@@ -1,0 +1,48 @@
+# Dependencies and package-manager caches
+node_modules/
+.npm/
+.cache/
+.pnpm-store/
+
+# Build output
+dist/
+dist_check/
+build/
+out/
+
+# Generated test bundles (rebuilt by the test runner, 2.4MB each)
+*.run.cjs
+*.run.mjs
+
+# Runtime ingestion state -- this is a local database, not source
+server/data/
+*.json.tmp
+*.json.corrupt-*
+
+# Secrets. Never commit these.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Logs
+*.log
+npm-debug.log*
+
+# Transfer archives generated for uploading this repo to GitHub.
+# They contain a copy of the repo itself - never commit them.
+brief-files.zip
+brief-repo.zip
+brief-repo.tar.gz
+PUSH-TO-GITHUB.md
+UPLOAD-TO-GITHUB.md
+BRIEF-ALL-FILES.txt
+parts/

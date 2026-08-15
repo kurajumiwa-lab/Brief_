@@ -1,0 +1,13 @@
+{
+  "name": "brief-ingestion",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node test/run.js"
+  },
+  "dependencies": {
+    "express": "^4.21.1"
+  }
+}
