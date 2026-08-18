@@ -108,6 +108,78 @@ export async function getChat(chatId) {
  * Normalize a Telegram update into the shape storeRawItem expects.
  * Returns null for updates carrying no usable text.
  */
+// Telegram caps a message at 4096 characters; anything vastly larger is not
+// a real Telegram message and is refused rather than stored.
+const MAX_TEXT_LENGTH = 16384;
+
+/**
+ * Structural validation for an inbound update.
+ *
+ * Separate from `normalizeUpdate` so the route can distinguish three cases
+ * that used to be conflated:
+ *
+ *   - valid and usable            -> process it
+ *   - valid but nothing to ingest -> 200 with `ignored` (a photo, a join event)
+ *   - PERMANENTLY malformed       -> 400, so the sender stops retrying
+ *
+ * Only rejects what can never succeed. An update carrying no text is NOT
+ * malformed -- Telegram legitimately sends those, and they are ignored.
+ */
+export function validateUpdateShape(update) {
+  if (update === null || typeof update !== 'object' || Array.isArray(update)) {
+    return { ok: false, error: 'update must be a JSON object' };
+  }
+
+  const msg =
+    update.message || update.channel_post ||
+    update.edited_message || update.edited_channel_post;
+
+  // No message at all is a legitimate update Brief simply ignores.
+  if (msg === undefined || msg === null) return { ok: true };
+  if (typeof msg !== 'object' || Array.isArray(msg)) {
+    return { ok: false, error: 'message must be an object' };
+  }
+
+  // message_id and chat.id form the dedup key, so they must be scalars.
+  if (msg.message_id !== undefined &&
+      typeof msg.message_id !== 'number' && typeof msg.message_id !== 'string') {
+    return { ok: false, error: 'message_id must be a number or string' };
+  }
+  if (msg.chat !== undefined) {
+    if (typeof msg.chat !== 'object' || msg.chat === null || Array.isArray(msg.chat)) {
+      return { ok: false, error: 'chat must be an object' };
+    }
+    if (msg.chat.id !== undefined &&
+        typeof msg.chat.id !== 'number' && typeof msg.chat.id !== 'string') {
+      return { ok: false, error: 'chat.id must be a number or string' };
+    }
+    if (msg.chat.type !== undefined && msg.chat.type !== null &&
+        typeof msg.chat.type !== 'string') {
+      return { ok: false, error: 'chat.type must be a string' };
+    }
+  }
+  if (msg.text !== undefined && msg.text !== null && typeof msg.text !== 'string') {
+    return { ok: false, error: 'text must be a string' };
+  }
+  if (msg.caption !== undefined && msg.caption !== null && typeof msg.caption !== 'string') {
+    return { ok: false, error: 'caption must be a string' };
+  }
+  // `date` is unix seconds. A non-numeric date would silently become an
+  // Invalid Date and poison publishedAt.
+  if (msg.date !== undefined && msg.date !== null &&
+      (typeof msg.date !== 'number' || !Number.isFinite(msg.date))) {
+    return { ok: false, error: 'date must be a unix timestamp in seconds' };
+  }
+
+  const text = typeof msg.text === 'string' ? msg.text
+             : typeof msg.caption === 'string' ? msg.caption : '';
+  if (text.length > MAX_TEXT_LENGTH) {
+    return { ok: false, error: `text exceeds ${MAX_TEXT_LENGTH} characters` };
+  }
+
+  return { ok: true };
+}
+
 export function normalizeUpdate(update) {
   const msg =
     update.message || update.channel_post ||

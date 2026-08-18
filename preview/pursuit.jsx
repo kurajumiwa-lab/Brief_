@@ -9,8 +9,41 @@ const App=require('./src/App.tsx').default;
 
 async function main(){
   dom.window.open=()=>null;
+
+  // Objects are server-backed now (no seeds), and pursuit matching is only
+  // meaningful against a real corpus. Serve the two objects these assertions
+  // match on, plus one deliberate non-match to prove intent words do not
+  // match everything.
+  const SERVER_OBJECTS=[
+    {id:'prd_solar', type:'product', title:'Portable Solar Lighting Pack',
+     category:'Energy', summary:'Solar lighting kit with panel and battery. Cheap to run.',
+     locationName:'Kilimani', publication:'public', verificationStatus:'verified',
+     metadata:{price:4500,currency:'KES'}, createdAt:'2026-08-01T08:00:00Z',
+     provenance:[], relationships:[]},
+    {id:'opp_grant', type:'opportunity', title:'Green Commerce Micro-Grant',
+     category:'Funding', summary:'Micro-grant for green commerce traders. Applications open.',
+     locationName:'Nairobi', publication:'public', verificationStatus:'verified',
+     metadata:{deadline:'2026-09-30'}, createdAt:'2026-08-01T08:00:00Z',
+     provenance:[], relationships:[]},
+    {id:'plc_park', type:'place', title:'Jeevanjee Gardens',
+     category:'Park', summary:'Public gardens in the city centre.',
+     locationName:'Nairobi CBD', publication:'public', verificationStatus:'verified',
+     createdAt:'2026-08-01T08:00:00Z', provenance:[], relationships:[]}
+  ];
+  global.fetch=async(url)=>{
+    const u=String(url);
+    const json=(body)=>({ok:true,status:200,text:async()=>JSON.stringify(body),json:async()=>body});
+    if(u.includes('/api/objects')) return json({objects:SERVER_OBJECTS});
+    if(u.includes('/api/campaigns')) return json({campaigns:[]});
+    if(u.includes('/api/sources')) return json({sources:[]});
+    if(u.includes('/api/config')) return json({publicOrigin:null});
+    return {ok:false,status:404,text:async()=>'{}',json:async()=>({})};
+  };
+  dom.window.fetch=global.fetch;
+
   const root=createRoot(document.getElementById('root'));
   await act(async()=>{root.render(React.createElement(App));});
+  await act(async()=>{await new Promise(r=>setTimeout(r,0));});
   const text=el=>(el.textContent||'').replace(/\s+/g,' ').trim();
   const body=()=>text(document.body);
   const click=async el=>{await act(async()=>{el.dispatchEvent(new dom.window.MouseEvent('click',{bubbles:true,cancelable:true}));});};

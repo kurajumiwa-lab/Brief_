@@ -1,34 +1,20 @@
-const { JSDOM }=require('jsdom');
-const dom=new JSDOM('<!DOCTYPE html><html><body><div id="root"></div></body></html>',{url:'https://brief.test/',pretendToBeVisual:true});
-global.window=dom.window;global.document=dom.window.document;global.navigator=dom.window.navigator;
-global.HTMLElement=dom.window.HTMLElement;global.Element=dom.window.Element;global.Node=dom.window.Node;
-global.MouseEvent=dom.window.MouseEvent;global.getComputedStyle=dom.window.getComputedStyle;
-global.IS_REACT_ACT_ENVIRONMENT=true;
-const React=require('react');const{createRoot}=require('react-dom/client');const{act}=require('react-dom/test-utils');
-const App=require('./src/App.tsx').default;
+// ---------------------------------------------------------------------------
+// GROUP ACCESS CONTROL
+//
+// Who may see a group, whose content stays sealed, and what revocation
+// destroys. Batch 1 emptied ALL_GROUPS/GROUP_MESSAGES in the product (groups
+// are derived from real server sources now), so this suite mounts the
+// extracted <ConnectedGroups> with test-owned fixtures and the REAL access
+// helpers. The rules under test are unchanged.
+// ---------------------------------------------------------------------------
+const { bootGroups } = require('./grouphost.cjs');
+
 async function main(){
-  dom.window.open=()=>null;
-  const root=createRoot(document.getElementById('root'));
-  await act(async()=>{root.render(React.createElement(App));});
-  const text=el=>(el.textContent||'').replace(/\s+/g,' ').trim();
-  const body=()=>text(document.body);
-  const click=async el=>{await act(async()=>{el.dispatchEvent(new dom.window.MouseEvent('click',{bubbles:true,cancelable:true}));});};
-  const btn=t=>Array.from(document.querySelectorAll('button')).find(b=>text(b)===t||text(b).startsWith(t));
-  const goto=async(dest,section)=>{
-    const d=Array.from(document.querySelectorAll('button')).find(b=>text(b)===dest||text(b).startsWith(dest));
-    if(d) await click(d);
-    if(section){
-      const sBtn=Array.from(document.querySelectorAll('button')).find(b=>text(b)===section||text(b).startsWith(section));
-      if(sBtn) await click(sBtn);
-    }
-  };
-  const setVal=async(el,v)=>{await act(async()=>{
-    Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype,'value').set.call(el,v);
-    el.dispatchEvent(new dom.window.Event('input',{bubbles:true}));});};
+  const h = await bootGroups();
+  const { text, body, click, btn, setVal, submit, askInput, act, dom } = h;
   let pass=0,fail=0;
   const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;console.log('  FAIL  '+n+(d?' -> '+d:''));}};
 
-  await goto('My Layer','Groups');
   let b=body();
   console.log('=== ONLY the user\'s own groups ===');
   check('says "Your Groups"', b.includes('Your Groups'));

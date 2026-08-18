@@ -68,8 +68,16 @@ async function main(){
   console.log('\n=== SOURCES view ===');
   await goto('Workflows','Sources');
   b=body();
-  check('lists sources', b.includes('Nairobi Traders')&&b.includes('Kilimani Notices'));
-  check('shows plain-language health', b.includes('Receiving information normally')||b.includes('No recent information'));
+  // Sources come from the server now; the seeded 'Nairobi Traders' list is
+  // gone. With no connector server in this harness the surface must say so
+  // rather than list sources Brief is not actually connected to.
+  check('sources surface renders without inventing sources',
+    !b.includes('Nairobi Traders') && !b.includes('Kilimani Notices'));
+  // With no seeded sources and no reachable server, the surface must state
+  // the connector situation plainly. (getSourceHealth's derivation is still
+  // guarded in parse.jsx -- it is the fake source rows that are gone.)
+  check('states the connector situation instead of listing nothing silently',
+    /Ingestion server not reachable|Checking\.\.\./i.test(b));
   check('channel is not the information', b.includes('A channel is not the information'));
   check('no technical errors exposed', !/stack|ECONN|undefined is not/i.test(b));
 

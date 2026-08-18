@@ -1,26 +1,21 @@
-const { JSDOM }=require('jsdom');
-const dom=new JSDOM('<!DOCTYPE html><html><body><div id="root"></div></body></html>',{url:'https://brief.test/',pretendToBeVisual:true});
-global.window=dom.window;global.document=dom.window.document;global.navigator=dom.window.navigator;
-global.HTMLElement=dom.window.HTMLElement;global.Element=dom.window.Element;global.Node=dom.window.Node;
-global.MouseEvent=dom.window.MouseEvent;global.getComputedStyle=dom.window.getComputedStyle;
-global.IS_REACT_ACT_ENVIRONMENT=true;
-const React=require('react');const{createRoot}=require('react-dom/client');const{act}=require('react-dom/test-utils');
-const Mod=require('./src/App.tsx');
-const App=Mod.default;
+// ---------------------------------------------------------------------------
+// DESTINATIONS
+//
+// Places that contain other objects (a market holding vendors and events).
+// Fixtures are served over /api/objects, so the containment rails are built
+// from real relationship edges rather than a seeded constant.
+// ---------------------------------------------------------------------------
+const { boot } = require('./harness.cjs');
+const { FIXTURE_OBJECTS } = require('./fixtures.cjs');
+const Mod = require('./src/App.tsx');
 
 async function main(){
-  dom.window.open=()=>null;
-  const root=createRoot(document.getElementById('root'));
-  await act(async()=>{root.render(React.createElement(App));});
-  const text=el=>(el.textContent||'').replace(/\s+/g,' ').trim();
-  const body=()=>text(document.body);
-  const click=async el=>{await act(async()=>{el.dispatchEvent(new dom.window.MouseEvent('click',{bubbles:true,cancelable:true}));});};
-  const btn=t=>Array.from(document.querySelectorAll('button')).find(b=>text(b)===t||text(b).startsWith(t));
-  const all=t=>Array.from(document.querySelectorAll('button')).filter(b=>text(b).includes(t));
+  const h = await boot({ objects: FIXTURE_OBJECTS });
+  const { text, body, click, btn, allBtns: all } = h;
   const card=t=>Array.from(document.querySelectorAll('div')).find(d=>text(d).startsWith(t));
+  const esc=async()=>{const x=Array.from(document.querySelectorAll('button')).find(b=>text(b)===''&&b.className.includes('rounded-full'));if(x)await click(x);};
   let pass=0,fail=0;
   const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;console.log('  FAIL  '+n+(d?' -> '+d:''));}};
-  const esc=async()=>{const x=Array.from(document.querySelectorAll('button')).find(b=>text(b)===''&&b.className.includes('rounded-full'));if(x)await click(x);};
 
   console.log('\n=== 2/3. Destinations are recognised, ordinary objects are not ===');
   const b=body();

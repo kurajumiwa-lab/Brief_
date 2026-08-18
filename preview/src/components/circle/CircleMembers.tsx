@@ -1,0 +1,159 @@
+import React from 'react';
+import type { Member, MemberEvidence } from '../../api/types';
+
+/**
+ * CIRCLE MEMBERS + EVIDENCE.
+ *
+ * TRUST IS EVIDENCE, NEVER A SCORE.
+ *
+ * There is deliberately no percentage, rating, star count, reliability index
+ * or hidden ranking anywhere in this component. A member is described by
+ * things that actually happened -- verifications that were recorded, tasks
+ * they completed, votes they cast, when they joined -- each of which is
+ * checkable and contestable in a way a number never is.
+ *
+ * A member with no history shows no evidence. That is the honest answer, not
+ * a gap to fill with a default rating.
+ */
+
+const ROLE_LABEL: Record<string, string> = {
+  coordinator: 'Coordinator',
+  contributor: 'Contributor',
+  scout: 'Scout',
+  logistics: 'Logistics',
+  observer: 'Observer'
+};
+
+export interface CircleMembersProps {
+  members: Member[];
+  /** Evidence per userId, loaded on demand when a member is expanded. */
+  evidence: Record<string, MemberEvidence | 'loading' | 'error'>;
+  expandedId: string | null;
+  onToggle: (userId: string) => void;
+}
+
+export function CircleMembers({
+  members,
+  evidence,
+  expandedId,
+  onToggle
+}: CircleMembersProps) {
+  return (
+    <div>
+      <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#5C6B52] mb-2">
+        Members
+      </h3>
+
+      {members.length === 0 ? (
+        <p className="text-xs text-[#86935C]">No members yet.</p>
+      ) : (
+        <div className="space-y-2">
+          {members.map((member) => {
+            const open = expandedId === member.userId;
+            const ev = evidence[member.userId];
+
+            return (
+              <div
+                key={member.id}
+                className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3 space-y-2"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs font-extrabold text-[#E2ECE5] truncate">
+                      {member.userId}
+                    </p>
+                    <p className="text-[9px] font-mono uppercase text-[#5C6B52] mt-0.5">
+                      {ROLE_LABEL[member.role] ?? member.role}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => onToggle(member.userId)}
+                    className="shrink-0 text-[10px] font-extrabold text-[#8DCF74] cursor-pointer"
+                  >
+                    {open ? 'Hide' : 'Evidence'}
+                  </button>
+                </div>
+
+                {/* Verifications: each names a specific check that happened. */}
+                {member.trust.evidence.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {member.trust.evidence.map((e) => (
+                      <span
+                        key={e.kind}
+                        className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-[#172D20] text-[#8DCF74]"
+                      >
+                        {e.label}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {open && (
+                  <div className="pt-1 space-y-2 border-t border-[#1E3A2A]">
+                    {/* Plain factual counts from the server. */}
+                    {member.trust.facts.length > 0 && (
+                      <ul className="space-y-0.5 mt-2">
+                        {member.trust.facts.map((f) => (
+                          <li key={f.kind} className="text-[10px] text-[#A9BDA0]">
+                            {f.label}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+
+                    {ev === 'loading' && (
+                      <p className="text-[10px] text-[#86935C]">Loading evidence...</p>
+                    )}
+
+                    {ev === 'error' && (
+                      <p className="text-[10px] text-[#C9A227]">
+                        Couldn't load this member's history.
+                      </p>
+                    )}
+
+                    {ev && ev !== 'loading' && ev !== 'error' && (
+                      <>
+                        {ev.summary.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {ev.summary.map((s) => (
+                              <span
+                                key={s.kind}
+                                className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-[#09150E] border border-[#1E3A2A] text-[#A9BDA0]"
+                              >
+                                {s.label}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {ev.evidence.length === 0 ? (
+                          <p className="text-[10px] text-[#5C6B52]">
+                            No recorded activity in this circle yet.
+                          </p>
+                        ) : (
+                          <ul className="space-y-1">
+                            {ev.evidence.slice(0, 10).map((item) => (
+                              <li
+                                key={item.signalId}
+                                className="flex items-center gap-2 text-[10px] text-[#A9BDA0]"
+                              >
+                                <span className="min-w-0 truncate">{item.label}</span>
+                                <span className="font-mono text-[9px] text-[#5C6B52] ml-auto shrink-0">
+                                  {item.at.slice(0, 10)}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}

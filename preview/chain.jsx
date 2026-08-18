@@ -1,20 +1,17 @@
-const { JSDOM } = require('jsdom');
-const dom = new JSDOM('<!DOCTYPE html><html><body><div id="root"></div></body></html>', { url: 'https://brief.test/', pretendToBeVisual: true });
-global.window = dom.window; global.document = dom.window.document; global.navigator = dom.window.navigator;
-global.HTMLElement = dom.window.HTMLElement; global.Element = dom.window.Element; global.Node = dom.window.Node;
-global.MouseEvent = dom.window.MouseEvent; global.getComputedStyle = dom.window.getComputedStyle;
-global.IS_REACT_ACT_ENVIRONMENT = true;
-const React = require('react');
-const { createRoot } = require('react-dom/client');
-const { act } = require('react-dom/test-utils');
-const App = require('./src/App.tsx').default;
+// ---------------------------------------------------------------------------
+// RELATIONSHIP CHAINS
+//
+// Walks object -> object edges through the detail rails. Batch 1 removed the
+// seeded graph, so the fixtures are served over /api/objects and arrive
+// through the real objectFromServer adapter -- which now maps the server's
+// relationship verbs onto the client's typed edge fields.
+// ---------------------------------------------------------------------------
+const { boot } = require('./harness.cjs');
+const { FIXTURE_OBJECTS } = require('./fixtures.cjs');
 
 async function main() {
-  dom.window.open = () => null;
-  const root = createRoot(document.getElementById('root'));
-  await act(async () => { root.render(React.createElement(App)); });
-  const text = (el) => (el.textContent || '').replace(/\s+/g, ' ').trim();
-  const click = async (el) => { await act(async () => { el.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true })); }); };
+  const h = await boot({ objects: FIXTURE_OBJECTS });
+  const { text, click, document: doc } = h;
   const modal = () => document.querySelector('.fixed.inset-0.z-50');
   const modalText = () => { const m = modal(); return m ? text(m) : ''; };
   let pass=0, fail=0;
@@ -64,8 +61,16 @@ async function main() {
     check('imageless detail shows category chip', t.includes('Hardware Supplier'));
     check('creator/provider name present', t.includes('Kikao Hardware'));
     check('location is Kilimani Hardware Lab', t.includes('Kilimani Hardware Lab'));
-    check('primary action is Open Map (no fake transaction)', t.includes('Open Map') && !/Buy|Purchase started|Booking started/.test(t));
-    check('shows trust (mirrored 97%)', t.includes('97'));
+    // The action label now comes from the object's TYPE, not from a stored
+    // string: the server has no actionLabel column, so an identity object
+    // gets the identity verb. Still no transactional verb on an identity --
+    // which is what this assertion has always really been guarding.
+    check('primary action is not a fake transaction',
+      /View|Open Map/.test(t) && !/Buy|Purchase started|Booking started/.test(t), t.slice(0,160));
+    // Trust is deliberately ABSENT. The server stores no trust score, and
+    // Brief does not invent one -- per the rule that trust is an evidence
+    // list, never a number. A mirrored "97%" here would be fabricated.
+    check('no invented trust percentage', !/\b\d{1,3}% trusted\b/.test(t), t.slice(0,160));
   }
   console.log(`\n${'='.repeat(46)}\nPASSED ${pass}   FAILED ${fail}\n${'='.repeat(46)}`);
   process.exit(fail?1:0);

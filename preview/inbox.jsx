@@ -9,8 +9,35 @@ const App=require('./src/App.tsx').default;
 
 async function main(){
   dom.window.open=()=>null;
+
+  // Brief no longer ships seeded objects: the stream is server-backed. Serve
+  // ONE real object so duplicate detection and link suggestion have something
+  // to compare an incoming message against -- which is the point of these
+  // assertions. Served over /api/objects, exercising the real load path.
+  const SERVER_OBJECTS=[{
+    id:'obj_maji_mazuri', type:'place', title:'Maji Mazuri Farmers & Artisans Market',
+    category:'Marketplace', summary:'Fresh organic produce, handcrafts, and open vendor trade.',
+    locationName:'Maji Mazuri Grounds, Kilimani', publication:'public',
+    verificationStatus:'verified', createdAt:'2026-08-01T08:00:00Z', provenance:[], relationships:[]
+  }];
+  // The review queue now READS the server. Messages are served from
+  // /api/raw-items rather than a constant compiled into the client.
+  const { FIXTURE_RAW_ITEMS, FIXTURE_INBOX_SOURCES }=require('./fixtures.cjs');
+  global.fetch=async(url)=>{
+    const u=String(url);
+    const json=(body)=>({ok:true,status:200,text:async()=>JSON.stringify(body),json:async()=>body});
+    if(u.includes('/api/raw-items')) return json({rawItems:FIXTURE_RAW_ITEMS});
+    if(u.includes('/api/objects')) return json({objects:SERVER_OBJECTS});
+    if(u.includes('/api/campaigns')) return json({campaigns:[]});
+    if(u.includes('/api/sources')) return json({sources:FIXTURE_INBOX_SOURCES});
+    if(u.includes('/api/config')) return json({publicOrigin:null});
+    return {ok:false,status:404,text:async()=>'{}',json:async()=>({})};
+  };
+  dom.window.fetch=global.fetch;
+
   const root=createRoot(document.getElementById('root'));
   await act(async()=>{root.render(React.createElement(App));});
+  await act(async()=>{await new Promise(r=>setTimeout(r,0));});
   const text=el=>(el.textContent||'').replace(/\s+/g,' ').trim();
   const body=()=>text(document.body);
   const click=async el=>{await act(async()=>{el.dispatchEvent(new dom.window.MouseEvent('click',{bubbles:true,cancelable:true}));});};
@@ -29,7 +56,9 @@ async function main(){
 
   const baseline=cards().length;
   console.log('=== A message does NOT become a post ===');
-  check('stream starts with seed objects only', baseline===13, String(baseline));
+  // The stream now reflects the server exactly: one object in, one card out.
+  // No seeds, and nothing invented to pad the grid.
+  check('stream renders exactly what the server returned', baseline===1, String(baseline));
 
   await goto('Workflows','Inbox');
   check('Inbox tab opens', body().includes('Messages from connected sources'));
@@ -52,7 +81,7 @@ async function main(){
   check('states unverified', inbox.includes('Unverified. No trust score until reviewed.'));
   check('flags unclear type on chatter', inbox.includes('Type unclear'));
   check('warns on low-signal message', inbox.includes('could not be determined'));
-  check('flags possible duplicate of seed market', inbox.includes('Possible duplicate'));
+  check('flags possible duplicate of the server object', inbox.includes('Possible duplicate'));
   check('shows extracted phone', inbox.includes('0712345678'));
   check('shows extracted price', inbox.includes('4500'));
   check('shows extracted deadline', inbox.includes('30 September'));

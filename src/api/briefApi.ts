@@ -1,0 +1,1151 @@
+// ---------------------------------------------------------------------------
+// BRIEF API CLIENT
+//
+// One place where the frontend talks to the ingestion + feature-schema server.
+// App.tsx currently calls fetch() inline for connectors; this module is the
+// layer those calls should migrate to, and the only layer Phase 4 UI will use.
+//
+// Design rules enforced here:
+//
+//   1. Nothing throws. Every function returns ApiResult<T> so one dead
+//      endpoint degrades one surface instead of breaking Brief.
+//   2. Authoritative economic values are never sent. The update/create types
+//      exclude currentValue/progress, so attempting to fake progress is a
+//      COMPILE error, not a silent runtime no-op.
+//   3. Capabilities the server does not have are reported as unavailable
+//      rather than stubbed.
+// ---------------------------------------------------------------------------
+
+import type {
+  ApiResult,
+  Block,
+  CapabilityUnavailable,
+  Circle,
+  CircleCreate,
+  CircleUpdate,
+  Member,
+  Signal,
+  TargetView,
+  AppConfig,
+  AuthStatus,
+  Campaign,
+  CampaignCreate,
+  CampaignUpdate,
+  PublicCampaign,
+  Registration,
+  RegistrationStatus,
+  ShareChannel,
+  ShareLink,
+  ShareChannels,
+  CampaignShare,
+  PaymentConfirmation,
+  Transaction,
+  TransactionCreate,
+  TransactionStatus,
+  VerificationKind,
+  Wallet,
+  Source,
+  RawItem,
+  VoteTally,
+  MemberEvidence,
+  BriefItPreview,
+  BriefItSaved,
+  Vendor,
+  VendorCreate,
+  VendorUpdate,
+  Listing,
+  ListingCreate,
+  ListingUpdate,
+  ListingStatus,
+  Order,
+  OrderCreate,
+  Dispute,
+  VendorEarnings,
+  ArenaMoneyStatus
+} from './types';
+import { asTarget } from './types';
+import {
+  areBlocks, areCampaigns, areCircles, areMembers, areRegistrations,
+  areSignals, areTransactions, isAuthStatus, isCampaign, isCircle, isBlock,
+  isAppConfig, isMember, isProviderStatus, isPublicCampaign, isRegistration,
+  isTransaction, isWallet, isCampaignShare, isPaymentConfirmation,
+  areSources, areRawItems, isBriefItPreview, isVoteTally, isMemberEvidence,
+  isVendor, areVendors, isListing, areListings, isOrder, areOrders,
+  isDispute, areDisputes
+} from './validate';
+
+/**
+ * The dev server proxies /ingest -> the API. The browser is not the sandbox,
+ * so this must stay a relative path: never call localhost from client code.
+ */
+export const INGEST_API = '/ingest';
+
+// ---------------------------------------------------------------------------
+// SESSION
+//
+// The token lives in ONE place and is attached by `request()`, so no call site
+// can forget it and no component ever handles a credential directly.
+//
+// localStorage rather than a JS-readable cookie: the app is a single-page
+// client talking to an API on another origin, and a cookie would not be sent
+// cross-origin without further configuration. The trade-off (XSS can read it)
+// is the same either way for a non-httpOnly cookie.
+// ---------------------------------------------------------------------------
+
+const TOKEN_KEY = 'brief_session';
+let memoryToken: string | null = null;
+
+export function setSessionToken(token: string | null): void {
+  memoryToken = token;
+  try {
+    if (token) window.localStorage.setItem(TOKEN_KEY, token);
+    else window.localStorage.removeItem(TOKEN_KEY);
+  } catch {
+    // Private browsing or a blocked store: the in-memory copy still works for
+    // this session rather than the app failing to sign in at all.
+  }
+}
+
+export function getSessionToken(): string | null {
+  if (memoryToken) return memoryToken;
+  try {
+    memoryToken = window.localStorage.getItem(TOKEN_KEY);
+  } catch {
+    memoryToken = null;
+  }
+  return memoryToken;
+}
+
+/** Called when the server reports a dead session, so the UI can re-prompt. */
+let onSessionExpired: (() => void) | null = null;
+export function setSessionExpiredHandler(fn: (() => void) | null): void {
+  onSessionExpired = fn;
+}
+
+async function request<T>(
+  path: string,
+  init?: RequestInit,
+  // Returning undefined is how a selector reports "the server answered 200 but
+  // the body is not the shape we expect". Narrowed below into a real error.
+  select?: (raw: any) => T | undefined
+): Promise<ApiResult<T>> {
+  try {
+    const token = getSessionToken();
+    const headers: Record<string, string> = {
+      ...((init?.headers as Record<string, string> | undefined) ?? {})
+    };
+    if (init?.body !== undefined) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`${INGEST_API}${path}`, {
+      ...init,
+      headers
+    });
+
+    // A dead session must clear itself rather than leaving the client
+    // retrying with a token the server has already rejected.
+    if (res.status === 401) {
+      const stale = getSessionToken();
+      if (stale) {
+        setSessionToken(null);
+        onSessionExpired?.();
+      }
+    }
+
+    // Read the body once, defensively: an HTML error page or an empty body
+    // must not throw a raw SyntaxError at the call site.
+    const text = await res.text();
+    let parsed: any = null;
+    if (text) {
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        return {
+          ok: false,
+          status: res.status,
+          error: 'server returned a non-JSON response'
+        };
+      }
+    }
+
+    if (!res.ok) {
+      return {
+        ok: false,
+        status: res.status,
+        error:
+          (parsed && typeof parsed.error === 'string' && parsed.error) ||
+          `request failed with status ${res.status}`
+      };
+    }
+
+    const data: T | undefined = select ? select(parsed) : (parsed as T);
+    // A 200 whose body is missing the expected key is a contract mismatch,
+    // not success. Surface it rather than handing `undefined` to the UI.
+    if (data === undefined || data === null) {
+      return { ok: false, status: res.status, error: 'unexpected response shape' };
+    }
+    return { ok: true, data };
+  } catch (e) {
+    // Network failure, offline server, aborted request.
+    return {
+      ok: false,
+      status: null,
+      error: e instanceof Error ? e.message : 'network error'
+    };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// CIRCLES
+// ---------------------------------------------------------------------------
+
+export function getCircles(): Promise<ApiResult<Circle[]>> {
+  return request('/api/circles', undefined, (r) => areCircles(r?.circles));
+}
+
+export interface CircleDetail {
+  circle: Circle;
+  blocks: Block[];
+  signals: Signal[];
+}
+
+export function getCircle(id: string): Promise<ApiResult<CircleDetail>> {
+  return request(`/api/circles/${encodeURIComponent(id)}`, undefined, (r) => {
+    if (!isCircle(r?.circle)) return undefined;
+    const blocks = areBlocks(r.blocks ?? []);
+    const signals = areSignals(r.signals ?? []);
+    if (!blocks || !signals) return undefined;
+    return { circle: r.circle, blocks, signals };
+  });
+}
+
+export function createCircle(body: CircleCreate): Promise<ApiResult<Circle>> {
+  return request(
+    '/api/circles',
+    { method: 'POST', body: JSON.stringify(body) },
+    (r) => (isCircle(r?.circle) ? r.circle : undefined)
+  );
+}
+
+/**
+ * `patch` is typed CircleUpdate, which has no progress fields. A caller
+ * writing `updateCircle(id, { currentValue: 33750 })` fails to compile.
+ */
+export function updateCircle(id: string, patch: CircleUpdate): Promise<ApiResult<Circle>> {
+  return request(
+    `/api/circles/${encodeURIComponent(id)}`,
+    { method: 'PATCH', body: JSON.stringify(patch) },
+    (r) => (isCircle(r?.circle) ? r.circle : undefined)
+  );
+}
+
+// ---------------------------------------------------------------------------
+// TARGETS -- a view over circles, not a separate endpoint
+// ---------------------------------------------------------------------------
+
+/** Circles that are measurable targets, with server-derived progress. */
+export async function getTargets(): Promise<ApiResult<TargetView[]>> {
+  const res = await getCircles();
+  if (!res.ok) return res;
+  const targets = res.data
+    .map(asTarget)
+    .filter((t): t is TargetView => t !== null);
+  return { ok: true, data: targets };
+}
+
+// ---------------------------------------------------------------------------
+// MEMBERS + TRUST
+// ---------------------------------------------------------------------------
+
+export function getMembers(circleId: string): Promise<ApiResult<Member[]>> {
+  return request(
+    `/api/circles/${encodeURIComponent(circleId)}/members`,
+    undefined,
+    (r) => areMembers(r?.members)
+  );
+}
+
+/**
+ * Join the circle AS THE AUTHENTICATED CALLER.
+ *
+ * There is deliberately no userId parameter. The server derives identity from
+ * the request, so a userId here would be a forgeable claim that the server
+ * ignores -- an API that invites callers to write code the server rejects.
+ */
+export function joinCircle(
+  circleId: string,
+  role?: Member['role']
+): Promise<ApiResult<Member>> {
+  return request(
+    `/api/circles/${encodeURIComponent(circleId)}/members`,
+    { method: 'POST', body: JSON.stringify({ role }) },
+    (r) => (isMember(r?.member) ? r.member : undefined)
+  );
+}
+
+/**
+ * Add SOMEBODY ELSE to a circle. Requires coordinator authority; the server
+ * returns 403 otherwise. Named separately from joinCircle so the privileged
+ * act is visible at the call site.
+ */
+export function inviteMember(
+  circleId: string,
+  userId: string,
+  role?: Member['role']
+): Promise<ApiResult<Member>> {
+  return request(
+    `/api/circles/${encodeURIComponent(circleId)}/members`,
+    { method: 'POST', body: JSON.stringify({ userId, role }) },
+    (r) => (isMember(r?.member) ? r.member : undefined)
+  );
+}
+
+/** Record a verification for another member. Coordinator-only; self-verification is refused. */
+export function recordVerification(
+  circleId: string,
+  userId: string,
+  kind: VerificationKind
+): Promise<ApiResult<Member>> {
+  return request(
+    `/api/circles/${encodeURIComponent(circleId)}/members/${encodeURIComponent(userId)}/verify`,
+    { method: 'POST', body: JSON.stringify({ kind }) },
+    (r) => (isMember(r?.member) ? r.member : undefined)
+  );
+}
+
+/** Change a member's role. Coordinator-only. */
+export function setMemberRole(
+  circleId: string,
+  userId: string,
+  role: Member['role']
+): Promise<ApiResult<Member>> {
+  return request(
+    `/api/circles/${encodeURIComponent(circleId)}/members/${encodeURIComponent(userId)}/role`,
+    { method: 'PATCH', body: JSON.stringify({ role }) },
+    (r) => (isMember(r?.member) ? r.member : undefined)
+  );
+}
+
+/** Whether caller identity is genuinely verified. Currently false. */
+export function getAuthStatus(): Promise<ApiResult<AuthStatus>> {
+  return request('/api/auth/status', undefined, (r) => (isAuthStatus(r) ? r : undefined));
+}
+
+// ---------------------------------------------------------------------------
+// BLOCKS
+// ---------------------------------------------------------------------------
+
+export function getBlocks(circleId?: string): Promise<ApiResult<Block[]>> {
+  const q = circleId ? `?circleId=${encodeURIComponent(circleId)}` : '';
+  return request(`/api/blocks${q}`, undefined, (r) => areBlocks(r?.blocks));
+}
+
+export interface BlockCreate {
+  circleId: string;
+  type?: Block['type'];
+  content?: string;
+  /** Promote an existing extracted object into the circle. */
+  objectId?: string;
+}
+
+export function createBlock(body: BlockCreate): Promise<ApiResult<Block>> {
+  return request(
+    '/api/blocks',
+    { method: 'POST', body: JSON.stringify(body) },
+    (r) => (isBlock(r?.block) ? r.block : undefined)
+  );
+}
+
+// ---------------------------------------------------------------------------
+// CIRCLE OPERATIONS: tasks and votes
+//
+// These act on Blocks, addressed through their circle. The circle in the path
+// is not decoration -- the server refuses a block that does not belong to it,
+// which is what stops one circle operating on another's work.
+//
+// Authority is enforced server-side. These bindings do not pre-check roles:
+// a client-side check is a convenience, and treating it as protection is how
+// authorisation holes are born. The UI hides what you cannot do; the SERVER
+// is what makes it impossible.
+// ---------------------------------------------------------------------------
+
+/** Take on a task, or (as coordinator) assign it to another member. */
+export function assignTask(
+  circleId: string,
+  blockId: string,
+  assigneeId?: string
+): Promise<ApiResult<{ block: Block; changed: boolean }>> {
+  return request(
+    `/api/circles/${encodeURIComponent(circleId)}/blocks/${encodeURIComponent(blockId)}/assign`,
+    { method: 'POST', body: JSON.stringify(assigneeId ? { assigneeId } : {}) },
+    (r) => (isBlock(r?.block) ? { block: r.block, changed: Boolean(r.changed) } : undefined)
+  );
+}
+
+/** Put a task back in the pool. */
+export function releaseTask(
+  circleId: string,
+  blockId: string
+): Promise<ApiResult<{ block: Block; changed: boolean }>> {
+  return request(
+    `/api/circles/${encodeURIComponent(circleId)}/blocks/${encodeURIComponent(blockId)}/release`,
+    { method: 'POST', body: JSON.stringify({}) },
+    (r) => (isBlock(r?.block) ? { block: r.block, changed: Boolean(r.changed) } : undefined)
+  );
+}
+
+/**
+ * Mark a task done. `changed: false` means it was already complete -- a
+ * harmless no-op, not a second completion.
+ */
+export function completeTask(
+  circleId: string,
+  blockId: string
+): Promise<ApiResult<{ block: Block; changed: boolean }>> {
+  return request(
+    `/api/circles/${encodeURIComponent(circleId)}/blocks/${encodeURIComponent(blockId)}/complete`,
+    { method: 'POST', body: JSON.stringify({}) },
+    (r) => (isBlock(r?.block) ? { block: r.block, changed: Boolean(r.changed) } : undefined)
+  );
+}
+
+/**
+ * Cast a ballot. The voter is the authenticated caller -- deliberately not a
+ * parameter, because a client-supplied voter id would be a forgeable claim.
+ * A second attempt returns a 409 conflict rather than replacing the first.
+ */
+export function castVote(
+  circleId: string,
+  blockId: string,
+  option: string
+): Promise<ApiResult<{ option: string; tally: VoteTally }>> {
+  return request(
+    `/api/circles/${encodeURIComponent(circleId)}/blocks/${encodeURIComponent(blockId)}/vote`,
+    { method: 'POST', body: JSON.stringify({ option }) },
+    (r) =>
+      isVoteTally(r?.tally)
+        ? { option: String(r?.vote?.option ?? option), tally: r.tally }
+        : undefined
+  );
+}
+
+/** Close a vote to further ballots. Coordinator only, enforced server-side. */
+export function closeVote(
+  circleId: string,
+  blockId: string
+): Promise<ApiResult<{ block: Block; tally: VoteTally }>> {
+  return request(
+    `/api/circles/${encodeURIComponent(circleId)}/blocks/${encodeURIComponent(blockId)}/close-vote`,
+    { method: 'POST', body: JSON.stringify({}) },
+    (r) => (isBlock(r?.block) && isVoteTally(r?.tally) ? { block: r.block, tally: r.tally } : undefined)
+  );
+}
+
+export function getTally(circleId: string, blockId: string): Promise<ApiResult<VoteTally>> {
+  return request(
+    `/api/circles/${encodeURIComponent(circleId)}/blocks/${encodeURIComponent(blockId)}/tally`,
+    undefined,
+    (r) => (isVoteTally(r?.tally) ? r.tally : undefined)
+  );
+}
+
+/**
+ * A member's evidence history. Returns things that happened -- never a score.
+ * An empty list means this member has done nothing yet, which is a real and
+ * useful answer, not a gap to fill with a default rating.
+ */
+export function getMemberEvidence(
+  circleId: string,
+  userId: string
+): Promise<ApiResult<MemberEvidence>> {
+  return request(
+    `/api/circles/${encodeURIComponent(circleId)}/members/${encodeURIComponent(userId)}/evidence`,
+    undefined,
+    (r) => (isMemberEvidence(r) ? r : undefined)
+  );
+}
+
+// ---------------------------------------------------------------------------
+// SIGNALS
+// ---------------------------------------------------------------------------
+
+export function getSignals(opts: { circleId?: string; limit?: number } = {}): Promise<
+  ApiResult<Signal[]>
+> {
+  const p = new URLSearchParams();
+  if (opts.circleId) p.set('circleId', opts.circleId);
+  if (opts.limit) p.set('limit', String(opts.limit));
+  const q = p.toString();
+  return request(`/api/signals${q ? `?${q}` : ''}`, undefined, (r) => areSignals(r?.signals));
+}
+
+// ---------------------------------------------------------------------------
+// ECONOMIC
+// ---------------------------------------------------------------------------
+
+export function getWallet(currency = 'KES'): Promise<ApiResult<Wallet>> {
+  // Validated rather than passed through: a 200 with an empty body would
+  // otherwise reach the UI as a wallet with `undefined` balance, which is
+  // exactly the kind of silent nonsense that turns into a fake zero on screen.
+  return request(
+    `/api/economic/wallet?currency=${encodeURIComponent(currency)}`,
+    undefined,
+    (r) => (isWallet(r) ? r : undefined)
+  );
+}
+
+export interface TransactionList {
+  transactions: Transaction[];
+  provider: Wallet['provider'];
+}
+
+export function getTransactions(limit?: number): Promise<ApiResult<TransactionList>> {
+  const q = limit ? `?limit=${limit}` : '';
+  return request(`/api/transactions${q}`, undefined, (r) => {
+    const transactions = areTransactions(r?.transactions);
+    if (!transactions || !isProviderStatus(r?.provider)) return undefined;
+    return { transactions, provider: r.provider };
+  });
+}
+
+export function createTransaction(body: TransactionCreate): Promise<ApiResult<Transaction>> {
+  return request(
+    '/api/transactions',
+    { method: 'POST', body: JSON.stringify(body) },
+    (r) => (isTransaction(r?.transaction) ? r.transaction : undefined)
+  );
+}
+
+/**
+ * Advance a transaction. The SERVER owns the state machine and rejects
+ * illegal hops -- notably created -> settled, which is how a UI would fake a
+ * settlement. This client cannot bypass that; it only relays the request and
+ * reports what the server decided.
+ *
+ * This is deliberately NOT named `settle`. There is no client-side settle.
+ */
+export function requestTransactionTransition(
+  id: string,
+  status: TransactionStatus,
+  note?: string
+): Promise<ApiResult<Transaction>> {
+  return request(
+    `/api/transactions/${encodeURIComponent(id)}/transition`,
+    { method: 'POST', body: JSON.stringify({ status, note }) },
+    (r) => (isTransaction(r?.transaction) ? r.transaction : undefined)
+  );
+}
+
+/**
+ * Disbursements are NOT implemented server-side (GET /api/disbursements -> 404,
+ * no domain service, no payment provider). This returns the reason so the UI
+ * can state the limitation instead of rendering an empty list that implies
+ * "no payouts yet" when the truth is "payouts do not exist".
+ */
+export function getDisbursements(): CapabilityUnavailable {
+  return {
+    available: false,
+    reason:
+      'Disbursements are not implemented. No payment provider is connected, ' +
+      'so Brief cannot pay anyone out and does not record disbursement state.'
+  };
+}
+
+// ---------------------------------------------------------------------------
+// CAMPAIGNS
+// ---------------------------------------------------------------------------
+
+export function getCampaigns(): Promise<ApiResult<Campaign[]>> {
+  return request('/api/campaigns', undefined, (r) => areCampaigns(r?.campaigns));
+}
+
+export function getCampaign(id: string): Promise<ApiResult<Campaign>> {
+  return request(`/api/campaigns/${encodeURIComponent(id)}`, undefined, (r) =>
+    isCampaign(r?.campaign) ? r.campaign : undefined
+  );
+}
+
+/** ownerId is NOT a parameter: the server derives it from the caller. */
+export function createCampaign(body: CampaignCreate): Promise<ApiResult<Campaign>> {
+  return request(
+    '/api/campaigns',
+    { method: 'POST', body: JSON.stringify(body) },
+    (r) => (isCampaign(r?.campaign) ? r.campaign : undefined)
+  );
+}
+
+export function updateCampaign(id: string, patch: CampaignUpdate): Promise<ApiResult<Campaign>> {
+  return request(
+    `/api/campaigns/${encodeURIComponent(id)}`,
+    { method: 'PATCH', body: JSON.stringify(patch) },
+    (r) => (isCampaign(r?.campaign) ? r.campaign : undefined)
+  );
+}
+
+/**
+ * Lifecycle transitions. The SERVER owns the state machine and refuses
+ * illegal hops; this only relays the request.
+ */
+export type CampaignAction = 'publish' | 'golive' | 'close' | 'cancel' | 'complete';
+
+export function campaignAction(id: string, action: CampaignAction): Promise<ApiResult<Campaign>> {
+  return request(
+    `/api/campaigns/${encodeURIComponent(id)}/${action}`,
+    { method: 'POST', body: JSON.stringify({}) },
+    (r) => (isCampaign(r?.campaign) ? r.campaign : undefined)
+  );
+}
+
+export function getCampaignRegistrations(id: string): Promise<ApiResult<Registration[]>> {
+  return request(
+    `/api/campaigns/${encodeURIComponent(id)}/registrations`,
+    undefined,
+    (r) => areRegistrations(r?.registrations)
+  );
+}
+
+/**
+ * The organiser confirms that payment for a held spot actually arrived.
+ *
+ * Deliberately takes no amount: the server uses the campaign price, so this
+ * call cannot mint revenue of the caller's choosing. The server creates the
+ * transaction, settles it, and promotes the registration in one step -- there
+ * is no client-side settlement anywhere in this flow.
+ */
+export function confirmRegistrationPayment(
+  campaignId: string,
+  registrationId: string
+): Promise<ApiResult<PaymentConfirmation>> {
+  return request(
+    `/api/campaigns/${encodeURIComponent(campaignId)}/registrations/${encodeURIComponent(registrationId)}/confirm-payment`,
+    { method: 'POST', body: JSON.stringify({}) },
+    (r) => (isPaymentConfirmation(r) ? r : undefined)
+  );
+}
+
+export function setRegistrationStatus(
+  campaignId: string,
+  registrationId: string,
+  status: RegistrationStatus
+): Promise<ApiResult<Registration>> {
+  return request(
+    `/api/campaigns/${encodeURIComponent(campaignId)}/registrations/${encodeURIComponent(registrationId)}/status`,
+    { method: 'POST', body: JSON.stringify({ status }) },
+    (r) => (isRegistration(r?.registration) ? r.registration : undefined)
+  );
+}
+
+// --- public (no authentication) ---------------------------------------------
+
+export function getPublicCampaign(slug: string): Promise<ApiResult<PublicCampaign>> {
+  return request(`/api/public/campaigns/${encodeURIComponent(slug)}`, undefined, (r) =>
+    isPublicCampaign(r?.campaign) ? r.campaign : undefined
+  );
+}
+
+export interface PublicRegisterResult {
+  registration: { id: string; status: RegistrationStatus; createdAt: string };
+  campaign: PublicCampaign;
+}
+
+export function registerForCampaign(
+  slug: string,
+  body: { attendeeRef: string; name?: string; contact?: string }
+): Promise<ApiResult<PublicRegisterResult>> {
+  return request(
+    `/api/public/campaigns/${encodeURIComponent(slug)}/register`,
+    { method: 'POST', body: JSON.stringify(body) },
+    (r) =>
+      isRegistration(r?.registration) && isPublicCampaign(r?.campaign)
+        ? { registration: r.registration, campaign: r.campaign }
+        : undefined
+  );
+}
+
+export type { ShareChannel, ShareChannels, ShareLink, CampaignShare } from './types';
+export { COPY_ONLY_CHANNELS } from './types';
+
+/** Client-visible server configuration, including the canonical public origin. */
+export function getConfig(): Promise<ApiResult<AppConfig>> {
+  return request('/api/config', undefined, (r) => (isAppConfig(r) ? r : undefined));
+}
+
+/**
+ * Build the canonical share link, or report honestly that there isn't one.
+ *
+ * The origin MUST come from server config. Deriving it from
+ * `window.location.origin` was the previous behaviour and was wrong: a creator
+ * on a preview host would distribute a link tied to that host. When no origin
+ * is configured the caller gets a structured unavailable state and shows the
+ * slug instead of a fabricated URL.
+ */
+export function campaignShareLink(slug: string, publicOrigin: string | null): ShareLink {
+  if (!publicOrigin) {
+    return { available: false, reason: 'public_origin_not_configured', slug };
+  }
+  return {
+    available: true,
+    url: `${publicOrigin.replace(/\/+$/, '')}/c/${slug}`,
+    slug
+  };
+}
+
+/**
+ * The server's canonical distribution payload for one campaign. Owner-only.
+ *
+ * Prefer this over composing a link locally: the origin lives in server
+ * config, so the server is the only party that can answer authoritatively.
+ */
+export function getCampaignShare(id: string): Promise<ApiResult<CampaignShare>> {
+  return request(
+    `/api/campaigns/${encodeURIComponent(id)}/share`,
+    undefined,
+    (r) => (isCampaignShare(r?.share) ? r.share : undefined)
+  );
+}
+
+/**
+ * Build the share-intent URLs for a canonical campaign link.
+ *
+ * This mirrors the server's `shareView()` byte-for-byte and is asserted to do
+ * so by the contract suite. It exists client-side so the share sheet needs no
+ * extra round-trip, NOT as a second source of truth: if the two ever diverge,
+ * the contract test fails rather than a creator quietly distributing a
+ * differently-shaped link on one channel.
+ */
+export function campaignShareChannels(url: string, title: string): ShareChannels {
+  const enc = encodeURIComponent(url);
+  const text = encodeURIComponent(title);
+  return {
+    whatsapp: `https://wa.me/?text=${encodeURIComponent(`${title} ${url}`)}`,
+    telegram: `https://t.me/share/url?url=${enc}&text=${text}`,
+    x: `https://twitter.com/intent/tweet?url=${enc}&text=${text}`
+  };
+}
+
+/**
+ * Records that the creator distributed the link. Emits a signal server-side
+ * and moves no money. Only meaningful once published.
+ */
+export function shareCampaign(
+  id: string,
+  channel: ShareChannel = 'link'
+): Promise<ApiResult<Campaign>> {
+  return request(
+    `/api/campaigns/${encodeURIComponent(id)}/share`,
+    { method: 'POST', body: JSON.stringify({ channel }) },
+    (r) => (isCampaign(r?.campaign) ? r.campaign : undefined)
+  );
+}
+
+/** A single Brief object. 404s for objects the caller may not see. */
+export function getObject(id: string): Promise<ApiResult<Record<string, unknown>>> {
+  return request(`/api/objects/${encodeURIComponent(id)}`, undefined, (r) =>
+    r && typeof r.object === 'object' && r.object !== null ? r.object : undefined
+  );
+}
+
+/** Objects the caller may attach to a campaign. */
+export function getObjects(publication?: string): Promise<ApiResult<any[]>> {
+  const q = publication ? `?publication=${encodeURIComponent(publication)}` : '';
+  return request(`/api/objects${q}`, undefined, (r) =>
+    Array.isArray(r?.objects) ? r.objects : undefined
+  );
+}
+
+// ---------------------------------------------------------------------------
+// SOURCES
+//
+// Where Brief's information comes from. The server computes every count from
+// real rows (items processed/pending/rejected, objects created), so this
+// binding is a pass-through: the client adds no arithmetic of its own.
+// ---------------------------------------------------------------------------
+
+export function getSources(): Promise<ApiResult<Source[]>> {
+  return request('/api/sources', undefined, (r) => areSources(r?.sources));
+}
+
+export interface SourceCreate {
+  name: string;
+  type: string;
+  url?: string;
+  description?: string;
+  accessType?: string;
+  externalId?: string;
+  ownerName?: string;
+}
+
+/**
+ * The create response is the stored row only. It deliberately does NOT carry
+ * the derived counts: a source created one millisecond ago has processed
+ * nothing, and returning `itemsProcessed: 0` here would be indistinguishable
+ * from a real measurement. Callers that need counts re-read getSources().
+ */
+export type CreatedSource = Omit<
+  Source,
+  'itemsProcessed' | 'itemsPending' | 'itemsRejected' | 'objectsCreated' | 'membership'
+>;
+
+export function createSource(input: SourceCreate): Promise<ApiResult<CreatedSource>> {
+  return request('/api/sources', {
+    method: 'POST',
+    body: JSON.stringify(input)
+  }, (r) =>
+    r?.source && typeof r.source.id === 'string'
+      ? (r.source as CreatedSource)
+      : undefined);
+}
+
+// ---------------------------------------------------------------------------
+// RAW ITEMS
+//
+// The inbound queue: messages as they actually arrived from connected sources.
+// This is what the review inbox reads. If no source has been connected the
+// list is genuinely empty, and the inbox must say so rather than showing
+// invented sample traffic -- an empty queue is a true statement about the
+// system, a fabricated one is not.
+// ---------------------------------------------------------------------------
+
+export function getRawItems(
+  opts: { sourceId?: string; status?: string } = {}
+): Promise<ApiResult<RawItem[]>> {
+  const qs = new URLSearchParams();
+  if (opts.sourceId) qs.set('sourceId', opts.sourceId);
+  if (opts.status) qs.set('status', opts.status);
+  const q = qs.toString();
+  return request(`/api/raw-items${q ? `?${q}` : ''}`, undefined, (r) =>
+    areRawItems(r?.rawItems) ? r.rawItems : undefined);
+}
+
+// ---------------------------------------------------------------------------
+// BRIEF-IT
+//
+// Manual capture, deliberately two steps. `preview` is read-only: it shows
+// what Brief would extract and whether the text is worth keeping at all.
+// `save` is the only call that writes. A caller cannot accidentally ingest by
+// previewing, which is why these are not collapsed into one function.
+// ---------------------------------------------------------------------------
+
+export function previewBriefIt(text: string): Promise<ApiResult<BriefItPreview>> {
+  return request('/api/brief-it/preview', {
+    method: 'POST',
+    body: JSON.stringify({ text })
+  }, (r) => (isBriefItPreview(r?.preview) ? r.preview : undefined));
+}
+
+export function saveBriefIt(
+  text: string,
+  meta: { sourceUrl?: string; sourceName?: string } = {}
+): Promise<ApiResult<BriefItSaved>> {
+  return request('/api/brief-it/save', {
+    method: 'POST',
+    body: JSON.stringify({ text, ...meta })
+  }, (r) =>
+    r && typeof r.rawItemId === 'string'
+      ? { rawItemId: r.rawItemId, duplicate: Boolean(r.duplicate), result: r.result }
+      : undefined);
+}
+
+// ---------------------------------------------------------------------------
+// COMMERCE (Batch 3)
+//
+// Vendor -> Listing -> Order -> Fulfilment -> Transaction.
+//
+// Two things are deliberately impossible to express through these bindings:
+//
+//   1. An identity. No function takes an ownerId, buyerId or vendorId for the
+//      acting party -- the server resolves the caller. A client-supplied
+//      identity is a claim, and claims do not belong in an API surface.
+//
+//   2. A price. createOrder takes a listingId and a quantity. OrderCreate has
+//      no total/unitPrice/amount field, so a forged total is a TYPE error
+//      here and an ignored field at the server. Two independent refusals.
+//
+// Authority is enforced server-side. These bindings do not pre-check whether
+// you own a listing; the UI hides what you cannot do, the SERVER is what makes
+// it impossible.
+// ---------------------------------------------------------------------------
+
+/** Every active seller. */
+export function getVendors(): Promise<ApiResult<Vendor[]>> {
+  return request('/api/vendors', undefined, (r) => (areVendors(r?.vendors) ? r.vendors : undefined));
+}
+
+/**
+ * The caller's own seller identity, or null. Null is a real answer -- most
+ * people are not vendors -- so it resolves as success, not an error.
+ */
+export function getMyVendor(): Promise<ApiResult<Vendor | null>> {
+  return request('/api/vendors/me', undefined, (r) => {
+    if (r?.vendor === null) return null;
+    return isVendor(r?.vendor) ? r.vendor : undefined;
+  });
+}
+
+/** A public seller profile plus their active listings. */
+export function getVendor(
+  id: string
+): Promise<ApiResult<{ vendor: Vendor; listings: Listing[] }>> {
+  return request(`/api/vendors/${encodeURIComponent(id)}`, undefined, (r) =>
+    isVendor(r?.vendor) && areListings(r?.listings)
+      ? { vendor: r.vendor, listings: r.listings }
+      : undefined
+  );
+}
+
+/** Become a seller. Ownership comes from the caller, never from this payload. */
+export function createVendor(body: VendorCreate): Promise<ApiResult<Vendor>> {
+  return request('/api/vendors', { method: 'POST', body: JSON.stringify(body) }, (r) =>
+    isVendor(r?.vendor) ? r.vendor : undefined
+  );
+}
+
+export function updateVendor(id: string, body: VendorUpdate): Promise<ApiResult<Vendor>> {
+  return request(
+    `/api/vendors/${encodeURIComponent(id)}`,
+    { method: 'PATCH', body: JSON.stringify(body) },
+    (r) => (isVendor(r?.vendor) ? r.vendor : undefined)
+  );
+}
+
+/**
+ * Browse. Active listings only unless a status is named. An empty array means
+ * an empty marketplace, which the UI must show as empty rather than fill.
+ */
+export function getListings(
+  opts: { vendorId?: string; type?: string; status?: string } = {}
+): Promise<ApiResult<Listing[]>> {
+  const q = new URLSearchParams();
+  if (opts.vendorId) q.set('vendorId', opts.vendorId);
+  if (opts.type) q.set('type', opts.type);
+  if (opts.status) q.set('status', opts.status);
+  const qs = q.toString();
+  return request(`/api/listings${qs ? `?${qs}` : ''}`, undefined, (r) =>
+    areListings(r?.listings) ? r.listings : undefined
+  );
+}
+
+/** The caller's own shelf, including drafts and archived rows. */
+export function getMyListings(): Promise<ApiResult<{ vendor: Vendor | null; listings: Listing[] }>> {
+  return request('/api/listings/mine', undefined, (r) => {
+    if (!areListings(r?.listings)) return undefined;
+    const vendor = r?.vendor === null || r?.vendor === undefined ? null : r.vendor;
+    if (vendor !== null && !isVendor(vendor)) return undefined;
+    return { vendor, listings: r.listings };
+  });
+}
+
+export function getListing(id: string): Promise<ApiResult<Listing>> {
+  return request(`/api/listings/${encodeURIComponent(id)}`, undefined, (r) =>
+    isListing(r?.listing) ? r.listing : undefined
+  );
+}
+
+export function createListing(body: ListingCreate): Promise<ApiResult<Listing>> {
+  return request('/api/listings', { method: 'POST', body: JSON.stringify(body) }, (r) =>
+    isListing(r?.listing) ? r.listing : undefined
+  );
+}
+
+export function updateListing(id: string, body: ListingUpdate): Promise<ApiResult<Listing>> {
+  return request(
+    `/api/listings/${encodeURIComponent(id)}`,
+    { method: 'PATCH', body: JSON.stringify(body) },
+    (r) => (isListing(r?.listing) ? r.listing : undefined)
+  );
+}
+
+/**
+ * Move a listing through its lifecycle. `changed: false` means it was already
+ * in that state -- a harmless no-op, not a second publication.
+ */
+export function setListingStatus(
+  id: string,
+  status: ListingStatus
+): Promise<ApiResult<{ listing: Listing; changed: boolean }>> {
+  return request(
+    `/api/listings/${encodeURIComponent(id)}/status`,
+    { method: 'POST', body: JSON.stringify({ status }) },
+    (r) => (isListing(r?.listing) ? { listing: r.listing, changed: Boolean(r.changed) } : undefined)
+  );
+}
+
+/** What I bought. */
+export function getMyOrders(status?: string): Promise<ApiResult<Order[]>> {
+  const qs = status ? `?status=${encodeURIComponent(status)}` : '';
+  return request(`/api/orders${qs}`, undefined, (r) => (areOrders(r?.orders) ? r.orders : undefined));
+}
+
+/** What I sold. */
+export function getVendorOrders(status?: string): Promise<ApiResult<Order[]>> {
+  const q = new URLSearchParams({ role: 'vendor' });
+  if (status) q.set('status', status);
+  return request(`/api/orders?${q.toString()}`, undefined, (r) =>
+    areOrders(r?.orders) ? r.orders : undefined
+  );
+}
+
+export function getOrder(id: string): Promise<ApiResult<Order>> {
+  return request(`/api/orders/${encodeURIComponent(id)}`, undefined, (r) =>
+    isOrder(r?.order) ? r.order : undefined
+  );
+}
+
+/**
+ * Place an order. The server derives unitPrice, total and currency from the
+ * listing -- OrderCreate cannot carry them.
+ */
+export function createOrder(body: OrderCreate): Promise<ApiResult<Order>> {
+  return request('/api/orders', { method: 'POST', body: JSON.stringify(body) }, (r) =>
+    isOrder(r?.order) ? r.order : undefined
+  );
+}
+
+/**
+ * Vendor marks an order delivered. Fulfilment says nothing about payment:
+ * an order can be fulfilled and still unpaid, and the UI shows both facts.
+ */
+export function fulfilOrder(
+  id: string,
+  note = ''
+): Promise<ApiResult<{ order: Order; changed: boolean }>> {
+  return request(
+    `/api/orders/${encodeURIComponent(id)}/fulfil`,
+    { method: 'POST', body: JSON.stringify({ note }) },
+    (r) => (isOrder(r?.order) ? { order: r.order, changed: Boolean(r.changed) } : undefined)
+  );
+}
+
+export function cancelOrder(
+  id: string,
+  reason = ''
+): Promise<ApiResult<{ order: Order; changed: boolean }>> {
+  return request(
+    `/api/orders/${encodeURIComponent(id)}/cancel`,
+    { method: 'POST', body: JSON.stringify({ reason }) },
+    (r) => (isOrder(r?.order) ? { order: r.order, changed: Boolean(r.changed) } : undefined)
+  );
+}
+
+/**
+ * Settlement requires a settled ledger transaction matching the order total.
+ * No payment provider is connected, so this currently refuses -- deliberately.
+ * The shape is ready for Batch 4; the money is not pretended in the meantime.
+ */
+export function settleOrder(
+  id: string,
+  transactionId?: string
+): Promise<ApiResult<{ order: Order; changed: boolean }>> {
+  return request(
+    `/api/orders/${encodeURIComponent(id)}/settle`,
+    { method: 'POST', body: JSON.stringify(transactionId ? { transactionId } : {}) },
+    (r) => (isOrder(r?.order) ? { order: r.order, changed: Boolean(r.changed) } : undefined)
+  );
+}
+
+/**
+ * Contest an order. Establishes one fact -- this is contested and must not be
+ * read as clean fulfilment. No refund is implied, because no money has moved.
+ */
+export function disputeOrder(
+  id: string,
+  reason: string
+): Promise<ApiResult<{ dispute: Dispute; order: Order }>> {
+  return request(
+    `/api/orders/${encodeURIComponent(id)}/dispute`,
+    { method: 'POST', body: JSON.stringify({ reason }) },
+    (r) => (isDispute(r?.dispute) && isOrder(r?.order) ? { dispute: r.dispute, order: r.order } : undefined)
+  );
+}
+
+/** Disputes against my listings (role='vendor') or ones I raised. */
+export function getDisputes(role?: 'vendor'): Promise<ApiResult<Dispute[]>> {
+  const qs = role ? `?role=${role}` : '';
+  return request(`/api/disputes${qs}`, undefined, (r) =>
+    areDisputes(r?.disputes) ? r.disputes : undefined
+  );
+}
+
+
+// ---------------------------------------------------------------------------
+// EARNINGS & COMPLIANCE (Batch 4)
+// ---------------------------------------------------------------------------
+
+/**
+ * What this seller has actually earned, derived server-side from settled
+ * orders. Deliberately NOT called "balance": `payoutAvailable` is false while
+ * no payment provider is connected, and the UI must show that distinction.
+ */
+export function getMyEarnings(): Promise<ApiResult<VendorEarnings>> {
+  return request('/api/vendors/me/earnings', undefined, (r) => {
+    const e = r?.earnings;
+    if (!e || typeof e.gross !== 'number' || typeof e.net !== 'number') return undefined;
+    if (typeof e.payoutAvailable !== 'boolean') return undefined;
+    return e as VendorEarnings;
+  });
+}
+
+/**
+ * Whether real-money contests are legally available in this deployment.
+ * Returns the unmet requirements so the client states the actual reason
+ * instead of "coming soon".
+ */
+export function getArenaMoneyStatus(): Promise<ApiResult<ArenaMoneyStatus>> {
+  return request('/api/arena/status', undefined, (r) =>
+    r?.arenaMoney && typeof r.arenaMoney.enabled === 'boolean'
+      ? (r.arenaMoney as ArenaMoneyStatus)
+      : undefined
+  );
+}
+
+
+// ---------------------------------------------------------------------------
+// AUTH
+// ---------------------------------------------------------------------------
+
+export interface AuthedUser {
+  id: string;
+  handle: string | null;
+  displayName: string;
+  devFallback?: boolean;
+}
+
+/** Register and sign in. The token is stored centrally on success. */
+export async function register(
+  handle: string,
+  password: string,
+  displayName?: string
+): Promise<ApiResult<AuthedUser>> {
+  const res = await request<{ user: AuthedUser; token: string }>(
+    '/api/auth/register',
+    { method: 'POST', body: JSON.stringify({ handle, password, displayName }) },
+    (r) => (r?.user && r?.token ? { user: r.user, token: r.token } : undefined)
+  );
+  if (!res.ok) return res;
+  setSessionToken(res.data.token);
+  return { ok: true, data: res.data.user };
+}
+
+export async function login(handle: string, password: string): Promise<ApiResult<AuthedUser>> {
+  const res = await request<{ user: AuthedUser; token: string }>(
+    '/api/auth/login',
+    { method: 'POST', body: JSON.stringify({ handle, password }) },
+    (r) => (r?.user && r?.token ? { user: r.user, token: r.token } : undefined)
+  );
+  if (!res.ok) return res;
+  setSessionToken(res.data.token);
+  return { ok: true, data: res.data.user };
+}
+
+export async function logout(): Promise<ApiResult<{ ok: boolean }>> {
+  const res = await request<{ ok: boolean }>('/api/auth/logout', { method: 'POST', body: '{}' },
+    (r) => (r ? { ok: Boolean(r.ok) } : undefined));
+  // Clear locally regardless: a failed logout must not leave the user stuck
+  // in a signed-in UI they cannot leave.
+  setSessionToken(null);
+  return res;
+}
+
+/** Who the server says we are. Used on boot to restore a session. */
+export function whoAmI(): Promise<ApiResult<AuthedUser>> {
+  return request('/api/auth/me', undefined, (r) => (r?.user ? (r.user as AuthedUser) : undefined));
+}

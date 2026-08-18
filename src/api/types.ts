@@ -1,0 +1,1032 @@
+// ---------------------------------------------------------------------------
+// BRIEF API TYPES
+//
+// These types were written by inspecting ACTUAL server responses captured from
+// a running instance -- not from a specification. Where the server does not
+// expose something, it is absent here rather than invented.
+//
+// Source of truth: server/src/domain/{circle,block,signal,ledger,member}.js
+//                  server/src/index.js
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// CIRCLE
+// ---------------------------------------------------------------------------
+
+export type CircleType = 'gathering' | 'build' | 'study' | 'treasury' | 'match' | 'target';
+export type CircleStatus = 'forming' | 'active' | 'completed' | 'dormant';
+export type CircleVisibility = 'open' | 'invite_only';
+
+/**
+ * Fields the server persists. Note the ABSENCE of `currentValue` -- progress is
+ * never stored, only derived. See CircleDerived below.
+ */
+export interface CircleStored {
+  id: string;
+  name: string;
+  description: string;
+  type: CircleType;
+  status: CircleStatus;
+  visibility: CircleVisibility;
+  sourceId: string | null;
+  goal: string | null;
+  targetValue: number | null;
+  deadline: string | null;
+  completionCriteria: string | null;
+  parentCircleId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * SERVER-DERIVED, READ-ONLY.
+ *
+ * Every field here is computed by the server from settled transactions and
+ * row counts. The client displays them and must never submit them. They are
+ * marked `readonly` so TypeScript rejects assignment at compile time.
+ */
+export interface CircleDerived {
+  /** Sum of transactions linked to this circle whose status is 'settled'. */
+  readonly currentValue: number;
+  /** Distinct counterparties among those settled transactions. */
+  readonly contributorCount: number;
+  /** null when targetValue is null or 0 -- there is no target to measure. */
+  readonly progressPct: number | null;
+  readonly settledCount: number;
+  readonly blockCount: number;
+  readonly memberCount: number;
+}
+
+export type Circle = CircleStored & CircleDerived;
+
+/**
+ * The ONLY fields a client may submit on update.
+ *
+ * `currentValue`, `progressPct`, `contributorCount` and `settledCount` are
+ * deliberately excluded. The server also strips them, but excluding them here
+ * means an attempt to fake progress fails to compile rather than failing
+ * silently at runtime.
+ */
+export interface CircleUpdate {
+  name?: string;
+  description?: string;
+  status?: CircleStatus;
+  visibility?: CircleVisibility;
+  goal?: string | null;
+  targetValue?: number | null;
+  deadline?: string | null;
+  completionCriteria?: string | null;
+}
+
+export interface CircleCreate {
+  name: string;
+  description?: string;
+  goal?: string | null;
+  targetValue?: number | null;
+  deadline?: string | null;
+  completionCriteria?: string | null;
+  /** Derive the circle from an already-connected source, preserving provenance. */
+  sourceId?: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// TARGET
+//
+// TARGET is not a separate entity on the server. It is a Circle whose type is
+// 'target' and which carries a targetValue. This view type exists so UI code
+// can express "a target with real progress" without inventing a new primitive.
+// ---------------------------------------------------------------------------
+
+export interface TargetView {
+  circleId: string;
+  name: string;
+  goal: string | null;
+  readonly targetValue: number;
+  readonly currentValue: number;
+  readonly progressPct: number;
+  readonly contributorCount: number;
+  deadline: string | null;
+}
+
+/** Narrow a Circle to a TargetView, or null when it is not a measurable target. */
+export function asTarget(circle: Circle): TargetView | null {
+  if (circle.type !== 'target') return null;
+  if (circle.targetValue === null || circle.targetValue <= 0) return null;
+  if (circle.progressPct === null) return null;
+  return {
+    circleId: circle.id,
+    name: circle.name,
+    goal: circle.goal,
+    targetValue: circle.targetValue,
+    currentValue: circle.currentValue,
+    progressPct: circle.progressPct,
+    contributorCount: circle.contributorCount,
+    deadline: circle.deadline
+  };
+}
+
+// ---------------------------------------------------------------------------
+// MEMBER + TRUST
+//
+// Trust is EVIDENCE. There is no score type here and none should be added.
+// ---------------------------------------------------------------------------
+
+export type MemberRole = 'coordinator' | 'contributor' | 'scout' | 'logistics' | 'observer';
+
+export type VerificationKind =
+  | 'phone_verified'
+  | 'identity_verified'
+  | 'business_verified'
+  | 'moderator_verified';
+
+/** A check that actually happened. */
+export interface TrustEvidence {
+  kind: VerificationKind;
+  label: string;
+}
+
+/** A plain fact counted from real rows. Carries no rating. */
+export interface TrustFact {
+  kind: string;
+  label: string;
+}
+
+export interface Trust {
+  evidence: TrustEvidence[];
+  /** How many checks passed. A count of evidence, NOT a score out of anything. */
+  verifiedCount: number;
+  facts: TrustFact[];
+}
+
+export interface Member {
+  id: string;
+  circleId: string;
+  userId: string;
+  role: MemberRole;
+  verifications: VerificationKind[];
+  joinedAt: string;
+  updatedAt: string;
+  trust: Trust;
+}
+
+// ---------------------------------------------------------------------------
+// BLOCK
+// ---------------------------------------------------------------------------
+
+export type BlockType = 'note' | 'pin' | 'image' | 'voice' | 'task' | 'vote' | 'listing';
+
+/** Provenance attached to a block that wraps an extracted object. */
+export interface BlockSource {
+  sourceId: string;
+  sourceName: string | null;
+  sourceUrl: string | null;
+  sourcePublishedAt: string | null;
+}
+
+// --- Task state -------------------------------------------------------------
+//
+// A task IS a Block of type 'task'. There is no separate task entity: the
+// server keeps this state inside block metadata and returns it hydrated, so
+// the client never has to know where it is stored.
+
+export type TaskStatus = 'open' | 'assigned' | 'completed';
+
+export interface TaskState {
+  status: TaskStatus;
+  assigneeId: string | null;
+  completedAt: string | null;
+  completedBy: string | null;
+}
+
+// --- Vote tally --------------------------------------------------------------
+//
+// DERIVED, never stored. The server recomputes this from the ballot rows on
+// every read, so a tally cannot drift from the votes it claims to summarise.
+
+export interface VoteResult {
+  option: string;
+  count: number;
+  /** Share of ballots cast. null before anyone votes -- 0% would be a claim. */
+  pct: number | null;
+}
+
+export interface VoteTally {
+  blockId: string;
+  circleId: string;
+  closed: boolean;
+  totalVotes: number;
+  /** Members eligible to vote, counted from real membership rows. */
+  eligibleCount: number;
+  results: VoteResult[];
+  /** Strictly-ahead option, or null. A tie has no leader. */
+  leader: string | null;
+}
+
+export interface Block {
+  id: string;
+  circleId: string;
+  /** Points at a canonical Brief object. null for directly-authored blocks. */
+  objectId: string | null;
+  type: BlockType;
+  content: string;
+  weight: number;
+  validatedBy: string | null;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+  /** The canonical object, when this block wraps one. Never a copy. */
+  object: unknown | null;
+  sources: BlockSource[];
+  /** Present on task blocks only, hydrated by the server. */
+  task?: TaskState;
+  /** Present on vote blocks only. Recomputed server-side on every read. */
+  tally?: VoteTally;
+}
+
+// ---------------------------------------------------------------------------
+// SIGNAL
+// ---------------------------------------------------------------------------
+
+export type SignalType =
+  | 'source_connected'
+  | 'item_received'
+  | 'object_created'
+  | 'object_updated'
+  | 'duplicate_merged'
+  | 'circle_created'
+  | 'block_added'
+  | 'target_progressed'
+  | 'member_joined'
+  | 'task_assigned'
+  | 'task_released'
+  | 'task_completed'
+  | 'vote_cast'
+  | 'vote_closed'
+  | 'sync_completed'
+  | 'sync_failed';
+
+export interface Signal {
+  id: string;
+  type: SignalType;
+  circleId: string | null;
+  blockId: string | null;
+  sourceId: string | null;
+  objectId: string | null;
+  /** Numeric payload where meaningful, e.g. amount on target_progressed. */
+  value: number | null;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  /** Who performed the act. null for system events (a sync has no actor). */
+  actorId: string | null;
+  /** Resolved server-side so the client never invents a label. */
+  sourceName: string | null;
+  circleName: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// MEMBER EVIDENCE
+//
+// TRUST IS EVIDENCE, NEVER A SCORE. These types deliberately carry no
+// percentage, rating, reliability index or ranking -- only things that
+// actually happened, each traceable back to the signal that recorded it.
+// A member with no history has an empty array, and that is the honest answer.
+// ---------------------------------------------------------------------------
+
+export interface EvidenceItem {
+  kind: SignalType;
+  label: string;
+  circleId: string | null;
+  circleName: string | null;
+  blockId: string | null;
+  /** The signal this evidence was derived from, so it can be inspected. */
+  signalId: string;
+  at: string;
+}
+
+export interface EvidenceCount {
+  kind: SignalType;
+  count: number;
+  label: string;
+}
+
+export interface MemberEvidence {
+  evidence: EvidenceItem[];
+  summary: EvidenceCount[];
+}
+
+// ---------------------------------------------------------------------------
+// ECONOMIC
+// ---------------------------------------------------------------------------
+
+/**
+ * Statuses the server's state machine actually emits.
+ *
+ * CONTRACT NOTE: `disbursement_pending` is NOT in this union because the
+ * server does not produce it. server/src/domain/ledger.js defines exactly
+ * these seven, and GET /api/disbursements returns 404. Adding a
+ * disbursement status here would be typing a fiction. See PHASE3.md.
+ */
+export type TransactionStatus =
+  | 'created'
+  | 'pending'
+  | 'confirmed'
+  | 'held'
+  | 'settled'
+  | 'failed'
+  | 'refunded';
+
+export interface TransactionHistoryEntry {
+  status: TransactionStatus;
+  at: string;
+  note?: string;
+}
+
+export interface Transaction {
+  id: string;
+  amount: number;
+  currency: string;
+  type: string;
+  status: TransactionStatus;
+  description: string;
+  counterparty: string | null;
+  /** Links the transaction to a circle so target progress can derive from it. */
+  circleId: string | null;
+  objectId: string | null;
+  /** Set when this payment is for a specific campaign registration. */
+  campaignId?: string | null;
+  /** Settling a transaction carrying this promotes the held spot. */
+  registrationId?: string | null;
+  metadata: Record<string, unknown>;
+  history: TransactionHistoryEntry[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TransactionCreate {
+  amount: number;
+  type: string;
+  currency?: string;
+  description?: string;
+  counterparty?: string | null;
+  circleId?: string | null;
+  objectId?: string | null;
+  campaignId?: string | null;
+  /** Must belong to `campaignId`; the server rejects a mismatch. */
+  registrationId?: string | null;
+}
+
+/**
+ * Result of an organiser confirming that payment for a held spot arrived.
+ * The server creates AND settles the transaction, then promotes the
+ * registration -- the client cannot do any of those three things itself.
+ */
+export interface PaymentConfirmation {
+  registration: Registration;
+  transaction: Transaction;
+  analytics: CampaignMetrics;
+}
+
+/**
+ * Whether real money can move. Currently always `configured: false` --
+ * no payment provider is connected. `reason` is plain English intended for
+ * display, so the UI states the limitation instead of implying payouts work.
+ */
+export interface ProviderStatus {
+  configured: boolean;
+  provider: string | null;
+  reason: string;
+}
+
+/**
+ * Balances are COMPUTED by the server from recorded rows. Zero transactions
+ * means zero, never a placeholder.
+ */
+export interface Wallet {
+  readonly balance: number;
+  readonly pending: number;
+  currency: string;
+  readonly transactionCount: number;
+  provider: ProviderStatus;
+}
+
+// ---------------------------------------------------------------------------
+// DISBURSEMENT -- NOT AVAILABLE
+//
+// The server exposes no disbursement endpoint. GET /api/disbursements -> 404,
+// and no domain service produces disbursement records. Rather than inventing
+// a shape, the capability is modelled explicitly as unavailable so calling
+// code must handle it and the UI can say so honestly.
+// ---------------------------------------------------------------------------
+
+export interface CapabilityUnavailable {
+  available: false;
+  reason: string;
+}
+
+// ---------------------------------------------------------------------------
+// AUTH
+//
+// Identity is currently assumed from a single-user deployment, not proven.
+// `configured: false` is the honest state; the UI should not imply otherwise.
+// ---------------------------------------------------------------------------
+
+export interface AuthStatus {
+  configured: boolean;
+  method: string;
+  callerId: string;
+  reason: string;
+}
+
+// ---------------------------------------------------------------------------
+// REQUEST RESULT
+//
+// Every call returns this instead of throwing, so a dead server degrades the
+// affected surface rather than breaking Brief (server spec 30).
+// ---------------------------------------------------------------------------
+
+export type ApiResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; error: string; status: number | null };
+
+/** UI-facing load state, so screens can render loading/empty/error honestly. */
+export interface LoadState<T> {
+  status: 'idle' | 'loading' | 'ready' | 'error';
+  data: T | null;
+  error: string | null;
+}
+
+export const idleState = <T,>(): LoadState<T> => ({
+  status: 'idle',
+  data: null,
+  error: null
+});
+
+// ---------------------------------------------------------------------------
+// CAMPAIGN
+//
+// A creator-facing distribution wrapper over an existing Brief object. Shapes
+// captured from the live server; metrics are all server-derived.
+// ---------------------------------------------------------------------------
+
+export type CampaignType = 'popup' | 'session' | 'drop' | 'event';
+export type CampaignStatus =
+  | 'draft' | 'published' | 'live' | 'closed' | 'cancelled' | 'completed';
+
+export type RegistrationStatus =
+  | 'started' | 'registered' | 'confirmed' | 'checked_in' | 'cancelled' | 'no_show';
+
+/**
+ * DERIVED, READ-ONLY. Every field is computed by the server from real rows on
+ * each read. There is no stored counter, so the client cannot write these.
+ */
+export interface CampaignMetrics {
+  /**
+   * Server-side loads of the public page. NOT people: a refresh counts twice
+   * and a link-preview crawler counts as one. Label it honestly in any UI.
+   */
+  readonly views: number;
+  /**
+   * Distinct coarse fingerprints among those loads. Closer to "people" than
+   * `views`, still not an identity claim. null when nothing was recorded.
+   */
+  readonly viewers: number | null;
+  /** Times the creator pressed Share. An intent to distribute, not a reach. */
+  readonly shares: number;
+  readonly registrationsStarted: number;
+  readonly registrations: number;
+  readonly checkedIn: number;
+  readonly noShows: number;
+  readonly cancelled: number;
+  readonly slotsTaken: number;
+  readonly capacity: number | null;
+  readonly remaining: number | null;
+  readonly orders: number;
+  readonly revenueSettled: number;
+  readonly revenuePending: number;
+  readonly currency: string;
+  /** null until at least one view is recorded -- not zero. */
+  readonly conversionPct: number | null;
+}
+
+/** Read-only projection of the wrapped object. Never a copy: recomputed. */
+export interface CampaignObject {
+  readonly id: string;
+  readonly type: string;
+  readonly title: string;
+  readonly summary: string | null;
+  readonly locationName: string | null;
+  readonly publication: string;
+  readonly verificationStatus: string | null;
+}
+
+export interface Campaign {
+  id: string;
+  ownerId: string;
+  objectId: string;
+  /** False when the campaign attached a pre-existing object it must not mutate. */
+  ownsObject: boolean;
+  object: CampaignObject | null;
+  circleId: string | null;
+  title: string;
+  description: string;
+  type: CampaignType;
+  status: CampaignStatus;
+  location: string | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  capacity: number | null;
+  price: number;
+  currency: string;
+  publicSlug: string;
+  createdAt: string;
+  updatedAt: string;
+  metrics: CampaignMetrics;
+}
+
+export interface CampaignCreate {
+  title: string;
+  type: CampaignType;
+  /**
+   * Attach an EXISTING Brief object instead of creating one. The server checks
+   * authority against source membership and refuses otherwise. Attaching never
+   * mutates or publishes the object.
+   */
+  objectId?: string | null;
+  description?: string;
+  location?: string | null;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  capacity?: number | null;
+  price?: number;
+  currency?: string;
+  circleId?: string | null;
+}
+
+/** Writable fields only. No metrics, no ownerId, no status, no slug. */
+export interface CampaignUpdate {
+  title?: string;
+  description?: string;
+  location?: string | null;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  price?: number;
+  /** Rejected by the server after publication. */
+  capacity?: number | null;
+  /**
+   * Attach an EXISTING Brief object to this campaign. Authorised server-side
+   * by the caller's existing access to the object's source -- objects carry no
+   * ownerId. Attaching never publishes or mutates the object itself.
+   */
+  objectId?: string;
+}
+
+/** The allow-listed public projection. No ownerId, no internal ids. */
+export interface PublicCampaign {
+  slug: string;
+  /** Display label only -- never the internal ownerId. Absent when unset. */
+  creator?: string | null;
+  image?: string | null;
+  title: string;
+  description: string;
+  type: CampaignType;
+  status: CampaignStatus;
+  location: string | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  price: number;
+  currency: string;
+  capacity: number | null;
+  remaining: number | null;
+  soldOut: boolean;
+}
+
+export interface Registration {
+  id: string;
+  campaignId: string;
+  attendeeRef: string;
+  name: string | null;
+  contact: string | null;
+  status: RegistrationStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+
+// ---------------------------------------------------------------------------
+// DISTRIBUTION
+// ---------------------------------------------------------------------------
+
+/** Client-visible server config. Never carries secrets. */
+export interface AppConfig {
+  /** null when BRIEF_PUBLIC_ORIGIN is unset. Do NOT substitute a guess. */
+  publicOrigin: string | null;
+  campaignPathPrefix: string;
+}
+
+/**
+ * A shareable link, or an honest reason there isn't one. Modelled as a
+ * discriminated union so a caller cannot read `.url` without first proving
+ * the link is available -- "no origin configured" becomes a COMPILE-time
+ * concern rather than a fabricated string.
+ */
+export type ShareLink =
+  | { available: true; url: string; slug: string }
+  | { available: false; reason: 'public_origin_not_configured'; slug: string };
+
+/**
+ * Share-intent URLs for the channels that genuinely publish one. These are
+ * ordinary web links that pre-fill a compose box -- Brief holds no social
+ * credentials and posts nothing on anyone's behalf.
+ *
+ * Instagram and TikTok are deliberately ABSENT rather than present-and-broken:
+ * neither platform exposes a share-intent URL, so they are copy-link only.
+ */
+export interface ShareChannels {
+  whatsapp: string;
+  telegram: string;
+  x: string;
+}
+
+/**
+ * The server-built distribution payload. Same discriminated-union discipline
+ * as ShareLink: `url` and `channels` are unreachable until `available` is
+ * narrowed to true, so an unconfigured deployment cannot produce a link.
+ */
+export type CampaignShare =
+  | { available: true; url: string; slug: string; channels: ShareChannels; copyOnly: readonly string[] }
+  | {
+      available: false;
+      reason: 'public_origin_not_configured';
+      slug: string;
+      channels: Record<string, never>;
+      copyOnly: readonly string[];
+    };
+
+/** Platforms with no share-intent URL. The link itself is the whole product. */
+export const COPY_ONLY_CHANNELS = ['instagram', 'tiktok'] as const;
+
+/** Where a share was sent. Recorded as creator intent, never as reach. */
+export type ShareChannel =
+  | 'link' | 'native' | 'whatsapp' | 'telegram' | 'x' | 'instagram' | 'tiktok';
+
+// ---------------------------------------------------------------------------
+// SOURCES
+//
+// A Source is where information came from: a Telegram group, a WhatsApp
+// group, a webpage, an RSS feed, or something a person captured by hand.
+//
+// This is the SERVER's source model. Brief previously carried a second,
+// client-only community type (`BriefGroup`) that described the same thing --
+// a platform group with an access level -- but held invented member counts
+// and invented indexing timestamps. That duplicate has been retired: a
+// connected group is a Source, and a community is a Circle.
+//
+// Every count below is computed by the server from real rows. There is no
+// client-side arithmetic on these, and no default that implies activity.
+// ---------------------------------------------------------------------------
+
+export type SourceAccessType =
+  | 'public' | 'member_access' | 'manual' | 'owner' | 'authorised';
+
+export type SourceConnectionStatus =
+  | 'connected' | 'disconnected' | 'error' | 'pending';
+
+export interface SourceMembership {
+  sourceId: string;
+  userId: string;
+  role?: string | null;
+  joinedAt?: string | null;
+}
+
+export interface Source {
+  id: string;
+  name: string;
+  type: string;
+  platform?: string | null;
+  url?: string | null;
+  externalId?: string | null;
+  accessType?: SourceAccessType | string | null;
+  connectionStatus?: SourceConnectionStatus | string | null;
+  confidence?: number | null;
+  lastSyncedAt?: string | null;
+  lastMessageAt?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+
+  /** Server-derived counts. Absent means unknown, never zero-as-decoration. */
+  itemsProcessed: number;
+  itemsPending: number;
+  itemsRejected: number;
+  objectsCreated: number;
+  membership: SourceMembership | null;
+}
+
+// ---------------------------------------------------------------------------
+// RAW ITEMS (the inbound queue)
+//
+// A raw item is a message exactly as it arrived from a connected source,
+// before anyone decided whether it means anything. It is NOT an object: the
+// distinction is the whole point of the review boundary, so the type stays
+// separate rather than being folded into BriefObject.
+//
+// `processingStatus` is the server's verdict, and `rejectionReason` is why --
+// both are recorded facts about a real message, not client-side guesses.
+// ---------------------------------------------------------------------------
+
+export type RawItemStatus = 'pending' | 'processed' | 'rejected';
+
+export interface RawItem {
+  id: string;
+  sourceId: string;
+  externalId?: string | null;
+  messageId?: string | null;
+  author?: string | null;
+  text: string;
+  media?: unknown[];
+  publishedAt?: string | null;
+  retrievedAt?: string | null;
+  rawUrl?: string | null;
+  processingStatus: RawItemStatus | string;
+  rejectionReason?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// BRIEF-IT (manual capture)
+//
+// Two steps on purpose: preview extracts and shows what Brief *would* record,
+// save is the only thing that writes. `worthy: false` is a real answer and
+// must be shown as one -- it is how Brief says "this text has no time, place,
+// price or contact, so there is nothing here worth keeping".
+// ---------------------------------------------------------------------------
+
+export interface BriefItPreview {
+  worthy: boolean;
+  fields: Record<string, unknown>;
+  evidence: Record<string, unknown> | unknown[];
+  confidence: number;
+  vendors: unknown[];
+  products: unknown[];
+}
+
+export interface BriefItSaved {
+  rawItemId: string;
+  duplicate: boolean;
+  result: unknown;
+}
+
+// ---------------------------------------------------------------------------
+// COMMERCE (Batch 3)
+//
+// The chain: Object -> Vendor -> Listing -> Order -> Fulfilment -> Transaction
+//
+// Deliberately absent from every type below: rating, stars, reviewCount,
+// sellerScore, revenue, balance. A vendor carries evidence and counted facts;
+// an order carries derived money and a payment status read from the ledger.
+//
+// Also absent: any writable price on an order. The create type carries a
+// listingId and a quantity and nothing else economic, so attempting to send a
+// total is a COMPILE error rather than a silently-ignored field.
+// ---------------------------------------------------------------------------
+
+export type VendorStatus = 'active' | 'paused' | 'closed';
+
+/** One thing that was actually checked, or one thing that actually happened. */
+export interface VendorEvidenceItem {
+  kind: string;
+  label: string;
+}
+
+export interface VendorVerification {
+  /** Verification checks that really passed. Empty means unverified. */
+  evidence: VendorEvidenceItem[];
+  verifiedCount: number;
+  /** Counted facts ("6 fulfilled orders"), never folded into a rating. */
+  facts: VendorEvidenceItem[];
+}
+
+export interface Vendor {
+  id: string;
+  ownerId: string;
+  displayName: string;
+  description: string;
+  contactMethod: string | null;
+  /** The extracted identity object this seller came from, when there is one. */
+  objectId: string | null;
+  status: VendorStatus;
+  verification: VendorVerification;
+  activeListingCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VendorCreate {
+  displayName: string;
+  description?: string;
+  contactMethod?: string | null;
+  objectId?: string | null;
+}
+
+/** ownerId is absent on purpose: the server takes it from the caller. */
+export interface VendorUpdate {
+  displayName?: string;
+  description?: string;
+  contactMethod?: string | null;
+  status?: VendorStatus;
+}
+
+export type ListingType = 'product' | 'service' | 'experience' | 'event';
+export type ListingStatus = 'draft' | 'active' | 'paused' | 'sold_out' | 'archived';
+
+/** The seller summary carried inline on a listing, so browse needs one call. */
+export interface ListingVendor {
+  id: string;
+  displayName: string;
+  status: VendorStatus;
+  contactMethod: string | null;
+}
+
+export interface Listing {
+  id: string;
+  vendorId: string;
+  title: string;
+  description: string;
+  type: ListingType;
+  price: number;
+  currency: string;
+  /** null means not stock-tracked (a service), which is not the same as 0. */
+  quantityAvailable: number | null;
+  /** Optional: a mobile service has no single location. */
+  locationName: string | null;
+  objectId: string | null;
+  media: string[];
+  status: ListingStatus;
+  vendor: ListingVendor | null;
+  /** Server's answer to "can this be ordered right now", with the reason. */
+  orderable: boolean;
+  unorderableReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** `status` is absent: a listing moves through the lifecycle endpoint only. */
+export interface ListingCreate {
+  title: string;
+  description?: string;
+  type?: ListingType;
+  price: number;
+  currency?: string;
+  quantityAvailable?: number | null;
+  locationName?: string | null;
+  objectId?: string | null;
+  media?: string[];
+}
+
+export interface ListingUpdate {
+  title?: string;
+  description?: string;
+  type?: ListingType;
+  price?: number;
+  currency?: string;
+  quantityAvailable?: number | null;
+  locationName?: string | null;
+  media?: string[];
+}
+
+export type OrderStatus =
+  | 'offered' | 'ordered' | 'fulfilled' | 'settled' | 'disputed' | 'cancelled';
+
+export interface OrderHistoryEntry {
+  status: OrderStatus;
+  at: string;
+  note?: string;
+}
+
+export interface OrderTransaction {
+  id: string;
+  status: TransactionStatus;
+  amount: number;
+  currency: string;
+}
+
+export interface OrderDispute {
+  id: string;
+  reason: string;
+  status: 'open' | 'withdrawn';
+  reportedBy: string;
+  createdAt: string;
+}
+
+export interface Order {
+  id: string;
+  listingId: string;
+  /** Snapshot: the listing may later be edited or archived. */
+  listingTitle: string;
+  listingType: ListingType;
+  buyerId: string;
+  vendorId: string;
+  vendorOwnerId: string;
+  quantity: number;
+  /** Derived server-side from the listing row. Never client-supplied. */
+  unitPrice: number;
+  total: number;
+  currency: string;
+  note: string;
+  status: OrderStatus;
+  transactionId: string | null;
+  /**
+   * Derived from a SETTLED ledger row, never stored. An order being placed
+   * does not mean anyone has paid.
+   */
+  paid: boolean;
+  paymentStatus: TransactionStatus | 'unpaid';
+  transaction: OrderTransaction | null;
+  dispute: OrderDispute | null;
+  fulfilledAt: string | null;
+  settledAt: string | null;
+  history: OrderHistoryEntry[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * What a buyer may send. There is deliberately no price, unitPrice, total,
+ * amount or currency field: the server reads price from the listing and does
+ * the arithmetic, so a forged total cannot even be expressed here.
+ */
+export interface OrderCreate {
+  listingId: string;
+  quantity?: number;
+  note?: string;
+  /**
+   * Duplicate-submission protection. Scoped to the authenticated buyer, so a
+   * retried or double-tapped order returns the FIRST order rather than
+   * creating a second commitment.
+   */
+  idempotencyKey?: string;
+}
+
+export interface Dispute {
+  id: string;
+  orderId: string;
+  reportedBy: string;
+  vendorId: string;
+  reason: string;
+  status: 'open' | 'withdrawn';
+  createdAt: string;
+  updatedAt: string;
+}
+
+
+// ---------------------------------------------------------------------------
+// SETTLEMENT & COMPLIANCE (Batch 4)
+// ---------------------------------------------------------------------------
+
+export interface SettlementSplit {
+  orderId: string;
+  transactionId: string;
+  vendorId: string;
+  currency: string;
+  total: number;
+  rate: number;
+  /** Platform commission, rounded DOWN so the seller keeps the remainder. */
+  commission: number;
+  sellerAmount: number;
+  settledAt: string | null;
+}
+
+/**
+ * What a vendor has earned, derived by scanning settled orders.
+ *
+ * NOT a balance. `payoutAvailable` is false while no payment provider is
+ * connected -- "earned" and "withdrawable" are different claims and the type
+ * keeps them apart.
+ */
+export interface VendorEarnings {
+  vendorId: string;
+  currency: string;
+  gross: number;
+  commission: number;
+  net: number;
+  orderCount: number;
+  rate: number;
+  lines: SettlementSplit[];
+  payoutAvailable: boolean;
+  payoutReason: string;
+}
+
+export interface ComplianceRequirement {
+  id: string;
+  label: string;
+  met: boolean;
+  detail: string;
+}
+
+/** Why a regulated surface is unavailable, enumerated rather than implied. */
+export interface ArenaMoneyStatus {
+  enabled: boolean;
+  requirements: ComplianceRequirement[];
+  unmet: string[];
+  reason: string | null;
+}

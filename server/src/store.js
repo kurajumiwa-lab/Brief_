@@ -20,6 +20,10 @@ const DB_FILE = path.join(DATA_DIR, 'brief.json');
 
 // The full schema. Each key is a collection of rows.
 const EMPTY = {
+  // Authentication. Passwords are scrypt-hashed with a per-user salt; only a
+  // SHA-256 fingerprint of each session token is stored, never the token.
+  users: [],
+  sessions: [],
   sources: [],
   sourceMemberships: [],
   rawItems: [],
@@ -27,24 +31,182 @@ const EMPTY = {
   objectSources: [], // canonical object <-> source provenance, many-to-many
   relationships: [],
   syncRuns: [],
-  errors: []
+  errors: [],
+  // Feature schema: durable group containers and their contents.
+  circles: [],
+  members: [],
+  blocks: [],
+  // One row per ballot cast, keyed by (blockId, voterId). Vote tallies are
+  // computed by scanning these rows -- there is deliberately no stored count.
+  votes: [],
+  signals: [],
+  // Recorded money movements. See src/domain/ledger.js -- no provider is
+  // connected, so these are records only.
+  ledgerTransactions: [],
+  // Payment attempts. NOT a second money store: the authoritative economic
+  // event is always the ledger transaction an intent points at.
+  paymentIntents: [],
+  // Raw provider callbacks, kept for audit and duplicate detection.
+  paymentCallbacks: [],
+  // Disbursements to sellers. A payout is a RECORD of money sent, not a
+  // balance -- withdrawable is always derived as (settled net - paid - pending).
+  payouts: [],
+  // Creator distribution layer. A campaign wraps an existing object; its
+  // metrics are derived, never stored. See src/domain/campaign.js.
+  campaigns: [],
+  registrations: [],
+  // Commerce (Batch 3). A vendor sells listings; a customer's commitment to a
+  // listing is an order; a contested order has a dispute. Money lives in
+  // ledgerTransactions as it always has -- there is deliberately no order
+  // balance and no second transaction table.
+  // Arena. Competitive play, persisted server-side. Results require BOTH
+  // players to agree; Brief never decides a winner. No Arena wallet exists --
+  // paid contests go through the compliance gate and the one ledger.
+  arenaChallenges: [],
+  arenaMatches: [],
+  // Fantasy 11. Non-economic core: pool, entries, stats and derived scores.
+  // No Fantasy wallet -- paid entry would use the one ledger, once legal.
+  fantasyCompetitions: [],
+  fantasyPlayers: [],
+  fantasyEntries: [],
+  fantasyStats: [],
+  vendors: [],
+  listings: [],
+  orders: [],
+  disputes: [],
+  // Auction. Price discovery over an existing listing. A BID IS NOT MONEY --
+  // bids live here, entirely separate from ledgerTransactions, so that
+  // nothing scanning the ledger can ever mistake an offer for income. A won
+  // auction produces an ordinary order, which settles through the ordinary
+  // chain. There is no auction wallet and no auction balance.
+  auctions: [],
+  bids: []
 };
 
 function ensureDir() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
+// ---------------------------------------------------------------------------
+// SCHEMA VERSION & MIGRATIONS
+//
+// Merging loaded data over EMPTY already handles the common case -- a new
+// collection or a new optional field appears on an old database with no
+// migration and no data loss. That is why there is no migration framework
+// here, and it is a deliberate choice rather than an omission.
+//
+// What that merge CANNOT do is TRANSFORM existing rows: rename a field,
+// backfill a required value, split a collection. Those need a real, ordered,
+// one-time step, and that is what this is.
+//
+// Rules:
+//   * migrations run in order, exactly once, recorded by version
+//   * a BACKUP IS TAKEN before anything destructive runs
+//   * a failing migration aborts startup rather than half-applying
+//   * migrations are deterministic and must be safe to re-run on a fresh DB
+// ---------------------------------------------------------------------------
+
+export const SCHEMA_VERSION = 2;
+
+const MIGRATIONS = [
+  {
+    version: 1,
+    name: 'baseline',
+    // Everything that existed before versioning. Nothing to transform: the
+    // EMPTY-merge already gave old databases every new collection.
+    up: (db) => db
+  },
+  {
+    version: 2,
+    name: 'backfill-order-currency',
+    // Early orders were written before `currency` was explicit. Settlement
+    // filters by currency, so a null there silently excludes real money from
+    // a vendor's earnings. Backfill to the deployment default.
+    up: (db) => {
+      for (const o of db.orders ?? []) {
+        if (!o.currency) o.currency = 'KES';
+      }
+      return db;
+    }
+  }
+];
+
+function backupBeforeMigration(fromVersion) {
+  if (!fs.existsSync(DB_FILE)) return null;
+  const dest = `${DB_FILE}.pre-v${fromVersion}-${Date.now()}.bak`;
+  fs.copyFileSync(DB_FILE, dest);
+  return dest;
+}
+
+/**
+ * Bring a loaded database up to SCHEMA_VERSION.
+ *
+ * Exported so it can be tested against an OLD FIXTURE rather than only ever
+ * running on a database that happens to already be current.
+ */
+export function migrate(db, { onBackup = backupBeforeMigration } = {}) {
+  const from = Number.isInteger(db.__schemaVersion) ? db.__schemaVersion : 0;
+  if (from >= SCHEMA_VERSION) return { db, migrated: false, from, to: from };
+
+  const pending = MIGRATIONS.filter((m) => m.version > from).sort((a, b) => a.version - b.version);
+  if (!pending.length) {
+    db.__schemaVersion = SCHEMA_VERSION;
+    return { db, migrated: false, from, to: SCHEMA_VERSION };
+  }
+
+  // Back up BEFORE transforming. If a migration is wrong, the operator still
+  // has the original -- this is the whole reason the step exists.
+  const backupFile = onBackup ? onBackup(from) : null;
+
+  const applied = [];
+  for (const m of pending) {
+    try {
+      db = m.up(db) ?? db;
+      db.__schemaVersion = m.version;
+      applied.push(`${m.version}:${m.name}`);
+    } catch (e) {
+      // Abort rather than leave the database half-migrated.
+      const err = new Error(
+        `migration ${m.version} (${m.name}) failed: ${e.message}. ` +
+        (backupFile ? `The pre-migration copy is at ${backupFile}.` : 'No backup was taken.')
+      );
+      err.applied = applied;
+      throw err;
+    }
+  }
+
+  db.__schemaVersion = SCHEMA_VERSION;
+  return { db, migrated: true, from, to: SCHEMA_VERSION, applied, backupFile };
+}
+
 function load() {
   ensureDir();
-  if (!fs.existsSync(DB_FILE)) return structuredClone(EMPTY);
+  if (!fs.existsSync(DB_FILE)) {
+    const fresh = structuredClone(EMPTY);
+    fresh.__schemaVersion = SCHEMA_VERSION;
+    return fresh;
+  }
   try {
     const parsed = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
-    return { ...structuredClone(EMPTY), ...parsed };
-  } catch {
+    // The merge that makes additive changes free: an old database gains every
+    // new collection without a migration.
+    const merged = { ...structuredClone(EMPTY), ...parsed };
+    const result = migrate(merged);
+    if (result.migrated) {
+      console.log(JSON.stringify({
+        at: new Date().toISOString(), level: 'info', event: 'schema_migrated',
+        from: result.from, to: result.to, applied: result.applied, backup: result.backupFile
+      }));
+    }
+    return result.db;
+  } catch (e) {
+    if (/^migration /.test(String(e.message))) throw e; // never silently continue
     // A corrupt file must not take the server down. Move it aside and start
     // clean; the operator still has the bad copy to inspect.
     fs.renameSync(DB_FILE, `${DB_FILE}.corrupt-${Date.now()}`);
-    return structuredClone(EMPTY);
+    const fresh = structuredClone(EMPTY);
+    fresh.__schemaVersion = SCHEMA_VERSION;
+    return fresh;
   }
 }
 
@@ -88,8 +250,10 @@ export const store = {
   /** Test helper: wipes everything. Never called by a route. */
   _reset() {
     db = structuredClone(EMPTY);
+    db.__schemaVersion = SCHEMA_VERSION;
     persist();
   },
+  schemaVersion() { return db.__schemaVersion ?? 0; },
   _file: DB_FILE
 };
 

@@ -1,4 +1,24 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import * as briefApi from './api/briefApi';
+import type { ArenaMoneyStatus } from './api/types';
+import { CampaignDistribution } from './components/CampaignDistribution';
+import { AwaitingPayment } from './components/AwaitingPayment';
+import { Pulse } from './components/Pulse';
+import { SourcesPanel } from './components/SourcesPanel';
+import { ConnectedGroups } from './components/ConnectedGroups';
+import { MoneyPanel } from './components/MoneyPanel';
+import { Circles } from './components/Circles';
+import { Marketplace } from './components/Marketplace';
+import { Pursuits } from './components/Pursuits';
+import { Inbox } from './components/Inbox';
+import { Quests } from './components/Quests';
+import type { CircleDetail as ApiCircleDetail } from './api/briefApi';
+import type {
+  Campaign as ApiCampaign,
+  CampaignType as ApiCampaignType,
+  PublicCampaign as ApiPublicCampaign,
+  Registration as ApiRegistration
+} from './api/types';
 import {
   Building2,
   Search,
@@ -102,11 +122,12 @@ const DESTINATION_ICONS: Record<Destination, LucideIcon> = {
   pulse: TrendingUp
 };
 
-export type NearbySection = 'stream' | 'tea' | 'today' | 'pursuits' | 'quests';
-export type MyLayerSection = 'saved' | 'activity' | 'arena' | 'points' | 'groups';
+export type NearbySection = 'stream' | 'tea' | 'today' | 'pursuits' | 'quests' | 'market';
+export type MyLayerSection =
+  | 'saved' | 'activity' | 'arena' | 'points' | 'circles' | 'groups' | 'campaigns';
 // Workflows secondary: a Journey is either in progress or finished. Inbox and
 // Sources are kept -- they are existing workflow surfaces, not new screens.
-export type WorkflowSection = 'active' | 'completed' | 'inbox' | 'sources';
+export type WorkflowSection = 'active' | 'completed' | 'inbox' | 'sources' | 'money';
 // Pulse secondary. Pulse is the information layer: freshness, local signals,
 // what groups are surfacing, and emerging activity. It is not an assistant.
 export type PulseSection = 'now' | 'local' | 'groups' | 'signals';
@@ -122,7 +143,10 @@ export interface BriefObject {
   summary: string;
   locationName?: string;
   creatorName?: string;
-  trustScore?: number;
+  // NO trustScore. Trust is an evidence list -- who provided this, when it
+  // was last verified, what it is linked to -- never a single invented
+  // percentage. The server stores no such score and Brief does not compute
+  // one, so the field is gone rather than left dangling as dead UI.
   lastVerifiedAt?: string;
   validityWindowDays?: number;
   isVerified?: boolean;
@@ -269,14 +293,26 @@ export interface BriefPost {
   tags?: string[];
 }
 
-export interface TownHealthMetrics {
-  opportunitiesActedOn: number;
-  businessesHelped: number;
-  eventsAttended: number;
-  knowledgeResolved: number;
-  journeysCompleted: number;
-  communityContributions: number;
-  infoFreshnessPct: number;
+/**
+ * A single civic metric.
+ *
+ * Brief used to hardcode these ("412 businesses helped", "97.4% fresh") and
+ * render them as measured civic activity. They were invented. The type now
+ * makes that impossible to repeat: a metric is EITHER derived from records
+ * Brief actually holds, or it is explicitly unavailable and says why.
+ *
+ * There is no third case, and no numeric default. `available: false` carries
+ * no `value` field at all, so a surface cannot read a number that was never
+ * measured -- it is a compile error, not a runtime 0.
+ */
+export type CivicMetric =
+  | { label: string; available: true; value: number; unit?: string; caption: string }
+  | { label: string; available: false; reason: string };
+
+export interface TownHealth {
+  metrics: CivicMetric[];
+  /** Freshness over objects Brief holds. Null when there is nothing to measure. */
+  infoFreshnessPct: number | null;
 }
 
 // ----------------------------------------------------------------------------
@@ -319,7 +355,7 @@ const DESTINATION_CATEGORIES = [
  *
  * Deliberately conservative: when in doubt, an object stays LEVEL 1.
  */
-const isDestinationObject = (object: BriefObject): boolean => {
+export const isDestinationObject = (object: BriefObject): boolean => {
   if (object.type === 'experience') return true;
   if (object.type !== 'place') return false;
   const category = object.category.toLowerCase();
@@ -340,7 +376,7 @@ export type DestinationState =
  * record only says "Upcoming", that is what we show. When it says nothing at
  * all we fall back to 'scheduled', which promises nothing.
  */
-const getDestinationState = (
+export const getDestinationState = (
   object: BriefObject,
   now: Date = new Date()
 ): DestinationState => {
@@ -388,7 +424,7 @@ const DESTINATION_STATE_LABELS: Record<DestinationState, string> = {
  * destination with no stated vendors correctly reports zero and the UI says
  * "Vendor information unavailable" instead of inventing a line-up.
  */
-const getDestinationVendors = (
+export const getDestinationVendors = (
   object: BriefObject,
   all: BriefObject[]
 ): BriefObject[] => {
@@ -811,7 +847,7 @@ const getReasonChip = (reason: RelationReason): string | null => {
 };
 
 // STEP 5 Proximity: only ever from real distanceKm. Never computed, never guessed.
-const getDistanceLabel = (object: BriefObject): string | null => {
+export const getDistanceLabel = (object: BriefObject): string | null => {
   const distance = object.metadata?.distanceKm;
   if (distance === undefined) return null;
   if (distance < 0.1) return 'Right here';
@@ -1269,7 +1305,7 @@ export interface Pursuit {
 // One scoring brain, shared by the search box and by pursuit matching, so a
 // phrase means the same thing in both places.
 // ----------------------------------------------------------------------------
-const scoreObjectForPhrase = (object: BriefObject, phrase: string): number => {
+export const scoreObjectForPhrase = (object: BriefObject, phrase: string): number => {
   const query = phrase.trim().toLowerCase();
   if (query === '') return 0;
 
@@ -1349,7 +1385,7 @@ const PURSUIT_INTENT_WORDS = new Set([
   'and'
 ]);
 
-const getPursuitTerms = (query: string): string[] =>
+export const getPursuitTerms = (query: string): string[] =>
   Array.from(
     new Set(
       query
@@ -1365,7 +1401,7 @@ const getPursuitTerms = (query: string): string[] =>
 // Deliberately minimal stemming -- enough that "lights" finds "Lighting" and
 // "auctions" finds "Auction", without pulling in a linguistics library that
 // would start making decisions nobody can audit.
-const singularise = (word: string): string => {
+export const singularise = (word: string): string => {
   if (word.length > 4 && word.endsWith('ies')) return `${word.slice(0, -3)}y`;
   if (word.length > 4 && word.endsWith('es')) return word.slice(0, -2);
   if (word.length > 3 && word.endsWith('s') && !word.endsWith('ss')) {
@@ -1392,7 +1428,7 @@ export interface PursuitMatch {
   matchedTerms: string[];
 }
 
-const matchPursuit = (
+export const matchPursuit = (
   pursuit: Pursuit,
   pool: BriefObject[],
   limit = 8
@@ -1742,7 +1778,7 @@ export type GroupAccess = 'member' | 'authorised' | 'pending' | 'revoked';
 // The ONLY states that may reach a user's Groups layer.
 const READABLE_ACCESS: GroupAccess[] = ['member', 'authorised'];
 
-const canUserAccessGroup = (group: BriefGroup): boolean =>
+export const canUserAccessGroup = (group: ConnectedSource): boolean =>
   READABLE_ACCESS.includes(group.access);
 
 // Four separate permissions, because "Brief can see it" must never silently
@@ -1767,20 +1803,37 @@ const DEFAULT_PERMISSIONS: GroupPermissions = {
   canPostDigest: false
 };
 
-export interface BriefGroup {
+/**
+ * A messaging group Brief has been given access to read.
+ *
+ * This replaces the retired `BriefGroup`. The rename is the point: Brief used
+ * to carry TWO community primitives -- client-only `BriefGroup` and the real,
+ * server-backed `Circle` -- which is the duplicate the coverage map flagged.
+ *
+ * They are not the same thing and this one is not a community:
+ *
+ *   Circle          a community. People, purpose, place, blocks, signals,
+ *                   targets, economic activity. Lives on the server.
+ *   ConnectedSource a pipe Brief reads. A WhatsApp or Telegram group whose
+ *                   messages are classified into knowledge entries.
+ *
+ * Collapsing this into Circle would have made Circle "Groups 2.0". Instead it
+ * maps onto the primitive the server already has for exactly this: a Source.
+ * `id` here IS a server source id.
+ *
+ * The invented fields are gone: memberCount/memberCountLabel/lastIndexedAt
+ * were hardcoded ("312 members") and measured nothing.
+ */
+export interface ConnectedSource {
   id: string;
   name: string;
   platform: 'telegram' | 'whatsapp' | 'other';
   description?: string;
   access: GroupAccess;
-  // Whether the group has allowed author names to be retained.
+  /** Whether the group has allowed author names to be retained. */
   retainAuthors: boolean;
-  memberCount?: number;
-  memberCountLabel?: string;
-  joinedAt?: string;
   lastActivityAt?: string;
   permissions?: GroupPermissions;
-  lastIndexedAt?: string;
 }
 
 // Where a single piece of information came from. Attached to every extracted
@@ -1949,9 +2002,9 @@ const extractEntities = (text: string): ExtractedField[] => {
   return out;
 };
 
-const buildGroupIndex = (
+export const buildGroupIndex = (
   messages: GroupMessage[],
-  group: BriefGroup
+  group: ConnectedSource
 ): GroupKnowledgeEntry[] => {
   const entries: GroupKnowledgeEntry[] = [];
 
@@ -2033,7 +2086,7 @@ const buildGroupIndex = (
   return entries;
 };
 
-const getUnansweredQuestions = (
+export const getUnansweredQuestions = (
   entries: GroupKnowledgeEntry[]
 ): GroupKnowledgeEntry[] =>
   entries
@@ -2143,14 +2196,14 @@ const searchGroupEntries = (
 };
 
 // "Aug 12" - light provenance, no clutter.
-const formatSourceDate = (iso: string): string => {
+export const formatSourceDate = (iso: string): string => {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   return `${months[d.getUTCMonth()]} ${d.getUTCDate()}`;
 };
 
-const runGroupCommand = (
+export const runGroupCommand = (
   raw: string,
   context: {
     entries: GroupKnowledgeEntry[];
@@ -2252,270 +2305,36 @@ export interface BusinessProfile {
   lastConfirmedAt?: string;
 }
 
-const INITIAL_BUSINESS_PROFILES: BusinessProfile[] = [
-  {
-    id: 'biz_kikao',
-    objectId: 'id_kikao_hardware',
-    name: 'Kikao Hardware',
-    location: 'Kilimani Hardware Lab',
-    services: ['Solar lighting packs', 'Installation support'],
-    faqs: [
-      {
-        question: 'Do you install?',
-        answer: 'Yes. Installation support is offered for solar lighting packs.'
-      }
-    ],
-    lastConfirmedAt: '2026-08-04T11:00:00Z'
-  }
-];
+/** No seeded business profiles. */
+const INITIAL_BUSINESS_PROFILES: BusinessProfile[] = [];
 
 // Brief's full group table. Crucially this includes groups the current user
 // must NEVER see -- they exist here precisely so the access filter is tested
 // against real data rather than against an empty list.
-const ALL_GROUPS: BriefGroup[] = [
-  {
-    id: 'grp_kilimani_traders',
-    name: 'Kilimani Traders',
-    platform: 'whatsapp',
-    description: 'Neighbourhood traders, services and notices.',
-    access: 'member',
-    retainAuthors: true,
-    memberCount: 312,
-    memberCountLabel: '312 members',
-    joinedAt: '2026-03-02T08:00:00Z',
-    lastActivityAt: '2026-08-14T10:20:00Z',
-    permissions: DEFAULT_PERMISSIONS,
-    lastIndexedAt: '2026-08-14T10:25:00Z'
-  },
-  {
-    id: 'grp_ku_medics',
-    name: 'KU Medical Students',
-    platform: 'telegram',
-    description: 'Study resources and campus notices.',
-    access: 'member',
-    // This group has NOT permitted author retention. Names must not appear.
-    retainAuthors: false,
-    memberCount: 148,
-    memberCountLabel: '148 members',
-    joinedAt: '2026-05-11T08:00:00Z',
-    lastActivityAt: '2026-08-13T16:40:00Z',
-    permissions: DEFAULT_PERMISSIONS,
-    lastIndexedAt: '2026-08-13T16:45:00Z'
-  },
-  {
-    id: 'grp_westlands_biz',
-    name: 'Westlands Business Forum',
-    platform: 'telegram',
-    description: 'Access granted by an administrator.',
-    access: 'authorised',
-    retainAuthors: true,
-    memberCount: 90,
-    memberCountLabel: '90 members',
-    lastActivityAt: '2026-08-12T09:00:00Z',
-    permissions: DEFAULT_PERMISSIONS
-  },
-  {
-    id: 'grp_pending_estate',
-    name: 'Riverside Estate',
-    platform: 'whatsapp',
-    access: 'pending',
-    retainAuthors: false,
-    permissions: { ...DEFAULT_PERMISSIONS, canRead: false, canProcess: false }
-  },
-  {
-    id: 'grp_revoked_market',
-    name: 'Old Market Vendors',
-    platform: 'whatsapp',
-    access: 'revoked',
-    retainAuthors: false,
-    permissions: { ...DEFAULT_PERMISSIONS, canRead: false, canProcess: false, canRetain: false }
-  },
-  {
-    id: 'grp_stranger_group',
-    name: 'Mombasa Fisheries',
-    platform: 'telegram',
-    // The user has no relationship with this group whatsoever. It exists in
-    // Brief's data because another user authorised it. It must never surface.
-    access: 'revoked',
-    retainAuthors: false,
-    permissions: { ...DEFAULT_PERMISSIONS, canRead: false, canProcess: false, canRetain: false }
-  }
-];
-
-const INITIAL_GROUP: BriefGroup = ALL_GROUPS[0];
+/**
+ * No seeded groups. Connected sources come from the server
+ * (`GET /api/sources`): a group Brief is not actually connected to must never
+ * appear in the list of groups Brief reads.
+ *
+ * The retired seed invented six groups with invented member counts. Access
+ * state (member/authorised/pending/revoked) is still modelled and still
+ * enforced in buildGroupIndex -- it is the data that was fake, not the rule.
+ */
+const ALL_GROUPS: ConnectedSource[] = [];
 
 // A week of ordinary group traffic: useful posts, questions, and noise.
-const GROUP_MESSAGES: GroupMessage[] = [
-  {
-    id: 'gm_01',
-    groupId: 'grp_kilimani_traders',
-    authorLabel: 'Wanjiru',
-    text: 'Where can I renew my business permit?',
-    sentAt: '2026-08-11T07:15:00Z'
-  },
-  {
-    id: 'gm_02',
-    groupId: 'grp_kilimani_traders',
-    authorLabel: 'Otieno',
-    text: 'Selling 3 goats, 18000 each, Kisumu. Call 0712345678',
-    sentAt: '2026-08-11T09:40:00Z'
-  },
-  {
-    id: 'gm_03',
-    groupId: 'grp_kilimani_traders',
-    authorLabel: 'Achieng',
-    text: 'Anyone selling a 50W solar kit?',
-    sentAt: '2026-08-12T06:05:00Z'
-  },
-  {
-    id: 'gm_04',
-    groupId: 'grp_kilimani_traders',
-    authorLabel: 'Mwangi',
-    text: 'Kikao Hardware has 50W systems, they are at Kilimani Hardware Lab',
-    sentAt: '2026-08-12T06:22:00Z',
-    replyToId: 'gm_03'
-  },
-  {
-    id: 'gm_05',
-    groupId: 'grp_kilimani_traders',
-    authorLabel: 'Njeri',
-    text: 'Vacancy: accounts assistant needed at a logistics firm. Deadline: 30 September. Send CV to the office.',
-    sentAt: '2026-08-12T11:00:00Z'
-  },
-  {
-    id: 'gm_06',
-    groupId: 'grp_kilimani_traders',
-    authorLabel: 'Kamau',
-    text: 'Who knows a plumber around Kilimani?',
-    sentAt: '2026-08-13T08:30:00Z'
-  },
-  {
-    id: 'gm_07',
-    groupId: 'grp_kilimani_traders',
-    authorLabel: 'Otieno',
-    text: 'Youth tech forum this Saturday at Jeevanjee Gardens, starts 09:00',
-    sentAt: '2026-08-13T13:12:00Z'
-  },
-  {
-    id: 'gm_08',
-    groupId: 'grp_kilimani_traders',
-    authorLabel: 'Achieng',
-    text: 'Green Commerce Micro-Grant applications are open, deadline: 31 August',
-    sentAt: '2026-08-14T07:45:00Z'
-  },
-  { id: 'gm_09', groupId: 'grp_kilimani_traders', authorLabel: 'Kamau', text: 'Good morning all', sentAt: '2026-08-14T07:50:00Z' },
-  { id: 'gm_10', groupId: 'grp_kilimani_traders', authorLabel: 'Njeri', text: 'haha true', sentAt: '2026-08-14T07:52:00Z' },
-  {
-    id: 'gm_11',
-    groupId: 'grp_kilimani_traders',
-    authorLabel: 'Mwangi',
-    text: 'Guide on the single business permit steps and requirements is on the county website',
-    sentAt: '2026-08-14T10:20:00Z'
-  },
-  {
-    id: 'gm_12',
-    groupId: 'grp_kilimani_traders',
-    authorLabel: 'Achieng',
-    text: 'Anyone know where I can get a 2-bedroom house around Kilimani?',
-    sentAt: '2026-08-14T15:10:00Z'
-  },
-
-  // --- KU Medical Students (member, authors NOT retained) -------------------
-  {
-    id: 'gm_20',
-    groupId: 'grp_ku_medics',
-    authorLabel: 'Brenda',
-    text: 'OSCE revision workshop on Saturday at the lecture hall, starts 14:00',
-    sentAt: '2026-08-13T09:00:00Z'
-  },
-  {
-    id: 'gm_21',
-    groupId: 'grp_ku_medics',
-    authorLabel: 'Dennis',
-    text: 'Anyone have the OSCE study guide document?',
-    sentAt: '2026-08-13T16:40:00Z'
-  },
-
-  // --- Westlands Business Forum (authorised, not a member) ------------------
-  {
-    id: 'gm_30',
-    groupId: 'grp_westlands_biz',
-    authorLabel: 'Forum Admin',
-    text: 'Business mentorship programme applications open, deadline: 20 September',
-    sentAt: '2026-08-12T09:00:00Z'
-  },
-
-  {
-    id: 'gm_50',
-    groupId: 'grp_kilimani_traders',
-    authorLabel: 'Kip',
-    text: 'Anyone for eFootball tonight? Looking for a 1v1 around 8pm',
-    sentAt: '2026-08-15T06:00:00Z'
-  },
-
-  // --- Multimodal: same model, different arrival ----------------------------
-  {
-    id: 'gm_40',
-    groupId: 'grp_kilimani_traders',
-    authorLabel: 'Otieno',
-    text: 'Event poster for the weekend',
-    sentAt: '2026-08-13T18:00:00Z',
-    mediaKind: 'image',
-    mediaReference: 'img_poster_001',
-    // Caption text only. Nothing here was read out of the image itself.
-    mediaExtractedText: 'Community clean-up meetup Sunday at Maji Mazuri, 08:00-11:00',
-    mediaAnalysisStatus: 'processed'
-  },
-  {
-    id: 'gm_41',
-    groupId: 'grp_kilimani_traders',
-    authorLabel: 'Mwangi',
-    text: 'Kikao Hardware Price List',
-    sentAt: '2026-08-13T18:30:00Z',
-    mediaKind: 'document',
-    mediaReference: 'doc_pricelist_kikao',
-    mediaExtractedText:
-      'Kikao Hardware price list. Solar panel, battery, lighting kit, inverter. 50W solar kit KSh 18,500.',
-    mediaAnalysisStatus: 'processed'
-  },
-  {
-    id: 'gm_42',
-    groupId: 'grp_kilimani_traders',
-    authorLabel: 'Njeri',
-    text: 'Flyer',
-    sentAt: '2026-08-13T19:00:00Z',
-    mediaKind: 'image',
-    mediaReference: 'img_flyer_002',
-    // No caption, no processed text: Brief must record the image and claim
-    // nothing about its contents.
-    mediaAnalysisStatus: 'pending'
-  },
-
-  // --- Messages in groups this user CANNOT access ---------------------------
-  // Present on purpose: if any of these ever appear in the user's results,
-  // the access filter has failed and the tests must catch it.
-  {
-    id: 'gm_90',
-    groupId: 'grp_revoked_market',
-    authorLabel: 'Someone',
-    text: 'Selling wholesale tomatoes, 4500 per crate. Call 0712999888',
-    sentAt: '2026-08-14T08:00:00Z'
-  },
-  {
-    id: 'gm_91',
-    groupId: 'grp_stranger_group',
-    authorLabel: 'Stranger',
-    text: 'Fresh tilapia supply available daily, contact 0713777666',
-    sentAt: '2026-08-14T08:30:00Z'
-  },
-  {
-    id: 'gm_92',
-    groupId: 'grp_pending_estate',
-    authorLabel: 'Neighbour',
-    text: 'Plumber recommendation: very good and affordable, call 0714555444',
-    sentAt: '2026-08-14T09:00:00Z'
-  }
-];
+/**
+ * No seeded group traffic.
+ *
+ * This was 171 lines of invented WhatsApp/Telegram messages -- fake vacancies,
+ * fake grants, fake plumber requests -- which the group index then classified
+ * and presented as real extracted local knowledge. It is the most misleading
+ * kind of seed: the output looks like genuine analysis of a real community.
+ *
+ * Real messages arrive through the connectors as raw items. Until a source is
+ * connected there is nothing to classify, and the UI says so.
+ */
+const GROUP_MESSAGES: GroupMessage[] = [];
 
 // ============================================================================
 // SOURCES
@@ -2584,39 +2403,12 @@ const getSourceHealthLabel = (health: SourceHealth): string => {
   }
 };
 
-const INITIAL_SOURCES: Source[] = [
-  {
-    id: 'tg_nairobi_traders',
-    name: 'Nairobi Traders',
-    type: 'telegram',
-    description: 'Trader announcements, stock and service adverts.',
-    active: true,
-    lastSeenAt: '2026-08-14T11:02:00Z',
-    lastSuccessfulIngestionAt: '2026-08-14T11:02:00Z',
-    ingestionCount: 3,
-    errorCount: 0
-  },
-  {
-    id: 'wa_kilimani_notices',
-    name: 'Kilimani Notices',
-    type: 'whatsapp',
-    description: 'Neighbourhood notices, grants and civic updates.',
-    active: true,
-    lastSeenAt: '2026-08-14T09:05:00Z',
-    lastSuccessfulIngestionAt: '2026-08-14T09:05:00Z',
-    ingestionCount: 1,
-    errorCount: 0
-  },
-  {
-    id: 'src_manual_capture',
-    name: 'Captured by you',
-    type: 'manual',
-    description: 'Anything you paste or forward into Brief yourself.',
-    active: true,
-    ingestionCount: 0,
-    errorCount: 0
-  }
-];
+/**
+ * Sources come from the server (`GET /api/sources`), which reports real
+ * per-source counts. The seeded list is gone: a source Brief is not actually
+ * connected to must never appear in the list of sources Brief reads.
+ */
+const INITIAL_SOURCES: Source[] = [];
 
 // ============================================================================
 // INGESTION BOUNDARY
@@ -4062,7 +3854,7 @@ export interface ContributionRecord {
   settledPoints: number;
 }
 
-const getAcceptanceRate = (c: ContributionRecord): number | undefined => {
+export const getAcceptanceRate = (c: ContributionRecord): number | undefined => {
   const total = c.accepted + c.rejected;
   if (total <= 0) return undefined;
   return Math.round((c.accepted / total) * 1000) / 10;
@@ -4091,7 +3883,7 @@ const RANK_LADDER: {
   { rank: 'Newcomer', minAccepted: 0, minAcceptanceRate: 0 }
 ];
 
-const getBriefRank = (c: ContributionRecord): BriefRank => {
+export const getBriefRank = (c: ContributionRecord): BriefRank => {
   const rate = getAcceptanceRate(c) ?? 0;
   for (const tier of RANK_LADDER) {
     if (c.accepted >= tier.minAccepted && rate >= tier.minAcceptanceRate) {
@@ -4103,7 +3895,7 @@ const getBriefRank = (c: ContributionRecord): BriefRank => {
 
 // What the user must still do to reach the next tier. Only ever states real
 // remaining requirements; returns null at the top.
-const getNextRankRequirement = (
+export const getNextRankRequirement = (
   c: ContributionRecord
 ): { rank: BriefRank; needAccepted: number; needRate: number } | null => {
   const current = getBriefRank(c);
@@ -4180,7 +3972,7 @@ export interface RewardPool {
   kesPerPoint: number;
 }
 
-const getPoolRemaining = (pool: RewardPool): number =>
+export const getPoolRemaining = (pool: RewardPool): number =>
   Math.max(0, pool.totalKes - pool.committedKes);
 
 // Points settle ONLY on acceptance. Any other status is worth zero, and this
@@ -4188,7 +3980,7 @@ const getPoolRemaining = (pool: RewardPool): number =>
 const settleQuest = (quest: Quest): number =>
   quest.status === 'accepted' ? quest.points : 0;
 
-const summariseContribution = (quests: Quest[]): ContributionRecord => {
+export const summariseContribution = (quests: Quest[]): ContributionRecord => {
   let accepted = 0;
   let rejected = 0;
   let settledPoints = 0;
@@ -4205,12 +3997,12 @@ const summariseContribution = (quests: Quest[]): ContributionRecord => {
 
 // Two boards, deliberately. Ranking on points alone teaches people to farm
 // points; ranking on accepted contribution teaches them to be useful.
-const getTopEarners = (people: Participant[], limit = 5): Participant[] =>
+export const getTopEarners = (people: Participant[], limit = 5): Participant[] =>
   [...people]
     .sort((a, b) => b.contribution.settledPoints - a.contribution.settledPoints)
     .slice(0, limit);
 
-const getTopContributors = (people: Participant[], limit = 5): Participant[] =>
+export const getTopContributors = (people: Participant[], limit = 5): Participant[] =>
   [...people]
     .sort((a, b) => {
       if (b.contribution.accepted !== a.contribution.accepted) {
@@ -4221,7 +4013,7 @@ const getTopContributors = (people: Participant[], limit = 5): Participant[] =>
     .slice(0, limit);
 
 // Percentile is only meaningful with a real cohort behind it.
-const getPercentile = (
+export const getPercentile = (
   person: Participant,
   people: Participant[]
 ): number | undefined => {
@@ -4465,106 +4257,13 @@ const ARENA_CHALLENGES: ArenaChallenge[] = [
 
 // --- Participation fixtures -------------------------------------------------
 
-const INITIAL_QUESTS: Quest[] = [
-  {
-    id: 'qst_verify_maji',
-    kind: 'verify_event',
-    title: 'Confirm Maji Market Day is still on Saturday',
-    acceptanceCriteria: 'Photo or notice showing the date, taken at the venue.',
-    points: 250,
-    status: 'open',
-    locationName: 'Maji Mazuri',
-    distanceKm: 1.8,
-    expiresAt: '2026-08-17T00:00:00Z'
-  },
-  {
-    id: 'qst_notice_permit',
-    kind: 'photograph_notice',
-    title: 'Photograph the county permit notice at the ward office',
-    acceptanceCriteria: 'Notice legible, dated, and not already submitted.',
-    points: 400,
-    status: 'open',
-    locationName: 'Kilimani Ward Office',
-    distanceKm: 2.3
-  },
-  {
-    id: 'qst_answer_plumber',
-    kind: 'answer_question',
-    title: 'Answer an unanswered question in Kilimani Traders',
-    acceptanceCriteria: 'Answer names a real, reachable provider. Accepted by the asker.',
-    points: 300,
-    status: 'open',
-    groupId: 'grp_kilimani_traders'
-  },
-  {
-    id: 'qst_arena_1v1',
-    kind: 'arena_challenge',
-    title: 'Win a 1v1 eFootball challenge',
-    acceptanceCriteria: 'Both players confirm the result.',
-    points: 500,
-    status: 'open',
-    gameId: 'efootball'
-  },
-  {
-    id: 'qst_checkin_cup',
-    kind: 'attend_and_checkin',
-    title: 'Check in at the Saturday cup at GameHub Kilimani',
-    acceptanceCriteria: 'Check-in at the venue during the event window.',
-    points: 200,
-    status: 'open',
-    locationName: 'GameHub Kilimani',
-    distanceKm: 1.2,
-    gameId: 'efootball'
-  },
-  // Settled history, so rank and acceptance rate are computed from real
-  // outcomes rather than seeded totals.
-  {
-    id: 'qst_done_vendor',
-    kind: 'help_find_vendor',
-    title: 'Found a solar supplier for a Kilimani request',
-    acceptanceCriteria: 'Requester confirmed the vendor was useful.',
-    points: 350,
-    status: 'accepted',
-    groupId: 'grp_kilimani_traders',
-    submittedAt: '2026-08-11T10:00:00Z',
-    reviewedAt: '2026-08-12T09:00:00Z'
-  },
-  {
-    id: 'qst_done_notice',
-    kind: 'photograph_notice',
-    title: 'Photographed the water rationing notice',
-    acceptanceCriteria: 'Notice legible and dated.',
-    points: 400,
-    status: 'accepted',
-    locationName: 'Kilimani',
-    submittedAt: '2026-08-09T08:00:00Z',
-    reviewedAt: '2026-08-09T15:00:00Z'
-  },
-  {
-    id: 'qst_pending_event',
-    kind: 'verify_event',
-    title: 'Verify the Westlands business forum date',
-    acceptanceCriteria: 'Photo or notice showing the date.',
-    points: 250,
-    status: 'submitted',
-    locationName: 'Westlands',
-    submittedAt: '2026-08-14T17:00:00Z'
-  },
-  // A rejection with a stated reason. Worth zero points, and visibly so.
-  {
-    id: 'qst_rejected_blurry',
-    kind: 'photograph_notice',
-    title: 'Photographed a notice board in Ngara',
-    acceptanceCriteria: 'Notice legible and dated.',
-    points: 400,
-    status: 'rejected',
-    locationName: 'Ngara',
-    submittedAt: '2026-08-10T12:00:00Z',
-    reviewedAt: '2026-08-10T18:00:00Z',
-    reviewNote: 'Notice was not legible and carried no date.'
-  }
-];
+/**
+ * No seeded quests. Participation is real activity or it is nothing.
+ */
+const INITIAL_QUESTS: Quest[] = [];
 
+// Arena's reward catalogue. Arena is mapped but intentionally unbuilt, and
+// this batch does not modify any Arena code path -- including its fixtures.
 const REWARD_CATALOGUE: Reward[] = [
   { id: 'rwd_carrefour_500', kind: 'supermarket_voucher', title: 'KES 500 supermarket voucher', providerName: 'Carrefour', valueKes: 500, pointsCost: 500, region: 'Nairobi', remaining: 24, transferPolicy: 'restricted' },
   { id: 'rwd_airtime_100', kind: 'airtime', title: 'KES 100 airtime', providerName: 'Safaricom', valueKes: 100, pointsCost: 100, region: 'Nairobi', remaining: 180, transferPolicy: 'officially_transferable' },
@@ -4576,28 +4275,38 @@ const REWARD_CATALOGUE: Reward[] = [
   { id: 'rwd_mombasa_voucher', kind: 'merchant_voucher', title: 'KES 500 seafood voucher', providerName: 'Mombasa Fish Market', valueKes: 500, pointsCost: 450, region: 'Mombasa', remaining: 10, transferPolicy: 'restricted' }
 ];
 
-const COMMUNITY_POOL: RewardPool = {
-  periodLabel: 'August 2026',
-  totalKes: 1000000,
-  committedKes: 412500,
-  kesPerPoint: 1
+/**
+ * No fabricated reward pool.
+ *
+ * This declared a KES 1,000,000 pool with KES 412,500 already committed --
+ * money that does not exist, presented as a real community fund. Brief has no
+ * payment provider and cannot disburse anything, so advertising a pot is the
+ * most damaging kind of invented economics.
+ *
+ * Zeroed rather than deleted: the Quests board reads the shape, and a pool of
+ * zero is the truthful figure. The UI reports it as unfunded.
+ */
+export const COMMUNITY_POOL: RewardPool = {
+  periodLabel: 'Not funded',
+  totalKes: 0,
+  committedKes: 0,
+  kesPerPoint: 0
 };
 
 // A cohort large enough for a percentile to mean something.
-const PARTICIPANTS: Participant[] = [
-  { id: 'pt_nyabs', displayName: 'Nyabs', locationName: 'Nairobi', contribution: { accepted: 1284, rejected: 40, settledPoints: 48920 } },
-  { id: 'pt_achieng', displayName: 'Achieng', locationName: 'Nairobi', contribution: { accepted: 903, rejected: 61, settledPoints: 39140 } },
-  { id: 'pt_mwangi', displayName: 'Mwangi', locationName: 'Nairobi', contribution: { accepted: 640, rejected: 55, settledPoints: 30200 } },
-  { id: 'pt_njeri', displayName: 'Njeri', locationName: 'Nairobi', contribution: { accepted: 402, rejected: 30, settledPoints: 21050 } },
-  { id: 'pt_otieno', displayName: 'Otieno', locationName: 'Nairobi', contribution: { accepted: 210, rejected: 18, settledPoints: 15600 } },
-  // High points, mediocre acceptance: must rank on Earners but NOT top Contributors.
-  { id: 'pt_volume', displayName: 'Kimani', locationName: 'Nairobi', contribution: { accepted: 96, rejected: 610, settledPoints: 34800 } },
-  { id: 'pt_kip', displayName: 'Kip', locationName: 'Nairobi', contribution: { accepted: 88, rejected: 12, settledPoints: 9100 } },
-  { id: 'pt_jay', displayName: 'Jay', locationName: 'Nairobi', contribution: { accepted: 54, rejected: 9, settledPoints: 6400 } },
-  { id: 'pt_mike', displayName: 'Mike', locationName: 'Nairobi', contribution: { accepted: 31, rejected: 14, settledPoints: 3900 } },
-  { id: 'pt_wanjiku', displayName: 'Wanjiku', locationName: 'Nairobi', contribution: { accepted: 4, rejected: 1, settledPoints: 800 } },
-  { id: 'pt_new', displayName: 'Brenda', locationName: 'Nairobi', contribution: { accepted: 0, rejected: 0, settledPoints: 0 } }
-];
+/**
+ * No fabricated cohort.
+ *
+ * This was eleven invented people -- Nyabs, Achieng, Mwangi and others -- with
+ * invented accepted/rejected counts and invented settled point totals, ranked
+ * into a leaderboard and rendered as real community standing. Percentiles
+ * computed against an invented cohort are meaningless.
+ *
+ * The ranking helpers (getTopContributors, getTopEarners, getPercentile) are
+ * real and keep their logic; they now operate on an empty cohort until real
+ * participants exist.
+ */
+export const PARTICIPANTS: Participant[] = [];
 
 // --- Arena economy fixtures -------------------------------------------------
 
@@ -4757,565 +4466,185 @@ const ARENA_LISTINGS: ArenaListing[] = [
 // ============================================================================
 // 2. SEED DATA
 // ============================================================================
-// Demo inbound traffic. These stand in for a real Telegram/WhatsApp bridge so
-// the review flow can be exercised end to end. They are messages, not objects:
-// nothing here is in the graph until a human accepts it.
-const INBOUND_FIXTURES: InboundMessage[] = [
-  {
-    id: 'msg_001',
-    channel: 'telegram',
-    sourceId: 'tg_nairobi_traders',
-    sourceLabel: 'Nairobi Traders (Telegram)',
-    text: 'Solar installation and repair service. We mount panels and wire battery boxes for stalls. Charges from KSh 4,500 per site. Call 0712345678. Open 08:00-17:00 Mon to Sat.',
-    receivedAt: '2026-08-14T07:20:00Z'
-  },
-  {
-    id: 'msg_002',
-    channel: 'whatsapp',
-    sourceId: 'wa_kilimani_notices',
-    sourceLabel: 'Kilimani Notices (WhatsApp)',
-    text: 'Youth enterprise grant applications now open. Non-equity funding for small traders. Deadline: 30 September. Requirements and steps will be shared here.',
-    receivedAt: '2026-08-14T09:05:00Z'
-  },
-  {
-    id: 'msg_003',
-    channel: 'telegram',
-    sourceId: 'tg_nairobi_traders',
-    sourceLabel: 'Nairobi Traders (Telegram)',
-    // Deliberately near-duplicate of an existing seed object, to prove the
-    // duplicate check fires before anything is published.
-    text: 'Maji Mazuri Farmers & Artisans Market is open today. Fresh produce and handcrafts at Haile Selassie Ave. Open 06:00-18:30.',
-    receivedAt: '2026-08-14T10:40:00Z'
-  },
-  {
-    id: 'msg_004',
-    channel: 'telegram',
-    sourceId: 'tg_nairobi_traders',
-    sourceLabel: 'Nairobi Traders (Telegram)',
-    // Deliberately unparseable chatter: proves low confidence is surfaced
-    // rather than smoothed over into a plausible-looking object.
-    text: 'Anyone around? asking for a friend',
-    receivedAt: '2026-08-14T11:02:00Z'
-  }
-];
 
-const INITIAL_OBJECTS: BriefObject[] = [
-  {
-    id: 'plc_maji_mazuri',
-    type: 'place',
-    title: 'Maji Mazuri Farmers & Artisans Market',
-    category: 'Marketplace',
-    summary: 'Fresh organic produce, handcrafts, and open vendor trade.',
-    locationName: 'Haile Selassie Ave, CBD',
-    creatorName: 'City County Markets Board',
-    trustScore: 96,
-    lastVerifiedAt: '2026-08-05T10:00:00Z',
-    validityWindowDays: 90,
-    isVerified: true,
-    imageUrl: 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?auto=format&fit=crop&w=1000&q=80',
-    metadata: {
-      operatingHours: '06:00-18:30',
-      statusBadge: 'Open Now',
-      capacity: 1500,
-      rating: 4.8,
-      reviewsCount: 142,
-      distanceKm: 0.4
-    },
-    actionLabel: 'Open Map',
-    actionType: 'map',
-    createdAt: '2026-01-15T08:00:00Z'
-  },
-  {
-    // Pattern 3 (place -> vendors -> events) had no event edge. This is the
-    // market's own recurring trading day, hosted by the board that already
-    // operates the market and located at the market object itself. No new
-    // vendor, no invented organiser: creatorName matches plc_maji_mazuri.
-    id: 'exp_maji_market_day',
-    type: 'experience',
-    title: 'Maji Mazuri Saturday Market Day',
-    category: 'Event',
-    summary: 'Weekly extended trading day for produce and artisan vendors.',
-    locationName: 'Haile Selassie Ave, CBD',
-    creatorName: 'City County Markets Board',
-    trustScore: 96,
-    lastVerifiedAt: '2026-08-05T10:00:00Z',
-    validityWindowDays: 90,
-    isVerified: true,
-    metadata: {
-      operatingHours: 'Saturdays, 06:00-18:30',
-      statusBadge: 'Upcoming',
-      distanceKm: 0.4
-    },
-    actionLabel: 'Get Directions',
-    actionType: 'map',
-    locationObjectId: 'plc_maji_mazuri',
-    parentObjectId: 'plc_maji_mazuri',
-    createdAt: '2026-08-01T08:00:00Z'
-  },
-  {
-    id: 'plc_jeevanjee',
-    type: 'place',
-    title: 'Jeevanjee Gardens Open Pavilion',
-    category: 'Civic Space',
-    summary: 'Civic dialogues, public forums, open-air art, and youth meetups.',
-    locationName: 'Muindi Mbingu St, CBD',
-    creatorName: 'County Parks Dept',
-    trustScore: 94,
-    lastVerifiedAt: '2026-08-04T12:00:00Z',
-    validityWindowDays: 60,
-    isVerified: true,
-    imageUrl: 'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?auto=format&fit=crop&w=1000&q=80',
-    metadata: {
-      operatingHours: '06:00-20:00',
-      statusBadge: 'Open Access',
-      capacity: 800,
-      rating: 4.6,
-      reviewsCount: 89,
-      distanceKm: 0.8
-    },
-    actionLabel: 'Open Map',
-    actionType: 'map',
-    createdAt: '2026-02-01T08:00:00Z'
-  },
-  {
-    id: 'plc_kilimani_hub',
-    type: 'place',
-    title: 'Kilimani Innovation Hub & Lab',
-    category: 'Co-Working',
-    summary: 'IoT prototype lab, shared workspace, and civic tech incubator.',
-    locationName: 'Argwings Kodhek Rd',
-    creatorName: 'Kilimani Collective',
-    trustScore: 98,
-    lastVerifiedAt: '2026-08-06T09:00:00Z',
-    validityWindowDays: 30,
-    isVerified: true,
-    imageUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1000&q=80',
-    metadata: {
-      operatingHours: '24/7 Access',
-      statusBadge: '24/7 Live',
-      capacity: 120,
-      rating: 4.9,
-      reviewsCount: 210,
-      distanceKm: 2.1
-    },
-    actionLabel: 'Open Map',
-    actionType: 'map',
-    createdAt: '2026-02-10T08:00:00Z'
-  },
-  {
-    id: 'id_county_licensing',
-    type: 'identity',
-    title: 'City Licensing & Permits Dept',
-    category: 'Government',
-    summary: 'Unified Business Permits, food health clearances, and signage.',
-    locationName: 'City Hall Annex, Fl 3',
-    creatorName: 'County Government',
-    trustScore: 95,
-    lastVerifiedAt: '2026-08-05T08:00:00Z',
-    validityWindowDays: 180,
-    isVerified: true,
-    imageUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1000&q=80',
-    metadata: {
-      operatingHours: '08:00-17:00',
-      statusBadge: 'Verified Authority',
-      contactPhone: '+254 700 000 111',
-      rating: 4.3,
-      reviewsCount: 64,
-      distanceKm: 0.2
-    },
-    actionLabel: 'Call Office',
-    actionType: 'phone',
-    createdAt: '2025-10-01T08:00:00Z'
-  },
-  {
-    id: 'id_green_harvest',
-    type: 'identity',
-    title: 'Green Harvest Farmers Co-op',
-    category: 'Cooperative',
-    summary: '85 smallholder urban farmers delivering farm-to-table harvests.',
-    locationName: 'Stall 42, Maji Mazuri',
-    creatorName: 'Jane Wambui',
-    trustScore: 97,
-    lastVerifiedAt: '2026-08-03T11:00:00Z',
-    validityWindowDays: 30,
-    isVerified: true,
-    imageUrl: 'https://images.unsplash.com/photo-1595974482597-4b8da8879bc5?auto=format&fit=crop&w=1000&q=80',
-    metadata: {
-      operatingHours: '07:00-18:00',
-      statusBadge: 'Active Seller',
-      contactPhone: '+254 712 345 678',
-      rating: 4.9,
-      reviewsCount: 178,
-      distanceKm: 0.4
-    },
-    actionLabel: 'Call Seller',
-    actionType: 'phone',
-    locationObjectId: 'plc_maji_mazuri',
-    createdAt: '2026-01-20T08:00:00Z'
-  },
-  {
-    id: 'exp_youth_summit',
-    type: 'experience',
-    title: 'Youth Tech & Micro-Commerce Forum',
-    category: 'Event',
-    summary: 'Licensing officers, young entrepreneurs, and micro-finance dialog.',
-    locationName: 'Jeevanjee Pavilion',
-    creatorName: 'Youth Enterprise Net',
-    trustScore: 98,
-    lastVerifiedAt: '2026-08-06T08:00:00Z',
-    validityWindowDays: 14,
-    isVerified: true,
-    imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1000&q=80',
-    metadata: {
-      operatingHours: 'Aug 15, 09:00',
-      statusBadge: 'Upcoming',
-      capacity: 300,
-      rating: 4.8,
-      reviewsCount: 45,
-      distanceKm: 0.8
-    },
-    actionLabel: 'Get Directions',
-    actionType: 'map',
-    locationObjectId: 'plc_jeevanjee',
-    createdAt: '2026-07-15T08:00:00Z'
-  },
-  {
-    id: 'opp_green_grant',
-    type: 'opportunity',
-    title: 'Green Commerce Micro-Grant 2026',
-    category: 'Grant',
-    summary: 'Non-equity seed grant for solar, zero-waste, or organic enterprise.',
-    locationName: 'Nairobi County Wide',
-    creatorName: 'Innovation Fund',
-    trustScore: 99,
-    lastVerifiedAt: '2026-08-05T09:00:00Z',
-    validityWindowDays: 30,
-    isVerified: true,
-    imageUrl: 'https://images.unsplash.com/photo-1553729459-efe14ef6055d?auto=format&fit=crop&w=1000&q=80',
-    metadata: {
-      price: 250000,
-      currency: 'KES',
-      deadline: 'Aug 31',
-      statusBadge: '22 Days Left',
-      rating: 5.0,
-      reviewsCount: 312
-    },
-    // actionUrl intentionally absent: no verified application portal yet.
-    // The intent is declared, but resolveAction falls through to 'none' and
-    // the UI shows "Apply Online unavailable" rather than a guessed URL.
-    actionType: 'external',
-    actionLabel: 'Apply Online',
-    createdAt: '2026-07-01T08:00:00Z'
-  },
-  {
-    id: 'knw_permit_guide',
-    type: 'knowledge',
-    title: 'Single Business Permit Online Guide',
-    category: 'Guide',
-    summary: 'Official registration steps and health inspection requirements.',
-    locationName: 'City Hall Annex',
-    creatorName: 'Civic Data Group',
-    trustScore: 98,
-    lastVerifiedAt: '2026-08-05T14:00:00Z',
-    validityWindowDays: 120,
-    isVerified: true,
-    imageUrl: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=1000&q=80',
-    metadata: {
-      operatingHours: 'Est 3 Days',
-      statusBadge: '4-Step Process',
-      rating: 4.7,
-      reviewsCount: 156
-    },
-    // actionUrl intentionally absent: no verified document URL yet.
-    actionType: 'external',
-    actionLabel: 'Read Guide',
-    providerObjectId: 'id_county_licensing',
-    relatedObjectIds: ['srv_health_inspection', 'opp_green_grant'],
-    createdAt: '2026-03-10T08:00:00Z'
-  },
-  {
-    id: 'prd_solar_kit',
-    type: 'product',
-    title: 'Portable Solar Lighting Pack (50W)',
-    category: 'Equipment',
-    summary: 'Heavy-duty 50W panel + 12V LiFePO4 battery box for vendor stalls.',
-    locationName: 'Kilimani Hardware Lab',
-    creatorName: 'Kikao Hardware',
-    trustScore: 97,
-    lastVerifiedAt: '2026-08-04T11:00:00Z',
-    validityWindowDays: 90,
-    isVerified: true,
-    imageUrl: 'https://images.unsplash.com/photo-1509391365360-2e959784a276?auto=format&fit=crop&w=1000&q=80',
-    metadata: {
-      price: 18500,
-      currency: 'KES',
-      statusBadge: '35 In Stock',
-      rating: 4.9,
-      reviewsCount: 92
-    },
-    actionLabel: 'Buy',
-    actionType: 'internal',
-    locationObjectId: 'plc_kilimani_hub',
-    providerObjectId: 'id_kikao_hardware',
-    relatedObjectIds: ['srv_solar_install'],
-    createdAt: '2026-05-10T08:00:00Z'
-  },
-  {
-    // The seller behind prd_solar_kit. Everything here is either copied from
-    // the product record that already named this business, or omitted.
-    // No phone, price, rating, review count, image or opening hours is
-    // invented: those fields are simply absent until a real source supplies
-    // them, and every consumer already guards for that.
-    id: 'id_kikao_hardware',
-    type: 'identity',
-    title: 'Kikao Hardware',
-    category: 'Hardware Supplier',
-    summary: 'Solar and electrical hardware supplier stocking vendor power kits.',
-    locationName: 'Kilimani Hardware Lab',
-    // Matches prd_solar_kit.creatorName exactly -- reusing the string already
-    // in the data rather than inventing a proprietor.
-    creatorName: 'Kikao Hardware',
-    // Trust mirrored from prd_solar_kit, the record that attests to this
-    // seller. Not a second, independently claimed verification event.
-    trustScore: 97,
-    lastVerifiedAt: '2026-08-04T11:00:00Z',
-    validityWindowDays: 90,
-    isVerified: true,
-    // No imageUrl: no existing image depicts this business, and the product
-    // photo would misrepresent a storefront. The UI already guards on it.
-    actionLabel: 'Open Map',
-    actionType: 'map',
-    locationObjectId: 'plc_kilimani_hub',
-    createdAt: '2026-05-10T08:00:00Z'
-  },
-  {
-    // Complementary service for the pack. The object model carries this
-    // cleanly: 'service' already exists and srv_health_inspection is the
-    // precedent. Price, availability and contact are omitted, not guessed.
-    id: 'srv_solar_install',
-    type: 'service',
-    title: 'Solar Pack Installation Support',
-    category: 'Installation',
-    summary: 'Mounting, wiring and handover support for stall solar lighting packs.',
-    locationName: 'Kilimani Hardware Lab',
-    creatorName: 'Kikao Hardware',
-    trustScore: 97,
-    lastVerifiedAt: '2026-08-04T11:00:00Z',
-    validityWindowDays: 90,
-    isVerified: true,
-    actionLabel: 'Book',
-    actionType: 'internal',
-    providerObjectId: 'id_kikao_hardware',
-    locationObjectId: 'plc_kilimani_hub',
-    relatedObjectIds: ['prd_solar_kit'],
-    createdAt: '2026-05-12T08:00:00Z'
-  },
-  {
-    id: 'srv_health_inspection',
-    type: 'service',
-    title: 'Food Safety Premises Inspection',
-    category: 'Inspection',
-    summary: 'Pre-opening food hygiene site visit by county health inspector.',
-    locationName: 'Nairobi CBD',
-    creatorName: 'City Licensing Board',
-    trustScore: 96,
-    lastVerifiedAt: '2026-08-05T09:00:00Z',
-    validityWindowDays: 30,
-    isVerified: true,
-    imageUrl: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=1000&q=80',
-    metadata: {
-      price: 3500,
-      currency: 'KES',
-      statusBadge: 'Bookable Slot',
-      rating: 4.8,
-      reviewsCount: 114
-    },
-    actionLabel: 'Book',
-    actionType: 'internal',
-    providerObjectId: 'id_county_licensing',
-    relatedObjectIds: ['knw_permit_guide'],
-    createdAt: '2026-04-15T08:00:00Z'
-  }
-];
+/**
+ * Brief starts empty.
+ *
+ * This was 338 lines of invented places, events and opportunities -- Maji
+ * Mazuri Market, fabricated permits, fabricated vendors -- rendered as though
+ * they were real local records. They are gone. Objects now come from the
+ * server, which only holds what a connector actually ingested.
+ *
+ * An empty Brief is the correct state for a deployment that has ingested
+ * nothing. The UI already handles it: every surface below has an empty state.
+ */
+const INITIAL_OBJECTS: BriefObject[] = [];
 
-const INITIAL_POSTS: BriefPost[] = [
-  {
-    id: 'post_water_cbd',
-    edition: 'morning',
-    kind: 'notice',
-    title: 'Water rationing on Haile Selassie Ave this week',
-    body: 'County water says supply to the CBD stretch will be cut 09:00-14:00 Tue and Thu. Market traders are advised to fill tanks early. Vendors at Maji Mazuri say they are sharing a bowser.',
-    authorName: 'Nairobi Water Desk',
-    authorHandle: '@nairobiwater',
-    authorIsVerified: true,
-    publishedAt: '2026-08-15T05:40:00Z',
-    reactionsCount: 214,
-    commentsCount: 38,
-    relatedObjectId: 'plc_maji_mazuri',
-    tags: ['utilities', 'cbd']
-  },
-  {
-    id: 'post_matatu_fare',
-    edition: 'morning',
-    kind: 'news',
-    title: 'Matatu fares on Ngong Road drop back to 70 bob',
-    body: 'After two weeks at 100, operators on the Ngong Road route have settled back to 70 during off-peak. Commuters report the change started Thursday evening.',
-    authorName: 'Ma3 Route Watch',
-    authorHandle: '@ma3watch',
-    publishedAt: '2026-08-15T04:15:00Z',
-    reactionsCount: 892,
-    commentsCount: 156,
-    tags: ['transport']
-  },
-  {
-    id: 'post_grant_deadline',
-    edition: 'morning',
-    kind: 'news',
-    title: 'Green Commerce grant closes in 16 days, only 40% of slots claimed',
-    body: 'The innovation fund says applications are running well below capacity this cycle. Solar, zero-waste and organic enterprises are all eligible.',
-    authorName: 'Brief Desk',
-    authorHandle: '@brief',
-    authorIsVerified: true,
-    publishedAt: '2026-08-15T06:05:00Z',
-    reactionsCount: 143,
-    commentsCount: 21,
-    relatedObjectId: 'opp_green_grant',
-    tags: ['funding']
-  },
-  {
-    id: 'post_kikao_promo',
-    edition: 'morning',
-    kind: 'promo',
-    title: 'Solar stall kits at 15% off until Sunday',
-    body: 'Kikao Hardware is clearing 50W panel and battery-box sets ahead of new stock. Fits a standard vendor stall and runs lights plus a phone charging bank.',
-    authorName: 'Kikao Hardware',
-    authorHandle: '@kikaohw',
-    publishedAt: '2026-08-15T05:00:00Z',
-    reactionsCount: 61,
-    commentsCount: 9,
-    isPromoted: true,
-    promotedBy: 'Kikao Hardware',
-    relatedObjectId: 'prd_solar_kit',
-    tags: ['market']
-  },
-  {
-    id: 'post_licensing_queue',
-    edition: 'evening',
-    kind: 'chatter',
-    title: 'Licensing office queue was actually short today',
-    body: 'Went in at 14:00 expecting the usual. Out in 35 minutes with the permit stamped. Whatever they changed at the annex, it is working.',
-    authorName: 'Wanjiru M.',
-    authorHandle: '@wanjiru_m',
-    publishedAt: '2026-08-14T15:30:00Z',
-    reactionsCount: 327,
-    commentsCount: 64,
-    relatedObjectId: 'id_county_licensing',
-    tags: ['permits']
-  },
-  {
-    id: 'post_jeevanjee_music',
-    edition: 'evening',
-    kind: 'chatter',
-    title: 'Someone has been playing sax at Jeevanjee around 18:00',
-    body: 'Third evening running. Small crowd, nobody collecting money, just a guy and a saxophone near the fountain. Best thing about my commute right now.',
-    authorName: 'Otieno K.',
-    authorHandle: '@otieno_k',
-    publishedAt: '2026-08-14T16:10:00Z',
-    reactionsCount: 1204,
-    commentsCount: 187,
-    relatedObjectId: 'plc_jeevanjee',
-    tags: ['culture']
-  },
-  {
-    id: 'post_inspection_tip',
-    edition: 'evening',
-    kind: 'question',
-    title: 'Does the health inspection need the premises fully fitted?',
-    body: 'Booking the food safety visit next week but the counters are not in yet. Anyone done this recently -- do they fail you for that or is a walkthrough enough?',
-    authorName: 'Brian N.',
-    authorHandle: '@brian_nj',
-    publishedAt: '2026-08-14T17:45:00Z',
-    reactionsCount: 88,
-    commentsCount: 42,
-    relatedObjectId: 'srv_health_inspection',
-    tags: ['permits', 'food']
-  },
-  {
-    id: 'post_weekend_market',
-    edition: 'weekend',
-    kind: 'news',
-    title: 'Maji Mazuri opens an extra artisan row on Saturdays',
-    body: 'Twenty additional stalls along the east wall, mostly leather, beadwork and recycled-metal pieces. Runs 08:00 to 16:00 through the end of the year.',
-    authorName: 'City Markets Board',
-    authorHandle: '@citymarkets',
-    authorIsVerified: true,
-    publishedAt: '2026-08-15T03:20:00Z',
-    reactionsCount: 456,
-    commentsCount: 73,
-    relatedObjectId: 'plc_maji_mazuri',
-    tags: ['market', 'weekend']
-  },
-  {
-    id: 'post_youth_forum_seats',
-    edition: 'weekend',
-    kind: 'notice',
-    title: 'Youth forum has 60 seats left for today',
-    body: 'Registration desk opens 08:30 at the Jeevanjee pavilion. Licensing officers are attending the second session, so bring permit questions.',
-    authorName: 'Youth Enterprise Net',
-    authorHandle: '@youthnet',
-    authorIsVerified: true,
-    publishedAt: '2026-08-15T02:50:00Z',
-    reactionsCount: 178,
-    commentsCount: 26,
-    relatedObjectId: 'exp_youth_summit',
-    tags: ['events']
-  },
-  {
-    id: 'post_kilimani_hub_weekend',
-    edition: 'weekend',
-    kind: 'chatter',
-    title: 'Kilimani hub is quiet on Saturdays and nobody seems to know',
-    body: 'Full lab access, no queue for the 3D printers, and the coffee machine actually works. Weekday crowd has no idea what it is missing.',
-    authorName: 'Faith A.',
-    authorHandle: '@faith_codes',
-    publishedAt: '2026-08-15T01:15:00Z',
-    reactionsCount: 634,
-    commentsCount: 91,
-    relatedObjectId: 'plc_kilimani_hub',
-    tags: ['coworking']
-  }
-];
+/**
+ * Maps a server object row onto the client's BriefObject.
+ *
+ * Written as an explicit field-by-field adapter rather than a cast because
+ * the two shapes genuinely differ: the server carries `verificationStatus`
+ * and a nullable `category`, the client carries `isVerified` and a required
+ * one. A cast would paper over that and produce `undefined` in the UI.
+ *
+ * Nothing is invented here. A field the server did not send is left absent,
+ * not defaulted to something plausible.
+ */
+export const objectFromServer = (row: any): BriefObject => ({
+  id: String(row?.id ?? ''),
+  type: (row?.type ?? 'knowledge') as ObjectType,
+  title: String(row?.title ?? 'Untitled'),
+  // The server may hold no category. "Uncategorised" is a statement of
+  // absence, not a guessed classification.
+  category: row?.category ? String(row.category) : 'Uncategorised',
+  summary: String(row?.summary ?? ''),
+  locationName: row?.locationName ?? undefined,
+  isVerified: row?.verificationStatus === 'verified',
+  lastVerifiedAt: row?.lastVerifiedAt ?? undefined,
+  validityWindowDays: row?.validityWindowDays ?? undefined,
+  sourceType: row?.provenance?.[0]?.platform ?? undefined,
+  sourceUrl: row?.provenance?.[0]?.sourceUrl ?? undefined,
+  sourceId: row?.provenance?.[0]?.sourceId ?? undefined,
+  metadata: row?.metadata ?? undefined,
+  createdAt: String(row?.createdAt ?? new Date().toISOString()),
 
-const INITIAL_JOURNEYS: Journey[] = [
-  {
-    id: 'jrn_register_food_biz',
-    title: 'Register & Open Licensed Food Enterprise',
-    category: 'Setup Workflow',
-    description: 'Trackable process linking health clearance, inspection, and permit issuance.',
-    estimatedDays: 5,
-    progressPercent: 50,
-    isCompleted: false,
-    imageUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80',
-    steps: [
-      { id: 'step_1', order: 1, title: 'Review Hygiene Standards', description: 'County sanitation checklist', targetObjectType: 'knowledge', targetObjectId: 'knw_permit_guide', isCompleted: true, statusLabel: 'Verified' },
-      { id: 'step_2', order: 2, title: 'Fill Clearance Form F-12', description: 'Digital health application', targetObjectType: 'document', isCompleted: true, statusLabel: 'Submitted' },
-      { id: 'step_3', order: 3, title: 'Site Hygiene Inspection', description: 'Officer visit booking', targetObjectType: 'service', targetObjectId: 'srv_health_inspection', isCompleted: false, statusLabel: 'Pending' },
-      { id: 'step_4', order: 4, title: 'Green Commerce Grant', description: 'KES 250k seed funding', targetObjectType: 'opportunity', targetObjectId: 'opp_green_grant', isCompleted: false, statusLabel: 'Optional' }
-    ]
-  }
-];
+  // Relationships the server actually recorded. `/api/objects` returns these
+  // as {verb, targetId, target}; the client models the same edges as typed
+  // id fields, so the known verbs are mapped across and anything else falls
+  // into relatedObjectIds rather than being dropped.
+  //
+  // Without this the relationship rails could never populate from real data:
+  // the edges existed server-side and were being discarded on arrival.
+  ...relationshipsFromServer(row?.relationships)
+});
 
-const INITIAL_TOWN_HEALTH: TownHealthMetrics = {
-  opportunitiesActedOn: 184,
-  businessesHelped: 412,
-  eventsAttended: 620,
-  knowledgeResolved: 940,
-  journeysCompleted: 118,
-  communityContributions: 1450,
-  infoFreshnessPct: 97.4
+/** Server relationship verbs -> the client's typed relationship fields. */
+const RELATIONSHIP_VERBS: Record<string, 'locationObjectId' | 'parentObjectId' | 'providerObjectId'> = {
+  located_at: 'locationObjectId',
+  appears_at: 'locationObjectId',
+  part_of: 'parentObjectId',
+  offered_by: 'providerObjectId',
+  provided_by: 'providerObjectId'
 };
 
-const getObjectTypeMeta = (type: ObjectType) => {
+const relationshipsFromServer = (
+  rels: any
+): Pick<BriefObject, 'locationObjectId' | 'parentObjectId' | 'providerObjectId' | 'relatedObjectIds'> => {
+  if (!Array.isArray(rels) || rels.length === 0) return {};
+
+  const out: ReturnType<typeof relationshipsFromServer> = {};
+  const related: string[] = [];
+
+  for (const rel of rels) {
+    const targetId = typeof rel?.targetId === 'string' ? rel.targetId : null;
+    if (!targetId) continue;
+
+    const field = RELATIONSHIP_VERBS[String(rel?.verb ?? '')];
+    if (field) {
+      // First one wins: an object has one location, one parent, one provider.
+      if (!out[field]) out[field] = targetId;
+    } else if (!related.includes(targetId)) {
+      related.push(targetId);
+    }
+  }
+
+  if (related.length > 0) out.relatedObjectIds = related;
+  return out;
+};
+
+/**
+ * Pulse carries no seeded posts.
+ *
+ * This was 147 lines of invented neighbourhood chatter presented as real
+ * local reporting. Brief has no post ingestion pipeline, so the honest state
+ * is empty and the Pulse surfaces say so.
+ */
+const INITIAL_POSTS: BriefPost[] = [];
+
+/**
+ * No seeded journeys. Workflows are user-created; there is no server journey
+ * model yet, so Brief starts with none rather than pretending the user is
+ * midway through a licence application they never began.
+ */
+const INITIAL_JOURNEYS: Journey[] = [];
+
+/**
+ * Derives civic metrics from records Brief actually holds.
+ *
+ * The rule this function exists to enforce:
+ *
+ *     no underlying records -> no number -> honest empty state
+ *
+ * Freshness is genuinely derivable: it is the share of objects carrying a
+ * verification date that has not expired, computed by the same getFreshness()
+ * the cards use. Everything else on the old dashboard -- businesses helped,
+ * events attended, knowledge resolved, community contributions -- would
+ * require outcome tracking Brief does not do. Those are reported as
+ * unavailable with the reason, not filled with a plausible-looking integer.
+ */
+const deriveTownHealth = (
+  objects: BriefObject[],
+  journeys: Journey[],
+  now: Date = new Date()
+): TownHealth => {
+  const dated = objects.filter((o) => getFreshness(o, now) !== null);
+  const fresh = dated.filter((o) => {
+    const f = getFreshness(o, now);
+    return f !== null && f.level !== 'stale';
+  });
+
+  const infoFreshnessPct =
+    dated.length > 0 ? Math.round((fresh.length / dated.length) * 1000) / 10 : null;
+
+  const completedJourneys = journeys.filter((j) => j.isCompleted).length;
+
+  const metrics: CivicMetric[] = [
+    infoFreshnessPct === null
+      ? {
+          label: 'Freshness',
+          available: false,
+          reason: 'No object carries a verification date yet, so freshness cannot be measured.'
+        }
+      : {
+          label: 'Freshness',
+          available: true,
+          value: infoFreshnessPct,
+          unit: '%',
+          caption: `${fresh.length} of ${dated.length} dated objects still within their verification window`
+        },
+    {
+      label: 'Journeys',
+      available: true,
+      value: completedJourneys,
+      caption: completedJourneys === 1 ? 'journey completed' : 'journeys completed'
+    },
+    {
+      label: 'Businesses',
+      available: false,
+      reason: 'Brief does not track business outcomes. Nothing records whether a business was helped.'
+    },
+    {
+      label: 'Events',
+      available: false,
+      reason: 'Attendance is only known for campaigns you run. There is no town-wide attendance record.'
+    },
+    {
+      label: 'Opportunities',
+      available: false,
+      reason: 'Brief does not know whether an opportunity was acted on after you left the app.'
+    },
+    {
+      label: 'Community',
+      available: false,
+      reason: 'Contributions are recorded per Circle. There is no town-wide contribution count.'
+    }
+  ];
+
+  return { metrics, infoFreshnessPct };
+};
+
+export const getObjectTypeMeta = (type: ObjectType) => {
   switch (type) {
     case 'place': return { label: 'Place', icon: <MapPin className="w-3.5 h-3.5" /> };
     case 'identity': return { label: 'Identity', icon: <Building2 className="w-3.5 h-3.5" /> };
@@ -5334,15 +4663,253 @@ const getObjectTypeMeta = (type: ObjectType) => {
 // ============================================================================
 // 3. MAIN COMPONENT
 // ============================================================================
+/**
+ * Reads the campaign slug out of the URL. Brief has no router, and adding one
+ * for a single public route would be a larger change than the feature. A
+ * pathname check is the smallest thing that works.
+ */
+export function campaignSlugFromPath(pathname: string): string | null {
+  const m = /^\/c\/([A-Za-z0-9_-]+)\/?$/.exec(pathname);
+  return m ? m[1] : null;
+}
+
+/**
+ * PUBLIC CAMPAIGN PAGE
+ *
+ * The page a stranger lands on from a shared link. It talks ONLY to the
+ * public endpoints, which return an allow-listed projection: no owner, no
+ * internal ids, no roster, no analytics. Nothing is hidden client-side,
+ * because nothing private is ever fetched.
+ */
+export function PublicCampaignPage({ slug }: { slug: string }) {
+  const [load, setLoad] = useState<{
+    status: 'loading' | 'ready' | 'error';
+    data: ApiPublicCampaign | null;
+    error: string | null;
+  }>({ status: 'loading', data: null, error: null });
+
+  const [name, setName] = useState<string>('');
+  const [contact, setContact] = useState<string>('');
+  const [busy, setBusy] = useState<boolean>(false);
+  const [regError, setRegError] = useState<string | null>(null);
+  const [done, setDone] = useState<null | { status: string }>(null);
+
+  const fetchCampaign = React.useCallback(async () => {
+    setLoad({ status: 'loading', data: null, error: null });
+    const res = await briefApi.getPublicCampaign(slug);
+    if (res.ok) setLoad({ status: 'ready', data: res.data, error: null });
+    else
+      setLoad({
+        status: 'error',
+        data: null,
+        error: res.status === 404 ? 'This campaign is not available.' : res.error
+      });
+  }, [slug]);
+
+  React.useEffect(() => {
+    fetchCampaign();
+  }, [fetchCampaign]);
+
+  const submit = async () => {
+    setBusy(true);
+    setRegError(null);
+    const attendeeRef =
+      contact.trim() !== '' ? contact.trim() : `guest-${Math.random().toString(36).slice(2, 10)}`;
+    const res = await briefApi.registerForCampaign(slug, {
+      attendeeRef,
+      name: name.trim() === '' ? undefined : name.trim(),
+      contact: contact.trim() === '' ? undefined : contact.trim()
+    });
+    setBusy(false);
+    if (!res.ok) {
+      // The backend owns these outcomes: full, closed, already registered.
+      // The page relays the reason rather than guessing at one.
+      setRegError(res.error);
+      // Capacity may have moved underneath us, so re-read the truth.
+      fetchCampaign();
+      return;
+    }
+    setDone({ status: res.data.registration.status });
+    setLoad({ status: 'ready', data: res.data.campaign, error: null });
+  };
+
+  const c = load.data;
+
+  return (
+    <div className="min-h-screen bg-[#09150E] text-[#E2ECE5] font-sans selection:bg-[#00FF42] selection:text-[#09150E] flex flex-col">
+      <div className="flex-1 w-full max-w-lg mx-auto px-4 py-8 space-y-5">
+        <p className="text-[9px] font-mono uppercase tracking-widest text-[#5C6B52]">Brief</p>
+
+        {load.status === 'loading' && (
+          <p className="text-xs text-[#86935C] py-12 text-center">Loading...</p>
+        )}
+
+        {load.status === 'error' && (
+          <div className="border border-[#7A2E2E] bg-[#1A0F0F] rounded-2xl p-5 space-y-2">
+            <p className="text-sm font-extrabold text-[#E2ECE5]">{load.error}</p>
+            <button
+              onClick={fetchCampaign}
+              className="px-3 py-1.5 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-[10px] cursor-pointer"
+            >
+              Try again
+            </button>
+          </div>
+        )}
+
+        {load.status === 'ready' && c && (
+          <>
+            <div className="space-y-2">
+              <p className="text-[9px] font-mono uppercase tracking-widest text-[#00FF42]">
+                {c.type}
+              </p>
+              <h1 className="text-2xl font-extrabold leading-tight">{c.title}</h1>
+              {c.creator && (
+                <p className="text-[11px] text-[#8DCF74] font-extrabold">by {c.creator}</p>
+              )}
+              {c.description && (
+                <p className="text-xs text-[#A9BDA0] leading-relaxed">{c.description}</p>
+              )}
+            </div>
+
+            <div className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-4 space-y-2">
+              {c.startsAt && (
+                <div className="flex items-center gap-2">
+                  <Clock className="w-3.5 h-3.5 text-[#8DCF74] shrink-0" />
+                  <span className="text-xs text-[#E2ECE5]">
+                    {c.startsAt.slice(0, 16).replace('T', ' ')}
+                  </span>
+                </div>
+              )}
+              {c.location && (
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-3.5 h-3.5 text-[#8DCF74] shrink-0" />
+                  <span className="text-xs text-[#E2ECE5]">{c.location}</span>
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <Tag className="w-3.5 h-3.5 text-[#8DCF74] shrink-0" />
+                <span className="text-xs text-[#E2ECE5]">
+                  {c.price === 0 ? 'Free' : `${c.currency} ${c.price.toLocaleString()}`}
+                </span>
+              </div>
+              {c.remaining !== null && (
+                <div className="flex items-center gap-2">
+                  <Users className="w-3.5 h-3.5 text-[#8DCF74] shrink-0" />
+                  <span className="text-xs text-[#E2ECE5]">
+                    {c.soldOut ? 'Full' : `${c.remaining} spots left`}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {done && (
+              <div className="border border-[#235F45] bg-[#102117] rounded-2xl p-5 space-y-2">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-[#00FF42] shrink-0" />
+                  <p className="text-sm font-extrabold text-[#E2ECE5]">
+                    {done.status === 'started' ? "You have a spot held" : "You're registered"}
+                  </p>
+                </div>
+                <p className="text-[11px] text-[#A9BDA0] leading-snug">
+                  {done.status === 'started'
+                    ? 'Your spot is held. It is confirmed once payment is arranged with the organiser.'
+                    : 'The organiser can see you on their list.'}
+                </p>
+              </div>
+            )}
+
+            {!done && (c.status === 'closed' || c.status === 'completed' || c.status === 'cancelled') && (
+              <div className="border border-[#1E3A2A] rounded-2xl p-5">
+                <p className="text-sm font-extrabold text-[#86935C]">
+                  Registration is closed.
+                </p>
+              </div>
+            )}
+
+            {!done && c.soldOut && c.status !== 'closed' && c.status !== 'cancelled' && (
+              <div className="border border-[#1E3A2A] rounded-2xl p-5">
+                <p className="text-sm font-extrabold text-[#C9A227]">This one is full.</p>
+              </div>
+            )}
+
+            {!done &&
+              !c.soldOut &&
+              (c.status === 'published' || c.status === 'live') && (
+                <div className="space-y-3">
+                  {regError && (
+                    <div className="border border-[#7A2E2E] bg-[#1A0F0F] rounded-xl p-3">
+                      <p className="text-[11px] text-[#E2ECE5] break-words">{regError}</p>
+                    </div>
+                  )}
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">
+                      Your name
+                    </label>
+                    <input
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Name"
+                      className="w-full bg-[#102117] text-[#E2ECE5] text-sm rounded-xl px-3 py-3 border border-[#1E3A2A] focus:border-[#00FF42] focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">
+                      Phone or email
+                    </label>
+                    <input
+                      value={contact}
+                      onChange={(e) => setContact(e.target.value)}
+                      placeholder="So the organiser can reach you"
+                      className="w-full bg-[#102117] text-[#E2ECE5] text-sm rounded-xl px-3 py-3 border border-[#1E3A2A] focus:border-[#00FF42] focus:outline-none"
+                    />
+                  </div>
+                  <button
+                    disabled={busy}
+                    onClick={submit}
+                    className="w-full py-4 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-sm cursor-pointer disabled:opacity-40"
+                  >
+                    {busy ? 'Registering...' : c.price === 0 ? 'Register' : `Register - ${c.currency} ${c.price.toLocaleString()}`}
+                  </button>
+                  {c.price > 0 && (
+                    <p className="text-[10px] text-[#5C6B52] leading-snug text-center">
+                      No online payment is connected yet. Your spot is held and you
+                      arrange payment with the organiser.
+                    </p>
+                  )}
+                </div>
+              )}
+          </>
+        )}
+      </div>
+
+      <footer className="border-t border-[#1E3A2A] py-6 text-[10px] text-[#5C6B52] text-center font-mono">
+        Brief
+      </footer>
+    </div>
+  );
+}
+
 export function App() {
+  // Public campaign links open the public page, not the app shell. Checked
+  // once at render: a stranger with a link is not a Brief user.
+  const publicSlug =
+    typeof window !== 'undefined' && window.location
+      ? campaignSlugFromPath(window.location.pathname)
+      : null;
   const [objects, setObjects] = useState<BriefObject[]>(INITIAL_OBJECTS);
   const [journeys, setJourneys] = useState<Journey[]>(INITIAL_JOURNEYS);
-  const [townHealth, setTownHealth] = useState<TownHealthMetrics>(INITIAL_TOWN_HEALTH);
+  // Derived, never stored. Nothing can set a civic metric by hand.
+  const townHealth = useMemo(
+    () => deriveTownHealth(objects, journeys),
+    [objects, journeys]
+  );
 
-  const [relationships, setRelationships] = useState<ObjectRelationship[]>([
-    { id: 'rel_1', sourceType: 'identity', sourceId: 'usr_me', verb: 'discovered', targetType: 'place', targetId: 'plc_maji_mazuri', state: 'discovered', updatedAt: new Date().toISOString() },
-    { id: 'rel_2', sourceType: 'identity', sourceId: 'usr_me', verb: 'engaged_with', targetType: 'knowledge', targetId: 'knw_permit_guide', state: 'engaged', updatedAt: new Date().toISOString() },
-  ]);
+  // My Activity starts empty. The two seeded relationships claimed the user
+  // had "discovered" and "engaged with" specific objects they had never seen
+  // -- a fabricated claim about the person using Brief, and one that pointed
+  // at seed objects that no longer exist. Relationships are created by real
+  // interaction from here on.
+  const [relationships, setRelationships] = useState<ObjectRelationship[]>([]);
 
   const [posts] = useState<BriefPost[]>(INITIAL_POSTS);
   const [likedPostIds, setLikedPostIds] = useState<string[]>([]);
@@ -5374,27 +4941,28 @@ export function App() {
   const [briefItSaved, setBriefItSaved] = useState<string | null>(null);
 
   const refreshConnectors = React.useCallback(async () => {
-    try {
-      const [capRes, srcRes, statRes] = await Promise.all([
-        fetch(`${INGEST_API}/api/capabilities`),
-        fetch(`${INGEST_API}/api/sources`),
-        fetch(`${INGEST_API}/api/status`)
-      ]);
-      if (!capRes.ok || !srcRes.ok) throw new Error('offline');
-      const caps = await capRes.json();
-      const srcs = await srcRes.json();
-      const stats = statRes.ok ? await statRes.json() : null;
-      setConnectorStatus({
-        online: true,
-        checked: true,
-        capabilities: caps,
-        liveSources: srcs.sources ?? [],
-        stats
-      });
-    } catch {
+    // Sources go through briefApi like everything else: one API layer, one
+    // set of response guards. Capabilities/status have no binding yet and
+    // stay inline until they earn one.
+    const [srcRes, capRes, statRes] = await Promise.all([
+      briefApi.getSources(),
+      fetch(`${INGEST_API}/api/capabilities`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+      fetch(`${INGEST_API}/api/status`).then((r) => (r.ok ? r.json() : null)).catch(() => null)
+    ]);
+
+    if (!srcRes.ok) {
       // A dead connector server must never break Brief (spec 30).
       setConnectorStatus((prev) => ({ ...prev, online: false, checked: true }));
+      return;
     }
+
+    setConnectorStatus({
+      online: true,
+      checked: true,
+      capabilities: capRes,
+      liveSources: srcRes.data,
+      stats: statRes
+    });
   }, []);
 
   React.useEffect(() => {
@@ -5403,49 +4971,67 @@ export function App() {
     }
   }, [activeTab, workflowSection, refreshConnectors]);
 
+  // --- Objects from the server ----------------------------------------------
+  // Brief holds no seeded objects. Everything discoverable arrives from the
+  // ingestion pipeline, so this is the only way the stream gets populated.
+  // A failure leaves the list empty and records why, rather than substituting
+  // placeholder content.
+  const [objectsLoad, setObjectsLoad] = useState<{
+    status: 'idle' | 'loading' | 'ready' | 'error';
+    error: string | null;
+  }>({ status: 'idle', error: null });
+
+  const loadObjects = React.useCallback(async () => {
+    setObjectsLoad({ status: 'loading', error: null });
+    const res = await briefApi.getObjects();
+    if (res.ok) {
+      setObjects((res.data as any[]).map(objectFromServer));
+      setObjectsLoad({ status: 'ready', error: null });
+    } else {
+      setObjects([]);
+      setObjectsLoad({ status: 'error', error: res.error });
+    }
+  }, []);
+
+  React.useEffect(() => {
+    void loadObjects();
+  }, [loadObjects]);
+
+
   const runBriefItPreview = async () => {
     if (!briefItText.trim()) return;
     setBriefItBusy(true);
     setBriefItSaved(null);
     try {
-      const res = await fetch(`${INGEST_API}/api/brief-it/preview`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ text: briefItText })
-      });
-      const json = await res.json();
-      setBriefItPreview(json.preview ?? null);
-    } catch {
-      setBriefItPreview({ error: 'Ingestion server unavailable.' });
+      const res = await briefApi.previewBriefIt(briefItText);
+      setBriefItPreview(res.ok ? res.data : { error: res.error });
     } finally {
       setBriefItBusy(false);
     }
   };
 
-  const saveBriefIt = async () => {
+  // Named runBriefItSave, not saveBriefIt: the latter is now the briefApi
+  // binding, and shadowing it would be a trap for the next edit.
+  const runBriefItSave = async () => {
     setBriefItBusy(true);
-    try {
-      const res = await fetch(`${INGEST_API}/api/brief-it/save`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ text: briefItText })
-      });
-      const json = await res.json();
+    const res = await briefApi.saveBriefIt(briefItText);
+    if (res.ok) {
+      const result: any = res.data.result;
       setBriefItSaved(
-        json?.result?.merged
+        result?.merged
           ? 'Merged into an object Brief already had.'
-          : json?.result?.created
+          : result?.created
           ? 'Saved to Brief.'
-          : json?.result?.reason ?? 'Nothing object-worthy found.'
+          : result?.reason ?? 'Nothing object-worthy found.'
       );
       setBriefItPreview(null);
       setBriefItText('');
       void refreshConnectors();
-    } catch {
-      setBriefItSaved('Ingestion server unavailable.');
-    } finally {
-      setBriefItBusy(false);
+      void loadObjects();
+    } else {
+      setBriefItSaved(res.error);
     }
+    setBriefItBusy(false);
   };
 
   // Both navs call this, so selecting a destination behaves identically on
@@ -5486,6 +5072,357 @@ export function App() {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
+
+  // ==========================================================================
+  // CAMPAIGNS (Creator Campaign Desk)
+  //
+  // A campaign is a distribution wrapper over an existing Brief object, so
+  // this is a VIEW over the backend, not a second product. Everything shown
+  // here -- counts, capacity, money -- arrives from the server on each load.
+  // There is deliberately no local mutation of any metric: the only way a
+  // number changes is a refetch. That is what keeps `82 / 100` honest.
+  // ==========================================================================
+
+  // Canonical public origin, from the server. Null until loaded, and null
+  // when the deployment has not configured one -- in which case the UI says
+  // so instead of inventing a URL from the current browser host.
+  const [publicOrigin, setPublicOrigin] = useState<string | null>(null);
+
+  const [campaignState, setCampaignState] = useState<{
+    status: 'idle' | 'loading' | 'ready' | 'error';
+    data: ApiCampaign[] | null;
+    error: string | null;
+  }>({ status: 'idle', data: null, error: null });
+
+  const [openCampaignId, setOpenCampaignId] = useState<string | null>(null);
+  const [campaignDetail, setCampaignDetail] = useState<ApiCampaign | null>(null);
+  const [campaignRegs, setCampaignRegs] = useState<{
+    status: 'idle' | 'loading' | 'ready' | 'error';
+    data: ApiRegistration[] | null;
+    error: string | null;
+  }>({ status: 'idle', data: null, error: null });
+
+  const [campaignBusy, setCampaignBusy] = useState<boolean>(false);
+  const [campaignActionError, setCampaignActionError] = useState<string | null>(null);
+
+  // Create flow. `preview` is a screen, not a stored object: nothing is sent
+  // to the server between 'form' and the user pressing Publish.
+  const [createStep, setCreateStep] = useState<'closed' | 'form' | 'preview' | 'published'>('closed');
+  const [draft, setDraft] = useState<{
+    title: string;
+    type: ApiCampaignType;
+    description: string;
+    location: string;
+    startsAt: string;
+    capacity: string;
+    price: string;
+    circleId: string;
+  }>({
+    title: '',
+    type: 'popup',
+    description: '',
+    location: '',
+    startsAt: '',
+    capacity: '',
+    price: '',
+    circleId: ''
+  });
+  const [publishedCampaign, setPublishedCampaign] = useState<ApiCampaign | null>(null);
+
+  // Attachable existing objects. Loaded only when the creator asks, because
+  // most campaigns are something new and the list is noise until it is wanted.
+  const [objectPicker, setObjectPicker] = useState<{
+    open: boolean;
+    status: 'idle' | 'loading' | 'ready' | 'error';
+    data: any[] | null;
+    error: string | null;
+    selected: { id: string; title: string } | null;
+  }>({ open: false, status: 'idle', data: null, error: null, selected: null });
+
+  const loadAttachableObjects = async () => {
+    setObjectPicker((p) => ({ ...p, open: true, status: 'loading', error: null }));
+    const res = await briefApi.getObjects();
+    if (res.ok) {
+      setObjectPicker((p) => ({ ...p, status: 'ready', data: res.data, error: null }));
+    } else {
+      setObjectPicker((p) => ({ ...p, status: 'error', data: null, error: res.error }));
+    }
+  };
+
+  // Editing an existing draft. Separate from `draft` (the create flow) so a
+  // half-finished new campaign is never confused with an edit in progress.
+  const [editDraft, setEditDraft] = useState<{
+    title: string;
+    description: string;
+    location: string;
+    startsAt: string;
+    price: string;
+    capacity: string;
+  } | null>(null);
+
+  // The Circle a campaign is attached to, if any. Read separately because the
+  // campaign row carries only `circleId`; the target's progress lives on the
+  // Circle and is derived there from settled transactions.
+  const [campaignCircle, setCampaignCircle] = useState<{
+    status: 'idle' | 'loading' | 'ready' | 'error';
+    data: ApiCircleDetail | null;
+    error: string | null;
+  }>({ status: 'idle', data: null, error: null });
+
+  const loadCampaigns = async () => {
+    setCampaignState((prev) => ({ ...prev, status: 'loading', error: null }));
+    // Config is read alongside the list so share links are correct as soon as
+    // a campaign can be shared. A failure here is not fatal: publicOrigin
+    // stays null and the share UI reports that honestly.
+    briefApi.getConfig().then((c) => {
+      if (c.ok) setPublicOrigin(c.data.publicOrigin);
+    });
+    const res = await briefApi.getCampaigns();
+    if (res.ok) {
+      setCampaignState({ status: 'ready', data: res.data, error: null });
+    } else {
+      // No fallback to seeded data. An unreachable server means we say so.
+      setCampaignState({ status: 'error', data: null, error: res.error });
+    }
+  };
+
+  const openCampaign = async (id: string) => {
+    setOpenCampaignId(id);
+    setCampaignDetail(null);
+    setCampaignActionError(null);
+    setCampaignRegs({ status: 'loading', data: null, error: null });
+    const [detail, regs] = await Promise.all([
+      briefApi.getCampaign(id),
+      briefApi.getCampaignRegistrations(id)
+    ]);
+    if (detail.ok) setCampaignDetail(detail.data);
+    else setCampaignActionError(detail.error);
+    if (regs.ok) setCampaignRegs({ status: 'ready', data: regs.data, error: null });
+    else setCampaignRegs({ status: 'error', data: null, error: regs.error });
+
+    // A campaign may be attached to a Circle carrying a Target. The target's
+    // progress is derived on the server from settled transactions -- this only
+    // reads it. Nothing here writes progress.
+    if (detail.ok && detail.data.circleId) {
+      setCampaignCircle({ status: 'loading', data: null, error: null });
+      const circle = await briefApi.getCircle(detail.data.circleId);
+      if (circle.ok) setCampaignCircle({ status: 'ready', data: circle.data, error: null });
+      else setCampaignCircle({ status: 'error', data: null, error: circle.error });
+    } else {
+      setCampaignCircle({ status: 'idle', data: null, error: null });
+    }
+  };
+
+  /**
+   * Save an edit to a draft. Only the fields the server declares writable are
+   * sent. Capacity is included only while the campaign is still a draft,
+   * because the backend rejects it after publication.
+   */
+/**
+   * Attach an existing Brief item to a campaign that already exists.
+   *
+   * The backend has supported this since Phase 7B (PATCH objectId, authorised
+   * by the caller's existing access to the item's source) but nothing in the
+   * UI reached it -- an item could only be linked at create time. Reuses the
+   * same picker as the create flow; adds no new primitive and copies no
+   * object data.
+   */
+  const attachObjectToCampaign = async (campaignId: string, objectId: string) => {
+    setCampaignBusy(true);
+    setCampaignActionError(null);
+    const res = await briefApi.updateCampaign(campaignId, { objectId });
+    setCampaignBusy(false);
+    setObjectPicker((p) => ({ ...p, open: false, selected: null }));
+    if (!res.ok) {
+      setCampaignActionError(res.error);
+      return;
+    }
+    await openCampaign(campaignId);
+    showToast('Item linked');
+  };
+
+  const saveCampaignEdit = async (campaign: ApiCampaign) => {
+    if (!editDraft) return;
+    setCampaignBusy(true);
+    setCampaignActionError(null);
+    const price = editDraft.price.trim() === '' ? 0 : Number(editDraft.price);
+    const capacity = editDraft.capacity.trim() === '' ? null : Number(editDraft.capacity);
+    const res = await briefApi.updateCampaign(campaign.id, {
+      title: editDraft.title.trim(),
+      description: editDraft.description.trim(),
+      location: editDraft.location.trim() === '' ? null : editDraft.location.trim(),
+      startsAt: editDraft.startsAt.trim() === '' ? null : editDraft.startsAt.trim(),
+      price: Number.isFinite(price) ? price : 0,
+      ...(campaign.status === 'draft'
+        ? { capacity: capacity !== null && Number.isFinite(capacity) ? capacity : null }
+        : {})
+    });
+    setCampaignBusy(false);
+    if (!res.ok) {
+      setCampaignActionError(res.error);
+      return;
+    }
+    setCampaignDetail(res.data);
+    setEditDraft(null);
+    loadCampaigns();
+    showToast('Saved');
+  };
+
+  const beginEdit = (c: ApiCampaign) => {
+    setCampaignActionError(null);
+    setEditDraft({
+      title: c.title,
+      description: c.description,
+      location: c.location ?? '',
+      startsAt: c.startsAt ? c.startsAt.slice(0, 16) : '',
+      price: c.price === 0 ? '' : String(c.price),
+      capacity: c.capacity === null ? '' : String(c.capacity)
+    });
+  };
+
+  /** Share uses the platform sheet where it exists, clipboard otherwise. */
+  const shareCampaign = async (campaign: ApiCampaign) => {
+    const link = briefApi.campaignShareLink(campaign.publicSlug, publicOrigin);
+    if (!link.available) {
+      showToast('No public link configured yet');
+      return;
+    }
+    briefApi.shareCampaign(campaign.id, 'native');
+    const url = link.url;
+    const nav = typeof navigator !== 'undefined' ? (navigator as any) : null;
+    if (nav && typeof nav.share === 'function') {
+      try {
+        await nav.share({ title: campaign.title, url });
+        return;
+      } catch {
+        // User dismissed the sheet, or the browser refused. Fall through to
+        // copy rather than reporting a failure they did not cause.
+      }
+    }
+    if (nav && nav.clipboard && typeof nav.clipboard.writeText === 'function') {
+      try {
+        await nav.clipboard.writeText(url);
+        showToast('Link copied');
+        return;
+      } catch {
+        // fall through
+      }
+    }
+    showToast(url);
+  };
+
+  const copyCampaignLink = async (slug: string, campaignId?: string) => {
+    const link = briefApi.campaignShareLink(slug, publicOrigin);
+    if (!link.available) {
+      showToast('No public link configured yet');
+      return;
+    }
+    if (campaignId) briefApi.shareCampaign(campaignId, 'link');
+    const url = link.url;
+    const nav = typeof navigator !== 'undefined' ? (navigator as any) : null;
+    if (nav && nav.clipboard && typeof nav.clipboard.writeText === 'function') {
+      try {
+        await nav.clipboard.writeText(url);
+        showToast('Link copied');
+        return;
+      } catch {
+        // fall through
+      }
+    }
+    showToast(url);
+  };
+
+  const submitDraft = async () => {
+    setCampaignBusy(true);
+    setCampaignActionError(null);
+    const capacity = draft.capacity.trim() === '' ? null : Number(draft.capacity);
+    const price = draft.price.trim() === '' ? 0 : Number(draft.price);
+    const res = await briefApi.createCampaign({
+      title: draft.title.trim(),
+      type: draft.type,
+      description: draft.description.trim(),
+      location: draft.location.trim() === '' ? null : draft.location.trim(),
+      startsAt: draft.startsAt.trim() === '' ? null : draft.startsAt.trim(),
+      capacity: capacity !== null && Number.isFinite(capacity) ? capacity : null,
+      price: Number.isFinite(price) ? price : 0,
+      circleId: draft.circleId === '' ? null : draft.circleId,
+      // Attach an existing item when one was chosen. The server checks
+      // authority and refuses if the creator may not use it.
+      objectId: objectPicker.selected ? objectPicker.selected.id : null
+    });
+    setCampaignBusy(false);
+    if (!res.ok) {
+      setCampaignActionError(res.error);
+      return null;
+    }
+    return res.data;
+  };
+
+  /**
+   * Publish goes through the real transition endpoint. If the server refuses
+   * the transition the campaign stays a draft on screen: there is no local
+   * `status = 'live'` anywhere in this file.
+   */
+  const publishDraft = async () => {
+    const created = await submitDraft();
+    if (!created) return;
+    setCampaignBusy(true);
+    const res = await briefApi.campaignAction(created.id, 'publish');
+    setCampaignBusy(false);
+    if (!res.ok) {
+      setCampaignActionError(res.error);
+      return;
+    }
+    setPublishedCampaign(res.data);
+    setCreateStep('published');
+    loadCampaigns();
+  };
+
+  /**
+   * The organiser confirms money actually arrived for a held spot.
+   *
+   * This does NOT set a registration status from the client. The server
+   * creates a real transaction, settles it through the ordinary ledger state
+   * machine, and promotes the registration off that settled row. The UI then
+   * refetches rather than optimistically patching, so what is displayed is
+   * always what the server derived.
+   */
+  const confirmPayment = async (campaignId: string, registrationId: string) => {
+    setCampaignBusy(true);
+    setCampaignActionError(null);
+    const res = await briefApi.confirmRegistrationPayment(campaignId, registrationId);
+    setCampaignBusy(false);
+    if (!res.ok) {
+      setCampaignActionError(res.error);
+      return;
+    }
+    await openCampaign(campaignId);
+    showToast('Payment confirmed');
+  };
+
+  const setRegStatus = async (
+    campaignId: string,
+    registrationId: string,
+    status: 'checked_in' | 'no_show'
+  ) => {
+    setCampaignBusy(true);
+    const res = await briefApi.setRegistrationStatus(campaignId, registrationId, status);
+    setCampaignBusy(false);
+    if (!res.ok) {
+      setCampaignActionError(res.error);
+      return;
+    }
+    // Refetch instead of patching state: the metrics block must move with it.
+    openCampaign(campaignId);
+  };
+
+  const campaignsLive = (campaignState.data ?? []).filter(
+    (c) => c.status === 'published' || c.status === 'live'
+  );
+  const campaignsDraft = (campaignState.data ?? []).filter((c) => c.status === 'draft');
+  const campaignsPast = (campaignState.data ?? []).filter(
+    (c) => c.status === 'closed' || c.status === 'completed' || c.status === 'cancelled'
+  );
 
   // Card button. Uses the same resolver as the detail view so a given label
   // means the same thing in both places. Anything without a real destination
@@ -5972,11 +5909,63 @@ export function App() {
   const [candidates, setCandidates] = useState<IngestionCandidate[]>([]);
   const [reviewed, setReviewed] = useState<Record<string, CandidateStatus>>({});
 
-  const handleReceiveInbound = () => {
+  // Pulls the real inbound queue: messages as they actually arrived from
+  // connected sources. Brief ships with no sample traffic, so on a system with
+  // nothing connected this correctly finds nothing -- "no new messages" is a
+  // true report about an empty queue, not a UI that failed to load.
+  const [inboundBusy, setInboundBusy] = useState(false);
+
+  const handleReceiveInbound = async () => {
+    setInboundBusy(true);
+    // Only unprocessed messages: anything already turned into an object is not
+    // waiting on a reviewer, and re-parsing it would invite a duplicate.
+    //
+    // Sources are fetched alongside them because a message's channel and
+    // label live on its source row. Reusing whatever happened to be cached
+    // would mean provenance renders only if the user had visited the Sources
+    // panel first -- so a draft would silently lose its origin.
+    const [res, srcRes] = await Promise.all([
+      briefApi.getRawItems({ status: 'pending' }),
+      briefApi.getSources()
+    ]);
+    setInboundBusy(false);
+
+    if (!res.ok) {
+      showToast(`Could not reach the inbox: ${res.error}`);
+      return;
+    }
+
+    const knownSources: any[] = srcRes.ok ? srcRes.data : connectorStatus.liveSources;
+
     const known = new Set(candidates.map((c) => c.message.id));
-    const fresh = INBOUND_FIXTURES.filter((m) => !known.has(m.id)).map((m) =>
-      parseInboundMessage(m, objects)
-    );
+    const CHANNELS: SourceType[] = ['telegram', 'whatsapp', 'web', 'rss', 'api', 'manual'];
+    const sourceFor = (sourceId: string) =>
+      knownSources.find((s: any) => s?.id === sourceId) ?? null;
+    const labelFor = (sourceId: string) => sourceFor(sourceId)?.name ?? sourceId;
+    // The channel is whatever the source says it is. An unrecognised platform
+    // falls back to 'manual' rather than being guessed into a specific network.
+    const channelFor = (sourceId: string): SourceType => {
+      const raw = sourceFor(sourceId);
+      const claimed = (raw?.platform ?? raw?.type ?? '').toLowerCase();
+      return CHANNELS.find((c) => c === claimed) ?? 'manual';
+    };
+
+    const fresh = res.data
+      .filter((item) => !known.has(item.id))
+      .map((item) =>
+        parseInboundMessage(
+          {
+            id: item.id,
+            channel: channelFor(item.sourceId),
+            sourceId: item.sourceId,
+            sourceLabel: labelFor(item.sourceId),
+            text: item.text,
+            receivedAt: item.publishedAt ?? item.retrievedAt ?? item.createdAt ?? new Date().toISOString(),
+            sourceUrl: item.rawUrl ?? undefined
+          },
+          objects
+        )
+      );
 
     if (fresh.length === 0) {
       showToast('No new messages');
@@ -6017,7 +6006,37 @@ export function App() {
   // --- Group intelligence layer ----------------------------------------------
   // Access state is live: revoking a group must immediately remove it and its
   // information, which is why groups are state rather than a constant.
-  const [groups, setGroups] = useState<BriefGroup[]>(ALL_GROUPS);
+  const [groups, setGroups] = useState<ConnectedSource[]>(ALL_GROUPS);
+  // --- Connected sources ----------------------------------------------------
+  // The groups Brief may read. Derived from the server's source rows: a
+  // source with a granted membership is one the user is in, anything else is
+  // only readable if it is public. Access is never assumed.
+  React.useEffect(() => {
+    if (!connectorStatus.online) return;
+    setGroups(
+      connectorStatus.liveSources
+        .filter((src: any) =>
+          src?.platform === 'telegram' || src?.platform === 'whatsapp')
+        .map((src: any): ConnectedSource => ({
+          id: src.id,
+          name: src.name,
+          platform: src.platform === 'telegram' ? 'telegram' : 'whatsapp',
+          description: src.description ?? undefined,
+          // A membership row is the only thing that proves access. Without
+          // one, a private group is not readable and says so.
+          access:
+            src.membership?.accessGranted
+              ? 'member'
+              : src.accessType === 'public'
+              ? 'authorised'
+              : 'pending',
+          // Author retention is the group's decision. The server does not
+          // model it yet, so Brief assumes the privacy-preserving answer.
+          retainAuthors: false,
+          lastActivityAt: src.lastMessageAt ?? undefined
+        }))
+    );
+  }, [connectorStatus.online, connectorStatus.liveSources]);
   const [openGroupId, setOpenGroupId] = useState<string | null>(null);
 
   // The ONLY list any part of the UI may iterate. Everything else is invisible.
@@ -6136,6 +6155,16 @@ export function App() {
   const CURRENT_PLAYER_ID = 'ply_nyabs';
   const [arenaGameId, setArenaGameId] = useState<ArenaGameId>('efootball');
   const [challenges, setChallenges] = useState<ArenaChallenge[]>(ARENA_CHALLENGES);
+
+  // Whether real-money contests are legally available HERE. Fetched from the
+  // server rather than hardcoded, because the answer depends on licensing and
+  // connected payment rails, not on what the UI would like to show.
+  const [arenaMoney, setArenaMoney] = useState<ArenaMoneyStatus | null>(null);
+  useEffect(() => {
+    briefApi.getArenaMoneyStatus().then((r) => {
+      if (r.ok) setArenaMoney(r.data);
+    });
+  }, []);
   const [matches, setMatches] = useState<ArenaMatch[]>([]);
   const [arenaView, setArenaView] = useState<'home' | 'find' | 'player'>('home');
   const [openPlayerId, setOpenPlayerId] = useState<string | null>(null);
@@ -6733,7 +6762,9 @@ export function App() {
           </div>
           <div className="flex items-center gap-2 font-mono text-xs font-extrabold">
             <span className="bg-[#09150E] px-3 py-1.5 rounded-xl border border-[#235F45] text-[#00FF42]">{objects.length} Objects</span>
-            <span className="bg-[#09150E] px-3 py-1.5 rounded-xl border border-[#235F45] text-[#00FF42]">{townHealth.infoFreshnessPct}% Fresh</span>
+            {townHealth.infoFreshnessPct !== null && (
+              <span className="bg-[#09150E] px-3 py-1.5 rounded-xl border border-[#235F45] text-[#00FF42]">{townHealth.infoFreshnessPct}% Fresh</span>
+            )}
           </div>
         </div>
 
@@ -6748,7 +6779,10 @@ export function App() {
                 ['tea', 'Tea'],
                 ['today', `Today${dailyBrief.length > 0 ? ' *' : ''}`],
                 ['pursuits', `Pursuits${pursuits.length > 0 ? ` (${pursuits.length})` : ''}`],
-                ['quests', `Quests${openQuests.length > 0 ? ` (${openQuests.length})` : ''}`]
+                ['quests', `Quests${openQuests.length > 0 ? ` (${openQuests.length})` : ''}`],
+                // Standalone commerce. A SECTION inside Nearby, not a sixth
+                // destination: buying from a local seller is a nearby act.
+                ['market', 'Market']
               ] as [NearbySection, string][]).map(([id, label]) => (
                 <button
                   key={id}
@@ -6774,7 +6808,11 @@ export function App() {
                 ['activity', 'Activity'],
                 ['arena', `Arena${matches.length > 0 ? ` (${matches.length})` : ''}`],
                 ['points', 'Points'],
-                ['groups', `Groups${unansweredQuestions.length > 0 ? ` (${unansweredQuestions.length})` : ''}`]
+                // Circle is the community primitive. "Groups" beside it is
+                // the connected-source reader, not a second community model.
+                ['circles', 'Circles'],
+                ['groups', `Groups${unansweredQuestions.length > 0 ? ` (${unansweredQuestions.length})` : ''}`],
+                ['campaigns', 'Campaigns']
               ] as [MyLayerSection, string][]).map(([id, label]) => (
                 <button
                   key={id}
@@ -6799,7 +6837,11 @@ export function App() {
                 ['active', `Active (${activeJourneys.length})`],
                 ['completed', `Completed (${completedJourneys.length})`],
                 ['inbox', `Inbox${pendingCandidates.length > 0 ? ` (${pendingCandidates.length})` : ''}`],
-                ['sources', 'Sources']
+                ['sources', 'Sources'],
+                // A SECTION inside Workflows, not a sixth destination. The
+                // rail stays five doors wide: Nearby / Arena / My Layer /
+                // Workflows / Pulse.
+                ['money', 'Money']
               ] as [WorkflowSection, string][]).map(([id, label]) => (
                 <button
                   key={id}
@@ -7071,11 +7113,6 @@ export function App() {
                             {getObjectTypeMeta(obj.type).label}
                           </span>
 
-                          {obj.trustScore && (
-                            <span className="text-[10px] font-mono text-[#00FF42]">
-                              {obj.trustScore}% trusted
-                            </span>
-                          )}
                         </div>
 
                         <h3 className="text-base font-extrabold text-[#E2ECE5] group-hover:text-[#00FF42] line-clamp-2">
@@ -7665,231 +7702,14 @@ export function App() {
 
         {/* INTELLIGENCE */}
         {activeTab === 'nearby' && nearbySection === 'quests' && (
-          <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
-            <div>
-              <h2 className="text-lg font-extrabold text-[#E2ECE5]">Quests</h2>
-              <p className="text-[11px] text-[#86935C] leading-snug mt-1">
-                Useful work around you. Points settle when a contribution is
-                accepted, not when it is submitted.
-              </p>
-            </div>
-
-            {/* Wallet. Settled and pending are never added together. */}
-            <div className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-4 space-y-2">
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="text-[10px] uppercase tracking-wider text-[#5C6B52]">
-                  Brief Points
-                </span>
-                <span className="text-lg font-extrabold text-[#00FF42] font-mono">
-                  {myContribution.settledPoints.toLocaleString()}
-                </span>
-              </div>
-              {pendingCount > 0 && (
-                <p className="text-[10px] text-[#C9A227]">
-                  {pendingCount} submitted, awaiting review. Worth nothing yet.
-                </p>
-              )}
-              <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1">
-                <span className="text-[10px] text-[#86935C]">
-                  Rank <span className="text-[#A9BDA0]">{myRank}</span>
-                </span>
-                <span className="text-[10px] text-[#86935C]">
-                  Accepted{' '}
-                  <span className="text-[#A9BDA0]">{myContribution.accepted}</span>
-                </span>
-                <span className="text-[10px] text-[#86935C]">
-                  Accuracy{' '}
-                  <span className="text-[#A9BDA0]">
-                    {typeof getAcceptanceRate(myContribution) === 'number'
-                      ? `${getAcceptanceRate(myContribution)}%`
-                      : 'No reviewed work yet'}
-                  </span>
-                </span>
-              </div>
-              {/* Only ever states a real remaining requirement. */}
-              {nextRank && (
-                <p className="text-[10px] text-[#5C6B52]">
-                  {nextRank.rank} needs {nextRank.needAccepted} more accepted
-                  {nextRank.needRate > 0
-                    ? ` and ${nextRank.needRate}% higher accuracy`
-                    : ''}
-                  .
-                </p>
-              )}
-            </div>
-
-            {/* The pool is stated plainly. No salary comparisons. */}
-            <div className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-4">
-              <p className="text-[10px] uppercase tracking-wider text-[#5C6B52]">
-                Community pool - {COMMUNITY_POOL.periodLabel}
-              </p>
-              <p className="text-base font-extrabold text-[#E2ECE5] font-mono mt-1">
-                KES {COMMUNITY_POOL.totalKes.toLocaleString()}
-              </p>
-              <p className="text-[10px] text-[#86935C] mt-1">
-                KES {getPoolRemaining(COMMUNITY_POOL).toLocaleString()} still to be
-                distributed. {COMMUNITY_POOL.kesPerPoint} KES per point.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#5C6B52] mb-2">
-                Open quests
-              </h3>
-              <div className="space-y-2">
-                {openQuests.map((q) => (
-                  <div
-                    key={q.id}
-                    className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-xs font-extrabold text-[#E2ECE5]">
-                          {q.title}
-                        </p>
-                        {/* Criteria shown up front, never retroactively. */}
-                        <p className="text-[10px] text-[#86935C] mt-1">
-                          Accepted when: {q.acceptanceCriteria}
-                        </p>
-                        <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
-                          {q.locationName && (
-                            <span className="text-[9px] font-mono text-[#5C6B52]">
-                              {q.locationName}
-                              {typeof q.distanceKm === 'number'
-                                ? ` - ${q.distanceKm} km`
-                                : ''}
-                            </span>
-                          )}
-                          {q.expiresAt && (
-                            <span className="text-[9px] font-mono text-[#C9A227]">
-                              closes {q.expiresAt.slice(0, 10)}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="shrink-0 text-right">
-                        <p className="text-xs font-extrabold text-[#00FF42] font-mono">
-                          {q.points}
-                        </p>
-                        <button
-                          onClick={() => handleSubmitQuest(q)}
-                          className="mt-1 px-3 py-1 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-[10px] cursor-pointer"
-                        >
-                          Submit
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Rejections stay visible with their reason. */}
-            {quests.some((q) => q.status === 'rejected') && (
-              <div>
-                <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#5C6B52] mb-2">
-                  Not accepted
-                </h3>
-                <div className="space-y-2">
-                  {quests
-                    .filter((q) => q.status === 'rejected')
-                    .map((q) => (
-                      <div
-                        key={q.id}
-                        className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3"
-                      >
-                        <p className="text-xs text-[#A9BDA0]">{q.title}</p>
-                        <p className="text-[10px] text-[#C9A227] mt-1">
-                          {q.reviewNote} No points awarded.
-                        </p>
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
-
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <button
-                  onClick={() => setBoardMode('contributors')}
-                  className={`px-3 py-1.5 rounded-xl text-[10px] font-extrabold cursor-pointer border ${
-                    boardMode === 'contributors'
-                      ? 'bg-[#00FF42] text-[#09150E] border-[#00FF42]'
-                      : 'bg-[#102117] text-[#8DCF74] border-[#1E3A2A]'
-                  }`}
-                >
-                  Top Contributors
-                </button>
-                <button
-                  onClick={() => setBoardMode('earners')}
-                  className={`px-3 py-1.5 rounded-xl text-[10px] font-extrabold cursor-pointer border ${
-                    boardMode === 'earners'
-                      ? 'bg-[#00FF42] text-[#09150E] border-[#00FF42]'
-                      : 'bg-[#102117] text-[#8DCF74] border-[#1E3A2A]'
-                  }`}
-                >
-                  Top Earners
-                </button>
-              </div>
-              <p className="text-[10px] text-[#86935C] mb-2">
-                {boardMode === 'contributors'
-                  ? 'Ranked by accepted contributions, so volume alone does not win.'
-                  : 'Ranked by settled points.'}
-              </p>
-              <div className="space-y-2">
-                {(boardMode === 'contributors'
-                  ? getTopContributors(PARTICIPANTS)
-                  : getTopEarners(PARTICIPANTS)
-                ).map((person, i) => {
-                  const rate = getAcceptanceRate(person.contribution);
-                  const pct = getPercentile(person, PARTICIPANTS);
-                  return (
-                    <div
-                      key={person.id}
-                      className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3 flex items-center gap-3"
-                    >
-                      <span className="text-[10px] font-mono text-[#5C6B52] w-4 shrink-0">
-                        {i + 1}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-extrabold text-[#E2ECE5]">
-                          {person.displayName}
-                          <span className="ml-2 text-[9px] font-mono uppercase text-[#8DCF74]">
-                            {getBriefRank(person.contribution)}
-                          </span>
-                        </p>
-                        <p className="text-[9px] font-mono text-[#5C6B52] mt-0.5">
-                          {person.locationName} - {person.contribution.accepted} accepted
-                          {typeof rate === 'number' ? ` - ${rate}% accepted` : ''}
-                          {typeof pct === 'number' ? ` - top ${pct}%` : ''}
-                        </p>
-                      </div>
-                      <span className="text-[10px] font-mono text-[#A9BDA0] shrink-0">
-                        {person.contribution.settledPoints.toLocaleString()}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* One redemption surface, in Arena. Rewards used to exist here
-                too, which meant two doors into the same room. */}
-            <div className="border-t border-[#1E3A2A] pt-4">
-              <p className="text-[11px] text-[#86935C]">
-                Redeem points for gift cards and vouchers in Arena.
-              </p>
-              <button
-                onClick={() => {
-                  setActiveTab('arena');
-                  setArenaSection('rewards');
-                }}
-                className="mt-2 px-3 py-1.5 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-[10px] cursor-pointer"
-              >
-                Open Rewards
-              </button>
-            </div>
-          </div>
+          <Quests
+            quests={quests}
+            boardMode={boardMode}
+            setBoardMode={setBoardMode}
+            handleSubmitQuest={handleSubmitQuest}
+            setActiveTab={setActiveTab}
+            setArenaSection={setArenaSection}
+          />
         )}
 
         {activeTab === 'arena' && (
@@ -7900,6 +7720,32 @@ export function App() {
                 Players looking for a game, an opponent or a squad. Not a feed.
               </p>
             </div>
+
+            {/* REAL-MONEY GATE.
+                Entry fees are arranged between players. Brief does not hold,
+                pool or pay out stakes, and says so rather than implying a
+                wallet exists. The requirement list is the server's, so this
+                cannot drift out of sync with what the backend will allow. */}
+            {arenaMoney && !arenaMoney.enabled && (
+              <div className="bg-[#1A1206] border border-[#4A3A12] rounded-2xl p-3">
+                <p className="text-[11px] font-extrabold text-[#C9A227]">
+                  Brief does not handle match money
+                </p>
+                <p className="text-[10px] text-[#86935C] leading-snug mt-1">
+                  Entry fees shown here are arranged directly between players.
+                  Brief holds no stakes and pays out no winnings.
+                </p>
+                <ul className="mt-2 space-y-0.5">
+                  {arenaMoney.requirements
+                    .filter((r) => !r.met)
+                    .map((r) => (
+                      <li key={r.id} className="text-[9px] font-mono text-[#5C6B52]">
+                        - {r.label}
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            )}
 
             {/* Game selection. Arena is game-agnostic; eFootball is only the
                 first entry in the list. */}
@@ -8999,361 +8845,238 @@ export function App() {
           </div>
         )}
 
+        {activeTab === 'mylayer' && myLayerSection === 'circles' && (
+          <div className="max-w-3xl mx-auto px-4 py-6">
+            <Circles />
+          </div>
+        )}
+
+        {activeTab === 'nearby' && nearbySection === 'market' && (
+          <div className="max-w-3xl mx-auto px-4 py-6">
+            <Marketplace />
+          </div>
+        )}
+
         {activeTab === 'mylayer' && myLayerSection === 'groups' && (
+          <ConnectedGroups
+            visibleGroups={visibleGroups}
+            groupIndexes={groupIndexes}
+            openGroup={openGroup}
+            setOpenGroupId={setOpenGroupId}
+            groupIndex={groupIndex}
+            unansweredQuestions={unansweredQuestions}
+            handleRevokeGroup={handleRevokeGroup}
+            handleSaveGroupEntry={handleSaveGroupEntry}
+            handleViewSource={handleViewSource}
+            commandResult={commandResult}
+            setCommandResult={setCommandResult}
+            commandText={commandText}
+            setCommandText={setCommandText}
+            getUnansweredQuestions={getUnansweredQuestions}
+            groupMessages={GROUP_MESSAGES}
+            formatSourceDate={formatSourceDate}
+            handleRunCommand={handleRunCommand}
+            setSelectedObjectForDetail={setSelectedObjectForDetail}
+          />
+        )}
+
+        {activeTab === 'mylayer' && myLayerSection === 'campaigns' && (
           <div className="space-y-4">
 
-            {/* YOUR GROUPS. Only groups this user is a member of or has
-                explicitly authorised. Brief never suggests, discovers or
-                lists groups the user has no relationship with. */}
-            {!openGroup && (
-              <>
-                <div>
-                  <h2 className="text-lg font-extrabold text-[#E2ECE5]">Your Groups</h2>
-                  <p className="text-[11px] text-[#86935C] leading-snug mt-1">
-                    Groups you're a member of where Brief can help organise
-                    information. Brief does not post, promote or message anyone.
-                  </p>
-                </div>
-
-                {visibleGroups.length === 0 && (
-                  <div className="border border-dashed border-[#1E3A2A] rounded-2xl p-8 text-center">
-                    <p className="text-xs text-[#86935C]">No groups connected.</p>
-                  </div>
-                )}
-
-                {visibleGroups.map((group) => {
-                  const entries = groupIndexes[group.id] ?? [];
-                  const open = getUnansweredQuestions(entries);
-                  return (
-                    <div
-                      key={group.id}
-                      className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-4 space-y-2"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="text-sm font-extrabold text-[#E2ECE5]">
-                            {group.name}
-                          </p>
-                          <p className="text-[9px] font-mono uppercase text-[#5C6B52] mt-0.5">
-                            {group.platform} {' '}
-                            {group.access === 'member' ? 'Member' : 'Authorised'}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => {
-                            setOpenGroupId(group.id);
-                            setCommandResult(null);
-                          }}
-                          className="shrink-0 px-3 py-1.5 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-[10px] cursor-pointer"
-                        >
-                          Open
-                        </button>
-                      </div>
-
-                      <div className="flex flex-wrap gap-x-4 gap-y-1">
-                        <span className="text-[10px] text-[#A9BDA0]">
-                          {entries.length} useful items
-                        </span>
-                        {open.length > 0 && (
-                          <span className="text-[10px] text-[#C9A227]">
-                            {open.length} unanswered
-                          </span>
-                        )}
-                        {group.lastActivityAt && (
-                          <span className="text-[10px] font-mono text-[#5C6B52]">
-                            last activity {group.lastActivityAt.slice(0, 10)}
-                          </span>
-                        )}
-                      </div>
-
-                      <button
-                        onClick={() => handleRevokeGroup(group.id)}
-                        className="text-[9px] text-[#5C6B52] underline underline-offset-2 cursor-pointer"
-                      >
-                        Revoke Brief's access
-                      </button>
-                    </div>
-                  );
-                })}
-              </>
-            )}
-
-            {openGroup && (
-              <div>
-                <button
-                  onClick={() => {
-                    setOpenGroupId(null);
-                    setCommandResult(null);
-                  }}
-                  className="text-[10px] text-[#8DCF74] cursor-pointer"
-                >
-                  Back to your groups
-                </button>
-
-                <div className="flex items-center gap-2 mt-2">
-                  <h2 className="text-lg font-extrabold text-[#E2ECE5]">
-                    {openGroup.name}
-                  </h2>
-                  <span className="text-[9px] font-mono uppercase text-[#5C6B52]">
-                    {openGroup.platform} {' '}
-                    {openGroup.access === 'member' ? "You're a member" : 'Authorised'}
-                  </span>
-                </div>
+            {/* CAMPAIGNS. Create something, publish it, share one link, watch
+                who turns up. Every figure below is read from the server. */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h2 className="text-lg font-extrabold text-[#E2ECE5]">Campaigns</h2>
                 <p className="text-[11px] text-[#86935C] leading-snug mt-1">
-                  Brief has organised useful information from this group. It
-                  does not post, promote or message members.
+                  Things you are putting out into the world. Publish once, share
+                  one link, see who registered.
                 </p>
               </div>
-            )}
-
-            {/* Ask Brief. A plain question works; slash commands also work. */}
-            {openGroup && (
-            <>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleRunCommand();
-              }}
-              className="flex gap-2"
-            >
-              <input
-                value={commandText}
-                onChange={(e) => setCommandText(e.target.value)}
-                placeholder="Ask something about this group..."
-                className="flex-1 bg-[#0D1F15] border border-[#1E3A2A] rounded-xl px-3 py-2.5 text-xs font-mono text-[#E2ECE5] placeholder-[#5C6B52] outline-none focus:border-[#235F45]"
-              />
               <button
-                type="submit"
-                className="px-4 py-2.5 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-[11px] cursor-pointer"
+                onClick={() => {
+                  setCampaignActionError(null);
+                  setPublishedCampaign(null);
+                  setDraft({
+                    title: '', type: 'popup', description: '', location: '',
+                    startsAt: '', capacity: '', price: '', circleId: ''
+                  });
+                  setObjectPicker({
+                    open: false, status: 'idle', data: null, error: null, selected: null
+                  });
+                  setCreateStep('form');
+                }}
+                className="shrink-0 px-3 py-2 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-[11px] cursor-pointer flex items-center gap-1"
               >
-                Run
+                <Plus className="w-3.5 h-3.5" />
+                Create
               </button>
-            </form>
-
-            <div className="flex flex-wrap gap-1.5">
-              {['/brief', '/jobs', '/events', '/find solar', '/ask permit'].map((c) => (
-                <button
-                  key={c}
-                  onClick={() => {
-                    setCommandText(c);
-                    handleRunCommand(c);
-                  }}
-                  className="text-[10px] font-mono px-2 py-1 rounded-full bg-[#172D20] border border-[#1E3A2A] text-[#8DCF74] cursor-pointer"
-                >
-                  {c}
-                </button>
-              ))}
             </div>
 
-            {commandResult && (
-              <div className="bg-[#102117] border border-[#235F45] rounded-2xl p-4 space-y-3">
-                <p className="text-[9px] font-mono uppercase text-[#00FF42]">
-                  /{commandResult.command} {commandResult.argument}
-                </p>
+            {campaignState.status === 'idle' && (
+              <button
+                onClick={loadCampaigns}
+                className="w-full border border-[#235F45] rounded-2xl p-4 text-xs font-extrabold text-[#8DCF74] cursor-pointer"
+              >
+                Load my campaigns
+              </button>
+            )}
 
-                {commandResult.brief && (
-                  <div className="space-y-2">
-                    <p className="text-[11px] font-extrabold text-[#E2ECE5]">
-                      This week in the group
-                    </p>
-                    {commandResult.brief.lines.map((line) => (
-                      <div
-                        key={line.messageClass}
-                        className="flex items-baseline justify-between gap-3"
-                      >
-                        <span className="text-[11px] text-[#A9BDA0]">{line.label}</span>
-                        <span className="text-[11px] font-mono text-[#8DCF74]">
-                          {line.count}
-                        </span>
-                      </div>
-                    ))}
-
-                    {commandResult.brief.unanswered.length > 0 && (
-                      <div className="pt-2 border-t border-[#1E3A2A] space-y-1">
-                        <p className="text-[10px] font-bold text-[#C9A227]">
-                          {commandResult.brief.unanswered.length} question
-                          {commandResult.brief.unanswered.length === 1 ? '' : 's'} still waiting
-                        </p>
-                        {commandResult.brief.unanswered.map((q) => (
-                          <p key={q.id} className="text-[10px] text-[#A9BDA0] leading-snug">
-                            {q.originalText}
-                          </p>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {commandResult.fromGroup.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-[10px] font-mono uppercase text-[#5C6B52]">
-                      From this group
-                    </p>
-                    {commandResult.fromGroup.slice(0, 6).map((entry) => (
-                      <div
-                        key={entry.id}
-                        className="bg-[#0D1F15] border border-[#1E3A2A] rounded-xl p-2.5"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-[9px] font-mono uppercase text-[#00FF42]">
-                            {MESSAGE_CLASS_LABELS[entry.messageClass]}
-                          </span>
-                          <span className="text-[9px] font-mono text-[#5C6B52]">
-                            {entry.sentAt.slice(0, 10)}
-                          </span>
-                        </div>
-
-                        {/* The original message, always. Brief's reading of it
-                            never stands in for what was actually said. */}
-                        <p className="text-[11px] text-[#E2ECE5] leading-snug mt-1">
-                          {entry.originalText}
-                        </p>
-
-                        {entry.mediaKind && entry.mediaKind !== 'message' && (
-                          <p className="text-[9px] font-mono uppercase text-[#5C6B52] mt-1">
-                            from {entry.mediaKind}
-                            {entry.mediaAnalysisStatus === 'pending'
-                              ? ' - not read yet'
-                              : ''}
-                          </p>
-                        )}
-
-                        {entry.mediaExtractedText &&
-                          entry.mediaAnalysisStatus === 'processed' && (
-                            <p className="text-[10px] text-[#A9BDA0] leading-snug mt-1 pl-2 border-l-2 border-[#1E3A2A]">
-                              {entry.mediaExtractedText}
-                            </p>
-                          )}
-
-                        {entry.answers.map((a) => (
-                          <p
-                            key={a.messageId}
-                            className="text-[10px] text-[#8DCF74] leading-snug mt-1 pl-2 border-l-2 border-[#235F45]"
-                          >
-                            {a.authorLabel ? `${a.authorLabel}: ` : ''}
-                            {a.text}
-                          </p>
-                        ))}
-
-                        <div className="flex items-center gap-2 mt-1">
-                          {entry.authorLabel && (
-                            <span className="text-[9px] text-[#5C6B52]">
-                              {entry.authorLabel}
-                            </span>
-                          )}
-                          {entry.entities.map((ent) => (
-                            <span
-                              key={ent.field}
-                              className="text-[9px] font-mono text-[#86935C]"
-                            >
-                              {ent.field}: {ent.value}
-                            </span>
-                          ))}
-                        </div>
-
-                        {/* Provenance stays attached to the record, and the
-                            saved copy lands in the user's own layer first. */}
-                        <div className="flex items-center gap-3 pt-2 mt-2 border-t border-[#16301F]">
-                          <button
-                            onClick={() => handleSaveGroupEntry(entry)}
-                            className="text-[9px] font-extrabold text-[#00FF42] cursor-pointer"
-                          >
-                            Save to My Layer
-                          </button>
-                          <button
-                            onClick={() => handleViewSource(entry)}
-                            className="text-[9px] text-[#86935C] underline underline-offset-2 cursor-pointer"
-                          >
-                            View source
-                          </button>
-                          <span className="text-[9px] text-[#5C6B52] ml-auto">
-                            From {openGroup.name}
-                            {' - '}
-                            {formatSourceDate(entry.source.timestamp)}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {commandResult.fromElsewhere.length > 0 && (
-                  <div className="space-y-2">
-                    {/* Deliberately a separate heading: a member must always be
-                        able to tell what their group said from what Brief
-                        knows from somewhere else. */}
-                    <p className="text-[10px] font-mono uppercase text-[#C9A227]">
-                      From your Brief information (not this group)
-                    </p>
-                    {commandResult.fromElsewhere.map((obj) => (
-                      <button
-                        key={obj.id}
-                        onClick={() => setSelectedObjectForDetail(obj)}
-                        className="w-full text-left bg-[#0D1F15] border border-[#1E3A2A] hover:border-[#235F45] rounded-xl p-2.5 cursor-pointer"
-                      >
-                        <span className="text-[9px] font-mono uppercase text-[#5C6B52]">
-                          {getObjectTypeMeta(obj.type).label}
-                        </span>
-                        <p className="text-[11px] font-bold text-[#E2ECE5] mt-0.5">
-                          {obj.title}
-                        </p>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {commandResult.emptyNote && (
-                  <p className="text-[11px] text-[#86935C]">{commandResult.emptyNote}</p>
-                )}
+            {campaignState.status === 'loading' && (
+              <div className="border border-[#1E3A2A] rounded-2xl p-8 text-center">
+                <p className="text-xs text-[#86935C]">Loading campaigns...</p>
               </div>
             )}
 
-            {/* Unanswered questions: groups are terrible at preserving these. */}
-            {unansweredQuestions.length > 0 && (
+            {campaignState.status === 'error' && (
+              <div className="border border-[#7A2E2E] bg-[#1A0F0F] rounded-2xl p-4 space-y-2">
+                <p className="text-xs text-[#E2ECE5] font-extrabold">
+                  Couldn't load campaigns. Try again.
+                </p>
+                <p className="text-[10px] font-mono text-[#A9BDA0] break-words">
+                  {campaignState.error}
+                </p>
+                <button
+                  onClick={loadCampaigns}
+                  className="px-3 py-1.5 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-[10px] cursor-pointer"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+
+            {campaignState.status === 'ready' && (campaignState.data ?? []).length === 0 && (
+              <div className="border border-dashed border-[#1E3A2A] rounded-2xl p-8 text-center">
+                <p className="text-xs text-[#86935C]">You haven't created a campaign yet.</p>
+              </div>
+            )}
+
+            {campaignState.status === 'ready' && campaignsLive.length > 0 && (
               <div className="space-y-2">
-                <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#C9A227]">
-                  {unansweredQuestions.length} questions still waiting
+                <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#5C6B52]">
+                  Live
                 </h3>
-                {unansweredQuestions.map((q) => (
+                {campaignsLive.map((c) => (
                   <div
-                    key={q.id}
-                    className="bg-[#102117] border border-[#1E3A2A] rounded-xl p-3"
+                    key={c.id}
+                    className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-4 space-y-2"
                   >
-                    <p className="text-[11px] text-[#E2ECE5] leading-snug">
-                      {q.originalText}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      {q.authorLabel && (
-                        <span className="text-[9px] text-[#5C6B52]">{q.authorLabel}</span>
-                      )}
-                      <span className="text-[9px] font-mono text-[#5C6B52]">
-                        {q.sentAt.slice(0, 10)}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-extrabold text-[#E2ECE5] truncate">{c.title}</p>
+                        <p className="text-[10px] text-[#A9BDA0] mt-0.5 truncate">
+                          {[c.location, c.startsAt ? c.startsAt.slice(0, 16).replace('T', ' ') : null]
+                            .filter(Boolean)
+                            .join(' \u00b7 ') || 'No place or time set'}
+                        </p>
+                      </div>
+                      <span className="shrink-0 text-[9px] font-mono uppercase text-[#00FF42]">
+                        {c.status}
                       </span>
+                    </div>
+
+                    {/* Capacity is printed from server values only. */}
+                    <div className="flex flex-wrap gap-x-4 gap-y-1">
+                      <span className="text-[11px] font-mono text-[#E2ECE5]">
+                        {c.metrics.slotsTaken}
+                        {c.metrics.capacity === null ? ' registered' : ` / ${c.metrics.capacity}`}
+                      </span>
+                      <span className="text-[11px] font-mono text-[#8DCF74]">
+                        {c.metrics.currency} {c.metrics.revenueSettled.toLocaleString()} settled
+                      </span>
+                      {c.metrics.revenuePending > 0 && (
+                        <span className="text-[11px] font-mono text-[#C9A227]">
+                          {c.metrics.currency} {c.metrics.revenuePending.toLocaleString()} pending
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <button
+                        onClick={() => openCampaign(c.id)}
+                        className="px-3 py-1.5 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-[10px] cursor-pointer"
+                      >
+                        Open
+                      </button>
+                      <button
+                        onClick={() => shareCampaign(c)}
+                        className="px-3 py-1.5 rounded-xl border border-[#235F45] text-[#8DCF74] font-extrabold text-[10px] cursor-pointer flex items-center gap-1"
+                      >
+                        <Share2 className="w-3 h-3" />
+                        Share
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
             )}
 
-            {/* Operational metrics only. No impressions, no engagement. */}
-            <div className="border-t border-[#1E3A2A] pt-4 space-y-2">
-              <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#5C6B52]">
-                Group health
-              </h3>
-              {[
-                ['Messages processed', GROUP_MESSAGES.filter((m) => m.groupId === openGroup.id).length],
-                ['Information extracted', groupIndex.length],
-                ['Questions asked', groupIndex.filter((e) => e.messageClass === 'question').length],
-                ['Questions answered', groupIndex.filter((e) => e.messageClass === 'question' && e.answeredByMessageIds.length > 0).length],
-                ['Still unanswered', unansweredQuestions.length]
-              ].map(([label, value]) => (
-                <div key={String(label)} className="flex items-baseline justify-between gap-3">
-                  <span className="text-[10px] text-[#86935C]">{label}</span>
-                  <span className="text-[10px] font-mono text-[#A9BDA0]">{value}</span>
-                </div>
-              ))}
-            </div>
-            </>
+            {campaignState.status === 'ready' && campaignsDraft.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#5C6B52]">
+                  Drafts
+                </h3>
+                {campaignsDraft.map((c) => (
+                  <div
+                    key={c.id}
+                    className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-4 flex items-center justify-between gap-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-extrabold text-[#E2ECE5] truncate">
+                        {c.title || 'Untitled'}
+                      </p>
+                      <p className="text-[9px] font-mono uppercase text-[#5C6B52] mt-0.5">
+                        {c.type} - not published
+                      </p>
+                    </div>
+                    <div className="shrink-0 flex items-center gap-1.5">
+                      <button
+                        onClick={() => { openCampaign(c.id); beginEdit(c); }}
+                        className="px-3 py-1.5 rounded-xl border border-[#235F45] text-[#8DCF74] font-extrabold text-[10px] cursor-pointer"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        disabled={campaignBusy}
+                        onClick={async () => {
+                          setCampaignBusy(true);
+                          setCampaignActionError(null);
+                          const res = await briefApi.campaignAction(c.id, 'publish');
+                          setCampaignBusy(false);
+                          if (!res.ok) { setCampaignActionError(res.error); showToast(res.error); return; }
+                          loadCampaigns();
+                          showToast('Published');
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
+                      >
+                        Publish
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {campaignState.status === 'ready' && campaignsPast.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#5C6B52]">
+                  Finished
+                </h3>
+                {campaignsPast.map((c) => (
+                  <div
+                    key={c.id}
+                    className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3 flex items-center justify-between gap-3"
+                  >
+                    <p className="text-xs text-[#A9BDA0] truncate">{c.title}</p>
+                    <button
+                      onClick={() => openCampaign(c.id)}
+                      className="shrink-0 text-[10px] text-[#5C6B52] underline underline-offset-2 cursor-pointer"
+                    >
+                      {c.status}
+                    </button>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         )}
@@ -9431,895 +9154,75 @@ export function App() {
           </div>
         )}
 
-        {activeTab === 'workflows' && workflowSection === 'sources' && (
-          <div className="space-y-4">
-            <div>
-              <h2 className="text-lg font-extrabold text-[#E2ECE5]">Sources</h2>
-              <p className="text-[11px] text-[#86935C] leading-snug mt-1">
-                Where Brief receives information from. A channel is not the
-                information -- Brief only keeps what it can structure.
-              </p>
-            </div>
-
-            {/* BRIEF IT (spec 16/17). Paste anything; Brief shows what it
-                found and writes nothing until you choose to save. */}
-            <div className="bg-[#102117] border border-[#235F45] rounded-2xl p-4">
-              <p className="text-[10px] font-mono uppercase text-[#00FF42]">Brief it</p>
-              <p className="text-[11px] text-[#86935C] mt-1 leading-snug">
-                Paste a message, listing or announcement. Brief structures it
-                and shows you the result before anything is saved.
-              </p>
-              <textarea
-                value={briefItText}
-                onChange={(e) => setBriefItText(e.target.value)}
-                rows={4}
-                placeholder="Saturday popup at Kilimani Studio. 12 vendors. KES 300 entry. 4PM-10PM."
-                className="w-full mt-2 bg-[#09150E] border border-[#1E3A2A] rounded-xl p-3 text-xs text-[#E2ECE5] placeholder:text-[#5C6B52]"
-              />
-              <div className="flex items-center gap-2 mt-2">
-                <button
-                  onClick={runBriefItPreview}
-                  disabled={briefItBusy || !briefItText.trim()}
-                  className="px-3 py-1.5 rounded-full text-[11px] font-extrabold bg-[#00FF42] text-[#09150E] cursor-pointer disabled:opacity-40"
-                >
-                  {briefItBusy ? 'Reading...' : 'Brief it'}
-                </button>
-                {briefItPreview && !briefItPreview.error && briefItPreview.worthy && (
-                  <button
-                    onClick={saveBriefIt}
-                    disabled={briefItBusy}
-                    className="px-3 py-1.5 rounded-full text-[11px] font-extrabold bg-[#172D20] text-[#8DCF74] border border-[#235F45] cursor-pointer"
-                  >
-                    Save to Brief
-                  </button>
-                )}
-                {briefItPreview && (
-                  <button
-                    onClick={() => { setBriefItPreview(null); setBriefItSaved(null); }}
-                    className="text-[11px] font-extrabold text-[#86935C] cursor-pointer"
-                  >
-                    Discard
-                  </button>
-                )}
-              </div>
-
-              {briefItSaved && (
-                <p className="text-[11px] text-[#8DCF74] mt-2">{briefItSaved}</p>
-              )}
-
-              {briefItPreview?.error && (
-                <p className="text-[11px] text-[#C9A227] mt-2">{briefItPreview.error}</p>
-              )}
-
-              {briefItPreview && !briefItPreview.error && (
-                <div className="mt-3 bg-[#09150E] border border-[#1E3A2A] rounded-xl p-3">
-                  {!briefItPreview.worthy ? (
-                    <p className="text-[11px] text-[#C9A227]">
-                      Nothing object-worthy found. Brief will not invent a
-                      record from this.
-                    </p>
-                  ) : (
-                    <>
-                      <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#8DCF74]">
-                        Found
-                      </p>
-                      <div className="mt-1.5 space-y-1">
-                        {Object.entries(briefItPreview.fields ?? {}).map(([k, v]) => (
-                          <div key={k} className="flex items-baseline justify-between gap-3">
-                            <span className="text-[10px] font-mono uppercase text-[#5C6B52]">{k}</span>
-                            <span className="text-[11px] text-[#E2ECE5] text-right truncate">
-                              {Array.isArray(v) ? v.join(', ') : String(v)}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                      {(briefItPreview.vendors?.length > 0 || briefItPreview.products?.length > 0) && (
-                        <div className="mt-2 pt-2 border-t border-[#1E3A2A] space-y-0.5">
-                          {briefItPreview.vendors?.map((v: string) => (
-                            <p key={v} className="text-[10px] text-[#8DCF74]">Vendor: {v}</p>
-                          ))}
-                          {briefItPreview.products?.map((pr: any) => (
-                            <p key={pr.name} className="text-[10px] text-[#8DCF74]">
-                              Product: {pr.name} - {pr.currency} {pr.price.toLocaleString()}
-                            </p>
-                          ))}
-                        </div>
-                      )}
-                      <p className="text-[9px] font-mono text-[#5C6B52] mt-2">
-                        Extraction confidence {Math.round((briefItPreview.confidence ?? 0) * 100)}%.
-                        Nothing has been saved yet.
-                      </p>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* CONNECTOR DASHBOARD (spec 25/26/27). Reports what the backend
-                genuinely supports, including what it cannot do. */}
-            <div className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-4">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-[10px] font-mono uppercase text-[#00FF42]">Connectors</p>
-                <button
-                  onClick={() => void refreshConnectors()}
-                  className="text-[10px] font-extrabold text-[#8DCF74] cursor-pointer"
-                >
-                  Refresh
-                </button>
-              </div>
-
-              {!connectorStatus.checked && (
-                <p className="text-[11px] text-[#86935C] mt-2">Checking...</p>
-              )}
-
-              {connectorStatus.checked && !connectorStatus.online && (
-                <p className="text-[11px] text-[#C9A227] mt-2 leading-snug">
-                  Ingestion server not reachable. Brief still works -- only live
-                  connectors are unavailable. Start it with{' '}
-                  <span className="font-mono text-[#8DCF74]">npm start</span> in
-                  the server directory.
-                </p>
-              )}
-
-              {connectorStatus.online && connectorStatus.capabilities && (
-                <>
-                  <div className="mt-2 space-y-2">
-                    {Object.entries(connectorStatus.capabilities).map(([name, cap]: [string, any]) => {
-                      const unsupported = Object.entries(cap).filter(
-                        ([, v]) => typeof v === 'string' && v.startsWith('NO')
-                      );
-                      const configured = cap.configured;
-                      return (
-                        <div key={name} className="bg-[#09150E] border border-[#1E3A2A] rounded-xl p-3">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-xs font-extrabold text-[#E2ECE5] capitalize">{name}</span>
-                            <span
-                              className={`text-[9px] font-extrabold uppercase tracking-wider ${
-                                configured === false ? 'text-[#C9A227]' : 'text-[#00FF42]'
-                              }`}
-                            >
-                              {configured === false ? 'Needs authorization' : 'Available'}
-                            </span>
-                          </div>
-                          {cap.receive && (
-                            <p className="text-[10px] text-[#86935C] mt-1">Receive: {cap.receive}</p>
-                          )}
-                          {/* Failed capabilities are shown, not hidden (spec 27). */}
-                          {unsupported.map(([k, v]) => (
-                            <p key={k} className="text-[10px] text-[#C9A227] mt-0.5">
-                              {k}: {String(v)}
-                            </p>
-                          ))}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {connectorStatus.stats && (
-                    <p className="text-[9px] font-mono text-[#5C6B52] mt-2">
-                      {connectorStatus.stats.rawItems} raw items -{' '}
-                      {connectorStatus.stats.objects} objects -{' '}
-                      {connectorStatus.stats.relationships} links -{' '}
-                      {connectorStatus.stats.errors} errors
-                    </p>
-                  )}
-
-                  {connectorStatus.liveSources.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-[#1E3A2A]">
-                      <p className="text-[9px] font-extrabold uppercase tracking-wider text-[#8DCF74]">
-                        Connected sources
-                      </p>
-                      <div className="mt-1.5 space-y-1">
-                        {connectorStatus.liveSources.map((src: any) => (
-                          <div key={src.id} className="flex items-baseline justify-between gap-3">
-                            <span className="text-[11px] text-[#E2ECE5] truncate">{src.name}</span>
-                            <span className="text-[9px] font-mono text-[#5C6B52] shrink-0">
-                              {src.platform} - {src.itemsProcessed} processed
-                              {src.objectsCreated > 0 ? ` - ${src.objectsCreated} objects` : ''}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-
-            {sources.map((source) => {
-              const health = getSourceHealth(source);
-              const tone =
-                health === 'healthy'
-                  ? 'text-[#00FF42]'
-                  : health === 'error'
-                  ? 'text-[#E06C4F]'
-                  : 'text-[#C9A227]';
-
-              return (
-                <div
-                  key={source.id}
-                  className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-4 space-y-2"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-sm font-extrabold text-[#E2ECE5]">
-                        {source.name}
-                      </p>
-                      <p className="text-[9px] font-mono uppercase text-[#5C6B52] mt-0.5">
-                        {source.type}
-                      </p>
-                    </div>
-                    <span className={`text-[10px] font-bold shrink-0 ${tone}`}>
-                      {getSourceHealthLabel(health)}
-                    </span>
-                  </div>
-
-                  {source.description && (
-                    <p className="text-[10px] text-[#86935C] leading-snug">
-                      {source.description}
-                    </p>
-                  )}
-
-                  <div className="flex items-center gap-4 pt-1">
-                    <span className="text-[9px] font-mono text-[#5C6B52]">
-                      {source.ingestionCount} received
-                    </span>
-                    {source.lastSuccessfulIngestionAt && (
-                      <span className="text-[9px] font-mono text-[#5C6B52]">
-                        last {source.lastSuccessfulIngestionAt.slice(0, 10)}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+        {activeTab === 'workflows' && workflowSection === 'money' && (
+          <div className="max-w-3xl mx-auto px-4 py-6">
+            <MoneyPanel />
           </div>
+        )}
+
+        {activeTab === 'workflows' && workflowSection === 'sources' && (
+          <SourcesPanel
+            connectorStatus={connectorStatus}
+            sources={sources}
+            objects={objects}
+            briefItText={briefItText}
+            setBriefItText={setBriefItText}
+            briefItPreview={briefItPreview}
+            briefItBusy={briefItBusy}
+            briefItSaved={briefItSaved}
+            setBriefItPreview={setBriefItPreview}
+            setBriefItSaved={setBriefItSaved}
+            runBriefItPreview={runBriefItPreview}
+            runBriefItSave={runBriefItSave}
+            refreshConnectors={refreshConnectors}
+            getSourceHealth={getSourceHealth}
+            getSourceHealthLabel={getSourceHealthLabel}
+          />
         )}
 
         {activeTab === 'nearby' && nearbySection === 'pursuits' && (
-          <div className="space-y-4">
-
-            <div>
-              <h2 className="text-lg font-extrabold text-[#E2ECE5]">Pursuits</h2>
-              <p className="text-[11px] text-[#86935C] leading-snug mt-1">
-                Things you have asked Brief to find or keep an eye on. Brief
-                searches only what it already holds, so results grow as more
-                information arrives.
-              </p>
-            </div>
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleCreatePursuit(pursuitDraft);
-                setPursuitDraft('');
-              }}
-              className="flex gap-2"
-            >
-              <input
-                value={pursuitDraft}
-                onChange={(e) => setPursuitDraft(e.target.value)}
-                placeholder="find a plumber near me"
-                className="flex-1 bg-[#0D1F15] border border-[#1E3A2A] rounded-xl px-3 py-2.5 text-xs text-[#E2ECE5] placeholder-[#5C6B52] outline-none focus:border-[#235F45]"
-              />
-              <button
-                type="submit"
-                className="px-4 py-2.5 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-[11px] cursor-pointer"
-              >
-                Pursue
-              </button>
-            </form>
-
-            {pursuits.length === 0 && (
-              <div className="border border-dashed border-[#1E3A2A] rounded-2xl p-8 text-center">
-                <p className="text-xs text-[#86935C]">Nothing being pursued yet.</p>
-                <p className="text-[10px] text-[#5C6B52] mt-1">
-                  Ask for something above, or start one from any object.
-                </p>
-              </div>
-            )}
-
-            {pursuits.map((pursuit) => {
-              const results = pursuitResults[pursuit.id] ?? [];
-              const dormant =
-                pursuit.status === 'completed' || pursuit.status === 'archived';
-
-              return (
-                <div
-                  key={pursuit.id}
-                  className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-4 space-y-3"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-sm font-extrabold text-[#E2ECE5] leading-snug">
-                        {pursuit.query}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[9px] font-mono uppercase text-[#86935C]">
-                          {pursuit.status}
-                        </span>
-                        {pursuit.watchChanges && (
-                          <span className="text-[9px] font-mono uppercase text-[#00FF42]">
-                            watching
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => handleRemovePursuit(pursuit.id)}
-                      title="Remove pursuit"
-                      className="shrink-0 p-2 rounded-xl bg-[#172D20] text-[#8DCF74] border border-[#1E3A2A] hover:border-[#00FF42] cursor-pointer"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-
-                  {!dormant && (
-                    <>
-                      <p className="text-[10px] font-mono uppercase text-[#5C6B52]">
-                        {results.length > 0
-                          ? `${results.length} match${results.length === 1 ? '' : 'es'} in Brief`
-                          : 'Nothing matching yet'}
-                      </p>
-
-                      {/* Saying "I don't know yet" is a feature, not a
-                          failure state. Brief never pads this with guesses. */}
-                      {results.length === 0 && (
-                        <div className="space-y-2">
-                          <p className="text-[11px] font-bold text-[#A9BDA0]">
-                            Nothing useful yet.
-                          </p>
-                          <p className="text-[10px] text-[#86935C] leading-snug">
-                            Keep this pursuit open and Brief can match new
-                            information later.
-                          </p>
-                          {!pursuit.watchChanges && (
-                            <button
-                              onClick={() => handleTogglePursuitWatch(pursuit.id)}
-                              className="px-3 py-1.5 rounded-full bg-[#172D20] border border-[#235F45] text-[#8DCF74] font-extrabold text-[10px] cursor-pointer"
-                            >
-                              Keep watching
-                            </button>
-                          )}
-                        </div>
-                      )}
-
-                      {results.length > 0 && (
-                        <div className="space-y-1.5">
-                          {results.slice(0, 4).map((match) => {
-                            const distance = getDistanceLabel(match.item);
-                            return (
-                              <button
-                                key={match.item.id}
-                                onClick={() => setSelectedObjectForDetail(match.item)}
-                                className="w-full text-left bg-[#0D1F15] border border-[#1E3A2A] hover:border-[#235F45] rounded-xl p-2.5 cursor-pointer transition"
-                              >
-                                <div className="flex items-center justify-between gap-2">
-                                  <span className="text-[9px] font-mono uppercase text-[#5C6B52]">
-                                    {getObjectTypeMeta(match.item.type).label}
-                                  </span>
-                                  {distance && (
-                                    <span className="text-[9px] font-mono text-[#86935C]">
-                                      {distance}
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-[11px] font-bold text-[#E2ECE5] leading-snug mt-0.5">
-                                  {match.item.title}
-                                </p>
-                                {match.item.metadata?.statusBadge && (
-                                  <p className="text-[9px] text-[#8DCF74] mt-0.5">
-                                    {match.item.metadata.statusBadge}
-                                  </p>
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {(['active', 'paused', 'completed', 'archived'] as PursuitStatus[]).map(
-                      (status) => (
-                        <button
-                          key={status}
-                          onClick={() => handleSetPursuitStatus(pursuit.id, status)}
-                          className={`text-[9px] font-bold px-2 py-0.5 rounded-full border cursor-pointer transition ${
-                            pursuit.status === status
-                              ? 'bg-[#00FF42] text-[#09150E] border-[#00FF42]'
-                              : 'bg-transparent text-[#5C6B52] border-[#1E3A2A] hover:border-[#235F45]'
-                          }`}
-                        >
-                          {status}
-                        </button>
-                      )
-                    )}
-
-                    <button
-                      onClick={() => handleTogglePursuitWatch(pursuit.id)}
-                      className={`text-[9px] font-bold px-2 py-0.5 rounded-full border cursor-pointer transition ${
-                        pursuit.watchChanges
-                          ? 'bg-[#172D20] text-[#00FF42] border-[#235F45]'
-                          : 'bg-transparent text-[#5C6B52] border-[#1E3A2A] hover:border-[#235F45]'
-                      }`}
-                    >
-                      watch changes
-                    </button>
-                  </div>
-
-                  {/* Which changes matter (prompt 5). Model + matching only --
-                      nothing is monitoring in the background yet. */}
-                  {pursuit.watchChanges && (
-                    <div className="space-y-1.5 pt-1">
-                      <p className="text-[9px] font-mono uppercase text-[#5C6B52]">
-                        Tell me about
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {(Object.keys(WATCH_CONDITION_LABELS) as WatchCondition[]).map(
-                          (condition) => {
-                            const on = (pursuit.watchConditions ?? []).includes(
-                              condition
-                            );
-                            return (
-                              <button
-                                key={condition}
-                                onClick={() =>
-                                  handleTogglePursuitCondition(pursuit.id, condition)
-                                }
-                                className={`text-[9px] font-bold px-2 py-0.5 rounded-full border cursor-pointer transition ${
-                                  on
-                                    ? 'bg-[#172D20] text-[#00FF42] border-[#235F45]'
-                                    : 'bg-transparent text-[#5C6B52] border-[#1E3A2A] hover:border-[#235F45]'
-                                }`}
-                              >
-                                {WATCH_CONDITION_LABELS[condition]}
-                              </button>
-                            );
-                          }
-                        )}
-                      </div>
-                      <p className="text-[9px] text-[#5C6B52]">
-                        Alerts are not live yet. Brief records what matters to you.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          <Pursuits
+            pursuits={pursuits}
+            pursuitResults={pursuitResults}
+            pursuitDraft={pursuitDraft}
+            setPursuitDraft={setPursuitDraft}
+            handleCreatePursuit={handleCreatePursuit}
+            handleRemovePursuit={handleRemovePursuit}
+            handleSetPursuitStatus={handleSetPursuitStatus}
+            handleTogglePursuitWatch={handleTogglePursuitWatch}
+            handleTogglePursuitCondition={handleTogglePursuitCondition}
+            setSelectedObjectForDetail={setSelectedObjectForDetail}
+          />
         )}
 
         {activeTab === 'workflows' && workflowSection === 'inbox' && (
-          <div className="space-y-4">
-
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <h2 className="text-lg font-extrabold text-[#E2ECE5]">Inbox</h2>
-                <p className="text-[11px] text-[#86935C] leading-snug mt-1">
-                  Messages from connected sources, parsed into draft objects.
-                  Nothing here is in Brief until you publish it.
-                </p>
-              </div>
-
-              <button
-                onClick={handleReceiveInbound}
-                className="shrink-0 px-3 py-2 rounded-xl bg-[#172D20] border border-[#235F45] text-[#8DCF74] font-extrabold text-[11px] cursor-pointer"
-              >
-                Fetch messages
-              </button>
-            </div>
-
-            {pendingCandidates.length === 0 && (
-              <div className="border border-dashed border-[#1E3A2A] rounded-2xl p-8 text-center">
-                <p className="text-xs text-[#86935C]">
-                  No messages awaiting review.
-                </p>
-                <p className="text-[10px] text-[#5C6B52] mt-1">
-                  Connected sources appear here as drafts, never as published objects.
-                </p>
-              </div>
-            )}
-
-            {pendingCandidates.map((candidate) => {
-              const confidencePct = Math.round(candidate.confidence * 100);
-              const lowConfidence = candidate.confidence < 0.5;
-
-              return (
-                <div
-                  key={candidate.id}
-                  className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-4 space-y-3"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[9px] font-mono uppercase text-[#86935C] truncate">
-                      {candidate.message.sourceLabel}
-                    </span>
-                    <span
-                      className={`text-[9px] font-mono shrink-0 ${
-                        lowConfidence ? 'text-[#C9A227]' : 'text-[#8DCF74]'
-                      }`}
-                    >
-                      {confidencePct}% parsed
-                    </span>
-                  </div>
-
-                  {/* The raw message, always visible next to what was made of it. */}
-                  <p className="text-[11px] text-[#5C6B52] italic leading-snug border-l-2 border-[#1E3A2A] pl-2">
-                    {candidate.message.text}
-                  </p>
-
-                  <div>
-                    <p className="text-[9px] font-mono uppercase text-[#00FF42]">
-                      {candidate.typeConfident
-                        ? getObjectTypeMeta(candidate.draft.type).label
-                        : 'Type unclear'}
-                    </p>
-                    <p className="text-sm font-extrabold text-[#E2ECE5] leading-snug mt-0.5">
-                      {candidate.draft.title}
-                    </p>
-                  </div>
-
-                  {candidate.extracted.length > 0 && (
-                    <div className="space-y-1">
-                      {candidate.extracted
-                        .filter((f) => f.field !== 'title')
-                        .map((f) => (
-                          <div
-                            key={f.field}
-                            className="flex items-baseline justify-between gap-3"
-                          >
-                            <span className="text-[10px] text-[#86935C] shrink-0">
-                              {f.field}
-                            </span>
-                            <span className="text-[10px] font-mono text-[#A9BDA0] truncate">
-                              {f.value}
-                            </span>
-                          </div>
-                        ))}
-                    </div>
-                  )}
-
-                  {candidate.suggestedLinks.length > 0 && (
-                    <div className="space-y-1">
-                      <p className="text-[9px] font-mono uppercase text-[#5C6B52]">
-                        Connects to
-                      </p>
-                      {candidate.suggestedLinks.map((link) => (
-                        <p
-                          key={link.objectId + link.relation}
-                          className="text-[10px] text-[#8DCF74]"
-                        >
-                          {link.why}
-                        </p>
-                      ))}
-                    </div>
-                  )}
-
-                  {candidate.warnings.map((w) => (
-                    <p key={w} className="text-[10px] text-[#C9A227]">
-                      {w}
-                    </p>
-                  ))}
-
-                  {candidate.duplicates.length > 0 && (
-                    <div className="border border-[#3A3416] bg-[#1A1708] rounded-xl p-2 space-y-0.5">
-                      <p className="text-[9px] font-mono uppercase text-[#C9A227]">
-                        Possible duplicate
-                      </p>
-                      {candidate.duplicates.slice(0, 2).map((d) => (
-                        <p key={d.item.id} className="text-[10px] text-[#A9BDA0]">
-                          {d.item.title} ({Math.round(d.similarity * 100)}% similar)
-                        </p>
-                      ))}
-                    </div>
-                  )}
-
-                  <p className="text-[9px] font-mono text-[#5C6B52]">
-                    Unverified. No trust score until reviewed.
-                  </p>
-
-                  <div className="flex gap-2 pt-1">
-                    <button
-                      onClick={() => handleRejectCandidate(candidate)}
-                      className="flex-1 py-2 rounded-xl bg-[#0D1F15] border border-[#1E3A2A] text-[#86935C] font-bold text-[11px] cursor-pointer"
-                    >
-                      Discard
-                    </button>
-                    <button
-                      onClick={() => handleAcceptCandidate(candidate)}
-                      className="flex-[2] py-2 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-[11px] cursor-pointer"
-                    >
-                      Publish to Brief
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <Inbox
+            pendingCandidates={pendingCandidates}
+            reviewed={reviewed}
+            objects={objects}
+            sources={sources}
+            handleAcceptCandidate={handleAcceptCandidate}
+            handleRejectCandidate={handleRejectCandidate}
+            handleReceiveInbound={handleReceiveInbound}
+            inboundBusy={inboundBusy}
+          />
         )}
 
         {activeTab === 'pulse' && (
-          <section className="space-y-5">
-            {/* PULSE. The information layer: what is fresh, what is local,
-                what the user's own groups are surfacing, and what the numbers
-                say. Deliberately not framed as an assistant -- no chat, no
-                model branding, no "AI" language. It answers "what is worth
-                knowing?", and every item traces back to a real source. */}
-            <div className="bg-[#102117] border border-[#235F45] rounded-2xl p-5">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="w-4 h-4 text-[#00FF42]" />
-                <span className="text-[10px] font-mono uppercase text-[#00FF42]">
-                  Pulse
-                </span>
-              </div>
-
-              <h2 className="text-xl font-extrabold">
-                What's changing around you.
-              </h2>
-
-              <p className="text-xs text-[#8DCF74] mt-1">
-                {pulseSection === 'now'
-                  ? 'The most recent things people have reported.'
-                  : pulseSection === 'local'
-                  ? 'Notices and updates about this area.'
-                  : pulseSection === 'groups'
-                  ? 'What the groups you are in are surfacing.'
-                  : 'How complete and current the local information layer is.'}
-              </p>
-            </div>
-
-            {/* NOW. Freshest first. */}
-            {pulseSection === 'now' && (
-              <div className="space-y-2">
-                {pulseNow.length === 0 && (
-                  <p className="text-xs text-[#86935C]">
-                    Nothing new has been reported yet today.
-                  </p>
-                )}
-                {pulseNow.map((post) => {
-                  const related = post.relatedObjectId
-                    ? objects.find((obj) => obj.id === post.relatedObjectId)
-                    : undefined;
-                  return (
-                    <div
-                      key={post.id}
-                      className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-4"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="text-[9px] font-extrabold uppercase tracking-wider text-[#00FF42]">
-                          {post.kind}
-                        </span>
-                        <span className="text-[9px] font-mono text-[#5C6B52]">
-                          {formatSourceDate(post.publishedAt)}
-                        </span>
-                        {post.isPromoted && (
-                          <span className="text-[9px] font-extrabold uppercase text-[#C9A227]">
-                            Promoted{post.promotedBy ? ` - ${post.promotedBy}` : ''}
-                          </span>
-                        )}
-                      </div>
-
-                      <p className="text-sm font-extrabold text-[#E2ECE5] mt-1">
-                        {post.title}
-                      </p>
-
-                      <p className="text-[11px] text-[#86935C] mt-1 leading-snug">
-                        {post.body}
-                      </p>
-
-                      <p className="text-[9px] font-mono text-[#5C6B52] mt-2">
-                        Reported by {post.authorName}
-                        {post.authorIsVerified ? ' (verified)' : ''}
-                      </p>
-
-                      {/* Exploration happens through relationships, not new
-                          categories: Pulse hands you back to the object. */}
-                      {related && (
-                        <button
-                          onClick={() => setSelectedObjectForDetail(related)}
-                          className="text-[10px] font-extrabold text-[#00FF42] mt-2 cursor-pointer"
-                        >
-                          Open {related.title}
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* LOCAL. Notices and news tied to this place, plus destinations
-                that are genuinely on today -- Pulse answers "what is worth
-                knowing", and something happening a kilometre away qualifies. */}
-            {pulseSection === 'local' && (
-              <div className="space-y-2">
-                <p className="text-[10px] font-mono uppercase text-[#5C6B52]">
-                  {selectedLocation}
-                </p>
-
-                {(() => {
-                  const live = objects.filter((obj) => {
-                    if (!isDestinationObject(obj)) return false;
-                    const state = getDestinationState(obj);
-                    return state === 'live' || state === 'today';
-                  });
-                  if (live.length === 0) return null;
-                  return (
-                    <div className="bg-[#102117] border border-[#235F45] rounded-2xl p-4">
-                      <p className="text-[9px] font-extrabold uppercase tracking-wider text-[#8DCF74]">
-                        On today
-                      </p>
-                      <div className="mt-2 space-y-1.5">
-                        {live.map((obj) => {
-                          const vendors = getDestinationVendors(obj, objects);
-                          return (
-                            <button
-                              key={obj.id}
-                              onClick={() => setSelectedObjectForDetail(obj)}
-                              className="w-full text-left cursor-pointer"
-                            >
-                              <span className="block text-xs text-[#E2ECE5]">
-                                {obj.title}
-                              </span>
-                              <span className="block text-[9px] font-mono text-[#5C6B52]">
-                                {obj.locationName}
-                                {vendors.length > 0
-                                  ? ` - ${vendors.length} vendor${
-                                      vendors.length === 1 ? '' : 's'
-                                    }`
-                                  : ''}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })()}
-                {pulseNotices.length === 0 && (
-                  <p className="text-xs text-[#86935C]">
-                    No notices for this area right now.
-                  </p>
-                )}
-                {pulseNotices.map((post) => (
-                  <div
-                    key={post.id}
-                    className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-4"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="text-[9px] font-extrabold uppercase tracking-wider text-[#00FF42]">
-                        {post.kind}
-                      </span>
-                      <span className="text-[9px] font-mono text-[#5C6B52]">
-                        {formatSourceDate(post.publishedAt)}
-                      </span>
-                    </div>
-                    <p className="text-sm font-extrabold text-[#E2ECE5] mt-1">
-                      {post.title}
-                    </p>
-                    <p className="text-[11px] text-[#86935C] mt-1 leading-snug">
-                      {post.body}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* GROUPS. Only groups the user already belongs to. Brief has not
-                joined, posted to, or claimed ownership of any of them. */}
-            {pulseSection === 'groups' && (
-              <div className="space-y-2">
-                {pulseGroupSignals.length === 0 && (
-                  <p className="text-xs text-[#86935C]">
-                    Nothing recent from your groups. Brief only reads groups you
-                    have connected yourself.
-                  </p>
-                )}
-                {pulseGroupSignals.map((sig) => (
-                  <div
-                    key={sig.id}
-                    className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-4"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Users className="w-3.5 h-3.5 text-[#00FF42] shrink-0" />
-                      <p className="text-xs font-extrabold text-[#E2ECE5]">
-                        {sig.groupName}
-                      </p>
-                    </div>
-                    <p className="text-[11px] text-[#86935C] mt-1 leading-snug">
-                      {sig.text}
-                    </p>
-                    <p className="text-[9px] font-mono text-[#5C6B52] mt-1">
-                      Shared in this group on {formatSourceDate(sig.at)}. Brief has
-                      not posted anything.
-                    </p>
-                  </div>
-                ))}
-                {pulseGroupSignals.length > 0 && (
-                  <button
-                    onClick={() => {
-                      setActiveTab('mylayer');
-                      setMyLayerSection('groups');
-                    }}
-                    className="text-[10px] font-extrabold text-[#00FF42] cursor-pointer"
-                  >
-                    Manage your groups
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* SIGNALS. The measured state of the information layer. */}
-            {pulseSection === 'signals' && (
-              <>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {[
-                    ['Freshness', `${townHealth.infoFreshnessPct}%`, 'Information freshness'],
-                    ['Businesses', townHealth.businessesHelped, 'Businesses helped'],
-                    ['Events', townHealth.eventsAttended, 'Events attended'],
-                    ['Opportunities', townHealth.opportunitiesActedOn, 'Acted on'],
-                    ['Knowledge', townHealth.knowledgeResolved, 'Questions resolved'],
-                    ['Community', townHealth.communityContributions, 'Contributions'],
-                  ].map(([label, value, caption]) => (
-                    <div
-                      key={label}
-                      className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-4"
-                    >
-                      <p className="text-[10px] uppercase font-mono text-[#86935C]">
-                        {label}
-                      </p>
-
-                      <p className="text-2xl font-extrabold text-[#00FF42] mt-1">
-                        {value}
-                      </p>
-
-                      <p className="text-[10px] text-[#8DCF74] mt-1">
-                        {caption}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-5">
-                  <p className="text-sm font-bold">
-                    {townHealth.infoFreshnessPct}% of the local information layer
-                    is currently marked fresh.
-                  </p>
-                  <p className="text-xs text-[#86935C] mt-1">
-                    Freshness falls as things go unchecked. It rises when someone
-                    verifies a place, closes a question or corrects a listing.
-                  </p>
-                </div>
-
-                {pulseRecentlyVerified.length > 0 && (
-                  <div>
-                    <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#5C6B52] mb-2">
-                      Recently verified
-                    </h3>
-                    <div className="space-y-2">
-                      {pulseRecentlyVerified.map((obj) => (
-                        <button
-                          key={obj.id}
-                          onClick={() => setSelectedObjectForDetail(obj)}
-                          className="w-full text-left bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3 cursor-pointer"
-                        >
-                          <p className="text-xs text-[#E2ECE5]">{obj.title}</p>
-                          <p className="text-[9px] font-mono text-[#5C6B52] mt-0.5">
-                            {obj.category} - verified{' '}
-                            {obj.lastVerifiedAt
-                              ? formatSourceDate(obj.lastVerifiedAt)
-                              : 'recently'}
-                          </p>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </section>
+          <Pulse
+            pulseSection={pulseSection}
+            townHealth={townHealth}
+            pulseNow={pulseNow}
+            pulseNotices={pulseNotices}
+            pulseRecentlyVerified={pulseRecentlyVerified}
+            pulseGroupSignals={pulseGroupSignals}
+            objects={objects}
+            setActiveTab={setActiveTab}
+            setMyLayerSection={setMyLayerSection}
+            setSelectedObjectForDetail={setSelectedObjectForDetail}
+            formatSourceDate={formatSourceDate}
+            selectedLocation={selectedLocation}
+          />
         )}
 
         </main>
@@ -10356,6 +9259,853 @@ export function App() {
           );
         })}
       </nav>
+
+      {/* CAMPAIGN DASHBOARD. Every number is server-derived. Where the
+          backend does not measure something, this says so rather than
+          printing a zero that looks like a measurement. */}
+      {openCampaignId && (
+        <div
+          className="fixed inset-0 z-50 bg-[#09150E]/90 backdrop-blur-md overflow-y-auto"
+          onClick={() => {
+            setOpenCampaignId(null);
+            setCampaignDetail(null);
+            setEditDraft(null);
+            setCampaignCircle({ status: 'idle', data: null, error: null });
+          }}
+        >
+          <div className="min-h-screen flex items-end sm:items-center justify-center p-0 sm:p-6">
+            <div
+              className="w-full max-w-lg bg-[#102117] border border-[#235F45] rounded-t-3xl sm:rounded-3xl p-5 space-y-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="text-base font-extrabold text-[#E2ECE5] truncate">
+                    {campaignDetail ? campaignDetail.title : 'Campaign'}
+                  </h2>
+                  {campaignDetail && (
+                    <p className="text-[9px] font-mono uppercase text-[#5C6B52] mt-0.5">
+                      {campaignDetail.type} &middot; {campaignDetail.status}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={() => { setOpenCampaignId(null); setCampaignDetail(null); }}
+                  className="shrink-0 text-[#5C6B52] cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {campaignActionError && (
+                <div className="border border-[#7A2E2E] bg-[#1A0F0F] rounded-xl p-3">
+                  <p className="text-[10px] font-mono text-[#E2ECE5] break-words">
+                    {campaignActionError}
+                  </p>
+                </div>
+              )}
+
+              {!campaignDetail && !campaignActionError && (
+                <p className="text-xs text-[#86935C] py-6 text-center">Loading campaign...</p>
+              )}
+
+              {campaignDetail && editDraft && (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">Title</label>
+                    <input
+                      value={editDraft.title}
+                      onChange={(e) => setEditDraft((d) => (d ? { ...d, title: e.target.value } : d))}
+                      className="w-full bg-[#0B1A12] text-[#E2ECE5] text-xs rounded-xl px-3 py-2.5 border border-[#1E3A2A] focus:border-[#00FF42] focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">Description</label>
+                    <textarea
+                      value={editDraft.description}
+                      onChange={(e) => setEditDraft((d) => (d ? { ...d, description: e.target.value } : d))}
+                      rows={2}
+                      className="w-full bg-[#0B1A12] text-[#E2ECE5] text-xs rounded-xl px-3 py-2.5 border border-[#1E3A2A] focus:border-[#00FF42] focus:outline-none resize-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">When</label>
+                    <input
+                      type="datetime-local"
+                      value={editDraft.startsAt}
+                      onChange={(e) => setEditDraft((d) => (d ? { ...d, startsAt: e.target.value } : d))}
+                      className="w-full bg-[#0B1A12] text-[#E2ECE5] text-xs rounded-xl px-3 py-2.5 border border-[#1E3A2A] focus:border-[#00FF42] focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">Where</label>
+                    <input
+                      value={editDraft.location}
+                      onChange={(e) => setEditDraft((d) => (d ? { ...d, location: e.target.value } : d))}
+                      className="w-full bg-[#0B1A12] text-[#E2ECE5] text-xs rounded-xl px-3 py-2.5 border border-[#1E3A2A] focus:border-[#00FF42] focus:outline-none"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">Spots</label>
+                      <input
+                        inputMode="numeric"
+                        disabled={campaignDetail.status !== 'draft'}
+                        value={editDraft.capacity}
+                        onChange={(e) => setEditDraft((d) => (d ? { ...d, capacity: e.target.value } : d))}
+                        placeholder="Unlimited"
+                        className="w-full bg-[#0B1A12] text-[#E2ECE5] text-xs rounded-xl px-3 py-2.5 border border-[#1E3A2A] focus:border-[#00FF42] focus:outline-none disabled:opacity-40"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">Price (KES)</label>
+                      <input
+                        inputMode="numeric"
+                        value={editDraft.price}
+                        onChange={(e) => setEditDraft((d) => (d ? { ...d, price: e.target.value } : d))}
+                        placeholder="Free"
+                        className="w-full bg-[#0B1A12] text-[#E2ECE5] text-xs rounded-xl px-3 py-2.5 border border-[#1E3A2A] focus:border-[#00FF42] focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                  {campaignDetail.status !== 'draft' && (
+                    <p className="text-[9px] text-[#5C6B52] leading-snug">
+                      Spots cannot change after publishing. People have already
+                      registered against this number.
+                    </p>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <button
+                      disabled={campaignBusy}
+                      onClick={() => setEditDraft(null)}
+                      className="px-4 py-3 rounded-xl border border-[#235F45] text-[#8DCF74] font-extrabold text-xs cursor-pointer disabled:opacity-40"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      disabled={campaignBusy || editDraft.title.trim() === ''}
+                      onClick={() => saveCampaignEdit(campaignDetail)}
+                      className="flex-1 py-3 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-xs cursor-pointer disabled:opacity-40"
+                    >
+                      {campaignBusy ? 'Saving...' : 'Save'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {campaignDetail && !editDraft && (
+                <>
+                  {/* Distribution. Previously the channel buttons and the
+                      canonical URL existed ONLY in the publish-success panel,
+                      so a creator returning later could not share to WhatsApp
+                      without re-publishing. Same component, both places. */}
+                  {campaignDetail.status !== 'draft' && (
+                    <CampaignDistribution
+                      compact
+                      link={briefApi.campaignShareLink(campaignDetail.publicSlug, publicOrigin)}
+                      title={campaignDetail.title}
+                      onCopy={() => copyCampaignLink(campaignDetail.publicSlug, campaignDetail.id)}
+                      onShare={(ch) => briefApi.shareCampaign(campaignDetail.id, ch)}
+                      onNativeShare={() => shareCampaign(campaignDetail)}
+                    />
+                  )}
+
+                  <button
+                    onClick={() => beginEdit(campaignDetail)}
+                    className="w-full py-2.5 rounded-xl border border-[#235F45] text-[#8DCF74] font-extrabold text-[11px] cursor-pointer"
+                  >
+                    Edit details
+                  </button>
+
+                  {campaignDetail.status === 'draft' && (
+                    <button
+                      disabled={campaignBusy}
+                      onClick={async () => {
+                        setCampaignBusy(true);
+                        setCampaignActionError(null);
+                        const res = await briefApi.campaignAction(campaignDetail.id, 'publish');
+                        setCampaignBusy(false);
+                        if (!res.ok) { setCampaignActionError(res.error); return; }
+                        setCampaignDetail(res.data);
+                        loadCampaigns();
+                        showToast('Published');
+                      }}
+                      className="w-full py-3 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-xs cursor-pointer disabled:opacity-40"
+                    >
+                      {campaignBusy ? 'Publishing...' : 'Publish'}
+                    </button>
+                  )}
+
+                  {/* PEOPLE */}
+                  <div className="bg-[#0B1A12] border border-[#1E3A2A] rounded-2xl p-4 space-y-2">
+                    <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#5C6B52]">
+                      People
+                    </h3>
+                    <p className="text-xl font-extrabold text-[#E2ECE5]">
+                      {campaignDetail.metrics.slotsTaken}
+                      {campaignDetail.metrics.capacity !== null && (
+                        <span className="text-[#5C6B52]"> / {campaignDetail.metrics.capacity}</span>
+                      )}
+                    </p>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                      {([
+                        ['Registered', campaignDetail.metrics.registrations],
+                        ['Checked in', campaignDetail.metrics.checkedIn],
+                        [
+                          'Remaining',
+                          campaignDetail.metrics.remaining === null
+                            ? 'Unlimited'
+                            : campaignDetail.metrics.remaining
+                        ],
+                        ['No-show', campaignDetail.metrics.noShows]
+                      ] as [string, string | number][]).map(([label, value]) => (
+                        <div key={label} className="flex items-baseline justify-between gap-2">
+                          <span className="text-[10px] text-[#86935C]">{label}</span>
+                          <span className="text-[11px] font-mono text-[#A9BDA0]">{value}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {campaignDetail.metrics.capacity !== null &&
+                      campaignDetail.metrics.remaining === 0 && (
+                        <p className="text-[10px] font-extrabold text-[#C9A227]">Full</p>
+                      )}
+                  </div>
+
+                  {/* MONEY. Settled and pending are never added together. */}
+                  <div className="bg-[#0B1A12] border border-[#1E3A2A] rounded-2xl p-4 space-y-2">
+                    <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#5C6B52]">
+                      Money
+                    </h3>
+                    {campaignDetail.price === 0 ? (
+                      <p className="text-[11px] text-[#86935C]">
+                        This is a free campaign. No money is collected.
+                      </p>
+                    ) : (
+                      <>
+                        <div className="flex items-baseline justify-between gap-2">
+                          <span className="text-[10px] text-[#86935C]">Settled</span>
+                          <span className="text-sm font-extrabold text-[#00FF42] font-mono">
+                            {campaignDetail.metrics.currency}{' '}
+                            {campaignDetail.metrics.revenueSettled.toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="flex items-baseline justify-between gap-2">
+                          <span className="text-[10px] text-[#86935C]">Pending</span>
+                          <span className="text-sm font-extrabold text-[#C9A227] font-mono">
+                            {campaignDetail.metrics.currency}{' '}
+                            {campaignDetail.metrics.revenuePending.toLocaleString()}
+                          </span>
+                        </div>
+                        <p className="text-[9px] text-[#5C6B52] leading-snug">
+                          Pending is money that has not arrived. No payment provider is
+                          connected, so settlement is recorded manually in Workflows.
+                        </p>
+                      </>
+                    )}
+                  </div>
+
+                  {/* CAMPAIGN. Honest labels only. */}
+                  <div className="bg-[#0B1A12] border border-[#1E3A2A] rounded-2xl p-4 space-y-1">
+                    <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#5C6B52]">
+                      Campaign
+                    </h3>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-[10px] text-[#86935C]">Page loads</span>
+                      <span className="text-[11px] font-mono text-[#A9BDA0]">
+                        {campaignDetail.metrics.views}
+                      </span>
+                    </div>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-[10px] text-[#86935C]">Different devices</span>
+                      <span className="text-[11px] font-mono text-[#A9BDA0]">
+                        {campaignDetail.metrics.viewers === null
+                          ? 'Not enough data'
+                          : campaignDetail.metrics.viewers}
+                      </span>
+                    </div>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-[10px] text-[#86935C]">Times you shared</span>
+                      <span className="text-[11px] font-mono text-[#A9BDA0]">
+                        {campaignDetail.metrics.shares}
+                      </span>
+                    </div>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-[10px] text-[#86935C]">Started registering</span>
+                      <span className="text-[11px] font-mono text-[#A9BDA0]">
+                        {campaignDetail.metrics.registrationsStarted}
+                      </span>
+                    </div>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-[10px] text-[#86935C]">Page load to registration</span>
+                      <span className="text-[11px] font-mono text-[#A9BDA0]">
+                        {campaignDetail.metrics.conversionPct === null
+                          ? 'Not enough data'
+                          : `${campaignDetail.metrics.conversionPct}%`}
+                      </span>
+                    </div>
+                    <p className="text-[9px] text-[#5C6B52] leading-snug pt-1">
+                      Page loads are server-side loads of the public page. Different
+                      devices is a rough count, not people. Times you shared counts
+                      your own taps, not how many people saw it. Brief does not
+                      measure reach or impressions.
+                    </p>
+                  </div>
+
+                  {/* WHAT PEOPLE ARE GETTING. The wrapped Brief object. Shown
+                      as a plain description of the offer -- the creator never
+                      needs to know the word "object". */}
+                  {campaignDetail.object && (
+                    <div className="bg-[#0B1A12] border border-[#1E3A2A] rounded-2xl p-4 space-y-1">
+                      <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#5C6B52]">
+                        What people get
+                      </h3>
+                      <p className="text-xs text-[#E2ECE5]">{campaignDetail.object.title}</p>
+                      {campaignDetail.object.summary && (
+                        <p className="text-[10px] text-[#A9BDA0] leading-snug">
+                          {campaignDetail.object.summary}
+                        </p>
+                      )}
+                      <p className="text-[9px] font-mono uppercase text-[#5C6B52] pt-0.5">
+                        {campaignDetail.object.type}
+                        {campaignDetail.ownsObject === false && ' \u00b7 existing item'}
+                      </p>
+                      {campaignDetail.ownsObject === false && (
+                        <p className="text-[9px] text-[#5C6B52] leading-snug">
+                          This campaign promotes something that already existed in
+                          Brief. Publishing the campaign does not change it.
+                        </p>
+                      )}
+
+                      {/* Link an existing item to a campaign that already
+                          exists. Backend capability shipped in 7B; this is the
+                          first surface that reaches it. */}
+                      {!objectPicker.open ? (
+                        <button
+                          disabled={campaignBusy}
+                          onClick={loadAttachableObjects}
+                          className="text-[10px] text-[#8DCF74] underline underline-offset-2 cursor-pointer disabled:opacity-40 pt-1"
+                        >
+                          Link a different item
+                        </button>
+                      ) : (
+                        <div className="bg-[#09150E] border border-[#1E3A2A] rounded-xl p-2 space-y-1 max-h-44 overflow-y-auto mt-1">
+                          {objectPicker.status === 'loading' && (
+                            <p className="text-[11px] text-[#86935C] p-2">Loading your items...</p>
+                          )}
+                          {objectPicker.status === 'error' && (
+                            <p className="text-[11px] text-[#E2ECE5] p-2">
+                              Couldn't load your items. {objectPicker.error}
+                            </p>
+                          )}
+                          {objectPicker.status === 'ready' &&
+                            (objectPicker.data ?? []).length === 0 && (
+                              <p className="text-[11px] text-[#86935C] p-2">
+                                Nothing else to link yet.
+                              </p>
+                            )}
+                          {objectPicker.status === 'ready' &&
+                            (objectPicker.data ?? []).slice(0, 25).map((o: any) => (
+                              <button
+                                key={o.id}
+                                disabled={campaignBusy}
+                                onClick={() => attachObjectToCampaign(campaignDetail.id, o.id)}
+                                className="w-full text-left px-2 py-2 rounded-lg hover:bg-[#102117] cursor-pointer disabled:opacity-40"
+                              >
+                                <p className="text-[11px] text-[#E2ECE5] truncate">{o.title}</p>
+                                <p className="text-[9px] font-mono uppercase text-[#5C6B52]">
+                                  {o.type}
+                                </p>
+                              </button>
+                            ))}
+                          <button
+                            onClick={() => setObjectPicker((p) => ({ ...p, open: false }))}
+                            className="w-full text-[10px] text-[#86935C] py-1 cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* TARGET. Only when the campaign is attached to a Circle
+                      that actually carries a target. Progress is read from the
+                      Circle's server-derived currentValue -- the campaign UI
+                      never computes or writes it. */}
+                  {campaignCircle.status === 'loading' && (
+                    <div className="bg-[#0B1A12] border border-[#1E3A2A] rounded-2xl p-4 space-y-1">
+                      <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#5C6B52]">
+                        Target
+                      </h3>
+                      <p className="text-[11px] text-[#86935C]">Loading target...</p>
+                    </div>
+                  )}
+
+                  {/* Honest unavailable state. Never a zeroed progress bar,
+                      which would read as "no progress" rather than "unknown". */}
+                  {campaignCircle.status === 'error' && (
+                    <div className="bg-[#0B1A12] border border-[#1E3A2A] rounded-2xl p-4 space-y-1">
+                      <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#5C6B52]">
+                        Target
+                      </h3>
+                      <p className="text-[11px] text-[#E2ECE5]">Target unavailable.</p>
+                      <p className="text-[9px] font-mono text-[#86935C] break-words">
+                        {campaignCircle.error}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Attached to a circle that carries no target: say so
+                      rather than inventing a goal to fill the space. */}
+                  {campaignCircle.status === 'ready' &&
+                    campaignCircle.data &&
+                    !(
+                      campaignCircle.data.circle.targetValue !== null &&
+                      campaignCircle.data.circle.targetValue > 0
+                    ) && (
+                      <div className="bg-[#0B1A12] border border-[#1E3A2A] rounded-2xl p-4 space-y-1">
+                        <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#5C6B52]">
+                          Target
+                        </h3>
+                        <p className="text-[11px] text-[#E2ECE5]">
+                          {campaignCircle.data.circle.name}
+                        </p>
+                        <p className="text-[10px] text-[#86935C]">
+                          No target set on this circle.
+                        </p>
+                      </div>
+                    )}
+
+                  {campaignCircle.status === 'ready' &&
+                    campaignCircle.data &&
+                    campaignCircle.data.circle.targetValue !== null &&
+                    campaignCircle.data.circle.targetValue > 0 && (
+                      <div className="bg-[#0B1A12] border border-[#1E3A2A] rounded-2xl p-4 space-y-2">
+                        <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#5C6B52]">
+                          Target
+                        </h3>
+                        <p className="text-xs text-[#E2ECE5]">
+                          {campaignCircle.data.circle.goal || campaignCircle.data.circle.name}
+                        </p>
+                        <div className="flex items-baseline justify-between gap-2">
+                          <span className="text-sm font-extrabold text-[#00FF42] font-mono">
+                            {campaignCircle.data.circle.currentValue.toLocaleString()}
+                          </span>
+                          <span className="text-[10px] font-mono text-[#5C6B52]">
+                            of {campaignCircle.data.circle.targetValue.toLocaleString()}
+                          </span>
+                        </div>
+                        {campaignCircle.data.circle.progressPct !== null && (
+                          <p className="text-[10px] font-mono text-[#8DCF74]">
+                            {Math.round(campaignCircle.data.circle.progressPct)}%
+                          </p>
+                        )}
+                        <div className="h-1.5 rounded-full bg-[#1E3A2A] overflow-hidden">
+                          <div
+                            className="h-full bg-[#00FF42]"
+                            style={{
+                              width: `${Math.min(100, campaignCircle.data.circle.progressPct ?? 0)}%`
+                            }}
+                          />
+                        </div>
+                        <p className="text-[9px] text-[#5C6B52] leading-snug">
+                          Progress comes from settled transactions in
+                          {' '}{campaignCircle.data.circle.name}, not from this campaign.
+                        </p>
+                      </div>
+                    )}
+
+                  {/* REGISTRATIONS */}
+                  <div className="space-y-2">
+                    <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#5C6B52]">
+                      Registrations
+                    </h3>
+
+                    {campaignRegs.status === 'loading' && (
+                      <p className="text-[11px] text-[#86935C]">Loading people...</p>
+                    )}
+
+                    {campaignRegs.status === 'error' && (
+                      <div className="border border-[#7A2E2E] bg-[#1A0F0F] rounded-xl p-3 space-y-1">
+                        <p className="text-[11px] text-[#E2ECE5]">Couldn't load registrations.</p>
+                        <p className="text-[9px] font-mono text-[#A9BDA0] break-words">
+                          {campaignRegs.error}
+                        </p>
+                      </div>
+                    )}
+
+                    {campaignRegs.status === 'ready' &&
+                      (campaignRegs.data ?? []).length === 0 && (
+                        <p className="text-[11px] text-[#86935C]">
+                          Nobody has registered yet.
+                        </p>
+                      )}
+
+                    {/* Creator attention: held-but-unpaid spots. Renders
+                        nothing when there are none. */}
+                    {campaignRegs.status === 'ready' && campaignDetail.price > 0 && (
+                      <AwaitingPayment
+                        registrations={campaignRegs.data ?? []}
+                        currency={campaignDetail.metrics.currency}
+                        price={campaignDetail.price}
+                        busy={campaignBusy}
+                        onConfirmPayment={(regId) => confirmPayment(campaignDetail.id, regId)}
+                      />
+                    )}
+
+                    {campaignRegs.status === 'ready' &&
+                      (campaignRegs.data ?? []).map((r) => (
+                        <div
+                          key={r.id}
+                          className="bg-[#0B1A12] border border-[#1E3A2A] rounded-xl p-3 flex items-center justify-between gap-2"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-xs text-[#E2ECE5] truncate">
+                              {r.name || r.attendeeRef}
+                            </p>
+                            <p className="text-[9px] font-mono uppercase text-[#5C6B52] mt-0.5">
+                              {r.status.replace('_', ' ')}
+                            </p>
+                          </div>
+                          {(r.status === 'registered' || r.status === 'confirmed') && (
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <button
+                                disabled={campaignBusy}
+                                onClick={() => setRegStatus(campaignDetail.id, r.id, 'checked_in')}
+                                className="px-2.5 py-1.5 rounded-lg bg-[#00FF42] text-[#09150E] font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
+                              >
+                                Check in
+                              </button>
+                              <button
+                                disabled={campaignBusy}
+                                onClick={() => setRegStatus(campaignDetail.id, r.id, 'no_show')}
+                                className="px-2.5 py-1.5 rounded-lg border border-[#235F45] text-[#86935C] font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
+                              >
+                                No-show
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                  </div>
+
+                  {(campaignDetail.status === 'published' || campaignDetail.status === 'live') && (
+                    <button
+                      disabled={campaignBusy}
+                      onClick={async () => {
+                        setCampaignBusy(true);
+                        const res = await briefApi.campaignAction(campaignDetail.id, 'close');
+                        setCampaignBusy(false);
+                        if (!res.ok) { setCampaignActionError(res.error); return; }
+                        setCampaignDetail(res.data);
+                        loadCampaigns();
+                      }}
+                      className="w-full py-2.5 rounded-xl border border-[#235F45] text-[#86935C] font-extrabold text-[11px] cursor-pointer disabled:opacity-40"
+                    >
+                      Close campaign
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CREATE CAMPAIGN. Type -> details -> preview -> publish. The preview
+          is a screen, not a saved object: nothing reaches the server until
+          Publish, and publication itself is the real transition endpoint. */}
+      {createStep !== 'closed' && (
+        <div
+          className="fixed inset-0 z-50 bg-[#09150E]/90 backdrop-blur-md overflow-y-auto"
+          onClick={() => { if (!campaignBusy) setCreateStep('closed'); }}
+        >
+          <div className="min-h-screen flex items-end sm:items-center justify-center p-0 sm:p-6">
+            <div
+              className="w-full max-w-lg bg-[#102117] border border-[#235F45] rounded-t-3xl sm:rounded-3xl p-5 space-y-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <h2 className="text-base font-extrabold text-[#E2ECE5]">
+                  {createStep === 'form'
+                    ? 'Create'
+                    : createStep === 'preview'
+                    ? 'Preview'
+                    : 'Published'}
+                </h2>
+                <button
+                  onClick={() => { if (!campaignBusy) setCreateStep('closed'); }}
+                  className="shrink-0 text-[#5C6B52] cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {campaignActionError && (
+                <div className="border border-[#7A2E2E] bg-[#1A0F0F] rounded-xl p-3">
+                  <p className="text-[10px] font-mono text-[#E2ECE5] break-words">
+                    {campaignActionError}
+                  </p>
+                </div>
+              )}
+
+              {createStep === 'form' && (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">What is it</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {(['popup', 'session', 'drop', 'event'] as ApiCampaignType[]).map((t) => (
+                        <button
+                          key={t}
+                          onClick={() => setDraft((d) => ({ ...d, type: t }))}
+                          className={`px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
+                            draft.type === t
+                              ? 'bg-[#00FF42] text-[#09150E] border-[#00FF42]'
+                              : 'bg-[#0B1A12] text-[#8DCF74] border-[#235F45]'
+                          }`}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">Title</label>
+                    <input
+                      value={draft.title}
+                      onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
+                      placeholder="Saturday plant sale"
+                      className="w-full bg-[#0B1A12] text-[#E2ECE5] text-xs rounded-xl px-3 py-2.5 border border-[#1E3A2A] focus:border-[#00FF42] focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">Description</label>
+                    <textarea
+                      value={draft.description}
+                      onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
+                      rows={2}
+                      placeholder="One or two lines. What should people expect?"
+                      className="w-full bg-[#0B1A12] text-[#E2ECE5] text-xs rounded-xl px-3 py-2.5 border border-[#1E3A2A] focus:border-[#00FF42] focus:outline-none resize-none"
+                    />
+                  </div>
+
+                  {/* Optionally promote something that already exists in Brief
+                      instead of describing it again. Collapsed by default. */}
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">
+                      What people get
+                    </label>
+                    {objectPicker.selected ? (
+                      <div className="flex items-center justify-between gap-2 bg-[#0B1A12] border border-[#235F45] rounded-xl px-3 py-2.5">
+                        <p className="text-xs text-[#E2ECE5] truncate">
+                          {objectPicker.selected.title}
+                        </p>
+                        <button
+                          onClick={() =>
+                            setObjectPicker((p) => ({ ...p, selected: null, open: false }))
+                          }
+                          className="shrink-0 text-[10px] text-[#86935C] underline underline-offset-2 cursor-pointer"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : !objectPicker.open ? (
+                      <button
+                        onClick={loadAttachableObjects}
+                        className="w-full text-left bg-[#0B1A12] border border-dashed border-[#1E3A2A] rounded-xl px-3 py-2.5 text-[11px] text-[#86935C] cursor-pointer"
+                      >
+                        Something new &middot; tap to link an existing item instead
+                      </button>
+                    ) : (
+                      <div className="bg-[#0B1A12] border border-[#1E3A2A] rounded-xl p-2 space-y-1 max-h-44 overflow-y-auto">
+                        {objectPicker.status === 'loading' && (
+                          <p className="text-[11px] text-[#86935C] p-2">Loading your items...</p>
+                        )}
+                        {objectPicker.status === 'error' && (
+                          <p className="text-[11px] text-[#E2ECE5] p-2">
+                            Couldn't load your items. {objectPicker.error}
+                          </p>
+                        )}
+                        {objectPicker.status === 'ready' &&
+                          (objectPicker.data ?? []).length === 0 && (
+                            <p className="text-[11px] text-[#86935C] p-2">
+                              Nothing to link yet. Carry on and describe it above.
+                            </p>
+                          )}
+                        {objectPicker.status === 'ready' &&
+                          (objectPicker.data ?? []).slice(0, 25).map((o: any) => (
+                            <button
+                              key={o.id}
+                              onClick={() =>
+                                setObjectPicker((p) => ({
+                                  ...p,
+                                  selected: { id: o.id, title: o.title },
+                                  open: false
+                                }))
+                              }
+                              className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-[#102117] cursor-pointer"
+                            >
+                              <p className="text-[11px] text-[#E2ECE5] truncate">{o.title}</p>
+                              <p className="text-[9px] font-mono uppercase text-[#5C6B52]">
+                                {o.type}
+                              </p>
+                            </button>
+                          ))}
+                        <button
+                          onClick={() => setObjectPicker((p) => ({ ...p, open: false }))}
+                          className="w-full text-[10px] text-[#5C6B52] underline underline-offset-2 cursor-pointer py-1"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">When</label>
+                    <input
+                      type="datetime-local"
+                      value={draft.startsAt}
+                      onChange={(e) => setDraft((d) => ({ ...d, startsAt: e.target.value }))}
+                      className="w-full bg-[#0B1A12] text-[#E2ECE5] text-xs rounded-xl px-3 py-2.5 border border-[#1E3A2A] focus:border-[#00FF42] focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">Where</label>
+                    <input
+                      value={draft.location}
+                      onChange={(e) => setDraft((d) => ({ ...d, location: e.target.value }))}
+                      placeholder="Kilimani, Nairobi"
+                      className="w-full bg-[#0B1A12] text-[#E2ECE5] text-xs rounded-xl px-3 py-2.5 border border-[#1E3A2A] focus:border-[#00FF42] focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">Spots</label>
+                      <input
+                        inputMode="numeric"
+                        value={draft.capacity}
+                        onChange={(e) => setDraft((d) => ({ ...d, capacity: e.target.value }))}
+                        placeholder="Unlimited"
+                        className="w-full bg-[#0B1A12] text-[#E2ECE5] text-xs rounded-xl px-3 py-2.5 border border-[#1E3A2A] focus:border-[#00FF42] focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">Price (KES)</label>
+                      <input
+                        inputMode="numeric"
+                        value={draft.price}
+                        onChange={(e) => setDraft((d) => ({ ...d, price: e.target.value }))}
+                        placeholder="Free"
+                        className="w-full bg-[#0B1A12] text-[#E2ECE5] text-xs rounded-xl px-3 py-2.5 border border-[#1E3A2A] focus:border-[#00FF42] focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    disabled={draft.title.trim() === ''}
+                    onClick={() => { setCampaignActionError(null); setCreateStep('preview'); }}
+                    className="w-full py-3 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Preview
+                  </button>
+                </div>
+              )}
+
+              {createStep === 'preview' && (
+                <div className="space-y-3">
+                  <p className="text-[11px] text-[#86935C]">
+                    This is what people will see. Nothing is public yet.
+                  </p>
+                  <div className="bg-[#0B1A12] border border-[#1E3A2A] rounded-2xl p-4 space-y-1.5">
+                    <p className="text-[9px] font-mono uppercase text-[#5C6B52]">{draft.type}</p>
+                    <p className="text-sm font-extrabold text-[#E2ECE5]">{draft.title}</p>
+                    {draft.description && (
+                      <p className="text-[11px] text-[#A9BDA0] leading-snug">{draft.description}</p>
+                    )}
+                    <div className="pt-1 space-y-0.5">
+                      {draft.startsAt && (
+                        <p className="text-[10px] font-mono text-[#8DCF74]">
+                          {draft.startsAt.replace('T', ' ')}
+                        </p>
+                      )}
+                      {draft.location && (
+                        <p className="text-[10px] font-mono text-[#8DCF74]">{draft.location}</p>
+                      )}
+                      <p className="text-[10px] font-mono text-[#8DCF74]">
+                        {draft.price.trim() === '' || Number(draft.price) === 0
+                          ? 'Free'
+                          : `KES ${draft.price}`}
+                        {draft.capacity.trim() !== '' && ` \u00b7 ${draft.capacity} spots`}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      disabled={campaignBusy}
+                      onClick={() => setCreateStep('form')}
+                      className="px-4 py-3 rounded-xl border border-[#235F45] text-[#8DCF74] font-extrabold text-xs cursor-pointer disabled:opacity-40"
+                    >
+                      Back
+                    </button>
+                    <button
+                      disabled={campaignBusy}
+                      onClick={publishDraft}
+                      className="flex-1 py-3 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-xs cursor-pointer disabled:opacity-40"
+                    >
+                      {campaignBusy ? 'Publishing...' : 'Publish'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {createStep === 'published' && publishedCampaign && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[#00FF42] shrink-0" />
+                    <p className="text-xs font-extrabold text-[#E2ECE5]">
+                      {publishedCampaign.title} is {publishedCampaign.status}
+                    </p>
+                  </div>
+                  <p className="text-[11px] text-[#86935C]">
+                    Share this link anywhere. Anyone who opens it can register.
+                  </p>
+                  {(() => {
+                    // Same distribution surface as the campaign detail view --
+                    // one component, so the two can never drift apart.
+                    const link = briefApi.campaignShareLink(
+                      publishedCampaign.publicSlug,
+                      publicOrigin
+                    );
+                    return (
+                      <CampaignDistribution
+                        link={link}
+                        title={publishedCampaign.title}
+                        onCopy={() =>
+                          copyCampaignLink(publishedCampaign.publicSlug, publishedCampaign.id)
+                        }
+                        onShare={(ch) => briefApi.shareCampaign(publishedCampaign.id, ch)}
+                        onNativeShare={() => shareCampaign(publishedCampaign)}
+                      />
+                    );
+                  })()}
+                  <button
+                    onClick={() => { setCreateStep('closed'); openCampaign(publishedCampaign.id); }}
+                    className="w-full text-[10px] text-[#5C6B52] underline underline-offset-2 cursor-pointer"
+                  >
+                    Open campaign
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* CAPTURE: the easiest way into Brief. Deliberately one input and two
           buttons -- no onboarding, no explanation, no AI branding. */}
@@ -10680,7 +10430,6 @@ export function App() {
                   const subject = selectedObjectForDetail;
                   const fresh = getFreshness(subject);
                   const hasTrust =
-                    subject.trustScore !== undefined ||
                     subject.isVerified ||
                     Boolean(subject.creatorName) ||
                     Boolean(fresh) ||
@@ -10708,11 +10457,6 @@ export function App() {
                           )}
                         </div>
 
-                        {subject.trustScore !== undefined && (
-                          <span className="text-sm font-extrabold text-[#00FF42] shrink-0">
-                            {subject.trustScore}%
-                          </span>
-                        )}
                       </div>
 
                       {fresh && (
@@ -10726,12 +10470,10 @@ export function App() {
                         </div>
                       )}
 
-                      {subject.trustScore !== undefined && (
-                        <p className="text-[10px] text-[#5C6B52] leading-snug">
-                          A confidence signal from how this record was sourced and
-                          checked. It is not a guarantee of accuracy.
-                        </p>
-                      )}
+                      <p className="text-[10px] text-[#5C6B52] leading-snug">
+                        Verification records when this was last checked. It is
+                        not a guarantee of accuracy.
+                      </p>
 
                       {subject.sourceUrl && (
                         <a

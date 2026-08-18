@@ -1,32 +1,24 @@
-const { JSDOM }=require('jsdom');
-const dom=new JSDOM('<!DOCTYPE html><html><body><div id="root"></div></body></html>',{url:'https://brief.test/',pretendToBeVisual:true});
-global.window=dom.window;global.document=dom.window.document;global.navigator=dom.window.navigator;
-global.HTMLElement=dom.window.HTMLElement;global.Element=dom.window.Element;global.Node=dom.window.Node;
-global.MouseEvent=dom.window.MouseEvent;global.getComputedStyle=dom.window.getComputedStyle;
-global.IS_REACT_ACT_ENVIRONMENT=true;
-const React=require('react');const{createRoot}=require('react-dom/client');const{act}=require('react-dom/test-utils');
-const App=require('./src/App.tsx').default;
+// ---------------------------------------------------------------------------
+// GROUP UI
+//
+// The group detail surface: unanswered questions, the /brief digest, and the
+// commitment that Brief reads a group without posting into it. Mounts the
+// extracted <ConnectedGroups> with test-owned fixtures -- see grouphost.cjs
+// for why the full-app mount no longer supplies this data.
+// ---------------------------------------------------------------------------
+const { bootGroups } = require('./grouphost.cjs');
+const { FIXTURE_OBJECTS } = require('./fixtures.cjs');
+
 async function main(){
-  dom.window.open=()=>null;
-  const root=createRoot(document.getElementById('root'));
-  await act(async()=>{root.render(React.createElement(App));});
-  const text=el=>(el.textContent||'').replace(/\s+/g,' ').trim();
-  const body=()=>text(document.body);
-  const click=async el=>{await act(async()=>{el.dispatchEvent(new dom.window.MouseEvent('click',{bubbles:true,cancelable:true}));});};
-  const btn=t=>Array.from(document.querySelectorAll('button')).find(b=>text(b)===t||text(b).startsWith(t));
-  const goto=async(dest,section)=>{
-    const d=Array.from(document.querySelectorAll('button')).find(b=>text(b)===dest||text(b).startsWith(dest));
-    if(d) await click(d);
-    if(section){
-      const sBtn=Array.from(document.querySelectorAll('button')).find(b=>text(b)===section||text(b).startsWith(section));
-      if(sBtn) await click(sBtn);
-    }
-  };
+  // Objects are supplied because /find falls back to the wider Brief graph
+  // when a group holds no answer -- and must label that result as coming from
+  // outside the group.
+  const h = await bootGroups({ objects: FIXTURE_OBJECTS });
+  const { text, body, click, btn, setVal, submit, askInput, act, dom } = h;
   let pass=0,fail=0;
   const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;console.log('  FAIL  '+n+(d?' -> '+d:''));}};
 
-  await goto('My Layer','Groups');
-  // The group tab now lists Your Groups first; open one to reach its detail.
+  // Your Groups lists first; open one to reach its detail.
   await click(btn('Open'));
   let b=body();
   console.log('=== Brief earns its place ===');
@@ -65,11 +57,8 @@ async function main(){
   check('shows the ANSWER alongside it', b.includes('Kikao Hardware has 50W systems'), b.slice(0,300));
 
   const inp=document.querySelector('input[placeholder="Ask something about this group..."]');
-  const setVal=async(el,v)=>{await act(async()=>{
-    Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype,'value').set.call(el,v);
-    el.dispatchEvent(new dom.window.Event('input',{bubbles:true}));});};
   await setVal(inp,'/find inspection');
-  await act(async()=>{inp.closest('form').dispatchEvent(new dom.window.Event('submit',{bubbles:true,cancelable:true}));});
+  await submit(inp);
   b=body();
   check('falls back to wider Brief', /From your Brief information/i.test(b), b.slice(0,200));
   check('labels it as NOT from this group', /\(not this group\)/i.test(b));

@@ -153,7 +153,10 @@ async function main(){
   for(const s of ['Now','Local','Groups','Signals']) check(`Pulse > ${s}`, !!sub(s));
   check('Pulse secondary is not in the rail', !railBtns().some(b=>/Signals|Local/.test(text(b))));
   await goto('Pulse','Now');
-  check('Now shows dated reports', /Reported by/i.test(body()));
+  // Brief no longer ships seeded posts, so with no ingested reports the
+  // honest state is the empty message -- not a fabricated bulletin.
+  check('Now states plainly that nothing has been reported',
+    /Nothing new has been reported yet today/i.test(body()));
   await goto('Pulse','Signals');
   check('Signals keeps freshness metrics', /Freshness/i.test(body()));
   check('Signals explains freshness without AI framing', !/\bAI\b|assistant|chatbot|machine learning/i.test(body()));

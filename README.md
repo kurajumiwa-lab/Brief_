@@ -10,10 +10,17 @@ happens inside context, reached through discovery.
 ## Repository layout
 
 ```
-App.tsx              The entire client application (~11,200 lines, React + TS)
-server/              Ingestion backend: connectors, pipeline, HTTP API
-preview/             Vite dev server + the jsdom test suites (605 assertions)
+App.tsx              Client application shell (React + TS)
+src/api/             Typed API client -- the ONLY place fetch() is called
+src/components/      Extracted client surfaces (Circles, Marketplace, Pulse, ...)
+server/              Backend: connectors, pipeline, domain modules, HTTP API
+  src/domain/        16 domain modules (auth, payment, settlement, ledger,
+                     arena, fantasy, auction, order, listing, campaign, ...)
+  src/ops.js         Structured logging, readiness, diagnostics, backup
+  test/run.js        Server suite (1217 assertions)
+preview/             Vite dev server + the jsdom client suites (23 suites)
 tc/                  Strict TypeScript typecheck harness
+live/                Smoke tests against the PRODUCTION build over HTTP
 uploads/             Screenshots of the deployed app
 ```
 
@@ -55,23 +62,35 @@ connector dashboard until their tokens are set. Brief keeps working either way
 ## Tests
 
 ```bash
-# Client: 605 assertions across 18 suites
-cd preview
-cp ../App.tsx src/App.tsx
-for f in e2e.final chain sys pure ing inbox pursuit pmatch parse capture \
-         group groupui access arena quests econ nav dest; do
-  npx esbuild $f.jsx --bundle --platform=node --outfile=$f.run.cjs \
-      --format=cjs --loader:.tsx=tsx --external:jsdom
-  node $f.run.cjs
-done
+./run-suites.sh              # all 23 client suites (syncs App.tsx first)
+./run-suites.sh commerce     # or a single named suite
 
-# Server: 94 assertions, including live network tests
-cd server && node test/run.js
-OFFLINE=1 node test/run.js     # skip anything needing the network
+cd server && node test/run.js         # server suite
+cd server && OFFLINE=1 node test/run.js   # skip anything needing the network
+cd server && node test/livecamp.mjs   # live campaign integration
 
-# Typecheck
-cd tc && cp ../App.tsx src/App.tsx && npx tsc -p tsconfig.json
+cd tc && npx tsc -p tsconfig.json     # strict typecheck (expects exit 0)
 ```
+
+Against a running production build (`cd preview && npx vite preview`, plus the
+API on :8787):
+
+```bash
+node live/2-commerce-over-http.mjs    # buyer journey, two real actors
+node live/3-public-campaign.mjs       # public distribution
+node live/4-full-chain.mjs            # identity -> ... -> payout, Arena,
+                                      # Fantasy, Auction, ops
+```
+
+**Current state: 2589 assertions, 0 failing.**
+
+| Suite | Result |
+|---|---|
+| `server/test/run.js` | 1217 passed / 0 failed / 1 skipped |
+| `server/test/livecamp.mjs` | 111 passed / 0 failed |
+| `./run-suites.sh` (23 client suites) | 1105 passed / 0 failed |
+| `tc` strict typecheck | exit 0 |
+| `live/` against the production build | 43 + 26 + 87 = 156 / 0 |
 
 The server suite hits real third parties (BBC's RSS feed, GitHub's robots.txt,
 Telegram's API). Those tests **skip** rather than pass when the network is
@@ -99,6 +118,28 @@ events.
 **Privacy.** Objects derived from a private source default to `source_members`,
 not `public`. "From your groups" renders only when a real membership record
 exists; membership is never inferred.
+
+**One economic layer.** `ledgerTransactions` is the single source of economic
+truth. There is no wallet, no balance column and no per-feature economy --
+not for vendors, campaigns, Circles, Arena, Fantasy or Auctions. Every figure
+the UI shows (earnings, commission, withdrawable, auction price) is **derived**
+by scanning rows, because a stored total is a second source of truth waiting to
+disagree with the first.
+
+**Money is server-authoritative.** Prices come from the listing row and
+auction amounts from the winning bid row; a client posting `{price: 1}` against
+a 2500 listing gets an order for 2500. Settlement is refused unless a genuinely
+settled ledger transaction backs it.
+
+**Honest refusal over fake success.** No payment provider is connected, so
+paying returns **503 with `charged:false`** and a stated reason -- it never
+fabricates a payment. Real-money Arena and paid Fantasy return **403
+`compliance_gate`** naming the five unmet requirements. `/api/capabilities`
+reports all of this truthfully.
+
+See [`BRIEF-FINAL-REPORT.md`](BRIEF-FINAL-REPORT.md) for what is built, partial
+and missing, and [`BRIEF-COVERAGE-MATRIX.md`](BRIEF-COVERAGE-MATRIX.md) for
+evidence-cited coverage per area.
 
 See [`server/CONNECTORS.md`](server/CONNECTORS.md) for exactly what each
 connector can and cannot do, including the things that are genuinely impossible

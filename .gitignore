@@ -46,3 +46,12 @@ PUSH-TO-GITHUB.md
 UPLOAD-TO-GITHUB.md
 BRIEF-ALL-FILES.txt
 parts/
+
+# Working notes from the phased build (phases 3-10 and batch completions).
+# Kept in the workspace as a record, but deliberately NOT published: they are
+# development history, not documentation. The published record is README.md,
+# BRIEF-COVERAGE-MATRIX.md and BRIEF-FINAL-REPORT.md.
+PHASE*.md
+BUILD-BATCH-*-COMPLETION.md
+AUDIT.md
+BRIEF-MASTER-COVERAGE.md

@@ -1,23 +1,28 @@
+// ---------------------------------------------------------------------------
+// PURSUIT MATCHING
+//
+// This suite used to eval INITIAL_OBJECTS out of App.tsx and then reimplement
+// the scoring algorithm locally -- so it tested a copy, not the product. Batch
+// 1 emptied that seed, which exposed the problem.
+//
+// It now imports the REAL exported matcher and owns its fixtures, so a change
+// to Brief's scoring is actually caught here.
+// ---------------------------------------------------------------------------
 const src=require('fs').readFileSync('/home/user/App.tsx','utf8');
-const objects=eval(src.match(/const INITIAL_OBJECTS: BriefObject\[\] = (\[[\s\S]*?\n\];)/)[1].replace(/;$/,''));
+const { FIXTURE_OBJECTS }=require('./fixtures.cjs');
+const App=require('./src/App.tsx');
+const objects=FIXTURE_OBJECTS;
 let pass=0,fail=0;
 const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;console.log('  FAIL  '+n+(d?' -> '+d:''));}};
-const INTENT=new Set(['find','show','get','look','looking','search','watch','monitor','track','want','need','me','my','a','an','the','for','near','nearby','around','this','that','week','today','tomorrow','good','best','cheapest','cheap','any','some','one','ones','thing','things','please','where','what','is','are','in','on','at','to','of','and']);
-const sing=w=>{if(w.length>4&&w.endsWith('ies'))return w.slice(0,-3)+'y';if(w.length>4&&w.endsWith('es'))return w.slice(0,-2);if(w.length>3&&w.endsWith('s')&&!w.endsWith('ss'))return w.slice(0,-1);return w;};
-const terms=q=>Array.from(new Set(q.toLowerCase().split(/[^a-z0-9]+/).filter(w=>w.length>2&&!INTENT.has(w))));
-const score=(o,p)=>{const q=p.trim().toLowerCase();if(!q)return 0;
- const t=o.title.toLowerCase(),c=o.category.toLowerCase(),su=o.summary.toLowerCase();
- const l=(o.locationName??'').toLowerCase(),cr=(o.creatorName??'').toLowerCase(),st=(o.metadata?.statusBadge??'').toLowerCase();
- let s=0; if(t===q)s+=100;else if(t.startsWith(q))s+=60;else if(t.includes(q))s+=40;
- if(c===q)s+=30;else if(c.includes(q))s+=18;
- if(o.type.includes(q))s+=16; if(cr.includes(q))s+=12; if(l.includes(q))s+=10; if(st.includes(q))s+=6; if(su.includes(q))s+=4; return s;};
-function match(q,pool=objects,limit=8){const T=terms(q); if(!T.length)return [];
- return pool.map(item=>{const st=(o,t)=>{const d=score(o,t);if(d>0)return d;const g=sing(t);return (g!==t&&g.length>2)?score(o,g)*0.9:0;};
-  const mt=T.filter(t=>st(item,t)>0);
-  if(!mt.length)return{item,score:0,mt};
-  let s=mt.reduce((a,t)=>a+st(item,t),0); s*=mt.length/T.length; s+=score(item,q.trim());
-  const d=item.metadata?.distanceKm; if(d!==undefined)s+=Math.max(0,2-d/2); return{item,score:s,mt};})
-  .filter(x=>x.score>0).sort((a,b)=>b.score-a.score).slice(0,limit);}
+
+const terms=q=>App.getPursuitTerms(q);
+const sing=w=>App.singularise(w);
+// Exercise matchPursuit exactly as the app calls it: through a Pursuit object.
+const match=(q,pool=objects,limit=8)=>App.matchPursuit(
+  { id:'p_test', query:q, status:'active', createdAt:'2026-08-01T00:00:00Z',
+    lastUpdatedAt:'2026-08-01T00:00:00Z', sourceTypes:[], matchedObjectIds:[],
+    watchChanges:false },
+  pool, limit);
 
 console.log('=== Intent words are stripped, not searched ===');
 check('"find" alone yields no terms', terms('find').length===0);
