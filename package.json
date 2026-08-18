@@ -1,0 +1,32 @@
+{
+  "name": "brief",
+  "version": "1.0.0",
+  "description": "Brief: An information layer for what is happening around you",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "preview",
+    "server",
+    "tc"
+  ],
+  "scripts": {
+    "install:all": "npm install && npm --workspace=preview install && npm --workspace=server install && npm --workspace=tc install",
+    "build:client": "npm --workspace=preview run build",
+    "build": "npm --workspace=preview run build",
+    "start": "cd server && npm start",
+    "dev": "cd preview && npm run dev",
+    "test": "cd server && npm test",
+    "test:client": "./run-suites.sh",
+    "test:typecheck": "cd tc && npx tsc -p tsconfig.json"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "keywords": [
+    "information",
+    "discovery",
+    "events",
+    "communities"
+  ]
+}
