@@ -39,17 +39,17 @@ export function SilkBanner({ glyph, title, subtitle, hue = 'green', compact = fa
       className={`brief-sheen brief-silk relative w-full overflow-hidden rounded-2xl border border-[#1E1E22] ${
         compact ? 'h-24' : 'h-40'
       }`}
-      style={{ background: `linear-gradient(135deg, ${c.from} 0%, ${c.mid} 45%, ${c.to} 100%)` }}
+      style={{ backgroundImage: `linear-gradient(135deg, ${c.from} 0%, ${c.mid} 45%, ${c.to} 100%)` }}
     >
       {/* Aura glow */}
       <div
         className="brief-glow absolute -right-6 -top-10 h-40 w-40 rounded-full"
-        style={{ background: 'radial-gradient(circle, rgba(0,230,118,0.35) 0%, transparent 70%)', filter: 'blur(18px)' }}
+        style={{ backgroundImage: 'radial-gradient(circle, rgba(0,230,118,0.35) 0%, transparent 70%)', filter: 'blur(18px)' }}
       />
       {/* Subtle second aura, offset */}
       <div
         className="brief-glow absolute -left-8 -bottom-12 h-36 w-36 rounded-full"
-        style={{ background: 'radial-gradient(circle, rgba(0,230,118,0.18) 0%, transparent 70%)', filter: 'blur(20px)', animationDelay: '1.4s' }}
+        style={{ backgroundImage: 'radial-gradient(circle, rgba(0,230,118,0.18) 0%, transparent 70%)', filter: 'blur(20px)', animationDelay: '1.4s' }}
       />
       <div className={`absolute inset-0 flex items-center ${compact ? 'gap-3 px-4' : 'flex-col justify-center gap-1 px-5 text-center'}`}>
         <span className={`brief-float ${compact ? 'text-2xl' : 'text-4xl'} drop-shadow-[0_0_14px_rgba(0,230,118,0.45)]`}>
@@ -85,11 +85,11 @@ export function GameBanner({ name, glyph, activity, hue = 'green' }: GameBannerP
     <div
       aria-hidden="true"
       className="brief-sheen brief-silk relative h-36 w-full overflow-hidden rounded-2xl border border-[#1E1E22]"
-      style={{ background: `linear-gradient(135deg, ${c.from} 0%, ${c.mid} 50%, ${c.to} 100%)` }}
+      style={{ backgroundImage: `linear-gradient(135deg, ${c.from} 0%, ${c.mid} 50%, ${c.to} 100%)` }}
     >
       <div
         className="brief-glow absolute -right-4 -top-8 h-36 w-36 rounded-full"
-        style={{ background: 'radial-gradient(circle, rgba(0,230,118,0.32) 0%, transparent 70%)', filter: 'blur(16px)' }}
+        style={{ backgroundImage: 'radial-gradient(circle, rgba(0,230,118,0.32) 0%, transparent 70%)', filter: 'blur(16px)' }}
       />
       <div className="absolute inset-0 flex items-center justify-between px-5">
         <div className="min-w-0">
