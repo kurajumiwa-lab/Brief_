@@ -46,6 +46,25 @@ function BrandMark() {
 }
 
 export function LandingPage({ onEnter }: LandingPageProps) {
+  // Honest social proof: the number of things happening, read live from the
+  // public objects feed. When the server is unreachable it reads "—" rather
+  // than a fabricated figure.
+  const [count, setCount] = React.useState<number | null>(null);
+  React.useEffect(() => {
+    let live = true;
+    (async () => {
+      try {
+        const res = await fetch('/ingest/api/objects?rank=1');
+        if (!res.ok) return;
+        const body = await res.json();
+        if (live && Array.isArray(body?.objects)) setCount(body.objects.length);
+      } catch {
+        /* server unreachable — stay honest with "—" */
+      }
+    })();
+    return () => { live = false; };
+  }, []);
+
   return (
     <div className="min-h-screen" style={{ background: 'var(--ground)', color: 'var(--ink)', fontFamily: 'var(--font-ui)' }}>
       {/* Sticky top navigation */}
@@ -84,7 +103,15 @@ export function LandingPage({ onEnter }: LandingPageProps) {
                 Brief turns what your community already posts — on Telegram, WhatsApp, the web — into things you can find,
                 trust and act on, and keeps the whole journey in one place.
               </p>
-              <div className="mt-8 flex flex-wrap items-center gap-3">
+              <p className="mt-4 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-[12px] font-semibold" style={{ background: 'var(--surface)', border: '1px solid var(--hairline)', color: 'var(--ink-dim)' }}>
+                <span className="brief-breathe h-2 w-2 rounded-full" style={{ background: 'var(--signal-live)' }} />
+                {count === null
+                  ? 'Checking what is happening…'
+                  : count === 0
+                  ? 'Nothing happening nearby yet — be the first to post'
+                  : `${count} thing${count === 1 ? '' : 's'} happening right now`}
+              </p>
+              <div className="mt-6 flex flex-wrap items-center gap-3">
                 <button
                   onClick={onEnter}
                   className="rounded-full px-7 py-3 text-[15px] font-bold transition-transform active:scale-[0.97]"
