@@ -2,14 +2,115 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Previously inline in index.html alongside the CDN script tag. */
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+/* =============================================================================
+   BRIEF DESIGN TOKENS — the single source of truth for color, type and motion.
 
-/* --- Spring physics (empty-state overlay) ---
-   Defined in the real stylesheet, not a React <style> tag, so the keyframes
-   never leak their "0%"/"100%" text into the rendered DOM (which a test suite
-   correctly treats as stray content). */
+   Every color has a job (§2). Every motion duration/easing has a job (§4).
+   A color used outside its job, or a loop without a limit, is a bug.
+   ============================================================================= */
+
+:root {
+  /* --- Color: the assigned-job palette (§2) --- */
+  --ground:         #090B10;  /* base background — cool near-black, never #000 */
+  --surface:        #10141C;  /* raised cards, banners */
+  --overlay-scrim:  #0C1220;  /* Arena background wash only */
+  --hairline:       #232A38;  /* borders, dividers */
+
+  --ink:            #F3F1E7;  /* primary text — warm paper white */
+  --ink-dim:        #8A93A6;  /* secondary text */
+  --ink-faint:      #4B5162;  /* tertiary/meta: timestamps, counters */
+
+  --signal-live:    #43D17A;  /* live/active state ONLY */
+  --signal-arena:   #3E8EFF;  /* Arena / tournament system ONLY */
+  --signal-urgent:  #FF6A4D;  /* countdown / closing-soon / expiring ONLY */
+
+  --tea:            #E8A33D;  /* Tea category */
+  --today:          #4FB0C6;  /* Today category */
+  --pursuits:       #B98CE0;  /* Pursuits category */
+  --quests:         #43D17A;  /* Quests (shares live — quests ARE the live layer) */
+
+  /* --- Type (§3) --- */
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-ui:      'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono:    'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* --- Motion: durations + easings (§4) --- */
+  --dur-entrance:    220ms;
+  --dur-banner:      320ms;
+  --dur-tap:         100ms;
+  --ease-out:        cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-entrance:   cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Apply the system type by default; components override with mono for readouts. */
+html, body {
+  font-family: var(--font-ui);
+  background-color: var(--ground);
+  color: var(--ink);
+}
+.font-display { font-family: var(--font-display); }
+.font-mono-live { font-family: var(--font-mono); }
+
+/* =============================================================================
+   MOTION SYSTEM (§4)
+   ============================================================================= */
+
+/* Content entrance: fade + 8px rise */
+@keyframes briefRiseIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.brief-rise-in {
+  animation: briefRiseIn var(--dur-entrance) var(--ease-entrance) both;
+}
+
+/* Banner slide-in: first appearance / state change only */
+@keyframes briefBannerIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.brief-banner-in {
+  animation: briefBannerIn var(--dur-banner) var(--ease-out) both;
+}
+
+/* Live pulse / breathing — only on elements tagged live (§4). 0.85–1. */
+@keyframes briefBreathe {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.85; }
+}
+.brief-breathe {
+  animation: briefBreathe 2.4s ease-in-out infinite;
+}
+
+/* Ticker / marquee scroll — functional motion, ~40px/s, linear. Pauses on touch. */
+@keyframes briefMarquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.brief-marquee {
+  display: flex;
+  width: max-content;
+  animation: briefMarquee 24s linear infinite;
+  animation-duration: 24s;
+}
+.brief-marquee:hover,
+.brief-marquee:active { animation-play-state: paused; }
+
+/* Countdown tick — discrete, no easing: it should feel like a clock (§4). */
+.brief-countdown { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* Pipeline flow connector — functional "energy" between stages */
+@keyframes briefFlowDash {
+  0%   { background-position: 0 0; }
+  100% { background-position: 12px 0; }
+}
+.brief-flow-connector {
+  background-image: linear-gradient(90deg, var(--signal-live) 40%, transparent 40%);
+  background-size: 12px 2px;
+  animation: briefFlowDash 1.1s linear infinite;
+}
+
+/* Spring overlay intro (empty-state prompt) */
 @keyframes briefSpringIntro {
   from { transform: translate(-50%, -50%) scale(0.85); opacity: 0; }
   to   { transform: translate(-50%, -50%) scale(1); opacity: 1; }
@@ -18,61 +119,26 @@
   animation: briefSpringIntro 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
-/* --- Animated banner art (cosmetic identity cards) ---
-   Pure CSS animation classes. These live in the stylesheet (never a React
-   <style> tag), so the keyframe text never leaks into the DOM. */
-
-/* Silk fluid gradient — a slow, breathing colour shift */
-@keyframes briefSilkShift {
-  0%   { background-position: 0% 50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-.brief-silk {
-  background-size: 220% 220%;
-  animation: briefSilkShift 9s ease-in-out infinite;
-}
-
-/* Aura glow pulse */
-@keyframes briefGlowPulse {
-  0%, 100% { opacity: 0.5; }
-  50%      { opacity: 1; }
-}
-.brief-glow {
-  animation: briefGlowPulse 3.2s ease-in-out infinite;
+/* =============================================================================
+   ACCESSIBILITY — prefers-reduced-motion kills every loop (§4)
+   ============================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  .brief-breathe,
+  .brief-marquee,
+  .brief-flow-connector,
+  .brief-sheen::after,
+  .brief-silk,
+  .brief-glow,
+  .brief-float {
+    animation: none !important;
+  }
+  .brief-rise-in,
+  .brief-banner-in {
+    animation-duration: 120ms;
+    animation-timing-function: ease-out;
+  }
 }
 
-/* Konami sheen sweep — a diagonal highlight crossing the card */
-@keyframes briefSheen {
-  0%        { transform: translateX(-130%) skewX(-18deg); }
-  55%, 100% { transform: translateX(230%) skewX(-18deg); }
-}
-.brief-sheen { position: relative; overflow: hidden; }
-.brief-sheen::after {
-  content: '';
-  position: absolute;
-  top: 0; bottom: 0; width: 40%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
-  animation: briefSheen 4.6s ease-in-out infinite;
-  pointer-events: none;
-}
-
-/* Gentle float for the semi-logo glyph */
-@keyframes briefFloat {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-4px); }
-}
-.brief-float {
-  animation: briefFloat 3.5s ease-in-out infinite;
-}
-
-/* --- Pipeline flow connector — a moving "energy" dash between stages --- */
-@keyframes briefFlowDash {
-  0%   { background-position: 0 0; }
-  100% { background-position: 12px 0; }
-}
-.brief-flow-connector {
-  background-image: linear-gradient(90deg, #00E676 40%, transparent 40%);
-  background-size: 12px 2px;
-  animation: briefFlowDash 1.1s linear infinite;
-}
+/* Utility: hide scrollbars on pill scrollers / marquees */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

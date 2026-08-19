@@ -70,10 +70,10 @@ export function Pulse({
           say. Deliberately not framed as an assistant -- no chat, no
           model branding, no "AI" language. It answers "what is worth
           knowing?", and every item traces back to a real source. */}
-      <div className="bg-[#1C1C1F] border border-[#14392B] rounded-2xl p-5">
+      <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-5">
         <div className="flex items-center gap-2 mb-2">
-          <TrendingUp className="w-4 h-4 text-[#00E676]" />
-          <span className="text-[10px] text-[#00E676]">
+          <TrendingUp className="w-4 h-4 text-[#43D17A]" />
+          <span className="text-[10px] text-[#43D17A]">
             Pulse
           </span>
         </div>
@@ -82,7 +82,7 @@ export function Pulse({
           What's changing around you.
         </h2>
 
-        <p className="text-xs text-[#00E676] mt-1">
+        <p className="text-xs text-[#43D17A] mt-1">
           {pulseSection === 'now'
             ? 'The most recent things people have reported.'
             : pulseSection === 'local'
@@ -97,7 +97,7 @@ export function Pulse({
       {pulseSection === 'now' && (
         <div className="space-y-2">
           {pulseNow.length === 0 && (
-            <p className="text-xs text-[#8E8E93]">
+            <p className="text-xs text-[#8A93A6]">
               Nothing new has been reported yet today.
             </p>
           )}
@@ -108,31 +108,31 @@ export function Pulse({
             return (
               <div
                 key={post.id}
-                className="bg-[#1C1C1F] border border-[#1E1E22] rounded-2xl p-4"
+                className="bg-[#10141C] border border-[#232A38] rounded-2xl p-4"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-[9px] font-extrabold text-[#00E676]">
+                  <span className="text-[9px] font-extrabold text-[#43D17A]">
                     {post.kind}
                   </span>
-                  <span className="text-[9px] text-[#48484A]">
+                  <span className="text-[9px] text-[#4B5162]">
                     {formatSourceDate(post.publishedAt)}
                   </span>
                   {post.isPromoted && (
-                    <span className="text-[9px] font-extrabold text-[#C2A24A]">
+                    <span className="text-[9px] font-extrabold text-[#E8A33D]">
                       Promoted{post.promotedBy ? ` - ${post.promotedBy}` : ''}
                     </span>
                   )}
                 </div>
 
-                <p className="text-sm font-extrabold text-[#FFFFFF] mt-1">
+                <p className="text-sm font-extrabold text-[#F3F1E7] mt-1">
                   {post.title}
                 </p>
 
-                <p className="text-[11px] text-[#8E8E93] mt-1 leading-snug">
+                <p className="text-[11px] text-[#8A93A6] mt-1 leading-snug">
                   {post.body}
                 </p>
 
-                <p className="text-[9px] text-[#48484A] mt-2">
+                <p className="text-[9px] text-[#4B5162] mt-2">
                   Reported by {post.authorName}
                   {post.authorIsVerified ? ' (verified)' : ''}
                 </p>
@@ -142,7 +142,7 @@ export function Pulse({
                 {related && (
                   <button
                     onClick={() => setSelectedObjectForDetail(related)}
-                    className="text-[10px] font-extrabold text-[#00E676] mt-2 cursor-pointer"
+                    className="text-[10px] font-extrabold text-[#43D17A] mt-2 cursor-pointer"
                   >
                     Open {related.title}
                   </button>
@@ -158,7 +158,7 @@ export function Pulse({
           knowing", and something happening a kilometre away qualifies. */}
       {pulseSection === 'local' && (
         <div className="space-y-2">
-          <p className="text-[10px] text-[#48484A]">
+          <p className="text-[10px] text-[#4B5162]">
             {selectedLocation}
           </p>
 
@@ -170,8 +170,8 @@ export function Pulse({
             });
             if (live.length === 0) return null;
             return (
-              <div className="bg-[#1C1C1F] border border-[#14392B] rounded-2xl p-4">
-                <p className="text-[9px] font-extrabold text-[#00E676]">
+              <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-4">
+                <p className="text-[9px] font-extrabold text-[#43D17A]">
                   On today
                 </p>
                 <div className="mt-2 space-y-1.5">
@@ -183,10 +183,10 @@ export function Pulse({
                         onClick={() => setSelectedObjectForDetail(obj)}
                         className="w-full text-left cursor-pointer"
                       >
-                        <span className="block text-xs text-[#FFFFFF]">
+                        <span className="block text-xs text-[#F3F1E7]">
                           {obj.title}
                         </span>
-                        <span className="block text-[9px] text-[#48484A]">
+                        <span className="block text-[9px] text-[#4B5162]">
                           {obj.locationName}
                           {vendors.length > 0
                             ? ` - ${vendors.length} vendor${
@@ -202,27 +202,27 @@ export function Pulse({
             );
           })()}
           {pulseNotices.length === 0 && (
-            <p className="text-xs text-[#8E8E93]">
+            <p className="text-xs text-[#8A93A6]">
               No notices for this area right now.
             </p>
           )}
           {pulseNotices.map((post) => (
             <div
               key={post.id}
-              className="bg-[#1C1C1F] border border-[#1E1E22] rounded-2xl p-4"
+              className="bg-[#10141C] border border-[#232A38] rounded-2xl p-4"
             >
               <div className="flex items-center gap-2">
-                <span className="text-[9px] font-extrabold text-[#00E676]">
+                <span className="text-[9px] font-extrabold text-[#43D17A]">
                   {post.kind}
                 </span>
-                <span className="text-[9px] text-[#48484A]">
+                <span className="text-[9px] text-[#4B5162]">
                   {formatSourceDate(post.publishedAt)}
                 </span>
               </div>
-              <p className="text-sm font-extrabold text-[#FFFFFF] mt-1">
+              <p className="text-sm font-extrabold text-[#F3F1E7] mt-1">
                 {post.title}
               </p>
-              <p className="text-[11px] text-[#8E8E93] mt-1 leading-snug">
+              <p className="text-[11px] text-[#8A93A6] mt-1 leading-snug">
                 {post.body}
               </p>
             </div>
@@ -235,7 +235,7 @@ export function Pulse({
       {pulseSection === 'groups' && (
         <div className="space-y-2">
           {pulseGroupSignals.length === 0 && (
-            <p className="text-xs text-[#8E8E93]">
+            <p className="text-xs text-[#8A93A6]">
               Nothing recent from your groups. Brief only reads groups you
               have connected yourself.
             </p>
@@ -243,18 +243,18 @@ export function Pulse({
           {pulseGroupSignals.map((sig) => (
             <div
               key={sig.id}
-              className="bg-[#1C1C1F] border border-[#1E1E22] rounded-2xl p-4"
+              className="bg-[#10141C] border border-[#232A38] rounded-2xl p-4"
             >
               <div className="flex items-center gap-2">
-                <Users className="w-3.5 h-3.5 text-[#00E676] shrink-0" />
-                <p className="text-xs font-extrabold text-[#FFFFFF]">
+                <Users className="w-3.5 h-3.5 text-[#43D17A] shrink-0" />
+                <p className="text-xs font-extrabold text-[#F3F1E7]">
                   {sig.groupName}
                 </p>
               </div>
-              <p className="text-[11px] text-[#8E8E93] mt-1 leading-snug">
+              <p className="text-[11px] text-[#8A93A6] mt-1 leading-snug">
                 {sig.text}
               </p>
-              <p className="text-[9px] text-[#48484A] mt-1">
+              <p className="text-[9px] text-[#4B5162] mt-1">
                 Shared in this group on {formatSourceDate(sig.at)}. Brief has
                 not posted anything.
               </p>
@@ -266,7 +266,7 @@ export function Pulse({
                 setActiveTab('mylayer');
                 setMyLayerSection('groups');
               }}
-              className="text-[10px] font-extrabold text-[#00E676] cursor-pointer"
+              className="text-[10px] font-extrabold text-[#43D17A] cursor-pointer"
             >
               Manage your groups
             </button>
@@ -281,18 +281,18 @@ export function Pulse({
             {townHealth.metrics.map((metric) => (
               <div
                 key={metric.label}
-                className="bg-[#1C1C1F] border border-[#1E1E22] rounded-2xl p-4"
+                className="bg-[#10141C] border border-[#232A38] rounded-2xl p-4"
               >
-                <p className="text-[10px] text-[#8E8E93]">
+                <p className="text-[10px] text-[#8A93A6]">
                   {metric.label}
                 </p>
 
                 {metric.available ? (
                   <>
-                    <p className="text-2xl font-extrabold text-[#00E676] mt-1">
+                    <p className="text-2xl font-extrabold text-[#43D17A] mt-1">
                       {metric.value}{metric.unit ?? ''}
                     </p>
-                    <p className="text-[10px] text-[#00E676] mt-1">
+                    <p className="text-[10px] text-[#43D17A] mt-1">
                       {metric.caption}
                     </p>
                   </>
@@ -300,10 +300,10 @@ export function Pulse({
                   <>
                     {/* No records -> no number. Brief says so plainly
                         instead of printing a confident-looking zero. */}
-                    <p className="text-sm font-extrabold text-[#48484A] mt-1">
+                    <p className="text-sm font-extrabold text-[#4B5162] mt-1">
                       Not measured
                     </p>
-                    <p className="text-[10px] text-[#8E8E93] mt-1">
+                    <p className="text-[10px] text-[#8A93A6] mt-1">
                       {metric.reason}
                     </p>
                   </>
@@ -312,18 +312,18 @@ export function Pulse({
             ))}
           </div>
 
-          <div className="bg-[#1C1C1F] border border-[#1E1E22] rounded-2xl p-5">
+          <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-5">
             {townHealth.infoFreshnessPct !== null ? (
               <p className="text-sm font-bold">
                 {townHealth.infoFreshnessPct}% of the local information layer
                 is currently marked fresh.
               </p>
             ) : (
-              <p className="text-sm font-bold text-[#00E676]">
+              <p className="text-sm font-bold text-[#43D17A]">
                 Freshness cannot be measured yet.
               </p>
             )}
-            <p className="text-xs text-[#8E8E93] mt-1">
+            <p className="text-xs text-[#8A93A6] mt-1">
               Freshness falls as things go unchecked. It rises when someone
               verifies a place, closes a question or corrects a listing.
             </p>
@@ -331,7 +331,7 @@ export function Pulse({
 
           {pulseRecentlyVerified.length > 0 && (
             <div>
-              <h3 className="text-[11px] font-extrabold text-[#48484A] mb-2">
+              <h3 className="text-[11px] font-extrabold text-[#4B5162] mb-2">
                 Recently verified
               </h3>
               <div className="space-y-2">
@@ -339,10 +339,10 @@ export function Pulse({
                   <button
                     key={obj.id}
                     onClick={() => setSelectedObjectForDetail(obj)}
-                    className="w-full text-left bg-[#1C1C1F] border border-[#1E1E22] rounded-2xl p-3 cursor-pointer"
+                    className="w-full text-left bg-[#10141C] border border-[#232A38] rounded-2xl p-3 cursor-pointer"
                   >
-                    <p className="text-xs text-[#FFFFFF]">{obj.title}</p>
-                    <p className="text-[9px] text-[#48484A] mt-0.5">
+                    <p className="text-xs text-[#F3F1E7]">{obj.title}</p>
+                    <p className="text-[9px] text-[#4B5162] mt-0.5">
                       {obj.category} - verified{' '}
                       {obj.lastVerifiedAt
                         ? formatSourceDate(obj.lastVerifiedAt)

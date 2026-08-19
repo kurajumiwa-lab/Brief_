@@ -47,8 +47,8 @@ export function Inbox({
 
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-lg font-extrabold text-[#FFFFFF]">Inbox</h2>
-          <p className="text-[11px] text-[#8E8E93] leading-snug mt-1">
+          <h2 className="text-lg font-extrabold text-[#F3F1E7]">Inbox</h2>
+          <p className="text-[11px] text-[#8A93A6] leading-snug mt-1">
             Messages from connected sources, parsed into draft objects.
             Nothing here is in Brief until you publish it.
           </p>
@@ -57,18 +57,18 @@ export function Inbox({
         <button
           onClick={handleReceiveInbound}
           disabled={inboundBusy}
-          className="shrink-0 px-3 py-2 rounded-xl bg-[#1C1C1F] border border-[#14392B] text-[#00E676] font-extrabold text-[11px] cursor-pointer disabled:opacity-50"
+          className="shrink-0 px-3 py-2 rounded-xl bg-[#10141C] border border-[#232A38] text-[#43D17A] font-extrabold text-[11px] cursor-pointer disabled:opacity-50"
         >
           {inboundBusy ? 'Fetching...' : 'Fetch messages'}
         </button>
       </div>
 
       {pendingCandidates.length === 0 && (
-        <div className="border border-dashed border-[#1E1E22] rounded-2xl p-8 text-center">
-          <p className="text-xs text-[#8E8E93]">
+        <div className="border border-dashed border-[#232A38] rounded-2xl p-8 text-center">
+          <p className="text-xs text-[#8A93A6]">
             No messages awaiting review.
           </p>
-          <p className="text-[10px] text-[#48484A] mt-1">
+          <p className="text-[10px] text-[#4B5162] mt-1">
             Connected sources appear here as drafts, never as published objects.
           </p>
         </div>
@@ -81,15 +81,15 @@ export function Inbox({
         return (
           <div
             key={candidate.id}
-            className="bg-[#1C1C1F] border border-[#1E1E22] rounded-2xl p-4 space-y-3"
+            className="bg-[#10141C] border border-[#232A38] rounded-2xl p-4 space-y-3"
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[9px] text-[#8E8E93] truncate">
+              <span className="text-[9px] text-[#8A93A6] truncate">
                 {candidate.message.sourceLabel}
               </span>
               <span
                 className={`text-[9px] shrink-0 ${
-                  lowConfidence ? 'text-[#C2A24A]' : 'text-[#00E676]'
+                  lowConfidence ? 'text-[#E8A33D]' : 'text-[#43D17A]'
                 }`}
               >
                 {confidencePct}% parsed
@@ -97,17 +97,17 @@ export function Inbox({
             </div>
 
             {/* The raw message, always visible next to what was made of it. */}
-            <p className="text-[11px] text-[#48484A] italic leading-snug border-l-2 border-[#1E1E22] pl-2">
+            <p className="text-[11px] text-[#4B5162] italic leading-snug border-l-2 border-[#232A38] pl-2">
               {candidate.message.text}
             </p>
 
             <div>
-              <p className="text-[9px] text-[#00E676]">
+              <p className="text-[9px] text-[#43D17A]">
                 {candidate.typeConfident
                   ? getObjectTypeMeta(candidate.draft.type).label
                   : 'Type unclear'}
               </p>
-              <p className="text-sm font-extrabold text-[#FFFFFF] leading-snug mt-0.5">
+              <p className="text-sm font-extrabold text-[#F3F1E7] leading-snug mt-0.5">
                 {candidate.draft.title}
               </p>
             </div>
@@ -121,10 +121,10 @@ export function Inbox({
                       key={f.field}
                       className="flex items-baseline justify-between gap-3"
                     >
-                      <span className="text-[10px] text-[#8E8E93] shrink-0">
+                      <span className="text-[10px] text-[#8A93A6] shrink-0">
                         {f.field}
                       </span>
-                      <span className="text-[10px] text-[#A1A1A6] truncate">
+                      <span className="text-[10px] text-[#8A93A6] truncate">
                         {f.value}
                       </span>
                     </div>
@@ -134,13 +134,13 @@ export function Inbox({
 
             {candidate.suggestedLinks.length > 0 && (
               <div className="space-y-1">
-                <p className="text-[9px] text-[#48484A]">
+                <p className="text-[9px] text-[#4B5162]">
                   Connects to
                 </p>
                 {candidate.suggestedLinks.map((link) => (
                   <p
                     key={link.objectId + link.relation}
-                    className="text-[10px] text-[#00E676]"
+                    className="text-[10px] text-[#43D17A]"
                   >
                     {link.why}
                   </p>
@@ -149,38 +149,38 @@ export function Inbox({
             )}
 
             {candidate.warnings.map((w) => (
-              <p key={w} className="text-[10px] text-[#C2A24A]">
+              <p key={w} className="text-[10px] text-[#E8A33D]">
                 {w}
               </p>
             ))}
 
             {candidate.duplicates.length > 0 && (
-              <div className="border border-[#3A3416] bg-[#1A1708] rounded-xl p-2 space-y-0.5">
-                <p className="text-[9px] text-[#C2A24A]">
+              <div className="border border-[#E8A33D] bg-[#10141C] rounded-xl p-2 space-y-0.5">
+                <p className="text-[9px] text-[#E8A33D]">
                   Possible duplicate
                 </p>
                 {candidate.duplicates.slice(0, 2).map((d) => (
-                  <p key={d.item.id} className="text-[10px] text-[#A1A1A6]">
+                  <p key={d.item.id} className="text-[10px] text-[#8A93A6]">
                     {d.item.title} ({Math.round(d.similarity * 100)}% similar)
                   </p>
                 ))}
               </div>
             )}
 
-            <p className="text-[9px] text-[#48484A]">
+            <p className="text-[9px] text-[#4B5162]">
               Unverified. No trust score until reviewed.
             </p>
 
             <div className="flex gap-2 pt-1">
               <button
                 onClick={() => handleRejectCandidate(candidate)}
-                className="flex-1 py-2 rounded-xl bg-[#121214] border border-[#1E1E22] text-[#8E8E93] font-bold text-[11px] cursor-pointer"
+                className="flex-1 py-2 rounded-xl bg-[#10141C] border border-[#232A38] text-[#8A93A6] font-bold text-[11px] cursor-pointer"
               >
                 Discard
               </button>
               <button
                 onClick={() => handleAcceptCandidate(candidate)}
-                className="flex-[2] py-2 rounded-xl bg-[#00E676] text-[#0A0A0B] font-extrabold text-[11px] cursor-pointer"
+                className="flex-[2] py-2 rounded-xl bg-[#43D17A] text-[#090B10] font-extrabold text-[11px] cursor-pointer"
               >
                 Publish to Brief
               </button>

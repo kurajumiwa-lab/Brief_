@@ -65,12 +65,12 @@ export function PipelineExplorer({ stats, online }: PipelineExplorerProps) {
   const [open, setOpen] = React.useState<Stage | null>(null);
 
   return (
-    <div className="rounded-2xl border border-[#00E676]/20 bg-gradient-to-b from-[#121214] to-[#0C0C0E] p-4">
+    <div className="rounded-2xl border border-[#43D17A]/20 bg-gradient-to-b from-[#10141C] to-[#090B10] p-4">
       <div className="mb-3 flex items-center gap-2">
         <span className="text-base">⚙️</span>
         <div className="min-w-0">
-          <p className="text-[12px] font-extrabold text-[#FFFFFF]">How Brief works</p>
-          <p className="text-[10px] text-[#8E8E93]">Everything you see starts as a message. Tap a step.</p>
+          <p className="text-[12px] font-extrabold text-[#F3F1E7]">How Brief works</p>
+          <p className="text-[10px] text-[#8A93A6]">Everything you see starts as a message. Tap a step.</p>
         </div>
       </div>
 
@@ -86,32 +86,32 @@ export function PipelineExplorer({ stats, online }: PipelineExplorerProps) {
                 aria-expanded={isOpen}
                 className={`brief-sheen relative flex flex-1 flex-col items-center gap-1.5 rounded-xl border px-2 py-3 text-center transition-all ${
                   isOpen
-                    ? 'border-[#00E676]/60 bg-[#00E676]/10'
-                    : 'border-[#1E1E22] bg-[#1C1C1F] hover:border-[#00E676]/40'
+                    ? 'border-[#43D17A]/60 bg-[#43D17A]/10'
+                    : 'border-[#232A38] bg-[#10141C] hover:border-[#43D17A]/40'
                 }`}
               >
                 <span
                   className={`flex h-9 w-9 items-center justify-center rounded-full border text-sm font-extrabold ${
-                    isOpen ? 'border-[#00E676] text-[#00E676]' : 'border-[#1E1E22] text-[#A1A1A6]'
+                    isOpen ? 'border-[#43D17A] text-[#43D17A]' : 'border-[#232A38] text-[#8A93A6]'
                   }`}
                   style={isOpen ? { boxShadow: '0 0 14px rgba(0,230,118,0.35)' } : undefined}
                 >
                   {stage.glyph}
                 </span>
-                <span className={`text-[10px] font-bold leading-tight ${isOpen ? 'text-[#00E676]' : 'text-[#FFFFFF]'}`}>
+                <span className={`text-[10px] font-bold leading-tight ${isOpen ? 'text-[#43D17A]' : 'text-[#F3F1E7]'}`}>
                   {stage.label}
                 </span>
-                <span className="text-[11px] font-extrabold text-[#FFFFFF]">
+                <span className="text-[11px] font-extrabold text-[#F3F1E7]">
                   {count === null ? (online ? '…' : '—') : count}
                 </span>
-                <span className="text-[8px] uppercase tracking-wide text-[#48484A]">
+                <span className="text-[8px] uppercase tracking-wide text-[#4B5162]">
                   {count === 1 ? stage.verb : `${stage.verb}s`}
                 </span>
               </button>
 
               {i < STAGES.length - 1 && (
                 <div className="flex w-4 shrink-0 items-center">
-                  <div className="brief-flow-connector h-0.5 flex-1 rounded-full bg-[#00E676]/40" />
+                  <div className="brief-flow-connector h-0.5 flex-1 rounded-full bg-[#43D17A]/40" />
                 </div>
               )}
             </React.Fragment>
@@ -121,13 +121,13 @@ export function PipelineExplorer({ stats, online }: PipelineExplorerProps) {
 
       {/* Expanded explanation — a real interaction, not a dead control */}
       {open && (
-        <div className="brief-spring-modal mt-3 rounded-xl border border-[#00E676]/25 bg-[#16161A] p-3">
+        <div className="brief-spring-modal mt-3 rounded-xl border border-[#43D17A]/25 bg-[#10141C] p-3">
           {(() => {
             const stage = STAGES.find((s) => s.id === open)!;
             return (
               <>
-                <p className="text-[11px] leading-relaxed text-[#FFFFFF]">{stage.explain}</p>
-                <p className="mt-2 rounded-lg bg-[#0C0C0E] px-2.5 py-2 font-mono text-[10px] text-[#00E676]">
+                <p className="text-[11px] leading-relaxed text-[#F3F1E7]">{stage.explain}</p>
+                <p className="mt-2 rounded-lg bg-[#090B10] px-2.5 py-2 font-mono text-[10px] text-[#43D17A]">
                   {stage.example}
                 </p>
               </>
@@ -138,7 +138,7 @@ export function PipelineExplorer({ stats, online }: PipelineExplorerProps) {
 
       {/* Honest availability note */}
       {!online && (
-        <p className="mt-2 text-[9px] text-[#48484A]">
+        <p className="mt-2 text-[9px] text-[#4B5162]">
           Counts appear once Brief is reachable. The flow itself is always on.
         </p>
       )}

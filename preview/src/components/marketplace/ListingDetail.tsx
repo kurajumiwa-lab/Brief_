@@ -43,27 +43,27 @@ export function ListingDetail({
     <div className="space-y-3">
       <button
         onClick={onBack}
-        className="text-[10px] font-extrabold text-[#00E676] cursor-pointer"
+        className="text-[10px] font-extrabold text-[#43D17A] cursor-pointer"
       >
         Back to marketplace
       </button>
 
-      <div className="bg-[#1C1C1F] border border-[#1E1E22] rounded-2xl p-4 space-y-2">
-        <h3 className="text-sm font-extrabold text-[#FFFFFF]">{listing.title}</h3>
-        <p className="text-lg font-extrabold text-[#00E676]">
+      <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-4 space-y-2">
+        <h3 className="text-sm font-extrabold text-[#F3F1E7]">{listing.title}</h3>
+        <p className="text-lg font-extrabold text-[#43D17A]">
           {money(listing.price, listing.currency)}
         </p>
 
         {listing.description && (
-          <p className="text-xs text-[#A1A1A6] whitespace-pre-wrap">{listing.description}</p>
+          <p className="text-xs text-[#8A93A6] whitespace-pre-wrap">{listing.description}</p>
         )}
 
         {listing.locationName && (
-          <p className="text-[10px] text-[#48484A]">Location: {listing.locationName}</p>
+          <p className="text-[10px] text-[#4B5162]">Location: {listing.locationName}</p>
         )}
 
         {listing.quantityAvailable !== null && (
-          <p className="text-[10px] text-[#48484A]">
+          <p className="text-[10px] text-[#4B5162]">
             {listing.quantityAvailable > 0
               ? `${listing.quantityAvailable} available`
               : 'None available'}
@@ -73,7 +73,7 @@ export function ListingDetail({
         {listing.vendor && (
           <button
             onClick={() => onViewVendor(listing.vendor!.id)}
-            className="text-[10px] font-extrabold text-[#00E676] cursor-pointer"
+            className="text-[10px] font-extrabold text-[#43D17A] cursor-pointer"
           >
             Sold by {listing.vendor.displayName}
           </button>
@@ -81,27 +81,27 @@ export function ListingDetail({
       </div>
 
       {listing.orderable ? (
-        <div className="bg-[#1C1C1F] border border-[#1E1E22] rounded-2xl p-4 space-y-3">
+        <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-extrabold text-[#48484A]">
+            <span className="text-[10px] font-extrabold text-[#4B5162]">
               Quantity
             </span>
             <button
               onClick={() => onQuantityChange(Math.max(1, quantity - 1))}
-              className="w-7 h-7 rounded-full bg-[#1C1C1F] text-[#00E676] font-extrabold cursor-pointer"
+              className="w-7 h-7 rounded-full bg-[#10141C] text-[#43D17A] font-extrabold cursor-pointer"
             >
               -
             </button>
-            <span className="text-xs font-extrabold text-[#FFFFFF] w-6 text-center">{quantity}</span>
+            <span className="text-xs font-extrabold text-[#F3F1E7] w-6 text-center">{quantity}</span>
             <button
               onClick={() => onQuantityChange(Math.min(max, quantity + 1))}
-              className="w-7 h-7 rounded-full bg-[#1C1C1F] text-[#00E676] font-extrabold cursor-pointer"
+              className="w-7 h-7 rounded-full bg-[#10141C] text-[#43D17A] font-extrabold cursor-pointer"
             >
               +
             </button>
           </div>
 
-          <p className="text-[10px] text-[#48484A]">
+          <p className="text-[10px] text-[#4B5162]">
             Estimated total {money(previewTotal, listing.currency)} - confirmed by the server when
             you order
           </p>
@@ -109,24 +109,24 @@ export function ListingDetail({
           <button
             onClick={onOrder}
             disabled={busy}
-            className="w-full py-2 rounded-full bg-[#00E676] text-[#0A0A0B] text-xs font-extrabold cursor-pointer disabled:opacity-50"
+            className="w-full py-2 rounded-full bg-[#43D17A] text-[#090B10] text-xs font-extrabold cursor-pointer disabled:opacity-50"
           >
             {busy ? 'Placing order...' : 'Place order'}
           </button>
 
-          <p className="text-[10px] text-[#48484A]">
+          <p className="text-[10px] text-[#4B5162]">
             Placing an order does not pay for it. You arrange payment with the seller directly.
           </p>
         </div>
       ) : (
-        <div className="bg-[#1C1C1F] border border-[#1E1E22] rounded-2xl p-4">
-          <p className="text-xs text-[#C2A24A]">
+        <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-4">
+          <p className="text-xs text-[#E8A33D]">
             {listing.unorderableReason ?? 'This listing is not available.'}
           </p>
         </div>
       )}
 
-      {notice && <p className="text-[10px] text-[#C2A24A]">{notice}</p>}
+      {notice && <p className="text-[10px] text-[#E8A33D]">{notice}</p>}
     </div>
   );
 }
