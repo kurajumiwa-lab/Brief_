@@ -39,6 +39,7 @@ import * as vault from './domain/vault.js';
 import * as footsteps from './domain/footsteps.js';
 import * as handoff from './domain/handoff.js';
 import * as command from './domain/command.js';
+import * as seed from './domain/seed.js';
 import * as trust from './domain/trust.js';
 import * as discovery from './domain/discovery.js';
 import * as notifications from './domain/notifications.js';
@@ -2658,6 +2659,26 @@ app.get('/api/host/command', (req, res) => {
   const me = requireAuth(req, res);
   if (!me) return;
   res.json({ command: command.commandCentre(me) });
+});
+
+/**
+ * Seed / clear demo content IN-PROCESS. The CLI script wrote to a data file
+ * that the running server (which holds the store in memory) never re-reads, so
+ * on the deployed site the data never appeared. These routes run the seed
+ * against the live in-memory store, so it is visible immediately.
+ *
+ * Authenticated (the local bootstrapped account counts), and the seed is
+ * clearly-tagged, removable, and creates no money — a harmless demo affordance,
+ * not a privileged surface.
+ */
+app.post('/api/ops/seed', (req, res) => {
+  if (!requireAuth(req, res)) return;
+  res.json({ seeded: seed.runSeed() });
+});
+
+app.post('/api/ops/seed/clear', (req, res) => {
+  if (!requireAuth(req, res)) return;
+  res.json({ cleared: seed.clearSeed() });
 });
 
 app.get('/api/economic/reconcile', (_req, res) => {

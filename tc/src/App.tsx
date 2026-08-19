@@ -5205,6 +5205,24 @@ export function App() {
   // an explicit trigger so it never covers content unprompted; the physics is
   // the same springIntro curve the design system specifies.
   const [springOverlayOpen, setSpringOverlayOpen] = useState<boolean>(false);
+  const [demoBusy, setDemoBusy] = useState<boolean>(false);
+  const [demoSeeded, setDemoSeeded] = useState<boolean>(false);
+
+  // Seed demo content in-process (the CLI wrote to a file the running server
+  // never re-read). Populates the empty surface through the real pipeline.
+  const handleLoadDemo = async () => {
+    setDemoBusy(true);
+    const res = await briefApi.seedDemo();
+    setDemoBusy(false);
+    if (res.ok) {
+      setDemoSeeded(true);
+      showToast('Demo content loaded.');
+      void loadObjects();
+      void refreshConnectors();
+    } else {
+      showToast(res.error ?? 'Could not load demo content.');
+    }
+  };
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -7481,12 +7499,23 @@ export function App() {
                     </button>
                   </div>
                 ) : (
-                  <PromptBanner
-                    line1="Quiet. Suspiciously quiet."
-                    line2="Everything here arrives from communities Brief is connected to. Post the first thing."
-                    action="Post the first thing"
-                    onAction={() => setCaptureOpen(true)}
-                  />
+                  <div className="space-y-2">
+                    <PromptBanner
+                      line1="Quiet. Suspiciously quiet."
+                      line2="Everything here arrives from communities Brief is connected to. Post the first thing."
+                      action="Post the first thing"
+                      onAction={() => setCaptureOpen(true)}
+                    />
+                    {/* Demo affordance: load clearly-tagged, removable Kenyan
+                        content through the real pipeline, in-process. */}
+                    <button
+                      onClick={handleLoadDemo}
+                      disabled={demoBusy}
+                      className="w-full rounded-xl border border-[#232A38] bg-[#10141C] px-4 py-2.5 text-[11px] font-bold text-[#8A93A6] transition-colors active:border-[#F3F1E7] disabled:opacity-50"
+                    >
+                      {demoBusy ? 'Loading…' : demoSeeded ? 'Load demo content again' : 'Load demo content'}
+                    </button>
+                  </div>
                 )}
               </div>
             )}

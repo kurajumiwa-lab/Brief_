@@ -1429,3 +1429,17 @@ export function cancelArenaChallenge(id: string): Promise<ApiResult<any>> {
     r?.challenge ? r : undefined
   );
 }
+
+// ---------------------------------------------------------------------------
+// DEMO SEED — in-process, authenticated. Lets an authorised user populate or
+// clear demo content from within the running server (the CLI wrote to a file
+// the server never re-read).
+// ---------------------------------------------------------------------------
+
+export function seedDemo(): Promise<ApiResult<{ seeded: any }>> {
+  return request('/api/ops/seed', { method: 'POST', body: '{}' }, (r) => (r?.seeded ? { seeded: r.seeded } : undefined));
+}
+
+export function clearDemo(): Promise<ApiResult<{ cleared: any }>> {
+  return request('/api/ops/seed/clear', { method: 'POST', body: '{}' }, (r) => (r?.cleared ? { cleared: r.cleared } : undefined));
+}
