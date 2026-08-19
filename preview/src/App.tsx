@@ -107,13 +107,13 @@ export const DESTINATIONS: {
   label: string;
   hint: string;
 }[] = [
-  { id: 'nearby', label: 'Nearby', hint: 'Everything happening around you' },
-  { id: 'arena', label: 'Arena', hint: 'Play, compete and find opponents' },
-  { id: 'mylayer', label: 'My Layer', hint: 'Your saved things and activity' },
-  { id: 'workflows', label: 'Workflows', hint: 'Processes and things to action' },
+  { id: 'nearby', label: 'Around', hint: "What's happening near you" },
+  { id: 'arena', label: 'Play', hint: 'Find people to play with nearby' },
+  { id: 'mylayer', label: 'Saved', hint: 'Your saved places and opportunities' },
+  { id: 'workflows', label: 'Actions', hint: 'Things you can get done' },
   // "Pulse", not "Intelligence": the second names the implementation, and
   // nobody sets out to visit an intelligence department.
-  { id: 'pulse', label: 'Pulse', hint: 'What is changing around you' }
+  { id: 'pulse', label: 'Pulse', hint: "What's changing around you" }
 ];
 
 // Icons kept separate from DESTINATIONS so the data stays plain and the
@@ -4120,7 +4120,7 @@ const GameGlyph: React.FC<{
         <GameGlyphShape gameId={gameId} color={color} />
       </svg>
       <span
-        className={`absolute -bottom-0.5 -right-0.5 min-w-[15px] px-1 rounded-full text-[8px] font-mono font-extrabold text-center leading-[15px] ${
+        className={`absolute -bottom-0.5 -right-0.5 min-w-[15px] px-1 rounded-full text-[8px] font-extrabold text-center leading-[15px] ${
           empty
             ? 'bg-[#2A2921] text-[#6F6A58]'
             : full
@@ -4726,7 +4726,7 @@ function PublicShareRow({ title, description }: { title: string; description: st
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#28261F] text-[#7FA98B] text-[10px] font-extrabold border border-[#3F5544] cursor-pointer">
         <Share2 className="w-3 h-3" /> {copied ? 'Copied' : 'Copy link'}
       </button>
-      <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#28261F] text-[#6F6A58] text-[10px] font-mono border border-[#3B372B]" title="Scan to open">
+      <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#28261F] text-[#6F6A58] text-[10px] border border-[#3B372B]" title="Scan to open">
         <ExternalLink className="w-3 h-3" /> QR
       </span>
     </div>
@@ -4798,7 +4798,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
   return (
     <div className="min-h-screen bg-[#191714] text-[#F2EFE7] font-sans selection:bg-[#3E9A66] selection:text-[#191714] flex flex-col">
       <div className="flex-1 w-full max-w-lg mx-auto px-4 py-8 space-y-5">
-        <p className="text-[9px] font-mono uppercase tracking-widest text-[#6F6A58]">Brief</p>
+        <p className="text-[9px] text-[#6F6A58]">Brief</p>
 
         {load.status === 'loading' && (
           <p className="text-xs text-[#9A9278] py-12 text-center">Loading...</p>
@@ -4819,7 +4819,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
         {load.status === 'ready' && c && (
           <>
             <div className="space-y-2">
-              <p className="text-[9px] font-mono uppercase tracking-widest text-[#3E9A66]">
+              <p className="text-[9px] text-[#3E9A66]">
                 {c.type}
               </p>
               <h1 className="text-2xl font-extrabold leading-tight">{c.title}</h1>
@@ -4889,8 +4889,8 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                   <div className="flex items-center gap-3 pt-1">
                     <PublicTicketQr code={done.ticketCode} />
                     <div className="min-w-0 space-y-1">
-                      <p className="text-[9px] font-mono uppercase text-[#6F6A58]">Your ticket</p>
-                      <p className="text-[11px] font-mono text-[#D9BB7D] break-all select-all">{done.ticketCode}</p>
+                      <p className="text-[9px] text-[#6F6A58]">Your ticket</p>
+                      <p className="text-[11px] text-[#D9BB7D] break-all select-all">{done.ticketCode}</p>
                       <p className="text-[10px] text-[#6F6A58] leading-snug">Show this code at the gate.</p>
                     </div>
                   </div>
@@ -4922,7 +4922,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                     </div>
                   )}
                   <div>
-                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">
+                    <label className="block text-[9px] text-[#6F6A58] mb-1">
                       Your name
                     </label>
                     <input
@@ -4933,7 +4933,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                     />
                   </div>
                   <div>
-                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">
+                    <label className="block text-[9px] text-[#6F6A58] mb-1">
                       Phone or email
                     </label>
                     <input
@@ -4962,11 +4962,19 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
         )}
       </div>
 
-      <footer className="border-t border-[#3B372B] py-6 text-[10px] text-[#6F6A58] text-center font-mono">
+      <footer className="border-t border-[#3B372B] py-6 text-[10px] text-[#6F6A58] text-center">
         Brief
       </footer>
     </div>
   );
+}
+
+/** A warm, human greeting for the home header — not a machine timestamp. */
+function greetingForHour(hour: number): string {
+  if (hour < 5) return 'Still up?';
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
 }
 
 export function App() {
@@ -6169,7 +6177,7 @@ export function App() {
     setSavedGroupEntryIds((prev) =>
       prev.includes(entry.id) ? prev : [...prev, entry.id]
     );
-    showToast('Saved to My Layer with its source.');
+    showToast('Saved with its source.');
   };
 
   const handleViewSource = (entry: GroupKnowledgeEntry) => {
@@ -6727,7 +6735,7 @@ export function App() {
         (rel) => !(rel.targetId === object.id && rel.verb === 'saved')
       )
     );
-    showToast(`Removed "${object.title}" from My Layer.`);
+    showToast(`Removed "${object.title}" from your saved things.`);
   };
 
   // Computed once per render instead of on every call site in the modal.
@@ -6785,7 +6793,7 @@ export function App() {
               <span className="font-extrabold text-xl text-[#3E9A66] tracking-tight">Brief</span>
               {/* Where am I. The rail shows it too, but the header keeps the
                   answer visible when the rail is collapsed to icons. */}
-              <span className="hidden lg:inline text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58]">
+              <span className="hidden lg:inline text-[11px] font-extrabold text-[#6F6A58]">
                 {DESTINATIONS.find((d) => d.id === activeTab)?.label}
               </span>
               <div className="flex items-center gap-1 bg-[#28261F] text-[#F2EFE7] text-xs font-bold px-2.5 py-1.5 rounded-xl border border-[#3F5544]">
@@ -6877,17 +6885,15 @@ export function App() {
         {/* Visual Hero Bar */}
         <div className="mb-6 rounded-2xl bg-[#28261F] border border-[#3F5544] p-5 shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#3E9A66] animate-ping" />
-              <span className="text-xs font-mono font-extrabold uppercase text-[#3E9A66]">{selectedLocation} &middot; Live Local Stream</span>
-            </div>
-            <h1 className="text-xl font-extrabold text-[#F2EFE7]">Brief &mdash; Everything Happening Around You</h1>
-          </div>
-          <div className="flex items-center gap-2 font-mono text-xs font-extrabold">
-            <span className="bg-[#191714] px-3 py-1.5 rounded-xl border border-[#3F5544] text-[#3E9A66]">{objects.length} Objects</span>
-            {townHealth.infoFreshnessPct !== null && (
-              <span className="bg-[#191714] px-3 py-1.5 rounded-xl border border-[#3F5544] text-[#3E9A66]">{townHealth.infoFreshnessPct}% Fresh</span>
-            )}
+            <p className="text-[11px] text-[#9A9278] mb-1">{greetingForHour(new Date().getHours())}</p>
+            <h1 className="text-xl font-extrabold text-[#F2EFE7]">
+              {selectedLocation} today
+            </h1>
+            <p className="text-xs text-[#9A9278] mt-1">
+              {objects.length > 0
+                ? `${objects.length} thing${objects.length === 1 ? '' : 's'} happening nearby`
+                : 'Nothing happening nearby yet — check again later or look around another area.'}
+            </p>
           </div>
         </div>
 
@@ -6965,8 +6971,8 @@ export function App() {
                 ['inbox', `Inbox${pendingCandidates.length > 0 ? ` (${pendingCandidates.length})` : ''}`],
                 ['sources', 'Sources'],
                 // A SECTION inside Workflows, not a sixth destination. The
-                // rail stays five doors wide: Nearby / Arena / My Layer /
-                // Workflows / Pulse.
+                // rail stays five doors wide: Around / Play / Saved /
+                // Actions / Pulse.
                 ['money', 'Money'],
                 ['vault', 'Vault'],
                 ['gate', 'Gate']
@@ -7018,7 +7024,7 @@ export function App() {
             <div className="mb-5">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-baseline gap-2 min-w-0">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#3E9A66] shrink-0">
+                  <span className="text-[10px] font-extrabold text-[#3E9A66] shrink-0">
                     Today's Tea
                   </span>
                   <span className="text-[11px] text-[#7FA98B] truncate">
@@ -7079,7 +7085,7 @@ export function App() {
                 <div className="mb-5">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#3E9A66]" />
-                    <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#7FA98B]">
+                    <h3 className="text-[11px] font-extrabold text-[#7FA98B]">
                       Happening nearby
                     </h3>
                   </div>
@@ -7170,7 +7176,7 @@ export function App() {
                     {level >= 2 && (
                       <div className="flex flex-wrap items-center gap-2 mb-2">
                         <span
-                          className={`inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                          className={`inline-flex items-center gap-1.5 text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
                             destState === 'live' || destState === 'today'
                               ? 'bg-[#3E9A66] text-[#191714]'
                               : 'bg-[#2A2921] text-[#3E9A66] border border-[#3F5544]'
@@ -7182,7 +7188,7 @@ export function App() {
                           {DESTINATION_STATE_LABELS[destState]}
                         </span>
                         {access && (
-                          <span className="text-[9px] font-extrabold uppercase tracking-wider text-[#7FA98B]">
+                          <span className="text-[9px] font-extrabold text-[#7FA98B]">
                             {access}
                           </span>
                         )}
@@ -7198,7 +7204,7 @@ export function App() {
                           />
 
                           <div className="absolute top-3 left-3 flex items-center gap-2">
-                            <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-[#191714]/80 text-[#3E9A66] border border-[#3F5544]">
+                            <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#191714]/80 text-[#3E9A66] border border-[#3F5544]">
                               {obj.category}
                             </span>
 
@@ -7210,7 +7216,7 @@ export function App() {
                           </div>
 
                           {obj.metadata?.price !== undefined && (
-                            <span className="absolute bottom-2 right-3 text-[#3E9A66] font-mono text-sm font-extrabold bg-[#191714]/80 px-2 py-0.5 rounded border border-[#3F5544]">
+                            <span className="absolute bottom-2 right-3 text-[#3E9A66] text-sm font-extrabold bg-[#191714]/80 px-2 py-0.5 rounded border border-[#3F5544]">
                               {obj.metadata.currency || 'KES'} {obj.metadata.price.toLocaleString()}
                             </span>
                           )}
@@ -7223,7 +7229,7 @@ export function App() {
                           styling, just reachable without a photo. */}
                       {!obj.imageUrl && (
                         <div className="flex items-center gap-2 px-4 pt-1">
-                          <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-[#191714]/80 text-[#3E9A66] border border-[#3F5544]">
+                          <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#191714]/80 text-[#3E9A66] border border-[#3F5544]">
                             {obj.category}
                           </span>
 
@@ -7237,7 +7243,7 @@ export function App() {
 
                       <div className="p-4 space-y-2">
                         <div className="flex items-center justify-between gap-3">
-                          <span className="text-[10px] font-mono uppercase text-[#9A9278]">
+                          <span className="text-[10px] text-[#9A9278]">
                             {getObjectTypeMeta(obj.type).label}
                           </span>
 
@@ -7265,7 +7271,7 @@ export function App() {
                             <MapPin className="w-3 h-3 shrink-0" />
                             <span className="truncate">{obj.locationName}</span>
                             {getDistanceLabel(obj) && (
-                              <span className="ml-auto shrink-0 font-mono text-[#7FA98B]">
+                              <span className="ml-auto shrink-0 text-[#7FA98B]">
                                 {getDistanceLabel(obj)}
                               </span>
                             )}
@@ -7337,7 +7343,7 @@ export function App() {
             ) : (
               <div className="py-16 text-center text-[#9A9278]">
                 <Sparkles className="w-8 h-8 mx-auto mb-3 opacity-50" />
-                <p className="text-sm font-bold">Nothing here yet.</p>
+                <p className="text-sm font-bold">Nothing nearby right now.</p>
 
                 {/* A search that finds nothing is the clearest signal of
                     intent Brief ever gets. Rather than a dead end, offer to
@@ -7372,7 +7378,7 @@ export function App() {
             <div className="bg-[#28261F] border border-[#3F5544] rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-2">
                 <Newspaper className="w-4 h-4 text-[#3E9A66]" />
-                <span className="text-[10px] font-mono uppercase text-[#3E9A66]">
+                <span className="text-[10px] text-[#3E9A66]">
                   Tea
                 </span>
               </div>
@@ -7408,7 +7414,7 @@ export function App() {
                       {label}
                     </span>
                     <span
-                      className={`text-[10px] font-mono ${
+                      className={`text-[10px] ${
                         isActive ? 'text-[#191714]/70' : 'text-[#9A9278]'
                       }`}
                     >
@@ -7423,7 +7429,7 @@ export function App() {
             </div>
 
             <div className="flex items-center justify-between text-[10px] text-[#9A9278] px-1">
-              <span className="font-mono uppercase">
+              <span className="font-extrabold">
                 {getEditionMeta(activeEdition).label}
               </span>
               <span>
@@ -7450,7 +7456,7 @@ export function App() {
                 >
                   <div className="flex items-center gap-2 flex-wrap mb-2">
                     <span
-                      className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full border bg-[#191714] ${kindMeta.tone}`}
+                      className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full border bg-[#191714] ${kindMeta.tone}`}
                     >
                       {kindMeta.label}
                     </span>
@@ -7463,7 +7469,7 @@ export function App() {
                       <ShieldCheck className="w-3 h-3 text-[#3E9A66] shrink-0" />
                     )}
 
-                    <span className="text-[10px] text-[#9A9278] font-mono">
+                    <span className="text-[10px] text-[#9A9278]">
                       {getRelativeTime(post.publishedAt)}
                     </span>
                   </div>
@@ -7496,7 +7502,7 @@ export function App() {
                       )}
 
                       <div className="min-w-0 flex-1">
-                        <div className="text-[9px] font-mono uppercase text-[#9A9278]">
+                        <div className="text-[9px] text-[#9A9278]">
                           About this {getObjectTypeMeta(subject.type).label}
                         </div>
                         <div className="text-[11px] font-extrabold truncate group-hover:text-[#3E9A66]">
@@ -7527,7 +7533,7 @@ export function App() {
                     </span>
 
                     {post.tags && post.tags.length > 0 && (
-                      <span className="ml-auto text-[10px] font-mono text-[#9A9278] truncate">
+                      <span className="ml-auto text-[10px] text-[#9A9278] truncate">
                         {post.tags.map((tag) => `#${tag}`).join(' ')}
                       </span>
                     )}
@@ -7551,8 +7557,8 @@ export function App() {
             <div className="bg-[#28261F] border border-[#3F5544] rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-2">
                 <Bookmark className="w-4 h-4 text-[#3E9A66]" />
-                <span className="text-[10px] font-mono uppercase text-[#3E9A66]">
-                  Your Layer
+                <span className="text-[10px] text-[#3E9A66]">
+                  Your saved things
                 </span>
               </div>
 
@@ -7570,10 +7576,10 @@ export function App() {
             {savedGroups.map((group) => (
               <div key={group.label}>
                 <div className="flex items-baseline gap-2 mb-2 px-1">
-                  <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#3E9A66]">
+                  <h3 className="text-[11px] font-extrabold text-[#3E9A66]">
                     {group.label}
                   </h3>
-                  <span className="text-[10px] font-mono text-[#9A9278]">
+                  <span className="text-[10px] text-[#9A9278]">
                     {group.items.length}
                   </span>
                 </div>
@@ -7602,14 +7608,14 @@ export function App() {
                             )}
 
                             <div className="min-w-0 flex-1">
-                              <div className="text-[9px] font-mono uppercase text-[#9A9278]">
+                              <div className="text-[9px] text-[#9A9278]">
                                 {obj.category}
                               </div>
                               <div className="text-xs font-extrabold mt-0.5 line-clamp-2 group-hover:text-[#3E9A66]">
                                 {obj.title}
                               </div>
                               {distance && (
-                                <div className="text-[10px] font-mono text-[#9A9278] mt-1">
+                                <div className="text-[10px] text-[#9A9278] mt-1">
                                   {distance}
                                 </div>
                               )}
@@ -7658,7 +7664,7 @@ export function App() {
 
                           <button
                             onClick={() => handleUnsave(obj)}
-                            title="Remove from My Layer"
+                            title="Remove from saved"
                             className="p-2 rounded-xl bg-[#2B2A22] text-[#7FA98B] border border-[#3B372B] hover:border-[#3E9A66] cursor-pointer"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -7701,7 +7707,7 @@ export function App() {
 
               return (
                 <div className="mt-8 pt-5 border-t border-[#3B372B]">
-                  <p className="text-[10px] font-mono uppercase text-[#6F6A58] mb-3">
+                  <p className="text-[10px] text-[#6F6A58] mb-3">
                     Recent activity
                   </p>
                   <div className="space-y-1.5">
@@ -7711,7 +7717,7 @@ export function App() {
                         onClick={() => setSelectedObjectForDetail(entry.object)}
                         className="w-full text-left flex items-center gap-2 py-1.5 cursor-pointer"
                       >
-                        <span className="text-[9px] font-mono uppercase text-[#3E9A66] w-20 shrink-0">
+                        <span className="text-[9px] text-[#3E9A66] w-20 shrink-0">
                           {entry.verb}
                         </span>
                         <span className="text-[11px] text-[#B6AFA0] truncate">
@@ -7743,7 +7749,7 @@ export function App() {
             <div className="bg-[#28261F] border border-[#3F5544] rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-2">
                 <Briefcase className="w-4 h-4 text-[#3E9A66]" />
-                <span className="text-[10px] font-mono uppercase text-[#3E9A66]">
+                <span className="text-[10px] text-[#3E9A66]">
                   Workflows
                 </span>
               </div>
@@ -7763,8 +7769,8 @@ export function App() {
               .length === 0 && (
               <p className="text-xs text-[#9A9278]">
                 {workflowSection === 'completed'
-                  ? 'Nothing finished yet. Completed processes stay here for reference.'
-                  : 'No processes in progress right now.'}
+                  ? 'Nothing finished yet. Things you complete will stay here for reference.'
+                  : 'Your activities will appear here.'}
               </p>
             )}
 
@@ -7776,7 +7782,7 @@ export function App() {
                 <div className="p-5">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <span className="text-[10px] font-mono uppercase text-[#3E9A66]">
+                      <span className="text-[10px] text-[#3E9A66]">
                         {journey.category}
                       </span>
 
@@ -7789,7 +7795,7 @@ export function App() {
                       </p>
                     </div>
 
-                    <span className="text-xs font-mono font-bold text-[#3E9A66]">
+                    <span className="text-xs font-bold text-[#3E9A66]">
                       {journey.progressPercent}%
                     </span>
                   </div>
@@ -7823,7 +7829,7 @@ export function App() {
                         </p>
                       </div>
 
-                      <span className="text-[9px] font-mono text-[#7FA98B]">
+                      <span className="text-[9px] text-[#7FA98B]">
                         {step.statusLabel}
                       </span>
                     </div>
@@ -7873,7 +7879,7 @@ export function App() {
                   {arenaMoney.requirements
                     .filter((r) => !r.met)
                     .map((r) => (
-                      <li key={r.id} className="text-[9px] font-mono text-[#6F6A58]">
+                      <li key={r.id} className="text-[9px] text-[#6F6A58]">
                         - {r.label}
                       </li>
                     ))}
@@ -7925,7 +7931,7 @@ export function App() {
                           ? 'Busy'
                           : 'Not available'}
                       </p>
-                      <p className="text-[9px] font-mono text-[#6F6A58]">
+                      <p className="text-[9px] text-[#6F6A58]">
                         {arenaGame.shortName}
                         {myAvailability?.state === 'available'
                           ? ` - ${myAvailability.format} - ${myAvailability.window === 'now' ? 'Now' : 'Today'}`
@@ -8014,7 +8020,7 @@ export function App() {
             {arenaView === 'home' && arenaSection === 'available' && (
               <div className="space-y-3">
                 <div>
-                  <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58]">
+                  <h3 className="text-[11px] font-extrabold text-[#6F6A58]">
                     Players available now
                   </h3>
                   <p className="text-[10px] text-[#9A9278] mt-0.5">
@@ -8045,7 +8051,7 @@ export function App() {
                           <span className="w-1.5 h-1.5 rounded-full bg-[#3E9A66] shrink-0" />
                           {e.player.displayName}
                         </p>
-                        <p className="text-[9px] font-mono text-[#6F6A58] mt-0.5">
+                        <p className="text-[9px] text-[#6F6A58] mt-0.5">
                           {arenaGame.shortName} - {PLAY_MODE_LABELS[e.availability.mode]} -{' '}
                           {e.availability.format} -{' '}
                           {/* Venue name or "Online". Never a coordinate. */}
@@ -8076,7 +8082,7 @@ export function App() {
 
                 {leagueSeekers.length > 0 && (
                   <div className="pt-2">
-                    <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58] mb-2">
+                    <h3 className="text-[11px] font-extrabold text-[#6F6A58] mb-2">
                       Looking for league
                     </h3>
                     {leagueSeekers.map(({ player, availability: av }) => (
@@ -8088,7 +8094,7 @@ export function App() {
                           <p className="text-xs font-extrabold text-[#F2EFE7]">
                             {player.displayName}
                           </p>
-                          <p className="text-[9px] font-mono text-[#6F6A58] mt-0.5">
+                          <p className="text-[9px] text-[#6F6A58] mt-0.5">
                             {arenaGame.shortName}
                             {av.leagueDivision ? ` - ${av.leagueDivision}` : ''} - available{' '}
                             {av.window === 'now' ? 'now' : av.window === 'today' ? 'today' : 'this week'}
@@ -8109,7 +8115,7 @@ export function App() {
 
             {arenaView === 'home' && arenaSection === 'challenges' && (
               <div className="space-y-2">
-                <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58]">
+                <h3 className="text-[11px] font-extrabold text-[#6F6A58]">
                   Challenges received
                 </h3>
                 {incomingChallenges.length === 0 && (
@@ -8122,7 +8128,7 @@ export function App() {
                       <p className="text-xs font-extrabold text-[#F2EFE7]">
                         {from ? from.displayName : 'A player'} challenged you
                       </p>
-                      <p className="text-[9px] font-mono text-[#6F6A58] mt-0.5">
+                      <p className="text-[9px] text-[#6F6A58] mt-0.5">
                         {arenaGame.shortName} - {c.format}
                         {c.proposedTime ? ` - ${c.proposedTime}` : ''}
                         {typeof c.pointsReward === 'number'
@@ -8157,7 +8163,7 @@ export function App() {
 
             {arenaView === 'home' && arenaSection === 'tournaments' && (
               <div className="space-y-2">
-                <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58]">
+                <h3 className="text-[11px] font-extrabold text-[#6F6A58]">
                   Tournaments
                 </h3>
                 {tournaments
@@ -8169,11 +8175,11 @@ export function App() {
                       <div key={t.id} className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3">
                         <div className="flex items-baseline justify-between gap-3">
                           <p className="text-xs font-extrabold text-[#F2EFE7]">{t.name}</p>
-                          <span className="text-[9px] font-mono text-[#6F6A58] shrink-0">
+                          <span className="text-[9px] text-[#6F6A58] shrink-0">
                             {t.registeredPlayerIds.length}/{t.capacity}
                           </span>
                         </div>
-                        <p className="text-[9px] font-mono text-[#6F6A58] mt-0.5">
+                        <p className="text-[9px] text-[#6F6A58] mt-0.5">
                           {organizer ? `Hosted by ${organizer.displayName}` : 'Organizer'} -{' '}
                           {t.status}
                         </p>
@@ -8185,10 +8191,10 @@ export function App() {
                         {reward.points > 0 ? (
                           <div className="mt-2 pt-2 border-t border-[#2A2921]">
                             <div className="flex items-baseline justify-between gap-3">
-                              <span className="text-[9px] uppercase tracking-wider text-[#6F6A58]">
+                              <span className="text-[9px] text-[#6F6A58]">
                                 Organizer earned
                               </span>
-                              <span className="text-xs font-extrabold text-[#3E9A66] font-mono">
+                              <span className="text-xs font-extrabold text-[#3E9A66]">
                                 {reward.points.toLocaleString()}
                               </span>
                             </div>
@@ -8198,7 +8204,7 @@ export function App() {
                                 className="flex items-baseline justify-between gap-3"
                               >
                                 <span className="text-[9px] text-[#9A9278]">{l.label}</span>
-                                <span className="text-[9px] font-mono text-[#B6AFA0]">
+                                <span className="text-[9px] text-[#B6AFA0]">
                                   +{l.points.toLocaleString()}
                                 </span>
                               </div>
@@ -8225,7 +8231,7 @@ export function App() {
             {arenaView === 'home' && arenaSection === 'kings' && (
               <div className="space-y-3">
                 <div>
-                  <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58]">
+                  <h3 className="text-[11px] font-extrabold text-[#6F6A58]">
                     Kings and Queens
                   </h3>
                   <p className="text-[10px] text-[#9A9278] mt-0.5">Players</p>
@@ -8241,13 +8247,13 @@ export function App() {
                       key={r.player.id}
                       className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3 flex items-center gap-3"
                     >
-                      <span className="text-[10px] font-mono text-[#6F6A58] w-8 shrink-0">
+                      <span className="text-[10px] text-[#6F6A58] w-8 shrink-0">
                         {i === 0 ? 'KING' : `#${i + 1}`}
                       </span>
                       <p className="text-xs font-extrabold text-[#F2EFE7] flex-1 min-w-0">
                         {r.player.displayName}
                       </p>
-                      <span className="text-[10px] font-mono text-[#B6AFA0] shrink-0">
+                      <span className="text-[10px] text-[#B6AFA0] shrink-0">
                         {r.points.toLocaleString()}
                       </span>
                     </div>
@@ -8259,17 +8265,17 @@ export function App() {
                   return (
                     <div key={o.organizerId} className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3">
                       <div className="flex items-center gap-3">
-                        <span className="text-[9px] font-mono text-[#C2A24A] shrink-0">
-                          {i === 0 ? 'ARENA HOST' : `#${i + 1}`}
+                        <span className="text-[9px] text-[#C2A24A] shrink-0">
+                          {i === 0 ? 'Arena host' : `#${i + 1}`}
                         </span>
                         <p className="text-xs font-extrabold text-[#F2EFE7] flex-1 min-w-0">
                           {person ? person.displayName : o.organizerId}
                         </p>
-                        <span className="text-[10px] font-mono text-[#B6AFA0] shrink-0">
+                        <span className="text-[10px] text-[#B6AFA0] shrink-0">
                           {o.pointsEarned.toLocaleString()}
                         </span>
                       </div>
-                      <p className="text-[9px] font-mono text-[#6F6A58] mt-1">
+                      <p className="text-[9px] text-[#6F6A58] mt-1">
                         {getOrganizerRank(o)} - {o.tournamentsHosted} tournaments -{' '}
                         {o.playersServed} players - {o.completionRate}% completion
                       </p>
@@ -8283,10 +8289,10 @@ export function App() {
               <div className="space-y-2">
                 <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3">
                   <div className="flex items-baseline justify-between gap-3">
-                    <span className="text-[10px] uppercase tracking-wider text-[#6F6A58]">
+                    <span className="text-[10px] text-[#6F6A58]">
                       Your Arena Points
                     </span>
-                    <span className="text-lg font-extrabold text-[#3E9A66] font-mono">
+                    <span className="text-lg font-extrabold text-[#3E9A66]">
                       {myBalance.toLocaleString()}
                     </span>
                   </div>
@@ -8302,7 +8308,7 @@ export function App() {
                       <span className="text-[10px] text-[#9A9278]">
                         From playing today
                       </span>
-                      <span className="text-[10px] font-mono text-[#B6AFA0]">
+                      <span className="text-[10px] text-[#B6AFA0]">
                         {participationToday} / {PARTICIPATION_DAILY_CAP}
                       </span>
                     </div>
@@ -8328,7 +8334,7 @@ export function App() {
                         <p className="text-xs font-extrabold text-[#F2EFE7]">
                           KES {g.valueKes.toLocaleString()} {g.brand}
                         </p>
-                        <p className="text-[9px] font-mono text-[#6F6A58] mt-0.5">
+                        <p className="text-[9px] text-[#6F6A58] mt-0.5">
                           {g.merchant} - {g.category.replace('_', ' ')} -{' '}
                           {g.inventory > 0 ? `${g.inventory} left` : 'none left'}
                         </p>
@@ -8338,7 +8344,7 @@ export function App() {
                       </div>
                       <div className="shrink-0 text-right">
                         {/* Points cost and cash value never share a line. */}
-                        <p className="text-[10px] font-mono text-[#B6AFA0]">
+                        <p className="text-[10px] text-[#B6AFA0]">
                           {g.pointsRequired.toLocaleString()} pts
                         </p>
                         <button
@@ -8359,7 +8365,7 @@ export function App() {
 
                 {redemptions.length > 0 && (
                   <div className="pt-2">
-                    <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58] mb-2">
+                    <h3 className="text-[11px] font-extrabold text-[#6F6A58] mb-2">
                       Your redemptions
                     </h3>
                     {redemptions.map((r) => {
@@ -8415,7 +8421,7 @@ export function App() {
                         <p className="text-base font-extrabold text-[#F2EFE7]">
                           {openPlayer.displayName}
                         </p>
-                        <p className="text-[9px] font-mono uppercase text-[#6F6A58] mt-0.5">
+                        <p className="text-[9px] text-[#6F6A58] mt-0.5">
                           {identity.game}
                           {' - '}
                           {identity.gamerTag}
@@ -8432,7 +8438,7 @@ export function App() {
                         ].map(([k, v]) => (
                           <React.Fragment key={k}>
                             <span className="text-[10px] text-[#9A9278]">{k}</span>
-                            <span className="text-[10px] font-mono text-[#B6AFA0]">{v}</span>
+                            <span className="text-[10px] text-[#B6AFA0]">{v}</span>
                           </React.Fragment>
                         ))}
                       </div>
@@ -8463,7 +8469,7 @@ export function App() {
                 >
                   Back to Arena
                 </button>
-                <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58]">
+                <h3 className="text-[11px] font-extrabold text-[#6F6A58]">
                   Find a Game
                 </h3>
                 <div className="flex flex-wrap gap-2">
@@ -8504,7 +8510,7 @@ export function App() {
                       <p className="text-xs font-extrabold text-[#F2EFE7]">
                         {c.player.displayName}
                       </p>
-                      <p className="text-[9px] font-mono text-[#6F6A58] mt-0.5">
+                      <p className="text-[9px] text-[#6F6A58] mt-0.5">
                         {typeof c.stats?.rating === 'number'
                           ? `Rating ${c.stats.rating}`
                           : 'Not rated yet'}
@@ -8542,14 +8548,14 @@ export function App() {
                     joins, posts to, or claims ownership of a group. */}
                 {groupArenaSignals.length > 0 && (
                   <div className="bg-[#28261F] border border-[#3F5544] rounded-2xl p-3">
-                    <p className="text-[9px] font-extrabold uppercase tracking-wider text-[#7FA98B]">
+                    <p className="text-[9px] font-extrabold text-[#7FA98B]">
                       From your groups
                     </p>
                     {groupArenaSignals.map((sig) => (
                       <div key={sig.id} className="mt-2">
                         <p className="text-xs text-[#F2EFE7]">{sig.groupName}</p>
                         <p className="text-[10px] text-[#9A9278] mt-0.5">{sig.summary}</p>
-                        <p className="text-[9px] font-mono text-[#6F6A58] mt-0.5">
+                        <p className="text-[9px] text-[#6F6A58] mt-0.5">
                           Shared in this group on {formatSourceDate(sig.at)}. Brief has
                           not posted anything.
                         </p>
@@ -8561,7 +8567,7 @@ export function App() {
                 {/* Operational economics. No engagement metrics. */}
                 {abuseFlags.length > 0 && (
                   <div className="bg-[#28261F] border border-[#C2A24A] rounded-2xl p-3">
-                    <p className="text-[9px] font-extrabold uppercase tracking-wider text-[#C2A24A]">
+                    <p className="text-[9px] font-extrabold text-[#C2A24A]">
                       Flagged for review
                     </p>
                     {abuseFlags.map((f) => (
@@ -8583,7 +8589,7 @@ export function App() {
                 </button>
 
                 <div>
-                  <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58] mb-2">
+                  <h3 className="text-[11px] font-extrabold text-[#6F6A58] mb-2">
                     Live lobby
                   </h3>
                   {lobbyChallenges.length === 0 && (
@@ -8610,14 +8616,14 @@ export function App() {
                           >
                             {player ? player.displayName : 'Player'}
                           </button>
-                          <span className="text-[10px] font-mono text-[#7FA98B] shrink-0">
+                          <span className="text-[10px] text-[#7FA98B] shrink-0">
                             {c.mode}
                           </span>
                           <span className="text-[10px] text-[#9A9278] truncate">
                             {c.format}
                           </span>
                           <span
-                            className={`text-[10px] font-mono ml-auto shrink-0 ${
+                            className={`text-[10px] ml-auto shrink-0 ${
                               c.stake === 'entry_fee' ? 'text-[#C2A24A]' : 'text-[#6F6A58]'
                             }`}
                           >
@@ -8628,7 +8634,7 @@ export function App() {
                               : 'Friendly'}
                           </span>
                           {c.createdByPlayerId === CURRENT_PLAYER_ID ? (
-                            <span className="shrink-0 text-[9px] font-mono uppercase text-[#6F6A58]">
+                            <span className="shrink-0 text-[9px] text-[#6F6A58]">
                               Your challenge
                             </span>
                           ) : (
@@ -8647,7 +8653,7 @@ export function App() {
 
                 {matches.length > 0 && (
                   <div>
-                    <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58] mb-2">
+                    <h3 className="text-[11px] font-extrabold text-[#6F6A58] mb-2">
                       Your matches
                     </h3>
                     <div className="space-y-2">
@@ -8677,7 +8683,7 @@ export function App() {
                 )}
 
                 <div>
-                  <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58] mb-2">
+                  <h3 className="text-[11px] font-extrabold text-[#6F6A58] mb-2">
                     Nearby
                   </h3>
                   {nearbyVenues.length === 0 && (
@@ -8705,7 +8711,7 @@ export function App() {
                             <p className="text-xs font-extrabold text-[#F2EFE7]">
                               {v.name}
                             </p>
-                            <p className="text-[9px] font-mono text-[#6F6A58] mt-0.5">
+                            <p className="text-[9px] text-[#6F6A58] mt-0.5">
                               {v.locationName}
                               {typeof v.distanceKm === 'number'
                                 ? ` - ${v.distanceKm} km`
@@ -8725,12 +8731,12 @@ export function App() {
                                   </span>
                                 )}
                               {typeof v.pricePerHourKes === 'number' && (
-                                <span className="text-[9px] font-mono text-[#9A9278]">
+                                <span className="text-[9px] text-[#9A9278]">
                                   KES {v.pricePerHourKes}/hr
                                 </span>
                               )}
                               {v.openUntil && (
-                                <span className="text-[9px] font-mono text-[#9A9278]">
+                                <span className="text-[9px] text-[#9A9278]">
                                   open until {v.openUntil}
                                 </span>
                               )}
@@ -8748,7 +8754,7 @@ export function App() {
                 </div>
 
                 <div>
-                  <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58] mb-2">
+                  <h3 className="text-[11px] font-extrabold text-[#6F6A58] mb-2">
                     Exchange
                   </h3>
                   <div className="space-y-2">
@@ -8762,7 +8768,7 @@ export function App() {
                           <div className="flex items-baseline justify-between gap-3">
                             <p className="text-xs text-[#F2EFE7]">{l.title}</p>
                             {gate.allowed && typeof l.priceKes === 'number' && (
-                              <span className="text-[10px] font-mono text-[#B6AFA0] shrink-0">
+                              <span className="text-[10px] text-[#B6AFA0] shrink-0">
                                 KES {l.priceKes}
                               </span>
                             )}
@@ -8809,13 +8815,13 @@ export function App() {
                       key={rel.id}
                       className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3 flex items-center gap-3"
                     >
-                      <span className="text-[9px] font-mono uppercase text-[#7FA98B] shrink-0">
+                      <span className="text-[9px] text-[#7FA98B] shrink-0">
                         {rel.verb}
                       </span>
                       <p className="text-xs text-[#F2EFE7] flex-1 min-w-0 truncate">
                         {obj ? obj.title : rel.targetId}
                       </p>
-                      <span className="text-[9px] font-mono text-[#6F6A58] shrink-0">
+                      <span className="text-[9px] text-[#6F6A58] shrink-0">
                         {rel.updatedAt.slice(0, 10)}
                       </span>
                     </div>
@@ -8839,16 +8845,16 @@ export function App() {
 
             <div className="grid grid-cols-2 gap-2">
               <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3">
-                <p className="text-[10px] uppercase tracking-wider text-[#6F6A58]">
+                <p className="text-[10px] text-[#6F6A58]">
                   Rank
                 </p>
                 <p className="text-sm font-extrabold text-[#F2EFE7] mt-1">{myRank}</p>
               </div>
               <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3">
-                <p className="text-[10px] uppercase tracking-wider text-[#6F6A58]">
+                <p className="text-[10px] text-[#6F6A58]">
                   Arena Points
                 </p>
-                <p className="text-sm font-extrabold text-[#3E9A66] font-mono mt-1">
+                <p className="text-sm font-extrabold text-[#3E9A66] mt-1">
                   {myBalance.toLocaleString()}
                 </p>
               </div>
@@ -8864,7 +8870,7 @@ export function App() {
               Redeem in Arena
             </button>
 
-            <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58]">
+            <h3 className="text-[11px] font-extrabold text-[#6F6A58]">
               My Matches
             </h3>
             {matches.length === 0 && (
@@ -8908,10 +8914,10 @@ export function App() {
 
             <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4 space-y-2">
               <div className="flex items-baseline justify-between gap-3">
-                <span className="text-[10px] uppercase tracking-wider text-[#6F6A58]">
+                <span className="text-[10px] text-[#6F6A58]">
                   Brief Points
                 </span>
-                <span className="text-lg font-extrabold text-[#3E9A66] font-mono">
+                <span className="text-lg font-extrabold text-[#3E9A66]">
                   {myContribution.settledPoints.toLocaleString()}
                 </span>
               </div>
@@ -8928,10 +8934,10 @@ export function App() {
 
             <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4 space-y-2">
               <div className="flex items-baseline justify-between gap-3">
-                <span className="text-[10px] uppercase tracking-wider text-[#6F6A58]">
+                <span className="text-[10px] text-[#6F6A58]">
                   Arena Points
                 </span>
-                <span className="text-lg font-extrabold text-[#3E9A66] font-mono">
+                <span className="text-lg font-extrabold text-[#3E9A66]">
                   {myBalance.toLocaleString()}
                 </span>
               </div>
@@ -8952,7 +8958,7 @@ export function App() {
 
             {redemptions.length > 0 && (
               <div>
-                <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58] mb-2">
+                <h3 className="text-[11px] font-extrabold text-[#6F6A58] mb-2">
                   Redeemed
                 </h3>
                 <div className="space-y-2">
@@ -9067,7 +9073,7 @@ export function App() {
                 <p className="text-xs text-[#F2EFE7] font-extrabold">
                   Couldn't load campaigns. Try again.
                 </p>
-                <p className="text-[10px] font-mono text-[#B6AFA0] break-words">
+                <p className="text-[10px] text-[#B6AFA0] break-words">
                   {campaignState.error}
                 </p>
                 <button
@@ -9087,7 +9093,7 @@ export function App() {
 
             {campaignState.status === 'ready' && campaignsLive.length > 0 && (
               <div className="space-y-2">
-                <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#6F6A58]">
+                <h3 className="text-[9px] text-[#6F6A58]">
                   Live
                 </h3>
                 {campaignsLive.map((c) => (
@@ -9104,22 +9110,22 @@ export function App() {
                             .join(' \u00b7 ') || 'No place or time set'}
                         </p>
                       </div>
-                      <span className="shrink-0 text-[9px] font-mono uppercase text-[#3E9A66]">
+                      <span className="shrink-0 text-[9px] text-[#3E9A66]">
                         {c.status}
                       </span>
                     </div>
 
                     {/* Capacity is printed from server values only. */}
                     <div className="flex flex-wrap gap-x-4 gap-y-1">
-                      <span className="text-[11px] font-mono text-[#F2EFE7]">
+                      <span className="text-[11px] text-[#F2EFE7]">
                         {c.metrics.slotsTaken}
                         {c.metrics.capacity === null ? ' registered' : ` / ${c.metrics.capacity}`}
                       </span>
-                      <span className="text-[11px] font-mono text-[#7FA98B]">
+                      <span className="text-[11px] text-[#7FA98B]">
                         {c.metrics.currency} {c.metrics.revenueSettled.toLocaleString()} settled
                       </span>
                       {c.metrics.revenuePending > 0 && (
-                        <span className="text-[11px] font-mono text-[#C2A24A]">
+                        <span className="text-[11px] text-[#C2A24A]">
                           {c.metrics.currency} {c.metrics.revenuePending.toLocaleString()} pending
                         </span>
                       )}
@@ -9147,7 +9153,7 @@ export function App() {
 
             {campaignState.status === 'ready' && campaignsDraft.length > 0 && (
               <div className="space-y-2">
-                <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#6F6A58]">
+                <h3 className="text-[9px] text-[#6F6A58]">
                   Drafts
                 </h3>
                 {campaignsDraft.map((c) => (
@@ -9159,7 +9165,7 @@ export function App() {
                       <p className="text-sm font-extrabold text-[#F2EFE7] truncate">
                         {c.title || 'Untitled'}
                       </p>
-                      <p className="text-[9px] font-mono uppercase text-[#6F6A58] mt-0.5">
+                      <p className="text-[9px] text-[#6F6A58] mt-0.5">
                         {c.type} - not published
                       </p>
                     </div>
@@ -9193,7 +9199,7 @@ export function App() {
 
             {campaignState.status === 'ready' && campaignsPast.length > 0 && (
               <div className="space-y-2">
-                <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#6F6A58]">
+                <h3 className="text-[9px] text-[#6F6A58]">
                   Finished
                 </h3>
                 {campaignsPast.map((c) => (
@@ -9236,10 +9242,10 @@ export function App() {
             {dailyBrief.map((section) => (
               <div key={section.key} className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#3E9A66]">
+                  <h3 className="text-[11px] font-extrabold text-[#3E9A66]">
                     {section.title}
                   </h3>
-                  <span className="text-[10px] font-mono text-[#9A9278]">
+                  <span className="text-[10px] text-[#9A9278]">
                     {section.objects.length + section.pursuits.length}
                   </span>
                 </div>
@@ -9251,11 +9257,11 @@ export function App() {
                     className="w-full text-left bg-[#28261F] border border-[#3B372B] hover:border-[#3F5544] rounded-xl p-3 cursor-pointer transition"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[9px] font-mono uppercase text-[#6F6A58]">
+                      <span className="text-[9px] text-[#6F6A58]">
                         {getObjectTypeMeta(obj.type).label}
                       </span>
                       {getDistanceLabel(obj) && (
-                        <span className="text-[9px] font-mono text-[#9A9278]">
+                        <span className="text-[9px] text-[#9A9278]">
                           {getDistanceLabel(obj)}
                         </span>
                       )}
@@ -9395,8 +9401,7 @@ export function App() {
             >
               <Icon className="w-5 h-5" />
               <span className="text-[9px] font-extrabold leading-none">
-                {/* Short label: the full "My Layer" does not fit five-up. */}
-                {d.id === 'mylayer' ? 'Mine' : d.label}
+                {d.label}
               </span>
               <span
                 className={`h-0.5 w-6 rounded-full transition-all ${
@@ -9432,7 +9437,7 @@ export function App() {
                     {campaignDetail ? campaignDetail.title : 'Campaign'}
                   </h2>
                   {campaignDetail && (
-                    <p className="text-[9px] font-mono uppercase text-[#6F6A58] mt-0.5">
+                    <p className="text-[9px] text-[#6F6A58] mt-0.5">
                       {campaignDetail.type} &middot; {campaignDetail.status}
                     </p>
                   )}
@@ -9447,7 +9452,7 @@ export function App() {
 
               {campaignActionError && (
                 <div className="border border-[#6E3A2E] bg-[#2A2018] rounded-xl p-3">
-                  <p className="text-[10px] font-mono text-[#F2EFE7] break-words">
+                  <p className="text-[10px] text-[#F2EFE7] break-words">
                     {campaignActionError}
                   </p>
                 </div>
@@ -9460,7 +9465,7 @@ export function App() {
               {campaignDetail && editDraft && (
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">Title</label>
+                    <label className="block text-[9px] text-[#6F6A58] mb-1">Title</label>
                     <input
                       value={editDraft.title}
                       onChange={(e) => setEditDraft((d) => (d ? { ...d, title: e.target.value } : d))}
@@ -9468,7 +9473,7 @@ export function App() {
                     />
                   </div>
                   <div>
-                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">Description</label>
+                    <label className="block text-[9px] text-[#6F6A58] mb-1">Description</label>
                     <textarea
                       value={editDraft.description}
                       onChange={(e) => setEditDraft((d) => (d ? { ...d, description: e.target.value } : d))}
@@ -9477,7 +9482,7 @@ export function App() {
                     />
                   </div>
                   <div>
-                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">When</label>
+                    <label className="block text-[9px] text-[#6F6A58] mb-1">When</label>
                     <input
                       type="datetime-local"
                       value={editDraft.startsAt}
@@ -9486,7 +9491,7 @@ export function App() {
                     />
                   </div>
                   <div>
-                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">Where</label>
+                    <label className="block text-[9px] text-[#6F6A58] mb-1">Where</label>
                     <input
                       value={editDraft.location}
                       onChange={(e) => setEditDraft((d) => (d ? { ...d, location: e.target.value } : d))}
@@ -9495,7 +9500,7 @@ export function App() {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">Spots</label>
+                      <label className="block text-[9px] text-[#6F6A58] mb-1">Spots</label>
                       <input
                         inputMode="numeric"
                         disabled={campaignDetail.status !== 'draft'}
@@ -9506,7 +9511,7 @@ export function App() {
                       />
                     </div>
                     <div>
-                      <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">Price (KES)</label>
+                      <label className="block text-[9px] text-[#6F6A58] mb-1">Price (KES)</label>
                       <input
                         inputMode="numeric"
                         value={editDraft.price}
@@ -9586,7 +9591,7 @@ export function App() {
 
                   {/* PEOPLE */}
                   <div className="bg-[#211F1A] border border-[#3B372B] rounded-2xl p-4 space-y-2">
-                    <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#6F6A58]">
+                    <h3 className="text-[9px] text-[#6F6A58]">
                       People
                     </h3>
                     <p className="text-xl font-extrabold text-[#F2EFE7]">
@@ -9609,7 +9614,7 @@ export function App() {
                       ] as [string, string | number][]).map(([label, value]) => (
                         <div key={label} className="flex items-baseline justify-between gap-2">
                           <span className="text-[10px] text-[#9A9278]">{label}</span>
-                          <span className="text-[11px] font-mono text-[#B6AFA0]">{value}</span>
+                          <span className="text-[11px] text-[#B6AFA0]">{value}</span>
                         </div>
                       ))}
                     </div>
@@ -9621,7 +9626,7 @@ export function App() {
 
                   {/* MONEY. Settled and pending are never added together. */}
                   <div className="bg-[#211F1A] border border-[#3B372B] rounded-2xl p-4 space-y-2">
-                    <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#6F6A58]">
+                    <h3 className="text-[9px] text-[#6F6A58]">
                       Money
                     </h3>
                     {campaignDetail.price === 0 ? (
@@ -9632,14 +9637,14 @@ export function App() {
                       <>
                         <div className="flex items-baseline justify-between gap-2">
                           <span className="text-[10px] text-[#9A9278]">Settled</span>
-                          <span className="text-sm font-extrabold text-[#3E9A66] font-mono">
+                          <span className="text-sm font-extrabold text-[#3E9A66]">
                             {campaignDetail.metrics.currency}{' '}
                             {campaignDetail.metrics.revenueSettled.toLocaleString()}
                           </span>
                         </div>
                         <div className="flex items-baseline justify-between gap-2">
                           <span className="text-[10px] text-[#9A9278]">Pending</span>
-                          <span className="text-sm font-extrabold text-[#C2A24A] font-mono">
+                          <span className="text-sm font-extrabold text-[#C2A24A]">
                             {campaignDetail.metrics.currency}{' '}
                             {campaignDetail.metrics.revenuePending.toLocaleString()}
                           </span>
@@ -9654,18 +9659,18 @@ export function App() {
 
                   {/* CAMPAIGN. Honest labels only. */}
                   <div className="bg-[#211F1A] border border-[#3B372B] rounded-2xl p-4 space-y-1">
-                    <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#6F6A58]">
+                    <h3 className="text-[9px] text-[#6F6A58]">
                       Campaign
                     </h3>
                     <div className="flex items-baseline justify-between gap-2">
                       <span className="text-[10px] text-[#9A9278]">Page loads</span>
-                      <span className="text-[11px] font-mono text-[#B6AFA0]">
+                      <span className="text-[11px] text-[#B6AFA0]">
                         {campaignDetail.metrics.views}
                       </span>
                     </div>
                     <div className="flex items-baseline justify-between gap-2">
                       <span className="text-[10px] text-[#9A9278]">Different devices</span>
-                      <span className="text-[11px] font-mono text-[#B6AFA0]">
+                      <span className="text-[11px] text-[#B6AFA0]">
                         {campaignDetail.metrics.viewers === null
                           ? 'Not enough data'
                           : campaignDetail.metrics.viewers}
@@ -9673,19 +9678,19 @@ export function App() {
                     </div>
                     <div className="flex items-baseline justify-between gap-2">
                       <span className="text-[10px] text-[#9A9278]">Times you shared</span>
-                      <span className="text-[11px] font-mono text-[#B6AFA0]">
+                      <span className="text-[11px] text-[#B6AFA0]">
                         {campaignDetail.metrics.shares}
                       </span>
                     </div>
                     <div className="flex items-baseline justify-between gap-2">
                       <span className="text-[10px] text-[#9A9278]">Started registering</span>
-                      <span className="text-[11px] font-mono text-[#B6AFA0]">
+                      <span className="text-[11px] text-[#B6AFA0]">
                         {campaignDetail.metrics.registrationsStarted}
                       </span>
                     </div>
                     <div className="flex items-baseline justify-between gap-2">
                       <span className="text-[10px] text-[#9A9278]">Page load to registration</span>
-                      <span className="text-[11px] font-mono text-[#B6AFA0]">
+                      <span className="text-[11px] text-[#B6AFA0]">
                         {campaignDetail.metrics.conversionPct === null
                           ? 'Not enough data'
                           : `${campaignDetail.metrics.conversionPct}%`}
@@ -9704,7 +9709,7 @@ export function App() {
                       needs to know the word "object". */}
                   {campaignDetail.object && (
                     <div className="bg-[#211F1A] border border-[#3B372B] rounded-2xl p-4 space-y-1">
-                      <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#6F6A58]">
+                      <h3 className="text-[9px] text-[#6F6A58]">
                         What people get
                       </h3>
                       <p className="text-xs text-[#F2EFE7]">{campaignDetail.object.title}</p>
@@ -9713,7 +9718,7 @@ export function App() {
                           {campaignDetail.object.summary}
                         </p>
                       )}
-                      <p className="text-[9px] font-mono uppercase text-[#6F6A58] pt-0.5">
+                      <p className="text-[9px] text-[#6F6A58] pt-0.5">
                         {campaignDetail.object.type}
                         {campaignDetail.ownsObject === false && ' \u00b7 existing item'}
                       </p>
@@ -9760,7 +9765,7 @@ export function App() {
                                 className="w-full text-left px-2 py-2 rounded-lg hover:bg-[#28261F] cursor-pointer disabled:opacity-40"
                               >
                                 <p className="text-[11px] text-[#F2EFE7] truncate">{o.title}</p>
-                                <p className="text-[9px] font-mono uppercase text-[#6F6A58]">
+                                <p className="text-[9px] text-[#6F6A58]">
                                   {o.type}
                                 </p>
                               </button>
@@ -9782,7 +9787,7 @@ export function App() {
                       never computes or writes it. */}
                   {campaignCircle.status === 'loading' && (
                     <div className="bg-[#211F1A] border border-[#3B372B] rounded-2xl p-4 space-y-1">
-                      <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#6F6A58]">
+                      <h3 className="text-[9px] text-[#6F6A58]">
                         Target
                       </h3>
                       <p className="text-[11px] text-[#9A9278]">Loading target...</p>
@@ -9793,11 +9798,11 @@ export function App() {
                       which would read as "no progress" rather than "unknown". */}
                   {campaignCircle.status === 'error' && (
                     <div className="bg-[#211F1A] border border-[#3B372B] rounded-2xl p-4 space-y-1">
-                      <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#6F6A58]">
+                      <h3 className="text-[9px] text-[#6F6A58]">
                         Target
                       </h3>
                       <p className="text-[11px] text-[#F2EFE7]">Target unavailable.</p>
-                      <p className="text-[9px] font-mono text-[#9A9278] break-words">
+                      <p className="text-[9px] text-[#9A9278] break-words">
                         {campaignCircle.error}
                       </p>
                     </div>
@@ -9812,7 +9817,7 @@ export function App() {
                       campaignCircle.data.circle.targetValue > 0
                     ) && (
                       <div className="bg-[#211F1A] border border-[#3B372B] rounded-2xl p-4 space-y-1">
-                        <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#6F6A58]">
+                        <h3 className="text-[9px] text-[#6F6A58]">
                           Target
                         </h3>
                         <p className="text-[11px] text-[#F2EFE7]">
@@ -9829,22 +9834,22 @@ export function App() {
                     campaignCircle.data.circle.targetValue !== null &&
                     campaignCircle.data.circle.targetValue > 0 && (
                       <div className="bg-[#211F1A] border border-[#3B372B] rounded-2xl p-4 space-y-2">
-                        <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#6F6A58]">
+                        <h3 className="text-[9px] text-[#6F6A58]">
                           Target
                         </h3>
                         <p className="text-xs text-[#F2EFE7]">
                           {campaignCircle.data.circle.goal || campaignCircle.data.circle.name}
                         </p>
                         <div className="flex items-baseline justify-between gap-2">
-                          <span className="text-sm font-extrabold text-[#3E9A66] font-mono">
+                          <span className="text-sm font-extrabold text-[#3E9A66]">
                             {campaignCircle.data.circle.currentValue.toLocaleString()}
                           </span>
-                          <span className="text-[10px] font-mono text-[#6F6A58]">
+                          <span className="text-[10px] text-[#6F6A58]">
                             of {campaignCircle.data.circle.targetValue.toLocaleString()}
                           </span>
                         </div>
                         {campaignCircle.data.circle.progressPct !== null && (
-                          <p className="text-[10px] font-mono text-[#7FA98B]">
+                          <p className="text-[10px] text-[#7FA98B]">
                             {Math.round(campaignCircle.data.circle.progressPct)}%
                           </p>
                         )}
@@ -9865,7 +9870,7 @@ export function App() {
 
                   {/* REGISTRATIONS */}
                   <div className="space-y-2">
-                    <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#6F6A58]">
+                    <h3 className="text-[9px] text-[#6F6A58]">
                       Registrations
                     </h3>
 
@@ -9876,7 +9881,7 @@ export function App() {
                     {campaignRegs.status === 'error' && (
                       <div className="border border-[#6E3A2E] bg-[#2A2018] rounded-xl p-3 space-y-1">
                         <p className="text-[11px] text-[#F2EFE7]">Couldn't load registrations.</p>
-                        <p className="text-[9px] font-mono text-[#B6AFA0] break-words">
+                        <p className="text-[9px] text-[#B6AFA0] break-words">
                           {campaignRegs.error}
                         </p>
                       </div>
@@ -9911,7 +9916,7 @@ export function App() {
                             <p className="text-xs text-[#F2EFE7] truncate">
                               {r.name || r.attendeeRef}
                             </p>
-                            <p className="text-[9px] font-mono uppercase text-[#6F6A58] mt-0.5">
+                            <p className="text-[9px] text-[#6F6A58] mt-0.5">
                               {r.status.replace('_', ' ')}
                             </p>
                           </div>
@@ -9991,7 +9996,7 @@ export function App() {
 
               {campaignActionError && (
                 <div className="border border-[#6E3A2E] bg-[#2A2018] rounded-xl p-3">
-                  <p className="text-[10px] font-mono text-[#F2EFE7] break-words">
+                  <p className="text-[10px] text-[#F2EFE7] break-words">
                     {campaignActionError}
                   </p>
                 </div>
@@ -10000,7 +10005,7 @@ export function App() {
               {createStep === 'form' && (
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">What is it</label>
+                    <label className="block text-[9px] text-[#6F6A58] mb-1">What is it</label>
                     <div className="flex flex-wrap gap-1.5">
                       {(['popup', 'session', 'drop', 'event'] as ApiCampaignType[]).map((t) => (
                         <button
@@ -10019,7 +10024,7 @@ export function App() {
                   </div>
 
                   <div>
-                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">Title</label>
+                    <label className="block text-[9px] text-[#6F6A58] mb-1">Title</label>
                     <input
                       value={draft.title}
                       onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
@@ -10029,7 +10034,7 @@ export function App() {
                   </div>
 
                   <div>
-                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">Description</label>
+                    <label className="block text-[9px] text-[#6F6A58] mb-1">Description</label>
                     <textarea
                       value={draft.description}
                       onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
@@ -10042,7 +10047,7 @@ export function App() {
                   {/* Optionally promote something that already exists in Brief
                       instead of describing it again. Collapsed by default. */}
                   <div>
-                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">
+                    <label className="block text-[9px] text-[#6F6A58] mb-1">
                       What people get
                     </label>
                     {objectPicker.selected ? (
@@ -10096,7 +10101,7 @@ export function App() {
                               className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-[#28261F] cursor-pointer"
                             >
                               <p className="text-[11px] text-[#F2EFE7] truncate">{o.title}</p>
-                              <p className="text-[9px] font-mono uppercase text-[#6F6A58]">
+                              <p className="text-[9px] text-[#6F6A58]">
                                 {o.type}
                               </p>
                             </button>
@@ -10112,7 +10117,7 @@ export function App() {
                   </div>
 
                   <div>
-                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">When</label>
+                    <label className="block text-[9px] text-[#6F6A58] mb-1">When</label>
                     <input
                       type="datetime-local"
                       value={draft.startsAt}
@@ -10122,7 +10127,7 @@ export function App() {
                   </div>
 
                   <div>
-                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">Where</label>
+                    <label className="block text-[9px] text-[#6F6A58] mb-1">Where</label>
                     <input
                       value={draft.location}
                       onChange={(e) => setDraft((d) => ({ ...d, location: e.target.value }))}
@@ -10133,7 +10138,7 @@ export function App() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">Spots</label>
+                      <label className="block text-[9px] text-[#6F6A58] mb-1">Spots</label>
                       <input
                         inputMode="numeric"
                         value={draft.capacity}
@@ -10143,7 +10148,7 @@ export function App() {
                       />
                     </div>
                     <div>
-                      <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">Price (KES)</label>
+                      <label className="block text-[9px] text-[#6F6A58] mb-1">Price (KES)</label>
                       <input
                         inputMode="numeric"
                         value={draft.price}
@@ -10170,21 +10175,21 @@ export function App() {
                     This is what people will see. Nothing is public yet.
                   </p>
                   <div className="bg-[#211F1A] border border-[#3B372B] rounded-2xl p-4 space-y-1.5">
-                    <p className="text-[9px] font-mono uppercase text-[#6F6A58]">{draft.type}</p>
+                    <p className="text-[9px] text-[#6F6A58]">{draft.type}</p>
                     <p className="text-sm font-extrabold text-[#F2EFE7]">{draft.title}</p>
                     {draft.description && (
                       <p className="text-[11px] text-[#B6AFA0] leading-snug">{draft.description}</p>
                     )}
                     <div className="pt-1 space-y-0.5">
                       {draft.startsAt && (
-                        <p className="text-[10px] font-mono text-[#7FA98B]">
+                        <p className="text-[10px] text-[#7FA98B]">
                           {draft.startsAt.replace('T', ' ')}
                         </p>
                       )}
                       {draft.location && (
-                        <p className="text-[10px] font-mono text-[#7FA98B]">{draft.location}</p>
+                        <p className="text-[10px] text-[#7FA98B]">{draft.location}</p>
                       )}
-                      <p className="text-[10px] font-mono text-[#7FA98B]">
+                      <p className="text-[10px] text-[#7FA98B]">
                         {draft.price.trim() === '' || Number(draft.price) === 0
                           ? 'Free'
                           : `KES ${draft.price}`}
@@ -10328,7 +10333,7 @@ export function App() {
                     </div>
                   ) : (
                     <div className="bg-[#24221C] border border-[#3B372B] rounded-xl p-3 space-y-2">
-                      <p className="text-[9px] font-mono uppercase text-[#3E9A66]">
+                      <p className="text-[9px] text-[#3E9A66]">
                         {getObjectTypeMeta(capturePreview.draft.type).label}
                       </p>
                       <p className="text-sm font-extrabold text-[#F2EFE7] leading-snug">
@@ -10345,7 +10350,7 @@ export function App() {
                             <span className="text-[10px] text-[#9A9278]">
                               {f.field}
                             </span>
-                            <span className="text-[10px] font-mono text-[#B6AFA0] truncate">
+                            <span className="text-[10px] text-[#B6AFA0] truncate">
                               {f.value}
                             </span>
                           </div>
@@ -10358,7 +10363,7 @@ export function App() {
                         </p>
                       )}
 
-                      <p className="text-[9px] font-mono text-[#6F6A58]">
+                      <p className="text-[9px] text-[#6F6A58]">
                         Unverified. Saved as your own capture.
                       </p>
                     </div>
@@ -10416,7 +10421,7 @@ export function App() {
                   </button>
 
                   <div className="absolute bottom-4 left-4 flex gap-2">
-                    <span className="text-[10px] font-extrabold uppercase px-3 py-1 rounded-full bg-[#191714]/85 text-[#3E9A66] border border-[#3F5544]">
+                    <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#191714]/85 text-[#3E9A66] border border-[#3F5544]">
                       {selectedObjectForDetail.category}
                     </span>
 
@@ -10435,7 +10440,7 @@ export function App() {
               {!selectedObjectForDetail.imageUrl && (
                 <div className="flex items-center justify-between gap-2 p-4 border-b border-[#3B372B]">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-extrabold uppercase px-3 py-1 rounded-full bg-[#191714]/85 text-[#3E9A66] border border-[#3F5544]">
+                    <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#191714]/85 text-[#3E9A66] border border-[#3F5544]">
                       {selectedObjectForDetail.category}
                     </span>
 
@@ -10460,7 +10465,7 @@ export function App() {
 
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-[10px] font-mono uppercase text-[#9A9278]">
+                    <span className="text-[10px] text-[#9A9278]">
                       {getObjectTypeMeta(selectedObjectForDetail.type).label}
                     </span>
                   </div>
@@ -10485,7 +10490,7 @@ export function App() {
                           key={fact.key}
                           className="bg-[#191714] border border-[#3B372B] rounded-xl p-3"
                         >
-                          <div className="text-[10px] uppercase text-[#9A9278]">
+                          <div className="text-[10px] text-[#9A9278]">
                             {fact.label}
                           </div>
                           <div className="text-xs font-bold mt-1">
@@ -10506,7 +10511,7 @@ export function App() {
                       <div className="flex items-start gap-2">
                         <MapPin className="w-4 h-4 text-[#3E9A66] shrink-0 mt-0.5" />
                         <div className="min-w-0">
-                          <div className="text-[10px] uppercase text-[#9A9278]">
+                          <div className="text-[10px] text-[#9A9278]">
                             Location
                           </div>
                           <div className="text-xs font-bold">
@@ -10533,7 +10538,7 @@ export function App() {
                       <div className="flex items-start gap-2">
                         <User className="w-4 h-4 text-[#3E9A66] shrink-0 mt-0.5" />
                         <div className="min-w-0">
-                          <div className="text-[10px] uppercase text-[#9A9278]">
+                          <div className="text-[10px] text-[#9A9278]">
                             {selectedObjectForDetail.type === 'product'
                               ? 'Seller'
                               : selectedObjectForDetail.type === 'service'
@@ -10553,7 +10558,7 @@ export function App() {
                       <div className="flex items-start gap-2">
                         <Building2 className="w-4 h-4 text-[#3E9A66] shrink-0 mt-0.5" />
                         <div className="min-w-0">
-                          <div className="text-[10px] uppercase text-[#9A9278]">
+                          <div className="text-[10px] text-[#9A9278]">
                             Contact
                           </div>
                           <a
@@ -10612,7 +10617,7 @@ export function App() {
                           <span className={`text-[10px] font-bold ${freshTone}`}>
                             {fresh.label}
                           </span>
-                          <span className="text-[10px] font-mono text-[#6F6A58]">
+                          <span className="text-[10px] text-[#6F6A58]">
                             checked {fresh.verifiedOn}
                           </span>
                         </div>
@@ -10647,7 +10652,7 @@ export function App() {
 
                   return (
                     <div className="space-y-2">
-                      <p className="text-[10px] font-mono uppercase text-[#6F6A58]">
+                      <p className="text-[10px] text-[#6F6A58]">
                         You can
                       </p>
                       <div className="flex flex-wrap gap-2">
@@ -10825,7 +10830,7 @@ export function App() {
 
                   return (
                     <div className="mt-6 pt-5 border-t border-[#3B372B]">
-                      <p className="text-[10px] font-mono uppercase text-[#3E9A66]">
+                      <p className="text-[10px] text-[#3E9A66]">
                         More from this area
                       </p>
                       <h3 className="text-sm font-extrabold mt-1 mb-3">Nearby</h3>
@@ -10839,14 +10844,14 @@ export function App() {
                               onClick={() => setSelectedObjectForDetail(obj)}
                               className="text-left bg-[#24221C] border border-[#3B372B] hover:border-[#3F5544] rounded-xl p-3 cursor-pointer transition"
                             >
-                              <p className="text-[9px] font-mono uppercase text-[#6F6A58]">
+                              <p className="text-[9px] text-[#6F6A58]">
                                 {getObjectTypeMeta(obj.type).label}
                               </p>
                               <p className="text-[11px] font-bold text-[#F2EFE7] leading-snug mt-0.5 line-clamp-2">
                                 {obj.title}
                               </p>
                               {dist && (
-                                <p className="text-[9px] font-mono text-[#9A9278] mt-1">
+                                <p className="text-[9px] text-[#9A9278] mt-1">
                                   {dist}
                                 </p>
                               )}
@@ -10872,7 +10877,7 @@ export function App() {
                     <div className="mt-6 pt-5 border-t border-[#3B372B]">
                       <div className="flex items-center justify-between gap-3 mb-3">
                         <div>
-                          <p className="text-[10px] font-mono uppercase text-[#3E9A66]">
+                          <p className="text-[10px] text-[#3E9A66]">
                             {DESTINATION_STATE_LABELS[state]}
                           </p>
                           <h3 className="text-sm font-extrabold mt-1">
@@ -10880,7 +10885,7 @@ export function App() {
                           </h3>
                         </div>
                         {access && (
-                          <span className="text-[9px] font-extrabold uppercase tracking-wider text-[#7FA98B] border border-[#3F5544] rounded-full px-2 py-0.5">
+                          <span className="text-[9px] font-extrabold text-[#7FA98B] border border-[#3F5544] rounded-full px-2 py-0.5">
                             {access}
                           </span>
                         )}
@@ -10943,7 +10948,7 @@ export function App() {
                                             {item.title}
                                           </span>
                                           {typeof item.metadata?.price === 'number' && (
-                                            <span className="shrink-0 text-[10px] font-mono text-[#3E9A66]">
+                                            <span className="shrink-0 text-[10px] text-[#3E9A66]">
                                               {item.metadata.currency || 'KES'}{' '}
                                               {item.metadata.price.toLocaleString()}
                                             </span>
@@ -10976,7 +10981,7 @@ export function App() {
                     <div className="mt-6 pt-5 border-t border-[#3B372B]">
                       {appearsAt.length > 0 && (
                         <div className="mb-4">
-                          <p className="text-[10px] font-mono uppercase text-[#3E9A66]">
+                          <p className="text-[10px] text-[#3E9A66]">
                             Find them at
                           </p>
                           <div className="mt-2 space-y-1.5">
@@ -10996,7 +11001,7 @@ export function App() {
                                       {dest.title}
                                     </span>
                                   </div>
-                                  <span className="text-[9px] font-mono text-[#6F6A58]">
+                                  <span className="text-[9px] text-[#6F6A58]">
                                     {DESTINATION_STATE_LABELS[state]}
                                     {dest.locationName ? ` - ${dest.locationName}` : ''}
                                   </span>
@@ -11009,7 +11014,7 @@ export function App() {
 
                       {offerings.length > 0 && (
                         <div>
-                          <p className="text-[10px] font-mono uppercase text-[#3E9A66]">
+                          <p className="text-[10px] text-[#3E9A66]">
                             What they offer
                           </p>
                           <div className="mt-2 space-y-1.5">
@@ -11023,12 +11028,12 @@ export function App() {
                                   <span className="block text-xs text-[#F2EFE7] truncate">
                                     {item.title}
                                   </span>
-                                  <span className="block text-[9px] font-mono text-[#6F6A58]">
+                                  <span className="block text-[9px] text-[#6F6A58]">
                                     {item.category}
                                   </span>
                                 </span>
                                 {typeof item.metadata?.price === 'number' && (
-                                  <span className="shrink-0 text-[11px] font-mono font-extrabold text-[#3E9A66]">
+                                  <span className="shrink-0 text-[11px] font-extrabold text-[#3E9A66]">
                                     {item.metadata.currency || 'KES'}{' '}
                                     {item.metadata.price.toLocaleString()}
                                   </span>
@@ -11047,7 +11052,7 @@ export function App() {
                   <div className="mt-6 pt-5 border-t border-[#3B372B]">
                     <div className="flex items-center justify-between mb-3">
                       <div>
-                        <p className="text-[10px] font-mono uppercase text-[#3E9A66]">
+                        <p className="text-[10px] text-[#3E9A66]">
                           Continue exploring
                         </p>
                         <h3 className="text-sm font-extrabold mt-1">
@@ -11085,11 +11090,11 @@ export function App() {
 
                               <div className="min-w-0">
                                 <div className="flex items-center gap-1.5 flex-wrap">
-                                  <p className="text-[9px] font-mono uppercase text-[#9A9278]">
+                                  <p className="text-[9px] text-[#9A9278]">
                                     {related.category}
                                   </p>
                                   {chip && (
-                                    <span className="text-[8px] font-extrabold uppercase px-1.5 py-0.5 rounded-full border border-[#3F5544] text-[#3E9A66]">
+                                    <span className="text-[8px] font-extrabold px-1.5 py-0.5 rounded-full border border-[#3F5544] text-[#3E9A66]">
                                       {chip}
                                     </span>
                                   )}
@@ -11106,7 +11111,7 @@ export function App() {
                                 )}
 
                                 {distance && (
-                                  <p className="text-[10px] font-mono text-[#9A9278] mt-0.5">
+                                  <p className="text-[10px] text-[#9A9278] mt-0.5">
                                     {distance}
                                   </p>
                                 )}
@@ -11124,7 +11129,7 @@ export function App() {
         </div>
       )}
 
-      <footer className="border-t border-[#3B372B] mt-12 py-6 text-xs text-[#9A9278] text-center font-mono">
+      <footer className="border-t border-[#3B372B] mt-12 py-6 text-xs text-[#9A9278] text-center">
         Brief 10.0 &middot; Everything Happening Around You
       </footer>
 

@@ -105,11 +105,11 @@ export function Pursuits({
                   {pursuit.query}
                 </p>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[9px] font-mono uppercase text-[#9A9278]">
+                  <span className="text-[9px] text-[#9A9278]">
                     {pursuit.status}
                   </span>
                   {pursuit.watchChanges && (
-                    <span className="text-[9px] font-mono uppercase text-[#3E9A66]">
+                    <span className="text-[9px] text-[#3E9A66]">
                       watching
                     </span>
                   )}
@@ -127,7 +127,7 @@ export function Pursuits({
 
             {!dormant && (
               <>
-                <p className="text-[10px] font-mono uppercase text-[#6F6A58]">
+                <p className="text-[10px] text-[#6F6A58]">
                   {results.length > 0
                     ? `${results.length} match${results.length === 1 ? '' : 'es'} in Brief`
                     : 'Nothing matching yet'}
@@ -166,11 +166,11 @@ export function Pursuits({
                           className="w-full text-left bg-[#24221C] border border-[#3B372B] hover:border-[#3F5544] rounded-xl p-2.5 cursor-pointer transition"
                         >
                           <div className="flex items-center justify-between gap-2">
-                            <span className="text-[9px] font-mono uppercase text-[#6F6A58]">
+                            <span className="text-[9px] text-[#6F6A58]">
                               {getObjectTypeMeta(match.item.type).label}
                             </span>
                             {distance && (
-                              <span className="text-[9px] font-mono text-[#9A9278]">
+                              <span className="text-[9px] text-[#9A9278]">
                                 {distance}
                               </span>
                             )}
@@ -224,7 +224,7 @@ export function Pursuits({
                 nothing is monitoring in the background yet. */}
             {pursuit.watchChanges && (
               <div className="space-y-1.5 pt-1">
-                <p className="text-[9px] font-mono uppercase text-[#6F6A58]">
+                <p className="text-[9px] text-[#6F6A58]">
                   Tell me about
                 </p>
                 <div className="flex flex-wrap gap-1.5">

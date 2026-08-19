@@ -74,7 +74,7 @@ export function CircleVotes({
             {vote.content}
           </p>
           {isClosed && (
-            <span className="shrink-0 text-[9px] font-mono uppercase px-2 py-0.5 rounded-full bg-[#1E1E1E] text-[#B6AFA0]">
+            <span className="shrink-0 text-[9px] px-2 py-0.5 rounded-full bg-[#1E1E1E] text-[#B6AFA0]">
               closed
             </span>
           )}
@@ -99,7 +99,7 @@ export function CircleVotes({
                   >
                     {r.option}
                   </span>
-                  <span className="text-[10px] font-mono text-[#6F6A58] shrink-0">
+                  <span className="text-[10px] text-[#6F6A58] shrink-0">
                     {r.count} {r.count === 1 ? 'vote' : 'votes'}
                     {/* Dash, not 0%: nobody has voted, so there is no share
                         to report. */}
@@ -188,11 +188,11 @@ export function CircleVotes({
 }
 
 const Heading = ({ children }: { children: React.ReactNode }) => (
-  <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58]">
+  <h3 className="text-[11px] font-extrabold text-[#6F6A58]">
     {children}
   </h3>
 );
 
 const SubHeading = ({ children }: { children: React.ReactNode }) => (
-  <p className="text-[10px] font-mono uppercase text-[#6F6A58]">{children}</p>
+  <p className="text-[10px] text-[#6F6A58]">{children}</p>
 );

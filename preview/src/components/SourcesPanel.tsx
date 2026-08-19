@@ -69,7 +69,7 @@ export function SourcesPanel({
       {/* BRIEF IT (spec 16/17). Paste anything; Brief shows what it
           found and writes nothing until you choose to save. */}
       <div className="bg-[#28261F] border border-[#3F5544] rounded-2xl p-4">
-        <p className="text-[10px] font-mono uppercase text-[#3E9A66]">Brief it</p>
+        <p className="text-[10px] text-[#3E9A66]">Brief it</p>
         <p className="text-[11px] text-[#9A9278] mt-1 leading-snug">
           Paste a message, listing or announcement. Brief structures it
           and shows you the result before anything is saved.
@@ -125,13 +125,13 @@ export function SourcesPanel({
               </p>
             ) : (
               <>
-                <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#7FA98B]">
+                <p className="text-[10px] font-extrabold text-[#7FA98B]">
                   Found
                 </p>
                 <div className="mt-1.5 space-y-1">
                   {Object.entries(briefItPreview.fields ?? {}).map(([k, v]) => (
                     <div key={k} className="flex items-baseline justify-between gap-3">
-                      <span className="text-[10px] font-mono uppercase text-[#6F6A58]">{k}</span>
+                      <span className="text-[10px] text-[#6F6A58]">{k}</span>
                       <span className="text-[11px] text-[#F2EFE7] text-right truncate">
                         {Array.isArray(v) ? v.join(', ') : String(v)}
                       </span>
@@ -150,7 +150,7 @@ export function SourcesPanel({
                     ))}
                   </div>
                 )}
-                <p className="text-[9px] font-mono text-[#6F6A58] mt-2">
+                <p className="text-[9px] text-[#6F6A58] mt-2">
                   Extraction confidence {Math.round((briefItPreview.confidence ?? 0) * 100)}%.
                   Nothing has been saved yet.
                 </p>
@@ -164,7 +164,7 @@ export function SourcesPanel({
           genuinely supports, including what it cannot do. */}
       <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-[10px] font-mono uppercase text-[#3E9A66]">Connectors</p>
+          <p className="text-[10px] text-[#3E9A66]">Connectors</p>
           <button
             onClick={() => void refreshConnectors()}
             className="text-[10px] font-extrabold text-[#7FA98B] cursor-pointer"
@@ -181,7 +181,7 @@ export function SourcesPanel({
           <p className="text-[11px] text-[#C2A24A] mt-2 leading-snug">
             Ingestion server not reachable. Brief still works -- only live
             connectors are unavailable. Start it with{' '}
-            <span className="font-mono text-[#7FA98B]">npm start</span> in
+            <span className="text-[#7FA98B]">npm start</span> in
             the server directory.
           </p>
         )}
@@ -199,7 +199,7 @@ export function SourcesPanel({
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-xs font-extrabold text-[#F2EFE7] capitalize">{name}</span>
                       <span
-                        className={`text-[9px] font-extrabold uppercase tracking-wider ${
+                        className={`text-[9px] font-extrabold ${
                           configured === false ? 'text-[#C2A24A]' : 'text-[#3E9A66]'
                         }`}
                       >
@@ -221,7 +221,7 @@ export function SourcesPanel({
             </div>
 
             {connectorStatus.stats && (
-              <p className="text-[9px] font-mono text-[#6F6A58] mt-2">
+              <p className="text-[9px] text-[#6F6A58] mt-2">
                 {connectorStatus.stats.rawItems} raw items -{' '}
                 {connectorStatus.stats.objects} objects -{' '}
                 {connectorStatus.stats.relationships} links -{' '}
@@ -231,14 +231,14 @@ export function SourcesPanel({
 
             {connectorStatus.liveSources.length > 0 && (
               <div className="mt-3 pt-3 border-t border-[#3B372B]">
-                <p className="text-[9px] font-extrabold uppercase tracking-wider text-[#7FA98B]">
+                <p className="text-[9px] font-extrabold text-[#7FA98B]">
                   Connected sources
                 </p>
                 <div className="mt-1.5 space-y-1">
                   {connectorStatus.liveSources.map((src: any) => (
                     <div key={src.id} className="flex items-baseline justify-between gap-3">
                       <span className="text-[11px] text-[#F2EFE7] truncate">{src.name}</span>
-                      <span className="text-[9px] font-mono text-[#6F6A58] shrink-0">
+                      <span className="text-[9px] text-[#6F6A58] shrink-0">
                         {src.platform} - {src.itemsProcessed} processed
                         {src.objectsCreated > 0 ? ` - ${src.objectsCreated} objects` : ''}
                       </span>
@@ -270,7 +270,7 @@ export function SourcesPanel({
                 <p className="text-sm font-extrabold text-[#F2EFE7]">
                   {source.name}
                 </p>
-                <p className="text-[9px] font-mono uppercase text-[#6F6A58] mt-0.5">
+                <p className="text-[9px] text-[#6F6A58] mt-0.5">
                   {source.type}
                 </p>
               </div>
@@ -286,11 +286,11 @@ export function SourcesPanel({
             )}
 
             <div className="flex items-center gap-4 pt-1">
-              <span className="text-[9px] font-mono text-[#6F6A58]">
+              <span className="text-[9px] text-[#6F6A58]">
                 {source.ingestionCount} received
               </span>
               {source.lastSuccessfulIngestionAt && (
-                <span className="text-[9px] font-mono text-[#6F6A58]">
+                <span className="text-[9px] text-[#6F6A58]">
                   last {source.lastSuccessfulIngestionAt.slice(0, 10)}
                 </span>
               )}

@@ -53,7 +53,7 @@ export function CampaignDistribution({
           Your campaign is live. Once a public address is set up for this Brief,
           your link will be:
         </p>
-        <p className="text-[10px] font-mono text-[#7FA98B] break-all">
+        <p className="text-[10px] text-[#7FA98B] break-all">
           /c/{link.slug}
         </p>
       </div>
@@ -70,10 +70,10 @@ export function CampaignDistribution({
   return (
     <div className="space-y-2">
       <div className="bg-[#211F1A] border border-[#3B372B] rounded-xl p-3">
-        <p className="text-[9px] font-mono uppercase tracking-wider text-[#6F6A58] mb-1">
+        <p className="text-[9px] text-[#6F6A58] mb-1">
           Your link
         </p>
-        <p className="text-[10px] font-mono text-[#7FA98B] break-all">{link.url}</p>
+        <p className="text-[10px] text-[#7FA98B] break-all">{link.url}</p>
       </div>
 
       <div className="flex items-center gap-2">

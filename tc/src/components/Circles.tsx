@@ -242,7 +242,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
                   <p className="text-sm font-extrabold text-[#F2EFE7]">
                     {circle.name}
                   </p>
-                  <p className="text-[9px] font-mono uppercase text-[#6F6A58] mt-0.5">
+                  <p className="text-[9px] text-[#6F6A58] mt-0.5">
                     {TYPE_LABEL[circle.type] ?? circle.type} &middot; {circle.status}
                   </p>
                 </div>
@@ -309,7 +309,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
         <>
           <div className="mt-2">
             <h2 className="text-lg font-extrabold text-[#F2EFE7]">{open.name}</h2>
-            <p className="text-[9px] font-mono uppercase text-[#6F6A58] mt-0.5">
+            <p className="text-[9px] text-[#6F6A58] mt-0.5">
               {TYPE_LABEL[open.type] ?? open.type} &middot; {open.visibility}
               {myRole ? ` \u00b7 you are ${myRole}` : ' \u00b7 not a member'}
             </p>
@@ -348,7 +348,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
             <div className="space-y-4">
               {open.goal && (
                 <div>
-                  <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58] mb-1">
+                  <h3 className="text-[11px] font-extrabold text-[#6F6A58] mb-1">
                     Purpose
                   </h3>
                   <p className="text-[11px] text-[#7FA98B] leading-snug">{open.goal}</p>
@@ -356,7 +356,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
               )}
 
               <div>
-                <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58] mb-2">
+                <h3 className="text-[11px] font-extrabold text-[#6F6A58] mb-2">
                   Target
                 </h3>
                 <CircleTarget circle={open} />
@@ -374,7 +374,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
               {/* Blocks that are neither tasks nor votes -- notes, pins and
                   anything wrapping an extracted object. */}
               <div>
-                <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58] mb-2">
+                <h3 className="text-[11px] font-extrabold text-[#6F6A58] mb-2">
                   Blocks
                 </h3>
                 {detail.blocks.filter((b) => b.type !== 'task' && b.type !== 'vote')
@@ -389,12 +389,12 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
                           key={block.id}
                           className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3"
                         >
-                          <p className="text-[9px] font-mono uppercase text-[#7FA98B]">
+                          <p className="text-[9px] text-[#7FA98B]">
                             {block.type}
                           </p>
                           <p className="text-xs text-[#F2EFE7] mt-1">{block.content}</p>
                           {block.sources.length > 0 && block.sources[0].sourceName && (
-                            <p className="text-[9px] font-mono text-[#6F6A58] mt-1">
+                            <p className="text-[9px] text-[#6F6A58] mt-1">
                               via {block.sources[0].sourceName}
                             </p>
                           )}

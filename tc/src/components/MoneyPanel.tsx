@@ -109,7 +109,7 @@ export function MoneyPanel() {
         <>
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-[#28261F] border border-[#3F5544] rounded-2xl p-4">
-              <p className="text-[10px] uppercase font-mono text-[#9A9278]">
+              <p className="text-[10px] text-[#9A9278]">
                 Available
               </p>
               <p className="text-2xl font-extrabold text-[#3E9A66] mt-1">
@@ -121,7 +121,7 @@ export function MoneyPanel() {
             </div>
 
             <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4">
-              <p className="text-[10px] uppercase font-mono text-[#9A9278]">
+              <p className="text-[10px] text-[#9A9278]">
                 Pending
               </p>
               <p className="text-2xl font-extrabold text-[#C2A24A] mt-1">
@@ -133,7 +133,7 @@ export function MoneyPanel() {
             </div>
           </div>
 
-          <p className="text-[10px] font-mono text-[#6F6A58]">
+          <p className="text-[10px] text-[#6F6A58]">
             Derived from {wallet.data.transactionCount}{' '}
             {wallet.data.transactionCount === 1 ? 'transaction' : 'transactions'}.
           </p>
@@ -155,7 +155,7 @@ export function MoneyPanel() {
 
       {/* LEDGER */}
       <div>
-        <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58] mb-2">
+        <h3 className="text-[11px] font-extrabold text-[#6F6A58] mb-2">
           Transactions
         </h3>
 
@@ -178,7 +178,7 @@ export function MoneyPanel() {
               className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3 flex items-center gap-3"
             >
               <span
-                className={`text-[9px] font-mono uppercase shrink-0 ${
+                className={`text-[9px] shrink-0 ${
                   STATUS_TONE[tx.status] ?? 'text-[#9A9278]'
                 }`}
               >

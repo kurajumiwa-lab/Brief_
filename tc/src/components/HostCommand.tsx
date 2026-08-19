@@ -19,7 +19,7 @@ const money = (n: number, c: string) => `${c} ${n.toLocaleString()}`;
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="bg-[#211F1A] border border-[#3B372B] rounded-xl p-3 space-y-2">
-      <p className="text-[9px] font-mono uppercase tracking-[0.2em] text-[#6F6A58]">{title}</p>
+      <p className="text-[9px] text-[#6F6A58]">{title}</p>
       {children}
     </div>
   );
@@ -29,7 +29,7 @@ function Big({ value, label, accent = false }: { value: string; label: string; a
   return (
     <div>
       <p className={`text-xl font-extrabold ${accent ? 'text-[#3E9A66]' : 'text-[#F2EFE7]'}`}>{value}</p>
-      <p className="text-[9px] font-mono uppercase tracking-wider text-[#6F6A58]">{label}</p>
+      <p className="text-[9px] text-[#6F6A58]">{label}</p>
     </div>
   );
 }
@@ -78,12 +78,12 @@ export function HostCommand() {
             {d.now.slice(0, 5).map((n, i) => (
               <div key={i} className="flex items-center justify-between gap-2">
                 <p className="text-xs text-[#F2EFE7] truncate">{n.name}</p>
-                <span className="shrink-0 text-[9px] font-mono uppercase text-[#C2A24A]">unpaid spot</span>
+                <span className="shrink-0 text-[9px] text-[#C2A24A]">unpaid spot</span>
               </div>
             ))}
             {d.upcoming.length > 0 && (
               <div className="pt-1 border-t border-[#2A2821]">
-                <p className="text-[9px] font-mono uppercase text-[#6F6A58] mb-1">Upcoming</p>
+                <p className="text-[9px] text-[#6F6A58] mb-1">Upcoming</p>
                 {d.upcoming.map((u) => (
                   <p key={u.id} className="text-xs text-[#7FA98B] truncate">
                     {u.title} · {u.startsAt.slice(0, 16).replace('T', ' ')}
@@ -132,7 +132,7 @@ export function HostCommand() {
           {d.action.slice(0, 6).map((a, i) => (
             <div key={i} className="flex items-center justify-between gap-2">
               <p className="text-xs text-[#F2EFE7] truncate">{a.vaultTitle}</p>
-              <span className="shrink-0 text-[9px] font-mono uppercase text-[#C2A24A]">{a.kind}</span>
+              <span className="shrink-0 text-[9px] text-[#C2A24A]">{a.kind}</span>
             </div>
           ))}
         </Section>

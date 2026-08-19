@@ -73,7 +73,7 @@ export function Pulse({
       <div className="bg-[#28261F] border border-[#3F5544] rounded-2xl p-5">
         <div className="flex items-center gap-2 mb-2">
           <TrendingUp className="w-4 h-4 text-[#3E9A66]" />
-          <span className="text-[10px] font-mono uppercase text-[#3E9A66]">
+          <span className="text-[10px] text-[#3E9A66]">
             Pulse
           </span>
         </div>
@@ -111,14 +111,14 @@ export function Pulse({
                 className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-[9px] font-extrabold uppercase tracking-wider text-[#3E9A66]">
+                  <span className="text-[9px] font-extrabold text-[#3E9A66]">
                     {post.kind}
                   </span>
-                  <span className="text-[9px] font-mono text-[#6F6A58]">
+                  <span className="text-[9px] text-[#6F6A58]">
                     {formatSourceDate(post.publishedAt)}
                   </span>
                   {post.isPromoted && (
-                    <span className="text-[9px] font-extrabold uppercase text-[#C2A24A]">
+                    <span className="text-[9px] font-extrabold text-[#C2A24A]">
                       Promoted{post.promotedBy ? ` - ${post.promotedBy}` : ''}
                     </span>
                   )}
@@ -132,7 +132,7 @@ export function Pulse({
                   {post.body}
                 </p>
 
-                <p className="text-[9px] font-mono text-[#6F6A58] mt-2">
+                <p className="text-[9px] text-[#6F6A58] mt-2">
                   Reported by {post.authorName}
                   {post.authorIsVerified ? ' (verified)' : ''}
                 </p>
@@ -158,7 +158,7 @@ export function Pulse({
           knowing", and something happening a kilometre away qualifies. */}
       {pulseSection === 'local' && (
         <div className="space-y-2">
-          <p className="text-[10px] font-mono uppercase text-[#6F6A58]">
+          <p className="text-[10px] text-[#6F6A58]">
             {selectedLocation}
           </p>
 
@@ -171,7 +171,7 @@ export function Pulse({
             if (live.length === 0) return null;
             return (
               <div className="bg-[#28261F] border border-[#3F5544] rounded-2xl p-4">
-                <p className="text-[9px] font-extrabold uppercase tracking-wider text-[#7FA98B]">
+                <p className="text-[9px] font-extrabold text-[#7FA98B]">
                   On today
                 </p>
                 <div className="mt-2 space-y-1.5">
@@ -186,7 +186,7 @@ export function Pulse({
                         <span className="block text-xs text-[#F2EFE7]">
                           {obj.title}
                         </span>
-                        <span className="block text-[9px] font-mono text-[#6F6A58]">
+                        <span className="block text-[9px] text-[#6F6A58]">
                           {obj.locationName}
                           {vendors.length > 0
                             ? ` - ${vendors.length} vendor${
@@ -212,10 +212,10 @@ export function Pulse({
               className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4"
             >
               <div className="flex items-center gap-2">
-                <span className="text-[9px] font-extrabold uppercase tracking-wider text-[#3E9A66]">
+                <span className="text-[9px] font-extrabold text-[#3E9A66]">
                   {post.kind}
                 </span>
-                <span className="text-[9px] font-mono text-[#6F6A58]">
+                <span className="text-[9px] text-[#6F6A58]">
                   {formatSourceDate(post.publishedAt)}
                 </span>
               </div>
@@ -254,7 +254,7 @@ export function Pulse({
               <p className="text-[11px] text-[#9A9278] mt-1 leading-snug">
                 {sig.text}
               </p>
-              <p className="text-[9px] font-mono text-[#6F6A58] mt-1">
+              <p className="text-[9px] text-[#6F6A58] mt-1">
                 Shared in this group on {formatSourceDate(sig.at)}. Brief has
                 not posted anything.
               </p>
@@ -283,7 +283,7 @@ export function Pulse({
                 key={metric.label}
                 className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4"
               >
-                <p className="text-[10px] uppercase font-mono text-[#9A9278]">
+                <p className="text-[10px] text-[#9A9278]">
                   {metric.label}
                 </p>
 
@@ -331,7 +331,7 @@ export function Pulse({
 
           {pulseRecentlyVerified.length > 0 && (
             <div>
-              <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58] mb-2">
+              <h3 className="text-[11px] font-extrabold text-[#6F6A58] mb-2">
                 Recently verified
               </h3>
               <div className="space-y-2">
@@ -342,7 +342,7 @@ export function Pulse({
                     className="w-full text-left bg-[#28261F] border border-[#3B372B] rounded-2xl p-3 cursor-pointer"
                   >
                     <p className="text-xs text-[#F2EFE7]">{obj.title}</p>
-                    <p className="text-[9px] font-mono text-[#6F6A58] mt-0.5">
+                    <p className="text-[9px] text-[#6F6A58] mt-0.5">
                       {obj.category} - verified{' '}
                       {obj.lastVerifiedAt
                         ? formatSourceDate(obj.lastVerifiedAt)

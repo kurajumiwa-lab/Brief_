@@ -67,7 +67,7 @@ const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;con
   check('no invented events-attended figure', !b.includes('620'));
 
   console.log('\n=== 3. Money: derived wallet, honest payouts ===');
-  await click(btn('Workflows')); await click(btn('Money'));
+  await click(btn('Actions')); await click(btn('Money'));
   await act(async()=>{await new Promise(r=>setTimeout(r,10));});
   b=body();
   check('available balance shown', b.includes('4,500'));
@@ -77,7 +77,7 @@ const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;con
   check('payouts explicitly unavailable', /Disbursements are not implemented/i.test(b));
 
   console.log('\n=== 4. Circles: one community primitive ===');
-  await click(btn('My Layer')); await click(btn('Circles'));
+  await click(btn('Saved')); await click(btn('Circles'));
   await act(async()=>{await new Promise(r=>setTimeout(r,10));});
   b=body();
   check('circle listed', b.includes('Kilimani Traders'));

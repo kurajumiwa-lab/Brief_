@@ -80,7 +80,7 @@ export function CheckIn() {
     <div className="max-w-3xl mx-auto px-4 py-4 space-y-3">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-lg font-extrabold text-[#F2EFE7]">The Gate</h2>
-        <p className="text-[9px] font-mono uppercase tracking-wider text-[#6F6A58]">check-in</p>
+        <p className="text-[9px] text-[#6F6A58]">check-in</p>
       </div>
 
       <div className="bg-[#211F1A] border border-[#3B372B] rounded-xl p-3 space-y-2">
@@ -89,7 +89,7 @@ export function CheckIn() {
           onChange={(e) => { setCode(e.target.value); setTicket(null); setError(null); setResult(null); }}
           onKeyDown={(e) => { if (e.key === 'Enter') void lookup(code); }}
           placeholder="Ticket code, e.g. BRF-XXXX-XXXX-XXXX"
-          className="w-full bg-[#191714] border border-[#3F5544] rounded-lg px-3 py-2.5 text-xs text-[#F2EFE7] placeholder:text-[#6F6A58] outline-none focus:border-[#3E9A66] uppercase"
+          className="w-full bg-[#191714] border border-[#3F5544] rounded-lg px-3 py-2.5 text-xs text-[#F2EFE7] placeholder:text-[#6F6A58] outline-none focus:border-[#3E9A66]"
         />
         <button
           onClick={() => void lookup(code)}
@@ -114,7 +114,7 @@ export function CheckIn() {
               <p className="text-sm font-extrabold text-[#F2EFE7]">{ticket.name ?? 'Guest'}</p>
               <p className="text-[10px] text-[#9A9278] truncate">{ticket.campaignTitle ?? '—'}</p>
             </div>
-            <span className={`shrink-0 text-[9px] font-mono uppercase px-2 py-0.5 rounded-full ${
+            <span className={`shrink-0 text-[9px] px-2 py-0.5 rounded-full ${
               ticket.status === 'checked_in'
                 ? 'bg-[#2B2A22] text-[#3E9A66]'
                 : ticket.paid
@@ -128,8 +128,8 @@ export function CheckIn() {
           <div className="flex items-center gap-3">
             <TicketQr code={ticket.code} />
             <div className="space-y-1 min-w-0">
-              <p className="text-[9px] font-mono uppercase text-[#6F6A58]">Ticket code</p>
-              <p className="text-[11px] font-mono text-[#D9BB7D] break-all select-all">{ticket.code}</p>
+              <p className="text-[9px] text-[#6F6A58]">Ticket code</p>
+              <p className="text-[11px] text-[#D9BB7D] break-all select-all">{ticket.code}</p>
               <p className={`text-[10px] ${ticket.paid ? TONE.accent : TONE.danger}`}>
                 {ticket.paid ? 'Paid' : 'Unpaid'}
                 {ticket.checkedInAt ? ` · in at ${new Date(ticket.checkedInAt).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}` : ''}

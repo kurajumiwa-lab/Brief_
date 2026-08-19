@@ -40,7 +40,7 @@ export function VendorProfile({ vendor, listings, onBack, onOpenListing }: Vendo
         <div className="flex items-start justify-between gap-3">
           <h3 className="text-sm font-extrabold text-[#F2EFE7]">{vendor.displayName}</h3>
           {vendor.status !== 'active' && (
-            <span className="shrink-0 text-[9px] font-mono uppercase px-2 py-0.5 rounded-full bg-[#1E1E1E] text-[#C2A24A]">
+            <span className="shrink-0 text-[9px] px-2 py-0.5 rounded-full bg-[#1E1E1E] text-[#C2A24A]">
               {vendor.status}
             </span>
           )}
@@ -57,7 +57,7 @@ export function VendorProfile({ vendor, listings, onBack, onOpenListing }: Vendo
 
       {/* Verification. Shown only when something was genuinely checked. */}
       <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4 space-y-2">
-        <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58]">
+        <h4 className="text-[11px] font-extrabold text-[#6F6A58]">
           Verification
         </h4>
         {evidence.length === 0 ? (
@@ -86,7 +86,7 @@ export function VendorProfile({ vendor, listings, onBack, onOpenListing }: Vendo
       </div>
 
       <div className="space-y-2">
-        <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58]">
+        <h4 className="text-[11px] font-extrabold text-[#6F6A58]">
           Listings
         </h4>
         {listings.length === 0 ? (

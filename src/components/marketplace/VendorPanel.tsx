@@ -73,7 +73,7 @@ export function VendorPanel({
     return (
       <div className="space-y-3">
         <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4 space-y-3">
-          <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58]">
+          <h4 className="text-[11px] font-extrabold text-[#6F6A58]">
             Start selling
           </h4>
           <p className="text-xs text-[#9A9278]">
@@ -130,7 +130,7 @@ export function VendorPanel({
           like a balance they could withdraw. */}
       {earnings && earnings.orderCount > 0 && (
         <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4 space-y-1">
-          <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58]">
+          <h4 className="text-[11px] font-extrabold text-[#6F6A58]">
             Settled earnings
           </h4>
           <p className="text-lg font-extrabold text-[#3E9A66]">
@@ -150,7 +150,7 @@ export function VendorPanel({
 
       {/* --- new listing ---------------------------------------------------- */}
       <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4 space-y-2">
-        <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58]">
+        <h4 className="text-[11px] font-extrabold text-[#6F6A58]">
           New listing
         </h4>
         <input
@@ -214,7 +214,7 @@ export function VendorPanel({
 
       {/* --- my listings ----------------------------------------------------- */}
       <div className="space-y-2">
-        <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58]">
+        <h4 className="text-[11px] font-extrabold text-[#6F6A58]">
           My listings
         </h4>
         {listings.length === 0 ? (
@@ -231,7 +231,7 @@ export function VendorPanel({
                   </p>
                 </div>
                 <span
-                  className={`shrink-0 text-[9px] font-mono uppercase px-2 py-0.5 rounded-full ${
+                  className={`shrink-0 text-[9px] px-2 py-0.5 rounded-full ${
                     STATUS_STYLE[l.status] ?? 'bg-[#1E1E1E] text-[#B6AFA0]'
                   }`}
                 >
@@ -259,7 +259,7 @@ export function VendorPanel({
 
       {/* --- orders received -------------------------------------------------- */}
       <div className="space-y-2">
-        <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58]">
+        <h4 className="text-[11px] font-extrabold text-[#6F6A58]">
           Orders received{pendingOrders.length > 0 ? ` (${pendingOrders.length} to fulfil)` : ''}
         </h4>
         {orders.length === 0 ? (

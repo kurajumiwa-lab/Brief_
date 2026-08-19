@@ -84,11 +84,11 @@ export function Inbox({
             className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4 space-y-3"
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[9px] font-mono uppercase text-[#9A9278] truncate">
+              <span className="text-[9px] text-[#9A9278] truncate">
                 {candidate.message.sourceLabel}
               </span>
               <span
-                className={`text-[9px] font-mono shrink-0 ${
+                className={`text-[9px] shrink-0 ${
                   lowConfidence ? 'text-[#C2A24A]' : 'text-[#7FA98B]'
                 }`}
               >
@@ -102,7 +102,7 @@ export function Inbox({
             </p>
 
             <div>
-              <p className="text-[9px] font-mono uppercase text-[#3E9A66]">
+              <p className="text-[9px] text-[#3E9A66]">
                 {candidate.typeConfident
                   ? getObjectTypeMeta(candidate.draft.type).label
                   : 'Type unclear'}
@@ -124,7 +124,7 @@ export function Inbox({
                       <span className="text-[10px] text-[#9A9278] shrink-0">
                         {f.field}
                       </span>
-                      <span className="text-[10px] font-mono text-[#B6AFA0] truncate">
+                      <span className="text-[10px] text-[#B6AFA0] truncate">
                         {f.value}
                       </span>
                     </div>
@@ -134,7 +134,7 @@ export function Inbox({
 
             {candidate.suggestedLinks.length > 0 && (
               <div className="space-y-1">
-                <p className="text-[9px] font-mono uppercase text-[#6F6A58]">
+                <p className="text-[9px] text-[#6F6A58]">
                   Connects to
                 </p>
                 {candidate.suggestedLinks.map((link) => (
@@ -156,7 +156,7 @@ export function Inbox({
 
             {candidate.duplicates.length > 0 && (
               <div className="border border-[#3A3416] bg-[#1A1708] rounded-xl p-2 space-y-0.5">
-                <p className="text-[9px] font-mono uppercase text-[#C2A24A]">
+                <p className="text-[9px] text-[#C2A24A]">
                   Possible duplicate
                 </p>
                 {candidate.duplicates.slice(0, 2).map((d) => (
@@ -167,7 +167,7 @@ export function Inbox({
               </div>
             )}
 
-            <p className="text-[9px] font-mono text-[#6F6A58]">
+            <p className="text-[9px] text-[#6F6A58]">
               Unverified. No trust score until reviewed.
             </p>
 

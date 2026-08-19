@@ -71,7 +71,7 @@ export function CircleTasks({
         <div className="flex items-start justify-between gap-3">
           <p className="text-xs text-[#F2EFE7] min-w-0">{task.content}</p>
           <span
-            className={`shrink-0 text-[9px] font-mono uppercase px-2 py-0.5 rounded-full ${
+            className={`shrink-0 text-[9px] px-2 py-0.5 rounded-full ${
               state?.status === 'completed'
                 ? 'bg-[#2B2A22] text-[#7FA98B]'
                 : state?.status === 'assigned'
@@ -166,11 +166,11 @@ export function CircleTasks({
 }
 
 const Heading = ({ children }: { children: React.ReactNode }) => (
-  <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58]">
+  <h3 className="text-[11px] font-extrabold text-[#6F6A58]">
     {children}
   </h3>
 );
 
 const SubHeading = ({ children }: { children: React.ReactNode }) => (
-  <p className="text-[10px] font-mono uppercase text-[#6F6A58]">{children}</p>
+  <p className="text-[10px] text-[#6F6A58]">{children}</p>
 );

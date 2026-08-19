@@ -215,7 +215,7 @@ const mount = async (element) => {
 
 const openCampaignsTab = async () => {
   const my = Array.from(document.querySelectorAll('button')).find((b) =>
-    text(b).startsWith('My Layer')
+    text(b).startsWith('Saved')
   );
   if (my) await click(my);
   const tab = Array.from(document.querySelectorAll('button')).find(

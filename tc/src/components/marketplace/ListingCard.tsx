@@ -39,7 +39,7 @@ export function ListingCard({ listing, onOpen }: ListingCardProps) {
     >
       <div className="flex items-start justify-between gap-3">
         <p className="text-xs font-extrabold text-[#F2EFE7] min-w-0">{listing.title}</p>
-        <span className="shrink-0 text-[9px] font-mono uppercase px-2 py-0.5 rounded-full bg-[#1E1E1E] text-[#B6AFA0]">
+        <span className="shrink-0 text-[9px] px-2 py-0.5 rounded-full bg-[#1E1E1E] text-[#B6AFA0]">
           {TYPE_LABEL[listing.type] ?? listing.type}
         </span>
       </div>

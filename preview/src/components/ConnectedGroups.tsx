@@ -103,7 +103,7 @@ export function ConnectedGroups({
                     <p className="text-sm font-extrabold text-[#F2EFE7]">
                       {group.name}
                     </p>
-                    <p className="text-[9px] font-mono uppercase text-[#6F6A58] mt-0.5">
+                    <p className="text-[9px] text-[#6F6A58] mt-0.5">
                       {group.platform} {' '}
                       {group.access === 'member' ? 'Member' : 'Authorised'}
                     </p>
@@ -129,7 +129,7 @@ export function ConnectedGroups({
                     </span>
                   )}
                   {group.lastActivityAt && (
-                    <span className="text-[10px] font-mono text-[#6F6A58]">
+                    <span className="text-[10px] text-[#6F6A58]">
                       last activity {group.lastActivityAt.slice(0, 10)}
                     </span>
                   )}
@@ -163,7 +163,7 @@ export function ConnectedGroups({
             <h2 className="text-lg font-extrabold text-[#F2EFE7]">
               {openGroup.name}
             </h2>
-            <span className="text-[9px] font-mono uppercase text-[#6F6A58]">
+            <span className="text-[9px] text-[#6F6A58]">
               {openGroup.platform} {' '}
               {openGroup.access === 'member' ? "You're a member" : 'Authorised'}
             </span>
@@ -189,7 +189,7 @@ export function ConnectedGroups({
           value={commandText}
           onChange={(e) => setCommandText(e.target.value)}
           placeholder="Ask something about this group..."
-          className="flex-1 bg-[#24221C] border border-[#3B372B] rounded-xl px-3 py-2.5 text-xs font-mono text-[#F2EFE7] placeholder-[#6F6A58] outline-none focus:border-[#3F5544]"
+          className="flex-1 bg-[#24221C] border border-[#3B372B] rounded-xl px-3 py-2.5 text-xs text-[#F2EFE7] placeholder-[#6F6A58] outline-none focus:border-[#3F5544]"
         />
         <button
           type="submit"
@@ -207,7 +207,7 @@ export function ConnectedGroups({
               setCommandText(c);
               handleRunCommand(c);
             }}
-            className="text-[10px] font-mono px-2 py-1 rounded-full bg-[#2B2A22] border border-[#3B372B] text-[#7FA98B] cursor-pointer"
+            className="text-[10px] px-2 py-1 rounded-full bg-[#2B2A22] border border-[#3B372B] text-[#7FA98B] cursor-pointer"
           >
             {c}
           </button>
@@ -216,7 +216,7 @@ export function ConnectedGroups({
 
       {commandResult && (
         <div className="bg-[#28261F] border border-[#3F5544] rounded-2xl p-4 space-y-3">
-          <p className="text-[9px] font-mono uppercase text-[#3E9A66]">
+          <p className="text-[9px] text-[#3E9A66]">
             /{commandResult.command} {commandResult.argument}
           </p>
 
@@ -231,7 +231,7 @@ export function ConnectedGroups({
                   className="flex items-baseline justify-between gap-3"
                 >
                   <span className="text-[11px] text-[#B6AFA0]">{line.label}</span>
-                  <span className="text-[11px] font-mono text-[#7FA98B]">
+                  <span className="text-[11px] text-[#7FA98B]">
                     {line.count}
                   </span>
                 </div>
@@ -255,7 +255,7 @@ export function ConnectedGroups({
 
           {commandResult.fromGroup.length > 0 && (
             <div className="space-y-2">
-              <p className="text-[10px] font-mono uppercase text-[#6F6A58]">
+              <p className="text-[10px] text-[#6F6A58]">
                 From this group
               </p>
               {commandResult.fromGroup.slice(0, 6).map((entry) => (
@@ -264,10 +264,10 @@ export function ConnectedGroups({
                   className="bg-[#24221C] border border-[#3B372B] rounded-xl p-2.5"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[9px] font-mono uppercase text-[#3E9A66]">
+                    <span className="text-[9px] text-[#3E9A66]">
                       {MESSAGE_CLASS_LABELS[entry.messageClass]}
                     </span>
-                    <span className="text-[9px] font-mono text-[#6F6A58]">
+                    <span className="text-[9px] text-[#6F6A58]">
                       {entry.sentAt.slice(0, 10)}
                     </span>
                   </div>
@@ -279,7 +279,7 @@ export function ConnectedGroups({
                   </p>
 
                   {entry.mediaKind && entry.mediaKind !== 'message' && (
-                    <p className="text-[9px] font-mono uppercase text-[#6F6A58] mt-1">
+                    <p className="text-[9px] text-[#6F6A58] mt-1">
                       from {entry.mediaKind}
                       {entry.mediaAnalysisStatus === 'pending'
                         ? ' - not read yet'
@@ -313,7 +313,7 @@ export function ConnectedGroups({
                     {entry.entities.map((ent) => (
                       <span
                         key={ent.field}
-                        className="text-[9px] font-mono text-[#9A9278]"
+                        className="text-[9px] text-[#9A9278]"
                       >
                         {ent.field}: {ent.value}
                       </span>
@@ -351,7 +351,7 @@ export function ConnectedGroups({
               {/* Deliberately a separate heading: a member must always be
                   able to tell what their group said from what Brief
                   knows from somewhere else. */}
-              <p className="text-[10px] font-mono uppercase text-[#C2A24A]">
+              <p className="text-[10px] text-[#C2A24A]">
                 From your Brief information (not this group)
               </p>
               {commandResult.fromElsewhere.map((obj) => (
@@ -360,7 +360,7 @@ export function ConnectedGroups({
                   onClick={() => setSelectedObjectForDetail(obj)}
                   className="w-full text-left bg-[#24221C] border border-[#3B372B] hover:border-[#3F5544] rounded-xl p-2.5 cursor-pointer"
                 >
-                  <span className="text-[9px] font-mono uppercase text-[#6F6A58]">
+                  <span className="text-[9px] text-[#6F6A58]">
                     {getObjectTypeMeta(obj.type).label}
                   </span>
                   <p className="text-[11px] font-bold text-[#F2EFE7] mt-0.5">
@@ -380,7 +380,7 @@ export function ConnectedGroups({
       {/* Unanswered questions: groups are terrible at preserving these. */}
       {unansweredQuestions.length > 0 && (
         <div className="space-y-2">
-          <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#C2A24A]">
+          <h3 className="text-[11px] font-extrabold text-[#C2A24A]">
             {unansweredQuestions.length} questions still waiting
           </h3>
           {unansweredQuestions.map((q) => (
@@ -395,7 +395,7 @@ export function ConnectedGroups({
                 {q.authorLabel && (
                   <span className="text-[9px] text-[#6F6A58]">{q.authorLabel}</span>
                 )}
-                <span className="text-[9px] font-mono text-[#6F6A58]">
+                <span className="text-[9px] text-[#6F6A58]">
                   {q.sentAt.slice(0, 10)}
                 </span>
               </div>
@@ -406,7 +406,7 @@ export function ConnectedGroups({
 
       {/* Operational metrics only. No impressions, no engagement. */}
       <div className="border-t border-[#3B372B] pt-4 space-y-2">
-        <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58]">
+        <h3 className="text-[11px] font-extrabold text-[#6F6A58]">
           Group health
         </h3>
         {[
@@ -418,7 +418,7 @@ export function ConnectedGroups({
         ].map(([label, value]) => (
           <div key={String(label)} className="flex items-baseline justify-between gap-3">
             <span className="text-[10px] text-[#9A9278]">{label}</span>
-            <span className="text-[10px] font-mono text-[#B6AFA0]">{value}</span>
+            <span className="text-[10px] text-[#B6AFA0]">{value}</span>
           </div>
         ))}
       </div>

@@ -66,7 +66,7 @@ export function OrderStatus({
           </p>
         </div>
         <span
-          className={`shrink-0 text-[9px] font-mono uppercase px-2 py-0.5 rounded-full ${
+          className={`shrink-0 text-[9px] px-2 py-0.5 rounded-full ${
             STATUS_STYLE[order.status] ?? 'bg-[#1E1E1E] text-[#B6AFA0]'
           }`}
         >

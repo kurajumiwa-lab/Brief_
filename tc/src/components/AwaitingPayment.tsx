@@ -50,7 +50,7 @@ export function AwaitingPayment({
         <p className="text-[11px] font-extrabold text-[#D9BB7D]">
           {held.length} awaiting payment
         </p>
-        <p className="text-[9px] font-mono uppercase tracking-wider text-[#6F6A58]">
+        <p className="text-[9px] text-[#6F6A58]">
           Spot held
         </p>
       </div>

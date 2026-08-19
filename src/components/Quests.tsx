@@ -79,10 +79,10 @@ export function Quests({
       {/* Wallet. Settled and pending are never added together. */}
       <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4 space-y-2">
         <div className="flex items-baseline justify-between gap-3">
-          <span className="text-[10px] uppercase tracking-wider text-[#6F6A58]">
+          <span className="text-[10px] text-[#6F6A58]">
             Brief Points
           </span>
-          <span className="text-lg font-extrabold text-[#3E9A66] font-mono">
+          <span className="text-lg font-extrabold text-[#3E9A66]">
             {myContribution.settledPoints.toLocaleString()}
           </span>
         </div>
@@ -124,12 +124,12 @@ export function Quests({
           An unfunded pool says so rather than rendering "KES 0" as though a
           real fund existed and happened to be empty. */}
       <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4">
-        <p className="text-[10px] uppercase tracking-wider text-[#6F6A58]">
+        <p className="text-[10px] text-[#6F6A58]">
           Community pool - {COMMUNITY_POOL.periodLabel}
         </p>
         {COMMUNITY_POOL.totalKes > 0 ? (
           <>
-            <p className="text-base font-extrabold text-[#F2EFE7] font-mono mt-1">
+            <p className="text-base font-extrabold text-[#F2EFE7] mt-1">
               KES {COMMUNITY_POOL.totalKes.toLocaleString()}
             </p>
             <p className="text-[10px] text-[#9A9278] mt-1">
@@ -146,7 +146,7 @@ export function Quests({
       </div>
 
       <div>
-        <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58] mb-2">
+        <h3 className="text-[11px] font-extrabold text-[#6F6A58] mb-2">
           Open quests
         </h3>
         <div className="space-y-2">
@@ -166,7 +166,7 @@ export function Quests({
                   </p>
                   <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
                     {q.locationName && (
-                      <span className="text-[9px] font-mono text-[#6F6A58]">
+                      <span className="text-[9px] text-[#6F6A58]">
                         {q.locationName}
                         {typeof q.distanceKm === 'number'
                           ? ` - ${q.distanceKm} km`
@@ -174,14 +174,14 @@ export function Quests({
                       </span>
                     )}
                     {q.expiresAt && (
-                      <span className="text-[9px] font-mono text-[#C2A24A]">
+                      <span className="text-[9px] text-[#C2A24A]">
                         closes {q.expiresAt.slice(0, 10)}
                       </span>
                     )}
                   </div>
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="text-xs font-extrabold text-[#3E9A66] font-mono">
+                  <p className="text-xs font-extrabold text-[#3E9A66]">
                     {q.points}
                   </p>
                   <button
@@ -200,7 +200,7 @@ export function Quests({
       {/* Rejections stay visible with their reason. */}
       {quests.some((q) => q.status === 'rejected') && (
         <div>
-          <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58] mb-2">
+          <h3 className="text-[11px] font-extrabold text-[#6F6A58] mb-2">
             Not accepted
           </h3>
           <div className="space-y-2">
@@ -261,23 +261,23 @@ export function Quests({
                 key={person.id}
                 className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3 flex items-center gap-3"
               >
-                <span className="text-[10px] font-mono text-[#6F6A58] w-4 shrink-0">
+                <span className="text-[10px] text-[#6F6A58] w-4 shrink-0">
                   {i + 1}
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-extrabold text-[#F2EFE7]">
                     {person.displayName}
-                    <span className="ml-2 text-[9px] font-mono uppercase text-[#7FA98B]">
+                    <span className="ml-2 text-[9px] text-[#7FA98B]">
                       {getBriefRank(person.contribution)}
                     </span>
                   </p>
-                  <p className="text-[9px] font-mono text-[#6F6A58] mt-0.5">
+                  <p className="text-[9px] text-[#6F6A58] mt-0.5">
                     {person.locationName} - {person.contribution.accepted} accepted
                     {typeof rate === 'number' ? ` - ${rate}% accepted` : ''}
                     {typeof pct === 'number' ? ` - top ${pct}%` : ''}
                   </p>
                 </div>
-                <span className="text-[10px] font-mono text-[#B6AFA0] shrink-0">
+                <span className="text-[10px] text-[#B6AFA0] shrink-0">
                   {person.contribution.settledPoints.toLocaleString()}
                 </span>
               </div>

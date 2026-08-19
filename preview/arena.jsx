@@ -61,7 +61,7 @@ async function main(){
   const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;console.log('  FAIL  '+n+(d?' -> '+d:''));}};
 
   console.log('=== Arena is its own world, not a gaming feed ===');
-  await click(btn('Arena'));
+  await click(btn('Play'));
   let b=body();
   check('Arena tab opens', b.includes('Arena')&&b.includes('Live lobby'));
   check('no social feed mechanics', !/\b(likes?|comments?|followers?|streak|leaderboard)\b/i.test(b));
@@ -163,7 +163,7 @@ async function main(){
 
 
   console.log('\n=== Real money is gated, and the reason is stated ===');
-  await click(btn('Arena'));
+  await click(btn('Play'));
   b=body();
   check('Arena states Brief does not handle match money', /does not handle match money/i.test(b));
   check('entry fees are named as player-to-player', /between players/i.test(b));

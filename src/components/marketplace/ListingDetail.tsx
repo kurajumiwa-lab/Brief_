@@ -83,7 +83,7 @@ export function ListingDetail({
       {listing.orderable ? (
         <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#6F6A58]">
+            <span className="text-[10px] font-extrabold text-[#6F6A58]">
               Quantity
             </span>
             <button

@@ -125,7 +125,7 @@ function Timeline({ vaultId }: { vaultId: string }) {
 
       {days.map((d) => (
         <div key={d.day} className="space-y-1">
-          <p className="text-[9px] font-mono tracking-[0.2em] text-[#6F6A58] mt-3 mb-1">{d.day}</p>
+          <p className="text-[9px] text-[#6F6A58] mt-3 mb-1">{d.day}</p>
           {d.items.map((f) => (
             <div key={f.id} className="flex items-start gap-2.5 py-1.5 border-b border-[#2A2821] last:border-0">
               <span
@@ -134,7 +134,7 @@ function Timeline({ vaultId }: { vaultId: string }) {
               />
               <div className="min-w-0">
                 <p className="text-[11px] leading-snug text-[#F2EFE7]">{f.narrative}</p>
-                <p className="text-[9px] font-mono text-[#6F6A58] mt-0.5">
+                <p className="text-[9px] text-[#6F6A58] mt-0.5">
                   {timeOf(f.createdAt)}
                   {f.channel && f.channel !== 'web' ? ` · via ${f.channel}` : ''}
                 </p>
@@ -219,7 +219,7 @@ function HostPanel({ vault, onChanged }: { vault: VaultType; onChanged: () => vo
 
       {handoff && (
         <div className="bg-[#191714] border border-[#3B372B] rounded-lg p-2 space-y-1">
-          <p className="text-[9px] font-mono text-[#6F6A58]">Handoff link (single-use):</p>
+          <p className="text-[9px] text-[#6F6A58]">Handoff link (single-use):</p>
           <p className="text-[10px] text-[#7FA98B] break-all select-all">{handoff}</p>
         </div>
       )}
@@ -243,7 +243,7 @@ function Requests({ vault, onChanged }: { vault: VaultType; onChanged: () => voi
         <div key={r.id} className="bg-[#191714] border border-[#3B372B] rounded-lg p-2.5 flex items-center justify-between gap-2">
           <div className="min-w-0">
             <p className="text-xs text-[#F2EFE7] truncate">{r.description}</p>
-            <p className="text-[9px] font-mono uppercase text-[#6F6A58] mt-0.5">{r.status}</p>
+            <p className="text-[9px] text-[#6F6A58] mt-0.5">{r.status}</p>
           </div>
           {vault.role === 'vendor' && (r.status === 'routed' || r.status === 'open') && (
             <button onClick={async () => { await briefApi.acceptVaultRequest(vault.id, r.id); onChanged(); }}
@@ -284,7 +284,7 @@ function VaultDetail({ vault, onBack, onChanged }: { vault: VaultType; onBack: (
       <div>
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-lg font-extrabold text-[#F2EFE7] leading-tight">{vault.title}</h2>
-          <span className="shrink-0 text-[9px] font-mono uppercase px-2 py-0.5 rounded-full bg-[#2B2A22] text-[#7FA98B]">{vault.status}</span>
+          <span className="shrink-0 text-[9px] px-2 py-0.5 rounded-full bg-[#2B2A22] text-[#7FA98B]">{vault.status}</span>
         </div>
         <p className={`text-[10px] ${TONE.faint} mt-0.5`}>{vault.type} · {vault.visibility}</p>
         {vault.description && <p className={`text-xs ${TONE.dim} mt-1`}>{vault.description}</p>}
@@ -330,7 +330,7 @@ function VaultDetail({ vault, onBack, onChanged }: { vault: VaultType; onBack: (
 function Stat({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
   return (
     <div className="bg-[#211F1A] border border-[#3B372B] rounded-lg px-3 py-2">
-      <p className="text-[9px] font-mono uppercase tracking-wider text-[#6F6A58]">{label}</p>
+      <p className="text-[9px] text-[#6F6A58]">{label}</p>
       <p className={`text-sm font-extrabold ${accent ? 'text-[#3E9A66]' : 'text-[#F2EFE7]'}`}>{value}</p>
     </div>
   );
@@ -451,9 +451,9 @@ function VaultHome({ onOpen, refreshKey }: { onOpen: (v: VaultType) => void; ref
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="text-sm font-extrabold text-[#F2EFE7] truncate">{v.title}</p>
-                <p className="text-[9px] font-mono uppercase tracking-wider text-[#6F6A58] mt-0.5">{v.type} · {v.role}</p>
+                <p className="text-[9px] text-[#6F6A58] mt-0.5">{v.type} · {v.role}</p>
               </div>
-              <span className={`shrink-0 text-[9px] font-mono uppercase px-2 py-0.5 rounded-full ${
+              <span className={`shrink-0 text-[9px] px-2 py-0.5 rounded-full ${
                 v.status === 'settled' ? 'bg-[#2B2A22] text-[#3E9A66]' : 'bg-[#252C31] text-[#8FAFC4]'
               }`}>{v.status}</span>
             </div>

@@ -40,7 +40,7 @@ export function CircleMembers({
 }: CircleMembersProps) {
   return (
     <div>
-      <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58] mb-2">
+      <h3 className="text-[11px] font-extrabold text-[#6F6A58] mb-2">
         Members
       </h3>
 
@@ -62,7 +62,7 @@ export function CircleMembers({
                     <p className="text-xs font-extrabold text-[#F2EFE7] truncate">
                       {member.userId}
                     </p>
-                    <p className="text-[9px] font-mono uppercase text-[#6F6A58] mt-0.5">
+                    <p className="text-[9px] text-[#6F6A58] mt-0.5">
                       {ROLE_LABEL[member.role] ?? member.role}
                     </p>
                   </div>
@@ -80,7 +80,7 @@ export function CircleMembers({
                     {member.trust.evidence.map((e) => (
                       <span
                         key={e.kind}
-                        className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-[#2B2A22] text-[#7FA98B]"
+                        className="text-[9px] px-2 py-0.5 rounded-full bg-[#2B2A22] text-[#7FA98B]"
                       >
                         {e.label}
                       </span>
@@ -118,7 +118,7 @@ export function CircleMembers({
                             {ev.summary.map((s) => (
                               <span
                                 key={s.kind}
-                                className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-[#191714] border border-[#3B372B] text-[#B6AFA0]"
+                                className="text-[9px] px-2 py-0.5 rounded-full bg-[#191714] border border-[#3B372B] text-[#B6AFA0]"
                               >
                                 {s.label}
                               </span>
@@ -138,7 +138,7 @@ export function CircleMembers({
                                 className="flex items-center gap-2 text-[10px] text-[#B6AFA0]"
                               >
                                 <span className="min-w-0 truncate">{item.label}</span>
-                                <span className="font-mono text-[9px] text-[#6F6A58] ml-auto shrink-0">
+                                <span className="text-[9px] text-[#6F6A58] ml-auto shrink-0">
                                   {item.at.slice(0, 10)}
                                 </span>
                               </li>

@@ -48,7 +48,7 @@ export function CircleActivity({ signals, limit }: CircleActivityProps) {
 
   return (
     <div>
-      <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58] mb-2">
+      <h3 className="text-[11px] font-extrabold text-[#6F6A58] mb-2">
         Activity
       </h3>
 
@@ -76,7 +76,7 @@ export function CircleActivity({ signals, limit }: CircleActivityProps) {
                 </span>
               )}
 
-              <span className="text-[9px] font-mono text-[#6F6A58] shrink-0 ml-auto">
+              <span className="text-[9px] text-[#6F6A58] shrink-0 ml-auto">
                 {signal.createdAt.slice(0, 10)}
               </span>
             </div>
