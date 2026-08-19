@@ -12,6 +12,7 @@ import { Vault } from './components/vault/Vault';
 import { CheckIn } from './components/CheckIn';
 import { HostCommand } from './components/HostCommand';
 import { SilkBanner, GameBanner } from './components/BannerArt';
+import { ActionsEngine } from './components/ActionsEngine';
 import { Circles } from './components/Circles';
 import { Marketplace } from './components/Marketplace';
 import { Pursuits } from './components/Pursuits';
@@ -7819,12 +7820,11 @@ export function App() {
         {activeTab === 'workflows' &&
           (workflowSection === 'active' || workflowSection === 'completed') && (
           <section className="space-y-5">
-            <SilkBanner
-              glyph="🛠️"
-              title="Automation"
-              subtitle="Channel ingest · live webhook triggers"
-              hue="violet"
-              compact
+            <ActionsEngine
+              online={connectorStatus.online}
+              checked={connectorStatus.checked}
+              capabilities={connectorStatus.capabilities as any}
+              liveSourceCount={connectorStatus.liveSources.length}
             />
             <div className="bg-[#1C1C1F] border border-[#14392B] rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-2">
