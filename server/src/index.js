@@ -2348,8 +2348,10 @@ app.post('/api/vendors/me/payouts', async (req, res) => {
     }
     res.status(201).json({ payout: store.find('payouts', (p) => p.id === payout.id), reused: false });
   } catch (e) {
-    // A missing provider is a 503 (try later), not a 400 (you did it wrong).
-    const status = e.code === 'payout_not_configured' ? 503 : 400;
+    // No disbursement provider is a 503 (unavailable, try later), not a 400
+    // (you did it wrong). The code is machine-readable so a client can state
+    // the truth rather than implying payouts work.
+    const status = e.code === 'provider_unavailable' ? 503 : 400;
     res.status(status).json({ error: String(e.message ?? e), code: e.code ?? null });
   }
 });

@@ -142,7 +142,7 @@ check('earnings are real zeros, not invented money', r.body?.earnings?.net === 0
 check('payout is unavailable', r.body?.earnings?.payoutAvailable === false);
 check('and the reason is stated', /provider/i.test(r.body?.earnings?.payoutReason ?? ''));
 r = await call('/api/vendors/me/payouts', 'POST', { phone: '0722000111' }, S.token);
-check('requesting a payout is refused (503), not queued', r.status === 503 || r.status === 400, `got ${r.status}`);
+check('requesting a payout is refused, not queued', r.status === 503 || r.status === 400, `got ${r.status}`);
 
 console.log('\n=== ARENA (server-persisted, no wallet) ===');
 r = await call('/api/arena/challenges', 'POST', { gameId: 'efootball', stake: 'friendly' }, S.token);

@@ -12,7 +12,7 @@ collection provider, settling to the LOOP BIZ business/till.**
 | `server/src/providers.js` | Rewritten: `COLLECTION_PROVIDERS = { tuma }`, `DISBURSEMENT_PROVIDERS = {}` (empty — no payout rail). Provider seam is the only place providers are registered. |
 | `server/src/connectors/tuma.js` | Tuma provider: method renamed `stkPush` → `collect`; env var `TUMA_CALLBACK_SECRET` → `TUMA_WEBHOOK_SECRET`; Daraja references in comments removed. |
 | `server/src/domain/payment.js` | Calls `provider.collect()`; Daraja comment removed. |
-| `server/src/domain/settlement.js` | `sendPayout` no longer calls a Daraja B2C method — it now refuses honestly (`payout_not_configured`) until a provider is registered in `DISBURSEMENT_PROVIDERS`. |
+| `server/src/domain/settlement.js` | `sendPayout` no longer calls any Daraja B2C method — it now refuses honestly (`provider_unavailable`) until a provider is registered in `DISBURSEMENT_PROVIDERS`. |
 | `server/src/domain/ledger.js` | (already provider-neutral) comment updated. |
 | `server/src/index.js` | Removed `import mpesa` and the entire `POST /api/webhooks/mpesa/:secret` route. Tuma webhook comment updated. |
 | `server/src/ops.js` | Startup diagnostic now checks `TUMA_WEBHOOK_SECRET`. |
@@ -99,5 +99,5 @@ neither of which is the Daraja API.
   therefore **not claimed live-ready** until a real STK push + callback round
   trip succeeds.
 - Merchant payouts remain **unavailable** (no disbursement provider): Tuma
-  documents no payout endpoint, and Daraja B2C was removed. Registering a
-  provider in `DISBURSEMENT_PROVIDERS` re-enables them.
+  documents no payout endpoint, and no other payout rail has been selected.
+  Registering a provider in `DISBURSEMENT_PROVIDERS` re-enables them.

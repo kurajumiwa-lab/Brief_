@@ -3203,13 +3203,16 @@ console.log('\n=== PAYOUT: SETTLED EARNINGS -> DISBURSEMENT ===');
   check('nothing paid out yet', e.paidOut === 0);
   check('withdrawable equals net', e.withdrawable === 1900, `got ${e.withdrawable}`);
 
-  // WITHOUT payout credentials the request must be REFUSED, not queued.
+  // WITHOUT a disbursement provider the request must be REFUSED, not queued,
+  // and must never create a payout row or a ledger transaction.
+  const ledgerRowsBefore = store.all('ledgerTransactions').length;
   let threw = null, code = null;
   try { settle.requestPayout({ vendorId: v.id, requestedBy: 'usr_payee', phone: '0722000111' }); }
   catch (err) { threw = err.message; code = err.code; }
   check('a payout is REFUSED with no provider', /unavailable|not configured/i.test(String(threw)), String(threw));
-  check('the refusal is machine-readable', code === 'payout_not_configured');
+  check('the refusal is machine-readable (provider_unavailable)', code === 'provider_unavailable');
   check('no payout row was created', store.all('payouts').length === 0);
+  check('no ledger transaction was created', store.all('ledgerTransactions').length === ledgerRowsBefore);
   check('payoutAvailable is false', e.payoutAvailable === false);
   check('and the reason names the provider', /provider/i.test(e.payoutReason));
 
@@ -3309,6 +3312,65 @@ console.log('\n=== PAYOUT: SETTLED EARNINGS -> DISBURSEMENT ===');
   delete providers.DISBURSEMENT_PROVIDERS.testpayout;
   check('with the provider removed, payout is unavailable again',
     settle.vendorEarnings(v.id).payoutAvailable === false);
+}
+
+console.log('\n=== PAYOUT OVER HTTP: 503 / provider_unavailable (no provider) ===');
+{
+  process.env.NODE_ENV = 'test';
+  const { default: app } = await import('../src/index.js');
+  const ordersD = await import('../src/domain/order.js');
+  const ledgerD = await import('../src/domain/ledger.js');
+  store._reset();
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, {
+      method, headers, body: body ? JSON.stringify(body) : undefined
+    });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+
+  try {
+    const S = (await call('/api/auth/register', 'POST', { handle: 'payseller503', password: 'a good passphrase' })).body;
+    const B = (await call('/api/auth/register', 'POST', { handle: 'paybuyer503', password: 'a good passphrase' })).body;
+    const v = (await call('/api/vendors', 'POST', { displayName: '503 Stall' }, S.token)).body.vendor;
+    const l = (await call('/api/listings', 'POST', { title: 'Beans', type: 'product', price: 500, quantityAvailable: 10 }, S.token)).body.listing;
+    await call(`/api/listings/${l.id}/status`, 'POST', { status: 'active' }, S.token);
+    const o = (await call('/api/orders', 'POST', { listingId: l.id, quantity: 2 }, B.token)).body.order;
+
+    // Give the vendor REAL settled earnings: a settled ledger transaction
+    // attached to the order, then fulfil + settle the order -- exactly the
+    // ordinary money path. No provider is involved in this step.
+    const tx = ledgerD.createTransaction({ amount: o.total, currency: 'KES', type: 'sale', counterparty: B.user.id });
+    ledgerD.transitionTransaction(tx.id, 'pending');
+    ledgerD.transitionTransaction(tx.id, 'confirmed');
+    ledgerD.transitionTransaction(tx.id, 'settled');
+    ordersD.attachTransaction(o.id, tx.id);
+    await call(`/api/orders/${o.id}/fulfil`, 'POST', {}, S.token);
+    await call(`/api/orders/${o.id}/settle`, 'POST', {}, S.token);
+
+    const earn = (await call('/api/vendors/me/earnings', 'GET', undefined, S.token)).body.earnings;
+    check('the vendor has settled earnings (net of commission)', earn?.withdrawable === 950, `got ${earn?.withdrawable}`);
+    check('but payoutAvailable is false (no provider)', earn?.payoutAvailable === false);
+
+    // Requesting a payout with earnings but NO disbursement provider must
+    // return an honest 503 / provider_unavailable -- never a queued payout,
+    // never a successful (or fake) ledger transaction.
+    const payoutRowsBefore = store.all('payouts').length;
+    const ledgerRowsBefore = store.all('ledgerTransactions').length;
+    const r = await call('/api/vendors/me/payouts', 'POST', { phone: '0722000111' }, S.token);
+    check('payout over HTTP is refused with 503', r.status === 503, `got ${r.status}`);
+    check('and names provider_unavailable', r.body?.code === 'provider_unavailable', JSON.stringify(r.body));
+    check('no payout row was created', store.all('payouts').length === payoutRowsBefore);
+    check('no ledger transaction was created', store.all('ledgerTransactions').length === ledgerRowsBefore);
+    check('earnings remain withdrawable (nothing was silently disbursed)',
+      (await call('/api/vendors/me/earnings', 'GET', undefined, S.token)).body.earnings?.withdrawable === 950);
+  } finally {
+    srv.close();
+  }
 }
 
 

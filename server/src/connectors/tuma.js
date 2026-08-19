@@ -25,7 +25,7 @@
 //   * no HMAC/signature on webhooks -- authenticity is (a) a secret path
 //     segment in the callback URL and (b) matching the checkout_request_id +
 //     amount against a stored intent.
-//   * no disbursement (B2C/payout) endpoint -- Tuma is collection-only here;
+//   * no disbursement (payout) endpoint -- Tuma is collection-only here;
 //     merchant payouts remain unavailable until a disbursement provider is
 //     registered (see providers.js and settlement.js).
 //   * no sandbox host -- the base URL is overridable via TUMA_BASE_URL, but

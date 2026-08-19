@@ -298,11 +298,14 @@ export function requestPayout({ vendorId, requestedBy, phone = null, idempotency
     );
   }
   if (!activeDisbursementProvider()) {
-    // Refuse rather than queue a payout Brief has no way to fulfil.
+    // Refuse rather than queue a payout Brief has no way to fulfil. No
+    // disbursement provider is connected (Tuma documents no payout endpoint,
+    // and no other payout rail has been selected), so a payout is genuinely
+    // unavailable -- never silently recorded as successful.
     const err = new Error(
-      'payouts are unavailable: no payment provider is configured to disburse funds'
+      'payouts are unavailable: no disbursement provider is configured'
     );
-    err.code = 'payout_not_configured';
+    err.code = 'provider_unavailable';
     throw err;
   }
 
@@ -330,7 +333,7 @@ export function requestPayout({ vendorId, requestedBy, phone = null, idempotency
  * Send a requested payout through the provider.
  *
  * No disbursement provider is connected (Tuma documents no payout endpoint,
- * and the former Daraja B2C rail has been removed), so this refuses honestly
+ * and no other payout rail has been selected), so this refuses honestly
  * rather than pretending to move money. Registering a provider in
  * DISBURSEMENT_PROVIDERS and implementing its `disburse()` is the only change
  * needed to re-enable real payouts.
@@ -347,14 +350,14 @@ export async function sendPayout(payoutId, { fetchImpl = fetch } = {}) {
   if (!providerName) {
     store.update('payouts', payout.id, {
       status: 'failed',
-      failureReason: 'payout_not_configured: no disbursement provider is connected'
+      failureReason: 'provider_unavailable: no disbursement provider is connected'
     });
-    return { ok: false, reason: 'payout_not_configured' };
+    return { ok: false, reason: 'provider_unavailable' };
   }
 
   store.update('payouts', payout.id, { status: 'processing' });
   // A registered disbursement provider exposes `disburse()` (the provider-
-  // neutral operation; B2C-shaped for the former Daraja rail).
+  // neutral operation name).
   const provider = disbursementProvider(providerName);
   const res = await provider.disburse({
     amount: Math.round(payout.amount),

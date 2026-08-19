@@ -5,14 +5,14 @@
 // directions:
 //
 //   COLLECTION     customer -> merchant   (STK Push). Tuma is the gateway.
-//   DISBURSEMENT   merchant -> customer   (B2C/payout). No provider is
-//                  connected -- Tuma documents no payout endpoint, and the
-//                  former Daraja B2C rail has been removed.
+//   DISBURSEMENT   merchant -> customer   (payout). No provider is connected
+//                  -- Tuma documents no payout endpoint, and no other payout
+//                  rail has been selected.
 //
 // Each provider is a connector module exposing a common shape:
 //   capabilities, isConfigured(), status(),
 //   collect, parseCallback(), verifyCallbackSecret()
-//   ...and for disbursement providers, disburse (b2cPayout) + isPayoutConfigured()
+//   ...and for disbursement providers, disburse() + isPayoutConfigured()
 //
 // Adding another provider (Paystack, SasaPay, Flutterwave, ...) is: write a
 // connector file + add ONE line to the map below. Nothing else changes,
@@ -26,8 +26,8 @@
 import * as tuma from './connectors/tuma.js';
 
 export const COLLECTION_PROVIDERS = { tuma };
-// No disbursement provider is connected. Register one here (e.g. a future
-// bank-rail or mobile-money payout provider) to enable merchant payouts.
+// Intentionally empty. No disbursement provider has been selected; register
+// one here to enable merchant payouts. Do not add one unless instructed.
 export const DISBURSEMENT_PROVIDERS = {};
 
 /** The active collection provider's name, or null when none is configured. */
