@@ -7,6 +7,9 @@
 
 import express from 'express';
 import crypto from 'node:crypto';
+import path from 'node:path';
+import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { store, newId } from './store.js';
 import { enqueue, queueStats, allow, withBackoff } from './queue.js';
 import { storeRawItem, processRawItem, previewText } from './pipeline/ingest.js';
@@ -39,6 +42,15 @@ import * as ops from './ops.js';
 
 const app = express();
 
+// The compiled React/Vite frontend, served by Express in production. Resolved
+// from THIS file's location (server/src) so it is correct regardless of the
+// deployment working directory (/app, /app/server, or anywhere else): the
+// build always lands at <repo>/preview/dist.
+const FRONTEND_DIST = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)), // server/src
+  '..', '..', 'preview', 'dist'
+);
+
 // Raw body retained for webhook signature verification -- the HMAC must be
 // computed over the exact bytes Meta sent, not a re-serialized object.
 app.use(express.json({
@@ -52,6 +64,17 @@ app.use((_req, res, next) => {
   next();
 });
 app.options('*', (_req, res) => res.sendStatus(204));
+
+// The production client calls the API under the /ingest prefix (the dev server
+// strips it with a Vite proxy; in production Express serves the API directly).
+// Strip the prefix here so /ingest/api/* resolves exactly like /api/*. This is
+// a no-op for the dev server, whose proxy never forwards the prefix.
+app.use((req, _res, next) => {
+  if (req.url.startsWith('/ingest')) {
+    req.url = req.url.slice('/ingest'.length) || '/';
+  }
+  next();
+});
 
 // Resolve the bearer token (or cookie) into a verified identity BEFORE any
 // route runs. Sets req.auth, or req.authError when a token was presented and
@@ -2993,6 +3016,31 @@ app.post('/api/vaults/handoff/resolve', (req, res) => {
     participant: participant ? { id: participant.id, role: participant.role } : null
   });
 });
+
+// --- Production frontend serving -------------------------------------------
+//
+// In production Express serves the compiled Vite build (FRONTEND_DIST) and
+// falls back to index.html for client-side routes. This is a no-op when the
+// build does not exist (development/test), so the API-only server behaves
+// exactly as it always has.
+const servingFrontend =
+  process.env.NODE_ENV === 'production' &&
+  fs.existsSync(path.join(FRONTEND_DIST, 'index.html'));
+
+if (servingFrontend) {
+  // Static assets: JS/CSS bundles, images, etc. `index: false` so '/' is
+  // handled by the explicit fallback below rather than a silent directory
+  // serve, and so an asset miss is not masked by a directory index.
+  app.use(express.static(FRONTEND_DIST, { index: false }));
+
+  // SPA fallback: any GET that is neither the API nor a real asset resolves to
+  // index.html, so client-side routes (e.g. /marketplace) do not 404.
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api/')) return next(); // API miss: 404 as API, never the SPA shell
+    if (req.path.includes('.')) return next();       // a real asset request; 404 if absent
+    res.sendFile(path.join(FRONTEND_DIST, 'index.html'));
+  });
+}
 
 // A failing connector must never take Brief down (spec 30).
 app.use((err, _req, res, _next) => {
