@@ -113,9 +113,6 @@ export function PayOrder({ order, onPaid }: PayOrderProps) {
     <div className="bg-[#0B1A12] border border-[#1E3A2A] rounded-xl p-3 space-y-2">
       <div className="flex items-center justify-between gap-2">
         <p className="text-[11px] font-extrabold text-[#E8D48B]">Pay with M-Pesa</p>
-        <p className="text-[9px] font-mono uppercase tracking-wider text-[#5C6B52]">
-          via Tuma
-        </p>
       </div>
 
       <p className="text-sm font-extrabold text-[#00FF42]">

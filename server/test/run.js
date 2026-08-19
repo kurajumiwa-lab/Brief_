@@ -2697,39 +2697,14 @@ console.log('\n=== AUTHORIZATION ACROSS TWO REAL ACTORS ===');
 
 console.log('\n=== PAYMENT CONNECTOR BOUNDARY (no credentials configured) ===');
 {
-  const mp = await import('../src/connectors/mpesa.js');
   const pay = await import('../src/domain/payment.js');
+  const providers = await import('../src/providers.js');
 
-  check('M-Pesa reports NOT configured', mp.isConfigured() === false);
-  check('payout reports NOT configured', mp.isPayoutConfigured() === false);
-  check('every missing credential is named', mp.missingCredentials().length === 7, mp.missingCredentials().join(','));
-  check('the reason is stated', /not configured/i.test(mp.status().reason));
-  check('there is no active provider', pay.activeProvider() === null);
+  check('there is no active collection provider', pay.activeProvider() === null);
+  check('there is no active disbursement provider', providers.activeDisbursementProvider() === null);
   check('providerStatus.configured is false', pay.providerStatus().configured === false);
-
-  // THE RULE THAT MATTERS: no fake success path.
-  const push = await mp.stkPush({ amount: 100, phone: '0722000111', accountReference: 'x' });
-  check('stkPush REFUSES without credentials', push.ok === false && push.reason === 'not_configured');
-  const payout = await mp.b2cPayout({ amount: 100, phone: '0722000111' });
-  check('b2cPayout REFUSES without credentials', payout.ok === false && payout.reason === 'payout_not_configured');
-  const tok = await mp.accessToken();
-  check('OAuth REFUSES without credentials', tok.ok === false && tok.reason === 'not_configured');
-
-  // Callback verification must FAIL CLOSED when no secret is set.
-  check('callback verification fails closed', mp.verifyCallbackSecret('anything').ok === false);
-  check('and names the reason', mp.verifyCallbackSecret('anything').reason === 'callback_secret_not_configured');
-
-  // Phone normalisation is real logic and must be right.
-  check('0722... normalises', mp.normalisePhone('0722000111') === '254722000111');
-  check('+254... normalises', mp.normalisePhone('+254722000111') === '254722000111');
-  check('254... passes through', mp.normalisePhone('254722000111') === '254722000111');
-  check('722... normalises', mp.normalisePhone('722000111') === '254722000111');
-  check('0110... (Airtel/Safaricom 1-prefix) normalises', mp.normalisePhone('0110000111') === '254110000111');
-  check('spaces and dashes tolerated', mp.normalisePhone('0722-000 111') === '254722000111');
-  check('a UK number is refused', mp.normalisePhone('+447700900000') === null);
-  check('gibberish is refused', mp.normalisePhone('not a phone') === null);
-  check('empty is refused', mp.normalisePhone('') === null);
-  check('a too-short number is refused', mp.normalisePhone('0722') === null);
+  check('providerStatus.payoutConfigured is false', pay.providerStatus().payoutConfigured === false);
+  check('the reason is stated', /no payment provider/i.test(pay.providerStatus().reason));
 
   // The ledger must agree -- one answer to "can Brief move money".
   const led = await import('../src/domain/ledger.js');
@@ -2746,8 +2721,8 @@ console.log('\n=== TUMA CONNECTOR (simulated fetch -- the REAL Tuma contract) ==
   check('every missing credential is named',
     tuma.missingCredentials().length === 4 && tuma.missingCredentials().includes('apiKey'),
     tuma.missingCredentials().join(','));
-  const push0 = await tuma.stkPush({ amount: 100, phone: '0722000111' });
-  check('stkPush REFUSES without credentials', push0.ok === false && push0.reason === 'not_configured');
+  const push0 = await tuma.collect({ amount: 100, phone: '0722000111' });
+  check('collect REFUSES without credentials', push0.ok === false && push0.reason === 'not_configured');
   const tok0 = await tuma.accessToken();
   check('auth REFUSES without credentials', tok0.ok === false && tok0.reason === 'not_configured');
   check('callback verification fails closed when unset', tuma.verifyCallbackSecret('x').reason === 'callback_secret_not_configured');
@@ -2780,7 +2755,7 @@ console.log('\n=== TUMA CONNECTOR (simulated fetch -- the REAL Tuma contract) ==
   process.env.TUMA_EMAIL = 'shop@example.com';
   process.env.TUMA_API_KEY = 'tuma_test_key';
   process.env.BRIEF_PUBLIC_ORIGIN = 'https://brief.example.com';
-  process.env.TUMA_CALLBACK_SECRET = 'tuma-cb-secret';
+  process.env.TUMA_WEBHOOK_SECRET = 'tuma-cb-secret';
   tuma._resetTokenCache();
   check('Tuma now reports configured', tuma.isConfigured() === true);
   check('the callback URL embeds the secret path', tuma.callbackUrl() === 'https://brief.example.com/api/webhooks/tuma/tuma-cb-secret');
@@ -2810,15 +2785,15 @@ console.log('\n=== TUMA CONNECTOR (simulated fetch -- the REAL Tuma contract) ==
     }
     throw new Error('unexpected URL ' + url);
   };
-  const push = await tuma.stkPush({ amount: 600, phone: '0722000111', description: 'Brief order xyz', fetchImpl: fakeFetch });
-  check('stkPush succeeds against a real-shaped response', push.ok === true && push.checkoutRequestId === 'ws_CO_9');
+  const push = await tuma.collect({ amount: 600, phone: '0722000111', description: 'Brief order xyz', fetchImpl: fakeFetch });
+  check('collect succeeds against a real-shaped response', push.ok === true && push.checkoutRequestId === 'ws_CO_9');
   check('the provider reference is the checkout_request_id', push.checkoutRequestId === 'ws_CO_9' && push.merchantRequestId === 'mr_9');
   check('a token was fetched exactly once', tokenCalls === 1);
   // Cached token: a second push does not re-auth.
-  await tuma.stkPush({ amount: 600, phone: '0722000111', fetchImpl: fakeFetch });
+  await tuma.collect({ amount: 600, phone: '0722000111', fetchImpl: fakeFetch });
   check('the token is cached across pushes', tokenCalls === 1);
   // (6) Tuma API failure: push rejected.
-  const reject = await tuma.stkPush({
+  const reject = await tuma.collect({
     amount: 600, phone: '0722000111',
     fetchImpl: async () => ({ ok: false, status: 400, json: async () => ({ success: false, message: 'Validation failed' }) })
   });
@@ -2831,7 +2806,7 @@ console.log('\n=== TUMA CONNECTOR (simulated fetch -- the REAL Tuma contract) ==
   delete process.env.TUMA_EMAIL;
   delete process.env.TUMA_API_KEY;
   delete process.env.BRIEF_PUBLIC_ORIGIN;
-  delete process.env.TUMA_CALLBACK_SECRET;
+  delete process.env.TUMA_WEBHOOK_SECRET;
   tuma._resetTokenCache();
 }
 
@@ -2841,7 +2816,7 @@ console.log('\n=== TUMA PAYMENT E2E + WEBHOOK (simulated provider) ===');
   process.env.TUMA_EMAIL = 'shop@example.com';
   process.env.TUMA_API_KEY = 'tuma_test_key';
   process.env.BRIEF_PUBLIC_ORIGIN = 'https://brief.example.com';
-  process.env.TUMA_CALLBACK_SECRET = 'tuma-cb-secret';
+  process.env.TUMA_WEBHOOK_SECRET = 'tuma-cb-secret';
 
   const pay = await import('../src/domain/payment.js');
   const tuma = await import('../src/connectors/tuma.js');
@@ -2958,7 +2933,7 @@ console.log('\n=== TUMA PAYMENT E2E + WEBHOOK (simulated provider) ===');
     delete process.env.TUMA_EMAIL;
     delete process.env.TUMA_API_KEY;
     delete process.env.BRIEF_PUBLIC_ORIGIN;
-    delete process.env.TUMA_CALLBACK_SECRET;
+    delete process.env.TUMA_WEBHOOK_SECRET;
     tuma._resetTokenCache();
   }
 }
@@ -3082,7 +3057,7 @@ console.log('\n=== PAYMENT LIFECYCLE, IDEMPOTENCY, REPLAY (simulated provider re
   // reconciler catches it rather than trusting it would.
   const rogue = store.insert('paymentIntents', {
     id: 'pay_rogue', orderId: order3.id, payerId: 'usr_buyer', amount: 500,
-    currency: 'KES', status: 'confirmed', provider: 'mpesa', providerRef: 'ws_ROGUE',
+    currency: 'KES', status: 'confirmed', provider: 'tuma', providerRef: 'ws_ROGUE',
     receipt: 'ROGUE1', transactionId: null, createdAt: new Date().toISOString()
   });
   rec = pay.reconcileIntents();
@@ -3152,30 +3127,29 @@ console.log('\n=== PAYMENT HTTP SURFACE ===');
 
     // --- WEBHOOK -------------------------------------------------------------
     // Fails closed with no secret configured.
-    r = await call('/api/webhooks/mpesa/whatever', 'POST', { Body: { stkCallback: { ResultCode: 0 } } });
+    r = await call('/api/webhooks/tuma/whatever', 'POST', { status: 'completed', checkout_request_id: 'ws_X', result_code: 0 });
     check('the webhook REJECTS when no secret is configured (403)', r.status === 403, `got ${r.status}`);
     check('the rejection leaks no detail', JSON.stringify(r.body) === '{"error":"rejected"}', JSON.stringify(r.body));
     check('the rejected callback was still recorded for audit',
       store.all('paymentCallbacks').some((c) => c.accepted === false));
 
     // With a secret configured, a WRONG secret is still refused.
-    process.env.MPESA_CALLBACK_SECRET = 'sekret-value-123';
-    r = await call('/api/webhooks/mpesa/wrong-secret-value', 'POST', { Body: { stkCallback: { ResultCode: 0 } } });
+    process.env.TUMA_WEBHOOK_SECRET = 'sekret-value-123';
+    r = await call('/api/webhooks/tuma/wrong-secret-value', 'POST', { status: 'completed', checkout_request_id: 'ws_X', result_code: 0 });
     check('a WRONG secret is refused (403)', r.status === 403, `got ${r.status}`);
 
-    // Right secret, but a payload Daraja would never send.
-    r = await call('/api/webhooks/mpesa/sekret-value-123', 'POST', { nonsense: true });
+    // Right secret, but a payload Tuma would never send.
+    r = await call('/api/webhooks/tuma/sekret-value-123', 'POST', { nonsense: true });
     check('a malformed payload is 400, not 500', r.status === 400, `got ${r.status}`);
 
     // Right secret, unknown reference: accepted (200) but NOT applied, so
-    // Safaricom does not retry forever.
-    r = await call('/api/webhooks/mpesa/sekret-value-123', 'POST', {
-      Body: { stkCallback: { CheckoutRequestID: 'ws_UNKNOWN', ResultCode: 0, ResultDesc: 'ok',
-        CallbackMetadata: { Item: [{ Name: 'Amount', Value: 600 }, { Name: 'MpesaReceiptNumber', Value: 'ZZZ' }] } } }
+    // Tuma does not retry forever.
+    r = await call('/api/webhooks/tuma/sekret-value-123', 'POST', {
+      status: 'completed', checkout_request_id: 'ws_UNKNOWN', result_code: 0, amount: 600
     });
     check('an unknown reference returns 200 but ok:false', r.status === 200 && r.body?.ok === false, JSON.stringify(r.body));
     check('no transaction was created', store.all('ledgerTransactions').length === 0);
-    delete process.env.MPESA_CALLBACK_SECRET;
+    delete process.env.TUMA_WEBHOOK_SECRET;
 
     // Reconciliation endpoint.
     r = await call('/api/economic/payments/reconcile', 'GET', undefined, B.token);
@@ -3199,6 +3173,7 @@ console.log('\n=== PAYOUT: SETTLED EARNINGS -> DISBURSEMENT ===');
   const ordersD = await import('../src/domain/order.js');
   const settle = await import('../src/domain/settlement.js');
   const led = await import('../src/domain/ledger.js');
+  const providers = await import('../src/providers.js');
 
   const v = vendors.createVendor({ ownerId: 'usr_payee', displayName: 'Payout Stall' });
   const l = listings.createListing({ vendorId: v.id, title: 'Crate', type: 'product',
@@ -3244,14 +3219,16 @@ console.log('\n=== PAYOUT: SETTLED EARNINGS -> DISBURSEMENT ===');
   catch (err) { threw = err.message; }
   check('another actor cannot request this vendor payout', /only the vendor/i.test(String(threw)), String(threw));
 
-  // --- with payout credentials present -------------------------------------
-  // Credentials are set ONLY to exercise the payout ledger arithmetic; no
-  // network call is made because sendPayout() is not invoked here.
-  process.env.MPESA_CONSUMER_KEY = 'test-key';
-  process.env.MPESA_CONSUMER_SECRET = 'test-secret';
-  process.env.MPESA_SHORTCODE = '600000';
-  process.env.MPESA_INITIATOR_NAME = 'testapi';
-  process.env.MPESA_SECURITY_CREDENTIAL = 'test-credential';
+  // --- with a disbursement provider registered -----------------------------
+  // A test provider is registered ONLY to exercise the payout ledger
+  // arithmetic; no network call is made because sendPayout() is not invoked
+  // here. This also proves the provider seam works: the domain layer sees a
+  // configured disbursement provider without knowing anything about it.
+  providers.DISBURSEMENT_PROVIDERS.testpayout = {
+    isPayoutConfigured: () => true,
+    status: () => ({ provider: 'testpayout', configured: true }),
+    disburse: async ({ amount }) => ({ ok: true, providerRef: `TEST_${amount}` })
+  };
 
   e = settle.vendorEarnings(v.id);
   check('payout now reports available', e.payoutAvailable === true);
@@ -3329,8 +3306,8 @@ console.log('\n=== PAYOUT: SETTLED EARNINGS -> DISBURSEMENT ===');
   check('removing a payout row changes the derived figure (no stored balance)',
     settle.vendorEarnings(v.id).withdrawable === before);
 
-  for (const k of ['MPESA_CONSUMER_KEY','MPESA_CONSUMER_SECRET','MPESA_SHORTCODE','MPESA_INITIATOR_NAME','MPESA_SECURITY_CREDENTIAL']) delete process.env[k];
-  check('with credentials removed, payout is unavailable again',
+  delete providers.DISBURSEMENT_PROVIDERS.testpayout;
+  check('with the provider removed, payout is unavailable again',
     settle.vendorEarnings(v.id).payoutAvailable === false);
 }
 

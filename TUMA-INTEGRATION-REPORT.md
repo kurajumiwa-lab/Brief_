@@ -1,160 +1,103 @@
-# Tuma + LOOP BIZ Payment Integration — Implementation Report
+# Brief Payment Provider Migration — Migration Report
 
-Replaces the abandoned Safaricom Daraja / M-PESA Express (STK Push) collection
-flow with **Tuma** as Brief's payment gateway, settling to the **LOOP BIZ**
-business/till configured on the Tuma merchant profile.
+**Remove Safaricom Daraja / M-PESA Express entirely; make Tuma the sole
+collection provider, settling to the LOOP BIZ business/till.**
 
 ---
 
-## 1. Existing Brief payment architecture discovered
+## 1. Files changed
 
-- **Stack:** React + TypeScript client (`App.tsx` + `src/components`), Node.js
-  + Express server (`server/`), a synchronous JSON document store
-  (`server/src/store.js`, collections not tables).
-- **Money model:** a single economic layer — `ledgerTransactions` — with no
-  wallet/balance column. Payment *intents* (`paymentIntents`) are a record of
-  an attempt; the authoritative money event is always a ledger transaction.
-- **Collection (customer → merchant):** `connectors/mpesa.js` (Daraja OAuth +
-  STK Push), driven by `domain/payment.js` (`createIntent` / `requestPayment`
-  / `confirmPayment`), exposed via `POST /api/orders/:id/pay` and
-  `POST /api/webhooks/mpesa/:secret`.
-- **Disbursement (merchant → customer):** Daraja B2C in the same connector,
-  driven by `domain/settlement.js`.
-- **Key invariants already enforced:** amount read from the order row (never
-  client or callback), one live intent per order, unique provider reference
-  (replay-safe), amount re-checked on callback, settlement requires a settled
-  ledger row, honest 503/`charged:false` with no provider, no fake-success path.
-- **Frontend:** no checkout wired — orders showed "Not paid yet" with no pay
-  button. The server pay route existed; no client called it.
-
-## 2. Daraja components removed / deprecated
-
-- `connectors/mpesa.js` — STK Push **collection** (`stkPush`,
-  `parseStkCallback`) marked **DEPRECATED**; retained only for reference and
-  for unmigrated deployments. The Daraja **B2C payout** is *kept* — Tuma
-  documents no disbursement endpoint, so payouts remain on the B2C rail.
-- `POST /api/webhooks/mpesa/:secret` — marked **DEPRECATED** (still fails
-  closed; no longer reachable from the pay path).
-- `activeProvider()` no longer returns `'mpesa'` for collection.
-- No PayBill/Till, passkey, shortcode, `PartyA/B`, or Daraja production
-  credentials are required or referenced by the collection path anymore.
-
-## 3. Tuma components added
-
-- **`server/src/connectors/tuma.js`** — the isolated Tuma provider:
-  - `accessToken()` → `POST {base}/auth/token` with `{email, api_key}`, JWT
-    cached until near expiry (reads the JWT's own `exp` when parseable).
-  - `stkPush()` → `POST {base}/payment/stk-push` (Bearer token) with
-    `{amount, phone, description, callback_url}`.
-  - `parseCallback()` → the flat callback bodies Tuma documents (success /
-    failed / cancelled), extracting `checkout_request_id`,
-    `mpesa_receipt_number`, `amount`, `result_code`, `failure_reason`.
-  - `verifyCallbackSecret()` → timing-safe, fail-closed.
-  - `normalisePhone()` → `2547XXXXXXXX` Kenyan normalisation.
-- **`server/src/providers.js`** — the provider seam. `COLLECTION_PROVIDERS =
-  { tuma }`, `DISBURSEMENT_PROVIDERS = { mpesa }`. Adding Paystack/SasaPay/
-  Flutterwave = one connector file + one registry line.
-- `domain/payment.js`, `domain/ledger.js`, `domain/settlement.js`,
-  `index.js`, `ops.js` — all now resolve providers through the registry.
-- **`POST /api/webhooks/tuma/:secret`** — the Tuma callback route (validates
-  the secret, parses, calls `confirmPayment`, attaches the transaction, emits
-  `order_paid`).
-- Frontend: `PaymentIntent` type + validators, `payOrder()` and
-  `getOrderPayments()` in the API client, and a new
-  `components/marketplace/PayOrder.tsx` checkout wired into the Marketplace.
-
-## 4. LOOP BIZ integration point
-
-The LOOP destination is **not configured in Brief at all** — by design. Tuma
-settles collected funds to the bank/till on the business profile (the LOOP
-BIZ / LOOP business account) the moment the customer authorises the prompt.
-Brief owns its transaction state; Tuma owns the rail and the destination. No
-LOOP number is exposed to customers, and none is required by the Tuma API.
-
-## 5. API endpoints actually used (the real Tuma contract)
-
-| Purpose | Endpoint |
+| File | Change |
 |---|---|
-| Authenticate | `POST https://api.tuma.co.ke/auth/token` |
-| Collect (STK Push) | `POST https://api.tuma.co.ke/payment/stk-push` |
-| Callback | Tuma POSTs to `<BRIEF_PUBLIC_ORIGIN>/api/webhooks/tuma/<secret>` |
+| `server/src/providers.js` | Rewritten: `COLLECTION_PROVIDERS = { tuma }`, `DISBURSEMENT_PROVIDERS = {}` (empty — no payout rail). Provider seam is the only place providers are registered. |
+| `server/src/connectors/tuma.js` | Tuma provider: method renamed `stkPush` → `collect`; env var `TUMA_CALLBACK_SECRET` → `TUMA_WEBHOOK_SECRET`; Daraja references in comments removed. |
+| `server/src/domain/payment.js` | Calls `provider.collect()`; Daraja comment removed. |
+| `server/src/domain/settlement.js` | `sendPayout` no longer calls a Daraja B2C method — it now refuses honestly (`payout_not_configured`) until a provider is registered in `DISBURSEMENT_PROVIDERS`. |
+| `server/src/domain/ledger.js` | (already provider-neutral) comment updated. |
+| `server/src/index.js` | Removed `import mpesa` and the entire `POST /api/webhooks/mpesa/:secret` route. Tuma webhook comment updated. |
+| `server/src/ops.js` | Startup diagnostic now checks `TUMA_WEBHOOK_SECRET`. |
+| `server/test/run.js` | Removed the Daraja connector test block; the HTTP-surface + payout tests now exercise Tuma and the provider seam (a test-only disbursement provider proves the registry works). |
+| `live/4-full-chain.mjs` | Webhook smoke test now hits `/api/webhooks/tuma`. |
+| `src/api/{types,validate,briefApi}.ts`, `src/components/marketplace/PayOrder.tsx`, `src/components/Marketplace.tsx` | Payment type/validators/client + checkout (already added last pass); checkout made provider-neutral (removed "via Tuma" badge). |
+| `server/.env.example`, `server/CONNECTORS.md`, `BRIEF-COVERAGE-MATRIX.md`, `BRIEF-FINAL-REPORT.md`, `TUMA-INTEGRATION-REPORT.md` | Docs aligned with Tuma; Daraja mentions replaced/removed. |
 
-## 6. Authentication mechanism actually used
+## 2. Files deleted
 
-`POST /auth/token` with `{ email, api_key }` → a JWT in `data.token`, sent as
-`Authorization: Bearer <token>` on `/payment/stk-push`. The 403
-`IPRS_VERIFICATION_REQUIRED` case is surfaced distinctly (`iprs_verification_required`),
-not faked around.
+- **`server/src/connectors/mpesa.js`** — the entire Safaricom Daraja connector
+  (OAuth token, STK Push `processrequest`, `parseStkCallback`,
+  `verifyCallbackSecret`, B2C payout). No other file references it.
 
-## 7. Webhook / callback implementation
+## 3. Daraja references removed
 
-`POST /api/webhooks/tuma/:secret`:
-1. Persists the raw callback to `paymentCallbacks` (audit + duplicate detection).
-2. Verifies the path secret — **fail-closed** (no secret → 403).
-3. Parses the body; unrecognised payload → 400.
-4. `confirmPayment` finds the intent by `checkout_request_id`, re-checks the
-   amount against the stored intent, refuses replays (unique receipt), and
-   creates exactly one settled ledger transaction on success.
-5. Attaches the transaction to the order and emits `order_paid` — only when a
-   *new* transaction was created (never on a duplicate).
+- Daraja OAuth (`oauth/v1/generate`), STK Push (`/mpesa/stkpush/v1/processrequest`),
+  `BusinessShortCode`, `CustomerPayBillOnline`, `PartyA`/`PartyB`, `Passkey`,
+  `ConsumerKey`/`ConsumerSecret`, `InitiatorName`/`SecurityCredential`,
+  `sandbox.safaricom.co.ke` / `api.safaricom.co.ke`, `MpesaReceiptNumber`
+  parsing, and `MPESA_*` environment variables — all gone from runtime code.
+- **No Daraja npm package** existed (only `express`); nothing to remove there.
 
-Tuma does not sign callbacks; authenticity is the secret path segment **plus**
-server-side re-verification of the reference and amount. This is stated
-plainly in the code rather than claiming a signature check that does not exist.
+## 4. Tuma integration points
 
-## 8. Database changes
+- `POST https://api.tuma.co.ke/auth/token` — JWT auth (`email` + `api_key`).
+- `POST https://api.tuma.co.ke/payment/stk-push` — collection (`collect()`).
+- `POST <origin>/api/webhooks/tuma/<secret>` — verified, idempotent webhook.
+- Provider seam (`providers.js`) isolates Tuma; domain code calls
+  `createIntent` / `requestPayment` / `confirmPayment` / `getIntent` —
+  never Tuma's endpoints directly.
 
-No new collections. `paymentIntents` gained optional fields: `providerMerchantRef`,
-`providerPaymentId` (Tuma's `merchant_request_id` / `payment_id`), `confirmedAt`,
-`failedAt` (completion time). `paymentCallbacks` already persisted raw webhooks.
-`providerRef` remains the unique key for replay protection; Brief's own
-transaction id stays in `transactionId` (the two are never conflated).
-
-## 9. Environment variables required (all server-side, placeholders only)
+## 5. Environment variables required
 
 ```
 TUMA_EMAIL=
 TUMA_API_KEY=
-TUMA_CALLBACK_SECRET=
+TUMA_WEBHOOK_SECRET=
 # TUMA_BASE_URL=https://api.tuma.co.ke   (optional override)
-# BRIEF_PUBLIC_ORIGIN=                   (required to build the callback URL)
+# BRIEF_PUBLIC_ORIGIN=                   (required to build the webhook URL)
 ```
 
-No real credentials are committed anywhere.
+All server-side. No credentials in source, tests, or the client bundle.
 
-## 10. Tests run and results
+## 6. Database changes
 
-| Suite | Result |
+None. `paymentIntents` already carried provider-neutral fields (`provider`,
+`providerRef`, `amount`, `currency`, `status`, timestamps). Historical records
+retain their stored `provider` value (e.g. `"mpesa"` / `"daraja"`) and remain
+readable; **new** intents are written with `provider: "tuma"`. No ownership
+rewrite, no destructive migration.
+
+## 7. Tests performed
+
+| Check | Result |
 |---|---|
-| `server/test/run.js` (full, incl. live) | **1263 passed / 0 failed / 1 skipped** |
-| `server/test/run.js` (OFFLINE) | **1250 passed / 0 failed / 3 skipped** |
-| `tc` strict typecheck | **exit 0** |
-| `./run-suites.sh` (23 client suites) | **1105 passed / 0 failed** |
-| `npm --workspace=preview run build` | **succeeds** |
+| `server/test/run.js` (full, incl. live 3rd-party) | **1247 passed / 0 failed / 1 skipped** |
+| `server/test/run.js` (OFFLINE) | **1234 passed / 0 failed / 3 skipped** |
+| Client suites (`./run-suites.sh`, 23 suites) | **1105 passed / 0 failed** |
+| Strict typecheck (`tc`) | **exit 0** |
+| Production build (`vite build`) | **succeeds** |
 
-New tests cover the full matrix: valid init, invalid/unauthorised transaction,
-amount mismatch, Tuma auth failure (401 + IPRS 403), Tuma API failure, pending,
-success, failed, cancelled (distinct terminal state), invalid callback,
-duplicate callback (idempotent), already-paid, unknown reference, and the
-end-to-end state transition (order → intent → authorized → webhook → settled
-ledger tx → order reads paid).
+Covered: payment creation, initiation, pending/success/failed/cancelled,
+webhook reception, duplicate webhook (idempotent), invalid webhook, invalid
+amount, transaction lookup, and the existing order/marketplace/settlement
+flows. A post-migration repo-wide sweep found **zero active Daraja/Safaricom-API
+references** — the only remaining "Safaricom" strings are reward-catalog brand
+names (airtime/data/gift cards) and "M-Pesa" the customer-facing payment label,
+neither of which is the Daraja API.
 
-## 11. Build result
+## 8. Remaining manual configuration
 
-Production build succeeds (`vite build`, 1536 modules). Typecheck exit 0.
+1. Set `TUMA_EMAIL` + `TUMA_API_KEY` (from the Tuma merchant/developer portal;
+   requires IPRS identity verification) and `TUMA_WEBHOOK_SECRET`.
+2. Configure a public `BRIEF_PUBLIC_ORIGIN` so Tuma can reach
+   `https://<origin>/api/webhooks/tuma/<secret>` (must be https + reachable).
+3. Confirm the LOOP BIZ business/till is the settlement account on the Tuma
+   business profile (Tuma-side, not Brief-side).
 
-## 12. Still required before live transactions
+## 9. Blockers
 
-- **Real Tuma credentials** — `TUMA_EMAIL` + `TUMA_API_KEY` from the merchant
-  portal (requires IPRS identity verification on the Tuma side), plus a
-  `TUMA_CALLBACK_SECRET` and a public `BRIEF_PUBLIC_ORIGIN`.
-- **Callback reachability** — `https://<origin>/api/webhooks/tuma/<secret>`
-  must be publicly reachable (Tuma requires an https `callback_url`).
-- **LOOP confirmation** — the LOOP BIZ business/till must be the configured
-  settlement account on the Tuma business profile (Tuma-side, not Brief-side).
-- **End-to-end live test** — a real STK push against a real M-Pesa number,
-  because Tuma publishes no sandbox host.
-
-**Not claimed production-ready** until the actual credentials, callback
-configuration and deployment environment have been verified against a live
-Tuma account.
+- **No live Tuma request/webhook has been executed yet** — Tuma publishes no
+  sandbox, so this requires the real credentials above. The integration is
+  therefore **not claimed live-ready** until a real STK push + callback round
+  trip succeeds.
+- Merchant payouts remain **unavailable** (no disbursement provider): Tuma
+  documents no payout endpoint, and Daraja B2C was removed. Registering a
+  provider in `DISBURSEMENT_PROVIDERS` re-enables them.

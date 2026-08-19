@@ -1,8 +1,9 @@
 // ---------------------------------------------------------------------------
 // TUMA PAYMENT CONNECTOR (COLLECTION)
 //
-// Brief's payment gateway for customer -> merchant money, replacing the
-// abandoned Safaricom Daraja M-PESA Express (STK Push) integration.
+// Brief's payment gateway for customer -> merchant money: the M-PESA STK Push
+// collection rail, settling to the connected merchant destination (LOOP BIZ
+// / till).
 //
 // The ACTUAL Tuma contract (https://github.com/matatashadrack/tuma-mpesa-stk-push,
 // linked from https://tuma.co.ke/faqs/ as the official docs) is:
@@ -23,16 +24,17 @@
 // WHAT TUMA DOES NOT DOCUMENT (stated honestly, never invented):
 //   * no HMAC/signature on webhooks -- authenticity is (a) a secret path
 //     segment in the callback URL and (b) matching the checkout_request_id +
-//     amount against a stored intent, exactly like the old Daraja callback.
-//   * no disbursement (B2C/payout) endpoint -- payouts stay on a separate
-//     rail (see settlement.js); Tuma is collection-only here.
+//     amount against a stored intent.
+//   * no disbursement (B2C/payout) endpoint -- Tuma is collection-only here;
+//     merchant payouts remain unavailable until a disbursement provider is
+//     registered (see providers.js and settlement.js).
 //   * no sandbox host -- the base URL is overridable via TUMA_BASE_URL, but
 //     Tuma publishes no sandbox; testing uses real accounts.
 //
 // CREDENTIALS (server-side only; never in the client bundle):
 //   TUMA_EMAIL            -- the business email used for /auth/token
 //   TUMA_API_KEY          -- the `api_key` generated in the Tuma merchant portal
-//   TUMA_CALLBACK_SECRET  -- a secret we invent for the callback path segment
+//   TUMA_WEBHOOK_SECRET  -- a secret we invent for the callback path segment
 //   BRIEF_PUBLIC_ORIGIN   -- the public origin, to build the callback URL
 //   TUMA_BASE_URL         -- optional override (default https://api.tuma.co.ke)
 // ---------------------------------------------------------------------------
@@ -71,7 +73,7 @@ function publicOrigin() {
 /** The callback URL we hand to Tuma. Built server-side; the secret never leaves here. */
 export function callbackUrl() {
   const origin = publicOrigin();
-  const secret = env('TUMA_CALLBACK_SECRET');
+  const secret = env('TUMA_WEBHOOK_SECRET');
   if (!origin || !secret) return null;
   return `${origin}/api/webhooks/tuma/${encodeURIComponent(secret)}`;
 }
@@ -81,7 +83,7 @@ export function credentialState() {
   return {
     email: Boolean(env('TUMA_EMAIL')),
     apiKey: Boolean(env('TUMA_API_KEY')),
-    callbackSecret: Boolean(env('TUMA_CALLBACK_SECRET')),
+    callbackSecret: Boolean(env('TUMA_WEBHOOK_SECRET')),
     publicOrigin: Boolean(publicOrigin())
   };
 }
@@ -92,7 +94,7 @@ export function credentialState() {
  * Requires the full end-to-end loop, not merely the auth pair: without a
  * callback URL Brief could push an STK prompt it could never confirm, which
  * would be a payment request that can never resolve. Fail-closed, like the
- * old Daraja connector.
+ * provider.
  */
 export function isConfigured() {
   const c = credentialState();
@@ -183,8 +185,7 @@ export function _resetTokenCache() {
  * Tuma requires 2547XXXXXXXX / 2541XXXXXXXX (international format). Kenyan
  * users type 0722..., +254722..., or 722.... Normalising here means every
  * caller gets the same rule and a bad number is refused before it becomes a
- * failed payment. (Same rule the Daraja connector used; duplicated so the
- * provider stays self-contained.)
+ * failed payment. (Self-contained so the provider stays swappable.)
  */
 export function normalisePhone(input) {
   const digits = String(input ?? '').replace(/[^0-9]/g, '');
@@ -208,7 +209,7 @@ export function normalisePhone(input) {
  * `amount` is supplied by the SERVER from the order row -- never by the
  * client. Tuma accepts whole shillings for our purposes.
  */
-export async function stkPush({ amount, phone, description = 'Brief order', fetchImpl = fetch }) {
+export async function collect({ amount, phone, description = 'Brief order', fetchImpl = fetch }) {
   if (!isConfigured()) {
     return { ok: false, reason: 'not_configured', missing: missingCredentials() };
   }
@@ -304,7 +305,7 @@ export function parseCallback(body) {
  * not perform.
  */
 export function verifyCallbackSecret(providedSecret) {
-  const expected = env('TUMA_CALLBACK_SECRET');
+  const expected = env('TUMA_WEBHOOK_SECRET');
   if (!expected) {
     // FAIL CLOSED. An unset secret must not mean "accept everything".
     return { ok: false, reason: 'callback_secret_not_configured' };

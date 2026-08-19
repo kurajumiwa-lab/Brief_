@@ -120,8 +120,8 @@ nothing; the user chooses to save.
   secret path segment *plus* server-side re-verification of the
   `checkout_request_id` + amount against the stored intent. State that plainly
   rather than claiming a signature check that does not exist.
-- **No payout endpoint** documented — disbursement stays on Daraja B2C
-  (`connectors/mpesa.js`), which is unrelated to the abandoned STK Push flow.
+- **No payout endpoint** documented — merchant payouts are unavailable until
+  a disbursement provider is registered in `providers.js` (`DISBURSEMENT_PROVIDERS`).
 - **No sandbox host** — `TUMA_BASE_URL` is overridable, but Tuma publishes no
   sandbox; testing uses a real business account.
 
@@ -149,7 +149,7 @@ nothing; the user chooses to save.
 
 Secrets stay server-side (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`,
 `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN`, `TUMA_EMAIL`, `TUMA_API_KEY`,
-`TUMA_CALLBACK_SECRET`). The client calls `/ingest/*`, proxied by Vite; no
+`TUMA_WEBHOOK_SECRET`). The client calls `/ingest/*`, proxied by Vite; no
 token is ever sent to the browser. Webhook secrets are
 verified before any processing, rate limiting is token-bucket per host/endpoint,
 and retries use exponential backoff honouring Telegram's `retry_after`.

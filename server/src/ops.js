@@ -86,8 +86,8 @@ export function startupDiagnostics({ store, capabilities }) {
     if (!capabilities.payments?.configured) {
       notes.push('no payment provider configured: Brief cannot collect or disburse money');
     }
-    if (!process.env.TUMA_CALLBACK_SECRET && capabilities.payments?.configured) {
-      problems.push('payments are configured but TUMA_CALLBACK_SECRET is unset: Tuma callbacks will be rejected');
+    if (!process.env.TUMA_WEBHOOK_SECRET && capabilities.payments?.configured) {
+      problems.push('payments are configured but TUMA_WEBHOOK_SECRET is unset: Tuma callbacks will be rejected');
     }
   }
 

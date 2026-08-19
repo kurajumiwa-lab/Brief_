@@ -5,23 +5,30 @@
 // directions:
 //
 //   COLLECTION     customer -> merchant   (STK Push). Tuma is the gateway.
-//   DISBURSEMENT   merchant -> customer   (B2C/payout). Still Daraja B2C,
-//                  because Tuma documents no payout endpoint.
+//   DISBURSEMENT   merchant -> customer   (B2C/payout). No provider is
+//                  connected -- Tuma documents no payout endpoint, and the
+//                  former Daraja B2C rail has been removed.
 //
 // Each provider is a connector module exposing a common shape:
-//   capabilities, isConfigured(), isPayoutConfigured?(), status(),
-//   stkPush()/collect, parseCallback(), verifyCallbackSecret()
+//   capabilities, isConfigured(), status(),
+//   collect, parseCallback(), verifyCallbackSecret()
+//   ...and for disbursement providers, disburse (b2cPayout) + isPayoutConfigured()
 //
 // Adding another provider (Paystack, SasaPay, Flutterwave, ...) is: write a
 // connector file + add ONE line to the map below. Nothing else changes,
 // because every domain module and route reaches providers through this file.
+//
+// The rest of Brief NEVER depends on Tuma API details directly. Domain code
+// calls the provider-neutral operations here; the connector files are the only
+// place that know a provider's endpoints, auth and payload shapes.
 // ---------------------------------------------------------------------------
 
 import * as tuma from './connectors/tuma.js';
-import * as mpesa from './connectors/mpesa.js';
 
 export const COLLECTION_PROVIDERS = { tuma };
-export const DISBURSEMENT_PROVIDERS = { mpesa };
+// No disbursement provider is connected. Register one here (e.g. a future
+// bank-rail or mobile-money payout provider) to enable merchant payouts.
+export const DISBURSEMENT_PROVIDERS = {};
 
 /** The active collection provider's name, or null when none is configured. */
 export function activeCollectionProvider() {

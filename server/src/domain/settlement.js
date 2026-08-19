@@ -326,7 +326,15 @@ export function requestPayout({ vendorId, requestedBy, phone = null, idempotency
   return { payout, reused: false };
 }
 
-/** Send a requested payout through the provider. */
+/**
+ * Send a requested payout through the provider.
+ *
+ * No disbursement provider is connected (Tuma documents no payout endpoint,
+ * and the former Daraja B2C rail has been removed), so this refuses honestly
+ * rather than pretending to move money. Registering a provider in
+ * DISBURSEMENT_PROVIDERS and implementing its `disburse()` is the only change
+ * needed to re-enable real payouts.
+ */
 export async function sendPayout(payoutId, { fetchImpl = fetch } = {}) {
   const payout = store.find('payouts', (p) => p.id === payoutId);
   if (!payout) throw new Error('payout not found');
@@ -335,8 +343,20 @@ export async function sendPayout(payoutId, { fetchImpl = fetch } = {}) {
   }
   if (!payout.phone) throw new Error('a valid phone number is required');
 
+  const providerName = activeDisbursementProvider();
+  if (!providerName) {
+    store.update('payouts', payout.id, {
+      status: 'failed',
+      failureReason: 'payout_not_configured: no disbursement provider is connected'
+    });
+    return { ok: false, reason: 'payout_not_configured' };
+  }
+
   store.update('payouts', payout.id, { status: 'processing' });
-  const res = await disbursementProvider(activeDisbursementProvider()).b2cPayout({
+  // A registered disbursement provider exposes `disburse()` (the provider-
+  // neutral operation; B2C-shaped for the former Daraja rail).
+  const provider = disbursementProvider(providerName);
+  const res = await provider.disburse({
     amount: Math.round(payout.amount),
     phone: payout.phone,
     remarks: `Brief payout ${payout.id}`,
@@ -347,8 +367,8 @@ export async function sendPayout(payoutId, { fetchImpl = fetch } = {}) {
     store.update('payouts', payout.id, { status: 'failed', failureReason: res.reason });
     return { ok: false, reason: res.reason, detail: res };
   }
-  store.update('payouts', payout.id, { providerRef: res.conversationId });
-  return { ok: true, providerRef: res.conversationId };
+  store.update('payouts', payout.id, { providerRef: res.providerRef });
+  return { ok: true, providerRef: res.providerRef };
 }
 
 /**

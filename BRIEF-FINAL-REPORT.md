@@ -166,11 +166,11 @@ test pass.**
 These are not engineering gaps. Every one is code-complete and waiting on
 something only a human with credentials or a licence can supply.
 
-1. **M-Pesa Daraja credentials** — consumer key, consumer secret, shortcode,
-   passkey, initiator name, security credential, callback secret. Without
+1. **Tuma credentials** — business email + API key (from the Tuma merchant
+   portal), a webhook secret, and a public origin for the callback. Without
    them no money can move, `payments.configured` stays false, and payouts stay
-   unavailable. The intent, confirmation, settlement and payout code is
-   already written and tested against them.
+   unavailable. The intent, confirmation and settlement code is already
+   written and tested against the Tuma contract.
 2. **Gaming licence, 18+ verification, KYC provider, and self-exclusion
    register** — all four, plus a payment rail, are required before real-money
    Arena or paid Fantasy 11 can be enabled. A licence alone does not unlock

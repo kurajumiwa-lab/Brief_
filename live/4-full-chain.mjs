@@ -128,7 +128,7 @@ r = await call(`/api/orders/${order.id}/settle`, 'POST', {}, S.token);
 check('settlement is refused without real money', r.status === 400, `got ${r.status}`);
 
 console.log('\n=== WEBHOOK SECURITY ===');
-r = await call('/api/webhooks/mpesa/anything', 'POST', { Body: { stkCallback: { ResultCode: 0 } } });
+r = await call('/api/webhooks/tuma/anything', 'POST', { status: 'completed', checkout_request_id: 'ws_X', result_code: 0 });
 check('the payment webhook fails CLOSED (403)', r.status === 403, `got ${r.status}`);
 check('and leaks no detail', JSON.stringify(r.body) === '{"error":"rejected"}');
 

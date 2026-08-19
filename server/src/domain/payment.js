@@ -54,9 +54,8 @@ const TERMINAL = new Set(['confirmed', 'failed', 'cancelled', 'reversed']);
 
 /**
  * Which provider is active for COLLECTION. Resolved through the provider
- * registry (see ../providers.js) -- Tuma is the gateway now; the abandoned
- * Daraja STK Push is no longer consulted. Only a genuinely configured
- * provider counts; there is no "mock" provider, by design.
+ * registry (see ../providers.js) -- Tuma is the gateway. Only a genuinely
+ * configured provider counts; there is no "mock" provider, by design.
  */
 export function activeProvider() {
   return activeCollectionProvider();
@@ -159,7 +158,7 @@ export async function requestPayment(intentId, { fetchImpl = fetch } = {}) {
   }
   const provider = collectionProvider(providerName);
 
-  const res = await provider.stkPush({
+  const res = await provider.collect({
     amount: Math.round(intent.amount),
     phone: intent.phone,
     description: `Brief order ${intent.orderId.slice(-12)}`,
