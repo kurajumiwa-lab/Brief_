@@ -12,6 +12,8 @@ import { Vault } from './components/vault/Vault';
 import { CheckIn } from './components/CheckIn';
 import { HostCommand } from './components/HostCommand';
 import { PulseBanner, TickerBanner, PromptBanner, JumbotronBanner } from './components/SignalBanner';
+import { BracketLadder } from './components/BracketLadder';
+import { TournamentCard } from './components/TournamentCard';
 import { ActionsEngine } from './components/ActionsEngine';
 import { Circles } from './components/Circles';
 import { Marketplace } from './components/Marketplace';
@@ -8316,57 +8318,24 @@ export function App() {
                     const reward = getOrganizerReward(t);
                     const organizer = ARENA_PLAYERS.find((p) => p.id === t.organizerId);
                     return (
-                      <div key={t.id} className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3">
-                        <div className="flex items-baseline justify-between gap-3">
-                          <p className="text-xs font-extrabold text-[#F3F1E7]">{t.name}</p>
-                          <span className="text-[9px] text-[#4B5162] shrink-0">
-                            {t.registeredPlayerIds.length}/{t.capacity}
-                          </span>
-                        </div>
-                        <p className="text-[9px] text-[#4B5162] mt-0.5">
-                          {organizer ? `Hosted by ${organizer.displayName}` : 'Organizer'} -{' '}
-                          {t.status}
-                        </p>
-                        {t.prizeDescription && (
-                          <p className="text-[10px] text-[#E8A33D] mt-1">{t.prizeDescription}</p>
-                        )}
-                        {/* Organizer reward, itemised. Shown honestly,
-                            including zero, so the incentive is legible. */}
-                        {reward.points > 0 ? (
-                          <div className="mt-2 pt-2 border-t border-[#10141C]">
-                            <div className="flex items-baseline justify-between gap-3">
-                              <span className="text-[9px] text-[#4B5162]">
-                                Organizer earned
-                              </span>
-                              <span className="text-xs font-extrabold text-[#43D17A]">
-                                {reward.points.toLocaleString()}
-                              </span>
-                            </div>
-                            {reward.lines.map((l) => (
-                              <div
-                                key={l.label}
-                                className="flex items-baseline justify-between gap-3"
-                              >
-                                <span className="text-[9px] text-[#8A93A6]">{l.label}</span>
-                                <span className="text-[9px] text-[#8A93A6]">
-                                  +{l.points.toLocaleString()}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-[9px] text-[#8A93A6] mt-1">
-                            Organizer reward: none - {reward.reason}
-                          </p>
-                        )}
-                        {/* The driver, stated plainly. */}
-                        {t.status !== 'completed' && (
-                          <p className="text-[9px] text-[#43D17A] mt-1">
-                            Each player who completes adds{' '}
-                            {getMarginalPlayerValue(t)} points for the organizer.
-                          </p>
-                        )}
-                      </div>
+                      <TournamentCard
+                        key={t.id}
+                        id={t.id}
+                        name={t.name}
+                        status={t.status}
+                        registered={t.registeredPlayerIds.length}
+                        capacity={t.capacity}
+                        organizerName={organizer?.displayName ?? 'Organizer'}
+                        prizeDescription={t.prizeDescription}
+                        rewardPoints={reward.points}
+                        rewardReason={reward.reason}
+                        rewardLines={reward.lines}
+                        marginalValue={getMarginalPlayerValue(t)}
+                        entrants={t.registeredPlayerIds}
+                        displayName={(id) =>
+                          ARENA_PLAYERS.find((p) => p.id === id)?.displayName ?? id
+                        }
+                      />
                     );
                   })}
               </div>

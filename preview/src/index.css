@@ -129,7 +129,9 @@ html, body {
   .brief-sheen::after,
   .brief-silk,
   .brief-glow,
-  .brief-float {
+  .brief-float,
+  .brief-spark-sweep,
+  .brief-spark-dot {
     animation: none !important;
   }
   .brief-rise-in,
@@ -142,3 +144,21 @@ html, body {
 /* Utility: hide scrollbars on pill scrollers / marquees */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* --- Sparkline sweep — the one "moving line" ambient element Pulse is allowed */
+@keyframes briefSparkSweep {
+  0%   { stroke-dashoffset: 220; }
+  60%  { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -220; }
+}
+.brief-spark-sweep {
+  animation: briefSparkSweep 5s linear infinite;
+}
+@keyframes briefSparkDot {
+  0%   { opacity: 1; }
+  50%  { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+.brief-spark-dot {
+  animation: briefSparkDot 2.4s ease-in-out infinite;
+}

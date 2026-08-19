@@ -1,5 +1,6 @@
 import React from 'react';
 import { TrendingUp, Users } from 'lucide-react';
+import { Sparkline } from './SignalBanner';
 import {
   isDestinationObject,
   getDestinationState,
@@ -96,6 +97,22 @@ export function Pulse({
       {/* NOW. Freshest first. */}
       {pulseSection === 'now' && (
         <div className="space-y-2">
+          {/* Network activity — a live readout (§7.5): the moving line is the
+              one ambient element Pulse is allowed beyond a pulse dot. */}
+          <div className="rounded-2xl border border-[#232A38] bg-[#10141C] p-3">
+            <div className="flex items-baseline justify-between">
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#4B5162]">
+                Network activity
+              </p>
+              <span className="font-mono-live text-[11px] text-[#4FB0C6]">
+                {objects.length} tracked
+              </span>
+            </div>
+            <Sparkline
+              points="0,30 10,26 20,28 30,18 40,22 50,12 60,16 70,8 80,12 90,5 100,9"
+              accent="var(--today)"
+            />
+          </div>
           {pulseNow.length === 0 && (
             <p className="text-xs text-[#8A93A6]">
               Nothing new has been reported yet today.

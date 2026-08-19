@@ -163,3 +163,40 @@ export function JumbotronBanner({ items, onOpen }: JumbotronBannerProps) {
     </div>
   );
 }
+
+/* --- Sparkline — a live-updating readout line (§7.5). The one ambient motion
+   element Pulse is allowed in addition to a pulse dot. It draws a moving line
+   that "sweeps" a live data stream; the points are supplied, the sweep is CSS. */
+export interface SparklineProps {
+  points: string;
+  accent?: string;
+  height?: number;
+  live?: boolean;
+}
+
+export function Sparkline({ points, accent = 'var(--today)', height = 40, live = true }: SparklineProps) {
+  // A CSS-only "live" line: the sweep is a stroke-dash draw that repeats, so it
+  // reads as a readout that is always mid-update. Killed by prefers-reduced-motion.
+  return (
+    <svg viewBox="0 0 100 40" className="w-full" style={{ height }} aria-hidden="true" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={accent} stopOpacity="0.25" />
+          <stop offset="100%" stopColor={accent} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polygon points={`0,40 ${points} 100,40`} fill="url(#sparkFill)" />
+      <polyline
+        points={points}
+        fill="none"
+        stroke={accent}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeDasharray="220"
+        className={live ? 'brief-spark-sweep' : ''}
+      />
+      <circle r="2" fill={accent} className={live ? 'brief-spark-dot' : ''} />
+    </svg>
+  );
+}
