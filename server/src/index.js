@@ -28,6 +28,7 @@ import * as compliance from './domain/compliance.js';
 import * as auth from './domain/auth.js';
 import * as payment from './domain/payment.js';
 import * as mpesa from './connectors/mpesa.js';
+import * as tuma from './connectors/tuma.js';
 import * as arena from './domain/arena.js';
 import * as fantasy from './domain/fantasy.js';
 import * as auctions from './domain/auction.js';
@@ -2261,12 +2262,14 @@ app.get('/api/orders/:id/payments', (req, res) => {
 });
 
 /**
- * M-Pesa STK callback.
+ * M-Pesa STK callback -- DEPRECATED.
  *
- * Daraja does not sign callbacks, so the deployment-controlled defence is a
- * secret path segment. It FAILS CLOSED: with no secret configured, nothing is
- * accepted. Every callback is persisted before processing so a replay or a
- * malformed payload is auditable.
+ * The Daraja M-Pesa Express (STK Push) collection flow has been replaced by
+ * Tuma (see /api/webhooks/tuma/:secret). This route is kept only so a
+ * deployment that still has Daraja collection credentials mounted does not
+ * silently lose them, and because it fails closed exactly as it always has.
+ * Brief's collection provider is Tuma; this route is no longer reachable from
+ * the pay path.
  */
 app.post('/api/webhooks/mpesa/:secret', (req, res) => {
   const check = mpesa.verifyCallbackSecret(req.params.secret);
@@ -2312,6 +2315,69 @@ app.post('/api/webhooks/mpesa/:secret', (req, res) => {
       });
     } catch (e) {
       recordError('mpesa_webhook', null, `attach failed: ${String(e.message ?? e)}`);
+    }
+  }
+
+  res.json({ ok: true, duplicate: Boolean(applied.duplicate) });
+});
+
+/**
+ * Tuma STK Push callback.
+ *
+ * Tuma does not sign callbacks, so the deployment-controlled defence is a
+ * secret path segment (TUMA_CALLBACK_SECRET), exactly like the old Daraja
+ * callback. The REAL authenticity check is inside confirmPayment(): the
+ * callback must carry a checkout_request_id Brief issued and an amount that
+ * matches the stored intent. It FAILS CLOSED: with no secret configured,
+ * nothing is accepted. Every callback is persisted before processing so a
+ * replay or a malformed payload is auditable.
+ */
+app.post('/api/webhooks/tuma/:secret', (req, res) => {
+  const check = tuma.verifyCallbackSecret(req.params.secret);
+  store.insert('paymentCallbacks', {
+    id: newId('cb'), provider: 'tuma', accepted: check.ok,
+    reason: check.reason ?? null, body: req.body ?? null, at: now()
+  });
+  if (!check.ok) {
+    recordError('tuma_webhook', null, `rejected callback: ${check.reason}`);
+    // 403, and deliberately no detail about why.
+    return res.status(403).json({ error: 'rejected' });
+  }
+
+  const parsed = tuma.parseCallback(req.body);
+  if (!parsed.ok) {
+    recordError('tuma_webhook', null, 'unrecognised callback payload');
+    return res.status(400).json({ error: 'unrecognised payload' });
+  }
+
+  const applied = payment.confirmPayment({
+    providerRef: parsed.checkoutRequestId,
+    succeeded: parsed.succeeded,
+    amount: parsed.amount,
+    receipt: parsed.receipt,
+    failureReason: parsed.failureReason,
+    cancelled: parsed.cancelled
+  });
+
+  if (!applied.ok) {
+    recordError('tuma_webhook', null, `callback not applied: ${applied.reason}`);
+    // 200 to the provider: retrying will not help, and Tuma retries on
+    // non-2xx (up to 5 attempts with backoff). The failure is recorded on
+    // our side instead.
+    return res.status(200).json({ ok: false, reason: applied.reason });
+  }
+
+  if (applied.transactionId && !applied.duplicate) {
+    // Attach the money to the order and emit the signal. Settlement itself
+    // still goes through the existing guarded transition.
+    try {
+      orders.attachTransaction(applied.intent.orderId, applied.transactionId);
+      signals.emitSignal({
+        type: 'order_paid', actorId: applied.intent.payerId,
+        metadata: { orderId: applied.intent.orderId, transactionId: applied.transactionId }
+      });
+    } catch (e) {
+      recordError('tuma_webhook', null, `attach failed: ${String(e.message ?? e)}`);
     }
   }
 

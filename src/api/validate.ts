@@ -40,7 +40,8 @@ import type {
   MemberEvidence,
   Signal,
   Transaction,
-  Wallet
+  Wallet,
+  PaymentIntent
 } from './types';
 
 // --- primitives -------------------------------------------------------------
@@ -430,3 +431,23 @@ export function isDispute(v: unknown): v is Dispute {
 }
 
 export const areDisputes = (v: unknown) => all(v, isDispute);
+
+export function isPaymentIntent(v: unknown): v is PaymentIntent {
+  if (!isObj(v)) return false;
+  return (
+    isStr(v.id) &&
+    isStr(v.orderId) &&
+    isStr(v.payerId) &&
+    isNum(v.amount) &&
+    isStr(v.currency) &&
+    isStr(v.status) &&
+    isStrOrNull(v.providerRef) &&
+    isStrOrNull(v.receipt) &&
+    isStrOrNull(v.transactionId) &&
+    isStrOrNull(v.failureReason) &&
+    isStr(v.createdAt) &&
+    isStr(v.updatedAt)
+  );
+}
+
+export const arePaymentIntents = (v: unknown) => all(v, isPaymentIntent);

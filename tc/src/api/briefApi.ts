@@ -61,7 +61,9 @@ import type {
   OrderCreate,
   Dispute,
   VendorEarnings,
-  ArenaMoneyStatus
+  ArenaMoneyStatus,
+  PaymentIntent,
+  PaymentInitiation
 } from './types';
 import { asTarget } from './types';
 import {
@@ -71,7 +73,7 @@ import {
   isTransaction, isWallet, isCampaignShare, isPaymentConfirmation,
   areSources, areRawItems, isBriefItPreview, isVoteTally, isMemberEvidence,
   isVendor, areVendors, isListing, areListings, isOrder, areOrders,
-  isDispute, areDisputes
+  isDispute, areDisputes, isPaymentIntent, arePaymentIntents
 } from './validate';
 
 /**
@@ -997,6 +999,46 @@ export function getOrder(id: string): Promise<ApiResult<Order>> {
 export function createOrder(body: OrderCreate): Promise<ApiResult<Order>> {
   return request('/api/orders', { method: 'POST', body: JSON.stringify(body) }, (r) =>
     isOrder(r?.order) ? r.order : undefined
+  );
+}
+
+/**
+ * Start paying for an order. The phone number is the only input the buyer
+ * supplies; the amount is read from the order row by the server and is never
+ * sent. `charged:true` means the STK prompt was dispatched, NOT that money
+ * arrived -- the client must never treat this as a successful payment. The
+ * server returns the intent, whose `status` is the single source of truth;
+ * poll getOrderPayments() until it leaves `intent`/`authorized`.
+ */
+export function payOrder(
+  orderId: string,
+  phone: string,
+  idempotencyKey?: string
+): Promise<ApiResult<PaymentInitiation>> {
+  const body: Record<string, unknown> = { phone };
+  if (idempotencyKey) body.idempotencyKey = idempotencyKey;
+  return request(
+    `/api/orders/${encodeURIComponent(orderId)}/pay`,
+    { method: 'POST', body: JSON.stringify(body) },
+    (r) =>
+      isPaymentIntent(r?.intent)
+        ? {
+            intent: r.intent,
+            reused: Boolean(r.reused),
+            charged: Boolean(r.charged),
+            customerMessage: typeof r.customerMessage === 'string' ? r.customerMessage : null
+          }
+        : undefined
+  );
+}
+
+/**
+ * Payment intents for an order. The buyer polls this to discover the verified
+ * state -- success is only ever the server's word, never the client's guess.
+ */
+export function getOrderPayments(orderId: string): Promise<ApiResult<PaymentIntent[]>> {
+  return request(`/api/orders/${encodeURIComponent(orderId)}/payments`, undefined, (r) =>
+    arePaymentIntents(r?.payments) ? r.payments : undefined
   );
 }
 

@@ -33,7 +33,12 @@
 // ---------------------------------------------------------------------------
 
 import { store, newId } from '../store.js';
-import * as mpesa from '../connectors/mpesa.js';
+import {
+  activeCollectionProvider,
+  collectionProvider,
+  providerStatus as providerStatusView
+} from '../providers.js';
+import { normalisePhone } from '../connectors/tuma.js';
 import * as ledger from './ledger.js';
 
 export const INTENT_STATUS = [
@@ -48,27 +53,17 @@ export const INTENT_STATUS = [
 const TERMINAL = new Set(['confirmed', 'failed', 'cancelled', 'reversed']);
 
 /**
- * Which provider is active. Only a genuinely configured provider counts;
- * there is no "mock" provider, by design.
+ * Which provider is active for COLLECTION. Resolved through the provider
+ * registry (see ../providers.js) -- Tuma is the gateway now; the abandoned
+ * Daraja STK Push is no longer consulted. Only a genuinely configured
+ * provider counts; there is no "mock" provider, by design.
  */
 export function activeProvider() {
-  if (mpesa.isConfigured()) return 'mpesa';
-  return null;
+  return activeCollectionProvider();
 }
 
 export function providerStatus() {
-  const active = activeProvider();
-  return {
-    configured: Boolean(active),
-    provider: active,
-    // Payout capability is strictly separate from collection capability.
-    payoutConfigured: mpesa.isPayoutConfigured(),
-    providers: { mpesa: mpesa.status() },
-    reason: active
-      ? null
-      : 'No payment provider is connected. Brief can record money that moved ' +
-        'elsewhere, but cannot collect or disburse it.'
-  };
+  return providerStatusView();
 }
 
 // ---------------------------------------------------------------------------
@@ -119,7 +114,7 @@ export function createIntent({ orderId, payerId, phone = null, idempotencyKey = 
     vendorId: order.vendorId ?? null,
     amount,
     currency: order.currency ?? 'KES',
-    phone: phone ? mpesa.normalisePhone(phone) : null,
+    phone: phone ? normalisePhone(phone) : null,
     status: 'intent',
     provider: activeProvider(),
     providerRef: null,
@@ -153,21 +148,21 @@ export async function requestPayment(intentId, { fetchImpl = fetch } = {}) {
   }
   if (!intent.phone) throw new Error('a valid phone number is required');
 
-  const provider = activeProvider();
-  if (!provider) {
+  const providerName = activeCollectionProvider();
+  if (!providerName) {
     return {
       ok: false,
       reason: 'no_provider',
       message: providerStatus().reason,
-      status: mpesa.status()
+      status: providerStatus()
     };
   }
+  const provider = collectionProvider(providerName);
 
-  const res = await mpesa.stkPush({
+  const res = await provider.stkPush({
     amount: Math.round(intent.amount),
     phone: intent.phone,
-    accountReference: intent.orderId.slice(-12),
-    description: 'Brief order',
+    description: `Brief order ${intent.orderId.slice(-12)}`,
     fetchImpl
   });
 
@@ -181,7 +176,9 @@ export async function requestPayment(intentId, { fetchImpl = fetch } = {}) {
 
   store.update('paymentIntents', intent.id, {
     status: 'authorized',
-    providerRef: res.checkoutRequestId
+    providerRef: res.checkoutRequestId,
+    providerMerchantRef: res.merchantRequestId ?? null,
+    providerPaymentId: res.paymentId ?? null
   });
   return { ok: true, providerRef: res.checkoutRequestId, customerMessage: res.customerMessage };
 }
@@ -203,7 +200,7 @@ export async function requestPayment(intentId, { fetchImpl = fetch } = {}) {
  *   4. the amount is checked against the intent; a mismatch FAILS the payment
  *   5. exactly one ledger transaction is created, and it is the authority
  */
-export function confirmPayment({ providerRef, succeeded, amount, receipt, failureReason = null }) {
+export function confirmPayment({ providerRef, succeeded, amount, receipt, failureReason = null, cancelled = false }) {
   const intent = store.find('paymentIntents', (p) => p.providerRef === providerRef);
   if (!intent) return { ok: false, reason: 'unknown_reference' };
 
@@ -221,11 +218,16 @@ export function confirmPayment({ providerRef, succeeded, amount, receipt, failur
   }
 
   if (!succeeded) {
+    // A customer cancelling on their handset is a DIFFERENT terminal state
+    // from a provider-side failure -- the UI states them separately, and an
+    // operator reconciling later can tell the two apart.
+    const status = cancelled ? 'cancelled' : 'failed';
     const updated = store.update('paymentIntents', intent.id, {
-      status: 'failed',
-      failureReason: failureReason ?? 'provider reported failure'
+      status,
+      failureReason: failureReason ?? (cancelled ? 'payment cancelled by customer' : 'provider reported failure'),
+      failedAt: new Date().toISOString()
     });
-    return { ok: true, failed: true, intent: updated };
+    return { ok: true, failed: true, cancelled, intent: updated };
   }
 
   // (2) Replay protection: a receipt may back exactly one payment, ever.
@@ -274,7 +276,8 @@ export function confirmPayment({ providerRef, succeeded, amount, receipt, failur
   const updated = store.update('paymentIntents', intent.id, {
     status: 'confirmed',
     receipt: receipt ?? null,
-    transactionId: tx.id
+    transactionId: tx.id,
+    confirmedAt: new Date().toISOString()
   });
 
   return { ok: true, intent: updated, transactionId: tx.id, transaction: tx };

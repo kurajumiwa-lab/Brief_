@@ -26,7 +26,11 @@
 //      invent fractions of a shilling on every transaction.
 // ---------------------------------------------------------------------------
 
-import * as mpesa from '../connectors/mpesa.js';
+import {
+  activeDisbursementProvider,
+  disbursementProvider
+} from '../providers.js';
+import { normalisePhone } from '../connectors/tuma.js';
 import { store, newId } from '../store.js';
 
 /**
@@ -135,7 +139,7 @@ export function vendorEarnings(vendorId, currency = 'KES') {
     .filter((p) => p.status === 'requested' || p.status === 'processing')
     .reduce((sum, p) => sum + p.amount, 0);
   const withdrawable = net - paidOut - pendingPayout;
-  const payoutConfigured = mpesa.isPayoutConfigured();
+  const payoutConfigured = Boolean(activeDisbursementProvider());
   const canPayout = payoutConfigured;
 
   return {
@@ -293,7 +297,7 @@ export function requestPayout({ vendorId, requestedBy, phone = null, idempotency
         : 'everything earned has already been paid out or is in flight'
     );
   }
-  if (!mpesa.isPayoutConfigured()) {
+  if (!activeDisbursementProvider()) {
     // Refuse rather than queue a payout Brief has no way to fulfil.
     const err = new Error(
       'payouts are unavailable: no payment provider is configured to disburse funds'
@@ -310,9 +314,9 @@ export function requestPayout({ vendorId, requestedBy, phone = null, idempotency
     // Derived from settled orders. Not a client-supplied figure.
     amount: earnings.withdrawable,
     currency: earnings.currency,
-    phone: phone ? mpesa.normalisePhone(phone) : null,
+    phone: phone ? normalisePhone(phone) : null,
     status: 'requested',
-    provider: 'mpesa',
+    provider: activeDisbursementProvider(),
     providerRef: null,
     failureReason: null,
     idempotencyKey: idempotencyKey ?? null,
@@ -332,7 +336,7 @@ export async function sendPayout(payoutId, { fetchImpl = fetch } = {}) {
   if (!payout.phone) throw new Error('a valid phone number is required');
 
   store.update('payouts', payout.id, { status: 'processing' });
-  const res = await mpesa.b2cPayout({
+  const res = await disbursementProvider(activeDisbursementProvider()).b2cPayout({
     amount: Math.round(payout.amount),
     phone: payout.phone,
     remarks: `Brief payout ${payout.id}`,

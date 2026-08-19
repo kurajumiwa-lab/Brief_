@@ -5,6 +5,7 @@ import { ListingCard } from './marketplace/ListingCard';
 import { ListingDetail } from './marketplace/ListingDetail';
 import { VendorProfile } from './marketplace/VendorProfile';
 import { OrderStatus } from './marketplace/OrderStatus';
+import { PayOrder } from './marketplace/PayOrder';
 import { VendorPanel } from './marketplace/VendorPanel';
 
 /**
@@ -319,14 +320,20 @@ export function Marketplace({ currentUserId = 'usr_me' }: MarketplaceProps = {})
             <p className="text-xs text-[#86935C]">You have not ordered anything yet.</p>
           ) : (
             myOrders.map((o) => (
-              <OrderStatus
-                key={o.id}
-                order={o}
-                perspective="buyer"
-                busy={busyId === o.id}
-                onDispute={dispute}
-                onCancel={cancel}
-              />
+              <React.Fragment key={o.id}>
+                <OrderStatus
+                  order={o}
+                  perspective="buyer"
+                  busy={busyId === o.id}
+                  onDispute={dispute}
+                  onCancel={cancel}
+                />
+                {/* Checkout lives here, only for an unpaid, uncancelled order.
+                    A paid order shows no pay form; a cancelled one is final. */}
+                {!o.paid && o.status !== 'cancelled' && o.status !== 'disputed' && (
+                  <PayOrder order={o} onPaid={loadOrders} />
+                )}
+              </React.Fragment>
             ))
           )}
         </div>

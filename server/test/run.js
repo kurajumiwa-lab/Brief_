@@ -2734,7 +2734,233 @@ console.log('\n=== PAYMENT CONNECTOR BOUNDARY (no credentials configured) ===');
   // The ledger must agree -- one answer to "can Brief move money".
   const led = await import('../src/domain/ledger.js');
   check('ledger.providerConfigured() agrees', led.providerConfigured() === false);
-  check('ledger delegates to the connector', led.providerStatus().detail?.provider === 'mpesa');
+  check('ledger delegates to the connector', led.providerStatus().detail?.provider === 'tuma');
+}
+
+console.log('\n=== TUMA CONNECTOR (simulated fetch -- the REAL Tuma contract) ===');
+{
+  const tuma = await import('../src/connectors/tuma.js');
+
+  // With nothing configured, everything refuses with a stated reason.
+  check('Tuma reports NOT configured', tuma.isConfigured() === false);
+  check('every missing credential is named',
+    tuma.missingCredentials().length === 4 && tuma.missingCredentials().includes('apiKey'),
+    tuma.missingCredentials().join(','));
+  const push0 = await tuma.stkPush({ amount: 100, phone: '0722000111' });
+  check('stkPush REFUSES without credentials', push0.ok === false && push0.reason === 'not_configured');
+  const tok0 = await tuma.accessToken();
+  check('auth REFUSES without credentials', tok0.ok === false && tok0.reason === 'not_configured');
+  check('callback verification fails closed when unset', tuma.verifyCallbackSecret('x').reason === 'callback_secret_not_configured');
+
+  // Phone normalisation (provider-neutral Kenyan rule).
+  check('0722... normalises', tuma.normalisePhone('0722000111') === '254722000111');
+  check('+254... normalises', tuma.normalisePhone('+254722000111') === '254722000111');
+  check('0110... (1-prefix) normalises', tuma.normalisePhone('0110000111') === '254110000111');
+  check('a foreign number is refused', tuma.normalisePhone('+447700900000') === null);
+
+  // Parse the REAL callback shapes Tuma documents (success / fail / cancelled).
+  const okCb = tuma.parseCallback({
+    status: 'completed', merchant_request_id: 'm1', checkout_request_id: 'ws_CO_1',
+    result_code: 0, result_desc: 'ok', mpesa_receipt_number: 'REC1', amount: 600
+  });
+  check('success callback parses', okCb.ok === true && okCb.succeeded === true && okCb.receipt === 'REC1');
+  check('success callback exposes amount', okCb.amount === 600);
+  const failCb = tuma.parseCallback({
+    status: 'failed', checkout_request_id: 'ws_CO_2', result_code: 2001,
+    result_desc: 'initiator invalid', failure_reason: 'Invalid M-Pesa PIN'
+  });
+  check('failure callback parses (not success)', failCb.ok === true && failCb.succeeded === false);
+  check('failure callback carries the reason', failCb.failureReason === 'Invalid M-Pesa PIN');
+  const cancelCb = tuma.parseCallback({ status: 'cancelled', checkout_request_id: 'ws_CO_3', result_code: 1032 });
+  check('cancelled callback parses and is not success', cancelCb.succeeded === false && cancelCb.cancelled === true);
+  const junk = tuma.parseCallback({ nonsense: true });
+  check('an unrecognised payload is refused', junk.ok === false && junk.reason === 'unrecognised_payload');
+
+  // With credentials + a stubbed fetch, exercise the REAL request path.
+  process.env.TUMA_EMAIL = 'shop@example.com';
+  process.env.TUMA_API_KEY = 'tuma_test_key';
+  process.env.BRIEF_PUBLIC_ORIGIN = 'https://brief.example.com';
+  process.env.TUMA_CALLBACK_SECRET = 'tuma-cb-secret';
+  tuma._resetTokenCache();
+  check('Tuma now reports configured', tuma.isConfigured() === true);
+  check('the callback URL embeds the secret path', tuma.callbackUrl() === 'https://brief.example.com/api/webhooks/tuma/tuma-cb-secret');
+
+  // (5) authentication failure: 401 invalid credentials.
+  let authFail = await tuma.accessToken({ fetchImpl: async () => ({ ok: false, status: 401, json: async () => ({ success: false, message: 'Invalid credentials' }) }) });
+  check('auth failure is surfaced, not faked', authFail.ok === false && authFail.reason === 'auth_failed', JSON.stringify(authFail));
+  // (5) IPRS gate is named distinctly.
+  let iprs = await tuma.accessToken({ fetchImpl: async () => ({ ok: false, status: 403, json: async () => ({ success: false, error_code: 'IPRS_VERIFICATION_REQUIRED' }) }) });
+  check('IPRS gate is named distinctly', iprs.reason === 'iprs_verification_required');
+
+  // A stubbed Tuma: token then a successful push.
+  let tokenCalls = 0;
+  const fakeFetch = async (url, opts) => {
+    if (url.endsWith('/auth/token')) {
+      tokenCalls++;
+      return { ok: true, status: 200, json: async () => ({ success: true, data: { token: 'jwt.test.token' } }) };
+    }
+    if (url.endsWith('/payment/stk-push')) {
+      return {
+        ok: true, status: 200,
+        json: async () => ({
+          success: true, message: 'sent',
+          data: { checkout_request_id: 'ws_CO_9', merchant_request_id: 'mr_9', customer_message: 'Check your phone' }
+        })
+      };
+    }
+    throw new Error('unexpected URL ' + url);
+  };
+  const push = await tuma.stkPush({ amount: 600, phone: '0722000111', description: 'Brief order xyz', fetchImpl: fakeFetch });
+  check('stkPush succeeds against a real-shaped response', push.ok === true && push.checkoutRequestId === 'ws_CO_9');
+  check('the provider reference is the checkout_request_id', push.checkoutRequestId === 'ws_CO_9' && push.merchantRequestId === 'mr_9');
+  check('a token was fetched exactly once', tokenCalls === 1);
+  // Cached token: a second push does not re-auth.
+  await tuma.stkPush({ amount: 600, phone: '0722000111', fetchImpl: fakeFetch });
+  check('the token is cached across pushes', tokenCalls === 1);
+  // (6) Tuma API failure: push rejected.
+  const reject = await tuma.stkPush({
+    amount: 600, phone: '0722000111',
+    fetchImpl: async () => ({ ok: false, status: 400, json: async () => ({ success: false, message: 'Validation failed' }) })
+  });
+  check('a rejected push is surfaced as failure', reject.ok === false && reject.reason === 'push_rejected');
+
+  // Callback secret verification: right/wrong/unset.
+  check('the correct callback secret is accepted', tuma.verifyCallbackSecret('tuma-cb-secret').ok === true);
+  check('a wrong callback secret is refused', tuma.verifyCallbackSecret('nope').reason === 'bad_secret');
+
+  delete process.env.TUMA_EMAIL;
+  delete process.env.TUMA_API_KEY;
+  delete process.env.BRIEF_PUBLIC_ORIGIN;
+  delete process.env.TUMA_CALLBACK_SECRET;
+  tuma._resetTokenCache();
+}
+
+console.log('\n=== TUMA PAYMENT E2E + WEBHOOK (simulated provider) ===');
+{
+  process.env.NODE_ENV = 'test';
+  process.env.TUMA_EMAIL = 'shop@example.com';
+  process.env.TUMA_API_KEY = 'tuma_test_key';
+  process.env.BRIEF_PUBLIC_ORIGIN = 'https://brief.example.com';
+  process.env.TUMA_CALLBACK_SECRET = 'tuma-cb-secret';
+
+  const pay = await import('../src/domain/payment.js');
+  const tuma = await import('../src/connectors/tuma.js');
+  const { default: app } = await import('../src/index.js');
+  store._reset();
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, {
+      method, headers, body: body ? JSON.stringify(body) : undefined
+    });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+
+  try {
+    // A stubbed Tuma rail: token + successful push, in place of the real fetch.
+    const fakeFetch = async (url, opts) => {
+      if (url.endsWith('/auth/token')) {
+        return { ok: true, status: 200, json: async () => ({ success: true, data: { token: 'jwt.test.token' } }) };
+      }
+      if (url.endsWith('/payment/stk-push')) {
+        const b = JSON.parse(opts.body);
+        return {
+          ok: true, status: 200,
+          json: async () => ({
+            success: true, message: 'sent',
+            data: { checkout_request_id: `ws_CO_${b.amount}`, merchant_request_id: 'mr_1', customer_message: 'Check your phone' }
+          })
+        };
+      }
+      throw new Error('unexpected URL ' + url);
+    };
+
+    const A = (await call('/api/auth/register', 'POST', { handle: 'tseller', password: 'a good passphrase' })).body;
+    const B = (await call('/api/auth/register', 'POST', { handle: 'tbuyer', password: 'a good passphrase' })).body;
+    await call('/api/vendors', 'POST', { displayName: 'Tuma Stall' }, A.token);
+    let r = await call('/api/listings', 'POST', { title: 'Rice', type: 'product', price: 300, quantityAvailable: 10 }, A.token);
+    const lid = r.body.listing.id;
+    await call(`/api/listings/${lid}/status`, 'POST', { status: 'active' }, A.token);
+    r = await call('/api/orders', 'POST', { listingId: lid, quantity: 2 }, B.token);
+    const oid = r.body.order.id;
+    check('order placed for 600', r.body.order.total === 600);
+
+    // --- INITIATE through the domain layer with the stubbed rail -----------
+    const { intent } = pay.createIntent({ orderId: oid, payerId: B.user.id, phone: '0722000111' });
+    check('provider is Tuma on the intent', intent.provider === 'tuma');
+    const init = await pay.requestPayment(intent.id, { fetchImpl: fakeFetch });
+    check('requestPayment succeeds against the stubbed Tuma', init.ok === true && init.providerRef === 'ws_CO_600');
+    let stored = pay.getIntent(intent.id);
+    check('the intent is authorized with the provider ref', stored.status === 'authorized' && stored.providerRef === 'ws_CO_600');
+
+    // --- WEBHOOK: fail closed ----------------------------------------------
+    r = await call('/api/webhooks/tuma/wrong', 'POST', { status: 'completed', checkout_request_id: 'ws_CO_600', result_code: 0 });
+    check('a wrong callback secret is refused (403)', r.status === 403, `got ${r.status}`);
+
+    // --- WEBHOOK: success, end to end --------------------------------------
+    r = await call('/api/webhooks/tuma/tuma-cb-secret', 'POST', {
+      status: 'completed', checkout_request_id: 'ws_CO_600', result_code: 0,
+      result_desc: 'ok', mpesa_receipt_number: 'REC600', amount: 600
+    });
+    check('a valid callback is accepted (200)', r.status === 200 && r.body?.ok === true, JSON.stringify(r.body));
+    check('exactly ONE ledger transaction was created', store.all('ledgerTransactions').length === 1);
+    check('the transaction is settled', store.all('ledgerTransactions')[0].status === 'settled');
+    check('the intent is confirmed', pay.getIntent(intent.id).status === 'confirmed');
+    check('the intent records a completion time', Boolean(pay.getIntent(intent.id).confirmedAt));
+    const paidOrder = (await call(`/api/orders/${oid}`, 'GET', undefined, B.token)).body.order;
+    check('the order now reads paid', paidOrder.paid === true && paidOrder.paymentStatus === 'settled');
+
+    // --- WEBHOOK: duplicate callback is an idempotent no-op ----------------
+    r = await call('/api/webhooks/tuma/tuma-cb-secret', 'POST', {
+      status: 'completed', checkout_request_id: 'ws_CO_600', result_code: 0, amount: 600
+    });
+    check('a duplicate callback is a no-op (ok:true, duplicate)', r.status === 200 && r.body?.duplicate === true);
+    check('a duplicate callback created NO second transaction', store.all('ledgerTransactions').length === 1);
+
+    // --- WEBHOOK: amount mismatch fails loudly -----------------------------
+    const { intent: intent2 } = pay.createIntent({ orderId: oid, payerId: B.user.id, phone: '0722000111' });
+    // (a second live intent cannot exist for the same order, so simulate an
+    // authorized state directly -- the domain enforces one live intent/order)
+    store.update('paymentIntents', intent2.id, { status: 'authorized', providerRef: 'ws_CO_BAD' });
+    r = await call('/api/webhooks/tuma/tuma-cb-secret', 'POST', {
+      status: 'completed', checkout_request_id: 'ws_CO_BAD', result_code: 0, amount: 1
+    });
+    check('an amount mismatch is refused', r.body?.ok === false && r.body?.reason === 'amount_mismatch', JSON.stringify(r.body));
+    check('still exactly one ledger transaction', store.all('ledgerTransactions').length === 1);
+
+    // --- WEBHOOK: unknown reference ----------------------------------------
+    r = await call('/api/webhooks/tuma/tuma-cb-secret', 'POST', {
+      status: 'completed', checkout_request_id: 'ws_CO_NOPE', result_code: 0, amount: 600
+    });
+    check('an unknown reference is 200 but not applied', r.status === 200 && r.body?.ok === false && r.body?.reason === 'unknown_reference');
+    check('no extra transaction was created', store.all('ledgerTransactions').length === 1);
+
+    // --- WEBHOOK: cancelled payment does not credit ------------------------
+    const { intent: intent3 } = pay.createIntent({ orderId: oid, payerId: B.user.id, phone: '0722000111' });
+    store.update('paymentIntents', intent3.id, { status: 'authorized', providerRef: 'ws_CO_CANCEL' });
+    r = await call('/api/webhooks/tuma/tuma-cb-secret', 'POST', {
+      status: 'cancelled', checkout_request_id: 'ws_CO_CANCEL', result_code: 1032
+    });
+    check('a cancelled payment is a DISTINCT terminal state', pay.getIntent(intent3.id).status === 'cancelled');
+    check('a cancelled payment created no transaction', store.all('ledgerTransactions').length === 1);
+
+    // --- Unauthenticated initiation is refused -----------------------------
+    const anon = await fetch(`http://127.0.0.1:${port}/api/orders/${oid}/pay`, {
+      method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer bogus' },
+      body: JSON.stringify({ phone: '0722000111' })
+    });
+    check('an invalid token cannot initiate (401)', anon.status === 401);
+  } finally {
+    srv.close();
+    delete process.env.TUMA_EMAIL;
+    delete process.env.TUMA_API_KEY;
+    delete process.env.BRIEF_PUBLIC_ORIGIN;
+    delete process.env.TUMA_CALLBACK_SECRET;
+    tuma._resetTokenCache();
+  }
 }
 
 console.log('\n=== PAYMENT LIFECYCLE, IDEMPOTENCY, REPLAY (simulated provider refs) ===');
@@ -2958,7 +3184,7 @@ console.log('\n=== PAYMENT HTTP SURFACE ===');
     // Capabilities must tell the truth.
     r = await call('/api/capabilities');
     check('capabilities still report payments unconfigured', r.body?.payments?.configured === false);
-    check('and name M-Pesa as the intended rail', r.body?.payments?.detail?.provider === 'mpesa');
+    check('and name Tuma as the intended rail', r.body?.payments?.detail?.provider === 'tuma');
   } finally {
     srv.close();
   }

@@ -1,8 +1,9 @@
 // ---------------------------------------------------------------------------
 // LEDGER
 //
-// HONEST SCOPE. Brief has no payment provider connected. There is no M-Pesa
-// / Daraja credential, no card processor, no bank rail. Therefore this module
+// HONEST SCOPE. Brief's collection rail is Tuma (see connectors/tuma.js);
+// whether it is live depends on credentials being mounted. With none mounted
+// there is no card processor and no bank rail in reach. Therefore this module
 // deliberately does NOT:
 //
 //   - move money
@@ -18,7 +19,7 @@
 // ---------------------------------------------------------------------------
 
 import { store, newId } from '../store.js';
-import * as mpesa from '../connectors/mpesa.js';
+import { providerStatus as providerStatusView, activeCollectionProvider } from '../providers.js';
 
 export const TX_STATUS = [
   'created',
@@ -37,26 +38,23 @@ const PENDING = new Set(['created', 'pending', 'confirmed', 'held']);
 /**
  * Is a real payment provider connected?
  *
- * This is now a genuine credential check, delegated to the connector: it is
- * true only when M-Pesa Daraja has every credential it needs. There is no
- * override and no mock branch -- the single source of truth for "can Brief
- * move money" lives with the connector that would actually move it.
+ * A genuine credential check delegated to the provider registry: true only
+ * when a collection provider (Tuma) has every credential it needs. There is
+ * no override and no mock branch -- the single source of truth for "can Brief
+ * move money" lives with the provider that would actually move it.
  */
 export function providerConfigured() {
-  return mpesa.isConfigured();
+  return Boolean(activeCollectionProvider());
 }
 
 export function providerStatus() {
-  const configured = providerConfigured();
+  const status = providerStatusView();
   return {
-    configured,
-    provider: configured ? 'mpesa' : null,
-    payoutConfigured: mpesa.isPayoutConfigured(),
-    detail: mpesa.status(),
-    reason: configured
-      ? null
-      : 'No payment provider is connected. Balances reflect recorded ' +
-        'transactions only; Brief cannot send or receive money.'
+    configured: status.configured,
+    provider: status.provider,
+    payoutConfigured: status.payoutConfigured,
+    detail: status.collection ?? null,
+    reason: status.reason
   };
 }
 

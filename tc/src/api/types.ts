@@ -978,6 +978,57 @@ export interface Dispute {
   updatedAt: string;
 }
 
+// ---------------------------------------------------------------------------
+// PAYMENT (Batch 5 -- Tuma)
+//
+// A payment intent is Brief's record of ONE attempt to collect money for an
+// order. The provider is Tuma (M-Pesa STK Push settling to the LOOP till);
+// the amount is server-derived from the order row and never client-supplied.
+//
+// `providerRef` is Tuma's `checkout_request_id`; Brief's own transaction id
+// is `transactionId`. Both are kept so reconciliation works across a provider
+// migration. Status is a single state machine -- there is no second payment
+// status system anywhere in the client.
+// ---------------------------------------------------------------------------
+
+export type PaymentStatus =
+  | 'intent' | 'authorized' | 'confirmed' | 'failed' | 'cancelled' | 'reversed';
+
+export interface PaymentIntent {
+  id: string;
+  orderId: string;
+  payerId: string;
+  vendorId: string | null;
+  /** Server-derived from the order row. Never client-supplied. */
+  amount: number;
+  currency: string;
+  phone: string | null;
+  status: PaymentStatus;
+  provider: string | null;
+  /** Tuma's checkout_request_id. */
+  providerRef: string | null;
+  /** The M-Pesa receipt number, once paid. */
+  receipt: string | null;
+  /** Brief's own ledger transaction id, once the payment is confirmed. */
+  transactionId: string | null;
+  failureReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+  confirmedAt?: string | null;
+  failedAt?: string | null;
+}
+
+/**
+ * What the server returns from initiating a payment. `charged:true` only means
+ * the STK prompt was sent -- it is NOT a claim that money arrived. Success is
+ * only ever asserted after the server verifies the provider callback.
+ */
+export interface PaymentInitiation {
+  intent: PaymentIntent;
+  reused: boolean;
+  charged: boolean;
+  customerMessage: string | null;
+}
 
 // ---------------------------------------------------------------------------
 // SETTLEMENT & COMPLIANCE (Batch 4)

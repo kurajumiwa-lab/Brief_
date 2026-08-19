@@ -1,9 +1,17 @@
 // ---------------------------------------------------------------------------
-// M-PESA (SAFARICOM DARAJA) PAYMENT CONNECTOR
+// M-PESA (SAFARICOM DARAJA) PAYMENT CONNECTOR -- COLLECTION DEPRECATED
 //
 // Brief's audience is in Kenya, so the payment rail that matters is M-Pesa.
-// This is the REAL Daraja integration: OAuth token fetch, STK Push (customer
-// -> business), B2C payout (business -> customer), and callback validation.
+// This connector still provides the REAL Daraja B2C payout (business ->
+// customer) integration, which remains the disbursement rail because Tuma
+// documents no payout endpoint.
+//
+// The Daraja M-PESA Express STK Push COLLECTION flow (customer -> business)
+// is DEPRECATED: Brief's collection provider is now Tuma (see tuma.js), which
+// settles to the connected LOOP BIZ / till. The stkPush() and
+// parseStkCallback() functions below are retained only for reference and for
+// deployments that have not yet migrated; they are no longer reachable from
+// the pay path (see ../providers.js).
 //
 // HONEST SCOPE, AND WHY THERE IS NO SANDBOX MODE HERE.
 //
