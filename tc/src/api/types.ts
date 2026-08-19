@@ -1081,3 +1081,162 @@ export interface ArenaMoneyStatus {
   unmet: string[];
   reason: string | null;
 }
+
+// ---------------------------------------------------------------------------
+// THE VAULT
+//
+// A Vault is a persistent context layer over a real-world activity. It is NOT
+// a chat, CRM, inbox or AI assistant. Types here mirror the server's domain
+// (server/src/domain/vault.js, footsteps.js, handoff.js).
+//
+// The `role` field on a Vault is the caller's scoped access, decided by the
+// SERVER — never by the client. A host sees everything; a guest sees their own
+// experience; a vendor sees only their scoped requests; the public sees a
+// minimal projection. The client renders whatever the server returns and never
+// fabricates access it was not granted.
+// ---------------------------------------------------------------------------
+
+export type VaultType = 'gathering' | 'event' | 'marketplace' | 'campaign' | 'service' | 'deal';
+export type VaultStatus = 'active' | 'pending' | 'settled' | 'closed' | 'archived';
+export type VaultVisibility = 'public' | 'private' | 'invite_only' | 'token_access';
+export type VaultRole = 'host' | 'guest' | 'vendor' | 'admin' | 'public';
+
+export interface VaultMetrics {
+  readonly participantCount: number;
+  readonly requestCount: number;
+  readonly pendingRequests: number;
+  readonly pendingKes: number;
+  readonly orderCount: number;
+  readonly settled: boolean;
+}
+
+export interface VaultParticipant {
+  id: string;
+  vaultId: string;
+  userId: string | null;
+  role: 'host' | 'guest' | 'vendor' | 'admin';
+  name: string | null;
+  phone: string | null;
+  channel: string | null;
+  joinedAt: string;
+}
+
+export interface VaultChannel {
+  id: string;
+  vaultId: string;
+  channel: string;
+  externalId: string | null;
+  connectedAt: string;
+}
+
+export type VaultRequestStatus = 'open' | 'routed' | 'accepted' | 'declined' | 'fulfilled';
+
+export interface VaultRequest {
+  id: string;
+  vaultId: string;
+  from: string;
+  kind: string;
+  description: string;
+  quantity: number;
+  priceEstimate: number | null;
+  location: string | null;
+  notes: string | null;
+  status: VaultRequestStatus;
+  vendorId: string | null;
+  orderId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VaultLink {
+  kind: 'order' | 'object' | 'campaign' | 'vendor' | 'transaction' | 'listing';
+  id: string;
+}
+
+export interface Vault {
+  id: string;
+  slug: string;
+  type: VaultType;
+  title: string;
+  description: string;
+  status: VaultStatus;
+  visibility: VaultVisibility;
+  ownerId?: string;
+  location: string | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  createdAt: string;
+  closedAt: string | null;
+  /** The caller's scoped role, decided server-side. */
+  role: VaultRole;
+  metrics: VaultMetrics;
+  // Scoped fields, present only for the roles the server grants:
+  links?: VaultLink[];
+  participants?: VaultParticipant[];
+  channels?: VaultChannel[];
+  requests?: VaultRequest[];
+  participant?: { id: string; role: string; name: string | null; joinedAt: string } | null;
+  metadata?: Record<string, unknown>;
+}
+
+export type FootstepCategory =
+  | 'people' | 'messages' | 'commerce' | 'payments' | 'vendors' | 'system' | 'decisions';
+
+export interface Footstep {
+  id: string;
+  vaultId: string;
+  seq: number;
+  kind: string;
+  category: FootstepCategory;
+  label: string;
+  narrative: string;
+  actorId: string | null;
+  actorName: string | null;
+  channel: string | null;
+  value: string | number | null;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface FootstepPage {
+  footsteps: Footstep[];
+  nextCursor: number | null;
+  total: number;
+}
+
+export interface VaultSearchResult {
+  vaultId: string;
+  title: string;
+  status: string;
+  matches: { where: string; snippet: string }[];
+}
+
+export interface ResolutionItem {
+  vaultId: string;
+  vaultTitle: string;
+  kind: string;
+  description?: string;
+  requestId?: string;
+  orderId?: string;
+  failureReason?: string | null;
+  providerRef?: string | null;
+}
+
+export interface VaultEntry {
+  ok: boolean;
+  vault?: Vault;
+  participant?: { id: string; role: string; name: string | null; joinedAt: string };
+  token?: string;
+}
+
+/** What a client may send to create a vault. No ownerId, role or slug. */
+export interface VaultCreate {
+  type?: VaultType;
+  title: string;
+  description?: string;
+  visibility?: VaultVisibility;
+  location?: string | null;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  sourceId?: string | null;
+}

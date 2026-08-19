@@ -80,7 +80,31 @@ const EMPTY = {
   // auction produces an ordinary order, which settles through the ordinary
   // chain. There is no auction wallet and no auction balance.
   auctions: [],
-  bids: []
+  bids: [],
+
+  // --- The Vault -----------------------------------------------------------
+  // A persistent context layer wrapping a real-world activity. A Vault is NOT
+  // a chat, a CRM or an inbox: it is the room that channels, people, vendors,
+  // orders and payments all open into. One real-world activity is one Vault,
+  // regardless of how many channels it flows through.
+  vaults: [],
+  // Who is in a vault and what they may see/do. Roles: host, guest, vendor,
+  // admin. Never derived from a client claim -- always a stored row.
+  vaultParticipants: [],
+  // Which channels open into this vault (telegram/whatsapp/web/manual/link).
+  // A channel is a DOOR; the vault is the room.
+  vaultChannels: [],
+  // A guest's or host's request for something, routed to a vendor. A request
+  // is NOT money; the order it turns into is, and that order lives in the
+  // ordinary orders/ledger path.
+  vaultRequests: [],
+  // The immutable chronological event stream of a vault. See domain/footsteps.js.
+  // Append-only; a footstep corresponds to a real application event.
+  footsteps: [],
+  // Opaque, signed, expiring tokens for channel handoffs and guest entry.
+  // See domain/handoff.js. The token is the id; never stored in plaintext
+  // anywhere else.
+  handoffs: []
 };
 
 function ensureDir() {

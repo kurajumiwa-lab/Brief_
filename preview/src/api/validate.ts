@@ -41,7 +41,10 @@ import type {
   Signal,
   Transaction,
   Wallet,
-  PaymentIntent
+  PaymentIntent,
+  Vault,
+  Footstep,
+  VaultRequest
 } from './types';
 
 // --- primitives -------------------------------------------------------------
@@ -451,3 +454,33 @@ export function isPaymentIntent(v: unknown): v is PaymentIntent {
 }
 
 export const arePaymentIntents = (v: unknown) => all(v, isPaymentIntent);
+
+// --- The Vault ---------------------------------------------------------------
+
+export function isVault(v: unknown): v is Vault {
+  if (!isObj(v)) return false;
+  return (
+    isStr(v.id) && isStr(v.slug) && isStr(v.type) && isStr(v.title) &&
+    isStr(v.status) && isStr(v.visibility) && isStr(v.role) && isStr(v.createdAt) &&
+    isObj(v.metrics)
+  );
+}
+
+export const areVaults = (v: unknown) => all(v, isVault);
+
+export function isFootstep(v: unknown): v is Footstep {
+  if (!isObj(v)) return false;
+  return (
+    isStr(v.id) && isStr(v.vaultId) && isNum(v.seq) && isStr(v.kind) &&
+    isStr(v.category) && isStr(v.narrative) && isStr(v.createdAt)
+  );
+}
+
+export const areFootsteps = (v: unknown) => all(v, isFootstep);
+
+export function isVaultRequest(v: unknown): v is VaultRequest {
+  if (!isObj(v)) return false;
+  return isStr(v.id) && isStr(v.vaultId) && isStr(v.description) && isStr(v.status);
+}
+
+export const areVaultRequests = (v: unknown) => all(v, isVaultRequest);

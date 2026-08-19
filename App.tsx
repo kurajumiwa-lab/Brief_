@@ -7,6 +7,7 @@ import { Pulse } from './components/Pulse';
 import { SourcesPanel } from './components/SourcesPanel';
 import { ConnectedGroups } from './components/ConnectedGroups';
 import { MoneyPanel } from './components/MoneyPanel';
+import { Vault } from './components/vault/Vault';
 import { Circles } from './components/Circles';
 import { Marketplace } from './components/Marketplace';
 import { Pursuits } from './components/Pursuits';
@@ -127,7 +128,7 @@ export type MyLayerSection =
   | 'saved' | 'activity' | 'arena' | 'points' | 'circles' | 'groups' | 'campaigns';
 // Workflows secondary: a Journey is either in progress or finished. Inbox and
 // Sources are kept -- they are existing workflow surfaces, not new screens.
-export type WorkflowSection = 'active' | 'completed' | 'inbox' | 'sources' | 'money';
+export type WorkflowSection = 'active' | 'completed' | 'inbox' | 'sources' | 'money' | 'vault';
 // Pulse secondary. Pulse is the information layer: freshness, local signals,
 // what groups are surfacing, and emerging activity. It is not an assistant.
 export type PulseSection = 'now' | 'local' | 'groups' | 'signals';
@@ -6841,7 +6842,8 @@ export function App() {
                 // A SECTION inside Workflows, not a sixth destination. The
                 // rail stays five doors wide: Nearby / Arena / My Layer /
                 // Workflows / Pulse.
-                ['money', 'Money']
+                ['money', 'Money'],
+                ['vault', 'Vault']
               ] as [WorkflowSection, string][]).map(([id, label]) => (
                 <button
                   key={id}
@@ -9158,6 +9160,10 @@ export function App() {
           <div className="max-w-3xl mx-auto px-4 py-6">
             <MoneyPanel />
           </div>
+        )}
+
+        {activeTab === 'workflows' && workflowSection === 'vault' && (
+          <Vault />
         )}
 
         {activeTab === 'workflows' && workflowSection === 'sources' && (

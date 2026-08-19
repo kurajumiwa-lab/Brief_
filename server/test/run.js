@@ -4646,6 +4646,245 @@ console.log('\n=== AUCTION OVER HTTP ===');
   }
 }
 
+console.log('\n=== THE VAULT: IDENTITY, FOOTSTEPS, HANDOFF (domain) ===');
+{
+  process.env.HANDOFF_SECRET = 'vault-test-secret';
+  store._reset();
+  const vault = await import('../src/domain/vault.js');
+  const footsteps = await import('../src/domain/footsteps.js');
+  const handoff = await import('../src/domain/handoff.js');
+  const ordersD = await import('../src/domain/order.js');
+  const vendorsD = await import('../src/domain/vendor.js');
+  const listingsD = await import('../src/domain/listing.js');
+  const payD = await import('../src/domain/payment.js');
+
+  // --- creation ------------------------------------------------------------
+  const v = vault.createVault({
+    ownerId: 'usr_host', type: 'gathering', title: 'Rooftop Saturday',
+    description: 'A rooftop gathering', visibility: 'private', location: 'Kilimani'
+  });
+  check('a vault is created with a slug', Boolean(v.id) && Boolean(v.slug), v.slug);
+  check('the owner becomes the first host', vault.participantRole(store, 'usr_host', v.id) === 'host');
+  check('a vault_created footstep exists', store.filter('footsteps', (f) => f.vaultId === v.id).some((f) => f.kind === 'vault_created'));
+
+  // --- authorization -------------------------------------------------------
+  check('the owner has host access', vault.accessRole(store, 'usr_host', v.id) === 'host');
+  check('a stranger has no access', vault.accessRole(store, 'usr_other', v.id) === null);
+  check('only the host may edit', (() => { try { vault.updateVault('usr_other', v.id, { title: 'x' }); return false; } catch { return true; } })());
+
+  // --- participants --------------------------------------------------------
+  const guest = vault.addParticipant('usr_host', { vaultId: v.id, role: 'guest', userId: 'usr_guest', name: 'Jane' });
+  check('a guest participant is added', guest.role === 'guest');
+  check('the guest has guest access', vault.accessRole(store, 'usr_guest', v.id) === 'guest');
+  check('a guest cannot add participants', (() => { try { vault.addParticipant('usr_guest', { vaultId: v.id, role: 'admin', userId: 'x' }); return false; } catch { return true; } })());
+  check('a person_joined footstep recorded', store.filter('footsteps', (f) => f.vaultId === v.id).some((f) => f.kind === 'person_joined'));
+
+  // --- footsteps: ordering, category, immutability, dedupe ---------------
+  const r1 = footsteps.recordFootstep({ vaultId: v.id, kind: 'question_asked', actorId: 'usr_guest', actorName: 'Jane' });
+  const r2 = footsteps.recordFootstep({ vaultId: v.id, kind: 'host_responded', actorId: 'usr_host', actorName: 'Host' });
+  check('footsteps are sequenced', r1.footstep.seq < r2.footstep.seq, `${r1.footstep.seq} vs ${r2.footstep.seq}`);
+  check('footsteps carry a category', r1.footstep.category === 'messages');
+  check('footsteps are human-readable', /Jane/.test(r1.footstep.narrative), r1.footstep.narrative);
+
+  const list = footsteps.listFootsteps(v.id);
+  check('the timeline returns oldest-first', list.footsteps[0].kind === 'vault_created' && list.footsteps[list.footsteps.length - 1].kind === 'host_responded');
+  const onlyPeople = footsteps.listFootsteps(v.id, { category: 'messages' });
+  check('category filtering works', onlyPeople.footsteps.length === 2 && onlyPeople.footsteps.every((f) => f.category === 'messages'));
+
+  // dedupe: the same logical event must not be recorded twice.
+  const d1 = footsteps.recordFootstep({ vaultId: v.id, kind: 'payment_settled', actorId: 'usr_guest', dedupeKey: 'pay:settled:REF1' });
+  const d2 = footsteps.recordFootstep({ vaultId: v.id, kind: 'payment_settled', actorId: 'usr_guest', dedupeKey: 'pay:settled:REF1' });
+  check('a dedupe key prevents a duplicate footstep', d2.reused === true && d2.footstep.id === d1.footstep.id);
+
+  // cursor pagination
+  const all = footsteps.listFootsteps(v.id, { limit: 3 });
+  check('pagination returns a next cursor', all.nextCursor !== null);
+  const page2 = footsteps.listFootsteps(v.id, { cursor: all.nextCursor });
+  check('the second page continues after the cursor', page2.footsteps[0].seq > all.footsteps[all.footsteps.length - 1].seq);
+
+  // --- links + commerce wiring -------------------------------------------
+  const vendor = vendorsD.createVendor({ ownerId: 'usr_vendor', displayName: 'Catering Co' });
+  const listing = listingsD.createListing({ vendorId: vendor.id, title: 'Platters', type: 'service', price: 3000, currency: 'KES', quantityAvailable: 10 });
+  listingsD.transitionListing(listing.id, 'active');
+  const order = ordersD.createOrder({ listingId: listing.id, buyerId: 'usr_host', quantity: 2 });
+  check('an order exists with total 6000', order.total === 6000);
+
+  vault.linkVault('usr_host', v.id, { kind: 'order', id: order.id });
+  check('the vault links the order', vault.getVault(v.id).links.some((l) => l.kind === 'order' && l.id === order.id));
+  check('vaultsForOrder finds the vault', vault.vaultsForOrder(order.id).some((x) => x.id === v.id));
+
+  // Payment settles -> a footstep appears on the linked vault.
+  const { intent } = payD.createIntent({ orderId: order.id, payerId: 'usr_host', phone: '0722000111' });
+  store.update('paymentIntents', intent.id, { status: 'authorized', providerRef: 'ws_CO_VAULT' });
+  const confirmed = payD.confirmPayment({ providerRef: 'ws_CO_VAULT', succeeded: true, amount: 6000, receipt: 'REC_VAULT' });
+  check('payment confirmed', confirmed.ok === true);
+  vault.emitOrderFootsteps(order.id, 'payment_settled', { actorId: 'usr_host', value: 6000, dedupeKey: 'pay:settled:ws_CO_VAULT' });
+  const paymentSteps = store.filter('footsteps', (f) => f.vaultId === v.id && f.kind === 'payment_settled' && f.metadata?.orderId === order.id);
+  check('the vault timeline records the settlement', paymentSteps.length === 1);
+
+  // --- handoff: signed, expiring, replay-protected ------------------------
+  const h = handoff.createHandoff({ vaultId: v.id, participantId: guest.id, purpose: 'handoff', fromChannel: 'web', toChannel: 'telegram' });
+  check('a handoff token is created', h.ok === true && Boolean(h.token));
+  const resolved = handoff.resolveHandoff(h.token);
+  check('the handoff resolves to the vault + participant', resolved.ok === true && resolved.vaultId === v.id && resolved.participantId === guest.id);
+  const replay = handoff.resolveHandoff(h.token);
+  check('a handoff token is single-use (replay refused)', replay.ok === false && replay.reason === 'token_already_used');
+
+  // tampered token refused
+  const tampered = h.token.slice(0, -4) + 'AAAA';
+  check('a tampered token is refused', handoff.resolveHandoff(tampered).ok === false);
+
+  // expiry
+  const exp = handoff.createHandoff({ vaultId: v.id, participantId: guest.id, ttlMs: 1 });
+  await new Promise((r) => setTimeout(r, 5));
+  check('an expired token is refused', handoff.resolveHandoff(exp.token).ok === false && handoff.resolveHandoff(exp.token).reason === 'token_expired');
+
+  // --- requests ------------------------------------------------------------
+  const req = vault.createRequest('usr_guest', { vaultId: v.id, description: 'Need 10 extra chairs', kind: 'service' });
+  check('a request is created open', req.status === 'open');
+  vault.routeRequest('usr_host', { requestId: req.id, vendorId: vendor.id });
+  check('routing sets the vendor and status routed', store.find('vaultRequests', (r) => r.id === req.id).status === 'routed');
+  vault.acceptRequest('usr_vendor', { requestId: req.id });
+  check('the vendor accepts the request', store.find('vaultRequests', (r) => r.id === req.id).status === 'accepted');
+  check('a guest cannot route a request', (() => { try { vault.routeRequest('usr_guest', { requestId: req.id, vendorId: vendor.id }); return false; } catch { return true; } })());
+
+  // --- scoped views --------------------------------------------------------
+  const hostView = vault.vaultView('usr_host', v.id);
+  check('the host sees participants, links, requests', hostView.role === 'host' && Array.isArray(hostView.participants) && Array.isArray(hostView.links) && Array.isArray(hostView.requests));
+  const vendorView = vault.vaultView('usr_vendor', v.id);
+  check('the vendor sees only scoped requests', vendorView.role === 'vendor' && vendorView.requests.length === 1 && vendorView.participants === undefined);
+  const guestView = vault.vaultView('usr_guest', v.id);
+  check('the guest sees a minimal view', guestView.role === 'guest' && guestView.participant !== undefined && guestView.participants === undefined);
+  const publicView = vault.vaultView(null, v.id);
+  check('an anonymous viewer sees a public projection only', publicView.role === 'public' && publicView.participants === undefined && publicView.links === undefined);
+
+  // --- public entry --------------------------------------------------------
+  const pv = vault.createVault({ ownerId: 'usr_host', type: 'event', title: 'Pop-up Market', visibility: 'public' });
+  check('a public vault is publicly enterable', vault.isPubliclyEnterable(pv));
+  const entry = vault.publicEnter(pv.slug, { name: 'Wanjiku', channel: 'web' });
+  check('a guest enters a public vault with a token', entry.ok === true && Boolean(entry.token) && entry.participant.role === 'guest');
+  const privateEntry = vault.publicEnter(v.slug, { name: 'X' });
+  check('a PRIVATE vault refuses public entry', privateEntry.ok === false && privateEntry.reason === 'not_open');
+
+  // --- search --------------------------------------------------------------
+  const sr = vault.searchVaults('Wanjiku');
+  check('search finds a vault by participant name', sr.some((x) => x.vaultId === pv.id));
+  const sr2 = vault.searchVaults('chairs');
+  check('search finds a vault by request text', sr2.some((x) => x.vaultId === v.id));
+
+  // --- resolution ----------------------------------------------------------
+  const rl = vault.resolution();
+  check('resolution surfaces nothing for a settled vault', rl.filter((i) => i.vaultId === v.id && i.kind === 'payment_failed').length === 0);
+
+  // --- closure -------------------------------------------------------------
+  vault.closeVault('usr_host', v.id);
+  check('closing a vault marks it closed', vault.getVault(v.id).status === 'closed');
+  check('a vault_closed footstep exists', store.filter('footsteps', (f) => f.vaultId === v.id).some((f) => f.kind === 'vault_closed'));
+
+  delete process.env.HANDOFF_SECRET;
+}
+
+console.log('\n=== THE VAULT: HTTP SURFACE, SCOPED ACCESS, HANDOFF (over HTTP) ===');
+{
+  process.env.HANDOFF_SECRET = 'vault-test-secret';
+  process.env.NODE_ENV = 'test';
+  const { default: app } = await import('../src/index.js');
+  store._reset();
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token, extraHeaders = {}) => {
+    const headers = { ...extraHeaders };
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, {
+      method, headers, body: body ? JSON.stringify(body) : undefined
+    });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+
+  try {
+    const HOST = (await call('/api/auth/register', 'POST', { handle: 'vhost', password: 'a good passphrase' })).body;
+    const GUEST = (await call('/api/auth/register', 'POST', { handle: 'vguest', password: 'a good passphrase' })).body;
+    const VENDOR = (await call('/api/auth/register', 'POST', { handle: 'vvendor', password: 'a good passphrase' })).body;
+    const STRANGER = (await call('/api/auth/register', 'POST', { handle: 'vstranger', password: 'a good passphrase' })).body;
+
+    // create a vault
+    let r = await call('/api/vaults', 'POST', { type: 'gathering', title: 'Rooftop', visibility: 'private' }, HOST.token);
+    check('HTTP: a vault is created', r.status === 201 && Boolean(r.body?.vault?.id), JSON.stringify(r.body).slice(0, 120));
+    const vaultId = r.body.vault.id;
+    check('HTTP: creator sees role host', r.body.vault.role === 'host');
+
+    // authorization
+    r = await call(`/api/vaults/${vaultId}`, 'GET', undefined, STRANGER.token);
+    check('HTTP: a stranger cannot read a private vault (404)', r.status === 404, `got ${r.status}`);
+    r = await call('/api/vaults', 'GET', undefined, STRANGER.token);
+    check('HTTP: a stranger lists no vaults', r.body?.vaults?.length === 0);
+
+    // add guest + vendor
+    r = await call(`/api/vaults/${vaultId}/participants`, 'POST', { role: 'guest', userId: GUEST.user.id, name: 'Jane' }, HOST.token);
+    check('HTTP: host adds a guest', r.status === 201);
+    r = await call(`/api/vaults/${vaultId}/participants`, 'POST', { role: 'vendor', userId: VENDOR.user.id, name: 'Catering' }, HOST.token);
+    check('HTTP: host adds a vendor', r.status === 201);
+
+    // footsteps via HTTP
+    r = await call(`/api/vaults/${vaultId}/footsteps`, 'POST', { kind: 'question_asked', actorName: 'Jane' }, GUEST.token);
+    check('HTTP: a participant records a footstep', r.status === 201 && r.body?.footstep?.category === 'messages');
+    r = await call(`/api/vaults/${vaultId}/footsteps`, 'GET', undefined, GUEST.token);
+    check('HTTP: footsteps are readable and ordered', r.status === 200 && r.body?.footsteps?.length >= 2);
+    r = await call(`/api/vaults/${vaultId}/footsteps`, 'GET', undefined, STRANGER.token);
+    check('HTTP: a stranger cannot read footsteps (404)', r.status === 404);
+
+    // vendor scoping over HTTP
+    const vendorId = (await call('/api/vendors', 'POST', { displayName: 'Catering Co' }, VENDOR.token)).body.vendor.id;
+    r = await call(`/api/vaults/${vaultId}/requests`, 'POST', { description: 'Chairs', kind: 'service' }, GUEST.token);
+    const requestId = r.body.request.id;
+    r = await call(`/api/vaults/${vaultId}/requests/${requestId}/route`, 'POST', { vendorId }, HOST.token);
+    check('HTTP: host routes a request to the vendor', r.status === 200 && r.body.request.status === 'routed');
+    r = await call(`/api/vaults/${vaultId}`, 'GET', undefined, VENDOR.token);
+    check('HTTP: the vendor sees only scoped requests', r.body.vault.role === 'vendor' && r.body.vault.requests.length === 1 && r.body.vault.participants === undefined);
+
+    // handoff over HTTP
+    const participant = (await call(`/api/vaults/${vaultId}`, 'GET', undefined, GUEST.token)).body.vault.participant;
+    r = await call(`/api/vaults/${vaultId}/handoff`, 'POST', { participantId: participant.id, toChannel: 'telegram' }, HOST.token);
+    check('HTTP: host creates a handoff token', r.status === 201 && Boolean(r.body?.token));
+    const token = r.body.token;
+    r = await call('/api/vaults/handoff/resolve', 'POST', { token });
+    check('HTTP: the handoff resolves to the same vault', r.status === 200 && r.body?.vault?.id === vaultId);
+    r = await call('/api/vaults/handoff/resolve', 'POST', { token });
+    check('HTTP: a replayed handoff is refused (403)', r.status === 403 && r.body?.error === 'token_already_used');
+
+    // public entry
+    r = await call('/api/vaults', 'POST', { type: 'event', title: 'Public Market', visibility: 'public' }, HOST.token);
+    const pubSlug = r.body.vault.slug;
+    r = await call(`/api/public/vaults/${pubSlug}`, 'GET');
+    check('HTTP: a public vault is readable anonymously', r.status === 200 && r.body.vault.role === 'public' && r.body.vault.participants === undefined);
+    r = await call(`/api/public/vaults/${pubSlug}/enter`, 'POST', { name: 'Wanjiku' });
+    check('HTTP: a guest enters via a public link', r.status === 201 && Boolean(r.body?.token));
+    const entryToken = r.body.token;
+    r = await call(`/api/vaults/${vaultId}`, 'GET', undefined, null, { 'x-vault-token': entryToken });
+    check('HTTP: a public entry token cannot read a DIFFERENT private vault', r.status === 404);
+
+    // private vault is not public
+    r = await call(`/api/public/vaults/${(await call(`/api/vaults/${vaultId}`, 'GET', undefined, HOST.token)).body.vault.slug}`, 'GET');
+    check('HTTP: a private vault is not publicly readable', r.status === 404);
+
+    // search + resolution
+    r = await call('/api/vaults/search?q=chairs', 'GET', undefined, HOST.token);
+    check('HTTP: search finds the vault by request text', r.status === 200 && r.body.results.some((x) => x.vaultId === vaultId));
+    r = await call('/api/vaults/resolution', 'GET', undefined, HOST.token);
+    check('HTTP: resolution returns an array', r.status === 200 && Array.isArray(r.body.items));
+
+    // close
+    r = await call(`/api/vaults/${vaultId}/close`, 'POST', {}, HOST.token);
+    check('HTTP: host closes the vault', r.status === 200 && r.body.vault.status === 'closed');
+    r = await call(`/api/vaults/${vaultId}/close`, 'POST', {}, GUEST.token);
+    check('HTTP: a guest cannot close the vault (403)', r.status === 403);
+  } finally {
+    srv.close();
+    delete process.env.HANDOFF_SECRET;
+  }
+}
+
 console.log(`\n${'='.repeat(52)}\nPASSED ${pass}   FAILED ${fail}   SKIPPED ${skip}\n${'='.repeat(52)}`);
 process.exit(fail ? 1 : 0);
 
