@@ -4986,6 +4986,48 @@ console.log('\n=== THE GATE: TICKET CODES + CHECK-IN (domain + HTTP) ===');
   }
 }
 
+console.log('\n=== HOST COMMAND CENTRE (derived, scoped) ===');
+{
+  store._reset();
+  const campaigns = await import('../src/domain/campaign.js');
+  const command = await import('../src/domain/command.js');
+  const ledgerD = await import('../src/domain/ledger.js');
+  const vault = await import('../src/domain/vault.js');
+
+  // A host with a paid campaign, one settled + one held registration.
+  const c = campaigns.createCampaign('usr_host', { title: 'Command Gathering', type: 'event', price: 1000 });
+  campaigns.transitionCampaign(c.id, 'published');
+  campaigns.transitionCampaign(c.id, 'live');
+  const live = campaigns.getCampaign(c.id);
+  const reg = campaigns.register(live, { attendeeRef: 'cmd-1', name: 'Alice' });
+  // Settle a transaction for Alice so she registers + revenue is real.
+  const tx = ledgerD.createTransaction({ amount: 1000, currency: 'KES', type: 'sale', campaignId: c.id, registrationId: reg.id, counterparty: 'usr_guest' });
+  ledgerD.transitionTransaction(tx.id, 'pending');
+  ledgerD.transitionTransaction(tx.id, 'confirmed');
+  ledgerD.transitionTransaction(tx.id, 'settled');
+  campaigns.promoteRegistrationForSettledTransaction(tx);
+  campaigns.setRegistrationStatus(reg.id, 'checked_in');
+  // A second, held (unpaid) registration.
+  const held = campaigns.register(live, { attendeeRef: 'cmd-2', name: 'Bob' });
+
+  const cc = command.commandCentre('usr_host');
+  check('command centre resolves for the host', cc !== null);
+  check('money.settled is real (1000)', cc.money.grossSettled === 1000, JSON.stringify(cc.money));
+  check('people.checkedIn is derived (1)', cc.people.checkedIn === 1, String(cc.people.checkedIn));
+  check('people.registered is derived (1)', cc.people.registered === 1, String(cc.people.registered));
+  check('an unpaid held spot appears in NOW', cc.now.some((n) => n.kind === 'unpaid_spot' && n.name === 'Bob'), JSON.stringify(cc.now));
+
+  // A different host sees nothing.
+  const stranger = command.commandCentre('usr_stranger');
+  check('a stranger sees an empty command centre', stranger !== null && stranger.money.grossSettled === 0 && stranger.campaigns.length === 0);
+
+  // Scope: a vault owned by the host appears; one owned by another does not.
+  vault.createVault({ ownerId: 'usr_host', title: 'My Vault', type: 'gathering' });
+  vault.createVault({ ownerId: 'usr_stranger', title: 'Their Vault', type: 'gathering' });
+  const cc2 = command.commandCentre('usr_host');
+  check('the host sees their own vault count', cc2.vaultCount === 1, String(cc2.vaultCount));
+}
+
 console.log(`\n${'='.repeat(52)}\nPASSED ${pass}   FAILED ${fail}   SKIPPED ${skip}\n${'='.repeat(52)}`);
 process.exit(fail ? 1 : 0);
 

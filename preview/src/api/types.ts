@@ -598,6 +598,8 @@ export interface PublicCampaign {
   capacity: number | null;
   remaining: number | null;
   soldOut: boolean;
+  /** Aggregate social proof: HOW MANY are registered, never WHO. */
+  registered: number;
 }
 
 export interface Registration {
@@ -609,6 +611,8 @@ export interface Registration {
   status: RegistrationStatus;
   createdAt: string;
   updatedAt: string;
+  /** The attendee's own gate credential, present on their own registration. */
+  ticketCode?: string | null;
 }
 
 
@@ -1265,4 +1269,46 @@ export interface CheckInResult {
   already?: boolean;
   ticket?: Ticket;
   checkedInCount?: number;
+}
+
+// ---------------------------------------------------------------------------
+// HOST COMMAND CENTRE
+//
+// A host-facing projection derived from real rows: NOW / MONEY / PEOPLE /
+// DISTRIBUTION / ACTION / NEXT. Every figure is server-derived; the client
+// renders it and computes nothing.
+// ---------------------------------------------------------------------------
+
+export interface CommandCentre {
+  money: {
+    grossSettled: number;
+    grossPending: number;
+    currency: string;
+    campaignCount: number;
+  };
+  people: { registered: number; checkedIn: number; cancelled: number };
+  distribution: { views: number; shares: number };
+  now: { kind: string; campaignId: string; campaignTitle: string; name: string; registrationId: string }[];
+  upcoming: { id: string; title: string; startsAt: string; status: string }[];
+  action: ResolutionItem[];
+  campaigns: {
+    id: string;
+    title: string;
+    type: string;
+    status: string;
+    startsAt: string | null;
+    price: number;
+    currency: string;
+    capacity: number | null;
+    remaining: number | null;
+    soldOut: boolean;
+    registered: number;
+    checkedIn: number;
+    revenueSettled: number;
+    revenuePending: number;
+    views: number;
+    shares: number;
+    conversionPct: number | null;
+  }[];
+  vaultCount: number;
 }

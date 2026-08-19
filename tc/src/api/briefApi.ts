@@ -73,7 +73,8 @@ import type {
   ResolutionItem,
   VaultEntry,
   Ticket,
-  CheckInResult
+  CheckInResult,
+  CommandCentre
 } from './types';
 import { asTarget } from './types';
 import {
@@ -84,7 +85,7 @@ import {
   areSources, areRawItems, isBriefItPreview, isVoteTally, isMemberEvidence,
   isVendor, areVendors, isListing, areListings, isOrder, areOrders,
   isDispute, areDisputes, isPaymentIntent, arePaymentIntents,
-  isVault, areVaults, isFootstep, areFootsteps, isVaultRequest, areVaultRequests, isTicket
+  isVault, areVaults, isFootstep, areFootsteps, isVaultRequest, areVaultRequests, isTicket, isCommandCentre
 } from './validate';
 
 /**
@@ -656,7 +657,7 @@ export function getPublicCampaign(slug: string): Promise<ApiResult<PublicCampaig
 }
 
 export interface PublicRegisterResult {
-  registration: { id: string; status: RegistrationStatus; createdAt: string };
+  registration: { id: string; status: RegistrationStatus; createdAt: string; ticketCode?: string | null };
   campaign: PublicCampaign;
 }
 
@@ -1332,5 +1333,12 @@ export function getTicket(code: string): Promise<ApiResult<Ticket>> {
 export function checkInTicket(code: string): Promise<ApiResult<CheckInResult>> {
   return request(`/api/tickets/${encodeURIComponent(code)}/check-in`, { method: 'POST', body: '{}' }, (r) =>
     r && typeof r === 'object' ? (r as CheckInResult) : undefined
+  );
+}
+
+/** The host command centre: derived figures across the caller's campaigns + vaults. */
+export function getCommandCentre(): Promise<ApiResult<CommandCentre>> {
+  return request('/api/host/command', undefined, (r) =>
+    isCommandCentre(r?.command) ? r.command : undefined
   );
 }

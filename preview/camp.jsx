@@ -154,7 +154,8 @@ const publicCampaign = (over) =>
       currency: 'KES',
       capacity: 100,
       remaining: 18,
-      soldOut: false
+      soldOut: false,
+      registered: 82
     },
     over || {}
   );

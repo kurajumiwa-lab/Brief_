@@ -38,9 +38,21 @@ import * as auctions from './domain/auction.js';
 import * as vault from './domain/vault.js';
 import * as footsteps from './domain/footsteps.js';
 import * as handoff from './domain/handoff.js';
+import * as command from './domain/command.js';
 import * as ops from './ops.js';
 
 const app = express();
+
+// HTML-escape for meta-tag injection: a campaign title or description is
+// user-authored and must never break out of an attribute/string context.
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 // The compiled React/Vite frontend, served by Express in production. Resolved
 // from THIS file's location (server/src) so it is correct regardless of the
@@ -2432,6 +2444,17 @@ app.get('/api/economic/payments/reconcile', (req, res) => {
   res.json({ reconciliation: payment.reconcileIntents() });
 });
 
+/**
+ * The host command centre: NOW / MONEY / PEOPLE / DISTRIBUTION / ACTION / NEXT,
+ * derived from real rows. Host-only, and scoped to the caller's own campaigns
+ * and vaults — a host never sees another host's figures.
+ */
+app.get('/api/host/command', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  res.json({ command: command.commandCentre(me) });
+});
+
 app.get('/api/economic/reconcile', (_req, res) => {
   res.json({ reconciliation: settlement.reconcile() });
 });
@@ -3037,6 +3060,53 @@ const servingFrontend =
   fs.existsSync(path.join(FRONTEND_DIST, 'index.html'));
 
 if (servingFrontend) {
+  const indexHtml = fs.readFileSync(path.join(FRONTEND_DIST, 'index.html'), 'utf8');
+
+  // Open Graph / social preview injection.
+  //
+  // Link crawlers (WhatsApp, Telegram, X, Facebook) do NOT run JavaScript, so
+  // the SPA's static index.html shows no preview. This route renders a small
+  // HTML shell for /c/:slug with og:*/twitter:* meta filled from the campaign's
+  // publicView, then still loads the same SPA bundle so a real browser gets the
+  // full app. No private data is emitted: only the public projection.
+  app.get('/c/:slug', (req, res) => {
+    const c = campaigns.getPublicBySlug(req.params.slug);
+    if (!c) {
+      // Not found / not public: fall through to the SPA shell, which renders
+      // its honest "not available" state.
+      return res.type('html').send(indexHtml);
+    }
+    const pv = campaigns.publicView(c);
+    const title = pv.title;
+    const desc = pv.description || 'A gathering on Brief';
+    const origin = process.env.BRIEF_PUBLIC_ORIGIN
+      ? process.env.BRIEF_PUBLIC_ORIGIN.replace(/\/+$/, '')
+      : null;
+    const url = origin ? `${origin}/c/${pv.slug}` : null;
+    const image = pv.image ?? null;
+
+    const tags = [
+      `<meta property="og:type" content="website" />`,
+      `<meta property="og:title" content="${escapeHtml(title)}" />`,
+      `<meta property="og:description" content="${escapeHtml(desc)}" />`,
+      `<meta name="twitter:card" content="${image ? 'summary_large_image' : 'summary'}" />`,
+      `<meta name="twitter:title" content="${escapeHtml(title)}" />`,
+      `<meta name="twitter:description" content="${escapeHtml(desc)}" />`,
+      ...(url ? [`<meta property="og:url" content="${escapeHtml(url)}" />`] : []),
+      // Only a real image is emitted -- never a placeholder.
+      ...(image ? [
+        `<meta property="og:image" content="${escapeHtml(image)}" />`,
+        `<meta name="twitter:image" content="${escapeHtml(image)}" />`
+      ] : [])
+    ].join('\n    ');
+
+    const html = indexHtml.replace(
+      /<title>.*?<\/title>/,
+      `<title>${escapeHtml(title)}</title>\n    ${tags}`
+    );
+    res.type('html').send(html);
+  });
+
   // Static assets: JS/CSS bundles, images, etc. `index: false` so '/' is
   // handled by the explicit fallback below rather than a silent directory
   // serve, and so an asset miss is not masked by a directory index.

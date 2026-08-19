@@ -364,6 +364,9 @@ export function publicView(campaign) {
     capacity: campaign.capacity,
     remaining: m.remaining,
     soldOut: m.remaining === 0,
+    // Aggregate social proof: HOW MANY are registered, never WHO. This is a
+    // counted fact ("42 registered"), not a roster.
+    registered: m.registrations,
     // Share metadata. Only what a link preview legitimately needs, and only
     // when it actually exists -- no placeholder image, no invented creator
     // name. `creator` is a display label, never the internal ownerId.

@@ -45,7 +45,8 @@ import type {
   Vault,
   Footstep,
   VaultRequest,
-  Ticket
+  Ticket,
+  CommandCentre
 } from './types';
 
 // --- primitives -------------------------------------------------------------
@@ -231,7 +232,8 @@ export function isPublicCampaign(v: unknown): v is PublicCampaign {
   if ('ownerId' in v || 'id' in v || 'objectId' in v || 'metrics' in v) return false;
   return (
     isStr(v.slug) && isStr(v.title) && isStr(v.status) &&
-    isNum(v.price) && isStr(v.currency) && isNumOrNull(v.remaining)
+    isNum(v.price) && isStr(v.currency) && isNumOrNull(v.remaining) &&
+    isNum(v.registered)
   );
 }
 
@@ -491,5 +493,16 @@ export function isTicket(v: unknown): v is Ticket {
   return (
     isStr(v.code) && isStr(v.campaignId) && isStr(v.status) && isBool(v.paid) &&
     isStrOrNull(v.checkedInAt) && isStrOrNull(v.checkedInBy)
+  );
+}
+
+export function isCommandCentre(v: unknown): v is CommandCentre {
+  if (!isObj(v)) return false;
+  return (
+    isObj(v.money) && isNum(v.money.grossSettled) && isNum(v.money.grossPending) &&
+    isObj(v.people) && isNum(v.people.registered) &&
+    isObj(v.distribution) && isNum(v.distribution.views) &&
+    Array.isArray(v.now) && Array.isArray(v.upcoming) && Array.isArray(v.action) &&
+    Array.isArray(v.campaigns) && isNum(v.vaultCount)
   );
 }
