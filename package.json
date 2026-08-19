@@ -18,7 +18,10 @@
     "test": "cd server && npm test",
     "test:client": "./run-suites.sh",
     "test:typecheck": "cd tc && npx tsc -p tsconfig.json",
-    "demo:vault": "node scripts/demo-vault.mjs"
+    "demo:vault": "node scripts/demo-vault.mjs",
+    "seed": "node scripts/seed-demo.mjs",
+    "seed:clear": "node scripts/seed-demo.mjs --clear",
+    "smoke:seeded": "node scripts/smoke-seeded.mjs"
   },
   "engines": {
     "node": ">=18.0.0",

@@ -7299,7 +7299,7 @@ export function App() {
                 {/* A search that finds nothing is the clearest signal of
                     intent Brief ever gets. Rather than a dead end, offer to
                     keep pursuing it as information arrives. */}
-                {searchQuery.trim() !== '' && (
+                {searchQuery.trim() !== '' ? (
                   <div className="mt-4">
                     <p className="text-[11px] text-[#5C6B52] mb-2">
                       Brief has not seen anything matching this yet.
@@ -7311,6 +7311,12 @@ export function App() {
                       Keep pursuing "{searchQuery.trim()}"
                     </button>
                   </div>
+                ) : (
+                  <p className="text-[11px] text-[#5C6B52] mt-4 max-w-xs mx-auto leading-relaxed">
+                    Everything here arrives from the communities and sources
+                    Brief is connected to. Connect a source or capture
+                    something in Workflows → Sources.
+                  </p>
                 )}
               </div>
             )}
