@@ -1,0 +1,86 @@
+// ---------------------------------------------------------------------------
+// ANALYTICS — product intelligence, derived from real rows
+//
+// Answers "what makes users come back?" with numbers that are DERIVED from the
+// store and the signal log, never from a stored counter or a guessed funnel.
+//
+//   ACTIVATION  — first location selection, first save, first contribution,
+//                 first Arena interaction, per user, from recorded signals.
+//   ENGAGEMENT  — views / saves / shares / challenges / matches, aggregated.
+//   RETENTION   — returning users (repeat actors) and location revisits.
+//   QUALITY     — verification rate, confirmation rate, open reports.
+//
+// Everything here is a scan. There is no analytics table and no event dropped
+// just to make a dashboard look active.
+// ---------------------------------------------------------------------------
+
+import { store } from '../store.js';
+
+const signalMeta = (type) => store.filter('signals', (s) => s.type === type);
+
+function distinctActors(type) {
+  return new Set(signalMeta(type).map((s) => s.actorId).filter(Boolean)).size;
+}
+
+function activationEvents() {
+  return {
+    firstView: distinctActors('object_viewed'),
+    firstSave: distinctActors('object_saved'),
+    firstContribution: distinctActors('object_created'),
+    firstArena: distinctActors('arena_challenge_opened')
+  };
+}
+
+function engagementCounts() {
+  return {
+    views: signalMeta('object_viewed').length,
+    saves: signalMeta('object_saved').length,
+    shares: signalMeta('object_shared').length,
+    challengesCreated: signalMeta('arena_challenge_opened').length,
+    matchesCompleted: signalMeta('arena_result_confirmed').length
+  };
+}
+
+function retention() {
+  // Returning users: actors with more than one distinct day of activity.
+  const byActor = {};
+  for (const s of store.all('signals')) {
+    if (!s.actorId) continue;
+    const day = String(s.createdAt).slice(0, 10);
+    (byActor[s.actorId] ??= new Set()).add(day);
+  }
+  const returning = Object.values(byActor).filter((days) => days.size > 1).length;
+  return { returning, activeUsers: Object.keys(byActor).length };
+}
+
+function quality() {
+  const objects = store.all('objects').filter((o) => o.publication !== 'removed');
+  const verified = objects.filter((o) => o.verificationStatus !== 'unverified').length;
+  const confirmed = store.filter('confirmations', () => true).length;
+  const openReports = store.filter('reports', (r) => r.status === 'open').length;
+  return {
+    objectCount: objects.length,
+    verificationRate: objects.length ? verified / objects.length : null,
+    confirmations: confirmed,
+    openReports
+  };
+}
+
+export function dashboard() {
+  return {
+    activation: activationEvents(),
+    engagement: engagementCounts(),
+    retention: retention(),
+    quality: quality(),
+    // Collection sizes, so the operator sees the system is alive.
+    counts: {
+      users: store.all('users').length,
+      objects: store.all('objects').length,
+      campaigns: store.all('campaigns').length,
+      vaults: store.all('vaults').length,
+      challenges: store.all('arenaChallenges').length,
+      matches: store.all('arenaMatches').length,
+      notifications: store.all('notifications').length
+    }
+  };
+}

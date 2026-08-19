@@ -5048,6 +5048,101 @@ console.log('\n=== HOST COMMAND CENTRE (derived, scoped) ===');
   check('the host sees their own vault count', cc2.vaultCount === 1, String(cc2.vaultCount));
 }
 
+console.log('\n=== TRUST, DISCOVERY, NOTIFICATIONS, ANALYTICS, ARENA ENTITIES ===');
+{
+  store._reset();
+  const trust = await import('../src/domain/trust.js');
+  const discovery = await import('../src/domain/discovery.js');
+  const notifications = await import('../src/domain/notifications.js');
+  const analytics = await import('../src/domain/analytics.js');
+  const arena = await import('../src/domain/arena.js');
+  const signals = await import('../src/domain/signal.js');
+
+  // --- geo ------------------------------------------------------------------
+  check('haversine is ~111km per degree at equator', Math.round(discovery.haversineKm(0, 0, 0, 1)) === 111);
+  check('same point is 0km', discovery.haversineKm(-1.28, 36.82, -1.28, 36.82) === 0);
+
+  // --- objects with location + verification --------------------------------
+  const o1 = store.insert('objects', { id: 'obj_nb', type: 'place', title: 'Nairobi Cafe', publication: 'public', verificationStatus: 'unverified', createdAt: new Date().toISOString(), metadata: { lat: -1.28, lng: 36.82 } });
+  const o2 = store.insert('objects', { id: 'obj_ksm', type: 'place', title: 'Kisumu Spot', publication: 'public', verificationStatus: 'unverified', createdAt: new Date().toISOString(), metadata: { lat: -0.09, lng: 34.76 } });
+  const o3 = store.insert('objects', { id: 'obj_noloc', type: 'place', title: 'No Location', publication: 'public', verificationStatus: 'unverified', createdAt: new Date().toISOString(), metadata: {} });
+
+  // --- ranking: trust + freshness ------------------------------------------
+  check('unverified objects have the base trust level', trust.verificationLevel('obj_nb') === 'unverified');
+  trust.confirmObject('obj_nb', 'usr_a');
+  trust.confirmObject('obj_nb', 'usr_b');
+  check('two independent confirmations reach community_confirmed', trust.verificationLevel('obj_nb') === 'community_confirmed');
+  check('confirmation count is derived (2)', trust.confirmationCount('obj_nb') === 2);
+
+  // re-confirm is idempotent
+  const re = trust.confirmObject('obj_nb', 'usr_a');
+  check('re-confirming is a no-op', re.reused === true && trust.confirmationCount('obj_nb') === 2);
+
+  // --- reporting ------------------------------------------------------------
+  const { report } = trust.reportObject({ objectId: 'obj_ksm', actorId: 'usr_c', reason: 'spam' });
+  check('a report is created open', report.status === 'open');
+  const dup = trust.reportObject({ objectId: 'obj_ksm', actorId: 'usr_c', reason: 'spam' });
+  check('a duplicate report is reused, not stacked', dup.reused === true);
+  check('open reports are listed', trust.openReports().length === 1);
+
+  trust.resolveReport(report.id, 'usr_admin', 'remove');
+  check('resolving remove takes the object out of discovery', store.find('objects', (o) => o.id === 'obj_ksm').publication === 'removed');
+  check('the object row is preserved (not deleted)', store.find('objects', (o) => o.id === 'obj_ksm') !== null);
+
+  // --- reputation (derived) -------------------------------------------------
+  const rep = trust.reputation('usr_a');
+  check('reputation is derived from real acts', rep !== null && rep.confirmations === 1 && rep.signal > 0);
+
+  // --- discovery ranking ----------------------------------------------------
+  const ranked = discovery.discoverable({ limit: 10 });
+  check('removed objects are excluded from discovery', !ranked.some((o) => o.id === 'obj_ksm'));
+  check('a confirmed object outranks an unconfirmed one', ranked[0].id === 'obj_nb', ranked.map((o) => o.id).join(','));
+
+  const near = discovery.discoverable({ near: { lat: -1.28, lng: 36.82 }, radiusKm: 5 });
+  check('distance discovery returns the nearby object first', near[0].id === 'obj_nb' && near[0].distanceKm !== null, near.map((o) => `${o.id}:${o.distanceKm}`).join(','));
+
+  // --- expiry ---------------------------------------------------------------
+  const stale = store.insert('objects', { id: 'obj_old', type: 'event', title: 'Old Event', publication: 'public', verificationStatus: 'unverified', validityWindowDays: 1, createdAt: new Date(Date.now() - 3 * 86400000).toISOString(), metadata: {} });
+  discovery.sweepExpired();
+  check('an expired object is marked stale', store.find('objects', (o) => o.id === 'obj_old').expiryStatus === 'expired');
+  check('stale objects are excluded by default', !discovery.discoverable().some((o) => o.id === 'obj_old'));
+
+  // --- notifications --------------------------------------------------------
+  notifications.notify('usr_a', { kind: 'confirmed', title: 'Someone confirmed your info', objectId: 'obj_nb' });
+  notifications.notify('usr_a', { kind: 'challenge', title: 'Challenge accepted' });
+  check('notifications are listed newest-first', notifications.listNotifications('usr_a').length === 2 && notifications.listNotifications('usr_a')[0].title === 'Challenge accepted');
+  check('unread count is derived', notifications.unreadCount('usr_a') === 2);
+  notifications.markAllRead('usr_a');
+  check('mark-all-read clears the unread count', notifications.unreadCount('usr_a') === 0);
+  check('a notification for another user is not visible', notifications.listNotifications('usr_b').length === 0);
+
+  // --- analytics ------------------------------------------------------------
+  signals.emitSignal({ type: 'object_viewed', actorId: 'usr_a', objectId: 'obj_nb' });
+  signals.emitSignal({ type: 'object_saved', actorId: 'usr_b', objectId: 'obj_nb' });
+  const dash = analytics.dashboard();
+  check('analytics counts engagement', dash.engagement.views === 1 && dash.engagement.saves === 1);
+  check('analytics reports quality', typeof dash.quality.verificationRate === 'number');
+
+  // --- arena entities -------------------------------------------------------
+  const p1 = arena.createPlayer({ userId: 'usr_p1', gameId: 'efootball', gamerTag: 'P1' });
+  const p2 = arena.createPlayer({ userId: 'usr_p2', gameId: 'efootball', gamerTag: 'P2' });
+  check('players are real records, one per (user, game)', p1.id !== p2.id && arena.listPlayers({ gameId: 'efootball' }).length === 2);
+  const venue = arena.createVenue({ name: 'GameHub Kilimani', gameIds: ['efootball'], lat: -1.28, lng: 36.82 });
+  check('venues are filterable by game', arena.listVenues({ gameId: 'efootball' }).length === 1 && arena.listVenues({ gameId: 'cod_mobile' }).length === 0);
+  const trn = arena.createTournament({ gameId: 'efootball', title: 'Kilimani Cup', createdBy: 'usr_admin' });
+  check('tournaments are created open', trn.status === 'open');
+
+  // leaderboard derives from confirmed results only
+  const ch = arena.createChallenge({ createdBy: p1.id, gameId: 'efootball', stake: 'friendly' });
+  const { match } = arena.acceptChallenge(ch.id, p2.id);
+  arena.reportResult(match.id, p1.id, { winnerPlayerId: p1.id });
+  arena.confirmResult(match.id, p2.id, { winnerPlayerId: p1.id });
+  arena.recordResult(match.id);
+  const board = arena.leaderboard('efootball');
+  check('the leaderboard is derived from the confirmed result', board.length === 2 && board[0].playerId === p1.id && board[0].won === 1, JSON.stringify(board));
+  check('recordResult is idempotent', arena.recordResult(match.id).reused === true);
+}
+
 console.log(`\n${'='.repeat(52)}\nPASSED ${pass}   FAILED ${fail}   SKIPPED ${skip}\n${'='.repeat(52)}`);
 process.exit(fail ? 1 : 0);
 

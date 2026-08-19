@@ -766,6 +766,52 @@ export function getObjects(publication?: string): Promise<ApiResult<any[]>> {
   );
 }
 
+/** The ranked discovery feed: freshness + trust + engagement, optionally geo-scoped. */
+export function discoverObjects(opts: { lat?: number; lng?: number; radiusKm?: number; limit?: number } = {}): Promise<ApiResult<any[]>> {
+  const params = new URLSearchParams({ rank: '1' });
+  if (opts.lat !== undefined) params.set('lat', String(opts.lat));
+  if (opts.lng !== undefined) params.set('lng', String(opts.lng));
+  if (opts.radiusKm !== undefined) params.set('radiusKm', String(opts.radiusKm));
+  if (opts.limit !== undefined) params.set('limit', String(opts.limit));
+  return request(`/api/objects?${params.toString()}`, undefined, (r) =>
+    Array.isArray(r?.objects) ? r.objects : undefined
+  );
+}
+
+/** Confirm an object as accurate. Idempotent per user. */
+export function confirmObject(id: string): Promise<ApiResult<{ verificationStatus: string; confirmationCount: number }>> {
+  return request(`/api/objects/${encodeURIComponent(id)}/confirm`, { method: 'POST', body: '{}' }, (r) =>
+    typeof r?.verificationStatus === 'string' ? r : undefined
+  );
+}
+
+/** Report an object as wrong/spam/offensive. */
+export function reportObject(id: string, reason: string): Promise<ApiResult<any>> {
+  return request(`/api/objects/${encodeURIComponent(id)}/report`, { method: 'POST', body: JSON.stringify({ reason }) }, (r) => (r?.report ? r : undefined));
+}
+
+export interface Notification {
+  id: string;
+  kind: string;
+  title: string;
+  body: string | null;
+  objectId: string | null;
+  read: boolean;
+  createdAt: string;
+}
+
+export function getNotifications(unreadOnly = false): Promise<ApiResult<{ notifications: Notification[]; unread: number }>> {
+  const q = unreadOnly ? '?unread=1' : '';
+  return request(`/api/notifications${q}`, undefined, (r) =>
+    Array.isArray(r?.notifications) ? r : undefined
+  );
+}
+
+export function markNotificationsRead(idOrAll?: string): Promise<ApiResult<any>> {
+  const body = idOrAll === undefined ? { all: true } : { id: idOrAll };
+  return request('/api/notifications/read', { method: 'POST', body: JSON.stringify(body) }, (r) => r);
+}
+
 // ---------------------------------------------------------------------------
 // SOURCES
 //

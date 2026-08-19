@@ -104,7 +104,29 @@ const EMPTY = {
   // Opaque, signed, expiring tokens for channel handoffs and guest entry.
   // See domain/handoff.js. The token is the id; never stored in plaintext
   // anywhere else.
-  handoffs: []
+  handoffs: [],
+
+  // --- Trust & integrity ---------------------------------------------------
+  // Community confirmation of an object: one row per (object, actor). Tallies
+  // are DERIVED by scanning these, never stored — same rule as votes and money.
+  confirmations: [],
+  // Abuse/spam reports. A report is a request for review, not a removal: it
+  // has a lifecycle (open -> dismissed / actioned) and never auto-deletes.
+  reports: [],
+  // In-app notifications. A notification is a real, derived event (something
+  // was confirmed, a challenge was accepted, a saved thing changed). Push is a
+  // separate, still-unconnected rail — these are the local inbox.
+  notifications: [],
+  // Append-only audit trail of consequential mutations (who/what/when/from/to).
+  // Never pruned by the app; the operator decides.
+  auditLog: [],
+
+  // --- Arena entities (server models) -------------------------------------
+  // A player's game identity is NOT their Brief account: one person holds many.
+  arenaPlayers: [],
+  arenaVenues: [],
+  arenaTournaments: [],
+  arenaResults: [] // agreed match results; leaderboards are derived from these
 };
 
 function ensureDir() {

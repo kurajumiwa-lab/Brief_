@@ -5071,7 +5071,8 @@ export function App() {
 
   const loadObjects = React.useCallback(async () => {
     setObjectsLoad({ status: 'loading', error: null });
-    const res = await briefApi.getObjects();
+    // The ranked discovery feed: freshness + trust + engagement, server-derived.
+    const res = await briefApi.discoverObjects();
     if (res.ok) {
       setObjects((res.data as any[]).map(objectFromServer));
       setObjectsLoad({ status: 'ready', error: null });
