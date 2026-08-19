@@ -22,7 +22,7 @@
 // writable counter anywhere in this file -- see analytics().
 // ---------------------------------------------------------------------------
 
-import { store, newId } from '../store.js';
+import { store, newId, newTicketCode } from '../store.js';
 import { emitSignal } from './signal.js';
 
 export const CAMPAIGN_TYPES = ['popup', 'session', 'drop', 'event'];
@@ -563,6 +563,12 @@ export function register(campaign, { attendeeRef, name = null, contact = null } 
     name,
     contact,
     status: campaign.price > 0 ? 'started' : 'registered',
+    // The gate's scannable code. Opaque and unguessable; issued once, never
+    // rotated, and independent of the internal id so the gate never needs to
+    // know about row internals.
+    ticketCode: newTicketCode(),
+    checkedInAt: null,
+    checkedInBy: null,
     createdAt: now,
     updatedAt: now
   });

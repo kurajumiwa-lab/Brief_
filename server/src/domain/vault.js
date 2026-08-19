@@ -318,6 +318,11 @@ export function vaultsForOrder(orderId) {
   return store.filter('vaults', (v) => v.links.some((l) => l.kind === 'order' && l.id === orderId));
 }
 
+/** Vaults that link a given campaign (for the check-in → footstep wiring). */
+export function vaultsForCampaign(campaignId) {
+  return store.filter('vaults', (v) => v.links.some((l) => l.kind === 'campaign' && l.id === campaignId));
+}
+
 // ---------------------------------------------------------------------------
 // REQUESTS (guest asks, host routes, vendor accepts)
 // ---------------------------------------------------------------------------
@@ -667,6 +672,26 @@ export function emitOrderFootsteps(orderId, kind, { actorId = null, actorName = 
       value,
       dedupeKey: dedupeKey ? `${dedupeKey}:${vault.id}` : null,
       metadata: { ...metadata, orderId }
+    });
+  }
+}
+
+/**
+ * Emit a footstep onto every vault that links a given campaign. Mirrors
+ * emitOrderFootsteps: a check-in is a real event the vault narrates, deduped so
+ * a re-scan never double-records. No-op when unlinked.
+ */
+export function emitCampaignFootsteps(campaignId, kind, { actorId = null, actorName = null, value = null, dedupeKey = null, metadata = {} } = {}) {
+  const vaults = vaultsForCampaign(campaignId);
+  for (const vault of vaults) {
+    footsteps.recordFootstep({
+      vaultId: vault.id,
+      kind,
+      actorId,
+      actorName,
+      value,
+      dedupeKey: dedupeKey ? `${dedupeKey}:${vault.id}` : null,
+      metadata: { ...metadata, campaignId }
     });
   }
 }

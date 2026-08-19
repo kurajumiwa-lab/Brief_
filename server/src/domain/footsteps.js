@@ -44,6 +44,7 @@ export const FOOTSTEP_KINDS = {
   participant_invited: { category: 'people', label: 'was invited' },
   rsvp_created: { category: 'people', label: 'RSVPed' },
   rsvp_changed: { category: 'people', label: 'changed their RSVP' },
+  checked_in: { category: 'people', label: 'arrived' },
   // messages
   message_received: { category: 'messages', label: 'sent a message' },
   message_sent: { category: 'messages', label: 'sent a message' },

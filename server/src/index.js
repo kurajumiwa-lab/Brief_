@@ -20,6 +20,7 @@ import * as ledger from './domain/ledger.js';
 import * as members from './domain/member.js';
 import { callerId, authStatus, isSelf, isCoordinator, circleHasNoMembers, membershipOf, canOperate, canGovernObject } from './identity.js';
 import * as campaigns from './domain/campaign.js';
+import * as checkin from './domain/checkin.js';
 import * as vendors from './domain/vendor.js';
 import * as listings from './domain/listing.js';
 import * as orders from './domain/order.js';
@@ -2619,6 +2620,51 @@ app.post('/api/campaigns/:id/registrations/:regId/status', (req, res) => {
   } catch (e) {
     res.status(400).json({ error: String(e.message ?? e) });
   }
+});
+
+// --- The gate (check-in) ----------------------------------------------------
+//
+// A ticket is a campaign registration carrying an opaque code. These routes are
+// the GATE OPERATOR's surface: scan a code, see who it is and whether they are
+// paid, and check them in exactly once. Operator identity comes from the
+// authenticated caller (a host), never from the request body.
+
+/** Look a ticket up by its scannable code. Host-only: a code is a gate secret. */
+app.get('/api/tickets/:code', (req, res) => {
+  if (!requireAuth(req, res)) return;
+  const registration = checkin.lookupTicket(req.params.code);
+  if (!registration) return res.status(404).json({ error: 'ticket not found' });
+  const view = checkin.ticketView(registration);
+  // Only the campaign's host may inspect a ticket — a code must not be a way
+  // to read the roster anonymously.
+  const c = store.find('campaigns', (x) => x.id === registration.campaignId);
+  if (!c || c.ownerId !== callerId(req)) return res.status(404).json({ error: 'ticket not found' });
+  res.json({ ticket: view });
+});
+
+/** Check a ticket in at the gate. Host-only, idempotent, honest refusals. */
+app.post('/api/tickets/:code/check-in', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  const registration = checkin.lookupTicket(req.params.code);
+  if (!registration) return res.status(404).json({ error: 'ticket not found' });
+  const c = store.find('campaigns', (x) => x.id === registration.campaignId);
+  if (!c || c.ownerId !== me) return res.status(404).json({ error: 'ticket not found' });
+
+  const result = checkin.checkIn(req.params.code, me);
+  if (!result.ok) {
+    const status = result.reason === 'cancelled' ? 410
+      : result.reason === 'unpaid' ? 402
+      : result.reason === 'invalid_transition' ? 409
+      : 400;
+    return res.status(status).json({ ok: false, reason: result.reason, ticket: result.ticket ?? null });
+  }
+  res.status(result.already ? 200 : 200).json({
+    ok: true,
+    already: Boolean(result.already),
+    ticket: result.ticket,
+    checkedInCount: checkin.checkedInCount(registration.campaignId)
+  });
 });
 
 // --- PUBLIC (no authentication; only published/live campaigns resolve) ------

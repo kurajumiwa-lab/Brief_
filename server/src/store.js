@@ -286,3 +286,29 @@ export function newId(prefix) {
     .toString(36)
     .slice(2, 8)}`;
 }
+
+/**
+ * An opaque, high-entropy ticket code for gate check-in.
+ *
+ * Deliberately NOT the registration id (which is guessable and scoped
+ * internally): a ticket code is what an attendee shows at the gate, so it must
+ * be unguessable enough that possession of the code is a reasonable stand-in
+ * for "this is my ticket", yet short enough to type or scan by hand.
+ *
+ * 4 groups of 4 base32 chars (26 bits each, ~104 bits total) — collision-safe
+ * at realistic event scale without a stored index.
+ */
+export function newTicketCode() {
+  // 31 chars: A-Z minus I,L,O and 2-9 minus 0,1 — no confusable glyphs.
+  const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  const group = () => {
+    const bytes = new Uint8Array(4);
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      crypto.getRandomValues(bytes);
+    } else {
+      for (let i = 0; i < 4; i++) bytes[i] = Math.floor(Math.random() * 256);
+    }
+    return Array.from(bytes, (b) => ALPHABET[b % ALPHABET.length]).join('');
+  };
+  return `BRF-${group()}-${group()}-${group()}`;
+}

@@ -4885,6 +4885,107 @@ console.log('\n=== THE VAULT: HTTP SURFACE, SCOPED ACCESS, HANDOFF (over HTTP) =
   }
 }
 
+console.log('\n=== THE GATE: TICKET CODES + CHECK-IN (domain + HTTP) ===');
+{
+  process.env.NODE_ENV = 'test';
+  store._reset();
+  const checkin = await import('../src/domain/checkin.js');
+  const campaigns = await import('../src/domain/campaign.js');
+  const vault = await import('../src/domain/vault.js');
+  const { default: app } = await import('../src/index.js');
+
+  // --- domain-level ---------------------------------------------------------
+  const c = campaigns.createCampaign('usr_host', {
+    title: 'Gate Test Gathering', type: 'event', price: 0, capacity: 2,
+    location: 'Kilimani', startsAt: null, endsAt: null
+  });
+  campaigns.transitionCampaign(c.id, 'published');
+  campaigns.transitionCampaign(c.id, 'live');
+  const live = campaigns.getCampaign(c.id); // re-fetch: register reads live status
+
+  const reg = campaigns.register(live, { attendeeRef: 'wanjiku-1', name: 'Wanjiku' });
+  check('a registration carries an opaque ticket code', /^BRF-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(reg.ticketCode), reg.ticketCode);
+  check('the ticket code is not the registration id', reg.ticketCode !== reg.id);
+
+  const found = checkin.lookupTicket(reg.ticketCode);
+  check('a ticket is found by its code', found?.id === reg.id);
+  check('a garbled code finds nothing', checkin.lookupTicket('BRF-NOPE-NOPE-NOPE') === null);
+
+  const view = checkin.ticketView(reg);
+  check('the gate view exposes name + paid but not contact', view.name === 'Wanjiku' && view.paid === true && view.contact === undefined);
+
+  // Check-in succeeds once, records attribution.
+  const res = checkin.checkIn(reg.ticketCode, 'usr_host');
+  check('check-in succeeds', res.ok === true && res.ticket.status === 'checked_in');
+  check('check-in records operator + timestamp', res.ticket.checkedInBy === 'usr_host' && Boolean(res.ticket.checkedInAt));
+  check('checked-in count is derived', checkin.checkedInCount(c.id) === 1);
+
+  // Re-scan is idempotent.
+  const again = checkin.checkIn(reg.ticketCode, 'usr_host');
+  check('a re-scan is an idempotent no-op', again.ok === true && again.already === true && again.ticket.checkedInAt === res.ticket.checkedInAt);
+
+  // A cancelled ticket refuses.
+  const reg2 = campaigns.register(live, { attendeeRef: 'jane-1', name: 'Jane' });
+  campaigns.setRegistrationStatus(reg2.id, 'cancelled');
+  check('a cancelled ticket refuses check-in', checkin.checkIn(reg2.ticketCode, 'usr_host').reason === 'cancelled');
+
+  // An unpaid (held) spot refuses. Capacity is 2, so register on a fresh campaign.
+  const paid = campaigns.createCampaign('usr_host', { title: 'Paid Gate', type: 'event', price: 1000 });
+  campaigns.transitionCampaign(paid.id, 'published');
+  campaigns.transitionCampaign(paid.id, 'live');
+  const held = campaigns.register(campaigns.getCampaign(paid.id), { attendeeRef: 'unpaid-1', name: 'Held Spot' });
+  check('a paid campaign opens a spot as started (held)', held.status === 'started');
+  check('an unpaid ticket refuses check-in', checkin.checkIn(held.ticketCode, 'usr_host').reason === 'unpaid');
+
+  // --- HTTP surface ---------------------------------------------------------
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, {
+      method, headers, body: body ? JSON.stringify(body) : undefined
+    });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+
+  try {
+    const HOST = (await call('/api/auth/register', 'POST', { handle: 'gatehost', password: 'a good passphrase' })).body;
+    const STRANGER = (await call('/api/auth/register', 'POST', { handle: 'gatestranger', password: 'a good passphrase' })).body;
+
+    // Build a live campaign owned by HOST with a free registration.
+    const cc = (await call('/api/campaigns', 'POST', { title: 'HTTP Gate', type: 'event', price: 0 }, HOST.token)).body.campaign;
+    await call(`/api/campaigns/${cc.id}/publish`, 'POST', {}, HOST.token);
+    await call(`/api/campaigns/${cc.id}/golive`, 'POST', {}, HOST.token);
+    const rr = (await call(`/api/public/campaigns/${cc.publicSlug}/register`, 'POST', { attendeeRef: 'gate-http-1', name: 'Gate Guest' })).body.registration;
+    const regRow = store.filter('registrations', (x) => x.campaignId === cc.id)[0];
+    const ticketCode = regRow?.ticketCode ?? null;
+    check('the HTTP registration produced a ticket code', Boolean(ticketCode));
+
+    // An unauthenticated (bogus-token) reader cannot inspect a ticket.
+    const anon = await call(`/api/tickets/${ticketCode}`, 'GET', undefined, 'bogus-token');
+    check('an unauthenticated reader cannot inspect a ticket (401)', anon.status === 401);
+    // A stranger cannot inspect it.
+    const stranger = await call(`/api/tickets/${ticketCode}`, 'GET', undefined, STRANGER.token);
+    check('a stranger cannot inspect a ticket (404)', stranger.status === 404);
+    // The host can.
+    const host = await call(`/api/tickets/${ticketCode}`, 'GET', undefined, HOST.token);
+    check('the host sees the gate-safe ticket view', host.status === 200 && host.body.ticket.name === 'Gate Guest' && host.body.ticket.contact === undefined);
+
+    // Check-in over HTTP.
+    const cin = await call(`/api/tickets/${ticketCode}/check-in`, 'POST', {}, HOST.token);
+    check('check-in over HTTP succeeds', cin.status === 200 && cin.body.ticket.status === 'checked_in' && cin.body.checkedInCount === 1);
+    const cin2 = await call(`/api/tickets/${ticketCode}/check-in`, 'POST', {}, HOST.token);
+    check('re-scan over HTTP is idempotent', cin2.status === 200 && cin2.body.already === true);
+    // A stranger cannot check someone in.
+    const cinStranger = await call(`/api/tickets/${ticketCode}/check-in`, 'POST', {}, STRANGER.token);
+    check('a stranger cannot check a ticket in (404)', cinStranger.status === 404);
+  } finally {
+    srv.close();
+  }
+}
+
 console.log(`\n${'='.repeat(52)}\nPASSED ${pass}   FAILED ${fail}   SKIPPED ${skip}\n${'='.repeat(52)}`);
 process.exit(fail ? 1 : 0);
 
