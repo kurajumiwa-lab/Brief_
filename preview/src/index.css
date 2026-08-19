@@ -91,7 +91,7 @@ html, body {
   display: flex;
   width: max-content;
   animation: briefMarquee 24s linear infinite;
-  animation-duration: 24s;
+  animation-duration: 12s;
 }
 .brief-marquee:hover,
 .brief-marquee:active { animation-play-state: paused; }

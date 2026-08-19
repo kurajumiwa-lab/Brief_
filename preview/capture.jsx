@@ -30,6 +30,21 @@ async function main(){
   let pass=0,fail=0;
   const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;console.log('  FAIL  '+n+(d?' -> '+d:''));}};
 
+  // Capture now persists server-side via /api/brief-it/save. Stub the API and
+  // record calls so the test asserts real persistence, not a local-state echo.
+  const calls=[];
+  global.fetch = dom.window.fetch = async (url, init) => {
+    const u=String(url); const m=(init&&init.method)||'GET';
+    calls.push(m+' '+u);
+    const send=(o)=>({ok:true,status:200,text:async()=>JSON.stringify(o),json:async()=>o});
+    if (u.includes('/api/auth/me')) return send({ user:{ id:'usr_local', handle:'local', displayName:'Local' } });
+    if (u.includes('/api/brief-it/save')) return send({ rawItemId:'raw_1', duplicate:false, result:{ created:true } });
+    if (u.includes('/api/objects')) return send({ objects:[] });
+    // Leave sources/capabilities/status unreachable so the Sources surface
+    // honestly reports "Ingestion server not reachable" in this harness.
+    return { ok:false, status:404, text:async()=> '{}', json:async()=>({}) };
+  };
+
   const baseline=cards().length;
   console.log('=== CAPTURE: drop something here ===');
   const cap=document.querySelector('button[title="Capture something"]');
@@ -48,10 +63,10 @@ async function main(){
   check('extracted price', b.includes('1500'));
   check('extracted phone', b.includes('0712345678'));
   check('marked unverified', b.includes('Unverified'));
-  check('NOT saved before confirmation', cards().length===baseline);
+  check('NOT saved before confirmation', !calls.some((c)=>c.startsWith('POST /ingest/api/brief-it/save')));
 
   await click(btn('Save to Brief'));
-  check('saved only after confirmation', cards().length===baseline+1, `${baseline} -> ${cards().length}`);
+  check('saved only after confirmation', calls.some((c)=>c.startsWith('POST /ingest/api/brief-it/save')), calls.join(' | '));
 
   console.log('\n=== CAPTURE refuses chatter ===');
   await click(document.querySelector('button[title="Capture something"]'));

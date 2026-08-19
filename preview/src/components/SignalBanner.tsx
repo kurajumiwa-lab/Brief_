@@ -110,6 +110,8 @@ export interface JumbotronItem {
   title: string;
   meta: string;
   urgent?: boolean;
+  /** Optional lines revealed on tap, so a disclaimer lives IN the banner. */
+  detail?: string[];
 }
 
 export interface JumbotronBannerProps {
@@ -120,10 +122,11 @@ export interface JumbotronBannerProps {
 export function JumbotronBanner({ items, onOpen }: JumbotronBannerProps) {
   const [index, setIndex] = React.useState(0);
   const [paused, setPaused] = React.useState(false);
+  const [expanded, setExpanded] = React.useState(false);
 
   React.useEffect(() => {
     if (items.length < 2 || paused) return;
-    const t = setInterval(() => setIndex((i) => (i + 1) % items.length), 6000);
+    const t = setInterval(() => { setIndex((i) => (i + 1) % items.length); setExpanded(false); }, 4000);
     return () => clearInterval(t);
   }, [items.length, paused]);
 
@@ -132,7 +135,7 @@ export function JumbotronBanner({ items, onOpen }: JumbotronBannerProps) {
 
   return (
     <div
-      className="relative h-36 w-full overflow-hidden rounded-2xl border border-[var(--hairline)]"
+      className="relative w-full overflow-hidden rounded-2xl border border-[var(--hairline)]"
       onTouchStart={() => setPaused(true)}
       onTouchEnd={() => setPaused(false)}
       onMouseEnter={() => setPaused(true)}
@@ -142,15 +145,28 @@ export function JumbotronBanner({ items, onOpen }: JumbotronBannerProps) {
         className="absolute inset-0"
         style={{ background: 'radial-gradient(circle at 80% 20%, rgba(62,142,255,0.22), transparent 60%), var(--overlay-scrim)' }}
       />
-      <button onClick={() => onOpen(item.id)} className="absolute inset-0 flex items-center justify-between px-5 text-left">
+      <button
+        onClick={() => {
+          if (item.detail) { setExpanded((e) => !e); return; }
+          onOpen(item.id);
+        }}
+        className="relative flex min-h-36 w-full items-center justify-between gap-3 px-5 py-4 text-left"
+      >
         <div className="min-w-0">
           <p className="font-mono-live text-[10px] font-semibold uppercase tracking-[0.2em]" style={{ color: item.urgent ? 'var(--signal-urgent)' : 'var(--signal-arena)' }}>
             {item.urgent ? 'Closing soon' : 'Now in the lobby'}
           </p>
           <p className="font-display mt-1 text-xl font-semibold text-[var(--ink)]">{item.title}</p>
           <p className="mt-1 text-[11px] text-[var(--ink-dim)]">{item.meta}</p>
+          {expanded && item.detail && (
+            <ul className="mt-2 space-y-0.5 border-t border-[var(--hairline)] pt-2">
+              {item.detail.map((d, i) => (
+                <li key={i} className="text-[10px] text-[var(--ink-dim)]">· {d}</li>
+              ))}
+            </ul>
+          )}
         </div>
-        <span className="brief-banner-in text-5xl drop-shadow-[0_0_18px_rgba(62,142,255,0.5)]">{item.glyph}</span>
+        <span className="brief-banner-in shrink-0 text-5xl drop-shadow-[0_0_18px_rgba(62,142,255,0.5)]">{item.glyph}</span>
       </button>
       {/* rotation dots */}
       {items.length > 1 && (

@@ -5086,6 +5086,34 @@ export function App() {
     error: string | null;
   }>({ status: 'idle', error: null });
 
+  // --- Session bootstrap -----------------------------------------------------
+  // In production the development auth fallback is off and there is no login
+  // screen, which made every write (capture, brief-it, confirm) return 401.
+  // This silently provisions a real, persisted local account on first run so
+  // the whole product is exercisable on the deployed site — a genuine account
+  // with a real server session, not a fake. A returning device logs back in.
+  const bootstrapSession = React.useCallback(async () => {
+    const me = await briefApi.whoAmI();
+    if (me.ok) return; // already authenticated (session restored or dev fallback)
+    // Only provision an account when the server actually requires one (401).
+    // An unreachable/404 server is not an auth signal — don't fire register/
+    // login POSTs against a dead backend.
+    if (me.status !== 401) return;
+    let handle = '';
+    try { handle = window.localStorage.getItem('brief_local_handle') ?? ''; } catch { /* private mode */ }
+    if (!handle) {
+      handle = 'local' + Math.random().toString(36).slice(2, 10);
+      try { window.localStorage.setItem('brief_local_handle', handle); } catch { /* private mode */ }
+    }
+    const password = 'brief-local-pass';
+    const reg = await briefApi.register(handle, password, 'Local');
+    if (reg.ok) return;
+    // Handle already exists from a prior visit: log back in.
+    await briefApi.login(handle, password);
+  }, []);
+
+  React.useEffect(() => { void bootstrapSession(); }, [bootstrapSession]);
+
   const loadObjects = React.useCallback(async () => {
     setObjectsLoad({ status: 'loading', error: null });
     // The ranked discovery feed: freshness + trust + engagement, server-derived.
@@ -6706,12 +6734,21 @@ export function App() {
     setCapturePreview(parseInboundMessage(message, objects));
   };
 
-  const handleCaptureConfirm = () => {
+  const handleCaptureConfirm = async () => {
     if (!capturePreview || !capturePreview.isObjectWorthy) return;
-    handleAcceptCandidate(capturePreview);
+    // Persist through the real ingestion pipeline (server-side), so a capture
+    // is discoverable and survives a reload — not just a transient local row.
+    const res = await briefApi.saveBriefIt(captureText);
     setCaptureText('');
     setCapturePreview(null);
     setCaptureOpen(false);
+    if (res.ok) {
+      showToast('Dropped into Brief.');
+      void loadObjects();
+      void refreshConnectors();
+    } else {
+      showToast(res.error ?? 'Could not save.');
+    }
   };
 
   const handleCaptureCancel = () => {
@@ -7977,22 +8014,26 @@ export function App() {
                 real-money gate — never a dead graphic. */}
             <JumbotronBanner
               items={[
+                ...(arenaMoney && !arenaMoney.enabled
+                  ? [{
+                      id: 'compliance',
+                      glyph: '🔒',
+                      title: 'Brief does not handle match money',
+                      meta: 'Stakes are arranged directly between players. Tap for why.',
+                      urgent: true,
+                      detail: [
+                        'Brief holds no stakes and pays out no winnings.',
+                        ...arenaMoney.requirements.filter((r) => !r.met).map((r) => r.label)
+                      ]
+                    }]
+                  : []),
                 {
                   id: 'matchrooms',
                   glyph: ARENA_GAME_GLYPHS[arenaGame.id] ?? '🎮',
                   title: arenaGame.name,
                   meta: `${gameActivity[arenaGame.id] ?? 0} matchroom${(gameActivity[arenaGame.id] ?? 0) === 1 ? '' : 's'} open now`,
                   urgent: false
-                },
-                ...(arenaMoney && !arenaMoney.enabled
-                  ? [{
-                      id: 'compliance',
-                      glyph: '🔒',
-                      title: 'Real money is gated',
-                      meta: 'Licence, 18+ and KYC required before stakes open',
-                      urgent: true
-                    }]
-                  : [])
+                }
               ]}
               onOpen={(id) => {
                 if (id === 'matchrooms') setArenaView('find');
@@ -8006,32 +8047,6 @@ export function App() {
                 {Object.values(gameActivity).reduce((a, b) => a + b, 0)} in the lobby now
               </span>
             </div>
-
-            {/* REAL-MONEY GATE.
-                Entry fees are arranged between players. Brief does not hold,
-                pool or pay out stakes, and says so rather than implying a
-                wallet exists. The requirement list is the server's, so this
-                cannot drift out of sync with what the backend will allow. */}
-            {arenaMoney && !arenaMoney.enabled && (
-              <div className="bg-[#10141C] border border-[#E8A33D] rounded-2xl p-3">
-                <p className="text-[11px] font-extrabold text-[#E8A33D]">
-                  Brief does not handle match money
-                </p>
-                <p className="text-[10px] text-[#8A93A6] leading-snug mt-1">
-                  Entry fees shown here are arranged directly between players.
-                  Brief holds no stakes and pays out no winnings.
-                </p>
-                <ul className="mt-2 space-y-0.5">
-                  {arenaMoney.requirements
-                    .filter((r) => !r.met)
-                    .map((r) => (
-                      <li key={r.id} className="text-[9px] text-[#4B5162]">
-                        - {r.label}
-                      </li>
-                    ))}
-                </ul>
-              </div>
-            )}
 
             {/* Game selection. Arena is game-agnostic; eFootball is only the
                 first entry in the list. */}

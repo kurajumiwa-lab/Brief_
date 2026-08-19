@@ -167,6 +167,12 @@ async function main(){
   b=body();
   check('Arena states Brief does not handle match money', /does not handle match money/i.test(b));
   check('entry fees are named as player-to-player', /between players/i.test(b));
+  // The full disclaimer now lives IN the overhead banner: tap it to reveal the
+  // requirement list (the gate is stated up front, the detail on demand).
+  const gate = Array.from(document.querySelectorAll('button')).find(x => /does not handle match money/i.test(text(x)));
+  check('the gate is tappable to reveal why', !!gate);
+  if (gate) await click(gate);
+  b=body();
   check('no winnings claim', /pays out no winnings/i.test(b));
   check('the missing licence is named', /licence/i.test(b));
   check('age verification named', /18\+/.test(b));
@@ -176,7 +182,9 @@ async function main(){
   // The failure mode this replaces.
   check('does NOT say coming soon', !/coming soon/i.test(b));
   check('no wallet balance is shown in Arena', !/wallet|balance/i.test(b));
-  check('no deposit or top-up affordance', !Array.from(document.querySelectorAll('button')).some(x=>/deposit|top ?up|withdraw/i.test(text(x))));
+  // No *action* affordance: a button labelled "Deposit"/"Top up"/"Withdraw".
+  // (The compliance requirement "Deposit limits…" is a label, not an action.)
+  check('no deposit or top-up affordance', !Array.from(document.querySelectorAll('button')).some(x=>/^(deposit|top ?up|withdraw)\b/i.test(text(x).trim())));
   // Free play is a real product and must remain usable.
   check('friendly matches still available', /Friendly/.test(b));
   check('challenge buttons still work', Boolean(btn('Challenge')));
