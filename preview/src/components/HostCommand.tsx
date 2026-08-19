@@ -18,8 +18,8 @@ const money = (n: number, c: string) => `${c} ${n.toLocaleString()}`;
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-[#0B1A12] border border-[#1E3A2A] rounded-xl p-3 space-y-2">
-      <p className="text-[9px] font-mono uppercase tracking-[0.2em] text-[#5C6B52]">{title}</p>
+    <div className="bg-[#211F1A] border border-[#3B372B] rounded-xl p-3 space-y-2">
+      <p className="text-[9px] text-[#6F6A58]">{title}</p>
       {children}
     </div>
   );
@@ -28,8 +28,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function Big({ value, label, accent = false }: { value: string; label: string; accent?: boolean }) {
   return (
     <div>
-      <p className={`text-xl font-extrabold ${accent ? 'text-[#00FF42]' : 'text-[#E2ECE5]'}`}>{value}</p>
-      <p className="text-[9px] font-mono uppercase tracking-wider text-[#5C6B52]">{label}</p>
+      <p className={`text-xl font-extrabold ${accent ? 'text-[#3E9A66]' : 'text-[#F2EFE7]'}`}>{value}</p>
+      <p className="text-[9px] text-[#6F6A58]">{label}</p>
     </div>
   );
 }
@@ -53,10 +53,10 @@ export function HostCommand() {
   const d = state.data;
 
   if (state.status === 'loading' && !d) {
-    return <p className="text-xs text-[#86935C]">Loading…</p>;
+    return <p className="text-xs text-[#9A9278]">Loading…</p>;
   }
   if (state.status === 'error') {
-    return <p className="text-xs text-[#C4553E]">{state.error}</p>;
+    return <p className="text-xs text-[#BC5A44]">{state.error}</p>;
   }
   if (!d) return null;
 
@@ -65,27 +65,27 @@ export function HostCommand() {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-lg font-extrabold text-[#E2ECE5]">Command</h2>
-        <button onClick={() => void load()} className="text-[10px] font-extrabold text-[#8DCF74] cursor-pointer">Refresh</button>
+        <h2 className="text-lg font-extrabold text-[#F2EFE7]">Command</h2>
+        <button onClick={() => void load()} className="text-[10px] font-extrabold text-[#7FA98B] cursor-pointer">Refresh</button>
       </div>
 
       {/* NOW — the one thing that matters first */}
       <Section title="Now">
         {d.now.length === 0 && d.upcoming.length === 0 ? (
-          <p className="text-xs text-[#86935C]">Nothing needs you right now.</p>
+          <p className="text-xs text-[#9A9278]">Nothing needs you right now.</p>
         ) : (
           <>
             {d.now.slice(0, 5).map((n, i) => (
               <div key={i} className="flex items-center justify-between gap-2">
-                <p className="text-xs text-[#E2ECE5] truncate">{n.name}</p>
-                <span className="shrink-0 text-[9px] font-mono uppercase text-[#C9A227]">unpaid spot</span>
+                <p className="text-xs text-[#F2EFE7] truncate">{n.name}</p>
+                <span className="shrink-0 text-[9px] text-[#C2A24A]">unpaid spot</span>
               </div>
             ))}
             {d.upcoming.length > 0 && (
-              <div className="pt-1 border-t border-[#122A1B]">
-                <p className="text-[9px] font-mono uppercase text-[#5C6B52] mb-1">Upcoming</p>
+              <div className="pt-1 border-t border-[#2A2821]">
+                <p className="text-[9px] text-[#6F6A58] mb-1">Upcoming</p>
                 {d.upcoming.map((u) => (
-                  <p key={u.id} className="text-xs text-[#8DCF74] truncate">
+                  <p key={u.id} className="text-xs text-[#7FA98B] truncate">
                     {u.title} · {u.startsAt.slice(0, 16).replace('T', ' ')}
                   </p>
                 ))}
@@ -102,7 +102,7 @@ export function HostCommand() {
           <Big value={money(d.money.grossPending, d.money.currency)} label="Pending" />
         </div>
         {d.money.campaignCount === 0 && (
-          <p className="text-[10px] text-[#5C6B52]">No campaigns yet.</p>
+          <p className="text-[10px] text-[#6F6A58]">No campaigns yet.</p>
         )}
       </Section>
 
@@ -121,7 +121,7 @@ export function HostCommand() {
           <Big value={String(d.distribution.views)} label="Views" />
           <Big value={String(d.distribution.shares)} label="Shares" />
         </div>
-        <p className="text-[9px] text-[#5C6B52] leading-snug">
+        <p className="text-[9px] text-[#6F6A58] leading-snug">
           Views are page loads, not people. A refresh counts twice.
         </p>
       </Section>
@@ -131,8 +131,8 @@ export function HostCommand() {
         <Section title="Action">
           {d.action.slice(0, 6).map((a, i) => (
             <div key={i} className="flex items-center justify-between gap-2">
-              <p className="text-xs text-[#E2ECE5] truncate">{a.vaultTitle}</p>
-              <span className="shrink-0 text-[9px] font-mono uppercase text-[#C9A227]">{a.kind}</span>
+              <p className="text-xs text-[#F2EFE7] truncate">{a.vaultTitle}</p>
+              <span className="shrink-0 text-[9px] text-[#C2A24A]">{a.kind}</span>
             </div>
           ))}
         </Section>
@@ -142,7 +142,7 @@ export function HostCommand() {
       {d.upcoming.length > 0 && (
         <Section title="Next">
           {d.upcoming.map((u) => (
-            <p key={u.id} className="text-xs text-[#E2ECE5] truncate">
+            <p key={u.id} className="text-xs text-[#F2EFE7] truncate">
               {u.title}
             </p>
           ))}
@@ -150,7 +150,7 @@ export function HostCommand() {
       )}
 
       {!hasAnything && (
-        <p className="text-xs text-[#86935C] leading-relaxed">
+        <p className="text-xs text-[#9A9278] leading-relaxed">
           You have no campaigns or vaults yet. Create a gathering to see it here.
         </p>
       )}

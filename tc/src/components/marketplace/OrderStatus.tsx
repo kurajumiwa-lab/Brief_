@@ -25,12 +25,12 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const STATUS_STYLE: Record<string, string> = {
-  ordered: 'bg-[#1A2A3A] text-[#7FB2E5]',
-  fulfilled: 'bg-[#172D20] text-[#8DCF74]',
-  settled: 'bg-[#172D20] text-[#00FF42]',
-  disputed: 'bg-[#3A1A1A] text-[#E57F7F]',
-  cancelled: 'bg-[#1E1E1E] text-[#A9BDA0]',
-  offered: 'bg-[#1E1E1E] text-[#A9BDA0]'
+  ordered: 'bg-[#252C31] text-[#8FAFC4]',
+  fulfilled: 'bg-[#2B2A22] text-[#7FA98B]',
+  settled: 'bg-[#2B2A22] text-[#3E9A66]',
+  disputed: 'bg-[#382A22] text-[#CE8578]',
+  cancelled: 'bg-[#1E1E1E] text-[#B6AFA0]',
+  offered: 'bg-[#1E1E1E] text-[#B6AFA0]'
 };
 
 export interface OrderStatusProps {
@@ -57,17 +57,17 @@ export function OrderStatus({
   const canCancel = order.status === 'ordered';
 
   return (
-    <div className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3 space-y-2">
+    <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3 space-y-2">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-extrabold text-[#E2ECE5]">{order.listingTitle}</p>
-          <p className="text-[10px] text-[#5C6B52]">
+          <p className="text-xs font-extrabold text-[#F2EFE7]">{order.listingTitle}</p>
+          <p className="text-[10px] text-[#6F6A58]">
             {order.quantity} x {money(order.unitPrice, order.currency)}
           </p>
         </div>
         <span
-          className={`shrink-0 text-[9px] font-mono uppercase px-2 py-0.5 rounded-full ${
-            STATUS_STYLE[order.status] ?? 'bg-[#1E1E1E] text-[#A9BDA0]'
+          className={`shrink-0 text-[9px] px-2 py-0.5 rounded-full ${
+            STATUS_STYLE[order.status] ?? 'bg-[#1E1E1E] text-[#B6AFA0]'
           }`}
         >
           {STATUS_LABEL[order.status] ?? order.status}
@@ -75,21 +75,21 @@ export function OrderStatus({
       </div>
 
       {/* The server's total, not a recomputation. */}
-      <p className="text-sm font-extrabold text-[#00FF42]">
+      <p className="text-sm font-extrabold text-[#3E9A66]">
         {money(order.total, order.currency)}
       </p>
 
       {/* Payment stated as its own fact, always. Never inferred from status. */}
-      <p className="text-[10px] text-[#5C6B52]">
+      <p className="text-[10px] text-[#6F6A58]">
         {order.paid
           ? 'Paid - settled transaction on record'
           : 'Not paid yet - no settled payment is on record for this order'}
       </p>
 
       {order.dispute && (
-        <div className="bg-[#1A1010] border border-[#3A1A1A] rounded-xl p-2">
-          <p className="text-[10px] font-extrabold text-[#E57F7F]">Disputed</p>
-          <p className="text-[10px] text-[#A9BDA0]">{order.dispute.reason}</p>
+        <div className="bg-[#2A2018] border border-[#382A22] rounded-xl p-2">
+          <p className="text-[10px] font-extrabold text-[#CE8578]">Disputed</p>
+          <p className="text-[10px] text-[#B6AFA0]">{order.dispute.reason}</p>
         </div>
       )}
 
@@ -99,7 +99,7 @@ export function OrderStatus({
             <button
               onClick={() => onFulfil(order.id)}
               disabled={busy}
-              className="px-3 py-1 rounded-full bg-[#00FF42] text-[#09150E] text-[10px] font-extrabold cursor-pointer disabled:opacity-50"
+              className="px-3 py-1 rounded-full bg-[#3E9A66] text-[#191714] text-[10px] font-extrabold cursor-pointer disabled:opacity-50"
             >
               Mark fulfilled
             </button>
@@ -108,7 +108,7 @@ export function OrderStatus({
             <button
               onClick={() => onDispute(order.id)}
               disabled={busy}
-              className="px-3 py-1 rounded-full bg-[#2A1515] text-[#E57F7F] border border-[#3A1A1A] text-[10px] font-extrabold cursor-pointer disabled:opacity-50"
+              className="px-3 py-1 rounded-full bg-[#2E241E] text-[#CE8578] border border-[#382A22] text-[10px] font-extrabold cursor-pointer disabled:opacity-50"
             >
               Report a problem
             </button>
@@ -117,7 +117,7 @@ export function OrderStatus({
             <button
               onClick={() => onCancel(order.id)}
               disabled={busy}
-              className="px-3 py-1 rounded-full bg-[#172D20] text-[#8DCF74] text-[10px] font-extrabold cursor-pointer disabled:opacity-50"
+              className="px-3 py-1 rounded-full bg-[#2B2A22] text-[#7FA98B] text-[10px] font-extrabold cursor-pointer disabled:opacity-50"
             >
               Cancel
             </button>

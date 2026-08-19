@@ -229,7 +229,7 @@ async function main(){
   console.log('\n=== Rewards live in Arena, not duplicated here ===');
   check('quests points to Arena for redemption', /Redeem points for gift cards and vouchers in Arena/i.test(b));
   check('no duplicate catalogue on this screen', !/Carrefour/.test(b));
-  await goto('Arena','Rewards');
+  await goto('Play','Rewards');
   const ab=body();
   check('supermarket voucher offered in Arena', /Carrefour/i.test(ab));
   check('airtime offered in Arena', /Safaricom/i.test(ab));

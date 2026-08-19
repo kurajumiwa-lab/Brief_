@@ -766,6 +766,52 @@ export function getObjects(publication?: string): Promise<ApiResult<any[]>> {
   );
 }
 
+/** The ranked discovery feed: freshness + trust + engagement, optionally geo-scoped. */
+export function discoverObjects(opts: { lat?: number; lng?: number; radiusKm?: number; limit?: number } = {}): Promise<ApiResult<any[]>> {
+  const params = new URLSearchParams({ rank: '1' });
+  if (opts.lat !== undefined) params.set('lat', String(opts.lat));
+  if (opts.lng !== undefined) params.set('lng', String(opts.lng));
+  if (opts.radiusKm !== undefined) params.set('radiusKm', String(opts.radiusKm));
+  if (opts.limit !== undefined) params.set('limit', String(opts.limit));
+  return request(`/api/objects?${params.toString()}`, undefined, (r) =>
+    Array.isArray(r?.objects) ? r.objects : undefined
+  );
+}
+
+/** Confirm an object as accurate. Idempotent per user. */
+export function confirmObject(id: string): Promise<ApiResult<{ verificationStatus: string; confirmationCount: number }>> {
+  return request(`/api/objects/${encodeURIComponent(id)}/confirm`, { method: 'POST', body: '{}' }, (r) =>
+    typeof r?.verificationStatus === 'string' ? r : undefined
+  );
+}
+
+/** Report an object as wrong/spam/offensive. */
+export function reportObject(id: string, reason: string): Promise<ApiResult<any>> {
+  return request(`/api/objects/${encodeURIComponent(id)}/report`, { method: 'POST', body: JSON.stringify({ reason }) }, (r) => (r?.report ? r : undefined));
+}
+
+export interface Notification {
+  id: string;
+  kind: string;
+  title: string;
+  body: string | null;
+  objectId: string | null;
+  read: boolean;
+  createdAt: string;
+}
+
+export function getNotifications(unreadOnly = false): Promise<ApiResult<{ notifications: Notification[]; unread: number }>> {
+  const q = unreadOnly ? '?unread=1' : '';
+  return request(`/api/notifications${q}`, undefined, (r) =>
+    Array.isArray(r?.notifications) ? r : undefined
+  );
+}
+
+export function markNotificationsRead(idOrAll?: string): Promise<ApiResult<any>> {
+  const body = idOrAll === undefined ? { all: true } : { id: idOrAll };
+  return request('/api/notifications/read', { method: 'POST', body: JSON.stringify(body) }, (r) => r);
+}
+
 // ---------------------------------------------------------------------------
 // SOURCES
 //
@@ -1340,5 +1386,46 @@ export function checkInTicket(code: string): Promise<ApiResult<CheckInResult>> {
 export function getCommandCentre(): Promise<ApiResult<CommandCentre>> {
   return request('/api/host/command', undefined, (r) =>
     isCommandCentre(r?.command) ? r.command : undefined
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ARENA — real backend
+//
+// The server Arena is the single source of truth for challenges and matches.
+// These functions return the server's actual rows; App.tsx maps them onto its
+// display model. Creating/accepting/cancelling all go through the server so a
+// challenge is real, persisted, and attributable.
+// ---------------------------------------------------------------------------
+
+export function getArenaGames(): Promise<ApiResult<any[]>> {
+  return request('/api/arena/games', undefined, (r) => (Array.isArray(r?.games) ? r.games : undefined));
+}
+
+export function getArenaChallenges(gameId?: string): Promise<ApiResult<any[]>> {
+  const q = gameId ? `?gameId=${encodeURIComponent(gameId)}` : '';
+  return request(`/api/arena/challenges${q}`, undefined, (r) =>
+    Array.isArray(r?.challenges) ? r.challenges : undefined
+  );
+}
+
+export function createArenaChallenge(body: {
+  gameId: string; mode?: string; stake?: string; entryFeeKes?: number | null;
+  note?: string; venue?: string | null; openMinutes?: number;
+}): Promise<ApiResult<any>> {
+  return request('/api/arena/challenges', { method: 'POST', body: JSON.stringify(body) }, (r) =>
+    r?.challenge ? r.challenge : undefined
+  );
+}
+
+export function acceptArenaChallenge(id: string): Promise<ApiResult<any>> {
+  return request(`/api/arena/challenges/${encodeURIComponent(id)}/accept`, { method: 'POST', body: '{}' }, (r) =>
+    r?.match || r?.challenge ? r : undefined
+  );
+}
+
+export function cancelArenaChallenge(id: string): Promise<ApiResult<any>> {
+  return request(`/api/arena/challenges/${encodeURIComponent(id)}/cancel`, { method: 'POST', body: '{}' }, (r) =>
+    r?.challenge ? r : undefined
   );
 }

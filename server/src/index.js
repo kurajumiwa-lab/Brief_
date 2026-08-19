@@ -39,6 +39,10 @@ import * as vault from './domain/vault.js';
 import * as footsteps from './domain/footsteps.js';
 import * as handoff from './domain/handoff.js';
 import * as command from './domain/command.js';
+import * as trust from './domain/trust.js';
+import * as discovery from './domain/discovery.js';
+import * as notifications from './domain/notifications.js';
+import * as analytics from './domain/analytics.js';
 import * as ops from './ops.js';
 
 const app = express();
@@ -379,6 +383,22 @@ app.post('/api/arena/matches/:id/confirm', (req, res) => {
         type: out.disputed ? 'arena_result_disputed' : 'arena_result_confirmed',
         actorId: me, metadata: { matchId: out.match.id }
       });
+      // A confirmed result is an agreed fact: record it for the leaderboard and
+      // tell both players their match is settled.
+      if (!out.disputed && out.match.status === 'confirmed') {
+        arena.recordResult(out.match.id);
+        for (const pid of [out.match.playerAId, out.match.playerBId]) {
+          const player = arena.getPlayer(pid);
+          if (player) {
+            notifications.notify(player.userId, {
+              kind: 'challenge',
+              title: 'Match result confirmed',
+              body: `Your ${player.gameId} match is settled.`,
+              metadata: { matchId: out.match.id }
+            });
+          }
+        }
+      }
     }
     res.json(out);
   } catch (e) {
@@ -1248,8 +1268,28 @@ app.post('/api/brief-it/save', (req, res) => {
 
 app.get('/api/objects', (req, res) => {
   const { publication } = req.query;
-  let objects = store.all('objects');
-  if (publication) objects = objects.filter((o) => o.publication === publication);
+  const nearLat = req.query.lat !== undefined ? Number(req.query.lat) : null;
+  const nearLng = req.query.lng !== undefined ? Number(req.query.lng) : null;
+  const radiusKm = req.query.radiusKm !== undefined ? Number(req.query.radiusKm) : null;
+
+  // Ranked discovery when a location is given (or always, for freshness/trust).
+  const near = nearLat !== null && nearLng !== null && Number.isFinite(nearLat) && Number.isFinite(nearLng)
+    ? { lat: nearLat, lng: nearLng }
+    : null;
+  const useRanking = near || req.query.rank === '1';
+
+  let objects;
+  if (useRanking) {
+    objects = discovery.discoverable({
+      near: near && radiusKm ? near : null,
+      radiusKm: near && radiusKm ? radiusKm : null,
+      limit: req.query.limit !== undefined ? Number(req.query.limit) : 50
+    });
+    if (publication) objects = objects.filter((o) => o.publication === publication);
+  } else {
+    objects = store.all('objects');
+    if (publication) objects = objects.filter((o) => o.publication === publication);
+  }
 
   const enriched = objects.map((o) => {
     const provenance = store.filter('objectSources', (s) => s.objectId === o.id).map((s) => {
@@ -1269,7 +1309,6 @@ app.get('/api/objects', (req, res) => {
         sourceRetrievedAt: s.sourceRetrievedAt,
         sourceConfidence: s.sourceConfidence,
         extractionConfidence: s.extractionConfidence,
-        // Drives "From your groups" -- true only with a real membership row.
         userHasAccess: Boolean(membership?.accessGranted)
       };
     });
@@ -1278,11 +1317,177 @@ app.get('/api/objects', (req, res) => {
       targetId: r.targetId,
       target: store.find('objects', (t) => t.id === r.targetId)?.title ?? null
     }));
-    return { ...o, provenance, relationships: rels, sourceCount: new Set(provenance.map((p) => p.sourceId)).size };
+    return {
+      ...o,
+      provenance,
+      relationships: rels,
+      sourceCount: new Set(provenance.map((p) => p.sourceId)).size,
+      verificationStatus: trust.verificationLevel(o.id),
+      confirmationCount: trust.confirmationCount(o.id)
+    };
   });
 
   res.json({ objects: enriched });
 });
+
+// --- Trust & integrity ------------------------------------------------------
+
+/** Confirm an object as accurate (idempotent per actor). */
+app.post('/api/objects/:id/confirm', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  try {
+    const { confirmation, reused } = trust.confirmObject(req.params.id, me);
+    if (!reused) {
+      signals.emitSignal({ type: 'object_confirmed', actorId: me, objectId: req.params.id, metadata: { objectId: req.params.id } });
+      // Tell the contributor their report is gaining corroboration — a real,
+      // derived notification, not a broadcast.
+      const object = store.find('objects', (o) => o.id === req.params.id);
+      if (object?.capturedBy && object.capturedBy !== me) {
+        notifications.notify(object.capturedBy, {
+          kind: 'confirmed',
+          title: 'Someone confirmed your information',
+          body: `"${String(object.title).slice(0, 60)}" now has ${trust.confirmationCount(req.params.id)} confirmation${trust.confirmationCount(req.params.id) === 1 ? '' : 's'}.`,
+          objectId: req.params.id
+        });
+      }
+    }
+    res.status(reused ? 200 : 201).json({ confirmation, reused, verificationStatus: trust.verificationLevel(req.params.id), confirmationCount: trust.confirmationCount(req.params.id) });
+  } catch (e) {
+    res.status(404).json({ error: String(e.message ?? e) });
+  }
+});
+
+/** Report an object as wrong/spam/offensive (a request for review, not a removal). */
+app.post('/api/objects/:id/report', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  try {
+    const { report, reused } = trust.reportObject({
+      objectId: req.params.id, actorId: me, reason: req.body?.reason ?? 'wrong', note: req.body?.note ?? null
+    });
+    if (!reused) {
+      signals.emitSignal({ type: 'object_reported', actorId: me, objectId: req.params.id, metadata: { objectId: req.params.id, reason: report.reason } });
+    }
+    res.status(reused ? 200 : 201).json({ report, reused });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message ?? e) });
+  }
+});
+
+/** Record a view (engagement signal). Rate-limited; a view is a real event. */
+app.post('/api/objects/:id/view', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  if (!store.find('objects', (o) => o.id === req.params.id)) return res.status(404).json({ error: 'object not found' });
+  signals.emitSignal({ type: 'object_viewed', actorId: me, objectId: req.params.id, metadata: { objectId: req.params.id } });
+  res.json({ ok: true });
+});
+
+// --- Notifications (in-app inbox) -------------------------------------------
+
+app.get('/api/notifications', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  res.json({
+    notifications: notifications.listNotifications(me, { unreadOnly: req.query.unread === '1' }),
+    unread: notifications.unreadCount(me)
+  });
+});
+
+app.post('/api/notifications/read', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  if (req.body?.all) {
+    res.json(notifications.markAllRead(me));
+    return;
+  }
+  const n = notifications.markRead(me, req.body?.id);
+  if (!n) return res.status(404).json({ error: 'notification not found' });
+  res.json({ notification: n });
+});
+
+// --- Analytics + operations (host/operator) ---------------------------------
+
+app.get('/api/ops/analytics', (req, res) => {
+  if (!requireAuth(req, res)) return;
+  res.json({ analytics: analytics.dashboard() });
+});
+
+app.get('/api/ops/reports', (req, res) => {
+  if (!requireAuth(req, res)) return;
+  res.json({ reports: trust.openReports() });
+});
+
+app.post('/api/ops/reports/:id/resolve', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  try {
+    res.json({ report: trust.resolveReport(req.params.id, me, req.body?.action ?? 'dismiss') });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message ?? e) });
+  }
+});
+
+app.get('/api/ops/contributors', (req, res) => {
+  if (!requireAuth(req, res)) return;
+  res.json({ contributors: trust.contributorLeaderboard() });
+});
+
+app.get('/api/ops/unverified', (req, res) => {
+  if (!requireAuth(req, res)) return;
+  res.json({ objects: store.filter('objects', (o) => o.verificationStatus === 'unverified' && o.publication !== 'removed') });
+});
+
+// --- Arena entities (players, venues, tournaments, leaderboards) ------------
+
+app.post('/api/arena/players', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  try {
+    res.status(201).json({ player: arena.createPlayer({ userId: me, gameId: req.body?.gameId, gamerTag: req.body?.gamerTag, platform: req.body?.platform ?? null, region: req.body?.region ?? null }) });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message ?? e) });
+  }
+});
+
+app.get('/api/arena/players', (req, res) => {
+  res.json({ players: arena.listPlayers({ gameId: req.query.gameId ?? null }) });
+});
+
+app.post('/api/arena/venues', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  try {
+    res.status(201).json({ venue: arena.createVenue({ name: req.body?.name, gameIds: req.body?.gameIds ?? [], location: req.body?.location ?? null, lat: req.body?.lat ?? null, lng: req.body?.lng ?? null, contact: req.body?.contact ?? null }) });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message ?? e) });
+  }
+});
+
+app.get('/api/arena/venues', (req, res) => {
+  res.json({ venues: arena.listVenues({ gameId: req.query.gameId ?? null }) });
+});
+
+app.post('/api/arena/tournaments', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  try {
+    res.status(201).json({ tournament: arena.createTournament({ gameId: req.body?.gameId, title: req.body?.title, startsAt: req.body?.startsAt ?? null, createdBy: me, venueId: req.body?.venueId ?? null, maxPlayers: req.body?.maxPlayers ?? null }) });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message ?? e) });
+  }
+});
+
+app.get('/api/arena/tournaments', (req, res) => {
+  res.json({ tournaments: arena.listTournaments({ gameId: req.query.gameId ?? null, status: req.query.status ?? null }) });
+});
+
+app.get('/api/arena/leaderboard', (req, res) => {
+  res.json({ leaderboard: arena.leaderboard(req.query.gameId ?? 'efootball') });
+});
+
+
 
 /**
  * A single object. Respects the same visibility rule the list route applies:
@@ -3141,6 +3346,15 @@ app.use((err, _req, res, _next) => {
 
 const PORT = process.env.PORT || 8787;
 if (process.env.NODE_ENV !== 'test') {
+  // Persistence net: bring back the latest snapshot if the data file is gone
+  // (e.g. a fresh deploy on Railway's ephemeral filesystem with a re-attached
+  // volume), and take rolling snapshots so a crash or forced kill never loses
+  // more than the last interval. The graceful-shutdown backup still runs too.
+  ops.restoreLatestBackupIfEmpty(store);
+  ops.installPeriodicBackup(store, {
+    intervalMs: Number(process.env.BRIEF_BACKUP_INTERVAL_MS) || 15 * 60 * 1000
+  });
+
   const server = app.listen(PORT, '0.0.0.0', () => {
     const diag = ops.startupDiagnostics({
       store, capabilities: { payments: ledger.providerStatus() }

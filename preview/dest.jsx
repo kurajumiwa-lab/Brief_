@@ -59,7 +59,7 @@ async function main(){
   check('still exactly two primary navs', navs.length===2, String(navs.length));
   const railText=navs.map(n=>text(n)).join(' ');
   check('no Marketplace/Shop/Store/Vendors primary', !/Marketplace|Shop\b|Store\b|Vendors/i.test(railText));
-  check('five destinations preserved', /Nearby/.test(railText)&&/Arena/.test(railText)&&/Workflows/.test(railText)&&/Pulse/.test(railText));
+  check('five destinations preserved', /Around/.test(railText)&&/Play/.test(railText)&&/Actions/.test(railText)&&/Pulse/.test(railText));
 
   console.log('\n=== 12/13. Save still works, related engine still works ===');
   check('save controls still present', document.querySelectorAll('svg').length>0);

@@ -27,6 +27,25 @@ global.fetch = async (url) => {
   const path = String(url);
   const send = (b) => ({ ok:true, status:200, text:async()=>JSON.stringify(b), json:async()=>b });
   if (path.includes('/api/arena/status')) return send({ arenaMoney: ARENA_MONEY_OFF });
+  // The real Arena is server-backed now: challenges come from these routes.
+  if (path.includes('/api/arena/games')) return send({ games: [
+    { id:'efootball', name:'eFootball', platform:'mobile' },
+    { id:'fc_mobile', name:'FC Mobile', platform:'mobile' },
+    { id:'pubg_mobile', name:'PUBG Mobile', platform:'mobile' },
+    { id:'cod_mobile', name:'COD Mobile', platform:'mobile' },
+    { id:'other', name:'Other', platform:'any' }
+  ], activity: {} });
+  if (path.includes('/api/arena/challenges/') && path.endsWith('/accept')) {
+    return send({ challenge: { id:'chl_real', status:'accepted' }, match: { id:'mtch_real', status:'scheduled' }, reused:false });
+  }
+  if (path.includes('/api/arena/challenges')) {
+    return send({ challenges: [
+      { id:'chl_nyabs_1', gameId:'efootball', mode:'1v1', createdBy:'ply_nyabs', stake:'entry_fee', entryFeeKes:100, openUntil:'2099-01-01T00:00:00Z', status:'open', createdAt:'2026-08-15T09:00:00Z' },
+      { id:'chl_mike_1', gameId:'efootball', mode:'1v1', createdBy:'ply_mike', stake:'friendly', openUntil:'2099-01-01T00:00:00Z', status:'open', createdAt:'2026-08-15T09:10:00Z' },
+      { id:'chl_kip_1', gameId:'efootball', mode:'2v2', createdBy:'ply_kip', stake:'ranked', openUntil:'2099-01-01T00:00:00Z', status:'open', createdAt:'2026-08-15T09:20:00Z' },
+      { id:'chl_jay_1', gameId:'efootball', mode:'1v1', createdBy:'ply_jay', stake:'friendly', openUntil:'2099-01-01T00:00:00Z', status:'open', createdAt:'2026-08-15T09:30:00Z' }
+    ] });
+  }
   return { ok:false, status:404, text:async()=>'{}', json:async()=>({}) };
 };
 
@@ -42,7 +61,7 @@ async function main(){
   const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;console.log('  FAIL  '+n+(d?' -> '+d:''));}};
 
   console.log('=== Arena is its own world, not a gaming feed ===');
-  await click(btn('Arena'));
+  await click(btn('Play'));
   let b=body();
   check('Arena tab opens', b.includes('Arena')&&b.includes('Live lobby'));
   check('no social feed mechanics', !/\b(likes?|comments?|followers?|streak|leaderboard)\b/i.test(b));
@@ -116,7 +135,7 @@ async function main(){
   const arc=el=>Array.from(el.querySelectorAll('circle')).map(c=>c.getAttribute('stroke-dasharray')||'').join(',');
   check('busy venue draws a live arc', /[1-9]/.test(arc(busy)));
   check('empty venue draws no live arc', !/^\s*$/.test(arc(idle)) ? /2 4/.test(arc(idle)) : false);
-  check('empty venue glyph is muted', (idle.innerHTML||'').includes('#5C6B52'));
+  check('empty venue glyph is muted', (idle.innerHTML||'').includes('#6F6A58'));
   check('game chip carries live count', /eFootball \(\d+\)/.test(b));
 
   console.log('\n=== Switching game re-reads the venue counts ===');
@@ -144,7 +163,7 @@ async function main(){
 
 
   console.log('\n=== Real money is gated, and the reason is stated ===');
-  await click(btn('Arena'));
+  await click(btn('Play'));
   b=body();
   check('Arena states Brief does not handle match money', /does not handle match money/i.test(b));
   check('entry fees are named as player-to-player', /between players/i.test(b));

@@ -43,27 +43,27 @@ export function ListingDetail({
     <div className="space-y-3">
       <button
         onClick={onBack}
-        className="text-[10px] font-extrabold text-[#8DCF74] cursor-pointer"
+        className="text-[10px] font-extrabold text-[#7FA98B] cursor-pointer"
       >
         Back to marketplace
       </button>
 
-      <div className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-4 space-y-2">
-        <h3 className="text-sm font-extrabold text-[#E2ECE5]">{listing.title}</h3>
-        <p className="text-lg font-extrabold text-[#00FF42]">
+      <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4 space-y-2">
+        <h3 className="text-sm font-extrabold text-[#F2EFE7]">{listing.title}</h3>
+        <p className="text-lg font-extrabold text-[#3E9A66]">
           {money(listing.price, listing.currency)}
         </p>
 
         {listing.description && (
-          <p className="text-xs text-[#A9BDA0] whitespace-pre-wrap">{listing.description}</p>
+          <p className="text-xs text-[#B6AFA0] whitespace-pre-wrap">{listing.description}</p>
         )}
 
         {listing.locationName && (
-          <p className="text-[10px] text-[#5C6B52]">Location: {listing.locationName}</p>
+          <p className="text-[10px] text-[#6F6A58]">Location: {listing.locationName}</p>
         )}
 
         {listing.quantityAvailable !== null && (
-          <p className="text-[10px] text-[#5C6B52]">
+          <p className="text-[10px] text-[#6F6A58]">
             {listing.quantityAvailable > 0
               ? `${listing.quantityAvailable} available`
               : 'None available'}
@@ -73,7 +73,7 @@ export function ListingDetail({
         {listing.vendor && (
           <button
             onClick={() => onViewVendor(listing.vendor!.id)}
-            className="text-[10px] font-extrabold text-[#8DCF74] cursor-pointer"
+            className="text-[10px] font-extrabold text-[#7FA98B] cursor-pointer"
           >
             Sold by {listing.vendor.displayName}
           </button>
@@ -81,27 +81,27 @@ export function ListingDetail({
       </div>
 
       {listing.orderable ? (
-        <div className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-4 space-y-3">
+        <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#5C6B52]">
+            <span className="text-[10px] font-extrabold text-[#6F6A58]">
               Quantity
             </span>
             <button
               onClick={() => onQuantityChange(Math.max(1, quantity - 1))}
-              className="w-7 h-7 rounded-full bg-[#172D20] text-[#8DCF74] font-extrabold cursor-pointer"
+              className="w-7 h-7 rounded-full bg-[#2B2A22] text-[#7FA98B] font-extrabold cursor-pointer"
             >
               -
             </button>
-            <span className="text-xs font-extrabold text-[#E2ECE5] w-6 text-center">{quantity}</span>
+            <span className="text-xs font-extrabold text-[#F2EFE7] w-6 text-center">{quantity}</span>
             <button
               onClick={() => onQuantityChange(Math.min(max, quantity + 1))}
-              className="w-7 h-7 rounded-full bg-[#172D20] text-[#8DCF74] font-extrabold cursor-pointer"
+              className="w-7 h-7 rounded-full bg-[#2B2A22] text-[#7FA98B] font-extrabold cursor-pointer"
             >
               +
             </button>
           </div>
 
-          <p className="text-[10px] text-[#5C6B52]">
+          <p className="text-[10px] text-[#6F6A58]">
             Estimated total {money(previewTotal, listing.currency)} - confirmed by the server when
             you order
           </p>
@@ -109,24 +109,24 @@ export function ListingDetail({
           <button
             onClick={onOrder}
             disabled={busy}
-            className="w-full py-2 rounded-full bg-[#00FF42] text-[#09150E] text-xs font-extrabold cursor-pointer disabled:opacity-50"
+            className="w-full py-2 rounded-full bg-[#3E9A66] text-[#191714] text-xs font-extrabold cursor-pointer disabled:opacity-50"
           >
             {busy ? 'Placing order...' : 'Place order'}
           </button>
 
-          <p className="text-[10px] text-[#5C6B52]">
+          <p className="text-[10px] text-[#6F6A58]">
             Placing an order does not pay for it. You arrange payment with the seller directly.
           </p>
         </div>
       ) : (
-        <div className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-4">
-          <p className="text-xs text-[#C9A227]">
+        <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4">
+          <p className="text-xs text-[#C2A24A]">
             {listing.unorderableReason ?? 'This listing is not available.'}
           </p>
         </div>
       )}
 
-      {notice && <p className="text-[10px] text-[#C9A227]">{notice}</p>}
+      {notice && <p className="text-[10px] text-[#C2A24A]">{notice}</p>}
     </div>
   );
 }

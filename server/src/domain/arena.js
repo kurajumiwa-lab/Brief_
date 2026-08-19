@@ -314,3 +314,148 @@ export function gameActivity() {
   }
   return counts;
 }
+
+// ---------------------------------------------------------------------------
+// ARENA ENTITIES — players, venues, tournaments, results, leaderboards
+//
+// These complete Arena as a real platform. Each is a persisted model with real
+// lifecycle rules; leaderboards are DERIVED from confirmed results, never a
+// stored table that could disagree with the matches behind it.
+// ---------------------------------------------------------------------------
+
+// --- Game identities / players --------------------------------------------
+
+export function createPlayer({ userId, gameId, gamerTag, platform = null, region = null }) {
+  if (!userId) throw new Error('a user is required');
+  if (!GAME_IDS.includes(gameId)) throw new Error(`gameId must be one of ${GAME_IDS.join(', ')}`);
+  if (!gamerTag || !String(gamerTag).trim()) throw new Error('a gamer tag is required');
+
+  const existing = store.find('arenaPlayers', (p) => p.userId === userId && p.gameId === gameId);
+  if (existing) return existing;
+
+  return store.insert('arenaPlayers', {
+    id: newId('ply'),
+    userId,
+    gameId,
+    gamerTag: String(gamerTag).trim(),
+    platform: platform ?? null,
+    region: region ?? null,
+    verified: false,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  });
+}
+
+export function getPlayer(id) {
+  return store.find('arenaPlayers', (p) => p.id === id) ?? null;
+}
+
+export function listPlayers({ gameId = null } = {}) {
+  let rows = store.all('arenaPlayers');
+  if (gameId) rows = rows.filter((p) => p.gameId === gameId);
+  return rows.slice().sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+}
+
+// --- Venues ----------------------------------------------------------------
+
+export function createVenue({ name, gameIds = [], location = null, lat = null, lng = null, contact = null }) {
+  if (!name || !String(name).trim()) throw new Error('a name is required');
+  return store.insert('arenaVenues', {
+    id: newId('vnu'),
+    name: String(name).trim(),
+    gameIds: gameIds.filter((g) => GAME_IDS.includes(g)),
+    location,
+    lat: typeof lat === 'number' ? lat : null,
+    lng: typeof lng === 'number' ? lng : null,
+    contact,
+    createdAt: new Date().toISOString()
+  });
+}
+
+export function listVenues({ gameId = null } = {}) {
+  let rows = store.all('arenaVenues');
+  if (gameId) rows = rows.filter((v) => v.gameIds.includes(gameId));
+  return rows;
+}
+
+// --- Tournaments -----------------------------------------------------------
+
+export function createTournament({ gameId, title, startsAt, createdBy, venueId = null, maxPlayers = null }) {
+  if (!GAME_IDS.includes(gameId)) throw new Error(`gameId must be one of ${GAME_IDS.join(', ')}`);
+  if (!title || !String(title).trim()) throw new Error('a title is required');
+  return store.insert('arenaTournaments', {
+    id: newId('trn'),
+    gameId,
+    title: String(title).trim(),
+    startsAt: startsAt ?? null,
+    createdBy: createdBy ?? null,
+    venueId,
+    maxPlayers,
+    status: 'open',
+    createdAt: new Date().toISOString()
+  });
+}
+
+export function listTournaments({ gameId = null, status = null } = {}) {
+  let rows = store.all('arenaTournaments');
+  if (gameId) rows = rows.filter((t) => t.gameId === gameId);
+  if (status) rows = rows.filter((t) => t.status === status);
+  return rows.slice().sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+}
+
+// --- Results + leaderboards ------------------------------------------------
+
+/**
+ * Record an AGREED result. This is what a confirmed match already is: the
+ * result both players accepted. Writing it to arenaResults gives leaderboards
+ * a single append-only source. Idempotent per match.
+ */
+export function recordResult(matchId) {
+  const m = getMatch(matchId);
+  if (!m) throw new Error('match not found');
+  if (m.status !== 'confirmed') throw new Error('only a confirmed match has an agreed result');
+  const existing = store.find('arenaResults', (r) => r.matchId === matchId);
+  if (existing) return { result: existing, reused: true };
+
+  return {
+    result: store.insert('arenaResults', {
+      id: newId('res'),
+      matchId,
+      gameId: m.gameId,
+      winnerPlayerId: m.winnerPlayerId,
+      playerAId: m.playerAId,
+      playerBId: m.playerBId,
+      scoreLine: m.scoreLine,
+      confirmedAt: new Date().toISOString()
+    }),
+    reused: false
+  };
+}
+
+/**
+ * Leaderboard: players ranked by wins (then win rate), DERIVED from confirmed
+ * results. Never a stored table that could drift from the matches.
+ */
+export function leaderboard(gameId) {
+  const results = store.filter('arenaResults', (r) => r.gameId === gameId);
+  const tally = {};
+  for (const r of results) {
+    for (const pid of [r.playerAId, r.playerBId]) {
+      if (!pid) continue;
+      (tally[pid] ??= { played: 0, won: 0 });
+      tally[pid].played++;
+    }
+    if (r.winnerPlayerId && r.winnerPlayerId !== 'draw') {
+      (tally[r.winnerPlayerId] ??= { played: 0, won: 0 }).won++;
+    }
+  }
+  return Object.entries(tally)
+    .map(([playerId, t]) => ({
+      playerId,
+      player: getPlayer(playerId)?.gamerTag ?? playerId,
+      played: t.played,
+      won: t.won,
+      winRate: t.played ? t.won / t.played : null
+    }))
+    .sort((a, b) => b.won - a.won || (b.winRate ?? 0) - (a.winRate ?? 0));
+}

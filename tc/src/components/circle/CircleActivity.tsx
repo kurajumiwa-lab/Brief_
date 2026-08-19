@@ -48,12 +48,12 @@ export function CircleActivity({ signals, limit }: CircleActivityProps) {
 
   return (
     <div>
-      <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#5C6B52] mb-2">
+      <h3 className="text-[11px] font-extrabold text-[#6F6A58] mb-2">
         Activity
       </h3>
 
       {rows.length === 0 ? (
-        <p className="text-xs text-[#86935C]">
+        <p className="text-xs text-[#9A9278]">
           No activity recorded yet. Actions in this circle will appear here.
         </p>
       ) : (
@@ -61,9 +61,9 @@ export function CircleActivity({ signals, limit }: CircleActivityProps) {
           {rows.map((signal) => (
             <div
               key={signal.id}
-              className="flex items-center gap-3 bg-[#102117] border border-[#1E3A2A] rounded-xl px-3 py-2"
+              className="flex items-center gap-3 bg-[#28261F] border border-[#3B372B] rounded-xl px-3 py-2"
             >
-              <span className="text-[10px] text-[#E2ECE5] min-w-0 truncate">
+              <span className="text-[10px] text-[#F2EFE7] min-w-0 truncate">
                 {ACTIVITY_LABELS[signal.type] ?? signal.type.replace(/_/g, ' ')}
               </span>
 
@@ -71,12 +71,12 @@ export function CircleActivity({ signals, limit }: CircleActivityProps) {
                   events have none and are left unattributed rather than
                   credited to somebody. */}
               {signal.actorId && (
-                <span className="text-[10px] text-[#A9BDA0] shrink-0">
+                <span className="text-[10px] text-[#B6AFA0] shrink-0">
                   {signal.actorId}
                 </span>
               )}
 
-              <span className="text-[9px] font-mono text-[#5C6B52] shrink-0 ml-auto">
+              <span className="text-[9px] text-[#6F6A58] shrink-0 ml-auto">
                 {signal.createdAt.slice(0, 10)}
               </span>
             </div>

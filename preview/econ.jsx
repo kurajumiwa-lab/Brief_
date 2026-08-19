@@ -20,7 +20,7 @@ async function main(){
   let pass=0,fail=0;
   const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;console.log('  FAIL  '+n+(d?' -> '+d:''));}};
 
-  await click(btn('Arena'));
+  await click(btn('Play'));
   let b=body();
   console.log('=== 1. Availability node ===');
   check('availability control present', /Available for|Not available|Busy/.test(b));
@@ -84,7 +84,7 @@ async function main(){
   await click(btn('Kings & Queens'));
   b=body();
   check('player board present', /KING/.test(b));
-  check('organizer board present', /ARENA HOST/.test(b));
+  check('organizer board present', /Arena host/.test(b));
   check('organizer rank shown', /Arena Host|Elite Organizer|Trusted Organizer/.test(b));
   check('organizer stats shown', /18 tournaments/.test(b)&&/423 players/.test(b)&&/97% completion/.test(b));
   check('weak organizer not top-ranked', /Organizer - 2 tournaments/.test(b)||/Organizer -/.test(b));

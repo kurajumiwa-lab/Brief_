@@ -64,7 +64,7 @@ async function main(){
   const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;console.log('  FAIL  '+n+(d?' -> '+d:''));}};
 
   console.log('=== Pursuits surface ===');
-  await goto('Nearby','Pursuits');
+  await goto('Around','Pursuits');
   check('tab opens', body().includes('Things you have asked Brief'));
   check('honest empty state', body().includes('Nothing being pursued yet'));
   check('states it only searches what it holds', body().includes('searches only what it already holds'));
@@ -101,7 +101,7 @@ async function main(){
   if(arch){ await click(arch); check('status changes to archived', body().includes('archived')); }
 
   console.log('\n=== Entry point: failed search -> pursuit ===');
-  await click(btn('Nearby'));
+  await click(btn('Around'));
   const search=document.querySelector('input[placeholder="Search nearby places, jobs, services..."]');
   await type(search,'zzzz nonexistent thing');
   b=body();
@@ -111,7 +111,7 @@ async function main(){
     check('creates pursuit from failed search', body().includes('zzzz nonexistent thing')); }
 
   console.log('\n=== Handing off clears the search box ===');
-  await click(btn('Nearby'));
+  await click(btn('Around'));
   const s2=document.querySelector('input[placeholder="Search nearby places, jobs, services..."]');
   check('search cleared after handoff', s2.value==='', `value="${s2.value}"`);
 
@@ -124,12 +124,12 @@ async function main(){
     if(p){ await click(p); check('detail pursuit created', body().includes('Pursuits (')); } }
 
   console.log('\n=== Marketplace preserved ===');
-  await click(btn('Nearby'));
+  await click(btn('Around'));
   check('stream still renders objects', document.querySelectorAll('div.grid > div[class*="cursor-pointer"]').length>0);
-  await goto('Workflows','Inbox');
+  await goto('Actions','Inbox');
   check('Inbox still present', /Inbox/.test(body()));
-  await click(btn('Nearby'));
-  check('My Layer still present', !!btn('My Layer'));
+  await click(btn('Around'));
+  check('My Layer still present', !!btn('Saved'));
   console.log(`\n${'='.repeat(46)}\nPASSED ${pass}   FAILED ${fail}\n${'='.repeat(46)}`);
   process.exit(fail?1:0);
 }
