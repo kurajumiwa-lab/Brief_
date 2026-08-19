@@ -247,8 +247,8 @@ export function Marketplace({ currentUserId = 'usr_me' }: MarketplaceProps = {})
           }}
           className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
             section === s.id
-              ? 'bg-[#3E9A66] text-[#191714] border-[#3E9A66]'
-              : 'bg-[#28261F] text-[#7FA98B] border-[#3F5544]'
+              ? 'bg-[#00E676] text-[#0A0A0B] border-[#00E676]'
+              : 'bg-[#1C1C1F] text-[#00E676] border-[#14392B]'
           }`}
         >
           {s.label}
@@ -296,14 +296,14 @@ export function Marketplace({ currentUserId = 'usr_me' }: MarketplaceProps = {})
       {section === 'browse' && (
         <div className="space-y-2">
           {listings.status === 'loading' && (
-            <p className="text-xs text-[#9A9278]">Loading listings...</p>
+            <p className="text-xs text-[#8E8E93]">Loading listings...</p>
           )}
           {listings.status === 'error' && (
             <p className="text-xs text-[#C2A24A]">{listings.error}</p>
           )}
           {listings.status === 'ready' && listings.data.length === 0 && (
             // Honest empty state. Nothing is invented to fill the screen.
-            <p className="text-xs text-[#9A9278]">
+            <p className="text-xs text-[#8E8E93]">
               Nothing is listed yet. When someone nearby offers something, it appears here.
             </p>
           )}
@@ -317,7 +317,7 @@ export function Marketplace({ currentUserId = 'usr_me' }: MarketplaceProps = {})
         <div className="space-y-2">
           {notice && <p className="text-[10px] text-[#C2A24A]">{notice}</p>}
           {myOrders.length === 0 ? (
-            <p className="text-xs text-[#9A9278]">You have not ordered anything yet.</p>
+            <p className="text-xs text-[#8E8E93]">You have not ordered anything yet.</p>
           ) : (
             myOrders.map((o) => (
               <React.Fragment key={o.id}>

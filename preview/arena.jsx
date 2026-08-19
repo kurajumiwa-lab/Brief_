@@ -135,7 +135,7 @@ async function main(){
   const arc=el=>Array.from(el.querySelectorAll('circle')).map(c=>c.getAttribute('stroke-dasharray')||'').join(',');
   check('busy venue draws a live arc', /[1-9]/.test(arc(busy)));
   check('empty venue draws no live arc', !/^\s*$/.test(arc(idle)) ? /2 4/.test(arc(idle)) : false);
-  check('empty venue glyph is muted', (idle.innerHTML||'').includes('#6F6A58'));
+  check('empty venue glyph is muted', (idle.innerHTML||'').includes('#48484A'));
   check('game chip carries live count', /eFootball \(\d+\)/.test(b));
 
   console.log('\n=== Switching game re-reads the venue counts ===');

@@ -5,3 +5,15 @@
 /* Previously inline in index.html alongside the CDN script tag. */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* --- Spring physics (empty-state overlay) ---
+   Defined in the real stylesheet, not a React <style> tag, so the keyframes
+   never leak their "0%"/"100%" text into the rendered DOM (which a test suite
+   correctly treats as stray content). */
+@keyframes briefSpringIntro {
+  from { transform: translate(-50%, -50%) scale(0.85); opacity: 0; }
+  to   { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+.brief-spring-modal {
+  animation: briefSpringIntro 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}

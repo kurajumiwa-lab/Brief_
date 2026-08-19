@@ -35,32 +35,32 @@ export function ListingCard({ listing, onOpen }: ListingCardProps) {
   return (
     <button
       onClick={() => onOpen(listing.id)}
-      className="w-full text-left bg-[#28261F] border border-[#3B372B] rounded-2xl p-3 space-y-1.5 cursor-pointer hover:border-[#3F5544] transition"
+      className="w-full text-left bg-[#1C1C1F] border border-[#1E1E22] rounded-2xl p-3 space-y-1.5 cursor-pointer hover:border-[#14392B] transition"
     >
       <div className="flex items-start justify-between gap-3">
-        <p className="text-xs font-extrabold text-[#F2EFE7] min-w-0">{listing.title}</p>
-        <span className="shrink-0 text-[9px] px-2 py-0.5 rounded-full bg-[#1E1E1E] text-[#B6AFA0]">
+        <p className="text-xs font-extrabold text-[#FFFFFF] min-w-0">{listing.title}</p>
+        <span className="shrink-0 text-[9px] px-2 py-0.5 rounded-full bg-[#1E1E1E] text-[#A1A1A6]">
           {TYPE_LABEL[listing.type] ?? listing.type}
         </span>
       </div>
 
-      <p className="text-sm font-extrabold text-[#3E9A66]">
+      <p className="text-sm font-extrabold text-[#00E676]">
         {money(listing.price, listing.currency)}
       </p>
 
       {listing.vendor && (
-        <p className="text-[10px] text-[#9A9278]">{listing.vendor.displayName}</p>
+        <p className="text-[10px] text-[#8E8E93]">{listing.vendor.displayName}</p>
       )}
 
       {/* Optional by design: a mobile service has no single location. */}
       {listing.locationName && (
-        <p className="text-[10px] text-[#6F6A58]">{listing.locationName}</p>
+        <p className="text-[10px] text-[#48484A]">{listing.locationName}</p>
       )}
 
       {/* Stock only when it is genuinely tracked. null means "not tracked",
           which is different from zero and must not render as "0 left". */}
       {listing.quantityAvailable !== null && listing.quantityAvailable > 0 && (
-        <p className="text-[10px] text-[#6F6A58]">{listing.quantityAvailable} available</p>
+        <p className="text-[10px] text-[#48484A]">{listing.quantityAvailable} available</p>
       )}
 
       {!listing.orderable && listing.unorderableReason && (

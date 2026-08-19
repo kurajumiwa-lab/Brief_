@@ -56,7 +56,7 @@ async function main(){
   for(const s of ['Everything','Tea','Today','Pursuits','Quests'])
     check(`Nearby > ${s}`, !!btn(s));
   await goto('Around','Tea');
-  check('Tea content preserved', /What Nairobi is talking about|Morning|Evening/i.test(body()));
+  check('Tea content preserved', /What people are talking about|Morning|Evening/i.test(body()));
   await goto('Around','Quests');
   check('Quests content preserved', /Open quests/i.test(body()));
 
@@ -174,7 +174,7 @@ async function main(){
   await click(btn('Around'));
   const cur=railBtns().find(b=>b.getAttribute('aria-current')==='page');
   check('active item is machine-readable', !!cur);
-  check('active item has a non-colour marker', !!cur && /bg-\[#28261F\]|font-extrabold/.test(cur.className));
+  check('active item has a non-colour marker', !!cur && /bg-\[#1C1C1F\]|font-extrabold/.test(cur.className));
   check('active item renders an edge indicator', !!cur && cur.querySelectorAll('span').length>=1);
 
   console.log(`\n${'='.repeat(46)}\nPASSED ${pass}   FAILED ${fail}\n${'='.repeat(46)}`);

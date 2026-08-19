@@ -53,7 +53,7 @@ export function CircleTasks({
     return (
       <div>
         <Heading>Tasks</Heading>
-        <p className="text-xs text-[#9A9278]">No tasks in this circle.</p>
+        <p className="text-xs text-[#8E8E93]">No tasks in this circle.</p>
       </div>
     );
   }
@@ -66,17 +66,17 @@ export function CircleTasks({
     return (
       <div
         key={task.id}
-        className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3 space-y-2"
+        className="bg-[#1C1C1F] border border-[#1E1E22] rounded-2xl p-3 space-y-2"
       >
         <div className="flex items-start justify-between gap-3">
-          <p className="text-xs text-[#F2EFE7] min-w-0">{task.content}</p>
+          <p className="text-xs text-[#FFFFFF] min-w-0">{task.content}</p>
           <span
             className={`shrink-0 text-[9px] px-2 py-0.5 rounded-full ${
               state?.status === 'completed'
-                ? 'bg-[#2B2A22] text-[#7FA98B]'
+                ? 'bg-[#1C1C1F] text-[#00E676]'
                 : state?.status === 'assigned'
                 ? 'bg-[#252C31] text-[#8FAFC4]'
-                : 'bg-[#1E1E1E] text-[#B6AFA0]'
+                : 'bg-[#1E1E1E] text-[#A1A1A6]'
             }`}
           >
             {state?.status ?? 'open'}
@@ -85,12 +85,12 @@ export function CircleTasks({
 
         {/* Who holds it. Stated plainly; never inferred. */}
         {state?.status === 'assigned' && (
-          <p className="text-[10px] text-[#6F6A58]">
+          <p className="text-[10px] text-[#48484A]">
             {mine ? 'Assigned to you' : `Assigned to ${state.assigneeId}`}
           </p>
         )}
         {state?.status === 'completed' && (
-          <p className="text-[10px] text-[#6F6A58]">
+          <p className="text-[10px] text-[#48484A]">
             Completed by {state.completedBy ?? 'unknown'}
             {state.completedAt ? ` on ${state.completedAt.slice(0, 10)}` : ''}
           </p>
@@ -101,7 +101,7 @@ export function CircleTasks({
             <button
               onClick={() => onAssign(task.id)}
               disabled={busy}
-              className="px-3 py-1.5 rounded-xl bg-[#3E9A66] text-[#191714] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+              className="px-3 py-1.5 rounded-xl bg-[#00E676] text-[#0A0A0B] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
             >
               {busy ? 'Working...' : 'Take this on'}
             </button>
@@ -112,14 +112,14 @@ export function CircleTasks({
               <button
                 onClick={() => onComplete(task.id)}
                 disabled={busy}
-                className="px-3 py-1.5 rounded-xl bg-[#3E9A66] text-[#191714] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+                className="px-3 py-1.5 rounded-xl bg-[#00E676] text-[#0A0A0B] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
               >
                 {busy ? 'Working...' : 'Mark complete'}
               </button>
               <button
                 onClick={() => onRelease(task.id)}
                 disabled={busy}
-                className="px-3 py-1.5 rounded-xl bg-[#2B2A22] border border-[#3F5544] text-[#7FA98B] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+                className="px-3 py-1.5 rounded-xl bg-[#1C1C1F] border border-[#14392B] text-[#00E676] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
               >
                 Release
               </button>
@@ -129,7 +129,7 @@ export function CircleTasks({
 
         {/* An observer is told why, rather than shown a button that 403s. */}
         {state?.status === 'open' && myRole === 'observer' && (
-          <p className="text-[10px] text-[#6F6A58]">
+          <p className="text-[10px] text-[#48484A]">
             Observers cannot take on tasks.
           </p>
         )}
@@ -166,11 +166,11 @@ export function CircleTasks({
 }
 
 const Heading = ({ children }: { children: React.ReactNode }) => (
-  <h3 className="text-[11px] font-extrabold text-[#6F6A58]">
+  <h3 className="text-[11px] font-extrabold text-[#48484A]">
     {children}
   </h3>
 );
 
 const SubHeading = ({ children }: { children: React.ReactNode }) => (
-  <p className="text-[10px] text-[#6F6A58]">{children}</p>
+  <p className="text-[10px] text-[#48484A]">{children}</p>
 );

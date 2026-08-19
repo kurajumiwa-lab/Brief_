@@ -45,16 +45,16 @@ export function AwaitingPayment({
   if (held.length === 0) return null;
 
   return (
-    <div className="bg-[#211F1A] border border-[#3A3320] rounded-xl p-3 space-y-2">
+    <div className="bg-[#121214] border border-[#3A3320] rounded-xl p-3 space-y-2">
       <div className="flex items-center justify-between gap-2">
         <p className="text-[11px] font-extrabold text-[#D9BB7D]">
           {held.length} awaiting payment
         </p>
-        <p className="text-[9px] text-[#6F6A58]">
+        <p className="text-[9px] text-[#48484A]">
           Spot held
         </p>
       </div>
-      <p className="text-[10px] text-[#9A9278] leading-snug">
+      <p className="text-[10px] text-[#8E8E93] leading-snug">
         These spots are held but unpaid. No online payment is connected, so
         confirm here once you have actually received the money.
       </p>
@@ -62,18 +62,18 @@ export function AwaitingPayment({
       {held.map((r) => (
         <div
           key={r.id}
-          className="bg-[#191714] border border-[#3B372B] rounded-lg p-2.5 flex items-center justify-between gap-2"
+          className="bg-[#0A0A0B] border border-[#1E1E22] rounded-lg p-2.5 flex items-center justify-between gap-2"
         >
           <div className="min-w-0">
-            <p className="text-xs text-[#F2EFE7] truncate">{r.name || r.attendeeRef}</p>
+            <p className="text-xs text-[#FFFFFF] truncate">{r.name || r.attendeeRef}</p>
             {r.contact && (
-              <p className="text-[9px] text-[#6F6A58] truncate mt-0.5">{r.contact}</p>
+              <p className="text-[9px] text-[#48484A] truncate mt-0.5">{r.contact}</p>
             )}
           </div>
           <button
             disabled={busy}
             onClick={() => onConfirmPayment(r.id)}
-            className="shrink-0 px-2.5 py-1.5 rounded-lg bg-[#3E9A66] text-[#191714] font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
+            className="shrink-0 px-2.5 py-1.5 rounded-lg bg-[#00E676] text-[#0A0A0B] font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
           >
             Confirm {currency} {price.toLocaleString()}
           </button>

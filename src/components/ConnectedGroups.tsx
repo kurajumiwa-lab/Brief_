@@ -77,16 +77,16 @@ export function ConnectedGroups({
       {!openGroup && (
         <>
           <div>
-            <h2 className="text-lg font-extrabold text-[#F2EFE7]">Your Groups</h2>
-            <p className="text-[11px] text-[#9A9278] leading-snug mt-1">
+            <h2 className="text-lg font-extrabold text-[#FFFFFF]">Your Groups</h2>
+            <p className="text-[11px] text-[#8E8E93] leading-snug mt-1">
               Groups you're a member of where Brief can help organise
               information. Brief does not post, promote or message anyone.
             </p>
           </div>
 
           {visibleGroups.length === 0 && (
-            <div className="border border-dashed border-[#3B372B] rounded-2xl p-8 text-center">
-              <p className="text-xs text-[#9A9278]">No groups connected.</p>
+            <div className="border border-dashed border-[#1E1E22] rounded-2xl p-8 text-center">
+              <p className="text-xs text-[#8E8E93]">No groups connected.</p>
             </div>
           )}
 
@@ -96,14 +96,14 @@ export function ConnectedGroups({
             return (
               <div
                 key={group.id}
-                className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4 space-y-2"
+                className="bg-[#1C1C1F] border border-[#1E1E22] rounded-2xl p-4 space-y-2"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-sm font-extrabold text-[#F2EFE7]">
+                    <p className="text-sm font-extrabold text-[#FFFFFF]">
                       {group.name}
                     </p>
-                    <p className="text-[9px] text-[#6F6A58] mt-0.5">
+                    <p className="text-[9px] text-[#48484A] mt-0.5">
                       {group.platform} {' '}
                       {group.access === 'member' ? 'Member' : 'Authorised'}
                     </p>
@@ -113,14 +113,14 @@ export function ConnectedGroups({
                       setOpenGroupId(group.id);
                       setCommandResult(null);
                     }}
-                    className="shrink-0 px-3 py-1.5 rounded-xl bg-[#3E9A66] text-[#191714] font-extrabold text-[10px] cursor-pointer"
+                    className="shrink-0 px-3 py-1.5 rounded-xl bg-[#00E676] text-[#0A0A0B] font-extrabold text-[10px] cursor-pointer"
                   >
                     Open
                   </button>
                 </div>
 
                 <div className="flex flex-wrap gap-x-4 gap-y-1">
-                  <span className="text-[10px] text-[#B6AFA0]">
+                  <span className="text-[10px] text-[#A1A1A6]">
                     {entries.length} useful items
                   </span>
                   {open.length > 0 && (
@@ -129,7 +129,7 @@ export function ConnectedGroups({
                     </span>
                   )}
                   {group.lastActivityAt && (
-                    <span className="text-[10px] text-[#6F6A58]">
+                    <span className="text-[10px] text-[#48484A]">
                       last activity {group.lastActivityAt.slice(0, 10)}
                     </span>
                   )}
@@ -137,7 +137,7 @@ export function ConnectedGroups({
 
                 <button
                   onClick={() => handleRevokeGroup(group.id)}
-                  className="text-[9px] text-[#6F6A58] underline underline-offset-2 cursor-pointer"
+                  className="text-[9px] text-[#48484A] underline underline-offset-2 cursor-pointer"
                 >
                   Revoke Brief's access
                 </button>
@@ -154,21 +154,21 @@ export function ConnectedGroups({
               setOpenGroupId(null);
               setCommandResult(null);
             }}
-            className="text-[10px] text-[#7FA98B] cursor-pointer"
+            className="text-[10px] text-[#00E676] cursor-pointer"
           >
             Back to your groups
           </button>
 
           <div className="flex items-center gap-2 mt-2">
-            <h2 className="text-lg font-extrabold text-[#F2EFE7]">
+            <h2 className="text-lg font-extrabold text-[#FFFFFF]">
               {openGroup.name}
             </h2>
-            <span className="text-[9px] text-[#6F6A58]">
+            <span className="text-[9px] text-[#48484A]">
               {openGroup.platform} {' '}
               {openGroup.access === 'member' ? "You're a member" : 'Authorised'}
             </span>
           </div>
-          <p className="text-[11px] text-[#9A9278] leading-snug mt-1">
+          <p className="text-[11px] text-[#8E8E93] leading-snug mt-1">
             Brief has organised useful information from this group. It
             does not post, promote or message members.
           </p>
@@ -189,11 +189,11 @@ export function ConnectedGroups({
           value={commandText}
           onChange={(e) => setCommandText(e.target.value)}
           placeholder="Ask something about this group..."
-          className="flex-1 bg-[#24221C] border border-[#3B372B] rounded-xl px-3 py-2.5 text-xs text-[#F2EFE7] placeholder-[#6F6A58] outline-none focus:border-[#3F5544]"
+          className="flex-1 bg-[#121214] border border-[#1E1E22] rounded-xl px-3 py-2.5 text-xs text-[#FFFFFF] placeholder-[#48484A] outline-none focus:border-[#14392B]"
         />
         <button
           type="submit"
-          className="px-4 py-2.5 rounded-xl bg-[#3E9A66] text-[#191714] font-extrabold text-[11px] cursor-pointer"
+          className="px-4 py-2.5 rounded-xl bg-[#00E676] text-[#0A0A0B] font-extrabold text-[11px] cursor-pointer"
         >
           Run
         </button>
@@ -207,7 +207,7 @@ export function ConnectedGroups({
               setCommandText(c);
               handleRunCommand(c);
             }}
-            className="text-[10px] px-2 py-1 rounded-full bg-[#2B2A22] border border-[#3B372B] text-[#7FA98B] cursor-pointer"
+            className="text-[10px] px-2 py-1 rounded-full bg-[#1C1C1F] border border-[#1E1E22] text-[#00E676] cursor-pointer"
           >
             {c}
           </button>
@@ -215,14 +215,14 @@ export function ConnectedGroups({
       </div>
 
       {commandResult && (
-        <div className="bg-[#28261F] border border-[#3F5544] rounded-2xl p-4 space-y-3">
-          <p className="text-[9px] text-[#3E9A66]">
+        <div className="bg-[#1C1C1F] border border-[#14392B] rounded-2xl p-4 space-y-3">
+          <p className="text-[9px] text-[#00E676]">
             /{commandResult.command} {commandResult.argument}
           </p>
 
           {commandResult.brief && (
             <div className="space-y-2">
-              <p className="text-[11px] font-extrabold text-[#F2EFE7]">
+              <p className="text-[11px] font-extrabold text-[#FFFFFF]">
                 This week in the group
               </p>
               {commandResult.brief.lines.map((line) => (
@@ -230,21 +230,21 @@ export function ConnectedGroups({
                   key={line.messageClass}
                   className="flex items-baseline justify-between gap-3"
                 >
-                  <span className="text-[11px] text-[#B6AFA0]">{line.label}</span>
-                  <span className="text-[11px] text-[#7FA98B]">
+                  <span className="text-[11px] text-[#A1A1A6]">{line.label}</span>
+                  <span className="text-[11px] text-[#00E676]">
                     {line.count}
                   </span>
                 </div>
               ))}
 
               {commandResult.brief.unanswered.length > 0 && (
-                <div className="pt-2 border-t border-[#3B372B] space-y-1">
+                <div className="pt-2 border-t border-[#1E1E22] space-y-1">
                   <p className="text-[10px] font-bold text-[#C2A24A]">
                     {commandResult.brief.unanswered.length} question
                     {commandResult.brief.unanswered.length === 1 ? '' : 's'} still waiting
                   </p>
                   {commandResult.brief.unanswered.map((q) => (
-                    <p key={q.id} className="text-[10px] text-[#B6AFA0] leading-snug">
+                    <p key={q.id} className="text-[10px] text-[#A1A1A6] leading-snug">
                       {q.originalText}
                     </p>
                   ))}
@@ -255,31 +255,31 @@ export function ConnectedGroups({
 
           {commandResult.fromGroup.length > 0 && (
             <div className="space-y-2">
-              <p className="text-[10px] text-[#6F6A58]">
+              <p className="text-[10px] text-[#48484A]">
                 From this group
               </p>
               {commandResult.fromGroup.slice(0, 6).map((entry) => (
                 <div
                   key={entry.id}
-                  className="bg-[#24221C] border border-[#3B372B] rounded-xl p-2.5"
+                  className="bg-[#121214] border border-[#1E1E22] rounded-xl p-2.5"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[9px] text-[#3E9A66]">
+                    <span className="text-[9px] text-[#00E676]">
                       {MESSAGE_CLASS_LABELS[entry.messageClass]}
                     </span>
-                    <span className="text-[9px] text-[#6F6A58]">
+                    <span className="text-[9px] text-[#48484A]">
                       {entry.sentAt.slice(0, 10)}
                     </span>
                   </div>
 
                   {/* The original message, always. Brief's reading of it
                       never stands in for what was actually said. */}
-                  <p className="text-[11px] text-[#F2EFE7] leading-snug mt-1">
+                  <p className="text-[11px] text-[#FFFFFF] leading-snug mt-1">
                     {entry.originalText}
                   </p>
 
                   {entry.mediaKind && entry.mediaKind !== 'message' && (
-                    <p className="text-[9px] text-[#6F6A58] mt-1">
+                    <p className="text-[9px] text-[#48484A] mt-1">
                       from {entry.mediaKind}
                       {entry.mediaAnalysisStatus === 'pending'
                         ? ' - not read yet'
@@ -289,7 +289,7 @@ export function ConnectedGroups({
 
                   {entry.mediaExtractedText &&
                     entry.mediaAnalysisStatus === 'processed' && (
-                      <p className="text-[10px] text-[#B6AFA0] leading-snug mt-1 pl-2 border-l-2 border-[#3B372B]">
+                      <p className="text-[10px] text-[#A1A1A6] leading-snug mt-1 pl-2 border-l-2 border-[#1E1E22]">
                         {entry.mediaExtractedText}
                       </p>
                     )}
@@ -297,7 +297,7 @@ export function ConnectedGroups({
                   {entry.answers.map((a) => (
                     <p
                       key={a.messageId}
-                      className="text-[10px] text-[#7FA98B] leading-snug mt-1 pl-2 border-l-2 border-[#3F5544]"
+                      className="text-[10px] text-[#00E676] leading-snug mt-1 pl-2 border-l-2 border-[#14392B]"
                     >
                       {a.authorLabel ? `${a.authorLabel}: ` : ''}
                       {a.text}
@@ -306,14 +306,14 @@ export function ConnectedGroups({
 
                   <div className="flex items-center gap-2 mt-1">
                     {entry.authorLabel && (
-                      <span className="text-[9px] text-[#6F6A58]">
+                      <span className="text-[9px] text-[#48484A]">
                         {entry.authorLabel}
                       </span>
                     )}
                     {entry.entities.map((ent) => (
                       <span
                         key={ent.field}
-                        className="text-[9px] text-[#9A9278]"
+                        className="text-[9px] text-[#8E8E93]"
                       >
                         {ent.field}: {ent.value}
                       </span>
@@ -322,20 +322,20 @@ export function ConnectedGroups({
 
                   {/* Provenance stays attached to the record, and the
                       saved copy lands in the user's own layer first. */}
-                  <div className="flex items-center gap-3 pt-2 mt-2 border-t border-[#2A2921]">
+                  <div className="flex items-center gap-3 pt-2 mt-2 border-t border-[#121214]">
                     <button
                       onClick={() => handleSaveGroupEntry(entry)}
-                      className="text-[9px] font-extrabold text-[#3E9A66] cursor-pointer"
+                      className="text-[9px] font-extrabold text-[#00E676] cursor-pointer"
                     >
                       Save to My Layer
                     </button>
                     <button
                       onClick={() => handleViewSource(entry)}
-                      className="text-[9px] text-[#9A9278] underline underline-offset-2 cursor-pointer"
+                      className="text-[9px] text-[#8E8E93] underline underline-offset-2 cursor-pointer"
                     >
                       View source
                     </button>
-                    <span className="text-[9px] text-[#6F6A58] ml-auto">
+                    <span className="text-[9px] text-[#48484A] ml-auto">
                       From {openGroup.name}
                       {' - '}
                       {formatSourceDate(entry.source.timestamp)}
@@ -358,12 +358,12 @@ export function ConnectedGroups({
                 <button
                   key={obj.id}
                   onClick={() => setSelectedObjectForDetail(obj)}
-                  className="w-full text-left bg-[#24221C] border border-[#3B372B] hover:border-[#3F5544] rounded-xl p-2.5 cursor-pointer"
+                  className="w-full text-left bg-[#121214] border border-[#1E1E22] hover:border-[#14392B] rounded-xl p-2.5 cursor-pointer"
                 >
-                  <span className="text-[9px] text-[#6F6A58]">
+                  <span className="text-[9px] text-[#48484A]">
                     {getObjectTypeMeta(obj.type).label}
                   </span>
-                  <p className="text-[11px] font-bold text-[#F2EFE7] mt-0.5">
+                  <p className="text-[11px] font-bold text-[#FFFFFF] mt-0.5">
                     {obj.title}
                   </p>
                 </button>
@@ -372,7 +372,7 @@ export function ConnectedGroups({
           )}
 
           {commandResult.emptyNote && (
-            <p className="text-[11px] text-[#9A9278]">{commandResult.emptyNote}</p>
+            <p className="text-[11px] text-[#8E8E93]">{commandResult.emptyNote}</p>
           )}
         </div>
       )}
@@ -386,16 +386,16 @@ export function ConnectedGroups({
           {unansweredQuestions.map((q) => (
             <div
               key={q.id}
-              className="bg-[#28261F] border border-[#3B372B] rounded-xl p-3"
+              className="bg-[#1C1C1F] border border-[#1E1E22] rounded-xl p-3"
             >
-              <p className="text-[11px] text-[#F2EFE7] leading-snug">
+              <p className="text-[11px] text-[#FFFFFF] leading-snug">
                 {q.originalText}
               </p>
               <div className="flex items-center gap-2 mt-1">
                 {q.authorLabel && (
-                  <span className="text-[9px] text-[#6F6A58]">{q.authorLabel}</span>
+                  <span className="text-[9px] text-[#48484A]">{q.authorLabel}</span>
                 )}
-                <span className="text-[9px] text-[#6F6A58]">
+                <span className="text-[9px] text-[#48484A]">
                   {q.sentAt.slice(0, 10)}
                 </span>
               </div>
@@ -405,8 +405,8 @@ export function ConnectedGroups({
       )}
 
       {/* Operational metrics only. No impressions, no engagement. */}
-      <div className="border-t border-[#3B372B] pt-4 space-y-2">
-        <h3 className="text-[11px] font-extrabold text-[#6F6A58]">
+      <div className="border-t border-[#1E1E22] pt-4 space-y-2">
+        <h3 className="text-[11px] font-extrabold text-[#48484A]">
           Group health
         </h3>
         {[
@@ -417,8 +417,8 @@ export function ConnectedGroups({
           ['Still unanswered', unansweredQuestions.length]
         ].map(([label, value]) => (
           <div key={String(label)} className="flex items-baseline justify-between gap-3">
-            <span className="text-[10px] text-[#9A9278]">{label}</span>
-            <span className="text-[10px] text-[#B6AFA0]">{value}</span>
+            <span className="text-[10px] text-[#8E8E93]">{label}</span>
+            <span className="text-[10px] text-[#A1A1A6]">{value}</span>
           </div>
         ))}
       </div>

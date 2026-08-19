@@ -17,11 +17,11 @@ import { OrderStatus } from './OrderStatus';
  */
 
 const STATUS_STYLE: Record<string, string> = {
-  draft: 'bg-[#1E1E1E] text-[#B6AFA0]',
-  active: 'bg-[#2B2A22] text-[#3E9A66]',
+  draft: 'bg-[#1E1E1E] text-[#A1A1A6]',
+  active: 'bg-[#1C1C1F] text-[#00E676]',
   paused: 'bg-[#2A2415] text-[#C2A24A]',
   sold_out: 'bg-[#252C31] text-[#8FAFC4]',
-  archived: 'bg-[#1E1E1E] text-[#6F6A58]'
+  archived: 'bg-[#1E1E1E] text-[#48484A]'
 };
 
 // Which moves the UI offers from each state. Mirrors the server's table; the
@@ -72,35 +72,35 @@ export function VendorPanel({
   if (!vendor) {
     return (
       <div className="space-y-3">
-        <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4 space-y-3">
-          <h4 className="text-[11px] font-extrabold text-[#6F6A58]">
+        <div className="bg-[#1C1C1F] border border-[#1E1E22] rounded-2xl p-4 space-y-3">
+          <h4 className="text-[11px] font-extrabold text-[#48484A]">
             Start selling
           </h4>
-          <p className="text-xs text-[#9A9278]">
+          <p className="text-xs text-[#8E8E93]">
             A seller profile lets you list products, services and experiences.
           </p>
           <input
             value={draft.displayName}
             onChange={(e) => onDraftChange({ displayName: e.target.value })}
             placeholder="Business or trading name"
-            className="w-full bg-[#1B1916] border border-[#3B372B] rounded-xl px-3 py-2 text-xs text-[#F2EFE7] outline-none"
+            className="w-full bg-[#0A0A0B] border border-[#1E1E22] rounded-xl px-3 py-2 text-xs text-[#FFFFFF] outline-none"
           />
           <input
             value={draft.description}
             onChange={(e) => onDraftChange({ description: e.target.value })}
             placeholder="What do you offer?"
-            className="w-full bg-[#1B1916] border border-[#3B372B] rounded-xl px-3 py-2 text-xs text-[#F2EFE7] outline-none"
+            className="w-full bg-[#0A0A0B] border border-[#1E1E22] rounded-xl px-3 py-2 text-xs text-[#FFFFFF] outline-none"
           />
           <input
             value={draft.contactMethod}
             onChange={(e) => onDraftChange({ contactMethod: e.target.value })}
             placeholder="How should buyers reach you?"
-            className="w-full bg-[#1B1916] border border-[#3B372B] rounded-xl px-3 py-2 text-xs text-[#F2EFE7] outline-none"
+            className="w-full bg-[#0A0A0B] border border-[#1E1E22] rounded-xl px-3 py-2 text-xs text-[#FFFFFF] outline-none"
           />
           <button
             onClick={onCreateVendor}
             disabled={busyId === 'vendor'}
-            className="w-full py-2 rounded-full bg-[#3E9A66] text-[#191714] text-xs font-extrabold cursor-pointer disabled:opacity-50"
+            className="w-full py-2 rounded-full bg-[#00E676] text-[#0A0A0B] text-xs font-extrabold cursor-pointer disabled:opacity-50"
           >
             Create seller profile
           </button>
@@ -114,11 +114,11 @@ export function VendorPanel({
 
   return (
     <div className="space-y-4">
-      <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4 space-y-1">
-        <h4 className="text-sm font-extrabold text-[#F2EFE7]">{vendor.displayName}</h4>
-        {vendor.description && <p className="text-xs text-[#B6AFA0]">{vendor.description}</p>}
+      <div className="bg-[#1C1C1F] border border-[#1E1E22] rounded-2xl p-4 space-y-1">
+        <h4 className="text-sm font-extrabold text-[#FFFFFF]">{vendor.displayName}</h4>
+        {vendor.description && <p className="text-xs text-[#A1A1A6]">{vendor.description}</p>}
         {vendor.verification.facts.map((f) => (
-          <p key={f.kind} className="text-[10px] text-[#6F6A58]">
+          <p key={f.kind} className="text-[10px] text-[#48484A]">
             {f.label}
           </p>
         ))}
@@ -129,14 +129,14 @@ export function VendorPanel({
           settled orders sees nothing here rather than "KES 0", which reads
           like a balance they could withdraw. */}
       {earnings && earnings.orderCount > 0 && (
-        <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4 space-y-1">
-          <h4 className="text-[11px] font-extrabold text-[#6F6A58]">
+        <div className="bg-[#1C1C1F] border border-[#1E1E22] rounded-2xl p-4 space-y-1">
+          <h4 className="text-[11px] font-extrabold text-[#48484A]">
             Settled earnings
           </h4>
-          <p className="text-lg font-extrabold text-[#3E9A66]">
+          <p className="text-lg font-extrabold text-[#00E676]">
             {money(earnings.net, earnings.currency)}
           </p>
-          <p className="text-[10px] text-[#6F6A58]">
+          <p className="text-[10px] text-[#48484A]">
             From {earnings.orderCount} settled order{earnings.orderCount === 1 ? '' : 's'} -{' '}
             {money(earnings.gross, earnings.currency)} less {money(earnings.commission, earnings.currency)}{' '}
             platform commission
@@ -149,21 +149,21 @@ export function VendorPanel({
       )}
 
       {/* --- new listing ---------------------------------------------------- */}
-      <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4 space-y-2">
-        <h4 className="text-[11px] font-extrabold text-[#6F6A58]">
+      <div className="bg-[#1C1C1F] border border-[#1E1E22] rounded-2xl p-4 space-y-2">
+        <h4 className="text-[11px] font-extrabold text-[#48484A]">
           New listing
         </h4>
         <input
           value={listingDraft.title}
           onChange={(e) => onListingDraftChange({ title: e.target.value })}
           placeholder="What are you offering?"
-          className="w-full bg-[#1B1916] border border-[#3B372B] rounded-xl px-3 py-2 text-xs text-[#F2EFE7] outline-none"
+          className="w-full bg-[#0A0A0B] border border-[#1E1E22] rounded-xl px-3 py-2 text-xs text-[#FFFFFF] outline-none"
         />
         <input
           value={listingDraft.description}
           onChange={(e) => onListingDraftChange({ description: e.target.value })}
           placeholder="Description"
-          className="w-full bg-[#1B1916] border border-[#3B372B] rounded-xl px-3 py-2 text-xs text-[#F2EFE7] outline-none"
+          className="w-full bg-[#0A0A0B] border border-[#1E1E22] rounded-xl px-3 py-2 text-xs text-[#FFFFFF] outline-none"
         />
         <div className="flex gap-2">
           <input
@@ -171,12 +171,12 @@ export function VendorPanel({
             onChange={(e) => onListingDraftChange({ price: e.target.value })}
             placeholder="Price"
             inputMode="numeric"
-            className="flex-1 bg-[#1B1916] border border-[#3B372B] rounded-xl px-3 py-2 text-xs text-[#F2EFE7] outline-none"
+            className="flex-1 bg-[#0A0A0B] border border-[#1E1E22] rounded-xl px-3 py-2 text-xs text-[#FFFFFF] outline-none"
           />
           <select
             value={listingDraft.type}
             onChange={(e) => onListingDraftChange({ type: e.target.value as Listing['type'] })}
-            className="bg-[#1B1916] border border-[#3B372B] rounded-xl px-3 py-2 text-xs text-[#F2EFE7] outline-none"
+            className="bg-[#0A0A0B] border border-[#1E1E22] rounded-xl px-3 py-2 text-xs text-[#FFFFFF] outline-none"
           >
             <option value="product">Product</option>
             <option value="service">Service</option>
@@ -190,23 +190,23 @@ export function VendorPanel({
             onChange={(e) => onListingDraftChange({ quantity: e.target.value })}
             placeholder="Quantity (blank for services)"
             inputMode="numeric"
-            className="flex-1 bg-[#1B1916] border border-[#3B372B] rounded-xl px-3 py-2 text-xs text-[#F2EFE7] outline-none"
+            className="flex-1 bg-[#0A0A0B] border border-[#1E1E22] rounded-xl px-3 py-2 text-xs text-[#FFFFFF] outline-none"
           />
           <input
             value={listingDraft.location}
             onChange={(e) => onListingDraftChange({ location: e.target.value })}
             placeholder="Location (optional)"
-            className="flex-1 bg-[#1B1916] border border-[#3B372B] rounded-xl px-3 py-2 text-xs text-[#F2EFE7] outline-none"
+            className="flex-1 bg-[#0A0A0B] border border-[#1E1E22] rounded-xl px-3 py-2 text-xs text-[#FFFFFF] outline-none"
           />
         </div>
         <button
           onClick={onCreateListing}
           disabled={busyId === 'listing'}
-          className="w-full py-2 rounded-full bg-[#3E9A66] text-[#191714] text-xs font-extrabold cursor-pointer disabled:opacity-50"
+          className="w-full py-2 rounded-full bg-[#00E676] text-[#0A0A0B] text-xs font-extrabold cursor-pointer disabled:opacity-50"
         >
           Create listing
         </button>
-        <p className="text-[10px] text-[#6F6A58]">
+        <p className="text-[10px] text-[#48484A]">
           New listings start as a draft. Publish when you are ready to take orders.
         </p>
         {notice && <p className="text-[10px] text-[#C2A24A]">{notice}</p>}
@@ -214,25 +214,25 @@ export function VendorPanel({
 
       {/* --- my listings ----------------------------------------------------- */}
       <div className="space-y-2">
-        <h4 className="text-[11px] font-extrabold text-[#6F6A58]">
+        <h4 className="text-[11px] font-extrabold text-[#48484A]">
           My listings
         </h4>
         {listings.length === 0 ? (
-          <p className="text-xs text-[#9A9278]">You have not listed anything yet.</p>
+          <p className="text-xs text-[#8E8E93]">You have not listed anything yet.</p>
         ) : (
           listings.map((l) => (
-            <div key={l.id} className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3 space-y-2">
+            <div key={l.id} className="bg-[#1C1C1F] border border-[#1E1E22] rounded-2xl p-3 space-y-2">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-extrabold text-[#F2EFE7]">{l.title}</p>
-                  <p className="text-[10px] text-[#6F6A58]">
+                  <p className="text-xs font-extrabold text-[#FFFFFF]">{l.title}</p>
+                  <p className="text-[10px] text-[#48484A]">
                     {money(l.price, l.currency)}
                     {l.quantityAvailable !== null ? ` - ${l.quantityAvailable} left` : ''}
                   </p>
                 </div>
                 <span
                   className={`shrink-0 text-[9px] px-2 py-0.5 rounded-full ${
-                    STATUS_STYLE[l.status] ?? 'bg-[#1E1E1E] text-[#B6AFA0]'
+                    STATUS_STYLE[l.status] ?? 'bg-[#1E1E1E] text-[#A1A1A6]'
                   }`}
                 >
                   {l.status}
@@ -245,7 +245,7 @@ export function VendorPanel({
                       key={a.status}
                       onClick={() => onSetStatus(l.id, a.status)}
                       disabled={busyId === l.id}
-                      className="px-3 py-1 rounded-full bg-[#2B2A22] text-[#7FA98B] text-[10px] font-extrabold cursor-pointer disabled:opacity-50"
+                      className="px-3 py-1 rounded-full bg-[#1C1C1F] text-[#00E676] text-[10px] font-extrabold cursor-pointer disabled:opacity-50"
                     >
                       {a.label}
                     </button>
@@ -259,11 +259,11 @@ export function VendorPanel({
 
       {/* --- orders received -------------------------------------------------- */}
       <div className="space-y-2">
-        <h4 className="text-[11px] font-extrabold text-[#6F6A58]">
+        <h4 className="text-[11px] font-extrabold text-[#48484A]">
           Orders received{pendingOrders.length > 0 ? ` (${pendingOrders.length} to fulfil)` : ''}
         </h4>
         {orders.length === 0 ? (
-          <p className="text-xs text-[#9A9278]">No one has ordered from you yet.</p>
+          <p className="text-xs text-[#8E8E93]">No one has ordered from you yet.</p>
         ) : (
           orders.map((o) => (
             <OrderStatus

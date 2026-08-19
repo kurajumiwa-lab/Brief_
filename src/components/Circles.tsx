@@ -198,15 +198,15 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
     return (
       <section className="space-y-4">
         <div>
-          <h2 className="text-lg font-extrabold text-[#F2EFE7]">Circles</h2>
-          <p className="text-[11px] text-[#9A9278] leading-snug mt-1">
+          <h2 className="text-lg font-extrabold text-[#FFFFFF]">Circles</h2>
+          <p className="text-[11px] text-[#8E8E93] leading-snug mt-1">
             Communities you are part of. People, purpose, blocks, signals and
             targets -- with progress derived from real contributions.
           </p>
         </div>
 
         {(list.status === 'loading' || list.status === 'idle') && (
-          <p className="text-xs text-[#9A9278]">Loading...</p>
+          <p className="text-xs text-[#8E8E93]">Loading...</p>
         )}
 
         {list.status === 'error' && (
@@ -216,7 +216,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
             </p>
             <button
               onClick={load}
-              className="mt-2 text-[10px] font-extrabold text-[#3E9A66] cursor-pointer"
+              className="mt-2 text-[10px] font-extrabold text-[#00E676] cursor-pointer"
             >
               Try again
             </button>
@@ -224,8 +224,8 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
         )}
 
         {list.status === 'ready' && (list.data ?? []).length === 0 && (
-          <div className="border border-dashed border-[#3B372B] rounded-2xl p-8 text-center">
-            <p className="text-xs text-[#9A9278]">
+          <div className="border border-dashed border-[#1E1E22] rounded-2xl p-8 text-center">
+            <p className="text-xs text-[#8E8E93]">
               You are not part of any Circle yet.
             </p>
           </div>
@@ -235,14 +235,14 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
           {(list.data ?? []).map((circle) => (
             <div
               key={circle.id}
-              className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4 space-y-2"
+              className="bg-[#1C1C1F] border border-[#1E1E22] rounded-2xl p-4 space-y-2"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-sm font-extrabold text-[#F2EFE7]">
+                  <p className="text-sm font-extrabold text-[#FFFFFF]">
                     {circle.name}
                   </p>
-                  <p className="text-[9px] text-[#6F6A58] mt-0.5">
+                  <p className="text-[9px] text-[#48484A] mt-0.5">
                     {TYPE_LABEL[circle.type] ?? circle.type} &middot; {circle.status}
                   </p>
                 </div>
@@ -251,23 +251,23 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
                     setOpenId(circle.id);
                     setSection('overview');
                   }}
-                  className="shrink-0 px-3 py-1.5 rounded-xl bg-[#3E9A66] text-[#191714] font-extrabold text-[10px] cursor-pointer"
+                  className="shrink-0 px-3 py-1.5 rounded-xl bg-[#00E676] text-[#0A0A0B] font-extrabold text-[10px] cursor-pointer"
                 >
                   Open
                 </button>
               </div>
 
               <div className="flex flex-wrap gap-x-4 gap-y-1">
-                <span className="text-[10px] text-[#B6AFA0]">
+                <span className="text-[10px] text-[#A1A1A6]">
                   {circle.memberCount}{' '}
                   {circle.memberCount === 1 ? 'member' : 'members'}
                 </span>
-                <span className="text-[10px] text-[#B6AFA0]">
+                <span className="text-[10px] text-[#A1A1A6]">
                   {circle.blockCount}{' '}
                   {circle.blockCount === 1 ? 'block' : 'blocks'}
                 </span>
                 {circle.contributorCount > 0 && (
-                  <span className="text-[10px] text-[#B6AFA0]">
+                  <span className="text-[10px] text-[#A1A1A6]">
                     {circle.contributorCount} contributing
                   </span>
                 )}
@@ -290,13 +290,13 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
           setNotice(null);
           setExpandedMember(null);
         }}
-        className="text-[10px] text-[#7FA98B] cursor-pointer"
+        className="text-[10px] text-[#00E676] cursor-pointer"
       >
         Back to your circles
       </button>
 
       {detail.status === 'loading' && (
-        <p className="text-xs text-[#9A9278] mt-2">Loading...</p>
+        <p className="text-xs text-[#8E8E93] mt-2">Loading...</p>
       )}
 
       {detail.status === 'error' && (
@@ -308,13 +308,13 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
       {detail.status === 'ready' && open && (
         <>
           <div className="mt-2">
-            <h2 className="text-lg font-extrabold text-[#F2EFE7]">{open.name}</h2>
-            <p className="text-[9px] text-[#6F6A58] mt-0.5">
+            <h2 className="text-lg font-extrabold text-[#FFFFFF]">{open.name}</h2>
+            <p className="text-[9px] text-[#48484A] mt-0.5">
               {TYPE_LABEL[open.type] ?? open.type} &middot; {open.visibility}
               {myRole ? ` \u00b7 you are ${myRole}` : ' \u00b7 not a member'}
             </p>
             {open.description && (
-              <p className="text-[11px] text-[#9A9278] leading-snug mt-1">
+              <p className="text-[11px] text-[#8E8E93] leading-snug mt-1">
                 {open.description}
               </p>
             )}
@@ -328,8 +328,8 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
                 onClick={() => setSection(s.id)}
                 className={`px-3 py-1.5 rounded-xl text-[10px] font-extrabold cursor-pointer ${
                   section === s.id
-                    ? 'bg-[#3E9A66] text-[#191714]'
-                    : 'bg-[#28261F] border border-[#3B372B] text-[#B6AFA0]'
+                    ? 'bg-[#00E676] text-[#0A0A0B]'
+                    : 'bg-[#1C1C1F] border border-[#1E1E22] text-[#A1A1A6]'
                 }`}
               >
                 {s.label}
@@ -348,25 +348,25 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
             <div className="space-y-4">
               {open.goal && (
                 <div>
-                  <h3 className="text-[11px] font-extrabold text-[#6F6A58] mb-1">
+                  <h3 className="text-[11px] font-extrabold text-[#48484A] mb-1">
                     Purpose
                   </h3>
-                  <p className="text-[11px] text-[#7FA98B] leading-snug">{open.goal}</p>
+                  <p className="text-[11px] text-[#00E676] leading-snug">{open.goal}</p>
                 </div>
               )}
 
               <div>
-                <h3 className="text-[11px] font-extrabold text-[#6F6A58] mb-2">
+                <h3 className="text-[11px] font-extrabold text-[#48484A] mb-2">
                   Target
                 </h3>
                 <CircleTarget circle={open} />
               </div>
 
               <div className="flex flex-wrap gap-x-4 gap-y-1">
-                <span className="text-[10px] text-[#B6AFA0]">
+                <span className="text-[10px] text-[#A1A1A6]">
                   {open.memberCount} {open.memberCount === 1 ? 'member' : 'members'}
                 </span>
-                <span className="text-[10px] text-[#B6AFA0]">
+                <span className="text-[10px] text-[#A1A1A6]">
                   {open.blockCount} {open.blockCount === 1 ? 'block' : 'blocks'}
                 </span>
               </div>
@@ -374,12 +374,12 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
               {/* Blocks that are neither tasks nor votes -- notes, pins and
                   anything wrapping an extracted object. */}
               <div>
-                <h3 className="text-[11px] font-extrabold text-[#6F6A58] mb-2">
+                <h3 className="text-[11px] font-extrabold text-[#48484A] mb-2">
                   Blocks
                 </h3>
                 {detail.blocks.filter((b) => b.type !== 'task' && b.type !== 'vote')
                   .length === 0 ? (
-                  <p className="text-xs text-[#9A9278]">Nothing posted yet.</p>
+                  <p className="text-xs text-[#8E8E93]">Nothing posted yet.</p>
                 ) : (
                   <div className="space-y-2">
                     {detail.blocks
@@ -387,14 +387,14 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
                       .map((block) => (
                         <div
                           key={block.id}
-                          className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3"
+                          className="bg-[#1C1C1F] border border-[#1E1E22] rounded-2xl p-3"
                         >
-                          <p className="text-[9px] text-[#7FA98B]">
+                          <p className="text-[9px] text-[#00E676]">
                             {block.type}
                           </p>
-                          <p className="text-xs text-[#F2EFE7] mt-1">{block.content}</p>
+                          <p className="text-xs text-[#FFFFFF] mt-1">{block.content}</p>
                           {block.sources.length > 0 && block.sources[0].sourceName && (
-                            <p className="text-[9px] text-[#6F6A58] mt-1">
+                            <p className="text-[9px] text-[#48484A] mt-1">
                               via {block.sources[0].sourceName}
                             </p>
                           )}
