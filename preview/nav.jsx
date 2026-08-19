@@ -174,7 +174,7 @@ async function main(){
   await click(btn('Nearby'));
   const cur=railBtns().find(b=>b.getAttribute('aria-current')==='page');
   check('active item is machine-readable', !!cur);
-  check('active item has a non-colour marker', !!cur && /bg-\[#102117\]|font-extrabold/.test(cur.className));
+  check('active item has a non-colour marker', !!cur && /bg-\[#28261F\]|font-extrabold/.test(cur.className));
   check('active item renders an edge indicator', !!cur && cur.querySelectorAll('span').length>=1);
 
   console.log(`\n${'='.repeat(46)}\nPASSED ${pass}   FAILED ${fail}\n${'='.repeat(46)}`);

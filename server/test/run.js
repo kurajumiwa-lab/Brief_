@@ -12,6 +12,7 @@
 // ---------------------------------------------------------------------------
 
 import { store } from '../src/store.js';
+import path from 'node:path';
 import { extractFields, extractVendors, extractProducts, isObjectWorthy } from '../src/pipeline/extract.js';
 import { storeRawItem, processRawItem, previewText } from '../src/pipeline/ingest.js';
 import * as telegram from '../src/connectors/telegram.js';
@@ -3917,6 +3918,25 @@ console.log('\n=== OPERATIONS: READINESS, DIAGNOSTICS, BACKUP ===');
     for (let i = 0; i < 3; i++) opsM.backup(store);
     const pruned = opsM.pruneBackups(store, 2);
     check('pruning keeps only the newest N', pruned.kept === 2, JSON.stringify(pruned));
+
+    // --- restore-from-snapshot: the redeploy resilience net ------------------
+    // With a live, non-empty data file, restore is a no-op.
+    const restoreNoop = opsM.restoreLatestBackupIfEmpty(store);
+    check('restore is a no-op when data exists', restoreNoop.restored === false, JSON.stringify(restoreNoop));
+    // Simulate a wiped primary (fresh deploy) with a snapshot present: restore
+    // must bring the snapshot back.
+    const dataFile = store._file;
+    const backupDir = path.join(path.dirname(dataFile), 'backups');
+    const snapshots = fsm.readdirSync(backupDir).filter((f) => f.endsWith('.json')).sort();
+    check('a snapshot exists to restore from', snapshots.length > 0, String(snapshots.length));
+    fsm.renameSync(dataFile, `${dataFile}.wiped`);
+    const restored2 = opsM.restoreLatestBackupIfEmpty(store);
+    check('restore brings the snapshot back after a wipe', restored2.restored === true, JSON.stringify(restored2));
+    check('the data file is back on disk', fsm.existsSync(dataFile));
+    fsm.rmSync(`${dataFile}.wiped`, { force: true });
+
+    // The periodic backup installer is disabled in test (non-positive interval).
+    check('periodic backup disables on a non-positive interval', opsM.installPeriodicBackup(store, { intervalMs: 0 }) === null);
 
     // --- startup diagnostics flag real problems -------------------------------
     const diagProd = opsM.startupDiagnostics({

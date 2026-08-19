@@ -69,39 +69,39 @@ export function Quests({
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
       <div>
-        <h2 className="text-lg font-extrabold text-[#E2ECE5]">Quests</h2>
-        <p className="text-[11px] text-[#86935C] leading-snug mt-1">
+        <h2 className="text-lg font-extrabold text-[#F2EFE7]">Quests</h2>
+        <p className="text-[11px] text-[#9A9278] leading-snug mt-1">
           Useful work around you. Points settle when a contribution is
           accepted, not when it is submitted.
         </p>
       </div>
 
       {/* Wallet. Settled and pending are never added together. */}
-      <div className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-4 space-y-2">
+      <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4 space-y-2">
         <div className="flex items-baseline justify-between gap-3">
-          <span className="text-[10px] uppercase tracking-wider text-[#5C6B52]">
+          <span className="text-[10px] uppercase tracking-wider text-[#6F6A58]">
             Brief Points
           </span>
-          <span className="text-lg font-extrabold text-[#00FF42] font-mono">
+          <span className="text-lg font-extrabold text-[#3E9A66] font-mono">
             {myContribution.settledPoints.toLocaleString()}
           </span>
         </div>
         {pendingCount > 0 && (
-          <p className="text-[10px] text-[#C9A227]">
+          <p className="text-[10px] text-[#C2A24A]">
             {pendingCount} submitted, awaiting review. Worth nothing yet.
           </p>
         )}
         <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1">
-          <span className="text-[10px] text-[#86935C]">
-            Rank <span className="text-[#A9BDA0]">{myRank}</span>
+          <span className="text-[10px] text-[#9A9278]">
+            Rank <span className="text-[#B6AFA0]">{myRank}</span>
           </span>
-          <span className="text-[10px] text-[#86935C]">
+          <span className="text-[10px] text-[#9A9278]">
             Accepted{' '}
-            <span className="text-[#A9BDA0]">{myContribution.accepted}</span>
+            <span className="text-[#B6AFA0]">{myContribution.accepted}</span>
           </span>
-          <span className="text-[10px] text-[#86935C]">
+          <span className="text-[10px] text-[#9A9278]">
             Accuracy{' '}
-            <span className="text-[#A9BDA0]">
+            <span className="text-[#B6AFA0]">
               {typeof getAcceptanceRate(myContribution) === 'number'
                 ? `${getAcceptanceRate(myContribution)}%`
                 : 'No reviewed work yet'}
@@ -110,7 +110,7 @@ export function Quests({
         </div>
         {/* Only ever states a real remaining requirement. */}
         {nextRank && (
-          <p className="text-[10px] text-[#5C6B52]">
+          <p className="text-[10px] text-[#6F6A58]">
             {nextRank.rank} needs {nextRank.needAccepted} more accepted
             {nextRank.needRate > 0
               ? ` and ${nextRank.needRate}% higher accuracy`
@@ -123,22 +123,22 @@ export function Quests({
       {/* The pool is stated plainly. No salary comparisons.
           An unfunded pool says so rather than rendering "KES 0" as though a
           real fund existed and happened to be empty. */}
-      <div className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-4">
-        <p className="text-[10px] uppercase tracking-wider text-[#5C6B52]">
+      <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4">
+        <p className="text-[10px] uppercase tracking-wider text-[#6F6A58]">
           Community pool - {COMMUNITY_POOL.periodLabel}
         </p>
         {COMMUNITY_POOL.totalKes > 0 ? (
           <>
-            <p className="text-base font-extrabold text-[#E2ECE5] font-mono mt-1">
+            <p className="text-base font-extrabold text-[#F2EFE7] font-mono mt-1">
               KES {COMMUNITY_POOL.totalKes.toLocaleString()}
             </p>
-            <p className="text-[10px] text-[#86935C] mt-1">
+            <p className="text-[10px] text-[#9A9278] mt-1">
               KES {getPoolRemaining(COMMUNITY_POOL).toLocaleString()} still to be
               distributed. {COMMUNITY_POOL.kesPerPoint} KES per point.
             </p>
           </>
         ) : (
-          <p className="text-[10px] text-[#86935C] mt-1 leading-snug">
+          <p className="text-[10px] text-[#9A9278] mt-1 leading-snug">
             No reward pool is funded. Points still record accepted
             contributions, but Brief cannot pay anything out.
           </p>
@@ -146,27 +146,27 @@ export function Quests({
       </div>
 
       <div>
-        <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#5C6B52] mb-2">
+        <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58] mb-2">
           Open quests
         </h3>
         <div className="space-y-2">
           {openQuests.map((q) => (
             <div
               key={q.id}
-              className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3"
+              className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-extrabold text-[#E2ECE5]">
+                  <p className="text-xs font-extrabold text-[#F2EFE7]">
                     {q.title}
                   </p>
                   {/* Criteria shown up front, never retroactively. */}
-                  <p className="text-[10px] text-[#86935C] mt-1">
+                  <p className="text-[10px] text-[#9A9278] mt-1">
                     Accepted when: {q.acceptanceCriteria}
                   </p>
                   <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
                     {q.locationName && (
-                      <span className="text-[9px] font-mono text-[#5C6B52]">
+                      <span className="text-[9px] font-mono text-[#6F6A58]">
                         {q.locationName}
                         {typeof q.distanceKm === 'number'
                           ? ` - ${q.distanceKm} km`
@@ -174,19 +174,19 @@ export function Quests({
                       </span>
                     )}
                     {q.expiresAt && (
-                      <span className="text-[9px] font-mono text-[#C9A227]">
+                      <span className="text-[9px] font-mono text-[#C2A24A]">
                         closes {q.expiresAt.slice(0, 10)}
                       </span>
                     )}
                   </div>
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="text-xs font-extrabold text-[#00FF42] font-mono">
+                  <p className="text-xs font-extrabold text-[#3E9A66] font-mono">
                     {q.points}
                   </p>
                   <button
                     onClick={() => handleSubmitQuest(q)}
-                    className="mt-1 px-3 py-1 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-[10px] cursor-pointer"
+                    className="mt-1 px-3 py-1 rounded-xl bg-[#3E9A66] text-[#191714] font-extrabold text-[10px] cursor-pointer"
                   >
                     Submit
                   </button>
@@ -200,7 +200,7 @@ export function Quests({
       {/* Rejections stay visible with their reason. */}
       {quests.some((q) => q.status === 'rejected') && (
         <div>
-          <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#5C6B52] mb-2">
+          <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58] mb-2">
             Not accepted
           </h3>
           <div className="space-y-2">
@@ -209,10 +209,10 @@ export function Quests({
               .map((q) => (
                 <div
                   key={q.id}
-                  className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3"
+                  className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3"
                 >
-                  <p className="text-xs text-[#A9BDA0]">{q.title}</p>
-                  <p className="text-[10px] text-[#C9A227] mt-1">
+                  <p className="text-xs text-[#B6AFA0]">{q.title}</p>
+                  <p className="text-[10px] text-[#C2A24A] mt-1">
                     {q.reviewNote} No points awarded.
                   </p>
                 </div>
@@ -227,8 +227,8 @@ export function Quests({
             onClick={() => setBoardMode('contributors')}
             className={`px-3 py-1.5 rounded-xl text-[10px] font-extrabold cursor-pointer border ${
               boardMode === 'contributors'
-                ? 'bg-[#00FF42] text-[#09150E] border-[#00FF42]'
-                : 'bg-[#102117] text-[#8DCF74] border-[#1E3A2A]'
+                ? 'bg-[#3E9A66] text-[#191714] border-[#3E9A66]'
+                : 'bg-[#28261F] text-[#7FA98B] border-[#3B372B]'
             }`}
           >
             Top Contributors
@@ -237,14 +237,14 @@ export function Quests({
             onClick={() => setBoardMode('earners')}
             className={`px-3 py-1.5 rounded-xl text-[10px] font-extrabold cursor-pointer border ${
               boardMode === 'earners'
-                ? 'bg-[#00FF42] text-[#09150E] border-[#00FF42]'
-                : 'bg-[#102117] text-[#8DCF74] border-[#1E3A2A]'
+                ? 'bg-[#3E9A66] text-[#191714] border-[#3E9A66]'
+                : 'bg-[#28261F] text-[#7FA98B] border-[#3B372B]'
             }`}
           >
             Top Earners
           </button>
         </div>
-        <p className="text-[10px] text-[#86935C] mb-2">
+        <p className="text-[10px] text-[#9A9278] mb-2">
           {boardMode === 'contributors'
             ? 'Ranked by accepted contributions, so volume alone does not win.'
             : 'Ranked by settled points.'}
@@ -259,25 +259,25 @@ export function Quests({
             return (
               <div
                 key={person.id}
-                className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3 flex items-center gap-3"
+                className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3 flex items-center gap-3"
               >
-                <span className="text-[10px] font-mono text-[#5C6B52] w-4 shrink-0">
+                <span className="text-[10px] font-mono text-[#6F6A58] w-4 shrink-0">
                   {i + 1}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-extrabold text-[#E2ECE5]">
+                  <p className="text-xs font-extrabold text-[#F2EFE7]">
                     {person.displayName}
-                    <span className="ml-2 text-[9px] font-mono uppercase text-[#8DCF74]">
+                    <span className="ml-2 text-[9px] font-mono uppercase text-[#7FA98B]">
                       {getBriefRank(person.contribution)}
                     </span>
                   </p>
-                  <p className="text-[9px] font-mono text-[#5C6B52] mt-0.5">
+                  <p className="text-[9px] font-mono text-[#6F6A58] mt-0.5">
                     {person.locationName} - {person.contribution.accepted} accepted
                     {typeof rate === 'number' ? ` - ${rate}% accepted` : ''}
                     {typeof pct === 'number' ? ` - top ${pct}%` : ''}
                   </p>
                 </div>
-                <span className="text-[10px] font-mono text-[#A9BDA0] shrink-0">
+                <span className="text-[10px] font-mono text-[#B6AFA0] shrink-0">
                   {person.contribution.settledPoints.toLocaleString()}
                 </span>
               </div>
@@ -288,8 +288,8 @@ export function Quests({
 
       {/* One redemption surface, in Arena. Rewards used to exist here
           too, which meant two doors into the same room. */}
-      <div className="border-t border-[#1E3A2A] pt-4">
-        <p className="text-[11px] text-[#86935C]">
+      <div className="border-t border-[#3B372B] pt-4">
+        <p className="text-[11px] text-[#9A9278]">
           Redeem points for gift cards and vouchers in Arena.
         </p>
         <button
@@ -297,7 +297,7 @@ export function Quests({
             setActiveTab('arena');
             setArenaSection('rewards');
           }}
-          className="mt-2 px-3 py-1.5 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-[10px] cursor-pointer"
+          className="mt-2 px-3 py-1.5 rounded-xl bg-[#3E9A66] text-[#191714] font-extrabold text-[10px] cursor-pointer"
         >
           Open Rewards
         </button>

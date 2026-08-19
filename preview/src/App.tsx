@@ -590,11 +590,11 @@ const getPostKindMeta = (
 ): { label: string; tone: string } => {
   switch (kind) {
     case 'news':
-      return { label: 'News', tone: 'text-[#00FF42] border-[#235F45]' };
+      return { label: 'News', tone: 'text-[#3E9A66] border-[#3F5544]' };
     case 'notice':
       return { label: 'Notice', tone: 'text-[#FFD166] border-[#5A4A1E]' };
     case 'chatter':
-      return { label: 'Chatter', tone: 'text-[#8DCF74] border-[#235F45]' };
+      return { label: 'Chatter', tone: 'text-[#7FA98B] border-[#3F5544]' };
     case 'question':
       return { label: 'Question', tone: 'text-[#7FD1FF] border-[#1E4A5F]' };
     case 'promo':
@@ -4086,12 +4086,12 @@ const GameGlyph: React.FC<{
   const ratio = Math.max(0, Math.min(1, playerCount / ceiling));
   const full = typeof capacity === 'number' && capacity > 0 && playerCount >= capacity;
   const empty = playerCount <= 0;
-  const color = empty ? '#5C6B52' : full ? '#C9A227' : '#00FF42';
+  const color = empty ? '#6F6A58' : full ? '#C2A24A' : '#3E9A66';
 
   return (
     <span className="relative inline-flex shrink-0" title={label}>
       <svg width="40" height="40" viewBox="0 0 40 40" role="img" aria-label={label}>
-        <circle cx="20" cy="20" r={radius} fill="none" stroke="#1E3A2A" strokeWidth="2.5" />
+        <circle cx="20" cy="20" r={radius} fill="none" stroke="#3B372B" strokeWidth="2.5" />
         {/* Live arc. Nothing is drawn when the count is genuinely zero. */}
         {!empty && (
           <circle
@@ -4112,7 +4112,7 @@ const GameGlyph: React.FC<{
             cy="20"
             r={radius}
             fill="none"
-            stroke="#1E3A2A"
+            stroke="#3B372B"
             strokeWidth="2.5"
             strokeDasharray="2 4"
           />
@@ -4122,10 +4122,10 @@ const GameGlyph: React.FC<{
       <span
         className={`absolute -bottom-0.5 -right-0.5 min-w-[15px] px-1 rounded-full text-[8px] font-mono font-extrabold text-center leading-[15px] ${
           empty
-            ? 'bg-[#16301F] text-[#5C6B52]'
+            ? 'bg-[#2A2921] text-[#6F6A58]'
             : full
-            ? 'bg-[#C9A227] text-[#09150E]'
-            : 'bg-[#00FF42] text-[#09150E]'
+            ? 'bg-[#C2A24A] text-[#191714]'
+            : 'bg-[#3E9A66] text-[#191714]'
         }`}
       >
         {playerCount}
@@ -4685,12 +4685,12 @@ function PublicTicketQr({ code, size = 128 }: { code: string; size?: number }) {
   const [dataUrl, setDataUrl] = React.useState<string | null>(null);
   React.useEffect(() => {
     let live = true;
-    QRCode.toDataURL(code, { width: size, margin: 1, color: { dark: '#0B1A12', light: '#E2ECE5' } })
+    QRCode.toDataURL(code, { width: size, margin: 1, color: { dark: '#211F1A', light: '#F2EFE7' } })
       .then((u) => { if (live) setDataUrl(u); })
       .catch(() => { if (live) setDataUrl(null); });
     return () => { live = false; };
   }, [code, size]);
-  if (!dataUrl) return <div className="w-28 h-28 bg-[#09150E] border border-[#1E3A2A] rounded-lg" />;
+  if (!dataUrl) return <div className="w-28 h-28 bg-[#191714] border border-[#3B372B] rounded-lg" />;
   return <img src={dataUrl} alt={`Ticket ${code}`} className="w-28 h-28 rounded-lg" />;
 }
 
@@ -4715,18 +4715,18 @@ function PublicShareRow({ title, description }: { title: string; description: st
   return (
     <div className="flex flex-wrap gap-1.5">
       <a href={wa} target="_blank" rel="noreferrer"
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#172D20] text-[#8DCF74] text-[10px] font-extrabold border border-[#235F45]">
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#2B2A22] text-[#7FA98B] text-[10px] font-extrabold border border-[#3F5544]">
         <MessageCircle className="w-3 h-3" /> WhatsApp
       </a>
       <a href={tg} target="_blank" rel="noreferrer"
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1A2A3A] text-[#7FB2E5] text-[10px] font-extrabold border border-[#235F45]">
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#252C31] text-[#8FAFC4] text-[10px] font-extrabold border border-[#3F5544]">
         <ExternalLink className="w-3 h-3" /> Telegram
       </a>
       <button onClick={copy}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#102117] text-[#8DCF74] text-[10px] font-extrabold border border-[#235F45] cursor-pointer">
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#28261F] text-[#7FA98B] text-[10px] font-extrabold border border-[#3F5544] cursor-pointer">
         <Share2 className="w-3 h-3" /> {copied ? 'Copied' : 'Copy link'}
       </button>
-      <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#102117] text-[#5C6B52] text-[10px] font-mono border border-[#1E3A2A]" title="Scan to open">
+      <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#28261F] text-[#6F6A58] text-[10px] font-mono border border-[#3B372B]" title="Scan to open">
         <ExternalLink className="w-3 h-3" /> QR
       </span>
     </div>
@@ -4796,20 +4796,20 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
   const c = load.data;
 
   return (
-    <div className="min-h-screen bg-[#09150E] text-[#E2ECE5] font-sans selection:bg-[#00FF42] selection:text-[#09150E] flex flex-col">
+    <div className="min-h-screen bg-[#191714] text-[#F2EFE7] font-sans selection:bg-[#3E9A66] selection:text-[#191714] flex flex-col">
       <div className="flex-1 w-full max-w-lg mx-auto px-4 py-8 space-y-5">
-        <p className="text-[9px] font-mono uppercase tracking-widest text-[#5C6B52]">Brief</p>
+        <p className="text-[9px] font-mono uppercase tracking-widest text-[#6F6A58]">Brief</p>
 
         {load.status === 'loading' && (
-          <p className="text-xs text-[#86935C] py-12 text-center">Loading...</p>
+          <p className="text-xs text-[#9A9278] py-12 text-center">Loading...</p>
         )}
 
         {load.status === 'error' && (
-          <div className="border border-[#7A2E2E] bg-[#1A0F0F] rounded-2xl p-5 space-y-2">
-            <p className="text-sm font-extrabold text-[#E2ECE5]">{load.error}</p>
+          <div className="border border-[#6E3A2E] bg-[#2A2018] rounded-2xl p-5 space-y-2">
+            <p className="text-sm font-extrabold text-[#F2EFE7]">{load.error}</p>
             <button
               onClick={fetchCampaign}
-              className="px-3 py-1.5 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-[10px] cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-[#3E9A66] text-[#191714] font-extrabold text-[10px] cursor-pointer"
             >
               Try again
             </button>
@@ -4819,51 +4819,51 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
         {load.status === 'ready' && c && (
           <>
             <div className="space-y-2">
-              <p className="text-[9px] font-mono uppercase tracking-widest text-[#00FF42]">
+              <p className="text-[9px] font-mono uppercase tracking-widest text-[#3E9A66]">
                 {c.type}
               </p>
               <h1 className="text-2xl font-extrabold leading-tight">{c.title}</h1>
               {c.creator && (
-                <p className="text-[11px] text-[#8DCF74] font-extrabold">by {c.creator}</p>
+                <p className="text-[11px] text-[#7FA98B] font-extrabold">by {c.creator}</p>
               )}
               {c.description && (
-                <p className="text-xs text-[#A9BDA0] leading-relaxed">{c.description}</p>
+                <p className="text-xs text-[#B6AFA0] leading-relaxed">{c.description}</p>
               )}
             </div>
 
-            <div className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-4 space-y-2">
+            <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4 space-y-2">
               {c.startsAt && (
                 <div className="flex items-center gap-2">
-                  <Clock className="w-3.5 h-3.5 text-[#8DCF74] shrink-0" />
-                  <span className="text-xs text-[#E2ECE5]">
+                  <Clock className="w-3.5 h-3.5 text-[#7FA98B] shrink-0" />
+                  <span className="text-xs text-[#F2EFE7]">
                     {c.startsAt.slice(0, 16).replace('T', ' ')}
                   </span>
                 </div>
               )}
               {c.location && (
                 <div className="flex items-center gap-2">
-                  <MapPin className="w-3.5 h-3.5 text-[#8DCF74] shrink-0" />
-                  <span className="text-xs text-[#E2ECE5]">{c.location}</span>
+                  <MapPin className="w-3.5 h-3.5 text-[#7FA98B] shrink-0" />
+                  <span className="text-xs text-[#F2EFE7]">{c.location}</span>
                 </div>
               )}
               <div className="flex items-center gap-2">
-                <Tag className="w-3.5 h-3.5 text-[#8DCF74] shrink-0" />
-                <span className="text-xs text-[#E2ECE5]">
+                <Tag className="w-3.5 h-3.5 text-[#7FA98B] shrink-0" />
+                <span className="text-xs text-[#F2EFE7]">
                   {c.price === 0 ? 'Free' : `${c.currency} ${c.price.toLocaleString()}`}
                 </span>
               </div>
               {c.remaining !== null && (
                 <div className="flex items-center gap-2">
-                  <Users className="w-3.5 h-3.5 text-[#8DCF74] shrink-0" />
-                  <span className="text-xs text-[#E2ECE5]">
+                  <Users className="w-3.5 h-3.5 text-[#7FA98B] shrink-0" />
+                  <span className="text-xs text-[#F2EFE7]">
                     {c.soldOut ? 'Full' : `${c.remaining} spots left`}
                   </span>
                 </div>
               )}
               {c.registered > 0 && (
                 <div className="flex items-center gap-2">
-                  <Users className="w-3.5 h-3.5 text-[#8DCF74] shrink-0" />
-                  <span className="text-xs text-[#E2ECE5]">
+                  <Users className="w-3.5 h-3.5 text-[#7FA98B] shrink-0" />
+                  <span className="text-xs text-[#F2EFE7]">
                     {c.registered} {c.registered === 1 ? 'person' : 'people'} registered
                   </span>
                 </div>
@@ -4873,14 +4873,14 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
             <PublicShareRow title={c.title} description={c.description} />
 
             {done && (
-              <div className="border border-[#235F45] bg-[#102117] rounded-2xl p-5 space-y-3">
+              <div className="border border-[#3F5544] bg-[#28261F] rounded-2xl p-5 space-y-3">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-[#00FF42] shrink-0" />
-                  <p className="text-sm font-extrabold text-[#E2ECE5]">
+                  <CheckCircle2 className="w-4 h-4 text-[#3E9A66] shrink-0" />
+                  <p className="text-sm font-extrabold text-[#F2EFE7]">
                     {done.status === 'started' ? "You have a spot held" : "You're registered"}
                   </p>
                 </div>
-                <p className="text-[11px] text-[#A9BDA0] leading-snug">
+                <p className="text-[11px] text-[#B6AFA0] leading-snug">
                   {done.status === 'started'
                     ? 'Your spot is held. It is confirmed once payment is arranged with the organiser.'
                     : 'The organiser can see you on their list.'}
@@ -4889,9 +4889,9 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                   <div className="flex items-center gap-3 pt-1">
                     <PublicTicketQr code={done.ticketCode} />
                     <div className="min-w-0 space-y-1">
-                      <p className="text-[9px] font-mono uppercase text-[#5C6B52]">Your ticket</p>
-                      <p className="text-[11px] font-mono text-[#E8D48B] break-all select-all">{done.ticketCode}</p>
-                      <p className="text-[10px] text-[#5C6B52] leading-snug">Show this code at the gate.</p>
+                      <p className="text-[9px] font-mono uppercase text-[#6F6A58]">Your ticket</p>
+                      <p className="text-[11px] font-mono text-[#D9BB7D] break-all select-all">{done.ticketCode}</p>
+                      <p className="text-[10px] text-[#6F6A58] leading-snug">Show this code at the gate.</p>
                     </div>
                   </div>
                 )}
@@ -4899,16 +4899,16 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
             )}
 
             {!done && (c.status === 'closed' || c.status === 'completed' || c.status === 'cancelled') && (
-              <div className="border border-[#1E3A2A] rounded-2xl p-5">
-                <p className="text-sm font-extrabold text-[#86935C]">
+              <div className="border border-[#3B372B] rounded-2xl p-5">
+                <p className="text-sm font-extrabold text-[#9A9278]">
                   Registration is closed.
                 </p>
               </div>
             )}
 
             {!done && c.soldOut && c.status !== 'closed' && c.status !== 'cancelled' && (
-              <div className="border border-[#1E3A2A] rounded-2xl p-5">
-                <p className="text-sm font-extrabold text-[#C9A227]">This one is full.</p>
+              <div className="border border-[#3B372B] rounded-2xl p-5">
+                <p className="text-sm font-extrabold text-[#C2A24A]">This one is full.</p>
               </div>
             )}
 
@@ -4917,41 +4917,41 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
               (c.status === 'published' || c.status === 'live') && (
                 <div className="space-y-3">
                   {regError && (
-                    <div className="border border-[#7A2E2E] bg-[#1A0F0F] rounded-xl p-3">
-                      <p className="text-[11px] text-[#E2ECE5] break-words">{regError}</p>
+                    <div className="border border-[#6E3A2E] bg-[#2A2018] rounded-xl p-3">
+                      <p className="text-[11px] text-[#F2EFE7] break-words">{regError}</p>
                     </div>
                   )}
                   <div>
-                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">
+                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">
                       Your name
                     </label>
                     <input
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Name"
-                      className="w-full bg-[#102117] text-[#E2ECE5] text-sm rounded-xl px-3 py-3 border border-[#1E3A2A] focus:border-[#00FF42] focus:outline-none"
+                      className="w-full bg-[#28261F] text-[#F2EFE7] text-sm rounded-xl px-3 py-3 border border-[#3B372B] focus:border-[#3E9A66] focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">
+                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">
                       Phone or email
                     </label>
                     <input
                       value={contact}
                       onChange={(e) => setContact(e.target.value)}
                       placeholder="So the organiser can reach you"
-                      className="w-full bg-[#102117] text-[#E2ECE5] text-sm rounded-xl px-3 py-3 border border-[#1E3A2A] focus:border-[#00FF42] focus:outline-none"
+                      className="w-full bg-[#28261F] text-[#F2EFE7] text-sm rounded-xl px-3 py-3 border border-[#3B372B] focus:border-[#3E9A66] focus:outline-none"
                     />
                   </div>
                   <button
                     disabled={busy}
                     onClick={submit}
-                    className="w-full py-4 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-sm cursor-pointer disabled:opacity-40"
+                    className="w-full py-4 rounded-xl bg-[#3E9A66] text-[#191714] font-extrabold text-sm cursor-pointer disabled:opacity-40"
                   >
                     {busy ? 'Registering...' : c.price === 0 ? 'Register' : `Register - ${c.currency} ${c.price.toLocaleString()}`}
                   </button>
                   {c.price > 0 && (
-                    <p className="text-[10px] text-[#5C6B52] leading-snug text-center">
+                    <p className="text-[10px] text-[#6F6A58] leading-snug text-center">
                       No online payment is connected yet. Your spot is held and you
                       arrange payment with the organiser.
                     </p>
@@ -4962,7 +4962,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
         )}
       </div>
 
-      <footer className="border-t border-[#1E3A2A] py-6 text-[10px] text-[#5C6B52] text-center font-mono">
+      <footer className="border-t border-[#3B372B] py-6 text-[10px] text-[#6F6A58] text-center font-mono">
         Brief
       </footer>
     </div>
@@ -6234,7 +6234,9 @@ export function App() {
   // not to accept.
   const CURRENT_PLAYER_ID = 'ply_nyabs';
   const [arenaGameId, setArenaGameId] = useState<ArenaGameId>('efootball');
-  const [challenges, setChallenges] = useState<ArenaChallenge[]>(ARENA_CHALLENGES);
+  // Challenges come from the SERVER, not a fixture: a challenge is a real,
+  // persisted, attributable record. `ARENA_CHALLENGES` is gone from the state.
+  const [challenges, setChallenges] = useState<ArenaChallenge[]>([]);
 
   // Whether real-money contests are legally available HERE. Fetched from the
   // server rather than hardcoded, because the answer depends on licensing and
@@ -6245,6 +6247,29 @@ export function App() {
       if (r.ok) setArenaMoney(r.data);
     });
   }, []);
+
+  // Load the real open challenges from the server and map them onto the
+  // display model. Server rows use createdBy/acceptedBy; the client model uses
+  // createdByPlayerId/acceptedByPlayerId. Everything else (format, points,
+  // suggested times) is a client-only convenience that stays absent for real
+  // server-backed challenges rather than being invented.
+  const refreshArenaChallenges = React.useCallback(async () => {
+    const res = await briefApi.getArenaChallenges();
+    if (!res.ok) return;
+    setChallenges(res.data.map((c: any) => ({
+      id: String(c.id),
+      gameId: c.gameId as ArenaGameId,
+      mode: String(c.mode ?? '1v1'),
+      createdByPlayerId: String(c.createdBy),
+      stake: (c.stake ?? 'friendly') as ChallengeStake,
+      entryFeeKes: c.entryFeeKes ?? undefined,
+      openUntil: c.openUntil,
+      status: (c.status ?? 'open') as ChallengeStatus,
+      acceptedByPlayerId: c.acceptedBy ? String(c.acceptedBy) : undefined,
+      createdAt: c.createdAt
+    })));
+  }, []);
+  useEffect(() => { void refreshArenaChallenges(); }, [refreshArenaChallenges]);
   const [matches, setMatches] = useState<ArenaMatch[]>([]);
   const [arenaView, setArenaView] = useState<'home' | 'find' | 'player'>('home');
   const [openPlayerId, setOpenPlayerId] = useState<string | null>(null);
@@ -6546,18 +6571,36 @@ export function App() {
     [arenaGameId, challenges, findFreeOnly, findNearby]
   );
 
-  const handleAcceptChallenge = (challenge: ArenaChallenge) => {
-    const now = new Date('2026-08-15T10:00:00Z').toISOString();
-    const result = acceptChallenge(challenge, CURRENT_PLAYER_ID, now);
-    if (!result) {
-      showToast('This challenge is no longer open.');
+  const handleAcceptChallenge = async (challenge: ArenaChallenge) => {
+    // Acceptance goes through the SERVER: it creates a real match and marks
+    // the challenge accepted, idempotently. A stale challenge is refused by
+    // the server rather than optimistically marked accepted.
+    const res = await briefApi.acceptArenaChallenge(challenge.id);
+    if (!res.ok) {
+      showToast(res.error ?? 'This challenge is no longer open.');
       return;
     }
-    setChallenges((prev) =>
-      prev.map((c) => (c.id === challenge.id ? result.challenge : c))
-    );
-    setMatches((prev) => [...prev, result.match]);
-    setRelationships((prev) => [...prev, ...result.edges]);
+    // The server's match is the record of the game. Map it onto the display
+    // model so "Your matches" reflects the real, server-persisted match.
+    if (res.data?.match) {
+      const m = res.data.match;
+      setMatches((prev) => [
+        ...prev.filter((x) => x.challengeId !== challenge.id),
+        {
+          id: String(m.id),
+          challengeId: String(m.challengeId ?? challenge.id),
+          gameId: m.gameId as ArenaGameId,
+          playerAId: String(m.playerAId),
+          playerBId: String(m.playerBId),
+          playedAt: m.createdAt ?? new Date().toISOString(),
+          winnerPlayerId: m.winnerPlayerId ?? undefined,
+          scoreLine: m.scoreLine ?? undefined,
+          confirmedByA: m.confirmedByA ?? undefined,
+          confirmedByB: m.confirmedByB ?? undefined
+        }
+      ]);
+    }
+    await refreshArenaChallenges();
     showToast('Challenge accepted. Match created.');
   };
 
@@ -6724,55 +6767,55 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#09150E] text-[#E2ECE5] flex flex-col font-sans selection:bg-[#00FF42] selection:text-[#09150E]">
+    <div className="min-h-screen bg-[#191714] text-[#F2EFE7] flex flex-col font-sans selection:bg-[#3E9A66] selection:text-[#191714]">
 
       {/* Toast */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#00FF42] text-[#09150E] px-4 py-2.5 rounded-xl font-extrabold shadow-2xl flex items-center gap-2">
+        <div className="fixed bottom-6 right-6 z-50 bg-[#3E9A66] text-[#191714] px-4 py-2.5 rounded-xl font-extrabold shadow-2xl flex items-center gap-2">
           <Sparkles className="w-4 h-4 shrink-0" />
           <span className="text-xs">{toastMessage}</span>
         </div>
       )}
 
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-[#09150E]/95 backdrop-blur-xl border-b border-[#1E3A2A] transition-all">
+      <header className="sticky top-0 z-40 bg-[#191714]/95 backdrop-blur-xl border-b border-[#3B372B] transition-all">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <span className="font-extrabold text-xl text-[#00FF42] tracking-tight">Brief</span>
+              <span className="font-extrabold text-xl text-[#3E9A66] tracking-tight">Brief</span>
               {/* Where am I. The rail shows it too, but the header keeps the
                   answer visible when the rail is collapsed to icons. */}
-              <span className="hidden lg:inline text-[11px] font-extrabold uppercase tracking-wider text-[#5C6B52]">
+              <span className="hidden lg:inline text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58]">
                 {DESTINATIONS.find((d) => d.id === activeTab)?.label}
               </span>
-              <div className="flex items-center gap-1 bg-[#102117] text-[#E2ECE5] text-xs font-bold px-2.5 py-1.5 rounded-xl border border-[#235F45]">
-                <MapPin className="w-3.5 h-3.5 text-[#00FF42]" />
+              <div className="flex items-center gap-1 bg-[#28261F] text-[#F2EFE7] text-xs font-bold px-2.5 py-1.5 rounded-xl border border-[#3F5544]">
+                <MapPin className="w-3.5 h-3.5 text-[#3E9A66]" />
                 <span>{selectedLocation}</span>
               </div>
             </div>
 
             <div className="relative flex-1 max-w-md hidden sm:block">
-              <Search className="w-4 h-4 absolute left-3 top-2.5 text-[#86935C]" />
+              <Search className="w-4 h-4 absolute left-3 top-2.5 text-[#9A9278]" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search nearby places, jobs, services..."
-                className="w-full bg-[#102117] text-[#E2ECE5] text-xs rounded-xl pl-9 pr-4 py-2 border border-[#1E3A2A] focus:outline-none focus:border-[#00FF42] placeholder:text-[#86935C]"
+                className="w-full bg-[#28261F] text-[#F2EFE7] text-xs rounded-xl pl-9 pr-4 py-2 border border-[#3B372B] focus:outline-none focus:border-[#3E9A66] placeholder:text-[#9A9278]"
               />
             </div>
 
             <button
               onClick={() => setCaptureOpen(true)}
               title="Capture something"
-              className="p-2 rounded-xl text-xs font-bold border bg-[#00FF42] text-[#09150E] border-[#00FF42] cursor-pointer"
+              className="p-2 rounded-xl text-xs font-bold border bg-[#3E9A66] text-[#191714] border-[#3E9A66] cursor-pointer"
             >
               <Plus className="w-4 h-4" />
             </button>
 
             <button
               onClick={() => setArchitectMode(!architectMode)}
-              className="p-2 rounded-xl text-xs font-bold border bg-[#102117] text-[#00FF42] border-[#235F45] cursor-pointer"
+              className="p-2 rounded-xl text-xs font-bold border bg-[#28261F] text-[#3E9A66] border-[#3F5544] cursor-pointer"
             >
               <Terminal className="w-4 h-4" />
             </button>
@@ -6789,7 +6832,7 @@ export function App() {
             never eats horizontal space the content needs. */}
         <nav
           aria-label="Primary"
-          className="hidden md:flex flex-col shrink-0 w-[76px] hover:w-60 transition-all duration-200 border-r border-[#1E3A2A] bg-[#0C1B12] sticky top-[57px] h-[calc(100vh-57px)] py-4 group/rail overflow-hidden"
+          className="hidden md:flex flex-col shrink-0 w-[76px] hover:w-60 transition-all duration-200 border-r border-[#3B372B] bg-[#211F1A] sticky top-[57px] h-[calc(100vh-57px)] py-4 group/rail overflow-hidden"
         >
           {DESTINATIONS.map((d) => {
             const active = activeTab === d.id;
@@ -6802,14 +6845,14 @@ export function App() {
                 aria-current={active ? 'page' : undefined}
                 className={`relative flex items-center gap-3 px-5 py-3 cursor-pointer transition-colors ${
                   active
-                    ? 'text-[#00FF42] bg-[#102117] font-extrabold'
-                    : 'text-[#8DCF74] hover:text-[#E2ECE5]'
+                    ? 'text-[#3E9A66] bg-[#28261F] font-extrabold'
+                    : 'text-[#7FA98B] hover:text-[#F2EFE7]'
                 }`}
               >
                 {/* Active marker on the edge, not a heavy filled pill. */}
                 <span
                   className={`absolute left-0 top-1/2 -translate-y-1/2 w-0.5 rounded-r transition-all ${
-                    active ? 'h-7 bg-[#00FF42]' : 'h-0 bg-transparent'
+                    active ? 'h-7 bg-[#3E9A66]' : 'h-0 bg-transparent'
                   }`}
                 />
                 <Icon className="w-5 h-5 shrink-0" />
@@ -6819,7 +6862,7 @@ export function App() {
                   <span className="block text-[11px] font-extrabold whitespace-nowrap">
                     {d.label}
                   </span>
-                  <span className="block text-[9px] text-[#5C6B52] whitespace-nowrap">
+                  <span className="block text-[9px] text-[#6F6A58] whitespace-nowrap">
                     {d.hint}
                   </span>
                 </span>
@@ -6832,18 +6875,18 @@ export function App() {
         <main className="flex-1 min-w-0 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 pb-24 md:pb-6">
 
         {/* Visual Hero Bar */}
-        <div className="mb-6 rounded-2xl bg-[#102117] border border-[#235F45] p-5 shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="mb-6 rounded-2xl bg-[#28261F] border border-[#3F5544] p-5 shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#00FF42] animate-ping" />
-              <span className="text-xs font-mono font-extrabold uppercase text-[#00FF42]">{selectedLocation} &middot; Live Local Stream</span>
+              <span className="w-2.5 h-2.5 rounded-full bg-[#3E9A66] animate-ping" />
+              <span className="text-xs font-mono font-extrabold uppercase text-[#3E9A66]">{selectedLocation} &middot; Live Local Stream</span>
             </div>
-            <h1 className="text-xl font-extrabold text-[#E2ECE5]">Brief &mdash; Everything Happening Around You</h1>
+            <h1 className="text-xl font-extrabold text-[#F2EFE7]">Brief &mdash; Everything Happening Around You</h1>
           </div>
           <div className="flex items-center gap-2 font-mono text-xs font-extrabold">
-            <span className="bg-[#09150E] px-3 py-1.5 rounded-xl border border-[#235F45] text-[#00FF42]">{objects.length} Objects</span>
+            <span className="bg-[#191714] px-3 py-1.5 rounded-xl border border-[#3F5544] text-[#3E9A66]">{objects.length} Objects</span>
             {townHealth.infoFreshnessPct !== null && (
-              <span className="bg-[#09150E] px-3 py-1.5 rounded-xl border border-[#235F45] text-[#00FF42]">{townHealth.infoFreshnessPct}% Fresh</span>
+              <span className="bg-[#191714] px-3 py-1.5 rounded-xl border border-[#3F5544] text-[#3E9A66]">{townHealth.infoFreshnessPct}% Fresh</span>
             )}
           </div>
         </div>
@@ -6869,8 +6912,8 @@ export function App() {
                   onClick={() => setNearbySection(id)}
                   className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
                     nearbySection === id
-                      ? 'bg-[#00FF42] text-[#09150E] border-[#00FF42]'
-                      : 'bg-[#102117] text-[#8DCF74] border-[#235F45]'
+                      ? 'bg-[#3E9A66] text-[#191714] border-[#3E9A66]'
+                      : 'bg-[#28261F] text-[#7FA98B] border-[#3F5544]'
                   }`}
                 >
                   {label}
@@ -6899,8 +6942,8 @@ export function App() {
                   onClick={() => setMyLayerSection(id)}
                   className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
                     myLayerSection === id
-                      ? 'bg-[#00FF42] text-[#09150E] border-[#00FF42]'
-                      : 'bg-[#102117] text-[#8DCF74] border-[#235F45]'
+                      ? 'bg-[#3E9A66] text-[#191714] border-[#3E9A66]'
+                      : 'bg-[#28261F] text-[#7FA98B] border-[#3F5544]'
                   }`}
                 >
                   {label}
@@ -6933,8 +6976,8 @@ export function App() {
                   onClick={() => setWorkflowSection(id)}
                   className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
                     workflowSection === id
-                      ? 'bg-[#00FF42] text-[#09150E] border-[#00FF42]'
-                      : 'bg-[#102117] text-[#8DCF74] border-[#235F45]'
+                      ? 'bg-[#3E9A66] text-[#191714] border-[#3E9A66]'
+                      : 'bg-[#28261F] text-[#7FA98B] border-[#3F5544]'
                   }`}
                 >
                   {label}
@@ -6958,8 +7001,8 @@ export function App() {
                   onClick={() => setPulseSection(id)}
                   className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
                     pulseSection === id
-                      ? 'bg-[#00FF42] text-[#09150E] border-[#00FF42]'
-                      : 'bg-[#102117] text-[#8DCF74] border-[#235F45]'
+                      ? 'bg-[#3E9A66] text-[#191714] border-[#3E9A66]'
+                      : 'bg-[#28261F] text-[#7FA98B] border-[#3F5544]'
                   }`}
                 >
                   {label}
@@ -6975,17 +7018,17 @@ export function App() {
             <div className="mb-5">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-baseline gap-2 min-w-0">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#00FF42] shrink-0">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#3E9A66] shrink-0">
                     Today's Tea
                   </span>
-                  <span className="text-[11px] text-[#8DCF74] truncate">
+                  <span className="text-[11px] text-[#7FA98B] truncate">
                     What Nairobi is talking about
                   </span>
                 </div>
 
                 <button
                   onClick={() => { setActiveTab('nearby'); setNearbySection('tea'); }}
-                  className="shrink-0 text-[10px] font-extrabold text-[#8DCF74] hover:text-[#00FF42] px-2 py-1 rounded-full cursor-pointer transition"
+                  className="shrink-0 text-[10px] font-extrabold text-[#7FA98B] hover:text-[#3E9A66] px-2 py-1 rounded-full cursor-pointer transition"
                 >
                   See all
                 </button>
@@ -7000,14 +7043,14 @@ export function App() {
                       setActiveTab('nearby');
                       setNearbySection('tea');
                     }}
-                    className="shrink-0 flex items-center gap-1.5 bg-[#102117] border border-[#235F45] hover:border-[#00FF42] rounded-full px-3 py-1.5 transition cursor-pointer"
+                    className="shrink-0 flex items-center gap-1.5 bg-[#28261F] border border-[#3F5544] hover:border-[#3E9A66] rounded-full px-3 py-1.5 transition cursor-pointer"
                   >
-                    <Icon className="w-3.5 h-3.5 text-[#00FF42] shrink-0" />
-                    <span className="text-[11px] font-extrabold text-[#E2ECE5] whitespace-nowrap">
+                    <Icon className="w-3.5 h-3.5 text-[#3E9A66] shrink-0" />
+                    <span className="text-[11px] font-extrabold text-[#F2EFE7] whitespace-nowrap">
                       {label}
                     </span>
                     {edition === liveEdition && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#00FF42] shrink-0" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#3E9A66] shrink-0" />
                     )}
                   </button>
                 ))}
@@ -7035,8 +7078,8 @@ export function App() {
               return (
                 <div className="mb-5">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#00FF42]" />
-                    <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#8DCF74]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#3E9A66]" />
+                    <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#7FA98B]">
                       Happening nearby
                     </h3>
                   </div>
@@ -7047,22 +7090,22 @@ export function App() {
                         <button
                           key={obj.id}
                           onClick={() => setSelectedObjectForDetail(obj)}
-                          className="shrink-0 w-60 text-left bg-[#102117] border border-[#235F45] hover:border-[#00FF42] rounded-2xl p-3 cursor-pointer transition"
+                          className="shrink-0 w-60 text-left bg-[#28261F] border border-[#3F5544] hover:border-[#3E9A66] rounded-2xl p-3 cursor-pointer transition"
                         >
-                          <p className="text-xs font-extrabold text-[#E2ECE5] line-clamp-1">
+                          <p className="text-xs font-extrabold text-[#F2EFE7] line-clamp-1">
                             {obj.title}
                           </p>
-                          <p className="text-[10px] text-[#86935C] mt-0.5 line-clamp-1">
+                          <p className="text-[10px] text-[#9A9278] mt-0.5 line-clamp-1">
                             {obj.locationName}
                             {getDistanceLabel(obj) ? ` - ${getDistanceLabel(obj)}` : ''}
                           </p>
                           {vendors.length > 0 && (
-                            <p className="text-[10px] text-[#8DCF74] mt-1">
+                            <p className="text-[10px] text-[#7FA98B] mt-1">
                               {vendors.length}{' '}
                               {vendors.length === 1 ? 'vendor' : 'vendors'} inside
                             </p>
                           )}
-                          <span className="inline-block text-[10px] font-extrabold text-[#00FF42] mt-1.5">
+                          <span className="inline-block text-[10px] font-extrabold text-[#3E9A66] mt-1.5">
                             See what's here
                           </span>
                         </button>
@@ -7088,8 +7131,8 @@ export function App() {
                   onClick={() => setSelectedObjectType(filter.id)}
                   className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border transition ${
                     selectedObjectType === filter.id
-                      ? 'bg-[#00FF42] text-[#09150E] border-[#00FF42]'
-                      : 'bg-[#102117] text-[#8DCF74] border-[#235F45] hover:border-[#00FF42]'
+                      ? 'bg-[#3E9A66] text-[#191714] border-[#3E9A66]'
+                      : 'bg-[#28261F] text-[#7FA98B] border-[#3F5544] hover:border-[#3E9A66]'
                   }`}
                 >
                   {filter.label}
@@ -7116,12 +7159,12 @@ export function App() {
                   <div
                     key={obj.id}
                     onClick={() => setSelectedObjectForDetail(obj)}
-                    className={`bg-[#102117] border hover:bg-[#13291C] rounded-2xl p-4 cursor-pointer transition ${
+                    className={`bg-[#28261F] border hover:bg-[#13291C] rounded-2xl p-4 cursor-pointer transition ${
                       level === 3
-                        ? 'border-[#00FF42] md:col-span-2 lg:col-span-3'
+                        ? 'border-[#3E9A66] md:col-span-2 lg:col-span-3'
                         : level === 2
-                        ? 'border-[#235F45] hover:border-[#00FF42]'
-                        : 'border-[#1E3A2A] hover:border-[#00FF42]'
+                        ? 'border-[#3F5544] hover:border-[#3E9A66]'
+                        : 'border-[#3B372B] hover:border-[#3E9A66]'
                     }`}
                   >
                     {level >= 2 && (
@@ -7129,17 +7172,17 @@ export function App() {
                         <span
                           className={`inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full ${
                             destState === 'live' || destState === 'today'
-                              ? 'bg-[#00FF42] text-[#09150E]'
-                              : 'bg-[#16301F] text-[#00FF42] border border-[#235F45]'
+                              ? 'bg-[#3E9A66] text-[#191714]'
+                              : 'bg-[#2A2921] text-[#3E9A66] border border-[#3F5544]'
                           }`}
                         >
                           {(destState === 'live' || destState === 'today') && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#09150E]" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#191714]" />
                           )}
                           {DESTINATION_STATE_LABELS[destState]}
                         </span>
                         {access && (
-                          <span className="text-[9px] font-extrabold uppercase tracking-wider text-[#8DCF74]">
+                          <span className="text-[9px] font-extrabold uppercase tracking-wider text-[#7FA98B]">
                             {access}
                           </span>
                         )}
@@ -7147,7 +7190,7 @@ export function App() {
                     )}
                     <div>
                       {obj.imageUrl && (
-                        <div className="relative h-44 w-full bg-[#09150E] overflow-hidden">
+                        <div className="relative h-44 w-full bg-[#191714] overflow-hidden">
                           <img
                             src={obj.imageUrl}
                             alt={obj.title}
@@ -7155,19 +7198,19 @@ export function App() {
                           />
 
                           <div className="absolute top-3 left-3 flex items-center gap-2">
-                            <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-[#09150E]/80 text-[#00FF42] border border-[#235F45]">
+                            <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-[#191714]/80 text-[#3E9A66] border border-[#3F5544]">
                               {obj.category}
                             </span>
 
                             {obj.isVerified && (
-                              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#00FF42] text-[#09150E]">
+                              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#3E9A66] text-[#191714]">
                                 VERIFIED
                               </span>
                             )}
                           </div>
 
                           {obj.metadata?.price !== undefined && (
-                            <span className="absolute bottom-2 right-3 text-[#00FF42] font-mono text-sm font-extrabold bg-[#09150E]/80 px-2 py-0.5 rounded border border-[#235F45]">
+                            <span className="absolute bottom-2 right-3 text-[#3E9A66] font-mono text-sm font-extrabold bg-[#191714]/80 px-2 py-0.5 rounded border border-[#3F5544]">
                               {obj.metadata.currency || 'KES'} {obj.metadata.price.toLocaleString()}
                             </span>
                           )}
@@ -7180,12 +7223,12 @@ export function App() {
                           styling, just reachable without a photo. */}
                       {!obj.imageUrl && (
                         <div className="flex items-center gap-2 px-4 pt-1">
-                          <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-[#09150E]/80 text-[#00FF42] border border-[#235F45]">
+                          <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-[#191714]/80 text-[#3E9A66] border border-[#3F5544]">
                             {obj.category}
                           </span>
 
                           {obj.isVerified && (
-                            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#00FF42] text-[#09150E]">
+                            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#3E9A66] text-[#191714]">
                               VERIFIED
                             </span>
                           )}
@@ -7194,13 +7237,13 @@ export function App() {
 
                       <div className="p-4 space-y-2">
                         <div className="flex items-center justify-between gap-3">
-                          <span className="text-[10px] font-mono uppercase text-[#86935C]">
+                          <span className="text-[10px] font-mono uppercase text-[#9A9278]">
                             {getObjectTypeMeta(obj.type).label}
                           </span>
 
                         </div>
 
-                        <h3 className="text-base font-extrabold text-[#E2ECE5] group-hover:text-[#00FF42] line-clamp-2">
+                        <h3 className="text-base font-extrabold text-[#F2EFE7] group-hover:text-[#3E9A66] line-clamp-2">
                           {obj.title}
                         </h3>
 
@@ -7208,21 +7251,21 @@ export function App() {
                             supplied. Never computed from partial data, and
                             deliberately below the title, not competing with it. */}
                         {obj.metadata?.statusBadge && (
-                          <span className="inline-block text-[10px] font-bold text-[#8DCF74]">
+                          <span className="inline-block text-[10px] font-bold text-[#7FA98B]">
                             {obj.metadata.statusBadge}
                           </span>
                         )}
 
-                        <p className="text-xs text-[#8DCF74] line-clamp-2">
+                        <p className="text-xs text-[#7FA98B] line-clamp-2">
                           {obj.summary}
                         </p>
 
                         {obj.locationName && (
-                          <div className="flex items-center gap-1.5 text-[10px] text-[#86935C]">
+                          <div className="flex items-center gap-1.5 text-[10px] text-[#9A9278]">
                             <MapPin className="w-3 h-3 shrink-0" />
                             <span className="truncate">{obj.locationName}</span>
                             {getDistanceLabel(obj) && (
-                              <span className="ml-auto shrink-0 font-mono text-[#8DCF74]">
+                              <span className="ml-auto shrink-0 font-mono text-[#7FA98B]">
                                 {getDistanceLabel(obj)}
                               </span>
                             )}
@@ -7235,7 +7278,7 @@ export function App() {
                             than a fabricated line-up. */}
                         {level === 3 && destVendors.length > 0 && (
                           <div className="pt-1">
-                            <p className="text-[10px] font-extrabold text-[#E2ECE5]">
+                            <p className="text-[10px] font-extrabold text-[#F2EFE7]">
                               {destVendors.length}{' '}
                               {destVendors.length === 1 ? 'vendor' : 'vendors'} inside
                             </p>
@@ -7243,7 +7286,7 @@ export function App() {
                               {vendorCats.map((cat) => (
                                 <span
                                   key={cat}
-                                  className="shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-[#16301F] text-[#8DCF74] border border-[#1E3A2A]"
+                                  className="shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-[#2A2921] text-[#7FA98B] border border-[#3B372B]"
                                 >
                                   {cat}
                                 </span>
@@ -7267,7 +7310,7 @@ export function App() {
                           }
                           handlePrimaryAction(obj);
                         }}
-                        className="flex-1 bg-[#00FF42] hover:bg-[#8DCF74] text-[#09150E] font-extrabold text-xs py-2.5 rounded-xl transition flex items-center justify-center gap-1 cursor-pointer"
+                        className="flex-1 bg-[#3E9A66] hover:bg-[#7FA98B] text-[#191714] font-extrabold text-xs py-2.5 rounded-xl transition flex items-center justify-center gap-1 cursor-pointer"
                       >
                         <span>
                           {level === 3 && destVendors.length > 0
@@ -7282,7 +7325,7 @@ export function App() {
                           e.stopPropagation();
                           handleExecuteProtocolAction('save', obj);
                         }}
-                        className="p-2.5 rounded-xl bg-[#172D20] text-[#8DCF74] border border-[#1E3A2A] hover:bg-[#235F45] cursor-pointer"
+                        className="p-2.5 rounded-xl bg-[#2B2A22] text-[#7FA98B] border border-[#3B372B] hover:bg-[#3F5544] cursor-pointer"
                       >
                         <Bookmark className="w-4 h-4 fill-current" />
                       </button>
@@ -7292,7 +7335,7 @@ export function App() {
                 })}
               </div>
             ) : (
-              <div className="py-16 text-center text-[#86935C]">
+              <div className="py-16 text-center text-[#9A9278]">
                 <Sparkles className="w-8 h-8 mx-auto mb-3 opacity-50" />
                 <p className="text-sm font-bold">Nothing here yet.</p>
 
@@ -7301,18 +7344,18 @@ export function App() {
                     keep pursuing it as information arrives. */}
                 {searchQuery.trim() !== '' ? (
                   <div className="mt-4">
-                    <p className="text-[11px] text-[#5C6B52] mb-2">
+                    <p className="text-[11px] text-[#6F6A58] mb-2">
                       Brief has not seen anything matching this yet.
                     </p>
                     <button
                       onClick={() => handleCreatePursuit(searchQuery)}
-                      className="px-4 py-2 rounded-xl bg-[#172D20] border border-[#235F45] text-[#8DCF74] font-extrabold text-[11px] cursor-pointer"
+                      className="px-4 py-2 rounded-xl bg-[#2B2A22] border border-[#3F5544] text-[#7FA98B] font-extrabold text-[11px] cursor-pointer"
                     >
                       Keep pursuing "{searchQuery.trim()}"
                     </button>
                   </div>
                 ) : (
-                  <p className="text-[11px] text-[#5C6B52] mt-4 max-w-xs mx-auto leading-relaxed">
+                  <p className="text-[11px] text-[#6F6A58] mt-4 max-w-xs mx-auto leading-relaxed">
                     Everything here arrives from the communities and sources
                     Brief is connected to. Connect a source or capture
                     something in Workflows → Sources.
@@ -7326,10 +7369,10 @@ export function App() {
         {/* TEA */}
         {activeTab === 'nearby' && nearbySection === 'tea' && (
           <section className="space-y-4">
-            <div className="bg-[#102117] border border-[#235F45] rounded-2xl p-5">
+            <div className="bg-[#28261F] border border-[#3F5544] rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-2">
-                <Newspaper className="w-4 h-4 text-[#00FF42]" />
-                <span className="text-[10px] font-mono uppercase text-[#00FF42]">
+                <Newspaper className="w-4 h-4 text-[#3E9A66]" />
+                <span className="text-[10px] font-mono uppercase text-[#3E9A66]">
                   Tea
                 </span>
               </div>
@@ -7338,7 +7381,7 @@ export function App() {
                 What {selectedLocation} is talking about.
               </h2>
 
-              <p className="text-xs text-[#8DCF74] mt-1">
+              <p className="text-xs text-[#7FA98B] mt-1">
                 News, notices and neighbourhood chatter, alongside the
                 directory. Posts link back to the places they are about.
               </p>
@@ -7356,8 +7399,8 @@ export function App() {
                     onClick={() => setActiveEdition(edition)}
                     className={`shrink-0 flex items-center gap-1.5 rounded-full px-3 py-1.5 border transition cursor-pointer ${
                       isActive
-                        ? 'bg-[#00FF42] text-[#09150E] border-[#00FF42]'
-                        : 'bg-[#102117] text-[#8DCF74] border-[#235F45] hover:border-[#00FF42]'
+                        ? 'bg-[#3E9A66] text-[#191714] border-[#3E9A66]'
+                        : 'bg-[#28261F] text-[#7FA98B] border-[#3F5544] hover:border-[#3E9A66]'
                     }`}
                   >
                     <Icon className="w-3.5 h-3.5 shrink-0" />
@@ -7366,20 +7409,20 @@ export function App() {
                     </span>
                     <span
                       className={`text-[10px] font-mono ${
-                        isActive ? 'text-[#09150E]/70' : 'text-[#86935C]'
+                        isActive ? 'text-[#191714]/70' : 'text-[#9A9278]'
                       }`}
                     >
                       {count}
                     </span>
                     {edition === liveEdition && !isActive && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#00FF42] shrink-0" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#3E9A66] shrink-0" />
                     )}
                   </button>
                 );
               })}
             </div>
 
-            <div className="flex items-center justify-between text-[10px] text-[#86935C] px-1">
+            <div className="flex items-center justify-between text-[10px] text-[#9A9278] px-1">
               <span className="font-mono uppercase">
                 {getEditionMeta(activeEdition).label}
               </span>
@@ -7401,35 +7444,35 @@ export function App() {
               return (
                 <article
                   key={post.id}
-                  className={`bg-[#102117] border rounded-2xl p-4 ${
-                    post.isPromoted ? 'border-[#5F3A1E]' : 'border-[#1E3A2A]'
+                  className={`bg-[#28261F] border rounded-2xl p-4 ${
+                    post.isPromoted ? 'border-[#5F3A1E]' : 'border-[#3B372B]'
                   }`}
                 >
                   <div className="flex items-center gap-2 flex-wrap mb-2">
                     <span
-                      className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full border bg-[#09150E] ${kindMeta.tone}`}
+                      className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full border bg-[#191714] ${kindMeta.tone}`}
                     >
                       {kindMeta.label}
                     </span>
 
-                    <span className="text-[11px] font-bold text-[#E2ECE5]">
+                    <span className="text-[11px] font-bold text-[#F2EFE7]">
                       {post.authorName}
                     </span>
 
                     {post.authorIsVerified && (
-                      <ShieldCheck className="w-3 h-3 text-[#00FF42] shrink-0" />
+                      <ShieldCheck className="w-3 h-3 text-[#3E9A66] shrink-0" />
                     )}
 
-                    <span className="text-[10px] text-[#86935C] font-mono">
+                    <span className="text-[10px] text-[#9A9278] font-mono">
                       {getRelativeTime(post.publishedAt)}
                     </span>
                   </div>
 
-                  <h3 className="text-sm font-extrabold text-[#E2ECE5] leading-snug">
+                  <h3 className="text-sm font-extrabold text-[#F2EFE7] leading-snug">
                     {post.title}
                   </h3>
 
-                  <p className="text-xs text-[#8DCF74] mt-1.5 leading-relaxed">
+                  <p className="text-xs text-[#7FA98B] mt-1.5 leading-relaxed">
                     {post.body}
                   </p>
 
@@ -7442,7 +7485,7 @@ export function App() {
                   {subject && (
                     <button
                       onClick={() => openPostSubject(post)}
-                      className="mt-3 w-full flex items-center gap-2 bg-[#09150E] border border-[#1E3A2A] hover:border-[#00FF42] rounded-xl p-2.5 transition cursor-pointer group text-left"
+                      className="mt-3 w-full flex items-center gap-2 bg-[#191714] border border-[#3B372B] hover:border-[#3E9A66] rounded-xl p-2.5 transition cursor-pointer group text-left"
                     >
                       {subject.imageUrl && (
                         <img
@@ -7453,23 +7496,23 @@ export function App() {
                       )}
 
                       <div className="min-w-0 flex-1">
-                        <div className="text-[9px] font-mono uppercase text-[#86935C]">
+                        <div className="text-[9px] font-mono uppercase text-[#9A9278]">
                           About this {getObjectTypeMeta(subject.type).label}
                         </div>
-                        <div className="text-[11px] font-extrabold truncate group-hover:text-[#00FF42]">
+                        <div className="text-[11px] font-extrabold truncate group-hover:text-[#3E9A66]">
                           {subject.title}
                         </div>
                       </div>
 
-                      <ArrowRight className="w-3.5 h-3.5 text-[#00FF42] shrink-0" />
+                      <ArrowRight className="w-3.5 h-3.5 text-[#3E9A66] shrink-0" />
                     </button>
                   )}
 
-                  <div className="flex items-center gap-4 mt-3 pt-3 border-t border-[#1E3A2A]">
+                  <div className="flex items-center gap-4 mt-3 pt-3 border-t border-[#3B372B]">
                     <button
                       onClick={() => toggleLike(post)}
                       className={`flex items-center gap-1.5 text-[11px] font-bold cursor-pointer transition ${
-                        isLiked ? 'text-[#00FF42]' : 'text-[#86935C] hover:text-[#8DCF74]'
+                        isLiked ? 'text-[#3E9A66]' : 'text-[#9A9278] hover:text-[#7FA98B]'
                       }`}
                     >
                       <Heart
@@ -7478,13 +7521,13 @@ export function App() {
                       {formatCount(post.reactionsCount + (isLiked ? 1 : 0))}
                     </button>
 
-                    <span className="flex items-center gap-1.5 text-[11px] font-bold text-[#86935C]">
+                    <span className="flex items-center gap-1.5 text-[11px] font-bold text-[#9A9278]">
                       <MessageCircle className="w-3.5 h-3.5" />
                       {formatCount(post.commentsCount)}
                     </span>
 
                     {post.tags && post.tags.length > 0 && (
-                      <span className="ml-auto text-[10px] font-mono text-[#86935C] truncate">
+                      <span className="ml-auto text-[10px] font-mono text-[#9A9278] truncate">
                         {post.tags.map((tag) => `#${tag}`).join(' ')}
                       </span>
                     )}
@@ -7494,8 +7537,8 @@ export function App() {
             })}
 
             {editionPosts.length === 0 && (
-              <div className="py-16 text-center border border-dashed border-[#235F45] rounded-2xl">
-                <Newspaper className="w-8 h-8 mx-auto mb-3 text-[#86935C]" />
+              <div className="py-16 text-center border border-dashed border-[#3F5544] rounded-2xl">
+                <Newspaper className="w-8 h-8 mx-auto mb-3 text-[#9A9278]" />
                 <p className="text-sm font-bold">No tea in this edition yet.</p>
               </div>
             )}
@@ -7505,17 +7548,17 @@ export function App() {
         {/* MY LAYER */}
         {activeTab === 'mylayer' && myLayerSection === 'saved' && (
           <section className="space-y-4">
-            <div className="bg-[#102117] border border-[#235F45] rounded-2xl p-5">
+            <div className="bg-[#28261F] border border-[#3F5544] rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-2">
-                <Bookmark className="w-4 h-4 text-[#00FF42]" />
-                <span className="text-[10px] font-mono uppercase text-[#00FF42]">
+                <Bookmark className="w-4 h-4 text-[#3E9A66]" />
+                <span className="text-[10px] font-mono uppercase text-[#3E9A66]">
                   Your Layer
                 </span>
               </div>
 
               <h2 className="text-xl font-extrabold">Things you've kept.</h2>
 
-              <p className="text-xs text-[#8DCF74] mt-1">
+              <p className="text-xs text-[#7FA98B] mt-1">
                 {savedObjects.length > 0
                   ? `${savedObjects.length} saved across ${savedGroups.length} ${
                       savedGroups.length === 1 ? 'section' : 'sections'
@@ -7527,10 +7570,10 @@ export function App() {
             {savedGroups.map((group) => (
               <div key={group.label}>
                 <div className="flex items-baseline gap-2 mb-2 px-1">
-                  <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#00FF42]">
+                  <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#3E9A66]">
                     {group.label}
                   </h3>
-                  <span className="text-[10px] font-mono text-[#86935C]">
+                  <span className="text-[10px] font-mono text-[#9A9278]">
                     {group.items.length}
                   </span>
                 </div>
@@ -7543,7 +7586,7 @@ export function App() {
                     return (
                       <div
                         key={obj.id}
-                        className="bg-[#102117] border border-[#1E3A2A] hover:border-[#00FF42] rounded-2xl p-3 transition"
+                        className="bg-[#28261F] border border-[#3B372B] hover:border-[#3E9A66] rounded-2xl p-3 transition"
                       >
                         <button
                           onClick={() => setSelectedObjectForDetail(obj)}
@@ -7559,14 +7602,14 @@ export function App() {
                             )}
 
                             <div className="min-w-0 flex-1">
-                              <div className="text-[9px] font-mono uppercase text-[#86935C]">
+                              <div className="text-[9px] font-mono uppercase text-[#9A9278]">
                                 {obj.category}
                               </div>
-                              <div className="text-xs font-extrabold mt-0.5 line-clamp-2 group-hover:text-[#00FF42]">
+                              <div className="text-xs font-extrabold mt-0.5 line-clamp-2 group-hover:text-[#3E9A66]">
                                 {obj.title}
                               </div>
                               {distance && (
-                                <div className="text-[10px] font-mono text-[#86935C] mt-1">
+                                <div className="text-[10px] font-mono text-[#9A9278] mt-1">
                                   {distance}
                                 </div>
                               )}
@@ -7578,7 +7621,7 @@ export function App() {
                           {action.kind === 'internal' || action.kind === 'none' ? (
                             <button
                               onClick={() => setSelectedObjectForDetail(obj)}
-                              className="flex-1 py-2 rounded-xl bg-[#172D20] border border-[#235F45] text-[#8DCF74] font-extrabold text-[11px] cursor-pointer"
+                              className="flex-1 py-2 rounded-xl bg-[#2B2A22] border border-[#3F5544] text-[#7FA98B] font-extrabold text-[11px] cursor-pointer"
                             >
                               View details
                             </button>
@@ -7598,7 +7641,7 @@ export function App() {
                                   { silent: true }
                                 )
                               }
-                              className="flex-1 py-2 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer"
+                              className="flex-1 py-2 rounded-xl bg-[#3E9A66] text-[#191714] font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer"
                             >
                               {action.label}
                               <ArrowRight className="w-3 h-3" />
@@ -7608,7 +7651,7 @@ export function App() {
                           <button
                             onClick={() => handleCreatePursuit(obj.title)}
                             title="Pursue similar"
-                            className="p-2 rounded-xl bg-[#172D20] text-[#8DCF74] border border-[#1E3A2A] hover:border-[#00FF42] cursor-pointer"
+                            className="p-2 rounded-xl bg-[#2B2A22] text-[#7FA98B] border border-[#3B372B] hover:border-[#3E9A66] cursor-pointer"
                           >
                             <Search className="w-3.5 h-3.5" />
                           </button>
@@ -7616,7 +7659,7 @@ export function App() {
                           <button
                             onClick={() => handleUnsave(obj)}
                             title="Remove from My Layer"
-                            className="p-2 rounded-xl bg-[#172D20] text-[#8DCF74] border border-[#1E3A2A] hover:border-[#00FF42] cursor-pointer"
+                            className="p-2 rounded-xl bg-[#2B2A22] text-[#7FA98B] border border-[#3B372B] hover:border-[#3E9A66] cursor-pointer"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -7634,8 +7677,8 @@ export function App() {
                                 onClick={() => handleSetSaveLabel(obj, label)}
                                 className={`text-[9px] font-bold px-2 py-0.5 rounded-full border cursor-pointer transition ${
                                   active
-                                    ? 'bg-[#00FF42] text-[#09150E] border-[#00FF42]'
-                                    : 'bg-transparent text-[#5C6B52] border-[#1E3A2A] hover:border-[#235F45]'
+                                    ? 'bg-[#3E9A66] text-[#191714] border-[#3E9A66]'
+                                    : 'bg-transparent text-[#6F6A58] border-[#3B372B] hover:border-[#3F5544]'
                                 }`}
                               >
                                 {label}
@@ -7657,8 +7700,8 @@ export function App() {
               if (recent.length === 0) return null;
 
               return (
-                <div className="mt-8 pt-5 border-t border-[#1E3A2A]">
-                  <p className="text-[10px] font-mono uppercase text-[#5C6B52] mb-3">
+                <div className="mt-8 pt-5 border-t border-[#3B372B]">
+                  <p className="text-[10px] font-mono uppercase text-[#6F6A58] mb-3">
                     Recent activity
                   </p>
                   <div className="space-y-1.5">
@@ -7668,10 +7711,10 @@ export function App() {
                         onClick={() => setSelectedObjectForDetail(entry.object)}
                         className="w-full text-left flex items-center gap-2 py-1.5 cursor-pointer"
                       >
-                        <span className="text-[9px] font-mono uppercase text-[#00FF42] w-20 shrink-0">
+                        <span className="text-[9px] font-mono uppercase text-[#3E9A66] w-20 shrink-0">
                           {entry.verb}
                         </span>
-                        <span className="text-[11px] text-[#A9BDA0] truncate">
+                        <span className="text-[11px] text-[#B6AFA0] truncate">
                           {entry.object.title}
                         </span>
                       </button>
@@ -7682,10 +7725,10 @@ export function App() {
             })()}
 
             {savedObjects.length === 0 && (
-              <div className="py-16 text-center border border-dashed border-[#235F45] rounded-2xl">
-                <Bookmark className="w-8 h-8 mx-auto mb-3 text-[#86935C]" />
+              <div className="py-16 text-center border border-dashed border-[#3F5544] rounded-2xl">
+                <Bookmark className="w-8 h-8 mx-auto mb-3 text-[#9A9278]" />
                 <p className="text-sm font-bold">Nothing saved yet.</p>
-                <p className="text-xs text-[#86935C] mt-1">
+                <p className="text-xs text-[#9A9278] mt-1">
                   Save something from Nearby and it will appear here.
                 </p>
               </div>
@@ -7697,10 +7740,10 @@ export function App() {
         {activeTab === 'workflows' &&
           (workflowSection === 'active' || workflowSection === 'completed') && (
           <section className="space-y-5">
-            <div className="bg-[#102117] border border-[#235F45] rounded-2xl p-5">
+            <div className="bg-[#28261F] border border-[#3F5544] rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-2">
-                <Briefcase className="w-4 h-4 text-[#00FF42]" />
-                <span className="text-[10px] font-mono uppercase text-[#00FF42]">
+                <Briefcase className="w-4 h-4 text-[#3E9A66]" />
+                <span className="text-[10px] font-mono uppercase text-[#3E9A66]">
                   Workflows
                 </span>
               </div>
@@ -7709,7 +7752,7 @@ export function App() {
                 Things you can actually do.
               </h2>
 
-              <p className="text-xs text-[#8DCF74] mt-1">
+              <p className="text-xs text-[#7FA98B] mt-1">
                 {workflowSection === 'completed'
                   ? 'Processes you have already finished.'
                   : 'Follow a process instead of figuring it out from scratch.'}
@@ -7718,7 +7761,7 @@ export function App() {
 
             {(workflowSection === 'completed' ? completedJourneys : activeJourneys)
               .length === 0 && (
-              <p className="text-xs text-[#86935C]">
+              <p className="text-xs text-[#9A9278]">
                 {workflowSection === 'completed'
                   ? 'Nothing finished yet. Completed processes stay here for reference.'
                   : 'No processes in progress right now.'}
@@ -7728,12 +7771,12 @@ export function App() {
             {(workflowSection === 'completed' ? completedJourneys : activeJourneys).map((journey) => (
               <div
                 key={journey.id}
-                className="bg-[#102117] border border-[#1E3A2A] rounded-2xl overflow-hidden"
+                className="bg-[#28261F] border border-[#3B372B] rounded-2xl overflow-hidden"
               >
                 <div className="p-5">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <span className="text-[10px] font-mono uppercase text-[#00FF42]">
+                      <span className="text-[10px] font-mono uppercase text-[#3E9A66]">
                         {journey.category}
                       </span>
 
@@ -7741,46 +7784,46 @@ export function App() {
                         {journey.title}
                       </h3>
 
-                      <p className="text-xs text-[#8DCF74] mt-1">
+                      <p className="text-xs text-[#7FA98B] mt-1">
                         {journey.description}
                       </p>
                     </div>
 
-                    <span className="text-xs font-mono font-bold text-[#00FF42]">
+                    <span className="text-xs font-mono font-bold text-[#3E9A66]">
                       {journey.progressPercent}%
                     </span>
                   </div>
 
-                  <div className="h-1.5 bg-[#09150E] rounded-full mt-5 overflow-hidden">
+                  <div className="h-1.5 bg-[#191714] rounded-full mt-5 overflow-hidden">
                     <div
-                      className="h-full bg-[#00FF42] rounded-full"
+                      className="h-full bg-[#3E9A66] rounded-full"
                       style={{ width: `${journey.progressPercent}%` }}
                     />
                   </div>
                 </div>
 
-                <div className="border-t border-[#1E3A2A]">
+                <div className="border-t border-[#3B372B]">
                   {journey.steps.map((step) => (
                     <div
                       key={step.id}
-                      className="flex items-center gap-3 p-4 border-b border-[#1E3A2A] last:border-b-0"
+                      className="flex items-center gap-3 p-4 border-b border-[#3B372B] last:border-b-0"
                     >
                       {step.isCompleted ? (
-                        <CheckCircle2 className="w-5 h-5 text-[#00FF42] shrink-0" />
+                        <CheckCircle2 className="w-5 h-5 text-[#3E9A66] shrink-0" />
                       ) : (
-                        <Circle className="w-5 h-5 text-[#86935C] shrink-0" />
+                        <Circle className="w-5 h-5 text-[#9A9278] shrink-0" />
                       )}
 
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-extrabold">
                           {step.title}
                         </p>
-                        <p className="text-[10px] text-[#86935C]">
+                        <p className="text-[10px] text-[#9A9278]">
                           {step.description}
                         </p>
                       </div>
 
-                      <span className="text-[9px] font-mono text-[#8DCF74]">
+                      <span className="text-[9px] font-mono text-[#7FA98B]">
                         {step.statusLabel}
                       </span>
                     </div>
@@ -7806,8 +7849,8 @@ export function App() {
         {activeTab === 'arena' && (
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
             <div>
-              <h2 className="text-lg font-extrabold text-[#E2ECE5]">Arena</h2>
-              <p className="text-[11px] text-[#86935C] leading-snug mt-1">
+              <h2 className="text-lg font-extrabold text-[#F2EFE7]">Arena</h2>
+              <p className="text-[11px] text-[#9A9278] leading-snug mt-1">
                 Players looking for a game, an opponent or a squad. Not a feed.
               </p>
             </div>
@@ -7819,10 +7862,10 @@ export function App() {
                 cannot drift out of sync with what the backend will allow. */}
             {arenaMoney && !arenaMoney.enabled && (
               <div className="bg-[#1A1206] border border-[#4A3A12] rounded-2xl p-3">
-                <p className="text-[11px] font-extrabold text-[#C9A227]">
+                <p className="text-[11px] font-extrabold text-[#C2A24A]">
                   Brief does not handle match money
                 </p>
-                <p className="text-[10px] text-[#86935C] leading-snug mt-1">
+                <p className="text-[10px] text-[#9A9278] leading-snug mt-1">
                   Entry fees shown here are arranged directly between players.
                   Brief holds no stakes and pays out no winnings.
                 </p>
@@ -7830,7 +7873,7 @@ export function App() {
                   {arenaMoney.requirements
                     .filter((r) => !r.met)
                     .map((r) => (
-                      <li key={r.id} className="text-[9px] font-mono text-[#5C6B52]">
+                      <li key={r.id} className="text-[9px] font-mono text-[#6F6A58]">
                         - {r.label}
                       </li>
                     ))}
@@ -7850,8 +7893,8 @@ export function App() {
                   }}
                   className={`px-3 py-1.5 rounded-xl text-[10px] font-extrabold cursor-pointer border ${
                     arenaGameId === g.id
-                      ? 'bg-[#00FF42] text-[#09150E] border-[#00FF42]'
-                      : 'bg-[#102117] text-[#8DCF74] border-[#1E3A2A]'
+                      ? 'bg-[#3E9A66] text-[#191714] border-[#3E9A66]'
+                      : 'bg-[#28261F] text-[#7FA98B] border-[#3B372B]'
                   }`}
                 >
                   {g.shortName}
@@ -7862,27 +7905,27 @@ export function App() {
 
             {/* Availability node. The dot is the signal, not decoration. */}
             {arenaView === 'home' && (
-              <div className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3">
+              <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2 min-w-0">
                     <span
                       className={`w-2 h-2 rounded-full shrink-0 ${
                         myAvailability?.state === 'available'
-                          ? 'bg-[#00FF42]'
+                          ? 'bg-[#3E9A66]'
                           : myAvailability?.state === 'busy'
-                          ? 'bg-[#C9A227]'
-                          : 'bg-[#5C6B52]'
+                          ? 'bg-[#C2A24A]'
+                          : 'bg-[#6F6A58]'
                       }`}
                     />
                     <div className="min-w-0">
-                      <p className="text-xs font-extrabold text-[#E2ECE5]">
+                      <p className="text-xs font-extrabold text-[#F2EFE7]">
                         {myAvailability?.state === 'available'
                           ? `Available for ${PLAY_MODE_LABELS[myAvailability.mode]}`
                           : myAvailability?.state === 'busy'
                           ? 'Busy'
                           : 'Not available'}
                       </p>
-                      <p className="text-[9px] font-mono text-[#5C6B52]">
+                      <p className="text-[9px] font-mono text-[#6F6A58]">
                         {arenaGame.shortName}
                         {myAvailability?.state === 'available'
                           ? ` - ${myAvailability.format} - ${myAvailability.window === 'now' ? 'Now' : 'Today'}`
@@ -7897,8 +7940,8 @@ export function App() {
                         onClick={() => handleToggleAvailability(st)}
                         className={`px-2 py-1 rounded-lg text-[9px] font-extrabold cursor-pointer border ${
                           (myAvailability?.state ?? 'offline') === st
-                            ? 'bg-[#00FF42] text-[#09150E] border-[#00FF42]'
-                            : 'bg-[#0C1B12] text-[#8DCF74] border-[#1E3A2A]'
+                            ? 'bg-[#3E9A66] text-[#191714] border-[#3E9A66]'
+                            : 'bg-[#211F1A] text-[#7FA98B] border-[#3B372B]'
                         }`}
                       >
                         {st === 'available' ? 'Available' : st === 'busy' ? 'Busy' : 'Offline'}
@@ -7916,27 +7959,27 @@ export function App() {
                 the entry point rather than one tab's content. Availability is
                 a state shown in context, never a navigation destination. */}
             {arenaView === 'home' && (
-              <div className="bg-[#102117] border border-[#235F45] rounded-2xl p-4 flex items-center justify-between gap-3">
+              <div className="bg-[#28261F] border border-[#3F5544] rounded-2xl p-4 flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <span
                       className={`w-2 h-2 rounded-full shrink-0 ${
-                        availableNow.length > 0 ? 'bg-[#00FF42]' : 'bg-[#5C6B52]'
+                        availableNow.length > 0 ? 'bg-[#3E9A66]' : 'bg-[#6F6A58]'
                       }`}
                     />
-                    <p className="text-sm font-extrabold text-[#E2ECE5]">
+                    <p className="text-sm font-extrabold text-[#F2EFE7]">
                       {availableNow.length}{' '}
                       {availableNow.length === 1 ? 'player' : 'players'} available now
                     </p>
                   </div>
-                  <p className="text-[10px] text-[#86935C] mt-0.5">
+                  <p className="text-[10px] text-[#9A9278] mt-0.5">
                     Ready to play {arenaGame.name}. Availability is set by each
                     player and expires on its own.
                   </p>
                 </div>
                 <button
                   onClick={() => setArenaView('find')}
-                  className="shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold bg-[#00FF42] text-[#09150E] cursor-pointer"
+                  className="shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold bg-[#3E9A66] text-[#191714] cursor-pointer"
                 >
                   Find Match
                 </button>
@@ -7958,8 +8001,8 @@ export function App() {
                     onClick={() => setArenaSection(key)}
                     className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer border ${
                       arenaSection === key
-                        ? 'bg-[#16301F] text-[#00FF42] border-[#00FF42]'
-                        : 'bg-[#102117] text-[#8DCF74] border-[#1E3A2A]'
+                        ? 'bg-[#2A2921] text-[#3E9A66] border-[#3E9A66]'
+                        : 'bg-[#28261F] text-[#7FA98B] border-[#3B372B]'
                     }`}
                   >
                     {label}
@@ -7971,15 +8014,15 @@ export function App() {
             {arenaView === 'home' && arenaSection === 'available' && (
               <div className="space-y-3">
                 <div>
-                  <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#5C6B52]">
+                  <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58]">
                     Players available now
                   </h3>
-                  <p className="text-[10px] text-[#86935C] mt-0.5">
+                  <p className="text-[10px] text-[#9A9278] mt-0.5">
                     Only players who switched availability on themselves.
                   </p>
                 </div>
                 {availableNow.length === 0 && (
-                  <p className="text-xs text-[#86935C]">
+                  <p className="text-xs text-[#9A9278]">
                     Nobody is listed as available for {arenaGame.name}.
                   </p>
                 )}
@@ -7990,19 +8033,19 @@ export function App() {
                   return (
                     <div
                       key={e.player.id}
-                      className={`bg-[#102117] border rounded-2xl p-3 flex items-center gap-3 ${
-                        e.visibility === 'reduced' ? 'border-[#16301F] opacity-70' : 'border-[#1E3A2A]'
+                      className={`bg-[#28261F] border rounded-2xl p-3 flex items-center gap-3 ${
+                        e.visibility === 'reduced' ? 'border-[#2A2921] opacity-70' : 'border-[#3B372B]'
                       }`}
                     >
-                      <span className="w-7 h-7 rounded-full bg-[#16301F] text-[#8DCF74] text-[10px] font-extrabold flex items-center justify-center shrink-0">
+                      <span className="w-7 h-7 rounded-full bg-[#2A2921] text-[#7FA98B] text-[10px] font-extrabold flex items-center justify-center shrink-0">
                         {e.player.displayName.slice(0, 2).toUpperCase()}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs font-extrabold text-[#E2ECE5] flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#00FF42] shrink-0" />
+                        <p className="text-xs font-extrabold text-[#F2EFE7] flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#3E9A66] shrink-0" />
                           {e.player.displayName}
                         </p>
-                        <p className="text-[9px] font-mono text-[#5C6B52] mt-0.5">
+                        <p className="text-[9px] font-mono text-[#6F6A58] mt-0.5">
                           {arenaGame.shortName} - {PLAY_MODE_LABELS[e.availability.mode]} -{' '}
                           {e.availability.format} -{' '}
                           {/* Venue name or "Online". Never a coordinate. */}
@@ -8012,7 +8055,7 @@ export function App() {
                               : 'At a venue'
                             : 'Online'}
                         </p>
-                        <p className="text-[9px] text-[#86935C] mt-0.5">
+                        <p className="text-[9px] text-[#9A9278] mt-0.5">
                           {e.stats
                             ? `${e.stats.wins}W / ${e.stats.losses}L`
                             : 'No matches yet'}
@@ -8023,7 +8066,7 @@ export function App() {
                       </div>
                       <button
                         onClick={() => handleChallengePlayer(e.player.id)}
-                        className="shrink-0 px-3 py-1.5 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-[10px] cursor-pointer"
+                        className="shrink-0 px-3 py-1.5 rounded-xl bg-[#3E9A66] text-[#191714] font-extrabold text-[10px] cursor-pointer"
                       >
                         Challenge
                       </button>
@@ -8033,19 +8076,19 @@ export function App() {
 
                 {leagueSeekers.length > 0 && (
                   <div className="pt-2">
-                    <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#5C6B52] mb-2">
+                    <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58] mb-2">
                       Looking for league
                     </h3>
                     {leagueSeekers.map(({ player, availability: av }) => (
                       <div
                         key={player.id}
-                        className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3 flex items-center justify-between gap-3"
+                        className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3 flex items-center justify-between gap-3"
                       >
                         <div className="min-w-0">
-                          <p className="text-xs font-extrabold text-[#E2ECE5]">
+                          <p className="text-xs font-extrabold text-[#F2EFE7]">
                             {player.displayName}
                           </p>
-                          <p className="text-[9px] font-mono text-[#5C6B52] mt-0.5">
+                          <p className="text-[9px] font-mono text-[#6F6A58] mt-0.5">
                             {arenaGame.shortName}
                             {av.leagueDivision ? ` - ${av.leagueDivision}` : ''} - available{' '}
                             {av.window === 'now' ? 'now' : av.window === 'today' ? 'today' : 'this week'}
@@ -8053,7 +8096,7 @@ export function App() {
                         </div>
                         <button
                           onClick={() => showToast('Invite sent to join your league.')}
-                          className="shrink-0 px-3 py-1.5 rounded-xl bg-[#16301F] text-[#00FF42] font-extrabold text-[10px] cursor-pointer border border-[#235F45]"
+                          className="shrink-0 px-3 py-1.5 rounded-xl bg-[#2A2921] text-[#3E9A66] font-extrabold text-[10px] cursor-pointer border border-[#3F5544]"
                         >
                           Invite
                         </button>
@@ -8066,20 +8109,20 @@ export function App() {
 
             {arenaView === 'home' && arenaSection === 'challenges' && (
               <div className="space-y-2">
-                <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#5C6B52]">
+                <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58]">
                   Challenges received
                 </h3>
                 {incomingChallenges.length === 0 && (
-                  <p className="text-xs text-[#86935C]">No challenges waiting for you.</p>
+                  <p className="text-xs text-[#9A9278]">No challenges waiting for you.</p>
                 )}
                 {incomingChallenges.map((c) => {
                   const from = ARENA_PLAYERS.find((p) => p.id === c.createdByPlayerId);
                   return (
-                    <div key={c.id} className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3">
-                      <p className="text-xs font-extrabold text-[#E2ECE5]">
+                    <div key={c.id} className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3">
+                      <p className="text-xs font-extrabold text-[#F2EFE7]">
                         {from ? from.displayName : 'A player'} challenged you
                       </p>
-                      <p className="text-[9px] font-mono text-[#5C6B52] mt-0.5">
+                      <p className="text-[9px] font-mono text-[#6F6A58] mt-0.5">
                         {arenaGame.shortName} - {c.format}
                         {c.proposedTime ? ` - ${c.proposedTime}` : ''}
                         {typeof c.pointsReward === 'number'
@@ -8089,19 +8132,19 @@ export function App() {
                       <div className="flex gap-2 mt-2">
                         <button
                           onClick={() => handleRespondToChallenge(c, 'accept')}
-                          className="px-3 py-1 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-[10px] cursor-pointer"
+                          className="px-3 py-1 rounded-xl bg-[#3E9A66] text-[#191714] font-extrabold text-[10px] cursor-pointer"
                         >
                           Accept
                         </button>
                         <button
                           onClick={() => handleRespondToChallenge(c, 'decline')}
-                          className="px-3 py-1 rounded-xl bg-[#16301F] text-[#8DCF74] text-[10px] cursor-pointer border border-[#1E3A2A]"
+                          className="px-3 py-1 rounded-xl bg-[#2A2921] text-[#7FA98B] text-[10px] cursor-pointer border border-[#3B372B]"
                         >
                           Decline
                         </button>
                         <button
                           onClick={() => handleRespondToChallenge(c, 'suggest')}
-                          className="px-3 py-1 rounded-xl bg-[#16301F] text-[#8DCF74] text-[10px] cursor-pointer border border-[#1E3A2A]"
+                          className="px-3 py-1 rounded-xl bg-[#2A2921] text-[#7FA98B] text-[10px] cursor-pointer border border-[#3B372B]"
                         >
                           Suggest Time
                         </button>
@@ -8114,7 +8157,7 @@ export function App() {
 
             {arenaView === 'home' && arenaSection === 'tournaments' && (
               <div className="space-y-2">
-                <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#5C6B52]">
+                <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58]">
                   Tournaments
                 </h3>
                 {tournaments
@@ -8123,29 +8166,29 @@ export function App() {
                     const reward = getOrganizerReward(t);
                     const organizer = ARENA_PLAYERS.find((p) => p.id === t.organizerId);
                     return (
-                      <div key={t.id} className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3">
+                      <div key={t.id} className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3">
                         <div className="flex items-baseline justify-between gap-3">
-                          <p className="text-xs font-extrabold text-[#E2ECE5]">{t.name}</p>
-                          <span className="text-[9px] font-mono text-[#5C6B52] shrink-0">
+                          <p className="text-xs font-extrabold text-[#F2EFE7]">{t.name}</p>
+                          <span className="text-[9px] font-mono text-[#6F6A58] shrink-0">
                             {t.registeredPlayerIds.length}/{t.capacity}
                           </span>
                         </div>
-                        <p className="text-[9px] font-mono text-[#5C6B52] mt-0.5">
+                        <p className="text-[9px] font-mono text-[#6F6A58] mt-0.5">
                           {organizer ? `Hosted by ${organizer.displayName}` : 'Organizer'} -{' '}
                           {t.status}
                         </p>
                         {t.prizeDescription && (
-                          <p className="text-[10px] text-[#C9A227] mt-1">{t.prizeDescription}</p>
+                          <p className="text-[10px] text-[#C2A24A] mt-1">{t.prizeDescription}</p>
                         )}
                         {/* Organizer reward, itemised. Shown honestly,
                             including zero, so the incentive is legible. */}
                         {reward.points > 0 ? (
-                          <div className="mt-2 pt-2 border-t border-[#16301F]">
+                          <div className="mt-2 pt-2 border-t border-[#2A2921]">
                             <div className="flex items-baseline justify-between gap-3">
-                              <span className="text-[9px] uppercase tracking-wider text-[#5C6B52]">
+                              <span className="text-[9px] uppercase tracking-wider text-[#6F6A58]">
                                 Organizer earned
                               </span>
-                              <span className="text-xs font-extrabold text-[#00FF42] font-mono">
+                              <span className="text-xs font-extrabold text-[#3E9A66] font-mono">
                                 {reward.points.toLocaleString()}
                               </span>
                             </div>
@@ -8154,21 +8197,21 @@ export function App() {
                                 key={l.label}
                                 className="flex items-baseline justify-between gap-3"
                               >
-                                <span className="text-[9px] text-[#86935C]">{l.label}</span>
-                                <span className="text-[9px] font-mono text-[#A9BDA0]">
+                                <span className="text-[9px] text-[#9A9278]">{l.label}</span>
+                                <span className="text-[9px] font-mono text-[#B6AFA0]">
                                   +{l.points.toLocaleString()}
                                 </span>
                               </div>
                             ))}
                           </div>
                         ) : (
-                          <p className="text-[9px] text-[#86935C] mt-1">
+                          <p className="text-[9px] text-[#9A9278] mt-1">
                             Organizer reward: none - {reward.reason}
                           </p>
                         )}
                         {/* The driver, stated plainly. */}
                         {t.status !== 'completed' && (
-                          <p className="text-[9px] text-[#8DCF74] mt-1">
+                          <p className="text-[9px] text-[#7FA98B] mt-1">
                             Each player who completes adds{' '}
                             {getMarginalPlayerValue(t)} points for the organizer.
                           </p>
@@ -8182,10 +8225,10 @@ export function App() {
             {arenaView === 'home' && arenaSection === 'kings' && (
               <div className="space-y-3">
                 <div>
-                  <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#5C6B52]">
+                  <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58]">
                     Kings and Queens
                   </h3>
-                  <p className="text-[10px] text-[#86935C] mt-0.5">Players</p>
+                  <p className="text-[10px] text-[#9A9278] mt-0.5">Players</p>
                 </div>
                 {ARENA_PLAYERS.map((p) => ({
                   player: p,
@@ -8196,37 +8239,37 @@ export function App() {
                   .map((r, i) => (
                     <div
                       key={r.player.id}
-                      className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3 flex items-center gap-3"
+                      className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3 flex items-center gap-3"
                     >
-                      <span className="text-[10px] font-mono text-[#5C6B52] w-8 shrink-0">
+                      <span className="text-[10px] font-mono text-[#6F6A58] w-8 shrink-0">
                         {i === 0 ? 'KING' : `#${i + 1}`}
                       </span>
-                      <p className="text-xs font-extrabold text-[#E2ECE5] flex-1 min-w-0">
+                      <p className="text-xs font-extrabold text-[#F2EFE7] flex-1 min-w-0">
                         {r.player.displayName}
                       </p>
-                      <span className="text-[10px] font-mono text-[#A9BDA0] shrink-0">
+                      <span className="text-[10px] font-mono text-[#B6AFA0] shrink-0">
                         {r.points.toLocaleString()}
                       </span>
                     </div>
                   ))}
 
-                <p className="text-[10px] text-[#86935C] pt-2">Organizers</p>
+                <p className="text-[10px] text-[#9A9278] pt-2">Organizers</p>
                 {ORGANIZER_RECORDS.sort((a, b) => b.pointsEarned - a.pointsEarned).map((o, i) => {
                   const person = ARENA_PLAYERS.find((p) => p.id === o.organizerId);
                   return (
-                    <div key={o.organizerId} className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3">
+                    <div key={o.organizerId} className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3">
                       <div className="flex items-center gap-3">
-                        <span className="text-[9px] font-mono text-[#C9A227] shrink-0">
+                        <span className="text-[9px] font-mono text-[#C2A24A] shrink-0">
                           {i === 0 ? 'ARENA HOST' : `#${i + 1}`}
                         </span>
-                        <p className="text-xs font-extrabold text-[#E2ECE5] flex-1 min-w-0">
+                        <p className="text-xs font-extrabold text-[#F2EFE7] flex-1 min-w-0">
                           {person ? person.displayName : o.organizerId}
                         </p>
-                        <span className="text-[10px] font-mono text-[#A9BDA0] shrink-0">
+                        <span className="text-[10px] font-mono text-[#B6AFA0] shrink-0">
                           {o.pointsEarned.toLocaleString()}
                         </span>
                       </div>
-                      <p className="text-[9px] font-mono text-[#5C6B52] mt-1">
+                      <p className="text-[9px] font-mono text-[#6F6A58] mt-1">
                         {getOrganizerRank(o)} - {o.tournamentsHosted} tournaments -{' '}
                         {o.playersServed} players - {o.completionRate}% completion
                       </p>
@@ -8238,32 +8281,32 @@ export function App() {
 
             {arenaView === 'home' && arenaSection === 'rewards' && (
               <div className="space-y-2">
-                <div className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3">
+                <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3">
                   <div className="flex items-baseline justify-between gap-3">
-                    <span className="text-[10px] uppercase tracking-wider text-[#5C6B52]">
+                    <span className="text-[10px] uppercase tracking-wider text-[#6F6A58]">
                       Your Arena Points
                     </span>
-                    <span className="text-lg font-extrabold text-[#00FF42] font-mono">
+                    <span className="text-lg font-extrabold text-[#3E9A66] font-mono">
                       {myBalance.toLocaleString()}
                     </span>
                   </div>
                   {/* Stated plainly, every time rewards are shown. */}
-                  <p className="text-[10px] text-[#86935C] mt-1">
+                  <p className="text-[10px] text-[#9A9278] mt-1">
                     Arena Points are not cash and have no monetary value. They can
                     be redeemed for the rewards below while stock lasts.
                   </p>
                   {/* Honest about where points actually come from, so nobody
                       grinds matches expecting it to add up. */}
-                  <div className="mt-2 pt-2 border-t border-[#16301F]">
+                  <div className="mt-2 pt-2 border-t border-[#2A2921]">
                     <div className="flex items-baseline justify-between gap-3">
-                      <span className="text-[10px] text-[#86935C]">
+                      <span className="text-[10px] text-[#9A9278]">
                         From playing today
                       </span>
-                      <span className="text-[10px] font-mono text-[#A9BDA0]">
+                      <span className="text-[10px] font-mono text-[#B6AFA0]">
                         {participationToday} / {PARTICIPATION_DAILY_CAP}
                       </span>
                     </div>
-                    <p className="text-[9px] text-[#5C6B52] mt-1 leading-snug">
+                    <p className="text-[9px] text-[#6F6A58] mt-1 leading-snug">
                       Playing earns a small fixed amount, capped daily. Points are
                       earned mainly by organising: {ARENA_CREATION_CONFIG.perCompletedPlayer}{' '}
                       per player who completes your event,{' '}
@@ -8280,22 +8323,22 @@ export function App() {
                     now: '2026-08-15T10:00:00Z'
                   });
                   return (
-                    <div key={g.id} className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3 flex items-center gap-3">
+                    <div key={g.id} className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3 flex items-center gap-3">
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs font-extrabold text-[#E2ECE5]">
+                        <p className="text-xs font-extrabold text-[#F2EFE7]">
                           KES {g.valueKes.toLocaleString()} {g.brand}
                         </p>
-                        <p className="text-[9px] font-mono text-[#5C6B52] mt-0.5">
+                        <p className="text-[9px] font-mono text-[#6F6A58] mt-0.5">
                           {g.merchant} - {g.category.replace('_', ' ')} -{' '}
                           {g.inventory > 0 ? `${g.inventory} left` : 'none left'}
                         </p>
                         {!gate.allowed && (
-                          <p className="text-[10px] text-[#C9A227] mt-1">{gate.reason}</p>
+                          <p className="text-[10px] text-[#C2A24A] mt-1">{gate.reason}</p>
                         )}
                       </div>
                       <div className="shrink-0 text-right">
                         {/* Points cost and cash value never share a line. */}
-                        <p className="text-[10px] font-mono text-[#A9BDA0]">
+                        <p className="text-[10px] font-mono text-[#B6AFA0]">
                           {g.pointsRequired.toLocaleString()} pts
                         </p>
                         <button
@@ -8303,8 +8346,8 @@ export function App() {
                           disabled={!gate.allowed}
                           className={`mt-1 px-3 py-1 rounded-xl font-extrabold text-[10px] ${
                             gate.allowed
-                              ? 'bg-[#00FF42] text-[#09150E] cursor-pointer'
-                              : 'bg-[#16301F] text-[#5C6B52] cursor-not-allowed'
+                              ? 'bg-[#3E9A66] text-[#191714] cursor-pointer'
+                              : 'bg-[#2A2921] text-[#6F6A58] cursor-not-allowed'
                           }`}
                         >
                           Redeem
@@ -8316,18 +8359,18 @@ export function App() {
 
                 {redemptions.length > 0 && (
                   <div className="pt-2">
-                    <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#5C6B52] mb-2">
+                    <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58] mb-2">
                       Your redemptions
                     </h3>
                     {redemptions.map((r) => {
                       const card = giftCards.find((g) => g.id === r.giftCardId);
                       return (
-                        <div key={r.id} className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3">
-                          <p className="text-xs text-[#E2ECE5]">
+                        <div key={r.id} className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3">
+                          <p className="text-xs text-[#F2EFE7]">
                             {card ? `${card.brand} - KES ${card.valueKes}` : 'Reward'}
                           </p>
                           {/* No fabricated voucher code. */}
-                          <p className="text-[10px] text-[#C9A227] mt-0.5">
+                          <p className="text-[10px] text-[#C2A24A] mt-0.5">
                             {r.status === 'processing'
                               ? 'Processing. No code has been issued yet.'
                               : r.status === 'issued'
@@ -8349,7 +8392,7 @@ export function App() {
                     setArenaView('home');
                     setOpenPlayerId(null);
                   }}
-                  className="text-[10px] text-[#8DCF74] cursor-pointer"
+                  className="text-[10px] text-[#7FA98B] cursor-pointer"
                 >
                   Back to Arena
                 </button>
@@ -8359,7 +8402,7 @@ export function App() {
                   );
                   if (!identity) {
                     return (
-                      <p className="text-xs text-[#86935C]">
+                      <p className="text-xs text-[#9A9278]">
                         {openPlayer.displayName} does not play {arenaGame.name}.
                       </p>
                     );
@@ -8367,12 +8410,12 @@ export function App() {
                   const stats = ARENA_STATS.find((st) => st.identityId === identity.id);
                   const winRate = stats ? getWinRate(stats) : undefined;
                   return (
-                    <div className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-4 space-y-3">
+                    <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4 space-y-3">
                       <div>
-                        <p className="text-base font-extrabold text-[#E2ECE5]">
+                        <p className="text-base font-extrabold text-[#F2EFE7]">
                           {openPlayer.displayName}
                         </p>
-                        <p className="text-[9px] font-mono uppercase text-[#5C6B52] mt-0.5">
+                        <p className="text-[9px] font-mono uppercase text-[#6F6A58] mt-0.5">
                           {identity.game}
                           {' - '}
                           {identity.gamerTag}
@@ -8388,18 +8431,18 @@ export function App() {
                           ['Win rate', typeof winRate === 'number' ? `${winRate}%` : 'No matches yet']
                         ].map(([k, v]) => (
                           <React.Fragment key={k}>
-                            <span className="text-[10px] text-[#86935C]">{k}</span>
-                            <span className="text-[10px] font-mono text-[#A9BDA0]">{v}</span>
+                            <span className="text-[10px] text-[#9A9278]">{k}</span>
+                            <span className="text-[10px] font-mono text-[#B6AFA0]">{v}</span>
                           </React.Fragment>
                         ))}
                       </div>
                       {openPlayer.preferredMode && (
-                        <p className="text-[10px] text-[#86935C]">
+                        <p className="text-[10px] text-[#9A9278]">
                           Preferred mode{' '}
-                          <span className="text-[#A9BDA0]">{openPlayer.preferredMode}</span>
+                          <span className="text-[#B6AFA0]">{openPlayer.preferredMode}</span>
                         </p>
                       )}
-                      <p className="text-[10px] text-[#8DCF74]">
+                      <p className="text-[10px] text-[#7FA98B]">
                         {openPlayer.presence === 'online'
                           ? 'Online'
                           : openPlayer.presence === 'nearby'
@@ -8416,11 +8459,11 @@ export function App() {
               <div className="space-y-3">
                 <button
                   onClick={() => setArenaView('home')}
-                  className="text-[10px] text-[#8DCF74] cursor-pointer"
+                  className="text-[10px] text-[#7FA98B] cursor-pointer"
                 >
                   Back to Arena
                 </button>
-                <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#5C6B52]">
+                <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58]">
                   Find a Game
                 </h3>
                 <div className="flex flex-wrap gap-2">
@@ -8428,8 +8471,8 @@ export function App() {
                     onClick={() => setFindFreeOnly((v) => !v)}
                     className={`px-3 py-1.5 rounded-xl text-[10px] cursor-pointer border ${
                       findFreeOnly
-                        ? 'bg-[#00FF42] text-[#09150E] border-[#00FF42] font-extrabold'
-                        : 'bg-[#102117] text-[#8DCF74] border-[#1E3A2A]'
+                        ? 'bg-[#3E9A66] text-[#191714] border-[#3E9A66] font-extrabold'
+                        : 'bg-[#28261F] text-[#7FA98B] border-[#3B372B]'
                     }`}
                   >
                     Free only
@@ -8438,8 +8481,8 @@ export function App() {
                     onClick={() => setFindNearby((v) => !v)}
                     className={`px-3 py-1.5 rounded-xl text-[10px] cursor-pointer border ${
                       findNearby
-                        ? 'bg-[#00FF42] text-[#09150E] border-[#00FF42] font-extrabold'
-                        : 'bg-[#102117] text-[#8DCF74] border-[#1E3A2A]'
+                        ? 'bg-[#3E9A66] text-[#191714] border-[#3E9A66] font-extrabold'
+                        : 'bg-[#28261F] text-[#7FA98B] border-[#3B372B]'
                     }`}
                   >
                     Nearby
@@ -8447,7 +8490,7 @@ export function App() {
                 </div>
 
                 {findResults.length === 0 && (
-                  <p className="text-xs text-[#86935C]">
+                  <p className="text-xs text-[#9A9278]">
                     No players available for {arenaGame.name} right now.
                   </p>
                 )}
@@ -8455,19 +8498,19 @@ export function App() {
                 {findResults.map((c) => (
                   <div
                     key={c.identity.id}
-                    className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3 flex items-center justify-between gap-3"
+                    className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3 flex items-center justify-between gap-3"
                   >
                     <div className="min-w-0">
-                      <p className="text-xs font-extrabold text-[#E2ECE5]">
+                      <p className="text-xs font-extrabold text-[#F2EFE7]">
                         {c.player.displayName}
                       </p>
-                      <p className="text-[9px] font-mono text-[#5C6B52] mt-0.5">
+                      <p className="text-[9px] font-mono text-[#6F6A58] mt-0.5">
                         {typeof c.stats?.rating === 'number'
                           ? `Rating ${c.stats.rating}`
                           : 'Not rated yet'}
                         {c.reason ? ` - ${c.reason}` : ''}
                       </p>
-                      <p className="text-[9px] text-[#86935C] mt-0.5">
+                      <p className="text-[9px] text-[#9A9278] mt-0.5">
                         {c.challenge
                           ? c.challenge.stake === 'entry_fee'
                             ? `Entry KES ${c.challenge.entryFeeKes}`
@@ -8480,7 +8523,7 @@ export function App() {
                     {c.challenge && (
                       <button
                         onClick={() => handleAcceptChallenge(c.challenge as ArenaChallenge)}
-                        className="shrink-0 px-3 py-1.5 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-[10px] cursor-pointer"
+                        className="shrink-0 px-3 py-1.5 rounded-xl bg-[#3E9A66] text-[#191714] font-extrabold text-[10px] cursor-pointer"
                       >
                         Challenge
                       </button>
@@ -8498,15 +8541,15 @@ export function App() {
                     reusing the same access rules as the Group tab. Brief never
                     joins, posts to, or claims ownership of a group. */}
                 {groupArenaSignals.length > 0 && (
-                  <div className="bg-[#102117] border border-[#235F45] rounded-2xl p-3">
-                    <p className="text-[9px] font-extrabold uppercase tracking-wider text-[#8DCF74]">
+                  <div className="bg-[#28261F] border border-[#3F5544] rounded-2xl p-3">
+                    <p className="text-[9px] font-extrabold uppercase tracking-wider text-[#7FA98B]">
                       From your groups
                     </p>
                     {groupArenaSignals.map((sig) => (
                       <div key={sig.id} className="mt-2">
-                        <p className="text-xs text-[#E2ECE5]">{sig.groupName}</p>
-                        <p className="text-[10px] text-[#86935C] mt-0.5">{sig.summary}</p>
-                        <p className="text-[9px] font-mono text-[#5C6B52] mt-0.5">
+                        <p className="text-xs text-[#F2EFE7]">{sig.groupName}</p>
+                        <p className="text-[10px] text-[#9A9278] mt-0.5">{sig.summary}</p>
+                        <p className="text-[9px] font-mono text-[#6F6A58] mt-0.5">
                           Shared in this group on {formatSourceDate(sig.at)}. Brief has
                           not posted anything.
                         </p>
@@ -8517,12 +8560,12 @@ export function App() {
 
                 {/* Operational economics. No engagement metrics. */}
                 {abuseFlags.length > 0 && (
-                  <div className="bg-[#102117] border border-[#C9A227] rounded-2xl p-3">
-                    <p className="text-[9px] font-extrabold uppercase tracking-wider text-[#C9A227]">
+                  <div className="bg-[#28261F] border border-[#C2A24A] rounded-2xl p-3">
+                    <p className="text-[9px] font-extrabold uppercase tracking-wider text-[#C2A24A]">
                       Flagged for review
                     </p>
                     {abuseFlags.map((f) => (
-                      <p key={f.id} className="text-[10px] text-[#86935C] mt-1">
+                      <p key={f.id} className="text-[10px] text-[#9A9278] mt-1">
                         {f.detail} Status: {f.status}. No account has been actioned.
                       </p>
                     ))}
@@ -8531,20 +8574,20 @@ export function App() {
 
                 <button
                   onClick={() => setArenaView('find')}
-                  className="w-full text-left bg-[#102117] border border-[#1E3A2A] rounded-2xl p-4 cursor-pointer"
+                  className="w-full text-left bg-[#28261F] border border-[#3B372B] rounded-2xl p-4 cursor-pointer"
                 >
-                  <p className="text-sm font-extrabold text-[#E2ECE5]">Find a Game</p>
-                  <p className="text-[10px] text-[#86935C] mt-0.5">
+                  <p className="text-sm font-extrabold text-[#F2EFE7]">Find a Game</p>
+                  <p className="text-[10px] text-[#9A9278] mt-0.5">
                     Match with someone ready to play {arenaGame.name}
                   </p>
                 </button>
 
                 <div>
-                  <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#5C6B52] mb-2">
+                  <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58] mb-2">
                     Live lobby
                   </h3>
                   {lobbyChallenges.length === 0 && (
-                    <p className="text-xs text-[#86935C]">
+                    <p className="text-xs text-[#9A9278]">
                       No open challenges for {arenaGame.name} right now.
                     </p>
                   )}
@@ -8556,26 +8599,26 @@ export function App() {
                       return (
                         <div
                           key={c.id}
-                          className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3 flex items-center gap-3"
+                          className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3 flex items-center gap-3"
                         >
                           <button
                             onClick={() => {
                               setOpenPlayerId(c.createdByPlayerId);
                               setArenaView('player');
                             }}
-                            className="text-xs font-extrabold text-[#E2ECE5] cursor-pointer shrink-0"
+                            className="text-xs font-extrabold text-[#F2EFE7] cursor-pointer shrink-0"
                           >
                             {player ? player.displayName : 'Player'}
                           </button>
-                          <span className="text-[10px] font-mono text-[#8DCF74] shrink-0">
+                          <span className="text-[10px] font-mono text-[#7FA98B] shrink-0">
                             {c.mode}
                           </span>
-                          <span className="text-[10px] text-[#86935C] truncate">
+                          <span className="text-[10px] text-[#9A9278] truncate">
                             {c.format}
                           </span>
                           <span
                             className={`text-[10px] font-mono ml-auto shrink-0 ${
-                              c.stake === 'entry_fee' ? 'text-[#C9A227]' : 'text-[#5C6B52]'
+                              c.stake === 'entry_fee' ? 'text-[#C2A24A]' : 'text-[#6F6A58]'
                             }`}
                           >
                             {c.stake === 'entry_fee'
@@ -8585,13 +8628,13 @@ export function App() {
                               : 'Friendly'}
                           </span>
                           {c.createdByPlayerId === CURRENT_PLAYER_ID ? (
-                            <span className="shrink-0 text-[9px] font-mono uppercase text-[#5C6B52]">
+                            <span className="shrink-0 text-[9px] font-mono uppercase text-[#6F6A58]">
                               Your challenge
                             </span>
                           ) : (
                             <button
                               onClick={() => handleAcceptChallenge(c)}
-                              className="shrink-0 px-3 py-1.5 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-[10px] cursor-pointer"
+                              className="shrink-0 px-3 py-1.5 rounded-xl bg-[#3E9A66] text-[#191714] font-extrabold text-[10px] cursor-pointer"
                             >
                               Accept
                             </button>
@@ -8604,7 +8647,7 @@ export function App() {
 
                 {matches.length > 0 && (
                   <div>
-                    <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#5C6B52] mb-2">
+                    <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58] mb-2">
                       Your matches
                     </h3>
                     <div className="space-y-2">
@@ -8614,14 +8657,14 @@ export function App() {
                         return (
                           <div
                             key={m.id}
-                            className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3"
+                            className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3"
                           >
-                            <p className="text-xs text-[#E2ECE5]">
+                            <p className="text-xs text-[#F2EFE7]">
                               {a ? a.displayName : 'Player'} vs{' '}
                               {b ? b.displayName : 'Player'}
                             </p>
                             {/* Brief does not decide or guess a result. */}
-                            <p className="text-[10px] text-[#86935C] mt-0.5">
+                            <p className="text-[10px] text-[#9A9278] mt-0.5">
                               {isResultConfirmed(m)
                                 ? m.scoreLine
                                 : 'Result not confirmed by both players'}
@@ -8634,11 +8677,11 @@ export function App() {
                 )}
 
                 <div>
-                  <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#5C6B52] mb-2">
+                  <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58] mb-2">
                     Nearby
                   </h3>
                   {nearbyVenues.length === 0 && (
-                    <p className="text-xs text-[#86935C]">
+                    <p className="text-xs text-[#9A9278]">
                       No venues nearby for {arenaGame.name}.
                     </p>
                   )}
@@ -8648,7 +8691,7 @@ export function App() {
                       return (
                         <div
                           key={v.id}
-                          className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3 flex items-start gap-3"
+                          className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3 flex items-start gap-3"
                         >
                           {/* The mark is the live part: ring and count track
                               who is actually here for THIS game. */}
@@ -8659,16 +8702,16 @@ export function App() {
                             label={`${here} playing ${arenaGame.name} at ${v.name}`}
                           />
                           <div className="min-w-0 flex-1">
-                            <p className="text-xs font-extrabold text-[#E2ECE5]">
+                            <p className="text-xs font-extrabold text-[#F2EFE7]">
                               {v.name}
                             </p>
-                            <p className="text-[9px] font-mono text-[#5C6B52] mt-0.5">
+                            <p className="text-[9px] font-mono text-[#6F6A58] mt-0.5">
                               {v.locationName}
                               {typeof v.distanceKm === 'number'
                                 ? ` - ${v.distanceKm} km`
                                 : ''}
                             </p>
-                            <p className="text-[10px] text-[#8DCF74] mt-1">
+                            <p className="text-[10px] text-[#7FA98B] mt-1">
                               {here > 0
                                 ? `${here} playing ${arenaGame.shortName} now`
                                 : 'Nobody checked in right now'}
@@ -8677,23 +8720,23 @@ export function App() {
                             <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
                               {typeof v.stationsFree === 'number' &&
                                 typeof v.stations === 'number' && (
-                                  <span className="text-[9px] text-[#86935C]">
+                                  <span className="text-[9px] text-[#9A9278]">
                                     {v.stationsFree} of {v.stations} stations free
                                   </span>
                                 )}
                               {typeof v.pricePerHourKes === 'number' && (
-                                <span className="text-[9px] font-mono text-[#86935C]">
+                                <span className="text-[9px] font-mono text-[#9A9278]">
                                   KES {v.pricePerHourKes}/hr
                                 </span>
                               )}
                               {v.openUntil && (
-                                <span className="text-[9px] font-mono text-[#86935C]">
+                                <span className="text-[9px] font-mono text-[#9A9278]">
                                   open until {v.openUntil}
                                 </span>
                               )}
                             </div>
                             {v.eventTonight && (
-                              <p className="text-[10px] text-[#C9A227] mt-1">
+                              <p className="text-[10px] text-[#C2A24A] mt-1">
                                 Tonight: {v.eventTonight}
                               </p>
                             )}
@@ -8705,7 +8748,7 @@ export function App() {
                 </div>
 
                 <div>
-                  <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#5C6B52] mb-2">
+                  <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58] mb-2">
                     Exchange
                   </h3>
                   <div className="space-y-2">
@@ -8714,12 +8757,12 @@ export function App() {
                       return (
                         <div
                           key={l.id}
-                          className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3"
+                          className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3"
                         >
                           <div className="flex items-baseline justify-between gap-3">
-                            <p className="text-xs text-[#E2ECE5]">{l.title}</p>
+                            <p className="text-xs text-[#F2EFE7]">{l.title}</p>
                             {gate.allowed && typeof l.priceKes === 'number' && (
-                              <span className="text-[10px] font-mono text-[#A9BDA0] shrink-0">
+                              <span className="text-[10px] font-mono text-[#B6AFA0] shrink-0">
                                 KES {l.priceKes}
                               </span>
                             )}
@@ -8727,7 +8770,7 @@ export function App() {
                           {/* The transfer boundary. Brief will not facilitate
                               what a publisher prohibits. */}
                           {!gate.allowed && (
-                            <p className="text-[10px] text-[#C9A227] mt-1">
+                            <p className="text-[10px] text-[#C2A24A] mt-1">
                               Not available in Arena. {gate.reason}
                             </p>
                           )}
@@ -8748,13 +8791,13 @@ export function App() {
         {activeTab === 'mylayer' && myLayerSection === 'activity' && (
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
             <div>
-              <h2 className="text-lg font-extrabold text-[#E2ECE5]">My Activity</h2>
-              <p className="text-[11px] text-[#86935C] leading-snug mt-1">
+              <h2 className="text-lg font-extrabold text-[#F2EFE7]">My Activity</h2>
+              <p className="text-[11px] text-[#9A9278] leading-snug mt-1">
                 What you have saved, watched and acted on.
               </p>
             </div>
             {relationships.length === 0 && (
-              <p className="text-xs text-[#86935C]">Nothing yet.</p>
+              <p className="text-xs text-[#9A9278]">Nothing yet.</p>
             )}
             <div className="space-y-2">
               {[...relationships]
@@ -8764,15 +8807,15 @@ export function App() {
                   return (
                     <div
                       key={rel.id}
-                      className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3 flex items-center gap-3"
+                      className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3 flex items-center gap-3"
                     >
-                      <span className="text-[9px] font-mono uppercase text-[#8DCF74] shrink-0">
+                      <span className="text-[9px] font-mono uppercase text-[#7FA98B] shrink-0">
                         {rel.verb}
                       </span>
-                      <p className="text-xs text-[#E2ECE5] flex-1 min-w-0 truncate">
+                      <p className="text-xs text-[#F2EFE7] flex-1 min-w-0 truncate">
                         {obj ? obj.title : rel.targetId}
                       </p>
-                      <span className="text-[9px] font-mono text-[#5C6B52] shrink-0">
+                      <span className="text-[9px] font-mono text-[#6F6A58] shrink-0">
                         {rel.updatedAt.slice(0, 10)}
                       </span>
                     </div>
@@ -8788,24 +8831,24 @@ export function App() {
         {activeTab === 'mylayer' && myLayerSection === 'arena' && (
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
             <div>
-              <h2 className="text-lg font-extrabold text-[#E2ECE5]">Your Arena</h2>
-              <p className="text-[11px] text-[#86935C] leading-snug mt-1">
+              <h2 className="text-lg font-extrabold text-[#F2EFE7]">Your Arena</h2>
+              <p className="text-[11px] text-[#9A9278] leading-snug mt-1">
                 Your rank, points and matches. Play and redeem in Arena.
               </p>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
-              <div className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3">
-                <p className="text-[10px] uppercase tracking-wider text-[#5C6B52]">
+              <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3">
+                <p className="text-[10px] uppercase tracking-wider text-[#6F6A58]">
                   Rank
                 </p>
-                <p className="text-sm font-extrabold text-[#E2ECE5] mt-1">{myRank}</p>
+                <p className="text-sm font-extrabold text-[#F2EFE7] mt-1">{myRank}</p>
               </div>
-              <div className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3">
-                <p className="text-[10px] uppercase tracking-wider text-[#5C6B52]">
+              <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3">
+                <p className="text-[10px] uppercase tracking-wider text-[#6F6A58]">
                   Arena Points
                 </p>
-                <p className="text-sm font-extrabold text-[#00FF42] font-mono mt-1">
+                <p className="text-sm font-extrabold text-[#3E9A66] font-mono mt-1">
                   {myBalance.toLocaleString()}
                 </p>
               </div>
@@ -8816,16 +8859,16 @@ export function App() {
                 setActiveTab('arena');
                 setArenaSection('rewards');
               }}
-              className="text-[10px] font-extrabold text-[#00FF42] cursor-pointer"
+              className="text-[10px] font-extrabold text-[#3E9A66] cursor-pointer"
             >
               Redeem in Arena
             </button>
 
-            <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#5C6B52]">
+            <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58]">
               My Matches
             </h3>
             {matches.length === 0 && (
-              <p className="text-xs text-[#86935C]">
+              <p className="text-xs text-[#9A9278]">
                 No matches yet. Accept a challenge in Arena to start one.
               </p>
             )}
@@ -8834,12 +8877,12 @@ export function App() {
                 const a = ARENA_PLAYERS.find((p) => p.id === m.playerAId);
                 const b = ARENA_PLAYERS.find((p) => p.id === m.playerBId);
                 return (
-                  <div key={m.id} className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3">
-                    <p className="text-xs text-[#E2ECE5]">
+                  <div key={m.id} className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3">
+                    <p className="text-xs text-[#F2EFE7]">
                       {a ? a.displayName : 'Player'} vs {b ? b.displayName : 'Player'}
                     </p>
                     {/* Result stays unclaimed until both players confirm. */}
-                    <p className="text-[10px] text-[#86935C] mt-0.5">
+                    <p className="text-[10px] text-[#9A9278] mt-0.5">
                       {isResultConfirmed(m)
                         ? m.scoreLine
                         : 'Result not confirmed by both players'}
@@ -8857,42 +8900,42 @@ export function App() {
         {activeTab === 'mylayer' && myLayerSection === 'points' && (
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
             <div>
-              <h2 className="text-lg font-extrabold text-[#E2ECE5]">My Points</h2>
-              <p className="text-[11px] text-[#86935C] leading-snug mt-1">
+              <h2 className="text-lg font-extrabold text-[#F2EFE7]">My Points</h2>
+              <p className="text-[11px] text-[#9A9278] leading-snug mt-1">
                 Points are not cash and have no monetary value.
               </p>
             </div>
 
-            <div className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-4 space-y-2">
+            <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4 space-y-2">
               <div className="flex items-baseline justify-between gap-3">
-                <span className="text-[10px] uppercase tracking-wider text-[#5C6B52]">
+                <span className="text-[10px] uppercase tracking-wider text-[#6F6A58]">
                   Brief Points
                 </span>
-                <span className="text-lg font-extrabold text-[#00FF42] font-mono">
+                <span className="text-lg font-extrabold text-[#3E9A66] font-mono">
                   {myContribution.settledPoints.toLocaleString()}
                 </span>
               </div>
-              <p className="text-[10px] text-[#86935C]">
-                Rank <span className="text-[#A9BDA0]">{myRank}</span> -{' '}
+              <p className="text-[10px] text-[#9A9278]">
+                Rank <span className="text-[#B6AFA0]">{myRank}</span> -{' '}
                 {myContribution.accepted} accepted contributions
               </p>
               {pendingCount > 0 && (
-                <p className="text-[10px] text-[#C9A227]">
+                <p className="text-[10px] text-[#C2A24A]">
                   {pendingCount} submitted, awaiting review. Worth nothing yet.
                 </p>
               )}
             </div>
 
-            <div className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-4 space-y-2">
+            <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4 space-y-2">
               <div className="flex items-baseline justify-between gap-3">
-                <span className="text-[10px] uppercase tracking-wider text-[#5C6B52]">
+                <span className="text-[10px] uppercase tracking-wider text-[#6F6A58]">
                   Arena Points
                 </span>
-                <span className="text-lg font-extrabold text-[#00FF42] font-mono">
+                <span className="text-lg font-extrabold text-[#3E9A66] font-mono">
                   {myBalance.toLocaleString()}
                 </span>
               </div>
-              <p className="text-[10px] text-[#86935C]">
+              <p className="text-[10px] text-[#9A9278]">
                 From playing today {participationToday} / {PARTICIPATION_DAILY_CAP}.
                 Earned mainly by organising events.
               </p>
@@ -8901,7 +8944,7 @@ export function App() {
                   setActiveTab('arena');
                   setArenaSection('rewards');
                 }}
-                className="text-[10px] font-extrabold text-[#00FF42] cursor-pointer"
+                className="text-[10px] font-extrabold text-[#3E9A66] cursor-pointer"
               >
                 Redeem in Arena
               </button>
@@ -8909,18 +8952,18 @@ export function App() {
 
             {redemptions.length > 0 && (
               <div>
-                <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#5C6B52] mb-2">
+                <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58] mb-2">
                   Redeemed
                 </h3>
                 <div className="space-y-2">
                   {redemptions.map((r) => {
                     const card = giftCards.find((g) => g.id === r.giftCardId);
                     return (
-                      <div key={r.id} className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3">
-                        <p className="text-xs text-[#E2ECE5]">
+                      <div key={r.id} className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3">
+                        <p className="text-xs text-[#F2EFE7]">
                           {card ? `${card.brand} - KES ${card.valueKes}` : 'Reward'}
                         </p>
-                        <p className="text-[10px] text-[#C9A227] mt-0.5">
+                        <p className="text-[10px] text-[#C2A24A] mt-0.5">
                           {r.status === 'processing'
                             ? 'Processing. No code has been issued yet.'
                             : r.status === 'issued'
@@ -8978,8 +9021,8 @@ export function App() {
                 who turns up. Every figure below is read from the server. */}
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <h2 className="text-lg font-extrabold text-[#E2ECE5]">Campaigns</h2>
-                <p className="text-[11px] text-[#86935C] leading-snug mt-1">
+                <h2 className="text-lg font-extrabold text-[#F2EFE7]">Campaigns</h2>
+                <p className="text-[11px] text-[#9A9278] leading-snug mt-1">
                   Things you are putting out into the world. Publish once, share
                   one link, see who registered.
                 </p>
@@ -8997,7 +9040,7 @@ export function App() {
                   });
                   setCreateStep('form');
                 }}
-                className="shrink-0 px-3 py-2 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-[11px] cursor-pointer flex items-center gap-1"
+                className="shrink-0 px-3 py-2 rounded-xl bg-[#3E9A66] text-[#191714] font-extrabold text-[11px] cursor-pointer flex items-center gap-1"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Create
@@ -9007,29 +9050,29 @@ export function App() {
             {campaignState.status === 'idle' && (
               <button
                 onClick={loadCampaigns}
-                className="w-full border border-[#235F45] rounded-2xl p-4 text-xs font-extrabold text-[#8DCF74] cursor-pointer"
+                className="w-full border border-[#3F5544] rounded-2xl p-4 text-xs font-extrabold text-[#7FA98B] cursor-pointer"
               >
                 Load my campaigns
               </button>
             )}
 
             {campaignState.status === 'loading' && (
-              <div className="border border-[#1E3A2A] rounded-2xl p-8 text-center">
-                <p className="text-xs text-[#86935C]">Loading campaigns...</p>
+              <div className="border border-[#3B372B] rounded-2xl p-8 text-center">
+                <p className="text-xs text-[#9A9278]">Loading campaigns...</p>
               </div>
             )}
 
             {campaignState.status === 'error' && (
-              <div className="border border-[#7A2E2E] bg-[#1A0F0F] rounded-2xl p-4 space-y-2">
-                <p className="text-xs text-[#E2ECE5] font-extrabold">
+              <div className="border border-[#6E3A2E] bg-[#2A2018] rounded-2xl p-4 space-y-2">
+                <p className="text-xs text-[#F2EFE7] font-extrabold">
                   Couldn't load campaigns. Try again.
                 </p>
-                <p className="text-[10px] font-mono text-[#A9BDA0] break-words">
+                <p className="text-[10px] font-mono text-[#B6AFA0] break-words">
                   {campaignState.error}
                 </p>
                 <button
                   onClick={loadCampaigns}
-                  className="px-3 py-1.5 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-[10px] cursor-pointer"
+                  className="px-3 py-1.5 rounded-xl bg-[#3E9A66] text-[#191714] font-extrabold text-[10px] cursor-pointer"
                 >
                   Retry
                 </button>
@@ -9037,46 +9080,46 @@ export function App() {
             )}
 
             {campaignState.status === 'ready' && (campaignState.data ?? []).length === 0 && (
-              <div className="border border-dashed border-[#1E3A2A] rounded-2xl p-8 text-center">
-                <p className="text-xs text-[#86935C]">You haven't created a campaign yet.</p>
+              <div className="border border-dashed border-[#3B372B] rounded-2xl p-8 text-center">
+                <p className="text-xs text-[#9A9278]">You haven't created a campaign yet.</p>
               </div>
             )}
 
             {campaignState.status === 'ready' && campaignsLive.length > 0 && (
               <div className="space-y-2">
-                <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#5C6B52]">
+                <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#6F6A58]">
                   Live
                 </h3>
                 {campaignsLive.map((c) => (
                   <div
                     key={c.id}
-                    className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-4 space-y-2"
+                    className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4 space-y-2"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-sm font-extrabold text-[#E2ECE5] truncate">{c.title}</p>
-                        <p className="text-[10px] text-[#A9BDA0] mt-0.5 truncate">
+                        <p className="text-sm font-extrabold text-[#F2EFE7] truncate">{c.title}</p>
+                        <p className="text-[10px] text-[#B6AFA0] mt-0.5 truncate">
                           {[c.location, c.startsAt ? c.startsAt.slice(0, 16).replace('T', ' ') : null]
                             .filter(Boolean)
                             .join(' \u00b7 ') || 'No place or time set'}
                         </p>
                       </div>
-                      <span className="shrink-0 text-[9px] font-mono uppercase text-[#00FF42]">
+                      <span className="shrink-0 text-[9px] font-mono uppercase text-[#3E9A66]">
                         {c.status}
                       </span>
                     </div>
 
                     {/* Capacity is printed from server values only. */}
                     <div className="flex flex-wrap gap-x-4 gap-y-1">
-                      <span className="text-[11px] font-mono text-[#E2ECE5]">
+                      <span className="text-[11px] font-mono text-[#F2EFE7]">
                         {c.metrics.slotsTaken}
                         {c.metrics.capacity === null ? ' registered' : ` / ${c.metrics.capacity}`}
                       </span>
-                      <span className="text-[11px] font-mono text-[#8DCF74]">
+                      <span className="text-[11px] font-mono text-[#7FA98B]">
                         {c.metrics.currency} {c.metrics.revenueSettled.toLocaleString()} settled
                       </span>
                       {c.metrics.revenuePending > 0 && (
-                        <span className="text-[11px] font-mono text-[#C9A227]">
+                        <span className="text-[11px] font-mono text-[#C2A24A]">
                           {c.metrics.currency} {c.metrics.revenuePending.toLocaleString()} pending
                         </span>
                       )}
@@ -9085,13 +9128,13 @@ export function App() {
                     <div className="flex items-center gap-2 pt-1">
                       <button
                         onClick={() => openCampaign(c.id)}
-                        className="px-3 py-1.5 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-[10px] cursor-pointer"
+                        className="px-3 py-1.5 rounded-xl bg-[#3E9A66] text-[#191714] font-extrabold text-[10px] cursor-pointer"
                       >
                         Open
                       </button>
                       <button
                         onClick={() => shareCampaign(c)}
-                        className="px-3 py-1.5 rounded-xl border border-[#235F45] text-[#8DCF74] font-extrabold text-[10px] cursor-pointer flex items-center gap-1"
+                        className="px-3 py-1.5 rounded-xl border border-[#3F5544] text-[#7FA98B] font-extrabold text-[10px] cursor-pointer flex items-center gap-1"
                       >
                         <Share2 className="w-3 h-3" />
                         Share
@@ -9104,26 +9147,26 @@ export function App() {
 
             {campaignState.status === 'ready' && campaignsDraft.length > 0 && (
               <div className="space-y-2">
-                <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#5C6B52]">
+                <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#6F6A58]">
                   Drafts
                 </h3>
                 {campaignsDraft.map((c) => (
                   <div
                     key={c.id}
-                    className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-4 flex items-center justify-between gap-3"
+                    className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4 flex items-center justify-between gap-3"
                   >
                     <div className="min-w-0">
-                      <p className="text-sm font-extrabold text-[#E2ECE5] truncate">
+                      <p className="text-sm font-extrabold text-[#F2EFE7] truncate">
                         {c.title || 'Untitled'}
                       </p>
-                      <p className="text-[9px] font-mono uppercase text-[#5C6B52] mt-0.5">
+                      <p className="text-[9px] font-mono uppercase text-[#6F6A58] mt-0.5">
                         {c.type} - not published
                       </p>
                     </div>
                     <div className="shrink-0 flex items-center gap-1.5">
                       <button
                         onClick={() => { openCampaign(c.id); beginEdit(c); }}
-                        className="px-3 py-1.5 rounded-xl border border-[#235F45] text-[#8DCF74] font-extrabold text-[10px] cursor-pointer"
+                        className="px-3 py-1.5 rounded-xl border border-[#3F5544] text-[#7FA98B] font-extrabold text-[10px] cursor-pointer"
                       >
                         Edit
                       </button>
@@ -9138,7 +9181,7 @@ export function App() {
                           loadCampaigns();
                           showToast('Published');
                         }}
-                        className="px-3 py-1.5 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
+                        className="px-3 py-1.5 rounded-xl bg-[#3E9A66] text-[#191714] font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
                       >
                         Publish
                       </button>
@@ -9150,18 +9193,18 @@ export function App() {
 
             {campaignState.status === 'ready' && campaignsPast.length > 0 && (
               <div className="space-y-2">
-                <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#5C6B52]">
+                <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#6F6A58]">
                   Finished
                 </h3>
                 {campaignsPast.map((c) => (
                   <div
                     key={c.id}
-                    className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3 flex items-center justify-between gap-3"
+                    className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3 flex items-center justify-between gap-3"
                   >
-                    <p className="text-xs text-[#A9BDA0] truncate">{c.title}</p>
+                    <p className="text-xs text-[#B6AFA0] truncate">{c.title}</p>
                     <button
                       onClick={() => openCampaign(c.id)}
-                      className="shrink-0 text-[10px] text-[#5C6B52] underline underline-offset-2 cursor-pointer"
+                      className="shrink-0 text-[10px] text-[#6F6A58] underline underline-offset-2 cursor-pointer"
                     >
                       {c.status}
                     </button>
@@ -9175,16 +9218,16 @@ export function App() {
         {activeTab === 'nearby' && nearbySection === 'today' && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-lg font-extrabold text-[#E2ECE5]">Today</h2>
-              <p className="text-[11px] text-[#86935C] leading-snug mt-1">
+              <h2 className="text-lg font-extrabold text-[#F2EFE7]">Today</h2>
+              <p className="text-[11px] text-[#9A9278] leading-snug mt-1">
                 Only what relates to your pursuits, saved and watched things.
               </p>
             </div>
 
             {dailyBrief.length === 0 && (
-              <div className="border border-dashed border-[#1E3A2A] rounded-2xl p-8 text-center">
-                <p className="text-xs text-[#86935C]">Nothing to report.</p>
-                <p className="text-[10px] text-[#5C6B52] mt-1">
+              <div className="border border-dashed border-[#3B372B] rounded-2xl p-8 text-center">
+                <p className="text-xs text-[#9A9278]">Nothing to report.</p>
+                <p className="text-[10px] text-[#6F6A58] mt-1">
                   Save something, or start a pursuit, and this fills itself in.
                 </p>
               </div>
@@ -9193,10 +9236,10 @@ export function App() {
             {dailyBrief.map((section) => (
               <div key={section.key} className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#00FF42]">
+                  <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#3E9A66]">
                     {section.title}
                   </h3>
-                  <span className="text-[10px] font-mono text-[#86935C]">
+                  <span className="text-[10px] font-mono text-[#9A9278]">
                     {section.objects.length + section.pursuits.length}
                   </span>
                 </div>
@@ -9205,23 +9248,23 @@ export function App() {
                   <button
                     key={obj.id}
                     onClick={() => setSelectedObjectForDetail(obj)}
-                    className="w-full text-left bg-[#102117] border border-[#1E3A2A] hover:border-[#235F45] rounded-xl p-3 cursor-pointer transition"
+                    className="w-full text-left bg-[#28261F] border border-[#3B372B] hover:border-[#3F5544] rounded-xl p-3 cursor-pointer transition"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[9px] font-mono uppercase text-[#5C6B52]">
+                      <span className="text-[9px] font-mono uppercase text-[#6F6A58]">
                         {getObjectTypeMeta(obj.type).label}
                       </span>
                       {getDistanceLabel(obj) && (
-                        <span className="text-[9px] font-mono text-[#86935C]">
+                        <span className="text-[9px] font-mono text-[#9A9278]">
                           {getDistanceLabel(obj)}
                         </span>
                       )}
                     </div>
-                    <p className="text-[12px] font-bold text-[#E2ECE5] leading-snug mt-0.5">
+                    <p className="text-[12px] font-bold text-[#F2EFE7] leading-snug mt-0.5">
                       {obj.title}
                     </p>
                     {obj.metadata?.statusBadge && (
-                      <p className="text-[10px] text-[#8DCF74] mt-0.5">
+                      <p className="text-[10px] text-[#7FA98B] mt-0.5">
                         {obj.metadata.statusBadge}
                       </p>
                     )}
@@ -9232,10 +9275,10 @@ export function App() {
                   <button
                     key={pursuit.id}
                     onClick={() => { setActiveTab('nearby'); setNearbySection('pursuits'); }}
-                    className="w-full text-left bg-[#0D1F15] border border-[#1E3A2A] rounded-xl p-3 cursor-pointer"
+                    className="w-full text-left bg-[#24221C] border border-[#3B372B] rounded-xl p-3 cursor-pointer"
                   >
-                    <p className="text-[11px] text-[#A9BDA0]">{pursuit.query}</p>
-                    <p className="text-[9px] text-[#5C6B52] mt-0.5">
+                    <p className="text-[11px] text-[#B6AFA0]">{pursuit.query}</p>
+                    <p className="text-[9px] text-[#6F6A58] mt-0.5">
                       Nothing useful yet. Brief is still looking.
                     </p>
                   </button>
@@ -9336,7 +9379,7 @@ export function App() {
       {/* MOBILE BOTTOM BAR. Same five doors, icon plus short label. */}
       <nav
         aria-label="Primary"
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#0C1B12]/98 backdrop-blur-xl border-t border-[#1E3A2A] flex"
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#211F1A]/98 backdrop-blur-xl border-t border-[#3B372B] flex"
       >
         {DESTINATIONS.map((d) => {
           const active = activeTab === d.id;
@@ -9347,7 +9390,7 @@ export function App() {
               onClick={() => goToDestination(d.id)}
               aria-current={active ? 'page' : undefined}
               className={`flex-1 flex flex-col items-center gap-1 py-2.5 cursor-pointer transition-colors ${
-                active ? 'text-[#00FF42]' : 'text-[#5C6B52]'
+                active ? 'text-[#3E9A66]' : 'text-[#6F6A58]'
               }`}
             >
               <Icon className="w-5 h-5" />
@@ -9357,7 +9400,7 @@ export function App() {
               </span>
               <span
                 className={`h-0.5 w-6 rounded-full transition-all ${
-                  active ? 'bg-[#00FF42]' : 'bg-transparent'
+                  active ? 'bg-[#3E9A66]' : 'bg-transparent'
                 }`}
               />
             </button>
@@ -9370,7 +9413,7 @@ export function App() {
           printing a zero that looks like a measurement. */}
       {openCampaignId && (
         <div
-          className="fixed inset-0 z-50 bg-[#09150E]/90 backdrop-blur-md overflow-y-auto"
+          className="fixed inset-0 z-50 bg-[#191714]/90 backdrop-blur-md overflow-y-auto"
           onClick={() => {
             setOpenCampaignId(null);
             setCampaignDetail(null);
@@ -9380,101 +9423,101 @@ export function App() {
         >
           <div className="min-h-screen flex items-end sm:items-center justify-center p-0 sm:p-6">
             <div
-              className="w-full max-w-lg bg-[#102117] border border-[#235F45] rounded-t-3xl sm:rounded-3xl p-5 space-y-4"
+              className="w-full max-w-lg bg-[#28261F] border border-[#3F5544] rounded-t-3xl sm:rounded-3xl p-5 space-y-4"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <h2 className="text-base font-extrabold text-[#E2ECE5] truncate">
+                  <h2 className="text-base font-extrabold text-[#F2EFE7] truncate">
                     {campaignDetail ? campaignDetail.title : 'Campaign'}
                   </h2>
                   {campaignDetail && (
-                    <p className="text-[9px] font-mono uppercase text-[#5C6B52] mt-0.5">
+                    <p className="text-[9px] font-mono uppercase text-[#6F6A58] mt-0.5">
                       {campaignDetail.type} &middot; {campaignDetail.status}
                     </p>
                   )}
                 </div>
                 <button
                   onClick={() => { setOpenCampaignId(null); setCampaignDetail(null); }}
-                  className="shrink-0 text-[#5C6B52] cursor-pointer"
+                  className="shrink-0 text-[#6F6A58] cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               {campaignActionError && (
-                <div className="border border-[#7A2E2E] bg-[#1A0F0F] rounded-xl p-3">
-                  <p className="text-[10px] font-mono text-[#E2ECE5] break-words">
+                <div className="border border-[#6E3A2E] bg-[#2A2018] rounded-xl p-3">
+                  <p className="text-[10px] font-mono text-[#F2EFE7] break-words">
                     {campaignActionError}
                   </p>
                 </div>
               )}
 
               {!campaignDetail && !campaignActionError && (
-                <p className="text-xs text-[#86935C] py-6 text-center">Loading campaign...</p>
+                <p className="text-xs text-[#9A9278] py-6 text-center">Loading campaign...</p>
               )}
 
               {campaignDetail && editDraft && (
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">Title</label>
+                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">Title</label>
                     <input
                       value={editDraft.title}
                       onChange={(e) => setEditDraft((d) => (d ? { ...d, title: e.target.value } : d))}
-                      className="w-full bg-[#0B1A12] text-[#E2ECE5] text-xs rounded-xl px-3 py-2.5 border border-[#1E3A2A] focus:border-[#00FF42] focus:outline-none"
+                      className="w-full bg-[#211F1A] text-[#F2EFE7] text-xs rounded-xl px-3 py-2.5 border border-[#3B372B] focus:border-[#3E9A66] focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">Description</label>
+                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">Description</label>
                     <textarea
                       value={editDraft.description}
                       onChange={(e) => setEditDraft((d) => (d ? { ...d, description: e.target.value } : d))}
                       rows={2}
-                      className="w-full bg-[#0B1A12] text-[#E2ECE5] text-xs rounded-xl px-3 py-2.5 border border-[#1E3A2A] focus:border-[#00FF42] focus:outline-none resize-none"
+                      className="w-full bg-[#211F1A] text-[#F2EFE7] text-xs rounded-xl px-3 py-2.5 border border-[#3B372B] focus:border-[#3E9A66] focus:outline-none resize-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">When</label>
+                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">When</label>
                     <input
                       type="datetime-local"
                       value={editDraft.startsAt}
                       onChange={(e) => setEditDraft((d) => (d ? { ...d, startsAt: e.target.value } : d))}
-                      className="w-full bg-[#0B1A12] text-[#E2ECE5] text-xs rounded-xl px-3 py-2.5 border border-[#1E3A2A] focus:border-[#00FF42] focus:outline-none"
+                      className="w-full bg-[#211F1A] text-[#F2EFE7] text-xs rounded-xl px-3 py-2.5 border border-[#3B372B] focus:border-[#3E9A66] focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">Where</label>
+                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">Where</label>
                     <input
                       value={editDraft.location}
                       onChange={(e) => setEditDraft((d) => (d ? { ...d, location: e.target.value } : d))}
-                      className="w-full bg-[#0B1A12] text-[#E2ECE5] text-xs rounded-xl px-3 py-2.5 border border-[#1E3A2A] focus:border-[#00FF42] focus:outline-none"
+                      className="w-full bg-[#211F1A] text-[#F2EFE7] text-xs rounded-xl px-3 py-2.5 border border-[#3B372B] focus:border-[#3E9A66] focus:outline-none"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">Spots</label>
+                      <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">Spots</label>
                       <input
                         inputMode="numeric"
                         disabled={campaignDetail.status !== 'draft'}
                         value={editDraft.capacity}
                         onChange={(e) => setEditDraft((d) => (d ? { ...d, capacity: e.target.value } : d))}
                         placeholder="Unlimited"
-                        className="w-full bg-[#0B1A12] text-[#E2ECE5] text-xs rounded-xl px-3 py-2.5 border border-[#1E3A2A] focus:border-[#00FF42] focus:outline-none disabled:opacity-40"
+                        className="w-full bg-[#211F1A] text-[#F2EFE7] text-xs rounded-xl px-3 py-2.5 border border-[#3B372B] focus:border-[#3E9A66] focus:outline-none disabled:opacity-40"
                       />
                     </div>
                     <div>
-                      <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">Price (KES)</label>
+                      <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">Price (KES)</label>
                       <input
                         inputMode="numeric"
                         value={editDraft.price}
                         onChange={(e) => setEditDraft((d) => (d ? { ...d, price: e.target.value } : d))}
                         placeholder="Free"
-                        className="w-full bg-[#0B1A12] text-[#E2ECE5] text-xs rounded-xl px-3 py-2.5 border border-[#1E3A2A] focus:border-[#00FF42] focus:outline-none"
+                        className="w-full bg-[#211F1A] text-[#F2EFE7] text-xs rounded-xl px-3 py-2.5 border border-[#3B372B] focus:border-[#3E9A66] focus:outline-none"
                       />
                     </div>
                   </div>
                   {campaignDetail.status !== 'draft' && (
-                    <p className="text-[9px] text-[#5C6B52] leading-snug">
+                    <p className="text-[9px] text-[#6F6A58] leading-snug">
                       Spots cannot change after publishing. People have already
                       registered against this number.
                     </p>
@@ -9483,14 +9526,14 @@ export function App() {
                     <button
                       disabled={campaignBusy}
                       onClick={() => setEditDraft(null)}
-                      className="px-4 py-3 rounded-xl border border-[#235F45] text-[#8DCF74] font-extrabold text-xs cursor-pointer disabled:opacity-40"
+                      className="px-4 py-3 rounded-xl border border-[#3F5544] text-[#7FA98B] font-extrabold text-xs cursor-pointer disabled:opacity-40"
                     >
                       Cancel
                     </button>
                     <button
                       disabled={campaignBusy || editDraft.title.trim() === ''}
                       onClick={() => saveCampaignEdit(campaignDetail)}
-                      className="flex-1 py-3 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-xs cursor-pointer disabled:opacity-40"
+                      className="flex-1 py-3 rounded-xl bg-[#3E9A66] text-[#191714] font-extrabold text-xs cursor-pointer disabled:opacity-40"
                     >
                       {campaignBusy ? 'Saving...' : 'Save'}
                     </button>
@@ -9517,7 +9560,7 @@ export function App() {
 
                   <button
                     onClick={() => beginEdit(campaignDetail)}
-                    className="w-full py-2.5 rounded-xl border border-[#235F45] text-[#8DCF74] font-extrabold text-[11px] cursor-pointer"
+                    className="w-full py-2.5 rounded-xl border border-[#3F5544] text-[#7FA98B] font-extrabold text-[11px] cursor-pointer"
                   >
                     Edit details
                   </button>
@@ -9535,21 +9578,21 @@ export function App() {
                         loadCampaigns();
                         showToast('Published');
                       }}
-                      className="w-full py-3 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-xs cursor-pointer disabled:opacity-40"
+                      className="w-full py-3 rounded-xl bg-[#3E9A66] text-[#191714] font-extrabold text-xs cursor-pointer disabled:opacity-40"
                     >
                       {campaignBusy ? 'Publishing...' : 'Publish'}
                     </button>
                   )}
 
                   {/* PEOPLE */}
-                  <div className="bg-[#0B1A12] border border-[#1E3A2A] rounded-2xl p-4 space-y-2">
-                    <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#5C6B52]">
+                  <div className="bg-[#211F1A] border border-[#3B372B] rounded-2xl p-4 space-y-2">
+                    <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#6F6A58]">
                       People
                     </h3>
-                    <p className="text-xl font-extrabold text-[#E2ECE5]">
+                    <p className="text-xl font-extrabold text-[#F2EFE7]">
                       {campaignDetail.metrics.slotsTaken}
                       {campaignDetail.metrics.capacity !== null && (
-                        <span className="text-[#5C6B52]"> / {campaignDetail.metrics.capacity}</span>
+                        <span className="text-[#6F6A58]"> / {campaignDetail.metrics.capacity}</span>
                       )}
                     </p>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-1">
@@ -9565,43 +9608,43 @@ export function App() {
                         ['No-show', campaignDetail.metrics.noShows]
                       ] as [string, string | number][]).map(([label, value]) => (
                         <div key={label} className="flex items-baseline justify-between gap-2">
-                          <span className="text-[10px] text-[#86935C]">{label}</span>
-                          <span className="text-[11px] font-mono text-[#A9BDA0]">{value}</span>
+                          <span className="text-[10px] text-[#9A9278]">{label}</span>
+                          <span className="text-[11px] font-mono text-[#B6AFA0]">{value}</span>
                         </div>
                       ))}
                     </div>
                     {campaignDetail.metrics.capacity !== null &&
                       campaignDetail.metrics.remaining === 0 && (
-                        <p className="text-[10px] font-extrabold text-[#C9A227]">Full</p>
+                        <p className="text-[10px] font-extrabold text-[#C2A24A]">Full</p>
                       )}
                   </div>
 
                   {/* MONEY. Settled and pending are never added together. */}
-                  <div className="bg-[#0B1A12] border border-[#1E3A2A] rounded-2xl p-4 space-y-2">
-                    <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#5C6B52]">
+                  <div className="bg-[#211F1A] border border-[#3B372B] rounded-2xl p-4 space-y-2">
+                    <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#6F6A58]">
                       Money
                     </h3>
                     {campaignDetail.price === 0 ? (
-                      <p className="text-[11px] text-[#86935C]">
+                      <p className="text-[11px] text-[#9A9278]">
                         This is a free campaign. No money is collected.
                       </p>
                     ) : (
                       <>
                         <div className="flex items-baseline justify-between gap-2">
-                          <span className="text-[10px] text-[#86935C]">Settled</span>
-                          <span className="text-sm font-extrabold text-[#00FF42] font-mono">
+                          <span className="text-[10px] text-[#9A9278]">Settled</span>
+                          <span className="text-sm font-extrabold text-[#3E9A66] font-mono">
                             {campaignDetail.metrics.currency}{' '}
                             {campaignDetail.metrics.revenueSettled.toLocaleString()}
                           </span>
                         </div>
                         <div className="flex items-baseline justify-between gap-2">
-                          <span className="text-[10px] text-[#86935C]">Pending</span>
-                          <span className="text-sm font-extrabold text-[#C9A227] font-mono">
+                          <span className="text-[10px] text-[#9A9278]">Pending</span>
+                          <span className="text-sm font-extrabold text-[#C2A24A] font-mono">
                             {campaignDetail.metrics.currency}{' '}
                             {campaignDetail.metrics.revenuePending.toLocaleString()}
                           </span>
                         </div>
-                        <p className="text-[9px] text-[#5C6B52] leading-snug">
+                        <p className="text-[9px] text-[#6F6A58] leading-snug">
                           Pending is money that has not arrived. No payment provider is
                           connected, so settlement is recorded manually in Workflows.
                         </p>
@@ -9610,45 +9653,45 @@ export function App() {
                   </div>
 
                   {/* CAMPAIGN. Honest labels only. */}
-                  <div className="bg-[#0B1A12] border border-[#1E3A2A] rounded-2xl p-4 space-y-1">
-                    <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#5C6B52]">
+                  <div className="bg-[#211F1A] border border-[#3B372B] rounded-2xl p-4 space-y-1">
+                    <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#6F6A58]">
                       Campaign
                     </h3>
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-[10px] text-[#86935C]">Page loads</span>
-                      <span className="text-[11px] font-mono text-[#A9BDA0]">
+                      <span className="text-[10px] text-[#9A9278]">Page loads</span>
+                      <span className="text-[11px] font-mono text-[#B6AFA0]">
                         {campaignDetail.metrics.views}
                       </span>
                     </div>
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-[10px] text-[#86935C]">Different devices</span>
-                      <span className="text-[11px] font-mono text-[#A9BDA0]">
+                      <span className="text-[10px] text-[#9A9278]">Different devices</span>
+                      <span className="text-[11px] font-mono text-[#B6AFA0]">
                         {campaignDetail.metrics.viewers === null
                           ? 'Not enough data'
                           : campaignDetail.metrics.viewers}
                       </span>
                     </div>
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-[10px] text-[#86935C]">Times you shared</span>
-                      <span className="text-[11px] font-mono text-[#A9BDA0]">
+                      <span className="text-[10px] text-[#9A9278]">Times you shared</span>
+                      <span className="text-[11px] font-mono text-[#B6AFA0]">
                         {campaignDetail.metrics.shares}
                       </span>
                     </div>
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-[10px] text-[#86935C]">Started registering</span>
-                      <span className="text-[11px] font-mono text-[#A9BDA0]">
+                      <span className="text-[10px] text-[#9A9278]">Started registering</span>
+                      <span className="text-[11px] font-mono text-[#B6AFA0]">
                         {campaignDetail.metrics.registrationsStarted}
                       </span>
                     </div>
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-[10px] text-[#86935C]">Page load to registration</span>
-                      <span className="text-[11px] font-mono text-[#A9BDA0]">
+                      <span className="text-[10px] text-[#9A9278]">Page load to registration</span>
+                      <span className="text-[11px] font-mono text-[#B6AFA0]">
                         {campaignDetail.metrics.conversionPct === null
                           ? 'Not enough data'
                           : `${campaignDetail.metrics.conversionPct}%`}
                       </span>
                     </div>
-                    <p className="text-[9px] text-[#5C6B52] leading-snug pt-1">
+                    <p className="text-[9px] text-[#6F6A58] leading-snug pt-1">
                       Page loads are server-side loads of the public page. Different
                       devices is a rough count, not people. Times you shared counts
                       your own taps, not how many people saw it. Brief does not
@@ -9660,22 +9703,22 @@ export function App() {
                       as a plain description of the offer -- the creator never
                       needs to know the word "object". */}
                   {campaignDetail.object && (
-                    <div className="bg-[#0B1A12] border border-[#1E3A2A] rounded-2xl p-4 space-y-1">
-                      <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#5C6B52]">
+                    <div className="bg-[#211F1A] border border-[#3B372B] rounded-2xl p-4 space-y-1">
+                      <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#6F6A58]">
                         What people get
                       </h3>
-                      <p className="text-xs text-[#E2ECE5]">{campaignDetail.object.title}</p>
+                      <p className="text-xs text-[#F2EFE7]">{campaignDetail.object.title}</p>
                       {campaignDetail.object.summary && (
-                        <p className="text-[10px] text-[#A9BDA0] leading-snug">
+                        <p className="text-[10px] text-[#B6AFA0] leading-snug">
                           {campaignDetail.object.summary}
                         </p>
                       )}
-                      <p className="text-[9px] font-mono uppercase text-[#5C6B52] pt-0.5">
+                      <p className="text-[9px] font-mono uppercase text-[#6F6A58] pt-0.5">
                         {campaignDetail.object.type}
                         {campaignDetail.ownsObject === false && ' \u00b7 existing item'}
                       </p>
                       {campaignDetail.ownsObject === false && (
-                        <p className="text-[9px] text-[#5C6B52] leading-snug">
+                        <p className="text-[9px] text-[#6F6A58] leading-snug">
                           This campaign promotes something that already existed in
                           Brief. Publishing the campaign does not change it.
                         </p>
@@ -9688,23 +9731,23 @@ export function App() {
                         <button
                           disabled={campaignBusy}
                           onClick={loadAttachableObjects}
-                          className="text-[10px] text-[#8DCF74] underline underline-offset-2 cursor-pointer disabled:opacity-40 pt-1"
+                          className="text-[10px] text-[#7FA98B] underline underline-offset-2 cursor-pointer disabled:opacity-40 pt-1"
                         >
                           Link a different item
                         </button>
                       ) : (
-                        <div className="bg-[#09150E] border border-[#1E3A2A] rounded-xl p-2 space-y-1 max-h-44 overflow-y-auto mt-1">
+                        <div className="bg-[#191714] border border-[#3B372B] rounded-xl p-2 space-y-1 max-h-44 overflow-y-auto mt-1">
                           {objectPicker.status === 'loading' && (
-                            <p className="text-[11px] text-[#86935C] p-2">Loading your items...</p>
+                            <p className="text-[11px] text-[#9A9278] p-2">Loading your items...</p>
                           )}
                           {objectPicker.status === 'error' && (
-                            <p className="text-[11px] text-[#E2ECE5] p-2">
+                            <p className="text-[11px] text-[#F2EFE7] p-2">
                               Couldn't load your items. {objectPicker.error}
                             </p>
                           )}
                           {objectPicker.status === 'ready' &&
                             (objectPicker.data ?? []).length === 0 && (
-                              <p className="text-[11px] text-[#86935C] p-2">
+                              <p className="text-[11px] text-[#9A9278] p-2">
                                 Nothing else to link yet.
                               </p>
                             )}
@@ -9714,17 +9757,17 @@ export function App() {
                                 key={o.id}
                                 disabled={campaignBusy}
                                 onClick={() => attachObjectToCampaign(campaignDetail.id, o.id)}
-                                className="w-full text-left px-2 py-2 rounded-lg hover:bg-[#102117] cursor-pointer disabled:opacity-40"
+                                className="w-full text-left px-2 py-2 rounded-lg hover:bg-[#28261F] cursor-pointer disabled:opacity-40"
                               >
-                                <p className="text-[11px] text-[#E2ECE5] truncate">{o.title}</p>
-                                <p className="text-[9px] font-mono uppercase text-[#5C6B52]">
+                                <p className="text-[11px] text-[#F2EFE7] truncate">{o.title}</p>
+                                <p className="text-[9px] font-mono uppercase text-[#6F6A58]">
                                   {o.type}
                                 </p>
                               </button>
                             ))}
                           <button
                             onClick={() => setObjectPicker((p) => ({ ...p, open: false }))}
-                            className="w-full text-[10px] text-[#86935C] py-1 cursor-pointer"
+                            className="w-full text-[10px] text-[#9A9278] py-1 cursor-pointer"
                           >
                             Cancel
                           </button>
@@ -9738,23 +9781,23 @@ export function App() {
                       Circle's server-derived currentValue -- the campaign UI
                       never computes or writes it. */}
                   {campaignCircle.status === 'loading' && (
-                    <div className="bg-[#0B1A12] border border-[#1E3A2A] rounded-2xl p-4 space-y-1">
-                      <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#5C6B52]">
+                    <div className="bg-[#211F1A] border border-[#3B372B] rounded-2xl p-4 space-y-1">
+                      <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#6F6A58]">
                         Target
                       </h3>
-                      <p className="text-[11px] text-[#86935C]">Loading target...</p>
+                      <p className="text-[11px] text-[#9A9278]">Loading target...</p>
                     </div>
                   )}
 
                   {/* Honest unavailable state. Never a zeroed progress bar,
                       which would read as "no progress" rather than "unknown". */}
                   {campaignCircle.status === 'error' && (
-                    <div className="bg-[#0B1A12] border border-[#1E3A2A] rounded-2xl p-4 space-y-1">
-                      <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#5C6B52]">
+                    <div className="bg-[#211F1A] border border-[#3B372B] rounded-2xl p-4 space-y-1">
+                      <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#6F6A58]">
                         Target
                       </h3>
-                      <p className="text-[11px] text-[#E2ECE5]">Target unavailable.</p>
-                      <p className="text-[9px] font-mono text-[#86935C] break-words">
+                      <p className="text-[11px] text-[#F2EFE7]">Target unavailable.</p>
+                      <p className="text-[9px] font-mono text-[#9A9278] break-words">
                         {campaignCircle.error}
                       </p>
                     </div>
@@ -9768,14 +9811,14 @@ export function App() {
                       campaignCircle.data.circle.targetValue !== null &&
                       campaignCircle.data.circle.targetValue > 0
                     ) && (
-                      <div className="bg-[#0B1A12] border border-[#1E3A2A] rounded-2xl p-4 space-y-1">
-                        <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#5C6B52]">
+                      <div className="bg-[#211F1A] border border-[#3B372B] rounded-2xl p-4 space-y-1">
+                        <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#6F6A58]">
                           Target
                         </h3>
-                        <p className="text-[11px] text-[#E2ECE5]">
+                        <p className="text-[11px] text-[#F2EFE7]">
                           {campaignCircle.data.circle.name}
                         </p>
-                        <p className="text-[10px] text-[#86935C]">
+                        <p className="text-[10px] text-[#9A9278]">
                           No target set on this circle.
                         </p>
                       </div>
@@ -9785,35 +9828,35 @@ export function App() {
                     campaignCircle.data &&
                     campaignCircle.data.circle.targetValue !== null &&
                     campaignCircle.data.circle.targetValue > 0 && (
-                      <div className="bg-[#0B1A12] border border-[#1E3A2A] rounded-2xl p-4 space-y-2">
-                        <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#5C6B52]">
+                      <div className="bg-[#211F1A] border border-[#3B372B] rounded-2xl p-4 space-y-2">
+                        <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#6F6A58]">
                           Target
                         </h3>
-                        <p className="text-xs text-[#E2ECE5]">
+                        <p className="text-xs text-[#F2EFE7]">
                           {campaignCircle.data.circle.goal || campaignCircle.data.circle.name}
                         </p>
                         <div className="flex items-baseline justify-between gap-2">
-                          <span className="text-sm font-extrabold text-[#00FF42] font-mono">
+                          <span className="text-sm font-extrabold text-[#3E9A66] font-mono">
                             {campaignCircle.data.circle.currentValue.toLocaleString()}
                           </span>
-                          <span className="text-[10px] font-mono text-[#5C6B52]">
+                          <span className="text-[10px] font-mono text-[#6F6A58]">
                             of {campaignCircle.data.circle.targetValue.toLocaleString()}
                           </span>
                         </div>
                         {campaignCircle.data.circle.progressPct !== null && (
-                          <p className="text-[10px] font-mono text-[#8DCF74]">
+                          <p className="text-[10px] font-mono text-[#7FA98B]">
                             {Math.round(campaignCircle.data.circle.progressPct)}%
                           </p>
                         )}
-                        <div className="h-1.5 rounded-full bg-[#1E3A2A] overflow-hidden">
+                        <div className="h-1.5 rounded-full bg-[#3B372B] overflow-hidden">
                           <div
-                            className="h-full bg-[#00FF42]"
+                            className="h-full bg-[#3E9A66]"
                             style={{
                               width: `${Math.min(100, campaignCircle.data.circle.progressPct ?? 0)}%`
                             }}
                           />
                         </div>
-                        <p className="text-[9px] text-[#5C6B52] leading-snug">
+                        <p className="text-[9px] text-[#6F6A58] leading-snug">
                           Progress comes from settled transactions in
                           {' '}{campaignCircle.data.circle.name}, not from this campaign.
                         </p>
@@ -9822,18 +9865,18 @@ export function App() {
 
                   {/* REGISTRATIONS */}
                   <div className="space-y-2">
-                    <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#5C6B52]">
+                    <h3 className="text-[9px] font-mono uppercase tracking-widest text-[#6F6A58]">
                       Registrations
                     </h3>
 
                     {campaignRegs.status === 'loading' && (
-                      <p className="text-[11px] text-[#86935C]">Loading people...</p>
+                      <p className="text-[11px] text-[#9A9278]">Loading people...</p>
                     )}
 
                     {campaignRegs.status === 'error' && (
-                      <div className="border border-[#7A2E2E] bg-[#1A0F0F] rounded-xl p-3 space-y-1">
-                        <p className="text-[11px] text-[#E2ECE5]">Couldn't load registrations.</p>
-                        <p className="text-[9px] font-mono text-[#A9BDA0] break-words">
+                      <div className="border border-[#6E3A2E] bg-[#2A2018] rounded-xl p-3 space-y-1">
+                        <p className="text-[11px] text-[#F2EFE7]">Couldn't load registrations.</p>
+                        <p className="text-[9px] font-mono text-[#B6AFA0] break-words">
                           {campaignRegs.error}
                         </p>
                       </div>
@@ -9841,7 +9884,7 @@ export function App() {
 
                     {campaignRegs.status === 'ready' &&
                       (campaignRegs.data ?? []).length === 0 && (
-                        <p className="text-[11px] text-[#86935C]">
+                        <p className="text-[11px] text-[#9A9278]">
                           Nobody has registered yet.
                         </p>
                       )}
@@ -9862,13 +9905,13 @@ export function App() {
                       (campaignRegs.data ?? []).map((r) => (
                         <div
                           key={r.id}
-                          className="bg-[#0B1A12] border border-[#1E3A2A] rounded-xl p-3 flex items-center justify-between gap-2"
+                          className="bg-[#211F1A] border border-[#3B372B] rounded-xl p-3 flex items-center justify-between gap-2"
                         >
                           <div className="min-w-0">
-                            <p className="text-xs text-[#E2ECE5] truncate">
+                            <p className="text-xs text-[#F2EFE7] truncate">
                               {r.name || r.attendeeRef}
                             </p>
-                            <p className="text-[9px] font-mono uppercase text-[#5C6B52] mt-0.5">
+                            <p className="text-[9px] font-mono uppercase text-[#6F6A58] mt-0.5">
                               {r.status.replace('_', ' ')}
                             </p>
                           </div>
@@ -9877,14 +9920,14 @@ export function App() {
                               <button
                                 disabled={campaignBusy}
                                 onClick={() => setRegStatus(campaignDetail.id, r.id, 'checked_in')}
-                                className="px-2.5 py-1.5 rounded-lg bg-[#00FF42] text-[#09150E] font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
+                                className="px-2.5 py-1.5 rounded-lg bg-[#3E9A66] text-[#191714] font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
                               >
                                 Check in
                               </button>
                               <button
                                 disabled={campaignBusy}
                                 onClick={() => setRegStatus(campaignDetail.id, r.id, 'no_show')}
-                                className="px-2.5 py-1.5 rounded-lg border border-[#235F45] text-[#86935C] font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
+                                className="px-2.5 py-1.5 rounded-lg border border-[#3F5544] text-[#9A9278] font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
                               >
                                 No-show
                               </button>
@@ -9905,7 +9948,7 @@ export function App() {
                         setCampaignDetail(res.data);
                         loadCampaigns();
                       }}
-                      className="w-full py-2.5 rounded-xl border border-[#235F45] text-[#86935C] font-extrabold text-[11px] cursor-pointer disabled:opacity-40"
+                      className="w-full py-2.5 rounded-xl border border-[#3F5544] text-[#9A9278] font-extrabold text-[11px] cursor-pointer disabled:opacity-40"
                     >
                       Close campaign
                     </button>
@@ -9922,16 +9965,16 @@ export function App() {
           Publish, and publication itself is the real transition endpoint. */}
       {createStep !== 'closed' && (
         <div
-          className="fixed inset-0 z-50 bg-[#09150E]/90 backdrop-blur-md overflow-y-auto"
+          className="fixed inset-0 z-50 bg-[#191714]/90 backdrop-blur-md overflow-y-auto"
           onClick={() => { if (!campaignBusy) setCreateStep('closed'); }}
         >
           <div className="min-h-screen flex items-end sm:items-center justify-center p-0 sm:p-6">
             <div
-              className="w-full max-w-lg bg-[#102117] border border-[#235F45] rounded-t-3xl sm:rounded-3xl p-5 space-y-4"
+              className="w-full max-w-lg bg-[#28261F] border border-[#3F5544] rounded-t-3xl sm:rounded-3xl p-5 space-y-4"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-start justify-between gap-3">
-                <h2 className="text-base font-extrabold text-[#E2ECE5]">
+                <h2 className="text-base font-extrabold text-[#F2EFE7]">
                   {createStep === 'form'
                     ? 'Create'
                     : createStep === 'preview'
@@ -9940,15 +9983,15 @@ export function App() {
                 </h2>
                 <button
                   onClick={() => { if (!campaignBusy) setCreateStep('closed'); }}
-                  className="shrink-0 text-[#5C6B52] cursor-pointer"
+                  className="shrink-0 text-[#6F6A58] cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               {campaignActionError && (
-                <div className="border border-[#7A2E2E] bg-[#1A0F0F] rounded-xl p-3">
-                  <p className="text-[10px] font-mono text-[#E2ECE5] break-words">
+                <div className="border border-[#6E3A2E] bg-[#2A2018] rounded-xl p-3">
+                  <p className="text-[10px] font-mono text-[#F2EFE7] break-words">
                     {campaignActionError}
                   </p>
                 </div>
@@ -9957,7 +10000,7 @@ export function App() {
               {createStep === 'form' && (
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">What is it</label>
+                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">What is it</label>
                     <div className="flex flex-wrap gap-1.5">
                       {(['popup', 'session', 'drop', 'event'] as ApiCampaignType[]).map((t) => (
                         <button
@@ -9965,8 +10008,8 @@ export function App() {
                           onClick={() => setDraft((d) => ({ ...d, type: t }))}
                           className={`px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
                             draft.type === t
-                              ? 'bg-[#00FF42] text-[#09150E] border-[#00FF42]'
-                              : 'bg-[#0B1A12] text-[#8DCF74] border-[#235F45]'
+                              ? 'bg-[#3E9A66] text-[#191714] border-[#3E9A66]'
+                              : 'bg-[#211F1A] text-[#7FA98B] border-[#3F5544]'
                           }`}
                         >
                           {t}
@@ -9976,42 +10019,42 @@ export function App() {
                   </div>
 
                   <div>
-                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">Title</label>
+                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">Title</label>
                     <input
                       value={draft.title}
                       onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
                       placeholder="Saturday plant sale"
-                      className="w-full bg-[#0B1A12] text-[#E2ECE5] text-xs rounded-xl px-3 py-2.5 border border-[#1E3A2A] focus:border-[#00FF42] focus:outline-none"
+                      className="w-full bg-[#211F1A] text-[#F2EFE7] text-xs rounded-xl px-3 py-2.5 border border-[#3B372B] focus:border-[#3E9A66] focus:outline-none"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">Description</label>
+                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">Description</label>
                     <textarea
                       value={draft.description}
                       onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
                       rows={2}
                       placeholder="One or two lines. What should people expect?"
-                      className="w-full bg-[#0B1A12] text-[#E2ECE5] text-xs rounded-xl px-3 py-2.5 border border-[#1E3A2A] focus:border-[#00FF42] focus:outline-none resize-none"
+                      className="w-full bg-[#211F1A] text-[#F2EFE7] text-xs rounded-xl px-3 py-2.5 border border-[#3B372B] focus:border-[#3E9A66] focus:outline-none resize-none"
                     />
                   </div>
 
                   {/* Optionally promote something that already exists in Brief
                       instead of describing it again. Collapsed by default. */}
                   <div>
-                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">
+                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">
                       What people get
                     </label>
                     {objectPicker.selected ? (
-                      <div className="flex items-center justify-between gap-2 bg-[#0B1A12] border border-[#235F45] rounded-xl px-3 py-2.5">
-                        <p className="text-xs text-[#E2ECE5] truncate">
+                      <div className="flex items-center justify-between gap-2 bg-[#211F1A] border border-[#3F5544] rounded-xl px-3 py-2.5">
+                        <p className="text-xs text-[#F2EFE7] truncate">
                           {objectPicker.selected.title}
                         </p>
                         <button
                           onClick={() =>
                             setObjectPicker((p) => ({ ...p, selected: null, open: false }))
                           }
-                          className="shrink-0 text-[10px] text-[#86935C] underline underline-offset-2 cursor-pointer"
+                          className="shrink-0 text-[10px] text-[#9A9278] underline underline-offset-2 cursor-pointer"
                         >
                           Remove
                         </button>
@@ -10019,23 +10062,23 @@ export function App() {
                     ) : !objectPicker.open ? (
                       <button
                         onClick={loadAttachableObjects}
-                        className="w-full text-left bg-[#0B1A12] border border-dashed border-[#1E3A2A] rounded-xl px-3 py-2.5 text-[11px] text-[#86935C] cursor-pointer"
+                        className="w-full text-left bg-[#211F1A] border border-dashed border-[#3B372B] rounded-xl px-3 py-2.5 text-[11px] text-[#9A9278] cursor-pointer"
                       >
                         Something new &middot; tap to link an existing item instead
                       </button>
                     ) : (
-                      <div className="bg-[#0B1A12] border border-[#1E3A2A] rounded-xl p-2 space-y-1 max-h-44 overflow-y-auto">
+                      <div className="bg-[#211F1A] border border-[#3B372B] rounded-xl p-2 space-y-1 max-h-44 overflow-y-auto">
                         {objectPicker.status === 'loading' && (
-                          <p className="text-[11px] text-[#86935C] p-2">Loading your items...</p>
+                          <p className="text-[11px] text-[#9A9278] p-2">Loading your items...</p>
                         )}
                         {objectPicker.status === 'error' && (
-                          <p className="text-[11px] text-[#E2ECE5] p-2">
+                          <p className="text-[11px] text-[#F2EFE7] p-2">
                             Couldn't load your items. {objectPicker.error}
                           </p>
                         )}
                         {objectPicker.status === 'ready' &&
                           (objectPicker.data ?? []).length === 0 && (
-                            <p className="text-[11px] text-[#86935C] p-2">
+                            <p className="text-[11px] text-[#9A9278] p-2">
                               Nothing to link yet. Carry on and describe it above.
                             </p>
                           )}
@@ -10050,17 +10093,17 @@ export function App() {
                                   open: false
                                 }))
                               }
-                              className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-[#102117] cursor-pointer"
+                              className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-[#28261F] cursor-pointer"
                             >
-                              <p className="text-[11px] text-[#E2ECE5] truncate">{o.title}</p>
-                              <p className="text-[9px] font-mono uppercase text-[#5C6B52]">
+                              <p className="text-[11px] text-[#F2EFE7] truncate">{o.title}</p>
+                              <p className="text-[9px] font-mono uppercase text-[#6F6A58]">
                                 {o.type}
                               </p>
                             </button>
                           ))}
                         <button
                           onClick={() => setObjectPicker((p) => ({ ...p, open: false }))}
-                          className="w-full text-[10px] text-[#5C6B52] underline underline-offset-2 cursor-pointer py-1"
+                          className="w-full text-[10px] text-[#6F6A58] underline underline-offset-2 cursor-pointer py-1"
                         >
                           Cancel
                         </button>
@@ -10069,44 +10112,44 @@ export function App() {
                   </div>
 
                   <div>
-                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">When</label>
+                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">When</label>
                     <input
                       type="datetime-local"
                       value={draft.startsAt}
                       onChange={(e) => setDraft((d) => ({ ...d, startsAt: e.target.value }))}
-                      className="w-full bg-[#0B1A12] text-[#E2ECE5] text-xs rounded-xl px-3 py-2.5 border border-[#1E3A2A] focus:border-[#00FF42] focus:outline-none"
+                      className="w-full bg-[#211F1A] text-[#F2EFE7] text-xs rounded-xl px-3 py-2.5 border border-[#3B372B] focus:border-[#3E9A66] focus:outline-none"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">Where</label>
+                    <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">Where</label>
                     <input
                       value={draft.location}
                       onChange={(e) => setDraft((d) => ({ ...d, location: e.target.value }))}
                       placeholder="Kilimani, Nairobi"
-                      className="w-full bg-[#0B1A12] text-[#E2ECE5] text-xs rounded-xl px-3 py-2.5 border border-[#1E3A2A] focus:border-[#00FF42] focus:outline-none"
+                      className="w-full bg-[#211F1A] text-[#F2EFE7] text-xs rounded-xl px-3 py-2.5 border border-[#3B372B] focus:border-[#3E9A66] focus:outline-none"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">Spots</label>
+                      <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">Spots</label>
                       <input
                         inputMode="numeric"
                         value={draft.capacity}
                         onChange={(e) => setDraft((d) => ({ ...d, capacity: e.target.value }))}
                         placeholder="Unlimited"
-                        className="w-full bg-[#0B1A12] text-[#E2ECE5] text-xs rounded-xl px-3 py-2.5 border border-[#1E3A2A] focus:border-[#00FF42] focus:outline-none"
+                        className="w-full bg-[#211F1A] text-[#F2EFE7] text-xs rounded-xl px-3 py-2.5 border border-[#3B372B] focus:border-[#3E9A66] focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="block text-[9px] font-mono uppercase tracking-widest text-[#5C6B52] mb-1">Price (KES)</label>
+                      <label className="block text-[9px] font-mono uppercase tracking-widest text-[#6F6A58] mb-1">Price (KES)</label>
                       <input
                         inputMode="numeric"
                         value={draft.price}
                         onChange={(e) => setDraft((d) => ({ ...d, price: e.target.value }))}
                         placeholder="Free"
-                        className="w-full bg-[#0B1A12] text-[#E2ECE5] text-xs rounded-xl px-3 py-2.5 border border-[#1E3A2A] focus:border-[#00FF42] focus:outline-none"
+                        className="w-full bg-[#211F1A] text-[#F2EFE7] text-xs rounded-xl px-3 py-2.5 border border-[#3B372B] focus:border-[#3E9A66] focus:outline-none"
                       />
                     </div>
                   </div>
@@ -10114,7 +10157,7 @@ export function App() {
                   <button
                     disabled={draft.title.trim() === ''}
                     onClick={() => { setCampaignActionError(null); setCreateStep('preview'); }}
-                    className="w-full py-3 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="w-full py-3 rounded-xl bg-[#3E9A66] text-[#191714] font-extrabold text-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     Preview
                   </button>
@@ -10123,25 +10166,25 @@ export function App() {
 
               {createStep === 'preview' && (
                 <div className="space-y-3">
-                  <p className="text-[11px] text-[#86935C]">
+                  <p className="text-[11px] text-[#9A9278]">
                     This is what people will see. Nothing is public yet.
                   </p>
-                  <div className="bg-[#0B1A12] border border-[#1E3A2A] rounded-2xl p-4 space-y-1.5">
-                    <p className="text-[9px] font-mono uppercase text-[#5C6B52]">{draft.type}</p>
-                    <p className="text-sm font-extrabold text-[#E2ECE5]">{draft.title}</p>
+                  <div className="bg-[#211F1A] border border-[#3B372B] rounded-2xl p-4 space-y-1.5">
+                    <p className="text-[9px] font-mono uppercase text-[#6F6A58]">{draft.type}</p>
+                    <p className="text-sm font-extrabold text-[#F2EFE7]">{draft.title}</p>
                     {draft.description && (
-                      <p className="text-[11px] text-[#A9BDA0] leading-snug">{draft.description}</p>
+                      <p className="text-[11px] text-[#B6AFA0] leading-snug">{draft.description}</p>
                     )}
                     <div className="pt-1 space-y-0.5">
                       {draft.startsAt && (
-                        <p className="text-[10px] font-mono text-[#8DCF74]">
+                        <p className="text-[10px] font-mono text-[#7FA98B]">
                           {draft.startsAt.replace('T', ' ')}
                         </p>
                       )}
                       {draft.location && (
-                        <p className="text-[10px] font-mono text-[#8DCF74]">{draft.location}</p>
+                        <p className="text-[10px] font-mono text-[#7FA98B]">{draft.location}</p>
                       )}
-                      <p className="text-[10px] font-mono text-[#8DCF74]">
+                      <p className="text-[10px] font-mono text-[#7FA98B]">
                         {draft.price.trim() === '' || Number(draft.price) === 0
                           ? 'Free'
                           : `KES ${draft.price}`}
@@ -10154,14 +10197,14 @@ export function App() {
                     <button
                       disabled={campaignBusy}
                       onClick={() => setCreateStep('form')}
-                      className="px-4 py-3 rounded-xl border border-[#235F45] text-[#8DCF74] font-extrabold text-xs cursor-pointer disabled:opacity-40"
+                      className="px-4 py-3 rounded-xl border border-[#3F5544] text-[#7FA98B] font-extrabold text-xs cursor-pointer disabled:opacity-40"
                     >
                       Back
                     </button>
                     <button
                       disabled={campaignBusy}
                       onClick={publishDraft}
-                      className="flex-1 py-3 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-xs cursor-pointer disabled:opacity-40"
+                      className="flex-1 py-3 rounded-xl bg-[#3E9A66] text-[#191714] font-extrabold text-xs cursor-pointer disabled:opacity-40"
                     >
                       {campaignBusy ? 'Publishing...' : 'Publish'}
                     </button>
@@ -10172,12 +10215,12 @@ export function App() {
               {createStep === 'published' && publishedCampaign && (
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-[#00FF42] shrink-0" />
-                    <p className="text-xs font-extrabold text-[#E2ECE5]">
+                    <CheckCircle2 className="w-4 h-4 text-[#3E9A66] shrink-0" />
+                    <p className="text-xs font-extrabold text-[#F2EFE7]">
                       {publishedCampaign.title} is {publishedCampaign.status}
                     </p>
                   </div>
-                  <p className="text-[11px] text-[#86935C]">
+                  <p className="text-[11px] text-[#9A9278]">
                     Share this link anywhere. Anyone who opens it can register.
                   </p>
                   {(() => {
@@ -10201,7 +10244,7 @@ export function App() {
                   })()}
                   <button
                     onClick={() => { setCreateStep('closed'); openCampaign(publishedCampaign.id); }}
-                    className="w-full text-[10px] text-[#5C6B52] underline underline-offset-2 cursor-pointer"
+                    className="w-full text-[10px] text-[#6F6A58] underline underline-offset-2 cursor-pointer"
                   >
                     Open campaign
                   </button>
@@ -10216,27 +10259,27 @@ export function App() {
           buttons -- no onboarding, no explanation, no AI branding. */}
       {captureOpen && (
         <div
-          className="fixed inset-0 z-50 bg-[#09150E]/90 backdrop-blur-md overflow-y-auto"
+          className="fixed inset-0 z-50 bg-[#191714]/90 backdrop-blur-md overflow-y-auto"
           onClick={handleCaptureCancel}
         >
           <div className="min-h-screen flex items-end sm:items-center justify-center p-0 sm:p-6">
             <div
-              className="w-full max-w-lg bg-[#102117] border border-[#235F45] rounded-t-3xl sm:rounded-3xl p-5 space-y-4"
+              className="w-full max-w-lg bg-[#28261F] border border-[#3F5544] rounded-t-3xl sm:rounded-3xl p-5 space-y-4"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h2 className="text-xl font-extrabold text-[#E2ECE5]">
+                  <h2 className="text-xl font-extrabold text-[#F2EFE7]">
                     Drop something here.
                   </h2>
-                  <p className="text-[11px] text-[#86935C] mt-1">
+                  <p className="text-[11px] text-[#9A9278] mt-1">
                     A message, link, listing, event, opportunity or anything
                     worth keeping.
                   </p>
                 </div>
                 <button
                   onClick={handleCaptureCancel}
-                  className="p-2 rounded-full bg-[#09150E]/80 text-[#E2ECE5] border border-[#235F45] shrink-0"
+                  className="p-2 rounded-full bg-[#191714]/80 text-[#F2EFE7] border border-[#3F5544] shrink-0"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -10250,7 +10293,7 @@ export function App() {
                 }}
                 rows={5}
                 placeholder="Paste or type anything"
-                className="w-full bg-[#0D1F15] border border-[#1E3A2A] rounded-xl px-3 py-2.5 text-xs text-[#E2ECE5] placeholder-[#5C6B52] outline-none focus:border-[#235F45] resize-none"
+                className="w-full bg-[#24221C] border border-[#3B372B] rounded-xl px-3 py-2.5 text-xs text-[#F2EFE7] placeholder-[#6F6A58] outline-none focus:border-[#3F5544] resize-none"
               />
 
               {!capturePreview && (
@@ -10259,8 +10302,8 @@ export function App() {
                   disabled={captureText.trim() === ''}
                   className={`w-full py-3 rounded-xl font-extrabold text-xs ${
                     captureText.trim() === ''
-                      ? 'bg-[#172D20] text-[#5C6B52] cursor-not-allowed'
-                      : 'bg-[#00FF42] text-[#09150E] cursor-pointer'
+                      ? 'bg-[#2B2A22] text-[#6F6A58] cursor-not-allowed'
+                      : 'bg-[#3E9A66] text-[#191714] cursor-pointer'
                   }`}
                 >
                   Read it
@@ -10273,22 +10316,22 @@ export function App() {
                 <div className="space-y-3">
                   {!capturePreview.isObjectWorthy ? (
                     <div className="border border-[#3A3416] bg-[#1A1708] rounded-xl p-3">
-                      <p className="text-[11px] font-bold text-[#C9A227]">
+                      <p className="text-[11px] font-bold text-[#C2A24A]">
                         Brief could not make an object from this.
                       </p>
-                      <p className="text-[10px] text-[#A9BDA0] mt-1">
+                      <p className="text-[10px] text-[#B6AFA0] mt-1">
                         {capturePreview.rejectionReason}
                       </p>
-                      <p className="text-[10px] text-[#5C6B52] mt-1">
+                      <p className="text-[10px] text-[#6F6A58] mt-1">
                         Nothing was saved.
                       </p>
                     </div>
                   ) : (
-                    <div className="bg-[#0D1F15] border border-[#1E3A2A] rounded-xl p-3 space-y-2">
-                      <p className="text-[9px] font-mono uppercase text-[#00FF42]">
+                    <div className="bg-[#24221C] border border-[#3B372B] rounded-xl p-3 space-y-2">
+                      <p className="text-[9px] font-mono uppercase text-[#3E9A66]">
                         {getObjectTypeMeta(capturePreview.draft.type).label}
                       </p>
-                      <p className="text-sm font-extrabold text-[#E2ECE5] leading-snug">
+                      <p className="text-sm font-extrabold text-[#F2EFE7] leading-snug">
                         {capturePreview.draft.title}
                       </p>
 
@@ -10299,23 +10342,23 @@ export function App() {
                             key={f.field}
                             className="flex items-baseline justify-between gap-3"
                           >
-                            <span className="text-[10px] text-[#86935C]">
+                            <span className="text-[10px] text-[#9A9278]">
                               {f.field}
                             </span>
-                            <span className="text-[10px] font-mono text-[#A9BDA0] truncate">
+                            <span className="text-[10px] font-mono text-[#B6AFA0] truncate">
                               {f.value}
                             </span>
                           </div>
                         ))}
 
                       {capturePreview.duplicates.length > 0 && (
-                        <p className="text-[10px] text-[#C9A227]">
+                        <p className="text-[10px] text-[#C2A24A]">
                           Possible duplicate of{' '}
                           {capturePreview.duplicates[0].item.title}
                         </p>
                       )}
 
-                      <p className="text-[9px] font-mono text-[#5C6B52]">
+                      <p className="text-[9px] font-mono text-[#6F6A58]">
                         Unverified. Saved as your own capture.
                       </p>
                     </div>
@@ -10324,14 +10367,14 @@ export function App() {
                   <div className="flex gap-2">
                     <button
                       onClick={handleCaptureCancel}
-                      className="flex-1 py-2.5 rounded-xl bg-[#0D1F15] border border-[#1E3A2A] text-[#86935C] font-bold text-[11px] cursor-pointer"
+                      className="flex-1 py-2.5 rounded-xl bg-[#24221C] border border-[#3B372B] text-[#9A9278] font-bold text-[11px] cursor-pointer"
                     >
                       Discard
                     </button>
                     {capturePreview.isObjectWorthy && (
                       <button
                         onClick={handleCaptureConfirm}
-                        className="flex-[2] py-2.5 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-[11px] cursor-pointer"
+                        className="flex-[2] py-2.5 rounded-xl bg-[#3E9A66] text-[#191714] font-extrabold text-[11px] cursor-pointer"
                       >
                         Save to Brief
                       </button>
@@ -10347,12 +10390,12 @@ export function App() {
       {/* DETAIL LAYER */}
       {selectedObjectForDetail && (
         <div
-          className="fixed inset-0 z-50 bg-[#09150E]/90 backdrop-blur-md overflow-y-auto"
+          className="fixed inset-0 z-50 bg-[#191714]/90 backdrop-blur-md overflow-y-auto"
           onClick={() => setSelectedObjectForDetail(null)}
         >
           <div className="min-h-screen flex items-end sm:items-center justify-center p-0 sm:p-6">
             <div
-              className="w-full max-w-2xl bg-[#102117] border border-[#235F45] rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl"
+              className="w-full max-w-2xl bg-[#28261F] border border-[#3F5544] rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
 
@@ -10367,18 +10410,18 @@ export function App() {
 
                   <button
                     onClick={() => setSelectedObjectForDetail(null)}
-                    className="absolute top-4 right-4 p-2 rounded-full bg-[#09150E]/80 text-[#E2ECE5] border border-[#235F45]"
+                    className="absolute top-4 right-4 p-2 rounded-full bg-[#191714]/80 text-[#F2EFE7] border border-[#3F5544]"
                   >
                     <X className="w-5 h-5" />
                   </button>
 
                   <div className="absolute bottom-4 left-4 flex gap-2">
-                    <span className="text-[10px] font-extrabold uppercase px-3 py-1 rounded-full bg-[#09150E]/85 text-[#00FF42] border border-[#235F45]">
+                    <span className="text-[10px] font-extrabold uppercase px-3 py-1 rounded-full bg-[#191714]/85 text-[#3E9A66] border border-[#3F5544]">
                       {selectedObjectForDetail.category}
                     </span>
 
                     {selectedObjectForDetail.isVerified && (
-                      <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#00FF42] text-[#09150E]">
+                      <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#3E9A66] text-[#191714]">
                         Verified
                       </span>
                     )}
@@ -10390,14 +10433,14 @@ export function App() {
                   entirely, leaving backdrop-click as the only way out. This is
                   the same control set, laid out for an imageless record. */}
               {!selectedObjectForDetail.imageUrl && (
-                <div className="flex items-center justify-between gap-2 p-4 border-b border-[#1E3A2A]">
+                <div className="flex items-center justify-between gap-2 p-4 border-b border-[#3B372B]">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-extrabold uppercase px-3 py-1 rounded-full bg-[#09150E]/85 text-[#00FF42] border border-[#235F45]">
+                    <span className="text-[10px] font-extrabold uppercase px-3 py-1 rounded-full bg-[#191714]/85 text-[#3E9A66] border border-[#3F5544]">
                       {selectedObjectForDetail.category}
                     </span>
 
                     {selectedObjectForDetail.isVerified && (
-                      <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#00FF42] text-[#09150E]">
+                      <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#3E9A66] text-[#191714]">
                         Verified
                       </span>
                     )}
@@ -10405,7 +10448,7 @@ export function App() {
 
                   <button
                     onClick={() => setSelectedObjectForDetail(null)}
-                    className="p-2 rounded-full bg-[#09150E]/80 text-[#E2ECE5] border border-[#235F45]"
+                    className="p-2 rounded-full bg-[#191714]/80 text-[#F2EFE7] border border-[#3F5544]"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -10417,16 +10460,16 @@ export function App() {
 
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-[10px] font-mono uppercase text-[#86935C]">
+                    <span className="text-[10px] font-mono uppercase text-[#9A9278]">
                       {getObjectTypeMeta(selectedObjectForDetail.type).label}
                     </span>
                   </div>
 
-                  <h2 className="text-2xl font-extrabold text-[#E2ECE5]">
+                  <h2 className="text-2xl font-extrabold text-[#F2EFE7]">
                     {selectedObjectForDetail.title}
                   </h2>
 
-                  <p className="text-sm text-[#8DCF74] mt-2 leading-relaxed">
+                  <p className="text-sm text-[#7FA98B] mt-2 leading-relaxed">
                     {selectedObjectForDetail.summary}
                   </p>
                 </div>
@@ -10440,9 +10483,9 @@ export function App() {
                       {facts.map((fact) => (
                         <div
                           key={fact.key}
-                          className="bg-[#09150E] border border-[#1E3A2A] rounded-xl p-3"
+                          className="bg-[#191714] border border-[#3B372B] rounded-xl p-3"
                         >
-                          <div className="text-[10px] uppercase text-[#86935C]">
+                          <div className="text-[10px] uppercase text-[#9A9278]">
                             {fact.label}
                           </div>
                           <div className="text-xs font-bold mt-1">
@@ -10458,12 +10501,12 @@ export function App() {
                 {(selectedObjectForDetail.locationName ||
                   selectedObjectForDetail.creatorName ||
                   selectedObjectForDetail.metadata?.contactPhone) && (
-                  <div className="bg-[#09150E] border border-[#1E3A2A] rounded-xl p-3 space-y-3">
+                  <div className="bg-[#191714] border border-[#3B372B] rounded-xl p-3 space-y-3">
                     {selectedObjectForDetail.locationName && (
                       <div className="flex items-start gap-2">
-                        <MapPin className="w-4 h-4 text-[#00FF42] shrink-0 mt-0.5" />
+                        <MapPin className="w-4 h-4 text-[#3E9A66] shrink-0 mt-0.5" />
                         <div className="min-w-0">
-                          <div className="text-[10px] uppercase text-[#86935C]">
+                          <div className="text-[10px] uppercase text-[#9A9278]">
                             Location
                           </div>
                           <div className="text-xs font-bold">
@@ -10476,7 +10519,7 @@ export function App() {
                               )}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-[10px] font-extrabold text-[#00FF42] mt-1 hover:underline"
+                              className="inline-flex items-center gap-1 text-[10px] font-extrabold text-[#3E9A66] mt-1 hover:underline"
                             >
                               Open in Maps
                               <ArrowRight className="w-3 h-3" />
@@ -10488,9 +10531,9 @@ export function App() {
 
                     {selectedObjectForDetail.creatorName && (
                       <div className="flex items-start gap-2">
-                        <User className="w-4 h-4 text-[#00FF42] shrink-0 mt-0.5" />
+                        <User className="w-4 h-4 text-[#3E9A66] shrink-0 mt-0.5" />
                         <div className="min-w-0">
-                          <div className="text-[10px] uppercase text-[#86935C]">
+                          <div className="text-[10px] uppercase text-[#9A9278]">
                             {selectedObjectForDetail.type === 'product'
                               ? 'Seller'
                               : selectedObjectForDetail.type === 'service'
@@ -10508,16 +10551,16 @@ export function App() {
 
                     {selectedObjectForDetail.metadata?.contactPhone && (
                       <div className="flex items-start gap-2">
-                        <Building2 className="w-4 h-4 text-[#00FF42] shrink-0 mt-0.5" />
+                        <Building2 className="w-4 h-4 text-[#3E9A66] shrink-0 mt-0.5" />
                         <div className="min-w-0">
-                          <div className="text-[10px] uppercase text-[#86935C]">
+                          <div className="text-[10px] uppercase text-[#9A9278]">
                             Contact
                           </div>
                           <a
                             href={buildTelHref(
                               selectedObjectForDetail.metadata.contactPhone
                             )}
-                            className="text-xs font-bold text-[#00FF42] hover:underline"
+                            className="text-xs font-bold text-[#3E9A66] hover:underline"
                           >
                             {selectedObjectForDetail.metadata.contactPhone}
                           </a>
@@ -10544,19 +10587,19 @@ export function App() {
 
                   const freshTone =
                     fresh?.level === 'stale' || fresh?.level === 'aging'
-                      ? 'text-[#C9A227]'
-                      : 'text-[#8DCF74]';
+                      ? 'text-[#C2A24A]'
+                      : 'text-[#7FA98B]';
 
                   return (
-                    <div className="bg-[#09150E] border border-[#1E3A2A] rounded-xl px-4 py-3 space-y-2">
+                    <div className="bg-[#191714] border border-[#3B372B] rounded-xl px-4 py-3 space-y-2">
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2 min-w-0">
-                          <ShieldCheck className="w-4 h-4 text-[#00FF42] shrink-0" />
+                          <ShieldCheck className="w-4 h-4 text-[#3E9A66] shrink-0" />
                           <span className="text-xs font-bold truncate">
                             {subject.creatorName || 'Provider not stated'}
                           </span>
                           {subject.isVerified && (
-                            <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-[#00FF42] text-[#09150E] shrink-0">
+                            <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-[#3E9A66] text-[#191714] shrink-0">
                               VERIFIED
                             </span>
                           )}
@@ -10569,13 +10612,13 @@ export function App() {
                           <span className={`text-[10px] font-bold ${freshTone}`}>
                             {fresh.label}
                           </span>
-                          <span className="text-[10px] font-mono text-[#5C6B52]">
+                          <span className="text-[10px] font-mono text-[#6F6A58]">
                             checked {fresh.verifiedOn}
                           </span>
                         </div>
                       )}
 
-                      <p className="text-[10px] text-[#5C6B52] leading-snug">
+                      <p className="text-[10px] text-[#6F6A58] leading-snug">
                         Verification records when this was last checked. It is
                         not a guarantee of accuracy.
                       </p>
@@ -10586,7 +10629,7 @@ export function App() {
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1.5 text-[10px] font-bold text-[#8DCF74] underline underline-offset-2"
+                          className="inline-flex items-center gap-1.5 text-[10px] font-bold text-[#7FA98B] underline underline-offset-2"
                         >
                           <ExternalLink className="w-3 h-3" />
                           Source
@@ -10604,7 +10647,7 @@ export function App() {
 
                   return (
                     <div className="space-y-2">
-                      <p className="text-[10px] font-mono uppercase text-[#5C6B52]">
+                      <p className="text-[10px] font-mono uppercase text-[#6F6A58]">
                         You can
                       </p>
                       <div className="flex flex-wrap gap-2">
@@ -10615,7 +10658,7 @@ export function App() {
                             target={a.key === 'call' ? undefined : '_blank'}
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            className="text-[11px] font-bold px-3 py-1.5 rounded-full bg-[#172D20] border border-[#235F45] text-[#8DCF74]"
+                            className="text-[11px] font-bold px-3 py-1.5 rounded-full bg-[#2B2A22] border border-[#3F5544] text-[#7FA98B]"
                           >
                             {a.label}
                           </a>
@@ -10635,7 +10678,7 @@ export function App() {
                           selectedObjectForDetail
                         )
                       }
-                      className="flex-1 py-3 rounded-xl bg-[#172D20] border border-[#235F45] text-[#8DCF74] font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer"
+                      className="flex-1 py-3 rounded-xl bg-[#2B2A22] border border-[#3F5544] text-[#7FA98B] font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <Bookmark className="w-4 h-4" />
                       Save
@@ -10644,7 +10687,7 @@ export function App() {
                     {(() => {
                       const action = resolveAction(selectedObjectForDetail);
                       const primaryClass =
-                        'flex-[2] py-3 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer';
+                        'flex-[2] py-3 rounded-xl bg-[#3E9A66] text-[#191714] font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer';
 
                       // Stays in Brief: pivot the stream sideways.
                       if (action.kind === 'internal') {
@@ -10686,14 +10729,14 @@ export function App() {
 
                       // No route -> say so plainly. Don't fake a transaction.
                       return (
-                        <div className="flex-[2] py-3 rounded-xl bg-[#172D20] border border-dashed border-[#235F45] text-[#86935C] font-extrabold text-xs flex items-center justify-center gap-2">
+                        <div className="flex-[2] py-3 rounded-xl bg-[#2B2A22] border border-dashed border-[#3F5544] text-[#9A9278] font-extrabold text-xs flex items-center justify-center gap-2">
                           {action.label} unavailable
                         </div>
                       );
                     })()}
                   </div>
 
-                  <p className="text-[10px] text-[#86935C] text-center">
+                  <p className="text-[10px] text-[#9A9278] text-center">
                     {getActionNote(selectedObjectForDetail)}
                   </p>
 
@@ -10703,7 +10746,7 @@ export function App() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleShare(selectedObjectForDetail)}
-                      className="flex-1 py-2.5 rounded-xl bg-[#0D1F15] border border-[#1E3A2A] text-[#86935C] font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="flex-1 py-2.5 rounded-xl bg-[#24221C] border border-[#3B372B] text-[#9A9278] font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <Share2 className="w-3.5 h-3.5" />
                       Share
@@ -10713,7 +10756,7 @@ export function App() {
                       onClick={() =>
                         handleCreatePursuit(selectedObjectForDetail.title)
                       }
-                      className="flex-1 py-2.5 rounded-xl bg-[#0D1F15] border border-[#1E3A2A] text-[#86935C] font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="flex-1 py-2.5 rounded-xl bg-[#24221C] border border-[#3B372B] text-[#9A9278] font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <Search className="w-3.5 h-3.5" />
                       Pursue
@@ -10723,8 +10766,8 @@ export function App() {
                       onClick={() => handleToggleWatch(selectedObjectForDetail)}
                       className={`flex-1 py-2.5 rounded-xl border font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer ${
                         watchedIds.has(selectedObjectForDetail.id)
-                          ? 'bg-[#172D20] border-[#235F45] text-[#00FF42]'
-                          : 'bg-[#0D1F15] border-[#1E3A2A] text-[#86935C]'
+                          ? 'bg-[#2B2A22] border-[#3F5544] text-[#3E9A66]'
+                          : 'bg-[#24221C] border-[#3B372B] text-[#9A9278]'
                       }`}
                     >
                       <Eye className="w-3.5 h-3.5" />
@@ -10733,7 +10776,7 @@ export function App() {
                   </div>
 
                   {watchedIds.has(selectedObjectForDetail.id) && (
-                    <p className="text-[10px] text-[#5C6B52] text-center">
+                    <p className="text-[10px] text-[#6F6A58] text-center">
                       Brief will track changes to this record. Alerts are not live yet.
                     </p>
                   )}
@@ -10753,12 +10796,12 @@ export function App() {
 
                   return (
                     <details className="group">
-                      <summary className="text-[10px] text-[#5C6B52] cursor-pointer list-none">
+                      <summary className="text-[10px] text-[#6F6A58] cursor-pointer list-none">
                         Why this appeared
                       </summary>
                       <div className="mt-2 space-y-1">
                         {reasons.map((r) => (
-                          <p key={r.key} className="text-[10px] text-[#86935C]">
+                          <p key={r.key} className="text-[10px] text-[#9A9278]">
                             {r.label}
                           </p>
                         ))}
@@ -10781,8 +10824,8 @@ export function App() {
                   if (near.length === 0) return null;
 
                   return (
-                    <div className="mt-6 pt-5 border-t border-[#1E3A2A]">
-                      <p className="text-[10px] font-mono uppercase text-[#00FF42]">
+                    <div className="mt-6 pt-5 border-t border-[#3B372B]">
+                      <p className="text-[10px] font-mono uppercase text-[#3E9A66]">
                         More from this area
                       </p>
                       <h3 className="text-sm font-extrabold mt-1 mb-3">Nearby</h3>
@@ -10794,16 +10837,16 @@ export function App() {
                             <button
                               key={obj.id}
                               onClick={() => setSelectedObjectForDetail(obj)}
-                              className="text-left bg-[#0D1F15] border border-[#1E3A2A] hover:border-[#235F45] rounded-xl p-3 cursor-pointer transition"
+                              className="text-left bg-[#24221C] border border-[#3B372B] hover:border-[#3F5544] rounded-xl p-3 cursor-pointer transition"
                             >
-                              <p className="text-[9px] font-mono uppercase text-[#5C6B52]">
+                              <p className="text-[9px] font-mono uppercase text-[#6F6A58]">
                                 {getObjectTypeMeta(obj.type).label}
                               </p>
-                              <p className="text-[11px] font-bold text-[#E2ECE5] leading-snug mt-0.5 line-clamp-2">
+                              <p className="text-[11px] font-bold text-[#F2EFE7] leading-snug mt-0.5 line-clamp-2">
                                 {obj.title}
                               </p>
                               {dist && (
-                                <p className="text-[9px] font-mono text-[#86935C] mt-1">
+                                <p className="text-[9px] font-mono text-[#9A9278] mt-1">
                                   {dist}
                                 </p>
                               )}
@@ -10826,10 +10869,10 @@ export function App() {
                   const state = getDestinationState(dest);
                   const access = getDestinationAccess(dest);
                   return (
-                    <div className="mt-6 pt-5 border-t border-[#1E3A2A]">
+                    <div className="mt-6 pt-5 border-t border-[#3B372B]">
                       <div className="flex items-center justify-between gap-3 mb-3">
                         <div>
-                          <p className="text-[10px] font-mono uppercase text-[#00FF42]">
+                          <p className="text-[10px] font-mono uppercase text-[#3E9A66]">
                             {DESTINATION_STATE_LABELS[state]}
                           </p>
                           <h3 className="text-sm font-extrabold mt-1">
@@ -10837,20 +10880,20 @@ export function App() {
                           </h3>
                         </div>
                         {access && (
-                          <span className="text-[9px] font-extrabold uppercase tracking-wider text-[#8DCF74] border border-[#235F45] rounded-full px-2 py-0.5">
+                          <span className="text-[9px] font-extrabold uppercase tracking-wider text-[#7FA98B] border border-[#3F5544] rounded-full px-2 py-0.5">
                             {access}
                           </span>
                         )}
                       </div>
 
                       {vendors.length === 0 ? (
-                        <p className="text-xs text-[#86935C]">
+                        <p className="text-xs text-[#9A9278]">
                           Vendor information unavailable. Brief only lists
                           traders that are actually linked to this destination.
                         </p>
                       ) : (
                         <>
-                          <p className="text-[11px] text-[#8DCF74] mb-2">
+                          <p className="text-[11px] text-[#7FA98B] mb-2">
                             {vendors.length}{' '}
                             {vendors.length === 1 ? 'vendor' : 'vendors'} listed
                             here
@@ -10861,27 +10904,27 @@ export function App() {
                               return (
                                 <div
                                   key={vendor.id}
-                                  className="bg-[#0C1B12] border border-[#1E3A2A] rounded-2xl p-3"
+                                  className="bg-[#211F1A] border border-[#3B372B] rounded-2xl p-3"
                                 >
                                   <div className="flex items-start justify-between gap-3">
                                     <div className="min-w-0">
                                       <div className="flex items-center gap-2">
-                                        <p className="text-xs font-extrabold text-[#E2ECE5] truncate">
+                                        <p className="text-xs font-extrabold text-[#F2EFE7] truncate">
                                           {vendor.title}
                                         </p>
                                         {vendor.isVerified && (
-                                          <span className="shrink-0 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-[#00FF42] text-[#09150E]">
+                                          <span className="shrink-0 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-[#3E9A66] text-[#191714]">
                                             VERIFIED
                                           </span>
                                         )}
                                       </div>
-                                      <p className="text-[10px] text-[#86935C] mt-0.5">
+                                      <p className="text-[10px] text-[#9A9278] mt-0.5">
                                         {vendor.category}
                                       </p>
                                     </div>
                                     <button
                                       onClick={() => setSelectedObjectForDetail(vendor)}
-                                      className="shrink-0 text-[10px] font-extrabold text-[#00FF42] cursor-pointer"
+                                      className="shrink-0 text-[10px] font-extrabold text-[#3E9A66] cursor-pointer"
                                     >
                                       View vendor
                                     </button>
@@ -10896,11 +10939,11 @@ export function App() {
                                           onClick={() => setSelectedObjectForDetail(item)}
                                           className="w-full flex items-center justify-between gap-3 text-left cursor-pointer"
                                         >
-                                          <span className="text-[10px] text-[#8DCF74] truncate">
+                                          <span className="text-[10px] text-[#7FA98B] truncate">
                                             {item.title}
                                           </span>
                                           {typeof item.metadata?.price === 'number' && (
-                                            <span className="shrink-0 text-[10px] font-mono text-[#00FF42]">
+                                            <span className="shrink-0 text-[10px] font-mono text-[#3E9A66]">
                                               {item.metadata.currency || 'KES'}{' '}
                                               {item.metadata.price.toLocaleString()}
                                             </span>
@@ -10930,10 +10973,10 @@ export function App() {
                   const appearsAt = getVendorDestinations(vendor, objects);
                   if (offerings.length === 0 && appearsAt.length === 0) return null;
                   return (
-                    <div className="mt-6 pt-5 border-t border-[#1E3A2A]">
+                    <div className="mt-6 pt-5 border-t border-[#3B372B]">
                       {appearsAt.length > 0 && (
                         <div className="mb-4">
-                          <p className="text-[10px] font-mono uppercase text-[#00FF42]">
+                          <p className="text-[10px] font-mono uppercase text-[#3E9A66]">
                             Find them at
                           </p>
                           <div className="mt-2 space-y-1.5">
@@ -10943,17 +10986,17 @@ export function App() {
                                 <button
                                   key={dest.id}
                                   onClick={() => setSelectedObjectForDetail(dest)}
-                                  className="w-full text-left bg-[#0C1B12] border border-[#1E3A2A] rounded-2xl p-3 cursor-pointer"
+                                  className="w-full text-left bg-[#211F1A] border border-[#3B372B] rounded-2xl p-3 cursor-pointer"
                                 >
                                   <div className="flex items-center gap-2">
                                     {(state === 'live' || state === 'today') && (
-                                      <span className="w-1.5 h-1.5 rounded-full bg-[#00FF42] shrink-0" />
+                                      <span className="w-1.5 h-1.5 rounded-full bg-[#3E9A66] shrink-0" />
                                     )}
-                                    <span className="text-xs text-[#E2ECE5] truncate">
+                                    <span className="text-xs text-[#F2EFE7] truncate">
                                       {dest.title}
                                     </span>
                                   </div>
-                                  <span className="text-[9px] font-mono text-[#5C6B52]">
+                                  <span className="text-[9px] font-mono text-[#6F6A58]">
                                     {DESTINATION_STATE_LABELS[state]}
                                     {dest.locationName ? ` - ${dest.locationName}` : ''}
                                   </span>
@@ -10966,7 +11009,7 @@ export function App() {
 
                       {offerings.length > 0 && (
                         <div>
-                          <p className="text-[10px] font-mono uppercase text-[#00FF42]">
+                          <p className="text-[10px] font-mono uppercase text-[#3E9A66]">
                             What they offer
                           </p>
                           <div className="mt-2 space-y-1.5">
@@ -10974,18 +11017,18 @@ export function App() {
                               <button
                                 key={item.id}
                                 onClick={() => setSelectedObjectForDetail(item)}
-                                className="w-full flex items-center justify-between gap-3 bg-[#0C1B12] border border-[#1E3A2A] rounded-2xl p-3 text-left cursor-pointer"
+                                className="w-full flex items-center justify-between gap-3 bg-[#211F1A] border border-[#3B372B] rounded-2xl p-3 text-left cursor-pointer"
                               >
                                 <span className="min-w-0">
-                                  <span className="block text-xs text-[#E2ECE5] truncate">
+                                  <span className="block text-xs text-[#F2EFE7] truncate">
                                     {item.title}
                                   </span>
-                                  <span className="block text-[9px] font-mono text-[#5C6B52]">
+                                  <span className="block text-[9px] font-mono text-[#6F6A58]">
                                     {item.category}
                                   </span>
                                 </span>
                                 {typeof item.metadata?.price === 'number' && (
-                                  <span className="shrink-0 text-[11px] font-mono font-extrabold text-[#00FF42]">
+                                  <span className="shrink-0 text-[11px] font-mono font-extrabold text-[#3E9A66]">
                                     {item.metadata.currency || 'KES'}{' '}
                                     {item.metadata.price.toLocaleString()}
                                   </span>
@@ -11001,10 +11044,10 @@ export function App() {
 
                 {/* Related */}
                 {relatedObjects.length > 0 && (
-                  <div className="mt-6 pt-5 border-t border-[#1E3A2A]">
+                  <div className="mt-6 pt-5 border-t border-[#3B372B]">
                     <div className="flex items-center justify-between mb-3">
                       <div>
-                        <p className="text-[10px] font-mono uppercase text-[#00FF42]">
+                        <p className="text-[10px] font-mono uppercase text-[#3E9A66]">
                           Continue exploring
                         </p>
                         <h3 className="text-sm font-extrabold mt-1">
@@ -11015,7 +11058,7 @@ export function App() {
                         </h3>
                       </div>
 
-                      <span className="text-[10px] text-[#86935C] shrink-0">
+                      <span className="text-[10px] text-[#9A9278] shrink-0">
                         {relatedObjects.length} nearby
                       </span>
                     </div>
@@ -11029,7 +11072,7 @@ export function App() {
                           <button
                             key={related.id}
                             onClick={() => setSelectedObjectForDetail(related)}
-                            className="text-left bg-[#09150E] border border-[#1E3A2A] hover:border-[#00FF42] rounded-xl p-3 transition group cursor-pointer"
+                            className="text-left bg-[#191714] border border-[#3B372B] hover:border-[#3E9A66] rounded-xl p-3 transition group cursor-pointer"
                           >
                             <div className="flex items-start gap-3">
                               {related.imageUrl && (
@@ -11042,28 +11085,28 @@ export function App() {
 
                               <div className="min-w-0">
                                 <div className="flex items-center gap-1.5 flex-wrap">
-                                  <p className="text-[9px] font-mono uppercase text-[#86935C]">
+                                  <p className="text-[9px] font-mono uppercase text-[#9A9278]">
                                     {related.category}
                                   </p>
                                   {chip && (
-                                    <span className="text-[8px] font-extrabold uppercase px-1.5 py-0.5 rounded-full border border-[#235F45] text-[#00FF42]">
+                                    <span className="text-[8px] font-extrabold uppercase px-1.5 py-0.5 rounded-full border border-[#3F5544] text-[#3E9A66]">
                                       {chip}
                                     </span>
                                   )}
                                 </div>
 
-                                <p className="text-xs font-extrabold mt-1 line-clamp-2 group-hover:text-[#00FF42]">
+                                <p className="text-xs font-extrabold mt-1 line-clamp-2 group-hover:text-[#3E9A66]">
                                   {related.title}
                                 </p>
 
                                 {related.locationName && (
-                                  <p className="text-[10px] text-[#8DCF74] mt-1 truncate">
+                                  <p className="text-[10px] text-[#7FA98B] mt-1 truncate">
                                     {related.locationName}
                                   </p>
                                 )}
 
                                 {distance && (
-                                  <p className="text-[10px] font-mono text-[#86935C] mt-0.5">
+                                  <p className="text-[10px] font-mono text-[#9A9278] mt-0.5">
                                     {distance}
                                   </p>
                                 )}
@@ -11081,7 +11124,7 @@ export function App() {
         </div>
       )}
 
-      <footer className="border-t border-[#1E3A2A] mt-12 py-6 text-xs text-[#86935C] text-center font-mono">
+      <footer className="border-t border-[#3B372B] mt-12 py-6 text-xs text-[#9A9278] text-center font-mono">
         Brief 10.0 &middot; Everything Happening Around You
       </footer>
 

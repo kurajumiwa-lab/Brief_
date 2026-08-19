@@ -3141,6 +3141,15 @@ app.use((err, _req, res, _next) => {
 
 const PORT = process.env.PORT || 8787;
 if (process.env.NODE_ENV !== 'test') {
+  // Persistence net: bring back the latest snapshot if the data file is gone
+  // (e.g. a fresh deploy on Railway's ephemeral filesystem with a re-attached
+  // volume), and take rolling snapshots so a crash or forced kill never loses
+  // more than the last interval. The graceful-shutdown backup still runs too.
+  ops.restoreLatestBackupIfEmpty(store);
+  ops.installPeriodicBackup(store, {
+    intervalMs: Number(process.env.BRIEF_BACKUP_INTERVAL_MS) || 15 * 60 * 1000
+  });
+
   const server = app.listen(PORT, '0.0.0.0', () => {
     const diag = ops.startupDiagnostics({
       store, capabilities: { payments: ledger.providerStatus() }

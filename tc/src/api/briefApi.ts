@@ -1342,3 +1342,44 @@ export function getCommandCentre(): Promise<ApiResult<CommandCentre>> {
     isCommandCentre(r?.command) ? r.command : undefined
   );
 }
+
+// ---------------------------------------------------------------------------
+// ARENA — real backend
+//
+// The server Arena is the single source of truth for challenges and matches.
+// These functions return the server's actual rows; App.tsx maps them onto its
+// display model. Creating/accepting/cancelling all go through the server so a
+// challenge is real, persisted, and attributable.
+// ---------------------------------------------------------------------------
+
+export function getArenaGames(): Promise<ApiResult<any[]>> {
+  return request('/api/arena/games', undefined, (r) => (Array.isArray(r?.games) ? r.games : undefined));
+}
+
+export function getArenaChallenges(gameId?: string): Promise<ApiResult<any[]>> {
+  const q = gameId ? `?gameId=${encodeURIComponent(gameId)}` : '';
+  return request(`/api/arena/challenges${q}`, undefined, (r) =>
+    Array.isArray(r?.challenges) ? r.challenges : undefined
+  );
+}
+
+export function createArenaChallenge(body: {
+  gameId: string; mode?: string; stake?: string; entryFeeKes?: number | null;
+  note?: string; venue?: string | null; openMinutes?: number;
+}): Promise<ApiResult<any>> {
+  return request('/api/arena/challenges', { method: 'POST', body: JSON.stringify(body) }, (r) =>
+    r?.challenge ? r.challenge : undefined
+  );
+}
+
+export function acceptArenaChallenge(id: string): Promise<ApiResult<any>> {
+  return request(`/api/arena/challenges/${encodeURIComponent(id)}/accept`, { method: 'POST', body: '{}' }, (r) =>
+    r?.match || r?.challenge ? r : undefined
+  );
+}
+
+export function cancelArenaChallenge(id: string): Promise<ApiResult<any>> {
+  return request(`/api/arena/challenges/${encodeURIComponent(id)}/cancel`, { method: 'POST', body: '{}' }, (r) =>
+    r?.challenge ? r : undefined
+  );
+}

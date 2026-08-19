@@ -59,8 +59,8 @@ export function SourcesPanel({
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-extrabold text-[#E2ECE5]">Sources</h2>
-        <p className="text-[11px] text-[#86935C] leading-snug mt-1">
+        <h2 className="text-lg font-extrabold text-[#F2EFE7]">Sources</h2>
+        <p className="text-[11px] text-[#9A9278] leading-snug mt-1">
           Where Brief receives information from. A channel is not the
           information -- Brief only keeps what it can structure.
         </p>
@@ -68,9 +68,9 @@ export function SourcesPanel({
 
       {/* BRIEF IT (spec 16/17). Paste anything; Brief shows what it
           found and writes nothing until you choose to save. */}
-      <div className="bg-[#102117] border border-[#235F45] rounded-2xl p-4">
-        <p className="text-[10px] font-mono uppercase text-[#00FF42]">Brief it</p>
-        <p className="text-[11px] text-[#86935C] mt-1 leading-snug">
+      <div className="bg-[#28261F] border border-[#3F5544] rounded-2xl p-4">
+        <p className="text-[10px] font-mono uppercase text-[#3E9A66]">Brief it</p>
+        <p className="text-[11px] text-[#9A9278] mt-1 leading-snug">
           Paste a message, listing or announcement. Brief structures it
           and shows you the result before anything is saved.
         </p>
@@ -79,13 +79,13 @@ export function SourcesPanel({
           onChange={(e) => setBriefItText(e.target.value)}
           rows={4}
           placeholder="Saturday popup at Kilimani Studio. 12 vendors. KES 300 entry. 4PM-10PM."
-          className="w-full mt-2 bg-[#09150E] border border-[#1E3A2A] rounded-xl p-3 text-xs text-[#E2ECE5] placeholder:text-[#5C6B52]"
+          className="w-full mt-2 bg-[#191714] border border-[#3B372B] rounded-xl p-3 text-xs text-[#F2EFE7] placeholder:text-[#6F6A58]"
         />
         <div className="flex items-center gap-2 mt-2">
           <button
             onClick={runBriefItPreview}
             disabled={briefItBusy || !briefItText.trim()}
-            className="px-3 py-1.5 rounded-full text-[11px] font-extrabold bg-[#00FF42] text-[#09150E] cursor-pointer disabled:opacity-40"
+            className="px-3 py-1.5 rounded-full text-[11px] font-extrabold bg-[#3E9A66] text-[#191714] cursor-pointer disabled:opacity-40"
           >
             {briefItBusy ? 'Reading...' : 'Brief it'}
           </button>
@@ -93,7 +93,7 @@ export function SourcesPanel({
             <button
               onClick={runBriefItSave}
               disabled={briefItBusy}
-              className="px-3 py-1.5 rounded-full text-[11px] font-extrabold bg-[#172D20] text-[#8DCF74] border border-[#235F45] cursor-pointer"
+              className="px-3 py-1.5 rounded-full text-[11px] font-extrabold bg-[#2B2A22] text-[#7FA98B] border border-[#3F5544] cursor-pointer"
             >
               Save to Brief
             </button>
@@ -101,7 +101,7 @@ export function SourcesPanel({
           {briefItPreview && (
             <button
               onClick={() => { setBriefItPreview(null); setBriefItSaved(null); }}
-              className="text-[11px] font-extrabold text-[#86935C] cursor-pointer"
+              className="text-[11px] font-extrabold text-[#9A9278] cursor-pointer"
             >
               Discard
             </button>
@@ -109,48 +109,48 @@ export function SourcesPanel({
         </div>
 
         {briefItSaved && (
-          <p className="text-[11px] text-[#8DCF74] mt-2">{briefItSaved}</p>
+          <p className="text-[11px] text-[#7FA98B] mt-2">{briefItSaved}</p>
         )}
 
         {briefItPreview?.error && (
-          <p className="text-[11px] text-[#C9A227] mt-2">{briefItPreview.error}</p>
+          <p className="text-[11px] text-[#C2A24A] mt-2">{briefItPreview.error}</p>
         )}
 
         {briefItPreview && !briefItPreview.error && (
-          <div className="mt-3 bg-[#09150E] border border-[#1E3A2A] rounded-xl p-3">
+          <div className="mt-3 bg-[#191714] border border-[#3B372B] rounded-xl p-3">
             {!briefItPreview.worthy ? (
-              <p className="text-[11px] text-[#C9A227]">
+              <p className="text-[11px] text-[#C2A24A]">
                 Nothing object-worthy found. Brief will not invent a
                 record from this.
               </p>
             ) : (
               <>
-                <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#8DCF74]">
+                <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#7FA98B]">
                   Found
                 </p>
                 <div className="mt-1.5 space-y-1">
                   {Object.entries(briefItPreview.fields ?? {}).map(([k, v]) => (
                     <div key={k} className="flex items-baseline justify-between gap-3">
-                      <span className="text-[10px] font-mono uppercase text-[#5C6B52]">{k}</span>
-                      <span className="text-[11px] text-[#E2ECE5] text-right truncate">
+                      <span className="text-[10px] font-mono uppercase text-[#6F6A58]">{k}</span>
+                      <span className="text-[11px] text-[#F2EFE7] text-right truncate">
                         {Array.isArray(v) ? v.join(', ') : String(v)}
                       </span>
                     </div>
                   ))}
                 </div>
                 {(briefItPreview.vendors?.length > 0 || briefItPreview.products?.length > 0) && (
-                  <div className="mt-2 pt-2 border-t border-[#1E3A2A] space-y-0.5">
+                  <div className="mt-2 pt-2 border-t border-[#3B372B] space-y-0.5">
                     {briefItPreview.vendors?.map((v: string) => (
-                      <p key={v} className="text-[10px] text-[#8DCF74]">Vendor: {v}</p>
+                      <p key={v} className="text-[10px] text-[#7FA98B]">Vendor: {v}</p>
                     ))}
                     {briefItPreview.products?.map((pr: any) => (
-                      <p key={pr.name} className="text-[10px] text-[#8DCF74]">
+                      <p key={pr.name} className="text-[10px] text-[#7FA98B]">
                         Product: {pr.name} - {pr.currency} {pr.price.toLocaleString()}
                       </p>
                     ))}
                   </div>
                 )}
-                <p className="text-[9px] font-mono text-[#5C6B52] mt-2">
+                <p className="text-[9px] font-mono text-[#6F6A58] mt-2">
                   Extraction confidence {Math.round((briefItPreview.confidence ?? 0) * 100)}%.
                   Nothing has been saved yet.
                 </p>
@@ -162,26 +162,26 @@ export function SourcesPanel({
 
       {/* CONNECTOR DASHBOARD (spec 25/26/27). Reports what the backend
           genuinely supports, including what it cannot do. */}
-      <div className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-4">
+      <div className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-[10px] font-mono uppercase text-[#00FF42]">Connectors</p>
+          <p className="text-[10px] font-mono uppercase text-[#3E9A66]">Connectors</p>
           <button
             onClick={() => void refreshConnectors()}
-            className="text-[10px] font-extrabold text-[#8DCF74] cursor-pointer"
+            className="text-[10px] font-extrabold text-[#7FA98B] cursor-pointer"
           >
             Refresh
           </button>
         </div>
 
         {!connectorStatus.checked && (
-          <p className="text-[11px] text-[#86935C] mt-2">Checking...</p>
+          <p className="text-[11px] text-[#9A9278] mt-2">Checking...</p>
         )}
 
         {connectorStatus.checked && !connectorStatus.online && (
-          <p className="text-[11px] text-[#C9A227] mt-2 leading-snug">
+          <p className="text-[11px] text-[#C2A24A] mt-2 leading-snug">
             Ingestion server not reachable. Brief still works -- only live
             connectors are unavailable. Start it with{' '}
-            <span className="font-mono text-[#8DCF74]">npm start</span> in
+            <span className="font-mono text-[#7FA98B]">npm start</span> in
             the server directory.
           </p>
         )}
@@ -195,23 +195,23 @@ export function SourcesPanel({
                 );
                 const configured = cap.configured;
                 return (
-                  <div key={name} className="bg-[#09150E] border border-[#1E3A2A] rounded-xl p-3">
+                  <div key={name} className="bg-[#191714] border border-[#3B372B] rounded-xl p-3">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-extrabold text-[#E2ECE5] capitalize">{name}</span>
+                      <span className="text-xs font-extrabold text-[#F2EFE7] capitalize">{name}</span>
                       <span
                         className={`text-[9px] font-extrabold uppercase tracking-wider ${
-                          configured === false ? 'text-[#C9A227]' : 'text-[#00FF42]'
+                          configured === false ? 'text-[#C2A24A]' : 'text-[#3E9A66]'
                         }`}
                       >
                         {configured === false ? 'Needs authorization' : 'Available'}
                       </span>
                     </div>
                     {cap.receive && (
-                      <p className="text-[10px] text-[#86935C] mt-1">Receive: {cap.receive}</p>
+                      <p className="text-[10px] text-[#9A9278] mt-1">Receive: {cap.receive}</p>
                     )}
                     {/* Failed capabilities are shown, not hidden (spec 27). */}
                     {unsupported.map(([k, v]) => (
-                      <p key={k} className="text-[10px] text-[#C9A227] mt-0.5">
+                      <p key={k} className="text-[10px] text-[#C2A24A] mt-0.5">
                         {k}: {String(v)}
                       </p>
                     ))}
@@ -221,7 +221,7 @@ export function SourcesPanel({
             </div>
 
             {connectorStatus.stats && (
-              <p className="text-[9px] font-mono text-[#5C6B52] mt-2">
+              <p className="text-[9px] font-mono text-[#6F6A58] mt-2">
                 {connectorStatus.stats.rawItems} raw items -{' '}
                 {connectorStatus.stats.objects} objects -{' '}
                 {connectorStatus.stats.relationships} links -{' '}
@@ -230,15 +230,15 @@ export function SourcesPanel({
             )}
 
             {connectorStatus.liveSources.length > 0 && (
-              <div className="mt-3 pt-3 border-t border-[#1E3A2A]">
-                <p className="text-[9px] font-extrabold uppercase tracking-wider text-[#8DCF74]">
+              <div className="mt-3 pt-3 border-t border-[#3B372B]">
+                <p className="text-[9px] font-extrabold uppercase tracking-wider text-[#7FA98B]">
                   Connected sources
                 </p>
                 <div className="mt-1.5 space-y-1">
                   {connectorStatus.liveSources.map((src: any) => (
                     <div key={src.id} className="flex items-baseline justify-between gap-3">
-                      <span className="text-[11px] text-[#E2ECE5] truncate">{src.name}</span>
-                      <span className="text-[9px] font-mono text-[#5C6B52] shrink-0">
+                      <span className="text-[11px] text-[#F2EFE7] truncate">{src.name}</span>
+                      <span className="text-[9px] font-mono text-[#6F6A58] shrink-0">
                         {src.platform} - {src.itemsProcessed} processed
                         {src.objectsCreated > 0 ? ` - ${src.objectsCreated} objects` : ''}
                       </span>
@@ -255,22 +255,22 @@ export function SourcesPanel({
         const health = getSourceHealth(source);
         const tone =
           health === 'healthy'
-            ? 'text-[#00FF42]'
+            ? 'text-[#3E9A66]'
             : health === 'error'
             ? 'text-[#E06C4F]'
-            : 'text-[#C9A227]';
+            : 'text-[#C2A24A]';
 
         return (
           <div
             key={source.id}
-            className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-4 space-y-2"
+            className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-4 space-y-2"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-sm font-extrabold text-[#E2ECE5]">
+                <p className="text-sm font-extrabold text-[#F2EFE7]">
                   {source.name}
                 </p>
-                <p className="text-[9px] font-mono uppercase text-[#5C6B52] mt-0.5">
+                <p className="text-[9px] font-mono uppercase text-[#6F6A58] mt-0.5">
                   {source.type}
                 </p>
               </div>
@@ -280,17 +280,17 @@ export function SourcesPanel({
             </div>
 
             {source.description && (
-              <p className="text-[10px] text-[#86935C] leading-snug">
+              <p className="text-[10px] text-[#9A9278] leading-snug">
                 {source.description}
               </p>
             )}
 
             <div className="flex items-center gap-4 pt-1">
-              <span className="text-[9px] font-mono text-[#5C6B52]">
+              <span className="text-[9px] font-mono text-[#6F6A58]">
                 {source.ingestionCount} received
               </span>
               {source.lastSuccessfulIngestionAt && (
-                <span className="text-[9px] font-mono text-[#5C6B52]">
+                <span className="text-[9px] font-mono text-[#6F6A58]">
                   last {source.lastSuccessfulIngestionAt.slice(0, 10)}
                 </span>
               )}

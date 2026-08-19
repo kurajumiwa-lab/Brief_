@@ -179,6 +179,75 @@ export function pruneBackups(store, keep = 14) {
 }
 
 /**
+ * Restore the newest snapshot when the primary data file is missing or empty.
+ *
+ * Railway's filesystem is ephemeral, so a fresh deploy starts with no data.
+ * If the data directory is mounted on a persistent volume, this is a no-op
+ * (the file is already there). If a previous run's snapshot exists — e.g. the
+ * volume was re-attached after a crash, or a snapshot was copied in — this
+ * brings it back so a redeploy does not silently wipe every record.
+ *
+ * Never overwrites an existing, non-empty data file: an empty/missing primary
+ * is the only case that triggers a restore.
+ */
+export function restoreLatestBackupIfEmpty(store) {
+  const src = store._file;
+  if (fs.existsSync(src)) {
+    try {
+      const parsed = JSON.parse(fs.readFileSync(src, 'utf8'));
+      const keys = Object.keys(parsed).filter((k) => !k.startsWith('__'));
+      const hasRows = Object.entries(parsed)
+        .filter(([k]) => !k.startsWith('__'))
+        .some(([, v]) => Array.isArray(v) && v.length > 0);
+      if (hasRows) return { restored: false, reason: 'data file present and non-empty' };
+      // Empty collections file (fresh init wrote a skeleton): treat as absent
+      // only if a snapshot exists.
+      if (keys.length > 0 && !hasRows) {
+        // fall through to restore attempt below
+      }
+    } catch {
+      return { restored: false, reason: 'data file unreadable; leaving as-is' };
+    }
+  }
+
+  const dir = path.join(path.dirname(store._file), 'backups');
+  if (!fs.existsSync(dir)) return { restored: false, reason: 'no snapshots' };
+  const files = fs.readdirSync(dir)
+    .filter((f) => f.startsWith('brief-') && f.endsWith('.json'))
+    .sort()
+    .reverse();
+  if (!files.length) return { restored: false, reason: 'no snapshots' };
+
+  const latest = path.join(dir, files[0]);
+  fs.copyFileSync(latest, src);
+  logInfo('restored_from_snapshot', { file: latest });
+  return { restored: true, file: latest };
+}
+
+/**
+ * Take a snapshot on a fixed cadence, in addition to the shutdown backup.
+ *
+ * The store writes atomically (tmp + rename), so a copy at any instant is a
+ * consistent snapshot. This is the resilience net that survives a crash or a
+ * forced kill (which never gets a chance to run the graceful-shutdown backup).
+ * Off by default in tests; enabled in production via BRIEF_BACKUP_INTERVAL_MS.
+ */
+export function installPeriodicBackup(store, { intervalMs = 15 * 60 * 1000, keep = 14 } = {}) {
+  if (!Number.isFinite(intervalMs) || intervalMs <= 0) return null;
+  const timer = setInterval(() => {
+    try {
+      const result = backup(store);
+      if (result.ok) pruneBackups(store, keep);
+    } catch (e) {
+      logWarn('backup_failed', { error: String(e.message ?? e) });
+    }
+  }, intervalMs);
+  // Do not hold the process open just to take snapshots.
+  timer.unref?.();
+  return timer;
+}
+
+/**
  * Finish in-flight requests before exiting.
  *
  * Without this a deploy can kill the process mid-write. The store's atomic

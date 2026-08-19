@@ -53,7 +53,7 @@ export function CircleTasks({
     return (
       <div>
         <Heading>Tasks</Heading>
-        <p className="text-xs text-[#86935C]">No tasks in this circle.</p>
+        <p className="text-xs text-[#9A9278]">No tasks in this circle.</p>
       </div>
     );
   }
@@ -66,17 +66,17 @@ export function CircleTasks({
     return (
       <div
         key={task.id}
-        className="bg-[#102117] border border-[#1E3A2A] rounded-2xl p-3 space-y-2"
+        className="bg-[#28261F] border border-[#3B372B] rounded-2xl p-3 space-y-2"
       >
         <div className="flex items-start justify-between gap-3">
-          <p className="text-xs text-[#E2ECE5] min-w-0">{task.content}</p>
+          <p className="text-xs text-[#F2EFE7] min-w-0">{task.content}</p>
           <span
             className={`shrink-0 text-[9px] font-mono uppercase px-2 py-0.5 rounded-full ${
               state?.status === 'completed'
-                ? 'bg-[#172D20] text-[#8DCF74]'
+                ? 'bg-[#2B2A22] text-[#7FA98B]'
                 : state?.status === 'assigned'
-                ? 'bg-[#1A2A3A] text-[#7FB2E5]'
-                : 'bg-[#1E1E1E] text-[#A9BDA0]'
+                ? 'bg-[#252C31] text-[#8FAFC4]'
+                : 'bg-[#1E1E1E] text-[#B6AFA0]'
             }`}
           >
             {state?.status ?? 'open'}
@@ -85,12 +85,12 @@ export function CircleTasks({
 
         {/* Who holds it. Stated plainly; never inferred. */}
         {state?.status === 'assigned' && (
-          <p className="text-[10px] text-[#5C6B52]">
+          <p className="text-[10px] text-[#6F6A58]">
             {mine ? 'Assigned to you' : `Assigned to ${state.assigneeId}`}
           </p>
         )}
         {state?.status === 'completed' && (
-          <p className="text-[10px] text-[#5C6B52]">
+          <p className="text-[10px] text-[#6F6A58]">
             Completed by {state.completedBy ?? 'unknown'}
             {state.completedAt ? ` on ${state.completedAt.slice(0, 10)}` : ''}
           </p>
@@ -101,7 +101,7 @@ export function CircleTasks({
             <button
               onClick={() => onAssign(task.id)}
               disabled={busy}
-              className="px-3 py-1.5 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+              className="px-3 py-1.5 rounded-xl bg-[#3E9A66] text-[#191714] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
             >
               {busy ? 'Working...' : 'Take this on'}
             </button>
@@ -112,14 +112,14 @@ export function CircleTasks({
               <button
                 onClick={() => onComplete(task.id)}
                 disabled={busy}
-                className="px-3 py-1.5 rounded-xl bg-[#00FF42] text-[#09150E] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+                className="px-3 py-1.5 rounded-xl bg-[#3E9A66] text-[#191714] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
               >
                 {busy ? 'Working...' : 'Mark complete'}
               </button>
               <button
                 onClick={() => onRelease(task.id)}
                 disabled={busy}
-                className="px-3 py-1.5 rounded-xl bg-[#172D20] border border-[#235F45] text-[#8DCF74] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+                className="px-3 py-1.5 rounded-xl bg-[#2B2A22] border border-[#3F5544] text-[#7FA98B] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
               >
                 Release
               </button>
@@ -129,7 +129,7 @@ export function CircleTasks({
 
         {/* An observer is told why, rather than shown a button that 403s. */}
         {state?.status === 'open' && myRole === 'observer' && (
-          <p className="text-[10px] text-[#5C6B52]">
+          <p className="text-[10px] text-[#6F6A58]">
             Observers cannot take on tasks.
           </p>
         )}
@@ -166,11 +166,11 @@ export function CircleTasks({
 }
 
 const Heading = ({ children }: { children: React.ReactNode }) => (
-  <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#5C6B52]">
+  <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-[#6F6A58]">
     {children}
   </h3>
 );
 
 const SubHeading = ({ children }: { children: React.ReactNode }) => (
-  <p className="text-[10px] font-mono uppercase text-[#5C6B52]">{children}</p>
+  <p className="text-[10px] font-mono uppercase text-[#6F6A58]">{children}</p>
 );
