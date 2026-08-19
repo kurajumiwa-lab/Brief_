@@ -65,3 +65,14 @@
 .brief-float {
   animation: briefFloat 3.5s ease-in-out infinite;
 }
+
+/* --- Pipeline flow connector — a moving "energy" dash between stages --- */
+@keyframes briefFlowDash {
+  0%   { background-position: 0 0; }
+  100% { background-position: 12px 0; }
+}
+.brief-flow-connector {
+  background-image: linear-gradient(90deg, #00E676 40%, transparent 40%);
+  background-size: 12px 2px;
+  animation: briefFlowDash 1.1s linear infinite;
+}

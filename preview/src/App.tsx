@@ -5066,7 +5066,10 @@ export function App() {
   }, []);
 
   React.useEffect(() => {
-    if (activeTab === 'workflows' && workflowSection === 'sources') {
+    // Connector state (capabilities + live stats) backs both the Sources tab
+    // AND the Actions dashboard's pipeline/ingest cards, so refresh it for any
+    // workflows view — not just Sources.
+    if (activeTab === 'workflows') {
       void refreshConnectors();
     }
   }, [activeTab, workflowSection, refreshConnectors]);
@@ -7825,6 +7828,7 @@ export function App() {
               checked={connectorStatus.checked}
               capabilities={connectorStatus.capabilities as any}
               liveSourceCount={connectorStatus.liveSources.length}
+              stats={connectorStatus.stats as any}
             />
             <div className="bg-[#1C1C1F] border border-[#14392B] rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-2">
