@@ -17,3 +17,51 @@
 .brief-spring-modal {
   animation: briefSpringIntro 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
+
+/* --- Animated banner art (cosmetic identity cards) ---
+   Pure CSS animation classes. These live in the stylesheet (never a React
+   <style> tag), so the keyframe text never leaks into the DOM. */
+
+/* Silk fluid gradient — a slow, breathing colour shift */
+@keyframes briefSilkShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.brief-silk {
+  background-size: 220% 220%;
+  animation: briefSilkShift 9s ease-in-out infinite;
+}
+
+/* Aura glow pulse */
+@keyframes briefGlowPulse {
+  0%, 100% { opacity: 0.5; }
+  50%      { opacity: 1; }
+}
+.brief-glow {
+  animation: briefGlowPulse 3.2s ease-in-out infinite;
+}
+
+/* Konami sheen sweep — a diagonal highlight crossing the card */
+@keyframes briefSheen {
+  0%        { transform: translateX(-130%) skewX(-18deg); }
+  55%, 100% { transform: translateX(230%) skewX(-18deg); }
+}
+.brief-sheen { position: relative; overflow: hidden; }
+.brief-sheen::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0; width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+  animation: briefSheen 4.6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Gentle float for the semi-logo glyph */
+@keyframes briefFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+.brief-float {
+  animation: briefFloat 3.5s ease-in-out infinite;
+}

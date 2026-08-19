@@ -11,6 +11,7 @@ import { MoneyPanel } from './components/MoneyPanel';
 import { Vault } from './components/vault/Vault';
 import { CheckIn } from './components/CheckIn';
 import { HostCommand } from './components/HostCommand';
+import { SilkBanner, GameBanner } from './components/BannerArt';
 import { Circles } from './components/Circles';
 import { Marketplace } from './components/Marketplace';
 import { Pursuits } from './components/Pursuits';
@@ -4183,6 +4184,16 @@ const ARENA_GAMES: ArenaGame[] = [
   }
 ];
 
+// Semi-logo glyphs for the Konami-style title cards. Purely cosmetic.
+const ARENA_GAME_GLYPHS: Record<string, string> = {
+  efootball: '⚽',
+  fc_mobile: '⚽',
+  ea_fc: '⚽',
+  pubg: '🪂',
+  cod: '🎯',
+  other: '🎮'
+};
+
 const ARENA_PLAYERS: ArenaPlayer[] = [
   { id: 'ply_nyabs', displayName: 'Nyabs', presence: 'online', preferredMode: '1v1', lastSeenAt: '2026-08-15T09:40:00Z' },
   { id: 'ply_mike', displayName: 'Mike', presence: 'online', preferredMode: '1v1', lastSeenAt: '2026-08-15T09:38:00Z' },
@@ -6931,6 +6942,14 @@ export function App() {
             bar stays five doors wide no matter how much is built. */}
         {activeTab === 'nearby' && (
           <div className="max-w-3xl mx-auto px-4 pt-4">
+            <div className="mb-4">
+              <SilkBanner
+                glyph="🌍"
+                title="Around"
+                subtitle="What's happening, everywhere you are"
+                hue="green"
+              />
+            </div>
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
               {([
                 ['stream', 'Everything'],
@@ -7024,6 +7043,14 @@ export function App() {
 
         {activeTab === 'pulse' && (
           <div className="max-w-3xl mx-auto px-4 pt-4">
+            <div className="mb-4">
+              <SilkBanner
+                glyph="📡"
+                title="Live network"
+                subtitle="Community data flow, in motion"
+                hue="teal"
+              />
+            </div>
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
               {([
                 ['now', 'Now'],
@@ -7593,6 +7620,13 @@ export function App() {
         {/* MY LAYER */}
         {activeTab === 'mylayer' && myLayerSection === 'saved' && (
           <section className="space-y-4">
+            <SilkBanner
+              glyph="📂"
+              title="Your vault"
+              subtitle="Kept spaces and tracked paths"
+              hue="blue"
+              compact
+            />
             <div className="bg-[#1C1C1F] border border-[#14392B] rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-2">
                 <Bookmark className="w-4 h-4 text-[#00E676]" />
@@ -7785,6 +7819,13 @@ export function App() {
         {activeTab === 'workflows' &&
           (workflowSection === 'active' || workflowSection === 'completed') && (
           <section className="space-y-5">
+            <SilkBanner
+              glyph="🛠️"
+              title="Automation"
+              subtitle="Channel ingest · live webhook triggers"
+              hue="violet"
+              compact
+            />
             <div className="bg-[#1C1C1F] border border-[#14392B] rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-2">
                 <Briefcase className="w-4 h-4 text-[#00E676]" />
@@ -7899,6 +7940,16 @@ export function App() {
                 Players looking for a game, an opponent or a squad. Not a feed.
               </p>
             </div>
+
+            {/* Konami-style title card for the selected game. Decorative: it
+                mirrors the game identity and the live open-matchroom count,
+                and never emits an action of its own. */}
+            <GameBanner
+              name={arenaGame.name}
+              glyph={ARENA_GAME_GLYPHS[arenaGame.id] ?? '🎮'}
+              activity={gameActivity[arenaGame.id] ?? 0}
+              hue="amber"
+            />
 
             {/* REAL-MONEY GATE.
                 Entry fees are arranged between players. Brief does not hold,
