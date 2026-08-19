@@ -17,7 +17,8 @@
     "dev": "cd preview && npm run dev",
     "test": "cd server && npm test",
     "test:client": "./run-suites.sh",
-    "test:typecheck": "cd tc && npx tsc -p tsconfig.json"
+    "test:typecheck": "cd tc && npx tsc -p tsconfig.json",
+    "demo:vault": "node scripts/demo-vault.mjs"
   },
   "engines": {
     "node": ">=18.0.0",

@@ -7,6 +7,9 @@
 
 import express from 'express';
 import crypto from 'node:crypto';
+import path from 'node:path';
+import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { store, newId } from './store.js';
 import { enqueue, queueStats, allow, withBackoff } from './queue.js';
 import { storeRawItem, processRawItem, previewText } from './pipeline/ingest.js';
@@ -20,6 +23,7 @@ import * as ledger from './domain/ledger.js';
 import * as members from './domain/member.js';
 import { callerId, authStatus, isSelf, isCoordinator, circleHasNoMembers, membershipOf, canOperate, canGovernObject } from './identity.js';
 import * as campaigns from './domain/campaign.js';
+import * as checkin from './domain/checkin.js';
 import * as vendors from './domain/vendor.js';
 import * as listings from './domain/listing.js';
 import * as orders from './domain/order.js';
@@ -27,13 +31,37 @@ import * as settlement from './domain/settlement.js';
 import * as compliance from './domain/compliance.js';
 import * as auth from './domain/auth.js';
 import * as payment from './domain/payment.js';
-import * as mpesa from './connectors/mpesa.js';
+import * as tuma from './connectors/tuma.js';
 import * as arena from './domain/arena.js';
 import * as fantasy from './domain/fantasy.js';
 import * as auctions from './domain/auction.js';
+import * as vault from './domain/vault.js';
+import * as footsteps from './domain/footsteps.js';
+import * as handoff from './domain/handoff.js';
+import * as command from './domain/command.js';
 import * as ops from './ops.js';
 
 const app = express();
+
+// HTML-escape for meta-tag injection: a campaign title or description is
+// user-authored and must never break out of an attribute/string context.
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// The compiled React/Vite frontend, served by Express in production. Resolved
+// from THIS file's location (server/src) so it is correct regardless of the
+// deployment working directory (/app, /app/server, or anywhere else): the
+// build always lands at <repo>/preview/dist.
+const FRONTEND_DIST = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)), // server/src
+  '..', '..', 'preview', 'dist'
+);
 
 // Raw body retained for webhook signature verification -- the HMAC must be
 // computed over the exact bytes Meta sent, not a re-serialized object.
@@ -48,6 +76,17 @@ app.use((_req, res, next) => {
   next();
 });
 app.options('*', (_req, res) => res.sendStatus(204));
+
+// The production client calls the API under the /ingest prefix (the dev server
+// strips it with a Vite proxy; in production Express serves the API directly).
+// Strip the prefix here so /ingest/api/* resolves exactly like /api/*. This is
+// a no-op for the dev server, whose proxy never forwards the prefix.
+app.use((req, _res, next) => {
+  if (req.url.startsWith('/ingest')) {
+    req.url = req.url.slice('/ingest'.length) || '/';
+  }
+  next();
+});
 
 // Resolve the bearer token (or cookie) into a verified identity BEFORE any
 // route runs. Sets req.auth, or req.authError when a token was presented and
@@ -2013,6 +2052,13 @@ app.post('/api/orders', (req, res) => {
       actorId: callerId(req),
       metadata: { orderId: order.id, listingId: order.listingId, vendorId: order.vendorId }
     });
+    // A vault linking this order gains an order_created footstep.
+    vault.emitOrderFootsteps(order.id, 'order_created', {
+      actorId: callerId(req),
+      value: order.total,
+      dedupeKey: `order:${order.id}`,
+      metadata: { listingId: order.listingId, vendorId: order.vendorId }
+    });
     res.status(201).json({ order });
   } catch (e) {
     res.status(400).json({ error: String(e.message ?? e) });
@@ -2043,6 +2089,10 @@ app.post('/api/orders/:id/fulfil', (req, res) => {
         type: 'order_fulfilled',
         actorId: callerId(req),
         metadata: { orderId: order.id, vendorId: order.vendorId }
+      });
+      vault.emitOrderFootsteps(order.id, 'order_fulfilled', {
+        actorId: callerId(req),
+        dedupeKey: `order:fulfilled:${order.id}`
       });
     }
     res.json({ order, changed });
@@ -2139,6 +2189,11 @@ app.post('/api/orders/:id/settle', (req, res) => {
         actorId: callerId(req),
         value: order.total,
         metadata: { orderId: order.id, vendorId: order.vendorId }
+      });
+      vault.emitOrderFootsteps(order.id, 'order_settled', {
+        actorId: callerId(req),
+        value: order.total,
+        dedupeKey: `order:settled:${order.id}`
       });
     }
     res.json({ order, changed });
@@ -2237,8 +2292,19 @@ app.post('/api/orders/:id/pay', async (req, res) => {
 
     const result = await payment.requestPayment(intent.id);
     if (!result.ok) {
+      vault.emitOrderFootsteps(intent.orderId, 'payment_failed', {
+        actorId: me,
+        dedupeKey: `pay:fail:${intent.id}`,
+        metadata: { reason: result.reason }
+      });
       return res.status(502).json({ intent: payment.getIntent(intent.id), error: result.reason, detail: result.detail ?? null });
     }
+    vault.emitOrderFootsteps(intent.orderId, 'payment_authorized', {
+      actorId: me,
+      value: intent.amount,
+      dedupeKey: `pay:authorized:${intent.id}`,
+      metadata: { providerRef: result.providerRef }
+    });
     res.status(reused ? 200 : 201).json({
       intent: payment.getIntent(intent.id), reused, charged: true,
       customerMessage: result.customerMessage
@@ -2261,28 +2327,31 @@ app.get('/api/orders/:id/payments', (req, res) => {
 });
 
 /**
- * M-Pesa STK callback.
+ * Tuma STK Push callback.
  *
- * Daraja does not sign callbacks, so the deployment-controlled defence is a
- * secret path segment. It FAILS CLOSED: with no secret configured, nothing is
- * accepted. Every callback is persisted before processing so a replay or a
- * malformed payload is auditable.
+ * Tuma does not sign callbacks, so the deployment-controlled defence is a
+ * secret path segment (TUMA_WEBHOOK_SECRET). The REAL authenticity check is
+ * inside confirmPayment(): the
+ * callback must carry a checkout_request_id Brief issued and an amount that
+ * matches the stored intent. It FAILS CLOSED: with no secret configured,
+ * nothing is accepted. Every callback is persisted before processing so a
+ * replay or a malformed payload is auditable.
  */
-app.post('/api/webhooks/mpesa/:secret', (req, res) => {
-  const check = mpesa.verifyCallbackSecret(req.params.secret);
+app.post('/api/webhooks/tuma/:secret', (req, res) => {
+  const check = tuma.verifyCallbackSecret(req.params.secret);
   store.insert('paymentCallbacks', {
-    id: newId('cb'), provider: 'mpesa', accepted: check.ok,
+    id: newId('cb'), provider: 'tuma', accepted: check.ok,
     reason: check.reason ?? null, body: req.body ?? null, at: now()
   });
   if (!check.ok) {
-    recordError('mpesa_webhook', null, `rejected callback: ${check.reason}`);
+    recordError('tuma_webhook', null, `rejected callback: ${check.reason}`);
     // 403, and deliberately no detail about why.
     return res.status(403).json({ error: 'rejected' });
   }
 
-  const parsed = mpesa.parseStkCallback(req.body);
+  const parsed = tuma.parseCallback(req.body);
   if (!parsed.ok) {
-    recordError('mpesa_webhook', null, 'unrecognised callback payload');
+    recordError('tuma_webhook', null, 'unrecognised callback payload');
     return res.status(400).json({ error: 'unrecognised payload' });
   }
 
@@ -2291,13 +2360,15 @@ app.post('/api/webhooks/mpesa/:secret', (req, res) => {
     succeeded: parsed.succeeded,
     amount: parsed.amount,
     receipt: parsed.receipt,
-    failureReason: parsed.resultDesc
+    failureReason: parsed.failureReason,
+    cancelled: parsed.cancelled
   });
 
   if (!applied.ok) {
-    recordError('mpesa_webhook', null, `callback not applied: ${applied.reason}`);
-    // 200 to the provider: retrying will not help, and Safaricom retries on
-    // non-2xx. The failure is recorded on our side instead.
+    recordError('tuma_webhook', null, `callback not applied: ${applied.reason}`);
+    // 200 to the provider: retrying will not help, and Tuma retries on
+    // non-2xx (up to 5 attempts with backoff). The failure is recorded on
+    // our side instead.
     return res.status(200).json({ ok: false, reason: applied.reason });
   }
 
@@ -2311,8 +2382,16 @@ app.post('/api/webhooks/mpesa/:secret', (req, res) => {
         metadata: { orderId: applied.intent.orderId, transactionId: applied.transactionId }
       });
     } catch (e) {
-      recordError('mpesa_webhook', null, `attach failed: ${String(e.message ?? e)}`);
+      recordError('tuma_webhook', null, `attach failed: ${String(e.message ?? e)}`);
     }
+    // The vault timeline records the settlement exactly once (dedupe by the
+    // provider reference), independent of the ledger's own replay protection.
+    vault.emitOrderFootsteps(applied.intent.orderId, 'payment_settled', {
+      actorId: applied.intent.payerId,
+      value: applied.intent.amount,
+      dedupeKey: `pay:settled:${applied.intent.providerRef}`,
+      metadata: { receipt: applied.intent.receipt, transactionId: applied.transactionId }
+    });
   }
 
   res.json({ ok: true, duplicate: Boolean(applied.duplicate) });
@@ -2343,8 +2422,10 @@ app.post('/api/vendors/me/payouts', async (req, res) => {
     }
     res.status(201).json({ payout: store.find('payouts', (p) => p.id === payout.id), reused: false });
   } catch (e) {
-    // A missing provider is a 503 (try later), not a 400 (you did it wrong).
-    const status = e.code === 'payout_not_configured' ? 503 : 400;
+    // No disbursement provider is a 503 (unavailable, try later), not a 400
+    // (you did it wrong). The code is machine-readable so a client can state
+    // the truth rather than implying payouts work.
+    const status = e.code === 'provider_unavailable' ? 503 : 400;
     res.status(status).json({ error: String(e.message ?? e), code: e.code ?? null });
   }
 });
@@ -2361,6 +2442,17 @@ app.get('/api/vendors/me/payouts', (req, res) => {
 app.get('/api/economic/payments/reconcile', (req, res) => {
   if (!requireAuth(req, res)) return;
   res.json({ reconciliation: payment.reconcileIntents() });
+});
+
+/**
+ * The host command centre: NOW / MONEY / PEOPLE / DISTRIBUTION / ACTION / NEXT,
+ * derived from real rows. Host-only, and scoped to the caller's own campaigns
+ * and vaults — a host never sees another host's figures.
+ */
+app.get('/api/host/command', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  res.json({ command: command.commandCentre(me) });
 });
 
 app.get('/api/economic/reconcile', (_req, res) => {
@@ -2576,6 +2668,57 @@ app.post('/api/campaigns/:id/registrations/:regId/status', (req, res) => {
   }
 });
 
+// --- The gate (check-in) ----------------------------------------------------
+//
+// A ticket is a campaign registration carrying an opaque code. These routes are
+// the GATE OPERATOR's surface: scan a code, see who it is and whether they are
+// paid, and check them in exactly once. Operator identity comes from the
+// authenticated caller (a host), never from the request body.
+
+/** Look a ticket up by its scannable code. Host-only: a code is a gate secret. */
+app.get('/api/tickets/:code', (req, res) => {
+  if (!requireAuth(req, res)) return;
+  const registration = checkin.lookupTicket(req.params.code);
+  if (!registration) return res.status(404).json({ error: 'ticket not found' });
+  const view = checkin.ticketView(registration);
+  // Only the campaign's host may inspect a ticket — a code must not be a way
+  // to read the roster anonymously.
+  const c = store.find('campaigns', (x) => x.id === registration.campaignId);
+  if (!c || c.ownerId !== callerId(req)) return res.status(404).json({ error: 'ticket not found' });
+  res.json({ ticket: view });
+});
+
+/** Check a ticket in at the gate. Host-only, idempotent, honest refusals. */
+app.post('/api/tickets/:code/check-in', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  const registration = checkin.lookupTicket(req.params.code);
+  if (!registration) return res.status(404).json({ error: 'ticket not found' });
+  const c = store.find('campaigns', (x) => x.id === registration.campaignId);
+  if (!c || c.ownerId !== me) return res.status(404).json({ error: 'ticket not found' });
+
+  const result = checkin.checkIn(req.params.code, me);
+  if (!result.ok) {
+    const status = result.reason === 'cancelled' ? 410
+      : result.reason === 'unpaid' ? 402
+      : result.reason === 'invalid_transition' ? 409
+      : 400;
+    const message = {
+      cancelled: 'This ticket has been cancelled.',
+      unpaid: 'Payment is still pending for this ticket.',
+      invalid_transition: 'This ticket cannot be checked in right now.',
+      not_found: 'Ticket not found.'
+    }[result.reason] ?? 'Check-in failed.';
+    return res.status(status).json({ error: message, reason: result.reason, ticket: result.ticket ?? null });
+  }
+  res.json({
+    ok: true,
+    already: Boolean(result.already),
+    ticket: result.ticket,
+    checkedInCount: checkin.checkedInCount(registration.campaignId)
+  });
+});
+
 // --- PUBLIC (no authentication; only published/live campaigns resolve) ------
 
 app.get('/api/public/campaigns/:slug', (req, res) => {
@@ -2602,9 +2745,12 @@ app.post('/api/public/campaigns/:slug/register', (req, res) => {
       name: req.body?.name ?? null,
       contact: req.body?.contact ?? null
     });
-    // Only the registrant's own record, never the roster.
+    // Only the registrant's own record, never the roster. The ticketCode is
+    // the attendee's own gate credential, so it is returned to THEM (and only
+    // to them) here — a code is the thing they show at the gate, not a roster
+    // leak.
     res.status(201).json({
-      registration: { id: reg.id, status: reg.status, createdAt: reg.createdAt },
+      registration: { id: reg.id, status: reg.status, createdAt: reg.createdAt, ticketCode: reg.ticketCode ?? null },
       campaign: campaigns.publicView(campaigns.getPublicBySlug(req.params.slug) ?? c)
     });
   } catch (e) {
@@ -2612,6 +2758,368 @@ app.post('/api/public/campaigns/:slug/register', (req, res) => {
     res.status(full ? 409 : 400).json({ error: String(e.message ?? e) });
   }
 });
+
+// --- The Vault --------------------------------------------------------------
+//
+// A Vault is a persistent context layer over real-world activity. Routes here
+// follow the same authority discipline as the rest of Brief: identity comes
+// from callerId(), roles from stored participant rows, and money is never
+// accepted from the client.
+
+/** Resolve the caller's participant token (guest entry), if presented. */
+function vaultTokenParticipant(req) {
+  const token = req.get('x-vault-token');
+  if (!token) return null;
+  const resolved = handoff.resolveHandoff(token, { markUsed: false });
+  if (!resolved.ok) return null;
+  return vault.getParticipant(resolved.participantId);
+}
+
+/** The caller id, extended: a guest token resolves to its participant id. */
+function vaultActor(req) {
+  return callerId(req) ?? vaultTokenParticipant(req)?.id ?? null;
+}
+
+app.post('/api/vaults', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  try {
+    const v = vault.createVault({
+      ownerId: me,
+      type: req.body?.type,
+      title: req.body?.title,
+      description: req.body?.description,
+      visibility: req.body?.visibility,
+      location: req.body?.location,
+      startsAt: req.body?.startsAt,
+      endsAt: req.body?.endsAt,
+      sourceId: req.body?.sourceId ?? null
+    });
+    res.status(201).json({ vault: vault.vaultView(me, v.id) });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message ?? e) });
+  }
+});
+
+app.get('/api/vaults', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  res.json({ vaults: vault.listVaults(me, { status: req.query.status ?? null }) });
+});
+
+app.get('/api/vaults/resolution', (req, res) => {
+  if (!requireAuth(req, res)) return;
+  res.json({ items: vault.resolution() });
+});
+
+app.get('/api/vaults/search', (req, res) => {
+  if (!requireAuth(req, res)) return;
+  res.json({ results: vault.searchVaults(req.query.q ?? '') });
+});
+
+app.get('/api/vaults/:id', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  const view = vault.vaultView(me, req.params.id);
+  if (!view) return res.status(404).json({ error: 'vault not found' });
+  if (view.role === 'public') return res.status(404).json({ error: 'vault not found' });
+  res.json({ vault: view });
+});
+
+app.patch('/api/vaults/:id', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  try {
+    res.json({ vault: vault.vaultView(me, vault.updateVault(me, req.params.id, req.body ?? {}).id) });
+  } catch (e) {
+    const status = /not found/.test(String(e.message)) ? 404 : 403;
+    res.status(status).json({ error: String(e.message ?? e) });
+  }
+});
+
+app.post('/api/vaults/:id/close', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  try {
+    res.json({ vault: vault.vaultView(me, vault.closeVault(me, req.params.id, { note: req.body?.note ?? '' }).id) });
+  } catch (e) {
+    res.status(/not found/.test(String(e.message)) ? 404 : 403).json({ error: String(e.message ?? e) });
+  }
+});
+
+// Footsteps: the immutable timeline. Read requires access; write is attributable.
+app.get('/api/vaults/:id/footsteps', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  const view = vault.vaultView(me, req.params.id);
+  if (!view || view.role === 'public') return res.status(404).json({ error: 'vault not found' });
+  const { category, cursor, limit } = req.query;
+  res.json(footsteps.listFootsteps(req.params.id, {
+    category: category ?? null,
+    cursor: cursor !== undefined ? Number(cursor) : null,
+    limit: limit !== undefined ? Number(limit) : 200
+  }));
+});
+
+app.post('/api/vaults/:id/footsteps', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  try {
+    const view = vault.vaultView(me, req.params.id);
+    if (!view || view.role === 'public') return res.status(404).json({ error: 'vault not found' });
+    const { footstep } = footsteps.recordFootstep({
+      vaultId: req.params.id,
+      kind: req.body?.kind,
+      actorId: me,
+      actorName: req.body?.actorName ?? null,
+      channel: req.body?.channel ?? 'web',
+      value: req.body?.value ?? null,
+      narrative: req.body?.narrative ?? null,
+      metadata: req.body?.metadata ?? {}
+    });
+    res.status(201).json({ footstep });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message ?? e) });
+  }
+});
+
+app.post('/api/vaults/:id/participants', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  try {
+    const participant = vault.addParticipant(me, {
+      vaultId: req.params.id,
+      role: req.body?.role,
+      userId: req.body?.userId ?? null,
+      name: req.body?.name ?? null,
+      phone: req.body?.phone ?? null,
+      channel: req.body?.channel ?? 'web'
+    });
+    res.status(201).json({ participant });
+  } catch (e) {
+    res.status(403).json({ error: String(e.message ?? e) });
+  }
+});
+
+app.post('/api/vaults/:id/link', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  try {
+    const updated = vault.linkVault(me, req.params.id, { kind: req.body?.kind, id: req.body?.id });
+    res.json({ vault: vault.vaultView(me, updated.id) });
+  } catch (e) {
+    res.status(403).json({ error: String(e.message ?? e) });
+  }
+});
+
+app.post('/api/vaults/:id/channels', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  try {
+    const channel = vault.attachChannel(me, {
+      vaultId: req.params.id,
+      channel: req.body?.channel,
+      externalId: req.body?.externalId ?? null
+    });
+    res.status(201).json({ channel });
+  } catch (e) {
+    res.status(403).json({ error: String(e.message ?? e) });
+  }
+});
+
+// Requests: a guest asks, the host routes, a vendor accepts.
+app.post('/api/vaults/:id/requests', (req, res) => {
+  const me = vaultActor(req);
+  if (!me) return res.status(401).json({ error: 'authentication required' });
+  try {
+    const view = vault.vaultView(callerId(req), req.params.id);
+    const participant = vaultTokenParticipant(req);
+    // Guests may ask through their token; hosts through their session.
+    if (!view || view.role === 'public') return res.status(404).json({ error: 'vault not found' });
+    const request = vault.createRequest(me, {
+      vaultId: req.params.id,
+      participantId: participant?.id ?? null,
+      kind: req.body?.kind,
+      description: req.body?.description,
+      quantity: req.body?.quantity,
+      priceEstimate: req.body?.priceEstimate,
+      location: req.body?.location,
+      notes: req.body?.notes
+    });
+    res.status(201).json({ request });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message ?? e) });
+  }
+});
+
+app.get('/api/vaults/:id/requests', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  const view = vault.vaultView(me, req.params.id);
+  if (!view || view.role === 'public') return res.status(404).json({ error: 'vault not found' });
+  res.json({ requests: vault.listRequests(req.params.id, { vendorId: req.query.vendorId ?? null }) });
+});
+
+app.post('/api/vaults/:id/requests/:requestId/route', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  try {
+    res.json({ request: vault.routeRequest(me, { requestId: req.params.requestId, vendorId: req.body?.vendorId }) });
+  } catch (e) {
+    res.status(/not found/.test(String(e.message)) ? 404 : 403).json({ error: String(e.message ?? e) });
+  }
+});
+
+app.post('/api/vaults/:id/requests/:requestId/accept', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  try {
+    res.json({ request: vault.acceptRequest(me, { requestId: req.params.requestId }) });
+  } catch (e) {
+    res.status(/not found/.test(String(e.message)) ? 404 : 403).json({ error: String(e.message ?? e) });
+  }
+});
+
+// Handoff ("continue elsewhere") — the host issues an opaque, expiring token.
+app.post('/api/vaults/:id/handoff', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  try {
+    const view = vault.vaultView(me, req.params.id);
+    if (!view || view.role === 'public') return res.status(404).json({ error: 'vault not found' });
+    const result = handoff.createHandoff({
+      vaultId: req.params.id,
+      participantId: req.body?.participantId,
+      purpose: 'handoff',
+      fromChannel: req.body?.fromChannel ?? 'web',
+      toChannel: req.body?.toChannel ?? null,
+      createdBy: me
+    });
+    if (!result.ok) return res.status(500).json({ error: result.reason });
+    footsteps.recordFootstep({
+      vaultId: req.params.id,
+      kind: 'handoff_created',
+      actorId: me,
+      channel: 'web',
+      metadata: { toChannel: req.body?.toChannel ?? null }
+    });
+    res.status(201).json({ token: result.token, expiresAt: result.expiresAt });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message ?? e) });
+  }
+});
+
+// Public entry: a guest enters through a public link, no account required.
+app.get('/api/public/vaults/:slug', (req, res) => {
+  const v = vault.getVaultBySlug(req.params.slug);
+  if (!v) return res.status(404).json({ error: 'vault not found' });
+  if (!vault.isPubliclyEnterable(v)) return res.status(404).json({ error: 'vault not found' });
+  res.json({ vault: vault.vaultView(null, v.id) });
+});
+
+app.post('/api/public/vaults/:slug/enter', (req, res) => {
+  const result = vault.publicEnter(req.params.slug, {
+    name: req.body?.name ?? null,
+    phone: req.body?.phone ?? null,
+    channel: 'web'
+  });
+  if (!result.ok) return res.status(result.reason === 'not_found' ? 404 : 403).json({ error: result.reason });
+  res.status(201).json(result);
+});
+
+/** Resolve a handoff token: continues the SAME vault from another channel. */
+app.post('/api/vaults/handoff/resolve', (req, res) => {
+  const result = handoff.resolveHandoff(req.body?.token ?? req.get('x-vault-token'));
+  if (!result.ok) return res.status(403).json({ error: result.reason });
+  const participant = vault.getParticipant(result.participantId);
+  if (participant) {
+    footsteps.recordFootstep({
+      vaultId: result.vaultId,
+      kind: 'handoff_resolved',
+      actorId: participant.userId,
+      actorName: participant.name,
+      channel: result.toChannel ?? 'web',
+      dedupeKey: `handoff:${result.participantId}:${result.vaultId}`,
+      metadata: { fromChannel: result.fromChannel, toChannel: result.toChannel }
+    });
+  }
+  res.json({
+    vault: vault.vaultView(participant?.userId ?? null, result.vaultId),
+    participant: participant ? { id: participant.id, role: participant.role } : null
+  });
+});
+
+// --- Production frontend serving -------------------------------------------
+//
+// In production Express serves the compiled Vite build (FRONTEND_DIST) and
+// falls back to index.html for client-side routes. This is a no-op when the
+// build does not exist (development/test), so the API-only server behaves
+// exactly as it always has.
+const servingFrontend =
+  process.env.NODE_ENV === 'production' &&
+  fs.existsSync(path.join(FRONTEND_DIST, 'index.html'));
+
+if (servingFrontend) {
+  const indexHtml = fs.readFileSync(path.join(FRONTEND_DIST, 'index.html'), 'utf8');
+
+  // Open Graph / social preview injection.
+  //
+  // Link crawlers (WhatsApp, Telegram, X, Facebook) do NOT run JavaScript, so
+  // the SPA's static index.html shows no preview. This route renders a small
+  // HTML shell for /c/:slug with og:*/twitter:* meta filled from the campaign's
+  // publicView, then still loads the same SPA bundle so a real browser gets the
+  // full app. No private data is emitted: only the public projection.
+  app.get('/c/:slug', (req, res) => {
+    const c = campaigns.getPublicBySlug(req.params.slug);
+    if (!c) {
+      // Not found / not public: fall through to the SPA shell, which renders
+      // its honest "not available" state.
+      return res.type('html').send(indexHtml);
+    }
+    const pv = campaigns.publicView(c);
+    const title = pv.title;
+    const desc = pv.description || 'A gathering on Brief';
+    const origin = process.env.BRIEF_PUBLIC_ORIGIN
+      ? process.env.BRIEF_PUBLIC_ORIGIN.replace(/\/+$/, '')
+      : null;
+    const url = origin ? `${origin}/c/${pv.slug}` : null;
+    const image = pv.image ?? null;
+
+    const tags = [
+      `<meta property="og:type" content="website" />`,
+      `<meta property="og:title" content="${escapeHtml(title)}" />`,
+      `<meta property="og:description" content="${escapeHtml(desc)}" />`,
+      `<meta name="twitter:card" content="${image ? 'summary_large_image' : 'summary'}" />`,
+      `<meta name="twitter:title" content="${escapeHtml(title)}" />`,
+      `<meta name="twitter:description" content="${escapeHtml(desc)}" />`,
+      ...(url ? [`<meta property="og:url" content="${escapeHtml(url)}" />`] : []),
+      // Only a real image is emitted -- never a placeholder.
+      ...(image ? [
+        `<meta property="og:image" content="${escapeHtml(image)}" />`,
+        `<meta name="twitter:image" content="${escapeHtml(image)}" />`
+      ] : [])
+    ].join('\n    ');
+
+    const html = indexHtml.replace(
+      /<title>.*?<\/title>/,
+      `<title>${escapeHtml(title)}</title>\n    ${tags}`
+    );
+    res.type('html').send(html);
+  });
+
+  // Static assets: JS/CSS bundles, images, etc. `index: false` so '/' is
+  // handled by the explicit fallback below rather than a silent directory
+  // serve, and so an asset miss is not masked by a directory index.
+  app.use(express.static(FRONTEND_DIST, { index: false }));
+
+  // SPA fallback: any GET that is neither the API nor a real asset resolves to
+  // index.html, so client-side routes (e.g. /marketplace) do not 404.
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api/')) return next(); // API miss: 404 as API, never the SPA shell
+    if (req.path.includes('.')) return next();       // a real asset request; 404 if absent
+    res.sendFile(path.join(FRONTEND_DIST, 'index.html'));
+  });
+}
 
 // A failing connector must never take Brief down (spec 30).
 app.use((err, _req, res, _next) => {

@@ -2697,44 +2697,245 @@ console.log('\n=== AUTHORIZATION ACROSS TWO REAL ACTORS ===');
 
 console.log('\n=== PAYMENT CONNECTOR BOUNDARY (no credentials configured) ===');
 {
-  const mp = await import('../src/connectors/mpesa.js');
   const pay = await import('../src/domain/payment.js');
+  const providers = await import('../src/providers.js');
 
-  check('M-Pesa reports NOT configured', mp.isConfigured() === false);
-  check('payout reports NOT configured', mp.isPayoutConfigured() === false);
-  check('every missing credential is named', mp.missingCredentials().length === 7, mp.missingCredentials().join(','));
-  check('the reason is stated', /not configured/i.test(mp.status().reason));
-  check('there is no active provider', pay.activeProvider() === null);
+  check('there is no active collection provider', pay.activeProvider() === null);
+  check('there is no active disbursement provider', providers.activeDisbursementProvider() === null);
   check('providerStatus.configured is false', pay.providerStatus().configured === false);
-
-  // THE RULE THAT MATTERS: no fake success path.
-  const push = await mp.stkPush({ amount: 100, phone: '0722000111', accountReference: 'x' });
-  check('stkPush REFUSES without credentials', push.ok === false && push.reason === 'not_configured');
-  const payout = await mp.b2cPayout({ amount: 100, phone: '0722000111' });
-  check('b2cPayout REFUSES without credentials', payout.ok === false && payout.reason === 'payout_not_configured');
-  const tok = await mp.accessToken();
-  check('OAuth REFUSES without credentials', tok.ok === false && tok.reason === 'not_configured');
-
-  // Callback verification must FAIL CLOSED when no secret is set.
-  check('callback verification fails closed', mp.verifyCallbackSecret('anything').ok === false);
-  check('and names the reason', mp.verifyCallbackSecret('anything').reason === 'callback_secret_not_configured');
-
-  // Phone normalisation is real logic and must be right.
-  check('0722... normalises', mp.normalisePhone('0722000111') === '254722000111');
-  check('+254... normalises', mp.normalisePhone('+254722000111') === '254722000111');
-  check('254... passes through', mp.normalisePhone('254722000111') === '254722000111');
-  check('722... normalises', mp.normalisePhone('722000111') === '254722000111');
-  check('0110... (Airtel/Safaricom 1-prefix) normalises', mp.normalisePhone('0110000111') === '254110000111');
-  check('spaces and dashes tolerated', mp.normalisePhone('0722-000 111') === '254722000111');
-  check('a UK number is refused', mp.normalisePhone('+447700900000') === null);
-  check('gibberish is refused', mp.normalisePhone('not a phone') === null);
-  check('empty is refused', mp.normalisePhone('') === null);
-  check('a too-short number is refused', mp.normalisePhone('0722') === null);
+  check('providerStatus.payoutConfigured is false', pay.providerStatus().payoutConfigured === false);
+  check('the reason is stated', /no payment provider/i.test(pay.providerStatus().reason));
 
   // The ledger must agree -- one answer to "can Brief move money".
   const led = await import('../src/domain/ledger.js');
   check('ledger.providerConfigured() agrees', led.providerConfigured() === false);
-  check('ledger delegates to the connector', led.providerStatus().detail?.provider === 'mpesa');
+  check('ledger delegates to the connector', led.providerStatus().detail?.provider === 'tuma');
+}
+
+console.log('\n=== TUMA CONNECTOR (simulated fetch -- the REAL Tuma contract) ===');
+{
+  const tuma = await import('../src/connectors/tuma.js');
+
+  // With nothing configured, everything refuses with a stated reason.
+  check('Tuma reports NOT configured', tuma.isConfigured() === false);
+  check('every missing credential is named',
+    tuma.missingCredentials().length === 4 && tuma.missingCredentials().includes('apiKey'),
+    tuma.missingCredentials().join(','));
+  const push0 = await tuma.collect({ amount: 100, phone: '0722000111' });
+  check('collect REFUSES without credentials', push0.ok === false && push0.reason === 'not_configured');
+  const tok0 = await tuma.accessToken();
+  check('auth REFUSES without credentials', tok0.ok === false && tok0.reason === 'not_configured');
+  check('callback verification fails closed when unset', tuma.verifyCallbackSecret('x').reason === 'callback_secret_not_configured');
+
+  // Phone normalisation (provider-neutral Kenyan rule).
+  check('0722... normalises', tuma.normalisePhone('0722000111') === '254722000111');
+  check('+254... normalises', tuma.normalisePhone('+254722000111') === '254722000111');
+  check('0110... (1-prefix) normalises', tuma.normalisePhone('0110000111') === '254110000111');
+  check('a foreign number is refused', tuma.normalisePhone('+447700900000') === null);
+
+  // Parse the REAL callback shapes Tuma documents (success / fail / cancelled).
+  const okCb = tuma.parseCallback({
+    status: 'completed', merchant_request_id: 'm1', checkout_request_id: 'ws_CO_1',
+    result_code: 0, result_desc: 'ok', mpesa_receipt_number: 'REC1', amount: 600
+  });
+  check('success callback parses', okCb.ok === true && okCb.succeeded === true && okCb.receipt === 'REC1');
+  check('success callback exposes amount', okCb.amount === 600);
+  const failCb = tuma.parseCallback({
+    status: 'failed', checkout_request_id: 'ws_CO_2', result_code: 2001,
+    result_desc: 'initiator invalid', failure_reason: 'Invalid M-Pesa PIN'
+  });
+  check('failure callback parses (not success)', failCb.ok === true && failCb.succeeded === false);
+  check('failure callback carries the reason', failCb.failureReason === 'Invalid M-Pesa PIN');
+  const cancelCb = tuma.parseCallback({ status: 'cancelled', checkout_request_id: 'ws_CO_3', result_code: 1032 });
+  check('cancelled callback parses and is not success', cancelCb.succeeded === false && cancelCb.cancelled === true);
+  const junk = tuma.parseCallback({ nonsense: true });
+  check('an unrecognised payload is refused', junk.ok === false && junk.reason === 'unrecognised_payload');
+
+  // With credentials + a stubbed fetch, exercise the REAL request path.
+  process.env.TUMA_EMAIL = 'shop@example.com';
+  process.env.TUMA_API_KEY = 'tuma_test_key';
+  process.env.BRIEF_PUBLIC_ORIGIN = 'https://brief.example.com';
+  process.env.TUMA_WEBHOOK_SECRET = 'tuma-cb-secret';
+  tuma._resetTokenCache();
+  check('Tuma now reports configured', tuma.isConfigured() === true);
+  check('the callback URL embeds the secret path', tuma.callbackUrl() === 'https://brief.example.com/api/webhooks/tuma/tuma-cb-secret');
+
+  // (5) authentication failure: 401 invalid credentials.
+  let authFail = await tuma.accessToken({ fetchImpl: async () => ({ ok: false, status: 401, json: async () => ({ success: false, message: 'Invalid credentials' }) }) });
+  check('auth failure is surfaced, not faked', authFail.ok === false && authFail.reason === 'auth_failed', JSON.stringify(authFail));
+  // (5) IPRS gate is named distinctly.
+  let iprs = await tuma.accessToken({ fetchImpl: async () => ({ ok: false, status: 403, json: async () => ({ success: false, error_code: 'IPRS_VERIFICATION_REQUIRED' }) }) });
+  check('IPRS gate is named distinctly', iprs.reason === 'iprs_verification_required');
+
+  // A stubbed Tuma: token then a successful push.
+  let tokenCalls = 0;
+  const fakeFetch = async (url, opts) => {
+    if (url.endsWith('/auth/token')) {
+      tokenCalls++;
+      return { ok: true, status: 200, json: async () => ({ success: true, data: { token: 'jwt.test.token' } }) };
+    }
+    if (url.endsWith('/payment/stk-push')) {
+      return {
+        ok: true, status: 200,
+        json: async () => ({
+          success: true, message: 'sent',
+          data: { checkout_request_id: 'ws_CO_9', merchant_request_id: 'mr_9', customer_message: 'Check your phone' }
+        })
+      };
+    }
+    throw new Error('unexpected URL ' + url);
+  };
+  const push = await tuma.collect({ amount: 600, phone: '0722000111', description: 'Brief order xyz', fetchImpl: fakeFetch });
+  check('collect succeeds against a real-shaped response', push.ok === true && push.checkoutRequestId === 'ws_CO_9');
+  check('the provider reference is the checkout_request_id', push.checkoutRequestId === 'ws_CO_9' && push.merchantRequestId === 'mr_9');
+  check('a token was fetched exactly once', tokenCalls === 1);
+  // Cached token: a second push does not re-auth.
+  await tuma.collect({ amount: 600, phone: '0722000111', fetchImpl: fakeFetch });
+  check('the token is cached across pushes', tokenCalls === 1);
+  // (6) Tuma API failure: push rejected.
+  const reject = await tuma.collect({
+    amount: 600, phone: '0722000111',
+    fetchImpl: async () => ({ ok: false, status: 400, json: async () => ({ success: false, message: 'Validation failed' }) })
+  });
+  check('a rejected push is surfaced as failure', reject.ok === false && reject.reason === 'push_rejected');
+
+  // Callback secret verification: right/wrong/unset.
+  check('the correct callback secret is accepted', tuma.verifyCallbackSecret('tuma-cb-secret').ok === true);
+  check('a wrong callback secret is refused', tuma.verifyCallbackSecret('nope').reason === 'bad_secret');
+
+  delete process.env.TUMA_EMAIL;
+  delete process.env.TUMA_API_KEY;
+  delete process.env.BRIEF_PUBLIC_ORIGIN;
+  delete process.env.TUMA_WEBHOOK_SECRET;
+  tuma._resetTokenCache();
+}
+
+console.log('\n=== TUMA PAYMENT E2E + WEBHOOK (simulated provider) ===');
+{
+  process.env.NODE_ENV = 'test';
+  process.env.TUMA_EMAIL = 'shop@example.com';
+  process.env.TUMA_API_KEY = 'tuma_test_key';
+  process.env.BRIEF_PUBLIC_ORIGIN = 'https://brief.example.com';
+  process.env.TUMA_WEBHOOK_SECRET = 'tuma-cb-secret';
+
+  const pay = await import('../src/domain/payment.js');
+  const tuma = await import('../src/connectors/tuma.js');
+  const { default: app } = await import('../src/index.js');
+  store._reset();
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, {
+      method, headers, body: body ? JSON.stringify(body) : undefined
+    });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+
+  try {
+    // A stubbed Tuma rail: token + successful push, in place of the real fetch.
+    const fakeFetch = async (url, opts) => {
+      if (url.endsWith('/auth/token')) {
+        return { ok: true, status: 200, json: async () => ({ success: true, data: { token: 'jwt.test.token' } }) };
+      }
+      if (url.endsWith('/payment/stk-push')) {
+        const b = JSON.parse(opts.body);
+        return {
+          ok: true, status: 200,
+          json: async () => ({
+            success: true, message: 'sent',
+            data: { checkout_request_id: `ws_CO_${b.amount}`, merchant_request_id: 'mr_1', customer_message: 'Check your phone' }
+          })
+        };
+      }
+      throw new Error('unexpected URL ' + url);
+    };
+
+    const A = (await call('/api/auth/register', 'POST', { handle: 'tseller', password: 'a good passphrase' })).body;
+    const B = (await call('/api/auth/register', 'POST', { handle: 'tbuyer', password: 'a good passphrase' })).body;
+    await call('/api/vendors', 'POST', { displayName: 'Tuma Stall' }, A.token);
+    let r = await call('/api/listings', 'POST', { title: 'Rice', type: 'product', price: 300, quantityAvailable: 10 }, A.token);
+    const lid = r.body.listing.id;
+    await call(`/api/listings/${lid}/status`, 'POST', { status: 'active' }, A.token);
+    r = await call('/api/orders', 'POST', { listingId: lid, quantity: 2 }, B.token);
+    const oid = r.body.order.id;
+    check('order placed for 600', r.body.order.total === 600);
+
+    // --- INITIATE through the domain layer with the stubbed rail -----------
+    const { intent } = pay.createIntent({ orderId: oid, payerId: B.user.id, phone: '0722000111' });
+    check('provider is Tuma on the intent', intent.provider === 'tuma');
+    const init = await pay.requestPayment(intent.id, { fetchImpl: fakeFetch });
+    check('requestPayment succeeds against the stubbed Tuma', init.ok === true && init.providerRef === 'ws_CO_600');
+    let stored = pay.getIntent(intent.id);
+    check('the intent is authorized with the provider ref', stored.status === 'authorized' && stored.providerRef === 'ws_CO_600');
+
+    // --- WEBHOOK: fail closed ----------------------------------------------
+    r = await call('/api/webhooks/tuma/wrong', 'POST', { status: 'completed', checkout_request_id: 'ws_CO_600', result_code: 0 });
+    check('a wrong callback secret is refused (403)', r.status === 403, `got ${r.status}`);
+
+    // --- WEBHOOK: success, end to end --------------------------------------
+    r = await call('/api/webhooks/tuma/tuma-cb-secret', 'POST', {
+      status: 'completed', checkout_request_id: 'ws_CO_600', result_code: 0,
+      result_desc: 'ok', mpesa_receipt_number: 'REC600', amount: 600
+    });
+    check('a valid callback is accepted (200)', r.status === 200 && r.body?.ok === true, JSON.stringify(r.body));
+    check('exactly ONE ledger transaction was created', store.all('ledgerTransactions').length === 1);
+    check('the transaction is settled', store.all('ledgerTransactions')[0].status === 'settled');
+    check('the intent is confirmed', pay.getIntent(intent.id).status === 'confirmed');
+    check('the intent records a completion time', Boolean(pay.getIntent(intent.id).confirmedAt));
+    const paidOrder = (await call(`/api/orders/${oid}`, 'GET', undefined, B.token)).body.order;
+    check('the order now reads paid', paidOrder.paid === true && paidOrder.paymentStatus === 'settled');
+
+    // --- WEBHOOK: duplicate callback is an idempotent no-op ----------------
+    r = await call('/api/webhooks/tuma/tuma-cb-secret', 'POST', {
+      status: 'completed', checkout_request_id: 'ws_CO_600', result_code: 0, amount: 600
+    });
+    check('a duplicate callback is a no-op (ok:true, duplicate)', r.status === 200 && r.body?.duplicate === true);
+    check('a duplicate callback created NO second transaction', store.all('ledgerTransactions').length === 1);
+
+    // --- WEBHOOK: amount mismatch fails loudly -----------------------------
+    const { intent: intent2 } = pay.createIntent({ orderId: oid, payerId: B.user.id, phone: '0722000111' });
+    // (a second live intent cannot exist for the same order, so simulate an
+    // authorized state directly -- the domain enforces one live intent/order)
+    store.update('paymentIntents', intent2.id, { status: 'authorized', providerRef: 'ws_CO_BAD' });
+    r = await call('/api/webhooks/tuma/tuma-cb-secret', 'POST', {
+      status: 'completed', checkout_request_id: 'ws_CO_BAD', result_code: 0, amount: 1
+    });
+    check('an amount mismatch is refused', r.body?.ok === false && r.body?.reason === 'amount_mismatch', JSON.stringify(r.body));
+    check('still exactly one ledger transaction', store.all('ledgerTransactions').length === 1);
+
+    // --- WEBHOOK: unknown reference ----------------------------------------
+    r = await call('/api/webhooks/tuma/tuma-cb-secret', 'POST', {
+      status: 'completed', checkout_request_id: 'ws_CO_NOPE', result_code: 0, amount: 600
+    });
+    check('an unknown reference is 200 but not applied', r.status === 200 && r.body?.ok === false && r.body?.reason === 'unknown_reference');
+    check('no extra transaction was created', store.all('ledgerTransactions').length === 1);
+
+    // --- WEBHOOK: cancelled payment does not credit ------------------------
+    const { intent: intent3 } = pay.createIntent({ orderId: oid, payerId: B.user.id, phone: '0722000111' });
+    store.update('paymentIntents', intent3.id, { status: 'authorized', providerRef: 'ws_CO_CANCEL' });
+    r = await call('/api/webhooks/tuma/tuma-cb-secret', 'POST', {
+      status: 'cancelled', checkout_request_id: 'ws_CO_CANCEL', result_code: 1032
+    });
+    check('a cancelled payment is a DISTINCT terminal state', pay.getIntent(intent3.id).status === 'cancelled');
+    check('a cancelled payment created no transaction', store.all('ledgerTransactions').length === 1);
+
+    // --- Unauthenticated initiation is refused -----------------------------
+    const anon = await fetch(`http://127.0.0.1:${port}/api/orders/${oid}/pay`, {
+      method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer bogus' },
+      body: JSON.stringify({ phone: '0722000111' })
+    });
+    check('an invalid token cannot initiate (401)', anon.status === 401);
+  } finally {
+    srv.close();
+    delete process.env.TUMA_EMAIL;
+    delete process.env.TUMA_API_KEY;
+    delete process.env.BRIEF_PUBLIC_ORIGIN;
+    delete process.env.TUMA_WEBHOOK_SECRET;
+    tuma._resetTokenCache();
+  }
 }
 
 console.log('\n=== PAYMENT LIFECYCLE, IDEMPOTENCY, REPLAY (simulated provider refs) ===');
@@ -2856,7 +3057,7 @@ console.log('\n=== PAYMENT LIFECYCLE, IDEMPOTENCY, REPLAY (simulated provider re
   // reconciler catches it rather than trusting it would.
   const rogue = store.insert('paymentIntents', {
     id: 'pay_rogue', orderId: order3.id, payerId: 'usr_buyer', amount: 500,
-    currency: 'KES', status: 'confirmed', provider: 'mpesa', providerRef: 'ws_ROGUE',
+    currency: 'KES', status: 'confirmed', provider: 'tuma', providerRef: 'ws_ROGUE',
     receipt: 'ROGUE1', transactionId: null, createdAt: new Date().toISOString()
   });
   rec = pay.reconcileIntents();
@@ -2926,30 +3127,29 @@ console.log('\n=== PAYMENT HTTP SURFACE ===');
 
     // --- WEBHOOK -------------------------------------------------------------
     // Fails closed with no secret configured.
-    r = await call('/api/webhooks/mpesa/whatever', 'POST', { Body: { stkCallback: { ResultCode: 0 } } });
+    r = await call('/api/webhooks/tuma/whatever', 'POST', { status: 'completed', checkout_request_id: 'ws_X', result_code: 0 });
     check('the webhook REJECTS when no secret is configured (403)', r.status === 403, `got ${r.status}`);
     check('the rejection leaks no detail', JSON.stringify(r.body) === '{"error":"rejected"}', JSON.stringify(r.body));
     check('the rejected callback was still recorded for audit',
       store.all('paymentCallbacks').some((c) => c.accepted === false));
 
     // With a secret configured, a WRONG secret is still refused.
-    process.env.MPESA_CALLBACK_SECRET = 'sekret-value-123';
-    r = await call('/api/webhooks/mpesa/wrong-secret-value', 'POST', { Body: { stkCallback: { ResultCode: 0 } } });
+    process.env.TUMA_WEBHOOK_SECRET = 'sekret-value-123';
+    r = await call('/api/webhooks/tuma/wrong-secret-value', 'POST', { status: 'completed', checkout_request_id: 'ws_X', result_code: 0 });
     check('a WRONG secret is refused (403)', r.status === 403, `got ${r.status}`);
 
-    // Right secret, but a payload Daraja would never send.
-    r = await call('/api/webhooks/mpesa/sekret-value-123', 'POST', { nonsense: true });
+    // Right secret, but a payload Tuma would never send.
+    r = await call('/api/webhooks/tuma/sekret-value-123', 'POST', { nonsense: true });
     check('a malformed payload is 400, not 500', r.status === 400, `got ${r.status}`);
 
     // Right secret, unknown reference: accepted (200) but NOT applied, so
-    // Safaricom does not retry forever.
-    r = await call('/api/webhooks/mpesa/sekret-value-123', 'POST', {
-      Body: { stkCallback: { CheckoutRequestID: 'ws_UNKNOWN', ResultCode: 0, ResultDesc: 'ok',
-        CallbackMetadata: { Item: [{ Name: 'Amount', Value: 600 }, { Name: 'MpesaReceiptNumber', Value: 'ZZZ' }] } } }
+    // Tuma does not retry forever.
+    r = await call('/api/webhooks/tuma/sekret-value-123', 'POST', {
+      status: 'completed', checkout_request_id: 'ws_UNKNOWN', result_code: 0, amount: 600
     });
     check('an unknown reference returns 200 but ok:false', r.status === 200 && r.body?.ok === false, JSON.stringify(r.body));
     check('no transaction was created', store.all('ledgerTransactions').length === 0);
-    delete process.env.MPESA_CALLBACK_SECRET;
+    delete process.env.TUMA_WEBHOOK_SECRET;
 
     // Reconciliation endpoint.
     r = await call('/api/economic/payments/reconcile', 'GET', undefined, B.token);
@@ -2958,7 +3158,7 @@ console.log('\n=== PAYMENT HTTP SURFACE ===');
     // Capabilities must tell the truth.
     r = await call('/api/capabilities');
     check('capabilities still report payments unconfigured', r.body?.payments?.configured === false);
-    check('and name M-Pesa as the intended rail', r.body?.payments?.detail?.provider === 'mpesa');
+    check('and name Tuma as the intended rail', r.body?.payments?.detail?.provider === 'tuma');
   } finally {
     srv.close();
   }
@@ -2973,6 +3173,7 @@ console.log('\n=== PAYOUT: SETTLED EARNINGS -> DISBURSEMENT ===');
   const ordersD = await import('../src/domain/order.js');
   const settle = await import('../src/domain/settlement.js');
   const led = await import('../src/domain/ledger.js');
+  const providers = await import('../src/providers.js');
 
   const v = vendors.createVendor({ ownerId: 'usr_payee', displayName: 'Payout Stall' });
   const l = listings.createListing({ vendorId: v.id, title: 'Crate', type: 'product',
@@ -3002,13 +3203,16 @@ console.log('\n=== PAYOUT: SETTLED EARNINGS -> DISBURSEMENT ===');
   check('nothing paid out yet', e.paidOut === 0);
   check('withdrawable equals net', e.withdrawable === 1900, `got ${e.withdrawable}`);
 
-  // WITHOUT payout credentials the request must be REFUSED, not queued.
+  // WITHOUT a disbursement provider the request must be REFUSED, not queued,
+  // and must never create a payout row or a ledger transaction.
+  const ledgerRowsBefore = store.all('ledgerTransactions').length;
   let threw = null, code = null;
   try { settle.requestPayout({ vendorId: v.id, requestedBy: 'usr_payee', phone: '0722000111' }); }
   catch (err) { threw = err.message; code = err.code; }
   check('a payout is REFUSED with no provider', /unavailable|not configured/i.test(String(threw)), String(threw));
-  check('the refusal is machine-readable', code === 'payout_not_configured');
+  check('the refusal is machine-readable (provider_unavailable)', code === 'provider_unavailable');
   check('no payout row was created', store.all('payouts').length === 0);
+  check('no ledger transaction was created', store.all('ledgerTransactions').length === ledgerRowsBefore);
   check('payoutAvailable is false', e.payoutAvailable === false);
   check('and the reason names the provider', /provider/i.test(e.payoutReason));
 
@@ -3018,14 +3222,16 @@ console.log('\n=== PAYOUT: SETTLED EARNINGS -> DISBURSEMENT ===');
   catch (err) { threw = err.message; }
   check('another actor cannot request this vendor payout', /only the vendor/i.test(String(threw)), String(threw));
 
-  // --- with payout credentials present -------------------------------------
-  // Credentials are set ONLY to exercise the payout ledger arithmetic; no
-  // network call is made because sendPayout() is not invoked here.
-  process.env.MPESA_CONSUMER_KEY = 'test-key';
-  process.env.MPESA_CONSUMER_SECRET = 'test-secret';
-  process.env.MPESA_SHORTCODE = '600000';
-  process.env.MPESA_INITIATOR_NAME = 'testapi';
-  process.env.MPESA_SECURITY_CREDENTIAL = 'test-credential';
+  // --- with a disbursement provider registered -----------------------------
+  // A test provider is registered ONLY to exercise the payout ledger
+  // arithmetic; no network call is made because sendPayout() is not invoked
+  // here. This also proves the provider seam works: the domain layer sees a
+  // configured disbursement provider without knowing anything about it.
+  providers.DISBURSEMENT_PROVIDERS.testpayout = {
+    isPayoutConfigured: () => true,
+    status: () => ({ provider: 'testpayout', configured: true }),
+    disburse: async ({ amount }) => ({ ok: true, providerRef: `TEST_${amount}` })
+  };
 
   e = settle.vendorEarnings(v.id);
   check('payout now reports available', e.payoutAvailable === true);
@@ -3103,9 +3309,68 @@ console.log('\n=== PAYOUT: SETTLED EARNINGS -> DISBURSEMENT ===');
   check('removing a payout row changes the derived figure (no stored balance)',
     settle.vendorEarnings(v.id).withdrawable === before);
 
-  for (const k of ['MPESA_CONSUMER_KEY','MPESA_CONSUMER_SECRET','MPESA_SHORTCODE','MPESA_INITIATOR_NAME','MPESA_SECURITY_CREDENTIAL']) delete process.env[k];
-  check('with credentials removed, payout is unavailable again',
+  delete providers.DISBURSEMENT_PROVIDERS.testpayout;
+  check('with the provider removed, payout is unavailable again',
     settle.vendorEarnings(v.id).payoutAvailable === false);
+}
+
+console.log('\n=== PAYOUT OVER HTTP: 503 / provider_unavailable (no provider) ===');
+{
+  process.env.NODE_ENV = 'test';
+  const { default: app } = await import('../src/index.js');
+  const ordersD = await import('../src/domain/order.js');
+  const ledgerD = await import('../src/domain/ledger.js');
+  store._reset();
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, {
+      method, headers, body: body ? JSON.stringify(body) : undefined
+    });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+
+  try {
+    const S = (await call('/api/auth/register', 'POST', { handle: 'payseller503', password: 'a good passphrase' })).body;
+    const B = (await call('/api/auth/register', 'POST', { handle: 'paybuyer503', password: 'a good passphrase' })).body;
+    const v = (await call('/api/vendors', 'POST', { displayName: '503 Stall' }, S.token)).body.vendor;
+    const l = (await call('/api/listings', 'POST', { title: 'Beans', type: 'product', price: 500, quantityAvailable: 10 }, S.token)).body.listing;
+    await call(`/api/listings/${l.id}/status`, 'POST', { status: 'active' }, S.token);
+    const o = (await call('/api/orders', 'POST', { listingId: l.id, quantity: 2 }, B.token)).body.order;
+
+    // Give the vendor REAL settled earnings: a settled ledger transaction
+    // attached to the order, then fulfil + settle the order -- exactly the
+    // ordinary money path. No provider is involved in this step.
+    const tx = ledgerD.createTransaction({ amount: o.total, currency: 'KES', type: 'sale', counterparty: B.user.id });
+    ledgerD.transitionTransaction(tx.id, 'pending');
+    ledgerD.transitionTransaction(tx.id, 'confirmed');
+    ledgerD.transitionTransaction(tx.id, 'settled');
+    ordersD.attachTransaction(o.id, tx.id);
+    await call(`/api/orders/${o.id}/fulfil`, 'POST', {}, S.token);
+    await call(`/api/orders/${o.id}/settle`, 'POST', {}, S.token);
+
+    const earn = (await call('/api/vendors/me/earnings', 'GET', undefined, S.token)).body.earnings;
+    check('the vendor has settled earnings (net of commission)', earn?.withdrawable === 950, `got ${earn?.withdrawable}`);
+    check('but payoutAvailable is false (no provider)', earn?.payoutAvailable === false);
+
+    // Requesting a payout with earnings but NO disbursement provider must
+    // return an honest 503 / provider_unavailable -- never a queued payout,
+    // never a successful (or fake) ledger transaction.
+    const payoutRowsBefore = store.all('payouts').length;
+    const ledgerRowsBefore = store.all('ledgerTransactions').length;
+    const r = await call('/api/vendors/me/payouts', 'POST', { phone: '0722000111' }, S.token);
+    check('payout over HTTP is refused with 503', r.status === 503, `got ${r.status}`);
+    check('and names provider_unavailable', r.body?.code === 'provider_unavailable', JSON.stringify(r.body));
+    check('no payout row was created', store.all('payouts').length === payoutRowsBefore);
+    check('no ledger transaction was created', store.all('ledgerTransactions').length === ledgerRowsBefore);
+    check('earnings remain withdrawable (nothing was silently disbursed)',
+      (await call('/api/vendors/me/earnings', 'GET', undefined, S.token)).body.earnings?.withdrawable === 950);
+  } finally {
+    srv.close();
+  }
 }
 
 
@@ -4379,6 +4644,388 @@ console.log('\n=== AUCTION OVER HTTP ===');
     srv.close();
     if (prevDev === undefined) delete process.env.BRIEF_DEV_AUTH; else process.env.BRIEF_DEV_AUTH = prevDev;
   }
+}
+
+console.log('\n=== THE VAULT: IDENTITY, FOOTSTEPS, HANDOFF (domain) ===');
+{
+  process.env.HANDOFF_SECRET = 'vault-test-secret';
+  store._reset();
+  const vault = await import('../src/domain/vault.js');
+  const footsteps = await import('../src/domain/footsteps.js');
+  const handoff = await import('../src/domain/handoff.js');
+  const ordersD = await import('../src/domain/order.js');
+  const vendorsD = await import('../src/domain/vendor.js');
+  const listingsD = await import('../src/domain/listing.js');
+  const payD = await import('../src/domain/payment.js');
+
+  // --- creation ------------------------------------------------------------
+  const v = vault.createVault({
+    ownerId: 'usr_host', type: 'gathering', title: 'Rooftop Saturday',
+    description: 'A rooftop gathering', visibility: 'private', location: 'Kilimani'
+  });
+  check('a vault is created with a slug', Boolean(v.id) && Boolean(v.slug), v.slug);
+  check('the owner becomes the first host', vault.participantRole(store, 'usr_host', v.id) === 'host');
+  check('a vault_created footstep exists', store.filter('footsteps', (f) => f.vaultId === v.id).some((f) => f.kind === 'vault_created'));
+
+  // --- authorization -------------------------------------------------------
+  check('the owner has host access', vault.accessRole(store, 'usr_host', v.id) === 'host');
+  check('a stranger has no access', vault.accessRole(store, 'usr_other', v.id) === null);
+  check('only the host may edit', (() => { try { vault.updateVault('usr_other', v.id, { title: 'x' }); return false; } catch { return true; } })());
+
+  // --- participants --------------------------------------------------------
+  const guest = vault.addParticipant('usr_host', { vaultId: v.id, role: 'guest', userId: 'usr_guest', name: 'Jane' });
+  check('a guest participant is added', guest.role === 'guest');
+  check('the guest has guest access', vault.accessRole(store, 'usr_guest', v.id) === 'guest');
+  check('a guest cannot add participants', (() => { try { vault.addParticipant('usr_guest', { vaultId: v.id, role: 'admin', userId: 'x' }); return false; } catch { return true; } })());
+  check('a person_joined footstep recorded', store.filter('footsteps', (f) => f.vaultId === v.id).some((f) => f.kind === 'person_joined'));
+
+  // --- footsteps: ordering, category, immutability, dedupe ---------------
+  const r1 = footsteps.recordFootstep({ vaultId: v.id, kind: 'question_asked', actorId: 'usr_guest', actorName: 'Jane' });
+  const r2 = footsteps.recordFootstep({ vaultId: v.id, kind: 'host_responded', actorId: 'usr_host', actorName: 'Host' });
+  check('footsteps are sequenced', r1.footstep.seq < r2.footstep.seq, `${r1.footstep.seq} vs ${r2.footstep.seq}`);
+  check('footsteps carry a category', r1.footstep.category === 'messages');
+  check('footsteps are human-readable', /Jane/.test(r1.footstep.narrative), r1.footstep.narrative);
+
+  const list = footsteps.listFootsteps(v.id);
+  check('the timeline returns oldest-first', list.footsteps[0].kind === 'vault_created' && list.footsteps[list.footsteps.length - 1].kind === 'host_responded');
+  const onlyPeople = footsteps.listFootsteps(v.id, { category: 'messages' });
+  check('category filtering works', onlyPeople.footsteps.length === 2 && onlyPeople.footsteps.every((f) => f.category === 'messages'));
+
+  // dedupe: the same logical event must not be recorded twice.
+  const d1 = footsteps.recordFootstep({ vaultId: v.id, kind: 'payment_settled', actorId: 'usr_guest', dedupeKey: 'pay:settled:REF1' });
+  const d2 = footsteps.recordFootstep({ vaultId: v.id, kind: 'payment_settled', actorId: 'usr_guest', dedupeKey: 'pay:settled:REF1' });
+  check('a dedupe key prevents a duplicate footstep', d2.reused === true && d2.footstep.id === d1.footstep.id);
+
+  // cursor pagination
+  const all = footsteps.listFootsteps(v.id, { limit: 3 });
+  check('pagination returns a next cursor', all.nextCursor !== null);
+  const page2 = footsteps.listFootsteps(v.id, { cursor: all.nextCursor });
+  check('the second page continues after the cursor', page2.footsteps[0].seq > all.footsteps[all.footsteps.length - 1].seq);
+
+  // --- links + commerce wiring -------------------------------------------
+  const vendor = vendorsD.createVendor({ ownerId: 'usr_vendor', displayName: 'Catering Co' });
+  const listing = listingsD.createListing({ vendorId: vendor.id, title: 'Platters', type: 'service', price: 3000, currency: 'KES', quantityAvailable: 10 });
+  listingsD.transitionListing(listing.id, 'active');
+  const order = ordersD.createOrder({ listingId: listing.id, buyerId: 'usr_host', quantity: 2 });
+  check('an order exists with total 6000', order.total === 6000);
+
+  vault.linkVault('usr_host', v.id, { kind: 'order', id: order.id });
+  check('the vault links the order', vault.getVault(v.id).links.some((l) => l.kind === 'order' && l.id === order.id));
+  check('vaultsForOrder finds the vault', vault.vaultsForOrder(order.id).some((x) => x.id === v.id));
+
+  // Payment settles -> a footstep appears on the linked vault.
+  const { intent } = payD.createIntent({ orderId: order.id, payerId: 'usr_host', phone: '0722000111' });
+  store.update('paymentIntents', intent.id, { status: 'authorized', providerRef: 'ws_CO_VAULT' });
+  const confirmed = payD.confirmPayment({ providerRef: 'ws_CO_VAULT', succeeded: true, amount: 6000, receipt: 'REC_VAULT' });
+  check('payment confirmed', confirmed.ok === true);
+  vault.emitOrderFootsteps(order.id, 'payment_settled', { actorId: 'usr_host', value: 6000, dedupeKey: 'pay:settled:ws_CO_VAULT' });
+  const paymentSteps = store.filter('footsteps', (f) => f.vaultId === v.id && f.kind === 'payment_settled' && f.metadata?.orderId === order.id);
+  check('the vault timeline records the settlement', paymentSteps.length === 1);
+
+  // --- handoff: signed, expiring, replay-protected ------------------------
+  const h = handoff.createHandoff({ vaultId: v.id, participantId: guest.id, purpose: 'handoff', fromChannel: 'web', toChannel: 'telegram' });
+  check('a handoff token is created', h.ok === true && Boolean(h.token));
+  const resolved = handoff.resolveHandoff(h.token);
+  check('the handoff resolves to the vault + participant', resolved.ok === true && resolved.vaultId === v.id && resolved.participantId === guest.id);
+  const replay = handoff.resolveHandoff(h.token);
+  check('a handoff token is single-use (replay refused)', replay.ok === false && replay.reason === 'token_already_used');
+
+  // tampered token refused
+  const tampered = h.token.slice(0, -4) + 'AAAA';
+  check('a tampered token is refused', handoff.resolveHandoff(tampered).ok === false);
+
+  // expiry
+  const exp = handoff.createHandoff({ vaultId: v.id, participantId: guest.id, ttlMs: 1 });
+  await new Promise((r) => setTimeout(r, 5));
+  check('an expired token is refused', handoff.resolveHandoff(exp.token).ok === false && handoff.resolveHandoff(exp.token).reason === 'token_expired');
+
+  // --- requests ------------------------------------------------------------
+  const req = vault.createRequest('usr_guest', { vaultId: v.id, description: 'Need 10 extra chairs', kind: 'service' });
+  check('a request is created open', req.status === 'open');
+  vault.routeRequest('usr_host', { requestId: req.id, vendorId: vendor.id });
+  check('routing sets the vendor and status routed', store.find('vaultRequests', (r) => r.id === req.id).status === 'routed');
+  vault.acceptRequest('usr_vendor', { requestId: req.id });
+  check('the vendor accepts the request', store.find('vaultRequests', (r) => r.id === req.id).status === 'accepted');
+  check('a guest cannot route a request', (() => { try { vault.routeRequest('usr_guest', { requestId: req.id, vendorId: vendor.id }); return false; } catch { return true; } })());
+
+  // --- scoped views --------------------------------------------------------
+  const hostView = vault.vaultView('usr_host', v.id);
+  check('the host sees participants, links, requests', hostView.role === 'host' && Array.isArray(hostView.participants) && Array.isArray(hostView.links) && Array.isArray(hostView.requests));
+  const vendorView = vault.vaultView('usr_vendor', v.id);
+  check('the vendor sees only scoped requests', vendorView.role === 'vendor' && vendorView.requests.length === 1 && vendorView.participants === undefined);
+  const guestView = vault.vaultView('usr_guest', v.id);
+  check('the guest sees a minimal view', guestView.role === 'guest' && guestView.participant !== undefined && guestView.participants === undefined);
+  const publicView = vault.vaultView(null, v.id);
+  check('an anonymous viewer sees a public projection only', publicView.role === 'public' && publicView.participants === undefined && publicView.links === undefined);
+
+  // --- public entry --------------------------------------------------------
+  const pv = vault.createVault({ ownerId: 'usr_host', type: 'event', title: 'Pop-up Market', visibility: 'public' });
+  check('a public vault is publicly enterable', vault.isPubliclyEnterable(pv));
+  const entry = vault.publicEnter(pv.slug, { name: 'Wanjiku', channel: 'web' });
+  check('a guest enters a public vault with a token', entry.ok === true && Boolean(entry.token) && entry.participant.role === 'guest');
+  const privateEntry = vault.publicEnter(v.slug, { name: 'X' });
+  check('a PRIVATE vault refuses public entry', privateEntry.ok === false && privateEntry.reason === 'not_open');
+
+  // --- search --------------------------------------------------------------
+  const sr = vault.searchVaults('Wanjiku');
+  check('search finds a vault by participant name', sr.some((x) => x.vaultId === pv.id));
+  const sr2 = vault.searchVaults('chairs');
+  check('search finds a vault by request text', sr2.some((x) => x.vaultId === v.id));
+
+  // --- resolution ----------------------------------------------------------
+  const rl = vault.resolution();
+  check('resolution surfaces nothing for a settled vault', rl.filter((i) => i.vaultId === v.id && i.kind === 'payment_failed').length === 0);
+
+  // --- closure -------------------------------------------------------------
+  vault.closeVault('usr_host', v.id);
+  check('closing a vault marks it closed', vault.getVault(v.id).status === 'closed');
+  check('a vault_closed footstep exists', store.filter('footsteps', (f) => f.vaultId === v.id).some((f) => f.kind === 'vault_closed'));
+
+  delete process.env.HANDOFF_SECRET;
+}
+
+console.log('\n=== THE VAULT: HTTP SURFACE, SCOPED ACCESS, HANDOFF (over HTTP) ===');
+{
+  process.env.HANDOFF_SECRET = 'vault-test-secret';
+  process.env.NODE_ENV = 'test';
+  const { default: app } = await import('../src/index.js');
+  store._reset();
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token, extraHeaders = {}) => {
+    const headers = { ...extraHeaders };
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, {
+      method, headers, body: body ? JSON.stringify(body) : undefined
+    });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+
+  try {
+    const HOST = (await call('/api/auth/register', 'POST', { handle: 'vhost', password: 'a good passphrase' })).body;
+    const GUEST = (await call('/api/auth/register', 'POST', { handle: 'vguest', password: 'a good passphrase' })).body;
+    const VENDOR = (await call('/api/auth/register', 'POST', { handle: 'vvendor', password: 'a good passphrase' })).body;
+    const STRANGER = (await call('/api/auth/register', 'POST', { handle: 'vstranger', password: 'a good passphrase' })).body;
+
+    // create a vault
+    let r = await call('/api/vaults', 'POST', { type: 'gathering', title: 'Rooftop', visibility: 'private' }, HOST.token);
+    check('HTTP: a vault is created', r.status === 201 && Boolean(r.body?.vault?.id), JSON.stringify(r.body).slice(0, 120));
+    const vaultId = r.body.vault.id;
+    check('HTTP: creator sees role host', r.body.vault.role === 'host');
+
+    // authorization
+    r = await call(`/api/vaults/${vaultId}`, 'GET', undefined, STRANGER.token);
+    check('HTTP: a stranger cannot read a private vault (404)', r.status === 404, `got ${r.status}`);
+    r = await call('/api/vaults', 'GET', undefined, STRANGER.token);
+    check('HTTP: a stranger lists no vaults', r.body?.vaults?.length === 0);
+
+    // add guest + vendor
+    r = await call(`/api/vaults/${vaultId}/participants`, 'POST', { role: 'guest', userId: GUEST.user.id, name: 'Jane' }, HOST.token);
+    check('HTTP: host adds a guest', r.status === 201);
+    r = await call(`/api/vaults/${vaultId}/participants`, 'POST', { role: 'vendor', userId: VENDOR.user.id, name: 'Catering' }, HOST.token);
+    check('HTTP: host adds a vendor', r.status === 201);
+
+    // footsteps via HTTP
+    r = await call(`/api/vaults/${vaultId}/footsteps`, 'POST', { kind: 'question_asked', actorName: 'Jane' }, GUEST.token);
+    check('HTTP: a participant records a footstep', r.status === 201 && r.body?.footstep?.category === 'messages');
+    r = await call(`/api/vaults/${vaultId}/footsteps`, 'GET', undefined, GUEST.token);
+    check('HTTP: footsteps are readable and ordered', r.status === 200 && r.body?.footsteps?.length >= 2);
+    r = await call(`/api/vaults/${vaultId}/footsteps`, 'GET', undefined, STRANGER.token);
+    check('HTTP: a stranger cannot read footsteps (404)', r.status === 404);
+
+    // vendor scoping over HTTP
+    const vendorId = (await call('/api/vendors', 'POST', { displayName: 'Catering Co' }, VENDOR.token)).body.vendor.id;
+    r = await call(`/api/vaults/${vaultId}/requests`, 'POST', { description: 'Chairs', kind: 'service' }, GUEST.token);
+    const requestId = r.body.request.id;
+    r = await call(`/api/vaults/${vaultId}/requests/${requestId}/route`, 'POST', { vendorId }, HOST.token);
+    check('HTTP: host routes a request to the vendor', r.status === 200 && r.body.request.status === 'routed');
+    r = await call(`/api/vaults/${vaultId}`, 'GET', undefined, VENDOR.token);
+    check('HTTP: the vendor sees only scoped requests', r.body.vault.role === 'vendor' && r.body.vault.requests.length === 1 && r.body.vault.participants === undefined);
+
+    // handoff over HTTP
+    const participant = (await call(`/api/vaults/${vaultId}`, 'GET', undefined, GUEST.token)).body.vault.participant;
+    r = await call(`/api/vaults/${vaultId}/handoff`, 'POST', { participantId: participant.id, toChannel: 'telegram' }, HOST.token);
+    check('HTTP: host creates a handoff token', r.status === 201 && Boolean(r.body?.token));
+    const token = r.body.token;
+    r = await call('/api/vaults/handoff/resolve', 'POST', { token });
+    check('HTTP: the handoff resolves to the same vault', r.status === 200 && r.body?.vault?.id === vaultId);
+    r = await call('/api/vaults/handoff/resolve', 'POST', { token });
+    check('HTTP: a replayed handoff is refused (403)', r.status === 403 && r.body?.error === 'token_already_used');
+
+    // public entry
+    r = await call('/api/vaults', 'POST', { type: 'event', title: 'Public Market', visibility: 'public' }, HOST.token);
+    const pubSlug = r.body.vault.slug;
+    r = await call(`/api/public/vaults/${pubSlug}`, 'GET');
+    check('HTTP: a public vault is readable anonymously', r.status === 200 && r.body.vault.role === 'public' && r.body.vault.participants === undefined);
+    r = await call(`/api/public/vaults/${pubSlug}/enter`, 'POST', { name: 'Wanjiku' });
+    check('HTTP: a guest enters via a public link', r.status === 201 && Boolean(r.body?.token));
+    const entryToken = r.body.token;
+    r = await call(`/api/vaults/${vaultId}`, 'GET', undefined, null, { 'x-vault-token': entryToken });
+    check('HTTP: a public entry token cannot read a DIFFERENT private vault', r.status === 404);
+
+    // private vault is not public
+    r = await call(`/api/public/vaults/${(await call(`/api/vaults/${vaultId}`, 'GET', undefined, HOST.token)).body.vault.slug}`, 'GET');
+    check('HTTP: a private vault is not publicly readable', r.status === 404);
+
+    // search + resolution
+    r = await call('/api/vaults/search?q=chairs', 'GET', undefined, HOST.token);
+    check('HTTP: search finds the vault by request text', r.status === 200 && r.body.results.some((x) => x.vaultId === vaultId));
+    r = await call('/api/vaults/resolution', 'GET', undefined, HOST.token);
+    check('HTTP: resolution returns an array', r.status === 200 && Array.isArray(r.body.items));
+
+    // close
+    r = await call(`/api/vaults/${vaultId}/close`, 'POST', {}, HOST.token);
+    check('HTTP: host closes the vault', r.status === 200 && r.body.vault.status === 'closed');
+    r = await call(`/api/vaults/${vaultId}/close`, 'POST', {}, GUEST.token);
+    check('HTTP: a guest cannot close the vault (403)', r.status === 403);
+  } finally {
+    srv.close();
+    delete process.env.HANDOFF_SECRET;
+  }
+}
+
+console.log('\n=== THE GATE: TICKET CODES + CHECK-IN (domain + HTTP) ===');
+{
+  process.env.NODE_ENV = 'test';
+  store._reset();
+  const checkin = await import('../src/domain/checkin.js');
+  const campaigns = await import('../src/domain/campaign.js');
+  const vault = await import('../src/domain/vault.js');
+  const { default: app } = await import('../src/index.js');
+
+  // --- domain-level ---------------------------------------------------------
+  const c = campaigns.createCampaign('usr_host', {
+    title: 'Gate Test Gathering', type: 'event', price: 0, capacity: 2,
+    location: 'Kilimani', startsAt: null, endsAt: null
+  });
+  campaigns.transitionCampaign(c.id, 'published');
+  campaigns.transitionCampaign(c.id, 'live');
+  const live = campaigns.getCampaign(c.id); // re-fetch: register reads live status
+
+  const reg = campaigns.register(live, { attendeeRef: 'wanjiku-1', name: 'Wanjiku' });
+  check('a registration carries an opaque ticket code', /^BRF-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(reg.ticketCode), reg.ticketCode);
+  check('the ticket code is not the registration id', reg.ticketCode !== reg.id);
+
+  const found = checkin.lookupTicket(reg.ticketCode);
+  check('a ticket is found by its code', found?.id === reg.id);
+  check('a garbled code finds nothing', checkin.lookupTicket('BRF-NOPE-NOPE-NOPE') === null);
+
+  const view = checkin.ticketView(reg);
+  check('the gate view exposes name + paid but not contact', view.name === 'Wanjiku' && view.paid === true && view.contact === undefined);
+
+  // Check-in succeeds once, records attribution.
+  const res = checkin.checkIn(reg.ticketCode, 'usr_host');
+  check('check-in succeeds', res.ok === true && res.ticket.status === 'checked_in');
+  check('check-in records operator + timestamp', res.ticket.checkedInBy === 'usr_host' && Boolean(res.ticket.checkedInAt));
+  check('checked-in count is derived', checkin.checkedInCount(c.id) === 1);
+
+  // Re-scan is idempotent.
+  const again = checkin.checkIn(reg.ticketCode, 'usr_host');
+  check('a re-scan is an idempotent no-op', again.ok === true && again.already === true && again.ticket.checkedInAt === res.ticket.checkedInAt);
+
+  // A cancelled ticket refuses.
+  const reg2 = campaigns.register(live, { attendeeRef: 'jane-1', name: 'Jane' });
+  campaigns.setRegistrationStatus(reg2.id, 'cancelled');
+  check('a cancelled ticket refuses check-in', checkin.checkIn(reg2.ticketCode, 'usr_host').reason === 'cancelled');
+
+  // An unpaid (held) spot refuses. Capacity is 2, so register on a fresh campaign.
+  const paid = campaigns.createCampaign('usr_host', { title: 'Paid Gate', type: 'event', price: 1000 });
+  campaigns.transitionCampaign(paid.id, 'published');
+  campaigns.transitionCampaign(paid.id, 'live');
+  const held = campaigns.register(campaigns.getCampaign(paid.id), { attendeeRef: 'unpaid-1', name: 'Held Spot' });
+  check('a paid campaign opens a spot as started (held)', held.status === 'started');
+  check('an unpaid ticket refuses check-in', checkin.checkIn(held.ticketCode, 'usr_host').reason === 'unpaid');
+
+  // --- HTTP surface ---------------------------------------------------------
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, {
+      method, headers, body: body ? JSON.stringify(body) : undefined
+    });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+
+  try {
+    const HOST = (await call('/api/auth/register', 'POST', { handle: 'gatehost', password: 'a good passphrase' })).body;
+    const STRANGER = (await call('/api/auth/register', 'POST', { handle: 'gatestranger', password: 'a good passphrase' })).body;
+
+    // Build a live campaign owned by HOST with a free registration.
+    const cc = (await call('/api/campaigns', 'POST', { title: 'HTTP Gate', type: 'event', price: 0 }, HOST.token)).body.campaign;
+    await call(`/api/campaigns/${cc.id}/publish`, 'POST', {}, HOST.token);
+    await call(`/api/campaigns/${cc.id}/golive`, 'POST', {}, HOST.token);
+    const rr = (await call(`/api/public/campaigns/${cc.publicSlug}/register`, 'POST', { attendeeRef: 'gate-http-1', name: 'Gate Guest' })).body.registration;
+    const regRow = store.filter('registrations', (x) => x.campaignId === cc.id)[0];
+    const ticketCode = regRow?.ticketCode ?? null;
+    check('the HTTP registration produced a ticket code', Boolean(ticketCode));
+
+    // An unauthenticated (bogus-token) reader cannot inspect a ticket.
+    const anon = await call(`/api/tickets/${ticketCode}`, 'GET', undefined, 'bogus-token');
+    check('an unauthenticated reader cannot inspect a ticket (401)', anon.status === 401);
+    // A stranger cannot inspect it.
+    const stranger = await call(`/api/tickets/${ticketCode}`, 'GET', undefined, STRANGER.token);
+    check('a stranger cannot inspect a ticket (404)', stranger.status === 404);
+    // The host can.
+    const host = await call(`/api/tickets/${ticketCode}`, 'GET', undefined, HOST.token);
+    check('the host sees the gate-safe ticket view', host.status === 200 && host.body.ticket.name === 'Gate Guest' && host.body.ticket.contact === undefined);
+
+    // Check-in over HTTP.
+    const cin = await call(`/api/tickets/${ticketCode}/check-in`, 'POST', {}, HOST.token);
+    check('check-in over HTTP succeeds', cin.status === 200 && cin.body.ticket.status === 'checked_in' && cin.body.checkedInCount === 1);
+    const cin2 = await call(`/api/tickets/${ticketCode}/check-in`, 'POST', {}, HOST.token);
+    check('re-scan over HTTP is idempotent', cin2.status === 200 && cin2.body.already === true);
+    // A stranger cannot check someone in.
+    const cinStranger = await call(`/api/tickets/${ticketCode}/check-in`, 'POST', {}, STRANGER.token);
+    check('a stranger cannot check a ticket in (404)', cinStranger.status === 404);
+  } finally {
+    srv.close();
+  }
+}
+
+console.log('\n=== HOST COMMAND CENTRE (derived, scoped) ===');
+{
+  store._reset();
+  const campaigns = await import('../src/domain/campaign.js');
+  const command = await import('../src/domain/command.js');
+  const ledgerD = await import('../src/domain/ledger.js');
+  const vault = await import('../src/domain/vault.js');
+
+  // A host with a paid campaign, one settled + one held registration.
+  const c = campaigns.createCampaign('usr_host', { title: 'Command Gathering', type: 'event', price: 1000 });
+  campaigns.transitionCampaign(c.id, 'published');
+  campaigns.transitionCampaign(c.id, 'live');
+  const live = campaigns.getCampaign(c.id);
+  const reg = campaigns.register(live, { attendeeRef: 'cmd-1', name: 'Alice' });
+  // Settle a transaction for Alice so she registers + revenue is real.
+  const tx = ledgerD.createTransaction({ amount: 1000, currency: 'KES', type: 'sale', campaignId: c.id, registrationId: reg.id, counterparty: 'usr_guest' });
+  ledgerD.transitionTransaction(tx.id, 'pending');
+  ledgerD.transitionTransaction(tx.id, 'confirmed');
+  ledgerD.transitionTransaction(tx.id, 'settled');
+  campaigns.promoteRegistrationForSettledTransaction(tx);
+  campaigns.setRegistrationStatus(reg.id, 'checked_in');
+  // A second, held (unpaid) registration.
+  const held = campaigns.register(live, { attendeeRef: 'cmd-2', name: 'Bob' });
+
+  const cc = command.commandCentre('usr_host');
+  check('command centre resolves for the host', cc !== null);
+  check('money.settled is real (1000)', cc.money.grossSettled === 1000, JSON.stringify(cc.money));
+  check('people.checkedIn is derived (1)', cc.people.checkedIn === 1, String(cc.people.checkedIn));
+  check('people.registered is derived (1)', cc.people.registered === 1, String(cc.people.registered));
+  check('an unpaid held spot appears in NOW', cc.now.some((n) => n.kind === 'unpaid_spot' && n.name === 'Bob'), JSON.stringify(cc.now));
+
+  // A different host sees nothing.
+  const stranger = command.commandCentre('usr_stranger');
+  check('a stranger sees an empty command centre', stranger !== null && stranger.money.grossSettled === 0 && stranger.campaigns.length === 0);
+
+  // Scope: a vault owned by the host appears; one owned by another does not.
+  vault.createVault({ ownerId: 'usr_host', title: 'My Vault', type: 'gathering' });
+  vault.createVault({ ownerId: 'usr_stranger', title: 'Their Vault', type: 'gathering' });
+  const cc2 = command.commandCentre('usr_host');
+  check('the host sees their own vault count', cc2.vaultCount === 1, String(cc2.vaultCount));
 }
 
 console.log(`\n${'='.repeat(52)}\nPASSED ${pass}   FAILED ${fail}   SKIPPED ${skip}\n${'='.repeat(52)}`);

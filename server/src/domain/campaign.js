@@ -22,7 +22,7 @@
 // writable counter anywhere in this file -- see analytics().
 // ---------------------------------------------------------------------------
 
-import { store, newId } from '../store.js';
+import { store, newId, newTicketCode } from '../store.js';
 import { emitSignal } from './signal.js';
 
 export const CAMPAIGN_TYPES = ['popup', 'session', 'drop', 'event'];
@@ -364,6 +364,9 @@ export function publicView(campaign) {
     capacity: campaign.capacity,
     remaining: m.remaining,
     soldOut: m.remaining === 0,
+    // Aggregate social proof: HOW MANY are registered, never WHO. This is a
+    // counted fact ("42 registered"), not a roster.
+    registered: m.registrations,
     // Share metadata. Only what a link preview legitimately needs, and only
     // when it actually exists -- no placeholder image, no invented creator
     // name. `creator` is a display label, never the internal ownerId.
@@ -563,6 +566,12 @@ export function register(campaign, { attendeeRef, name = null, contact = null } 
     name,
     contact,
     status: campaign.price > 0 ? 'started' : 'registered',
+    // The gate's scannable code. Opaque and unguessable; issued once, never
+    // rotated, and independent of the internal id so the gate never needs to
+    // know about row internals.
+    ticketCode: newTicketCode(),
+    checkedInAt: null,
+    checkedInBy: null,
     createdAt: now,
     updatedAt: now
   });

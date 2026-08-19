@@ -598,6 +598,8 @@ export interface PublicCampaign {
   capacity: number | null;
   remaining: number | null;
   soldOut: boolean;
+  /** Aggregate social proof: HOW MANY are registered, never WHO. */
+  registered: number;
 }
 
 export interface Registration {
@@ -609,6 +611,8 @@ export interface Registration {
   status: RegistrationStatus;
   createdAt: string;
   updatedAt: string;
+  /** The attendee's own gate credential, present on their own registration. */
+  ticketCode?: string | null;
 }
 
 
@@ -978,6 +982,57 @@ export interface Dispute {
   updatedAt: string;
 }
 
+// ---------------------------------------------------------------------------
+// PAYMENT (Batch 5 -- Tuma)
+//
+// A payment intent is Brief's record of ONE attempt to collect money for an
+// order. The provider is Tuma (M-Pesa STK Push settling to the LOOP till);
+// the amount is server-derived from the order row and never client-supplied.
+//
+// `providerRef` is Tuma's `checkout_request_id`; Brief's own transaction id
+// is `transactionId`. Both are kept so reconciliation works across a provider
+// migration. Status is a single state machine -- there is no second payment
+// status system anywhere in the client.
+// ---------------------------------------------------------------------------
+
+export type PaymentStatus =
+  | 'intent' | 'authorized' | 'confirmed' | 'failed' | 'cancelled' | 'reversed';
+
+export interface PaymentIntent {
+  id: string;
+  orderId: string;
+  payerId: string;
+  vendorId: string | null;
+  /** Server-derived from the order row. Never client-supplied. */
+  amount: number;
+  currency: string;
+  phone: string | null;
+  status: PaymentStatus;
+  provider: string | null;
+  /** Tuma's checkout_request_id. */
+  providerRef: string | null;
+  /** The M-Pesa receipt number, once paid. */
+  receipt: string | null;
+  /** Brief's own ledger transaction id, once the payment is confirmed. */
+  transactionId: string | null;
+  failureReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+  confirmedAt?: string | null;
+  failedAt?: string | null;
+}
+
+/**
+ * What the server returns from initiating a payment. `charged:true` only means
+ * the STK prompt was sent -- it is NOT a claim that money arrived. Success is
+ * only ever asserted after the server verifies the provider callback.
+ */
+export interface PaymentInitiation {
+  intent: PaymentIntent;
+  reused: boolean;
+  charged: boolean;
+  customerMessage: string | null;
+}
 
 // ---------------------------------------------------------------------------
 // SETTLEMENT & COMPLIANCE (Batch 4)
@@ -1029,4 +1084,231 @@ export interface ArenaMoneyStatus {
   requirements: ComplianceRequirement[];
   unmet: string[];
   reason: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// THE VAULT
+//
+// A Vault is a persistent context layer over a real-world activity. It is NOT
+// a chat, CRM, inbox or AI assistant. Types here mirror the server's domain
+// (server/src/domain/vault.js, footsteps.js, handoff.js).
+//
+// The `role` field on a Vault is the caller's scoped access, decided by the
+// SERVER — never by the client. A host sees everything; a guest sees their own
+// experience; a vendor sees only their scoped requests; the public sees a
+// minimal projection. The client renders whatever the server returns and never
+// fabricates access it was not granted.
+// ---------------------------------------------------------------------------
+
+export type VaultType = 'gathering' | 'event' | 'marketplace' | 'campaign' | 'service' | 'deal';
+export type VaultStatus = 'active' | 'pending' | 'settled' | 'closed' | 'archived';
+export type VaultVisibility = 'public' | 'private' | 'invite_only' | 'token_access';
+export type VaultRole = 'host' | 'guest' | 'vendor' | 'admin' | 'public';
+
+export interface VaultMetrics {
+  readonly participantCount: number;
+  readonly requestCount: number;
+  readonly pendingRequests: number;
+  readonly pendingKes: number;
+  readonly orderCount: number;
+  readonly settled: boolean;
+}
+
+export interface VaultParticipant {
+  id: string;
+  vaultId: string;
+  userId: string | null;
+  role: 'host' | 'guest' | 'vendor' | 'admin';
+  name: string | null;
+  phone: string | null;
+  channel: string | null;
+  joinedAt: string;
+}
+
+export interface VaultChannel {
+  id: string;
+  vaultId: string;
+  channel: string;
+  externalId: string | null;
+  connectedAt: string;
+}
+
+export type VaultRequestStatus = 'open' | 'routed' | 'accepted' | 'declined' | 'fulfilled';
+
+export interface VaultRequest {
+  id: string;
+  vaultId: string;
+  from: string;
+  kind: string;
+  description: string;
+  quantity: number;
+  priceEstimate: number | null;
+  location: string | null;
+  notes: string | null;
+  status: VaultRequestStatus;
+  vendorId: string | null;
+  orderId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VaultLink {
+  kind: 'order' | 'object' | 'campaign' | 'vendor' | 'transaction' | 'listing';
+  id: string;
+}
+
+export interface Vault {
+  id: string;
+  slug: string;
+  type: VaultType;
+  title: string;
+  description: string;
+  status: VaultStatus;
+  visibility: VaultVisibility;
+  ownerId?: string;
+  location: string | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  createdAt: string;
+  closedAt: string | null;
+  /** The caller's scoped role, decided server-side. */
+  role: VaultRole;
+  metrics: VaultMetrics;
+  // Scoped fields, present only for the roles the server grants:
+  links?: VaultLink[];
+  participants?: VaultParticipant[];
+  channels?: VaultChannel[];
+  requests?: VaultRequest[];
+  participant?: { id: string; role: string; name: string | null; joinedAt: string } | null;
+  metadata?: Record<string, unknown>;
+}
+
+export type FootstepCategory =
+  | 'people' | 'messages' | 'commerce' | 'payments' | 'vendors' | 'system' | 'decisions';
+
+export interface Footstep {
+  id: string;
+  vaultId: string;
+  seq: number;
+  kind: string;
+  category: FootstepCategory;
+  label: string;
+  narrative: string;
+  actorId: string | null;
+  actorName: string | null;
+  channel: string | null;
+  value: string | number | null;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface FootstepPage {
+  footsteps: Footstep[];
+  nextCursor: number | null;
+  total: number;
+}
+
+export interface VaultSearchResult {
+  vaultId: string;
+  title: string;
+  status: string;
+  matches: { where: string; snippet: string }[];
+}
+
+export interface ResolutionItem {
+  vaultId: string;
+  vaultTitle: string;
+  kind: string;
+  description?: string;
+  requestId?: string;
+  orderId?: string;
+  failureReason?: string | null;
+  providerRef?: string | null;
+}
+
+export interface VaultEntry {
+  ok: boolean;
+  vault?: Vault;
+  participant?: { id: string; role: string; name: string | null; joinedAt: string };
+  token?: string;
+}
+
+/** What a client may send to create a vault. No ownerId, role or slug. */
+export interface VaultCreate {
+  type?: VaultType;
+  title: string;
+  description?: string;
+  visibility?: VaultVisibility;
+  location?: string | null;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  sourceId?: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// THE GATE — tickets & check-in
+//
+// A ticket is a campaign registration carrying an opaque code. The gate view is
+// deliberately minimal: what an operator needs to admit someone, and nothing
+// that leaks the roster (no contact details, no other attendees).
+// ---------------------------------------------------------------------------
+
+export interface Ticket {
+  code: string;
+  campaignId: string;
+  campaignTitle: string | null;
+  name: string | null;
+  status: string;
+  paid: boolean;
+  checkedInAt: string | null;
+  checkedInBy: string | null;
+}
+
+export interface CheckInResult {
+  ok: boolean;
+  already?: boolean;
+  ticket?: Ticket;
+  checkedInCount?: number;
+}
+
+// ---------------------------------------------------------------------------
+// HOST COMMAND CENTRE
+//
+// A host-facing projection derived from real rows: NOW / MONEY / PEOPLE /
+// DISTRIBUTION / ACTION / NEXT. Every figure is server-derived; the client
+// renders it and computes nothing.
+// ---------------------------------------------------------------------------
+
+export interface CommandCentre {
+  money: {
+    grossSettled: number;
+    grossPending: number;
+    currency: string;
+    campaignCount: number;
+  };
+  people: { registered: number; checkedIn: number; cancelled: number };
+  distribution: { views: number; shares: number };
+  now: { kind: string; campaignId: string; campaignTitle: string; name: string; registrationId: string }[];
+  upcoming: { id: string; title: string; startsAt: string; status: string }[];
+  action: ResolutionItem[];
+  campaigns: {
+    id: string;
+    title: string;
+    type: string;
+    status: string;
+    startsAt: string | null;
+    price: number;
+    currency: string;
+    capacity: number | null;
+    remaining: number | null;
+    soldOut: boolean;
+    registered: number;
+    checkedIn: number;
+    revenueSettled: number;
+    revenuePending: number;
+    views: number;
+    shares: number;
+    conversionPct: number | null;
+  }[];
+  vaultCount: number;
 }

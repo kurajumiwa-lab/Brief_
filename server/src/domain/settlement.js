@@ -26,7 +26,11 @@
 //      invent fractions of a shilling on every transaction.
 // ---------------------------------------------------------------------------
 
-import * as mpesa from '../connectors/mpesa.js';
+import {
+  activeDisbursementProvider,
+  disbursementProvider
+} from '../providers.js';
+import { normalisePhone } from '../connectors/tuma.js';
 import { store, newId } from '../store.js';
 
 /**
@@ -135,7 +139,7 @@ export function vendorEarnings(vendorId, currency = 'KES') {
     .filter((p) => p.status === 'requested' || p.status === 'processing')
     .reduce((sum, p) => sum + p.amount, 0);
   const withdrawable = net - paidOut - pendingPayout;
-  const payoutConfigured = mpesa.isPayoutConfigured();
+  const payoutConfigured = Boolean(activeDisbursementProvider());
   const canPayout = payoutConfigured;
 
   return {
@@ -293,12 +297,15 @@ export function requestPayout({ vendorId, requestedBy, phone = null, idempotency
         : 'everything earned has already been paid out or is in flight'
     );
   }
-  if (!mpesa.isPayoutConfigured()) {
-    // Refuse rather than queue a payout Brief has no way to fulfil.
+  if (!activeDisbursementProvider()) {
+    // Refuse rather than queue a payout Brief has no way to fulfil. No
+    // disbursement provider is connected (Tuma documents no payout endpoint,
+    // and no other payout rail has been selected), so a payout is genuinely
+    // unavailable -- never silently recorded as successful.
     const err = new Error(
-      'payouts are unavailable: no payment provider is configured to disburse funds'
+      'payouts are unavailable: no disbursement provider is configured'
     );
-    err.code = 'payout_not_configured';
+    err.code = 'provider_unavailable';
     throw err;
   }
 
@@ -310,9 +317,9 @@ export function requestPayout({ vendorId, requestedBy, phone = null, idempotency
     // Derived from settled orders. Not a client-supplied figure.
     amount: earnings.withdrawable,
     currency: earnings.currency,
-    phone: phone ? mpesa.normalisePhone(phone) : null,
+    phone: phone ? normalisePhone(phone) : null,
     status: 'requested',
-    provider: 'mpesa',
+    provider: activeDisbursementProvider(),
     providerRef: null,
     failureReason: null,
     idempotencyKey: idempotencyKey ?? null,
@@ -322,7 +329,15 @@ export function requestPayout({ vendorId, requestedBy, phone = null, idempotency
   return { payout, reused: false };
 }
 
-/** Send a requested payout through the provider. */
+/**
+ * Send a requested payout through the provider.
+ *
+ * No disbursement provider is connected (Tuma documents no payout endpoint,
+ * and no other payout rail has been selected), so this refuses honestly
+ * rather than pretending to move money. Registering a provider in
+ * DISBURSEMENT_PROVIDERS and implementing its `disburse()` is the only change
+ * needed to re-enable real payouts.
+ */
 export async function sendPayout(payoutId, { fetchImpl = fetch } = {}) {
   const payout = store.find('payouts', (p) => p.id === payoutId);
   if (!payout) throw new Error('payout not found');
@@ -331,8 +346,20 @@ export async function sendPayout(payoutId, { fetchImpl = fetch } = {}) {
   }
   if (!payout.phone) throw new Error('a valid phone number is required');
 
+  const providerName = activeDisbursementProvider();
+  if (!providerName) {
+    store.update('payouts', payout.id, {
+      status: 'failed',
+      failureReason: 'provider_unavailable: no disbursement provider is connected'
+    });
+    return { ok: false, reason: 'provider_unavailable' };
+  }
+
   store.update('payouts', payout.id, { status: 'processing' });
-  const res = await mpesa.b2cPayout({
+  // A registered disbursement provider exposes `disburse()` (the provider-
+  // neutral operation name).
+  const provider = disbursementProvider(providerName);
+  const res = await provider.disburse({
     amount: Math.round(payout.amount),
     phone: payout.phone,
     remarks: `Brief payout ${payout.id}`,
@@ -343,8 +370,8 @@ export async function sendPayout(payoutId, { fetchImpl = fetch } = {}) {
     store.update('payouts', payout.id, { status: 'failed', failureReason: res.reason });
     return { ok: false, reason: res.reason, detail: res };
   }
-  store.update('payouts', payout.id, { providerRef: res.conversationId });
-  return { ok: true, providerRef: res.conversationId };
+  store.update('payouts', payout.id, { providerRef: res.providerRef });
+  return { ok: true, providerRef: res.providerRef };
 }
 
 /**

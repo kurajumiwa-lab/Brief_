@@ -61,7 +61,20 @@ import type {
   OrderCreate,
   Dispute,
   VendorEarnings,
-  ArenaMoneyStatus
+  ArenaMoneyStatus,
+  PaymentIntent,
+  PaymentInitiation,
+  Vault,
+  VaultCreate,
+  Footstep,
+  FootstepPage,
+  VaultRequest,
+  VaultSearchResult,
+  ResolutionItem,
+  VaultEntry,
+  Ticket,
+  CheckInResult,
+  CommandCentre
 } from './types';
 import { asTarget } from './types';
 import {
@@ -71,7 +84,8 @@ import {
   isTransaction, isWallet, isCampaignShare, isPaymentConfirmation,
   areSources, areRawItems, isBriefItPreview, isVoteTally, isMemberEvidence,
   isVendor, areVendors, isListing, areListings, isOrder, areOrders,
-  isDispute, areDisputes
+  isDispute, areDisputes, isPaymentIntent, arePaymentIntents,
+  isVault, areVaults, isFootstep, areFootsteps, isVaultRequest, areVaultRequests, isTicket, isCommandCentre
 } from './validate';
 
 /**
@@ -643,7 +657,7 @@ export function getPublicCampaign(slug: string): Promise<ApiResult<PublicCampaig
 }
 
 export interface PublicRegisterResult {
-  registration: { id: string; status: RegistrationStatus; createdAt: string };
+  registration: { id: string; status: RegistrationStatus; createdAt: string; ticketCode?: string | null };
   campaign: PublicCampaign;
 }
 
@@ -1001,6 +1015,46 @@ export function createOrder(body: OrderCreate): Promise<ApiResult<Order>> {
 }
 
 /**
+ * Start paying for an order. The phone number is the only input the buyer
+ * supplies; the amount is read from the order row by the server and is never
+ * sent. `charged:true` means the STK prompt was dispatched, NOT that money
+ * arrived -- the client must never treat this as a successful payment. The
+ * server returns the intent, whose `status` is the single source of truth;
+ * poll getOrderPayments() until it leaves `intent`/`authorized`.
+ */
+export function payOrder(
+  orderId: string,
+  phone: string,
+  idempotencyKey?: string
+): Promise<ApiResult<PaymentInitiation>> {
+  const body: Record<string, unknown> = { phone };
+  if (idempotencyKey) body.idempotencyKey = idempotencyKey;
+  return request(
+    `/api/orders/${encodeURIComponent(orderId)}/pay`,
+    { method: 'POST', body: JSON.stringify(body) },
+    (r) =>
+      isPaymentIntent(r?.intent)
+        ? {
+            intent: r.intent,
+            reused: Boolean(r.reused),
+            charged: Boolean(r.charged),
+            customerMessage: typeof r.customerMessage === 'string' ? r.customerMessage : null
+          }
+        : undefined
+  );
+}
+
+/**
+ * Payment intents for an order. The buyer polls this to discover the verified
+ * state -- success is only ever the server's word, never the client's guess.
+ */
+export function getOrderPayments(orderId: string): Promise<ApiResult<PaymentIntent[]>> {
+  return request(`/api/orders/${encodeURIComponent(orderId)}/payments`, undefined, (r) =>
+    arePaymentIntents(r?.payments) ? r.payments : undefined
+  );
+}
+
+/**
  * Vendor marks an order delivered. Fulfilment says nothing about payment:
  * an order can be fulfilled and still unpaid, and the UI shows both facts.
  */
@@ -1148,4 +1202,143 @@ export async function logout(): Promise<ApiResult<{ ok: boolean }>> {
 /** Who the server says we are. Used on boot to restore a session. */
 export function whoAmI(): Promise<ApiResult<AuthedUser>> {
   return request('/api/auth/me', undefined, (r) => (r?.user ? (r.user as AuthedUser) : undefined));
+}
+
+// ---------------------------------------------------------------------------
+// THE VAULT
+//
+// The client never decides a vault's access level: every call returns the
+// SERVER's scoped `role` and the fields that role is allowed to see. Money is
+// never accepted from the client; requests carry a description, not a price.
+// ---------------------------------------------------------------------------
+
+export function createVault(body: VaultCreate): Promise<ApiResult<Vault>> {
+  return request('/api/vaults', { method: 'POST', body: JSON.stringify(body) }, (r) =>
+    isVault(r?.vault) ? r.vault : undefined
+  );
+}
+
+export function listVaults(status?: string): Promise<ApiResult<Vault[]>> {
+  const q = status ? `?status=${encodeURIComponent(status)}` : '';
+  return request(`/api/vaults${q}`, undefined, (r) =>
+    areVaults(r?.vaults) ? r.vaults : undefined
+  );
+}
+
+export function getVault(id: string): Promise<ApiResult<Vault>> {
+  return request(`/api/vaults/${encodeURIComponent(id)}`, undefined, (r) =>
+    isVault(r?.vault) ? r.vault : undefined
+  );
+}
+
+export function closeVault(id: string): Promise<ApiResult<Vault>> {
+  return request(`/api/vaults/${encodeURIComponent(id)}/close`, { method: 'POST', body: '{}' }, (r) =>
+    isVault(r?.vault) ? r.vault : undefined
+  );
+}
+
+export function getFootsteps(id: string, category?: string, cursor?: number): Promise<ApiResult<FootstepPage>> {
+  const params = new URLSearchParams();
+  if (category) params.set('category', category);
+  if (cursor !== undefined) params.set('cursor', String(cursor));
+  const qs = params.toString();
+  return request(`/api/vaults/${encodeURIComponent(id)}/footsteps${qs ? `?${qs}` : ''}`, undefined, (r) =>
+    r && areFootsteps(r.footsteps) ? { footsteps: r.footsteps, nextCursor: r.nextCursor ?? null, total: r.total ?? r.footsteps.length } : undefined
+  );
+}
+
+export function recordFootstep(
+  id: string,
+  body: { kind: string; narrative?: string; actorName?: string; value?: string | number | null }
+): Promise<ApiResult<Footstep>> {
+  return request(`/api/vaults/${encodeURIComponent(id)}/footsteps`, { method: 'POST', body: JSON.stringify(body) }, (r) =>
+    isFootstep(r?.footstep) ? r.footstep : undefined
+  );
+}
+
+export function addVaultParticipant(id: string, body: { role?: string; name?: string; phone?: string; userId?: string }): Promise<ApiResult<{ id: string; role: string }>> {
+  return request(`/api/vaults/${encodeURIComponent(id)}/participants`, { method: 'POST', body: JSON.stringify(body) }, (r) =>
+    r?.participant && typeof r.participant.id === 'string' ? r.participant : undefined
+  );
+}
+
+export function createVaultRequest(id: string, body: { description: string; kind?: string; quantity?: number; notes?: string }): Promise<ApiResult<VaultRequest>> {
+  return request(`/api/vaults/${encodeURIComponent(id)}/requests`, { method: 'POST', body: JSON.stringify(body) }, (r) =>
+    isVaultRequest(r?.request) ? r.request : undefined
+  );
+}
+
+export function listVaultRequests(id: string): Promise<ApiResult<VaultRequest[]>> {
+  return request(`/api/vaults/${encodeURIComponent(id)}/requests`, undefined, (r) =>
+    areVaultRequests(r?.requests) ? r.requests : undefined
+  );
+}
+
+export function routeVaultRequest(id: string, requestId: string, vendorId: string): Promise<ApiResult<VaultRequest>> {
+  return request(
+    `/api/vaults/${encodeURIComponent(id)}/requests/${encodeURIComponent(requestId)}/route`,
+    { method: 'POST', body: JSON.stringify({ vendorId }) },
+    (r) => (isVaultRequest(r?.request) ? r.request : undefined)
+  );
+}
+
+export function acceptVaultRequest(id: string, requestId: string): Promise<ApiResult<VaultRequest>> {
+  return request(
+    `/api/vaults/${encodeURIComponent(id)}/requests/${encodeURIComponent(requestId)}/accept`,
+    { method: 'POST', body: '{}' },
+    (r) => (isVaultRequest(r?.request) ? r.request : undefined)
+  );
+}
+
+export function createHandoff(id: string, body: { participantId: string; toChannel?: string }): Promise<ApiResult<{ token: string; expiresAt: string }>> {
+  return request(`/api/vaults/${encodeURIComponent(id)}/handoff`, { method: 'POST', body: JSON.stringify(body) }, (r) =>
+    typeof r?.token === 'string' ? { token: r.token, expiresAt: r.expiresAt } : undefined
+  );
+}
+
+export function searchVaults(q: string): Promise<ApiResult<VaultSearchResult[]>> {
+  return request(`/api/vaults/search?q=${encodeURIComponent(q)}`, undefined, (r) =>
+    Array.isArray(r?.results) ? r.results : undefined
+  );
+}
+
+export function getResolution(): Promise<ApiResult<ResolutionItem[]>> {
+  return request('/api/vaults/resolution', undefined, (r) =>
+    Array.isArray(r?.items) ? r.items : undefined
+  );
+}
+
+export function getPublicVault(slug: string): Promise<ApiResult<Vault>> {
+  return request(`/api/public/vaults/${encodeURIComponent(slug)}`, undefined, (r) =>
+    isVault(r?.vault) ? r.vault : undefined
+  );
+}
+
+export function publicEnter(slug: string, body: { name?: string; phone?: string }): Promise<ApiResult<VaultEntry>> {
+  return request(`/api/public/vaults/${encodeURIComponent(slug)}/enter`, { method: 'POST', body: JSON.stringify(body) }, (r) =>
+    r && typeof r === 'object' ? (r as VaultEntry) : undefined
+  );
+}
+
+// ---------------------------------------------------------------------------
+// THE GATE — ticket lookup + check-in (host/gate operator)
+// ---------------------------------------------------------------------------
+
+export function getTicket(code: string): Promise<ApiResult<Ticket>> {
+  return request(`/api/tickets/${encodeURIComponent(code)}`, undefined, (r) =>
+    isTicket(r?.ticket) ? r.ticket : undefined
+  );
+}
+
+export function checkInTicket(code: string): Promise<ApiResult<CheckInResult>> {
+  return request(`/api/tickets/${encodeURIComponent(code)}/check-in`, { method: 'POST', body: '{}' }, (r) =>
+    r && typeof r === 'object' ? (r as CheckInResult) : undefined
+  );
+}
+
+/** The host command centre: derived figures across the caller's campaigns + vaults. */
+export function getCommandCentre(): Promise<ApiResult<CommandCentre>> {
+  return request('/api/host/command', undefined, (r) =>
+    isCommandCentre(r?.command) ? r.command : undefined
+  );
 }

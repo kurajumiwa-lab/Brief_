@@ -128,7 +128,7 @@ r = await call(`/api/orders/${order.id}/settle`, 'POST', {}, S.token);
 check('settlement is refused without real money', r.status === 400, `got ${r.status}`);
 
 console.log('\n=== WEBHOOK SECURITY ===');
-r = await call('/api/webhooks/mpesa/anything', 'POST', { Body: { stkCallback: { ResultCode: 0 } } });
+r = await call('/api/webhooks/tuma/anything', 'POST', { status: 'completed', checkout_request_id: 'ws_X', result_code: 0 });
 check('the payment webhook fails CLOSED (403)', r.status === 403, `got ${r.status}`);
 check('and leaks no detail', JSON.stringify(r.body) === '{"error":"rejected"}');
 
@@ -142,7 +142,7 @@ check('earnings are real zeros, not invented money', r.body?.earnings?.net === 0
 check('payout is unavailable', r.body?.earnings?.payoutAvailable === false);
 check('and the reason is stated', /provider/i.test(r.body?.earnings?.payoutReason ?? ''));
 r = await call('/api/vendors/me/payouts', 'POST', { phone: '0722000111' }, S.token);
-check('requesting a payout is refused (503), not queued', r.status === 503 || r.status === 400, `got ${r.status}`);
+check('requesting a payout is refused, not queued', r.status === 503 || r.status === 400, `got ${r.status}`);
 
 console.log('\n=== ARENA (server-persisted, no wallet) ===');
 r = await call('/api/arena/challenges', 'POST', { gameId: 'efootball', stake: 'friendly' }, S.token);

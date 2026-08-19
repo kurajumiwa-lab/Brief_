@@ -99,12 +99,12 @@ live run that actually executed. Status vocabulary is used strictly:
 | Reconciliation | 🟢 | `reconcile()` — proven by **injecting** a rogue settled-order-without-transaction and asserting detection, then `balanced:true` after removal. |
 | Earnings endpoint | 🟢 | `GET /api/vendors/me/earnings`; live returns real zeros, never invented money. |
 | Payment intent layer | 🟢 | `domain/payment.js`: intent · authorization · confirmation · ledger tx · settlement · failure, each a distinct state. Amounts read from the **order row**, never the caller. Buyer-only. |
-| Webhook verification | 🟢 | `POST /api/webhooks/mpesa/:secret` **fails closed** — a wrong or missing secret returns 403 `{"error":"rejected"}` with no detail. Live-asserted. |
+| Webhook verification | 🟢 | `POST /api/webhooks/tuma/:secret` **fails closed** — a wrong or missing secret returns 403 `{"error":"rejected"}` with no detail. Live-asserted. |
 | Replay / duplicate callbacks | 🟢 | Raw callbacks stored in `paymentCallbacks`; a repeated provider reference is recorded and ignored rather than settling twice. |
 | Payment reconciliation | 🟢 | `reconcileIntents()` + `GET /api/economic/payments/reconcile`, balanced live. |
 | Payout chain | 🟢 | `PAYOUT_STATUS`, `requestPayout` → `sendPayout` → `confirmPayout`. Withdrawable is **derived** as (settled net − paid − pending); there is no balance column. 41-assertion proof. |
 | No fake success | 🟢 | With no credentials, `POST /api/orders/:id/pay` returns **503** with `charged:false` and a stated reason, and still records an intent for audit. It never fabricates a payment. |
-| **Real disbursement** | 🔴 | `mpesa.isConfigured()` is **false** — no Daraja credentials exist. `payments.configured=false`, `payoutAvailable=false`. **Genuine external blocker.** |
+| **Real disbursement** | 🔴 | `tuma.isConfigured()` is **false** — no Tuma credentials exist. `payments.configured=false`, `payoutAvailable=false`. **Genuine external blocker.** |
 
 ## 8. Public Distribution / Links — 🟢 BUILT
 
@@ -266,7 +266,7 @@ stay public**.
 | Error handling | 🟢 | Corrupt DB file is moved aside, not fatal. Atomic write via tmp + rename. |
 | Structured logging | 🟢 | `ops.js`: one JSON object per line; `requestLogger` strips query strings and never logs bodies or `Authorization`. |
 | Health + readiness | 🟢 | `GET /api/health` and `GET /api/ready`. Readiness is **real**: injecting a rogue settled order with no transaction flipped it to **503** naming the `settlement` check, and removing it returned 200. |
-| Startup diagnostics | 🟢 | Flags `BRIEF_DEV_AUTH=1` in production, a missing `MPESA_CALLBACK_SECRET` when payments are configured, and an unwritable data dir. |
+| Startup diagnostics | 🟢 | Flags `BRIEF_DEV_AUTH=1` in production, a missing `TUMA_WEBHOOK_SECRET` when payments are configured, and an unwritable data dir. |
 | Backup / recovery | 🟢 | `POST /api/ops/backup` writes a file that parses as JSON, carries the schema version and contains real rows; `pruneBackups(store, 2)` kept exactly 2 of 4. |
 | Graceful shutdown | 🟢 | SIGTERM/SIGINT drain with a 10s force timer, final backup, structured `unhandledRejection` / `uncaughtException` logging. |
 | Scheduled jobs / workers | 🟡 | No daemon by design. Expiry is handled opportunistically: `auctions.sweepExpired()` runs on read, so an ended auction closes the next time anyone looks. |

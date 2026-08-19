@@ -40,7 +40,13 @@ import type {
   MemberEvidence,
   Signal,
   Transaction,
-  Wallet
+  Wallet,
+  PaymentIntent,
+  Vault,
+  Footstep,
+  VaultRequest,
+  Ticket,
+  CommandCentre
 } from './types';
 
 // --- primitives -------------------------------------------------------------
@@ -226,7 +232,8 @@ export function isPublicCampaign(v: unknown): v is PublicCampaign {
   if ('ownerId' in v || 'id' in v || 'objectId' in v || 'metrics' in v) return false;
   return (
     isStr(v.slug) && isStr(v.title) && isStr(v.status) &&
-    isNum(v.price) && isStr(v.currency) && isNumOrNull(v.remaining)
+    isNum(v.price) && isStr(v.currency) && isNumOrNull(v.remaining) &&
+    isNum(v.registered)
   );
 }
 
@@ -430,3 +437,72 @@ export function isDispute(v: unknown): v is Dispute {
 }
 
 export const areDisputes = (v: unknown) => all(v, isDispute);
+
+export function isPaymentIntent(v: unknown): v is PaymentIntent {
+  if (!isObj(v)) return false;
+  return (
+    isStr(v.id) &&
+    isStr(v.orderId) &&
+    isStr(v.payerId) &&
+    isNum(v.amount) &&
+    isStr(v.currency) &&
+    isStr(v.status) &&
+    isStrOrNull(v.providerRef) &&
+    isStrOrNull(v.receipt) &&
+    isStrOrNull(v.transactionId) &&
+    isStrOrNull(v.failureReason) &&
+    isStr(v.createdAt) &&
+    isStr(v.updatedAt)
+  );
+}
+
+export const arePaymentIntents = (v: unknown) => all(v, isPaymentIntent);
+
+// --- The Vault ---------------------------------------------------------------
+
+export function isVault(v: unknown): v is Vault {
+  if (!isObj(v)) return false;
+  return (
+    isStr(v.id) && isStr(v.slug) && isStr(v.type) && isStr(v.title) &&
+    isStr(v.status) && isStr(v.visibility) && isStr(v.role) && isStr(v.createdAt) &&
+    isObj(v.metrics)
+  );
+}
+
+export const areVaults = (v: unknown) => all(v, isVault);
+
+export function isFootstep(v: unknown): v is Footstep {
+  if (!isObj(v)) return false;
+  return (
+    isStr(v.id) && isStr(v.vaultId) && isNum(v.seq) && isStr(v.kind) &&
+    isStr(v.category) && isStr(v.narrative) && isStr(v.createdAt)
+  );
+}
+
+export const areFootsteps = (v: unknown) => all(v, isFootstep);
+
+export function isVaultRequest(v: unknown): v is VaultRequest {
+  if (!isObj(v)) return false;
+  return isStr(v.id) && isStr(v.vaultId) && isStr(v.description) && isStr(v.status);
+}
+
+export const areVaultRequests = (v: unknown) => all(v, isVaultRequest);
+
+export function isTicket(v: unknown): v is Ticket {
+  if (!isObj(v)) return false;
+  return (
+    isStr(v.code) && isStr(v.campaignId) && isStr(v.status) && isBool(v.paid) &&
+    isStrOrNull(v.checkedInAt) && isStrOrNull(v.checkedInBy)
+  );
+}
+
+export function isCommandCentre(v: unknown): v is CommandCentre {
+  if (!isObj(v)) return false;
+  return (
+    isObj(v.money) && isNum(v.money.grossSettled) && isNum(v.money.grossPending) &&
+    isObj(v.people) && isNum(v.people.registered) &&
+    isObj(v.distribution) && isNum(v.distribution.views) &&
+    Array.isArray(v.now) && Array.isArray(v.upcoming) && Array.isArray(v.action) &&
+    Array.isArray(v.campaigns) && isNum(v.vaultCount)
+  );
+}

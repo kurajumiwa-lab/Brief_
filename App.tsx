@@ -1,12 +1,16 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import * as briefApi from './api/briefApi';
 import type { ArenaMoneyStatus } from './api/types';
+import QRCode from 'qrcode';
 import { CampaignDistribution } from './components/CampaignDistribution';
 import { AwaitingPayment } from './components/AwaitingPayment';
 import { Pulse } from './components/Pulse';
 import { SourcesPanel } from './components/SourcesPanel';
 import { ConnectedGroups } from './components/ConnectedGroups';
 import { MoneyPanel } from './components/MoneyPanel';
+import { Vault } from './components/vault/Vault';
+import { CheckIn } from './components/CheckIn';
+import { HostCommand } from './components/HostCommand';
 import { Circles } from './components/Circles';
 import { Marketplace } from './components/Marketplace';
 import { Pursuits } from './components/Pursuits';
@@ -127,7 +131,7 @@ export type MyLayerSection =
   | 'saved' | 'activity' | 'arena' | 'points' | 'circles' | 'groups' | 'campaigns';
 // Workflows secondary: a Journey is either in progress or finished. Inbox and
 // Sources are kept -- they are existing workflow surfaces, not new screens.
-export type WorkflowSection = 'active' | 'completed' | 'inbox' | 'sources' | 'money';
+export type WorkflowSection = 'command' | 'active' | 'completed' | 'inbox' | 'sources' | 'money' | 'vault' | 'gate';
 // Pulse secondary. Pulse is the information layer: freshness, local signals,
 // what groups are surfacing, and emerging activity. It is not an assistant.
 export type PulseSection = 'now' | 'local' | 'groups' | 'signals';
@@ -4674,6 +4678,62 @@ export function campaignSlugFromPath(pathname: string): string | null {
 }
 
 /**
+ * Renders a ticket code as a QR for display at the gate. The code IS the
+ * scannable value; any QR reader recovers the same string.
+ */
+function PublicTicketQr({ code, size = 128 }: { code: string; size?: number }) {
+  const [dataUrl, setDataUrl] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    let live = true;
+    QRCode.toDataURL(code, { width: size, margin: 1, color: { dark: '#0B1A12', light: '#E2ECE5' } })
+      .then((u) => { if (live) setDataUrl(u); })
+      .catch(() => { if (live) setDataUrl(null); });
+    return () => { live = false; };
+  }, [code, size]);
+  if (!dataUrl) return <div className="w-28 h-28 bg-[#09150E] border border-[#1E3A2A] rounded-lg" />;
+  return <img src={dataUrl} alt={`Ticket ${code}`} className="w-28 h-28 rounded-lg" />;
+}
+
+/** The public page's own share actions, built from the URL the viewer is on. */
+function PublicShareRow({ title, description }: { title: string; description: string }) {
+  const [copied, setCopied] = useState(false);
+  // The viewer is ON the public page, so window.location.href is the canonical
+  // link to share (no fabricated origin).
+  const url = typeof window !== 'undefined' ? window.location.href : '';
+  const text = `${title} — ${description}`;
+  const wa = `https://wa.me/?text=${encodeURIComponent(`${text}\n${url}`)}`;
+  const tg = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch { /* clipboard unavailable: no-op */ }
+  };
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      <a href={wa} target="_blank" rel="noreferrer"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#172D20] text-[#8DCF74] text-[10px] font-extrabold border border-[#235F45]">
+        <MessageCircle className="w-3 h-3" /> WhatsApp
+      </a>
+      <a href={tg} target="_blank" rel="noreferrer"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1A2A3A] text-[#7FB2E5] text-[10px] font-extrabold border border-[#235F45]">
+        <ExternalLink className="w-3 h-3" /> Telegram
+      </a>
+      <button onClick={copy}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#102117] text-[#8DCF74] text-[10px] font-extrabold border border-[#235F45] cursor-pointer">
+        <Share2 className="w-3 h-3" /> {copied ? 'Copied' : 'Copy link'}
+      </button>
+      <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#102117] text-[#5C6B52] text-[10px] font-mono border border-[#1E3A2A]" title="Scan to open">
+        <ExternalLink className="w-3 h-3" /> QR
+      </span>
+    </div>
+  );
+}
+
+/**
  * PUBLIC CAMPAIGN PAGE
  *
  * The page a stranger lands on from a shared link. It talks ONLY to the
@@ -4692,7 +4752,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
   const [contact, setContact] = useState<string>('');
   const [busy, setBusy] = useState<boolean>(false);
   const [regError, setRegError] = useState<string | null>(null);
-  const [done, setDone] = useState<null | { status: string }>(null);
+  const [done, setDone] = useState<null | { status: string; ticketCode?: string | null }>(null);
 
   const fetchCampaign = React.useCallback(async () => {
     setLoad({ status: 'loading', data: null, error: null });
@@ -4729,7 +4789,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
       fetchCampaign();
       return;
     }
-    setDone({ status: res.data.registration.status });
+    setDone({ status: res.data.registration.status, ticketCode: res.data.registration.ticketCode ?? null });
     setLoad({ status: 'ready', data: res.data.campaign, error: null });
   };
 
@@ -4800,10 +4860,20 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                   </span>
                 </div>
               )}
+              {c.registered > 0 && (
+                <div className="flex items-center gap-2">
+                  <Users className="w-3.5 h-3.5 text-[#8DCF74] shrink-0" />
+                  <span className="text-xs text-[#E2ECE5]">
+                    {c.registered} {c.registered === 1 ? 'person' : 'people'} registered
+                  </span>
+                </div>
+              )}
             </div>
 
+            <PublicShareRow title={c.title} description={c.description} />
+
             {done && (
-              <div className="border border-[#235F45] bg-[#102117] rounded-2xl p-5 space-y-2">
+              <div className="border border-[#235F45] bg-[#102117] rounded-2xl p-5 space-y-3">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-[#00FF42] shrink-0" />
                   <p className="text-sm font-extrabold text-[#E2ECE5]">
@@ -4815,6 +4885,16 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                     ? 'Your spot is held. It is confirmed once payment is arranged with the organiser.'
                     : 'The organiser can see you on their list.'}
                 </p>
+                {done.ticketCode && (
+                  <div className="flex items-center gap-3 pt-1">
+                    <PublicTicketQr code={done.ticketCode} />
+                    <div className="min-w-0 space-y-1">
+                      <p className="text-[9px] font-mono uppercase text-[#5C6B52]">Your ticket</p>
+                      <p className="text-[11px] font-mono text-[#E8D48B] break-all select-all">{done.ticketCode}</p>
+                      <p className="text-[10px] text-[#5C6B52] leading-snug">Show this code at the gate.</p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -4920,7 +5000,7 @@ export function App() {
   const [activeTab, setActiveTab] = useState<Destination>('nearby');
   const [nearbySection, setNearbySection] = useState<NearbySection>('stream');
   const [myLayerSection, setMyLayerSection] = useState<MyLayerSection>('saved');
-  const [workflowSection, setWorkflowSection] = useState<WorkflowSection>('active');
+  const [workflowSection, setWorkflowSection] = useState<WorkflowSection>('command');
   const [pulseSection, setPulseSection] = useState<PulseSection>('now');
 
   // --- Ingestion backend (real connectors) ---------------------------------
@@ -6834,6 +6914,9 @@ export function App() {
           <div className="max-w-3xl mx-auto px-4 pt-4">
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
               {([
+                // Command is the host's landing surface: the overview of what
+                // needs attention, money, people, distribution and what's next.
+                ['command', 'Command'],
                 ['active', `Active (${activeJourneys.length})`],
                 ['completed', `Completed (${completedJourneys.length})`],
                 ['inbox', `Inbox${pendingCandidates.length > 0 ? ` (${pendingCandidates.length})` : ''}`],
@@ -6841,7 +6924,9 @@ export function App() {
                 // A SECTION inside Workflows, not a sixth destination. The
                 // rail stays five doors wide: Nearby / Arena / My Layer /
                 // Workflows / Pulse.
-                ['money', 'Money']
+                ['money', 'Money'],
+                ['vault', 'Vault'],
+                ['gate', 'Gate']
               ] as [WorkflowSection, string][]).map(([id, label]) => (
                 <button
                   key={id}
@@ -9158,6 +9243,20 @@ export function App() {
           <div className="max-w-3xl mx-auto px-4 py-6">
             <MoneyPanel />
           </div>
+        )}
+
+        {activeTab === 'workflows' && workflowSection === 'command' && (
+          <div className="max-w-3xl mx-auto px-4 py-6">
+            <HostCommand />
+          </div>
+        )}
+
+        {activeTab === 'workflows' && workflowSection === 'vault' && (
+          <Vault />
+        )}
+
+        {activeTab === 'workflows' && workflowSection === 'gate' && (
+          <CheckIn />
         )}
 
         {activeTab === 'workflows' && workflowSection === 'sources' && (
