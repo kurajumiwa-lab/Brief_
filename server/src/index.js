@@ -3260,9 +3260,14 @@ app.post('/api/vaults/handoff/resolve', (req, res) => {
 // falls back to index.html for client-side routes. This is a no-op when the
 // build does not exist (development/test), so the API-only server behaves
 // exactly as it always has.
-const servingFrontend =
-  process.env.NODE_ENV === 'production' &&
-  fs.existsSync(path.join(FRONTEND_DIST, 'index.html'));
+// Serve the compiled frontend whenever the build exists.
+//
+// Deliberately NOT gated on NODE_ENV: Railway/nixpacks does not reliably set
+// NODE_ENV=production, and gating on it silently disabled frontend serving so
+// the deployed site returned 404 on '/'. The build's presence is the only
+// honest signal — if the Vite output exists, serve it; if not, the API-only
+// server behaves exactly as before.
+const servingFrontend = fs.existsSync(path.join(FRONTEND_DIST, 'index.html'));
 
 if (servingFrontend) {
   const indexHtml = fs.readFileSync(path.join(FRONTEND_DIST, 'index.html'), 'utf8');
@@ -3326,6 +3331,19 @@ if (servingFrontend) {
   });
 }
 
+// When no frontend build is present, '/' returns an actionable message instead
+// of Express's bare "Cannot GET /" — the operator sees what is missing and how
+// to fix it.
+if (!servingFrontend) {
+  app.get('/', (_req, res) => {
+    res.status(503).type('text/plain').send(
+      'Brief is running (API only). The frontend build is missing.\n' +
+      `Expected at: ${FRONTEND_DIST}\n` +
+      'Run `npm run build:client` at deploy time (railway.json buildCommand).\n'
+    );
+  });
+}
+
 // A failing connector must never take Brief down (spec 30).
 app.use((err, _req, res, _next) => {
   // A body express could not parse is a CLIENT error. Returning 500 made
@@ -3360,6 +3378,13 @@ if (process.env.NODE_ENV !== 'test') {
       store, capabilities: { payments: ledger.providerStatus() }
     });
     ops.logInfo('server_started', { port: Number(PORT), env: diag.env, dataFile: diag.dataFile });
+    // Say, in one line, whether the frontend is being served and from where —
+    // a 404-on-"/" deployment is diagnosed instantly instead of at 3am.
+    ops.logInfo('frontend_serving', {
+      serving: servingFrontend,
+      dist: FRONTEND_DIST,
+      reason: servingFrontend ? null : `no build found at ${FRONTEND_DIST} — run \`npm run build:client\``
+    });
     ops.logInfo('connectors', {
       telegram: telegram.isConfigured(),
       whatsapp: whatsapp.isConfigured(),
