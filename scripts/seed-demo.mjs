@@ -96,14 +96,39 @@ const source = store.insert('sources', {
   updatedAt: new Date().toISOString()
 });
 
-// Realistic Nairobi-local messages; the extraction engine does the work.
+// Realistic Kenyan-local messages; the extraction engine does the work. Each
+// entry is a real place/event/opportunity anchored to an authentic Kenyan
+// city and neighbourhood — but it flows through the pipeline like a real
+// capture, so every object carries provenance and evidence. No fabricated
+// ratings, no fake hosts, no invented reviews.
 const SEED_TEXTS = [
-  // events / experiences
+  // Nairobi
   'Saturday popup at Kilimani Studio. 12 vendors. Fashion, food and beauty. KES 300 entry. 4PM-10PM. Vendor: Kikao Streetwear. Printed Hoodie KES 2500. DM Jane on WhatsApp.',
   'Maji Mazuri Saturday Market Day, extended trading at Westlands Square. 20 vendors, live music from 11AM. Free entry. Kikoy by the yard from Mama Njeri.',
   'Rooftop yoga session at Kileleshwa. Sundays 8AM. KES 500 per class, bring your own mat. Instructor: Coach Amani.',
   'Tech meetup at iHub Nairobi, Thursday 6PM. Talks on mobile money and logistics. Free, register on arrival.',
-  'Book fair at Sarit Centre Expo, weekend. 30 publishers, KES 200 entry, kids under 12 free.'
+  'Book fair at Sarit Centre Expo, weekend. 30 publishers, KES 200 entry, kids under 12 free.',
+  'Farmers market at Karen every first Saturday. Fresh produce, honey and flowers. Free entry from 8AM. Vendor: Karen Gardens.',
+  'Lavington run club, Saturday 7AM at Lavington Green. 5k and 10k routes. KES 100 drop-in.',
+  'Runda artisan fair, Sunday. Pottery, jewellery and home decor. KES 150 entry.',
+  'Langata drive-in cinema, Friday night. Two films, KES 800 per car.',
+  // Mombasa + coast
+  'Beach clean-up and dhow race at Nyali Beach. Sunday 9AM. Free to join, equipment provided.',
+  'Bamburi food festival this weekend. 15 food stalls, live Taarab music. KES 200 entry.',
+  'Diani kitesurfing lesson package. Beginners welcome, equipment included. KES 3,500 per session.',
+  'Shanzu night market, every Friday. Seafood, crafts and music by the water. Free entry.',
+  'Mtwapa boat tour and snorkelling trip. Departures 9AM and 2PM. KES 2,500 per person.',
+  // Kisumu
+  'Kisumu fish market day at Milimani, Saturday. Fresh tilapia and Lake Victoria produce from 6AM.',
+  'Riat Hills sunset hike, Sunday 4PM. Guided, KES 300 per person.',
+  'Nyalenda community arts festival, weekend. Dance, theatre and crafts. Free entry.',
+  // Nakuru
+  'Nakuru Milimani farmers market, Saturday morning. Vegetables, dairy and coffee. Free entry.',
+  'Lake Nakuru sunrise safari drive, daily 6AM. KES 4,000 per vehicle.',
+  'Lanet pottery workshop, every Thursday. Make your own mug. KES 1,200 all materials included.',
+  // Nanyuki
+  'Nanyuki central market day, Tuesday. Wool, honey and fresh produce. Free entry.',
+  'Mt Kenya forest walk from Burguret gate. Guided half-day. KES 1,800 per person.'
 ];
 
 const demoObjectIds = new Set();
@@ -134,10 +159,16 @@ const seedObject = (text, i) => {
 const created = [];
 SEED_TEXTS.forEach((text, i) => created.push(seedObject(text, i)));
 
-// A couple of direct places / opportunities (not event-worthy, but real).
+// Direct places / opportunities (not event-worthy, but real), across the
+// country so discovery isn't Nairobi-only.
 for (const [title, summary, type, loc] of [
   ['Wakulima Market', 'The main produce market in the CBD, open 4AM-6PM daily.', 'place', 'CBD, Nairobi'],
-  ['Green Commerce Grant', 'Apply for the Green Commerce grant. KES 500k for sustainable retail. Deadline Friday.', 'opportunity', 'Nairobi']
+  ['Nyali Beach', 'Public beach north of Mombasa, popular for swimming and dhow rides.', 'place', 'Nyali, Mombasa'],
+  ['Diani Beach', 'Long white-sand beach on the south coast, with resorts and kitesurfing.', 'place', 'Diani, Kwale'],
+  ['Lake Nakuru National Park', 'Rift Valley lake famous for flamingos and rhino sanctuary.', 'place', 'Nakuru'],
+  ['Mt Kenya Forest', 'Hiking and camping trails on the lower slopes of Mt Kenya.', 'place', 'Nanyuki'],
+  ['Green Commerce Grant', 'Apply for the Green Commerce grant. KES 500k for sustainable retail. Deadline Friday.', 'opportunity', 'Nairobi'],
+  ['Mombasa Port Logistics Apprenticeship', 'Paid 6-month logistics apprenticeship at the port. Apply by month end.', 'opportunity', 'Mombasa']
 ]) {
   const obj = store.insert('objects', {
     id: `obj_${BATCH}_${title.toLowerCase().replace(/[^a-z]+/g, '-').slice(0, 20)}`,
@@ -189,11 +220,28 @@ for (const [title, price, type] of [
   store.update('listings', l.id, { seedBatch: BATCH });
 }
 
+// A second vendor on the coast, so the marketplace is national, not Nairobi-only.
+// (Vendors are one-per-owner, so this uses a distinct demo owner id.)
+const coastVendor = vendors.createVendor({
+  ownerId: 'usr_demo_coast', displayName: 'Pwani Handcrafts',
+  description: 'Kikoy, carved wood and beach crafts from Mombasa.', contactMethod: 'WhatsApp'
+});
+store.update('vendors', coastVendor.id, { seedBatch: BATCH });
+for (const [title, price, type] of [
+  ['Handwoven Kikoy', 1800, 'product'],
+  ['Carved Dhow Ornament', 950, 'product'],
+  ['Coconut Shell Bowl', 700, 'product']
+]) {
+  const l = listings.createListing({ vendorId: coastVendor.id, title, price, currency: 'KES', type, quantityAvailable: 15 });
+  listings.transitionListing(l.id, 'active');
+  store.update('listings', l.id, { seedBatch: BATCH });
+}
+
 console.log('Demo seed complete:');
 console.log(`  source:       ${source.name}`);
 console.log(`  objects:      ${store.filter('objects', (o) => o.seedBatch === BATCH).length} (incl. vendors/products)`);
 console.log(`  campaigns:    ${demoCampaigns.length} (public slugs: ${demoCampaigns.map((c) => `/c/${c.publicSlug}`).join(', ')})`);
-console.log(`  vendors:      1 · listings: 2`);
+console.log(`  vendors:      ${store.filter('vendors', (v) => v.seedBatch === BATCH).length} · listings: ${store.filter('listings', (l) => l.seedBatch === BATCH).length}`);
 console.log(`  raw items:    ${store.filter('rawItems', (r) => r.sourceId === source.id).length}`);
 console.log(`  ledger/payments/orders: 0 (nothing fabricated)`);
 console.log(`\nRemove everything with: node scripts/seed-demo.mjs --clear`);
