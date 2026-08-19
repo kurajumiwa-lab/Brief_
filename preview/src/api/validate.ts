@@ -44,7 +44,8 @@ import type {
   PaymentIntent,
   Vault,
   Footstep,
-  VaultRequest
+  VaultRequest,
+  Ticket
 } from './types';
 
 // --- primitives -------------------------------------------------------------
@@ -484,3 +485,11 @@ export function isVaultRequest(v: unknown): v is VaultRequest {
 }
 
 export const areVaultRequests = (v: unknown) => all(v, isVaultRequest);
+
+export function isTicket(v: unknown): v is Ticket {
+  if (!isObj(v)) return false;
+  return (
+    isStr(v.code) && isStr(v.campaignId) && isStr(v.status) && isBool(v.paid) &&
+    isStrOrNull(v.checkedInAt) && isStrOrNull(v.checkedInBy)
+  );
+}

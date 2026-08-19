@@ -1240,3 +1240,29 @@ export interface VaultCreate {
   endsAt?: string | null;
   sourceId?: string | null;
 }
+
+// ---------------------------------------------------------------------------
+// THE GATE — tickets & check-in
+//
+// A ticket is a campaign registration carrying an opaque code. The gate view is
+// deliberately minimal: what an operator needs to admit someone, and nothing
+// that leaks the roster (no contact details, no other attendees).
+// ---------------------------------------------------------------------------
+
+export interface Ticket {
+  code: string;
+  campaignId: string;
+  campaignTitle: string | null;
+  name: string | null;
+  status: string;
+  paid: boolean;
+  checkedInAt: string | null;
+  checkedInBy: string | null;
+}
+
+export interface CheckInResult {
+  ok: boolean;
+  already?: boolean;
+  ticket?: Ticket;
+  checkedInCount?: number;
+}

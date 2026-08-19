@@ -71,7 +71,9 @@ import type {
   VaultRequest,
   VaultSearchResult,
   ResolutionItem,
-  VaultEntry
+  VaultEntry,
+  Ticket,
+  CheckInResult
 } from './types';
 import { asTarget } from './types';
 import {
@@ -82,7 +84,7 @@ import {
   areSources, areRawItems, isBriefItPreview, isVoteTally, isMemberEvidence,
   isVendor, areVendors, isListing, areListings, isOrder, areOrders,
   isDispute, areDisputes, isPaymentIntent, arePaymentIntents,
-  isVault, areVaults, isFootstep, areFootsteps, isVaultRequest, areVaultRequests
+  isVault, areVaults, isFootstep, areFootsteps, isVaultRequest, areVaultRequests, isTicket
 } from './validate';
 
 /**
@@ -1314,5 +1316,21 @@ export function getPublicVault(slug: string): Promise<ApiResult<Vault>> {
 export function publicEnter(slug: string, body: { name?: string; phone?: string }): Promise<ApiResult<VaultEntry>> {
   return request(`/api/public/vaults/${encodeURIComponent(slug)}/enter`, { method: 'POST', body: JSON.stringify(body) }, (r) =>
     r && typeof r === 'object' ? (r as VaultEntry) : undefined
+  );
+}
+
+// ---------------------------------------------------------------------------
+// THE GATE — ticket lookup + check-in (host/gate operator)
+// ---------------------------------------------------------------------------
+
+export function getTicket(code: string): Promise<ApiResult<Ticket>> {
+  return request(`/api/tickets/${encodeURIComponent(code)}`, undefined, (r) =>
+    isTicket(r?.ticket) ? r.ticket : undefined
+  );
+}
+
+export function checkInTicket(code: string): Promise<ApiResult<CheckInResult>> {
+  return request(`/api/tickets/${encodeURIComponent(code)}/check-in`, { method: 'POST', body: '{}' }, (r) =>
+    r && typeof r === 'object' ? (r as CheckInResult) : undefined
   );
 }

@@ -2680,9 +2680,15 @@ app.post('/api/tickets/:code/check-in', (req, res) => {
       : result.reason === 'unpaid' ? 402
       : result.reason === 'invalid_transition' ? 409
       : 400;
-    return res.status(status).json({ ok: false, reason: result.reason, ticket: result.ticket ?? null });
+    const message = {
+      cancelled: 'This ticket has been cancelled.',
+      unpaid: 'Payment is still pending for this ticket.',
+      invalid_transition: 'This ticket cannot be checked in right now.',
+      not_found: 'Ticket not found.'
+    }[result.reason] ?? 'Check-in failed.';
+    return res.status(status).json({ error: message, reason: result.reason, ticket: result.ticket ?? null });
   }
-  res.status(result.already ? 200 : 200).json({
+  res.json({
     ok: true,
     already: Boolean(result.already),
     ticket: result.ticket,
@@ -2716,9 +2722,12 @@ app.post('/api/public/campaigns/:slug/register', (req, res) => {
       name: req.body?.name ?? null,
       contact: req.body?.contact ?? null
     });
-    // Only the registrant's own record, never the roster.
+    // Only the registrant's own record, never the roster. The ticketCode is
+    // the attendee's own gate credential, so it is returned to THEM (and only
+    // to them) here — a code is the thing they show at the gate, not a roster
+    // leak.
     res.status(201).json({
-      registration: { id: reg.id, status: reg.status, createdAt: reg.createdAt },
+      registration: { id: reg.id, status: reg.status, createdAt: reg.createdAt, ticketCode: reg.ticketCode ?? null },
       campaign: campaigns.publicView(campaigns.getPublicBySlug(req.params.slug) ?? c)
     });
   } catch (e) {
