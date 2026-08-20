@@ -262,9 +262,14 @@ export function installGracefulShutdown(server, { onShutdown = null, timeoutMs =
     shuttingDown = true;
     logInfo('shutdown_started', { signal });
 
+    // A crash is a FAILURE and must exit non-zero so a supervisor with
+    // `restartPolicyType: "on_failure"` (Railway) actually restarts it. A
+    // deliberate stop (SIGTERM on deploy, SIGINT, manual) is a clean exit 0.
+    const exitCode = signal === 'uncaughtException' ? 1 : 0;
+
     const timer = setTimeout(() => {
       logWarn('shutdown_forced', { after: timeoutMs });
-      process.exit(1);
+      process.exit(exitCode);
     }, timeoutMs);
     // Do not let the timer itself hold the process open.
     if (typeof timer.unref === 'function') timer.unref();
@@ -274,8 +279,8 @@ export function installGracefulShutdown(server, { onShutdown = null, timeoutMs =
         logError('shutdown_hook_failed', { message: String(e.message ?? e) });
       }
       clearTimeout(timer);
-      logInfo('shutdown_complete', {});
-      process.exit(0);
+      logInfo('shutdown_complete', { exitCode });
+      process.exit(exitCode);
     });
   };
 
