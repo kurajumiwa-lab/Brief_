@@ -7,6 +7,7 @@ import * as trust from '../domain/trust.js';
 import * as signals from '../domain/signal.js';
 import * as notifications from '../domain/notifications.js';
 import * as campaigns from '../domain/campaign.js';
+import * as media from '../domain/media.js';
 import { requireAuth, CURRENT_USER } from './helpers.js';
 
 import { requireFeature } from '../features.js';
@@ -78,7 +79,11 @@ app.get('/api/objects', (req, res) => {
     };
   });
 
-  res.json({ objects: enriched });
+  // Media association: resolve the best honest image for each object once,
+  // tagging the level used (exact/venue/location/category/none) so the client
+  // can render an appropriate fallback instead of a wrong image.
+  const withMedia = media.enrichObjects(enriched);
+  res.json({ objects: withMedia, mediaProvider: media.providerStatus() });
 });
 
 

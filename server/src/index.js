@@ -43,6 +43,7 @@ import { register as campaignsRoutes } from './routes/campaigns.js';
 import { register as vaultsRoutes } from './routes/vaults.js';
 import { register as peopleRoutes } from './routes/people.js';
 import { register as teaRoutes } from './routes/tea.js';
+import { register as mediaRoutes } from './routes/media.js';
 
 const app = express();
 
@@ -120,6 +121,7 @@ campaignsRoutes(app);
 vaultsRoutes(app);
 peopleRoutes(app);
 teaRoutes(app);
+mediaRoutes(app);
 
 // --- Production frontend serving -------------------------------------------
 //

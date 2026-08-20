@@ -126,6 +126,12 @@ const EMPTY = {
   // publicly. See domain/tea.js.
   teaArticles: [],
 
+  // --- Media (visual association, home-feed master build) ------------------
+  // The editorial media library: category/editorial images an editor approves
+  // for use as fallback visuals. Empty until uploaded — never pre-fabricated.
+  // See domain/media.js.
+  mediaLibrary: [],
+
   // --- Person (report §4.4) -------------------------------------------------
   // A first-class entity over every identity Brief holds. A person is a stable
   // id; personAliases bind it to concrete external identifiers (user id, phone,

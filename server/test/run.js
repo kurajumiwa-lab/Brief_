@@ -3004,6 +3004,52 @@ console.log('\n=== TEA EDITORIAL SYSTEM (home-feed Phase 4) ===');
   }
 }
 
+console.log('\n=== MEDIA ASSOCIATION (home-feed Phase 6) ===');
+{
+  const media = await import('../src/domain/media.js');
+
+  // No provider configured -> reported honestly, never pretended.
+  check('no image provider is configured', media.providerStatus().configured === false);
+  check('the reason is stated, not hidden', /No image provider/.test(media.providerStatus().reason));
+
+  // An object with its own exact image resolves at level 'exact'.
+  const exact = media.resolveMedia({ id: 'a', title: 'Pop-up', imageUrl: 'https://x/y.jpg', imageAlt: 'popup' });
+  check('an exact image is preferred', exact.level === 'exact' && exact.image?.url === 'https://x/y.jpg');
+
+  // An object with no image resolves to level 'none' — never a random image.
+  const bare = media.resolveMedia({ id: 'b', title: 'Thing', category: 'Event' });
+  check('no image -> level none', bare.level === 'none' && bare.image === null);
+
+  // A vendor image is used when the object links a provider and has no own image.
+  store.insert('vendors', { id: 'v1', ownerId: 'u', displayName: 'Kikao', imageUrl: 'https://x/vendor.jpg' });
+  const viaVenue = media.resolveMedia({ id: 'c', title: 'Hoodie', providerObjectId: 'v1', metadata: {} });
+  check('venue image is the second fallback', viaVenue.level === 'venue' && viaVenue.image?.url === 'https://x/vendor.jpg');
+
+  // A location image is the third fallback.
+  store.insert('objects', { id: 'loc1', title: 'Kilimani Studio', imageUrl: 'https://x/loc.jpg' });
+  const viaLoc = media.resolveMedia({ id: 'd', title: 'Gig', locationObjectId: 'loc1' });
+  check('location image is the third fallback', viaLoc.level === 'location' && viaLoc.image?.url === 'https://x/loc.jpg');
+
+  // A category image is the fourth fallback, and only when APPROVED.
+  media.recordMediaLibraryImage({ kind: 'category', key: 'Event', url: 'https://x/cat.jpg', status: 'draft' });
+  check('a draft category image is NOT used', media.resolveMedia({ id: 'e', title: 'Gig', category: 'Event' }).level === 'none');
+  media.recordMediaLibraryImage({ kind: 'category', key: 'Event', url: 'https://x/cat.jpg', status: 'approved' });
+  const viaCat = media.resolveMedia({ id: 'f', title: 'Gig', category: 'Event' });
+  check('an approved category image is used', viaCat.level === 'category' && viaCat.image?.url === 'https://x/cat.jpg');
+
+  // enrichObjects tags every object with its resolved level.
+  const enriched = media.enrichObjects([
+    { id: 'g', title: 'A', imageUrl: 'https://x/a.jpg' },
+    { id: 'h', title: 'B' }
+  ]);
+  check('enrichObjects tags the exact image', enriched[0].mediaLevel === 'exact' && enriched[0].media?.url === 'https://x/a.jpg');
+  check('enrichObjects tags a missing image as none', enriched[1].mediaLevel === 'none' && enriched[1].media === null);
+
+  // The library record is idempotent on (kind, key).
+  const again = media.recordMediaLibraryImage({ kind: 'category', key: 'Event', url: 'https://x/cat2.jpg', status: 'approved' });
+  check('media library record is idempotent per key', again.url === 'https://x/cat2.jpg');
+}
+
 console.log('\n=== FEATURE REGISTRY (§4.2) ===');
 {
   const features = await import('../src/features.js');
@@ -3016,7 +3062,7 @@ console.log('\n=== FEATURE REGISTRY (§4.2) ===');
   // Default state: everything enabled; module features configured; provider
   // features NOT configured (no credentials in this run).
   check('every feature is enabled by default', features.list().every((f) => f.enabled));
-  check('the registry holds 21 features', features.list().length === 21, String(features.list().length));
+  check('the registry holds 22 features', features.list().length === 22, String(features.list().length));
   check('auth is available by default', features.available('auth') === true);
   check('arena is available by default', features.available('arena') === true);
   check('vaults is available by default', features.available('vaults') === true);
