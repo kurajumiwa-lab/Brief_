@@ -194,6 +194,15 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true, at: now(), queue: queueStats() });
 });
 
+// Favicon: the brand mark, served as SVG so `/favicon.ico` never 404s (browsers
+// request it automatically; a 404 here is noise, not a failure). Self-contained
+// — no file, no network, no cache-busting surprises.
+const FAVICON_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#090B10"/><circle cx="16" cy="16" r="10" fill="#43D17A" opacity="0.18"/><circle cx="16" cy="16" r="5" fill="#43D17A"/></svg>';
+app.get('/favicon.ico', (_req, res) => {
+  res.type('image/svg+xml').set('Cache-Control', 'public, max-age=86400').send(FAVICON_SVG);
+});
+
 /**
  * Readiness, as distinct from liveness. Checks the store is writable and that
  * the economic reconcilers still balance -- a ledger that stopped reconciling
