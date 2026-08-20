@@ -2811,6 +2811,74 @@ console.log('\n=== TUMA CONNECTOR (simulated fetch -- the REAL Tuma contract) ==
   tuma._resetTokenCache();
 }
 
+console.log('\n=== OUTBOUND CHANNEL SEAM + TWILIO (no credentials configured) ===');
+{
+  const outbound = await import('../src/outbound.js');
+  const twilio = await import('../src/connectors/twilio.js');
+
+  // Nothing configured -> every channel is honestly unavailable.
+  check('no channel can send yet', outbound.canSend('sms') === false && outbound.canSend('whatsapp') === false);
+  check('email and telegram have no provider', outbound.canSend('email') === false && outbound.canSend('telegram') === false);
+  check('status reports all channels unconfigured', outbound.status().anyConfigured === false);
+  check('status names sms as unconfigured', outbound.status().channels.sms.configured === false);
+  check('status names whatsapp as unconfigured', outbound.status().channels.whatsapp.configured === false);
+
+  // Twilio, alone, refuses with a named reason.
+  check('Twilio reports NOT configured (sms)', twilio.isConfigured('sms') === false);
+  check('Twilio reports NOT configured (whatsapp)', twilio.isConfigured('whatsapp') === false);
+  check('missing credentials are named', twilio.missingCredentials('sms').length === 3, twilio.missingCredentials('sms').join(','));
+  const s0 = await twilio.send({ channel: 'sms', to: '0722000111', text: 'hi' });
+  check('send REFUSES without credentials', s0.ok === false && s0.reason === 'not_configured');
+  const s1 = await outbound.send({ channel: 'whatsapp', to: '0722000111', text: 'hi' });
+  check('seam send REFUSES with no provider', s1.ok === false && s1.reason === 'no_provider');
+
+  // Phone normalisation (E.164 with '+', Kenyan rule).
+  check('0722... normalises to +254', twilio.normalisePhone('0722000111') === '+254722000111');
+  check('+254... normalises', twilio.normalisePhone('+254722000111') === '+254722000111');
+  check('0110... normalises', twilio.normalisePhone('0110000111') === '+254110000111');
+  check('a foreign number is refused', twilio.normalisePhone('+447700900000') === null);
+
+  // With credentials + a stubbed fetch, exercise the REAL request path.
+  process.env.TWILIO_ACCOUNT_SID = 'AC_test_sid';
+  process.env.TWILIO_AUTH_TOKEN = 'test_auth_token';
+  process.env.TWILIO_SMS_FROM = '+254700000000';
+  process.env.TWILIO_WHATSAPP_FROM = 'whatsapp:+254700000000';
+  check('Twilio now reports configured (sms)', twilio.isConfigured('sms') === true);
+  check('Twilio now reports configured (whatsapp)', twilio.isConfigured('whatsapp') === true);
+  check('seam now finds the sms provider', outbound.canSend('sms') === true && outbound.providerForChannel('sms')?.name === 'twilio');
+
+  let lastUrl = '', lastAuth = '', lastBody = '';
+  const fakeFetch = async (url, opts) => {
+    lastUrl = url; lastAuth = opts.headers.authorization; lastBody = opts.body;
+    return { ok: true, status: 201, json: async () => ({ sid: 'SM_test_1', status: 'queued' }) };
+  };
+  const sent = await twilio.send({ channel: 'sms', to: '0722000111', text: 'Your spot is held.', fetchImpl: fakeFetch });
+  check('sms send succeeds against a real-shaped response', sent.ok === true && sent.sid === 'SM_test_1' && sent.status === 'queued');
+  check('the Twilio endpoint is correct', lastUrl.includes('/Accounts/AC_test_sid/Messages.json'));
+  check('Basic auth carries SID:token', lastAuth === `Basic ${Buffer.from('AC_test_sid:test_auth_token').toString('base64')}`);
+  check('the body is form-encoded with To/From/Body', lastBody.includes('Body=Your+spot+is+held.') && lastBody.includes('To=%2B254722000111') && lastBody.includes('From=%2B254700000000'));
+
+  // WhatsApp path prefixes To with whatsapp:.
+  await twilio.send({ channel: 'whatsapp', to: '0722000111', text: 'hi', fetchImpl: fakeFetch });
+  check('whatsapp send uses whatsapp: To/From', lastBody.includes('To=whatsapp%3A%2B254722000111') && lastBody.includes('From=whatsapp%3A%2B254700000000'));
+
+  // A Twilio-side rejection is surfaced, not faked.
+  const rejected = await twilio.send({
+    channel: 'sms', to: '0722000111', text: 'hi',
+    fetchImpl: async () => ({ ok: false, status: 400, json: async () => ({ code: 21211, message: 'Invalid phone number' }) })
+  });
+  check('a rejected send is surfaced as failure', rejected.ok === false && rejected.reason === 'send_rejected' && rejected.code === 21211);
+
+  // Invalid / empty inputs are refused before any network call.
+  check('an invalid phone is refused', (await twilio.send({ channel: 'sms', to: '999', text: 'hi', fetchImpl: fakeFetch })).reason === 'invalid_phone');
+  check('empty text is refused', (await twilio.send({ channel: 'sms', to: '0722000111', text: '  ', fetchImpl: fakeFetch })).reason === 'empty_text');
+
+  delete process.env.TWILIO_ACCOUNT_SID;
+  delete process.env.TWILIO_AUTH_TOKEN;
+  delete process.env.TWILIO_SMS_FROM;
+  delete process.env.TWILIO_WHATSAPP_FROM;
+}
+
 console.log('\n=== TUMA PAYMENT E2E + WEBHOOK (simulated provider) ===');
 {
   process.env.NODE_ENV = 'test';

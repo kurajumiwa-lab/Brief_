@@ -32,6 +32,7 @@ import * as compliance from './domain/compliance.js';
 import * as auth from './domain/auth.js';
 import * as payment from './domain/payment.js';
 import * as tuma from './connectors/tuma.js';
+import * as outbound from './outbound.js';
 import * as arena from './domain/arena.js';
 import * as fantasy from './domain/fantasy.js';
 import * as auctions from './domain/auction.js';
@@ -265,7 +266,11 @@ app.get('/api/capabilities', (_req, res) => {
     // client uses these to state plainly what Brief cannot currently do.
     payments: ledger.providerStatus(),
     arenaMoney: compliance.arenaMoneyStatus(),
-    auth: authStatus()
+    auth: authStatus(),
+    // Outbound messaging: which channels can Brief actually SEND on. Honest
+    // per-channel configured state, so the client never implies a reply rail
+    // that has no provider.
+    outbound: outbound.status()
   });
 });
 
