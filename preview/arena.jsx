@@ -57,6 +57,7 @@ async function main(){
   const body=()=>text(document.body);
   const click=async el=>{await act(async()=>{el.dispatchEvent(new dom.window.MouseEvent('click',{bubbles:true,cancelable:true}));});};
   const btn=t=>Array.from(document.querySelectorAll('button')).find(b=>text(b)===t||text(b).startsWith(t));
+  const gameBtn=id=>document.querySelector(`button[data-game-id="${id}"]`);
   let pass=0,fail=0;
   const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;console.log('  FAIL  '+n+(d?' -> '+d:''));}};
 
@@ -71,7 +72,7 @@ async function main(){
   check('eFootball present', b.includes('eFootball'));
   check('FC Mobile present', b.includes('FC Mobile'));
   check('PUBG present', b.includes('PUBG'));
-  check('COD present', b.includes('COD'));
+  check('COD present', b.includes('Call of Duty'));
   check('Other present', b.includes('Other'));
 
   console.log('\n=== Live lobby shows real open challenges ===');
@@ -82,11 +83,11 @@ async function main(){
   check('2v2 partner request', b.includes('2v2'));
 
   console.log('\n=== Switching game changes the lobby ===');
-  await click(btn('PUBG'));
+  await click(gameBtn('pubg'));
   b=body();
   check('no eFootball challenges under PUBG', !b.includes('KES 100'));
   check('honest empty state', /No open challenges for PUBG/i.test(b));
-  await click(btn('eFootball'));
+  await click(gameBtn('efootball'));
 
   console.log('\n=== Accepting a challenge creates a match ===');
   check('own challenge is not acceptable', /Your challenge/i.test(body()));
@@ -136,15 +137,15 @@ async function main(){
   check('busy venue draws a live arc', /[1-9]/.test(arc(busy)));
   check('empty venue draws no live arc', !/^\s*$/.test(arc(idle)) ? /2 4/.test(arc(idle)) : false);
   check('empty venue glyph is muted', (idle.innerHTML||'').includes('#4B5162'));
-  check('game chip carries live count', /eFootball \(\d+\)/.test(b));
+  check('game portal carries a live room count', /eFootball[\s\S]{0,120}rooms open now/i.test(b));
 
   console.log('\n=== Switching game re-reads the venue counts ===');
-  await click(btn('COD'));
+  await click(gameBtn('cod'));
   b=body();
   const codLabels=Array.from(document.querySelectorAll('svg[role="img"]')).map(x=>x.getAttribute('aria-label')||'');
   check('COD count differs from eFootball', codLabels.some(l=>/^1 playing Call of Duty Mobile at GameHub/i.test(l)), codLabels.join(' | ').slice(0,140));
   check('venue without COD is dropped', !b.includes('Corner Play Ngara'));
-  await click(btn('eFootball'));
+  await click(gameBtn('efootball'));
 
   console.log('\n=== No fabricated publisher branding ===');
   check('no trademarked logo files referenced', !/konami|logo\.(png|svg|jpg)|brandfetch|seeklogo/i.test(code));

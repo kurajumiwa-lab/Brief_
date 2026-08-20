@@ -23,6 +23,7 @@ import { Quests } from './components/Quests';
 import { NearbyMap } from './components/NearbyMap';
 import type { GeoPoint } from './components/NearbyMap';
 import { TeaSection } from './components/TeaSection';
+import { ArenaPortal } from './components/ArenaPortal';
 import type { CircleDetail as ApiCircleDetail } from './api/briefApi';
 import type {
   Campaign as ApiCampaign,
@@ -8205,27 +8206,19 @@ export function App() {
               </span>
             </div>
 
-            {/* Game selection. Arena is game-agnostic; eFootball is only the
-                first entry in the list. */}
-            <div className="flex flex-wrap gap-2">
-              {ARENA_GAMES.map((g) => (
-                <button
-                  key={g.id}
-                  onClick={() => {
-                    setArenaGameId(g.id);
-                    setArenaView('home');
-                  }}
-                  className={`px-3 py-1.5 rounded-xl text-[10px] font-extrabold cursor-pointer border ${
-                    arenaGameId === g.id
-                      ? 'bg-[#43D17A] text-[#090B10] border-[#43D17A]'
-                      : 'bg-[#10141C] text-[#43D17A] border-[#232A38]'
-                  }`}
-                >
-                  {g.shortName}
-                  {gameActivity[g.id] > 0 ? ` (${gameActivity[g.id]})` : ''}
-                </button>
-              ))}
-            </div>
+            {/* Game selection — immersive portals from the Game Theme Engine.
+                Each game is its own world; activity is real (open matchrooms +
+                check-ins), never a fabricated player count. */}
+            <ArenaPortal
+              games={ARENA_GAMES}
+              activity={gameActivity}
+              selectedId={arenaGameId}
+              onSelect={(id) => {
+                setArenaGameId(id);
+                setArenaView('home');
+              }}
+              onFind={() => setArenaView('find')}
+            />
 
             {/* Availability node. The dot is the signal, not decoration. */}
             {arenaView === 'home' && (
