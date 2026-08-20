@@ -1312,3 +1312,32 @@ export interface CommandCentre {
   }[];
   vaultCount: number;
 }
+
+export type TeaCategory =
+  | 'live' | 'guide' | 'explainer' | 'culture' | 'useful'
+  | 'trend' | 'weekend' | 'local_business' | 'opportunity' | 'howto';
+
+export interface TeaArticle {
+  id: string;
+  slug: string;
+  title: string;
+  dek: string;
+  category: TeaCategory | string;
+  subCategory: string | null;
+  location: string | null;
+  heroImage: string | null;
+  images: string[];
+  author: string | null;
+  source: string | null;
+  sourceUrl: string | null;
+  readingTime: number;
+  publishedAt: string | null;
+  expiresAt: string | null;
+  createdAt: string;
+  tags: string[];
+  entities: string[];
+  relatedContent: string[];
+  relatedPlaces: string[];
+  relatedEvents: string[];
+  body: string;
+}

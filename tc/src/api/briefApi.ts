@@ -85,7 +85,8 @@ import {
   areSources, areRawItems, isBriefItPreview, isVoteTally, isMemberEvidence,
   isVendor, areVendors, isListing, areListings, isOrder, areOrders,
   isDispute, areDisputes, isPaymentIntent, arePaymentIntents,
-  isVault, areVaults, isFootstep, areFootsteps, isVaultRequest, areVaultRequests, isTicket, isCommandCentre
+  isVault, areVaults, isFootstep, areFootsteps, isVaultRequest, areVaultRequests, isTicket, isCommandCentre,
+  isTeaArticle, areTeaArticles
 } from './validate';
 
 /**
@@ -1442,4 +1443,23 @@ export function seedDemo(): Promise<ApiResult<{ seeded: any }>> {
 
 export function clearDemo(): Promise<ApiResult<{ cleared: any }>> {
   return request('/api/ops/seed/clear', { method: 'POST', body: '{}' }, (r) => (r?.cleared ? { cleared: r.cleared } : undefined));
+}
+
+/** Published Tea articles (ranked), optionally filtered by category/location. */
+export function getTea(opts: { category?: string; location?: string; limit?: number } = {}): Promise<ApiResult<any[]>> {
+  const params = new URLSearchParams();
+  if (opts.category) params.set('category', opts.category);
+  if (opts.location) params.set('location', opts.location);
+  if (opts.limit !== undefined) params.set('limit', String(opts.limit));
+  const q = params.toString() ? `?${params.toString()}` : '';
+  return request(`/api/tea${q}`, undefined, (r) =>
+    Array.isArray(r?.tea) ? (r.tea as unknown[]).filter((x) => isTeaArticle(x)) : undefined
+  );
+}
+
+/** One published Tea article by slug. */
+export function getTeaArticle(slug: string): Promise<ApiResult<any>> {
+  return request(`/api/tea/${encodeURIComponent(slug)}`, undefined, (r) =>
+    isTeaArticle(r?.article) ? r.article : undefined
+  );
 }

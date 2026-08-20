@@ -22,6 +22,7 @@ import { Inbox } from './components/Inbox';
 import { Quests } from './components/Quests';
 import { NearbyMap } from './components/NearbyMap';
 import type { GeoPoint } from './components/NearbyMap';
+import { TeaSection } from './components/TeaSection';
 import type { CircleDetail as ApiCircleDetail } from './api/briefApi';
 import type {
   Campaign as ApiCampaign,
@@ -7124,6 +7125,11 @@ export function App() {
               {locError && (
                 <p className="mt-2 text-[10px]" style={{ color: 'var(--signal-urgent)' }}>{locError}</p>
               )}
+            </div>
+            <div className="mb-4">
+              {/* TODAY'S TEA — the editorial layer. Real published articles from
+                  /api/tea, ranked server-side. Not a card dump, not hardcoded. */}
+              <TeaSection />
             </div>
             <div className="mb-4">
               {/* Town Pulse — a live number, tappable to a category breakdown (§5.1). */}

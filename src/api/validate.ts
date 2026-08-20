@@ -46,7 +46,8 @@ import type {
   Footstep,
   VaultRequest,
   Ticket,
-  CommandCentre
+  CommandCentre,
+  TeaArticle
 } from './types';
 
 // --- primitives -------------------------------------------------------------
@@ -506,3 +507,11 @@ export function isCommandCentre(v: unknown): v is CommandCentre {
     Array.isArray(v.campaigns) && isNum(v.vaultCount)
   );
 }
+
+export function isTeaArticle(v: unknown): v is TeaArticle {
+  return (
+    isObj(v) && isStr(v.id) && isStr(v.slug) && isStr(v.title) &&
+    isStr(v.dek) && isStr(v.category) && isNum(v.readingTime)
+  );
+}
+export const areTeaArticles = (v: unknown) => all(v, isTeaArticle);
