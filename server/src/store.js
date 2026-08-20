@@ -121,6 +121,14 @@ const EMPTY = {
   // Never pruned by the app; the operator decides.
   auditLog: [],
 
+  // --- Person (report §4.4) -------------------------------------------------
+  // A first-class entity over every identity Brief holds. A person is a stable
+  // id; personAliases bind it to concrete external identifiers (user id, phone,
+  // email, telegram/whatsapp, participant id) through EXPLICIT verified acts
+  // only — never probabilistic inference.
+  people: [],
+  personAliases: [],
+
   // --- Arena entities (server models) -------------------------------------
   // A player's game identity is NOT their Brief account: one person holds many.
   arenaPlayers: [],

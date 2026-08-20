@@ -2879,6 +2879,69 @@ console.log('\n=== OUTBOUND CHANNEL SEAM + TWILIO (no credentials configured) ==
   delete process.env.TWILIO_WHATSAPP_FROM;
 }
 
+console.log('\n=== PERSON ENTITY (§4.4) ===');
+{
+  const person = await import('../src/domain/person.js');
+
+  // ensurePersonForUser creates a person + verified user alias, idempotently.
+  const p1 = person.ensurePersonForUser('usr_me');
+  const p2 = person.ensurePersonForUser('usr_me');
+  check('ensurePersonForUser is idempotent', p1.id === p2.id);
+  check('a person holds a verified user alias', p2.aliases.some((a) => a.kind === 'user' && a.value === 'usr_me' && a.verified));
+
+  // findByAlias resolves through the alias.
+  const found = person.findByAlias('user', 'usr_me');
+  check('findByAlias resolves the person', found && found.id === p1.id);
+
+  // Verified-only: an unverified alias link is refused.
+  try {
+    person.linkAlias(p1.id, 'phone', '0722000111', { verified: false });
+    check('unverified alias is refused', false);
+  } catch (e) {
+    check('unverified alias is refused', /verified/.test(e.message));
+  }
+
+  // A self-asserted alias binds and normalises the phone.
+  const a = person.linkAlias(p1.id, 'phone', '0722000111', { verified: true, source: 'self' });
+  check('self-asserted alias links', a.kind === 'phone' && a.value === '254722000111');
+  check('phone alias is normalised to 254...', person.normaliseAlias('phone', '+254722000111') === '254722000111');
+
+  // Re-binding the same value to a DIFFERENT person is refused, not silent.
+  const other = person.ensurePersonForUser('usr_other');
+  try {
+    person.linkAlias(other.id, 'phone', '0722000111', { verified: true });
+    check('alias re-binding is refused', false);
+  } catch (e) {
+    check('alias re-binding is refused', /already linked/.test(e.message));
+  }
+
+  // findByAlias finds via the phone alias now.
+  check('findByAlias via phone works', person.findByAlias('phone', '254722000111')?.id === p1.id);
+
+  // Merge: fold `other` into p1, re-pointing the user alias.
+  const before = person.getPerson(other.id).aliases.length;
+  const merged = person.mergePersons(other.id, p1.id, 'usr_admin');
+  check('merge folds the aliases across', merged.movedAliases === before);
+  check('merged-away person is gone', person.getPerson(other.id) === null);
+  check('merged target now holds both user aliases', person.getPerson(p1.id).aliases.some((x) => x.value === 'usr_other'));
+  check('merge is audited', store.find('auditLog', (x) => x.action === 'merge' && x.from === other.id) !== null);
+
+  // Timeline: a person with no activity has empty events, not an error.
+  const t = person.timeline(p1.id);
+  check('timeline returns for a fresh person', t && Array.isArray(t.events));
+
+  // Over HTTP: /api/person/me resolves for an authenticated caller.
+  {
+    const { default: appP } = await import('../src/index.js');
+    const srvP = appP.listen(0);
+    const portP = srvP.address().port;
+    const r = await fetch(`http://127.0.0.1:${portP}/api/person/me`);
+    const body = await r.json().catch(() => null);
+    check('GET /api/person/me returns the caller person', r.status === 200 && body?.person?.id, JSON.stringify(body));
+    srvP.close();
+  }
+}
+
 console.log('\n=== FEATURE REGISTRY (§4.2) ===');
 {
   const features = await import('../src/features.js');
@@ -2891,7 +2954,7 @@ console.log('\n=== FEATURE REGISTRY (§4.2) ===');
   // Default state: everything enabled; module features configured; provider
   // features NOT configured (no credentials in this run).
   check('every feature is enabled by default', features.list().every((f) => f.enabled));
-  check('the registry holds 19 features', features.list().length === 19, String(features.list().length));
+  check('the registry holds 20 features', features.list().length === 20, String(features.list().length));
   check('auth is available by default', features.available('auth') === true);
   check('arena is available by default', features.available('arena') === true);
   check('vaults is available by default', features.available('vaults') === true);
