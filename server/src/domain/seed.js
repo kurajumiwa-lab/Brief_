@@ -25,6 +25,71 @@ import * as listings from './listing.js';
 export const BATCH = 'nairobi-demo-v1';
 const HOST = 'usr_me';
 
+// ---------------------------------------------------------------------------
+// Coarse geography for the demo content.
+//
+// The seed names REAL Kenyan places. These are their REAL approximate
+// coordinates (neighbourhood/city centroids, ~1km accuracy) attached so the
+// geo ranking and the relative map have something true to draw from. They are
+// deliberately coarse and are NOT street addresses -- a pin at "Kilimani" is
+// the neighbourhood, not the venue. Distance ranking, not navigation.
+// ---------------------------------------------------------------------------
+
+const CITY_COORDS = [
+  // Nairobi neighbourhoods first (most specific wins on substring match).
+  { key: 'kilimani', lat: -1.288, lng: 36.786 },
+  { key: 'westlands', lat: -1.2667, lng: 36.8 },
+  { key: 'kileleshwa', lat: -1.2767, lng: 36.782 },
+  { key: 'sarit', lat: -1.258, lng: 36.782 },
+  { key: 'karen', lat: -1.32, lng: 36.707 },
+  { key: 'lavington', lat: -1.282, lng: 36.775 },
+  { key: 'runda', lat: -1.226, lng: 36.817 },
+  { key: 'langata', lat: -1.353, lng: 36.747 },
+  // Coast.
+  { key: 'nyali', lat: -4.043, lng: 39.704 },
+  { key: 'bamburi', lat: -3.996, lng: 39.734 },
+  { key: 'diani', lat: -4.316, lng: 39.584 },
+  { key: 'shanzu', lat: -3.96, lng: 39.764 },
+  { key: 'mtwapa', lat: -3.95, lng: 39.744 },
+  // Lake Victoria / Kisumu.
+  { key: 'riat', lat: -0.06, lng: 34.7 },
+  { key: 'nyalenda', lat: -0.1, lng: 34.775 },
+  // Rift Valley.
+  { key: 'lanet', lat: -0.316, lng: 36.133 },
+  { key: 'lake nakuru', lat: -0.35, lng: 36.083 },
+  { key: 'nakuru', lat: -0.3031, lng: 36.08 },
+  // Central / highlands.
+  { key: 'burguret', lat: -0.02, lng: 37.13 },
+  { key: 'mt kenya', lat: -0.02, lng: 37.13 },
+  { key: 'nanyuki', lat: 0.006, lng: 37.072 },
+  // Cities last (broad fallback).
+  { key: 'nairobi', lat: -1.2921, lng: 36.8219 },
+  { key: 'mombasa', lat: -4.0435, lng: 39.6682 },
+  { key: 'kisumu', lat: -0.0917, lng: 34.768 },
+  { key: 'kwale', lat: -4.174, lng: 39.46 }
+];
+
+/** Resolve a locationName string to coarse real coordinates, or null. */
+function coordsForLocation(locationName) {
+  if (typeof locationName !== 'string' || !locationName.trim()) return null;
+  const hay = locationName.toLowerCase();
+  for (const c of CITY_COORDS) {
+    if (hay.includes(c.key)) return { lat: c.lat, lng: c.lng };
+  }
+  return null;
+}
+
+/** Attach coarse coords to an object's metadata when its location resolves. */
+function geoTag(objectId) {
+  const obj = store.find('objects', (o) => o.id === objectId);
+  if (!obj) return;
+  const coords = coordsForLocation(obj.locationName);
+  if (!coords) return;
+  store.update('objects', objectId, {
+    metadata: { ...(obj.metadata ?? {}), lat: coords.lat, lng: coords.lng }
+  });
+}
+
 function removeWhere(collection, pred) {
   const ids = store.filter(collection, pred).map((r) => r.id);
   for (const id of ids) store.remove(collection, id);
@@ -115,6 +180,7 @@ export function runSeed() {
       for (const id of [result.objectId, ...(result.childIds ?? [])]) {
         const obj = store.find('objects', (o) => o.id === id);
         if (obj) store.update('objects', id, { seedBatch: BATCH, publication: 'public' });
+        geoTag(id);
       }
     }
     return result;
@@ -131,11 +197,13 @@ export function runSeed() {
     ['Green Commerce Grant', 'Apply for the Green Commerce grant. KES 500k for sustainable retail. Deadline Friday.', 'opportunity', 'Nairobi'],
     ['Mombasa Port Logistics Apprenticeship', 'Paid 6-month logistics apprenticeship at the port. Apply by month end.', 'opportunity', 'Mombasa']
   ]) {
+    const coords = coordsForLocation(loc);
     const obj = store.insert('objects', {
       id: `obj_${BATCH}_${title.toLowerCase().replace(/[^a-z]+/g, '-').slice(0, 20)}`,
       type, title, summary, locationName: loc,
       category: type === 'place' ? 'Place' : 'Opportunity',
-      metadata: {}, isFixture: false, publication: 'public',
+      metadata: coords ? { lat: coords.lat, lng: coords.lng } : {},
+      isFixture: false, publication: 'public',
       verificationStatus: 'unverified', extractionConfidence: 0.5, extractionEvidence: [],
       seedBatch: BATCH, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
     });

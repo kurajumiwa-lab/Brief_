@@ -1,4 +1,6 @@
 import React from 'react';
+import { Compass, CalendarDays, Zap, ArrowDown, Diamond, Check } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
 // LANDING PAGE — Brief's front door
@@ -15,19 +17,19 @@ export interface LandingPageProps {
   onEnter: () => void;
 }
 
-const FEATURES = [
+const FEATURES: { Icon: LucideIcon; title: string; body: string }[] = [
   {
-    glyph: '🧭',
+    Icon: Compass,
     title: 'Discover',
     body: 'Events, places and opportunities near you — ranked by what is real, verified and fresh, not what is promoted.'
   },
   {
-    glyph: '🗓️',
+    Icon: CalendarDays,
     title: 'Organize',
     body: 'Start a gathering anywhere, sell tickets, and check people in at the gate with a scannable code.'
   },
   {
-    glyph: '⚡',
+    Icon: Zap,
     title: 'Transact',
     body: 'Orders and payments that settle on a real ledger. No pretend money, no fabricated success.'
   }
@@ -137,17 +139,17 @@ export function LandingPage({ onEnter }: LandingPageProps) {
                 </p>
                 <div className="mt-5 flex items-center gap-0">
                   {[
-                    { g: '⇣', t: 'Message in' },
-                    { g: '◇', t: 'Brief understands it' },
-                    { g: '✓', t: 'Thing to act on' }
+                    { g: ArrowDown, t: 'Message in' },
+                    { g: Diamond, t: 'Brief understands it' },
+                    { g: Check, t: 'Thing to act on' }
                   ].map((s, i) => (
                     <React.Fragment key={s.t}>
                       <div className="flex flex-1 flex-col items-center gap-2 text-center">
                         <span
-                          className="flex h-11 w-11 items-center justify-center rounded-full border text-lg font-bold"
+                          className="flex h-11 w-11 items-center justify-center rounded-full border"
                           style={{ borderColor: 'var(--signal-live)', color: 'var(--signal-live)', boxShadow: '0 0 16px rgba(67,209,122,0.25)' }}
                         >
-                          {s.g}
+                          <s.g className="h-5 w-5" />
                         </span>
                         <span className="text-[11px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{s.t}</span>
                       </div>
@@ -174,7 +176,7 @@ export function LandingPage({ onEnter }: LandingPageProps) {
                   className="brief-rise-in rounded-2xl border p-6"
                   style={{ borderColor: 'var(--hairline)', animationDelay: `${i * 60}ms` }}
                 >
-                  <span className="text-2xl">{f.glyph}</span>
+                  <f.Icon className="h-6 w-6" style={{ color: 'var(--signal-live)' }} />
                   <h3 className="font-display mt-3 text-xl font-semibold" style={{ color: 'var(--ink)' }}>{f.title}</h3>
                   <p className="mt-2 text-[13px] leading-relaxed" style={{ color: 'var(--ink-dim)' }}>{f.body}</p>
                 </div>

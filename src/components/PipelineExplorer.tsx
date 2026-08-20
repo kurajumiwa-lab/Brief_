@@ -1,4 +1,6 @@
 import React from 'react';
+import { Settings, ArrowDown, Diamond, Check } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
 // PIPELINE EXPLORER — "how Brief works", for a layman
@@ -31,10 +33,10 @@ export interface PipelineExplorerProps {
 
 type Stage = 'in' | 'understand' | 'act';
 
-const STAGES: { id: Stage; glyph: string; label: string; verb: string; count: (s: PipelineStats) => number | null; explain: string; example: string }[] = [
+const STAGES: { id: Stage; glyph: LucideIcon; label: string; verb: string; count: (s: PipelineStats) => number | null; explain: string; example: string }[] = [
   {
     id: 'in',
-    glyph: '⇣',
+    glyph: ArrowDown,
     label: 'Message in',
     verb: 'message',
     count: (s) => s?.rawItems ?? null,
@@ -43,7 +45,7 @@ const STAGES: { id: Stage; glyph: string; label: string; verb: string; count: (s
   },
   {
     id: 'understand',
-    glyph: '◇',
+    glyph: Diamond,
     label: 'Brief understands it',
     verb: 'thing',
     count: (s) => s?.objects ?? null,
@@ -52,7 +54,7 @@ const STAGES: { id: Stage; glyph: string; label: string; verb: string; count: (s
   },
   {
     id: 'act',
-    glyph: '✓',
+    glyph: Check,
     label: 'Thing to act on',
     verb: 'connection',
     count: (s) => s?.relationships ?? null,
@@ -67,7 +69,7 @@ export function PipelineExplorer({ stats, online }: PipelineExplorerProps) {
   return (
     <div className="rounded-2xl border border-[#43D17A]/20 bg-gradient-to-b from-[#10141C] to-[#090B10] p-4">
       <div className="mb-3 flex items-center gap-2">
-        <span className="text-base">⚙️</span>
+        <Settings className="h-4 w-4" style={{ color: 'var(--signal-live)' }} />
         <div className="min-w-0">
           <p className="text-[12px] font-extrabold text-[#F3F1E7]">How Brief works</p>
           <p className="text-[10px] text-[#8A93A6]">Everything you see starts as a message. Tap a step.</p>
@@ -96,7 +98,7 @@ export function PipelineExplorer({ stats, online }: PipelineExplorerProps) {
                   }`}
                   style={isOpen ? { boxShadow: '0 0 14px rgba(0,230,118,0.35)' } : undefined}
                 >
-                  {stage.glyph}
+                  <stage.glyph className="h-4 w-4" />
                 </span>
                 <span className={`text-[10px] font-bold leading-tight ${isOpen ? 'text-[#43D17A]' : 'text-[#F3F1E7]'}`}>
                   {stage.label}

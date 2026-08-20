@@ -20,6 +20,8 @@ import { Marketplace } from './components/Marketplace';
 import { Pursuits } from './components/Pursuits';
 import { Inbox } from './components/Inbox';
 import { Quests } from './components/Quests';
+import { NearbyMap } from './components/NearbyMap';
+import type { GeoPoint } from './components/NearbyMap';
 import type { CircleDetail as ApiCircleDetail } from './api/briefApi';
 import type {
   Campaign as ApiCampaign,
@@ -4509,7 +4511,43 @@ const INITIAL_OBJECTS: BriefObject[] = [];
  * Nothing is invented here. A field the server did not send is left absent,
  * not defaulted to something plausible.
  */
-export const objectFromServer = (row: any): BriefObject => ({
+/**
+ * A real sparkline from object recency: how many visible things were created
+ * per day over the last 8 days, normalised to the sparkline's 0–40 y-range.
+ * Derived from `createdAt`, never a stored counter or a hardcoded curve — so a
+ * flat or sparse shape is the truth, not a decoration.
+ */
+function sparkFromObjects(objects: BriefObject[]): string {
+  const now = Date.now();
+  const days = 8;
+  const bins = new Array<number>(days).fill(0);
+  for (const o of objects) {
+    const t = Date.parse(o.createdAt);
+    if (!Number.isFinite(t)) continue;
+    const ageDays = (now - t) / 86400000;
+    if (ageDays < 0 || ageDays >= days) continue;
+    bins[days - 1 - Math.floor(ageDays)] += 1;
+  }
+  const max = Math.max(1, ...bins);
+  return bins
+    .map((n, i) => {
+      const x = (i / (days - 1)) * 64;
+      const y = 40 - (n / max) * 36;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(' ');
+}
+
+export const objectFromServer = (row: any): BriefObject => {
+  // Preserve the server's metadata (which now carries coarse lat/lng), and fold
+  // in the geo-scoped distance the server computed when a location was given.
+  // Without this, the ranked feed drops `distanceKm` on arrival and the map /
+  // proximity rail can never populate from real data.
+  const meta = row?.metadata && typeof row.metadata === 'object' ? { ...row.metadata } : {};
+  if (typeof row?.distanceKm === 'number' && Number.isFinite(row.distanceKm)) {
+    meta.distanceKm = row.distanceKm;
+  }
+  return {
   id: String(row?.id ?? ''),
   type: (row?.type ?? 'knowledge') as ObjectType,
   title: String(row?.title ?? 'Untitled'),
@@ -4524,7 +4562,7 @@ export const objectFromServer = (row: any): BriefObject => ({
   sourceType: row?.provenance?.[0]?.platform ?? undefined,
   sourceUrl: row?.provenance?.[0]?.sourceUrl ?? undefined,
   sourceId: row?.provenance?.[0]?.sourceId ?? undefined,
-  metadata: row?.metadata ?? undefined,
+  metadata: Object.keys(meta).length > 0 ? meta : undefined,
   createdAt: String(row?.createdAt ?? new Date().toISOString()),
 
   // Relationships the server actually recorded. `/api/objects` returns these
@@ -4535,7 +4573,8 @@ export const objectFromServer = (row: any): BriefObject => ({
   // Without this the relationship rails could never populate from real data:
   // the edges existed server-side and were being discarded on arrival.
   ...relationshipsFromServer(row?.relationships)
-});
+  };
+};
 
 /** Server relationship verbs -> the client's typed relationship fields. */
 const RELATIONSHIP_VERBS: Record<string, 'locationObjectId' | 'parentObjectId' | 'providerObjectId'> = {
@@ -4812,7 +4851,13 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
   return (
     <div className="min-h-screen bg-[#090B10] text-[#F3F1E7] font-sans selection:bg-[#43D17A] selection:text-[#090B10] flex flex-col">
       <div className="flex-1 w-full max-w-lg mx-auto px-4 py-8 space-y-5">
-        <p className="text-[9px] text-[#4B5162]">Brief</p>
+        <div className="flex items-center gap-2">
+          <svg width="18" height="18" viewBox="0 0 26 26" aria-hidden="true">
+            <circle cx="13" cy="13" r="9" fill="var(--signal-live)" opacity="0.15" />
+            <circle cx="13" cy="13" r="4" fill="var(--signal-live)" />
+          </svg>
+          <span className="font-display text-sm font-bold tracking-tight" style={{ color: 'var(--ink)' }}>Brief</span>
+        </div>
 
         {load.status === 'loading' && (
           <p className="text-xs text-[#8A93A6] py-12 text-center">Loading...</p>
@@ -4880,6 +4925,25 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                   <span className="text-xs text-[#F3F1E7]">
                     {c.registered} {c.registered === 1 ? 'person' : 'people'} registered
                   </span>
+                </div>
+              )}
+              {c.capacity !== null && c.remaining !== null && c.capacity > 0 && (
+                <div className="space-y-1 pt-1">
+                  <div className="flex items-center justify-between text-[10px]">
+                    <span className="text-[#8A93A6]">Spots filled</span>
+                    <span className="font-mono-live text-[#F3F1E7]">
+                      {c.capacity - c.remaining} / {c.capacity}
+                    </span>
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full" style={{ background: 'var(--ground)' }}>
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${Math.min(100, Math.round(((c.capacity - c.remaining) / c.capacity) * 100))}%`,
+                        background: 'var(--signal-live)'
+                      }}
+                    />
+                  </div>
                 </div>
               )}
             </div>
@@ -5114,10 +5178,53 @@ export function App() {
 
   React.useEffect(() => { void bootstrapSession(); }, [bootstrapSession]);
 
-  const loadObjects = React.useCallback(async () => {
+  // --- Location & geo --------------------------------------------------------
+  // A viewer's coarse position, for "what's around me". Set only by an
+  // explicit device-location grant or a manual city tap — never inferred,
+  // never fabricated. Null means "everywhere" (the global ranked feed).
+  const [userLocation, setUserLocation] = useState<GeoPoint | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [locError, setLocError] = useState<string | null>(null);
+
+  const locate = React.useCallback(() => {
+    if (typeof navigator === 'undefined' || !('geolocation' in navigator)) {
+      setLocError('This browser has no location service — tap a city instead.');
+      return;
+    }
+    setLocating(true);
+    setLocError(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocating(false);
+        setUserLocation({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          label: 'your location'
+        });
+      },
+      () => {
+        setLocating(false);
+        setLocError('Location unavailable — tap a city instead.');
+      },
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 }
+    );
+  }, []);
+
+  const chooseCity = React.useCallback((c: GeoPoint) => {
+    setLocError(null);
+    setUserLocation(c);
+  }, []);
+
+  const clearLocation = React.useCallback(() => {
+    setLocError(null);
+    setUserLocation(null);
+  }, []);
+
+  const loadObjects = React.useCallback(async (loc?: { lat: number; lng: number }) => {
     setObjectsLoad({ status: 'loading', error: null });
     // The ranked discovery feed: freshness + trust + engagement, server-derived.
-    const res = await briefApi.discoverObjects();
+    // When a location is set, it is also geo-scoped (distanceKm per object).
+    const res = await briefApi.discoverObjects(loc ? { lat: loc.lat, lng: loc.lng, radiusKm: 40 } : {});
     if (res.ok) {
       setObjects((res.data as any[]).map(objectFromServer));
       setObjectsLoad({ status: 'ready', error: null });
@@ -5128,8 +5235,8 @@ export function App() {
   }, []);
 
   React.useEffect(() => {
-    void loadObjects();
-  }, [loadObjects]);
+    void loadObjects(userLocation ? { lat: userLocation.lat, lng: userLocation.lng } : undefined);
+  }, [loadObjects, userLocation]);
 
 
   const runBriefItPreview = async () => {
@@ -7004,11 +7111,26 @@ export function App() {
         {activeTab === 'nearby' && (
           <div className="max-w-3xl mx-auto px-4 pt-4">
             <div className="mb-4">
+              {/* Relative map of real coordinates — "what's actually around me". */}
+              <NearbyMap
+                objects={objects}
+                center={userLocation}
+                onSelect={setSelectedObjectForDetail}
+                onLocate={locate}
+                locating={locating}
+                onClearLocation={clearLocation}
+                onSelectCity={chooseCity}
+              />
+              {locError && (
+                <p className="mt-2 text-[10px]" style={{ color: 'var(--signal-urgent)' }}>{locError}</p>
+              )}
+            </div>
+            <div className="mb-4">
               {/* Town Pulse — a live number, tappable to a category breakdown (§5.1). */}
               <PulseBanner
                 value={String(objects.length)}
                 label="things happening around you right now"
-                spark="0,18 8,14 16,16 24,9 32,11 40,5 48,8 56,3 64,4"
+                spark={sparkFromObjects(objects)}
                 detail={
                   <div className="space-y-1">
                     {(() => {

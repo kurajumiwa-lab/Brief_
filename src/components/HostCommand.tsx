@@ -1,6 +1,7 @@
 import React from 'react';
 import * as briefApi from '../api/briefApi';
 import type { CommandCentre as CommandCentreType } from '../api/types';
+import { MicroBars, Funnel } from './MicroBars';
 
 // ---------------------------------------------------------------------------
 // HOST COMMAND CENTRE
@@ -101,6 +102,12 @@ export function HostCommand() {
           <Big value={money(d.money.grossSettled, d.money.currency)} label="Settled" accent />
           <Big value={money(d.money.grossPending, d.money.currency)} label="Pending" />
         </div>
+        <MicroBars
+          items={[
+            { label: 'Settled', value: d.money.grossSettled, color: 'var(--signal-live)' },
+            { label: 'Pending', value: d.money.grossPending }
+          ]}
+        />
         {d.money.campaignCount === 0 && (
           <p className="text-[10px] text-[#4B5162]">No campaigns yet.</p>
         )}
@@ -113,6 +120,13 @@ export function HostCommand() {
           <Big value={String(d.people.checkedIn)} label="Checked in" accent={d.people.checkedIn > 0} />
           <Big value={String(d.people.cancelled)} label="Cancelled" />
         </div>
+        <MicroBars
+          items={[
+            { label: 'Registered', value: d.people.registered, color: 'var(--signal-live)' },
+            { label: 'Arrived', value: d.people.checkedIn },
+            { label: 'Cancelled', value: d.people.cancelled }
+          ]}
+        />
       </Section>
 
       {/* DISTRIBUTION */}
@@ -121,6 +135,13 @@ export function HostCommand() {
           <Big value={String(d.distribution.views)} label="Views" />
           <Big value={String(d.distribution.shares)} label="Shares" />
         </div>
+        <Funnel
+          stages={[
+            { label: 'Views', value: d.distribution.views },
+            { label: 'Registered', value: d.people.registered },
+            { label: 'Arrived', value: d.people.checkedIn }
+          ]}
+        />
         <p className="text-[9px] text-[#4B5162] leading-snug">
           Views are page loads, not people. A refresh counts twice.
         </p>

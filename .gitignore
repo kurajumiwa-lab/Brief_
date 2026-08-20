@@ -1,1 +1,10 @@
 .env.local
+
+# Dependencies (installed per environment, lockfiles are the committed source of truth)
+node_modules/
+
+# Build output (rebuilt on deploy)
+preview/dist/
+
+# Runtime data store + backups (never commit live data)
+server/data/
