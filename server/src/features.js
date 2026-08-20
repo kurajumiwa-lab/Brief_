@@ -45,6 +45,7 @@ const DEFINITIONS = [
   { key: 'fantasy',   domain: 'fantasy',    label: 'Fantasy 11',                      configured: () => true },
   { key: 'command',   domain: 'command',    label: 'Host command centre',             configured: () => true },
   { key: 'people',    domain: 'people',     label: 'Person entity (timeline & identity)', configured: () => true },
+  { key: 'tea',       domain: 'tea',        label: 'Tea editorial system',              configured: () => true },
   // Provider-backed: configured derives from LIVE credentials, never a stored flag.
   { key: 'payments',  domain: 'commerce',   label: 'Payment collection (Tuma STK)',   configured: () => providers.providerStatus().configured },
   { key: 'payouts',   domain: 'commerce',   label: 'Merchant payouts (disbursement)', configured: () => providers.providerStatus().payoutConfigured },

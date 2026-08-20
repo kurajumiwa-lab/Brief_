@@ -21,6 +21,7 @@ import { storeRawItem, processRawItem } from '../pipeline/ingest.js';
 import * as campaigns from './campaign.js';
 import * as vendors from './vendor.js';
 import * as listings from './listing.js';
+import * as tea from './tea.js';
 
 export const BATCH = 'nairobi-demo-v1';
 const HOST = 'usr_me';
@@ -111,7 +112,8 @@ export function clearSeed() {
     rawItems: removeWhere('rawItems', (r) => demoSourceIds.has(r.sourceId)),
     sources: removeWhere('sources', (s) => s.seedBatch === BATCH),
     objectSources: removeWhere('objectSources', (os) => demoObjectIds.has(os.objectId) || demoSourceIds.has(os.sourceId)),
-    relationships: removeWhere('relationships', (r) => demoObjectIds.has(r.sourceId) || demoObjectIds.has(r.targetId))
+    relationships: removeWhere('relationships', (r) => demoObjectIds.has(r.sourceId) || demoObjectIds.has(r.targetId)),
+    tea: removeWhere('teaArticles', (t) => t.seedBatch === BATCH)
   };
   return n;
 }
@@ -240,7 +242,41 @@ export function runSeed() {
   mk(HOST, 'Kikao Streetwear', 'Printed streetwear from Kilimani.', [['Printed Hoodie', 2500], ['Screen Tee', 1200]]);
   mk('usr_demo_coast', 'Pwani Handcrafts', 'Kikoy, carved wood and beach crafts from Mombasa.', [['Handwoven Kikoy', 1800], ['Carved Dhow Ornament', 950], ['Coconut Shell Bowl', 700]]);
 
+  seedTea();
+
   return { alreadySeeded: false, ...counts() };
+}
+
+/**
+ * The ready-written evergreen Tea starter library (home-feed master build).
+ *
+ * These are GENUINELY evergreen: useful without live information, so none of
+ * them fabricate a current claim. They are tagged seedBatch and removable, and
+ * carry author "Brief Editorial (demo)" so they are never mistaken for live
+ * reporting. Each is published so the feed has real editorial content to rank.
+ */
+function seedTea() {
+  const ARTICLES = [
+    { title: 'A practical Nairobi weekend guide', category: 'guide', location: 'Nairobi', dek: 'Markets, food, and easy wins — without burning the whole weekend.', body: "Nairobi weekends work best when you pick one anchor and let everything else follow.\n\nStart early. The farmers markets — Karen, Westlands, and the Saturday popups around Kilimani — are best before 10am, when produce is freshest and parking is kind.\n\nPlan one sit-down meal and one walk. Pair a market with a neighbourhood walk: the same trip that gets you produce can get you a meal and a sense of the area.\n\nKeep the afternoon light. Afternoon sun is for slow things — a gallery, a book fair, a rooftop. Save anything that needs energy for the morning.\n\nWhat you can do: pick one market and one meal spot near each other, and let the rest happen." },
+    { title: 'Things to do when you have KES 500', category: 'useful', location: 'Nairobi', dek: 'A real budget still gets you a genuinely good day.', body: "Five hundred shillings is not a lot, but it is enough for a full day if you choose one thing well.\n\n- Matatu or boda there and back, and one proper street meal: a full plate, not a snack.\n- Market entry is usually free; buying nothing but a single piece of fruit still gets you the whole experience.\n- Many galleries, exhibitions and community events are free to enter.\n\nWhat you can do: spend the money on the meal and the fare, and let everything else be free." },
+    { title: 'How Nairobi popup markets work', category: 'explainer', location: 'Nairobi', dek: 'Why a popup is different from a market, and how to shop one well.', body: "A popup market is a temporary, usually weekend, gathering of small vendors in a borrowed space.\n\nOrganisers rent the venue, curate the vendors, and charge entry to cover costs. Vendors pay for a spot; shoppers pay at the gate. The good ones curate hard, so the same hour is not spent on twenty stalls selling the same thing.\n\nWhy they are growing: low overhead for vendors, and a curated crowd for shoppers.\n\nWhat you can do: go early for the best stock, carry cash in small notes, and ask vendors who makes their goods." },
+    { title: 'A Kilimani guide', category: 'guide', location: 'Kilimani', dek: 'The neighbourhood in a sentence: young, walkable, and always open.', body: "Kilimani runs on cafés, popups and small studios. It is the easiest place in the city to find something happening on short notice.\n\nThe spine is the stretch around Yaya and the studio blocks behind it — most popups and markets land within walking distance of there.\n\nWhat you can do: walk the spine once, note the venues you like, and check them before the weekend." },
+    { title: 'A Westlands guide', category: 'guide', location: 'Westlands', dek: 'The work neighbourhood that turns social after dark.', body: "Westlands is dense, commercial by day and social by night. Its markets run Saturday mornings; its restaurants and rooftops carry the evenings.\n\nIt is the easiest place to combine errands with something to do after — most of the action is within a few blocks.\n\nWhat you can do: stack a Saturday market with an early-evening meal and skip the traffic home." },
+    { title: 'A Karen guide', category: 'guide', location: 'Karen', dek: 'Leafy, spread out, and worth the trip for a slow Saturday.', body: "Karen is the city's calm weekend pocket: farms, gardens and open-air markets.\n\nThe farmers market is the anchor. Everything else — nurseries, garden cafés, trail walks — radiates from it.\n\nWhat you can do: go for the market, stay for lunch, and leave before the afternoon heat." }
+  ];
+
+  let added = 0;
+  for (const a of ARTICLES) {
+    const article = tea.createArticle({
+      title: a.title, dek: a.dek, body: a.body, category: a.category,
+      location: a.location, status: 'published',
+      author: 'Brief Editorial (demo)',
+      publishedAt: new Date().toISOString()
+    });
+    store.update('teaArticles', article.id, { seedBatch: BATCH });
+    added++;
+  }
+  return added;
 }
 
 function counts() {
@@ -248,6 +284,7 @@ function counts() {
     objects: store.filter('objects', (o) => o.seedBatch === BATCH).length,
     vendors: store.filter('vendors', (v) => v.seedBatch === BATCH).length,
     listings: store.filter('listings', (l) => l.seedBatch === BATCH).length,
-    campaigns: store.filter('campaigns', (c) => c.seedBatch === BATCH).length
+    campaigns: store.filter('campaigns', (c) => c.seedBatch === BATCH).length,
+    tea: store.filter('teaArticles', (t) => t.seedBatch === BATCH).length
   };
 }

@@ -121,6 +121,11 @@ const EMPTY = {
   // Never pruned by the app; the operator decides.
   auditLog: [],
 
+  // --- Tea (editorial layer, home-feed master build) ------------------------
+  // Articles with a full status lifecycle; only published+unexpired resolve
+  // publicly. See domain/tea.js.
+  teaArticles: [],
+
   // --- Person (report §4.4) -------------------------------------------------
   // A first-class entity over every identity Brief holds. A person is a stable
   // id; personAliases bind it to concrete external identifiers (user id, phone,

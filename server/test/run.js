@@ -2942,6 +2942,68 @@ console.log('\n=== PERSON ENTITY (§4.4) ===');
   }
 }
 
+console.log('\n=== TEA EDITORIAL SYSTEM (home-feed Phase 4) ===');
+{
+  const tea = await import('../src/domain/tea.js');
+
+  // Draft does not appear publicly.
+  const draft = tea.createArticle({ title: 'The Nairobi weekend guide', body: 'Here is a short useful guide to the weekend. It is practical and local.', category: 'guide' });
+  check('an article starts as draft', draft.status === 'draft');
+  check('a draft is not in the public list', tea.listPublished().every((a) => a.id !== draft.id));
+  check('a draft slug does not resolve publicly', tea.getBySlug(draft.slug) === null);
+
+  // Reading time is derived from body length.
+  check('reading time is derived', draft.readingTime >= 1);
+
+  // Publish -> appears publicly, and by slug.
+  tea.transition(draft.id, 'publish');
+  check('publishing sets status + publishedAt', tea.getById(draft.id).status === 'published' && Boolean(tea.getById(draft.id).publishedAt));
+  check('a published article appears publicly', tea.listPublished().some((a) => a.id === draft.id));
+  const bySlug = tea.getBySlug(draft.slug);
+  check('a published slug resolves', bySlug && bySlug.id === draft.id);
+
+  // Live articles rank above older guides (freshness + live lift).
+  const live = tea.createArticle({ title: 'A popup opened today in Kilimani', body: 'Short live note about a new thing.', category: 'live', status: 'published', publishedAt: new Date().toISOString() });
+  const top = tea.listPublished({ limit: 5 })[0];
+  check('a fresh live article ranks first', top.id === live.id, top.title);
+
+  // Category filter works.
+  check('category filter returns only that category', tea.listPublished({ category: 'guide' }).every((a) => a.category === 'guide'));
+
+  // Expiry: an expired article leaves the active feed.
+  const expiring = tea.createArticle({ title: 'Weekend popup', body: 'Gone soon.', category: 'weekend', status: 'published', publishedAt: new Date().toISOString(), expiresAt: new Date(Date.now() - 1000).toISOString() });
+  const after = tea.listPublished();
+  check('an expired article leaves the public feed', after.every((a) => a.id !== expiring.id));
+  check('the expired article is marked expired', tea.getById(expiring.id).status === 'expired');
+
+  // Scheduled article publishes when its time arrives.
+  const sched = tea.createArticle({ title: 'Tomorrow morning', body: 'Scheduled.', category: 'useful', status: 'scheduled', publishedAt: new Date(Date.now() - 1000).toISOString() });
+  check('a due scheduled article auto-publishes on read', tea.getById(sched.id).status === 'published');
+
+  // Transition gating: cannot publish from archived.
+  const arch = tea.createArticle({ title: 'Old thing', body: 'Archived.', category: 'guide' });
+  tea.transition(arch.id, 'publish');
+  tea.transition(arch.id, 'archive');
+  try {
+    tea.transition(arch.id, 'publish');
+    check('publishing from archived is refused', false);
+  } catch (e) {
+    check('publishing from archived is refused', /cannot publish from archived/.test(e.message));
+  }
+
+  // Over HTTP: public list + a draft is NOT reachable publicly.
+  {
+    const { default: appT } = await import('../src/index.js');
+    const srvT = appT.listen(0);
+    const portT = srvT.address().port;
+    const list = await (await fetch(`http://127.0.0.1:${portT}/api/tea`)).json();
+    check('GET /api/tea returns published articles + categories', Array.isArray(list.tea) && Array.isArray(list.categories));
+    const slug = await (await fetch(`http://127.0.0.1:${portT}/api/tea/${draft.slug}`)).json();
+    check('GET /api/tea/:slug resolves a published article', slug.article && slug.article.id === draft.id);
+    srvT.close();
+  }
+}
+
 console.log('\n=== FEATURE REGISTRY (§4.2) ===');
 {
   const features = await import('../src/features.js');
@@ -2954,7 +3016,7 @@ console.log('\n=== FEATURE REGISTRY (§4.2) ===');
   // Default state: everything enabled; module features configured; provider
   // features NOT configured (no credentials in this run).
   check('every feature is enabled by default', features.list().every((f) => f.enabled));
-  check('the registry holds 20 features', features.list().length === 20, String(features.list().length));
+  check('the registry holds 21 features', features.list().length === 21, String(features.list().length));
   check('auth is available by default', features.available('auth') === true);
   check('arena is available by default', features.available('arena') === true);
   check('vaults is available by default', features.available('vaults') === true);
