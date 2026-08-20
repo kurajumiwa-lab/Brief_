@@ -4,7 +4,10 @@ import * as auth from '../domain/auth.js';
 import { callerId } from '../identity.js';
 import { requireAuth } from './helpers.js';
 
+import { requireFeature } from '../features.js';
+
 export function register(app) {
+app.use('/api/auth', requireFeature('auth'));
 app.post('/api/auth/register', (req, res) => {
   try {
     const user = auth.createUser({

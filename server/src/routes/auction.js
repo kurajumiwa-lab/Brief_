@@ -4,7 +4,11 @@ import { callerId } from '../identity.js';
 import * as auctions from '../domain/auction.js';
 import { requireAuth } from './helpers.js';
 
+import { requireFeature } from '../features.js';
+
 export function register(app) {
+app.use('/api/auctions', requireFeature('auction'));
+app.use('/api/bids', requireFeature('auction'));
 // --- Auction --------------------------------------------------------------
 //
 // An auction is price discovery over an EXISTING listing. When it closes, the

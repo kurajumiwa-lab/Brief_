@@ -9,7 +9,11 @@ import * as settlement from '../domain/settlement.js';
 import * as payment from '../domain/payment.js';
 import { requireAuth } from './helpers.js';
 
+import { requireFeature } from '../features.js';
+
 export function register(app) {
+app.use('/api/economic', requireFeature('economic'));
+app.use('/api/transactions', requireFeature('economic'));
 app.get('/api/economic/wallet', (req, res) => {
   res.json(ledger.walletBalance(String(req.query?.currency || 'KES')));
 });

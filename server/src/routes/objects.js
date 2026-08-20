@@ -9,7 +9,11 @@ import * as notifications from '../domain/notifications.js';
 import * as campaigns from '../domain/campaign.js';
 import { requireAuth, CURRENT_USER } from './helpers.js';
 
+import { requireFeature } from '../features.js';
+
 export function register(app) {
+app.use('/api/objects', requireFeature('objects'));
+app.use('/api/notifications', requireFeature('objects'));
 // --- Objects + provenance (spec 4, 33, 35) -----------------------------------
 
 

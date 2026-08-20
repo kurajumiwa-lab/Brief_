@@ -8,7 +8,12 @@ import * as signals from '../domain/signal.js';
 import * as members from '../domain/member.js';
 import { requireAuth } from './helpers.js';
 
+import { requireFeature } from '../features.js';
+
 export function register(app) {
+app.use('/api/circles', requireFeature('circles'));
+app.use('/api/blocks', requireFeature('circles'));
+app.use('/api/signals', requireFeature('circles'));
 // ---------------------------------------------------------------------------
 // FEATURE SCHEMA: circles, blocks, signals, ledger
 // ---------------------------------------------------------------------------

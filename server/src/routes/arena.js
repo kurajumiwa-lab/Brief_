@@ -7,7 +7,10 @@ import * as notifications from '../domain/notifications.js';
 import * as compliance from '../domain/compliance.js';
 import { requireAuth } from './helpers.js';
 
+import { requireFeature } from '../features.js';
+
 export function register(app) {
+app.use('/api/arena', requireFeature('arena'));
 /**
  * Real-money contest gate.
  *

@@ -4,7 +4,10 @@ import * as fantasy from '../domain/fantasy.js';
 import * as compliance from '../domain/compliance.js';
 import { requireAuth } from './helpers.js';
 
+import { requireFeature } from '../features.js';
+
 export function register(app) {
+app.use('/api/fantasy', requireFeature('fantasy'));
 // --- Fantasy 11 ----------------------------------------------------------------
 //
 // The non-economic core. Paid entry inherits the SAME compliance gate as

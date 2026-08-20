@@ -13,7 +13,17 @@ import * as tuma from '../connectors/tuma.js';
 import * as signals from '../domain/signal.js';
 import { requireAuth, now, recordError } from './helpers.js';
 
+import { requireFeature } from '../features.js';
+
 export function register(app) {
+app.use('/api/vendors', requireFeature('commerce'));
+app.use('/api/listings', requireFeature('commerce'));
+app.use('/api/orders', requireFeature('commerce'));
+app.use('/api/disputes', requireFeature('commerce'));
+app.use('/api/orders/:id/pay', requireFeature('payments'));
+app.use('/api/orders/:id/payments', requireFeature('payments'));
+app.use('/api/webhooks/tuma', requireFeature('payments'));
+app.use('/api/vendors/me/payouts', requireFeature('payouts'));
 // ---------------------------------------------------------------------------
 // COMMERCE (Batch 3): vendors, listings, orders, fulfilment, disputes.
 //

@@ -6,7 +6,10 @@ import { callerId, canGovernObject } from '../identity.js';
 import { storeRawItem, processRawItem, previewText } from '../pipeline/ingest.js';
 import { requireAuth, now } from './helpers.js';
 
+import { requireFeature } from '../features.js';
+
 export function register(app) {
+app.use('/api/brief-it', requireFeature('briefit'));
 // --- Brief It / manual (spec 16-17) ------------------------------------------
 
 /** Preview only. Nothing is written -- the user decides (spec 16). */

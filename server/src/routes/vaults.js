@@ -7,7 +7,11 @@ import * as footsteps from '../domain/footsteps.js';
 import * as handoff from '../domain/handoff.js';
 import { requireAuth, now } from './helpers.js';
 
+import { requireFeature } from '../features.js';
+
 export function register(app) {
+app.use('/api/vaults', requireFeature('vaults'));
+app.use('/api/public/vaults', requireFeature('vaults'));
 // --- The Vault --------------------------------------------------------------
 //
 // A Vault is a persistent context layer over real-world activity. Routes here

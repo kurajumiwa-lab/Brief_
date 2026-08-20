@@ -19,7 +19,12 @@ function ownedCampaign(req, res) {
   return c;
 }
 
+import { requireFeature } from '../features.js';
+
 export function register(app) {
+app.use('/api/campaigns', requireFeature('campaigns'));
+app.use('/api/tickets', requireFeature('campaigns'));
+app.use('/api/public/campaigns', requireFeature('campaigns'));
 app.get('/api/campaigns', (req, res) => {
   res.json({ campaigns: campaigns.listCampaigns(callerId(req)) });
 });

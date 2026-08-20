@@ -10,7 +10,14 @@ import * as whatsapp from '../connectors/whatsapp.js';
 import * as web from '../connectors/web.js';
 import { requireAuth, now, recordError, CURRENT_USER } from './helpers.js';
 
+import { requireFeature } from '../features.js';
+
 export function register(app) {
+app.use('/api/connectors/web', requireFeature('connectors'));
+app.use('/api/connectors/rss', requireFeature('connectors'));
+app.use('/api/connectors/telegram', requireFeature('telegram'));
+app.use('/api/webhooks/telegram', requireFeature('telegram'));
+app.use('/api/webhooks/whatsapp', requireFeature('whatsapp'));
 // --- Telegram (spec 10-12) ---------------------------------------------------
 
 

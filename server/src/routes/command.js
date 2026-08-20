@@ -4,7 +4,10 @@ import { callerId } from '../identity.js';
 import * as command from '../domain/command.js';
 import { requireAuth } from './helpers.js';
 
+import { requireFeature } from '../features.js';
+
 export function register(app) {
+app.use('/api/host', requireFeature('command'));
 /**
  * The host command centre: NOW / MONEY / PEOPLE / DISTRIBUTION / ACTION / NEXT,
  * derived from real rows. Host-only, and scoped to the caller's own campaigns

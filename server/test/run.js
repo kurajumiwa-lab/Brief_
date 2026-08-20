@@ -2879,6 +2879,60 @@ console.log('\n=== OUTBOUND CHANNEL SEAM + TWILIO (no credentials configured) ==
   delete process.env.TWILIO_WHATSAPP_FROM;
 }
 
+console.log('\n=== FEATURE REGISTRY (§4.2) ===');
+{
+  const features = await import('../src/features.js');
+
+  // The WhatsApp connector tests above leave WHATSAPP_* set (a pre-existing
+  // leak). Establish the no-credential baseline this block asserts against.
+  delete process.env.WHATSAPP_APP_SECRET;
+  delete process.env.WHATSAPP_VERIFY_TOKEN;
+
+  // Default state: everything enabled; module features configured; provider
+  // features NOT configured (no credentials in this run).
+  check('every feature is enabled by default', features.list().every((f) => f.enabled));
+  check('the registry holds 19 features', features.list().length === 19, String(features.list().length));
+  check('auth is available by default', features.available('auth') === true);
+  check('arena is available by default', features.available('arena') === true);
+  check('vaults is available by default', features.available('vaults') === true);
+  check('payments is enabled but NOT configured (no Tuma creds)', features.isEnabled('payments') === true && features.isConfigured('payments') === false);
+  check('payments available=false (enabled yet unconfigured)', features.available('payments') === false);
+  check('payouts is NOT configured', features.isConfigured('payouts') === false);
+  check('outbound is NOT configured (no Twilio creds)', features.isConfigured('outbound') === false);
+  check('telegram is NOT configured (no token in this run)', features.isConfigured('telegram') === false);
+  check('whatsapp is NOT configured', features.isConfigured('whatsapp') === false);
+  check('status() reports disabled as empty', features.status().disabled.length === 0);
+
+  // Deploy toggle: disable arena, then confirm the edge guard 503s and the
+  // rest of the app is untouched.
+  process.env.BRIEF_DISABLED_FEATURES = 'arena';
+  check('disabling arena flips enabled', features.isEnabled('arena') === false);
+  check('a disabled feature is not available', features.available('arena') === false);
+  check('status() names the disabled feature', features.status().disabled.includes('arena'));
+  check('other features are unaffected', features.isEnabled('auth') === true && features.isEnabled('commerce') === true);
+
+  // Over HTTP: /api/arena/games is 503 when arena is disabled; /api/health is not.
+  {
+    const { default: appF } = await import('../src/index.js');
+    const srvF = appF.listen(0);
+    const portF = srvF.address().port;
+    const callF = async (p) => {
+      const res = await fetch(`http://127.0.0.1:${portF}${p}`);
+      return { status: res.status, body: await res.json().catch(() => null) };
+    };
+    const off = await callF('/api/arena/games');
+    check('a disabled feature 503s at the edge', off.status === 503 && off.body?.feature === 'arena', JSON.stringify(off));
+    const still = await callF('/api/health');
+    check('health still serves while arena is disabled', still.status === 200);
+    const cmd = await callF('/api/host/command');
+    check('an enabled feature still serves', cmd.status === 200, `got ${cmd.status}`);
+    srvF.close();
+  }
+
+  delete process.env.BRIEF_DISABLED_FEATURES;
+  check('clearing the list re-enables the feature', features.isEnabled('arena') === true);
+}
+
 console.log('\n=== TUMA PAYMENT E2E + WEBHOOK (simulated provider) ===');
 {
   process.env.NODE_ENV = 'test';

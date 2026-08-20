@@ -12,6 +12,7 @@ import * as telegram from '../connectors/telegram.js';
 import * as web from '../connectors/web.js';
 import * as whatsapp from '../connectors/whatsapp.js';
 import * as outbound from '../outbound.js';
+import * as features from '../features.js';
 import { requireAuth, now } from './helpers.js';
 
 export function register(app) {
@@ -73,7 +74,10 @@ app.get('/api/capabilities', (_req, res) => {
     // Outbound messaging: which channels can Brief actually SEND on. Honest
     // per-channel configured state, so the client never implies a reply rail
     // that has no provider.
-    outbound: outbound.status()
+    outbound: outbound.status(),
+    // The feature registry (§4.2): one table of what is enabled, what is
+    // configured, and what is therefore actually available.
+    features: features.status()
   });
 });
 

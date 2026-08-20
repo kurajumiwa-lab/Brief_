@@ -5,7 +5,10 @@ import { callerId } from '../identity.js';
 import * as web from '../connectors/web.js';
 import { requireAuth, now, CURRENT_USER } from './helpers.js';
 
+import { requireFeature } from '../features.js';
+
 export function register(app) {
+app.use('/api/sources', requireFeature('sources'));
 // --- Sources (spec 2) --------------------------------------------------------
 
 
