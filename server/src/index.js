@@ -18,6 +18,7 @@ import { fileURLToPath } from 'node:url';
 import { store } from './store.js';
 import * as auth from './domain/auth.js';
 import * as ops from './ops.js';
+import * as workflow from './domain/workflow.js';
 import * as campaigns from './domain/campaign.js';
 import * as ledger from './domain/ledger.js';
 import * as telegram from './connectors/telegram.js';
@@ -51,6 +52,7 @@ import { register as assistRoutes } from './routes/assist.js';
 import { register as poolsRoutes } from './routes/pools.js';
 import { register as distributionRoutes } from './routes/distribution.js';
 import { register as lobbyRoutes } from './routes/lobby.js';
+import { register as workflowRoutes } from './routes/workflow.js';
 
 const app = express();
 
@@ -136,6 +138,7 @@ assistRoutes(app);
 poolsRoutes(app);
 distributionRoutes(app);
 lobbyRoutes(app);
+workflowRoutes(app);
 
 // --- Production frontend serving -------------------------------------------
 //
@@ -254,6 +257,11 @@ if (process.env.NODE_ENV !== 'test') {
   ops.restoreLatestBackupIfEmpty(store);
   ops.installPeriodicBackup(store, {
     intervalMs: Number(process.env.BRIEF_BACKUP_INTERVAL_MS) || 15 * 60 * 1000
+  });
+  // Automation engine: sweep unprocessed signals through workflows on a
+  // cadence, so triggers fire without a request. Idempotent by design.
+  workflow.installSweep({
+    intervalMs: Number(process.env.BRIEF_WORKFLOW_INTERVAL_MS) || 60 * 1000
   });
 
   const server = app.listen(PORT, '0.0.0.0', () => {

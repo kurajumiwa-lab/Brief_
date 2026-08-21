@@ -3428,6 +3428,77 @@ console.log('\n=== TELEGRAM MINI APP initData ===');
   delete process.env.TELEGRAM_BOT_TOKEN;
 }
 
+console.log('\n=== AUTOMATION ENGINE (CCS §3.1) ===');
+{
+  const workflow = await import('../src/domain/workflow.js');
+  const signals = await import('../src/domain/signal.js');
+  const person = await import('../src/domain/person.js');
+
+  // A workflow that tags "Outdoor enthusiast" when a member joins, and
+  // notifies the actor.
+  const wf = workflow.createWorkflow({
+    name: 'Welcome outdoor folks',
+    trigger: 'member_joined',
+    conditions: [],
+    actions: [
+      { type: 'tag', tag: 'Outdoor enthusiast' },
+      { type: 'notify', title: 'Welcome!', body: 'Glad you are here.' }
+    ],
+    ownerId: 'usr_creator'
+  });
+  check('a workflow is created', Boolean(wf.id) && wf.enabled === true);
+
+  // A matching signal fires it.
+  const sig = signals.emitSignal({ type: 'member_joined', actorId: 'usr_me', circleId: 'c1' });
+  check('matches() is true for a matching signal', workflow.matches(wf, sig) === true);
+
+  // A non-matching signal does not.
+  const other = signals.emitSignal({ type: 'object_viewed', actorId: 'usr_me' });
+  check('matches() is false for a non-matching signal', workflow.matches(wf, other) === false);
+
+  // The sweep runs the actions: tag + notify, deduped.
+  const person1 = person.ensurePersonForUser('usr_me');
+  const sweep1 = await workflow.sweep();
+  check('the sweep executed actions', sweep1.executed >= 2, String(sweep1.executed));
+  check('the tag action tagged the person', (person.getPerson(person1.id).tags ?? []).includes('Outdoor enthusiast'));
+  check('the notify action created a notification', store.filter('notifications', (n) => n.metadata?.workflowId === wf.id).length >= 1);
+
+  // A second sweep is idempotent — no double fire.
+  const sweep2 = await workflow.sweep();
+  check('a second sweep is idempotent', sweep2.executed === 0, String(sweep2.executed));
+
+  // Conditions gate execution: a workflow that only fires for a specific actor.
+  const cond = workflow.createWorkflow({
+    name: 'VIP only', trigger: '*', conditions: [{ field: 'actorId', op: 'eq', value: 'usr_vip' }],
+    actions: [{ type: 'tag', tag: 'VIP' }], ownerId: 'usr_creator'
+  });
+  const notVip = signals.emitSignal({ type: 'object_saved', actorId: 'usr_plain' });
+  check('a condition can reject a signal', workflow.matches(cond, notVip) === false);
+  const vip = signals.emitSignal({ type: 'object_saved', actorId: 'usr_vip' });
+  check('a condition can accept a signal', workflow.matches(cond, vip) === true);
+
+  // A blast action fails closed with no provider/recipient.
+  const blastWf = workflow.createWorkflow({
+    name: 'Blast', trigger: 'campaign_published',
+    actions: [{ type: 'blast', channel: 'sms', to: '0722000111', text: 'New event!' }],
+    ownerId: 'usr_creator'
+  });
+  signals.emitSignal({ type: 'campaign_published', actorId: 'usr_me', objectId: 'o1' });
+  await workflow.sweep();
+  const run = workflow.listRuns().find((r) => r.workflowId === blastWf.id);
+  check('a blast run is logged even when it fails closed', Boolean(run) && run.results[0].ok === false);
+
+  // Over HTTP.
+  {
+    const { default: appW } = await import('../src/index.js');
+    const srvW = appW.listen(0);
+    const portW = srvW.address().port;
+    const list = await (await fetch(`http://127.0.0.1:${portW}/api/workflows`)).json();
+    check('GET /api/workflows lists workflows + runs', Array.isArray(list.workflows) && Array.isArray(list.runs) && typeof list.stats.totalRuns === 'number');
+    srvW.close();
+  }
+}
+
 console.log('\n=== FEATURE REGISTRY (§4.2) ===');
 {
   const features = await import('../src/features.js');
@@ -3440,7 +3511,7 @@ console.log('\n=== FEATURE REGISTRY (§4.2) ===');
   // Default state: everything enabled; module features configured; provider
   // features NOT configured (no credentials in this run).
   check('every feature is enabled by default', features.list().every((f) => f.enabled));
-  check('the registry holds 29 features', features.list().length === 29, String(features.list().length));
+  check('the registry holds 30 features', features.list().length === 30, String(features.list().length));
   check('auth is available by default', features.available('auth') === true);
   check('arena is available by default', features.available('arena') === true);
   check('vaults is available by default', features.available('vaults') === true);

@@ -62,6 +62,7 @@ export function ensurePersonForUser(userId) {
   const person = store.insert('people', {
     id: newId('person'),
     displayName: user?.displayName ?? null,
+    tags: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   });
@@ -80,7 +81,21 @@ export function ensurePersonForUser(userId) {
 export function getPerson(id) {
   const p = store.find('people', (x) => x.id === id);
   if (!p) return null;
-  return { ...p, aliases: store.filter('personAliases', (a) => a.personId === id) };
+  return { ...p, tags: p.tags ?? [], aliases: store.filter('personAliases', (a) => a.personId === id) };
+}
+
+/**
+ * Add a tag to a person (the CRM "interests" field). Idempotent and additive —
+ * tags are a creator's own labels ("Outdoor enthusiast", "Bought hiking
+ * guide"), never a computed score.
+ */
+export function tagPerson(personId, tag) {
+  const p = store.find('people', (x) => x.id === personId);
+  if (!p) throw new Error('person not found');
+  const clean = String(tag ?? '').trim();
+  if (!clean) throw new Error('tag is required');
+  const tags = [...new Set([...(p.tags ?? []), clean])];
+  return store.update('people', personId, { tags, updatedAt: new Date().toISOString() });
 }
 
 /**

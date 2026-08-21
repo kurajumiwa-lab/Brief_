@@ -54,6 +54,7 @@ const DEFINITIONS = [
   { key: 'pools',      domain: 'pools',       label: 'Cooperative savings (Chama/Stokvel)', configured: () => true },
   { key: 'distribution', domain: 'distribution', label: 'Campaign blast + UTM attribution',  configured: () => true },
   { key: 'lobby',      domain: 'lobby',       label: 'Lobby code board & clan matches',       configured: () => true },
+  { key: 'workflows',  domain: 'workflow',    label: 'Automation engine (trigger/condition/action)', configured: () => true },
   // Provider-backed: configured derives from LIVE credentials, never a stored flag.
   { key: 'payments',  domain: 'commerce',   label: 'Payment collection (Tuma STK)',   configured: () => providers.providerStatus().configured },
   { key: 'payouts',   domain: 'commerce',   label: 'Merchant payouts (disbursement)', configured: () => providers.providerStatus().payoutConfigured },

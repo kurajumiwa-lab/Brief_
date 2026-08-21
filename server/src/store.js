@@ -157,6 +157,12 @@ const EMPTY = {
   scoreboardReceipts: [],
   clanMatches: [],
 
+  // --- Automation engine (CCS §3.1) ----------------------------------------
+  // Trigger→condition→action workflows evaluated against the signal log, and
+  // their append-only run history. See domain/workflow.js.
+  workflows: [],
+  workflowRuns: [],
+
   // --- Person (report §4.4) -------------------------------------------------
   // A first-class entity over every identity Brief holds. A person is a stable
   // id; personAliases bind it to concrete external identifiers (user id, phone,
