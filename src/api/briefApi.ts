@@ -1473,3 +1473,28 @@ export function getFeed(opts: { lat?: number; lng?: number; radiusKm?: number } 
   const q = params.toString() ? `?${params.toString()}` : '';
   return request(`/api/feed${q}`, undefined, (r) => (r?.feed ? r.feed : undefined));
 }
+
+// --- Tea Desk (editorial admin) ---------------------------------------------
+
+/** All Tea articles including drafts, for the desk. */
+export function listTeaAll(status?: string): Promise<ApiResult<any[]>> {
+  const q = status ? `?status=${encodeURIComponent(status)}` : '';
+  return request(`/api/admin/tea${q}`, undefined, (r) =>
+    Array.isArray(r?.articles) ? r.articles : undefined
+  );
+}
+
+/** Create a Tea article (draft by default). */
+export function createTeaArticle(fields: Record<string, unknown>): Promise<ApiResult<any>> {
+  return request('/api/admin/tea', { method: 'POST', body: JSON.stringify(fields) }, (r) => r?.article ?? undefined);
+}
+
+/** Edit a Tea article. */
+export function updateTeaArticle(id: string, patch: Record<string, unknown>): Promise<ApiResult<any>> {
+  return request(`/api/admin/tea/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(patch) }, (r) => r?.article ?? undefined);
+}
+
+/** Drive a status transition: submit/approve/publish/schedule/unpublish/expire/archive. */
+export function transitionTea(id: string, action: string): Promise<ApiResult<any>> {
+  return request(`/api/admin/tea/${encodeURIComponent(id)}/${encodeURIComponent(action)}`, { method: 'POST', body: '{}' }, (r) => r?.article ?? undefined);
+}

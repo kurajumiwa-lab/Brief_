@@ -24,6 +24,7 @@ import { NearbyMap } from './components/NearbyMap';
 import type { GeoPoint } from './components/NearbyMap';
 import { ArenaPortal } from './components/ArenaPortal';
 import { FeedComposer } from './components/FeedComposer';
+import { TeaDesk } from './components/TeaDesk';
 import type { CircleDetail as ApiCircleDetail } from './api/briefApi';
 import type {
   Campaign as ApiCampaign,
@@ -139,7 +140,7 @@ export type MyLayerSection =
   | 'saved' | 'activity' | 'arena' | 'points' | 'circles' | 'groups' | 'campaigns';
 // Workflows secondary: a Journey is either in progress or finished. Inbox and
 // Sources are kept -- they are existing workflow surfaces, not new screens.
-export type WorkflowSection = 'command' | 'active' | 'completed' | 'inbox' | 'sources' | 'money' | 'vault' | 'gate';
+export type WorkflowSection = 'command' | 'active' | 'completed' | 'inbox' | 'sources' | 'money' | 'vault' | 'gate' | 'tea';
 // Pulse secondary. Pulse is the information layer: freshness, local signals,
 // what groups are surfacing, and emerging activity. It is not an assistant.
 export type PulseSection = 'now' | 'local' | 'groups' | 'signals';
@@ -7235,7 +7236,8 @@ export function App() {
                 // Actions / Pulse.
                 ['money', 'Money'],
                 ['vault', 'Vault'],
-                ['gate', 'Gate']
+                ['gate', 'Gate'],
+                ['tea', 'Tea Desk']
               ] as [WorkflowSection, string][]).map(([id, label]) => (
                 <button
                   key={id}
@@ -9591,6 +9593,12 @@ export function App() {
 
         {activeTab === 'workflows' && workflowSection === 'vault' && (
           <Vault />
+        )}
+
+        {activeTab === 'workflows' && workflowSection === 'tea' && (
+          <div className="max-w-3xl mx-auto px-4 pt-4">
+            <TeaDesk />
+          </div>
         )}
 
         {activeTab === 'workflows' && workflowSection === 'gate' && (
