@@ -145,6 +145,10 @@ const EMPTY = {
   poolMembers: [],
   poolRotations: [],
 
+  // --- Distribution (four-screen build B) ----------------------------------
+  // UTM click attribution: one row per tracked click. See domain/distribution.js.
+  clickEvents: [],
+
   // --- Person (report §4.4) -------------------------------------------------
   // A first-class entity over every identity Brief holds. A person is a stable
   // id; personAliases bind it to concrete external identifiers (user id, phone,

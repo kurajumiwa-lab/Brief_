@@ -3255,6 +3255,51 @@ console.log('\n=== COOPERATIVE POOLS (four-screen build A) ===');
   }
 }
 
+console.log('\n=== DISTRIBUTION (four-screen build B) ===');
+{
+  const distribution = await import('../src/domain/distribution.js');
+  const campaigns = await import('../src/domain/campaign.js');
+
+  const c = campaigns.createCampaign('usr_me', { title: 'Rooftop Gig', type: 'event', location: 'Kilimani', capacity: 50, price: 0, currency: 'KES' });
+  campaigns.transitionCampaign(c.id, 'published');
+  campaigns.transitionCampaign(c.id, 'live');
+
+  // A tracked link needs a public origin; null otherwise (honest).
+  check('no tracked link without a public origin', distribution.trackedLink(c, null) === null);
+  const link = distribution.trackedLink(c, 'https://brief.example.com', { source: 'whatsapp', medium: 'social', content: 'weekend' });
+  check('a tracked link embeds UTM params', link && link.includes('utm_source=whatsapp') && link.includes('utm_campaign=' + c.id) && link.includes('utm_content=weekend'), link);
+
+  // Blast fails honestly when no origin is configured.
+  const noOrigin = await distribution.blast(c, { recipients: [{ channel: 'whatsapp', to: '0722000111' }], publicOrigin: null });
+  check('blast fails without an origin', noOrigin.ok === false && noOrigin.reason === 'public_origin_not_configured');
+
+  // A Telegram/X recipient is honestly "no send connector".
+  process.env.BRIEF_PUBLIC_ORIGIN = 'https://brief.example.com';
+  const tgBlast = await distribution.blast(c, { recipients: [{ channel: 'telegram', to: 'chat' }] });
+  check('telegram blast reports no send connector', tgBlast.results[0].ok === false && tgBlast.results[0].reason === 'no_send_connector');
+
+  // recordClick attributes a click and returns the campaign.
+  const clicked = distribution.recordClick({ c: c.publicSlug, utm_source: 'x', utm_medium: 'social' });
+  check('recordClick attributes a click', clicked && clicked.id === c.id);
+  check('clicksFor aggregates by source', distribution.clicksFor(c.id).clicks === 1 && distribution.clicksFor(c.id).clicksBySource.x === 1);
+
+  // Clicks flow into campaign analytics.
+  const an = campaigns.analytics(c.id);
+  check('campaign analytics reports clicks + bySource', an.clicks === 1 && an.clicksBySource.x === 1);
+
+  // Over HTTP: click endpoint records and redirects.
+  {
+    const { default: appD } = await import('../src/index.js');
+    const srvD = appD.listen(0);
+    const portD = srvD.address().port;
+    const r = await fetch(`http://127.0.0.1:${portD}/api/click?c=${c.publicSlug}&utm_source=whatsapp`, { redirect: 'manual' });
+    check('GET /api/click redirects to the campaign', r.status === 302 && /\/c\//.test(r.headers.get('location') || ''), String(r.headers.get('location')));
+    srvD.close();
+  }
+
+  delete process.env.BRIEF_PUBLIC_ORIGIN;
+}
+
 console.log('\n=== FEATURE REGISTRY (§4.2) ===');
 {
   const features = await import('../src/features.js');
@@ -3267,7 +3312,7 @@ console.log('\n=== FEATURE REGISTRY (§4.2) ===');
   // Default state: everything enabled; module features configured; provider
   // features NOT configured (no credentials in this run).
   check('every feature is enabled by default', features.list().every((f) => f.enabled));
-  check('the registry holds 27 features', features.list().length === 27, String(features.list().length));
+  check('the registry holds 28 features', features.list().length === 28, String(features.list().length));
   check('auth is available by default', features.available('auth') === true);
   check('arena is available by default', features.available('arena') === true);
   check('vaults is available by default', features.available('vaults') === true);

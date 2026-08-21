@@ -158,6 +158,13 @@ export function analytics(campaignId) {
     currency: campaign?.currency ?? 'KES',
     viewers,
     shares,
+    ...(() => {
+      // Click attribution from the distribution rail (UTM-tracked links).
+      const clicks = store.filter('clickEvents', (c) => c.campaignId === campaignId);
+      const bySource = {};
+      for (const c of clicks) bySource[c.utmSource] = (bySource[c.utmSource] ?? 0) + 1;
+      return { clicks: clicks.length, clicksBySource: bySource };
+    })(),
     // Conversion is only meaningful once a view has actually been recorded.
     // With no views this is `null` ("not enough data"), never 0 -- a real 0%
     // and an unmeasured one are different facts.
