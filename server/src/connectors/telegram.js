@@ -10,6 +10,7 @@
 //                                   command / a reply to the bot
 //   CAN   read channel posts     -- ONLY if the bot is a member/admin of that
 //                                   channel
+//   CAN   verify Mini App initData -- HMAC-SHA256 over the signed payload
 //   CANNOT read history          -- there is no Bot API method to fetch past
 //                                   messages. A bot sees traffic only from the
 //                                   moment it joins. Backfill requires MTProto
@@ -19,6 +20,8 @@
 //
 // The token never leaves the server (spec 28).
 // ---------------------------------------------------------------------------
+
+import crypto from 'node:crypto';
 
 const API = 'https://api.telegram.org';
 
@@ -73,6 +76,84 @@ export async function verify() {
       canReadAllGroupMessages: res.result.can_read_all_group_messages ?? false,
       canJoinGroups: res.result.can_join_groups ?? false
     }
+  };
+}
+
+// ---------------------------------------------------------------------------
+// MINI APP initData VERIFICATION
+//
+// A Mini App opened inside Telegram receives a signed `initData` string. The
+// signature is an HMAC-SHA256 whose secret is derived from the BOT TOKEN, so
+// only a server holding the token can verify it. This is the whole identity
+// bridge: if the HMAC checks out, the Telegram user id inside is authentic and
+// can be bound to a Brief session without the user ever typing a password.
+//
+// Algorithm (Telegram's documented contract):
+//   1. split initData into key=value pairs
+//   2. drop `hash`
+//   3. sort keys alphabetically
+//   4. data_check_string = pairs joined with "\n" as "key=value"
+//   5. secret_key = HMAC_SHA256(key = "WebAppData", msg = bot_token)
+//   6. hash        = HMAC_SHA256(key = secret_key,    msg = data_check_string)
+//   7. timing-safe compare with the provided hash
+// ---------------------------------------------------------------------------
+
+export function verifyInitData(initData, { maxAgeMs = 24 * 60 * 60 * 1000 } = {}) {
+  if (typeof initData !== 'string' || !initData.trim()) {
+    return { ok: false, reason: 'no_init_data' };
+  }
+  if (!isConfigured()) {
+    return { ok: false, reason: 'not_configured' };
+  }
+
+  const params = new URLSearchParams(initData);
+  const providedHash = params.get('hash');
+  if (!providedHash) return { ok: false, reason: 'missing_hash' };
+
+  // The data-check-string is every field except `hash`, sorted by key.
+  const dataCheckString = [...params.entries()]
+    .filter(([k]) => k !== 'hash')
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => `${k}=${v}`)
+    .join('\n');
+
+  const secretKey = crypto.createHmac('sha256', 'WebAppData').update(token()).digest();
+  const computedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+
+  const a = Buffer.from(computedHash);
+  const b = Buffer.from(providedHash);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+    return { ok: false, reason: 'bad_signature' };
+  }
+
+  // Reject stale initData: a payload older than maxAgeMs cannot mint a session.
+  const authDate = Number(params.get('auth_date') ?? 0);
+  if (!Number.isFinite(authDate) || authDate <= 0) {
+    return { ok: false, reason: 'missing_auth_date' };
+  }
+  if (Date.now() - authDate * 1000 > maxAgeMs) {
+    return { ok: false, reason: 'init_data_expired' };
+  }
+
+  // The `user` field is a JSON string. Parse it into the real Telegram user.
+  let user = null;
+  try {
+    user = params.get('user') ? JSON.parse(params.get('user')) : null;
+  } catch {
+    return { ok: false, reason: 'bad_user_payload' };
+  }
+  if (!user || !user.id) return { ok: false, reason: 'missing_user' };
+
+  return {
+    ok: true,
+    user: {
+      id: String(user.id),
+      firstName: user.first_name ?? null,
+      lastName: user.last_name ?? null,
+      username: user.username ?? null,
+      languageCode: user.language_code ?? null
+    },
+    authDate
   };
 }
 

@@ -5156,6 +5156,21 @@ export function App() {
   // the whole product is exercisable on the deployed site — a genuine account
   // with a real server session, not a fake. A returning device logs back in.
   const bootstrapSession = React.useCallback(async () => {
+    // Inside a Telegram Mini App, the user's real identity is the signed
+    // initData — bind it to a Brief account rather than minting an anonymous
+    // local identity. This is what lets a Mini App user post as THEMSELVES.
+    if (briefApi.isTelegramMiniApp()) {
+      const tg = (window as any)?.Telegram?.WebApp;
+      try {
+        tg?.ready?.();
+        tg?.expand?.();
+      } catch { /* SDK not fully loaded */ }
+      const init = await briefApi.telegramInit(String(tg.initData));
+      if (init.ok) return;
+      // initData rejected (stale/bad) — fall through to the ordinary path so
+      // the app still renders, just without the Telegram identity.
+    }
+
     const me = await briefApi.whoAmI();
     if (me.ok) return; // already authenticated (session restored or dev fallback)
     // Only provision an account when the server actually requires one (401).

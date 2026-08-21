@@ -8,6 +8,7 @@ import { storeRawItem, processRawItem } from '../pipeline/ingest.js';
 import * as telegram from '../connectors/telegram.js';
 import * as whatsapp from '../connectors/whatsapp.js';
 import * as web from '../connectors/web.js';
+import * as auth from '../domain/auth.js';
 import { requireAuth, now, recordError, CURRENT_USER } from './helpers.js';
 
 import { requireFeature } from '../features.js';
@@ -16,8 +17,48 @@ export function register(app) {
 app.use('/api/connectors/web', requireFeature('connectors'));
 app.use('/api/connectors/rss', requireFeature('connectors'));
 app.use('/api/connectors/telegram', requireFeature('telegram'));
+app.use('/api/telegram', requireFeature('telegram'));
 app.use('/api/webhooks/telegram', requireFeature('telegram'));
 app.use('/api/webhooks/whatsapp', requireFeature('whatsapp'));
+
+/**
+ * MINI APP AUTH — exchange verified initData for a Brief session.
+ *
+ * A Mini App opened inside Telegram presents signed initData. This route
+ * verifies the HMAC (so only Telegram can have produced it), then binds the
+ * Telegram user id to a Brief account and returns a session token. From here
+ * the client is an ordinary authenticated Brief client — it can post, save,
+ * register, etc. — because its identity is now real, not a local fallback.
+ *
+ * The account is a `tg_<id>` handle with a random, never-exposed password: the
+ * user signs in via initData on every open, never by typing a password.
+ */
+app.post('/api/telegram/init', (req, res) => {
+  const verified = telegram.verifyInitData(req.body?.initData);
+  if (!verified.ok) {
+    return res.status(401).json({ error: 'invalid telegram initData', reason: verified.reason });
+  }
+
+  const handle = `tg_${verified.user.id}`;
+  let user = auth.getUserByHandle(handle);
+  if (!user) {
+    // A random server-side password the user never sees; auth is via initData.
+    const password = crypto.randomBytes(32).toString('hex');
+    user = auth.createUser({
+      handle,
+      password,
+      displayName: verified.user.firstName || verified.user.username || handle
+    });
+  }
+
+  const { token: sessionToken, session } = auth.issueSession(user.id);
+  res.json({
+    ok: true,
+    token: sessionToken,
+    expiresAt: session.expiresAt,
+    user: auth.publicUser(user)
+  });
+});
 // --- Telegram (spec 10-12) ---------------------------------------------------
 
 

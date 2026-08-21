@@ -1533,3 +1533,31 @@ export function startLobbyRoom(roomId: string): Promise<ApiResult<any>> {
 export function vouchHost(hostId: string, up: boolean): Promise<ApiResult<any>> {
   return request(`/api/lobby/hosts/${encodeURIComponent(hostId)}/vouch`, { method: 'POST', body: JSON.stringify({ up }) }, (r) => r?.trust ?? undefined);
 }
+
+// --- Telegram Mini App -------------------------------------------------------
+
+/**
+ * Exchange Telegram Mini App initData for a Brief session. Only callable from
+ * inside Telegram, where the WebApp SDK injects a signed initData string; the
+ * server verifies the HMAC and binds the Telegram user to a Brief account.
+ */
+export async function telegramInit(initData: string): Promise<ApiResult<AuthedUser>> {
+  const res = await request<{ user: AuthedUser; token: string }>(
+    '/api/telegram/init',
+    { method: 'POST', body: JSON.stringify({ initData }) },
+    (r) => (r?.user && r?.token ? { user: r.user, token: r.token } : undefined)
+  );
+  if (!res.ok) return res;
+  setSessionToken(res.data.token);
+  return { ok: true, data: res.data.user };
+}
+
+/** Are we running inside a Telegram Mini App (WebApp SDK present)? */
+export function isTelegramMiniApp(): boolean {
+  try {
+    const tg = (window as any)?.Telegram?.WebApp;
+    return Boolean(tg && typeof tg.initData === 'string' && tg.initData.length > 0);
+  } catch {
+    return false;
+  }
+}

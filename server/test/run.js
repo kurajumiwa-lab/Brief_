@@ -3364,6 +3364,70 @@ console.log('\n=== LOBBY CODE BOARD (Arena integration) ===');
   }
 }
 
+console.log('\n=== TELEGRAM MINI APP initData ===');
+{
+  const telegram = await import('../src/connectors/telegram.js');
+  const crypto = await import('node:crypto');
+
+  // Build a genuine signed initData using the real Telegram algorithm.
+  process.env.TELEGRAM_BOT_TOKEN = '12345:test_token_for_initdata';
+  const user = JSON.stringify({ id: 998877, first_name: 'Wanjiku', username: 'wanjiku_hikes' });
+  const fields = {
+    query_id: 'AAHdF6IQAAAAAN0XohDhrOrc',
+    user,
+    auth_date: String(Math.floor(Date.now() / 1000))
+  };
+  const dataCheckString = Object.entries(fields)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => `${k}=${v}`)
+    .join('\n');
+  const secretKey = crypto.createHmac('sha256', 'WebAppData').update('12345:test_token_for_initdata').digest();
+  const hash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+  const initData = new URLSearchParams({ ...fields, hash }).toString();
+
+  const verified = telegram.verifyInitData(initData);
+  check('a valid initData verifies', verified.ok === true);
+  check('the Telegram user id is extracted', verified.user?.id === '998877');
+  check('the first name is extracted', verified.user?.firstName === 'Wanjiku');
+
+  // Tampering with any field invalidates the signature.
+  const tampered = initData.replace('Wanjiku', 'Attacker');
+  check('a tampered initData is refused', telegram.verifyInitData(tampered).reason === 'bad_signature');
+
+  // An expired initData is refused.
+  const oldFields = { ...fields, auth_date: String(Math.floor(Date.now() / 1000) - 48 * 3600) };
+  const oldDcs = Object.entries(oldFields).sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => `${k}=${v}`).join('\n');
+  const oldHash = crypto.createHmac('sha256', secretKey).update(oldDcs).digest('hex');
+  const oldInitData = new URLSearchParams({ ...oldFields, hash: oldHash }).toString();
+  check('an expired initData is refused', telegram.verifyInitData(oldInitData).reason === 'init_data_expired');
+
+  // The init route binds the Telegram user to a Brief account + session.
+  {
+    const { default: appTg } = await import('../src/index.js');
+    const srvTg = appTg.listen(0);
+    const portTg = srvTg.address().port;
+    const r = await fetch(`http://127.0.0.1:${portTg}/api/telegram/init`, {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ initData })
+    });
+    const body = await r.json().catch(() => null);
+    check('POST /api/telegram/init issues a session', r.status === 200 && Boolean(body?.token));
+    check('the account is bound to the telegram id', body?.user?.handle === 'tg_998877', body?.user?.handle);
+    // The returned token is a real session: whoAmI with it resolves.
+    const me = await fetch(`http://127.0.0.1:${portTg}/api/auth/me`, { headers: { authorization: `Bearer ${body.token}` } });
+    check('the minted token authenticates', me.status === 200);
+    // A forged initData is refused with 401.
+    const bad = await fetch(`http://127.0.0.1:${portTg}/api/telegram/init`, {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ initData: tampered })
+    });
+    check('a forged initData is refused 401', bad.status === 401);
+    srvTg.close();
+  }
+
+  delete process.env.TELEGRAM_BOT_TOKEN;
+}
+
 console.log('\n=== FEATURE REGISTRY (§4.2) ===');
 {
   const features = await import('../src/features.js');
