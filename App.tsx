@@ -26,6 +26,7 @@ import { ArenaPortal } from './components/ArenaPortal';
 import { FeedComposer } from './components/FeedComposer';
 import { TeaDesk } from './components/TeaDesk';
 import { SearchResults } from './components/SearchResults';
+import { TeaReader } from './components/TeaReader';
 import type { CircleDetail as ApiCircleDetail } from './api/briefApi';
 import type {
   Campaign as ApiCampaign,
@@ -5297,6 +5298,7 @@ export function App() {
   const [seenIds, setSeenIds] = useState<Set<string>>(new Set());
 
   const [selectedObjectForDetail, setSelectedObjectForDetailRaw] = useState<BriefObject | null>(null);
+  const [selectedTeaSlug, setSelectedTeaSlug] = useState<string | null>(null);
 
   // Opening an object marks it seen, which is what keeps the Daily Brief's
   // "New" section honest instead of showing the same items forever.
@@ -7137,6 +7139,7 @@ export function App() {
                 onOpen={(raw) => {
                   if (raw?.id) setSelectedObjectForDetail(objectFromServer(raw));
                 }}
+                onOpenTea={(slug) => setSelectedTeaSlug(slug)}
               />
             </div>
             <div className="mb-4">
@@ -10691,6 +10694,10 @@ export function App() {
       )}
 
       {/* DETAIL LAYER */}
+      {selectedTeaSlug && (
+        <TeaReader slug={selectedTeaSlug} onClose={() => setSelectedTeaSlug(null)} />
+      )}
+
       {selectedObjectForDetail && (
         <div
           className="fixed inset-0 z-50 bg-[#090B10]/90 backdrop-blur-md overflow-y-auto"

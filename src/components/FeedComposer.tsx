@@ -19,6 +19,7 @@ type FeedObject = any;
 
 interface FeedComposerProps {
   onOpen: (obj: FeedObject) => void;
+  onOpenTea: (slug: string) => void;
 }
 
 interface FeedData {
@@ -128,25 +129,24 @@ function CompactCard({ obj, onOpen }: { obj: FeedObject; onOpen: (o: FeedObject)
   );
 }
 
-function TeaCard({ article }: { article: any }) {
-  // Display-only: there is no article reader page yet, so the card does not
-  // open a dead link. The full reader is a later phase (Tea Desk preview is
-  // the editor view; the public reader routes already resolve server-side).
+function TeaCard({ article, onOpenTea }: { article: any; onOpenTea: (slug: string) => void }) {
   return (
-    <div className="block w-full overflow-hidden rounded-2xl border border-[#232A38] bg-[#10141C] text-left">
+    <button
+      onClick={() => onOpenTea(article.slug)}
+      className="block w-full overflow-hidden rounded-2xl border border-[#232A38] bg-[#10141C] text-left cursor-pointer transition hover:border-[#43D17A]">
       <div className="p-4">
         <p className="text-[9px] uppercase tracking-[0.15em] text-[#4B5162]">{article.location ?? 'Your city'} · {article.category}</p>
         <h3 className="mt-1 text-[16px] font-bold leading-snug text-[#F3F1E7]">{article.title}</h3>
         {article.dek && <p className="mt-1 text-[11px] leading-relaxed text-[#8A93A6] line-clamp-2">{article.dek}</p>}
         <p className="mt-2 text-[10px] text-[#4B5162]">{article.readingTime} min read</p>
       </div>
-    </div>
+    </button>
   );
 }
 
 // --- Composer ---------------------------------------------------------------
 
-export function FeedComposer({ onOpen }: FeedComposerProps) {
+export function FeedComposer({ onOpen, onOpenTea }: FeedComposerProps) {
   const [state, setState] = React.useState<{ status: 'loading' | 'ready'; feed: FeedData | null }>({ status: 'loading', feed: null });
   const [collections, setCollections] = React.useState<any[]>([]);
 
@@ -192,7 +192,7 @@ export function FeedComposer({ onOpen }: FeedComposerProps) {
       {feed.tea && (
         <section className="space-y-2">
           <h2 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#43D17A]">Today's Tea</h2>
-          <TeaCard article={feed.tea} />
+          <TeaCard article={feed.tea} onOpenTea={onOpenTea} />
         </section>
       )}
 
