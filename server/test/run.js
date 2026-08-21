@@ -3204,6 +3204,57 @@ console.log('\n=== AI ASSIST SEAM (§27) ===');
   }
 }
 
+console.log('\n=== COOPERATIVE POOLS (four-screen build A) ===');
+{
+  const pool = await import('../src/domain/pool.js');
+
+  const p = pool.createPool({ name: 'Kilimani Chama', regionType: 'KENYA', contributionAmount: 1000, createdBy: 'usr_me', displayName: 'Host' });
+  check('a pool is created forming', p.status === 'forming' && p.rotationOrder.length === 1);
+
+  pool.addMember(p.id, 'usr_b', 'Brian');
+  pool.addMember(p.id, 'usr_c', 'Chiku');
+  check('members join while forming', pool.poolView(p.id).members.length === 3);
+
+  // A forming pool with <2 members cannot activate.
+  const solo = pool.createPool({ name: 'Solo', contributionAmount: 500, createdBy: 'usr_me' });
+  try { pool.activate(solo.id, 'usr_me'); check('a solo pool cannot activate', false); }
+  catch (e) { check('a solo pool cannot activate', /at least two/.test(e.message)); }
+
+  // Members lock once active.
+  pool.activate(p.id, 'usr_me');
+  try { pool.addMember(p.id, 'usr_d'); check('members lock after activation', false); }
+  catch (e) { check('members lock after activation', /locked/.test(e.message)); }
+
+  // Contributions are real ledger transactions; a duplicate is refused.
+  const c1 = pool.contribute(p.id, 'usr_me', 1000);
+  check('a contribution is a ledger transaction', c1.transaction.type === 'pool_contribution' && c1.transaction.amount === 1000);
+  const c1b = pool.contribute(p.id, 'usr_me', 1000);
+  check('a duplicate contribution is refused', c1b.duplicate === true);
+  check('the balance is derived from contributions', pool.poolView(p.id).balance.total === 1000);
+
+  // The recipient is the first member in rotation order (derived).
+  check('the recipient is derived', pool.poolView(p.id).recipientId === 'usr_me');
+
+  // Rotating advances to the next member.
+  pool.rotate(p.id, 'usr_me');
+  check('rotation advances the recipient', pool.poolView(p.id).recipientId === 'usr_b');
+
+  // Payout is honestly unavailable (no disbursement provider).
+  check('payout is honestly unavailable', pool.poolView(p.id).payoutAvailable === false && /No payout provider/.test(pool.poolView(p.id).payoutReason));
+
+  // Over HTTP.
+  {
+    const { default: appP } = await import('../src/index.js');
+    const srvP = appP.listen(0);
+    const portP = srvP.address().port;
+    const list = await (await fetch(`http://127.0.0.1:${portP}/api/pools`)).json();
+    check('GET /api/pools lists pools', Array.isArray(list.pools) && list.pools.length > 0);
+    const one = await (await fetch(`http://127.0.0.1:${portP}/api/pools/${p.id}`)).json();
+    check('GET /api/pools/:id returns the derived view', one.pool && typeof one.pool.balance.total === 'number');
+    srvP.close();
+  }
+}
+
 console.log('\n=== FEATURE REGISTRY (§4.2) ===');
 {
   const features = await import('../src/features.js');
@@ -3216,7 +3267,7 @@ console.log('\n=== FEATURE REGISTRY (§4.2) ===');
   // Default state: everything enabled; module features configured; provider
   // features NOT configured (no credentials in this run).
   check('every feature is enabled by default', features.list().every((f) => f.enabled));
-  check('the registry holds 26 features', features.list().length === 26, String(features.list().length));
+  check('the registry holds 27 features', features.list().length === 27, String(features.list().length));
   check('auth is available by default', features.available('auth') === true);
   check('arena is available by default', features.available('arena') === true);
   check('vaults is available by default', features.available('vaults') === true);

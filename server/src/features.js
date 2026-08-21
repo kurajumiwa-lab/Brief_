@@ -51,6 +51,7 @@ const DEFINITIONS = [
   { key: 'collections', domain: 'collections', label: 'Editorial collections',           configured: () => true },
   { key: 'search',     domain: 'search',      label: 'Cross-entity search',              configured: () => true },
   { key: 'assist',     domain: 'assist',      label: 'AI-assisted editorial drafting',    configured: () => true },
+  { key: 'pools',      domain: 'pools',       label: 'Cooperative savings (Chama/Stokvel)', configured: () => true },
   // Provider-backed: configured derives from LIVE credentials, never a stored flag.
   { key: 'payments',  domain: 'commerce',   label: 'Payment collection (Tuma STK)',   configured: () => providers.providerStatus().configured },
   { key: 'payouts',   domain: 'commerce',   label: 'Merchant payouts (disbursement)', configured: () => providers.providerStatus().payoutConfigured },

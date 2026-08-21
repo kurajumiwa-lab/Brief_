@@ -48,6 +48,7 @@ import { register as feedRoutes } from './routes/feed.js';
 import { register as collectionsRoutes } from './routes/collections.js';
 import { register as searchRoutes } from './routes/search.js';
 import { register as assistRoutes } from './routes/assist.js';
+import { register as poolsRoutes } from './routes/pools.js';
 
 const app = express();
 
@@ -130,6 +131,7 @@ feedRoutes(app);
 collectionsRoutes(app);
 searchRoutes(app);
 assistRoutes(app);
+poolsRoutes(app);
 
 // --- Production frontend serving -------------------------------------------
 //

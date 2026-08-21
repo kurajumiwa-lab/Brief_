@@ -137,6 +137,14 @@ const EMPTY = {
   // domain/collection.js.
   collections: [],
 
+  // --- Cooperative pools (four-screen build A) -----------------------------
+  // Chama / Stokvel / Esusu / Sou-Sou rotating savings (ROSCA). Contributions
+  // are ledger transactions; the rotation is a derived schedule. See
+  // domain/pool.js.
+  pools: [],
+  poolMembers: [],
+  poolRotations: [],
+
   // --- Person (report §4.4) -------------------------------------------------
   // A first-class entity over every identity Brief holds. A person is a stable
   // id; personAliases bind it to concrete external identifiers (user id, phone,
