@@ -44,6 +44,7 @@ import { register as vaultsRoutes } from './routes/vaults.js';
 import { register as peopleRoutes } from './routes/people.js';
 import { register as teaRoutes } from './routes/tea.js';
 import { register as mediaRoutes } from './routes/media.js';
+import { register as feedRoutes } from './routes/feed.js';
 
 const app = express();
 
@@ -122,6 +123,7 @@ vaultsRoutes(app);
 peopleRoutes(app);
 teaRoutes(app);
 mediaRoutes(app);
+feedRoutes(app);
 
 // --- Production frontend serving -------------------------------------------
 //

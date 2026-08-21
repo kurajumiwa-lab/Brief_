@@ -3050,6 +3050,49 @@ console.log('\n=== MEDIA ASSOCIATION (home-feed Phase 6) ===');
   check('media library record is idempotent per key', again.url === 'https://x/cat2.jpg');
 }
 
+console.log('\n=== FEED COMPOSITION (home-feed Phase 8) ===');
+{
+  const feed = await import('../src/domain/feed.js');
+
+  const objects = [
+    { id: 'o1', type: 'experience', title: 'Top event' },
+    { id: 'o2', type: 'place', title: 'A place' },
+    { id: 'o3', type: 'opportunity', title: 'An opportunity' },
+    { id: 'o4', type: 'experience', title: 'Another event' },
+    { id: 'o5', type: 'service', title: 'A service' },
+    { id: 'o6', type: 'opportunity', title: 'Second opportunity' },
+    { id: 'o7', type: 'product', title: 'A product' },
+    { id: 'o8', type: 'place', title: 'Another place' }
+  ];
+  const tea = [
+    { slug: 'a', title: 'Tea A' },
+    { slug: 'b', title: 'Tea B' },
+    { slug: 'c', title: 'Tea C' }
+  ];
+
+  const composed = feed.composeFeed({ objects, tea });
+  check('a hero is chosen', composed.hero.length === 1 && composed.hero[0].id === 'o1');
+  check('discovery is filled', composed.discovery.length === 4);
+  check('opportunities are split out', composed.opportunities.length === 2);
+  check('the rest is retained', composed.more.length === 1);
+  check('a featured tea is chosen', composed.tea?.slug === 'a');
+  check('supporting tea is limited', composed.moreTea.length === 2);
+
+  // Dedup: no object appears in two slots.
+  const allIds = [...composed.hero, ...composed.discovery, ...composed.opportunities, ...composed.more].map((o) => o.id);
+  check('no object is duplicated across slots', new Set(allIds).size === allIds.length);
+
+  // Dedup: the same object given twice collapses to one.
+  const dup = feed.composeFeed({ objects: [{ id: 'x', type: 'place', title: 'X' }, { id: 'x', type: 'place', title: 'X' }], tea: [] });
+  check('duplicate ids collapse to one', dup.hero.length + dup.discovery.length + dup.opportunities.length + dup.more.length === 1);
+  check('dedup count is reported', dup.counts.deduped === 1);
+
+  // An empty section is omitted, not padded.
+  const empty = feed.composeFeed({ objects: [{ id: 'only', type: 'place', title: 'Only' }], tea: [] });
+  check('empty opportunities is omitted', empty.opportunities.length === 0);
+  check('empty tea is null', empty.tea === null && empty.moreTea.length === 0);
+}
+
 console.log('\n=== FEATURE REGISTRY (§4.2) ===');
 {
   const features = await import('../src/features.js');
@@ -3062,7 +3105,7 @@ console.log('\n=== FEATURE REGISTRY (§4.2) ===');
   // Default state: everything enabled; module features configured; provider
   // features NOT configured (no credentials in this run).
   check('every feature is enabled by default', features.list().every((f) => f.enabled));
-  check('the registry holds 22 features', features.list().length === 22, String(features.list().length));
+  check('the registry holds 23 features', features.list().length === 23, String(features.list().length));
   check('auth is available by default', features.available('auth') === true);
   check('arena is available by default', features.available('arena') === true);
   check('vaults is available by default', features.available('vaults') === true);

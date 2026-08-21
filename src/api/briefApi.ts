@@ -1463,3 +1463,13 @@ export function getTeaArticle(slug: string): Promise<ApiResult<any>> {
     isTeaArticle(r?.article) ? r.article : undefined
   );
 }
+
+/** The composed home feed (hero/discovery/opportunities/more + featured tea). */
+export function getFeed(opts: { lat?: number; lng?: number; radiusKm?: number } = {}): Promise<ApiResult<any>> {
+  const params = new URLSearchParams();
+  if (opts.lat !== undefined) params.set('lat', String(opts.lat));
+  if (opts.lng !== undefined) params.set('lng', String(opts.lng));
+  if (opts.radiusKm !== undefined) params.set('radiusKm', String(opts.radiusKm));
+  const q = params.toString() ? `?${params.toString()}` : '';
+  return request(`/api/feed${q}`, undefined, (r) => (r?.feed ? r.feed : undefined));
+}
