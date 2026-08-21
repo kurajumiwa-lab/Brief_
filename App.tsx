@@ -7000,45 +7000,45 @@ export function App() {
         </>
       )}
 
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-[#090B10]/95 backdrop-blur-xl border-b border-[#232A38] transition-all">
+      {/* Header (M3 TopAppBar) */}
+      <header className="sticky top-0 z-40 bg-[#0f131c]/95 backdrop-blur-xl border-b border-[#3c4a42] transition-all">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <span className="font-extrabold text-xl text-[#43D17A] tracking-tight">Brief</span>
+              <span className="font-extrabold text-xl text-[#4edea3] tracking-tight" style={{ fontFamily: 'var(--m3-font-headline)' }}>Brief</span>
               {/* Where am I. The rail shows it too, but the header keeps the
                   answer visible when the rail is collapsed to icons. */}
-              <span className="hidden lg:inline text-[11px] font-extrabold text-[#4B5162]">
+              <span className="hidden lg:inline text-[11px] font-extrabold text-[#86948a]">
                 {DESTINATIONS.find((d) => d.id === activeTab)?.label}
               </span>
-              <div className="flex items-center gap-1 bg-[#10141C] text-[#F3F1E7] text-xs font-bold px-2.5 py-1.5 rounded-xl border border-[#232A38]">
-                <MapPin className="w-3.5 h-3.5 text-[#43D17A]" />
+              <div className="flex items-center gap-1.5 bg-[#1c1f29] text-[#dfe2ef] text-xs font-bold px-3 py-1.5 rounded-full border border-[#3c4a42]">
+                <MapPin className="w-3.5 h-3.5 text-[#4edea3]" />
                 <span>{selectedLocation}</span>
               </div>
             </div>
 
             <div className="relative flex-1 max-w-md hidden sm:block">
-              <Search className="w-4 h-4 absolute left-3 top-2.5 text-[#8A93A6]" />
+              <Search className="w-4 h-4 absolute left-3 top-2.5 text-[#bbcabf]" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search nearby places, jobs, services..."
-                className="w-full bg-[#10141C] text-[#F3F1E7] text-xs rounded-xl pl-9 pr-4 py-2 border border-[#232A38] focus:outline-none focus:border-[#43D17A] placeholder:text-[#8A93A6]"
+                className="w-full bg-[#1c1f29] text-[#dfe2ef] text-xs rounded-full pl-9 pr-4 py-2 border border-[#3c4a42] focus:outline-none focus:border-[#4edea3] placeholder:text-[#bbcabf]"
               />
             </div>
 
             <button
               onClick={() => setCaptureOpen(true)}
               title="Capture something"
-              className="p-2 rounded-xl text-xs font-bold border bg-[#43D17A] text-[#090B10] border-[#43D17A] cursor-pointer"
+              className="h-8 w-8 rounded-full text-xs font-bold bg-[#10b981] text-[#00422b] flex items-center justify-center cursor-pointer hover:opacity-90"
             >
               <Plus className="w-4 h-4" />
             </button>
 
             <button
               onClick={() => setArchitectMode(!architectMode)}
-              className="p-2 rounded-xl text-xs font-bold border bg-[#10141C] text-[#43D17A] border-[#232A38] cursor-pointer"
+              className="h-8 w-8 rounded-full text-xs font-bold border bg-[#1c1f29] text-[#dfe2ef] border-[#3c4a42] flex items-center justify-center cursor-pointer"
             >
               <Terminal className="w-4 h-4" />
             </button>
@@ -7097,14 +7097,14 @@ export function App() {
         {/* Main Stream. pb-24 on mobile clears the bottom bar. */}
         <main className="flex-1 min-w-0 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 pb-24 md:pb-6">
 
-        {/* Visual Hero Bar */}
-        <div className="mb-6 rounded-2xl bg-[#10141C] border border-[#232A38] p-5 shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        {/* Visual Hero Bar (M3) */}
+        <div className="mb-6 rounded-xl bg-[#1c1f29] border border-[#3c4a42] p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <p className="text-[11px] text-[#8A93A6] mb-1">{greetingForHour(new Date().getHours())}</p>
-            <h1 className="text-xl font-extrabold text-[#F3F1E7]">
+            <p className="text-[11px] text-[#bbcabf] mb-1">{greetingForHour(new Date().getHours())}</p>
+            <h1 className="text-xl font-extrabold text-[#dfe2ef]" style={{ fontFamily: 'var(--m3-font-headline)' }}>
               What's happening around you
             </h1>
-            <p className="text-xs text-[#8A93A6] mt-1">
+            <p className="text-xs text-[#bbcabf] mt-1">
               {objects.length > 0
                 ? `${objects.length} thing${objects.length === 1 ? '' : 's'} happening nearby`
                 : 'Nothing happening nearby yet — check again later or look around another area.'}
@@ -9718,7 +9718,7 @@ export function App() {
       {/* MOBILE BOTTOM BAR. Same five doors, icon plus short label. */}
       <nav
         aria-label="Primary"
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#10141C]/98 backdrop-blur-xl border-t border-[#232A38] flex"
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#1c1f29]/98 backdrop-blur-xl border-t border-[#3c4a42] flex shadow-lg"
       >
         {DESTINATIONS.map((d) => {
           const active = activeTab === d.id;
@@ -9728,19 +9728,14 @@ export function App() {
               key={d.id}
               onClick={() => goToDestination(d.id)}
               aria-current={active ? 'page' : undefined}
-              className={`flex-1 flex flex-col items-center gap-1 py-2.5 cursor-pointer transition-colors ${
-                active ? 'text-[#43D17A]' : 'text-[#4B5162]'
+              className={`flex-1 flex flex-col items-center justify-center gap-1 pt-2 cursor-pointer transition-colors ${
+                active ? 'text-[#4edea3] font-bold border-t-2 border-[#4edea3]' : 'text-[#bbcabf]'
               }`}
             >
               <Icon className="w-5 h-5" />
               <span className="text-[9px] font-extrabold leading-none">
                 {d.label}
               </span>
-              <span
-                className={`h-0.5 w-6 rounded-full transition-all ${
-                  active ? 'bg-[#43D17A]' : 'bg-transparent'
-                }`}
-              />
             </button>
           );
         })}

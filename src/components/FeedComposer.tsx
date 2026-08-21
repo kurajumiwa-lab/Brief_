@@ -1,18 +1,19 @@
 import React from 'react';
+import { Compass, CalendarDays, MapPin, Clock, Tag } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
 
 // ---------------------------------------------------------------------------
-// FEED COMPOSER — the home feed as a magazine, not a card dump.
+// FEED COMPOSER — the home feed, rebuilt in the Material 3 visual system.
 //
-// Fetches the composed, deduplicated feed from /api/feed and renders it with a
-// deliberate rhythm: Hero → Tea → discovery → opportunities → more. Card
-// variants are chosen by the object's type and what it actually carries, so
-// the feed never looks like a repeating grid.
+// Layout mirrors the approved M3 reference (Top Updates → Featured → Tea →
+// Around-you scroll → Upcoming → Trending), but every slot is REAL data from
+// /api/feed, /api/collections and /api/tea — never the reference's hardcoded
+// placeholder content.
 //
-// Honesty: every object is a real server row; media comes from the association
-// layer (exact → venue → location → category → none); an object with no image
-// renders as a text card, never a wrong photo. The CTA reflects the type —
-// Join / Explore / View / Get started / Shop — never a universal button.
+// Honesty rules (unchanged): media comes from the association layer (exact →
+// venue → location → category → none); an object with no image renders as an
+// icon block, never a wrong photo. CTAs reflect the object type. Empty
+// sections are omitted, not padded.
 // ---------------------------------------------------------------------------
 
 type FeedObject = any;
@@ -33,118 +34,60 @@ interface FeedData {
 }
 
 const CTA_FOR_TYPE: Record<string, string> = {
-  experience: 'Join',
-  place: 'Explore',
-  opportunity: 'View',
-  service: 'Get started',
-  product: 'Shop',
-  identity: 'View',
-  community: 'View',
-  knowledge: 'Read',
-  document: 'View',
-  conversation: 'View'
+  experience: 'Join', place: 'Explore', opportunity: 'View', service: 'Get started',
+  product: 'Shop', identity: 'View', community: 'View', knowledge: 'Read',
+  document: 'View', conversation: 'View'
 };
+const ctaFor = (o: FeedObject) => CTA_FOR_TYPE[o.type] ?? 'View';
 
-function ctaFor(obj: FeedObject): string {
-  return CTA_FOR_TYPE[obj.type] ?? 'View';
+/** The story avatars: top categories by real object count. */
+function topCategories(objects: FeedObject[]): { category: string; count: number; image: string | null }[] {
+  const counts = new Map<string, number>();
+  const imageBy = new Map<string, string | null>();
+  for (const o of objects) {
+    const c = o.category ?? 'Other';
+    counts.set(c, (counts.get(c) ?? 0) + 1);
+    if (!imageBy.has(c) && o.media?.url) imageBy.set(c, o.media.url);
+  }
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6)
+    .map(([category, count]) => ({ category, count, image: imageBy.get(category) ?? null }));
 }
 
-function metaFor(obj: FeedObject): string {
+/** A real date block (month/day) only when the object carries one; else null. */
+function dateBlock(o: FeedObject): { month: string; day: string } | null {
+  const iso = o.metadata?.deadline ?? o.startsAt ?? o.endsAt ?? null;
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return {
+    month: d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
+    day: String(d.getDate())
+  };
+}
+
+function metaFor(o: FeedObject): string {
   const parts: string[] = [];
-  if (obj.locationName) parts.push(obj.locationName);
-  if (typeof obj.distanceKm === 'number' && Number.isFinite(obj.distanceKm)) parts.push(`${obj.distanceKm} km`);
+  if (o.locationName) parts.push(o.locationName);
+  if (typeof o.distanceKm === 'number' && Number.isFinite(o.distanceKm)) parts.push(`${o.distanceKm} km`);
   return parts.join(' · ');
 }
 
-// --- Card variants ---------------------------------------------------------
-
-function HeroCard({ obj, onOpen }: { obj: FeedObject; onOpen: (o: FeedObject) => void }) {
-  const media = obj.media;
-  const price = obj.metadata?.price !== undefined ? `${obj.metadata.currency || 'KES'} ${obj.metadata.price.toLocaleString()}` : null;
-  return (
-    <button
-      onClick={() => onOpen(obj)}
-      className="group relative block w-full overflow-hidden rounded-2xl border border-[#232A38] bg-[#10141C] text-left cursor-pointer transition hover:border-[#43D17A]"
-    >
-      {media?.url ? (
-        <div className="relative h-48 w-full bg-[#090B10]">
-          <img src={media.url} alt={media.alt ?? obj.title} loading="lazy" className="h-full w-full object-cover opacity-90" />
-          <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#090B10] to-transparent" />
-        </div>
-      ) : (
-        <div className="h-24 w-full bg-gradient-to-br from-[#0B1A12] to-[#090B10]" />
-      )}
-      <div className="p-4">
-        <p className="text-[10px] uppercase tracking-[0.15em] text-[#43D17A]">{obj.category}</p>
-        <h3 className="mt-1 text-[20px] font-bold leading-snug text-[#F3F1E7]">{obj.title}</h3>
-        {obj.summary && <p className="mt-1 text-[12px] leading-relaxed text-[#8A93A6] line-clamp-2">{obj.summary}</p>}
-        <div className="mt-3 flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            {metaFor(obj) && <p className="text-[11px] text-[#8A93A6] truncate">{metaFor(obj)}</p>}
-            {price && <p className="text-[12px] font-bold text-[#43D17A] mt-0.5">{price}</p>}
-          </div>
-          <span className="shrink-0 rounded-full bg-[#43D17A] px-4 py-1.5 text-[12px] font-bold text-[#090B10]">
-            {ctaFor(obj)}
-          </span>
-        </div>
-      </div>
-    </button>
-  );
-}
-
-function HorizontalCard({ obj, onOpen }: { obj: FeedObject; onOpen: (o: FeedObject) => void }) {
-  const media = obj.media;
-  return (
-    <button
-      onClick={() => onOpen(obj)}
-      className="flex w-full items-center gap-3 rounded-xl border border-[#232A38] bg-[#10141C] p-3 text-left cursor-pointer transition hover:border-[#43D17A]"
-    >
-      {media?.url ? (
-        <img src={media.url} alt={media.alt ?? obj.title} loading="lazy" className="h-14 w-14 shrink-0 rounded-lg object-cover" />
-      ) : (
-        <div className="h-14 w-14 shrink-0 rounded-lg bg-gradient-to-br from-[#0B1A12] to-[#090B10]" />
-      )}
-      <div className="min-w-0 flex-1">
-        <p className="text-[13px] font-semibold leading-snug text-[#F3F1E7] line-clamp-2">{obj.title}</p>
-        {metaFor(obj) && <p className="mt-0.5 text-[10px] text-[#8A93A6] truncate">{metaFor(obj)}</p>}
-      </div>
-      <span className="shrink-0 text-[11px] font-bold text-[#43D17A]">{ctaFor(obj)}</span>
-    </button>
-  );
-}
-
-function CompactCard({ obj, onOpen }: { obj: FeedObject; onOpen: (o: FeedObject) => void }) {
-  return (
-    <button
-      onClick={() => onOpen(obj)}
-      className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#232A38] bg-[#10141C] p-3 text-left cursor-pointer transition hover:border-[#43D17A]"
-    >
-      <div className="min-w-0">
-        <p className="text-[9px] uppercase tracking-[0.12em] text-[#4B5162]">Opportunity</p>
-        <p className="mt-0.5 text-[13px] font-semibold text-[#F3F1E7] line-clamp-1">{obj.title}</p>
-        {metaFor(obj) && <p className="text-[10px] text-[#8A93A6] truncate">{metaFor(obj)}</p>}
-      </div>
-      <span className="shrink-0 text-[11px] font-bold text-[#43D17A]">{ctaFor(obj)}</span>
-    </button>
-  );
-}
-
-function TeaCard({ article, onOpenTea }: { article: any; onOpenTea: (slug: string) => void }) {
-  return (
-    <button
-      onClick={() => onOpenTea(article.slug)}
-      className="block w-full overflow-hidden rounded-2xl border border-[#232A38] bg-[#10141C] text-left cursor-pointer transition hover:border-[#43D17A]">
-      <div className="p-4">
-        <p className="text-[9px] uppercase tracking-[0.15em] text-[#4B5162]">{article.location ?? 'Your city'} · {article.category}</p>
-        <h3 className="mt-1 text-[16px] font-bold leading-snug text-[#F3F1E7]">{article.title}</h3>
-        {article.dek && <p className="mt-1 text-[11px] leading-relaxed text-[#8A93A6] line-clamp-2">{article.dek}</p>}
-        <p className="mt-2 text-[10px] text-[#4B5162]">{article.readingTime} min read</p>
-      </div>
-    </button>
-  );
-}
-
-// --- Composer ---------------------------------------------------------------
+const T = {
+  bg: 'var(--m3-surface)',
+  container: 'var(--m3-surface-container)',
+  containerLow: 'var(--m3-surface-container-low)',
+  primary: 'var(--m3-primary)',
+  primaryContainer: 'var(--m3-primary-container)',
+  onPrimaryContainer: 'var(--m3-on-primary-container)',
+  secondary: 'var(--m3-secondary)',
+  secondaryContainer: 'var(--m3-secondary-container)',
+  onSurface: 'var(--m3-on-surface)',
+  onSurfaceVariant: 'var(--m3-on-surface-variant)',
+  outline: 'var(--m3-outline)',
+  outlineVariant: 'var(--m3-outline-variant)'
+};
 
 export function FeedComposer({ onOpen, onOpenTea }: FeedComposerProps) {
   const [state, setState] = React.useState<{ status: 'loading' | 'ready'; feed: FeedData | null }>({ status: 'loading', feed: null });
@@ -164,9 +107,9 @@ export function FeedComposer({ onOpen, onOpenTea }: FeedComposerProps) {
 
   if (state.status === 'loading') {
     return (
-      <div className="space-y-3 animate-pulse">
-        <div className="h-48 rounded-2xl bg-[#10141C] border border-[#232A38]" />
-        <div className="h-16 rounded-xl bg-[#10141C] border border-[#232A38]" />
+      <div className="space-y-4 animate-pulse">
+        <div className="h-16 rounded-xl" style={{ background: T.container }} />
+        <div className="h-64 rounded-xl" style={{ background: T.container }} />
       </div>
     );
   }
@@ -174,61 +117,209 @@ export function FeedComposer({ onOpen, onOpenTea }: FeedComposerProps) {
   const feed = state.feed;
   if (!feed || (feed.hero.length === 0 && feed.discovery.length === 0 && feed.opportunities.length === 0 && !feed.tea)) {
     return (
-      <div className="rounded-2xl border border-[#232A38] bg-[#10141C] p-4">
-        <p className="text-[13px] text-[#8A93A6]">Nothing much nearby right now. Try another area.</p>
+      <div className="rounded-xl border p-5" style={{ borderColor: T.outlineVariant, background: T.container }}>
+        <p className="text-[13px]" style={{ color: T.onSurfaceVariant }}>Nothing much nearby right now. Try another area.</p>
       </div>
     );
   }
 
-  const hero = feed.hero[0];
-  const discovery = feed.discovery;
+  const all = [...feed.hero, ...feed.discovery, ...feed.opportunities, ...feed.more];
+  const stories = topCategories(all);
+  const featured = feed.hero[0];
+  const upcoming = all.filter((o) => (o.type === 'experience' || o.type === 'opportunity') && o.expiryStatus !== 'expired');
+  const trendingTags = [
+    ...new Set([...all.map((o) => o.category).filter(Boolean), ...(feed.tea?.tags ?? [])])
+  ].slice(0, 8);
 
   return (
-    <div className="space-y-5">
-      {/* Hero — the single most important thing. */}
-      {hero && <HeroCard obj={hero} onOpen={onOpen} />}
-
-      {/* Tea — the editorial feature. */}
-      {feed.tea && (
-        <section className="space-y-2">
-          <h2 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#43D17A]">Today's Tea</h2>
-          <TeaCard article={feed.tea} onOpenTea={onOpenTea} />
-        </section>
-      )}
-
-      {/* Discovery — a varied horizontal rhythm. */}
-      {discovery.length > 0 && (
-        <section className="space-y-2">
-          <h2 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#43D17A]">Around you</h2>
-          {discovery.map((o) => (
-            <HorizontalCard key={o.id} obj={o} onOpen={onOpen} />
-          ))}
-        </section>
-      )}
-
-      {/* Opportunities — compact, useful. */}
-      {feed.opportunities.length > 0 && (
-        <section className="space-y-2">
-          <h2 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#43D17A]">Opportunities</h2>
-          {feed.opportunities.map((o) => (
-            <CompactCard key={o.id} obj={o} onOpen={onOpen} />
-          ))}
-        </section>
-      )}
-
-      {/* Collections — a horizontal strip of named, data-driven groupings. */}
-      {collections.length > 0 && (
-        <section className="space-y-2">
-          <h2 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#43D17A]">Collections</h2>
-          <div className="flex gap-2 overflow-x-auto no-scrollbar">
-            {collections.map((c) => (
-              <div
-                key={c.id}
-                className="shrink-0 rounded-xl border border-[#232A38] bg-[#10141C] px-3 py-2 text-left"
-              >
-                <p className="text-[12px] font-bold text-[#F3F1E7]">{c.title}</p>
-                {c.description && <p className="mt-0.5 max-w-[160px] text-[9px] text-[#8A93A6] line-clamp-1">{c.description}</p>}
+    <div className="space-y-6" style={{ fontFamily: 'var(--m3-font-body)', color: T.onSurface }}>
+      {/* --- Top Updates (stories) ------------------------------------------- */}
+      {stories.length > 0 && (
+        <section>
+          <h3 className="mb-3 px-1 text-[15px] font-semibold" style={{ color: T.onSurface }}>Top Updates</h3>
+          <div className="flex gap-4 overflow-x-auto no-scrollbar px-1 pb-2">
+            {stories.map((s, i) => (
+              <div key={s.category} className="flex w-[72px] flex-none flex-col items-center gap-2">
+                <div
+                  className="m3-status-ring relative h-16 w-16 rounded-full p-[2px]"
+                  title={`${s.count} ${s.category} thing${s.count === 1 ? '' : 's'}`}
+                >
+                  <div className="h-full w-full overflow-hidden rounded-full border-2" style={{ borderColor: T.bg, background: T.container }}>
+                    {s.image ? (
+                      <img src={s.image} alt={s.category} loading="lazy" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center" style={{ background: T.containerLow }}>
+                        <Compass className="h-6 w-6" style={{ color: T.primary }} />
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <span className="w-full truncate text-center text-[11px] font-bold tracking-[0.08em]" style={{ color: T.onSurface }}>
+                  {s.category}
+                </span>
               </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* --- Featured card (hero) -------------------------------------------- */}
+      {featured && (
+        <article className="group relative overflow-hidden rounded-xl border" style={{ borderColor: T.outlineVariant, background: 'rgba(6,78,59,0.2)' }}>
+          <div className="relative h-64 w-full">
+            {featured.media?.url ? (
+              <img
+                src={featured.media.url}
+                alt={featured.media.alt ?? featured.title}
+                loading="lazy"
+                className="h-full w-full object-cover opacity-80 mix-blend-luminosity transition-opacity group-hover:opacity-100"
+              />
+            ) : (
+              <div className="h-full w-full" style={{ background: `linear-gradient(135deg, ${T.containerLow}, ${T.bg})` }} />
+            )}
+            <div className="absolute inset-0" style={{ background: `linear-gradient(to top, ${T.bg}, transparent)` }} />
+            <div className="absolute left-4 top-4 flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-bold tracking-[0.08em]" style={{ background: '#064E3B', color: '#6EE7B7' }}>
+              <span className="h-1.5 w-1.5 rounded-full" style={{ background: '#6EE7B7' }} />
+              FEATURED
+            </div>
+          </div>
+          <div className="relative z-10 p-6" style={{ background: 'rgba(15,19,28,0.8)', backdropFilter: 'blur(4px)' }}>
+            <h3 className="mb-2 text-[20px] font-bold leading-tight" style={{ color: T.onSurface }}>{featured.title}</h3>
+            <p className="mb-4 text-[15px] leading-6" style={{ color: T.onSurfaceVariant }}>{featured.summary || featured.title}</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => onOpen(featured)}
+                className="rounded-lg px-4 py-2 text-[15px] font-semibold transition-shadow hover:shadow-[0_0_16px_rgba(16,185,129,0.2)]"
+                style={{ background: T.primaryContainer, color: T.onPrimaryContainer }}
+              >
+                {ctaFor(featured)}
+              </button>
+              <button
+                onClick={() => onOpen(featured)}
+                className="rounded-lg border px-4 py-2 text-[15px] font-semibold transition-colors hover:bg-[#262a34]"
+                style={{ borderColor: T.outlineVariant, color: T.onSurface }}
+              >
+                Details
+              </button>
+            </div>
+          </div>
+        </article>
+      )}
+
+      {/* --- Tea (the editorial feature) -------------------------------------- */}
+      {feed.tea && (
+        <article
+          onClick={() => onOpenTea(feed.tea.slug)}
+          className="cursor-pointer rounded-xl border p-5 transition-colors hover:border-[var(--m3-primary)]"
+          style={{ borderColor: T.outlineVariant, background: T.container }}
+        >
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full" style={{ background: T.secondaryContainer, color: '#00374d' }}>
+                <Compass className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold" style={{ color: T.onSurface }}>Today's Tea</p>
+                <p className="text-xs" style={{ color: T.onSurfaceVariant }}>{feed.tea.location ?? 'Your city'} · {feed.tea.category}</p>
+              </div>
+            </div>
+          </div>
+          <h4 className="mb-2 text-[18px] font-semibold" style={{ color: T.onSurface }}>{feed.tea.title}</h4>
+          <p className="text-[13px]" style={{ color: T.onSurfaceVariant }}>{feed.tea.dek || `${feed.tea.readingTime} min read`}</p>
+        </article>
+      )}
+
+      {/* --- Around you (discovery scroll) ------------------------------------ */}
+      {feed.discovery.length > 0 && (
+        <section className="mt-2">
+          <h3 className="mb-3 px-1 text-[18px] font-semibold" style={{ color: T.onSurface }}>Around you</h3>
+          <div className="flex gap-4 overflow-x-auto no-scrollbar px-1 pb-2">
+            {feed.discovery.map((o) => (
+              <article
+                key={o.id}
+                onClick={() => onOpen(o)}
+                className="w-[320px] flex-none cursor-pointer rounded-xl border p-4 transition-colors hover:border-[var(--m3-primary)]"
+                style={{ borderColor: T.outlineVariant, background: T.container }}
+              >
+                <div className="mb-3 flex h-40 items-center justify-center rounded-lg" style={{ background: `linear-gradient(135deg, ${T.containerLow}, ${T.bg})` }}>
+                  {o.media?.url ? (
+                    <img src={o.media.url} alt={o.media.alt ?? o.title} loading="lazy" className="h-full w-full rounded-lg object-cover" />
+                  ) : (
+                    <MapPin className="h-8 w-8" style={{ color: T.outlineVariant }} />
+                  )}
+                </div>
+                <h4 className="mb-1 truncate text-[15px] font-semibold" style={{ color: T.onSurface }}>{o.title}</h4>
+                <p className="line-clamp-2 text-[13px]" style={{ color: T.onSurfaceVariant }}>{metaFor(o) || o.summary}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* --- Upcoming events --------------------------------------------------- */}
+      {upcoming.length > 0 && (
+        <section className="mt-2">
+          <div className="mb-3 flex items-center justify-between px-1">
+            <h3 className="text-[18px] font-semibold" style={{ color: T.onSurface }}>Upcoming</h3>
+            <span className="text-sm font-semibold" style={{ color: T.primary }}>{upcoming.length}</span>
+          </div>
+          <div className="flex flex-col gap-3">
+            {upcoming.slice(0, 5).map((o) => {
+              const db = dateBlock(o);
+              return (
+                <div
+                  key={o.id}
+                  onClick={() => onOpen(o)}
+                  className="flex cursor-pointer items-center gap-4 rounded-xl border p-3 transition-colors hover:border-[var(--m3-primary)]"
+                  style={{ borderColor: T.outlineVariant, background: T.container }}
+                >
+                  <div className="flex h-14 w-14 flex-col items-center justify-center rounded-lg border" style={{ borderColor: T.outlineVariant, background: T.bg }}>
+                    {db ? (
+                      <>
+                        <span className="text-[11px] font-bold tracking-[0.08em]" style={{ color: T.primary }}>{db.month}</span>
+                        <span className="text-[18px] font-semibold leading-none" style={{ color: T.onSurface }}>{db.day}</span>
+                      </>
+                    ) : (
+                      <CalendarDays className="h-5 w-5" style={{ color: T.primary }} />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="truncate text-[15px] font-semibold" style={{ color: T.onSurface }}>{o.title}</h4>
+                    <p className="truncate text-[13px]" style={{ color: T.onSurfaceVariant }}>{metaFor(o) || o.summary}</p>
+                  </div>
+                  <span className="flex-none text-[13px] font-semibold" style={{ color: T.primary }}>{ctaFor(o)}</span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* --- Collections -------------------------------------------------------- */}
+      {collections.length > 0 && (
+        <section className="mt-2">
+          <h3 className="mb-3 px-1 text-[18px] font-semibold" style={{ color: T.onSurface }}>Collections</h3>
+          <div className="flex gap-2 overflow-x-auto no-scrollbar px-1 pb-2">
+            {collections.map((c) => (
+              <div key={c.id} className="flex-none rounded-xl border px-3 py-2" style={{ borderColor: T.outlineVariant, background: T.container }}>
+                <p className="text-[13px] font-semibold" style={{ color: T.onSurface }}>{c.title}</p>
+                {c.description && <p className="mt-0.5 max-w-[160px] truncate text-[11px]" style={{ color: T.onSurfaceVariant }}>{c.description}</p>}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* --- Trending topics ---------------------------------------------------- */}
+      {trendingTags.length > 0 && (
+        <section className="mt-2">
+          <h3 className="mb-3 px-1 text-[18px] font-semibold" style={{ color: T.onSurface }}>Trending</h3>
+          <div className="flex flex-wrap gap-2 px-1">
+            {trendingTags.map((t) => (
+              <span key={t} className="flex items-center gap-1 rounded-full border px-3 py-1.5 text-[13px]" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }}>
+                <Tag className="h-3 w-3" style={{ color: T.primary }} />
+                {t}
+              </span>
             ))}
           </div>
         </section>

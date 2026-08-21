@@ -162,3 +162,62 @@ html, body {
 .brief-spark-dot {
   animation: briefSparkDot 2.4s ease-in-out infinite;
 }
+
+/* =============================================================================
+   M3 HOME DESIGN SYSTEM — Material 3 tokens for the home screen (refactor)
+   Palette + typography lifted verbatim from the approved M3 reference. These
+   coexist with the earlier tokens so non-home surfaces are unaffected.
+   ============================================================================= */
+:root {
+  /* Color — M3 dark scheme */
+  --m3-background:             #0f131c;
+  --m3-surface:                #0f131c;
+  --m3-surface-dim:            #0f131c;
+  --m3-surface-bright:         #353943;
+  --m3-surface-container-lowest: #0a0e17;
+  --m3-surface-container-low:  #181b25;
+  --m3-surface-container:      #1c1f29;
+  --m3-surface-container-high: #262a34;
+  --m3-surface-container-highest: #31353f;
+  --m3-surface-variant:        #31353f;
+
+  --m3-primary:                #4edea3;
+  --m3-primary-fixed:          #6ffbbe;
+  --m3-primary-fixed-dim:      #4edea3;
+  --m3-primary-container:      #10b981;
+  --m3-on-primary:             #003824;
+  --m3-on-primary-container:   #00422b;
+
+  --m3-secondary:              #7bd0ff;
+  --m3-secondary-fixed:        #c4e7ff;
+  --m3-secondary-fixed-dim:    #7bd0ff;
+  --m3-secondary-container:    #00a6e0;
+  --m3-on-secondary-container: #00374d;
+
+  --m3-tertiary:               #cebdff;
+  --m3-tertiary-container:     #ad91ff;
+  --m3-on-tertiary-container:  #40208d;
+
+  --m3-error:                  #ffb4ab;
+  --m3-error-container:        #93000a;
+
+  --m3-outline:                #86948a;
+  --m3-outline-variant:        #3c4a42;
+  --m3-on-surface:             #dfe2ef;
+  --m3-on-surface-variant:     #bbcabf;
+  --m3-on-background:          #dfe2ef;
+  --m3-inverse-surface:        #dfe2ef;
+
+  /* Type — M3 */
+  --m3-font-headline: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  --m3-font-body:    'Inter', sans-serif;
+  --m3-font-code:    'JetBrains Mono', monospace;
+}
+
+/* Status ring (the "new" story affordance) — conic gradient, like the reference */
+.m3-status-ring {
+  background: conic-gradient(from 180deg at 50% 50%, #10B981 0deg, #10B981 120deg, transparent 120deg, transparent 360deg);
+}
+.m3-status-ring-seen {
+  background: conic-gradient(from 180deg at 50% 50%, #3c4a42 0deg, #3c4a42 360deg);
+}
