@@ -26,6 +26,7 @@ import { ArenaPortal } from './components/ArenaPortal';
 import { LobbyBoard } from './components/LobbyBoard';
 import { FeedComposer } from './components/FeedComposer';
 import { TeaDesk } from './components/TeaDesk';
+import { CreatorCockpit } from './components/CreatorCockpit';
 import { SearchResults } from './components/SearchResults';
 import { TeaReader } from './components/TeaReader';
 import type { CircleDetail as ApiCircleDetail } from './api/briefApi';
@@ -143,7 +144,7 @@ export type MyLayerSection =
   | 'saved' | 'activity' | 'arena' | 'points' | 'circles' | 'groups' | 'campaigns';
 // Workflows secondary: a Journey is either in progress or finished. Inbox and
 // Sources are kept -- they are existing workflow surfaces, not new screens.
-export type WorkflowSection = 'command' | 'active' | 'completed' | 'inbox' | 'sources' | 'money' | 'vault' | 'gate' | 'tea';
+export type WorkflowSection = 'cockpit' | 'command' | 'active' | 'completed' | 'inbox' | 'sources' | 'money' | 'vault' | 'gate' | 'tea';
 // Pulse secondary. Pulse is the information layer: freshness, local signals,
 // what groups are surfacing, and emerging activity. It is not an assistant.
 export type PulseSection = 'now' | 'local' | 'groups' | 'signals';
@@ -5085,7 +5086,7 @@ export function App() {
   const [nearbySection, setNearbySection] = useState<NearbySection>('stream');
   const [moreFilters, setMoreFilters] = useState<boolean>(false);
   const [myLayerSection, setMyLayerSection] = useState<MyLayerSection>('saved');
-  const [workflowSection, setWorkflowSection] = useState<WorkflowSection>('command');
+  const [workflowSection, setWorkflowSection] = useState<WorkflowSection>('cockpit');
   const [pulseSection, setPulseSection] = useState<PulseSection>('now');
 
   // --- Ingestion backend (real connectors) ---------------------------------
@@ -7272,6 +7273,7 @@ export function App() {
               {([
                 // Command is the host's landing surface: the overview of what
                 // needs attention, money, people, distribution and what's next.
+                ['cockpit', 'Cockpit'],
                 ['command', 'Command'],
                 ['active', `Active (${activeJourneys.length})`],
                 ['completed', `Completed (${completedJourneys.length})`],
@@ -9618,6 +9620,12 @@ export function App() {
         {activeTab === 'workflows' && workflowSection === 'money' && (
           <div className="max-w-3xl mx-auto px-4 py-6">
             <MoneyPanel />
+          </div>
+        )}
+
+        {activeTab === 'workflows' && workflowSection === 'cockpit' && (
+          <div className="max-w-3xl mx-auto px-4 pt-4">
+            <CreatorCockpit />
           </div>
         )}
 

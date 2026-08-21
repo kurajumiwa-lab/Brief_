@@ -18,4 +18,5 @@ declare module 'lucide-react' {
   export const Diamond: LucideIcon; export const Check: LucideIcon; export const Settings: LucideIcon;
   export const Compass: LucideIcon;
   export const Copy: LucideIcon;
+  export const Zap: LucideIcon; export const Play: LucideIcon;
 }

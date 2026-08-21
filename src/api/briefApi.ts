@@ -1561,3 +1561,21 @@ export function isTelegramMiniApp(): boolean {
     return false;
   }
 }
+
+// --- Automation engine (creator cockpit) -------------------------------------
+
+export function getWorkflows(): Promise<ApiResult<any>> {
+  return request('/api/workflows', undefined, (r) => (r?.workflows ? { workflows: r.workflows, runs: r.runs, stats: r.stats } : undefined));
+}
+
+export function createWorkflow(fields: Record<string, unknown>): Promise<ApiResult<any>> {
+  return request('/api/workflows', { method: 'POST', body: JSON.stringify(fields) }, (r) => r?.workflow ?? undefined);
+}
+
+export function updateWorkflow(id: string, patch: Record<string, unknown>): Promise<ApiResult<any>> {
+  return request(`/api/workflows/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(patch) }, (r) => r?.workflow ?? undefined);
+}
+
+export function runWorkflowSweep(): Promise<ApiResult<any>> {
+  return request('/api/workflows/sweep', { method: 'POST', body: '{}' }, (r) => r ?? undefined);
+}

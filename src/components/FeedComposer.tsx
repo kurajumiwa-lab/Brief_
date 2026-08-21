@@ -3,16 +3,16 @@ import { Compass, CalendarDays, MapPin, Tag } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
 
 // ---------------------------------------------------------------------------
-// FEED COMPOSER — the home feed, rebuilt in the Material 3 visual system.
+// FEED COMPOSER — the home feed as a set of distinct shelves.
 //
-// Layout: Today's Tea leads, then Around-you → Upcoming → Collections →
-// Trending. Every slot is REAL data from /api/feed, /api/collections and
-// /api/tea — never the reference's hardcoded placeholder content.
+// Each shelf has ONE job (Tea = editorial, Around you = discovery, Opportunities
+// = things to apply for, Upcoming = dated events, Collections = curated groups,
+// Trending = tags). No shelf repeats another's content: events and
+// opportunities are split, not folded together.
 //
-// Honesty rules (unchanged): media comes from the association layer (exact →
-// venue → location → category → none); an object with no image renders as an
-// icon block, never a wrong photo. CTAs reflect the object type. Empty
-// sections are omitted, not padded.
+// SHELF SNAPS: each shelf header uses the first REAL image from its own content
+// as a dimmed photographic backdrop ("snap"). When a shelf has no image, it
+// falls back to a quiet gradient — never a wrong or unrelated photo.
 // ---------------------------------------------------------------------------
 
 type FeedObject = any;
@@ -70,6 +70,26 @@ const T = {
   outlineVariant: 'var(--m3-outline-variant)'
 };
 
+/** A shelf header with a real "snap" image dimmed behind it. */
+function ShelfHeader({ title, count, snap }: { title: string; count?: number; snap?: string | null }) {
+  return (
+    <div className="relative mb-3 overflow-hidden rounded-xl px-3 py-4">
+      {snap ? (
+        <>
+          <img src={snap} alt="" aria-hidden="true" loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-20" />
+          <div className="absolute inset-0" style={{ background: `linear-gradient(90deg, ${T.bg} 0%, transparent 70%)` }} />
+        </>
+      ) : (
+        <div className="absolute inset-0" style={{ background: `linear-gradient(90deg, ${T.containerLow}, transparent)` }} />
+      )}
+      <h3 className="relative text-[18px] font-semibold" style={{ color: T.onSurface }}>
+        {title}
+        {count !== undefined && <span className="ml-2 text-[13px] font-semibold" style={{ color: T.primary }}>{count}</span>}
+      </h3>
+    </div>
+  );
+}
+
 export function FeedComposer({ onOpen, onOpenTea }: FeedComposerProps) {
   const [state, setState] = React.useState<{ status: 'loading' | 'ready'; feed: FeedData | null }>({ status: 'loading', feed: null });
   const [collections, setCollections] = React.useState<any[]>([]);
@@ -90,7 +110,7 @@ export function FeedComposer({ onOpen, onOpenTea }: FeedComposerProps) {
     return (
       <div className="space-y-4 animate-pulse">
         <div className="h-16 rounded-xl" style={{ background: T.container }} />
-        <div className="h-64 rounded-xl" style={{ background: T.container }} />
+        <div className="h-48 rounded-xl" style={{ background: T.container }} />
       </div>
     );
   }
@@ -105,29 +125,28 @@ export function FeedComposer({ onOpen, onOpenTea }: FeedComposerProps) {
   }
 
   const all = [...feed.hero, ...feed.discovery, ...feed.opportunities, ...feed.more];
-  const upcoming = all.filter((o) => (o.type === 'experience' || o.type === 'opportunity') && o.expiryStatus !== 'expired');
-  const trendingTags = [
-    ...new Set([...all.map((o) => o.category).filter(Boolean), ...(feed.tea?.tags ?? [])])
-  ].slice(0, 8);
+  const events = all.filter((o) => o.type === 'experience' && o.expiryStatus !== 'expired');
+  const opportunities = all.filter((o) => o.type === 'opportunity' && o.expiryStatus !== 'expired');
+  const discovery = feed.discovery.filter((o) => o.type !== 'experience' && o.type !== 'opportunity');
+  const trendingTags = [...new Set([...all.map((o) => o.category).filter(Boolean), ...(feed.tea?.tags ?? [])])].slice(0, 8);
+  const snapOf = (list: FeedObject[]) => list.find((o) => o.media?.url)?.media?.url ?? null;
 
   return (
     <div className="space-y-6" style={{ fontFamily: 'var(--m3-font-body)', color: T.onSurface }}>
-      {/* --- Tea (the editorial feature) -------------------------------------- */}
+      {/* --- Tea (editorial lead) --------------------------------------------- */}
       {feed.tea && (
         <article
           onClick={() => onOpenTea(feed.tea.slug)}
           className="cursor-pointer rounded-xl border p-5 transition-colors hover:border-[var(--m3-primary)]"
           style={{ borderColor: T.outlineVariant, background: T.container }}
         >
-          <div className="mb-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full" style={{ background: T.secondaryContainer, color: '#00374d' }}>
-                <Compass className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold" style={{ color: T.onSurface }}>Today's Tea</p>
-                <p className="text-xs" style={{ color: T.onSurfaceVariant }}>{feed.tea.location ?? 'Your city'} · {feed.tea.category}</p>
-              </div>
+          <div className="mb-3 flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full" style={{ background: T.secondaryContainer, color: '#00374d' }}>
+              <Compass className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold" style={{ color: T.onSurface }}>Today's Tea</p>
+              <p className="text-xs" style={{ color: T.onSurfaceVariant }}>{feed.tea.location ?? 'Your city'} · {feed.tea.category}</p>
             </div>
           </div>
           <h4 className="mb-2 text-[18px] font-semibold" style={{ color: T.onSurface }}>{feed.tea.title}</h4>
@@ -135,12 +154,12 @@ export function FeedComposer({ onOpen, onOpenTea }: FeedComposerProps) {
         </article>
       )}
 
-      {/* --- Around you (discovery scroll) ------------------------------------ */}
-      {feed.discovery.length > 0 && (
-        <section className="mt-2">
-          <h3 className="mb-3 px-1 text-[18px] font-semibold" style={{ color: T.onSurface }}>Around you</h3>
+      {/* --- Around you (discovery) ------------------------------------------- */}
+      {discovery.length > 0 && (
+        <section>
+          <ShelfHeader title="Around you" count={discovery.length} snap={snapOf(discovery)} />
           <div className="flex gap-4 overflow-x-auto no-scrollbar px-1 pb-2">
-            {feed.discovery.map((o) => (
+            {discovery.map((o) => (
               <article
                 key={o.id}
                 onClick={() => onOpen(o)}
@@ -162,15 +181,35 @@ export function FeedComposer({ onOpen, onOpenTea }: FeedComposerProps) {
         </section>
       )}
 
-      {/* --- Upcoming events --------------------------------------------------- */}
-      {upcoming.length > 0 && (
-        <section className="mt-2">
-          <div className="mb-3 flex items-center justify-between px-1">
-            <h3 className="text-[18px] font-semibold" style={{ color: T.onSurface }}>Upcoming</h3>
-            <span className="text-sm font-semibold" style={{ color: T.primary }}>{upcoming.length}</span>
-          </div>
+      {/* --- Opportunities ----------------------------------------------------- */}
+      {opportunities.length > 0 && (
+        <section>
+          <ShelfHeader title="Opportunities" count={opportunities.length} snap={snapOf(opportunities)} />
           <div className="flex flex-col gap-3">
-            {upcoming.slice(0, 5).map((o) => {
+            {opportunities.slice(0, 5).map((o) => (
+              <div
+                key={o.id}
+                onClick={() => onOpen(o)}
+                className="flex cursor-pointer items-center gap-4 rounded-xl border p-3 transition-colors hover:border-[var(--m3-primary)]"
+                style={{ borderColor: T.outlineVariant, background: T.container }}
+              >
+                <div className="min-w-0 flex-1">
+                  <h4 className="truncate text-[15px] font-semibold" style={{ color: T.onSurface }}>{o.title}</h4>
+                  <p className="truncate text-[13px]" style={{ color: T.onSurfaceVariant }}>{metaFor(o) || o.summary}</p>
+                </div>
+                <span className="flex-none text-[13px] font-semibold" style={{ color: T.primary }}>{ctaFor(o)}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* --- Upcoming events --------------------------------------------------- */}
+      {events.length > 0 && (
+        <section>
+          <ShelfHeader title="Upcoming" count={events.length} snap={snapOf(events)} />
+          <div className="flex flex-col gap-3">
+            {events.slice(0, 5).map((o) => {
               const db = dateBlock(o);
               return (
                 <div
@@ -203,8 +242,8 @@ export function FeedComposer({ onOpen, onOpenTea }: FeedComposerProps) {
 
       {/* --- Collections -------------------------------------------------------- */}
       {collections.length > 0 && (
-        <section className="mt-2">
-          <h3 className="mb-3 px-1 text-[18px] font-semibold" style={{ color: T.onSurface }}>Collections</h3>
+        <section>
+          <ShelfHeader title="Collections" count={collections.length} />
           <div className="flex gap-2 overflow-x-auto no-scrollbar px-1 pb-2">
             {collections.map((c) => (
               <div key={c.id} className="flex-none rounded-xl border px-3 py-2" style={{ borderColor: T.outlineVariant, background: T.container }}>
@@ -218,8 +257,8 @@ export function FeedComposer({ onOpen, onOpenTea }: FeedComposerProps) {
 
       {/* --- Trending topics ---------------------------------------------------- */}
       {trendingTags.length > 0 && (
-        <section className="mt-2">
-          <h3 className="mb-3 px-1 text-[18px] font-semibold" style={{ color: T.onSurface }}>Trending</h3>
+        <section>
+          <ShelfHeader title="Trending" />
           <div className="flex flex-wrap gap-2 px-1">
             {trendingTags.map((t) => (
               <span key={t} className="flex items-center gap-1 rounded-full border px-3 py-1.5 text-[13px]" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }}>
