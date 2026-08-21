@@ -20,8 +20,8 @@ import { Marketplace } from './components/Marketplace';
 import { Pursuits } from './components/Pursuits';
 import { Inbox } from './components/Inbox';
 import { Quests } from './components/Quests';
-import { NearbyMap } from './components/NearbyMap';
-import type { GeoPoint } from './components/NearbyMap';
+import { LocationChip } from './components/LocationChip';
+import type { GeoPoint } from './components/LocationChip';
 import { ArenaPortal } from './components/ArenaPortal';
 import { FeedComposer } from './components/FeedComposer';
 import { TeaDesk } from './components/TeaDesk';
@@ -5052,14 +5052,6 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
   );
 }
 
-/** A warm, human greeting for the home header — not a machine timestamp. */
-function greetingForHour(hour: number): string {
-  if (hour < 5) return 'Still up?';
-  if (hour < 12) return 'Good morning';
-  if (hour < 17) return 'Good afternoon';
-  return 'Good evening';
-}
-
 export function App() {
   // Public campaign links open the public page, not the app shell. Checked
   // once at render: a stranger with a link is not a Brief user.
@@ -5207,6 +5199,7 @@ export function App() {
           lng: pos.coords.longitude,
           label: 'your location'
         });
+        setSelectedLocation('your location');
       },
       () => {
         setLocating(false);
@@ -5219,11 +5212,13 @@ export function App() {
   const chooseCity = React.useCallback((c: GeoPoint) => {
     setLocError(null);
     setUserLocation(c);
+    setSelectedLocation(c.label);
   }, []);
 
   const clearLocation = React.useCallback(() => {
     setLocError(null);
     setUserLocation(null);
+    setSelectedLocation('Your area');
   }, []);
 
   const loadObjects = React.useCallback(async (loc?: { lat: number; lng: number }) => {
@@ -7011,10 +7006,15 @@ export function App() {
               <span className="hidden lg:inline text-[11px] font-extrabold text-[#86948a]">
                 {DESTINATIONS.find((d) => d.id === activeTab)?.label}
               </span>
-              <div className="flex items-center gap-1.5 bg-[#1c1f29] text-[#dfe2ef] text-xs font-bold px-3 py-1.5 rounded-full border border-[#3c4a42]">
-                <MapPin className="w-3.5 h-3.5 text-[#4edea3]" />
-                <span>{selectedLocation}</span>
-              </div>
+              <LocationChip
+                label={selectedLocation}
+                locating={locating}
+                locError={locError}
+                hasLocation={userLocation !== null}
+                onLocate={locate}
+                onSelectCity={chooseCity}
+                onClearLocation={clearLocation}
+              />
             </div>
 
             <div className="relative flex-1 max-w-md hidden sm:block">
@@ -7097,41 +7097,11 @@ export function App() {
         {/* Main Stream. pb-24 on mobile clears the bottom bar. */}
         <main className="flex-1 min-w-0 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 pb-24 md:pb-6">
 
-        {/* Visual Hero Bar (M3) */}
-        <div className="mb-6 rounded-xl bg-[#1c1f29] border border-[#3c4a42] p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <p className="text-[11px] text-[#bbcabf] mb-1">{greetingForHour(new Date().getHours())}</p>
-            <h1 className="text-xl font-extrabold text-[#dfe2ef]" style={{ fontFamily: 'var(--m3-font-headline)' }}>
-              What's happening around you
-            </h1>
-            <p className="text-xs text-[#bbcabf] mt-1">
-              {objects.length > 0
-                ? `${objects.length} thing${objects.length === 1 ? '' : 's'} happening nearby`
-                : 'Nothing happening nearby yet — check again later or look around another area.'}
-            </p>
-          </div>
-        </div>
-
         {/* Main Content */}
         {/* Sub-navigation. Sections live INSIDE a destination, so the top
             bar stays five doors wide no matter how much is built. */}
         {activeTab === 'nearby' && (
           <div className="max-w-3xl mx-auto px-4 pt-4">
-            <div className="mb-4">
-              {/* Relative map of real coordinates — "what's actually around me". */}
-              <NearbyMap
-                objects={objects}
-                center={userLocation}
-                onSelect={setSelectedObjectForDetail}
-                onLocate={locate}
-                locating={locating}
-                onClearLocation={clearLocation}
-                onSelectCity={chooseCity}
-              />
-              {locError && (
-                <p className="mt-2 text-[10px]" style={{ color: 'var(--signal-urgent)' }}>{locError}</p>
-              )}
-            </div>
             <div className="mb-4">
               {/* FEED COMPOSER — the composed, deduplicated magazine feed:
                   hero → tea → discovery → opportunities. Real server rows via
