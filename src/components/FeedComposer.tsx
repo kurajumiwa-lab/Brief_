@@ -1,14 +1,13 @@
 import React from 'react';
-import { Compass, CalendarDays, MapPin, Clock, Tag } from 'lucide-react';
+import { Compass, CalendarDays, MapPin, Tag } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
 
 // ---------------------------------------------------------------------------
 // FEED COMPOSER — the home feed, rebuilt in the Material 3 visual system.
 //
-// Layout mirrors the approved M3 reference (Top Updates → Featured → Tea →
-// Around-you scroll → Upcoming → Trending), but every slot is REAL data from
-// /api/feed, /api/collections and /api/tea — never the reference's hardcoded
-// placeholder content.
+// Layout: Today's Tea leads, then Around-you → Upcoming → Collections →
+// Trending. Every slot is REAL data from /api/feed, /api/collections and
+// /api/tea — never the reference's hardcoded placeholder content.
 //
 // Honesty rules (unchanged): media comes from the association layer (exact →
 // venue → location → category → none); an object with no image renders as an
@@ -40,21 +39,6 @@ const CTA_FOR_TYPE: Record<string, string> = {
 };
 const ctaFor = (o: FeedObject) => CTA_FOR_TYPE[o.type] ?? 'View';
 
-/** The story avatars: top categories by real object count. */
-function topCategories(objects: FeedObject[]): { category: string; count: number; image: string | null }[] {
-  const counts = new Map<string, number>();
-  const imageBy = new Map<string, string | null>();
-  for (const o of objects) {
-    const c = o.category ?? 'Other';
-    counts.set(c, (counts.get(c) ?? 0) + 1);
-    if (!imageBy.has(c) && o.media?.url) imageBy.set(c, o.media.url);
-  }
-  return [...counts.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 6)
-    .map(([category, count]) => ({ category, count, image: imageBy.get(category) ?? null }));
-}
-
 /** A real date block (month/day) only when the object carries one; else null. */
 function dateBlock(o: FeedObject): { month: string; day: string } | null {
   const iso = o.metadata?.deadline ?? o.startsAt ?? o.endsAt ?? null;
@@ -79,9 +63,6 @@ const T = {
   container: 'var(--m3-surface-container)',
   containerLow: 'var(--m3-surface-container-low)',
   primary: 'var(--m3-primary)',
-  primaryContainer: 'var(--m3-primary-container)',
-  onPrimaryContainer: 'var(--m3-on-primary-container)',
-  secondary: 'var(--m3-secondary)',
   secondaryContainer: 'var(--m3-secondary-container)',
   onSurface: 'var(--m3-on-surface)',
   onSurfaceVariant: 'var(--m3-on-surface-variant)',
@@ -124,8 +105,6 @@ export function FeedComposer({ onOpen, onOpenTea }: FeedComposerProps) {
   }
 
   const all = [...feed.hero, ...feed.discovery, ...feed.opportunities, ...feed.more];
-  const stories = topCategories(all);
-  const featured = feed.hero[0];
   const upcoming = all.filter((o) => (o.type === 'experience' || o.type === 'opportunity') && o.expiryStatus !== 'expired');
   const trendingTags = [
     ...new Set([...all.map((o) => o.category).filter(Boolean), ...(feed.tea?.tags ?? [])])
@@ -133,79 +112,6 @@ export function FeedComposer({ onOpen, onOpenTea }: FeedComposerProps) {
 
   return (
     <div className="space-y-6" style={{ fontFamily: 'var(--m3-font-body)', color: T.onSurface }}>
-      {/* --- Top Updates (stories) ------------------------------------------- */}
-      {stories.length > 0 && (
-        <section>
-          <h3 className="mb-3 px-1 text-[15px] font-semibold" style={{ color: T.onSurface }}>Top Updates</h3>
-          <div className="flex gap-4 overflow-x-auto no-scrollbar px-1 pb-2">
-            {stories.map((s, i) => (
-              <div key={s.category} className="flex w-[72px] flex-none flex-col items-center gap-2">
-                <div
-                  className="m3-status-ring relative h-16 w-16 rounded-full p-[2px]"
-                  title={`${s.count} ${s.category} thing${s.count === 1 ? '' : 's'}`}
-                >
-                  <div className="h-full w-full overflow-hidden rounded-full border-2" style={{ borderColor: T.bg, background: T.container }}>
-                    {s.image ? (
-                      <img src={s.image} alt={s.category} loading="lazy" className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center" style={{ background: T.containerLow }}>
-                        <Compass className="h-6 w-6" style={{ color: T.primary }} />
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <span className="w-full truncate text-center text-[11px] font-bold tracking-[0.08em]" style={{ color: T.onSurface }}>
-                  {s.category}
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* --- Featured card (hero) -------------------------------------------- */}
-      {featured && (
-        <article className="group relative overflow-hidden rounded-xl border" style={{ borderColor: T.outlineVariant, background: 'rgba(6,78,59,0.2)' }}>
-          <div className="relative h-64 w-full">
-            {featured.media?.url ? (
-              <img
-                src={featured.media.url}
-                alt={featured.media.alt ?? featured.title}
-                loading="lazy"
-                className="h-full w-full object-cover opacity-80 mix-blend-luminosity transition-opacity group-hover:opacity-100"
-              />
-            ) : (
-              <div className="h-full w-full" style={{ background: `linear-gradient(135deg, ${T.containerLow}, ${T.bg})` }} />
-            )}
-            <div className="absolute inset-0" style={{ background: `linear-gradient(to top, ${T.bg}, transparent)` }} />
-            <div className="absolute left-4 top-4 flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-bold tracking-[0.08em]" style={{ background: '#064E3B', color: '#6EE7B7' }}>
-              <span className="h-1.5 w-1.5 rounded-full" style={{ background: '#6EE7B7' }} />
-              FEATURED
-            </div>
-          </div>
-          <div className="relative z-10 p-6" style={{ background: 'rgba(15,19,28,0.8)', backdropFilter: 'blur(4px)' }}>
-            <h3 className="mb-2 text-[20px] font-bold leading-tight" style={{ color: T.onSurface }}>{featured.title}</h3>
-            <p className="mb-4 text-[15px] leading-6" style={{ color: T.onSurfaceVariant }}>{featured.summary || featured.title}</p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => onOpen(featured)}
-                className="rounded-lg px-4 py-2 text-[15px] font-semibold transition-shadow hover:shadow-[0_0_16px_rgba(16,185,129,0.2)]"
-                style={{ background: T.primaryContainer, color: T.onPrimaryContainer }}
-              >
-                {ctaFor(featured)}
-              </button>
-              <button
-                onClick={() => onOpen(featured)}
-                className="rounded-lg border px-4 py-2 text-[15px] font-semibold transition-colors hover:bg-[#262a34]"
-                style={{ borderColor: T.outlineVariant, color: T.onSurface }}
-              >
-                Details
-              </button>
-            </div>
-          </div>
-        </article>
-      )}
-
       {/* --- Tea (the editorial feature) -------------------------------------- */}
       {feed.tea && (
         <article
