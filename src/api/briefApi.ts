@@ -1498,3 +1498,10 @@ export function updateTeaArticle(id: string, patch: Record<string, unknown>): Pr
 export function transitionTea(id: string, action: string): Promise<ApiResult<any>> {
   return request(`/api/admin/tea/${encodeURIComponent(id)}/${encodeURIComponent(action)}`, { method: 'POST', body: '{}' }, (r) => r?.article ?? undefined);
 }
+
+/** Published editorial collections (metadata). */
+export function getCollections(): Promise<ApiResult<any[]>> {
+  return request('/api/collections', undefined, (r) =>
+    Array.isArray(r?.collections) ? r.collections : undefined
+  );
+}

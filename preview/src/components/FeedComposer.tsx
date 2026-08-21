@@ -148,14 +148,16 @@ function TeaCard({ article }: { article: any }) {
 
 export function FeedComposer({ onOpen }: FeedComposerProps) {
   const [state, setState] = React.useState<{ status: 'loading' | 'ready'; feed: FeedData | null }>({ status: 'loading', feed: null });
+  const [collections, setCollections] = React.useState<any[]>([]);
 
   React.useEffect(() => {
     let live = true;
     (async () => {
-      const res = await briefApi.getFeed();
+      const [feedRes, colRes] = await Promise.all([briefApi.getFeed(), briefApi.getCollections()]);
       if (!live) return;
-      if (res.ok) setState({ status: 'ready', feed: res.data as FeedData });
+      if (feedRes.ok) setState({ status: 'ready', feed: feedRes.data as FeedData });
       else setState({ status: 'ready', feed: null });
+      if (colRes.ok) setCollections(colRes.data as any[]);
     })();
     return () => { live = false; };
   }, []);
@@ -211,6 +213,24 @@ export function FeedComposer({ onOpen }: FeedComposerProps) {
           {feed.opportunities.map((o) => (
             <CompactCard key={o.id} obj={o} onOpen={onOpen} />
           ))}
+        </section>
+      )}
+
+      {/* Collections — a horizontal strip of named, data-driven groupings. */}
+      {collections.length > 0 && (
+        <section className="space-y-2">
+          <h2 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#43D17A]">Collections</h2>
+          <div className="flex gap-2 overflow-x-auto no-scrollbar">
+            {collections.map((c) => (
+              <div
+                key={c.id}
+                className="shrink-0 rounded-xl border border-[#232A38] bg-[#10141C] px-3 py-2 text-left"
+              >
+                <p className="text-[12px] font-bold text-[#F3F1E7]">{c.title}</p>
+                {c.description && <p className="mt-0.5 max-w-[160px] text-[9px] text-[#8A93A6] line-clamp-1">{c.description}</p>}
+              </div>
+            ))}
+          </div>
         </section>
       )}
     </div>

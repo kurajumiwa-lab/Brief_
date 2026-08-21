@@ -22,6 +22,7 @@ import * as campaigns from './campaign.js';
 import * as vendors from './vendor.js';
 import * as listings from './listing.js';
 import * as tea from './tea.js';
+import * as collection from './collection.js';
 
 export const BATCH = 'nairobi-demo-v1';
 const HOST = 'usr_me';
@@ -113,7 +114,8 @@ export function clearSeed() {
     sources: removeWhere('sources', (s) => s.seedBatch === BATCH),
     objectSources: removeWhere('objectSources', (os) => demoObjectIds.has(os.objectId) || demoSourceIds.has(os.sourceId)),
     relationships: removeWhere('relationships', (r) => demoObjectIds.has(r.sourceId) || demoObjectIds.has(r.targetId)),
-    tea: removeWhere('teaArticles', (t) => t.seedBatch === BATCH)
+    tea: removeWhere('teaArticles', (t) => t.seedBatch === BATCH),
+    collections: removeWhere('collections', (c) => c.seedBatch === BATCH)
   };
   return n;
 }
@@ -243,6 +245,7 @@ export function runSeed() {
   mk('usr_demo_coast', 'Pwani Handcrafts', 'Kikoy, carved wood and beach crafts from Mombasa.', [['Handwoven Kikoy', 1800], ['Carved Dhow Ornament', 950], ['Coconut Shell Bowl', 700]]);
 
   seedTea();
+  seedCollections();
 
   return { alreadySeeded: false, ...counts() };
 }
@@ -279,12 +282,33 @@ function seedTea() {
   return added;
 }
 
+/**
+ * Starter collections — rule-based and genuinely evergreen, so they resolve
+ * against whatever real content exists without fabricating any of it.
+ */
+function seedCollections() {
+  const defs = [
+    { title: 'Under KES 500', description: 'Things you can do on a small budget.', kind: 'rule', rule: { maxPrice: 500 }, featured: true },
+    { title: 'Around Kilimani', description: 'What is happening in and around Kilimani.', kind: 'rule', rule: { locationContains: 'Kilimani' } },
+    { title: 'Opportunities', description: 'Grants, apprenticeships and openings.', kind: 'rule', rule: { type: 'opportunity' } },
+    { title: 'Free things to do', description: 'Entry-free events and places.', kind: 'rule', rule: { maxPrice: 0 } }
+  ];
+  let added = 0;
+  for (const d of defs) {
+    const c = collection.createCollection({ ...d, status: 'published' });
+    store.update('collections', c.id, { seedBatch: BATCH });
+    added++;
+  }
+  return added;
+}
+
 function counts() {
   return {
     objects: store.filter('objects', (o) => o.seedBatch === BATCH).length,
     vendors: store.filter('vendors', (v) => v.seedBatch === BATCH).length,
     listings: store.filter('listings', (l) => l.seedBatch === BATCH).length,
     campaigns: store.filter('campaigns', (c) => c.seedBatch === BATCH).length,
-    tea: store.filter('teaArticles', (t) => t.seedBatch === BATCH).length
+    tea: store.filter('teaArticles', (t) => t.seedBatch === BATCH).length,
+    collections: store.filter('collections', (c) => c.seedBatch === BATCH).length
   };
 }

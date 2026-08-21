@@ -3093,6 +3093,53 @@ console.log('\n=== FEED COMPOSITION (home-feed Phase 8) ===');
   check('empty tea is null', empty.tea === null && empty.moreTea.length === 0);
 }
 
+console.log('\n=== COLLECTIONS (home-feed §47) ===');
+{
+  const collection = await import('../src/domain/collection.js');
+
+  // A rule collection matches by price ceiling.
+  const budget = collection.createCollection({ title: 'Under KES 300', kind: 'rule', rule: { maxPrice: 300 }, status: 'published' });
+  check('a rule collection is created', Boolean(budget.id));
+
+  // A curated collection holds explicit object ids.
+  store.insert('objects', { id: 'obj_c1', type: 'place', title: 'Cafe', publication: 'public', category: 'Place', metadata: { price: 150 } });
+  store.insert('objects', { id: 'obj_c2', type: 'place', title: 'Expensive spot', publication: 'public', category: 'Place', metadata: { price: 5000 } });
+  const curated = collection.createCollection({ title: 'My picks', kind: 'curated', objectIds: ['obj_c1', 'obj_c2'], status: 'published' });
+  check('a curated collection resolves its explicit ids', collection.resolveCollection(curated.key).objectCount === 2);
+
+  // The rule collection only matches objects under the ceiling.
+  const res = collection.resolveCollection(budget.key);
+  check('a rule collection resolves only matching objects', res.objects.every((o) => (o.metadata?.price ?? Infinity) <= 300), JSON.stringify(res.objects.map((o) => o.title)));
+  check('the expensive object is excluded', !res.objects.some((o) => o.id === 'obj_c2'));
+
+  // A locationContains rule.
+  store.insert('objects', { id: 'obj_k', type: 'experience', title: 'Kilimani gig', publication: 'public', locationName: 'Kilimani, Nairobi', category: 'Event', metadata: {} });
+  const local = collection.createCollection({ title: 'Around Kilimani X', kind: 'rule', rule: { locationContains: 'Kilimani' }, status: 'published' });
+  check('a location rule matches by substring', collection.resolveCollection(local.key).objects.some((o) => o.id === 'obj_k'));
+
+  // A draft collection does not resolve publicly.
+  const draft = collection.createCollection({ title: 'Hidden', kind: 'rule', rule: { type: 'place' }, status: 'draft' });
+  check('a draft collection does not resolve', collection.resolveCollection(draft.key) === null);
+  check('a draft collection is not listed', collection.listPublished().every((c) => c.id !== draft.id));
+
+  // Publish makes it listed and resolvable.
+  collection.transitionCollection(draft.key, 'publish');
+  check('publishing lists the collection', collection.listPublished().some((c) => c.id === draft.id));
+  check('a published collection resolves', collection.resolveCollection(draft.key) !== null);
+
+  // Over HTTP: list + resolve.
+  {
+    const { default: appC } = await import('../src/index.js');
+    const srvC = appC.listen(0);
+    const portC = srvC.address().port;
+    const list = await (await fetch(`http://127.0.0.1:${portC}/api/collections`)).json();
+    check('GET /api/collections returns published collections', Array.isArray(list.collections) && list.collections.length > 0);
+    const one = await (await fetch(`http://127.0.0.1:${portC}/api/collections/${budget.key}`)).json();
+    check('GET /api/collections/:key resolves membership', one.collection && typeof one.collection.objectCount === 'number');
+    srvC.close();
+  }
+}
+
 console.log('\n=== FEATURE REGISTRY (§4.2) ===');
 {
   const features = await import('../src/features.js');
@@ -3105,7 +3152,7 @@ console.log('\n=== FEATURE REGISTRY (§4.2) ===');
   // Default state: everything enabled; module features configured; provider
   // features NOT configured (no credentials in this run).
   check('every feature is enabled by default', features.list().every((f) => f.enabled));
-  check('the registry holds 23 features', features.list().length === 23, String(features.list().length));
+  check('the registry holds 24 features', features.list().length === 24, String(features.list().length));
   check('auth is available by default', features.available('auth') === true);
   check('arena is available by default', features.available('arena') === true);
   check('vaults is available by default', features.available('vaults') === true);
