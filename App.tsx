@@ -23,6 +23,7 @@ import { Quests } from './components/Quests';
 import { LocationChip } from './components/LocationChip';
 import type { GeoPoint } from './components/LocationChip';
 import { ArenaPortal } from './components/ArenaPortal';
+import { LobbyBoard } from './components/LobbyBoard';
 import { FeedComposer } from './components/FeedComposer';
 import { TeaDesk } from './components/TeaDesk';
 import { SearchResults } from './components/SearchResults';
@@ -8840,6 +8841,14 @@ export function App() {
               <>
                 {arenaSection === 'lobby' && (
                 <>
+                {/* LOBBY BOARD — the 1-tap room-code board (server-backed).
+                    Brief carries the code the host's own lobby produced; the
+                    game owns the match. Client game ids map to the server's
+                    canonical ids. */}
+                <LobbyBoard
+                  gameId={({ pubg: 'pubg_mobile', cod: 'cod_mobile', ea_fc: 'fc_mobile' } as Record<string, string>)[arenaGameId] ?? arenaGameId}
+                />
+
                 {/* FROM YOUR GROUPS. Only groups the user already belongs to,
                     reusing the same access rules as the Group tab. Brief never
                     joins, posts to, or claims ownership of a group. */}

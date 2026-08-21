@@ -53,6 +53,7 @@ const DEFINITIONS = [
   { key: 'assist',     domain: 'assist',      label: 'AI-assisted editorial drafting',    configured: () => true },
   { key: 'pools',      domain: 'pools',       label: 'Cooperative savings (Chama/Stokvel)', configured: () => true },
   { key: 'distribution', domain: 'distribution', label: 'Campaign blast + UTM attribution',  configured: () => true },
+  { key: 'lobby',      domain: 'lobby',       label: 'Lobby code board & clan matches',       configured: () => true },
   // Provider-backed: configured derives from LIVE credentials, never a stored flag.
   { key: 'payments',  domain: 'commerce',   label: 'Payment collection (Tuma STK)',   configured: () => providers.providerStatus().configured },
   { key: 'payouts',   domain: 'commerce',   label: 'Merchant payouts (disbursement)', configured: () => providers.providerStatus().payoutConfigured },

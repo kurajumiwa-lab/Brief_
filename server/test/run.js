@@ -3300,6 +3300,70 @@ console.log('\n=== DISTRIBUTION (four-screen build B) ===');
   delete process.env.BRIEF_PUBLIC_ORIGIN;
 }
 
+console.log('\n=== LOBBY CODE BOARD (Arena integration) ===');
+{
+  const lobby = await import('../src/domain/lobby.js');
+
+  // A host creates a room with a 4-8 digit code.
+  const room = lobby.createRoom({ gameId: 'cod_mobile', code: '48592', mode: 'Search & Destroy', hostId: 'usr_host', maxSlots: 8 });
+  check('a room is created open', room.status === 'open' && room.code === '48592');
+
+  // A non-digit or wrong-length code is refused.
+  try { lobby.createRoom({ gameId: 'cod_mobile', code: 'abc', hostId: 'x' }); check('a non-numeric code is refused', false); }
+  catch (e) { check('a non-numeric code is refused', /4-8 digits/.test(e.message)); }
+
+  // The board view shows slots and the code while open.
+  const v = lobby.roomView(room);
+  check('the board shows open slots', v.slotsOpen === 8 && v.code === '48592');
+
+  // Players claim slots; full is refused.
+  for (let i = 0; i < 8; i++) lobby.claimSlot(room.id, `p${i}`);
+  check('slots fill to capacity', lobby.roomView(room).slotsOpen === 0);
+  try { lobby.claimSlot(room.id, 'p_overflow'); check('claiming a full room is refused', false); }
+  catch (e) { check('claiming a full room is refused', /full/.test(e.message)); }
+
+  // A re-claim by the same player is idempotent (reused).
+  const r2 = lobby.createRoom({ gameId: 'efootball', code: '1234', hostId: 'usr_host', maxSlots: 4 });
+  lobby.claimSlot(r2.id, 'p1');
+  const re = lobby.claimSlot(r2.id, 'p1');
+  check('a re-claim is idempotent', re.reused === true);
+
+  // Starting the room hides the code.
+  lobby.startRoom(r2.id, 'usr_host');
+  check('a started room hides its code', lobby.roomView(r2.id).code === null);
+  check('a started room leaves the open board', lobby.listOpenRooms({ gameId: 'efootball' }).length === 0);
+
+  // Vouching: derived verification only after enough net-positive.
+  for (let i = 0; i < 3; i++) lobby.vouchHost('usr_host', `voter${i}`, true);
+  check('three up-vouches verify a host', lobby.hostTrust('usr_host').verified === true && lobby.hostTrust('usr_host').label === 'Verified Lobby Master');
+  lobby.vouchHost('usr_host', 'voter_down', false);
+  check('a down-vote is counted', lobby.hostTrust('usr_host').down === 1);
+  try { lobby.vouchHost('usr_host', 'usr_host', true); check('self-vouch is refused', false); }
+  catch (e) { check('self-vouch is refused', /themselves/.test(e.message)); }
+
+  // Scoreboard receipt: honest "pending review", no fabricated OCR.
+  const sb = lobby.recordScoreboard({ roomId: r2.id, actorId: 'usr_host', imageUrl: 'https://x/scoreboard.jpg' });
+  check('a scoreboard receipt is pending review', sb.status === 'pending_review');
+
+  // Clan match: neighbourhood rivalry.
+  const clan = lobby.createClanMatch({ title: 'Nairobi CBD vs Ruiru', homeLabel: 'CBD', awayLabel: 'Ruiru', gameId: 'cod_mobile', hostId: 'usr_host' });
+  check('a clan match is scheduled', clan.status === 'scheduled' && clan.homeLabel === 'CBD');
+  lobby.transitionClan(clan.id, 'activate', 'usr_host');
+  check('a clan match can activate', lobby.listClanMatches().find((m) => m.id === clan.id).status === 'active');
+
+  // Over HTTP: board + host room + claim.
+  {
+    const { default: appL } = await import('../src/index.js');
+    const srvL = appL.listen(0);
+    const portL = srvL.address().port;
+    const board = await (await fetch(`http://127.0.0.1:${portL}/api/lobby/rooms?gameId=cod_mobile`)).json();
+    check('GET /api/lobby/rooms returns the open board', Array.isArray(board.rooms) && board.rooms.some((r) => r.code === '48592'));
+    const trust = await (await fetch(`http://127.0.0.1:${portL}/api/lobby/hosts/usr_host/trust`)).json();
+    check('GET trust returns derived host trust', trust.trust && typeof trust.trust.up === 'number');
+    srvL.close();
+  }
+}
+
 console.log('\n=== FEATURE REGISTRY (§4.2) ===');
 {
   const features = await import('../src/features.js');
@@ -3312,7 +3376,7 @@ console.log('\n=== FEATURE REGISTRY (§4.2) ===');
   // Default state: everything enabled; module features configured; provider
   // features NOT configured (no credentials in this run).
   check('every feature is enabled by default', features.list().every((f) => f.enabled));
-  check('the registry holds 28 features', features.list().length === 28, String(features.list().length));
+  check('the registry holds 29 features', features.list().length === 29, String(features.list().length));
   check('auth is available by default', features.available('auth') === true);
   check('arena is available by default', features.available('arena') === true);
   check('vaults is available by default', features.available('vaults') === true);

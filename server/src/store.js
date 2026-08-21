@@ -149,6 +149,14 @@ const EMPTY = {
   // UTM click attribution: one row per tracked click. See domain/distribution.js.
   clickEvents: [],
 
+  // --- Lobby (Arena integration: 1-tap room codes) -------------------------
+  // Private game rooms (code + mode + slots + status), host vouches, scoreboard
+  // receipts, and clan matches. See domain/lobby.js.
+  lobbyRooms: [],
+  lobbyVouches: [],
+  scoreboardReceipts: [],
+  clanMatches: [],
+
   // --- Person (report §4.4) -------------------------------------------------
   // A first-class entity over every identity Brief holds. A person is a stable
   // id; personAliases bind it to concrete external identifiers (user id, phone,

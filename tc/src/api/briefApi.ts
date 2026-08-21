@@ -1510,3 +1510,26 @@ export function getCollections(): Promise<ApiResult<any[]>> {
 export function searchAll(q: string): Promise<ApiResult<any>> {
   return request(`/api/search?q=${encodeURIComponent(q)}`, undefined, (r) => (r?.results ? r.results : undefined));
 }
+
+// --- Lobby (Arena: 1-tap room codes) ----------------------------------------
+
+export function getLobbyRooms(gameId?: string): Promise<ApiResult<any[]>> {
+  const q = gameId ? `?gameId=${encodeURIComponent(gameId)}` : '';
+  return request(`/api/lobby/rooms${q}`, undefined, (r) => Array.isArray(r?.rooms) ? r.rooms : undefined);
+}
+
+export function hostLobbyRoom(fields: Record<string, unknown>): Promise<ApiResult<any>> {
+  return request('/api/lobby/rooms', { method: 'POST', body: JSON.stringify(fields) }, (r) => r?.room ?? undefined);
+}
+
+export function claimLobbySlot(roomId: string): Promise<ApiResult<any>> {
+  return request(`/api/lobby/rooms/${encodeURIComponent(roomId)}/claim`, { method: 'POST', body: '{}' }, (r) => r?.room ?? undefined);
+}
+
+export function startLobbyRoom(roomId: string): Promise<ApiResult<any>> {
+  return request(`/api/lobby/rooms/${encodeURIComponent(roomId)}/start`, { method: 'POST', body: '{}' }, (r) => r?.room ?? undefined);
+}
+
+export function vouchHost(hostId: string, up: boolean): Promise<ApiResult<any>> {
+  return request(`/api/lobby/hosts/${encodeURIComponent(hostId)}/vouch`, { method: 'POST', body: JSON.stringify({ up }) }, (r) => r?.trust ?? undefined);
+}
