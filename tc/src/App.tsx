@@ -5090,6 +5090,7 @@ export function App() {
 
   const [activeTab, setActiveTab] = useState<Destination>('nearby');
   const [nearbySection, setNearbySection] = useState<NearbySection>('stream');
+  const [moreFilters, setMoreFilters] = useState<boolean>(false);
   const [myLayerSection, setMyLayerSection] = useState<MyLayerSection>('saved');
   const [workflowSection, setWorkflowSection] = useState<WorkflowSection>('command');
   const [pulseSection, setPulseSection] = useState<PulseSection>('now');
@@ -7167,30 +7168,85 @@ export function App() {
                 }
               />
             </div>
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-              {([
-                ['stream', 'Everything'],
-                ['tea', 'Tea'],
-                ['today', `Today${dailyBrief.length > 0 ? ' *' : ''}`],
-                ['pursuits', `Pursuits${pursuits.length > 0 ? ` (${pursuits.length})` : ''}`],
-                ['quests', `Quests${openQuests.length > 0 ? ` (${openQuests.length})` : ''}`],
-                // Standalone commerce. A SECTION inside Nearby, not a sixth
-                // destination: buying from a local seller is a nearby act.
-                ['market', 'Market']
-              ] as [NearbySection, string][]).map(([id, label]) => (
+
+            {/* Primary discovery categories — the spec's limited four, not the
+                old overloaded pill rows. Selecting one always returns to the
+                stream (typed by that category); Tea/Today/Pursuits/Quests and
+                the remaining types live behind "More" so they never permanently
+                occupy the feed. This lives in the OUTER nearby block so it is
+                reachable from every section. */}
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+              {[
+                { id: 'all', label: 'Everything' },
+                { id: 'place', label: 'Places' },
+                { id: 'experience', label: 'Events' },
+                { id: 'opportunity', label: 'Opportunities' },
+              ].map((filter) => (
                 <button
-                  key={id}
-                  onClick={() => setNearbySection(id)}
-                  className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
-                    nearbySection === id
+                  key={filter.id}
+                  onClick={() => { setSelectedObjectType(filter.id); setNearbySection('stream'); }}
+                  className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border transition ${
+                    nearbySection === 'stream' && selectedObjectType === filter.id
                       ? 'bg-[#43D17A] text-[#090B10] border-[#43D17A]'
-                      : 'bg-[#10141C] text-[#43D17A] border-[#232A38]'
+                      : 'bg-[#10141C] text-[#43D17A] border-[#232A38] hover:border-[#43D17A]'
                   }`}
                 >
-                  {label}
+                  {filter.label}
                 </button>
               ))}
+              <button
+                onClick={() => setMoreFilters((v) => !v)}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border transition ${
+                  moreFilters
+                    ? 'bg-[#43D17A] text-[#090B10] border-[#43D17A]'
+                    : 'bg-[#10141C] text-[#8A93A6] border-[#232A38] hover:border-[#43D17A]'
+                }`}
+              >
+                More
+              </button>
             </div>
+
+            {/* More filters — reachable from every section, not permanently
+                occupying the feed. */}
+            {moreFilters && (
+              <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto no-scrollbar">
+                {([
+                  ['tea', 'Tea'],
+                  ['today', `Today${dailyBrief.length > 0 ? ' *' : ''}`],
+                  ['pursuits', `Pursuits${pursuits.length > 0 ? ` (${pursuits.length})` : ''}`],
+                  ['quests', `Quests${openQuests.length > 0 ? ` (${openQuests.length})` : ''}`],
+                  ['market', 'Market']
+                ] as [NearbySection, string][]).map(([id, label]) => (
+                  <button
+                    key={id}
+                    onClick={() => setNearbySection(id)}
+                    className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
+                      nearbySection === id
+                        ? 'bg-[#43D17A] text-[#090B10] border-[#43D17A]'
+                        : 'bg-[#10141C] text-[#43D17A] border-[#232A38]'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+                {[
+                  { id: 'service', label: 'Services' },
+                  { id: 'product', label: 'Market items' },
+                ].map((filter) => (
+                  <button
+                    key={filter.id}
+                    onClick={() => { setSelectedObjectType(filter.id); setNearbySection('stream'); }}
+                    className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
+                      nearbySection === 'stream' && selectedObjectType === filter.id
+                        ? 'bg-[#43D17A] text-[#090B10] border-[#43D17A]'
+                        : 'bg-[#10141C] text-[#43D17A] border-[#232A38]'
+                    }`}
+                  >
+                    {filter.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -7401,30 +7457,6 @@ export function App() {
                 </div>
               );
             })()}
-
-            {/* Stream Filters */}
-            <div className="flex items-center gap-2 mb-5 overflow-x-auto no-scrollbar">
-              {[
-                { id: 'all', label: 'Everything' },
-                { id: 'place', label: 'Places' },
-                { id: 'experience', label: 'Events' },
-                { id: 'opportunity', label: 'Opportunities' },
-                { id: 'service', label: 'Services' },
-                { id: 'product', label: 'Market' },
-              ].map((filter) => (
-                <button
-                  key={filter.id}
-                  onClick={() => setSelectedObjectType(filter.id)}
-                  className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border transition ${
-                    selectedObjectType === filter.id
-                      ? 'bg-[#43D17A] text-[#090B10] border-[#43D17A]'
-                      : 'bg-[#10141C] text-[#43D17A] border-[#232A38] hover:border-[#43D17A]'
-                  }`}
-                >
-                  {filter.label}
-                </button>
-              ))}
-            </div>
 
             {/* Cross-entity search results (objects + Tea + vendors + collections),
                 shown while a search is active, above the filtered object grid. */}

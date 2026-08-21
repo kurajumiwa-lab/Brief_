@@ -53,11 +53,20 @@ async function main(){
 
   console.log('\n=== Nearby holds discovery sections ===');
   await click(btn('Around'));
-  for(const s of ['Everything','Tea','Today','Pursuits','Quests'])
+  // Primary categories are the limited four; Tea/Today/Pursuits/Quests live
+  // behind "More" (filter overload removed) but remain reachable.
+  for(const s of ['Everything','Places','Events','Opportunities'])
     check(`Nearby > ${s}`, !!btn(s));
-  await goto('Around','Tea');
+  const more=btn('More');
+  check('a More control exists', !!more);
+  await click(more);
+  for(const s of ['Tea','Today','Pursuits','Quests'])
+    check(`Nearby > ${s} (behind More)`, !!btn(s));
+  await click(btn('Tea'));
   check('Tea content preserved', /What people are talking about|Morning|Evening/i.test(body()));
-  await goto('Around','Quests');
+  // The More menu stays open across sections (state, not navigation), so the
+  // remaining section pills are still reachable without re-opening it.
+  await click(btn('Quests'));
   check('Quests content preserved', /Open quests/i.test(body()));
 
   console.log('\n=== My Layer absorbs personal content ===');

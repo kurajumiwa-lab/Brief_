@@ -3181,6 +3181,29 @@ console.log('\n=== SEARCH (home-feed §33) ===');
   }
 }
 
+console.log('\n=== AI ASSIST SEAM (§27) ===');
+{
+  const assist = await import('../src/domain/assist.js');
+
+  check('no AI provider is configured', assist.providerStatus().configured === false);
+  check('the reason is stated', /No AI provider/.test(assist.providerStatus().reason));
+
+  const r = await assist.assist('summarise', { text: 'something' });
+  check('assist fails closed without a provider', r.ok === false && r.reason === 'no_provider');
+
+  // Over HTTP: status reports unconfigured; assist 503s (auth-gated, so this
+  // is the anonymous refusal — the configured path is exercised in the unit
+  // call above).
+  {
+    const { default: appA } = await import('../src/index.js');
+    const srvA = appA.listen(0);
+    const portA = srvA.address().port;
+    const st = await (await fetch(`http://127.0.0.1:${portA}/api/assist/status`)).json();
+    check('GET /api/assist/status reports unconfigured', st.assist?.configured === false);
+    srvA.close();
+  }
+}
+
 console.log('\n=== FEATURE REGISTRY (§4.2) ===');
 {
   const features = await import('../src/features.js');
@@ -3193,7 +3216,7 @@ console.log('\n=== FEATURE REGISTRY (§4.2) ===');
   // Default state: everything enabled; module features configured; provider
   // features NOT configured (no credentials in this run).
   check('every feature is enabled by default', features.list().every((f) => f.enabled));
-  check('the registry holds 25 features', features.list().length === 25, String(features.list().length));
+  check('the registry holds 26 features', features.list().length === 26, String(features.list().length));
   check('auth is available by default', features.available('auth') === true);
   check('arena is available by default', features.available('arena') === true);
   check('vaults is available by default', features.available('vaults') === true);

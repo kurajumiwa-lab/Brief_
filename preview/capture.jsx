@@ -97,7 +97,9 @@ async function main(){
   check('no technical errors exposed', !/stack|ECONN|undefined is not/i.test(b));
 
   console.log('\n=== TODAY / daily brief ===');
-  await goto('Around','Today');
+  await click(btn('Around'));
+  await click(btn('More')); // section pills live behind More now
+  await click(btn('Today'));
   b=body();
   check('today tab renders', b.includes('Only what relates to your pursuits'));
   check('no generic news', !/headline|breaking|trending/i.test(b));

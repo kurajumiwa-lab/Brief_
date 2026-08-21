@@ -47,6 +47,7 @@ import { register as mediaRoutes } from './routes/media.js';
 import { register as feedRoutes } from './routes/feed.js';
 import { register as collectionsRoutes } from './routes/collections.js';
 import { register as searchRoutes } from './routes/search.js';
+import { register as assistRoutes } from './routes/assist.js';
 
 const app = express();
 
@@ -128,6 +129,7 @@ mediaRoutes(app);
 feedRoutes(app);
 collectionsRoutes(app);
 searchRoutes(app);
+assistRoutes(app);
 
 // --- Production frontend serving -------------------------------------------
 //

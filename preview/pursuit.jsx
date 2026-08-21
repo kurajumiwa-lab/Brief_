@@ -64,7 +64,9 @@ async function main(){
   const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;console.log('  FAIL  '+n+(d?' -> '+d:''));}};
 
   console.log('=== Pursuits surface ===');
-  await goto('Around','Pursuits');
+  await click(btn('Around'));
+  await click(btn('More')); // section pills live behind More now
+  await click(btn('Pursuits'));
   check('tab opens', body().includes('Things you have asked Brief'));
   check('honest empty state', body().includes('Nothing being pursued yet'));
   check('states it only searches what it holds', body().includes('searches only what it already holds'));
