@@ -163,6 +163,12 @@ const EMPTY = {
   workflows: [],
   workflowRuns: [],
 
+  // --- Partnership + subscriptions (CCS §3.3/§3.4) -------------------------
+  // Creator media kits (derived) + brand opportunities, and recurring
+  // memberships whose money still flows through the one ledger.
+  partnershipRequests: [],
+  subscriptions: [],
+
   // --- Person (report §4.4) -------------------------------------------------
   // A first-class entity over every identity Brief holds. A person is a stable
   // id; personAliases bind it to concrete external identifiers (user id, phone,

@@ -3499,6 +3499,74 @@ console.log('\n=== AUTOMATION ENGINE (CCS §3.1) ===');
   }
 }
 
+console.log('\n=== CREATOR: MEDIA KIT, PARTNERSHIP, INBOX, SUBSCRIPTIONS (CCS §3) ===');
+{
+  const partnership = await import('../src/domain/partnership.js');
+  const inbox = await import('../src/domain/inbox.js');
+  const subscription = await import('../src/domain/subscription.js');
+  const vendors = await import('../src/domain/vendor.js');
+  const campaigns = await import('../src/domain/campaign.js');
+
+  // A media kit is derived from a creator's real vendor + activity.
+  vendors.createVendor({ ownerId: 'usr_creator', displayName: 'Hike Kenya' });
+  const kit = partnership.mediaKit('usr_creator');
+  check('a media kit derives from a vendor', kit && kit.displayName === 'Hike Kenya');
+  check('the media kit notes no fabricated reach', /No follower count is fabricated/.test(kit.note));
+  check('interests are derived (may be empty)', Array.isArray(kit.interests));
+
+  // A brand sends an opportunity; only the creator may respond.
+  const opp = partnership.createOpportunity({ creatorId: 'usr_creator', brandId: 'usr_brand', title: 'Sponsored hike', budget: 20000 });
+  check('an opportunity is created pending', opp.status === 'pending');
+  try { partnership.transitionOpportunity(opp.id, 'accept', 'usr_brand'); check('a brand cannot accept', false); }
+  catch (e) { check('a brand cannot accept', /creator may respond/.test(e.message)); }
+  partnership.transitionOpportunity(opp.id, 'accept', 'usr_creator');
+  check('the creator can accept', partnership.listOpportunities({ creatorId: 'usr_creator' })[0].status === 'accepted');
+
+  // Unified inbox: inbound author activity forms a contact.
+  store.insert('rawItems', { id: 'r1', sourceId: 's1', externalId: 'e1', author: 'Wanjiku', text: 'Hi!', platform: 'telegram', publishedAt: new Date().toISOString() });
+  const contacts = inbox.listContacts();
+  check('an inbound message forms a contact', contacts.some((c) => c.name === 'Wanjiku'));
+  const thread = inbox.thread('author:Wanjiku');
+  check('the thread has the inbound message', thread.length === 1 && thread[0].direction === 'inbound' && thread[0].text === 'Hi!');
+
+  // Subscriptions: schedule is real, money flows through the ledger.
+  const sub = subscription.createSubscription({ creatorId: 'usr_creator', title: 'Trail Club', price: 500, interval: 'monthly' });
+  check('a subscription is created active', sub.status === 'active');
+  subscription.transitionSubscription(sub.id, 'pause');
+  check('a subscription can pause', subscription.getSubscription(sub.id).status === 'paused');
+  subscription.transitionSubscription(sub.id, 'resume');
+  const tx = subscription.recordCycle(sub.id, 'usr_member');
+  check('a cycle is a real ledger transaction', tx.type === 'subscription' && tx.amount === 500);
+  const subs = subscription.listSubscriptions({ creatorId: 'usr_creator' });
+  check('subscriptions list', subs.length === 1);
+
+  // Outdoor fields are validated and surfaced.
+  const camp = campaigns.createCampaign('usr_creator', {
+    title: 'Sunrise summit', type: 'popup', location: 'Ngong',
+    metadata: { requirements: 'Bring water', equipmentList: ['Boots', 'Torch'], emergencyContact: '0722000111', routeInfo: 'Southern ridge' }
+  });
+  const pub = campaigns.publicView(campaigns.getCampaign(camp.id));
+  check('outdoor fields are surfaced on the public view', pub.equipmentList?.includes('Boots') && pub.routeInfo === 'Southern ridge');
+  try {
+    campaigns.createCampaign('usr_creator', { title: 'Bad', type: 'popup', metadata: { equipmentList: 'not-a-list' } });
+    check('a malformed equipmentList is refused', false);
+  } catch (e) {
+    check('a malformed equipmentList is refused', /equipmentList must be a list/.test(e.message));
+  }
+
+  // Over HTTP.
+  {
+    const { default: appC } = await import('../src/index.js');
+    const srvC = appC.listen(0);
+    const portC = srvC.address().port;
+    const kits = await (await fetch(`http://127.0.0.1:${portC}/api/creator/mediakits`)).json();
+    check('GET /api/creator/mediakits lists derived kits', Array.isArray(kits.mediaKits) && kits.mediaKits.some((k) => k.displayName === 'Hike Kenya'));
+    const cs = await (await fetch(`http://127.0.0.1:${portC}/api/inbox/contacts`)).json();
+    check('GET /api/inbox/contacts lists contacts', Array.isArray(cs.contacts));
+    srvC.close();
+  }
+}
+
 console.log('\n=== FEATURE REGISTRY (§4.2) ===');
 {
   const features = await import('../src/features.js');
@@ -3511,7 +3579,7 @@ console.log('\n=== FEATURE REGISTRY (§4.2) ===');
   // Default state: everything enabled; module features configured; provider
   // features NOT configured (no credentials in this run).
   check('every feature is enabled by default', features.list().every((f) => f.enabled));
-  check('the registry holds 30 features', features.list().length === 30, String(features.list().length));
+  check('the registry holds 31 features', features.list().length === 31, String(features.list().length));
   check('auth is available by default', features.available('auth') === true);
   check('arena is available by default', features.available('arena') === true);
   check('vaults is available by default', features.available('vaults') === true);

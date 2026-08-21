@@ -246,6 +246,37 @@ export function mayAttachObject(userId, object) {
 }
 
 /**
+ * The outdoor-experience fields (CCS §3.5). These are the structured metadata a
+ * creator sets on an outdoor event — requirements, equipment, emergency
+ * contact, route info. They are validated here so a malformed value is refused
+ * rather than stored as arbitrary JSON, and surfaced in publicView.
+ */
+export const OUTDOOR_FIELDS = ['requirements', 'equipmentList', 'emergencyContact', 'routeInfo'];
+
+function normaliseOutdoor(metadata) {
+  const out = {};
+  if (metadata?.requirements !== undefined) {
+    if (!Array.isArray(metadata.requirements) && typeof metadata.requirements !== 'string') {
+      throw new Error('requirements must be a list or text');
+    }
+    out.requirements = metadata.requirements;
+  }
+  if (metadata?.equipmentList !== undefined) {
+    if (!Array.isArray(metadata.equipmentList)) throw new Error('equipmentList must be a list');
+    out.equipmentList = metadata.equipmentList.map((s) => String(s).trim()).filter(Boolean);
+  }
+  if (metadata?.emergencyContact !== undefined) {
+    if (typeof metadata.emergencyContact !== 'string') throw new Error('emergencyContact must be text');
+    out.emergencyContact = metadata.emergencyContact.trim();
+  }
+  if (metadata?.routeInfo !== undefined) {
+    if (typeof metadata.routeInfo !== 'string') throw new Error('routeInfo must be text');
+    out.routeInfo = metadata.routeInfo.trim();
+  }
+  return out;
+}
+
+/**
  * Create a campaign AND the Brief object it wraps. `ownerId` is supplied by
  * the route from the authenticated caller -- never from the request body.
  */
@@ -318,7 +349,7 @@ export function createCampaign(ownerId, input = {}) {
     publicSlug: makeSlug(title),
     createdAt: now,
     updatedAt: now,
-    metadata
+    metadata: { ...(metadata ?? {}), ...normaliseOutdoor(metadata ?? {}) }
   };
   store.insert('campaigns', campaign);
 
@@ -378,7 +409,12 @@ export function publicView(campaign) {
     // when it actually exists -- no placeholder image, no invented creator
     // name. `creator` is a display label, never the internal ownerId.
     image: campaign.metadata?.image ?? null,
-    creator: campaign.metadata?.creatorName ?? null
+    creator: campaign.metadata?.creatorName ?? null,
+    // Outdoor experience fields, surfaced only when actually set (CCS §3.5).
+    requirements: campaign.metadata?.requirements ?? null,
+    equipmentList: campaign.metadata?.equipmentList ?? null,
+    emergencyContact: campaign.metadata?.emergencyContact ?? null,
+    routeInfo: campaign.metadata?.routeInfo ?? null
   };
 }
 

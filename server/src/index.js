@@ -53,6 +53,7 @@ import { register as poolsRoutes } from './routes/pools.js';
 import { register as distributionRoutes } from './routes/distribution.js';
 import { register as lobbyRoutes } from './routes/lobby.js';
 import { register as workflowRoutes } from './routes/workflow.js';
+import { register as creatorRoutes } from './routes/creator.js';
 
 const app = express();
 
@@ -139,6 +140,7 @@ poolsRoutes(app);
 distributionRoutes(app);
 lobbyRoutes(app);
 workflowRoutes(app);
+creatorRoutes(app);
 
 // --- Production frontend serving -------------------------------------------
 //
