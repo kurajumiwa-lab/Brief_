@@ -25,6 +25,7 @@ import type { GeoPoint } from './components/NearbyMap';
 import { ArenaPortal } from './components/ArenaPortal';
 import { FeedComposer } from './components/FeedComposer';
 import { TeaDesk } from './components/TeaDesk';
+import { SearchResults } from './components/SearchResults';
 import type { CircleDetail as ApiCircleDetail } from './api/briefApi';
 import type {
   Campaign as ApiCampaign,
@@ -7421,6 +7422,12 @@ export function App() {
                 </button>
               ))}
             </div>
+
+            {/* Cross-entity search results (objects + Tea + vendors + collections),
+                shown while a search is active, above the filtered object grid. */}
+            {searchQuery.trim() !== '' && (
+              <SearchResults query={searchQuery} onOpenObject={(o) => setSelectedObjectForDetail(objectFromServer(o))} />
+            )}
 
             {/* Objects */}
             {filteredObjects.length > 0 ? (

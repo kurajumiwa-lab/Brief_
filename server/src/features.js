@@ -49,6 +49,7 @@ const DEFINITIONS = [
   { key: 'media',     domain: 'media',      label: 'Media association & image library',  configured: () => true },
   { key: 'feed',      domain: 'feed',       label: 'Composed home feed',                 configured: () => true },
   { key: 'collections', domain: 'collections', label: 'Editorial collections',           configured: () => true },
+  { key: 'search',     domain: 'search',      label: 'Cross-entity search',              configured: () => true },
   // Provider-backed: configured derives from LIVE credentials, never a stored flag.
   { key: 'payments',  domain: 'commerce',   label: 'Payment collection (Tuma STK)',   configured: () => providers.providerStatus().configured },
   { key: 'payouts',   domain: 'commerce',   label: 'Merchant payouts (disbursement)', configured: () => providers.providerStatus().payoutConfigured },

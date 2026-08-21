@@ -1505,3 +1505,8 @@ export function getCollections(): Promise<ApiResult<any[]>> {
     Array.isArray(r?.collections) ? r.collections : undefined
   );
 }
+
+/** Cross-entity search: objects + Tea + vendors + collections. */
+export function searchAll(q: string): Promise<ApiResult<any>> {
+  return request(`/api/search?q=${encodeURIComponent(q)}`, undefined, (r) => (r?.results ? r.results : undefined));
+}

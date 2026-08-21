@@ -46,6 +46,7 @@ import { register as teaRoutes } from './routes/tea.js';
 import { register as mediaRoutes } from './routes/media.js';
 import { register as feedRoutes } from './routes/feed.js';
 import { register as collectionsRoutes } from './routes/collections.js';
+import { register as searchRoutes } from './routes/search.js';
 
 const app = express();
 
@@ -126,6 +127,7 @@ teaRoutes(app);
 mediaRoutes(app);
 feedRoutes(app);
 collectionsRoutes(app);
+searchRoutes(app);
 
 // --- Production frontend serving -------------------------------------------
 //

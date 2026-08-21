@@ -3140,6 +3140,47 @@ console.log('\n=== COLLECTIONS (home-feed §47) ===');
   }
 }
 
+console.log('\n=== SEARCH (home-feed §33) ===');
+{
+  const search = await import('../src/domain/search.js');
+
+  // Cross-entity: an empty query returns nothing, honestly.
+  check('an empty query returns nothing', search.search('  ').objects.length === 0);
+
+  // Objects match by title/location/category.
+  store.insert('objects', { id: 's_obj', type: 'place', title: 'Karura Forest walk', publication: 'public', category: 'Place', locationName: 'Karura', metadata: {} });
+  const r1 = search.search('karura');
+  check('search finds an object by title', r1.objects.some((o) => o.id === 's_obj'));
+  check('search reports its counts', r1.counts.objects >= 1);
+
+  // Tea matches by title/dek/body.
+  const tea = await import('../src/domain/tea.js');
+  const art = tea.createArticle({ title: 'Karura trail guide', body: 'A short guide to the Karura forest trails.', category: 'guide', status: 'published' });
+  const r2 = search.search('karura');
+  check('search finds a tea article', r2.tea.some((a) => a.slug === art.slug));
+
+  // Vendors match by name.
+  store.insert('vendors', { id: 's_vendor', ownerId: 'u', displayName: 'Karura Honey Co', status: 'active' });
+  const r3 = search.search('karura');
+  check('search finds a vendor', r3.vendors.some((v) => v.id === 's_vendor'));
+
+  // Collections match by title.
+  const collection = await import('../src/domain/collection.js');
+  const col = collection.createCollection({ title: 'Karura mornings', kind: 'rule', rule: { locationContains: 'Karura' }, status: 'published' });
+  const r4 = search.search('karura');
+  check('search finds a collection', r4.collections.some((c) => c.id === col.id));
+
+  // Over HTTP.
+  {
+    const { default: appS } = await import('../src/index.js');
+    const srvS = appS.listen(0);
+    const portS = srvS.address().port;
+    const res = await (await fetch(`http://127.0.0.1:${portS}/api/search?q=karura`)).json();
+    check('GET /api/search returns typed results', res.results && Array.isArray(res.results.objects) && Array.isArray(res.results.tea));
+    srvS.close();
+  }
+}
+
 console.log('\n=== FEATURE REGISTRY (§4.2) ===');
 {
   const features = await import('../src/features.js');
@@ -3152,7 +3193,7 @@ console.log('\n=== FEATURE REGISTRY (§4.2) ===');
   // Default state: everything enabled; module features configured; provider
   // features NOT configured (no credentials in this run).
   check('every feature is enabled by default', features.list().every((f) => f.enabled));
-  check('the registry holds 24 features', features.list().length === 24, String(features.list().length));
+  check('the registry holds 25 features', features.list().length === 25, String(features.list().length));
   check('auth is available by default', features.available('auth') === true);
   check('arena is available by default', features.available('arena') === true);
   check('vaults is available by default', features.available('vaults') === true);
