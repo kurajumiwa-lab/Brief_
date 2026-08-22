@@ -211,13 +211,13 @@ function HostValueCard({
   ];
 
   return (
-    <div className="px-4 pt-1">
+    <div className="px-2 pt-1">
       {expanded && (
         <button
           onClick={onBack}
-          className="mb-3 flex items-center gap-1 text-[12px] font-bold text-[#3d4460] cursor-pointer"
+          className="mb-2 flex items-center gap-1 text-[11px] font-bold text-[#3d4460] cursor-pointer"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-3.5 w-3.5" />
           Shelf
         </button>
       )}
@@ -225,51 +225,39 @@ function HostValueCard({
       <button
         type="button"
         onClick={expanded ? undefined : onExpand}
-        className="w-full text-left rounded-3xl p-4 shadow-lg cursor-pointer"
+        className="w-full text-left rounded-2xl p-2.5 shadow-lg cursor-pointer"
         style={{
           background: 'linear-gradient(145deg, #141a28 0%, #0c1220 58%, #163528 100%)',
           border: '1px solid rgba(67,209,122,0.28)'
         }}
       >
-        <div className="flex items-start gap-3">
+        <div className="flex items-center gap-2">
           <div
-            className="h-12 w-12 rounded-2xl flex items-center justify-center text-[15px] font-extrabold shrink-0"
+            className="h-9 w-9 rounded-xl flex items-center justify-center text-[12px] font-extrabold shrink-0"
             style={{ background: '#43D17A', color: '#090B10' }}
           >
             {initials(name)}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
-              <p className="text-[16px] font-extrabold text-[#F3F1E7] truncate">{name}</p>
-              {kit && <BadgeCheck className="h-4 w-4 text-[#43D17A] shrink-0" />}
-            </div>
-            <p className="text-[11px] text-[#8A93A6] truncate">
+            <p className="text-[13px] font-extrabold text-[#F3F1E7] truncate">{name}</p>
+            <p className="text-[10px] text-[#8A93A6] truncate">
               {handle ?? (kitKnown && !kit ? 'No vendor profile yet' : 'Your host card')}
             </p>
           </div>
-          <span className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#43D17A] shrink-0 mt-1">
-            Card
-          </span>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-2">
+        <div className="mt-2.5 grid grid-cols-1 gap-1">
           {(standing.length > 0 ? standing : [
             { label: 'Settled', value: '—' },
             { label: 'Arrived', value: '—' },
-            { label: 'Views', value: '—' },
             { label: 'Hosted', value: '—' }
-          ]).slice(0, 4).map((s) => (
-            <div key={s.label} className="min-w-0">
-              <p className="text-[13px] font-extrabold text-[#F3F1E7] truncate">{s.value}</p>
+          ]).slice(0, 3).map((s) => (
+            <div key={s.label} className="flex items-baseline justify-between gap-1 min-w-0">
               <p className="text-[9px] text-[#8A93A6]">{s.label}</p>
+              <p className="text-[12px] font-extrabold text-[#F3F1E7] truncate">{s.value}</p>
             </div>
           ))}
         </div>
-
-        <p className="mt-3 text-[10px] leading-snug text-[#4B5162]">
-          Standing is what happened — settled money, arrivals, views, gatherings.
-          There is no star rating to invent.
-        </p>
       </button>
 
       {expanded && (
@@ -416,8 +404,8 @@ function Section({
 }) {
   return (
     <section className={tint ? '' : 'bg-white'}>
-      <div className={`px-5 pt-4 pb-2 ${tint ?? 'bg-[#f3f5f8]'}`}>
-        <h2 className="text-[17px] font-extrabold text-[#16181f] tracking-tight">{title}</h2>
+      <div className={`px-2.5 pt-3 pb-1.5 ${tint ?? 'bg-[#f3f5f8]'}`}>
+        <h2 className="text-[12px] font-extrabold text-[#16181f] tracking-tight">{title}</h2>
       </div>
       <div className={tint ?? 'bg-white'}>{children}</div>
     </section>
@@ -438,12 +426,12 @@ function Row({
   return (
     <button
       onClick={onClick}
-      className={`flex w-full items-center gap-3.5 px-5 py-3.5 text-left cursor-pointer ${
+      className={`flex w-full items-center gap-2 px-2.5 py-2.5 text-left cursor-pointer ${
         muted ? 'text-[#7b8194]' : 'text-[#1c2340]'
       }`}
     >
-      <Icon className="h-[18px] w-[18px] shrink-0" />
-      <span className="text-[15px] font-semibold">{label}</span>
+      <Icon className="h-3.5 w-3.5 shrink-0" />
+      <span className="text-[12px] font-semibold truncate">{label}</span>
     </button>
   );
 }
@@ -478,22 +466,20 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
       <button
         aria-label="Dismiss menu"
         onClick={onClose}
-        className="fixed top-0 left-0 right-0 bottom-16 md:inset-0 z-[45] bg-black/45 cursor-pointer"
+        className="fixed inset-0 z-[45] bg-black/25 cursor-pointer"
       />
       <div
         role="dialog"
         aria-label="Menu"
-        className="fixed inset-x-0 z-[50] bottom-16 md:inset-auto md:left-4 md:bottom-4 md:w-[400px] flex flex-col rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden"
+        className="fixed top-0 bottom-0 left-0 z-[50] flex flex-col overflow-x-hidden overflow-y-auto border-r border-[#d7dbe8] shadow-[8px_0_24px_rgba(0,0,0,0.22)]"
         style={{
           background: '#f7f8fb',
-          maxHeight: 'min(82vh, 720px)'
+          width: '33.333vw',
+          maxWidth: '33.333vw',
+          minWidth: 0
         }}
       >
-        <div className="flex justify-center pt-2 pb-1 shrink-0">
-          <span className="h-1 w-10 rounded-full bg-[#cfd3df]" />
-        </div>
-
-        <div className="overflow-y-auto flex-1">
+        <div className="overflow-y-auto overflow-x-hidden flex-1">
           <HostValueCard
             expanded={cardOpen}
             onExpand={() => setCardOpen(true)}
@@ -503,20 +489,20 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
 
           {!cardOpen && (
             <>
-              <div className="px-4 pt-4 pb-2">
-                <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+              <div className="px-2 pt-3 pb-2">
+                <div className="grid grid-cols-2 gap-1.5">
                   {QUICK.map((q) => {
                     const Icon = q.icon;
                     return (
                       <button
                         key={q.id}
                         onClick={() => onSelect(q.target)}
-                        className="shrink-0 w-[68px] flex flex-col items-center gap-1.5 cursor-pointer"
+                        className="flex flex-col items-center gap-1 cursor-pointer min-w-0"
                       >
-                        <span className="h-12 w-12 rounded-2xl bg-white border border-[#e4e7ef] flex items-center justify-center text-[#0f766e] shadow-sm">
-                          <Icon className="h-5 w-5" />
+                        <span className="h-9 w-9 rounded-xl bg-white border border-[#e4e7ef] flex items-center justify-center text-[#0f766e] shadow-sm">
+                          <Icon className="h-4 w-4" />
                         </span>
-                        <span className="text-[10px] font-bold text-[#3d4460]">{q.label}</span>
+                        <span className="text-[9px] font-bold text-[#3d4460] truncate w-full text-center">{q.label}</span>
                       </button>
                     );
                   })}
@@ -528,13 +514,13 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
                 <Row icon={Circle} label="Circles" onClick={() => onSelect({ tab: 'mylayer', section: 'circles' })} />
                 <Row icon={CalendarDays} label="Campaigns" onClick={() => onSelect({ tab: 'mylayer', section: 'campaigns' })} />
                 <Row icon={Trophy} label="Play" onClick={() => onSelect({ tab: 'arena' })} />
-                <div className="px-4 pb-4 pt-1">
+                <div className="px-2 pb-3 pt-1">
                   <button
                     onClick={() => onSelect({ tab: 'capture' })}
-                    className="w-full h-12 rounded-xl bg-[#0f766e] text-white text-[15px] font-extrabold flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full h-9 rounded-lg bg-[#0f766e] text-white text-[11px] font-extrabold flex items-center justify-center gap-1 cursor-pointer"
                   >
-                    <Plus className="h-4 w-4" />
-                    Start something
+                    <Plus className="h-3.5 w-3.5" />
+                    Start
                   </button>
                 </div>
               </Section>
@@ -564,7 +550,7 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
                       onSelectCity(r.city);
                       onSelect({ tab: 'nearby', section: 'stream' });
                     }}
-                    className="flex w-full items-center gap-3.5 px-5 py-3.5 text-left cursor-pointer"
+                    className="flex w-full items-center gap-2 px-2.5 py-2.5 text-left cursor-pointer"
                   >
                     <span className="text-[18px] leading-none w-6 text-center">{r.flag}</span>
                     <span className="text-[15px] font-semibold text-[#1c2340]">{r.label}</span>
