@@ -1,5 +1,13 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import * as briefApi from './api/briefApi';
+import {
+  parsePath,
+  toPath,
+  objectShareUrl,
+  isBriefRoute,
+  DEFAULT_ROUTE,
+  type BriefRoute
+} from './nav/routes';
 import type { ArenaMoneyStatus } from './api/types';
 import QRCode from 'qrcode';
 import { CampaignDistribution } from './components/CampaignDistribution';
@@ -76,6 +84,15 @@ import {
 import { MenuSheet } from './components/MenuSheet';
 import type { MenuTarget } from './components/MenuSheet';
 import type { LucideIcon } from 'lucide-react';
+
+const bootRoute: BriefRoute = (() => {
+  try {
+    if (typeof window === 'undefined') return DEFAULT_ROUTE;
+    return parsePath(window.location.pathname, window.location.search);
+  } catch {
+    return DEFAULT_ROUTE;
+  }
+})();
 
 // ============================================================================
 // 1. TYPES & ENUMS
@@ -4907,11 +4924,11 @@ export function App() {
     getCurrentEdition()
   );
 
-  const [activeTab, setActiveTab] = useState<Destination>('nearby');
-  const [nearbySection, setNearbySection] = useState<NearbySection>('stream');
+  const [activeTab, setActiveTab] = useState<Destination>(bootRoute.dest);
+  const [nearbySection, setNearbySection] = useState<NearbySection>(bootRoute.nearby);
   const [moreFilters, setMoreFilters] = useState<boolean>(false);
-  const [myLayerSection, setMyLayerSection] = useState<MyLayerSection>('saved');
-  const [workflowSection, setWorkflowSection] = useState<WorkflowSection>('cockpit');
+  const [myLayerSection, setMyLayerSection] = useState<MyLayerSection>(bootRoute.mylayer);
+  const [workflowSection, setWorkflowSection] = useState<WorkflowSection>(bootRoute.workflow);
   const [menuOpen, setMenuOpen] = useState(false);
   const [sessionUser, setSessionUser] = useState<briefApi.AuthedUser | null>(null);
   const [dockOn, setDockOn] = useState(true);
@@ -5152,10 +5169,16 @@ export function App() {
   // desktop and mobile: you land on that destination's main section.
   const goToDestination = (id: Destination) => {
     setMenuOpen(false);
+    setCaptureOpen(false);
+    setSelectedTeaSlug(null);
+    setOpenCampaignId(null);
+    setSelectedObjectForDetailRaw(null);
+    setPendingObjectId(null);
     setActiveTab(id);
     if (id === 'nearby') setNearbySection('stream');
     if (id === 'mylayer') setMyLayerSection('saved');
     if (id === 'workflows') setWorkflowSection('active');
+    if (id === 'arena') setArenaSection('lobby');
   };
   const [selectedObjectType, setSelectedObjectType] = useState<string>('all');
   const [selectedLocation, setSelectedLocation] = useState<string>('Your area');
@@ -5166,12 +5189,14 @@ export function App() {
   const [seenIds, setSeenIds] = useState<Set<string>>(new Set());
 
   const [selectedObjectForDetail, setSelectedObjectForDetailRaw] = useState<BriefObject | null>(null);
-  const [selectedTeaSlug, setSelectedTeaSlug] = useState<string | null>(null);
+  const [selectedTeaSlug, setSelectedTeaSlug] = useState<string | null>(bootRoute.teaSlug);
+  const [pendingObjectId, setPendingObjectId] = useState<string | null>(bootRoute.objectId);
 
   // Opening an object marks it seen, which is what keeps the Daily Brief's
   // "New" section honest instead of showing the same items forever.
   const setSelectedObjectForDetail = (object: BriefObject | null) => {
     setSelectedObjectForDetailRaw(object);
+    setPendingObjectId(object ? object.id : null);
     if (object) {
       setSeenIds((prev) => {
         if (prev.has(object.id)) return prev;
@@ -5231,7 +5256,7 @@ export function App() {
     error: string | null;
   }>({ status: 'idle', data: null, error: null });
 
-  const [openCampaignId, setOpenCampaignId] = useState<string | null>(null);
+  const [openCampaignId, setOpenCampaignId] = useState<string | null>(bootRoute.campaignId);
   const [campaignDetail, setCampaignDetail] = useState<ApiCampaign | null>(null);
   const [campaignRegs, setCampaignRegs] = useState<{
     status: 'idle' | 'loading' | 'ready' | 'error';
@@ -5921,27 +5946,30 @@ export function App() {
   // browser offers it, clipboard otherwise. No invented links, no marketing.
   const handleShare = async (object: BriefObject) => {
     const action = resolveAction(object);
+    const origin = publicOrigin || (typeof window !== 'undefined' ? window.location.origin : null);
+    const shareUrl = objectShareUrl(origin, object.id);
     const lines = [
       object.title,
       object.category,
       object.locationName ? `Location: ${object.locationName}` : null,
       action.kind !== 'none' ? `Action: ${action.label}` : null,
-      object.sourceUrl ? `Source: ${object.sourceUrl}` : null
+      shareUrl ? shareUrl : null,
+      !shareUrl && object.sourceUrl ? `Source: ${object.sourceUrl}` : null
     ].filter(Boolean) as string[];
 
     const payload = lines.join('\n');
     const nav = navigator as Navigator & {
-      share?: (data: { title: string; text: string }) => Promise<void>;
+      share?: (data: { title: string; text: string; url?: string }) => Promise<void>;
     };
 
     try {
       if (typeof nav.share === 'function') {
-        await nav.share({ title: object.title, text: payload });
+        await nav.share({ title: object.title, text: payload, url: shareUrl ?? undefined });
         return;
       }
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(payload);
-        showToast('Copied to clipboard');
+        showToast(shareUrl ? 'Link copied' : 'Copied to clipboard');
         return;
       }
       showToast('Sharing unavailable on this device');
@@ -6412,7 +6440,7 @@ export function App() {
 
   const [arenaSection, setArenaSection] = useState<
     'lobby' | 'challenges' | 'tournaments' | 'leaderboard'
-  >('lobby');
+  >(bootRoute.arena);
 
   // Challenges addressed to this user, awaiting a decision.
   // Gaming activity detected in groups the user is ALREADY a member of.
@@ -6677,7 +6705,7 @@ export function App() {
   // --- Capture ---------------------------------------------------------------
   // Pasted text runs through the ingestion parser, then waits for confirmation
   // exactly like anything else. Capture is a doorway, not a shortcut.
-  const [captureOpen, setCaptureOpen] = useState(false);
+  const [captureOpen, setCaptureOpen] = useState(bootRoute.capture);
   const [captureText, setCaptureText] = useState('');
   const [capturePreview, setCapturePreview] = useState<IngestionCandidate | null>(null);
 
@@ -6793,11 +6821,132 @@ export function App() {
       setCaptureOpen(true);
       return;
     }
+    setCaptureOpen(false);
+    setSelectedTeaSlug(null);
     setActiveTab(target.tab);
     if (target.tab === 'nearby') setNearbySection(target.section ?? 'stream');
     if (target.tab === 'mylayer') setMyLayerSection(target.section ?? 'saved');
     if (target.tab === 'workflows') setWorkflowSection(target.section ?? 'cockpit');
+    if (target.tab === 'arena') setArenaSection('lobby');
   };
+
+  const skipUrl = useRef(false);
+
+  const currentRoute = useCallback((): BriefRoute => ({
+    dest: activeTab,
+    nearby: nearbySection,
+    mylayer: myLayerSection,
+    workflow: workflowSection,
+    arena: arenaSection,
+    objectId: selectedObjectForDetail?.id ?? pendingObjectId,
+    teaSlug: selectedTeaSlug,
+    campaignId: openCampaignId,
+    capture: captureOpen,
+    menu: menuOpen,
+    landed: false
+  }), [
+    activeTab, nearbySection, myLayerSection, workflowSection, arenaSection,
+    selectedObjectForDetail, pendingObjectId, selectedTeaSlug, openCampaignId,
+    captureOpen, menuOpen
+  ]);
+
+  const writeUrl = useCallback((route: BriefRoute, mode: 'push' | 'replace') => {
+    if (typeof window === 'undefined' || !window.history) return;
+    const url = toPath(route);
+    if (mode === 'push') window.history.pushState(route, '', url);
+    else window.history.replaceState(route, '', url);
+  }, []);
+
+  const applyRoute = useCallback((route: BriefRoute) => {
+    skipUrl.current = true;
+    setActiveTab(route.dest);
+    setNearbySection(route.nearby);
+    setMyLayerSection(route.mylayer);
+    setWorkflowSection(route.workflow);
+    setArenaSection(route.arena);
+    setMenuOpen(route.menu);
+    setCaptureOpen(route.capture);
+    setSelectedTeaSlug(route.teaSlug);
+    setOpenCampaignId(route.campaignId);
+    if (route.objectId) setPendingObjectId(route.objectId);
+    else {
+      setPendingObjectId(null);
+      setSelectedObjectForDetailRaw(null);
+    }
+  }, []);
+
+  const dismissOverlay = useCallback(() => {
+    const st = typeof window !== 'undefined' ? window.history.state : null;
+    const overlayState = isBriefRoute(st) && (st.menu || st.capture || st.objectId || st.teaSlug || st.campaignId);
+    if (overlayState && !st.landed && typeof window !== 'undefined' && window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+    skipUrl.current = true;
+    setMenuOpen(false);
+    setCaptureOpen(false);
+    setSelectedTeaSlug(null);
+    setOpenCampaignId(null);
+    setPendingObjectId(null);
+    setSelectedObjectForDetailRaw(null);
+    writeUrl({ ...currentRoute(), menu: false, capture: false, objectId: null, teaSlug: null, campaignId: null }, 'replace');
+  }, [currentRoute, writeUrl]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    writeUrl({ ...bootRoute, landed: true }, 'replace');
+    const onPop = (event: PopStateEvent) => {
+      const route = isBriefRoute(event.state)
+        ? event.state
+        : parsePath(window.location.pathname, window.location.search);
+      applyRoute(route);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [applyRoute, writeUrl]);
+
+  useEffect(() => {
+    if (skipUrl.current) {
+      skipUrl.current = false;
+      return;
+    }
+    const overlay = menuOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail) || Boolean(pendingObjectId);
+    writeUrl(currentRoute(), overlay ? 'push' : 'replace');
+  }, [
+    activeTab, nearbySection, myLayerSection, workflowSection, arenaSection,
+    menuOpen, captureOpen, selectedTeaSlug, openCampaignId,
+    selectedObjectForDetail, pendingObjectId, currentRoute, writeUrl
+  ]);
+
+  useEffect(() => {
+    const tg = (typeof window !== 'undefined' ? (window as any).Telegram?.WebApp : null);
+    if (!tg?.BackButton) return;
+    const show = menuOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail);
+    try {
+      if (show) tg.BackButton.show();
+      else tg.BackButton.hide();
+    } catch { /* Mini App host without BackButton */ }
+    const handler = () => dismissOverlay();
+    try { tg.BackButton.onClick(handler); } catch { /* */ }
+    return () => {
+      try { tg.BackButton.offClick?.(handler); } catch { /* */ }
+    };
+  }, [menuOpen, captureOpen, selectedTeaSlug, openCampaignId, selectedObjectForDetail, dismissOverlay]);
+
+  useEffect(() => {
+    if (!pendingObjectId) return;
+    const hit = objects.find((o) => o.id === pendingObjectId);
+    if (hit) {
+      if (selectedObjectForDetail?.id !== hit.id) setSelectedObjectForDetailRaw(hit);
+      return;
+    }
+    let live = true;
+    briefApi.getObject(pendingObjectId).then((res) => {
+      if (!live || !res.ok) return;
+      setSelectedObjectForDetailRaw(objectFromServer(res.data));
+    });
+    return () => { live = false; };
+  }, [pendingObjectId, objects, selectedObjectForDetail]);
 
   return (
     <div className="min-h-screen bg-[#090B10] text-[#F3F1E7] flex flex-col font-sans selection:bg-[#43D17A] selection:text-[#090B10]">
@@ -8178,18 +8327,45 @@ export function App() {
               </p>
             )}
             <div className="space-y-2">
-              {matches.map((m) => (
-                <div key={m.id} className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3">
-                  <p className="text-xs text-[#F3F1E7]">
-                    {m.playerAId ?? 'Player'} vs {m.playerBId ?? 'Player'}
-                  </p>
-                  <p className="text-[10px] text-[#8A93A6] mt-0.5">
-                    {isResultConfirmed(m)
-                      ? m.scoreLine
-                      : 'Result not confirmed by both players'}
-                  </p>
-                </div>
-              ))}
+              {matches.map((m) => {
+                const me = CURRENT_PLAYER_ID;
+                const status = m.status ?? (isResultConfirmed(m) ? 'confirmed' : 'scheduled');
+                const iReported = Boolean(me) && m.reportedBy === me;
+                const waiting = status === 'reported' && iReported;
+                const canConfirm = status === 'reported' && Boolean(me) && !iReported;
+                const canReport = status === 'scheduled' && Boolean(me);
+                const opponent = m.playerAId === me ? m.playerBId : m.playerAId;
+                return (
+                  <div key={m.id} className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3 space-y-2">
+                    <p className="text-xs text-[#F3F1E7]">
+                      {arenaPlayerLabel(m.playerAId, me || null)} vs {arenaPlayerLabel(m.playerBId, me || null)}
+                    </p>
+                    <p className="text-[10px] text-[#8A93A6]">
+                      {status === 'confirmed'
+                        ? (m.scoreLine || 'Confirmed')
+                        : status === 'disputed'
+                        ? 'Players disagreed. Brief does not pick a winner.'
+                        : status === 'abandoned'
+                        ? 'Abandoned'
+                        : waiting
+                        ? 'Waiting for the other player to confirm'
+                        : 'Result not confirmed by both players'}
+                    </p>
+                    {canReport && (
+                      <div className="flex flex-wrap gap-1.5">
+                        <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleReportMatch(m, me)} className="px-2.5 py-1.5 rounded-lg bg-[#43D17A] text-[#090B10] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">I won</button>
+                        <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleReportMatch(m, opponent ?? null)} className="px-2.5 py-1.5 rounded-lg border border-[#232A38] text-[#F3F1E7] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">They won</button>
+                        <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleReportMatch(m, null)} className="px-2.5 py-1.5 rounded-lg border border-[#232A38] text-[#F3F1E7] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">Draw</button>
+                      </div>
+                    )}
+                    {canConfirm && (
+                      <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleConfirmMatch(m)} className="px-3 py-1.5 rounded-lg bg-[#43D17A] text-[#090B10] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">
+                        Confirm result
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -9672,13 +9848,13 @@ export function App() {
 
       {/* DETAIL LAYER */}
       {selectedTeaSlug && (
-        <TeaReader slug={selectedTeaSlug} onClose={() => setSelectedTeaSlug(null)} />
+        <TeaReader slug={selectedTeaSlug} onClose={dismissOverlay} />
       )}
 
       {selectedObjectForDetail && (
         <div
           className="fixed inset-0 z-50 bg-[#090B10]/90 backdrop-blur-md overflow-y-auto"
-          onClick={() => setSelectedObjectForDetail(null)}
+          onClick={dismissOverlay}
         >
           <div className="min-h-screen flex items-end sm:items-center justify-center p-0 sm:p-6">
             <div
@@ -9734,7 +9910,7 @@ export function App() {
                   </div>
 
                   <button
-                    onClick={() => setSelectedObjectForDetail(null)}
+                    onClick={dismissOverlay}
                     className="p-2 rounded-full bg-[#090B10]/80 text-[#F3F1E7] border border-[#232A38]"
                   >
                     <X className="w-5 h-5" />
@@ -10413,7 +10589,7 @@ export function App() {
 
       <MenuSheet
         open={menuOpen}
-        onClose={() => setMenuOpen(false)}
+        onClose={dismissOverlay}
         onSelect={handleMenuSelect}
         onSelectCity={chooseCity}
         selectedLocation={selectedLocation}
@@ -10428,3 +10604,4 @@ export function App() {
 }
 
 export default App;
+

@@ -110,7 +110,9 @@ async function main() {
 
   console.log('=== Play cards complete their loop ===');
   await click(btn('Play'));
+  check('Play is a place on the URL', window.location.pathname === '/play' || window.location.pathname.startsWith('/play'));
   await click(btn('Challenges'));
+  check('Challenges live at /play/challenges', window.location.pathname === '/play/challenges');
   check('Accept is a real button', Boolean(btn('Accept')));
   check('open-challenge verb exists', /Open a 1v1 challenge/i.test(body()));
   await click(btn('Accept'));
