@@ -1,4 +1,5 @@
 import './index.css';
+import './ui/theme.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App, { PublicCampaignPage, campaignSlugFromPath } from './App.tsx';

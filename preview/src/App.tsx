@@ -84,6 +84,7 @@ import {
 import { MenuSheet } from './components/MenuSheet';
 import type { MenuTarget } from './components/MenuSheet';
 import type { LucideIcon } from 'lucide-react';
+import { ROOM, HOME_MORE, SAVED_TABS, INBOX_TABS, FILTERS } from './ui/names';
 
 const bootRoute: BriefRoute = (() => {
   try {
@@ -140,10 +141,10 @@ export const DESTINATIONS: {
   label: string;
   hint: string;
 }[] = [
-  { id: 'nearby', label: 'Around', hint: "What's happening near you" },
-  { id: 'arena', label: 'Play', hint: 'Find people to play with nearby' },
-  { id: 'mylayer', label: 'Saved', hint: 'Your saved places and opportunities' },
-  { id: 'workflows', label: 'Actions', hint: 'Things you can get done' }
+  { id: 'nearby', label: ROOM.nearby.label, hint: ROOM.nearby.hint },
+  { id: 'arena', label: ROOM.arena.label, hint: ROOM.arena.hint },
+  { id: 'mylayer', label: ROOM.mylayer.label, hint: ROOM.mylayer.hint },
+  { id: 'workflows', label: ROOM.workflows.label, hint: ROOM.workflows.hint }
 ];
 
 // Icons kept separate from DESTINATIONS so the data stays plain and the
@@ -5052,13 +5053,18 @@ export function App() {
   React.useEffect(() => {
     const onScroll = () => {
       const y = typeof window === 'undefined' ? 0 : window.scrollY;
+      if (menuOpen || activeTab === 'arena') {
+        setDockOn(true);
+        dockLastY.current = y;
+        return;
+      }
       if (y > dockLastY.current + 10 && y > 48) setDockOn(false);
       else if (y < dockLastY.current - 10) setDockOn(true);
       dockLastY.current = y;
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  }, [menuOpen, activeTab]);
 
   React.useEffect(() => {
     // Menu is a screen: keep the five-tab dock up while it is open.
@@ -7008,8 +7014,8 @@ export function App() {
             />
             <Menu className="w-5 h-5 shrink-0" />
             <span className="min-w-0 opacity-0 group-hover/rail:opacity-100 transition-opacity">
-              <span className="block text-[11px] font-extrabold whitespace-nowrap">Menu</span>
-              <span className="block text-[9px] text-[#4B5162] whitespace-nowrap">
+              <span className="block text-[13px] font-extrabold whitespace-nowrap">Menu</span>
+              <span className="block text-[12px] text-[#4B5162] whitespace-nowrap">
                 Card, shelf and shortcuts
               </span>
             </span>
@@ -7039,10 +7045,10 @@ export function App() {
                 {/* Collapsed shows the icon only (with a title tooltip).
                     Expanded adds the name and a one-line description. */}
                 <span className="min-w-0 opacity-0 group-hover/rail:opacity-100 transition-opacity">
-                  <span className="block text-[11px] font-extrabold whitespace-nowrap">
+                  <span className="block text-[13px] font-extrabold whitespace-nowrap">
                     {d.label}
                   </span>
-                  <span className="block text-[9px] text-[#4B5162] whitespace-nowrap">
+                  <span className="block text-[12px] text-[#4B5162] whitespace-nowrap">
                     {d.hint}
                   </span>
                 </span>
@@ -7082,10 +7088,10 @@ export function App() {
                 reachable from every section. */}
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
               {[
-                { id: 'all', label: 'Everything' },
-                { id: 'place', label: 'Places' },
-                { id: 'experience', label: 'Events' },
-                { id: 'opportunity', label: 'Opportunities' },
+                { id: 'all', label: FILTERS.all },
+                { id: 'place', label: FILTERS.place },
+                { id: 'experience', label: FILTERS.experience },
+                { id: 'opportunity', label: FILTERS.opportunity },
               ].map((filter) => (
                 <button
                   key={filter.id}
@@ -7116,11 +7122,11 @@ export function App() {
             {moreFilters && (
               <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto no-scrollbar">
                 {([
-                  ['tea', 'Tea'],
-                  ['today', `Today${dailyBrief.length > 0 ? ' *' : ''}`],
-                  ['pursuits', `Pursuits${pursuits.length > 0 ? ` (${pursuits.length})` : ''}`],
-                  ['quests', `Quests${openQuests.length > 0 ? ` (${openQuests.length})` : ''}`],
-                  ['market', 'Market']
+                  ['tea', HOME_MORE.tea],
+                  ['today', `${HOME_MORE.today}${dailyBrief.length > 0 ? ' *' : ''}`],
+                  ['pursuits', `${HOME_MORE.pursuits}${pursuits.length > 0 ? ` (${pursuits.length})` : ''}`],
+                  ['quests', `${HOME_MORE.quests}${openQuests.length > 0 ? ` (${openQuests.length})` : ''}`],
+                  ['market', HOME_MORE.market]
                 ] as [NearbySection, string][]).map(([id, label]) => (
                   <button
                     key={id}
@@ -7135,8 +7141,8 @@ export function App() {
                   </button>
                 ))}
                 {[
-                  { id: 'service', label: 'Services' },
-                  { id: 'product', label: 'Market items' },
+                  { id: 'service', label: FILTERS.service },
+                  { id: 'product', label: FILTERS.product },
                 ].map((filter) => (
                   <button
                     key={filter.id}
@@ -7159,22 +7165,17 @@ export function App() {
           <div className="max-w-3xl mx-auto px-4 pt-4">
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
               {([
-                ['saved', `Saved (${relationships.length})`],
-                ['activity', 'Activity'],
-                ['arena', `Arena${matches.length > 0 ? ` (${matches.length})` : ''}`],
-                ['points', 'Points'],
-                // Circle is the community primitive. "Groups" beside it is
-                // the connected-source reader, not a second community model.
-                ['circles', 'Circles'],
-                ['groups', `Groups${unansweredQuestions.length > 0 ? ` (${unansweredQuestions.length})` : ''}`],
-                ['campaigns', 'Campaigns'],
-                // The creator workspace: the Saved screen is the dynamic home
-                // for the creator's own relationship/revenue tools, surfaced
-                // here rather than as orphaned screens.
-                ['mediakit', 'Media Kit'],
-                ['opportunities', 'Opportunities'],
-                ['messages', 'Messages'],
-                ['subscriptions', 'Subscriptions']
+                ['saved', `${SAVED_TABS.saved} (${relationships.length})`],
+                ['activity', SAVED_TABS.activity],
+                ['arena', `${SAVED_TABS.arena}${matches.length > 0 ? ` (${matches.length})` : ''}`],
+                ['points', SAVED_TABS.points],
+                ['circles', SAVED_TABS.circles],
+                ['groups', `${SAVED_TABS.groups}${unansweredQuestions.length > 0 ? ` (${unansweredQuestions.length})` : ''}`],
+                ['campaigns', SAVED_TABS.campaigns],
+                ['mediakit', SAVED_TABS.mediakit],
+                ['opportunities', SAVED_TABS.opportunities],
+                ['messages', SAVED_TABS.messages],
+                ['subscriptions', SAVED_TABS.subscriptions]
               ] as [MyLayerSection, string][]).map(([id, label]) => (
                 <button
                   key={id}
@@ -7198,19 +7199,16 @@ export function App() {
               {([
                 // Command is the host's landing surface: the overview of what
                 // needs attention, money, people, distribution and what's next.
-                ['cockpit', 'Cockpit'],
-                ['command', 'Command'],
-                ['active', `Active (${activeJourneys.length})`],
-                ['completed', `Completed (${completedJourneys.length})`],
-                ['inbox', `Inbox${pendingCandidates.length > 0 ? ` (${pendingCandidates.length})` : ''}`],
-                ['sources', 'Sources'],
-                // A SECTION inside Workflows, not a sixth destination. The
-                // rail stays five doors wide: Around / Play / Saved /
-                // Actions / Pulse.
-                ['money', 'Money'],
-                ['vault', 'Vault'],
-                ['gate', 'Gate'],
-                ['tea', 'Tea Desk']
+                ['cockpit', INBOX_TABS.cockpit],
+                ['command', INBOX_TABS.command],
+                ['active', `${INBOX_TABS.active} (${activeJourneys.length})`],
+                ['completed', `${INBOX_TABS.completed} (${completedJourneys.length})`],
+                ['inbox', `${INBOX_TABS.inbox}${pendingCandidates.length > 0 ? ` (${pendingCandidates.length})` : ''}`],
+                ['sources', INBOX_TABS.sources],
+                ['money', INBOX_TABS.money],
+                ['vault', INBOX_TABS.vault],
+                ['gate', INBOX_TABS.gate],
+                ['tea', INBOX_TABS.tea]
               ] as [WorkflowSection, string][]).map(([id, label]) => (
                 <button
                   key={id}
@@ -7235,7 +7233,7 @@ export function App() {
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-baseline gap-2 min-w-0">
                   <span className="text-[10px] font-extrabold text-[#43D17A] shrink-0">
-                    Today's Tea
+                    Stories
                   </span>
                   <span className="text-[11px] text-[#43D17A] truncate">
                     What Nairobi is talking about
@@ -8442,7 +8440,7 @@ export function App() {
                 who turns up. Every figure below is read from the server. */}
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <h2 className="text-lg font-extrabold text-[#F3F1E7]">Campaigns</h2>
+                <h2 className="text-lg font-extrabold text-[#F3F1E7]">Events</h2>
                 <p className="text-[11px] text-[#8A93A6] leading-snug mt-1">
                   Things you are putting out into the world. Publish once, share
                   one link, see who registered.
@@ -8840,11 +8838,11 @@ export function App() {
           aria-expanded={menuOpen}
           title="Menu"
           className={`flex-1 flex flex-col items-center justify-center gap-1 pt-2 pb-2 cursor-pointer transition-colors ${
-            menuOpen ? 'text-[#4edea3] font-bold border-t-2 border-[#4edea3]' : 'text-[#bbcabf]'
+            menuOpen ? 'text-[var(--brief-green)] font-bold border-t-2 border-[var(--brief-green)]' : 'text-[var(--brief-muted)]'
           }`}
         >
           <Menu className="w-5 h-5" />
-          <span className="text-[9px] font-extrabold leading-none">Menu</span>
+          <span className="text-[12px] font-extrabold leading-none">Menu</span>
         </button>
         {DESTINATIONS.map((d) => {
           const active = activeTab === d.id;
@@ -8855,11 +8853,11 @@ export function App() {
               onClick={() => goToDestination(d.id)}
               aria-current={active ? 'page' : undefined}
               className={`flex-1 flex flex-col items-center justify-center gap-1 pt-2 pb-2 cursor-pointer transition-colors ${
-                active ? 'text-[#4edea3] font-bold border-t-2 border-[#4edea3]' : 'text-[#bbcabf]'
+                active ? 'text-[var(--brief-green)] font-bold border-t-2 border-[var(--brief-green)]' : 'text-[var(--brief-muted)]'
               }`}
             >
               <Icon className="w-5 h-5" />
-              <span className="text-[9px] font-extrabold leading-none">
+              <span className="text-[12px] font-extrabold leading-none">
                 {d.label}
               </span>
             </button>

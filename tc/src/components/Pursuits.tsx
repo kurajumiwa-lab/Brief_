@@ -50,7 +50,7 @@ export function Pursuits({
     <div className="space-y-4">
 
       <div>
-        <h2 className="text-lg font-extrabold text-[#F3F1E7]">Pursuits</h2>
+        <h2 className="text-lg font-extrabold text-[#F3F1E7]">Alerts</h2>
         <p className="text-[11px] text-[#8A93A6] leading-snug mt-1">
           Things you have asked Brief to find or keep an eye on. Brief
           searches only what it already holds, so results grow as more
@@ -76,7 +76,7 @@ export function Pursuits({
           type="submit"
           className="px-4 py-2.5 rounded-xl bg-[#43D17A] text-[#090B10] font-extrabold text-[11px] cursor-pointer"
         >
-          Pursue
+          Search
         </button>
       </form>
 

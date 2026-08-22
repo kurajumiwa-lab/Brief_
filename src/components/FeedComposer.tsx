@@ -61,15 +61,15 @@ function metaFor(o: FeedObject): string {
 }
 
 const T = {
-  bg: 'var(--m3-surface)',
-  container: 'var(--m3-surface-container)',
-  containerLow: 'var(--m3-surface-container-low)',
-  primary: 'var(--m3-primary)',
-  secondaryContainer: 'var(--m3-secondary-container)',
-  onSurface: 'var(--m3-on-surface)',
-  onSurfaceVariant: 'var(--m3-on-surface-variant)',
-  outline: 'var(--m3-outline)',
-  outlineVariant: 'var(--m3-outline-variant)'
+  bg: 'var(--brief-bg)',
+  container: 'var(--brief-card)',
+  containerLow: '#100e0c',
+  primary: 'var(--brief-green)',
+  secondaryContainer: '#24382c',
+  onSurface: 'var(--brief-ink)',
+  onSurfaceVariant: 'var(--brief-muted)',
+  outline: 'var(--brief-line)',
+  outlineVariant: 'var(--brief-line)'
 };
 
 /** A shelf header with a real "snap" image dimmed behind it. */
@@ -182,7 +182,7 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag }: FeedComposerProps
               <Compass className="h-4 w-4" />
             </div>
             <div>
-              <p className="text-sm font-semibold" style={{ color: T.onSurface }}>Today's Tea</p>
+              <p className="text-sm font-semibold" style={{ color: T.onSurface }}>Stories</p>
               <p className="text-xs" style={{ color: T.onSurfaceVariant }}>{feed.tea.location ?? 'Your city'} · {feed.tea.category}</p>
             </div>
           </div>
@@ -194,7 +194,7 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag }: FeedComposerProps
       {/* --- Around you (discovery) ------------------------------------------- */}
       {discovery.length > 0 && (
         <section>
-          <ShelfHeader title="Around you" count={discovery.length} snap={snapOf(discovery)} />
+          <ShelfHeader title="Nearby" count={discovery.length} snap={snapOf(discovery)} />
           <div className="flex gap-4 overflow-x-auto no-scrollbar px-1 pb-2">
             {discovery.map((o) => (
               <article
@@ -221,7 +221,7 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag }: FeedComposerProps
       {/* --- Opportunities ----------------------------------------------------- */}
       {opportunities.length > 0 && (
         <section>
-          <ShelfHeader title="Opportunities" count={opportunities.length} snap={snapOf(opportunities)} />
+          <ShelfHeader title="Offers" count={opportunities.length} snap={snapOf(opportunities)} />
           <div className="flex flex-col gap-3">
             {opportunities.slice(0, 5).map((o) => (
               <div
@@ -283,19 +283,53 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag }: FeedComposerProps
           <ShelfHeader title="Collections" count={collections.length} />
           <div className="flex gap-2 overflow-x-auto no-scrollbar px-1 pb-2">
             {collections.map((c) => (
-              <div key={c.id} className="flex-none rounded-xl border px-3 py-2" style={{ borderColor: T.outlineVariant, background: T.container }}>
+              <button
+                key={c.id || c.key}
+                type="button"
+                onClick={() => void openCollectionByKey(c)}
+                className="brief-tap flex-none rounded-xl border px-3 py-2 text-left cursor-pointer"
+                style={{
+                  borderColor: openCollection?.key === (c.key || c.id) ? T.primary : T.outlineVariant,
+                  background: T.container
+                }}
+              >
                 <p className="text-[13px] font-semibold" style={{ color: T.onSurface }}>{c.title}</p>
                 {c.description && <p className="mt-0.5 max-w-[160px] truncate text-[11px]" style={{ color: T.onSurfaceVariant }}>{c.description}</p>}
-              </div>
+              </button>
             ))}
           </div>
+          {openCollection && (
+            <div className="mt-3 space-y-2">
+              <p className="px-1 text-[12px] font-extrabold" style={{ color: T.onSurfaceVariant }}>{openCollection.title}</p>
+              {openCollection.status === 'loading' && <p className="px-1 text-[13px]" style={{ color: T.onSurfaceVariant }}>Opening…</p>}
+              {openCollection.status === 'error' && <p className="px-1 text-[13px]" style={{ color: T.onSurfaceVariant }}>{openCollection.error}</p>}
+              {openCollection.status === 'ready' && openCollection.objects.length === 0 && (
+                <p className="px-1 text-[13px]" style={{ color: T.onSurfaceVariant }}>Nothing in this collection right now.</p>
+              )}
+              {openCollection.objects.map((o) => (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => onOpen(o)}
+                  className="brief-tap flex w-full cursor-pointer items-center gap-3 rounded-xl border p-3 text-left"
+                  style={{ borderColor: T.outlineVariant, background: T.container }}
+                >
+                  <div className="min-w-0 flex-1">
+                    <h4 className="truncate text-[15px] font-semibold" style={{ color: T.onSurface }}>{o.title}</h4>
+                    <p className="truncate text-[13px]" style={{ color: T.onSurfaceVariant }}>{metaFor(o) || o.summary}</p>
+                  </div>
+                  <span className="flex-none text-[13px] font-semibold" style={{ color: T.primary }}>{ctaFor(o)}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </section>
       )}
 
       {/* --- Trending topics ---------------------------------------------------- */}
       {trendingTags.length > 0 && (
         <section>
-          <ShelfHeader title="Trending" />
+          <ShelfHeader title="Topics" />
           <div className="flex flex-wrap gap-2 px-1">
             {trendingTags.map((t) => (
               <button

@@ -17,7 +17,7 @@ async function main(){
 
   let b=body();
   console.log('=== ONLY the user\'s own groups ===');
-  check('says "Your Groups"', b.includes('Your Groups'));
+  check('says "Your chats"', b.includes('Your chats'));
   check('no Discover/Popular/Communities framing', !/Discover Groups|Popular Groups|Communities|Suggested/i.test(b));
   check('member group listed', b.includes('Kilimani Traders'));
   check('second member group listed', b.includes('KU Medical Students'));

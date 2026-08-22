@@ -18,7 +18,7 @@ async function main(){
   let pass=0,fail=0;
   const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;console.log('  FAIL  '+n+(d?' -> '+d:''));}};
 
-  // Your Groups lists first; open one to reach its detail.
+  // Your chats lists first; open one to reach its detail.
   await click(btn('Open'));
   let b=body();
   console.log('=== Brief earns its place ===');

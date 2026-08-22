@@ -69,7 +69,7 @@ export function Quests({
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
       <div>
-        <h2 className="text-lg font-extrabold text-[#F3F1E7]">Quests</h2>
+        <h2 className="text-lg font-extrabold text-[#F3F1E7]">Jobs</h2>
         <p className="text-[11px] text-[#8A93A6] leading-snug mt-1">
           Useful work around you. Points settle when a contribution is
           accepted, not when it is submitted.
@@ -147,7 +147,7 @@ export function Quests({
 
       <div>
         <h3 className="text-[11px] font-extrabold text-[#4B5162] mb-2">
-          Open quests
+          Open jobs
         </h3>
         <div className="space-y-2">
           {openQuests.map((q) => (

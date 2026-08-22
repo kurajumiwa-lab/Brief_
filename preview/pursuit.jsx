@@ -64,9 +64,9 @@ async function main(){
   const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;console.log('  FAIL  '+n+(d?' -> '+d:''));}};
 
   console.log('=== Pursuits surface ===');
-  await click(btn('Around'));
+  await click(btn('Home'));
   await click(btn('More')); // section pills live behind More now
-  await click(btn('Pursuits'));
+  await click(btn('Alerts'));
   check('tab opens', body().includes('Things you have asked Brief'));
   check('honest empty state', body().includes('Nothing being pursued yet'));
   check('states it only searches what it holds', body().includes('searches only what it already holds'));
@@ -108,14 +108,14 @@ async function main(){
     const m=document.querySelector('.fixed.inset-0.z-50');
     const p=Array.from(m.querySelectorAll('button')).find(x=>text(x)==='Pursue');
     check('detail has Pursue action', !!p);
-    if(p){ await click(p); check('detail pursuit created', body().includes('Pursuits (')); } }
+    if(p){ await click(p); check('detail pursuit created', body().includes('Alerts (') || body().includes('Alerts')); } }
 
   console.log('\n=== Marketplace preserved ===');
-  await click(btn('Around'));
+  await click(btn('Home'));
   check('stream still renders objects', document.querySelectorAll('div.grid > div[class*="cursor-pointer"]').length>0);
-  await goto('Actions','Inbox');
+  await goto('Inbox','Review');
   check('Inbox still present', /Inbox/.test(body()));
-  await click(btn('Around'));
+  await click(btn('Home'));
   check('My Layer still present', !!btn('Saved'));
   console.log(`\n${'='.repeat(46)}\nPASSED ${pass}   FAILED ${fail}\n${'='.repeat(46)}`);
   process.exit(fail?1:0);

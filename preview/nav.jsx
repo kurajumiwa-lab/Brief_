@@ -24,55 +24,55 @@ async function main(){
   const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;console.log('  FAIL  '+n+(d?' -> '+d:''));}};
 
   console.log('=== Four screens, not twelve ===');
-  const top=['Around','Play','Saved','Actions'];
+  const top=['Home','Play','Saved','Inbox'];
   for(const t of top) check(`${t} is a destination`, !!btn(t));
   check('Pulse is not a destination', !btn('Pulse'));
   const strays=['Tea','Today','Sources','Inbox','Group','Quests','Pursuits'];
   // These must NOT be top-level: they may appear as sub-sections only.
-  await click(btn('Around'));
+  await click(btn('Home'));
   const introBody=body();
   for(const t of strays){
     check(`${t} is not a top-level tab`, !new RegExp(`^${t}`).test(introBody.slice(0,400)), t);
   }
 
   console.log('\n=== Every destination answers one question ===');
-  await click(btn('Around'));
+  await click(btn('Home'));
   check('Nearby = discovery', /Everything Happening Around You/i.test(body()));
   await click(btn('Play'));
   check('Arena = gather & play', /Gather with people to play/i.test(body()));
   await click(btn('Saved'));
   check('My Layer = personal', /Your Layer|Things you.ve kept/i.test(body()));
-  await click(btn('Actions'));
+  await click(btn('Inbox'));
   check('Workflows = actions', /Things you can actually do/i.test(body()));
   check('Pulse is not a fifth screen', !btn('Pulse'));
 
   console.log('\n=== Nearby holds discovery sections ===');
-  await click(btn('Around'));
+  await click(btn('Home'));
   // Primary categories are the limited four; Tea/Today/Pursuits/Quests live
   // behind "More" (filter overload removed) but remain reachable.
-  for(const s of ['Everything','Places','Events','Opportunities'])
+  for(const s of ['All','Places','Events','Offers'])
     check(`Nearby > ${s}`, !!btn(s));
   const more=btn('More');
   check('a More control exists', !!more);
   await click(more);
-  for(const s of ['Tea','Today','Pursuits','Quests'])
+  for(const s of ['Stories','Today','Alerts','Jobs'])
     check(`Nearby > ${s} (behind More)`, !!btn(s));
-  await click(btn('Tea'));
+  await click(btn('Stories'));
   check('Tea content preserved', /What people are talking about|Morning|Evening/i.test(body()));
   // The More menu stays open across sections (state, not navigation), so the
   // remaining section pills are still reachable without re-opening it.
-  await click(btn('Quests'));
-  check('Quests content preserved', /Open quests/i.test(body()));
+  await click(btn('Jobs'));
+  check('Quests content preserved', /Open jobs/i.test(body()));
 
   console.log('\n=== My Layer absorbs personal content ===');
   await click(btn('Saved'));
-  for(const s of ['Saved','Activity','Arena','Points','Groups'])
+  for(const s of ['Saved','Activity','Matches','Points','Groups'])
     check(`My Layer > ${s}`, !!sub(s));
-  await goto('Saved','Groups');
-  check('Groups preserved', /Your Groups/i.test(body()));
+  await goto('Saved','Chats');
+  check('Groups preserved', /Your chats/i.test(body()));
   await goto('Saved','Activity');
   check('Activity uses real relationships', /My Activity/i.test(body())&&/saved|watched/i.test(body()));
-  await goto('Saved','Arena');
+  await goto('Saved','Matches');
   check('My Layer > Arena keeps match history', /My Matches/i.test(body()));
   check('My Layer > Arena keeps match history', /My Matches/i.test(body()));
   await goto('Saved','Points');
@@ -80,26 +80,26 @@ async function main(){
   check('points not summed into one total', !/Total points/i.test(body()));
 
   console.log('\n=== Workflows holds operational tools ===');
-  await click(btn('Actions'));
-  for(const s of ['Active','Completed','Inbox','Sources']) check(`Workflows > ${s}`, !!sub(s));
-  await goto('Actions','Active');
+  await click(btn('Inbox'));
+  for(const s of ['Open','Done','Review','Feeds']) check(`Workflows > ${s}`, !!sub(s));
+  await goto('Inbox','Open');
   check('Active shows an honest empty state, not fake journeys', /Things you can actually do|Your activities will appear here|No processes/i.test(body()));
-  await goto('Actions','Completed');
+  await goto('Inbox','Done');
   check('Completed is a real filter, not a new screen', /Completed|Nothing finished/i.test(body()));
-  await goto('Actions','Sources');
+  await goto('Inbox','Feeds');
   check('Sources preserved', /A channel is not the information/i.test(body()));
-  await goto('Actions','Inbox');
+  await goto('Inbox','Review');
   check('Inbox preserved', /Inbox/i.test(body()));
 
   console.log('\n=== No duplicate rooms ===');
-  await goto('Around','Quests');
+  await goto('Home','Jobs');
   check('rewards not duplicated in Quests', !/Carrefour/.test(body()));
   check('Quests points to Arena', /Redeem points/i.test(body())||/Points/i.test(body()));
 
   console.log('\n=== Returning to a tab resets to its main section ===');
-  await goto('Around','Pursuits');
+  await goto('Home','Alerts');
   await click(btn('Play'));
-  await click(btn('Around'));
+  await click(btn('Home'));
   check('Nearby returns to Everything', /Everything Happening Around You/i.test(body()));
 
   console.log('\n=== Availability is state, not navigation ===');
@@ -150,8 +150,8 @@ async function main(){
   check('Arena sections are not in the rail', !railBtns().some(b=>/Tournaments|Challenges/.test(text(b))));
 
   console.log('\n=== Group chatter lives in Saved, not a Pulse room ===');
-  await goto('Saved','Groups');
-  check('Groups are the user\'s own', /Your Groups/i.test(body()));
+  await goto('Saved','Chats');
+  check('Groups are the user\'s own', /Your chats/i.test(body()));
   check('never claims to have joined a group', !/we joined|auto-joined|Brief joined/i.test(body()));
 
   console.log('\n=== Arena entry point shows availability ===');
@@ -161,7 +161,7 @@ async function main(){
   check('availability is not a nav item', !railBtns().some(b=>/Available|Busy|Offline/.test(text(b))));
 
   console.log('\n=== Active state does not rely on colour alone ===');
-  await click(btn('Around'));
+  await click(btn('Home'));
   const cur=railBtns().find(b=>b.getAttribute('aria-current')==='page');
   check('active item is machine-readable', !!cur);
   check('active item has a non-colour marker', !!cur && /bg-\[#10141C\]|font-extrabold/.test(cur.className));

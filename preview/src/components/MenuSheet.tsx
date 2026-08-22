@@ -27,6 +27,7 @@ import {
 import * as briefApi from '../api/briefApi';
 import type { AuthedUser } from '../api/briefApi';
 import type { CommandCentre, Wallet as WalletType } from '../api/types';
+import { MENU_QUICK } from '../ui/names';
 
 // ---------------------------------------------------------------------------
 // MENU SHEET — a selectable bottom screen in place of a titled side menu.
@@ -445,14 +446,14 @@ const QUICK: {
   icon: React.ComponentType<{ className?: string }>;
   target: MenuTarget;
 }[] = [
-  { id: 'new', label: 'New', icon: Plus, target: { tab: 'capture' } },
-  { id: 'inbox', label: 'Inbox', icon: Inbox, target: { tab: 'workflows', section: 'inbox' } },
-  { id: 'money', label: 'Money', icon: Wallet, target: { tab: 'workflows', section: 'money' } },
-  { id: 'circles', label: 'Circles', icon: Users, target: { tab: 'mylayer', section: 'circles' } },
-  { id: 'market', label: 'Market', icon: ShoppingBag, target: { tab: 'nearby', section: 'market' } },
-  { id: 'command', label: 'Command', icon: Landmark, target: { tab: 'workflows', section: 'command' } },
-  { id: 'tea', label: 'Tea', icon: Newspaper, target: { tab: 'nearby', section: 'tea' } },
-  { id: 'groups', label: 'Groups', icon: Users, target: { tab: 'mylayer', section: 'groups' } }
+  { id: 'new', label: MENU_QUICK.new, icon: Plus, target: { tab: 'capture' } },
+  { id: 'inbox', label: MENU_QUICK.inbox, icon: Inbox, target: { tab: 'workflows', section: 'inbox' } },
+  { id: 'money', label: MENU_QUICK.money, icon: Wallet, target: { tab: 'workflows', section: 'money' } },
+  { id: 'circles', label: MENU_QUICK.circles, icon: Users, target: { tab: 'mylayer', section: 'circles' } },
+  { id: 'market', label: MENU_QUICK.market, icon: ShoppingBag, target: { tab: 'nearby', section: 'market' } },
+  { id: 'command', label: MENU_QUICK.command, icon: Landmark, target: { tab: 'workflows', section: 'command' } },
+  { id: 'tea', label: MENU_QUICK.tea, icon: Newspaper, target: { tab: 'nearby', section: 'tea' } },
+  { id: 'groups', label: MENU_QUICK.groups, icon: Users, target: { tab: 'mylayer', section: 'groups' } }
 ];
 
 export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocation }: MenuSheetProps) {
@@ -527,9 +528,9 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
               </div>
 
               <Section title="Community">
-                <Row icon={CheckCircle2} label="Tea" onClick={() => onSelect({ tab: 'nearby', section: 'tea' })} />
-                <Row icon={Circle} label="Circles" onClick={() => onSelect({ tab: 'mylayer', section: 'circles' })} />
-                <Row icon={CalendarDays} label="Campaigns" onClick={() => onSelect({ tab: 'mylayer', section: 'campaigns' })} />
+                <Row icon={CheckCircle2} label="Stories" onClick={() => onSelect({ tab: 'nearby', section: 'tea' })} />
+                <Row icon={Circle} label="Groups" onClick={() => onSelect({ tab: 'mylayer', section: 'circles' })} />
+                <Row icon={CalendarDays} label="Events" onClick={() => onSelect({ tab: 'mylayer', section: 'campaigns' })} />
                 <Row icon={Trophy} label="Play" onClick={() => onSelect({ tab: 'arena' })} />
                 <div className="px-2 pb-3 pt-1">
                   <button
@@ -543,14 +544,14 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
               </Section>
 
               <Section title="Host">
-                <Row icon={Landmark} label="Command" onClick={() => onSelect({ tab: 'workflows', section: 'command' })} />
-                <Row icon={CreditCard} label="Money" onClick={() => onSelect({ tab: 'workflows', section: 'money' })} />
-                <Row icon={BadgeCheck} label="Media kit" onClick={() => onSelect({ tab: 'mylayer', section: 'mediakit' })} />
+                <Row icon={Landmark} label="Dashboard" onClick={() => onSelect({ tab: 'workflows', section: 'command' })} />
+                <Row icon={CreditCard} label="Payments" onClick={() => onSelect({ tab: 'workflows', section: 'money' })} />
+                <Row icon={BadgeCheck} label="Profile" onClick={() => onSelect({ tab: 'mylayer', section: 'mediakit' })} />
                 <Row icon={MessageCircle} label="Messages" onClick={() => onSelect({ tab: 'mylayer', section: 'messages' })} />
                 <Row icon={Inbox} label="Inbox" onClick={() => onSelect({ tab: 'workflows', section: 'inbox' })} />
-                <Row icon={Zap} label="Cockpit" onClick={() => onSelect({ tab: 'workflows', section: 'cockpit' })} />
-                <Row icon={Send} label="Sources" onClick={() => onSelect({ tab: 'workflows', section: 'sources' })} />
-                <Row icon={Bookmark} label="Vault" onClick={() => onSelect({ tab: 'workflows', section: 'vault' })} />
+                <Row icon={Zap} label="Create" onClick={() => onSelect({ tab: 'workflows', section: 'cockpit' })} />
+                <Row icon={Send} label="Feeds" onClick={() => onSelect({ tab: 'workflows', section: 'sources' })} />
+                <Row icon={Bookmark} label="Records" onClick={() => onSelect({ tab: 'workflows', section: 'vault' })} />
               </Section>
 
               <Section title="Coming soon">

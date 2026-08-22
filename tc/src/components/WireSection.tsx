@@ -77,7 +77,7 @@ export function WireSection() {
   if (state.status === 'loading') {
     return (
       <div className="rounded-2xl border border-[#232A38] bg-[#10141C] p-4 animate-pulse">
-        <p className="text-[10px] uppercase tracking-[0.2em] text-[#43D17A]">The Wire</p>
+        <p className="text-[10px] uppercase tracking-[0.2em] text-[#43D17A]">News</p>
         <div className="mt-3 h-12 rounded-xl bg-[#090B10]" />
       </div>
     );
@@ -87,9 +87,9 @@ export function WireSection() {
   if (!wire || (wire.kenya.length === 0 && wire.world.length === 0)) {
     return (
       <div className="rounded-2xl border border-[#232A38] bg-[#10141C] p-4">
-        <p className="text-[10px] uppercase tracking-[0.2em] text-[#43D17A]">The Wire</p>
+        <p className="text-[10px] uppercase tracking-[0.2em] text-[#43D17A]">News</p>
         <p className="mt-2 text-[13px] text-[#8A93A6]">
-          {wire?.error ? `Wire is quiet. ${wire.error}.` : 'No Kenya or world headlines in the last 24 hours.'}
+          {wire?.error ? `Wire is quiet. ${wire.error}.` : 'No Kenya or world desks in the last 24 hours.'}
         </p>
       </div>
     );
@@ -98,7 +98,7 @@ export function WireSection() {
   return (
     <section className="space-y-4">
       <div>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#43D17A]">The Wire</p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#43D17A]">News</p>
         <p className="mt-0.5 text-[11px] text-[#4B5162]">Kenya and major world desks · last 24h</p>
       </div>
 

@@ -72,7 +72,7 @@ export function LobbyBoard({ gameId }: { gameId: string }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-[11px] font-extrabold uppercase tracking-[0.15em] text-[#4edea3]">Lobby Board</h3>
+        <h3 className="text-[12px] font-extrabold uppercase tracking-[0.15em] text-[var(--brief-green)]">Rooms</h3>
         <span className="text-[10px] text-[#86948a]">{rooms.length} room{rooms.length === 1 ? '' : 's'} open</span>
       </div>
 
@@ -122,7 +122,7 @@ export function LobbyBoard({ gameId }: { gameId: string }) {
               </div>
               <button
                 onClick={() => void copy(r.code ?? '')}
-                className="rounded-lg border border-[#3c4a42] px-3 py-1.5 text-[11px] font-bold text-[#4edea3] hover:border-[#4edea3] cursor-pointer"
+                className="brief-tap rounded-lg border border-[var(--brief-line)] px-3 py-1.5 text-[12px] font-bold text-[var(--brief-green)] hover:border-[var(--brief-green)] cursor-pointer"
               >
                 {copied === r.code ? 'Copied' : 'Copy'}
               </button>

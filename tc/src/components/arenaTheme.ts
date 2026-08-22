@@ -43,7 +43,7 @@ export const ARENA_THEMES: Record<ArenaGameId, ArenaThemeConfig> = {
     accent2: '#1E7A4B',
     background: 'linear-gradient(135deg, #06120B 0%, #0B2317 45%, #0A0F14 100%)',
     tagline: 'Ranked 1v1 and 2v2. Find a match, play, and record the result.',
-    liveLabel: 'LIVE NOW',
+    liveLabel: 'Live',
     enterCta: 'Enter Stadium',
     findCta: 'Find Match'
   },
@@ -54,7 +54,7 @@ export const ARENA_THEMES: Record<ArenaGameId, ArenaThemeConfig> = {
     accent2: '#1D4FBF',
     background: 'linear-gradient(135deg, #060C1A 0%, #0B1E3E 45%, #0A0F14 100%)',
     tagline: 'Squad-based 1v1. Build a side and take on the next challenger.',
-    liveLabel: 'LIVE EVENTS',
+    liveLabel: 'Live',
     enterCta: 'Enter Club',
     findCta: 'Find Opponent'
   },
@@ -65,7 +65,7 @@ export const ARENA_THEMES: Record<ArenaGameId, ArenaThemeConfig> = {
     accent2: '#5B3E86',
     background: 'linear-gradient(135deg, #0E0A16 0%, #1A1130 45%, #0A0F14 100%)',
     tagline: 'Squad and career play. Restricted account transfer — see terms.',
-    liveLabel: 'LIVE EVENTS',
+    liveLabel: 'Live',
     enterCta: 'Enter Club',
     findCta: 'Find Opponent'
   },
@@ -76,7 +76,7 @@ export const ARENA_THEMES: Record<ArenaGameId, ArenaThemeConfig> = {
     accent2: '#8A5A14',
     background: 'linear-gradient(135deg, #160F04 0%, #241A08 45%, #0A0F14 100%)',
     tagline: 'Squad play and scrims. Drop in, link up, and settle it on the map.',
-    liveLabel: 'PLAYERS DEPLOYED',
+    liveLabel: 'Live',
     enterCta: 'Enter Zone',
     findCta: 'Find Squad'
   },
@@ -87,7 +87,7 @@ export const ARENA_THEMES: Record<ArenaGameId, ArenaThemeConfig> = {
     accent2: '#9E3317',
     background: 'linear-gradient(135deg, #170706 0%, #2A1008 45%, #0A0F14 100%)',
     tagline: 'Tactical 1v1 and team play. Coordinate, load in, and report.',
-    liveLabel: 'OPS ACTIVE',
+    liveLabel: 'Live',
     enterCta: 'Enter Op',
     findCta: 'Find Op'
   },
@@ -98,7 +98,7 @@ export const ARENA_THEMES: Record<ArenaGameId, ArenaThemeConfig> = {
     accent2: '#4B5162',
     background: 'linear-gradient(135deg, #0A0C11 0%, #11151D 45%, #0A0F14 100%)',
     tagline: 'Any game not listed. Set a mode, agree terms, and play.',
-    liveLabel: 'OPEN',
+    liveLabel: 'Open',
     enterCta: 'Enter Arena',
     findCta: 'Find Match'
   }

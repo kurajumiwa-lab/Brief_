@@ -59,7 +59,7 @@ async function main(){
   check('still exactly two primary navs', navs.length===2, String(navs.length));
   const railText=navs.map(n=>text(n)).join(' ');
   check('no Marketplace/Shop/Store/Vendors primary', !/Marketplace|Shop\b|Store\b|Vendors/i.test(railText));
-  check('four screens preserved', /Around/.test(railText)&&/Play/.test(railText)&&/Actions/.test(railText)&&/Saved/.test(railText));
+  check('four screens preserved', /Home/.test(railText)&&/Play/.test(railText)&&/Inbox/.test(railText)&&/Saved/.test(railText));
   check('Pulse is not a destination', !/Pulse/.test(railText));
 
   console.log('\n=== 12/13. Save still works, related engine still works ===');

@@ -77,7 +77,7 @@ export function ConnectedGroups({
       {!openGroup && (
         <>
           <div>
-            <h2 className="text-lg font-extrabold text-[#F3F1E7]">Your Groups</h2>
+            <h2 className="text-lg font-extrabold text-[#F3F1E7]">Your chats</h2>
             <p className="text-[11px] text-[#8A93A6] leading-snug mt-1">
               Groups you're a member of where Brief can help organise
               information. Brief does not post, promote or message anyone.

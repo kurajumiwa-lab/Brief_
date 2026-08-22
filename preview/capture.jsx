@@ -83,7 +83,7 @@ async function main(){
   await click(btn('Discard'));
 
   console.log('\n=== SOURCES view ===');
-  await goto('Actions','Sources');
+  await goto('Inbox','Feeds');
   b=body();
   // Sources come from the server now; the seeded 'Nairobi Traders' list is
   // gone. With no connector server in this harness the surface must say so
@@ -99,7 +99,7 @@ async function main(){
   check('no technical errors exposed', !/stack|ECONN|undefined is not/i.test(b));
 
   console.log('\n=== TODAY / daily brief ===');
-  await click(btn('Around'));
+  await click(btn('Home'));
   await click(btn('More')); // section pills live behind More now
   await click(btn('Today'));
   b=body();
@@ -111,7 +111,7 @@ async function main(){
   check('no motivational filler', !/You got this|Have a great|You're doing great/i.test(b));
 
   console.log('\n=== Pursuit: "Nothing useful yet." ===');
-  await click(btn('Pursuits'));
+  await click(btn('Alerts'));
   const inp=document.querySelector('input[placeholder="find a plumber near me"]');
   await setVal(inp,'find a helicopter mechanic');
   await act(async()=>{inp.closest('form').dispatchEvent(new dom.window.Event('submit',{bubbles:true,cancelable:true}));});
@@ -124,7 +124,7 @@ async function main(){
     check('honest that alerts are not live', body().includes('Alerts are not live yet')); }
 
   console.log('\n=== Why this appeared ===');
-  await click(btn('Around'));
+  await click(btn('Home'));
   if(cards()[0]){ await click(cards()[0]);
     const m=document.querySelector('.fixed.inset-0.z-50');
     check('why-this-appeared present', text(m).includes('Why this appeared'), text(m).slice(0,120)); }

@@ -1,0 +1,57 @@
+/* One Brief. Familiar, readable, one green. */
+
+:root {
+  --brief-bg: #191714;
+  --brief-card: #14110e;
+  --brief-ink: #f2efe7;
+  --brief-muted: #9a9278;
+  --brief-faint: #6f6a58;
+  --brief-line: #3b372b;
+  --brief-green: #3e9a66;
+  --brief-green-ink: #0b1a12;
+  --brief-warn: #c9842a;
+  --brief-danger: #c45a3a;
+
+  --ground: var(--brief-bg);
+  --surface: var(--brief-card);
+  --hairline: var(--brief-line);
+  --ink: var(--brief-ink);
+  --ink-dim: var(--brief-muted);
+  --ink-faint: var(--brief-faint);
+  --signal-live: var(--brief-green);
+
+  --m3-surface: var(--brief-bg);
+  --m3-surface-container: var(--brief-card);
+  --m3-surface-container-low: #100e0c;
+  --m3-primary: var(--brief-green);
+  --m3-secondary-container: #24382c;
+  --m3-on-surface: var(--brief-ink);
+  --m3-on-surface-variant: var(--brief-muted);
+  --m3-outline: var(--brief-line);
+  --m3-outline-variant: var(--brief-line);
+  --m3-font-body: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+
+  --brief-text: 15px;
+  --brief-ui: 13px;
+  --brief-label: 12px;
+  --dur-tap: 100ms;
+}
+
+html, body, #root {
+  background: var(--brief-bg);
+  color: var(--brief-ink);
+  font-size: var(--brief-text);
+  font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+}
+
+button, [role="button"] {
+  min-height: 44px;
+}
+
+.brief-tap {
+  transition: transform var(--dur-tap) ease, filter var(--dur-tap) ease;
+}
+.brief-tap:active {
+  transform: scale(0.98);
+  filter: brightness(1.08);
+}
