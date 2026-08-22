@@ -2930,6 +2930,9 @@ export interface ArenaMatch {
   // Both players must confirm before a result counts.
   confirmedByA?: boolean;
   confirmedByB?: boolean;
+  // Server match lifecycle. Absent on older client-only rows.
+  status?: 'scheduled' | 'reported' | 'confirmed' | 'disputed' | 'abandoned' | string;
+  reportedBy?: string | null;
 }
 
 export type ArenaListingKind =
@@ -4206,6 +4209,32 @@ const ARENA_GAME_GLYPHS: Record<string, string> = {
   other: '🎮'
 };
 
+// Client game ids stay stable for the portal. The server uses a slightly
+// different set (pubg_mobile, no ea_fc). Map at the edge; never invent a game.
+const CLIENT_TO_SERVER_GAME: Record<ArenaGameId, string> = {
+  efootball: 'efootball',
+  fc_mobile: 'fc_mobile',
+  ea_fc: 'fc_mobile',
+  pubg: 'pubg_mobile',
+  cod: 'cod_mobile',
+  other: 'other'
+};
+
+const SERVER_TO_CLIENT_GAME: Record<string, ArenaGameId> = {
+  efootball: 'efootball',
+  fc_mobile: 'fc_mobile',
+  pubg_mobile: 'pubg',
+  cod_mobile: 'cod',
+  other: 'other'
+};
+
+/** Never print fixture handles. If we do not know the person, say Player. */
+const arenaPlayerLabel = (id: string | undefined, meId: string | null): string => {
+  if (!id) return 'Player';
+  if (meId && id === meId) return 'You';
+  return 'Player';
+};
+
 
 
 
@@ -4884,6 +4913,7 @@ export function App() {
   const [myLayerSection, setMyLayerSection] = useState<MyLayerSection>('saved');
   const [workflowSection, setWorkflowSection] = useState<WorkflowSection>('cockpit');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [sessionUser, setSessionUser] = useState<briefApi.AuthedUser | null>(null);
   const [dockOn, setDockOn] = useState(true);
   const dockLastY = React.useRef(0);
 
@@ -4965,13 +4995,19 @@ export function App() {
         tg?.expand?.();
       } catch { /* SDK not fully loaded */ }
       const init = await briefApi.telegramInit(String(tg.initData));
-      if (init.ok) return;
+      if (init.ok) {
+        setSessionUser(init.data);
+        return;
+      }
       // initData rejected (stale/bad) — fall through to the ordinary path so
       // the app still renders, just without the Telegram identity.
     }
 
     const me = await briefApi.whoAmI();
-    if (me.ok) return; // already authenticated (session restored or dev fallback)
+    if (me.ok) {
+      setSessionUser(me.data);
+      return;
+    }
     // Only provision an account when the server actually requires one (401).
     // An unreachable/404 server is not an auth signal — don't fire register/
     // login POSTs against a dead backend.
@@ -4984,9 +5020,13 @@ export function App() {
     }
     const password = 'brief-local-pass';
     const reg = await briefApi.register(handle, password, 'Local');
-    if (reg.ok) return;
+    if (reg.ok) {
+      setSessionUser(reg.data);
+      return;
+    }
     // Handle already exists from a prior visit: log back in.
-    await briefApi.login(handle, password);
+    const logged = await briefApi.login(handle, password);
+    if (logged.ok) setSessionUser(logged.data);
   }, []);
 
   React.useEffect(() => { void bootstrapSession(); }, [bootstrapSession]);
@@ -6249,8 +6289,12 @@ export function App() {
   // --- Arena -----------------------------------------------------------------
   // Who the viewer is in Arena. Their own challenges are theirs to manage,
   // not to accept.
-  const CURRENT_PLAYER_ID = 'ply_nyabs';
+  const CURRENT_PLAYER_ID = sessionUser?.id ?? '';
   const [arenaGameId, setArenaGameId] = useState<ArenaGameId>('efootball');
+  const [arenaBusyId, setArenaBusyId] = useState<string | null>(null);
+  const [openedTournament, setOpenedTournament] = useState<any | null>(null);
+  const [openedStanding, setOpenedStanding] = useState<any | null>(null);
+  const [arenaActivity, setArenaActivity] = useState<Record<string, number>>({});
   // Challenges come from the SERVER, not a fixture: a challenge is a real,
   // persisted, attributable record. `ARENA_CHALLENGES` is gone from the state.
   const [challenges, setChallenges] = useState<ArenaChallenge[]>([]);
@@ -6271,11 +6315,12 @@ export function App() {
   // suggested times) is a client-only convenience that stays absent for real
   // server-backed challenges rather than being invented.
   const refreshArenaChallenges = React.useCallback(async () => {
-    const res = await briefApi.getArenaChallenges();
+    const serverGame = CLIENT_TO_SERVER_GAME[arenaGameId] ?? arenaGameId;
+    const res = await briefApi.getArenaChallenges(serverGame);
     if (!res.ok) return;
     setChallenges(res.data.map((c: any) => ({
       id: String(c.id),
-      gameId: c.gameId as ArenaGameId,
+      gameId: (SERVER_TO_CLIENT_GAME[c.gameId] ?? c.gameId) as ArenaGameId,
       mode: String(c.mode ?? '1v1'),
       createdByPlayerId: String(c.createdBy),
       stake: (c.stake ?? 'friendly') as ChallengeStake,
@@ -6285,9 +6330,31 @@ export function App() {
       acceptedByPlayerId: c.acceptedBy ? String(c.acceptedBy) : undefined,
       createdAt: c.createdAt
     })));
-  }, []);
+  }, [arenaGameId]);
   useEffect(() => { void refreshArenaChallenges(); }, [refreshArenaChallenges]);
   const [matches, setMatches] = useState<ArenaMatch[]>([]);
+
+  const mapServerMatch = (m: any): ArenaMatch => ({
+    id: String(m.id),
+    challengeId: String(m.challengeId ?? ''),
+    gameId: (SERVER_TO_CLIENT_GAME[m.gameId] ?? m.gameId) as ArenaGameId,
+    playerAId: String(m.playerAId),
+    playerBId: String(m.playerBId),
+    playedAt: m.createdAt ?? m.playedAt ?? new Date().toISOString(),
+    winnerPlayerId: m.winnerPlayerId ?? undefined,
+    scoreLine: m.scoreLine ?? undefined,
+    confirmedByA: m.confirmedByA ?? undefined,
+    confirmedByB: m.confirmedByB ?? undefined,
+    status: m.status,
+    reportedBy: m.reportedBy ?? null
+  });
+
+  const refreshArenaMatches = React.useCallback(async () => {
+    const res = await briefApi.getArenaMatches();
+    if (!res.ok) return;
+    setMatches(res.data.map(mapServerMatch));
+  }, []);
+  useEffect(() => { void refreshArenaMatches(); }, [refreshArenaMatches]);
 
   // Availability is the user's own switch. Defaults to the seeded record and
   // is never flipped on by Brief.
@@ -6302,15 +6369,35 @@ export function App() {
   React.useEffect(() => {
     let live = true;
     (async () => {
-      const [p, v, t] = await Promise.all([
+      const [p, v, t, g, rooms] = await Promise.all([
         briefApi.getArenaPlayers(),
         briefApi.getArenaVenues(),
-        briefApi.getArenaTournaments()
+        briefApi.getArenaTournaments(),
+        briefApi.getArenaGames(),
+        briefApi.getLobbyRooms()
       ]);
       if (!live) return;
       if (p.ok) setArenaPlayers(p.data as any[]);
       if (v.ok) setArenaVenues(v.data as any[]);
       if (t.ok) setArenaTournaments(t.data as any[]);
+      const counts: Record<string, number> = {};
+      const bump = (key: string, n = 1) => {
+        const client = SERVER_TO_CLIENT_GAME[key] ?? key;
+        counts[client] = (counts[client] ?? 0) + n;
+      };
+      if (g.ok) {
+        for (const [k, val] of Object.entries(g.data.activity ?? {})) {
+          if (typeof val === 'number' && val > 0) bump(k, val);
+        }
+      }
+      if (rooms.ok) {
+        for (const r of rooms.data as any[]) {
+          if (!r?.gameId) continue;
+          if (r.status === 'started' || r.status === 'closed') continue;
+          bump(String(r.gameId), 1);
+        }
+      }
+      setArenaActivity(counts);
     })();
     return () => { live = false; };
   }, []);
@@ -6496,7 +6583,62 @@ export function App() {
       ]);
     }
     await refreshArenaChallenges();
+    await refreshArenaMatches();
     showToast('Challenge accepted. Match created.');
+  };
+
+  const handleCancelChallenge = async (challenge: ArenaChallenge) => {
+    setArenaBusyId(challenge.id);
+    const res = await briefApi.cancelArenaChallenge(challenge.id);
+    setArenaBusyId(null);
+    if (!res.ok) {
+      showToast(res.error ?? 'Could not cancel this challenge.');
+      return;
+    }
+    await refreshArenaChallenges();
+    showToast('Challenge cancelled.');
+  };
+
+  const handleCreateChallenge = async () => {
+    setArenaBusyId('create');
+    const res = await briefApi.createArenaChallenge({
+      gameId: CLIENT_TO_SERVER_GAME[arenaGameId] ?? arenaGameId,
+      mode: arenaGame.modes[0] ?? '1v1',
+      stake: 'friendly',
+      openMinutes: 120
+    });
+    setArenaBusyId(null);
+    if (!res.ok) {
+      showToast(res.error ?? 'Could not open a challenge.');
+      return;
+    }
+    setArenaSection('challenges');
+    await refreshArenaChallenges();
+    showToast('Challenge opened. Anyone can accept it.');
+  };
+
+  const handleReportMatch = async (match: ArenaMatch, winnerPlayerId: string | null) => {
+    setArenaBusyId(match.id);
+    const res = await briefApi.reportArenaMatch(match.id, { winnerPlayerId });
+    setArenaBusyId(null);
+    if (!res.ok) {
+      showToast(res.error ?? 'Could not report this result.');
+      return;
+    }
+    await refreshArenaMatches();
+    showToast('Result reported. The other player still has to confirm.');
+  };
+
+  const handleConfirmMatch = async (match: ArenaMatch) => {
+    setArenaBusyId(match.id);
+    const res = await briefApi.confirmArenaMatch(match.id);
+    setArenaBusyId(null);
+    if (!res.ok) {
+      showToast(res.error ?? 'Could not confirm this result.');
+      return;
+    }
+    await refreshArenaMatches();
+    showToast(res.data?.disputed ? 'Players disagreed. Brief does not pick a winner.' : 'Result confirmed.');
   };
 
   // Venues that actually host the selected game, nearest first.
@@ -6777,6 +6919,10 @@ export function App() {
                   if (raw?.id) setSelectedObjectForDetail(objectFromServer(raw));
                 }}
                 onOpenTea={(slug) => setSelectedTeaSlug(slug)}
+                onOpenTag={(tag) => {
+                  setSearchQuery(tag);
+                  setNearbySection('stream');
+                }}
               />
             </div>
             {/* Primary discovery categories — the spec's limited four, not the
@@ -7448,8 +7594,7 @@ export function App() {
                     </button>
 
                     <span className="flex items-center gap-1.5 text-[11px] font-bold text-[#8A93A6]">
-                      <MessageCircle className="w-3.5 h-3.5" />
-                      {formatCount(post.commentsCount)}
+                      No discussion yet
                     </span>
 
                     {post.tags && post.tags.length > 0 && (
@@ -7797,7 +7942,7 @@ export function App() {
 
             <ArenaPortal
               games={ARENA_GAMES}
-              activity={{}}
+              activity={arenaActivity}
               selectedId={arenaGameId}
               onSelect={(id) => { setArenaGameId(id); }}
               onFind={() => setArenaSection('challenges')}
@@ -7830,31 +7975,101 @@ export function App() {
 
             {arenaSection === 'challenges' && (
               <div className="space-y-2">
+                <button
+                  type="button"
+                  disabled={arenaBusyId === 'create'}
+                  onClick={() => void handleCreateChallenge()}
+                  className="w-full h-10 rounded-xl bg-[#43D17A] text-[#090B10] text-[12px] font-extrabold cursor-pointer disabled:opacity-40"
+                >
+                  {arenaBusyId === 'create' ? 'Opening…' : `Open a ${arenaGame.modes[0] ?? '1v1'} challenge`}
+                </button>
                 {challenges.length === 0 && (
                   <p className="text-xs text-[#8A93A6]">No open challenges for {arenaGame.name} right now.</p>
                 )}
-                {challenges.map((c) => (
-                  <div key={c.id} className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3 flex items-center justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="text-xs font-extrabold text-[#F3F1E7]">{c.mode} · {c.stake === 'friendly' ? 'Friendly' : c.stake === 'ranked' ? 'Ranked' : 'Entry fee'}</p>
-                      {c.entryFeeKes ? <p className="text-[10px] text-[#8A93A6]">KES {c.entryFeeKes}</p> : null}
+                {challenges.map((c) => {
+                  const mine = Boolean(CURRENT_PLAYER_ID) && c.createdByPlayerId === CURRENT_PLAYER_ID;
+                  const expired = Boolean(c.openUntil) && c.openUntil <= new Date().toISOString();
+                  const taken = c.status === 'accepted' || Boolean(c.acceptedByPlayerId);
+                  return (
+                    <div key={c.id} className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3 flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-xs font-extrabold text-[#F3F1E7]">{c.mode} · {c.stake === 'friendly' ? 'Friendly' : c.stake === 'ranked' ? 'Ranked' : 'Entry fee'}</p>
+                        {c.entryFeeKes ? <p className="text-[10px] text-[#8A93A6]">KES {c.entryFeeKes}</p> : null}
+                        <p className="text-[10px] text-[#8A93A6] mt-0.5">
+                          {mine ? 'Your challenge' : 'Open challenge'}
+                          {expired ? ' · expired' : ''}
+                          {taken ? ' · taken' : ''}
+                        </p>
+                      </div>
+                      {mine ? (
+                        <button
+                          type="button"
+                          disabled={arenaBusyId === c.id || taken || c.status === 'cancelled'}
+                          onClick={() => void handleCancelChallenge(c)}
+                          className="shrink-0 px-3 py-1.5 rounded-xl border border-[#232A38] text-[#F3F1E7] text-[11px] font-extrabold cursor-pointer disabled:opacity-40"
+                        >
+                          Cancel
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={arenaBusyId === c.id || expired || taken}
+                          onClick={() => void handleAcceptChallenge(c)}
+                          className="shrink-0 px-3 py-1.5 rounded-xl bg-[#43D17A] text-[#090B10] text-[11px] font-extrabold cursor-pointer disabled:opacity-40"
+                          title={expired ? 'This challenge has expired' : taken ? 'Already accepted' : undefined}
+                        >
+                          Accept
+                        </button>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
             {arenaSection === 'tournaments' && (
               <div className="space-y-2">
-                {arenaTournaments.length === 0 && (
+                {arenaTournaments.filter((t) => !t.gameId || (SERVER_TO_CLIENT_GAME[t.gameId] ?? t.gameId) === arenaGameId).length === 0 && (
                   <p className="text-xs text-[#8A93A6]">No tournaments yet for {arenaGame.name}.</p>
                 )}
-                {arenaTournaments.map((t) => (
-                  <div key={t.id} className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3">
+                {arenaTournaments.filter((t) => !t.gameId || (SERVER_TO_CLIENT_GAME[t.gameId] ?? t.gameId) === arenaGameId).map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setOpenedTournament(t)}
+                    className="w-full text-left bg-[#10141C] border border-[#232A38] rounded-2xl p-3 cursor-pointer"
+                  >
                     <p className="text-xs font-extrabold text-[#F3F1E7]">{t.title}</p>
                     {t.startsAt && <p className="text-[10px] text-[#8A93A6] mt-0.5">{t.startsAt.slice(0, 16).replace('T', ' ')}</p>}
-                  </div>
+                    <p className="text-[10px] text-[#43D17A] mt-1">Open</p>
+                  </button>
                 ))}
+                {openedTournament && (
+                  <div className="bg-[#10141C] border border-[#43D17A] rounded-2xl p-3 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-xs font-extrabold text-[#F3F1E7]">{openedTournament.title}</p>
+                        <p className="text-[10px] text-[#8A93A6] mt-0.5">
+                          {openedTournament.status || 'open'}
+                          {openedTournament.startsAt ? ` · ${String(openedTournament.startsAt).slice(0, 16).replace('T', ' ')}` : ''}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setOpenedTournament(null)}
+                        className="text-[10px] font-extrabold text-[#8A93A6] cursor-pointer"
+                      >
+                        Close
+                      </button>
+                    </div>
+                    {openedTournament.maxPlayers != null && (
+                      <p className="text-[11px] text-[#8A93A6]">Cap {openedTournament.maxPlayers}</p>
+                    )}
+                    <p className="text-[11px] text-[#8A93A6] leading-snug">
+                      Registration is not on the server yet. Brief will not pretend you can join.
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -7864,14 +8079,38 @@ export function App() {
                   <p className="text-xs text-[#8A93A6]">No confirmed results yet for {arenaGame.name}.</p>
                 )}
                 {arenaLeaderboard.map((row, i) => (
-                  <div key={row.playerId} className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3 flex items-center justify-between gap-2">
+                  <button
+                    key={row.playerId}
+                    type="button"
+                    onClick={() => setOpenedStanding(row)}
+                    className="w-full bg-[#10141C] border border-[#232A38] rounded-2xl p-3 flex items-center justify-between gap-2 text-left cursor-pointer"
+                  >
                     <div className="flex items-center gap-3">
                       <span className="text-[11px] font-bold text-[#4B5162] w-4">{i + 1}</span>
                       <span className="text-xs font-extrabold text-[#F3F1E7]">{row.player}</span>
                     </div>
                     <span className="text-[10px] text-[#8A93A6]">{row.won} won · {row.played} played</span>
-                  </div>
+                  </button>
                 ))}
+                {openedStanding && (
+                  <div className="bg-[#10141C] border border-[#43D17A] rounded-2xl p-3 space-y-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-xs font-extrabold text-[#F3F1E7]">{openedStanding.player}</p>
+                      <button
+                        type="button"
+                        onClick={() => setOpenedStanding(null)}
+                        className="text-[10px] font-extrabold text-[#8A93A6] cursor-pointer"
+                      >
+                        Close
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-[#8A93A6]">
+                      {openedStanding.won} won · {openedStanding.played} played
+                      {typeof openedStanding.winRate === 'number' ? ` · ${Math.round(openedStanding.winRate * 100)}%` : ''}
+                    </p>
+                    <p className="text-[10px] text-[#4B5162]">Confirmed results only. Brief does not invent a rating.</p>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -7894,9 +8133,14 @@ export function App() {
                 .map((rel) => {
                   const obj = objects.find((o) => o.id === rel.targetId);
                   return (
-                    <div
+                    <button
                       key={rel.id}
-                      className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3 flex items-center gap-3"
+                      type="button"
+                      disabled={!obj}
+                      onClick={() => {
+                        if (obj) setSelectedObjectForDetail(obj);
+                      }}
+                      className="w-full bg-[#10141C] border border-[#232A38] rounded-2xl p-3 flex items-center gap-3 text-left cursor-pointer disabled:cursor-default disabled:opacity-70"
                     >
                       <span className="text-[9px] text-[#43D17A] shrink-0">
                         {rel.verb}
@@ -7907,7 +8151,7 @@ export function App() {
                       <span className="text-[9px] text-[#4B5162] shrink-0">
                         {rel.updatedAt.slice(0, 10)}
                       </span>
-                    </div>
+                    </button>
                   );
                 })}
             </div>

@@ -76,8 +76,8 @@ export function ArenaPortal({ games, activity, selectedId, onSelect, onFind }: A
             <div className="relative mt-3 flex items-center justify-between gap-2">
               <span className="font-mono text-[11px]" style={{ color: live ? theme.accent : 'var(--ink-faint)' }}>
                 {live
-                  ? `${count} ${count === 1 ? 'room' : 'rooms'} open now`
-                  : 'No rooms open right now'}
+                  ? `${count} open now`
+                  : 'Nothing open right now'}
               </span>
               <span
                 className="text-[11px] font-bold underline-offset-2 group-hover:underline"

@@ -554,9 +554,23 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
               </Section>
 
               <Section title="Coming soon">
-                <Row icon={BookOpen} label="Courses" muted onClick={() => undefined} />
-                <Row icon={Database} label="Data desk" muted onClick={() => undefined} />
-                <Row icon={Crown} label="Premium" muted onClick={() => undefined} />
+                {[
+                  { icon: BookOpen, label: 'Courses' },
+                  { icon: Database, label: 'Data desk' },
+                  { icon: Crown, label: 'Premium' }
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <div
+                      key={item.label}
+                      className="flex w-full items-center gap-2 px-2.5 py-2.5 text-[#7b8194]"
+                    >
+                      <Icon className="h-4 w-4 shrink-0" />
+                      <span className="text-[14px] font-semibold truncate">{item.label}</span>
+                      <span className="ml-auto text-[10px] font-bold shrink-0">Not built</span>
+                    </div>
+                  );
+                })}
               </Section>
 
               <Section title="Regional communities" tint="bg-[#d9dcf0]">

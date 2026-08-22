@@ -21,6 +21,7 @@ type FeedObject = any;
 interface FeedComposerProps {
   onOpen: (obj: FeedObject) => void;
   onOpenTea: (slug: string) => void;
+  onOpenTag?: (tag: string) => void;
 }
 
 interface FeedData {
@@ -91,9 +92,41 @@ function ShelfHeader({ title, count, snap }: { title: string; count?: number; sn
   );
 }
 
-export function FeedComposer({ onOpen, onOpenTea }: FeedComposerProps) {
+export function FeedComposer({ onOpen, onOpenTea, onOpenTag }: FeedComposerProps) {
   const [state, setState] = React.useState<{ status: 'loading' | 'ready'; feed: FeedData | null }>({ status: 'loading', feed: null });
   const [collections, setCollections] = React.useState<any[]>([]);
+  const [openCollection, setOpenCollection] = React.useState<{
+    key: string;
+    title: string;
+    status: 'loading' | 'ready' | 'error';
+    objects: FeedObject[];
+    error: string | null;
+  } | null>(null);
+
+  const openCollectionByKey = async (c: { key?: string; id?: string; title?: string }) => {
+    const key = String(c.key || c.id || '');
+    if (!key) return;
+    setOpenCollection({ key, title: c.title || key, status: 'loading', objects: [], error: null });
+    const res = await briefApi.getCollection(key);
+    if (!res.ok) {
+      setOpenCollection({
+        key,
+        title: c.title || key,
+        status: 'error',
+        objects: [],
+        error: res.error || 'Collection could not be opened.'
+      });
+      return;
+    }
+    const members = Array.isArray(res.data?.objects) ? res.data.objects : [];
+    setOpenCollection({
+      key,
+      title: res.data?.title || c.title || key,
+      status: 'ready',
+      objects: members,
+      error: null
+    });
+  };
 
   React.useEffect(() => {
     let live = true;
@@ -265,10 +298,16 @@ export function FeedComposer({ onOpen, onOpenTea }: FeedComposerProps) {
           <ShelfHeader title="Trending" />
           <div className="flex flex-wrap gap-2 px-1">
             {trendingTags.map((t) => (
-              <span key={t} className="flex items-center gap-1 rounded-full border px-3 py-1.5 text-[13px]" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }}>
+              <button
+                key={t}
+                type="button"
+                onClick={() => onOpenTag?.(t)}
+                className="flex items-center gap-1 rounded-full border px-3 py-1.5 text-[13px] cursor-pointer"
+                style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }}
+              >
                 <Tag className="h-3 w-3" style={{ color: T.primary }} />
                 {t}
-              </span>
+              </button>
             ))}
           </div>
         </section>

@@ -59,6 +59,7 @@ async function main(){
   b=body();
   check('a real challenge is listed', /1v1/.test(b) && /Friendly|Entry fee|Ranked/.test(b));
   check('entry fee shown from the server row', /KES 100/.test(b));
+  check('challenge row has an Accept verb', Boolean(btn('Accept')));
 
   console.log('\n=== No fabricated economy remains ===');
   check('no fake player names', !/Nyabs|Jay|Kip|Wanjiku/.test(body()));

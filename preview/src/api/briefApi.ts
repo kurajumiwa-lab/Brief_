@@ -1399,8 +1399,15 @@ export function getCommandCentre(): Promise<ApiResult<CommandCentre>> {
 // challenge is real, persisted, and attributable.
 // ---------------------------------------------------------------------------
 
-export function getArenaGames(): Promise<ApiResult<any[]>> {
-  return request('/api/arena/games', undefined, (r) => (Array.isArray(r?.games) ? r.games : undefined));
+export function getArenaGames(): Promise<ApiResult<{ games: any[]; activity: Record<string, number> }>> {
+  return request('/api/arena/games', undefined, (r) =>
+    Array.isArray(r?.games)
+      ? {
+          games: r.games,
+          activity: r.activity && typeof r.activity === 'object' ? r.activity : {}
+        }
+      : undefined
+  );
 }
 
 export function getArenaChallenges(gameId?: string): Promise<ApiResult<any[]>> {
@@ -1428,6 +1435,42 @@ export function acceptArenaChallenge(id: string): Promise<ApiResult<any>> {
 export function cancelArenaChallenge(id: string): Promise<ApiResult<any>> {
   return request(`/api/arena/challenges/${encodeURIComponent(id)}/cancel`, { method: 'POST', body: '{}' }, (r) =>
     r?.challenge ? r : undefined
+  );
+}
+
+export function getArenaMatches(): Promise<ApiResult<any[]>> {
+  return request('/api/arena/matches', undefined, (r) =>
+    Array.isArray(r?.matches) ? r.matches : undefined
+  );
+}
+
+export function reportArenaMatch(
+  id: string,
+  body: { winnerPlayerId?: string | null; scoreLine?: string | null }
+): Promise<ApiResult<any>> {
+  return request(
+    `/api/arena/matches/${encodeURIComponent(id)}/report`,
+    { method: 'POST', body: JSON.stringify(body) },
+    (r) => (r?.match ? r.match : undefined)
+  );
+}
+
+export function confirmArenaMatch(
+  id: string,
+  body: { winnerPlayerId?: string | null } = {}
+): Promise<ApiResult<any>> {
+  return request(
+    `/api/arena/matches/${encodeURIComponent(id)}/confirm`,
+    { method: 'POST', body: JSON.stringify(body) },
+    (r) => (r?.match ? r : undefined)
+  );
+}
+
+export function abandonArenaMatch(id: string, reason = ''): Promise<ApiResult<any>> {
+  return request(
+    `/api/arena/matches/${encodeURIComponent(id)}/abandon`,
+    { method: 'POST', body: JSON.stringify({ reason }) },
+    (r) => (r?.match ? r.match : undefined)
   );
 }
 
@@ -1517,6 +1560,13 @@ export function transitionTea(id: string, action: string): Promise<ApiResult<any
 export function getCollections(): Promise<ApiResult<any[]>> {
   return request('/api/collections', undefined, (r) =>
     Array.isArray(r?.collections) ? r.collections : undefined
+  );
+}
+
+/** One published collection resolved to its current member objects. */
+export function getCollection(key: string): Promise<ApiResult<any>> {
+  return request(`/api/collections/${encodeURIComponent(key)}`, undefined, (r) =>
+    r?.collection ? r.collection : undefined
   );
 }
 
