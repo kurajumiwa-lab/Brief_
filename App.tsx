@@ -23,6 +23,7 @@ import type { GeoPoint } from './components/LocationChip';
 import { ArenaPortal } from './components/ArenaPortal';
 import { LobbyBoard } from './components/LobbyBoard';
 import { FeedComposer } from './components/FeedComposer';
+import { WireSection } from './components/WireSection';
 import { TeaDesk } from './components/TeaDesk';
 import { CreatorCockpit } from './components/CreatorCockpit';
 import { MediaKitPanel, OpportunitiesPanel, MessagesPanel, SubscriptionsPanel } from './components/CreatorPanels';

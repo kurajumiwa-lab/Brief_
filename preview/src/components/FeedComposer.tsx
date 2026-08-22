@@ -1,6 +1,7 @@
 import React from 'react';
 import { Compass, CalendarDays, MapPin, Tag } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
+import { WireSection } from './WireSection';
 
 // ---------------------------------------------------------------------------
 // FEED COMPOSER — the home feed as a set of distinct shelves.
@@ -118,8 +119,11 @@ export function FeedComposer({ onOpen, onOpenTea }: FeedComposerProps) {
   const feed = state.feed;
   if (!feed || (feed.hero.length === 0 && feed.discovery.length === 0 && feed.opportunities.length === 0 && !feed.tea)) {
     return (
-      <div className="rounded-xl border p-5" style={{ borderColor: T.outlineVariant, background: T.container }}>
-        <p className="text-[13px]" style={{ color: T.onSurfaceVariant }}>Nothing much nearby right now. Try another area.</p>
+      <div className="space-y-5">
+        <WireSection />
+        <div className="rounded-xl border p-5" style={{ borderColor: T.outlineVariant, background: T.container }}>
+          <p className="text-[13px]" style={{ color: T.onSurfaceVariant }}>Nothing much nearby right now. Try another area.</p>
+        </div>
       </div>
     );
   }

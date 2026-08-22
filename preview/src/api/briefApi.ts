@@ -1445,6 +1445,20 @@ export function clearDemo(): Promise<ApiResult<{ cleared: any }>> {
   return request('/api/ops/seed/clear', { method: 'POST', body: '{}' }, (r) => (r?.cleared ? { cleared: r.cleared } : undefined));
 }
 
+/** Kenya + major world headlines, last 24h. Empty lists if the wire is down. */
+export function getWire(): Promise<ApiResult<{
+  kenya: any[];
+  world: any[];
+  note: string;
+  error: string | null;
+  fetchedAt: string;
+  source: string;
+}>> {
+  return request('/api/wire', undefined, (r) =>
+    r?.wire && Array.isArray(r.wire.kenya) && Array.isArray(r.wire.world) ? r.wire : undefined
+  );
+}
+
 /** Published Tea articles (ranked), optionally filtered by category/location. */
 export function getTea(opts: { category?: string; location?: string; limit?: number } = {}): Promise<ApiResult<any[]>> {
   const params = new URLSearchParams();

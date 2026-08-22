@@ -433,8 +433,8 @@ function Row({
         muted ? 'text-[#7b8194]' : 'text-[#1c2340]'
       }`}
     >
-      <Icon className="h-3.5 w-3.5 shrink-0" />
-      <span className="text-[12px] font-semibold truncate">{label}</span>
+      <Icon className="h-4 w-4 shrink-0" />
+      <span className="text-[14px] font-semibold truncate">{label}</span>
     </button>
   );
 }

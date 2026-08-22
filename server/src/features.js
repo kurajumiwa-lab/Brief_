@@ -46,6 +46,7 @@ const DEFINITIONS = [
   { key: 'command',   domain: 'command',    label: 'Host command centre',             configured: () => true },
   { key: 'people',    domain: 'people',     label: 'Person entity (timeline & identity)', configured: () => true },
   { key: 'tea',       domain: 'tea',        label: 'Tea editorial system',              configured: () => true },
+  { key: 'wire',      domain: 'wire',       label: 'Kenya + world news wire',           configured: () => true },
   { key: 'media',     domain: 'media',      label: 'Media association & image library',  configured: () => true },
   { key: 'feed',      domain: 'feed',       label: 'Composed home feed',                 configured: () => true },
   { key: 'collections', domain: 'collections', label: 'Editorial collections',           configured: () => true },
