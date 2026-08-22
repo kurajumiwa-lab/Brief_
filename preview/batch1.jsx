@@ -55,12 +55,10 @@ const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;con
   check('no seeded market', !body().includes('Maji Mazuri Farmers'));
   check('no seeded permit guide', !body().includes('knw_permit_guide'));
 
-  console.log('\n=== 2. Pulse: derived, or honestly absent ===');
-  await click(btn('Pulse')); await click(btn('Signals'));
+  console.log('\n=== 2. Pulse retired; invented civic figures stay gone ===');
+  check('Pulse is not a destination', !btn('Pulse'));
   let b=body();
-  check('freshness section present', /Freshness/.test(b));
-  check('unmeasurable metrics say Not measured', /Not measured/.test(b));
-  check('a reason is given, not a blank', /Brief does not track business outcomes/i.test(b));
+  check('no town-dashboard Signals screen', !btn('Signals'));
   check('no invented businesses-helped figure', !b.includes('412'));
   check('no invented contributions figure', !b.includes('1450'));
   check('no invented freshness percentage', !b.includes('97.4'));
@@ -90,8 +88,8 @@ const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;con
   check('civic metrics are derived, not stored', /deriveTownHealth/.test(appSrc));
   check('a metric cannot carry a value while unavailable',
     /available: false; reason: string/.test(appSrc));
-  check('five destinations only',
-    (appSrc.match(/\{ id: '(nearby|arena|mylayer|workflows|pulse)'/g)||[]).length===5);
+  check('four screens only',
+    (appSrc.match(/\{ id: '(nearby|arena|mylayer|workflows|pulse)'/g)||[]).length===4);
 
   console.log(`\n${'='.repeat(46)}\nPASSED ${pass}   FAILED ${fail}\n${'='.repeat(46)}`);
   process.exit(fail?1:0);

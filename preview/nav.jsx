@@ -23,17 +23,13 @@ async function main(){
   let pass=0,fail=0;
   const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;console.log('  FAIL  '+n+(d?' -> '+d:''));}};
 
-  // The nav bar is the first row of buttons under the header.
-  const navLabels=()=>Array.from(document.querySelectorAll('button'))
-    .map(b=>text(b))
-    .filter(t=>/^(Around|Play|Saved|Actions|Pulse|Intelligence|Tea|Today|Pursuits|Quests|Group|Inbox|Sources)/.test(t));
-
-  console.log('=== Five doors, not twelve ===');
-  const top=['Around','Play','Saved','Actions','Pulse'];
+  console.log('=== Four screens, not twelve ===');
+  const top=['Around','Play','Saved','Actions'];
   for(const t of top) check(`${t} is a destination`, !!btn(t));
+  check('Pulse is not a destination', !btn('Pulse'));
   const strays=['Tea','Today','Sources','Inbox','Group','Quests','Pursuits'];
   // These must NOT be top-level: they may appear as sub-sections only.
-  await click(btn('Pulse'));
+  await click(btn('Around'));
   const introBody=body();
   for(const t of strays){
     check(`${t} is not a top-level tab`, !new RegExp(`^${t}`).test(introBody.slice(0,400)), t);
@@ -48,8 +44,7 @@ async function main(){
   check('My Layer = personal', /Your Layer|Things you.ve kept/i.test(body()));
   await click(btn('Actions'));
   check('Workflows = actions', /Things you can actually do/i.test(body()));
-  await click(btn('Pulse'));
-  check('Pulse = insight', /What.s changing around you/i.test(body()));
+  check('Pulse is not a fifth screen', !btn('Pulse'));
 
   console.log('\n=== Nearby holds discovery sections ===');
   await click(btn('Around'));
@@ -121,8 +116,8 @@ async function main(){
   check('rail hidden on mobile widths', !!rail && rail.className.includes('hidden'));
   check('rail is sticky and full height', !!rail && /sticky/.test(rail.className));
   check('bottom bar fixed to viewport bottom', !!bar && /fixed/.test(bar.className)&&/bottom-0/.test(bar.className));
-  check('rail has Menu plus 5 doors', !!rail && rail.querySelectorAll('button').length===6, rail?String(rail.querySelectorAll('button').length):'no rail');
-  check('bar has Menu plus 5 doors', !!bar && bar.querySelectorAll('button').length===6);
+  check('rail has Menu plus 4 screens', !!rail && rail.querySelectorAll('button').length===5, rail?String(rail.querySelectorAll('button').length):'no rail');
+  check('bar has Menu plus 4 screens', !!bar && bar.querySelectorAll('button').length===5);
 
   console.log('\n=== Both navs stay in sync ===');
   const railBtns=()=>Array.from(rail.querySelectorAll('button'));
@@ -143,33 +138,21 @@ async function main(){
   check('rail uses the full label', railBtns().some(b=>text(b).startsWith('Saved')));
   check('each door has a hint for hover', railBtns().every(b=>(b.getAttribute('title')||'').length>0));
 
-  console.log('\n=== Pulse, not Intelligence ===');
-  check('Pulse is the label', !!btn('Pulse'));
+  console.log('\n=== Pulse retired; no Intelligence department ===');
+  check('Pulse is not a destination', !btn('Pulse'));
   check('no Intelligence in navigation', !railBtns().some(b=>/Intelligence/.test(text(b))));
-  await click(btn('Pulse'));
-  check('Pulse body says Pulse', /Pulse/.test(body()));
   check('no AI department framing', !/AI Intelligence|Intelligence Department|AI Insights/i.test(body()));
+  check('town-dashboard Signals are not a screen', !sub('Signals'));
 
   console.log('\n=== Secondary nav still nested, not promoted ===');
   await click(btn('Play'));
   check('Arena secondary sections present', !!btn('Lobby')&&!!btn('Challenges')&&!!btn('Tournaments'));
   check('Arena sections are not in the rail', !railBtns().some(b=>/Tournaments|Challenges/.test(text(b))));
 
-  console.log('\n=== Pulse secondary: Now | Local | Groups | Signals ===');
-  await click(btn('Pulse'));
-  for(const s of ['Now','Local','Groups','Signals']) check(`Pulse > ${s}`, !!sub(s));
-  check('Pulse secondary is not in the rail', !railBtns().some(b=>/Signals|Local/.test(text(b))));
-  await goto('Pulse','Now');
-  // Brief no longer ships seeded posts, so with no ingested reports the
-  // honest state is the empty message -- not a fabricated bulletin.
-  check('Now states plainly that nothing has been reported',
-    /Nothing new has been reported yet today/i.test(body()));
-  await goto('Pulse','Signals');
-  check('Signals keeps freshness metrics', /Freshness/i.test(body()));
-  check('Signals explains freshness without AI framing', !/\bAI\b|assistant|chatbot|machine learning/i.test(body()));
-  await goto('Pulse','Groups');
-  check('Pulse groups are the user\'s own', /Brief has\s+not posted anything|only reads groups you/i.test(body()));
-  check('Pulse never claims to have joined a group', !/we joined|auto-joined|Brief joined/i.test(body()));
+  console.log('\n=== Group chatter lives in Saved, not a Pulse room ===');
+  await goto('Saved','Groups');
+  check('Groups are the user\'s own', /Your Groups/i.test(body()));
+  check('never claims to have joined a group', !/we joined|auto-joined|Brief joined/i.test(body()));
 
   console.log('\n=== Arena entry point shows availability ===');
   await click(btn('Play'));

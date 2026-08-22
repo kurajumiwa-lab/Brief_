@@ -4,14 +4,13 @@ import type { ArenaMoneyStatus } from './api/types';
 import QRCode from 'qrcode';
 import { CampaignDistribution } from './components/CampaignDistribution';
 import { AwaitingPayment } from './components/AwaitingPayment';
-import { Pulse } from './components/Pulse';
 import { SourcesPanel } from './components/SourcesPanel';
 import { ConnectedGroups } from './components/ConnectedGroups';
 import { MoneyPanel } from './components/MoneyPanel';
 import { Vault } from './components/vault/Vault';
 import { CheckIn } from './components/CheckIn';
 import { HostCommand } from './components/HostCommand';
-import { PulseBanner, TickerBanner, PromptBanner, JumbotronBanner } from './components/SignalBanner';
+import { TickerBanner, PromptBanner, JumbotronBanner } from './components/SignalBanner';
 import { BracketLadder } from './components/BracketLadder';
 import { TournamentCard } from './components/TournamentCard';
 import { ActionsEngine } from './components/ActionsEngine';
@@ -107,18 +106,18 @@ export type ProtocolAction =
   | 'follow';
 
 // --- Navigation -------------------------------------------------------------
-// Five doors. Each answers one question: where do I discover, play, find my
-// own things, do work, or understand what changed. Everything else is a
-// section INSIDE one of these, never a top-level tab.
+// Four screens. Each answers one question: where do I discover, play, find my
+// own things, or do work. Menu is an overlay, not a fifth room. Pulse was
+// retired: town-dashboard metrics attracted nobody in the commune, and the
+// useful bits (today, group chatter) already live in Around and Saved.
 export type Destination =
   | 'nearby'
   | 'arena'
   | 'mylayer'
-  | 'workflows'
-  | 'pulse';
+  | 'workflows';
 
-// The five doors, defined once and consumed by both the desktop rail and the
-// mobile bar so the two can never drift apart.
+// The four screens, defined once and consumed by both the desktop rail and the
+// mobile dock so the two can never drift apart.
 export const DESTINATIONS: {
   id: Destination;
   label: string;
@@ -127,20 +126,16 @@ export const DESTINATIONS: {
   { id: 'nearby', label: 'Around', hint: "What's happening near you" },
   { id: 'arena', label: 'Play', hint: 'Find people to play with nearby' },
   { id: 'mylayer', label: 'Saved', hint: 'Your saved places and opportunities' },
-  { id: 'workflows', label: 'Actions', hint: 'Things you can get done' },
-  // "Pulse", not "Intelligence": the second names the implementation, and
-  // nobody sets out to visit an intelligence department.
-  { id: 'pulse', label: 'Pulse', hint: "What's changing around you" }
+  { id: 'workflows', label: 'Actions', hint: 'Things you can get done' }
 ];
 
 // Icons kept separate from DESTINATIONS so the data stays plain and the
-// component layer owns the visuals. All five are already imported.
+// component layer owns the visuals.
 const DESTINATION_ICONS: Record<Destination, LucideIcon> = {
   nearby: MapPin,
   arena: Award,
   mylayer: Bookmark,
-  workflows: Briefcase,
-  pulse: TrendingUp
+  workflows: Briefcase
 };
 
 export type NearbySection = 'stream' | 'tea' | 'today' | 'pursuits' | 'quests' | 'market';
@@ -4888,8 +4883,9 @@ export function App() {
   const [moreFilters, setMoreFilters] = useState<boolean>(false);
   const [myLayerSection, setMyLayerSection] = useState<MyLayerSection>('saved');
   const [workflowSection, setWorkflowSection] = useState<WorkflowSection>('cockpit');
-  const [pulseSection, setPulseSection] = useState<PulseSection>('now');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [dockOn, setDockOn] = useState(true);
+  const dockLastY = React.useRef(0);
 
   // --- Ingestion backend (real connectors) ---------------------------------
   // The client holds no tokens. It talks to the ingestion server, which owns
@@ -4994,6 +4990,22 @@ export function App() {
   }, []);
 
   React.useEffect(() => { void bootstrapSession(); }, [bootstrapSession]);
+
+  // Mobile dock: hide while reading, pull the nub to bring the five tabs back.
+  React.useEffect(() => {
+    const onScroll = () => {
+      const y = typeof window === 'undefined' ? 0 : window.scrollY;
+      if (y > dockLastY.current + 10 && y > 48) setDockOn(false);
+      else if (y < dockLastY.current - 10) setDockOn(true);
+      dockLastY.current = y;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  React.useEffect(() => {
+    if (menuOpen) setDockOn(false);
+  }, [menuOpen]);
 
   // --- Location & geo --------------------------------------------------------
   // A viewer's coarse position, for "what's around me". Set only by an
@@ -5103,7 +5115,6 @@ export function App() {
     if (id === 'nearby') setNearbySection('stream');
     if (id === 'mylayer') setMyLayerSection('saved');
     if (id === 'workflows') setWorkflowSection('active');
-    if (id === 'pulse') setPulseSection('now');
   };
   const [selectedObjectType, setSelectedObjectType] = useState<string>('all');
   const [selectedLocation, setSelectedLocation] = useState<string>('Your area');
@@ -6643,7 +6654,6 @@ export function App() {
     if (target.tab === 'nearby') setNearbySection(target.section ?? 'stream');
     if (target.tab === 'mylayer') setMyLayerSection(target.section ?? 'saved');
     if (target.tab === 'workflows') setWorkflowSection(target.section ?? 'cockpit');
-    if (target.tab === 'pulse') setPulseSection('now');
   };
 
   return (
@@ -6829,32 +6839,6 @@ export function App() {
                 onOpenTea={(slug) => setSelectedTeaSlug(slug)}
               />
             </div>
-            <div className="mb-4">
-              {/* Town Pulse — a live number, tappable to a category breakdown (§5.1). */}
-              <PulseBanner
-                value={String(objects.length)}
-                label="things happening around you right now"
-                spark={sparkFromObjects(objects)}
-                detail={
-                  <div className="space-y-1">
-                    {(() => {
-                      const counts: Record<string, number> = {};
-                      for (const o of objects) {
-                        const c = o.category ?? 'Uncategorised';
-                        counts[c] = (counts[c] ?? 0) + 1;
-                      }
-                      return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([cat, n]) => (
-                        <div key={cat} className="flex items-center justify-between">
-                          <span className="text-[11px] text-[#8A93A6]">{cat}</span>
-                          <span className="font-mono-live text-[11px] text-[#43D17A]">{n}</span>
-                        </div>
-                      ));
-                    })()}
-                  </div>
-                }
-              />
-            </div>
-
             {/* Primary discovery categories — the spec's limited four, not the
                 old overloaded pill rows. Selecting one always returns to the
                 stream (typed by that category); Tea/Today/Pursuits/Quests and
@@ -6998,45 +6982,6 @@ export function App() {
                   onClick={() => setWorkflowSection(id)}
                   className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
                     workflowSection === id
-                      ? 'bg-[#43D17A] text-[#090B10] border-[#43D17A]'
-                      : 'bg-[#10141C] text-[#43D17A] border-[#232A38]'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'pulse' && (
-          <div className="max-w-3xl mx-auto px-4 pt-4">
-            <div className="mb-4">
-              {/* Live network — a mono readout, not a dead graphic (§7.5). */}
-              <PulseBanner
-                value={String(pulseRecentlyVerified.length)}
-                label="things verified in your network"
-                spark="0,20 10,16 20,18 30,10 40,13 50,6 64,8"
-                accent="var(--today)"
-                detail={
-                  <p className="text-[11px] text-[#8A93A6]">
-                    Confirmations and cross-checks that moved an object up the trust ladder.
-                  </p>
-                }
-              />
-            </div>
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-              {([
-                ['now', 'Now'],
-                ['local', 'Local'],
-                ['groups', 'Groups'],
-                ['signals', 'Signals']
-              ] as [PulseSection, string][]).map(([id, label]) => (
-                <button
-                  key={id}
-                  onClick={() => setPulseSection(id)}
-                  className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
-                    pulseSection === id
                       ? 'bg-[#43D17A] text-[#090B10] border-[#43D17A]'
                       : 'bg-[#10141C] text-[#43D17A] border-[#232A38]'
                   }`}
@@ -8508,38 +8453,33 @@ export function App() {
           />
         )}
 
-        {activeTab === 'pulse' && (
-          <Pulse
-            pulseSection={pulseSection}
-            townHealth={townHealth}
-            pulseNow={pulseNow}
-            pulseNotices={pulseNotices}
-            pulseRecentlyVerified={pulseRecentlyVerified}
-            pulseGroupSignals={pulseGroupSignals}
-            objects={objects}
-            setActiveTab={setActiveTab}
-            setMyLayerSection={setMyLayerSection}
-            setSelectedObjectForDetail={setSelectedObjectForDetail}
-            formatSourceDate={formatSourceDate}
-            selectedLocation={selectedLocation}
-          />
-        )}
-
         </main>
       </div>
 
-      {/* MOBILE BOTTOM BAR. Same five doors, icon plus short label. */}
+      {/* MOBILE DOCK. Five tabs. Hides while you read; a pull nub brings it back. */}
+      <button
+        type="button"
+        aria-label="Show navigation"
+        onClick={() => setDockOn(true)}
+        className={`md:hidden fixed bottom-0 left-1/2 z-40 -translate-x-1/2 h-5 w-16 rounded-t-full bg-[#1c1f29] border border-b-0 border-[#3c4a42] cursor-pointer transition-transform ${
+          dockOn || menuOpen ? 'translate-y-full pointer-events-none' : ''
+        }`}
+      >
+        <span className="mx-auto mt-1.5 block h-1 w-8 rounded-full bg-[#86948a]" />
+      </button>
       <nav
         aria-label="Primary"
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#1c1f29]/98 backdrop-blur-xl border-t border-[#3c4a42] flex shadow-lg"
+        className={`md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#1c1f29]/98 backdrop-blur-xl border-t border-[#3c4a42] flex shadow-lg transition-transform duration-200 ${
+          dockOn && !menuOpen ? 'translate-y-0' : 'translate-y-full'
+        }`}
       >
         <button
           type="button"
-          onClick={() => setMenuOpen((v) => !v)}
+          onClick={() => { setMenuOpen((v) => !v); setDockOn(false); }}
           aria-label="Menu"
           aria-expanded={menuOpen}
           title="Menu"
-          className={`flex-1 flex flex-col items-center justify-center gap-1 pt-2 cursor-pointer transition-colors ${
+          className={`flex-1 flex flex-col items-center justify-center gap-1 pt-2 pb-2 cursor-pointer transition-colors ${
             menuOpen ? 'text-[#4edea3] font-bold border-t-2 border-[#4edea3]' : 'text-[#bbcabf]'
           }`}
         >
@@ -8554,7 +8494,7 @@ export function App() {
               key={d.id}
               onClick={() => goToDestination(d.id)}
               aria-current={active ? 'page' : undefined}
-              className={`flex-1 flex flex-col items-center justify-center gap-1 pt-2 cursor-pointer transition-colors ${
+              className={`flex-1 flex flex-col items-center justify-center gap-1 pt-2 pb-2 cursor-pointer transition-colors ${
                 active ? 'text-[#4edea3] font-bold border-t-2 border-[#4edea3]' : 'text-[#bbcabf]'
               }`}
             >

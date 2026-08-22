@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   BadgeCheck,
-  BarChart3,
   Bookmark,
   BookOpen,
   CalendarDays,
@@ -49,7 +48,6 @@ export type MenuTarget =
   | { tab: 'workflows'; section?:
       | 'cockpit' | 'command' | 'active' | 'completed' | 'inbox'
       | 'sources' | 'money' | 'vault' | 'gate' | 'tea' }
-  | { tab: 'pulse' }
   | { tab: 'capture' };
 
 export interface GeoCity {
@@ -254,7 +252,7 @@ function HostValueCard({
           </span>
         </div>
 
-        <div className="mt-4 grid grid-cols-4 gap-2">
+        <div className="mt-4 grid grid-cols-2 gap-2">
           {(standing.length > 0 ? standing : [
             { label: 'Settled', value: '—' },
             { label: 'Arrived', value: '—' },
@@ -321,7 +319,7 @@ function HostValueCard({
                 Command
               </button>
             </div>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {metrics.map((m) => (
                 <div key={m.label} className="min-w-0">
                   <p className="text-[16px] font-extrabold text-[#16181f]">
@@ -463,7 +461,7 @@ const QUICK: {
   { id: 'market', label: 'Market', icon: ShoppingBag, target: { tab: 'nearby', section: 'market' } },
   { id: 'command', label: 'Command', icon: Landmark, target: { tab: 'workflows', section: 'command' } },
   { id: 'tea', label: 'Tea', icon: Newspaper, target: { tab: 'nearby', section: 'tea' } },
-  { id: 'pulse', label: 'Pulse', icon: BarChart3, target: { tab: 'pulse' } }
+  { id: 'groups', label: 'Groups', icon: Users, target: { tab: 'mylayer', section: 'groups' } }
 ];
 
 export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocation }: MenuSheetProps) {
