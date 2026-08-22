@@ -19,7 +19,6 @@ import { Marketplace } from './components/Marketplace';
 import { Pursuits } from './components/Pursuits';
 import { Inbox } from './components/Inbox';
 import { Quests } from './components/Quests';
-import { LocationChip } from './components/LocationChip';
 import type { GeoPoint } from './components/LocationChip';
 import { ArenaPortal } from './components/ArenaPortal';
 import { LobbyBoard } from './components/LobbyBoard';
@@ -6691,75 +6690,14 @@ export function App() {
         </>
       )}
 
-      {/* Header (M3 TopAppBar) */}
-      <header className="sticky top-0 z-40 bg-[#0f131c]/95 backdrop-blur-xl border-b border-[#3c4a42] transition-all">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setMenuOpen((v) => !v)}
-                aria-label="Menu"
-                aria-expanded={menuOpen}
-                title="Menu"
-                className={`h-8 w-8 rounded-full border flex items-center justify-center cursor-pointer ${
-                  menuOpen
-                    ? 'bg-[#10b981] text-[#00422b] border-[#10b981]'
-                    : 'bg-[#1c1f29] text-[#dfe2ef] border-[#3c4a42]'
-                }`}
-              >
-                <Menu className="w-4 h-4" />
-              </button>
-              <LocationChip
-                label={selectedLocation}
-                locating={locating}
-                locError={locError}
-                hasLocation={userLocation !== null}
-                onLocate={locate}
-                onSelectCity={chooseCity}
-                onClearLocation={clearLocation}
-              />
-            </div>
-
-            <div className="relative flex-1 max-w-md hidden sm:block">
-              <Search className="w-4 h-4 absolute left-3 top-2.5 text-[#bbcabf]" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search nearby places, jobs, services..."
-                className="w-full bg-[#1c1f29] text-[#dfe2ef] text-xs rounded-full pl-9 pr-4 py-2 border border-[#3c4a42] focus:outline-none focus:border-[#4edea3] placeholder:text-[#bbcabf]"
-              />
-            </div>
-
-            <button
-              onClick={() => setCaptureOpen(true)}
-              title="Capture something"
-              className="h-8 w-8 rounded-full text-xs font-bold bg-[#10b981] text-[#00422b] flex items-center justify-center cursor-pointer hover:opacity-90"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-
-            <button
-              onClick={() => setArchitectMode(!architectMode)}
-              className="h-8 w-8 rounded-full text-xs font-bold border bg-[#1c1f29] text-[#dfe2ef] border-[#3c4a42] flex items-center justify-center cursor-pointer"
-            >
-              <Terminal className="w-4 h-4" />
-            </button>
-          </div>
-
-        </div>
-      </header>
-
-      {/* Shell: persistent rail on the left from md up, bottom bar below that.
-          Both read from DESTINATIONS so they cannot disagree. */}
+      {/* Roofless: no top bar. The page opens onto the sky. Menu, capture
+          and place live on the dock / shelf, not as a lid over the house. */}
       <div className="flex-1 flex w-full">
 
-        {/* DESKTOP / TABLET RAIL. Slim by default, expands on hover so it
-            never eats horizontal space the content needs. */}
+        {/* DESKTOP / TABLET RAIL. Full height now the header is gone. */}
         <nav
           aria-label="Primary"
-          className="hidden md:flex flex-col shrink-0 w-[76px] hover:w-60 transition-all duration-200 border-r border-[#232A38] bg-[#10141C] sticky top-[57px] h-[calc(100vh-57px)] py-4 group/rail overflow-hidden"
+          className="hidden md:flex flex-col shrink-0 w-[76px] hover:w-60 transition-all duration-200 border-r border-[#232A38] bg-[#10141C] sticky top-0 h-screen py-4 group/rail overflow-hidden"
         >
           <button
             type="button"

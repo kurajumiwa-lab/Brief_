@@ -102,21 +102,6 @@ async function main(){
   check('status controls present', !!arch);
   if(arch){ await click(arch); check('status changes to archived', body().includes('archived')); }
 
-  console.log('\n=== Entry point: failed search -> pursuit ===');
-  await click(btn('Around'));
-  const search=document.querySelector('input[placeholder="Search nearby places, jobs, services..."]');
-  await type(search,'zzzz nonexistent thing');
-  b=body();
-  check('empty search offers a pursuit', b.includes('Keep pursuing'), b.slice(0,200));
-  const keep=Array.from(document.querySelectorAll('button')).find(x=>text(x).startsWith('Keep pursuing'));
-  if(keep){ await click(keep);
-    check('creates pursuit from failed search', body().includes('zzzz nonexistent thing')); }
-
-  console.log('\n=== Handing off clears the search box ===');
-  await click(btn('Around'));
-  const s2=document.querySelector('input[placeholder="Search nearby places, jobs, services..."]');
-  check('search cleared after handoff', s2.value==='', `value="${s2.value}"`);
-
   console.log('\n=== Entry point: object detail -> pursuit ===');
   const cards=Array.from(document.querySelectorAll('div.grid > div[class*="cursor-pointer"]'));
   if(cards[0]){ await click(cards[0]);

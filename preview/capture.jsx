@@ -47,8 +47,9 @@ async function main(){
 
   const baseline=cards().length;
   console.log('=== CAPTURE: drop something here ===');
-  const cap=document.querySelector('button[title="Capture something"]');
-  check('capture button in header', !!cap);
+  await click(btn('Menu'));
+  const cap=btn('New')||btn('Start something');
+  check('capture lives on the shelf, not a header', !!cap);
   await click(cap);
   check('shows "Drop something here."', body().includes('Drop something here.'));
   check('shows supporting copy', body().includes('A message, link, listing, event, opportunity or anything worth keeping'));
@@ -69,7 +70,8 @@ async function main(){
   check('saved only after confirmation', calls.some((c)=>c.startsWith('POST /ingest/api/brief-it/save')), calls.join(' | '));
 
   console.log('\n=== CAPTURE refuses chatter ===');
-  await click(document.querySelector('button[title="Capture something"]'));
+  await click(btn('Menu'));
+  await click(btn('New')||btn('Start something'));
   const ta2=document.querySelector('textarea');
   await setVal(ta2,'Hey everyone good morning');
   await click(btn('Read it'));
