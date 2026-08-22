@@ -459,27 +459,41 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
     if (!open) setCardOpen(false);
   }, [open]);
 
+  React.useEffect(() => {
+    if (!open) return;
+    const html = document.documentElement;
+    const body = document.body;
+    const prevHtml = html.style.overflow;
+    const prevBody = body.style.overflow;
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    return () => {
+      html.style.overflow = prevHtml;
+      body.style.overflow = prevBody;
+    };
+  }, [open]);
+
   if (!open) return null;
 
   return (
-    <>
-      <button
-        aria-label="Dismiss menu"
-        onClick={onClose}
-        className="fixed inset-0 z-[45] bg-black/25 cursor-pointer"
-      />
-      <div
+    <div
+      className="fixed inset-x-0 top-0 z-[45] flex"
+      style={{ bottom: 56 }}
+    >
+      <aside
         role="dialog"
         aria-label="Menu"
-        className="fixed top-0 bottom-0 left-0 z-[50] flex flex-col overflow-x-hidden overflow-y-auto border-r border-[#d7dbe8] shadow-[8px_0_24px_rgba(0,0,0,0.22)]"
+        aria-modal="true"
+        className="h-full w-1/3 max-w-[33.333%] min-w-0 shrink-0 overflow-y-auto overflow-x-hidden border-r border-[#d7dbe8] shadow-[8px_0_24px_rgba(0,0,0,0.22)]"
         style={{
           background: '#f7f8fb',
-          width: '33.333vw',
-          maxWidth: '33.333vw',
-          minWidth: 0
+          overscrollBehavior: 'contain',
+          touchAction: 'pan-y',
+          WebkitOverflowScrolling: 'touch'
         }}
+        onWheel={(e) => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
       >
-        <div className="overflow-y-auto overflow-x-hidden flex-1">
           <HostValueCard
             expanded={cardOpen}
             onExpand={() => setCardOpen(true)}
@@ -553,7 +567,7 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
                     className="flex w-full items-center gap-2 px-2.5 py-2.5 text-left cursor-pointer"
                   >
                     <span className="text-[18px] leading-none w-6 text-center">{r.flag}</span>
-                    <span className="text-[15px] font-semibold text-[#1c2340]">{r.label}</span>
+                    <span className="text-[13px] font-semibold text-[#1c2340] truncate">{r.label}</span>
                     {selectedLocation.toLowerCase().includes(r.city.label.toLowerCase()) ||
                     selectedLocation.toLowerCase() === r.label.toLowerCase() ? (
                       <span className="ml-auto text-[10px] font-extrabold text-[#0f766e]">Here</span>
@@ -563,9 +577,16 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
               </Section>
             </>
           )}
-        </div>
-      </div>
-    </>
+      </aside>
+      <button
+        type="button"
+        aria-label="Dismiss menu"
+        onClick={onClose}
+        className="h-full min-w-0 flex-1 bg-black/20 cursor-pointer"
+        style={{ touchAction: 'none' }}
+        onTouchMove={(e) => e.preventDefault()}
+      />
+    </div>
   );
 }
 

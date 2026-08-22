@@ -208,13 +208,23 @@ if (servingFrontend) {
   // Static assets: JS/CSS bundles, images, etc. `index: false` so '/' is
   // handled by the explicit fallback below rather than a silent directory
   // serve, and so an asset miss is not masked by a directory index.
-  app.use(express.static(FRONTEND_DIST, { index: false }));
+  app.use(express.static(FRONTEND_DIST, {
+    index: false,
+    setHeaders: (res, filePath) => {
+      // Telegram Mini Apps cache index.html hard. A stale shell keeps serving
+      // the previous hashed bundle, so UI fixes never appear in the WebView.
+      if (filePath.endsWith('index.html')) {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+      }
+    }
+  }));
 
   // SPA fallback: any GET that is neither the API nor a real asset resolves to
   // index.html, so client-side routes (e.g. /marketplace) do not 404.
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api/')) return next(); // API miss: 404 as API, never the SPA shell
     if (req.path.includes('.')) return next();       // a real asset request; 404 if absent
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.sendFile(path.join(FRONTEND_DIST, 'index.html'));
   });
 }

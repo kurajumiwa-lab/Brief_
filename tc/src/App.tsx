@@ -5003,7 +5003,8 @@ export function App() {
   }, []);
 
   React.useEffect(() => {
-    if (menuOpen) setDockOn(false);
+    // Menu is a screen: keep the five-tab dock up while it is open.
+    if (menuOpen) setDockOn(true);
   }, [menuOpen]);
 
   // --- Location & geo --------------------------------------------------------
@@ -8399,21 +8400,21 @@ export function App() {
         type="button"
         aria-label="Show navigation"
         onClick={() => setDockOn(true)}
-        className={`md:hidden fixed bottom-0 left-1/2 z-40 -translate-x-1/2 h-5 w-16 rounded-t-full bg-[#1c1f29] border border-b-0 border-[#3c4a42] cursor-pointer transition-transform ${
-          dockOn || menuOpen ? 'translate-y-full pointer-events-none' : ''
+        className={`md:hidden fixed bottom-0 left-1/2 z-[55] -translate-x-1/2 h-5 w-16 rounded-t-full bg-[#1c1f29] border border-b-0 border-[#3c4a42] cursor-pointer transition-transform ${
+          dockOn ? 'translate-y-full pointer-events-none' : ''
         }`}
       >
         <span className="mx-auto mt-1.5 block h-1 w-8 rounded-full bg-[#86948a]" />
       </button>
       <nav
         aria-label="Primary"
-        className={`md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#1c1f29]/98 backdrop-blur-xl border-t border-[#3c4a42] flex shadow-lg transition-transform duration-200 ${
-          dockOn && !menuOpen ? 'translate-y-0' : 'translate-y-full'
+        className={`md:hidden fixed bottom-0 inset-x-0 z-[55] bg-[#1c1f29]/98 backdrop-blur-xl border-t border-[#3c4a42] flex shadow-lg transition-transform duration-200 ${
+          dockOn ? 'translate-y-0' : 'translate-y-full'
         }`}
       >
         <button
           type="button"
-          onClick={() => { setMenuOpen((v) => !v); setDockOn(false); }}
+          onClick={() => { setMenuOpen((v) => !v); setDockOn(true); }}
           aria-label="Menu"
           aria-expanded={menuOpen}
           title="Menu"
