@@ -4208,81 +4208,9 @@ const ARENA_GAME_GLYPHS: Record<string, string> = {
   other: '🎮'
 };
 
-const ARENA_PLAYERS: ArenaPlayer[] = [
-  { id: 'ply_nyabs', displayName: 'Nyabs', presence: 'online', preferredMode: '1v1', lastSeenAt: '2026-08-15T09:40:00Z' },
-  { id: 'ply_mike', displayName: 'Mike', presence: 'online', preferredMode: '1v1', lastSeenAt: '2026-08-15T09:38:00Z' },
-  { id: 'ply_kip', displayName: 'Kip', presence: 'online', preferredMode: '2v2', lastSeenAt: '2026-08-15T09:30:00Z' },
-  { id: 'ply_jay', displayName: 'Jay', presence: 'nearby', distanceKm: 2.4, preferredMode: '1v1', lastSeenAt: '2026-08-15T09:20:00Z' },
-  { id: 'ply_wanjiku', displayName: 'Wanjiku', presence: 'offline', preferredMode: '1v1', lastSeenAt: '2026-08-14T21:00:00Z' }
-];
 
-const ARENA_IDENTITIES: GameIdentity[] = [
-  { id: 'gid_nyabs_ef', playerId: 'ply_nyabs', gameId: 'efootball', game: 'eFootball', gamerTag: 'NYABS_254', platform: 'Mobile', region: 'KE', verified: true },
-  { id: 'gid_mike_ef', playerId: 'ply_mike', gameId: 'efootball', game: 'eFootball', gamerTag: 'MikeStrikes', platform: 'Mobile', region: 'KE' },
-  { id: 'gid_kip_ef', playerId: 'ply_kip', gameId: 'efootball', game: 'eFootball', gamerTag: 'KipMaster', platform: 'Console', region: 'KE' },
-  { id: 'gid_jay_ef', playerId: 'ply_jay', gameId: 'efootball', game: 'eFootball', gamerTag: 'JayZeroSix', platform: 'Mobile', region: 'KE' },
-  // Same person, different game, separate identity and separate stats.
-  { id: 'gid_mike_cod', playerId: 'ply_mike', gameId: 'cod', game: 'Call of Duty Mobile', gamerTag: 'M1KE_OPS', platform: 'Mobile', region: 'KE' },
-  { id: 'gid_wanjiku_ef', playerId: 'ply_wanjiku', gameId: 'efootball', game: 'eFootball', gamerTag: 'WanjikuW', platform: 'Mobile', region: 'KE' }
-];
 
-const ARENA_STATS: PlayerGameStats[] = [
-  { identityId: 'gid_nyabs_ef', rating: 87, matches: 142, wins: 96, losses: 46 },
-  { identityId: 'gid_mike_ef', rating: 84, matches: 61, wins: 33, losses: 28 },
-  { identityId: 'gid_kip_ef', rating: 86, matches: 78, wins: 44, losses: 34 },
-  { identityId: 'gid_jay_ef', rating: 89, matches: 103, wins: 71, losses: 32 },
-  { identityId: 'gid_mike_cod', rating: 62, matches: 12, wins: 5, losses: 7 },
-  // A brand new identity: no rating, nothing played. Must not render as 0%.
-  { identityId: 'gid_wanjiku_ef', matches: 0, wins: 0, losses: 0 }
-];
 
-const ARENA_CHALLENGES: ArenaChallenge[] = [
-  {
-    id: 'chl_nyabs_1',
-    gameId: 'efootball',
-    mode: '1v1',
-    createdByPlayerId: 'ply_nyabs',
-    stake: 'entry_fee',
-    entryFeeKes: 100,
-    format: 'First to 3',
-    openUntil: '2026-08-15T20:00:00Z',
-    status: 'open',
-    createdAt: '2026-08-15T09:00:00Z'
-  },
-  {
-    id: 'chl_mike_1',
-    gameId: 'efootball',
-    mode: '1v1',
-    createdByPlayerId: 'ply_mike',
-    stake: 'friendly',
-    format: 'Single match',
-    openUntil: '2026-08-15T22:00:00Z',
-    status: 'open',
-    createdAt: '2026-08-15T09:10:00Z'
-  },
-  {
-    id: 'chl_kip_1',
-    gameId: 'efootball',
-    mode: '2v2',
-    createdByPlayerId: 'ply_kip',
-    stake: 'friendly',
-    format: 'Looking for partner',
-    openUntil: '2026-08-15T21:00:00Z',
-    status: 'open',
-    createdAt: '2026-08-15T09:15:00Z'
-  },
-  {
-    id: 'chl_jay_1',
-    gameId: 'efootball',
-    mode: '1v1',
-    createdByPlayerId: 'ply_jay',
-    stake: 'ranked',
-    format: 'First to 3',
-    openUntil: '2026-08-15T19:00:00Z',
-    status: 'open',
-    createdAt: '2026-08-15T08:50:00Z'
-  }
-];
 
 // --- Participation fixtures -------------------------------------------------
 
@@ -4339,100 +4267,15 @@ export const PARTICIPANTS: Participant[] = [];
 
 // --- Arena economy fixtures -------------------------------------------------
 
-const ARENA_AVAILABILITY: PlayerAvailability[] = [
-  { playerId: 'ply_mike', state: 'available', gameId: 'efootball', mode: 'free_match', format: '1v1', window: 'now', locationKind: 'online', updatedAt: '2026-08-15T09:38:00Z' },
-  { playerId: 'ply_kip', state: 'available', gameId: 'efootball', mode: 'league', format: '2v2', window: 'today', locationKind: 'online', lookingForLeague: true, leagueDivision: 'Intermediate', updatedAt: '2026-08-15T09:30:00Z' },
-  { playerId: 'ply_jay', state: 'available', gameId: 'efootball', mode: 'ranked', format: '1v1', window: 'now', locationKind: 'venue', venueId: 'ven_gamehub_kilimani', updatedAt: '2026-08-15T09:20:00Z' },
-  // Busy and offline players must never appear in Available Now.
-  { playerId: 'ply_wanjiku', state: 'busy', gameId: 'efootball', mode: 'friendly', format: '1v1', window: 'today', locationKind: 'online', updatedAt: '2026-08-15T08:00:00Z' },
-  { playerId: 'ply_nyabs', state: 'available', gameId: 'cod', mode: 'free_match', format: '1v1', window: 'now', locationKind: 'venue', venueId: 'ven_gamehub_kilimani', updatedAt: '2026-08-15T09:40:00Z' }
-];
 
-const ARENA_RELIABILITY: ReliabilityRecord[] = [
-  { playerId: 'ply_nyabs', accepted: 150, completed: 142, cancelled: 6, noShows: 0, disputes: 1 },
-  { playerId: 'ply_mike', accepted: 64, completed: 61, cancelled: 3, noShows: 0, disputes: 0 },
-  { playerId: 'ply_kip', accepted: 82, completed: 78, cancelled: 4, noShows: 0, disputes: 0 },
-  // Deliberately unreliable: must sink in the list, not disappear or be banned.
-  { playerId: 'ply_jay', accepted: 110, completed: 96, cancelled: 5, noShows: 6, disputes: 3 },
-  { playerId: 'ply_wanjiku', accepted: 0, completed: 0, cancelled: 0, noShows: 0, disputes: 0 }
-];
 
-const ARENA_TOURNAMENTS: Tournament[] = [
-  {
-    id: 'trn_weekend_cup',
-    name: 'Weekend eFootball Cup',
-    gameId: 'efootball',
-    organizerId: 'ply_nyabs',
-    capacity: 32,
-    registeredPlayerIds: Array.from({ length: 28 }, (_, i) => `ply_reg_${i}`),
-    completedPlayerIds: [],
-    matchesCompleted: 0,
-    status: 'open',
-    startsAt: '2026-08-16T16:00:00Z',
-    venueId: 'ven_gamehub_kilimani',
-    entryPoints: 100,
-    prizeDescription: 'KES 2,000 supermarket voucher'
-  },
-  {
-    id: 'trn_kilimani_league',
-    name: 'Kilimani Midweek League',
-    gameId: 'efootball',
-    organizerId: 'ply_nyabs',
-    capacity: 64,
-    registeredPlayerIds: Array.from({ length: 58 }, (_, i) => `ply_lg_${i}`),
-    // 52 players actually finished: base 150 + the 50-player tier 3500 = 3650,
-    // which is exactly what the ledger credits.
-    completedPlayerIds: Array.from({ length: 52 }, (_, i) => `ply_lg_${i}`),
-    // 18 had never played an Arena tournament; 24 had played one of Nyabs'
-    // previous events. Growth and retention are what the rates reward.
-    newPlayerIds: Array.from({ length: 18 }, (_, i) => `ply_lg_${i}`),
-    repeatPlayerIds: Array.from({ length: 24 }, (_, i) => `ply_lg_${i + 18}`),
-    matchesCompleted: 134,
-    status: 'completed',
-    startsAt: '2026-08-05T16:00:00Z',
-    disputes: 0
-  },
-  // An organizer marking an empty tournament complete: earns nothing, flagged.
-  {
-    id: 'trn_ghost',
-    name: 'Ngara Flash Cup',
-    gameId: 'efootball',
-    organizerId: 'ply_kip',
-    capacity: 16,
-    registeredPlayerIds: [],
-    completedPlayerIds: [],
-    matchesCompleted: 0,
-    status: 'completed',
-    startsAt: '2026-08-12T16:00:00Z'
-  }
-];
 
 const ORGANIZER_RECORDS: OrganizerRecord[] = [
   { organizerId: 'ply_nyabs', tournamentsHosted: 18, playersServed: 423, matchesCompleted: 612, completionRate: 97, disputeRate: 1.2, repeatPlayers: 186, pointsEarned: 42000 },
   { organizerId: 'ply_kip', tournamentsHosted: 2, playersServed: 12, matchesCompleted: 9, completionRate: 40, disputeRate: 15, repeatPlayers: 1, pointsEarned: 300 }
 ];
 
-const ARENA_LEDGER: PointsEntry[] = [
-  // Matches getOrganizerReward for trn_kilimani_league exactly: 150 base
-  // + 52*60 + 18*100 + 24*30 + 3500 milestone.
-  { id: 'pe_1', playerId: 'ply_nyabs', reason: 'organizer_milestone', amount: 9290, at: '2026-08-06T10:00:00Z', refId: 'trn_kilimani_league', note: '52 players completed' },
-  { id: 'pe_2', playerId: 'ply_nyabs', reason: 'tournament_win', amount: 60, at: '2026-08-02T18:00:00Z' },
-  { id: 'pe_3', playerId: 'ply_nyabs', reason: 'match_win', amount: 10, at: '2026-08-13T18:00:00Z' },
-  { id: 'pe_4', playerId: 'ply_nyabs', reason: 'match_complete', amount: 5, at: '2026-08-13T18:00:00Z' },
-  { id: 'pe_5', playerId: 'ply_mike', reason: 'match_complete', amount: 5, at: '2026-08-13T19:00:00Z' },
-  { id: 'pe_6', playerId: 'ply_nyabs', reason: 'community_contribution', amount: 50, at: '2026-08-12T09:00:00Z' },
-  { id: 'pe_7', playerId: 'ply_nyabs', reason: 'redemption', amount: -1000, at: '2026-08-14T12:00:00Z', refId: 'gc_airtime_100' }
-];
 
-const GIFT_CARDS: GiftCard[] = [
-  { id: 'gc_super_500', brand: 'Carrefour', merchant: 'Carrefour Kenya', category: 'supermarket', valueKes: 500, pointsRequired: 5000, redemptionMethod: 'voucher_code', status: 'available', inventory: 40, region: 'Nairobi' },
-  { id: 'gc_gaming_1000', brand: 'GameHub', merchant: 'GameHub Kilimani', category: 'gaming', valueKes: 1000, pointsRequired: 10000, redemptionMethod: 'qr', status: 'available', inventory: 15, region: 'Nairobi' },
-  { id: 'gc_airtime_100', brand: 'Safaricom', merchant: 'Safaricom', category: 'mobile_data', valueKes: 100, pointsRequired: 1000, redemptionMethod: 'voucher_code', status: 'available', inventory: 200, region: 'Nairobi' },
-  { id: 'gc_food_300', brand: 'Java House', merchant: 'Java House', category: 'food', valueKes: 300, pointsRequired: 3000, redemptionMethod: 'qr', status: 'available', inventory: 25, region: 'Nairobi' },
-  { id: 'gc_transport_200', brand: 'Little', merchant: 'Little Cab', category: 'transport', valueKes: 200, pointsRequired: 2000, redemptionMethod: 'voucher_code', status: 'available', inventory: 60, region: 'Nairobi' },
-  { id: 'gc_merch_tee', brand: 'Brief', merchant: 'Brief Store', category: 'merchandise', valueKes: 800, pointsRequired: 9000, redemptionMethod: 'physical_card', status: 'available', inventory: 8, region: 'Nairobi' },
-  { id: 'gc_sold_out', brand: 'IMAX', merchant: 'IMAX Nairobi', category: 'entertainment', valueKes: 700, pointsRequired: 7000, redemptionMethod: 'qr', status: 'sold_out', inventory: 0, region: 'Nairobi' }
-];
 
 const REWARD_POOL_CONTROLS: RewardPoolControls = {
   dailyRedemptionLimit: 50,
@@ -4441,56 +4284,10 @@ const REWARD_POOL_CONTROLS: RewardPoolControls = {
   redeemedThisMonth: 310
 };
 
-const ARENA_VENUES: ArenaVenue[] = [
-  {
-    id: 'ven_gamehub_kilimani',
-    name: 'GameHub Kilimani',
-    locationName: 'Kilimani',
-    distanceKm: 1.2,
-    stations: 8,
-    stationsFree: 3,
-    pricePerHourKes: 150,
-    openUntil: '22:00',
-    gameIds: ['efootball', 'fc_mobile', 'cod'],
-    eventTonight: 'eFootball 16-player cup, 19:00'
-  },
-  {
-    id: 'ven_pixel_westlands',
-    name: 'Pixel Lounge Westlands',
-    locationName: 'Westlands',
-    distanceKm: 4.6,
-    stations: 12,
-    stationsFree: 12,
-    pricePerHourKes: 200,
-    openUntil: '23:00',
-    gameIds: ['efootball', 'ea_fc', 'pubg']
-  },
-  {
-    // Deliberately sparse: no price, no capacity, no event. The card must
-    // simply omit what is unknown instead of inventing plausible values.
-    id: 'ven_corner_ngara',
-    name: 'Corner Play Ngara',
-    locationName: 'Ngara',
-    distanceKm: 6.1,
-    gameIds: ['efootball']
-  }
-];
 
 // Who is physically at a venue right now. The glyph counts these, so an empty
 // venue genuinely renders as zero.
-const ARENA_CHECKINS: { playerId: string; venueId: string; gameId: ArenaGameId }[] = [
-  { playerId: 'ply_mike', venueId: 'ven_gamehub_kilimani', gameId: 'efootball' },
-  { playerId: 'ply_kip', venueId: 'ven_gamehub_kilimani', gameId: 'efootball' },
-  { playerId: 'ply_jay', venueId: 'ven_gamehub_kilimani', gameId: 'efootball' },
-  { playerId: 'ply_nyabs', venueId: 'ven_gamehub_kilimani', gameId: 'cod' }
-];
 
-const ARENA_LISTINGS: ArenaListing[] = [
-  { id: 'lst_ticket_1', kind: 'tournament_ticket', gameId: 'efootball', title: 'Saturday 16-player cup entry', priceKes: 200, sellerPlayerId: 'ply_nyabs', transferPolicy: 'officially_transferable', createdAt: '2026-08-14T10:00:00Z' },
-  { id: 'lst_coach_1', kind: 'coaching', gameId: 'efootball', title: 'Defending and counter-attack coaching, 1 hour', priceKes: 500, sellerPlayerId: 'ply_jay', transferPolicy: 'officially_transferable', createdAt: '2026-08-14T11:00:00Z' },
-  // Present so the boundary is exercised, and refused by canListInArena.
-  { id: 'lst_account_1', kind: 'account', gameId: 'efootball', title: 'Established eFootball account', priceKes: 8000, sellerPlayerId: 'ply_kip', transferPolicy: 'not_supported', createdAt: '2026-08-14T12:00:00Z' }
-];
 
 // ============================================================================
 // 2. SEED DATA
@@ -6475,94 +6272,46 @@ export function App() {
   }, []);
   useEffect(() => { void refreshArenaChallenges(); }, [refreshArenaChallenges]);
   const [matches, setMatches] = useState<ArenaMatch[]>([]);
-  const [arenaView, setArenaView] = useState<'home' | 'find' | 'player'>('home');
-  const [openPlayerId, setOpenPlayerId] = useState<string | null>(null);
-  const [findFreeOnly, setFindFreeOnly] = useState(false);
-  const [findNearby, setFindNearby] = useState(false);
 
   // Availability is the user's own switch. Defaults to the seeded record and
   // is never flipped on by Brief.
-  const [availability, setAvailability] = useState<PlayerAvailability[]>(ARENA_AVAILABILITY);
-  const [ledger, setLedger] = useState<PointsEntry[]>(ARENA_LEDGER);
-  const [giftCards, setGiftCards] = useState<GiftCard[]>(GIFT_CARDS);
-  const [redemptions, setRedemptions] = useState<RedemptionRecord[]>([]);
-  const [tournaments] = useState<Tournament[]>(ARENA_TOURNAMENTS);
+  // Arena entities come from the SERVER — real persisted rows, never a
+  // fixture. The fabricated client-side economy (points ledger, gift cards,
+  // fake availability/reliability, account listings, venue check-ins) is gone.
+  const [arenaPlayers, setArenaPlayers] = useState<any[]>([]);
+  const [arenaVenues, setArenaVenues] = useState<any[]>([]);
+  const [arenaTournaments, setArenaTournaments] = useState<any[]>([]);
+  const [arenaLeaderboard, setArenaLeaderboard] = useState<any[]>([]);
+
+  React.useEffect(() => {
+    let live = true;
+    (async () => {
+      const [p, v, t] = await Promise.all([
+        briefApi.getArenaPlayers(),
+        briefApi.getArenaVenues(),
+        briefApi.getArenaTournaments()
+      ]);
+      if (!live) return;
+      if (p.ok) setArenaPlayers(p.data as any[]);
+      if (v.ok) setArenaVenues(v.data as any[]);
+      if (t.ok) setArenaTournaments(t.data as any[]);
+    })();
+    return () => { live = false; };
+  }, []);
+
+  React.useEffect(() => {
+    let live = true;
+    briefApi.getArenaLeaderboard(arenaGameId).then((r) => {
+      if (live && r.ok) setArenaLeaderboard(r.data as any[]);
+    });
+    return () => { live = false; };
+  }, [arenaGameId]);
+
   const [arenaSection, setArenaSection] = useState<
-    'lobby' | 'available' | 'challenges' | 'tournaments' | 'kings' | 'rewards'
+    'lobby' | 'challenges' | 'tournaments' | 'leaderboard'
   >('lobby');
 
-  const myAvailability = useMemo(
-    () => availability.find((a) => a.playerId === CURRENT_PLAYER_ID && a.gameId === arenaGameId),
-    [availability, arenaGameId]
-  );
-
-  const handleToggleAvailability = (state: AvailabilityState) => {
-    setAvailability((prev) => {
-      const existing = prev.find(
-        (a) => a.playerId === CURRENT_PLAYER_ID && a.gameId === arenaGameId
-      );
-      if (existing) {
-        return prev.map((a) =>
-          a === existing ? { ...a, state, updatedAt: new Date().toISOString() } : a
-        );
-      }
-      return [
-        ...prev,
-        {
-          playerId: CURRENT_PLAYER_ID,
-          state,
-          gameId: arenaGameId,
-          mode: 'free_match' as PlayMode,
-          format: '1v1' as PlayFormat,
-          window: 'now' as AvailabilityWindow,
-          locationKind: 'online' as const,
-          updatedAt: new Date().toISOString()
-        }
-      ];
-    });
-    showToast(
-      state === 'available'
-        ? 'You are listed as available. Only you control this.'
-        : 'You are no longer listed as available.'
-    );
-  };
-
-  const availableNow = useMemo(
-    () =>
-      getAvailablePlayers(
-        {
-          players: ARENA_PLAYERS,
-          availability,
-          identities: ARENA_IDENTITIES,
-          stats: ARENA_STATS,
-          reliability: ARENA_RELIABILITY
-        },
-        { gameId: arenaGameId, excludePlayerId: CURRENT_PLAYER_ID }
-      ),
-    [availability, arenaGameId]
-  );
-
-  const leagueSeekers = useMemo(
-    () => getLeagueSeekers({ players: ARENA_PLAYERS, availability }, arenaGameId),
-    [availability, arenaGameId]
-  );
-
-  const participationToday = useMemo(
-    () => getParticipationEarnedOn(ledger, CURRENT_PLAYER_ID, '2026-08-15T00:00:00Z'),
-    [ledger]
-  );
-
-  const myBalance = useMemo(
-    () => getPointsBalance(ledger, CURRENT_PLAYER_ID),
-    [ledger]
-  );
-
   // Challenges addressed to this user, awaiting a decision.
-  const incomingChallenges = useMemo(
-    () => challenges.filter((c) => c.toPlayerId === CURRENT_PLAYER_ID && c.status === 'pending'),
-    [challenges]
-  );
-
   // Gaming activity detected in groups the user is ALREADY a member of.
   // Runs over the access-checked indexes, so an inaccessible group can never
   // contribute a signal.
@@ -6636,11 +6385,6 @@ export function App() {
     return out;
   }, [visibleGroups, groupIndexes]);
 
-  const abuseFlags = useMemo(
-    () => detectAbuse(matches, tournaments, ARENA_RELIABILITY, '2026-08-15T10:00:00Z'),
-    [matches, tournaments]
-  );
-
   const handleChallengePlayer = (targetId: string) => {
     const now = new Date('2026-08-15T10:00:00Z').toISOString();
     const created = createDirectChallenge(
@@ -6700,81 +6444,12 @@ export function App() {
     showToast('Challenge accepted. Match created.');
   };
 
-  const handleRedeemGiftCard = (card: GiftCard) => {
-    const gate = canRedeemGiftCard(card, {
-      balance: myBalance,
-      region: 'Nairobi',
-      controls: REWARD_POOL_CONTROLS,
-      now: '2026-08-15T10:00:00Z'
-    });
-    if (!gate.allowed) {
-      showToast(gate.reason);
-      return;
-    }
-    const id = `rdm_${card.id}_${Date.now()}`;
-    // Recorded as processing. No voucher code is invented here -- a code only
-    // exists once a real provider issues one.
-    setRedemptions((prev) => [
-      ...prev,
-      {
-        id,
-        giftCardId: card.id,
-        playerId: CURRENT_PLAYER_ID,
-        pointsSpent: card.pointsRequired,
-        at: new Date().toISOString(),
-        status: 'processing'
-      }
-    ]);
-    setLedger((prev) => [
-      ...prev,
-      {
-        id: `pe_${id}`,
-        playerId: CURRENT_PLAYER_ID,
-        reason: 'redemption',
-        amount: -card.pointsRequired,
-        at: new Date().toISOString(),
-        refId: card.id
-      }
-    ]);
-    setGiftCards((prev) =>
-      prev.map((g) => (g.id === card.id ? { ...g, inventory: g.inventory - 1 } : g))
-    );
-    showToast('Redemption submitted. Your code appears once the merchant issues it.');
-  };
-
   const arenaGame = useMemo(
     () => ARENA_GAMES.find((g) => g.id === arenaGameId) ?? ARENA_GAMES[0],
     [arenaGameId]
   );
 
   // The lobby shows open challenges for the selected game only.
-  const lobbyChallenges = useMemo(
-    () =>
-      challenges.filter(
-        (c) => c.gameId === arenaGameId && c.status === 'open'
-      ),
-    [challenges, arenaGameId]
-  );
-
-  const findResults = useMemo(
-    () =>
-      findGameCandidates(
-        {
-          gameId: arenaGameId,
-          location: findNearby ? 'nearby' : 'any',
-          freeOnly: findFreeOnly
-        },
-        {
-          players: ARENA_PLAYERS,
-          identities: ARENA_IDENTITIES,
-          stats: ARENA_STATS,
-          challenges,
-          excludePlayerId: CURRENT_PLAYER_ID
-        }
-      ),
-    [arenaGameId, challenges, findFreeOnly, findNearby]
-  );
-
   const handleAcceptChallenge = async (challenge: ArenaChallenge) => {
     // Acceptance goes through the SERVER: it creates a real match and marks
     // the challenge accepted, idempotently. A stale challenge is refused by
@@ -6809,33 +6484,8 @@ export function App() {
   };
 
   // Venues that actually host the selected game, nearest first.
-  const nearbyVenues = useMemo(
-    () =>
-      ARENA_VENUES.filter((v) => v.gameIds.includes(arenaGameId)).sort(
-        (a, b) => (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity)
-      ),
-    [arenaGameId]
-  );
-
   // Live activity per game: open challenges plus players checked in at a
   // venue. Drives the count on each game chip, so the selector is dynamic.
-  const gameActivity = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const g of ARENA_GAMES) {
-      const open = challenges.filter(
-        (c) => c.gameId === g.id && c.status === 'open'
-      ).length;
-      const atVenues = ARENA_CHECKINS.filter((c) => c.gameId === g.id).length;
-      counts[g.id] = open + atVenues;
-    }
-    return counts;
-  }, [challenges]);
-
-  const openPlayer = useMemo(
-    () => ARENA_PLAYERS.find((p) => p.id === openPlayerId) ?? null,
-    [openPlayerId]
-  );
-
   const [savedGroupEntryIds, setSavedGroupEntryIds] = useState<string[]>([]);
   const [commandText, setCommandText] = useState('');
   const [commandResult, setCommandResult] = useState<GroupCommandResult | null>(null);
@@ -8209,923 +7859,92 @@ export function App() {
             <div>
               <h2 className="text-lg font-extrabold text-[#F3F1E7]">Arena</h2>
               <p className="text-[11px] text-[#8A93A6] leading-snug mt-1">
-                Players looking for a game, an opponent or a squad. Not a feed.
+                Gather with people to play, host and discover experiences. Not a competition.
               </p>
             </div>
 
-            {/* Jumbotron (§5.4): rotating, tappable banners on the static lobby
-                ground. Real events only — the live open-matchroom count and the
-                real-money gate — never a dead graphic. */}
-            <JumbotronBanner
-              items={[
-                ...(arenaMoney && !arenaMoney.enabled
-                  ? [{
-                      id: 'compliance',
-                      glyph: '🔒',
-                      title: 'Brief does not handle match money',
-                      meta: 'Stakes are arranged directly between players. Tap for why.',
-                      urgent: true,
-                      detail: [
-                        'Brief holds no stakes and pays out no winnings.',
-                        ...arenaMoney.requirements.filter((r) => !r.met).map((r) => r.label)
-                      ]
-                    }]
-                  : []),
-                {
-                  id: 'matchrooms',
-                  glyph: ARENA_GAME_GLYPHS[arenaGame.id] ?? '🎮',
-                  title: arenaGame.name,
-                  meta: `${gameActivity[arenaGame.id] ?? 0} matchroom${(gameActivity[arenaGame.id] ?? 0) === 1 ? '' : 's'} open now`,
-                  urgent: false
-                }
-              ]}
-              onOpen={(id) => {
-                if (id === 'matchrooms') setArenaView('find');
-              }}
-            />
-
-            {/* Presence chip — a real count, pulses only when the number changes. */}
-            <div className="flex items-center gap-2 px-1">
-              <span className="brief-breathe h-2 w-2 rounded-full bg-[#43D17A]" />
-              <span className="font-mono-live text-[11px] text-[#43D17A]">
-                {Object.values(gameActivity).reduce((a, b) => a + b, 0)} in the lobby now
-              </span>
-            </div>
-
-            {/* Game selection — immersive portals from the Game Theme Engine.
-                Each game is its own world; activity is real (open matchrooms +
-                check-ins), never a fabricated player count. */}
             <ArenaPortal
               games={ARENA_GAMES}
-              activity={gameActivity}
+              activity={{}}
               selectedId={arenaGameId}
-              onSelect={(id) => {
-                setArenaGameId(id);
-                setArenaView('home');
-              }}
-              onFind={() => setArenaView('find')}
+              onSelect={(id) => { setArenaGameId(id); }}
+              onFind={() => setArenaSection('challenges')}
             />
 
-            {/* Availability node. The dot is the signal, not decoration. */}
-            {arenaView === 'home' && (
-              <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span
-                      className={`w-2 h-2 rounded-full shrink-0 ${
-                        myAvailability?.state === 'available'
-                          ? 'bg-[#43D17A]'
-                          : myAvailability?.state === 'busy'
-                          ? 'bg-[#E8A33D]'
-                          : 'bg-[#4B5162]'
-                      }`}
-                    />
+            <div className="flex flex-wrap gap-1.5">
+              {([
+                ['lobby', 'Lobby'],
+                ['challenges', `Challenges${challenges.length > 0 ? ` (${challenges.length})` : ''}`],
+                ['tournaments', `Tournaments${arenaTournaments.length > 0 ? ` (${arenaTournaments.length})` : ''}`],
+                ['leaderboard', 'Leaderboard']
+              ] as [typeof arenaSection, string][]).map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => setArenaSection(key)}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer border ${
+                    arenaSection === key
+                      ? 'bg-[#10141C] text-[#43D17A] border-[#43D17A]'
+                      : 'bg-[#10141C] text-[#43D17A] border-[#232A38]'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {arenaSection === 'lobby' && (
+              <LobbyBoard gameId={({ pubg: 'pubg_mobile', cod: 'cod_mobile', ea_fc: 'fc_mobile' } as Record<string, string>)[arenaGameId] ?? arenaGameId} />
+            )}
+
+            {arenaSection === 'challenges' && (
+              <div className="space-y-2">
+                {challenges.length === 0 && (
+                  <p className="text-xs text-[#8A93A6]">No open challenges for {arenaGame.name} right now.</p>
+                )}
+                {challenges.map((c) => (
+                  <div key={c.id} className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3 flex items-center justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="text-xs font-extrabold text-[#F3F1E7]">
-                        {myAvailability?.state === 'available'
-                          ? `Available for ${PLAY_MODE_LABELS[myAvailability.mode]}`
-                          : myAvailability?.state === 'busy'
-                          ? 'Busy'
-                          : 'Not available'}
-                      </p>
-                      <p className="text-[9px] text-[#4B5162]">
-                        {arenaGame.shortName}
-                        {myAvailability?.state === 'available'
-                          ? ` - ${myAvailability.format} - ${myAvailability.window === 'now' ? 'Now' : 'Today'}`
-                          : ''}
-                      </p>
+                      <p className="text-xs font-extrabold text-[#F3F1E7]">{c.mode} · {c.stake === 'friendly' ? 'Friendly' : c.stake === 'ranked' ? 'Ranked' : 'Entry fee'}</p>
+                      {c.entryFeeKes ? <p className="text-[10px] text-[#8A93A6]">KES {c.entryFeeKes}</p> : null}
                     </div>
-                  </div>
-                  <div className="flex gap-1 shrink-0">
-                    {(['available', 'busy', 'offline'] as AvailabilityState[]).map((st) => (
-                      <button
-                        key={st}
-                        onClick={() => handleToggleAvailability(st)}
-                        className={`px-2 py-1 rounded-lg text-[9px] font-extrabold cursor-pointer border ${
-                          (myAvailability?.state ?? 'offline') === st
-                            ? 'bg-[#43D17A] text-[#090B10] border-[#43D17A]'
-                            : 'bg-[#10141C] text-[#43D17A] border-[#232A38]'
-                        }`}
-                      >
-                        {st === 'available' ? 'Available' : st === 'busy' ? 'Busy' : 'Offline'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Compact section switcher, not six giant cards. */}
-            {/* AVAILABILITY NODE. The first thing you see on entering Arena:
-                how many people are actually available right now, and one way
-                to act on it. It sits above the section pills so it is part of
-                the entry point rather than one tab's content. Availability is
-                a state shown in context, never a navigation destination. */}
-            {arenaView === 'home' && (
-              <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-4 flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`w-2 h-2 rounded-full shrink-0 ${
-                        availableNow.length > 0 ? 'bg-[#43D17A]' : 'bg-[#4B5162]'
-                      }`}
-                    />
-                    <p className="text-sm font-extrabold text-[#F3F1E7]">
-                      {availableNow.length}{' '}
-                      {availableNow.length === 1 ? 'player' : 'players'} available now
-                    </p>
-                  </div>
-                  <p className="text-[10px] text-[#8A93A6] mt-0.5">
-                    Ready to play {arenaGame.name}. Availability is set by each
-                    player and expires on its own.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setArenaView('find')}
-                  className="shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold bg-[#43D17A] text-[#090B10] cursor-pointer"
-                >
-                  Find Match
-                </button>
-              </div>
-            )}
-
-            {arenaView === 'home' && (
-              <div className="flex flex-wrap gap-1.5">
-                {([
-                  ['lobby', 'Play Now'],
-                  ['available', `Players (${availableNow.length})`],
-                  ['challenges', `Challenges${incomingChallenges.length > 0 ? ` (${incomingChallenges.length})` : ''}`],
-                  ['tournaments', 'Tournaments'],
-                  ['kings', 'Kings & Queens'],
-                  ['rewards', 'Rewards']
-                ] as [typeof arenaSection, string][]).map(([key, label]) => (
-                  <button
-                    key={key}
-                    onClick={() => setArenaSection(key)}
-                    className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer border ${
-                      arenaSection === key
-                        ? 'bg-[#10141C] text-[#43D17A] border-[#43D17A]'
-                        : 'bg-[#10141C] text-[#43D17A] border-[#232A38]'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {arenaView === 'home' && arenaSection === 'available' && (
-              <div className="space-y-3">
-                <div>
-                  <h3 className="text-[11px] font-extrabold text-[#4B5162]">
-                    Players available now
-                  </h3>
-                  <p className="text-[10px] text-[#8A93A6] mt-0.5">
-                    Only players who switched availability on themselves.
-                  </p>
-                </div>
-                {availableNow.length === 0 && (
-                  <p className="text-xs text-[#8A93A6]">
-                    Nobody is listed as available for {arenaGame.name}.
-                  </p>
-                )}
-                {availableNow.map((e) => {
-                  const venue = e.availability.venueId
-                    ? ARENA_VENUES.find((v) => v.id === e.availability.venueId)
-                    : undefined;
-                  return (
-                    <div
-                      key={e.player.id}
-                      className={`bg-[#10141C] border rounded-2xl p-3 flex items-center gap-3 ${
-                        e.visibility === 'reduced' ? 'border-[#10141C] opacity-70' : 'border-[#232A38]'
-                      }`}
-                    >
-                      <span className="w-7 h-7 rounded-full bg-[#10141C] text-[#43D17A] text-[10px] font-extrabold flex items-center justify-center shrink-0">
-                        {e.player.displayName.slice(0, 2).toUpperCase()}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-extrabold text-[#F3F1E7] flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#43D17A] shrink-0" />
-                          {e.player.displayName}
-                        </p>
-                        <p className="text-[9px] text-[#4B5162] mt-0.5">
-                          {arenaGame.shortName} - {PLAY_MODE_LABELS[e.availability.mode]} -{' '}
-                          {e.availability.format} -{' '}
-                          {/* Venue name or "Online". Never a coordinate. */}
-                          {e.availability.locationKind === 'venue'
-                            ? venue
-                              ? venue.name
-                              : 'At a venue'
-                            : 'Online'}
-                        </p>
-                        <p className="text-[9px] text-[#8A93A6] mt-0.5">
-                          {e.stats
-                            ? `${e.stats.wins}W / ${e.stats.losses}L`
-                            : 'No matches yet'}
-                          {typeof e.reliability === 'number'
-                            ? ` - ${e.reliability}% reliability`
-                            : ' - reliability not established'}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => handleChallengePlayer(e.player.id)}
-                        className="shrink-0 px-3 py-1.5 rounded-xl bg-[#43D17A] text-[#090B10] font-extrabold text-[10px] cursor-pointer"
-                      >
-                        Challenge
-                      </button>
-                    </div>
-                  );
-                })}
-
-                {leagueSeekers.length > 0 && (
-                  <div className="pt-2">
-                    <h3 className="text-[11px] font-extrabold text-[#4B5162] mb-2">
-                      Looking for league
-                    </h3>
-                    {leagueSeekers.map(({ player, availability: av }) => (
-                      <div
-                        key={player.id}
-                        className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3 flex items-center justify-between gap-3"
-                      >
-                        <div className="min-w-0">
-                          <p className="text-xs font-extrabold text-[#F3F1E7]">
-                            {player.displayName}
-                          </p>
-                          <p className="text-[9px] text-[#4B5162] mt-0.5">
-                            {arenaGame.shortName}
-                            {av.leagueDivision ? ` - ${av.leagueDivision}` : ''} - available{' '}
-                            {av.window === 'now' ? 'now' : av.window === 'today' ? 'today' : 'this week'}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => showToast('Invite sent to join your league.')}
-                          className="shrink-0 px-3 py-1.5 rounded-xl bg-[#10141C] text-[#43D17A] font-extrabold text-[10px] cursor-pointer border border-[#232A38]"
-                        >
-                          Invite
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {arenaView === 'home' && arenaSection === 'challenges' && (
-              <div className="space-y-2">
-                <h3 className="text-[11px] font-extrabold text-[#4B5162]">
-                  Challenges received
-                </h3>
-                {incomingChallenges.length === 0 && (
-                  <p className="text-xs text-[#8A93A6]">No challenges waiting for you.</p>
-                )}
-                {incomingChallenges.map((c) => {
-                  const from = ARENA_PLAYERS.find((p) => p.id === c.createdByPlayerId);
-                  return (
-                    <div key={c.id} className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3">
-                      <p className="text-xs font-extrabold text-[#F3F1E7]">
-                        {from ? from.displayName : 'A player'} challenged you
-                      </p>
-                      <p className="text-[9px] text-[#4B5162] mt-0.5">
-                        {arenaGame.shortName} - {c.format}
-                        {c.proposedTime ? ` - ${c.proposedTime}` : ''}
-                        {typeof c.pointsReward === 'number'
-                          ? ` - ${c.pointsReward} Arena Points`
-                          : ''}
-                      </p>
-                      <div className="flex gap-2 mt-2">
-                        <button
-                          onClick={() => handleRespondToChallenge(c, 'accept')}
-                          className="px-3 py-1 rounded-xl bg-[#43D17A] text-[#090B10] font-extrabold text-[10px] cursor-pointer"
-                        >
-                          Accept
-                        </button>
-                        <button
-                          onClick={() => handleRespondToChallenge(c, 'decline')}
-                          className="px-3 py-1 rounded-xl bg-[#10141C] text-[#43D17A] text-[10px] cursor-pointer border border-[#232A38]"
-                        >
-                          Decline
-                        </button>
-                        <button
-                          onClick={() => handleRespondToChallenge(c, 'suggest')}
-                          className="px-3 py-1 rounded-xl bg-[#10141C] text-[#43D17A] text-[10px] cursor-pointer border border-[#232A38]"
-                        >
-                          Suggest Time
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {arenaView === 'home' && arenaSection === 'tournaments' && (
-              <div className="space-y-2">
-                <h3 className="text-[11px] font-extrabold text-[#4B5162]">
-                  Tournaments
-                </h3>
-                {tournaments
-                  .filter((t) => t.gameId === arenaGameId)
-                  .map((t) => {
-                    const reward = getOrganizerReward(t);
-                    const organizer = ARENA_PLAYERS.find((p) => p.id === t.organizerId);
-                    return (
-                      <TournamentCard
-                        key={t.id}
-                        id={t.id}
-                        name={t.name}
-                        status={t.status}
-                        registered={t.registeredPlayerIds.length}
-                        capacity={t.capacity}
-                        organizerName={organizer?.displayName ?? 'Organizer'}
-                        prizeDescription={t.prizeDescription}
-                        rewardPoints={reward.points}
-                        rewardReason={reward.reason}
-                        rewardLines={reward.lines}
-                        marginalValue={getMarginalPlayerValue(t)}
-                        entrants={t.registeredPlayerIds}
-                        displayName={(id) =>
-                          ARENA_PLAYERS.find((p) => p.id === id)?.displayName ?? id
-                        }
-                      />
-                    );
-                  })}
-              </div>
-            )}
-
-            {arenaView === 'home' && arenaSection === 'kings' && (
-              <div className="space-y-3">
-                <div>
-                  <h3 className="text-[11px] font-extrabold text-[#4B5162]">
-                    Kings and Queens
-                  </h3>
-                  <p className="text-[10px] text-[#8A93A6] mt-0.5">Players</p>
-                </div>
-                {ARENA_PLAYERS.map((p) => ({
-                  player: p,
-                  points: getPointsBalance(ledger, p.id)
-                }))
-                  .filter((r) => r.points > 0)
-                  .sort((a, b) => b.points - a.points)
-                  .map((r, i) => (
-                    <div
-                      key={r.player.id}
-                      className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3 flex items-center gap-3"
-                    >
-                      <span className="text-[10px] text-[#4B5162] w-8 shrink-0">
-                        {i === 0 ? 'KING' : `#${i + 1}`}
-                      </span>
-                      <p className="text-xs font-extrabold text-[#F3F1E7] flex-1 min-w-0">
-                        {r.player.displayName}
-                      </p>
-                      <span className="text-[10px] text-[#8A93A6] shrink-0">
-                        {r.points.toLocaleString()}
-                      </span>
-                    </div>
-                  ))}
-
-                <p className="text-[10px] text-[#8A93A6] pt-2">Organizers</p>
-                {ORGANIZER_RECORDS.sort((a, b) => b.pointsEarned - a.pointsEarned).map((o, i) => {
-                  const person = ARENA_PLAYERS.find((p) => p.id === o.organizerId);
-                  return (
-                    <div key={o.organizerId} className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3">
-                      <div className="flex items-center gap-3">
-                        <span className="text-[9px] text-[#E8A33D] shrink-0">
-                          {i === 0 ? 'Arena host' : `#${i + 1}`}
-                        </span>
-                        <p className="text-xs font-extrabold text-[#F3F1E7] flex-1 min-w-0">
-                          {person ? person.displayName : o.organizerId}
-                        </p>
-                        <span className="text-[10px] text-[#8A93A6] shrink-0">
-                          {o.pointsEarned.toLocaleString()}
-                        </span>
-                      </div>
-                      <p className="text-[9px] text-[#4B5162] mt-1">
-                        {getOrganizerRank(o)} - {o.tournamentsHosted} tournaments -{' '}
-                        {o.playersServed} players - {o.completionRate}% completion
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {arenaView === 'home' && arenaSection === 'rewards' && (
-              <div className="space-y-2">
-                <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <span className="text-[10px] text-[#4B5162]">
-                      Your Arena Points
-                    </span>
-                    <span className="text-lg font-extrabold text-[#43D17A]">
-                      {myBalance.toLocaleString()}
-                    </span>
-                  </div>
-                  {/* Stated plainly, every time rewards are shown. */}
-                  <p className="text-[10px] text-[#8A93A6] mt-1">
-                    Arena Points are not cash and have no monetary value. They can
-                    be redeemed for the rewards below while stock lasts.
-                  </p>
-                  {/* Honest about where points actually come from, so nobody
-                      grinds matches expecting it to add up. */}
-                  <div className="mt-2 pt-2 border-t border-[#10141C]">
-                    <div className="flex items-baseline justify-between gap-3">
-                      <span className="text-[10px] text-[#8A93A6]">
-                        From playing today
-                      </span>
-                      <span className="text-[10px] text-[#8A93A6]">
-                        {participationToday} / {PARTICIPATION_DAILY_CAP}
-                      </span>
-                    </div>
-                    <p className="text-[9px] text-[#4B5162] mt-1 leading-snug">
-                      Playing earns a small fixed amount, capped daily. Points are
-                      earned mainly by organising: {ARENA_CREATION_CONFIG.perCompletedPlayer}{' '}
-                      per player who completes your event,{' '}
-                      {ARENA_CREATION_CONFIG.perNewPlayer} for each player new to Arena.
-                    </p>
-                  </div>
-                </div>
-
-                {giftCards.map((g) => {
-                  const gate = canRedeemGiftCard(g, {
-                    balance: myBalance,
-                    region: 'Nairobi',
-                    controls: REWARD_POOL_CONTROLS,
-                    now: '2026-08-15T10:00:00Z'
-                  });
-                  return (
-                    <div key={g.id} className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3 flex items-center gap-3">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-extrabold text-[#F3F1E7]">
-                          KES {g.valueKes.toLocaleString()} {g.brand}
-                        </p>
-                        <p className="text-[9px] text-[#4B5162] mt-0.5">
-                          {g.merchant} - {g.category.replace('_', ' ')} -{' '}
-                          {g.inventory > 0 ? `${g.inventory} left` : 'none left'}
-                        </p>
-                        {!gate.allowed && (
-                          <p className="text-[10px] text-[#E8A33D] mt-1">{gate.reason}</p>
-                        )}
-                      </div>
-                      <div className="shrink-0 text-right">
-                        {/* Points cost and cash value never share a line. */}
-                        <p className="text-[10px] text-[#8A93A6]">
-                          {g.pointsRequired.toLocaleString()} pts
-                        </p>
-                        <button
-                          onClick={() => handleRedeemGiftCard(g)}
-                          disabled={!gate.allowed}
-                          className={`mt-1 px-3 py-1 rounded-xl font-extrabold text-[10px] ${
-                            gate.allowed
-                              ? 'bg-[#43D17A] text-[#090B10] cursor-pointer'
-                              : 'bg-[#10141C] text-[#4B5162] cursor-not-allowed'
-                          }`}
-                        >
-                          Redeem
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {redemptions.length > 0 && (
-                  <div className="pt-2">
-                    <h3 className="text-[11px] font-extrabold text-[#4B5162] mb-2">
-                      Your redemptions
-                    </h3>
-                    {redemptions.map((r) => {
-                      const card = giftCards.find((g) => g.id === r.giftCardId);
-                      return (
-                        <div key={r.id} className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3">
-                          <p className="text-xs text-[#F3F1E7]">
-                            {card ? `${card.brand} - KES ${card.valueKes}` : 'Reward'}
-                          </p>
-                          {/* No fabricated voucher code. */}
-                          <p className="text-[10px] text-[#E8A33D] mt-0.5">
-                            {r.status === 'processing'
-                              ? 'Processing. No code has been issued yet.'
-                              : r.status === 'issued'
-                              ? r.voucherCode
-                              : r.failureReason}
-                          </p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {arenaView === 'player' && openPlayer && (
-              <div className="space-y-3">
-                <button
-                  onClick={() => {
-                    setArenaView('home');
-                    setOpenPlayerId(null);
-                  }}
-                  className="text-[10px] text-[#43D17A] cursor-pointer"
-                >
-                  Back to Arena
-                </button>
-                {(() => {
-                  const identity = ARENA_IDENTITIES.find(
-                    (i) => i.playerId === openPlayer.id && i.gameId === arenaGameId
-                  );
-                  if (!identity) {
-                    return (
-                      <p className="text-xs text-[#8A93A6]">
-                        {openPlayer.displayName} does not play {arenaGame.name}.
-                      </p>
-                    );
-                  }
-                  const stats = ARENA_STATS.find((st) => st.identityId === identity.id);
-                  const winRate = stats ? getWinRate(stats) : undefined;
-                  return (
-                    <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-4 space-y-3">
-                      <div>
-                        <p className="text-base font-extrabold text-[#F3F1E7]">
-                          {openPlayer.displayName}
-                        </p>
-                        <p className="text-[9px] text-[#4B5162] mt-0.5">
-                          {identity.game}
-                          {' - '}
-                          {identity.gamerTag}
-                          {identity.verified ? ' - verified' : ''}
-                        </p>
-                      </div>
-                      <div className="grid grid-cols-2 gap-y-1">
-                        {[
-                          ['Rating', typeof stats?.rating === 'number' ? String(stats.rating) : 'Not rated yet'],
-                          ['Matches', String(stats?.matches ?? 0)],
-                          ['Wins', String(stats?.wins ?? 0)],
-                          // An unplayed identity says so rather than showing 0%.
-                          ['Win rate', typeof winRate === 'number' ? `${winRate}%` : 'No matches yet']
-                        ].map(([k, v]) => (
-                          <React.Fragment key={k}>
-                            <span className="text-[10px] text-[#8A93A6]">{k}</span>
-                            <span className="text-[10px] text-[#8A93A6]">{v}</span>
-                          </React.Fragment>
-                        ))}
-                      </div>
-                      {openPlayer.preferredMode && (
-                        <p className="text-[10px] text-[#8A93A6]">
-                          Preferred mode{' '}
-                          <span className="text-[#8A93A6]">{openPlayer.preferredMode}</span>
-                        </p>
-                      )}
-                      <p className="text-[10px] text-[#43D17A]">
-                        {openPlayer.presence === 'online'
-                          ? 'Online'
-                          : openPlayer.presence === 'nearby'
-                          ? `${openPlayer.distanceKm} km away`
-                          : 'Offline'}
-                      </p>
-                    </div>
-                  );
-                })()}
-              </div>
-            )}
-
-            {arenaView === 'find' && (
-              <div className="space-y-3">
-                <button
-                  onClick={() => setArenaView('home')}
-                  className="text-[10px] text-[#43D17A] cursor-pointer"
-                >
-                  Back to Arena
-                </button>
-                <h3 className="text-[11px] font-extrabold text-[#4B5162]">
-                  Find a Game
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setFindFreeOnly((v) => !v)}
-                    className={`px-3 py-1.5 rounded-xl text-[10px] cursor-pointer border ${
-                      findFreeOnly
-                        ? 'bg-[#43D17A] text-[#090B10] border-[#43D17A] font-extrabold'
-                        : 'bg-[#10141C] text-[#43D17A] border-[#232A38]'
-                    }`}
-                  >
-                    Free only
-                  </button>
-                  <button
-                    onClick={() => setFindNearby((v) => !v)}
-                    className={`px-3 py-1.5 rounded-xl text-[10px] cursor-pointer border ${
-                      findNearby
-                        ? 'bg-[#43D17A] text-[#090B10] border-[#43D17A] font-extrabold'
-                        : 'bg-[#10141C] text-[#43D17A] border-[#232A38]'
-                    }`}
-                  >
-                    Nearby
-                  </button>
-                </div>
-
-                {findResults.length === 0 && (
-                  <p className="text-xs text-[#8A93A6]">
-                    No players available for {arenaGame.name} right now.
-                  </p>
-                )}
-
-                {findResults.map((c) => (
-                  <div
-                    key={c.identity.id}
-                    className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3 flex items-center justify-between gap-3"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-xs font-extrabold text-[#F3F1E7]">
-                        {c.player.displayName}
-                      </p>
-                      <p className="text-[9px] text-[#4B5162] mt-0.5">
-                        {typeof c.stats?.rating === 'number'
-                          ? `Rating ${c.stats.rating}`
-                          : 'Not rated yet'}
-                        {c.reason ? ` - ${c.reason}` : ''}
-                      </p>
-                      <p className="text-[9px] text-[#8A93A6] mt-0.5">
-                        {c.challenge
-                          ? c.challenge.stake === 'entry_fee'
-                            ? `Entry KES ${c.challenge.entryFeeKes}`
-                            : c.challenge.stake === 'ranked'
-                            ? 'Ranked'
-                            : 'Friendly'
-                          : 'No open challenge'}
-                      </p>
-                    </div>
-                    {c.challenge && (
-                      <button
-                        onClick={() => handleAcceptChallenge(c.challenge as ArenaChallenge)}
-                        className="shrink-0 px-3 py-1.5 rounded-xl bg-[#43D17A] text-[#090B10] font-extrabold text-[10px] cursor-pointer"
-                      >
-                        Challenge
-                      </button>
-                    )}
                   </div>
                 ))}
               </div>
             )}
 
-            {arenaView === 'home' && (
-              <>
-                {arenaSection === 'lobby' && (
-                <>
-                {/* LOBBY BOARD — the 1-tap room-code board (server-backed).
-                    Brief carries the code the host's own lobby produced; the
-                    game owns the match. Client game ids map to the server's
-                    canonical ids. */}
-                <LobbyBoard
-                  gameId={({ pubg: 'pubg_mobile', cod: 'cod_mobile', ea_fc: 'fc_mobile' } as Record<string, string>)[arenaGameId] ?? arenaGameId}
-                />
-
-                {/* FROM YOUR GROUPS. Only groups the user already belongs to,
-                    reusing the same access rules as the Group tab. Brief never
-                    joins, posts to, or claims ownership of a group. */}
-                {groupArenaSignals.length > 0 && (
-                  <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3">
-                    <p className="text-[9px] font-extrabold text-[#43D17A]">
-                      From your groups
-                    </p>
-                    {groupArenaSignals.map((sig) => (
-                      <div key={sig.id} className="mt-2">
-                        <p className="text-xs text-[#F3F1E7]">{sig.groupName}</p>
-                        <p className="text-[10px] text-[#8A93A6] mt-0.5">{sig.summary}</p>
-                        <p className="text-[9px] text-[#4B5162] mt-0.5">
-                          Shared in this group on {formatSourceDate(sig.at)}. Brief has
-                          not posted anything.
-                        </p>
-                      </div>
-                    ))}
-                  </div>
+            {arenaSection === 'tournaments' && (
+              <div className="space-y-2">
+                {arenaTournaments.length === 0 && (
+                  <p className="text-xs text-[#8A93A6]">No tournaments yet for {arenaGame.name}.</p>
                 )}
-
-                {/* Operational economics. No engagement metrics. */}
-                {abuseFlags.length > 0 && (
-                  <div className="bg-[#10141C] border border-[#E8A33D] rounded-2xl p-3">
-                    <p className="text-[9px] font-extrabold text-[#E8A33D]">
-                      Flagged for review
-                    </p>
-                    {abuseFlags.map((f) => (
-                      <p key={f.id} className="text-[10px] text-[#8A93A6] mt-1">
-                        {f.detail} Status: {f.status}. No account has been actioned.
-                      </p>
-                    ))}
+                {arenaTournaments.map((t) => (
+                  <div key={t.id} className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3">
+                    <p className="text-xs font-extrabold text-[#F3F1E7]">{t.title}</p>
+                    {t.startsAt && <p className="text-[10px] text-[#8A93A6] mt-0.5">{t.startsAt.slice(0, 16).replace('T', ' ')}</p>}
                   </div>
+                ))}
+              </div>
+            )}
+
+            {arenaSection === 'leaderboard' && (
+              <div className="space-y-2">
+                {arenaLeaderboard.length === 0 && (
+                  <p className="text-xs text-[#8A93A6]">No confirmed results yet for {arenaGame.name}.</p>
                 )}
-
-                <button
-                  onClick={() => setArenaView('find')}
-                  className="w-full text-left bg-[#10141C] border border-[#232A38] rounded-2xl p-4 cursor-pointer"
-                >
-                  <p className="text-sm font-extrabold text-[#F3F1E7]">Find a Game</p>
-                  <p className="text-[10px] text-[#8A93A6] mt-0.5">
-                    Match with someone ready to play {arenaGame.name}
-                  </p>
-                </button>
-
-                <div>
-                  <h3 className="text-[11px] font-extrabold text-[#4B5162] mb-2">
-                    Live lobby
-                  </h3>
-                  {lobbyChallenges.length === 0 && (
-                    <p className="text-xs text-[#8A93A6]">
-                      No open challenges for {arenaGame.name} right now.
-                    </p>
-                  )}
-                  <div className="space-y-2">
-                    {lobbyChallenges.map((c) => {
-                      const player = ARENA_PLAYERS.find(
-                        (p) => p.id === c.createdByPlayerId
-                      );
-                      return (
-                        <div
-                          key={c.id}
-                          className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3 flex items-center gap-3"
-                        >
-                          <button
-                            onClick={() => {
-                              setOpenPlayerId(c.createdByPlayerId);
-                              setArenaView('player');
-                            }}
-                            className="text-xs font-extrabold text-[#F3F1E7] cursor-pointer shrink-0"
-                          >
-                            {player ? player.displayName : 'Player'}
-                          </button>
-                          <span className="text-[10px] text-[#43D17A] shrink-0">
-                            {c.mode}
-                          </span>
-                          <span className="text-[10px] text-[#8A93A6] truncate">
-                            {c.format}
-                          </span>
-                          <span
-                            className={`text-[10px] ml-auto shrink-0 ${
-                              c.stake === 'entry_fee' ? 'text-[#E8A33D]' : 'text-[#4B5162]'
-                            }`}
-                          >
-                            {c.stake === 'entry_fee'
-                              ? `KES ${c.entryFeeKes}`
-                              : c.stake === 'ranked'
-                              ? 'Ranked'
-                              : 'Friendly'}
-                          </span>
-                          {c.createdByPlayerId === CURRENT_PLAYER_ID ? (
-                            <span className="shrink-0 text-[9px] text-[#4B5162]">
-                              Your challenge
-                            </span>
-                          ) : (
-                            <button
-                              onClick={() => handleAcceptChallenge(c)}
-                              className="shrink-0 px-3 py-1.5 rounded-xl bg-[#43D17A] text-[#090B10] font-extrabold text-[10px] cursor-pointer"
-                            >
-                              Accept
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {matches.length > 0 && (
-                  <div>
-                    <h3 className="text-[11px] font-extrabold text-[#4B5162] mb-2">
-                      Your matches
-                    </h3>
-                    <div className="space-y-2">
-                      {matches.map((m) => {
-                        const a = ARENA_PLAYERS.find((p) => p.id === m.playerAId);
-                        const b = ARENA_PLAYERS.find((p) => p.id === m.playerBId);
-                        return (
-                          <div
-                            key={m.id}
-                            className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3"
-                          >
-                            <p className="text-xs text-[#F3F1E7]">
-                              {a ? a.displayName : 'Player'} vs{' '}
-                              {b ? b.displayName : 'Player'}
-                            </p>
-                            {/* Brief does not decide or guess a result. */}
-                            <p className="text-[10px] text-[#8A93A6] mt-0.5">
-                              {isResultConfirmed(m)
-                                ? m.scoreLine
-                                : 'Result not confirmed by both players'}
-                            </p>
-                          </div>
-                        );
-                      })}
+                {arenaLeaderboard.map((row, i) => (
+                  <div key={row.playerId} className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-3">
+                      <span className="text-[11px] font-bold text-[#4B5162] w-4">{i + 1}</span>
+                      <span className="text-xs font-extrabold text-[#F3F1E7]">{row.player}</span>
                     </div>
+                    <span className="text-[10px] text-[#8A93A6]">{row.won} won · {row.played} played</span>
                   </div>
-                )}
-
-                <div>
-                  <h3 className="text-[11px] font-extrabold text-[#4B5162] mb-2">
-                    Nearby
-                  </h3>
-                  {nearbyVenues.length === 0 && (
-                    <p className="text-xs text-[#8A93A6]">
-                      No venues nearby for {arenaGame.name}.
-                    </p>
-                  )}
-                  <div className="space-y-2">
-                    {nearbyVenues.map((v) => {
-                      const here = getVenuePlayerCount(v, arenaGameId, ARENA_CHECKINS);
-                      return (
-                        <div
-                          key={v.id}
-                          className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3 flex items-start gap-3"
-                        >
-                          {/* The mark is the live part: ring and count track
-                              who is actually here for THIS game. */}
-                          <GameGlyph
-                            gameId={arenaGameId}
-                            playerCount={here}
-                            capacity={v.stations}
-                            label={`${here} playing ${arenaGame.name} at ${v.name}`}
-                          />
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs font-extrabold text-[#F3F1E7]">
-                              {v.name}
-                            </p>
-                            <p className="text-[9px] text-[#4B5162] mt-0.5">
-                              {v.locationName}
-                              {typeof v.distanceKm === 'number'
-                                ? ` - ${v.distanceKm} km`
-                                : ''}
-                            </p>
-                            <p className="text-[10px] text-[#43D17A] mt-1">
-                              {here > 0
-                                ? `${here} playing ${arenaGame.shortName} now`
-                                : 'Nobody checked in right now'}
-                            </p>
-                            {/* Everything below is omitted when unknown. */}
-                            <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
-                              {typeof v.stationsFree === 'number' &&
-                                typeof v.stations === 'number' && (
-                                  <span className="text-[9px] text-[#8A93A6]">
-                                    {v.stationsFree} of {v.stations} stations free
-                                  </span>
-                                )}
-                              {typeof v.pricePerHourKes === 'number' && (
-                                <span className="text-[9px] text-[#8A93A6]">
-                                  KES {v.pricePerHourKes}/hr
-                                </span>
-                              )}
-                              {v.openUntil && (
-                                <span className="text-[9px] text-[#8A93A6]">
-                                  open until {v.openUntil}
-                                </span>
-                              )}
-                            </div>
-                            {v.eventTonight && (
-                              <p className="text-[10px] text-[#E8A33D] mt-1">
-                                Tonight: {v.eventTonight}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-[11px] font-extrabold text-[#4B5162] mb-2">
-                    Exchange
-                  </h3>
-                  <div className="space-y-2">
-                    {ARENA_LISTINGS.filter((l) => l.gameId === arenaGameId).map((l) => {
-                      const gate = canListInArena(l);
-                      return (
-                        <div
-                          key={l.id}
-                          className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3"
-                        >
-                          <div className="flex items-baseline justify-between gap-3">
-                            <p className="text-xs text-[#F3F1E7]">{l.title}</p>
-                            {gate.allowed && typeof l.priceKes === 'number' && (
-                              <span className="text-[10px] text-[#8A93A6] shrink-0">
-                                KES {l.priceKes}
-                              </span>
-                            )}
-                          </div>
-                          {/* The transfer boundary. Brief will not facilitate
-                              what a publisher prohibits. */}
-                          {!gate.allowed && (
-                            <p className="text-[10px] text-[#E8A33D] mt-1">
-                              Not available in Arena. {gate.reason}
-                            </p>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-                </>
-                )}
-              </>
+                ))}
+              </div>
             )}
           </div>
         )}
 
-        {/* MY ACTIVITY. Reuses the existing relationships edges -- no second
-            activity store. Every row is a real edge the user created. */}
         {activeTab === 'mylayer' && myLayerSection === 'activity' && (
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
             <div>
@@ -9171,37 +7990,9 @@ export function App() {
             <div>
               <h2 className="text-lg font-extrabold text-[#F3F1E7]">Your Arena</h2>
               <p className="text-[11px] text-[#8A93A6] leading-snug mt-1">
-                Your rank, points and matches. Play and redeem in Arena.
+                Your matches. Play is recorded when both players confirm a result.
               </p>
             </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3">
-                <p className="text-[10px] text-[#4B5162]">
-                  Progress
-                </p>
-                <p className="text-sm font-extrabold text-[#F3F1E7] mt-1">{myRank}</p>
-              </div>
-              <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3">
-                <p className="text-[10px] text-[#4B5162]">
-                  Arena Points
-                </p>
-                <p className="text-sm font-extrabold text-[#43D17A] mt-1">
-                  {myBalance.toLocaleString()}
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => {
-                setActiveTab('arena');
-                setArenaSection('rewards');
-              }}
-              className="text-[10px] font-extrabold text-[#43D17A] cursor-pointer"
-            >
-              Redeem in Arena
-            </button>
-
             <h3 className="text-[11px] font-extrabold text-[#4B5162]">
               My Matches
             </h3>
@@ -9211,30 +8002,22 @@ export function App() {
               </p>
             )}
             <div className="space-y-2">
-              {matches.map((m) => {
-                const a = ARENA_PLAYERS.find((p) => p.id === m.playerAId);
-                const b = ARENA_PLAYERS.find((p) => p.id === m.playerBId);
-                return (
-                  <div key={m.id} className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3">
-                    <p className="text-xs text-[#F3F1E7]">
-                      {a ? a.displayName : 'Player'} vs {b ? b.displayName : 'Player'}
-                    </p>
-                    {/* Result stays unclaimed until both players confirm. */}
-                    <p className="text-[10px] text-[#8A93A6] mt-0.5">
-                      {isResultConfirmed(m)
-                        ? m.scoreLine
-                        : 'Result not confirmed by both players'}
-                    </p>
-                  </div>
-                );
-              })}
+              {matches.map((m) => (
+                <div key={m.id} className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3">
+                  <p className="text-xs text-[#F3F1E7]">
+                    {m.playerAId ?? 'Player'} vs {m.playerBId ?? 'Player'}
+                  </p>
+                  <p className="text-[10px] text-[#8A93A6] mt-0.5">
+                    {isResultConfirmed(m)
+                      ? m.scoreLine
+                      : 'Result not confirmed by both players'}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         )}
 
-        {/* MY POINTS. Both currencies in one place, still clearly separate:
-            Brief Points come from accepted quests, Arena Points from play and
-            organising. They are never summed into a single number. */}
         {activeTab === 'mylayer' && myLayerSection === 'points' && (
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
             <div>
@@ -9243,7 +8026,6 @@ export function App() {
                 Points are not cash and have no monetary value.
               </p>
             </div>
-
             <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-4 space-y-2">
               <div className="flex items-baseline justify-between gap-3">
                 <span className="text-[10px] text-[#4B5162]">
@@ -9263,57 +8045,6 @@ export function App() {
                 </p>
               )}
             </div>
-
-            <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-4 space-y-2">
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="text-[10px] text-[#4B5162]">
-                  Arena Points
-                </span>
-                <span className="text-lg font-extrabold text-[#43D17A]">
-                  {myBalance.toLocaleString()}
-                </span>
-              </div>
-              <p className="text-[10px] text-[#8A93A6]">
-                From playing today {participationToday} / {PARTICIPATION_DAILY_CAP}.
-                Earned mainly by organising events.
-              </p>
-              <button
-                onClick={() => {
-                  setActiveTab('arena');
-                  setArenaSection('rewards');
-                }}
-                className="text-[10px] font-extrabold text-[#43D17A] cursor-pointer"
-              >
-                Redeem in Arena
-              </button>
-            </div>
-
-            {redemptions.length > 0 && (
-              <div>
-                <h3 className="text-[11px] font-extrabold text-[#4B5162] mb-2">
-                  Redeemed
-                </h3>
-                <div className="space-y-2">
-                  {redemptions.map((r) => {
-                    const card = giftCards.find((g) => g.id === r.giftCardId);
-                    return (
-                      <div key={r.id} className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3">
-                        <p className="text-xs text-[#F3F1E7]">
-                          {card ? `${card.brand} - KES ${card.valueKes}` : 'Reward'}
-                        </p>
-                        <p className="text-[10px] text-[#E8A33D] mt-0.5">
-                          {r.status === 'processing'
-                            ? 'Processing. No code has been issued yet.'
-                            : r.status === 'issued'
-                            ? r.voucherCode
-                            : r.failureReason}
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
           </div>
         )}
 

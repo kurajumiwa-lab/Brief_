@@ -1613,3 +1613,24 @@ export function createSubscription(fields: Record<string, unknown>): Promise<Api
 export function subscriptionAction(id: string, action: string): Promise<ApiResult<any>> {
   return request(`/api/subscriptions/${encodeURIComponent(id)}/${encodeURIComponent(action)}`, { method: 'POST', body: '{}' }, (r) => r?.subscription ?? r?.transaction ?? undefined);
 }
+
+// --- Arena: real server entities (players/venues/tournaments/leaderboard) ----
+
+export function getArenaPlayers(gameId?: string): Promise<ApiResult<any[]>> {
+  const q = gameId ? `?gameId=${encodeURIComponent(gameId)}` : '';
+  return request(`/api/arena/players${q}`, undefined, (r) => Array.isArray(r?.players) ? r.players : undefined);
+}
+
+export function getArenaVenues(gameId?: string): Promise<ApiResult<any[]>> {
+  const q = gameId ? `?gameId=${encodeURIComponent(gameId)}` : '';
+  return request(`/api/arena/venues${q}`, undefined, (r) => Array.isArray(r?.venues) ? r.venues : undefined);
+}
+
+export function getArenaTournaments(gameId?: string): Promise<ApiResult<any[]>> {
+  const q = gameId ? `?gameId=${encodeURIComponent(gameId)}` : '';
+  return request(`/api/arena/tournaments${q}`, undefined, (r) => Array.isArray(r?.tournaments) ? r.tournaments : undefined);
+}
+
+export function getArenaLeaderboard(gameId: string): Promise<ApiResult<any[]>> {
+  return request(`/api/arena/leaderboard?gameId=${encodeURIComponent(gameId)}`, undefined, (r) => Array.isArray(r?.leaderboard) ? r.leaderboard : undefined);
+}

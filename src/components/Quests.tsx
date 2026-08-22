@@ -286,21 +286,11 @@ export function Quests({
         </div>
       </div>
 
-      {/* One redemption surface, in Arena. Rewards used to exist here
-          too, which meant two doors into the same room. */}
+      {/* Brief Points are a record of contribution, not a spendable currency. */}
       <div className="border-t border-[#232A38] pt-4">
         <p className="text-[11px] text-[#8A93A6]">
-          Redeem points for gift cards and vouchers in Arena.
+          Points are not cash and have no monetary value.
         </p>
-        <button
-          onClick={() => {
-            setActiveTab('arena');
-            setArenaSection('rewards');
-          }}
-          className="mt-2 px-3 py-1.5 rounded-xl bg-[#43D17A] text-[#090B10] font-extrabold text-[10px] cursor-pointer"
-        >
-          Open Rewards
-        </button>
       </div>
     </div>
   );

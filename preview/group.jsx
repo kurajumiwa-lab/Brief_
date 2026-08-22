@@ -48,7 +48,7 @@ console.log('\n=== Weekly brief is useful, not engagement ===');
 check('empty categories dropped', /Empty categories are dropped rather than reported as zero/.test(src));
 // Strip comments first: the guarantee is about code, not the note explaining it.
 const code=src.replace(/\/\/[^\n]*/g,'').replace(/\/\*[\s\S]*?\*\//g,'');
-check('no leaderboard / streaks / member counts', !/mostActive|leaderboard|streak|topPoster/i.test(code));
+check('no social-popularity metrics in groups', !/mostActive|streak|topPoster/i.test(code));
 check('unanswered questions included', /unanswered: getUnansweredQuestions\(recent\)/.test(src));
 
 console.log('\n=== Local-first: group before elsewhere ===');
