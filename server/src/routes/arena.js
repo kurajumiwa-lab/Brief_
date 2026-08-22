@@ -2,6 +2,7 @@
 // Each route keeps its original body verbatim; only its home file changed.
 import { callerId } from '../identity.js';
 import * as arena from '../domain/arena.js';
+import * as person from '../domain/person.js';
 import * as signals from '../domain/signal.js';
 import * as notifications from '../domain/notifications.js';
 import * as compliance from '../domain/compliance.js';
@@ -102,10 +103,22 @@ app.post('/api/arena/challenges/:id/cancel', (req, res) => {
 
 
 
+function withNames(match) {
+  if (!match) return match;
+  return {
+    ...match,
+    playerAName: person.resolveDisplayName(match.playerAId),
+    playerBName: person.resolveDisplayName(match.playerBId)
+  };
+}
+
 app.get('/api/arena/matches', (req, res) => {
   const me = requireAuth(req, res);
   if (!me) return;
-  res.json({ matches: arena.listMatchesFor(me), record: arena.playerRecord(me) });
+  res.json({
+    matches: arena.listMatchesFor(me).map(withNames),
+    record: arena.playerRecord(me)
+  });
 });
 
 
@@ -116,7 +129,7 @@ app.get('/api/arena/matches/:id', (req, res) => {
   const m = arena.getMatch(req.params.id);
   // A match is between two people. A stranger gets 404, not a peek.
   if (!m || !arena.isParticipant(m, me)) return res.status(404).json({ error: 'match not found' });
-  res.json({ match: m });
+  res.json({ match: withNames(m) });
 });
 
 
@@ -211,10 +224,19 @@ app.post('/api/arena/players', (req, res) => {
   }
 });
 
+app.get('/api/arena/players/me', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  res.json({ players: arena.listPlayers().filter((p) => p.userId === me) });
+});
 
-
+/** Public list is opted-in availability only. Not a people search. */
 app.get('/api/arena/players', (req, res) => {
-  res.json({ players: arena.listPlayers({ gameId: req.query.gameId ?? null }) });
+  res.json({ players: person.listAvailable({ gameId: req.query.gameId ?? null }) });
+});
+
+app.get('/api/arena/available', (req, res) => {
+  res.json({ available: person.listAvailable({ gameId: req.query.gameId ?? null }) });
 });
 
 

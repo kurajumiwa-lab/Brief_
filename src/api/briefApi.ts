@@ -1207,7 +1207,37 @@ export interface AuthedUser {
   id: string;
   handle: string | null;
   displayName: string;
+  personId?: string;
   devFallback?: boolean;
+}
+
+export interface PersonStanding {
+  personId: string;
+  displayName: string;
+  hosted: number;
+  bought: number;
+  arrived: number;
+  registered: number;
+  vendor: { id: string; displayName: string } | null;
+  gameTags: { id: string; gameId: string; gamerTag: string; verified: boolean }[];
+}
+
+export interface PersonAvailability {
+  userId: string;
+  personId: string | null;
+  state: 'available' | 'offline';
+  gameId: string | null;
+  mode: string | null;
+  format: string | null;
+  window: string | null;
+  locationKind: string | null;
+  updatedAt: string | null;
+}
+
+export interface PersonMe {
+  person: { id: string; displayName: string | null; tags: string[]; aliases: any[] };
+  standing: PersonStanding | null;
+  availability: PersonAvailability;
 }
 
 /** Register and sign in. The token is stored centrally on success. */
@@ -1697,4 +1727,49 @@ export function getArenaTournaments(gameId?: string): Promise<ApiResult<any[]>> 
 
 export function getArenaLeaderboard(gameId: string): Promise<ApiResult<any[]>> {
   return request(`/api/arena/leaderboard?gameId=${encodeURIComponent(gameId)}`, undefined, (r) => Array.isArray(r?.leaderboard) ? r.leaderboard : undefined);
+}
+
+export function createArenaPlayer(body: {
+  gameId: string;
+  gamerTag: string;
+  platform?: string | null;
+  region?: string | null;
+}): Promise<ApiResult<any>> {
+  return request('/api/arena/players', { method: 'POST', body: JSON.stringify(body) }, (r) =>
+    r?.player ? r.player : undefined
+  );
+}
+
+export function getMyArenaPlayers(): Promise<ApiResult<any[]>> {
+  return request('/api/arena/players/me', undefined, (r) =>
+    Array.isArray(r?.players) ? r.players : undefined
+  );
+}
+
+export function getPersonMe(): Promise<ApiResult<PersonMe>> {
+  return request('/api/person/me', undefined, (r) =>
+    r?.person && r.person.id ? (r as PersonMe) : undefined
+  );
+}
+
+export function setMyAvailability(body: {
+  state: 'available' | 'offline';
+  gameId?: string | null;
+  mode?: string | null;
+  format?: string | null;
+  window?: string | null;
+  locationKind?: string | null;
+}): Promise<ApiResult<PersonAvailability>> {
+  return request(
+    '/api/person/me/availability',
+    { method: 'PUT', body: JSON.stringify(body) },
+    (r) => (r?.availability ? (r.availability as PersonAvailability) : undefined)
+  );
+}
+
+export function getAvailablePlayers(gameId?: string): Promise<ApiResult<any[]>> {
+  const q = gameId ? `?gameId=${encodeURIComponent(gameId)}` : '';
+  return request(`/api/arena/available${q}`, undefined, (r) =>
+    Array.isArray(r?.available) ? r.available : undefined
+  );
 }

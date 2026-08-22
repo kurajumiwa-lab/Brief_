@@ -28,6 +28,7 @@
 
 import { store, newId } from '../store.js';
 import * as listings from './listing.js';
+import { personIdForUser } from './person.js';
 
 export const ORDER_STATUS = [
   'offered', 'ordered', 'accepted', 'preparing', 'ready',
@@ -150,6 +151,7 @@ export function createOrder({ listingId, buyerId, quantity = 1, note = '', idemp
     listingTitle: listing.title,
     listingType: listing.type,
     buyerId,
+    personId: personIdForUser(buyerId),
     vendorId: vendor.id,
     vendorOwnerId: vendor.ownerId,
     quantity,

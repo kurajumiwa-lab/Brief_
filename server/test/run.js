@@ -3579,7 +3579,7 @@ console.log('\n=== FEATURE REGISTRY (§4.2) ===');
   // Default state: everything enabled; module features configured; provider
   // features NOT configured (no credentials in this run).
   check('every feature is enabled by default', features.list().every((f) => f.enabled));
-  check('the registry holds 31 features', features.list().length === 31, String(features.list().length));
+  check('the registry holds 32 features', features.list().length === 32, String(features.list().length));
   check('auth is available by default', features.available('auth') === true);
   check('arena is available by default', features.available('arena') === true);
   check('vaults is available by default', features.available('vaults') === true);
@@ -5951,6 +5951,99 @@ console.log('\n=== TRUST, DISCOVERY, NOTIFICATIONS, ANALYTICS, ARENA ENTITIES ==
   const board = arena.leaderboard('efootball');
   check('the leaderboard is derived from the confirmed result', board.length === 2 && board[0].playerId === p1.id && board[0].won === 1, JSON.stringify(board));
   check('recordResult is idempotent', arena.recordResult(match.id).reused === true);
+}
+
+console.log('\n=== PHASE 4: ONE PERSON, REAL SESSION ===');
+{
+  process.env.NODE_ENV = 'test';
+  const { default: app } = await import('../src/index.js');
+  const person = await import('../src/domain/person.js');
+  const vendors = await import('../src/domain/vendor.js');
+  const listings = await import('../src/domain/listing.js');
+  const ordersD = await import('../src/domain/order.js');
+  const campaigns = await import('../src/domain/campaign.js');
+  store._reset();
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, {
+      method, headers, body: body ? JSON.stringify(body) : undefined
+    });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+
+  try {
+    const A = (await call('/api/auth/register', 'POST', {
+      handle: 'phase4a', password: 'a good passphrase', displayName: 'Amina'
+    })).body;
+    const B = (await call('/api/auth/register', 'POST', {
+      handle: 'phase4b', password: 'a good passphrase', displayName: 'Baraka'
+    })).body;
+    check('register returns a personId', Boolean(A.user.personId), JSON.stringify(A.user));
+    check('whoAmI carries the same personId',
+      (await call('/api/auth/me', 'GET', undefined, A.token)).body.user.personId === A.user.personId);
+
+    let r = await call('/api/arena/challenges', 'POST', { gameId: 'efootball', stake: 'friendly' }, A.token);
+    const chal = r.body.challenge;
+    check('challenge is stamped with a personId', Boolean(chal.personId));
+    r = await call(`/api/arena/challenges/${chal.id}/accept`, 'POST', {}, A.token);
+    check('A cannot accept A\'s challenge', r.status === 400);
+
+    r = await call(`/api/arena/challenges/${chal.id}/accept`, 'POST', {}, B.token);
+    check('B can accept', r.status === 201);
+    const match = r.body.match;
+    check('player ids are account ids', match.playerAId === A.user.id && match.playerBId === B.user.id);
+    const named = (await call(`/api/arena/matches/${match.id}`, 'GET', undefined, A.token)).body.match;
+    check('whoAmI can resolve A\'s name', named.playerAName === 'Amina', String(named.playerAName));
+    check('whoAmI can resolve B\'s name', named.playerBName === 'Baraka', String(named.playerBName));
+    check('no fixture handle leaked', !/ply_nyabs|Nyabs/.test(JSON.stringify(named)));
+
+    await call('/api/vendors', 'POST', { displayName: 'Amina Stall' }, A.token);
+    const listing = (await call('/api/listings', 'POST', {
+      title: 'Maize', type: 'product', price: 200, quantityAvailable: 5
+    }, A.token)).body.listing;
+    await call(`/api/listings/${listing.id}/status`, 'POST', { status: 'active' }, A.token);
+    const otherV = vendors.createVendor({ ownerId: B.user.id, displayName: 'Baraka Goods' });
+    const otherL = listings.createListing({ vendorId: otherV.id, title: 'Beans', price: 100, quantityAvailable: 4 });
+    listings.transitionListing(otherL.id, 'active');
+    ordersD.createOrder({ listingId: otherL.id, buyerId: A.user.id, quantity: 1 });
+    campaigns.createCampaign(A.user.id, { title: 'Amina Night', type: 'popup', price: 0 });
+    const mine = (await call('/api/person/me', 'GET', undefined, A.token)).body;
+    check('standing is one person', mine.standing.personId === A.user.personId);
+    check('hosted campaigns count on that person', mine.standing.hosted >= 1, String(mine.standing.hosted));
+    check('bought orders count on that person', mine.standing.bought >= 1, String(mine.standing.bought));
+    check('vendor is a view of the same person', mine.standing.vendor?.displayName === 'Amina Stall');
+
+    check('availability starts offline', mine.availability.state === 'offline');
+    r = await call('/api/person/me/availability', 'PUT', {
+      state: 'available', gameId: 'efootball', format: '1v1', window: 'tonight', locationKind: 'online'
+    }, A.token);
+    check('going available requires an explicit switch', r.status === 200 && r.body.availability.state === 'available');
+    const listed = (await call('/api/arena/available')).body.available;
+    check('only opted-in people are listed', listed.some((p) => p.userId === A.user.id));
+    check('B is not listed without opting in', !listed.some((p) => p.userId === B.user.id));
+    await call('/api/person/me/availability', 'PUT', { state: 'offline' }, A.token);
+    check('turning off removes them from the list',
+      !(await call('/api/arena/available')).body.available.some((p) => p.userId === A.user.id));
+
+    r = await call('/api/person/me/aliases', 'POST', { kind: 'whatsapp', value: '254700111222' }, A.token);
+    check('unverified WhatsApp alias is refused', r.status === 400);
+    check('the refusal names the guess', /not verified|will not guess/i.test(r.body?.error ?? ''), r.body?.error);
+    r = await call('/api/person/me/aliases', 'POST', { kind: 'phone', value: '0722000111' }, A.token);
+    check('self-asserted phone is refused without a check', r.status === 400);
+    check('no whatsapp alias was stored',
+      !store.all('personAliases').some((a) => a.kind === 'whatsapp' && a.personId === A.user.personId));
+
+    const bound = person.linkAlias(A.user.personId, 'telegram', '999001', {
+      verified: true, source: 'telegram_init'
+    });
+    check('a verified telegram bind is accepted', bound.kind === 'telegram' && bound.verified === true);
+  } finally {
+    srv.close();
+  }
 }
 
 console.log(`\n${'='.repeat(52)}\nPASSED ${pass}   FAILED ${fail}   SKIPPED ${skip}\n${'='.repeat(52)}`);

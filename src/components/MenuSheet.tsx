@@ -156,6 +156,17 @@ function HostValueCard({
     };
   }, []);
 
+  const [standingExtra, setStandingExtra] = React.useState<{ bought: number } | null>(null);
+
+  React.useEffect(() => {
+    let live = true;
+    briefApi.getPersonMe().then((res) => {
+      if (!live || !res.ok) return;
+      setStandingExtra({ bought: res.data.standing?.bought ?? 0 });
+    });
+    return () => { live = false; };
+  }, []);
+
   const name = kit?.displayName || me?.displayName || 'Host';
   const handle = me?.handle ? `@${me.handle}` : null;
   const audience = kit?.audience;
@@ -165,7 +176,10 @@ function HostValueCard({
     command ? { label: 'Settled', value: money(command.money.grossSettled, command.money.currency) } : null,
     command ? { label: 'Arrived', value: String(command.people.checkedIn) } : null,
     audience && audience.views !== undefined ? { label: 'Views', value: String(audience.views) } : null,
-    command ? { label: 'Hosted', value: String(command.campaigns.length) } : null
+    command ? { label: 'Hosted', value: String(command.campaigns.length) } : null,
+    standingExtra && standingExtra.bought > 0
+      ? { label: 'Bought', value: String(standingExtra.bought) }
+      : null
   ].filter(Boolean) as { label: string; value: string }[];
 
   const metrics = [

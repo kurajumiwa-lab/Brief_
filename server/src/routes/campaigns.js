@@ -295,7 +295,10 @@ app.post('/api/public/campaigns/:slug/register', (req, res) => {
     const reg = campaigns.register(c, {
       attendeeRef: req.body?.attendeeRef,
       name: req.body?.name ?? null,
-      contact: req.body?.contact ?? null
+      contact: req.body?.contact ?? null,
+      // Only a verified session binds. Dev-fallback / anonymous walk-ins are
+      // not guessed to be the local user.
+      userId: req.auth?.userId ?? null
     });
     // Only the registrant's own record, never the roster. The ticketCode is
     // the attendee's own gate credential, so it is returned to THEM (and only

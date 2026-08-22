@@ -9,6 +9,7 @@ import * as telegram from '../connectors/telegram.js';
 import * as whatsapp from '../connectors/whatsapp.js';
 import * as web from '../connectors/web.js';
 import * as auth from '../domain/auth.js';
+import * as person from '../domain/person.js';
 import { requireAuth, now, recordError, CURRENT_USER } from './helpers.js';
 
 import { requireFeature } from '../features.js';
@@ -52,11 +53,17 @@ app.post('/api/telegram/init', (req, res) => {
   }
 
   const { token: sessionToken, session } = auth.issueSession(user.id);
+  const mine = person.ensurePersonForUser(user.id);
+  try {
+    person.bindTelegram(user.id, verified.user.id);
+  } catch {
+    // Already bound to this person is fine; a clash is refused below.
+  }
   res.json({
     ok: true,
     token: sessionToken,
     expiresAt: session.expiresAt,
-    user: auth.publicUser(user)
+    user: { ...auth.publicUser(user), personId: mine.id }
   });
 });
 // --- Telegram (spec 10-12) ---------------------------------------------------

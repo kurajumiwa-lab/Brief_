@@ -25,6 +25,7 @@
 // ---------------------------------------------------------------------------
 
 import { store, newId } from '../store.js';
+import { personIdIfUser } from './person.js';
 
 export const FOOTSTEP_CATEGORIES = [
   'people',
@@ -130,6 +131,7 @@ export function recordFootstep({
     // caller does not supply an explicit one, so the client never invents.
     narrative: narrative ?? defaultNarrative(kind, resolvedName, value),
     actorId,
+    personId: personIdIfUser(actorId),
     actorName: resolvedName,
     channel,
     value,

@@ -28,6 +28,7 @@
 // ---------------------------------------------------------------------------
 
 import { store, newId } from '../store.js';
+import { personIdIfUser, resolveDisplayName } from './person.js';
 
 /** Games Brief actually knows about. A challenge for anything else is refused. */
 export const ARENA_GAMES = [
@@ -87,6 +88,7 @@ export function createChallenge({
   return store.insert('arenaChallenges', {
     id: newId('chal'),
     createdBy,
+    personId: personIdIfUser(createdBy),
     gameId,
     mode: String(mode).slice(0, 16),
     stake,
@@ -163,6 +165,8 @@ export function acceptChallenge(challengeId, acceptingPlayerId) {
     entryFeeKes: c.entryFeeKes,
     playerAId: c.createdBy,
     playerBId: acceptingPlayerId,
+    personAId: personIdIfUser(c.createdBy),
+    personBId: personIdIfUser(acceptingPlayerId),
     status: 'scheduled',
     // Result fields stay empty until players agree. Brief never fills these.
     reportedBy: null,
@@ -336,6 +340,7 @@ export function createPlayer({ userId, gameId, gamerTag, platform = null, region
   return store.insert('arenaPlayers', {
     id: newId('ply'),
     userId,
+    personId: personIdIfUser(userId),
     gameId,
     gamerTag: String(gamerTag).trim(),
     platform: platform ?? null,
@@ -452,7 +457,9 @@ export function leaderboard(gameId) {
   return Object.entries(tally)
     .map(([playerId, t]) => ({
       playerId,
-      player: getPlayer(playerId)?.gamerTag ?? playerId,
+      player: getPlayer(playerId)?.gamerTag
+        ?? store.find('arenaPlayers', (p) => p.userId === playerId)?.gamerTag
+        ?? resolveDisplayName(playerId),
       played: t.played,
       won: t.won,
       winRate: t.played ? t.won / t.played : null

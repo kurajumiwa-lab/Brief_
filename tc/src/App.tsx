@@ -83,6 +83,7 @@ import {
 } from 'lucide-react';
 import { MenuSheet } from './components/MenuSheet';
 import type { MenuTarget } from './components/MenuSheet';
+import { PlayAs } from './components/PlayAs';
 import type { LucideIcon } from 'lucide-react';
 import { ROOM, HOME_MORE, SAVED_TABS, INBOX_TABS, FILTERS } from './ui/names';
 
@@ -2940,6 +2941,8 @@ export interface ArenaMatch {
   gameId: ArenaGameId;
   playerAId: string;
   playerBId: string;
+  playerAName?: string;
+  playerBName?: string;
   playedAt: string;
   // A match with no agreed result stays without one. Brief does not decide
   // who won.
@@ -4247,9 +4250,15 @@ const SERVER_TO_CLIENT_GAME: Record<string, ArenaGameId> = {
 };
 
 /** Never print fixture handles. If we do not know the person, say Player. */
-const arenaPlayerLabel = (id: string | undefined, meId: string | null): string => {
+const arenaPlayerLabel = (
+  id: string | undefined,
+  meId: string | null,
+  name?: string | null
+): string => {
   if (!id) return 'Player';
   if (meId && id === meId) return 'You';
+  const label = String(name ?? '').trim();
+  if (label && !/^(ply_|usr_|person_)/i.test(label) && label !== id) return label;
   return 'Player';
 };
 
@@ -4315,18 +4324,13 @@ export const PARTICIPANTS: Participant[] = [];
 
 
 
-const ORGANIZER_RECORDS: OrganizerRecord[] = [
-  { organizerId: 'ply_nyabs', tournamentsHosted: 18, playersServed: 423, matchesCompleted: 612, completionRate: 97, disputeRate: 1.2, repeatPlayers: 186, pointsEarned: 42000 },
-  { organizerId: 'ply_kip', tournamentsHosted: 2, playersServed: 12, matchesCompleted: 9, completionRate: 40, disputeRate: 15, repeatPlayers: 1, pointsEarned: 300 }
-];
-
-
+const ORGANIZER_RECORDS: OrganizerRecord[] = [];
 
 const REWARD_POOL_CONTROLS: RewardPoolControls = {
   dailyRedemptionLimit: 50,
   monthlyRedemptionLimit: 800,
-  redeemedToday: 12,
-  redeemedThisMonth: 310
+  redeemedToday: 0,
+  redeemedThisMonth: 0
 };
 
 
@@ -6328,6 +6332,34 @@ export function App() {
   const [arenaBusyId, setArenaBusyId] = useState<string | null>(null);
   const [openedTournament, setOpenedTournament] = useState<any | null>(null);
   const [openedStanding, setOpenedStanding] = useState<any | null>(null);
+  const [playAsConfirmed, setPlayAsConfirmed] = useState(false);
+  const [myGameTag, setMyGameTag] = useState<string | null>(null);
+  const [tagDraft, setTagDraft] = useState('');
+  const [tagBusy, setTagBusy] = useState(false);
+  const [availabilityOn, setAvailabilityOn] = useState(false);
+  const [availabilityBusy, setAvailabilityBusy] = useState(false);
+
+  React.useEffect(() => {
+    if (!sessionUser) return;
+    let live = true;
+    (async () => {
+      const [me, tags] = await Promise.all([
+        briefApi.getPersonMe(),
+        briefApi.getMyArenaPlayers()
+      ]);
+      if (!live) return;
+      if (me.ok) {
+        setAvailabilityOn(me.data.availability?.state === 'available');
+        const tag = me.data.standing?.gameTags?.find((t) => t.gameId === (CLIENT_TO_SERVER_GAME[arenaGameId] ?? arenaGameId));
+        if (tag) setMyGameTag(tag.gamerTag);
+      }
+      if (tags.ok) {
+        const mine = (tags.data as any[]).find((p) => p.gameId === (CLIENT_TO_SERVER_GAME[arenaGameId] ?? arenaGameId));
+        if (mine?.gamerTag) setMyGameTag(String(mine.gamerTag));
+      }
+    })();
+    return () => { live = false; };
+  }, [sessionUser, arenaGameId]);
   const [arenaActivity, setArenaActivity] = useState<Record<string, number>>({});
   // Challenges come from the SERVER, not a fixture: a challenge is a real,
   // persisted, attributable record. `ARENA_CHALLENGES` is gone from the state.
@@ -6374,6 +6406,8 @@ export function App() {
     gameId: (SERVER_TO_CLIENT_GAME[m.gameId] ?? m.gameId) as ArenaGameId,
     playerAId: String(m.playerAId),
     playerBId: String(m.playerBId),
+    playerAName: m.playerAName ? String(m.playerAName) : undefined,
+    playerBName: m.playerBName ? String(m.playerBName) : undefined,
     playedAt: m.createdAt ?? m.playedAt ?? new Date().toISOString(),
     winnerPlayerId: m.winnerPlayerId ?? undefined,
     scoreLine: m.scoreLine ?? undefined,
@@ -8087,6 +8121,61 @@ export function App() {
               </p>
             </div>
 
+            {sessionUser && (
+              <PlayAs
+                displayName={sessionUser.displayName || 'you'}
+                handle={sessionUser.handle}
+                confirmed={playAsConfirmed}
+                onConfirm={() => setPlayAsConfirmed(true)}
+                gameName={arenaGame.name}
+                gameId={arenaGame.id}
+                tagDraft={tagDraft}
+                onTagDraft={setTagDraft}
+                onCreateTag={async () => {
+                  setTagBusy(true);
+                  const res = await briefApi.createArenaPlayer({
+                    gameId: CLIENT_TO_SERVER_GAME[arenaGameId] ?? arenaGameId,
+                    gamerTag: tagDraft.trim()
+                  });
+                  setTagBusy(false);
+                  if (!res.ok) {
+                    showToast(res.error ?? 'Could not save that tag.');
+                    return;
+                  }
+                  setMyGameTag(tagDraft.trim());
+                  setPlayAsConfirmed(true);
+                  showToast('Game tag saved.');
+                }}
+                tagBusy={tagBusy}
+                myTag={myGameTag}
+                availabilityOn={availabilityOn}
+                availabilityBusy={availabilityBusy}
+                onToggleAvailability={async () => {
+                  setAvailabilityBusy(true);
+                  const next = !availabilityOn;
+                  const res = await briefApi.setMyAvailability(
+                    next
+                      ? {
+                          state: 'available',
+                          gameId: CLIENT_TO_SERVER_GAME[arenaGameId] ?? arenaGameId,
+                          mode: '1v1',
+                          format: '1v1',
+                          window: 'tonight',
+                          locationKind: 'online'
+                        }
+                      : { state: 'offline' }
+                  );
+                  setAvailabilityBusy(false);
+                  if (!res.ok) {
+                    showToast(res.error ?? 'Could not update availability.');
+                    return;
+                  }
+                  setAvailabilityOn(res.data.state === 'available');
+                  setPlayAsConfirmed(true);
+                }}
+              />
+            )}
+
             <ArenaPortal
               games={ARENA_GAMES}
               activity={arenaActivity}
@@ -8336,7 +8425,7 @@ export function App() {
                 return (
                   <div key={m.id} className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3 space-y-2">
                     <p className="text-xs text-[#F3F1E7]">
-                      {arenaPlayerLabel(m.playerAId, me || null)} vs {arenaPlayerLabel(m.playerBId, me || null)}
+                      {arenaPlayerLabel(m.playerAId, me || null, m.playerAName)} vs {arenaPlayerLabel(m.playerBId, me || null, m.playerBName)}
                     </p>
                     <p className="text-[10px] text-[#8A93A6]">
                       {status === 'confirmed'
@@ -10602,4 +10691,3 @@ export function App() {
 }
 
 export default App;
-

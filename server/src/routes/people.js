@@ -14,7 +14,34 @@ export function register(app) {
   app.get('/api/person/me', (req, res) => {
     const me = requireAuth(req, res);
     if (!me) return;
-    res.json({ person: person.ensurePersonForUser(me) });
+    const mine = person.ensurePersonForUser(me);
+    res.json({
+      person: mine,
+      standing: person.standing(mine.id),
+      availability: person.getAvailability(me)
+    });
+  });
+
+  /** Explicit availability. Off by default. Presence is not consent. */
+  app.put('/api/person/me/availability', (req, res) => {
+    const me = requireAuth(req, res);
+    if (!me) return;
+    try {
+      res.json({ availability: person.setAvailability(me, req.body ?? {}) });
+    } catch (e) {
+      res.status(400).json({ error: String(e.message ?? e) });
+    }
+  });
+
+  app.get('/api/person/me/availability', (req, res) => {
+    const me = requireAuth(req, res);
+    if (!me) return;
+    res.json({ availability: person.getAvailability(me) });
+  });
+
+  /** Opted-in available players only. Not a public people search. */
+  app.get('/api/person/available', (req, res) => {
+    res.json({ available: person.listAvailable({ gameId: req.query.gameId ?? null }) });
   });
 
   /** A person by id. Operator-readable; existence is not disclosed widely. */
@@ -45,8 +72,19 @@ export function register(app) {
     const me = requireAuth(req, res);
     if (!me) return;
     const my = person.ensurePersonForUser(me);
+    const kind = req.body?.kind;
+    // Phone / WhatsApp / email / Telegram cannot be self-certified. A claim
+    // that "this WhatsApp is that account" without a check is a guess.
+    if (person.CHECKED_ALIAS_KINDS.includes(kind)) {
+      return res.status(400).json({
+        error: 'this alias is not verified. Brief will not guess that this contact is that account.'
+      });
+    }
+    if (!person.SELF_ASSERTABLE_KINDS.includes(kind)) {
+      return res.status(400).json({ error: `invalid alias kind: ${kind}` });
+    }
     try {
-      const alias = person.linkAlias(my.id, req.body?.kind, req.body?.value, {
+      const alias = person.linkAlias(my.id, kind, req.body?.value, {
         verified: true,
         source: 'self'
       });

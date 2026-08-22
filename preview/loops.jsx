@@ -23,8 +23,16 @@ global.fetch = async (url, init = {}) => {
   const method = String(init.method || 'GET').toUpperCase();
   const send = (b) => ({ ok: true, status: 200, text: async () => JSON.stringify(b), json: async () => b });
   if (path.includes('/api/auth/me')) {
-    return send({ user: { id: 'usr_me', handle: 'local', displayName: 'Local' } });
+    return send({ user: { id: 'usr_me', handle: 'local', displayName: 'Local', personId: 'person_me' } });
   }
+  if (path.includes('/api/person/me')) {
+    return send({
+      person: { id: 'person_me', displayName: 'Local', tags: [], aliases: [] },
+      standing: { personId: 'person_me', displayName: 'Local', hosted: 0, bought: 0, arrived: 0, registered: 0, vendor: null, gameTags: [] },
+      availability: { state: 'offline' }
+    });
+  }
+  if (path.includes('/api/arena/players')) return send({ players: [] });
   if (path.includes('/api/arena/status')) return send({ arenaMoney: { enabled: false, requirements: [] } });
   if (path.includes('/api/arena/games')) {
     return send({

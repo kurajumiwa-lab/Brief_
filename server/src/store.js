@@ -176,6 +176,9 @@ const EMPTY = {
   // only — never probabilistic inference.
   people: [],
   personAliases: [],
+  // Explicit Play availability. Off by default: a missing row is offline.
+  // Presence is not consent — only an opted-in row is listed.
+  arenaAvailability: [],
 
   // --- Arena entities (server models) -------------------------------------
   // A player's game identity is NOT their Brief account: one person holds many.

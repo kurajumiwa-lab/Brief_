@@ -24,6 +24,7 @@
 
 import { store, newId, newTicketCode } from '../store.js';
 import { emitSignal } from './signal.js';
+import { personIdIfUser } from './person.js';
 
 export const CAMPAIGN_TYPES = ['popup', 'session', 'drop', 'event'];
 
@@ -578,7 +579,7 @@ export function recordView(campaign, viewerRef = null) {
  * The client cannot influence it: there is no count in the request and no
  * counter in storage.
  */
-export function register(campaign, { attendeeRef, name = null, contact = null } = {}) {
+export function register(campaign, { attendeeRef, name = null, contact = null, userId = null } = {}) {
   if (campaign.status !== 'published' && campaign.status !== 'live') {
     throw new Error('campaign is not open for registration');
   }
@@ -606,6 +607,8 @@ export function register(campaign, { attendeeRef, name = null, contact = null } 
     id: newId('reg'),
     campaignId: campaign.id,
     attendeeRef,
+    userId: userId || null,
+    personId: personIdIfUser(userId),
     name,
     contact,
     status: campaign.price > 0 ? 'started' : 'registered',

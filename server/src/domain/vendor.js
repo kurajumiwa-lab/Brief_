@@ -24,6 +24,7 @@
 
 import { store, newId } from '../store.js';
 import { VERIFICATION_KINDS } from './member.js';
+import { personIdForUser } from './person.js';
 
 export const VENDOR_STATUS = ['active', 'paused', 'closed'];
 
@@ -66,6 +67,7 @@ export function createVendor({
   const vendor = {
     id: newId('vend'),
     ownerId,
+    personId: personIdForUser(ownerId),
     displayName: String(displayName).trim(),
     description: String(description ?? ''),
     contactMethod: contactMethod ?? null,
