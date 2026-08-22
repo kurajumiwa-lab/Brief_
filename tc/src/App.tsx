@@ -27,6 +27,7 @@ import { LobbyBoard } from './components/LobbyBoard';
 import { FeedComposer } from './components/FeedComposer';
 import { TeaDesk } from './components/TeaDesk';
 import { CreatorCockpit } from './components/CreatorCockpit';
+import { MediaKitPanel, OpportunitiesPanel, MessagesPanel, SubscriptionsPanel } from './components/CreatorPanels';
 import { SearchResults } from './components/SearchResults';
 import { TeaReader } from './components/TeaReader';
 import type { CircleDetail as ApiCircleDetail } from './api/briefApi';
@@ -141,7 +142,8 @@ const DESTINATION_ICONS: Record<Destination, LucideIcon> = {
 
 export type NearbySection = 'stream' | 'tea' | 'today' | 'pursuits' | 'quests' | 'market';
 export type MyLayerSection =
-  | 'saved' | 'activity' | 'arena' | 'points' | 'circles' | 'groups' | 'campaigns';
+  | 'saved' | 'activity' | 'arena' | 'points' | 'circles' | 'groups' | 'campaigns'
+  | 'mediakit' | 'opportunities' | 'messages' | 'subscriptions';
 // Workflows secondary: a Journey is either in progress or finished. Inbox and
 // Sources are kept -- they are existing workflow surfaces, not new screens.
 export type WorkflowSection = 'cockpit' | 'command' | 'active' | 'completed' | 'inbox' | 'sources' | 'money' | 'vault' | 'gate' | 'tea';
@@ -7249,7 +7251,14 @@ export function App() {
                 // the connected-source reader, not a second community model.
                 ['circles', 'Circles'],
                 ['groups', `Groups${unansweredQuestions.length > 0 ? ` (${unansweredQuestions.length})` : ''}`],
-                ['campaigns', 'Campaigns']
+                ['campaigns', 'Campaigns'],
+                // The creator workspace: the Saved screen is the dynamic home
+                // for the creator's own relationship/revenue tools, surfaced
+                // here rather than as orphaned screens.
+                ['mediakit', 'Media Kit'],
+                ['opportunities', 'Opportunities'],
+                ['messages', 'Messages'],
+                ['subscriptions', 'Subscriptions']
               ] as [MyLayerSection, string][]).map(([id, label]) => (
                 <button
                   key={id}
@@ -9614,6 +9623,30 @@ export function App() {
                 ))}
               </div>
             ))}
+          </div>
+        )}
+
+        {activeTab === 'mylayer' && myLayerSection === 'mediakit' && (
+          <div className="max-w-2xl mx-auto px-4 py-6">
+            <MediaKitPanel />
+          </div>
+        )}
+
+        {activeTab === 'mylayer' && myLayerSection === 'opportunities' && (
+          <div className="max-w-2xl mx-auto px-4 py-6">
+            <OpportunitiesPanel />
+          </div>
+        )}
+
+        {activeTab === 'mylayer' && myLayerSection === 'messages' && (
+          <div className="max-w-2xl mx-auto px-4 py-6">
+            <MessagesPanel />
+          </div>
+        )}
+
+        {activeTab === 'mylayer' && myLayerSection === 'subscriptions' && (
+          <div className="max-w-2xl mx-auto px-4 py-6">
+            <SubscriptionsPanel />
           </div>
         )}
 

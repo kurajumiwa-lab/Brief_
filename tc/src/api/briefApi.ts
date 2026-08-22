@@ -1579,3 +1579,37 @@ export function updateWorkflow(id: string, patch: Record<string, unknown>): Prom
 export function runWorkflowSweep(): Promise<ApiResult<any>> {
   return request('/api/workflows/sweep', { method: 'POST', body: '{}' }, (r) => r ?? undefined);
 }
+
+// --- Creator workspace (media kit, partnership, inbox, subscriptions) ---------
+
+export function getMyMediaKit(): Promise<ApiResult<any>> {
+  return request('/api/creator/mediakit/mine', undefined, (r) => (r?.mediaKit ? r.mediaKit : null));
+}
+
+export function getOpportunities(): Promise<ApiResult<any[]>> {
+  return request('/api/creator/opportunities', undefined, (r) => Array.isArray(r?.opportunities) ? r.opportunities : undefined);
+}
+
+export function respondOpportunity(id: string, action: string): Promise<ApiResult<any>> {
+  return request(`/api/creator/opportunities/${encodeURIComponent(id)}/${encodeURIComponent(action)}`, { method: 'POST', body: '{}' }, (r) => r?.opportunity ?? undefined);
+}
+
+export function getInboxContacts(): Promise<ApiResult<any[]>> {
+  return request('/api/inbox/contacts', undefined, (r) => Array.isArray(r?.contacts) ? r.contacts : undefined);
+}
+
+export function getInboxThread(key: string): Promise<ApiResult<any[]>> {
+  return request(`/api/inbox/thread/${encodeURIComponent(key)}`, undefined, (r) => Array.isArray(r?.messages) ? r.messages : undefined);
+}
+
+export function getSubscriptions(): Promise<ApiResult<any[]>> {
+  return request('/api/subscriptions', undefined, (r) => Array.isArray(r?.subscriptions) ? r.subscriptions : undefined);
+}
+
+export function createSubscription(fields: Record<string, unknown>): Promise<ApiResult<any>> {
+  return request('/api/subscriptions', { method: 'POST', body: JSON.stringify(fields) }, (r) => r?.subscription ?? undefined);
+}
+
+export function subscriptionAction(id: string, action: string): Promise<ApiResult<any>> {
+  return request(`/api/subscriptions/${encodeURIComponent(id)}/${encodeURIComponent(action)}`, { method: 'POST', body: '{}' }, (r) => r?.subscription ?? r?.transaction ?? undefined);
+}
