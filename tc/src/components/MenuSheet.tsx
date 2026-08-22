@@ -211,13 +211,13 @@ function HostValueCard({
   ];
 
   return (
-    <div className="px-2 pt-1">
+    <div className="px-3 pt-3">
       {expanded && (
         <button
           onClick={onBack}
-          className="mb-2 flex items-center gap-1 text-[11px] font-bold text-[#3d4460] cursor-pointer"
+          className="mb-2 flex items-center gap-1 text-[12px] font-bold text-[#3d4460] cursor-pointer"
         >
-          <ChevronLeft className="h-3.5 w-3.5" />
+          <ChevronLeft className="h-4 w-4" />
           Shelf
         </button>
       )}
@@ -225,36 +225,39 @@ function HostValueCard({
       <button
         type="button"
         onClick={expanded ? undefined : onExpand}
-        className="w-full text-left rounded-2xl p-2.5 shadow-lg cursor-pointer"
+        className="w-full text-left rounded-2xl p-3.5 shadow-lg cursor-pointer"
         style={{
           background: 'linear-gradient(145deg, #141a28 0%, #0c1220 58%, #163528 100%)',
           border: '1px solid rgba(67,209,122,0.28)'
         }}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <div
-            className="h-9 w-9 rounded-xl flex items-center justify-center text-[12px] font-extrabold shrink-0"
+            className="h-11 w-11 rounded-2xl flex items-center justify-center text-[14px] font-extrabold shrink-0"
             style={{ background: '#43D17A', color: '#090B10' }}
           >
             {initials(name)}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[13px] font-extrabold text-[#F3F1E7] truncate">{name}</p>
-            <p className="text-[10px] text-[#8A93A6] truncate">
+            <p className="text-[15px] font-extrabold text-[#F3F1E7] truncate">{name}</p>
+            <p className="text-[11px] text-[#8A93A6] truncate">
               {handle ?? (kitKnown && !kit ? 'No vendor profile yet' : 'Your host card')}
             </p>
           </div>
+          <span className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#43D17A] shrink-0">
+            Card
+          </span>
         </div>
 
-        <div className="mt-2.5 grid grid-cols-1 gap-1">
+        <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2">
           {(standing.length > 0 ? standing : [
             { label: 'Settled', value: '—' },
             { label: 'Arrived', value: '—' },
             { label: 'Hosted', value: '—' }
-          ]).slice(0, 3).map((s) => (
-            <div key={s.label} className="flex items-baseline justify-between gap-1 min-w-0">
+          ]).slice(0, 4).map((s) => (
+            <div key={s.label} className="min-w-0">
+              <p className="text-[14px] font-extrabold text-[#F3F1E7] truncate">{s.value}</p>
               <p className="text-[9px] text-[#8A93A6]">{s.label}</p>
-              <p className="text-[12px] font-extrabold text-[#F3F1E7] truncate">{s.value}</p>
             </div>
           ))}
         </div>
@@ -405,7 +408,7 @@ function Section({
   return (
     <section className={tint ? '' : 'bg-white'}>
       <div className={`px-2.5 pt-3 pb-1.5 ${tint ?? 'bg-[#f3f5f8]'}`}>
-        <h2 className="text-[12px] font-extrabold text-[#16181f] tracking-tight">{title}</h2>
+        <h2 className="text-[15px] font-extrabold text-[#16181f] tracking-tight">{title}</h2>
       </div>
       <div className={tint ?? 'bg-white'}>{children}</div>
     </section>
@@ -484,7 +487,7 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
         role="dialog"
         aria-label="Menu"
         aria-modal="true"
-        className="h-full w-1/3 max-w-[33.333%] min-w-0 shrink-0 overflow-y-auto overflow-x-hidden border-r border-[#d7dbe8] shadow-[8px_0_24px_rgba(0,0,0,0.22)]"
+        className="h-full w-[min(20rem,78vw)] max-w-[78vw] min-w-0 shrink-0 overflow-y-auto overflow-x-hidden border-r border-[#d7dbe8] shadow-[8px_0_24px_rgba(0,0,0,0.22)]"
         style={{
           background: '#f7f8fb',
           overscrollBehavior: 'contain',
@@ -504,7 +507,7 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
           {!cardOpen && (
             <>
               <div className="px-2 pt-3 pb-2">
-                <div className="grid grid-cols-2 gap-1.5">
+                <div className="grid grid-cols-4 gap-2">
                   {QUICK.map((q) => {
                     const Icon = q.icon;
                     return (
