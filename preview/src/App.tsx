@@ -3320,7 +3320,7 @@ const getPointsOutstanding = (ledger: PointsEntry[]): number =>
 // award only, and milestones count players who actually finished.
 
 const ORGANIZER_MILESTONES: { completedPlayers: number; points: number; label: string }[] = [
-  { completedPlayers: 100, points: 8000, label: 'Elite organizer' },
+  { completedPlayers: 100, points: 8000, label: 'Experienced' },
   { completedPlayers: 50, points: 3500, label: 'Major' },
   { completedPlayers: 25, points: 1500, label: 'Large' },
   { completedPlayers: 10, points: 600, label: 'Established' }
@@ -3438,11 +3438,11 @@ export interface OrganizerRecord {
 }
 
 export type OrganizerRank =
-  | 'Organizer'
-  | 'Trusted Organizer'
-  | 'Elite Organizer'
-  | 'Arena Host'
-  | 'Arena Champion';
+  | 'Host'
+  | 'Trusted Host'
+  | 'Experienced Host'
+  | 'Established Host'
+  | 'Seasoned Host';
 
 // Organizer rank needs volume AND quality. A high dispute rate blocks the top
 // tiers regardless of how many tournaments someone has run.
@@ -3453,11 +3453,11 @@ const ORGANIZER_LADDER: {
   minCompletionRate: number;
   maxDisputeRate: number;
 }[] = [
-  { rank: 'Arena Champion', minHosted: 25, minPlayersServed: 500, minCompletionRate: 95, maxDisputeRate: 2 },
-  { rank: 'Arena Host', minHosted: 15, minPlayersServed: 250, minCompletionRate: 90, maxDisputeRate: 4 },
-  { rank: 'Elite Organizer', minHosted: 8, minPlayersServed: 100, minCompletionRate: 85, maxDisputeRate: 6 },
-  { rank: 'Trusted Organizer', minHosted: 3, minPlayersServed: 30, minCompletionRate: 75, maxDisputeRate: 10 },
-  { rank: 'Organizer', minHosted: 0, minPlayersServed: 0, minCompletionRate: 0, maxDisputeRate: 100 }
+  { rank: 'Seasoned Host', minHosted: 25, minPlayersServed: 500, minCompletionRate: 95, maxDisputeRate: 2 },
+  { rank: 'Established Host', minHosted: 15, minPlayersServed: 250, minCompletionRate: 90, maxDisputeRate: 4 },
+  { rank: 'Experienced Host', minHosted: 8, minPlayersServed: 100, minCompletionRate: 85, maxDisputeRate: 6 },
+  { rank: 'Trusted Host', minHosted: 3, minPlayersServed: 30, minCompletionRate: 75, maxDisputeRate: 10 },
+  { rank: 'Host', minHosted: 0, minPlayersServed: 0, minCompletionRate: 0, maxDisputeRate: 100 }
 ];
 
 const getOrganizerRank = (r: OrganizerRecord): OrganizerRank => {
@@ -3471,7 +3471,7 @@ const getOrganizerRank = (r: OrganizerRecord): OrganizerRank => {
       return tier.rank;
     }
   }
-  return 'Organizer';
+  return 'Host';
 };
 
 // --- Anti-abuse -------------------------------------------------------------
@@ -3885,18 +3885,18 @@ export type BriefRank =
   | 'Newcomer'
   | 'Explorer'
   | 'Contributor'
-  | 'Pro'
-  | 'Elite'
-  | 'Sovereign';
+  | 'Seasoned'
+  | 'Expert'
+  | 'Steward';
 
 const RANK_LADDER: {
   rank: BriefRank;
   minAccepted: number;
   minAcceptanceRate: number;
 }[] = [
-  { rank: 'Sovereign', minAccepted: 500, minAcceptanceRate: 90 },
-  { rank: 'Elite', minAccepted: 200, minAcceptanceRate: 85 },
-  { rank: 'Pro', minAccepted: 75, minAcceptanceRate: 80 },
+  { rank: 'Steward', minAccepted: 500, minAcceptanceRate: 90 },
+  { rank: 'Expert', minAccepted: 200, minAcceptanceRate: 85 },
+  { rank: 'Seasoned', minAccepted: 75, minAcceptanceRate: 80 },
   { rank: 'Contributor', minAccepted: 20, minAcceptanceRate: 70 },
   { rank: 'Explorer', minAccepted: 5, minAcceptanceRate: 0 },
   { rank: 'Newcomer', minAccepted: 0, minAcceptanceRate: 0 }
@@ -9178,7 +9178,7 @@ export function App() {
             <div className="grid grid-cols-2 gap-2">
               <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3">
                 <p className="text-[10px] text-[#4B5162]">
-                  Rank
+                  Progress
                 </p>
                 <p className="text-sm font-extrabold text-[#F3F1E7] mt-1">{myRank}</p>
               </div>
@@ -9254,7 +9254,7 @@ export function App() {
                 </span>
               </div>
               <p className="text-[10px] text-[#8A93A6]">
-                Rank <span className="text-[#8A93A6]">{myRank}</span> -{' '}
+                Progress <span className="text-[#8A93A6]">{myRank}</span> -{' '}
                 {myContribution.accepted} accepted contributions
               </p>
               {pendingCount > 0 && (

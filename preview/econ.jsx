@@ -85,9 +85,9 @@ async function main(){
   b=body();
   check('player board present', /KING/.test(b));
   check('organizer board present', /Arena host/.test(b));
-  check('organizer rank shown', /Arena Host|Elite Organizer|Trusted Organizer/.test(b));
+  check('organizer rank shown', /Established Host|Experienced Host|Trusted Host/.test(b));
   check('organizer stats shown', /18 tournaments/.test(b)&&/423 players/.test(b)&&/97% completion/.test(b));
-  check('weak organizer not top-ranked', /Organizer - 2 tournaments/.test(b)||/Organizer -/.test(b));
+  check('weak organizer not top-ranked', /Host - 2 tournaments/.test(b)||/Host -/.test(b));
 
   console.log('\n=== 9+10+11. Gift cards ===');
   await click(btn('Rewards'));

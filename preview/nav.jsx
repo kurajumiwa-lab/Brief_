@@ -79,7 +79,7 @@ async function main(){
   check('Activity uses real relationships', /My Activity/i.test(body())&&/saved|watched/i.test(body()));
   await goto('Saved','Arena');
   check('My Layer > Arena keeps match history', /My Matches/i.test(body()));
-  check('My Layer > Arena shows rank and points', /Rank/i.test(body())&&/Arena Points/i.test(body()));
+  check('My Layer > Arena shows progress and points', /Progress/i.test(body())&&/Arena Points/i.test(body()));
   await goto('Saved','Points');
   check('both currencies shown separately', /Brief Points/i.test(body())&&/Arena Points/i.test(body()));
   check('points not summed into one total', !/Total points/i.test(body()));

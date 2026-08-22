@@ -210,7 +210,7 @@ async function main(){
   check('explicitly zero', /No points awarded/i.test(b));
 
   console.log('\n=== Rank is earned, not bought ===');
-  check('rank shown', /Rank Explorer|Rank Newcomer|Rank Contributor/i.test(b));
+  check('rank shown', /Progress Explorer|Progress Newcomer|Progress Contributor/i.test(b));
   check('next rank states real requirement', /needs \d+ more accepted/i.test(b));
 
   console.log('\n=== Two boards: volume must not beat usefulness ===');

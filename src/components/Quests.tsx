@@ -93,7 +93,7 @@ export function Quests({
         )}
         <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1">
           <span className="text-[10px] text-[#8A93A6]">
-            Rank <span className="text-[#8A93A6]">{myRank}</span>
+            Progress <span className="text-[#8A93A6]">{myRank}</span>
           </span>
           <span className="text-[10px] text-[#8A93A6]">
             Accepted{' '}
