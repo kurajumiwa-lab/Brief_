@@ -71,8 +71,11 @@ import {
   MessageCircle,
   ExternalLink,
   Eye,
-  X
+  X,
+  Menu
 } from 'lucide-react';
+import { MenuSheet } from './components/MenuSheet';
+import type { MenuTarget } from './components/MenuSheet';
 import type { LucideIcon } from 'lucide-react';
 
 // ============================================================================
@@ -4662,7 +4665,6 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
             <circle cx="13" cy="13" r="9" fill="var(--signal-live)" opacity="0.15" />
             <circle cx="13" cy="13" r="4" fill="var(--signal-live)" />
           </svg>
-          <span className="font-display text-sm font-bold tracking-tight" style={{ color: 'var(--ink)' }}>Brief</span>
         </div>
 
         {load.status === 'loading' && (
@@ -4887,6 +4889,7 @@ export function App() {
   const [myLayerSection, setMyLayerSection] = useState<MyLayerSection>('saved');
   const [workflowSection, setWorkflowSection] = useState<WorkflowSection>('cockpit');
   const [pulseSection, setPulseSection] = useState<PulseSection>('now');
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // --- Ingestion backend (real connectors) ---------------------------------
   // The client holds no tokens. It talks to the ingestion server, which owns
@@ -5095,6 +5098,7 @@ export function App() {
   // Both navs call this, so selecting a destination behaves identically on
   // desktop and mobile: you land on that destination's main section.
   const goToDestination = (id: Destination) => {
+    setMenuOpen(false);
     setActiveTab(id);
     if (id === 'nearby') setNearbySection('stream');
     if (id === 'mylayer') setMyLayerSection('saved');
@@ -6629,6 +6633,19 @@ export function App() {
     );
   };
 
+  const handleMenuSelect = (target: MenuTarget) => {
+    setMenuOpen(false);
+    if (target.tab === 'capture') {
+      setCaptureOpen(true);
+      return;
+    }
+    setActiveTab(target.tab);
+    if (target.tab === 'nearby') setNearbySection(target.section ?? 'stream');
+    if (target.tab === 'mylayer') setMyLayerSection(target.section ?? 'saved');
+    if (target.tab === 'workflows') setWorkflowSection(target.section ?? 'cockpit');
+    if (target.tab === 'pulse') setPulseSection('now');
+  };
+
   return (
     <div className="min-h-screen bg-[#090B10] text-[#F3F1E7] flex flex-col font-sans selection:bg-[#43D17A] selection:text-[#090B10]">
 
@@ -6669,12 +6686,20 @@ export function App() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <span className="font-extrabold text-xl text-[#4edea3] tracking-tight" style={{ fontFamily: 'var(--m3-font-headline)' }}>Brief</span>
-              {/* Where am I. The rail shows it too, but the header keeps the
-                  answer visible when the rail is collapsed to icons. */}
-              <span className="hidden lg:inline text-[11px] font-extrabold text-[#86948a]">
-                {DESTINATIONS.find((d) => d.id === activeTab)?.label}
-              </span>
+              <button
+                type="button"
+                onClick={() => setMenuOpen((v) => !v)}
+                aria-label="Menu"
+                aria-expanded={menuOpen}
+                title="Menu"
+                className={`h-8 w-8 rounded-full border flex items-center justify-center cursor-pointer ${
+                  menuOpen
+                    ? 'bg-[#10b981] text-[#00422b] border-[#10b981]'
+                    : 'bg-[#1c1f29] text-[#dfe2ef] border-[#3c4a42]'
+                }`}
+              >
+                <Menu className="w-4 h-4" />
+              </button>
               <LocationChip
                 label={selectedLocation}
                 locating={locating}
@@ -6726,6 +6751,28 @@ export function App() {
           aria-label="Primary"
           className="hidden md:flex flex-col shrink-0 w-[76px] hover:w-60 transition-all duration-200 border-r border-[#232A38] bg-[#10141C] sticky top-[57px] h-[calc(100vh-57px)] py-4 group/rail overflow-hidden"
         >
+          <button
+            type="button"
+            onClick={() => setMenuOpen((v) => !v)}
+            title="Menu"
+            aria-expanded={menuOpen}
+            className={`relative flex items-center gap-3 px-5 py-3 cursor-pointer transition-colors ${
+              menuOpen ? 'text-[#43D17A] bg-[#10141C] font-extrabold' : 'text-[#43D17A] hover:text-[#F3F1E7]'
+            }`}
+          >
+            <span
+              className={`absolute left-0 top-1/2 -translate-y-1/2 w-0.5 rounded-r transition-all ${
+                menuOpen ? 'h-7 bg-[#43D17A]' : 'h-0 bg-transparent'
+              }`}
+            />
+            <Menu className="w-5 h-5 shrink-0" />
+            <span className="min-w-0 opacity-0 group-hover/rail:opacity-100 transition-opacity">
+              <span className="block text-[11px] font-extrabold whitespace-nowrap">Menu</span>
+              <span className="block text-[9px] text-[#4B5162] whitespace-nowrap">
+                Card, shelf and shortcuts
+              </span>
+            </span>
+          </button>
           {DESTINATIONS.map((d) => {
             const active = activeTab === d.id;
             const Icon = DESTINATION_ICONS[d.id];
@@ -8486,6 +8533,19 @@ export function App() {
         aria-label="Primary"
         className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#1c1f29]/98 backdrop-blur-xl border-t border-[#3c4a42] flex shadow-lg"
       >
+        <button
+          type="button"
+          onClick={() => setMenuOpen((v) => !v)}
+          aria-label="Menu"
+          aria-expanded={menuOpen}
+          title="Menu"
+          className={`flex-1 flex flex-col items-center justify-center gap-1 pt-2 cursor-pointer transition-colors ${
+            menuOpen ? 'text-[#4edea3] font-bold border-t-2 border-[#4edea3]' : 'text-[#bbcabf]'
+          }`}
+        >
+          <Menu className="w-5 h-5" />
+          <span className="text-[9px] font-extrabold leading-none">Menu</span>
+        </button>
         {DESTINATIONS.map((d) => {
           const active = activeTab === d.id;
           const Icon = DESTINATION_ICONS[d.id];
@@ -10227,8 +10287,16 @@ export function App() {
         </div>
       )}
 
+      <MenuSheet
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        onSelect={handleMenuSelect}
+        onSelectCity={chooseCity}
+        selectedLocation={selectedLocation}
+      />
+
       <footer className="border-t border-[#232A38] mt-12 py-6 text-xs text-[#8A93A6] text-center">
-        Brief 10.0 &middot; Everything Happening Around You
+        Everything Happening Around You
       </footer>
 
     </div>

@@ -121,19 +121,19 @@ async function main(){
   check('rail hidden on mobile widths', !!rail && rail.className.includes('hidden'));
   check('rail is sticky and full height', !!rail && /sticky/.test(rail.className));
   check('bottom bar fixed to viewport bottom', !!bar && /fixed/.test(bar.className)&&/bottom-0/.test(bar.className));
-  check('rail has exactly 5 doors', !!rail && rail.querySelectorAll('button').length===5, rail?String(rail.querySelectorAll('button').length):'no rail');
-  check('bar has exactly 5 doors', !!bar && bar.querySelectorAll('button').length===5);
+  check('rail has Menu plus 5 doors', !!rail && rail.querySelectorAll('button').length===6, rail?String(rail.querySelectorAll('button').length):'no rail');
+  check('bar has Menu plus 5 doors', !!bar && bar.querySelectorAll('button').length===6);
 
   console.log('\n=== Both navs stay in sync ===');
   const railBtns=()=>Array.from(rail.querySelectorAll('button'));
   const barBtns=()=>Array.from(bar.querySelectorAll('button'));
-  await click(barBtns()[1]);
+  await click(barBtns()[2]);
   check('tapping bottom bar changes destination', /Gather with people to play/i.test(body()));
-  check('rail reflects the same active item', railBtns()[1].getAttribute('aria-current')==='page');
-  check('bar reflects the same active item', barBtns()[1].getAttribute('aria-current')==='page');
-  await click(railBtns()[0]);
+  check('rail reflects the same active item', railBtns()[2].getAttribute('aria-current')==='page');
+  check('bar reflects the same active item', barBtns()[2].getAttribute('aria-current')==='page');
+  await click(railBtns()[1]);
   check('clicking rail changes destination', /Everything Happening Around You/i.test(body()));
-  check('bar follows the rail', barBtns()[0].getAttribute('aria-current')==='page');
+  check('bar follows the rail', barBtns()[1].getAttribute('aria-current')==='page');
   check('only one item is current at a time', railBtns().filter(b=>b.getAttribute('aria-current')==='page').length===1);
 
   console.log('\n=== Icons carry labels, not decoration alone ===');
