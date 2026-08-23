@@ -141,6 +141,10 @@ See [`BRIEF-FINAL-REPORT.md`](BRIEF-FINAL-REPORT.md) for what is built, partial
 and missing, and [`BRIEF-COVERAGE-MATRIX.md`](BRIEF-COVERAGE-MATRIX.md) for
 evidence-cited coverage per area.
 
+The anonymous, read-only feed contract is documented in
+[`PUBLIC-FEED-API.md`](PUBLIC-FEED-API.md). Use `GET /api/public/feed` for
+external integrations; `GET /api/feed` remains the first-party alias.
+
 See [`server/CONNECTORS.md`](server/CONNECTORS.md) for exactly what each
 connector can and cannot do, including the things that are genuinely impossible
 (WhatsApp group ingestion, Telegram history backfill) and why.

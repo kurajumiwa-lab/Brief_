@@ -135,12 +135,15 @@ export function rankObject(object) {
 /**
  * The discoverable feed: visible objects ranked by relevance, optionally
  * constrained to a radius around a point. Removed and stale-heavy objects fall
- * away; located objects beat unlocated ones when a location is given.
+ * away; located objects beat unlocated ones when a location is given. Callers
+ * may pass `publication: 'public'` when building an anonymous projection.
  */
-export function discoverable({ near = null, radiusKm = null, limit = 50, includeExpired = false } = {}) {
+export function discoverable({ near = null, radiusKm = null, limit = 50, includeExpired = false, publication = null } = {}) {
   sweepExpired();
 
-  let objects = store.filter('objects', (o) => o.publication !== 'removed');
+  let objects = store.filter('objects', (o) =>
+    o.publication !== 'removed' && (!publication || o.publication === publication)
+  );
   if (!includeExpired) {
     objects = objects.filter((o) => !isStale(o));
   }

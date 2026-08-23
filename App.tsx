@@ -4419,6 +4419,12 @@ export const objectFromServer = (row: any): BriefObject => {
   sourceId: row?.provenance?.[0]?.sourceId ?? undefined,
   metadata: Object.keys(meta).length > 0 ? meta : undefined,
   createdAt: String(row?.createdAt ?? new Date().toISOString()),
+  // Feed projections expose media/action as nested public fields; keep the
+  // first-party detail view compatible without reintroducing private fields.
+  imageUrl: row?.imageUrl ?? row?.media?.url ?? undefined,
+  actionUrl: row?.actionUrl ?? row?.action?.url ?? undefined,
+  actionType: row?.actionType ?? row?.action?.type ?? undefined,
+  actionLabel: row?.actionLabel ?? row?.action?.label ?? undefined,
 
   // Relationships the server actually recorded. `/api/objects` returns these
   // as {verb, targetId, target}; the client models the same edges as typed
@@ -7104,7 +7110,9 @@ export function App() {
                 typeFilter={selectedObjectType}
                 onFeedStatus={setHomeFeedStatus}
                 onOpen={(raw) => {
-                  if (raw?.id) setSelectedObjectForDetail(objectFromServer(raw));
+                  if (!raw?.id) return;
+                  const local = objects.find((object) => object.id === String(raw.id));
+                  setSelectedObjectForDetail(local ?? objectFromServer(raw));
                 }}
                 onOpenTea={(slug) => setSelectedTeaSlug(slug)}
                 onOpenTag={(tag) => {

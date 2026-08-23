@@ -1561,6 +1561,21 @@ export function getFeed(opts: { lat?: number; lng?: number; radiusKm?: number } 
   return request(`/api/feed${q}`, undefined, (r) => (r?.feed ? r.feed : undefined));
 }
 
+/**
+ * Anonymous feed contract for external consumers. It returns the same
+ * title/media composition as getFeed, but uses the explicit public URL so
+ * integrations do not depend on the first-party alias.
+ */
+export function getPublicFeed(opts: { lat?: number; lng?: number; radiusKm?: number; limit?: number } = {}): Promise<ApiResult<any>> {
+  const params = new URLSearchParams();
+  if (opts.lat !== undefined) params.set('lat', String(opts.lat));
+  if (opts.lng !== undefined) params.set('lng', String(opts.lng));
+  if (opts.radiusKm !== undefined) params.set('radiusKm', String(opts.radiusKm));
+  if (opts.limit !== undefined) params.set('limit', String(opts.limit));
+  const q = params.toString() ? `?${params.toString()}` : '';
+  return request(`/api/public/feed${q}`, undefined, (r) => (r?.feed ? r.feed : undefined));
+}
+
 // --- Tea Desk (editorial admin) ---------------------------------------------
 
 /** All Tea articles including drafts, for the desk. */
