@@ -2,11 +2,7 @@ import React from 'react';
 import * as briefApi from '../api/briefApi';
 
 // ---------------------------------------------------------------------------
-// SEARCH RESULTS — cross-entity results (objects + Tea + vendors + collections)
-//
-// Renders the typed results of /api/search. Objects open the detail view;
-// Tea/vendors/collections are honest and typed (Tea read-only until the reader
-// page ships; vendors and collections are labelled). No fabricated hits.
+// SEARCH RESULTS — title-first results for the home surface.
 // ---------------------------------------------------------------------------
 
 interface Results {
@@ -15,6 +11,34 @@ interface Results {
   tea: any[];
   vendors: any[];
   collections: any[];
+}
+
+function ResultRow({ title, image, onClick }: { title: string; image?: string | null; onClick?: () => void }) {
+  const content = (
+    <>
+      {image && <img src={image} alt="" aria-hidden="true" loading="lazy" className="h-12 w-12 shrink-0 rounded-xl object-cover" />}
+      <h3 className="min-w-0 flex-1 truncate px-1 text-[14px] font-semibold text-[#F3F1E7]">{title}</h3>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={title}
+        className="flex w-full items-center gap-3 rounded-2xl border border-[#232A38] bg-[#10141C] p-2 text-left transition-colors hover:border-[#43D17A]"
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex w-full items-center gap-3 rounded-2xl border border-[#232A38] bg-[#10141C] p-2 text-left">
+      {content}
+    </div>
+  );
 }
 
 export function SearchResults({ query, onOpenObject }: { query: string; onOpenObject: (o: any) => void }) {
@@ -35,54 +59,33 @@ export function SearchResults({ query, onOpenObject }: { query: string; onOpenOb
   }, [query]);
 
   if (!query.trim()) return null;
-  if (loading) return <p className="text-xs text-[#8A93A6] py-2">Searching…</p>;
+  if (loading) return <div className="h-16 animate-pulse rounded-2xl bg-[#10141C]" aria-label="Searching" />;
   if (!results) return null;
 
   const total = results.counts.objects + results.counts.tea + results.counts.vendors + results.counts.collections;
-  if (total === 0) return null; // the stream's own empty state handles "nothing"
+  if (total === 0) return null;
 
   return (
-    <div className="mb-5 space-y-2">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#43D17A]">
-        Search results · {total} across {results.counts.objects} things, {results.counts.tea} articles, {results.counts.vendors} vendors, {results.counts.collections} collections
-      </p>
-
-      {results.objects.slice(0, 6).map((o) => (
-        <button
-          key={o.id}
-          onClick={() => onOpenObject(o)}
-          className="flex w-full items-center gap-3 rounded-xl border border-[#232A38] bg-[#10141C] p-3 text-left cursor-pointer transition hover:border-[#43D17A]"
-        >
-          <div className="min-w-0 flex-1">
-            <p className="text-[9px] uppercase tracking-[0.12em] text-[#4B5162]">{o.category}</p>
-            <p className="text-[13px] font-semibold text-[#F3F1E7] line-clamp-1">{o.title}</p>
-            {o.locationName && <p className="text-[10px] text-[#8A93A6] truncate">{o.locationName}</p>}
-          </div>
-        </button>
+    <section className="mx-auto mb-6 max-w-5xl space-y-2">
+      <h2 className="px-1 text-[11px] font-bold uppercase tracking-[0.22em] text-[#8A93A6]">Results</h2>
+      {results.objects.slice(0, 6).map((object) => (
+        <ResultRow
+          key={object.id}
+          title={object.title}
+          image={object.imageUrl ?? object.media?.url}
+          onClick={() => onOpenObject(object)}
+        />
       ))}
-
-      {results.tea.slice(0, 3).map((a) => (
-        <div key={a.id} className="rounded-xl border border-[#232A38] bg-[#10141C] p-3">
-          <p className="text-[9px] uppercase tracking-[0.12em] text-[#4B5162]">Tea · {a.category}</p>
-          <p className="text-[13px] font-semibold text-[#F3F1E7]">{a.title}</p>
-          <p className="text-[10px] text-[#4B5162]">{a.readingTime} min read</p>
-        </div>
+      {results.tea.slice(0, 3).map((article) => (
+        <ResultRow key={article.id} title={article.title} image={article.heroImage} />
       ))}
-
-      {results.vendors.slice(0, 3).map((v) => (
-        <div key={v.id} className="rounded-xl border border-[#232A38] bg-[#10141C] p-3">
-          <p className="text-[9px] uppercase tracking-[0.12em] text-[#4B5162]">Vendor</p>
-          <p className="text-[13px] font-semibold text-[#F3F1E7]">{v.name}</p>
-        </div>
+      {results.vendors.slice(0, 3).map((vendor) => (
+        <ResultRow key={vendor.id} title={vendor.name} image={vendor.imageUrl} />
       ))}
-
-      {results.collections.slice(0, 3).map((c) => (
-        <div key={c.id} className="rounded-xl border border-[#232A38] bg-[#10141C] p-3">
-          <p className="text-[9px] uppercase tracking-[0.12em] text-[#4B5162]">Collection</p>
-          <p className="text-[13px] font-semibold text-[#F3F1E7]">{c.title}</p>
-        </div>
+      {results.collections.slice(0, 3).map((collection) => (
+        <ResultRow key={collection.id} title={collection.title} image={collection.imageUrl} />
       ))}
-    </div>
+    </section>
   );
 }
 

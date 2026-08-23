@@ -4930,6 +4930,7 @@ export function App() {
   );
 
   const [activeTab, setActiveTab] = useState<Destination>(bootRoute.dest);
+  const [homeFeedStatus, setHomeFeedStatus] = useState<'loading' | 'ready' | 'unavailable'>('loading');
   const [nearbySection, setNearbySection] = useState<NearbySection>(bootRoute.nearby);
   const [moreFilters, setMoreFilters] = useState<boolean>(false);
   const [myLayerSection, setMyLayerSection] = useState<MyLayerSection>(bootRoute.mylayer);
@@ -7049,9 +7050,6 @@ export function App() {
             <Menu className="w-5 h-5 shrink-0" />
             <span className="min-w-0 opacity-0 group-hover/rail:opacity-100 transition-opacity">
               <span className="block text-[13px] font-extrabold whitespace-nowrap">Menu</span>
-              <span className="block text-[12px] text-[#4B5162] whitespace-nowrap">
-                Card, shelf and shortcuts
-              </span>
             </span>
           </button>
           {DESTINATIONS.map((d) => {
@@ -7061,7 +7059,7 @@ export function App() {
               <button
                 key={d.id}
                 onClick={() => goToDestination(d.id)}
-                title={d.hint}
+                title={d.label}
                 aria-current={active ? 'page' : undefined}
                 className={`relative flex items-center gap-3 px-5 py-3 cursor-pointer transition-colors ${
                   active
@@ -7076,14 +7074,9 @@ export function App() {
                   }`}
                 />
                 <Icon className="w-5 h-5 shrink-0" />
-                {/* Collapsed shows the icon only (with a title tooltip).
-                    Expanded adds the name and a one-line description. */}
                 <span className="min-w-0 opacity-0 group-hover/rail:opacity-100 transition-opacity">
                   <span className="block text-[13px] font-extrabold whitespace-nowrap">
                     {d.label}
-                  </span>
-                  <span className="block text-[12px] text-[#4B5162] whitespace-nowrap">
-                    {d.hint}
                   </span>
                 </span>
               </button>
@@ -7098,12 +7091,18 @@ export function App() {
         {/* Sub-navigation. Sections live INSIDE a destination, so the top
             bar stays five doors wide no matter how much is built. */}
         {activeTab === 'nearby' && (
-          <div className="max-w-3xl mx-auto px-4 pt-4">
-            <div className="mb-4">
+          <div className="max-w-5xl mx-auto px-0 sm:px-4 pt-2">
+            <div className="mb-5">
+              <div className="flex items-center justify-between px-1 pb-3">
+                <h1 className="font-display text-2xl font-semibold tracking-tight text-[#F3F1E7]">Home</h1>
+                <span className="text-[10px] uppercase tracking-[0.2em] text-[#4B5162]">Nearby</span>
+              </div>
               {/* FEED COMPOSER — the composed, deduplicated magazine feed:
                   hero → tea → discovery → opportunities. Real server rows via
                   /api/feed; card variety by type, never a repeating grid. */}
               <FeedComposer
+                typeFilter={selectedObjectType}
+                onFeedStatus={setHomeFeedStatus}
                 onOpen={(raw) => {
                   if (raw?.id) setSelectedObjectForDetail(objectFromServer(raw));
                 }}
@@ -7262,53 +7261,7 @@ export function App() {
 
         {activeTab === 'nearby' && nearbySection === 'stream' && (
           <>
-            {/* TEA */}
-            <div className="mb-5">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-baseline gap-2 min-w-0">
-                  <span className="text-[10px] font-extrabold text-[#43D17A] shrink-0">
-                    Stories
-                  </span>
-                  <span className="text-[11px] text-[#43D17A] truncate">
-                    What Nairobi is talking about
-                  </span>
-                </div>
-
-                <button
-                  onClick={() => { setActiveTab('nearby'); setNearbySection('tea'); }}
-                  className="shrink-0 text-[10px] font-extrabold text-[#43D17A] hover:text-[#43D17A] px-2 py-1 rounded-full cursor-pointer transition"
-                >
-                  See all
-                </button>
-              </div>
-
-              <div className="flex gap-2 overflow-x-auto no-scrollbar">
-                {TEA_EDITIONS.map(({ edition, label, Icon }) => (
-                  <button
-                    key={edition}
-                    onClick={() => {
-                      setActiveEdition(edition);
-                      setActiveTab('nearby');
-                      setNearbySection('tea');
-                    }}
-                    className="shrink-0 flex items-center gap-1.5 bg-[#10141C] border border-[#232A38] hover:border-[#43D17A] rounded-full px-3 py-1.5 transition cursor-pointer"
-                  >
-                    <Icon className="w-3.5 h-3.5 text-[#43D17A] shrink-0" />
-                    <span className="text-[11px] font-extrabold text-[#F3F1E7] whitespace-nowrap">
-                      {label}
-                    </span>
-                    {edition === liveEdition && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#43D17A] shrink-0" />
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* HAPPENING NEARBY (rework 10). Passing-mass discovery: if
-                something is on today near the selected location, surface it
-                above the browse grid so a person walking around the city sees
-                it without searching. Empty when nothing is genuinely on. */}
+            {/* A small live rail for destinations. Keep it visual and concise. */}
             {(() => {
               const active = objects
                 .filter((obj) => {
@@ -7324,284 +7277,194 @@ export function App() {
                 .slice(0, 3);
               if (active.length === 0) return null;
               return (
-                <div className="mb-5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#43D17A]" />
-                    <h3 className="text-[11px] font-extrabold text-[#43D17A]">
-                      Happening nearby
-                    </h3>
-                  </div>
-                  <div className="flex items-stretch gap-2 overflow-x-auto no-scrollbar">
+                <section className="mx-auto mb-8 max-w-5xl">
+                  <h2 className="mb-3 px-1 text-[11px] font-bold uppercase tracking-[0.22em] text-[#8A93A6]">
+                    Happening nearby
+                  </h2>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                     {active.map((obj) => {
                       const vendors = getDestinationVendors(obj, objects);
                       return (
                         <button
                           key={obj.id}
+                          type="button"
                           onClick={() => setSelectedObjectForDetail(obj)}
-                          className="shrink-0 w-60 text-left bg-[#10141C] border border-[#232A38] hover:border-[#43D17A] rounded-2xl p-3 cursor-pointer transition"
+                          aria-label={obj.title}
+                          className="group relative min-h-[170px] overflow-hidden rounded-2xl border border-[#232A38] bg-[#10141C] text-left transition-transform duration-200 hover:-translate-y-0.5 hover:border-[#43D17A]"
                         >
-                          <p className="text-xs font-extrabold text-[#F3F1E7] line-clamp-1">
-                            {obj.title}
-                          </p>
-                          <p className="text-[10px] text-[#8A93A6] mt-0.5 line-clamp-1">
-                            {obj.locationName}
-                            {getDistanceLabel(obj) ? ` - ${getDistanceLabel(obj)}` : ''}
-                          </p>
-                          {vendors.length > 0 && (
-                            <p className="text-[10px] text-[#43D17A] mt-1">
-                              {vendors.length}{' '}
-                              {vendors.length === 1 ? 'vendor' : 'vendors'} inside
-                            </p>
+                          {obj.imageUrl ? (
+                            <img
+                              src={obj.imageUrl}
+                              alt=""
+                              aria-hidden="true"
+                              loading="lazy"
+                              className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                            />
+                          ) : (
+                            <div className="absolute inset-0 bg-gradient-to-br from-[#10141C] to-[#090B10]" />
                           )}
-                          <span className="inline-block text-[10px] font-extrabold text-[#43D17A] mt-1.5">
-                            See what's here
-                          </span>
+                          <div className="absolute inset-0 bg-gradient-to-t from-[#090B10]/90 via-[#090B10]/10 to-transparent" />
+                          <div className="absolute inset-x-3 bottom-3">
+                            <h3 className="line-clamp-2 text-[14px] font-semibold leading-snug text-[#F3F1E7]">
+                              {obj.title}
+                            </h3>
+                            {vendors.length > 0 && (
+                              <p className="mt-1 text-[10px] font-semibold text-[#43D17A]">
+                                {vendors.length} {vendors.length === 1 ? 'vendor' : 'vendors'} inside
+                              </p>
+                            )}
+                          </div>
                         </button>
                       );
                     })}
                   </div>
-                </div>
+                </section>
               );
             })()}
 
-            {/* Cross-entity search results (objects + Tea + vendors + collections),
-                shown while a search is active, above the filtered object grid. */}
+            {/* Search stays above the visual stream, but the cards themselves
+                are title-first. */}
             {searchQuery.trim() !== '' && (
               <SearchResults query={searchQuery} onOpenObject={(o) => setSelectedObjectForDetail(objectFromServer(o))} />
             )}
 
-            {/* Objects */}
-            {filteredObjects.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {filteredObjects.map((obj) => {
-                  // Destination treatment (rework 3/17). Level 3 = on today
-                  // with vendors inside; it spans the grid and leads with what
-                  // is there. Level 2 = upcoming destination. Everything else
-                  // renders exactly as it always has.
-                  const destVendors = isDestinationObject(obj)
-                    ? getDestinationVendors(obj, objects)
-                    : [];
-                  const level = getCardLevel(obj, destVendors.length);
-                  const destState = getDestinationState(obj);
-                  const access = getDestinationAccess(obj);
-                  const vendorCats = getVendorCategories(destVendors);
-                  return (
-                  <div
-                    key={obj.id}
-                    onClick={() => setSelectedObjectForDetail(obj)}
-                    className={`bg-[#10141C] border hover:bg-[#10141C] rounded-2xl p-4 cursor-pointer transition ${
-                      level === 3
-                        ? 'border-[#43D17A] md:col-span-2 lg:col-span-3'
-                        : level === 2
-                        ? 'border-[#232A38] hover:border-[#43D17A]'
-                        : 'border-[#232A38] hover:border-[#43D17A]'
-                    }`}
-                  >
-                    {level >= 2 && (
-                      <div className="flex flex-wrap items-center gap-2 mb-2">
-                        <span
-                          className={`inline-flex items-center gap-1.5 text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
-                            destState === 'live' || destState === 'today'
-                              ? 'bg-[#43D17A] text-[#090B10]'
-                              : 'bg-[#10141C] text-[#43D17A] border border-[#232A38]'
-                          }`}
-                        >
-                          {(destState === 'live' || destState === 'today') && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#090B10]" />
-                          )}
-                          {DESTINATION_STATE_LABELS[destState]}
-                        </span>
-                        {access && (
-                          <span className="text-[9px] font-extrabold text-[#43D17A]">
-                            {access}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                    <div>
-                      {obj.imageUrl && (
-                        <div className="relative h-44 w-full bg-[#090B10] overflow-hidden">
-                          <img
-                            src={obj.imageUrl}
-                            alt={obj.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90"
-                          />
-
-                          <div className="absolute top-3 left-3 flex items-center gap-2">
-                            <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#090B10]/80 text-[#43D17A] border border-[#232A38]">
-                              {obj.category}
-                            </span>
-
-                            {obj.isVerified && (
-                              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#43D17A] text-[#090B10]">
-                                VERIFIED
-                              </span>
+            {/* The legacy object stream is a fallback for deployments where the
+                composed feed is unavailable. Keep one visual language in both
+                paths: photo, title, and the one action the record supports. */}
+            {(homeFeedStatus !== 'ready' || searchQuery.trim() !== '') && (
+              <>
+                {filteredObjects.length > 0 ? (
+                  <section className="mx-auto max-w-5xl">
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                      {filteredObjects.map((obj) => {
+                        const destVendors = isDestinationObject(obj)
+                          ? getDestinationVendors(obj, objects)
+                          : [];
+                        const level = getCardLevel(obj, destVendors.length);
+                        const destState = getDestinationState(obj);
+                        const status = level >= 2
+                          ? DESTINATION_STATE_LABELS[destState]
+                          : obj.metadata?.statusBadge;
+                        return (
+                          <div
+                            key={obj.id}
+                            onClick={() => setSelectedObjectForDetail(obj)}
+                            className={`group relative min-h-[210px] cursor-pointer overflow-hidden rounded-2xl border bg-[#10141C] transition-transform duration-200 hover:-translate-y-0.5 hover:border-[#43D17A] ${
+                              level === 3 ? 'sm:col-span-2 sm:row-span-2 min-h-[270px]' : ''
+                            }`}
+                          >
+                            {obj.imageUrl ? (
+                              <img
+                                src={obj.imageUrl}
+                                alt=""
+                                aria-hidden="true"
+                                loading="lazy"
+                                className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                              />
+                            ) : (
+                              <div className="absolute inset-0 bg-gradient-to-br from-[#10141C] to-[#090B10]" />
                             )}
-                          </div>
-
-                          {obj.metadata?.price !== undefined && (
-                            <span className="absolute bottom-2 right-3 text-[#43D17A] text-sm font-extrabold bg-[#090B10]/80 px-2 py-0.5 rounded border border-[#232A38]">
-                              {obj.metadata.currency || 'KES'} {obj.metadata.price.toLocaleString()}
-                            </span>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Imageless objects must not silently lose their
-                          category and verification chips -- these used to live
-                          only inside the hero image block. Same chips, same
-                          styling, just reachable without a photo. */}
-                      {!obj.imageUrl && (
-                        <div className="flex items-center gap-2 px-4 pt-1">
-                          <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#090B10]/80 text-[#43D17A] border border-[#232A38]">
-                            {obj.category}
-                          </span>
-
-                          {obj.isVerified && (
-                            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#43D17A] text-[#090B10]">
-                              VERIFIED
-                            </span>
-                          )}
-                        </div>
-                      )}
-
-                      <div className="p-4 space-y-2">
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="text-[10px] text-[#8A93A6]">
-                            {getObjectTypeMeta(obj.type).label}
-                          </span>
-
-                        </div>
-
-                        <h3 className="text-base font-extrabold text-[#F3F1E7] group-hover:text-[#43D17A] line-clamp-2">
-                          {obj.title}
-                        </h3>
-
-                        {/* Status (prompt 9): displayed only when explicitly
-                            supplied. Never computed from partial data, and
-                            deliberately below the title, not competing with it. */}
-                        {obj.metadata?.statusBadge && (
-                          <span className="inline-block text-[10px] font-bold text-[#43D17A]">
-                            {obj.metadata.statusBadge}
-                          </span>
-                        )}
-
-                        <p className="text-xs text-[#43D17A] line-clamp-2">
-                          {obj.summary}
-                        </p>
-
-                        {obj.locationName && (
-                          <div className="flex items-center gap-1.5 text-[10px] text-[#8A93A6]">
-                            <MapPin className="w-3 h-3 shrink-0" />
-                            <span className="truncate">{obj.locationName}</span>
-                            {getDistanceLabel(obj) && (
-                              <span className="ml-auto shrink-0 text-[#43D17A]">
-                                {getDistanceLabel(obj)}
+                            <div className="absolute inset-0 bg-gradient-to-t from-[#090B10]/95 via-[#090B10]/20 to-[#090B10]/05" />
+                            <div className="absolute left-3 top-3 flex max-w-[calc(100%-24px)] flex-wrap gap-1.5">
+                              <span className="rounded-full bg-[#090B10]/75 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-[#F3F1E7]">
+                                {getObjectTypeMeta(obj.type).label}
                               </span>
-                            )}
-                          </div>
-                        )}
-
-                        {/* WHAT IS INSIDE (rework 11). Counts and categories
-                            are read off real linked records -- a destination
-                            with no stated vendors shows nothing here rather
-                            than a fabricated line-up. */}
-                        {level === 3 && destVendors.length > 0 && (
-                          <div className="pt-1">
-                            <p className="text-[10px] font-extrabold text-[#F3F1E7]">
-                              {destVendors.length}{' '}
-                              {destVendors.length === 1 ? 'vendor' : 'vendors'} inside
-                            </p>
-                            <div className="flex items-center gap-1.5 mt-1.5 overflow-x-auto no-scrollbar">
-                              {vendorCats.map((cat) => (
-                                <span
-                                  key={cat}
-                                  className="shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-[#10141C] text-[#43D17A] border border-[#232A38]"
-                                >
-                                  {cat}
+                              {!obj.imageUrl && obj.category && (
+                                <span className="rounded-full bg-[#090B10]/75 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-[#F3F1E7]">
+                                  {obj.category}
                                 </span>
-                              ))}
+                              )}
+                              {obj.isVerified && (
+                                <span className="rounded-full bg-[#43D17A] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-[#090B10]">
+                                  VERIFIED
+                                </span>
+                              )}
+                              {status && (
+                                <span className="rounded-full bg-[#090B10]/75 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-[#43D17A]">
+                                  {status}
+                                </span>
+                              )}
+                            </div>
+                            <div className="absolute inset-x-3 bottom-3">
+                              <h3 className="line-clamp-3 pr-2 text-[14px] font-semibold leading-snug text-[#F3F1E7]">
+                                {obj.title}
+                              </h3>
+                              {level === 3 && destVendors.length > 0 && (
+                                <p className="mt-1 text-[10px] font-semibold text-[#43D17A]">
+                                  {destVendors.length} {destVendors.length === 1 ? 'vendor' : 'vendors'} inside
+                                </p>
+                              )}
+                              <div className="mt-2 flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    if (level === 3 && destVendors.length > 0) {
+                                      setSelectedObjectForDetail(obj);
+                                    } else {
+                                      handlePrimaryAction(obj);
+                                    }
+                                  }}
+                                  className="rounded-full border border-[#43D17A]/70 bg-[#090B10]/60 px-2.5 py-1 text-[10px] font-bold text-[#43D17A] transition-colors hover:bg-[#43D17A] hover:text-[#090B10]"
+                                >
+                                  {level === 3 && destVendors.length > 0 ? "See what's here" : resolveAction(obj).label}
+                                </button>
+                                <button
+                                  type="button"
+                                  aria-label={`Save ${obj.title}`}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    handleExecuteProtocolAction('save', obj);
+                                  }}
+                                  className="ml-auto inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#F3F1E7]/35 bg-[#090B10]/60 text-[#F3F1E7] transition-colors hover:border-[#43D17A] hover:text-[#43D17A]"
+                                >
+                                  <Bookmark className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
                             </div>
                           </div>
-                        )}
-                      </div>
+                        );
+                      })}
                     </div>
-
-                    <div className="p-3.5 pt-0 flex items-center gap-2">
-                      {/* "See what's here" opens the context; it is not a
-                          booking. Only destinations with something inside get
-                          it -- otherwise the object keeps its real action. */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (level === 3 && destVendors.length > 0) {
-                            setSelectedObjectForDetail(obj);
-                            return;
-                          }
-                          handlePrimaryAction(obj);
-                        }}
-                        className="flex-1 bg-[#43D17A] hover:bg-[#43D17A] text-[#090B10] font-extrabold text-xs py-2.5 rounded-xl transition flex items-center justify-center gap-1 cursor-pointer"
-                      >
-                        <span>
-                          {level === 3 && destVendors.length > 0
-                            ? "See what's here"
-                            : resolveAction(obj).label}
-                        </span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
-
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleExecuteProtocolAction('save', obj);
-                        }}
-                        className="p-2.5 rounded-xl bg-[#10141C] text-[#43D17A] border border-[#232A38] hover:bg-[#232A38] cursor-pointer"
-                      >
-                        <Bookmark className="w-4 h-4 fill-current" />
-                      </button>
-                    </div>
-                  </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="py-8">
-                {/* A search that finds nothing is the clearest signal of
-                    intent Brief ever gets. Rather than a dead end, offer to
-                    keep pursuing it as information arrives. */}
-                {searchQuery.trim() !== '' ? (
-                  <div className="text-center">
-                    <p className="text-sm font-bold text-[#8A93A6]">Nothing nearby right now.</p>
-                    <p className="mt-2 text-[11px] text-[#4B5162]">
-                      Brief has not seen anything matching this yet.
-                    </p>
-                    <button
-                      onClick={() => handleCreatePursuit(searchQuery)}
-                      className="mt-4 px-4 py-2 rounded-xl bg-[#10141C] border border-[#232A38] text-[#43D17A] font-extrabold text-[11px] cursor-pointer"
-                    >
-                      Keep pursuing "{searchQuery.trim()}"
-                    </button>
-                  </div>
+                  </section>
                 ) : (
-                  <div className="space-y-2">
-                    <PromptBanner
-                      line1="Quiet. Suspiciously quiet."
-                      line2="Everything here arrives from communities Brief is connected to. Post the first thing."
-                      action="Post the first thing"
-                      onAction={() => setCaptureOpen(true)}
-                    />
-                    {/* Demo affordance: load clearly-tagged, removable Kenyan
-                        content through the real pipeline, in-process. */}
-                    <button
-                      onClick={handleLoadDemo}
-                      disabled={demoBusy}
-                      className="w-full rounded-xl border border-[#232A38] bg-[#10141C] px-4 py-2.5 text-[11px] font-bold text-[#8A93A6] transition-colors active:border-[#F3F1E7] disabled:opacity-50"
-                    >
-                      {demoBusy ? 'Loading…' : demoSeeded ? 'Load demo content again' : 'Load demo content'}
-                    </button>
-                  </div>
+                  <section className="mx-auto max-w-5xl py-10 text-center">
+                    {searchQuery.trim() !== '' ? (
+                      <>
+                        <h2 className="text-base font-semibold text-[#F3F1E7]">Nothing nearby</h2>
+                        <button
+                          type="button"
+                          onClick={() => handleCreatePursuit(searchQuery)}
+                          className="mt-4 rounded-full border border-[#43D17A]/60 px-4 py-2 text-[11px] font-bold text-[#43D17A]"
+                        >
+                          Keep pursuing
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <h2 className="text-base font-semibold text-[#F3F1E7]">Nothing nearby</h2>
+                        <div className="mt-4 flex justify-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setCaptureOpen(true)}
+                            className="rounded-full bg-[#43D17A] px-4 py-2 text-[11px] font-bold text-[#090B10]"
+                          >
+                            Add
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleLoadDemo}
+                            disabled={demoBusy}
+                            className="rounded-full border border-[#232A38] px-4 py-2 text-[11px] font-bold text-[#8A93A6] disabled:opacity-50"
+                          >
+                            {demoBusy ? 'Loading' : 'Demo'}
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </section>
                 )}
-              </div>
+              </>
             )}
           </>
         )}
