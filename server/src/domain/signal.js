@@ -81,7 +81,26 @@ export const SIGNAL_TYPES = [
   'auction_closed',
   'auction_order_raised',
   'auction_winner_defaulted',
-  'auction_cancelled'
+  'auction_cancelled',
+  // --- Yard Engine / advertising ------------------------------------------
+  'advertiser_campaign_created',
+  'advertiser_campaign_submitted',
+  'advertiser_campaign_funded',
+  'creator_match_proposed',
+  'creator_match_accepted',
+  'creator_match_declined',
+  'queue_reservation_released',
+  'ad_asset_approved',
+  'ad_asset_issued',
+  'tracked_asset_clicked',
+  'campaign_fulfilment_verified',
+  'advertising_payout_settled',
+  'payout_ready',
+  'advertiser_campaign_expired',
+  'waitlist_joined',
+  'waitlist_offered',
+  'waitlist_expired',
+  'waitlist_registered'
 ];
 
 export function emitSignal({ type, circleId = null, blockId = null, sourceId = null, objectId = null, actorId = null, value = null, metadata = {} }) {

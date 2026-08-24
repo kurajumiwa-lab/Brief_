@@ -492,6 +492,9 @@ export interface CampaignMetrics {
   readonly viewers: number | null;
   /** Times the creator pressed Share. An intent to distribute, not a reach. */
   readonly shares: number;
+  /** Registrations carrying a verified public ad tracking hash. */
+  readonly attributedRegistrations?: number;
+  readonly attributedByAsset?: Record<string, number>;
   readonly registrationsStarted: number;
   readonly registrations: number;
   readonly checkedIn: number;

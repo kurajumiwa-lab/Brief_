@@ -137,6 +137,22 @@ const EMPTY = {
   // domain/collection.js.
   collections: [],
 
+  // --- Yard Engine / creator advertising -----------------------------------
+  // These are additive operational shelves. Identity remains in `people`,
+  // money remains in `ledgerTransactions`, and content remains in `objects`.
+  creatorProfiles: [],
+  rateCards: [],
+  advertiserProfiles: [],
+  advertiserCampaigns: [],
+  campaignMatches: [],
+  queueReservations: [],
+  adAssets: [],
+  calendarEntries: [],
+  waitlistEntries: [],
+  vendorCapabilities: [],
+  vendorRecommendations: [],
+  outboundMessages: [],
+
   // --- Cooperative pools (four-screen build A) -----------------------------
   // Chama / Stokvel / Esusu / Sou-Sou rotating savings (ROSCA). Contributions
   // are ledger transactions; the rotation is a derived schedule. See

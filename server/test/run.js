@@ -3093,6 +3093,47 @@ console.log('\n=== FEED COMPOSITION (home-feed Phase 8) ===');
   check('empty tea is null', empty.tea === null && empty.moreTea.length === 0);
 }
 
+console.log('\n=== PUBLIC FEED API (home-feed) ===');
+{
+  const publicId = 'public_feed_object';
+  const privateId = 'private_feed_object';
+  store.insert('objects', {
+    id: publicId,
+    type: 'place',
+    title: 'Public feed place',
+    category: 'Place',
+    summary: 'A public feed record',
+    publication: 'public',
+    imageUrl: 'https://example.com/place.jpg',
+    metadata: { price: 200, contactPhone: '+254700000000', lat: -1.28, lng: 36.82 },
+    createdAt: new Date().toISOString()
+  });
+  store.insert('objects', {
+    id: privateId,
+    type: 'place',
+    title: 'Private feed place',
+    summary: 'Must not appear publicly',
+    publication: 'source_members',
+    createdAt: new Date().toISOString()
+  });
+
+  const { default: appPF } = await import('../src/index.js');
+  const srvPF = appPF.listen(0);
+  const portPF = srvPF.address().port;
+  const response = await fetch(`http://127.0.0.1:${portPF}/api/public/feed?limit=10`);
+  const body = await response.json();
+  const rows = [...body.feed.hero, ...body.feed.discovery, ...body.feed.opportunities, ...body.feed.more];
+  const raw = JSON.stringify(body);
+  check('public feed needs no auth', response.status === 200);
+  check('public feed includes public objects', rows.some((o) => o.id === publicId));
+  check('public feed excludes private objects', !raw.includes(privateId) && !raw.includes('Private feed place'));
+  check('public feed omits contact and coordinates', !raw.includes('contactPhone') && !raw.includes('"lat"'));
+  check('public feed sends cache headers', response.headers.get('cache-control')?.includes('max-age=60'));
+  check('public feed validates incomplete location',
+    (await fetch(`http://127.0.0.1:${portPF}/api/public/feed?lat=1`)).status === 400);
+  srvPF.close();
+}
+
 console.log('\n=== COLLECTIONS (home-feed §47) ===');
 {
   const collection = await import('../src/domain/collection.js');
@@ -3579,7 +3620,7 @@ console.log('\n=== FEATURE REGISTRY (§4.2) ===');
   // Default state: everything enabled; module features configured; provider
   // features NOT configured (no credentials in this run).
   check('every feature is enabled by default', features.list().every((f) => f.enabled));
-  check('the registry holds 32 features', features.list().length === 32, String(features.list().length));
+  check('the registry holds all registered features', features.list().length === 38, String(features.list().length));
   check('auth is available by default', features.available('auth') === true);
   check('arena is available by default', features.available('arena') === true);
   check('vaults is available by default', features.available('vaults') === true);

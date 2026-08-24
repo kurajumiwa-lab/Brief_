@@ -10,6 +10,7 @@ import * as ledger from '../domain/ledger.js';
 import * as payment from '../domain/payment.js';
 import * as settlement from '../domain/settlement.js';
 import * as tuma from '../connectors/tuma.js';
+import * as vendorSyndication from '../domain/vendorSyndication.js';
 import * as signals from '../domain/signal.js';
 import { requireAuth, now, recordError } from './helpers.js';
 
@@ -124,6 +125,23 @@ app.patch('/api/vendors/:id', (req, res) => {
   }
 });
 
+// --- Yard Engine capability profile ----------------------------------------
+app.use('/api/vendors/:id/capabilities', requireFeature('vendor_syndication'));
+
+app.get('/api/vendors/:id/capabilities', (req, res) => {
+  const view = vendorSyndication.vendorView(req.params.id);
+  if (!view) return res.status(404).json({ error: 'vendor not found' });
+  res.json(view);
+});
+
+app.put('/api/vendors/:id/capabilities', (req, res) => {
+  if (!requireAuth(req, res)) return;
+  try {
+    res.json({ capabilities: vendorSyndication.upsertCapabilities(callerId(req), req.params.id, req.body ?? {}) });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message ?? e) });
+  }
+});
 
 // --- Listings ----------------------------------------------------------------
 

@@ -16,7 +16,8 @@ export type MyLayerSection =
   | 'mediakit' | 'opportunities' | 'messages' | 'subscriptions';
 export type WorkflowSection =
   | 'cockpit' | 'command' | 'active' | 'completed' | 'inbox'
-  | 'sources' | 'money' | 'vault' | 'gate' | 'tea';
+  | 'sources' | 'money' | 'vault' | 'gate' | 'tea'
+  | 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'ai';
 export type ArenaSection = 'lobby' | 'challenges' | 'tournaments' | 'leaderboard';
 
 export type BriefRoute = {
@@ -55,7 +56,8 @@ const MYLAYER: MyLayerSection[] = [
 ];
 const WORKFLOW: WorkflowSection[] = [
   'cockpit', 'command', 'active', 'completed', 'inbox',
-  'sources', 'money', 'vault', 'gate', 'tea'
+  'sources', 'money', 'vault', 'gate', 'tea',
+  'campaigns', 'matches', 'distribution', 'calendar', 'vendors', 'ai'
 ];
 const ARENA: ArenaSection[] = ['lobby', 'challenges', 'tournaments', 'leaderboard'];
 

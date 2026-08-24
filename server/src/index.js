@@ -24,6 +24,7 @@ import * as ledger from './domain/ledger.js';
 import * as telegram from './connectors/telegram.js';
 import * as whatsapp from './connectors/whatsapp.js';
 import * as compliance from './domain/compliance.js';
+import * as calendar from './domain/calendar.js';
 import { authStatus } from './identity.js';
 import { recordError } from './routes/helpers.js';
 import { register as authRoutes } from './routes/auth.js';
@@ -55,6 +56,8 @@ import { register as distributionRoutes } from './routes/distribution.js';
 import { register as lobbyRoutes } from './routes/lobby.js';
 import { register as workflowRoutes } from './routes/workflow.js';
 import { register as creatorRoutes } from './routes/creator.js';
+import { register as advertisingRoutes } from './routes/advertising.js';
+import { register as calendarRoutes } from './routes/calendar.js';
 
 const app = express();
 
@@ -143,6 +146,8 @@ distributionRoutes(app);
 lobbyRoutes(app);
 workflowRoutes(app);
 creatorRoutes(app);
+advertisingRoutes(app);
+calendarRoutes(app);
 
 // --- Production frontend serving -------------------------------------------
 //
@@ -276,6 +281,12 @@ if (process.env.NODE_ENV !== 'test') {
   // cadence, so triggers fire without a request. Idempotent by design.
   workflow.installSweep({
     intervalMs: Number(process.env.BRIEF_WORKFLOW_INTERVAL_MS) || 60 * 1000
+  });
+  // Calendar/wait-list and advertiser expiration share the same durable
+  // domain rules. This timer is a worker hook in the JSON adapter; production
+  // should replace it with a claimed database job.
+  calendar.installSweep({
+    intervalMs: Number(process.env.BRIEF_CALENDAR_INTERVAL_MS) || 60 * 1000
   });
 
   const server = app.listen(PORT, '0.0.0.0', () => {

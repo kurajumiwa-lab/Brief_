@@ -2,6 +2,7 @@ import React from 'react';
 import {
   BadgeCheck,
   Bookmark,
+  Briefcase,
   BookOpen,
   CalendarDays,
   CheckCircle2,
@@ -48,7 +49,8 @@ export type MenuTarget =
       | 'campaigns' | 'mediakit' | 'opportunities' | 'messages' | 'subscriptions' }
   | { tab: 'workflows'; section?:
       | 'cockpit' | 'command' | 'active' | 'completed' | 'inbox'
-      | 'sources' | 'money' | 'vault' | 'gate' | 'tea' }
+      | 'sources' | 'money' | 'vault' | 'gate' | 'tea'
+      | 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'ai' }
   | { tab: 'capture' };
 
 export interface GeoCity {
@@ -564,6 +566,10 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
                 <Row icon={MessageCircle} label="Messages" onClick={() => onSelect({ tab: 'mylayer', section: 'messages' })} />
                 <Row icon={Inbox} label="Inbox" onClick={() => onSelect({ tab: 'workflows', section: 'inbox' })} />
                 <Row icon={Zap} label="Create" onClick={() => onSelect({ tab: 'workflows', section: 'cockpit' })} />
+                <Row icon={Briefcase} label="Advertise" onClick={() => onSelect({ tab: 'workflows', section: 'campaigns' })} />
+                <Row icon={Users} label="Matches" onClick={() => onSelect({ tab: 'workflows', section: 'matches' })} />
+                <Row icon={Send} label="Distribution" onClick={() => onSelect({ tab: 'workflows', section: 'distribution' })} />
+                <Row icon={CalendarDays} label="Calendar" onClick={() => onSelect({ tab: 'workflows', section: 'calendar' })} />
                 <Row icon={Send} label="Feeds" onClick={() => onSelect({ tab: 'workflows', section: 'sources' })} />
                 <Row icon={Bookmark} label="Records" onClick={() => onSelect({ tab: 'workflows', section: 'vault' })} />
               </Section>
