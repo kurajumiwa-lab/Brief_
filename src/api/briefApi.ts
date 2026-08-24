@@ -664,7 +664,7 @@ export interface PublicRegisterResult {
 
 export function registerForCampaign(
   slug: string,
-  body: { attendeeRef: string; name?: string; contact?: string }
+  body: { attendeeRef: string; name?: string; contact?: string; trackingHash?: string }
 ): Promise<ApiResult<PublicRegisterResult>> {
   return request(
     `/api/public/campaigns/${encodeURIComponent(slug)}/register`,
@@ -1689,7 +1689,37 @@ export function runWorkflowSweep(): Promise<ApiResult<any>> {
   return request('/api/workflows/sweep', { method: 'POST', body: '{}' }, (r) => r ?? undefined);
 }
 
-// --- Creator workspace (media kit, partnership, inbox, subscriptions) ---------
+// --- AI seam ---------------------------------------------------------------
+
+export function getAssistStatus(): Promise<ApiResult<any>> {
+  return request('/api/assist/status', undefined, (r) => r?.assist ?? undefined);
+}
+
+export function requestAssist(task: string, input: unknown): Promise<ApiResult<any>> {
+  return request('/api/assist', { method: 'POST', body: JSON.stringify({ task, input }) }, (r) => r ?? undefined);
+}
+
+// --- Creator workspace (profile, rate cards, media kit, partnership, inbox) ---
+
+export function getCreatorProfile(): Promise<ApiResult<any>> {
+  return request('/api/creator/profile', undefined, (r) => r?.profile ?? undefined);
+}
+
+export function updateCreatorProfile(fields: Record<string, unknown>): Promise<ApiResult<any>> {
+  return request('/api/creator/profile', { method: 'PATCH', body: JSON.stringify(fields) }, (r) => r?.profile ?? undefined);
+}
+
+export function getCreatorRateCards(): Promise<ApiResult<any[]>> {
+  return request('/api/creator/rate-cards', undefined, (r) => Array.isArray(r?.rateCards) ? r.rateCards : undefined);
+}
+
+export function createCreatorRateCard(fields: Record<string, unknown>): Promise<ApiResult<any>> {
+  return request('/api/creator/rate-cards', { method: 'POST', body: JSON.stringify(fields) }, (r) => r?.rateCard ?? undefined);
+}
+
+export function updateCreatorRateCard(id: string, fields: Record<string, unknown>): Promise<ApiResult<any>> {
+  return request(`/api/creator/rate-cards/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(fields) }, (r) => r?.rateCard ?? undefined);
+}
 
 export function getMyMediaKit(): Promise<ApiResult<any>> {
   return request('/api/creator/mediakit/mine', undefined, (r) => (r?.mediaKit ? r.mediaKit : null));
@@ -1721,6 +1751,122 @@ export function createSubscription(fields: Record<string, unknown>): Promise<Api
 
 export function subscriptionAction(id: string, action: string): Promise<ApiResult<any>> {
   return request(`/api/subscriptions/${encodeURIComponent(id)}/${encodeURIComponent(action)}`, { method: 'POST', body: '{}' }, (r) => r?.subscription ?? r?.transaction ?? undefined);
+}
+
+// --- Yard Engine: advertising, matching and distribution --------------------
+
+export function getAdvertiserProfile(): Promise<ApiResult<any>> {
+  return request('/api/advertising/advertiser', undefined, (r) => r?.advertiser ?? undefined);
+}
+
+export function updateAdvertiserProfile(fields: Record<string, unknown>): Promise<ApiResult<any>> {
+  return request('/api/advertising/advertiser', { method: 'PATCH', body: JSON.stringify(fields) }, (r) => r?.advertiser ?? undefined);
+}
+
+export function getAdvertiserCampaigns(status?: string): Promise<ApiResult<any[]>> {
+  const q = status ? `?status=${encodeURIComponent(status)}` : '';
+  return request(`/api/advertising/campaigns${q}`, undefined, (r) => Array.isArray(r?.campaigns) ? r.campaigns : undefined);
+}
+
+export function createAdvertiserCampaign(fields: Record<string, unknown>): Promise<ApiResult<any>> {
+  return request('/api/advertising/campaigns', { method: 'POST', body: JSON.stringify(fields) }, (r) => r?.campaign ?? undefined);
+}
+
+export function updateAdvertiserCampaign(id: string, fields: Record<string, unknown>): Promise<ApiResult<any>> {
+  return request(`/api/advertising/campaigns/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(fields) }, (r) => r?.campaign ?? undefined);
+}
+
+export function submitAdvertiserCampaign(id: string): Promise<ApiResult<any>> {
+  return request(`/api/advertising/campaigns/${encodeURIComponent(id)}/submit`, { method: 'POST', body: '{}' }, (r) => r?.campaign ?? undefined);
+}
+
+export function confirmAdvertiserFunding(id: string, reference?: string): Promise<ApiResult<any>> {
+  return request(`/api/advertising/campaigns/${encodeURIComponent(id)}/confirm-funding`, { method: 'POST', body: JSON.stringify({ confirmation: true, reference: reference ?? null }) }, (r) => r?.campaign ?? undefined);
+}
+
+export function allocateAdvertiserCampaign(id: string): Promise<ApiResult<any>> {
+  return request(`/api/advertising/campaigns/${encodeURIComponent(id)}/allocate`, { method: 'POST', body: '{}' }, (r) => r ?? undefined);
+}
+
+export function getAdvertiserMatches(id: string): Promise<ApiResult<any[]>> {
+  return request(`/api/advertising/campaigns/${encodeURIComponent(id)}/matches`, undefined, (r) => Array.isArray(r?.matches) ? r.matches : undefined);
+}
+
+export function getMyAdvertiserMatches(): Promise<ApiResult<any[]>> {
+  return request('/api/advertising/matches/mine', undefined, (r) => Array.isArray(r?.matches) ? r.matches : undefined);
+}
+
+export function acceptAdvertiserMatch(id: string): Promise<ApiResult<any>> {
+  return request(`/api/advertising/matches/${encodeURIComponent(id)}/accept`, { method: 'POST', body: '{}' }, (r) => r?.match ?? undefined);
+}
+
+export function declineAdvertiserMatch(id: string): Promise<ApiResult<any>> {
+  return request(`/api/advertising/matches/${encodeURIComponent(id)}/decline`, { method: 'POST', body: '{}' }, (r) => r?.match ?? undefined);
+}
+
+export function verifyAdvertiserFulfillment(id: string, proofUrl?: string): Promise<ApiResult<any>> {
+  return request(`/api/advertising/matches/${encodeURIComponent(id)}/verify-fulfillment`, { method: 'POST', body: JSON.stringify({ performanceVerified: true, proofUrl: proofUrl ?? null }) }, (r) => r ?? undefined);
+}
+
+export function retryAdvertiserSettlement(id: string): Promise<ApiResult<any>> {
+  return request(`/api/advertising/matches/${encodeURIComponent(id)}/retry-settlement`, { method: 'POST', body: '{}' }, (r) => r ?? undefined);
+}
+
+export function getAdAssets(advertiserCampaignId?: string): Promise<ApiResult<any[]>> {
+  const q = advertiserCampaignId ? `?advertiserCampaignId=${encodeURIComponent(advertiserCampaignId)}` : '';
+  return request(`/api/advertising/assets${q}`, undefined, (r) => Array.isArray(r?.assets) ? r.assets : undefined);
+}
+
+export function createAdAsset(fields: Record<string, unknown>): Promise<ApiResult<any>> {
+  return request('/api/advertising/assets', { method: 'POST', body: JSON.stringify(fields) }, (r) => r?.asset ?? undefined);
+}
+
+export function approveAdAsset(id: string): Promise<ApiResult<any>> {
+  return request(`/api/advertising/assets/${encodeURIComponent(id)}/approve`, { method: 'POST', body: '{}' }, (r) => r?.asset ?? undefined);
+}
+
+export function issueAdAsset(id: string): Promise<ApiResult<any>> {
+  return request(`/api/advertising/assets/${encodeURIComponent(id)}/issue`, { method: 'POST', body: '{}' }, (r) => r?.asset ?? undefined);
+}
+
+export function getDistributionKit(id: string): Promise<ApiResult<any>> {
+  return request(`/api/advertising/assets/${encodeURIComponent(id)}/distribution-kit`, undefined, (r) => r?.kit ?? undefined);
+}
+
+// --- Calendar and waiting lists ---------------------------------------------
+
+export function getCalendarEntries(): Promise<ApiResult<any[]>> {
+  return request('/api/calendar', undefined, (r) => Array.isArray(r?.entries) ? r.entries : undefined);
+}
+
+export function createCalendarEntry(fields: Record<string, unknown>): Promise<ApiResult<any>> {
+  return request('/api/calendar', { method: 'POST', body: JSON.stringify(fields) }, (r) => r?.entry ?? undefined);
+}
+
+export function sweepCalendar(): Promise<ApiResult<any>> {
+  return request('/api/calendar/sweep', { method: 'POST', body: '{}' }, (r) => r ?? undefined);
+}
+
+export function getCampaignWaitlist(slug: string): Promise<ApiResult<any[]>> {
+  return request(`/api/calendar/campaigns/${encodeURIComponent(slug)}/waitlist`, undefined, (r) => Array.isArray(r?.waitlist) ? r.waitlist : undefined);
+}
+
+export function joinCampaignWaitlist(slug: string, fields: Record<string, unknown>): Promise<ApiResult<any>> {
+  return request(`/api/calendar/campaigns/${encodeURIComponent(slug)}/waitlist`, { method: 'POST', body: JSON.stringify(fields) }, (r) => r?.entry ?? undefined);
+}
+
+export function acceptWaitlistOffer(id: string, attendeeRef?: string): Promise<ApiResult<any>> {
+  return request(`/api/waitlist/${encodeURIComponent(id)}/accept`, { method: 'POST', body: JSON.stringify({ attendeeRef: attendeeRef ?? null }) }, (r) => r ?? undefined);
+}
+
+// --- Vendor capability shelf -----------------------------------------------
+
+export function getVendorCapabilities(id: string): Promise<ApiResult<any>> {
+  return request(`/api/vendors/${encodeURIComponent(id)}/capabilities`, undefined, (r) => r ?? undefined);
+}
+
+export function updateVendorCapabilities(id: string, fields: Record<string, unknown>): Promise<ApiResult<any>> {
+  return request(`/api/vendors/${encodeURIComponent(id)}/capabilities`, { method: 'PUT', body: JSON.stringify(fields) }, (r) => r?.capabilities ?? undefined);
 }
 
 // --- Arena: real server entities (players/venues/tournaments/leaderboard) ----

@@ -8,6 +8,7 @@ import * as checkin from '../domain/checkin.js';
 import * as signals from '../domain/signal.js';
 import * as ledger from '../domain/ledger.js';
 import * as analytics from '../domain/analytics.js';
+import * as advertising from '../domain/advertising.js';
 import { requireAuth, now } from './helpers.js';
 
 // Owner-only guard. Returns the campaign, or sends the response and returns
@@ -291,11 +292,16 @@ app.get('/api/public/campaigns/:slug', (req, res) => {
 app.post('/api/public/campaigns/:slug/register', (req, res) => {
   const c = campaigns.getPublicBySlug(req.params.slug);
   if (!c) return res.status(404).json({ error: 'campaign not found' });
+  const trackingHash = req.body?.trackingHash ?? req.query?.trackingHash ?? null;
+  if (trackingHash && !advertising.assetForTrackingHash(String(trackingHash), c.id)) {
+    return res.status(400).json({ error: 'tracking asset does not belong to this campaign' });
+  }
   try {
     const reg = campaigns.register(c, {
       attendeeRef: req.body?.attendeeRef,
       name: req.body?.name ?? null,
       contact: req.body?.contact ?? null,
+      trackingHash: trackingHash ? String(trackingHash) : null,
       // Only a verified session binds. Dev-fallback / anonymous walk-ins are
       // not guessed to be the local user.
       userId: req.auth?.userId ?? null

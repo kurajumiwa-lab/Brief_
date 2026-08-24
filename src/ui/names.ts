@@ -40,7 +40,13 @@ export const INBOX_TABS: Record<string, string> = {
   money: 'Payments',
   vault: 'Records',
   gate: 'Check-in',
-  tea: 'Editor'
+  tea: 'Editor',
+  campaigns: 'Campaigns',
+  matches: 'Matches',
+  distribution: 'Distribution',
+  calendar: 'Calendar',
+  vendors: 'Vendors',
+  ai: 'AI review'
 };
 
 export const MENU_QUICK: Record<string, string> = {

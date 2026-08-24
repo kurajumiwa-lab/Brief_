@@ -140,6 +140,12 @@ export function analytics(campaignId) {
     (s) => s.metadata?.campaignId === campaignId && s.type === 'campaign_shared'
   ).length;
 
+  const attributed = regs.filter((registration) => registration.trackingHash);
+  const attributedByAsset = {};
+  for (const registration of attributed) {
+    attributedByAsset[registration.trackingHash] = (attributedByAsset[registration.trackingHash] ?? 0) + 1;
+  }
+
   const campaign = store.find('campaigns', (c) => c.id === campaignId);
   const capacity = campaign?.capacity ?? null;
 
@@ -159,6 +165,8 @@ export function analytics(campaignId) {
     currency: campaign?.currency ?? 'KES',
     viewers,
     shares,
+    attributedRegistrations: attributed.length,
+    attributedByAsset,
     ...(() => {
       // Click attribution from the distribution rail (UTM-tracked links).
       const clicks = store.filter('clickEvents', (c) => c.campaignId === campaignId);
@@ -579,7 +587,7 @@ export function recordView(campaign, viewerRef = null) {
  * The client cannot influence it: there is no count in the request and no
  * counter in storage.
  */
-export function register(campaign, { attendeeRef, name = null, contact = null, userId = null } = {}) {
+export function register(campaign, { attendeeRef, name = null, contact = null, userId = null, trackingHash = null } = {}) {
   if (campaign.status !== 'published' && campaign.status !== 'live') {
     throw new Error('campaign is not open for registration');
   }
@@ -611,6 +619,9 @@ export function register(campaign, { attendeeRef, name = null, contact = null, u
     personId: personIdIfUser(userId),
     name,
     contact,
+    // Optional attribution from a public ad asset. It is validated by the
+    // public route before reaching this domain function.
+    trackingHash: trackingHash ? String(trackingHash).slice(0, 64) : null,
     status: campaign.price > 0 ? 'started' : 'registered',
     // The gate's scannable code. Opaque and unguessable; issued once, never
     // rotated, and independent of the internal id so the gate never needs to
@@ -626,7 +637,11 @@ export function register(campaign, { attendeeRef, name = null, contact = null, u
     type: campaign.price > 0 ? 'campaign_registration_started' : 'campaign_registered',
     circleId: campaign.circleId,
     objectId: campaign.objectId,
-    metadata: { campaignId: campaign.id, registrationId: row.id }
+    metadata: {
+      campaignId: campaign.id,
+      registrationId: row.id,
+      ...(row.trackingHash ? { trackingHash: row.trackingHash } : {})
+    }
   });
   return row;
 }

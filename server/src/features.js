@@ -57,7 +57,15 @@ const DEFINITIONS = [
   { key: 'lobby',      domain: 'lobby',       label: 'Lobby code board & clan matches',       configured: () => true },
   { key: 'workflows',  domain: 'workflow',    label: 'Automation engine (trigger/condition/action)', configured: () => true },
   { key: 'partnership', domain: 'creator',    label: 'Media kit, partnership, inbox & subscriptions', configured: () => true },
-  // Provider-backed: configured derives from LIVE credentials, never a stored flag.
+  // Yard Engine shelves. These are local logic and can be disabled independently
+  // without removing the existing creator/event/commerce paths.
+  { key: 'creator_profiles', domain: 'creator', label: 'Creator profiles & rate cards', configured: () => true },
+  { key: 'advertising', domain: 'advertising', label: 'Advertiser campaigns & matching', configured: () => true },
+  { key: 'matching', domain: 'advertising', label: 'Creator matching & reservations', configured: () => true },
+  { key: 'ad_assets', domain: 'advertising', label: 'Ad assets & distribution kits', configured: () => true },
+  { key: 'calendar', domain: 'calendar', label: 'Calendar & waiting lists', configured: () => true },
+  { key: 'vendor_syndication', domain: 'vendor', label: 'Vendor capabilities & syndication', configured: () => true },
+  // Provider-backed: configured derives from LIVE credentials, never stored flag.
   { key: 'payments',  domain: 'commerce',   label: 'Payment collection (Tuma STK)',   configured: () => providers.providerStatus().configured },
   { key: 'payouts',   domain: 'commerce',   label: 'Merchant payouts (disbursement)', configured: () => providers.providerStatus().payoutConfigured },
   { key: 'outbound',  domain: 'connectors', label: 'Outbound messaging',              configured: () => outbound.status().anyConfigured },

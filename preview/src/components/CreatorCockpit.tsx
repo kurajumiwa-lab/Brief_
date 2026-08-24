@@ -18,7 +18,10 @@ const TRIGGERS = [
   'campaign_published', 'campaign_shared', 'campaign_registered', 'campaign_checkin',
   'order_placed', 'order_paid', 'order_settled', 'order_fulfilled',
   'arena_challenge_accepted', 'arena_result_confirmed', 'vendor_created',
-  'listing_published', 'auction_closed', 'circle_created'
+  'listing_published', 'auction_closed', 'circle_created',
+  'advertiser_campaign_submitted', 'advertiser_campaign_funded',
+  'creator_match_proposed', 'creator_match_accepted', 'campaign_fulfilment_verified',
+  'tracked_asset_clicked', 'waitlist_offered', 'advertiser_campaign_expired'
 ];
 
 const ACTION_TYPES = ['notify', 'tag', 'blast'];

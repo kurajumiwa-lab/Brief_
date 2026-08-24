@@ -34,8 +34,10 @@ import { FeedComposer } from './components/FeedComposer';
 import { WireSection } from './components/WireSection';
 import { TeaDesk } from './components/TeaDesk';
 import { CreatorCockpit } from './components/CreatorCockpit';
-import { MediaKitPanel, OpportunitiesPanel, MessagesPanel, SubscriptionsPanel } from './components/CreatorPanels';
+import { CreatorProfilePanel, OpportunitiesPanel, MessagesPanel, SubscriptionsPanel } from './components/CreatorPanels';
 import { SearchResults } from './components/SearchResults';
+import { YardEngineDesk } from './components/YardEngineDesk';
+import type { YardSection } from './components/YardEngineDesk';
 import { TeaReader } from './components/TeaReader';
 import type { CircleDetail as ApiCircleDetail } from './api/briefApi';
 import type {
@@ -163,7 +165,7 @@ export type MyLayerSection =
   | 'mediakit' | 'opportunities' | 'messages' | 'subscriptions';
 // Workflows secondary: a Journey is either in progress or finished. Inbox and
 // Sources are kept -- they are existing workflow surfaces, not new screens.
-export type WorkflowSection = 'cockpit' | 'command' | 'active' | 'completed' | 'inbox' | 'sources' | 'money' | 'vault' | 'gate' | 'tea';
+export type WorkflowSection = 'cockpit' | 'command' | 'active' | 'completed' | 'inbox' | 'sources' | 'money' | 'vault' | 'gate' | 'tea' | 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'ai';
 // Pulse secondary. Pulse is the information layer: freshness, local signals,
 // what groups are surfacing, and emerging activity. It is not an assistant.
 export type PulseSection = 'now' | 'local' | 'groups' | 'signals';
@@ -4667,6 +4669,8 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
   const [busy, setBusy] = useState<boolean>(false);
   const [regError, setRegError] = useState<string | null>(null);
   const [done, setDone] = useState<null | { status: string; ticketCode?: string | null }>(null);
+  const [waitlistBusy, setWaitlistBusy] = useState(false);
+  const [waitlistMessage, setWaitlistMessage] = useState<string | null>(null);
 
   const fetchCampaign = React.useCallback(async () => {
     setLoad({ status: 'loading', data: null, error: null });
@@ -4689,10 +4693,14 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
     setRegError(null);
     const attendeeRef =
       contact.trim() !== '' ? contact.trim() : `guest-${Math.random().toString(36).slice(2, 10)}`;
+    const trackingHash = typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.search).get('trackingHash') ?? undefined
+      : undefined;
     const res = await briefApi.registerForCampaign(slug, {
       attendeeRef,
       name: name.trim() === '' ? undefined : name.trim(),
-      contact: contact.trim() === '' ? undefined : contact.trim()
+      contact: contact.trim() === '' ? undefined : contact.trim(),
+      trackingHash
     });
     setBusy(false);
     if (!res.ok) {
@@ -4705,6 +4713,23 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
     }
     setDone({ status: res.data.registration.status, ticketCode: res.data.registration.ticketCode ?? null });
     setLoad({ status: 'ready', data: res.data.campaign, error: null });
+  };
+
+  const joinWaitlist = async () => {
+    setWaitlistBusy(true);
+    setWaitlistMessage(null);
+    const attendeeRef = contact.trim() !== '' ? contact.trim() : `guest-${Math.random().toString(36).slice(2, 10)}`;
+    const res = await briefApi.joinCampaignWaitlist(slug, {
+      attendeeRef,
+      name: name.trim() === '' ? undefined : name.trim(),
+      contact: contact.trim() === '' ? undefined : contact.trim()
+    });
+    setWaitlistBusy(false);
+    if (!res.ok) {
+      setWaitlistMessage(res.error);
+      return;
+    }
+    setWaitlistMessage(`Wait list position ${res.data.position ?? res.data.entry?.position ?? 'saved'}.`);
   };
 
   const c = load.data;
@@ -4845,8 +4870,30 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
             )}
 
             {!done && c.soldOut && c.status !== 'closed' && c.status !== 'cancelled' && (
-              <div className="border border-[#232A38] rounded-2xl p-5">
+              <div className="border border-[#232A38] rounded-2xl p-5 space-y-3">
                 <p className="text-sm font-extrabold text-[#E8A33D]">This one is full.</p>
+                <div className="space-y-2">
+                  <input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Name"
+                    className="w-full bg-[#10141C] text-[#F3F1E7] text-sm rounded-xl px-3 py-3 border border-[#232A38] focus:border-[#43D17A] focus:outline-none"
+                  />
+                  <input
+                    value={contact}
+                    onChange={(e) => setContact(e.target.value)}
+                    placeholder="Phone or email"
+                    className="w-full bg-[#10141C] text-[#F3F1E7] text-sm rounded-xl px-3 py-3 border border-[#232A38] focus:border-[#43D17A] focus:outline-none"
+                  />
+                  <button
+                    disabled={waitlistBusy}
+                    onClick={joinWaitlist}
+                    className="w-full py-3 rounded-xl border border-[#43D17A] text-[#43D17A] font-extrabold text-xs cursor-pointer disabled:opacity-40"
+                  >
+                    {waitlistBusy ? 'Saving...' : 'Join wait list'}
+                  </button>
+                  {waitlistMessage && <p className="text-[10px] text-[#8A93A6]">{waitlistMessage}</p>}
+                </div>
               </div>
             )}
 
@@ -7249,7 +7296,13 @@ export function App() {
                 ['money', INBOX_TABS.money],
                 ['vault', INBOX_TABS.vault],
                 ['gate', INBOX_TABS.gate],
-                ['tea', INBOX_TABS.tea]
+                ['tea', INBOX_TABS.tea],
+                ['campaigns', INBOX_TABS.campaigns],
+                ['matches', INBOX_TABS.matches],
+                ['distribution', INBOX_TABS.distribution],
+                ['calendar', INBOX_TABS.calendar],
+                ['vendors', INBOX_TABS.vendors],
+                ['ai', INBOX_TABS.ai]
               ] as [WorkflowSection, string][]).map(([id, label]) => (
                 <button
                   key={id}
@@ -8669,7 +8722,7 @@ export function App() {
 
         {activeTab === 'mylayer' && myLayerSection === 'mediakit' && (
           <div className="max-w-2xl mx-auto px-4 py-6">
-            <MediaKitPanel />
+            <CreatorProfilePanel />
           </div>
         )}
 
@@ -8722,6 +8775,13 @@ export function App() {
         {activeTab === 'workflows' && workflowSection === 'gate' && (
           <CheckIn />
         )}
+
+        {activeTab === 'workflows' &&
+          ['campaigns', 'matches', 'distribution', 'calendar', 'vendors', 'ai'].includes(workflowSection) && (
+            <div className="max-w-3xl mx-auto px-4 py-6">
+              <YardEngineDesk section={workflowSection as YardSection} />
+            </div>
+          )}
 
         {activeTab === 'workflows' && workflowSection === 'sources' && (
           <SourcesPanel

@@ -33,19 +33,17 @@ vendors   → listings      → orders          ──────────�
 people    → aliases / vault participants / creator views
 ```
 
-The proposal is **not drop-in complete**. The following are still absent or
-blocked:
+The proposal is now **partially implemented as a working Yard Engine vertical**.
+The remaining gaps are deliberate provider or production boundaries:
 
 1. PostgreSQL/Supabase persistence and transactional reservation semantics.
-2. A first-class creator profile and rate-card model.
-3. Advertiser accounts, advertiser campaigns and creator matching.
-4. A curated ad-asset vault with immutable tracking identifiers.
-5. A real calendar/wait-list/expiry worker.
-6. Automated WhatsApp Status and Facebook publishing adapters.
-7. Live escrow collection and merchant disbursement.
-8. A configured AI provider and human-reviewed AI workflow.
-9. Cross-channel conversion attribution from tracked click to registration,
-   payment and fulfilment.
+2. Durable multi-process worker claims for expiry and queue reservations.
+3. Live escrow collection and merchant disbursement.
+4. Automated WhatsApp Status and Facebook publishing adapters.
+5. Durable object storage/image compression for generated media.
+6. A configured AI provider and human-reviewed AI generation flow.
+7. Full cross-border compliance, KRA/iTax reporting and provider-specific
+   settlement certification.
 
 **Recommended posture:** scaffold these as independent shelves, but keep them
 off until each provider, authorization rule and state transition is real. The AI
@@ -64,22 +62,24 @@ an integration contract, and no credentials should be taken from them.
 |---|---|---|
 | Canonical content graph | `objects`, `objectSources`, `relationships`, `pipeline/ingest.js`, provenance and extraction evidence | **BUILT** |
 | People and explicit identity | `people`, `personAliases`, verified alias binding, account/session identity | **BUILT**, but creator profile fields are missing |
-| Creator-facing layer | `partnership.js`, media-kit projection, creator opportunities, subscriptions, vendor identity | **PARTIAL** |
-| Campaign/event wrapper | `campaigns`, lifecycle, public slug, capacity, registrations, ticketing and check-in | **BUILT for events/drops; not an advertiser campaign model** |
+| Creator-facing layer | `creatorProfile.js`, `partnership.js`, media-kit projection, creator opportunities, subscriptions, vendor identity | **BUILT for profiles/rate cards; media-kit/partnership remains partial** |
+| Campaign/event wrapper | `campaigns`, lifecycle, public slug, capacity, registrations, ticketing and check-in | **BUILT for events/drops; advertiser campaign layer now added** |
 | Public feed | `GET /api/public/feed`, public-only projection, CORS, geo ranking, `limit`, cache headers; `/api/feed` alias | **BUILT** |
 | Public campaign distribution | `/api/public/campaigns/:slug`, server-side Open Graph injection, share-intent links | **BUILT for campaign pages** |
-| Tracking | `distribution.trackedLink`, `clickEvents`, UTM source/medium/content, click analytics | **PARTIAL** |
+| Tracking | `distribution.trackedLink`, `clickEvents`, UTM source/medium/content, click analytics; advertiser asset hashes and registration attribution | **BUILT for local loop; shortener/persistent analytics still partial** |
+| Advertiser campaigns and matching | `advertising.js`, advertiser profiles, rate cards, campaign matches, queue reservations, manual funding attestation | **BUILT locally; provider funding/disbursement remains blocked** |
+| Ad distribution kits | `adAssets`, approval/issue lifecycle, public hash redirect, WhatsApp copy kit and Facebook OG payload | **BUILT as a download/copy kit; automatic publishing/media transform unavailable** |
 | Outbound messaging | `outbound.js` plus Twilio SMS/WhatsApp-send adapter | **CONFIGURATION REQUIRED**; no credentials or delivery callbacks |
 | Telegram / WhatsApp input | Telegram webhook/pull and WhatsApp inbound DM paths | **BUILT**, subject to platform credentials; WhatsApp group ingestion is intentionally unsupported |
 | TikTok input/output | No TikTok connector, webhook, publisher or import contract | **NOT BUILT** |
 | AI seam | `assist.js`, task/provider abstraction, fail-closed behavior | **CONFIGURATION REQUIRED**; `AI_PROVIDERS` is empty |
 | Workflow automation | `workflows`, `workflowRuns`, trigger/condition/action engine, periodic signal sweep, `CreatorCockpit` UI | **BUILT**, but not yet an advertiser-specific orchestration layer |
 | Payments | Tuma collection connector, payment intents, confirmation and ledger state machine | **CONFIGURATION REQUIRED**; no live credentials and no sandbox |
-| Escrow/disbursement | `held` ledger status and payout domain/provider seam | **PARTIAL / NOT AVAILABLE**; `DISBURSEMENT_PROVIDERS` is empty |
+| Escrow/disbursement | `held` ledger status, advertising funding, derived 5% split plan and provider seam | **PARTIAL / NOT AVAILABLE**; live collection and `DISBURSEMENT_PROVIDERS` remain absent |
 | Cooperatives | `pools`, `poolMembers`, `poolRotations`, contributions through the shared ledger | **BUILT for cooperative savings; not connected to advertising escrow** |
-| Vendors | vendors, listings, orders, fulfilment, disputes, trust evidence | **PARTIAL**; no transport/print/POD capability registry |
-| Calendar | campaign `startsAt`, `endsAt`, capacity and gate data | **PARTIAL**; no unified calendar or waiting list |
-| Persistence | synchronous JSON document store, named collections, schema version/migrations | **NOT READY for multi-replica production** |
+| Vendors | vendors, listings, orders, fulfilment, disputes, trust evidence, capability declarations | **PARTIAL**; no transport/print/POD provider adapters or operator license route |
+| Calendar | `calendar.js`, calendar entries, public campaign wait list, offer/expiry sweeper | **BUILT on JSON adapter; durable multi-process worker still required** |
+| Persistence | synchronous JSON document store, named collections, schema version/migrations; supplemental `server/sql/yard-engine.sql` target | **SCHEMA PREPARED; runtime adapter is not ready for multi-replica production** |
 
 The current feature registry already provides the correct pattern for shelf
 allocation: a feature can report `enabled`, `configured` and `available`, and a
@@ -93,11 +93,11 @@ deploy can disable a feature without pretending it works.
 
 | Requested node | Closest Brief node | Finding | Required secondary development |
 |---|---|---|---|
-| `creators_profile` | `people`, `personAliases`, `vendors`, derived `partnership.mediaKit` | There is a canonical person, but no preferred language, region, niche or external-social-links record. Vendor is a commercial identity, not a full creator profile. | Add a one-to-one `creatorProfiles` record keyed by `personId`; do not create a second identity table. |
-| `rate_cards` | Derived vendor listing pricing and `partnership.derivePricing()` | Current pricing is a min/max view of active listings. It cannot quote WhatsApp Status, FB post, dedicated campaign or appearance services. | Add `rateCards` with service type, price, currency, availability and version/status. |
-| `campaign_ledger` | `campaigns`, `ledgerTransactions`, campaign analytics | Brief deliberately has one economic ledger. `campaigns` are currently event/drop wrappers. A second ledger would violate the one-money-source rule. | Add an advertiser-campaign wrapper or extend campaign metadata; link every hold, payout, refund and fee to `ledgerTransactions`. Derive `distributedPayouts`. |
-| `curated_ads_vault` | `campaigns`, `distribution.js`, `clickEvents`, media association | No ad-vault row, asset lifecycle or immutable per-creative tracking hash exists. | Add `adAssets`/`distributionAssets` owned by an advertiser campaign. Store references and metadata, not binary media in the JSON store. |
-| PostgreSQL/Supabase | `server/src/store.js` JSON store | No relational database, row-level security, SQL indexes or multi-writer transaction exists. | Implement a store adapter and migration plan before money reservation, queue reservations or multi-region operation. |
+| `creators_profile` | `people`, `personAliases`, `creatorProfile.js`, `vendors`, derived `partnership.mediaKit` | A canonical profile is now persisted against `personId`, with language, regions, niches and validated social links. | **Implemented.** Keep `people` as identity and `creatorProfiles` as creator metadata; do not duplicate identity. |
+| `rate_cards` | `creatorProfile.js`, `/api/creator/rate-cards` | Service-specific pricing now supports all four requested tiers, regions, currencies, availability and draft/published versions. | **Implemented locally.** Matching uses published cards; decimal/transactional DB work remains. |
+| `campaign_ledger` | `advertising.js`, `campaigns`, `ledgerTransactions`, campaign analytics | Advertiser campaigns, manual funding, held escrow rows, derived reservations and 5% payout plans now exist. A second ledger would still violate the one-money-source rule. | **Implemented as an advertiser wrapper.** `distributedPayouts` remains derived; all money stays in `ledgerTransactions`. |
+| `curated_ads_vault` | `advertising.js`, `adAssets`, `distribution.js`, `clickEvents`, media association | Ad assets now have approval/issue lifecycle, unique tracking hashes, public redirects, media URL and copy fields. | **Implemented as metadata/URL storage.** Binary media storage and compression remain unbuilt. |
+| PostgreSQL/Supabase | `server/src/store.js` JSON store + `server/sql/yard-engine.sql` target migration | A relational target, constraints and indexes are now documented, but no runtime adapter, RLS policy or multi-writer transaction is active. | **Schema prepared; adapter not wired.** Add the adapter before enabling concurrent paid allocation. |
 
 #### Important enum normalization
 
@@ -126,35 +126,35 @@ mapping, but should not become the advertiser API vocabulary.
 
 | Requirement | Current state | Advisory finding |
 |---|---|---|
-| Advertiser identity and access | Accounts exist; campaign ownership is creator/host-oriented; `brandId` appears in partnership requests but is not an advertiser domain | **Not built as a proper advertiser role.** Add `advertiserProfiles` and permissions. Do not overload creator ownership. |
-| Budget submission | Campaign price and order totals exist; no campaign budget/reserved amount model | **Not built.** A budget is not the same as an event ticket price. |
-| Rate-card matching | No rate-card matrix or matching query | **Not built.** Needs region, service, minimum interaction and availability joins. |
-| Queue bandwidth | `queue.js` is an in-process ingestion queue with concurrency one | **Not the requested capacity model.** Add explicit creator availability/queue reservations; do not infer capacity from the ingestion queue. |
-| Micro-payments | Ledger/payment intent state machine and Tuma collection exist | **Provider-unwired.** Tuma is collection only in this repository; there is no selected payout provider. |
-| Escrow / communal pot | Cooperative pools exist and ledger has `held` | **Partial.** There is no advertiser escrow object, release policy, dispute window or cross-campaign allocation transaction. |
+| Advertiser identity and access | `advertiserProfiles` tied to `people`; advertiser routes are session-scoped | **Implemented for one advertiser role.** Organization/team roles and approval policy remain. |
+| Budget submission | `advertiserCampaigns`, budget/currency/targets, submitted and funding-pending states | **Implemented.** Funding is manual-attestation fallback until Tuma collection is configured. |
+| Rate-card matching | `advertising.allocate()` joins active creator profiles, published rate cards, region/niche/service and derived interactions | **Implemented locally.** Matching is explainable; database locking is still required for production. |
+| Queue bandwidth | `queueReservations` with max active allocation, offer expiry and release state | **Implemented locally.** The JSON adapter cannot provide multi-writer atomic reservation. |
+| Micro-payments | Shared ledger, funding transaction and provider-neutral settlement plan | **Partial.** Tuma collection exists but is not live; paid funding endpoint is not yet provider-wired. |
+| Escrow / communal pot | Advertiser escrow funding in `ledgerTransactions`, `held` state, derived 5% split, retryable payout block; pools remain separate | **Partial.** Dispute/refund/release policy and live payout provider remain. |
 | M-Pesa B2C / Korapay | No active connector/provider registration | **Not built.** Never label payouts live until a provider is selected, credentialed and callback-tested. |
 
 ### Module 3 — automated content pipeline and embedded links
 
 | Requirement | Current state | Finding |
 |---|---|---|
-| Link generation | `distribution.trackedLink()` creates a campaign URL with UTM parameters | **Partial.** It is a real tracked link, but not a short URL or an immutable `unique_tracking_hash` per ad asset. |
-| Click recording | `clickEvents` and campaign click analytics exist | **Built for clicks.** Registration and payment are not yet joined to the originating click. |
-| WhatsApp Status banner | No image-generation, compression, storage or share-kit route | **Not built.** A downloadable status-ready asset is feasible; automatic posting to a creator's personal Status must not be assumed. |
+| Link generation | `advertising.createAsset()`, `uniqueTrackingHash`, `distributionKit()`, public `/api/public/ad/:trackingHash`; existing `distribution.trackedLink()` remains | **Built for opaque asset redirects.** A dedicated short domain/edge cache is still optional work. |
+| Click recording | `recordAssetClick()`, `clickEvents`, campaign registration `trackingHash`, derived attribution analytics | **Built for the local loop.** Multi-touch attribution and consent controls remain. |
+| WhatsApp Status banner | Distribution kit returns media URL, one-click copy caption and explicitly `autoPublish:false` | **Built as a safe copy/download kit.** No personal Status publishing is claimed. |
 | WhatsApp send | Twilio adapter can send WhatsApp messages when configured | **Different capability.** Message send is not Status publishing. |
-| Facebook card | `/c/:slug` gets server-side `og:*` tags for crawlers | **Partial/built for link preview.** Open Graph is metadata consumed by Facebook and other crawlers; it is not a Facebook Page publishing API. |
-| Optimized copy | `assist.js` exposes a provider seam only | **Configuration required.** No model is connected and no AI output can be trusted or auto-published. |
-| Downloadable media | Media is URL-based and resolves only real associated images | **Partial.** No durable object storage or image transform service exists. |
+| Facebook card | Distribution kit returns Open Graph tags; `/c/:slug` already gets server-side `og:*` tags | **Built for link preview.** Facebook Page publishing/auth remains unbuilt. |
+| Optimized copy | `assist.js` exposes a provider seam; UI exposes AI review status | **Configuration required.** No model is connected and no AI output can be trusted or auto-published. |
+| Downloadable media | Ad asset accepts a real media URL and kit surfaces it | **Partial.** No durable object storage, compression or transform service exists. |
 
 ### Module 4 — chronology and vendor syndication
 
 | Requirement | Current state | Finding |
 |---|---|---|
-| Unified calendar | Campaign dates, capacity, tickets and check-in exist | **Partial.** No cross-campaign/event calendar projection or calendar API. |
-| Expiration-bounded waiting list | No wait-list collection, reservation timeout or promotion policy | **Not built.** Requires a durable scheduler/worker and an idempotent state machine. |
-| Notify adjacent backups | Notifications exist; outbound seam exists | **Partial.** The delivery rails are not all configured and there is no wait-list event to trigger them. |
-| Vendor syndication | Vendor/listing/order/fulfilment and vendor requests exist in Vault | **Partial.** Transport, print vendor, POD and capability matching are absent. |
-| Trust markers | Community verification evidence, fulfilled/settled sale facts and member evidence exist | **Partial.** No explicit licensing, historical-performance policy, escrow compatibility or staff recommendation model. |
+| Unified calendar | `calendar.js`, calendar entries, owner checks and Workflows → Calendar shelf | **Built on the JSON adapter.** Cross-region calendar sync and durable jobs remain. |
+| Expiration-bounded waiting list | `waitlistEntries`, public join/accept routes, offer expiry and promotion sweep | **Built for one process.** Durable worker claims and notification delivery remain. |
+| Notify adjacent backups | `waitlist_offered`/`waitlist_expired` signals and workflow/outbound seams | **Partial.** The event path exists; provider delivery is configuration-dependent. |
+| Vendor syndication | `vendorSyndication.js`, capability declarations, escrow flag, performance evidence, vendor route | **Partial.** Transport, print vendor, POD adapters and operator-only license verification still need deployment work. |
+| Trust markers | Community verification evidence, fulfilled/settled sale facts, capability license marker and recommendations | **Partial.** No external compliance registry or fully separated operator role is configured. |
 
 ---
 
@@ -360,8 +360,8 @@ the existing secondary navigation.
 | **Home** | Public discovery feed, Tea, public objects and public campaign entry | Public promoted placements, creator/event cards and public ad landing links. Use the safe `/api/public/feed` projection. | Advertiser budgets, rate-card editing, private match data, creator payout details |
 | **Play** | Arena players, challenges, lobbies, tournaments and results | No core Yard Engine shelf. A sponsored Arena event may be a public campaign/object and enter Home or a campaign page. | Advertising operations, escrow controls, audience targeting or vendor fulfilment |
 | **Saved** | Personal saves, activity, circles, campaigns, profile/media kit, opportunities, messages, subscriptions | **Creator profile**, rate cards, external social links, creator availability, incoming brand opportunities and the creator's shareable media kit. Existing `mediakit`, `opportunities` and `messages` sections are the natural landing points. | Advertiser-wide campaign queue, platform delivery logs and system-wide analytics |
-| **Inbox** | Workflows/host tools: Create, Dashboard, Open/Done, Review, Feeds, Payments, Records, Check-in and Editor | **Primary operations shelf:** advertiser campaign creation, match review, distribution kits, calendar, wait list, vendor syndication, automation and escrow status. Add secondary sections rather than a new destination. | Public discovery cards and social browsing |
-| **Menu sheet** | Cross-screen shortcuts and host value card | Add an `Advertise`/`Brand campaigns` shortcut only after role/access rules exist. Use it as an entry point, not a data model. | Hidden admin bypasses or direct provider credential controls |
+| **Inbox** | Workflows/host tools: Create, Dashboard, Open/Done, Review, Feeds, Payments, Records, Check-in and Editor | **Primary operations shelf:** advertiser campaign creation, match review, distribution kits, calendar, wait list, vendor syndication, automation and escrow status. The new Yard shelves are secondary tabs, not a new destination. | Public discovery cards and social browsing |
+| **Menu sheet** | Cross-screen shortcuts and host value card | `Advertise`, `Matches`, `Distribution` and `Calendar` now open the corresponding Inbox shelves. The menu is an entry point, not a data model. | Hidden admin bypasses or direct provider credential controls |
 | **Public API** | External read surface | `/api/public/feed`, public campaign pages, tracked redirects and later public asset-kit reads. | Private source membership, creator rate-card drafts, match scores or payout data |
 
 ### Proposed Inbox secondary sections
@@ -386,13 +386,13 @@ UI:
 
 | Feature key | Domain/route shelf | Depends on | Current state |
 |---|---|---|---|
-| `creator_profiles` | `domain/creatorProfile.js`, `/api/creator/profile` | `people`, `auth` | **NOT BUILT** |
-| `rate_cards` | `domain/rateCard.js`, `/api/creator/rate-cards` | `creator_profiles` | **NOT BUILT** |
-| `advertising` | `domain/advertising.js`, `/api/advertising/*` | profiles, rate cards, campaigns, ledger | **NOT BUILT** |
-| `matching` | `domain/matching.js`, `/api/advertising/:id/matches` | advertising, signals, reservations | **NOT BUILT** |
-| `ad_assets` | `domain/adAsset.js`, public/private kit routes | advertising, media, distribution | **NOT BUILT** |
-| `calendar` | `domain/calendar.js`, `/api/calendar/*` | campaigns, wait list, worker | **NOT BUILT** |
-| `vendor_syndication` | vendor capability/fulfilment routes | vendors, orders, Vault | **PARTIAL** |
+| `creator_profiles` | `domain/creatorProfile.js`, `/api/creator/profile`, `/api/creator/rate-cards` | `people`, `auth` | **BUILT locally** |
+| `rate_cards` | `creatorProfile.js`, `/api/creator/rate-cards` | `creator_profiles` | **BUILT locally** |
+| `advertising` | `domain/advertising.js`, `/api/advertising/*` | profiles, rate cards, campaigns, ledger | **BUILT locally** |
+| `matching` | `advertising.allocate()`, `/api/advertising/matches/*` | advertising, signals, reservations | **BUILT locally** |
+| `ad_assets` | `adAssets`, `/api/advertising/assets/*`, `/api/public/ad/*` | advertising, media, distribution | **BUILT as kit/redirect** |
+| `calendar` | `domain/calendar.js`, `/api/calendar/*`, `/api/waitlist/*` | campaigns, wait list, worker | **BUILT on JSON adapter** |
+| `vendor_syndication` | `vendorSyndication.js`, `/api/vendors/:id/capabilities` | vendors, orders, Vault | **PARTIAL** |
 | `automation` | existing `workflow` domain/routes | signals, outbound | **BUILT**, needs new triggers/actions |
 | `ai_engine` | existing `assist` provider seam | review/editorial authorization | **CONFIGURATION REQUIRED** |
 | `payouts` | existing provider/settlement shelf | selected disbursement provider | **UNWIRED** |
@@ -530,23 +530,23 @@ Prompt injection in source messages must be treated as data, not instructions.
 
 | Capability | Status | Why it will fail if attempted now | Shelf allocation |
 |---|---|---|---|
-| PostgreSQL/Supabase schema | **NOT BUILT** | JSON store has no SQL indexes, RLS, multi-writer transactions or durable job claims | Persistence/platform, before paid matching |
-| Creator profile record | **NOT BUILT** | `people` is identity, not creator preferences/links/niche | Saved → Profile |
-| Service rate cards | **NOT BUILT** | Listing price range is not a service quote | Saved → Media kit |
-| Advertiser role/profile | **NOT BUILT** | Current campaign owner is not a brand/advertiser principal | Inbox → Campaigns |
-| Budget and escrow policy | **NOT BUILT** | `held` ledger status alone has no allocation/release/dispute policy | Inbox → Payments |
-| Creator matching | **NOT BUILT** | No rate-card, region, threshold or bandwidth joins | Inbox → Matches |
-| Persistent reservation queue | **NOT BUILT** | Current `queue.js` is an ingestion queue, not a creator-capacity ledger | Inbox → Matches/Calendar |
-| Ad vault / asset lifecycle | **NOT BUILT** | No ad asset record, hash, storage or approval lifecycle | Inbox → Distribution |
-| Short/opaque tracking hash | **PARTIAL** | UTM links and click rows exist, but no per-asset hash/shortener | Public API + Distribution |
-| Click → registration attribution | **NOT BUILT** | Registration does not persist the originating click/asset key | Inbox → Distribution/Analytics |
-| WhatsApp Status auto-publish | **NOT BUILT / platform-dependent** | Twilio send is not Status publishing; no approved creator-posting adapter exists | Distribution, behind provider gate |
-| WhatsApp downloadable banner | **NOT BUILT** | No image processing or durable object storage | Distribution |
-| Facebook publishing | **NOT BUILT** | Open Graph preview exists; Graph Page publishing/auth is separate | Distribution |
-| Calendar and wait list | **NOT BUILT** | Campaign dates/capacity do not implement waiting-list semantics | Inbox → Calendar |
-| Expiry worker | **PARTIAL** | Workflow sweep exists, but no time-based wait-list worker or durable locks | Server worker |
-| Vendor transport/print/POD | **NOT BUILT** | Vendor/listing/order model has no capability or external fulfilment adapters | Inbox → Vendors |
-| Licensing/performance trust markers | **PARTIAL** | Evidence/facts exist, but no structured compliance documents or review policy | Saved → Profile / Inbox → Vendors |
+| PostgreSQL/Supabase runtime adapter | **NOT BUILT** | `server/sql/yard-engine.sql` supplies the target constraints/indexes, but the JSON store still has no SQL transactions, RLS or durable job claims | Persistence/platform, before paid matching |
+| Creator profile record | **BUILT locally** | `creatorProfile.js` stores profile metadata against `people`; production DB adapter remains | Saved → Profile |
+| Service rate cards | **BUILT locally** | Four service tiers, currency/region, availability and versioning exist | Saved → Media kit |
+| Advertiser role/profile | **BUILT locally** | `advertiserProfiles` is tied to `people`; organization/team roles remain | Inbox → Campaigns |
+| Budget and escrow policy | **PARTIAL** | Manual funding creates a held ledger transaction; provider funding, disputes and refunds remain | Inbox → Payments |
+| Creator matching | **BUILT locally** | Region, niche, interaction, service and active allocation checks are explicit | Inbox → Matches |
+| Persistent reservation queue | **PARTIAL** | `queueReservations` and expiry exist; JSON adapter is not safe for multi-writer claims | Inbox → Matches/Calendar |
+| Ad vault / asset lifecycle | **BUILT as metadata/URL** | `adAssets` has hash, approval and issue states; binary storage/compression remains | Inbox → Distribution |
+| Short/opaque tracking hash | **BUILT** | Per-asset random hash and public redirect exist; dedicated short-domain/edge cache is optional | Public API + Distribution |
+| Click → registration attribution | **BUILT for one touch** | Registration stores the validated tracking hash and campaign analytics derives attribution; multi-touch remains | Inbox → Distribution/Analytics |
+| WhatsApp Status auto-publish | **NOT BUILT / platform-dependent** | Twilio send is not Status publishing; the kit deliberately returns `autoPublish:false` | Distribution, behind provider gate |
+| WhatsApp downloadable banner | **PARTIAL** | Existing media URL can be issued; image processing and durable object storage remain | Distribution |
+| Facebook publishing | **PARTIAL** | Open Graph kit and campaign preview exist; Graph Page publishing/auth remains | Distribution |
+| Calendar and wait list | **BUILT on JSON adapter** | Calendar entries, public wait-list join/offer/accept and capacity release exist | Inbox → Calendar |
+| Expiry worker | **PARTIAL** | Minute sweep hook exists and is unref'd; durable job claims remain | Server worker |
+| Vendor transport/print/POD | **PARTIAL** | Capability declarations and evidence exist; provider adapters remain | Inbox → Vendors |
+| Licensing/performance trust markers | **PARTIAL** | Capability license marker, recommendations and derived order evidence exist; operator/registry integration remains | Saved → Profile / Inbox → Vendors |
 | AI copy/matching | **CONFIGURATION REQUIRED** | `AI_PROVIDERS` empty; no model, moderation or cost controls | Inbox → AI review |
 | Tuma collection | **CONFIGURATION REQUIRED** | Connector is present but credentials/public callback are absent | Inbox → Payments |
 | B2C/payout rail | **UNWIRED** | `DISBURSEMENT_PROVIDERS` is empty | Inbox → Payments |
@@ -557,6 +557,38 @@ Prompt injection in source messages must be treated as data, not instructions.
 ---
 
 ## 8. Dependency-ordered implementation plan
+
+### Delivered in this pass
+
+The first functional vertical is now present on the existing store and screens:
+
+```text
+creator profile + rate card
+  → advertiser campaign
+  → manual funding attestation / held ledger row
+  → explainable creator match + queue reservation
+  → creator accept/decline
+  → approved distribution asset + opaque tracking hash
+  → public redirect
+  → attributed registration
+  → explicit fulfilment verification
+  → provider-unavailable block with retry
+  → provider-backed test seam → 95/5 payout split → completed campaign
+```
+
+The same pass adds a public wait list:
+
+```text
+full campaign → join wait list → cancellation → expiry sweep
+  → next offer → acceptance → real campaign registration
+```
+
+The UI shelves are live under Saved → Creator profile and Inbox → Campaigns,
+Matches, Distribution, Calendar and Vendors. The AI review shelf is visible but
+provider-gated. A target PostgreSQL migration is staged at
+`server/sql/yard-engine.sql`; the runtime still uses the existing JSON adapter.
+The loop test intentionally exercises both the honest blocked state and the
+provider seam so a missing credential is not mistaken for a dead end.
 
 ### Phase 0 — choose the foundation before money
 
@@ -572,47 +604,51 @@ Prompt injection in source messages must be treated as data, not instructions.
 **Gate:** two concurrent requests cannot reserve the same creator capacity or
 spend the same advertiser budget.
 
-### Phase 1 — identity, profiles and rates
+Phases 1–4 below describe the production hardening and external-provider work
+that remains after the local JSON-adapter vertical above; the profile, rate,
+matching, asset and basic calendar code is already scaffolded and tested.
 
-1. Add `creatorProfiles` keyed to `people`.
-2. Add `rateCards` and availability windows.
-3. Add advertiser profile/role and role-scoped UI.
-4. Surface Profile/Media kit and rate cards under Saved.
+### Phase 1 — productionize identity, profiles and rates
+
+1. Move `creatorProfiles` and `rateCards` from the JSON adapter into the selected relational adapter.
+2. Add database constraints for one current card per creator/service and availability windows.
+3. Add organization/team advertiser roles and role-scoped access.
+4. Harden the Saved → Profile/Media kit and rate-card UI.
 5. Keep current vendor profile as the fulfilment/commercial identity.
 
 **Gate:** no rate card can be published without a real creator/person; a client
 cannot change creator ownership through a PATCH.
 
-### Phase 2 — advertiser campaign and matching
+### Phase 2 — harden advertiser campaign and matching
 
-1. Add advertiser campaign lifecycle and budget fields.
-2. Add `campaignMatches` and `queueReservations`.
-3. Implement server-side matching using explicit region, niche, rate, metrics
-   and availability fields.
-4. Add accept/decline/expiry transitions and Inbox → Matches UI.
-5. Emit the signal types listed above.
+1. Port advertiser campaign lifecycle and budget fields to PostgreSQL.
+2. Add database uniqueness/locking for `campaignMatches` and `queueReservations`.
+3. Keep matching server-side using explicit region, niche, rate, metrics and
+   availability fields; AI remains advisory.
+4. Harden accept/decline/expiry transitions and Inbox → Matches UI.
+5. Keep the signal types listed above as the automation contract.
 
 **Gate:** a match is explainable from stored fields; no AI-only match is binding;
 expired reservations release once and only once.
 
-### Phase 3 — asset vault and public distribution
+### Phase 3 — productionize asset vault and public distribution
 
-1. Add `adAssets` with server-generated tracking hash.
+1. Move `adAssets` and server-generated tracking hashes to PostgreSQL.
 2. Add object storage/CDN abstraction and image validation/compression.
-3. Add creator/advertiser approval lifecycle.
-4. Add `/api/advertising/:id/distribution-kit` and public hash redirect.
-5. Join click events to registration attribution.
+3. Keep the creator/advertiser approval lifecycle and add moderation/audit policy.
+4. Add edge caching for `/api/public/ad/:trackingHash` without caching writes.
+5. Extend the existing click-to-registration attribution to multi-touch consented attribution.
 6. Extend the existing server-side Open Graph implementation instead of
    inventing a second social preview system.
 
 **Gate:** every redirect is allow-listed, every click is attributable to one
 asset, and asset generation never claims social delivery.
 
-### Phase 4 — chronology, vendor operations and worker
+### Phase 4 — productionize chronology, vendor operations and worker
 
-1. Add calendar projection and wait-list entries.
+1. Move calendar projection and wait-list entries to the relational adapter.
 2. Replace the in-process-only expiry path with a durable worker/job claim.
-3. Add transport, printer and POD vendor capabilities as adapters.
+3. Add transport, printer and POD capabilities as adapters.
 4. Add fulfilment tickets in Vault and Workflows → Vendors.
 5. Add structured licensing/compliance evidence with expiry.
 
@@ -645,43 +681,49 @@ identity or publication state.
 
 ---
 
-## 9. API surface to add later
+## 9. API surface implemented and remaining
 
-These are the recommended route shelves; they are not present today unless
-noted.
+The following shelves now exist in the JSON adapter and are session/role
+checked where they mutate state:
 
 ```text
-GET    /api/creator/profile
-PATCH  /api/creator/profile
-GET    /api/creator/rate-cards
-POST   /api/creator/rate-cards
-PATCH  /api/creator/rate-cards/:id
+GET/PATCH /api/creator/profile
+GET       /api/creator/rate-cards
+POST/PATCH /api/creator/rate-cards/:id
 
-GET    /api/advertisers/me
-POST   /api/advertising/campaigns
-GET    /api/advertising/campaigns
-GET    /api/advertising/campaigns/:id
-POST   /api/advertising/campaigns/:id/submit
-GET    /api/advertising/campaigns/:id/matches
-POST   /api/advertising/matches/:id/accept
-POST   /api/advertising/matches/:id/decline
+GET       /api/advertising/advertiser
+GET       /api/advertising/campaigns
+POST      /api/advertising/campaigns
+GET/PATCH /api/advertising/campaigns/:id
+POST      /api/advertising/campaigns/:id/submit
+POST      /api/advertising/campaigns/:id/confirm-funding
+POST      /api/advertising/campaigns/:id/allocate
+GET       /api/advertising/campaigns/:id/matches
+GET       /api/advertising/matches/mine
+POST      /api/advertising/matches/:id/accept|decline
+POST      /api/advertising/matches/:id/verify-fulfillment
+POST      /api/advertising/matches/:id/retry-settlement
 
-POST   /api/advertising/assets
-POST   /api/advertising/assets/:id/approve
-GET    /api/advertising/assets/:id/distribution-kit
-GET    /api/public/ad/:trackingHash
+GET/POST  /api/advertising/assets
+POST      /api/advertising/assets/:id/approve|issue
+GET       /api/advertising/assets/:id/distribution-kit
+GET       /api/public/ad/:trackingHash
 
-GET    /api/calendar
-GET    /api/calendar/:id/waitlist
-POST   /api/calendar/:id/waitlist
-POST   /api/waitlist/:id/accept
+GET/POST  /api/calendar
+POST      /api/calendar/sweep
+GET/POST  /api/calendar/campaigns/:slug/waitlist
+POST      /api/waitlist/:id/accept
 
-GET    /api/ai/status
-POST   /api/ai/suggest
+GET       /api/public/feed
+GET       /api/assist/status
 ```
 
+Still required are provider-backed funding, a public/role-separated advertiser
+administration model, multi-touch attribution, image transformation/storage,
+Facebook/Status publishing adapters, and a production database/worker.
+
 All private routes need session/role checks. Public asset redirects and public
-feed reads must use allow-listed projections. Public APIs must never become a
+feed reads use allow-listed projections. Public APIs must never become a
 shortcut around campaign ownership, source membership or payment authority.
 
 ---
@@ -693,10 +735,13 @@ shortcut around campaign ownership, source membership or payment authority.
 - Use the existing public feed and public campaign surface as the distribution
   discovery layer.
 - Use `people` and verified aliases as the identity base.
-- Extend `partnership` into a real creator profile/media-kit shelf.
-- Add rate cards, advertiser profiles and campaigns as new domain modules.
-- Reuse `signals`, `workflow`, `outbound`, `campaigns`, Vault and the one ledger.
-- Put all operational UI under Saved and Inbox; keep Play unchanged.
+- Keep the new creator profile/media-kit and rate-card shelf under Saved.
+- Keep advertiser campaigns, matching, assets, calendar and vendor operations
+  under Inbox/Workflows.
+- Reuse `signals`, `workflow`, `outbound`, `campaigns`, Vault and the one ledger;
+  do not introduce a parallel economy.
+- Harden the local JSON implementation with PostgreSQL transactions, durable
+  workers and live providers; keep Play unchanged.
 
 ### Do not claim yet
 

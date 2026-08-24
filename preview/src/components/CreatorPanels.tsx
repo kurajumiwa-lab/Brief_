@@ -37,6 +37,10 @@ function Empty({ text }: { text: string }) {
   return <p className="text-[12px]" style={{ color: T.onSurfaceVariant }}>{text}</p>;
 }
 
+function Notice({ message }: { message: string | null }) {
+  return message ? <p className="text-[11px]" style={{ color: T.onSurfaceVariant }}>{message}</p> : null;
+}
+
 // --- Media kit ---------------------------------------------------------------
 
 export function MediaKitPanel() {
@@ -89,6 +93,105 @@ export function MediaKitPanel() {
           <p className="text-[9px]" style={{ color: T.outline }}>{kit.note}</p>
         </div>
       )}
+    </Shell>
+  );
+}
+
+// --- Creator profile + rate cards --------------------------------------------
+
+export function CreatorProfilePanel() {
+  const [profile, setProfile] = React.useState<any | null>(null);
+  const [cards, setCards] = React.useState<any[]>([]);
+  const [state, setState] = React.useState<'loading' | 'ready'>('loading');
+  const [message, setMessage] = React.useState<string | null>(null);
+  const [form, setForm] = React.useState({ fullName: '', preferredLanguage: 'en', regions: 'KE', nicheTags: '', instagram: '', facebook: '', tiktok: '' });
+  const [card, setCard] = React.useState({ serviceType: 'WHATSAPP_STATUS', basePrice: '', currency: 'KES', regions: 'KE' });
+  const [busy, setBusy] = React.useState(false);
+
+  const load = React.useCallback(async () => {
+    const [profileResult, cardsResult] = await Promise.all([briefApi.getCreatorProfile(), briefApi.getCreatorRateCards()]);
+    if (profileResult.ok) {
+      const p = profileResult.data;
+      setProfile(p);
+      setForm({
+        fullName: p.fullName ?? '',
+        preferredLanguage: p.preferredLanguage ?? 'en',
+        regions: (p.regions ?? []).join(', '),
+        nicheTags: (p.nicheTags ?? []).join(', '),
+        instagram: p.externalSocialLinks?.instagram ?? '',
+        facebook: p.externalSocialLinks?.facebook ?? '',
+        tiktok: p.externalSocialLinks?.tiktok ?? ''
+      });
+    }
+    if (cardsResult.ok) setCards(cardsResult.data);
+    setState('ready');
+  }, []);
+  React.useEffect(() => { void load(); }, [load]);
+
+  const saveProfile = async () => {
+    setBusy(true);
+    const links = Object.fromEntries([['instagram', form.instagram], ['facebook', form.facebook], ['tiktok', form.tiktok]].filter(([, value]) => value.trim()));
+    const result = await briefApi.updateCreatorProfile({
+      fullName: form.fullName,
+      preferredLanguage: form.preferredLanguage,
+      regions: form.regions.split(',').map((x) => x.trim()).filter(Boolean),
+      nicheTags: form.nicheTags.split(',').map((x) => x.trim()).filter(Boolean),
+      externalSocialLinks: links,
+      status: 'active'
+    });
+    setBusy(false);
+    setMessage(result.ok ? 'Profile saved.' : result.error);
+    if (result.ok) await load();
+  };
+
+  const createCard = async () => {
+    setBusy(true);
+    const result = await briefApi.createCreatorRateCard({
+      serviceType: card.serviceType,
+      basePrice: Number(card.basePrice),
+      currency: card.currency,
+      regions: card.regions.split(',').map((x) => x.trim()).filter(Boolean)
+    });
+    setBusy(false);
+    setMessage(result.ok ? 'Rate card saved as draft.' : result.error);
+    if (result.ok) { setCard((old) => ({ ...old, basePrice: '' })); await load(); }
+  };
+
+  const publishCard = async (id: string) => {
+    setBusy(true);
+    const result = await briefApi.updateCreatorRateCard(id, { status: 'published' });
+    setBusy(false);
+    setMessage(result.ok ? 'Rate card published.' : result.error);
+    await load();
+  };
+
+  const input = (label: string, key: keyof typeof form, placeholder = '') => (
+    <label className="block space-y-1">
+      <span className="text-[10px]" style={{ color: T.onSurfaceVariant }}>{label}</span>
+      <input value={form[key]} onChange={(e) => setForm((old) => ({ ...old, [key]: e.target.value }))} placeholder={placeholder} className="w-full rounded-lg border px-3 py-2 text-[12px] outline-none" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }} />
+    </label>
+  );
+
+  return (
+    <Shell icon={Briefcase} title="Creator profile">
+      {state === 'loading' ? <Empty text="Loading…" /> : (
+        <>
+          <div className="rounded-xl border p-4 space-y-3" style={{ borderColor: T.outlineVariant, background: T.container }}>
+            {input('Name', 'fullName', 'Your public name')}
+            <div className="grid grid-cols-2 gap-2">{input('Regions', 'regions', 'KE, NG')}{input('Niches', 'nicheTags', 'events, fashion')}</div>
+            <div className="grid gap-2 sm:grid-cols-3">{input('Instagram', 'instagram', 'https://instagram.com/...')}{input('Facebook', 'facebook', 'https://facebook.com/...')}{input('TikTok', 'tiktok', 'https://tiktok.com/@...')}</div>
+            <button type="button" disabled={busy || !form.fullName.trim()} onClick={() => void saveProfile()} className="rounded-full px-4 py-2 text-[11px] font-bold cursor-pointer disabled:opacity-40" style={{ background: T.primary, color: '#003824' }}>Save profile</button>
+          </div>
+
+          <div className="rounded-xl border p-4 space-y-3" style={{ borderColor: T.outlineVariant, background: T.container }}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: T.primary }}>Rate cards</p>
+            <div className="grid gap-2 sm:grid-cols-2"><select value={card.serviceType} onChange={(e) => setCard((old) => ({ ...old, serviceType: e.target.value }))} className="rounded-lg border px-2 py-2 text-[12px]" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }}><option value="WHATSAPP_STATUS">WhatsApp Status</option><option value="FB_POST">Facebook post</option><option value="DEDICATED_CAMPAIGN">Dedicated campaign</option><option value="EVENT_APPEARANCE">Event appearance</option></select><input value={card.basePrice} onChange={(e) => setCard((old) => ({ ...old, basePrice: e.target.value }))} placeholder="Base price" type="number" className="rounded-lg border px-3 py-2 text-[12px] outline-none" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }} /></div>
+            <div className="flex gap-2"><select value={card.currency} onChange={(e) => setCard((old) => ({ ...old, currency: e.target.value }))} className="rounded-lg border px-2 py-2 text-[12px]" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }}><option>KES</option><option>NGN</option><option>ZAR</option><option>USD</option></select><input value={card.regions} onChange={(e) => setCard((old) => ({ ...old, regions: e.target.value }))} placeholder="Regions" className="flex-1 rounded-lg border px-3 py-2 text-[12px] outline-none" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }} /><button type="button" disabled={busy || !card.basePrice} onClick={() => void createCard()} className="rounded-lg px-3 py-2 text-[11px] font-bold cursor-pointer disabled:opacity-40" style={{ background: T.primary, color: '#003824' }}><Plus className="h-3.5 w-3.5" /></button></div>
+            {cards.length === 0 ? <Empty text="No rate cards yet." /> : <div className="space-y-2">{cards.map((item) => <div key={item.id} className="flex items-center justify-between gap-2 rounded-lg border p-2" style={{ borderColor: T.outlineVariant }}><div className="min-w-0"><p className="text-[12px] font-semibold truncate" style={{ color: T.onSurface }}>{item.serviceType}</p><p className="text-[10px]" style={{ color: T.onSurfaceVariant }}>{item.currency} {Number(item.basePrice).toLocaleString()} · {item.status}</p></div>{item.status === 'draft' && <button type="button" disabled={busy} onClick={() => void publishCard(item.id)} className="text-[10px] font-bold cursor-pointer" style={{ color: T.primary }}>Publish</button>}</div>)}</div>}
+          </div>
+        </>
+      )}
+      <Notice message={message} />
     </Shell>
   );
 }

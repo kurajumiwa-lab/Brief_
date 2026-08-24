@@ -150,8 +150,9 @@ export function walletBalance(currency = 'KES') {
   let balance = 0;
   let pending = 0;
   for (const t of rows) {
-    if (AVAILABLE.has(t.status)) balance += t.amount;
-    else if (PENDING.has(t.status)) pending += t.amount;
+    const sign = t.metadata?.direction === 'outflow' ? -1 : 1;
+    if (AVAILABLE.has(t.status)) balance += sign * t.amount;
+    else if (PENDING.has(t.status)) pending += sign * t.amount;
   }
   return {
     balance,
