@@ -30,6 +30,8 @@ interface FeedData {
   tea: any | null;
   moreTea: any[];
   counts: { objects: number; tea: number; deduped: number };
+  _meta?: { generatedAt?: string; apiVersion?: string } | null;
+  _mediaProvider?: { configured?: boolean } | null;
 }
 
 const T = {
@@ -40,6 +42,20 @@ const T = {
   muted: 'rgba(17,17,17,0.62)',
   green: '#111111'
 };
+
+function feedUpdatedAt(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return null;
+  return date.toLocaleTimeString('en-KE', { hour: 'numeric', minute: '2-digit' });
+}
+
+function testExpiryLabel(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return null;
+  return date.toLocaleDateString('en-KE', { day: 'numeric', month: 'short' });
+}
 
 function imageOf(item: FeedObject): string | null {
   return item?.media?.url ?? item?.imageUrl ?? item?.heroImage ?? null;
@@ -223,6 +239,8 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
   ])].slice(0, 8);
 
   const hasContent = Boolean(hero || feed.tea || discovery.length || opportunities.length || events.length || collections.length || banners.length || tags.length);
+  const temporary = [...unique, feed.tea].find((item) => item?.testContent);
+  const temporaryExpiry = testExpiryLabel(temporary?.testContent?.expiresAt);
   if (!hasContent) {
     return (
       <>
@@ -232,8 +250,24 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
     );
   }
 
+  const updatedAt = feedUpdatedAt(feed._meta?.generatedAt);
+
   return (
     <div className="space-y-8" style={{ fontFamily: 'var(--m3-font-body)', color: T.ink }}>
+      {temporary && (
+        <div className="flex items-start justify-between gap-3 rounded-2xl border border-dashed border-[#E5E7EB] bg-[#FFFFFF] px-3 py-2.5">
+          <div>
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#111111]">{temporary.testContent.label}</p>
+            <p className="mt-1 text-[10px] leading-snug text-[#111111]/55">Temporary welcome content for release testing. It will leave the public feed at the expiry above and will not be silently reseeded.</p>
+          </div>
+          <span className="shrink-0 text-right text-[9px] font-bold text-[#111111]/45">{temporaryExpiry ? `until ${temporaryExpiry}` : 'temporary'}</span>
+        </div>
+      )}
+      {updatedAt && (
+        <p className="px-1 text-[10px] text-[#111111]/45">
+          Live Brief feed · refreshed {updatedAt}
+        </p>
+      )}
       {/* A single visual lead. */}
       {hero && (
         <PhotoTitleCard

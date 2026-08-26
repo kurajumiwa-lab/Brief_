@@ -2707,6 +2707,9 @@ console.log('\n=== AUTHORIZATION ACROSS TWO REAL ACTORS ===');
     check('and it does not leak ownerId', !/ownerId/.test(JSON.stringify(r.body)));
     r = await call('/api/health');
     check('health needs no auth', r.status === 200);
+    r = await call('/api/release');
+    check('release handshake names the current API contract',
+      r.status === 200 && r.body?.apiContractVersion === 'gallery-banners-v1' && typeof r.body?.serverTime === 'string');
     r = await call('/api/capabilities');
     check('capabilities need no auth', r.status === 200);
     check('capabilities report auth as configured', r.body?.auth?.configured === true);
@@ -3149,6 +3152,7 @@ console.log('\n=== PUBLIC FEED API (home-feed) ===');
   check('public feed excludes private objects', !raw.includes(privateId) && !raw.includes('Private feed place'));
   check('public feed omits contact and coordinates', !raw.includes('contactPhone') && !raw.includes('"lat"'));
   check('public feed sends cache headers', response.headers.get('cache-control')?.includes('max-age=60'));
+  check('public feed identifies its generation time', typeof body.meta?.generatedAt === 'string' && body.meta?.apiVersion === '1');
   check('public feed validates incomplete location',
     (await fetch(`http://127.0.0.1:${portPF}/api/public/feed?lat=1`)).status === 400);
   srvPF.close();
@@ -6121,6 +6125,25 @@ console.log('\n=== PHASE 4: ONE PERSON, REAL SESSION ===');
   } finally {
     srv.close();
   }
+}
+
+console.log('\n=== TEMPORARY DEMO CONTENT EXPIRY ===');
+{
+  const seed = await import('../src/domain/seed.js');
+  const discovery = await import('../src/domain/discovery.js');
+  store._reset();
+  const seeded = seed.runSeed();
+  const source = store.find('sources', (row) => row.seedBatch === seed.BATCH);
+  const before = store.filter('objects', (row) => row.seedBatch === seed.BATCH).length;
+  const expired = seed.expireSeed(Date.parse(source.seedExpiresAt) + 1);
+  const visibleAfterExpiry = discovery.discoverable({ publication: 'public' });
+  const rerun = seed.runSeed();
+  check('demo seed is time-bounded', seeded.alreadySeeded === false && source.seedExpiresAt && seed.DEMO_TTL_DAYS === 7);
+  check('expired demo content leaves public discovery', expired.expired === true && visibleAfterExpiry.length === 0);
+  check('expired demo rows are retained as expired records', store.filter('objects', (row) => row.expiryStatus === 'expired').length === before);
+  check('expired demo content is not silently reseeded', rerun.alreadySeeded === true && rerun.expired === true && store.filter('objects', (row) => row.seedBatch === seed.BATCH).length === before);
+  const cleared = seed.clearSeed();
+  check('the operator can explicitly clear the expired cohort', cleared.objects === before && store.filter('objects', (row) => row.seedBatch === seed.BATCH).length === 0);
 }
 
 console.log(`\n${'='.repeat(52)}\nPASSED ${pass}   FAILED ${fail}   SKIPPED ${skip}\n${'='.repeat(52)}`);

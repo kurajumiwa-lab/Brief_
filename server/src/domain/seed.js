@@ -25,7 +25,85 @@ import * as tea from './tea.js';
 import * as collection from './collection.js';
 
 export const BATCH = 'nairobi-demo-v1';
+export const DEMO_TTL_DAYS = 7;
 const HOST = 'usr_me';
+
+function expiresAtFrom(startedAt = Date.now()) {
+  return new Date(startedAt + DEMO_TTL_DAYS * 86400000).toISOString();
+}
+
+/**
+ * Expire the one-time demo cohort without deleting it or making it seedable
+ * again. The source's original start time is the clock; legacy demo rows that
+ * predate `seedExpiresAt` get the same seven-day window from `createdAt`.
+ */
+export function expireSeed(nowMs = Date.now()) {
+  const sources = store.filter('sources', (source) => source.seedBatch === BATCH);
+  const source = sources[0];
+  if (!source) return { expired: false, reason: 'not_seeded' };
+  if (source.seedStatus === 'expired') {
+    return { expired: true, seedExpiresAt: source.seedExpiresAt ?? null, reason: 'already_expired' };
+  }
+
+  let expiryMs = Date.parse(source.seedExpiresAt ?? '');
+  if (!Number.isFinite(expiryMs)) {
+    const startedMs = Date.parse(source.createdAt ?? '');
+    if (!Number.isFinite(startedMs)) return { expired: false, reason: 'seed_clock_unknown' };
+    expiryMs = startedMs + DEMO_TTL_DAYS * 86400000;
+    store.update('sources', source.id, { seedExpiresAt: new Date(expiryMs).toISOString() });
+  }
+  if (nowMs < expiryMs) {
+    return { expired: false, seedExpiresAt: new Date(expiryMs).toISOString() };
+  }
+
+  const expiredAt = new Date(expiryMs).toISOString();
+  let changed = { objects: 0, campaigns: 0, banners: 0, vendors: 0, listings: 0, tea: 0, collections: 0 };
+  for (const row of store.filter('objects', (item) => item.seedBatch === BATCH)) {
+    if (row.publication !== 'removed' || row.expiryStatus !== 'expired') {
+      store.update('objects', row.id, { publication: 'removed', expiryStatus: 'expired', seedExpiredAt: expiredAt });
+      changed.objects++;
+    }
+  }
+  for (const row of store.filter('campaigns', (item) => item.seedBatch === BATCH)) {
+    const nextStatus = ['published', 'live'].includes(row.status) ? 'closed' : row.status === 'draft' ? 'cancelled' : row.status;
+    if (row.seedExpiredAt !== expiredAt || row.status !== nextStatus) {
+      store.update('campaigns', row.id, { status: nextStatus, seedExpiredAt: expiredAt });
+      changed.campaigns++;
+    }
+  }
+  for (const row of store.filter('campaignBanners', (item) => item.seedBatch === BATCH || store.find('campaigns', (campaign) => campaign.id === item.campaignId && campaign.seedBatch === BATCH))) {
+    if (row.status !== 'archived') {
+      store.update('campaignBanners', row.id, { status: 'archived', seedExpiredAt: expiredAt, updatedAt: new Date().toISOString() });
+      changed.banners++;
+    }
+  }
+  for (const row of store.filter('vendors', (item) => item.seedBatch === BATCH)) {
+    if (row.status !== 'closed') {
+      store.update('vendors', row.id, { status: 'closed', seedExpiredAt: expiredAt, updatedAt: new Date().toISOString() });
+      changed.vendors++;
+    }
+  }
+  for (const row of store.filter('listings', (item) => item.seedBatch === BATCH)) {
+    if (row.status !== 'archived') {
+      store.update('listings', row.id, { status: 'archived', seedExpiredAt: expiredAt, updatedAt: new Date().toISOString() });
+      changed.listings++;
+    }
+  }
+  for (const row of store.filter('teaArticles', (item) => item.seedBatch === BATCH)) {
+    if (row.status !== 'expired' && row.status !== 'archived') {
+      store.update('teaArticles', row.id, { status: 'expired', seedExpiredAt: expiredAt, updatedAt: new Date().toISOString() });
+      changed.tea++;
+    }
+  }
+  for (const row of store.filter('collections', (item) => item.seedBatch === BATCH)) {
+    if (row.status !== 'archived') {
+      store.update('collections', row.id, { status: 'archived', seedExpiredAt: expiredAt, updatedAt: new Date().toISOString() });
+      changed.collections++;
+    }
+  }
+  store.update('sources', source.id, { connectionStatus: 'disconnected', seedStatus: 'expired', seedExpiredAt: expiredAt, seedExpiresAt: new Date(expiryMs).toISOString() });
+  return { expired: true, seedExpiresAt: new Date(expiryMs).toISOString(), changed };
+}
 
 // ---------------------------------------------------------------------------
 // Coarse geography for the demo content.
@@ -123,11 +201,20 @@ export function clearSeed() {
 
 /** Populate the store with authentic Kenyan demo content. Returns counts. */
 export function runSeed() {
-  // Idempotent: re-seeding does not duplicate.
-  if (store.find('sources', (s) => s.seedBatch === BATCH)) {
-    return { alreadySeeded: true, ...counts() };
+  // Idempotent: re-seeding does not duplicate. An expired cohort remains
+  // marked in the store and cannot silently come back on a later boot.
+  const existing = store.find('sources', (s) => s.seedBatch === BATCH);
+  if (existing) {
+    const expiry = expireSeed();
+    return {
+      alreadySeeded: true,
+      expired: expiry.expired || existing.seedStatus === 'expired',
+      seedExpiresAt: existing.seedExpiresAt ?? expiry.seedExpiresAt ?? null,
+      ...counts()
+    };
   }
 
+  const seedExpiresAt = expiresAtFrom();
   const SEED_TEXTS = [
     'Saturday popup at Kilimani Studio. 12 vendors. Fashion, food and beauty. KES 300 entry. 4PM-10PM. Vendor: Kikao Streetwear. Printed Hoodie KES 2500. DM Jane on WhatsApp.',
     'Maji Mazuri Saturday Market Day, extended trading at Westlands Square. 20 vendors, live music from 11AM. Free entry. Kikoy by the yard from Mama Njeri.',
@@ -164,6 +251,7 @@ export function runSeed() {
     connectionStatus: 'connected',
     confidence: 0.5,
     seedBatch: BATCH,
+    seedExpiresAt,
     lastSyncedAt: new Date().toISOString(),
     lastMessageAt: new Date().toISOString(),
     createdAt: new Date().toISOString(),
@@ -184,7 +272,12 @@ export function runSeed() {
     if (result.ok && result.objectId) {
       for (const id of [result.objectId, ...(result.childIds ?? [])]) {
         const obj = store.find('objects', (o) => o.id === id);
-        if (obj) store.update('objects', id, { seedBatch: BATCH, publication: 'public' });
+        if (obj) store.update('objects', id, {
+          seedBatch: BATCH,
+          seedExpiresAt,
+          validityWindowDays: DEMO_TTL_DAYS,
+          publication: 'public'
+        });
         geoTag(id);
       }
     }
@@ -210,7 +303,8 @@ export function runSeed() {
       metadata: coords ? { lat: coords.lat, lng: coords.lng } : {},
       isFixture: false, publication: 'public',
       verificationStatus: 'unverified', extractionConfidence: 0.5, extractionEvidence: [],
-      seedBatch: BATCH, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+      seedBatch: BATCH, seedExpiresAt, validityWindowDays: DEMO_TTL_DAYS,
+      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
     });
   }
 
@@ -225,30 +319,35 @@ export function runSeed() {
     });
     campaigns.transitionCampaign(c.id, 'published');
     campaigns.transitionCampaign(c.id, 'live');
-    store.update('campaigns', c.id, { seedBatch: BATCH });
+    store.update('campaigns', c.id, { seedBatch: BATCH, seedExpiresAt });
     if (store.find('objects', (o) => o.id === c.objectId)) {
-      store.update('objects', c.objectId, { seedBatch: BATCH, publication: 'public' });
+      store.update('objects', c.objectId, {
+        seedBatch: BATCH,
+        seedExpiresAt,
+        validityWindowDays: DEMO_TTL_DAYS,
+        publication: 'public'
+      });
     }
     demoCampaigns.push(c);
   }
 
   const mk = (ownerId, displayName, description, items) => {
     const v = vendors.createVendor({ ownerId, displayName, description, contactMethod: 'WhatsApp' });
-    store.update('vendors', v.id, { seedBatch: BATCH });
+    store.update('vendors', v.id, { seedBatch: BATCH, seedExpiresAt });
     for (const [title, price] of items) {
       const l = listings.createListing({ vendorId: v.id, title, price, currency: 'KES', type: 'product', quantityAvailable: 20 });
       listings.transitionListing(l.id, 'active');
-      store.update('listings', l.id, { seedBatch: BATCH });
+      store.update('listings', l.id, { seedBatch: BATCH, seedExpiresAt });
     }
   };
 
   mk(HOST, 'Kikao Streetwear', 'Printed streetwear from Kilimani.', [['Printed Hoodie', 2500], ['Screen Tee', 1200]]);
   mk('usr_demo_coast', 'Pwani Handcrafts', 'Kikoy, carved wood and beach crafts from Mombasa.', [['Handwoven Kikoy', 1800], ['Carved Dhow Ornament', 950], ['Coconut Shell Bowl', 700]]);
 
-  seedTea();
-  seedCollections();
+  seedTea(seedExpiresAt);
+  seedCollections(seedExpiresAt);
 
-  return { alreadySeeded: false, ...counts() };
+  return { alreadySeeded: false, seedExpiresAt, ...counts() };
 }
 
 /**
@@ -259,7 +358,7 @@ export function runSeed() {
  * carry author "Brief Editorial (demo)" so they are never mistaken for live
  * reporting. Each is published so the feed has real editorial content to rank.
  */
-function seedTea() {
+function seedTea(seedExpiresAt) {
   const ARTICLES = [
     { title: 'A practical Nairobi weekend guide', category: 'guide', location: 'Nairobi', dek: 'Markets, food, and easy wins — without burning the whole weekend.', body: "Nairobi weekends work best when you pick one anchor and let everything else follow.\n\nStart early. The farmers markets — Karen, Westlands, and the Saturday popups around Kilimani — are best before 10am, when produce is freshest and parking is kind.\n\nPlan one sit-down meal and one walk. Pair a market with a neighbourhood walk: the same trip that gets you produce can get you a meal and a sense of the area.\n\nKeep the afternoon light. Afternoon sun is for slow things — a gallery, a book fair, a rooftop. Save anything that needs energy for the morning.\n\nWhat you can do: pick one market and one meal spot near each other, and let the rest happen." },
     { title: 'Things to do when you have KES 500', category: 'useful', location: 'Nairobi', dek: 'A real budget still gets you a genuinely good day.', body: "Five hundred shillings is not a lot, but it is enough for a full day if you choose one thing well.\n\n- Matatu or boda there and back, and one proper street meal: a full plate, not a snack.\n- Market entry is usually free; buying nothing but a single piece of fruit still gets you the whole experience.\n- Many galleries, exhibitions and community events are free to enter.\n\nWhat you can do: spend the money on the meal and the fare, and let everything else be free." },
@@ -277,7 +376,7 @@ function seedTea() {
       author: 'Brief Editorial (demo)',
       publishedAt: new Date().toISOString()
     });
-    store.update('teaArticles', article.id, { seedBatch: BATCH });
+    store.update('teaArticles', article.id, { seedBatch: BATCH, seedExpiresAt });
     added++;
   }
   return added;
@@ -287,7 +386,7 @@ function seedTea() {
  * Starter collections — rule-based and genuinely evergreen, so they resolve
  * against whatever real content exists without fabricating any of it.
  */
-function seedCollections() {
+function seedCollections(seedExpiresAt) {
   const defs = [
     { title: 'Under KES 500', description: 'Things you can do on a small budget.', kind: 'rule', rule: { maxPrice: 500 }, featured: true },
     { title: 'Around Kilimani', description: 'What is happening in and around Kilimani.', kind: 'rule', rule: { locationContains: 'Kilimani' } },
@@ -297,7 +396,7 @@ function seedCollections() {
   let added = 0;
   for (const d of defs) {
     const c = collection.createCollection({ ...d, status: 'published' });
-    store.update('collections', c.id, { seedBatch: BATCH });
+    store.update('collections', c.id, { seedBatch: BATCH, seedExpiresAt });
     added++;
   }
   return added;

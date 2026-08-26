@@ -15,6 +15,10 @@ import * as outbound from '../outbound.js';
 import * as features from '../features.js';
 import { requireAuth, now } from './helpers.js';
 
+// The frontend uses this handshake to flag an old API instead of failing later
+// on a missing banner/news endpoint. It is a contract version, not a secret.
+export const API_CONTRACT_VERSION = 'gallery-banners-v1';
+
 export function register(app) {
 // --- Health / capabilities ---------------------------------------------------
 
@@ -113,6 +117,18 @@ app.get('/api/config', (_req, res) => {
   res.json({
     publicOrigin: origin ? String(origin).replace(/\/+$/, '') : null,
     campaignPathPrefix: '/c/'
+  });
+});
+
+/**
+ * Tiny release handshake. Keeping this separate from `/api/config` preserves
+ * that older two-field config contract while giving the client a way to detect
+ * an old deployment before a new gallery action fails.
+ */
+app.get('/api/release', (_req, res) => {
+  res.json({
+    apiContractVersion: API_CONTRACT_VERSION,
+    serverTime: now()
   });
 });
 }

@@ -27,6 +27,7 @@ import type {
   Signal,
   TargetView,
   AppConfig,
+  ReleaseStatus,
   AuthStatus,
   Campaign,
   CampaignCreate,
@@ -98,6 +99,8 @@ import {
  * so this must stay a relative path: never call localhost from client code.
  */
 export const INGEST_API = '/ingest';
+/** Shared with /api/config so a deployed frontend can detect an older API. */
+export const CLIENT_API_CONTRACT = 'gallery-banners-v1';
 
 // ---------------------------------------------------------------------------
 // SESSION
@@ -689,6 +692,15 @@ export { COPY_ONLY_CHANNELS } from './types';
 /** Client-visible server configuration, including the canonical public origin. */
 export function getConfig(): Promise<ApiResult<AppConfig>> {
   return request('/api/config', undefined, (r) => (isAppConfig(r) ? r : undefined));
+}
+
+/** Detect that the frontend and API came from the same current deployment. */
+export function getRelease(): Promise<ApiResult<ReleaseStatus>> {
+  return request('/api/release', undefined, (r) =>
+    typeof r?.apiContractVersion === 'string' && typeof r?.serverTime === 'string'
+      ? r as ReleaseStatus
+      : undefined
+  );
 }
 
 /**
@@ -1619,7 +1631,11 @@ export function getFeed(opts: { lat?: number; lng?: number; radiusKm?: number } 
   if (opts.lng !== undefined) params.set('lng', String(opts.lng));
   if (opts.radiusKm !== undefined) params.set('radiusKm', String(opts.radiusKm));
   const q = params.toString() ? `?${params.toString()}` : '';
-  return request(`/api/feed${q}`, undefined, (r) => (r?.feed ? r.feed : undefined));
+  return request(`/api/feed${q}`, undefined, (r) => (
+    r?.feed
+      ? { ...r.feed, _meta: r.meta ?? null, _mediaProvider: r.mediaProvider ?? null }
+      : undefined
+  ));
 }
 
 /**

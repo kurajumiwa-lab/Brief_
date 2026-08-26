@@ -25,6 +25,7 @@ import * as telegram from './connectors/telegram.js';
 import * as whatsapp from './connectors/whatsapp.js';
 import * as compliance from './domain/compliance.js';
 import * as calendar from './domain/calendar.js';
+import * as demoSeed from './domain/seed.js';
 import { authStatus } from './identity.js';
 import { recordError } from './routes/helpers.js';
 import { register as authRoutes } from './routes/auth.js';
@@ -107,6 +108,15 @@ app.use((req, _res, next) => {
   if (req.url.startsWith('/ingest')) {
     req.url = req.url.slice('/ingest'.length) || '/';
   }
+  next();
+});
+
+// Demo content is a temporary welcome cohort, not a permanent fixture layer.
+// Expiry runs opportunistically before every request so a seven-day test window
+// disappears even when the deployment has no cron worker. Real user rows never
+// carry the demo batch marker and are untouched.
+app.use((_req, _res, next) => {
+  try { demoSeed.expireSeed(); } catch { /* diagnostics/read paths must stay live */ }
   next();
 });
 

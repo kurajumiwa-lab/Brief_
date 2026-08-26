@@ -630,6 +630,12 @@ export interface AppConfig {
   campaignPathPrefix: string;
 }
 
+/** Small release handshake used to detect an older API before testing flows. */
+export interface ReleaseStatus {
+  apiContractVersion: string;
+  serverTime: string;
+}
+
 /**
  * A shareable link, or an honest reason there isn't one. Modelled as a
  * discriminated union so a caller cannot read `.url` without first proving
