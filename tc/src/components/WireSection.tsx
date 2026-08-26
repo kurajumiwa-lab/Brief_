@@ -23,12 +23,12 @@ function Row({ item }: { item: WireItem }) {
       href={item.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex min-h-16 items-center gap-3 rounded-2xl border border-[#232A38] bg-[#10141C] p-2 transition-colors hover:border-[#43D17A]"
+      className="group flex min-h-16 items-center gap-3 rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-2 transition-colors hover:border-[#111111]"
     >
       {item.image && (
         <img src={item.image} alt="" aria-hidden="true" loading="lazy" className="h-12 w-12 shrink-0 rounded-xl object-cover" />
       )}
-      <h3 className="min-w-0 truncate px-1 text-[14px] font-semibold leading-snug text-[#F3F1E7]">
+      <h3 className="min-w-0 truncate px-1 text-[14px] font-semibold leading-snug text-[#111111]">
         {item.title}
       </h3>
     </a>
@@ -54,8 +54,8 @@ export function WireSection() {
   if (state.status === 'loading') {
     return (
       <div className="grid grid-cols-2 gap-3 animate-pulse" aria-label="Loading">
-        <div className="h-16 rounded-2xl bg-[#10141C]" />
-        <div className="h-16 rounded-2xl bg-[#10141C]" />
+        <div className="h-16 rounded-2xl bg-[#FFFFFF]" />
+        <div className="h-16 rounded-2xl bg-[#FFFFFF]" />
       </div>
     );
   }
@@ -65,7 +65,7 @@ export function WireSection() {
 
   return (
     <section className="space-y-4">
-      <h2 className="px-1 text-[11px] font-bold uppercase tracking-[0.22em] text-[#8A93A6]">News</h2>
+      <h2 className="px-1 text-[11px] font-bold uppercase tracking-[0.22em] text-[#111111]/60">News</h2>
       {wire.kenya.length > 0 && (
         <div className="grid gap-2 sm:grid-cols-2">
           {wire.kenya.slice(0, 6).map((item) => <Row key={item.id} item={item} />)}

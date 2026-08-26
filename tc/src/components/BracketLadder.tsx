@@ -63,7 +63,7 @@ export function BracketLadder({ entrants, displayName, accent = 'var(--signal-ar
   const firstRound = seedFirstRound(entrants);
 
   if (firstRound.length === 0) {
-    return <p className="text-[10px] text-[#8A93A6]">No one is in the bracket yet.</p>;
+    return <p className="text-[10px] text-[#111111]/60">No one is in the bracket yet.</p>;
   }
 
   const rounds: Match[][] = [firstRound];
@@ -79,12 +79,12 @@ export function BracketLadder({ entrants, displayName, accent = 'var(--signal-ar
 
   const MatchRow = ({ m }: { m: Match }) => (
     <div className="flex items-center gap-1.5 py-1">
-      <span className="flex-1 truncate text-[10px] font-semibold text-[#F3F1E7]">
+      <span className="flex-1 truncate text-[10px] font-semibold text-[#111111]">
         {m.a ? displayName(m.a) : '—'}
       </span>
-      <span className="text-[9px] text-[#4B5162]">vs</span>
-      <span className="flex-1 truncate text-right text-[10px] font-semibold text-[#F3F1E7]">
-        {m.b ? displayName(m.b) : m.note === 'bye' ? <span className="text-[#8A93A6]">bye</span> : '—'}
+      <span className="text-[9px] text-[#111111]/40">vs</span>
+      <span className="flex-1 truncate text-right text-[10px] font-semibold text-[#111111]">
+        {m.b ? displayName(m.b) : m.note === 'bye' ? <span className="text-[#111111]/60">bye</span> : '—'}
       </span>
     </div>
   );
@@ -94,11 +94,11 @@ export function BracketLadder({ entrants, displayName, accent = 'var(--signal-ar
       <div className="flex min-w-max gap-4 py-2">
         {rounds.map((round, r) => (
           <div key={r} className="flex flex-col justify-around gap-2">
-            {r === 0 && <p className="text-[8px] font-extrabold uppercase tracking-wider text-[#4B5162]">Round 1</p>}
+            {r === 0 && <p className="text-[8px] font-extrabold uppercase tracking-wider text-[#111111]/40">Round 1</p>}
             {round.map((m, i) => (
               <div
                 key={i}
-                className="rounded-lg border border-[#232A38] bg-[#0C1220] px-2.5 py-1.5"
+                className="rounded-lg border border-[#E5E7EB] bg-[#FFFFFF] px-2.5 py-1.5"
                 style={r === 0 ? { borderColor: `${accent}44` } : undefined}
               >
                 <MatchRow m={m} />

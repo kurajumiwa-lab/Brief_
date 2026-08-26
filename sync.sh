@@ -13,13 +13,18 @@ for dest in preview/src tc/src; do
   # Mirror the whole tree rather than named files: a new subdirectory
   # (src/components/circle/) was silently missed by the old per-glob copy,
   # which is exactly how the stale-copy trap reappears.
-  rm -rf "$dest/api" "$dest/components" "$dest/nav" "$dest/ui"
+  rm -rf "$dest/api" "$dest/components" "$dest/nav" "$dest/ui" "$dest/assets" "$dest/engine"
   mkdir -p "$dest"
   cp App.tsx "$dest/App.tsx"
   cp -R src/api "$dest/api"
   cp -R src/components "$dest/components"
   cp -R src/nav "$dest/nav"
   cp -R src/ui "$dest/ui"
+  # Static assets imported by components (e.g. arena key-art). tc needs the
+  # images.d.ts shim to type-check the imports; preview needs the bytes to build.
+  cp -R src/assets "$dest/assets"
+  # The engine sync machine (src/engine) is imported by components.
+  cp -R src/engine "$dest/engine"
 done
 
-echo "synced App.tsx + src/api + src/components + src/nav + src/ui -> preview/src, tc/src"
+echo "synced App.tsx + src/api + src/components + src/nav + src/ui + src/assets + src/engine -> preview/src, tc/src"

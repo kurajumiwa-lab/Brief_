@@ -8,7 +8,7 @@
 // It now imports the REAL exported matcher and owns its fixtures, so a change
 // to Brief's scoring is actually caught here.
 // ---------------------------------------------------------------------------
-const src=require('fs').readFileSync('/home/user/App.tsx','utf8');
+const src=require('fs').readFileSync(__dirname + '/src/App.tsx','utf8');
 const { FIXTURE_OBJECTS }=require('./fixtures.cjs');
 const App=require('./src/App.tsx');
 const objects=FIXTURE_OBJECTS;

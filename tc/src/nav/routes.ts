@@ -17,7 +17,7 @@ export type MyLayerSection =
 export type WorkflowSection =
   | 'cockpit' | 'command' | 'active' | 'completed' | 'inbox'
   | 'sources' | 'money' | 'vault' | 'gate' | 'tea'
-  | 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'ai';
+  | 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'ai' | 'engine' | 'groupbuy';
 export type ArenaSection = 'lobby' | 'challenges' | 'tournaments' | 'leaderboard';
 
 export type BriefRoute = {
@@ -57,7 +57,7 @@ const MYLAYER: MyLayerSection[] = [
 const WORKFLOW: WorkflowSection[] = [
   'cockpit', 'command', 'active', 'completed', 'inbox',
   'sources', 'money', 'vault', 'gate', 'tea',
-  'campaigns', 'matches', 'distribution', 'calendar', 'vendors', 'ai'
+  'campaigns', 'matches', 'distribution', 'calendar', 'vendors', 'ai', 'engine', 'groupbuy'
 ];
 const ARENA: ArenaSection[] = ['lobby', 'challenges', 'tournaments', 'leaderboard'];
 

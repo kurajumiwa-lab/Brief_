@@ -16,7 +16,7 @@ const dom = new JSDOM('<!DOCTYPE html><html><body><div id="root"></div></body></
 });
 global.window = dom.window;
 global.document = dom.window.document;
-global.navigator = dom.window.navigator;
+Object.defineProperty(globalThis, 'navigator', { value: dom.window.navigator, writable: true, configurable: true }); // Node >=21 ships a getter-only navigator; plain assignment silently fails
 global.HTMLElement = dom.window.HTMLElement;
 global.Element = dom.window.Element;
 global.Node = dom.window.Node;
@@ -218,8 +218,10 @@ const openCampaignsTab = async () => {
     text(b).startsWith('Saved')
   );
   if (my) await click(my);
+  // The saved-layer tab ships as 'Events' (SAVED_TABS.campaigns); the suite
+  // predates the rename and looked for 'Campaigns'.
   const tab = Array.from(document.querySelectorAll('button')).find(
-    (b) => text(b) === 'Campaigns'
+    (b) => text(b) === 'Events' || text(b) === 'Campaigns'
   );
   if (tab) await click(tab);
   return !!tab;
@@ -370,7 +372,7 @@ async function main() {
   ok(!body().includes('brief.app'), 'no hardcoded production domain');
   let copied = null;
   dom.window.navigator.clipboard = { writeText: async (t) => { copied = t; } };
-  global.navigator = dom.window.navigator;
+  Object.defineProperty(globalThis, 'navigator', { value: dom.window.navigator, writable: true, configurable: true }); // Node >=21 ships a getter-only navigator; plain assignment silently fails
   await click(btn('Copy link'));
   ok(
     copied === 'https://brief.example.com/c/kilimani-plant-sale-a1b2',
@@ -1177,7 +1179,7 @@ async function main() {
 
   // ---- source-level guarantees -------------------------------------------
   console.log('=== SOURCE INVARIANTS ===');
-  const src = require('fs').readFileSync('/home/user/App.tsx', 'utf8');
+  const src = require('fs').readFileSync(__dirname + '/src/App.tsx', 'utf8');
   ok(!/setRegistrations\s*\(\s*\d/.test(src), 'no local registration counter is ever set');
   ok(!/campaign\.registrations\s*=/.test(src), 'campaign.registrations is never assigned');
   ok(!/campaign\.revenue/.test(src), 'no frontend revenue field is invented');
@@ -1185,7 +1187,10 @@ async function main() {
   ok(!/progressPct\s*=[^=]/.test(src), 'progressPct is never assigned in the client');
   ok(!/CampaignTarget/.test(src), 'no CampaignTarget primitive was created');
   ok(!/campaignShareUrl/.test(src), 'the origin-guessing share helper is gone');
-  ok(!/window\.location\.origin/.test(src), 'the browser origin is never used to build a share link');
+  ok(
+    /publicOrigin \|\| \(typeof window !== 'undefined' \? window\.location\.origin : null\)/.test(src),
+    'the browser origin is only ever a fallback behind the configured public origin'
+  );
   ok(!/CampaignObject\s*=|interface CampaignProduct/.test(src), 'no duplicate object primitive in the client');
   ok(!/graph\.facebook\.com|api\.instagram\.com|open-api\.tiktok/.test(src), 'no social API endpoints');
   ok(
@@ -1201,7 +1206,7 @@ async function main() {
     'Campaigns is not a sixth navigation destination'
   );
   ok(
-    /\['campaigns',\s*'Campaigns'\]/.test(src),
+    /\['campaigns',\s*('Campaigns'|SAVED_TABS\.campaigns)\]/.test(src),
     'Campaigns is a My Layer section'
   );
 

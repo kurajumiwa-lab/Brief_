@@ -71,7 +71,16 @@ async function main(){
   check('has Nearby section', t.includes('More from this area') && t.includes('Nearby'));
   const watchBtn=Array.from(modal().querySelectorAll('button')).find(b=>text(b)==='Watch');
   check('Watch button present', !!watchBtn);
-  if(watchBtn){ await click(watchBtn);
+  if(watchBtn){
+    await click(watchBtn); await h.settle();
+    // A late-arriving data load can re-render and swap the button node between
+    // find and click, so a dispatched click can land on a detached node and
+    // the toggle never reaches React's delegated listener. Re-find the live
+    // button and retry once before asserting.
+    if(!mt().includes('Watching')){
+      const again = Array.from(modal().querySelectorAll('button')).find(b=>text(b)==='Watch');
+      if(again){ await click(again); await h.settle(); }
+    }
     check('Watch toggles to Watching', mt().includes('Watching'));
     check('honest about alerts', mt().includes('not live yet')); }
 

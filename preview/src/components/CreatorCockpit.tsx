@@ -93,74 +93,74 @@ export function CreatorCockpit() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
         <div>
-          <h2 className="text-lg font-extrabold text-[#F3F1E7]">Creator Cockpit</h2>
-          <p className="text-[10px] text-[#8A93A6]">
+          <h2 className="text-lg font-extrabold text-[#111111]">Creator Cockpit</h2>
+          <p className="text-[10px] text-[#111111]/60">
             Automate your streams: when something happens, do something. {stats ? `${stats.totalRuns} run${stats.totalRuns === 1 ? '' : 's'} so far.` : ''}
           </p>
         </div>
-        <button onClick={() => void sweep()} className="flex items-center gap-1 rounded-full border border-[#232A38] px-3 py-1.5 text-[11px] font-bold text-[#43D17A] cursor-pointer">
+        <button onClick={() => void sweep()} className="flex items-center gap-1 rounded-full border border-[#E5E7EB] px-3 py-1.5 text-[11px] font-bold text-[#111111] cursor-pointer">
           <Play className="h-3 w-3" /> Run now
         </button>
       </div>
 
       {/* Builder */}
-      <div className="rounded-2xl border border-[#232A38] bg-[#10141C] p-4 space-y-3">
-        <p className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#43D17A]">
+      <div className="rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-4 space-y-3">
+        <p className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#111111]">
           <Zap className="h-3.5 w-3.5" /> New automation
         </p>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Name (e.g. Welcome new members)"
-          className="w-full rounded-lg border border-[#232A38] bg-[#090B10] px-3 py-2 text-[13px] text-[#F3F1E7] outline-none focus:border-[#43D17A]"
+          className="w-full rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-3 py-2 text-[13px] text-[#111111] outline-none focus:border-[#111111]"
         />
         <div className="flex flex-wrap gap-2 text-[11px]">
           <div className="flex items-center gap-1.5">
-            <span className="text-[#8A93A6]">When</span>
-            <select value={trigger} onChange={(e) => setTrigger(e.target.value)} className="rounded-lg border border-[#232A38] bg-[#090B10] px-2 py-1.5 text-[#F3F1E7]">
+            <span className="text-[#111111]/60">When</span>
+            <select value={trigger} onChange={(e) => setTrigger(e.target.value)} className="rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-2 py-1.5 text-[#111111]">
               {TRIGGERS.map((t) => <option key={t} value={t}>{t === '*' ? 'Anything happens' : t}</option>)}
             </select>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-[#8A93A6]">do</span>
-            <select value={actionType} onChange={(e) => setActionType(e.target.value)} className="rounded-lg border border-[#232A38] bg-[#090B10] px-2 py-1.5 text-[#F3F1E7]">
+            <span className="text-[#111111]/60">do</span>
+            <select value={actionType} onChange={(e) => setActionType(e.target.value)} className="rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-2 py-1.5 text-[#111111]">
               {ACTION_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
         </div>
         {actionType === 'tag' ? (
-          <input value={actionTitle} onChange={(e) => setActionTitle(e.target.value)} placeholder="Tag (e.g. Outdoor enthusiast)" className="w-full rounded-lg border border-[#232A38] bg-[#090B10] px-3 py-2 text-[12px] text-[#F3F1E7] outline-none focus:border-[#43D17A]" />
+          <input value={actionTitle} onChange={(e) => setActionTitle(e.target.value)} placeholder="Tag (e.g. Outdoor enthusiast)" className="w-full rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-3 py-2 text-[12px] text-[#111111] outline-none focus:border-[#111111]" />
         ) : actionType === 'blast' ? (
-          <input value={actionBody} onChange={(e) => setActionBody(e.target.value)} placeholder="Message text" className="w-full rounded-lg border border-[#232A38] bg-[#090B10] px-3 py-2 text-[12px] text-[#F3F1E7] outline-none focus:border-[#43D17A]" />
+          <input value={actionBody} onChange={(e) => setActionBody(e.target.value)} placeholder="Message text" className="w-full rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-3 py-2 text-[12px] text-[#111111] outline-none focus:border-[#111111]" />
         ) : (
           <>
-            <input value={actionTitle} onChange={(e) => setActionTitle(e.target.value)} placeholder="Notification title" className="w-full rounded-lg border border-[#232A38] bg-[#090B10] px-3 py-2 text-[12px] text-[#F3F1E7] outline-none focus:border-[#43D17A]" />
-            <input value={actionBody} onChange={(e) => setActionBody(e.target.value)} placeholder="Notification body (optional)" className="w-full rounded-lg border border-[#232A38] bg-[#090B10] px-3 py-2 text-[12px] text-[#F3F1E7] outline-none focus:border-[#43D17A]" />
+            <input value={actionTitle} onChange={(e) => setActionTitle(e.target.value)} placeholder="Notification title" className="w-full rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-3 py-2 text-[12px] text-[#111111] outline-none focus:border-[#111111]" />
+            <input value={actionBody} onChange={(e) => setActionBody(e.target.value)} placeholder="Notification body (optional)" className="w-full rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-3 py-2 text-[12px] text-[#111111] outline-none focus:border-[#111111]" />
           </>
         )}
-        <button onClick={() => void create()} disabled={busy || !name.trim()} className="flex items-center gap-1.5 rounded-full bg-[#43D17A] px-4 py-2 text-[12px] font-bold text-[#090B10] disabled:opacity-40 cursor-pointer">
+        <button onClick={() => void create()} disabled={busy || !name.trim()} className="flex items-center gap-1.5 rounded-full bg-[#111111] px-4 py-2 text-[12px] font-bold text-[#FFFFFF] disabled:opacity-40 cursor-pointer">
           <Plus className="h-3.5 w-3.5" /> Create automation
         </button>
       </div>
 
       {/* Workflow list */}
       <div className="space-y-2">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#43D17A]">Your automations ({workflows.length})</p>
-        {state === 'loading' && <p className="text-xs text-[#8A93A6]">Loading…</p>}
+        <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#111111]">Your automations ({workflows.length})</p>
+        {state === 'loading' && <p className="text-xs text-[#111111]/60">Loading…</p>}
         {state === 'ready' && workflows.length === 0 && (
-          <p className="text-xs text-[#8A93A6]">No automations yet. Create one above.</p>
+          <p className="text-xs text-[#111111]/60">No automations yet. Create one above.</p>
         )}
         {workflows.map((w) => (
-          <div key={w.id} className="flex items-center gap-3 rounded-xl border border-[#232A38] bg-[#10141C] p-3">
+          <div key={w.id} className="flex items-center gap-3 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] p-3">
             <div className="min-w-0 flex-1">
-              <p className="text-[13px] font-semibold text-[#F3F1E7] truncate">{w.name}</p>
-              <p className="text-[10px] text-[#8A93A6]">
-                when <span className="text-[#43D17A]">{w.trigger === '*' ? 'anything' : w.trigger}</span> → {w.actions.map((a) => a.type).join(', ')}
+              <p className="text-[13px] font-semibold text-[#111111] truncate">{w.name}</p>
+              <p className="text-[10px] text-[#111111]/60">
+                when <span className="text-[#111111]">{w.trigger === '*' ? 'anything' : w.trigger}</span> → {w.actions.map((a) => a.type).join(', ')}
               </p>
             </div>
             <button
               onClick={() => void toggle(w)}
-              className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-bold cursor-pointer ${w.enabled ? 'bg-[#43D17A] text-[#090B10]' : 'bg-[#10141C] text-[#8A93A6] border border-[#232A38]'}`}
+              className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-bold cursor-pointer ${w.enabled ? 'bg-[#111111] text-[#FFFFFF]' : 'bg-[#FFFFFF] text-[#111111]/60 border border-[#E5E7EB]'}`}
             >
               {w.enabled ? 'On' : 'Off'}
             </button>
@@ -171,12 +171,12 @@ export function CreatorCockpit() {
       {/* Recent runs */}
       {runs.length > 0 && (
         <div className="space-y-2">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4B5162]">Recent activity</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#111111]/40">Recent activity</p>
           {runs.slice(0, 8).map((r) => (
-            <div key={r.id} className="rounded-lg border border-[#232A38] bg-[#10141C] px-3 py-2 text-[10px] text-[#8A93A6]">
-              <span className="text-[#43D17A]">{r.signalType}</span>
+            <div key={r.id} className="rounded-lg border border-[#E5E7EB] bg-[#FFFFFF] px-3 py-2 text-[10px] text-[#111111]/60">
+              <span className="text-[#111111]">{r.signalType}</span>
               {' → '}{r.results.map((x: any) => `${x.action}${x.ok ? ' ✓' : ' ✗'}`).join(', ')}
-              <span className="float-right text-[#4B5162]">{new Date(r.at).toLocaleTimeString()}</span>
+              <span className="float-right text-[#111111]/40">{new Date(r.at).toLocaleTimeString()}</span>
             </div>
           ))}
         </div>

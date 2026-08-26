@@ -40,12 +40,12 @@ export function CircleMembers({
 }: CircleMembersProps) {
   return (
     <div>
-      <h3 className="text-[11px] font-extrabold text-[#4B5162] mb-2">
+      <h3 className="text-[11px] font-extrabold text-[#111111]/40 mb-2">
         Members
       </h3>
 
       {members.length === 0 ? (
-        <p className="text-xs text-[#8A93A6]">No members yet.</p>
+        <p className="text-xs text-[#111111]/60">No members yet.</p>
       ) : (
         <div className="space-y-2">
           {members.map((member) => {
@@ -55,20 +55,20 @@ export function CircleMembers({
             return (
               <div
                 key={member.id}
-                className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3 space-y-2"
+                className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-3 space-y-2"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-xs font-extrabold text-[#F3F1E7] truncate">
+                    <p className="text-xs font-extrabold text-[#111111] truncate">
                       {member.userId}
                     </p>
-                    <p className="text-[9px] text-[#4B5162] mt-0.5">
+                    <p className="text-[9px] text-[#111111]/40 mt-0.5">
                       {ROLE_LABEL[member.role] ?? member.role}
                     </p>
                   </div>
                   <button
                     onClick={() => onToggle(member.userId)}
-                    className="shrink-0 text-[10px] font-extrabold text-[#43D17A] cursor-pointer"
+                    className="shrink-0 text-[10px] font-extrabold text-[#111111] cursor-pointer"
                   >
                     {open ? 'Hide' : 'Evidence'}
                   </button>
@@ -80,7 +80,7 @@ export function CircleMembers({
                     {member.trust.evidence.map((e) => (
                       <span
                         key={e.kind}
-                        className="text-[9px] px-2 py-0.5 rounded-full bg-[#10141C] text-[#43D17A]"
+                        className="text-[9px] px-2 py-0.5 rounded-full bg-[#FFFFFF] text-[#111111]"
                       >
                         {e.label}
                       </span>
@@ -89,12 +89,12 @@ export function CircleMembers({
                 )}
 
                 {open && (
-                  <div className="pt-1 space-y-2 border-t border-[#232A38]">
+                  <div className="pt-1 space-y-2 border-t border-[#E5E7EB]">
                     {/* Plain factual counts from the server. */}
                     {member.trust.facts.length > 0 && (
                       <ul className="space-y-0.5 mt-2">
                         {member.trust.facts.map((f) => (
-                          <li key={f.kind} className="text-[10px] text-[#8A93A6]">
+                          <li key={f.kind} className="text-[10px] text-[#111111]/60">
                             {f.label}
                           </li>
                         ))}
@@ -102,11 +102,11 @@ export function CircleMembers({
                     )}
 
                     {ev === 'loading' && (
-                      <p className="text-[10px] text-[#8A93A6]">Loading evidence...</p>
+                      <p className="text-[10px] text-[#111111]/60">Loading evidence...</p>
                     )}
 
                     {ev === 'error' && (
-                      <p className="text-[10px] text-[#E8A33D]">
+                      <p className="text-[10px] text-[#111111]">
                         Couldn't load this member's history.
                       </p>
                     )}
@@ -118,7 +118,7 @@ export function CircleMembers({
                             {ev.summary.map((s) => (
                               <span
                                 key={s.kind}
-                                className="text-[9px] px-2 py-0.5 rounded-full bg-[#090B10] border border-[#232A38] text-[#8A93A6]"
+                                className="text-[9px] px-2 py-0.5 rounded-full bg-[#FAFAFA] border border-[#E5E7EB] text-[#111111]/60"
                               >
                                 {s.label}
                               </span>
@@ -127,7 +127,7 @@ export function CircleMembers({
                         )}
 
                         {ev.evidence.length === 0 ? (
-                          <p className="text-[10px] text-[#4B5162]">
+                          <p className="text-[10px] text-[#111111]/40">
                             No recorded activity in this circle yet.
                           </p>
                         ) : (
@@ -135,10 +135,10 @@ export function CircleMembers({
                             {ev.evidence.slice(0, 10).map((item) => (
                               <li
                                 key={item.signalId}
-                                className="flex items-center gap-2 text-[10px] text-[#8A93A6]"
+                                className="flex items-center gap-2 text-[10px] text-[#111111]/60"
                               >
                                 <span className="min-w-0 truncate">{item.label}</span>
-                                <span className="text-[9px] text-[#4B5162] ml-auto shrink-0">
+                                <span className="text-[9px] text-[#111111]/40 ml-auto shrink-0">
                                   {item.at.slice(0, 10)}
                                 </span>
                               </li>

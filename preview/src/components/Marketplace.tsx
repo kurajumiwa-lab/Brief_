@@ -247,8 +247,8 @@ export function Marketplace({ currentUserId = 'usr_me' }: MarketplaceProps = {})
           }}
           className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
             section === s.id
-              ? 'bg-[#43D17A] text-[#090B10] border-[#43D17A]'
-              : 'bg-[#10141C] text-[#43D17A] border-[#232A38]'
+              ? 'bg-[#111111] text-[#FFFFFF] border-[#111111]'
+              : 'bg-[#FFFFFF] text-[#111111] border-[#E5E7EB]'
           }`}
         >
           {s.label}
@@ -296,14 +296,14 @@ export function Marketplace({ currentUserId = 'usr_me' }: MarketplaceProps = {})
       {section === 'browse' && (
         <div className="space-y-2">
           {listings.status === 'loading' && (
-            <p className="text-xs text-[#8A93A6]">Loading listings...</p>
+            <p className="text-xs text-[#111111]/60">Loading listings...</p>
           )}
           {listings.status === 'error' && (
-            <p className="text-xs text-[#E8A33D]">{listings.error}</p>
+            <p className="text-xs text-[#111111]">{listings.error}</p>
           )}
           {listings.status === 'ready' && listings.data.length === 0 && (
             // Honest empty state. Nothing is invented to fill the screen.
-            <p className="text-xs text-[#8A93A6]">
+            <p className="text-xs text-[#111111]/60">
               Nothing is listed yet. When someone nearby offers something, it appears here.
             </p>
           )}
@@ -315,9 +315,9 @@ export function Marketplace({ currentUserId = 'usr_me' }: MarketplaceProps = {})
 
       {section === 'orders' && (
         <div className="space-y-2">
-          {notice && <p className="text-[10px] text-[#E8A33D]">{notice}</p>}
+          {notice && <p className="text-[10px] text-[#111111]">{notice}</p>}
           {myOrders.length === 0 ? (
-            <p className="text-xs text-[#8A93A6]">You have not ordered anything yet.</p>
+            <p className="text-xs text-[#111111]/60">You have not ordered anything yet.</p>
           ) : (
             myOrders.map((o) => (
               <React.Fragment key={o.id}>

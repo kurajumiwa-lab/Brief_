@@ -8,6 +8,12 @@
 // ---------------------------------------------------------------------------
 
 import { store, newId } from '../store.js';
+// The Universal Data Router is a downstream consumer of every signal: if the
+// owner has routing rules matching this signal, a signed payload is dispatched
+// (webhook/Discord/Slack/WhatsApp). Imported lazily inside emitSignal to avoid
+// a load-time cycle, and dispatched WITHOUT await so a dead webhook endpoint
+// can never break signal emission — failures land in the delivery ledger.
+import * as engineRouter from './engine/router.js';
 
 export const SIGNAL_TYPES = [
   'source_connected',
@@ -44,6 +50,12 @@ export const SIGNAL_TYPES = [
   'task_assigned',
   'task_released',
   'task_completed',
+  // --- Group Buy engine (orchestration packages) ----------------------------
+  // Emitted by real contribution records and stage transitions; the Universal
+  // Data Router fans these to a group's WhatsApp/Telegram/webhook endpoints.
+  'group_buy_created',
+  'group_buy_contribution',
+  'group_buy_stage',
   'vote_cast',
   'vote_closed',
   // --- Commerce (Batch 3) --------------------------------------------------
@@ -124,6 +136,16 @@ export function emitSignal({ type, circleId = null, blockId = null, sourceId = n
     createdAt: new Date().toISOString()
   };
   store.insert('signals', signal);
+
+  // Fan out to the Universal Data Router. Fire-and-forget by design: the
+  // ledger records every outcome, and emitSignal's caller never waits on (or
+  // learns about) a webhook endpoint being down.
+  try {
+    void engineRouter.dispatchForSignal(signal);
+  } catch {
+    // Dispatch itself failed before any delivery attempt — never let that
+    // surface through signal emission.
+  }
   return signal;
 }
 

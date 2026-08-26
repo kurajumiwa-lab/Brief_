@@ -1,4 +1,4 @@
-const src=require('fs').readFileSync('/home/user/App.tsx','utf8');
+const src=require('fs').readFileSync(__dirname + '/src/App.tsx','utf8');
 let pass=0,fail=0;
 const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;console.log('  FAIL  '+n+(d?' -> '+d:''));}};
 const QUESTION_RE=/\?\s*$|\?\s|^\s*(?:anyone|does anyone|any one|who|where|how|what|when|which|is there|are there|can (?:i|anyone|someone)|looking for|need|nataka|naomba|kuna)\b/i;

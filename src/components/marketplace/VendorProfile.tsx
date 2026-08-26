@@ -32,42 +32,42 @@ export function VendorProfile({ vendor, listings, onBack, onOpenListing }: Vendo
 
   return (
     <div className="space-y-3">
-      <button onClick={onBack} className="text-[10px] font-extrabold text-[#43D17A] cursor-pointer">
+      <button onClick={onBack} className="text-[10px] font-extrabold text-[#111111] cursor-pointer">
         Back to marketplace
       </button>
 
-      <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-4 space-y-2">
+      <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 space-y-2">
         <div className="flex items-start justify-between gap-3">
-          <h3 className="text-sm font-extrabold text-[#F3F1E7]">{vendor.displayName}</h3>
+          <h3 className="text-sm font-extrabold text-[#111111]">{vendor.displayName}</h3>
           {vendor.status !== 'active' && (
-            <span className="shrink-0 text-[9px] px-2 py-0.5 rounded-full bg-[#232A38] text-[#E8A33D]">
+            <span className="shrink-0 text-[9px] px-2 py-0.5 rounded-full bg-[#E5E7EB] text-[#111111]">
               {vendor.status}
             </span>
           )}
         </div>
 
         {vendor.description && (
-          <p className="text-xs text-[#8A93A6] whitespace-pre-wrap">{vendor.description}</p>
+          <p className="text-xs text-[#111111]/60 whitespace-pre-wrap">{vendor.description}</p>
         )}
 
         {vendor.contactMethod && (
-          <p className="text-[10px] text-[#4B5162]">Contact: {vendor.contactMethod}</p>
+          <p className="text-[10px] text-[#111111]/40">Contact: {vendor.contactMethod}</p>
         )}
       </div>
 
       {/* Verification. Shown only when something was genuinely checked. */}
-      <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-4 space-y-2">
-        <h4 className="text-[11px] font-extrabold text-[#4B5162]">
+      <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 space-y-2">
+        <h4 className="text-[11px] font-extrabold text-[#111111]/40">
           Verification
         </h4>
         {evidence.length === 0 ? (
-          <p className="text-xs text-[#8A93A6]">
+          <p className="text-xs text-[#111111]/60">
             Nothing has been verified for this seller yet.
           </p>
         ) : (
           <ul className="space-y-1">
             {evidence.map((e) => (
-              <li key={e.kind} className="text-xs text-[#43D17A]">
+              <li key={e.kind} className="text-xs text-[#111111]">
                 {e.label}
               </li>
             ))}
@@ -77,7 +77,7 @@ export function VendorProfile({ vendor, listings, onBack, onOpenListing }: Vendo
         {facts.length > 0 && (
           <ul className="space-y-1 pt-1">
             {facts.map((f) => (
-              <li key={f.kind} className="text-[10px] text-[#8A93A6]">
+              <li key={f.kind} className="text-[10px] text-[#111111]/60">
                 {f.label}
               </li>
             ))}
@@ -86,11 +86,11 @@ export function VendorProfile({ vendor, listings, onBack, onOpenListing }: Vendo
       </div>
 
       <div className="space-y-2">
-        <h4 className="text-[11px] font-extrabold text-[#4B5162]">
+        <h4 className="text-[11px] font-extrabold text-[#111111]/40">
           Listings
         </h4>
         {listings.length === 0 ? (
-          <p className="text-xs text-[#8A93A6]">This seller has nothing listed right now.</p>
+          <p className="text-xs text-[#111111]/60">This seller has nothing listed right now.</p>
         ) : (
           listings.map((l) => <ListingCard key={l.id} listing={l} onOpen={onOpenListing} />)
         )}
