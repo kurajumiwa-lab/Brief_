@@ -2,6 +2,7 @@ import React from 'react';
 import { Heart } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
 import { WireSection } from './WireSection';
+import { StandaloneBanner } from './StandaloneBanner';
 
 // ---------------------------------------------------------------------------
 // HOME FEED
@@ -138,6 +139,7 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
     feed: FeedData | null;
   }>({ status: 'loading', feed: null });
   const [collections, setCollections] = React.useState<any[]>([]);
+  const [banners, setBanners] = React.useState<any[]>([]);
   const [openCollection, setOpenCollection] = React.useState<{
     key: string;
     title: string;
@@ -174,14 +176,16 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
     let live = true;
     onFeedStatus?.('loading');
     (async () => {
-      const [feedRes, collectionRes] = await Promise.all([
+      const [feedRes, collectionRes, bannerRes] = await Promise.all([
         briefApi.getFeed(),
-        briefApi.getCollections()
+        briefApi.getCollections(),
+        briefApi.getCampaignBanners()
       ]);
       if (!live) return;
       setState({ status: 'ready', feed: feedRes.ok ? feedRes.data as FeedData : null });
       onFeedStatus?.(feedRes.ok ? 'ready' : 'unavailable');
       if (collectionRes.ok) setCollections(collectionRes.data as any[]);
+      if (bannerRes.ok) setBanners(bannerRes.data as any[]);
     })();
     return () => { live = false; };
   }, [onFeedStatus]);
@@ -218,7 +222,7 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
     ...(feed.tea?.tags ?? [])
   ])].slice(0, 8);
 
-  const hasContent = Boolean(hero || feed.tea || discovery.length || opportunities.length || events.length || collections.length || tags.length);
+  const hasContent = Boolean(hero || feed.tea || discovery.length || opportunities.length || events.length || collections.length || banners.length || tags.length);
   if (!hasContent) {
     return (
       <>
@@ -237,6 +241,17 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
           onOpen={onOpen}
           className="min-h-[290px] sm:min-h-[380px]"
         />
+      )}
+
+      {banners.length > 0 && (
+        <section>
+          <SectionTitle>Featured</SectionTitle>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {banners.slice(0, 4).map((banner) => (
+              <StandaloneBanner key={banner.id} banner={banner} />
+            ))}
+          </div>
+        </section>
       )}
 
       {feed.tea && (

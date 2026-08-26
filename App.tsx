@@ -29,6 +29,7 @@ import { Inbox } from './components/Inbox';
 import { Quests } from './components/Quests';
 import type { GeoPoint } from './components/LocationChip';
 import { ArenaShelf } from './components/ArenaShelf';
+import { MainShelf } from './components/MainShelf';
 import { ArenaBetaPilot } from './components/ArenaBetaPilot';
 import type { ArenaBetaSegment, ArenaBetaSummary } from './api/types';
 import { EnginePanel } from './components/EnginePanel';
@@ -7229,6 +7230,7 @@ export function App() {
                 <h1 className="font-display text-2xl font-semibold tracking-tight text-[#111111]">Home</h1>
                 <span className="text-[10px] uppercase tracking-[0.2em] text-[#111111]/40">Nearby</span>
               </div>
+              <MainShelf onSelect={handleMenuSelect} />
               {/* FEED COMPOSER — the composed, deduplicated magazine feed:
                   hero → tea → discovery → opportunities. Real server rows via
                   /api/feed; card variety by type, never a repeating grid. */}

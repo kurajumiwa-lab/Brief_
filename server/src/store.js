@@ -55,6 +55,9 @@ const EMPTY = {
   // metrics are derived, never stored. See src/domain/campaign.js.
   campaigns: [],
   registrations: [],
+  // Standalone public banners are a presentation layer over a published
+  // campaign. They carry no second event or payment state.
+  campaignBanners: [],
   // Commerce (Batch 3). A vendor sells listings; a customer's commitment to a
   // listing is an order; a contested order has a dispute. Money lives in
   // ledgerTransactions as it always has -- there is deliberately no order

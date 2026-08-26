@@ -79,6 +79,7 @@ export function dashboard() {
       users: store.all('users').length,
       objects: store.all('objects').length,
       campaigns: store.all('campaigns').length,
+      banners: store.all('campaignBanners').length,
       vaults: store.all('vaults').length,
       betaSignups: store.all('arenaBetaSignups').length,
       challenges: store.all('arenaChallenges').length,

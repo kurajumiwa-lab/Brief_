@@ -38,6 +38,7 @@ import type {
   ShareLink,
   ShareChannels,
   CampaignShare,
+  CampaignBanner,
   PaymentConfirmation,
   Transaction,
   TransactionCreate,
@@ -84,7 +85,7 @@ import {
   areBlocks, areCampaigns, areCircles, areMembers, areRegistrations,
   areSignals, areTransactions, isAuthStatus, isCampaign, isCircle, isBlock,
   isAppConfig, isMember, isProviderStatus, isPublicCampaign, isRegistration,
-  isTransaction, isWallet, isCampaignShare, isPaymentConfirmation,
+  isTransaction, isWallet, isCampaignShare, isCampaignBanner, areCampaignBanners, isPaymentConfirmation,
   areSources, areRawItems, isBriefItPreview, isVoteTally, isMemberEvidence,
   isVendor, areVendors, isListing, areListings, isOrder, areOrders,
   isDispute, areDisputes, isPaymentIntent, arePaymentIntents,
@@ -721,6 +722,37 @@ export function getCampaignShare(id: string): Promise<ApiResult<CampaignShare>> 
     `/api/campaigns/${encodeURIComponent(id)}/share`,
     undefined,
     (r) => (isCampaignShare(r?.share) ? r.share : undefined)
+  );
+}
+
+/** Public home-shelf banners over already-published campaigns. */
+export function getCampaignBanners(): Promise<ApiResult<CampaignBanner[]>> {
+  return request('/api/banners', undefined, (r) => areCampaignBanners(r?.banners) ? r.banners : undefined);
+}
+
+export function getCampaignBanner(id: string): Promise<ApiResult<CampaignBanner | null>> {
+  return request(`/api/campaigns/${encodeURIComponent(id)}/banner`, undefined, (r) =>
+    r?.banner === null ? null : (isCampaignBanner(r?.banner) ? r.banner : undefined)
+  );
+}
+
+/** Create a standalone banner; the server requires a published campaign. */
+export function createCampaignBanner(
+  id: string,
+  fields: { headline?: string; body?: string; imageUrl?: string | null } = {}
+): Promise<ApiResult<{ banner: CampaignBanner; reused: boolean }>> {
+  return request(
+    `/api/campaigns/${encodeURIComponent(id)}/banner`,
+    { method: 'POST', body: JSON.stringify(fields) },
+    (r) => isCampaignBanner(r?.banner)
+      ? { banner: r.banner, reused: Boolean(r.reused) }
+      : undefined
+  );
+}
+
+export function archiveCampaignBanner(id: string): Promise<ApiResult<CampaignBanner>> {
+  return request(`/api/banners/${encodeURIComponent(id)}/archive`, { method: 'POST', body: '{}' }, (r) =>
+    isCampaignBanner(r?.banner) ? r.banner : undefined
   );
 }
 

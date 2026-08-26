@@ -107,6 +107,7 @@ export function clearSeed() {
   const n = {
     objects: removeWhere('objects', (o) => o.seedBatch === BATCH),
     campaigns: removeWhere('campaigns', (c) => c.seedBatch === BATCH),
+    banners: removeWhere('campaignBanners', (b) => demoCampaignIds.has(b.campaignId)),
     vendors: removeWhere('vendors', (v) => v.seedBatch === BATCH),
     listings: removeWhere('listings', (l) => l.seedBatch === BATCH),
     registrations: removeWhere('registrations', (r) => demoCampaignIds.has(r.campaignId)),
@@ -303,11 +304,13 @@ function seedCollections() {
 }
 
 function counts() {
+  const demoCampaignIds = new Set(store.filter('campaigns', (c) => c.seedBatch === BATCH).map((c) => c.id));
   return {
     objects: store.filter('objects', (o) => o.seedBatch === BATCH).length,
     vendors: store.filter('vendors', (v) => v.seedBatch === BATCH).length,
     listings: store.filter('listings', (l) => l.seedBatch === BATCH).length,
     campaigns: store.filter('campaigns', (c) => c.seedBatch === BATCH).length,
+    banners: store.filter('campaignBanners', (b) => demoCampaignIds.has(b.campaignId)).length,
     tea: store.filter('teaArticles', (t) => t.seedBatch === BATCH).length,
     collections: store.filter('collections', (c) => c.seedBatch === BATCH).length
   };

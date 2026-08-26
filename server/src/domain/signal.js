@@ -37,6 +37,7 @@ export const SIGNAL_TYPES = [
   'campaign_completed',
   'campaign_viewed',
   'campaign_shared',
+  'campaign_banner_created',
   'campaign_registration_started',
   'campaign_registered',
   'campaign_registration_updated',

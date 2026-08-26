@@ -835,6 +835,26 @@ console.log('\n=== CAMPAIGNS ===');
 
     const shareable = (await call2('/api/campaigns', 'POST', { title: 'Shareable', type: 'popup', price: 500 })).body.campaign;
     await call2(`/api/campaigns/${shareable.id}/publish`, 'POST', {});
+
+    // --- standalone banner + WhatsApp link -------------------------------
+    process.env.BRIEF_PUBLIC_ORIGIN = 'https://brief.example.com/';
+    r = await call2(`/api/campaigns/${shareable.id}/banner`, 'POST', {
+      headline: 'Share the next gathering', body: 'A clean standalone card for the home shelf.'
+    });
+    check('published campaign can create a standalone banner',
+      r.status === 201 && r.body?.banner?.status === 'active');
+    check('banner carries the server WhatsApp intent link',
+      r.body?.banner?.share?.available === true && r.body.banner.share.channels.whatsapp.startsWith('https://wa.me/?text='));
+    r = await call2('/api/banners');
+    check('active banners are publicly listed without a roster',
+      r.status === 200 && r.body?.banners?.some((item) => item.campaignId === shareable.id) &&
+      !JSON.stringify(r.body.banners).includes(shareable.ownerId));
+    r = await call2(`/api/campaigns/${shareable.id}/banner`, 'POST', { headline: 'Changed' });
+    check('creating the same banner is idempotent', r.status === 200 && r.body?.reused === true);
+    r = await call2(`/api/banners/${r.body.banner.id}/archive`, 'POST', {});
+    check('the owner can archive the standalone banner', r.status === 200 && r.body?.banner?.status === 'archived');
+    delete process.env.BRIEF_PUBLIC_ORIGIN;
+
     const beforeShare = (await call2(`/api/campaigns/${shareable.id}`)).body.campaign.metrics;
     await call2(`/api/campaigns/${shareable.id}/share`, 'POST', { channel: 'whatsapp' });
     await call2(`/api/campaigns/${shareable.id}/share`, 'POST', { channel: 'telegram' });

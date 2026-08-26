@@ -25,6 +25,7 @@ import type {
   Source,
   BriefItPreview,
   CampaignShare,
+  CampaignBanner,
   PaymentConfirmation,
   Campaign,
   PublicCampaign,
@@ -271,6 +272,21 @@ export function isCampaignShare(v: unknown): v is CampaignShare {
   if (!isStr(v.url) || !isObj(v.channels)) return false;
   return isStr(v.channels.whatsapp) && isStr(v.channels.telegram) && isStr(v.channels.x);
 }
+
+export function isCampaignBanner(v: unknown): v is CampaignBanner {
+  if (!isObj(v)) return false;
+  if (!isStr(v.id) || !isStr(v.campaignId) || !isStr(v.title) || !isStr(v.status) || !isStr(v.createdAt)) return false;
+  if (!['active', 'archived'].includes(v.status)) return false;
+  if (!(v.body === null || isStr(v.body)) || !(v.location === null || isStr(v.location))) return false;
+  if (!(v.startsAt === null || isStr(v.startsAt)) || !(v.imageUrl === null || isStr(v.imageUrl))) return false;
+  if (!isObj(v.share)) return false;
+  if (v.share.available === true) {
+    return isStr(v.share.url) && isObj(v.share.channels) && isStr(v.share.channels.whatsapp);
+  }
+  return v.share.available === false && isStr(v.share.reason);
+}
+
+export const areCampaignBanners = (v: unknown) => all(v, isCampaignBanner);
 
 export function isAppConfig(v: unknown): v is AppConfig {
   if (!isObj(v)) return false;

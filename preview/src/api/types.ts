@@ -669,6 +669,22 @@ export type CampaignShare =
       copyOnly: readonly string[];
     };
 
+/** A standalone, public presentation of a published campaign. */
+export interface CampaignBanner {
+  id: string;
+  campaignId: string;
+  title: string;
+  body: string | null;
+  location: string | null;
+  startsAt: string | null;
+  imageUrl: string | null;
+  status: 'active' | 'archived';
+  createdAt: string;
+  share:
+    | { available: true; url: string; channels: { whatsapp: string } }
+    | { available: false; reason: string };
+}
+
 /** Platforms with no share-intent URL. The link itself is the whole product. */
 export const COPY_ONLY_CHANNELS = ['instagram', 'tiktok'] as const;
 
