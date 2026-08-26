@@ -1,4 +1,5 @@
 import React from 'react';
+import { Heart } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
 import { WireSection } from './WireSection';
 
@@ -31,12 +32,12 @@ interface FeedData {
 }
 
 const T = {
-  bg: '#090B10',
-  surface: '#10141C',
-  line: '#232A38',
-  ink: '#F3F1E7',
-  muted: '#8A93A6',
-  green: '#43D17A'
+  bg: '#FAFAFA',
+  surface: '#FFFFFF',
+  line: '#E5E7EB',
+  ink: '#111111',
+  muted: 'rgba(17,17,17,0.62)',
+  green: '#111111'
 };
 
 function imageOf(item: FeedObject): string | null {
@@ -72,7 +73,7 @@ function PhotoTitleCard({
       type="button"
       onClick={() => onOpen(item)}
       aria-label={title}
-      className={`group relative block min-h-[190px] overflow-hidden rounded-2xl border text-left transition-transform duration-200 hover:-translate-y-0.5 hover:border-[#43D17A] active:scale-[0.99] ${className}`}
+      className={`group relative block min-h-[190px] overflow-hidden rounded-2xl border text-left transition-transform duration-200 hover:-translate-y-0.5 hover:border-[#111111] active:scale-[0.99] ${className}`}
       style={{ borderColor: T.line, background: T.surface }}
     >
       {image ? (
@@ -89,15 +90,13 @@ function PhotoTitleCard({
           style={{ background: `linear-gradient(135deg, ${T.surface} 0%, ${T.bg} 100%)` }}
         />
       )}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: image
-            ? 'linear-gradient(180deg, rgba(9,11,16,0.04) 22%, rgba(9,11,16,0.82) 100%)'
-            : 'linear-gradient(180deg, transparent 0%, rgba(9,11,16,0.72) 100%)'
-        }}
-      />
-      <h3 className="absolute inset-x-4 bottom-4 line-clamp-3 text-[15px] font-semibold leading-snug" style={{ color: T.ink }}>
+      {image && (
+        <div
+          className="absolute inset-0"
+          style={{ background: 'linear-gradient(180deg, rgba(9,11,16,0.04) 22%, rgba(9,11,16,0.82) 100%)' }}
+        />
+      )}
+      <h3 className="absolute inset-x-4 bottom-4 line-clamp-3 text-[15px] font-semibold leading-snug" style={{ color: image ? '#FFFFFF' : T.ink }}>
         {title}
       </h3>
     </button>
@@ -120,7 +119,7 @@ function TitleRow({
       type="button"
       onClick={() => onOpen(item)}
       aria-label={title}
-      className="group flex min-h-16 w-full items-center gap-3 rounded-2xl border p-2 text-left transition-colors hover:border-[#43D17A]"
+      className="group flex min-h-16 w-full items-center gap-3 rounded-2xl border p-2 text-left transition-colors hover:border-[#111111]"
       style={{ borderColor: T.line, background: T.surface }}
     >
       {image && source && (
@@ -247,7 +246,7 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
             type="button"
             onClick={() => onOpenTea(feed.tea.slug)}
             aria-label={titleOf(feed.tea)}
-            className="group relative block min-h-[190px] w-full overflow-hidden rounded-2xl border text-left transition-transform duration-200 hover:-translate-y-0.5 hover:border-[#43D17A]"
+            className="group relative block min-h-[190px] w-full overflow-hidden rounded-2xl border text-left transition-transform duration-200 hover:-translate-y-0.5 hover:border-[#111111]"
             style={{ borderColor: T.line, background: T.surface }}
           >
             {imageOf(feed.tea) ? (
@@ -261,10 +260,22 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
             ) : (
               <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${T.surface}, ${T.bg})` }} />
             )}
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(9,11,16,0.04) 20%, rgba(9,11,16,0.86) 100%)' }} />
-            <h3 className="absolute inset-x-4 bottom-4 line-clamp-3 text-[18px] font-semibold leading-snug" style={{ color: T.ink }}>
+            {imageOf(feed.tea) && (
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(9,11,16,0.04) 20%, rgba(9,11,16,0.86) 100%)' }} />
+            )}
+            <h3 className="absolute inset-x-4 bottom-4 line-clamp-3 text-[18px] font-semibold leading-snug" style={{ color: imageOf(feed.tea) ? '#FFFFFF' : T.ink }}>
               {titleOf(feed.tea)}
             </h3>
+            {/* The public rating, on the front page: the real derived count. */}
+            {typeof (feed.tea as any).likeCount === 'number' && (feed.tea as any).likeCount > 0 && (
+              <span
+                className="absolute right-3 top-3 flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold"
+                style={{ background: 'rgba(9,11,16,0.75)', color: '#FFFFFF' }}
+              >
+                <Heart className="h-3 w-3" style={{ fill: '#FFFFFF', stroke: '#FFFFFF' }} />
+                {(feed.tea as any).likeCount}
+              </span>
+            )}
           </button>
         </section>
       )}
@@ -315,12 +326,12 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
                   type="button"
                   onClick={() => void openCollectionByKey(collection)}
                   aria-label={title}
-                  className="group relative min-h-28 overflow-hidden rounded-2xl border p-3 text-left transition-colors hover:border-[#43D17A]"
+                  className="group relative min-h-28 overflow-hidden rounded-2xl border p-3 text-left transition-colors hover:border-[#111111]"
                   style={{ borderColor: openCollection?.key === (collection.key || collection.id) ? T.green : T.line, background: T.surface }}
                 >
                   {image && <img src={image} alt="" aria-hidden="true" loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-60 transition-transform duration-500 group-hover:scale-[1.03]" />}
-                  <div className="absolute inset-0" style={{ background: image ? 'linear-gradient(180deg, rgba(9,11,16,0.12), rgba(9,11,16,0.88))' : 'linear-gradient(135deg, #10141C, #090B10)' }} />
-                  <span className="relative block line-clamp-3 text-[14px] font-semibold" style={{ color: T.ink }}>{title}</span>
+                  <div className="absolute inset-0" style={{ background: image ? 'linear-gradient(180deg, rgba(9,11,16,0.12), rgba(9,11,16,0.88))' : 'linear-gradient(135deg, #E5E7EB, #F3F4F6)' }} />
+                  <span className="relative block line-clamp-3 text-[14px] font-semibold" style={{ color: image ? '#FFFFFF' : T.ink }}>{title}</span>
                 </button>
               );
             })}
@@ -346,7 +357,7 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
                 key={tag}
                 type="button"
                 onClick={() => onOpenTag?.(tag)}
-                className="rounded-full border px-3 py-2 text-[12px] font-semibold transition-colors hover:border-[#43D17A]"
+                className="rounded-full border px-3 py-2 text-[12px] font-semibold transition-colors hover:border-[#111111]"
                 style={{ borderColor: T.line, background: T.surface, color: T.ink }}
               >
                 {tag}

@@ -1,15 +1,31 @@
 import type { ArenaGameId } from '../App';
 
+// The game key art. Atmospheric, non-trademarked cover tiles — one per title —
+// so the shelf reads "image first, provider forward". They are cosmetic identity
+// over the REAL Arena entities; nothing here invents a player count or a money rail.
+import efootballArt from '../assets/arena/efootball.webp';
+import fcMobileArt from '../assets/arena/fc_mobile.webp';
+import eaFcArt from '../assets/arena/ea_fc.webp';
+import pubgArt from '../assets/arena/pubg.webp';
+import codArt from '../assets/arena/cod.webp';
+import otherArt from '../assets/arena/other.webp';
+
 // ---------------------------------------------------------------------------
 // ARENA GAME THEME ENGINE
 //
-// The master-redesign core: each game carries its own visual identity and
+// The master-redesign core: each game carries its own identity and
 // terminology, so selecting a game makes Arena feel like that game's world —
 // while the platform underneath stays one Arena.
 //
-// Everything here is DATA, not per-component hardcoding. A game's theme drives
-// its hero background, accent, tagline and vocabulary. Adding a game is one
-// entry; the portal renders it without a code change.
+// MINIMALIST RE-THEME: the platform surface is now strictly neutral (the
+// site-wide white/off-white system). A game's identity is carried by its KEY
+// ART and vocabulary, not by coloured chrome — accents are ink-black, card
+// and page backgrounds are the neutral surfaces. Typography across the
+// platform is strictly black or white: black on light surfaces, white over
+// key art's dark veil and on black fills.
+//
+// Everything here is DATA, not per-component hardcoding. Adding a game is one
+// entry; the shelf renders it without a code change.
 //
 // Honesty: these are cosmetic identities over the REAL Arena entities
 // (players, challenges, matches, tournaments). They never invent a player
@@ -21,11 +37,17 @@ export interface ArenaThemeConfig {
   id: ArenaGameId;
   /** The theme's name — the "world" the user is entering. */
   themeName: string;
-  /** Primary accent (used for glows, borders, active state). */
+  /** The game's publisher/provider — the shelf highlight identity. */
+  provider: string;
+  /** Short provider mark shown over the art when space is tight. */
+  providerMark: string;
+  /** Key-art cover tile (imported asset URL). */
+  art: string;
+  /** Primary accent. Neutral ink — the platform carries no coloured chrome. */
   accent: string;
-  /** Secondary accent (gradient partner). */
+  /** Secondary accent (kept neutral for the same reason). */
   accent2: string;
-  /** Hero background: a CSS gradient — game-specific atmosphere. */
+  /** Hero/page background: the neutral surface, not a per-game colour wash. */
   background: string;
   /** One-line tagline under the game name. */
   tagline: string;
@@ -35,13 +57,21 @@ export interface ArenaThemeConfig {
   findCta: string;
 }
 
+// One neutral system for every title: identity comes from the art + words.
+const NEUTRAL = {
+  accent: '#111111',
+  accent2: '#111111',
+  background: '#FAFAFA'
+};
+
 export const ARENA_THEMES: Record<ArenaGameId, ArenaThemeConfig> = {
   efootball: {
     id: 'efootball',
     themeName: 'Neon Stadium',
-    accent: '#43D17A',
-    accent2: '#1E7A4B',
-    background: 'linear-gradient(135deg, #06120B 0%, #0B2317 45%, #0A0F14 100%)',
+    provider: 'Konami',
+    providerMark: 'KONAMI',
+    art: efootballArt,
+    ...NEUTRAL,
     tagline: 'Ranked 1v1 and 2v2. Find a match, play, and record the result.',
     liveLabel: 'Live',
     enterCta: 'Enter Stadium',
@@ -50,9 +80,10 @@ export const ARENA_THEMES: Record<ArenaGameId, ArenaThemeConfig> = {
   fc_mobile: {
     id: 'fc_mobile',
     themeName: 'Player Cards',
-    accent: '#3E8EFF',
-    accent2: '#1D4FBF',
-    background: 'linear-gradient(135deg, #060C1A 0%, #0B1E3E 45%, #0A0F14 100%)',
+    provider: 'EA Sports',
+    providerMark: 'EA',
+    art: fcMobileArt,
+    ...NEUTRAL,
     tagline: 'Squad-based 1v1. Build a side and take on the next challenger.',
     liveLabel: 'Live',
     enterCta: 'Enter Club',
@@ -61,9 +92,10 @@ export const ARENA_THEMES: Record<ArenaGameId, ArenaThemeConfig> = {
   ea_fc: {
     id: 'ea_fc',
     themeName: 'Ultimate Club',
-    accent: '#B98CE0',
-    accent2: '#5B3E86',
-    background: 'linear-gradient(135deg, #0E0A16 0%, #1A1130 45%, #0A0F14 100%)',
+    provider: 'EA Sports',
+    providerMark: 'EA',
+    art: eaFcArt,
+    ...NEUTRAL,
     tagline: 'Squad and career play. Restricted account transfer — see terms.',
     liveLabel: 'Live',
     enterCta: 'Enter Club',
@@ -72,9 +104,10 @@ export const ARENA_THEMES: Record<ArenaGameId, ArenaThemeConfig> = {
   pubg: {
     id: 'pubg',
     themeName: 'Battle Zone',
-    accent: '#E8A33D',
-    accent2: '#8A5A14',
-    background: 'linear-gradient(135deg, #160F04 0%, #241A08 45%, #0A0F14 100%)',
+    provider: 'Krafton',
+    providerMark: 'KRAFTON',
+    art: pubgArt,
+    ...NEUTRAL,
     tagline: 'Squad play and scrims. Drop in, link up, and settle it on the map.',
     liveLabel: 'Live',
     enterCta: 'Enter Zone',
@@ -83,9 +116,10 @@ export const ARENA_THEMES: Record<ArenaGameId, ArenaThemeConfig> = {
   cod: {
     id: 'cod',
     themeName: 'Tactical Ops',
-    accent: '#FF6A4D',
-    accent2: '#9E3317',
-    background: 'linear-gradient(135deg, #170706 0%, #2A1008 45%, #0A0F14 100%)',
+    provider: 'Activision',
+    providerMark: 'ACTIVISION',
+    art: codArt,
+    ...NEUTRAL,
     tagline: 'Tactical 1v1 and team play. Coordinate, load in, and report.',
     liveLabel: 'Live',
     enterCta: 'Enter Op',
@@ -94,9 +128,10 @@ export const ARENA_THEMES: Record<ArenaGameId, ArenaThemeConfig> = {
   other: {
     id: 'other',
     themeName: 'Open Arena',
-    accent: '#8A93A6',
-    accent2: '#4B5162',
-    background: 'linear-gradient(135deg, #0A0C11 0%, #11151D 45%, #0A0F14 100%)',
+    provider: 'Open Arena',
+    providerMark: 'OPEN',
+    art: otherArt,
+    ...NEUTRAL,
     tagline: 'Any game not listed. Set a mode, agree terms, and play.',
     liveLabel: 'Open',
     enterCta: 'Enter Arena',

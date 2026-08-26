@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node src/index.js",
     "test": "node test/run.js",
+    "test:huduma": "node test/huduma.mjs",
     "test:yard": "node test/yard-loop.mjs"
   },
   "dependencies": {

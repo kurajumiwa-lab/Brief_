@@ -1,42 +1,70 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { Heart } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
+import { StoryView } from './StoryView';
+import { designOf, accentFor, themeFor } from './storyDesign';
 
 // ---------------------------------------------------------------------------
-// TEA READER — the public article page (home-feed §32 "See all").
+// STORY READER — the public article page.
 //
-// Renders one published article by slug from GET /api/tea/:slug: title, dek,
-// body, source, reading time, category and location. Real editorial content;
-// a missing/unpublished slug resolves to an honest not-found state.
+// Renders one published story through the SAME StoryView the editor previewed:
+// its theme, layout, accent and hero overlay, exactly as designed. Below the
+// story: the GALLERY of extra photos the editor added, and the LIKE bar —
+// the public rating, recorded as a real act by a signed-in reader.
+// A missing/unpublished slug resolves to an honest not-found state.
 // ---------------------------------------------------------------------------
 
 export function TeaReader({ slug, onClose }: { slug: string; onClose: () => void }) {
   const [state, setState] = React.useState<{ status: 'loading' | 'ready' | 'missing'; article: any | null }>({ status: 'loading', article: null });
+  const [likeState, setLikeState] = useState<{ count: number; liked: boolean; busy: boolean; note: string | null }>({ count: 0, liked: false, busy: false, note: null });
 
-  React.useEffect(() => {
+  useEffect(() => {
     let live = true;
     (async () => {
       const res = await briefApi.getTeaArticle(slug);
       if (!live) return;
-      if (res.ok) setState({ status: 'ready', article: res.data });
-      else setState({ status: 'missing', article: null });
+      if (res.ok) {
+        setState({ status: 'ready', article: res.data });
+        setLikeState({ count: Number((res.data as any)?.likeCount ?? 0), liked: Boolean((res.data as any)?.likedByMe), busy: false, note: null });
+      } else {
+        setState({ status: 'missing', article: null });
+      }
     })();
     return () => { live = false; };
   }, [slug]);
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-[#090B10]/95 backdrop-blur-md" onClick={onClose}>
-      <div
-        className="mx-auto min-h-full max-w-2xl px-4 py-10"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button onClick={onClose} className="mb-4 text-[12px] font-bold text-[#8A93A6] cursor-pointer">← Back</button>
+  const toggleLike = async () => {
+    const a = state.article;
+    if (!a || likeState.busy) return;
+    setLikeState((s) => ({ ...s, busy: true, note: null }));
+    const res = likeState.liked
+      ? await briefApi.unlikeTeaArticle(a.id)
+      : await briefApi.likeTeaArticle(a.id);
+    if (res.ok) {
+      setLikeState({ count: res.data.likeCount, liked: res.data.liked, busy: false, note: null });
+    } else if (res.status === 401) {
+      setLikeState((s) => ({ ...s, busy: false, note: 'Sign in to like stories.' }));
+    } else {
+      setLikeState((s) => ({ ...s, busy: false, note: res.error }));
+    }
+  };
 
-        {state.status === 'loading' && <p className="text-sm text-[#8A93A6]">Loading…</p>}
+  const design = designOf(state.article);
+  const theme = themeFor(design);
+  const accent = accentFor(design);
+  const gallery: string[] = Array.isArray(state.article?.images) ? state.article.images : [];
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-[#FAFAFA]/95 backdrop-blur-md" onClick={onClose}>
+      <div className="mx-auto min-h-full max-w-2xl px-4 py-8" onClick={(e) => e.stopPropagation()}>
+        <button onClick={onClose} className="mb-4 text-[12px] font-bold text-[#111111]/60 cursor-pointer">← Back</button>
+
+        {state.status === 'loading' && <p className="text-sm text-[#111111]/60">Loading…</p>}
 
         {state.status === 'missing' && (
-          <div className="rounded-2xl border border-[#232A38] bg-[#10141C] p-5">
-            <p className="text-sm font-bold text-[#F3F1E7]">This article is not available.</p>
-            <p className="mt-1 text-[12px] text-[#8A93A6]">It may be unpublished, expired, or the link is wrong.</p>
+          <div className="rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-5">
+            <p className="text-sm font-bold text-[#111111]">This story is not available.</p>
+            <p className="mt-1 text-[12px] text-[#111111]/60">It may be unpublished, expired, or the link is wrong.</p>
           </div>
         )}
 
@@ -44,29 +72,70 @@ export function TeaReader({ slug, onClose }: { slug: string; onClose: () => void
           const a = state.article;
           return (
             <article className="space-y-4">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-[#43D17A]">
-                {a.location ?? 'Brief'} · {a.category}
-              </p>
-              <h1 className="font-display text-3xl font-bold leading-tight text-[#F3F1E7]">{a.title}</h1>
-              {a.dek && <p className="text-[15px] leading-relaxed text-[#8A93A6]">{a.dek}</p>}
-              <div className="flex items-center gap-3 text-[11px] text-[#4B5162]">
-                {a.author && <span>{a.author}</span>}
-                <span>{a.readingTime} min read</span>
-                {a.publishedAt && <span>{new Date(a.publishedAt).toLocaleDateString()}</span>}
+              {/* the designed story — exactly what the editor previewed */}
+              <div className="overflow-hidden rounded-2xl border border-[#E5E7EB]">
+                <StoryView article={a} design={design} mode="read" />
               </div>
-              <div className="whitespace-pre-wrap text-[15px] leading-relaxed text-[#E8E3D4]">{a.body}</div>
+
+              {/* the gallery: every photo the editor added, for the viewer */}
+              {gallery.length > 0 && (
+                <section className="rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-4">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#111111]">
+                    Gallery · {gallery.length} photo{gallery.length === 1 ? '' : 's'}
+                  </p>
+                  <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    {gallery.map((url) => (
+                      <a key={url} href={url} target="_blank" rel="noreferrer" className="overflow-hidden rounded-xl border border-[#E5E7EB]">
+                        <img src={url} alt="" loading="lazy" className="h-32 w-full object-cover transition-transform duration-300 hover:scale-[1.03]" />
+                      </a>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* the like bar — the public rating */}
+              <section className="rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[12px] font-bold text-[#111111]">
+                      {likeState.count} like{likeState.count === 1 ? '' : 's'}
+                    </p>
+                    <p className="text-[10px] text-[#111111]/50">The public rating — recorded by readers, derived from real rows.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void toggleLike()}
+                    disabled={likeState.busy}
+                    className="flex h-10 items-center gap-2 rounded-xl border px-4 text-[12px] font-extrabold cursor-pointer disabled:opacity-40 transition-all"
+                    style={{
+                      background: likeState.liked ? '#111111' : '#FFFFFF',
+                      color: likeState.liked ? '#FFFFFF' : '#111111',
+                      borderColor: '#111111'
+                    }}
+                    aria-pressed={likeState.liked}
+                  >
+                    <Heart
+                      className="h-4 w-4"
+                      style={{ fill: likeState.liked ? (accent === '#FFFFFF' ? '#111111' : accent === '#111111' ? '#FFFFFF' : accent) : 'none', stroke: likeState.liked ? 'currentColor' : 'currentColor' }}
+                    />
+                    {likeState.liked ? 'Liked' : 'Like'}
+                  </button>
+                </div>
+                {likeState.note && <p className="mt-2 text-[10px] text-[#111111]/60">{likeState.note}</p>}
+              </section>
+
               {a.source && (
-                <p className="border-t border-[#232A38] pt-3 text-[11px] text-[#4B5162]">
+                <p className="border-t pt-3 text-[11px]" style={{ color: theme.inkDim, borderColor: theme.line }}>
                   Source: {a.source}
                   {a.sourceUrl ? ` · ${a.sourceUrl}` : ''}
                 </p>
               )}
               {(a.relatedContent?.length > 0 || a.relatedPlaces?.length > 0 || a.relatedEvents?.length > 0) && (
-                <div className="rounded-xl border border-[#232A38] bg-[#10141C] p-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#43D17A]">Related</p>
+                <div className="rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] p-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#111111]">Related</p>
                   <div className="mt-1 flex flex-wrap gap-2">
-                    {[...(a.relatedPlaces ?? []), ...(a.relatedEvents ?? []), ...(a.relatedContent ?? [])].map((r, i) => (
-                      <span key={i} className="rounded-full border border-[#232A38] px-2 py-0.5 text-[10px] text-[#8A93A6]">{r}</span>
+                    {[...(a.relatedPlaces ?? []), ...(a.relatedEvents ?? []), ...(a.relatedContent ?? [])].map((r: string, i: number) => (
+                      <span key={i} className="rounded-full border border-[#E5E7EB] px-2 py-0.5 text-[10px] text-[#111111]/60">{r}</span>
                     ))}
                   </div>
                 </div>

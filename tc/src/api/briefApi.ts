@@ -188,7 +188,10 @@ async function request<T>(
         status: res.status,
         error:
           (parsed && typeof parsed.error === 'string' && parsed.error) ||
-          `request failed with status ${res.status}`
+          `request failed with status ${res.status}`,
+        // The parsed body rides along for callers that need the server's
+        // structured refusal (e.g. the engine tier's honest 402 detail).
+        errorBody: parsed ?? undefined
       };
     }
 
@@ -1932,5 +1935,182 @@ export function getAvailablePlayers(gameId?: string): Promise<ApiResult<any[]>> 
   const q = gameId ? `?gameId=${encodeURIComponent(gameId)}` : '';
   return request(`/api/arena/available${q}`, undefined, (r) =>
     Array.isArray(r?.available) ? r.available : undefined
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ENGINE — the power-plant layer: sync pipeline, universal router, tiers.
+// Every response is the server's honest shape; nothing here simulates a
+// capability the server did not report.
+// ---------------------------------------------------------------------------
+
+export interface EngineGuardrail {
+  tier: string;
+  label: string;
+  caps: { syncIntervalMs: number; maxRoutes: number | null; pipelineDepth: string };
+  micro: string;
+  next: { tier: string; label: string; micro: string } | null;
+  billingConfigured: boolean;
+}
+
+export interface EngineStatus {
+  engine: string;
+  version: string;
+  watermark: string | null;
+  collections: Record<string, number>;
+  guardrail: EngineGuardrail | null;
+  router: { signingConfigured: boolean; channels: { kind: string; configured: boolean }[] };
+  billingConfigured: boolean;
+}
+
+export function getEngineStatus(): Promise<ApiResult<EngineStatus>> {
+  return request('/api/engine/status', undefined, (r) =>
+    r?.engine && r?.guardrail ? (r as EngineStatus) : undefined
+  );
+}
+
+export interface EngineRouteChannel {
+  kind: 'webhook' | 'discord' | 'slack' | 'whatsapp' | 'sms';
+  to: string;
+}
+
+export interface EngineRoute {
+  id: string;
+  name: string;
+  match: { signalType: string; objectId: string | null };
+  channels: EngineRouteChannel[];
+  enabled: boolean;
+  createdAt: string;
+}
+
+export function getEngineRoutes(): Promise<ApiResult<EngineRoute[]>> {
+  return request('/api/engine/routes', undefined, (r) =>
+    Array.isArray(r?.routes) ? (r.routes as EngineRoute[]) : undefined
+  );
+}
+
+export function createEngineRoute(body: {
+  name: string;
+  match?: { signalType?: string; objectId?: string | null };
+  channels: EngineRouteChannel[];
+}): Promise<ApiResult<EngineRoute>> {
+  return request(
+    '/api/engine/routes',
+    { method: 'POST', body: JSON.stringify(body) },
+    (r) => (r?.route ? (r.route as EngineRoute) : undefined)
+  );
+}
+
+export function deleteEngineRoute(id: string): Promise<ApiResult<{ ok: boolean }>> {
+  return request(`/api/engine/routes/${encodeURIComponent(id)}`, { method: 'DELETE' }, (r) =>
+    r?.ok ? { ok: true } : undefined
+  );
+}
+
+export function requestEngineTier(tier: string): Promise<ApiResult<any>> {
+  // The server answers 402 with the honest refusal payload; request() folds
+  // non-2xx into { ok:false, error } — the detail fields ride on errorBody.
+  return request('/api/engine/tier', { method: 'POST', body: JSON.stringify({ tier }) }, (r) => r);
+}
+
+export function getEngineDeliveries(): Promise<ApiResult<any[]>> {
+  return request('/api/engine/deliveries', undefined, (r) =>
+    Array.isArray(r?.deliveries) ? r.deliveries : undefined
+  );
+}
+
+// --- Story likes (the public rating) ------------------------------------------
+
+export function likeTeaArticle(id: string): Promise<ApiResult<{ liked: boolean; likeCount: number }>> {
+  return request(
+    `/api/tea/${encodeURIComponent(id)}/like`,
+    { method: 'POST', body: '{}' },
+    (r) => (typeof r?.likeCount === 'number' ? r : undefined)
+  );
+}
+
+export function unlikeTeaArticle(id: string): Promise<ApiResult<{ liked: boolean; likeCount: number }>> {
+  return request(
+    `/api/tea/${encodeURIComponent(id)}/like`,
+    { method: 'DELETE' },
+    (r) => (typeof r?.likeCount === 'number' ? r : undefined)
+  );
+}
+
+// --- Group Buy engine (Chama & group-order pipelines) ---------------------------
+
+export interface GroupBuyContribution {
+  id: string;
+  memberRef: string;
+  amount: number;
+  source: string;
+  receiptHash: string;
+  createdAt: string;
+}
+
+export interface GroupBuy {
+  id: string;
+  title: string;
+  note: string | null;
+  targetAmount: number;
+  stage: string;
+  stages: { id: string; label: string; blurb: string }[];
+  stageIndex: number;
+  total: number;
+  remaining: number;
+  progressPct: number;
+  contributionCount: number;
+  contributions: GroupBuyContribution[];
+  history: { stage: string; at: string; note: string }[];
+}
+
+export function listGroupBuys(): Promise<ApiResult<GroupBuy[]>> {
+  return request('/api/engine/group-buys', undefined, (r) =>
+    Array.isArray(r?.groupBuys) ? (r.groupBuys as GroupBuy[]) : undefined
+  );
+}
+
+export function createGroupBuy(body: { title: string; targetAmount: number; note?: string }): Promise<ApiResult<GroupBuy>> {
+  return request('/api/engine/group-buys', { method: 'POST', body: JSON.stringify(body) }, (r) =>
+    r?.groupBuy ? (r.groupBuy as GroupBuy) : undefined
+  );
+}
+
+export function contributeGroupBuy(id: string, body: { memberRef: string; amount: number; source: string }): Promise<ApiResult<{
+  receipt: { contributionId: string; memberRef: string; amount: number; source: string; receiptHash: string; createdAt: string };
+  total: number;
+  progressPct: number;
+  stageChanged: boolean;
+}>> {
+  return request(`/api/engine/group-buys/${encodeURIComponent(id)}/contribute`, { method: 'POST', body: JSON.stringify(body) }, (r) =>
+    r?.receipt ? r : undefined
+  );
+}
+
+export function advanceGroupBuyStage(id: string, to: string): Promise<ApiResult<GroupBuy>> {
+  return request(`/api/engine/group-buys/${encodeURIComponent(id)}/stage`, { method: 'POST', body: JSON.stringify({ to }) }, (r) =>
+    r?.groupBuy ? (r.groupBuy as GroupBuy) : undefined
+  );
+}
+
+// --- The dynamic ticket bar ------------------------------------------------------
+
+export interface EngineTicketBar {
+  active: boolean;
+  ticket?: {
+    eventTitle: string;
+    ticketCode: string;
+    registrationId: string;
+    entryState: 'active' | 'upcoming' | 'checked-in';
+    startsAt: string | null;
+    checkedIn: boolean;
+  };
+  deltas?: { kind: string; at: string }[];
+  reason?: string;
+}
+
+export function getEngineTicketBar(): Promise<ApiResult<EngineTicketBar>> {
+  return request('/api/engine/ticket-bar', undefined, (r) =>
+    typeof r?.active === 'boolean' ? (r as EngineTicketBar) : undefined
   );
 }

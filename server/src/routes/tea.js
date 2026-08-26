@@ -25,12 +25,47 @@ export function register(app) {
     });
   });
 
-  /** Public: one article by slug (published only). */
+  /** The design vocabulary, so the editor renders presets from the server.
+   *  Registered BEFORE /:slug so it is not captured as a slug. */
+  app.get('/api/tea-design', (_req, res) => {
+    res.json({ themes: tea.THEMES, layouts: tea.LAYOUTS, defaults: tea.DEFAULT_DESIGN });
+  });
+
+  /** Public: one article by slug (published only). Carries the viewer's own
+   *  like state when they are signed in, so the reader renders honestly. */
   app.get('/api/tea/:slug', (req, res) => {
-    const a = tea.getBySlug(req.params.slug);
+    const a = tea.getBySlug(req.params.slug, { viewerId: callerId(req) });
     if (!a) return res.status(404).json({ error: 'article not found' });
     res.json({ article: a });
   });
+
+  // --- Likes (the public rating) --------------------------------------------
+  // A like is a real recorded act by a signed-in reader; the count is derived
+  // from the rows on every read, so it can never drift from the records.
+
+  app.post('/api/tea/:id/like', (req, res) => {
+    const me = requireAuth(req, res);
+    if (!me) return;
+    try {
+      res.json(tea.likeArticle(req.params.id, me));
+    } catch (e) {
+      const msg = String(e.message ?? e);
+      res.status(/not found/.test(msg) ? 404 : 400).json({ error: msg });
+    }
+  });
+
+  app.delete('/api/tea/:id/like', (req, res) => {
+    const me = requireAuth(req, res);
+    if (!me) return;
+    try {
+      res.json(tea.unlikeArticle(req.params.id, me));
+    } catch (e) {
+      const msg = String(e.message ?? e);
+      res.status(/not found/.test(msg) ? 404 : 400).json({ error: msg });
+    }
+  });
+
+
 
   // --- Tea Desk (editorial workflow) ----------------------------------------
 

@@ -201,7 +201,40 @@ const EMPTY = {
   arenaPlayers: [],
   arenaVenues: [],
   arenaTournaments: [],
-  arenaResults: [] // agreed match results; leaderboards are derived from these
+  arenaResults: [], // agreed match results; leaderboards are derived from these
+
+  // --- HudumaLink (WhatsApp + M-Pesa distributed action layer) -------------
+  // A self-contained product module living inside the same store. Identity is
+  // keyed by phone; money lives in hudumaEscrow exactly as the ledger pattern
+  // elsewhere expects (no second balance). See server/src/domain/huduma/* and
+  // the production schema in server/sql/hudumalink.sql.
+  hudumaUsers: [],       // phone-keyed data subjects; eCitizen token AES-encrypted
+  hudumaOrders: [],      // service orders + escrow status
+  hudumaEscrow: [],      // M-Pesa STK ledger rows backing each order
+  hudumaDocuments: [],   // delivered artefacts + authenticity signature hash
+  hudumaSessions: [],    // per-phone conversational state machine
+
+  // --- Engine (sync core + universal router + tier guardrails) -------------
+  // The "power plant": background state synchronization, signed webhook
+  // dispatch, and server-authoritative access tiers. engineSyncs is an audit
+  // trail of real pipeline runs (bounded per caller); engineDeliveries is the
+  // dispatch ledger — nothing is recorded delivered that was not delivered.
+  engineSyncs: [],       // per-caller sync telemetry (real stage timings)
+  engineRoutes: [],      // user routing rules: signal match -> channels
+  engineDeliveries: [],  // webhook/outbound dispatch ledger, every attempt
+  engineTierGrants: [],  // operator tier grants (billing is not connected)
+
+  // --- Story likes (editorial rating) ---------------------------------------
+  // One row per (article, actor). Like counts are DERIVED by scanning these
+  // rows — never a stored counter that can drift from the records.
+  articleLikes: [],
+
+  // --- Group Buy engine (Chama & group-order pipelines) ---------------------
+  // A group buy is a tracked funding pipeline; contributions are records with
+  // verifiable receipt digests. Money records also ride the one ledger —
+  // there is deliberately no second balance here.
+  groupBuys: [],
+  groupBuyContributions: []
 };
 
 function ensureDir() {

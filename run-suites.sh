@@ -16,14 +16,14 @@ cd "$(dirname "$0")"
 ./sync.sh > /dev/null || { echo "sync.sh FAILED"; exit 1; }
 cd preview || exit 1
 
-ALL="access apic arena batch1 camp circleops capture commerce chain dest econ group groupui inbox ing loops nav parse person pmatch pure pursuit quests routes session sys"
+ALL="access apic arena batch1 camp circleops capture commerce chain dest econ engine group groupui inbox ing loops nav orchestration parse person pmatch pure pursuit quests routes session stories sys"
 SUITES="${*:-$ALL}"
 
 tot_p=0; tot_f=0; broken=""
 
 for f in $SUITES; do
   if ! npx esbuild "$f.jsx" --bundle --platform=node --outfile=".tmp.$f.cjs" \
-       --format=cjs --loader:.tsx=tsx --external:jsdom > ".tmp.$f.build" 2>&1; then
+       --format=cjs --loader:.tsx=tsx --loader:.webp=empty --external:jsdom > ".tmp.$f.build" 2>&1; then
     printf "  %-9s BUILD FAILED\n" "$f"
     head -5 ".tmp.$f.build" | sed 's/^/      /'
     broken="$broken $f"; rm -f ".tmp.$f.cjs" ".tmp.$f.build"; continue

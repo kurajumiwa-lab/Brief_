@@ -232,7 +232,7 @@ function HostValueCard({
       {expanded && (
         <button
           onClick={onBack}
-          className="mb-2 flex items-center gap-1 text-[12px] font-bold text-[#3d4460] cursor-pointer"
+          className="mb-2 flex items-center gap-1 text-[12px] font-bold text-[#111111] cursor-pointer"
         >
           <ChevronLeft className="h-4 w-4" />
           Shelf
@@ -244,24 +244,24 @@ function HostValueCard({
         onClick={expanded ? undefined : onExpand}
         className="w-full text-left rounded-2xl p-3.5 shadow-lg cursor-pointer"
         style={{
-          background: 'linear-gradient(145deg, #141a28 0%, #0c1220 58%, #163528 100%)',
-          border: '1px solid rgba(67,209,122,0.28)'
+          background: 'linear-gradient(145deg, #FFFFFF 0%, #FAFAFA 58%, #F3F4F6 100%)',
+          border: '1px solid rgba(17,17,17,0.28)'
         }}
       >
         <div className="flex items-center gap-2.5">
           <div
             className="h-11 w-11 rounded-2xl flex items-center justify-center text-[14px] font-extrabold shrink-0"
-            style={{ background: '#43D17A', color: '#090B10' }}
+            style={{ background: '#111111', color: '#FFFFFF' }}
           >
             {initials(name)}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[15px] font-extrabold text-[#F3F1E7] truncate">{name}</p>
-            <p className="text-[11px] text-[#8A93A6] truncate">
+            <p className="text-[15px] font-extrabold text-[#111111] truncate">{name}</p>
+            <p className="text-[11px] text-[#111111]/60 truncate">
               {handle ?? (kitKnown && !kit ? 'No vendor profile yet' : 'Your host card')}
             </p>
           </div>
-          <span className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#43D17A] shrink-0">
+          <span className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#111111] shrink-0">
             Card
           </span>
         </div>
@@ -273,8 +273,8 @@ function HostValueCard({
             { label: 'Hosted', value: '—' }
           ]).slice(0, 4).map((s) => (
             <div key={s.label} className="min-w-0">
-              <p className="text-[14px] font-extrabold text-[#F3F1E7] truncate">{s.value}</p>
-              <p className="text-[9px] text-[#8A93A6]">{s.label}</p>
+              <p className="text-[14px] font-extrabold text-[#111111] truncate">{s.value}</p>
+              <p className="text-[9px] text-[#111111]/60">{s.label}</p>
             </div>
           ))}
         </div>
@@ -282,12 +282,12 @@ function HostValueCard({
 
       {expanded && (
         <div className="mt-4 space-y-3">
-          <div className="rounded-2xl bg-white border border-[#e6e8f0] p-4">
+          <div className="rounded-2xl bg-white border border-[#E5E7EB] p-4">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#5b6478]">Payments</p>
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#111111]/60">Payments</p>
               <button
                 onClick={() => onSelect({ tab: 'workflows', section: 'money' })}
-                className="text-[11px] font-extrabold text-[#0f766e] cursor-pointer"
+                className="text-[11px] font-extrabold text-[#111111] cursor-pointer"
               >
                 Open ledger
               </button>
@@ -295,34 +295,34 @@ function HostValueCard({
             {wallet ? (
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-[18px] font-extrabold text-[#0f766e]">
+                  <p className="text-[18px] font-extrabold text-[#111111]">
                     {money(wallet.balance, wallet.currency)}
                   </p>
-                  <p className="text-[10px] text-[#6b7289]">Available · settled only</p>
+                  <p className="text-[10px] text-[#111111]/60">Available · settled only</p>
                 </div>
                 <div>
-                  <p className="text-[18px] font-extrabold text-[#b45309]">
+                  <p className="text-[18px] font-extrabold text-[#111111]">
                     {money(wallet.pending, wallet.currency)}
                   </p>
-                  <p className="text-[10px] text-[#6b7289]">Pending</p>
+                  <p className="text-[10px] text-[#111111]/60">Pending</p>
                 </div>
               </div>
             ) : (
-              <p className="text-[12px] text-[#6b7289]">Wallet not loaded. Nothing is assumed.</p>
+              <p className="text-[12px] text-[#111111]/60">Wallet not loaded. Nothing is assumed.</p>
             )}
             {wallet && !wallet.provider.configured && (
-              <p className="mt-2 text-[10px] text-[#b45309] leading-snug">{wallet.provider.reason}</p>
+              <p className="mt-2 text-[10px] text-[#111111] leading-snug">{wallet.provider.reason}</p>
             )}
           </div>
 
-          <div className="rounded-2xl bg-white border border-[#e6e8f0] p-4">
+          <div className="rounded-2xl bg-white border border-[#E5E7EB] p-4">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#5b6478]">
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#111111]/60">
                 Marketing
               </p>
               <button
                 onClick={() => onSelect({ tab: 'workflows', section: 'command' })}
-                className="text-[11px] font-extrabold text-[#0f766e] cursor-pointer"
+                className="text-[11px] font-extrabold text-[#111111] cursor-pointer"
               >
                 Command
               </button>
@@ -330,31 +330,31 @@ function HostValueCard({
             <div className="grid grid-cols-2 gap-2">
               {metrics.map((m) => (
                 <div key={m.label} className="min-w-0">
-                  <p className="text-[16px] font-extrabold text-[#16181f]">
+                  <p className="text-[16px] font-extrabold text-[#111111]">
                     {m.value === undefined ? '—' : m.value}
                   </p>
-                  <p className="text-[9px] text-[#6b7289]">{m.label}</p>
+                  <p className="text-[9px] text-[#111111]/60">{m.label}</p>
                 </div>
               ))}
             </div>
             {audience?.engagementRate != null && (
-              <p className="mt-2 text-[10px] text-[#6b7289]">
+              <p className="mt-2 text-[10px] text-[#111111]/60">
                 Engagement {Math.round(audience.engagementRate * 100)}% of views (saves + shares).
               </p>
             )}
-            {kit?.note && <p className="mt-2 text-[10px] text-[#9aa0b4] leading-snug">{kit.note}</p>}
+            {kit?.note && <p className="mt-2 text-[10px] text-[#111111]/60 leading-snug">{kit.note}</p>}
           </div>
 
-          <div className="rounded-2xl bg-white border border-[#e6e8f0] p-4">
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#5b6478] mb-3">
+          <div className="rounded-2xl bg-white border border-[#E5E7EB] p-4">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#111111]/60 mb-3">
               Social
             </p>
             {contact ? (
-              <p className="text-[12px] text-[#16181f] mb-2">
+              <p className="text-[12px] text-[#111111] mb-2">
                 Linked channel · <span className="font-bold">{contact}</span>
               </p>
             ) : (
-              <p className="text-[12px] text-[#6b7289] mb-2">
+              <p className="text-[12px] text-[#111111]/60 mb-2">
                 No social channel linked on the vendor profile.
               </p>
             )}
@@ -366,14 +366,14 @@ function HostValueCard({
                     href={ch.href}
                     target="_blank"
                     rel="noreferrer"
-                    className="rounded-full border border-[#d7dbe8] px-3 py-1.5 text-[11px] font-bold text-[#16181f]"
+                    className="rounded-full border border-[#E5E7EB] px-3 py-1.5 text-[11px] font-bold text-[#111111]"
                   >
                     {ch.label}
                   </a>
                 ) : (
                   <span
                     key={ch.id}
-                    className="rounded-full border border-dashed border-[#d7dbe8] px-3 py-1.5 text-[11px] font-bold text-[#9aa0b4]"
+                    className="rounded-full border border-dashed border-[#E5E7EB] px-3 py-1.5 text-[11px] font-bold text-[#111111]/60"
                   >
                     {ch.label} · not linked
                   </span>
@@ -385,14 +385,14 @@ function HostValueCard({
           <div className="flex gap-2">
             <button
               onClick={() => void shareCard()}
-              className="flex-1 h-11 rounded-xl bg-[#0f766e] text-white text-[13px] font-extrabold flex items-center justify-center gap-2 cursor-pointer"
+              className="flex-1 h-11 rounded-xl bg-[#111111] text-white text-[13px] font-extrabold flex items-center justify-center gap-2 cursor-pointer"
             >
               <Share2 className="h-4 w-4" />
               Share card
             </button>
             <button
               onClick={() => void copyCard()}
-              className="h-11 px-4 rounded-xl border border-[#d7dbe8] text-[#16181f] text-[13px] font-extrabold flex items-center justify-center gap-2 cursor-pointer"
+              className="h-11 px-4 rounded-xl border border-[#E5E7EB] text-[#111111] text-[13px] font-extrabold flex items-center justify-center gap-2 cursor-pointer"
             >
               <Copy className="h-4 w-4" />
               {copied ? 'Copied' : 'Copy'}
@@ -401,7 +401,7 @@ function HostValueCard({
 
           <button
             onClick={() => onSelect({ tab: 'mylayer', section: 'mediakit' })}
-            className="w-full h-11 rounded-xl border border-[#d7dbe8] text-[13px] font-extrabold text-[#16181f] cursor-pointer"
+            className="w-full h-11 rounded-xl border border-[#E5E7EB] text-[13px] font-extrabold text-[#111111] cursor-pointer"
           >
             Open media kit
           </button>
@@ -424,8 +424,8 @@ function Section({
 }) {
   return (
     <section className={tint ? '' : 'bg-white'}>
-      <div className={`px-2.5 pt-3 pb-1.5 ${tint ?? 'bg-[#f3f5f8]'}`}>
-        <h2 className="text-[15px] font-extrabold text-[#16181f] tracking-tight">{title}</h2>
+      <div className={`px-2.5 pt-3 pb-1.5 ${tint ?? 'bg-[#F3F4F6]'}`}>
+        <h2 className="text-[15px] font-extrabold text-[#111111] tracking-tight">{title}</h2>
       </div>
       <div className={tint ?? 'bg-white'}>{children}</div>
     </section>
@@ -447,7 +447,7 @@ function Row({
     <button
       onClick={onClick}
       className={`flex w-full items-center gap-2 px-2.5 py-2.5 text-left cursor-pointer ${
-        muted ? 'text-[#7b8194]' : 'text-[#1c2340]'
+        muted ? 'text-[#111111]/60' : 'text-[#111111]'
       }`}
     >
       <Icon className="h-4 w-4 shrink-0" />
@@ -504,9 +504,9 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
         role="dialog"
         aria-label="Menu"
         aria-modal="true"
-        className="h-full w-[min(20rem,78vw)] max-w-[78vw] min-w-0 shrink-0 overflow-y-auto overflow-x-hidden border-r border-[#d7dbe8] shadow-[8px_0_24px_rgba(0,0,0,0.22)]"
+        className="h-full w-[min(20rem,78vw)] max-w-[78vw] min-w-0 shrink-0 overflow-y-auto overflow-x-hidden border-r border-[#E5E7EB] shadow-[8px_0_24px_rgba(0,0,0,0.22)]"
         style={{
-          background: '#f7f8fb',
+          background: '#FFFFFF',
           overscrollBehavior: 'contain',
           touchAction: 'pan-y',
           WebkitOverflowScrolling: 'touch'
@@ -533,10 +533,10 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
                         onClick={() => onSelect(q.target)}
                         className="flex flex-col items-center gap-1 cursor-pointer min-w-0"
                       >
-                        <span className="h-9 w-9 rounded-xl bg-white border border-[#e4e7ef] flex items-center justify-center text-[#0f766e] shadow-sm">
+                        <span className="h-9 w-9 rounded-xl bg-white border border-[#E5E7EB] flex items-center justify-center text-[#111111] shadow-sm">
                           <Icon className="h-4 w-4" />
                         </span>
-                        <span className="text-[9px] font-bold text-[#3d4460] truncate w-full text-center">{q.label}</span>
+                        <span className="text-[9px] font-bold text-[#111111] truncate w-full text-center">{q.label}</span>
                       </button>
                     );
                   })}
@@ -551,7 +551,7 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
                 <div className="px-2 pb-3 pt-1">
                   <button
                     onClick={() => onSelect({ tab: 'capture' })}
-                    className="w-full h-9 rounded-lg bg-[#0f766e] text-white text-[11px] font-extrabold flex items-center justify-center gap-1 cursor-pointer"
+                    className="w-full h-9 rounded-lg bg-[#111111] text-white text-[11px] font-extrabold flex items-center justify-center gap-1 cursor-pointer"
                   >
                     <Plus className="h-3.5 w-3.5" />
                     Start
@@ -584,7 +584,7 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
                   return (
                     <div
                       key={item.label}
-                      className="flex w-full items-center gap-2 px-2.5 py-2.5 text-[#7b8194]"
+                      className="flex w-full items-center gap-2 px-2.5 py-2.5 text-[#111111]/60"
                     >
                       <Icon className="h-4 w-4 shrink-0" />
                       <span className="text-[14px] font-semibold truncate">{item.label}</span>
@@ -594,7 +594,7 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
                 })}
               </Section>
 
-              <Section title="Regional communities" tint="bg-[#d9dcf0]">
+              <Section title="Regional communities" tint="bg-[#F3F4F6]">
                 {REGIONS.map((r) => (
                   <button
                     key={r.label}
@@ -605,10 +605,10 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
                     className="flex w-full items-center gap-2 px-2.5 py-2.5 text-left cursor-pointer"
                   >
                     <span className="text-[18px] leading-none w-6 text-center">{r.flag}</span>
-                    <span className="text-[13px] font-semibold text-[#1c2340] truncate">{r.label}</span>
+                    <span className="text-[13px] font-semibold text-[#111111] truncate">{r.label}</span>
                     {selectedLocation.toLowerCase().includes(r.city.label.toLowerCase()) ||
                     selectedLocation.toLowerCase() === r.label.toLowerCase() ? (
-                      <span className="ml-auto text-[10px] font-extrabold text-[#0f766e]">Here</span>
+                      <span className="ml-auto text-[10px] font-extrabold text-[#111111]">Here</span>
                     ) : null}
                   </button>
                 ))}

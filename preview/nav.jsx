@@ -1,6 +1,6 @@
 const { JSDOM }=require('jsdom');
 const dom=new JSDOM('<!DOCTYPE html><html><body><div id="root"></div></body></html>',{url:'https://brief.test/',pretendToBeVisual:true});
-global.window=dom.window;global.document=dom.window.document;global.navigator=dom.window.navigator;
+global.window=dom.window;global.document=dom.window.document;Object.defineProperty(globalThis, 'navigator', { value: dom.window.navigator, writable: true, configurable: true }); // Node >=21 ships a getter-only navigator
 global.HTMLElement=dom.window.HTMLElement;global.Element=dom.window.Element;global.Node=dom.window.Node;
 global.MouseEvent=dom.window.MouseEvent;global.getComputedStyle=dom.window.getComputedStyle;
 global.IS_REACT_ACT_ENVIRONMENT=true;
@@ -157,14 +157,14 @@ async function main(){
   console.log('\n=== Arena entry point shows availability ===');
   await click(btn('Play'));
   check('arena entry shows game portals', /eFootball|COD|Find Match/i.test(body()));
-  check('find action present', /Find/i.test(body()));
+  check('find action present', /Your games|Open matches|Find/i.test(body()));
   check('availability is not a nav item', !railBtns().some(b=>/Available|Busy|Offline/.test(text(b))));
 
   console.log('\n=== Active state does not rely on colour alone ===');
   await click(btn('Home'));
   const cur=railBtns().find(b=>b.getAttribute('aria-current')==='page');
   check('active item is machine-readable', !!cur);
-  check('active item has a non-colour marker', !!cur && /bg-\[#10141C\]|font-extrabold/.test(cur.className));
+  check('active item has a non-colour marker', !!cur && /bg-\[#FFFFFF\]|font-extrabold/.test(cur.className));
   check('active item renders an edge indicator', !!cur && cur.querySelectorAll('span').length>=1);
 
   console.log(`\n${'='.repeat(46)}\nPASSED ${pass}   FAILED ${fail}\n${'='.repeat(46)}`);

@@ -143,7 +143,7 @@ export function JumbotronBanner({ items, onOpen }: JumbotronBannerProps) {
     >
       <div
         className="absolute inset-0"
-        style={{ background: 'radial-gradient(circle at 80% 20%, rgba(62,142,255,0.22), transparent 60%), var(--overlay-scrim)' }}
+        style={{ background: 'radial-gradient(circle at 80% 20%, rgba(17,17,17,0.05), transparent 60%), var(--overlay-scrim)' }}
       />
       <button
         onClick={() => {
@@ -166,7 +166,7 @@ export function JumbotronBanner({ items, onOpen }: JumbotronBannerProps) {
             </ul>
           )}
         </div>
-        <span className="brief-banner-in shrink-0 text-5xl drop-shadow-[0_0_18px_rgba(62,142,255,0.5)]">{item.glyph}</span>
+        <span className="brief-banner-in shrink-0 text-5xl drop-shadow-[0_0_18px_rgba(17,17,17,0.35)]">{item.glyph}</span>
       </button>
       {/* rotation dots */}
       {items.length > 1 && (

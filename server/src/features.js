@@ -70,7 +70,18 @@ const DEFINITIONS = [
   { key: 'payouts',   domain: 'commerce',   label: 'Merchant payouts (disbursement)', configured: () => providers.providerStatus().payoutConfigured },
   { key: 'outbound',  domain: 'connectors', label: 'Outbound messaging',              configured: () => outbound.status().anyConfigured },
   { key: 'telegram',  domain: 'connectors', label: 'Telegram ingest',                 configured: () => telegram.isConfigured() },
-  { key: 'whatsapp',  domain: 'connectors', label: 'WhatsApp ingest',                 configured: () => whatsapp.isConfigured() }
+  { key: 'whatsapp',  domain: 'connectors', label: 'WhatsApp ingest',                 configured: () => whatsapp.isConfigured() },
+  // HudumaLink: the WhatsApp + M-Pesa distributed action layer. It runs its
+  // full conversational + order + escrow state machines without any credential
+  // (those run against the local store); `configured` reports whether the live
+  // outbound + payment + crypto seams are wired, which the routes surface as an
+  // honest 503 rather than faking a send or a charge.
+  { key: 'huduma', domain: 'huduma', label: 'HudumaLink (WhatsApp + M-Pesa services)',
+    configured: () => true },
+  // Engine: sync core + universal router + tier guardrails. Runs against the
+  // local store; the router's webhook signing and outbound channels fail
+  // closed (named, honest) until their credentials exist.
+  { key: 'engine', domain: 'engine', label: 'Engine (sync + router + tiers)', configured: () => true }
 ];
 
 const byKey = new Map(DEFINITIONS.map((d) => [d.key, d]));

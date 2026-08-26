@@ -1,0 +1,134 @@
+import React from 'react';
+import type { EngineRun, EngineStage } from '../engine/syncEngine';
+
+// ---------------------------------------------------------------------------
+// SYNC PIPELINE — the Linear Pipeline Orchestrator.
+//
+// Renders the engine's LAST REAL RUN: Ping Gateway -> Hash Comparison ->
+// Delta Isolation -> UI Render. Every node state, timing and count comes from
+// telemetry the server (and, for render, this client) actually measured.
+//
+// HONESTY RULES:
+//   * No run yet -> every node reads "waiting", never a fake progress state.
+//   * A blocked beat (tier guardrail) shows exactly which stages were held.
+//   * The connector pulses only while a beat is genuinely in flight.
+// ---------------------------------------------------------------------------
+
+const NODES: { id: string; label: string; caption: string }[] = [
+  { id: 'ping', label: 'Ping Gateway', caption: 'liveness + context' },
+  { id: 'hash', label: 'Hash Comparison', caption: 'manifest digests' },
+  { id: 'delta', label: 'Delta Isolation', caption: 'only what changed' },
+  { id: 'render', label: 'UI Render', caption: 'silent merge' }
+];
+
+export interface SyncPipelineProps {
+  run: EngineRun | null;
+  pending: boolean;
+}
+
+function stageFor(run: EngineRun | null, id: string): EngineStage | null {
+  return run?.stages?.find((s) => s.id === id) ?? null;
+}
+
+export function SyncPipeline({ run, pending }: SyncPipelineProps) {
+  const doneCount = NODES.filter((n) => {
+    const s = stageFor(run, n.id);
+    return s && (s.status === 'done' || s.status === 'client');
+  }).length;
+
+  return (
+    <div className="rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-4">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#111111]">
+          Pipeline
+        </h3>
+        <span className="text-[10px] font-mono text-[#111111]/60">
+          {run
+            ? run.inSync
+              ? `in sync · ${run.version?.slice(0, 8) ?? ''}`
+              : `${run.deltaRows} row${run.deltaRows === 1 ? '' : 's'} merged`
+            : 'awaiting first beat'}
+        </span>
+      </div>
+
+      <div className="flex items-stretch gap-0">
+        {NODES.map((node, i) => {
+          const stage = stageFor(run, node.id);
+          const state: 'idle' | 'active' | 'done' | 'blocked' | 'client' =
+            pending && (!stage || stage.status === 'done' || stage.status === 'client')
+              ? i === doneCount ? 'active' : stage ? 'done' : 'idle'
+              : stage
+              ? (stage.status as any)
+              : 'idle';
+          const isLast = i === NODES.length - 1;
+          return (
+            <React.Fragment key={node.id}>
+              <div className="flex-1 min-w-0 flex flex-col items-center text-center">
+                {/* the node dot */}
+                <div
+                  className={`h-9 w-9 rounded-full flex items-center justify-center border text-[11px] font-extrabold transition-all ${
+                    state === 'active' ? 'animate-pulse' : ''
+                  }`}
+                  style={{
+                    background:
+                      state === 'done' ? '#111111' :
+                      state === 'active' ? '#FAFAFA' :
+                      state === 'blocked' ? '#FAFAFA' :
+                      '#FFFFFF',
+                    color:
+                      state === 'done' ? '#FFFFFF' :
+                      state === 'active' ? '#111111' :
+                      state === 'blocked' ? '#111111/60' :
+                      '#111111/40',
+                    borderColor:
+                      state === 'done' ? '#111111' :
+                      state === 'active' ? '#111111' :
+                      '#E5E7EB'
+                  }}
+                >
+                  {state === 'done' ? '✓' : state === 'blocked' ? '⏸' : i + 1}
+                </div>
+                <p className="mt-2 text-[10px] font-extrabold text-[#111111] leading-tight">
+                  {node.label}
+                </p>
+                <p className="text-[9px] text-[#111111]/40 leading-tight">{node.caption}</p>
+                {/* real timing, or the honest absence of one */}
+                <p className="mt-1 text-[9px] font-mono" style={{ color: stage?.ms != null ? '#111111' : 'rgba(17,17,17,0.4)' }}>
+                  {stage?.ms != null ? `${stage.ms}ms` : state === 'blocked' ? 'held' : '—'}
+                </p>
+                {stage?.detail && (
+                  <p className="mt-0.5 text-[8px] text-[#111111]/40 leading-tight line-clamp-2 px-0.5">
+                    {stage.detail}
+                  </p>
+                )}
+              </div>
+              {!isLast && (
+                <div className="flex items-center pt-[18px] px-0.5" aria-hidden="true">
+                  <div
+                    className={`h-[2px] w-4 sm:w-8 rounded-full transition-colors ${
+                      pending ? 'animate-pulse' : ''
+                    }`}
+                    style={{
+                      background:
+                        stageFor(run, NODES[i + 1].id) && !pending
+                          ? '#111111'
+                          : '#E5E7EB'
+                    }}
+                  />
+                </div>
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
+
+      {!run && (
+        <p className="mt-3 text-center text-[10px] text-[#111111]/40">
+          The pipeline runs the moment the engine beats — nothing here is animated for show.
+        </p>
+      )}
+    </div>
+  );
+}
+
+export default SyncPipeline;

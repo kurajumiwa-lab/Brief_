@@ -446,7 +446,7 @@ export interface AuthStatus {
 
 export type ApiResult<T> =
   | { ok: true; data: T }
-  | { ok: false; error: string; status: number | null };
+  | { ok: false; error: string; status: number | null; errorBody?: any };
 
 /** UI-facing load state, so screens can render loading/empty/error honestly. */
 export interface LoadState<T> {

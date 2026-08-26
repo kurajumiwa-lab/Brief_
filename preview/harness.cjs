@@ -87,8 +87,18 @@ async function boot(opts = {}) {
     { url: 'https://brief.test/', pretendToBeVisual: true });
 
   global.window = dom.window;
+  // Node >=21 ships a getter-only `navigator` global, so a plain
+  // `global.navigator = ...` silently fails and the app would keep seeing
+  // Node's navigator (no clipboard). Define it properly so the jsdom
+  // navigator — including clipboard mocks installed by suites — is what
+  // client code actually reads.
+  Object.defineProperty(globalThis, 'navigator', {
+    value: dom.window.navigator,
+    writable: true,
+    configurable: true
+  });
   global.document = dom.window.document;
-  global.navigator = dom.window.navigator;
+  Object.defineProperty(globalThis, 'navigator', { value: dom.window.navigator, writable: true, configurable: true });
   global.HTMLElement = dom.window.HTMLElement;
   global.Element = dom.window.Element;
   global.Node = dom.window.Node;

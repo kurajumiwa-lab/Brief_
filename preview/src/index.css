@@ -10,24 +10,27 @@
    ============================================================================= */
 
 :root {
-  /* --- Color: the assigned-job palette (§2) --- */
-  --ground:         #090B10;  /* base background — cool near-black, never #000 */
-  --surface:        #10141C;  /* raised cards, banners */
-  --overlay-scrim:  #0C1220;  /* Arena background wash only */
-  --hairline:       #232A38;  /* borders, dividers */
+  /* --- Color: the minimalist palette — white surfaces, ink type, neutral
+       lines. Typography is strictly black (this ink) on light surfaces and
+       white over dark imagery; muted/faint are the SAME ink at lower alpha,
+       so hierarchy comes from weight and size, never hue. --- */
+  --ground:         #FAFAFA;  /* base background — soft off-white */
+  --surface:        #FFFFFF;  /* raised cards, banners */
+  --overlay-scrim:  #F3F4F6;  /* neutral scrim wash */
+  --hairline:       #E5E7EB;  /* borders, dividers */
 
-  --ink:            #F3F1E7;  /* primary text — warm paper white */
-  --ink-dim:        #8A93A6;  /* secondary text */
-  --ink-faint:      #4B5162;  /* tertiary/meta: timestamps, counters */
+  --ink:            #111111;  /* primary text — ink black */
+  --ink-dim:        rgba(17, 17, 17, 0.62);  /* secondary text — same ink, lower alpha */
+  --ink-faint:      rgba(17, 17, 17, 0.45);  /* tertiary/meta: timestamps, counters */
 
-  --signal-live:    #43D17A;  /* live/active state ONLY */
-  --signal-arena:   #3E8EFF;  /* Arena / tournament system ONLY */
-  --signal-urgent:  #FF6A4D;  /* countdown / closing-soon / expiring ONLY */
+  --signal-live:    #111111;  /* live/active state ONLY — the one accent is ink */
+  --signal-arena:   #111111;  /* Arena / tournament system ONLY — ink */
+  --signal-urgent:  #111111;  /* countdown / closing-soon / expiring ONLY — ink */
 
-  --tea:            #E8A33D;  /* Tea category */
-  --today:          #4FB0C6;  /* Today category */
-  --pursuits:       #B98CE0;  /* Pursuits category */
-  --quests:         #43D17A;  /* Quests (shares live — quests ARE the live layer) */
+  --tea:            #111111;  /* Tea category — neutral system */
+  --today:          #111111;  /* Today category */
+  --pursuits:       #111111;  /* Pursuits category */
+  --quests:         #111111;  /* Quests (shares live — quests ARE the live layer) */
 
   /* --- Type (§3) --- */
   --font-display: 'Fraunces', Georgia, serif;
@@ -169,44 +172,45 @@ html, body {
    coexist with the earlier tokens so non-home surfaces are unaffected.
    ============================================================================= */
 :root {
-  /* Color — M3 dark scheme */
-  --m3-background:             #0f131c;
-  --m3-surface:                #0f131c;
-  --m3-surface-dim:            #0f131c;
-  --m3-surface-bright:         #353943;
-  --m3-surface-container-lowest: #0a0e17;
-  --m3-surface-container-low:  #181b25;
-  --m3-surface-container:      #1c1f29;
-  --m3-surface-container-high: #262a34;
-  --m3-surface-container-highest: #31353f;
-  --m3-surface-variant:        #31353f;
+  /* Color — M3 tokens mapped onto the minimalist light system. Every accent
+     is ink; every surface is white/off-white; every line is neutral. */
+  --m3-background:             #FAFAFA;
+  --m3-surface:                #FAFAFA;
+  --m3-surface-dim:            #F3F4F6;
+  --m3-surface-bright:         #FFFFFF;
+  --m3-surface-container-lowest: #FFFFFF;
+  --m3-surface-container-low:  #F3F4F6;
+  --m3-surface-container:      #FFFFFF;
+  --m3-surface-container-high: #F3F4F6;
+  --m3-surface-container-highest: #E5E7EB;
+  --m3-surface-variant:        #E5E7EB;
 
-  --m3-primary:                #4edea3;
-  --m3-primary-fixed:          #6ffbbe;
-  --m3-primary-fixed-dim:      #4edea3;
-  --m3-primary-container:      #10b981;
-  --m3-on-primary:             #003824;
-  --m3-on-primary-container:   #00422b;
+  --m3-primary:                #111111;
+  --m3-primary-fixed:          #111111;
+  --m3-primary-fixed-dim:      #111111;
+  --m3-primary-container:      #111111;
+  --m3-on-primary:             #FFFFFF;
+  --m3-on-primary-container:   #FFFFFF;
 
-  --m3-secondary:              #7bd0ff;
-  --m3-secondary-fixed:        #c4e7ff;
-  --m3-secondary-fixed-dim:    #7bd0ff;
-  --m3-secondary-container:    #00a6e0;
-  --m3-on-secondary-container: #00374d;
+  --m3-secondary:              #111111;
+  --m3-secondary-fixed:        #111111;
+  --m3-secondary-fixed-dim:    #111111;
+  --m3-secondary-container:    #F3F4F6;
+  --m3-on-secondary-container: #111111;
 
-  --m3-tertiary:               #cebdff;
-  --m3-tertiary-container:     #ad91ff;
-  --m3-on-tertiary-container:  #40208d;
+  --m3-tertiary:               #111111;
+  --m3-tertiary-container:     #F3F4F6;
+  --m3-on-tertiary-container:  #111111;
 
-  --m3-error:                  #ffb4ab;
-  --m3-error-container:        #93000a;
+  --m3-error:                  #111111;
+  --m3-error-container:        #111111;
 
-  --m3-outline:                #86948a;
-  --m3-outline-variant:        #3c4a42;
-  --m3-on-surface:             #dfe2ef;
-  --m3-on-surface-variant:     #bbcabf;
-  --m3-on-background:          #dfe2ef;
-  --m3-inverse-surface:        #dfe2ef;
+  --m3-outline:                #E5E7EB;
+  --m3-outline-variant:        #E5E7EB;
+  --m3-on-surface:             #111111;
+  --m3-on-surface-variant:     rgba(17, 17, 17, 0.62);
+  --m3-on-background:          #111111;
+  --m3-inverse-surface:        #111111;
 
   /* Type — M3 */
   --m3-font-headline: 'Plus Jakarta Sans', 'Inter', sans-serif;
@@ -214,10 +218,11 @@ html, body {
   --m3-font-code:    'JetBrains Mono', monospace;
 }
 
-/* Status ring (the "new" story affordance) — conic gradient, like the reference */
+/* Status ring (the "new" story affordance) — ink arc for new, hairline full
+   ring once seen. Strictly neutral. */
 .m3-status-ring {
-  background: conic-gradient(from 180deg at 50% 50%, #10B981 0deg, #10B981 120deg, transparent 120deg, transparent 360deg);
+  background: conic-gradient(from 180deg at 50% 50%, #111111 0deg, #111111 120deg, transparent 120deg, transparent 360deg);
 }
 .m3-status-ring-seen {
-  background: conic-gradient(from 180deg at 50% 50%, #3c4a42 0deg, #3c4a42 360deg);
+  background: conic-gradient(from 180deg at 50% 50%, #E5E7EB 0deg, #E5E7EB 360deg);
 }

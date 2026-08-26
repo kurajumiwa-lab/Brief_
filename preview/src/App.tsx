@@ -28,7 +28,13 @@ import { Pursuits } from './components/Pursuits';
 import { Inbox } from './components/Inbox';
 import { Quests } from './components/Quests';
 import type { GeoPoint } from './components/LocationChip';
-import { ArenaPortal } from './components/ArenaPortal';
+import { ArenaShelf } from './components/ArenaShelf';
+import { EnginePanel } from './components/EnginePanel';
+import { GroupBuyPortal } from './components/GroupBuyPortal';
+import { MatchQueuePanel } from './components/MatchQueuePanel';
+import { TicketBar } from './components/TicketBar';
+import { ArenaGameScreen } from './components/ArenaGameScreen';
+import type { ArenaStakeKind } from './components/ArenaGameScreen';
 import { LobbyBoard } from './components/LobbyBoard';
 import { FeedComposer } from './components/FeedComposer';
 import { WireSection } from './components/WireSection';
@@ -165,7 +171,7 @@ export type MyLayerSection =
   | 'mediakit' | 'opportunities' | 'messages' | 'subscriptions';
 // Workflows secondary: a Journey is either in progress or finished. Inbox and
 // Sources are kept -- they are existing workflow surfaces, not new screens.
-export type WorkflowSection = 'cockpit' | 'command' | 'active' | 'completed' | 'inbox' | 'sources' | 'money' | 'vault' | 'gate' | 'tea' | 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'ai';
+export type WorkflowSection = 'cockpit' | 'command' | 'active' | 'completed' | 'inbox' | 'sources' | 'money' | 'vault' | 'gate' | 'tea' | 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'ai' | 'engine' | 'groupbuy';
 // Pulse secondary. Pulse is the information layer: freshness, local signals,
 // what groups are surfacing, and emerging activity. It is not an assistant.
 export type PulseSection = 'now' | 'local' | 'groups' | 'signals';
@@ -624,15 +630,15 @@ const getPostKindMeta = (
 ): { label: string; tone: string } => {
   switch (kind) {
     case 'news':
-      return { label: 'News', tone: 'text-[#43D17A] border-[#232A38]' };
+      return { label: 'News', tone: 'text-[#111111] border-[#E5E7EB]' };
     case 'notice':
-      return { label: 'Notice', tone: 'text-[#E8A33D] border-[#E8A33D]' };
+      return { label: 'Notice', tone: 'text-[#111111] border-[#111111]' };
     case 'chatter':
-      return { label: 'Chatter', tone: 'text-[#43D17A] border-[#232A38]' };
+      return { label: 'Chatter', tone: 'text-[#111111] border-[#E5E7EB]' };
     case 'question':
-      return { label: 'Question', tone: 'text-[#4FB0C6] border-[#3E8EFF]' };
+      return { label: 'Question', tone: 'text-[#111111] border-[#111111]' };
     case 'promo':
-      return { label: 'Promoted', tone: 'text-[#FF6A4D] border-[#E8A33D]' };
+      return { label: 'Promoted', tone: 'text-[#111111] border-[#111111]' };
   }
 };
 
@@ -4125,12 +4131,12 @@ const GameGlyph: React.FC<{
   const ratio = Math.max(0, Math.min(1, playerCount / ceiling));
   const full = typeof capacity === 'number' && capacity > 0 && playerCount >= capacity;
   const empty = playerCount <= 0;
-  const color = empty ? '#4B5162' : full ? '#E8A33D' : '#43D17A';
+  const color = empty ? '#9CA3AF' : full ? '#111111' : '#6B7280';
 
   return (
     <span className="relative inline-flex shrink-0" title={label}>
       <svg width="40" height="40" viewBox="0 0 40 40" role="img" aria-label={label}>
-        <circle cx="20" cy="20" r={radius} fill="none" stroke="#232A38" strokeWidth="2.5" />
+        <circle cx="20" cy="20" r={radius} fill="none" stroke="#E5E7EB" strokeWidth="2.5" />
         {/* Live arc. Nothing is drawn when the count is genuinely zero. */}
         {!empty && (
           <circle
@@ -4151,7 +4157,7 @@ const GameGlyph: React.FC<{
             cy="20"
             r={radius}
             fill="none"
-            stroke="#232A38"
+            stroke="#E5E7EB"
             strokeWidth="2.5"
             strokeDasharray="2 4"
           />
@@ -4161,10 +4167,10 @@ const GameGlyph: React.FC<{
       <span
         className={`absolute -bottom-0.5 -right-0.5 min-w-[15px] px-1 rounded-full text-[8px] font-extrabold text-center leading-[15px] ${
           empty
-            ? 'bg-[#10141C] text-[#4B5162]'
+            ? 'bg-[#FFFFFF] text-[#111111]/40'
             : full
-            ? 'bg-[#E8A33D] text-[#090B10]'
-            : 'bg-[#43D17A] text-[#090B10]'
+            ? 'bg-[#111111] text-[#FFFFFF]'
+            : 'bg-[#111111] text-[#FFFFFF]'
         }`}
       >
         {playerCount}
@@ -4601,12 +4607,12 @@ function PublicTicketQr({ code, size = 128 }: { code: string; size?: number }) {
   const [dataUrl, setDataUrl] = React.useState<string | null>(null);
   React.useEffect(() => {
     let live = true;
-    QRCode.toDataURL(code, { width: size, margin: 1, color: { dark: '#10141C', light: '#F3F1E7' } })
+    QRCode.toDataURL(code, { width: size, margin: 1, color: { dark: '#111111', light: '#FFFFFF' } })
       .then((u) => { if (live) setDataUrl(u); })
       .catch(() => { if (live) setDataUrl(null); });
     return () => { live = false; };
   }, [code, size]);
-  if (!dataUrl) return <div className="w-28 h-28 bg-[#090B10] border border-[#232A38] rounded-lg" />;
+  if (!dataUrl) return <div className="w-28 h-28 bg-[#FAFAFA] border border-[#E5E7EB] rounded-lg" />;
   return <img src={dataUrl} alt={`Ticket ${code}`} className="w-28 h-28 rounded-lg" />;
 }
 
@@ -4631,18 +4637,18 @@ function PublicShareRow({ title, description }: { title: string; description: st
   return (
     <div className="flex flex-wrap gap-1.5">
       <a href={wa} target="_blank" rel="noreferrer"
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#10141C] text-[#43D17A] text-[10px] font-extrabold border border-[#232A38]">
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FFFFFF] text-[#111111] text-[10px] font-extrabold border border-[#E5E7EB]">
         <MessageCircle className="w-3 h-3" /> WhatsApp
       </a>
       <a href={tg} target="_blank" rel="noreferrer"
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#10141C] text-[#4FB0C6] text-[10px] font-extrabold border border-[#232A38]">
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FFFFFF] text-[#111111] text-[10px] font-extrabold border border-[#E5E7EB]">
         <ExternalLink className="w-3 h-3" /> Telegram
       </a>
       <button onClick={copy}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#10141C] text-[#43D17A] text-[10px] font-extrabold border border-[#232A38] cursor-pointer">
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FFFFFF] text-[#111111] text-[10px] font-extrabold border border-[#E5E7EB] cursor-pointer">
         <Share2 className="w-3 h-3" /> {copied ? 'Copied' : 'Copy link'}
       </button>
-      <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#10141C] text-[#4B5162] text-[10px] border border-[#232A38]" title="Scan to open">
+      <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FFFFFF] text-[#111111]/40 text-[10px] border border-[#E5E7EB]" title="Scan to open">
         <ExternalLink className="w-3 h-3" /> QR
       </span>
     </div>
@@ -4735,7 +4741,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
   const c = load.data;
 
   return (
-    <div className="min-h-screen bg-[#090B10] text-[#F3F1E7] font-sans selection:bg-[#43D17A] selection:text-[#090B10] flex flex-col">
+    <div className="min-h-screen bg-[#FAFAFA] text-[#111111] font-sans selection:bg-[#111111] selection:text-[#FFFFFF] flex flex-col">
       <div className="flex-1 w-full max-w-lg mx-auto px-4 py-8 space-y-5">
         <div className="flex items-center gap-2">
           <svg width="18" height="18" viewBox="0 0 26 26" aria-hidden="true">
@@ -4745,15 +4751,15 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
         </div>
 
         {load.status === 'loading' && (
-          <p className="text-xs text-[#8A93A6] py-12 text-center">Loading...</p>
+          <p className="text-xs text-[#111111]/60 py-12 text-center">Loading...</p>
         )}
 
         {load.status === 'error' && (
-          <div className="border border-[#10141C] bg-[#10141C] rounded-2xl p-5 space-y-2">
-            <p className="text-sm font-extrabold text-[#F3F1E7]">{load.error}</p>
+          <div className="border border-[#E5E7EB] bg-[#FFFFFF] rounded-2xl p-5 space-y-2">
+            <p className="text-sm font-extrabold text-[#111111]">{load.error}</p>
             <button
               onClick={fetchCampaign}
-              className="px-3 py-1.5 rounded-xl bg-[#43D17A] text-[#090B10] font-extrabold text-[10px] cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-[10px] cursor-pointer"
             >
               Try again
             </button>
@@ -4763,51 +4769,51 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
         {load.status === 'ready' && c && (
           <>
             <div className="space-y-2">
-              <p className="text-[9px] text-[#43D17A]">
+              <p className="text-[9px] text-[#111111]">
                 {c.type}
               </p>
               <h1 className="text-2xl font-extrabold leading-tight">{c.title}</h1>
               {c.creator && (
-                <p className="text-[11px] text-[#43D17A] font-extrabold">by {c.creator}</p>
+                <p className="text-[11px] text-[#111111] font-extrabold">by {c.creator}</p>
               )}
               {c.description && (
-                <p className="text-xs text-[#8A93A6] leading-relaxed">{c.description}</p>
+                <p className="text-xs text-[#111111]/60 leading-relaxed">{c.description}</p>
               )}
             </div>
 
-            <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-4 space-y-2">
+            <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 space-y-2">
               {c.startsAt && (
                 <div className="flex items-center gap-2">
-                  <Clock className="w-3.5 h-3.5 text-[#43D17A] shrink-0" />
-                  <span className="text-xs text-[#F3F1E7]">
+                  <Clock className="w-3.5 h-3.5 text-[#111111] shrink-0" />
+                  <span className="text-xs text-[#111111]">
                     {c.startsAt.slice(0, 16).replace('T', ' ')}
                   </span>
                 </div>
               )}
               {c.location && (
                 <div className="flex items-center gap-2">
-                  <MapPin className="w-3.5 h-3.5 text-[#43D17A] shrink-0" />
-                  <span className="text-xs text-[#F3F1E7]">{c.location}</span>
+                  <MapPin className="w-3.5 h-3.5 text-[#111111] shrink-0" />
+                  <span className="text-xs text-[#111111]">{c.location}</span>
                 </div>
               )}
               <div className="flex items-center gap-2">
-                <Tag className="w-3.5 h-3.5 text-[#43D17A] shrink-0" />
-                <span className="text-xs text-[#F3F1E7]">
+                <Tag className="w-3.5 h-3.5 text-[#111111] shrink-0" />
+                <span className="text-xs text-[#111111]">
                   {c.price === 0 ? 'Free' : `${c.currency} ${c.price.toLocaleString()}`}
                 </span>
               </div>
               {c.remaining !== null && (
                 <div className="flex items-center gap-2">
-                  <Users className="w-3.5 h-3.5 text-[#43D17A] shrink-0" />
-                  <span className="text-xs text-[#F3F1E7]">
+                  <Users className="w-3.5 h-3.5 text-[#111111] shrink-0" />
+                  <span className="text-xs text-[#111111]">
                     {c.soldOut ? 'Full' : `${c.remaining} spots left`}
                   </span>
                 </div>
               )}
               {c.registered > 0 && (
                 <div className="flex items-center gap-2">
-                  <Users className="w-3.5 h-3.5 text-[#43D17A] shrink-0" />
-                  <span className="text-xs text-[#F3F1E7]">
+                  <Users className="w-3.5 h-3.5 text-[#111111] shrink-0" />
+                  <span className="text-xs text-[#111111]">
                     {c.registered} {c.registered === 1 ? 'person' : 'people'} registered
                   </span>
                 </div>
@@ -4815,8 +4821,8 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
               {c.capacity !== null && c.remaining !== null && c.capacity > 0 && (
                 <div className="space-y-1 pt-1">
                   <div className="flex items-center justify-between text-[10px]">
-                    <span className="text-[#8A93A6]">Spots filled</span>
-                    <span className="font-mono-live text-[#F3F1E7]">
+                    <span className="text-[#111111]/60">Spots filled</span>
+                    <span className="font-mono-live text-[#111111]">
                       {c.capacity - c.remaining} / {c.capacity}
                     </span>
                   </div>
@@ -4836,14 +4842,14 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
             <PublicShareRow title={c.title} description={c.description} />
 
             {done && (
-              <div className="border border-[#232A38] bg-[#10141C] rounded-2xl p-5 space-y-3">
+              <div className="border border-[#E5E7EB] bg-[#FFFFFF] rounded-2xl p-5 space-y-3">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-[#43D17A] shrink-0" />
-                  <p className="text-sm font-extrabold text-[#F3F1E7]">
+                  <CheckCircle2 className="w-4 h-4 text-[#111111] shrink-0" />
+                  <p className="text-sm font-extrabold text-[#111111]">
                     {done.status === 'started' ? "You have a spot held" : "You're registered"}
                   </p>
                 </div>
-                <p className="text-[11px] text-[#8A93A6] leading-snug">
+                <p className="text-[11px] text-[#111111]/60 leading-snug">
                   {done.status === 'started'
                     ? 'Your spot is held. It is confirmed once payment is arranged with the organiser.'
                     : 'The organiser can see you on their list.'}
@@ -4852,9 +4858,9 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                   <div className="flex items-center gap-3 pt-1">
                     <PublicTicketQr code={done.ticketCode} />
                     <div className="min-w-0 space-y-1">
-                      <p className="text-[9px] text-[#4B5162]">Your ticket</p>
-                      <p className="text-[11px] text-[#E8A33D] break-all select-all">{done.ticketCode}</p>
-                      <p className="text-[10px] text-[#4B5162] leading-snug">Show this code at the gate.</p>
+                      <p className="text-[9px] text-[#111111]/40">Your ticket</p>
+                      <p className="text-[11px] text-[#111111] break-all select-all">{done.ticketCode}</p>
+                      <p className="text-[10px] text-[#111111]/40 leading-snug">Show this code at the gate.</p>
                     </div>
                   </div>
                 )}
@@ -4862,37 +4868,37 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
             )}
 
             {!done && (c.status === 'closed' || c.status === 'completed' || c.status === 'cancelled') && (
-              <div className="border border-[#232A38] rounded-2xl p-5">
-                <p className="text-sm font-extrabold text-[#8A93A6]">
+              <div className="border border-[#E5E7EB] rounded-2xl p-5">
+                <p className="text-sm font-extrabold text-[#111111]/60">
                   Registration is closed.
                 </p>
               </div>
             )}
 
             {!done && c.soldOut && c.status !== 'closed' && c.status !== 'cancelled' && (
-              <div className="border border-[#232A38] rounded-2xl p-5 space-y-3">
-                <p className="text-sm font-extrabold text-[#E8A33D]">This one is full.</p>
+              <div className="border border-[#E5E7EB] rounded-2xl p-5 space-y-3">
+                <p className="text-sm font-extrabold text-[#111111]">This one is full.</p>
                 <div className="space-y-2">
                   <input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Name"
-                    className="w-full bg-[#10141C] text-[#F3F1E7] text-sm rounded-xl px-3 py-3 border border-[#232A38] focus:border-[#43D17A] focus:outline-none"
+                    className="w-full bg-[#FFFFFF] text-[#111111] text-sm rounded-xl px-3 py-3 border border-[#E5E7EB] focus:border-[#111111] focus:outline-none"
                   />
                   <input
                     value={contact}
                     onChange={(e) => setContact(e.target.value)}
                     placeholder="Phone or email"
-                    className="w-full bg-[#10141C] text-[#F3F1E7] text-sm rounded-xl px-3 py-3 border border-[#232A38] focus:border-[#43D17A] focus:outline-none"
+                    className="w-full bg-[#FFFFFF] text-[#111111] text-sm rounded-xl px-3 py-3 border border-[#E5E7EB] focus:border-[#111111] focus:outline-none"
                   />
                   <button
                     disabled={waitlistBusy}
                     onClick={joinWaitlist}
-                    className="w-full py-3 rounded-xl border border-[#43D17A] text-[#43D17A] font-extrabold text-xs cursor-pointer disabled:opacity-40"
+                    className="w-full py-3 rounded-xl border border-[#111111] text-[#111111] font-extrabold text-xs cursor-pointer disabled:opacity-40"
                   >
                     {waitlistBusy ? 'Saving...' : 'Join wait list'}
                   </button>
-                  {waitlistMessage && <p className="text-[10px] text-[#8A93A6]">{waitlistMessage}</p>}
+                  {waitlistMessage && <p className="text-[10px] text-[#111111]/60">{waitlistMessage}</p>}
                 </div>
               </div>
             )}
@@ -4902,41 +4908,41 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
               (c.status === 'published' || c.status === 'live') && (
                 <div className="space-y-3">
                   {regError && (
-                    <div className="border border-[#10141C] bg-[#10141C] rounded-xl p-3">
-                      <p className="text-[11px] text-[#F3F1E7] break-words">{regError}</p>
+                    <div className="border border-[#E5E7EB] bg-[#FFFFFF] rounded-xl p-3">
+                      <p className="text-[11px] text-[#111111] break-words">{regError}</p>
                     </div>
                   )}
                   <div>
-                    <label className="block text-[9px] text-[#4B5162] mb-1">
+                    <label className="block text-[9px] text-[#111111]/40 mb-1">
                       Your name
                     </label>
                     <input
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Name"
-                      className="w-full bg-[#10141C] text-[#F3F1E7] text-sm rounded-xl px-3 py-3 border border-[#232A38] focus:border-[#43D17A] focus:outline-none"
+                      className="w-full bg-[#FFFFFF] text-[#111111] text-sm rounded-xl px-3 py-3 border border-[#E5E7EB] focus:border-[#111111] focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[9px] text-[#4B5162] mb-1">
+                    <label className="block text-[9px] text-[#111111]/40 mb-1">
                       Phone or email
                     </label>
                     <input
                       value={contact}
                       onChange={(e) => setContact(e.target.value)}
                       placeholder="So the organiser can reach you"
-                      className="w-full bg-[#10141C] text-[#F3F1E7] text-sm rounded-xl px-3 py-3 border border-[#232A38] focus:border-[#43D17A] focus:outline-none"
+                      className="w-full bg-[#FFFFFF] text-[#111111] text-sm rounded-xl px-3 py-3 border border-[#E5E7EB] focus:border-[#111111] focus:outline-none"
                     />
                   </div>
                   <button
                     disabled={busy}
                     onClick={submit}
-                    className="w-full py-4 rounded-xl bg-[#43D17A] text-[#090B10] font-extrabold text-sm cursor-pointer disabled:opacity-40"
+                    className="w-full py-4 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-sm cursor-pointer disabled:opacity-40"
                   >
                     {busy ? 'Registering...' : c.price === 0 ? 'Register' : `Register - ${c.currency} ${c.price.toLocaleString()}`}
                   </button>
                   {c.price > 0 && (
-                    <p className="text-[10px] text-[#4B5162] leading-snug text-center">
+                    <p className="text-[10px] text-[#111111]/40 leading-snug text-center">
                       No online payment is connected yet. Your spot is held and you
                       arrange payment with the organiser.
                     </p>
@@ -4947,7 +4953,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
         )}
       </div>
 
-      <footer className="border-t border-[#232A38] py-6 text-[10px] text-[#4B5162] text-center">
+      <footer className="border-t border-[#E5E7EB] py-6 text-[10px] text-[#111111]/40 text-center">
         Brief
       </footer>
     </div>
@@ -6386,6 +6392,9 @@ export function App() {
   const [arenaBusyId, setArenaBusyId] = useState<string | null>(null);
   const [openedTournament, setOpenedTournament] = useState<any | null>(null);
   const [openedStanding, setOpenedStanding] = useState<any | null>(null);
+  // The secondary game screen. null = closed; set to a game id to open the
+  // match-setup surface behind a shelf tile.
+  const [arenaOpenGame, setArenaOpenGame] = useState<ArenaGameId | null>(null);
   const [playAsConfirmed, setPlayAsConfirmed] = useState(false);
   const [myGameTag, setMyGameTag] = useState<string | null>(null);
   const [tagDraft, setTagDraft] = useState('');
@@ -6721,13 +6730,21 @@ export function App() {
     showToast('Challenge cancelled.');
   };
 
-  const handleCreateChallenge = async () => {
+  const handleCreateChallenge = async (params?: {
+    mode?: string;
+    stake?: ArenaStakeKind;
+    entryFeeKes?: number;
+    note?: string;
+    openMinutes?: number;
+  }) => {
     setArenaBusyId('create');
     const res = await briefApi.createArenaChallenge({
       gameId: CLIENT_TO_SERVER_GAME[arenaGameId] ?? arenaGameId,
-      mode: arenaGame.modes[0] ?? '1v1',
-      stake: 'friendly',
-      openMinutes: 120
+      mode: params?.mode ?? arenaGame.modes[0] ?? '1v1',
+      stake: params?.stake ?? 'friendly',
+      entryFeeKes: params?.entryFeeKes,
+      note: params?.note,
+      openMinutes: params?.openMinutes ?? 120
     });
     setArenaBusyId(null);
     if (!res.ok) {
@@ -6737,6 +6754,31 @@ export function App() {
     setArenaSection('challenges');
     await refreshArenaChallenges();
     showToast('Challenge opened. Anyone can accept it.');
+  };
+
+  // Shared availability toggle used by both PlayAs and the game screen.
+  const handleToggleAvailability = async () => {
+    setAvailabilityBusy(true);
+    const next = !availabilityOn;
+    const res = await briefApi.setMyAvailability(
+      next
+        ? {
+            state: 'available',
+            gameId: CLIENT_TO_SERVER_GAME[arenaGameId] ?? arenaGameId,
+            mode: '1v1',
+            format: '1v1',
+            window: 'tonight',
+            locationKind: 'online'
+          }
+        : { state: 'offline' }
+    );
+    setAvailabilityBusy(false);
+    if (!res.ok) {
+      showToast(res.error ?? 'Could not update availability.');
+      return;
+    }
+    setAvailabilityOn(res.data.state === 'available');
+    setPlayAsConfirmed(true);
   };
 
   const handleReportMatch = async (match: ArenaMatch, winnerPlayerId: string | null) => {
@@ -7043,11 +7085,11 @@ export function App() {
   }, [pendingObjectId, objects, selectedObjectForDetail]);
 
   return (
-    <div className="min-h-screen bg-[#090B10] text-[#F3F1E7] flex flex-col font-sans selection:bg-[#43D17A] selection:text-[#090B10]">
+    <div className="min-h-screen bg-[#FAFAFA] text-[#111111] flex flex-col font-sans selection:bg-[#111111] selection:text-[#FFFFFF]">
 
       {/* Toast */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#43D17A] text-[#090B10] px-4 py-2.5 rounded-xl font-extrabold shadow-2xl flex items-center gap-2">
+        <div className="fixed bottom-6 right-6 z-50 bg-[#111111] text-[#FFFFFF] px-4 py-2.5 rounded-xl font-extrabold shadow-2xl flex items-center gap-2">
           <Sparkles className="w-4 h-4 shrink-0" />
           <span className="text-xs">{toastMessage}</span>
         </div>
@@ -7060,16 +7102,16 @@ export function App() {
             onClick={() => setSpringOverlayOpen(false)}
             className="fixed inset-0 z-[60] bg-black/45 backdrop-blur-[8px] transition-opacity"
           />
-          <div className="brief-spring-modal fixed top-1/2 left-1/2 z-[70] w-[calc(100%-48px)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[#43D17A]/25 bg-[#10141C]/90 px-6 py-8 text-center shadow-2xl">
+          <div className="brief-spring-modal fixed top-1/2 left-1/2 z-[70] w-[calc(100%-48px)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[#111111]/25 bg-[#FFFFFF]/90 px-6 py-8 text-center shadow-2xl">
             <div className="text-4xl mb-4">⏳</div>
             <h3 className="text-xl font-bold mb-2">Nothing to do here?</h3>
-            <p className="text-sm text-[#8A93A6] leading-relaxed mb-6">
+            <p className="text-sm text-[#111111]/60 leading-relaxed mb-6">
               The current timeline is looking ultra quiet. Let's look into a
               different zone.
             </p>
             <button
               onClick={() => setSpringOverlayOpen(false)}
-              className="w-full py-4 rounded-lg bg-[#10141C] border border-[#43D17A]/30 text-[#F3F1E7] text-[15px] font-bold flex items-center justify-center gap-2 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 hover:border-[#43D17A]/70 active:translate-y-0.5 active:scale-[0.96] active:border-white"
+              className="w-full py-4 rounded-lg bg-[#FFFFFF] border border-[#111111]/30 text-[#111111] text-[15px] font-bold flex items-center justify-center gap-2 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 hover:border-[#111111]/70 active:translate-y-0.5 active:scale-[0.96] active:border-white"
             >
               🗓️ Check a Different Time
             </button>
@@ -7084,7 +7126,7 @@ export function App() {
         {/* DESKTOP / TABLET RAIL. Full height now the header is gone. */}
         <nav
           aria-label="Primary"
-          className="hidden md:flex flex-col shrink-0 w-[76px] hover:w-60 transition-all duration-200 border-r border-[#232A38] bg-[#10141C] sticky top-0 h-screen py-4 group/rail overflow-hidden"
+          className="hidden md:flex flex-col shrink-0 w-[76px] hover:w-60 transition-all duration-200 border-r border-[#E5E7EB] bg-[#FFFFFF] sticky top-0 h-screen py-4 group/rail overflow-hidden"
         >
           <button
             type="button"
@@ -7092,12 +7134,12 @@ export function App() {
             title="Menu"
             aria-expanded={menuOpen}
             className={`relative flex items-center gap-3 px-5 py-3 cursor-pointer transition-colors ${
-              menuOpen ? 'text-[#43D17A] bg-[#10141C] font-extrabold' : 'text-[#43D17A] hover:text-[#F3F1E7]'
+              menuOpen ? 'text-[#111111] bg-[#FFFFFF] font-extrabold' : 'text-[#111111] hover:text-[#111111]'
             }`}
           >
             <span
               className={`absolute left-0 top-1/2 -translate-y-1/2 w-0.5 rounded-r transition-all ${
-                menuOpen ? 'h-7 bg-[#43D17A]' : 'h-0 bg-transparent'
+                menuOpen ? 'h-7 bg-[#111111]' : 'h-0 bg-transparent'
               }`}
             />
             <Menu className="w-5 h-5 shrink-0" />
@@ -7116,14 +7158,14 @@ export function App() {
                 aria-current={active ? 'page' : undefined}
                 className={`relative flex items-center gap-3 px-5 py-3 cursor-pointer transition-colors ${
                   active
-                    ? 'text-[#43D17A] bg-[#10141C] font-extrabold'
-                    : 'text-[#43D17A] hover:text-[#F3F1E7]'
+                    ? 'text-[#111111] bg-[#FFFFFF] font-extrabold'
+                    : 'text-[#111111] hover:text-[#111111]'
                 }`}
               >
                 {/* Active marker on the edge, not a heavy filled pill. */}
                 <span
                   className={`absolute left-0 top-1/2 -translate-y-1/2 w-0.5 rounded-r transition-all ${
-                    active ? 'h-7 bg-[#43D17A]' : 'h-0 bg-transparent'
+                    active ? 'h-7 bg-[#111111]' : 'h-0 bg-transparent'
                   }`}
                 />
                 <Icon className="w-5 h-5 shrink-0" />
@@ -7147,8 +7189,8 @@ export function App() {
           <div className="max-w-5xl mx-auto px-0 sm:px-4 pt-2">
             <div className="mb-5">
               <div className="flex items-center justify-between px-1 pb-3">
-                <h1 className="font-display text-2xl font-semibold tracking-tight text-[#F3F1E7]">Home</h1>
-                <span className="text-[10px] uppercase tracking-[0.2em] text-[#4B5162]">Nearby</span>
+                <h1 className="font-display text-2xl font-semibold tracking-tight text-[#111111]">Home</h1>
+                <span className="text-[10px] uppercase tracking-[0.2em] text-[#111111]/40">Nearby</span>
               </div>
               {/* FEED COMPOSER — the composed, deduplicated magazine feed:
                   hero → tea → discovery → opportunities. Real server rows via
@@ -7186,8 +7228,8 @@ export function App() {
                   onClick={() => { setSelectedObjectType(filter.id); setNearbySection('stream'); }}
                   className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border transition ${
                     nearbySection === 'stream' && selectedObjectType === filter.id
-                      ? 'bg-[#43D17A] text-[#090B10] border-[#43D17A]'
-                      : 'bg-[#10141C] text-[#43D17A] border-[#232A38] hover:border-[#43D17A]'
+                      ? 'bg-[#111111] text-[#FFFFFF] border-[#111111]'
+                      : 'bg-[#FFFFFF] text-[#111111] border-[#E5E7EB] hover:border-[#111111]'
                   }`}
                 >
                   {filter.label}
@@ -7197,8 +7239,8 @@ export function App() {
                 onClick={() => setMoreFilters((v) => !v)}
                 className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border transition ${
                   moreFilters
-                    ? 'bg-[#43D17A] text-[#090B10] border-[#43D17A]'
-                    : 'bg-[#10141C] text-[#8A93A6] border-[#232A38] hover:border-[#43D17A]'
+                    ? 'bg-[#111111] text-[#FFFFFF] border-[#111111]'
+                    : 'bg-[#FFFFFF] text-[#111111]/60 border-[#E5E7EB] hover:border-[#111111]'
                 }`}
               >
                 More
@@ -7221,8 +7263,8 @@ export function App() {
                     onClick={() => setNearbySection(id)}
                     className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
                       nearbySection === id
-                        ? 'bg-[#43D17A] text-[#090B10] border-[#43D17A]'
-                        : 'bg-[#10141C] text-[#43D17A] border-[#232A38]'
+                        ? 'bg-[#111111] text-[#FFFFFF] border-[#111111]'
+                        : 'bg-[#FFFFFF] text-[#111111] border-[#E5E7EB]'
                     }`}
                   >
                     {label}
@@ -7237,8 +7279,8 @@ export function App() {
                     onClick={() => { setSelectedObjectType(filter.id); setNearbySection('stream'); }}
                     className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
                       nearbySection === 'stream' && selectedObjectType === filter.id
-                        ? 'bg-[#43D17A] text-[#090B10] border-[#43D17A]'
-                        : 'bg-[#10141C] text-[#43D17A] border-[#232A38]'
+                        ? 'bg-[#111111] text-[#FFFFFF] border-[#111111]'
+                        : 'bg-[#FFFFFF] text-[#111111] border-[#E5E7EB]'
                     }`}
                   >
                     {filter.label}
@@ -7270,8 +7312,8 @@ export function App() {
                   onClick={() => setMyLayerSection(id)}
                   className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
                     myLayerSection === id
-                      ? 'bg-[#43D17A] text-[#090B10] border-[#43D17A]'
-                      : 'bg-[#10141C] text-[#43D17A] border-[#232A38]'
+                      ? 'bg-[#111111] text-[#FFFFFF] border-[#111111]'
+                      : 'bg-[#FFFFFF] text-[#111111] border-[#E5E7EB]'
                   }`}
                 >
                   {label}
@@ -7302,15 +7344,17 @@ export function App() {
                 ['distribution', INBOX_TABS.distribution],
                 ['calendar', INBOX_TABS.calendar],
                 ['vendors', INBOX_TABS.vendors],
-                ['ai', INBOX_TABS.ai]
+                ['ai', INBOX_TABS.ai],
+                ['engine', INBOX_TABS.engine],
+                ['groupbuy', INBOX_TABS.groupbuy]
               ] as [WorkflowSection, string][]).map(([id, label]) => (
                 <button
                   key={id}
                   onClick={() => setWorkflowSection(id)}
                   className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
                     workflowSection === id
-                      ? 'bg-[#43D17A] text-[#090B10] border-[#43D17A]'
-                      : 'bg-[#10141C] text-[#43D17A] border-[#232A38]'
+                      ? 'bg-[#111111] text-[#FFFFFF] border-[#111111]'
+                      : 'bg-[#FFFFFF] text-[#111111] border-[#E5E7EB]'
                   }`}
                 >
                   {label}
@@ -7339,7 +7383,7 @@ export function App() {
               if (active.length === 0) return null;
               return (
                 <section className="mx-auto mb-8 max-w-5xl">
-                  <h2 className="mb-3 px-1 text-[11px] font-bold uppercase tracking-[0.22em] text-[#8A93A6]">
+                  <h2 className="mb-3 px-1 text-[11px] font-bold uppercase tracking-[0.22em] text-[#111111]/60">
                     Happening nearby
                   </h2>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -7351,7 +7395,7 @@ export function App() {
                           type="button"
                           onClick={() => setSelectedObjectForDetail(obj)}
                           aria-label={obj.title}
-                          className="group relative min-h-[170px] overflow-hidden rounded-2xl border border-[#232A38] bg-[#10141C] text-left transition-transform duration-200 hover:-translate-y-0.5 hover:border-[#43D17A]"
+                          className="group relative min-h-[170px] overflow-hidden rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] text-left transition-transform duration-200 hover:-translate-y-0.5 hover:border-[#111111]"
                         >
                           {obj.imageUrl ? (
                             <img
@@ -7362,15 +7406,15 @@ export function App() {
                               className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                             />
                           ) : (
-                            <div className="absolute inset-0 bg-gradient-to-br from-[#10141C] to-[#090B10]" />
+                            <div className="absolute inset-0 bg-gradient-to-br from-[#F3F4F6] to-[#E5E7EB]" />
                           )}
                           <div className="absolute inset-0 bg-gradient-to-t from-[#090B10]/90 via-[#090B10]/10 to-transparent" />
                           <div className="absolute inset-x-3 bottom-3">
-                            <h3 className="line-clamp-2 text-[14px] font-semibold leading-snug text-[#F3F1E7]">
+                            <h3 className="line-clamp-2 text-[14px] font-semibold leading-snug text-[#FFFFFF]">
                               {obj.title}
                             </h3>
                             {vendors.length > 0 && (
-                              <p className="mt-1 text-[10px] font-semibold text-[#43D17A]">
+                              <p className="mt-1 text-[10px] font-semibold text-[#FFFFFF]">
                                 {vendors.length} {vendors.length === 1 ? 'vendor' : 'vendors'} inside
                               </p>
                             )}
@@ -7410,7 +7454,7 @@ export function App() {
                           <div
                             key={obj.id}
                             onClick={() => setSelectedObjectForDetail(obj)}
-                            className={`group relative min-h-[210px] cursor-pointer overflow-hidden rounded-2xl border bg-[#10141C] transition-transform duration-200 hover:-translate-y-0.5 hover:border-[#43D17A] ${
+                            className={`group relative min-h-[210px] cursor-pointer overflow-hidden rounded-2xl border bg-[#FFFFFF] transition-transform duration-200 hover:-translate-y-0.5 hover:border-[#111111] ${
                               level === 3 ? 'sm:col-span-2 sm:row-span-2 min-h-[270px]' : ''
                             }`}
                           >
@@ -7423,35 +7467,35 @@ export function App() {
                                 className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                               />
                             ) : (
-                              <div className="absolute inset-0 bg-gradient-to-br from-[#10141C] to-[#090B10]" />
+                              <div className="absolute inset-0 bg-gradient-to-br from-[#F3F4F6] to-[#E5E7EB]" />
                             )}
                             <div className="absolute inset-0 bg-gradient-to-t from-[#090B10]/95 via-[#090B10]/20 to-[#090B10]/05" />
                             <div className="absolute left-3 top-3 flex max-w-[calc(100%-24px)] flex-wrap gap-1.5">
-                              <span className="rounded-full bg-[#090B10]/75 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-[#F3F1E7]">
+                              <span className="rounded-full bg-[#FAFAFA]/75 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-[#111111]">
                                 {getObjectTypeMeta(obj.type).label}
                               </span>
                               {!obj.imageUrl && obj.category && (
-                                <span className="rounded-full bg-[#090B10]/75 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-[#F3F1E7]">
+                                <span className="rounded-full bg-[#FAFAFA]/75 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-[#111111]">
                                   {obj.category}
                                 </span>
                               )}
                               {obj.isVerified && (
-                                <span className="rounded-full bg-[#43D17A] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-[#090B10]">
+                                <span className="rounded-full bg-[#111111] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-[#FFFFFF]">
                                   VERIFIED
                                 </span>
                               )}
                               {status && (
-                                <span className="rounded-full bg-[#090B10]/75 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-[#43D17A]">
+                                <span className="rounded-full bg-[#FAFAFA]/75 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-[#111111]">
                                   {status}
                                 </span>
                               )}
                             </div>
                             <div className="absolute inset-x-3 bottom-3">
-                              <h3 className="line-clamp-3 pr-2 text-[14px] font-semibold leading-snug text-[#F3F1E7]">
+                              <h3 className="line-clamp-3 pr-2 text-[14px] font-semibold leading-snug text-[#FFFFFF]">
                                 {obj.title}
                               </h3>
                               {level === 3 && destVendors.length > 0 && (
-                                <p className="mt-1 text-[10px] font-semibold text-[#43D17A]">
+                                <p className="mt-1 text-[10px] font-semibold text-[#FFFFFF]">
                                   {destVendors.length} {destVendors.length === 1 ? 'vendor' : 'vendors'} inside
                                 </p>
                               )}
@@ -7466,7 +7510,7 @@ export function App() {
                                       handlePrimaryAction(obj);
                                     }
                                   }}
-                                  className="rounded-full border border-[#43D17A]/70 bg-[#090B10]/60 px-2.5 py-1 text-[10px] font-bold text-[#43D17A] transition-colors hover:bg-[#43D17A] hover:text-[#090B10]"
+                                  className="rounded-full border border-[#111111]/70 bg-[#FAFAFA]/60 px-2.5 py-1 text-[10px] font-bold text-[#111111] transition-colors hover:bg-[#111111] hover:text-[#FFFFFF]"
                                 >
                                   {level === 3 && destVendors.length > 0 ? "See what's here" : resolveAction(obj).label}
                                 </button>
@@ -7477,7 +7521,7 @@ export function App() {
                                     event.stopPropagation();
                                     handleExecuteProtocolAction('save', obj);
                                   }}
-                                  className="ml-auto inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#F3F1E7]/35 bg-[#090B10]/60 text-[#F3F1E7] transition-colors hover:border-[#43D17A] hover:text-[#43D17A]"
+                                  className="ml-auto inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#E5E7EB]/35 bg-[#FAFAFA]/60 text-[#111111] transition-colors hover:border-[#111111] hover:text-[#111111]"
                                 >
                                   <Bookmark className="h-3.5 w-3.5" />
                                 </button>
@@ -7492,23 +7536,23 @@ export function App() {
                   <section className="mx-auto max-w-5xl py-10 text-center">
                     {searchQuery.trim() !== '' ? (
                       <>
-                        <h2 className="text-base font-semibold text-[#F3F1E7]">Nothing nearby</h2>
+                        <h2 className="text-base font-semibold text-[#111111]">Nothing nearby</h2>
                         <button
                           type="button"
                           onClick={() => handleCreatePursuit(searchQuery)}
-                          className="mt-4 rounded-full border border-[#43D17A]/60 px-4 py-2 text-[11px] font-bold text-[#43D17A]"
+                          className="mt-4 rounded-full border border-[#111111]/60 px-4 py-2 text-[11px] font-bold text-[#111111]"
                         >
                           Keep pursuing
                         </button>
                       </>
                     ) : (
                       <>
-                        <h2 className="text-base font-semibold text-[#F3F1E7]">Nothing nearby</h2>
+                        <h2 className="text-base font-semibold text-[#111111]">Nothing nearby</h2>
                         <div className="mt-4 flex justify-center gap-2">
                           <button
                             type="button"
                             onClick={() => setCaptureOpen(true)}
-                            className="rounded-full bg-[#43D17A] px-4 py-2 text-[11px] font-bold text-[#090B10]"
+                            className="rounded-full bg-[#111111] px-4 py-2 text-[11px] font-bold text-[#FFFFFF]"
                           >
                             Add
                           </button>
@@ -7516,7 +7560,7 @@ export function App() {
                             type="button"
                             onClick={handleLoadDemo}
                             disabled={demoBusy}
-                            className="rounded-full border border-[#232A38] px-4 py-2 text-[11px] font-bold text-[#8A93A6] disabled:opacity-50"
+                            className="rounded-full border border-[#E5E7EB] px-4 py-2 text-[11px] font-bold text-[#111111]/60 disabled:opacity-50"
                           >
                             {demoBusy ? 'Loading' : 'Demo'}
                           </button>
@@ -7533,10 +7577,10 @@ export function App() {
         {/* TEA */}
         {activeTab === 'nearby' && nearbySection === 'tea' && (
           <section className="space-y-4">
-            <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-5">
+            <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-2">
-                <Newspaper className="w-4 h-4 text-[#43D17A]" />
-                <span className="text-[10px] text-[#43D17A]">
+                <Newspaper className="w-4 h-4 text-[#111111]" />
+                <span className="text-[10px] text-[#111111]">
                   Tea
                 </span>
               </div>
@@ -7545,7 +7589,7 @@ export function App() {
                 What people are talking about
               </h2>
 
-              <p className="text-xs text-[#43D17A] mt-1">
+              <p className="text-xs text-[#111111] mt-1">
                 News, notices and neighbourhood chatter, alongside the
                 directory. Posts link back to the places they are about.
               </p>
@@ -7576,8 +7620,8 @@ export function App() {
                     onClick={() => setActiveEdition(edition)}
                     className={`shrink-0 flex items-center gap-1.5 rounded-full px-3 py-1.5 border transition cursor-pointer ${
                       isActive
-                        ? 'bg-[#43D17A] text-[#090B10] border-[#43D17A]'
-                        : 'bg-[#10141C] text-[#43D17A] border-[#232A38] hover:border-[#43D17A]'
+                        ? 'bg-[#111111] text-[#FFFFFF] border-[#111111]'
+                        : 'bg-[#FFFFFF] text-[#111111] border-[#E5E7EB] hover:border-[#111111]'
                     }`}
                   >
                     <Icon className="w-3.5 h-3.5 shrink-0" />
@@ -7586,20 +7630,20 @@ export function App() {
                     </span>
                     <span
                       className={`text-[10px] ${
-                        isActive ? 'text-[#090B10]/70' : 'text-[#8A93A6]'
+                        isActive ? 'text-[#FFFFFF]/70' : 'text-[#111111]/60'
                       }`}
                     >
                       {count}
                     </span>
                     {edition === liveEdition && !isActive && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#43D17A] shrink-0" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#111111] shrink-0" />
                     )}
                   </button>
                 );
               })}
             </div>
 
-            <div className="flex items-center justify-between text-[10px] text-[#8A93A6] px-1">
+            <div className="flex items-center justify-between text-[10px] text-[#111111]/60 px-1">
               <span className="font-extrabold">
                 {getEditionMeta(activeEdition).label}
               </span>
@@ -7621,40 +7665,40 @@ export function App() {
               return (
                 <article
                   key={post.id}
-                  className={`bg-[#10141C] border rounded-2xl p-4 ${
-                    post.isPromoted ? 'border-[#E8A33D]' : 'border-[#232A38]'
+                  className={`bg-[#FFFFFF] border rounded-2xl p-4 ${
+                    post.isPromoted ? 'border-[#111111]' : 'border-[#E5E7EB]'
                   }`}
                 >
                   <div className="flex items-center gap-2 flex-wrap mb-2">
                     <span
-                      className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full border bg-[#090B10] ${kindMeta.tone}`}
+                      className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full border bg-[#FAFAFA] ${kindMeta.tone}`}
                     >
                       {kindMeta.label}
                     </span>
 
-                    <span className="text-[11px] font-bold text-[#F3F1E7]">
+                    <span className="text-[11px] font-bold text-[#111111]">
                       {post.authorName}
                     </span>
 
                     {post.authorIsVerified && (
-                      <ShieldCheck className="w-3 h-3 text-[#43D17A] shrink-0" />
+                      <ShieldCheck className="w-3 h-3 text-[#111111] shrink-0" />
                     )}
 
-                    <span className="text-[10px] text-[#8A93A6]">
+                    <span className="text-[10px] text-[#111111]/60">
                       {getRelativeTime(post.publishedAt)}
                     </span>
                   </div>
 
-                  <h3 className="text-sm font-extrabold text-[#F3F1E7] leading-snug">
+                  <h3 className="text-sm font-extrabold text-[#111111] leading-snug">
                     {post.title}
                   </h3>
 
-                  <p className="text-xs text-[#43D17A] mt-1.5 leading-relaxed">
+                  <p className="text-xs text-[#111111] mt-1.5 leading-relaxed">
                     {post.body}
                   </p>
 
                   {post.isPromoted && (
-                    <p className="text-[10px] text-[#FF6A4D] mt-2">
+                    <p className="text-[10px] text-[#111111] mt-2">
                       Paid distribution by {post.promotedBy}.
                     </p>
                   )}
@@ -7662,7 +7706,7 @@ export function App() {
                   {subject && (
                     <button
                       onClick={() => openPostSubject(post)}
-                      className="mt-3 w-full flex items-center gap-2 bg-[#090B10] border border-[#232A38] hover:border-[#43D17A] rounded-xl p-2.5 transition cursor-pointer group text-left"
+                      className="mt-3 w-full flex items-center gap-2 bg-[#FAFAFA] border border-[#E5E7EB] hover:border-[#111111] rounded-xl p-2.5 transition cursor-pointer group text-left"
                     >
                       {subject.imageUrl && (
                         <img
@@ -7673,23 +7717,23 @@ export function App() {
                       )}
 
                       <div className="min-w-0 flex-1">
-                        <div className="text-[9px] text-[#8A93A6]">
+                        <div className="text-[9px] text-[#111111]/60">
                           About this {getObjectTypeMeta(subject.type).label}
                         </div>
-                        <div className="text-[11px] font-extrabold truncate group-hover:text-[#43D17A]">
+                        <div className="text-[11px] font-extrabold truncate group-hover:text-[#111111]">
                           {subject.title}
                         </div>
                       </div>
 
-                      <ArrowRight className="w-3.5 h-3.5 text-[#43D17A] shrink-0" />
+                      <ArrowRight className="w-3.5 h-3.5 text-[#111111] shrink-0" />
                     </button>
                   )}
 
-                  <div className="flex items-center gap-4 mt-3 pt-3 border-t border-[#232A38]">
+                  <div className="flex items-center gap-4 mt-3 pt-3 border-t border-[#E5E7EB]">
                     <button
                       onClick={() => toggleLike(post)}
                       className={`flex items-center gap-1.5 text-[11px] font-bold cursor-pointer transition ${
-                        isLiked ? 'text-[#43D17A]' : 'text-[#8A93A6] hover:text-[#43D17A]'
+                        isLiked ? 'text-[#111111]' : 'text-[#111111]/60 hover:text-[#111111]'
                       }`}
                     >
                       <Heart
@@ -7698,12 +7742,12 @@ export function App() {
                       {formatCount(post.reactionsCount + (isLiked ? 1 : 0))}
                     </button>
 
-                    <span className="flex items-center gap-1.5 text-[11px] font-bold text-[#8A93A6]">
+                    <span className="flex items-center gap-1.5 text-[11px] font-bold text-[#111111]/60">
                       No discussion yet
                     </span>
 
                     {post.tags && post.tags.length > 0 && (
-                      <span className="ml-auto text-[10px] text-[#8A93A6] truncate">
+                      <span className="ml-auto text-[10px] text-[#111111]/60 truncate">
                         {post.tags.map((tag) => `#${tag}`).join(' ')}
                       </span>
                     )}
@@ -7713,8 +7757,8 @@ export function App() {
             })}
 
             {editionPosts.length === 0 && (
-              <div className="py-16 text-center border border-dashed border-[#232A38] rounded-2xl">
-                <Newspaper className="w-8 h-8 mx-auto mb-3 text-[#8A93A6]" />
+              <div className="py-16 text-center border border-dashed border-[#E5E7EB] rounded-2xl">
+                <Newspaper className="w-8 h-8 mx-auto mb-3 text-[#111111]/60" />
                 <p className="text-sm font-bold">No tea in this edition yet.</p>
               </div>
             )}
@@ -7724,17 +7768,17 @@ export function App() {
         {/* MY LAYER */}
         {activeTab === 'mylayer' && myLayerSection === 'saved' && (
           <section className="space-y-4">
-            <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-5">
+            <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-2">
-                <Bookmark className="w-4 h-4 text-[#43D17A]" />
-                <span className="text-[10px] text-[#43D17A]">
+                <Bookmark className="w-4 h-4 text-[#111111]" />
+                <span className="text-[10px] text-[#111111]">
                   Your saved things
                 </span>
               </div>
 
               <h2 className="text-xl font-extrabold">Things you've kept.</h2>
 
-              <p className="text-xs text-[#43D17A] mt-1">
+              <p className="text-xs text-[#111111] mt-1">
                 {savedObjects.length > 0
                   ? `${savedObjects.length} saved across ${savedGroups.length} ${
                       savedGroups.length === 1 ? 'section' : 'sections'
@@ -7746,10 +7790,10 @@ export function App() {
             {savedGroups.map((group) => (
               <div key={group.label}>
                 <div className="flex items-baseline gap-2 mb-2 px-1">
-                  <h3 className="text-[11px] font-extrabold text-[#43D17A]">
+                  <h3 className="text-[11px] font-extrabold text-[#111111]">
                     {group.label}
                   </h3>
-                  <span className="text-[10px] text-[#8A93A6]">
+                  <span className="text-[10px] text-[#111111]/60">
                     {group.items.length}
                   </span>
                 </div>
@@ -7762,7 +7806,7 @@ export function App() {
                     return (
                       <div
                         key={obj.id}
-                        className="bg-[#10141C] border border-[#232A38] hover:border-[#43D17A] rounded-2xl p-3 transition"
+                        className="bg-[#FFFFFF] border border-[#E5E7EB] hover:border-[#111111] rounded-2xl p-3 transition"
                       >
                         <button
                           onClick={() => setSelectedObjectForDetail(obj)}
@@ -7778,14 +7822,14 @@ export function App() {
                             )}
 
                             <div className="min-w-0 flex-1">
-                              <div className="text-[9px] text-[#8A93A6]">
+                              <div className="text-[9px] text-[#111111]/60">
                                 {obj.category}
                               </div>
-                              <div className="text-xs font-extrabold mt-0.5 line-clamp-2 group-hover:text-[#43D17A]">
+                              <div className="text-xs font-extrabold mt-0.5 line-clamp-2 group-hover:text-[#111111]">
                                 {obj.title}
                               </div>
                               {distance && (
-                                <div className="text-[10px] text-[#8A93A6] mt-1">
+                                <div className="text-[10px] text-[#111111]/60 mt-1">
                                   {distance}
                                 </div>
                               )}
@@ -7797,7 +7841,7 @@ export function App() {
                           {action.kind === 'internal' || action.kind === 'none' ? (
                             <button
                               onClick={() => setSelectedObjectForDetail(obj)}
-                              className="flex-1 py-2 rounded-xl bg-[#10141C] border border-[#232A38] text-[#43D17A] font-extrabold text-[11px] cursor-pointer"
+                              className="flex-1 py-2 rounded-xl bg-[#FFFFFF] border border-[#E5E7EB] text-[#111111] font-extrabold text-[11px] cursor-pointer"
                             >
                               View details
                             </button>
@@ -7817,7 +7861,7 @@ export function App() {
                                   { silent: true }
                                 )
                               }
-                              className="flex-1 py-2 rounded-xl bg-[#43D17A] text-[#090B10] font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer"
+                              className="flex-1 py-2 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer"
                             >
                               {action.label}
                               <ArrowRight className="w-3 h-3" />
@@ -7827,7 +7871,7 @@ export function App() {
                           <button
                             onClick={() => handleCreatePursuit(obj.title)}
                             title="Pursue similar"
-                            className="p-2 rounded-xl bg-[#10141C] text-[#43D17A] border border-[#232A38] hover:border-[#43D17A] cursor-pointer"
+                            className="p-2 rounded-xl bg-[#FFFFFF] text-[#111111] border border-[#E5E7EB] hover:border-[#111111] cursor-pointer"
                           >
                             <Search className="w-3.5 h-3.5" />
                           </button>
@@ -7835,7 +7879,7 @@ export function App() {
                           <button
                             onClick={() => handleUnsave(obj)}
                             title="Remove from saved"
-                            className="p-2 rounded-xl bg-[#10141C] text-[#43D17A] border border-[#232A38] hover:border-[#43D17A] cursor-pointer"
+                            className="p-2 rounded-xl bg-[#FFFFFF] text-[#111111] border border-[#E5E7EB] hover:border-[#111111] cursor-pointer"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -7853,8 +7897,8 @@ export function App() {
                                 onClick={() => handleSetSaveLabel(obj, label)}
                                 className={`text-[9px] font-bold px-2 py-0.5 rounded-full border cursor-pointer transition ${
                                   active
-                                    ? 'bg-[#43D17A] text-[#090B10] border-[#43D17A]'
-                                    : 'bg-transparent text-[#4B5162] border-[#232A38] hover:border-[#232A38]'
+                                    ? 'bg-[#111111] text-[#FFFFFF] border-[#111111]'
+                                    : 'bg-transparent text-[#111111]/40 border-[#E5E7EB] hover:border-[#E5E7EB]'
                                 }`}
                               >
                                 {label}
@@ -7876,8 +7920,8 @@ export function App() {
               if (recent.length === 0) return null;
 
               return (
-                <div className="mt-8 pt-5 border-t border-[#232A38]">
-                  <p className="text-[10px] text-[#4B5162] mb-3">
+                <div className="mt-8 pt-5 border-t border-[#E5E7EB]">
+                  <p className="text-[10px] text-[#111111]/40 mb-3">
                     Recent activity
                   </p>
                   <div className="space-y-1.5">
@@ -7887,10 +7931,10 @@ export function App() {
                         onClick={() => setSelectedObjectForDetail(entry.object)}
                         className="w-full text-left flex items-center gap-2 py-1.5 cursor-pointer"
                       >
-                        <span className="text-[9px] text-[#43D17A] w-20 shrink-0">
+                        <span className="text-[9px] text-[#111111] w-20 shrink-0">
                           {entry.verb}
                         </span>
-                        <span className="text-[11px] text-[#8A93A6] truncate">
+                        <span className="text-[11px] text-[#111111]/60 truncate">
                           {entry.object.title}
                         </span>
                       </button>
@@ -7902,9 +7946,9 @@ export function App() {
 
             {savedObjects.length === 0 && (
               <div className="py-14 text-center">
-                <Bookmark className="w-8 h-8 mx-auto mb-3 text-[#4B5162]" />
-                <p className="font-display text-lg font-semibold text-[#F3F1E7]">Nothing kept yet.</p>
-                <p className="mt-1 text-xs text-[#8A93A6]">
+                <Bookmark className="w-8 h-8 mx-auto mb-3 text-[#111111]/40" />
+                <p className="font-display text-lg font-semibold text-[#111111]">Nothing kept yet.</p>
+                <p className="mt-1 text-xs text-[#111111]/60">
                   Save a place or opportunity and it will sit here, quiet and waiting.
                 </p>
               </div>
@@ -7923,10 +7967,10 @@ export function App() {
               liveSourceCount={connectorStatus.liveSources.length}
               stats={connectorStatus.stats as any}
             />
-            <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-5">
+            <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-2">
-                <Briefcase className="w-4 h-4 text-[#43D17A]" />
-                <span className="text-[10px] text-[#43D17A]">
+                <Briefcase className="w-4 h-4 text-[#111111]" />
+                <span className="text-[10px] text-[#111111]">
                   Workflows
                 </span>
               </div>
@@ -7935,7 +7979,7 @@ export function App() {
                 Things you can actually do.
               </h2>
 
-              <p className="text-xs text-[#43D17A] mt-1">
+              <p className="text-xs text-[#111111] mt-1">
                 {workflowSection === 'completed'
                   ? 'Processes you have already finished.'
                   : 'Follow a process instead of figuring it out from scratch.'}
@@ -7945,7 +7989,7 @@ export function App() {
             {(workflowSection === 'completed' ? completedJourneys : activeJourneys)
               .length === 0 && (
               workflowSection === 'completed' ? (
-                <p className="text-xs text-[#8A93A6]">
+                <p className="text-xs text-[#111111]/60">
                   Nothing finished yet. Your wins will collect here.
                 </p>
               ) : (
@@ -7961,12 +8005,12 @@ export function App() {
             {(workflowSection === 'completed' ? completedJourneys : activeJourneys).map((journey) => (
               <div
                 key={journey.id}
-                className="bg-[#10141C] border border-[#232A38] rounded-2xl overflow-hidden"
+                className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl overflow-hidden"
               >
                 <div className="p-5">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <span className="text-[10px] text-[#43D17A]">
+                      <span className="text-[10px] text-[#111111]">
                         {journey.category}
                       </span>
 
@@ -7974,46 +8018,46 @@ export function App() {
                         {journey.title}
                       </h3>
 
-                      <p className="text-xs text-[#43D17A] mt-1">
+                      <p className="text-xs text-[#111111] mt-1">
                         {journey.description}
                       </p>
                     </div>
 
-                    <span className="text-xs font-bold text-[#43D17A]">
+                    <span className="text-xs font-bold text-[#111111]">
                       {journey.progressPercent}%
                     </span>
                   </div>
 
-                  <div className="h-1.5 bg-[#090B10] rounded-full mt-5 overflow-hidden">
+                  <div className="h-1.5 bg-[#FAFAFA] rounded-full mt-5 overflow-hidden">
                     <div
-                      className="h-full bg-[#43D17A] rounded-full"
+                      className="h-full bg-[#111111] rounded-full"
                       style={{ width: `${journey.progressPercent}%` }}
                     />
                   </div>
                 </div>
 
-                <div className="border-t border-[#232A38]">
+                <div className="border-t border-[#E5E7EB]">
                   {journey.steps.map((step) => (
                     <div
                       key={step.id}
-                      className="flex items-center gap-3 p-4 border-b border-[#232A38] last:border-b-0"
+                      className="flex items-center gap-3 p-4 border-b border-[#E5E7EB] last:border-b-0"
                     >
                       {step.isCompleted ? (
-                        <CheckCircle2 className="w-5 h-5 text-[#43D17A] shrink-0" />
+                        <CheckCircle2 className="w-5 h-5 text-[#111111] shrink-0" />
                       ) : (
-                        <Circle className="w-5 h-5 text-[#8A93A6] shrink-0" />
+                        <Circle className="w-5 h-5 text-[#111111]/60 shrink-0" />
                       )}
 
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-extrabold">
                           {step.title}
                         </p>
-                        <p className="text-[10px] text-[#8A93A6]">
+                        <p className="text-[10px] text-[#111111]/60">
                           {step.description}
                         </p>
                       </div>
 
-                      <span className="text-[9px] text-[#43D17A]">
+                      <span className="text-[9px] text-[#111111]">
                         {step.statusLabel}
                       </span>
                     </div>
@@ -8039,8 +8083,8 @@ export function App() {
         {activeTab === 'arena' && (
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
             <div>
-              <h2 className="text-lg font-extrabold text-[#F3F1E7]">Arena</h2>
-              <p className="text-[11px] text-[#8A93A6] leading-snug mt-1">
+              <h2 className="text-lg font-extrabold text-[#111111]">Arena</h2>
+              <p className="text-[11px] text-[#111111]/60 leading-snug mt-1">
                 Gather with people to play, host and discover experiences. Not a competition.
               </p>
             </div>
@@ -8074,38 +8118,51 @@ export function App() {
                 myTag={myGameTag}
                 availabilityOn={availabilityOn}
                 availabilityBusy={availabilityBusy}
-                onToggleAvailability={async () => {
-                  setAvailabilityBusy(true);
-                  const next = !availabilityOn;
-                  const res = await briefApi.setMyAvailability(
-                    next
-                      ? {
-                          state: 'available',
-                          gameId: CLIENT_TO_SERVER_GAME[arenaGameId] ?? arenaGameId,
-                          mode: '1v1',
-                          format: '1v1',
-                          window: 'tonight',
-                          locationKind: 'online'
-                        }
-                      : { state: 'offline' }
-                  );
-                  setAvailabilityBusy(false);
-                  if (!res.ok) {
-                    showToast(res.error ?? 'Could not update availability.');
-                    return;
-                  }
-                  setAvailabilityOn(res.data.state === 'available');
-                  setPlayAsConfirmed(true);
-                }}
+                onToggleAvailability={() => void handleToggleAvailability()}
               />
             )}
 
-            <ArenaPortal
+            <ArenaShelf
               games={ARENA_GAMES}
               activity={arenaActivity}
-              selectedId={arenaGameId}
-              onSelect={(id) => { setArenaGameId(id); }}
-              onFind={() => setArenaSection('challenges')}
+              onOpen={(id) => { setArenaGameId(id); setArenaOpenGame(id); }}
+            />
+
+            {/* Secondary screen: the match-setup surface behind a shelf tile. */}
+            {arenaOpenGame && (
+              <ArenaGameScreen
+                game={ARENA_GAMES.find((g) => g.id === arenaOpenGame) ?? ARENA_GAMES[0]}
+                activity={arenaActivity[arenaOpenGame] ?? 0}
+                challenges={challenges.filter(
+                  (c) =>
+                    c.gameId === arenaOpenGame ||
+                    (SERVER_TO_CLIENT_GAME[c.gameId] ?? c.gameId) === arenaOpenGame
+                )}
+                myTag={myGameTag}
+                availabilityOn={availabilityOn}
+                availabilityBusy={availabilityBusy}
+                busyId={arenaBusyId}
+                myPlayerId={CURRENT_PLAYER_ID || null}
+                onClose={() => setArenaOpenGame(null)}
+                onCreateChallenge={(params) => void handleCreateChallenge(params)}
+                onAcceptChallenge={(c) => void handleAcceptChallenge(c)}
+                onCancelChallenge={(c) => void handleCancelChallenge(c)}
+                onToggleAvailability={() => void handleToggleAvailability()}
+                onViewLeaderboard={() => { setArenaSection('leaderboard'); setArenaOpenGame(null); }}
+                onViewTournaments={() => { setArenaSection('tournaments'); setArenaOpenGame(null); }}
+              />
+            )}
+
+            {/* Package 2: the high-frequency match queue — real pipeline,
+                inline toggles, instant-queue availability. */}
+            <MatchQueuePanel
+              gameName={arenaGame.name}
+              latestChallenge={challenges.find((c) => c.status === 'open' || c.status === 'accepted') ?? challenges[0] ?? null}
+              latestMatch={matches[0] ?? null}
+              availabilityOn={availabilityOn}
+              busy={availabilityBusy || arenaBusyId === 'create'}
+              onEnterQueue={(params) => void handleCreateChallenge({ stake: params.stake, note: params.note })}
+              onToggleAvailability={() => void handleToggleAvailability()}
             />
 
             <div className="flex flex-wrap gap-1.5">
@@ -8120,8 +8177,8 @@ export function App() {
                   onClick={() => setArenaSection(key)}
                   className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer border ${
                     arenaSection === key
-                      ? 'bg-[#10141C] text-[#43D17A] border-[#43D17A]'
-                      : 'bg-[#10141C] text-[#43D17A] border-[#232A38]'
+                      ? 'bg-[#FFFFFF] text-[#111111] border-[#111111]'
+                      : 'bg-[#FFFFFF] text-[#111111] border-[#E5E7EB]'
                   }`}
                 >
                   {label}
@@ -8139,23 +8196,23 @@ export function App() {
                   type="button"
                   disabled={arenaBusyId === 'create'}
                   onClick={() => void handleCreateChallenge()}
-                  className="w-full h-10 rounded-xl bg-[#43D17A] text-[#090B10] text-[12px] font-extrabold cursor-pointer disabled:opacity-40"
+                  className="w-full h-10 rounded-xl bg-[#111111] text-[#FFFFFF] text-[12px] font-extrabold cursor-pointer disabled:opacity-40"
                 >
                   {arenaBusyId === 'create' ? 'Opening…' : `Open a ${arenaGame.modes[0] ?? '1v1'} challenge`}
                 </button>
                 {challenges.length === 0 && (
-                  <p className="text-xs text-[#8A93A6]">No open challenges for {arenaGame.name} right now.</p>
+                  <p className="text-xs text-[#111111]/60">No open challenges for {arenaGame.name} right now.</p>
                 )}
                 {challenges.map((c) => {
                   const mine = Boolean(CURRENT_PLAYER_ID) && c.createdByPlayerId === CURRENT_PLAYER_ID;
                   const expired = Boolean(c.openUntil) && c.openUntil <= new Date().toISOString();
                   const taken = c.status === 'accepted' || Boolean(c.acceptedByPlayerId);
                   return (
-                    <div key={c.id} className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3 flex items-center justify-between gap-2">
+                    <div key={c.id} className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-3 flex items-center justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="text-xs font-extrabold text-[#F3F1E7]">{c.mode} · {c.stake === 'friendly' ? 'Friendly' : c.stake === 'ranked' ? 'Ranked' : 'Entry fee'}</p>
-                        {c.entryFeeKes ? <p className="text-[10px] text-[#8A93A6]">KES {c.entryFeeKes}</p> : null}
-                        <p className="text-[10px] text-[#8A93A6] mt-0.5">
+                        <p className="text-xs font-extrabold text-[#111111]">{c.mode} · {c.stake === 'friendly' ? 'Friendly' : c.stake === 'ranked' ? 'Ranked' : 'Entry fee'}</p>
+                        {c.entryFeeKes ? <p className="text-[10px] text-[#111111]/60">KES {c.entryFeeKes}</p> : null}
+                        <p className="text-[10px] text-[#111111]/60 mt-0.5">
                           {mine ? 'Your challenge' : 'Open challenge'}
                           {expired ? ' · expired' : ''}
                           {taken ? ' · taken' : ''}
@@ -8166,7 +8223,7 @@ export function App() {
                           type="button"
                           disabled={arenaBusyId === c.id || taken || c.status === 'cancelled'}
                           onClick={() => void handleCancelChallenge(c)}
-                          className="shrink-0 px-3 py-1.5 rounded-xl border border-[#232A38] text-[#F3F1E7] text-[11px] font-extrabold cursor-pointer disabled:opacity-40"
+                          className="shrink-0 px-3 py-1.5 rounded-xl border border-[#E5E7EB] text-[#111111] text-[11px] font-extrabold cursor-pointer disabled:opacity-40"
                         >
                           Cancel
                         </button>
@@ -8175,7 +8232,7 @@ export function App() {
                           type="button"
                           disabled={arenaBusyId === c.id || expired || taken}
                           onClick={() => void handleAcceptChallenge(c)}
-                          className="shrink-0 px-3 py-1.5 rounded-xl bg-[#43D17A] text-[#090B10] text-[11px] font-extrabold cursor-pointer disabled:opacity-40"
+                          className="shrink-0 px-3 py-1.5 rounded-xl bg-[#111111] text-[#FFFFFF] text-[11px] font-extrabold cursor-pointer disabled:opacity-40"
                           title={expired ? 'This challenge has expired' : taken ? 'Already accepted' : undefined}
                         >
                           Accept
@@ -8190,26 +8247,26 @@ export function App() {
             {arenaSection === 'tournaments' && (
               <div className="space-y-2">
                 {arenaTournaments.filter((t) => !t.gameId || (SERVER_TO_CLIENT_GAME[t.gameId] ?? t.gameId) === arenaGameId).length === 0 && (
-                  <p className="text-xs text-[#8A93A6]">No tournaments yet for {arenaGame.name}.</p>
+                  <p className="text-xs text-[#111111]/60">No tournaments yet for {arenaGame.name}.</p>
                 )}
                 {arenaTournaments.filter((t) => !t.gameId || (SERVER_TO_CLIENT_GAME[t.gameId] ?? t.gameId) === arenaGameId).map((t) => (
                   <button
                     key={t.id}
                     type="button"
                     onClick={() => setOpenedTournament(t)}
-                    className="w-full text-left bg-[#10141C] border border-[#232A38] rounded-2xl p-3 cursor-pointer"
+                    className="w-full text-left bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-3 cursor-pointer"
                   >
-                    <p className="text-xs font-extrabold text-[#F3F1E7]">{t.title}</p>
-                    {t.startsAt && <p className="text-[10px] text-[#8A93A6] mt-0.5">{t.startsAt.slice(0, 16).replace('T', ' ')}</p>}
-                    <p className="text-[10px] text-[#43D17A] mt-1">Open</p>
+                    <p className="text-xs font-extrabold text-[#111111]">{t.title}</p>
+                    {t.startsAt && <p className="text-[10px] text-[#111111]/60 mt-0.5">{t.startsAt.slice(0, 16).replace('T', ' ')}</p>}
+                    <p className="text-[10px] text-[#111111] mt-1">Open</p>
                   </button>
                 ))}
                 {openedTournament && (
-                  <div className="bg-[#10141C] border border-[#43D17A] rounded-2xl p-3 space-y-2">
+                  <div className="bg-[#FFFFFF] border border-[#111111] rounded-2xl p-3 space-y-2">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="text-xs font-extrabold text-[#F3F1E7]">{openedTournament.title}</p>
-                        <p className="text-[10px] text-[#8A93A6] mt-0.5">
+                        <p className="text-xs font-extrabold text-[#111111]">{openedTournament.title}</p>
+                        <p className="text-[10px] text-[#111111]/60 mt-0.5">
                           {openedTournament.status || 'open'}
                           {openedTournament.startsAt ? ` · ${String(openedTournament.startsAt).slice(0, 16).replace('T', ' ')}` : ''}
                         </p>
@@ -8217,15 +8274,15 @@ export function App() {
                       <button
                         type="button"
                         onClick={() => setOpenedTournament(null)}
-                        className="text-[10px] font-extrabold text-[#8A93A6] cursor-pointer"
+                        className="text-[10px] font-extrabold text-[#111111]/60 cursor-pointer"
                       >
                         Close
                       </button>
                     </div>
                     {openedTournament.maxPlayers != null && (
-                      <p className="text-[11px] text-[#8A93A6]">Cap {openedTournament.maxPlayers}</p>
+                      <p className="text-[11px] text-[#111111]/60">Cap {openedTournament.maxPlayers}</p>
                     )}
-                    <p className="text-[11px] text-[#8A93A6] leading-snug">
+                    <p className="text-[11px] text-[#111111]/60 leading-snug">
                       Registration is not on the server yet. Brief will not pretend you can join.
                     </p>
                   </div>
@@ -8236,39 +8293,39 @@ export function App() {
             {arenaSection === 'leaderboard' && (
               <div className="space-y-2">
                 {arenaLeaderboard.length === 0 && (
-                  <p className="text-xs text-[#8A93A6]">No confirmed results yet for {arenaGame.name}.</p>
+                  <p className="text-xs text-[#111111]/60">No confirmed results yet for {arenaGame.name}.</p>
                 )}
                 {arenaLeaderboard.map((row, i) => (
                   <button
                     key={row.playerId}
                     type="button"
                     onClick={() => setOpenedStanding(row)}
-                    className="w-full bg-[#10141C] border border-[#232A38] rounded-2xl p-3 flex items-center justify-between gap-2 text-left cursor-pointer"
+                    className="w-full bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-3 flex items-center justify-between gap-2 text-left cursor-pointer"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-[11px] font-bold text-[#4B5162] w-4">{i + 1}</span>
-                      <span className="text-xs font-extrabold text-[#F3F1E7]">{row.player}</span>
+                      <span className="text-[11px] font-bold text-[#111111]/40 w-4">{i + 1}</span>
+                      <span className="text-xs font-extrabold text-[#111111]">{row.player}</span>
                     </div>
-                    <span className="text-[10px] text-[#8A93A6]">{row.won} won · {row.played} played</span>
+                    <span className="text-[10px] text-[#111111]/60">{row.won} won · {row.played} played</span>
                   </button>
                 ))}
                 {openedStanding && (
-                  <div className="bg-[#10141C] border border-[#43D17A] rounded-2xl p-3 space-y-1">
+                  <div className="bg-[#FFFFFF] border border-[#111111] rounded-2xl p-3 space-y-1">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-xs font-extrabold text-[#F3F1E7]">{openedStanding.player}</p>
+                      <p className="text-xs font-extrabold text-[#111111]">{openedStanding.player}</p>
                       <button
                         type="button"
                         onClick={() => setOpenedStanding(null)}
-                        className="text-[10px] font-extrabold text-[#8A93A6] cursor-pointer"
+                        className="text-[10px] font-extrabold text-[#111111]/60 cursor-pointer"
                       >
                         Close
                       </button>
                     </div>
-                    <p className="text-[11px] text-[#8A93A6]">
+                    <p className="text-[11px] text-[#111111]/60">
                       {openedStanding.won} won · {openedStanding.played} played
                       {typeof openedStanding.winRate === 'number' ? ` · ${Math.round(openedStanding.winRate * 100)}%` : ''}
                     </p>
-                    <p className="text-[10px] text-[#4B5162]">Confirmed results only. Brief does not invent a rating.</p>
+                    <p className="text-[10px] text-[#111111]/40">Confirmed results only. Brief does not invent a rating.</p>
                   </div>
                 )}
               </div>
@@ -8279,13 +8336,13 @@ export function App() {
         {activeTab === 'mylayer' && myLayerSection === 'activity' && (
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
             <div>
-              <h2 className="text-lg font-extrabold text-[#F3F1E7]">My Activity</h2>
-              <p className="text-[11px] text-[#8A93A6] leading-snug mt-1">
+              <h2 className="text-lg font-extrabold text-[#111111]">My Activity</h2>
+              <p className="text-[11px] text-[#111111]/60 leading-snug mt-1">
                 What you have saved, watched and acted on.
               </p>
             </div>
             {relationships.length === 0 && (
-              <p className="text-xs text-[#8A93A6]">Nothing yet.</p>
+              <p className="text-xs text-[#111111]/60">Nothing yet.</p>
             )}
             <div className="space-y-2">
               {[...relationships]
@@ -8300,15 +8357,15 @@ export function App() {
                       onClick={() => {
                         if (obj) setSelectedObjectForDetail(obj);
                       }}
-                      className="w-full bg-[#10141C] border border-[#232A38] rounded-2xl p-3 flex items-center gap-3 text-left cursor-pointer disabled:cursor-default disabled:opacity-70"
+                      className="w-full bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-3 flex items-center gap-3 text-left cursor-pointer disabled:cursor-default disabled:opacity-70"
                     >
-                      <span className="text-[9px] text-[#43D17A] shrink-0">
+                      <span className="text-[9px] text-[#111111] shrink-0">
                         {rel.verb}
                       </span>
-                      <p className="text-xs text-[#F3F1E7] flex-1 min-w-0 truncate">
+                      <p className="text-xs text-[#111111] flex-1 min-w-0 truncate">
                         {obj ? obj.title : rel.targetId}
                       </p>
-                      <span className="text-[9px] text-[#4B5162] shrink-0">
+                      <span className="text-[9px] text-[#111111]/40 shrink-0">
                         {rel.updatedAt.slice(0, 10)}
                       </span>
                     </button>
@@ -8324,16 +8381,16 @@ export function App() {
         {activeTab === 'mylayer' && myLayerSection === 'arena' && (
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
             <div>
-              <h2 className="text-lg font-extrabold text-[#F3F1E7]">Your Arena</h2>
-              <p className="text-[11px] text-[#8A93A6] leading-snug mt-1">
+              <h2 className="text-lg font-extrabold text-[#111111]">Your Arena</h2>
+              <p className="text-[11px] text-[#111111]/60 leading-snug mt-1">
                 Your matches. Play is recorded when both players confirm a result.
               </p>
             </div>
-            <h3 className="text-[11px] font-extrabold text-[#4B5162]">
+            <h3 className="text-[11px] font-extrabold text-[#111111]/40">
               My Matches
             </h3>
             {matches.length === 0 && (
-              <p className="text-xs text-[#8A93A6]">
+              <p className="text-xs text-[#111111]/60">
                 No matches yet. Accept a challenge in Arena to start one.
               </p>
             )}
@@ -8347,11 +8404,11 @@ export function App() {
                 const canReport = status === 'scheduled' && Boolean(me);
                 const opponent = m.playerAId === me ? m.playerBId : m.playerAId;
                 return (
-                  <div key={m.id} className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3 space-y-2">
-                    <p className="text-xs text-[#F3F1E7]">
+                  <div key={m.id} className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-3 space-y-2">
+                    <p className="text-xs text-[#111111]">
                       {arenaPlayerLabel(m.playerAId, me || null, m.playerAName)} vs {arenaPlayerLabel(m.playerBId, me || null, m.playerBName)}
                     </p>
-                    <p className="text-[10px] text-[#8A93A6]">
+                    <p className="text-[10px] text-[#111111]/60">
                       {status === 'confirmed'
                         ? (m.scoreLine || 'Confirmed')
                         : status === 'disputed'
@@ -8364,13 +8421,13 @@ export function App() {
                     </p>
                     {canReport && (
                       <div className="flex flex-wrap gap-1.5">
-                        <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleReportMatch(m, me)} className="px-2.5 py-1.5 rounded-lg bg-[#43D17A] text-[#090B10] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">I won</button>
-                        <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleReportMatch(m, opponent ?? null)} className="px-2.5 py-1.5 rounded-lg border border-[#232A38] text-[#F3F1E7] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">They won</button>
-                        <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleReportMatch(m, null)} className="px-2.5 py-1.5 rounded-lg border border-[#232A38] text-[#F3F1E7] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">Draw</button>
+                        <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleReportMatch(m, me)} className="px-2.5 py-1.5 rounded-lg bg-[#111111] text-[#FFFFFF] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">I won</button>
+                        <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleReportMatch(m, opponent ?? null)} className="px-2.5 py-1.5 rounded-lg border border-[#E5E7EB] text-[#111111] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">They won</button>
+                        <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleReportMatch(m, null)} className="px-2.5 py-1.5 rounded-lg border border-[#E5E7EB] text-[#111111] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">Draw</button>
                       </div>
                     )}
                     {canConfirm && (
-                      <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleConfirmMatch(m)} className="px-3 py-1.5 rounded-lg bg-[#43D17A] text-[#090B10] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">
+                      <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleConfirmMatch(m)} className="px-3 py-1.5 rounded-lg bg-[#111111] text-[#FFFFFF] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">
                         Confirm result
                       </button>
                     )}
@@ -8384,26 +8441,26 @@ export function App() {
         {activeTab === 'mylayer' && myLayerSection === 'points' && (
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
             <div>
-              <h2 className="text-lg font-extrabold text-[#F3F1E7]">My Points</h2>
-              <p className="text-[11px] text-[#8A93A6] leading-snug mt-1">
+              <h2 className="text-lg font-extrabold text-[#111111]">My Points</h2>
+              <p className="text-[11px] text-[#111111]/60 leading-snug mt-1">
                 Points are not cash and have no monetary value.
               </p>
             </div>
-            <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-4 space-y-2">
+            <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 space-y-2">
               <div className="flex items-baseline justify-between gap-3">
-                <span className="text-[10px] text-[#4B5162]">
+                <span className="text-[10px] text-[#111111]/40">
                   Brief Points
                 </span>
-                <span className="text-lg font-extrabold text-[#43D17A]">
+                <span className="text-lg font-extrabold text-[#111111]">
                   {myContribution.settledPoints.toLocaleString()}
                 </span>
               </div>
-              <p className="text-[10px] text-[#8A93A6]">
-                Progress <span className="text-[#8A93A6]">{myRank}</span> -{' '}
+              <p className="text-[10px] text-[#111111]/60">
+                Progress <span className="text-[#111111]/60">{myRank}</span> -{' '}
                 {myContribution.accepted} accepted contributions
               </p>
               {pendingCount > 0 && (
-                <p className="text-[10px] text-[#E8A33D]">
+                <p className="text-[10px] text-[#111111]">
                   {pendingCount} submitted, awaiting review. Worth nothing yet.
                 </p>
               )}
@@ -8453,8 +8510,8 @@ export function App() {
                 who turns up. Every figure below is read from the server. */}
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <h2 className="text-lg font-extrabold text-[#F3F1E7]">Events</h2>
-                <p className="text-[11px] text-[#8A93A6] leading-snug mt-1">
+                <h2 className="text-lg font-extrabold text-[#111111]">Events</h2>
+                <p className="text-[11px] text-[#111111]/60 leading-snug mt-1">
                   Things you are putting out into the world. Publish once, share
                   one link, see who registered.
                 </p>
@@ -8472,7 +8529,7 @@ export function App() {
                   });
                   setCreateStep('form');
                 }}
-                className="shrink-0 px-3 py-2 rounded-xl bg-[#43D17A] text-[#090B10] font-extrabold text-[11px] cursor-pointer flex items-center gap-1"
+                className="shrink-0 px-3 py-2 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-[11px] cursor-pointer flex items-center gap-1"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Create
@@ -8482,29 +8539,29 @@ export function App() {
             {campaignState.status === 'idle' && (
               <button
                 onClick={loadCampaigns}
-                className="w-full border border-[#232A38] rounded-2xl p-4 text-xs font-extrabold text-[#43D17A] cursor-pointer"
+                className="w-full border border-[#E5E7EB] rounded-2xl p-4 text-xs font-extrabold text-[#111111] cursor-pointer"
               >
                 Load my campaigns
               </button>
             )}
 
             {campaignState.status === 'loading' && (
-              <div className="border border-[#232A38] rounded-2xl p-8 text-center">
-                <p className="text-xs text-[#8A93A6]">Loading campaigns...</p>
+              <div className="border border-[#E5E7EB] rounded-2xl p-8 text-center">
+                <p className="text-xs text-[#111111]/60">Loading campaigns...</p>
               </div>
             )}
 
             {campaignState.status === 'error' && (
-              <div className="border border-[#10141C] bg-[#10141C] rounded-2xl p-4 space-y-2">
-                <p className="text-xs text-[#F3F1E7] font-extrabold">
+              <div className="border border-[#E5E7EB] bg-[#FFFFFF] rounded-2xl p-4 space-y-2">
+                <p className="text-xs text-[#111111] font-extrabold">
                   Couldn't load campaigns. Try again.
                 </p>
-                <p className="text-[10px] text-[#8A93A6] break-words">
+                <p className="text-[10px] text-[#111111]/60 break-words">
                   {campaignState.error}
                 </p>
                 <button
                   onClick={loadCampaigns}
-                  className="px-3 py-1.5 rounded-xl bg-[#43D17A] text-[#090B10] font-extrabold text-[10px] cursor-pointer"
+                  className="px-3 py-1.5 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-[10px] cursor-pointer"
                 >
                   Retry
                 </button>
@@ -8512,46 +8569,46 @@ export function App() {
             )}
 
             {campaignState.status === 'ready' && (campaignState.data ?? []).length === 0 && (
-              <div className="border border-dashed border-[#232A38] rounded-2xl p-8 text-center">
-                <p className="text-xs text-[#8A93A6]">You haven't created a campaign yet.</p>
+              <div className="border border-dashed border-[#E5E7EB] rounded-2xl p-8 text-center">
+                <p className="text-xs text-[#111111]/60">You haven't created a campaign yet.</p>
               </div>
             )}
 
             {campaignState.status === 'ready' && campaignsLive.length > 0 && (
               <div className="space-y-2">
-                <h3 className="text-[9px] text-[#4B5162]">
+                <h3 className="text-[9px] text-[#111111]/40">
                   Live
                 </h3>
                 {campaignsLive.map((c) => (
                   <div
                     key={c.id}
-                    className="bg-[#10141C] border border-[#232A38] rounded-2xl p-4 space-y-2"
+                    className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 space-y-2"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-sm font-extrabold text-[#F3F1E7] truncate">{c.title}</p>
-                        <p className="text-[10px] text-[#8A93A6] mt-0.5 truncate">
+                        <p className="text-sm font-extrabold text-[#111111] truncate">{c.title}</p>
+                        <p className="text-[10px] text-[#111111]/60 mt-0.5 truncate">
                           {[c.location, c.startsAt ? c.startsAt.slice(0, 16).replace('T', ' ') : null]
                             .filter(Boolean)
                             .join(' \u00b7 ') || 'No place or time set'}
                         </p>
                       </div>
-                      <span className="shrink-0 text-[9px] text-[#43D17A]">
+                      <span className="shrink-0 text-[9px] text-[#111111]">
                         {c.status}
                       </span>
                     </div>
 
                     {/* Capacity is printed from server values only. */}
                     <div className="flex flex-wrap gap-x-4 gap-y-1">
-                      <span className="text-[11px] text-[#F3F1E7]">
+                      <span className="text-[11px] text-[#111111]">
                         {c.metrics.slotsTaken}
                         {c.metrics.capacity === null ? ' registered' : ` / ${c.metrics.capacity}`}
                       </span>
-                      <span className="text-[11px] text-[#43D17A]">
+                      <span className="text-[11px] text-[#111111]">
                         {c.metrics.currency} {c.metrics.revenueSettled.toLocaleString()} settled
                       </span>
                       {c.metrics.revenuePending > 0 && (
-                        <span className="text-[11px] text-[#E8A33D]">
+                        <span className="text-[11px] text-[#111111]">
                           {c.metrics.currency} {c.metrics.revenuePending.toLocaleString()} pending
                         </span>
                       )}
@@ -8560,13 +8617,13 @@ export function App() {
                     <div className="flex items-center gap-2 pt-1">
                       <button
                         onClick={() => openCampaign(c.id)}
-                        className="px-3 py-1.5 rounded-xl bg-[#43D17A] text-[#090B10] font-extrabold text-[10px] cursor-pointer"
+                        className="px-3 py-1.5 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-[10px] cursor-pointer"
                       >
                         Open
                       </button>
                       <button
                         onClick={() => shareCampaign(c)}
-                        className="px-3 py-1.5 rounded-xl border border-[#232A38] text-[#43D17A] font-extrabold text-[10px] cursor-pointer flex items-center gap-1"
+                        className="px-3 py-1.5 rounded-xl border border-[#E5E7EB] text-[#111111] font-extrabold text-[10px] cursor-pointer flex items-center gap-1"
                       >
                         <Share2 className="w-3 h-3" />
                         Share
@@ -8579,26 +8636,26 @@ export function App() {
 
             {campaignState.status === 'ready' && campaignsDraft.length > 0 && (
               <div className="space-y-2">
-                <h3 className="text-[9px] text-[#4B5162]">
+                <h3 className="text-[9px] text-[#111111]/40">
                   Drafts
                 </h3>
                 {campaignsDraft.map((c) => (
                   <div
                     key={c.id}
-                    className="bg-[#10141C] border border-[#232A38] rounded-2xl p-4 flex items-center justify-between gap-3"
+                    className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 flex items-center justify-between gap-3"
                   >
                     <div className="min-w-0">
-                      <p className="text-sm font-extrabold text-[#F3F1E7] truncate">
+                      <p className="text-sm font-extrabold text-[#111111] truncate">
                         {c.title || 'Untitled'}
                       </p>
-                      <p className="text-[9px] text-[#4B5162] mt-0.5">
+                      <p className="text-[9px] text-[#111111]/40 mt-0.5">
                         {c.type} - not published
                       </p>
                     </div>
                     <div className="shrink-0 flex items-center gap-1.5">
                       <button
                         onClick={() => { openCampaign(c.id); beginEdit(c); }}
-                        className="px-3 py-1.5 rounded-xl border border-[#232A38] text-[#43D17A] font-extrabold text-[10px] cursor-pointer"
+                        className="px-3 py-1.5 rounded-xl border border-[#E5E7EB] text-[#111111] font-extrabold text-[10px] cursor-pointer"
                       >
                         Edit
                       </button>
@@ -8613,7 +8670,7 @@ export function App() {
                           loadCampaigns();
                           showToast('Published');
                         }}
-                        className="px-3 py-1.5 rounded-xl bg-[#43D17A] text-[#090B10] font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
+                        className="px-3 py-1.5 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
                       >
                         Publish
                       </button>
@@ -8625,18 +8682,18 @@ export function App() {
 
             {campaignState.status === 'ready' && campaignsPast.length > 0 && (
               <div className="space-y-2">
-                <h3 className="text-[9px] text-[#4B5162]">
+                <h3 className="text-[9px] text-[#111111]/40">
                   Finished
                 </h3>
                 {campaignsPast.map((c) => (
                   <div
                     key={c.id}
-                    className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3 flex items-center justify-between gap-3"
+                    className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-3 flex items-center justify-between gap-3"
                   >
-                    <p className="text-xs text-[#8A93A6] truncate">{c.title}</p>
+                    <p className="text-xs text-[#111111]/60 truncate">{c.title}</p>
                     <button
                       onClick={() => openCampaign(c.id)}
-                      className="shrink-0 text-[10px] text-[#4B5162] underline underline-offset-2 cursor-pointer"
+                      className="shrink-0 text-[10px] text-[#111111]/40 underline underline-offset-2 cursor-pointer"
                     >
                       {c.status}
                     </button>
@@ -8650,16 +8707,16 @@ export function App() {
         {activeTab === 'nearby' && nearbySection === 'today' && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-lg font-extrabold text-[#F3F1E7]">Today</h2>
-              <p className="text-[11px] text-[#8A93A6] leading-snug mt-1">
+              <h2 className="text-lg font-extrabold text-[#111111]">Today</h2>
+              <p className="text-[11px] text-[#111111]/60 leading-snug mt-1">
                 Only what relates to your pursuits, saved and watched things.
               </p>
             </div>
 
             {dailyBrief.length === 0 && (
-              <div className="border border-dashed border-[#232A38] rounded-2xl p-8 text-center">
-                <p className="text-xs text-[#8A93A6]">Nothing to report.</p>
-                <p className="text-[10px] text-[#4B5162] mt-1">
+              <div className="border border-dashed border-[#E5E7EB] rounded-2xl p-8 text-center">
+                <p className="text-xs text-[#111111]/60">Nothing to report.</p>
+                <p className="text-[10px] text-[#111111]/40 mt-1">
                   Save something, or start a pursuit, and this fills itself in.
                 </p>
               </div>
@@ -8668,10 +8725,10 @@ export function App() {
             {dailyBrief.map((section) => (
               <div key={section.key} className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-[11px] font-extrabold text-[#43D17A]">
+                  <h3 className="text-[11px] font-extrabold text-[#111111]">
                     {section.title}
                   </h3>
-                  <span className="text-[10px] text-[#8A93A6]">
+                  <span className="text-[10px] text-[#111111]/60">
                     {section.objects.length + section.pursuits.length}
                   </span>
                 </div>
@@ -8680,23 +8737,23 @@ export function App() {
                   <button
                     key={obj.id}
                     onClick={() => setSelectedObjectForDetail(obj)}
-                    className="w-full text-left bg-[#10141C] border border-[#232A38] hover:border-[#232A38] rounded-xl p-3 cursor-pointer transition"
+                    className="w-full text-left bg-[#FFFFFF] border border-[#E5E7EB] hover:border-[#E5E7EB] rounded-xl p-3 cursor-pointer transition"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[9px] text-[#4B5162]">
+                      <span className="text-[9px] text-[#111111]/40">
                         {getObjectTypeMeta(obj.type).label}
                       </span>
                       {getDistanceLabel(obj) && (
-                        <span className="text-[9px] text-[#8A93A6]">
+                        <span className="text-[9px] text-[#111111]/60">
                           {getDistanceLabel(obj)}
                         </span>
                       )}
                     </div>
-                    <p className="text-[12px] font-bold text-[#F3F1E7] leading-snug mt-0.5">
+                    <p className="text-[12px] font-bold text-[#111111] leading-snug mt-0.5">
                       {obj.title}
                     </p>
                     {obj.metadata?.statusBadge && (
-                      <p className="text-[10px] text-[#43D17A] mt-0.5">
+                      <p className="text-[10px] text-[#111111] mt-0.5">
                         {obj.metadata.statusBadge}
                       </p>
                     )}
@@ -8707,10 +8764,10 @@ export function App() {
                   <button
                     key={pursuit.id}
                     onClick={() => { setActiveTab('nearby'); setNearbySection('pursuits'); }}
-                    className="w-full text-left bg-[#10141C] border border-[#232A38] rounded-xl p-3 cursor-pointer"
+                    className="w-full text-left bg-[#FFFFFF] border border-[#E5E7EB] rounded-xl p-3 cursor-pointer"
                   >
-                    <p className="text-[11px] text-[#8A93A6]">{pursuit.query}</p>
-                    <p className="text-[9px] text-[#4B5162] mt-0.5">
+                    <p className="text-[11px] text-[#111111]/60">{pursuit.query}</p>
+                    <p className="text-[9px] text-[#111111]/40 mt-0.5">
                       Nothing useful yet. Brief is still looking.
                     </p>
                   </button>
@@ -8770,6 +8827,18 @@ export function App() {
           <div className="max-w-3xl mx-auto px-4 pt-4">
             <TeaDesk />
           </div>
+        )}
+
+        {activeTab === 'workflows' && workflowSection === 'engine' && (
+          <EnginePanel
+            // Deltas that touch the object stream silently refresh the home
+            // feed — the "never loading" feel, wired to real data.
+            onObjectsChanged={() => { void loadObjects(); }}
+          />
+        )}
+
+        {activeTab === 'workflows' && workflowSection === 'groupbuy' && (
+          <GroupBuyPortal />
         )}
 
         {activeTab === 'workflows' && workflowSection === 'gate' && (
@@ -8839,15 +8908,15 @@ export function App() {
         type="button"
         aria-label="Show navigation"
         onClick={() => setDockOn(true)}
-        className={`md:hidden fixed bottom-0 left-1/2 z-[55] -translate-x-1/2 h-5 w-16 rounded-t-full bg-[#1c1f29] border border-b-0 border-[#3c4a42] cursor-pointer transition-transform ${
+        className={`md:hidden fixed bottom-0 left-1/2 z-[55] -translate-x-1/2 h-5 w-16 rounded-t-full bg-[#FFFFFF] border border-b-0 border-[#E5E7EB] cursor-pointer transition-transform ${
           dockOn ? 'translate-y-full pointer-events-none' : ''
         }`}
       >
-        <span className="mx-auto mt-1.5 block h-1 w-8 rounded-full bg-[#86948a]" />
+        <span className="mx-auto mt-1.5 block h-1 w-8 rounded-full bg-[#D1D5DB]" />
       </button>
       <nav
         aria-label="Primary"
-        className={`md:hidden fixed bottom-0 inset-x-0 z-[55] bg-[#1c1f29]/98 backdrop-blur-xl border-t border-[#3c4a42] flex shadow-lg transition-transform duration-200 ${
+        className={`md:hidden fixed bottom-0 inset-x-0 z-[55] bg-[#FFFFFF]/98 backdrop-blur-xl border-t border-[#E5E7EB] flex shadow-lg transition-transform duration-200 ${
           dockOn ? 'translate-y-0' : 'translate-y-full'
         }`}
       >
@@ -8890,7 +8959,7 @@ export function App() {
           printing a zero that looks like a measurement. */}
       {openCampaignId && (
         <div
-          className="fixed inset-0 z-50 bg-[#090B10]/90 backdrop-blur-md overflow-y-auto"
+          className="fixed inset-0 z-50 bg-[#FAFAFA]/90 backdrop-blur-md overflow-y-auto"
           onClick={() => {
             setOpenCampaignId(null);
             setCampaignDetail(null);
@@ -8900,101 +8969,101 @@ export function App() {
         >
           <div className="min-h-screen flex items-end sm:items-center justify-center p-0 sm:p-6">
             <div
-              className="w-full max-w-lg bg-[#10141C] border border-[#232A38] rounded-t-3xl sm:rounded-3xl p-5 space-y-4"
+              className="w-full max-w-lg bg-[#FFFFFF] border border-[#E5E7EB] rounded-t-3xl sm:rounded-3xl p-5 space-y-4"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <h2 className="text-base font-extrabold text-[#F3F1E7] truncate">
+                  <h2 className="text-base font-extrabold text-[#111111] truncate">
                     {campaignDetail ? campaignDetail.title : 'Campaign'}
                   </h2>
                   {campaignDetail && (
-                    <p className="text-[9px] text-[#4B5162] mt-0.5">
+                    <p className="text-[9px] text-[#111111]/40 mt-0.5">
                       {campaignDetail.type} &middot; {campaignDetail.status}
                     </p>
                   )}
                 </div>
                 <button
                   onClick={() => { setOpenCampaignId(null); setCampaignDetail(null); }}
-                  className="shrink-0 text-[#4B5162] cursor-pointer"
+                  className="shrink-0 text-[#111111]/40 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               {campaignActionError && (
-                <div className="border border-[#10141C] bg-[#10141C] rounded-xl p-3">
-                  <p className="text-[10px] text-[#F3F1E7] break-words">
+                <div className="border border-[#E5E7EB] bg-[#FFFFFF] rounded-xl p-3">
+                  <p className="text-[10px] text-[#111111] break-words">
                     {campaignActionError}
                   </p>
                 </div>
               )}
 
               {!campaignDetail && !campaignActionError && (
-                <p className="text-xs text-[#8A93A6] py-6 text-center">Loading campaign...</p>
+                <p className="text-xs text-[#111111]/60 py-6 text-center">Loading campaign...</p>
               )}
 
               {campaignDetail && editDraft && (
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-[9px] text-[#4B5162] mb-1">Title</label>
+                    <label className="block text-[9px] text-[#111111]/40 mb-1">Title</label>
                     <input
                       value={editDraft.title}
                       onChange={(e) => setEditDraft((d) => (d ? { ...d, title: e.target.value } : d))}
-                      className="w-full bg-[#10141C] text-[#F3F1E7] text-xs rounded-xl px-3 py-2.5 border border-[#232A38] focus:border-[#43D17A] focus:outline-none"
+                      className="w-full bg-[#FFFFFF] text-[#111111] text-xs rounded-xl px-3 py-2.5 border border-[#E5E7EB] focus:border-[#111111] focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[9px] text-[#4B5162] mb-1">Description</label>
+                    <label className="block text-[9px] text-[#111111]/40 mb-1">Description</label>
                     <textarea
                       value={editDraft.description}
                       onChange={(e) => setEditDraft((d) => (d ? { ...d, description: e.target.value } : d))}
                       rows={2}
-                      className="w-full bg-[#10141C] text-[#F3F1E7] text-xs rounded-xl px-3 py-2.5 border border-[#232A38] focus:border-[#43D17A] focus:outline-none resize-none"
+                      className="w-full bg-[#FFFFFF] text-[#111111] text-xs rounded-xl px-3 py-2.5 border border-[#E5E7EB] focus:border-[#111111] focus:outline-none resize-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[9px] text-[#4B5162] mb-1">When</label>
+                    <label className="block text-[9px] text-[#111111]/40 mb-1">When</label>
                     <input
                       type="datetime-local"
                       value={editDraft.startsAt}
                       onChange={(e) => setEditDraft((d) => (d ? { ...d, startsAt: e.target.value } : d))}
-                      className="w-full bg-[#10141C] text-[#F3F1E7] text-xs rounded-xl px-3 py-2.5 border border-[#232A38] focus:border-[#43D17A] focus:outline-none"
+                      className="w-full bg-[#FFFFFF] text-[#111111] text-xs rounded-xl px-3 py-2.5 border border-[#E5E7EB] focus:border-[#111111] focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[9px] text-[#4B5162] mb-1">Where</label>
+                    <label className="block text-[9px] text-[#111111]/40 mb-1">Where</label>
                     <input
                       value={editDraft.location}
                       onChange={(e) => setEditDraft((d) => (d ? { ...d, location: e.target.value } : d))}
-                      className="w-full bg-[#10141C] text-[#F3F1E7] text-xs rounded-xl px-3 py-2.5 border border-[#232A38] focus:border-[#43D17A] focus:outline-none"
+                      className="w-full bg-[#FFFFFF] text-[#111111] text-xs rounded-xl px-3 py-2.5 border border-[#E5E7EB] focus:border-[#111111] focus:outline-none"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[9px] text-[#4B5162] mb-1">Spots</label>
+                      <label className="block text-[9px] text-[#111111]/40 mb-1">Spots</label>
                       <input
                         inputMode="numeric"
                         disabled={campaignDetail.status !== 'draft'}
                         value={editDraft.capacity}
                         onChange={(e) => setEditDraft((d) => (d ? { ...d, capacity: e.target.value } : d))}
                         placeholder="Unlimited"
-                        className="w-full bg-[#10141C] text-[#F3F1E7] text-xs rounded-xl px-3 py-2.5 border border-[#232A38] focus:border-[#43D17A] focus:outline-none disabled:opacity-40"
+                        className="w-full bg-[#FFFFFF] text-[#111111] text-xs rounded-xl px-3 py-2.5 border border-[#E5E7EB] focus:border-[#111111] focus:outline-none disabled:opacity-40"
                       />
                     </div>
                     <div>
-                      <label className="block text-[9px] text-[#4B5162] mb-1">Price (KES)</label>
+                      <label className="block text-[9px] text-[#111111]/40 mb-1">Price (KES)</label>
                       <input
                         inputMode="numeric"
                         value={editDraft.price}
                         onChange={(e) => setEditDraft((d) => (d ? { ...d, price: e.target.value } : d))}
                         placeholder="Free"
-                        className="w-full bg-[#10141C] text-[#F3F1E7] text-xs rounded-xl px-3 py-2.5 border border-[#232A38] focus:border-[#43D17A] focus:outline-none"
+                        className="w-full bg-[#FFFFFF] text-[#111111] text-xs rounded-xl px-3 py-2.5 border border-[#E5E7EB] focus:border-[#111111] focus:outline-none"
                       />
                     </div>
                   </div>
                   {campaignDetail.status !== 'draft' && (
-                    <p className="text-[9px] text-[#4B5162] leading-snug">
+                    <p className="text-[9px] text-[#111111]/40 leading-snug">
                       Spots cannot change after publishing. People have already
                       registered against this number.
                     </p>
@@ -9003,14 +9072,14 @@ export function App() {
                     <button
                       disabled={campaignBusy}
                       onClick={() => setEditDraft(null)}
-                      className="px-4 py-3 rounded-xl border border-[#232A38] text-[#43D17A] font-extrabold text-xs cursor-pointer disabled:opacity-40"
+                      className="px-4 py-3 rounded-xl border border-[#E5E7EB] text-[#111111] font-extrabold text-xs cursor-pointer disabled:opacity-40"
                     >
                       Cancel
                     </button>
                     <button
                       disabled={campaignBusy || editDraft.title.trim() === ''}
                       onClick={() => saveCampaignEdit(campaignDetail)}
-                      className="flex-1 py-3 rounded-xl bg-[#43D17A] text-[#090B10] font-extrabold text-xs cursor-pointer disabled:opacity-40"
+                      className="flex-1 py-3 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-xs cursor-pointer disabled:opacity-40"
                     >
                       {campaignBusy ? 'Saving...' : 'Save'}
                     </button>
@@ -9037,7 +9106,7 @@ export function App() {
 
                   <button
                     onClick={() => beginEdit(campaignDetail)}
-                    className="w-full py-2.5 rounded-xl border border-[#232A38] text-[#43D17A] font-extrabold text-[11px] cursor-pointer"
+                    className="w-full py-2.5 rounded-xl border border-[#E5E7EB] text-[#111111] font-extrabold text-[11px] cursor-pointer"
                   >
                     Edit details
                   </button>
@@ -9055,21 +9124,21 @@ export function App() {
                         loadCampaigns();
                         showToast('Published');
                       }}
-                      className="w-full py-3 rounded-xl bg-[#43D17A] text-[#090B10] font-extrabold text-xs cursor-pointer disabled:opacity-40"
+                      className="w-full py-3 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-xs cursor-pointer disabled:opacity-40"
                     >
                       {campaignBusy ? 'Publishing...' : 'Publish'}
                     </button>
                   )}
 
                   {/* PEOPLE */}
-                  <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-4 space-y-2">
-                    <h3 className="text-[9px] text-[#4B5162]">
+                  <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 space-y-2">
+                    <h3 className="text-[9px] text-[#111111]/40">
                       People
                     </h3>
-                    <p className="text-xl font-extrabold text-[#F3F1E7]">
+                    <p className="text-xl font-extrabold text-[#111111]">
                       {campaignDetail.metrics.slotsTaken}
                       {campaignDetail.metrics.capacity !== null && (
-                        <span className="text-[#4B5162]"> / {campaignDetail.metrics.capacity}</span>
+                        <span className="text-[#111111]/40"> / {campaignDetail.metrics.capacity}</span>
                       )}
                     </p>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-1">
@@ -9085,43 +9154,43 @@ export function App() {
                         ['No-show', campaignDetail.metrics.noShows]
                       ] as [string, string | number][]).map(([label, value]) => (
                         <div key={label} className="flex items-baseline justify-between gap-2">
-                          <span className="text-[10px] text-[#8A93A6]">{label}</span>
-                          <span className="text-[11px] text-[#8A93A6]">{value}</span>
+                          <span className="text-[10px] text-[#111111]/60">{label}</span>
+                          <span className="text-[11px] text-[#111111]/60">{value}</span>
                         </div>
                       ))}
                     </div>
                     {campaignDetail.metrics.capacity !== null &&
                       campaignDetail.metrics.remaining === 0 && (
-                        <p className="text-[10px] font-extrabold text-[#E8A33D]">Full</p>
+                        <p className="text-[10px] font-extrabold text-[#111111]">Full</p>
                       )}
                   </div>
 
                   {/* MONEY. Settled and pending are never added together. */}
-                  <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-4 space-y-2">
-                    <h3 className="text-[9px] text-[#4B5162]">
+                  <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 space-y-2">
+                    <h3 className="text-[9px] text-[#111111]/40">
                       Money
                     </h3>
                     {campaignDetail.price === 0 ? (
-                      <p className="text-[11px] text-[#8A93A6]">
+                      <p className="text-[11px] text-[#111111]/60">
                         This is a free campaign. No money is collected.
                       </p>
                     ) : (
                       <>
                         <div className="flex items-baseline justify-between gap-2">
-                          <span className="text-[10px] text-[#8A93A6]">Settled</span>
-                          <span className="text-sm font-extrabold text-[#43D17A]">
+                          <span className="text-[10px] text-[#111111]/60">Settled</span>
+                          <span className="text-sm font-extrabold text-[#111111]">
                             {campaignDetail.metrics.currency}{' '}
                             {campaignDetail.metrics.revenueSettled.toLocaleString()}
                           </span>
                         </div>
                         <div className="flex items-baseline justify-between gap-2">
-                          <span className="text-[10px] text-[#8A93A6]">Pending</span>
-                          <span className="text-sm font-extrabold text-[#E8A33D]">
+                          <span className="text-[10px] text-[#111111]/60">Pending</span>
+                          <span className="text-sm font-extrabold text-[#111111]">
                             {campaignDetail.metrics.currency}{' '}
                             {campaignDetail.metrics.revenuePending.toLocaleString()}
                           </span>
                         </div>
-                        <p className="text-[9px] text-[#4B5162] leading-snug">
+                        <p className="text-[9px] text-[#111111]/40 leading-snug">
                           Pending is money that has not arrived. No payment provider is
                           connected, so settlement is recorded manually in Workflows.
                         </p>
@@ -9130,45 +9199,45 @@ export function App() {
                   </div>
 
                   {/* CAMPAIGN. Honest labels only. */}
-                  <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-4 space-y-1">
-                    <h3 className="text-[9px] text-[#4B5162]">
+                  <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 space-y-1">
+                    <h3 className="text-[9px] text-[#111111]/40">
                       Campaign
                     </h3>
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-[10px] text-[#8A93A6]">Page loads</span>
-                      <span className="text-[11px] text-[#8A93A6]">
+                      <span className="text-[10px] text-[#111111]/60">Page loads</span>
+                      <span className="text-[11px] text-[#111111]/60">
                         {campaignDetail.metrics.views}
                       </span>
                     </div>
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-[10px] text-[#8A93A6]">Different devices</span>
-                      <span className="text-[11px] text-[#8A93A6]">
+                      <span className="text-[10px] text-[#111111]/60">Different devices</span>
+                      <span className="text-[11px] text-[#111111]/60">
                         {campaignDetail.metrics.viewers === null
                           ? 'Not enough data'
                           : campaignDetail.metrics.viewers}
                       </span>
                     </div>
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-[10px] text-[#8A93A6]">Times you shared</span>
-                      <span className="text-[11px] text-[#8A93A6]">
+                      <span className="text-[10px] text-[#111111]/60">Times you shared</span>
+                      <span className="text-[11px] text-[#111111]/60">
                         {campaignDetail.metrics.shares}
                       </span>
                     </div>
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-[10px] text-[#8A93A6]">Started registering</span>
-                      <span className="text-[11px] text-[#8A93A6]">
+                      <span className="text-[10px] text-[#111111]/60">Started registering</span>
+                      <span className="text-[11px] text-[#111111]/60">
                         {campaignDetail.metrics.registrationsStarted}
                       </span>
                     </div>
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-[10px] text-[#8A93A6]">Page load to registration</span>
-                      <span className="text-[11px] text-[#8A93A6]">
+                      <span className="text-[10px] text-[#111111]/60">Page load to registration</span>
+                      <span className="text-[11px] text-[#111111]/60">
                         {campaignDetail.metrics.conversionPct === null
                           ? 'Not enough data'
                           : `${campaignDetail.metrics.conversionPct}%`}
                       </span>
                     </div>
-                    <p className="text-[9px] text-[#4B5162] leading-snug pt-1">
+                    <p className="text-[9px] text-[#111111]/40 leading-snug pt-1">
                       Page loads are server-side loads of the public page. Different
                       devices is a rough count, not people. Times you shared counts
                       your own taps, not how many people saw it. Brief does not
@@ -9180,22 +9249,22 @@ export function App() {
                       as a plain description of the offer -- the creator never
                       needs to know the word "object". */}
                   {campaignDetail.object && (
-                    <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-4 space-y-1">
-                      <h3 className="text-[9px] text-[#4B5162]">
+                    <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 space-y-1">
+                      <h3 className="text-[9px] text-[#111111]/40">
                         What people get
                       </h3>
-                      <p className="text-xs text-[#F3F1E7]">{campaignDetail.object.title}</p>
+                      <p className="text-xs text-[#111111]">{campaignDetail.object.title}</p>
                       {campaignDetail.object.summary && (
-                        <p className="text-[10px] text-[#8A93A6] leading-snug">
+                        <p className="text-[10px] text-[#111111]/60 leading-snug">
                           {campaignDetail.object.summary}
                         </p>
                       )}
-                      <p className="text-[9px] text-[#4B5162] pt-0.5">
+                      <p className="text-[9px] text-[#111111]/40 pt-0.5">
                         {campaignDetail.object.type}
                         {campaignDetail.ownsObject === false && ' \u00b7 existing item'}
                       </p>
                       {campaignDetail.ownsObject === false && (
-                        <p className="text-[9px] text-[#4B5162] leading-snug">
+                        <p className="text-[9px] text-[#111111]/40 leading-snug">
                           This campaign promotes something that already existed in
                           Brief. Publishing the campaign does not change it.
                         </p>
@@ -9208,23 +9277,23 @@ export function App() {
                         <button
                           disabled={campaignBusy}
                           onClick={loadAttachableObjects}
-                          className="text-[10px] text-[#43D17A] underline underline-offset-2 cursor-pointer disabled:opacity-40 pt-1"
+                          className="text-[10px] text-[#111111] underline underline-offset-2 cursor-pointer disabled:opacity-40 pt-1"
                         >
                           Link a different item
                         </button>
                       ) : (
-                        <div className="bg-[#090B10] border border-[#232A38] rounded-xl p-2 space-y-1 max-h-44 overflow-y-auto mt-1">
+                        <div className="bg-[#FAFAFA] border border-[#E5E7EB] rounded-xl p-2 space-y-1 max-h-44 overflow-y-auto mt-1">
                           {objectPicker.status === 'loading' && (
-                            <p className="text-[11px] text-[#8A93A6] p-2">Loading your items...</p>
+                            <p className="text-[11px] text-[#111111]/60 p-2">Loading your items...</p>
                           )}
                           {objectPicker.status === 'error' && (
-                            <p className="text-[11px] text-[#F3F1E7] p-2">
+                            <p className="text-[11px] text-[#111111] p-2">
                               Couldn't load your items. {objectPicker.error}
                             </p>
                           )}
                           {objectPicker.status === 'ready' &&
                             (objectPicker.data ?? []).length === 0 && (
-                              <p className="text-[11px] text-[#8A93A6] p-2">
+                              <p className="text-[11px] text-[#111111]/60 p-2">
                                 Nothing else to link yet.
                               </p>
                             )}
@@ -9234,17 +9303,17 @@ export function App() {
                                 key={o.id}
                                 disabled={campaignBusy}
                                 onClick={() => attachObjectToCampaign(campaignDetail.id, o.id)}
-                                className="w-full text-left px-2 py-2 rounded-lg hover:bg-[#10141C] cursor-pointer disabled:opacity-40"
+                                className="w-full text-left px-2 py-2 rounded-lg hover:bg-[#FFFFFF] cursor-pointer disabled:opacity-40"
                               >
-                                <p className="text-[11px] text-[#F3F1E7] truncate">{o.title}</p>
-                                <p className="text-[9px] text-[#4B5162]">
+                                <p className="text-[11px] text-[#111111] truncate">{o.title}</p>
+                                <p className="text-[9px] text-[#111111]/40">
                                   {o.type}
                                 </p>
                               </button>
                             ))}
                           <button
                             onClick={() => setObjectPicker((p) => ({ ...p, open: false }))}
-                            className="w-full text-[10px] text-[#8A93A6] py-1 cursor-pointer"
+                            className="w-full text-[10px] text-[#111111]/60 py-1 cursor-pointer"
                           >
                             Cancel
                           </button>
@@ -9258,23 +9327,23 @@ export function App() {
                       Circle's server-derived currentValue -- the campaign UI
                       never computes or writes it. */}
                   {campaignCircle.status === 'loading' && (
-                    <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-4 space-y-1">
-                      <h3 className="text-[9px] text-[#4B5162]">
+                    <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 space-y-1">
+                      <h3 className="text-[9px] text-[#111111]/40">
                         Target
                       </h3>
-                      <p className="text-[11px] text-[#8A93A6]">Loading target...</p>
+                      <p className="text-[11px] text-[#111111]/60">Loading target...</p>
                     </div>
                   )}
 
                   {/* Honest unavailable state. Never a zeroed progress bar,
                       which would read as "no progress" rather than "unknown". */}
                   {campaignCircle.status === 'error' && (
-                    <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-4 space-y-1">
-                      <h3 className="text-[9px] text-[#4B5162]">
+                    <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 space-y-1">
+                      <h3 className="text-[9px] text-[#111111]/40">
                         Target
                       </h3>
-                      <p className="text-[11px] text-[#F3F1E7]">Target unavailable.</p>
-                      <p className="text-[9px] text-[#8A93A6] break-words">
+                      <p className="text-[11px] text-[#111111]">Target unavailable.</p>
+                      <p className="text-[9px] text-[#111111]/60 break-words">
                         {campaignCircle.error}
                       </p>
                     </div>
@@ -9288,14 +9357,14 @@ export function App() {
                       campaignCircle.data.circle.targetValue !== null &&
                       campaignCircle.data.circle.targetValue > 0
                     ) && (
-                      <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-4 space-y-1">
-                        <h3 className="text-[9px] text-[#4B5162]">
+                      <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 space-y-1">
+                        <h3 className="text-[9px] text-[#111111]/40">
                           Target
                         </h3>
-                        <p className="text-[11px] text-[#F3F1E7]">
+                        <p className="text-[11px] text-[#111111]">
                           {campaignCircle.data.circle.name}
                         </p>
-                        <p className="text-[10px] text-[#8A93A6]">
+                        <p className="text-[10px] text-[#111111]/60">
                           No target set on this circle.
                         </p>
                       </div>
@@ -9305,35 +9374,35 @@ export function App() {
                     campaignCircle.data &&
                     campaignCircle.data.circle.targetValue !== null &&
                     campaignCircle.data.circle.targetValue > 0 && (
-                      <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-4 space-y-2">
-                        <h3 className="text-[9px] text-[#4B5162]">
+                      <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 space-y-2">
+                        <h3 className="text-[9px] text-[#111111]/40">
                           Target
                         </h3>
-                        <p className="text-xs text-[#F3F1E7]">
+                        <p className="text-xs text-[#111111]">
                           {campaignCircle.data.circle.goal || campaignCircle.data.circle.name}
                         </p>
                         <div className="flex items-baseline justify-between gap-2">
-                          <span className="text-sm font-extrabold text-[#43D17A]">
+                          <span className="text-sm font-extrabold text-[#111111]">
                             {campaignCircle.data.circle.currentValue.toLocaleString()}
                           </span>
-                          <span className="text-[10px] text-[#4B5162]">
+                          <span className="text-[10px] text-[#111111]/40">
                             of {campaignCircle.data.circle.targetValue.toLocaleString()}
                           </span>
                         </div>
                         {campaignCircle.data.circle.progressPct !== null && (
-                          <p className="text-[10px] text-[#43D17A]">
+                          <p className="text-[10px] text-[#111111]">
                             {Math.round(campaignCircle.data.circle.progressPct)}%
                           </p>
                         )}
-                        <div className="h-1.5 rounded-full bg-[#232A38] overflow-hidden">
+                        <div className="h-1.5 rounded-full bg-[#E5E7EB] overflow-hidden">
                           <div
-                            className="h-full bg-[#43D17A]"
+                            className="h-full bg-[#111111]"
                             style={{
                               width: `${Math.min(100, campaignCircle.data.circle.progressPct ?? 0)}%`
                             }}
                           />
                         </div>
-                        <p className="text-[9px] text-[#4B5162] leading-snug">
+                        <p className="text-[9px] text-[#111111]/40 leading-snug">
                           Progress comes from settled transactions in
                           {' '}{campaignCircle.data.circle.name}, not from this campaign.
                         </p>
@@ -9342,18 +9411,18 @@ export function App() {
 
                   {/* REGISTRATIONS */}
                   <div className="space-y-2">
-                    <h3 className="text-[9px] text-[#4B5162]">
+                    <h3 className="text-[9px] text-[#111111]/40">
                       Registrations
                     </h3>
 
                     {campaignRegs.status === 'loading' && (
-                      <p className="text-[11px] text-[#8A93A6]">Loading people...</p>
+                      <p className="text-[11px] text-[#111111]/60">Loading people...</p>
                     )}
 
                     {campaignRegs.status === 'error' && (
-                      <div className="border border-[#10141C] bg-[#10141C] rounded-xl p-3 space-y-1">
-                        <p className="text-[11px] text-[#F3F1E7]">Couldn't load registrations.</p>
-                        <p className="text-[9px] text-[#8A93A6] break-words">
+                      <div className="border border-[#E5E7EB] bg-[#FFFFFF] rounded-xl p-3 space-y-1">
+                        <p className="text-[11px] text-[#111111]">Couldn't load registrations.</p>
+                        <p className="text-[9px] text-[#111111]/60 break-words">
                           {campaignRegs.error}
                         </p>
                       </div>
@@ -9361,7 +9430,7 @@ export function App() {
 
                     {campaignRegs.status === 'ready' &&
                       (campaignRegs.data ?? []).length === 0 && (
-                        <p className="text-[11px] text-[#8A93A6]">
+                        <p className="text-[11px] text-[#111111]/60">
                           Nobody has registered yet.
                         </p>
                       )}
@@ -9382,13 +9451,13 @@ export function App() {
                       (campaignRegs.data ?? []).map((r) => (
                         <div
                           key={r.id}
-                          className="bg-[#10141C] border border-[#232A38] rounded-xl p-3 flex items-center justify-between gap-2"
+                          className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-xl p-3 flex items-center justify-between gap-2"
                         >
                           <div className="min-w-0">
-                            <p className="text-xs text-[#F3F1E7] truncate">
+                            <p className="text-xs text-[#111111] truncate">
                               {r.name || r.attendeeRef}
                             </p>
-                            <p className="text-[9px] text-[#4B5162] mt-0.5">
+                            <p className="text-[9px] text-[#111111]/40 mt-0.5">
                               {r.status.replace('_', ' ')}
                             </p>
                           </div>
@@ -9397,14 +9466,14 @@ export function App() {
                               <button
                                 disabled={campaignBusy}
                                 onClick={() => setRegStatus(campaignDetail.id, r.id, 'checked_in')}
-                                className="px-2.5 py-1.5 rounded-lg bg-[#43D17A] text-[#090B10] font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
+                                className="px-2.5 py-1.5 rounded-lg bg-[#111111] text-[#FFFFFF] font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
                               >
                                 Check in
                               </button>
                               <button
                                 disabled={campaignBusy}
                                 onClick={() => setRegStatus(campaignDetail.id, r.id, 'no_show')}
-                                className="px-2.5 py-1.5 rounded-lg border border-[#232A38] text-[#8A93A6] font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
+                                className="px-2.5 py-1.5 rounded-lg border border-[#E5E7EB] text-[#111111]/60 font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
                               >
                                 No-show
                               </button>
@@ -9425,7 +9494,7 @@ export function App() {
                         setCampaignDetail(res.data);
                         loadCampaigns();
                       }}
-                      className="w-full py-2.5 rounded-xl border border-[#232A38] text-[#8A93A6] font-extrabold text-[11px] cursor-pointer disabled:opacity-40"
+                      className="w-full py-2.5 rounded-xl border border-[#E5E7EB] text-[#111111]/60 font-extrabold text-[11px] cursor-pointer disabled:opacity-40"
                     >
                       Close campaign
                     </button>
@@ -9442,16 +9511,16 @@ export function App() {
           Publish, and publication itself is the real transition endpoint. */}
       {createStep !== 'closed' && (
         <div
-          className="fixed inset-0 z-50 bg-[#090B10]/90 backdrop-blur-md overflow-y-auto"
+          className="fixed inset-0 z-50 bg-[#FAFAFA]/90 backdrop-blur-md overflow-y-auto"
           onClick={() => { if (!campaignBusy) setCreateStep('closed'); }}
         >
           <div className="min-h-screen flex items-end sm:items-center justify-center p-0 sm:p-6">
             <div
-              className="w-full max-w-lg bg-[#10141C] border border-[#232A38] rounded-t-3xl sm:rounded-3xl p-5 space-y-4"
+              className="w-full max-w-lg bg-[#FFFFFF] border border-[#E5E7EB] rounded-t-3xl sm:rounded-3xl p-5 space-y-4"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-start justify-between gap-3">
-                <h2 className="text-base font-extrabold text-[#F3F1E7]">
+                <h2 className="text-base font-extrabold text-[#111111]">
                   {createStep === 'form'
                     ? 'Create'
                     : createStep === 'preview'
@@ -9460,15 +9529,15 @@ export function App() {
                 </h2>
                 <button
                   onClick={() => { if (!campaignBusy) setCreateStep('closed'); }}
-                  className="shrink-0 text-[#4B5162] cursor-pointer"
+                  className="shrink-0 text-[#111111]/40 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               {campaignActionError && (
-                <div className="border border-[#10141C] bg-[#10141C] rounded-xl p-3">
-                  <p className="text-[10px] text-[#F3F1E7] break-words">
+                <div className="border border-[#E5E7EB] bg-[#FFFFFF] rounded-xl p-3">
+                  <p className="text-[10px] text-[#111111] break-words">
                     {campaignActionError}
                   </p>
                 </div>
@@ -9477,7 +9546,7 @@ export function App() {
               {createStep === 'form' && (
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-[9px] text-[#4B5162] mb-1">What is it</label>
+                    <label className="block text-[9px] text-[#111111]/40 mb-1">What is it</label>
                     <div className="flex flex-wrap gap-1.5">
                       {(['popup', 'session', 'drop', 'event'] as ApiCampaignType[]).map((t) => (
                         <button
@@ -9485,8 +9554,8 @@ export function App() {
                           onClick={() => setDraft((d) => ({ ...d, type: t }))}
                           className={`px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
                             draft.type === t
-                              ? 'bg-[#43D17A] text-[#090B10] border-[#43D17A]'
-                              : 'bg-[#10141C] text-[#43D17A] border-[#232A38]'
+                              ? 'bg-[#111111] text-[#FFFFFF] border-[#111111]'
+                              : 'bg-[#FFFFFF] text-[#111111] border-[#E5E7EB]'
                           }`}
                         >
                           {t}
@@ -9496,42 +9565,42 @@ export function App() {
                   </div>
 
                   <div>
-                    <label className="block text-[9px] text-[#4B5162] mb-1">Title</label>
+                    <label className="block text-[9px] text-[#111111]/40 mb-1">Title</label>
                     <input
                       value={draft.title}
                       onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
                       placeholder="Saturday plant sale"
-                      className="w-full bg-[#10141C] text-[#F3F1E7] text-xs rounded-xl px-3 py-2.5 border border-[#232A38] focus:border-[#43D17A] focus:outline-none"
+                      className="w-full bg-[#FFFFFF] text-[#111111] text-xs rounded-xl px-3 py-2.5 border border-[#E5E7EB] focus:border-[#111111] focus:outline-none"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[9px] text-[#4B5162] mb-1">Description</label>
+                    <label className="block text-[9px] text-[#111111]/40 mb-1">Description</label>
                     <textarea
                       value={draft.description}
                       onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
                       rows={2}
                       placeholder="One or two lines. What should people expect?"
-                      className="w-full bg-[#10141C] text-[#F3F1E7] text-xs rounded-xl px-3 py-2.5 border border-[#232A38] focus:border-[#43D17A] focus:outline-none resize-none"
+                      className="w-full bg-[#FFFFFF] text-[#111111] text-xs rounded-xl px-3 py-2.5 border border-[#E5E7EB] focus:border-[#111111] focus:outline-none resize-none"
                     />
                   </div>
 
                   {/* Optionally promote something that already exists in Brief
                       instead of describing it again. Collapsed by default. */}
                   <div>
-                    <label className="block text-[9px] text-[#4B5162] mb-1">
+                    <label className="block text-[9px] text-[#111111]/40 mb-1">
                       What people get
                     </label>
                     {objectPicker.selected ? (
-                      <div className="flex items-center justify-between gap-2 bg-[#10141C] border border-[#232A38] rounded-xl px-3 py-2.5">
-                        <p className="text-xs text-[#F3F1E7] truncate">
+                      <div className="flex items-center justify-between gap-2 bg-[#FFFFFF] border border-[#E5E7EB] rounded-xl px-3 py-2.5">
+                        <p className="text-xs text-[#111111] truncate">
                           {objectPicker.selected.title}
                         </p>
                         <button
                           onClick={() =>
                             setObjectPicker((p) => ({ ...p, selected: null, open: false }))
                           }
-                          className="shrink-0 text-[10px] text-[#8A93A6] underline underline-offset-2 cursor-pointer"
+                          className="shrink-0 text-[10px] text-[#111111]/60 underline underline-offset-2 cursor-pointer"
                         >
                           Remove
                         </button>
@@ -9539,23 +9608,23 @@ export function App() {
                     ) : !objectPicker.open ? (
                       <button
                         onClick={loadAttachableObjects}
-                        className="w-full text-left bg-[#10141C] border border-dashed border-[#232A38] rounded-xl px-3 py-2.5 text-[11px] text-[#8A93A6] cursor-pointer"
+                        className="w-full text-left bg-[#FFFFFF] border border-dashed border-[#E5E7EB] rounded-xl px-3 py-2.5 text-[11px] text-[#111111]/60 cursor-pointer"
                       >
                         Something new &middot; tap to link an existing item instead
                       </button>
                     ) : (
-                      <div className="bg-[#10141C] border border-[#232A38] rounded-xl p-2 space-y-1 max-h-44 overflow-y-auto">
+                      <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-xl p-2 space-y-1 max-h-44 overflow-y-auto">
                         {objectPicker.status === 'loading' && (
-                          <p className="text-[11px] text-[#8A93A6] p-2">Loading your items...</p>
+                          <p className="text-[11px] text-[#111111]/60 p-2">Loading your items...</p>
                         )}
                         {objectPicker.status === 'error' && (
-                          <p className="text-[11px] text-[#F3F1E7] p-2">
+                          <p className="text-[11px] text-[#111111] p-2">
                             Couldn't load your items. {objectPicker.error}
                           </p>
                         )}
                         {objectPicker.status === 'ready' &&
                           (objectPicker.data ?? []).length === 0 && (
-                            <p className="text-[11px] text-[#8A93A6] p-2">
+                            <p className="text-[11px] text-[#111111]/60 p-2">
                               Nothing to link yet. Carry on and describe it above.
                             </p>
                           )}
@@ -9570,17 +9639,17 @@ export function App() {
                                   open: false
                                 }))
                               }
-                              className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-[#10141C] cursor-pointer"
+                              className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-[#FFFFFF] cursor-pointer"
                             >
-                              <p className="text-[11px] text-[#F3F1E7] truncate">{o.title}</p>
-                              <p className="text-[9px] text-[#4B5162]">
+                              <p className="text-[11px] text-[#111111] truncate">{o.title}</p>
+                              <p className="text-[9px] text-[#111111]/40">
                                 {o.type}
                               </p>
                             </button>
                           ))}
                         <button
                           onClick={() => setObjectPicker((p) => ({ ...p, open: false }))}
-                          className="w-full text-[10px] text-[#4B5162] underline underline-offset-2 cursor-pointer py-1"
+                          className="w-full text-[10px] text-[#111111]/40 underline underline-offset-2 cursor-pointer py-1"
                         >
                           Cancel
                         </button>
@@ -9589,44 +9658,44 @@ export function App() {
                   </div>
 
                   <div>
-                    <label className="block text-[9px] text-[#4B5162] mb-1">When</label>
+                    <label className="block text-[9px] text-[#111111]/40 mb-1">When</label>
                     <input
                       type="datetime-local"
                       value={draft.startsAt}
                       onChange={(e) => setDraft((d) => ({ ...d, startsAt: e.target.value }))}
-                      className="w-full bg-[#10141C] text-[#F3F1E7] text-xs rounded-xl px-3 py-2.5 border border-[#232A38] focus:border-[#43D17A] focus:outline-none"
+                      className="w-full bg-[#FFFFFF] text-[#111111] text-xs rounded-xl px-3 py-2.5 border border-[#E5E7EB] focus:border-[#111111] focus:outline-none"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[9px] text-[#4B5162] mb-1">Where</label>
+                    <label className="block text-[9px] text-[#111111]/40 mb-1">Where</label>
                     <input
                       value={draft.location}
                       onChange={(e) => setDraft((d) => ({ ...d, location: e.target.value }))}
                       placeholder="Kilimani, Nairobi"
-                      className="w-full bg-[#10141C] text-[#F3F1E7] text-xs rounded-xl px-3 py-2.5 border border-[#232A38] focus:border-[#43D17A] focus:outline-none"
+                      className="w-full bg-[#FFFFFF] text-[#111111] text-xs rounded-xl px-3 py-2.5 border border-[#E5E7EB] focus:border-[#111111] focus:outline-none"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[9px] text-[#4B5162] mb-1">Spots</label>
+                      <label className="block text-[9px] text-[#111111]/40 mb-1">Spots</label>
                       <input
                         inputMode="numeric"
                         value={draft.capacity}
                         onChange={(e) => setDraft((d) => ({ ...d, capacity: e.target.value }))}
                         placeholder="Unlimited"
-                        className="w-full bg-[#10141C] text-[#F3F1E7] text-xs rounded-xl px-3 py-2.5 border border-[#232A38] focus:border-[#43D17A] focus:outline-none"
+                        className="w-full bg-[#FFFFFF] text-[#111111] text-xs rounded-xl px-3 py-2.5 border border-[#E5E7EB] focus:border-[#111111] focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="block text-[9px] text-[#4B5162] mb-1">Price (KES)</label>
+                      <label className="block text-[9px] text-[#111111]/40 mb-1">Price (KES)</label>
                       <input
                         inputMode="numeric"
                         value={draft.price}
                         onChange={(e) => setDraft((d) => ({ ...d, price: e.target.value }))}
                         placeholder="Free"
-                        className="w-full bg-[#10141C] text-[#F3F1E7] text-xs rounded-xl px-3 py-2.5 border border-[#232A38] focus:border-[#43D17A] focus:outline-none"
+                        className="w-full bg-[#FFFFFF] text-[#111111] text-xs rounded-xl px-3 py-2.5 border border-[#E5E7EB] focus:border-[#111111] focus:outline-none"
                       />
                     </div>
                   </div>
@@ -9634,7 +9703,7 @@ export function App() {
                   <button
                     disabled={draft.title.trim() === ''}
                     onClick={() => { setCampaignActionError(null); setCreateStep('preview'); }}
-                    className="w-full py-3 rounded-xl bg-[#43D17A] text-[#090B10] font-extrabold text-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="w-full py-3 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     Preview
                   </button>
@@ -9643,25 +9712,25 @@ export function App() {
 
               {createStep === 'preview' && (
                 <div className="space-y-3">
-                  <p className="text-[11px] text-[#8A93A6]">
+                  <p className="text-[11px] text-[#111111]/60">
                     This is what people will see. Nothing is public yet.
                   </p>
-                  <div className="bg-[#10141C] border border-[#232A38] rounded-2xl p-4 space-y-1.5">
-                    <p className="text-[9px] text-[#4B5162]">{draft.type}</p>
-                    <p className="text-sm font-extrabold text-[#F3F1E7]">{draft.title}</p>
+                  <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 space-y-1.5">
+                    <p className="text-[9px] text-[#111111]/40">{draft.type}</p>
+                    <p className="text-sm font-extrabold text-[#111111]">{draft.title}</p>
                     {draft.description && (
-                      <p className="text-[11px] text-[#8A93A6] leading-snug">{draft.description}</p>
+                      <p className="text-[11px] text-[#111111]/60 leading-snug">{draft.description}</p>
                     )}
                     <div className="pt-1 space-y-0.5">
                       {draft.startsAt && (
-                        <p className="text-[10px] text-[#43D17A]">
+                        <p className="text-[10px] text-[#111111]">
                           {draft.startsAt.replace('T', ' ')}
                         </p>
                       )}
                       {draft.location && (
-                        <p className="text-[10px] text-[#43D17A]">{draft.location}</p>
+                        <p className="text-[10px] text-[#111111]">{draft.location}</p>
                       )}
-                      <p className="text-[10px] text-[#43D17A]">
+                      <p className="text-[10px] text-[#111111]">
                         {draft.price.trim() === '' || Number(draft.price) === 0
                           ? 'Free'
                           : `KES ${draft.price}`}
@@ -9674,14 +9743,14 @@ export function App() {
                     <button
                       disabled={campaignBusy}
                       onClick={() => setCreateStep('form')}
-                      className="px-4 py-3 rounded-xl border border-[#232A38] text-[#43D17A] font-extrabold text-xs cursor-pointer disabled:opacity-40"
+                      className="px-4 py-3 rounded-xl border border-[#E5E7EB] text-[#111111] font-extrabold text-xs cursor-pointer disabled:opacity-40"
                     >
                       Back
                     </button>
                     <button
                       disabled={campaignBusy}
                       onClick={publishDraft}
-                      className="flex-1 py-3 rounded-xl bg-[#43D17A] text-[#090B10] font-extrabold text-xs cursor-pointer disabled:opacity-40"
+                      className="flex-1 py-3 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-xs cursor-pointer disabled:opacity-40"
                     >
                       {campaignBusy ? 'Publishing...' : 'Publish'}
                     </button>
@@ -9692,12 +9761,12 @@ export function App() {
               {createStep === 'published' && publishedCampaign && (
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-[#43D17A] shrink-0" />
-                    <p className="text-xs font-extrabold text-[#F3F1E7]">
+                    <CheckCircle2 className="w-4 h-4 text-[#111111] shrink-0" />
+                    <p className="text-xs font-extrabold text-[#111111]">
                       {publishedCampaign.title} is {publishedCampaign.status}
                     </p>
                   </div>
-                  <p className="text-[11px] text-[#8A93A6]">
+                  <p className="text-[11px] text-[#111111]/60">
                     Share this link anywhere. Anyone who opens it can register.
                   </p>
                   {(() => {
@@ -9721,7 +9790,7 @@ export function App() {
                   })()}
                   <button
                     onClick={() => { setCreateStep('closed'); openCampaign(publishedCampaign.id); }}
-                    className="w-full text-[10px] text-[#4B5162] underline underline-offset-2 cursor-pointer"
+                    className="w-full text-[10px] text-[#111111]/40 underline underline-offset-2 cursor-pointer"
                   >
                     Open campaign
                   </button>
@@ -9736,27 +9805,27 @@ export function App() {
           buttons -- no onboarding, no explanation, no AI branding. */}
       {captureOpen && (
         <div
-          className="fixed inset-0 z-50 bg-[#090B10]/90 backdrop-blur-md overflow-y-auto"
+          className="fixed inset-0 z-50 bg-[#FAFAFA]/90 backdrop-blur-md overflow-y-auto"
           onClick={handleCaptureCancel}
         >
           <div className="min-h-screen flex items-end sm:items-center justify-center p-0 sm:p-6">
             <div
-              className="w-full max-w-lg bg-[#10141C] border border-[#232A38] rounded-t-3xl sm:rounded-3xl p-5 space-y-4"
+              className="w-full max-w-lg bg-[#FFFFFF] border border-[#E5E7EB] rounded-t-3xl sm:rounded-3xl p-5 space-y-4"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h2 className="text-xl font-extrabold text-[#F3F1E7]">
+                  <h2 className="text-xl font-extrabold text-[#111111]">
                     Drop something here.
                   </h2>
-                  <p className="text-[11px] text-[#8A93A6] mt-1">
+                  <p className="text-[11px] text-[#111111]/60 mt-1">
                     A message, link, listing, event, opportunity or anything
                     worth keeping.
                   </p>
                 </div>
                 <button
                   onClick={handleCaptureCancel}
-                  className="p-2 rounded-full bg-[#090B10]/80 text-[#F3F1E7] border border-[#232A38] shrink-0"
+                  className="p-2 rounded-full bg-[#FAFAFA]/80 text-[#111111] border border-[#E5E7EB] shrink-0"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -9770,7 +9839,7 @@ export function App() {
                 }}
                 rows={5}
                 placeholder="Paste or type anything"
-                className="w-full bg-[#10141C] border border-[#232A38] rounded-xl px-3 py-2.5 text-xs text-[#F3F1E7] placeholder-[#4B5162] outline-none focus:border-[#232A38] resize-none"
+                className="w-full bg-[#FFFFFF] border border-[#E5E7EB] rounded-xl px-3 py-2.5 text-xs text-[#111111] placeholder:text-[#111111]/40 outline-none focus:border-[#E5E7EB] resize-none"
               />
 
               {!capturePreview && (
@@ -9779,8 +9848,8 @@ export function App() {
                   disabled={captureText.trim() === ''}
                   className={`w-full py-3 rounded-xl font-extrabold text-xs ${
                     captureText.trim() === ''
-                      ? 'bg-[#10141C] text-[#4B5162] cursor-not-allowed'
-                      : 'bg-[#43D17A] text-[#090B10] cursor-pointer'
+                      ? 'bg-[#FFFFFF] text-[#111111]/40 cursor-not-allowed'
+                      : 'bg-[#111111] text-[#FFFFFF] cursor-pointer'
                   }`}
                 >
                   Read it
@@ -9792,23 +9861,23 @@ export function App() {
               {capturePreview && (
                 <div className="space-y-3">
                   {!capturePreview.isObjectWorthy ? (
-                    <div className="border border-[#E8A33D] bg-[#10141C] rounded-xl p-3">
-                      <p className="text-[11px] font-bold text-[#E8A33D]">
+                    <div className="border border-[#111111] bg-[#FFFFFF] rounded-xl p-3">
+                      <p className="text-[11px] font-bold text-[#111111]">
                         Brief could not make an object from this.
                       </p>
-                      <p className="text-[10px] text-[#8A93A6] mt-1">
+                      <p className="text-[10px] text-[#111111]/60 mt-1">
                         {capturePreview.rejectionReason}
                       </p>
-                      <p className="text-[10px] text-[#4B5162] mt-1">
+                      <p className="text-[10px] text-[#111111]/40 mt-1">
                         Nothing was saved.
                       </p>
                     </div>
                   ) : (
-                    <div className="bg-[#10141C] border border-[#232A38] rounded-xl p-3 space-y-2">
-                      <p className="text-[9px] text-[#43D17A]">
+                    <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-xl p-3 space-y-2">
+                      <p className="text-[9px] text-[#111111]">
                         {getObjectTypeMeta(capturePreview.draft.type).label}
                       </p>
-                      <p className="text-sm font-extrabold text-[#F3F1E7] leading-snug">
+                      <p className="text-sm font-extrabold text-[#111111] leading-snug">
                         {capturePreview.draft.title}
                       </p>
 
@@ -9819,23 +9888,23 @@ export function App() {
                             key={f.field}
                             className="flex items-baseline justify-between gap-3"
                           >
-                            <span className="text-[10px] text-[#8A93A6]">
+                            <span className="text-[10px] text-[#111111]/60">
                               {f.field}
                             </span>
-                            <span className="text-[10px] text-[#8A93A6] truncate">
+                            <span className="text-[10px] text-[#111111]/60 truncate">
                               {f.value}
                             </span>
                           </div>
                         ))}
 
                       {capturePreview.duplicates.length > 0 && (
-                        <p className="text-[10px] text-[#E8A33D]">
+                        <p className="text-[10px] text-[#111111]">
                           Possible duplicate of{' '}
                           {capturePreview.duplicates[0].item.title}
                         </p>
                       )}
 
-                      <p className="text-[9px] text-[#4B5162]">
+                      <p className="text-[9px] text-[#111111]/40">
                         Unverified. Saved as your own capture.
                       </p>
                     </div>
@@ -9844,14 +9913,14 @@ export function App() {
                   <div className="flex gap-2">
                     <button
                       onClick={handleCaptureCancel}
-                      className="flex-1 py-2.5 rounded-xl bg-[#10141C] border border-[#232A38] text-[#8A93A6] font-bold text-[11px] cursor-pointer"
+                      className="flex-1 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E5E7EB] text-[#111111]/60 font-bold text-[11px] cursor-pointer"
                     >
                       Discard
                     </button>
                     {capturePreview.isObjectWorthy && (
                       <button
                         onClick={handleCaptureConfirm}
-                        className="flex-[2] py-2.5 rounded-xl bg-[#43D17A] text-[#090B10] font-extrabold text-[11px] cursor-pointer"
+                        className="flex-[2] py-2.5 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-[11px] cursor-pointer"
                       >
                         Save to Brief
                       </button>
@@ -9864,6 +9933,10 @@ export function App() {
         </div>
       )}
 
+      {/* Package 3: the dynamic ticket bar — the active gate pass, locked to
+          the bottom of the screen, with inline delta alerts. */}
+      <TicketBar />
+
       {/* DETAIL LAYER */}
       {selectedTeaSlug && (
         <TeaReader slug={selectedTeaSlug} onClose={dismissOverlay} />
@@ -9871,12 +9944,12 @@ export function App() {
 
       {selectedObjectForDetail && (
         <div
-          className="fixed inset-0 z-50 bg-[#090B10]/90 backdrop-blur-md overflow-y-auto"
+          className="fixed inset-0 z-50 bg-[#FAFAFA]/90 backdrop-blur-md overflow-y-auto"
           onClick={dismissOverlay}
         >
           <div className="min-h-screen flex items-end sm:items-center justify-center p-0 sm:p-6">
             <div
-              className="w-full max-w-2xl bg-[#10141C] border border-[#232A38] rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl"
+              className="w-full max-w-2xl bg-[#FFFFFF] border border-[#E5E7EB] rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
 
@@ -9891,18 +9964,18 @@ export function App() {
 
                   <button
                     onClick={() => setSelectedObjectForDetail(null)}
-                    className="absolute top-4 right-4 p-2 rounded-full bg-[#090B10]/80 text-[#F3F1E7] border border-[#232A38]"
+                    className="absolute top-4 right-4 p-2 rounded-full bg-[#FAFAFA]/80 text-[#111111] border border-[#E5E7EB]"
                   >
                     <X className="w-5 h-5" />
                   </button>
 
                   <div className="absolute bottom-4 left-4 flex gap-2">
-                    <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#090B10]/85 text-[#43D17A] border border-[#232A38]">
+                    <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#FAFAFA]/85 text-[#111111] border border-[#E5E7EB]">
                       {selectedObjectForDetail.category}
                     </span>
 
                     {selectedObjectForDetail.isVerified && (
-                      <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#43D17A] text-[#090B10]">
+                      <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#111111] text-[#FFFFFF]">
                         Verified
                       </span>
                     )}
@@ -9914,14 +9987,14 @@ export function App() {
                   entirely, leaving backdrop-click as the only way out. This is
                   the same control set, laid out for an imageless record. */}
               {!selectedObjectForDetail.imageUrl && (
-                <div className="flex items-center justify-between gap-2 p-4 border-b border-[#232A38]">
+                <div className="flex items-center justify-between gap-2 p-4 border-b border-[#E5E7EB]">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#090B10]/85 text-[#43D17A] border border-[#232A38]">
+                    <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#FAFAFA]/85 text-[#111111] border border-[#E5E7EB]">
                       {selectedObjectForDetail.category}
                     </span>
 
                     {selectedObjectForDetail.isVerified && (
-                      <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#43D17A] text-[#090B10]">
+                      <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#111111] text-[#FFFFFF]">
                         Verified
                       </span>
                     )}
@@ -9929,7 +10002,7 @@ export function App() {
 
                   <button
                     onClick={dismissOverlay}
-                    className="p-2 rounded-full bg-[#090B10]/80 text-[#F3F1E7] border border-[#232A38]"
+                    className="p-2 rounded-full bg-[#FAFAFA]/80 text-[#111111] border border-[#E5E7EB]"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -9941,16 +10014,16 @@ export function App() {
 
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-[10px] text-[#8A93A6]">
+                    <span className="text-[10px] text-[#111111]/60">
                       {getObjectTypeMeta(selectedObjectForDetail.type).label}
                     </span>
                   </div>
 
-                  <h2 className="text-2xl font-extrabold text-[#F3F1E7]">
+                  <h2 className="text-2xl font-extrabold text-[#111111]">
                     {selectedObjectForDetail.title}
                   </h2>
 
-                  <p className="text-sm text-[#43D17A] mt-2 leading-relaxed">
+                  <p className="text-sm text-[#111111] mt-2 leading-relaxed">
                     {selectedObjectForDetail.summary}
                   </p>
                 </div>
@@ -9964,9 +10037,9 @@ export function App() {
                       {facts.map((fact) => (
                         <div
                           key={fact.key}
-                          className="bg-[#090B10] border border-[#232A38] rounded-xl p-3"
+                          className="bg-[#FAFAFA] border border-[#E5E7EB] rounded-xl p-3"
                         >
-                          <div className="text-[10px] text-[#8A93A6]">
+                          <div className="text-[10px] text-[#111111]/60">
                             {fact.label}
                           </div>
                           <div className="text-xs font-bold mt-1">
@@ -9982,12 +10055,12 @@ export function App() {
                 {(selectedObjectForDetail.locationName ||
                   selectedObjectForDetail.creatorName ||
                   selectedObjectForDetail.metadata?.contactPhone) && (
-                  <div className="bg-[#090B10] border border-[#232A38] rounded-xl p-3 space-y-3">
+                  <div className="bg-[#FAFAFA] border border-[#E5E7EB] rounded-xl p-3 space-y-3">
                     {selectedObjectForDetail.locationName && (
                       <div className="flex items-start gap-2">
-                        <MapPin className="w-4 h-4 text-[#43D17A] shrink-0 mt-0.5" />
+                        <MapPin className="w-4 h-4 text-[#111111] shrink-0 mt-0.5" />
                         <div className="min-w-0">
-                          <div className="text-[10px] text-[#8A93A6]">
+                          <div className="text-[10px] text-[#111111]/60">
                             Location
                           </div>
                           <div className="text-xs font-bold">
@@ -10000,7 +10073,7 @@ export function App() {
                               )}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-[10px] font-extrabold text-[#43D17A] mt-1 hover:underline"
+                              className="inline-flex items-center gap-1 text-[10px] font-extrabold text-[#111111] mt-1 hover:underline"
                             >
                               Open in Maps
                               <ArrowRight className="w-3 h-3" />
@@ -10012,9 +10085,9 @@ export function App() {
 
                     {selectedObjectForDetail.creatorName && (
                       <div className="flex items-start gap-2">
-                        <User className="w-4 h-4 text-[#43D17A] shrink-0 mt-0.5" />
+                        <User className="w-4 h-4 text-[#111111] shrink-0 mt-0.5" />
                         <div className="min-w-0">
-                          <div className="text-[10px] text-[#8A93A6]">
+                          <div className="text-[10px] text-[#111111]/60">
                             {selectedObjectForDetail.type === 'product'
                               ? 'Seller'
                               : selectedObjectForDetail.type === 'service'
@@ -10032,16 +10105,16 @@ export function App() {
 
                     {selectedObjectForDetail.metadata?.contactPhone && (
                       <div className="flex items-start gap-2">
-                        <Building2 className="w-4 h-4 text-[#43D17A] shrink-0 mt-0.5" />
+                        <Building2 className="w-4 h-4 text-[#111111] shrink-0 mt-0.5" />
                         <div className="min-w-0">
-                          <div className="text-[10px] text-[#8A93A6]">
+                          <div className="text-[10px] text-[#111111]/60">
                             Contact
                           </div>
                           <a
                             href={buildTelHref(
                               selectedObjectForDetail.metadata.contactPhone
                             )}
-                            className="text-xs font-bold text-[#43D17A] hover:underline"
+                            className="text-xs font-bold text-[#111111] hover:underline"
                           >
                             {selectedObjectForDetail.metadata.contactPhone}
                           </a>
@@ -10068,19 +10141,19 @@ export function App() {
 
                   const freshTone =
                     fresh?.level === 'stale' || fresh?.level === 'aging'
-                      ? 'text-[#E8A33D]'
-                      : 'text-[#43D17A]';
+                      ? 'text-[#111111]'
+                      : 'text-[#111111]';
 
                   return (
-                    <div className="bg-[#090B10] border border-[#232A38] rounded-xl px-4 py-3 space-y-2">
+                    <div className="bg-[#FAFAFA] border border-[#E5E7EB] rounded-xl px-4 py-3 space-y-2">
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2 min-w-0">
-                          <ShieldCheck className="w-4 h-4 text-[#43D17A] shrink-0" />
+                          <ShieldCheck className="w-4 h-4 text-[#111111] shrink-0" />
                           <span className="text-xs font-bold truncate">
                             {subject.creatorName || 'Provider not stated'}
                           </span>
                           {subject.isVerified && (
-                            <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-[#43D17A] text-[#090B10] shrink-0">
+                            <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-[#111111] text-[#FFFFFF] shrink-0">
                               VERIFIED
                             </span>
                           )}
@@ -10093,13 +10166,13 @@ export function App() {
                           <span className={`text-[10px] font-bold ${freshTone}`}>
                             {fresh.label}
                           </span>
-                          <span className="text-[10px] text-[#4B5162]">
+                          <span className="text-[10px] text-[#111111]/40">
                             checked {fresh.verifiedOn}
                           </span>
                         </div>
                       )}
 
-                      <p className="text-[10px] text-[#4B5162] leading-snug">
+                      <p className="text-[10px] text-[#111111]/40 leading-snug">
                         Verification records when this was last checked. It is
                         not a guarantee of accuracy.
                       </p>
@@ -10110,7 +10183,7 @@ export function App() {
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1.5 text-[10px] font-bold text-[#43D17A] underline underline-offset-2"
+                          className="inline-flex items-center gap-1.5 text-[10px] font-bold text-[#111111] underline underline-offset-2"
                         >
                           <ExternalLink className="w-3 h-3" />
                           Source
@@ -10128,7 +10201,7 @@ export function App() {
 
                   return (
                     <div className="space-y-2">
-                      <p className="text-[10px] text-[#4B5162]">
+                      <p className="text-[10px] text-[#111111]/40">
                         You can
                       </p>
                       <div className="flex flex-wrap gap-2">
@@ -10139,7 +10212,7 @@ export function App() {
                             target={a.key === 'call' ? undefined : '_blank'}
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            className="text-[11px] font-bold px-3 py-1.5 rounded-full bg-[#10141C] border border-[#232A38] text-[#43D17A]"
+                            className="text-[11px] font-bold px-3 py-1.5 rounded-full bg-[#FFFFFF] border border-[#E5E7EB] text-[#111111]"
                           >
                             {a.label}
                           </a>
@@ -10159,7 +10232,7 @@ export function App() {
                           selectedObjectForDetail
                         )
                       }
-                      className="flex-1 py-3 rounded-xl bg-[#10141C] border border-[#232A38] text-[#43D17A] font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer"
+                      className="flex-1 py-3 rounded-xl bg-[#FFFFFF] border border-[#E5E7EB] text-[#111111] font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <Bookmark className="w-4 h-4" />
                       Save
@@ -10168,7 +10241,7 @@ export function App() {
                     {(() => {
                       const action = resolveAction(selectedObjectForDetail);
                       const primaryClass =
-                        'flex-[2] py-3 rounded-xl bg-[#43D17A] text-[#090B10] font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer';
+                        'flex-[2] py-3 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer';
 
                       // Stays in Brief: pivot the stream sideways.
                       if (action.kind === 'internal') {
@@ -10210,14 +10283,14 @@ export function App() {
 
                       // No route -> say so plainly. Don't fake a transaction.
                       return (
-                        <div className="flex-[2] py-3 rounded-xl bg-[#10141C] border border-dashed border-[#232A38] text-[#8A93A6] font-extrabold text-xs flex items-center justify-center gap-2">
+                        <div className="flex-[2] py-3 rounded-xl bg-[#FFFFFF] border border-dashed border-[#E5E7EB] text-[#111111]/60 font-extrabold text-xs flex items-center justify-center gap-2">
                           {action.label} unavailable
                         </div>
                       );
                     })()}
                   </div>
 
-                  <p className="text-[10px] text-[#8A93A6] text-center">
+                  <p className="text-[10px] text-[#111111]/60 text-center">
                     {getActionNote(selectedObjectForDetail)}
                   </p>
 
@@ -10227,7 +10300,7 @@ export function App() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleShare(selectedObjectForDetail)}
-                      className="flex-1 py-2.5 rounded-xl bg-[#10141C] border border-[#232A38] text-[#8A93A6] font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="flex-1 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E5E7EB] text-[#111111]/60 font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <Share2 className="w-3.5 h-3.5" />
                       Share
@@ -10237,7 +10310,7 @@ export function App() {
                       onClick={() =>
                         handleCreatePursuit(selectedObjectForDetail.title)
                       }
-                      className="flex-1 py-2.5 rounded-xl bg-[#10141C] border border-[#232A38] text-[#8A93A6] font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="flex-1 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E5E7EB] text-[#111111]/60 font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <Search className="w-3.5 h-3.5" />
                       Pursue
@@ -10247,8 +10320,8 @@ export function App() {
                       onClick={() => handleToggleWatch(selectedObjectForDetail)}
                       className={`flex-1 py-2.5 rounded-xl border font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer ${
                         watchedIds.has(selectedObjectForDetail.id)
-                          ? 'bg-[#10141C] border-[#232A38] text-[#43D17A]'
-                          : 'bg-[#10141C] border-[#232A38] text-[#8A93A6]'
+                          ? 'bg-[#FFFFFF] border-[#E5E7EB] text-[#111111]'
+                          : 'bg-[#FFFFFF] border-[#E5E7EB] text-[#111111]/60'
                       }`}
                     >
                       <Eye className="w-3.5 h-3.5" />
@@ -10257,7 +10330,7 @@ export function App() {
                   </div>
 
                   {watchedIds.has(selectedObjectForDetail.id) && (
-                    <p className="text-[10px] text-[#4B5162] text-center">
+                    <p className="text-[10px] text-[#111111]/40 text-center">
                       Brief will track changes to this record. Alerts are not live yet.
                     </p>
                   )}
@@ -10277,12 +10350,12 @@ export function App() {
 
                   return (
                     <details className="group">
-                      <summary className="text-[10px] text-[#4B5162] cursor-pointer list-none">
+                      <summary className="text-[10px] text-[#111111]/40 cursor-pointer list-none">
                         Why this appeared
                       </summary>
                       <div className="mt-2 space-y-1">
                         {reasons.map((r) => (
-                          <p key={r.key} className="text-[10px] text-[#8A93A6]">
+                          <p key={r.key} className="text-[10px] text-[#111111]/60">
                             {r.label}
                           </p>
                         ))}
@@ -10305,8 +10378,8 @@ export function App() {
                   if (near.length === 0) return null;
 
                   return (
-                    <div className="mt-6 pt-5 border-t border-[#232A38]">
-                      <p className="text-[10px] text-[#43D17A]">
+                    <div className="mt-6 pt-5 border-t border-[#E5E7EB]">
+                      <p className="text-[10px] text-[#111111]">
                         More from this area
                       </p>
                       <h3 className="text-sm font-extrabold mt-1 mb-3">Nearby</h3>
@@ -10318,16 +10391,16 @@ export function App() {
                             <button
                               key={obj.id}
                               onClick={() => setSelectedObjectForDetail(obj)}
-                              className="text-left bg-[#10141C] border border-[#232A38] hover:border-[#232A38] rounded-xl p-3 cursor-pointer transition"
+                              className="text-left bg-[#FFFFFF] border border-[#E5E7EB] hover:border-[#E5E7EB] rounded-xl p-3 cursor-pointer transition"
                             >
-                              <p className="text-[9px] text-[#4B5162]">
+                              <p className="text-[9px] text-[#111111]/40">
                                 {getObjectTypeMeta(obj.type).label}
                               </p>
-                              <p className="text-[11px] font-bold text-[#F3F1E7] leading-snug mt-0.5 line-clamp-2">
+                              <p className="text-[11px] font-bold text-[#111111] leading-snug mt-0.5 line-clamp-2">
                                 {obj.title}
                               </p>
                               {dist && (
-                                <p className="text-[9px] text-[#8A93A6] mt-1">
+                                <p className="text-[9px] text-[#111111]/60 mt-1">
                                   {dist}
                                 </p>
                               )}
@@ -10350,10 +10423,10 @@ export function App() {
                   const state = getDestinationState(dest);
                   const access = getDestinationAccess(dest);
                   return (
-                    <div className="mt-6 pt-5 border-t border-[#232A38]">
+                    <div className="mt-6 pt-5 border-t border-[#E5E7EB]">
                       <div className="flex items-center justify-between gap-3 mb-3">
                         <div>
-                          <p className="text-[10px] text-[#43D17A]">
+                          <p className="text-[10px] text-[#111111]">
                             {DESTINATION_STATE_LABELS[state]}
                           </p>
                           <h3 className="text-sm font-extrabold mt-1">
@@ -10361,20 +10434,20 @@ export function App() {
                           </h3>
                         </div>
                         {access && (
-                          <span className="text-[9px] font-extrabold text-[#43D17A] border border-[#232A38] rounded-full px-2 py-0.5">
+                          <span className="text-[9px] font-extrabold text-[#111111] border border-[#E5E7EB] rounded-full px-2 py-0.5">
                             {access}
                           </span>
                         )}
                       </div>
 
                       {vendors.length === 0 ? (
-                        <p className="text-xs text-[#8A93A6]">
+                        <p className="text-xs text-[#111111]/60">
                           Vendor information unavailable. Brief only lists
                           traders that are actually linked to this destination.
                         </p>
                       ) : (
                         <>
-                          <p className="text-[11px] text-[#43D17A] mb-2">
+                          <p className="text-[11px] text-[#111111] mb-2">
                             {vendors.length}{' '}
                             {vendors.length === 1 ? 'vendor' : 'vendors'} listed
                             here
@@ -10385,27 +10458,27 @@ export function App() {
                               return (
                                 <div
                                   key={vendor.id}
-                                  className="bg-[#10141C] border border-[#232A38] rounded-2xl p-3"
+                                  className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-3"
                                 >
                                   <div className="flex items-start justify-between gap-3">
                                     <div className="min-w-0">
                                       <div className="flex items-center gap-2">
-                                        <p className="text-xs font-extrabold text-[#F3F1E7] truncate">
+                                        <p className="text-xs font-extrabold text-[#111111] truncate">
                                           {vendor.title}
                                         </p>
                                         {vendor.isVerified && (
-                                          <span className="shrink-0 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-[#43D17A] text-[#090B10]">
+                                          <span className="shrink-0 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-[#111111] text-[#FFFFFF]">
                                             VERIFIED
                                           </span>
                                         )}
                                       </div>
-                                      <p className="text-[10px] text-[#8A93A6] mt-0.5">
+                                      <p className="text-[10px] text-[#111111]/60 mt-0.5">
                                         {vendor.category}
                                       </p>
                                     </div>
                                     <button
                                       onClick={() => setSelectedObjectForDetail(vendor)}
-                                      className="shrink-0 text-[10px] font-extrabold text-[#43D17A] cursor-pointer"
+                                      className="shrink-0 text-[10px] font-extrabold text-[#111111] cursor-pointer"
                                     >
                                       View vendor
                                     </button>
@@ -10420,11 +10493,11 @@ export function App() {
                                           onClick={() => setSelectedObjectForDetail(item)}
                                           className="w-full flex items-center justify-between gap-3 text-left cursor-pointer"
                                         >
-                                          <span className="text-[10px] text-[#43D17A] truncate">
+                                          <span className="text-[10px] text-[#111111] truncate">
                                             {item.title}
                                           </span>
                                           {typeof item.metadata?.price === 'number' && (
-                                            <span className="shrink-0 text-[10px] text-[#43D17A]">
+                                            <span className="shrink-0 text-[10px] text-[#111111]">
                                               {item.metadata.currency || 'KES'}{' '}
                                               {item.metadata.price.toLocaleString()}
                                             </span>
@@ -10454,10 +10527,10 @@ export function App() {
                   const appearsAt = getVendorDestinations(vendor, objects);
                   if (offerings.length === 0 && appearsAt.length === 0) return null;
                   return (
-                    <div className="mt-6 pt-5 border-t border-[#232A38]">
+                    <div className="mt-6 pt-5 border-t border-[#E5E7EB]">
                       {appearsAt.length > 0 && (
                         <div className="mb-4">
-                          <p className="text-[10px] text-[#43D17A]">
+                          <p className="text-[10px] text-[#111111]">
                             Find them at
                           </p>
                           <div className="mt-2 space-y-1.5">
@@ -10467,17 +10540,17 @@ export function App() {
                                 <button
                                   key={dest.id}
                                   onClick={() => setSelectedObjectForDetail(dest)}
-                                  className="w-full text-left bg-[#10141C] border border-[#232A38] rounded-2xl p-3 cursor-pointer"
+                                  className="w-full text-left bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-3 cursor-pointer"
                                 >
                                   <div className="flex items-center gap-2">
                                     {(state === 'live' || state === 'today') && (
-                                      <span className="w-1.5 h-1.5 rounded-full bg-[#43D17A] shrink-0" />
+                                      <span className="w-1.5 h-1.5 rounded-full bg-[#111111] shrink-0" />
                                     )}
-                                    <span className="text-xs text-[#F3F1E7] truncate">
+                                    <span className="text-xs text-[#111111] truncate">
                                       {dest.title}
                                     </span>
                                   </div>
-                                  <span className="text-[9px] text-[#4B5162]">
+                                  <span className="text-[9px] text-[#111111]/40">
                                     {DESTINATION_STATE_LABELS[state]}
                                     {dest.locationName ? ` - ${dest.locationName}` : ''}
                                   </span>
@@ -10490,7 +10563,7 @@ export function App() {
 
                       {offerings.length > 0 && (
                         <div>
-                          <p className="text-[10px] text-[#43D17A]">
+                          <p className="text-[10px] text-[#111111]">
                             What they offer
                           </p>
                           <div className="mt-2 space-y-1.5">
@@ -10498,18 +10571,18 @@ export function App() {
                               <button
                                 key={item.id}
                                 onClick={() => setSelectedObjectForDetail(item)}
-                                className="w-full flex items-center justify-between gap-3 bg-[#10141C] border border-[#232A38] rounded-2xl p-3 text-left cursor-pointer"
+                                className="w-full flex items-center justify-between gap-3 bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-3 text-left cursor-pointer"
                               >
                                 <span className="min-w-0">
-                                  <span className="block text-xs text-[#F3F1E7] truncate">
+                                  <span className="block text-xs text-[#111111] truncate">
                                     {item.title}
                                   </span>
-                                  <span className="block text-[9px] text-[#4B5162]">
+                                  <span className="block text-[9px] text-[#111111]/40">
                                     {item.category}
                                   </span>
                                 </span>
                                 {typeof item.metadata?.price === 'number' && (
-                                  <span className="shrink-0 text-[11px] font-extrabold text-[#43D17A]">
+                                  <span className="shrink-0 text-[11px] font-extrabold text-[#111111]">
                                     {item.metadata.currency || 'KES'}{' '}
                                     {item.metadata.price.toLocaleString()}
                                   </span>
@@ -10525,10 +10598,10 @@ export function App() {
 
                 {/* Related */}
                 {relatedObjects.length > 0 && (
-                  <div className="mt-6 pt-5 border-t border-[#232A38]">
+                  <div className="mt-6 pt-5 border-t border-[#E5E7EB]">
                     <div className="flex items-center justify-between mb-3">
                       <div>
-                        <p className="text-[10px] text-[#43D17A]">
+                        <p className="text-[10px] text-[#111111]">
                           Continue exploring
                         </p>
                         <h3 className="text-sm font-extrabold mt-1">
@@ -10539,7 +10612,7 @@ export function App() {
                         </h3>
                       </div>
 
-                      <span className="text-[10px] text-[#8A93A6] shrink-0">
+                      <span className="text-[10px] text-[#111111]/60 shrink-0">
                         {relatedObjects.length} nearby
                       </span>
                     </div>
@@ -10553,7 +10626,7 @@ export function App() {
                           <button
                             key={related.id}
                             onClick={() => setSelectedObjectForDetail(related)}
-                            className="text-left bg-[#090B10] border border-[#232A38] hover:border-[#43D17A] rounded-xl p-3 transition group cursor-pointer"
+                            className="text-left bg-[#FAFAFA] border border-[#E5E7EB] hover:border-[#111111] rounded-xl p-3 transition group cursor-pointer"
                           >
                             <div className="flex items-start gap-3">
                               {related.imageUrl && (
@@ -10566,28 +10639,28 @@ export function App() {
 
                               <div className="min-w-0">
                                 <div className="flex items-center gap-1.5 flex-wrap">
-                                  <p className="text-[9px] text-[#8A93A6]">
+                                  <p className="text-[9px] text-[#111111]/60">
                                     {related.category}
                                   </p>
                                   {chip && (
-                                    <span className="text-[8px] font-extrabold px-1.5 py-0.5 rounded-full border border-[#232A38] text-[#43D17A]">
+                                    <span className="text-[8px] font-extrabold px-1.5 py-0.5 rounded-full border border-[#E5E7EB] text-[#111111]">
                                       {chip}
                                     </span>
                                   )}
                                 </div>
 
-                                <p className="text-xs font-extrabold mt-1 line-clamp-2 group-hover:text-[#43D17A]">
+                                <p className="text-xs font-extrabold mt-1 line-clamp-2 group-hover:text-[#111111]">
                                   {related.title}
                                 </p>
 
                                 {related.locationName && (
-                                  <p className="text-[10px] text-[#43D17A] mt-1 truncate">
+                                  <p className="text-[10px] text-[#111111] mt-1 truncate">
                                     {related.locationName}
                                   </p>
                                 )}
 
                                 {distance && (
-                                  <p className="text-[10px] text-[#8A93A6] mt-0.5">
+                                  <p className="text-[10px] text-[#111111]/60 mt-0.5">
                                     {distance}
                                   </p>
                                 )}
@@ -10613,7 +10686,7 @@ export function App() {
         selectedLocation={selectedLocation}
       />
 
-      <footer className="border-t border-[#232A38] mt-12 py-6 text-xs text-[#8A93A6] text-center">
+      <footer className="border-t border-[#E5E7EB] mt-12 py-6 text-xs text-[#111111]/60 text-center">
         Everything Happening Around You
       </footer>
 

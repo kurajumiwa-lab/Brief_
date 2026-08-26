@@ -46,7 +46,9 @@ export const INBOX_TABS: Record<string, string> = {
   distribution: 'Distribution',
   calendar: 'Calendar',
   vendors: 'Vendors',
-  ai: 'AI review'
+  ai: 'AI review',
+  engine: 'Engine',
+  groupbuy: 'Group Buy'
 };
 
 export const MENU_QUICK: Record<string, string> = {

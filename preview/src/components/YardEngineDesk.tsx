@@ -18,15 +18,15 @@ import * as briefApi from '../api/briefApi';
 export type YardSection = 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'ai';
 
 const T = {
-  bg: '#090B10',
-  surface: '#10141C',
-  line: '#232A38',
-  ink: '#F3F1E7',
-  muted: '#8A93A6',
-  faint: '#4B5162',
-  green: '#43D17A',
-  amber: '#E8A33D',
-  red: '#FF6A4D'
+  bg: '#FAFAFA',
+  surface: '#FFFFFF',
+  line: '#E5E7EB',
+  ink: '#111111',
+  muted: 'rgba(17,17,17,0.62)',
+  faint: 'rgba(17,17,17,0.45)',
+  green: '#111111',
+  amber: '#111111',
+  red: '#111111'
 };
 
 function Panel({ title, icon: Icon, children }: { title: string; icon: React.ElementType; children: React.ReactNode }) {

@@ -1,0 +1,295 @@
+import React, { useCallback, useEffect, useState } from 'react';
+import { StageStepper } from './StageStepper';
+import * as briefApi from '../api/briefApi';
+import type { GroupBuy } from '../api/briefApi';
+
+// ---------------------------------------------------------------------------
+// GROUP BUY PORTAL — the "Chama & Group Buy" financial package.
+//
+//   INTAKE     the rapid 3-field contribution form: Member ID, amount,
+//              payment source — the moment a member contributes, the engine
+//              records it, writes the ledger row, and returns a structured
+//              RECEIPT with a verifiable digest (shown inline).
+//   STEPPER    the real-time ledger pipeline: Funding Pool Initiated -> Target
+//              Achieved -> Merchant Escrow Locked -> Bulk Order Dispatched ->
+//              Individual Delivery — server-authoritative, auto-advancing the
+//              moment the target is covered.
+//   ROUTING    every contribution and stage change emits a signal through the
+//              SAME Universal Data Router a gaming update uses — configure a
+//              route once and the group's WhatsApp/Telegram thread is told.
+//
+// Honesty: contributions are RECORDS (ledger rows), not settled payments —
+// no payment rail is connected and the UI never implies money moved.
+// ---------------------------------------------------------------------------
+
+const SOURCES: { id: string; label: string }[] = [
+  { id: 'mpesa', label: 'M-Pesa' },
+  { id: 'cash', label: 'Cash' },
+  { id: 'bank', label: 'Bank' },
+  { id: 'other', label: 'Other' }
+];
+
+const money = (n: number) => `KSh ${n.toLocaleString()}`;
+
+export function GroupBuyPortal() {
+  const [buys, setBuys] = useState<GroupBuy[]>([]);
+  const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [error, setError] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [lastReceipt, setLastReceipt] = useState<{ memberRef: string; amount: number; receiptHash: string } | null>(null);
+
+  // the 3-field intake
+  const [memberRef, setMemberRef] = useState('');
+  const [amount, setAmount] = useState('');
+  const [source, setSource] = useState('mpesa');
+  const [busy, setBusy] = useState(false);
+  const [intakeError, setIntakeError] = useState<string | null>(null);
+
+  // create form
+  const [newTitle, setNewTitle] = useState('');
+  const [newTarget, setNewTarget] = useState('');
+  const [creating, setCreating] = useState(false);
+
+  const load = useCallback(async () => {
+    setState('loading');
+    const res = await briefApi.listGroupBuys();
+    if (res.ok) {
+      setBuys(res.data);
+      setState('ready');
+      setSelectedId((cur) => cur ?? res.data[0]?.id ?? null);
+    } else {
+      setState('error');
+      setError(res.error ?? 'could not load group buys');
+    }
+  }, []);
+
+  useEffect(() => { void load(); }, [load]);
+
+  const selected = buys.find((b) => b.id === selectedId) ?? buys[0] ?? null;
+
+  const contribute = async () => {
+    if (!selected || busy) return;
+    setBusy(true);
+    setIntakeError(null);
+    setLastReceipt(null);
+    const res = await briefApi.contributeGroupBuy(selected.id, {
+      memberRef: memberRef.trim(),
+      amount: Number(amount),
+      source
+    });
+    setBusy(false);
+    if (!res.ok) {
+      setIntakeError(res.error);
+      return;
+    }
+    setLastReceipt(res.data.receipt);
+    setMemberRef('');
+    setAmount('');
+    await load();
+  };
+
+  const create = async () => {
+    if (!newTitle.trim() || !newTarget.trim() || creating) return;
+    setCreating(true);
+    setIntakeError(null);
+    const res = await briefApi.createGroupBuy({ title: newTitle.trim(), targetAmount: Number(newTarget) });
+    setCreating(false);
+    if (!res.ok) {
+      setIntakeError(res.error);
+      return;
+    }
+    setNewTitle('');
+    setNewTarget('');
+    setSelectedId(res.data.id);
+    await load();
+  };
+
+  const advance = async (to: string) => {
+    if (!selected) return;
+    await briefApi.advanceGroupBuyStage(selected.id, to);
+    await load();
+  };
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-lg font-extrabold text-[#111111]">Group Buy</h2>
+        <p className="text-[10px] text-[#111111]/60">
+          Chama cycles and group orders — contributions, receipts and the pipeline, tracked by the engine.
+        </p>
+      </div>
+
+      {state === 'loading' && <p className="text-xs text-[#111111]/60">Loading…</p>}
+      {state === 'error' && <p className="text-xs text-[#111111]">{error}</p>}
+
+      {state === 'ready' && (
+        <>
+          {/* buy selector + create */}
+          {buys.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {buys.map((b) => (
+                <button
+                  key={b.id}
+                  type="button"
+                  onClick={() => { setSelectedId(b.id); setLastReceipt(null); }}
+                  className="rounded-lg border px-2.5 py-1 text-[10px] font-extrabold cursor-pointer"
+                  style={{
+                    borderColor: b.id === selected?.id ? '#111111' : '#E5E7EB',
+                    background: b.id === selected?.id ? '#111111' : '#FFFFFF',
+                    color: b.id === selected?.id ? '#FFFFFF' : '#111111'
+                  }}
+                >
+                  {b.title}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {!selected && (
+            <div className="rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-4">
+              <p className="text-[13px] font-bold text-[#111111]">No group buys yet.</p>
+              <p className="mt-1 text-[11px] text-[#111111]/60">Open the first chama cycle or group order below.</p>
+            </div>
+          )}
+
+          {/* create form */}
+          <div className="rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-3.5">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#111111]">Open a buy</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <input
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                placeholder="Title (e.g. Unga December cycle)"
+                className="min-w-[180px] flex-1 rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-3 py-2 text-[12px] text-[#111111] outline-none focus:border-[#111111]"
+              />
+              <input
+                value={newTarget}
+                onChange={(e) => setNewTarget(e.target.value)}
+                inputMode="numeric"
+                placeholder="Target KSh"
+                className="w-32 rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-3 py-2 text-[12px] text-[#111111] outline-none focus:border-[#111111]"
+              />
+              <button
+                type="button"
+                onClick={() => void create()}
+                disabled={creating || !newTitle.trim() || !newTarget.trim()}
+                className="rounded-lg bg-[#111111] px-4 py-2 text-[11px] font-extrabold text-[#FFFFFF] cursor-pointer disabled:opacity-40"
+              >
+                {creating ? '…' : 'Open'}
+              </button>
+            </div>
+          </div>
+
+          {selected && (
+            <>
+              {/* the ledger stepper */}
+              <div className="rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-4">
+                <div className="mb-3 flex items-baseline justify-between gap-2">
+                  <div>
+                    <p className="text-[14px] font-extrabold text-[#111111]">{selected.title}</p>
+                    <p className="text-[10px] text-[#111111]/60">
+                      {money(selected.total)} of {money(selected.targetAmount)} · {selected.progressPct}% · {selected.contributionCount} contribution{selected.contributionCount === 1 ? '' : 's'}
+                    </p>
+                  </div>
+                  <span className="rounded-md bg-[#111111] px-2 py-0.5 text-[9px] font-extrabold text-[#FFFFFF]">
+                    {selected.stages[selected.stageIndex]?.label}
+                  </span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-[#E5E7EB]">
+                  <div className="h-full rounded-full bg-[#111111] transition-all" style={{ width: `${selected.progressPct}%` }} />
+                </div>
+                <div className="mt-4">
+                  <StageStepper stages={selected.stages} currentIndex={selected.stageIndex} />
+                </div>
+                {/* organiser stage controls — only the legal next move */}
+                {selected.stageIndex < selected.stages.length - 1 && (
+                  <button
+                    type="button"
+                    onClick={() => void advance(selected.stages[selected.stageIndex + 1].id)}
+                    className="mt-3 rounded-lg border border-[#111111] px-3 py-1.5 text-[11px] font-extrabold text-[#111111] cursor-pointer"
+                  >
+                    Mark: {selected.stages[selected.stageIndex + 1].label}
+                  </button>
+                )}
+              </div>
+
+              {/* the 3-field intake */}
+              <div className="rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-4 space-y-2.5">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#111111]">Record a contribution</p>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  <input
+                    value={memberRef}
+                    onChange={(e) => setMemberRef(e.target.value)}
+                    placeholder="Member ID"
+                    className="rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-3 py-2 text-[12px] text-[#111111] outline-none focus:border-[#111111]"
+                  />
+                  <input
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    inputMode="numeric"
+                    placeholder="Amount KSh"
+                    className="rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-3 py-2 text-[12px] text-[#111111] outline-none focus:border-[#111111]"
+                  />
+                  <select
+                    value={source}
+                    onChange={(e) => setSource(e.target.value)}
+                    className="rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-2 py-2 text-[12px] text-[#111111]"
+                    aria-label="Payment source"
+                  >
+                    {SOURCES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+                  </select>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void contribute()}
+                  disabled={busy || !memberRef.trim() || !Number(amount)}
+                  className="w-full rounded-lg bg-[#111111] py-2.5 text-[12px] font-extrabold text-[#FFFFFF] cursor-pointer disabled:opacity-40"
+                >
+                  {busy ? 'Recording…' : 'Record contribution'}
+                </button>
+                <p className="text-[9px] leading-snug text-[#111111]/50">
+                  A contribution is a ledger record with a verifiable receipt — and it notifies the group's routed
+                  channels automatically. No payment rail is connected, so nothing pretends money moved.
+                </p>
+
+                {intakeError && <p className="text-[11px] text-[#111111]">{intakeError}</p>}
+
+                {/* the structured receipt */}
+                {lastReceipt && (
+                  <div className="rounded-xl border border-[#111111] bg-[#FAFAFA] p-3">
+                    <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#111111]">Ledger receipt</p>
+                    <div className="mt-1 flex items-center justify-between gap-2 text-[11px]">
+                      <span className="font-bold text-[#111111]">{lastReceipt.memberRef} · {money(lastReceipt.amount)}</span>
+                      <span className="font-mono text-[10px] text-[#111111]/60">#{lastReceipt.receiptHash.slice(0, 12)}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* the contributions feed */}
+              {selected.contributions.length > 0 && (
+                <div className="rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-4">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#111111]">
+                    Contributions ({selected.contributionCount})
+                  </p>
+                  <div className="mt-2 space-y-1.5">
+                    {selected.contributions.map((c) => (
+                      <div key={c.id} className="flex items-center justify-between gap-2 text-[11px]">
+                        <span className="min-w-0 truncate font-semibold text-[#111111]">{c.memberRef}</span>
+                        <span className="shrink-0 font-mono text-[#111111]">{money(c.amount)}</span>
+                        <span className="shrink-0 rounded-full border border-[#E5E7EB] px-1.5 py-0.5 text-[8px] font-bold uppercase text-[#111111]/60">{c.source}</span>
+                        <span className="shrink-0 font-mono text-[9px] text-[#111111]/40">#{c.receiptHash.slice(0, 8)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+export default GroupBuyPortal;

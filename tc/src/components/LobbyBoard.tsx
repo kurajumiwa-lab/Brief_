@@ -73,7 +73,7 @@ export function LobbyBoard({ gameId }: { gameId: string }) {
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-[12px] font-extrabold uppercase tracking-[0.15em] text-[var(--brief-green)]">Rooms</h3>
-        <span className="text-[10px] text-[#86948a]">{rooms.length} room{rooms.length === 1 ? '' : 's'} open</span>
+        <span className="text-[10px] text-[#111111]/60">{rooms.length} room{rooms.length === 1 ? '' : 's'} open</span>
       </div>
 
       {/* Host a room — the 1-tap path */}
@@ -82,40 +82,40 @@ export function LobbyBoard({ gameId }: { gameId: string }) {
           value={code}
           onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 8))}
           placeholder="Room code (4-8 digits)"
-          className="flex-1 rounded-lg border border-[#3c4a42] bg-[#1c1f29] px-3 py-2 text-[12px] text-[#dfe2ef] outline-none focus:border-[#4edea3]"
+          className="flex-1 rounded-lg border border-[#E5E7EB] bg-[#FFFFFF] px-3 py-2 text-[12px] text-[#111111] outline-none focus:border-[#111111]"
         />
         <input
           value={mode}
           onChange={(e) => setMode(e.target.value)}
           placeholder="Mode (e.g. S&D)"
-          className="hidden sm:block w-32 rounded-lg border border-[#3c4a42] bg-[#1c1f29] px-3 py-2 text-[12px] text-[#dfe2ef] outline-none focus:border-[#4edea3]"
+          className="hidden sm:block w-32 rounded-lg border border-[#E5E7EB] bg-[#FFFFFF] px-3 py-2 text-[12px] text-[#111111] outline-none focus:border-[#111111]"
         />
         <button
           onClick={() => void host()}
           disabled={busy || code.length < 4}
-          className="flex items-center gap-1 rounded-lg bg-[#10b981] px-3 py-2 text-[12px] font-bold text-[#00422b] disabled:opacity-40 cursor-pointer"
+          className="flex items-center gap-1 rounded-lg bg-[#111111] px-3 py-2 text-[12px] font-bold text-[#FFFFFF] disabled:opacity-40 cursor-pointer"
         >
           <Plus className="h-3.5 w-3.5" /> Host
         </button>
       </div>
 
       {status === 'loading' ? (
-        <p className="text-[11px] text-[#86948a]">Loading rooms…</p>
+        <p className="text-[11px] text-[#111111]/60">Loading rooms…</p>
       ) : rooms.length === 0 ? (
-        <p className="text-[11px] text-[#86948a]">No rooms open. Host one and drop the code.</p>
+        <p className="text-[11px] text-[#111111]/60">No rooms open. Host one and drop the code.</p>
       ) : (
         <div className="space-y-2">
           {rooms.map((r) => (
-            <div key={r.id} className="flex items-center gap-3 rounded-xl border border-[#3c4a42] bg-[#1c1f29] p-3">
+            <div key={r.id} className="flex items-center gap-3 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] p-3">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-[16px] font-bold text-[#dfe2ef]">{r.code}</span>
-                  {r.mode && <span className="text-[10px] text-[#bbcabf]">· {r.mode}</span>}
+                  <span className="font-mono text-[16px] font-bold text-[#111111]">{r.code}</span>
+                  {r.mode && <span className="text-[10px] text-[#111111]/60">· {r.mode}</span>}
                   {r.hostTrust?.verified && (
-                    <span className="rounded-full bg-[#00a6e0]/20 px-2 py-0.5 text-[9px] font-bold text-[#7bd0ff]">✓ {r.hostTrust.label}</span>
+                    <span className="rounded-full bg-[#111111]/10 px-2 py-0.5 text-[9px] font-bold text-[#111111]">✓ {r.hostTrust.label}</span>
                   )}
                 </div>
-                <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[#86948a]">
+                <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[#111111]/60">
                   <Users className="h-3 w-3" />
                   <span>{r.slotsTaken}/{r.maxSlots} filled</span>
                 </div>
@@ -128,7 +128,7 @@ export function LobbyBoard({ gameId }: { gameId: string }) {
               </button>
               <button
                 onClick={() => void claim(r)}
-                className="rounded-lg border border-[#3c4a42] px-3 py-1.5 text-[11px] font-bold text-[#dfe2ef] hover:border-[#4edea3] cursor-pointer"
+                className="rounded-lg border border-[#E5E7EB] px-3 py-1.5 text-[11px] font-bold text-[#111111] hover:border-[#111111] cursor-pointer"
               >
                 Join
               </button>

@@ -1,6 +1,6 @@
 const { JSDOM }=require('jsdom');
 const dom=new JSDOM('<!DOCTYPE html><html><body><div id="root"></div></body></html>',{url:'https://brief.test/',pretendToBeVisual:true});
-global.window=dom.window;global.document=dom.window.document;global.navigator=dom.window.navigator;
+global.window=dom.window;global.document=dom.window.document;Object.defineProperty(globalThis, 'navigator', { value: dom.window.navigator, writable: true, configurable: true }); // Node >=21 ships a getter-only navigator
 global.HTMLElement=dom.window.HTMLElement;global.Element=dom.window.Element;global.Node=dom.window.Node;
 global.MouseEvent=dom.window.MouseEvent;global.getComputedStyle=dom.window.getComputedStyle;
 global.IS_REACT_ACT_ENVIRONMENT=true;
@@ -172,7 +172,7 @@ async function main(){
   await renderQuests();
   let b=text(questHost);
   console.log('=== Quests reward useful work, not clicking ===');
-  check('Quests tab opens', b.includes('Open quests'));
+  check('Quests tab opens', b.includes('Open jobs'));
   check('points settle on acceptance', /settle when a contribution is accepted/i.test(b));
   check('criteria shown BEFORE starting', /Accepted when:/i.test(b));
   check('quest spans information layer', /permit notice/i.test(b));

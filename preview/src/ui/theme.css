@@ -1,16 +1,20 @@
-/* One Brief. Familiar, readable, one green. */
+/* One Brief. Minimalist: white surfaces, ink typography. */
 
 :root {
-  --brief-bg: #191714;
-  --brief-card: #14110e;
-  --brief-ink: #f2efe7;
-  --brief-muted: #9a9278;
-  --brief-faint: #6f6a58;
-  --brief-line: #3b372b;
-  --brief-green: #3e9a66;
-  --brief-green-ink: #0b1a12;
-  --brief-warn: #c9842a;
-  --brief-danger: #c45a3a;
+  /* --- The minimalist system: white surfaces, black type, neutral lines.
+         Hierarchy inside typography comes from weight and size — never hue.
+         Muted/faint are the SAME ink at reduced alpha, so the whole platform
+         speaks strictly black-or-white type. --- */
+  --brief-bg: #FAFAFA;
+  --brief-card: #FFFFFF;
+  --brief-ink: #111111;
+  --brief-muted: rgba(17, 17, 17, 0.62);
+  --brief-faint: rgba(17, 17, 17, 0.45);
+  --brief-line: #E5E7EB;
+  --brief-green: #111111;   /* the one accent is ink; name kept for consumers */
+  --brief-green-ink: #FFFFFF;
+  --brief-warn: #111111;
+  --brief-danger: #111111;
 
   --ground: var(--brief-bg);
   --surface: var(--brief-card);
@@ -22,9 +26,9 @@
 
   --m3-surface: var(--brief-bg);
   --m3-surface-container: var(--brief-card);
-  --m3-surface-container-low: #100e0c;
+  --m3-surface-container-low: #F3F4F6;
   --m3-primary: var(--brief-green);
-  --m3-secondary-container: #24382c;
+  --m3-secondary-container: #F3F4F6;
   --m3-on-surface: var(--brief-ink);
   --m3-on-surface-variant: var(--brief-muted);
   --m3-outline: var(--brief-line);
@@ -53,5 +57,5 @@ button, [role="button"] {
 }
 .brief-tap:active {
   transform: scale(0.98);
-  filter: brightness(1.08);
+  filter: brightness(0.92);
 }
