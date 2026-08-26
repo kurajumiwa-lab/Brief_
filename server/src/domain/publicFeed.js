@@ -61,6 +61,14 @@ function publicAction(object) {
   };
 }
 
+function temporaryTestContent(row) {
+  if (row?.seedBatch !== 'nairobi-demo-v1') return null;
+  return {
+    label: 'Test preview',
+    expiresAt: typeof row.seedExpiresAt === 'string' ? row.seedExpiresAt : null
+  };
+}
+
 /** A public object contains useful discovery fields, never the object row. */
 export function publicObject(object) {
   if (!object || object.publication !== 'public') return null;
@@ -77,7 +85,8 @@ export function publicObject(object) {
     metadata: publicMetadata(object.metadata),
     media: publicMedia(object.media),
     action: publicAction(object),
-    createdAt: object.createdAt ?? null
+    createdAt: object.createdAt ?? null,
+    ...(temporaryTestContent(object) ? { testContent: temporaryTestContent(object) } : {})
   };
 }
 
@@ -104,7 +113,8 @@ export function publicArticle(article) {
     createdAt: article.createdAt ?? null,
     tags: Array.isArray(article.tags)
       ? article.tags.filter((tag) => typeof tag === 'string').slice(0, 20)
-      : []
+      : [],
+    ...(temporaryTestContent(article) ? { testContent: temporaryTestContent(article) } : {})
   };
 }
 

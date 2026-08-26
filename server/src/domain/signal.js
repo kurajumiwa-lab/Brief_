@@ -37,6 +37,7 @@ export const SIGNAL_TYPES = [
   'campaign_completed',
   'campaign_viewed',
   'campaign_shared',
+  'campaign_banner_created',
   'campaign_registration_started',
   'campaign_registered',
   'campaign_registration_updated',
@@ -72,7 +73,9 @@ export const SIGNAL_TYPES = [
   'order_paid',
   // --- Arena ---------------------------------------------------------------
   // Arena reuses the ONE activity layer rather than getting its own analytics
-  // table. Every one of these is a real state change on a challenge or match.
+  // table. Every one of these is a real state change on a challenge, match, or
+  // beta cohort signup.
+  'arena_beta_joined',
   'arena_challenge_opened',
   'arena_challenge_accepted',
   'arena_result_reported',

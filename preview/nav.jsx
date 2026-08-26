@@ -27,6 +27,16 @@ async function main(){
   const top=['Home','Play','Saved','Inbox'];
   for(const t of top) check(`${t} is a destination`, !!btn(t));
   check('Pulse is not a destination', !btn('Pulse'));
+
+  console.log('\n=== Main sheet is a gallery of real entry points ===');
+  check('main shelf is visible on Home', body().includes('What do you want to do?'));
+  const shelfIds = ['around', 'play', 'events', 'create', 'share', 'groups'];
+  check('main shelf has six labelled doors', shelfIds.every((id) => Boolean(document.querySelector(`[data-shelf-id="${id}"]`))));
+  const shareShelfCard = document.querySelector('[data-shelf-id="share"]');
+  if (shareShelfCard) await click(shareShelfCard);
+  check('WhatsApp shelf door lands in distribution', /WhatsApp \+ home shelf|Distribution kits/i.test(body()));
+  await click(btn('Home'));
+
   const strays=['Tea','Today','Sources','Inbox','Group','Quests','Pursuits'];
   // These must NOT be top-level: they may appear as sub-sections only.
   await click(btn('Home'));

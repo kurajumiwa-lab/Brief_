@@ -630,6 +630,12 @@ export interface AppConfig {
   campaignPathPrefix: string;
 }
 
+/** Small release handshake used to detect an older API before testing flows. */
+export interface ReleaseStatus {
+  apiContractVersion: string;
+  serverTime: string;
+}
+
 /**
  * A shareable link, or an honest reason there isn't one. Modelled as a
  * discriminated union so a caller cannot read `.url` without first proving
@@ -668,6 +674,22 @@ export type CampaignShare =
       channels: Record<string, never>;
       copyOnly: readonly string[];
     };
+
+/** A standalone, public presentation of a published campaign. */
+export interface CampaignBanner {
+  id: string;
+  campaignId: string;
+  title: string;
+  body: string | null;
+  location: string | null;
+  startsAt: string | null;
+  imageUrl: string | null;
+  status: 'active' | 'archived';
+  createdAt: string;
+  share:
+    | { available: true; url: string; channels: { whatsapp: string } }
+    | { available: false; reason: string };
+}
 
 /** Platforms with no share-intent URL. The link itself is the whole product. */
 export const COPY_ONLY_CHANNELS = ['instagram', 'tiktok'] as const;
@@ -1087,6 +1109,49 @@ export interface ArenaMoneyStatus {
   requirements: ComplianceRequirement[];
   unmet: string[];
   reason: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// ARENA BETA PILOT
+//
+// The first Arena test is intentionally small and manual. These are aggregate
+// counters derived from beta signups, matches and confirmed results; the client
+// never submits or edits an attained figure.
+// ---------------------------------------------------------------------------
+
+export type ArenaBetaSegment = 'casual' | 'competitive';
+
+export interface ArenaBetaSignup {
+  id: string;
+  betaId: string;
+  gameId: string;
+  userId: string;
+  segment: ArenaBetaSegment;
+  acquisitionSource: string | null;
+  createdAt: string;
+}
+
+export interface ArenaBetaSummary {
+  id: string;
+  gameId: string;
+  label: string;
+  status: 'recruiting' | 'running' | 'closed';
+  targets: {
+    signups: number;
+    playersWithFirstMatch: number;
+    matchesCompleted: number;
+    playersWithTwoMatches: number;
+  };
+  actual: {
+    signups: number;
+    playersWithFirstMatch: number;
+    matchesStarted: number;
+    matchesCompleted: number;
+    playersWithTwoMatches: number;
+  };
+  segments: Record<ArenaBetaSegment, number>;
+  joined: boolean;
+  joinedSegment: ArenaBetaSegment | null;
 }
 
 // ---------------------------------------------------------------------------

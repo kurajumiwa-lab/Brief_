@@ -27,7 +27,8 @@ function activationEvents() {
     firstView: distinctActors('object_viewed'),
     firstSave: distinctActors('object_saved'),
     firstContribution: distinctActors('object_created'),
-    firstArena: distinctActors('arena_challenge_opened')
+    firstArena: distinctActors('arena_challenge_opened'),
+    firstArenaBeta: distinctActors('arena_beta_joined')
   };
 }
 
@@ -36,6 +37,7 @@ function engagementCounts() {
     views: signalMeta('object_viewed').length,
     saves: signalMeta('object_saved').length,
     shares: signalMeta('object_shared').length,
+    betaSignups: signalMeta('arena_beta_joined').length,
     challengesCreated: signalMeta('arena_challenge_opened').length,
     matchesCompleted: signalMeta('arena_result_confirmed').length
   };
@@ -77,7 +79,9 @@ export function dashboard() {
       users: store.all('users').length,
       objects: store.all('objects').length,
       campaigns: store.all('campaigns').length,
+      banners: store.all('campaignBanners').length,
       vaults: store.all('vaults').length,
+      betaSignups: store.all('arenaBetaSignups').length,
       challenges: store.all('arenaChallenges').length,
       matches: store.all('arenaMatches').length,
       notifications: store.all('notifications').length

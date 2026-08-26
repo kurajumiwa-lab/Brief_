@@ -1,41 +1,16 @@
 import React from 'react';
-import {
-  BadgeCheck,
-  Bookmark,
-  Briefcase,
-  BookOpen,
-  CalendarDays,
-  CheckCircle2,
-  ChevronLeft,
-  Circle,
-  Copy,
-  CreditCard,
-  Crown,
-  Database,
-  Inbox,
-  Landmark,
-  MessageCircle,
-  Newspaper,
-  Plus,
-  Send,
-  Share2,
-  ShoppingBag,
-  Trophy,
-  Users,
-  Wallet,
-  Zap
-} from 'lucide-react';
+import { ChevronLeft, Copy, Share2 } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
 import type { AuthedUser } from '../api/briefApi';
 import type { CommandCentre, Wallet as WalletType } from '../api/types';
-import { MENU_QUICK } from '../ui/names';
+import { MainShelf } from './MainShelf';
 
 // ---------------------------------------------------------------------------
 // MENU SHEET — a selectable bottom screen in place of a titled side menu.
 //
 // No product title. No "Brief" wordmark. The shelf is the menu: a host value
-// card you can showcase, a quick-select row, then grouped lists in the same
-// rhythm as a community drawer (community / host / coming soon / regional).
+// card, visual destination tiles, quick actions, and compact region cards. The
+// long community/host row drawer is deliberately gone.
 //
 // Honesty: every figure is server-derived. Missing data is said, not zeroed.
 // There is no star rating — standing is what actually happened.
@@ -411,66 +386,98 @@ function HostValueCard({
   );
 }
 
-// --- Shelf lists ------------------------------------------------------------
+// --- Main sheet gallery -----------------------------------------------------
 
-function Section({
-  title,
-  children,
-  tint
-}: {
-  title: string;
-  children: React.ReactNode;
-  tint?: string;
-}) {
+function MoreToCome() {
   return (
-    <section className={tint ? '' : 'bg-white'}>
-      <div className={`px-2.5 pt-3 pb-1.5 ${tint ?? 'bg-[#F3F4F6]'}`}>
-        <h2 className="text-[15px] font-extrabold text-[#111111] tracking-tight">{title}</h2>
+    <section className="px-4 pb-4">
+      <div className="mb-2 flex items-baseline justify-between gap-2">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#111111]/50">More to come</p>
+        <span className="text-[9px] text-[#111111]/45">Not active yet</span>
       </div>
-      <div className={tint ?? 'bg-white'}>{children}</div>
+      <div className="grid grid-cols-3 gap-2">
+        {['Courses', 'Data desk', 'Premium'].map((label) => (
+          <div key={label} className="rounded-xl border border-dashed border-[#E5E7EB] bg-[#FAFAFA] p-3">
+            <p className="text-[11px] font-extrabold text-[#111111]">{label}</p>
+            <p className="mt-1 text-[9px] font-bold text-[#111111]/45">Not built</p>
+          </div>
+        ))}
+      </div>
     </section>
   );
 }
 
-function Row({
-  icon: Icon,
-  label,
-  muted,
-  onClick
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  muted?: boolean;
-  onClick: () => void;
-}) {
+function QuickActions({ onSelect }: { onSelect: (target: MenuTarget) => void }) {
+  const actions: { label: string; detail: string; target: MenuTarget }[] = [
+    { label: 'New', detail: 'Capture something useful', target: { tab: 'capture' } },
+    { label: 'Dashboard', detail: 'See what is moving', target: { tab: 'workflows', section: 'command' } },
+    { label: 'Inbox', detail: 'Review what needs you', target: { tab: 'workflows', section: 'inbox' } },
+    { label: 'Records', detail: 'Open your vaults', target: { tab: 'workflows', section: 'vault' } },
+    { label: 'Calendar', detail: 'Keep a date in view', target: { tab: 'workflows', section: 'calendar' } }
+  ];
   return (
-    <button
-      onClick={onClick}
-      className={`flex w-full items-center gap-2 px-2.5 py-2.5 text-left cursor-pointer ${
-        muted ? 'text-[#111111]/60' : 'text-[#111111]'
-      }`}
-    >
-      <Icon className="h-4 w-4 shrink-0" />
-      <span className="text-[14px] font-semibold truncate">{label}</span>
-    </button>
+    <section className="px-4 pb-4">
+      <p className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#111111]/50">Quick actions</p>
+      <div className="grid grid-cols-2 gap-2">
+        {actions.map((action) => (
+          <button
+            key={action.label}
+            type="button"
+            onClick={() => onSelect(action.target)}
+            className="group rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] p-3 text-left transition-colors hover:border-[#111111]"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[12px] font-extrabold text-[#111111]">{action.label}</p>
+              <span className="text-[14px] text-[#111111]/35 transition-transform group-hover:translate-x-0.5">→</span>
+            </div>
+            <p className="mt-1 text-[10px] leading-snug text-[#111111]/55">{action.detail}</p>
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }
 
-const QUICK: {
-  id: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  target: MenuTarget;
-}[] = [
-  { id: 'new', label: MENU_QUICK.new, icon: Plus, target: { tab: 'capture' } },
-  { id: 'inbox', label: MENU_QUICK.inbox, icon: Inbox, target: { tab: 'workflows', section: 'inbox' } },
-  { id: 'money', label: MENU_QUICK.money, icon: Wallet, target: { tab: 'workflows', section: 'money' } },
-  { id: 'circles', label: MENU_QUICK.circles, icon: Users, target: { tab: 'mylayer', section: 'circles' } },
-  { id: 'market', label: MENU_QUICK.market, icon: ShoppingBag, target: { tab: 'nearby', section: 'market' } },
-  { id: 'command', label: MENU_QUICK.command, icon: Landmark, target: { tab: 'workflows', section: 'command' } },
-  { id: 'tea', label: MENU_QUICK.tea, icon: Newspaper, target: { tab: 'nearby', section: 'tea' } },
-  { id: 'groups', label: MENU_QUICK.groups, icon: Users, target: { tab: 'mylayer', section: 'groups' } }
-];
+function RegionGallery({
+  selectedLocation,
+  onSelect,
+  onSelectCity
+}: {
+  selectedLocation: string;
+  onSelect: (target: MenuTarget) => void;
+  onSelectCity: (city: GeoCity) => void;
+}) {
+  return (
+    <section className="px-4 pb-5">
+      <div className="mb-2 flex items-baseline justify-between gap-2">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#111111]/50">Your region</p>
+        <span className="text-[9px] text-[#111111]/45">{selectedLocation}</span>
+      </div>
+      <div className="grid grid-cols-4 gap-2">
+        {REGIONS.map((region) => {
+          const selected = selectedLocation.toLowerCase().includes(region.city.label.toLowerCase()) ||
+            selectedLocation.toLowerCase() === region.label.toLowerCase();
+          return (
+            <button
+              key={region.label}
+              type="button"
+              onClick={() => {
+                onSelectCity(region.city);
+                onSelect({ tab: 'nearby', section: 'stream' });
+              }}
+              className="rounded-xl border bg-[#FFFFFF] px-2 py-2.5 text-center transition-colors hover:border-[#111111]"
+              style={{ borderColor: selected ? '#111111' : '#E5E7EB' }}
+            >
+              <span className="block text-[20px] leading-none">{region.flag}</span>
+              <span className="mt-1 block truncate text-[10px] font-extrabold text-[#111111]">{region.label}</span>
+              {selected && <span className="mt-0.5 block text-[8px] font-bold text-[#111111]/50">Selected</span>}
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
 
 export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocation }: MenuSheetProps) {
   const [cardOpen, setCardOpen] = React.useState(false);
@@ -496,24 +503,40 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
   if (!open) return null;
 
   return (
-    <div
-      className="fixed inset-x-0 top-0 z-[45] flex"
-      style={{ bottom: 56 }}
-    >
+    <div className="fixed inset-0 z-[45] flex items-end justify-center sm:items-center" role="presentation">
+      <button
+        type="button"
+        aria-label="Dismiss menu"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/25 backdrop-blur-[2px] cursor-pointer"
+      />
       <aside
         role="dialog"
-        aria-label="Menu"
+        aria-label="Explore gallery"
         aria-modal="true"
-        className="h-full w-[min(20rem,78vw)] max-w-[78vw] min-w-0 shrink-0 overflow-y-auto overflow-x-hidden border-r border-[#E5E7EB] shadow-[8px_0_24px_rgba(0,0,0,0.22)]"
-        style={{
-          background: '#FFFFFF',
-          overscrollBehavior: 'contain',
-          touchAction: 'pan-y',
-          WebkitOverflowScrolling: 'touch'
-        }}
-        onWheel={(e) => e.stopPropagation()}
-        onTouchMove={(e) => e.stopPropagation()}
+        className="relative z-10 flex w-full max-w-3xl flex-col overflow-hidden rounded-t-[28px] border border-[#E5E7EB] bg-[#FAFAFA] shadow-2xl sm:max-h-[min(860px,calc(100vh-24px))] sm:rounded-[28px]"
+        style={{ maxHeight: 'calc(100vh - 12px)' }}
       >
+        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[#E5E7EB] bg-[#FFFFFF] px-4 py-3.5 sm:px-5">
+          <div>
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#111111]/50">Main sheet</p>
+            <h1 className="mt-0.5 text-[19px] font-extrabold tracking-[-0.02em] text-[#111111]">Explore by shelf</h1>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#E5E7EB] text-[20px] leading-none text-[#111111] cursor-pointer"
+            aria-label="Close explore gallery"
+          >
+            ×
+          </button>
+        </header>
+
+        <div
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+          onWheel={(event) => event.stopPropagation()}
+          onTouchMove={(event) => event.stopPropagation()}
+        >
           <HostValueCard
             expanded={cardOpen}
             onExpand={() => setCardOpen(true)}
@@ -523,107 +546,18 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
 
           {!cardOpen && (
             <>
-              <div className="px-2 pt-3 pb-2">
-                <div className="grid grid-cols-4 gap-2">
-                  {QUICK.map((q) => {
-                    const Icon = q.icon;
-                    return (
-                      <button
-                        key={q.id}
-                        onClick={() => onSelect(q.target)}
-                        className="flex flex-col items-center gap-1 cursor-pointer min-w-0"
-                      >
-                        <span className="h-9 w-9 rounded-xl bg-white border border-[#E5E7EB] flex items-center justify-center text-[#111111] shadow-sm">
-                          <Icon className="h-4 w-4" />
-                        </span>
-                        <span className="text-[9px] font-bold text-[#111111] truncate w-full text-center">{q.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <Section title="Community">
-                <Row icon={CheckCircle2} label="Stories" onClick={() => onSelect({ tab: 'nearby', section: 'tea' })} />
-                <Row icon={Circle} label="Groups" onClick={() => onSelect({ tab: 'mylayer', section: 'circles' })} />
-                <Row icon={CalendarDays} label="Events" onClick={() => onSelect({ tab: 'mylayer', section: 'campaigns' })} />
-                <Row icon={Trophy} label="Play" onClick={() => onSelect({ tab: 'arena' })} />
-                <div className="px-2 pb-3 pt-1">
-                  <button
-                    onClick={() => onSelect({ tab: 'capture' })}
-                    className="w-full h-9 rounded-lg bg-[#111111] text-white text-[11px] font-extrabold flex items-center justify-center gap-1 cursor-pointer"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    Start
-                  </button>
-                </div>
-              </Section>
-
-              <Section title="Host">
-                <Row icon={Landmark} label="Dashboard" onClick={() => onSelect({ tab: 'workflows', section: 'command' })} />
-                <Row icon={CreditCard} label="Payments" onClick={() => onSelect({ tab: 'workflows', section: 'money' })} />
-                <Row icon={BadgeCheck} label="Profile" onClick={() => onSelect({ tab: 'mylayer', section: 'mediakit' })} />
-                <Row icon={MessageCircle} label="Messages" onClick={() => onSelect({ tab: 'mylayer', section: 'messages' })} />
-                <Row icon={Inbox} label="Inbox" onClick={() => onSelect({ tab: 'workflows', section: 'inbox' })} />
-                <Row icon={Zap} label="Create" onClick={() => onSelect({ tab: 'workflows', section: 'cockpit' })} />
-                <Row icon={Briefcase} label="Advertise" onClick={() => onSelect({ tab: 'workflows', section: 'campaigns' })} />
-                <Row icon={Users} label="Matches" onClick={() => onSelect({ tab: 'workflows', section: 'matches' })} />
-                <Row icon={Send} label="Distribution" onClick={() => onSelect({ tab: 'workflows', section: 'distribution' })} />
-                <Row icon={CalendarDays} label="Calendar" onClick={() => onSelect({ tab: 'workflows', section: 'calendar' })} />
-                <Row icon={Send} label="Feeds" onClick={() => onSelect({ tab: 'workflows', section: 'sources' })} />
-                <Row icon={Bookmark} label="Records" onClick={() => onSelect({ tab: 'workflows', section: 'vault' })} />
-              </Section>
-
-              <Section title="Coming soon">
-                {[
-                  { icon: BookOpen, label: 'Courses' },
-                  { icon: Database, label: 'Data desk' },
-                  { icon: Crown, label: 'Premium' }
-                ].map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <div
-                      key={item.label}
-                      className="flex w-full items-center gap-2 px-2.5 py-2.5 text-[#111111]/60"
-                    >
-                      <Icon className="h-4 w-4 shrink-0" />
-                      <span className="text-[14px] font-semibold truncate">{item.label}</span>
-                      <span className="ml-auto text-[10px] font-bold shrink-0">Not built</span>
-                    </div>
-                  );
-                })}
-              </Section>
-
-              <Section title="Regional communities" tint="bg-[#F3F4F6]">
-                {REGIONS.map((r) => (
-                  <button
-                    key={r.label}
-                    onClick={() => {
-                      onSelectCity(r.city);
-                      onSelect({ tab: 'nearby', section: 'stream' });
-                    }}
-                    className="flex w-full items-center gap-2 px-2.5 py-2.5 text-left cursor-pointer"
-                  >
-                    <span className="text-[18px] leading-none w-6 text-center">{r.flag}</span>
-                    <span className="text-[13px] font-semibold text-[#111111] truncate">{r.label}</span>
-                    {selectedLocation.toLowerCase().includes(r.city.label.toLowerCase()) ||
-                    selectedLocation.toLowerCase() === r.label.toLowerCase() ? (
-                      <span className="ml-auto text-[10px] font-extrabold text-[#111111]">Here</span>
-                    ) : null}
-                  </button>
-                ))}
-              </Section>
+              <MainShelf onSelect={onSelect} compact />
+              <QuickActions onSelect={onSelect} />
+              <MoreToCome />
+              <RegionGallery
+                selectedLocation={selectedLocation}
+                onSelect={onSelect}
+                onSelectCity={onSelectCity}
+              />
             </>
           )}
+        </div>
       </aside>
-      <button
-        type="button"
-        aria-label="Dismiss menu"
-        onClick={onClose}
-        className="h-full min-w-0 flex-1 bg-black/20 cursor-pointer"
-        style={{ touchAction: 'none' }}
-        onTouchMove={(e) => e.preventDefault()}
-      />
     </div>
   );
 }

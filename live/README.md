@@ -7,6 +7,8 @@ same path a real browser takes, including the Vite preview proxy.
     # 1. stop the API, seed a second seller (see note), restart, then:
     node live/2-commerce-over-http.mjs
     node live/3-public-campaign.mjs
+    node live/5-release-smoke.mjs
+    RELEASE_SMOKE_WRITES=1 node live/5-release-smoke.mjs
 
 ## Why phase 1 is separate
 

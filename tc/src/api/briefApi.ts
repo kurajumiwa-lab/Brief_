@@ -27,6 +27,7 @@ import type {
   Signal,
   TargetView,
   AppConfig,
+  ReleaseStatus,
   AuthStatus,
   Campaign,
   CampaignCreate,
@@ -38,6 +39,7 @@ import type {
   ShareLink,
   ShareChannels,
   CampaignShare,
+  CampaignBanner,
   PaymentConfirmation,
   Transaction,
   TransactionCreate,
@@ -62,6 +64,9 @@ import type {
   Dispute,
   VendorEarnings,
   ArenaMoneyStatus,
+  ArenaBetaSegment,
+  ArenaBetaSignup,
+  ArenaBetaSummary,
   PaymentIntent,
   PaymentInitiation,
   Vault,
@@ -81,7 +86,7 @@ import {
   areBlocks, areCampaigns, areCircles, areMembers, areRegistrations,
   areSignals, areTransactions, isAuthStatus, isCampaign, isCircle, isBlock,
   isAppConfig, isMember, isProviderStatus, isPublicCampaign, isRegistration,
-  isTransaction, isWallet, isCampaignShare, isPaymentConfirmation,
+  isTransaction, isWallet, isCampaignShare, isCampaignBanner, areCampaignBanners, isPaymentConfirmation,
   areSources, areRawItems, isBriefItPreview, isVoteTally, isMemberEvidence,
   isVendor, areVendors, isListing, areListings, isOrder, areOrders,
   isDispute, areDisputes, isPaymentIntent, arePaymentIntents,
@@ -94,6 +99,8 @@ import {
  * so this must stay a relative path: never call localhost from client code.
  */
 export const INGEST_API = '/ingest';
+/** Shared with /api/config so a deployed frontend can detect an older API. */
+export const CLIENT_API_CONTRACT = 'gallery-banners-v1';
 
 // ---------------------------------------------------------------------------
 // SESSION
@@ -687,6 +694,15 @@ export function getConfig(): Promise<ApiResult<AppConfig>> {
   return request('/api/config', undefined, (r) => (isAppConfig(r) ? r : undefined));
 }
 
+/** Detect that the frontend and API came from the same current deployment. */
+export function getRelease(): Promise<ApiResult<ReleaseStatus>> {
+  return request('/api/release', undefined, (r) =>
+    typeof r?.apiContractVersion === 'string' && typeof r?.serverTime === 'string'
+      ? r as ReleaseStatus
+      : undefined
+  );
+}
+
 /**
  * Build the canonical share link, or report honestly that there isn't one.
  *
@@ -718,6 +734,37 @@ export function getCampaignShare(id: string): Promise<ApiResult<CampaignShare>> 
     `/api/campaigns/${encodeURIComponent(id)}/share`,
     undefined,
     (r) => (isCampaignShare(r?.share) ? r.share : undefined)
+  );
+}
+
+/** Public home-shelf banners over already-published campaigns. */
+export function getCampaignBanners(): Promise<ApiResult<CampaignBanner[]>> {
+  return request('/api/banners', undefined, (r) => areCampaignBanners(r?.banners) ? r.banners : undefined);
+}
+
+export function getCampaignBanner(id: string): Promise<ApiResult<CampaignBanner | null>> {
+  return request(`/api/campaigns/${encodeURIComponent(id)}/banner`, undefined, (r) =>
+    r?.banner === null ? null : (isCampaignBanner(r?.banner) ? r.banner : undefined)
+  );
+}
+
+/** Create a standalone banner; the server requires a published campaign. */
+export function createCampaignBanner(
+  id: string,
+  fields: { headline?: string; body?: string; imageUrl?: string | null } = {}
+): Promise<ApiResult<{ banner: CampaignBanner; reused: boolean }>> {
+  return request(
+    `/api/campaigns/${encodeURIComponent(id)}/banner`,
+    { method: 'POST', body: JSON.stringify(fields) },
+    (r) => isCampaignBanner(r?.banner)
+      ? { banner: r.banner, reused: Boolean(r.reused) }
+      : undefined
+  );
+}
+
+export function archiveCampaignBanner(id: string): Promise<ApiResult<CampaignBanner>> {
+  return request(`/api/banners/${encodeURIComponent(id)}/archive`, { method: 'POST', body: '{}' }, (r) =>
+    isCampaignBanner(r?.banner) ? r.banner : undefined
   );
 }
 
@@ -1443,6 +1490,29 @@ export function getArenaGames(): Promise<ApiResult<{ games: any[]; activity: Rec
   );
 }
 
+/** Aggregate pilot counters. A missing server is an unavailable scoreboard, not zero players. */
+export function getArenaBeta(): Promise<ApiResult<ArenaBetaSummary>> {
+  return request('/api/arena/beta', undefined, (r) => {
+    const beta = r?.beta;
+    if (!beta || typeof beta.id !== 'string' || typeof beta.gameId !== 'string') return undefined;
+    if (!beta.targets || !beta.actual || !beta.segments) return undefined;
+    return beta as ArenaBetaSummary;
+  });
+}
+
+export function joinArenaBeta(body: {
+  segment: ArenaBetaSegment;
+  acquisitionSource?: string | null;
+}): Promise<ApiResult<{ signup: ArenaBetaSignup; reused: boolean }>> {
+  return request(
+    '/api/arena/beta/join',
+    { method: 'POST', body: JSON.stringify(body) },
+    (r) => r?.signup && typeof r.signup.id === 'string'
+      ? { signup: r.signup as ArenaBetaSignup, reused: Boolean(r.reused) }
+      : undefined
+  );
+}
+
 export function getArenaChallenges(gameId?: string): Promise<ApiResult<any[]>> {
   const q = gameId ? `?gameId=${encodeURIComponent(gameId)}` : '';
   return request(`/api/arena/challenges${q}`, undefined, (r) =>
@@ -1561,7 +1631,11 @@ export function getFeed(opts: { lat?: number; lng?: number; radiusKm?: number } 
   if (opts.lng !== undefined) params.set('lng', String(opts.lng));
   if (opts.radiusKm !== undefined) params.set('radiusKm', String(opts.radiusKm));
   const q = params.toString() ? `?${params.toString()}` : '';
-  return request(`/api/feed${q}`, undefined, (r) => (r?.feed ? r.feed : undefined));
+  return request(`/api/feed${q}`, undefined, (r) => (
+    r?.feed
+      ? { ...r.feed, _meta: r.meta ?? null, _mediaProvider: r.mediaProvider ?? null }
+      : undefined
+  ));
 }
 
 /**

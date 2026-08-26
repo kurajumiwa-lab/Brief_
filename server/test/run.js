@@ -835,6 +835,26 @@ console.log('\n=== CAMPAIGNS ===');
 
     const shareable = (await call2('/api/campaigns', 'POST', { title: 'Shareable', type: 'popup', price: 500 })).body.campaign;
     await call2(`/api/campaigns/${shareable.id}/publish`, 'POST', {});
+
+    // --- standalone banner + WhatsApp link -------------------------------
+    process.env.BRIEF_PUBLIC_ORIGIN = 'https://brief.example.com/';
+    r = await call2(`/api/campaigns/${shareable.id}/banner`, 'POST', {
+      headline: 'Share the next gathering', body: 'A clean standalone card for the home shelf.'
+    });
+    check('published campaign can create a standalone banner',
+      r.status === 201 && r.body?.banner?.status === 'active');
+    check('banner carries the server WhatsApp intent link',
+      r.body?.banner?.share?.available === true && r.body.banner.share.channels.whatsapp.startsWith('https://wa.me/?text='));
+    r = await call2('/api/banners');
+    check('active banners are publicly listed without a roster',
+      r.status === 200 && r.body?.banners?.some((item) => item.campaignId === shareable.id) &&
+      !JSON.stringify(r.body.banners).includes(shareable.ownerId));
+    r = await call2(`/api/campaigns/${shareable.id}/banner`, 'POST', { headline: 'Changed' });
+    check('creating the same banner is idempotent', r.status === 200 && r.body?.reused === true);
+    r = await call2(`/api/banners/${r.body.banner.id}/archive`, 'POST', {});
+    check('the owner can archive the standalone banner', r.status === 200 && r.body?.banner?.status === 'archived');
+    delete process.env.BRIEF_PUBLIC_ORIGIN;
+
     const beforeShare = (await call2(`/api/campaigns/${shareable.id}`)).body.campaign.metrics;
     await call2(`/api/campaigns/${shareable.id}/share`, 'POST', { channel: 'whatsapp' });
     await call2(`/api/campaigns/${shareable.id}/share`, 'POST', { channel: 'telegram' });
@@ -2687,6 +2707,9 @@ console.log('\n=== AUTHORIZATION ACROSS TWO REAL ACTORS ===');
     check('and it does not leak ownerId', !/ownerId/.test(JSON.stringify(r.body)));
     r = await call('/api/health');
     check('health needs no auth', r.status === 200);
+    r = await call('/api/release');
+    check('release handshake names the current API contract',
+      r.status === 200 && r.body?.apiContractVersion === 'gallery-banners-v1' && typeof r.body?.serverTime === 'string');
     r = await call('/api/capabilities');
     check('capabilities need no auth', r.status === 200);
     check('capabilities report auth as configured', r.body?.auth?.configured === true);
@@ -3129,6 +3152,7 @@ console.log('\n=== PUBLIC FEED API (home-feed) ===');
   check('public feed excludes private objects', !raw.includes(privateId) && !raw.includes('Private feed place'));
   check('public feed omits contact and coordinates', !raw.includes('contactPhone') && !raw.includes('"lat"'));
   check('public feed sends cache headers', response.headers.get('cache-control')?.includes('max-age=60'));
+  check('public feed identifies its generation time', typeof body.meta?.generatedAt === 'string' && body.meta?.apiVersion === '1');
   check('public feed validates incomplete location',
     (await fetch(`http://127.0.0.1:${portPF}/api/public/feed?lat=1`)).status === 400);
   srvPF.close();
@@ -4249,8 +4273,24 @@ console.log('\n=== ARENA: SERVER-SIDE PERSISTENCE & RESULT INTEGRITY ===');
     const P2 = (await call('/api/auth/register', 'POST', { handle: 'player_two', password: 'a good passphrase' })).body;
     const P3 = (await call('/api/auth/register', 'POST', { handle: 'player_three', password: 'a good passphrase' })).body;
 
+    // --- controlled beta -----------------------------------------------------
+    let r = await call('/api/arena/beta');
+    check('beta scoreboard starts empty and has explicit targets',
+      r.status === 200 && r.body?.beta?.actual?.signups === 0 && r.body?.beta?.targets?.signups === 100);
+    r = await call('/api/arena/beta/join', 'POST', { segment: 'competitive' }, P1.token);
+    check('a player can join the beta with a stated segment',
+      r.status === 201 && r.body?.signup?.segment === 'competitive');
+    r = await call('/api/arena/beta/join', 'POST', { segment: 'casual' }, P1.token);
+    check('a beta join is idempotent and preserves the first segment',
+      r.status === 200 && r.body?.reused === true && r.body?.signup?.segment === 'competitive');
+    r = await call('/api/arena/beta/join', 'POST', { segment: 'casual' }, P2.token);
+    check('the second player can join the casual cohort', r.status === 201);
+    r = await call('/api/arena/beta');
+    check('beta counters derive signups and segments',
+      r.body?.beta?.actual?.signups === 2 && r.body?.beta?.segments?.competitive === 1 && r.body?.beta?.segments?.casual === 1);
+
     // --- games ---------------------------------------------------------------
-    let r = await call('/api/arena/games');
+    r = await call('/api/arena/games');
     check('games are served from the SERVER', r.status === 200 && r.body?.games?.length === 5);
     check('eFootball present', r.body.games.some((g) => g.id === 'efootball'));
     check('PUBG present', r.body.games.some((g) => g.id === 'pubg_mobile'));
@@ -6085,6 +6125,25 @@ console.log('\n=== PHASE 4: ONE PERSON, REAL SESSION ===');
   } finally {
     srv.close();
   }
+}
+
+console.log('\n=== TEMPORARY DEMO CONTENT EXPIRY ===');
+{
+  const seed = await import('../src/domain/seed.js');
+  const discovery = await import('../src/domain/discovery.js');
+  store._reset();
+  const seeded = seed.runSeed();
+  const source = store.find('sources', (row) => row.seedBatch === seed.BATCH);
+  const before = store.filter('objects', (row) => row.seedBatch === seed.BATCH).length;
+  const expired = seed.expireSeed(Date.parse(source.seedExpiresAt) + 1);
+  const visibleAfterExpiry = discovery.discoverable({ publication: 'public' });
+  const rerun = seed.runSeed();
+  check('demo seed is time-bounded', seeded.alreadySeeded === false && source.seedExpiresAt && seed.DEMO_TTL_DAYS === 7);
+  check('expired demo content leaves public discovery', expired.expired === true && visibleAfterExpiry.length === 0);
+  check('expired demo rows are retained as expired records', store.filter('objects', (row) => row.expiryStatus === 'expired').length === before);
+  check('expired demo content is not silently reseeded', rerun.alreadySeeded === true && rerun.expired === true && store.filter('objects', (row) => row.seedBatch === seed.BATCH).length === before);
+  const cleared = seed.clearSeed();
+  check('the operator can explicitly clear the expired cohort', cleared.objects === before && store.filter('objects', (row) => row.seedBatch === seed.BATCH).length === 0);
 }
 
 console.log(`\n${'='.repeat(52)}\nPASSED ${pass}   FAILED ${fail}   SKIPPED ${skip}\n${'='.repeat(52)}`);

@@ -57,6 +57,27 @@ immediately; Telegram and WhatsApp report **"Needs authorization"** in the
 connector dashboard until their tokens are set. Brief keeps working either way
 — a dead connector never breaks the app.
 
+### Temporary release-test content
+
+When a new deployment needs a welcoming first page, run `npm run seed` (or use
+the authenticated Demo action). The seed is server-side, marked as demo data,
+and gets a seven-day expiry from its first creation. Once expired, public
+objects are withdrawn, stories expire, campaigns close, listings archive, and
+the marker remains so a later boot cannot silently resurrect the cohort. Use
+`npm run seed:clear` only for an explicit reset.
+
+The browser can run a release smoke check through the same `/ingest` proxy used
+in production:
+
+```bash
+node live/5-release-smoke.mjs
+RELEASE_SMOKE_WRITES=1 node live/5-release-smoke.mjs
+```
+
+The check verifies the release handshake, current home-feed timestamp, news
+wire shape, Arena entry point, and (with writes enabled) a real registration,
+challenge, campaign, WhatsApp-share/banner, and archive cycle.
+
 ---
 
 ## Tests

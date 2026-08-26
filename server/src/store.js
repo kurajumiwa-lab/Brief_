@@ -55,6 +55,9 @@ const EMPTY = {
   // metrics are derived, never stored. See src/domain/campaign.js.
   campaigns: [],
   registrations: [],
+  // Standalone public banners are a presentation layer over a published
+  // campaign. They carry no second event or payment state.
+  campaignBanners: [],
   // Commerce (Batch 3). A vendor sells listings; a customer's commitment to a
   // listing is an order; a contested order has a dispute. Money lives in
   // ledgerTransactions as it always has -- there is deliberately no order
@@ -64,6 +67,9 @@ const EMPTY = {
   // paid contests go through the compliance gate and the one ledger.
   arenaChallenges: [],
   arenaMatches: [],
+  // The controlled eFootball pilot. Signup rows carry cohort intent; pilot
+  // counters are derived from these rows plus the ordinary Arena matches.
+  arenaBetaSignups: [],
   // Fantasy 11. Non-economic core: pool, entries, stats and derived scores.
   // No Fantasy wallet -- paid entry would use the one ledger, once legal.
   fantasyCompetitions: [],

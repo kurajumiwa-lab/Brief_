@@ -29,6 +29,9 @@ import { Inbox } from './components/Inbox';
 import { Quests } from './components/Quests';
 import type { GeoPoint } from './components/LocationChip';
 import { ArenaShelf } from './components/ArenaShelf';
+import { MainShelf } from './components/MainShelf';
+import { ArenaBetaPilot } from './components/ArenaBetaPilot';
+import type { ArenaBetaSegment, ArenaBetaSummary } from './api/types';
 import { EnginePanel } from './components/EnginePanel';
 import { GroupBuyPortal } from './components/GroupBuyPortal';
 import { MatchQueuePanel } from './components/MatchQueuePanel';
@@ -195,6 +198,8 @@ export interface BriefObject {
   validityWindowDays?: number;
   isVerified?: boolean;
   imageUrl?: string;
+  /** Server-labelled temporary demo content; never a client-side fixture flag. */
+  testContent?: { label: string; expiresAt: string | null };
 
   // --- Provenance ------------------------------------------------------------
   // Where this record came from: the listing, register entry or page an
@@ -4433,6 +4438,12 @@ export const objectFromServer = (row: any): BriefObject => {
   actionUrl: row?.actionUrl ?? row?.action?.url ?? undefined,
   actionType: row?.actionType ?? row?.action?.type ?? undefined,
   actionLabel: row?.actionLabel ?? row?.action?.label ?? undefined,
+  testContent: row?.testContent && typeof row.testContent === 'object'
+    ? {
+        label: String(row.testContent.label ?? 'Test preview'),
+        expiresAt: typeof row.testContent.expiresAt === 'string' ? row.testContent.expiresAt : null
+      }
+    : undefined,
 
   // Relationships the server actually recorded. `/api/objects` returns these
   // as {verb, targetId, target}; the client models the same edges as typed
@@ -5283,6 +5294,8 @@ export function App() {
   const [springOverlayOpen, setSpringOverlayOpen] = useState<boolean>(false);
   const [demoBusy, setDemoBusy] = useState<boolean>(false);
   const [demoSeeded, setDemoSeeded] = useState<boolean>(false);
+  const [demoExpiresAt, setDemoExpiresAt] = useState<string | null>(null);
+  const [feedReload, setFeedReload] = useState(0);
 
   // Seed demo content in-process (the CLI wrote to a file the running server
   // never re-read). Populates the empty surface through the real pipeline.
@@ -5292,7 +5305,9 @@ export function App() {
     setDemoBusy(false);
     if (res.ok) {
       setDemoSeeded(true);
-      showToast('Demo content loaded.');
+      setDemoExpiresAt(res.data.seeded?.seedExpiresAt ?? null);
+      setFeedReload((value) => value + 1);
+      showToast(res.data.seeded?.expired ? 'Demo content has expired and was not reused.' : 'Temporary demo content loaded.');
       void loadObjects();
       void refreshConnectors();
     } else {
@@ -5319,6 +5334,26 @@ export function App() {
   // when the deployment has not configured one -- in which case the UI says
   // so instead of inventing a URL from the current browser host.
   const [publicOrigin, setPublicOrigin] = useState<string | null>(null);
+  const [runtimeCheck, setRuntimeCheck] = useState<'checking' | 'current' | 'old' | 'unavailable'>('checking');
+
+  // A lightweight release handshake prevents an older API from looking like a
+  // broken button later. Old deployments still return the original config, so
+  // a missing contract version is a clear "update before testing" signal.
+  useEffect(() => {
+    let live = true;
+    Promise.all([briefApi.getConfig(), briefApi.getRelease()]).then(([config, release]) => {
+      if (!live) return;
+      if (config.ok) setPublicOrigin(config.data.publicOrigin);
+      if (release.ok) {
+        setRuntimeCheck(release.data.apiContractVersion === briefApi.CLIENT_API_CONTRACT ? 'current' : 'old');
+      } else {
+        // A 200 config + missing release endpoint is an older server. If both
+        // probes fail, this is connectivity rather than a version mismatch.
+        setRuntimeCheck(config.ok ? 'old' : 'unavailable');
+      }
+    });
+    return () => { live = false; };
+  }, []);
 
   const [campaignState, setCampaignState] = useState<{
     status: 'idle' | 'loading' | 'ready' | 'error';
@@ -6438,6 +6473,41 @@ export function App() {
     });
   }, []);
 
+  // The eFootball beta is the first controlled Arena test. Its counters are
+  // aggregate server projections; a missing response stays visibly unavailable
+  // rather than becoming a fabricated zero-population claim.
+  const [arenaBetaSummary, setArenaBetaSummary] = useState<ArenaBetaSummary | null>(null);
+  const [arenaBetaBusy, setArenaBetaBusy] = useState(false);
+  const refreshArenaBeta = React.useCallback(async () => {
+    const res = await briefApi.getArenaBeta();
+    if (res.ok) setArenaBetaSummary(res.data);
+  }, []);
+  useEffect(() => { void refreshArenaBeta(); }, [refreshArenaBeta, sessionUser]);
+
+  const handleJoinArenaBeta = async (segment: ArenaBetaSegment) => {
+    if (!sessionUser) {
+      showToast('Your account is still loading — try again in a moment.');
+      return;
+    }
+    setArenaBetaBusy(true);
+    // Preserve a real campaign source when a player arrives from a tagged
+    // community/creator link; otherwise record the in-product entry point.
+    const acquisitionSource = typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.search).get('utm_source') ?? 'arena_beta_card'
+      : 'arena_beta_card';
+    const res = await briefApi.joinArenaBeta({
+      segment,
+      acquisitionSource
+    });
+    setArenaBetaBusy(false);
+    if (!res.ok) {
+      showToast(res.error ?? 'Could not save your pilot spot.');
+      return;
+    }
+    await refreshArenaBeta();
+    showToast(res.data.reused ? 'You are already on the pilot list.' : 'You are on the pilot list. Add your game tag to play.');
+  };
+
   // Load the real open challenges from the server and map them onto the
   // display model. Server rows use createdBy/acceptedBy; the client model uses
   // createdByPlayerId/acceptedByPlayerId. Everything else (format, points,
@@ -6518,7 +6588,9 @@ export function App() {
       };
       if (g.ok) {
         for (const [k, val] of Object.entries(g.data.activity ?? {})) {
-          if (typeof val === 'number' && val > 0) bump(k, val);
+          if (typeof val !== 'number' || val < 0) continue;
+          const client = SERVER_TO_CLIENT_GAME[k] ?? k;
+          counts[client] = Math.max(counts[client] ?? 0, val);
         }
       }
       if (rooms.ok) {
@@ -7192,23 +7264,64 @@ export function App() {
                 <h1 className="font-display text-2xl font-semibold tracking-tight text-[#111111]">Home</h1>
                 <span className="text-[10px] uppercase tracking-[0.2em] text-[#111111]/40">Nearby</span>
               </div>
-              {/* FEED COMPOSER — the composed, deduplicated magazine feed:
-                  hero → tea → discovery → opportunities. Real server rows via
-                  /api/feed; card variety by type, never a repeating grid. */}
-              <FeedComposer
-                typeFilter={selectedObjectType}
-                onFeedStatus={setHomeFeedStatus}
-                onOpen={(raw) => {
-                  if (!raw?.id) return;
-                  const local = objects.find((object) => object.id === String(raw.id));
-                  setSelectedObjectForDetail(local ?? objectFromServer(raw));
-                }}
-                onOpenTea={(slug) => setSelectedTeaSlug(slug)}
-                onOpenTag={(tag) => {
-                  setSearchQuery(tag);
-                  setNearbySection('stream');
-                }}
-              />
+              {runtimeCheck === 'old' && (
+                <div className="mb-3 flex items-start justify-between gap-3 rounded-2xl border border-[#111111] bg-[#FFFFFF] px-4 py-3">
+                  <div>
+                    <p className="text-[11px] font-extrabold text-[#111111]">Update needed before testing</p>
+                    <p className="mt-1 text-[10px] leading-snug text-[#111111]/60">This app is newer than the API behind it. Deploy the current server so gallery, banner, and news checks use the same contract.</p>
+                  </div>
+                  <button type="button" onClick={() => window.location.reload()} className="shrink-0 rounded-lg bg-[#111111] px-3 py-2 text-[10px] font-extrabold text-[#FFFFFF]">Refresh</button>
+                </div>
+              )}
+              {runtimeCheck === 'unavailable' && (
+                <div className="mb-3 rounded-2xl border border-dashed border-[#E5E7EB] bg-[#FFFFFF] px-4 py-3">
+                  <p className="text-[11px] font-extrabold text-[#111111]">Live services are not reachable</p>
+                  <p className="mt-1 text-[10px] leading-snug text-[#111111]/60">The shelf still works as navigation, but live news and create actions will wait for the API. No placeholder counts are shown.</p>
+                </div>
+              )}
+              {nearbySection === 'stream' && (
+                <>
+                  <MainShelf onSelect={handleMenuSelect} playOpenCount={arenaActivity.efootball ?? null} />
+                  {homeFeedStatus === 'ready' && objects.length === 0 && !demoSeeded && (
+                    <div className="rounded-2xl border border-dashed border-[#E5E7EB] bg-[#FFFFFF] px-4 py-3">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <p className="text-[11px] font-extrabold text-[#111111]">The stream is out of supply</p>
+                          <p className="mt-1 text-[10px] leading-snug text-[#111111]/55">No live objects have arrived yet. Load a temporary server-side preview for testing; it expires automatically and is never treated as live news.</p>
+                        </div>
+                        <button type="button" onClick={() => void handleLoadDemo()} disabled={demoBusy} className="shrink-0 rounded-lg bg-[#111111] px-3 py-2 text-[10px] font-extrabold text-[#FFFFFF] disabled:opacity-50">
+                          {demoBusy ? 'Loading…' : 'Load test preview'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {homeFeedStatus === 'ready' && objects.length === 0 && demoSeeded && (
+                    <div className="rounded-2xl border border-dashed border-[#E5E7EB] bg-[#FFFFFF] px-4 py-3">
+                      <p className="text-[11px] font-extrabold text-[#111111]">Test preview is out of time</p>
+                      <p className="mt-1 text-[10px] leading-snug text-[#111111]/55">This temporary cohort has expired and was not reused. Clear it explicitly before starting another release test.</p>
+                      {demoExpiresAt && <p className="mt-2 text-[9px] font-bold text-[#111111]/40">Ended {new Date(demoExpiresAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'short' })}.</p>}
+                    </div>
+                  )}
+                  {/* FEED COMPOSER — the composed, deduplicated magazine feed:
+                      hero → tea → discovery → opportunities. Real server rows via
+                      /api/feed; card variety by type, never a repeating grid. */}
+                  <FeedComposer
+                    key={feedReload}
+                    typeFilter={selectedObjectType}
+                    onFeedStatus={setHomeFeedStatus}
+                    onOpen={(raw) => {
+                      if (!raw?.id) return;
+                      const local = objects.find((object) => object.id === String(raw.id));
+                      setSelectedObjectForDetail(local ?? objectFromServer(raw));
+                    }}
+                    onOpenTea={(slug) => setSelectedTeaSlug(slug)}
+                    onOpenTag={(tag) => {
+                      setSearchQuery(tag);
+                      setNearbySection('stream');
+                    }}
+                  />
+                </>
+              )}
             </div>
             {/* Primary discovery categories — the spec's limited four, not the
                 old overloaded pill rows. Selecting one always returns to the
@@ -8085,11 +8198,26 @@ export function App() {
             <div>
               <h2 className="text-lg font-extrabold text-[#111111]">Arena</h2>
               <p className="text-[11px] text-[#111111]/60 leading-snug mt-1">
-                Gather with people to play, host and discover experiences. Not a competition.
+                Gather with people to play, host and discover experiences. Not a competition to watch — a live test of whether players show up, play, and return.
               </p>
             </div>
 
+            <ArenaBetaPilot
+              summary={arenaBetaSummary}
+              signedIn={Boolean(sessionUser)}
+              joined={Boolean(arenaBetaSummary?.joined)}
+              joinedSegment={arenaBetaSummary?.joinedSegment ?? null}
+              hasGameTag={Boolean(myGameTag)}
+              busy={arenaBetaBusy}
+              onJoin={(segment) => void handleJoinArenaBeta(segment)}
+              onOpenProfile={() => {
+                document.getElementById('arena-profile')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }}
+              onOpenChallenges={() => setArenaSection('challenges')}
+            />
+
             {sessionUser && (
+              <div id="arena-profile">
               <PlayAs
                 displayName={sessionUser.displayName || 'you'}
                 handle={sessionUser.handle}
@@ -8120,6 +8248,7 @@ export function App() {
                 availabilityBusy={availabilityBusy}
                 onToggleAvailability={() => void handleToggleAvailability()}
               />
+              </div>
             )}
 
             <ArenaShelf

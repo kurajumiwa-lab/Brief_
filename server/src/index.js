@@ -25,6 +25,7 @@ import * as telegram from './connectors/telegram.js';
 import * as whatsapp from './connectors/whatsapp.js';
 import * as compliance from './domain/compliance.js';
 import * as calendar from './domain/calendar.js';
+import * as demoSeed from './domain/seed.js';
 import { authStatus } from './identity.js';
 import { recordError } from './routes/helpers.js';
 import { register as authRoutes } from './routes/auth.js';
@@ -42,6 +43,7 @@ import { register as economicRoutes } from './routes/economic.js';
 import { register as commerceRoutes } from './routes/commerce.js';
 import { register as commandRoutes } from './routes/command.js';
 import { register as campaignsRoutes } from './routes/campaigns.js';
+import { register as bannersRoutes } from './routes/banners.js';
 import { register as vaultsRoutes } from './routes/vaults.js';
 import { register as peopleRoutes } from './routes/people.js';
 import { register as teaRoutes } from './routes/tea.js';
@@ -109,6 +111,15 @@ app.use((req, _res, next) => {
   next();
 });
 
+// Demo content is a temporary welcome cohort, not a permanent fixture layer.
+// Expiry runs opportunistically before every request so a seven-day test window
+// disappears even when the deployment has no cron worker. Real user rows never
+// carry the demo batch marker and are untouched.
+app.use((_req, _res, next) => {
+  try { demoSeed.expireSeed(); } catch { /* diagnostics/read paths must stay live */ }
+  next();
+});
+
 // Resolve the bearer token (or cookie) into a verified identity BEFORE any
 // route runs. Sets req.auth, or req.authError when a token was presented and
 // failed. Every authority check reads this through identity.callerId().
@@ -135,6 +146,7 @@ economicRoutes(app);
 commerceRoutes(app);
 commandRoutes(app);
 campaignsRoutes(app);
+bannersRoutes(app);
 vaultsRoutes(app);
 peopleRoutes(app);
 teaRoutes(app);

@@ -36,7 +36,33 @@ app.get('/api/arena/games', (_req, res) => {
   res.json({ games: arena.ARENA_GAMES, activity: arena.gameActivity() });
 });
 
+// The public beta surface returns only aggregate counters. An authenticated
+// caller additionally gets their own joined flag; no roster leaves this route.
+app.get('/api/arena/beta', (req, res) => {
+  res.json({ beta: arena.betaSummary({ userId: callerId(req) }) });
+});
 
+app.post('/api/arena/beta/join', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  try {
+    const result = arena.joinBeta({
+      userId: me,
+      segment: req.body?.segment,
+      acquisitionSource: req.body?.acquisitionSource ?? null
+    });
+    if (!result.reused) {
+      signals.emitSignal({
+        type: 'arena_beta_joined',
+        actorId: me,
+        metadata: { betaId: result.signup.betaId, segment: result.signup.segment }
+      });
+    }
+    res.status(result.reused ? 200 : 201).json(result);
+  } catch (e) {
+    res.status(400).json({ error: String(e.message ?? e) });
+  }
+});
 
 app.get('/api/arena/challenges', (req, res) => {
   res.json({

@@ -14,6 +14,10 @@ import {
   Zap
 } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
+import { CampaignDistribution } from './CampaignDistribution';
+import { StandaloneBanner } from './StandaloneBanner';
+import type { CampaignShare } from '../api/types';
+import whatsappBannerArt from '../assets/shelf/whatsapp-share.webp';
 
 export type YardSection = 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'ai';
 
@@ -272,21 +276,82 @@ function MatchesPanel() {
 
 function DistributionPanel() {
   const [campaigns, setCampaigns] = React.useState<any[]>([]);
+  const [briefCampaigns, setBriefCampaigns] = React.useState<any[]>([]);
   const [assets, setAssets] = React.useState<any[]>([]);
   const [form, setForm] = React.useState({ campaignId: '', targetPlatform: 'WHATSAPP_STATUS', baseRedirectUrl: '', mediaAssetUrl: '', copyText: '' });
+  const [briefCampaignId, setBriefCampaignId] = React.useState('');
+  const [briefShare, setBriefShare] = React.useState<CampaignShare | null>(null);
+  const [currentBanner, setCurrentBanner] = React.useState<any | null>(null);
+  const [bannerForm, setBannerForm] = React.useState({ headline: '', body: '' });
   const [kit, setKit] = React.useState<any | null>(null);
   const [message, setMessage] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
 
   const load = React.useCallback(async () => {
-    const [campaignsResult, assetsResult] = await Promise.all([briefApi.getAdvertiserCampaigns(), briefApi.getAdAssets()]);
+    const [campaignsResult, assetsResult, briefCampaignsResult] = await Promise.all([
+      briefApi.getAdvertiserCampaigns(),
+      briefApi.getAdAssets(),
+      briefApi.getCampaigns()
+    ]);
     if (campaignsResult.ok) {
       setCampaigns(campaignsResult.data);
       setForm((old) => ({ ...old, campaignId: old.campaignId || campaignsResult.data[0]?.id || '' }));
     }
     if (assetsResult.ok) setAssets(assetsResult.data);
+    if (briefCampaignsResult.ok) {
+      const published = briefCampaignsResult.data.filter((item) => ['published', 'live'].includes(item.status));
+      setBriefCampaigns(published);
+      setBriefCampaignId((old) => old || published[0]?.id || '');
+    }
   }, []);
   React.useEffect(() => { void load(); }, [load]);
+
+  React.useEffect(() => {
+    let live = true;
+    if (!briefCampaignId) {
+      setBriefShare(null);
+      setCurrentBanner(null);
+      return () => { live = false; };
+    }
+    (async () => {
+      const [shareResult, bannerResult] = await Promise.all([
+        briefApi.getCampaignShare(briefCampaignId),
+        briefApi.getCampaignBanner(briefCampaignId)
+      ]);
+      if (!live) return;
+      setBriefShare(shareResult.ok ? shareResult.data : null);
+      setCurrentBanner(bannerResult.ok ? bannerResult.data : null);
+      const campaign = briefCampaigns.find((item) => item.id === briefCampaignId);
+      if (campaign) {
+        setBannerForm({
+          headline: campaign.title || '',
+          body: campaign.description || ''
+        });
+      }
+    })();
+    return () => { live = false; };
+  }, [briefCampaignId, briefCampaigns]);
+
+  const createStandaloneBanner = async () => {
+    if (!briefCampaignId) return;
+    setBusy(true); setMessage(null);
+    const result = await briefApi.createCampaignBanner(briefCampaignId, {
+      headline: bannerForm.headline,
+      body: bannerForm.body
+    });
+    setBusy(false);
+    setMessage(result.ok ? (result.data.reused ? 'This campaign already has a standalone banner.' : 'Standalone banner published to the home shelf.') : result.error);
+    if (result.ok) setCurrentBanner(result.data.banner);
+  };
+
+  const archiveStandaloneBanner = async () => {
+    if (!currentBanner?.id) return;
+    setBusy(true); setMessage(null);
+    const result = await briefApi.archiveCampaignBanner(currentBanner.id);
+    setBusy(false);
+    setMessage(result.ok ? 'Standalone banner archived.' : result.error);
+    if (result.ok) setCurrentBanner(null);
+  };
 
   const create = async () => {
     setBusy(true); setMessage(null);
@@ -311,11 +376,79 @@ function DistributionPanel() {
     else if (result.ok) await load();
   };
 
+  const selectedBriefCampaign = briefCampaigns.find((item) => item.id === briefCampaignId) ?? null;
+
   return (
     <Panel title="Distribution kits" icon={Send}>
+      {/* A first-class path for the product's common action: canonical link →
+          WhatsApp intent → standalone banner on the home shelf. */}
+      <div className="rounded-2xl border p-4 space-y-3" style={{ borderColor: T.ink, background: T.surface }}>
+        <div className="flex items-start gap-3">
+          <div className="h-9 w-9 shrink-0 overflow-hidden rounded-xl bg-[#111111]">
+            <img src={whatsappBannerArt} alt="" aria-hidden="true" className="h-full w-full object-cover" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.16em]" style={{ color: T.ink }}>WhatsApp + home shelf</p>
+            <h3 className="mt-1 text-[15px] font-extrabold" style={{ color: T.ink }}>Make one real link do more.</h3>
+            <p className="mt-1 text-[11px] leading-relaxed" style={{ color: T.muted }}>Choose a published Brief campaign. The server supplies its canonical URL and WhatsApp share intent; you can then publish one standalone banner to the home shelf.</p>
+          </div>
+        </div>
+        {briefCampaigns.length === 0 ? (
+          <div className="rounded-xl border border-dashed p-3" style={{ borderColor: T.line }}>
+            <p className="text-[11px] font-extrabold" style={{ color: T.ink }}>Publish a Brief campaign first.</p>
+            <p className="mt-1 text-[10px] leading-snug" style={{ color: T.muted }}>This path does not accept a guessed URL or an unpublished draft. Use Create to make the real campaign, then return here.</p>
+          </div>
+        ) : (
+          <>
+            <label className="block space-y-1">
+              <span className="text-[10px] font-semibold" style={{ color: T.muted }}>Published campaign</span>
+              <select value={briefCampaignId} onChange={(event) => setBriefCampaignId(event.target.value)} className="w-full rounded-xl border px-3 py-2.5 text-[12px] outline-none" style={{ borderColor: T.line, background: T.bg, color: T.ink }}>
+                {briefCampaigns.map((campaign) => <option key={campaign.id} value={campaign.id}>{campaign.title} · {campaign.status}</option>)}
+              </select>
+            </label>
+            <div className="rounded-xl border p-3" style={{ borderColor: T.line, background: T.bg }}>
+              <div className="flex items-baseline justify-between gap-2">
+                <p className="text-[11px] font-extrabold" style={{ color: T.ink }}>{selectedBriefCampaign?.title}</p>
+                <span className="text-[9px] font-bold uppercase" style={{ color: T.green }}>{selectedBriefCampaign?.status}</span>
+              </div>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <Field label="Banner headline" value={bannerForm.headline} onChange={(headline) => setBannerForm((old) => ({ ...old, headline }))} placeholder="Use the campaign title" />
+                <Field label="Banner support text" value={bannerForm.body} onChange={(body) => setBannerForm((old) => ({ ...old, body }))} placeholder="One useful line" />
+              </div>
+            </div>
+            {currentBanner ? (
+              <>
+                <StandaloneBanner banner={currentBanner} />
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[10px] font-bold" style={{ color: T.green }}>Live on the home shelf</span>
+                  <Button disabled={busy} onClick={() => void archiveStandaloneBanner()}>Archive banner</Button>
+                </div>
+              </>
+            ) : (
+              <Button tone="primary" disabled={busy || !briefCampaignId} onClick={() => void createStandaloneBanner()}><Plus className="h-3.5 w-3.5" /> Create standalone banner</Button>
+            )}
+            {briefShare && (
+              <div className="border-t pt-3" style={{ borderColor: T.line }}>
+                <p className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.14em]" style={{ color: T.muted }}>Canonical share link</p>
+                <CampaignDistribution
+                  link={briefShare}
+                  title={selectedBriefCampaign?.title ?? 'Brief campaign'}
+                  onCopy={() => {
+                    if (!briefShare.available) return;
+                    void navigator.clipboard?.writeText(briefShare.url);
+                    setMessage('Campaign link copied.');
+                  }}
+                  onShare={(channel) => { void briefApi.shareCampaign(briefCampaignId, channel); }}
+                />
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
       <div className="rounded-2xl border p-4 space-y-3" style={{ borderColor: T.line, background: T.surface }}>
         <label className="block space-y-1"><span className="text-[10px] font-semibold" style={{ color: T.muted }}>Advertiser campaign</span><select value={form.campaignId} onChange={(event) => setForm((old) => ({ ...old, campaignId: event.target.value }))} className="w-full rounded-xl border px-3 py-2.5 text-[12px] outline-none" style={{ borderColor: T.line, background: T.bg, color: T.ink }}>{campaigns.map((campaign) => <option key={campaign.id} value={campaign.id}>{campaign.title}</option>)}</select></label>
-        <div className="grid gap-3 sm:grid-cols-2"><Field label="Redirect URL" value={form.baseRedirectUrl} onChange={(baseRedirectUrl) => setForm((old) => ({ ...old, baseRedirectUrl }))} placeholder="https://brief.example/c/..." /><Field label="Media URL" value={form.mediaAssetUrl} onChange={(mediaAssetUrl) => setForm((old) => ({ ...old, mediaAssetUrl }))} placeholder="https://cdn.example/banner.jpg" /></div>
+        <div className="grid gap-3 sm:grid-cols-2"><Field label="Redirect URL" value={form.baseRedirectUrl} onChange={(baseRedirectUrl) => setForm((old) => ({ ...old, baseRedirectUrl }))} placeholder="https://brief.example/c/..." /><Field label="Media URL" value={form.mediaAssetUrl} onChange={(mediaAssetUrl) => setForm((old) => ({ ...old, mediaAssetUrl }))} placeholder="https://cdn.example/banner.webp" /></div>
         <Field label="Copy" value={form.copyText} onChange={(copyText) => setForm((old) => ({ ...old, copyText }))} placeholder="Your approved campaign copy" />
         <div className="flex flex-wrap items-center gap-2"><select value={form.targetPlatform} onChange={(event) => setForm((old) => ({ ...old, targetPlatform: event.target.value }))} className="rounded-xl border px-3 py-2 text-[11px]" style={{ borderColor: T.line, background: T.bg, color: T.ink }}><option value="WHATSAPP_STATUS">WhatsApp Status</option><option value="FB_POST">Facebook</option></select><Button tone="primary" disabled={busy || !form.campaignId || !form.baseRedirectUrl} onClick={() => void create()}><Plus className="h-3.5 w-3.5" /> Create asset</Button></div>
       </div>
