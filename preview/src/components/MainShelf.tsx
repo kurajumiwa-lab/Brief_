@@ -24,6 +24,8 @@ import eventArt from '../assets/shelf/event-gathering.webp';
 export interface MainShelfProps {
   onSelect: (target: MenuTarget) => void;
   compact?: boolean;
+  /** Actual open eFootball challenges; null means the activity check has not returned. */
+  playOpenCount?: number | null;
 }
 
 interface ShelfCard {
@@ -95,13 +97,17 @@ const SHELF_CARDS: ShelfCard[] = [
   }
 ];
 
-function ShelfCardView({ card, onSelect, compact }: { card: ShelfCard; onSelect: MainShelfProps['onSelect']; compact: boolean }) {
+function ShelfCardView({ card, onSelect, compact, playOpenCount }: { card: ShelfCard; onSelect: MainShelfProps['onSelect']; compact: boolean; playOpenCount: number | null }) {
   const Icon = card.Icon;
+  const detail = card.id === 'play' && playOpenCount !== null
+    ? playOpenCount > 0 ? `${playOpenCount} open match${playOpenCount === 1 ? '' : 'es'} · enter Arena` : 'No open matches yet · Arena is quiet'
+    : card.detail;
   return (
     <button
       type="button"
       onClick={() => onSelect(card.target)}
-      aria-label={`${card.title}: ${card.detail}`}
+      aria-label={`${card.title}: ${detail}`}
+      data-shelf-id={card.id}
       className={`group relative shrink-0 overflow-hidden rounded-2xl border border-[#E5E7EB] text-left transition-all hover:-translate-y-0.5 hover:border-[#111111] ${
         compact ? 'w-full min-h-[120px]' : 'w-[174px] min-h-[154px] sm:w-auto sm:min-h-[164px]'
       }`}
@@ -122,19 +128,24 @@ function ShelfCardView({ card, onSelect, compact }: { card: ShelfCard; onSelect:
           Featured path
         </span>
       )}
+      {card.id === 'play' && playOpenCount === 0 && (
+        <span className="absolute right-2.5 top-2.5 rounded-full border border-[#FFFFFF]/35 bg-[#090B10]/75 px-2 py-1 text-[8px] font-extrabold uppercase tracking-[0.14em] text-[#FFFFFF]">
+          No supply now
+        </span>
+      )}
       <span className="absolute left-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-lg bg-[#111111]/85 text-[#FFFFFF]">
         <Icon className="h-3.5 w-3.5" />
       </span>
       <div className="absolute inset-x-3 bottom-3">
         <p className="text-[8px] font-extrabold uppercase tracking-[0.18em] text-[#FFFFFF]/70">{card.eyebrow}</p>
         <p className="mt-1 text-[15px] font-extrabold leading-tight text-[#FFFFFF]">{card.title}</p>
-        <p className="mt-1 line-clamp-2 text-[10px] leading-snug text-[#FFFFFF]/72">{card.detail}</p>
+        <p className="mt-1 line-clamp-2 text-[10px] leading-snug text-[#FFFFFF]/72">{detail}</p>
       </div>
     </button>
   );
 }
 
-export function MainShelf({ onSelect, compact = false }: MainShelfProps) {
+export function MainShelf({ onSelect, compact = false, playOpenCount = null }: MainShelfProps) {
   return (
     <section aria-labelledby="main-shelf-title" className="space-y-3">
       <div className="flex items-end justify-between gap-3 px-1">
@@ -147,7 +158,7 @@ export function MainShelf({ onSelect, compact = false }: MainShelfProps) {
         </span>
       </div>
       <div className={compact ? 'grid grid-cols-2 gap-2' : 'flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 snap-x snap-mandatory sm:grid sm:grid-cols-3 sm:overflow-visible'}>
-        {SHELF_CARDS.map((card) => <ShelfCardView key={card.id} card={card} onSelect={onSelect} compact={compact} />)}
+        {SHELF_CARDS.map((card) => <ShelfCardView key={card.id} card={card} onSelect={onSelect} compact={compact} playOpenCount={playOpenCount} />)}
       </div>
       {!compact && (
         <p className="px-1 text-[10px] leading-snug text-[#111111]/45">
