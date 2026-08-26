@@ -64,6 +64,9 @@ const EMPTY = {
   // paid contests go through the compliance gate and the one ledger.
   arenaChallenges: [],
   arenaMatches: [],
+  // The controlled eFootball pilot. Signup rows carry cohort intent; pilot
+  // counters are derived from these rows plus the ordinary Arena matches.
+  arenaBetaSignups: [],
   // Fantasy 11. Non-economic core: pool, entries, stats and derived scores.
   // No Fantasy wallet -- paid entry would use the one ledger, once legal.
   fantasyCompetitions: [],

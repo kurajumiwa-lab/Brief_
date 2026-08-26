@@ -320,6 +320,124 @@ export function gameActivity() {
 }
 
 // ---------------------------------------------------------------------------
+// CONTROLLED BETA — the first eFootball test
+//
+// This is deliberately smaller than a tournament system. A signup records a
+// player's stated reason for joining; the funnel below is derived from those
+// rows and the ordinary Arena match/result rows. No counter is writable from
+// the client and no inactive player is presented as live.
+// ---------------------------------------------------------------------------
+
+export const ARENA_BETA = {
+  id: 'efootball-beta-1',
+  gameId: 'efootball',
+  label: 'Nairobi eFootball pilot',
+  status: 'recruiting',
+  targets: {
+    signups: 100,
+    playersWithFirstMatch: 30,
+    matchesCompleted: 200,
+    playersWithTwoMatches: 20
+  }
+};
+
+export const ARENA_BETA_SEGMENTS = ['casual', 'competitive'];
+
+export function joinBeta({ userId, segment, acquisitionSource = null, gameId = ARENA_BETA.gameId }) {
+  if (!userId) throw new Error('a user is required');
+  if (gameId !== ARENA_BETA.gameId) throw new Error('this pilot is for eFootball');
+  if (!ARENA_BETA_SEGMENTS.includes(segment)) {
+    throw new Error(`segment must be one of ${ARENA_BETA_SEGMENTS.join(', ')}`);
+  }
+
+  const existing = store.find('arenaBetaSignups', (row) =>
+    row.betaId === ARENA_BETA.id && row.userId === userId
+  );
+  if (existing) return { signup: existing, reused: true };
+
+  const row = store.insert('arenaBetaSignups', {
+    id: newId('beta'),
+    betaId: ARENA_BETA.id,
+    gameId: ARENA_BETA.gameId,
+    userId,
+    segment,
+    acquisitionSource: acquisitionSource ? String(acquisitionSource).slice(0, 80) : null,
+    createdAt: new Date().toISOString()
+  });
+  return { signup: row, reused: false };
+}
+
+export function listBetaSignups({ gameId = ARENA_BETA.gameId } = {}) {
+  return store
+    .filter('arenaBetaSignups', (row) => row.betaId === ARENA_BETA.id && row.gameId === gameId)
+    .slice()
+    .sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
+}
+
+/**
+ * The beta dashboard is aggregate-only. `userId` is used solely to tell the
+ * caller whether they have joined and is never returned as a roster.
+ */
+export function betaSummary({ userId = null, gameId = ARENA_BETA.gameId } = {}) {
+  const signups = listBetaSignups({ gameId });
+  const signupAt = new Map(signups.map((row) => [row.userId, row.createdAt]));
+  const signupUsers = new Set(signups.map((row) => row.userId));
+  const segments = { casual: 0, competitive: 0 };
+  for (const row of signups) {
+    if (row.segment === 'casual' || row.segment === 'competitive') segments[row.segment]++;
+  }
+
+  const matches = store.filter('arenaMatches', (match) => {
+    if (match.gameId !== gameId) return false;
+    return [match.playerAId, match.playerBId].some((playerId) => {
+      const at = signupAt.get(playerId);
+      return Boolean(at) && (!match.createdAt || Date.parse(match.createdAt) >= Date.parse(at));
+    });
+  });
+
+  const startedByPlayer = new Map();
+  for (const match of matches) {
+    for (const playerId of [match.playerAId, match.playerBId]) {
+      const at = signupAt.get(playerId);
+      if (!at || (match.createdAt && Date.parse(match.createdAt) < Date.parse(at))) continue;
+      startedByPlayer.set(playerId, (startedByPlayer.get(playerId) ?? 0) + 1);
+    }
+  }
+
+  const betaMatchIds = new Set(matches.map((match) => match.id));
+  const results = store.filter('arenaResults', (result) => {
+    if (result.gameId !== gameId || !betaMatchIds.has(result.matchId)) return false;
+    return [result.playerAId, result.playerBId].some((playerId) => signupUsers.has(playerId));
+  });
+  const completedByPlayer = new Map();
+  for (const result of results) {
+    for (const playerId of [result.playerAId, result.playerBId]) {
+      if (signupUsers.has(playerId)) {
+        completedByPlayer.set(playerId, (completedByPlayer.get(playerId) ?? 0) + 1);
+      }
+    }
+  }
+
+  return {
+    id: ARENA_BETA.id,
+    gameId,
+    label: ARENA_BETA.label,
+    status: ARENA_BETA.status,
+    targets: ARENA_BETA.targets,
+    actual: {
+      signups: signups.length,
+      playersWithFirstMatch: startedByPlayer.size,
+      matchesStarted: matches.length,
+      matchesCompleted: results.length,
+      playersWithTwoMatches: [...completedByPlayer.values()].filter((count) => count >= 2).length
+    },
+    segments,
+    joined: Boolean(userId && signupAt.has(userId)),
+    joinedSegment: userId ? signups.find((row) => row.userId === userId)?.segment ?? null : null
+  };
+}
+
+// ---------------------------------------------------------------------------
 // ARENA ENTITIES — players, venues, tournaments, results, leaderboards
 //
 // These complete Arena as a real platform. Each is a persisted model with real

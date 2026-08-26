@@ -1090,6 +1090,49 @@ export interface ArenaMoneyStatus {
 }
 
 // ---------------------------------------------------------------------------
+// ARENA BETA PILOT
+//
+// The first Arena test is intentionally small and manual. These are aggregate
+// counters derived from beta signups, matches and confirmed results; the client
+// never submits or edits an attained figure.
+// ---------------------------------------------------------------------------
+
+export type ArenaBetaSegment = 'casual' | 'competitive';
+
+export interface ArenaBetaSignup {
+  id: string;
+  betaId: string;
+  gameId: string;
+  userId: string;
+  segment: ArenaBetaSegment;
+  acquisitionSource: string | null;
+  createdAt: string;
+}
+
+export interface ArenaBetaSummary {
+  id: string;
+  gameId: string;
+  label: string;
+  status: 'recruiting' | 'running' | 'closed';
+  targets: {
+    signups: number;
+    playersWithFirstMatch: number;
+    matchesCompleted: number;
+    playersWithTwoMatches: number;
+  };
+  actual: {
+    signups: number;
+    playersWithFirstMatch: number;
+    matchesStarted: number;
+    matchesCompleted: number;
+    playersWithTwoMatches: number;
+  };
+  segments: Record<ArenaBetaSegment, number>;
+  joined: boolean;
+  joinedSegment: ArenaBetaSegment | null;
+}
+
+// ---------------------------------------------------------------------------
 // THE VAULT
 //
 // A Vault is a persistent context layer over a real-world activity. It is NOT

@@ -29,6 +29,8 @@ import { Inbox } from './components/Inbox';
 import { Quests } from './components/Quests';
 import type { GeoPoint } from './components/LocationChip';
 import { ArenaShelf } from './components/ArenaShelf';
+import { ArenaBetaPilot } from './components/ArenaBetaPilot';
+import type { ArenaBetaSegment, ArenaBetaSummary } from './api/types';
 import { EnginePanel } from './components/EnginePanel';
 import { GroupBuyPortal } from './components/GroupBuyPortal';
 import { MatchQueuePanel } from './components/MatchQueuePanel';
@@ -6438,6 +6440,41 @@ export function App() {
     });
   }, []);
 
+  // The eFootball beta is the first controlled Arena test. Its counters are
+  // aggregate server projections; a missing response stays visibly unavailable
+  // rather than becoming a fabricated zero-population claim.
+  const [arenaBetaSummary, setArenaBetaSummary] = useState<ArenaBetaSummary | null>(null);
+  const [arenaBetaBusy, setArenaBetaBusy] = useState(false);
+  const refreshArenaBeta = React.useCallback(async () => {
+    const res = await briefApi.getArenaBeta();
+    if (res.ok) setArenaBetaSummary(res.data);
+  }, []);
+  useEffect(() => { void refreshArenaBeta(); }, [refreshArenaBeta, sessionUser]);
+
+  const handleJoinArenaBeta = async (segment: ArenaBetaSegment) => {
+    if (!sessionUser) {
+      showToast('Your account is still loading — try again in a moment.');
+      return;
+    }
+    setArenaBetaBusy(true);
+    // Preserve a real campaign source when a player arrives from a tagged
+    // community/creator link; otherwise record the in-product entry point.
+    const acquisitionSource = typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.search).get('utm_source') ?? 'arena_beta_card'
+      : 'arena_beta_card';
+    const res = await briefApi.joinArenaBeta({
+      segment,
+      acquisitionSource
+    });
+    setArenaBetaBusy(false);
+    if (!res.ok) {
+      showToast(res.error ?? 'Could not save your pilot spot.');
+      return;
+    }
+    await refreshArenaBeta();
+    showToast(res.data.reused ? 'You are already on the pilot list.' : 'You are on the pilot list. Add your game tag to play.');
+  };
+
   // Load the real open challenges from the server and map them onto the
   // display model. Server rows use createdBy/acceptedBy; the client model uses
   // createdByPlayerId/acceptedByPlayerId. Everything else (format, points,
@@ -8085,11 +8122,26 @@ export function App() {
             <div>
               <h2 className="text-lg font-extrabold text-[#111111]">Arena</h2>
               <p className="text-[11px] text-[#111111]/60 leading-snug mt-1">
-                Gather with people to play, host and discover experiences. Not a competition.
+                Gather with people to play, host and discover experiences. Not a competition to watch — a live test of whether players show up, play, and return.
               </p>
             </div>
 
+            <ArenaBetaPilot
+              summary={arenaBetaSummary}
+              signedIn={Boolean(sessionUser)}
+              joined={Boolean(arenaBetaSummary?.joined)}
+              joinedSegment={arenaBetaSummary?.joinedSegment ?? null}
+              hasGameTag={Boolean(myGameTag)}
+              busy={arenaBetaBusy}
+              onJoin={(segment) => void handleJoinArenaBeta(segment)}
+              onOpenProfile={() => {
+                document.getElementById('arena-profile')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }}
+              onOpenChallenges={() => setArenaSection('challenges')}
+            />
+
             {sessionUser && (
+              <div id="arena-profile">
               <PlayAs
                 displayName={sessionUser.displayName || 'you'}
                 handle={sessionUser.handle}
@@ -8120,6 +8172,7 @@ export function App() {
                 availabilityBusy={availabilityBusy}
                 onToggleAvailability={() => void handleToggleAvailability()}
               />
+              </div>
             )}
 
             <ArenaShelf

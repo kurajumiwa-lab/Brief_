@@ -62,6 +62,9 @@ import type {
   Dispute,
   VendorEarnings,
   ArenaMoneyStatus,
+  ArenaBetaSegment,
+  ArenaBetaSignup,
+  ArenaBetaSummary,
   PaymentIntent,
   PaymentInitiation,
   Vault,
@@ -1439,6 +1442,29 @@ export function getArenaGames(): Promise<ApiResult<{ games: any[]; activity: Rec
           games: r.games,
           activity: r.activity && typeof r.activity === 'object' ? r.activity : {}
         }
+      : undefined
+  );
+}
+
+/** Aggregate pilot counters. A missing server is an unavailable scoreboard, not zero players. */
+export function getArenaBeta(): Promise<ApiResult<ArenaBetaSummary>> {
+  return request('/api/arena/beta', undefined, (r) => {
+    const beta = r?.beta;
+    if (!beta || typeof beta.id !== 'string' || typeof beta.gameId !== 'string') return undefined;
+    if (!beta.targets || !beta.actual || !beta.segments) return undefined;
+    return beta as ArenaBetaSummary;
+  });
+}
+
+export function joinArenaBeta(body: {
+  segment: ArenaBetaSegment;
+  acquisitionSource?: string | null;
+}): Promise<ApiResult<{ signup: ArenaBetaSignup; reused: boolean }>> {
+  return request(
+    '/api/arena/beta/join',
+    { method: 'POST', body: JSON.stringify(body) },
+    (r) => r?.signup && typeof r.signup.id === 'string'
+      ? { signup: r.signup as ArenaBetaSignup, reused: Boolean(r.reused) }
       : undefined
   );
 }

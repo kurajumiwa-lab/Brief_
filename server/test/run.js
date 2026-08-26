@@ -4249,8 +4249,24 @@ console.log('\n=== ARENA: SERVER-SIDE PERSISTENCE & RESULT INTEGRITY ===');
     const P2 = (await call('/api/auth/register', 'POST', { handle: 'player_two', password: 'a good passphrase' })).body;
     const P3 = (await call('/api/auth/register', 'POST', { handle: 'player_three', password: 'a good passphrase' })).body;
 
+    // --- controlled beta -----------------------------------------------------
+    let r = await call('/api/arena/beta');
+    check('beta scoreboard starts empty and has explicit targets',
+      r.status === 200 && r.body?.beta?.actual?.signups === 0 && r.body?.beta?.targets?.signups === 100);
+    r = await call('/api/arena/beta/join', 'POST', { segment: 'competitive' }, P1.token);
+    check('a player can join the beta with a stated segment',
+      r.status === 201 && r.body?.signup?.segment === 'competitive');
+    r = await call('/api/arena/beta/join', 'POST', { segment: 'casual' }, P1.token);
+    check('a beta join is idempotent and preserves the first segment',
+      r.status === 200 && r.body?.reused === true && r.body?.signup?.segment === 'competitive');
+    r = await call('/api/arena/beta/join', 'POST', { segment: 'casual' }, P2.token);
+    check('the second player can join the casual cohort', r.status === 201);
+    r = await call('/api/arena/beta');
+    check('beta counters derive signups and segments',
+      r.body?.beta?.actual?.signups === 2 && r.body?.beta?.segments?.competitive === 1 && r.body?.beta?.segments?.casual === 1);
+
     // --- games ---------------------------------------------------------------
-    let r = await call('/api/arena/games');
+    r = await call('/api/arena/games');
     check('games are served from the SERVER', r.status === 200 && r.body?.games?.length === 5);
     check('eFootball present', r.body.games.some((g) => g.id === 'efootball'));
     check('PUBG present', r.body.games.some((g) => g.id === 'pubg_mobile'));
