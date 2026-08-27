@@ -659,6 +659,16 @@ export function setRegistrationStatus(
   );
 }
 
+export function deleteCampaign(
+  id: string
+): Promise<ApiResult<{ ok: boolean }>> {
+  return request(
+    `/api/campaigns/${encodeURIComponent(id)}`,
+    { method: 'DELETE' },
+    (r) => (r?.ok ? { ok: true } : undefined)
+  );
+}
+
 // --- public (no authentication) ---------------------------------------------
 
 export function getPublicCampaign(slug: string): Promise<ApiResult<PublicCampaign>> {

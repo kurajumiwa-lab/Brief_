@@ -90,7 +90,8 @@ import {
   ExternalLink,
   Eye,
   X,
-  Menu
+  Menu,
+  ChevronLeft
 } from 'lucide-react';
 import { MenuSheet } from './components/MenuSheet';
 import type { MenuTarget } from './components/MenuSheet';
@@ -2563,11 +2564,11 @@ const cleanMoney = (raw: string): number | null => {
 // genuinely signals the category; ambiguity returns null rather than 'place'.
 const TYPE_SIGNALS: { type: ObjectType; words: RegExp; label: string }[] = [
   { type: 'opportunity', words: /\b(grant|scholarship|apply|application|funding|vacancy|hiring|job|tender|bursary)\b/i, label: 'application language' },
-  { type: 'experience', words: /\b(event|forum|summit|meetup|workshop|festival|market day|auction|training|webinar)\b/i, label: 'event language' },
+  { type: 'experience', words: /\b(event|forum|summit|meetup|workshop|festival|market day|auction|training|webinar|tournament|match|gathering|party|concert|show)\b/i, label: 'event language' },
   { type: 'service', words: /\b(service|repair|installation|booking|book a|consultation|inspection|delivery|plumber|fundi)\b/i, label: 'service language' },
   { type: 'product', words: /\b(for sale|selling|stock|in stock|price|buy|brand new|second hand|pieces|units)\b/i, label: 'sale language' },
-  { type: 'knowledge', words: /\b(guide|how to|steps|requirements|explainer|notice|announcement)\b/i, label: 'informational language' },
-  { type: 'place', words: /\b(shop|stall|market|centre|center|hub|office|premises|located at|branch)\b/i, label: 'premises language' }
+  { type: 'knowledge', words: /\b(guide|how to|steps|requirements|explainer|notice|announcement|news|update|alert|advisory|report|post|brief|bulletin|traffic|outage|power|water|road|weather|community|statement|release|info)\b/i, label: 'informational language' },
+  { type: 'place', words: /\b(shop|stall|market|centre|center|hub|office|premises|located at|branch|station|venue|avenue|street)\b/i, label: 'premises language' }
 ];
 
 const inferType = (text: string): { type: ObjectType; why: string } | null => {
@@ -2585,8 +2586,13 @@ const extractTitle = (text: string): string | null => {
     .split(/\n|(?<=[.!])\s+/)
     .map((l) => l.trim())
     .find((l) => l.length >= 8 && l.length <= 90 && /[a-z]/i.test(l));
-  if (!line) return null;
-  return line.replace(/^[^A-Za-z0-9]+/, '').slice(0, 80);
+  if (line) return line.replace(/^[^A-Za-z0-9]+/, '').slice(0, 80);
+  const fallback = text
+    .split(/\n|(?<=[.!])\s+/)
+    .map((l) => l.trim())
+    .find((l) => l.length >= 4 && /[a-z0-9]/i.test(l));
+  if (!fallback) return null;
+  return fallback.replace(/^[^A-Za-z0-9]+/, '').slice(0, 80);
 };
 
 const parseInboundMessage = (
@@ -2716,7 +2722,7 @@ const parseInboundMessage = (
   // and at least one concrete detail.
   const concreteDetails = extracted.filter((f) => f.field !== 'title').length;
   const conversational = CONVERSATION_RE.test(text.trim());
-  const tooShort = text.trim().length < 25;
+  const tooShort = text.trim().length < 18;
 
   let rejectionReason: string | undefined;
   if (!title) {
@@ -5004,7 +5010,13 @@ export function App() {
   const [nearbySection, setNearbySection] = useState<NearbySection>(bootRoute.nearby);
   const [moreFilters, setMoreFilters] = useState<boolean>(false);
   const [myLayerSection, setMyLayerSection] = useState<MyLayerSection>(bootRoute.mylayer);
+  const [myLayerView, setMyLayerView] = useState<'menu' | 'screen'>(
+    bootRoute.mylayer !== 'saved' ? 'screen' : 'menu'
+  );
   const [workflowSection, setWorkflowSection] = useState<WorkflowSection>(bootRoute.workflow);
+  const [workflowView, setWorkflowView] = useState<'menu' | 'screen'>(
+    bootRoute.workflow !== 'active' ? 'screen' : 'menu'
+  );
   const [menuOpen, setMenuOpen] = useState(false);
   const [sessionUser, setSessionUser] = useState<briefApi.AuthedUser | null>(null);
   const [dockOn, setDockOn] = useState(true);
@@ -5257,8 +5269,14 @@ export function App() {
     setPendingObjectId(null);
     setActiveTab(id);
     if (id === 'nearby') setNearbySection('stream');
-    if (id === 'mylayer') setMyLayerSection('saved');
-    if (id === 'workflows') setWorkflowSection('active');
+    if (id === 'mylayer') {
+      setMyLayerSection('saved');
+      setMyLayerView('menu');
+    }
+    if (id === 'workflows') {
+      setWorkflowSection('active');
+      setWorkflowView('menu');
+    }
     if (id === 'arena') setArenaSection('lobby');
   };
   const [selectedObjectType, setSelectedObjectType] = useState<string>('all');
@@ -5533,6 +5551,36 @@ export function App() {
     setEditDraft(null);
     loadCampaigns();
     showToast('Saved');
+  };
+
+  const handleRemoveCampaign = async (campaignId: string) => {
+    setCampaignBusy(true);
+    setCampaignActionError(null);
+    try {
+      const allCampaigns = campaignState.data ?? [];
+      const c = allCampaigns.find((x) => x.id === campaignId) || campaignDetail;
+      if (c && c.status !== 'cancelled' && c.status !== 'closed') {
+        try { await briefApi.campaignAction(campaignId, 'cancel'); } catch {}
+      }
+      await briefApi.deleteCampaign(campaignId);
+      setCampaignState((prev) => ({
+        ...prev,
+        data: (prev.data ?? []).filter((item) => item.id !== campaignId)
+      }));
+      if (c?.objectId) {
+        setObjects((prev) => prev.filter((o) => o.id !== c.objectId));
+      }
+      setOpenCampaignId(null);
+      setCampaignDetail(null);
+      setEditDraft(null);
+      showToast('Event removed.');
+      void loadCampaigns();
+      void loadObjects();
+    } catch (e: any) {
+      setCampaignActionError(String(e.message || e));
+    } finally {
+      setCampaignBusy(false);
+    }
   };
 
   const beginEdit = (c: ApiCampaign) => {
@@ -6802,7 +6850,16 @@ export function App() {
     showToast('Challenge cancelled.');
   };
 
+  const [arenaTestGame, setArenaTestGame] = useState<string>('efootball');
+  const [arenaTestMode, setArenaTestMode] = useState<string>('1v1 Match');
+  const [arenaTestStake, setArenaTestStake] = useState<ArenaStakeKind>('friendly');
+  const [arenaTestFee, setArenaTestFee] = useState<string>('100');
+  const [arenaTestRules, setArenaTestRules] = useState<string>('');
+  const [arenaTestDuration, setArenaTestDuration] = useState<number>(120);
+  const [arenaTestCreatorOpen, setArenaTestCreatorOpen] = useState<boolean>(false);
+
   const handleCreateChallenge = async (params?: {
+    gameId?: string;
     mode?: string;
     stake?: ArenaStakeKind;
     entryFeeKes?: number;
@@ -6810,8 +6867,11 @@ export function App() {
     openMinutes?: number;
   }) => {
     setArenaBusyId('create');
+    const gid = params?.gameId
+      ? ((CLIENT_TO_SERVER_GAME as Record<string, string>)[params.gameId] ?? params.gameId)
+      : ((CLIENT_TO_SERVER_GAME as Record<string, string>)[arenaGameId] ?? arenaGameId);
     const res = await briefApi.createArenaChallenge({
-      gameId: CLIENT_TO_SERVER_GAME[arenaGameId] ?? arenaGameId,
+      gameId: gid,
       mode: params?.mode ?? arenaGame.modes[0] ?? '1v1',
       stake: params?.stake ?? 'friendly',
       entryFeeKes: params?.entryFeeKes,
@@ -6826,6 +6886,21 @@ export function App() {
     setArenaSection('challenges');
     await refreshArenaChallenges();
     showToast('Challenge opened. Anyone can accept it.');
+  };
+
+  const handleLaunchArenaTest = async () => {
+    const fee = arenaTestStake === 'entry_fee' ? (Number(arenaTestFee) || 100) : undefined;
+    await handleCreateChallenge({
+      gameId: arenaTestGame,
+      mode: arenaTestMode,
+      stake: arenaTestStake,
+      entryFeeKes: fee,
+      note: arenaTestRules.trim() || undefined,
+      openMinutes: arenaTestDuration
+    });
+    setArenaTestCreatorOpen(false);
+    setArenaTestRules('');
+    showToast('Arena test match launched!');
   };
 
   // Shared availability toggle used by both PlayAs and the game screen.
@@ -6916,6 +6991,11 @@ export function App() {
   const [captureOpen, setCaptureOpen] = useState(bootRoute.capture);
   const [captureText, setCaptureText] = useState('');
   const [capturePreview, setCapturePreview] = useState<IngestionCandidate | null>(null);
+  const [captureMode, setCaptureMode] = useState<'quick' | 'direct'>('quick');
+  const [directTitle, setDirectTitle] = useState('');
+  const [directType, setDirectType] = useState<ObjectType>('knowledge');
+  const [directCategory, setDirectCategory] = useState('News');
+  const [directLocation, setDirectLocation] = useState('');
 
   const handleCaptureParse = () => {
     const raw = captureText.trim();
@@ -6924,13 +7004,43 @@ export function App() {
     setCapturePreview(parseInboundMessage(message, objects));
   };
 
-  const handleCaptureConfirm = async () => {
-    if (!capturePreview || !capturePreview.isObjectWorthy) return;
+  const handleCaptureConfirm = async (overrideDraft?: { title?: string; type?: ObjectType; category?: string; locationName?: string }) => {
+    const raw = captureText.trim();
+    if (!raw) return;
+    const effTitle = overrideDraft?.title || capturePreview?.draft.title || extractTitle(raw) || 'Captured Post';
+    const effType = overrideDraft?.type || capturePreview?.draft.type || 'knowledge';
+    const effCat = overrideDraft?.category || capturePreview?.draft.category || 'News';
+    const effLoc = overrideDraft?.locationName || capturePreview?.draft.locationName || undefined;
+
     // Persist through the real ingestion pipeline (server-side), so a capture
     // is discoverable and survives a reload — not just a transient local row.
-    const res = await briefApi.saveBriefIt(captureText);
+    const res = await briefApi.saveBriefIt(raw, {
+      title: effTitle,
+      type: effType,
+      category: effCat,
+      locationName: effLoc
+    } as any);
+
+    // Immediately inject into local state so user sees it formed right away!
+    const newObj: BriefObject = {
+      id: res.ok && (res.data as any)?.objectId ? (res.data as any).objectId : `cap_${Date.now()}`,
+      type: effType,
+      title: effTitle,
+      category: effCat,
+      summary: raw.replace(/\s+/g, ' ').trim().slice(0, 240),
+      locationName: effLoc,
+      isVerified: false,
+      sourceType: 'manual',
+      sourceId: 'src_manual_capture',
+      ingestedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString()
+    };
+    setObjects((prev) => [newObj, ...prev.filter((o) => o.id !== newObj.id)]);
+
     setCaptureText('');
     setCapturePreview(null);
+    setDirectTitle('');
+    setDirectLocation('');
     setCaptureOpen(false);
     if (res.ok) {
       showToast('Dropped into Brief.');
@@ -6941,9 +7051,23 @@ export function App() {
     }
   };
 
+  const handleDirectPost = async () => {
+    const raw = captureText.trim();
+    const title = directTitle.trim();
+    if (!raw || !title) return;
+    await handleCaptureConfirm({
+      title,
+      type: directType,
+      category: directCategory,
+      locationName: directLocation.trim() || undefined
+    });
+  };
+
   const handleCaptureCancel = () => {
     setCaptureText('');
     setCapturePreview(null);
+    setDirectTitle('');
+    setDirectLocation('');
     setCaptureOpen(false);
   };
 
@@ -7033,8 +7157,16 @@ export function App() {
     setSelectedTeaSlug(null);
     setActiveTab(target.tab);
     if (target.tab === 'nearby') setNearbySection(target.section ?? 'stream');
-    if (target.tab === 'mylayer') setMyLayerSection(target.section ?? 'saved');
-    if (target.tab === 'workflows') setWorkflowSection(target.section ?? 'cockpit');
+    if (target.tab === 'mylayer') {
+      setMyLayerSection(target.section ?? 'saved');
+      if (target.section) setMyLayerView('screen');
+      else setMyLayerView('menu');
+    }
+    if (target.tab === 'workflows') {
+      setWorkflowSection(target.section ?? 'cockpit');
+      if (target.section) setWorkflowView('screen');
+      else setWorkflowView('menu');
+    }
     if (target.tab === 'arena') setArenaSection('lobby');
   };
 
@@ -7070,7 +7202,9 @@ export function App() {
     setActiveTab(route.dest);
     setNearbySection(route.nearby);
     setMyLayerSection(route.mylayer);
+    if (route.dest === 'mylayer' && route.mylayer !== 'saved') setMyLayerView('screen');
     setWorkflowSection(route.workflow);
+    if (route.dest === 'workflows' && route.workflow !== 'active') setWorkflowView('screen');
     setArenaSection(route.arena);
     setMenuOpen(route.menu);
     setCaptureOpen(route.capture);
@@ -7155,6 +7289,8 @@ export function App() {
     });
     return () => { live = false; };
   }, [pendingObjectId, objects, selectedObjectForDetail]);
+
+  const isAnyModalActive = Boolean(openCampaignId) || createStep !== 'closed' || captureOpen || Boolean(selectedObjectForDetail) || Boolean(selectedTeaSlug);
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] text-[#111111] flex flex-col font-sans selection:bg-[#111111] selection:text-[#FFFFFF]">
@@ -7404,75 +7540,244 @@ export function App() {
           </div>
         )}
 
-        {activeTab === 'mylayer' && (
-          <div className="max-w-3xl mx-auto px-4 pt-4">
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+        {activeTab === 'mylayer' && myLayerView === 'menu' && (
+          <div className="max-w-3xl mx-auto px-4 py-4 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E5E7EB]">
+              <div>
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#111111]/50">Personal Layer</p>
+                <h1 className="text-xl font-extrabold text-[#111111] tracking-tight">Your Layer — Things you've kept</h1>
+                <p className="text-[11px] text-[#111111]/60 mt-0.5">Select an option to open its secondary screen</p>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-[0.14em] bg-[#F3F4F6] text-[#111111] px-2.5 py-1 rounded-full">
+                11 Options
+              </span>
+            </div>
+
+            <div className="divide-y divide-[#E5E7EB] rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] overflow-hidden shadow-sm">
               {([
-                ['saved', `${SAVED_TABS.saved} (${relationships.length})`],
-                ['activity', SAVED_TABS.activity],
-                ['arena', `${SAVED_TABS.arena}${matches.length > 0 ? ` (${matches.length})` : ''}`],
-                ['points', SAVED_TABS.points],
-                ['circles', SAVED_TABS.circles],
-                ['groups', `${SAVED_TABS.groups}${unansweredQuestions.length > 0 ? ` (${unansweredQuestions.length})` : ''}`],
-                ['campaigns', SAVED_TABS.campaigns],
-                ['mediakit', SAVED_TABS.mediakit],
-                ['opportunities', SAVED_TABS.opportunities],
-                ['messages', SAVED_TABS.messages],
-                ['subscriptions', SAVED_TABS.subscriptions]
-              ] as [MyLayerSection, string][]).map(([id, label]) => (
-                <button
+                ['saved', '1', SAVED_TABS.saved, 'Places, opportunities and events you kept', relationships.length > 0 ? `(${relationships.length})` : null],
+                ['activity', '2', SAVED_TABS.activity, 'What you have saved, watched and acted on', null],
+                ['arena', '3', SAVED_TABS.arena, 'Match history and challenge lobbies', matches.length > 0 ? `(${matches.length})` : null],
+                ['points', '4', SAVED_TABS.points, 'Brief Points earned from confirmed activity', null],
+                ['circles', '5', SAVED_TABS.circles, 'Community circles you belong to', null],
+                ['groups', '6', SAVED_TABS.groups, 'Group chatter and unanswered questions', unansweredQuestions.length > 0 ? `(${unansweredQuestions.length})` : null],
+                ['campaigns', '7', SAVED_TABS.campaigns, 'Events and gatherings you host or attend', null],
+                ['mediakit', '8', SAVED_TABS.mediakit, 'Host profile, vendor standing and media kit', null],
+                ['opportunities', '9', SAVED_TABS.opportunities, 'Opportunities and verified gigs', null],
+                ['messages', '10', SAVED_TABS.messages, 'Direct inquiries and correspondence', null],
+                ['subscriptions', '11', SAVED_TABS.subscriptions, 'Creator subscriptions and support tiers', null]
+              ] as [MyLayerSection, string, string, string, string | null][]).map(([id, num, label, hint, badge]) => (
+                <div
                   key={id}
-                  onClick={() => setMyLayerSection(id)}
-                  className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
-                    myLayerSection === id
-                      ? 'bg-[#111111] text-[#FFFFFF] border-[#111111]'
-                      : 'bg-[#FFFFFF] text-[#111111] border-[#E5E7EB]'
-                  }`}
+                  className="flex items-center justify-between p-3.5 sm:p-4 hover:bg-[#FAFAFA] transition-colors group"
                 >
-                  {label}
-                </button>
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMyLayerSection(id);
+                            setMyLayerView('screen');
+                          }}
+                          className="text-[13px] font-extrabold text-[#111111] hover:underline cursor-pointer text-left"
+                        >
+                          {label}
+                        </button>
+                        {badge && (
+                          <span className="rounded-full bg-[#111111] px-1.5 py-0.5 text-[9px] font-extrabold text-[#FFFFFF]">
+                            {badge}
+                          </span>
+                        )}
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-[#FAFAFA] border border-[#E5E7EB] font-mono text-[9px] font-extrabold text-[#111111]/60">
+                          {num}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-[#111111]/55 truncate mt-0.5">{hint}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    aria-label={`Open ${label}`}
+                    onClick={() => {
+                      setMyLayerSection(id);
+                      setMyLayerView('screen');
+                    }}
+                    className="text-[15px] font-bold text-[#111111]/35 group-hover:text-[#111111] group-hover:translate-x-0.5 transition-all p-2 cursor-pointer"
+                  >
+                    →
+                  </button>
+                </div>
               ))}
             </div>
           </div>
         )}
 
-        {activeTab === 'workflows' && (
-          <div className="max-w-3xl mx-auto px-4 pt-4">
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+        {activeTab === 'mylayer' && myLayerView === 'screen' && (
+          <div className="max-w-3xl mx-auto px-4 pt-3 pb-1">
+            <div className="flex items-center justify-between gap-2 pb-3 mb-2 border-b border-[#E5E7EB]">
+              <button
+                type="button"
+                onClick={() => setMyLayerView('menu')}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] px-3 py-1.5 text-[11px] font-extrabold text-[#111111] hover:border-[#111111] cursor-pointer"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" /> All options
+              </button>
+              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
+                {([
+                  ['saved', SAVED_TABS.saved],
+                  ['activity', SAVED_TABS.activity],
+                  ['arena', SAVED_TABS.arena],
+                  ['points', SAVED_TABS.points],
+                  ['circles', SAVED_TABS.circles],
+                  ['groups', SAVED_TABS.groups],
+                  ['campaigns', SAVED_TABS.campaigns],
+                  ['mediakit', SAVED_TABS.mediakit],
+                  ['opportunities', SAVED_TABS.opportunities],
+                  ['messages', SAVED_TABS.messages],
+                  ['subscriptions', SAVED_TABS.subscriptions]
+                ] as [MyLayerSection, string][]).map(([id, label]) => (
+                  <button
+                    key={id}
+                    onClick={() => setMyLayerSection(id)}
+                    className={`shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition cursor-pointer ${
+                      myLayerSection === id
+                        ? 'bg-[#111111] text-[#FFFFFF]'
+                        : 'text-[#111111]/60 hover:text-[#111111] bg-[#FAFAFA]'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'workflows' && workflowView === 'menu' && (
+          <div className="max-w-3xl mx-auto px-4 py-4 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E5E7EB]">
+              <div>
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#111111]/50">Workspace Desk</p>
+                <h1 className="text-xl font-extrabold text-[#111111] tracking-tight">Workflows — Things you can actually do</h1>
+                <p className="text-[11px] text-[#111111]/60 mt-0.5">Select a workspace or tool to open its secondary desk</p>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-[0.14em] bg-[#F3F4F6] text-[#111111] px-2.5 py-1 rounded-full">
+                18 Tools
+              </span>
+            </div>
+
+            <div className="divide-y divide-[#E5E7EB] rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] overflow-hidden shadow-sm">
               {([
-                // Command is the host's landing surface: the overview of what
-                // needs attention, money, people, distribution and what's next.
-                ['cockpit', INBOX_TABS.cockpit],
-                ['command', INBOX_TABS.command],
-                ['active', `${INBOX_TABS.active} (${activeJourneys.length})`],
-                ['completed', `${INBOX_TABS.completed} (${completedJourneys.length})`],
-                ['inbox', `${INBOX_TABS.inbox}${pendingCandidates.length > 0 ? ` (${pendingCandidates.length})` : ''}`],
-                ['sources', INBOX_TABS.sources],
-                ['money', INBOX_TABS.money],
-                ['vault', INBOX_TABS.vault],
-                ['gate', INBOX_TABS.gate],
-                ['tea', INBOX_TABS.tea],
-                ['campaigns', INBOX_TABS.campaigns],
-                ['matches', INBOX_TABS.matches],
-                ['distribution', INBOX_TABS.distribution],
-                ['calendar', INBOX_TABS.calendar],
-                ['vendors', INBOX_TABS.vendors],
-                ['ai', INBOX_TABS.ai],
-                ['engine', INBOX_TABS.engine],
-                ['groupbuy', INBOX_TABS.groupbuy]
-              ] as [WorkflowSection, string][]).map(([id, label]) => (
-                <button
+                ['cockpit', '1', INBOX_TABS.cockpit, 'Creator cockpit, rapid actions and campaign setup', null],
+                ['command', '2', INBOX_TABS.command, 'Overview of revenue, check-ins, people & alerts', null],
+                ['active', '3', INBOX_TABS.active, 'Active journeys and in-flight tasks', activeJourneys.length > 0 ? `(${activeJourneys.length})` : null],
+                ['completed', '4', INBOX_TABS.completed, 'Completed journeys and settled audit records', completedJourneys.length > 0 ? `(${completedJourneys.length})` : null],
+                ['inbox', '5', INBOX_TABS.inbox, 'Inbound messages and reviews needing your attention', pendingCandidates.length > 0 ? `(${pendingCandidates.length})` : null],
+                ['sources', '6', INBOX_TABS.sources, 'Connected channels, WhatsApp, Telegram and web feeds', null],
+                ['money', '7', INBOX_TABS.money, 'Wallet, escrow balances, disbursements and ledger', null],
+                ['vault', '8', INBOX_TABS.vault, 'The Vault: participants, footsteps, and handoffs', null],
+                ['gate', '9', INBOX_TABS.gate, 'The Gate: ticket codes and door check-in', null],
+                ['tea', '10', INBOX_TABS.tea, 'Story studio: write, style and publish articles', null],
+                ['campaigns', '11', INBOX_TABS.campaigns, 'Campaign lifecycle, public slugs and ticket inventory', null],
+                ['matches', '12', INBOX_TABS.matches, 'Match queue, clan scheduling and tournament brackets', null],
+                ['distribution', '13', INBOX_TABS.distribution, 'Social banner generator and channel share kits', null],
+                ['calendar', '14', INBOX_TABS.calendar, 'Production calendar, bookings and release dates', null],
+                ['vendors', '15', INBOX_TABS.vendors, 'Vendor directory, capabilities and escrow support', null],
+                ['ai', '16', INBOX_TABS.ai, 'Machine suggestions with human confirmation guardrails', null],
+                ['engine', '17', INBOX_TABS.engine, 'Sync pipeline, connector status and yard health', null],
+                ['groupbuy', '18', INBOX_TABS.groupbuy, 'Pooled orders, contributions and split settlements', null]
+              ] as [WorkflowSection, string, string, string, string | null][]).map(([id, num, label, hint, badge]) => (
+                <div
                   key={id}
-                  onClick={() => setWorkflowSection(id)}
-                  className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
-                    workflowSection === id
-                      ? 'bg-[#111111] text-[#FFFFFF] border-[#111111]'
-                      : 'bg-[#FFFFFF] text-[#111111] border-[#E5E7EB]'
-                  }`}
+                  className="flex items-center justify-between p-3.5 sm:p-4 hover:bg-[#FAFAFA] transition-colors group"
                 >
-                  {label}
-                </button>
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setWorkflowSection(id);
+                            setWorkflowView('screen');
+                          }}
+                          className="text-[13px] font-extrabold text-[#111111] hover:underline cursor-pointer text-left"
+                        >
+                          {label}
+                        </button>
+                        {badge && (
+                          <span className="rounded-full bg-[#111111] px-1.5 py-0.5 text-[9px] font-extrabold text-[#FFFFFF]">
+                            {badge}
+                          </span>
+                        )}
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-[#FAFAFA] border border-[#E5E7EB] font-mono text-[9px] font-extrabold text-[#111111]/60">
+                          {num}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-[#111111]/55 truncate mt-0.5">{hint}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    aria-label={`Open ${label}`}
+                    onClick={() => {
+                      setWorkflowSection(id);
+                      setWorkflowView('screen');
+                    }}
+                    className="text-[15px] font-bold text-[#111111]/35 group-hover:text-[#111111] group-hover:translate-x-0.5 transition-all p-2 cursor-pointer"
+                  >
+                    →
+                  </button>
+                </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'workflows' && workflowView === 'screen' && (
+          <div className="max-w-3xl mx-auto px-4 pt-3 pb-1">
+            <div className="flex items-center justify-between gap-2 pb-3 mb-2 border-b border-[#E5E7EB]">
+              <button
+                type="button"
+                onClick={() => setWorkflowView('menu')}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] px-3 py-1.5 text-[11px] font-extrabold text-[#111111] hover:border-[#111111] cursor-pointer"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" /> All actions
+              </button>
+              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
+                {([
+                  ['cockpit', INBOX_TABS.cockpit],
+                  ['command', INBOX_TABS.command],
+                  ['active', INBOX_TABS.active],
+                  ['completed', INBOX_TABS.completed],
+                  ['inbox', INBOX_TABS.inbox],
+                  ['sources', INBOX_TABS.sources],
+                  ['money', INBOX_TABS.money],
+                  ['vault', INBOX_TABS.vault],
+                  ['gate', INBOX_TABS.gate],
+                  ['tea', INBOX_TABS.tea],
+                  ['campaigns', INBOX_TABS.campaigns],
+                  ['matches', INBOX_TABS.matches],
+                  ['distribution', INBOX_TABS.distribution],
+                  ['calendar', INBOX_TABS.calendar],
+                  ['vendors', INBOX_TABS.vendors],
+                  ['ai', INBOX_TABS.ai],
+                  ['engine', INBOX_TABS.engine],
+                  ['groupbuy', INBOX_TABS.groupbuy]
+                ] as [WorkflowSection, string][]).map(([id, label]) => (
+                  <button
+                    key={id}
+                    onClick={() => setWorkflowSection(id)}
+                    className={`shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition cursor-pointer ${
+                      workflowSection === id
+                        ? 'bg-[#111111] text-[#FFFFFF]'
+                        : 'text-[#111111]/60 hover:text-[#111111] bg-[#FAFAFA]'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -7879,7 +8184,7 @@ export function App() {
         )}
 
         {/* MY LAYER */}
-        {activeTab === 'mylayer' && myLayerSection === 'saved' && (
+        {activeTab === 'mylayer' && myLayerView === 'screen' && myLayerSection === 'saved' && (
           <section className="space-y-4">
             <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-2">
@@ -8071,6 +8376,7 @@ export function App() {
 
         {/* WORKFLOWS */}
         {activeTab === 'workflows' &&
+          workflowView === 'screen' &&
           (workflowSection === 'active' || workflowSection === 'completed') && (
           <section className="space-y-5">
             <ActionsEngine
@@ -8198,23 +8504,9 @@ export function App() {
             <div>
               <h2 className="text-lg font-extrabold text-[#111111]">Arena</h2>
               <p className="text-[11px] text-[#111111]/60 leading-snug mt-1">
-                Gather with people to play, host and discover experiences. Not a competition to watch — a live test of whether players show up, play, and return.
+                Gather with people to play. Not a competition — host challenges and run live match tests.
               </p>
             </div>
-
-            <ArenaBetaPilot
-              summary={arenaBetaSummary}
-              signedIn={Boolean(sessionUser)}
-              joined={Boolean(arenaBetaSummary?.joined)}
-              joinedSegment={arenaBetaSummary?.joinedSegment ?? null}
-              hasGameTag={Boolean(myGameTag)}
-              busy={arenaBetaBusy}
-              onJoin={(segment) => void handleJoinArenaBeta(segment)}
-              onOpenProfile={() => {
-                document.getElementById('arena-profile')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              }}
-              onOpenChallenges={() => setArenaSection('challenges')}
-            />
 
             {sessionUser && (
               <div id="arena-profile">
@@ -8282,8 +8574,7 @@ export function App() {
               />
             )}
 
-            {/* Package 2: the high-frequency match queue — real pipeline,
-                inline toggles, instant-queue availability. */}
+            {/* Package 2: the high-frequency match queue */}
             <MatchQueuePanel
               gameName={arenaGame.name}
               latestChallenge={challenges.find((c) => c.status === 'open' || c.status === 'accepted') ?? challenges[0] ?? null}
@@ -8293,6 +8584,204 @@ export function App() {
               onEnterQueue={(params) => void handleCreateChallenge({ stake: params.stake, note: params.note })}
               onToggleAvailability={() => void handleToggleAvailability()}
             />
+
+            {/* ARENA DIRECT TEST & CHALLENGE STUDIO */}
+            <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-md bg-[#111111] text-[#FFFFFF] text-[10px] font-black">
+                      ⚡
+                    </span>
+                    <h3 className="text-[14px] font-black text-[#111111] tracking-tight">
+                      Arena Test & Challenge Studio
+                    </h3>
+                  </div>
+                  <p className="text-[11px] text-[#111111]/60 mt-0.5">
+                    Configure and launch a live test match or challenge with all options listed.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setArenaTestCreatorOpen((v) => !v)}
+                  className="px-3 py-1.5 rounded-xl border border-[#E5E7EB] text-[11px] font-extrabold text-[#111111] hover:border-[#111111] transition-colors cursor-pointer"
+                >
+                  {arenaTestCreatorOpen ? 'Close' : 'Create Test'}
+                </button>
+              </div>
+
+              {arenaTestCreatorOpen && (
+                <div className="space-y-3 pt-3 border-t border-[#F3F4F6]">
+                  {/* Game Selection */}
+                  <div>
+                    <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#111111]/50 mb-1.5">
+                      Target Game
+                    </label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                      {ARENA_GAMES.map((g) => (
+                        <button
+                          key={g.id}
+                          type="button"
+                          onClick={() => {
+                            setArenaTestGame(g.id);
+                            setArenaTestMode(g.modes[0] ?? '1v1 Match');
+                          }}
+                          className={`px-3 py-2 rounded-xl text-left border transition-all cursor-pointer ${
+                            arenaTestGame === g.id
+                              ? 'bg-[#111111] text-[#FFFFFF] border-[#111111] shadow-xs'
+                              : 'bg-[#FAFAFA] text-[#111111] border-[#E5E7EB] hover:border-[#111111]/40'
+                          }`}
+                        >
+                          <p className="text-[11px] font-black truncate">{g.name}</p>
+                          <p className={`text-[8.5px] truncate mt-0.5 ${arenaTestGame === g.id ? 'text-[#FFFFFF]/70' : 'text-[#111111]/50'}`}>
+                            {g.modes.length} modes
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Mode / Format Selection */}
+                  <div>
+                    <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#111111]/50 mb-1.5">
+                      Match Format & Mode
+                    </label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {([
+                        ...(ARENA_GAMES.find((g) => g.id === arenaTestGame)?.modes ?? ['1v1 Match']),
+                        'Beta Pilot Duel',
+                        'Clan Test'
+                      ]).map((m) => (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => setArenaTestMode(m)}
+                          className={`px-3 py-1.5 rounded-lg text-[11px] font-extrabold border transition-all cursor-pointer ${
+                            arenaTestMode === m
+                              ? 'bg-[#111111] text-[#FFFFFF] border-[#111111]'
+                              : 'bg-[#FFFFFF] text-[#111111] border-[#E5E7EB] hover:border-[#111111]/40'
+                          }`}
+                        >
+                          {m}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Stake / Tier Selection */}
+                  <div>
+                    <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#111111]/50 mb-1.5">
+                      Test Tier & Stake
+                    </label>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {([
+                        ['friendly', 'Friendly Test', 'Free match'],
+                        ['ranked', 'Ranked Challenge', 'Elo points'],
+                        ['entry_fee', 'Prize Stake', 'KES fee']
+                      ] as [ArenaStakeKind, string, string][]).map(([s, label, hint]) => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => setArenaTestStake(s)}
+                          className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
+                            arenaTestStake === s
+                              ? 'bg-[#111111] text-[#FFFFFF] border-[#111111]'
+                              : 'bg-[#FFFFFF] text-[#111111] border-[#E5E7EB] hover:border-[#111111]/40'
+                          }`}
+                        >
+                          <p className="text-[11px] font-black">{label}</p>
+                          <p className={`text-[8.5px] ${arenaTestStake === s ? 'text-[#FFFFFF]/70' : 'text-[#111111]/50'}`}>{hint}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Entry fee input if prize stake */}
+                  {arenaTestStake === 'entry_fee' && (
+                    <div>
+                      <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#111111]/50 mb-1">
+                        Entry Fee / Prize Stake (KES)
+                      </label>
+                      <div className="flex items-center gap-2">
+                        {['50', '100', '200', '500'].map((amt) => (
+                          <button
+                            key={amt}
+                            type="button"
+                            onClick={() => setArenaTestFee(amt)}
+                            className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold border cursor-pointer ${
+                              arenaTestFee === amt
+                                ? 'bg-[#111111] text-[#FFFFFF] border-[#111111]'
+                                : 'bg-[#FAFAFA] text-[#111111] border-[#E5E7EB]'
+                            }`}
+                          >
+                            KES {amt}
+                          </button>
+                        ))}
+                        <input
+                          type="number"
+                          value={arenaTestFee}
+                          onChange={(e) => setArenaTestFee(e.target.value)}
+                          placeholder="Amount"
+                          className="w-24 px-2.5 py-1 text-[11px] font-bold rounded-lg border border-[#E5E7EB] focus:border-[#111111] outline-none"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Rules / Notes */}
+                  <div>
+                    <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#111111]/50 mb-1">
+                      Match Notes & Objectives (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={arenaTestRules}
+                      onChange={(e) => setArenaTestRules(e.target.value)}
+                      placeholder="e.g. Test new squad, 90 mins, no extra time"
+                      className="w-full px-3 py-2 text-xs rounded-xl border border-[#E5E7EB] focus:border-[#111111] outline-none"
+                    />
+                  </div>
+
+                  {/* Duration Window */}
+                  <div>
+                    <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#111111]/50 mb-1">
+                      Time Window
+                    </label>
+                    <div className="flex gap-1.5">
+                      {[
+                        [30, '30m'],
+                        [60, '1 hr'],
+                        [120, '2 hrs'],
+                        [1440, '24 hrs']
+                      ].map(([mins, lbl]) => (
+                        <button
+                          key={mins}
+                          type="button"
+                          onClick={() => setArenaTestDuration(Number(mins))}
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold border cursor-pointer ${
+                            arenaTestDuration === mins
+                              ? 'bg-[#111111] text-[#FFFFFF] border-[#111111]'
+                              : 'bg-[#FAFAFA] text-[#111111] border-[#E5E7EB]'
+                          }`}
+                        >
+                          {lbl}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Launch button */}
+                  <button
+                    type="button"
+                    disabled={arenaBusyId === 'create'}
+                    onClick={() => void handleLaunchArenaTest()}
+                    className="w-full py-3 rounded-xl bg-[#111111] hover:bg-[#000000] text-[#FFFFFF] text-xs font-black cursor-pointer disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                  >
+                    {arenaBusyId === 'create' ? 'Launching…' : '🚀 Launch Arena Test Match'}
+                  </button>
+                </div>
+              )}
+            </div>
 
             <div className="flex flex-wrap gap-1.5">
               {([
@@ -8462,7 +8951,7 @@ export function App() {
           </div>
         )}
 
-        {activeTab === 'mylayer' && myLayerSection === 'activity' && (
+        {activeTab === 'mylayer' && myLayerView === 'screen' && myLayerSection === 'activity' && (
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
             <div>
               <h2 className="text-lg font-extrabold text-[#111111]">My Activity</h2>
@@ -8507,7 +8996,7 @@ export function App() {
         {/* MY LAYER > ARENA. Your standing in Arena gathered in one section:
             rank, points, and match history. This is a view of existing Arena
             state, not a second Arena -- playing still happens in Arena. */}
-        {activeTab === 'mylayer' && myLayerSection === 'arena' && (
+        {activeTab === 'mylayer' && myLayerView === 'screen' && myLayerSection === 'arena' && (
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
             <div>
               <h2 className="text-lg font-extrabold text-[#111111]">Your Arena</h2>
@@ -8567,7 +9056,7 @@ export function App() {
           </div>
         )}
 
-        {activeTab === 'mylayer' && myLayerSection === 'points' && (
+        {activeTab === 'mylayer' && myLayerView === 'screen' && myLayerSection === 'points' && (
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
             <div>
               <h2 className="text-lg font-extrabold text-[#111111]">My Points</h2>
@@ -8597,7 +9086,7 @@ export function App() {
           </div>
         )}
 
-        {activeTab === 'mylayer' && myLayerSection === 'circles' && (
+        {activeTab === 'mylayer' && myLayerView === 'screen' && myLayerSection === 'circles' && (
           <div className="max-w-3xl mx-auto px-4 py-6">
             <Circles />
           </div>
@@ -8609,7 +9098,7 @@ export function App() {
           </div>
         )}
 
-        {activeTab === 'mylayer' && myLayerSection === 'groups' && (
+        {activeTab === 'mylayer' && myLayerView === 'screen' && myLayerSection === 'groups' && (
           <ConnectedGroups
             visibleGroups={visibleGroups}
             groupIndexes={groupIndexes}
@@ -8632,7 +9121,7 @@ export function App() {
           />
         )}
 
-        {activeTab === 'mylayer' && myLayerSection === 'campaigns' && (
+        {activeTab === 'mylayer' && myLayerView === 'screen' && myLayerSection === 'campaigns' && (
           <div className="space-y-4">
 
             {/* CAMPAIGNS. Create something, publish it, share one link, watch
@@ -8757,6 +9246,16 @@ export function App() {
                         <Share2 className="w-3 h-3" />
                         Share
                       </button>
+                      <button
+                        onClick={() => {
+                          if (window.confirm('Cancel and remove this event?')) {
+                            void handleRemoveCampaign(c.id);
+                          }
+                        }}
+                        className="px-3 py-1.5 rounded-xl border border-red-200 bg-red-50 text-red-600 font-extrabold text-[10px] cursor-pointer hover:bg-red-100 transition-colors"
+                      >
+                        Remove
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -8803,6 +9302,16 @@ export function App() {
                       >
                         Publish
                       </button>
+                      <button
+                        onClick={() => {
+                          if (window.confirm('Cancel and remove this draft?')) {
+                            void handleRemoveCampaign(c.id);
+                          }
+                        }}
+                        className="px-3 py-1.5 rounded-xl border border-red-200 bg-red-50 text-red-600 font-extrabold text-[10px] cursor-pointer hover:bg-red-100 transition-colors"
+                      >
+                        Remove
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -8820,12 +9329,24 @@ export function App() {
                     className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-3 flex items-center justify-between gap-3"
                   >
                     <p className="text-xs text-[#111111]/60 truncate">{c.title}</p>
-                    <button
-                      onClick={() => openCampaign(c.id)}
-                      className="shrink-0 text-[10px] text-[#111111]/40 underline underline-offset-2 cursor-pointer"
-                    >
-                      {c.status}
-                    </button>
+                    <div className="shrink-0 flex items-center gap-1.5">
+                      <button
+                        onClick={() => openCampaign(c.id)}
+                        className="text-[10px] text-[#111111]/40 underline underline-offset-2 cursor-pointer"
+                      >
+                        {c.status}
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (window.confirm('Remove this finished event?')) {
+                            void handleRemoveCampaign(c.id);
+                          }
+                        }}
+                        className="px-2.5 py-1 rounded-lg border border-red-200 bg-red-50 text-red-600 font-extrabold text-[10px] cursor-pointer hover:bg-red-100 transition-colors"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -8906,59 +9427,59 @@ export function App() {
           </div>
         )}
 
-        {activeTab === 'mylayer' && myLayerSection === 'mediakit' && (
+        {activeTab === 'mylayer' && myLayerView === 'screen' && myLayerSection === 'mediakit' && (
           <div className="max-w-2xl mx-auto px-4 py-6">
             <CreatorProfilePanel />
           </div>
         )}
 
-        {activeTab === 'mylayer' && myLayerSection === 'opportunities' && (
+        {activeTab === 'mylayer' && myLayerView === 'screen' && myLayerSection === 'opportunities' && (
           <div className="max-w-2xl mx-auto px-4 py-6">
             <OpportunitiesPanel />
           </div>
         )}
 
-        {activeTab === 'mylayer' && myLayerSection === 'messages' && (
+        {activeTab === 'mylayer' && myLayerView === 'screen' && myLayerSection === 'messages' && (
           <div className="max-w-2xl mx-auto px-4 py-6">
             <MessagesPanel />
           </div>
         )}
 
-        {activeTab === 'mylayer' && myLayerSection === 'subscriptions' && (
+        {activeTab === 'mylayer' && myLayerView === 'screen' && myLayerSection === 'subscriptions' && (
           <div className="max-w-2xl mx-auto px-4 py-6">
             <SubscriptionsPanel />
           </div>
         )}
 
-        {activeTab === 'workflows' && workflowSection === 'money' && (
+        {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'money' && (
           <div className="max-w-3xl mx-auto px-4 py-6">
             <MoneyPanel />
           </div>
         )}
 
-        {activeTab === 'workflows' && workflowSection === 'cockpit' && (
+        {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'cockpit' && (
           <div className="max-w-3xl mx-auto px-4 pt-4">
             <CreatorCockpit />
           </div>
         )}
 
-        {activeTab === 'workflows' && workflowSection === 'command' && (
+        {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'command' && (
           <div className="max-w-3xl mx-auto px-4 py-6">
             <HostCommand />
           </div>
         )}
 
-        {activeTab === 'workflows' && workflowSection === 'vault' && (
+        {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'vault' && (
           <Vault />
         )}
 
-        {activeTab === 'workflows' && workflowSection === 'tea' && (
+        {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'tea' && (
           <div className="max-w-3xl mx-auto px-4 pt-4">
             <TeaDesk />
           </div>
         )}
 
-        {activeTab === 'workflows' && workflowSection === 'engine' && (
+        {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'engine' && (
           <EnginePanel
             // Deltas that touch the object stream silently refresh the home
             // feed — the "never loading" feel, wired to real data.
@@ -8966,22 +9487,23 @@ export function App() {
           />
         )}
 
-        {activeTab === 'workflows' && workflowSection === 'groupbuy' && (
+        {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'groupbuy' && (
           <GroupBuyPortal />
         )}
 
-        {activeTab === 'workflows' && workflowSection === 'gate' && (
+        {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'gate' && (
           <CheckIn />
         )}
 
         {activeTab === 'workflows' &&
+          workflowView === 'screen' &&
           ['campaigns', 'matches', 'distribution', 'calendar', 'vendors', 'ai'].includes(workflowSection) && (
             <div className="max-w-3xl mx-auto px-4 py-6">
               <YardEngineDesk section={workflowSection as YardSection} />
             </div>
           )}
 
-        {activeTab === 'workflows' && workflowSection === 'sources' && (
+        {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'sources' && (
           <SourcesPanel
             connectorStatus={connectorStatus}
             sources={sources}
@@ -9016,7 +9538,7 @@ export function App() {
           />
         )}
 
-        {activeTab === 'workflows' && workflowSection === 'inbox' && (
+        {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'inbox' && (
           <Inbox
             pendingCandidates={pendingCandidates}
             reviewed={reviewed}
@@ -9038,15 +9560,15 @@ export function App() {
         aria-label="Show navigation"
         onClick={() => setDockOn(true)}
         className={`md:hidden fixed bottom-0 left-1/2 z-[55] -translate-x-1/2 h-5 w-16 rounded-t-full bg-[#FFFFFF] border border-b-0 border-[#E5E7EB] cursor-pointer transition-transform ${
-          dockOn ? 'translate-y-full pointer-events-none' : ''
-        }`}
+          dockOn || isAnyModalActive ? 'translate-y-full pointer-events-none hidden' : ''
+        } ${isAnyModalActive ? 'hidden' : ''}`}
       >
         <span className="mx-auto mt-1.5 block h-1 w-8 rounded-full bg-[#D1D5DB]" />
       </button>
       <nav
         aria-label="Primary"
         className={`md:hidden fixed bottom-0 inset-x-0 z-[55] bg-[#FFFFFF]/98 backdrop-blur-xl border-t border-[#E5E7EB] flex shadow-lg transition-transform duration-200 ${
-          dockOn ? 'translate-y-0' : 'translate-y-full'
+          dockOn && !isAnyModalActive ? 'translate-y-0' : 'translate-y-full hidden pointer-events-none'
         }`}
       >
         <button
@@ -9088,7 +9610,7 @@ export function App() {
           printing a zero that looks like a measurement. */}
       {openCampaignId && (
         <div
-          className="fixed inset-0 z-50 bg-[#FAFAFA]/90 backdrop-blur-md overflow-y-auto"
+          className="fixed inset-0 z-50 bg-[#0A0D14]/85 backdrop-blur-md flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4 overflow-hidden"
           onClick={() => {
             setOpenCampaignId(null);
             setCampaignDetail(null);
@@ -9096,33 +9618,39 @@ export function App() {
             setCampaignCircle({ status: 'idle', data: null, error: null });
           }}
         >
-          <div className="min-h-screen flex items-end sm:items-center justify-center p-0 sm:p-6">
-            <div
-              className="w-full max-w-lg bg-[#FFFFFF] border border-[#E5E7EB] rounded-t-3xl sm:rounded-3xl p-5 space-y-4"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h2 className="text-base font-extrabold text-[#111111] truncate">
-                    {campaignDetail ? campaignDetail.title : 'Campaign'}
-                  </h2>
-                  {campaignDetail && (
-                    <p className="text-[9px] text-[#111111]/40 mt-0.5">
-                      {campaignDetail.type} &middot; {campaignDetail.status}
-                    </p>
-                  )}
-                </div>
-                <button
-                  onClick={() => { setOpenCampaignId(null); setCampaignDetail(null); }}
-                  className="shrink-0 text-[#111111]/40 cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+          <div
+            className="w-full max-w-lg max-h-[92vh] sm:max-h-[85vh] flex flex-col bg-[#FFFFFF] border border-[#E5E7EB] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden mb-safe"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-[#E5E7EB] shrink-0 flex items-start justify-between gap-3 bg-[#FFFFFF]">
+              <div className="min-w-0">
+                <h2 className="text-base font-extrabold text-[#111111] truncate">
+                  {campaignDetail ? campaignDetail.title : 'Campaign'}
+                </h2>
+                {campaignDetail && (
+                  <p className="text-[9px] text-[#111111]/40 mt-0.5">
+                    {campaignDetail.type} &middot; {campaignDetail.status}
+                  </p>
+                )}
               </div>
+              <button
+                onClick={() => {
+                  setOpenCampaignId(null);
+                  setCampaignDetail(null);
+                  setEditDraft(null);
+                }}
+                className="shrink-0 p-1.5 rounded-full hover:bg-[#F3F4F6] text-[#111111]/60 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
+            {/* Scrollable Content Body */}
+            <div className="p-4 sm:p-5 overflow-y-auto flex-1 space-y-4">
               {campaignActionError && (
-                <div className="border border-[#E5E7EB] bg-[#FFFFFF] rounded-xl p-3">
-                  <p className="text-[10px] text-[#111111] break-words">
+                <div className="border border-red-200 bg-red-50 text-red-700 rounded-xl p-3">
+                  <p className="text-[11px] font-bold break-words">
                     {campaignActionError}
                   </p>
                 </div>
@@ -9197,31 +9725,11 @@ export function App() {
                       registered against this number.
                     </p>
                   )}
-                  <div className="flex items-center gap-2">
-                    <button
-                      disabled={campaignBusy}
-                      onClick={() => setEditDraft(null)}
-                      className="px-4 py-3 rounded-xl border border-[#E5E7EB] text-[#111111] font-extrabold text-xs cursor-pointer disabled:opacity-40"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      disabled={campaignBusy || editDraft.title.trim() === ''}
-                      onClick={() => saveCampaignEdit(campaignDetail)}
-                      className="flex-1 py-3 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-xs cursor-pointer disabled:opacity-40"
-                    >
-                      {campaignBusy ? 'Saving...' : 'Save'}
-                    </button>
-                  </div>
                 </div>
               )}
 
               {campaignDetail && !editDraft && (
                 <>
-                  {/* Distribution. Previously the channel buttons and the
-                      canonical URL existed ONLY in the publish-success panel,
-                      so a creator returning later could not share to WhatsApp
-                      without re-publishing. Same component, both places. */}
                   {campaignDetail.status !== 'draft' && (
                     <CampaignDistribution
                       compact
@@ -9235,7 +9743,7 @@ export function App() {
 
                   <button
                     onClick={() => beginEdit(campaignDetail)}
-                    className="w-full py-2.5 rounded-xl border border-[#E5E7EB] text-[#111111] font-extrabold text-[11px] cursor-pointer"
+                    className="w-full py-2.5 rounded-xl border border-[#E5E7EB] text-[#111111] font-extrabold text-[11px] cursor-pointer hover:bg-[#F9FAFB]"
                   >
                     Edit details
                   </button>
@@ -9253,7 +9761,7 @@ export function App() {
                         loadCampaigns();
                         showToast('Published');
                       }}
-                      className="w-full py-3 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-xs cursor-pointer disabled:opacity-40"
+                      className="w-full py-3 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-xs cursor-pointer disabled:opacity-40 hover:bg-[#000000]"
                     >
                       {campaignBusy ? 'Publishing...' : 'Publish'}
                     </button>
@@ -9294,7 +9802,7 @@ export function App() {
                       )}
                   </div>
 
-                  {/* MONEY. Settled and pending are never added together. */}
+                  {/* MONEY */}
                   <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 space-y-2">
                     <h3 className="text-[9px] text-[#111111]/40">
                       Money
@@ -9320,14 +9828,13 @@ export function App() {
                           </span>
                         </div>
                         <p className="text-[9px] text-[#111111]/40 leading-snug">
-                          Pending is money that has not arrived. No payment provider is
-                          connected, so settlement is recorded manually in Workflows.
+                          Pending is money that has not arrived.
                         </p>
                       </>
                     )}
                   </div>
 
-                  {/* CAMPAIGN. Honest labels only. */}
+                  {/* CAMPAIGN */}
                   <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 space-y-1">
                     <h3 className="text-[9px] text-[#111111]/40">
                       Campaign
@@ -9367,16 +9874,11 @@ export function App() {
                       </span>
                     </div>
                     <p className="text-[9px] text-[#111111]/40 leading-snug pt-1">
-                      Page loads are server-side loads of the public page. Different
-                      devices is a rough count, not people. Times you shared counts
-                      your own taps, not how many people saw it. Brief does not
-                      measure reach or impressions.
+                      Different devices is a rough count, not people. Times you shared counts your own taps, not how many people saw it.
                     </p>
                   </div>
 
-                  {/* WHAT PEOPLE ARE GETTING. The wrapped Brief object. Shown
-                      as a plain description of the offer -- the creator never
-                      needs to know the word "object". */}
+                  {/* WHAT PEOPLE ARE GETTING */}
                   {campaignDetail.object && (
                     <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 space-y-1">
                       <h3 className="text-[9px] text-[#111111]/40">
@@ -9394,14 +9896,10 @@ export function App() {
                       </p>
                       {campaignDetail.ownsObject === false && (
                         <p className="text-[9px] text-[#111111]/40 leading-snug">
-                          This campaign promotes something that already existed in
-                          Brief. Publishing the campaign does not change it.
+                          Publishing the campaign does not change it.
                         </p>
                       )}
 
-                      {/* Link an existing item to a campaign that already
-                          exists. Backend capability shipped in 7B; this is the
-                          first surface that reaches it. */}
                       {!objectPicker.open ? (
                         <button
                           disabled={campaignBusy}
@@ -9451,10 +9949,7 @@ export function App() {
                     </div>
                   )}
 
-                  {/* TARGET. Only when the campaign is attached to a Circle
-                      that actually carries a target. Progress is read from the
-                      Circle's server-derived currentValue -- the campaign UI
-                      never computes or writes it. */}
+                  {/* TARGET */}
                   {campaignCircle.status === 'loading' && (
                     <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 space-y-1">
                       <h3 className="text-[9px] text-[#111111]/40">
@@ -9464,8 +9959,6 @@ export function App() {
                     </div>
                   )}
 
-                  {/* Honest unavailable state. Never a zeroed progress bar,
-                      which would read as "no progress" rather than "unknown". */}
                   {campaignCircle.status === 'error' && (
                     <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 space-y-1">
                       <h3 className="text-[9px] text-[#111111]/40">
@@ -9478,8 +9971,6 @@ export function App() {
                     </div>
                   )}
 
-                  {/* Attached to a circle that carries no target: say so
-                      rather than inventing a goal to fill the space. */}
                   {campaignCircle.status === 'ready' &&
                     campaignCircle.data &&
                     !(
@@ -9564,8 +10055,6 @@ export function App() {
                         </p>
                       )}
 
-                    {/* Creator attention: held-but-unpaid spots. Renders
-                        nothing when there are none. */}
                     {campaignRegs.status === 'ready' && campaignDetail.price > 0 && (
                       <AwaitingPayment
                         registrations={campaignRegs.data ?? []}
@@ -9631,6 +10120,55 @@ export function App() {
                 </>
               )}
             </div>
+
+            {/* Sticky Action Footer */}
+            {campaignDetail && editDraft && (
+              <div className="p-4 pb-safe pb-8 sm:pb-4 border-t border-[#E5E7EB] bg-[#FFFFFF] shrink-0 space-y-2">
+                <div className="flex items-center gap-2">
+                  <button
+                    disabled={campaignBusy}
+                    onClick={() => setEditDraft(null)}
+                    className="flex-1 py-3 rounded-xl border border-[#E5E7EB] text-[#111111] font-extrabold text-xs cursor-pointer disabled:opacity-40 hover:bg-[#F9FAFB] transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    disabled={campaignBusy || editDraft.title.trim() === ''}
+                    onClick={() => saveCampaignEdit(campaignDetail)}
+                    className="flex-[2] py-3 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-xs cursor-pointer disabled:opacity-40 hover:bg-[#000000] transition-colors shadow-xs"
+                  >
+                    {campaignBusy ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
+                <button
+                  disabled={campaignBusy}
+                  onClick={() => {
+                    if (window.confirm('Cancel and remove this event?')) {
+                      void handleRemoveCampaign(campaignDetail.id);
+                    }
+                  }}
+                  className="w-full py-2.5 rounded-xl border border-red-200 bg-red-50 text-red-600 font-extrabold text-[11px] cursor-pointer hover:bg-red-100 transition-colors disabled:opacity-40"
+                >
+                  Cancel & Remove Event
+                </button>
+              </div>
+            )}
+
+            {campaignDetail && !editDraft && (
+              <div className="p-4 pb-safe pb-8 sm:pb-4 border-t border-[#E5E7EB] bg-[#FFFFFF] shrink-0 flex items-center gap-2">
+                <button
+                  disabled={campaignBusy}
+                  onClick={() => {
+                    if (window.confirm('Cancel and remove this event?')) {
+                      void handleRemoveCampaign(campaignDetail.id);
+                    }
+                  }}
+                  className="w-full py-2.5 rounded-xl border border-red-200 bg-red-50 text-red-600 font-extrabold text-[11px] cursor-pointer hover:bg-red-100 transition-colors disabled:opacity-40"
+                >
+                  Cancel & Remove Event
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -9640,33 +10178,33 @@ export function App() {
           Publish, and publication itself is the real transition endpoint. */}
       {createStep !== 'closed' && (
         <div
-          className="fixed inset-0 z-50 bg-[#FAFAFA]/90 backdrop-blur-md overflow-y-auto"
+          className="fixed inset-0 z-50 bg-[#0A0D14]/85 backdrop-blur-md flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4 overflow-hidden"
           onClick={() => { if (!campaignBusy) setCreateStep('closed'); }}
         >
-          <div className="min-h-screen flex items-end sm:items-center justify-center p-0 sm:p-6">
-            <div
-              className="w-full max-w-lg bg-[#FFFFFF] border border-[#E5E7EB] rounded-t-3xl sm:rounded-3xl p-5 space-y-4"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <h2 className="text-base font-extrabold text-[#111111]">
-                  {createStep === 'form'
-                    ? 'Create'
-                    : createStep === 'preview'
-                    ? 'Preview'
-                    : 'Published'}
-                </h2>
-                <button
-                  onClick={() => { if (!campaignBusy) setCreateStep('closed'); }}
-                  className="shrink-0 text-[#111111]/40 cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
+          <div
+            className="w-full max-w-lg max-h-[92vh] sm:max-h-[85vh] flex flex-col bg-[#FFFFFF] border border-[#E5E7EB] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden mb-safe"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 sm:p-5 border-b border-[#E5E7EB] shrink-0 flex items-start justify-between gap-3 bg-[#FFFFFF]">
+              <h2 className="text-base font-extrabold text-[#111111]">
+                {createStep === 'form'
+                  ? 'Create'
+                  : createStep === 'preview'
+                  ? 'Preview'
+                  : 'Published'}
+              </h2>
+              <button
+                onClick={() => { if (!campaignBusy) setCreateStep('closed'); }}
+                className="shrink-0 p-1.5 rounded-full hover:bg-[#F3F4F6] text-[#111111]/60 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
+            <div className="p-4 sm:p-5 overflow-y-auto flex-1 space-y-4">
               {campaignActionError && (
-                <div className="border border-[#E5E7EB] bg-[#FFFFFF] rounded-xl p-3">
-                  <p className="text-[10px] text-[#111111] break-words">
+                <div className="border border-red-200 bg-red-50 text-red-700 rounded-xl p-3">
+                  <p className="text-[10px] font-bold break-words">
                     {campaignActionError}
                   </p>
                 </div>
@@ -9714,8 +10252,6 @@ export function App() {
                     />
                   </div>
 
-                  {/* Optionally promote something that already exists in Brief
-                      instead of describing it again. Collapsed by default. */}
                   <div>
                     <label className="block text-[9px] text-[#111111]/40 mb-1">
                       What people get
@@ -9828,14 +10364,6 @@ export function App() {
                       />
                     </div>
                   </div>
-
-                  <button
-                    disabled={draft.title.trim() === ''}
-                    onClick={() => { setCampaignActionError(null); setCreateStep('preview'); }}
-                    className="w-full py-3 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    Preview
-                  </button>
                 </div>
               )}
 
@@ -9867,23 +10395,6 @@ export function App() {
                       </p>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      disabled={campaignBusy}
-                      onClick={() => setCreateStep('form')}
-                      className="px-4 py-3 rounded-xl border border-[#E5E7EB] text-[#111111] font-extrabold text-xs cursor-pointer disabled:opacity-40"
-                    >
-                      Back
-                    </button>
-                    <button
-                      disabled={campaignBusy}
-                      onClick={publishDraft}
-                      className="flex-1 py-3 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-xs cursor-pointer disabled:opacity-40"
-                    >
-                      {campaignBusy ? 'Publishing...' : 'Publish'}
-                    </button>
-                  </div>
                 </div>
               )}
 
@@ -9899,8 +10410,6 @@ export function App() {
                     Share this link anywhere. Anyone who opens it can register.
                   </p>
                   {(() => {
-                    // Same distribution surface as the campaign detail view --
-                    // one component, so the two can never drift apart.
                     const link = briefApi.campaignShareLink(
                       publishedCampaign.publicSlug,
                       publicOrigin
@@ -9926,134 +10435,297 @@ export function App() {
                 </div>
               )}
             </div>
+
+            {/* Sticky Action Footer */}
+            {createStep === 'form' && (
+              <div className="p-4 pb-safe pb-8 sm:pb-4 border-t border-[#E5E7EB] bg-[#FFFFFF] shrink-0">
+                <button
+                  disabled={draft.title.trim() === ''}
+                  onClick={() => { setCampaignActionError(null); setCreateStep('preview'); }}
+                  className="w-full py-3 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#000000] transition-colors"
+                >
+                  Preview
+                </button>
+              </div>
+            )}
+
+            {createStep === 'preview' && (
+              <div className="p-4 pb-safe pb-8 sm:pb-4 border-t border-[#E5E7EB] bg-[#FFFFFF] shrink-0 flex items-center gap-2">
+                <button
+                  disabled={campaignBusy}
+                  onClick={() => setCreateStep('form')}
+                  className="px-4 py-3 rounded-xl border border-[#E5E7EB] text-[#111111] font-extrabold text-xs cursor-pointer disabled:opacity-40 hover:bg-[#F9FAFB]"
+                >
+                  Back
+                </button>
+                <button
+                  disabled={campaignBusy}
+                  onClick={publishDraft}
+                  className="flex-1 py-3 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-xs cursor-pointer disabled:opacity-40 hover:bg-[#000000]"
+                >
+                  {campaignBusy ? 'Publishing...' : 'Publish'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* CAPTURE: the easiest way into Brief. Deliberately one input and two
-          buttons -- no onboarding, no explanation, no AI branding. */}
+      {/* CAPTURE: the easiest way into Brief. Quick drop or direct post creation. */}
       {captureOpen && (
         <div
-          className="fixed inset-0 z-50 bg-[#FAFAFA]/90 backdrop-blur-md overflow-y-auto"
+          className="fixed inset-0 z-50 bg-[#0A0D14]/85 backdrop-blur-md flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4 overflow-hidden"
           onClick={handleCaptureCancel}
         >
-          <div className="min-h-screen flex items-end sm:items-center justify-center p-0 sm:p-6">
-            <div
-              className="w-full max-w-lg bg-[#FFFFFF] border border-[#E5E7EB] rounded-t-3xl sm:rounded-3xl p-5 space-y-4"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h2 className="text-xl font-extrabold text-[#111111]">
-                    Drop something here.
-                  </h2>
-                  <p className="text-[11px] text-[#111111]/60 mt-1">
-                    A message, link, listing, event, opportunity or anything
-                    worth keeping.
-                  </p>
-                </div>
+          <div
+            className="w-full max-w-lg max-h-[92vh] sm:max-h-[85vh] flex flex-col bg-[#FFFFFF] border border-[#E5E7EB] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden mb-safe"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 sm:p-5 border-b border-[#E5E7EB] shrink-0 flex items-start justify-between gap-3 bg-[#FFFFFF]">
+              <div>
+                <h2 className="text-xl font-extrabold text-[#111111]">
+                  {captureMode === 'quick' ? 'Drop something here.' : 'Create news or post.'}
+                </h2>
+                <p className="text-[11px] text-[#111111]/60 mt-1">
+                  {captureMode === 'quick'
+                    ? 'A message, link, listing, event, opportunity or anything worth keeping.'
+                    : 'Publish updates, news bulletins, opportunities or stories directly into Brief.'}
+                </p>
+              </div>
+              <button
+                onClick={handleCaptureCancel}
+                className="p-2 rounded-full bg-[#FAFAFA]/80 text-[#111111] border border-[#E5E7EB] shrink-0 hover:bg-[#F3F4F6] cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4 sm:p-5 overflow-y-auto flex-1 space-y-4 pb-safe pb-8 sm:pb-5">
+              {/* Mode switcher */}
+              <div className="flex rounded-xl bg-[#F3F4F6] p-1 gap-1">
                 <button
-                  onClick={handleCaptureCancel}
-                  className="p-2 rounded-full bg-[#FAFAFA]/80 text-[#111111] border border-[#E5E7EB] shrink-0"
+                  type="button"
+                  onClick={() => { setCaptureMode('quick'); setCapturePreview(null); }}
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-extrabold transition cursor-pointer ${
+                    captureMode === 'quick' ? 'bg-[#FFFFFF] text-[#111111] shadow-xs' : 'text-[#111111]/60 hover:text-[#111111]'
+                  }`}
                 >
-                  <X className="w-5 h-5" />
+                  Quick Capture
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setCaptureMode('direct'); setCapturePreview(null); }}
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-extrabold transition cursor-pointer ${
+                    captureMode === 'direct' ? 'bg-[#FFFFFF] text-[#111111] shadow-xs' : 'text-[#111111]/60 hover:text-[#111111]'
+                  }`}
+                >
+                  Post News / Update
                 </button>
               </div>
 
-              <textarea
-                value={captureText}
-                onChange={(e) => {
-                  setCaptureText(e.target.value);
-                  setCapturePreview(null);
-                }}
-                rows={5}
-                placeholder="Paste or type anything"
-                className="w-full bg-[#FFFFFF] border border-[#E5E7EB] rounded-xl px-3 py-2.5 text-xs text-[#111111] placeholder:text-[#111111]/40 outline-none focus:border-[#E5E7EB] resize-none"
-              />
+              {captureMode === 'quick' ? (
+                <>
+                  <textarea
+                    value={captureText}
+                    onChange={(e) => {
+                      setCaptureText(e.target.value);
+                      setCapturePreview(null);
+                    }}
+                    rows={5}
+                    placeholder="Paste or type anything (e.g. news update, meetup announcement, listing...)"
+                    className="w-full bg-[#FFFFFF] border border-[#E5E7EB] rounded-xl px-3 py-2.5 text-xs text-[#111111] placeholder:text-[#111111]/40 outline-none focus:border-[#111111] resize-none"
+                  />
 
-              {!capturePreview && (
-                <button
-                  onClick={handleCaptureParse}
-                  disabled={captureText.trim() === ''}
-                  className={`w-full py-3 rounded-xl font-extrabold text-xs ${
-                    captureText.trim() === ''
-                      ? 'bg-[#FFFFFF] text-[#111111]/40 cursor-not-allowed'
-                      : 'bg-[#111111] text-[#FFFFFF] cursor-pointer'
-                  }`}
-                >
-                  Read it
-                </button>
-              )}
-
-              {/* Confirmation step. Brief shows exactly what it understood and
-                  waits -- nothing is saved until the user agrees. */}
-              {capturePreview && (
-                <div className="space-y-3">
-                  {!capturePreview.isObjectWorthy ? (
-                    <div className="border border-[#111111] bg-[#FFFFFF] rounded-xl p-3">
-                      <p className="text-[11px] font-bold text-[#111111]">
-                        Brief could not make an object from this.
-                      </p>
-                      <p className="text-[10px] text-[#111111]/60 mt-1">
-                        {capturePreview.rejectionReason}
-                      </p>
-                      <p className="text-[10px] text-[#111111]/40 mt-1">
-                        Nothing was saved.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-xl p-3 space-y-2">
-                      <p className="text-[9px] text-[#111111]">
-                        {getObjectTypeMeta(capturePreview.draft.type).label}
-                      </p>
-                      <p className="text-sm font-extrabold text-[#111111] leading-snug">
-                        {capturePreview.draft.title}
-                      </p>
-
-                      {capturePreview.extracted
-                        .filter((f) => f.field !== 'title')
-                        .map((f) => (
-                          <div
-                            key={f.field}
-                            className="flex items-baseline justify-between gap-3"
-                          >
-                            <span className="text-[10px] text-[#111111]/60">
-                              {f.field}
-                            </span>
-                            <span className="text-[10px] text-[#111111]/60 truncate">
-                              {f.value}
-                            </span>
-                          </div>
-                        ))}
-
-                      {capturePreview.duplicates.length > 0 && (
-                        <p className="text-[10px] text-[#111111]">
-                          Possible duplicate of{' '}
-                          {capturePreview.duplicates[0].item.title}
-                        </p>
-                      )}
-
-                      <p className="text-[9px] text-[#111111]/40">
-                        Unverified. Saved as your own capture.
-                      </p>
-                    </div>
+                  {!capturePreview && (
+                    <button
+                      onClick={handleCaptureParse}
+                      disabled={captureText.trim() === ''}
+                      className={`w-full py-3 rounded-xl font-extrabold text-xs transition ${
+                        captureText.trim() === ''
+                          ? 'bg-[#FFFFFF] text-[#111111]/40 cursor-not-allowed border border-[#E5E7EB]'
+                          : 'bg-[#111111] text-[#FFFFFF] cursor-pointer hover:bg-[#000000]'
+                      }`}
+                    >
+                      Read it
+                    </button>
                   )}
 
-                  <div className="flex gap-2">
+                  {/* Confirmation step. Brief shows exactly what it understood and
+                      waits -- nothing is saved until the user agrees. */}
+                  {capturePreview && (
+                    <div className="space-y-3">
+                      {!capturePreview.isObjectWorthy ? (
+                        <div className="border border-[#E5E7EB] bg-[#FAFAFA] rounded-xl p-3">
+                          <p className="text-[11px] font-bold text-[#111111]">
+                            Brief could not make an object from this.
+                          </p>
+                          <p className="text-[10px] text-[#111111]/60 mt-1">
+                            {capturePreview.rejectionReason}
+                          </p>
+                          <p className="text-[10px] text-[#111111]/40 mt-1">
+                            Nothing was saved.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCaptureMode('direct');
+                              setDirectTitle(captureText.slice(0, 60));
+                            }}
+                            className="mt-2.5 inline-flex items-center text-[11px] font-extrabold text-[#111111] underline cursor-pointer"
+                          >
+                            Create directly as news or post instead →
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-xl p-3 space-y-2">
+                          <p className="text-[9px] text-[#111111] font-bold uppercase tracking-wider">
+                            {getObjectTypeMeta(capturePreview.draft.type).label}
+                          </p>
+                          <p className="text-sm font-extrabold text-[#111111] leading-snug">
+                            {capturePreview.draft.title}
+                          </p>
+
+                          {capturePreview.extracted
+                            .filter((f) => f.field !== 'title')
+                            .map((f) => (
+                              <div
+                                key={f.field}
+                                className="flex items-baseline justify-between gap-3"
+                              >
+                                <span className="text-[10px] text-[#111111]/60">
+                                  {f.field}
+                                </span>
+                                <span className="text-[10px] text-[#111111]/60 truncate">
+                                  {f.value}
+                                </span>
+                              </div>
+                            ))}
+
+                          {capturePreview.duplicates.length > 0 && (
+                            <p className="text-[10px] text-[#111111]">
+                              Possible duplicate of{' '}
+                              {capturePreview.duplicates[0].item.title}
+                            </p>
+                          )}
+
+                          <p className="text-[9px] text-[#111111]/40">
+                            Unverified. Saved as your own capture.
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleCaptureCancel}
+                          className="flex-1 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E5E7EB] text-[#111111]/60 font-bold text-[11px] cursor-pointer"
+                        >
+                          Discard
+                        </button>
+                        {capturePreview.isObjectWorthy && (
+                          <button
+                            onClick={() => void handleCaptureConfirm()}
+                            className="flex-[2] py-2.5 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-[11px] cursor-pointer hover:bg-[#000000]"
+                          >
+                            Save to Brief
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                /* Direct Post / News Creation */
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-[10px] font-extrabold uppercase tracking-wider text-[#111111]/60 mb-1">
+                      Post Type
+                    </label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {([
+                        ['knowledge', 'News / Bulletin', 'News'],
+                        ['community', 'Community Post', 'Community'],
+                        ['experience', 'Event / Meetup', 'Event'],
+                        ['opportunity', 'Opportunity', 'Opportunity'],
+                        ['service', 'Service Offer', 'Service']
+                      ] as [ObjectType, string, string][]).map(([typeVal, label, catVal]) => (
+                        <button
+                          key={typeVal}
+                          type="button"
+                          onClick={() => {
+                            setDirectType(typeVal);
+                            setDirectCategory(catVal);
+                          }}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition cursor-pointer border ${
+                            directType === typeVal
+                              ? 'bg-[#111111] text-[#FFFFFF] border-[#111111]'
+                              : 'bg-[#FAFAFA] text-[#111111]/70 border-[#E5E7EB] hover:text-[#111111]'
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-extrabold uppercase tracking-wider text-[#111111]/60 mb-1">
+                      Title / Headline <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={directTitle}
+                      onChange={(e) => setDirectTitle(e.target.value)}
+                      placeholder="e.g. Community Tech Meetup this Saturday"
+                      className="w-full bg-[#FFFFFF] border border-[#E5E7EB] rounded-xl px-3 py-2 text-xs text-[#111111] placeholder:text-[#111111]/40 outline-none focus:border-[#111111]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-extrabold uppercase tracking-wider text-[#111111]/60 mb-1">
+                      Post Details / Content <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      value={captureText}
+                      onChange={(e) => setCaptureText(e.target.value)}
+                      rows={4}
+                      placeholder="Write your news or post details here..."
+                      className="w-full bg-[#FFFFFF] border border-[#E5E7EB] rounded-xl px-3 py-2 text-xs text-[#111111] placeholder:text-[#111111]/40 outline-none focus:border-[#111111] resize-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-extrabold uppercase tracking-wider text-[#111111]/60 mb-1">
+                      Location / Venue (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={directLocation}
+                      onChange={(e) => setDirectLocation(e.target.value)}
+                      placeholder="e.g. Alchemist Bar, Westlands, Nairobi"
+                      className="w-full bg-[#FFFFFF] border border-[#E5E7EB] rounded-xl px-3 py-2 text-xs text-[#111111] placeholder:text-[#111111]/40 outline-none focus:border-[#111111]"
+                    />
+                  </div>
+
+                  <div className="flex gap-2 pt-1">
                     <button
+                      type="button"
                       onClick={handleCaptureCancel}
                       className="flex-1 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E5E7EB] text-[#111111]/60 font-bold text-[11px] cursor-pointer"
                     >
-                      Discard
+                      Cancel
                     </button>
-                    {capturePreview.isObjectWorthy && (
-                      <button
-                        onClick={handleCaptureConfirm}
-                        className="flex-[2] py-2.5 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-[11px] cursor-pointer"
-                      >
-                        Save to Brief
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      disabled={!directTitle.trim() || !captureText.trim()}
+                      onClick={() => void handleDirectPost()}
+                      className={`flex-[2] py-2.5 rounded-xl font-extrabold text-[11px] transition ${
+                        !directTitle.trim() || !captureText.trim()
+                          ? 'bg-[#E5E7EB] text-[#111111]/40 cursor-not-allowed'
+                          : 'bg-[#111111] text-[#FFFFFF] cursor-pointer hover:bg-[#000000]'
+                      }`}
+                    >
+                      Publish to Brief
+                    </button>
                   </div>
                 </div>
               )}
@@ -10073,15 +10745,14 @@ export function App() {
 
       {selectedObjectForDetail && (
         <div
-          className="fixed inset-0 z-50 bg-[#FAFAFA]/90 backdrop-blur-md overflow-y-auto"
+          className="fixed inset-0 z-50 bg-[#0A0D14]/85 backdrop-blur-md flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4 overflow-hidden"
           onClick={dismissOverlay}
         >
-          <div className="min-h-screen flex items-end sm:items-center justify-center p-0 sm:p-6">
-            <div
-              className="w-full max-w-2xl bg-[#FFFFFF] border border-[#E5E7EB] rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-
+          <div
+            className="w-full max-w-2xl max-h-[92vh] sm:max-h-[88vh] flex flex-col bg-[#FFFFFF] border border-[#E5E7EB] rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl mb-safe"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="overflow-y-auto flex-1 pb-safe pb-8 sm:pb-5">
               {/* Hero */}
               {selectedObjectForDetail.imageUrl && (
                 <div className="relative h-56 sm:h-72">

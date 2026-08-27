@@ -79,6 +79,23 @@ app.patch('/api/campaigns/:id', (req, res) => {
   }
 });
 
+app.delete('/api/campaigns/:id', (req, res) => {
+  const c = ownedCampaign(req, res);
+  if (!c) return;
+  try {
+    if (c.status !== 'cancelled' && c.status !== 'closed') {
+      try { campaigns.transitionCampaign(c.id, 'cancelled'); } catch {}
+    }
+    store.remove('campaigns', c.id);
+    if (c.ownsObject !== false && c.objectId) {
+      store.remove('objects', c.objectId);
+    }
+    res.json({ ok: true, removed: true });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message ?? e) });
+  }
+});
+
 
 
 for (const [action, next] of [['publish','published'],['close','closed'],['cancel','cancelled'],['complete','completed'],['golive','live']]) {

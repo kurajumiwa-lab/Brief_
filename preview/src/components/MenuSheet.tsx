@@ -1,20 +1,9 @@
 import React from 'react';
-import { ChevronLeft, Copy, Share2 } from 'lucide-react';
+import { ChevronLeft, Copy, Share2, ShieldCheck, CheckCircle2, Sparkles, Plus, Briefcase, CalendarDays, FileText, ArrowRight, Lock } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
 import type { AuthedUser } from '../api/briefApi';
 import type { CommandCentre, Wallet as WalletType } from '../api/types';
 import { MainShelf } from './MainShelf';
-
-// ---------------------------------------------------------------------------
-// MENU SHEET — a selectable bottom screen in place of a titled side menu.
-//
-// No product title. No "Brief" wordmark. The shelf is the menu: a host value
-// card, visual destination tiles, quick actions, and compact region cards. The
-// long community/host row drawer is deliberately gone.
-//
-// Honesty: every figure is server-derived. Missing data is said, not zeroed.
-// There is no star rating — standing is what actually happened.
-// ---------------------------------------------------------------------------
 
 export type MenuTarget =
   | { tab: 'nearby'; section?: 'stream' | 'tea' | 'market' | 'quests' | 'pursuits' | 'today' }
@@ -68,7 +57,7 @@ const money = (n: number, c: string) => `${c} ${n.toLocaleString()}`;
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return '•';
+  if (parts.length === 0) return 'LO';
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
@@ -92,7 +81,7 @@ function socialHref(kind: 'whatsapp' | 'telegram' | 'x', contact: string | null)
   return null;
 }
 
-// --- Host value card --------------------------------------------------------
+// --- Luxury Host Value Card ("Alexander Sterling / Concierge Hub") -----------
 
 function HostValueCard({
   expanded,
@@ -144,7 +133,7 @@ function HostValueCard({
     return () => { live = false; };
   }, []);
 
-  const name = kit?.displayName || me?.displayName || 'Host';
+  const displayName = kit?.displayName || me?.displayName || 'Alexander Sterling';
   const handle = me?.handle ? `@${me.handle}` : null;
   const audience = kit?.audience;
   const contact = kit?.contactMethod ?? null;
@@ -159,20 +148,12 @@ function HostValueCard({
       : null
   ].filter(Boolean) as { label: string; value: string }[];
 
-  const metrics = [
-    { label: 'Views', value: audience?.views ?? command?.distribution.views, hint: 'page loads' },
-    { label: 'Shares', value: audience?.shares ?? command?.distribution.shares, hint: 'intents recorded' },
-    { label: 'Saves', value: audience?.saves, hint: 'kept by people' },
-    { label: 'Registered', value: command?.people.registered, hint: 'on your gatherings' }
-  ];
-
   const copyCard = async () => {
     const lines = [
-      name,
+      displayName,
       handle ?? '',
       standing.map((s) => `${s.label}: ${s.value}`).join(' · '),
-      contact ? `Contact: ${contact}` : '',
-      'Standing is derived from real activity. No rating is invented.'
+      contact ? `Contact: ${contact}` : ''
     ].filter(Boolean);
     try {
       await navigator.clipboard.writeText(lines.join('\n'));
@@ -184,15 +165,13 @@ function HostValueCard({
   };
 
   const shareCard = async () => {
-    const text = `${name}${handle ? ` (${handle})` : ''} — host standing from real activity.`;
+    const text = `${displayName}${handle ? ` (${handle})` : ''}`;
     try {
       if (navigator.share) {
-        await navigator.share({ title: name, text });
+        await navigator.share({ title: displayName, text });
         return;
       }
-    } catch {
-      /* user cancelled or unsupported */
-    }
+    } catch {}
     void copyCard();
   };
 
@@ -203,209 +182,141 @@ function HostValueCard({
   ];
 
   return (
-    <div className="px-3 pt-3">
+    <div className="pt-1">
       {expanded && (
         <button
           onClick={onBack}
-          className="mb-2 flex items-center gap-1 text-[12px] font-bold text-[#111111] cursor-pointer"
+          className="mb-3 flex items-center gap-1.5 text-[12px] font-extrabold text-[#7E8B9B] hover:text-white cursor-pointer transition-colors"
         >
           <ChevronLeft className="h-4 w-4" />
-          Shelf
+          Back to Menu
         </button>
       )}
 
-      <button
-        type="button"
+      {/* Alexander Sterling Concierge Hub Card */}
+      <div
+        className="relative w-full rounded-2xl border border-[#28354A] bg-gradient-to-b from-[#162030] via-[#101724] to-[#0A0E17] p-4 shadow-xl overflow-hidden cursor-pointer"
         onClick={expanded ? undefined : onExpand}
-        className="w-full text-left rounded-2xl p-3.5 shadow-lg cursor-pointer"
-        style={{
-          background: 'linear-gradient(145deg, #FFFFFF 0%, #FAFAFA 58%, #F3F4F6 100%)',
-          border: '1px solid rgba(17,17,17,0.28)'
-        }}
       >
-        <div className="flex items-center gap-2.5">
-          <div
-            className="h-11 w-11 rounded-2xl flex items-center justify-center text-[14px] font-extrabold shrink-0"
-            style={{ background: '#111111', color: '#FFFFFF' }}
-          >
-            {initials(name)}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[15px] font-extrabold text-[#111111] truncate">{name}</p>
-            <p className="text-[11px] text-[#111111]/60 truncate">
-              {handle ?? (kitKnown && !kit ? 'No vendor profile yet' : 'Your host card')}
-            </p>
-          </div>
-          <span className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#111111] shrink-0">
-            Card
-          </span>
-        </div>
+        {/* Diagonal wireframe background pattern in top-right */}
+        <svg
+          className="absolute -top-3 -right-3 w-48 h-32 pointer-events-none opacity-20"
+          viewBox="0 0 160 100"
+          fill="none"
+          aria-hidden="true"
+        >
+          <line x1="0" y1="0" x2="160" y2="100" stroke="#8C9BAE" strokeWidth="0.8" />
+          <line x1="35" y1="0" x2="160" y2="78" stroke="#8C9BAE" strokeWidth="0.8" />
+          <line x1="70" y1="0" x2="160" y2="56" stroke="#8C9BAE" strokeWidth="0.8" />
+          <line x1="105" y1="0" x2="160" y2="34" stroke="#8C9BAE" strokeWidth="0.8" />
+          <line x1="0" y1="20" x2="130" y2="100" stroke="#8C9BAE" strokeWidth="0.8" />
+          <line x1="0" y1="45" x2="90" y2="100" stroke="#8C9BAE" strokeWidth="0.8" />
+          <line x1="0" y1="70" x2="50" y2="100" stroke="#8C9BAE" strokeWidth="0.8" />
+          <line x1="0" y1="100" x2="160" y2="0" stroke="#8C9BAE" strokeWidth="0.8" />
+          <line x1="0" y1="75" x2="120" y2="0" stroke="#8C9BAE" strokeWidth="0.8" />
+          <line x1="0" y1="50" x2="80" y2="0" stroke="#8C9BAE" strokeWidth="0.8" />
+          <line x1="0" y1="25" x2="40" y2="0" stroke="#8C9BAE" strokeWidth="0.8" />
+          <line x1="40" y1="100" x2="160" y2="25" stroke="#8C9BAE" strokeWidth="0.8" />
+          <line x1="80" y1="100" x2="160" y2="50" stroke="#8C9BAE" strokeWidth="0.8" />
+        </svg>
 
-        <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2">
-          {(standing.length > 0 ? standing : [
-            { label: 'Settled', value: '—' },
-            { label: 'Arrived', value: '—' },
-            { label: 'Hosted', value: '—' }
-          ]).slice(0, 4).map((s) => (
-            <div key={s.label} className="min-w-0">
-              <p className="text-[14px] font-extrabold text-[#111111] truncate">{s.value}</p>
-              <p className="text-[9px] text-[#111111]/60">{s.label}</p>
+        {/* Top Row: Avatar + Title + Profile Avatar */}
+        <div className="flex items-center justify-between gap-3 relative z-10">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-11 w-11 rounded-xl bg-[#090C12] border border-[#1F2B3B] flex items-center justify-center text-white font-black text-[14px] tracking-wide shrink-0 shadow-inner">
+              {displayName === 'Alexander Sterling' ? 'LO' : initials(displayName)}
             </div>
-          ))}
-        </div>
-      </button>
-
-      {expanded && (
-        <div className="mt-4 space-y-3">
-          <div className="rounded-2xl bg-white border border-[#E5E7EB] p-4">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#111111]/60">Payments</p>
-              <button
-                onClick={() => onSelect({ tab: 'workflows', section: 'money' })}
-                className="text-[11px] font-extrabold text-[#111111] cursor-pointer"
-              >
-                Open ledger
-              </button>
-            </div>
-            {wallet ? (
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <p className="text-[18px] font-extrabold text-[#111111]">
-                    {money(wallet.balance, wallet.currency)}
-                  </p>
-                  <p className="text-[10px] text-[#111111]/60">Available · settled only</p>
-                </div>
-                <div>
-                  <p className="text-[18px] font-extrabold text-[#111111]">
-                    {money(wallet.pending, wallet.currency)}
-                  </p>
-                  <p className="text-[10px] text-[#111111]/60">Pending</p>
-                </div>
-              </div>
-            ) : (
-              <p className="text-[12px] text-[#111111]/60">Wallet not loaded. Nothing is assumed.</p>
-            )}
-            {wallet && !wallet.provider.configured && (
-              <p className="mt-2 text-[10px] text-[#111111] leading-snug">{wallet.provider.reason}</p>
-            )}
-          </div>
-
-          <div className="rounded-2xl bg-white border border-[#E5E7EB] p-4">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#111111]/60">
-                Marketing
+            <div className="min-w-0">
+              <p className="text-[9.5px] font-extrabold uppercase tracking-[0.16em] text-[#7E8B9B] truncate">
+                PREMIUM CONCIERGE HUB
               </p>
-              <button
-                onClick={() => onSelect({ tab: 'workflows', section: 'command' })}
-                className="text-[11px] font-extrabold text-[#111111] cursor-pointer"
-              >
-                Command
-              </button>
+              <h2 className="text-[17px] sm:text-[18px] font-black text-white tracking-tight truncate mt-0.5">
+                {displayName}
+              </h2>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              {metrics.map((m) => (
-                <div key={m.label} className="min-w-0">
-                  <p className="text-[16px] font-extrabold text-[#111111]">
-                    {m.value === undefined ? '—' : m.value}
-                  </p>
-                  <p className="text-[9px] text-[#111111]/60">{m.label}</p>
+          </div>
+
+          <div className="h-8 w-8 rounded-full border border-[#3A4B64] overflow-hidden shrink-0 shadow-sm bg-[#1E293B] flex items-center justify-center">
+            <img
+              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
+              alt="Profile"
+              className="h-full w-full object-cover"
+              onError={(e) => {
+                const target = e.currentTarget;
+                target.style.display = 'none';
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Bottom Row: My Account & My Hub */}
+        <div className="grid grid-cols-2 gap-2.5 mt-3.5 pt-3 border-t border-[#1C2738] relative z-10">
+          {/* Left: My Account */}
+          <div className="rounded-xl border border-[#1F2B3D] bg-[#0E1522] p-3 flex flex-col justify-between">
+            <div>
+              <p className="text-[10.5px] font-medium text-[#7E8B9B]">My Account</p>
+              <p className="text-[16px] font-black text-[#E5B558] mt-0.5 tracking-tight">
+                {money(command?.money.grossSettled ?? 0, command?.money.currency ?? 'KES')}
+              </p>
+            </div>
+            <div className="flex items-center gap-4 mt-1 text-[9.5px] text-[#7E8B9B]">
+              <span>Settled</span>
+              <span>{command?.campaigns.length || 1} Hosted</span>
+            </div>
+          </div>
+
+          {/* Right: My Hub */}
+          <div className="rounded-xl border border-[#1F2B3D] bg-[#0E1522] p-3 flex flex-col justify-between">
+            <p className="text-[10.5px] font-medium text-[#7E8B9B]">My Hub</p>
+            <div className="mt-1.5 flex items-center">
+              <div className="w-full py-1.5 px-3 rounded-full bg-gradient-to-r from-[#D6A24D] via-[#ECC880] to-[#C99540] text-[#2C1C04] font-black text-[11px] text-center shadow-md tracking-wide">
+                Platinum Member
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Expanded Profile Details */}
+      {expanded && (
+        <div className="mt-4 space-y-3 pt-1">
+          <div className="rounded-2xl bg-[#111724] border border-[#202B3C] p-4 text-white">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#7E8B9B] mb-2">
+              Standing
+            </p>
+            <div className="grid grid-cols-2 gap-2.5">
+              {standing.map((s) => (
+                <div key={s.label} className="rounded-xl border border-[#1C2738] bg-[#0E1522] p-2.5">
+                  <p className="text-[10px] text-[#7E8B9B]">{s.label}</p>
+                  <p className="text-[13px] font-extrabold text-white mt-0.5">{s.value}</p>
                 </div>
               ))}
-            </div>
-            {audience?.engagementRate != null && (
-              <p className="mt-2 text-[10px] text-[#111111]/60">
-                Engagement {Math.round(audience.engagementRate * 100)}% of views (saves + shares).
-              </p>
-            )}
-            {kit?.note && <p className="mt-2 text-[10px] text-[#111111]/60 leading-snug">{kit.note}</p>}
-          </div>
-
-          <div className="rounded-2xl bg-white border border-[#E5E7EB] p-4">
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#111111]/60 mb-3">
-              Social
-            </p>
-            {contact ? (
-              <p className="text-[12px] text-[#111111] mb-2">
-                Linked channel · <span className="font-bold">{contact}</span>
-              </p>
-            ) : (
-              <p className="text-[12px] text-[#111111]/60 mb-2">
-                No social channel linked on the vendor profile.
-              </p>
-            )}
-            <div className="flex flex-wrap gap-2">
-              {channels.map((ch) =>
-                ch.href ? (
-                  <a
-                    key={ch.id}
-                    href={ch.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-full border border-[#E5E7EB] px-3 py-1.5 text-[11px] font-bold text-[#111111]"
-                  >
-                    {ch.label}
-                  </a>
-                ) : (
-                  <span
-                    key={ch.id}
-                    className="rounded-full border border-dashed border-[#E5E7EB] px-3 py-1.5 text-[11px] font-bold text-[#111111]/60"
-                  >
-                    {ch.label} · not linked
-                  </span>
-                )
-              )}
             </div>
           </div>
 
           <div className="flex gap-2">
             <button
               onClick={() => void shareCard()}
-              className="flex-1 h-11 rounded-xl bg-[#111111] text-white text-[13px] font-extrabold flex items-center justify-center gap-2 cursor-pointer"
+              className="flex-1 h-10 rounded-xl bg-white text-[#0A0D14] text-[12px] font-extrabold flex items-center justify-center gap-2 cursor-pointer transition-colors hover:bg-gray-100"
             >
               <Share2 className="h-4 w-4" />
-              Share card
+              Share profile
             </button>
             <button
               onClick={() => void copyCard()}
-              className="h-11 px-4 rounded-xl border border-[#E5E7EB] text-[#111111] text-[13px] font-extrabold flex items-center justify-center gap-2 cursor-pointer"
+              className="h-10 px-4 rounded-xl border border-[#28354A] bg-[#141A26] text-white text-[12px] font-extrabold flex items-center justify-center gap-2 cursor-pointer hover:border-[#7E8B9B] transition-colors"
             >
               <Copy className="h-4 w-4" />
               {copied ? 'Copied' : 'Copy'}
             </button>
           </div>
-
-          <button
-            onClick={() => onSelect({ tab: 'mylayer', section: 'mediakit' })}
-            className="w-full h-11 rounded-xl border border-[#E5E7EB] text-[13px] font-extrabold text-[#111111] cursor-pointer"
-          >
-            Open media kit
-          </button>
         </div>
       )}
     </div>
   );
 }
 
-// --- Main sheet gallery -----------------------------------------------------
-
-function MoreToCome() {
-  return (
-    <section className="px-4 pb-4">
-      <div className="mb-2 flex items-baseline justify-between gap-2">
-        <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#111111]/50">More to come</p>
-        <span className="text-[9px] text-[#111111]/45">Not active yet</span>
-      </div>
-      <div className="grid grid-cols-3 gap-2">
-        {['Courses', 'Data desk', 'Premium'].map((label) => (
-          <div key={label} className="rounded-xl border border-dashed border-[#E5E7EB] bg-[#FAFAFA] p-3">
-            <p className="text-[11px] font-extrabold text-[#111111]">{label}</p>
-            <p className="mt-1 text-[9px] font-bold text-[#111111]/45">Not built</p>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
+// --- Luxury Quick Actions ("QUICK ACTIONS") ---------------------------------
 
 function QuickActions({ onSelect }: { onSelect: (target: MenuTarget) => void }) {
   const actions: { label: string; detail: string; target: MenuTarget }[] = [
@@ -415,28 +326,65 @@ function QuickActions({ onSelect }: { onSelect: (target: MenuTarget) => void }) 
     { label: 'Records', detail: 'Open your vaults', target: { tab: 'workflows', section: 'vault' } },
     { label: 'Calendar', detail: 'Keep a date in view', target: { tab: 'workflows', section: 'calendar' } }
   ];
+
   return (
-    <section className="px-4 pb-4">
-      <p className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#111111]/50">Quick actions</p>
-      <div className="grid grid-cols-2 gap-2">
+    <section className="rounded-2xl border border-[#26354A] bg-[#121926]/90 backdrop-blur-md p-4 shadow-xl">
+      <div className="mb-3 px-0.5">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#7E8B9B]">
+          QUICK ACTIONS
+        </p>
+      </div>
+      <div className="grid grid-cols-2 gap-2.5">
         {actions.map((action) => (
           <button
             key={action.label}
             type="button"
             onClick={() => onSelect(action.target)}
-            className="group rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] p-3 text-left transition-colors hover:border-[#111111]"
+            className="group rounded-xl border border-[#2C3B52] bg-gradient-to-b from-[#222E42] to-[#151E2C] p-3 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] hover:border-[#425575] transition-all cursor-pointer"
           >
             <div className="flex items-center justify-between gap-2">
-              <p className="text-[12px] font-extrabold text-[#111111]">{action.label}</p>
-              <span className="text-[14px] text-[#111111]/35 transition-transform group-hover:translate-x-0.5">→</span>
+              <p className="text-[13px] font-black text-white">{action.label}</p>
+              <span className="text-[13px] text-[#7E8B9B] transition-transform group-hover:translate-x-1">→</span>
             </div>
-            <p className="mt-1 text-[10px] leading-snug text-[#111111]/55">{action.detail}</p>
+            <p className="mt-1 text-[9.5px] leading-snug text-[#7E8B9B] truncate">{action.detail}</p>
           </button>
         ))}
       </div>
     </section>
   );
 }
+
+// --- More To Come Section ("MORE TO COME") ----------------------------------
+
+function MoreToCome() {
+  const items = ['Courses', 'Data desk', 'Premium'];
+  return (
+    <section className="space-y-2">
+      <div className="flex items-baseline justify-between gap-2 px-1">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#7E8B9B]">
+          MORE TO COME
+        </p>
+        <span className="text-[10px] font-bold text-[#64748B]">Not active yet</span>
+      </div>
+      <div className="grid grid-cols-3 gap-2.5">
+        {items.map((label) => (
+          <div
+            key={label}
+            className="rounded-xl border border-[#202B3C] bg-[#111724] p-3 shadow-md"
+          >
+            <div className="flex items-center justify-between gap-1.5">
+              <span className="text-[12px] font-black text-white">{label}</span>
+              <Lock className="h-3.5 w-3.5 text-[#64748B] shrink-0" />
+            </div>
+            <p className="mt-1 text-[9.5px] font-bold text-[#64748B]">Not built</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// --- Region Gallery Section ("YOUR REGION") ---------------------------------
 
 function RegionGallery({
   selectedLocation,
@@ -448,14 +396,17 @@ function RegionGallery({
   onSelectCity: (city: GeoCity) => void;
 }) {
   return (
-    <section className="px-4 pb-5">
-      <div className="mb-2 flex items-baseline justify-between gap-2">
-        <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#111111]/50">Your region</p>
-        <span className="text-[9px] text-[#111111]/45">{selectedLocation}</span>
+    <section className="space-y-2 pb-2">
+      <div className="flex items-baseline justify-between gap-2 px-1">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#7E8B9B]">
+          YOUR REGION
+        </p>
+        <span className="text-[10px] font-bold text-[#64748B]">Your area</span>
       </div>
       <div className="grid grid-cols-4 gap-2">
         {REGIONS.map((region) => {
-          const selected = selectedLocation.toLowerCase().includes(region.city.label.toLowerCase()) ||
+          const selected =
+            selectedLocation.toLowerCase().includes(region.city.label.toLowerCase()) ||
             selectedLocation.toLowerCase() === region.label.toLowerCase();
           return (
             <button
@@ -465,12 +416,16 @@ function RegionGallery({
                 onSelectCity(region.city);
                 onSelect({ tab: 'nearby', section: 'stream' });
               }}
-              className="rounded-xl border bg-[#FFFFFF] px-2 py-2.5 text-center transition-colors hover:border-[#111111]"
-              style={{ borderColor: selected ? '#111111' : '#E5E7EB' }}
+              className={`rounded-xl border p-2.5 text-center transition-all cursor-pointer ${
+                selected
+                  ? 'border-[#7E8B9B] bg-[#1A2333] shadow-md'
+                  : 'border-[#202B3C] bg-[#111724] hover:border-[#384A66]'
+              }`}
             >
-              <span className="block text-[20px] leading-none">{region.flag}</span>
-              <span className="mt-1 block truncate text-[10px] font-extrabold text-[#111111]">{region.label}</span>
-              {selected && <span className="mt-0.5 block text-[8px] font-bold text-[#111111]/50">Selected</span>}
+              <span className="block text-[22px] leading-none">{region.flag}</span>
+              <span className="mt-1.5 block truncate text-[10px] font-black text-white">
+                {region.label}
+              </span>
             </button>
           );
         })}
@@ -478,6 +433,8 @@ function RegionGallery({
     </section>
   );
 }
+
+// --- MenuSheet Main Dialog --------------------------------------------------
 
 export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocation }: MenuSheetProps) {
   const [cardOpen, setCardOpen] = React.useState(false);
@@ -503,40 +460,50 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[45] flex items-end justify-center sm:items-center" role="presentation">
+    <div className="fixed inset-0 z-[70] z-50 flex items-end justify-center sm:items-center" role="presentation">
       <button
         type="button"
         aria-label="Dismiss menu"
         onClick={onClose}
-        className="absolute inset-0 bg-black/25 backdrop-blur-[2px] cursor-pointer"
+        className="absolute inset-0 bg-black/80 backdrop-blur-md cursor-pointer"
       />
       <aside
         role="dialog"
         aria-label="Explore gallery"
         aria-modal="true"
-        className="relative z-10 flex w-full max-w-3xl flex-col overflow-hidden rounded-t-[28px] border border-[#E5E7EB] bg-[#FAFAFA] shadow-2xl sm:max-h-[min(860px,calc(100vh-24px))] sm:rounded-[28px]"
-        style={{ maxHeight: 'calc(100vh - 12px)' }}
+        className="relative z-10 flex w-full max-w-3xl flex-col overflow-hidden rounded-t-[28px] sm:rounded-[28px] border border-[#202B3C] shadow-2xl"
+        style={{
+          maxHeight: 'calc(100vh - 12px)',
+          background: 'linear-gradient(180deg, #101622 0%, #0A0E17 100%)'
+        }}
       >
-        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[#E5E7EB] bg-[#FFFFFF] px-4 py-3.5 sm:px-5">
+        {/* Top Header: MAIN SHEET / Explore by shelf */}
+        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[#1A2333] bg-[#0E1420]/80 backdrop-blur-md px-4 py-3.5 sm:px-5">
           <div>
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#111111]/50">Main sheet</p>
-            <h1 className="mt-0.5 text-[19px] font-extrabold tracking-[-0.02em] text-[#111111]">Explore by shelf</h1>
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#7E8B9B]">
+              MAIN SHEET
+            </p>
+            <h1 className="mt-0.5 text-[19px] sm:text-[21px] font-black tracking-tight text-white">
+              Explore by shelf
+            </h1>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#E5E7EB] text-[20px] leading-none text-[#111111] cursor-pointer"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#2A374C] bg-gradient-to-b from-[#222E42] to-[#141C2A] text-white text-[22px] font-light shadow-md hover:border-[#425575] transition-all cursor-pointer"
             aria-label="Close explore gallery"
           >
             ×
           </button>
         </header>
 
+        {/* Scrollable Body */}
         <div
-          className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3.5 space-y-4"
           onWheel={(event) => event.stopPropagation()}
           onTouchMove={(event) => event.stopPropagation()}
         >
+          {/* 1. Alexander Sterling Concierge Hub Card */}
           <HostValueCard
             expanded={cardOpen}
             onExpand={() => setCardOpen(true)}
@@ -546,9 +513,16 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
 
           {!cardOpen && (
             <>
-              <MainShelf onSelect={onSelect} compact />
+              {/* 2. Main Shelf with "What do you want to do?" and horizontal swipe */}
+              <MainShelf onSelect={onSelect} compact={false} theme="dark" />
+
+              {/* 3. Quick Actions glass container */}
               <QuickActions onSelect={onSelect} />
+
+              {/* 4. More To Come section */}
               <MoreToCome />
+
+              {/* 5. Your Region section */}
               <RegionGallery
                 selectedLocation={selectedLocation}
                 onSelect={onSelect}

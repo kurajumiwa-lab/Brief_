@@ -24,6 +24,7 @@ import eventArt from '../assets/shelf/event-gathering.webp';
 export interface MainShelfProps {
   onSelect: (target: MenuTarget) => void;
   compact?: boolean;
+  theme?: 'light' | 'dark';
   /** Actual open eFootball challenges; null means the activity check has not returned. */
   playOpenCount?: number | null;
 }
@@ -97,8 +98,21 @@ const SHELF_CARDS: ShelfCard[] = [
   }
 ];
 
-function ShelfCardView({ card, onSelect, compact, playOpenCount }: { card: ShelfCard; onSelect: MainShelfProps['onSelect']; compact: boolean; playOpenCount: number | null }) {
+function ShelfCardView({
+  card,
+  onSelect,
+  compact,
+  playOpenCount,
+  theme = 'light'
+}: {
+  card: ShelfCard;
+  onSelect: MainShelfProps['onSelect'];
+  compact: boolean;
+  playOpenCount: number | null;
+  theme?: 'light' | 'dark';
+}) {
   const Icon = card.Icon;
+  const isDark = theme === 'dark';
   const detail = card.id === 'play' && playOpenCount !== null
     ? playOpenCount > 0 ? `${playOpenCount} open match${playOpenCount === 1 ? '' : 'es'} · enter Arena` : 'No open matches yet · Arena is quiet'
     : card.detail;
@@ -108,8 +122,12 @@ function ShelfCardView({ card, onSelect, compact, playOpenCount }: { card: Shelf
       onClick={() => onSelect(card.target)}
       aria-label={`${card.title}: ${detail}`}
       data-shelf-id={card.id}
-      className={`group relative shrink-0 overflow-hidden rounded-2xl border border-[#E5E7EB] text-left transition-all hover:-translate-y-0.5 hover:border-[#111111] ${
-        compact ? 'w-full min-h-[120px]' : 'w-[174px] min-h-[154px] sm:w-auto sm:min-h-[164px]'
+      className={`group relative shrink-0 overflow-hidden rounded-xl text-left transition-all hover:-translate-y-0.5 cursor-pointer ${
+        isDark
+          ? 'border border-[#222B3A] hover:border-[#00DF8F] shadow-lg'
+          : 'border border-[#E5E7EB] hover:border-[#111111]'
+      } ${
+        compact ? 'w-full min-h-[76px] sm:min-h-[82px]' : 'w-[144px] min-h-[102px] sm:w-auto sm:min-h-[108px]'
       }`}
     >
       <img
@@ -121,47 +139,94 @@ function ShelfCardView({ card, onSelect, compact, playOpenCount }: { card: Shelf
       />
       <div
         className="absolute inset-0"
-        style={{ background: 'linear-gradient(180deg, rgba(9,11,16,0.08) 18%, rgba(9,11,16,0.88) 100%)' }}
+        style={{
+          background: isDark
+            ? 'linear-gradient(180deg, rgba(8,11,16,0.2) 0%, rgba(8,11,16,0.92) 100%)'
+            : 'linear-gradient(180deg, rgba(9,11,16,0.18) 0%, rgba(9,11,16,0.85) 100%)'
+        }}
       />
       {card.featured && (
-        <span className="absolute right-2.5 top-2.5 rounded-full bg-[#FFFFFF] px-2 py-1 text-[8px] font-extrabold uppercase tracking-[0.14em] text-[#111111]">
-          Featured path
+        <span
+          className={`absolute right-2 top-2 rounded-full px-1.5 py-0.5 text-[7px] font-extrabold uppercase tracking-[0.14em] ${
+            isDark ? 'bg-[#00DF8F] text-[#0A0D14]' : 'bg-[#FFFFFF] text-[#111111]'
+          }`}
+        >
+          Featured
         </span>
       )}
       {card.id === 'play' && playOpenCount === 0 && (
-        <span className="absolute right-2.5 top-2.5 rounded-full border border-[#FFFFFF]/35 bg-[#090B10]/75 px-2 py-1 text-[8px] font-extrabold uppercase tracking-[0.14em] text-[#FFFFFF]">
-          No supply now
+        <span className="absolute right-2 top-2 rounded-full border border-[#FFFFFF]/35 bg-[#090B10]/85 px-1.5 py-0.5 text-[7px] font-extrabold uppercase tracking-[0.14em] text-[#FFFFFF]">
+          Quiet now
         </span>
       )}
-      <span className="absolute left-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-lg bg-[#111111]/85 text-[#FFFFFF]">
-        <Icon className="h-3.5 w-3.5" />
+      <span
+        className={`absolute left-2 top-2 flex items-center justify-center rounded-md ${
+          isDark
+            ? 'bg-[#151D2A]/90 border border-[#2B374C] text-[#00DF8F]'
+            : 'bg-[#111111]/85 text-[#FFFFFF]'
+        } ${compact ? 'h-5 w-5' : 'h-6 w-6'}`}
+      >
+        <Icon className={compact ? 'h-2.5 w-2.5' : 'h-3 w-3'} />
       </span>
-      <div className="absolute inset-x-3 bottom-3">
-        <p className="text-[8px] font-extrabold uppercase tracking-[0.18em] text-[#FFFFFF]/70">{card.eyebrow}</p>
-        <p className="mt-1 text-[15px] font-extrabold leading-tight text-[#FFFFFF]">{card.title}</p>
-        <p className="mt-1 line-clamp-2 text-[10px] leading-snug text-[#FFFFFF]/72">{detail}</p>
+      <div className={`absolute inset-x-2.5 ${compact ? 'bottom-2' : 'bottom-2.5'}`}>
+        <p
+          className={`text-[7.5px] font-extrabold uppercase tracking-[0.16em] ${
+            isDark ? 'text-[#00DF8F]' : 'text-[#FFFFFF]/75'
+          }`}
+        >
+          {card.eyebrow}
+        </p>
+        <p className={`mt-0.5 font-extrabold leading-tight text-[#FFFFFF] ${compact ? 'text-[12px]' : 'text-[13px]'}`}>{card.title}</p>
+        <p className="mt-0.5 line-clamp-1 text-[9px] leading-snug text-[#FFFFFF]/80">{detail}</p>
       </div>
     </button>
   );
 }
 
-export function MainShelf({ onSelect, compact = false, playOpenCount = null }: MainShelfProps) {
+export function MainShelf({ onSelect, compact = false, playOpenCount = null, theme = 'light' }: MainShelfProps) {
+  const isDark = theme === 'dark';
   return (
-    <section aria-labelledby="main-shelf-title" className="space-y-3">
+    <section aria-labelledby="main-shelf-title" className="space-y-2.5">
       <div className="flex items-end justify-between gap-3 px-1">
         <div>
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#111111]/50">Main shelf</p>
-          <h2 id="main-shelf-title" className="mt-1 text-[18px] font-extrabold tracking-[-0.02em] text-[#111111]">What do you want to do?</h2>
+          <p
+            className={`text-[9px] font-extrabold uppercase tracking-[0.18em] ${
+              isDark ? 'text-[#00DF8F]' : 'text-[#111111]/50'
+            }`}
+          >
+            Main shelf
+          </p>
+          <h2
+            id="main-shelf-title"
+            className={`mt-0.5 text-[16px] font-extrabold tracking-[-0.02em] ${
+              isDark ? 'text-[#FFFFFF]' : 'text-[#111111]'
+            }`}
+          >
+            What do you want to do?
+          </h2>
         </div>
-        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#111111]/45">
-          <ArrowRight className="h-3 w-3" /> swipe or tap
+        <span
+          className={`inline-flex items-center gap-1 text-[9px] font-bold ${
+            isDark ? 'text-[#8B98A9]' : 'text-[#111111]/45'
+          }`}
+        >
+          <ArrowRight className="h-2.5 w-2.5" /> swipe or tap
         </span>
       </div>
-      <div className={compact ? 'grid grid-cols-2 gap-2' : 'flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 snap-x snap-mandatory sm:grid sm:grid-cols-3 sm:overflow-visible'}>
-        {SHELF_CARDS.map((card) => <ShelfCardView key={card.id} card={card} onSelect={onSelect} compact={compact} playOpenCount={playOpenCount} />)}
+      <div className={compact ? 'grid grid-cols-2 gap-2' : 'flex gap-2.5 overflow-x-auto pb-1 -mx-1 px-1 snap-x snap-mandatory sm:grid sm:grid-cols-3 sm:overflow-visible'}>
+        {SHELF_CARDS.map((card) => (
+          <ShelfCardView
+            key={card.id}
+            card={card}
+            onSelect={onSelect}
+            compact={compact}
+            playOpenCount={playOpenCount}
+            theme={theme}
+          />
+        ))}
       </div>
       {!compact && (
-        <p className="px-1 text-[10px] leading-snug text-[#111111]/45">
+        <p className={`px-1 text-[9.5px] leading-snug ${isDark ? 'text-[#8B98A9]' : 'text-[#111111]/45'}`}>
           The shelf is the shortcut. Use the menu for less frequent tools and region settings.
         </p>
       )}

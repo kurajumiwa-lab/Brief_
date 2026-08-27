@@ -48,8 +48,8 @@ export function PlayAs({
             Play as {displayName}
           </p>
           <p className="text-[13px] leading-snug text-[var(--brief-muted)]">
-            Challenges and matches attach to this account
-            {handle ? ` (@${handle})` : ''}. No second player is invented.
+            Challenges and matches attach to your account
+            {handle ? ` (@${handle})` : ''}.
           </p>
           <div className="flex flex-wrap gap-2">
             <button
