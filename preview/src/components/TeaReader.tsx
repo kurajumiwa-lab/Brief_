@@ -55,7 +55,7 @@ export function TeaReader({ slug, onClose }: { slug: string; onClose: () => void
   const gallery: string[] = Array.isArray(state.article?.images) ? state.article.images : [];
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-[#FAFAFA]/95 backdrop-blur-md" onClick={onClose}>
+    <div className="fixed inset-0 z-[70] overflow-y-auto bg-[#0A0D14]/90 backdrop-blur-md" onClick={onClose}>
       <div className="mx-auto min-h-full max-w-2xl px-4 py-8" onClick={(e) => e.stopPropagation()}>
         <button onClick={onClose} className="mb-4 text-[12px] font-bold text-[#111111]/60 cursor-pointer">← Back</button>
 
