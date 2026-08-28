@@ -42,10 +42,12 @@ async function main(){
   const body=()=>text(document.body);
   const click=async el=>{await act(async()=>{el.dispatchEvent(new dom.window.MouseEvent('click',{bubbles:true,cancelable:true}));});};
   const btn=t=>Array.from(document.querySelectorAll('button')).find(b=>text(b)===t||text(b).startsWith(t));
-  const goto=async(dest,section)=>{
+  // Sections now live inside a bundle: destination -> bundle -> sub-section.
+  // Review (the parsed-drafts desk) is filed under Create.
+  const goto=async(dest,...sections)=>{
     const d=Array.from(document.querySelectorAll('button')).find(b=>text(b)===dest||text(b).startsWith(dest));
     if(d) await click(d);
-    if(section){
+    for(const section of sections){
       const sBtn=Array.from(document.querySelectorAll('button')).find(b=>text(b)===section||text(b).startsWith(section));
       if(sBtn) await click(sBtn);
     }
@@ -60,7 +62,7 @@ async function main(){
   // No seeds, and nothing invented to pad the grid.
   check('stream renders exactly what the server returned', baseline===1, String(baseline));
 
-  await goto('Inbox','Review');
+  await goto('Inbox','Create','Review');
   check('Inbox tab opens', body().includes('Messages from connected sources'));
   check('empty state is honest', body().includes('never as published objects'));
 
@@ -73,7 +75,7 @@ async function main(){
   await click(btn('Home'));
   const afterFetch=cards().length;
   check('stream UNCHANGED after parsing', afterFetch===baseline, `${baseline} -> ${afterFetch}`);
-  await goto('Inbox','Review');
+  await goto('Inbox','Create','Review');
 
   console.log('\n=== Provenance + honesty on drafts ===');
   check('shows source channel', inbox.includes('Nairobi Traders (Telegram)')||inbox.includes('Kilimani Notices (WhatsApp)'));
@@ -109,7 +111,7 @@ async function main(){
   }
 
   console.log('\n=== Discard removes from review, adds nothing ===');
-  await goto('Inbox','Review');
+  await goto('Inbox','Create','Review');
   const before=cards().length;
   const disc=btn('Discard');
   if(disc) await click(disc);

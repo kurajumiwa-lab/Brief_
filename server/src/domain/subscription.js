@@ -17,6 +17,39 @@ import { createTransaction } from './ledger.js';
 export const SUB_INTERVALS = ['weekly', 'monthly', 'yearly'];
 export const SUB_STATUS = ['active', 'paused', 'cancelled'];
 
+/**
+ * The subscriber count is DERIVED, never stored.
+ *
+ * The plan row used to carry a `subscriberCount: 0` field that nothing ever
+ * incremented. It would have been a permanent, confident zero next to a list
+ * of real members. Counting the rows is the only version that can be right.
+ */
+function withCounts(sub, viewerId = null) {
+  const subscribers = store.filter(
+    'subscribers',
+    (s) => s.subscriptionId === sub.id && s.status === 'active'
+  );
+
+  // Money is counted from the ledger, where it actually lives. `settled` is
+  // the only status that means money moved.
+  const settled = store.filter(
+    'ledgerTransactions',
+    (t) => t.metadata?.subscriptionId === sub.id && t.status === 'settled'
+  );
+
+  return {
+    ...sub,
+    subscriberCount: subscribers.length,
+    settledCycles: settled.length,
+    collected: settled.reduce((sum, t) => sum + t.amount, 0),
+    // Whether the viewer themselves is subscribed, so a client can render
+    // "Subscribed" instead of a button that would create a duplicate.
+    viewerIsSubscriber: viewerId
+      ? subscribers.some((s) => s.memberId === viewerId)
+      : null
+  };
+}
+
 export function createSubscription({ creatorId, title, price, currency = 'KES', interval = 'monthly', description = '' }) {
   if (!creatorId) throw new Error('a creator is required');
   if (!title || !String(title).trim()) throw new Error('title is required');
@@ -32,20 +65,111 @@ export function createSubscription({ creatorId, title, price, currency = 'KES', 
     currency,
     interval,
     status: 'active',
-    subscriberCount: 0,
     createdAt: now,
     updatedAt: now
   });
 }
 
-export function listSubscriptions({ creatorId = null } = {}) {
+export function listSubscriptions({ creatorId = null, viewerId = null } = {}) {
   let rows = store.all('subscriptions');
   if (creatorId) rows = rows.filter((s) => s.creatorId === creatorId);
-  return rows.slice().sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+  return rows
+    .slice()
+    .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)))
+    .map((s) => withCounts(s, viewerId));
 }
 
-export function getSubscription(id) {
-  return store.find('subscriptions', (s) => s.id === id) ?? null;
+export function listSubscribers({ subscriptionId = null, memberId = null } = {}) {
+  let rows = store.all('subscribers');
+  if (subscriptionId) rows = rows.filter((s) => s.subscriptionId === subscriptionId);
+  if (memberId) rows = rows.filter((s) => s.memberId === memberId);
+  return rows.map((s) => ({ ...s }));
+}
+
+export function getSubscription(id, viewerId = null) {
+  const sub = store.find('subscriptions', (s) => s.id === id);
+  return sub ? withCounts(sub, viewerId) : null;
+}
+
+/**
+ * SUBSCRIBE — the half of the loop that did not exist.
+ *
+ * A creator could publish a plan and could even record a billing cycle for
+ * THEMSELVES, but nobody else could ever join: there was no subscribe call,
+ * so a follower reading a plan had nothing to press. This is that call.
+ *
+ * Honesty, stated rather than implied:
+ *
+ *   * The membership is real: a subscriber row is written, so the plan's
+ *     count and the follower's "you are subscribed" state are both derived
+ *     from data rather than from a flag the client asserted.
+ *   * THE MONEY IS NOT COLLECTED. The first cycle is recorded as a ledger
+ *     transaction, which with no payment provider stays 'created'. The
+ *     response says `charged: false`, and the transaction's own status is
+ *     returned so the client can show "recorded, not paid".
+ *   * Subscribing twice is idempotent. A second call returns the existing
+ *     membership instead of a duplicate row (and a duplicate would inflate
+ *     the derived count).
+ */
+export function subscribe(subscriptionId, memberId) {
+  if (!memberId) throw new Error('a member is required');
+  const sub = getSubscription(subscriptionId);
+  if (!sub) throw new Error('subscription not found');
+  if (sub.status !== 'active') throw new Error('this plan is not open');
+
+  const existing = store.find(
+    'subscribers',
+    (s) => s.subscriptionId === subscriptionId && s.memberId === memberId
+  );
+
+  if (existing) {
+    const revived = existing.status === 'active'
+      ? existing
+      : store.update('subscribers', existing.id, { status: 'active', endedAt: null, updatedAt: new Date().toISOString() });
+    return {
+      subscriber: { ...revived },
+      transaction: null,
+      duplicate: true,
+      charged: false
+    };
+  }
+
+  const now = new Date().toISOString();
+  const subscriber = store.insert('subscribers', {
+    id: newId('subm'),
+    subscriptionId,
+    memberId,
+    status: 'active',
+    startedAt: now,
+    endedAt: null,
+    createdAt: now,
+    updatedAt: now
+  });
+
+  // The membership is instant; the payment is not. Recording the cycle is
+  // honest about the commitment without pretending money moved.
+  const transaction = recordCycle(subscriptionId, memberId);
+
+  return { subscriber: { ...subscriber }, transaction, duplicate: false, charged: transaction.status === 'settled' };
+}
+
+/**
+ * Unsubscribe. The row keeps its history (startedAt/endedAt) rather than being
+ * deleted: the count drops because the status changed, not because the fact
+ * that they were ever a member was erased.
+ */
+export function unsubscribe(subscriptionId, memberId) {
+  const existing = store.find(
+    'subscribers',
+    (s) => s.subscriptionId === subscriptionId && s.memberId === memberId
+  );
+  if (!existing) throw new Error('you are not subscribed to this plan');
+  if (existing.status === 'cancelled') {
+    return { subscriber: { ...existing }, changed: false };
+  }
+  const now = new Date().toISOString();
+  const row = store.update('subscribers', existing.id, { status: 'cancelled', endedAt: now, updatedAt: now });
+  return { subscriber: { ...row }, changed: true };
 }
 
 export function transitionSubscription(id, action) {

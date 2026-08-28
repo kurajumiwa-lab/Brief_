@@ -80,6 +80,14 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
   const [votedIds, setVotedIds] = React.useState<string[]>([]);
   const [notice, setNotice] = React.useState<string | null>(null);
 
+  // Starting a circle is part of the same loop: until this existed the only
+  // way to get a circle was to have one derived from a source.
+  const [showCreate, setShowCreate] = React.useState(false);
+  const [newName, setNewName] = React.useState('');
+  const [newGoal, setNewGoal] = React.useState('');
+  const [newTarget, setNewTarget] = React.useState('');
+  const [creating, setCreating] = React.useState(false);
+
   const load = React.useCallback(async () => {
     setList((p) => ({ ...p, status: 'loading', error: null }));
     const res = await briefApi.getCircles();
@@ -132,11 +140,21 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
     void loadDetail(openId);
   }, [openId, loadDetail]);
 
-  /** The viewer's role in the open circle, or null when not a member. */
+  /**
+   * The viewer's role in the open circle, or null when not a member.
+   *
+   * The server now states this on the circle itself (`viewerRole`), which is
+   * the authoritative answer. The member list is only a fallback for an older
+   * API that does not carry the field -- in which case "not a member" is the
+   * honest reading rather than a guess.
+   */
   const myRole = React.useMemo(() => {
+    if (detail.circle && 'viewerRole' in detail.circle) {
+      return detail.circle.viewerRole ?? null;
+    }
     const row = members.find((m) => m.userId === currentUserId);
     return row ? row.role : null;
-  }, [members, currentUserId]);
+  }, [detail.circle, members, currentUserId]);
 
   // --- actions --------------------------------------------------------------
   //
@@ -191,19 +209,223 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
     setEvidence((prev) => ({ ...prev, [userId]: res.ok ? res.data : 'error' }));
   };
 
+  /**
+   * JOIN A CIRCLE.
+   *
+   * This is the step the loop never had. The list used to show every circle in
+   * the deployment under the heading "Communities you are part of", with no
+   * way to join any of them -- so a person who was not a member was told they
+   * were one, and a person who wanted to be one had nothing to press.
+   *
+   * The server decides whether the join is allowed (an open circle, or one
+   * with nobody in it yet). A refusal is shown verbatim: "this circle is
+   * invite only" is information, and hiding it would leave somebody wondering
+   * whether the button is broken.
+   */
+  const handleJoin = async (id: string) => {
+    setBusyId(id);
+    setNotice(null);
+    const res = await briefApi.joinCircle(id);
+    setBusyId(null);
+    if (!res.ok) {
+      setNotice(res.error ?? 'could not join this circle');
+      return;
+    }
+    setNotice('You have joined this circle.');
+    await load();
+    if (openId) await loadDetail(openId);
+  };
+
+  /**
+   * LEAVE A CIRCLE. Self-service, and scoped to your own membership: there is
+   * no userId parameter, so this cannot remove anybody else.
+   */
+  const handleLeave = async (id: string) => {
+    setBusyId(id);
+    setNotice(null);
+    const res = await briefApi.leaveCircle(id);
+    setBusyId(null);
+    if (!res.ok) {
+      setNotice(res.error ?? 'could not leave this circle');
+      return;
+    }
+    setNotice('You have left this circle.');
+    await load();
+    if (openId === id) setOpenId(null);
+    else if (openId) await loadDetail(openId);
+  };
+
+  /** Start a circle. The server makes the creator its coordinator. */
+  const handleCreate = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const name = newName.trim();
+    if (!name) return;
+    setCreating(true);
+    setNotice(null);
+    const res = await briefApi.createCircle({
+      name,
+      goal: newGoal.trim() || null,
+      targetValue: newTarget ? Number(newTarget) : null
+    });
+    setCreating(false);
+    if (!res.ok) {
+      setNotice(res.error ?? 'could not start this circle');
+      return;
+    }
+    setNewName('');
+    setNewGoal('');
+    setNewTarget('');
+    setShowCreate(false);
+    setNotice('Circle started — you are its coordinator.');
+    await load();
+  };
+
   const open = detail.circle;
 
   // --- list view ------------------------------------------------------------
+  //
+  // THE LIST USED TO LIE. It rendered every circle in the deployment under the
+  // heading "communities you are part of", and its empty state said "you are
+  // not part of any Circle yet" -- so it could show you ten circles while
+  // claiming you were in none of them. The list is now split by the one fact
+  // that matters: whether you are a member.
+
+  const circles = list.data ?? [];
+  const mine = circles.filter((c) => c.isMember === true);
+  const joinable = circles.filter((c) => c.isMember !== true && c.canJoin === true);
+  const closed = circles.filter((c) => c.isMember !== true && c.canJoin !== true);
+
+  /** One circle card. The action depends on the membership the server reports. */
+  const card = (circle: Circle, mode: 'mine' | 'joinable' | 'closed') => (
+    <div
+      key={circle.id}
+      className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 space-y-2"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-extrabold text-[#111111]">{circle.name}</p>
+          <p className="text-[9px] text-[#111111]/40 mt-0.5">
+            {TYPE_LABEL[circle.type] ?? circle.type} &middot; {circle.status}
+            {circle.viewerRole ? ` \u00b7 you are ${circle.viewerRole}` : ''}
+          </p>
+        </div>
+        <div className="shrink-0 flex items-center gap-1.5">
+          {mode === 'joinable' && (
+            <button
+              onClick={() => void handleJoin(circle.id)}
+              disabled={busyId === circle.id}
+              className="px-3 py-1.5 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+            >
+              {busyId === circle.id ? 'Joining…' : 'Join'}
+            </button>
+          )}
+          {mode === 'mine' && (
+            <button
+              onClick={() => void handleLeave(circle.id)}
+              disabled={busyId === circle.id}
+              className="px-3 py-1.5 rounded-xl border border-[#E5E7EB] text-[10px] font-bold text-[#111111]/60 cursor-pointer disabled:opacity-50"
+            >
+              {busyId === circle.id ? 'Leaving…' : 'Leave'}
+            </button>
+          )}
+          <button
+            onClick={() => {
+              setOpenId(circle.id);
+              setSection('overview');
+              setNotice(null);
+            }}
+            className="px-3 py-1.5 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-[10px] cursor-pointer"
+          >
+            Open
+          </button>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-x-4 gap-y-1">
+        <span className="text-[10px] text-[#111111]/60">
+          {circle.memberCount} {circle.memberCount === 1 ? 'member' : 'members'}
+        </span>
+        <span className="text-[10px] text-[#111111]/60">
+          {circle.blockCount} {circle.blockCount === 1 ? 'block' : 'blocks'}
+        </span>
+        {circle.contributorCount > 0 && (
+          <span className="text-[10px] text-[#111111]/60">
+            {circle.contributorCount} contributing
+          </span>
+        )}
+        {mode === 'closed' && (
+          <span className="text-[10px] text-[#111111]/40">
+            Invite only — a coordinator has to add you
+          </span>
+        )}
+      </div>
+
+      <CircleTarget circle={circle} compact />
+    </div>
+  );
+
   if (!openId) {
     return (
       <section className="space-y-4">
-        <div>
-          <h2 className="text-lg font-extrabold text-[#111111]">Circles</h2>
-          <p className="text-[11px] text-[#111111]/60 leading-snug mt-1">
-            Communities you are part of. People, purpose, blocks, signals and
-            targets -- with progress derived from real contributions.
-          </p>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="text-lg font-extrabold text-[#111111]">Circles</h2>
+            <p className="text-[11px] text-[#111111]/60 leading-snug mt-1">
+              Communities, split by whether you are in them. People, purpose,
+              blocks, signals and targets -- with progress derived from real
+              contributions.
+            </p>
+          </div>
+          <button
+            onClick={() => setShowCreate((v) => !v)}
+            className="shrink-0 px-3 py-2 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-[10px] cursor-pointer"
+          >
+            {showCreate ? 'Cancel' : 'Start a circle'}
+          </button>
         </div>
+
+        {notice && (
+          <div className="border border-[#E5E7EB] bg-[#FFFFFF] rounded-xl px-3 py-2">
+            <p className="text-[10px] text-[#111111] leading-snug">{notice}</p>
+          </div>
+        )}
+
+        {showCreate && (
+          <form
+            onSubmit={handleCreate}
+            className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 space-y-2"
+          >
+            <input
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder="Circle name"
+              className="w-full rounded-xl border border-[#E5E7EB] px-3 py-2 text-[12px] text-[#111111]"
+            />
+            <input
+              value={newGoal}
+              onChange={(e) => setNewGoal(e.target.value)}
+              placeholder="What is it for? (optional)"
+              className="w-full rounded-xl border border-[#E5E7EB] px-3 py-2 text-[12px] text-[#111111]"
+            />
+            <input
+              value={newTarget}
+              onChange={(e) => setNewTarget(e.target.value.replace(/[^0-9.]/g, ''))}
+              placeholder="Money target, if it has one (optional)"
+              inputMode="decimal"
+              className="w-full rounded-xl border border-[#E5E7EB] px-3 py-2 text-[12px] text-[#111111]"
+            />
+            <button
+              type="submit"
+              disabled={creating || !newName.trim()}
+              className="px-3 py-2 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+            >
+              {creating ? 'Starting…' : 'Start circle'}
+            </button>
+            <p className="text-[10px] text-[#111111]/50">
+              You become its coordinator, so you can add other people.
+            </p>
+          </form>
+        )}
 
         {(list.status === 'loading' || list.status === 'idle') && (
           <p className="text-xs text-[#111111]/60">Loading...</p>
@@ -223,60 +445,54 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
           </div>
         )}
 
-        {list.status === 'ready' && (list.data ?? []).length === 0 && (
+        {list.status === 'ready' && circles.length === 0 && (
           <div className="border border-dashed border-[#E5E7EB] rounded-2xl p-8 text-center">
             <p className="text-xs text-[#111111]/60">
-              You are not part of any Circle yet.
+              There are no circles here yet.
+            </p>
+            <p className="text-[10px] text-[#111111]/40 mt-1">
+              Start one, or join an open one when somebody starts it.
             </p>
           </div>
         )}
 
-        <div className="space-y-2">
-          {(list.data ?? []).map((circle) => (
-            <div
-              key={circle.id}
-              className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 space-y-2"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-extrabold text-[#111111]">
-                    {circle.name}
-                  </p>
-                  <p className="text-[9px] text-[#111111]/40 mt-0.5">
-                    {TYPE_LABEL[circle.type] ?? circle.type} &middot; {circle.status}
-                  </p>
-                </div>
-                <button
-                  onClick={() => {
-                    setOpenId(circle.id);
-                    setSection('overview');
-                  }}
-                  className="shrink-0 px-3 py-1.5 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-[10px] cursor-pointer"
-                >
-                  Open
-                </button>
-              </div>
+        {mine.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#111111]/45">
+              Circles you are in ({mine.length})
+            </h3>
+            {mine.map((circle) => card(circle, 'mine'))}
+          </div>
+        )}
 
-              <div className="flex flex-wrap gap-x-4 gap-y-1">
-                <span className="text-[10px] text-[#111111]/60">
-                  {circle.memberCount}{' '}
-                  {circle.memberCount === 1 ? 'member' : 'members'}
-                </span>
-                <span className="text-[10px] text-[#111111]/60">
-                  {circle.blockCount}{' '}
-                  {circle.blockCount === 1 ? 'block' : 'blocks'}
-                </span>
-                {circle.contributorCount > 0 && (
-                  <span className="text-[10px] text-[#111111]/60">
-                    {circle.contributorCount} contributing
-                  </span>
-                )}
-              </div>
+        {list.status === 'ready' && mine.length === 0 && circles.length > 0 && (
+          <div className="border border-dashed border-[#E5E7EB] rounded-2xl p-6 text-center">
+            <p className="text-xs text-[#111111]/60">
+              You are not part of any Circle yet.
+            </p>
+            <p className="text-[10px] text-[#111111]/40 mt-1">
+              The ones below are open — joining takes one press.
+            </p>
+          </div>
+        )}
 
-              <CircleTarget circle={circle} compact />
-            </div>
-          ))}
-        </div>
+        {joinable.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#111111]/45">
+              Open to join ({joinable.length})
+            </h3>
+            {joinable.map((circle) => card(circle, 'joinable'))}
+          </div>
+        )}
+
+        {closed.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#111111]/45">
+              Invite only ({closed.length})
+            </h3>
+            {closed.map((circle) => card(circle, 'closed'))}
+          </div>
+        )}
       </section>
     );
   }
@@ -307,18 +523,49 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
 
       {detail.status === 'ready' && open && (
         <>
-          <div className="mt-2">
-            <h2 className="text-lg font-extrabold text-[#111111]">{open.name}</h2>
-            <p className="text-[9px] text-[#111111]/40 mt-0.5">
-              {TYPE_LABEL[open.type] ?? open.type} &middot; {open.visibility}
-              {myRole ? ` \u00b7 you are ${myRole}` : ' \u00b7 not a member'}
-            </p>
-            {open.description && (
-              <p className="text-[11px] text-[#111111]/60 leading-snug mt-1">
-                {open.description}
+          <div className="mt-2 flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-lg font-extrabold text-[#111111]">{open.name}</h2>
+              <p className="text-[9px] text-[#111111]/40 mt-0.5">
+                {TYPE_LABEL[open.type] ?? open.type} &middot; {open.visibility}
+                {myRole ? ` \u00b7 you are ${myRole}` : ' \u00b7 not a member'}
               </p>
+            </div>
+            {myRole ? (
+              <button
+                onClick={() => void handleLeave(open.id)}
+                disabled={busyId === open.id}
+                className="shrink-0 px-3 py-1.5 rounded-xl border border-[#E5E7EB] text-[10px] font-bold text-[#111111]/60 cursor-pointer disabled:opacity-50"
+              >
+                {busyId === open.id ? 'Leaving…' : 'Leave circle'}
+              </button>
+            ) : open.canJoin ? (
+              <button
+                onClick={() => void handleJoin(open.id)}
+                disabled={busyId === open.id}
+                className="shrink-0 px-3 py-1.5 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+              >
+                {busyId === open.id ? 'Joining…' : 'Join circle'}
+              </button>
+            ) : (
+              <span className="shrink-0 text-[10px] text-[#111111]/40">
+                Invite only
+              </span>
             )}
           </div>
+
+          {open.description && (
+            <p className="text-[11px] text-[#111111]/60 leading-snug mt-1">
+              {open.description}
+            </p>
+          )}
+          {/* Leaving is honest about what it does and does not undo. */}
+          {myRole && (
+            <p className="text-[10px] text-[#111111]/40 mt-1">
+              Leaving removes your membership. Work you were holding keeps your
+              name on it, and money that settled stays settled.
+            </p>
+          )}
 
           {/* Section rail. Same visual language as the rest of Brief. */}
           <div className="flex gap-1.5 flex-wrap">

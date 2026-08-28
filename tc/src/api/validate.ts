@@ -49,7 +49,12 @@ import type {
   VaultRequest,
   Ticket,
   CommandCentre,
-  TeaArticle
+  TeaArticle,
+  TriageItem,
+  TriageQueue,
+  Subscription,
+  Subscriber,
+  SubscriptionJoin
 } from './types';
 
 // --- primitives -------------------------------------------------------------
@@ -65,6 +70,16 @@ const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFin
 const isNumOrNull = (v: unknown): v is number | null => v === null || isNum(v);
 const isStrOrNull = (v: unknown): v is string | null => v === null || isStr(v);
 const isBool = (v: unknown): v is boolean => typeof v === 'boolean';
+const isBoolOrUndefined = (v: unknown): boolean => v === undefined || isBool(v);
+
+/**
+ * A viewer role is one of the five real roles, or null for "not a member".
+ * An unknown string is rejected rather than rendered: a role the client does
+ * not understand would be displayed as authority the member does not have.
+ */
+const isRoleOrNull = (v: unknown): boolean =>
+  v === null || v === 'coordinator' || v === 'contributor' || v === 'scout'
+  || v === 'logistics' || v === 'observer';
 
 /**
  * Validate every element. Returns undefined if ANY element is malformed --
@@ -100,7 +115,14 @@ export function isCircle(v: unknown): v is Circle {
     isNum(v.memberCount) &&
     // null is legitimate: a circle with no targetValue has no percentage.
     isNumOrNull(v.progressPct) &&
-    isStr(v.createdAt)
+    isStr(v.createdAt) &&
+    // Membership facts about the viewer. An API that predates these fields
+    // cannot claim a membership for you either way, so a missing viewerRole
+    // is read as "not shown as a member" -- the honest reading of silence --
+    // while a role that is not one of the five is rejected outright.
+    (v.viewerRole === undefined || isRoleOrNull(v.viewerRole)) &&
+    isBoolOrUndefined(v.isMember) &&
+    isBoolOrUndefined(v.canJoin)
   );
 }
 
@@ -542,3 +564,97 @@ export function isMediaUpload(v: unknown): v is MediaUpload {
   );
 }
 export const areMediaUploads = (v: unknown) => all(v, isMediaUpload);
+
+// --- the waiting-on-you queue -----------------------------------------------
+
+const isStrList = (v: unknown, allowed: readonly string[]): boolean =>
+  Array.isArray(v) && v.every((x) => typeof x === 'string' && allowed.includes(x));
+
+function isTriageBase(v: Record<string, unknown>): boolean {
+  return (
+    isStr(v.id) && isStr(v.title) &&
+    (v.detail === null || isStr(v.detail)) &&
+    (v.at === null || isStr(v.at)) &&
+    isNum(v.daysWaiting) && v.daysWaiting >= 0
+  );
+}
+
+/**
+ * Each kind is checked against the fields the UI actually reads. A queue item
+ * that is missing its circle, or offers an action it cannot perform, fails
+ * here rather than rendering a button that does nothing.
+ */
+export function isTriageItem(v: unknown): v is TriageItem {
+  if (!isObj(v) || !isTriageBase(v)) return false;
+  switch (v.kind) {
+    case 'task':
+      return isStr(v.circleId) && isStr(v.circleName) &&
+        (v.status === 'open' || v.status === 'assigned') &&
+        isStrList(v.actions, ['assign', 'release', 'complete']);
+    case 'order':
+      return isStr(v.vendorId) && (v.vendorName === null || isStr(v.vendorName)) &&
+        isStr(v.status) && (v.nextStatus === null || isStr(v.nextStatus)) &&
+        isStrList(v.actions, ['advance']);
+    case 'checkin':
+      return isStr(v.campaignId) && (v.status === 'open' || v.status === 'starting') &&
+        isNum(v.pending) && isNum(v.checkedIn) &&
+        isStrList(v.actions, ['checkin']);
+    case 'draft':
+      return (v.sourceId === null || isStr(v.sourceId)) &&
+        (v.sourceName === null || isStr(v.sourceName)) &&
+        (v.channel === null || isStr(v.channel)) &&
+        isStrList(v.actions, ['review']);
+    default:
+      return false;
+  }
+}
+
+export const areTriageItems = (v: unknown) => all(v, isTriageItem);
+
+export function isTriageQueue(v: unknown): v is TriageQueue {
+  if (!isObj(v)) return false;
+  const c = v.counts;
+  return (
+    areTriageItems(v.items ?? []) !== undefined &&
+    isNum(v.total) && (v.viewer === null || isStr(v.viewer)) &&
+    isNum(v.withinHours) && isObj(c) &&
+    isNum(c.task) && isNum(c.order) && isNum(c.checkin) && isNum(c.draft)
+  );
+}
+
+// --- subscriptions -----------------------------------------------------------
+
+export function isSubscription(v: unknown): v is Subscription {
+  return (
+    isObj(v) && isStr(v.id) && isStr(v.creatorId) && isStr(v.title) &&
+    isNum(v.price) && isStr(v.currency) &&
+    ['weekly', 'monthly', 'yearly'].includes(String(v.interval)) &&
+    ['active', 'paused', 'cancelled'].includes(String(v.status)) &&
+    isStr(v.createdAt) &&
+    // Derived counts, never stored. Their absence would be the old bug: a
+    // permanent confident zero next to a list of real members.
+    isNum(v.subscriberCount) && isNum(v.settledCycles) && isNum(v.collected) &&
+    (v.viewerIsSubscriber === null || isBool(v.viewerIsSubscriber))
+  );
+}
+
+export const areSubscriptions = (v: unknown) => all(v, isSubscription);
+
+export function isSubscriber(v: unknown): v is Subscriber {
+  return (
+    isObj(v) && isStr(v.id) && isStr(v.subscriptionId) && isStr(v.memberId) &&
+    ['active', 'cancelled'].includes(String(v.status)) &&
+    isStr(v.startedAt) && (v.endedAt === null || isStr(v.endedAt))
+  );
+}
+
+export const areSubscribers = (v: unknown) => all(v, isSubscriber);
+
+export function isSubscriptionJoin(v: unknown): v is SubscriptionJoin {
+  return (
+    isObj(v) && isSubscriber(v.subscriber) && isBool(v.duplicate) &&
+    isBool(v.charged) && isStr(v.note) &&
+    (v.transaction === null || (isObj(v.transaction) && isStr(v.transaction.id) &&
+      isStr(v.transaction.status) && isNum(v.transaction.amount)))
+  );
+}

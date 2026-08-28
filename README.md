@@ -104,14 +104,14 @@ node live/4-full-chain.mjs            # identity -> ... -> payout, Arena,
                                       # Fantasy, Auction, ops
 ```
 
-**Current state: 3282 assertions, 0 failing** — measured 2026-08-28 against a
+**Current state: 3420 assertions, 0 failing** — measured 2026-08-28 against a
 production build over HTTP, not inherited from an earlier report.
 
 | Suite | Result |
 |---|---|
-| `server/test/run.js` | 1750 passed / 0 failed / 3 skipped |
+| `server/test/run.js` | 1832 passed / 0 failed / 3 skipped |
 | `server/test/livecamp.mjs` | 111 passed / 0 failed |
-| `./run-suites.sh` (33 client suites) | 1218 passed / 0 failed |
+| `./run-suites.sh` (34 client suites) | 1274 passed / 0 failed |
 | `tc` strict typecheck | exit 0 |
 | `live/` against the production build | 43 + 27 + 91 + 16 + 26 = 203 / 0 |
 
@@ -132,6 +132,23 @@ and what is still weak.
 **Five primary destinations** — Nearby, Arena, My Layer, Workflows, Pulse.
 There is no router: navigation is conceptual, driven by state. Do not add a
 sixth destination; put new surfaces under an existing one's secondary nav.
+
+**Two desks are filed into bundles, and the Inbox opens on a queue.** The
+Inbox (Workflows) used to open on a list of 18 tools; it now opens on one
+*waiting-on-you* queue (`GET /api/triage`), and the tools sit in four bundles
+behind it — Create · Sell · Run · Records. My Layer's 11 options became three:
+Kept · Groups · Creator. Every screen still exists at the same section id and
+the same URL; the bundles only decide which sub-tabs are shown next to each
+other. See `src/ui/names.ts` (`WORKFLOW_BUNDLES`, `SAVED_BUNDLES`) — that is
+the single place the filing lives.
+
+**A loop is not finished until somebody can walk it.** Three of them were
+half-built and are now whole: a circle can be started, joined and left
+(`POST /api/circles` makes the creator its coordinator; `POST/DELETE
+/api/circles/:id/members[/me]`); a public plan can be joined and left
+(`/api/subscriptions?browse=1`, `POST /api/subscriptions/:id/subscribe`); and
+the queue answers "is anything waiting for me?" in one list instead of leaving
+a badge on eighteen screens.
 
 **Onboarding is a ladder.** A new person passes through five rungs — account,
 intent, keep your first thing (the aha), contribute something, put it in front

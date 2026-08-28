@@ -223,3 +223,134 @@ link route still reachable). `preview/media.jsx` is a new suite.
 
 **Measured after: server 1750/0/3 · livecamp 111/0 · client 1218/0 ·
 typecheck exit 0 · live/ 203/0 → 3282 assertions, 0 failing.**
+
+---
+
+## 7. Addendum — the Inbox, the bundles, and three unfinished loops (same day)
+
+You asked for three things: make the Inbox simple and quick, complete the
+loops that were left half-built ("how do I join circles"), and collapse the
+feature count without losing functionality, bundling what ships as a package.
+
+### 7.1 The Inbox is now one queue, not eighteen badges
+
+`GET /api/triage` (`server/src/domain/triage.js`) answers one question — *what
+is blocked on me right now* — by deriving it from real rows:
+
+| Kind | Where it comes from |
+|---|---|
+| `task` | Blocks of type `task` whose `assigneeId` is the caller and whose status is not `completed` |
+| `order` | Orders on the caller's own vendor still inside the fulfilment path |
+| `checkin` | Campaigns the caller owns, published/live, starting inside the look-ahead window, with people still to check in |
+| `draft` | `rawItems` whose `processingStatus` is still `pending` |
+
+Rules it holds to, all covered by assertions:
+
+* **Nothing is stored.** There is no triage table, so the queue cannot drift
+  out of step with the work it describes and cannot be written to.
+* **An unassigned task is absent.** Work nobody holds belongs to the circle,
+  not to one person; it does not chase an individual.
+* **Time-boxed work floats to the top.** A door opening tonight cannot wait
+  behind a task with no deadline. `withinHours` is stated in the response
+  (default 48, clamped 1–336) rather than left implicit.
+* **It is per-caller and requires an identity.** An anonymous caller gets 401,
+  not an empty queue that looks like "nothing is waiting".
+* **The client cannot fake it.** An unreachable queue renders as
+  *unreadable*, never as *empty*; a refused action keeps the row and shows the
+  server's reason; completing a task re-reads the queue rather than splicing
+  the row out locally.
+
+It is deliberately its own namespace: `/api/inbox` already means the
+per-contact conversation projection (`domain/inbox.js`).
+
+### 7.2 The feature count collapsed; nothing was deleted
+
+| Before | After |
+|---|---|
+| Workflows: a menu of **18 tools** | **Waiting on you** (the landing view) + **Create · Sell · Run · Records** |
+| Saved: a menu of **11 options** | **Kept · Groups · Creator** |
+
+The filing lives in one place, `src/ui/names.ts`. Every section id is
+unchanged and every URL still resolves (`/actions/records/sources`,
+`/saved/creator/subscriptions`, …); the bundle only decides which sub-tabs sit
+next to each other. The active bundle is **derived** from the open section, so
+a deep link cannot disagree with the chips.
+
+* Create — Create, Review, Editor, Distribution, Calendar, AI review
+* Sell — Campaigns, Vendors, Payments, Group Buy
+* Run — Dashboard, Open, Done, Matches, Engine
+* Records — Records, Check-in, Feeds
+* Kept — Saved, Activity, Points, Events
+* Groups — Groups, Chats, Matches
+* Creator — Profile, Offers, Messages, Plans
+
+### 7.3 Three loops that were half-built
+
+**Circles: browse → join → leave.** `GET /api/circles` returned every circle in
+the deployment with no membership information, and `Circles.tsx` rendered all
+of them under "Communities you are part of" — so it could list circles while
+its own empty state said "You are not part of any Circle yet". There was no
+join button anywhere and **no way to leave at all**: the server had no removal
+route.
+
+* Each row now carries `viewerRole`, `isMember` and `canJoin`, all derived.
+* `POST /api/circles/:id/members` **requires an identity**. It did not, and an
+  anonymous join wrote a `userId: null` row — the §3.1 problem, now closed.
+* `DELETE /api/circles/:id/members/me` leaves; `DELETE …/members/:userId`
+  removes somebody else and is coordinator-only (403 otherwise).
+* `POST /api/circles` now requires an identity **and makes the creator its
+  coordinator**. Previously you could create a circle and then be told you
+  were not a member of it, with no way in but an invitation from a coordinator
+  who did not exist. This is also the first client-side way to start one
+  (`Circles.tsx` — until now circles only appeared when derived from a source).
+* The list is split into *Circles you are in* / *Open to join* / *Invite only*,
+  and leaving says what it does and does not undo: work you were holding keeps
+  your name on it, and settled money stays settled.
+
+**Subscriptions: the follower's half.** `domain/subscription.js` was
+creator-only — a creator could publish a plan and even record a billing cycle
+for themselves, but no follower could ever join. Added `subscribe` /
+`unsubscribe` / `listSubscribers`, `GET /api/subscriptions?browse=1` for
+discovery, and `?creator=<id>` for one creator's plans. The old route handed
+*every* plan in the deployment to an *anonymous* caller; that was a leak that
+happened to look like a feature, and it is now 401.
+
+Two honesty fixes came with it: `subscriberCount` was a stored field nothing
+ever incremented — a permanent confident zero next to a list of real members —
+and is now derived from rows; and joining reports `charged: false` with the
+cycle recorded as a ledger transaction that has **not** settled, because no
+payment provider is connected.
+
+**Starting a circle.** See above: it was API-only, and now the client offers it.
+
+### 7.4 Measured after this change
+
+| Suite | Result |
+|---|---|
+| `server/test/run.js` | **1832 passed / 0 failed / 3 skipped** (was 1750) |
+| `server/test/livecamp.mjs` | **111 / 0** |
+| `./run-suites.sh` (34 client suites) | **1274 passed / 0 failed** (was 1218) |
+| `tc` strict typecheck | exit 0 |
+| `live/` against the production build | **43 + 27 + 91 + 16 + 26 = 203 / 0** |
+
+**Total: 3420 assertions, 0 failing.** New coverage: 82 server assertions
+(queue derivation, per-caller scoping, join/leave, subscriptions) and 49 client
+assertions in a new suite, `preview/joins.jsx`, which drives the real
+components against a mock server that refuses things the way the real one
+does — because a loop that only works on the happy path is still broken for
+the person who hits the refusal.
+
+Four existing client suites were updated to the new navigation (`nav`,
+`capture`, `inbox`, `batch1`, `onboard`): they walked `destination → section`,
+which is now `destination → bundle → section`. Their assertions were rewritten,
+not deleted — for example nav.jsx still checks that every Saved and Workflows
+screen is reachable, and now also asserts that the flat "18 Tools"/"11
+Options" lists are gone.
+
+### 7.5 What this did not touch
+
+§3 of this report still stands apart from one item. The client bundle is
+untouched (still one chunk, still unmeasured by any test); documentation
+drift, scheduled work, connectors and payments are all unchanged. **§3.1 is
+resolved**: circle joins and circle creation now require an identity, so
+`null`-identity membership rows can no longer be written.

@@ -214,6 +214,10 @@ const EMPTY = {
   // memberships whose money still flows through the one ledger.
   partnershipRequests: [],
   subscriptions: [],
+  // WHO is subscribed to which plan. Separate from the plan row so membership
+  // is a fact per person and the count is derived, never a stored number that
+  // can drift out of step with the rows it claims to count.
+  subscribers: [],
 
   // --- Person (report §4.4) -------------------------------------------------
   // A first-class entity over every identity Brief holds. A person is a stable

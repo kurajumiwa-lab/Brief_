@@ -42,6 +42,10 @@ import type {
   CampaignBanner,
   MediaUpload,
   MediaStorageStatus,
+  TriageQueue,
+  Subscription,
+  Subscriber,
+  SubscriptionJoin,
   PaymentConfirmation,
   Transaction,
   TransactionCreate,
@@ -93,7 +97,9 @@ import {
   isVendor, areVendors, isListing, areListings, isOrder, areOrders,
   isDispute, areDisputes, isPaymentIntent, arePaymentIntents,
   isVault, areVaults, isFootstep, areFootsteps, isVaultRequest, areVaultRequests, isTicket, isCommandCentre,
-  isTeaArticle, areTeaArticles, isMediaUpload, areMediaUploads
+  isTeaArticle, areTeaArticles, isMediaUpload, areMediaUploads,
+  isTriageQueue, isSubscription, areSubscriptions, isSubscriber,
+  areSubscribers, isSubscriptionJoin
 } from './validate';
 
 /**
@@ -2735,5 +2741,136 @@ export function getMediaStatus(): Promise<ApiResult<{ media: any; uploads: Media
     r?.uploads && typeof r.uploads === 'object'
       ? { media: r.media ?? null, uploads: r.uploads as MediaStorageStatus }
       : undefined
+  );
+}
+
+// ---------------------------------------------------------------------------
+// THE WAITING-ON-YOU QUEUE
+// ---------------------------------------------------------------------------
+
+/**
+ * Everything currently blocked on the signed-in person: the circle tasks they
+ * hold, the orders on their shelf, the events they are running, and the
+ * messages nobody has reviewed.
+ *
+ * Derived on the server from real rows, per caller. There is no cache and no
+ * local merging, so the list cannot disagree with the work it points at.
+ */
+export function getTriageQueue(withinHours?: number): Promise<ApiResult<TriageQueue>> {
+  const q = withinHours ? `?withinHours=${encodeURIComponent(String(withinHours))}` : '';
+  return request(`/api/triage${q}`, undefined, (r) => (isTriageQueue(r) ? r : undefined));
+}
+
+// ---------------------------------------------------------------------------
+// CIRCLE MEMBERSHIP: JOIN, LEAVE, REMOVE
+// ---------------------------------------------------------------------------
+
+/**
+ * Leave a circle as the signed-in caller.
+ *
+ * The loop had no exit: you could be added to a circle, or self-join an open
+ * one, and then had no way to stop being a member. Leaving is self-service --
+ * it removes YOUR row and nobody else's.
+ */
+export function leaveCircle(circleId: string): Promise<ApiResult<{ left: true; circleId: string }>> {
+  return request(
+    `/api/circles/${encodeURIComponent(circleId)}/members/me`,
+    { method: 'DELETE' },
+    (r) => (r?.left === true ? { left: true as const, circleId } : undefined)
+  );
+}
+
+/**
+ * Remove SOMEBODY ELSE from a circle. Coordinator-only; the server returns
+ * 403 otherwise. Separate from leaveCircle so the privileged act is visible
+ * at the call site -- and so you cannot "remove" yourself by accident.
+ */
+export function removeMember(
+  circleId: string,
+  userId: string
+): Promise<ApiResult<{ left: true; userId: string }>> {
+  return request(
+    `/api/circles/${encodeURIComponent(circleId)}/members/${encodeURIComponent(userId)}`,
+    { method: 'DELETE' },
+    (r) => (r?.left === true ? { left: true as const, userId } : undefined)
+  );
+}
+
+// ---------------------------------------------------------------------------
+// SUBSCRIPTIONS: THE FOLLOWER'S HALF
+// ---------------------------------------------------------------------------
+
+/** The plans I publish. */
+export function getMySubscriptions(): Promise<ApiResult<Subscription[]>> {
+  return request('/api/subscriptions', undefined, (r) => areSubscriptions(r?.subscriptions ?? []));
+}
+
+/**
+ * Public plans by other creators. This is the discovery the follower side was
+ * missing: without it a plan could exist but be unreachable by anybody except
+ * the person who wrote it.
+ */
+export function browseSubscriptions(): Promise<ApiResult<Subscription[]>> {
+  return request('/api/subscriptions?browse=1', undefined, (r) => areSubscriptions(r?.subscriptions ?? []));
+}
+
+/** One creator's public plans. */
+export function getCreatorSubscriptions(creatorId: string): Promise<ApiResult<Subscription[]>> {
+  return request(
+    `/api/subscriptions?creator=${encodeURIComponent(creatorId)}`,
+    undefined,
+    (r) => areSubscriptions(r?.subscriptions ?? [])
+  );
+}
+
+/**
+ * Join a plan AS THE AUTHENTICATED CALLER.
+ *
+ * The response says `charged: false` while no payment provider is connected.
+ * The UI must show that rather than implying money moved.
+ */
+export function subscribeToPlan(id: string): Promise<ApiResult<SubscriptionJoin>> {
+  return request(
+    `/api/subscriptions/${encodeURIComponent(id)}/subscribe`,
+    { method: 'POST', body: '{}' },
+    (r) => (isSubscriptionJoin(r) ? r : undefined)
+  );
+}
+
+export function unsubscribeFromPlan(id: string): Promise<ApiResult<{ subscriber: Subscriber; changed: boolean }>> {
+  return request(
+    `/api/subscriptions/${encodeURIComponent(id)}/unsubscribe`,
+    { method: 'POST', body: '{}' },
+    (r) => (isSubscriber(r?.subscriber)
+      ? { subscriber: r.subscriber, changed: r.changed === true }
+      : undefined)
+  );
+}
+
+/** Who is subscribed. Creator-only; the server refuses everybody else with 403. */
+export function getPlanSubscribers(id: string): Promise<ApiResult<Subscriber[]>> {
+  return request(
+    `/api/subscriptions/${encodeURIComponent(id)}/subscribers`,
+    undefined,
+    (r) => areSubscribers(r?.subscribers ?? [])
+  );
+}
+
+/**
+ * Move an order to the next fulfilment stage as its vendor.
+ *
+ * The stage is the server's vocabulary (accepted / preparing / ready) because
+ * those are the only stages a vendor may set: settlement is economic and needs
+ * a settled transaction, so it has its own guarded endpoint.
+ */
+export function stageOrder(
+  id: string,
+  stage: string,
+  note = ''
+): Promise<ApiResult<{ order: Order; changed: boolean }>> {
+  return request(
+    `/api/orders/${encodeURIComponent(id)}/stage`,
+    { method: 'POST', body: JSON.stringify({ stage, note }) },
+    (r) => (isOrder(r?.order) ? { order: r.order, changed: Boolean(r.changed) } : undefined)
   );
 }
