@@ -86,6 +86,11 @@ export function publicUser(user) {
     id: user.id,
     handle: user.handle,
     displayName: user.displayName,
+    // Present only for accounts that actually carry a verified email (Google
+    // sign-in, signed email links). A password account has none and says so
+    // with null rather than an empty string that looks like an address.
+    email: user.email ?? null,
+    authProvider: user.authProvider ?? 'password',
     createdAt: user.createdAt,
     status: user.status
   };
@@ -124,6 +129,91 @@ export function getUser(id) {
 
 export function getUserByHandle(handle) {
   return store.find('users', (u) => u.handle === normaliseHandle(handle));
+}
+
+// ---------------------------------------------------------------------------
+// FEDERATED ACCOUNTS (Google, signed email links)
+//
+// A verified email is an identity Brief can trust because something else
+// already proved it: Google's signature, or an HMAC this server produced.
+// These accounts still get a password hash — a random one they never learn —
+// so that every account row has the same shape and no code path has to ask
+// "is this one of the passwordless ones?" before it can verify anything.
+//
+// The verification itself lives in domain/federated.js. This module only
+// binds an already-verified claim to an account.
+// ---------------------------------------------------------------------------
+
+export function normaliseEmail(email) {
+  return String(email ?? '').trim().toLowerCase();
+}
+
+export function getUserByEmail(email) {
+  const e = normaliseEmail(email);
+  if (!e) return null;
+  return store.find('users', (u) => normaliseEmail(u.email) === e);
+}
+
+/**
+ * Turn an email into a free handle.
+ *
+ * The local part, sanitised, with a numeric suffix only if it is taken. The
+ * handle is a display convenience here; the email is the identity.
+ */
+function handleFromEmail(email) {
+  const base = normaliseEmail(email).split('@')[0].replace(/[^a-z0-9_.-]/g, '').slice(0, 24) || 'member';
+  const padded = base.length >= 3 ? base : `${base}${'0'.repeat(3 - base.length)}`;
+  if (!getUserByHandle(padded)) return padded;
+  for (let i = 2; i < 1000; i++) {
+    const candidate = `${padded.slice(0, 28)}${i}`;
+    if (!getUserByHandle(candidate)) return candidate;
+  }
+  throw new Error('could not allocate a handle');
+}
+
+/**
+ * Sign in (or create) the account behind a VERIFIED identity claim.
+ *
+ * The caller must have verified the claim already — this function does not,
+ * and cannot, check a signature. Returns `{ user, created }`.
+ */
+export function signInWithVerifiedIdentity({ provider, subject = null, email, displayName = null }) {
+  const e = normaliseEmail(email);
+  if (!e) throw new Error('a verified email is required');
+  if (!provider) throw new Error('a provider is required');
+
+  let user = getUserByEmail(e);
+  if (user) {
+    if (user.status !== 'active') throw new Error('this account is not active');
+    // Bind the provider subject the first time we see it, so a later email
+    // change at the provider still resolves to the same Brief account.
+    const patch = {};
+    if (subject && !user.providerSubject) {
+      patch.providerSubject = subject;
+      patch.authProvider = provider;
+    }
+    if (Object.keys(patch).length) user = store.update('users', user.id, patch);
+    return { user, created: false };
+  }
+
+  // A random password the person never sees. They sign in through the
+  // provider; nothing about this account is guessable.
+  const { salt, hash } = hashPassword(crypto.randomBytes(32).toString('hex'));
+  const now = new Date().toISOString();
+  const created = store.insert('users', {
+    id: newId('usr'),
+    handle: handleFromEmail(e),
+    displayName: String(displayName ?? '').trim() || e.split('@')[0],
+    email: e,
+    authProvider: provider,
+    providerSubject: subject,
+    passwordSalt: salt,
+    passwordHash: hash,
+    status: 'active',
+    createdAt: now,
+    updatedAt: now
+  });
+  return { user: created, created: true };
 }
 
 // ---------------------------------------------------------------------------

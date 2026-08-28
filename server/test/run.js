@@ -3644,7 +3644,7 @@ console.log('\n=== FEATURE REGISTRY (§4.2) ===');
   // Default state: everything enabled; module features configured; provider
   // features NOT configured (no credentials in this run).
   check('every feature is enabled by default', features.list().every((f) => f.enabled));
-  check('the registry holds all registered features', features.list().length === 40, String(features.list().length));
+  check('the registry holds all registered features', features.list().length === 42, String(features.list().length));
   check('auth is available by default', features.available('auth') === true);
   check('arena is available by default', features.available('arena') === true);
   check('vaults is available by default', features.available('vaults') === true);
@@ -6144,6 +6144,393 @@ console.log('\n=== TEMPORARY DEMO CONTENT EXPIRY ===');
   check('expired demo content is not silently reseeded', rerun.alreadySeeded === true && rerun.expired === true && store.filter('objects', (row) => row.seedBatch === seed.BATCH).length === before);
   const cleared = seed.clearSeed();
   check('the operator can explicitly clear the expired cohort', cleared.objects === before && store.filter('objects', (row) => row.seedBatch === seed.BATCH).length === 0);
+}
+
+console.log('\n=== ONBOARDING: THE SERVICE LADDER ===');
+{
+  const onboarding = await import('../src/domain/onboarding.js');
+  const auth = await import('../src/domain/auth.js');
+  store._reset();
+
+  const user = auth.createUser({ handle: 'kamau', password: 'passw0rd123', displayName: 'Kamau' });
+  onboarding.ensureProfile(user.id);
+
+  let ladder = onboarding.ladderFor(user.id);
+  check('an account alone reaches only the first rung',
+    ladder.reached.length === 1 && ladder.reached[0] === 'identity');
+  check('the next step is the segmentation question', ladder.nextStep?.id === 'orient');
+  check('nobody is activated before they keep something', ladder.activated === false);
+
+  const capture = ladder.services.find((s) => s.id === 'capture');
+  const distribution = ladder.services.find((s) => s.id === 'distribution');
+  check('capture is closed before activation', capture.unlocked === false);
+  check('a closed service names the step that opens it',
+    typeof capture.unlocksAfter === 'string' && capture.unlocksAfter.length > 0);
+  check('distribution is closed at the very bottom of the ladder', distribution.unlocked === false);
+
+  onboarding.setGoal(user.id, 'discover');
+  ladder = onboarding.ladderFor(user.id);
+  check('answering the one question climbs a rung', ladder.reached.includes('orient'));
+  check('the aha step is now the next one', ladder.nextStep?.id === 'value');
+
+  let refused = false;
+  try { onboarding.setGoal(user.id, 'world-domination'); } catch { refused = true; }
+  check('an unknown goal is refused rather than stored', refused);
+
+  let badEvent = false;
+  try { onboarding.recordEvent(user.id, 'invented_event'); } catch { badEvent = true; }
+  check('an unknown activation event is refused', badEvent);
+
+  // A LADDER, NOT A BADGE SHELF: creating a listing before saving anything
+  // must not skip the rung underneath it.
+  const vendor = store.insert('vendors', {
+    id: 'ven_ladder', ownerId: user.id, displayName: 'Kamau Prints', status: 'active',
+    createdAt: new Date().toISOString()
+  });
+  store.insert('listings', {
+    id: 'lst_ladder', vendorId: vendor.id, title: 'Print run', price: 500, currency: 'KES',
+    status: 'draft', createdAt: new Date().toISOString()
+  });
+  ladder = onboarding.ladderFor(user.id);
+  check('a later rung with evidence is not REACHED while an earlier one is missing',
+    ladder.rungs.find((r) => r.id === 'reach').done === true &&
+    ladder.rungs.find((r) => r.id === 'reach').reached === false);
+  check('the missing step is still the one being asked for', ladder.nextStep?.id === 'value');
+  check('services above the gap stay closed',
+    ladder.services.find((s) => s.id === 'distribution').unlocked === false);
+
+  onboarding.recordEvent(user.id, 'object_saved', { objectId: 'obj_1' });
+  ladder = onboarding.ladderFor(user.id);
+  check('keeping the first thing is activation', ladder.activated === true && typeof ladder.activatedAt === 'string');
+  check('activation opens capture', ladder.services.find((s) => s.id === 'capture').unlocked === true);
+  check('activation alone does not open distribution',
+    ladder.services.find((s) => s.id === 'distribution').unlocked === false);
+  check('the rung records HOW it was reached',
+    ladder.rungs.find((r) => r.id === 'value').how === 'Saved something from the feed');
+
+  onboarding.recordEvent(user.id, 'capture_saved', {});
+  ladder = onboarding.ladderFor(user.id);
+  check('capturing climbs the contribute rung, which now lets the listing count',
+    ladder.reached.includes('contribute') && ladder.reached.includes('reach'));
+  check('a complete ladder asks for nothing more', ladder.complete === true && ladder.nextStep === null);
+
+  const metrics = onboarding.metrics();
+  check('activation metrics are scanned, not stored',
+    metrics.started === 1 && metrics.activated === 1 && metrics.activationRate === 1);
+  check('drop-off is reported per rung transition', metrics.dropOff.length === onboarding.RUNG_IDS.length - 1);
+
+  // Personalisation: the answer promotes the service it is about, by ONE rung.
+  const player = auth.createUser({ handle: 'otieno', password: 'passw0rd123' });
+  onboarding.ensureProfile(player.id);
+  const before = onboarding.ladderFor(player.id).services.find((s) => s.id === 'play');
+  check('Arena follows the aha step by default', before.unlocked === false && before.requires === 'value');
+  onboarding.setGoal(player.id, 'play');
+  const after = onboarding.ladderFor(player.id).services.find((s) => s.id === 'play');
+  check('someone who came to PLAY gets Arena one rung earlier',
+    after.unlocked === true && after.promoted === true);
+  const stillClosed = onboarding.ladderFor(player.id).services.find((s) => s.id === 'distribution');
+  check('the promotion moves ONE service, not the whole ladder',
+    stillClosed.unlocked === false && stillClosed.promoted === false);
+
+  const fresh = auth.createUser({ handle: 'atieno', password: 'passw0rd123' });
+  onboarding.ensureProfile(fresh.id);
+  const cohort = onboarding.metrics();
+  check('a person who has done nothing lowers the rate honestly',
+    cohort.started === 3 && cohort.activated === 1 && Math.abs(cohort.activationRate - 1 / 3) < 1e-9);
+}
+
+console.log('\n=== FEDERATED SIGN-IN (Google + signed links) ===');
+{
+  const federated = await import('../src/domain/federated.js');
+  const auth = await import('../src/domain/auth.js');
+  store._reset();
+  delete process.env.GOOGLE_CLIENT_ID;
+  delete process.env.VITE_GOOGLE_CLIENT_ID;
+
+  const status = federated.providerStatus();
+  check('a password account is always offered', status.password.configured === true);
+  check('Google reports itself unconfigured rather than pretending', status.google.configured === false);
+  check('the refusal names what is missing', /GOOGLE_CLIENT_ID/.test(status.google.reason));
+  check('TELEGRAM IS NOT REQUIRED FOR MEMBERSHIP', status.telegram.required === false);
+
+  const unconfigured = await federated.verifyGoogleIdToken('a.b.c');
+  check('no client id means no verification, and it says so',
+    unconfigured.ok === false && unconfigured.reason === 'provider_not_configured');
+
+  // Verify a REAL RS256 token against a key we control. This exercises the
+  // same signature path a Google token takes; only the key differs.
+  const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const jwk = { ...publicKey.export({ format: 'jwk' }), kid: 'test-key', alg: 'RS256', use: 'sig' };
+  federated._setGoogleKeys([jwk]);
+  process.env.GOOGLE_CLIENT_ID = 'brief-test.apps.googleusercontent.com';
+
+  const b64 = (obj) => Buffer.from(JSON.stringify(obj)).toString('base64url');
+  const mint = (claims, kid = 'test-key') => {
+    const head = b64({ alg: 'RS256', kid, typ: 'JWT' });
+    const body = b64(claims);
+    const sig = crypto.sign('RSA-SHA256', Buffer.from(`${head}.${body}`), privateKey).toString('base64url');
+    return `${head}.${body}.${sig}`;
+  };
+  const goodClaims = {
+    iss: 'https://accounts.google.com',
+    aud: 'brief-test.apps.googleusercontent.com',
+    sub: '10992',
+    email: 'Wanjiru@Example.com',
+    email_verified: true,
+    name: 'Wanjiru',
+    exp: Math.floor(Date.now() / 1000) + 600
+  };
+
+  const good = await federated.verifyGoogleIdToken(mint(goodClaims));
+  check('a correctly signed token verifies', good.ok === true, good.reason ?? '');
+  check('the email is normalised', good.ok && good.claims.email === 'wanjiru@example.com');
+
+  const tampered = mint(goodClaims).replace(/.$/, (c) => (c === 'A' ? 'B' : 'A'));
+  const bad = await federated.verifyGoogleIdToken(tampered);
+  check('a tampered signature is refused', bad.ok === false);
+
+  const wrongAud = await federated.verifyGoogleIdToken(mint({ ...goodClaims, aud: 'someone-else' }));
+  check('a token minted for another app is refused', wrongAud.ok === false && wrongAud.reason === 'bad_audience');
+
+  const expired = await federated.verifyGoogleIdToken(mint({ ...goodClaims, exp: Math.floor(Date.now() / 1000) - 5 }));
+  check('an expired token is refused', expired.ok === false && expired.reason === 'expired');
+
+  const unverifiedEmail = await federated.verifyGoogleIdToken(mint({ ...goodClaims, email_verified: false }));
+  check('an unverified Google email is refused', unverifiedEmail.ok === false && unverifiedEmail.reason === 'email_not_verified');
+
+  const unknownKid = await federated.verifyGoogleIdToken(mint(goodClaims, 'not-a-key'));
+  check('a token signed by an unknown key is refused', unknownKid.ok === false && unknownKid.reason === 'unknown_key');
+
+  // The account binding itself.
+  const first = auth.signInWithVerifiedIdentity({
+    provider: 'google', subject: '10992', email: 'wanjiru@example.com', displayName: 'Wanjiru'
+  });
+  check('a verified identity creates exactly one account', first.created === true);
+  check('the handle is derived from the email', first.user.handle === 'wanjiru');
+  const second = auth.signInWithVerifiedIdentity({
+    provider: 'google', subject: '10992', email: 'WANJIRU@example.com'
+  });
+  check('signing in again reuses that account', second.created === false && second.user.id === first.user.id);
+  check('the public projection carries the verified email, never a hash',
+    auth.publicUser(second.user).email === 'wanjiru@example.com' &&
+    auth.publicUser(second.user).passwordHash === undefined);
+
+  // Signed one-tap links (the TikTok arrival path).
+  const token = federated.mintEmailLinkToken('amina@example.com', { source: 'tiktok' });
+  const redeemed = federated.redeemEmailLinkToken(token);
+  check('a Brief-signed link identifies the address it was minted for',
+    redeemed.ok === true && redeemed.email === 'amina@example.com' && redeemed.source === 'tiktok');
+
+  const forged = `${token.split('.')[0]}.${'x'.repeat(token.split('.')[1].length)}`;
+  check('a forged signature is refused', federated.redeemEmailLinkToken(forged).ok === false);
+  check('a bare email is not a token', federated.redeemEmailLinkToken('amina@example.com').ok === false);
+
+  const stale = federated.mintEmailLinkToken('amina@example.com', { ttlMs: 1000, now: Date.now() - 60_000 });
+  check('an old link stops identifying anyone',
+    federated.redeemEmailLinkToken(stale).ok === false &&
+    federated.redeemEmailLinkToken(stale).reason === 'expired');
+
+  let rejectedEmail = false;
+  try { federated.mintEmailLinkToken('not-an-email'); } catch { rejectedEmail = true; }
+  check('a malformed address cannot be minted', rejectedEmail);
+
+  delete process.env.GOOGLE_CLIENT_ID;
+  federated._setGoogleKeys(null);
+}
+
+console.log('\n=== LIGI: AFRICAN FANTASY FOOTBALL, AUTOMATED ===');
+{
+  const ligi = await import('../src/domain/ligi.js');
+  const fantasy = await import('../src/domain/fantasy.js');
+  const auth = await import('../src/domain/auth.js');
+  store._reset();
+
+  const host = auth.createUser({ handle: 'organiser', password: 'passw0rd123' });
+  const amina = auth.createUser({ handle: 'amina', password: 'passw0rd123' });
+  const kip = auth.createUser({ handle: 'kipchoge', password: 'passw0rd123' });
+
+  check('the league catalogue is African', ligi.LEAGUES.length >= 10 &&
+    ligi.LEAGUES.every((l) => l.country && l.name) &&
+    ligi.LEAGUES.some((l) => l.id === 'caf_cl') &&
+    ligi.LEAGUES.some((l) => l.id === 'ke_fkf_pl') &&
+    ligi.LEAGUES.some((l) => l.id === 'ng_npfl'));
+  check('an unknown league cannot host a season', (() => {
+    try { ligi.createSeason({ createdBy: host.id, leagueId: 'epl', startsAt: new Date().toISOString() }); return false; }
+    catch { return true; }
+  })());
+
+  const DAY = 24 * 60 * 60 * 1000;
+  // Kickoff is in the real future: Fantasy 11's lock reads the SERVER clock,
+  // so a season dated in the past would arrive pre-locked. The tick is still
+  // driven by an explicit clock, which is what makes the automation testable.
+  const t0 = Date.now() + 10 * 24 * 60 * 60 * 1000;
+  const { season, gameweeks } = ligi.createSeason({
+    createdBy: host.id, leagueId: 'ke_fkf_pl', startsAt: new Date(t0).toISOString(),
+    gameweeks: 3, cashSlotPriceKes: 500
+  });
+  check('a season schedules every gameweek up front', gameweeks.length === 3);
+  check('each gameweek is backed by ONE fantasy competition, not a second engine',
+    gameweeks.every((g) => fantasy.getCompetition(g.competitionId)) &&
+    new Set(gameweeks.map((g) => g.competitionId)).size === 3);
+  check('a season starts upcoming', season.status === 'upcoming');
+
+  // A pool is required before a gameweek can open: no pool, no game.
+  const gw1 = gameweeks[0];
+  const idle = ligi.tick(t0 - 2 * DAY);
+  check('a gameweek with no players refuses to open onto an empty screen',
+    ligi.getGameweek(gw1.id).status === 'scheduled' && idle.changed === false);
+
+  const SQUAD = [
+    ['Mo Keeper', 'GK', 'Gor Mahia'], ['Ada Back', 'DEF', 'Gor Mahia'], ['Bila Back', 'DEF', 'Tusker'],
+    ['Cheb Back', 'DEF', 'Tusker'], ['Dede Mid', 'MID', 'Bandari'], ['Esi Mid', 'MID', 'Bandari'],
+    ['Fara Mid', 'MID', 'Kakamega Homeboyz'], ['Gita Mid', 'MID', 'Kakamega Homeboyz'],
+    ['Hawa Fwd', 'FWD', 'AFC Leopards'], ['Isa Fwd', 'FWD', 'AFC Leopards'], ['Juma Fwd', 'FWD', 'Ulinzi Stars']
+  ];
+  const poolFor = (gw) => SQUAD.map(([name, position, club]) =>
+    fantasy.addPoolPlayer(gw.competitionId, host.id, { name, position, club }));
+  const pool1 = poolFor(gw1);
+
+  const opened = ligi.tick(t0 - 2 * DAY);
+  check('the clock opens the gameweek, with no human input',
+    ligi.getGameweek(gw1.id).status === 'open' &&
+    opened.actions.some((a) => a.action === 'opened'));
+  check('the tick is idempotent', ligi.tick(t0 - 2 * DAY).changed === false);
+
+  // --- seats ---------------------------------------------------------------
+  const seat = ligi.enter(gw1.id, amina.id, { slot: 'free' });
+  check('a free seat is a real seat with a real bankroll',
+    seat.created === true && seat.entry.unitsBankroll === 100 && seat.entry.stakeKind === 'units');
+  check('taking the same seat twice does not create two entries',
+    ligi.enter(gw1.id, amina.id).created === false);
+  ligi.enter(gw1.id, kip.id);
+
+  let cashRefusal = null;
+  try { ligi.enter(gw1.id, kip.id, { slot: 'cash' }); } catch (e) { cashRefusal = e; }
+  check('THE CASH SEAT IS REFUSED, not hidden',
+    cashRefusal && cashRefusal.code === 'compliance_gate');
+  check('the refusal names every unmet requirement',
+    Array.isArray(cashRefusal.compliance.requirements) &&
+    cashRefusal.compliance.requirements.length >= 5);
+  check('no ledger row was created by an attempted cash seat',
+    store.all('ledgerTransactions').length === 0);
+
+  // --- picks ---------------------------------------------------------------
+  const ids = pool1.map((p) => p.id);
+  ligi.submitTeam(gw1.id, amina.id, { playerIds: ids, captainId: ids[8] });
+  ligi.submitTeam(gw1.id, kip.id, { playerIds: ids, captainId: ids[0] });
+  check('a squad must come from the server-authoritative pool', (() => {
+    try { ligi.submitTeam(gw1.id, amina.id, { playerIds: [...ids.slice(0, 10), 'fply_invented'], captainId: ids[0] }); return false; }
+    catch { return true; }
+  })());
+
+  // --- the house line, with no commissioner --------------------------------
+  const lines = ligi.deriveHouseLines(gw1.id);
+  check('every pool player gets a line', lines.length === SQUAD.length);
+  check('a first-week line falls back to the PUBLISHED position baseline',
+    lines.find((l) => l.name === 'Hawa Fwd').line === ligi.HOUSE_RULES.baselineLine.FWD &&
+    lines.every((l) => l.basis === 'position_baseline'));
+  check('no line is a whole number, so nothing can push on the total',
+    lines.every((l) => !Number.isInteger(l.line)));
+  check('deriving twice gives the same lines',
+    JSON.stringify(ligi.deriveHouseLines(gw1.id)) === JSON.stringify(lines));
+
+  // --- wagers --------------------------------------------------------------
+  const hawa = pool1.find((p) => p.name === 'Hawa Fwd');
+  const isa = pool1.find((p) => p.name === 'Isa Fwd');
+  ligi.placeWager(gw1.id, amina.id, { mode: 'over_under', playerId: hawa.id, side: 'over', units: 40 });
+  ligi.placeWager(gw1.id, amina.id, { mode: 'spread', playerId: hawa.id, opponentPlayerId: isa.id, units: 30 });
+  ligi.placeWager(gw1.id, amina.id, { mode: 'confidence', units: 30 });
+  check('the weekly bankroll is exactly 100 units', (() => {
+    try { ligi.placeWager(gw1.id, amina.id, { mode: 'over_under', playerId: isa.id, side: 'under', units: 1 }); return false; }
+    catch (e) { return /100 units/.test(String(e.message)); }
+  })());
+  ligi.placeWager(gw1.id, kip.id, { mode: 'over_under', playerId: hawa.id, side: 'under', units: 50 });
+  check('a wager on a player outside the pool is refused', (() => {
+    try { ligi.placeWager(gw1.id, kip.id, { mode: 'over_under', playerId: 'fply_ghost', side: 'over', units: 5 }); return false; }
+    catch { return true; }
+  })());
+
+  // --- lock ----------------------------------------------------------------
+  ligi.tick(t0 + 60 * 1000);
+  const locked = ligi.getGameweek(gw1.id);
+  check('kickoff locks the week automatically', locked.status === 'awaiting_results');
+  check('the lines are FROZEN at lock', Array.isArray(locked.houseLines) && locked.houseLines.length === SQUAD.length);
+  check('wagers close at the lock', (() => {
+    try { ligi.placeWager(gw1.id, kip.id, { mode: 'over_under', playerId: isa.id, side: 'over', units: 5 }); return false; }
+    catch (e) { return /locked/.test(String(e.message)); }
+  })());
+
+  // --- settlement waits for real data --------------------------------------
+  const early = ligi.settleGameweek(gw1.id);
+  check('SETTLEMENT REFUSES TO INVENT A RESULT', early.settled === false && early.awaiting === true);
+  check('the wait states how much data is missing', /have not arrived/.test(early.reason));
+  check('a tick past the due date still settles nothing without stats',
+    ligi.tick(t0 + 5 * DAY).actions.every((a) => a.action !== 'settled'));
+
+  // Real stats arrive. Hawa scores twice (4+4+1 = 9), Isa does nothing.
+  const stat = (player, s) => fantasy.recordStats(gw1.competitionId, host.id, player.id, s);
+  for (const p of pool1) stat(p, { minutes: 90 });
+  stat(hawa, { minutes: 90, goals: 2 });
+  stat(pool1.find((p) => p.name === 'Mo Keeper'), { minutes: 90, cleanSheet: true, saves: 3 });
+
+  const settled = ligi.tick(t0 + 5 * DAY);
+  check('once the data is real, the week settles itself',
+    ligi.getGameweek(gw1.id).status === 'settled' &&
+    settled.actions.some((a) => a.action === 'settled'));
+
+  const aminaEntry = ligi.getEntry(gw1.id, amina.id);
+  const kipEntry = ligi.getEntry(gw1.id, kip.id);
+  const overWager = ligi.wagersOf(gw1.id, amina.id).find((w) => w.mode === 'over_under');
+  check('an over bet that beat the line pays 1:1',
+    overWager.outcome === 'won' && overWager.unitsReturned === 80);
+  check('the settled wager shows the line it beat and the score it made',
+    overWager.detail.line === 4.5 && overWager.detail.scored === 9);
+  const kipWager = ligi.wagersOf(gw1.id, kip.id)[0];
+  check('the other side of the same line lost', kipWager.outcome === 'lost' && kipWager.unitsReturned === 0);
+  check('the spread settles on the derived handicap',
+    ligi.wagersOf(gw1.id, amina.id).find((w) => w.mode === 'spread').detail.handicap === 0);
+  check('units are netted per manager', aminaEntry.netUnits === aminaEntry.unitsReturned - aminaEntry.unitsStaked);
+  check('the two managers scored the same team points', aminaEntry.teamPoints !== null && kipEntry.teamPoints !== null);
+  check('settling twice changes nothing', ligi.settleGameweek(gw1.id).alreadySettled === true);
+  check('SETTLEMENT MOVED NO MONEY', store.all('ledgerTransactions').length === 0);
+
+  // --- the two ladders -----------------------------------------------------
+  const table = ligi.seasonTable(season.id);
+  check('the season table is derived from settled weeks only', table.length === 2 && table[0].played === 1);
+  check('the table ranks on points, then units',
+    table[0].rank === 1 && typeof table[0].netUnits === 'number');
+  const streaks = ligi.streakTable(season.id);
+  check('a week won starts a streak', streaks.some((s) => s.current === 1 && s.longest === 1));
+  check('a week lost has no streak', streaks.some((s) => s.current === 0));
+  check('the streak rule is published, not implicit', /net units/.test(ligi.HOUSE_RULES.streakWinRule));
+
+  // --- week two: the line now comes from real history ----------------------
+  const gw2 = ligi.gameweeksOf(season.id)[1];
+  const pool2 = poolFor(gw2);
+  ligi.tick(t0 + 5 * DAY);
+  check('the next week opens by itself', ligi.getGameweek(gw2.id).status === 'open');
+  const lines2 = ligi.deriveHouseLines(gw2.id);
+  const hawaLine2 = lines2.find((l) => l.name === 'Hawa Fwd');
+  check('a scoring player is priced UP from their own history',
+    hawaLine2.basis === 'median_of_1' && hawaLine2.line === 9.5);
+  check('the line records the history it was derived from',
+    Array.isArray(hawaLine2.history) && hawaLine2.history[0] === 9);
+  const quietLine2 = lines2.find((l) => l.name === 'Isa Fwd');
+  check('a quiet player is priced down to what they actually did',
+    quietLine2.basis === 'median_of_1' && quietLine2.line === 1.5);
+  check('season status advanced to running on its own', ligi.getSeason(season.id).status === 'running');
+
+  // --- the read model ------------------------------------------------------
+  const view = ligi.overview(amina.id);
+  check('the overview names both slots honestly',
+    view.slots.find((s) => s.id === 'free').available === true &&
+    view.slots.find((s) => s.id === 'cash').available === false);
+  check('the cash slot carries the compliance detail',
+    view.slots.find((s) => s.id === 'cash').compliance.unmet.length >= 4);
+  check('the overview states that units are not money', view.rules.house.unitsAreNotMoney === true);
+  check('the card asks for priority listing', view.game.priority === true);
+  check('the overview carries both ladders', Array.isArray(view.table) && Array.isArray(view.streaks));
+  void pool2;
 }
 
 console.log(`\n${'='.repeat(52)}\nPASSED ${pass}   FAILED ${fail}   SKIPPED ${skip}\n${'='.repeat(52)}`);

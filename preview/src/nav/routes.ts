@@ -18,7 +18,7 @@ export type WorkflowSection =
   | 'cockpit' | 'command' | 'active' | 'completed' | 'inbox'
   | 'sources' | 'money' | 'vault' | 'gate' | 'tea'
   | 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'ai' | 'engine' | 'groupbuy';
-export type ArenaSection = 'lobby' | 'challenges' | 'tournaments' | 'leaderboard';
+export type ArenaSection = 'lobby' | 'ligi' | 'challenges' | 'tournaments' | 'leaderboard';
 
 export type BriefRoute = {
   dest: Destination;
@@ -59,7 +59,7 @@ const WORKFLOW: WorkflowSection[] = [
   'sources', 'money', 'vault', 'gate', 'tea',
   'campaigns', 'matches', 'distribution', 'calendar', 'vendors', 'ai', 'engine', 'groupbuy'
 ];
-const ARENA: ArenaSection[] = ['lobby', 'challenges', 'tournaments', 'leaderboard'];
+const ARENA: ArenaSection[] = ['lobby', 'ligi', 'challenges', 'tournaments', 'leaderboard'];
 
 function isOne<T extends string>(list: T[], value: string): value is T {
   return (list as string[]).includes(value);

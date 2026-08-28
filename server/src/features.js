@@ -31,6 +31,7 @@ import * as whatsapp from './connectors/whatsapp.js';
 const DEFINITIONS = [
   // Always-configured: these run on the local store and need no credential.
   { key: 'auth',      domain: 'auth',       label: 'Accounts & sessions',             configured: () => true },
+  { key: 'onboarding',domain: 'onboarding', label: 'Onboarding & service ladder',     configured: () => true },
   { key: 'sources',   domain: 'sources',    label: 'Sources',                         configured: () => true },
   { key: 'connectors',domain: 'connectors', label: 'Ingest connectors (web/RSS)',     configured: () => true },
   { key: 'briefit',   domain: 'briefit',    label: 'Capture ("Brief It")',            configured: () => true },
@@ -43,6 +44,7 @@ const DEFINITIONS = [
   { key: 'arena',     domain: 'arena',      label: 'Arena',                           configured: () => true },
   { key: 'auction',   domain: 'auction',    label: 'Auctions',                        configured: () => true },
   { key: 'fantasy',   domain: 'fantasy',    label: 'Fantasy 11',                      configured: () => true },
+  { key: 'ligi',      domain: 'ligi',       label: 'Ligi (African fantasy football)', configured: () => true },
   { key: 'command',   domain: 'command',    label: 'Host command centre',             configured: () => true },
   { key: 'people',    domain: 'people',     label: 'Person entity (timeline & identity)', configured: () => true },
   { key: 'tea',       domain: 'tea',        label: 'Tea editorial system',              configured: () => true },

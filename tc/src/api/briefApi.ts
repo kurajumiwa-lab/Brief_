@@ -1342,6 +1342,440 @@ export function whoAmI(): Promise<ApiResult<AuthedUser>> {
 }
 
 // ---------------------------------------------------------------------------
+// FEDERATED SIGN-IN + ONBOARDING
+//
+// The first screen leads with Google and falls back to a handle. Telegram is
+// never required. Everything here is a thin binding over routes that verify
+// the claim server-side; the client asserts no identity of its own.
+// ---------------------------------------------------------------------------
+
+export interface AuthProviderStatus {
+  configured: boolean;
+  label: string;
+  reason?: string | null;
+  clientId?: string | null;
+  required?: boolean;
+}
+
+export interface AuthProviders {
+  password: AuthProviderStatus;
+  google: AuthProviderStatus;
+  telegram: AuthProviderStatus;
+  emailLink: AuthProviderStatus;
+}
+
+/** What this deployment can honestly offer on the sign-in screen. */
+export function getAuthProviders(): Promise<ApiResult<AuthProviders>> {
+  return request('/api/auth/providers', undefined, (r) =>
+    r?.providers ? (r.providers as AuthProviders) : undefined
+  );
+}
+
+/** Exchange a Google ID token for a Brief session. The server verifies it. */
+export async function googleSignIn(
+  credential: string,
+  source?: string | null
+): Promise<ApiResult<AuthedUser>> {
+  const res = await request<{ user: AuthedUser; token: string }>(
+    '/api/auth/google',
+    { method: 'POST', body: JSON.stringify({ credential, source: source ?? null }) },
+    (r) => (r?.user && r?.token ? { user: r.user, token: r.token } : undefined)
+  );
+  if (!res.ok) return res;
+  setSessionToken(res.data.token);
+  return { ok: true, data: res.data.user };
+}
+
+/**
+ * Continue from a link that carries a Brief-signed email token.
+ *
+ * This is the "arrived from a TikTok link and was already recognised" path.
+ * The token is verified server-side; a bare email in a query string is not an
+ * identity and is refused there.
+ */
+export async function continueFromLinkToken(
+  token: string,
+  source?: string | null
+): Promise<ApiResult<AuthedUser>> {
+  const res = await request<{ user: AuthedUser; token: string }>(
+    '/api/auth/email-link',
+    { method: 'POST', body: JSON.stringify({ token, source: source ?? null }) },
+    (r) => (r?.user && r?.token ? { user: r.user, token: r.token } : undefined)
+  );
+  if (!res.ok) return res;
+  setSessionToken(res.data.token);
+  return { ok: true, data: res.data.user };
+}
+
+/** Mint a one-tap link token for someone you are inviting by email. */
+export function mintEmailLinkToken(
+  email: string,
+  source?: string | null
+): Promise<ApiResult<{ token: string; expiresInMs: number }>> {
+  return request(
+    '/api/auth/email-link/mint',
+    { method: 'POST', body: JSON.stringify({ email, source: source ?? null }) },
+    (r) => (typeof r?.token === 'string' ? { token: r.token, expiresInMs: Number(r.expiresInMs ?? 0) } : undefined)
+  );
+}
+
+export type LadderRungId = 'identity' | 'orient' | 'value' | 'contribute' | 'reach';
+
+export interface LadderRung {
+  id: LadderRungId;
+  label: string;
+  detail: string;
+  cta: string;
+  index: number;
+  done: boolean;
+  reached: boolean;
+  at: string | null;
+  how: string | null;
+}
+
+export interface LadderService {
+  id: string;
+  label: string;
+  requires: LadderRungId;
+  surface: { tab: string; section?: string };
+  unlocked: boolean;
+  unlocksAfter: string | null;
+  /** True when the segmentation answer moved this service one rung earlier. */
+  promoted?: boolean;
+}
+
+export interface Ladder {
+  rungs: LadderRung[];
+  reached: LadderRungId[];
+  currentRungId: LadderRungId | null;
+  nextStep: { id: LadderRungId; label: string; detail: string; cta: string } | null;
+  complete: boolean;
+  activated: boolean;
+  activatedAt: string | null;
+  services: LadderService[];
+}
+
+export interface OnboardingGoal {
+  id: string;
+  label: string;
+  leadsTo: { tab: string; section?: string };
+}
+
+export interface OnboardingState {
+  profile: {
+    goal: string | null;
+    place: string | null;
+    source: string | null;
+    startedAt: string | null;
+    finishedAt: string | null;
+    skippedAt: string | null;
+  } | null;
+  goals: OnboardingGoal[];
+  ladder: Ladder;
+}
+
+export type ActivationEventName =
+  | 'onboarding_started'
+  | 'signed_in'
+  | 'goal_chosen'
+  | 'place_chosen'
+  | 'feed_seen'
+  | 'object_opened'
+  | 'object_saved'
+  | 'object_confirmed'
+  | 'capture_saved'
+  | 'onboarding_skipped'
+  | 'onboarding_finished'
+  | 'service_locked_tapped';
+
+function isOnboardingState(raw: any): OnboardingState | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  if (!raw.ladder || !Array.isArray(raw.ladder.rungs)) return undefined;
+  return raw as OnboardingState;
+}
+
+export function getOnboarding(): Promise<ApiResult<OnboardingState>> {
+  return request('/api/onboarding', undefined, isOnboardingState);
+}
+
+export function getLadder(): Promise<ApiResult<Ladder>> {
+  return request('/api/ladder', undefined, (r) =>
+    r?.ladder && Array.isArray(r.ladder.rungs) ? (r.ladder as Ladder) : undefined
+  );
+}
+
+export function setOnboardingGoal(goal: string): Promise<ApiResult<OnboardingState>> {
+  return request('/api/onboarding/goal', { method: 'POST', body: JSON.stringify({ goal }) }, isOnboardingState);
+}
+
+export function setOnboardingPlace(place: string): Promise<ApiResult<OnboardingState>> {
+  return request('/api/onboarding/place', { method: 'POST', body: JSON.stringify({ place }) }, isOnboardingState);
+}
+
+export function setOnboardingSource(source: string): Promise<ApiResult<OnboardingState>> {
+  return request('/api/onboarding/source', { method: 'POST', body: JSON.stringify({ source }) }, isOnboardingState);
+}
+
+export function finishOnboarding(skipped = false): Promise<ApiResult<OnboardingState>> {
+  return request('/api/onboarding/finish', { method: 'POST', body: JSON.stringify({ skipped }) }, isOnboardingState);
+}
+
+/**
+ * Report a real step someone took. Only the steps that leave no server row of
+ * their own are reported this way; everything else is derived from rows.
+ */
+export function recordActivation(
+  name: ActivationEventName,
+  meta: Record<string, unknown> = {}
+): Promise<ApiResult<{ ladder: Ladder }>> {
+  return request(
+    '/api/onboarding/event',
+    { method: 'POST', body: JSON.stringify({ name, meta }) },
+    (r) => (r?.ladder ? { ladder: r.ladder as Ladder } : undefined)
+  );
+}
+
+export interface ActivationMetrics {
+  started: number;
+  activated: number;
+  activationRate: number | null;
+  medianSecondsToActivate: number | null;
+  perRung: Record<string, number>;
+  dropOff: { from: string; to: string; lost: number }[];
+  note: string | null;
+}
+
+export function getActivationMetrics(): Promise<ApiResult<ActivationMetrics>> {
+  return request('/api/onboarding/metrics', undefined, (r) =>
+    r && typeof r.started === 'number' ? (r as ActivationMetrics) : undefined
+  );
+}
+
+// ---------------------------------------------------------------------------
+// LIGI — African fantasy football
+//
+// One read model (`getLigi`) backs the whole screen; the writes are seats,
+// squads and unit wagers. The cash seat is expected to fail with 403 and a
+// compliance payload — that refusal is the product behaving correctly, not an
+// error to hide.
+// ---------------------------------------------------------------------------
+
+export interface LigiLeague {
+  id: string;
+  name: string;
+  country: string;
+  tier: string;
+}
+
+export interface LigiHouseRules {
+  weeklyUnits: number;
+  rollover: boolean;
+  modes: ('over_under' | 'spread' | 'confidence')[];
+  payout: Record<string, string>;
+  spreadHandicapStep: number;
+  baselineLine: Record<string, number>;
+  lineHistoryWindow: number;
+  streakWinRule: string;
+  unitsAreNotMoney: boolean;
+}
+
+export interface LigiSeason {
+  id: string;
+  leagueId: string;
+  leagueName: string;
+  country: string;
+  name: string;
+  startsAt: string;
+  endsAt: string;
+  gameweekCount: number;
+  cashSlotPriceKes: number;
+  status: 'upcoming' | 'running' | 'complete';
+}
+
+export interface LigiGameweek {
+  id: string;
+  seasonId: string;
+  competitionId: string;
+  index: number;
+  opensAt: string;
+  kickoffAt: string;
+  resultsDueAt: string;
+  status: 'scheduled' | 'open' | 'locked' | 'awaiting_results' | 'settled' | 'void';
+  houseLines: LigiLine[] | null;
+  settledAt: string | null;
+}
+
+export interface LigiLine {
+  playerId: string;
+  name: string;
+  position: string;
+  club: string;
+  line: number;
+  basis: string;
+  history: number[];
+}
+
+export interface LigiPoolPlayer {
+  id: string;
+  name: string;
+  position: string;
+  club: string;
+  price: number;
+}
+
+export interface LigiWager {
+  id: string;
+  mode: 'over_under' | 'spread' | 'confidence';
+  units: number;
+  playerId?: string;
+  opponentPlayerId?: string;
+  side?: 'over' | 'under';
+  settled: boolean;
+  outcome: 'won' | 'lost' | 'push' | null;
+  unitsReturned: number | null;
+  detail: Record<string, unknown> | null;
+}
+
+export interface LigiEntry {
+  id: string;
+  gameweekId: string;
+  userId: string;
+  slot: 'free' | 'cash';
+  stakeKind: 'units' | 'cash';
+  unitsBankroll: number;
+  teamPoints: number | null;
+  unitsStaked: number;
+  unitsReturned: number | null;
+  netUnits: number | null;
+  won: boolean | null;
+  settledAt: string | null;
+}
+
+export interface LigiGameweekView {
+  gameweek: LigiGameweek;
+  locked: boolean;
+  pool: LigiPoolPlayer[];
+  houseLines: LigiLine[] | null;
+  readiness: { ready: boolean; needed: number; missing: number; reason: string | null };
+  entryCount: number;
+  me: {
+    entry: LigiEntry;
+    team: { playerIds: string[]; captainId: string; points: number | null } | null;
+    wagers: LigiWager[];
+    unitsRemaining: number;
+  } | null;
+}
+
+export interface LigiSlot {
+  id: 'free' | 'cash';
+  label: string;
+  stakeKind: 'units' | 'cash';
+  available: boolean;
+  priceKes?: number | null;
+  detail: string;
+  compliance?: { enabled: boolean; requirements: { id: string; label: string; met: boolean; detail: string }[]; unmet: string[] };
+}
+
+export interface LigiTableRow {
+  userId: string;
+  played: number;
+  points: number;
+  netUnits: number;
+  weeksWon: number;
+  rank: number;
+}
+
+export interface LigiStreakRow {
+  userId: string;
+  current: number;
+  longest: number;
+  played: number;
+}
+
+export interface LigiOverview {
+  game: { id: string; name: string; tagline: string; priority: boolean };
+  leagues: LigiLeague[];
+  rules: { house: LigiHouseRules; squad: Record<string, unknown>; scoring: Record<string, unknown> };
+  slots: LigiSlot[];
+  season: LigiSeason | null;
+  seasons: LigiSeason[];
+  gameweek: LigiGameweekView | null;
+  table: LigiTableRow[];
+  streaks: LigiStreakRow[];
+}
+
+export function getLigi(seasonId?: string | null): Promise<ApiResult<LigiOverview>> {
+  const q = seasonId ? `?season=${encodeURIComponent(seasonId)}` : '';
+  return request(`/api/ligi${q}`, undefined, (r) => (r?.game && Array.isArray(r?.leagues) ? (r as LigiOverview) : undefined));
+}
+
+export function getLigiGameweek(id: string): Promise<ApiResult<LigiGameweekView>> {
+  return request(`/api/ligi/gameweeks/${encodeURIComponent(id)}`, undefined, (r) =>
+    r?.gameweek ? (r as LigiGameweekView) : undefined
+  );
+}
+
+export function createLigiSeason(body: {
+  leagueId: string;
+  startsAt: string;
+  gameweeks?: number;
+  name?: string;
+  cashSlotPriceKes?: number;
+}): Promise<ApiResult<{ season: LigiSeason; gameweeks: LigiGameweek[] }>> {
+  return request('/api/ligi/seasons', { method: 'POST', body: JSON.stringify(body) }, (r) =>
+    r?.season ? { season: r.season, gameweeks: r.gameweeks ?? [] } : undefined
+  );
+}
+
+/** Take a seat. A cash seat is expected to come back 403 with the gate. */
+export function enterLigi(
+  gameweekId: string,
+  slot: 'free' | 'cash' = 'free'
+): Promise<ApiResult<{ entry: LigiEntry; created: boolean }>> {
+  return request(
+    `/api/ligi/gameweeks/${encodeURIComponent(gameweekId)}/enter`,
+    { method: 'POST', body: JSON.stringify({ slot }) },
+    (r) => (r?.entry ? { entry: r.entry, created: Boolean(r.created) } : undefined)
+  );
+}
+
+export function submitLigiTeam(
+  gameweekId: string,
+  playerIds: string[],
+  captainId: string
+): Promise<ApiResult<{ team: unknown; created: boolean }>> {
+  return request(
+    `/api/ligi/gameweeks/${encodeURIComponent(gameweekId)}/team`,
+    { method: 'POST', body: JSON.stringify({ playerIds, captainId }) },
+    (r) => (r?.team ? { team: r.team, created: Boolean(r.created) } : undefined)
+  );
+}
+
+export function placeLigiWager(
+  gameweekId: string,
+  wager: {
+    mode: 'over_under' | 'spread' | 'confidence';
+    units: number;
+    playerId?: string;
+    opponentPlayerId?: string;
+    side?: 'over' | 'under';
+  }
+): Promise<ApiResult<{ wager: LigiWager; unitsRemaining: number }>> {
+  return request(
+    `/api/ligi/gameweeks/${encodeURIComponent(gameweekId)}/wagers`,
+    { method: 'POST', body: JSON.stringify(wager) },
+    (r) => (r?.wager ? { wager: r.wager, unitsRemaining: Number(r.unitsRemaining ?? 0) } : undefined)
+  );
+}
+
+/** Run the automated pass now. Idempotent, so calling it is never destructive. */
+export function tickLigi(): Promise<ApiResult<{ at: string; actions: unknown[]; changed: boolean }>> {
+  return request('/api/ligi/tick', { method: 'POST', body: '{}' }, (r) =>
+    r && Array.isArray(r.actions) ? { at: String(r.at), actions: r.actions, changed: Boolean(r.changed) } : undefined
+  );
+}
+
+// ---------------------------------------------------------------------------
 // THE VAULT
 //
 // The client never decides a vault's access level: every call returns the

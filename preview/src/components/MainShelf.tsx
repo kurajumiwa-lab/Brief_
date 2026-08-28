@@ -1,11 +1,14 @@
 import React from 'react';
-import { ArrowRight, CalendarDays, MessageCircle, Plus, Sparkles, Trophy, Users } from 'lucide-react';
+import { ArrowRight, CalendarDays, Flame, Lock, MessageCircle, Plus, Sparkles, Trophy, Users } from 'lucide-react';
 import type { MenuTarget } from './MenuSheet';
+import type { Ladder } from '../api/briefApi';
+import { serviceForSurface } from './ladder';
 
 import communityArt from '../assets/shelf/nairobi-community.webp';
 import shareArt from '../assets/shelf/whatsapp-share.webp';
 import createArt from '../assets/shelf/host-create.webp';
 import efootballArt from '../assets/arena/efootball.webp';
+import ligiArt from '../assets/arena/ligi.webp';
 import eventArt from '../assets/shelf/event-gathering.webp';
 
 // ---------------------------------------------------------------------------
@@ -27,6 +30,14 @@ export interface MainShelfProps {
   theme?: 'light' | 'dark';
   /** Actual open eFootball challenges; null means the activity check has not returned. */
   playOpenCount?: number | null;
+  /**
+   * The service ladder. Optional on purpose: with no ladder loaded (offline,
+   * dead API) every card behaves exactly as it always did. A gate that failed
+   * closed would turn an outage into a locked product.
+   */
+  ladder?: Ladder | null;
+  /** Tapped a card whose rung has not been climbed yet. */
+  onLocked?: (info: { cardId: string; requires: string; unlocksAfter: string | null }) => void;
 }
 
 interface ShelfCard {
@@ -38,9 +49,31 @@ interface ShelfCard {
   target: MenuTarget;
   Icon: React.ComponentType<{ className?: string }>;
   featured?: boolean;
+  /** Listed first, ahead of the ordinary shelf order. */
+  priority?: boolean;
+}
+
+/** Priority cards first, everything else in its declared order. */
+function shelfOrder(cards: ShelfCard[]): ShelfCard[] {
+  return [...cards.filter((c) => c.priority), ...cards.filter((c) => !c.priority)];
 }
 
 const SHELF_CARDS: ShelfCard[] = [
+  // PRIORITY LISTING. Ligi is first on the shelf on purpose: it is the one
+  // card with a weekly rhythm behind it, so it is the one worth returning for.
+  // `priority` is not a synonym for `featured` — featured is a badge, priority
+  // is a POSITION, and the card is ordered by it rather than by hand so a
+  // future second priority card cannot quietly bury this one.
+  {
+    id: 'ligi',
+    eyebrow: 'LIGI · AFRICAN FOOTBALL',
+    title: 'Ligi',
+    detail: 'Fantasy football over African leagues · free to play',
+    image: ligiArt,
+    target: { tab: 'arena', section: 'ligi' },
+    Icon: Flame,
+    priority: true
+  },
   {
     id: 'around',
     eyebrow: 'DISCOVER',
@@ -103,24 +136,45 @@ function ShelfCardView({
   onSelect,
   compact,
   playOpenCount,
-  theme = 'light'
+  theme = 'light',
+  ladder = null,
+  onLocked
 }: {
   card: ShelfCard;
   onSelect: MainShelfProps['onSelect'];
   compact: boolean;
   playOpenCount: number | null;
   theme?: 'light' | 'dark';
+  ladder?: Ladder | null;
+  onLocked?: MainShelfProps['onLocked'];
 }) {
   const Icon = card.Icon;
   const isDark = theme === 'dark';
+  // Progressive disclosure: a card whose rung is not yet climbed still shows
+  // — hiding it would make the product look smaller than it is — but it says
+  // what opens it instead of dropping someone into a surface they have no use
+  // for yet.
+  const service = serviceForSurface(
+    ladder ?? null,
+    card.target.tab,
+    'section' in card.target ? card.target.section ?? null : null
+  );
+  const locked = Boolean(service && !service.unlocked);
   const detail = card.id === 'play' && playOpenCount !== null
     ? playOpenCount > 0 ? `${playOpenCount} open match${playOpenCount === 1 ? '' : 'es'} · enter Arena` : 'No open matches yet · Arena is quiet'
     : card.detail;
   return (
     <button
       type="button"
-      onClick={() => onSelect(card.target)}
-      aria-label={`${card.title}: ${detail}`}
+      onClick={() => {
+        if (locked && service) {
+          onLocked?.({ cardId: card.id, requires: service.requires, unlocksAfter: service.unlocksAfter });
+          return;
+        }
+        onSelect(card.target);
+      }}
+      aria-label={locked && service ? `${card.title}: opens after ${service.unlocksAfter}` : `${card.title}: ${detail}`}
+      data-locked={locked ? 'true' : undefined}
       data-shelf-id={card.id}
       className={`group relative shrink-0 overflow-hidden rounded-xl text-left transition-all hover:-translate-y-0.5 cursor-pointer ${
         isDark
@@ -145,7 +199,21 @@ function ShelfCardView({
             : 'linear-gradient(180deg, rgba(9,11,16,0.18) 0%, rgba(9,11,16,0.85) 100%)'
         }}
       />
-      {card.featured && (
+      {locked && service && (
+        <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-[#090B10]/85 px-1.5 py-0.5 text-[7px] font-extrabold uppercase tracking-[0.14em] text-[#FFFFFF]">
+          <Lock className="h-2 w-2" /> {service.unlocksAfter}
+        </span>
+      )}
+      {!locked && card.priority && (
+        <span
+          className={`absolute right-2 top-2 rounded-full px-1.5 py-0.5 text-[7px] font-extrabold uppercase tracking-[0.14em] ${
+            isDark ? 'bg-[#00DF8F] text-[#0A0D14]' : 'bg-[#111111] text-[#FFFFFF]'
+          }`}
+        >
+          Free to play
+        </span>
+      )}
+      {!locked && card.featured && (
         <span
           className={`absolute right-2 top-2 rounded-full px-1.5 py-0.5 text-[7px] font-extrabold uppercase tracking-[0.14em] ${
             isDark ? 'bg-[#00DF8F] text-[#0A0D14]' : 'bg-[#FFFFFF] text-[#111111]'
@@ -177,13 +245,22 @@ function ShelfCardView({
           {card.eyebrow}
         </p>
         <p className={`mt-0.5 font-extrabold leading-tight text-[#FFFFFF] ${compact ? 'text-[12px]' : 'text-[13px]'}`}>{card.title}</p>
-        <p className="mt-0.5 line-clamp-1 text-[9px] leading-snug text-[#FFFFFF]/80">{detail}</p>
+        <p className="mt-0.5 line-clamp-1 text-[9px] leading-snug text-[#FFFFFF]/80">
+          {locked && service ? `Opens after: ${service.unlocksAfter}` : detail}
+        </p>
       </div>
     </button>
   );
 }
 
-export function MainShelf({ onSelect, compact = false, playOpenCount = null, theme = 'light' }: MainShelfProps) {
+export function MainShelf({
+  onSelect,
+  compact = false,
+  playOpenCount = null,
+  theme = 'light',
+  ladder = null,
+  onLocked
+}: MainShelfProps) {
   const isDark = theme === 'dark';
   return (
     <section aria-labelledby="main-shelf-title" className="space-y-2.5">
@@ -214,7 +291,7 @@ export function MainShelf({ onSelect, compact = false, playOpenCount = null, the
         </span>
       </div>
       <div className={compact ? 'grid grid-cols-2 gap-2' : 'flex gap-2.5 overflow-x-auto pb-1 -mx-1 px-1 snap-x snap-mandatory sm:grid sm:grid-cols-3 sm:overflow-visible'}>
-        {SHELF_CARDS.map((card) => (
+        {shelfOrder(SHELF_CARDS).map((card) => (
           <ShelfCardView
             key={card.id}
             card={card}
@@ -222,6 +299,8 @@ export function MainShelf({ onSelect, compact = false, playOpenCount = null, the
             compact={compact}
             playOpenCount={playOpenCount}
             theme={theme}
+            ladder={ladder}
+            onLocked={onLocked}
           />
         ))}
       </div>

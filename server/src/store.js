@@ -24,6 +24,15 @@ const EMPTY = {
   // SHA-256 fingerprint of each session token is stored, never the token.
   users: [],
   sessions: [],
+  // Server-held secrets that must survive a restart but must never reach a
+  // client (currently: the HMAC key that signs one-tap email links).
+  appSecrets: [],
+  // First-run state: the segmentation answer a person actually gave, and the
+  // append-only stream of named activation events. Ladder progress is DERIVED
+  // from these plus ordinary rows (confirmations, captures, campaigns) — never
+  // stored as a step counter. See domain/onboarding.js.
+  onboardingProfiles: [],
+  activationEvents: [],
   sources: [],
   sourceMemberships: [],
   rawItems: [],
@@ -70,6 +79,16 @@ const EMPTY = {
   // The controlled eFootball pilot. Signup rows carry cohort intent; pilot
   // counters are derived from these rows plus the ordinary Arena matches.
   arenaBetaSignups: [],
+  // Ligi — African fantasy football. Seasons over real African leagues, their
+  // scheduled gameweeks, seats, and unit wagers against the derived house
+  // line. Every gameweek is backed by a fantasyCompetition row, so there is
+  // still exactly one scoring engine. Units are a scoring device, never money:
+  // nothing here touches ledgerTransactions. See domain/ligi.js.
+  ligiSeasons: [],
+  ligiGameweeks: [],
+  ligiEntries: [],
+  ligiWagers: [],
+
   // Fantasy 11. Non-economic core: pool, entries, stats and derived scores.
   // No Fantasy wallet -- paid entry would use the one ledger, once legal.
   fantasyCompetitions: [],
