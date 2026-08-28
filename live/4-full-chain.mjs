@@ -54,8 +54,26 @@ check('it has an id', Boolean(objectId), JSON.stringify(r.body?.result).slice(0,
 
 // The same refusal, proven rather than assumed.
 r = await call('/api/brief-it/save', 'POST', { text: `just some idle chatter ${uniq} with nothing in it` }, S.token);
-check('a signal-free note is REFUSED, not stored as an object',
-  r.body?.result?.created === false && /not object worthy/.test(r.body?.result?.reason ?? ''));
+// An EXPLICIT save keeps the words. The client refuses chatter before it ever
+// reaches this route, and the server's extractor can score text differently
+// from the client's preview -- silently dropping what someone just typed is
+// worse than keeping it. What the rescue may NOT do is dress a note up as
+// something it is not, which is what it used to do: it claimed 0.85 extraction
+// confidence over text nothing had been extracted from, and published itself
+// straight to the anonymous public feed.
+check('a signal-free note is kept, because a person asked for it',
+  r.body?.result?.created === true, JSON.stringify(r.body?.result).slice(0, 160));
+const kept = r.body?.result?.object ?? {};
+check('it claims no confidence extraction did not earn',
+  typeof kept.extractionConfidence === 'number' && kept.extractionConfidence < 0.85,
+  `confidence=${kept.extractionConfidence}`);
+check('it says it was kept as written, not extracted',
+  /kept as written/.test(kept.extractionEvidence ?? ''), kept.extractionEvidence);
+check('it is NOT pushed onto the anonymous public feed',
+  kept.publication === 'source_members', `publication=${kept.publication}`);
+const anonFeed = await call('/api/public/feed', 'GET', undefined, null);
+check('the anonymous feed does not carry it',
+  !JSON.stringify(anonFeed.body ?? {}).includes(`idle chatter ${uniq}`), JSON.stringify(anonFeed.body).slice(0, 120));
 
 r = await call('/api/campaigns', 'POST', { objectId, title: `Night Market ${uniq}`, type: 'event', capacity: 2 }, S.token);
 check('a campaign wraps it', r.status === 201, JSON.stringify(r.body).slice(0, 140));

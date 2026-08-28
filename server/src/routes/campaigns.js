@@ -33,6 +33,13 @@ app.get('/api/campaigns', (req, res) => {
 
 
 app.post('/api/campaigns', (req, res) => {
+  // AUTHORIZATION. Creating a campaign is an authoring act, and an anonymous
+  // caller previously got one with `ownerId: null` -- which it could then
+  // publish, because the ownership guard compares the stored owner to the
+  // caller and null === null. Anyone could put a campaign on Brief's public
+  // surface with no identity behind it. Outsiders do not need this: they
+  // already have /api/public/campaigns/:slug/register.
+  if (!requireAuth(req, res)) return;
   try {
     // ownerId comes from the caller, never req.body.
     const c = campaigns.createCampaign(callerId(req), {

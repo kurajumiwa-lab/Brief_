@@ -104,19 +104,26 @@ node live/4-full-chain.mjs            # identity -> ... -> payout, Arena,
                                       # Fantasy, Auction, ops
 ```
 
-**Current state: 3077 assertions, 0 failing.**
+**Current state: 3225 assertions, 0 failing** — measured 2026-08-28 against a
+production build over HTTP, not inherited from an earlier report.
 
 | Suite | Result |
 |---|---|
-| `server/test/run.js` | 1649 passed / 0 failed / 3 skipped |
+| `server/test/run.js` | 1717 passed / 0 failed / 3 skipped |
 | `server/test/livecamp.mjs` | 111 passed / 0 failed |
-| `./run-suites.sh` (client suites) | 1161 passed / 0 failed |
+| `./run-suites.sh` (32 client suites) | 1194 passed / 0 failed |
 | `tc` strict typecheck | exit 0 |
-| `live/` against the production build | 43 + 26 + 87 = 156 / 0 |
+| `live/` against the production build | 43 + 27 + 91 + 16 + 26 = 203 / 0 |
 
 The server suite hits real third parties (BBC's RSS feed, GitHub's robots.txt,
 Telegram's API). Those tests **skip** rather than pass when the network is
 unavailable, so a green run always means something real happened.
+
+These numbers were produced by re-running everything from a clean install, not
+copied forward. [`VERIFICATION-REPORT.md`](VERIFICATION-REPORT.md) records what
+that sweep found and fixed — three write routes that accepted an anonymous
+caller, a manual capture that claimed extraction confidence it had not earned —
+and what is still weak.
 
 ---
 

@@ -4894,6 +4894,10 @@ console.log('\n=== ENDPOINT AUTHORIZATION RULES, ENCODED EXPLICITLY ===');
       ['POST', '/api/connectors/telegram/sync', {}],
       ['POST', '/api/brief-it/preview', { text: 'something' }],
       ['POST', '/api/brief-it/save', { text: 'something' }],
+      // Found by audit, not by the original sweep: these three accepted an
+      // anonymous caller and wrote rows with no actor behind them.
+      ['POST', '/api/campaigns', { title: 'X' }],
+      ['POST', '/api/transactions', { amount: 1, currency: 'KES', type: 'contribution' }],
       ['POST', '/api/vendors', { displayName: 'X' }],
       ['POST', '/api/listings', { title: 'X', price: 1 }],
       ['POST', '/api/orders', { listingId: 'x' }],
@@ -6531,6 +6535,102 @@ console.log('\n=== LIGI: AFRICAN FANTASY FOOTBALL, AUTOMATED ===');
   check('the card asks for priority listing', view.game.priority === true);
   check('the overview carries both ladders', Array.isArray(view.table) && Array.isArray(view.streaks));
   void pool2;
+}
+
+console.log('\n=== MANUAL CAPTURE HONESTY + THREE UNGUARDED WRITES ===');
+{
+  // Dev fallback OFF. With it on, every anonymous request is silently the
+  // single dev user and none of these assertions would mean anything.
+  process.env.NODE_ENV = 'test';
+  const prevDev = process.env.BRIEF_DEV_AUTH;
+  process.env.BRIEF_DEV_AUTH = '0';
+  const { default: app } = await import('../src/index.js');
+  store._reset();
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, {
+      method, headers, body: body ? JSON.stringify(body) : undefined
+    });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+
+  try {
+    const u = Date.now().toString(36);
+    const me = (await call('/api/auth/register', 'POST', { handle: `mch_${u}`, password: 'a good passphrase' })).body;
+    const token = me.token;
+
+    // --- the three writes that accepted an anonymous caller -----------------
+    let r = await call('/api/campaigns', 'POST', { title: 'Anonymous campaign' });
+    check('creating a campaign requires an identity (401)', r.status === 401, `got ${r.status}`);
+
+    r = await call('/api/transactions', 'POST', { amount: 100, currency: 'KES', type: 'contribution' });
+    check('writing to the ledger requires an identity (401)', r.status === 401, `got ${r.status}`);
+
+    const tx = (await call('/api/transactions', 'POST', { amount: 100, currency: 'KES', type: 'contribution' }, token)).body.transaction;
+    check('an identified caller CAN record a transaction (201)', Boolean(tx?.id), JSON.stringify(tx ?? {}).slice(0, 120));
+    r = await call(`/api/transactions/${tx.id}/transition`, 'POST', { status: 'settled' });
+    check('moving money through states requires an identity (401)', r.status === 401, `got ${r.status}`);
+
+    const src = (await call('/api/sources', 'POST', { name: `Audit source ${u}`, type: 'manual' }, token)).body.source;
+    r = await call(`/api/sources/${src.id}/membership`, 'POST', { membershipStatus: 'owner' });
+    check('declaring a source membership requires an identity (401)', r.status === 401, `got ${r.status}`);
+
+    r = await call(`/api/sources/${src.id}/membership`, 'POST', { membershipStatus: 'owner', accessMethod: 'declared' }, token);
+    check('the caller declares their own membership (200)', r.status === 200, JSON.stringify(r.body).slice(0, 140));
+    check('the membership row is written for the CALLER, not a hard-coded user',
+      r.body?.membership?.userId === me.user.id, JSON.stringify(r.body?.membership).slice(0, 160));
+
+    r = await call('/api/sources', 'GET', undefined, token);
+    const listed = (r.body?.sources ?? []).find((s) => s.id === src.id);
+    check('the source list reports the CALLER\'s own membership',
+      listed?.membership?.userId === me.user.id, JSON.stringify(listed?.membership).slice(0, 160));
+
+    // --- a manual save the extractor refuses --------------------------------
+    const { extractFields } = await import('../src/pipeline/extract.js');
+    const chatter = `just some idle chatter ${u} with nothing in it`;
+    const earned = extractFields(chatter).confidence;
+
+    r = await call('/api/brief-it/save', 'POST', { text: chatter }, token);
+    check('an explicit save never loses the words the person typed', r.body?.result?.created === true, JSON.stringify(r.body).slice(0, 160));
+
+    const kept = store.find('objects', (o) => o.id === r.body?.result?.objectId);
+    check('the kept note claims exactly the confidence extraction earned, not a flattering constant',
+      kept?.extractionConfidence === earned, `claimed ${kept?.extractionConfidence} vs earned ${earned}`);
+    check('that confidence is below the number it used to assert', (kept?.extractionConfidence ?? 1) < 0.85,
+      `claimed ${kept?.extractionConfidence}`);
+    // Extraction did find a title -- that is a field, just not one of the
+    // signals that make text object-worthy. The evidence must say the note was
+    // kept as written and name the little that was found, not imply success.
+    check('the evidence states the note was kept as written, not extracted',
+      /manual capture, kept as written/.test(kept?.extractionEvidence ?? ''), kept?.extractionEvidence);
+    check('the evidence names the only field extraction found',
+      /title/.test(kept?.extractionEvidence ?? ''), kept?.extractionEvidence);
+    check('it is NOT published to the anonymous public feed',
+      kept?.publication === 'source_members', `publication=${kept?.publication}`);
+    check('fields it could not establish are named unknown rather than omitted',
+      Array.isArray(kept?.metadata?.unknownFields) && kept.metadata.unknownFields.includes('price'),
+      JSON.stringify(kept?.metadata).slice(0, 160));
+    check('the provenance row carries the same honest confidence',
+      store.find('objectSources', (os) => os.objectId === kept?.id)?.extractionConfidence === earned);
+
+    const feed = await call('/api/public/feed');
+    check('the public feed does not carry it', !JSON.stringify(feed.body ?? {}).includes(chatter));
+
+    // --- a capture with real signals is unaffected --------------------------
+    r = await call('/api/brief-it/save', 'POST',
+      { text: `Night market ${u} at Yaya Centre rooftop, Saturday 6pm - 10pm, entry KSh 200. Call 0722123456.` }, token);
+    const real = store.find('objects', (o) => o.id === r.body?.result?.objectId);
+    check('a capture with real signals still carries a real confidence',
+      (real?.extractionConfidence ?? 0) > 0, `confidence=${real?.extractionConfidence}`);
+  } finally {
+    srv.close();
+    if (prevDev === undefined) delete process.env.BRIEF_DEV_AUTH;
+    else process.env.BRIEF_DEV_AUTH = prevDev;
+  }
 }
 
 console.log(`\n${'='.repeat(52)}\nPASSED ${pass}   FAILED ${fail}   SKIPPED ${skip}\n${'='.repeat(52)}`);
