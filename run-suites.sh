@@ -13,7 +13,7 @@
 set -u
 cd "$(dirname "$0")"
 
-./sync.sh > /dev/null || { echo "sync.sh FAILED"; exit 1; }
+bash ./sync.sh > /dev/null || { echo "sync.sh FAILED"; exit 1; }
 cd preview || exit 1
 
 ALL="access apic arena ligi batch1 camp circleops capture commerce chain dest econ engine group groupui inbox ing joins loops media nav news onboard orchestration parse person pmatch pure pursuit quests resale routes session stories sys"
