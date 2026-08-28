@@ -26,7 +26,11 @@ export function register(app) {
   // --- browsing ---------------------------------------------------------------
 
   app.get('/api/ticket-market/events/:eventId/listings', (req, res) => {
-    res.json({ listings: ticketMarket.listingsForEvent(req.params.eventId) });
+    // :eventId is the public slug in the event context (the public campaign
+    // view exposes no internal ids) and the internal id elsewhere.
+    const event = ticketMarket.resolveEvent(req.params.eventId);
+    if (!event) return res.status(404).json({ error: 'event not found' });
+    res.json({ listings: ticketMarket.listingsForEvent(event.id) });
   });
 
   app.get('/api/ticket-market/me/tickets', (req, res) => {
@@ -135,6 +139,21 @@ export function register(app) {
     }
   });
 
+  /**
+   * The seller confirms receiving payment out-of-band. Brief records a real
+   * settled ledger row (attested by the recipient of the money) and moves the
+   * seat. With a payment provider connected this is superseded by the
+   * provider's own confirmation — never bypassed by it.
+   */
+  app.post('/api/ticket-market/orders/:id/confirm-received', (req, res) => {
+    try {
+      const { order, changed } = ticketMarket.sellerConfirmReceived(callerId(req), req.params.id);
+      res.json({ order, changed });
+    } catch (e) {
+      res.status(400).json({ error: String(e.message ?? e) });
+    }
+  });
+
   app.post('/api/ticket-market/orders/:id/refund', (req, res) => {
     try {
       const { order, ticket } = ticketMarket.refundOrder(callerId(req), req.params.id);
@@ -148,7 +167,12 @@ export function register(app) {
 
   app.post('/api/ticket-market/tickets/:id/transfer', (req, res) => {
     try {
-      const ticket = ticketMarket.transferTicket(callerId(req), req.params.id, String(req.body?.toUserId ?? ''));
+      const to = ticketMarket.findUserRef({
+        toUserId: req.body?.toUserId ?? null,
+        toHandle: req.body?.toHandle ?? null
+      });
+      if (!to) return res.status(400).json({ error: 'recipient not found' });
+      const ticket = ticketMarket.transferTicket(callerId(req), req.params.id, to.id);
       res.json({ ticket: ticketMarket.ticketOwnerView(ticket) });
     } catch (e) {
       res.status(400).json({ error: String(e.message ?? e) });

@@ -15,6 +15,9 @@ import { AwaitingPayment } from './components/AwaitingPayment';
 import { SourcesPanel } from './components/SourcesPanel';
 import { ConnectedGroups } from './components/ConnectedGroups';
 import { MoneyPanel } from './components/MoneyPanel';
+import { ResaleDesk } from './components/ResaleDesk';
+import { MyTickets } from './components/MyTickets';
+import { EventResale } from './components/EventResale';
 import { Vault } from './components/vault/Vault';
 import { CheckIn } from './components/CheckIn';
 import { HostCommand } from './components/HostCommand';
@@ -181,10 +184,10 @@ const DESTINATION_ICONS: Record<Destination, LucideIcon> = {
 export type NearbySection = 'stream' | 'tea' | 'today' | 'pursuits' | 'quests' | 'market';
 export type MyLayerSection =
   | 'saved' | 'activity' | 'arena' | 'points' | 'circles' | 'groups' | 'campaigns'
-  | 'mediakit' | 'opportunities' | 'messages' | 'subscriptions';
+  | 'mediakit' | 'opportunities' | 'messages' | 'subscriptions' | 'tickets';
 // Workflows secondary: a Journey is either in progress or finished. Inbox and
 // Sources are kept -- they are existing workflow surfaces, not new screens.
-export type WorkflowSection = 'cockpit' | 'command' | 'active' | 'completed' | 'inbox' | 'sources' | 'money' | 'vault' | 'gate' | 'tea' | 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'ai' | 'engine' | 'groupbuy';
+export type WorkflowSection = 'cockpit' | 'command' | 'active' | 'completed' | 'inbox' | 'sources' | 'money' | 'vault' | 'gate' | 'tea' | 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'ai' | 'engine' | 'groupbuy' | 'resale';
 // Pulse secondary. Pulse is the information layer: freshness, local signals,
 // what groups are surfacing, and emerging activity. It is not an assistant.
 export type PulseSection = 'now' | 'local' | 'groups' | 'signals';
@@ -4975,6 +4978,11 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                   )}
                 </div>
               )}
+
+            {/* Commerce only inside context: this event's own resale seats.
+                Holders list seats they cannot use; buying here holds the seat
+                at the listed price while money is settled with the seller. */}
+            {load.status === 'ready' && <EventResale slug={c.slug} />}
           </>
         )}
       </div>
@@ -9217,6 +9225,18 @@ export function App() {
           />
         )}
 
+        {activeTab === 'mylayer' && myLayerSection === 'tickets' && (
+          <MyTickets
+            onSell={() => {
+              // Selling is a Workflows → Sell act: the money side of the seat
+              // lives with the rest of the money, not in the personal layer.
+              setActiveTab('workflows');
+              setWorkflowView('screen');
+              setWorkflowSection('resale');
+            }}
+          />
+        )}
+
         {activeTab === 'mylayer' && myLayerSection === 'campaigns' && (
           <div className="space-y-4">
 
@@ -9551,6 +9571,10 @@ export function App() {
           <div className="max-w-3xl mx-auto px-4 py-6">
             <MoneyPanel />
           </div>
+        )}
+
+        {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'resale' && (
+          <ResaleDesk />
         )}
 
         {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'cockpit' && (

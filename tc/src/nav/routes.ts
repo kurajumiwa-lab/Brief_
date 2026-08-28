@@ -13,11 +13,12 @@ export type Destination = 'nearby' | 'arena' | 'mylayer' | 'workflows';
 export type NearbySection = 'stream' | 'tea' | 'today' | 'pursuits' | 'quests' | 'market';
 export type MyLayerSection =
   | 'saved' | 'activity' | 'arena' | 'points' | 'circles' | 'groups' | 'campaigns'
-  | 'mediakit' | 'opportunities' | 'messages' | 'subscriptions';
+  | 'mediakit' | 'opportunities' | 'messages' | 'subscriptions' | 'tickets';
 export type WorkflowSection =
   | 'cockpit' | 'command' | 'active' | 'completed' | 'inbox'
   | 'sources' | 'money' | 'vault' | 'gate' | 'tea'
-  | 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'ai' | 'engine' | 'groupbuy';
+  | 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'ai' | 'engine'
+  | 'groupbuy' | 'resale';
 export type ArenaSection = 'lobby' | 'ligi' | 'challenges' | 'tournaments' | 'leaderboard';
 
 export type BriefRoute = {

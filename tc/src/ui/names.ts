@@ -29,7 +29,8 @@ export const SAVED_TABS: Record<string, string> = {
   mediakit: 'Profile',
   opportunities: 'Offers',
   messages: 'Messages',
-  subscriptions: 'Plans'
+  subscriptions: 'Plans',
+  tickets: 'My tickets'
 };
 
 export const INBOX_TABS: Record<string, string> = {
@@ -40,6 +41,7 @@ export const INBOX_TABS: Record<string, string> = {
   inbox: 'Review',
   sources: 'Feeds',
   money: 'Payments',
+  resale: 'Resale',
   vault: 'Records',
   gate: 'Check-in',
   tea: 'Editor',
@@ -89,7 +91,7 @@ export const WORKFLOW_BUNDLES = [
   { id: 'create', label: 'Create', hint: 'Write, review and publish',
     sections: ['cockpit', 'inbox', 'tea', 'distribution', 'calendar', 'ai'] },
   { id: 'sell', label: 'Sell', hint: 'Events, shelves and the money they make',
-    sections: ['campaigns', 'vendors', 'money', 'groupbuy'] },
+    sections: ['campaigns', 'vendors', 'money', 'resale', 'groupbuy'] },
   { id: 'run', label: 'Run', hint: 'Operate what is already live',
     sections: ['command', 'active', 'completed', 'matches', 'engine'] },
   { id: 'records', label: 'Records', hint: 'What happened, attested',
@@ -98,7 +100,7 @@ export const WORKFLOW_BUNDLES = [
 
 export const SAVED_BUNDLES = [
   { id: 'kept', label: 'Kept', hint: 'What you kept, and your own history',
-    sections: ['saved', 'activity', 'points', 'campaigns'] },
+    sections: ['saved', 'activity', 'points', 'campaigns', 'tickets'] },
   { id: 'groups', label: 'Groups', hint: 'Circles, chats and matches',
     sections: ['circles', 'groups', 'arena'] },
   { id: 'creator', label: 'Creator', hint: 'Your public side',

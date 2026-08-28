@@ -454,6 +454,22 @@ export interface ResaleListing {
   readonly transferCount: number;
 }
 
+/** The seller's own listing row (Workflows → Sell). Raw state, not a shop view. */
+export interface ResaleListingRow {
+  readonly id: string;
+  readonly ticketId: string;
+  readonly sellerId: string;
+  readonly eventId: string;
+  readonly price: number;
+  currency: string;
+  readonly status: 'active' | 'pending' | 'sold' | 'cancelled' | 'expired' | 'removed';
+  readonly note: string | null;
+  readonly expiresAt: string | null;
+  readonly createdAt: string;
+  readonly soldAt: string | null;
+  readonly removedReason: string | null;
+}
+
 export interface TicketOrder {
   readonly id: string;
   readonly reference: string;

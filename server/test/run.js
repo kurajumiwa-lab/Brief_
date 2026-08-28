@@ -7332,10 +7332,40 @@ console.log('\n=== TICKET RESALE MARKET (Tikiti T1) ===');
     r = await call(`/api/tickets/${regA.ticketCode}?v=3`, 'GET', undefined, A.token);
     check('the gate refuses the post-refund code', r.status === 409);
 
+    // --- the seller confirms out-of-band money: the walkable path ----------
+    r = await call('/api/ticket-market/listings', 'POST', { ticketId: tik.id, price: 1800 }, A.token);
+    const l2 = r.body?.listing;
+    check('seller relists at KES 1,800', r.status === 201);
+    r = await call('/api/ticket-market/orders', 'POST', { listingId: l2.id }, C.token);
+    const o2 = r.body?.order;
+    check('a second buyer opens an order', r.status === 201 && o2?.total === 1800);
+    r = await call(`/api/ticket-market/orders/${o2.id}/confirm-received`, 'POST', {}, C.token);
+    check('the BUYER cannot confirm receiving money', r.status === 400 && /seller/.test(r.body?.error ?? ''), JSON.stringify(r.body));
+    r = await call(`/api/ticket-market/orders/${o2.id}/confirm-received`, 'POST', {}, A.token);
+    check('the seller confirms receiving payment out-of-band',
+      r.status === 200 && r.body?.order?.status === 'completed', JSON.stringify(r.body).slice(0, 140));
+    const attnTx = store.find('ledgerTransactions', (t) => t.counterparty === C.user.id && t.amount === 1800);
+    check('the confirmation created a genuinely settled ledger row',
+      attnTx?.status === 'settled' && /confirmed by the seller/.test(attnTx?.description ?? ''));
+    const moved = store.find('tickets', (t) => t.id === tik.id);
+    check('the seat moved to the buyer with a fresh code version',
+      moved.ownerUserId === C.user.id && moved.codeVersion === 5, `v${moved.codeVersion}`);
+    r = await call(`/api/tickets/${regA.ticketCode}?v=5`, 'GET', undefined, A.token);
+    check('the gate accepts only the newest code', r.status === 200);
+    r = await call(`/api/tickets/${regA.ticketCode}?v=4`, 'GET', undefined, A.token);
+    check('the previous version is dead at the gate', r.status === 409);
+
+    // --- gifting by handle ---------------------------------------------------
+    r = await call(`/api/ticket-market/tickets/${tik.id}/transfer`, 'POST', { toHandle: 'nosuchperson' }, C.token);
+    check('gifting to an unknown handle is refused', r.status === 400 && /recipient/.test(r.body?.error ?? ''), JSON.stringify(r.body));
+    r = await call(`/api/ticket-market/tickets/${tik.id}/transfer`, 'POST', { toHandle: B.user?.handle }, C.token);
+    check('gifting by HANDLE moves the seat', r.status === 200 && r.body?.ticket?.codeVersion === 6, JSON.stringify(r.body).slice(0, 120));
+
     // --- moderation ------------------------------------------------------------------
-    r = await call('/api/ticket-market/listings', 'POST', { ticketId: tik.id, price: 2000 }, A.token);
+    // B holds the seat now (the gift above), so B is the one who relists.
+    r = await call('/api/ticket-market/listings', 'POST', { ticketId: tik.id, price: 2000 }, B.token);
     const fresh = r.body?.listing;
-    check('the seller relists after the refund', r.status === 201);
+    check('the current owner relists the seat', r.status === 201);
     r = await call(`/api/ticket-market/listings/${fresh.id}/remove`, 'POST', { reason: 'suspected fake' }, B.token);
     check('a plain user cannot remove listings (403 names the capability)',
       r.status === 403 && r.body?.requiredCapability === 'moderate', JSON.stringify(r.body));
@@ -7347,7 +7377,7 @@ console.log('\n=== TICKET RESALE MARKET (Tikiti T1) ===');
     check('the removal is in the audit trail with its reason', auditRow?.reason === 'suspected fake');
     r = await call(`/api/ticket-market/tickets/${tik.id}/void`, 'POST', { reason: 'fraud: duplicate seat' }, REV.token);
     check('a reviewer voids a ticket', r.status === 200 && r.body?.ticket?.status === 'void');
-    r = await call(`/api/tickets/${regA.ticketCode}?v=4`, 'GET', undefined, A.token);
+    r = await call(`/api/tickets/${regA.ticketCode}?v=6`, 'GET', undefined, A.token);
     check('a voided ticket is refused at the gate (410)', r.status === 410 && r.body?.reason === 'void', `${r.status}`);
 
     // --- the changes were signals, not silent flips ------------------------------------

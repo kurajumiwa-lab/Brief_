@@ -21,6 +21,7 @@ import type {
   Block,
   ResaleTicket,
   ResaleListing,
+  ResaleListingRow,
   TicketOrder,
   CapabilityUnavailable,
   Circle,
@@ -562,9 +563,11 @@ export function getMyTickets(): Promise<ApiResult<{ tickets: ResaleTicket[] }>> 
     Array.isArray(r?.tickets) ? r : undefined);
 }
 
-export function getMyResaleDesk(): Promise<ApiResult<{ listings: unknown[]; orders: unknown[] }>> {
+export function getMyResaleDesk(): Promise<ApiResult<{ listings: ResaleListingRow[]; orders: TicketOrder[] }>> {
   return request('/api/ticket-market/me/listings', undefined, (r) =>
-    Array.isArray(r?.listings) && Array.isArray(r?.orders) ? r : undefined);
+    Array.isArray(r?.listings) && Array.isArray(r?.orders)
+      ? { listings: r.listings, orders: r.orders }
+      : undefined);
 }
 
 export function createResaleListing(
@@ -618,6 +621,24 @@ export function giftTicket(ticketId: string, toUserId: string): Promise<ApiResul
     method: 'POST',
     body: JSON.stringify({ toUserId })
   });
+}
+
+/** Gifting in the UI addresses people by handle — what people actually know. */
+export function giftTicketToHandle(ticketId: string, toHandle: string): Promise<ApiResult<{ ticket: ResaleTicket }>> {
+  return request(`/api/ticket-market/tickets/${encodeURIComponent(ticketId)}/transfer`, {
+    method: 'POST',
+    body: JSON.stringify({ toHandle })
+  });
+}
+
+/**
+ * The seller confirms receiving the money out-of-band. Brief records a real
+ * settled ledger row and moves the seat — this is how a sale completes while
+ * no payment provider is connected, and it is the seller's attestation, never
+ * Brief pretending it collected the money.
+ */
+export function confirmTicketOrderReceived(orderId: string): Promise<ApiResult<{ order: TicketOrder; changed: boolean }>> {
+  return request(`/api/ticket-market/orders/${encodeURIComponent(orderId)}/confirm-received`, { method: 'POST', body: '{}' });
 }
 
 export function getWallet(currency = 'KES'): Promise<ApiResult<Wallet>> {

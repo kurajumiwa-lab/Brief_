@@ -85,6 +85,26 @@ F3 notifications, F4 admin, F5–F7 removals) per the parallel-work decision.
       **1925/0/1**. Live suites re-verified green; production probe walked
       register→confirm→issue→list→buy→pay-503-honest→settle-refused→gate-200.
 - [x] T1 client API layer — `briefApi.ts` bindings + types (§4 clean, tc green).
-- [ ] T1 UI (Nearby event context "Resale tickets" / Workflows → Sell "Resale listings" / My Layer → Kept "My tickets" with live QR)
+- [x] **T1 UI** — three surfaces under existing destinations (no sixth):
+      - *Nearby / event context*: `EventResale` in the public campaign page —
+        listings by **slug** (public view exposes no ids), cheapest badge, seller
+        display name + member-since + resold-count, buy = hold at listed price
+        with the honest money path stated ("no provider, Brief will not pretend
+        to charge you"; seller confirms receipt).
+      - *Workflows → Sell → Resale*: `ResaleDesk` — list (whole-KES only),
+        pull listing, buyer-holds panel with **"I received KES x"** (seller
+        attestation → settled ledger row → seat moves) and refund, buyer-side
+        order tracking, closed-listing history with removal reasons.
+      - *My Layer → Kept → My tickets*: `MyTickets` — live QR of
+        `CODE#version` (old screenshot dies on transfer), version stated in
+        words, seat history timeline, gift **by handle**, "Sell this seat"
+        deep-links to the desk (money lives in Workflows, not the personal
+        layer).
+      Server additions to close the loop: `sellerConfirmReceived` (out-of-band
+      money attested by its recipient — the organiser-confirm precedent),
+      slug-addressed listings, gift-by-handle. Verified: run.js **1935/0/1**,
+      client suites **1291/0** (incl. new `resale.jsx` 14 checks), tc clean,
+      live suites 43/27/93/16 all 0-fail, and a 10-step production HTTP walk
+      (issue→list→browse-by-slug→hold→attest→v2-code→gate-409/200→gift→refund).
 - [ ] T2 Bargains — tiered pricing + expiry + caps
 - [ ] T3–T10 …

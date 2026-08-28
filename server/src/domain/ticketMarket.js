@@ -198,6 +198,13 @@ export function cancelListing(sellerId, listingId) {
 }
 
 /** Public-in-app browsing view. No seller identity beyond a display name. */
+export function resolveEvent(slugOrId) {
+  // The public campaign view deliberately exposes no internal id, so the
+  // browse surface addresses events by their public slug (ids still work for
+  // the in-app owner surfaces).
+  return store.find('campaigns', (c) => c.publicSlug === slugOrId || c.id === slugOrId) ?? null;
+}
+
 export function listingsForEvent(eventId) {
   return store.filter('ticketListings', (l) => l.eventId === eventId && l.status === 'active')
     .sort((a, b) => a.price - b.price)
@@ -276,6 +283,29 @@ export function cancelOrder(buyerId, orderId) {
  * The row must match the order exactly (amount, currency) — the same rules
  * the product marketplace enforces via orders.attachTransaction.
  */
+export function sellerConfirmReceived(sellerId, orderId) {
+  const order = store.find('ticketOrders', (o) => o.id === orderId);
+  if (!order) throw new Error('order not found');
+  if (order.sellerId !== sellerId) throw new Error('only the seller may confirm receiving payment');
+  if (order.status === 'completed') return { order, changed: false };
+  if (order.status !== 'pending') throw new Error('this order can no longer be completed');
+
+  const campaign = store.find('campaigns', (c) => c.id === order.eventId);
+  let tx = ledger.createTransaction({
+    amount: order.total,
+    currency: order.currency,
+    type: 'sale',
+    description: `Resale ${order.reference} — payment received out-of-band, confirmed by the seller`,
+    counterparty: order.buyerId,
+    circleId: campaign?.circleId ?? null
+  });
+  for (const step of ['pending', 'confirmed', 'settled']) {
+    tx = ledger.transitionTransaction(tx.id, step, 'seller confirmed receiving payment');
+  }
+  // The transfer itself is the same code path a provider-settled order takes.
+  return settleOrder(order.buyerId, order.id, { transactionId: tx.id });
+}
+
 export function settleOrder(buyerId, orderId, { transactionId } = {}) {
   const order = store.find('ticketOrders', (o) => o.id === orderId);
   if (!order) throw new Error('order not found');
@@ -369,6 +399,12 @@ export function refundOrder(callerId, orderId) {
 }
 
 /** Gift a seat: no money, but the same version bump and provenance. */
+export function findUserRef({ toUserId = null, toHandle = null } = {}) {
+  if (toUserId) return store.find('users', (u) => u.id === toUserId) ?? null;
+  if (toHandle) return store.find('users', (u) => u.handle === String(toHandle).trim()) ?? null;
+  return null;
+}
+
 export function transferTicket(ownerId, ticketId, toUserId) {
   const ticket = store.find('tickets', (t) => t.id === ticketId);
   if (!ticket) throw new Error('ticket not found');
