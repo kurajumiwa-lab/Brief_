@@ -277,7 +277,17 @@ const EMPTY = {
   // verifiable receipt digests. Money records also ride the one ledger —
   // there is deliberately no second balance here.
   groupBuys: [],
-  groupBuyContributions: []
+  groupBuyContributions: [],
+  // T2: a bargain's committed participants (per-head pricing bands).
+  groupBuyParticipants: [],
+  // T3: owner-authored updates on a contribution campaign.
+  campaignUpdates: [],
+  // T6: KYC verification records. No identity documents are ever stored --
+  // only status, provider reference and review provenance.
+  verificationRecords: [],
+  // T7: email subscriptions with double opt-in + delivery log.
+  emailSubscriptions: [],
+  emailLog: []
 };
 
 function ensureDir() {

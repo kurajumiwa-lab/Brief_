@@ -96,6 +96,9 @@ export function issueForRegistration(registration) {
   const existing = ticketForRegistration(registration.id);
   if (existing) return existing;
   const campaign = store.find('campaigns', (c) => c.id === registration.campaignId);
+  // A contribution pot is not a seat: contributors hold no admittance to
+  // resell. No ticket row is invented for them.
+  if (campaign?.type === 'contribution') return null;
   const now = new Date().toISOString();
   return store.insert('tickets', {
     id: newId('tik'),
@@ -160,6 +163,21 @@ export function listForResale(ownerId, ticketId, priceKes, { note = null, expire
     if (!Number.isFinite(when) || when <= Date.now()) throw new Error('expiry must be in the future');
   }
   const now = new Date().toISOString();
+  // T10 fraud screen: an asking price far above what the seat cost, from a
+  // very fresh account, is flagged for review -- hidden from browse until a
+  // reviewer deals with it. The flag names its own reasons; it accuses nobody.
+  const seller = store.find('users', (u) => u.id === ownerId);
+  const accountAgeHours = seller?.createdAt
+    ? (Date.now() - Date.parse(seller.createdAt)) / 3_600_000 : Infinity;
+  const reasons = [];
+  if (ticket.issuePrice > 0 && price >= ticket.issuePrice * 3) {
+    reasons.push(`asking ${price} for a seat issued at ${ticket.issuePrice}`);
+  }
+  if (accountAgeHours < 24) reasons.push(`account is ${Math.max(0, Math.round(accountAgeHours))}h old`);
+  // Both signals together, not either alone: a fair price from a fresh
+  // account is a newcomer, not a fraudster; an ambitious price from a
+  // long-standing account is a market question, not a pattern.
+  const flagged = reasons.length === 2;
   const listing = store.insert('ticketListings', {
     id: newId('tl'),
     ticketId: ticket.id,
@@ -172,9 +190,19 @@ export function listForResale(ownerId, ticketId, priceKes, { note = null, expire
     expiresAt: expiresAt ?? null,
     createdAt: now,
     soldAt: null,
+    flagged,
+    flaggedReason: flagged ? reasons.join('; ') : null,
     removedReason: null,
     removedBy: null
   });
+  if (flagged) {
+    signals.emitSignal({
+      type: 'ticket_flagged',
+      actorId: ownerId,
+      value: price,
+      metadata: { listingId: listing.id, ticketId: ticket.id, reasons }
+    });
+  }
   store.update('tickets', ticket.id, { activeListingId: listing.id });
   signals.emitSignal({
     type: 'ticket_listed',
@@ -206,7 +234,7 @@ export function resolveEvent(slugOrId) {
 }
 
 export function listingsForEvent(eventId) {
-  return store.filter('ticketListings', (l) => l.eventId === eventId && l.status === 'active')
+  return store.filter('ticketListings', (l) => l.eventId === eventId && l.status === 'active' && !l.flagged)
     .sort((a, b) => a.price - b.price)
     .map((l) => {
       const ticket = store.find('tickets', (t) => t.id === l.ticketId);

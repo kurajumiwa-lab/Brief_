@@ -27,7 +27,9 @@ import * as ticketMarket from './ticketMarket.js';
 import { emitSignal } from './signal.js';
 import { personIdIfUser } from './person.js';
 
-export const CAMPAIGN_TYPES = ['popup', 'session', 'drop', 'event'];
+export const CAMPAIGN_TYPES = ['popup', 'session', 'drop', 'event', 'contribution'];
+// A contribution campaign is a pot with a GOAL, not seats with a price: its
+// progress is derived from settled ledger rows only (Tikiti T3).
 
 // Lifecycle. Mirrors the existing object `publication` convention rather than
 // inventing a parallel vocabulary: only a `published`/`live` campaign is
@@ -306,6 +308,15 @@ export function createCampaign(ownerId, input = {}) {
     throw new Error('capacity must be a positive integer when provided');
   }
   if (!Number.isFinite(price) || price < 0) throw new Error('price must be a non-negative number');
+  // Contribution pots: an optional whole-shillings goal the room is raising
+  // toward. Null is honest ("no stated goal"), zero is refused.
+  let goalAmount = null;
+  if (input.goalAmount != null) {
+    goalAmount = Math.trunc(Number(input.goalAmount));
+    if (!Number.isSafeInteger(goalAmount) || goalAmount <= 0) {
+      throw new Error('goalAmount must be a positive whole number of shillings');
+    }
+  }
   if (circleId && !store.find('circles', (c) => c.id === circleId)) {
     throw new Error('circle not found');
   }
@@ -356,6 +367,8 @@ export function createCampaign(ownerId, input = {}) {
     capacity,
     price,
     currency,
+    // Contribution pots only (Tikiti T3); null otherwise.
+    goalAmount,
     publicSlug: makeSlug(title),
     createdAt: now,
     updatedAt: now,
@@ -415,6 +428,17 @@ export function publicView(campaign) {
     // Aggregate social proof: HOW MANY are registered, never WHO. This is a
     // counted fact ("42 registered"), not a roster.
     registered: m.registrations,
+    // Contribution progress: derived from settled ledger rows only. Raised
+    // money that has not settled is not raised (the same rule the wallet
+    // lives by). Anonymous contributors are counted, never listed.
+    goalAmount: campaign.goalAmount ?? null,
+    raised: campaign.goalAmount == null ? null
+      : store.filter('ledgerTransactions', (t) => t.campaignId === campaign.id && t.status === 'settled')
+          .reduce((sum, t) => sum + t.amount, 0),
+    // HOW MANY contributions, never WHO: anonymous pots count rows, and an
+    // anonymous row has no counterparty to count by.
+    contributors: campaign.goalAmount == null ? null
+      : store.filter('ledgerTransactions', (t) => t.campaignId === campaign.id && t.status === 'settled').length,
     // Share metadata. Only what a link preview legitimately needs, and only
     // when it actually exists -- no placeholder image, no invented creator
     // name. `creator` is a display label, never the internal ownerId.
@@ -588,9 +612,24 @@ export function recordView(campaign, viewerRef = null) {
  * The client cannot influence it: there is no count in the request and no
  * counter in storage.
  */
-export function register(campaign, { attendeeRef, name = null, contact = null, userId = null, trackingHash = null } = {}) {
+export function register(campaign, { attendeeRef, name = null, contact = null, userId = null, trackingHash = null, amount = null } = {}) {
   if (campaign.status !== 'published' && campaign.status !== 'live') {
     throw new Error('campaign is not open for registration');
+  }
+  // A contribution pot has no fixed seat price: the supporter states what
+  // they are putting in, validated here (whole shillings, above zero). The
+  // organiser's confirmation settles exactly this amount.
+  let contributionAmount = null;
+  if (amount != null) {
+    contributionAmount = Math.trunc(Number(amount));
+    if (!Number.isSafeInteger(contributionAmount) || contributionAmount <= 0) {
+      throw new Error('a contribution amount is whole shillings above zero');
+    }
+  }
+  // A deadline is a wall: past endsAt, no new registrations -- the campaign
+  // closes itself on the calendar, not on someone remembering to.
+  if (campaign.endsAt && Date.parse(campaign.endsAt) <= Date.now()) {
+    throw new Error('this campaign has ended');
   }
   if (!attendeeRef) throw new Error('attendeeRef is required');
 
@@ -623,7 +662,12 @@ export function register(campaign, { attendeeRef, name = null, contact = null, u
     // Optional attribution from a public ad asset. It is validated by the
     // public route before reaching this domain function.
     trackingHash: trackingHash ? String(trackingHash).slice(0, 64) : null,
-    status: campaign.price > 0 ? 'started' : 'registered',
+    // Fixed-price events hold the spot until money settles. A contribution
+    // pot with a stated amount is the same shape: held until the organiser
+    // confirms the money. Free events and unnamed-amount rows register now.
+    status: campaign.price > 0 || contributionAmount != null ? 'started' : 'registered',
+    // The stated contribution (pots only; null for fixed-price events).
+    amount: contributionAmount,
     // The gate's scannable code. Opaque and unguessable; issued once, never
     // rotated, and independent of the internal id so the gate never needs to
     // know about row internals.
@@ -681,6 +725,17 @@ export function promoteRegistrationForSettledTransaction(tx) {
   // The seat is confirmed by settled money: it enters the resale system as a
   // ticket (idempotent; authenticated owners only).
   try { ticketMarket.issueForRegistration({ ...reg, status: 'registered' }); } catch { /* issuance never blocks promotion */ }
+  // A contribution campaign crossing its goal is news, exactly once.
+  try {
+    const settled = store.filter('ledgerTransactions',
+      (t) => t.campaignId === reg.campaignId && t.status === 'settled');
+    const raised = settled.reduce((sum, t) => sum + t.amount, 0);
+    const goal = store.find('campaigns', (c) => c.id === reg.campaignId)?.goalAmount ?? null;
+    if (goal && raised >= goal && !store.find('signals',
+      (x) => x.type === 'campaign_goal_reached' && x.metadata?.campaignId === reg.campaignId)) {
+      emitSignal({ type: 'campaign_goal_reached', value: raised, metadata: { campaignId: reg.campaignId, goal, raised } });
+    }
+  } catch { /* a signal must never block promotion */ }
 
   const campaign = store.find('campaigns', (c) => c.id === reg.campaignId);
   // Reuses the EXISTING signal. No campaign-specific analytics store, no new
@@ -815,4 +870,29 @@ export function setRegistrationStatus(registrationId, status) {
 
 export function listRegistrations(campaignId) {
   return store.filter('registrations', (r) => r.campaignId === campaignId);
+}
+
+
+// --- T3: campaign updates ------------------------------------------------------
+
+export function postCampaignUpdate(ownerId, campaignId, { title, body }) {
+  const c = store.find('campaigns', (x) => x.id === campaignId);
+  if (!c) throw new Error('campaign not found');
+  if (c.ownerId !== ownerId) throw new Error('only the campaign owner may post an update');
+  if (!title || !String(title).trim()) throw new Error('an update needs a title');
+  if (!body || !String(body).trim()) throw new Error('an update needs a body');
+  const update = store.insert('campaignUpdates', {
+    id: newId('cupd'),
+    campaignId,
+    title: String(title).trim().slice(0, 120),
+    body: String(body).trim().slice(0, 2000),
+    at: new Date().toISOString()
+  });
+  emitSignal({ type: 'campaign_update_posted', objectId: c.objectId, value: 0, metadata: { campaignId, updateId: update.id } });
+  return update;
+}
+
+export function listCampaignUpdates(campaignId) {
+  return store.filter('campaignUpdates', (u) => u.campaignId === campaignId)
+    .sort((a, b) => String(b.at).localeCompare(String(a.at)));
 }

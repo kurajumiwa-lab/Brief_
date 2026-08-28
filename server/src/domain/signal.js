@@ -46,6 +46,15 @@ export const SIGNAL_TYPES = [
   'ticket_transferred',
   'ticket_order_refunded',
   'ticket_voided',
+  // Bargain tiers (Tikiti T2): a room crossing a price band is news.
+  'bargain_tier_reached',
+  // Contribution campaigns (Tikiti T3): updates + goal reached.
+  'campaign_update_posted',
+  'campaign_goal_reached',
+  // Verification (Tikiti T6): a review decision changed someone's standing.
+  'verification_decision',
+  // Fraud (Tikiti T10): a listing was auto-flagged for review.
+  'ticket_flagged',
   'campaign_registration_started',
   'campaign_registered',
   'campaign_registration_updated',

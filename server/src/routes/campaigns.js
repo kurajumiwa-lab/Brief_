@@ -52,6 +52,7 @@ app.post('/api/campaigns', (req, res) => {
       endsAt: req.body?.endsAt,
       capacity: req.body?.capacity === undefined ? null : req.body.capacity,
       price: req.body?.price === undefined ? 0 : Number(req.body.price),
+      goalAmount: req.body?.goalAmount ?? null,
       currency: req.body?.currency,
       circleId: req.body?.circleId ?? null,
       metadata: req.body?.metadata,
@@ -183,18 +184,23 @@ app.post('/api/campaigns/:id/registrations/:regId/confirm-payment', (req, res) =
   if (!row || row.campaignId !== c.id) {
     return res.status(404).json({ error: 'registration not found' });
   }
-  if (c.price <= 0) {
+  if (c.price <= 0 && !row.amount) {
     return res.status(400).json({ error: 'campaign is free; nothing to confirm' });
   }
   if (row.status !== 'started') {
     return res.status(409).json({ error: `registration is ${row.status}, not awaiting payment` });
   }
   try {
+    // A pot settles the supporter's stated amount; an event settles its
+    // fixed price. One row, the amount that actually changed hands.
     let tx = ledger.createTransaction({
-      amount: c.price,
+      amount: row.amount ?? c.price,
       currency: c.currency,
       type: 'sale',
       description: `Payment confirmed by organiser for ${c.title}`,
+      // The money belongs to the person who paid (the registration's bound
+      // identity), not to the organiser confirming it arrived.
+      counterparty: row.userId ?? null,
       campaignId: c.id,
       registrationId: row.id,
       circleId: c.circleId ?? null,
@@ -328,6 +334,25 @@ app.post('/api/tickets/:code/check-in', (req, res) => {
 });
 
 
+// --- T3: campaign updates (owner authors; public reads) ---------------------
+
+app.post('/api/campaigns/:id/updates', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  try {
+    const update = campaigns.postCampaignUpdate(me, req.params.id, {
+      title: req.body?.title, body: req.body?.body
+    });
+    res.status(201).json({ update });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message ?? e) });
+  }
+});
+
+app.get('/api/campaigns/:id/updates', (req, res) => {
+  res.json({ updates: campaigns.listCampaignUpdates(req.params.id) });
+});
+
 // --- PUBLIC (no authentication; only published/live campaigns resolve) ------
 
 
@@ -360,6 +385,7 @@ app.post('/api/public/campaigns/:slug/register', (req, res) => {
       attendeeRef: req.body?.attendeeRef,
       name: req.body?.name ?? null,
       contact: req.body?.contact ?? null,
+      amount: req.body?.amount ?? null,
       trackingHash: trackingHash ? String(trackingHash) : null,
       // Only a verified session binds. Dev-fallback / anonymous walk-ins are
       // not guessed to be the local user.

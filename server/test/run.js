@@ -7391,6 +7391,293 @@ console.log('\n=== TICKET RESALE MARKET (Tikiti T1) ===');
 }
 
 
+
+console.log('\n=== BARGAIN TIERS (Tikiti T2) ===');
+{
+  process.env.BRIEF_DEV_AUTH = '0';
+  const { default: app } = await import('../src/index.js');
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    const reg = async (h) => (await call('/api/auth/register', 'POST', { handle: h + Date.now().toString(36), password: 'a good passphrase' })).body;
+    const O = await reg('barg_owner'); const U1 = await reg('barg_1'); const U2 = await reg('barg_2');
+    let r = await call('/api/engine/group-buys', 'POST', { title: 'Crate of soda', targetAmount: 10000 }, O.token);
+    check('owner creates the bargain', r.status === 201, JSON.stringify(r.body).slice(0, 100));
+    const buyId = r.body?.groupBuy?.id;
+
+    // A broken ladder is refused: same price twice.
+    r = await call(`/api/engine/group-buys/${buyId}/pricing`, 'POST', {
+      tiers: [{ min: 1, pricePerHead: 1000 }, { min: 5, pricePerHead: 1000 }]
+    }, O.token);
+    check('a flat ladder is refused (prices must fall)', r.status === 400 && /fall/.test(r.body?.error ?? ''), JSON.stringify(r.body));
+    r = await call(`/api/engine/group-buys/${buyId}/pricing`, 'POST', {
+      tiers: [{ min: 5, pricePerHead: 800 }, { min: 1, pricePerHead: 1000 }]
+    }, O.token);
+    check('an unordered ladder is refused', r.status === 400 && /climb/.test(r.body?.error ?? ''));
+    r = await call(`/api/engine/group-buys/${buyId}/pricing`, 'POST', {
+      tiers: [{ min: 1, pricePerHead: 1000 }, { min: 5, pricePerHead: 800 }, { min: 10, pricePerHead: 650 }],
+      minParticipants: 5, maxParticipants: 12,
+      expiresAt: new Date(Date.now() + 86_400_000).toISOString()
+    }, O.token);
+    check('a valid ladder prices the bargain', r.status === 200, JSON.stringify(r.body).slice(0, 120));
+
+    // The price is DERIVED, never sent.
+    r = await call(`/api/engine/group-buys/${buyId}/join`, 'POST', { pricePerHead: 1 }, U1.token);
+    check('join #1 commits at the top band (server-priced)',
+      r.status === 201 && r.body?.participant?.priceAtJoin === 1000, JSON.stringify(r.body).slice(0, 120));
+    r = await call(`/api/engine/group-buys/${buyId}/join`, 'POST', {}, U1.token);
+    check('joining twice is idempotent, not a second seat', r.status === 200 && r.body?.changed === false);
+    for (let i = 0; i < 3; i++) await call(`/api/engine/group-buys/${buyId}/join`, 'POST', {}, (await reg('barg_fill' + i)).token);
+    r = await call(`/api/engine/group-buys/${buyId}/join`, 'POST', {}, U2.token);
+    check('the 5th joiner lands in the discounted band',
+      r.status === 201 && r.body?.participant?.priceAtJoin === 800, JSON.stringify(r.body).slice(0, 120));
+    const tierSignal = store.find('signals', (x) => x.type === 'bargain_tier_reached' && x.metadata?.groupBuyId === buyId && x.metadata?.tierMin === 5);
+    check('crossing the band surfaced as a signal', Boolean(tierSignal));
+    r = await call(`/api/engine/group-buys/${buyId}`, 'GET', undefined, O.token);
+    check('the owner view states current price, next band and settlement price',
+      r.body?.bargain?.currentPricePerHead === 800 && r.body?.bargain?.nextTier?.pricePerHead === 650
+      && r.body?.bargain?.settlesAt === 650, JSON.stringify(r.body?.bargain));
+    check('the view counts participants honestly', r.body?.bargain?.participants === 5 && r.body?.bargain?.minimumMet === true);
+
+    // Capacity is a hard wall.
+    for (let i = 0; i < 7; i++) await call(`/api/engine/group-buys/${buyId}/join`, 'POST', {}, (await reg('barg_cap' + i)).token);
+    const extra = await reg('barg_over');
+    r = await call(`/api/engine/group-buys/${buyId}/join`, 'POST', {}, extra.token);
+    check('a full bargain refuses the 13th joiner (409)', r.status === 409 && r.body?.code === 'bargain_full', `${r.status}`);
+
+    // Leaving opens a spot.
+    r = await call(`/api/engine/group-buys/${buyId}/leave`, 'POST', {}, U2.token);
+    check('a joiner can leave before execution', r.status === 200 && r.body?.participant?.status === 'cancelled');
+    r = await call(`/api/engine/group-buys/${buyId}`, 'GET', undefined, O.token);
+    check('the count drops when someone leaves', r.body?.bargain?.participants === 11, `${r.body?.bargain?.participants}`);
+
+    // Expiry is a wall the server owns.
+    const gb = store.find('groupBuys', (b) => b.id === buyId);
+    store.update('groupBuys', buyId, { pricing: { ...gb.pricing, expiresAt: new Date(Date.now() - 1000).toISOString() } });
+    r = await call(`/api/engine/group-buys/${buyId}/join`, 'POST', {}, extra.token);
+    check('an expired bargain refuses joins', r.status === 400 && /expired/.test(r.body?.error ?? ''));
+  } finally { srv.close(); process.env.BRIEF_DEV_AUTH = '1'; }
+}
+
+console.log('\n=== CONTRIBUTION POTS + DEADLINES + UPDATES (Tikiti T3) ===');
+{
+  process.env.BRIEF_DEV_AUTH = '0';
+  const { default: app } = await import('../src/index.js');
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    const reg = async (h) => (await call('/api/auth/register', 'POST', { handle: h + Date.now().toString(36), password: 'a good passphrase' })).body;
+    const O = await reg('pot_owner'); const S = await reg('pot_supporter');
+    let r = await call('/api/campaigns', 'POST', {
+      title: 'Mwenda farewell pot ' + Date.now().toString(36), type: 'contribution', goalAmount: 5000,
+      endsAt: new Date(Date.now() + 86_400_000).toISOString()
+    }, O.token);
+    check('a contribution pot is created with a goal', r.status === 201 && r.body?.campaign?.goalAmount === 5000, JSON.stringify(r.body).slice(0, 120));
+    const potId = r.body?.campaign?.id;
+    r = await call('/api/campaigns', 'POST', { title: 'Broken pot', type: 'contribution', goalAmount: 0 }, O.token);
+    check('a zero goal is refused', r.status === 400);
+    await call(`/api/campaigns/${potId}/publish`, 'POST', {}, O.token);
+    const pot = store.find('campaigns', (c) => c.id === potId);
+
+    r = await call(`/api/public/campaigns/${pot.publicSlug}`, 'GET');
+    check('the public view derives raised from settled rows only',
+      r.body?.campaign?.raised === 0 && r.body?.campaign?.contributors === 0, JSON.stringify(r.body?.campaign?.raised));
+    r = await call(`/api/public/campaigns/${pot.publicSlug}/register`, 'POST', { attendeeRef: 'pot-1', name: 'First Giver', amount: 2500 }, S.token);
+    check('a signed-in supporter joins the pot with a stated amount', r.status === 201, JSON.stringify(r.body).slice(0, 120));
+    r = await call(`/api/public/campaigns/${pot.publicSlug}/register`, 'POST', { attendeeRef: 'pot-bad', amount: -5 });
+    check('a negative amount is refused at the door', r.status === 400);
+    const reg1 = store.find('registrations', (x) => x.attendeeRef === 'pot-1');
+    await call(`/api/campaigns/${potId}/registrations/${reg1.id}/confirm-payment`, 'POST', { }, O.token);
+    r = await call(`/api/public/campaigns/${pot.publicSlug}`, 'GET');
+    check('the settled KES 2,500 moves the public progress',
+      r.body?.campaign?.raised === 2500, `${r.body?.campaign?.raised}`);
+    check('the ledger row carries the supporter, not the organiser',
+      store.find('ledgerTransactions', (t) => t.campaignId === potId && t.status === 'settled')?.counterparty === S.user.id);
+
+    // Anonymous: a contribution with no name and no account still counts.
+    await call(`/api/public/campaigns/${pot.publicSlug}/register`, 'POST', { attendeeRef: 'anon-9', amount: 2500 });
+    const regA = store.find('registrations', (x) => x.attendeeRef === 'anon-9');
+    await call(`/api/campaigns/${potId}/registrations/${regA.id}/confirm-payment`, 'POST', {}, O.token);
+    r = await call(`/api/public/campaigns/${pot.publicSlug}`, 'GET');
+    check('the goal is reported reached exactly when settled money covers it',
+      r.body?.campaign?.raised === 5000 && r.body?.campaign?.contributors === 2, JSON.stringify(r.body?.campaign?.raised));
+    check('an anonymous contribution is COUNTED, never listed',
+      !JSON.stringify(r.body).includes('anon-9'), 'attendeeRef leaked');
+    check('goal reached surfaced as a signal, exactly once',
+      store.filter('signals', (x) => x.type === 'campaign_goal_reached' && x.metadata?.campaignId === potId).length === 1);
+
+    // Deadline is a wall.
+    store.update('campaigns', potId, { endsAt: new Date(Date.now() - 1000).toISOString() });
+    r = await call(`/api/public/campaigns/${pot.publicSlug}/register`, 'POST', { attendeeRef: 'late-comer' });
+    check('registering after the deadline is refused', r.status === 400 && /ended/.test(r.body?.error ?? ''), JSON.stringify(r.body));
+    store.update('campaigns', potId, { endsAt: new Date(Date.now() + 86_400_000).toISOString() });
+
+    // Updates: owner authors, anyone reads, strangers cannot.
+    r = await call(`/api/campaigns/${potId}/updates`, 'POST', { title: 'Halfway there', body: 'KES 2,500 raised. Thank you.' }, S.token);
+    check('only the owner may post an update', r.status === 400);
+    r = await call(`/api/campaigns/${potId}/updates`, 'POST', { title: 'Halfway there', body: 'KES 2,500 raised. Thank you.' }, O.token);
+    check('the owner posts a campaign update', r.status === 201);
+    r = await call(`/api/campaigns/${potId}/updates`, 'GET');
+    check('updates are public', r.body?.updates?.length === 1);
+    check('the update surfaced as a signal', Boolean(store.find('signals', (x) => x.type === 'campaign_update_posted' && x.metadata?.campaignId === potId)));
+  } finally { srv.close(); process.env.BRIEF_DEV_AUTH = '1'; }
+}
+
+console.log('\n=== VERIFICATION (Tikiti T6) ===');
+{
+  process.env.BRIEF_DEV_AUTH = '0';
+  process.env.BRIEF_REVIEWERS = 'verrev';
+  const { default: app } = await import('../src/index.js');
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    const reg = async (h) => (await call('/api/auth/register', 'POST', { handle: h + Date.now().toString(36), password: 'a good passphrase' })).body;
+    const U = await reg('ver_user'); const P = await reg('ver_plain');
+    // The reviewer handle must match BRIEF_REVIEWERS exactly, so register or
+    // log in rather than suffixing.
+    let revReg = await call('/api/auth/register', 'POST', { handle: 'verrev', password: 'a good passphrase' });
+    if (revReg.status !== 201) revReg = await call('/api/auth/login', 'POST', { handle: 'verrev', password: 'a good passphrase' });
+    const REV = revReg.body;
+    let r = await call('/api/verification', 'POST', { kind: 'drivers_licence' }, U.token);
+    check('an unknown verification kind is refused', r.status === 400);
+    r = await call('/api/verification', 'POST', { kind: 'identity', note: 'manual review please' }, U.token);
+    check('an identity request is submitted (no documents, ever)', r.status === 201 && !JSON.stringify(r.body).includes('document'), JSON.stringify(r.body).slice(0, 100));
+    const rec = r.body?.record;
+    r = await call('/api/verification', 'POST', { kind: 'identity' }, U.token);
+    check('a duplicate open request is idempotent', r.status === 200 && r.body?.changed === false);
+    r = await call('/api/verification/me', 'GET', undefined, U.token);
+    check('the user sees their own standing', r.body?.standing?.identity === 'pending');
+    r = await call('/api/ops/verification', 'GET', undefined, P.token);
+    check('the review queue is capability-gated (403)', r.status === 403 && r.body?.requiredCapability === 'moderate');
+    r = await call('/api/ops/verification', 'GET', undefined, REV.token);
+    check('a reviewer reads the queue', r.status === 200 && r.body?.queue?.length >= 1);
+    r = await call(`/api/ops/verification/${rec.id}/decision`, 'POST', { decision: 'rejected' }, REV.token);
+    check('a rejection without a reason is refused', r.status === 400 && /reason/.test(r.body?.error ?? ''));
+    r = await call(`/api/ops/verification/${rec.id}/decision`, 'POST', { decision: 'approved' }, REV.token);
+    check('a reviewer approves with an audit trail', r.status === 200);
+    const auditRow = store.find('auditLog', (a) => a.action === 'verification.decision' && a.objectId === rec.id);
+    check('the decision is audited with before/after',
+      auditRow?.before?.status === 'pending' && auditRow?.after?.status === 'approved',
+      JSON.stringify({ found: Boolean(auditRow), before: auditRow?.before?.status ?? null, after: auditRow?.after?.status ?? null }));
+    r = await call('/api/verification/me', 'GET', undefined, U.token);
+    check('approval flips the derived standing', r.body?.standing?.identity === 'verified');
+    r = await call(`/api/ops/verification/${rec.id}/revoke`, 'POST', { reason: 'court order' }, REV.token);
+    check('revocation is explicit and reasoned', r.status === 200 && r.body?.record?.status === 'revoked');
+    r = await call('/api/verification/me', 'GET', undefined, U.token);
+    check('revocation flips the standing back', r.body?.standing?.identity !== 'verified');
+  } finally { srv.close(); delete process.env.BRIEF_REVIEWERS; process.env.BRIEF_DEV_AUTH = '1'; }
+}
+
+console.log('\n=== EMAIL SUBSCRIPTIONS (Tikiti T7) ===');
+{
+  process.env.BRIEF_DEV_AUTH = '0';
+  process.env.BRIEF_OPERATORS = 'mailop';
+  const { default: app } = await import('../src/index.js');
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    const OP = (await call('/api/auth/register', 'POST', { handle: 'mailop', password: 'a good passphrase' })).body;
+    let r = await call('/api/email-subscriptions', 'POST', { email: 'not-an-email', topics: ['arena_announcements'] });
+    check('a malformed address is refused', r.status === 400);
+    r = await call('/api/email-subscriptions', 'POST', { email: 'a@b.co', topics: ['horoscope'] });
+    check('an unknown topic is refused by name', r.status === 400 && /horoscope/.test(r.body?.error ?? ''));
+    r = await call('/api/email-subscriptions', 'POST', { email: 'a@b.co', topics: ['event_announcements', 'bargain_alerts'] });
+    check('a subscription starts PENDING (double opt-in)', r.status === 201 && r.body?.subscription?.status === 'pending', JSON.stringify(r.body).slice(0, 120));
+    check('with no provider the mail is honestly NOT sent',
+      /not sent/i.test(r.body?.delivery ?? ''), r.body?.delivery);
+    const token = r.body?.subscription?.token;
+    r = await call('/api/email-subscriptions/confirm?token=wrong', 'GET');
+    check('a wrong confirmation token is refused', r.status === 404);
+    r = await call(`/api/email-subscriptions/confirm?token=${encodeURIComponent(token)}`, 'GET');
+    check('the token confirms the subscription', r.status === 200 && r.body?.ok === true);
+    r = await call(`/api/email-subscriptions/confirm?token=${encodeURIComponent(token)}`, 'GET');
+    check('confirming twice is idempotent', r.status === 200 && r.body?.already === true);
+    r = await call('/api/email-subscriptions/unsubscribe', 'POST', { email: 'a@b.co' });
+    check('unsubscribing needs no account (the privacy-correct direction)', r.status === 200);
+    r = await call('/api/email-subscriptions/unsubscribe', 'POST', { email: 'a@b.co' });
+    check('unsubscribing twice is idempotent', r.status === 200 && r.body?.already === true);
+    r = await call('/api/email-subscriptions', 'POST', { email: 'a@b.co', topics: ['product_updates'] });
+    check('re-subscribing restarts double opt-in', r.status === 201 && r.body?.subscription?.status === 'pending');
+    r = await call('/api/ops/email-log', 'GET', undefined, OP.token);
+    check('the delivery log says skipped_no_provider, never "sent"',
+      r.body?.log?.length >= 1 && r.body.log.every((m) => m.status === 'skipped_no_provider'), JSON.stringify(r.body?.log?.map((m) => m.status)));
+  } finally { srv.close(); delete process.env.BRIEF_OPERATORS; process.env.BRIEF_DEV_AUTH = '1'; }
+}
+
+console.log('\n=== FRAUD FLAGGING (Tikiti T10) ===');
+{
+  process.env.BRIEF_DEV_AUTH = '0';
+  process.env.BRIEF_REVIEWERS = 'fraudrev';
+  const { default: app } = await import('../src/index.js');
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    const reg = async (h) => (await call('/api/auth/register', 'POST', { handle: h + Date.now().toString(36), password: 'a good passphrase' })).body;
+    const O = await reg('fraud_org'); const S = await reg('fraud_seller'); const B = await reg('fraud_buyer');
+    void B;
+    let r = await call('/api/campaigns', 'POST', { title: 'Fraud gate night', type: 'popup', price: 1000, capacity: 8 }, O.token);
+    const campId = r.body.campaign.id;
+    await call(`/api/campaigns/${campId}/publish`, 'POST', {}, O.token);
+    const camp = store.find('campaigns', (c) => c.id === campId);
+    const seat = async (who, ref) => {
+      await call(`/api/public/campaigns/${camp.publicSlug}/register`, 'POST', { attendeeRef: ref, name: ref }, who.token);
+      const regRow = store.find('registrations', (x) => x.attendeeRef === ref);
+      await call(`/api/campaigns/${campId}/registrations/${regRow.id}/confirm-payment`, 'POST', {}, O.token);
+      // The ticket BORN from this exact registration -- "the first unlisted
+      // one" was flaky by construction once a seller holds several seats.
+      return store.find('tickets', (t) => t.registrationId === regRow.id);
+    };
+    const tikFair = await seat(S, 'fraud-fair');
+    const tikScalp = await seat(S, 'fraud-scalp');
+    r = await call('/api/ticket-market/listings', 'POST', { ticketId: tikFair.id, price: 1200 }, S.token);
+    check('a fair price from a fresh account is NOT flagged', r.status === 201 && r.body?.listing?.flagged === false, JSON.stringify(r.body?.listing?.flaggedReason));
+    r = await call('/api/ticket-market/listings', 'POST', { ticketId: tikScalp?.id ?? 'none', price: 5000 }, S.token);
+    check('3× issue price + hours-old account is flagged with reasons',
+      r.status === 201 && r.body?.listing?.flagged === true && /asking 5000/.test(r.body?.listing?.flaggedReason ?? ''),
+      `${r.status} ${JSON.stringify(r.body).slice(0, 140)}`);
+    r = await call(`/api/ticket-market/events/${camp.publicSlug}/listings`, 'GET', undefined, B.token);
+    check('flagged listings are hidden from browse', (r.body?.listings ?? []).every((l) => l.id !== tikScalp && l.price !== 5000), JSON.stringify(r.body?.listings?.map((l) => l.price)));
+    check('the flag surfaced as a signal for review',
+      Boolean(store.find('signals', (x) => x.type === 'ticket_flagged')),
+      store.filter('signals', (x) => x.type === 'ticket_flagged').length + ' flag signals');
+  } finally { srv.close(); delete process.env.BRIEF_REVIEWERS; process.env.BRIEF_DEV_AUTH = '1'; }
+}
+
 console.log('\n=== PLATFORM ROLES: THE OPERATOR SURFACE IS CAPABILITY-GUARDED ===');
 {
   // Production posture: no dev fallback, real identities only.
