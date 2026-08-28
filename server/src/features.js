@@ -44,6 +44,7 @@ const DEFINITIONS = [
   { key: 'arena',     domain: 'arena',      label: 'Arena',                           configured: () => true },
   { key: 'auction',   domain: 'auction',    label: 'Auctions',                        configured: () => true },
   { key: 'fantasy',   domain: 'fantasy',    label: 'Fantasy 11',                      configured: () => true },
+  { key: 'ligi',      domain: 'ligi',       label: 'Ligi (African fantasy football)', configured: () => true },
   { key: 'command',   domain: 'command',    label: 'Host command centre',             configured: () => true },
   { key: 'people',    domain: 'people',     label: 'Person entity (timeline & identity)', configured: () => true },
   { key: 'tea',       domain: 'tea',        label: 'Tea editorial system',              configured: () => true },

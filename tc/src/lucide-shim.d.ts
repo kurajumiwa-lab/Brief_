@@ -18,6 +18,8 @@ declare module 'lucide-react' {
   export const Newspaper: LucideIcon; export const Heart: LucideIcon; export const MessageCircle: LucideIcon;
   export const X: LucideIcon; export const FileText: LucideIcon; export const Image: LucideIcon;
   export const Lock: LucideIcon;
+  export const Activity: LucideIcon; export const Coins: LucideIcon; export const Flame: LucideIcon;
+  export const RefreshCw: LucideIcon;
   export const ArrowDown: LucideIcon;
   export const Diamond: LucideIcon; export const Check: LucideIcon; export const Settings: LucideIcon;
   export const Compass: LucideIcon;

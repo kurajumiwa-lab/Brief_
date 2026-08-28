@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, CalendarDays, Lock, MessageCircle, Plus, Sparkles, Trophy, Users } from 'lucide-react';
+import { ArrowRight, CalendarDays, Flame, Lock, MessageCircle, Plus, Sparkles, Trophy, Users } from 'lucide-react';
 import type { MenuTarget } from './MenuSheet';
 import type { Ladder } from '../api/briefApi';
 import { serviceForSurface } from './ladder';
@@ -8,6 +8,7 @@ import communityArt from '../assets/shelf/nairobi-community.webp';
 import shareArt from '../assets/shelf/whatsapp-share.webp';
 import createArt from '../assets/shelf/host-create.webp';
 import efootballArt from '../assets/arena/efootball.webp';
+import ligiArt from '../assets/arena/ligi.webp';
 import eventArt from '../assets/shelf/event-gathering.webp';
 
 // ---------------------------------------------------------------------------
@@ -48,9 +49,31 @@ interface ShelfCard {
   target: MenuTarget;
   Icon: React.ComponentType<{ className?: string }>;
   featured?: boolean;
+  /** Listed first, ahead of the ordinary shelf order. */
+  priority?: boolean;
+}
+
+/** Priority cards first, everything else in its declared order. */
+function shelfOrder(cards: ShelfCard[]): ShelfCard[] {
+  return [...cards.filter((c) => c.priority), ...cards.filter((c) => !c.priority)];
 }
 
 const SHELF_CARDS: ShelfCard[] = [
+  // PRIORITY LISTING. Ligi is first on the shelf on purpose: it is the one
+  // card with a weekly rhythm behind it, so it is the one worth returning for.
+  // `priority` is not a synonym for `featured` — featured is a badge, priority
+  // is a POSITION, and the card is ordered by it rather than by hand so a
+  // future second priority card cannot quietly bury this one.
+  {
+    id: 'ligi',
+    eyebrow: 'LIGI · AFRICAN FOOTBALL',
+    title: 'Ligi',
+    detail: 'Fantasy football over African leagues · free to play',
+    image: ligiArt,
+    target: { tab: 'arena', section: 'ligi' },
+    Icon: Flame,
+    priority: true
+  },
   {
     id: 'around',
     eyebrow: 'DISCOVER',
@@ -181,6 +204,15 @@ function ShelfCardView({
           <Lock className="h-2 w-2" /> {service.unlocksAfter}
         </span>
       )}
+      {!locked && card.priority && (
+        <span
+          className={`absolute right-2 top-2 rounded-full px-1.5 py-0.5 text-[7px] font-extrabold uppercase tracking-[0.14em] ${
+            isDark ? 'bg-[#00DF8F] text-[#0A0D14]' : 'bg-[#111111] text-[#FFFFFF]'
+          }`}
+        >
+          Free to play
+        </span>
+      )}
       {!locked && card.featured && (
         <span
           className={`absolute right-2 top-2 rounded-full px-1.5 py-0.5 text-[7px] font-extrabold uppercase tracking-[0.14em] ${
@@ -259,7 +291,7 @@ export function MainShelf({
         </span>
       </div>
       <div className={compact ? 'grid grid-cols-2 gap-2' : 'flex gap-2.5 overflow-x-auto pb-1 -mx-1 px-1 snap-x snap-mandatory sm:grid sm:grid-cols-3 sm:overflow-visible'}>
-        {SHELF_CARDS.map((card) => (
+        {shelfOrder(SHELF_CARDS).map((card) => (
           <ShelfCardView
             key={card.id}
             card={card}

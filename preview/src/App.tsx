@@ -43,6 +43,7 @@ import { TicketBar } from './components/TicketBar';
 import { ArenaGameScreen } from './components/ArenaGameScreen';
 import type { ArenaStakeKind } from './components/ArenaGameScreen';
 import { LobbyBoard } from './components/LobbyBoard';
+import { Ligi } from './components/Ligi';
 import { FeedComposer } from './components/FeedComposer';
 import { WireSection } from './components/WireSection';
 import { TeaDesk } from './components/TeaDesk';
@@ -6799,7 +6800,7 @@ export function App() {
   }, [arenaGameId]);
 
   const [arenaSection, setArenaSection] = useState<
-    'lobby' | 'challenges' | 'tournaments' | 'leaderboard'
+    'lobby' | 'ligi' | 'challenges' | 'tournaments' | 'leaderboard'
   >(bootRoute.arena);
 
   // Challenges addressed to this user, awaiting a decision.
@@ -7323,7 +7324,7 @@ export function App() {
       if (target.section) setWorkflowView('screen');
       else setWorkflowView('menu');
     }
-    if (target.tab === 'arena') setArenaSection('lobby');
+    if (target.tab === 'arena') setArenaSection(target.section ?? 'lobby');
   };
 
   const skipUrl = useRef(false);
@@ -8979,6 +8980,7 @@ export function App() {
             <div className="flex flex-wrap gap-1.5">
               {([
                 ['lobby', 'Lobby'],
+                ['ligi', 'Ligi'],
                 ['challenges', `Challenges${challenges.length > 0 ? ` (${challenges.length})` : ''}`],
                 ['tournaments', `Tournaments${arenaTournaments.length > 0 ? ` (${arenaTournaments.length})` : ''}`],
                 ['leaderboard', 'Leaderboard']
@@ -8996,6 +8998,10 @@ export function App() {
                 </button>
               ))}
             </div>
+
+            {arenaSection === 'ligi' && (
+              <Ligi meId={sessionUser?.id ?? null} onToast={showToast} />
+            )}
 
             {arenaSection === 'lobby' && (
               <LobbyBoard gameId={({ pubg: 'pubg_mobile', cod: 'cod_mobile', ea_fc: 'fc_mobile' } as Record<string, string>)[arenaGameId] ?? arenaGameId} />

@@ -79,6 +79,13 @@ export const RUNG_IDS = RUNGS.map((r) => r.id);
 export const SERVICES = [
   { id: 'stream',       label: 'Around you',            requires: 'identity',   surface: { tab: 'nearby', section: 'stream' } },
   { id: 'saved',        label: 'Your layer',            requires: 'identity',   surface: { tab: 'mylayer', section: 'saved' } },
+  // Ligi sits one rung BELOW the rest of Arena, and that is the whole point of
+  // its priority listing: a free seat with a weekly rhythm is the cheapest
+  // reason to come back, so it opens as soon as someone has oriented rather
+  // than waiting behind a kept object. The staking half of the game is not a
+  // second ladder rung — it is gated inside the game by the same compliance
+  // answer every paid surface gives, which is a stricter gate than any rung.
+  { id: 'ligi',         label: 'Ligi (African fantasy football)', requires: 'orient', surface: { tab: 'arena', section: 'ligi' } },
   { id: 'capture',      label: 'Capture',               requires: 'value',      surface: { tab: 'capture' } },
   { id: 'play',         label: 'Arena',                 requires: 'value',      surface: { tab: 'arena' } },
   { id: 'campaigns',    label: 'Host an event',         requires: 'contribute', surface: { tab: 'workflows', section: 'campaigns' } },

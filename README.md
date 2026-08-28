@@ -135,6 +135,15 @@ and Actions deliberately show no ladder chrome. Google sign-in leads the first
 screen and Telegram is never required. See
 [`ONBOARDING.md`](ONBOARDING.md).
 
+**Ligi runs itself.** The Arena's African fantasy football game opens, locks,
+prices and settles every gameweek on a clock with no human in the loop — house
+lines are DERIVED from each player's own settled history, not set by a
+commissioner, and a week whose match stats have not arrived stays unsettled
+rather than being guessed. It holds the priority listing on the main shelf. The
+free seat is the whole game, staked in units that have no cash value; the cash
+seat is listed, priced, and refused with the five requirements it is missing.
+See [`LIGI.md`](LIGI.md).
+
 **No fabricated data.** The rule the ingestion pipeline exists to enforce is
 that a field which was not stated stays unstated. "Saturday popup" yields a
 day, never a calendar date. Messages with nothing concrete in them produce no
