@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
 import { CampaignDistribution } from './CampaignDistribution';
+import { ImageField } from './ImageField';
 import { StandaloneBanner } from './StandaloneBanner';
 import type { CampaignShare } from '../api/types';
 import whatsappBannerArt from '../assets/shelf/whatsapp-share.webp';
@@ -448,7 +449,16 @@ function DistributionPanel() {
 
       <div className="rounded-2xl border p-4 space-y-3" style={{ borderColor: T.line, background: T.surface }}>
         <label className="block space-y-1"><span className="text-[10px] font-semibold" style={{ color: T.muted }}>Advertiser campaign</span><select value={form.campaignId} onChange={(event) => setForm((old) => ({ ...old, campaignId: event.target.value }))} className="w-full rounded-xl border px-3 py-2.5 text-[12px] outline-none" style={{ borderColor: T.line, background: T.bg, color: T.ink }}>{campaigns.map((campaign) => <option key={campaign.id} value={campaign.id}>{campaign.title}</option>)}</select></label>
-        <div className="grid gap-3 sm:grid-cols-2"><Field label="Redirect URL" value={form.baseRedirectUrl} onChange={(baseRedirectUrl) => setForm((old) => ({ ...old, baseRedirectUrl }))} placeholder="https://brief.example/c/..." /><Field label="Media URL" value={form.mediaAssetUrl} onChange={(mediaAssetUrl) => setForm((old) => ({ ...old, mediaAssetUrl }))} placeholder="https://cdn.example/banner.webp" /></div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="Redirect URL" value={form.baseRedirectUrl} onChange={(baseRedirectUrl) => setForm((old) => ({ ...old, baseRedirectUrl }))} placeholder="https://brief.example/c/..." />
+          <ImageField
+            label="Media"
+            hint="The creative for this asset. Upload it, or use a link you have the rights to."
+            value={form.mediaAssetUrl || null}
+            onChange={(url) => setForm((old) => ({ ...old, mediaAssetUrl: url ?? '' }))}
+            compact
+          />
+        </div>
         <Field label="Copy" value={form.copyText} onChange={(copyText) => setForm((old) => ({ ...old, copyText }))} placeholder="Your approved campaign copy" />
         <div className="flex flex-wrap items-center gap-2"><select value={form.targetPlatform} onChange={(event) => setForm((old) => ({ ...old, targetPlatform: event.target.value }))} className="rounded-xl border px-3 py-2 text-[11px]" style={{ borderColor: T.line, background: T.bg, color: T.ink }}><option value="WHATSAPP_STATUS">WhatsApp Status</option><option value="FB_POST">Facebook</option></select><Button tone="primary" disabled={busy || !form.campaignId || !form.baseRedirectUrl} onClick={() => void create()}><Plus className="h-3.5 w-3.5" /> Create asset</Button></div>
       </div>

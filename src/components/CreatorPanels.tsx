@@ -295,8 +295,22 @@ export function MessagesPanel() {
 }
 
 // --- Subscriptions --------------------------------------------------------------
+//
+// TWO HALVES OF ONE LOOP.
+//
+// A creator could publish a plan and even record a billing cycle for
+// themselves, but nobody could ever JOIN one: there was no subscribe call, so
+// a supporter reading a plan had nothing to press. This panel now holds both
+// sides -- the plans I publish, and the plans I can join -- because a
+// membership with only one half is not a membership, it is a form.
+//
+// Money is never implied: a join records the cycle as a ledger transaction and
+// says plainly that nothing has been charged, because no payment provider is
+// connected.
 
 export function SubscriptionsPanel() {
+  const [mode, setMode] = React.useState<'mine' | 'join'>('mine');
+
   const [subs, setSubs] = React.useState<any[]>([]);
   const [state, setState] = React.useState<'loading' | 'ready'>('loading');
   const [title, setTitle] = React.useState('');
@@ -304,56 +318,206 @@ export function SubscriptionsPanel() {
   const [interval, setInterval] = React.useState('monthly');
   const [busy, setBusy] = React.useState(false);
 
+  // The plans I can join, and the state of each join while it happens.
+  const [publicPlans, setPublicPlans] = React.useState<any[]>([]);
+  const [publicState, setPublicState] = React.useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [publicError, setPublicError] = React.useState<string | null>(null);
+  const [joining, setJoining] = React.useState<string | null>(null);
+  const [notice, setNotice] = React.useState<string | null>(null);
+
   const load = React.useCallback(async () => {
-    const res = await briefApi.getSubscriptions();
+    const res = await briefApi.getMySubscriptions();
     if (res.ok) setSubs(res.data as any[]);
     setState('ready');
   }, []);
   React.useEffect(() => { void load(); }, [load]);
 
+  const browse = React.useCallback(async () => {
+    setPublicState('loading');
+    setPublicError(null);
+    const res = await briefApi.browseSubscriptions();
+    if (!res.ok) {
+      setPublicState('error');
+      setPublicError(res.error ?? 'could not read the plans');
+      return;
+    }
+    setPublicPlans(res.data as any[]);
+    setPublicState('ready');
+  }, []);
+
+  React.useEffect(() => {
+    if (mode === 'join' && publicState === 'idle') void browse();
+  }, [mode, publicState, browse]);
+
   const create = async () => {
     if (!title.trim() || !price) return;
     setBusy(true);
-    await briefApi.createSubscription({ title, price: Number(price), interval });
+    const res = await briefApi.createSubscription({ title, price: Number(price), interval });
     setBusy(false);
+    if (!res.ok) { setNotice(res.error ?? 'could not create this plan'); return; }
     setTitle(''); setPrice('');
+    setNotice('Plan published. Supporters can join it from the Join tab.');
     await load();
   };
 
   const act = async (id: string, action: string) => { await briefApi.subscriptionAction(id, action); await load(); };
 
+  /**
+   * Join a plan. The server answers with `charged: false` while no provider is
+   * connected, and the panel repeats that rather than congratulating somebody
+   * for a payment that did not happen.
+   */
+  const join = async (id: string) => {
+    setJoining(id);
+    setNotice(null);
+    const res = await briefApi.subscribeToPlan(id);
+    setJoining(null);
+    if (!res.ok) { setNotice(res.error ?? 'could not join this plan'); return; }
+    setNotice(res.data.duplicate ? 'You are already a member of this plan.' : res.data.note);
+    await browse();
+    await load();
+  };
+
+  const leave = async (id: string) => {
+    setJoining(id);
+    setNotice(null);
+    const res = await briefApi.unsubscribeFromPlan(id);
+    setJoining(null);
+    if (!res.ok) { setNotice(res.error ?? 'could not leave this plan'); return; }
+    setNotice(res.data.changed ? 'You have left this plan.' : 'You were not a member of this plan.');
+    await browse();
+    await load();
+  };
+
   return (
     <Shell icon={Repeat} title="Subscriptions">
-      <div className="flex gap-2">
-        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Name (e.g. Trail Club)" className="flex-1 rounded-lg border px-3 py-2 text-[12px] outline-none" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }} />
-        <input value={price} onChange={(e) => setPrice(e.target.value.replace(/[^0-9]/g, ''))} placeholder="KES" className="w-24 rounded-lg border px-3 py-2 text-[12px] outline-none" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }} />
-        <select value={interval} onChange={(e) => setInterval(e.target.value)} className="rounded-lg border px-2 py-2 text-[12px]" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }}>
-          <option value="weekly">weekly</option><option value="monthly">monthly</option><option value="yearly">yearly</option>
-        </select>
-        <button onClick={() => void create()} disabled={busy || !title.trim() || !price} className="rounded-lg px-3 py-2 text-[12px] font-bold cursor-pointer disabled:opacity-40" style={{ background: T.primary, color: '#FFFFFF' }}>
-          <Plus className="h-3.5 w-3.5" />
+      <div className="flex gap-1.5">
+        <button
+          onClick={() => setMode('mine')}
+          className="rounded-lg px-3 py-1.5 text-[11px] font-bold cursor-pointer"
+          style={{
+            background: mode === 'mine' ? T.primary : T.container,
+            color: mode === 'mine' ? '#FFFFFF' : T.onSurfaceVariant,
+            border: `1px solid ${T.outlineVariant}`
+          }}
+        >
+          Plans I offer
+        </button>
+        <button
+          onClick={() => setMode('join')}
+          className="rounded-lg px-3 py-1.5 text-[11px] font-bold cursor-pointer"
+          style={{
+            background: mode === 'join' ? T.primary : T.container,
+            color: mode === 'join' ? '#FFFFFF' : T.onSurfaceVariant,
+            border: `1px solid ${T.outlineVariant}`
+          }}
+        >
+          Plans I can join
         </button>
       </div>
 
-      {state === 'loading' ? <Empty text="Loading…" /> : subs.length === 0 ? (
-        <Empty text="No memberships yet. Create one to offer recurring access." />
-      ) : (
-        <div className="space-y-2">
-          {subs.map((s) => (
-            <div key={s.id} className="flex items-center justify-between gap-2 rounded-xl border p-3" style={{ borderColor: T.outlineVariant, background: T.container }}>
-              <div className="min-w-0">
-                <p className="text-[13px] font-semibold" style={{ color: T.onSurface }}>{s.title}</p>
-                <p className="text-[10px]" style={{ color: T.onSurfaceVariant }}>{s.currency} {s.price} · {s.interval} · {s.status}</p>
-              </div>
-              <div className="flex gap-1">
-                {s.status === 'active' && <button onClick={() => void act(s.id, 'pause')} className="text-[10px] font-bold cursor-pointer" style={{ color: T.primary }}>Pause</button>}
-                {s.status === 'paused' && <button onClick={() => void act(s.id, 'resume')} className="text-[10px] font-bold cursor-pointer" style={{ color: T.primary }}>Resume</button>}
-                {s.status !== 'cancelled' && <button onClick={() => void act(s.id, 'cancel')} className="text-[10px] font-bold cursor-pointer" style={{ color: T.onSurfaceVariant }}>Cancel</button>}
-              </div>
-            </div>
-          ))}
+      {notice && (
+        <div className="rounded-xl border p-3" style={{ borderColor: T.outlineVariant, background: T.container }}>
+          <p className="text-[11px]" style={{ color: T.onSurface }}>{notice}</p>
         </div>
+      )}
+
+      {mode === 'mine' && (
+        <>
+          <div className="flex gap-2">
+            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Name (e.g. Trail Club)" className="flex-1 rounded-lg border px-3 py-2 text-[12px] outline-none" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }} />
+            <input value={price} onChange={(e) => setPrice(e.target.value.replace(/[^0-9]/g, ''))} placeholder="KES" className="w-24 rounded-lg border px-3 py-2 text-[12px] outline-none" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }} />
+            <select value={interval} onChange={(e) => setInterval(e.target.value)} className="rounded-lg border px-2 py-2 text-[12px]" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }}>
+              <option value="weekly">weekly</option><option value="monthly">monthly</option><option value="yearly">yearly</option>
+            </select>
+            <button onClick={() => void create()} disabled={busy || !title.trim() || !price} className="rounded-lg px-3 py-2 text-[12px] font-bold cursor-pointer disabled:opacity-40" style={{ background: T.primary, color: '#FFFFFF' }}>
+              <Plus className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
+          {state === 'loading' ? <Empty text="Loading…" /> : subs.length === 0 ? (
+            <Empty text="No memberships yet. Create one to offer recurring access." />
+          ) : (
+            <div className="space-y-2">
+              {subs.map((s) => (
+                <div key={s.id} className="flex items-center justify-between gap-2 rounded-xl border p-3" style={{ borderColor: T.outlineVariant, background: T.container }}>
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-semibold" style={{ color: T.onSurface }}>{s.title}</p>
+                    <p className="text-[10px]" style={{ color: T.onSurfaceVariant }}>
+                      {s.currency} {s.price} · {s.interval} · {s.status}
+                    </p>
+                    {/* Derived, not stored: it cannot disagree with the rows. */}
+                    <p className="text-[10px]" style={{ color: T.onSurfaceVariant }}>
+                      {s.subscriberCount} {s.subscriberCount === 1 ? 'member' : 'members'} · {s.settledCycles} settled {s.settledCycles === 1 ? 'cycle' : 'cycles'}
+                    </p>
+                  </div>
+                  <div className="flex gap-1">
+                    {s.status === 'active' && <button onClick={() => void act(s.id, 'pause')} className="text-[10px] font-bold cursor-pointer" style={{ color: T.primary }}>Pause</button>}
+                    {s.status === 'paused' && <button onClick={() => void act(s.id, 'resume')} className="text-[10px] font-bold cursor-pointer" style={{ color: T.primary }}>Resume</button>}
+                    {s.status !== 'cancelled' && <button onClick={() => void act(s.id, 'cancel')} className="text-[10px] font-bold cursor-pointer" style={{ color: T.onSurfaceVariant }}>Cancel</button>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {mode === 'join' && (
+        <>
+          {publicState === 'loading' && <Empty text="Looking for plans…" />}
+
+          {publicState === 'error' && (
+            <div className="rounded-xl border p-3" style={{ borderColor: T.outlineVariant, background: T.container }}>
+              <p className="text-[11px]" style={{ color: T.onSurface }}>Could not read public plans. {publicError}</p>
+              <button onClick={() => void browse()} className="mt-2 text-[10px] font-bold cursor-pointer" style={{ color: T.primary }}>Try again</button>
+            </div>
+          )}
+
+          {publicState === 'ready' && publicPlans.length === 0 && (
+            <Empty text="No public plans from other creators yet." />
+          )}
+
+          <div className="space-y-2">
+            {publicPlans.map((s) => (
+              <div key={s.id} className="flex items-center justify-between gap-2 rounded-xl border p-3" style={{ borderColor: T.outlineVariant, background: T.container }}>
+                <div className="min-w-0">
+                  <p className="text-[13px] font-semibold" style={{ color: T.onSurface }}>{s.title}</p>
+                  <p className="text-[10px]" style={{ color: T.onSurfaceVariant }}>
+                    {s.currency} {s.price} · {s.interval} · {s.subscriberCount} {s.subscriberCount === 1 ? 'member' : 'members'}
+                  </p>
+                </div>
+                {s.viewerIsSubscriber ? (
+                  <button
+                    onClick={() => void leave(s.id)}
+                    disabled={joining === s.id}
+                    className="rounded-lg px-3 py-1.5 text-[11px] font-bold cursor-pointer disabled:opacity-40"
+                    style={{ color: T.onSurfaceVariant, border: `1px solid ${T.outlineVariant}` }}
+                  >
+                    {joining === s.id ? 'Leaving…' : 'Subscribed — leave'}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => void join(s.id)}
+                    disabled={joining === s.id}
+                    className="rounded-lg px-3 py-1.5 text-[11px] font-bold cursor-pointer disabled:opacity-40"
+                    style={{ background: T.primary, color: '#FFFFFF' }}
+                  >
+                    {joining === s.id ? 'Joining…' : 'Join'}
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <p className="text-[10px]" style={{ color: T.onSurfaceVariant }}>
+            No payment provider is connected, so joining records the membership and
+            the cycle without charging anything. Nothing is owed until a real
+            payment exists.
+          </p>
+        </>
       )}
     </Shell>
   );
 }
+

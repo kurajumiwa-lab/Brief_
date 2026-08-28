@@ -3,7 +3,7 @@
 import { store, newId } from '../store.js';
 import { callerId } from '../identity.js';
 import * as web from '../connectors/web.js';
-import { requireAuth, now, CURRENT_USER } from './helpers.js';
+import { requireAuth, now } from './helpers.js';
 
 import { requireFeature } from '../features.js';
 
@@ -12,7 +12,7 @@ app.use('/api/sources', requireFeature('sources'));
 // --- Sources (spec 2) --------------------------------------------------------
 
 
-app.get('/api/sources', (_req, res) => {
+app.get('/api/sources', (req, res) => {
   const sources = store.all('sources').map((s) => {
     const raws = store.filter('rawItems', (r) => r.sourceId === s.id);
     const objs = new Set(
@@ -20,7 +20,7 @@ app.get('/api/sources', (_req, res) => {
     );
     const membership = store.find(
       'sourceMemberships',
-      (m) => m.sourceId === s.id && m.userId === CURRENT_USER
+      (m) => m.sourceId === s.id && m.userId === callerId(req)
     );
     return {
       ...s,
@@ -125,6 +125,13 @@ app.delete('/api/sources/:id', (req, res) => {
 
 
 app.post('/api/sources/:id/membership', (req, res) => {
+  // AUTHORIZATION + IDENTITY. Two defects lived here. The row was written
+  // against the hard-coded single-user constant instead of the caller, so a
+  // real member's grant landed on `usr_me` and never governed anything for
+  // them; and with the development fallback on, an anonymous caller granting
+  // `owner` to that constant granted it to themselves. A membership is a
+  // claim about YOU, so it needs an identity and it must be that identity.
+  if (!requireAuth(req, res)) return;
   const source = store.find('sources', (s) => s.id === req.params.id);
   if (!source) return res.status(404).json({ error: 'source not found' });
 
@@ -134,9 +141,10 @@ app.post('/api/sources/:id/membership', (req, res) => {
     return res.status(400).json({ error: `membershipStatus must be one of ${VALID.join(', ')}` });
   }
 
+  const me = callerId(req);
   const existing = store.find(
     'sourceMemberships',
-    (m) => m.sourceId === source.id && m.userId === CURRENT_USER
+    (m) => m.sourceId === source.id && m.userId === me
   );
   const row = existing
     ? store.update('sourceMemberships', existing.id, {
@@ -146,7 +154,7 @@ app.post('/api/sources/:id/membership', (req, res) => {
       })
     : store.insert('sourceMemberships', {
         id: newId('mem'),
-        userId: CURRENT_USER,
+        userId: me,
         sourceId: source.id,
         membershipStatus,
         accessGranted: membershipStatus !== 'unknown',

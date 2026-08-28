@@ -14,10 +14,12 @@ async function main(){
   const body=()=>text(document.body);
   const click=async el=>{await act(async()=>{el.dispatchEvent(new dom.window.MouseEvent('click',{bubbles:true,cancelable:true}));});};
   const btn=t=>Array.from(document.querySelectorAll('button')).find(b=>text(b)===t||text(b).startsWith(t));
-  const goto=async(dest,section)=>{
+  // Sections now live inside a bundle, so a jump is destination -> bundle ->
+  // sub-section. Feeds is filed under Records.
+  const goto=async(dest,...sections)=>{
     const d=Array.from(document.querySelectorAll('button')).find(b=>text(b)===dest||text(b).startsWith(dest));
     if(d) await click(d);
-    if(section){
+    for(const section of sections){
       const sBtn=Array.from(document.querySelectorAll('button')).find(b=>text(b)===section||text(b).startsWith(section));
       if(sBtn) await click(sBtn);
     }
@@ -83,7 +85,7 @@ async function main(){
   await click(btn('Discard'));
 
   console.log('\n=== SOURCES view ===');
-  await goto('Inbox','Feeds');
+  await goto('Inbox','Records','Feeds');
   b=body();
   // Sources come from the server now; the seeded 'Nairobi Traders' list is
   // gone. With no connector server in this harness the surface must say so

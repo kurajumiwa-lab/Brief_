@@ -40,6 +40,12 @@ import type {
   ShareChannels,
   CampaignShare,
   CampaignBanner,
+  MediaUpload,
+  MediaStorageStatus,
+  TriageQueue,
+  Subscription,
+  Subscriber,
+  SubscriptionJoin,
   PaymentConfirmation,
   Transaction,
   TransactionCreate,
@@ -91,7 +97,9 @@ import {
   isVendor, areVendors, isListing, areListings, isOrder, areOrders,
   isDispute, areDisputes, isPaymentIntent, arePaymentIntents,
   isVault, areVaults, isFootstep, areFootsteps, isVaultRequest, areVaultRequests, isTicket, isCommandCentre,
-  isTeaArticle, areTeaArticles
+  isTeaArticle, areTeaArticles, isMediaUpload, areMediaUploads,
+  isTriageQueue, isSubscription, areSubscriptions, isSubscriber,
+  areSubscribers, isSubscriptionJoin
 } from './validate';
 
 /**
@@ -151,12 +159,40 @@ async function request<T>(
   // the body is not the shape we expect". Narrowed below into a real error.
   select?: (raw: any) => T | undefined
 ): Promise<ApiResult<T>> {
+  const headers: Record<string, string> = {
+    ...((init?.headers as Record<string, string> | undefined) ?? {})
+  };
+  if (init?.body !== undefined) headers['content-type'] = 'application/json';
+  return send<T>(path, { ...init, headers }, select);
+}
+
+/**
+ * The same request path, for a MULTIPART body.
+ *
+ * The content-type is deliberately NOT set: the browser has to add its own
+ * `multipart/form-data; boundary=...`, and setting the header by hand is the
+ * classic way to produce an unparseable body. Everything else — the session
+ * token, the 401 handling, the "unexpected response shape" rule — is shared
+ * with every other call, because this file is the only place that fetches.
+ */
+async function requestForm<T>(
+  path: string,
+  form: FormData,
+  select?: (raw: any) => T | undefined
+): Promise<ApiResult<T>> {
+  return send<T>(path, { method: 'POST', body: form }, select);
+}
+
+async function send<T>(
+  path: string,
+  init: RequestInit,
+  select?: (raw: any) => T | undefined
+): Promise<ApiResult<T>> {
   try {
     const token = getSessionToken();
     const headers: Record<string, string> = {
-      ...((init?.headers as Record<string, string> | undefined) ?? {})
+      ...((init.headers as Record<string, string> | undefined) ?? {})
     };
-    if (init?.body !== undefined) headers['content-type'] = 'application/json';
     if (token) headers.authorization = `Bearer ${token}`;
     const res = await fetch(`${INGEST_API}${path}`, {
       ...init,
@@ -2630,5 +2666,211 @@ export interface EngineTicketBar {
 export function getEngineTicketBar(): Promise<ApiResult<EngineTicketBar>> {
   return request('/api/engine/ticket-bar', undefined, (r) =>
     typeof r?.active === 'boolean' ? (r as EngineTicketBar) : undefined
+  );
+}
+
+// ---------------------------------------------------------------------------
+// REAL IMAGE UPLOADS
+//
+// The editorial surfaces used to accept only a URL, so every photo was
+// somebody else's asset on somebody else's server: free to rot, free to
+// hotlink-block, free to change under a published story. These calls put an
+// actual file in Brief instead.
+//
+// The link route is NOT removed -- an editor may still have a legitimately
+// attributed external image -- but it is no longer the only way in, and it is
+// no longer the default.
+// ---------------------------------------------------------------------------
+
+/**
+ * Turn a server image reference into something an <img> can load.
+ *
+ * The server returns a ROOT-relative path (`/api/media/file/<id>`) because it
+ * does not know how the client reaches it. In the browser that path has to go
+ * through the ingestion proxy; an absolute http(s) link passes straight
+ * through. Deciding this here keeps the proxy detail out of every component.
+ */
+export function mediaFileUrl(url: string): string {
+  if (!url) return url;
+  if (/^https?:\/\//i.test(url)) return url;
+  return url.startsWith('/') ? `${INGEST_API}${url}` : url;
+}
+
+/**
+ * Upload one image file.
+ *
+ * The server decides what the file really is from its magic bytes, so a
+ * refusal here is worth showing to the person verbatim: "only JPEG, PNG, WebP
+ * and GIF images can be uploaded" is a better message than a generic failure.
+ */
+export function uploadMediaFile(
+  file: File,
+  opts: { alt?: string } = {}
+): Promise<ApiResult<{ upload: MediaUpload; duplicate: boolean }>> {
+  const form = new FormData();
+  form.append('file', file, file.name);
+  if (opts.alt) form.append('alt', opts.alt.slice(0, 240));
+  return requestForm('/api/media/upload', form, (r) =>
+    isMediaUpload(r?.upload)
+      ? { upload: r.upload as MediaUpload, duplicate: Boolean(r.duplicate) }
+      : undefined
+  );
+}
+
+/** Your own uploads, newest first. */
+export function listMyMedia(): Promise<ApiResult<MediaUpload[]>> {
+  return request('/api/media/mine', undefined, (r) => areMediaUploads(r?.uploads ?? []));
+}
+
+/** Remove one of your own uploads, bytes and all. */
+export function deleteMedia(id: string): Promise<ApiResult<{ removed: true }>> {
+  return request(`/api/media/${encodeURIComponent(id)}`, { method: 'DELETE' }, (r) =>
+    r?.removed === true ? { removed: true as const } : undefined
+  );
+}
+
+/**
+ * What this deployment can promise about uploads.
+ *
+ * Local disk, so `persisted` is false: images survive a restart but not a
+ * redeploy to a fresh container. The editor says that out loud instead of
+ * letting somebody discover it.
+ */
+export function getMediaStatus(): Promise<ApiResult<{ media: any; uploads: MediaStorageStatus }>> {
+  return request('/api/media/status', undefined, (r) =>
+    r?.uploads && typeof r.uploads === 'object'
+      ? { media: r.media ?? null, uploads: r.uploads as MediaStorageStatus }
+      : undefined
+  );
+}
+
+// ---------------------------------------------------------------------------
+// THE WAITING-ON-YOU QUEUE
+// ---------------------------------------------------------------------------
+
+/**
+ * Everything currently blocked on the signed-in person: the circle tasks they
+ * hold, the orders on their shelf, the events they are running, and the
+ * messages nobody has reviewed.
+ *
+ * Derived on the server from real rows, per caller. There is no cache and no
+ * local merging, so the list cannot disagree with the work it points at.
+ */
+export function getTriageQueue(withinHours?: number): Promise<ApiResult<TriageQueue>> {
+  const q = withinHours ? `?withinHours=${encodeURIComponent(String(withinHours))}` : '';
+  return request(`/api/triage${q}`, undefined, (r) => (isTriageQueue(r) ? r : undefined));
+}
+
+// ---------------------------------------------------------------------------
+// CIRCLE MEMBERSHIP: JOIN, LEAVE, REMOVE
+// ---------------------------------------------------------------------------
+
+/**
+ * Leave a circle as the signed-in caller.
+ *
+ * The loop had no exit: you could be added to a circle, or self-join an open
+ * one, and then had no way to stop being a member. Leaving is self-service --
+ * it removes YOUR row and nobody else's.
+ */
+export function leaveCircle(circleId: string): Promise<ApiResult<{ left: true; circleId: string }>> {
+  return request(
+    `/api/circles/${encodeURIComponent(circleId)}/members/me`,
+    { method: 'DELETE' },
+    (r) => (r?.left === true ? { left: true as const, circleId } : undefined)
+  );
+}
+
+/**
+ * Remove SOMEBODY ELSE from a circle. Coordinator-only; the server returns
+ * 403 otherwise. Separate from leaveCircle so the privileged act is visible
+ * at the call site -- and so you cannot "remove" yourself by accident.
+ */
+export function removeMember(
+  circleId: string,
+  userId: string
+): Promise<ApiResult<{ left: true; userId: string }>> {
+  return request(
+    `/api/circles/${encodeURIComponent(circleId)}/members/${encodeURIComponent(userId)}`,
+    { method: 'DELETE' },
+    (r) => (r?.left === true ? { left: true as const, userId } : undefined)
+  );
+}
+
+// ---------------------------------------------------------------------------
+// SUBSCRIPTIONS: THE FOLLOWER'S HALF
+// ---------------------------------------------------------------------------
+
+/** The plans I publish. */
+export function getMySubscriptions(): Promise<ApiResult<Subscription[]>> {
+  return request('/api/subscriptions', undefined, (r) => areSubscriptions(r?.subscriptions ?? []));
+}
+
+/**
+ * Public plans by other creators. This is the discovery the follower side was
+ * missing: without it a plan could exist but be unreachable by anybody except
+ * the person who wrote it.
+ */
+export function browseSubscriptions(): Promise<ApiResult<Subscription[]>> {
+  return request('/api/subscriptions?browse=1', undefined, (r) => areSubscriptions(r?.subscriptions ?? []));
+}
+
+/** One creator's public plans. */
+export function getCreatorSubscriptions(creatorId: string): Promise<ApiResult<Subscription[]>> {
+  return request(
+    `/api/subscriptions?creator=${encodeURIComponent(creatorId)}`,
+    undefined,
+    (r) => areSubscriptions(r?.subscriptions ?? [])
+  );
+}
+
+/**
+ * Join a plan AS THE AUTHENTICATED CALLER.
+ *
+ * The response says `charged: false` while no payment provider is connected.
+ * The UI must show that rather than implying money moved.
+ */
+export function subscribeToPlan(id: string): Promise<ApiResult<SubscriptionJoin>> {
+  return request(
+    `/api/subscriptions/${encodeURIComponent(id)}/subscribe`,
+    { method: 'POST', body: '{}' },
+    (r) => (isSubscriptionJoin(r) ? r : undefined)
+  );
+}
+
+export function unsubscribeFromPlan(id: string): Promise<ApiResult<{ subscriber: Subscriber; changed: boolean }>> {
+  return request(
+    `/api/subscriptions/${encodeURIComponent(id)}/unsubscribe`,
+    { method: 'POST', body: '{}' },
+    (r) => (isSubscriber(r?.subscriber)
+      ? { subscriber: r.subscriber, changed: r.changed === true }
+      : undefined)
+  );
+}
+
+/** Who is subscribed. Creator-only; the server refuses everybody else with 403. */
+export function getPlanSubscribers(id: string): Promise<ApiResult<Subscriber[]>> {
+  return request(
+    `/api/subscriptions/${encodeURIComponent(id)}/subscribers`,
+    undefined,
+    (r) => areSubscribers(r?.subscribers ?? [])
+  );
+}
+
+/**
+ * Move an order to the next fulfilment stage as its vendor.
+ *
+ * The stage is the server's vocabulary (accepted / preparing / ready) because
+ * those are the only stages a vendor may set: settlement is economic and needs
+ * a settled transaction, so it has its own guarded endpoint.
+ */
+export function stageOrder(
+  id: string,
+  stage: string,
+  note = ''
+): Promise<ApiResult<{ order: Order; changed: boolean }>> {
+  return request(
+    `/api/orders/${encodeURIComponent(id)}/stage`,
+    { method: 'POST', body: JSON.stringify({ stage, note }) },
+    (r) => (isOrder(r?.order) ? { order: r.order, changed: Boolean(r.changed) } : undefined)
   );
 }

@@ -83,16 +83,38 @@ app.post('/api/brief-it/save', (req, res) => {
 
   let result = duplicate ? { ok: true, duplicate: true, reason: 'already captured' } : processRawItem(row.id);
 
-  // If processRawItem rejected as "not object worthy" for a manual user post/capture,
-  // ensure an object is explicitly formed so user input is never lost.
+  // processRawItem rejected this as "not object worthy". For an EXPLICIT
+  // manual save the words are still kept: the client's preview and the
+  // server's extractor can disagree, and silently discarding text someone
+  // just typed is worse than keeping it. What is NOT kept is the pretence.
+  //
+  // The row used to claim 0.85 extraction confidence over text from which
+  // nothing had been extracted, and to publish itself straight to the
+  // anonymous public feed -- while an object-worthy capture from this very
+  // source took the source's own default. It now records the confidence
+  // extraction actually earned, says what it did and did not find, and
+  // takes the same publication default as its sibling branch.
   if (!duplicate && !result.created && !result.merged) {
     const title = (customTitle && String(customTitle).trim()) ||
       (result.fields?.title) ||
       String(text).split('\n')[0].replace(/^[^A-Za-z0-9]+/, '').slice(0, 80) ||
       'Captured Post';
     const type = customType || result.fields?.type || 'knowledge';
-    const category = customCat || result.fields?.categories?.[0] || (type === 'knowledge' ? 'News' : 'Post');
+    const category = customCat || result.fields?.categories?.[0] || (type === 'knowledge' ? 'Note' : 'Post');
     const locationName = customLoc || result.fields?.locationName || null;
+
+    const found = result.fields ? Object.keys(result.fields) : [];
+    const extractedConfidence = Number.isFinite(result.confidence) ? result.confidence : 0;
+    const evidence = found.length
+      ? `manual capture, kept as written. Extraction found only: ${found.join(', ')}.`
+      : 'manual capture, kept as written. No structured fields were extracted.';
+    const metadata = result.fields ? { ...result.fields } : {};
+    // Fields not established are named as unknown rather than omitted, so a
+    // reader can tell "not stated" from "not asked" -- the same rule the
+    // pipeline branch follows.
+    const unknown = ['dateText', 'timeRange', 'locationName', 'price']
+      .filter((k) => metadata[k] === undefined);
+    if (unknown.length) metadata.unknownFields = unknown;
 
     const object = store.insert('objects', {
       id: newId('obj'),
@@ -101,12 +123,12 @@ app.post('/api/brief-it/save', (req, res) => {
       category,
       summary: String(text).replace(/\s+/g, ' ').trim().slice(0, 240),
       locationName,
-      metadata: result.fields ? { ...result.fields } : {},
+      metadata,
       isFixture: false,
-      publication: 'public',
+      publication: source.accessType === 'public' ? 'public' : 'source_members',
       verificationStatus: 'unverified',
-      extractionConfidence: 0.85,
-      extractionEvidence: 'User manual capture/post',
+      extractionConfidence: extractedConfidence,
+      extractionEvidence: evidence,
       createdAt: now(),
       updatedAt: now()
     });
@@ -122,8 +144,8 @@ app.post('/api/brief-it/save', (req, res) => {
       sourceAuthor: row.author,
       sourceRetrievedAt: row.retrievedAt,
       sourceUrl: row.rawUrl,
-      sourceConfidence: 0.85,
-      extractionConfidence: 0.85,
+      sourceConfidence: source.confidence ?? 0.5,
+      extractionConfidence: extractedConfidence,
       createdAt: now()
     });
 

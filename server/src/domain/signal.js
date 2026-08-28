@@ -44,6 +44,10 @@ export const SIGNAL_TYPES = [
   'campaign_checkin',
   'campaign_no_show',
   'member_joined',
+  // Leaving is a real state change too, and it belongs in the same evidence
+  // history as joining -- otherwise a member's trail shows arrivals only.
+  'member_left',
+  'member_removed',
   // --- Circle operations (Batch 2) -----------------------------------------
   // Each of these is emitted by a real state change on a Block, never by a
   // UI render. They are what the Circle activity feed and a member's evidence

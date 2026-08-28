@@ -1205,9 +1205,18 @@ async function main() {
     !/\['campaigns',\s*'Campaigns',\s*[A-Z]/.test(src),
     'Campaigns is not a sixth navigation destination'
   );
+  // Campaigns is filed under My Layer. It moved from an inline array of rows
+  // to a bundle in src/ui/names.ts, so the assertion reads the bundle list
+  // rather than the deleted menu.
+  const namesSrc = require('fs').readFileSync(__dirname + '/src/ui/names.ts', 'utf8');
   ok(
-    /\['campaigns',\s*('Campaigns'|SAVED_TABS\.campaigns)\]/.test(src),
+    /SAVED_BUNDLES[\s\S]*?'campaigns'/.test(namesSrc) &&
+      /SAVED_BUNDLES[\s\S]*?'campaigns'[\s\S]*?\]/.test(namesSrc),
     'Campaigns is a My Layer section'
+  );
+  ok(
+    !/WORKFLOW_BUNDLES[\s\S]*?sections:\s*\[[^\]]*'campaigns'[^\]]*\][\s\S]*?,\s*\{\s*id:\s*'[^']+',\s*label:\s*'Campaigns'/.test(namesSrc),
+    'Campaigns is not a navigation destination of its own'
   );
 
   // =========================================================================

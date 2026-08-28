@@ -19,7 +19,13 @@ async function main(){
   const sub=t=>Array.from(document.querySelectorAll('button'))
     .filter(b=>!b.closest('nav[aria-label="Primary"]'))
     .find(b=>text(b)===t||text(b).startsWith(t));
-  const goto=async(d,s)=>{const x=btn(d); if(x) await click(x); if(s){const y=sub(s)||btn(s); if(y) await click(y);} };
+  // A section now sits inside a bundle, so a jump is destination -> bundle ->
+  // sub-section. Every existing screen is still reachable; there is simply one
+  // more hop in the path, and the suite walks it the way a person would.
+  const goto=async(d,...rest)=>{
+    const x=btn(d); if(x) await click(x);
+    for(const s of rest){const y=sub(s)||btn(s); if(y) await click(y);}
+  };
   let pass=0,fail=0;
   const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;console.log('  FAIL  '+n+(d?' -> '+d:''));}};
 
@@ -53,7 +59,9 @@ async function main(){
   await click(btn('Saved'));
   check('My Layer = personal', /Your Layer|Things you.ve kept/i.test(body()));
   await click(btn('Inbox'));
-  check('Workflows = actions', /Things you can actually do/i.test(body()));
+  // The Inbox no longer opens on an index of tools: it opens on the one list
+  // of what is waiting on you.
+  check('Workflows = what is waiting on you', /Waiting on you/i.test(body()));
   check('Pulse is not a fifth screen', !btn('Pulse'));
 
   console.log('\n=== Nearby holds discovery sections ===');
@@ -76,29 +84,44 @@ async function main(){
 
   console.log('\n=== My Layer absorbs personal content ===');
   await click(btn('Saved'));
-  for(const s of ['Saved','Activity','Matches','Points','Groups'])
+  // Eleven options became three bundles. The bundles themselves are the
+  // top-level choice; their sections appear underneath the active one.
+  for(const b of ['Kept','Groups','Creator']) check(`Saved bundle: ${b}`, !!btn(b));
+  for(const s of ['Saved','Activity','Points','Events'])
     check(`My Layer > ${s}`, !!sub(s));
-  await goto('Saved','Chats');
+  check('the eleven options are no longer one flat list of eleven',
+    !/11 Options/.test(body()));
+  await goto('Saved','Groups');
+  check('the Groups bundle exposes its own sections',
+    ['Groups','Chats','Matches'].every((s) => !!sub(s)));
+  await goto('Saved','Groups','Chats');
   check('Groups preserved', /Your chats/i.test(body()));
-  await goto('Saved','Activity');
+  await goto('Saved','Kept','Activity');
   check('Activity uses real relationships', /My Activity/i.test(body())&&/saved|watched/i.test(body()));
-  await goto('Saved','Matches');
+  await goto('Saved','Groups','Matches');
   check('My Layer > Arena keeps match history', /My Matches/i.test(body()));
-  check('My Layer > Arena keeps match history', /My Matches/i.test(body()));
-  await goto('Saved','Points');
+  await goto('Saved','Creator');
+  check('the Creator bundle exposes its own sections',
+    ['Profile','Offers','Messages','Plans'].every((s) => !!sub(s)));
+  await goto('Saved','Kept','Points');
   check('Brief Points shown', /Brief Points/i.test(body()));
   check('points not summed into one total', !/Total points/i.test(body()));
 
   console.log('\n=== Workflows holds operational tools ===');
   await click(btn('Inbox'));
-  for(const s of ['Open','Done','Review','Feeds']) check(`Workflows > ${s}`, !!sub(s));
-  await goto('Inbox','Open');
-  check('Active shows an honest empty state, not fake journeys', /Things you can actually do|Your activities will appear here|No processes/i.test(body()));
-  await goto('Inbox','Done');
+  // Eighteen tools became four bundles, and the queue is the landing view.
+  for(const b of ['Create','Sell','Run','Records']) check(`Workflows bundle: ${b}`, !!btn(b));
+  check('the eighteen tools are no longer one flat list of eighteen', !/18 Tools/.test(body()));
+  await goto('Inbox','Run');
+  check('the Run bundle exposes its own sections',
+    ['Dashboard','Open','Done','Matches','Engine'].every((s) => !!sub(s)));
+  await goto('Inbox','Run','Open');
+  check('Active shows an honest empty state, not fake journeys', /Your activities will appear here|No processes|Things you can actually do/i.test(body()));
+  await goto('Inbox','Run','Done');
   check('Completed is a real filter, not a new screen', /Completed|Nothing finished/i.test(body()));
-  await goto('Inbox','Feeds');
+  await goto('Inbox','Records','Feeds');
   check('Sources preserved', /A channel is not the information/i.test(body()));
-  await goto('Inbox','Review');
+  await goto('Inbox','Create','Review');
   check('Inbox preserved', /Inbox/i.test(body()));
 
   console.log('\n=== No duplicate rooms ===');
@@ -160,7 +183,7 @@ async function main(){
   check('Arena sections are not in the rail', !railBtns().some(b=>/Tournaments|Challenges/.test(text(b))));
 
   console.log('\n=== Group chatter lives in Saved, not a Pulse room ===');
-  await goto('Saved','Chats');
+  await goto('Saved','Groups','Chats');
   check('Groups are the user\'s own', /Your chats/i.test(body()));
   check('never claims to have joined a group', !/we joined|auto-joined|Brief joined/i.test(body()));
 

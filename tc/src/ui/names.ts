@@ -70,3 +70,44 @@ export const FILTERS = {
   service: 'Services',
   product: 'Products'
 } as const;
+
+// ---------------------------------------------------------------------------
+// BUNDLES
+//
+// Eighteen tools and eleven options were not eighteen or eleven decisions --
+// they were one list with no structure, so opening the desk meant scanning a
+// menu to find the thing you came for. Each bundle below is a package that
+// ships together: the tools you reach for in the same sitting.
+//
+// The section ids are unchanged and every one of them is still reachable, so
+// nothing was deleted to make the list shorter -- it was filed.
+// ---------------------------------------------------------------------------
+
+export const WORKFLOW_BUNDLES = [
+  { id: 'create', label: 'Create', hint: 'Write, review and publish',
+    sections: ['cockpit', 'inbox', 'tea', 'distribution', 'calendar', 'ai'] },
+  { id: 'sell', label: 'Sell', hint: 'Events, shelves and the money they make',
+    sections: ['campaigns', 'vendors', 'money', 'groupbuy'] },
+  { id: 'run', label: 'Run', hint: 'Operate what is already live',
+    sections: ['command', 'active', 'completed', 'matches', 'engine'] },
+  { id: 'records', label: 'Records', hint: 'What happened, attested',
+    sections: ['vault', 'gate', 'sources'] }
+] as const;
+
+export const SAVED_BUNDLES = [
+  { id: 'kept', label: 'Kept', hint: 'What you kept, and your own history',
+    sections: ['saved', 'activity', 'points', 'campaigns'] },
+  { id: 'groups', label: 'Groups', hint: 'Circles, chats and matches',
+    sections: ['circles', 'groups', 'arena'] },
+  { id: 'creator', label: 'Creator', hint: 'Your public side',
+    sections: ['mediakit', 'opportunities', 'messages', 'subscriptions'] }
+] as const;
+
+export type WorkflowBundleId = typeof WORKFLOW_BUNDLES[number]['id'];
+export type SavedBundleId = typeof SAVED_BUNDLES[number]['id'];
+
+/** The queue is the Inbox landing: the one list of everything waiting on you. */
+export const QUEUE_LABEL = 'Waiting on you';
+/** The chip label. Short because the page title above it already says the rest. */
+export const QUEUE_CHIP = 'Queue';
+export const QUEUE_HINT = 'Drafts to review, tasks you hold, orders to fill, doors to open';

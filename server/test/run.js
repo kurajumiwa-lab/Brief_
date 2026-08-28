@@ -19,6 +19,8 @@ import * as telegram from '../src/connectors/telegram.js';
 import * as web from '../src/connectors/web.js';
 import * as whatsapp from '../src/connectors/whatsapp.js';
 import crypto from 'node:crypto';
+import fsp from 'node:fs';
+import os from 'node:os';
 
 let pass = 0, fail = 0, skip = 0;
 const check = (name, cond, detail = '') => {
@@ -364,7 +366,11 @@ console.log('\n=== AUTHORITY (spec 32) ===');
   };
 
   try {
-    const c = (await call('/api/circles', 'POST', { name: 'Auth Circle', targetValue: 1000 })).body.circle;
+    // Created through the domain, not the route: the route now makes the
+    // creator its coordinator, and this attack needs a circle the caller has
+    // nothing to do with.
+    const circlesD = await import('../src/domain/circle.js');
+    const c = circlesD.createTargetCircle({ name: 'Auth Circle', targetValue: 1000 });
 
     // --- forging membership for another user ------------------------------
     let r = await call(`/api/circles/${c.id}/members`, 'POST', { userId: 'attacker_victim' });
@@ -393,7 +399,9 @@ console.log('\n=== AUTHORITY (spec 32) ===');
     check('still no numeric trust score', !('trustScore' in (r.body?.member ?? {})));
 
     // --- a circle the caller does NOT coordinate ---------------------------
-    const c2 = (await call('/api/circles', 'POST', { name: 'Second' })).body.circle;
+    // Likewise created outside the route so the caller is a joinER, not the
+    // coordinator -- the point of the two checks below.
+    const c2 = circlesD.createTargetCircle({ name: 'Second' });
     await call(`/api/circles/${c2.id}/members`, 'POST', { role: 'observer' });
 
     r = await call(`/api/circles/${c2.id}/members/usr_me/role`, 'PATCH', { role: 'coordinator' });
@@ -1444,7 +1452,8 @@ console.log('\n=== CIRCLE OPERATIONS: BLOCKS (spec F5) ===');
     store.update('members', myRow.id, { role: 'coordinator' });
 
     // --- non-member cannot operate at all ----------------------------------
-    const strangerCircle = (await call('/api/circles', 'POST', { name: 'Not Mine' })).body.circle;
+    const circlesOp = await import('../src/domain/circle.js');
+    const strangerCircle = circlesOp.createTargetCircle({ name: 'Not Mine' });
     store.insert('members', {
       id: 'memb_other', circleId: strangerCircle.id, userId: 'usr_someone_else',
       role: 'coordinator', verifications: [], joinedAt: new Date().toISOString()
@@ -3644,7 +3653,7 @@ console.log('\n=== FEATURE REGISTRY (§4.2) ===');
   // Default state: everything enabled; module features configured; provider
   // features NOT configured (no credentials in this run).
   check('every feature is enabled by default', features.list().every((f) => f.enabled));
-  check('the registry holds all registered features', features.list().length === 42, String(features.list().length));
+  check('the registry holds all registered features', features.list().length === 43, String(features.list().length));
   check('auth is available by default', features.available('auth') === true);
   check('arena is available by default', features.available('arena') === true);
   check('vaults is available by default', features.available('vaults') === true);
@@ -4894,6 +4903,10 @@ console.log('\n=== ENDPOINT AUTHORIZATION RULES, ENCODED EXPLICITLY ===');
       ['POST', '/api/connectors/telegram/sync', {}],
       ['POST', '/api/brief-it/preview', { text: 'something' }],
       ['POST', '/api/brief-it/save', { text: 'something' }],
+      // Found by audit, not by the original sweep: these three accepted an
+      // anonymous caller and wrote rows with no actor behind them.
+      ['POST', '/api/campaigns', { title: 'X' }],
+      ['POST', '/api/transactions', { amount: 1, currency: 'KES', type: 'contribution' }],
       ['POST', '/api/vendors', { displayName: 'X' }],
       ['POST', '/api/listings', { title: 'X', price: 1 }],
       ['POST', '/api/orders', { listingId: 'x' }],
@@ -6285,9 +6298,17 @@ console.log('\n=== FEDERATED SIGN-IN (Google + signed links) ===');
   check('a correctly signed token verifies', good.ok === true, good.reason ?? '');
   check('the email is normalised', good.ok && good.claims.email === 'wanjiru@example.com');
 
-  const tampered = mint(goodClaims).replace(/.$/, (c) => (c === 'A' ? 'B' : 'A'));
+  // Flip a character in the MIDDLE of the signature. The LAST character of a
+  // base64url signature carries padding bits: changing it can decode to the
+  // exact same bytes, so the "tampering" was a no-op and this assertion
+  // passed or failed depending on the random signature. It failed roughly one
+  // run in three, which is a security test that is not testing anything.
+  const parts = mint(goodClaims).split('.');
+  const mid = Math.floor(parts[2].length / 2);
+  parts[2] = parts[2].slice(0, mid) + (parts[2][mid] === 'A' ? 'B' : 'A') + parts[2].slice(mid + 1);
+  const tampered = parts.join('.');
   const bad = await federated.verifyGoogleIdToken(tampered);
-  check('a tampered signature is refused', bad.ok === false);
+  check('a tampered signature is refused', bad.ok === false, bad.ok ? 'it verified' : '');
 
   const wrongAud = await federated.verifyGoogleIdToken(mint({ ...goodClaims, aud: 'someone-else' }));
   check('a token minted for another app is refused', wrongAud.ok === false && wrongAud.reason === 'bad_audience');
@@ -6531,6 +6552,606 @@ console.log('\n=== LIGI: AFRICAN FANTASY FOOTBALL, AUTOMATED ===');
   check('the card asks for priority listing', view.game.priority === true);
   check('the overview carries both ladders', Array.isArray(view.table) && Array.isArray(view.streaks));
   void pool2;
+}
+
+console.log('\n=== MANUAL CAPTURE HONESTY + THREE UNGUARDED WRITES ===');
+{
+  // Dev fallback OFF. With it on, every anonymous request is silently the
+  // single dev user and none of these assertions would mean anything.
+  process.env.NODE_ENV = 'test';
+  const prevDev = process.env.BRIEF_DEV_AUTH;
+  process.env.BRIEF_DEV_AUTH = '0';
+  const { default: app } = await import('../src/index.js');
+  store._reset();
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, {
+      method, headers, body: body ? JSON.stringify(body) : undefined
+    });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+
+  try {
+    const u = Date.now().toString(36);
+    const me = (await call('/api/auth/register', 'POST', { handle: `mch_${u}`, password: 'a good passphrase' })).body;
+    const token = me.token;
+
+    // --- the three writes that accepted an anonymous caller -----------------
+    let r = await call('/api/campaigns', 'POST', { title: 'Anonymous campaign' });
+    check('creating a campaign requires an identity (401)', r.status === 401, `got ${r.status}`);
+
+    r = await call('/api/transactions', 'POST', { amount: 100, currency: 'KES', type: 'contribution' });
+    check('writing to the ledger requires an identity (401)', r.status === 401, `got ${r.status}`);
+
+    const tx = (await call('/api/transactions', 'POST', { amount: 100, currency: 'KES', type: 'contribution' }, token)).body.transaction;
+    check('an identified caller CAN record a transaction (201)', Boolean(tx?.id), JSON.stringify(tx ?? {}).slice(0, 120));
+    r = await call(`/api/transactions/${tx.id}/transition`, 'POST', { status: 'settled' });
+    check('moving money through states requires an identity (401)', r.status === 401, `got ${r.status}`);
+
+    const src = (await call('/api/sources', 'POST', { name: `Audit source ${u}`, type: 'manual' }, token)).body.source;
+    r = await call(`/api/sources/${src.id}/membership`, 'POST', { membershipStatus: 'owner' });
+    check('declaring a source membership requires an identity (401)', r.status === 401, `got ${r.status}`);
+
+    r = await call(`/api/sources/${src.id}/membership`, 'POST', { membershipStatus: 'owner', accessMethod: 'declared' }, token);
+    check('the caller declares their own membership (200)', r.status === 200, JSON.stringify(r.body).slice(0, 140));
+    check('the membership row is written for the CALLER, not a hard-coded user',
+      r.body?.membership?.userId === me.user.id, JSON.stringify(r.body?.membership).slice(0, 160));
+
+    r = await call('/api/sources', 'GET', undefined, token);
+    const listed = (r.body?.sources ?? []).find((s) => s.id === src.id);
+    check('the source list reports the CALLER\'s own membership',
+      listed?.membership?.userId === me.user.id, JSON.stringify(listed?.membership).slice(0, 160));
+
+    // --- a manual save the extractor refuses --------------------------------
+    const { extractFields } = await import('../src/pipeline/extract.js');
+    const chatter = `just some idle chatter ${u} with nothing in it`;
+    const earned = extractFields(chatter).confidence;
+
+    r = await call('/api/brief-it/save', 'POST', { text: chatter }, token);
+    check('an explicit save never loses the words the person typed', r.body?.result?.created === true, JSON.stringify(r.body).slice(0, 160));
+
+    const kept = store.find('objects', (o) => o.id === r.body?.result?.objectId);
+    check('the kept note claims exactly the confidence extraction earned, not a flattering constant',
+      kept?.extractionConfidence === earned, `claimed ${kept?.extractionConfidence} vs earned ${earned}`);
+    check('that confidence is below the number it used to assert', (kept?.extractionConfidence ?? 1) < 0.85,
+      `claimed ${kept?.extractionConfidence}`);
+    // Extraction did find a title -- that is a field, just not one of the
+    // signals that make text object-worthy. The evidence must say the note was
+    // kept as written and name the little that was found, not imply success.
+    check('the evidence states the note was kept as written, not extracted',
+      /manual capture, kept as written/.test(kept?.extractionEvidence ?? ''), kept?.extractionEvidence);
+    check('the evidence names the only field extraction found',
+      /title/.test(kept?.extractionEvidence ?? ''), kept?.extractionEvidence);
+    check('it is NOT published to the anonymous public feed',
+      kept?.publication === 'source_members', `publication=${kept?.publication}`);
+    check('fields it could not establish are named unknown rather than omitted',
+      Array.isArray(kept?.metadata?.unknownFields) && kept.metadata.unknownFields.includes('price'),
+      JSON.stringify(kept?.metadata).slice(0, 160));
+    check('the provenance row carries the same honest confidence',
+      store.find('objectSources', (os) => os.objectId === kept?.id)?.extractionConfidence === earned);
+
+    const feed = await call('/api/public/feed');
+    check('the public feed does not carry it', !JSON.stringify(feed.body ?? {}).includes(chatter));
+
+    // --- a capture with real signals is unaffected --------------------------
+    r = await call('/api/brief-it/save', 'POST',
+      { text: `Night market ${u} at Yaya Centre rooftop, Saturday 6pm - 10pm, entry KSh 200. Call 0722123456.` }, token);
+    const real = store.find('objects', (o) => o.id === r.body?.result?.objectId);
+    check('a capture with real signals still carries a real confidence',
+      (real?.extractionConfidence ?? 0) > 0, `confidence=${real?.extractionConfidence}`);
+  } finally {
+    srv.close();
+    if (prevDev === undefined) delete process.env.BRIEF_DEV_AUTH;
+    else process.env.BRIEF_DEV_AUTH = prevDev;
+  }
+}
+
+
+console.log('\n=== IMAGE UPLOADS: REAL FILES, NOT LINKS ===');
+{
+  process.env.NODE_ENV = 'test';
+  const prevDev = process.env.BRIEF_DEV_AUTH;
+  process.env.BRIEF_DEV_AUTH = '0';
+
+  // A throwaway directory: these tests write real bytes, and a passing run
+  // must not leave them behind or depend on a previous run's leftovers.
+  const dir = fsp.mkdtempSync(path.join(os.tmpdir(), 'brief-uploads-'));
+  const prevDir = process.env.BRIEF_UPLOAD_DIR;
+  process.env.BRIEF_UPLOAD_DIR = dir;
+
+  const upload = await import('../src/domain/upload.js');
+  const { default: app } = await import('../src/index.js');
+  store._reset();
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const base = `http://127.0.0.1:${port}`;
+
+  const call = async (p, m = 'GET', body, token) => {
+    const headers = {};
+    if (body && !(typeof FormData !== 'undefined' && body instanceof FormData)) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(base + p, { method: m, headers, body: body instanceof FormData ? body : (body ? JSON.stringify(body) : undefined) });
+    const type = res.headers.get('content-type') ?? '';
+    if (type.includes('image')) {
+      const buf = Buffer.from(await res.arrayBuffer());
+      return { status: res.status, body: null, type, bytes: buf, headers: res.headers };
+    }
+    return { status: res.status, body: await res.json().catch(() => null), headers: res.headers };
+  };
+
+  // One real 1x1 PNG, and the things people rename to look like one.
+  const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64');
+  const GIF = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
+  const WEBP = Buffer.from('UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==', 'base64');
+  const JPEG = Buffer.from('/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwcJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPDs0NDT/wAALCAABAAEBAREA/8QAFAABAQAAAAAAAAAAAAAAAAAAAAr/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFAEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAA/AJQA/9k=', 'base64');
+  const BMP = Buffer.concat([Buffer.from('BM'), Buffer.alloc(64, 1)]);
+  const SVG = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
+  const TEXT = Buffer.from('this is not an image, whatever the filename says');
+
+  const form = (buf, name, type) => {
+    const fd = new FormData();
+    fd.append('file', new Blob([buf], { type }), name);
+    return fd;
+  };
+
+  try {
+    const u = Date.now().toString(36);
+    const me = (await call('/api/auth/register', 'POST', { handle: `upl_${u}`, password: 'a good passphrase' })).body;
+    const stranger = (await call('/api/auth/register', 'POST', { handle: `upls_${u}`, password: 'a good passphrase' })).body;
+    const T = me.token;
+
+    let r = await call('/api/media/upload', 'POST', form(PNG, 'a.png', 'image/png'));
+    check('an anonymous upload is refused (401)', r.status === 401, `got ${r.status}`);
+
+    r = await call('/api/media/upload', 'POST', form(PNG, 'a.png', 'image/png'), T);
+    check('a real PNG is accepted (201)', r.status === 201, JSON.stringify(r.body).slice(0, 160));
+    const row = r.body?.upload;
+    check('the row records the size of what was stored', row?.bytes === PNG.length, `${row?.bytes} vs ${PNG.length}`);
+    check('the row records a sha256 of the bytes', /^[0-9a-f]{64}$/.test(row?.sha256 ?? ''), row?.sha256);
+    check('the type is what the BYTES are, not what the caller claimed', row?.mimeType === 'image/png', row?.mimeType);
+    check('the url is served by Brief, not an external host', row?.url === `/api/media/file/${row?.id}`, row?.url);
+    check('the bytes landed in the upload directory', fsp.existsSync(path.join(dir, `${row?.id}.png`)), path.join(dir, `${row?.id}.png`));
+
+    r = await call(`/api/media/file/${row.id}`);
+    check('the file is readable WITHOUT a session (public stories render)', r.status === 200, `got ${r.status}`);
+    check('it comes back byte for byte', Buffer.compare(r.bytes, PNG) === 0, `${r.bytes?.length} bytes`);
+    check('it is served as its real image type', r.headers.get('content-type') === 'image/png', r.headers.get('content-type'));
+    check('it cannot be sniffed into something else', r.headers.get('x-content-type-options') === 'nosniff');
+    check('it cannot run anything', (r.headers.get('content-security-policy') ?? '').includes("default-src 'none'"));
+
+    check('GIF is accepted', (await call('/api/media/upload', 'POST', form(GIF, 'a.gif', 'image/gif'), T)).status === 201);
+    check('WebP is accepted', (await call('/api/media/upload', 'POST', form(WEBP, 'a.webp', 'image/webp'), T)).status === 201);
+    check('JPEG is accepted', (await call('/api/media/upload', 'POST', form(JPEG, 'a.jpg', 'image/jpeg'), T)).status === 201);
+
+    // The whole point of sniffing: a name and a declared type prove nothing.
+    r = await call('/api/media/upload', 'POST', form(TEXT, 'innocent.png', 'image/png'), T);
+    check('a text file named .png is refused (415)', r.status === 415, `got ${r.status}`);
+    check('the refusal names the formats that are accepted', Array.isArray(r.body?.allowed), JSON.stringify(r.body).slice(0, 140));
+    check('an SVG is refused — it is a document that can carry script',
+      (await call('/api/media/upload', 'POST', form(SVG, 'x.svg', 'image/svg+xml'), T)).status === 415);
+    check('a BMP is refused (not a format Brief serves)',
+      (await call('/api/media/upload', 'POST', form(BMP, 'x.bmp', 'image/bmp'), T)).status === 415);
+    check('an empty file is refused (400)',
+      (await call('/api/media/upload', 'POST', form(Buffer.alloc(0), 'x.png', 'image/png'), T)).status === 400);
+    check('a file over the limit is refused (413)',
+      (await call('/api/media/upload', 'POST', form(Buffer.alloc(9 * 1024 * 1024, 1), 'big.png', 'image/png'), T)).status === 413);
+    check('nothing was written for a refused upload',
+      store.all('uploads').length === 4, `${store.all('uploads').length} rows`);
+
+    // An image is content, not an event: the same bytes are the same asset.
+    const again = await call('/api/media/upload', 'POST', form(PNG, 'again.png', 'image/png'), T);
+    check('the same bytes twice is the same asset, not a second copy',
+      again.body?.upload?.id === row.id && again.body?.duplicate === true, JSON.stringify(again.body).slice(0, 140));
+
+    r = await call('/api/media/mine', 'GET', undefined, T);
+    check('your own uploads are listed', Array.isArray(r.body?.uploads) && r.body.uploads.length === 4, `${r.body?.uploads?.length}`);
+
+    check('a stranger cannot delete your upload (404)',
+      (await call(`/api/media/${row.id}`, 'DELETE', undefined, stranger.token)).status === 404);
+
+    // The disk is not durable. When the bytes are gone, say so rather than
+    // serving a broken image that looks like the editor's mistake.
+    fsp.unlinkSync(path.join(dir, `${row.id}.png`));
+    r = await call(`/api/media/file/${row.id}`);
+    check('bytes that are gone are reported, not faked (404)', r.status === 404, `got ${r.status}`);
+    check('and the reason says the disk no longer holds them', /no longer holds/i.test(r.body?.error ?? ''), r.body?.error);
+
+    const status = (await call('/api/media/status', 'GET', undefined, T)).body;
+    check('the deployment admits uploads are on local disk', status?.uploads?.kind === 'local_disk', JSON.stringify(status?.uploads).slice(0, 120));
+    check('and admits they are NOT durable across a redeploy', status?.uploads?.persisted === false);
+    check('and reports how many are missing their bytes', status?.uploads?.missingBytes === 1, `${status?.uploads?.missingBytes}`);
+
+    check('the owner removes their upload', (await call(`/api/media/${row.id}`, 'DELETE', undefined, T)).status === 200);
+    check('and the row goes with it', store.find('uploads', (x) => x.id === row.id) === null);
+    check('sniffing is a pure function of the bytes',
+      upload.sniffImageType(PNG) === 'image/png' && upload.sniffImageType(TEXT) === null);
+  } finally {
+    srv.close();
+    try { fsp.rmSync(dir, { recursive: true, force: true }); } catch {}
+    if (prevDir === undefined) delete process.env.BRIEF_UPLOAD_DIR;
+    else process.env.BRIEF_UPLOAD_DIR = prevDir;
+    if (prevDev === undefined) delete process.env.BRIEF_DEV_AUTH;
+    else process.env.BRIEF_DEV_AUTH = prevDev;
+  }
+}
+
+
+// ---------------------------------------------------------------------------
+// THE WAITING-ON-YOU QUEUE
+//
+// One question, answered once: what is actually blocked on ME right now. The
+// queue is derived, per-caller, and refuses to invent work -- an empty queue
+// is an empty list, not a set of suggestions.
+// ---------------------------------------------------------------------------
+console.log('\n=== THE WAITING-ON-YOU QUEUE ===');
+{
+  store._reset();
+  const { default: app } = await import('../src/index.js');
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+
+  try {
+    const A = await call('/api/auth/register', 'POST', { handle: 'queue_owner', password: 'a good passphrase', displayName: 'Owner' });
+    const B = await call('/api/auth/register', 'POST', { handle: 'queue_other', password: 'another good passphrase', displayName: 'Other' });
+    const TA = A.body.token, TB = B.body.token, idA = A.body.user.id, idB = B.body.user.id;
+
+    // --- nothing waiting is reported as nothing waiting ----------------------
+    let q = await call('/api/triage', 'GET', undefined, TA);
+    check('an empty queue is empty, not filled with suggestions',
+      q.status === 200 && q.body.items.length === 0 && q.body.total === 0, JSON.stringify(q.body).slice(0, 120));
+    check('the queue is the CALLER\'s, not everybody\'s', q.body.viewer === idA);
+    check('the window it looks ahead is stated', q.body.withinHours === 48);
+    // With the development fallback off, "anonymous" means nobody at all, so
+    // this is the production answer rather than a fallback identity.
+    const prevDev = process.env.BRIEF_DEV_AUTH;
+    process.env.BRIEF_DEV_AUTH = '0';
+    check('an anonymous caller has no queue at all (401)', (await call('/api/triage')).status === 401);
+    process.env.BRIEF_DEV_AUTH = prevDev ?? '';
+
+    // --- a circle task I hold ------------------------------------------------
+    const circlesD = await import('../src/domain/circle.js');
+    const blocksD = await import('../src/domain/block.js');
+    const membersD = await import('../src/domain/member.js');
+
+    const circle = circlesD.createTargetCircle({ name: 'Queue Ops' });
+    membersD.addMember(circle.id, idA, 'coordinator');
+    membersD.addMember(circle.id, idB, 'contributor');
+    const mine = blocksD.createBlock({ circleId: circle.id, type: 'task', content: 'Confirm the venue\nAsk about parking' });
+    const theirs = blocksD.createBlock({ circleId: circle.id, type: 'task', content: 'Book the van' });
+
+    // Unassigned work belongs to the circle, not to one person: it must NOT
+    // chase an individual here.
+    q = await call('/api/triage', 'GET', undefined, TA);
+    check('work nobody holds does not chase an individual',
+      q.body.items.filter((i) => i.kind === 'task').length === 0, `${q.body.counts.task}`);
+
+    blocksD.assignTask(mine.id, idA);
+    blocksD.assignTask(theirs.id, idB);
+
+    q = await call('/api/triage', 'GET', undefined, TA);
+    let task = q.body.items.find((i) => i.kind === 'task');
+    check('a task you hold appears in the queue', Boolean(task) && task.id === mine.id);
+    check('the queue counts it', q.body.counts.task === 1, `${q.body.counts.task}`);
+    check('it names the circle it belongs to', task.circleName === 'Queue Ops', task?.circleName);
+    check('it shows a title, not a blob', task.title === 'Confirm the venue', task?.title);
+    check('it offers exactly the actions the caller may take',
+      JSON.stringify(task.actions) === JSON.stringify(['complete', 'release']), JSON.stringify(task?.actions));
+
+    q = await call('/api/triage', 'GET', undefined, TB);
+    check('someone else\'s task is not in my queue',
+      q.body.items.filter((i) => i.kind === 'task').every((i) => i.id === theirs.id),
+      JSON.stringify(q.body.items.map((i) => i.id)));
+
+    // Finishing the work takes it off the queue -- derived, not dismissed.
+    blocksD.completeTask(mine.id, idA);
+    q = await call('/api/triage', 'GET', undefined, TA);
+    check('a completed task leaves the queue',
+      q.body.items.filter((i) => i.kind === 'task').length === 0);
+
+    // --- an order on my shelf ------------------------------------------------
+    const vendors = await import('../src/domain/vendor.js');
+    const listings = await import('../src/domain/listing.js');
+    const orders = await import('../src/domain/order.js');
+
+    const vendor = vendors.createVendor({ ownerId: idA, displayName: 'Queue Foods' });
+    const listing = listings.createListing({ vendorId: vendor.id, title: 'Roasted maize', price: 100, type: 'product' });
+    listings.transitionListing(listing.id, 'active');
+    const order = orders.createOrder({ listingId: listing.id, buyerId: idB, quantity: 2 });
+
+    q = await call('/api/triage', 'GET', undefined, TA);
+    const ord = q.body.items.find((i) => i.kind === 'order');
+    check('an order waiting on the vendor is in the queue', Boolean(ord) && ord.id === order.id);
+    check('it names what was ordered', /maize/.test(ord?.title ?? ''), ord?.title);
+    check('it names the next real step, not a generic button', ord?.nextStatus === 'accepted', ord?.nextStatus);
+    check('the buyer does not see the vendor\'s obligation',
+      (await call('/api/triage', 'GET', undefined, TB)).body.items.filter((i) => i.kind === 'order').length === 0);
+
+    orders.transitionOrder(order.id, 'fulfilled');
+    q = await call('/api/triage', 'GET', undefined, TA);
+    check('a fulfilled order leaves the queue',
+      q.body.items.filter((i) => i.kind === 'order').length === 0);
+
+    // --- an event I am running ----------------------------------------------
+    const campaigns = await import('../src/domain/campaign.js');
+    const camp = campaigns.createCampaign(idA, {
+      title: 'Sunrise run', type: 'session', price: 0,
+      startsAt: new Date(Date.now() + 3600_000).toISOString()
+    });
+    campaigns.transitionCampaign(camp.id, 'published');
+    campaigns.register(campaigns.getCampaign(camp.id), { attendeeRef: 'runner-1' });
+
+    q = await call('/api/triage', 'GET', undefined, TA);
+    const ci = q.body.items.find((i) => i.kind === 'checkin');
+    check('an event starting soon is in the queue', Boolean(ci) && ci.campaignId === camp.id);
+    check('it counts the people still to check in', ci?.pending === 1, `${ci?.pending}`);
+    check('it counts nobody as checked in before they are', ci?.checkedIn === 0, `${ci?.checkedIn}`);
+    check('time-boxed work floats to the top', q.body.items[0].kind === 'checkin', q.body.items[0]?.kind);
+
+    // A campaign that is still a draft has nobody to check in.
+    const draftCamp = campaigns.createCampaign(idA, { title: 'Later', type: 'session', price: 0, startsAt: new Date().toISOString() });
+    check('an unpublished event is not in the queue',
+      (await call('/api/triage', 'GET', undefined, TA)).body.items.every((i) => i.campaignId !== draftCamp.id));
+
+    // --- a message awaiting review -------------------------------------------
+    store.insert('sources', { id: 'src_queue', name: 'Kilimani WhatsApp', type: 'whatsapp', createdAt: new Date().toISOString() });
+    store.insert('rawItems', {
+      id: 'raw_queue', sourceId: 'src_queue', externalId: 'e1', author: 'Wanjiku',
+      text: 'Power is back on Ngong Road', processingStatus: 'pending', receivedAt: new Date().toISOString()
+    });
+
+    q = await call('/api/triage', 'GET', undefined, TA);
+    const draft = q.body.items.find((i) => i.kind === 'draft');
+    check('an unread inbound message is in the queue', Boolean(draft) && draft.id === 'raw_queue');
+    check('it says where it came from', draft?.sourceName === 'Kilimani WhatsApp', draft?.sourceName);
+    check('reviewing is the only action offered (no silent publishing)',
+      JSON.stringify(draft?.actions) === JSON.stringify(['review']), JSON.stringify(draft?.actions));
+
+    store.update('rawItems', 'raw_queue', { processingStatus: 'published' });
+    q = await call('/api/triage', 'GET', undefined, TA);
+    check('a processed message leaves the queue',
+      q.body.items.filter((i) => i.kind === 'draft').length === 0);
+
+    // --- the whole point: one list, everything in it --------------------------
+    q = await call('/api/triage', 'GET', undefined, TA);
+    check('the queue holds every kind of waiting work at once',
+      q.body.items.length > 0 && ['task', 'order', 'checkin', 'draft'].every((k) => k in q.body.counts),
+      JSON.stringify(q.body.counts));
+    check('the total matches the list', q.body.total === q.body.items.length);
+  } finally {
+    srv.close();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// THE CIRCLE LOOP: BROWSE, JOIN, LEAVE
+//
+// The list claimed you were part of circles you had never joined, and there
+// was no way in -- or out. Each step of the loop is proven here, including
+// the refusals, because a loop that only works for the happy path is still
+// broken for the person who hits the refusal.
+// ---------------------------------------------------------------------------
+console.log('\n=== THE CIRCLE LOOP: JOIN AND LEAVE ===');
+{
+  const prevDev = process.env.BRIEF_DEV_AUTH;
+  store._reset();
+  const { default: app } = await import('../src/index.js');
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+
+  try {
+    const A = await call('/api/auth/register', 'POST', { handle: 'joiner', password: 'a good passphrase', displayName: 'Joiner' });
+    const B = await call('/api/auth/register', 'POST', { handle: 'host', password: 'another good passphrase', displayName: 'Host' });
+    const TA = A.body.token, TB = B.body.token, idA = A.body.user.id, idB = B.body.user.id;
+
+    // --- the loop starts: creating a circle puts you IN it -------------------
+    let r = await call('/api/circles', 'POST', { name: 'Ngong Trail Crew' }, TA);
+    check('creating a circle succeeds', r.status === 201, JSON.stringify(r.body).slice(0, 120));
+    const created = r.body.circle;
+    check('the creator is IN the circle they made', r.body.circle.viewerRole === 'coordinator', `${r.body.circle.viewerRole}`);
+    check('and the membership row exists', r.body.membership?.userId === idA && r.body.membership?.role === 'coordinator');
+    check('the circle counts its first member', created.memberCount === 1, `${created.memberCount}`);
+
+    // --- the list tells the truth about membership ---------------------------
+    const other = (await call('/api/circles', 'POST', { name: 'Kilimani Traders' }, TB)).body.circle;
+    let list = (await call('/api/circles', 'GET', undefined, TA)).body.circles;
+    const mineRow = list.find((c) => c.id === created.id);
+    const notMine = list.find((c) => c.id === other.id);
+    check('a circle I am in reports my role', mineRow.viewerRole === 'coordinator' && mineRow.isMember === true);
+    check('a circle I am NOT in says so', notMine.viewerRole === null && notMine.isMember === false);
+    check('and says whether I may join it', typeof notMine.canJoin === 'boolean', `${notMine.canJoin}`);
+
+    // --- joining an open circle ----------------------------------------------
+    store.update('circles', other.id, { visibility: 'open' });
+    r = await call(`/api/circles/${other.id}/members`, 'POST', {}, TA);
+    check('an open circle can be joined', r.status === 201, `got ${r.status} ${JSON.stringify(r.body).slice(0, 120)}`);
+    check('the membership is the caller\'s, not a body-supplied id', r.body.member?.userId === idA);
+    check('a joiner is a contributor, not a coordinator', r.body.member?.role === 'contributor', r.body.member?.role);
+
+    r = await call(`/api/circles/${other.id}/members`, 'POST', {}, TA);
+    check('joining twice does not create a second membership', r.status === 201);
+    check('there is still exactly one row for this member',
+      store.filter('members', (m) => m.circleId === other.id && m.userId === idA).length === 1);
+
+    list = (await call('/api/circles', 'GET', undefined, TA)).body.circles;
+    check('the list now shows me as a member of the joined circle',
+      list.find((c) => c.id === other.id).isMember === true);
+
+    // --- an invite-only circle refuses a stranger ----------------------------
+    const closed = (await call('/api/circles', 'POST', { name: 'Closed Crew' }, TB)).body.circle;
+    r = await call(`/api/circles/${closed.id}/members`, 'POST', {}, TA);
+    check('an invite-only circle refuses a self-join', r.status === 403, `got ${r.status}`);
+    check('the refusal says why', /invite only/i.test(r.body?.error ?? ''), r.body?.error);
+    check('no membership row was written',
+      store.filter('members', (m) => m.circleId === closed.id && m.userId === idA).length === 0);
+
+    // --- joining needs an identity -------------------------------------------
+    // With the development fallback off, "anonymous" genuinely means nobody.
+    process.env.BRIEF_DEV_AUTH = '0';
+    r = await call(`/api/circles/${other.id}/members`, 'POST', {});
+    check('an anonymous join is refused (401)', r.status === 401, `got ${r.status}`);
+    check('no anonymous membership row exists',
+      store.all('members').every((m) => m.userId !== null));
+    r = await call('/api/circles', 'POST', { name: 'Nobody\'s Circle' });
+    check('an anonymous circle creation is refused (401)', r.status === 401, `got ${r.status}`);
+    process.env.BRIEF_DEV_AUTH = prevDev ?? '';
+
+    // --- leaving --------------------------------------------------------------
+    r = await call(`/api/circles/${other.id}/members/me`, 'DELETE', undefined, TA);
+    check('you can leave a circle', r.status === 200 && r.body.left === true, JSON.stringify(r.body).slice(0, 120));
+    check('the membership row is gone',
+      store.filter('members', (m) => m.circleId === other.id && m.userId === idA).length === 0);
+    list = (await call('/api/circles', 'GET', undefined, TA)).body.circles;
+    check('the list stops claiming I am a member', list.find((c) => c.id === other.id).isMember === false);
+
+    r = await call(`/api/circles/${other.id}/members/me`, 'DELETE', undefined, TA);
+    check('leaving twice is reported, not invented', r.status === 404, `got ${r.status}`);
+    check('the refusal says I am not a member', /not a member/i.test(r.body?.error ?? ''), r.body?.error);
+
+    // Leaving does not rewrite history: work and money stay put.
+    const blocksD = await import('../src/domain/block.js');
+    await call(`/api/circles/${other.id}/members`, 'POST', {}, TA);
+    const t = blocksD.createBlock({ circleId: other.id, type: 'task', content: 'Carry water' });
+    blocksD.assignTask(t.id, idA);
+    await call(`/api/circles/${other.id}/members/me`, 'DELETE', undefined, TA);
+    check('leaving does not delete the work I was doing', Boolean(store.find('blocks', (b) => b.id === t.id)));
+
+    // --- removing somebody else is an act of authority ------------------------
+    // `other` is TB's circle (open), so TA can join it as a plain member.
+    await call(`/api/circles/${other.id}/members`, 'POST', {}, TA);
+    r = await call(`/api/circles/${other.id}/members/${idB}`, 'DELETE', undefined, TA);
+    check('a plain member cannot remove somebody else', r.status === 403, `got ${r.status}`);
+    check('the refusal names the missing authority', /coordinator/.test(r.body?.error ?? ''), r.body?.error);
+    r = await call(`/api/circles/${other.id}/members/${idA}`, 'DELETE', undefined, TB);
+    check('the coordinator can remove a member', r.status === 200, `got ${r.status}`);
+    check('and they are gone', store.filter('members', (m) => m.circleId === other.id && m.userId === idA).length === 0);
+    check('removing yourself goes through the leave route, not the removal one',
+      (await call(`/api/circles/${created.id}/members/${idA}`, 'DELETE', undefined, TA)).status === 400);
+
+    // Leaving is recorded as evidence, like joining.
+    check('leaving emits a signal, so the circle shows arrivals AND departures',
+      store.filter('signals', (s) => s.type === 'member_left').length >= 1);
+  } finally {
+    if (prevDev === undefined) delete process.env.BRIEF_DEV_AUTH;
+    else process.env.BRIEF_DEV_AUTH = prevDev;
+    srv.close();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// SUBSCRIPTIONS: THE FOLLOWER'S HALF
+//
+// A creator could publish a plan and even bill themselves for it, but nobody
+// could ever join it. This is the missing half, plus the honesty fix: the
+// count is derived from real rows instead of a stored zero.
+// ---------------------------------------------------------------------------
+console.log('\n=== SUBSCRIPTIONS: JOINING A PLAN ===');
+{
+  store._reset();
+  const { default: app } = await import('../src/index.js');
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+
+  try {
+    const A = await call('/api/auth/register', 'POST', { handle: 'plan_owner', password: 'a good passphrase', displayName: 'Creator' });
+    const B = await call('/api/auth/register', 'POST', { handle: 'supporter', password: 'another good passphrase', displayName: 'Supporter' });
+    const TA = A.body.token, TB = B.body.token;
+
+    // --- the creator publishes a plan ----------------------------------------
+    let r = await call('/api/subscriptions', 'POST', { title: 'Trail Club', price: 500, interval: 'monthly' }, TA);
+    check('a creator can publish a plan', r.status === 201, JSON.stringify(r.body).slice(0, 120));
+    const plan = r.body.subscription;
+
+    // The old route handed every plan in the deployment to an anonymous
+    // caller. Discovery is now explicit, and "my plans" is private.
+    const prevDev2 = process.env.BRIEF_DEV_AUTH;
+    process.env.BRIEF_DEV_AUTH = '0';
+    check('an anonymous caller cannot list my plans (401)', (await call('/api/subscriptions')).status === 401);
+    process.env.BRIEF_DEV_AUTH = prevDev2 ?? '';
+
+    r = await call('/api/subscriptions', 'GET', undefined, TB);
+    check('another member\'s default list is their own, not mine', r.body.subscriptions.length === 0, `${r.body.subscriptions.length}`);
+
+    r = await call('/api/subscriptions?browse=1', 'GET', undefined, TB);
+    check('a supporter can browse public plans', r.body.subscriptions.length === 1, JSON.stringify(r.body).slice(0, 120));
+    check('and is told they are not subscribed', r.body.subscriptions[0].viewerIsSubscriber === false);
+
+    check('a plan starts with zero subscribers, derived not asserted',
+      r.body.subscriptions[0].subscriberCount === 0, `${r.body.subscriptions[0].subscriberCount}`);
+
+    // --- joining ---------------------------------------------------------------
+    process.env.BRIEF_DEV_AUTH = '0';
+    check('an anonymous join is refused (401)', (await call(`/api/subscriptions/${plan.id}/subscribe`, 'POST', {})).status === 401);
+    process.env.BRIEF_DEV_AUTH = prevDev2 ?? '';
+    check('and no membership row was written for nobody',
+      store.all('subscribers').every((s) => s.memberId !== null));
+
+    r = await call(`/api/subscriptions/${plan.id}/subscribe`, 'POST', {}, TB);
+    check('a supporter can join a plan', r.status === 201, JSON.stringify(r.body).slice(0, 160));
+    check('the membership row is real', r.body.subscriber?.memberId === B.body.user.id);
+    check('THE MONEY IS NOT COLLECTED and said so', r.body.charged === false && /not charged/i.test(r.body.note ?? ''), r.body?.note);
+    check('the cycle is recorded as a ledger transaction that has NOT settled',
+      r.body.transaction?.type === 'subscription' && r.body.transaction?.status !== 'settled',
+      JSON.stringify(r.body.transaction).slice(0, 160));
+
+    r = await call(`/api/subscriptions/${plan.id}/subscribe`, 'POST', {}, TB);
+    check('joining twice is idempotent, not a second membership', r.status === 200 && r.body.duplicate === true);
+    check('and the count does not double',
+      store.filter('subscribers', (s) => s.subscriptionId === plan.id).length === 1);
+
+    r = await call('/api/subscriptions?browse=1', 'GET', undefined, TB);
+    check('the count is derived from real rows', r.body.subscriptions[0].subscriberCount === 1, `${r.body.subscriptions[0].subscriberCount}`);
+    check('and the supporter is told they are subscribed', r.body.subscriptions[0].viewerIsSubscriber === true);
+
+    // --- who is subscribed is the creator's business ---------------------------
+    check('a supporter cannot read the member list (403)',
+      (await call(`/api/subscriptions/${plan.id}/subscribers`, 'GET', undefined, TB)).status === 403);
+    r = await call(`/api/subscriptions/${plan.id}/subscribers`, 'GET', undefined, TA);
+    check('the creator can see who is subscribed', r.status === 200 && r.body.subscribers.length === 1);
+
+    // --- a paused plan is not joinable -----------------------------------------
+    await call(`/api/subscriptions/${plan.id}/pause`, 'POST', {}, TA);
+    r = await call(`/api/subscriptions/${plan.id}/subscribe`, 'POST', {}, TB);
+    check('a paused plan cannot be joined', r.status === 400, `got ${r.status}`);
+
+    // --- leaving ----------------------------------------------------------------
+    await call(`/api/subscriptions/${plan.id}/resume`, 'POST', {}, TA);
+    r = await call(`/api/subscriptions/${plan.id}/unsubscribe`, 'POST', {}, TB);
+    check('a supporter can leave a plan', r.status === 200 && r.body.changed === true, JSON.stringify(r.body).slice(0, 120));
+    check('the count drops because the status changed',
+      (await call('/api/subscriptions?browse=1', 'GET', undefined, TB)).body.subscriptions[0].subscriberCount === 0);
+    check('but the fact that they were a member is not erased',
+      store.all('subscribers').length === 1 && store.all('subscribers')[0].endedAt !== null);
+    const again = await call(`/api/subscriptions/${plan.id}/unsubscribe`, 'POST', {}, TB);
+    check('leaving twice is a no-op, not a second cancellation',
+      again.status === 200 && again.body.changed === false, JSON.stringify(again.body).slice(0, 120));
+  } finally {
+    srv.close();
+  }
 }
 
 console.log(`\n${'='.repeat(52)}\nPASSED ${pass}   FAILED ${fail}   SKIPPED ${skip}\n${'='.repeat(52)}`);

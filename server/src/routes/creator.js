@@ -110,9 +110,76 @@ export function register(app) {
 
   // --- Subscriptions ----------------------------------------------------------
 
+  // Plans are read in three shapes, and each is explicit rather than guessed
+  // from an unauthenticated caller:
+  //   (no query, signed in) MY plans
+  //   ?creator=<id>          one creator's public plans (discovery)
+  //   ?browse=1              every public plan, minus my own
+  // An anonymous caller gets discovery only -- the old route returned every
+  // plan in the deployment to anyone, which was a leak that happened to look
+  // like a feature.
   app.get('/api/subscriptions', (req, res) => {
     const me = callerId(req);
-    res.json({ subscriptions: subscription.listSubscriptions({ creatorId: me ?? undefined }) });
+
+    if (req.query.creator) {
+      return res.json({
+        subscriptions: subscription.listSubscriptions({ creatorId: String(req.query.creator), viewerId: me })
+      });
+    }
+
+    if (req.query.browse) {
+      const all = subscription.listSubscriptions({ viewerId: me })
+        .filter((s) => s.creatorId !== me)
+        .filter((s) => s.status === 'active');
+      return res.json({ subscriptions: all });
+    }
+
+    if (!me) return res.status(401).json({ error: 'authentication required' });
+    res.json({ subscriptions: subscription.listSubscriptions({ creatorId: me, viewerId: me }) });
+  });
+
+  // JOIN A PLAN. This is the follower's half of the loop: the creator can
+  // publish a plan, and this is how anybody else actually supports it.
+  app.post('/api/subscriptions/:id/subscribe', (req, res) => {
+    const me = requireAuth(req, res);
+    if (!me) return;
+    try {
+      const result = subscription.subscribe(req.params.id, me);
+      // 201 on a new membership, 200 when the caller was already a member --
+      // a duplicate must not look like a fresh commitment.
+      res.status(result.duplicate ? 200 : 201).json({
+        ...result,
+        charged: false,
+        note: result.duplicate
+          ? 'You are already a member of this plan.'
+          : 'Membership recorded. No payment provider is connected, so this cycle is recorded, not charged.'
+      });
+    } catch (e) {
+      res.status(400).json({ error: String(e.message ?? e) });
+    }
+  });
+
+  app.post('/api/subscriptions/:id/unsubscribe', (req, res) => {
+    const me = requireAuth(req, res);
+    if (!me) return;
+    try {
+      res.json(subscription.unsubscribe(req.params.id, me));
+    } catch (e) {
+      res.status(400).json({ error: String(e.message ?? e) });
+    }
+  });
+
+  // Who is subscribed. Creator-only for their own plan: a member list is not
+  // public data.
+  app.get('/api/subscriptions/:id/subscribers', (req, res) => {
+    const me = requireAuth(req, res);
+    if (!me) return;
+    const sub = subscription.getSubscription(req.params.id);
+    if (!sub) return res.status(404).json({ error: 'subscription not found' });
+    if (sub.creatorId !== me) {
+      return res.status(403).json({ error: 'only the creator may see who is subscribed' });
+    }
+    res.json({ subscribers: subscription.listSubscribers({ subscriptionId: sub.id }) });
   });
 
   app.post('/api/subscriptions', (req, res) => {

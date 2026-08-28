@@ -19,14 +19,18 @@ app.use('/api/signals', requireFeature('circles'));
 // ---------------------------------------------------------------------------
 
 
-app.get('/api/circles', (_req, res) => {
-  res.json({ circles: circles.listCircles() });
+app.get('/api/circles', (req, res) => {
+  // The viewer is passed so each row can say whether THEY are a member.
+  // An anonymous caller still gets the list (circles are public), but every
+  // row reports viewerRole: null -- the list never implies a membership the
+  // caller does not have.
+  res.json({ circles: circles.listCircles(callerId(req)) });
 });
 
 
 
 app.get('/api/circles/:id', (req, res) => {
-  const circle = circles.getCircle(req.params.id);
+  const circle = circles.getCircle(req.params.id, callerId(req));
   if (!circle) return res.status(404).json({ error: 'circle not found' });
   res.json({
     circle,
@@ -38,13 +42,24 @@ app.get('/api/circles/:id', (req, res) => {
 
 
 app.post('/api/circles', (req, res) => {
+  // Creating a circle is a durable act with an owner, so it needs an identity.
+  // Previously an anonymous POST succeeded and produced a circle that belonged
+  // to nobody and could never be administered.
+  const me = requireAuth(req, res);
+  if (!me) return;
+
   const { name, description, goal, targetValue, deadline, completionCriteria, sourceId } = req.body ?? {};
   try {
     // Deriving from a source keeps the provenance chain intact.
     if (sourceId) {
       const c = circles.findOrCreateCircleFromSource(sourceId, { name, description });
-      signals.emitSignal({ type: 'circle_created', circleId: c.id, sourceId, actorId: callerId(req) });
-      return res.status(201).json({ circle: c });
+      // The creator joins their own circle. Without this the loop broke at the
+      // first step: you could create a circle and then be told you were not a
+      // member of it, with no way in except an invitation from a coordinator
+      // who did not exist.
+      const membership = members.addMember(c.id, me, 'coordinator');
+      signals.emitSignal({ type: 'circle_created', circleId: c.id, sourceId, actorId: me });
+      return res.status(201).json({ circle: circles.getCircle(c.id, me), membership });
     }
     const c = circles.createTargetCircle({
       name, description, goal,
@@ -52,8 +67,9 @@ app.post('/api/circles', (req, res) => {
         ? null : Number(targetValue),
       deadline, completionCriteria
     });
-    signals.emitSignal({ type: 'circle_created', circleId: c.id, actorId: callerId(req) });
-    res.status(201).json({ circle: c });
+    const membership = members.addMember(c.id, me, 'coordinator');
+    signals.emitSignal({ type: 'circle_created', circleId: c.id, actorId: me });
+    res.status(201).json({ circle: circles.getCircle(c.id, me), membership });
   } catch (e) {
     res.status(400).json({ error: String(e.message ?? e) });
   }
@@ -89,7 +105,16 @@ app.get('/api/circles/:id/members', (req, res) => {
 // caller. Adding somebody else requires coordinator authority on that circle.
 
 app.post('/api/circles/:id/members', (req, res) => {
-  const me = callerId(req);
+  // JOINING REQUIRES AN IDENTITY.
+  //
+  // An anonymous self-join used to be accepted and stored a membership row
+  // with userId: null. That row is not a member: it cannot be listed as one,
+  // cannot be counted, and two anonymous joins collapse into a single null
+  // row that then blocks the real join (addMember returns the first match).
+  // Requiring auth is the fix -- a membership must belong to somebody.
+  const me = requireAuth(req, res);
+  if (!me) return;
+
   const requested = req.body?.userId;
 
   // Naming a different user is an act of authority, not a self-join.
@@ -130,6 +155,54 @@ app.post('/api/circles/:id/members', (req, res) => {
   } catch (e) {
     res.status(400).json({ error: String(e.message ?? e) });
   }
+});
+
+
+// LEAVE A CIRCLE.
+//
+// The join loop had no exit. A user could be added -- or could self-join an
+// open circle -- and then had no way to stop being a member short of asking a
+// coordinator to delete a row nobody could reach. Leaving is self-service and
+// scoped: you may always remove YOUR OWN membership.
+//
+// Removing SOMEBODY ELSE is a different act and stays coordinator-only, on the
+// same authority check as every other member mutation here.
+
+app.delete('/api/circles/:id/members/me', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+
+  const circle = circles.getCircle(req.params.id);
+  if (!circle) return res.status(404).json({ error: 'circle not found' });
+
+  const { left, reason } = members.removeMember(req.params.id, me);
+  if (!left) return res.status(404).json({ error: reason ?? 'you are not a member of this circle' });
+
+  signals.emitSignal({ type: 'member_left', circleId: req.params.id, actorId: me });
+  res.json({ left: true, circleId: req.params.id, userId: me });
+});
+
+
+app.delete('/api/circles/:id/members/:userId', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+
+  const target = req.params.userId;
+  // Removing yourself is the /members/me route above. Reaching it here would
+  // mean the authority check had been applied to a self-service action.
+  if (target === me) {
+    return res.status(400).json({ error: 'use DELETE /api/circles/:id/members/me to leave' });
+  }
+
+  if (!isCoordinator(store, req, req.params.id)) {
+    return res.status(403).json({ error: 'only a coordinator may remove another member' });
+  }
+
+  const { left, reason } = members.removeMember(req.params.id, target);
+  if (!left) return res.status(404).json({ error: reason ?? 'not a member of this circle' });
+
+  signals.emitSignal({ type: 'member_removed', circleId: req.params.id, actorId: me });
+  res.json({ left: true, circleId: req.params.id, userId: target });
 });
 
 

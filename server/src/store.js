@@ -156,6 +156,11 @@ const EMPTY = {
   // for use as fallback visuals. Empty until uploaded — never pre-fabricated.
   // See domain/media.js.
   mediaLibrary: [],
+  // Real image files a person uploaded, not links to somebody else's server.
+  // The row records the bytes (size, sha256, sniffed type); the file itself
+  // lives in the upload directory, which is local disk and therefore not
+  // durable across a redeploy. See domain/upload.js.
+  uploads: [],
 
   // --- Collections (home-feed master build §47) ----------------------------
   // Named, data-driven groupings over real objects (rule or curated). See
@@ -209,6 +214,10 @@ const EMPTY = {
   // memberships whose money still flows through the one ledger.
   partnershipRequests: [],
   subscriptions: [],
+  // WHO is subscribed to which plan. Separate from the plan row so membership
+  // is a fact per person and the count is derived, never a stored number that
+  // can drift out of step with the rows it claims to count.
+  subscribers: [],
 
   // --- Person (report §4.4) -------------------------------------------------
   // A first-class entity over every identity Brief holds. A person is a stable

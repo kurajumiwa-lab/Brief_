@@ -26,6 +26,7 @@ import { Circles } from './components/Circles';
 import { Marketplace } from './components/Marketplace';
 import { Pursuits } from './components/Pursuits';
 import { Inbox } from './components/Inbox';
+import { TriageQueue } from './components/TriageQueue';
 import { Quests } from './components/Quests';
 import type { GeoPoint } from './components/LocationChip';
 import { ArenaShelf } from './components/ArenaShelf';
@@ -102,7 +103,10 @@ import { MenuSheet } from './components/MenuSheet';
 import type { MenuTarget } from './components/MenuSheet';
 import { PlayAs } from './components/PlayAs';
 import type { LucideIcon } from 'lucide-react';
-import { ROOM, HOME_MORE, SAVED_TABS, INBOX_TABS, FILTERS } from './ui/names';
+import {
+  ROOM, HOME_MORE, SAVED_TABS, INBOX_TABS, FILTERS,
+  WORKFLOW_BUNDLES, SAVED_BUNDLES, QUEUE_LABEL, QUEUE_CHIP, QUEUE_HINT
+} from './ui/names';
 
 const bootRoute: BriefRoute = (() => {
   try {
@@ -5015,12 +5019,20 @@ export function App() {
   const [nearbySection, setNearbySection] = useState<NearbySection>(bootRoute.nearby);
   const [moreFilters, setMoreFilters] = useState<boolean>(false);
   const [myLayerSection, setMyLayerSection] = useState<MyLayerSection>(bootRoute.mylayer);
-  const [myLayerView, setMyLayerView] = useState<'menu' | 'screen'>(
-    bootRoute.mylayer !== 'saved' ? 'screen' : 'menu'
-  );
   const [workflowSection, setWorkflowSection] = useState<WorkflowSection>(bootRoute.workflow);
-  const [workflowView, setWorkflowView] = useState<'menu' | 'screen'>(
-    bootRoute.workflow !== 'active' ? 'screen' : 'menu'
+  // Which bundle each desk is showing is DERIVED from the open section rather
+  // than stored: a deep link, a URL change or a notification jump cannot then
+  // disagree with the chips, and there is no second source of truth to sync.
+  const activeWorkflowBundle = WORKFLOW_BUNDLES.find((b) =>
+    (b.sections as readonly string[]).includes(workflowSection)
+  ) ?? WORKFLOW_BUNDLES[0];
+  const activeSavedBundle = SAVED_BUNDLES.find((b) =>
+    (b.sections as readonly string[]).includes(myLayerSection)
+  ) ?? SAVED_BUNDLES[0];
+  // 'queue' is the landing view: one list of everything waiting on you. A tool
+  // is only one tap deeper, filed under the bundle it belongs to.
+  const [workflowView, setWorkflowView] = useState<'queue' | 'screen'>(
+    bootRoute.workflow !== 'active' ? 'screen' : 'queue'
   );
   const [menuOpen, setMenuOpen] = useState(false);
   const [sessionUser, setSessionUser] = useState<briefApi.AuthedUser | null>(null);
@@ -5402,13 +5414,10 @@ export function App() {
     setPendingObjectId(null);
     setActiveTab(id);
     if (id === 'nearby') setNearbySection('stream');
-    if (id === 'mylayer') {
-      setMyLayerSection('saved');
-      setMyLayerView('menu');
-    }
+    if (id === 'mylayer') setMyLayerSection('saved');
     if (id === 'workflows') {
       setWorkflowSection('active');
-      setWorkflowView('menu');
+      setWorkflowView('queue');
     }
     if (id === 'arena') setArenaSection('lobby');
   };
@@ -7314,15 +7323,10 @@ export function App() {
     setSelectedTeaSlug(null);
     setActiveTab(target.tab);
     if (target.tab === 'nearby') setNearbySection(target.section ?? 'stream');
-    if (target.tab === 'mylayer') {
-      setMyLayerSection(target.section ?? 'saved');
-      if (target.section) setMyLayerView('screen');
-      else setMyLayerView('menu');
-    }
+    if (target.tab === 'mylayer') setMyLayerSection(target.section ?? 'saved');
     if (target.tab === 'workflows') {
       setWorkflowSection(target.section ?? 'cockpit');
-      if (target.section) setWorkflowView('screen');
-      else setWorkflowView('menu');
+      setWorkflowView(target.section ? 'screen' : 'queue');
     }
     if (target.tab === 'arena') setArenaSection(target.section ?? 'lobby');
   };
@@ -7359,9 +7363,8 @@ export function App() {
     setActiveTab(route.dest);
     setNearbySection(route.nearby);
     setMyLayerSection(route.mylayer);
-    if (route.dest === 'mylayer' && route.mylayer !== 'saved') setMyLayerView('screen');
     setWorkflowSection(route.workflow);
-    if (route.dest === 'workflows' && route.workflow !== 'active') setWorkflowView('screen');
+    setWorkflowView(route.dest === 'workflows' && route.workflow !== 'active' ? 'screen' : 'queue');
     setArenaSection(route.arena);
     setMenuOpen(route.menu);
     setCaptureOpen(route.capture);
@@ -7734,246 +7737,140 @@ export function App() {
           </div>
         )}
 
-        {activeTab === 'mylayer' && myLayerView === 'menu' && (
-          <div className="max-w-3xl mx-auto px-4 py-4 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#E5E7EB]">
-              <div>
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#111111]/50">Personal Layer</p>
-                <h1 className="text-xl font-extrabold text-[#111111] tracking-tight">Your Layer — Things you've kept</h1>
-                <p className="text-[11px] text-[#111111]/60 mt-0.5">Select an option to open its secondary screen</p>
+        {activeTab === 'mylayer' && (
+          <div className="max-w-3xl mx-auto px-4 pt-3 pb-1">
+            <div className="flex items-end justify-between gap-2 pb-2">
+              <div className="min-w-0">
+                <h1 className="text-lg font-extrabold text-[#111111] tracking-tight">
+                  Your Layer — Things you've kept
+                </h1>
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#111111]/50 mt-0.5">
+                  {activeSavedBundle.hint}
+                </p>
               </div>
-              <span className="text-[10px] font-bold uppercase tracking-[0.14em] bg-[#F3F4F6] text-[#111111] px-2.5 py-1 rounded-full">
-                11 Options
+              <span className="text-[10px] font-bold uppercase tracking-[0.14em] bg-[#F3F4F6] text-[#111111]/60 px-2.5 py-1 rounded-full">
+                {activeSavedBundle.sections.length} screens
               </span>
             </div>
-
-            <div className="divide-y divide-[#E5E7EB] rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] overflow-hidden shadow-sm">
-              {([
-                ['saved', '1', SAVED_TABS.saved, 'Places, opportunities and events you kept', relationships.length > 0 ? `(${relationships.length})` : null],
-                ['activity', '2', SAVED_TABS.activity, 'What you have saved, watched and acted on', null],
-                ['arena', '3', SAVED_TABS.arena, 'Match history and challenge lobbies', matches.length > 0 ? `(${matches.length})` : null],
-                ['points', '4', SAVED_TABS.points, 'Brief Points earned from confirmed activity', null],
-                ['circles', '5', SAVED_TABS.circles, 'Community circles you belong to', null],
-                ['groups', '6', SAVED_TABS.groups, 'Group chatter and unanswered questions', unansweredQuestions.length > 0 ? `(${unansweredQuestions.length})` : null],
-                ['campaigns', '7', SAVED_TABS.campaigns, 'Events and gatherings you host or attend', null],
-                ['mediakit', '8', SAVED_TABS.mediakit, 'Host profile, vendor standing and media kit', null],
-                ['opportunities', '9', SAVED_TABS.opportunities, 'Opportunities and verified gigs', null],
-                ['messages', '10', SAVED_TABS.messages, 'Direct inquiries and correspondence', null],
-                ['subscriptions', '11', SAVED_TABS.subscriptions, 'Creator subscriptions and support tiers', null]
-              ] as [MyLayerSection, string, string, string, string | null][]).map(([id, num, label, hint, badge]) => (
-                <div
-                  key={id}
-                  className="flex items-center justify-between p-3.5 sm:p-4 hover:bg-[#FAFAFA] transition-colors group"
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-2">
+              {SAVED_BUNDLES.map((bundle) => (
+                <button
+                  key={bundle.id}
+                  onClick={() => setMyLayerSection(bundle.sections[0] as MyLayerSection)}
+                  className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
+                    activeSavedBundle.id === bundle.id
+                      ? 'bg-[#111111] text-[#FFFFFF] border-[#111111]'
+                      : 'bg-[#FFFFFF] text-[#111111] border-[#E5E7EB]'
+                  }`}
                 >
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setMyLayerSection(id);
-                            setMyLayerView('screen');
-                          }}
-                          className="text-[13px] font-extrabold text-[#111111] hover:underline cursor-pointer text-left"
-                        >
-                          {label}
-                        </button>
-                        {badge && (
-                          <span className="rounded-full bg-[#111111] px-1.5 py-0.5 text-[9px] font-extrabold text-[#FFFFFF]">
-                            {badge}
-                          </span>
-                        )}
-                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-[#FAFAFA] border border-[#E5E7EB] font-mono text-[9px] font-extrabold text-[#111111]/60">
-                          {num}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-[#111111]/55 truncate mt-0.5">{hint}</p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    aria-label={`Open ${label}`}
-                    onClick={() => {
-                      setMyLayerSection(id);
-                      setMyLayerView('screen');
-                    }}
-                    className="text-[15px] font-bold text-[#111111]/35 group-hover:text-[#111111] group-hover:translate-x-0.5 transition-all p-2 cursor-pointer"
-                  >
-                    →
-                  </button>
-                </div>
+                  {bundle.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5 border-t border-[#E5E7EB] pt-2">
+              {activeSavedBundle.sections.map((id) => (
+                <button
+                  key={id}
+                  onClick={() => setMyLayerSection(id as MyLayerSection)}
+                  className={`shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition cursor-pointer ${
+                    myLayerSection === id
+                      ? 'bg-[#111111] text-[#FFFFFF]'
+                      : 'text-[#111111]/60 hover:text-[#111111] bg-[#FAFAFA]'
+                  }`}
+                >
+                  {SAVED_TABS[id]}
+                </button>
               ))}
             </div>
           </div>
         )}
 
-        {activeTab === 'mylayer' && myLayerView === 'screen' && (
+        {activeTab === 'workflows' && (
           <div className="max-w-3xl mx-auto px-4 pt-3 pb-1">
-            <div className="flex items-center justify-between gap-2 pb-3 mb-2 border-b border-[#E5E7EB]">
+            <div className="flex items-end justify-between gap-2 pb-2">
+              <div className="min-w-0">
+                <h1 className="text-lg font-extrabold text-[#111111] tracking-tight">
+                  {workflowView === 'queue' ? ROOM.workflows.label : `Workflows — ${activeWorkflowBundle.label}`}
+                </h1>
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#111111]/50 mt-0.5">
+                  {workflowView === 'queue' ? `${QUEUE_LABEL} — ${QUEUE_HINT}` : activeWorkflowBundle.hint}
+                </p>
+              </div>
+              {/* No count on the queue: how much is waiting is the queue's own
+                  answer, and a header badge would be a second, worse copy. */}
+              {workflowView === 'screen' && (
+                <span className="text-[10px] font-bold uppercase tracking-[0.14em] bg-[#F3F4F6] text-[#111111]/60 px-2.5 py-1 rounded-full">
+                  {activeWorkflowBundle.sections.length} screens
+                </span>
+              )}
+            </div>
+
+            {/* The landing row. The queue is first because it is the reason you
+                opened the Inbox; the bundles are the tools, filed by job. */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-2">
               <button
-                type="button"
-                onClick={() => setMyLayerView('menu')}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] px-3 py-1.5 text-[11px] font-extrabold text-[#111111] hover:border-[#111111] cursor-pointer"
+                onClick={() => {
+                  // Back to the desk's default section as well, so the URL
+                  // says /actions while the queue is what you are looking at.
+                  // A path that names a tool you are not reading is a small
+                  // lie, and it is what a shared link would carry.
+                  setWorkflowSection('active');
+                  setWorkflowView('queue');
+                }}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
+                  workflowView === 'queue'
+                    ? 'bg-[#111111] text-[#FFFFFF] border-[#111111]'
+                    : 'bg-[#FFFFFF] text-[#111111] border-[#E5E7EB]'
+                }`}
               >
-                <ChevronLeft className="h-3.5 w-3.5" /> All options
+                {QUEUE_CHIP}
               </button>
-              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
-                {([
-                  ['saved', SAVED_TABS.saved],
-                  ['activity', SAVED_TABS.activity],
-                  ['arena', SAVED_TABS.arena],
-                  ['points', SAVED_TABS.points],
-                  ['circles', SAVED_TABS.circles],
-                  ['groups', SAVED_TABS.groups],
-                  ['campaigns', SAVED_TABS.campaigns],
-                  ['mediakit', SAVED_TABS.mediakit],
-                  ['opportunities', SAVED_TABS.opportunities],
-                  ['messages', SAVED_TABS.messages],
-                  ['subscriptions', SAVED_TABS.subscriptions]
-                ] as [MyLayerSection, string][]).map(([id, label]) => (
-                  <button
-                    key={id}
-                    onClick={() => setMyLayerSection(id)}
-                    className={`shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition cursor-pointer ${
-                      myLayerSection === id
-                        ? 'bg-[#111111] text-[#FFFFFF]'
-                        : 'text-[#111111]/60 hover:text-[#111111] bg-[#FAFAFA]'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'workflows' && workflowView === 'menu' && (
-          <div className="max-w-3xl mx-auto px-4 py-4 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#E5E7EB]">
-              <div>
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#111111]/50">Workspace Desk</p>
-                <h1 className="text-xl font-extrabold text-[#111111] tracking-tight">Workflows — Things you can actually do</h1>
-                <p className="text-[11px] text-[#111111]/60 mt-0.5">Select a workspace or tool to open its secondary desk</p>
-              </div>
-              <span className="text-[10px] font-bold uppercase tracking-[0.14em] bg-[#F3F4F6] text-[#111111] px-2.5 py-1 rounded-full">
-                18 Tools
-              </span>
-            </div>
-
-            <div className="divide-y divide-[#E5E7EB] rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] overflow-hidden shadow-sm">
-              {([
-                ['cockpit', '1', INBOX_TABS.cockpit, 'Creator cockpit, rapid actions and campaign setup', null],
-                ['command', '2', INBOX_TABS.command, 'Overview of revenue, check-ins, people & alerts', null],
-                ['active', '3', INBOX_TABS.active, 'Active journeys and in-flight tasks', activeJourneys.length > 0 ? `(${activeJourneys.length})` : null],
-                ['completed', '4', INBOX_TABS.completed, 'Completed journeys and settled audit records', completedJourneys.length > 0 ? `(${completedJourneys.length})` : null],
-                ['inbox', '5', INBOX_TABS.inbox, 'Inbound messages and reviews needing your attention', pendingCandidates.length > 0 ? `(${pendingCandidates.length})` : null],
-                ['sources', '6', INBOX_TABS.sources, 'Connected channels, WhatsApp, Telegram and web feeds', null],
-                ['money', '7', INBOX_TABS.money, 'Wallet, escrow balances, disbursements and ledger', null],
-                ['vault', '8', INBOX_TABS.vault, 'The Vault: participants, footsteps, and handoffs', null],
-                ['gate', '9', INBOX_TABS.gate, 'The Gate: ticket codes and door check-in', null],
-                ['tea', '10', INBOX_TABS.tea, 'Story studio: write, style and publish articles', null],
-                ['campaigns', '11', INBOX_TABS.campaigns, 'Campaign lifecycle, public slugs and ticket inventory', null],
-                ['matches', '12', INBOX_TABS.matches, 'Match queue, clan scheduling and tournament brackets', null],
-                ['distribution', '13', INBOX_TABS.distribution, 'Social banner generator and channel share kits', null],
-                ['calendar', '14', INBOX_TABS.calendar, 'Production calendar, bookings and release dates', null],
-                ['vendors', '15', INBOX_TABS.vendors, 'Vendor directory, capabilities and escrow support', null],
-                ['ai', '16', INBOX_TABS.ai, 'Machine suggestions with human confirmation guardrails', null],
-                ['engine', '17', INBOX_TABS.engine, 'Sync pipeline, connector status and yard health', null],
-                ['groupbuy', '18', INBOX_TABS.groupbuy, 'Pooled orders, contributions and split settlements', null]
-              ] as [WorkflowSection, string, string, string, string | null][]).map(([id, num, label, hint, badge]) => (
-                <div
-                  key={id}
-                  className="flex items-center justify-between p-3.5 sm:p-4 hover:bg-[#FAFAFA] transition-colors group"
+              {WORKFLOW_BUNDLES.map((bundle) => (
+                <button
+                  key={bundle.id}
+                  onClick={() => {
+                    setWorkflowSection(bundle.sections[0] as WorkflowSection);
+                    setWorkflowView('screen');
+                  }}
+                  className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
+                    workflowView === 'screen' && activeWorkflowBundle.id === bundle.id
+                      ? 'bg-[#111111] text-[#FFFFFF] border-[#111111]'
+                      : 'bg-[#FFFFFF] text-[#111111] border-[#E5E7EB]'
+                  }`}
                 >
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setWorkflowSection(id);
-                            setWorkflowView('screen');
-                          }}
-                          className="text-[13px] font-extrabold text-[#111111] hover:underline cursor-pointer text-left"
-                        >
-                          {label}
-                        </button>
-                        {badge && (
-                          <span className="rounded-full bg-[#111111] px-1.5 py-0.5 text-[9px] font-extrabold text-[#FFFFFF]">
-                            {badge}
-                          </span>
-                        )}
-                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-[#FAFAFA] border border-[#E5E7EB] font-mono text-[9px] font-extrabold text-[#111111]/60">
-                          {num}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-[#111111]/55 truncate mt-0.5">{hint}</p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    aria-label={`Open ${label}`}
-                    onClick={() => {
-                      setWorkflowSection(id);
-                      setWorkflowView('screen');
-                    }}
-                    className="text-[15px] font-bold text-[#111111]/35 group-hover:text-[#111111] group-hover:translate-x-0.5 transition-all p-2 cursor-pointer"
-                  >
-                    →
-                  </button>
-                </div>
+                  {bundle.label}
+                </button>
               ))}
             </div>
-          </div>
-        )}
 
-        {activeTab === 'workflows' && workflowView === 'screen' && (
-          <div className="max-w-3xl mx-auto px-4 pt-3 pb-1">
-            <div className="flex items-center justify-between gap-2 pb-3 mb-2 border-b border-[#E5E7EB]">
-              <button
-                type="button"
-                onClick={() => setWorkflowView('menu')}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] px-3 py-1.5 text-[11px] font-extrabold text-[#111111] hover:border-[#111111] cursor-pointer"
-              >
-                <ChevronLeft className="h-3.5 w-3.5" /> All actions
-              </button>
-              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
-                {([
-                  ['cockpit', INBOX_TABS.cockpit],
-                  ['command', INBOX_TABS.command],
-                  ['active', INBOX_TABS.active],
-                  ['completed', INBOX_TABS.completed],
-                  ['inbox', INBOX_TABS.inbox],
-                  ['sources', INBOX_TABS.sources],
-                  ['money', INBOX_TABS.money],
-                  ['vault', INBOX_TABS.vault],
-                  ['gate', INBOX_TABS.gate],
-                  ['tea', INBOX_TABS.tea],
-                  ['campaigns', INBOX_TABS.campaigns],
-                  ['matches', INBOX_TABS.matches],
-                  ['distribution', INBOX_TABS.distribution],
-                  ['calendar', INBOX_TABS.calendar],
-                  ['vendors', INBOX_TABS.vendors],
-                  ['ai', INBOX_TABS.ai],
-                  ['engine', INBOX_TABS.engine],
-                  ['groupbuy', INBOX_TABS.groupbuy]
-                ] as [WorkflowSection, string][]).map(([id, label]) => (
+            {workflowView === 'screen' && (
+              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5 border-t border-[#E5E7EB] pt-2">
+                {activeWorkflowBundle.sections.map((id) => (
                   <button
                     key={id}
-                    onClick={() => setWorkflowSection(id)}
+                    onClick={() => setWorkflowSection(id as WorkflowSection)}
                     className={`shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition cursor-pointer ${
                       workflowSection === id
                         ? 'bg-[#111111] text-[#FFFFFF]'
                         : 'text-[#111111]/60 hover:text-[#111111] bg-[#FAFAFA]'
                     }`}
                   >
-                    {label}
+                    {INBOX_TABS[id]}
                   </button>
                 ))}
               </div>
-            </div>
+            )}
           </div>
+        )}
+
+        {activeTab === 'workflows' && workflowView === 'queue' && (
+          <TriageQueue
+            onOpenSection={(section) => {
+              setWorkflowSection(section as WorkflowSection);
+              setWorkflowView('screen');
+            }}
+            onNotice={(message) => showToast(message)}
+          />
         )}
 
         {activeTab === 'nearby' && nearbySection === 'stream' && (
@@ -8378,7 +8275,7 @@ export function App() {
         )}
 
         {/* MY LAYER */}
-        {activeTab === 'mylayer' && myLayerView === 'screen' && myLayerSection === 'saved' && (
+        {activeTab === 'mylayer' && myLayerSection === 'saved' && (
           <section className="space-y-4">
             <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-2">
@@ -9150,7 +9047,7 @@ export function App() {
           </div>
         )}
 
-        {activeTab === 'mylayer' && myLayerView === 'screen' && myLayerSection === 'activity' && (
+        {activeTab === 'mylayer' && myLayerSection === 'activity' && (
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
             <div>
               <h2 className="text-lg font-extrabold text-[#111111]">My Activity</h2>
@@ -9195,7 +9092,7 @@ export function App() {
         {/* MY LAYER > ARENA. Your standing in Arena gathered in one section:
             rank, points, and match history. This is a view of existing Arena
             state, not a second Arena -- playing still happens in Arena. */}
-        {activeTab === 'mylayer' && myLayerView === 'screen' && myLayerSection === 'arena' && (
+        {activeTab === 'mylayer' && myLayerSection === 'arena' && (
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
             <div>
               <h2 className="text-lg font-extrabold text-[#111111]">Your Arena</h2>
@@ -9255,7 +9152,7 @@ export function App() {
           </div>
         )}
 
-        {activeTab === 'mylayer' && myLayerView === 'screen' && myLayerSection === 'points' && (
+        {activeTab === 'mylayer' && myLayerSection === 'points' && (
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
             <div>
               <h2 className="text-lg font-extrabold text-[#111111]">My Points</h2>
@@ -9285,7 +9182,7 @@ export function App() {
           </div>
         )}
 
-        {activeTab === 'mylayer' && myLayerView === 'screen' && myLayerSection === 'circles' && (
+        {activeTab === 'mylayer' && myLayerSection === 'circles' && (
           <div className="max-w-3xl mx-auto px-4 py-6">
             <Circles />
           </div>
@@ -9297,7 +9194,7 @@ export function App() {
           </div>
         )}
 
-        {activeTab === 'mylayer' && myLayerView === 'screen' && myLayerSection === 'groups' && (
+        {activeTab === 'mylayer' && myLayerSection === 'groups' && (
           <ConnectedGroups
             visibleGroups={visibleGroups}
             groupIndexes={groupIndexes}
@@ -9320,7 +9217,7 @@ export function App() {
           />
         )}
 
-        {activeTab === 'mylayer' && myLayerView === 'screen' && myLayerSection === 'campaigns' && (
+        {activeTab === 'mylayer' && myLayerSection === 'campaigns' && (
           <div className="space-y-4">
 
             {/* CAMPAIGNS. Create something, publish it, share one link, watch
@@ -9626,25 +9523,25 @@ export function App() {
           </div>
         )}
 
-        {activeTab === 'mylayer' && myLayerView === 'screen' && myLayerSection === 'mediakit' && (
+        {activeTab === 'mylayer' && myLayerSection === 'mediakit' && (
           <div className="max-w-2xl mx-auto px-4 py-6">
             <CreatorProfilePanel />
           </div>
         )}
 
-        {activeTab === 'mylayer' && myLayerView === 'screen' && myLayerSection === 'opportunities' && (
+        {activeTab === 'mylayer' && myLayerSection === 'opportunities' && (
           <div className="max-w-2xl mx-auto px-4 py-6">
             <OpportunitiesPanel />
           </div>
         )}
 
-        {activeTab === 'mylayer' && myLayerView === 'screen' && myLayerSection === 'messages' && (
+        {activeTab === 'mylayer' && myLayerSection === 'messages' && (
           <div className="max-w-2xl mx-auto px-4 py-6">
             <MessagesPanel />
           </div>
         )}
 
-        {activeTab === 'mylayer' && myLayerView === 'screen' && myLayerSection === 'subscriptions' && (
+        {activeTab === 'mylayer' && myLayerSection === 'subscriptions' && (
           <div className="max-w-2xl mx-auto px-4 py-6">
             <SubscriptionsPanel />
           </div>

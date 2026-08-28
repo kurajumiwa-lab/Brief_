@@ -36,8 +36,27 @@ let likeCalls = [];
 let createCalls = [];
 const send = (body, status = 200) => ({ ok: status < 400, status, text: async () => JSON.stringify(body), json: async () => body });
 
+// FormData/File/Blob must come from one realm (jsdom's) or Node's FormData
+// rejects a jsdom File. See preview/media.jsx.
+global.FormData = dom.window.FormData;
+global.Blob = dom.window.Blob;
+global.File = dom.window.File;
+
+let uploadCalls = [];
 global.fetch = async (url, init) => {
   const path = String(url);
+  if (path.includes('/api/media/status')) {
+    return send({ media: { configured: false, count: 0, providers: {}, reason: 'no provider' },
+      uploads: { enabled: true, kind: 'local_disk', persisted: false, dir: '/tmp/uploads', writable: true,
+        dirError: null, maxBytes: 8388608, allowedTypes: ['image/jpeg','image/png','image/webp','image/gif'],
+        count: 0, missingBytes: 0, reason: 'local disk' } });
+  }
+  if (path.includes('/api/media/upload')) {
+    uploadCalls.push({ path, method: init?.method, name: init?.body?.get('file')?.name ?? null });
+    return send({ upload: { id: 'upl_story', url: '/api/media/file/upl_story', mimeType: 'image/png',
+      bytes: 68, sha256: 'c'.repeat(64), originalName: 'gallery.png', alt: null, createdAt: '2026-08-28T00:00:00Z' },
+      duplicate: false }, 201);
+  }
   if (path.includes('/api/tea/designed-story')) return send({ article: ARTICLE });
   if (path.includes('/like')) {
     likeCalls.push({ method: init?.method, path });
@@ -65,6 +84,16 @@ const setVal = (el, v) => {
 };
 const body = () => text(document.body);
 const btn = (t) => Array.from(document.querySelectorAll('button')).find((b) => text(b) === t || text(b).startsWith(t));
+
+/** jsdom will not let a test type into a file input, so hand it a FileList. */
+const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64');
+function chooseFile(input, name = 'gallery.png') {
+  const file = new dom.window.File([PNG], name, { type: 'image/png' });
+  const list = { 0: file, length: 1, item: (i) => (i === 0 ? file : null), [Symbol.iterator]: function* () { yield file; } };
+  Object.defineProperty(input, 'files', { value: list, configurable: true });
+  input.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+  input.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+}
 
 async function withRoot(render, run) {
   const host = document.createElement('div');
@@ -134,19 +163,32 @@ async function main() {
     const inputs = Array.from(document.querySelectorAll('input[placeholder], textarea[placeholder]'));
     const headline = inputs.find((i) => i.placeholder === 'Headline');
     const bodyBox = Array.from(document.querySelectorAll('textarea')).find((t) => /Body/.test(t.placeholder || ''));
-    const gallery = inputs.find((i) => i.placeholder?.includes('/photo.jpg') && i.placeholder?.includes('…') === false && i.closest('section')?.textContent.includes('Gallery'));
     await act(async () => {
       if (headline) setVal(headline, 'Studio story');
       if (bodyBox) setVal(bodyBox, 'Written in the studio.');
     });
     check('publish enables once written', btn('Publish')?.disabled === false);
 
-    if (gallery) {
-      await act(async () => { setVal(gallery, 'https://cdn.test/gallery.jpg'); });
-      const add = Array.from(document.querySelectorAll('button[aria-label="Add gallery photo"]'))[0];
-      await act(async () => { if (add) add.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
-      check('gallery photo added and shown', Boolean(document.querySelector('img[src*="gallery.jpg"]')));
-    }
+    // Gallery photos are real files now, not pasted links. Upload one and it
+    // must appear; the link route still exists behind "Use a link instead".
+    const galleryUpload = Array.from(document.querySelectorAll('input[type="file"]'))
+      .find((i) => (i.getAttribute('aria-label') || '').includes('Gallery'));
+    check('the gallery takes a file upload', Boolean(galleryUpload));
+    await act(async () => { if (galleryUpload) chooseFile(galleryUpload, 'gallery.png'); });
+    await act(async () => { await new Promise((r) => setTimeout(r, 30)); });
+    check('the photo was uploaded', uploadCalls.length === 1 && uploadCalls[0].name === 'gallery.png', JSON.stringify(uploadCalls));
+    check('gallery photo added and shown', Boolean(document.querySelector('img[src="/ingest/api/media/file/upl_story"]')));
+
+    const linkToggle = btn('Use a link instead');
+    check('the link route is offered, but not the default', Boolean(linkToggle));
+    await act(async () => { if (linkToggle) linkToggle.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
+    const linkInput = Array.from(document.querySelectorAll('input[placeholder]'))
+      .find((i) => /photo\.jpg/.test(i.placeholder || ''));
+    check('a link can still be used when asked for', Boolean(linkInput));
+    await act(async () => { if (linkInput) setVal(linkInput, 'https://cdn.test/linked.jpg'); });
+    const useBtn = Array.from(document.querySelectorAll('button')).find((b) => text(b) === 'Use');
+    await act(async () => { if (useBtn) useBtn.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
+    check('a pasted link is added too', Boolean(document.querySelector('img[src="https://cdn.test/linked.jpg"]')));
 
     await act(async () => { const b = btn('Save'); if (b) b.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
     await act(async () => { await new Promise((r) => setTimeout(r, 30)); });

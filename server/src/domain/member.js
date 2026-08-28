@@ -114,6 +114,34 @@ export function recordVerification(circleId, userId, kind) {
   return hydrate(store.find('members', (m) => m.id === member.id));
 }
 
+/**
+ * Leave a circle.
+ *
+ * The loop was half-built: a user could be added (and an open circle could be
+ * self-joined) with no way out. Closing it here rather than in the client
+ * matters because leaving is a data change, not a display preference.
+ *
+ * What leaving does and does not do, stated so nothing is implied:
+ *
+ *   * The membership ROW IS REMOVED. Role, verifications and join date go
+ *     with it -- they described a membership that no longer exists.
+ *   * WORK IS NOT DELETED. A task assigned to the leaver keeps its assignee:
+ *     erasing the assignment would rewrite who did what. The task becomes
+ *     unclaimable-by-them in the client, and a coordinator can release it.
+ *   * MONEY IS UNTOUCHED. Settled ledger rows are history; leaving a circle
+ *     cannot un-contribute.
+ *
+ * A sole coordinator may leave. The alternative -- trapping the last
+ * coordinator to keep the row valid -- is worse than a circle with no
+ * coordinator, and `canJoin` already reopens such a circle to a new joiner.
+ */
+export function removeMember(circleId, userId) {
+  const member = store.find('members', (m) => m.circleId === circleId && m.userId === userId);
+  if (!member) return { left: false, reason: 'not a member' };
+  store.remove('members', member.id);
+  return { left: true, circleId, userId };
+}
+
 export function setRole(circleId, userId, role) {
   if (!MEMBER_ROLES.includes(role)) {
     throw new Error(`role must be one of ${MEMBER_ROLES.join(', ')}`);

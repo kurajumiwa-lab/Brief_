@@ -30,6 +30,11 @@ app.get('/api/transactions', (req, res) => {
 
 
 app.post('/api/transactions', (req, res) => {
+  // AUTHORIZATION. ledgerTransactions is the single source of economic truth,
+  // so a row must always have someone behind it. An anonymous POST used to
+  // succeed with `counterparty: null`, which is an economic fact with no
+  // actor -- unattributable and unauditable.
+  if (!requireAuth(req, res)) return;
   const { amount, currency, type, description, counterparty, circleId, objectId, campaignId, registrationId } = req.body ?? {};
   // A caller may record money against their own name. Attributing a payment to
   // somebody else inside a circle is a coordinator act -- otherwise anyone
@@ -53,6 +58,10 @@ app.post('/api/transactions', (req, res) => {
 
 
 app.post('/api/transactions/:id/transition', (req, res) => {
+  // AUTHORIZATION. Moving money through states is the most consequential
+  // write in the product -- settling promotes a registration and releases a
+  // spot -- so it is never an anonymous act.
+  if (!requireAuth(req, res)) return;
   try {
     const tx = ledger.transitionTransaction(req.params.id, req.body?.status, req.body?.note ?? '');
     // A held spot becomes a real registration only when money actually

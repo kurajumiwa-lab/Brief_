@@ -301,13 +301,20 @@ async function main() {
   const saved = h.body();
   check('the Saved screen shows no "opens after" chrome', !/Opens after:/.test(saved));
   check('the Saved screen shows no next-step card', document.querySelectorAll('[data-testid="next-step"]').length === 0);
-  check('the Saved screen still lists every option', /Campaigns|Events and gatherings/i.test(saved));
+  // The flat list of options became three bundles, so the screen is checked
+  // for the bundles and for one section inside the bundle it opens on.
+  check('the Saved screen still offers every group of options',
+    /Kept/.test(saved) && /Groups/.test(saved) && /Creator/.test(saved) && /Events/.test(saved),
+    saved.slice(0, 200));
 
   await h.goto('Inbox');
   const actions = h.body();
   check('the Actions desk shows no "opens after" chrome', !/Opens after:/.test(actions));
   check('the Actions desk shows no next-step card', document.querySelectorAll('[data-testid="next-step"]').length === 0);
-  check('the Actions desk still lists its tools', /Distribution|banner/i.test(actions));
+  // The desk now opens on the waiting-on-you queue, with the tools filed into
+  // four bundles behind it.
+  check('the Actions desk still offers its bundled tools',
+    /Create/.test(actions) && /Sell/.test(actions) && /Run/.test(actions) && /Records/.test(actions));
 
   console.log(`\n${'='.repeat(46)}\nPASSED ${pass}   FAILED ${fail}\n${'='.repeat(46)}`);
   process.exit(fail ? 1 : 0);

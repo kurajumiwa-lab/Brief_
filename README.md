@@ -104,19 +104,26 @@ node live/4-full-chain.mjs            # identity -> ... -> payout, Arena,
                                       # Fantasy, Auction, ops
 ```
 
-**Current state: 3077 assertions, 0 failing.**
+**Current state: 3420 assertions, 0 failing** — measured 2026-08-28 against a
+production build over HTTP, not inherited from an earlier report.
 
 | Suite | Result |
 |---|---|
-| `server/test/run.js` | 1649 passed / 0 failed / 3 skipped |
+| `server/test/run.js` | 1832 passed / 0 failed / 3 skipped |
 | `server/test/livecamp.mjs` | 111 passed / 0 failed |
-| `./run-suites.sh` (client suites) | 1161 passed / 0 failed |
+| `./run-suites.sh` (34 client suites) | 1274 passed / 0 failed |
 | `tc` strict typecheck | exit 0 |
-| `live/` against the production build | 43 + 26 + 87 = 156 / 0 |
+| `live/` against the production build | 43 + 27 + 91 + 16 + 26 = 203 / 0 |
 
 The server suite hits real third parties (BBC's RSS feed, GitHub's robots.txt,
 Telegram's API). Those tests **skip** rather than pass when the network is
 unavailable, so a green run always means something real happened.
+
+These numbers were produced by re-running everything from a clean install, not
+copied forward. [`VERIFICATION-REPORT.md`](VERIFICATION-REPORT.md) records what
+that sweep found and fixed — three write routes that accepted an anonymous
+caller, a manual capture that claimed extraction confidence it had not earned —
+and what is still weak.
 
 ---
 
@@ -125,6 +132,23 @@ unavailable, so a green run always means something real happened.
 **Five primary destinations** — Nearby, Arena, My Layer, Workflows, Pulse.
 There is no router: navigation is conceptual, driven by state. Do not add a
 sixth destination; put new surfaces under an existing one's secondary nav.
+
+**Two desks are filed into bundles, and the Inbox opens on a queue.** The
+Inbox (Workflows) used to open on a list of 18 tools; it now opens on one
+*waiting-on-you* queue (`GET /api/triage`), and the tools sit in four bundles
+behind it — Create · Sell · Run · Records. My Layer's 11 options became three:
+Kept · Groups · Creator. Every screen still exists at the same section id and
+the same URL; the bundles only decide which sub-tabs are shown next to each
+other. See `src/ui/names.ts` (`WORKFLOW_BUNDLES`, `SAVED_BUNDLES`) — that is
+the single place the filing lives.
+
+**A loop is not finished until somebody can walk it.** Three of them were
+half-built and are now whole: a circle can be started, joined and left
+(`POST /api/circles` makes the creator its coordinator; `POST/DELETE
+/api/circles/:id/members[/me]`); a public plan can be joined and left
+(`/api/subscriptions?browse=1`, `POST /api/subscriptions/:id/subscribe`); and
+the queue answers "is anything waiting for me?" in one list instead of leaving
+a badge on eighteen screens.
 
 **Onboarding is a ladder.** A new person passes through five rungs — account,
 intent, keep your first thing (the aha), contribute something, put it in front
@@ -149,6 +173,20 @@ that a field which was not stated stays unstated. "Saturday popup" yields a
 day, never a calendar date. Messages with nothing concrete in them produce no
 object at all. Every extracted value stores the substring it came from so the
 parser can be audited rather than trusted.
+
+**Images are files, not links.** The editorial surfaces upload a real image
+(`POST /api/media/upload`, multipart) rather than pasting a URL, because a
+photo Brief does not hold can rot, hotlink-block or change under a published
+story. The server decides what a file really is from its **magic bytes** — a
+declared type, a filename and an extension prove nothing — accepts only JPEG,
+PNG, WebP and GIF (never SVG, which is a document that can carry script), caps
+the size on the wire, stores the file under a name it generates itself, and
+serves the bytes with `nosniff` and a CSP that allows nothing. Bytes live on
+the deployment's local disk, so they survive a restart and **not** a redeploy,
+and the scheduled backup copies the store's rows but not the bytes;
+`/api/media/status` says so, and a request for bytes that are gone answers 404
+with that reason rather than serving a broken image. Point `BRIEF_UPLOAD_DIR`
+at a mounted volume to keep them. See `server/src/domain/upload.js`.
 
 **Provenance is first-class.** One real-world thing is one canonical object
 with many attached sources. Seeing the same event on Telegram and in a WhatsApp

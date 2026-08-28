@@ -55,6 +55,18 @@ export interface CircleDerived {
   readonly settledCount: number;
   readonly blockCount: number;
   readonly memberCount: number;
+  /**
+   * The VIEWER's role in this circle, or null when they are not a member.
+   *
+   * This is what makes an honest list possible. Without it every circle looks
+   * identical and a list cannot tell "yours" from "open to join" -- which is
+   * how the client ended up labelling all of them "communities you are part
+   * of". Null is a stated answer, not a missing one.
+   */
+  readonly viewerRole: MemberRole | null;
+  readonly isMember: boolean;
+  /** Whether a self-join is permitted: an open circle, or one with nobody in it. */
+  readonly canJoin: boolean;
 }
 
 export type Circle = CircleStored & CircleDerived;
@@ -1408,4 +1420,161 @@ export interface TeaArticle {
   relatedPlaces: string[];
   relatedEvents: string[];
   body: string;
+}
+
+// --- real image uploads -----------------------------------------------------
+//
+// An upload is a file Brief holds, not a link to somebody else's server. The
+// `url` the server returns is ROOT-relative (/api/media/file/<id>): the client
+// must prefix it with the ingestion proxy before it can be used as an img src.
+// See mediaFileUrl().
+export interface MediaUpload {
+  id: string;
+  url: string;
+  mimeType: string;
+  bytes: number;
+  sha256: string;
+  originalName: string | null;
+  alt: string | null;
+  createdAt: string;
+  ownerId?: string;
+}
+
+/** What the deployment can honestly promise about uploaded images. */
+export interface MediaStorageStatus {
+  enabled: boolean;
+  kind: string;
+  persisted: boolean;
+  dir: string;
+  writable: boolean;
+  dirError: string | null;
+  maxBytes: number;
+  allowedTypes: string[];
+  count: number;
+  missingBytes: number;
+  reason: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// THE WAITING-ON-YOU QUEUE
+//
+// One derived list of everything that is blocked on the person looking at it.
+// Modelled as a discriminated union so the UI cannot read a task's circleId
+// off an order, or offer an action a kind does not have.
+//
+// Nothing here is storable: there is no triage table on the server. The queue
+// is computed from real rows on every read, which is why an item can never
+// survive the work it describes.
+// ---------------------------------------------------------------------------
+
+export type TriageKind = 'task' | 'order' | 'checkin' | 'draft';
+
+interface TriageBase {
+  id: string;
+  title: string;
+  /** A second line, or null. Never a placeholder. */
+  detail: string | null;
+  at: string | null;
+  /** How long this has waited, in days. 0 when unknown, never negative. */
+  daysWaiting: number;
+}
+
+/** A circle task the viewer holds. Unassigned work is deliberately absent. */
+export interface TriageTask extends TriageBase {
+  kind: 'task';
+  circleId: string;
+  circleName: string;
+  status: 'open' | 'assigned';
+  actions: ('assign' | 'release' | 'complete')[];
+}
+
+/** An order on the viewer's shelf that is theirs to move forward. */
+export interface TriageOrder extends TriageBase {
+  kind: 'order';
+  vendorId: string;
+  vendorName: string | null;
+  status: string;
+  /** The next real stage, or null when there is no legal step. */
+  nextStatus: string | null;
+  actions: 'advance'[];
+}
+
+/** An event the viewer is running, with people still to check in. */
+export interface TriageCheckIn extends TriageBase {
+  kind: 'checkin';
+  campaignId: string;
+  status: 'open' | 'starting';
+  pending: number;
+  checkedIn: number;
+  actions: 'checkin'[];
+}
+
+/** An inbound message nobody has reviewed yet. */
+export interface TriageDraft extends TriageBase {
+  kind: 'draft';
+  sourceId: string | null;
+  sourceName: string | null;
+  channel: string | null;
+  /** Reviewing is the only action: there is no silent auto-publishing. */
+  actions: 'review'[];
+}
+
+export type TriageItem = TriageTask | TriageOrder | TriageCheckIn | TriageDraft;
+
+export interface TriageQueue {
+  items: TriageItem[];
+  counts: { task: number; order: number; checkin: number; draft: number };
+  total: number;
+  viewer: string | null;
+  /** How far ahead the queue looks for imminent events. Stated, not implied. */
+  withinHours: number;
+}
+
+// ---------------------------------------------------------------------------
+// SUBSCRIPTIONS — the follower's side
+// ---------------------------------------------------------------------------
+
+/**
+ * A recurring plan. `subscriberCount` is SERVER-DERIVED: it is counted from
+ * real membership rows, so it can never disagree with the list below it. It
+ * used to be a stored field that nothing ever incremented.
+ */
+export interface Subscription {
+  id: string;
+  creatorId: string;
+  title: string;
+  description: string;
+  price: number;
+  currency: string;
+  interval: 'weekly' | 'monthly' | 'yearly';
+  status: 'active' | 'paused' | 'cancelled';
+  createdAt: string;
+  updatedAt: string;
+  readonly subscriberCount: number;
+  readonly settledCycles: number;
+  readonly collected: number;
+  /** Whether the viewer is a member, or null when nobody is signed in. */
+  readonly viewerIsSubscriber: boolean | null;
+}
+
+export interface Subscriber {
+  id: string;
+  subscriptionId: string;
+  memberId: string;
+  status: 'active' | 'cancelled';
+  startedAt: string;
+  endedAt: string | null;
+}
+
+export interface SubscriptionJoin {
+  subscriber: Subscriber;
+  /** The recorded cycle, or null when the caller was already a member. */
+  transaction: { id: string; status: string; amount: number } | null;
+  duplicate: boolean;
+  /**
+   * Always false while no payment provider is connected. Present so the UI
+   * can say "recorded, not charged" rather than implying money moved.
+   */
+  charged: boolean;
+  note: string;
 }

@@ -29,11 +29,26 @@ const TYPE_FROM_SOURCE = {
   event_feed: 'study'
 };
 
-export function listCircles() {
-  return store.all('circles').map(withCounts);
+/**
+ * List circles.
+ *
+ * `viewerId` makes the list honest about membership. Without it every circle
+ * in the deployment looks the same, and a client cannot tell "yours" from
+ * "open to join" -- which is exactly how the list ended up labelled
+ * "communities you are part of" while showing circles you had never joined.
+ *
+ * With a viewer, each row carries `viewerRole` (their role, or null when they
+ * are not a member) and `canJoin` (whether a self-join is permitted: an open
+ * circle, or one with nobody in it yet). Both are derived, never stored.
+ */
+export function listCircles(viewerId = null) {
+  return store.all('circles').map((c) => withCounts(c, viewerId));
 }
 
-function withCounts(circle) {
+function withCounts(circle, viewerId = null) {
+  const membership = viewerId
+    ? store.find('members', (m) => m.circleId === circle.id && m.userId === viewerId) ?? null
+    : null;
   const blocks = store.filter('blocks', (b) => b.circleId === circle.id);
   const members = store.filter('members', (m) => m.circleId === circle.id);
 
@@ -64,13 +79,20 @@ function withCounts(circle) {
     progressPct,
     settledCount: contributions.length,
     blockCount: blocks.length,
-    memberCount: members.length
+    memberCount: members.length,
+    // Membership facts about the viewer. Stated as null (not omitted) so a
+    // client cannot mistake "unknown" for "member".
+    viewerRole: membership?.role ?? null,
+    isMember: Boolean(membership),
+    // A self-join is permitted when the circle is open, or when it has no
+    // members yet and therefore nobody to ask.
+    canJoin: circle.visibility === 'open' || members.length === 0
   };
 }
 
-export function getCircle(id) {
+export function getCircle(id, viewerId = null) {
   const circle = store.find('circles', (c) => c.id === id);
-  return circle ? withCounts(circle) : null;
+  return circle ? withCounts(circle, viewerId) : null;
 }
 
 /**

@@ -37,6 +37,7 @@ const DEFINITIONS = [
   { key: 'briefit',   domain: 'briefit',    label: 'Capture ("Brief It")',            configured: () => true },
   { key: 'objects',   domain: 'objects',    label: 'Objects, discovery & trust',      configured: () => true },
   { key: 'circles',   domain: 'circles',    label: 'Circles, blocks & signals',       configured: () => true },
+  { key: 'triage',    domain: 'triage',     label: 'The waiting-on-you queue',        configured: () => true },
   { key: 'economic',  domain: 'economic',   label: 'Ledger & transactions',           configured: () => true },
   { key: 'commerce',  domain: 'commerce',   label: 'Commerce (vendors/listings/orders)', configured: () => true },
   { key: 'campaigns', domain: 'campaigns',  label: 'Campaigns, registration & gate',  configured: () => true },
