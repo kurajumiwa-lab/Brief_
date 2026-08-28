@@ -55,7 +55,6 @@ const DEFINITIONS = [
   { key: 'collections', domain: 'collections', label: 'Editorial collections',           configured: () => true },
   { key: 'search',     domain: 'search',      label: 'Cross-entity search',              configured: () => true },
   { key: 'assist',     domain: 'assist',      label: 'AI-assisted editorial drafting',    configured: () => true },
-  { key: 'pools',      domain: 'pools',       label: 'Cooperative savings (Chama/Stokvel)', configured: () => true },
   { key: 'distribution', domain: 'distribution', label: 'Campaign blast + UTM attribution',  configured: () => true },
   { key: 'lobby',      domain: 'lobby',       label: 'Lobby code board & clan matches',       configured: () => true },
   { key: 'workflows',  domain: 'workflow',    label: 'Automation engine (trigger/condition/action)', configured: () => true },

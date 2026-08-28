@@ -91,10 +91,10 @@ order → payment → settlement → reconciliation) and capability-gated contro
 
 | Module | State | Decision |
 |---|---|---|
-| `auction` (10 routes + domain + tests) | zero client code, zero UI, never referenced by the brief | **C — remove** |
-| `pools` (7 routes + domain + tests) | chama/stokvel savings; zero client code | **C — remove** |
-| `routes/fantasy.js` (8 routes) | `/api/fantasy/*` surface unused; `domain/fantasy.js` is the engine behind Ligi, which has its own live routes + UI | **C — remove the HTTP surface, keep the domain for Ligi** |
-| advertiser console (`/api/advertising/advertiser|campaigns|matches|assets` CRUD) | 4 client functions written, never called; no actor in the five-destination model | **C — remove console routes + client fns.** Keep the serving/attribution side (`assetForTrackingHash`, `/api/click`, `/api/public/ad/:trackingHash`) because campaign registration attribution uses it |
+| `auction` (10 routes + domain + tests) | zero client code, zero UI, never referenced by the brief | **C — DONE: removed with its test blocks** |
+| `pools` (7 routes + domain + tests) | chama/stokvel savings; zero client code | **C — DONE: removed with its test blocks** |
+| `routes/fantasy.js` (13 routes) | `/api/fantasy/*` surface unused by the client; `domain/fantasy.js` is the engine behind Ligi **and the EPL surface (`/api/epl/*`, Tikiti T5)**, both of which have live routes + UI | **C — DONE: HTTP surface removed; domain kept and re-tested through domain calls; EPL lobby/budget/pool-import live under `/api/epl/*`** |
+| advertiser console (`/api/advertising/advertiser|campaigns|matches|assets` CRUD) | **Correction (post-audit): NOT dead.** `YardEngineDesk` (rendered from App.tsx, Workflows → Run) calls 9 of its client functions — the audit's "never called" was stale. **A — keep, integrated.** The serving/attribution side also stays (campaign registration attribution uses it) |
 
 ## F6 — Orphan client code
 

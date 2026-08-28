@@ -100,21 +100,18 @@ const EMPTY = {
 
   // Fantasy 11. Non-economic core: pool, entries, stats and derived scores.
   // No Fantasy wallet -- paid entry would use the one ledger, once legal.
+  // The bare /api/fantasy HTTP surface was removed (F5); the domain engine
+  // lives on behind Ligi and the EPL contest routes.
   fantasyCompetitions: [],
   fantasyPlayers: [],
   fantasyEntries: [],
   fantasyStats: [],
+
+  // --- Commerce -------------------------------------------------------------
   vendors: [],
   listings: [],
   orders: [],
   disputes: [],
-  // Auction. Price discovery over an existing listing. A BID IS NOT MONEY --
-  // bids live here, entirely separate from ledgerTransactions, so that
-  // nothing scanning the ledger can ever mistake an offer for income. A won
-  // auction produces an ordinary order, which settles through the ordinary
-  // chain. There is no auction wallet and no auction balance.
-  auctions: [],
-  bids: [],
 
   // --- The Vault -----------------------------------------------------------
   // A persistent context layer wrapping a real-world activity. A Vault is NOT
@@ -191,14 +188,6 @@ const EMPTY = {
   vendorCapabilities: [],
   vendorRecommendations: [],
   outboundMessages: [],
-
-  // --- Cooperative pools (four-screen build A) -----------------------------
-  // Chama / Stokvel / Esusu / Sou-Sou rotating savings (ROSCA). Contributions
-  // are ledger transactions; the rotation is a derived schedule. See
-  // domain/pool.js.
-  pools: [],
-  poolMembers: [],
-  poolRotations: [],
 
   // --- Distribution (four-screen build B) ----------------------------------
   // UTM click attribution: one row per tracked click. See domain/distribution.js.

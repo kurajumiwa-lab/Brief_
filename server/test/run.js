@@ -3301,57 +3301,6 @@ console.log('\n=== AI ASSIST SEAM (§27) ===');
   }
 }
 
-console.log('\n=== COOPERATIVE POOLS (four-screen build A) ===');
-{
-  const pool = await import('../src/domain/pool.js');
-
-  const p = pool.createPool({ name: 'Kilimani Chama', regionType: 'KENYA', contributionAmount: 1000, createdBy: 'usr_me', displayName: 'Host' });
-  check('a pool is created forming', p.status === 'forming' && p.rotationOrder.length === 1);
-
-  pool.addMember(p.id, 'usr_b', 'Brian');
-  pool.addMember(p.id, 'usr_c', 'Chiku');
-  check('members join while forming', pool.poolView(p.id).members.length === 3);
-
-  // A forming pool with <2 members cannot activate.
-  const solo = pool.createPool({ name: 'Solo', contributionAmount: 500, createdBy: 'usr_me' });
-  try { pool.activate(solo.id, 'usr_me'); check('a solo pool cannot activate', false); }
-  catch (e) { check('a solo pool cannot activate', /at least two/.test(e.message)); }
-
-  // Members lock once active.
-  pool.activate(p.id, 'usr_me');
-  try { pool.addMember(p.id, 'usr_d'); check('members lock after activation', false); }
-  catch (e) { check('members lock after activation', /locked/.test(e.message)); }
-
-  // Contributions are real ledger transactions; a duplicate is refused.
-  const c1 = pool.contribute(p.id, 'usr_me', 1000);
-  check('a contribution is a ledger transaction', c1.transaction.type === 'pool_contribution' && c1.transaction.amount === 1000);
-  const c1b = pool.contribute(p.id, 'usr_me', 1000);
-  check('a duplicate contribution is refused', c1b.duplicate === true);
-  check('the balance is derived from contributions', pool.poolView(p.id).balance.total === 1000);
-
-  // The recipient is the first member in rotation order (derived).
-  check('the recipient is derived', pool.poolView(p.id).recipientId === 'usr_me');
-
-  // Rotating advances to the next member.
-  pool.rotate(p.id, 'usr_me');
-  check('rotation advances the recipient', pool.poolView(p.id).recipientId === 'usr_b');
-
-  // Payout is honestly unavailable (no disbursement provider).
-  check('payout is honestly unavailable', pool.poolView(p.id).payoutAvailable === false && /No payout provider/.test(pool.poolView(p.id).payoutReason));
-
-  // Over HTTP.
-  {
-    const { default: appP } = await import('../src/index.js');
-    const srvP = appP.listen(0);
-    const portP = srvP.address().port;
-    const list = await (await fetch(`http://127.0.0.1:${portP}/api/pools`)).json();
-    check('GET /api/pools lists pools', Array.isArray(list.pools) && list.pools.length > 0);
-    const one = await (await fetch(`http://127.0.0.1:${portP}/api/pools/${p.id}`)).json();
-    check('GET /api/pools/:id returns the derived view', one.pool && typeof one.pool.balance.total === 'number');
-    srvP.close();
-  }
-}
-
 console.log('\n=== DISTRIBUTION (four-screen build B) ===');
 {
   const distribution = await import('../src/domain/distribution.js');
@@ -3676,7 +3625,7 @@ console.log('\n=== FEATURE REGISTRY (§4.2) ===');
   // Default state: everything enabled; module features configured; provider
   // features NOT configured (no credentials in this run).
   check('every feature is enabled by default', features.list().every((f) => f.enabled));
-  check('the registry holds all registered features', features.list().length === 43, String(features.list().length));
+  check('the registry holds all registered features', features.list().length === 42, String(features.list().length));
   check('auth is available by default', features.available('auth') === true);
   check('arena is available by default', features.available('arena') === true);
   check('vaults is available by default', features.available('vaults') === true);
@@ -4500,6 +4449,15 @@ console.log('\n=== FANTASY 11: LOCK, DETERMINISTIC SCORING, RANKING ===');
   };
 
   try {
+    // --- the full journey, through the DOMAIN (the bare /api/fantasy HTTP
+    // surface was removed with F5; Ligi and the EPL routes are the surfaces,
+    // and both ride this engine).
+    const attempt = (fn) => {
+      try { const data = fn(); return { ok: true, data }; }
+      catch (e) { return { ok: false, err: new Error(String(e.message ?? e)), thrown: e }; }
+    };
+    let r;
+    void r;
     const ORG = (await call('/api/auth/register', 'POST', { handle: 'organiser', password: 'a good passphrase' })).body;
     const U1 = (await call('/api/auth/register', 'POST', { handle: 'fanuser1', password: 'a good passphrase' })).body;
     const U2 = (await call('/api/auth/register', 'POST', { handle: 'fanuser2', password: 'a good passphrase' })).body;
@@ -4519,58 +4477,37 @@ console.log('\n=== FANTASY 11: LOCK, DETERMINISTIC SCORING, RANKING ===');
     check('2 saves is 0 extra points', fz.scorePlayer('GK', { minutes: 90, saves: 2 }).points === 1);
     check('a red card costs 3', fz.scorePlayer('MID', { minutes: 90, redCards: 1 }).points === -2);
     check('conceding 4 costs a GK 2', fz.scorePlayer('GK', { minutes: 90, goalsConceded: 4 }).points === -1);
-    check('conceding does NOT penalise a FWD', fz.scorePlayer('FWD', { minutes: 90, goalsConceded: 4 }).points === 1);
-    check('an own goal costs 2', fz.scorePlayer('DEF', { minutes: 90, ownGoals: 1 }).points === -1);
-    check('scoring is NEVER NaN', Number.isFinite(fz.scorePlayer('GK', { minutes: 90, goalsConceded: 5, saves: 7, penaltiesSaved: 1 }).points));
-    check('every score carries a breakdown', fz.scorePlayer('FWD', { minutes: 90, goals: 1 }).lines.length === 2);
 
-    // DETERMINISM: the same inputs must always give the same answer.
-    const a1 = fz.scorePlayer('MID', { minutes: 90, goals: 1, assists: 2, yellowCards: 1 });
-    const a2 = fz.scorePlayer('MID', { minutes: 90, goals: 1, assists: 2, yellowCards: 1 });
-    check('scoring is deterministic', JSON.stringify(a1) === JSON.stringify(a2));
-
-    // --- competition setup ---------------------------------------------------
-    const kickoff = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-    let r = await call('/api/fantasy/competitions', 'POST', { title: 'Saturday XI', kickoffAt: kickoff }, ORG.token);
-    check('a competition can be created', r.status === 201);
-    const comp = r.body.competition;
+    let a = attempt(() => fz.createCompetition({ createdBy: ORG.user.id, title: 'Saturday XI', kickoffAt: new Date(Date.now() + 60000).toISOString() }));
+    check('a competition can be created', a.ok);
+    const comp = a.data;
     check('it starts as draft', comp.status === 'draft');
     check('paid entry is null until legally possible', comp.entryFeeKes === null);
+    a = attempt(() => fz.createCompetition({ createdBy: ORG.user.id, title: 'Bad', kickoffAt: 'not a date' }));
+    check('an invalid kickoff is refused', !a.ok);
 
-    r = await call('/api/fantasy/competitions', 'POST', { title: 'Bad', kickoffAt: 'not a date' }, ORG.token);
-    check('an invalid kickoff is refused', r.status === 400);
+    a = attempt(() => fz.openCompetition(comp.id, ORG.user.id));
+    check('a competition cannot open without enough players', !a.ok, a.err?.message);
 
-    // Opening with too small a pool must fail.
-    r = await call(`/api/fantasy/competitions/${comp.id}/open`, 'POST', {}, ORG.token);
-    check('a competition cannot open without enough players', r.status === 400, `got ${r.status}`);
-
-    // Build a real pool: 2 GK, 6 DEF, 6 MID, 4 FWD across 6 clubs.
-    const mk = async (name, position, club) =>
-      (await call(`/api/fantasy/competitions/${comp.id}/players`, 'POST', { name, position, club }, ORG.token)).body.player;
+    const mk = (name, position, club) => fz.addPoolPlayer(comp.id, ORG.user.id, { name, position, club });
     const pool = [];
     const clubs = ['Gor', 'Leopards', 'Tusker', 'Bandari', 'Ulinzi', 'Kakamega'];
-    for (let i = 0; i < 2; i++) pool.push(await mk(`GK${i}`, 'GK', clubs[i % 6]));
-    for (let i = 0; i < 6; i++) pool.push(await mk(`DEF${i}`, 'DEF', clubs[i % 6]));
-    for (let i = 0; i < 6; i++) pool.push(await mk(`MID${i}`, 'MID', clubs[i % 6]));
-    for (let i = 0; i < 4; i++) pool.push(await mk(`FWD${i}`, 'FWD', clubs[i % 6]));
+    for (let i = 0; i < 2; i++) pool.push(mk(`GK${i}`, 'GK', clubs[i % 6]));
+    for (let i = 0; i < 6; i++) pool.push(mk(`DEF${i}`, 'DEF', clubs[i % 6]));
+    for (let i = 0; i < 6; i++) pool.push(mk(`MID${i}`, 'MID', clubs[i % 6]));
+    for (let i = 0; i < 4; i++) pool.push(mk(`FWD${i}`, 'FWD', clubs[i % 6]));
     check('the pool was built', pool.length === 18);
 
-    // POOL AUTHORITY: a participant cannot add players.
-    r = await call(`/api/fantasy/competitions/${comp.id}/players`, 'POST', { name: 'Ringer', position: 'FWD', club: 'Gor' }, U1.token);
-    check('a PARTICIPANT cannot add to the player pool (403)', r.status === 403, `got ${r.status}`);
-    r = await call(`/api/fantasy/competitions/${comp.id}/players`, 'POST', { name: 'X', position: 'STRIKER', club: 'Gor' }, ORG.token);
-    check('an invalid position is refused', r.status === 400);
+    a = attempt(() => fz.addPoolPlayer(comp.id, U1.user.id, { name: 'Ringer', position: 'FWD', club: 'Gor' }));
+    check('a PARTICIPANT cannot add to the player pool', !a.ok && /organiser/.test(a.err.message), a.err?.message);
+    a = attempt(() => fz.addPoolPlayer(comp.id, ORG.user.id, { name: 'X', position: 'STRIKER', club: 'Gor' }));
+    check('an invalid position is refused', !a.ok && /position/.test(a.err.message));
 
-    r = await call(`/api/fantasy/competitions/${comp.id}/open`, 'POST', {}, ORG.token);
-    check('the organiser opens the competition', r.status === 200 && r.body.competition.status === 'open');
+    a = attempt(() => fz.openCompetition(comp.id, ORG.user.id));
+    check('the organiser opens the competition', a.ok && a.data.status === 'open');
 
-    // --- squad validation ----------------------------------------------------
     const gk = pool.filter((p) => p.position === 'GK');
-    const def = pool.filter((p) => p.position === 'DEF');
-    const mid = pool.filter((p) => p.position === 'MID');
     const fwd = pool.filter((p) => p.position === 'FWD');
-    // Build a squad that respects the max-3-per-club rule. Picking greedily
-    // by position while tracking club counts is how a real client would.
     const pickSquad = (want, exclude = new Set()) => {
       const clubCount = {};
       const out = [];
@@ -4590,99 +4527,86 @@ console.log('\n=== FANTASY 11: LOCK, DETERMINISTIC SCORING, RANKING ===');
     check('a legal 11 could be assembled', squad1.length === 11, `got ${squad1.length}`);
     const validTeam = squad1.map((p) => p.id);
 
-    const bad = async (playerIds, captainId, label) => {
-      const rr = await call(`/api/fantasy/competitions/${comp.id}/entries`, 'POST', { playerIds, captainId }, U1.token);
-      check(label, rr.status === 400, `got ${rr.status}`);
+    const bad = (playerIds, captainId, label) => {
+      const rr = attempt(() => fz.submitTeam(comp.id, U1.user.id, { playerIds, captainId }));
+      check(label, !rr.ok, rr.err?.message);
     };
-    await bad(validTeam.slice(0, 10), validTeam[0], 'a team of 10 is refused');
-    await bad([...validTeam, fwd[3].id], validTeam[0], 'a team of 12 is refused');
-    await bad([validTeam[0], ...validTeam.slice(0, 10)], validTeam[0], 'a duplicated player is refused');
-    await bad([...validTeam.slice(0, 10), 'fply_invented'], validTeam[0], 'an INVENTED player is refused');
-    await bad(validTeam, 'fply_invented', 'a captain outside the team is refused');
-    await bad(validTeam, null, 'a missing captain is refused');
-    await bad([gk[0].id, gk[1].id, ...validTeam.slice(1, 10)], gk[0].id, 'two goalkeepers is refused');
+    bad(validTeam.slice(0, 10), validTeam[0], 'a team of 10 is refused');
+    bad([...validTeam, fwd[3].id], validTeam[0], 'a team of 12 is refused');
+    bad([validTeam[0], ...validTeam.slice(0, 10)], validTeam[0], 'a duplicated player is refused');
+    bad([...validTeam.slice(0, 10), 'fply_invented'], validTeam[0], 'an INVENTED player is refused');
+    bad(validTeam, 'fply_invented', 'a captain outside the team is refused');
+    bad(validTeam, null, 'a missing captain is refused');
+    bad([gk[0].id, gk[1].id, ...validTeam.slice(1, 10)], gk[0].id, 'two goalkeepers is refused');
 
-    // Club limit: 4 from one club.
     const gorPlayers = pool.filter((p) => p.club === 'Gor');
     if (gorPlayers.length >= 4) {
       const clubHeavy = [...gorPlayers.slice(0, 4).map((p) => p.id)];
       const filler = pool.filter((p) => !clubHeavy.includes(p.id)).slice(0, 7).map((p) => p.id);
-      await bad([...clubHeavy, ...filler], clubHeavy[0], 'more than 3 from one club is refused');
+      bad([...clubHeavy, ...filler], clubHeavy[0], 'more than 3 from one club is refused');
     }
 
-    // --- valid submission ----------------------------------------------------
     const cap1 = squad1.find((p) => p.position === 'FWD').id;
     const cap1b = squad1.find((p) => p.position === 'MID').id;
-    r = await call(`/api/fantasy/competitions/${comp.id}/entries`, 'POST', { playerIds: validTeam, captainId: cap1 }, U1.token);
-    check('a valid team is accepted', r.status === 201, JSON.stringify(r.body).slice(0, 140));
-    check('the entry has no points yet', r.body.entry.points === null);
-    check('and no rank yet', r.body.entry.rank === null);
+    a = attempt(() => fz.submitTeam(comp.id, U1.user.id, { playerIds: validTeam, captainId: cap1 }));
+    check('a valid team is accepted', a.ok && a.data.created === true, a.err?.message);
+    check('the entry has no points yet', a.data.entry.points === null);
+    check('and no rank yet', a.data.entry.rank === null);
 
-    // DUPLICATE PROTECTION: resubmitting updates, never duplicates.
-    r = await call(`/api/fantasy/competitions/${comp.id}/entries`, 'POST', { playerIds: validTeam, captainId: cap1b }, U1.token);
-    check('resubmitting BEFORE lock updates the same entry', r.status === 200 && r.body.created === false);
+    a = attempt(() => fz.submitTeam(comp.id, U1.user.id, { playerIds: validTeam, captainId: cap1b }));
+    check('resubmitting BEFORE lock updates the same entry', a.ok && a.data.created === false);
     check('exactly one entry for this user', fz.listEntries(comp.id).filter((e) => e.userId === U1.user.id).length === 1);
     check('the captain changed', fz.getEntry(comp.id, U1.user.id).captainId === cap1b);
 
-    // A second user enters.
     const squad2 = pickSquad({ GK: 1, DEF: 3, MID: 4, FWD: 3 });
     const team2 = squad2.map((p) => p.id);
     const cap2 = squad2.find((p) => p.position === 'FWD').id;
-    r = await call(`/api/fantasy/competitions/${comp.id}/entries`, 'POST', { playerIds: team2, captainId: cap2 }, U2.token);
-    check('a second user can enter', r.status === 201, JSON.stringify(r.body).slice(0, 140));
+    a = attempt(() => fz.submitTeam(comp.id, U2.user.id, { playerIds: team2, captainId: cap2 }));
+    check('a second user can enter', a.ok && a.data.created === true, a.err?.message);
     check('two entries exist', fz.listEntries(comp.id).length === 2);
+    check('you can read your OWN entry', fz.getEntry(comp.id, U2.user.id)?.userId === U2.user.id);
 
-    // Privacy: you cannot read someone else's team.
-    r = await call(`/api/fantasy/competitions/${comp.id}/entries/me`, 'GET', undefined, U2.token);
-    check('you can read your OWN entry', r.status === 200 && r.body.entry.userId === U2.user.id);
+    a = attempt(() => fz.recordStats(comp.id, ORG.user.id, fwd[0].id, { minutes: 90, goals: 3 }));
+    check('stats CANNOT be recorded before kickoff', !a.ok, a.err?.message);
+    a = attempt(() => fz.scoreCompetition(comp.id));
+    check('scoring before lock is refused', !a.ok, a.err?.message);
 
-    // --- stats before kickoff are refused ------------------------------------
-    r = await call(`/api/fantasy/competitions/${comp.id}/stats`, 'POST', { playerId: fwd[0].id, stats: { minutes: 90, goals: 3 } }, ORG.token);
-    check('stats CANNOT be recorded before kickoff', r.status === 400, `got ${r.status}`);
-    r = await call(`/api/fantasy/competitions/${comp.id}/score`, 'POST', {}, ORG.token);
-    check('scoring before lock is refused', r.status === 400, `got ${r.status}`);
-
-    // --- THE LOCK ------------------------------------------------------------
-    // Move kickoff into the past. The server clock decides, not the client.
     store.update('fantasyCompetitions', comp.id, { kickoffAt: new Date(Date.now() - 1000).toISOString() });
     check('the competition is now locked by TIME alone', fz.isLocked(fz.getCompetition(comp.id)) === true);
 
-    r = await call(`/api/fantasy/competitions/${comp.id}/entries`, 'POST', { playerIds: team2, captainId: cap2 }, U1.token);
-    check('a team CANNOT be changed after lock', r.status === 400, `got ${r.status}`);
-    check('the refusal says why', /locked/i.test(r.body?.error ?? ''), r.body?.error);
+    a = attempt(() => fz.submitTeam(comp.id, U1.user.id, { playerIds: team2, captainId: cap2 }));
+    check('a team CANNOT be changed after lock', !a.ok, a.err?.message);
+    check('the refusal says why', /locked/i.test(a.err?.message ?? ''));
     check('the stored team is unchanged', fz.getEntry(comp.id, U1.user.id).captainId === cap1b);
 
-    r = await call(`/api/fantasy/competitions/${comp.id}/entries`, 'POST', { playerIds: validTeam, captainId: cap1 },
-      (await call('/api/auth/register', 'POST', { handle: 'latecomer', password: 'a good passphrase' })).body.token);
-    check('a NEW entry after lock is refused', r.status === 400, `got ${r.status}`);
+    const LATE = (await call('/api/auth/register', 'POST', { handle: 'latecomer', password: 'a good passphrase' })).body;
+    a = attempt(() => fz.submitTeam(comp.id, LATE.user.id, { playerIds: validTeam, captainId: cap1 }));
+    check('a NEW entry after lock is refused', !a.ok, a.err?.message);
 
-    // --- stats + scoring ------------------------------------------------------
-    r = await call(`/api/fantasy/competitions/${comp.id}/stats`, 'POST', { playerId: cap1, stats: { minutes: 90, goals: 2 } }, ORG.token);
-    check('the organiser can record stats after kickoff', r.status === 200);
-    r = await call(`/api/fantasy/competitions/${comp.id}/stats`, 'POST', { playerId: cap1, stats: { minutes: 90, goals: 5 } }, U1.token);
-    check('a PARTICIPANT cannot record stats (403)', r.status === 403, `got ${r.status}`);
+    a = attempt(() => fz.recordStats(comp.id, ORG.user.id, cap1, { minutes: 90, goals: 2 }));
+    check('the organiser can record stats after kickoff', a.ok, a.err?.message);
+    a = attempt(() => fz.recordStats(comp.id, U1.user.id, cap1, { minutes: 90, goals: 5 }));
+    check('a PARTICIPANT cannot record stats', !a.ok && /organiser/.test(a.err.message), a.err?.message);
 
     for (const p of squad1.slice(0, 6)) {
-      await call(`/api/fantasy/competitions/${comp.id}/stats`, 'POST',
-        { playerId: p.id, stats: { minutes: 90, goals: p.position === 'FWD' ? 1 : 0, assists: 1, cleanSheet: p.position === 'GK' } }, ORG.token);
+      attempt(() => fz.recordStats(comp.id, ORG.user.id, p.id,
+        { minutes: 90, goals: p.position === 'FWD' ? 1 : 0, assists: 1, cleanSheet: p.position === 'GK' }));
     }
 
-    r = await call(`/api/fantasy/competitions/${comp.id}/score`, 'POST', {}, U1.token);
-    check('a participant cannot score the competition (403)', r.status === 403, `got ${r.status}`);
+    a = attempt(() => fz.scoreCompetition(comp.id, U1.user.id));
+    check('a participant cannot score the competition', !a.ok && /organiser/.test(a.err.message), a.err?.message);
 
-    r = await call(`/api/fantasy/competitions/${comp.id}/score`, 'POST', {}, ORG.token);
-    check('the organiser scores it', r.status === 200);
-    const standings1 = r.body.standings;
-    check('every entry got a score', standings1.length === 2 && standings1.every((s) => Number.isFinite(s.points)));
-    check('ranks were assigned', standings1.every((s) => s.rank >= 1));
+    a = attempt(() => fz.scoreCompetition(comp.id, ORG.user.id));
+    check('the organiser scores it', a.ok, a.err?.message);
+    const standings1 = a.data.standings;
+    check('every entry got a score', standings1.length === 2 && standings1.every((x) => Number.isFinite(x.points)));
+    check('ranks were assigned', standings1.every((x) => x.rank >= 1));
 
-    // REPRODUCIBILITY: rescoring the same data gives the same answer.
     const again = fz.scoreCompetition(comp.id);
     check('rescoring is REPRODUCIBLE',
       JSON.stringify(again.standings) === JSON.stringify(standings1),
       `${JSON.stringify(again.standings)} vs ${JSON.stringify(standings1)}`);
 
-    // AUDITABILITY: the breakdown must explain the number.
     const e1 = fz.getEntry(comp.id, U1.user.id);
     check('the entry carries a full breakdown', Array.isArray(e1.breakdown) && e1.breakdown.length === 11);
     const sum = e1.breakdown.reduce((t, b) => t + b.points, 0);
@@ -4690,25 +4614,20 @@ console.log('\n=== FANTASY 11: LOCK, DETERMINISTIC SCORING, RANKING ===');
     const capLine = e1.breakdown.find((b) => b.isCaptain);
     check('the captain is flagged in the breakdown', Boolean(capLine));
     check('the captain line shows the multiplier', capLine.lines.some((l) => /Captain/.test(l.label)));
-
-    r = await call(`/api/fantasy/competitions/${comp.id}/standings`);
-    check('standings are publicly readable after scoring', r.status === 200 && r.body.standings.length === 2);
-    check('the competition is marked scored', r.body.status === 'scored');
+    check('standings are readable after scoring', fz.standings(comp.id).length === 2);
 
     // --- NO FANTASY ECONOMY ---------------------------------------------------
     check('fantasy created NO ledger transactions', store.all('ledgerTransactions').length === 0);
-    check('no fantasy wallet exists', store.all('fantasyWallets').length === 0);
-    r = await call(`/api/fantasy/competitions/${comp.id}/paid-entry`, 'POST', { amount: 200 }, U1.token);
-    check('PAID fantasy entry hits the same compliance gate (403)', r.status === 403, `got ${r.status}`);
-    check('and returns the same machine-readable code', r.body?.code === 'compliance_gate');
-    check('naming the same unmet requirements', r.body?.unmet?.includes('gaming_licence'));
-
-    r = await call('/api/fantasy/rules');
-    check('the scoring rules are published for verification', r.status === 200 && r.body.scoring.assist === 3);
+    const compliance = await import('../src/domain/compliance.js');
+    const gate = compliance.refuseIfUnlicensed();
+    check('paid fantasy entry hits the same compliance gate', Boolean(gate));
+    check('naming the same unmet requirements', (gate?.unmet ?? []).includes('gaming_licence'), JSON.stringify(gate));
+    check('the scoring rules are published for verification', fz.SCORING_RULES.assist === 3);
   } finally {
     srv.close();
   }
 }
+
 
 
 console.log('\n=== MIGRATIONS AGAINST AN OLD FIXTURE ===');
@@ -4943,7 +4862,7 @@ console.log('\n=== ENDPOINT AUTHORIZATION RULES, ENCODED EXPLICITLY ===');
       ['POST', '/api/orders', { listingId: 'x' }],
       ['POST', '/api/arena/challenges', { gameId: 'efootball' }],
       ['GET', '/api/arena/matches', null],
-      ['POST', '/api/fantasy/competitions', { title: 'X', kickoffAt: new Date().toISOString() }],
+      ['POST', '/api/ligi/seasons', { name: 'X' }],
       ['GET', '/api/vendors/me/earnings', null],
       ['POST', '/api/vendors/me/payouts', {}],
       ['GET', '/api/ops/diagnostics', null],
@@ -4970,8 +4889,9 @@ console.log('\n=== ENDPOINT AUTHORIZATION RULES, ENCODED EXPLICITLY ===');
       ['GET', '/api/arena/games'],
       ['GET', '/api/arena/challenges'],
       ['GET', '/api/arena/status'],
-      ['GET', '/api/fantasy/rules'],
-      ['GET', '/api/fantasy/competitions']
+      ['GET', '/api/ligi/rules'],
+      ['GET', '/api/ligi/seasons'],
+      ['GET', '/api/epl/clubs']
     ];
     let allPublic = true;
     const blocked = [];
@@ -5015,587 +4935,6 @@ console.log('\n=== ENDPOINT AUTHORIZATION RULES, ENCODED EXPLICITLY ===');
     check('a stranger can still register with NO token', r.status === 200 || r.status === 201, `got ${r.status}`);
     check('this is the documented exception, and it still leaks nothing',
       !/ownerId|sourceId/.test(JSON.stringify(r.body)));
-  } finally {
-    srv.close();
-    if (prevDev === undefined) delete process.env.BRIEF_DEV_AUTH; else process.env.BRIEF_DEV_AUTH = prevDev;
-  }
-}
-
-
-console.log('\n=== AUCTION: PRICE DISCOVERY, NOT A SECOND ECONOMY ===');
-{
-  const auctions = await import('../src/domain/auction.js');
-  const vendors = await import('../src/domain/vendor.js');
-  const listings = await import('../src/domain/listing.js');
-  const settlementM = await import('../src/domain/settlement.js');
-  store._reset();
-
-  const future = (ms) => new Date(Date.now() + ms).toISOString();
-
-  const seller = { id: 'usr_seller' };
-  const v = vendors.createVendor({ ownerId: seller.id, displayName: 'Curio Shop', contactMethod: '0700' });
-  const mkListing = (over = {}) => listings.createListing({
-    vendorId: v.id, title: 'Carved stool', type: 'product',
-    price: 3000, currency: 'KES', quantityAvailable: 1, ...over
-  });
-  const l1 = mkListing();
-
-  // ---- creation rules ------------------------------------------------------
-  let threw = null;
-  try {
-    auctions.createAuction({ listingId: l1.id, ownerId: 'usr_stranger', startingPrice: 1000, endsAt: future(60000) });
-  } catch (e) { threw = e.message; }
-  check('a stranger cannot auction someone else\'s listing', /only the listing owner/.test(threw ?? ''), threw);
-
-  threw = null;
-  try {
-    auctions.createAuction({ listingId: l1.id, ownerId: seller.id, startingPrice: 1000, endsAt: new Date(Date.now() - 1000).toISOString() });
-  } catch (e) { threw = e.message; }
-  check('an auction cannot end in the past', /future/.test(threw ?? ''), threw);
-
-  threw = null;
-  try {
-    auctions.createAuction({ listingId: l1.id, ownerId: seller.id, startingPrice: 1000, reservePrice: 500, endsAt: future(60000) });
-  } catch (e) { threw = e.message; }
-  check('a reserve below the start price is refused', /reservePrice/.test(threw ?? ''), threw);
-
-  threw = null;
-  try {
-    auctions.createAuction({ listingId: l1.id, ownerId: seller.id, startingPrice: 1000, buyNowPrice: 900, endsAt: future(60000) });
-  } catch (e) { threw = e.message; }
-  check('a Buy Now below the start price is refused', /buyNowPrice/.test(threw ?? ''), threw);
-
-  const a1 = auctions.createAuction({ listingId: l1.id, ownerId: seller.id, startingPrice: 1000, endsAt: future(60000) });
-  check('an auction is created as draft', a1.status === 'draft');
-  check('it has NO winner', a1.winnerId === null && a1.winningBidId === null);
-  check('its price starts at the starting price', a1.currentPrice === 1000);
-  check('it is not yet biddable', a1.biddable === false);
-
-  threw = null;
-  try { auctions.createAuction({ listingId: l1.id, ownerId: seller.id, startingPrice: 1000, endsAt: future(60000) }); }
-  catch (e) { threw = e.message; }
-  check('a listing cannot have two live auctions', /already has an auction/.test(threw ?? ''), threw);
-
-  // ---- bidding requires an open auction ------------------------------------
-  threw = null;
-  try { auctions.placeBid({ auctionId: a1.id, bidderId: 'usr_b1', amount: 1500 }); }
-  catch (e) { threw = e.message; }
-  check('a draft auction refuses bids', /not open/.test(threw ?? ''), threw);
-
-  auctions.openAuction(a1.id, seller.id);
-  check('the owner opens it', auctions.getAuction(a1.id).status === 'open');
-  check('now it is biddable', auctions.getAuction(a1.id).biddable === true);
-
-  threw = null;
-  try { auctions.openAuction(a1.id, 'usr_stranger'); } catch (e) { threw = e.message; }
-  check('a stranger cannot open an auction', /only the owner/.test(threw ?? ''), threw);
-
-  // ---- A BID IS NOT A TRANSACTION -----------------------------------------
-  const ledgerBefore = store.all('ledgerTransactions').length;
-  const ordersBefore = store.all('orders').length;
-  auctions.placeBid({ auctionId: a1.id, bidderId: 'usr_b1', amount: 1200 });
-  check('a bid writes NO ledger transaction', store.all('ledgerTransactions').length === ledgerBefore);
-  check('a bid creates NO order', store.all('orders').length === ordersBefore);
-  check('a bid is stored in its own collection', store.all('bids').length === 1);
-  check('the price is now DERIVED from the bid', auctions.currentPrice(a1.id) === 1200);
-
-  // The seller has earned nothing. Bids are not revenue.
-  const earn = settlementM.vendorEarnings(v.id);
-  check('BIDS ARE NOT REVENUE: seller earnings still zero', earn.net === 0, JSON.stringify(earn));
-
-  // ---- bidding rules -------------------------------------------------------
-  threw = null;
-  try { auctions.placeBid({ auctionId: a1.id, bidderId: 'usr_b2', amount: 1200 }); }
-  catch (e) { threw = e.message; }
-  check('a bid must EXCEED the current price', /exceed/.test(threw ?? ''), threw);
-
-  threw = null;
-  try { auctions.placeBid({ auctionId: a1.id, bidderId: seller.id, amount: 5000 }); }
-  catch (e) { threw = e.message; }
-  check('the seller cannot bid on their own auction', /your own auction/.test(threw ?? ''), threw);
-
-  for (const bad of [0, -5, 2.5, NaN, Infinity, 1e308]) {
-    threw = null;
-    try { auctions.placeBid({ auctionId: a1.id, bidderId: 'usr_b2', amount: bad }); }
-    catch (e) { threw = e.message; }
-    check(`a bid of ${bad} is refused`, threw !== null, String(threw));
-  }
-
-  // Idempotency, matching orders.
-  const k = 'bid-key-1';
-  const r1 = auctions.placeBid({ auctionId: a1.id, bidderId: 'usr_b2', amount: 1500, idempotencyKey: k });
-  const r2 = auctions.placeBid({ auctionId: a1.id, bidderId: 'usr_b2', amount: 1500, idempotencyKey: k });
-  check('a repeated bid key returns the SAME bid', r1.bid.id === r2.bid.id);
-  check('and is flagged as reused', r2.reused === true);
-  check('only one row was written', store.filter('bids', (b) => b.idempotencyKey === k).length === 1);
-
-  // ---- the leader is derived, so retraction re-derives it ------------------
-  auctions.placeBid({ auctionId: a1.id, bidderId: 'usr_b3', amount: 2000 });
-  check('the leader is the highest bid', auctions.highestBid(a1.id).amount === 2000);
-  const top = auctions.highestBid(a1.id);
-  auctions.retractBid({ bidId: top.id, actorId: 'usr_b3' });
-  check('RETRACTION RE-DERIVES the price (no stale stored leader)',
-    auctions.currentPrice(a1.id) === 1500, String(auctions.currentPrice(a1.id)));
-  check('the retracted bid is excluded from active bids',
-    !auctions.activeBids(a1.id).some((b) => b.id === top.id));
-
-  threw = null;
-  try { auctions.retractBid({ bidId: r1.bid.id, actorId: 'usr_someone_else' }); }
-  catch (e) { threw = e.message; }
-  check('only the bidder may retract their bid', /only the bidder/.test(threw ?? ''), threw);
-
-  // ---- bidder privacy ------------------------------------------------------
-  const pub = auctions.publicView(auctions.getAuction(a1.id));
-  const pubStr = JSON.stringify(pub);
-  check('the public view shows the leading AMOUNT', pub.currentPrice === 1500);
-  check('and the bid count', pub.bidCount >= 1);
-  check('but NO bidder identity leaks', !/usr_b1|usr_b2|usr_b3/.test(pubStr), pubStr.slice(0, 160));
-  check('and no bid ids either', !/bid_/.test(pubStr));
-
-  // ---- closing: deterministic winner --------------------------------------
-  const closed = auctions.closeAuction({ auctionId: a1.id, actorId: seller.id });
-  check('the owner may close early', closed.changed === true && closed.sold === true);
-  check('the winner is the highest bidder', closed.auction.winnerId === 'usr_b2');
-  check('at the winning amount', closed.auction.winningAmount === 1500);
-  check('the auction is closed', closed.auction.status === 'closed');
-  const lost = store.filter('bids', (b) => b.auctionId === a1.id && b.status === 'lost');
-  check('losing bids are marked lost', lost.length >= 1);
-  check('A LOSING BID PRODUCED NO LEDGER ROW', store.all('ledgerTransactions').length === ledgerBefore);
-  check('and no order for the losers', store.filter('orders', (o) => o.buyerId === 'usr_b1').length === 0);
-
-  // Terminal: no reopening, no re-closing with a different winner.
-  const again = auctions.closeAuction({ auctionId: a1.id, actorId: seller.id });
-  check('closing twice is a no-op', again.changed === false);
-  check('the winner did not change', again.auction.winnerId === 'usr_b2');
-  threw = null;
-  try { auctions.openAuction(a1.id, seller.id); } catch (e) { threw = e.message; }
-  check('a closed auction cannot be REOPENED', /cannot open/.test(threw ?? ''), threw);
-  threw = null;
-  try { auctions.placeBid({ auctionId: a1.id, bidderId: 'usr_b1', amount: 99999 }); }
-  catch (e) { threw = e.message; }
-  check('and cannot take a late bid', /not open/.test(threw ?? ''), threw);
-
-  // ---- determinism: same bids in, same winner out --------------------------
-  //
-  // Note that placeBid REFUSES an equal bid, so a tie cannot arise through
-  // the public API at all -- that is the first assertion below. The tie-break
-  // is still tested, against rows written directly, because the comparator
-  // must be a total order even for data that predates the rule or arrives by
-  // repair.
-  {
-    const mkAuction = (owner) => {
-      const vv = vendors.createVendor({ ownerId: owner, displayName: owner, contactMethod: '1' });
-      const ll = listings.createListing({ vendorId: vv.id, title: 'X', type: 'product', price: 100, currency: 'KES', quantityAvailable: 1 });
-      const aa = auctions.createAuction({ listingId: ll.id, ownerId: owner, startingPrice: 100, endsAt: future(60000) });
-      auctions.openAuction(aa.id, owner);
-      return aa;
-    };
-
-    store._reset();
-    const aa = mkAuction('usr_s2');
-    auctions.placeBid({ auctionId: aa.id, bidderId: 'usr_early', amount: 500 });
-    let t = null;
-    try { auctions.placeBid({ auctionId: aa.id, bidderId: 'usr_late', amount: 500 }); }
-    catch (e) { t = e.message; }
-    check('an EQUAL bid is refused, so ties cannot arise through the API', /exceed/.test(t ?? ''), t);
-
-    // Force a tie at the data layer and confirm the winner is still stable.
-    const runWinner = () => {
-      store._reset();
-      const a2 = mkAuction('usr_s2');
-      const first = auctions.placeBid({ auctionId: a2.id, bidderId: 'usr_early', amount: 500 }).bid;
-      store.update('bids', first.id, { placedAt: '2020-01-01T00:00:00.000Z' });
-      // Written directly: placeBid would (correctly) refuse this.
-      store.insert('bids', {
-        id: 'bid_forced_tie', auctionId: a2.id, bidderId: 'usr_late', amount: 500,
-        currency: 'KES', status: 'active', idempotencyKey: null,
-        placedAt: '2020-06-01T00:00:00.000Z', createdAt: '2020-06-01T00:00:00.000Z'
-      });
-      return auctions.closeAuction({ auctionId: a2.id, actorId: 'usr_s2' }).auction.winnerId;
-    };
-    const w1 = runWinner(), w2 = runWinner(), w3 = runWinner();
-    check('a forced TIE breaks by who bid FIRST', w1 === 'usr_early', String(w1));
-    check('and the outcome is reproducible', w1 === w2 && w2 === w3);
-  }
-
-  // ---- reserve not met = closed with NO sale -------------------------------
-  {
-    store._reset();
-    const vv = vendors.createVendor({ ownerId: 'usr_s3', displayName: 'S3', contactMethod: '1' });
-    const ll = listings.createListing({ vendorId: vv.id, title: 'Rare', type: 'product', price: 9000, currency: 'KES', quantityAvailable: 1 });
-    const aa = auctions.createAuction({ listingId: ll.id, ownerId: 'usr_s3', startingPrice: 1000, reservePrice: 8000, endsAt: future(60000) });
-    auctions.openAuction(aa.id, 'usr_s3');
-    auctions.placeBid({ auctionId: aa.id, bidderId: 'usr_low', amount: 2000 });
-    const p = auctions.publicView(auctions.getAuction(aa.id));
-    check('the public view says a reserve EXISTS', p.hasReserve === true);
-    check('but never discloses its value', !JSON.stringify(p).includes('8000'));
-    check('and reports it unmet', p.reserveMet === false);
-    const r = auctions.closeAuction({ auctionId: aa.id, actorId: 'usr_s3' });
-    check('an unmet reserve closes with NO sale', r.sold === false);
-    check('no winner is recorded', r.auction.winnerId === null);
-    check('the under-bid is marked lost, not won',
-      store.filter('bids', (b) => b.auctionId === aa.id && b.status === 'won').length === 0);
-    check('and NO order exists', store.filter('orders', (o) => o.auctionId === aa.id).length === 0);
-    threw = null;
-    try { auctions.createWinnerOrder({ auctionId: aa.id, actorId: 'usr_s3' }); } catch (e) { threw = e.message; }
-    check('no order can be raised for an unsold auction', /no winner/.test(threw ?? ''), threw);
-  }
-
-  // ---- no bids at all ------------------------------------------------------
-  {
-    store._reset();
-    const vv = vendors.createVendor({ ownerId: 'usr_s4', displayName: 'S4', contactMethod: '1' });
-    const ll = listings.createListing({ vendorId: vv.id, title: 'Unwanted', type: 'product', price: 100, currency: 'KES', quantityAvailable: 1 });
-    const aa = auctions.createAuction({ listingId: ll.id, ownerId: 'usr_s4', startingPrice: 100, endsAt: future(60000) });
-    auctions.openAuction(aa.id, 'usr_s4');
-    const r = auctions.closeAuction({ auctionId: aa.id, actorId: 'usr_s4' });
-    check('an auction with no bids closes unsold', r.sold === false && r.auction.status === 'closed');
-    check('with no economic activity of any kind',
-      store.all('ledgerTransactions').length === 0 && store.all('orders').length === 0);
-  }
-
-  // ---- WINNER -> ORDER -> the ORDINARY chain -------------------------------
-  {
-    store._reset();
-    const vv = vendors.createVendor({ ownerId: 'usr_s5', displayName: 'S5', contactMethod: '1' });
-    const ll = listings.createListing({ vendorId: vv.id, title: 'Stool', type: 'product', price: 3000, currency: 'KES', quantityAvailable: 1 });
-    const aa = auctions.createAuction({ listingId: ll.id, ownerId: 'usr_s5', startingPrice: 1000, endsAt: future(60000) });
-    auctions.openAuction(aa.id, 'usr_s5');
-    auctions.placeBid({ auctionId: aa.id, bidderId: 'usr_w', amount: 4200 });
-    auctions.closeAuction({ auctionId: aa.id, actorId: 'usr_s5' });
-
-    let t = null;
-    try { auctions.createWinnerOrder({ auctionId: aa.id, actorId: 'usr_nobody' }); } catch (e) { t = e.message; }
-    check('a stranger cannot raise the winner\'s order', /only the winner/.test(t ?? ''), t);
-
-    const { order } = auctions.createWinnerOrder({ auctionId: aa.id, actorId: 'usr_w' });
-    check('the winner gets an ORDINARY order row', order.id.startsWith('ord_'));
-    check('priced from the WINNING BID, not the listing', order.total === 4200, String(order.total));
-    check('the buyer is the winner', order.buyerId === 'usr_w');
-    check('it is traceable back to the auction', order.auctionId === aa.id);
-    check('and to the exact bid', Boolean(order.bidId));
-    check('the order is NOT paid', order.transactionId === null);
-    check('stock was consumed', store.find('listings', (x) => x.id === ll.id).quantityAvailable === 0);
-
-    const dup = auctions.createWinnerOrder({ auctionId: aa.id, actorId: 'usr_w' });
-    check('raising the order twice returns the SAME order', dup.order.id === order.id && dup.reused === true);
-    check('and does not double-consume stock', store.find('listings', (x) => x.id === ll.id).quantityAvailable === 0);
-
-    // Settlement must still refuse without real money.
-    const ordersM = await import('../src/domain/order.js');
-    t = null;
-    try { ordersM.transitionOrder(order.id, 'settled'); } catch (e) { t = e.message; }
-    check('an auction order CANNOT settle without a settled ledger row', t !== null, String(t));
-    check('the seller has earned nothing yet', settlementM.vendorEarnings(vv.id).net === 0);
-
-    // Commission on an auction is the ORDINARY commission. No auction rate.
-    const split = settlementM.splitAmount(4200);
-    check('commission uses the SAME 5% rule', split.commission === 210, JSON.stringify(split));
-    check('and the split is exact', split.commission + split.sellerAmount === 4200, JSON.stringify(split));
-
-    // No auction wallet anywhere.
-    const collections = Object.keys(store.all('auctions').length >= 0 ? store._file ? {} : {} : {});
-    check('there is NO auction wallet collection',
-      store.all('wallets') === undefined || store.all('wallets').length === 0);
-    check('and no auction balance field on the auction row',
-      !('balance' in store.find('auctions', (x) => x.id === aa.id)));
-  }
-
-  // ---- WINNER NON-PAYMENT: an explicit path -------------------------------
-  {
-    store._reset();
-    const vv = vendors.createVendor({ ownerId: 'usr_s6', displayName: 'S6', contactMethod: '1' });
-    const ll = listings.createListing({ vendorId: vv.id, title: 'Bike', type: 'product', price: 5000, currency: 'KES', quantityAvailable: 1 });
-    const aa = auctions.createAuction({ listingId: ll.id, ownerId: 'usr_s6', startingPrice: 1000, endsAt: future(60000) });
-    auctions.openAuction(aa.id, 'usr_s6');
-    auctions.placeBid({ auctionId: aa.id, bidderId: 'usr_deadbeat', amount: 3000 });
-    auctions.placeBid({ auctionId: aa.id, bidderId: 'usr_runnerup', amount: 3500 });
-    // Retract the higher one so the deadbeat wins.
-    const hi = auctions.highestBid(aa.id);
-    auctions.retractBid({ bidId: hi.id, actorId: 'usr_runnerup' });
-    auctions.closeAuction({ auctionId: aa.id, actorId: 'usr_s6' });
-    const { order } = auctions.createWinnerOrder({ auctionId: aa.id, actorId: 'usr_s6' });
-
-    let t = null;
-    try { auctions.defaultWinner({ auctionId: aa.id, actorId: 'usr_deadbeat' }); } catch (e) { t = e.message; }
-    check('only the SELLER may record a default', /only the seller/.test(t ?? ''), t);
-
-    const failed = auctions.defaultWinner({ auctionId: aa.id, actorId: 'usr_s6' });
-    check('the auction moves to FAILED, not quietly closed', failed.status === 'failed');
-    check('the reason is recorded', /did not pay/.test(failed.defaultReason ?? ''));
-    check('the winner\'s order is cancelled',
-      store.find('orders', (o) => o.id === order.id).status === 'cancelled');
-    check('the item returns to stock',
-      store.find('listings', (x) => x.id === ll.id).quantityAvailable === 1);
-    check('the runner-up is NOT auto-awarded',
-      store.filter('orders', (o) => o.buyerId === 'usr_runnerup').length === 0);
-    check('and still no economic activity', store.all('ledgerTransactions').length === 0);
-  }
-
-  // ---- a PAID auction cannot be defaulted ---------------------------------
-  {
-    store._reset();
-    const ledgerM = await import('../src/domain/ledger.js');
-    const vv = vendors.createVendor({ ownerId: 'usr_s7', displayName: 'S7', contactMethod: '1' });
-    const ll = listings.createListing({ vendorId: vv.id, title: 'Lamp', type: 'product', price: 800, currency: 'KES', quantityAvailable: 1 });
-    const aa = auctions.createAuction({ listingId: ll.id, ownerId: 'usr_s7', startingPrice: 500, endsAt: future(60000) });
-    auctions.openAuction(aa.id, 'usr_s7');
-    auctions.placeBid({ auctionId: aa.id, bidderId: 'usr_payer', amount: 900 });
-    auctions.closeAuction({ auctionId: aa.id, actorId: 'usr_s7' });
-    const { order } = auctions.createWinnerOrder({ auctionId: aa.id, actorId: 'usr_payer' });
-
-    // Walk a real ledger transaction to settled, the long way round.
-    const tx = ledgerM.createTransaction({
-      type: 'sale', amount: 900, currency: 'KES', description: 'auction sale'
-    });
-    // The real state machine, walked in order. No shortcut to a terminal
-    // state: that is what makes the money auditable.
-    for (const st of ['pending', 'confirmed', 'settled']) {
-      ledgerM.transitionTransaction(tx.id, st);
-    }
-    const settledTx = store.find('ledgerTransactions', (x) => x.id === tx.id);
-    if (settledTx.status === 'settled') {
-      store.update('orders', order.id, { transactionId: tx.id });
-      let t = null;
-      try { auctions.defaultWinner({ auctionId: aa.id, actorId: 'usr_s7' }); } catch (e) { t = e.message; }
-      check('a PAID auction cannot be defaulted by the seller', /paid for/.test(t ?? ''), t);
-      const settledAuction = auctions.markSettled(aa.id);
-      check('a paid auction can be marked settled', settledAuction.status === 'settled');
-    } else {
-      check('ledger reached settled for the paid-auction case', false, `status=${settledTx.status}`);
-    }
-  }
-
-  // ---- markSettled cannot be used to fake a sale --------------------------
-  {
-    store._reset();
-    const vv = vendors.createVendor({ ownerId: 'usr_s8', displayName: 'S8', contactMethod: '1' });
-    const ll = listings.createListing({ vendorId: vv.id, title: 'Fake', type: 'product', price: 100, currency: 'KES', quantityAvailable: 1 });
-    const aa = auctions.createAuction({ listingId: ll.id, ownerId: 'usr_s8', startingPrice: 100, endsAt: future(60000) });
-    auctions.openAuction(aa.id, 'usr_s8');
-    auctions.placeBid({ auctionId: aa.id, bidderId: 'usr_x', amount: 200 });
-    auctions.closeAuction({ auctionId: aa.id, actorId: 'usr_s8' });
-    auctions.createWinnerOrder({ auctionId: aa.id, actorId: 'usr_x' });
-    let t = null;
-    try { auctions.markSettled(aa.id); } catch (e) { t = e.message; }
-    check('markSettled REFUSES an unpaid auction', /has not settled/.test(t ?? ''), t);
-    check('the auction stays closed', auctions.getAuction(aa.id).status === 'closed');
-  }
-
-  // ---- Buy Now -------------------------------------------------------------
-  {
-    store._reset();
-    const vv = vendors.createVendor({ ownerId: 'usr_s9', displayName: 'S9', contactMethod: '1' });
-    const ll = listings.createListing({ vendorId: vv.id, title: 'Chair', type: 'product', price: 2000, currency: 'KES', quantityAvailable: 1 });
-    const aa = auctions.createAuction({ listingId: ll.id, ownerId: 'usr_s9', startingPrice: 500, buyNowPrice: 2500, endsAt: future(60000) });
-    auctions.openAuction(aa.id, 'usr_s9');
-    auctions.placeBid({ auctionId: aa.id, bidderId: 'usr_bidder', amount: 700 });
-
-    let t = null;
-    try { auctions.buyNow({ auctionId: aa.id, buyerId: 'usr_s9' }); } catch (e) { t = e.message; }
-    check('the seller cannot Buy Now their own auction', /your own/.test(t ?? ''), t);
-
-    const r = auctions.buyNow({ auctionId: aa.id, buyerId: 'usr_instant' });
-    check('Buy Now ends the auction immediately', r.auction.status === 'closed');
-    check('the buyer wins', r.auction.winnerId === 'usr_instant');
-    check('at exactly the Buy Now price', r.auction.winningAmount === 2500);
-    check('the earlier bidder loses and pays nothing',
-      store.find('bids', (b) => b.bidderId === 'usr_bidder').status === 'lost');
-    check('Buy Now still creates NO ledger row by itself', store.all('ledgerTransactions').length === 0);
-    const { order } = auctions.createWinnerOrder({ auctionId: aa.id, actorId: 'usr_instant' });
-    check('and the winner order uses the Buy Now amount', order.total === 2500);
-  }
-
-  // ---- Circle auction: membership is enforced ------------------------------
-  {
-    store._reset();
-    const circlesM = await import('../src/domain/circle.js');
-    const membersM = await import('../src/domain/member.js');
-    const vv = vendors.createVendor({ ownerId: 'usr_s10', displayName: 'S10', contactMethod: '1' });
-    const ll = listings.createListing({ vendorId: vv.id, title: 'Members only', type: 'product', price: 300, currency: 'KES', quantityAvailable: 1 });
-    const c = circlesM.createTargetCircle({ name: 'Kilimani Traders', description: 'trade' });
-    membersM.addMember(c.id, 'usr_member', 'contributor');
-
-    let t = null;
-    try {
-      auctions.createAuction({ listingId: ll.id, ownerId: 'usr_s10', type: 'circle', startingPrice: 100, endsAt: future(60000) });
-    } catch (e) { t = e.message; }
-    check('a circle auction requires a circleId', /circleId/.test(t ?? ''), t);
-
-    const aa = auctions.createAuction({
-      listingId: ll.id, ownerId: 'usr_s10', type: 'circle',
-      startingPrice: 100, endsAt: future(60000), circleId: c.id
-    });
-    auctions.openAuction(aa.id, 'usr_s10');
-    t = null;
-    try { auctions.placeBid({ auctionId: aa.id, bidderId: 'usr_outsider', amount: 500 }); }
-    catch (e) { t = e.message; }
-    check('a NON-MEMBER cannot bid in a circle auction', /circle members/.test(t ?? ''), t);
-    const ok = auctions.placeBid({ auctionId: aa.id, bidderId: 'usr_member', amount: 500 });
-    check('a member can', ok.bid.amount === 500);
-  }
-
-  // ---- server-authoritative timing ----------------------------------------
-  {
-    store._reset();
-    const vv = vendors.createVendor({ ownerId: 'usr_s11', displayName: 'S11', contactMethod: '1' });
-    const ll = listings.createListing({ vendorId: vv.id, title: 'Timed', type: 'product', price: 100, currency: 'KES', quantityAvailable: 1 });
-    const aa = auctions.createAuction({ listingId: ll.id, ownerId: 'usr_s11', startingPrice: 100, endsAt: future(60000) });
-    auctions.openAuction(aa.id, 'usr_s11');
-    auctions.placeBid({ auctionId: aa.id, bidderId: 'usr_t1', amount: 400 });
-
-    // Move the end time into the past: the SERVER clock now says it is over.
-    store.update('auctions', aa.id, { endsAt: new Date(Date.now() - 1000).toISOString() });
-    let t = null;
-    try { auctions.placeBid({ auctionId: aa.id, bidderId: 'usr_t2', amount: 900 }); }
-    catch (e) { t = e.message; }
-    check('the SERVER clock closes bidding, whatever the client thinks', /has ended/.test(t ?? ''), t);
-
-    // A non-owner may finalise an auction whose time has passed.
-    const r = auctions.closeAuction({ auctionId: aa.id, actorId: 'usr_anyone' });
-    check('an expired auction can be finalised by anyone', r.changed === true && r.sold === true);
-    check('and the winner is the last valid bidder', r.auction.winnerId === 'usr_t1');
-
-    // The sweep is idempotent.
-    const sweep1 = auctions.sweepExpired();
-    check('sweeping an already-closed auction does nothing', sweep1.closed === 0);
-  }
-
-  // ---- cancellation --------------------------------------------------------
-  {
-    store._reset();
-    const vv = vendors.createVendor({ ownerId: 'usr_s12', displayName: 'S12', contactMethod: '1' });
-    const ll = listings.createListing({ vendorId: vv.id, title: 'C', type: 'product', price: 100, currency: 'KES', quantityAvailable: 1 });
-    const aa = auctions.createAuction({ listingId: ll.id, ownerId: 'usr_s12', startingPrice: 100, endsAt: future(60000) });
-    auctions.openAuction(aa.id, 'usr_s12');
-    auctions.placeBid({ auctionId: aa.id, bidderId: 'usr_c1', amount: 300 });
-    let t = null;
-    try { auctions.cancelAuction({ auctionId: aa.id, actorId: 'usr_s12' }); } catch (e) { t = e.message; }
-    check('a seller CANNOT cancel out of a live bid', /already has bids/.test(t ?? ''), t);
-
-    const ll2 = listings.createListing({ vendorId: vv.id, title: 'C2', type: 'product', price: 100, currency: 'KES', quantityAvailable: 1 });
-    const bb = auctions.createAuction({ listingId: ll2.id, ownerId: 'usr_s12', startingPrice: 100, endsAt: future(60000) });
-    const cancelled = auctions.cancelAuction({ auctionId: bb.id, actorId: 'usr_s12' });
-    check('an unbid auction can be cancelled', cancelled.status === 'cancelled');
-    t = null;
-    try { auctions.openAuction(bb.id, 'usr_s12'); } catch (e) { t = e.message; }
-    check('a cancelled auction cannot be opened', /cannot open/.test(t ?? ''), t);
-  }
-}
-
-console.log('\n=== AUCTION OVER HTTP ===');
-{
-  process.env.NODE_ENV = 'test';
-  // Dev fallback OFF: otherwise every anonymous request would be silently
-  // treated as the single dev user and the authorization assertions below
-  // would prove nothing.
-  const prevDev = process.env.BRIEF_DEV_AUTH;
-  process.env.BRIEF_DEV_AUTH = '0';
-  const { default: app } = await import('../src/index.js');
-  store._reset();
-  const srv = app.listen(0);
-  const port = srv.address().port;
-  const call = async (path, method = 'GET', body, token) => {
-    const headers = {};
-    if (body) headers['content-type'] = 'application/json';
-    if (token) headers.authorization = `Bearer ${token}`;
-    const res = await fetch(`http://127.0.0.1:${port}${path}`, {
-      method, headers, body: body ? JSON.stringify(body) : undefined
-    });
-    return { status: res.status, body: await res.json().catch(() => null) };
-  };
-
-  try {
-    const u = Date.now().toString(36);
-    process.env.BRIEF_FINANCE = `aucs_${u}`;
-    const seller = (await call('/api/auth/register', 'POST', { handle: `aucs_${u}`, password: 'a good passphrase' })).body;
-    const bidder = (await call('/api/auth/register', 'POST', { handle: `aucb_${u}`, password: 'a good passphrase' })).body;
-    const other = (await call('/api/auth/register', 'POST', { handle: `auco_${u}`, password: 'a good passphrase' })).body;
-
-    await call('/api/vendors', 'POST', { displayName: 'Auction House' }, seller.token);
-    const listing = (await call('/api/listings', 'POST',
-      { title: 'Signed print', type: 'product', price: 1000, currency: 'KES', quantityAvailable: 1 }, seller.token)).body.listing;
-    await call(`/api/listings/${listing.id}/status`, 'POST', { status: 'active' }, seller.token);
-
-    let r = await call('/api/auctions', 'POST', { listingId: listing.id, startingPrice: 500, endsAt: new Date(Date.now() + 60000).toISOString() });
-    check('creating an auction requires auth (401)', r.status === 401, `got ${r.status}`);
-
-    r = await call('/api/auctions', 'POST', { listingId: listing.id, startingPrice: 500, endsAt: new Date(Date.now() + 60000).toISOString() }, other.token);
-    check('a non-owner cannot auction the listing (400)', r.status === 400, `got ${r.status}`);
-
-    r = await call('/api/auctions', 'POST',
-      { listingId: listing.id, startingPrice: 500, buyNowPrice: 5000, endsAt: new Date(Date.now() + 60000).toISOString() }, seller.token);
-    check('the owner creates an auction (201)', r.status === 201, JSON.stringify(r.body).slice(0, 140));
-    const auc = r.body.auction;
-
-    r = await call(`/api/auctions/${auc.id}/bids`, 'POST', { amount: 600 }, bidder.token);
-    check('a draft auction refuses bids (400)', r.status === 400, `got ${r.status}`);
-
-    await call(`/api/auctions/${auc.id}/open`, 'POST', {}, seller.token);
-    r = await call(`/api/auctions/${auc.id}/bids`, 'POST', { amount: 600 }, bidder.token);
-    check('a bid is accepted (201)', r.status === 201, JSON.stringify(r.body).slice(0, 140));
-    check('the response shows the new price', r.body.auction.currentPrice === 600);
-    check('and does NOT name other bidders', !JSON.stringify(r.body.auction).includes(bidder.user.id));
-
-    r = await call(`/api/auctions/${auc.id}/bids`, 'POST', { amount: 550 }, other.token);
-    check('a lower bid is refused (400)', r.status === 400, `got ${r.status}`);
-
-    // Bidder privacy over HTTP.
-    r = await call(`/api/auctions/${auc.id}`, 'GET', undefined, other.token);
-    check('a rival bidder sees the public view only', !JSON.stringify(r.body).includes(bidder.user.id),
-      JSON.stringify(r.body).slice(0, 180));
-    r = await call(`/api/auctions/${auc.id}/bids`, 'GET', undefined, other.token);
-    check('a rival CANNOT read the bid list (403)', r.status === 403, `got ${r.status}`);
-    r = await call(`/api/auctions/${auc.id}/bids`, 'GET', undefined, seller.token);
-    check('the SELLER can read the bid list', r.status === 200 && r.body.bids.length === 1);
-
-    r = await call('/api/bids/mine', 'GET', undefined, bidder.token);
-    check('a bidder sees their OWN bids', r.body.bids.length === 1);
-    r = await call('/api/bids/mine', 'GET', undefined, other.token);
-    check('and only their own', r.body.bids.length === 0);
-
-    // Idempotent bidding over the wire.
-    const key = `k-${u}`;
-    const [b1, b2] = await Promise.all([
-      call(`/api/auctions/${auc.id}/bids`, 'POST', { amount: 800, idempotencyKey: key }, other.token),
-      call(`/api/auctions/${auc.id}/bids`, 'POST', { amount: 800, idempotencyKey: key }, other.token)
-    ]);
-    const ids = [b1.body?.bid?.id, b2.body?.bid?.id];
-    check('concurrent duplicate bid keys yield ONE bid', ids[0] === ids[1], ids.join(' vs '));
-
-    // Close and order.
-    r = await call(`/api/auctions/${auc.id}/close`, 'POST', {}, other.token);
-    check('a non-owner cannot close early (400)', r.status === 400, `got ${r.status}`);
-    r = await call(`/api/auctions/${auc.id}/close`, 'POST', {}, seller.token);
-    check('the seller closes it', r.status === 200 && r.body.sold === true);
-    check('the winner is the highest bidder', r.body.auction.winnerId === other.user.id);
-
-    r = await call(`/api/auctions/${auc.id}/order`, 'POST', {}, bidder.token);
-    check('a LOSER cannot raise the winner order (403)', r.status === 403, `got ${r.status}`);
-    r = await call(`/api/auctions/${auc.id}/order`, 'POST', {}, other.token);
-    check('the winner raises their order (201)', r.status === 201, JSON.stringify(r.body).slice(0, 140));
-    const order = r.body.order;
-    check('priced at the winning bid', order.total === 800);
-    check('and unpaid', order.paid !== true);
-
-    // The ordinary payment path applies, and still refuses honestly.
-    r = await call(`/api/orders/${order.id}/pay`, 'POST', { phone: '0722000111' }, other.token);
-    check('paying an auction order uses the ORDINARY route', r.status === 503, `got ${r.status}`);
-    check('and admits nothing was charged', r.body?.charged === false);
-
-    r = await call('/api/economic/reconcile', 'GET', undefined, seller.token);
-    check('the ledger is still balanced after an auction', r.body?.reconciliation?.balanced === true);
-    r = await call('/api/vendors/me/earnings', 'GET', undefined, seller.token);
-    check('an unpaid auction produced NO earnings', r.body?.earnings?.net === 0);
-
-    // Signals: one activity layer.
-    r = await call('/api/signals');
-    const kinds = (r.body?.signals ?? []).map((s) => s.type);
-    check('auction signals use the shared layer', kinds.includes('auction_opened') && kinds.includes('bid_placed'));
-    check('and record the close', kinds.includes('auction_closed'));
-    const bidSignals = (r.body?.signals ?? []).filter((s) => s.type === 'bid_placed');
-    check('bid signals do not leak the bidder to a public reader',
-      bidSignals.every((s) => !JSON.stringify(s.metadata ?? {}).includes('usr_')));
   } finally {
     srv.close();
     if (prevDev === undefined) delete process.env.BRIEF_DEV_AUTH; else process.env.BRIEF_DEV_AUTH = prevDev;

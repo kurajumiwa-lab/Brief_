@@ -109,16 +109,6 @@ export const SIGNAL_TYPES = [
   'order_cancelled',
   'sync_completed',
   'sync_failed',
-  // --- Auction (Batch 4) ---------------------------------------------------
-  // A bid is an event, not money. These record price discovery; the money
-  // events for a won auction are the ORDER's, emitted by the existing
-  // commerce signals, because an auction settles through the ordinary chain.
-  'auction_opened',
-  'bid_placed',
-  'auction_closed',
-  'auction_order_raised',
-  'auction_winner_defaulted',
-  'auction_cancelled',
   // --- Yard Engine / advertising ------------------------------------------
   'advertiser_campaign_created',
   'advertiser_campaign_submitted',
