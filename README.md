@@ -83,7 +83,7 @@ challenge, campaign, WhatsApp-share/banner, and archive cycle.
 ## Tests
 
 ```bash
-./run-suites.sh              # all 23 client suites (syncs App.tsx first)
+./run-suites.sh              # all client suites (syncs App.tsx first)
 ./run-suites.sh commerce     # or a single named suite
 
 cd server && node test/run.js         # server suite
@@ -104,13 +104,13 @@ node live/4-full-chain.mjs            # identity -> ... -> payout, Arena,
                                       # Fantasy, Auction, ops
 ```
 
-**Current state: 2589 assertions, 0 failing.**
+**Current state: 3077 assertions, 0 failing.**
 
 | Suite | Result |
 |---|---|
-| `server/test/run.js` | 1217 passed / 0 failed / 1 skipped |
+| `server/test/run.js` | 1649 passed / 0 failed / 3 skipped |
 | `server/test/livecamp.mjs` | 111 passed / 0 failed |
-| `./run-suites.sh` (23 client suites) | 1105 passed / 0 failed |
+| `./run-suites.sh` (client suites) | 1161 passed / 0 failed |
 | `tc` strict typecheck | exit 0 |
 | `live/` against the production build | 43 + 26 + 87 = 156 / 0 |
 
@@ -125,6 +125,15 @@ unavailable, so a green run always means something real happened.
 **Five primary destinations** — Nearby, Arena, My Layer, Workflows, Pulse.
 There is no router: navigation is conceptual, driven by state. Do not add a
 sixth destination; put new surfaces under an existing one's secondary nav.
+
+**Onboarding is a ladder.** A new person passes through five rungs — account,
+intent, keep your first thing (the aha), contribute something, put it in front
+of people — and each rung opens the secondary services above it. Progress is
+DERIVED from real rows plus an append-only event stream, never stored as a step
+counter, and the lock shapes what is *offered*, never what is permitted. Saved
+and Actions deliberately show no ladder chrome. Google sign-in leads the first
+screen and Telegram is never required. See
+[`ONBOARDING.md`](ONBOARDING.md).
 
 **No fabricated data.** The rule the ingestion pipeline exists to enforce is
 that a field which was not stated stays unstated. "Saturday popup" yields a

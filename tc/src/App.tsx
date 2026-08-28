@@ -30,6 +30,10 @@ import { Quests } from './components/Quests';
 import type { GeoPoint } from './components/LocationChip';
 import { ArenaShelf } from './components/ArenaShelf';
 import { MainShelf } from './components/MainShelf';
+import { Onboarding } from './components/Onboarding';
+import { NextStep } from './components/NextStep';
+import { isSurfaceUnlocked, shouldOpenFirstRun, showsLadder, unlockHint } from './components/ladder';
+import { arrivalSource, linkTokenFrom, urlWithoutArrivalParams, type ArrivalChannel } from './components/arrival';
 import { ArenaBetaPilot } from './components/ArenaBetaPilot';
 import type { ArenaBetaSegment, ArenaBetaSummary } from './api/types';
 import { EnginePanel } from './components/EnginePanel';
@@ -5019,6 +5023,37 @@ export function App() {
   );
   const [menuOpen, setMenuOpen] = useState(false);
   const [sessionUser, setSessionUser] = useState<briefApi.AuthedUser | null>(null);
+
+  // --- Onboarding & the service ladder ---------------------------------------
+  // The ladder is DERIVED server-side from real rows; the client only holds
+  // the answer and decides where it may be shown. Null means "not loaded",
+  // which every ladder helper reads as "nothing is locked" — an outage must
+  // never turn into a product that refuses to open.
+  const [authProviders, setAuthProviders] = useState<briefApi.AuthProviders | null>(null);
+  const [onboardingState, setOnboardingState] = useState<briefApi.OnboardingState | null>(null);
+  const [firstRunOpen, setFirstRunOpen] = useState(false);
+  const [nextStepHidden, setNextStepHidden] = useState(false);
+  const [sessionChecked, setSessionChecked] = useState(false);
+  const arrivalChannel: ArrivalChannel = React.useMemo(
+    () =>
+      typeof window === 'undefined'
+        ? 'browser'
+        : arrivalSource(window.location.href, window.navigator?.userAgent ?? ''),
+    []
+  );
+  const ladder = onboardingState?.ladder ?? null;
+
+  /** Report a step that leaves no server row of its own. Never blocks the UI. */
+  const noteActivation = React.useCallback(
+    (name: briefApi.ActivationEventName, meta: Record<string, unknown> = {}) => {
+      void briefApi.recordActivation(name, meta).then((res) => {
+        if (res.ok) {
+          setOnboardingState((prev) => (prev ? { ...prev, ladder: res.data.ladder } : prev));
+        }
+      });
+    },
+    []
+  );
   const [dockOn, setDockOn] = useState(true);
   const dockLastY = React.useRef(0);
 
@@ -5089,34 +5124,16 @@ export function App() {
   // This silently provisions a real, persisted local account on first run so
   // the whole product is exercisable on the deployed site — a genuine account
   // with a real server session, not a fake. A returning device logs back in.
-  const bootstrapSession = React.useCallback(async () => {
-    // Inside a Telegram Mini App, the user's real identity is the signed
-    // initData — bind it to a Brief account rather than minting an anonymous
-    // local identity. This is what lets a Mini App user post as THEMSELVES.
-    if (briefApi.isTelegramMiniApp()) {
-      const tg = (window as any)?.Telegram?.WebApp;
-      try {
-        tg?.ready?.();
-        tg?.expand?.();
-      } catch { /* SDK not fully loaded */ }
-      const init = await briefApi.telegramInit(String(tg.initData));
-      if (init.ok) {
-        setSessionUser(init.data);
-        return;
-      }
-      // initData rejected (stale/bad) — fall through to the ordinary path so
-      // the app still renders, just without the Telegram identity.
-    }
-
-    const me = await briefApi.whoAmI();
-    if (me.ok) {
-      setSessionUser(me.data);
-      return;
-    }
-    // Only provision an account when the server actually requires one (401).
-    // An unreachable/404 server is not an auth signal — don't fire register/
-    // login POSTs against a dead backend.
-    if (me.status !== 401) return;
+  /**
+   * A device-only account.
+   *
+   * This used to run silently on every first boot, which meant the very first
+   * thing Brief did for a new person was invent an anonymous identity they
+   * could never move to another phone. It is now an explicit choice on the
+   * first screen: "just look around on this device". Still a real server
+   * account with a real session — just one with no email attached to it.
+   */
+  const provisionGuest = React.useCallback(async (): Promise<briefApi.AuthedUser | null> => {
     let handle = '';
     try { handle = window.localStorage.getItem('brief_local_handle') ?? ''; } catch { /* private mode */ }
     if (!handle) {
@@ -5127,14 +5144,126 @@ export function App() {
     const reg = await briefApi.register(handle, password, 'Local');
     if (reg.ok) {
       setSessionUser(reg.data);
-      return;
+      return reg.data;
     }
     // Handle already exists from a prior visit: log back in.
     const logged = await briefApi.login(handle, password);
-    if (logged.ok) setSessionUser(logged.data);
+    if (logged.ok) {
+      setSessionUser(logged.data);
+      return logged.data;
+    }
+    return null;
   }, []);
 
+  const bootstrapSession = React.useCallback(async () => {
+    // Inside a Telegram Mini App, the user's real identity is the signed
+    // initData — bind it to a Brief account rather than minting an anonymous
+    // local identity. Telegram is a DOOR, not a requirement: nobody outside
+    // the Mini App is ever asked for it.
+    if (briefApi.isTelegramMiniApp()) {
+      const tg = (window as any)?.Telegram?.WebApp;
+      try {
+        tg?.ready?.();
+        tg?.expand?.();
+      } catch { /* SDK not fully loaded */ }
+      const init = await briefApi.telegramInit(String(tg.initData));
+      if (init.ok) {
+        setSessionUser(init.data);
+        setSessionChecked(true);
+        return;
+      }
+      // initData rejected (stale/bad) — fall through to the ordinary path so
+      // the app still renders, just without the Telegram identity.
+    }
+
+    // Arrived from a link that already knows who this is.
+    //
+    // The honest version of "the in-app browser identifies the email": the
+    // link carries a token THIS server signed for that address, and the server
+    // re-verifies the signature before it means anything. A bare ?email= in a
+    // URL is not an identity and is ignored. Nothing here reads a device
+    // account — no browser exposes that.
+    const linkToken = typeof window === 'undefined' ? null : linkTokenFrom(window.location.href);
+    if (linkToken) {
+      const viaLink = await briefApi.continueFromLinkToken(linkToken, arrivalChannel);
+      if (viaLink.ok) {
+        setSessionUser(viaLink.data);
+        setSessionChecked(true);
+        // Burn the parameter so a reload or a forwarded URL cannot replay it.
+        try {
+          window.history.replaceState({}, '', urlWithoutArrivalParams(window.location.href));
+        } catch { /* history blocked */ }
+        return;
+      }
+    }
+
+    const me = await briefApi.whoAmI();
+    if (me.ok) {
+      setSessionUser(me.data);
+      setSessionChecked(true);
+      return;
+    }
+    // 401 means the server wants a real identity. It no longer gets one
+    // invented for it: the first-run flow opens and the person chooses
+    // Google, a handle, or a device-only account.
+    setSessionChecked(true);
+    if (me.status === 401) setFirstRunOpen(true);
+  }, [arrivalChannel]);
+
   React.useEffect(() => { void bootstrapSession(); }, [bootstrapSession]);
+
+  // What this deployment may honestly offer on the sign-in screen.
+  React.useEffect(() => {
+    void briefApi.getAuthProviders().then((res) => {
+      if (res.ok) setAuthProviders(res.data);
+    });
+  }, []);
+
+  // Onboarding state + ladder follow the session. Signed out, there is
+  // nothing to load and nothing to lock.
+  const refreshOnboarding = React.useCallback(async () => {
+    if (!sessionUser) return;
+    const res = await briefApi.getOnboarding();
+    if (res.ok) setOnboardingState(res.data);
+  }, [sessionUser]);
+
+  React.useEffect(() => { void refreshOnboarding(); }, [refreshOnboarding]);
+
+  // Seeing a populated feed is the moment Brief has shown its point. Recorded
+  // once per session, and only when real rows actually arrived.
+  const feedSeenRef = React.useRef(false);
+  React.useEffect(() => {
+    if (feedSeenRef.current) return;
+    if (!sessionUser || homeFeedStatus !== 'ready') return;
+    feedSeenRef.current = true;
+    noteActivation('feed_seen', {});
+  }, [sessionUser, homeFeedStatus, noteActivation]);
+
+  // Attribute the visit to the link that produced it, once, when it was not
+  // an ordinary browser.
+  React.useEffect(() => {
+    if (!sessionUser || arrivalChannel === 'browser') return;
+    void briefApi.setOnboardingSource(arrivalChannel);
+  }, [sessionUser, arrivalChannel]);
+
+  // Open the first run only when there is a real reason to: no session, or a
+  // session that has never answered the one question and never skipped it.
+  React.useEffect(() => {
+    if (!sessionChecked) return;
+    if (firstRunOpen) return;
+    if (!sessionUser) return;
+    if (!onboardingState) return;
+    if (
+      shouldOpenFirstRun({
+        signedIn: true,
+        goal: onboardingState.profile?.goal,
+        finishedAt: onboardingState.profile?.finishedAt,
+        skippedAt: onboardingState.profile?.skippedAt
+      })
+    ) {
+      setFirstRunOpen(true);
+    }
+  }, [sessionChecked, sessionUser, onboardingState, firstRunOpen]);
 
   // Mobile dock: hide while reading, pull the nub to bring the five tabs back.
   React.useEffect(() => {
@@ -5250,6 +5379,9 @@ export function App() {
       );
       setBriefItPreview(null);
       setBriefItText('');
+      // A capture is the "contribute" rung. The server also sees the manual
+      // source membership this creates; the event just timestamps the moment.
+      if (result?.created || result?.merged) noteActivation('capture_saved', {});
       void refreshConnectors();
       void loadObjects();
     } else {
@@ -5793,6 +5925,11 @@ export function App() {
       nextState = 'engaged';
       verb = 'saved';
     }
+
+    // The aha moment, reported once it has actually happened. "saved" is the
+    // activation event Brief measures itself on; opening is the step before it.
+    if (action === 'save') noteActivation('object_saved', { objectId: object.id, type: object.type });
+    else if (action === 'discover' || action === 'read') noteActivation('object_opened', { objectId: object.id });
 
     setRelationships(prev => {
       const existingIdx = prev.findIndex(r => r.targetId === object.id);
@@ -7149,6 +7286,25 @@ export function App() {
 
   const handleMenuSelect = (target: MenuTarget) => {
     setMenuOpen(false);
+    // The ladder shapes what is OFFERED, never what is permitted: authority
+    // still lives on the server. A surface whose rung has not been climbed
+    // says which step opens it and points at that step instead of dropping
+    // someone into a desk they have nothing to put on yet.
+    //
+    // Saved (Your Layer) and Actions (Workflows) are exempt by design — see
+    // showsLadder(). Those two index screens list what exists; they are not a
+    // shop window and never carry lock chrome.
+    const section = 'section' in target ? target.section ?? null : null;
+    if (!isSurfaceUnlocked(ladder, target.tab, section)) {
+      const hint = unlockHint(ladder, target.tab, section);
+      noteActivation('service_locked_tapped', { tab: target.tab, section, requires: hint });
+      showToast(hint ? `Opens after: ${hint}` : 'Not open yet');
+      setNextStepHidden(false);
+      setCaptureOpen(false);
+      setActiveTab('nearby');
+      setNearbySection('stream');
+      return;
+    }
     if (target.tab === 'capture') {
       setCaptureOpen(true);
       return;
@@ -7417,7 +7573,44 @@ export function App() {
               )}
               {nearbySection === 'stream' && (
                 <>
-                  <MainShelf onSelect={handleMenuSelect} playOpenCount={arenaActivity.efootball ?? null} />
+                  {/* The ladder's one card: the rung they are on and the
+                      single thing that opens the next one. Home only — Saved
+                      and Actions stay quiet. */}
+                  {!nextStepHidden && showsLadder('nearby') && (
+                    <div className="mb-3">
+                      <NextStep
+                        ladder={ladder}
+                        onDismiss={() => setNextStepHidden(true)}
+                        onAct={(rungId) => {
+                          if (rungId === 'identity' || rungId === 'orient') {
+                            setFirstRunOpen(true);
+                            return;
+                          }
+                          if (rungId === 'value') {
+                            setActiveTab('nearby');
+                            setNearbySection('stream');
+                            return;
+                          }
+                          if (rungId === 'contribute') {
+                            setCaptureOpen(true);
+                            return;
+                          }
+                          setActiveTab('workflows');
+                          setWorkflowSection('campaigns');
+                          setWorkflowView('screen');
+                        }}
+                      />
+                    </div>
+                  )}
+                  <MainShelf
+                    onSelect={handleMenuSelect}
+                    playOpenCount={arenaActivity.efootball ?? null}
+                    ladder={ladder}
+                    onLocked={(info) => {
+                      noteActivation('service_locked_tapped', { card: info.cardId, requires: info.requires });
+                      showToast(info.unlocksAfter ? `Opens after: ${info.unlocksAfter}` : 'Not open yet');
+                    }}
+                  />
                   {homeFeedStatus === 'ready' && objects.length === 0 && !demoSeeded && (
                     <div className="rounded-2xl border border-dashed border-[#E5E7EB] bg-[#FFFFFF] px-4 py-3">
                       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -11477,6 +11670,31 @@ export function App() {
           </div>
         </div>
       )}
+
+      {/* First run. An OVERLAY, not a replacement: the feed loads behind it,
+          so the screen after the flow is already warm. */}
+      <Onboarding
+        open={firstRunOpen}
+        providers={authProviders}
+        state={onboardingState}
+        user={sessionUser}
+        channel={arrivalChannel}
+        placeLabel={userLocation?.label ?? null}
+        onSignedIn={(user) => {
+          setSessionUser(user);
+          void refreshOnboarding();
+        }}
+        onGuest={provisionGuest}
+        onStateChange={setOnboardingState}
+        onUseLocation={locate}
+        onChooseCity={(city) => chooseCity(city)}
+        onDone={() => {
+          setFirstRunOpen(false);
+          setActiveTab('nearby');
+          setNearbySection('stream');
+          void refreshOnboarding();
+        }}
+      />
 
       <MenuSheet
         open={menuOpen}

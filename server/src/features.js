@@ -31,6 +31,7 @@ import * as whatsapp from './connectors/whatsapp.js';
 const DEFINITIONS = [
   // Always-configured: these run on the local store and need no credential.
   { key: 'auth',      domain: 'auth',       label: 'Accounts & sessions',             configured: () => true },
+  { key: 'onboarding',domain: 'onboarding', label: 'Onboarding & service ladder',     configured: () => true },
   { key: 'sources',   domain: 'sources',    label: 'Sources',                         configured: () => true },
   { key: 'connectors',domain: 'connectors', label: 'Ingest connectors (web/RSS)',     configured: () => true },
   { key: 'briefit',   domain: 'briefit',    label: 'Capture ("Brief It")',            configured: () => true },

@@ -3644,7 +3644,7 @@ console.log('\n=== FEATURE REGISTRY (§4.2) ===');
   // Default state: everything enabled; module features configured; provider
   // features NOT configured (no credentials in this run).
   check('every feature is enabled by default', features.list().every((f) => f.enabled));
-  check('the registry holds all registered features', features.list().length === 40, String(features.list().length));
+  check('the registry holds all registered features', features.list().length === 41, String(features.list().length));
   check('auth is available by default', features.available('auth') === true);
   check('arena is available by default', features.available('arena') === true);
   check('vaults is available by default', features.available('vaults') === true);
@@ -6144,6 +6144,198 @@ console.log('\n=== TEMPORARY DEMO CONTENT EXPIRY ===');
   check('expired demo content is not silently reseeded', rerun.alreadySeeded === true && rerun.expired === true && store.filter('objects', (row) => row.seedBatch === seed.BATCH).length === before);
   const cleared = seed.clearSeed();
   check('the operator can explicitly clear the expired cohort', cleared.objects === before && store.filter('objects', (row) => row.seedBatch === seed.BATCH).length === 0);
+}
+
+console.log('\n=== ONBOARDING: THE SERVICE LADDER ===');
+{
+  const onboarding = await import('../src/domain/onboarding.js');
+  const auth = await import('../src/domain/auth.js');
+  store._reset();
+
+  const user = auth.createUser({ handle: 'kamau', password: 'passw0rd123', displayName: 'Kamau' });
+  onboarding.ensureProfile(user.id);
+
+  let ladder = onboarding.ladderFor(user.id);
+  check('an account alone reaches only the first rung',
+    ladder.reached.length === 1 && ladder.reached[0] === 'identity');
+  check('the next step is the segmentation question', ladder.nextStep?.id === 'orient');
+  check('nobody is activated before they keep something', ladder.activated === false);
+
+  const capture = ladder.services.find((s) => s.id === 'capture');
+  const distribution = ladder.services.find((s) => s.id === 'distribution');
+  check('capture is closed before activation', capture.unlocked === false);
+  check('a closed service names the step that opens it',
+    typeof capture.unlocksAfter === 'string' && capture.unlocksAfter.length > 0);
+  check('distribution is closed at the very bottom of the ladder', distribution.unlocked === false);
+
+  onboarding.setGoal(user.id, 'discover');
+  ladder = onboarding.ladderFor(user.id);
+  check('answering the one question climbs a rung', ladder.reached.includes('orient'));
+  check('the aha step is now the next one', ladder.nextStep?.id === 'value');
+
+  let refused = false;
+  try { onboarding.setGoal(user.id, 'world-domination'); } catch { refused = true; }
+  check('an unknown goal is refused rather than stored', refused);
+
+  let badEvent = false;
+  try { onboarding.recordEvent(user.id, 'invented_event'); } catch { badEvent = true; }
+  check('an unknown activation event is refused', badEvent);
+
+  // A LADDER, NOT A BADGE SHELF: creating a listing before saving anything
+  // must not skip the rung underneath it.
+  const vendor = store.insert('vendors', {
+    id: 'ven_ladder', ownerId: user.id, displayName: 'Kamau Prints', status: 'active',
+    createdAt: new Date().toISOString()
+  });
+  store.insert('listings', {
+    id: 'lst_ladder', vendorId: vendor.id, title: 'Print run', price: 500, currency: 'KES',
+    status: 'draft', createdAt: new Date().toISOString()
+  });
+  ladder = onboarding.ladderFor(user.id);
+  check('a later rung with evidence is not REACHED while an earlier one is missing',
+    ladder.rungs.find((r) => r.id === 'reach').done === true &&
+    ladder.rungs.find((r) => r.id === 'reach').reached === false);
+  check('the missing step is still the one being asked for', ladder.nextStep?.id === 'value');
+  check('services above the gap stay closed',
+    ladder.services.find((s) => s.id === 'distribution').unlocked === false);
+
+  onboarding.recordEvent(user.id, 'object_saved', { objectId: 'obj_1' });
+  ladder = onboarding.ladderFor(user.id);
+  check('keeping the first thing is activation', ladder.activated === true && typeof ladder.activatedAt === 'string');
+  check('activation opens capture', ladder.services.find((s) => s.id === 'capture').unlocked === true);
+  check('activation alone does not open distribution',
+    ladder.services.find((s) => s.id === 'distribution').unlocked === false);
+  check('the rung records HOW it was reached',
+    ladder.rungs.find((r) => r.id === 'value').how === 'Saved something from the feed');
+
+  onboarding.recordEvent(user.id, 'capture_saved', {});
+  ladder = onboarding.ladderFor(user.id);
+  check('capturing climbs the contribute rung, which now lets the listing count',
+    ladder.reached.includes('contribute') && ladder.reached.includes('reach'));
+  check('a complete ladder asks for nothing more', ladder.complete === true && ladder.nextStep === null);
+
+  const metrics = onboarding.metrics();
+  check('activation metrics are scanned, not stored',
+    metrics.started === 1 && metrics.activated === 1 && metrics.activationRate === 1);
+  check('drop-off is reported per rung transition', metrics.dropOff.length === onboarding.RUNG_IDS.length - 1);
+
+  // Personalisation: the answer promotes the service it is about, by ONE rung.
+  const player = auth.createUser({ handle: 'otieno', password: 'passw0rd123' });
+  onboarding.ensureProfile(player.id);
+  const before = onboarding.ladderFor(player.id).services.find((s) => s.id === 'play');
+  check('Arena follows the aha step by default', before.unlocked === false && before.requires === 'value');
+  onboarding.setGoal(player.id, 'play');
+  const after = onboarding.ladderFor(player.id).services.find((s) => s.id === 'play');
+  check('someone who came to PLAY gets Arena one rung earlier',
+    after.unlocked === true && after.promoted === true);
+  const stillClosed = onboarding.ladderFor(player.id).services.find((s) => s.id === 'distribution');
+  check('the promotion moves ONE service, not the whole ladder',
+    stillClosed.unlocked === false && stillClosed.promoted === false);
+
+  const fresh = auth.createUser({ handle: 'atieno', password: 'passw0rd123' });
+  onboarding.ensureProfile(fresh.id);
+  const cohort = onboarding.metrics();
+  check('a person who has done nothing lowers the rate honestly',
+    cohort.started === 3 && cohort.activated === 1 && Math.abs(cohort.activationRate - 1 / 3) < 1e-9);
+}
+
+console.log('\n=== FEDERATED SIGN-IN (Google + signed links) ===');
+{
+  const federated = await import('../src/domain/federated.js');
+  const auth = await import('../src/domain/auth.js');
+  store._reset();
+  delete process.env.GOOGLE_CLIENT_ID;
+  delete process.env.VITE_GOOGLE_CLIENT_ID;
+
+  const status = federated.providerStatus();
+  check('a password account is always offered', status.password.configured === true);
+  check('Google reports itself unconfigured rather than pretending', status.google.configured === false);
+  check('the refusal names what is missing', /GOOGLE_CLIENT_ID/.test(status.google.reason));
+  check('TELEGRAM IS NOT REQUIRED FOR MEMBERSHIP', status.telegram.required === false);
+
+  const unconfigured = await federated.verifyGoogleIdToken('a.b.c');
+  check('no client id means no verification, and it says so',
+    unconfigured.ok === false && unconfigured.reason === 'provider_not_configured');
+
+  // Verify a REAL RS256 token against a key we control. This exercises the
+  // same signature path a Google token takes; only the key differs.
+  const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const jwk = { ...publicKey.export({ format: 'jwk' }), kid: 'test-key', alg: 'RS256', use: 'sig' };
+  federated._setGoogleKeys([jwk]);
+  process.env.GOOGLE_CLIENT_ID = 'brief-test.apps.googleusercontent.com';
+
+  const b64 = (obj) => Buffer.from(JSON.stringify(obj)).toString('base64url');
+  const mint = (claims, kid = 'test-key') => {
+    const head = b64({ alg: 'RS256', kid, typ: 'JWT' });
+    const body = b64(claims);
+    const sig = crypto.sign('RSA-SHA256', Buffer.from(`${head}.${body}`), privateKey).toString('base64url');
+    return `${head}.${body}.${sig}`;
+  };
+  const goodClaims = {
+    iss: 'https://accounts.google.com',
+    aud: 'brief-test.apps.googleusercontent.com',
+    sub: '10992',
+    email: 'Wanjiru@Example.com',
+    email_verified: true,
+    name: 'Wanjiru',
+    exp: Math.floor(Date.now() / 1000) + 600
+  };
+
+  const good = await federated.verifyGoogleIdToken(mint(goodClaims));
+  check('a correctly signed token verifies', good.ok === true, good.reason ?? '');
+  check('the email is normalised', good.ok && good.claims.email === 'wanjiru@example.com');
+
+  const tampered = mint(goodClaims).replace(/.$/, (c) => (c === 'A' ? 'B' : 'A'));
+  const bad = await federated.verifyGoogleIdToken(tampered);
+  check('a tampered signature is refused', bad.ok === false);
+
+  const wrongAud = await federated.verifyGoogleIdToken(mint({ ...goodClaims, aud: 'someone-else' }));
+  check('a token minted for another app is refused', wrongAud.ok === false && wrongAud.reason === 'bad_audience');
+
+  const expired = await federated.verifyGoogleIdToken(mint({ ...goodClaims, exp: Math.floor(Date.now() / 1000) - 5 }));
+  check('an expired token is refused', expired.ok === false && expired.reason === 'expired');
+
+  const unverifiedEmail = await federated.verifyGoogleIdToken(mint({ ...goodClaims, email_verified: false }));
+  check('an unverified Google email is refused', unverifiedEmail.ok === false && unverifiedEmail.reason === 'email_not_verified');
+
+  const unknownKid = await federated.verifyGoogleIdToken(mint(goodClaims, 'not-a-key'));
+  check('a token signed by an unknown key is refused', unknownKid.ok === false && unknownKid.reason === 'unknown_key');
+
+  // The account binding itself.
+  const first = auth.signInWithVerifiedIdentity({
+    provider: 'google', subject: '10992', email: 'wanjiru@example.com', displayName: 'Wanjiru'
+  });
+  check('a verified identity creates exactly one account', first.created === true);
+  check('the handle is derived from the email', first.user.handle === 'wanjiru');
+  const second = auth.signInWithVerifiedIdentity({
+    provider: 'google', subject: '10992', email: 'WANJIRU@example.com'
+  });
+  check('signing in again reuses that account', second.created === false && second.user.id === first.user.id);
+  check('the public projection carries the verified email, never a hash',
+    auth.publicUser(second.user).email === 'wanjiru@example.com' &&
+    auth.publicUser(second.user).passwordHash === undefined);
+
+  // Signed one-tap links (the TikTok arrival path).
+  const token = federated.mintEmailLinkToken('amina@example.com', { source: 'tiktok' });
+  const redeemed = federated.redeemEmailLinkToken(token);
+  check('a Brief-signed link identifies the address it was minted for',
+    redeemed.ok === true && redeemed.email === 'amina@example.com' && redeemed.source === 'tiktok');
+
+  const forged = `${token.split('.')[0]}.${'x'.repeat(token.split('.')[1].length)}`;
+  check('a forged signature is refused', federated.redeemEmailLinkToken(forged).ok === false);
+  check('a bare email is not a token', federated.redeemEmailLinkToken('amina@example.com').ok === false);
+
+  const stale = federated.mintEmailLinkToken('amina@example.com', { ttlMs: 1000, now: Date.now() - 60_000 });
+  check('an old link stops identifying anyone',
+    federated.redeemEmailLinkToken(stale).ok === false &&
+    federated.redeemEmailLinkToken(stale).reason === 'expired');
+
+  let rejectedEmail = false;
+  try { federated.mintEmailLinkToken('not-an-email'); } catch { rejectedEmail = true; }
+  check('a malformed address cannot be minted', rejectedEmail);
+
+  delete process.env.GOOGLE_CLIENT_ID;
+  federated._setGoogleKeys(null);
 }
 
 console.log(`\n${'='.repeat(52)}\nPASSED ${pass}   FAILED ${fail}   SKIPPED ${skip}\n${'='.repeat(52)}`);

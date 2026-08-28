@@ -1342,6 +1342,216 @@ export function whoAmI(): Promise<ApiResult<AuthedUser>> {
 }
 
 // ---------------------------------------------------------------------------
+// FEDERATED SIGN-IN + ONBOARDING
+//
+// The first screen leads with Google and falls back to a handle. Telegram is
+// never required. Everything here is a thin binding over routes that verify
+// the claim server-side; the client asserts no identity of its own.
+// ---------------------------------------------------------------------------
+
+export interface AuthProviderStatus {
+  configured: boolean;
+  label: string;
+  reason?: string | null;
+  clientId?: string | null;
+  required?: boolean;
+}
+
+export interface AuthProviders {
+  password: AuthProviderStatus;
+  google: AuthProviderStatus;
+  telegram: AuthProviderStatus;
+  emailLink: AuthProviderStatus;
+}
+
+/** What this deployment can honestly offer on the sign-in screen. */
+export function getAuthProviders(): Promise<ApiResult<AuthProviders>> {
+  return request('/api/auth/providers', undefined, (r) =>
+    r?.providers ? (r.providers as AuthProviders) : undefined
+  );
+}
+
+/** Exchange a Google ID token for a Brief session. The server verifies it. */
+export async function googleSignIn(
+  credential: string,
+  source?: string | null
+): Promise<ApiResult<AuthedUser>> {
+  const res = await request<{ user: AuthedUser; token: string }>(
+    '/api/auth/google',
+    { method: 'POST', body: JSON.stringify({ credential, source: source ?? null }) },
+    (r) => (r?.user && r?.token ? { user: r.user, token: r.token } : undefined)
+  );
+  if (!res.ok) return res;
+  setSessionToken(res.data.token);
+  return { ok: true, data: res.data.user };
+}
+
+/**
+ * Continue from a link that carries a Brief-signed email token.
+ *
+ * This is the "arrived from a TikTok link and was already recognised" path.
+ * The token is verified server-side; a bare email in a query string is not an
+ * identity and is refused there.
+ */
+export async function continueFromLinkToken(
+  token: string,
+  source?: string | null
+): Promise<ApiResult<AuthedUser>> {
+  const res = await request<{ user: AuthedUser; token: string }>(
+    '/api/auth/email-link',
+    { method: 'POST', body: JSON.stringify({ token, source: source ?? null }) },
+    (r) => (r?.user && r?.token ? { user: r.user, token: r.token } : undefined)
+  );
+  if (!res.ok) return res;
+  setSessionToken(res.data.token);
+  return { ok: true, data: res.data.user };
+}
+
+/** Mint a one-tap link token for someone you are inviting by email. */
+export function mintEmailLinkToken(
+  email: string,
+  source?: string | null
+): Promise<ApiResult<{ token: string; expiresInMs: number }>> {
+  return request(
+    '/api/auth/email-link/mint',
+    { method: 'POST', body: JSON.stringify({ email, source: source ?? null }) },
+    (r) => (typeof r?.token === 'string' ? { token: r.token, expiresInMs: Number(r.expiresInMs ?? 0) } : undefined)
+  );
+}
+
+export type LadderRungId = 'identity' | 'orient' | 'value' | 'contribute' | 'reach';
+
+export interface LadderRung {
+  id: LadderRungId;
+  label: string;
+  detail: string;
+  cta: string;
+  index: number;
+  done: boolean;
+  reached: boolean;
+  at: string | null;
+  how: string | null;
+}
+
+export interface LadderService {
+  id: string;
+  label: string;
+  requires: LadderRungId;
+  surface: { tab: string; section?: string };
+  unlocked: boolean;
+  unlocksAfter: string | null;
+  /** True when the segmentation answer moved this service one rung earlier. */
+  promoted?: boolean;
+}
+
+export interface Ladder {
+  rungs: LadderRung[];
+  reached: LadderRungId[];
+  currentRungId: LadderRungId | null;
+  nextStep: { id: LadderRungId; label: string; detail: string; cta: string } | null;
+  complete: boolean;
+  activated: boolean;
+  activatedAt: string | null;
+  services: LadderService[];
+}
+
+export interface OnboardingGoal {
+  id: string;
+  label: string;
+  leadsTo: { tab: string; section?: string };
+}
+
+export interface OnboardingState {
+  profile: {
+    goal: string | null;
+    place: string | null;
+    source: string | null;
+    startedAt: string | null;
+    finishedAt: string | null;
+    skippedAt: string | null;
+  } | null;
+  goals: OnboardingGoal[];
+  ladder: Ladder;
+}
+
+export type ActivationEventName =
+  | 'onboarding_started'
+  | 'signed_in'
+  | 'goal_chosen'
+  | 'place_chosen'
+  | 'feed_seen'
+  | 'object_opened'
+  | 'object_saved'
+  | 'object_confirmed'
+  | 'capture_saved'
+  | 'onboarding_skipped'
+  | 'onboarding_finished'
+  | 'service_locked_tapped';
+
+function isOnboardingState(raw: any): OnboardingState | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  if (!raw.ladder || !Array.isArray(raw.ladder.rungs)) return undefined;
+  return raw as OnboardingState;
+}
+
+export function getOnboarding(): Promise<ApiResult<OnboardingState>> {
+  return request('/api/onboarding', undefined, isOnboardingState);
+}
+
+export function getLadder(): Promise<ApiResult<Ladder>> {
+  return request('/api/ladder', undefined, (r) =>
+    r?.ladder && Array.isArray(r.ladder.rungs) ? (r.ladder as Ladder) : undefined
+  );
+}
+
+export function setOnboardingGoal(goal: string): Promise<ApiResult<OnboardingState>> {
+  return request('/api/onboarding/goal', { method: 'POST', body: JSON.stringify({ goal }) }, isOnboardingState);
+}
+
+export function setOnboardingPlace(place: string): Promise<ApiResult<OnboardingState>> {
+  return request('/api/onboarding/place', { method: 'POST', body: JSON.stringify({ place }) }, isOnboardingState);
+}
+
+export function setOnboardingSource(source: string): Promise<ApiResult<OnboardingState>> {
+  return request('/api/onboarding/source', { method: 'POST', body: JSON.stringify({ source }) }, isOnboardingState);
+}
+
+export function finishOnboarding(skipped = false): Promise<ApiResult<OnboardingState>> {
+  return request('/api/onboarding/finish', { method: 'POST', body: JSON.stringify({ skipped }) }, isOnboardingState);
+}
+
+/**
+ * Report a real step someone took. Only the steps that leave no server row of
+ * their own are reported this way; everything else is derived from rows.
+ */
+export function recordActivation(
+  name: ActivationEventName,
+  meta: Record<string, unknown> = {}
+): Promise<ApiResult<{ ladder: Ladder }>> {
+  return request(
+    '/api/onboarding/event',
+    { method: 'POST', body: JSON.stringify({ name, meta }) },
+    (r) => (r?.ladder ? { ladder: r.ladder as Ladder } : undefined)
+  );
+}
+
+export interface ActivationMetrics {
+  started: number;
+  activated: number;
+  activationRate: number | null;
+  medianSecondsToActivate: number | null;
+  perRung: Record<string, number>;
+  dropOff: { from: string; to: string; lost: number }[];
+  note: string | null;
+}
+
+export function getActivationMetrics(): Promise<ApiResult<ActivationMetrics>> {
+  return request('/api/onboarding/metrics', undefined, (r) =>
+    r && typeof r.started === 'number' ? (r as ActivationMetrics) : undefined
+  );
+}
+
+// ---------------------------------------------------------------------------
 // THE VAULT
 //
 // The client never decides a vault's access level: every call returns the

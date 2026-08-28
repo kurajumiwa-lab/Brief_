@@ -29,6 +29,7 @@ import * as demoSeed from './domain/seed.js';
 import { authStatus } from './identity.js';
 import { recordError } from './routes/helpers.js';
 import { register as authRoutes } from './routes/auth.js';
+import { register as onboardingRoutes } from './routes/onboarding.js';
 import { register as healthRoutes } from './routes/health.js';
 import { register as opsRoutes } from './routes/ops.js';
 import { register as arenaRoutes } from './routes/arena.js';
@@ -132,6 +133,7 @@ app.use(ops.requestLogger);
 // ROUTE MOUNTS -- one per domain module.
 // ---------------------------------------------------------------------------
 authRoutes(app);
+onboardingRoutes(app);
 healthRoutes(app);
 opsRoutes(app);
 arenaRoutes(app);

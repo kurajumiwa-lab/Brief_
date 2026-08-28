@@ -24,6 +24,15 @@ const EMPTY = {
   // SHA-256 fingerprint of each session token is stored, never the token.
   users: [],
   sessions: [],
+  // Server-held secrets that must survive a restart but must never reach a
+  // client (currently: the HMAC key that signs one-tap email links).
+  appSecrets: [],
+  // First-run state: the segmentation answer a person actually gave, and the
+  // append-only stream of named activation events. Ladder progress is DERIVED
+  // from these plus ordinary rows (confirmations, captures, campaigns) — never
+  // stored as a step counter. See domain/onboarding.js.
+  onboardingProfiles: [],
+  activationEvents: [],
   sources: [],
   sourceMemberships: [],
   rawItems: [],
