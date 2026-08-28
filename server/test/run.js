@@ -7678,6 +7678,150 @@ console.log('\n=== FRAUD FLAGGING (Tikiti T10) ===');
   } finally { srv.close(); delete process.env.BRIEF_REVIEWERS; process.env.BRIEF_DEV_AUTH = '1'; }
 }
 
+
+console.log('\n=== EVENTS HUB (Tikiti T4) ===');
+{
+  const { default: app } = await import('../src/index.js');
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    // register routes: browse + feature. Need the domain directly too.
+    const events = await import('../src/domain/events.js');
+    const O = (await call('/api/auth/register', 'POST', { handle: 'hub_org' + Date.now().toString(36), password: 'a good passphrase' })).body;
+    const X = (await call('/api/auth/register', 'POST', { handle: 'hub_other' + Date.now().toString(36), password: 'a good passphrase' })).body;
+    for (const [title, type, loc] of [['Night Market X', 'popup', 'Kilimani'], ['Yoga X', 'session', 'Westlands'], ['Farewell pot X', 'contribution', 'Kilimani']]) {
+      const c = (await call('/api/campaigns', 'POST', { title, type, location: loc, ...(type === 'contribution' ? { goalAmount: 1000 } : {}) }, O.token)).body.campaign;
+      await call(`/api/campaigns/${c.id}/publish`, 'POST', {}, O.token);
+    }
+    let r = await call('/api/events?category=popup', 'GET');
+    check('browsing by category finds the market', r.body?.events?.some((e) => e.title === 'Night Market X') ?? false, JSON.stringify(r.body).slice(0, 120));
+    r = await call('/api/events?location=kilimani', 'GET');
+    check('location search is case-insensitive', (r.body?.events ?? []).length === 2, `${r.body?.events?.length}`);
+    r = await call('/api/events?category=horoscope', 'GET');
+    check('an unknown category is refused', r.status === 400);
+    r = await call('/api/events?sort=popularity', 'GET');
+    check('popularity sort answers with counted people', Array.isArray(r.body?.events) && r.body.events.every((e) => typeof e.popularity === 'number'));
+    check('internal ids never appear in browse', !JSON.stringify(r.body).includes('"id":"camp_'));
+    // Featuring is the organiser's explicit act.
+    const camp = store.find('campaigns', (c) => c.title === 'Night Market X');
+    let threw = null;
+    try { events.setFeatured(X.user.id, camp.id, true); } catch (e) { threw = String(e.message); }
+    check('a stranger cannot feature someone else\'s event', /organiser/.test(threw ?? ''), threw);
+    events.setFeatured(O.user.id, camp.id, true);
+    r = await call('/api/events?featured=1', 'GET');
+    check('featured is an explicit flag, not a guess', (r.body?.events ?? []).every((e) => e.featured) && r.body.events.length === 1, `${r.body?.events?.length}`);
+  } finally { srv.close(); }
+}
+
+console.log('\n=== EPL CATALOG + SQUAD BUDGET + LOBBY (Tikiti T5) ===');
+{
+  process.env.BRIEF_DEV_AUTH = '0';
+  process.env.BRIEF_OPERATORS = 'eplop';
+  const { default: app } = await import('../src/index.js');
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    let opReg = await call('/api/auth/register', 'POST', { handle: 'eplop', password: 'a good passphrase' });
+    if (opReg.status !== 201) opReg = await call('/api/auth/login', 'POST', { handle: 'eplop', password: 'a good passphrase' });
+    const OP = opReg.body;
+    const O = (await call('/api/auth/register', 'POST', { handle: 'epl_org' + Date.now().toString(36), password: 'a good passphrase' })).body;
+    const M1 = (await call('/api/auth/register', 'POST', { handle: 'epl_m1' + Date.now().toString(36), password: 'a good passphrase' })).body;
+    const M2 = (await call('/api/auth/register', 'POST', { handle: 'epl_m2' + Date.now().toString(36), password: 'a good passphrase' })).body;
+
+    // Provider honesty first.
+    let r = await call('/api/epl/catalog', 'GET');
+    check('the catalog states its provider state honestly',
+      r.body?.provider?.configured === false && /SEED|no EPL data provider/i.test(r.body?.provider?.reason ?? ''), JSON.stringify(r.body?.provider));
+    r = await call('/api/epl/catalog/sync', 'POST', {}, OP.token);
+    check('a sync without credentials is a 503 refusal, never a fake sync',
+      r.status === 503 && r.body?.ok === false, `${r.status}`);
+
+    // Seeding is operator-only and tagged.
+    r = await call('/api/epl/catalog/seed', 'POST', { players: [
+      { name: 'Mock Keeper', club: 'Arsenal', position: 'GK', price: 50 },
+      { name: 'Mock Forward', club: 'Arsenal', position: 'FWD', price: 120 },
+      { name: 'Mock Bad Club', club: 'Real Madrid', position: 'FWD', price: 90 }
+    ] }, M1.token);
+    check('seeding is capability-gated (403)', r.status === 403);
+    r = await call('/api/epl/catalog/seed', 'POST', { players: [
+      { name: 'Mock Keeper', club: 'Arsenal', position: 'GK', price: 50 },
+      { name: 'Mock Forward', club: 'Arsenal', position: 'FWD', price: 120 },
+      { name: 'Mock Bad Club', club: 'Real Madrid', position: 'FWD', price: 90 }
+    ] }, OP.token);
+    check('an operator seeds the catalog', r.status === 201 && r.body?.inserted === 2, JSON.stringify(r.body));
+    r = await call('/api/epl/catalog', 'GET');
+    check('non-EPL clubs never enter the catalog', !JSON.stringify(r.body).includes('Real Madrid'));
+    check('every catalog row carries its source', (r.body?.players ?? []).every((p) => p.source === 'seed'));
+
+    // A competition with a budget, an imported pool and a waiting room,
+    // driven through the domain + the /api/epl surface (the bare fantasy HTTP
+    // surface is scheduled for removal; these are not its routes).
+    const fantasyDomain = await import('../src/domain/fantasy.js');
+    const eplDomain = await import('../src/domain/epl.js');
+    const compId = fantasyDomain.createCompetition({
+      createdBy: O.user.id, title: 'GW1 waiting room',
+      kickoffAt: new Date(Date.now() + 3_600_000).toISOString()
+    }).id;
+    r = await call(`/api/epl/competitions/${compId}/pool/import`, 'POST', {}, O.token);
+    check('the organiser imports the catalog into the pool', r.status === 201 && r.body?.imported === 2, JSON.stringify(r.body));
+    r = await call(`/api/epl/competitions/${compId}/budget`, 'POST', { budgetKes: 200 }, O.token);
+    check('a budget is set in whole shillings', r.status === 200);
+    r = await call(`/api/epl/competitions/${compId}/lobby`, 'POST', { minEntries: 2, maxEntries: 4 }, O.token);
+    check('entry bounds make a waiting room', r.status === 200 && r.body?.lobbyState === 'waiting_for_players', JSON.stringify(r.body?.lobbyState));
+
+    // Budget arithmetic, proven through the domain hook submitTeam uses.
+    const pool = store.filter('fantasyPlayers', (p) => p.competitionId === compId);
+    const gk = pool.find((p) => p.position === 'GK'); const fwd = pool.find((p) => p.position === 'FWD');
+    const problems = eplDomain.budgetProblems(compId, [gk.id, fwd.id, fwd.id, fwd.id]);
+    check('an unaffordable squad is refused with the arithmetic',
+      problems.length === 1 && /costs 410/.test(problems[0]), JSON.stringify(problems));
+    check('an affordable selection passes', eplDomain.budgetProblems(compId, [gk.id, fwd.id]).length === 0);
+
+    // One manager holds a seat (a real entry row, however built).
+    const seatIn = (competitionId, userId) => store.insert('fantasyEntries', {
+      id: 'fent_test_' + Math.random().toString(36).slice(2, 8), competitionId, userId,
+      playerIds: [], captainId: null, points: null, createdAt: new Date().toISOString()
+    });
+    seatIn(compId, M1.user.id);
+    r = await call(`/api/epl/competitions/${compId}/lobby`, 'GET', undefined, O.token);
+    check('one of two managers still reads waiting_for_players', r.body?.lobbyState === 'waiting_for_players' && r.body?.entries === 1, JSON.stringify(r.body));
+
+    // The waiting-room wall: the room needed two and never got them.
+    r = await call(`/api/epl/competitions/${compId}/settle-lobby`, 'POST', {}, O.token);
+    check('an underfilled room is CANCELLED, not scored on a walkover',
+      r.body?.competition?.status === 'cancelled' && /only 1 of 2/.test(r.body?.competition?.cancelledReason ?? ''),
+      JSON.stringify(r.body?.competition?.cancelledReason));
+    check('the cancellation surfaced as a signal',
+      Boolean(store.find('signals', (x) => x.type === 'arena_contest_cancelled' && x.metadata?.competitionId === compId)));
+
+    // A filled room locks instead.
+    const comp2 = fantasyDomain.createCompetition({
+      createdBy: O.user.id, title: 'GW2 full room',
+      kickoffAt: new Date(Date.now() + 3_600_000).toISOString()
+    }).id;
+    eplDomain.setEntryBounds(O.user.id, comp2, { minEntries: 2 });
+    seatIn(comp2, M1.user.id); seatIn(comp2, M2.user.id);
+    r = await call(`/api/epl/competitions/${comp2}/lobby`, 'GET', undefined, O.token);
+    check('a room at its minimum reports open', r.body?.lobbyState === 'open' && r.body?.entries === 2, JSON.stringify(r.body?.lobbyState));
+    r = await call(`/api/epl/competitions/${comp2}/settle-lobby`, 'POST', {}, O.token);
+    check('a filled room locks at the wall', r.body?.lobbyState === 'in_progress', JSON.stringify(r.body?.lobbyState));
+  } finally { srv.close(); delete process.env.BRIEF_OPERATORS; process.env.BRIEF_DEV_AUTH = '1'; }
+}
+
 console.log('\n=== PLATFORM ROLES: THE OPERATOR SURFACE IS CAPABILITY-GUARDED ===');
 {
   // Production posture: no dev fallback, real identities only.

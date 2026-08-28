@@ -55,6 +55,7 @@ export const SIGNAL_TYPES = [
   'verification_decision',
   // Fraud (Tikiti T10): a listing was auto-flagged for review.
   'ticket_flagged',
+  'arena_contest_cancelled',
   'campaign_registration_started',
   'campaign_registered',
   'campaign_registration_updated',
