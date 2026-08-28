@@ -1,6 +1,6 @@
 // Shared route helpers — the small set every route file depends on.
 // Extracted from index.js verbatim.
-import { callerId } from '../identity.js';
+import { callerId, hasCapability, platformRolesOf } from '../identity.js';
 import { store, newId } from '../store.js';
 
 /**
@@ -28,4 +28,58 @@ export const CURRENT_USER = 'usr_me'; // single-user deployment; auth slots in h
 
 export function recordError(scope, sourceId, message) {
   store.insert('errors', { id: newId('err'), scope, sourceId: sourceId ?? null, message, at: now() });
+}
+
+/**
+ * Guard for operator-surface routes: a real actor WHO HOLDS a capability.
+ *
+ * 401 for no identity (same as requireAuth), 403 with an honest reason when
+ * the identity is real but not permitted. The refusal names the capability
+ * and the caller's own roles so the client can explain itself.
+ */
+export function requireCap(req, res, capability) {
+  const me = requireAuth(req, res);
+  if (!me) return null;
+  if (!hasCapability(me, capability)) {
+    res.status(403).json({
+      error: `this action requires the "${capability}" capability`,
+      code: 'forbidden_capability',
+      requiredCapability: capability,
+      yourRoles: platformRolesOf(me)
+    });
+    return null;
+  }
+  return me;
+}
+
+/**
+ * Append-only record of a consequential action. Who, what object, when,
+ * before/after, reason. Never throws -- an audit failure must not unwind the
+ * operation it is describing, but it is also never swallowed silently: the
+ * row carries the error if one occurs.
+ */
+export function recordAudit(action, { actorId = null, objectType = null, objectId = null, before = null, after = null, reason = null } = {}) {
+  try {
+    return store.insert('auditLog', {
+      id: newId('aud'),
+      at: new Date().toISOString(),
+      actorId,
+      actorHandle: (() => {
+        const u = store.find('users', (x) => x.id === actorId);
+        return u?.handle ?? null;
+      })(),
+      action,
+      objectType,
+      objectId,
+      before: before === null ? null : JSON.parse(JSON.stringify(before)),
+      after: after === null ? null : JSON.parse(JSON.stringify(after)),
+      reason: reason === null ? null : String(reason).slice(0, 300)
+    });
+  } catch (e) {
+    store.insert('errors', {
+      id: newId('err'), at: new Date().toISOString(), scope: 'audit',
+      message: String(e?.message ?? e)
+    });
+    return null;
+  }
 }

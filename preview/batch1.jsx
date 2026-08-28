@@ -66,7 +66,7 @@ const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;con
 
   console.log('\n=== 3. Money: derived wallet, honest payouts ===');
   // Payments is filed under the Sell bundle.
-  await click(btn('Inbox')); await click(btn('Sell')); await click(btn('Payments'));
+  await click(btn('Workflows')); await click(btn('Sell')); await click(btn('Payments'));
   await act(async()=>{await new Promise(r=>setTimeout(r,10));});
   b=body();
   check('available balance shown', b.includes('4,500'));
@@ -77,7 +77,7 @@ const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;con
 
   console.log('\n=== 4. Circles: one community primitive ===');
   // Groups is a bundle now, and the circle list is its first section.
-  await click(btn('Saved')); await click(btn('Groups'));
+  await click(btn('My Layer')); await click(btn('Groups'));
   await act(async()=>{await new Promise(r=>setTimeout(r,10));});
   b=body();
   check('circle listed', b.includes('Kilimani Traders'));

@@ -30,7 +30,7 @@ async function main(){
   const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;console.log('  FAIL  '+n+(d?' -> '+d:''));}};
 
   console.log('=== Four screens, not twelve ===');
-  const top=['Home','Play','Saved','Inbox'];
+  const top=['Nearby','Arena','My Layer','Workflows'];
   for(const t of top) check(`${t} is a destination`, !!btn(t));
   check('Pulse is not a destination', !btn('Pulse'));
 
@@ -41,31 +41,31 @@ async function main(){
   const shareShelfCard = document.querySelector('[data-shelf-id="share"]');
   if (shareShelfCard) await click(shareShelfCard);
   check('WhatsApp shelf door lands in distribution', /WhatsApp \+ home shelf|Distribution kits/i.test(body()));
-  await click(btn('Home'));
+  await click(btn('Nearby'));
 
   const strays=['Tea','Today','Sources','Inbox','Group','Quests','Pursuits'];
   // These must NOT be top-level: they may appear as sub-sections only.
-  await click(btn('Home'));
+  await click(btn('Nearby'));
   const introBody=body();
   for(const t of strays){
     check(`${t} is not a top-level tab`, !new RegExp(`^${t}`).test(introBody.slice(0,400)), t);
   }
 
   console.log('\n=== Every destination answers one question ===');
-  await click(btn('Home'));
+  await click(btn('Nearby'));
   check('Nearby = discovery', /Everything Happening Around You/i.test(body()));
-  await click(btn('Play'));
+  await click(btn('Arena'));
   check('Arena = gather & play', /Gather with people to play/i.test(body()));
-  await click(btn('Saved'));
+  await click(btn('My Layer'));
   check('My Layer = personal', /Your Layer|Things you.ve kept/i.test(body()));
-  await click(btn('Inbox'));
+  await click(btn('Workflows'));
   // The Inbox no longer opens on an index of tools: it opens on the one list
   // of what is waiting on you.
   check('Workflows = what is waiting on you', /Waiting on you/i.test(body()));
   check('Pulse is not a fifth screen', !btn('Pulse'));
 
   console.log('\n=== Nearby holds discovery sections ===');
-  await click(btn('Home'));
+  await click(btn('Nearby'));
   // Primary categories are the limited four; Tea/Today/Pursuits/Quests live
   // behind "More" (filter overload removed) but remain reachable.
   for(const s of ['All','Places','Events','Offers'])
@@ -83,7 +83,7 @@ async function main(){
   check('Quests content preserved', /Open jobs/i.test(body()));
 
   console.log('\n=== My Layer absorbs personal content ===');
-  await click(btn('Saved'));
+  await click(btn('My Layer'));
   // Eleven options became three bundles. The bundles themselves are the
   // top-level choice; their sections appear underneath the active one.
   for(const b of ['Kept','Groups','Creator']) check(`Saved bundle: ${b}`, !!btn(b));
@@ -91,52 +91,52 @@ async function main(){
     check(`My Layer > ${s}`, !!sub(s));
   check('the eleven options are no longer one flat list of eleven',
     !/11 Options/.test(body()));
-  await goto('Saved','Groups');
+  await goto('My Layer','Groups');
   check('the Groups bundle exposes its own sections',
     ['Groups','Chats','Matches'].every((s) => !!sub(s)));
-  await goto('Saved','Groups','Chats');
+  await goto('My Layer','Groups','Chats');
   check('Groups preserved', /Your chats/i.test(body()));
-  await goto('Saved','Kept','Activity');
+  await goto('My Layer','Kept','Activity');
   check('Activity uses real relationships', /My Activity/i.test(body())&&/saved|watched/i.test(body()));
-  await goto('Saved','Groups','Matches');
+  await goto('My Layer','Groups','Matches');
   check('My Layer > Arena keeps match history', /My Matches/i.test(body()));
-  await goto('Saved','Creator');
+  await goto('My Layer','Creator');
   check('the Creator bundle exposes its own sections',
     ['Profile','Offers','Messages','Plans'].every((s) => !!sub(s)));
-  await goto('Saved','Kept','Points');
+  await goto('My Layer','Kept','Points');
   check('Brief Points shown', /Brief Points/i.test(body()));
   check('points not summed into one total', !/Total points/i.test(body()));
 
   console.log('\n=== Workflows holds operational tools ===');
-  await click(btn('Inbox'));
+  await click(btn('Workflows'));
   // Eighteen tools became four bundles, and the queue is the landing view.
   for(const b of ['Create','Sell','Run','Records']) check(`Workflows bundle: ${b}`, !!btn(b));
   check('the eighteen tools are no longer one flat list of eighteen', !/18 Tools/.test(body()));
-  await goto('Inbox','Run');
+  await goto('Workflows','Run');
   check('the Run bundle exposes its own sections',
     ['Dashboard','Open','Done','Matches','Engine'].every((s) => !!sub(s)));
-  await goto('Inbox','Run','Open');
+  await goto('Workflows','Run','Open');
   check('Active shows an honest empty state, not fake journeys', /Your activities will appear here|No processes|Things you can actually do/i.test(body()));
-  await goto('Inbox','Run','Done');
+  await goto('Workflows','Run','Done');
   check('Completed is a real filter, not a new screen', /Completed|Nothing finished/i.test(body()));
-  await goto('Inbox','Records','Feeds');
+  await goto('Workflows','Records','Feeds');
   check('Sources preserved', /A channel is not the information/i.test(body()));
-  await goto('Inbox','Create','Review');
+  await goto('Workflows','Create','Review');
   check('Inbox preserved', /Inbox/i.test(body()));
 
   console.log('\n=== No duplicate rooms ===');
-  await goto('Home','Jobs');
+  await goto('Nearby','Jobs');
   check('rewards not duplicated in Quests', !/Carrefour/.test(body()));
   check('Quests points to Arena', /Redeem points/i.test(body())||/Points/i.test(body()));
 
   console.log('\n=== Returning to a tab resets to its main section ===');
-  await goto('Home','Alerts');
-  await click(btn('Play'));
-  await click(btn('Home'));
+  await goto('Nearby','Alerts');
+  await click(btn('Arena'));
+  await click(btn('Nearby'));
   check('Nearby returns to Everything', /Everything Happening Around You/i.test(body()));
 
   console.log('\n=== Availability is state, not navigation ===');
-  await click(btn('Play'));
+  await click(btn('Arena'));
   const arenaTop=body().slice(0,300);
   check('Available/Busy/Offline not in nav row', !/^(Available|Busy|Offline)/.test(arenaTop));
   check('arena renders its own sections', !!btn('Lobby')||!!btn('Challenges'));
@@ -167,8 +167,10 @@ async function main(){
   console.log('\n=== Icons carry labels, not decoration alone ===');
   check('every rail item has an icon', rail.querySelectorAll('svg').length>=5);
   check('every rail item has a text label', railBtns().every(b=>text(b).length>0));
-  check('bar uses short label for My Layer', barBtns().some(b=>text(b)==='Saved'));
-  check('rail uses the full label', railBtns().some(b=>text(b).startsWith('Saved')));
+  // §2: the brief's vocabulary is the label everywhere; the ids underneath
+  // are the stable contract. There is no second, slangier name per room.
+  check('bar uses the brief label for My Layer', barBtns().some(b=>text(b)==='My Layer'));
+  check('rail uses the brief label too', railBtns().some(b=>text(b).startsWith('My Layer')));
   check('each door has a hint for hover', railBtns().every(b=>(b.getAttribute('title')||'').length>0));
 
   console.log('\n=== Pulse retired; no Intelligence department ===');
@@ -178,23 +180,23 @@ async function main(){
   check('town-dashboard Signals are not a screen', !sub('Signals'));
 
   console.log('\n=== Secondary nav still nested, not promoted ===');
-  await click(btn('Play'));
+  await click(btn('Arena'));
   check('Arena secondary sections present', !!btn('Lobby')&&!!btn('Challenges')&&!!btn('Tournaments'));
   check('Arena sections are not in the rail', !railBtns().some(b=>/Tournaments|Challenges/.test(text(b))));
 
   console.log('\n=== Group chatter lives in Saved, not a Pulse room ===');
-  await goto('Saved','Groups','Chats');
+  await goto('My Layer','Groups','Chats');
   check('Groups are the user\'s own', /Your chats/i.test(body()));
   check('never claims to have joined a group', !/we joined|auto-joined|Brief joined/i.test(body()));
 
   console.log('\n=== Arena entry point shows availability ===');
-  await click(btn('Play'));
+  await click(btn('Arena'));
   check('arena entry shows game portals', /eFootball|COD|Find Match/i.test(body()));
   check('find action present', /Your games|Open matches|Find/i.test(body()));
   check('availability is not a nav item', !railBtns().some(b=>/Available|Busy|Offline/.test(text(b))));
 
   console.log('\n=== Active state does not rely on colour alone ===');
-  await click(btn('Home'));
+  await click(btn('Nearby'));
   const cur=railBtns().find(b=>b.getAttribute('aria-current')==='page');
   check('active item is machine-readable', !!cur);
   check('active item has a non-colour marker', !!cur && /bg-\[#FFFFFF\]|font-extrabold/.test(cur.className));

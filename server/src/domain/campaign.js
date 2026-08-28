@@ -23,6 +23,7 @@
 // ---------------------------------------------------------------------------
 
 import { store, newId, newTicketCode } from '../store.js';
+import * as ticketMarket from './ticketMarket.js';
 import { emitSignal } from './signal.js';
 import { personIdIfUser } from './person.js';
 
@@ -677,6 +678,9 @@ export function promoteRegistrationForSettledTransaction(tx) {
     status: 'registered',
     updatedAt: new Date().toISOString()
   });
+  // The seat is confirmed by settled money: it enters the resale system as a
+  // ticket (idempotent; authenticated owners only).
+  try { ticketMarket.issueForRegistration({ ...reg, status: 'registered' }); } catch { /* issuance never blocks promotion */ }
 
   const campaign = store.find('campaigns', (c) => c.id === reg.campaignId);
   // Reuses the EXISTING signal. No campaign-specific analytics store, no new
@@ -791,6 +795,12 @@ export function setRegistrationStatus(registrationId, status) {
   }
 
   store.update('registrations', registrationId, { status });
+  // A CONFIRMED seat enters the resale system as a ticket (idempotent; only
+  // authenticated owners get one — see domain/ticketMarket.js). Paid seats
+  // arrive here through confirm-payment; free seats through registration.
+  if (status === 'registered') {
+    try { ticketMarket.issueForRegistration({ ...row, status }); } catch { /* issuance must never block a confirmation */ }
+  }
   const campaign = store.find('c' + 'ampaigns', (c) => c.id === row.campaignId);
   emitSignal({
     type: status === 'checked_in' ? 'campaign_checkin'

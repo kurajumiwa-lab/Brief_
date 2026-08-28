@@ -101,8 +101,12 @@ check('still cancelled', r.body?.order?.status==='cancelled');
 const cancelSignals = ((await call('/api/signals')).body?.signals||[]).filter(x=>x.type==='order_cancelled' && x.metadata?.orderId===order.id);
 check('only ONE cancel signal for the two calls', cancelSignals.length===1, `got ${cancelSignals.length}`);
 
-// Economic reads.
-r = await call('/api/economic/reconcile');
+// Economic reads. Reconciliation is a finance capability: use the
+// deployment-bootstrapped operator (BRIEF_OPERATORS=liveop, see live/README).
+let opReg = await call('/api/auth/register','POST',{ handle:'liveop', password:'live operator passphrase' }, null);
+if (opReg.status !== 201) opReg = await call('/api/auth/login','POST',{ handle:'liveop', password:'live operator passphrase' }, null);
+const FIN = opReg.body?.token ?? null;
+r = await call('/api/economic/reconcile','GET',undefined,FIN);
 check('reconciliation live', r.status===200);
 check('ledger balanced', r.body?.reconciliation?.balanced===true, JSON.stringify(r.body).slice(0,180));
 r = await call('/api/vendors/me/earnings', 'GET', undefined, SELLER);

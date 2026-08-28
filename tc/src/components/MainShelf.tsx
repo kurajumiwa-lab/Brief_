@@ -86,7 +86,7 @@ const SHELF_CARDS: ShelfCard[] = [
   {
     id: 'play',
     eyebrow: 'ARENA',
-    title: 'Play',
+    title: 'Arena',
     detail: 'Find a match or open a lobby',
     image: efootballArt,
     target: { tab: 'arena' },

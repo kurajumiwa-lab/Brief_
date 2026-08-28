@@ -5,6 +5,7 @@ import { store } from '../store.js';
 import { callerId } from '../identity.js';
 import * as campaigns from '../domain/campaign.js';
 import * as checkin from '../domain/checkin.js';
+import * as ticketMarket from '../domain/ticketMarket.js';
 import * as signals from '../domain/signal.js';
 import * as ledger from '../domain/ledger.js';
 import * as analytics from '../domain/analytics.js';
@@ -249,8 +250,24 @@ app.post('/api/campaigns/:id/registrations/:regId/status', (req, res) => {
 
 app.get('/api/tickets/:code', (req, res) => {
   if (!requireAuth(req, res)) return;
-  const registration = checkin.lookupTicket(req.params.code);
-  if (!registration) return res.status(404).json({ error: 'ticket not found' });
+  // Resale-aware resolution: a transferred ticket only answers to its
+  // CURRENT code version. The scanned payload is "CODE#n"; the # never
+  // survives a URL, so the version travels as ?v=n and is recomposed here.
+  const scanned = req.query.v != null ? `${req.params.code}#${req.query.v}` : req.params.code;
+  const gate = ticketMarket.resolveGateCode(scanned);
+  if (!gate.ok) {
+    if (gate.reason === 'stale_code') {
+      return res.status(409).json({
+        error: 'This code is no longer valid — the ticket was transferred and has a newer code.',
+        reason: 'stale_code'
+      });
+    }
+    if (gate.reason === 'void') {
+      return res.status(410).json({ error: 'This ticket was voided and cannot be used.', reason: 'void' });
+    }
+    return res.status(404).json({ error: 'ticket not found' });
+  }
+  const registration = gate.registration;
   const view = checkin.ticketView(registration);
   // Only the campaign's host may inspect a ticket — a code must not be a way
   // to read the roster anonymously.
@@ -265,12 +282,30 @@ app.get('/api/tickets/:code', (req, res) => {
 app.post('/api/tickets/:code/check-in', (req, res) => {
   const me = requireAuth(req, res);
   if (!me) return;
-  const registration = checkin.lookupTicket(req.params.code);
+  // The gate scans ONE code per seat, and only the CURRENT version admits:
+  // every transfer kills the previous QR outright. ("CODE#n" arrives as
+  // ?v=n because a # is a URL fragment and never reaches the server.)
+  const scannedIn = req.query.v != null ? `${req.params.code}#${req.query.v}` : req.params.code;
+  const gate = ticketMarket.resolveGateCode(scannedIn);
+  if (!gate.ok) {
+    if (gate.reason === 'stale_code') {
+      return res.status(409).json({
+        error: 'This code is no longer valid — the ticket was transferred and has a newer code.',
+        reason: 'stale_code'
+      });
+    }
+    if (gate.reason === 'void') {
+      return res.status(410).json({ error: 'This ticket was voided and cannot be used.', reason: 'void' });
+    }
+    return res.status(404).json({ error: 'ticket not found' });
+  }
+  const registration = gate.registration;
+  const scannedBase = gate.ticket ? gate.ticket.code : String(req.params.code).toUpperCase();
   if (!registration) return res.status(404).json({ error: 'ticket not found' });
   const c = store.find('campaigns', (x) => x.id === registration.campaignId);
   if (!c || c.ownerId !== me) return res.status(404).json({ error: 'ticket not found' });
 
-  const result = checkin.checkIn(req.params.code, me);
+  const result = checkin.checkIn(scannedBase, me);
   if (!result.ok) {
     const status = result.reason === 'cancelled' ? 410
       : result.reason === 'unpaid' ? 402

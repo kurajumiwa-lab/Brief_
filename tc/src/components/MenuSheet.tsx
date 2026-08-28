@@ -2,7 +2,7 @@ import React from 'react';
 import { ChevronLeft, Copy, Share2, ShieldCheck, CheckCircle2, Sparkles, Plus, Briefcase, CalendarDays, FileText, ArrowRight, Lock } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
 import type { AuthedUser } from '../api/briefApi';
-import type { CommandCentre, Wallet as WalletType } from '../api/types';
+import type { CommandCentre } from '../api/types';
 import { MainShelf } from './MainShelf';
 
 export type MenuTarget =
@@ -97,25 +97,22 @@ function HostValueCard({
   const [me, setMe] = React.useState<AuthedUser | null>(null);
   const [kit, setKit] = React.useState<MediaKit>(null);
   const [command, setCommand] = React.useState<CommandCentre | null>(null);
-  const [wallet, setWallet] = React.useState<WalletType | null>(null);
   const [kitKnown, setKitKnown] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
 
   React.useEffect(() => {
     let live = true;
     (async () => {
-      const [who, media, centre, pay] = await Promise.all([
+      const [who, media, centre] = await Promise.all([
         briefApi.whoAmI(),
         briefApi.getMyMediaKit(),
-        briefApi.getCommandCentre(),
-        briefApi.getWallet()
+        briefApi.getCommandCentre()
       ]);
       if (!live) return;
       setMe(who.ok ? who.data : null);
       setKit(media.ok ? (media.data as MediaKit) : null);
       setKitKnown(true);
       setCommand(centre.ok ? centre.data : null);
-      setWallet(pay.ok ? pay.data : null);
     })();
     return () => {
       live = false;

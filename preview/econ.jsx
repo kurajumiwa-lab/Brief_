@@ -32,14 +32,14 @@ async function main(){
   const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;console.log('  FAIL  '+n+(d?' -> '+d:''));}};
 
   console.log('=== The fabricated economy is gone ===');
-  await click(btn('Play'));
+  await click(btn('Arena'));
   check('no points balance', !/Arena Points/.test(body()));
   check('no gift cards', !/Carrefour|Safaricom|Java House|IMAX/.test(body()));
   check('no redemption surface', !/Redeem in Arena/.test(body()));
   check('no fake reliability/ratings', !/% reliability|W \/ \d+L/.test(body()));
 
   console.log('\n=== Brief Points remain honest (a record, not currency) ===');
-  await click(btn('Saved'));
+  await click(btn('My Layer'));
   await click(btn('Points'));
   check('points stated as not cash', /not cash and have no monetary value/i.test(body()));
 

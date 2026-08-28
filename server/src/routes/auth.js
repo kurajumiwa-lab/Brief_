@@ -4,7 +4,7 @@ import * as auth from '../domain/auth.js';
 import * as federated from '../domain/federated.js';
 import * as onboarding from '../domain/onboarding.js';
 import * as person from '../domain/person.js';
-import { callerId } from '../identity.js';
+import { callerId, platformRolesOf, capabilitiesOf } from '../identity.js';
 import { requireAuth } from './helpers.js';
 
 import { requireFeature } from '../features.js';
@@ -98,7 +98,14 @@ app.get('/api/auth/me', (req, res) => {
   }
   const mine = person.ensurePersonForUser(user.id);
   res.json({
-    user: { ...auth.publicUser(user), personId: mine.id },
+    user: {
+      ...auth.publicUser(user),
+      personId: mine.id,
+      // Operator-surface truth: what this account may operate. Derived only
+      // from stored rows + deployment bootstrap, never from the request.
+      platformRoles: platformRolesOf(user.id),
+      capabilities: capabilitiesOf(user.id)
+    },
     method: req.auth?.method ?? 'dev_fallback'
   });
 });

@@ -11,6 +11,7 @@
 //   OFFLINE=1 node test/run.js  offline only
 // ---------------------------------------------------------------------------
 
+import './test-env.mjs';
 import { store } from '../src/store.js';
 import path from 'node:path';
 import { extractFields, extractVendors, extractProducts, isObjectWorthy } from '../src/pipeline/extract.js';
@@ -29,7 +30,9 @@ const check = (name, cond, detail = '') => {
 };
 const skipped = (name, why) => { skip++; console.log(`  SKIP  ${name} (${why})`); };
 
-process.env.BRIEF_DATA_DIR = '/tmp/brief-test-data';
+// BRIEF_DATA_DIR is set by ./test-env.mjs, imported before the store binds.
+// It MUST NOT be assigned here: this module body runs after the hoisted
+// static imports, and an assignment here would be a no-op for store.js.
 store._reset();
 
 const POPUP = `Saturday popup at Kilimani Studio.
@@ -356,7 +359,8 @@ console.log('\n=== AUTHORITY (spec 32) ===');
 
   const srv = app.listen(0);
   const port = srv.address().port;
-  const call = async (path, method = 'GET', body) => {
+
+const call = async (path, method = 'GET', body) => {
     const res = await fetch(`http://127.0.0.1:${port}${path}`, {
       method,
       headers: body ? { 'content-type': 'application/json' } : undefined,
@@ -1985,10 +1989,29 @@ console.log('\n=== COMMERCE: VENDORS, LISTINGS, ORDERS (Batch 3) ===');
     {
       const wallet = (await call('/api/economic/wallet')).body;
       const settledTotal = store
-        .filter('ledgerTransactions', (t) => t.status === 'settled')
+        .filter('ledgerTransactions', (t) => t.status === 'settled' && t.counterparty === 'usr_me')
         .reduce((s, t) => s + t.amount, 0);
-      check('wallet balance equals real settled rows only',
+      check('wallet balance equals MY real settled rows only',
         wallet.balance === settledTotal, `${wallet.balance} vs ${settledTotal}`);
+      // The wallet is personal: rows belonging to other counterparties must
+      // never leak into it.
+      const mineRows = store.filter('ledgerTransactions', (t) => t.counterparty === 'usr_me');
+      check('wallet counts only MY rows',
+        wallet.transactionCount === mineRows.length,
+        `${wallet.transactionCount} vs ${mineRows.length}`);
+      // Prove the scoping with a genuinely foreign row: another actor's
+      // settled money must not move my balance or my count.
+      const ledgerDomain = await import('../src/domain/ledger.js');
+      const before = wallet.balance;
+      const mineCount = mineRows.length;
+      ledgerDomain.createTransaction({ amount: 90000, type: 'sale', counterparty: 'usr_somebody_else', status: undefined });
+      const settledForeign = store.find('ledgerTransactions', (t) => t.counterparty === 'usr_somebody_else');
+      settledForeign.status = 'settled';
+      settledForeign.history.push({ status: 'settled', at: new Date().toISOString() });
+      const walletAfter = (await call('/api/economic/wallet')).body;
+      check('another actor\'s settled KES 90,000 never leaks into my wallet',
+        walletAfter.balance === before && walletAfter.transactionCount === mineCount,
+        `${walletAfter.balance}/${walletAfter.transactionCount} vs ${before}/${mineCount}`);
       check('orders created no second transaction table',
         store.all('orders').every((o) => !('balance' in o) && !('wallet' in o)));
       check('no order carries a stored paid flag',
@@ -3975,6 +3998,8 @@ console.log('\n=== PAYMENT HTTP SURFACE ===');
 
   try {
     const A = (await call('/api/auth/register', 'POST', { handle: 'payseller', password: 'a good passphrase' })).body;
+    // Reconciliation is a finance capability; bootstrap the buyer for this block.
+    process.env.BRIEF_FINANCE = 'paybuyer';
     const B = (await call('/api/auth/register', 'POST', { handle: 'paybuyer', password: 'a good passphrase' })).body;
     await call('/api/vendors', 'POST', { displayName: 'Pay Stall' }, A.token);
     let r = await call('/api/listings', 'POST', { title: 'Beans', type: 'product', price: 300, quantityAvailable: 10 }, A.token);
@@ -4793,6 +4818,9 @@ console.log('\n=== OPERATIONS: READINESS, DIAGNOSTICS, BACKUP ===');
     check('readiness recovers once fixed', r.status === 200);
 
     // --- diagnostics ---------------------------------------------------------
+    // Deployment bootstrap: this handle is named an operator by environment,
+    // which is exactly how a fresh deploy names its first operator.
+    process.env.BRIEF_OPERATORS = 'operator';
     const U = (await call('/api/auth/register', 'POST', { handle: 'operator', password: 'a good passphrase' })).body;
     r = await call('/api/ops/diagnostics', 'GET', undefined, U.token);
     check('diagnostics are available to an authenticated operator', r.status === 200);
@@ -4862,10 +4890,13 @@ console.log('\n=== OPERATIONS: READINESS, DIAGNOSTICS, BACKUP ===');
     // --- ops endpoints are not public ----------------------------------------
     // (dev fallback is on in tests, so this asserts the route exists and is
     // guarded by requireAuth rather than being anonymous-only.)
+    // With capability guards, a resolved caller WITHOUT the capability gets a
+    // real 403 answer -- still a response from a living, guarded route.
     r = await call('/api/ops/diagnostics');
-    check('diagnostics respond for a resolved caller', r.status === 200 || r.status === 401);
+    check('diagnostics respond for a resolved caller', [200, 401, 403].includes(r.status), `got ${r.status}`);
   } finally {
     srv.close();
+    delete process.env.BRIEF_OPERATORS;
   }
 }
 
@@ -5476,6 +5507,7 @@ console.log('\n=== AUCTION OVER HTTP ===');
 
   try {
     const u = Date.now().toString(36);
+    process.env.BRIEF_FINANCE = `aucs_${u}`;
     const seller = (await call('/api/auth/register', 'POST', { handle: `aucs_${u}`, password: 'a good passphrase' })).body;
     const bidder = (await call('/api/auth/register', 'POST', { handle: `aucb_${u}`, password: 'a good passphrase' })).body;
     const other = (await call('/api/auth/register', 'POST', { handle: `auco_${u}`, password: 'a good passphrase' })).body;
@@ -7151,6 +7183,281 @@ console.log('\n=== SUBSCRIPTIONS: JOINING A PLAN ===');
       again.status === 200 && again.body.changed === false, JSON.stringify(again.body).slice(0, 120));
   } finally {
     srv.close();
+  }
+}
+
+
+
+console.log('\n=== TICKET RESALE MARKET (Tikiti T1) ===');
+{
+  // Real identities over HTTP; the resale market is a multi-party system.
+  process.env.BRIEF_DEV_AUTH = '0';
+  process.env.BRIEF_REVIEWERS = 'tikrev';
+  const { default: app } = await import('../src/index.js');
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    const reg = async (h) => (await call('/api/auth/register', 'POST', { handle: h, password: 'a good passphrase' })).body;
+    const A = await reg('tikseller_' + Date.now().toString(36));
+    const B = await reg('tikbuyer_' + Date.now().toString(36));
+    const C = await reg('tikgift_' + Date.now().toString(36));
+    const REV = await reg('tikrev');
+    check('four real identities registered', [A, B, C, REV].every((x) => x?.token));
+
+    // --- a paid event with a confirmed seat ------------------------------
+    let r = await call('/api/campaigns', 'POST', { title: 'Resale Night ' + Date.now().toString(36), description: 'One seat, resold honestly', type: 'popup', price: 1500, capacity: 10 }, A.token);
+    check('organiser creates a paid campaign', r.status === 201, JSON.stringify(r.body).slice(0, 120));
+    const campId = r.body?.campaign?.id;
+    r = await call(`/api/campaigns/${campId}/publish`, 'POST', {}, A.token);
+    check('campaign published', r.status === 200, `got ${r.status}`);
+    const camp = store.find('campaigns', (c) => c.id === campId);
+    check('the published campaign carries a public slug', Boolean(camp?.publicSlug));
+
+    r = await call(`/api/public/campaigns/${camp.publicSlug}/register`, 'POST', { attendeeRef: 'seat-holder-a', name: 'Seat Holder A' }, A.token);
+    check('a signed-in user registers their own seat', r.status === 201, JSON.stringify(r.body).slice(0, 120));
+    const regA = store.find('registrations', (x) => x.attendeeRef === 'seat-holder-a');
+    check('the registration is bound to their identity', regA?.userId === A.user?.id, `${regA?.userId} vs ${A.user?.id}`);
+    r = await call(`/api/campaigns/${campId}/registrations/${regA.id}/confirm-payment`, 'POST', {}, A.token);
+    check('payment confirmed by the organiser', r.status === 201 || r.status === 200, JSON.stringify(r.body).slice(0, 120));
+    const paidTx = store.find('ledgerTransactions', (t) => t.registrationId === regA.id);
+    check('confirmation created a genuinely SETTLED ledger row', paidTx?.status === 'settled');
+
+    // --- issuance ---------------------------------------------------------
+    r = await call('/api/ticket-market/me/tickets', 'GET', undefined, A.token);
+    const tik = r.body?.tickets?.[0];
+    check('a confirmed seat automatically becomes a resale ticket', r.body?.tickets?.length === 1 && Boolean(tik?.id));
+    check('the ticket answers to the registration gate code', tik?.code === regA.ticketCode, `${tik?.code} vs ${regA.ticketCode}`);
+    check('the live scan code carries version 1', tik?.scanCode === `${regA.ticketCode}#1`);
+
+    // A public stranger's seat never enters the resale system: no identity,
+    // no ownership, no invented ticket.
+    await call(`/api/public/campaigns/${camp.publicSlug}/register`, 'POST', { attendeeRef: 'stranger-x', name: 'Stranger' });
+    const regX = store.find('registrations', (x) => x.attendeeRef === 'stranger-x');
+    await call(`/api/campaigns/${campId}/registrations/${regX.id}/confirm-payment`, 'POST', {}, A.token);
+    check("an anonymous stranger's confirmed seat issues NO resale ticket",
+      store.filter('tickets', (t) => t.registrationId === regX.id).length === 0);
+
+    // --- listing attacks ----------------------------------------------------
+    const badPrices = [0, -100, 12.5, 'free'];
+    for (const p of badPrices) {
+      r = await call('/api/ticket-market/listings', 'POST', { ticketId: tik.id, price: p }, A.token);
+      check(`price ${JSON.stringify(p)} is refused`, r.status === 400, `got ${r.status}`);
+    }
+    r = await call('/api/ticket-market/listings', 'POST', { ticketId: tik.id, price: 2500 }, B.token);
+    check('only the owner may list a ticket', r.status === 400 && /owner/.test(r.body?.error ?? ''), JSON.stringify(r.body));
+    r = await call('/api/ticket-market/listings', 'POST', { ticketId: tik.id, price: 2500, note: 'Can no longer attend' }, A.token);
+    check('the owner lists the seat for resale', r.status === 201, JSON.stringify(r.body).slice(0, 120));
+    const listing = r.body?.listing;
+    r = await call('/api/ticket-market/listings', 'POST', { ticketId: tik.id, price: 3000 }, A.token);
+    check('a ticket cannot be listed twice in parallel', r.status === 400 && /already/.test(r.body?.error ?? ''), JSON.stringify(r.body));
+
+    r = await call(`/api/ticket-market/events/${campId}/listings`, 'GET', undefined, B.token);
+    const view = r.body?.listings?.[0];
+    check('the event context shows the active listing at the server-fixed price',
+      view?.price === 2500 && view?.id === listing.id);
+    check('the public listing leaks no seller identity column',
+      view && !('sellerId' in view) && !('ownerUserId' in view), Object.keys(view ?? {}).join(','));
+
+    // --- buying -------------------------------------------------------------
+    r = await call('/api/ticket-market/orders', 'POST', { listingId: listing.id }, A.token);
+    check('the seller cannot buy their own listing', r.status === 400, `got ${r.status}`);
+    r = await call('/api/ticket-market/orders', 'POST', { listingId: listing.id }, B.token);
+    check('a buyer opens an order at the listed price', r.status === 201 && r.body?.order?.total === 2500, JSON.stringify(r.body).slice(0, 120));
+    const order = r.body?.order;
+    r = await call('/api/ticket-market/orders', 'POST', { listingId: listing.id }, C.token);
+    check('a second buyer cannot open a parallel order on the same seat', r.status === 400 && /no longer/.test(r.body?.error ?? ''), JSON.stringify(r.body));
+
+    // --- payment honesty ------------------------------------------------------
+    r = await call(`/api/ticket-market/orders/${order.id}/pay`, 'POST', {}, B.token);
+    check('paying with no provider configured is an honest 503 charged:false',
+      r.status === 503 && r.body?.charged === false, `${r.status} ${JSON.stringify(r.body).slice(0, 100)}`);
+
+    // --- settlement requires genuine money ------------------------------------
+    r = await call(`/api/ticket-market/orders/${order.id}/settle`, 'POST', {}, B.token);
+    check('settle without a ledger row is refused', r.status === 400 && /settled ledger/.test(r.body?.error ?? ''), JSON.stringify(r.body));
+    const ledgerDomain = await import('../src/domain/ledger.js');
+    const mkSettled = async (amount, who) => {
+      let t = ledgerDomain.createTransaction({ amount, type: 'sale', counterparty: who, description: 'resale payment' });
+      for (const step of ['pending', 'confirmed', 'settled']) t = ledgerDomain.transitionTransaction(t.id, step, 'test settlement');
+      return t;
+    };
+    const shortTx = await mkSettled(100, B.user.id);
+    r = await call(`/api/ticket-market/orders/${order.id}/settle`, 'POST', { transactionId: shortTx.id }, B.token);
+    check('a settled row of the WRONG amount does not transfer a ticket', r.status === 400 && /amount/.test(r.body?.error ?? ''), JSON.stringify(r.body));
+    const otherTx = await mkSettled(2500, C.user.id);
+    r = await call(`/api/ticket-market/orders/${order.id}/settle`, 'POST', { transactionId: otherTx.id }, B.token);
+    check("someone else's settled row does not transfer the ticket", r.status === 400, `got ${r.status}`);
+    const realTx = await mkSettled(2500, B.user.id);
+    r = await call(`/api/ticket-market/orders/${order.id}/settle`, 'POST', { transactionId: realTx.id }, B.token);
+    check('settlement with the buyer\'s genuinely settled row completes the order',
+      r.status === 200 && r.body?.order?.status === 'completed', JSON.stringify(r.body).slice(0, 140));
+
+    // --- the transfer itself ---------------------------------------------------
+    const sold = store.find('tickets', (t) => t.id === tik.id);
+    check('ownership moved to the buyer', sold.ownerUserId === B.user.id);
+    check('the code version bumped — every printed QR before this is dead', sold.codeVersion === 2, `v${sold.codeVersion}`);
+    check('the listing is sold, not relisted', store.find('ticketListings', (l) => l.id === listing.id).status === 'sold');
+    check('the transfer is recorded with provenance',
+      store.find('ticketTransfers', (t) => t.ticketId === tik.id && t.kind === 'purchase' && t.codeVersionAfter === 2));
+
+    // --- the gate honours versions --------------------------------------------
+    r = await call(`/api/tickets/${regA.ticketCode}`, 'GET', undefined, A.token);
+    check('the gate refuses the pre-transfer QR (bare code)', r.status === 409 && r.body?.reason === 'stale_code', `${r.status}`);
+    r = await call(`/api/tickets/${regA.ticketCode}?v=1`, 'GET', undefined, A.token);
+    check('the gate refuses the stale version explicitly', r.status === 409);
+    r = await call(`/api/tickets/${regA.ticketCode}?v=2`, 'GET', undefined, A.token);
+    check('the gate accepts the CURRENT version', r.status === 200, `${r.status}`);
+
+    // --- gifting -----------------------------------------------------------------
+    r = await call(`/api/ticket-market/tickets/${tik.id}/transfer`, 'POST', { toUserId: C.user.id }, B.token);
+    check('an owner can gift a seat', r.status === 200 && r.body?.ticket?.codeVersion === 3, JSON.stringify(r.body).slice(0, 120));
+    r = await call('/api/ticket-market/me/tickets', 'GET', undefined, C.token);
+    check("the recipient's wallet of tickets shows the live scan code", r.body?.tickets?.[0]?.scanCode === `${regA.ticketCode}#3`);
+
+    // --- refunds revert, and kill the recipient's QR -------------------------------
+    r = await call(`/api/ticket-market/orders/${order.id}/refund`, 'POST', {}, A.token);
+    check('a completed order is refunded through its real ledger row',
+      r.status === 200 && r.body?.order?.status === 'refunded', JSON.stringify(r.body).slice(0, 140));
+    check('the ledger row itself transitioned to refunded', store.find('ledgerTransactions', (t) => t.id === realTx.id).status === 'refunded');
+    const reverted = store.find('tickets', (t) => t.id === tik.id);
+    check('ownership reverted to the seller', reverted.ownerUserId === A.user.id);
+    check("the recipient's QR died with the revert", reverted.codeVersion === 4, `v${reverted.codeVersion}`);
+    r = await call(`/api/tickets/${regA.ticketCode}?v=3`, 'GET', undefined, A.token);
+    check('the gate refuses the post-refund code', r.status === 409);
+
+    // --- moderation ------------------------------------------------------------------
+    r = await call('/api/ticket-market/listings', 'POST', { ticketId: tik.id, price: 2000 }, A.token);
+    const fresh = r.body?.listing;
+    check('the seller relists after the refund', r.status === 201);
+    r = await call(`/api/ticket-market/listings/${fresh.id}/remove`, 'POST', { reason: 'suspected fake' }, B.token);
+    check('a plain user cannot remove listings (403 names the capability)',
+      r.status === 403 && r.body?.requiredCapability === 'moderate', JSON.stringify(r.body));
+    r = await call(`/api/ticket-market/listings/${fresh.id}/remove`, 'POST', { reason: 'suspected fake' }, REV.token);
+    check('a reviewer removes a listing with a reason', r.status === 200 && r.body?.listing?.status === 'removed', JSON.stringify(r.body).slice(0, 120));
+    r = await call(`/api/ticket-market/listings/${fresh.id}/remove`, 'POST', { reason: '' }, REV.token);
+    check('a removal without a reason is refused', r.status === 400);
+    const auditRow = store.find('auditLog', (a) => a.action === 'ticket_market.listing_removed' && a.objectId === fresh.id);
+    check('the removal is in the audit trail with its reason', auditRow?.reason === 'suspected fake');
+    r = await call(`/api/ticket-market/tickets/${tik.id}/void`, 'POST', { reason: 'fraud: duplicate seat' }, REV.token);
+    check('a reviewer voids a ticket', r.status === 200 && r.body?.ticket?.status === 'void');
+    r = await call(`/api/tickets/${regA.ticketCode}?v=4`, 'GET', undefined, A.token);
+    check('a voided ticket is refused at the gate (410)', r.status === 410 && r.body?.reason === 'void', `${r.status}`);
+
+    // --- the changes were signals, not silent flips ------------------------------------
+    check('listing and transfers surfaced as signals',
+      store.find('signals', (x) => x.type === 'ticket_listed') && store.find('signals', (x) => x.type === 'ticket_transferred'));
+  } finally {
+    srv.close();
+    delete process.env.BRIEF_REVIEWERS;
+    process.env.BRIEF_DEV_AUTH = '1';
+  }
+}
+
+
+console.log('\n=== PLATFORM ROLES: THE OPERATOR SURFACE IS CAPABILITY-GUARDED ===');
+{
+  // Production posture: no dev fallback, real identities only.
+  process.env.BRIEF_DEV_AUTH = '0';
+  const { default: app } = await import('../src/index.js');
+  store._reset();
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    // Deployment bootstrap: one reviewer, one finance, one admin by handle.
+    process.env.BRIEF_OPERATORS = 'platop';
+    process.env.BRIEF_REVIEWERS = 'platrev';
+    process.env.BRIEF_FINANCE = 'platfin';
+    process.env.BRIEF_ADMINS = 'platadm';
+    const reg = async (handle) => (await call('/api/auth/register', 'POST', { handle, password: 'a good passphrase' })).body;
+    const nobody = await reg('plainuser');
+    const op = await reg('platop');
+    const rev = await reg('platrev');
+    const fin = await reg('platfin');
+    const adm = await reg('platadm');
+
+    check('a plain account holds no operator roles', (await call('/api/auth/me', 'GET', undefined, nobody.token)).body?.user?.platformRoles?.length === 0);
+
+    // --- capability refusals are honest 403s, named -------------------------
+    let r = await call('/api/ops/diagnostics', 'GET', undefined, nobody.token);
+    check('a plain user cannot read diagnostics (403)', r.status === 403, `got ${r.status}`);
+    check('the refusal names the capability', r.body?.requiredCapability === 'ops.read', JSON.stringify(r.body));
+    r = await call('/api/ops/backup', 'POST', {}, nobody.token);
+    check('a plain user cannot trigger backups (403)', r.status === 403);
+    r = await call('/api/ops/seed/clear', 'POST', {}, nobody.token);
+    check('a plain user cannot clear the store (403)', r.status === 403);
+    r = await call('/api/economic/reconcile', 'GET', undefined, op.token);
+    check('an operator cannot read reconciliation (finance-only, 403)', r.status === 403);
+    r = await call('/api/ops/reports/x/resolve', 'POST', {}, op.token);
+    check('an operator cannot moderate reports (403)', r.status === 403);
+    r = await call('/api/ops/roles', 'POST', { userId: 'usr_x', roles: ['admin'] }, rev.token);
+    check('a reviewer cannot assign roles (403)', r.status === 403);
+
+    // --- the ladder of capabilities -----------------------------------------
+    r = await call('/api/ops/diagnostics', 'GET', undefined, op.token);
+    check('an operator reads diagnostics (200)', r.status === 200);
+    r = await call('/api/ops/backup', 'POST', {}, op.token);
+    check('an operator takes a backup (200)', r.status === 200 && r.body?.ok === true);
+    r = await call('/api/ops/reports', 'GET', undefined, rev.token);
+    check('a reviewer reads the report queue (200)', r.status === 200);
+    r = await call('/api/economic/reconcile', 'GET', undefined, fin.token);
+    check('finance reads settlement reconciliation (200)', r.status === 200);
+    r = await call('/api/economic/payments/reconcile', 'GET', undefined, fin.token);
+    check('finance reads payment reconciliation (200)', r.status === 200);
+
+    // --- role assignment is admin-only and audited ---------------------------
+    const target = (await call('/api/auth/me', 'GET', undefined, nobody.token)).body.user;
+    r = await call('/api/ops/roles', 'POST', { userId: target.id, roles: ['operator'], reason: 'onboarding the night shift' }, adm.token);
+    check('an admin assigns a stored role (200)', r.status === 200, JSON.stringify(r.body).slice(0, 120));
+    r = await call('/api/ops/diagnostics', 'GET', undefined, nobody.token);
+    check('the stored role takes effect immediately', r.status === 200, `got ${r.status}`);
+    r = await call('/api/ops/roles', 'POST', { userId: target.id, roles: ['owner'] }, adm.token);
+    check('an unknown role is refused, not stored', r.status === 400 || (Array.isArray(r.body?.user?.platformRoles) && !r.body.user.platformRoles.includes('owner')), JSON.stringify(r.body).slice(0, 120));
+
+    // --- the audit trail records consequential actions -----------------------
+    r = await call('/api/ops/audit', 'GET', undefined, op.token);
+    check('the audit trail lists operator actions', Array.isArray(r.body?.audit) && r.body.audit.length > 0, JSON.stringify(r.body).slice(0, 120));
+    const actions = new Set(r.body.audit.map((a) => a.action));
+    check('the backup is in the audit trail', actions.has('ops.backup'));
+    check('the role assignment is in the audit trail with a reason', r.body.audit.some((a) => a.action === 'ops.roles.set' && a.reason === 'onboarding the night shift'));
+    check('audit rows name their actor', r.body.audit.every((a) => a.actorHandle || a.actorId));
+    r = await call('/api/ops/audit', 'GET', undefined, nobody.token);
+    check('the audit trail is capability-gated', r.status === 403);
+
+    // --- moderation acts are audited with before/after ------------------------
+    // The tea publish transition is reviewer-gated; drive it end to end.
+    const teaCreate = await call('/api/admin/tea', 'POST', { title: 'Audit trail story', category: 'local_business', body: 'x'.repeat(40) }, rev.token);
+    const article = teaCreate.body?.article;
+    check('a reviewer can create a story draft', teaCreate.status === 201 && Boolean(article), JSON.stringify(teaCreate.body).slice(0, 120));
+    r = await call(`/api/admin/tea/${article.id}/publish`, 'POST', {}, op.token);
+    check('an operator cannot publish stories (moderate, 403)', r.status === 403);
+    r = await call(`/api/admin/tea/${article.id}/publish`, 'POST', {}, rev.token);
+    check('a reviewer publishes the story', r.status === 200 && r.body?.article?.status === 'published', JSON.stringify(r.body).slice(0, 140));
+    r = await call('/api/ops/audit', 'GET', undefined, rev.token);
+    check('the publish is audited with before/after status', r.body.audit.some((a) => a.action === 'tea.publish' && a.before?.status === 'draft' && a.after?.status === 'published'));
+
+    // --- Ligi's clock is not a player button ----------------------------------
+    r = await call('/api/ligi/tick', 'POST', {}, nobody.token);
+    check('a player cannot tick Ligi (403)', r.status === 403, `got ${r.status}`);
+    r = await call('/api/ligi/tick', 'POST', {}, op.token);
+    check('an operator may tick Ligi (200)', r.status === 200);
+  } finally {
+    srv.close();
+    for (const k of ['BRIEF_OPERATORS', 'BRIEF_REVIEWERS', 'BRIEF_FINANCE', 'BRIEF_ADMINS']) delete process.env[k];
+    process.env.BRIEF_DEV_AUTH = '1';
   }
 }
 

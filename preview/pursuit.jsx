@@ -64,7 +64,7 @@ async function main(){
   const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;console.log('  FAIL  '+n+(d?' -> '+d:''));}};
 
   console.log('=== Pursuits surface ===');
-  await click(btn('Home'));
+  await click(btn('Nearby'));
   await click(btn('More')); // section pills live behind More now
   await click(btn('Alerts'));
   check('tab opens', body().includes('Things you have asked Brief'));
@@ -111,12 +111,12 @@ async function main(){
     if(p){ await click(p); check('detail pursuit created', body().includes('Alerts (') || body().includes('Alerts')); } }
 
   console.log('\n=== Marketplace preserved ===');
-  await click(btn('Home'));
+  await click(btn('Nearby'));
   check('stream still renders objects', document.querySelectorAll('div.grid > div[class*="cursor-pointer"]').length>0);
-  await goto('Inbox','Review');
-  check('Inbox still present', /Inbox/.test(body()));
-  await click(btn('Home'));
-  check('My Layer still present', !!btn('Saved'));
+  await goto('Workflows','Review');
+  check('the Workflows destination answers with its queue', /Waiting on you|waiting/i.test(body()) || !!btn('Review'));
+  await click(btn('Nearby'));
+  check('My Layer still present', !!btn('My Layer'));
   console.log(`\n${'='.repeat(46)}\nPASSED ${pass}   FAILED ${fail}\n${'='.repeat(46)}`);
   process.exit(fail?1:0);
 }

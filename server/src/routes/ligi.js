@@ -9,7 +9,7 @@
 import * as ligi from '../domain/ligi.js';
 import * as fantasy from '../domain/fantasy.js';
 import { callerId } from '../identity.js';
-import { requireAuth } from './helpers.js';
+import { requireAuth, requireCap, recordAudit } from './helpers.js';
 import { requireFeature } from '../features.js';
 
 const statusFor = (msg) =>
@@ -150,7 +150,11 @@ export function register(app) {
    * debug. It is idempotent, so calling it is never destructive.
    */
   app.post('/api/ligi/tick', (req, res) => {
-    if (!requireAuth(req, res)) return;
-    res.json(ligi.tick());
+    // Operator: Ligi operates itself from the system clock (§15). A manual
+    // tick is an operator/debug affordance, not a player action.
+    if (!requireCap(req, res, 'ops.run')) return;
+    const result = ligi.tick();
+    recordAudit('ligi.tick', { actorId: callerId(req), objectType: 'ligi', after: { gameweeks: Array.isArray(result?.gameweeks) ? result.gameweeks.length : null } });
+    res.json(result);
   });
 }

@@ -78,7 +78,7 @@ async function main() {
   };
 
   console.log('=== First Play visit is a real person ===');
-  await click(btn('Play'));
+  await click(btn('Arena'));
   check('Play as the session name', /Play as Local/i.test(body()));
   check('no Nyabs fixture', !/Nyabs|ply_nyabs/.test(body()));
   check('availability is off until switched', /Not available|Off unless you switch/i.test(body()) || /Play as Local/i.test(body()));

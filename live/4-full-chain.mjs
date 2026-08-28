@@ -35,6 +35,12 @@ const S = r.body;
 r = await call('/api/auth/register', 'POST', { handle: `buyer_${uniq}`, password: 'a good passphrase', displayName: 'Otieno' });
 check('buyer registers', r.status === 201);
 const Bu = r.body;
+
+// The deployment-bootstrapped operator (BRIEF_OPERATORS=liveop + finance, see
+// live/README.md). Reconciliation and diagnostics reads below use it.
+r = await call('/api/auth/register', 'POST', { handle: 'liveop', password: 'live operator passphrase' });
+if (r.status !== 201) r = await call('/api/auth/login', 'POST', { handle: 'liveop', password: 'live operator passphrase' });
+const OP = r.body;
 check('two distinct identities', S.user.id !== Bu.user.id);
 check('no password material returned', !/passwordHash|passwordSalt/.test(JSON.stringify(S)));
 
@@ -151,9 +157,9 @@ check('the payment webhook fails CLOSED (403)', r.status === 403, `got ${r.statu
 check('and leaks no detail', JSON.stringify(r.body) === '{"error":"rejected"}');
 
 console.log('\n=== LEDGER / SETTLEMENT / PAYOUT ===');
-r = await call('/api/economic/reconcile', 'GET', undefined, S.token);
+r = await call('/api/economic/reconcile', 'GET', undefined, OP.token);
 check('settlement reconciliation is balanced', r.body?.reconciliation?.balanced === true);
-r = await call('/api/economic/payments/reconcile', 'GET', undefined, S.token);
+r = await call('/api/economic/payments/reconcile', 'GET', undefined, OP.token);
 check('payment reconciliation is balanced', r.body?.reconciliation?.balanced === true);
 r = await call('/api/vendors/me/earnings', 'GET', undefined, S.token);
 check('earnings are real zeros, not invented money', r.body?.earnings?.net === 0);
@@ -209,8 +215,14 @@ check('NO paid signal, because nothing was paid', !kinds.includes('order_paid'))
 console.log('\n=== OPERATIONS ===');
 r = await call('/api/ready');
 check('readiness is 200 and checks real state', r.status === 200 && r.body.checks.length >= 3);
+// The operator surface is capability-guaraded now: a plain seller is refused
+// honestly, and the deployment-bootstrapped operator (BRIEF_OPERATORS=liveop,
+// see live/README.md) is let in.
 r = await call('/api/ops/diagnostics', 'GET', undefined, S.token);
-check('diagnostics are available', r.status === 200 && Number.isFinite(r.body?.counts?.users));
+check('diagnostics refuse a non-operator honestly (403)', r.status === 403 && r.body?.code === 'forbidden_capability', `got ${r.status}`);
+check('the operator identity exists on this deployment', Boolean(OP?.token), JSON.stringify(OP).slice(0, 120));
+r = await call('/api/ops/diagnostics', 'GET', undefined, OP.token);
+check('diagnostics are available to the operator', r.status === 200 && Number.isFinite(r.body?.counts?.users));
 r = await call('/api/capabilities');
 check('capabilities admit no payment provider', r.body?.payments?.configured === false);
 check('capabilities report auth as configured', r.body?.auth?.configured === true);
@@ -239,7 +251,7 @@ console.log('\n=== AUCTION (live, production build) ===');
   check('a higher bid takes the lead', a.status === 201 && a.body.auction.currentPrice === 1200);
 
   // A bid is not money.
-  a = await call('/api/economic/reconcile', 'GET', undefined, S.token);
+  a = await call('/api/economic/reconcile', 'GET', undefined, OP.token);
   check('BIDS CREATED NO LEDGER ACTIVITY', a.body?.reconciliation?.balanced === true);
   a = await call('/api/vendors/me/earnings', 'GET', undefined, S.token);
   check('and no seller earnings', a.body?.earnings?.net === 0);

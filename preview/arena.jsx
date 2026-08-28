@@ -44,7 +44,7 @@ async function main(){
   const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;console.log('  FAIL  '+n+(d?' -> '+d:''));}};
 
   console.log('=== Arena is a gathering place, not a competition ===');
-  await click(btn('Play'));
+  await click(btn('Arena'));
   let b=body();
   check('Arena opens', /Gather with people to play/i.test(b));
   check('not framed as a competition', /Not a competition/i.test(b));

@@ -64,6 +64,15 @@ const EMPTY = {
   // metrics are derived, never stored. See src/domain/campaign.js.
   campaigns: [],
   registrations: [],
+  // P2P ticket resale (Tikiti integration T1). A ticket is ONE admitted
+  // seat, born from a confirmed campaign registration; its scannable code
+  // IS the registration's gate code, versioned so a transfer kills every
+  // prior QR. ledgerTransactions remains the only economic truth — these
+  // rows are inventory, provenance and state machines, never money.
+  tickets: [],
+  ticketListings: [],
+  ticketOrders: [],
+  ticketTransfers: [],
   // Standalone public banners are a presentation layer over a published
   // campaign. They carry no second event or payment state.
   campaignBanners: [],

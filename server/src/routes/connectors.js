@@ -10,7 +10,7 @@ import * as whatsapp from '../connectors/whatsapp.js';
 import * as web from '../connectors/web.js';
 import * as auth from '../domain/auth.js';
 import * as person from '../domain/person.js';
-import { requireAuth, now, recordError, CURRENT_USER } from './helpers.js';
+import { requireAuth, requireCap, recordAudit, now, recordError, CURRENT_USER } from './helpers.js';
 
 import { requireFeature } from '../features.js';
 
@@ -78,6 +78,10 @@ app.get('/api/connectors/telegram/verify', async (_req, res) => {
 
 
 app.post('/api/connectors/telegram/webhook-config', async (req, res) => {
+  // Operator: this rewrites the connector's live webhook configuration.
+  const op = requireCap(req, res, 'ops.run');
+  if (!op) return;
+  recordAudit('connector.telegram.webhook_config', { actorId: op, objectType: 'connector', objectId: 'telegram' });
   const { url } = req.body ?? {};
   if (!url) return res.status(400).json({ error: 'url is required' });
   let secret = process.env.TELEGRAM_WEBHOOK_SECRET;
@@ -180,7 +184,9 @@ app.post('/api/webhooks/telegram', (req, res) => {
  */
 
 app.post('/api/connectors/telegram/sync', async (req, res) => {
-  if (!requireAuth(req, res)) return;
+  const op = requireCap(req, res, 'ops.run');
+  if (!op) return;
+  recordAudit('connector.telegram.sync', { actorId: op, objectType: 'connector', objectId: 'telegram' });
   const gate = allow('tg-sync', 20, 5);
   if (!gate.ok) return res.status(429).json({ error: 'rate limited', retryAfterMs: gate.retryAfterMs });
 

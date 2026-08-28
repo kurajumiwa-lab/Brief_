@@ -5073,8 +5073,8 @@ export function App() {
   // --- Ingestion backend (real connectors) ---------------------------------
   // The client holds no tokens. It talks to the ingestion server, which owns
   // every secret. When the server is not running these panels degrade to an
-  // explicit "not connected" state rather than pretending.
-  const INGEST_API = '/ingest';
+  // explicit "not connected" state rather than pretending. The proxy prefix
+  // lives in src/api/briefApi.ts, which is the only place that fetches.
   const [connectorStatus, setConnectorStatus] = useState<{
     online: boolean;
     checked: boolean;
@@ -5088,13 +5088,13 @@ export function App() {
   const [briefItSaved, setBriefItSaved] = useState<string | null>(null);
 
   const refreshConnectors = React.useCallback(async () => {
-    // Sources go through briefApi like everything else: one API layer, one
-    // set of response guards. Capabilities/status have no binding yet and
-    // stay inline until they earn one.
+    // Everything goes through briefApi: one API layer, one set of response
+    // guards, no fetch() outside src/api (spec 4). Capabilities/status that
+    // fail their shape guard degrade to null exactly as before.
     const [srcRes, capRes, statRes] = await Promise.all([
       briefApi.getSources(),
-      fetch(`${INGEST_API}/api/capabilities`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-      fetch(`${INGEST_API}/api/status`).then((r) => (r.ok ? r.json() : null)).catch(() => null)
+      briefApi.getConnectorCapabilities(),
+      briefApi.getIngestStatus()
     ]);
 
     if (!srcRes.ok) {
@@ -5106,9 +5106,9 @@ export function App() {
     setConnectorStatus({
       online: true,
       checked: true,
-      capabilities: capRes,
+      capabilities: capRes.ok ? capRes.data : null,
       liveSources: srcRes.data,
-      stats: statRes
+      stats: statRes.ok ? statRes.data : null
     });
   }, []);
 

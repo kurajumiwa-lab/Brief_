@@ -38,6 +38,14 @@ export const SIGNAL_TYPES = [
   'campaign_viewed',
   'campaign_shared',
   'campaign_banner_created',
+  // Ticket resale market (Tikiti T1): a seat is a real-world thing whose
+  // ownership and availability change — every change is a signal Pulse can
+  // surface, never a silent state flip.
+  'ticket_listed',
+  'ticket_order_opened',
+  'ticket_transferred',
+  'ticket_order_refunded',
+  'ticket_voided',
   'campaign_registration_started',
   'campaign_registered',
   'campaign_registration_updated',

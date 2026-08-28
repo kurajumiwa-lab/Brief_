@@ -19,6 +19,9 @@
 import type {
   ApiResult,
   Block,
+  ResaleTicket,
+  ResaleListing,
+  TicketOrder,
   CapabilityUnavailable,
   Circle,
   CircleCreate,
@@ -543,6 +546,80 @@ export function getSignals(opts: { circleId?: string; limit?: number } = {}): Pr
 // ECONOMIC
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// TICKET RESALE MARKET (Tikiti T1). All fetches live here (§4); the UI never
+// sees a raw response shape. The scan code version is part of the ticket
+// object, so a stale QR is impossible to render by accident.
+// ---------------------------------------------------------------------------
+
+export function getEventResaleListings(eventId: string): Promise<ApiResult<{ listings: ResaleListing[] }>> {
+  return request(`/api/ticket-market/events/${encodeURIComponent(eventId)}/listings`, undefined, (r) =>
+    Array.isArray(r?.listings) ? r : undefined);
+}
+
+export function getMyTickets(): Promise<ApiResult<{ tickets: ResaleTicket[] }>> {
+  return request('/api/ticket-market/me/tickets', undefined, (r) =>
+    Array.isArray(r?.tickets) ? r : undefined);
+}
+
+export function getMyResaleDesk(): Promise<ApiResult<{ listings: unknown[]; orders: unknown[] }>> {
+  return request('/api/ticket-market/me/listings', undefined, (r) =>
+    Array.isArray(r?.listings) && Array.isArray(r?.orders) ? r : undefined);
+}
+
+export function createResaleListing(
+  ticketId: string,
+  price: number,
+  note?: string
+): Promise<ApiResult<{ listing: ResaleListing }>> {
+  return request('/api/ticket-market/listings', {
+    method: 'POST',
+    body: JSON.stringify({ ticketId, price, note: note ?? null })
+  });
+}
+
+export function cancelResaleListing(listingId: string): Promise<ApiResult<{ listing: ResaleListing; changed: boolean }>> {
+  return request(`/api/ticket-market/listings/${encodeURIComponent(listingId)}/cancel`, { method: 'POST', body: '{}' });
+}
+
+export function openTicketOrder(listingId: string): Promise<ApiResult<{ order: TicketOrder }>> {
+  return request('/api/ticket-market/orders', {
+    method: 'POST',
+    body: JSON.stringify({ listingId })
+  });
+}
+
+export function cancelTicketOrder(orderId: string): Promise<ApiResult<{ order: TicketOrder; changed: boolean }>> {
+  return request(`/api/ticket-market/orders/${encodeURIComponent(orderId)}/cancel`, { method: 'POST', body: '{}' });
+}
+
+/**
+ * Pay for a ticket order. With no payment provider configured the server
+ * answers 503 charged:false — an honest refusal, surfaced here as the error
+ * result with the server's own detail, never a fake success.
+ */
+export function payTicketOrder(orderId: string): Promise<ApiResult<{ charged: boolean }>> {
+  return request(`/api/ticket-market/orders/${encodeURIComponent(orderId)}/pay`, { method: 'POST', body: '{}' });
+}
+
+export function settleTicketOrder(orderId: string, transactionId: string): Promise<ApiResult<{ order: TicketOrder; changed: boolean }>> {
+  return request(`/api/ticket-market/orders/${encodeURIComponent(orderId)}/settle`, {
+    method: 'POST',
+    body: JSON.stringify({ transactionId })
+  });
+}
+
+export function refundTicketOrder(orderId: string): Promise<ApiResult<{ order: TicketOrder; changed: boolean }>> {
+  return request(`/api/ticket-market/orders/${encodeURIComponent(orderId)}/refund`, { method: 'POST', body: '{}' });
+}
+
+export function giftTicket(ticketId: string, toUserId: string): Promise<ApiResult<{ ticket: ResaleTicket }>> {
+  return request(`/api/ticket-market/tickets/${encodeURIComponent(ticketId)}/transfer`, {
+    method: 'POST',
+    body: JSON.stringify({ toUserId })
+  });
+}
+
 export function getWallet(currency = 'KES'): Promise<ApiResult<Wallet>> {
   // Validated rather than passed through: a 200 with an empty body would
   // otherwise reach the UI as a wallet with `undefined` balance, which is
@@ -919,6 +996,48 @@ export function markNotificationsRead(idOrAll?: string): Promise<ApiResult<any>>
 
 export function getSources(): Promise<ApiResult<Source[]>> {
   return request('/api/sources', undefined, (r) => areSources(r?.sources));
+}
+
+// Connector capability + ingestion status. These were the last two fetch()
+// calls living outside this file (inlined in App.tsx "until they earn a
+// binding"): they have earned one. Same proxy prefix, same session header,
+// same response guards as everything else.
+export type ConnectorCapabilities = {
+  telegram?: Record<string, unknown>;
+  web?: Record<string, unknown>;
+  rss?: Record<string, unknown>;
+  whatsapp?: Record<string, unknown>;
+  manual?: Record<string, unknown>;
+  payments?: Record<string, unknown>;
+  arenaMoney?: Record<string, unknown>;
+  auth?: Record<string, unknown>;
+  outbound?: Record<string, unknown>;
+  features?: Record<string, unknown>;
+};
+
+export function getConnectorCapabilities(): Promise<ApiResult<ConnectorCapabilities>> {
+  return request('/api/capabilities', undefined, (r) =>
+    r && typeof r === 'object' && typeof r.manual === 'object'
+      ? (r as ConnectorCapabilities)
+      : undefined);
+}
+
+export type IngestStatus = {
+  sources: number;
+  connected: number;
+  rawItems: number;
+  objects: number;
+  relationships: number;
+  errors: number;
+  queue: Record<string, unknown>;
+  lastSyncRuns: unknown[];
+};
+
+export function getIngestStatus(): Promise<ApiResult<IngestStatus>> {
+  return request('/api/status', undefined, (r) =>
+    typeof r?.sources === 'number' && typeof r?.objects === 'number'
+      ? (r as IngestStatus)
+      : undefined);
 }
 
 export interface SourceCreate {
@@ -1801,13 +1920,6 @@ export function placeLigiWager(
     `/api/ligi/gameweeks/${encodeURIComponent(gameweekId)}/wagers`,
     { method: 'POST', body: JSON.stringify(wager) },
     (r) => (r?.wager ? { wager: r.wager, unitsRemaining: Number(r.unitsRemaining ?? 0) } : undefined)
-  );
-}
-
-/** Run the automated pass now. Idempotent, so calling it is never destructive. */
-export function tickLigi(): Promise<ApiResult<{ at: string; actions: unknown[]; changed: boolean }>> {
-  return request('/api/ligi/tick', { method: 'POST', body: '{}' }, (r) =>
-    r && Array.isArray(r.actions) ? { at: String(r.at), actions: r.actions, changed: Boolean(r.changed) } : undefined
   );
 }
 

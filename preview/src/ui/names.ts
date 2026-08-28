@@ -2,10 +2,12 @@
 // People should recognise the words from other apps.
 
 export const ROOM = {
-  nearby: { label: 'Home', hint: "What's happening near you" },
-  arena: { label: 'Play', hint: 'Find people to play with' },
-  mylayer: { label: 'Saved', hint: 'Places and events you kept' },
-  workflows: { label: 'Inbox', hint: 'Things waiting for you' }
+  // §2: exactly these destinations, in the brief's own words. The ids are the
+  // stable contract (URLs, tests); the labels are what the brief calls them.
+  nearby: { label: 'Nearby', hint: "What's happening near you" },
+  arena: { label: 'Arena', hint: 'Find people to play with' },
+  mylayer: { label: 'My Layer', hint: 'Places and events you kept' },
+  workflows: { label: 'Workflows', hint: "What's waiting on you" }
 } as const;
 
 export const HOME_MORE: Record<string, string> = {

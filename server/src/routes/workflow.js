@@ -1,7 +1,7 @@
 // WORKFLOW ROUTES — the automation engine (CCS §3.1).
 import { callerId } from '../identity.js';
 import * as workflow from '../domain/workflow.js';
-import { requireAuth } from './helpers.js';
+import { requireAuth, requireCap, recordAudit } from './helpers.js';
 import { requireFeature } from '../features.js';
 
 export function register(app) {
@@ -40,9 +40,10 @@ export function register(app) {
 
   /** Manually trigger a sweep (idempotent). */
   app.post('/api/workflows/sweep', async (req, res) => {
-    const me = requireAuth(req, res);
+    const me = requireCap(req, res, 'ops.run');
     if (!me) return;
     const result = await workflow.sweep();
+    recordAudit('workflow.sweep', { actorId: me, objectType: 'workflows', after: { swept: result?.swept ?? null } });
     res.json(result);
   });
 }
