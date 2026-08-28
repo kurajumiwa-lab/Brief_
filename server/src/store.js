@@ -156,6 +156,11 @@ const EMPTY = {
   // for use as fallback visuals. Empty until uploaded — never pre-fabricated.
   // See domain/media.js.
   mediaLibrary: [],
+  // Real image files a person uploaded, not links to somebody else's server.
+  // The row records the bytes (size, sha256, sniffed type); the file itself
+  // lives in the upload directory, which is local disk and therefore not
+  // durable across a redeploy. See domain/upload.js.
+  uploads: [],
 
   // --- Collections (home-feed master build §47) ----------------------------
   // Named, data-driven groupings over real objects (rule or curated). See

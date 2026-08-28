@@ -1409,3 +1409,36 @@ export interface TeaArticle {
   relatedEvents: string[];
   body: string;
 }
+
+// --- real image uploads -----------------------------------------------------
+//
+// An upload is a file Brief holds, not a link to somebody else's server. The
+// `url` the server returns is ROOT-relative (/api/media/file/<id>): the client
+// must prefix it with the ingestion proxy before it can be used as an img src.
+// See mediaFileUrl().
+export interface MediaUpload {
+  id: string;
+  url: string;
+  mimeType: string;
+  bytes: number;
+  sha256: string;
+  originalName: string | null;
+  alt: string | null;
+  createdAt: string;
+  ownerId?: string;
+}
+
+/** What the deployment can honestly promise about uploaded images. */
+export interface MediaStorageStatus {
+  enabled: boolean;
+  kind: string;
+  persisted: boolean;
+  dir: string;
+  writable: boolean;
+  dirError: string | null;
+  maxBytes: number;
+  allowedTypes: string[];
+  count: number;
+  missingBytes: number;
+  reason: string | null;
+}

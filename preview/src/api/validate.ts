@@ -18,6 +18,7 @@
 
 import type {
   AppConfig,
+  MediaUpload,
   Vendor,
   Listing,
   Order,
@@ -531,3 +532,13 @@ export function isTeaArticle(v: unknown): v is TeaArticle {
   );
 }
 export const areTeaArticles = (v: unknown) => all(v, isTeaArticle);
+
+export function isMediaUpload(v: unknown): v is MediaUpload {
+  return (
+    isObj(v) && isStr(v.id) && isStr(v.url) && isStr(v.mimeType) &&
+    isNum(v.bytes) && isStr(v.sha256) && isStr(v.createdAt) &&
+    (v.originalName === null || isStr(v.originalName)) &&
+    (v.alt === null || isStr(v.alt))
+  );
+}
+export const areMediaUploads = (v: unknown) => all(v, isMediaUpload);

@@ -104,14 +104,14 @@ node live/4-full-chain.mjs            # identity -> ... -> payout, Arena,
                                       # Fantasy, Auction, ops
 ```
 
-**Current state: 3225 assertions, 0 failing** — measured 2026-08-28 against a
+**Current state: 3282 assertions, 0 failing** — measured 2026-08-28 against a
 production build over HTTP, not inherited from an earlier report.
 
 | Suite | Result |
 |---|---|
-| `server/test/run.js` | 1717 passed / 0 failed / 3 skipped |
+| `server/test/run.js` | 1750 passed / 0 failed / 3 skipped |
 | `server/test/livecamp.mjs` | 111 passed / 0 failed |
-| `./run-suites.sh` (32 client suites) | 1194 passed / 0 failed |
+| `./run-suites.sh` (33 client suites) | 1218 passed / 0 failed |
 | `tc` strict typecheck | exit 0 |
 | `live/` against the production build | 43 + 27 + 91 + 16 + 26 = 203 / 0 |
 
@@ -156,6 +156,20 @@ that a field which was not stated stays unstated. "Saturday popup" yields a
 day, never a calendar date. Messages with nothing concrete in them produce no
 object at all. Every extracted value stores the substring it came from so the
 parser can be audited rather than trusted.
+
+**Images are files, not links.** The editorial surfaces upload a real image
+(`POST /api/media/upload`, multipart) rather than pasting a URL, because a
+photo Brief does not hold can rot, hotlink-block or change under a published
+story. The server decides what a file really is from its **magic bytes** — a
+declared type, a filename and an extension prove nothing — accepts only JPEG,
+PNG, WebP and GIF (never SVG, which is a document that can carry script), caps
+the size on the wire, stores the file under a name it generates itself, and
+serves the bytes with `nosniff` and a CSP that allows nothing. Bytes live on
+the deployment's local disk, so they survive a restart and **not** a redeploy,
+and the scheduled backup copies the store's rows but not the bytes;
+`/api/media/status` says so, and a request for bytes that are gone answers 404
+with that reason rather than serving a broken image. Point `BRIEF_UPLOAD_DIR`
+at a mounted volume to keep them. See `server/src/domain/upload.js`.
 
 **Provenance is first-class.** One real-world thing is one canonical object
 with many attached sources. Seeing the same event on Telegram and in a WhatsApp

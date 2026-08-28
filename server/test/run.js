@@ -19,6 +19,8 @@ import * as telegram from '../src/connectors/telegram.js';
 import * as web from '../src/connectors/web.js';
 import * as whatsapp from '../src/connectors/whatsapp.js';
 import crypto from 'node:crypto';
+import fsp from 'node:fs';
+import os from 'node:os';
 
 let pass = 0, fail = 0, skip = 0;
 const check = (name, cond, detail = '') => {
@@ -6289,9 +6291,17 @@ console.log('\n=== FEDERATED SIGN-IN (Google + signed links) ===');
   check('a correctly signed token verifies', good.ok === true, good.reason ?? '');
   check('the email is normalised', good.ok && good.claims.email === 'wanjiru@example.com');
 
-  const tampered = mint(goodClaims).replace(/.$/, (c) => (c === 'A' ? 'B' : 'A'));
+  // Flip a character in the MIDDLE of the signature. The LAST character of a
+  // base64url signature carries padding bits: changing it can decode to the
+  // exact same bytes, so the "tampering" was a no-op and this assertion
+  // passed or failed depending on the random signature. It failed roughly one
+  // run in three, which is a security test that is not testing anything.
+  const parts = mint(goodClaims).split('.');
+  const mid = Math.floor(parts[2].length / 2);
+  parts[2] = parts[2].slice(0, mid) + (parts[2][mid] === 'A' ? 'B' : 'A') + parts[2].slice(mid + 1);
+  const tampered = parts.join('.');
   const bad = await federated.verifyGoogleIdToken(tampered);
-  check('a tampered signature is refused', bad.ok === false);
+  check('a tampered signature is refused', bad.ok === false, bad.ok ? 'it verified' : '');
 
   const wrongAud = await federated.verifyGoogleIdToken(mint({ ...goodClaims, aud: 'someone-else' }));
   check('a token minted for another app is refused', wrongAud.ok === false && wrongAud.reason === 'bad_audience');
@@ -6628,6 +6638,135 @@ console.log('\n=== MANUAL CAPTURE HONESTY + THREE UNGUARDED WRITES ===');
       (real?.extractionConfidence ?? 0) > 0, `confidence=${real?.extractionConfidence}`);
   } finally {
     srv.close();
+    if (prevDev === undefined) delete process.env.BRIEF_DEV_AUTH;
+    else process.env.BRIEF_DEV_AUTH = prevDev;
+  }
+}
+
+
+console.log('\n=== IMAGE UPLOADS: REAL FILES, NOT LINKS ===');
+{
+  process.env.NODE_ENV = 'test';
+  const prevDev = process.env.BRIEF_DEV_AUTH;
+  process.env.BRIEF_DEV_AUTH = '0';
+
+  // A throwaway directory: these tests write real bytes, and a passing run
+  // must not leave them behind or depend on a previous run's leftovers.
+  const dir = fsp.mkdtempSync(path.join(os.tmpdir(), 'brief-uploads-'));
+  const prevDir = process.env.BRIEF_UPLOAD_DIR;
+  process.env.BRIEF_UPLOAD_DIR = dir;
+
+  const upload = await import('../src/domain/upload.js');
+  const { default: app } = await import('../src/index.js');
+  store._reset();
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const base = `http://127.0.0.1:${port}`;
+
+  const call = async (p, m = 'GET', body, token) => {
+    const headers = {};
+    if (body && !(typeof FormData !== 'undefined' && body instanceof FormData)) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(base + p, { method: m, headers, body: body instanceof FormData ? body : (body ? JSON.stringify(body) : undefined) });
+    const type = res.headers.get('content-type') ?? '';
+    if (type.includes('image')) {
+      const buf = Buffer.from(await res.arrayBuffer());
+      return { status: res.status, body: null, type, bytes: buf, headers: res.headers };
+    }
+    return { status: res.status, body: await res.json().catch(() => null), headers: res.headers };
+  };
+
+  // One real 1x1 PNG, and the things people rename to look like one.
+  const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64');
+  const GIF = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
+  const WEBP = Buffer.from('UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==', 'base64');
+  const JPEG = Buffer.from('/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwcJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPDs0NDT/wAALCAABAAEBAREA/8QAFAABAQAAAAAAAAAAAAAAAAAAAAr/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFAEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAA/AJQA/9k=', 'base64');
+  const BMP = Buffer.concat([Buffer.from('BM'), Buffer.alloc(64, 1)]);
+  const SVG = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
+  const TEXT = Buffer.from('this is not an image, whatever the filename says');
+
+  const form = (buf, name, type) => {
+    const fd = new FormData();
+    fd.append('file', new Blob([buf], { type }), name);
+    return fd;
+  };
+
+  try {
+    const u = Date.now().toString(36);
+    const me = (await call('/api/auth/register', 'POST', { handle: `upl_${u}`, password: 'a good passphrase' })).body;
+    const stranger = (await call('/api/auth/register', 'POST', { handle: `upls_${u}`, password: 'a good passphrase' })).body;
+    const T = me.token;
+
+    let r = await call('/api/media/upload', 'POST', form(PNG, 'a.png', 'image/png'));
+    check('an anonymous upload is refused (401)', r.status === 401, `got ${r.status}`);
+
+    r = await call('/api/media/upload', 'POST', form(PNG, 'a.png', 'image/png'), T);
+    check('a real PNG is accepted (201)', r.status === 201, JSON.stringify(r.body).slice(0, 160));
+    const row = r.body?.upload;
+    check('the row records the size of what was stored', row?.bytes === PNG.length, `${row?.bytes} vs ${PNG.length}`);
+    check('the row records a sha256 of the bytes', /^[0-9a-f]{64}$/.test(row?.sha256 ?? ''), row?.sha256);
+    check('the type is what the BYTES are, not what the caller claimed', row?.mimeType === 'image/png', row?.mimeType);
+    check('the url is served by Brief, not an external host', row?.url === `/api/media/file/${row?.id}`, row?.url);
+    check('the bytes landed in the upload directory', fsp.existsSync(path.join(dir, `${row?.id}.png`)), path.join(dir, `${row?.id}.png`));
+
+    r = await call(`/api/media/file/${row.id}`);
+    check('the file is readable WITHOUT a session (public stories render)', r.status === 200, `got ${r.status}`);
+    check('it comes back byte for byte', Buffer.compare(r.bytes, PNG) === 0, `${r.bytes?.length} bytes`);
+    check('it is served as its real image type', r.headers.get('content-type') === 'image/png', r.headers.get('content-type'));
+    check('it cannot be sniffed into something else', r.headers.get('x-content-type-options') === 'nosniff');
+    check('it cannot run anything', (r.headers.get('content-security-policy') ?? '').includes("default-src 'none'"));
+
+    check('GIF is accepted', (await call('/api/media/upload', 'POST', form(GIF, 'a.gif', 'image/gif'), T)).status === 201);
+    check('WebP is accepted', (await call('/api/media/upload', 'POST', form(WEBP, 'a.webp', 'image/webp'), T)).status === 201);
+    check('JPEG is accepted', (await call('/api/media/upload', 'POST', form(JPEG, 'a.jpg', 'image/jpeg'), T)).status === 201);
+
+    // The whole point of sniffing: a name and a declared type prove nothing.
+    r = await call('/api/media/upload', 'POST', form(TEXT, 'innocent.png', 'image/png'), T);
+    check('a text file named .png is refused (415)', r.status === 415, `got ${r.status}`);
+    check('the refusal names the formats that are accepted', Array.isArray(r.body?.allowed), JSON.stringify(r.body).slice(0, 140));
+    check('an SVG is refused — it is a document that can carry script',
+      (await call('/api/media/upload', 'POST', form(SVG, 'x.svg', 'image/svg+xml'), T)).status === 415);
+    check('a BMP is refused (not a format Brief serves)',
+      (await call('/api/media/upload', 'POST', form(BMP, 'x.bmp', 'image/bmp'), T)).status === 415);
+    check('an empty file is refused (400)',
+      (await call('/api/media/upload', 'POST', form(Buffer.alloc(0), 'x.png', 'image/png'), T)).status === 400);
+    check('a file over the limit is refused (413)',
+      (await call('/api/media/upload', 'POST', form(Buffer.alloc(9 * 1024 * 1024, 1), 'big.png', 'image/png'), T)).status === 413);
+    check('nothing was written for a refused upload',
+      store.all('uploads').length === 4, `${store.all('uploads').length} rows`);
+
+    // An image is content, not an event: the same bytes are the same asset.
+    const again = await call('/api/media/upload', 'POST', form(PNG, 'again.png', 'image/png'), T);
+    check('the same bytes twice is the same asset, not a second copy',
+      again.body?.upload?.id === row.id && again.body?.duplicate === true, JSON.stringify(again.body).slice(0, 140));
+
+    r = await call('/api/media/mine', 'GET', undefined, T);
+    check('your own uploads are listed', Array.isArray(r.body?.uploads) && r.body.uploads.length === 4, `${r.body?.uploads?.length}`);
+
+    check('a stranger cannot delete your upload (404)',
+      (await call(`/api/media/${row.id}`, 'DELETE', undefined, stranger.token)).status === 404);
+
+    // The disk is not durable. When the bytes are gone, say so rather than
+    // serving a broken image that looks like the editor's mistake.
+    fsp.unlinkSync(path.join(dir, `${row.id}.png`));
+    r = await call(`/api/media/file/${row.id}`);
+    check('bytes that are gone are reported, not faked (404)', r.status === 404, `got ${r.status}`);
+    check('and the reason says the disk no longer holds them', /no longer holds/i.test(r.body?.error ?? ''), r.body?.error);
+
+    const status = (await call('/api/media/status', 'GET', undefined, T)).body;
+    check('the deployment admits uploads are on local disk', status?.uploads?.kind === 'local_disk', JSON.stringify(status?.uploads).slice(0, 120));
+    check('and admits they are NOT durable across a redeploy', status?.uploads?.persisted === false);
+    check('and reports how many are missing their bytes', status?.uploads?.missingBytes === 1, `${status?.uploads?.missingBytes}`);
+
+    check('the owner removes their upload', (await call(`/api/media/${row.id}`, 'DELETE', undefined, T)).status === 200);
+    check('and the row goes with it', store.find('uploads', (x) => x.id === row.id) === null);
+    check('sniffing is a pure function of the bytes',
+      upload.sniffImageType(PNG) === 'image/png' && upload.sniffImageType(TEXT) === null);
+  } finally {
+    srv.close();
+    try { fsp.rmSync(dir, { recursive: true, force: true }); } catch {}
+    if (prevDir === undefined) delete process.env.BRIEF_UPLOAD_DIR;
+    else process.env.BRIEF_UPLOAD_DIR = prevDir;
     if (prevDev === undefined) delete process.env.BRIEF_DEV_AUTH;
     else process.env.BRIEF_DEV_AUTH = prevDev;
   }

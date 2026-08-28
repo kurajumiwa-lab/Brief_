@@ -40,6 +40,8 @@ import type {
   ShareChannels,
   CampaignShare,
   CampaignBanner,
+  MediaUpload,
+  MediaStorageStatus,
   PaymentConfirmation,
   Transaction,
   TransactionCreate,
@@ -91,7 +93,7 @@ import {
   isVendor, areVendors, isListing, areListings, isOrder, areOrders,
   isDispute, areDisputes, isPaymentIntent, arePaymentIntents,
   isVault, areVaults, isFootstep, areFootsteps, isVaultRequest, areVaultRequests, isTicket, isCommandCentre,
-  isTeaArticle, areTeaArticles
+  isTeaArticle, areTeaArticles, isMediaUpload, areMediaUploads
 } from './validate';
 
 /**
@@ -151,12 +153,40 @@ async function request<T>(
   // the body is not the shape we expect". Narrowed below into a real error.
   select?: (raw: any) => T | undefined
 ): Promise<ApiResult<T>> {
+  const headers: Record<string, string> = {
+    ...((init?.headers as Record<string, string> | undefined) ?? {})
+  };
+  if (init?.body !== undefined) headers['content-type'] = 'application/json';
+  return send<T>(path, { ...init, headers }, select);
+}
+
+/**
+ * The same request path, for a MULTIPART body.
+ *
+ * The content-type is deliberately NOT set: the browser has to add its own
+ * `multipart/form-data; boundary=...`, and setting the header by hand is the
+ * classic way to produce an unparseable body. Everything else — the session
+ * token, the 401 handling, the "unexpected response shape" rule — is shared
+ * with every other call, because this file is the only place that fetches.
+ */
+async function requestForm<T>(
+  path: string,
+  form: FormData,
+  select?: (raw: any) => T | undefined
+): Promise<ApiResult<T>> {
+  return send<T>(path, { method: 'POST', body: form }, select);
+}
+
+async function send<T>(
+  path: string,
+  init: RequestInit,
+  select?: (raw: any) => T | undefined
+): Promise<ApiResult<T>> {
   try {
     const token = getSessionToken();
     const headers: Record<string, string> = {
-      ...((init?.headers as Record<string, string> | undefined) ?? {})
+      ...((init.headers as Record<string, string> | undefined) ?? {})
     };
-    if (init?.body !== undefined) headers['content-type'] = 'application/json';
     if (token) headers.authorization = `Bearer ${token}`;
     const res = await fetch(`${INGEST_API}${path}`, {
       ...init,
@@ -2630,5 +2660,80 @@ export interface EngineTicketBar {
 export function getEngineTicketBar(): Promise<ApiResult<EngineTicketBar>> {
   return request('/api/engine/ticket-bar', undefined, (r) =>
     typeof r?.active === 'boolean' ? (r as EngineTicketBar) : undefined
+  );
+}
+
+// ---------------------------------------------------------------------------
+// REAL IMAGE UPLOADS
+//
+// The editorial surfaces used to accept only a URL, so every photo was
+// somebody else's asset on somebody else's server: free to rot, free to
+// hotlink-block, free to change under a published story. These calls put an
+// actual file in Brief instead.
+//
+// The link route is NOT removed -- an editor may still have a legitimately
+// attributed external image -- but it is no longer the only way in, and it is
+// no longer the default.
+// ---------------------------------------------------------------------------
+
+/**
+ * Turn a server image reference into something an <img> can load.
+ *
+ * The server returns a ROOT-relative path (`/api/media/file/<id>`) because it
+ * does not know how the client reaches it. In the browser that path has to go
+ * through the ingestion proxy; an absolute http(s) link passes straight
+ * through. Deciding this here keeps the proxy detail out of every component.
+ */
+export function mediaFileUrl(url: string): string {
+  if (!url) return url;
+  if (/^https?:\/\//i.test(url)) return url;
+  return url.startsWith('/') ? `${INGEST_API}${url}` : url;
+}
+
+/**
+ * Upload one image file.
+ *
+ * The server decides what the file really is from its magic bytes, so a
+ * refusal here is worth showing to the person verbatim: "only JPEG, PNG, WebP
+ * and GIF images can be uploaded" is a better message than a generic failure.
+ */
+export function uploadMediaFile(
+  file: File,
+  opts: { alt?: string } = {}
+): Promise<ApiResult<{ upload: MediaUpload; duplicate: boolean }>> {
+  const form = new FormData();
+  form.append('file', file, file.name);
+  if (opts.alt) form.append('alt', opts.alt.slice(0, 240));
+  return requestForm('/api/media/upload', form, (r) =>
+    isMediaUpload(r?.upload)
+      ? { upload: r.upload as MediaUpload, duplicate: Boolean(r.duplicate) }
+      : undefined
+  );
+}
+
+/** Your own uploads, newest first. */
+export function listMyMedia(): Promise<ApiResult<MediaUpload[]>> {
+  return request('/api/media/mine', undefined, (r) => areMediaUploads(r?.uploads ?? []));
+}
+
+/** Remove one of your own uploads, bytes and all. */
+export function deleteMedia(id: string): Promise<ApiResult<{ removed: true }>> {
+  return request(`/api/media/${encodeURIComponent(id)}`, { method: 'DELETE' }, (r) =>
+    r?.removed === true ? { removed: true as const } : undefined
+  );
+}
+
+/**
+ * What this deployment can promise about uploads.
+ *
+ * Local disk, so `persisted` is false: images survive a restart but not a
+ * redeploy to a fresh container. The editor says that out loud instead of
+ * letting somebody discover it.
+ */
+export function getMediaStatus(): Promise<ApiResult<{ media: any; uploads: MediaStorageStatus }>> {
+  return request('/api/media/status', undefined, (r) =>
+    r?.uploads && typeof r.uploads === 'object'
+      ? { media: r.media ?? null, uploads: r.uploads as MediaStorageStatus }
+      : undefined
   );
 }

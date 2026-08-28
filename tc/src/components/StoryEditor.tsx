@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { X, Plus, Star, Trash2 } from 'lucide-react';
+import { X, Star, Trash2 } from 'lucide-react';
 import { STORY_THEMES, STORY_LAYOUTS, designOf, type StoryDesign } from './storyDesign';
 import { StoryView } from './StoryView';
+import { ImageField } from './ImageField';
 import * as briefApi from '../api/briefApi';
 
 // ---------------------------------------------------------------------------
@@ -36,7 +37,6 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
   const [heroImage, setHeroImage] = useState(article?.heroImage ?? '');
   const [images, setImages] = useState<string[]>(Array.isArray(article?.images) ? article.images : []);
   const [design, setDesign] = useState<StoryDesign>(designOf(article));
-  const [galleryDraft, setGalleryDraft] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -78,13 +78,6 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
     setBusy(false);
     onSaved();
     onClose();
-  };
-
-  const addGalleryPhoto = () => {
-    const url = galleryDraft.trim();
-    if (!url) return;
-    setImages((imgs) => (imgs.includes(url) ? imgs : [...imgs, url]));
-    setGalleryDraft('');
   };
 
   const makeHero = (url: string) => {
@@ -285,37 +278,20 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
           {/* photos */}
           <section className="rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-4 space-y-3">
             <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#111111]">Photos</p>
+            <ImageField
+              label="Lead photo"
+              hint="Used as the story's background on the home shelf and its hero."
+              value={heroImage || null}
+              onChange={(url) => setHeroImage(url ?? '')}
+            />
             <div>
-              <p className="text-[11px] font-bold text-[#111111]">Lead photo</p>
-              <p className="text-[9px] text-[#111111]/50">Used as the story's background on the home shelf and its hero.</p>
-              <input
-                value={heroImage}
-                onChange={(e) => setHeroImage(e.target.value)}
-                placeholder="https://…/photo.jpg"
-                className="mt-1 w-full rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-3 py-2 text-[11px] text-[#111111] outline-none focus:border-[#111111]"
+              <ImageField
+                label="Gallery"
+                hint="Extra photos readers see when they open the story."
+                onAdd={(url) => setImages((imgs) => (imgs.includes(url) ? imgs : [...imgs, url]))}
+                multiple
+                compact
               />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold text-[#111111]">Gallery</p>
-              <p className="text-[9px] text-[#111111]/50">Extra photos readers see when they open the story.</p>
-              <div className="mt-1 flex gap-2">
-                <input
-                  value={galleryDraft}
-                  onChange={(e) => setGalleryDraft(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addGalleryPhoto(); } }}
-                  placeholder="https://…/photo.jpg"
-                  className="flex-1 rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-3 py-2 text-[11px] text-[#111111] outline-none focus:border-[#111111]"
-                />
-                <button
-                  type="button"
-                  onClick={addGalleryPhoto}
-                  disabled={!galleryDraft.trim()}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#111111] text-[#FFFFFF] cursor-pointer disabled:opacity-40"
-                  aria-label="Add gallery photo"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
-              </div>
               {images.length > 0 && (
                 <div className="mt-2 grid grid-cols-3 gap-1.5">
                   {images.map((url) => (
