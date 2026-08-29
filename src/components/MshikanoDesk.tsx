@@ -66,7 +66,9 @@ export function MshikanoDesk() {
   const [matchesFor, setMatchesFor] = React.useState<{ post: CoopPost; rows: CoopMatch[] } | null>(null);
 
   // cooperations
-  const [coops, setCoops] = React.useState<{ pending: CoopCooperation[]; confirmed: CoopCooperation[] } | null>(null);
+  const [coops, setCoops] = React.useState<{ pending: CoopCooperation[]; confirmed: CoopCooperation[]; disputed: CoopCooperation[] } | null>(null);
+  const [disputeFor, setDisputeFor] = React.useState<string | null>(null);
+  const [disputeReason, setDisputeReason] = React.useState('');
 
   // who can help
   const [question, setQuestion] = React.useState('');
@@ -75,7 +77,7 @@ export function MshikanoDesk() {
   const load = React.useCallback(async () => {
     const [p, c] = await Promise.all([briefApi.listCoopPosts({ intent: filter ?? undefined }), briefApi.listCooperations()]);
     if (p.ok) setPosts(p.data.posts);
-    if (c.ok) setCoops({ pending: c.data.pending, confirmed: c.data.confirmed });
+    if (c.ok) setCoops({ pending: c.data.pending, confirmed: c.data.confirmed, disputed: c.data.disputed });
   }, [filter]);
 
   React.useEffect(() => { void load(); }, [load]);
@@ -117,6 +119,17 @@ export function MshikanoDesk() {
     const res = await briefApi.respondCooperation(id, accept);
     setBusy(false);
     setNote(res.ok ? (accept ? 'Confirmed — it now counts on both graphs.' : 'Declined.') : res.error);
+    await load();
+  };
+
+  const dispute = async (id: string) => {
+    if (busy || disputeReason.trim().length < 4) return;
+    setBusy(true); setNote(null);
+    const res = await briefApi.disputeCooperation(id, disputeReason.trim());
+    setBusy(false);
+    if (!res.ok) { setNote(res.error); return; }
+    setDisputeFor(null); setDisputeReason('');
+    setNote('Disputed. The confirmation no longer counts for either of you.');
     await load();
   };
 
@@ -207,9 +220,15 @@ export function MshikanoDesk() {
         {answer && (
           <div className="space-y-2">
             <p className="text-[11px] font-extrabold text-[#251045]">
-              {answer.counts.people} {answer.counts.people === 1 ? 'person' : 'people'} · {answer.counts.businesses} {answer.counts.businesses === 1 ? 'business' : 'businesses'} · {answer.counts.guides} {answer.counts.guides === 1 ? 'guide' : 'guides'}
-              {answer.counts.people + answer.counts.businesses + answer.counts.guides === 0 && ' — nobody has posted this yet. Post what you need; the network fills in around it.'}
+              {answer.counts.people} {answer.counts.people === 1 ? 'person' : 'people'} · {answer.counts.businesses} {answer.counts.businesses === 1 ? 'business' : 'businesses'} · {answer.counts.groups} {answer.counts.groups === 1 ? 'group' : 'groups'} · {answer.counts.guides} {answer.counts.guides === 1 ? 'guide' : 'guides'}
+              {answer.counts.people + answer.counts.businesses + answer.counts.groups + answer.counts.guides === 0 && ' — nobody has posted this yet. Post what you need; the network fills in around it.'}
             </p>
+            {answer.groups.map((g) => (
+              <div key={g.id} className="rounded-xl border border-[#D6CFE4] px-3 py-2">
+                <p className="text-[11px] font-bold text-[#251045]">{g.name}</p>
+                <p className="text-[9px] text-[#251045]/55">{g.members} {g.members === 1 ? 'member' : 'members'}{g.description ? ` · ${g.description.slice(0, 70)}` : ''}</p>
+              </div>
+            ))}
             {[...answer.people, ...answer.businesses].slice(0, 6).map((p) => (
               <div key={p.id} className="rounded-xl border border-[#D6CFE4] px-3 py-2">
                 <p className="text-[11px] font-bold text-[#251045]">{p.title}</p>
@@ -318,9 +337,38 @@ export function MshikanoDesk() {
         <section aria-label="Confirmed cooperations" className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-4 space-y-1.5">
           <h2 className="text-[13px] font-extrabold text-[#251045]">Your cooperation graph</h2>
           {coops.confirmed.slice(0, 6).map((c) => (
+            <div key={c.id} className="space-y-1">
+              <p className="text-[10px] text-[#251045]/70">
+                🤝 {c.direction === 'outgoing' ? 'You proposed' : 'Confirmed with'} <span className="font-bold">{c.partner?.displayName}</span>
+                {c.confirmedAt ? ` · ${new Date(c.confirmedAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'short' })}` : ''}
+              </p>
+              {disputeFor === c.id ? (
+                <div className="flex gap-1">
+                  <input value={disputeReason} onChange={(e) => setDisputeReason(e.target.value)}
+                    placeholder="Say what went wrong — both sides will see it"
+                    aria-label="Dispute reason"
+                    className="flex-1 rounded-lg border border-[#D6CFE4] bg-[#F1EDF7] px-2 py-1 text-[10px] text-[#251045]" />
+                  <button type="button" onClick={() => void dispute(c.id)} disabled={busy || disputeReason.trim().length < 4}
+                    className="rounded-lg bg-[#8A3B3B] px-2 py-1 text-[9px] font-extrabold text-[#FFFFFF] disabled:opacity-40">Send</button>
+                  <button type="button" onClick={() => { setDisputeFor(null); setDisputeReason(''); }}
+                    className="rounded-lg border border-[#D6CFE4] px-2 py-1 text-[9px] font-bold text-[#251045]">Keep it</button>
+                </div>
+              ) : (
+                <button type="button" onClick={() => { setDisputeFor(c.id); setDisputeReason(''); }}
+                  className="text-[9px] font-bold text-[#8A3B3B]/80 underline">Did not go as written?</button>
+              )}
+            </div>
+          ))}
+        </section>
+      )}
+
+      {/* Disputed — the credit is withdrawn, the record stays */}
+      {coops && coops.disputed.length > 0 && (
+        <section aria-label="Disputed cooperations" className="rounded-2xl border border-[#8A3B3B]/40 bg-[#FBFAFD] p-4 space-y-1.5">
+          <h2 className="text-[13px] font-extrabold text-[#8A3B3B]">Disputed — no longer counts for anyone</h2>
+          {coops.disputed.slice(0, 6).map((c) => (
             <p key={c.id} className="text-[10px] text-[#251045]/70">
-              🤝 {c.direction === 'outgoing' ? 'You proposed' : 'Confirmed with'} <span className="font-bold">{c.partner?.displayName}</span>
-              {c.confirmedAt ? ` · ${new Date(c.confirmedAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'short' })}` : ''}
+              ⚠️ With <span className="font-bold">{c.partner?.displayName}</span> — “{c.dispute?.note ?? ''}”. The confirmation is withdrawn until this is resolved.
             </p>
           ))}
         </section>

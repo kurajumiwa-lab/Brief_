@@ -34,23 +34,37 @@ const MATCHES = [{
   post: FARMER, sharedCount: 1, reasons: ['both mention: mangoes'], score: 16
 }];
 
+let DISPUTED_FIRED = false;
 global.fetch = async (url, init = {}) => {
   const path = String(url);
   const send = (b, s = 200) => ({ ok: s < 400, status: s, text: async () => JSON.stringify(b), json: async () => b });
   if (path.includes('/api/mshikano/posts/') && path.includes('/matches')) return send({ matches: MATCHES });
+  if (path.includes('/dispute') && init.method === 'POST') {
+    DISPUTED_FIRED = true;
+    return send({ cooperation: { id: 'coopx_0', postId: null, fromUserId: 'usr_farmer', toUserId: 'usr_me',
+      summary: 'mangoes weekly', status: 'disputed', recommendations: [], createdAt: new Date().toISOString(),
+      confirmedAt: new Date().toISOString(), disputedAt: new Date().toISOString(),
+      dispute: { byUserId: 'usr_me', note: 'never delivered the second batch', at: new Date().toISOString() },
+      direction: 'incoming', partner: { id: 'usr_farmer', displayName: 'Makueni Farmer' } } });
+  }
   if (path.includes('/api/mshikano/cooperations') && (init.method === 'POST')) {
     return send({ cooperation: { id: 'coopx_1', status: 'pending', fromUserId: 'usr_me', toUserId: 'usr_farmer', summary: 'About: mangoes', recommendations: [], postId: FARMER.id } }, 201);
   }
   if (path.includes('/api/mshikano/cooperations')) {
-    return send({
-      pending: [], declined: [], confirmed: [{ id: 'coopx_0', postId: null, fromUserId: 'usr_farmer', toUserId: 'usr_me',
-        summary: 'mangoes weekly', status: 'confirmed', recommendations: [], createdAt: new Date().toISOString(),
-        confirmedAt: new Date().toISOString(), direction: 'incoming', partner: { id: 'usr_farmer', displayName: 'Makueni Farmer' } }]
-    });
+    const row = { id: 'coopx_0', postId: null, fromUserId: 'usr_farmer', toUserId: 'usr_me',
+      summary: 'mangoes weekly', status: 'confirmed', recommendations: [], createdAt: new Date().toISOString(),
+      confirmedAt: new Date().toISOString(), direction: 'incoming', partner: { id: 'usr_farmer', displayName: 'Makueni Farmer' } };
+    if (DISPUTED_FIRED) {
+      row.status = 'disputed'; row.disputedAt = new Date().toISOString();
+      row.dispute = { byUserId: 'usr_me', note: 'never delivered the second batch', at: new Date().toISOString() };
+    }
+    return send({ pending: [], declined: [], disputed: DISPUTED_FIRED ? [row] : [], confirmed: DISPUTED_FIRED ? [] : [row] });
   }
   if (path.includes('/api/mshikano/who-can-help')) return send({
-    query: 'poultry', counts: { people: 1, businesses: 0, groups: 0, guides: 0 },
-    people: [FARMER], businesses: [], guides: []
+    query: 'poultry', counts: { people: 1, businesses: 0, groups: 1, guides: 0 },
+    people: [FARMER], businesses: [],
+    groups: [{ id: 'circ_1', name: 'Bungoma Poultry Circle', description: 'members who help each other keep poultry', visibility: 'invite_only', members: 12 }],
+    guides: []
   });
   if (path.includes('/api/mshikano/posts') && init.method === 'POST') {
     return send({ post: { ...POSTS[1], id: 'coop_new', title: 'Solar training for three people in Kisumu', mine: true, author: ME } }, 201);
@@ -116,6 +130,17 @@ const check = (n, c, d = '') => { if (c) { pass++; console.log('  PASS  ' + n); 
   await click(btn('Ask'));
   await act(async () => { await new Promise((r) => setTimeout(r, 10)); });
   check('the question returns grouped people', body().includes('1 person'), body().slice(-160));
+  check('a real group answers with its real member count', body().includes('Bungoma Poultry Circle') && body().includes('12 members'), body().slice(-260));
+
+  console.log('\n=== a dispute withdraws the credit, not the record ===');
+  const askRow = Array.from(document.querySelectorAll('button')).find((b) => text(b) === 'Did not go as written?');
+  check('a confirmed cooperation can be questioned', Boolean(askRow));
+  await click(askRow);
+  const reason = document.querySelector('input[aria-label="Dispute reason"]');
+  await act(async () => { setVal(reason, 'never delivered the second batch'); });
+  await click(btn('Send'));
+  await act(async () => { await new Promise((r) => setTimeout(r, 10)); });
+  check('the dispute is recorded in words', body().includes('no longer counts for anyone') && body().includes('never delivered the second batch'), body().slice(-260));
 
   console.log(`\nPASS ${pass} FAIL ${fail}`);
   process.exit(fail ? 1 : 0);

@@ -61,8 +61,16 @@ check('matches are mutual — anne sees brian too', (r.body?.matches||[]).some(x
 // 5. Who can help? — honest answers only.
 r = await call('/api/mshikano/who-can-help?q=mangoes','GET',undefined,BRIAN);
 check('who can help finds a person with mangoes', (r.body?.people||[]).length>0, JSON.stringify(r.body).slice(0,200));
-check('who can help counts its groups as zero', r.body?.counts?.groups===0);
-check('who can help keeps groups honestly empty', Array.isArray(r.body?.groups) && r.body.groups.length===0);
+r = await call('/api/mshikano/who-can-help?q=kyozo+phone+repairs+overnight','GET',undefined,BRIAN);
+check('a question nothing matches keeps groups honestly empty', r.body?.counts?.groups===0 && Array.isArray(r.body?.groups) && r.body.groups.length===0, JSON.stringify(r.body?.counts));
+
+// 5b. A REAL circle answers as a group, with its real member count.
+r = await call('/api/circles','POST',{ name:'Mango Traders '+uniq, description:'members who help each other move mangoes from Makueni to Nairobi' }, BRIAN);
+check('brian starts a real circle', r.status===201, JSON.stringify(r.body).slice(0,140));
+r = await call('/api/mshikano/who-can-help?q=mangoes','GET',undefined,BRIAN);
+const grp = (r.body?.groups||[]).find((g)=>/Mango Traders/.test(g.name));
+check('the circle answers who can help', !!grp, JSON.stringify(r.body?.groups).slice(0,200));
+check('the group carries its real member count (the founder)', grp?.members===1, JSON.stringify(grp));
 
 // 6. The relationship unit: propose → only the named partner confirms.
 r = await call('/api/mshikano/cooperations','POST',{ postId:NEED.id, partnerUserId:NEED.author.id, summary:'800 kg of anne\'s mangoes to Gikomba' }, ANNE);
@@ -93,6 +101,20 @@ r = await call(`/api/mshikano/cooperations/${COOP.id}/recommend`,'POST',{ note:'
 check('brian can recommend anne after cooperating', r.status===200 && (r.body.cooperation?.recommendations||[]).length===1, JSON.stringify(r.body).slice(0,200));
 r = await call(`/api/mshikano/cooperations/${COOP.id}/recommend`,'POST',{ note:'again' }, BRIAN);
 check('but only once per side', r.status===400, r.status);
+
+// 10. A dispute withdraws the credit and keeps the record.
+r = await call(`/api/mshikano/cooperations/${COOP.id}/dispute`,'POST',{ reason:'never delivered the second batch' },OUTSIDER);
+check('an outsider cannot dispute (403)', r.status===403, r.status);
+r = await call(`/api/mshikano/cooperations/${COOP.id}/dispute`,'POST',{ reason:'x' },ANNE);
+check('a dispute needs a real reason (400)', r.status===400, r.status);
+r = await call(`/api/mshikano/cooperations/${COOP.id}/dispute`,'POST',{ reason:'never delivered the second batch' },ANNE);
+check('a partner disputes the cooperation', r.status===200 && r.body?.cooperation?.status==='disputed' && /second batch/.test(r.body?.cooperation?.dispute?.note ?? ''), JSON.stringify(r.body?.cooperation?.dispute));
+r = await call('/api/mshikano/cooperations','GET',undefined,ANNE);
+check('a disputed cooperation stays listed for the partners', (r.body?.disputed||[]).some((d)=>d.id===COOP.id), JSON.stringify((r.body?.disputed||[]).map((d)=>d.id)));
+r = await call('/api/mshikano/graph','GET',undefined,ANNE);
+check('the disputed link leaves the confirmed graph', r.body?.totals?.confirmed===0, JSON.stringify(r.body?.totals));
+r = await call(`/api/mshikano/trust/${HAVE.author.id}`,'GET',undefined,BRIAN);
+check('the dispute is counted as evidence', r.body?.evidence?.disputes>=1, JSON.stringify(r.body?.evidence));
 
 console.log(`\nPHASE 8 RESULT: ${pass} passed / ${fail} failed`);
 process.exit(fail?1:0);

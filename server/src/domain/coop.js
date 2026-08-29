@@ -217,6 +217,36 @@ export function recommendPartner(actorId, partnershipId, note) {
   return store.update('coopPartnerships', partnershipId, { recommendations: recs });
 }
 
+/**
+ * A dispute is the honest opposite of a confirmation: one of the two partners
+ * says the cooperation on record did not go as written. The row leaves the
+ * confirmed graph immediately -- the credit is WITHDRAWN, not deleted -- the
+ * dispute is counted on both trust records, and the reason is kept, because
+ * an accusation nobody can read is not accountability.
+ */
+export function disputeCooperation(actorId, partnershipId, reason) {
+  const p = store.find('coopPartnerships', (x) => x.id === partnershipId);
+  if (!p) throw new Error('cooperation not found');
+  if (actorId !== p.fromUserId && actorId !== p.toUserId) throw new Error('only the two partners may raise a dispute');
+  if (p.status === 'disputed') throw new Error('this cooperation is already disputed');
+  if (p.status !== 'confirmed') throw new Error('only a confirmed cooperation can be disputed');
+  const text = String(reason ?? '').trim();
+  if (text.length < 4) throw new Error('say what went wrong (a few words at least)');
+  const partner = actorId === p.fromUserId ? p.toUserId : p.fromUserId;
+  const row = store.update('coopPartnerships', partnershipId, {
+    status: 'disputed',
+    disputedAt: new Date().toISOString(),
+    dispute: { byUserId: actorId, note: text.slice(0, 300), at: new Date().toISOString() }
+  });
+  notify(partner, {
+    kind: 'coop',
+    title: 'A cooperation you confirmed is disputed',
+    body: `${authorOf(actorId).displayName} says this did not go as written: "${text.slice(0, 120)}". The confirmation no longer counts for either of you until it is resolved.`,
+    objectId: partnershipId
+  });
+  return row;
+}
+
 export function listCooperations(actorId) {
   const rows = store.all('coopPartnerships').filter((x) => x.fromUserId === actorId || x.toUserId === actorId);
   const shape = (p) => ({
@@ -227,7 +257,10 @@ export function listCooperations(actorId) {
   return {
     pending: rows.filter((p) => p.status === 'pending').map(shape),
     confirmed: rows.filter((p) => p.status === 'confirmed').map(shape),
-    declined: rows.filter((p) => p.status === 'declined').map(shape)
+    declined: rows.filter((p) => p.status === 'declined').map(shape),
+    // A disputed row stays LISTED for both partners. Withdrawing the credit
+    // and hiding it would be two different lies.
+    disputed: rows.filter((p) => p.status === 'disputed').map(shape)
   };
 }
 
@@ -325,17 +358,31 @@ export function whoCanHelp(q) {
     .slice(0, 4)
     .map((a) => ({ id: a.id, slug: a.slug, title: a.title }));
 
+  // Groups answer honestly too: real circles whose name or description
+  // matches the question, surfaced with their ACTUAL member count. No circle
+  // matches -> [] and 0, and the answer says so rather than padding.
+  const groups = store.all('circles')
+    .filter((c) => hit(c.name, c.description))
+    .slice(0, 4)
+    .map((c) => ({
+      id: c.id,
+      name: c.name,
+      description: c.description || null,
+      visibility: c.visibility ?? null,
+      members: store.filter('members', (m) => m.circleId === c.id).length
+    }));
+
   return {
     query,
     counts: {
       people: peoplePosts.length,
       businesses: businessPosts.length,
-      groups: 0,
+      groups: groups.length,
       guides: guides.length
     },
     people: peoplePosts.slice(0, 8).map((p) => postView(p)),
     businesses: businessPosts.slice(0, 6).map((p) => ({ ...postView(p), vendorIds: [...vendorIds] })),
-    groups: [],
+    groups,
     guides
   };
 }

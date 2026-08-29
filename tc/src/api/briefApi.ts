@@ -3312,10 +3312,12 @@ export interface CoopCooperation {
   fromUserId: string;
   toUserId: string;
   summary: string | null;
-  status: 'pending' | 'confirmed' | 'declined';
+  status: 'pending' | 'confirmed' | 'declined' | 'disputed';
   recommendations: { byUserId: string; forUserId: string; note: string; at: string }[];
   createdAt: string;
   confirmedAt: string | null;
+  disputedAt?: string | null;
+  dispute?: { byUserId: string; note: string; at: string } | null;
   direction?: 'outgoing' | 'incoming';
   partner?: { id: string; displayName: string };
 }
@@ -3349,12 +3351,13 @@ export interface CoopCooperations {
   pending: CoopCooperation[];
   confirmed: CoopCooperation[];
   declined: CoopCooperation[];
+  disputed: CoopCooperation[];
 }
 
 export function listCooperations(): Promise<ApiResult<CoopCooperations>> {
   return request('/api/mshikano/cooperations', undefined, (r): CoopCooperations | undefined =>
-    Array.isArray(r?.pending) && Array.isArray(r?.confirmed) && Array.isArray(r?.declined)
-      ? { pending: r.pending, confirmed: r.confirmed, declined: r.declined }
+    Array.isArray(r?.pending) && Array.isArray(r?.confirmed) && Array.isArray(r?.declined) && Array.isArray(r?.disputed)
+      ? { pending: r.pending, confirmed: r.confirmed, declined: r.declined, disputed: r.disputed }
       : undefined);
 }
 
@@ -3364,6 +3367,10 @@ export function respondCooperation(id: string, accept: boolean): Promise<ApiResu
 
 export function recommendCooperation(id: string, note: string): Promise<ApiResult<{ cooperation: CoopCooperation }>> {
   return request(`/api/mshikano/cooperations/${encodeURIComponent(id)}/recommend`, { method: 'POST', body: JSON.stringify({ note }) }, (r) => (r?.cooperation ? { cooperation: r.cooperation as CoopCooperation } : undefined));
+}
+
+export function disputeCooperation(id: string, reason: string): Promise<ApiResult<{ cooperation: CoopCooperation }>> {
+  return request(`/api/mshikano/cooperations/${encodeURIComponent(id)}/dispute`, { method: 'POST', body: JSON.stringify({ reason }) }, (r) => (r?.cooperation ? { cooperation: r.cooperation as CoopCooperation } : undefined));
 }
 
 export interface CoopGraph {
@@ -3388,13 +3395,21 @@ export interface WhoCanHelpAnswer {
   counts: { people: number; businesses: number; groups: number; guides: number };
   people: CoopPost[];
   businesses: CoopPost[];
+  groups: { id: string; name: string; description: string | null; visibility: string | null; members: number }[];
   guides: { slug: string; title: string }[];
 }
 
 export function whoCanHelp(q: string): Promise<ApiResult<WhoCanHelpAnswer>> {
   return request(`/api/mshikano/who-can-help?q=${encodeURIComponent(q)}`, undefined, (r): WhoCanHelpAnswer | undefined =>
-    r?.counts && Array.isArray(r?.people) && Array.isArray(r?.guides)
-      ? { query: r.query ?? q, counts: r.counts, people: r.people, businesses: r.businesses ?? [], guides: r.guides }
+    r?.counts && Array.isArray(r?.people) && Array.isArray(r?.guides) && Array.isArray(r?.groups)
+      ? {
+          query: r.query ?? q,
+          counts: r.counts,
+          people: r.people,
+          businesses: r.businesses ?? [],
+          groups: r.groups,
+          guides: r.guides
+        }
       : undefined);
 }
 

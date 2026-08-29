@@ -90,6 +90,18 @@ export function register(app) {
     }
   });
 
+  app.post('/api/mshikano/cooperations/:id/dispute', (req, res) => {
+    const me = requireAuth(req, res);
+    if (!me) return;
+    try {
+      const row = coop.disputeCooperation(me, req.params.id, req.body?.reason ?? '');
+      res.json({ cooperation: row });
+    } catch (e) {
+      const msg = String(e.message ?? e);
+      res.status(msg.includes('not found') ? 404 : msg.includes('only the two partners') ? 403 : 400).json({ error: msg });
+    }
+  });
+
   app.post('/api/mshikano/cooperations/:id/recommend', (req, res) => {
     const me = requireAuth(req, res);
     if (!me) return;

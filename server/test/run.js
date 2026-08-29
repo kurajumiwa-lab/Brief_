@@ -7303,8 +7303,31 @@ console.log('\n=== MSHIKANO: the cooperation network (post -> match -> confirm -
     check('the question answers with grouped, real rows only',
       r.status === 200 && typeof r.body?.counts?.people === 'number' && Array.isArray(r.body?.guides), JSON.stringify(r.body?.counts));
     check('an empty answer is EMPTY, not padded',
-      r.body.counts.people + r.body.counts.businesses + r.body.counts.guides === 0
-        || r.body.people.every((p) => /poultry|business|bungoma/i.test(p.title)));
+      r.body.counts.people + r.body.counts.businesses + r.body.counts.groups + r.body.counts.guides === 0
+        || (r.body.people.every((p) => /poultry|business|bungoma/i.test(p.title)) && r.body.counts.groups === 0));
+
+    // Groups answer from REAL circles, with their real member count.
+    r = await call('/api/circles', 'POST', { name: 'Bungoma Poultry Circle', description: 'members who help each other keep poultry in Bungoma' }, B.token);
+    check('a member starts a real circle', r.status === 201, JSON.stringify(r.body).slice(0, 120));
+    r = await call('/api/mshikano/who-can-help?q=who+can+help+me+start+a+poultry+business+in+Bungoma', 'GET', undefined, A.token);
+    check('a matching circle answers as a group', r.body?.counts?.groups === 1 && r.body.groups[0]?.name === 'Bungoma Poultry Circle', JSON.stringify(r.body?.groups));
+    check('the group carries its REAL member count (the founder)', r.body?.groups?.[0]?.members === 1, JSON.stringify(r.body?.groups?.[0]));
+    r = await call('/api/mshikano/who-can-help?q=who+repairs+kyozo+phones+overnight', 'GET', undefined, A.token);
+    check('a question nothing matches keeps groups EMPTY', r.body?.counts?.groups === 0 && r.body.groups.length === 0, JSON.stringify(r.body?.counts));
+
+    // A dispute withdraws the credit and keeps the record.
+    r = await call(`/api/mshikano/cooperations/${partnership}/dispute`, 'POST', { reason: 'never delivered the second batch' }, C.token);
+    check('an outsider cannot dispute (403)', r.status === 403, `got ${r.status}`);
+    r = await call(`/api/mshikano/cooperations/${partnership}/dispute`, 'POST', { reason: 'x' }, A.token);
+    check('a dispute needs a real reason (400)', r.status === 400, `got ${r.status}`);
+    r = await call(`/api/mshikano/cooperations/${partnership}/dispute`, 'POST', { reason: 'never delivered the second batch' }, A.token);
+    check('a partner disputes the cooperation', r.status === 200 && r.body?.cooperation?.status === 'disputed' && r.body?.cooperation?.dispute?.note?.includes('second batch'), JSON.stringify(r.body?.cooperation?.dispute));
+    r = await call('/api/mshikano/cooperations', 'GET', undefined, A.token);
+    check('a disputed cooperation stays LISTED for the partners', (r.body?.disputed ?? []).some((d) => d.id === partnership), JSON.stringify(r.body?.disputed?.map((d) => d.id)));
+    r = await call('/api/mshikano/graph', 'GET', undefined, B.token);
+    check('the disputed link leaves the confirmed graph', r.body?.totals?.confirmed === 0, JSON.stringify(r.body?.totals));
+    r = await call(`/api/mshikano/trust/${A.user.id}`, 'GET', undefined, B.token);
+    check('the dispute is COUNTED as evidence on both records', r.body?.evidence?.disputes >= 1, JSON.stringify(r.body?.evidence));
 
     // The app gate still owns the door.
     r = await call('/api/mshikano/posts');
