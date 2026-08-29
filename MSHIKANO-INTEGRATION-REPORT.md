@@ -77,7 +77,7 @@ The list is deduped (38 suites) and every number above is from after the fix.
 | Gap | Status | Note |
 |---|---|---|
 | Groups in who-can-help | 🟠 | Honestly empty until real groups exist; either group matching gets built or the gap stays visible |
-| Rate-limit parity | 🟡 | The collections `:key/:action` cap gap predates Mshikano and still stands |
+| Capability parity (collections `:key/:action`) | 🟢 | Closed 2026-08-29: publish/unpublish/archive now require the `moderate` capability and are audited with before/after status; plain member 403 `forbidden_capability` proven in the suite and against the production build |
 | Business model | 🟠 | Deliberately none — no fees, no cut, no pay-to-be-seen. Deferred by decision, not by omission |
 | Trust disputes | 🟡 | Counted in evidence (`disputed` partnerships) but no dispute-filing flow yet |
 | Guides in who-can-help | 🟡 | Sourced from published tea articles — real, but not cooperation-specific knowledge |

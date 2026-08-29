@@ -113,12 +113,12 @@ node live/8-mshikano.mjs              # cooperation network: intents, matches,
                                       # two-sided confirmation, trust evidence
 ```
 
-**Current state: 3596 assertions, 0 failing** — measured 2026-08-29 against a
+**Current state: 3601 assertions, 0 failing** — measured 2026-08-29 against a
 production build over HTTP, not inherited from an earlier report.
 
 | Suite | Result |
 |---|---|
-| `server/test/run.js` | 1907 passed / 0 failed / 1 skipped |
+| `server/test/run.js` | 1912 passed / 0 failed / 1 skipped |
 | `server/test/livecamp.mjs` | 111 passed / 0 failed |
 | `./run-suites.sh` (38 client suites) | 1321 passed / 0 failed |
 | `tc` strict typecheck | exit 0 |

@@ -7371,6 +7371,19 @@ console.log('\n=== PLATFORM ROLES: THE OPERATOR SURFACE IS CAPABILITY-GUARDED ==
     r = await call('/api/economic/payments/reconcile', 'GET', undefined, fin.token);
     check('finance reads payment reconciliation (200)', r.status === 200);
 
+    // --- editorial transitions are moderation acts (the collections cap gap) --
+    r = await call('/api/admin/collections', 'POST', { title: 'Reviewer picks', kind: 'rule', rule: { type: 'place' } }, rev.token);
+    check('a reviewer creates a collection (201)', r.status === 201, JSON.stringify(r.body).slice(0, 120));
+    const colKey = r.body?.collection?.key;
+    r = await call(`/api/admin/collections/${colKey}/publish`, 'POST', {}, nobody.token);
+    check('a plain member cannot publish a collection (403)', r.status === 403, `got ${r.status}`);
+    check('the refusal names the moderate capability', r.body?.requiredCapability === 'moderate', JSON.stringify(r.body).slice(0, 120));
+    r = await call(`/api/admin/collections/${colKey}/publish`, 'POST', {}, rev.token);
+    check('a reviewer publishes the collection (200)', r.status === 200 && r.body?.collection?.status === 'published', JSON.stringify(r.body).slice(0, 120));
+    r = await call(`/api/collections/${colKey}`, 'GET', undefined, nobody.token);
+    check('the published collection resolves for a member', r.body?.collection?.status === 'published', JSON.stringify(r.body).slice(0, 120));
+
+
     // --- role assignment is admin-only and audited ---------------------------
     const target = (await call('/api/auth/me', 'GET', undefined, nobody.token)).body.user;
     r = await call('/api/ops/roles', 'POST', { userId: target.id, roles: ['operator'], reason: 'onboarding the night shift' }, adm.token);
