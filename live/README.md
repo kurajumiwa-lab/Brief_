@@ -56,3 +56,10 @@ suite needs the server to be stopped.
 * **phase 5 — 16/0 read-only, 26/0 with writes**: release handshake, home-feed
   timestamp, news wire shape, Arena entry point, and a full registration ->
   challenge -> campaign -> WhatsApp banner -> archive cycle.
+* **phase 7 — 23/0: the Android bug replay (2026-08-29)**: anonymous rooms +
+  catalog reads (self-healed SEED, provenance stated in words), a fresh user
+  writing + uploading a real PNG + publishing their OWN story, and the EPL
+  room end-to-end: create -> import (room OPENS) -> pool readback -> XI seated
+  within budget -> over-budget refused with the arithmetic -> unseatable
+  budget refused at creation -> no phantom rooms. Run against :8787 with
+  NODE_ENV=production and the real data file.
