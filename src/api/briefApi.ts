@@ -1445,6 +1445,9 @@ export interface AuthedUser {
   displayName: string;
   personId?: string;
   devFallback?: boolean;
+  /** Platform roles + derived capabilities (operator surface). Server truth. */
+  platformRoles?: string[];
+  capabilities?: string[];
 }
 
 export interface PersonStanding {
@@ -2972,6 +2975,108 @@ export function unsubscribeEmail(tokenOrEmail: string): Promise<ApiResult<{ ok: 
   return request('/api/email-subscriptions/unsubscribe', { method: 'POST', body: JSON.stringify({ token: tokenOrEmail }) }, (r) =>
     r?.ok === true ? { ok: true, already: Boolean(r.already) } : undefined
   );
+}
+
+// ---------------------------------------------------------------------------
+// OPERATOR SURFACE (F4 / Tikiti T8). Every call here is capability-gated
+// server-side (ops.read / ops.run / moderate / finance / admin); the client
+// mirrors the gating only to decide what to OFFER. 403 bodies name
+// `requiredCapability`, which the desk shows verbatim.
+// ---------------------------------------------------------------------------
+
+/** True when the session may operate at all (any operator capability). */
+export const OPERATOR_CAPABILITIES = ['ops.read', 'ops.run', 'moderate', 'finance', 'admin'] as const;
+
+export function isOperator(user: { capabilities?: string[] | null } | null | undefined): boolean {
+  const caps = user?.capabilities ?? [];
+  return OPERATOR_CAPABILITIES.some((c) => caps.includes(c));
+}
+
+const isRowArray = (v: unknown): v is Record<string, any>[] => Array.isArray(v);
+
+export function getOpsDiagnostics(): Promise<ApiResult<Record<string, any>>> {
+  return request('/api/ops/diagnostics', undefined, (r) => (r && typeof r === 'object' && 'counts' in r ? r : undefined));
+}
+
+export function opsBackup(): Promise<ApiResult<{ ok: boolean; file?: string; size?: number }>> {
+  return request('/api/ops/backup', { method: 'POST', body: '{}' }, (r) => (r?.ok === true ? r : undefined));
+}
+
+export function getOpsAnalytics(): Promise<ApiResult<{ analytics: Record<string, any> }>> {
+  return request('/api/ops/analytics', undefined, (r) => (r && typeof r.analytics === 'object' ? r as { analytics: Record<string, any> } : undefined));
+}
+
+export function getOpsReports(): Promise<ApiResult<Record<string, any>[]>> {
+  return request('/api/ops/reports', undefined, (r) => (isRowArray(r?.reports) ? r.reports : undefined));
+}
+
+export function resolveOpsReport(id: string, action: 'dismiss' | 'remove', reason: string): Promise<ApiResult<Record<string, any>>> {
+  return request(`/api/ops/reports/${encodeURIComponent(id)}/resolve`, { method: 'POST', body: JSON.stringify({ action, reason }) }, (r) => r ?? undefined);
+}
+
+export function getOpsUnverified(): Promise<ApiResult<Record<string, any>[]>> {
+  return request('/api/ops/unverified', undefined, (r) => (isRowArray(r?.objects) ? r.objects : undefined));
+}
+
+export function getOpsContributors(): Promise<ApiResult<Record<string, any>[]>> {
+  return request('/api/ops/contributors', undefined, (r) => (isRowArray(r?.contributors) ? r.contributors : undefined));
+}
+
+export function getOpsDisputes(): Promise<ApiResult<Record<string, any>[]>> {
+  return request('/api/ops/disputes', undefined, (r) => (isRowArray(r?.disputes) ? r.disputes : undefined));
+}
+
+export function getOpsTicketListings(): Promise<ApiResult<Record<string, any>[]>> {
+  return request('/api/ops/ticket-listings', undefined, (r) => (isRowArray(r?.listings) ? r.listings : undefined));
+}
+
+export function getOpsVerificationQueue(): Promise<ApiResult<Record<string, any>[]>> {
+  return request('/api/ops/verification', undefined, (r) => (isRowArray(r?.queue) ? r.queue : undefined));
+}
+
+export function opsVerificationDecision(id: string, decision: 'approved' | 'rejected', reason: string): Promise<ApiResult<Record<string, any>>> {
+  return request(`/api/ops/verification/${encodeURIComponent(id)}/decision`, { method: 'POST', body: JSON.stringify({ decision, reason }) }, (r) => r ?? undefined);
+}
+
+export function opsVerificationRevoke(id: string, reason: string): Promise<ApiResult<Record<string, any>>> {
+  return request(`/api/ops/verification/${encodeURIComponent(id)}/revoke`, { method: 'POST', body: JSON.stringify({ reason }) }, (r) => r ?? undefined);
+}
+
+export function getOpsEmailLog(limit = 50): Promise<ApiResult<Record<string, any>[]>> {
+  return request(`/api/ops/email-log?limit=${limit}`, undefined, (r) => (isRowArray(r?.log) ? r.log : undefined));
+}
+
+export function getOpsAudit(limit = 100): Promise<ApiResult<{ audit: Record<string, any>[]; total: number }>> {
+  return request(`/api/ops/audit?limit=${limit}`, undefined, (r) => (isRowArray(r?.audit) && Number.isFinite(r?.total) ? r : undefined));
+}
+
+export function setPlatformRoles(userId: string, roles: string[], reason: string): Promise<ApiResult<Record<string, any>>> {
+  return request('/api/ops/roles', { method: 'POST', body: JSON.stringify({ userId, roles, reason }) }, (r) => r ?? undefined);
+}
+
+export function getEconomicReconcile(): Promise<ApiResult<Record<string, any>>> {
+  return request('/api/economic/reconcile', undefined, (r) => (r && typeof r.reconciliation === 'object' ? r : undefined));
+}
+
+export function getPaymentsReconcile(): Promise<ApiResult<Record<string, any>>> {
+  return request('/api/economic/payments/reconcile', undefined, (r) => (r && typeof r.reconciliation === 'object' ? r : undefined));
+}
+
+
+/** Editorial collections (moderate capability). */
+export function getAdminCollections(): Promise<ApiResult<Record<string, any>[]>> {
+  return request('/api/admin/collections', undefined, (r) => (isRowArray(r?.collections) ? r.collections : undefined));
+}
+
+export function transitionAdminCollection(key: string, action: string): Promise<ApiResult<Record<string, any>>> {
+  return request(`/api/admin/collections/${encodeURIComponent(key)}/${encodeURIComponent(action)}`, { method: 'POST', body: '{}' }, (r) => r ?? undefined);
+}
+
+/** Record an editorial/library image (ops.run). Validation is the server's. */
+export function recordAdminMedia(fields: {
+  kind?: string; key?: string; url?: string; alt?: string | null; attribution?: string | null; status?: string;
+}): Promise<ApiResult<Record<string, any>>> {
+  return request('/api/admin/media', { method: 'POST', body: JSON.stringify(fields) }, (r) => r ?? undefined);
 }
 
 // --- Events hub (Tikiti T4) ------------------------------------------------------

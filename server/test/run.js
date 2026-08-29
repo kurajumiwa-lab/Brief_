@@ -4749,6 +4749,17 @@ console.log('\n=== OPERATIONS: READINESS, DIAGNOSTICS, BACKUP ===');
     check('they surface recent errors', Array.isArray(r.body?.recentErrors));
     check('they surface rejected webhook callbacks', Number.isFinite(r.body?.rejectedCallbacks));
 
+    // --- T8 operator visibility: the dispute wall + resale listing wall ------
+    r = await call('/api/ops/disputes', 'GET', undefined, U.token);
+    check('the dispute wall is readable by an operator', r.status === 200 && Array.isArray(r.body?.disputes));
+    r = await call('/api/ops/disputes', 'GET');
+    check('the dispute wall is not anonymous', r.status === 401 || r.status === 403);
+    r = await call('/api/ops/ticket-listings', 'GET', undefined, U.token);
+    check('the resale listing wall is readable by an operator', r.status === 200 && Array.isArray(r.body?.listings));
+    check('removed listings keep their reason for the audit trail',
+      r.body.listings.filter((l) => l.status === 'removed')
+        .every((l) => typeof l.removedReason === 'string' && l.removedReason.length > 0));
+
     // --- backup --------------------------------------------------------------
     r = await call('/api/ops/backup', 'POST', {}, U.token);
     check('a backup can be taken', r.status === 200 && r.body?.ok === true, JSON.stringify(r.body).slice(0, 140));

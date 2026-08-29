@@ -16,7 +16,8 @@ export type MenuTarget =
       | 'cockpit' | 'command' | 'active' | 'completed' | 'inbox'
       | 'sources' | 'money' | 'vault' | 'gate' | 'tea'
       | 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'ai' }
-  | { tab: 'capture' };
+  | { tab: 'capture' }
+  | { tab: 'operate' };
 
 export interface GeoCity {
   lat: number;
@@ -30,6 +31,8 @@ export interface MenuSheetProps {
   onSelect: (target: MenuTarget) => void;
   onSelectCity: (city: GeoCity) => void;
   selectedLocation: string;
+  /** Operator desk entry (F4): offered only when the session may operate. */
+  canOperate?: boolean;
 }
 
 type MediaKit = {
@@ -446,7 +449,7 @@ function RegionGallery({
 
 // --- MenuSheet Main Dialog --------------------------------------------------
 
-export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocation }: MenuSheetProps) {
+export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocation, canOperate = false }: MenuSheetProps) {
   const [cardOpen, setCardOpen] = React.useState(false);
 
   React.useEffect(() => {
@@ -528,6 +531,26 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
 
               {/* 3. Quick Actions glass container */}
               <QuickActions onSelect={onSelect} />
+
+              {/* 3.5 Operator entry (F4/T8): the desk is an overlay, never a
+                  sixth destination, and it is only OFFERED to sessions that
+                  carry an operator capability — the server re-checks every
+                  single call it makes. */}
+              {canOperate && (
+                <button
+                  type="button"
+                  onClick={() => onSelect({ tab: 'operate' })}
+                  className="w-full rounded-2xl border border-[#202B3C] bg-[#111724] px-4 py-3 flex items-center justify-between gap-3 cursor-pointer hover:border-[#384A66] transition-colors"
+                >
+                  <span className="text-left">
+                    <span className="block text-[12px] font-extrabold text-white">Operate</span>
+                    <span className="block text-[10px] text-[#7E8B9B]">
+                      The operator desk — health, queues, commerce, audit
+                    </span>
+                  </span>
+                  <span aria-hidden className="text-[16px] text-[#7E8B9B]">⚙</span>
+                </button>
+              )}
 
               {/* 4. More To Come section */}
               <MoreToCome />

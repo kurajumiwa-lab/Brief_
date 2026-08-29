@@ -33,6 +33,8 @@ export type BriefRoute = {
   campaignId: string | null;
   capture: boolean;
   menu: boolean;
+  /** Operator desk overlay (F4) — not a consumer destination. */
+  admin: boolean;
   /** True when the user landed on this URL (share / reload), not via in-app push. */
   landed: boolean;
 };
@@ -48,6 +50,7 @@ export const DEFAULT_ROUTE: BriefRoute = {
   campaignId: null,
   capture: false,
   menu: false,
+  admin: false,
   landed: false
 };
 
@@ -83,6 +86,7 @@ export function parsePath(pathname: string, search = ''): BriefRoute {
   const q = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search);
 
   if (q.get('menu') === '1') route.menu = true;
+  if (q.get('admin') === '1') route.admin = true;
   if (q.get('capture') === '1') route.capture = true;
   const campaign = q.get('campaign');
   if (campaign) route.campaignId = campaign;
@@ -157,6 +161,7 @@ export function toPath(route: BriefRoute): string {
 
   const q = new URLSearchParams();
   if (route.menu) q.set('menu', '1');
+  if (route.admin) q.set('admin', '1');
   if (route.capture) q.set('capture', '1');
   if (route.campaignId) q.set('campaign', route.campaignId);
   const qs = q.toString();

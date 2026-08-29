@@ -93,6 +93,34 @@ app.get('/api/ops/unverified', (req, res) => {
 
 
 /**
+ * T8 (F4 Attention): every dispute, platform-wide. A disputed order is
+ * deliberately TERMINAL in the order state machine -- there is no half
+ * resolution flow -- so the operator's duty is visibility, not a pretend
+ * resolve button. Rows are read-only here; remedies live in refunds,
+ * moderation and the ledger, each audited on its own route.
+ */
+app.get('/api/ops/disputes', (req, res) => {
+  if (!requireCap(req, res, 'ops.read')) return;
+  const rows = store.all('disputes').slice().sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  res.json({ disputes: rows });
+});
+
+
+/**
+ * T8 (F4 Attention): the resale listing wall -- active listings plus the
+ * removed ones WITH their reasons, so the moderation loop
+ * (flag -> inspect -> decide -> audit) can be read end to end after the fact.
+ * Removal itself stays on its own moderate-capability route, audited there.
+ */
+app.get('/api/ops/ticket-listings', (req, res) => {
+  if (!requireCap(req, res, 'ops.read')) return;
+  const rows = store.all('ticketListings').slice()
+    .sort((a, b) => String(b.createdAt ?? '').localeCompare(String(a.createdAt ?? '')));
+  res.json({ listings: rows });
+});
+
+
+/**
  * Seed / clear demo content IN-PROCESS. The CLI script wrote to a data file
  * that the running server (which holds the store in memory) never re-reads, so
  * on the deployed site the data never appeared. These routes run the seed

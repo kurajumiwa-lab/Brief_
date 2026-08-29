@@ -108,6 +108,7 @@ import {
   ChevronLeft
 } from 'lucide-react';
 import { MenuSheet } from './components/MenuSheet';
+import { AdminDesk } from './components/AdminDesk';
 import type { MenuTarget } from './components/MenuSheet';
 import { PlayAs } from './components/PlayAs';
 import type { LucideIcon } from 'lucide-react';
@@ -5064,6 +5065,7 @@ export function App() {
     bootRoute.workflow !== 'active' ? 'screen' : 'queue'
   );
   const [menuOpen, setMenuOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
   const [sessionUser, setSessionUser] = useState<briefApi.AuthedUser | null>(null);
 
   // --- Onboarding & the service ladder ---------------------------------------
@@ -7363,6 +7365,12 @@ export function App() {
 
   const handleMenuSelect = (target: MenuTarget) => {
     setMenuOpen(false);
+    // The operator desk is not a consumer destination and is not ladder-gated:
+    // authority is the session's capabilities, checked again per call.
+    if (target.tab === 'operate') {
+      setAdminOpen(true);
+      return;
+    }
     // The ladder shapes what is OFFERED, never what is permitted: authority
     // still lives on the server. A surface whose rung has not been climbed
     // says which step opens it and points at that step instead of dropping
@@ -7411,11 +7419,12 @@ export function App() {
     campaignId: openCampaignId,
     capture: captureOpen,
     menu: menuOpen,
+    admin: adminOpen,
     landed: false
   }), [
     activeTab, nearbySection, myLayerSection, workflowSection, arenaSection,
     selectedObjectForDetail, pendingObjectId, selectedTeaSlug, openCampaignId,
-    captureOpen, menuOpen
+    captureOpen, menuOpen, adminOpen
   ]);
 
   const writeUrl = useCallback((route: BriefRoute, mode: 'push' | 'replace') => {
@@ -7434,6 +7443,7 @@ export function App() {
     setWorkflowView(route.dest === 'workflows' && route.workflow !== 'active' ? 'screen' : 'queue');
     setArenaSection(route.arena);
     setMenuOpen(route.menu);
+    setAdminOpen(route.admin);
     setCaptureOpen(route.capture);
     setSelectedTeaSlug(route.teaSlug);
     setOpenCampaignId(route.campaignId);
@@ -7446,19 +7456,20 @@ export function App() {
 
   const dismissOverlay = useCallback(() => {
     const st = typeof window !== 'undefined' ? window.history.state : null;
-    const overlayState = isBriefRoute(st) && (st.menu || st.capture || st.objectId || st.teaSlug || st.campaignId);
+    const overlayState = isBriefRoute(st) && (st.menu || st.capture || st.admin || st.objectId || st.teaSlug || st.campaignId);
     if (overlayState && !st.landed && typeof window !== 'undefined' && window.history.length > 1) {
       window.history.back();
       return;
     }
     skipUrl.current = true;
     setMenuOpen(false);
+    setAdminOpen(false);
     setCaptureOpen(false);
     setSelectedTeaSlug(null);
     setOpenCampaignId(null);
     setPendingObjectId(null);
     setSelectedObjectForDetailRaw(null);
-    writeUrl({ ...currentRoute(), menu: false, capture: false, objectId: null, teaSlug: null, campaignId: null }, 'replace');
+    writeUrl({ ...currentRoute(), menu: false, admin: false, capture: false, objectId: null, teaSlug: null, campaignId: null }, 'replace');
   }, [currentRoute, writeUrl]);
 
   useEffect(() => {
@@ -7479,11 +7490,11 @@ export function App() {
       skipUrl.current = false;
       return;
     }
-    const overlay = menuOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail) || Boolean(pendingObjectId);
+    const overlay = menuOpen || adminOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail) || Boolean(pendingObjectId);
     writeUrl(currentRoute(), overlay ? 'push' : 'replace');
   }, [
     activeTab, nearbySection, myLayerSection, workflowSection, arenaSection,
-    menuOpen, captureOpen, selectedTeaSlug, openCampaignId,
+    menuOpen, adminOpen, captureOpen, selectedTeaSlug, openCampaignId,
     selectedObjectForDetail, pendingObjectId, currentRoute, writeUrl
   ]);
 
@@ -11778,7 +11789,9 @@ export function App() {
         onSelect={handleMenuSelect}
         onSelectCity={chooseCity}
         selectedLocation={selectedLocation}
+        canOperate={briefApi.isOperator(sessionUser)}
       />
+      <AdminDesk open={adminOpen} onClose={dismissOverlay} me={sessionUser} />
 
       <footer className="border-t border-[#E5E7EB] mt-12 py-6 text-xs text-[#111111]/60 text-center">
         Everything Happening Around You
