@@ -3,7 +3,10 @@
 An information layer for what is happening around you. Brief structures what
 communities already post — on Telegram, on the web, in feeds — into objects you
 can find, verify and act on. It is deliberately **not** a marketplace: commerce
-happens inside context, reached through discovery.
+happens inside context, reached through discovery. And through **Mshikano**,
+members cooperate directly — stating what they have, need, can help with or
+are looking for — building a record of confirmed cooperation rather than a
+wall of ratings.
 
 ---
 
@@ -14,11 +17,12 @@ App.tsx              Client application shell (React + TS)
 src/api/             Typed API client -- the ONLY place fetch() is called
 src/components/      Extracted client surfaces (Circles, Marketplace, Pulse, ...)
 server/              Backend: connectors, pipeline, domain modules, HTTP API
-  src/domain/        16 domain modules (auth, payment, settlement, ledger,
-                     arena, fantasy, auction, order, listing, campaign, ...)
+  src/domain/        17 domain modules (auth, payment, settlement, ledger,
+                     arena, fantasy, auction, order, listing, campaign,
+                     coop, ...)
   src/ops.js         Structured logging, readiness, diagnostics, backup
-  test/run.js        Server suite (1217 assertions)
-preview/             Vite dev server + the jsdom client suites (23 suites)
+  test/run.js        Server suite (1907 assertions)
+preview/             Vite dev server + the jsdom client suites (38 suites)
 tc/                  Strict TypeScript typecheck harness
 live/                Smoke tests against the PRODUCTION build over HTTP
 uploads/             Screenshots of the deployed app
@@ -102,18 +106,23 @@ node live/2-commerce-over-http.mjs    # buyer journey, two real actors
 node live/3-public-campaign.mjs       # public distribution
 node live/4-full-chain.mjs            # identity -> ... -> payout, Arena,
                                       # Fantasy, Auction, ops
+node live/5-release-smoke.mjs         # release handshake & feed shape
+node live/6-completion-walk.mjs       # walk every loop end to end
+node live/7-android-bug-replay.mjs    # replay the reported bugs
+node live/8-mshikano.mjs              # cooperation network: intents, matches,
+                                      # two-sided confirmation, trust evidence
 ```
 
-**Current state: 3420 assertions, 0 failing** — measured 2026-08-28 against a
+**Current state: 3596 assertions, 0 failing** — measured 2026-08-29 against a
 production build over HTTP, not inherited from an earlier report.
 
 | Suite | Result |
 |---|---|
-| `server/test/run.js` | 1832 passed / 0 failed / 3 skipped |
+| `server/test/run.js` | 1907 passed / 0 failed / 1 skipped |
 | `server/test/livecamp.mjs` | 111 passed / 0 failed |
-| `./run-suites.sh` (34 client suites) | 1274 passed / 0 failed |
+| `./run-suites.sh` (38 client suites) | 1321 passed / 0 failed |
 | `tc` strict typecheck | exit 0 |
-| `live/` against the production build | 43 + 27 + 91 + 16 + 26 = 203 / 0 |
+| `live/` against the production build | 43 + 27 + 82 + 18 + 35 + 26 + 26 = 257 / 0 |
 
 The server suite hits real third parties (BBC's RSS feed, GitHub's robots.txt,
 Telegram's API). Those tests **skip** rather than pass when the network is
@@ -167,6 +176,21 @@ rather than being guessed. It holds the priority listing on the main shelf. The
 free seat is the whole game, staked in units that have no cash value; the cash
 seat is listed, priced, and refused with the five requirements it is missing.
 See [`LIGI.md`](LIGI.md).
+
+**Mshikano: the unit is the relationship.** The cooperation network lives
+under Nearby (the five-destination rule holds — it is a secondary surface, the
+seventh door on the main shelf). Members post in one of four intents — have,
+need, can help, looking for — and matching joins only complements
+(HAVE↔NEED, CAN_HELP↔LOOKING_FOR), every match explaining itself with reasons
+in words. A cooperation exists only when **both sides confirm it**: the
+proposer cannot self-confirm, nobody outside the pair can respond, and only
+confirmed rows reach the graph. Trust is counted evidence — confirmed
+cooperations, repeat partners, recommendations, a verified identity — never a
+star rating, and the level says what it means in words. "Who can help?"
+answers with real people, active businesses and published guides, and keeps
+groups honestly **empty** until real groups exist. Nothing under
+`/api/mshikano/*` is reachable without an account. See
+[`MSHIKANO-INTEGRATION-REPORT.md`](MSHIKANO-INTEGRATION-REPORT.md).
 
 **No fabricated data.** The rule the ingestion pipeline exists to enforce is
 that a field which was not stated stays unstated. "Saturday popup" yields a
