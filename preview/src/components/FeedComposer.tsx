@@ -36,10 +36,10 @@ interface FeedData {
 
 const T = {
   bg: '#F1EDF7',
-  surface: '#FFFFFF',
+  surface: '#FBFAFD',
   line: '#D6CFE4',
   ink: '#251045',
-  muted: 'rgba(17,17,17,0.62)',
+  muted: 'rgba(37,16,69,0.62)',
   green: '#251045'
 };
 
@@ -242,10 +242,28 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
   const temporary = [...unique, feed.tea].find((item) => item?.testContent);
   const temporaryExpiry = testExpiryLabel(temporary?.testContent?.expiresAt);
   if (!hasContent) {
+    // Honest emptiness: say WHAT this feed is and WHERE its content comes
+    // from, instead of a bare label that reads like a bug. Never invent
+    // rows to fill the space (the no-fake-live-data rule).
     return (
       <>
         <WireSection />
-        <h2 className="px-1 py-8 text-center text-base font-semibold" style={{ color: T.ink }}>Nothing nearby</h2>
+        <section
+          aria-label="Live brief feed is empty"
+          className="mx-1 rounded-2xl border p-5 text-center"
+          style={{ borderColor: T.line, background: T.surface }}
+        >
+          <h2 className="text-base font-semibold" style={{ color: T.ink }}>Nothing nearby — yet</h2>
+          <p className="mx-auto mt-2 max-w-sm text-[12px] leading-relaxed" style={{ color: T.muted }}>
+            This feed fills with what people publish around you: stories from the
+            Tea studio, marketplace listings, events and pinned banners. It is
+            empty because nothing has been published yet — not because
+            something failed.
+          </p>
+          <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: T.muted }}>
+            Publish a story or open a room and it appears here
+          </p>
+        </section>
       </>
     );
   }
