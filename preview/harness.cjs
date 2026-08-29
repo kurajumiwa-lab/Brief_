@@ -116,8 +116,14 @@ async function boot(opts = {}) {
     json: async () => body
   });
 
+  // The app gate (no access without an account): give the suite a session.
+  try { dom.window.localStorage.setItem('brief_session', 'suite-runner-token'); } catch {}
   global.fetch = async (url) => {
     const u = String(url);
+    if (u.includes('/api/auth/me')) {
+      // The app gate: the suite runs signed in.
+      return reply({ user: { id: 'usr_suite_runner', handle: 'suite_runner', displayName: 'Suite Runner', personId: 'per_suite_runner' }, method: 'password' });
+    }
     for (const [frag, body] of Object.entries(routes)) {
       if (u.includes(frag)) return reply(typeof body === 'function' ? body(u) : body);
     }

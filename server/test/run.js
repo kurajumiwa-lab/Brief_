@@ -5059,13 +5059,25 @@ console.log('\n=== ENDPOINT AUTHORIZATION RULES, ENCODED EXPLICITLY ===');
       ['GET', '/api/arena/status'],
       ['GET', '/api/epl/clubs']
     ];
-    let allPublic = true;
-    const blocked = [];
+    // Product decision (2026-08-29): NO ACCESS WITHOUT AN ACCOUNT. Data reads
+    // answer 401 to an anonymous caller; only sign-in, the external campaign
+    // share face, ops probes and the account-less newsletter surface stay open.
+    let allGated = true;
+    const ungated = [];
     for (const [method, path] of publicOps) {
       const r = await call(path, method);
-      if (r.status === 401) { allPublic = false; blocked.push(path); }
+      if (path === '/api/ready' || path === '/api/health') continue; // ops probes: stay public
+      if (r.status !== 401) { allGated = false; ungated.push(`${path}:${r.status}`); }
     }
-    check('public reads stay public', allPublic, blocked.join(', '));
+    check('the app gate: data reads need a session', allGated, ungated.join(', '));
+    check('ops probes stay public (deploy health checks)',
+      (await call('/api/ready', 'GET')).status === 200);
+    let gated = await call('/api/feed', 'GET');
+    check('the feed is behind the gate (401, account_required)',
+      gated.status === 401 && gated.body?.gate === 'account_required', JSON.stringify(gated.body));
+    gated = await call('/api/public/campaigns/does-not-exist', 'GET');
+    check('the external campaign share face stays open (404, not 401)',
+      gated.status === 404, `got ${gated.status}`);
 
     // --- registration and login must remain reachable ------------------------
     let r = await call('/api/auth/register', 'POST', { handle: 'authruleuser', password: 'a good passphrase' });
@@ -6844,7 +6856,9 @@ console.log('\n=== CONTRIBUTION POTS + DEADLINES + UPDATES (Tikiti T3) ===');
     r = await call(`/api/campaigns/${potId}/updates`, 'POST', { title: 'Halfway there', body: 'KES 2,500 raised. Thank you.' }, O.token);
     check('the owner posts a campaign update', r.status === 201);
     r = await call(`/api/campaigns/${potId}/updates`, 'GET');
-    check('updates are public', r.body?.updates?.length === 1);
+    check('campaign updates are behind the app gate (401)', r.status === 401, `got ${r.status}`);
+    r = await call(`/api/campaigns/${potId}/updates`, 'GET', undefined, O.token);
+    check('a signed-in member reads campaign updates', r.body?.updates?.length === 1);
     check('the update surfaced as a signal', Boolean(store.find('signals', (x) => x.type === 'campaign_update_posted' && x.metadata?.campaignId === potId)));
 
     // The PUBLIC page is slug-addressed and never learns the internal id, so
@@ -7067,7 +7081,7 @@ console.log('\n=== EPL CATALOG + SQUAD BUDGET + LOBBY (Tikiti T5) ===');
     const M2 = (await call('/api/auth/register', 'POST', { handle: 'epl_m2' + Date.now().toString(36), password: 'a good passphrase' })).body;
 
     // Provider honesty first.
-    let r = await call('/api/epl/catalog', 'GET');
+    let r = await call('/api/epl/catalog', 'GET', undefined, OP.token); // app gate: catalog needs a session
     check('the catalog states its provider state honestly',
       r.body?.provider?.configured === false && /SEED|no EPL data provider/i.test(r.body?.provider?.reason ?? ''), JSON.stringify(r.body?.provider));
     r = await call('/api/epl/catalog/sync', 'POST', {}, OP.token);
@@ -7205,7 +7219,9 @@ console.log('\n=== EPL CATALOG + SQUAD BUDGET + LOBBY (Tikiti T5) ===');
     }, M1.token);
     check('a malformed seat is REFUSED honestly (a team is eleven)', r.status === 400 && /exactly 11/.test(r.body?.error ?? ''), JSON.stringify(r.body).slice(0, 140));
     r = await call(`/api/epl/competitions/${httpRoom}/standings`, 'GET');
-    check('standings read publicly (empty before scoring)', r.status === 200 && Array.isArray(r.body?.standings) && r.body.standings.length === 0);
+    check('standings are behind the app gate (401)', r.status === 401, `got ${r.status}`);
+    r = await call(`/api/epl/competitions/${httpRoom}/standings`, 'GET', undefined, M1.token);
+    check('a signed-in manager reads standings (empty before scoring)', r.status === 200 && Array.isArray(r.body?.standings) && r.body.standings.length === 0);
   } finally { srv.close(); delete process.env.BRIEF_OPERATORS; process.env.BRIEF_DEV_AUTH = '1'; }
 }
 
@@ -7317,8 +7333,8 @@ console.log('\n=== PLATFORM ROLES: THE OPERATOR SURFACE IS CAPABILITY-GUARDED ==
 
     // --- EPL: browsing is public, the catalog bootstraps, rooms list ----------
     r = await call('/api/epl/competitions');
-    check('the EPL rooms list is a public read (no session)', r.status === 200 && Array.isArray(r.body?.competitions), `got ${r.status}`);
-    r = await call('/api/epl/catalog');
+    check('the EPL rooms list is behind the app gate (401)', r.status === 401 && r.body?.gate === 'account_required', `got ${r.status}`);
+    r = await call('/api/epl/catalog', 'GET', undefined, nobody.token);
     const cat = r.body?.players ?? [];
     check('a fresh deployment auto-seeds the catalog (game is playable)', cat.length >= 200, `players=${cat.length}`);
     check('every auto-seeded row states its source honestly', cat.every((x) => x.source === 'seed'));
@@ -7331,11 +7347,11 @@ console.log('\n=== PLATFORM ROLES: THE OPERATOR SURFACE IS CAPABILITY-GUARDED ==
     // --- Ligi is gone; EPL is the fantasy surface ----------------------------
     // The African-league game was removed by product decision (its whole HTTP
     // surface + UI). The honesty check: the routes are GONE, not hidden.
-    r = await call('/api/ligi/rules', 'GET');
+    r = await call('/api/ligi/rules', 'GET', undefined, op.token);
     check('the Ligi surface is gone (404)', r.status === 404, `got ${r.status}`);
     r = await call('/api/ligi/tick', 'POST', {}, op.token);
     check('even an operator cannot tick a removed surface (404)', r.status === 404, `got ${r.status}`);
-    r = await call('/api/epl/clubs', 'GET');
+    r = await call('/api/epl/clubs', 'GET', undefined, op.token);
     check('EPL is the fantasy surface that remains', r.status === 200 && Array.isArray(r.body?.clubs));
   } finally {
     srv.close();

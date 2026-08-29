@@ -12,6 +12,7 @@ global.Node = dom.window.Node;
 global.MouseEvent = dom.window.MouseEvent;
 global.getComputedStyle = dom.window.getComputedStyle;
 global.IS_REACT_ACT_ENVIRONMENT = true;
+require('./suiteauth.cjs').installSuiteSession();
 const React = require('react');
 const { createRoot } = require('react-dom/client');
 const { act } = require('react-dom/test-utils');

@@ -72,13 +72,13 @@ r = await call(`/api/email-subscriptions/confirm?token=${encodeURIComponent(toke
 check('a used token is dead', r.status === 404, `status=${r.status}`);
 
 console.log('\n=== EVENTS HUB (T4) + EPL (T5) over the public surface ===');
-r = await call('/api/events/categories', 'GET', undefined, null);
-check('the five event categories are public', Array.isArray(r.body?.categories) && r.body.categories.length === 5, JSON.stringify(r.body).slice(0, 140));
-r = await call('/api/events?limit=5', 'GET', undefined, null);
+r = await call('/api/events/categories', 'GET', undefined, A.token);
+check('the five event categories read for a signed-in member', Array.isArray(r.body?.categories) && r.body.categories.length === 5, JSON.stringify(r.body).slice(0, 140));
+r = await call('/api/events?limit=5', 'GET', undefined, A.token);
 check('events read honestly (shape, whatever the count)', Array.isArray(r.body?.events), JSON.stringify(r.body).slice(0, 120));
-r = await call('/api/epl/clubs', 'GET', undefined, null);
+r = await call('/api/epl/clubs', 'GET', undefined, A.token);
 check('EPL clubs are seeded', Array.isArray(r.body?.clubs) && r.body.clubs.length >= 10, `clubs=${r.body?.clubs?.length}`);
-r = await call('/api/epl/catalog', 'GET', undefined, null);
+r = await call('/api/epl/catalog', 'GET', undefined, A.token);
 const players = r.body?.players ?? [];
 check('the catalog carries provenance (source, never invented)', players.length === 0 || players.every((p) => p.source === 'seed' || p.source === 'provider'), JSON.stringify(players.slice(0, 1)).slice(0, 140));
 r = await call('/api/epl/competitions', 'POST', { title: 'Walkers League', kickoffAt: new Date(Date.now() + 36e5).toISOString(), minEntries: 2, maxEntries: 8 }, A.token);
@@ -87,8 +87,8 @@ const comp = r.body?.competition;
 r = await call('/api/epl/competitions', 'GET', undefined, A.token);
 const listed = (r.body?.competitions ?? []).find((c) => c.id === comp?.id);
 check('the lobby state is DERIVED on read (never stored as a claim)', Boolean(listed?.lobbyState), JSON.stringify(listed ?? {}).slice(0, 140));
-r = await call(`/api/epl/competitions/${comp?.id}/standings`, 'GET', undefined, null);
-check('standings are public', r.status === 200, `status=${r.status}`);
+r = await call(`/api/epl/competitions/${comp?.id}/standings`, 'GET', undefined, A.token);
+check('standings read for a signed-in member', r.status === 200, `status=${r.status}`);
 
 console.log('\n=== THE DESK (F4): operator over HTTP, plain user refused ===');
 const OP = rev.status === 201 ? null : null; // liveop logs in below

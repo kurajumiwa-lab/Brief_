@@ -15,6 +15,7 @@ global.window=dom.window;global.document=dom.window.document;Object.defineProper
 global.HTMLElement=dom.window.HTMLElement;global.Element=dom.window.Element;global.Node=dom.window.Node;
 global.MouseEvent=dom.window.MouseEvent;global.getComputedStyle=dom.window.getComputedStyle;
 global.IS_REACT_ACT_ENVIRONMENT=true;
+require('./suiteauth.cjs').installSuiteSession();
 const React=require('react');const{createRoot}=require('react-dom/client');const{act}=require('react-dom/test-utils');
 const App=require('./src/App.tsx').default;
 

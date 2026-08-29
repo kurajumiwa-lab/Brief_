@@ -29,6 +29,7 @@ import * as calendar from './domain/calendar.js';
 import * as demoSeed from './domain/seed.js';
 import { authStatus } from './identity.js';
 import { recordError } from './routes/helpers.js';
+import { callerId } from './identity.js';
 import { register as authRoutes } from './routes/auth.js';
 import { register as onboardingRoutes } from './routes/onboarding.js';
 import { register as healthRoutes } from './routes/health.js';
@@ -131,6 +132,38 @@ app.use(auth.authMiddleware);
 // Structured request logs. Records method/route/status/duration/actor -- never
 // bodies, tokens or query strings.
 app.use(ops.requestLogger);
+
+// ---------------------------------------------------------------------------
+// THE APP GATE (product decision, 2026-08-29): no access without an account.
+//
+// Every /api route now requires a signed-in session. The exceptions are the
+// surfaces that must work for a person who has no account YET, or for the
+// outside world:
+//   /api/auth/*            sign-in itself (register, login, google, providers)
+//   /api/public/campaigns/*  the EXTERNAL share face (QR / WhatsApp links) --
+//                           gating it would break the product's purpose
+//   /api/health, /api/readiness  ops probes
+//   /api/media/file/*      images referenced by the public share pages
+// Everything else -- feed, EPL, objects, signals -- answers 401 until the
+// caller has an account. The client enforces the same rule with a wall; this
+// is the enforcement that actually matters.
+// ---------------------------------------------------------------------------
+//   /api/config, /api/release  version/metadata probes the client shakes
+//                           hands with at boot, before any account exists
+//   /api/ready               deploy-platform health checks
+//   /api/email-subscriptions  the newsletter surface -- subscribing and
+//                           UNSUBSCRIBING must work account-less (privacy)
+const PUBLIC_WITHOUT_SESSION = /^\/(auth|public\/campaigns|health|ready|readiness|media\/file|config|release|email-subscriptions)(\/|$)/;
+app.use('/api', (req, res, next) => {
+  if (PUBLIC_WITHOUT_SESSION.test(req.path)) return next();
+  const me = callerId(req);
+  if (me) return next();
+  return res.status(401).json({
+    error: req.authError === 'expired' ? 'your session has expired, please sign in again' : 'authentication required',
+    code: req.authError ?? 'no_token',
+    gate: 'account_required'
+  });
+});
 
 // ---------------------------------------------------------------------------
 // ROUTE MOUNTS -- one per domain module.

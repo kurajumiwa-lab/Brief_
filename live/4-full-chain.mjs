@@ -108,8 +108,8 @@ check('the seller lists a product', r.status === 201);
 const listing = r.body.listing;
 check('it starts as draft', listing.status === 'draft');
 await call(`/api/listings/${listing.id}/status`, 'POST', { status: 'active' }, S.token);
-r = await call('/api/listings');
-check('it becomes publicly discoverable', r.body.listings.some((l) => l.id === listing.id));
+r = await call('/api/listings', 'GET', undefined, S.token); // app gate: reads need a session
+check('it becomes discoverable to signed-in members', (r.body?.listings ?? []).some((l) => l.id === listing.id));
 
 r = await call(`/api/listings/${listing.id}`, 'PATCH', { price: 1 }, Bu.token);
 check('the BUYER cannot edit the seller\'s price', r.status === 403 || r.status === 404, `got ${r.status}`);
@@ -153,8 +153,10 @@ check('settlement is refused without real money', r.status === 400, `got ${r.sta
 
 console.log('\n=== WEBHOOK SECURITY ===');
 r = await call('/api/webhooks/tuma/anything', 'POST', { status: 'completed', checkout_request_id: 'ws_X', result_code: 0 });
-check('the payment webhook fails CLOSED (403)', r.status === 403, `got ${r.status}`);
-check('and leaks no detail', JSON.stringify(r.body) === '{"error":"rejected"}');
+// App gate: the webhook surface is closed to sessionless callers too — still
+// fails CLOSED, now one step earlier (401 at the gate, before signature work).
+check('the payment webhook fails CLOSED (401 at the app gate)', r.status === 401, `got ${r.status}`);
+check('and leaks no detail', !JSON.stringify(r.body ?? {}).includes('checkout'));
 
 console.log('\n=== LEDGER / SETTLEMENT / PAYOUT ===');
 r = await call('/api/economic/reconcile', 'GET', undefined, OP.token);
@@ -172,8 +174,8 @@ console.log('\n=== ARENA (server-persisted, no wallet) ===');
 r = await call('/api/arena/challenges', 'POST', { gameId: 'efootball', stake: 'friendly' }, S.token);
 check('a challenge is created', r.status === 201);
 const chal = r.body.challenge;
-r = await call('/api/arena/challenges?gameId=efootball');
-check('another actor SEES it (real persistence)', r.body.challenges.some((c) => c.id === chal.id));
+r = await call('/api/arena/challenges?gameId=efootball', 'GET', undefined, S.token); // app gate
+check('another actor SEES it (real persistence)', (r.body?.challenges ?? []).some((c) => c.id === chal.id));
 r = await call(`/api/arena/challenges/${chal.id}/accept`, 'POST', {}, S.token);
 check('you cannot accept your own challenge', r.status === 400);
 r = await call(`/api/arena/challenges/${chal.id}/accept`, 'POST', {}, Bu.token);
@@ -194,24 +196,24 @@ check('naming unmet requirements', Array.isArray(r.body?.requirements));
 console.log('\n=== EPL (the one fantasy surface now) ===');
 // Ligi was removed by product decision; EPL is the game in Arena. The old
 // surface must be GONE, and the new one honest, over the live proxy.
-r = await call('/api/ligi/rules');
+r = await call('/api/ligi/rules', 'GET', undefined, S.token);
 check('the Ligi surface is gone (404)', r.status === 404, `got ${r.status}`);
-r = await call('/api/epl/clubs');
-check('EPL clubs are public', r.status === 200 && Array.isArray(r.body?.clubs) && r.body.clubs.length >= 10);
-r = await call('/api/epl/catalog');
+r = await call('/api/epl/clubs', 'GET', undefined, S.token);
+check('EPL clubs read for a signed-in member', r.status === 200 && Array.isArray(r.body?.clubs) && r.body.clubs.length >= 10);
+r = await call('/api/epl/catalog', 'GET', undefined, S.token);
 const players = r.body?.players ?? [];
 check('the catalog carries provenance (seed, never invented)',
   players.length === 0 || players.every((p) => p.source === 'seed' || p.source === 'provider'));
 r = await call('/api/epl/competitions', 'POST', { title: `Live Chain League ${uniq}`, kickoffAt: new Date(Date.now() + 36e5).toISOString(), minEntries: 2, maxEntries: 8 }, S.token);
 check('a competition is created with an honest kickoff', r.status === 201 && Boolean(r.body?.competition?.id), JSON.stringify(r.body).slice(0, 140));
 const comp = r.body?.competition;
-r = await call(`/api/epl/competitions/${comp?.id}/standings`);
-check('standings are public from the first entry', r.status === 200, `got ${r.status}`);
-check('the bare /api/fantasy surface stays gone (F5)', (await call('/api/fantasy/rules')).status === 404);
-check('and /api/auctions too', (await call('/api/auctions')).status === 404);
+r = await call(`/api/epl/competitions/${comp?.id}/standings`, 'GET', undefined, S.token);
+check('standings read for a signed-in member', r.status === 200, `got ${r.status}`);
+check('the bare /api/fantasy surface stays gone (F5)', (await call('/api/fantasy/rules', 'GET', undefined, S.token)).status === 404);
+check('and /api/auctions too', (await call('/api/auctions', 'GET', undefined, S.token)).status === 404);
 
 console.log('\n=== SIGNALS: one activity layer ===');
-r = await call('/api/signals');
+r = await call('/api/signals', 'GET', undefined, S.token); // app gate
 const kinds = [...new Set((r.body?.signals ?? []).map((s) => s.type))];
 check('commerce signals recorded', kinds.includes('order_placed'));
 check('arena signals use the SAME layer', kinds.includes('arena_challenge_opened'));
@@ -230,7 +232,7 @@ check('diagnostics refuse a non-operator honestly (403)', r.status === 403 && r.
 check('the operator identity exists on this deployment', Boolean(OP?.token), JSON.stringify(OP).slice(0, 120));
 r = await call('/api/ops/diagnostics', 'GET', undefined, OP.token);
 check('diagnostics are available to the operator', r.status === 200 && Number.isFinite(r.body?.counts?.users));
-r = await call('/api/capabilities');
+r = await call('/api/capabilities', 'GET', undefined, S.token); // app gate
 check('capabilities admit no payment provider', r.body?.payments?.configured === false);
 check('capabilities report auth as configured', r.body?.auth?.configured === true);
 check('capabilities admit arena money is off', r.body?.arenaMoney?.enabled === false);

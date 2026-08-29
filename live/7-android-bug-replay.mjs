@@ -20,18 +20,25 @@ const call = async (path, method = 'GET', body, token) => {
   return { status: res.status, body: await res.json().catch(() => null) };
 };
 
-// ---------- (c) anonymous browsing: the EPL dead-end starts here ----------
+// ---------- (c) the app gate: no access without an account ------------------
+// Product decision 2026-08-29: every data read answers 401 to an anonymous
+// caller. Only sign-in, ops probes and the external campaign share face stay
+// open. The catalog self-heal now runs on the first AUTHED read below.
 {
-  const r = await call('/api/epl/competitions');
-  check('[anon] the EPL rooms list loads with no session', r.status === 200 && Array.isArray(r.body?.competitions), r.status);
-  const c = await call('/api/epl/catalog');
-  const players = c.body?.players ?? [];
-  check('[anon] the catalog is populated on real data (self-healed)', players.length >= 200, players.length);
-  check('[anon] every catalog row states SEED provenance', players.every((p) => p.source === 'seed'));
-  const provider = c.body?.provider?.configured === false ? c.body?.provider?.reason ?? '' : '';
-  check('[anon] the provider state is said in words (not "live")', /seed|no epl data provider/i.test(provider), provider);
-  const t = await call('/api/admin/tea');
-  check('[anon] the story desk still asks for a session (401)', t.status === 401, t.status);
+  let r = await call('/api/epl/competitions');
+  check('[gate] the EPL rooms list is closed to anonymous callers', r.status === 401 && r.body?.gate === 'account_required', r.status);
+  r = await call('/api/epl/catalog');
+  check('[gate] the catalog is closed to anonymous callers', r.status === 401, r.status);
+  r = await call('/api/feed');
+  check('[gate] the live feed is closed to anonymous callers', r.status === 401, r.status);
+  r = await call('/api/auth/providers');
+  check('[gate] sign-in options remain reachable (providers object)',
+    r.status === 200 && r.body?.providers?.password?.configured === true
+      && r.body?.providers?.google?.configured === false
+      && /GOOGLE_CLIENT_ID/.test(r.body?.providers?.google?.reason ?? ''),
+    JSON.stringify(r.body?.providers).slice(0, 120));
+  r = await call('/api/public/campaigns/not-a-real-slug');
+  check('[gate] the external campaign share face stays open (404, not 401)', r.status === 404, r.status);
 }
 
 // ---------- (a) the tea studio, as a brand-new user ----------
@@ -39,6 +46,17 @@ const U = (await call('/api/auth/register', 'POST', {
   handle: 'live7_' + Date.now().toString(36), password: 'a good passphrase', displayName: 'Live Seven'
 })).body;
 check('a fresh user registers', Boolean(U?.token));
+
+// ---------- (a0) authed: the catalog self-heals and states its source ------
+{
+  const c = await call('/api/epl/catalog', 'GET', undefined, U.token);
+  const players = c.body?.players ?? [];
+  check('[catalog] populated on real data once signed in (self-healed)', players.length >= 200, players.length);
+  check('[catalog] every row states SEED provenance', players.every((p) => p.source === 'seed'));
+  const provider = c.body?.provider?.configured === false ? c.body?.provider?.reason ?? '' : '';
+  check('[catalog] the provider state is said in words (not "live")', /seed|no epl data provider/i.test(provider), provider);
+}
+
 
 let r = await call('/api/admin/tea', 'GET', undefined, U.token);
 check('[tea] a plain author opens their story list (no capability needed)', r.status === 200 && Array.isArray(r.body?.articles), r.status);
@@ -126,15 +144,15 @@ check('[epl] the XI is seated (the dead-end screen)', /^20[01]$/.test(String(r.s
   }, U.token);
   check('[epl] an unseatable budget is refused at creation with the arithmetic',
     r.status === 400 && /cannot seat any squad.*cheapest XI here costs 550/.test(r.body?.error ?? ''), r.body?.error);
-  r = await call('/api/epl/competitions');
+  r = await call('/api/epl/competitions', 'GET', undefined, U.token);
   check('[epl] a refused creation leaves no phantom room',
     !(r.body?.competitions ?? []).some((x) => x.title === 'GW-Live7 impossible room'));
 }
 
 r = await call(`/api/epl/competitions/${roomId}/lobby`, 'GET', undefined, U.token);
 check('[epl] the room reads one seated manager, waiting for the second', r.body?.lobbyState === 'waiting_for_players' && r.body?.entries === 1, JSON.stringify(r.body)?.slice(0, 120));
-r = await call('/api/epl/competitions');
-check('[epl] the room appears in the public list with its state', ((r.body?.competitions ?? []).some((x) => x.id === roomId && x.lobbyState === 'waiting_for_players')));
+r = await call('/api/epl/competitions', 'GET', undefined, U.token);
+check('[epl] the room appears in the signed-in rooms list with its state', ((r.body?.competitions ?? []).some((x) => x.id === roomId && x.lobbyState === 'waiting_for_players')));
 
 console.log(`\nLIVE PHASE 7:  PASSED ${pass}   FAILED ${fail}`);
 process.exit(fail ? 1 : 0);
