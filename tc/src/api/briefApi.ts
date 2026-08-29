@@ -2899,6 +2899,167 @@ export function postCampaignUpdate(
   );
 }
 
+// --- Events hub (Tikiti T4) ------------------------------------------------------
+
+export interface EventListing {
+  /** The public identity; internal ids stay private. */
+  slug: string;
+  title: string;
+  category: string;
+  categoryLabel: string;
+  location: string | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  price: number;
+  currency: string;
+  goalAmount: number | null;
+  featured: boolean;
+  /** COUNTED registrations, never a seeded number. */
+  popularity: number;
+}
+
+export function browseEvents(opts: {
+  category?: string; location?: string; from?: string; to?: string;
+  featured?: boolean; sort?: 'date' | 'popularity'; limit?: number;
+} = {}): Promise<ApiResult<{ events: EventListing[]; total: number }>> {
+  const q = new URLSearchParams();
+  if (opts.category) q.set('category', opts.category);
+  if (opts.location) q.set('location', opts.location);
+  if (opts.from) q.set('from', opts.from);
+  if (opts.to) q.set('to', opts.to);
+  if (opts.featured) q.set('featured', '1');
+  if (opts.sort) q.set('sort', opts.sort);
+  if (opts.limit) q.set('limit', String(opts.limit));
+  const qs = q.toString();
+  return request(`/api/events${qs ? `?${qs}` : ''}`, undefined, (r) =>
+    Array.isArray(r?.events) ? { events: r.events as EventListing[], total: Number(r.total ?? r.events.length) } : undefined
+  );
+}
+
+export function getEventCategories(): Promise<ApiResult<{ categories: string[]; labels: Record<string, string> }>> {
+  return request('/api/events/categories', undefined, (r) =>
+    Array.isArray(r?.categories) ? { categories: r.categories, labels: r.labels ?? {} } : undefined
+  );
+}
+
+// --- EPL contest rooms (Tikiti T5) ------------------------------------------------
+
+export interface EplProviderStatus {
+  configured: boolean;
+  reason?: string;
+}
+
+export interface EplClubRow { id: string; name: string; shortName?: string | null }
+
+export interface EplCatalogPlayer {
+  id: string;
+  name: string;
+  club: string;
+  position: 'GK' | 'DEF' | 'MID' | 'FWD';
+  price: number;
+  /** 'seed' or a provider name -- never invented. */
+  source: string;
+}
+
+export function getEplClubs(): Promise<ApiResult<{ clubs: EplClubRow[]; provider: EplProviderStatus }>> {
+  return request('/api/epl/clubs', undefined, (r) =>
+    Array.isArray(r?.clubs) ? { clubs: r.clubs, provider: r.provider ?? { configured: false } } : undefined
+  );
+}
+
+export function getEplCatalog(opts: { club?: string; position?: string } = {}): Promise<ApiResult<{ players: EplCatalogPlayer[]; provider: EplProviderStatus }>> {
+  const q = new URLSearchParams();
+  if (opts.club) q.set('club', opts.club);
+  if (opts.position) q.set('position', opts.position);
+  const qs = q.toString();
+  return request(`/api/epl/catalog${qs ? `?${qs}` : ''}`, undefined, (r) =>
+    Array.isArray(r?.players) ? { players: r.players, provider: r.provider ?? { configured: false } } : undefined
+  );
+}
+
+export type EplLobbyState =
+  | 'waiting_for_players' | 'open' | 'full' | 'in_progress'
+  | 'completed' | 'cancelled';
+
+export interface EplRoomRow {
+  id: string;
+  title: string;
+  status: string;
+  kickoffAt: string;
+  budgetKes: number | null;
+  minEntries: number | null;
+  maxEntries: number | null;
+  mine: boolean;
+  lobbyState: EplLobbyState;
+  entries: number;
+}
+
+export function listEplRooms(): Promise<ApiResult<EplRoomRow[]>> {
+  return request('/api/epl/competitions', undefined, (r) =>
+    Array.isArray(r?.competitions) ? (r.competitions as EplRoomRow[]) : undefined
+  );
+}
+
+export function createEplRoom(body: {
+  title: string; kickoffAt: string;
+  budgetKes?: number | null; minEntries?: number | null; maxEntries?: number | null;
+}): Promise<ApiResult<{ competition: { id: string; title: string; status: string; budgetKes: number | null; minEntries: number | null; maxEntries: number | null }; lobbyState: EplLobbyState }>> {
+  return request('/api/epl/competitions', { method: 'POST', body: JSON.stringify(body) }, (r) =>
+    r?.competition ? { competition: r.competition, lobbyState: r.lobbyState } : undefined
+  );
+}
+
+/** Import the (seed or provider) catalog into a room's pool. Organiser-only. */
+export function importEplPool(competitionId: string, club?: string): Promise<ApiResult<{ imported: number }>> {
+  return request(
+    `/api/epl/competitions/${encodeURIComponent(competitionId)}/pool/import`,
+    { method: 'POST', body: JSON.stringify(club ? { club } : {}) },
+    (r) => (typeof r?.imported === 'number' ? { imported: r.imported } : undefined)
+  );
+}
+
+/**
+ * Seat a team in a room. No price is sent; the server derives everything and
+ * a refusal carries the arithmetic.
+ */
+export function submitEplEntry(
+  competitionId: string,
+  body: { playerIds: string[]; captainId: string }
+): Promise<ApiResult<{
+  created: boolean;
+  entry: { id: string; playerIds: string[]; captainId: string | null; points: number | null };
+  lobbyState: EplLobbyState;
+  entries: number;
+}>> {
+  return request(
+    `/api/epl/competitions/${encodeURIComponent(competitionId)}/entries`,
+    { method: 'POST', body: JSON.stringify(body) },
+    (r) => (r?.entry ? { created: Boolean(r.created), entry: r.entry, lobbyState: r.lobbyState, entries: Number(r.entries ?? 0) } : undefined)
+  );
+}
+
+/** The waiting-room wall: cancel an underfilled room, or lock a filled one. */
+export function settleEplLobby(competitionId: string): Promise<ApiResult<{
+  competition: { id: string; status: string; cancelledReason?: string | null };
+  changed: boolean;
+  lobbyState: EplLobbyState;
+}>> {
+  return request(
+    `/api/epl/competitions/${encodeURIComponent(competitionId)}/settle-lobby`,
+    { method: 'POST', body: '{}' },
+    (r) => (r?.competition ? { competition: r.competition, changed: Boolean(r.changed), lobbyState: r.lobbyState } : undefined)
+  );
+}
+
+export function getEplStandings(competitionId: string): Promise<ApiResult<{
+  competition: { id: string; title: string; status: string };
+  standings: { entryId: string; userId: string; points: number | null; rank: number | null }[];
+}>> {
+  return request(`/api/epl/competitions/${encodeURIComponent(competitionId)}/standings`, undefined, (r) =>
+    r?.competition ? { competition: r.competition, standings: r.standings ?? [] } : undefined
+  );
+}
+
 // --- The dynamic ticket bar ------------------------------------------------------
 
 export interface EngineTicketBar {

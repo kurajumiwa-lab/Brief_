@@ -18,6 +18,8 @@ import { MoneyPanel } from './components/MoneyPanel';
 import { ResaleDesk } from './components/ResaleDesk';
 import { MyTickets } from './components/MyTickets';
 import { EventResale } from './components/EventResale';
+import { EventsHub } from './components/EventsHub';
+import { EplDesk } from './components/EplDesk';
 import { Vault } from './components/vault/Vault';
 import { CheckIn } from './components/CheckIn';
 import { HostCommand } from './components/HostCommand';
@@ -181,7 +183,7 @@ const DESTINATION_ICONS: Record<Destination, LucideIcon> = {
   workflows: Briefcase
 };
 
-export type NearbySection = 'stream' | 'tea' | 'today' | 'pursuits' | 'quests' | 'market';
+export type NearbySection = 'stream' | 'tea' | 'today' | 'pursuits' | 'quests' | 'market' | 'events';
 export type MyLayerSection =
   | 'saved' | 'activity' | 'arena' | 'points' | 'circles' | 'groups' | 'campaigns'
   | 'mediakit' | 'opportunities' | 'messages' | 'subscriptions' | 'tickets';
@@ -6987,7 +6989,7 @@ export function App() {
   }, [arenaGameId]);
 
   const [arenaSection, setArenaSection] = useState<
-    'lobby' | 'ligi' | 'challenges' | 'tournaments' | 'leaderboard'
+    'lobby' | 'ligi' | 'epl' | 'challenges' | 'tournaments' | 'leaderboard'
   >(bootRoute.arena);
 
   // Challenges addressed to this user, awaiting a decision.
@@ -7894,7 +7896,8 @@ export function App() {
                   ['today', `${HOME_MORE.today}${dailyBrief.length > 0 ? ' *' : ''}`],
                   ['pursuits', `${HOME_MORE.pursuits}${pursuits.length > 0 ? ` (${pursuits.length})` : ''}`],
                   ['quests', `${HOME_MORE.quests}${openQuests.length > 0 ? ` (${openQuests.length})` : ''}`],
-                  ['market', HOME_MORE.market]
+                  ['market', HOME_MORE.market],
+                  ['events', HOME_MORE.events]
                 ] as [NearbySection, string][]).map(([id, label]) => (
                   <button
                     key={id}
@@ -9070,6 +9073,7 @@ export function App() {
               {([
                 ['lobby', 'Lobby'],
                 ['ligi', 'Ligi'],
+                ['epl', 'EPL'],
                 ['challenges', `Challenges${challenges.length > 0 ? ` (${challenges.length})` : ''}`],
                 ['tournaments', `Tournaments${arenaTournaments.length > 0 ? ` (${arenaTournaments.length})` : ''}`],
                 ['leaderboard', 'Leaderboard']
@@ -9090,6 +9094,10 @@ export function App() {
 
             {arenaSection === 'ligi' && (
               <Ligi meId={sessionUser?.id ?? null} onToast={showToast} />
+            )}
+
+            {arenaSection === 'epl' && (
+              <EplDesk meId={sessionUser?.id ?? null} onToast={showToast} />
             )}
 
             {arenaSection === 'lobby' && (
@@ -9378,6 +9386,12 @@ export function App() {
         {activeTab === 'mylayer' && myLayerSection === 'circles' && (
           <div className="max-w-3xl mx-auto px-4 py-6">
             <Circles />
+          </div>
+        )}
+
+        {activeTab === 'nearby' && nearbySection === 'events' && (
+          <div className="max-w-3xl mx-auto px-4 py-6">
+            <EventsHub />
           </div>
         )}
 

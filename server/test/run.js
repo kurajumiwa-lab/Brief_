@@ -7165,6 +7165,30 @@ console.log('\n=== EPL CATALOG + SQUAD BUDGET + LOBBY (Tikiti T5) ===');
     check('a room at its minimum reports open', r.body?.lobbyState === 'open' && r.body?.entries === 2, JSON.stringify(r.body?.lobbyState));
     r = await call(`/api/epl/competitions/${comp2}/settle-lobby`, 'POST', {}, O.token);
     check('a filled room locks at the wall', r.body?.lobbyState === 'in_progress', JSON.stringify(r.body?.lobbyState));
+
+    // The full creation -> room -> seat loop over HTTP, on the EPL surface
+    // alone (the bare fantasy surface is gone; this is the one that lives).
+    r = await call('/api/epl/competitions', 'POST', {
+      title: 'GW3 http room', kickoffAt: new Date(Date.now() + 3_600_000).toISOString(),
+      budgetKes: 200, minEntries: 2, maxEntries: 4
+    }, O.token);
+    check('a room is CREATED over HTTP with budget and bounds', r.status === 201 && r.body?.lobbyState === 'waiting_for_players', JSON.stringify(r.body).slice(0, 160));
+    const httpRoom = r.body.competition.id;
+    r = await call(`/api/epl/competitions/${httpRoom}/pool/import`, 'POST', {}, O.token);
+    check('its pool imports from the catalog over HTTP', r.status === 201 && r.body?.imported === 2, JSON.stringify(r.body));
+    r = await call('/api/epl/competitions', 'GET', undefined, M1.token);
+    const listed = (r.body?.competitions ?? []).find((c) => c.id === httpRoom);
+    check('rooms list carries DERIVED lobby state and a live count',
+      Boolean(listed) && listed.lobbyState === 'waiting_for_players' && listed.entries === 0 && listed.mine === false, JSON.stringify(listed));
+    r = await call('/api/epl/competitions', 'GET', undefined, O.token);
+    check('the organiser sees the room as their own', (r.body?.competitions ?? []).find((c) => c.id === httpRoom)?.mine === true);
+    const smallPool = store.filter('fantasyPlayers', (p) => p.competitionId === httpRoom);
+    r = await call(`/api/epl/competitions/${httpRoom}/entries`, 'POST', {
+      playerIds: smallPool.map((p) => p.id), captainId: smallPool[0].id
+    }, M1.token);
+    check('a seat is REFUSED honestly: the room cannot open on a 2-player pool', r.status === 400 && /not open/i.test(r.body?.error ?? ''), JSON.stringify(r.body).slice(0, 140));
+    r = await call(`/api/epl/competitions/${httpRoom}/standings`, 'GET');
+    check('standings read publicly (empty before scoring)', r.status === 200 && Array.isArray(r.body?.standings) && r.body.standings.length === 0);
   } finally { srv.close(); delete process.env.BRIEF_OPERATORS; process.env.BRIEF_DEV_AUTH = '1'; }
 }
 

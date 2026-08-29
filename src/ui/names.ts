@@ -15,7 +15,8 @@ export const HOME_MORE: Record<string, string> = {
   today: 'Today',
   pursuits: 'Alerts',
   quests: 'Jobs',
-  market: 'Shop'
+  market: 'Shop',
+  events: "What's on"
 };
 
 export const SAVED_TABS: Record<string, string> = {
