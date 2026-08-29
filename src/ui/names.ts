@@ -31,7 +31,8 @@ export const SAVED_TABS: Record<string, string> = {
   opportunities: 'Offers',
   messages: 'Messages',
   subscriptions: 'Plans',
-  tickets: 'My tickets'
+  tickets: 'My tickets',
+  verification: 'Verify'
 };
 
 export const INBOX_TABS: Record<string, string> = {
@@ -101,7 +102,7 @@ export const WORKFLOW_BUNDLES = [
 
 export const SAVED_BUNDLES = [
   { id: 'kept', label: 'Kept', hint: 'What you kept, and your own history',
-    sections: ['saved', 'activity', 'points', 'campaigns', 'tickets'] },
+    sections: ['saved', 'activity', 'points', 'campaigns', 'tickets', 'verification'] },
   { id: 'groups', label: 'Groups', hint: 'Circles, chats and matches',
     sections: ['circles', 'groups', 'arena'] },
   { id: 'creator', label: 'Creator', hint: 'Your public side',

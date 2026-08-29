@@ -309,7 +309,7 @@ export function MessagesPanel() {
 // connected.
 
 export function SubscriptionsPanel() {
-  const [mode, setMode] = React.useState<'mine' | 'join'>('mine');
+  const [mode, setMode] = React.useState<'mine' | 'join' | 'topics'>('mine');
 
   const [subs, setSubs] = React.useState<any[]>([]);
   const [state, setState] = React.useState<'loading' | 'ready'>('loading');
@@ -389,6 +389,61 @@ export function SubscriptionsPanel() {
     await load();
   };
 
+  // --- email topic subscriptions (Tikiti T7) -------------------------------
+  // Double opt-in with an honest gap: no mail provider is connected, so the
+  // confirmation TOKEN is returned to the subscriber instead of being emailed,
+  // and the panel says exactly that.
+  const [email, setEmail] = React.useState('');
+  const [topics, setTopics] = React.useState<string[]>([]);
+  const [tokenOut, setTokenOut] = React.useState<string | null>(null);
+  const [confirmToken, setConfirmToken] = React.useState('');
+  const [leaveToken, setLeaveToken] = React.useState('');
+  const [topicBusy, setTopicBusy] = React.useState(false);
+  const [topicNote, setTopicNote] = React.useState<string | null>(null);
+
+  const toggleTopic = (t: string) =>
+    setTopics((cur) => cur.includes(t) ? cur.filter((x) => x !== t) : [...cur, t]);
+
+  const subscribe = async () => {
+    if (!email.trim() || topics.length === 0 || topicBusy) return;
+    setTopicBusy(true);
+    setTokenOut(null);
+    setTopicNote(null);
+    const res = await briefApi.subscribeEmailTopics(email.trim(), topics);
+    setTopicBusy(false);
+    if (!res.ok) { setTopicNote(res.error); return; }
+    if (!res.data.changed) {
+      setTopicNote('That address is already subscribed (or waiting to confirm). Nothing changed.');
+      return;
+    }
+    setTokenOut(res.data.subscription.token ?? null);
+    setTopicNote(res.data.delivery || 'Confirmation token issued.');
+  };
+
+  const confirm = async () => {
+    if (!confirmToken.trim() || topicBusy) return;
+    setTopicBusy(true);
+    setTopicNote(null);
+    const res = await briefApi.confirmEmailSubscription(confirmToken.trim());
+    setTopicBusy(false);
+    setTopicNote(res.ok
+      ? (res.data.already ? 'Already confirmed.' : 'Confirmed. You are on the lists you chose.')
+      : 'This confirmation link is not valid.');
+    if (res.ok) setConfirmToken('');
+  };
+
+  const doUnsubscribe = async () => {
+    if (!leaveToken.trim() || topicBusy) return;
+    setTopicBusy(true);
+    setTopicNote(null);
+    const res = await briefApi.unsubscribeEmail(leaveToken.trim());
+    setTopicBusy(false);
+    setTopicNote(res.ok
+      ? (res.data.already ? 'Already off the lists.' : 'You are off the lists.')
+      : 'No subscription matches that token or address.');
+    if (res.ok) setLeaveToken('');
+  };
+
   return (
     <Shell icon={Repeat} title="Subscriptions">
       <div className="flex gap-1.5">
@@ -413,6 +468,17 @@ export function SubscriptionsPanel() {
           }}
         >
           Plans I can join
+        </button>
+        <button
+          onClick={() => setMode('topics')}
+          className="rounded-lg px-3 py-1.5 text-[11px] font-bold cursor-pointer"
+          style={{
+            background: mode === 'topics' ? T.primary : T.container,
+            color: mode === 'topics' ? '#FFFFFF' : T.onSurfaceVariant,
+            border: `1px solid ${T.outlineVariant}`
+          }}
+        >
+          Email lists
         </button>
       </div>
 
@@ -461,6 +527,92 @@ export function SubscriptionsPanel() {
             </div>
           )}
         </>
+      )}
+
+      {mode === 'topics' && (
+        <div className="space-y-3">
+          <div className="rounded-xl border p-3 space-y-2" style={{ borderColor: T.outlineVariant, background: T.container }}>
+            <p className="text-[11px] font-semibold" style={{ color: T.onSurface }}>Get email about what you chose — nothing else</p>
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              aria-label="email address"
+              className="w-full rounded-lg border px-3 py-2 text-[12px] outline-none"
+              style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }}
+            />
+            <div className="flex flex-wrap gap-1.5">
+              {briefApi.EMAIL_TOPICS.map((t) => (
+                <button
+                  key={t}
+                  onClick={() => toggleTopic(t)}
+                  className="rounded-full px-2.5 py-1 text-[10px] font-bold cursor-pointer"
+                  style={{
+                    border: `1px solid ${topics.includes(t) ? T.primary : T.outlineVariant}`,
+                    color: topics.includes(t) ? T.primary : T.onSurfaceVariant,
+                    background: T.container
+                  }}
+                >
+                  {briefApi.EMAIL_TOPIC_LABELS[t]}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => void subscribe()}
+              disabled={topicBusy || !email.trim() || topics.length === 0}
+              className="rounded-lg px-4 py-2 text-[11px] font-bold cursor-pointer disabled:opacity-40"
+              style={{ background: T.primary, color: '#FFFFFF' }}
+            >
+              {topicBusy ? '…' : 'Subscribe (double opt-in)'}
+            </button>
+            {tokenOut && (
+              <div className="rounded-lg border p-2 space-y-1" style={{ borderColor: T.outlineVariant, background: T.container }}>
+                <p className="text-[10px]" style={{ color: T.onSurfaceVariant }}>
+                  No mail provider is connected, so here is the confirmation token the email would have carried:
+                </p>
+                <p className="font-mono text-[10px] break-all select-all" style={{ color: T.onSurface }}>{tokenOut}</p>
+              </div>
+            )}
+            {topicNote && <p className="text-[11px]" style={{ color: T.onSurface }}>{topicNote}</p>}
+          </div>
+
+          <div className="rounded-xl border p-3 space-y-2" style={{ borderColor: T.outlineVariant, background: T.container }}>
+            <p className="text-[11px] font-semibold" style={{ color: T.onSurface }}>Confirm a subscription</p>
+            <div className="flex gap-2">
+              <input
+                value={confirmToken}
+                onChange={(e) => setConfirmToken(e.target.value)}
+                placeholder="paste the confirmation token"
+                aria-label="confirmation token"
+                className="flex-1 rounded-lg border px-3 py-2 text-[12px] outline-none"
+                style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }}
+              />
+              <button onClick={() => void confirm()} disabled={topicBusy || !confirmToken.trim()} className="rounded-lg px-3 py-2 text-[11px] font-bold cursor-pointer disabled:opacity-40" style={{ background: T.primary, color: '#FFFFFF' }}>
+                Confirm
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-xl border p-3 space-y-2" style={{ borderColor: T.outlineVariant, background: T.container }}>
+            <p className="text-[11px] font-semibold" style={{ color: T.onSurface }}>Leave the lists</p>
+            <p className="text-[10px]" style={{ color: T.onSurfaceVariant }}>
+              Leaving needs no account — the token is enough. That is the privacy-correct direction.
+            </p>
+            <div className="flex gap-2">
+              <input
+                value={leaveToken}
+                onChange={(e) => setLeaveToken(e.target.value)}
+                placeholder="token or email address"
+                aria-label="unsubscribe token or email"
+                className="flex-1 rounded-lg border px-3 py-2 text-[12px] outline-none"
+                style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }}
+              />
+              <button onClick={() => void doUnsubscribe()} disabled={topicBusy || !leaveToken.trim()} className="rounded-lg px-3 py-2 text-[11px] font-bold cursor-pointer disabled:opacity-40" style={{ border: `1px solid ${T.outlineVariant}`, color: T.onSurfaceVariant, background: T.container }}>
+                Unsubscribe
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {mode === 'join' && (

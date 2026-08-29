@@ -2899,6 +2899,81 @@ export function postCampaignUpdate(
   );
 }
 
+// --- Verification (Tikiti T6) ----------------------------------------------------
+
+export type AccountVerificationKind = 'email' | 'phone' | 'identity';
+export type VerificationStatus = 'pending' | 'approved' | 'rejected' | 'revoked';
+
+export interface VerificationRecord {
+  id: string;
+  kind: AccountVerificationKind;
+  status: VerificationStatus;
+  providerRef: string | null;
+  note: string | null;
+  submittedAt: string;
+  reviewedAt: string | null;
+  /** The reviewer's own reason, shown verbatim. */
+  reason: string | null;
+}
+
+export function submitVerification(body: {
+  kind: AccountVerificationKind; providerRef?: string | null; note?: string | null;
+}): Promise<ApiResult<{ record: VerificationRecord; changed: boolean }>> {
+  return request('/api/verification', { method: 'POST', body: JSON.stringify(body) }, (r) =>
+    r?.record ? { record: r.record as VerificationRecord, changed: Boolean(r.changed) } : undefined
+  );
+}
+
+/** My records and my DERIVED standing (never a stored second truth). */
+export function getMyVerification(): Promise<ApiResult<{
+  records: VerificationRecord[];
+  standing: Record<string, 'verified' | 'pending' | 'unverified'>;
+}>> {
+  return request('/api/verification/me', undefined, (r) =>
+    Array.isArray(r?.records) ? { records: r.records as VerificationRecord[], standing: r.standing ?? {} } : undefined
+  );
+}
+
+// --- Email topic subscriptions (Tikiti T7) -----------------------------------------
+
+export const EMAIL_TOPICS = [
+  'event_announcements', 'new_ticket_listings', 'bargain_alerts',
+  'contribution_updates', 'arena_announcements', 'product_updates'
+] as const;
+export type EmailTopic = typeof EMAIL_TOPICS[number];
+
+export const EMAIL_TOPIC_LABELS: Record<EmailTopic, string> = {
+  event_announcements: 'Events',
+  new_ticket_listings: 'Ticket resale',
+  bargain_alerts: 'Bargain bands',
+  contribution_updates: 'Causes you back',
+  arena_announcements: 'Arena',
+  product_updates: 'Brief itself'
+};
+
+export function subscribeEmailTopics(email: string, topics: string[]): Promise<ApiResult<{
+  subscription: { email: string; status: string; topics: string[]; token?: string };
+  delivery: string;
+  changed: boolean;
+}>> {
+  return request('/api/email-subscriptions', { method: 'POST', body: JSON.stringify({ email, topics }) }, (r) =>
+    r?.subscription ? { subscription: r.subscription, delivery: String(r.delivery ?? ''), changed: Boolean(r.changed) } : undefined
+  );
+}
+
+export function confirmEmailSubscription(token: string): Promise<ApiResult<{ ok: true; already: boolean; topics: string[] }>> {
+  return request(`/api/email-subscriptions/confirm?token=${encodeURIComponent(token)}`, undefined, (r) =>
+    r?.ok === true ? { ok: true, already: Boolean(r.already), topics: r.topics ?? [] } : undefined
+  );
+}
+
+/** Leaving a list needs no account: the token (or the address) is enough. */
+export function unsubscribeEmail(tokenOrEmail: string): Promise<ApiResult<{ ok: true; already: boolean }>> {
+  return request('/api/email-subscriptions/unsubscribe', { method: 'POST', body: JSON.stringify({ token: tokenOrEmail }) }, (r) =>
+    r?.ok === true ? { ok: true, already: Boolean(r.already) } : undefined
+  );
+}
+
 // --- Events hub (Tikiti T4) ------------------------------------------------------
 
 export interface EventListing {

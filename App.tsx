@@ -19,6 +19,7 @@ import { ResaleDesk } from './components/ResaleDesk';
 import { MyTickets } from './components/MyTickets';
 import { EventResale } from './components/EventResale';
 import { EventsHub } from './components/EventsHub';
+import { VerificationPanel } from './components/VerificationPanel';
 import { EplDesk } from './components/EplDesk';
 import { Vault } from './components/vault/Vault';
 import { CheckIn } from './components/CheckIn';
@@ -186,7 +187,8 @@ const DESTINATION_ICONS: Record<Destination, LucideIcon> = {
 export type NearbySection = 'stream' | 'tea' | 'today' | 'pursuits' | 'quests' | 'market' | 'events';
 export type MyLayerSection =
   | 'saved' | 'activity' | 'arena' | 'points' | 'circles' | 'groups' | 'campaigns'
-  | 'mediakit' | 'opportunities' | 'messages' | 'subscriptions' | 'tickets';
+  | 'mediakit' | 'opportunities' | 'messages' | 'subscriptions' | 'tickets'
+  | 'verification';
 // Workflows secondary: a Journey is either in progress or finished. Inbox and
 // Sources are kept -- they are existing workflow surfaces, not new screens.
 export type WorkflowSection = 'cockpit' | 'command' | 'active' | 'completed' | 'inbox' | 'sources' | 'money' | 'vault' | 'gate' | 'tea' | 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'ai' | 'engine' | 'groupbuy' | 'resale';
@@ -9757,6 +9759,12 @@ export function App() {
         {activeTab === 'mylayer' && myLayerSection === 'messages' && (
           <div className="max-w-2xl mx-auto px-4 py-6">
             <MessagesPanel />
+          </div>
+        )}
+
+        {activeTab === 'mylayer' && myLayerSection === 'verification' && (
+          <div className="max-w-3xl mx-auto px-4 py-6">
+            <VerificationPanel />
           </div>
         )}
 

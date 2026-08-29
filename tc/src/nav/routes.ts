@@ -13,7 +13,8 @@ export type Destination = 'nearby' | 'arena' | 'mylayer' | 'workflows';
 export type NearbySection = 'stream' | 'tea' | 'today' | 'pursuits' | 'quests' | 'market' | 'events';
 export type MyLayerSection =
   | 'saved' | 'activity' | 'arena' | 'points' | 'circles' | 'groups' | 'campaigns'
-  | 'mediakit' | 'opportunities' | 'messages' | 'subscriptions' | 'tickets';
+  | 'mediakit' | 'opportunities' | 'messages' | 'subscriptions' | 'tickets'
+  | 'verification';
 export type WorkflowSection =
   | 'cockpit' | 'command' | 'active' | 'completed' | 'inbox'
   | 'sources' | 'money' | 'vault' | 'gate' | 'tea'
@@ -53,7 +54,7 @@ export const DEFAULT_ROUTE: BriefRoute = {
 const NEARBY: NearbySection[] = ['stream', 'tea', 'today', 'pursuits', 'quests', 'market', 'events'];
 const MYLAYER: MyLayerSection[] = [
   'saved', 'activity', 'arena', 'points', 'circles', 'groups', 'campaigns',
-  'mediakit', 'opportunities', 'messages', 'subscriptions'
+  'mediakit', 'opportunities', 'messages', 'subscriptions', 'verification'
 ];
 const WORKFLOW: WorkflowSection[] = [
   'cockpit', 'command', 'active', 'completed', 'inbox',

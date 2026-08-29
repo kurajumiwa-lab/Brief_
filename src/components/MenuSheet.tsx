@@ -10,7 +10,8 @@ export type MenuTarget =
   | { tab: 'arena'; section?: 'lobby' | 'ligi' | 'epl' | 'challenges' | 'tournaments' | 'leaderboard' }
   | { tab: 'mylayer'; section?:
       | 'saved' | 'activity' | 'arena' | 'points' | 'circles' | 'groups'
-      | 'campaigns' | 'mediakit' | 'opportunities' | 'messages' | 'subscriptions' }
+      | 'campaigns' | 'mediakit' | 'opportunities' | 'messages' | 'subscriptions'
+      | 'verification' }
   | { tab: 'workflows'; section?:
       | 'cockpit' | 'command' | 'active' | 'completed' | 'inbox'
       | 'sources' | 'money' | 'vault' | 'gate' | 'tea'
