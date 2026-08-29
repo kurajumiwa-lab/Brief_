@@ -81,7 +81,7 @@ export function register(app) {
     const me = requireAuth(req, res);
     if (!me) return;
     try {
-      const article = tea.createArticle({ ...req.body, author: req.body?.author ?? null });
+      const article = tea.createArticle({ ...req.body, author: req.body?.author ?? null, createdBy: me });
       res.status(201).json({ article });
     } catch (e) {
       res.status(400).json({ error: String(e.message ?? e) });
@@ -104,20 +104,25 @@ export function register(app) {
    * Drive a status transition.
    *
    * Creator powers (any signed-in editor of their own desk): submit (send for
-   * review) and unpublish (withdraw). Everything else -- approve, publish,
-   * schedule, expire, archive -- is a MODERATION act on the public story
-   * layer, so it requires the "moderate" capability and is audited.
+   * review), unpublish (withdraw), and PUBLISHING THEIR OWN STORY -- a news
+   * update should not wait on a capability its author does not have. Ownership
+   * is the stored createdBy fact, never a client claim. Everything else --
+   * approve, publish someone ELSE'S story, schedule, expire, archive -- is a
+   * MODERATION act on the public story layer: it requires the "moderate"
+   * capability. Both paths are audited, because both change public visibility.
    */
   const CREATOR_ACTIONS = new Set(['submit', 'unpublish']);
+  const creatorMayRun = (action, article, me) =>
+    CREATOR_ACTIONS.has(action) || (action === 'publish' && article?.createdBy === me);
   app.post('/api/admin/tea/:id/:action', (req, res) => {
     const action = String(req.params.action ?? '');
-    const me = CREATOR_ACTIONS.has(action)
+    const existing = store.find('teaArticles', (a) => a.id === req.params.id) ?? null;
+    const me = creatorMayRun(action, existing, callerId(req))
       ? requireAuth(req, res)
       : requireCap(req, res, 'moderate');
     if (!me) return;
     try {
-      const before = tea.listAll({}).find?.((a) => a.id === req.params.id)?.status
-        ?? (store.find('teaArticles', (a) => a.id === req.params.id) ?? {}).status ?? null;
+      const before = existing?.status ?? null;
       const article = tea.transition(req.params.id, action);
       if (!CREATOR_ACTIONS.has(action)) {
         recordAudit(`tea.${action}`, {

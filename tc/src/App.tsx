@@ -20,7 +20,6 @@ import { MyTickets } from './components/MyTickets';
 import { EventResale } from './components/EventResale';
 import { EventsHub } from './components/EventsHub';
 import { VerificationPanel } from './components/VerificationPanel';
-import { PulseScreen } from './components/PulseScreen';
 import { EplDesk } from './components/EplDesk';
 import { Vault } from './components/vault/Vault';
 import { CheckIn } from './components/CheckIn';
@@ -51,7 +50,6 @@ import { TicketBar } from './components/TicketBar';
 import { ArenaGameScreen } from './components/ArenaGameScreen';
 import type { ArenaStakeKind } from './components/ArenaGameScreen';
 import { LobbyBoard } from './components/LobbyBoard';
-import { Ligi } from './components/Ligi';
 import { FeedComposer } from './components/FeedComposer';
 import { WireSection } from './components/WireSection';
 import { TeaDesk } from './components/TeaDesk';
@@ -155,19 +153,17 @@ export type ProtocolAction =
   | 'follow';
 
 // --- Navigation -------------------------------------------------------------
-// Five screens (§2, §20). Each answers one question: where do I discover,
-// play, find my own things, do work, or see what CHANGED. Menu is an overlay,
-// not a sixth room. Pulse is back change-first: notifications, confirmations,
-// kept-object changes, group signals, event reminders and workflow
-// completions — never the retired town-metrics vanity reading.
+// Four screens. Menu is an overlay, not a fifth room. Pulse was removed by
+// product decision (2026-08-29): its change-feed read duplicated what the
+// surfaces themselves now say. The notifications API remains server-complete;
+// it simply has no dedicated page any more.
 export type Destination =
   | 'nearby'
   | 'arena'
   | 'mylayer'
-  | 'workflows'
-  | 'pulse';
+  | 'workflows';
 
-// The five screens, defined once and consumed by both the desktop rail and the
+// The four screens, defined once and consumed by both the desktop rail and the
 // mobile dock so the two can never drift apart.
 export const DESTINATIONS: {
   id: Destination;
@@ -177,8 +173,7 @@ export const DESTINATIONS: {
   { id: 'nearby', label: ROOM.nearby.label, hint: ROOM.nearby.hint },
   { id: 'arena', label: ROOM.arena.label, hint: ROOM.arena.hint },
   { id: 'mylayer', label: ROOM.mylayer.label, hint: ROOM.mylayer.hint },
-  { id: 'workflows', label: ROOM.workflows.label, hint: ROOM.workflows.hint },
-  { id: 'pulse', label: ROOM.pulse.label, hint: ROOM.pulse.hint }
+  { id: 'workflows', label: ROOM.workflows.label, hint: ROOM.workflows.hint }
 ];
 
 // Icons kept separate from DESTINATIONS so the data stays plain and the
@@ -187,8 +182,7 @@ const DESTINATION_ICONS: Record<Destination, LucideIcon> = {
   nearby: MapPin,
   arena: Award,
   mylayer: Bookmark,
-  workflows: Briefcase,
-  pulse: Activity
+  workflows: Briefcase
 };
 
 export type NearbySection = 'stream' | 'tea' | 'today' | 'pursuits' | 'quests' | 'market' | 'events';
@@ -6910,7 +6904,7 @@ export function App() {
   }, [arenaGameId]);
 
   const [arenaSection, setArenaSection] = useState<
-    'lobby' | 'ligi' | 'epl' | 'challenges' | 'tournaments' | 'leaderboard'
+    'lobby' | 'epl' | 'challenges' | 'tournaments' | 'leaderboard'
   >(bootRoute.arena);
 
   // Challenges addressed to this user, awaiting a decision.
@@ -7861,12 +7855,6 @@ export function App() {
                 </button>
               ))}
             </div>
-          </div>
-        )}
-
-        {activeTab === 'pulse' && (
-          <div className="max-w-3xl mx-auto px-4 py-6">
-            <PulseScreen />
           </div>
         )}
 
@@ -8962,7 +8950,6 @@ export function App() {
             <div className="flex flex-wrap gap-1.5">
               {([
                 ['lobby', 'Lobby'],
-                ['ligi', 'Ligi'],
                 ['epl', 'EPL'],
                 ['challenges', `Challenges${challenges.length > 0 ? ` (${challenges.length})` : ''}`],
                 ['tournaments', `Tournaments${arenaTournaments.length > 0 ? ` (${arenaTournaments.length})` : ''}`],
@@ -8981,10 +8968,6 @@ export function App() {
                 </button>
               ))}
             </div>
-
-            {arenaSection === 'ligi' && (
-              <Ligi meId={sessionUser?.id ?? null} onToast={showToast} />
-            )}
 
             {arenaSection === 'epl' && (
               <EplDesk meId={sessionUser?.id ?? null} onToast={showToast} />

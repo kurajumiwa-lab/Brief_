@@ -8,7 +8,7 @@ import communityArt from '../assets/shelf/nairobi-community.webp';
 import shareArt from '../assets/shelf/whatsapp-share.webp';
 import createArt from '../assets/shelf/host-create.webp';
 import efootballArt from '../assets/arena/efootball.webp';
-import ligiArt from '../assets/arena/ligi.webp';
+import eplArt from '../assets/arena/epl.webp';
 import eventArt from '../assets/shelf/event-gathering.webp';
 
 // ---------------------------------------------------------------------------
@@ -59,18 +59,20 @@ function shelfOrder(cards: ShelfCard[]): ShelfCard[] {
 }
 
 const SHELF_CARDS: ShelfCard[] = [
-  // PRIORITY LISTING. Ligi is first on the shelf on purpose: it is the one
+  // PRIORITY LISTING. EPL is first on the shelf on purpose: it is the one
   // card with a weekly rhythm behind it, so it is the one worth returning for.
-  // `priority` is not a synonym for `featured` — featured is a badge, priority
-  // is a POSITION, and the card is ordered by it rather than by hand so a
-  // future second priority card cannot quietly bury this one.
+  // (Ligi — the African-league variant — was removed by product decision; EPL
+  // is the fantasy surface.) `priority` is not a synonym for `featured` —
+  // featured is a badge, priority is a POSITION, and the card is ordered by it
+  // rather than by hand so a future second priority card cannot quietly bury
+  // this one.
   {
-    id: 'ligi',
-    eyebrow: 'LIGI · AFRICAN FOOTBALL',
-    title: 'Ligi',
-    detail: 'Fantasy football over African leagues · free to play',
-    image: ligiArt,
-    target: { tab: 'arena', section: 'ligi' },
+    id: 'epl',
+    eyebrow: 'EPL · FANTASY FOOTBALL',
+    title: 'EPL',
+    detail: 'Fantasy football over the English Premier League · free to play',
+    image: eplArt,
+    target: { tab: 'arena', section: 'epl' },
     Icon: Flame,
     priority: true
   },

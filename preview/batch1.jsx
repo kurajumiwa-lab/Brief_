@@ -56,8 +56,8 @@ const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;con
   check('no seeded permit guide', !body().includes('knw_permit_guide'));
 
   console.log('\n=== 2. Pulse retired; invented civic figures stay gone ===');
-  // F2: Pulse restored as the fifth destination, change-first (§20).
-  check('Pulse is a destination', !!btn('Pulse'));
+  // Product decision (2026-08-29): the Pulse page was removed. Four screens.
+  check('Pulse is not a destination', !btn('Pulse'));
   let b=body();
   check('no town-dashboard Signals screen', !btn('Signals'));
   check('no invented businesses-helped figure', !b.includes('412'));
@@ -93,8 +93,8 @@ const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;con
   check('town-metrics vanity reading stays retired', !/deriveTownHealth|TownHealth|CivicMetric/.test(appSrc));
   // F2: CivicMetric/TownHealth retired with the vanity reading; Pulse is
   // change-first, so no metric shape can smuggle a value back in.
-  check('five screens (§2): pulse restored change-first',
-    (appSrc.match(/\{ id: '(nearby|arena|mylayer|workflows|pulse)'/g)||[]).length===5);
+  check('four screens (Pulse removed by product decision)',
+    (appSrc.match(/\{ id: '(nearby|arena|mylayer|workflows|pulse)'/g)||[]).length===4);
 
   console.log(`\n${'='.repeat(46)}\nPASSED ${pass}   FAILED ${fail}\n${'='.repeat(46)}`);
   process.exit(fail?1:0);

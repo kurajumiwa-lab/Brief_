@@ -3625,7 +3625,7 @@ console.log('\n=== FEATURE REGISTRY (§4.2) ===');
   // Default state: everything enabled; module features configured; provider
   // features NOT configured (no credentials in this run).
   check('every feature is enabled by default', features.list().every((f) => f.enabled));
-  check('the registry holds all registered features', features.list().length === 42, String(features.list().length));
+  check('the registry holds all registered features', features.list().length === 41, String(features.list().length));
   check('auth is available by default', features.available('auth') === true);
   check('arena is available by default', features.available('arena') === true);
   check('vaults is available by default', features.available('vaults') === true);
@@ -4608,8 +4608,8 @@ console.log('\n=== FANTASY 11: LOCK, DETERMINISTIC SCORING, RANKING ===');
 
   try {
     // --- the full journey, through the DOMAIN (the bare /api/fantasy HTTP
-    // surface was removed with F5; Ligi and the EPL routes are the surfaces,
-    // and both ride this engine).
+    // surface was removed with F5; the EPL routes are the surface, and they
+    // ride this engine).
     const attempt = (fn) => {
       try { const data = fn(); return { ok: true, data }; }
       catch (e) { return { ok: false, err: new Error(String(e.message ?? e)), thrown: e }; }
@@ -5031,7 +5031,6 @@ console.log('\n=== ENDPOINT AUTHORIZATION RULES, ENCODED EXPLICITLY ===');
       ['POST', '/api/orders', { listingId: 'x' }],
       ['POST', '/api/arena/challenges', { gameId: 'efootball' }],
       ['GET', '/api/arena/matches', null],
-      ['POST', '/api/ligi/seasons', { name: 'X' }],
       ['GET', '/api/vendors/me/earnings', null],
       ['POST', '/api/vendors/me/payouts', {}],
       ['GET', '/api/ops/diagnostics', null],
@@ -5058,8 +5057,6 @@ console.log('\n=== ENDPOINT AUTHORIZATION RULES, ENCODED EXPLICITLY ===');
       ['GET', '/api/arena/games'],
       ['GET', '/api/arena/challenges'],
       ['GET', '/api/arena/status'],
-      ['GET', '/api/ligi/rules'],
-      ['GET', '/api/ligi/seasons'],
       ['GET', '/api/epl/clubs']
     ];
     let allPublic = true;
@@ -5897,201 +5894,6 @@ console.log('\n=== FEDERATED SIGN-IN (Google + signed links) ===');
 
   delete process.env.GOOGLE_CLIENT_ID;
   federated._setGoogleKeys(null);
-}
-
-console.log('\n=== LIGI: AFRICAN FANTASY FOOTBALL, AUTOMATED ===');
-{
-  const ligi = await import('../src/domain/ligi.js');
-  const fantasy = await import('../src/domain/fantasy.js');
-  const auth = await import('../src/domain/auth.js');
-  store._reset();
-
-  const host = auth.createUser({ handle: 'organiser', password: 'passw0rd123' });
-  const amina = auth.createUser({ handle: 'amina', password: 'passw0rd123' });
-  const kip = auth.createUser({ handle: 'kipchoge', password: 'passw0rd123' });
-
-  check('the league catalogue is African', ligi.LEAGUES.length >= 10 &&
-    ligi.LEAGUES.every((l) => l.country && l.name) &&
-    ligi.LEAGUES.some((l) => l.id === 'caf_cl') &&
-    ligi.LEAGUES.some((l) => l.id === 'ke_fkf_pl') &&
-    ligi.LEAGUES.some((l) => l.id === 'ng_npfl'));
-  check('an unknown league cannot host a season', (() => {
-    try { ligi.createSeason({ createdBy: host.id, leagueId: 'epl', startsAt: new Date().toISOString() }); return false; }
-    catch { return true; }
-  })());
-
-  const DAY = 24 * 60 * 60 * 1000;
-  // Kickoff is in the real future: Fantasy 11's lock reads the SERVER clock,
-  // so a season dated in the past would arrive pre-locked. The tick is still
-  // driven by an explicit clock, which is what makes the automation testable.
-  const t0 = Date.now() + 10 * 24 * 60 * 60 * 1000;
-  const { season, gameweeks } = ligi.createSeason({
-    createdBy: host.id, leagueId: 'ke_fkf_pl', startsAt: new Date(t0).toISOString(),
-    gameweeks: 3, cashSlotPriceKes: 500
-  });
-  check('a season schedules every gameweek up front', gameweeks.length === 3);
-  check('each gameweek is backed by ONE fantasy competition, not a second engine',
-    gameweeks.every((g) => fantasy.getCompetition(g.competitionId)) &&
-    new Set(gameweeks.map((g) => g.competitionId)).size === 3);
-  check('a season starts upcoming', season.status === 'upcoming');
-
-  // A pool is required before a gameweek can open: no pool, no game.
-  const gw1 = gameweeks[0];
-  const idle = ligi.tick(t0 - 2 * DAY);
-  check('a gameweek with no players refuses to open onto an empty screen',
-    ligi.getGameweek(gw1.id).status === 'scheduled' && idle.changed === false);
-
-  const SQUAD = [
-    ['Mo Keeper', 'GK', 'Gor Mahia'], ['Ada Back', 'DEF', 'Gor Mahia'], ['Bila Back', 'DEF', 'Tusker'],
-    ['Cheb Back', 'DEF', 'Tusker'], ['Dede Mid', 'MID', 'Bandari'], ['Esi Mid', 'MID', 'Bandari'],
-    ['Fara Mid', 'MID', 'Kakamega Homeboyz'], ['Gita Mid', 'MID', 'Kakamega Homeboyz'],
-    ['Hawa Fwd', 'FWD', 'AFC Leopards'], ['Isa Fwd', 'FWD', 'AFC Leopards'], ['Juma Fwd', 'FWD', 'Ulinzi Stars']
-  ];
-  const poolFor = (gw) => SQUAD.map(([name, position, club]) =>
-    fantasy.addPoolPlayer(gw.competitionId, host.id, { name, position, club }));
-  const pool1 = poolFor(gw1);
-
-  const opened = ligi.tick(t0 - 2 * DAY);
-  check('the clock opens the gameweek, with no human input',
-    ligi.getGameweek(gw1.id).status === 'open' &&
-    opened.actions.some((a) => a.action === 'opened'));
-  check('the tick is idempotent', ligi.tick(t0 - 2 * DAY).changed === false);
-
-  // --- seats ---------------------------------------------------------------
-  const seat = ligi.enter(gw1.id, amina.id, { slot: 'free' });
-  check('a free seat is a real seat with a real bankroll',
-    seat.created === true && seat.entry.unitsBankroll === 100 && seat.entry.stakeKind === 'units');
-  check('taking the same seat twice does not create two entries',
-    ligi.enter(gw1.id, amina.id).created === false);
-  ligi.enter(gw1.id, kip.id);
-
-  let cashRefusal = null;
-  try { ligi.enter(gw1.id, kip.id, { slot: 'cash' }); } catch (e) { cashRefusal = e; }
-  check('THE CASH SEAT IS REFUSED, not hidden',
-    cashRefusal && cashRefusal.code === 'compliance_gate');
-  check('the refusal names every unmet requirement',
-    Array.isArray(cashRefusal.compliance.requirements) &&
-    cashRefusal.compliance.requirements.length >= 5);
-  check('no ledger row was created by an attempted cash seat',
-    store.all('ledgerTransactions').length === 0);
-
-  // --- picks ---------------------------------------------------------------
-  const ids = pool1.map((p) => p.id);
-  ligi.submitTeam(gw1.id, amina.id, { playerIds: ids, captainId: ids[8] });
-  ligi.submitTeam(gw1.id, kip.id, { playerIds: ids, captainId: ids[0] });
-  check('a squad must come from the server-authoritative pool', (() => {
-    try { ligi.submitTeam(gw1.id, amina.id, { playerIds: [...ids.slice(0, 10), 'fply_invented'], captainId: ids[0] }); return false; }
-    catch { return true; }
-  })());
-
-  // --- the house line, with no commissioner --------------------------------
-  const lines = ligi.deriveHouseLines(gw1.id);
-  check('every pool player gets a line', lines.length === SQUAD.length);
-  check('a first-week line falls back to the PUBLISHED position baseline',
-    lines.find((l) => l.name === 'Hawa Fwd').line === ligi.HOUSE_RULES.baselineLine.FWD &&
-    lines.every((l) => l.basis === 'position_baseline'));
-  check('no line is a whole number, so nothing can push on the total',
-    lines.every((l) => !Number.isInteger(l.line)));
-  check('deriving twice gives the same lines',
-    JSON.stringify(ligi.deriveHouseLines(gw1.id)) === JSON.stringify(lines));
-
-  // --- wagers --------------------------------------------------------------
-  const hawa = pool1.find((p) => p.name === 'Hawa Fwd');
-  const isa = pool1.find((p) => p.name === 'Isa Fwd');
-  ligi.placeWager(gw1.id, amina.id, { mode: 'over_under', playerId: hawa.id, side: 'over', units: 40 });
-  ligi.placeWager(gw1.id, amina.id, { mode: 'spread', playerId: hawa.id, opponentPlayerId: isa.id, units: 30 });
-  ligi.placeWager(gw1.id, amina.id, { mode: 'confidence', units: 30 });
-  check('the weekly bankroll is exactly 100 units', (() => {
-    try { ligi.placeWager(gw1.id, amina.id, { mode: 'over_under', playerId: isa.id, side: 'under', units: 1 }); return false; }
-    catch (e) { return /100 units/.test(String(e.message)); }
-  })());
-  ligi.placeWager(gw1.id, kip.id, { mode: 'over_under', playerId: hawa.id, side: 'under', units: 50 });
-  check('a wager on a player outside the pool is refused', (() => {
-    try { ligi.placeWager(gw1.id, kip.id, { mode: 'over_under', playerId: 'fply_ghost', side: 'over', units: 5 }); return false; }
-    catch { return true; }
-  })());
-
-  // --- lock ----------------------------------------------------------------
-  ligi.tick(t0 + 60 * 1000);
-  const locked = ligi.getGameweek(gw1.id);
-  check('kickoff locks the week automatically', locked.status === 'awaiting_results');
-  check('the lines are FROZEN at lock', Array.isArray(locked.houseLines) && locked.houseLines.length === SQUAD.length);
-  check('wagers close at the lock', (() => {
-    try { ligi.placeWager(gw1.id, kip.id, { mode: 'over_under', playerId: isa.id, side: 'over', units: 5 }); return false; }
-    catch (e) { return /locked/.test(String(e.message)); }
-  })());
-
-  // --- settlement waits for real data --------------------------------------
-  const early = ligi.settleGameweek(gw1.id);
-  check('SETTLEMENT REFUSES TO INVENT A RESULT', early.settled === false && early.awaiting === true);
-  check('the wait states how much data is missing', /have not arrived/.test(early.reason));
-  check('a tick past the due date still settles nothing without stats',
-    ligi.tick(t0 + 5 * DAY).actions.every((a) => a.action !== 'settled'));
-
-  // Real stats arrive. Hawa scores twice (4+4+1 = 9), Isa does nothing.
-  const stat = (player, s) => fantasy.recordStats(gw1.competitionId, host.id, player.id, s);
-  for (const p of pool1) stat(p, { minutes: 90 });
-  stat(hawa, { minutes: 90, goals: 2 });
-  stat(pool1.find((p) => p.name === 'Mo Keeper'), { minutes: 90, cleanSheet: true, saves: 3 });
-
-  const settled = ligi.tick(t0 + 5 * DAY);
-  check('once the data is real, the week settles itself',
-    ligi.getGameweek(gw1.id).status === 'settled' &&
-    settled.actions.some((a) => a.action === 'settled'));
-
-  const aminaEntry = ligi.getEntry(gw1.id, amina.id);
-  const kipEntry = ligi.getEntry(gw1.id, kip.id);
-  const overWager = ligi.wagersOf(gw1.id, amina.id).find((w) => w.mode === 'over_under');
-  check('an over bet that beat the line pays 1:1',
-    overWager.outcome === 'won' && overWager.unitsReturned === 80);
-  check('the settled wager shows the line it beat and the score it made',
-    overWager.detail.line === 4.5 && overWager.detail.scored === 9);
-  const kipWager = ligi.wagersOf(gw1.id, kip.id)[0];
-  check('the other side of the same line lost', kipWager.outcome === 'lost' && kipWager.unitsReturned === 0);
-  check('the spread settles on the derived handicap',
-    ligi.wagersOf(gw1.id, amina.id).find((w) => w.mode === 'spread').detail.handicap === 0);
-  check('units are netted per manager', aminaEntry.netUnits === aminaEntry.unitsReturned - aminaEntry.unitsStaked);
-  check('the two managers scored the same team points', aminaEntry.teamPoints !== null && kipEntry.teamPoints !== null);
-  check('settling twice changes nothing', ligi.settleGameweek(gw1.id).alreadySettled === true);
-  check('SETTLEMENT MOVED NO MONEY', store.all('ledgerTransactions').length === 0);
-
-  // --- the two ladders -----------------------------------------------------
-  const table = ligi.seasonTable(season.id);
-  check('the season table is derived from settled weeks only', table.length === 2 && table[0].played === 1);
-  check('the table ranks on points, then units',
-    table[0].rank === 1 && typeof table[0].netUnits === 'number');
-  const streaks = ligi.streakTable(season.id);
-  check('a week won starts a streak', streaks.some((s) => s.current === 1 && s.longest === 1));
-  check('a week lost has no streak', streaks.some((s) => s.current === 0));
-  check('the streak rule is published, not implicit', /net units/.test(ligi.HOUSE_RULES.streakWinRule));
-
-  // --- week two: the line now comes from real history ----------------------
-  const gw2 = ligi.gameweeksOf(season.id)[1];
-  const pool2 = poolFor(gw2);
-  ligi.tick(t0 + 5 * DAY);
-  check('the next week opens by itself', ligi.getGameweek(gw2.id).status === 'open');
-  const lines2 = ligi.deriveHouseLines(gw2.id);
-  const hawaLine2 = lines2.find((l) => l.name === 'Hawa Fwd');
-  check('a scoring player is priced UP from their own history',
-    hawaLine2.basis === 'median_of_1' && hawaLine2.line === 9.5);
-  check('the line records the history it was derived from',
-    Array.isArray(hawaLine2.history) && hawaLine2.history[0] === 9);
-  const quietLine2 = lines2.find((l) => l.name === 'Isa Fwd');
-  check('a quiet player is priced down to what they actually did',
-    quietLine2.basis === 'median_of_1' && quietLine2.line === 1.5);
-  check('season status advanced to running on its own', ligi.getSeason(season.id).status === 'running');
-
-  // --- the read model ------------------------------------------------------
-  const view = ligi.overview(amina.id);
-  check('the overview names both slots honestly',
-    view.slots.find((s) => s.id === 'free').available === true &&
-    view.slots.find((s) => s.id === 'cash').available === false);
-  check('the cash slot carries the compliance detail',
-    view.slots.find((s) => s.id === 'cash').compliance.unmet.length >= 4);
-  check('the overview states that units are not money', view.rules.house.unitsAreNotMoney === true);
-  check('the card asks for priority listing', view.game.priority === true);
-  check('the overview carries both ladders', Array.isArray(view.table) && Array.isArray(view.streaks));
-  void pool2;
 }
 
 console.log('\n=== MANUAL CAPTURE HONESTY + THREE UNGUARDED WRITES ===');
@@ -7450,17 +7252,33 @@ console.log('\n=== PLATFORM ROLES: THE OPERATOR SURFACE IS CAPABILITY-GUARDED ==
     const article = teaCreate.body?.article;
     check('a reviewer can create a story draft', teaCreate.status === 201 && Boolean(article), JSON.stringify(teaCreate.body).slice(0, 120));
     r = await call(`/api/admin/tea/${article.id}/publish`, 'POST', {}, op.token);
-    check('an operator cannot publish stories (moderate, 403)', r.status === 403);
-    r = await call(`/api/admin/tea/${article.id}/publish`, 'POST', {}, rev.token);
-    check('a reviewer publishes the story', r.status === 200 && r.body?.article?.status === 'published', JSON.stringify(r.body).slice(0, 140));
+    check("an operator cannot publish SOMEONE ELSE'S story (moderate, 403)", r.status === 403);
+    // A creator publishes their OWN news update with no capability at all.
+    const ownCreate = await call('/api/admin/tea', 'POST', { title: 'A plain editor update', category: 'local_business', body: 'y'.repeat(40) }, nobody.token);
+    const own = ownCreate.body?.article;
+    check('any signed-in editor can draft a story', ownCreate.status === 201 && Boolean(own));
+    r = await call(`/api/admin/tea/${own.id}/publish`, 'POST', {}, nobody.token);
+    check('the AUTHOR publishes their own news update (no capability needed)', r.status === 200 && r.body?.article?.status === 'published', JSON.stringify(r.body).slice(0, 140));
+    r = await call(`/api/admin/tea/${own.id}/unpublish`, 'POST', {}, nobody.token);
+    check('the author can withdraw it again', r.status === 200);
+    const others = await call('/api/admin/tea', 'POST', { title: 'Not mine to publish', category: 'local_business', body: 'z'.repeat(40) }, nobody.token);
+    r = await call(`/api/admin/tea/${others.body?.article?.id}/publish`, 'POST', {}, rev.token);
+    check('a reviewer (moderate) publishes on behalf of another author', r.status === 200);
+    r = await call(`/api/admin/tea/${article.id}/archive`, 'POST', {}, nobody.token);
+    check("archiving someone else's story still needs moderation (403)", r.status === 403);
     r = await call('/api/ops/audit', 'GET', undefined, rev.token);
-    check('the publish is audited with before/after status', r.body.audit.some((a) => a.action === 'tea.publish' && a.before?.status === 'draft' && a.after?.status === 'published'));
+    check('every publish is audited with before/after status, author or moderator',
+      r.body.audit.some((a) => a.action === 'tea.publish' && a.before?.status === 'draft' && a.after?.status === 'published'));
 
-    // --- Ligi's clock is not a player button ----------------------------------
-    r = await call('/api/ligi/tick', 'POST', {}, nobody.token);
-    check('a player cannot tick Ligi (403)', r.status === 403, `got ${r.status}`);
+    // --- Ligi is gone; EPL is the fantasy surface ----------------------------
+    // The African-league game was removed by product decision (its whole HTTP
+    // surface + UI). The honesty check: the routes are GONE, not hidden.
+    r = await call('/api/ligi/rules', 'GET');
+    check('the Ligi surface is gone (404)', r.status === 404, `got ${r.status}`);
     r = await call('/api/ligi/tick', 'POST', {}, op.token);
-    check('an operator may tick Ligi (200)', r.status === 200);
+    check('even an operator cannot tick a removed surface (404)', r.status === 404, `got ${r.status}`);
+    r = await call('/api/epl/clubs', 'GET');
+    check('EPL is the fantasy surface that remains', r.status === 200 && Array.isArray(r.body?.clubs));
   } finally {
     srv.close();
     for (const k of ['BRIEF_OPERATORS', 'BRIEF_REVIEWERS', 'BRIEF_FINANCE', 'BRIEF_ADMINS']) delete process.env[k];

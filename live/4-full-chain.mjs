@@ -191,20 +191,23 @@ r = await call('/api/arena/contests/x/stake', 'POST', { amount: 500 }, S.token);
 check('the real-money gate still refuses (403)', r.status === 403);
 check('naming unmet requirements', Array.isArray(r.body?.requirements));
 
-console.log('\n=== LIGI XI (the fantasy surface that lived) ===');
+console.log('\n=== EPL (the one fantasy surface now) ===');
+// Ligi was removed by product decision; EPL is the game in Arena. The old
+// surface must be GONE, and the new one honest, over the live proxy.
 r = await call('/api/ligi/rules');
-check('scoring rules are published', r.status === 200 && r.body.scoring.assist === 3);
-const ligiRules = (await call('/api/ligi/rules')).body;
-r = await call('/api/ligi/seasons', 'POST', { name: `Sim Season ${uniq}`, leagueId: ligiRules.leagues[0].id, gameweeks: 2, startsAt: new Date(Date.now() - 60_000).toISOString() }, S.token);
-check('a season is created over a real league', r.status === 201, JSON.stringify(r.body).slice(0, 140));
-const season = r.body.season;
-r = await call(`/api/ligi/seasons/${season.id}`);
-const gw = (r.body?.gameweeks ?? [])[0];
-check('its first gameweek is scheduled', Boolean(gw?.id), JSON.stringify(r.body).slice(0, 140));
-r = await call(`/api/ligi/gameweeks/${gw.id}/enter`, 'POST', { slot: 'free' }, Bu.token);
-check('a gameweek with NO player pool does NOT open (nothing to pick)', r.status === 400 && /not opened/i.test(r.body?.error ?? ''), JSON.stringify(r.body).slice(0, 120));
-check('the real-money gate already refused in ARENA with the same compliance code', true);
-check('the bare /api/fantasy surface is GONE (F5)', (await call('/api/fantasy/rules')).status === 404);
+check('the Ligi surface is gone (404)', r.status === 404, `got ${r.status}`);
+r = await call('/api/epl/clubs');
+check('EPL clubs are public', r.status === 200 && Array.isArray(r.body?.clubs) && r.body.clubs.length >= 10);
+r = await call('/api/epl/catalog');
+const players = r.body?.players ?? [];
+check('the catalog carries provenance (seed, never invented)',
+  players.length === 0 || players.every((p) => p.source === 'seed' || p.source === 'provider'));
+r = await call('/api/epl/competitions', 'POST', { title: `Live Chain League ${uniq}`, kickoffAt: new Date(Date.now() + 36e5).toISOString(), minEntries: 2, maxEntries: 8 }, S.token);
+check('a competition is created with an honest kickoff', r.status === 201 && Boolean(r.body?.competition?.id), JSON.stringify(r.body).slice(0, 140));
+const comp = r.body?.competition;
+r = await call(`/api/epl/competitions/${comp?.id}/standings`);
+check('standings are public from the first entry', r.status === 200, `got ${r.status}`);
+check('the bare /api/fantasy surface stays gone (F5)', (await call('/api/fantasy/rules')).status === 404);
 check('and /api/auctions too', (await call('/api/auctions')).status === 404);
 
 console.log('\n=== SIGNALS: one activity layer ===');

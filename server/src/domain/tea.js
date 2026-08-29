@@ -142,6 +142,7 @@ export function hasLiked(articleId, actorId) {
 export function createArticle({
   title, dek = '', body = '', category = 'guide', subCategory = null,
   location = null, heroImage = null, images = [], author = null,
+  createdBy = null,
   source = null, sourceUrl = null, readingTime = null, status = 'draft',
   publishedAt = null, expiresAt = null, tags = [], entities = [],
   relatedContent = [], relatedPlaces = [], relatedEvents = [], design = null
@@ -171,6 +172,9 @@ export function createArticle({
     heroImage,
     images: Array.isArray(images) ? images : [],
     author,
+    // Ownership fact (a user id), distinct from the byline (a name). Publish
+    // authority derives from THIS, never from a client-supplied claim.
+    createdBy,
     source,
     sourceUrl,
     readingTime: Number.isFinite(readingTime) && readingTime > 0 ? readingTime : estimateReadingTime(body),

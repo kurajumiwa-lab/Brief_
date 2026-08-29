@@ -88,16 +88,6 @@ const EMPTY = {
   // The controlled eFootball pilot. Signup rows carry cohort intent; pilot
   // counters are derived from these rows plus the ordinary Arena matches.
   arenaBetaSignups: [],
-  // Ligi — African fantasy football. Seasons over real African leagues, their
-  // scheduled gameweeks, seats, and unit wagers against the derived house
-  // line. Every gameweek is backed by a fantasyCompetition row, so there is
-  // still exactly one scoring engine. Units are a scoring device, never money:
-  // nothing here touches ledgerTransactions. See domain/ligi.js.
-  ligiSeasons: [],
-  ligiGameweeks: [],
-  ligiEntries: [],
-  ligiWagers: [],
-
   // Fantasy 11. Non-economic core: pool, entries, stats and derived scores.
   // No Fantasy wallet -- paid entry would use the one ledger, once legal.
   // The bare /api/fantasy HTTP surface was removed (F5); the domain engine

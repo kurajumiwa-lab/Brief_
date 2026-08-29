@@ -33,8 +33,6 @@ import { register as onboardingRoutes } from './routes/onboarding.js';
 import { register as healthRoutes } from './routes/health.js';
 import { register as opsRoutes } from './routes/ops.js';
 import { register as arenaRoutes } from './routes/arena.js';
-import { register as ligiRoutes } from './routes/ligi.js';
-import * as ligi from './domain/ligi.js';
 import { register as sourcesRoutes } from './routes/sources.js';
 import { register as connectorsRoutes } from './routes/connectors.js';
 import { register as briefitRoutes } from './routes/briefit.js';
@@ -141,7 +139,6 @@ onboardingRoutes(app);
 healthRoutes(app);
 opsRoutes(app);
 arenaRoutes(app);
-ligiRoutes(app);
 sourcesRoutes(app);
 connectorsRoutes(app);
 briefitRoutes(app);
@@ -315,21 +312,6 @@ if (process.env.NODE_ENV !== 'test') {
   calendar.installSweep({
     intervalMs: Number(process.env.BRIEF_CALENDAR_INTERVAL_MS) || 60 * 1000
   });
-  // Ligi: open, lock, price and settle every African fantasy gameweek with no
-  // human in the loop. Idempotent, and it never invents a result — a week
-  // whose match stats have not arrived simply stays awaiting.
-  {
-    const intervalMs = Number(process.env.BRIEF_LIGI_INTERVAL_MS) || 60 * 1000;
-    const timer = setInterval(() => {
-      try {
-        const result = ligi.tick();
-        if (result.changed) ops.logInfo('ligi_tick', { actions: result.actions });
-      } catch (e) {
-        ops.logError('ligi_tick_failed', { message: String(e?.message ?? e) });
-      }
-    }, intervalMs);
-    timer.unref?.();
-  }
 
   const server = app.listen(PORT, '0.0.0.0', () => {
     const diag = ops.startupDiagnostics({
