@@ -1,6 +1,6 @@
 import React from 'react';
 import * as briefApi from '../api/briefApi';
-import type { Listing, Order, Vendor, VendorEarnings } from '../api/types';
+import type { Dispute, Listing, Order, Vendor, VendorEarnings } from '../api/types';
 import { ListingCard } from './marketplace/ListingCard';
 import { ListingDetail } from './marketplace/ListingDetail';
 import { VendorProfile } from './marketplace/VendorProfile';
@@ -63,6 +63,11 @@ export function Marketplace({ currentUserId = 'usr_me' }: MarketplaceProps = {})
   const [myListings, setMyListings] = React.useState<Listing[]>([]);
   const [vendorOrders, setVendorOrders] = React.useState<Order[]>([]);
   const [earnings, setEarnings] = React.useState<VendorEarnings | null>(null);
+  const [disputes, setDisputes] = React.useState<Dispute[]>([]);
+  // A per-order "the server's own record, fetched fresh" view. Not a local
+  // copy of what we already hold — a real GET /api/orders/:id behind a button,
+  // because reading one order deeply had no surface at all.
+  const [fresh, setFresh] = React.useState<Record<string, Order | 'loading' | 'error'>>({});
 
   const [quantity, setQuantity] = React.useState(1);
   const [busyId, setBusyId] = React.useState<string | null>(null);
@@ -91,6 +96,10 @@ export function Marketplace({ currentUserId = 'usr_me' }: MarketplaceProps = {})
   const loadOrders = React.useCallback(async () => {
     const res = await briefApi.getMyOrders();
     if (res.ok) setMyOrders(res.data);
+    // Disputes I raised: the other half of "report a problem" — the report
+    // used to vanish into the server with no way to see it again.
+    const d = await briefApi.getDisputes();
+    if (d.ok) setDisputes(d.data);
   }, []);
 
   const loadSelling = React.useCallback(async () => {
@@ -222,6 +231,12 @@ export function Marketplace({ currentUserId = 'usr_me' }: MarketplaceProps = {})
 
   const fulfil = (id: string) => run(id, () => briefApi.fulfilOrder(id), loadSelling);
 
+  // Settlement: the server refuses unless a SETTLED ledger transaction covers
+  // the order. With no payment provider connected that refusal is the honest
+  // outcome and is shown verbatim — the loop exists end to end, the money is
+  // not pretended in the meantime.
+  const settle = (id: string) => run(id, () => briefApi.settleOrder(id), loadSelling);
+
   const cancel = (id: string) => run(id, () => briefApi.cancelOrder(id), loadOrders);
 
   const dispute = (id: string) =>
@@ -232,6 +247,15 @@ export function Marketplace({ currentUserId = 'usr_me' }: MarketplaceProps = {})
       () => briefApi.disputeOrder(id, 'Reported a problem with this order'),
       loadOrders
     );
+
+  /** Fetch one order's current record straight from the server. */
+  const loadFresh = async (id: string) => {
+    if (fresh[id] && fresh[id] !== 'error') { setFresh((p) => { const q = { ...p }; delete q[id]; return q; }); return; }
+    setFresh((p) => ({ ...p, [id]: 'loading' }));
+    const res = await briefApi.getOrder(id);
+    setFresh((p) => ({ ...p, [id]: res.ok ? res.data : 'error' }));
+  };
+
 
   // --- render --------------------------------------------------------------
 
@@ -328,6 +352,25 @@ export function Marketplace({ currentUserId = 'usr_me' }: MarketplaceProps = {})
                   onDispute={dispute}
                   onCancel={cancel}
                 />
+                <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-2">
+                  <button
+                    onClick={() => void loadFresh(o.id)}
+                    className="text-[10px] font-extrabold text-[#111111]/60 cursor-pointer"
+                  >
+                    {fresh[o.id] && fresh[o.id] !== 'error' ? 'Hide record' : 'Server record'}
+                  </button>
+                  {fresh[o.id] === 'loading' && (
+                    <p className="text-[10px] text-[#111111]/40 mt-1">Fetching this order's current record…</p>
+                  )}
+                  {fresh[o.id] === 'error' && (
+                    <p className="text-[10px] text-[#111111] mt-1">Could not load this order.</p>
+                  )}
+                  {fresh[o.id] && fresh[o.id] !== 'loading' && fresh[o.id] !== 'error' && (
+                    <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap break-words text-[9px] text-[#111111]/60">
+                      {JSON.stringify(fresh[o.id], null, 2)}
+                    </pre>
+                  )}
+                </div>
                 {/* Checkout lives here, only for an unpaid, uncancelled order.
                     A paid order shows no pay form; a cancelled one is final. */}
                 {!o.paid && o.status !== 'cancelled' && o.status !== 'disputed' && (
@@ -335,6 +378,30 @@ export function Marketplace({ currentUserId = 'usr_me' }: MarketplaceProps = {})
                 )}
               </React.Fragment>
             ))
+          )}
+          {disputes.length > 0 && (
+            <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-3 space-y-2">
+              <h4 className="text-[11px] font-extrabold text-[#111111]/40">
+                Problems you reported
+              </h4>
+              {disputes.map((d) => (
+                <div key={d.id} className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold text-[#111111] truncate">{d.reason}</p>
+                    <p className="text-[9px] text-[#111111]/40">
+                      {d.orderId} · raised {d.createdAt.slice(0, 10)}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-[9px] px-2 py-0.5 rounded-full bg-[#FFFFFF] text-[#111111]">
+                    {d.status}
+                  </span>
+                </div>
+              ))}
+              <p className="text-[9px] text-[#111111]/40">
+                A dispute marks the order as contested. No refund is implied —
+                no money has moved.
+              </p>
+            </div>
           )}
         </div>
       )}
@@ -355,6 +422,7 @@ export function Marketplace({ currentUserId = 'usr_me' }: MarketplaceProps = {})
           onCreateListing={createListing}
           onSetStatus={setStatus}
           onFulfil={fulfil}
+          onSettle={settle}
         />
       )}
     </div>

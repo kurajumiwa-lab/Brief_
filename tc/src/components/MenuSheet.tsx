@@ -307,6 +307,18 @@ function HostValueCard({
               {copied ? 'Copied' : 'Copy'}
             </button>
           </div>
+
+          {/* Sign out: the end of the session loop. The token is revoked
+              server-side; the local copy is cleared inside logout() either
+              way, and the app re-opens signed out. */}
+          {me && (
+            <button
+              onClick={() => void briefApi.logout().then(() => window.location.reload())}
+              className="mt-3 w-full h-10 rounded-xl border border-[#28354A] bg-transparent text-white/70 text-[12px] font-extrabold cursor-pointer hover:border-[#7E8B9B] transition-colors"
+            >
+              Sign out
+            </button>
+          )}
         </div>
       )}
     </div>

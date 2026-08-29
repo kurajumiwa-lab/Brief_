@@ -50,6 +50,8 @@ export interface VendorPanelProps {
   onCreateListing: () => void;
   onSetStatus: (id: string, status: Listing['status']) => void;
   onFulfil: (id: string) => void;
+  /** Settle a fulfilled order. Refused server-side until money has really settled. */
+  onSettle: (id: string) => void;
 }
 
 export function VendorPanel({
@@ -66,7 +68,8 @@ export function VendorPanel({
   onListingDraftChange,
   onCreateListing,
   onSetStatus,
-  onFulfil
+  onFulfil,
+  onSettle
 }: VendorPanelProps) {
   // --- not a seller yet ----------------------------------------------------
   if (!vendor) {
@@ -272,6 +275,7 @@ export function VendorPanel({
               perspective="vendor"
               busy={busyId === o.id}
               onFulfil={onFulfil}
+              onSettle={o.status === 'fulfilled' ? onSettle : undefined}
             />
           ))
         )}

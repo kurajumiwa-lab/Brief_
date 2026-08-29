@@ -41,6 +41,8 @@ export interface OrderStatusProps {
   onFulfil?: (id: string) => void;
   onDispute?: (id: string) => void;
   onCancel?: (id: string) => void;
+  /** Vendor-only: settle a fulfilled order against the real ledger. */
+  onSettle?: (id: string) => void;
 }
 
 export function OrderStatus({
@@ -49,9 +51,11 @@ export function OrderStatus({
   busy,
   onFulfil,
   onDispute,
-  onCancel
+  onCancel,
+  onSettle
 }: OrderStatusProps) {
   const canFulfil = perspective === 'vendor' && order.status === 'ordered';
+  const canSettle = perspective === 'vendor' && order.status === 'fulfilled';
   const canDispute =
     perspective === 'buyer' && ['ordered', 'fulfilled', 'settled'].includes(order.status);
   const canCancel = order.status === 'ordered';
@@ -93,8 +97,17 @@ export function OrderStatus({
         </div>
       )}
 
-      {(canFulfil || canDispute || canCancel) && (
+      {(canFulfil || canDispute || canCancel || canSettle) && (
         <div className="flex flex-wrap gap-1.5 pt-0.5">
+          {canSettle && onSettle && (
+            <button
+              onClick={() => onSettle(order.id)}
+              disabled={busy}
+              className="px-3 py-1 rounded-full bg-[#111111] text-[#FFFFFF] text-[10px] font-extrabold cursor-pointer disabled:opacity-50"
+            >
+              Settle
+            </button>
+          )}
           {canFulfil && onFulfil && (
             <button
               onClick={() => onFulfil(order.id)}

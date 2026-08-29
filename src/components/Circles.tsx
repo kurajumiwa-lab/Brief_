@@ -209,6 +209,42 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
     setEvidence((prev) => ({ ...prev, [userId]: res.ok ? res.data : 'error' }));
   };
 
+  // --- coordinator governance ------------------------------------------------
+  //
+  // The members panel used to be read-only: the server had invite / re-role /
+  // remove, but no surface ever called them, so a coordinator could not
+  // actually coordinate. Each action below is refused by the server for
+  // anybody else; the refusal text is shown verbatim.
+
+  const [govBusy, setGovBusy] = React.useState<string | null>(null);
+
+  const govern = async (
+    key: string,
+    fn: () => Promise<{ ok: true; data: unknown } | { ok: false; error: string }>,
+    okNote: string
+  ) => {
+    if (!openId) return;
+    setGovBusy(key);
+    setNotice(null);
+    const res = await fn();
+    setGovBusy(null);
+    if (!res.ok) {
+      setNotice(res.error);
+      return;
+    }
+    setNotice(okNote);
+    await loadDetail(openId);
+  };
+
+  const handleInviteMember = (userId: string, role: Member['role']) =>
+    govern('invite', () => briefApi.inviteMember(openId as string, userId, role), `${userId} is now a member of this circle.`);
+
+  const handleSetRole = (userId: string, role: Member['role']) =>
+    govern(userId, () => briefApi.setMemberRole(openId as string, userId, role), `${userId} is now ${role}.`);
+
+  const handleRemoveMember = (userId: string) =>
+    govern(userId, () => briefApi.removeMember(openId as string, userId), `${userId} was removed from this circle.`);
+
   /**
    * JOIN A CIRCLE.
    *
@@ -684,6 +720,12 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
               evidence={evidence}
               expandedId={expandedMember}
               onToggle={handleToggleMember}
+              canGovern={myRole === 'coordinator'}
+              currentUserId={currentUserId}
+              busyUserId={govBusy}
+              onInvite={handleInviteMember}
+              onRole={handleSetRole}
+              onRemove={handleRemoveMember}
             />
           )}
 

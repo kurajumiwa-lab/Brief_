@@ -50,6 +50,14 @@ export function LobbyBoard({ gameId }: { gameId: string }) {
     setTimeout(() => setCopied(null), 1500);
   };
 
+  const [vouchBusy, setVouchBusy] = React.useState<string | null>(null);
+  const vouch = async (hostId: string, up: boolean) => {
+    setVouchBusy(hostId);
+    await briefApi.vouchHost(hostId, up);
+    setVouchBusy(null);
+    await load();
+  };
+
   const host = async () => {
     if (!code.trim()) return;
     setBusy(true);
@@ -118,6 +126,28 @@ export function LobbyBoard({ gameId }: { gameId: string }) {
                 <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[#111111]/60">
                   <Users className="h-3 w-3" />
                   <span>{r.slotsTaken}/{r.maxSlots} filled</span>
+                </div>
+                {/* Host trust is a tally of real vouches, never a score. The
+                    buttons record YOUR vouch either way; the totals come back
+                    from the server. */}
+                <div className="mt-1 flex items-center gap-1.5 text-[10px] text-[#111111]/60">
+                  <span>host vouches:</span>
+                  <button
+                    onClick={() => void vouch(r.hostId, true)}
+                    disabled={vouchBusy === r.hostId}
+                    className="rounded-md border border-[#E5E7EB] px-1.5 py-0.5 text-[10px] font-bold text-[#111111] cursor-pointer disabled:opacity-50"
+                    aria-label="vouch for this host"
+                  >
+                    ▲ {r.hostTrust?.up ?? 0}
+                  </button>
+                  <button
+                    onClick={() => void vouch(r.hostId, false)}
+                    disabled={vouchBusy === r.hostId}
+                    className="rounded-md border border-[#E5E7EB] px-1.5 py-0.5 text-[10px] font-bold text-[#111111]/60 cursor-pointer disabled:opacity-50"
+                    aria-label="vouch against this host"
+                  >
+                    ▼ {r.hostTrust?.down ?? 0}
+                  </button>
                 </div>
               </div>
               <button

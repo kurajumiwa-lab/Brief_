@@ -478,8 +478,76 @@ function CalendarPanel() {
   React.useEffect(() => { void load(); }, [load]);
   const create = async () => { setBusy(true); const result = await briefApi.createCalendarEntry(form); setBusy(false); setMessage(result.ok ? 'Calendar entry saved.' : result.error); if (result.ok) { setForm({ kind: 'campaign', sourceId: '', startsAt: '', endsAt: '' }); await load(); } };
   const sweep = async () => { setBusy(true); const result = await briefApi.sweepCalendar(); setBusy(false); setMessage(result.ok ? `Sweep: ${JSON.stringify(result.data)}` : result.error); await load(); };
+
+  // --- the wait-list half of capacity --------------------------------------
+  // Joining happens on the campaign itself; reading the queue and accepting
+  // an offer happened nowhere. Both are real server rows, and the public
+  // queue deliberately shows positions and statuses only — no names, no
+  // contacts. Accepting requires the entry id plus the attendee reference
+  // you were given when you joined (or your signed-in identity).
+  const [queueSlug, setQueueSlug] = React.useState('');
+  const [queue, setQueue] = React.useState<any[] | null>(null);
+  const [queueError, setQueueError] = React.useState<string | null>(null);
+  const [acceptId, setAcceptId] = React.useState('');
+  const [acceptRef, setAcceptRef] = React.useState('');
+  const [acceptBusy, setAcceptBusy] = React.useState(false);
+  const [acceptResult, setAcceptResult] = React.useState<string | null>(null);
+  const [acceptError, setAcceptError] = React.useState<string | null>(null);
+  const loadQueue = async () => {
+    const slug = queueSlug.trim();
+    if (!slug) return;
+    setQueue(null); setQueueError(null);
+    const result = await briefApi.getCampaignWaitlist(slug);
+    if (result.ok) setQueue(result.data); else setQueueError(result.error);
+  };
+  const accept = async () => {
+    const id = acceptId.trim();
+    if (!id) return;
+    setAcceptBusy(true); setAcceptResult(null); setAcceptError(null);
+    const result = await briefApi.acceptWaitlistOffer(id, acceptRef.trim() || undefined);
+    setAcceptBusy(false);
+    if (!result.ok) { setAcceptError(result.error); return; }
+    const reg = (result.data as any)?.registration;
+    setAcceptResult(reg?.ticketCode
+      ? `Registered. Your ticket: ${reg.ticketCode}`
+      : 'Registered.');
+    setAcceptId(''); setAcceptRef('');
+    if (queueSlug.trim()) await loadQueue();
+  };
   return (
     <Panel title="Calendar and waiting lists" icon={CalendarDays}>
+      <div className="rounded-2xl border p-4 space-y-3" style={{ borderColor: T.line, background: T.surface }}>
+        <h3 className="text-sm font-semibold" style={{ color: T.ink }}>Wait-list queue</h3>
+        <p className="text-[11px] leading-relaxed" style={{ color: T.muted }}>
+          When an event is full, joiners queue by position. The queue below shows real positions and offer statuses — never names or contacts.
+        </p>
+        <div className="flex flex-wrap items-end gap-2">
+          <Field label="Campaign slug" value={queueSlug} onChange={setQueueSlug} placeholder="the public event address" />
+          <Button disabled={busy || !queueSlug.trim()} onClick={() => void loadQueue()}><Users className="h-3.5 w-3.5" /> Show queue</Button>
+        </div>
+        {queueError && <p className="text-[11px]" style={{ color: T.muted }}>{queueError}</p>}
+        {queue && queue.length === 0 && <p className="text-[11px]" style={{ color: T.muted }}>Nobody is waiting for this one.</p>}
+        {queue && queue.length > 0 && (
+          <ul className="space-y-1.5">
+            {queue.map((row) => (
+              <li key={row.id} className="flex items-center justify-between gap-2 rounded-xl border px-3 py-2" style={{ borderColor: T.line, background: T.bg }}>
+                <span className="text-[11px] font-semibold" style={{ color: T.ink }}>Position {row.position}</span>
+                <span className="text-[10px] uppercase" style={{ color: row.status === 'offered' ? T.green : T.muted }}>{row.status}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="border-t pt-3 space-y-2" style={{ borderColor: T.line }}>
+          <p className="text-[12px] font-semibold" style={{ color: T.ink }}>Accept an offer</p>
+          <div className="flex flex-wrap items-end gap-2">
+            <Field label="Entry id" value={acceptId} onChange={setAcceptId} placeholder="wl_…" />
+            <Field label="Attendee reference" value={acceptRef} onChange={setAcceptRef} placeholder="given when you joined" />
+            <Button tone="primary" disabled={acceptBusy || !acceptId.trim()} onClick={() => void accept()}><Check className="h-3.5 w-3.5" /> {acceptBusy ? 'Accepting…' : 'Accept offer'}</Button>
+          </div>
+          {acceptError && <p className="text-[11px]" style={{ color: T.muted }}>{acceptError}</p>}
+          {acceptResult && <p className="text-[11px]" style={{ color: T.green }}>{acceptResult}</p>}
+        </div>
+      </div>
       <div className="rounded-2xl border p-4 space-y-3" style={{ borderColor: T.line, background: T.surface }}><div className="grid gap-3 sm:grid-cols-2"><label className="block space-y-1"><span className="text-[10px] font-semibold" style={{ color: T.muted }}>Source kind</span><select value={form.kind} onChange={(event) => setForm((old) => ({ ...old, kind: event.target.value }))} className="w-full rounded-xl border px-3 py-2.5 text-[12px]" style={{ borderColor: T.line, background: T.bg, color: T.ink }}><option value="campaign">Brief campaign</option><option value="advertiser_campaign">Advertiser campaign</option></select></label><Field label="Source ID" value={form.sourceId} onChange={(sourceId) => setForm((old) => ({ ...old, sourceId }))} placeholder="camp_..." /><Field label="Starts at" value={form.startsAt} onChange={(startsAt) => setForm((old) => ({ ...old, startsAt }))} placeholder="2026-09-01T10:00:00Z" /><Field label="Ends at" value={form.endsAt} onChange={(endsAt) => setForm((old) => ({ ...old, endsAt }))} placeholder="2026-09-01T18:00:00Z" /></div><div className="flex flex-wrap gap-2"><Button tone="primary" disabled={busy || !form.sourceId || !form.startsAt} onClick={() => void create()}><Plus className="h-3.5 w-3.5" /> Add to calendar</Button><Button disabled={busy} onClick={() => void sweep()}><Clock className="h-3.5 w-3.5" /> Run expiry sweep</Button></div></div>
       <Notice message={message} />
       <div className="space-y-2">{entries.map((entry) => <div key={entry.id} className="flex items-center justify-between gap-3 rounded-2xl border p-3" style={{ borderColor: T.line, background: T.surface }}><div className="min-w-0"><p className="truncate text-[12px] font-semibold" style={{ color: T.ink }}>{entry.title ?? entry.sourceId}</p><p className="text-[10px]" style={{ color: T.muted }}>{entry.startsAt} · {entry.status}</p></div><span className="text-[10px] uppercase" style={{ color: T.green }}>{entry.kind}</span></div>)}</div>
@@ -497,6 +565,41 @@ function VendorsPanel() {
   const [busy, setBusy] = React.useState(false);
   const load = React.useCallback(async () => { const result = await briefApi.getMyVendor(); if (result.ok) setVendor(result.data); }, []);
   React.useEffect(() => { void load(); }, [load]);
+
+  // --- the directory half: every active seller, from the real rows ----------
+  // getVendors existed with no caller: the panel could create a profile but
+  // never show the market of sellers it was joining. The list is honest about
+  // what it is — names and statuses the server publishes, nothing invented.
+  const [directory, setDirectory] = React.useState<any[] | null>(null);
+  const [directoryError, setDirectoryError] = React.useState<string | null>(null);
+  const [editName, setEditName] = React.useState('');
+  const [editDescription, setEditDescription] = React.useState('');
+  const [editStatus, setEditStatus] = React.useState('active');
+  const [editBusy, setEditBusy] = React.useState(false);
+  const [editMessage, setEditMessage] = React.useState<string | null>(null);
+  const loadDirectory = React.useCallback(async () => {
+    setDirectoryError(null);
+    const result = await briefApi.getVendors();
+    if (result.ok) setDirectory(result.data); else { setDirectory([]); setDirectoryError(result.error); }
+  }, []);
+  React.useEffect(() => { void loadDirectory(); }, [loadDirectory]);
+  React.useEffect(() => {
+    if (vendor) { setEditName(vendor.displayName ?? ''); setEditDescription(vendor.description ?? ''); setEditStatus(vendor.status ?? 'active'); }
+  }, [vendor]);
+  const saveProfile = async () => {
+    if (!vendor) return;
+    setEditBusy(true); setEditMessage(null);
+    const result = await briefApi.updateVendor(vendor.id, {
+      displayName: editName.trim() || undefined,
+      description: editDescription,
+      status: editStatus as any
+    });
+    setEditBusy(false);
+    if (!result.ok) { setEditMessage(result.error); return; }
+    setEditMessage('Profile saved.');
+    setVendor(result.data);
+    await loadDirectory();
+  };
   const create = async () => { setBusy(true); const result = await briefApi.createVendor({ displayName: form.displayName, description: form.description, contactMethod: null }); setBusy(false); setMessage(result.ok ? 'Vendor profile created.' : result.error); if (result.ok) { setVendor(result.data); setForm({ displayName: '', description: '' }); } };
   const loadCapabilities = async () => { if (!vendor) return; const result = await briefApi.getVendorCapabilities(vendor.id); if (result.ok && result.data.capabilities) { setServices(result.data.capabilities.services ?? []); setRegions((result.data.capabilities.regions ?? ['KE']).join(', ')); setEscrowSupported(result.data.capabilities.escrowSupported === true); } };
   React.useEffect(() => { void loadCapabilities(); }, [vendor]);
@@ -506,6 +609,8 @@ function VendorsPanel() {
     <Panel title="Vendor syndication" icon={Briefcase}>
       {!vendor ? <div className="rounded-2xl border p-4 space-y-3" style={{ borderColor: T.line, background: T.surface }}><h3 className="text-sm font-semibold" style={{ color: T.ink }}>Create vendor profile</h3><Field label="Business name" value={form.displayName} onChange={(displayName) => setForm((old) => ({ ...old, displayName }))} placeholder="Studio or supplier" /><Field label="Description" value={form.description} onChange={(description) => setForm((old) => ({ ...old, description }))} placeholder="What you provide" /><Button tone="primary" disabled={busy || !form.displayName.trim()} onClick={() => void create()}><Plus className="h-3.5 w-3.5" /> Create profile</Button></div> : <div className="rounded-2xl border p-4 space-y-3" style={{ borderColor: T.line, background: T.surface }}><div><h3 className="text-sm font-semibold" style={{ color: T.ink }}>{vendor.displayName}</h3><p className="mt-1 text-[11px]" style={{ color: T.muted }}>Capability declarations do not self-verify a license.</p></div><div className="flex flex-wrap gap-2">{allServices.map((service) => <button type="button" key={service} onClick={() => setServices((old) => old.includes(service) ? old.filter((item) => item !== service) : [...old, service])} className="rounded-full border px-3 py-1.5 text-[11px] font-semibold" style={{ borderColor: services.includes(service) ? T.green : T.line, color: services.includes(service) ? T.green : T.muted, background: T.bg }}>{service}</button>)}</div><Field label="Regions" value={regions} onChange={setRegions} placeholder="KE, NG" /><label className="flex items-center gap-2 text-[11px]" style={{ color: T.muted }}><input type="checkbox" checked={escrowSupported} onChange={(event) => setEscrowSupported(event.target.checked)} /> Escrow-compatible</label><Button tone="primary" disabled={busy} onClick={() => void save()}><Check className="h-3.5 w-3.5" /> Save capabilities</Button></div>}
       <Notice message={message} />
+      {vendor && <div className="rounded-2xl border p-4 space-y-3" style={{ borderColor: T.line, background: T.surface }}><p className="text-[10px] uppercase tracking-[0.14em]" style={{ color: T.faint }}>Your seller profile</p><div className="grid gap-3 sm:grid-cols-2"><Field label="Business name" value={editName} onChange={setEditName} placeholder="Studio or supplier" /><Field label="Description" value={editDescription} onChange={setEditDescription} placeholder="What you provide" /></div><label className="block space-y-1"><span className="text-[10px] font-semibold" style={{ color: T.muted }}>Status</span><select value={editStatus} onChange={(event) => setEditStatus(event.target.value)} className="w-full rounded-xl border px-3 py-2.5 text-[12px]" style={{ borderColor: T.line, background: T.bg, color: T.ink }}><option value="active">active — visible to buyers</option><option value="paused">paused — hidden from browse</option><option value="closed">closed — no longer selling</option></select></label><Button tone="primary" disabled={editBusy || !editName.trim()} onClick={() => void saveProfile()}><Check className="h-3.5 w-3.5" /> {editBusy ? 'Saving…' : 'Save profile'}</Button>{editMessage && <p className="text-[11px]" style={{ color: T.muted }}>{editMessage}</p>}</div>}
+      <div className="rounded-2xl border p-4 space-y-2" style={{ borderColor: T.line, background: T.surface }}><div className="flex items-center justify-between"><p className="text-[10px] uppercase tracking-[0.14em]" style={{ color: T.faint }}>Seller directory</p><Button disabled={busy} onClick={() => void loadDirectory()}><Users className="h-3.5 w-3.5" /> Refresh</Button></div>{directoryError && <p className="text-[11px]" style={{ color: T.muted }}>{directoryError}</p>}{directory === null && <p className="text-[11px]" style={{ color: T.muted }}>Loading sellers…</p>}{directory !== null && directory.length === 0 && !directoryError && <p className="text-[11px]" style={{ color: T.muted }}>No sellers yet. The directory fills as vendors create profiles.</p>}{directory !== null && directory.length > 0 && <ul className="space-y-1.5">{directory.map((row) => <li key={row.id} className="flex items-center justify-between gap-3 rounded-xl border px-3 py-2" style={{ borderColor: T.line, background: T.bg }}><div className="min-w-0"><p className="truncate text-[12px] font-semibold" style={{ color: T.ink }}>{row.displayName}</p><p className="truncate text-[10px]" style={{ color: T.muted }}>{row.description || 'No description yet.'}</p></div><span className="shrink-0 text-[10px] uppercase" style={{ color: row.status === 'active' ? T.green : T.muted }}>{row.status}</span></li>)}</ul>}</div>
       {vendor && <div className="rounded-2xl border p-4" style={{ borderColor: T.line, background: T.surface }}><p className="text-[10px] uppercase tracking-[0.14em]" style={{ color: T.faint }}>Performance evidence</p><div className="mt-2 grid grid-cols-3 gap-2 text-center"><div><p className="text-sm font-semibold" style={{ color: T.ink }}>{vendor.activeListingCount ?? 0}</p><p className="text-[9px]" style={{ color: T.faint }}>active listings</p></div><div><p className="text-sm font-semibold" style={{ color: T.ink }}>{vendor.verification?.verifiedCount ?? 0}</p><p className="text-[9px]" style={{ color: T.faint }}>evidence</p></div><div><p className="text-sm font-semibold" style={{ color: T.green }}>{vendor.status ?? 'active'}</p><p className="text-[9px]" style={{ color: T.faint }}>status</p></div></div></div>}
     </Panel>
   );

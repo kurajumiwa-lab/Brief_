@@ -5250,6 +5250,21 @@ export function App() {
 
   React.useEffect(() => { void refreshOnboarding(); }, [refreshOnboarding]);
 
+  // The ladder card renders on the Home stream, and its rungs are derived
+  // server-side from REAL rows — a saved object, a confirmed one. Those rows
+  // change while the app is open, so the ladder is re-read from the server
+  // every time Home comes back into view. getLadder() is exactly that half:
+  // the ladder alone, without dragging onboarding state along with it.
+  React.useEffect(() => {
+    if (!sessionUser) return;
+    if (activeTab !== 'nearby') return;
+    void briefApi.getLadder().then((res) => {
+      if (res.ok) {
+        setOnboardingState((prev) => (prev ? { ...prev, ladder: res.data } : prev));
+      }
+    });
+  }, [sessionUser, activeTab]);
+
   // Seeing a populated feed is the moment Brief has shown its point. Recorded
   // once per session, and only when real rows actually arrived.
   const feedSeenRef = React.useRef(false);
@@ -6208,6 +6223,37 @@ export function App() {
   // Watch (prompt 21): records intent to monitor. No polling, no fake alerts --
   // diffObjects is the engine this will drive once ingestion supplies a second
   // version of a record.
+  // --- §8 verify / report: the crowd-checking half of object trust ----------
+  // "I was there" (confirm) and "this is wrong" (report) had server routes
+  // and no buttons. Both hit the real endpoints; both show the server's own
+  // answer or refusal.
+  const [objectCheckBusy, setObjectCheckBusy] = useState<string | null>(null);
+  const [reportForObject, setReportForObject] = useState<string | null>(null);
+
+  const handleConfirmObject = async (object: BriefObject) => {
+    setObjectCheckBusy(object.id);
+    const res = await briefApi.confirmObject(object.id);
+    setObjectCheckBusy(null);
+    if (!res.ok) {
+      showToast(res.error ?? 'Could not record your confirmation.');
+      return;
+    }
+    showToast(`Confirmed — ${res.data.confirmationCount} confirmation${res.data.confirmationCount === 1 ? '' : 's'} on record.`);
+    await loadObjects();
+  };
+
+  const handleReportObject = async (object: BriefObject, reason: string) => {
+    setObjectCheckBusy(object.id);
+    const res = await briefApi.reportObject(object.id, reason);
+    setObjectCheckBusy(null);
+    setReportForObject(null);
+    if (!res.ok) {
+      showToast(res.error ?? 'Could not record your report.');
+      return;
+    }
+    showToast('Reported. A moderator sees it; the record stays up until then.');
+  };
+
   const handleToggleWatch = (object: BriefObject) => {
     const isWatching = watchedIds.has(object.id);
 
@@ -7105,6 +7151,20 @@ export function App() {
     }
     await refreshArenaMatches();
     showToast(res.data?.disputed ? 'Players disagreed. Brief does not pick a winner.' : 'Result confirmed.');
+  };
+
+  // Abandon: the honest exit for a match that never happened. The server
+  // decides who may abandon (and when); a refusal says why.
+  const handleAbandonMatch = async (match: ArenaMatch) => {
+    setArenaBusyId(match.id);
+    const res = await briefApi.abandonArenaMatch(match.id, 'never started');
+    setArenaBusyId(null);
+    if (!res.ok) {
+      showToast(res.error ?? 'Could not abandon this match.');
+      return;
+    }
+    await refreshArenaMatches();
+    showToast('Match abandoned.');
   };
 
   // Venues that actually host the selected game, nearest first.
@@ -9146,6 +9206,7 @@ export function App() {
                         <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleReportMatch(m, me)} className="px-2.5 py-1.5 rounded-lg bg-[#111111] text-[#FFFFFF] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">I won</button>
                         <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleReportMatch(m, opponent ?? null)} className="px-2.5 py-1.5 rounded-lg border border-[#E5E7EB] text-[#111111] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">They won</button>
                         <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleReportMatch(m, null)} className="px-2.5 py-1.5 rounded-lg border border-[#E5E7EB] text-[#111111] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">Draw</button>
+                        <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleAbandonMatch(m)} className="px-2.5 py-1.5 rounded-lg border border-[#E5E7EB] text-[#111111]/60 text-[10px] font-extrabold cursor-pointer disabled:opacity-40">Never happened</button>
                       </div>
                     )}
                     {canConfirm && (
@@ -11244,10 +11305,43 @@ export function App() {
                           : 'bg-[#FFFFFF] border-[#E5E7EB] text-[#111111]/60'
                       }`}
                     >
-                      <Eye className="w-3.5 h-3.5" />
+                      <Eye className="h-3.5 w-3.5" />
                       {watchedIds.has(selectedObjectForDetail.id) ? 'Watching' : 'Watch'}
                     </button>
                   </div>
+
+                  {/* §8: the crowd-checking row. Confirm says "I know this is
+                      true"; report says "this is wrong" with a reason. Both
+                      are real server records, not local flags. */}
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => void handleConfirmObject(selectedObjectForDetail)}
+                      disabled={objectCheckBusy === selectedObjectForDetail.id}
+                      className="flex-1 min-w-fit py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E5E7EB] text-[#111111]/70 font-bold text-[11px] cursor-pointer disabled:opacity-50"
+                    >
+                      {objectCheckBusy === selectedObjectForDetail.id ? 'Recording…' : '✓ I can confirm this'}
+                    </button>
+                    <button
+                      onClick={() => setReportForObject(reportForObject === selectedObjectForDetail.id ? null : selectedObjectForDetail.id)}
+                      className="flex-1 min-w-fit py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E5E7EB] text-[#111111]/50 font-bold text-[11px] cursor-pointer"
+                    >
+                      Report
+                    </button>
+                  </div>
+                  {reportForObject === selectedObjectForDetail.id && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {['wrong details', 'spam', 'offensive', 'no longer true'].map((reason) => (
+                        <button
+                          key={reason}
+                          onClick={() => void handleReportObject(selectedObjectForDetail, reason)}
+                          disabled={objectCheckBusy === selectedObjectForDetail.id}
+                          className="px-3 py-1.5 rounded-full border border-[#E5E7EB] text-[11px] font-bold text-[#111111]/70 cursor-pointer disabled:opacity-50"
+                        >
+                          {reason}
+                        </button>
+                      ))}
+                    </div>
+                  )}
 
                   {watchedIds.has(selectedObjectForDetail.id) && (
                     <p className="text-[10px] text-[#111111]/40 text-center">
