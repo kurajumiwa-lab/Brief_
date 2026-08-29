@@ -7,7 +7,8 @@ export const ROOM = {
   nearby: { label: 'Nearby', hint: "What's happening near you" },
   arena: { label: 'Arena', hint: 'Find people to play with' },
   mylayer: { label: 'My Layer', hint: 'Places and events you kept' },
-  workflows: { label: 'Workflows', hint: "What's waiting on you" }
+  workflows: { label: 'Workflows', hint: "What's waiting on you" },
+  pulse: { label: 'Pulse', hint: 'What changed that matters' }
 } as const;
 
 export const HOME_MORE: Record<string, string> = {

@@ -32,7 +32,8 @@ async function main(){
   console.log('=== Four screens, not twelve ===');
   const top=['Nearby','Arena','My Layer','Workflows'];
   for(const t of top) check(`${t} is a destination`, !!btn(t));
-  check('Pulse is not a destination', !btn('Pulse'));
+  // F2: Pulse is the fifth destination (§2, §20).
+  check('Pulse is a destination', !!btn('Pulse'));
 
   console.log('\n=== Main sheet is a gallery of real entry points ===');
   check('main shelf is visible on Home', body().includes('What do you want to do?'));
@@ -62,7 +63,7 @@ async function main(){
   // The Inbox no longer opens on an index of tools: it opens on the one list
   // of what is waiting on you.
   check('Workflows = what is waiting on you', /Waiting on you/i.test(body()));
-  check('Pulse is not a fifth screen', !btn('Pulse'));
+  check('Pulse is the fifth screen', !!btn('Pulse'));
 
   console.log('\n=== Nearby holds discovery sections ===');
   await click(btn('Nearby'));
@@ -149,8 +150,8 @@ async function main(){
   check('rail hidden on mobile widths', !!rail && rail.className.includes('hidden'));
   check('rail is sticky and full height', !!rail && /sticky/.test(rail.className));
   check('bottom bar fixed to viewport bottom', !!bar && /fixed/.test(bar.className)&&/bottom-0/.test(bar.className));
-  check('rail has Menu plus 4 screens', !!rail && rail.querySelectorAll('button').length===5, rail?String(rail.querySelectorAll('button').length):'no rail');
-  check('bar has Menu plus 4 screens', !!bar && bar.querySelectorAll('button').length===5);
+  check('rail has Menu plus 5 screens', !!rail && rail.querySelectorAll('button').length===6, rail?String(rail.querySelectorAll('button').length):'no rail');
+  check('bar has Menu plus 5 screens', !!bar && bar.querySelectorAll('button').length===6);
 
   console.log('\n=== Both navs stay in sync ===');
   const railBtns=()=>Array.from(rail.querySelectorAll('button'));
@@ -174,7 +175,8 @@ async function main(){
   check('each door has a hint for hover', railBtns().every(b=>(b.getAttribute('title')||'').length>0));
 
   console.log('\n=== Pulse retired; no Intelligence department ===');
-  check('Pulse is not a destination', !btn('Pulse'));
+  // F2: Pulse is the fifth destination (§2, §20).
+  check('Pulse is a destination', !!btn('Pulse'));
   check('no Intelligence in navigation', !railBtns().some(b=>/Intelligence/.test(text(b))));
   check('no AI department framing', !/AI Intelligence|Intelligence Department|AI Insights/i.test(body()));
   check('town-dashboard Signals are not a screen', !sub('Signals'));

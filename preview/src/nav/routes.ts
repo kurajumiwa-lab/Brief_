@@ -8,7 +8,7 @@
 // This module is pure. No React, no fetch, no window.
 // ---------------------------------------------------------------------------
 
-export type Destination = 'nearby' | 'arena' | 'mylayer' | 'workflows';
+export type Destination = 'nearby' | 'arena' | 'mylayer' | 'workflows' | 'pulse';
 
 export type NearbySection = 'stream' | 'tea' | 'today' | 'pursuits' | 'quests' | 'market' | 'events';
 export type MyLayerSection =
@@ -121,6 +121,11 @@ export function parsePath(pathname: string, search = ''): BriefRoute {
     return route;
   }
 
+  if (root === 'pulse') {
+    route.dest = 'pulse';
+    return route;
+  }
+
   // Public campaign pages are a server route. The SPA still boots; leave dest
   // as Around so a missing campaign does not invent a fifth room.
   if (root === 'c') {
@@ -134,7 +139,9 @@ export function parsePath(pathname: string, search = ''): BriefRoute {
 export function toPath(route: BriefRoute): string {
   let path = '/around';
 
-  if (route.dest === 'arena') {
+  if (route.dest === 'pulse') {
+    path = '/pulse';
+  } else if (route.dest === 'arena') {
     path = route.arena === 'lobby' ? '/play' : `/play/${route.arena}`;
   } else if (route.dest === 'mylayer') {
     path = route.mylayer === 'saved' ? '/saved' : `/saved/${route.mylayer}`;
@@ -173,5 +180,5 @@ export function samePlace(a: BriefRoute, b: BriefRoute): boolean {
 export function isBriefRoute(value: unknown): value is BriefRoute {
   if (!value || typeof value !== 'object') return false;
   const r = value as BriefRoute;
-  return r.dest === 'nearby' || r.dest === 'arena' || r.dest === 'mylayer' || r.dest === 'workflows';
+  return r.dest === 'nearby' || r.dest === 'arena' || r.dest === 'mylayer' || r.dest === 'workflows' || r.dest === 'pulse';
 }

@@ -61,7 +61,8 @@ async function main(){
   check('no Marketplace/Shop/Store/Vendors primary', !/Marketplace|Shop\b|Store\b|Vendors/i.test(railText));
   check('the four screens use the brief\'s own vocabulary',
     /Nearby/.test(railText)&&/Arena/.test(railText)&&/Workflows/.test(railText)&&/My Layer/.test(railText));
-  check('Pulse is not a destination', !/Pulse/.test(railText));
+  // F2: Pulse is the fifth destination (§2, §20).
+  check('Pulse is a destination', /Pulse/.test(railText));
 
   console.log('\n=== 12/13. Save still works, related engine still works ===');
   check('save controls still present', document.querySelectorAll('svg').length>0);

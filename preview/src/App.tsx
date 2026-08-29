@@ -20,6 +20,7 @@ import { MyTickets } from './components/MyTickets';
 import { EventResale } from './components/EventResale';
 import { EventsHub } from './components/EventsHub';
 import { VerificationPanel } from './components/VerificationPanel';
+import { PulseScreen } from './components/PulseScreen';
 import { EplDesk } from './components/EplDesk';
 import { Vault } from './components/vault/Vault';
 import { CheckIn } from './components/CheckIn';
@@ -73,6 +74,7 @@ import {
   Sparkles,
   Plus,
   Terminal,
+  Activity,
   MapPin,
   Users,
   Briefcase,
@@ -152,17 +154,19 @@ export type ProtocolAction =
   | 'follow';
 
 // --- Navigation -------------------------------------------------------------
-// Four screens. Each answers one question: where do I discover, play, find my
-// own things, or do work. Menu is an overlay, not a fifth room. Pulse was
-// retired: town-dashboard metrics attracted nobody in the commune, and the
-// useful bits (today, group chatter) already live in Around and Saved.
+// Five screens (§2, §20). Each answers one question: where do I discover,
+// play, find my own things, do work, or see what CHANGED. Menu is an overlay,
+// not a sixth room. Pulse is back change-first: notifications, confirmations,
+// kept-object changes, group signals, event reminders and workflow
+// completions — never the retired town-metrics vanity reading.
 export type Destination =
   | 'nearby'
   | 'arena'
   | 'mylayer'
-  | 'workflows';
+  | 'workflows'
+  | 'pulse';
 
-// The four screens, defined once and consumed by both the desktop rail and the
+// The five screens, defined once and consumed by both the desktop rail and the
 // mobile dock so the two can never drift apart.
 export const DESTINATIONS: {
   id: Destination;
@@ -172,7 +176,8 @@ export const DESTINATIONS: {
   { id: 'nearby', label: ROOM.nearby.label, hint: ROOM.nearby.hint },
   { id: 'arena', label: ROOM.arena.label, hint: ROOM.arena.hint },
   { id: 'mylayer', label: ROOM.mylayer.label, hint: ROOM.mylayer.hint },
-  { id: 'workflows', label: ROOM.workflows.label, hint: ROOM.workflows.hint }
+  { id: 'workflows', label: ROOM.workflows.label, hint: ROOM.workflows.hint },
+  { id: 'pulse', label: ROOM.pulse.label, hint: ROOM.pulse.hint }
 ];
 
 // Icons kept separate from DESTINATIONS so the data stays plain and the
@@ -181,7 +186,8 @@ const DESTINATION_ICONS: Record<Destination, LucideIcon> = {
   nearby: MapPin,
   arena: Award,
   mylayer: Bookmark,
-  workflows: Briefcase
+  workflows: Briefcase,
+  pulse: Activity
 };
 
 export type NearbySection = 'stream' | 'tea' | 'today' | 'pursuits' | 'quests' | 'market' | 'events';
@@ -371,16 +377,6 @@ export interface BriefPost {
  * no `value` field at all, so a surface cannot read a number that was never
  * measured -- it is a compile error, not a runtime 0.
  */
-export type CivicMetric =
-  | { label: string; available: true; value: number; unit?: string; caption: string }
-  | { label: string; available: false; reason: string };
-
-export interface TownHealth {
-  metrics: CivicMetric[];
-  /** Freshness over objects Brief holds. Null when there is nothing to measure. */
-  infoFreshnessPct: number | null;
-}
-
 // ----------------------------------------------------------------------------
 // Type-derived helpers (must live BELOW the type declarations above)
 // ----------------------------------------------------------------------------
@@ -4528,80 +4524,6 @@ const INITIAL_POSTS: BriefPost[] = [];
  */
 const INITIAL_JOURNEYS: Journey[] = [];
 
-/**
- * Derives civic metrics from records Brief actually holds.
- *
- * The rule this function exists to enforce:
- *
- *     no underlying records -> no number -> honest empty state
- *
- * Freshness is genuinely derivable: it is the share of objects carrying a
- * verification date that has not expired, computed by the same getFreshness()
- * the cards use. Everything else on the old dashboard -- businesses helped,
- * events attended, knowledge resolved, community contributions -- would
- * require outcome tracking Brief does not do. Those are reported as
- * unavailable with the reason, not filled with a plausible-looking integer.
- */
-const deriveTownHealth = (
-  objects: BriefObject[],
-  journeys: Journey[],
-  now: Date = new Date()
-): TownHealth => {
-  const dated = objects.filter((o) => getFreshness(o, now) !== null);
-  const fresh = dated.filter((o) => {
-    const f = getFreshness(o, now);
-    return f !== null && f.level !== 'stale';
-  });
-
-  const infoFreshnessPct =
-    dated.length > 0 ? Math.round((fresh.length / dated.length) * 1000) / 10 : null;
-
-  const completedJourneys = journeys.filter((j) => j.isCompleted).length;
-
-  const metrics: CivicMetric[] = [
-    infoFreshnessPct === null
-      ? {
-          label: 'Freshness',
-          available: false,
-          reason: 'No object carries a verification date yet, so freshness cannot be measured.'
-        }
-      : {
-          label: 'Freshness',
-          available: true,
-          value: infoFreshnessPct,
-          unit: '%',
-          caption: `${fresh.length} of ${dated.length} dated objects still within their verification window`
-        },
-    {
-      label: 'Journeys',
-      available: true,
-      value: completedJourneys,
-      caption: completedJourneys === 1 ? 'journey completed' : 'journeys completed'
-    },
-    {
-      label: 'Businesses',
-      available: false,
-      reason: 'Brief does not track business outcomes. Nothing records whether a business was helped.'
-    },
-    {
-      label: 'Events',
-      available: false,
-      reason: 'Attendance is only known for campaigns you run. There is no town-wide attendance record.'
-    },
-    {
-      label: 'Opportunities',
-      available: false,
-      reason: 'Brief does not know whether an opportunity was acted on after you left the app.'
-    },
-    {
-      label: 'Community',
-      available: false,
-      reason: 'Contributions are recorded per Circle. There is no town-wide contribution count.'
-    }
-  ];
-
-  return { metrics, infoFreshnessPct };
-};
 
 export const getObjectTypeMeta = (type: ObjectType) => {
   switch (type) {
@@ -5108,11 +5030,6 @@ export function App() {
   const [objects, setObjects] = useState<BriefObject[]>(INITIAL_OBJECTS);
   const [journeys, setJourneys] = useState<Journey[]>(INITIAL_JOURNEYS);
   // Derived, never stored. Nothing can set a civic metric by hand.
-  const townHealth = useMemo(
-    () => deriveTownHealth(objects, journeys),
-    [objects, journeys]
-  );
-
   // My Activity starts empty. The two seeded relationships claimed the user
   // had "discovered" and "engaged with" specific objects they had never seen
   // -- a fabricated claim about the person using Brief, and one that pointed
@@ -6999,52 +6916,6 @@ export function App() {
   // Runs over the access-checked indexes, so an inaccessible group can never
   // contribute a signal.
   // Workflows secondary is derived from real Journey data, not a new store.
-  // PULSE derivations. Every one reads existing state -- posts, objects,
-  // groups the user already belongs to. Nothing here is generated or inferred
-  // by a model; Pulse is a reading of the information layer, not an assistant.
-  const pulseNow = useMemo(
-    () =>
-      [...posts]
-        .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
-        .slice(0, 6),
-    [posts]
-  );
-
-  const pulseNotices = useMemo(
-    () => posts.filter((p) => p.kind === 'notice' || p.kind === 'news'),
-    [posts]
-  );
-
-  const pulseRecentlyVerified = useMemo(
-    () =>
-      objects
-        .filter((obj) => obj.isVerified && obj.lastVerifiedAt)
-        .sort((a, b) => (b.lastVerifiedAt ?? '').localeCompare(a.lastVerifiedAt ?? ''))
-        .slice(0, 5),
-    [objects]
-  );
-
-  // What the groups you are already in are surfacing. Membership is never
-  // invented: this walks visibleGroups only.
-  const pulseGroupSignals = useMemo(() => {
-    const out: {
-      id: string;
-      groupName: string;
-      text: string;
-      at: string;
-    }[] = [];
-    for (const group of visibleGroups) {
-      for (const entry of groupIndexes[group.id] ?? []) {
-        out.push({
-          id: `pulse_${entry.id}`,
-          groupName: group.name,
-          text: entry.originalText,
-          at: entry.sentAt
-        });
-      }
-    }
-    return out.sort((a, b) => b.at.localeCompare(a.at)).slice(0, 6);
-  }, [visibleGroups, groupIndexes]);
 
   const activeJourneys = useMemo(() => journeys.filter((j) => !j.isCompleted), [journeys]);
   const completedJourneys = useMemo(() => journeys.filter((j) => j.isCompleted), [journeys]);
@@ -7979,6 +7850,12 @@ export function App() {
                 </button>
               ))}
             </div>
+          </div>
+        )}
+
+        {activeTab === 'pulse' && (
+          <div className="max-w-3xl mx-auto px-4 py-6">
+            <PulseScreen />
           </div>
         )}
 
