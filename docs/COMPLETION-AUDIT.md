@@ -170,3 +170,25 @@ level (half-loops above), which F7 addresses.
 
 Every step keeps all suites green; removals delete their tests with them so
 the totals stay honest.
+
+---
+
+## COMPLETION (2026-08-29) — every finding closed
+
+| Finding | Close-out | Commit |
+|---|---|---|
+| F1 roles/guards/audit | done earlier (see remediation log above) | pre-audit series |
+| F2 Pulse restored as fifth destination, change-first; town-metrics + dead derivations deleted; retirement guards inverted | `8574500` |  |
+| F3 notifications surfaced (primary Pulse input, mark-read wired) | `8574500` |  |
+| F4 operator desk: Health / Attention / Ingestion / Content / Media / Commerce / Security / Diagnostics, capability-gated, loops closed incl. T6 review queue + T7 delivery log; new `GET /api/ops/disputes`, `GET /api/ops/ticket-listings` | `12b2b2c` |  |
+| F5 abandoned server-only products removed (auction, pools, bare fantasy HTTP; advertiser console kept — audit correction) | `498aa13` |  |
+| F6 orphan client components removed | `94d4d89` |  |
+| F7 every half-loop wired to real UI | `a7f34bc` |  |
+| F8 legitimately-external endpoints kept | no change needed | — |
+| F9 rogue fetches fixed | `f370e65` |  |
+| F10 nav vocabulary restored to the brief's names | `f370e65` |  |
+| F11 handler-less button sweep: only orphan (F6), removed | `94d4d89` |  |
+
+Tikiti merge T1–T10 all closed (T9 resolved as Brief's payment truth rather
+than a sandbox port — see `docs/INTEGRATION-TIKITI.md` progress). Final
+baseline numbers and the end-to-end walk: `docs/COMPLETION-REPORT.md`.

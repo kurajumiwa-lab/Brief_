@@ -5997,6 +5997,8 @@ console.log('\n=== MANUAL CAPTURE HONESTY + THREE UNGUARDED WRITES ===');
     check('an explicit save never loses the words the person typed', r.body?.result?.created === true, JSON.stringify(r.body).slice(0, 160));
 
     const kept = store.find('objects', (o) => o.id === r.body?.result?.objectId);
+    check('the capture is attributed to its capturer (the confirmed-notification rail needs someone to notify)',
+      kept?.capturedBy === me.user.id, JSON.stringify({ capturedBy: kept?.capturedBy ?? null, caller: me.user.id }));
     check('the kept note claims exactly the confidence extraction earned, not a flattering constant',
       kept?.extractionConfidence === earned, `claimed ${kept?.extractionConfidence} vs earned ${earned}`);
     check('that confidence is below the number it used to assert', (kept?.extractionConfidence ?? 1) < 0.85,
@@ -6981,6 +6983,8 @@ console.log('\n=== EMAIL SUBSCRIPTIONS (Tikiti T7) ===');
     check('unsubscribing needs no account (the privacy-correct direction)', r.status === 200);
     r = await call('/api/email-subscriptions/unsubscribe', 'POST', { email: 'a@b.co' });
     check('unsubscribing twice is idempotent', r.status === 200 && r.body?.already === true);
+    r = await call(`/api/email-subscriptions/confirm?token=${encodeURIComponent(token)}`, 'GET');
+    check('a token from a LEFT list is retired (no resurrection without consent)', r.status === 404, `status=${r.status}`);
     r = await call('/api/email-subscriptions', 'POST', { email: 'a@b.co', topics: ['product_updates'] });
     check('re-subscribing restarts double opt-in', r.status === 201 && r.body?.subscription?.status === 'pending');
     r = await call('/api/ops/email-log', 'GET', undefined, OP.token);

@@ -77,6 +77,43 @@ F3 notifications, F4 admin, F5–F7 removals) per the parallel-work decision.
 ## Progress
 
 - [x] Plan agreed (target = merge into Brief; order = all, Tikiti-brief order; parallel with F-phases)
+- [x] **T2 server+client** — bargain tiers (participant bands -> price), countdown
+      expiry, min/max caps, tier signals; Marketplace bargain UI (`9a198de`)
+- [x] **T3 server+client** — contribution pots: stated amounts, anonymous option
+      (identity kept server-side), deadlines, updates feed
+      (`/api/public/campaigns/:slug/updates`), progress from settled ledger
+      rows only; CampaignPage pot view (`b594cba`, `9a198de`)
+- [x] **T4 server+client** — events hub: categories/featured/search/sort over
+      real campaigns, counted popularity (`b594cba`); EventsHub in Nearby ->
+      What's on (`3067be6`)
+- [x] **T5 server+client** — EPL: player catalog with provenance (seed-tagged,
+      honest 503 sync), squad budgets + club caps, waiting-room lobby states
+      with underfilled-cancel wall (`8d3213d`); EplDesk in Arena (`3067be6`)
+- [x] **T6 server+client** — verification records + review queue + audit
+      (`b594cba`); Verify panel in My Layer (`35e0b1a`)
+- [x] **T7 server+client** — topic subscriptions, double opt-in with the token
+      returned honestly (no provider), unsubscribe by token or address,
+      delivery log (`b594cba`); Email lists mode in Plans (`35e0b1a`)
+- [x] **T8** — absorbed into the F4 operator desk: Attention station carries
+      the verification queue, dispute wall, resale listing wall with removal
+      reasons (`12b2b2c`)
+- [x] **T9 — resolved as Brief's payment truth, not a port.** Brief's provider
+      registry (tuma registered; real Daraja connector exists for the huduma
+      STK loop) is the gateway; only a genuinely configured provider counts,
+      there is no mock provider by design, and an unconfigured deployment
+      answers 503 `charged:false` (§17). No sandbox-simulated success was
+      ported from Tikiti, deliberately: honest refusal beats a fake charge.
+- [x] **T10 — fraud screen + capability sweep** — listing fraud screen on the
+      resale market (`b594cba`); webhook callbacks verified with reasons and
+      rejects recorded; operator capabilities (F1) gate every consequential
+      route, audited.
+- [x] **F2+F3 — Pulse restored change-first** (`8574500`): fifth destination
+      (/pulse), notifications-primary surface with mark-read, group-signal
+      strip; town-metrics vanity reading deleted.
+- [x] **F4 — the operator desk** (`12b2b2c`): eight stations (Health /
+      Attention / Ingestion / Content / Media / Commerce / Security /
+      Diagnostics), capability-gated, audited.
+- [x] Final baseline + report — `docs/COMPLETION-REPORT.md`.
 - [x] **T1 server** — `domain/ticketMarket.js` + `routes/ticketmarket.js` + 4 store
       collections + auto-issuance hooks (confirm-payment & registration promote)
       + version-aware gate (`/api/tickets/:code`/check-in honour `?v=`,
@@ -106,5 +143,4 @@ F3 notifications, F4 admin, F5–F7 removals) per the parallel-work decision.
       client suites **1291/0** (incl. new `resale.jsx` 14 checks), tc clean,
       live suites 43/27/93/16 all 0-fail, and a 10-step production HTTP walk
       (issue→list→browse-by-slug→hold→attest→v2-code→gate-409/200→gift→refund).
-- [ ] T2 Bargains — tiered pricing + expiry + caps
-- [ ] T3–T10 …
+

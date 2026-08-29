@@ -167,6 +167,11 @@ export function confirmEmail(token) {
   const sub = store.find('emailSubscriptions', (s) => s.token === String(token ?? ''));
   if (!sub) return { ok: false, reason: 'unknown_token' };
   if (sub.status === 'confirmed') return { ok: true, subscription: sub, already: true };
+  // A token from a subscription the person LEFT is retired. Letting it
+  // re-confirm would resubscribe someone who explicitly opted out, using a
+  // link they may not control any more. Rejoining goes through subscribe(),
+  // which restarts double opt-in with a fresh token.
+  if (sub.status === 'unsubscribed') return { ok: false, reason: 'token_retired' };
   const updated = store.update('emailSubscriptions', sub.id, { status: 'confirmed', confirmedAt: nowIso() });
   logEmail(sub.email, sub.topics[0] ?? null, 'subscribe_confirmed', 'skipped_no_provider', 'no email provider configured');
   return { ok: true, subscription: updated, already: false };
