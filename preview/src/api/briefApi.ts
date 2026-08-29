@@ -2948,6 +2948,7 @@ export interface EplRoomRow {
   id: string;
   title: string;
   status: string;
+  createdAt?: string;
   kickoffAt: string;
   budgetKes: number | null;
   minEntries: number | null;

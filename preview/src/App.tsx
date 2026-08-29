@@ -10,6 +10,7 @@ import {
 } from './nav/routes';
 import type { ArenaMoneyStatus } from './api/types';
 import QRCode from 'qrcode';
+import { deriveDestinationAlerts, readLastSeen, writeLastSeen, alertLabel, type DestinationAlerts } from './nav/alerts';
 import { CampaignDistribution } from './components/CampaignDistribution';
 import { AwaitingPayment } from './components/AwaitingPayment';
 import { SourcesPanel } from './components/SourcesPanel';
@@ -175,6 +176,20 @@ export const DESTINATIONS: {
   { id: 'mylayer', label: ROOM.mylayer.label, hint: ROOM.mylayer.hint },
   { id: 'workflows', label: ROOM.workflows.label, hint: ROOM.workflows.hint }
 ];
+
+// The red activity dot for a sidebar title. Dot for 1 update, dot + count
+// from 2 (capped at 9+). Pure presentation; counts come from real data only.
+function ActivityDot({ n }: { n: number }) {
+  if (n <= 0) return null;
+  return (
+    <span
+      aria-hidden="true"
+      className="brief-alert-dot inline-flex items-center justify-center min-w-[15px] h-[15px] px-[3px] rounded-full bg-[#B42318] text-[#FFFFFF] text-[8px] font-extrabold leading-none shadow-[0_0_0_1.5px_#FBFAFD]"
+    >
+      {n > 1 ? alertLabel(n) : ''}
+    </span>
+  );
+}
 
 // Icons kept separate from DESTINATIONS so the data stays plain and the
 // component layer owns the visuals.
@@ -5445,8 +5460,64 @@ export function App() {
 
   // Both navs call this, so selecting a destination behaves identically on
   // desktop and mobile: you land on that destination's main section.
+  // --- Destination activity alerts (the red dots on the sidebar titles) ------
+  // Derived ONLY from real data: unread notifications (routed by kind) plus
+  // public feed items / EPL rooms newer than the last time this viewer
+  // opened that destination. First visit baselines silently; unreachable
+  // services contribute zero. Never a decorative dot.
+  const [destinationAlerts, setDestinationAlerts] = useState<DestinationAlerts>({ nearby: 0, arena: 0, mylayer: 0, workflows: 0 });
+  const alertsTick = React.useRef(0);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    const derive = async () => {
+      const tick = ++alertsTick.current;
+      const [notifRes, roomsRes, feedRes] = await Promise.all([
+        briefApi.getNotifications(true).catch(() => null),
+        briefApi.listEplRooms().catch(() => null),
+        briefApi.getPublicFeed({}).catch(() => null)
+      ]);
+      if (cancelled || tick !== alertsTick.current) return;
+      const feed = (feedRes && feedRes.ok ? feedRes.data?.feed : null) ?? null;
+      const feedItems = feed
+        ? [
+            ...(Array.isArray(feed.hero) ? feed.hero : []),
+            ...(Array.isArray(feed.discovery) ? feed.discovery : []),
+            ...(Array.isArray(feed.opportunities) ? feed.opportunities : []),
+            ...(Array.isArray(feed.more) ? feed.more : []),
+            ...(Array.isArray(feed.moreTea) ? feed.moreTea : []),
+            ...(feed.tea ? [feed.tea] : [])
+          ]
+        : [];
+      const lastSeen = {
+        nearby: readLastSeen('nearby'),
+        arena: readLastSeen('arena')
+      };
+      setDestinationAlerts(deriveDestinationAlerts({
+        notifications: notifRes && notifRes.ok ? notifRes.data?.notifications ?? [] : null,
+        rooms: roomsRes && roomsRes.ok ? roomsRes.data ?? [] : null,
+        feedItems,
+        lastSeen
+      }));
+    };
+    void derive();
+    const interval = window.setInterval(() => { void derive(); }, 60_000);
+    const onVisible = () => { if (document.visibilityState === 'visible') void derive(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, []);
+
   const goToDestination = (id: Destination) => {
     setMenuOpen(false);
+    // Opening a destination is the user SEEING it: baseline its freshness
+    // clock and drop the dot immediately (notifications keep their own
+    // unread state until read on the activity surface).
+    writeLastSeen(id, Date.now());
+    setDestinationAlerts((prev) => (prev[id] === 0 ? prev : { ...prev, [id]: 0 }));
     setCaptureOpen(false);
     setSelectedTeaSlug(null);
     setOpenCampaignId(null);
@@ -7608,7 +7679,12 @@ export function App() {
                     active ? 'h-7 bg-[#5B2EA6]' : 'h-0 bg-transparent'
                   }`}
                 />
-                <Icon className="w-5 h-5 shrink-0" />
+                <span className="relative shrink-0">
+                  <Icon className="w-5 h-5" />
+                  <span className="absolute -right-1.5 -top-1.5">
+                    <ActivityDot n={destinationAlerts[d.id] ?? 0} />
+                  </span>
+                </span>
                 <span className="min-w-0 opacity-0 group-hover/rail:opacity-100 transition-opacity">
                   <span className="block text-[13px] font-extrabold whitespace-nowrap">
                     {d.label}
@@ -9794,10 +9870,20 @@ export function App() {
                 active ? 'text-[var(--brief-green)] font-bold border-t-2 border-[var(--brief-green)]' : 'text-[var(--brief-muted)]'
               }`}
             >
-              <Icon className="w-5 h-5" />
+              <span className="relative">
+                <Icon className="w-5 h-5" />
+                <span className="absolute -right-2 -top-1.5">
+                  <ActivityDot n={destinationAlerts[d.id] ?? 0} />
+                </span>
+              </span>
               <span className="text-[12px] font-extrabold leading-none">
                 {d.label}
               </span>
+              {(destinationAlerts[d.id] ?? 0) > 0 && (
+                <span className="sr-only">
+                  {destinationAlerts[d.id]} update{(destinationAlerts[d.id] ?? 0) > 1 ? 's' : ''}
+                </span>
+              )}
             </button>
           );
         })}

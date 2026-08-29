@@ -7192,6 +7192,8 @@ console.log('\n=== EPL CATALOG + SQUAD BUDGET + LOBBY (Tikiti T5) ===');
     const listed = (r.body?.competitions ?? []).find((c) => c.id === httpRoom);
     check('rooms list carries DERIVED lobby state and a live count',
       Boolean(listed) && listed.lobbyState === 'waiting_for_players' && listed.entries === 0 && listed.mine === false, JSON.stringify(listed));
+    check('rooms list carries createdAt (the activity dot source)',
+      Boolean(listed?.createdAt) && Number.isFinite(Date.parse(listed.createdAt)), JSON.stringify(listed?.createdAt));
     r = await call('/api/epl/competitions', 'GET', undefined, O.token);
     check('the organiser sees the room as their own', (r.body?.competitions ?? []).find((c) => c.id === httpRoom)?.mine === true);
     // The room is OPEN now (import opens it), so the honest refusal left to

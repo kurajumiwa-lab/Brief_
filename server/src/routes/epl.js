@@ -23,6 +23,9 @@ export function register(app) {
       id: c.id,
       title: c.title,
       status: c.status,
+      // createdAt powers the sidebar's new-activity dot; it is the server's
+      // own timestamp, never a client guess.
+      createdAt: c.createdAt,
       kickoffAt: c.kickoffAt,
       budgetKes: c.budgetKes ?? null,
       minEntries: c.minEntries ?? null,

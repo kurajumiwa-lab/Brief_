@@ -34,6 +34,11 @@ async function main(){
   for(const t of top) check(`${t} is a destination`, !!btn(t));
   // Product decision (2026-08-29): the Pulse page was removed.
   check('Pulse is not a destination', !btn('Pulse'));
+  // Honesty rule: with live services unreachable, NO alert dots are invented
+  // on the sidebar titles (a dot must trace to real activity data).
+  check('no alert dots invented when services are unreachable',
+    document.querySelectorAll('.brief-alert-dot').length === 0,
+    `got ${document.querySelectorAll('.brief-alert-dot').length}`);
 
   console.log('\n=== Main sheet is a gallery of real entry points ===');
   check('main shelf is visible on Home', body().includes('What do you want to do?'));
