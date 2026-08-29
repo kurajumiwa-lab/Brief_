@@ -9,6 +9,7 @@ import * as settlement from '../domain/settlement.js';
 import * as payment from '../domain/payment.js';
 import * as compliance from '../domain/compliance.js';
 import * as telegram from '../connectors/telegram.js';
+import * as smileid from '../connectors/smileid.js';
 import * as web from '../connectors/web.js';
 import * as whatsapp from '../connectors/whatsapp.js';
 import * as outbound from '../outbound.js';
@@ -73,6 +74,8 @@ app.get('/api/capabilities', (_req, res) => {
     // Economic + regulatory capability, reported rather than implied. The
     // client uses these to state plainly what Brief cannot currently do.
     payments: ledger.providerStatus(),
+    // KYC assist rail: honest configured state for the verification queue.
+    kyc: smileid.status(),
     arenaMoney: compliance.arenaMoneyStatus(),
     auth: authStatus(),
     // Outbound messaging: which channels can Brief actually SEND on. Honest

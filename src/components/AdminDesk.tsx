@@ -237,6 +237,17 @@ function AttentionTab({ tick, can, refresh }: { tick: number; can: (c: string) =
                 <span className="text-[9px] text-[#111111]/40">submitted {String(r.submittedAt ?? '').slice(0, 10)}</span>
               </Row>
               <p className="text-[10px] text-[#111111]/50">user {String(r.userId ?? '?')}{r.note ? ` — “${String(r.note)}”` : ''}</p>
+              {/* White-label KYC assist: the provider's outcome codes, shown as
+                  EVIDENCE for the reviewer -- never an auto-verdict. */}
+              {r.providerAssist && (
+                <p className="text-[9px] text-[#111111]/40">
+                  provider check ({String(r.providerAssist.provider)}):{' '}
+                  {r.providerAssist.ok
+                    ? `${String(r.providerAssist.resultCode ?? '')} ${String(r.providerAssist.resultText ?? '')}`.trim() || 'no detail returned'
+                    : `unavailable — ${String(r.providerAssist.reason)}`}
+                  {' '}· evidence, not a verdict
+                </p>
+              )}
               {can('moderate') ? <DecideRow
                 onDecide={(d, reason) => act(() => briefApi.opsVerificationDecision(r.id, d, reason), `${d} verification`)}
               /> : <Empty>Review needs the moderate capability.</Empty>}

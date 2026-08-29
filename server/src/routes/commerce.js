@@ -10,6 +10,7 @@ import * as ledger from '../domain/ledger.js';
 import * as payment from '../domain/payment.js';
 import * as settlement from '../domain/settlement.js';
 import * as tuma from '../connectors/tuma.js';
+import * as paystack from '../connectors/paystack.js';
 import * as vendorSyndication from '../domain/vendorSyndication.js';
 import * as signals from '../domain/signal.js';
 import { requireAuth, now, recordError } from './helpers.js';
@@ -24,6 +25,7 @@ app.use('/api/disputes', requireFeature('commerce'));
 app.use('/api/orders/:id/pay', requireFeature('payments'));
 app.use('/api/orders/:id/payments', requireFeature('payments'));
 app.use('/api/webhooks/tuma', requireFeature('payments'));
+app.use('/api/webhooks/paystack', requireFeature('payments'));
 app.use('/api/vendors/me/payouts', requireFeature('payouts'));
 // ---------------------------------------------------------------------------
 // COMMERCE (Batch 3): vendors, listings, orders, fulfilment, disputes.
@@ -589,6 +591,7 @@ app.post('/api/orders/:id/pay', async (req, res) => {
     });
     res.status(reused ? 200 : 201).json({
       intent: payment.getIntent(intent.id), reused, charged: true,
+      authorizationUrl: result.authorizationUrl ?? null,
       customerMessage: result.customerMessage
     });
   } catch (e) {
@@ -672,6 +675,70 @@ app.post('/api/webhooks/tuma/:secret', (req, res) => {
     }
     // The vault timeline records the settlement exactly once (dedupe by the
     // provider reference), independent of the ledger's own replay protection.
+    vault.emitOrderFootsteps(applied.intent.orderId, 'payment_settled', {
+      actorId: applied.intent.payerId,
+      value: applied.intent.amount,
+      dedupeKey: `pay:settled:${applied.intent.providerRef}`,
+      metadata: { receipt: applied.intent.receipt, transactionId: applied.transactionId }
+    });
+  }
+
+  res.json({ ok: true, duplicate: Boolean(applied.duplicate) });
+});
+
+
+// PAYSTACK WEBHOOK. Unlike Tuma, Paystack SIGNS every delivery:
+// x-paystack-signature is a hex HMAC-SHA512 of the RAW body keyed with the
+// secret key (index.js captures req.rawBody for exactly this). The signature
+// is verified against the exact bytes received -- never a re-serialisation.
+// Every callback is persisted before processing, accepted or not, so a
+// replay, a forgery or a malformed payload is auditable after the fact.
+app.post('/api/webhooks/paystack', (req, res) => {
+  const check = paystack.verifyCallbackSecret(req.headers['x-paystack-signature'], req.rawBody);
+  store.insert('paymentCallbacks', {
+    id: newId('cb'), provider: 'paystack', accepted: check.ok,
+    reason: check.reason ?? null, body: req.body ?? null, at: now()
+  });
+  if (!check.ok) {
+    recordError('paystack_webhook', null, `rejected callback: ${check.reason}`);
+    return res.status(403).json({ error: 'rejected' });
+  }
+
+  const parsed = paystack.parseCallback(req.body);
+  if (!parsed.ok) {
+    recordError('paystack_webhook', null, 'unrecognised callback payload');
+    return res.status(400).json({ error: 'unrecognised payload' });
+  }
+  // Events Brief does not act on (transfers, refunds, disputes...) are
+  // acknowledged so Paystack stops retrying; nothing is applied.
+  if (parsed.ignored) {
+    return res.json({ ok: true, ignored: true, event: parsed.event });
+  }
+
+  const applied = payment.confirmPayment({
+    providerRef: parsed.checkoutRequestId,
+    succeeded: parsed.succeeded,
+    amount: parsed.amount,
+    receipt: parsed.receipt,
+    failureReason: parsed.failureReason,
+    cancelled: parsed.cancelled
+  });
+
+  if (!applied.ok) {
+    recordError('paystack_webhook', null, `callback not applied: ${applied.reason}`);
+    return res.status(200).json({ ok: false, reason: applied.reason });
+  }
+
+  if (applied.transactionId && !applied.duplicate) {
+    try {
+      orders.attachTransaction(applied.intent.orderId, applied.transactionId);
+      signals.emitSignal({
+        type: 'order_paid', actorId: applied.intent.payerId,
+        metadata: { orderId: applied.intent.orderId, transactionId: applied.transactionId }
+      });
+    } catch (e) {
+      recordError('paystack_webhook', null, `attach failed: ${String(e.message ?? e)}`);
+    }
     vault.emitOrderFootsteps(applied.intent.orderId, 'payment_settled', {
       actorId: applied.intent.payerId,
       value: applied.intent.amount,

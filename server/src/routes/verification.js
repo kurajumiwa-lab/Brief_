@@ -8,12 +8,43 @@
 import { callerId } from '../identity.js';
 import { store } from '../store.js';
 import * as verification from '../domain/verification.js';
+import * as smileid from '../connectors/smileid.js';
 import { requireAuth, requireCap, recordAudit } from './helpers.js';
+
+/**
+ * KYC ASSIST (never KYC autopilot). When the Smile ID connector is
+ * configured, an identity/phone submission is checked against the register
+ * and ONLY THE OUTCOME CODES are attached to the record for the reviewer.
+ *
+ *   * the reviewer still decides on the audited decision route -- a provider
+ *     result is evidence, not a verdict
+ *   * PII minimisation: the ID/phone number goes to the provider for the
+ *     check and is never persisted on the record
+ *   * every failure mode is recorded as exactly what it was; nothing is
+ *     inferred from silence
+ */
+async function assistRecord(kind, details) {
+  if (!smileid.isConfigured()) return null;
+  const at = new Date().toISOString();
+  if (kind === 'identity' && details?.idNumber) {
+    const r = await smileid.lookupId({ idNumber: String(details.idNumber).trim() });
+    return r.ok
+      ? { provider: 'smileid', at, ok: true, resultCode: r.resultCode, resultText: r.resultText }
+      : { provider: 'smileid', at, ok: false, reason: r.reason };
+  }
+  if (kind === 'phone' && details?.phoneNumber) {
+    const r = await smileid.lookupPhone({ phoneNumber: String(details.phoneNumber).trim() });
+    return r.ok
+      ? { provider: 'smileid', at, ok: true, resultCode: r.resultCode, resultText: r.resultText }
+      : { provider: 'smileid', at, ok: false, reason: r.reason };
+  }
+  return null;
+}
 
 export function register(app) {
   // --- T6: verification ------------------------------------------------------
 
-  app.post('/api/verification', (req, res) => {
+  app.post('/api/verification', async (req, res) => {
     const me = requireAuth(req, res);
     if (!me) return;
     try {
@@ -22,7 +53,27 @@ export function register(app) {
         providerRef: req.body?.providerRef ?? null,
         note: req.body?.note ?? null
       });
-      res.status(changed ? 201 : 200).json({ record, changed });
+      // Attach the provider assist AFTER the record exists, only on the
+      // submission that created/changed it (a no-op resubmit carries the
+      // original assist; re-checking would bill a second check for nothing).
+      let assisted = record.providerAssist ?? null;
+      if (changed) {
+        const assist = await assistRecord(record.kind, {
+          idNumber: req.body?.idNumber ?? null,
+          phoneNumber: req.body?.phoneNumber ?? null
+        });
+        if (assist) {
+          assisted = assist;
+          store.update('verificationRecords', record.id, { providerAssist: assist });
+        }
+      }
+      res.status(changed ? 201 : 200).json({
+        record: changed ? (store.find('verificationRecords', (r) => r.id === record.id) ?? record) : record,
+        changed,
+        // Honest either way: 'smileid' when a check ran, null when the
+        // reviewer is on their own (no provider configured).
+        assistProvider: smileid.isConfigured() ? 'smileid' : null
+      });
     } catch (e) {
       res.status(400).json({ error: String(e.message ?? e) });
     }
