@@ -23,10 +23,10 @@ const KIND_LABEL: Record<AccountVerificationKind, string> = {
 };
 
 const STATUS_STYLE: Record<string, string> = {
-  pending: 'bg-[#E5E7EB] text-[#111111]/60',
-  approved: 'bg-[#111111] text-[#FFFFFF]',
-  rejected: 'bg-[#FFFFFF] text-[#111111]',
-  revoked: 'bg-[#E5E7EB] text-[#111111]/40'
+  pending: 'bg-[#D6CFE4] text-[#251045]/60',
+  approved: 'bg-[#5B2EA6] text-[#FFFFFF]',
+  rejected: 'bg-[#FBFAFD] text-[#251045]',
+  revoked: 'bg-[#D6CFE4] text-[#251045]/40'
 };
 
 export function VerificationPanel() {
@@ -69,8 +69,8 @@ export function VerificationPanel() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-extrabold text-[#111111]">Verify</h2>
-        <p className="text-[10px] text-[#111111]/60 leading-snug">
+        <h2 className="text-lg font-extrabold text-[#251045]">Verify</h2>
+        <p className="text-[10px] text-[#251045]/60 leading-snug">
           Verified email, phone and identity unlock the things the compliance
           gates require. Reviews are human, recorded, and reversible — no
           documents are collected here.
@@ -80,9 +80,9 @@ export function VerificationPanel() {
       {/* standing — derived by the server from the records below */}
       <div className="grid grid-cols-3 gap-2">
         {(['email', 'phone', 'identity'] as AccountVerificationKind[]).map((k) => (
-          <div key={k} className="rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-3">
-            <p className="text-[9px] uppercase tracking-[0.14em] text-[#111111]/40">{KIND_LABEL[k]}</p>
-            <p className="mt-1 text-[12px] font-extrabold text-[#111111] capitalize">
+          <div key={k} className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-3">
+            <p className="text-[9px] uppercase tracking-[0.14em] text-[#251045]/40">{KIND_LABEL[k]}</p>
+            <p className="mt-1 text-[12px] font-extrabold text-[#251045] capitalize">
               {standing[k] ?? 'unverified'}
             </p>
           </div>
@@ -90,15 +90,15 @@ export function VerificationPanel() {
       </div>
 
       {/* submit */}
-      <div className="rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-4 space-y-2">
-        <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#111111]">Ask for a review</p>
+      <div className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-4 space-y-2">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#251045]">Ask for a review</p>
         <div className="flex flex-wrap gap-1.5">
           {(['email', 'phone', 'identity'] as AccountVerificationKind[]).map((k) => (
             <button
               key={k}
               onClick={() => setKind(k)}
               className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer border ${
-                kind === k ? 'bg-[#111111] text-[#FFFFFF] border-[#111111]' : 'bg-[#FFFFFF] text-[#111111] border-[#E5E7EB]'
+                kind === k ? 'bg-[#5B2EA6] text-[#FFFFFF] border-[#6C3EC9]' : 'bg-[#FBFAFD] text-[#251045] border-[#D6CFE4]'
               }`}
             >
               {KIND_LABEL[k]}
@@ -111,45 +111,45 @@ export function VerificationPanel() {
           rows={3}
           aria-label="what a reviewer should check"
           placeholder="What should the reviewer check? (e.g. the phone number on my M-Pesa registration is …)"
-          className="w-full rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] px-3 py-2.5 text-[12px] text-[#111111] resize-none"
+          className="w-full rounded-xl border border-[#D6CFE4] bg-[#F1EDF7] px-3 py-2.5 text-[12px] text-[#251045] resize-none"
         />
         <button
           type="button"
           onClick={() => void submit()}
           disabled={busy || !note.trim()}
-          className="rounded-lg bg-[#111111] px-4 py-2 text-[11px] font-extrabold text-[#FFFFFF] cursor-pointer disabled:opacity-40"
+          className="rounded-lg bg-[#5B2EA6] px-4 py-2 text-[11px] font-extrabold text-[#FFFFFF] cursor-pointer disabled:opacity-40"
         >
           {busy ? 'Submitting…' : 'Submit for review'}
         </button>
-        {noteMsg && <p className="text-[11px] text-[#111111]">{noteMsg}</p>}
+        {noteMsg && <p className="text-[11px] text-[#251045]">{noteMsg}</p>}
       </div>
 
-      {error && <p className="text-xs text-[#111111]">{error}</p>}
-      {records === null && <p className="text-xs text-[#111111]/60">Loading…</p>}
+      {error && <p className="text-xs text-[#251045]">{error}</p>}
+      {records === null && <p className="text-xs text-[#251045]/60">Loading…</p>}
 
       {/* history */}
       {records !== null && records.length === 0 && !error && (
-        <p className="text-xs text-[#111111]/60">
+        <p className="text-xs text-[#251045]/60">
           No verification history yet. Unverified is the honest default.
         </p>
       )}
       {records !== null && records.length > 0 && (
         <div className="space-y-2">
           {records.map((r) => (
-            <div key={r.id} className="rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-3 space-y-1">
+            <div key={r.id} className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-3 space-y-1">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-extrabold text-[#111111]">{KIND_LABEL[r.kind] ?? r.kind}</p>
+                <p className="text-xs font-extrabold text-[#251045]">{KIND_LABEL[r.kind] ?? r.kind}</p>
                 <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full ${STATUS_STYLE[r.status] ?? STATUS_STYLE.pending}`}>
                   {r.status}
                 </span>
               </div>
-              {r.note && <p className="text-[10px] text-[#111111]/60">{r.note}</p>}
-              <p className="text-[9px] text-[#111111]/40">
+              {r.note && <p className="text-[10px] text-[#251045]/60">{r.note}</p>}
+              <p className="text-[9px] text-[#251045]/40">
                 submitted {r.submittedAt.slice(0, 10)}
                 {r.reviewedAt ? ` · reviewed ${r.reviewedAt.slice(0, 10)}` : ' · awaiting review'}
               </p>
               {r.reason && (
-                <p className="text-[10px] text-[#111111] break-words">
+                <p className="text-[10px] text-[#251045] break-words">
                   Reviewer: {r.reason}
                 </p>
               )}

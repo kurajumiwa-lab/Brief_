@@ -59,9 +59,9 @@ export function EventResale({ slug }: { slug: string }) {
 
   if (load.status === 'loading') {
     return (
-      <div className="border-t border-[#E5E7EB] pt-4">
-        <h3 className="text-[10px] font-bold uppercase tracking-wide text-[#111111]/50 mb-2">Resale tickets</h3>
-        <p className="text-xs text-[#111111]/50 py-2">Checking for resale seats…</p>
+      <div className="border-t border-[#D6CFE4] pt-4">
+        <h3 className="text-[10px] font-bold uppercase tracking-wide text-[#251045]/50 mb-2">Resale tickets</h3>
+        <p className="text-xs text-[#251045]/50 py-2">Checking for resale seats…</p>
       </div>
     );
   }
@@ -70,10 +70,10 @@ export function EventResale({ slug }: { slug: string }) {
   // market that may not be empty.
   if (load.status === 'error') {
     return (
-      <div className="border-t border-[#E5E7EB] pt-4 space-y-2">
-        <h3 className="text-[10px] font-bold uppercase tracking-wide text-[#111111]/50">Resale tickets</h3>
-        <p className="text-[11px] text-[#111111]/70">Resale seats could not be loaded right now. {load.error}</p>
-        <button onClick={() => void fetchListings()} className="text-xs font-bold text-[#111111] underline cursor-pointer">
+      <div className="border-t border-[#D6CFE4] pt-4 space-y-2">
+        <h3 className="text-[10px] font-bold uppercase tracking-wide text-[#251045]/50">Resale tickets</h3>
+        <p className="text-[11px] text-[#251045]/70">Resale seats could not be loaded right now. {load.error}</p>
+        <button onClick={() => void fetchListings()} className="text-xs font-bold text-[#251045] underline cursor-pointer">
           Try again
         </button>
       </div>
@@ -81,25 +81,25 @@ export function EventResale({ slug }: { slug: string }) {
   }
 
   return (
-    <div className="border-t border-[#E5E7EB] pt-4 space-y-3">
+    <div className="border-t border-[#D6CFE4] pt-4 space-y-3">
       <div className="flex items-baseline justify-between gap-2">
-        <h3 className="text-[10px] font-bold uppercase tracking-wide text-[#111111]/50">Resale tickets</h3>
-        <span className="text-[10px] text-[#111111]/40">{load.data?.length ?? 0} listed</span>
+        <h3 className="text-[10px] font-bold uppercase tracking-wide text-[#251045]/50">Resale tickets</h3>
+        <span className="text-[10px] text-[#251045]/40">{load.data?.length ?? 0} listed</span>
       </div>
 
       {load.data?.length === 0 && (
-        <p className="text-[11px] text-[#111111]/60">
+        <p className="text-[11px] text-[#251045]/60">
           No resale seats right now. Official tickets, when this event sells them, are above — resale
           appears here once holders list a seat they cannot use.
         </p>
       )}
 
       {order && (
-        <div className="border border-[#111111] rounded-2xl p-4 space-y-2 bg-[#F9FAFB]">
-          <p className="text-xs font-extrabold text-[#111111]">
+        <div className="border border-[#6C3EC9] rounded-2xl p-4 space-y-2 bg-[#F4F1FA]">
+          <p className="text-xs font-extrabold text-[#251045]">
             Order {order.reference} — {money(order.total, order.currency)} held for you
           </p>
-          <p className="text-[11px] text-[#111111]/75">
+          <p className="text-[11px] text-[#251045]/75">
             The seat is held at this price. Payment goes to the seller directly — Brief has no payment
             provider and will not pretend to charge you. When the seller confirms receiving{' '}
             {money(order.total, order.currency)}, the seat moves to you with a fresh code in
@@ -109,37 +109,37 @@ export function EventResale({ slug }: { slug: string }) {
             <button
               disabled={busy}
               onClick={() => void cancel()}
-              className="text-xs px-3 py-2 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] text-[#111111] cursor-pointer disabled:opacity-40"
+              className="text-xs px-3 py-2 rounded-xl border border-[#D6CFE4] bg-[#FBFAFD] text-[#251045] cursor-pointer disabled:opacity-40"
             >
               Let it go
             </button>
           </div>
-          <p className="text-[10px] text-[#111111]/50">
+          <p className="text-[10px] text-[#251045]/50">
             Track this order under Workflows → Sell → Resale.
           </p>
         </div>
       )}
 
-      {error && <p className="text-[11px] text-[#111111]">{error}</p>}
+      {error && <p className="text-[11px] text-[#251045]">{error}</p>}
 
       <div className="space-y-2">
         {load.data?.map((l) => (
-          <div key={l.id} className="border border-[#E5E7EB] rounded-2xl p-3 flex items-center justify-between gap-3">
+          <div key={l.id} className="border border-[#D6CFE4] rounded-2xl p-3 flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-xs font-extrabold text-[#111111]">
-                {money(l.price, l.currency)} {l.cheapest && <span className="text-[9px] font-bold text-[#111111]/50">· cheapest</span>}
+              <p className="text-xs font-extrabold text-[#251045]">
+                {money(l.price, l.currency)} {l.cheapest && <span className="text-[9px] font-bold text-[#251045]/50">· cheapest</span>}
               </p>
-              <p className="text-[10px] text-[#111111]/50 truncate">
+              <p className="text-[10px] text-[#251045]/50 truncate">
                 {l.seller?.displayName ?? 'A Brief member'}
                 {l.seller?.joinedAt ? ` · member since ${new Date(l.seller.joinedAt).getFullYear()}` : ''}
                 {l.transferCount > 0 ? ` · resold ${l.transferCount}×` : ''}
               </p>
-              {l.note && <p className="text-[10px] text-[#111111]/60 mt-0.5">“{l.note}”</p>}
+              {l.note && <p className="text-[10px] text-[#251045]/60 mt-0.5">“{l.note}”</p>}
             </div>
             <button
               disabled={busy || Boolean(order)}
               onClick={() => void buy(l.id)}
-              className="shrink-0 text-xs font-bold px-3 py-2 rounded-xl bg-[#111111] text-[#FFFFFF] cursor-pointer disabled:opacity-40"
+              className="shrink-0 text-xs font-bold px-3 py-2 rounded-xl bg-[#5B2EA6] text-[#FFFFFF] cursor-pointer disabled:opacity-40"
             >
               Buy
             </button>
@@ -147,7 +147,7 @@ export function EventResale({ slug }: { slug: string }) {
         ))}
       </div>
 
-      <p className="text-[10px] text-[#111111]/40">
+      <p className="text-[10px] text-[#251045]/40">
         Every transfer re-issues the seat's code; a printed or screenshotted old code stops working.
       </p>
     </div>

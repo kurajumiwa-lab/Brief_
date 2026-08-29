@@ -35,12 +35,12 @@ interface FeedData {
 }
 
 const T = {
-  bg: '#FAFAFA',
+  bg: '#F1EDF7',
   surface: '#FFFFFF',
-  line: '#E5E7EB',
-  ink: '#111111',
+  line: '#D6CFE4',
+  ink: '#251045',
   muted: 'rgba(17,17,17,0.62)',
-  green: '#111111'
+  green: '#251045'
 };
 
 function feedUpdatedAt(value: unknown): string | null {
@@ -90,7 +90,7 @@ function PhotoTitleCard({
       type="button"
       onClick={() => onOpen(item)}
       aria-label={title}
-      className={`group relative block min-h-[190px] overflow-hidden rounded-2xl border text-left transition-transform duration-200 hover:-translate-y-0.5 hover:border-[#111111] active:scale-[0.99] ${className}`}
+      className={`group relative block min-h-[190px] overflow-hidden rounded-2xl border text-left transition-transform duration-200 hover:-translate-y-0.5 hover:border-[#6C3EC9] active:scale-[0.99] ${className}`}
       style={{ borderColor: T.line, background: T.surface }}
     >
       {image ? (
@@ -136,7 +136,7 @@ function TitleRow({
       type="button"
       onClick={() => onOpen(item)}
       aria-label={title}
-      className="group flex min-h-16 w-full items-center gap-3 rounded-2xl border p-2 text-left transition-colors hover:border-[#111111]"
+      className="group flex min-h-16 w-full items-center gap-3 rounded-2xl border p-2 text-left transition-colors hover:border-[#6C3EC9]"
       style={{ borderColor: T.line, background: T.surface }}
     >
       {image && source && (
@@ -255,16 +255,16 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
   return (
     <div className="space-y-8" style={{ fontFamily: 'var(--m3-font-body)', color: T.ink }}>
       {temporary && (
-        <div className="flex items-start justify-between gap-3 rounded-2xl border border-dashed border-[#E5E7EB] bg-[#FFFFFF] px-3 py-2.5">
+        <div className="flex items-start justify-between gap-3 rounded-2xl border border-dashed border-[#D6CFE4] bg-[#FBFAFD] px-3 py-2.5">
           <div>
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#111111]">{temporary.testContent.label}</p>
-            <p className="mt-1 text-[10px] leading-snug text-[#111111]/55">Temporary welcome content for release testing. It will leave the public feed at the expiry above and will not be silently reseeded.</p>
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#251045]">{temporary.testContent.label}</p>
+            <p className="mt-1 text-[10px] leading-snug text-[#251045]/55">Temporary welcome content for release testing. It will leave the public feed at the expiry above and will not be silently reseeded.</p>
           </div>
-          <span className="shrink-0 text-right text-[9px] font-bold text-[#111111]/45">{temporaryExpiry ? `until ${temporaryExpiry}` : 'temporary'}</span>
+          <span className="shrink-0 text-right text-[9px] font-bold text-[#251045]/45">{temporaryExpiry ? `until ${temporaryExpiry}` : 'temporary'}</span>
         </div>
       )}
       {updatedAt && (
-        <p className="px-1 text-[10px] text-[#111111]/45">
+        <p className="px-1 text-[10px] text-[#251045]/45">
           Live Brief feed · refreshed {updatedAt}
         </p>
       )}
@@ -295,7 +295,7 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
             type="button"
             onClick={() => onOpenTea(feed.tea.slug)}
             aria-label={titleOf(feed.tea)}
-            className="group relative block min-h-[190px] w-full overflow-hidden rounded-2xl border text-left transition-transform duration-200 hover:-translate-y-0.5 hover:border-[#111111]"
+            className="group relative block min-h-[190px] w-full overflow-hidden rounded-2xl border text-left transition-transform duration-200 hover:-translate-y-0.5 hover:border-[#6C3EC9]"
             style={{ borderColor: T.line, background: T.surface }}
           >
             {imageOf(feed.tea) ? (
@@ -375,11 +375,11 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
                   type="button"
                   onClick={() => void openCollectionByKey(collection)}
                   aria-label={title}
-                  className="group relative min-h-28 overflow-hidden rounded-2xl border p-3 text-left transition-colors hover:border-[#111111]"
+                  className="group relative min-h-28 overflow-hidden rounded-2xl border p-3 text-left transition-colors hover:border-[#6C3EC9]"
                   style={{ borderColor: openCollection?.key === (collection.key || collection.id) ? T.green : T.line, background: T.surface }}
                 >
                   {image && <img src={image} alt="" aria-hidden="true" loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-60 transition-transform duration-500 group-hover:scale-[1.03]" />}
-                  <div className="absolute inset-0" style={{ background: image ? 'linear-gradient(180deg, rgba(9,11,16,0.12), rgba(9,11,16,0.88))' : 'linear-gradient(135deg, #E5E7EB, #F3F4F6)' }} />
+                  <div className="absolute inset-0" style={{ background: image ? 'linear-gradient(180deg, rgba(21,8,38,0.12), rgba(21,8,38,0.88))' : 'linear-gradient(135deg, #D6CFE4, #E9E4F2)' }} />
                   <span className="relative block line-clamp-3 text-[14px] font-semibold" style={{ color: image ? '#FFFFFF' : T.ink }}>{title}</span>
                 </button>
               );
@@ -406,7 +406,7 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
                 key={tag}
                 type="button"
                 onClick={() => onOpenTag?.(tag)}
-                className="rounded-full border px-3 py-2 text-[12px] font-semibold transition-colors hover:border-[#111111]"
+                className="rounded-full border px-3 py-2 text-[12px] font-semibold transition-colors hover:border-[#6C3EC9]"
                 style={{ borderColor: T.line, background: T.surface, color: T.ink }}
               >
                 {tag}

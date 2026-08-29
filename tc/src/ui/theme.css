@@ -1,20 +1,20 @@
-/* One Brief. Minimalist: white surfaces, ink typography. */
+/* One Brief. The violet/lavender system: lavender page, deep-violet ink,
+   one electric-violet accent family (extracted from the user's refs). */
 
 :root {
-  /* --- The minimalist system: white surfaces, black type, neutral lines.
-         Hierarchy inside typography comes from weight and size — never hue.
-         Muted/faint are the SAME ink at reduced alpha, so the whole platform
-         speaks strictly black-or-white type. --- */
-  --brief-bg: #FAFAFA;
-  --brief-card: #FFFFFF;
-  --brief-ink: #111111;
-  --brief-muted: rgba(17, 17, 17, 0.62);
-  --brief-faint: rgba(17, 17, 17, 0.45);
-  --brief-line: #E5E7EB;
-  --brief-green: #111111;   /* the one accent is ink; name kept for consumers */
+  /* --- The violet/lavender system: a lavender page, deep-violet ink, one
+         violet accent family. Hierarchy still comes from weight and size
+         first; muted/faint are the SAME ink at reduced alpha. --- */
+  --brief-bg: #D8D2E1;
+  --brief-card: #FBFAFD;
+  --brief-ink: #251045;
+  --brief-muted: rgba(37, 16, 69, 0.62);
+  --brief-faint: rgba(37, 16, 69, 0.45);
+  --brief-line: #D6CFE4;
+  --brief-green: #5B2EA6;   /* the one accent is primary violet; name kept for consumers */
   --brief-green-ink: #FFFFFF;
-  --brief-warn: #111111;
-  --brief-danger: #111111;
+  --brief-warn: #B6441C;
+  --brief-danger: #B42318;
 
   --ground: var(--brief-bg);
   --surface: var(--brief-card);
@@ -26,9 +26,9 @@
 
   --m3-surface: var(--brief-bg);
   --m3-surface-container: var(--brief-card);
-  --m3-surface-container-low: #F3F4F6;
+  --m3-surface-container-low: #E9E4F2;
   --m3-primary: var(--brief-green);
-  --m3-secondary-container: #F3F4F6;
+  --m3-secondary-container: #E9E4F2;
   --m3-on-surface: var(--brief-ink);
   --m3-on-surface-variant: var(--brief-muted);
   --m3-outline: var(--brief-line);

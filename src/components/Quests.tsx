@@ -69,39 +69,39 @@ export function Quests({
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
       <div>
-        <h2 className="text-lg font-extrabold text-[#111111]">Jobs</h2>
-        <p className="text-[11px] text-[#111111]/60 leading-snug mt-1">
+        <h2 className="text-lg font-extrabold text-[#251045]">Jobs</h2>
+        <p className="text-[11px] text-[#251045]/60 leading-snug mt-1">
           Useful work around you. Points settle when a contribution is
           accepted, not when it is submitted.
         </p>
       </div>
 
       {/* Wallet. Settled and pending are never added together. */}
-      <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 space-y-2">
+      <div className="bg-[#FBFAFD] border border-[#D6CFE4] rounded-2xl p-4 space-y-2">
         <div className="flex items-baseline justify-between gap-3">
-          <span className="text-[10px] text-[#111111]/40">
+          <span className="text-[10px] text-[#251045]/40">
             Brief Points
           </span>
-          <span className="text-lg font-extrabold text-[#111111]">
+          <span className="text-lg font-extrabold text-[#251045]">
             {myContribution.settledPoints.toLocaleString()}
           </span>
         </div>
         {pendingCount > 0 && (
-          <p className="text-[10px] text-[#111111]">
+          <p className="text-[10px] text-[#251045]">
             {pendingCount} submitted, awaiting review. Worth nothing yet.
           </p>
         )}
         <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1">
-          <span className="text-[10px] text-[#111111]/60">
-            Progress <span className="text-[#111111]/60">{myRank}</span>
+          <span className="text-[10px] text-[#251045]/60">
+            Progress <span className="text-[#251045]/60">{myRank}</span>
           </span>
-          <span className="text-[10px] text-[#111111]/60">
+          <span className="text-[10px] text-[#251045]/60">
             Accepted{' '}
-            <span className="text-[#111111]/60">{myContribution.accepted}</span>
+            <span className="text-[#251045]/60">{myContribution.accepted}</span>
           </span>
-          <span className="text-[10px] text-[#111111]/60">
+          <span className="text-[10px] text-[#251045]/60">
             Accuracy{' '}
-            <span className="text-[#111111]/60">
+            <span className="text-[#251045]/60">
               {typeof getAcceptanceRate(myContribution) === 'number'
                 ? `${getAcceptanceRate(myContribution)}%`
                 : 'No reviewed work yet'}
@@ -110,7 +110,7 @@ export function Quests({
         </div>
         {/* Only ever states a real remaining requirement. */}
         {nextRank && (
-          <p className="text-[10px] text-[#111111]/40">
+          <p className="text-[10px] text-[#251045]/40">
             {nextRank.rank} needs {nextRank.needAccepted} more accepted
             {nextRank.needRate > 0
               ? ` and ${nextRank.needRate}% higher accuracy`
@@ -123,22 +123,22 @@ export function Quests({
       {/* The pool is stated plainly. No salary comparisons.
           An unfunded pool says so rather than rendering "KES 0" as though a
           real fund existed and happened to be empty. */}
-      <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4">
-        <p className="text-[10px] text-[#111111]/40">
+      <div className="bg-[#FBFAFD] border border-[#D6CFE4] rounded-2xl p-4">
+        <p className="text-[10px] text-[#251045]/40">
           Community pool - {COMMUNITY_POOL.periodLabel}
         </p>
         {COMMUNITY_POOL.totalKes > 0 ? (
           <>
-            <p className="text-base font-extrabold text-[#111111] mt-1">
+            <p className="text-base font-extrabold text-[#251045] mt-1">
               KES {COMMUNITY_POOL.totalKes.toLocaleString()}
             </p>
-            <p className="text-[10px] text-[#111111]/60 mt-1">
+            <p className="text-[10px] text-[#251045]/60 mt-1">
               KES {getPoolRemaining(COMMUNITY_POOL).toLocaleString()} still to be
               distributed. {COMMUNITY_POOL.kesPerPoint} KES per point.
             </p>
           </>
         ) : (
-          <p className="text-[10px] text-[#111111]/60 mt-1 leading-snug">
+          <p className="text-[10px] text-[#251045]/60 mt-1 leading-snug">
             No reward pool is funded. Points still record accepted
             contributions, but Brief cannot pay anything out.
           </p>
@@ -146,27 +146,27 @@ export function Quests({
       </div>
 
       <div>
-        <h3 className="text-[11px] font-extrabold text-[#111111]/40 mb-2">
+        <h3 className="text-[11px] font-extrabold text-[#251045]/40 mb-2">
           Open jobs
         </h3>
         <div className="space-y-2">
           {openQuests.map((q) => (
             <div
               key={q.id}
-              className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-3"
+              className="bg-[#FBFAFD] border border-[#D6CFE4] rounded-2xl p-3"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-extrabold text-[#111111]">
+                  <p className="text-xs font-extrabold text-[#251045]">
                     {q.title}
                   </p>
                   {/* Criteria shown up front, never retroactively. */}
-                  <p className="text-[10px] text-[#111111]/60 mt-1">
+                  <p className="text-[10px] text-[#251045]/60 mt-1">
                     Accepted when: {q.acceptanceCriteria}
                   </p>
                   <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
                     {q.locationName && (
-                      <span className="text-[9px] text-[#111111]/40">
+                      <span className="text-[9px] text-[#251045]/40">
                         {q.locationName}
                         {typeof q.distanceKm === 'number'
                           ? ` - ${q.distanceKm} km`
@@ -174,19 +174,19 @@ export function Quests({
                       </span>
                     )}
                     {q.expiresAt && (
-                      <span className="text-[9px] text-[#111111]">
+                      <span className="text-[9px] text-[#251045]">
                         closes {q.expiresAt.slice(0, 10)}
                       </span>
                     )}
                   </div>
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="text-xs font-extrabold text-[#111111]">
+                  <p className="text-xs font-extrabold text-[#251045]">
                     {q.points}
                   </p>
                   <button
                     onClick={() => handleSubmitQuest(q)}
-                    className="mt-1 px-3 py-1 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-[10px] cursor-pointer"
+                    className="mt-1 px-3 py-1 rounded-xl bg-[#5B2EA6] text-[#FFFFFF] font-extrabold text-[10px] cursor-pointer"
                   >
                     Submit
                   </button>
@@ -200,7 +200,7 @@ export function Quests({
       {/* Rejections stay visible with their reason. */}
       {quests.some((q) => q.status === 'rejected') && (
         <div>
-          <h3 className="text-[11px] font-extrabold text-[#111111]/40 mb-2">
+          <h3 className="text-[11px] font-extrabold text-[#251045]/40 mb-2">
             Not accepted
           </h3>
           <div className="space-y-2">
@@ -209,10 +209,10 @@ export function Quests({
               .map((q) => (
                 <div
                   key={q.id}
-                  className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-3"
+                  className="bg-[#FBFAFD] border border-[#D6CFE4] rounded-2xl p-3"
                 >
-                  <p className="text-xs text-[#111111]/60">{q.title}</p>
-                  <p className="text-[10px] text-[#111111] mt-1">
+                  <p className="text-xs text-[#251045]/60">{q.title}</p>
+                  <p className="text-[10px] text-[#251045] mt-1">
                     {q.reviewNote} No points awarded.
                   </p>
                 </div>
@@ -227,8 +227,8 @@ export function Quests({
             onClick={() => setBoardMode('contributors')}
             className={`px-3 py-1.5 rounded-xl text-[10px] font-extrabold cursor-pointer border ${
               boardMode === 'contributors'
-                ? 'bg-[#111111] text-[#FFFFFF] border-[#111111]'
-                : 'bg-[#FFFFFF] text-[#111111] border-[#E5E7EB]'
+                ? 'bg-[#5B2EA6] text-[#FFFFFF] border-[#6C3EC9]'
+                : 'bg-[#FBFAFD] text-[#251045] border-[#D6CFE4]'
             }`}
           >
             Top Contributors
@@ -237,14 +237,14 @@ export function Quests({
             onClick={() => setBoardMode('earners')}
             className={`px-3 py-1.5 rounded-xl text-[10px] font-extrabold cursor-pointer border ${
               boardMode === 'earners'
-                ? 'bg-[#111111] text-[#FFFFFF] border-[#111111]'
-                : 'bg-[#FFFFFF] text-[#111111] border-[#E5E7EB]'
+                ? 'bg-[#5B2EA6] text-[#FFFFFF] border-[#6C3EC9]'
+                : 'bg-[#FBFAFD] text-[#251045] border-[#D6CFE4]'
             }`}
           >
             Top Earners
           </button>
         </div>
-        <p className="text-[10px] text-[#111111]/60 mb-2">
+        <p className="text-[10px] text-[#251045]/60 mb-2">
           {boardMode === 'contributors'
             ? 'Ranked by accepted contributions, so volume alone does not win.'
             : 'Ranked by settled points.'}
@@ -259,25 +259,25 @@ export function Quests({
             return (
               <div
                 key={person.id}
-                className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-3 flex items-center gap-3"
+                className="bg-[#FBFAFD] border border-[#D6CFE4] rounded-2xl p-3 flex items-center gap-3"
               >
-                <span className="text-[10px] text-[#111111]/40 w-4 shrink-0">
+                <span className="text-[10px] text-[#251045]/40 w-4 shrink-0">
                   {i + 1}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-extrabold text-[#111111]">
+                  <p className="text-xs font-extrabold text-[#251045]">
                     {person.displayName}
-                    <span className="ml-2 text-[9px] text-[#111111]">
+                    <span className="ml-2 text-[9px] text-[#251045]">
                       {getBriefRank(person.contribution)}
                     </span>
                   </p>
-                  <p className="text-[9px] text-[#111111]/40 mt-0.5">
+                  <p className="text-[9px] text-[#251045]/40 mt-0.5">
                     {person.locationName} - {person.contribution.accepted} accepted
                     {typeof rate === 'number' ? ` - ${rate}% accepted` : ''}
                     {typeof pct === 'number' ? ` - top ${pct}%` : ''}
                   </p>
                 </div>
-                <span className="text-[10px] text-[#111111]/60 shrink-0">
+                <span className="text-[10px] text-[#251045]/60 shrink-0">
                   {person.contribution.settledPoints.toLocaleString()}
                 </span>
               </div>
@@ -287,8 +287,8 @@ export function Quests({
       </div>
 
       {/* Brief Points are a record of contribution, not a spendable currency. */}
-      <div className="border-t border-[#E5E7EB] pt-4">
-        <p className="text-[11px] text-[#111111]/60">
+      <div className="border-t border-[#D6CFE4] pt-4">
+        <p className="text-[11px] text-[#251045]/60">
           Points are not cash and have no monetary value.
         </p>
       </div>

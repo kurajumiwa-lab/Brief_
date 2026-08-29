@@ -42,17 +42,17 @@ export const STORY_THEMES: StoryTheme[] = [
     label: 'Classic',
     blurb: 'Serif headline on clean paper.',
     surface: '#FFFFFF',
-    ink: '#111111',
-    inkDim: 'rgba(17,17,17,0.6)',
-    defaultAccent: '#111111',
+    ink: '#251045',
+    inkDim: 'rgba(37,16,69,0.6)',
+    defaultAccent: '#251045',
     titleClass: 'font-display text-3xl font-bold leading-tight',
-    line: '#E5E7EB'
+    line: '#D6CFE4'
   },
   {
     id: 'noir',
     label: 'Noir',
-    blurb: 'Ink-on-black night edition.',
-    surface: '#111111',
+    blurb: 'Night edition — white ink on deep violet.',
+    surface: '#251045',
     ink: '#FFFFFF',
     inkDim: 'rgba(255,255,255,0.65)',
     defaultAccent: '#FFFFFF',
@@ -64,20 +64,20 @@ export const STORY_THEMES: StoryTheme[] = [
     label: 'Poster',
     blurb: 'Big display type, loud and simple.',
     surface: '#FFFFFF',
-    ink: '#111111',
-    inkDim: 'rgba(17,17,17,0.55)',
-    defaultAccent: '#111111',
+    ink: '#251045',
+    inkDim: 'rgba(37,16,69,0.55)',
+    defaultAccent: '#251045',
     titleClass: 'text-4xl font-extrabold leading-[1.05] tracking-tight',
-    line: '#111111'
+    line: '#251045'
   },
   {
     id: 'gazette',
     label: 'Gazette',
     blurb: 'Warm paper, ruled and quiet.',
     surface: '#FAF9F6',
-    ink: '#111111',
-    inkDim: 'rgba(17,17,17,0.6)',
-    defaultAccent: '#111111',
+    ink: '#251045',
+    inkDim: 'rgba(37,16,69,0.6)',
+    defaultAccent: '#251045',
     titleClass: 'font-display text-2xl font-bold leading-snug',
     line: '#D8D4CC'
   }

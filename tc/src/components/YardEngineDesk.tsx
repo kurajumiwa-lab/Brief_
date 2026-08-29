@@ -23,15 +23,15 @@ import whatsappBannerArt from '../assets/shelf/whatsapp-share.webp';
 export type YardSection = 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'ai';
 
 const T = {
-  bg: '#FAFAFA',
+  bg: '#F1EDF7',
   surface: '#FFFFFF',
-  line: '#E5E7EB',
-  ink: '#111111',
+  line: '#D6CFE4',
+  ink: '#251045',
   muted: 'rgba(17,17,17,0.62)',
   faint: 'rgba(17,17,17,0.45)',
-  green: '#111111',
-  amber: '#111111',
-  red: '#111111'
+  green: '#251045',
+  amber: '#251045',
+  red: '#251045'
 };
 
 function Panel({ title, icon: Icon, children }: { title: string; icon: React.ElementType; children: React.ReactNode }) {
@@ -385,7 +385,7 @@ function DistributionPanel() {
           WhatsApp intent → standalone banner on the home shelf. */}
       <div className="rounded-2xl border p-4 space-y-3" style={{ borderColor: T.ink, background: T.surface }}>
         <div className="flex items-start gap-3">
-          <div className="h-9 w-9 shrink-0 overflow-hidden rounded-xl bg-[#111111]">
+          <div className="h-9 w-9 shrink-0 overflow-hidden rounded-xl bg-[#5B2EA6]">
             <img src={whatsappBannerArt} alt="" aria-hidden="true" className="h-full w-full object-cover" />
           </div>
           <div className="min-w-0">

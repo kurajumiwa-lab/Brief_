@@ -22,12 +22,12 @@ function TicketQr({ code, size = 176 }: { code: string; size?: number }) {
   const [dataUrl, setDataUrl] = React.useState<string | null>(null);
   React.useEffect(() => {
     let live = true;
-    QRCode.toDataURL(code, { width: size, margin: 1, color: { dark: '#111111', light: '#FFFFFF' } })
+    QRCode.toDataURL(code, { width: size, margin: 1, color: { dark: '#251045', light: '#FFFFFF' } })
       .then((url) => { if (live) setDataUrl(url); })
       .catch(() => { if (live) setDataUrl(null); });
     return () => { live = false; };
   }, [code, size]);
-  if (!dataUrl) return <div className="w-44 h-44 bg-[#FAFAFA] border border-[#E5E7EB] rounded-xl" />;
+  if (!dataUrl) return <div className="w-44 h-44 bg-[#F1EDF7] border border-[#D6CFE4] rounded-xl" />;
   return <img src={dataUrl} alt={`Gate code ${code}`} className="w-44 h-44 rounded-xl" />;
 }
 
@@ -73,29 +73,29 @@ export function MyTickets({ onSell }: { onSell?: () => void }) {
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
       <div>
-        <h2 className="text-base font-extrabold text-[#111111]">My tickets</h2>
-        <p className="text-xs text-[#111111]/60 mt-1">
+        <h2 className="text-base font-extrabold text-[#251045]">My tickets</h2>
+        <p className="text-xs text-[#251045]/60 mt-1">
           Seats you hold, with the code the gate accepts right now. Every transfer issues a
           fresh code — old screenshots stop working, on purpose.
         </p>
       </div>
 
       {notice && (
-        <div className="text-xs bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-3 py-2.5 text-[#111111]">
+        <div className="text-xs bg-[#F4F1FA] border border-[#D6CFE4] rounded-xl px-3 py-2.5 text-[#251045]">
           {notice}
         </div>
       )}
 
       {load.status === 'loading' && (
-        <div className="text-xs text-[#111111]/50 py-8 text-center">Loading your tickets…</div>
+        <div className="text-xs text-[#251045]/50 py-8 text-center">Loading your tickets…</div>
       )}
 
       {load.status === 'error' && (
-        <div className="border border-[#E5E7EB] rounded-xl p-4 text-center space-y-2">
-          <p className="text-xs text-[#111111]/70">{load.error}</p>
+        <div className="border border-[#D6CFE4] rounded-xl p-4 text-center space-y-2">
+          <p className="text-xs text-[#251045]/70">{load.error}</p>
           <button
             onClick={() => void fetchTickets()}
-            className="text-xs font-bold text-[#111111] cursor-pointer underline"
+            className="text-xs font-bold text-[#251045] cursor-pointer underline"
           >
             Try again
           </button>
@@ -103,9 +103,9 @@ export function MyTickets({ onSell }: { onSell?: () => void }) {
       )}
 
       {load.status === 'ready' && load.data?.length === 0 && (
-        <div className="border border-[#E5E7EB] rounded-xl p-6 text-center space-y-1">
-          <p className="text-xs font-bold text-[#111111]">No tickets yet</p>
-          <p className="text-[11px] text-[#111111]/60">
+        <div className="border border-[#D6CFE4] rounded-xl p-6 text-center space-y-1">
+          <p className="text-xs font-bold text-[#251045]">No tickets yet</p>
+          <p className="text-[11px] text-[#251045]/60">
             Register for an event and confirm your seat — a ticket appears here the moment it
             is yours. Seats from public links belong to whoever holds that code, not to an account.
           </p>
@@ -113,20 +113,20 @@ export function MyTickets({ onSell }: { onSell?: () => void }) {
       )}
 
       {load.status === 'ready' && load.data?.map((t) => (
-        <div key={t.id} className="border border-[#E5E7EB] rounded-2xl p-4 space-y-3 bg-[#FFFFFF]">
+        <div key={t.id} className="border border-[#D6CFE4] rounded-2xl p-4 space-y-3 bg-[#FBFAFD]">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-xs font-extrabold text-[#111111] truncate">{t.eventTitle ?? 'Event'}</p>
-              <p className="text-[10px] text-[#111111]/50 mt-0.5">
+              <p className="text-xs font-extrabold text-[#251045] truncate">{t.eventTitle ?? 'Event'}</p>
+              <p className="text-[10px] text-[#251045]/50 mt-0.5">
                 {t.status === 'void' ? 'Voided — this seat cannot be used' : `Code version ${t.codeVersion}`}
               </p>
             </div>
             {t.status === 'void' ? (
-              <span className="shrink-0 text-[10px] font-bold px-2 py-1 rounded-full bg-[#F3F4F6] text-[#111111]/60">
+              <span className="shrink-0 text-[10px] font-bold px-2 py-1 rounded-full bg-[#E9E4F2] text-[#251045]/60">
                 VOID
               </span>
             ) : t.activeListingId ? (
-              <span className="shrink-0 text-[10px] font-bold px-2 py-1 rounded-full bg-[#F3F4F6] text-[#111111]/70">
+              <span className="shrink-0 text-[10px] font-bold px-2 py-1 rounded-full bg-[#E9E4F2] text-[#251045]/70">
                 LISTED FOR RESALE
               </span>
             ) : null}
@@ -136,8 +136,8 @@ export function MyTickets({ onSell }: { onSell?: () => void }) {
             <div className="flex flex-col sm:flex-row items-center gap-4">
               <TicketQr code={t.scanCode} />
               <div className="min-w-0 space-y-1 text-center sm:text-left">
-                <p className="font-mono text-sm font-bold text-[#111111] tracking-wide break-all">{t.scanCode}</p>
-                <p className="text-[10px] text-[#111111]/50">
+                <p className="font-mono text-sm font-bold text-[#251045] tracking-wide break-all">{t.scanCode}</p>
+                <p className="text-[10px] text-[#251045]/50">
                   Show this at the gate. The <span className="font-bold">#{t.codeVersion}</span> is the
                   version — a scan of an older version is refused.
                 </p>
@@ -146,10 +146,10 @@ export function MyTickets({ onSell }: { onSell?: () => void }) {
           )}
 
           {t.transfers.length > 0 && (
-            <div className="border-t border-[#E5E7EB] pt-2 space-y-1">
-              <p className="text-[10px] font-bold text-[#111111]/60 uppercase tracking-wide">This seat's history</p>
+            <div className="border-t border-[#D6CFE4] pt-2 space-y-1">
+              <p className="text-[10px] font-bold text-[#251045]/60 uppercase tracking-wide">This seat's history</p>
               {t.transfers.map((x, i) => (
-                <p key={i} className="text-[10px] text-[#111111]/60">
+                <p key={i} className="text-[10px] text-[#251045]/60">
                   {new Date(x.at).toLocaleDateString()} · {KIND_LABEL[x.kind] ?? x.kind} · code v{x.codeVersionAfter} issued
                 </p>
               ))}
@@ -157,11 +157,11 @@ export function MyTickets({ onSell }: { onSell?: () => void }) {
           )}
 
           {t.status !== 'void' && !t.activeListingId && (
-            <div className="flex flex-wrap gap-2 border-t border-[#E5E7EB] pt-3">
+            <div className="flex flex-wrap gap-2 border-t border-[#D6CFE4] pt-3">
               {onSell && (
                 <button
                   onClick={onSell}
-                  className="text-xs font-bold px-3 py-2 rounded-xl bg-[#111111] text-[#FFFFFF] cursor-pointer"
+                  className="text-xs font-bold px-3 py-2 rounded-xl bg-[#5B2EA6] text-[#FFFFFF] cursor-pointer"
                 >
                   Sell this seat
                 </button>
@@ -172,18 +172,18 @@ export function MyTickets({ onSell }: { onSell?: () => void }) {
                     value={handle}
                     onChange={(e) => setHandle(e.target.value)}
                     placeholder="recipient handle"
-                    className="text-xs bg-[#FFFFFF] text-[#111111] rounded-xl px-3 py-2 border border-[#E5E7EB] focus:border-[#111111] focus:outline-none"
+                    className="text-xs bg-[#FBFAFD] text-[#251045] rounded-xl px-3 py-2 border border-[#D6CFE4] focus:border-[#6C3EC9] focus:outline-none"
                   />
                   <button
                     disabled={busy || !handle.trim()}
                     onClick={() => void gift(t.id)}
-                    className="text-xs font-bold px-3 py-2 rounded-xl border border-[#111111] text-[#111111] cursor-pointer disabled:opacity-40"
+                    className="text-xs font-bold px-3 py-2 rounded-xl border border-[#6C3EC9] text-[#251045] cursor-pointer disabled:opacity-40"
                   >
                     Gift
                   </button>
                   <button
                     onClick={() => { setGiftFor(null); setHandle(''); setGiftError(null); }}
-                    className="text-xs text-[#111111]/60 cursor-pointer"
+                    className="text-xs text-[#251045]/60 cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -191,7 +191,7 @@ export function MyTickets({ onSell }: { onSell?: () => void }) {
               ) : (
                 <button
                   onClick={() => { setGiftFor(t.id); setGiftError(null); }}
-                  className="text-xs font-bold px-3 py-2 rounded-xl border border-[#E5E7EB] text-[#111111] cursor-pointer"
+                  className="text-xs font-bold px-3 py-2 rounded-xl border border-[#D6CFE4] text-[#251045] cursor-pointer"
                 >
                   Gift to someone
                 </button>
@@ -200,7 +200,7 @@ export function MyTickets({ onSell }: { onSell?: () => void }) {
           )}
 
           {giftFor === t.id && giftError && (
-            <p className="text-[11px] text-[#111111]">{giftError}</p>
+            <p className="text-[11px] text-[#251045]">{giftError}</p>
           )}
         </div>
       ))}

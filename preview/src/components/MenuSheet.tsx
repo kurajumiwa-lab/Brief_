@@ -187,7 +187,7 @@ function HostValueCard({
       {expanded && (
         <button
           onClick={onBack}
-          className="mb-3 flex items-center gap-1.5 text-[12px] font-extrabold text-[#7E8B9B] hover:text-white cursor-pointer transition-colors"
+          className="mb-3 flex items-center gap-1.5 text-[12px] font-extrabold text-[#A99BD1] hover:text-white cursor-pointer transition-colors"
         >
           <ChevronLeft className="h-4 w-4" />
           Back to Menu
@@ -196,7 +196,7 @@ function HostValueCard({
 
       {/* Alexander Sterling Concierge Hub Card */}
       <div
-        className="relative w-full rounded-2xl border border-[#28354A] bg-gradient-to-b from-[#162030] via-[#101724] to-[#0A0E17] p-4 shadow-xl overflow-hidden cursor-pointer"
+        className="relative w-full rounded-2xl border border-[#31205C] bg-gradient-to-b from-[#2A1657] via-[#101724] to-[#150826] p-4 shadow-xl overflow-hidden cursor-pointer"
         onClick={expanded ? undefined : onExpand}
       >
         {/* Diagonal wireframe background pattern in top-right */}
@@ -228,7 +228,7 @@ function HostValueCard({
               {displayName === 'Alexander Sterling' ? 'LO' : initials(displayName)}
             </div>
             <div className="min-w-0">
-              <p className="text-[9.5px] font-extrabold uppercase tracking-[0.16em] text-[#7E8B9B] truncate">
+              <p className="text-[9.5px] font-extrabold uppercase tracking-[0.16em] text-[#A99BD1] truncate">
                 PREMIUM CONCIERGE HUB
               </p>
               <h2 className="text-[17px] sm:text-[18px] font-black text-white tracking-tight truncate mt-0.5">
@@ -253,22 +253,22 @@ function HostValueCard({
         {/* Bottom Row: My Account & My Hub */}
         <div className="grid grid-cols-2 gap-2.5 mt-3.5 pt-3 border-t border-[#1C2738] relative z-10">
           {/* Left: My Account */}
-          <div className="rounded-xl border border-[#1F2B3D] bg-[#0E1522] p-3 flex flex-col justify-between">
+          <div className="rounded-xl border border-[#1F2B3D] bg-[#1C0A38] p-3 flex flex-col justify-between">
             <div>
-              <p className="text-[10.5px] font-medium text-[#7E8B9B]">My Account</p>
+              <p className="text-[10.5px] font-medium text-[#A99BD1]">My Account</p>
               <p className="text-[16px] font-black text-[#E5B558] mt-0.5 tracking-tight">
                 {money(command?.money.grossSettled ?? 0, command?.money.currency ?? 'KES')}
               </p>
             </div>
-            <div className="flex items-center gap-4 mt-1 text-[9.5px] text-[#7E8B9B]">
+            <div className="flex items-center gap-4 mt-1 text-[9.5px] text-[#A99BD1]">
               <span>Settled</span>
               <span>{command?.campaigns.length || 1} Hosted</span>
             </div>
           </div>
 
           {/* Right: My Hub */}
-          <div className="rounded-xl border border-[#1F2B3D] bg-[#0E1522] p-3 flex flex-col justify-between">
-            <p className="text-[10.5px] font-medium text-[#7E8B9B]">My Hub</p>
+          <div className="rounded-xl border border-[#1F2B3D] bg-[#1C0A38] p-3 flex flex-col justify-between">
+            <p className="text-[10.5px] font-medium text-[#A99BD1]">My Hub</p>
             <div className="mt-1.5 flex items-center">
               <div className="w-full py-1.5 px-3 rounded-full bg-gradient-to-r from-[#D6A24D] via-[#ECC880] to-[#C99540] text-[#2C1C04] font-black text-[11px] text-center shadow-md tracking-wide">
                 Platinum Member
@@ -281,14 +281,14 @@ function HostValueCard({
       {/* Expanded Profile Details */}
       {expanded && (
         <div className="mt-4 space-y-3 pt-1">
-          <div className="rounded-2xl bg-[#111724] border border-[#202B3C] p-4 text-white">
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#7E8B9B] mb-2">
+          <div className="rounded-2xl bg-[#1C0A38] border border-[#2A1657] p-4 text-white">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#A99BD1] mb-2">
               Standing
             </p>
             <div className="grid grid-cols-2 gap-2.5">
               {standing.map((s) => (
-                <div key={s.label} className="rounded-xl border border-[#1C2738] bg-[#0E1522] p-2.5">
-                  <p className="text-[10px] text-[#7E8B9B]">{s.label}</p>
+                <div key={s.label} className="rounded-xl border border-[#1C2738] bg-[#1C0A38] p-2.5">
+                  <p className="text-[10px] text-[#A99BD1]">{s.label}</p>
                   <p className="text-[13px] font-extrabold text-white mt-0.5">{s.value}</p>
                 </div>
               ))}
@@ -298,14 +298,14 @@ function HostValueCard({
           <div className="flex gap-2">
             <button
               onClick={() => void shareCard()}
-              className="flex-1 h-10 rounded-xl bg-white text-[#0A0D14] text-[12px] font-extrabold flex items-center justify-center gap-2 cursor-pointer transition-colors hover:bg-gray-100"
+              className="flex-1 h-10 rounded-xl bg-white text-[#150826] text-[12px] font-extrabold flex items-center justify-center gap-2 cursor-pointer transition-colors hover:bg-gray-100"
             >
               <Share2 className="h-4 w-4" />
               Share profile
             </button>
             <button
               onClick={() => void copyCard()}
-              className="h-10 px-4 rounded-xl border border-[#28354A] bg-[#141A26] text-white text-[12px] font-extrabold flex items-center justify-center gap-2 cursor-pointer hover:border-[#7E8B9B] transition-colors"
+              className="h-10 px-4 rounded-xl border border-[#31205C] bg-[#141A26] text-white text-[12px] font-extrabold flex items-center justify-center gap-2 cursor-pointer hover:border-[#A99BD1] transition-colors"
             >
               <Copy className="h-4 w-4" />
               {copied ? 'Copied' : 'Copy'}
@@ -318,7 +318,7 @@ function HostValueCard({
           {me && (
             <button
               onClick={() => void briefApi.logout().then(() => window.location.reload())}
-              className="mt-3 w-full h-10 rounded-xl border border-[#28354A] bg-transparent text-white/70 text-[12px] font-extrabold cursor-pointer hover:border-[#7E8B9B] transition-colors"
+              className="mt-3 w-full h-10 rounded-xl border border-[#31205C] bg-transparent text-white/70 text-[12px] font-extrabold cursor-pointer hover:border-[#A99BD1] transition-colors"
             >
               Sign out
             </button>
@@ -343,7 +343,7 @@ function QuickActions({ onSelect }: { onSelect: (target: MenuTarget) => void }) 
   return (
     <section className="rounded-2xl border border-[#26354A] bg-[#121926]/90 backdrop-blur-md p-4 shadow-xl">
       <div className="mb-3 px-0.5">
-        <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#7E8B9B]">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#A99BD1]">
           QUICK ACTIONS
         </p>
       </div>
@@ -353,13 +353,13 @@ function QuickActions({ onSelect }: { onSelect: (target: MenuTarget) => void }) 
             key={action.label}
             type="button"
             onClick={() => onSelect(action.target)}
-            className="group rounded-xl border border-[#2C3B52] bg-gradient-to-b from-[#222E42] to-[#151E2C] p-3 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] hover:border-[#425575] transition-all cursor-pointer"
+            className="group rounded-xl border border-[#2C3B52] bg-gradient-to-b from-[#2A1657] to-[#1C0A38] p-3 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] hover:border-[#4C2685] transition-all cursor-pointer"
           >
             <div className="flex items-center justify-between gap-2">
               <p className="text-[13px] font-black text-white">{action.label}</p>
-              <span className="text-[13px] text-[#7E8B9B] transition-transform group-hover:translate-x-1">→</span>
+              <span className="text-[13px] text-[#A99BD1] transition-transform group-hover:translate-x-1">→</span>
             </div>
-            <p className="mt-1 text-[9.5px] leading-snug text-[#7E8B9B] truncate">{action.detail}</p>
+            <p className="mt-1 text-[9.5px] leading-snug text-[#A99BD1] truncate">{action.detail}</p>
           </button>
         ))}
       </div>
@@ -374,22 +374,22 @@ function MoreToCome() {
   return (
     <section className="space-y-2">
       <div className="flex items-baseline justify-between gap-2 px-1">
-        <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#7E8B9B]">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#A99BD1]">
           MORE TO COME
         </p>
-        <span className="text-[10px] font-bold text-[#64748B]">Not active yet</span>
+        <span className="text-[10px] font-bold text-[#6E6488]">Not active yet</span>
       </div>
       <div className="grid grid-cols-3 gap-2.5">
         {items.map((label) => (
           <div
             key={label}
-            className="rounded-xl border border-[#202B3C] bg-[#111724] p-3 shadow-md"
+            className="rounded-xl border border-[#2A1657] bg-[#1C0A38] p-3 shadow-md"
           >
             <div className="flex items-center justify-between gap-1.5">
               <span className="text-[12px] font-black text-white">{label}</span>
-              <Lock className="h-3.5 w-3.5 text-[#64748B] shrink-0" />
+              <Lock className="h-3.5 w-3.5 text-[#6E6488] shrink-0" />
             </div>
-            <p className="mt-1 text-[9.5px] font-bold text-[#64748B]">Not built</p>
+            <p className="mt-1 text-[9.5px] font-bold text-[#6E6488]">Not built</p>
           </div>
         ))}
       </div>
@@ -411,10 +411,10 @@ function RegionGallery({
   return (
     <section className="space-y-2 pb-2">
       <div className="flex items-baseline justify-between gap-2 px-1">
-        <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#7E8B9B]">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#A99BD1]">
           YOUR REGION
         </p>
-        <span className="text-[10px] font-bold text-[#64748B]">Your area</span>
+        <span className="text-[10px] font-bold text-[#6E6488]">Your area</span>
       </div>
       <div className="grid grid-cols-4 gap-2">
         {REGIONS.map((region) => {
@@ -431,8 +431,8 @@ function RegionGallery({
               }}
               className={`rounded-xl border p-2.5 text-center transition-all cursor-pointer ${
                 selected
-                  ? 'border-[#7E8B9B] bg-[#1A2333] shadow-md'
-                  : 'border-[#202B3C] bg-[#111724] hover:border-[#384A66]'
+                  ? 'border-[#A99BD1] bg-[#1A2333] shadow-md'
+                  : 'border-[#2A1657] bg-[#1C0A38] hover:border-[#3A2169]'
               }`}
             >
               <span className="block text-[22px] leading-none">{region.flag}</span>
@@ -484,7 +484,7 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
         role="dialog"
         aria-label="Explore gallery"
         aria-modal="true"
-        className="relative z-10 flex w-full max-w-3xl flex-col overflow-hidden rounded-t-[28px] sm:rounded-[28px] border border-[#202B3C] shadow-2xl"
+        className="relative z-10 flex w-full max-w-3xl flex-col overflow-hidden rounded-t-[28px] sm:rounded-[28px] border border-[#2A1657] shadow-2xl"
         style={{
           maxHeight: 'calc(100vh - 12px)',
           background: 'linear-gradient(180deg, #101622 0%, #0A0E17 100%)'
@@ -493,7 +493,7 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
         {/* Top Header: MAIN SHEET / Explore by shelf */}
         <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[#1A2333] bg-[#0E1420]/80 backdrop-blur-md px-4 py-3.5 sm:px-5">
           <div>
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#7E8B9B]">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#A99BD1]">
               MAIN SHEET
             </p>
             <h1 className="mt-0.5 text-[19px] sm:text-[21px] font-black tracking-tight text-white">
@@ -503,7 +503,7 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
           <button
             type="button"
             onClick={onClose}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#2A374C] bg-gradient-to-b from-[#222E42] to-[#141C2A] text-white text-[22px] font-light shadow-md hover:border-[#425575] transition-all cursor-pointer"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#2A374C] bg-gradient-to-b from-[#2A1657] to-[#1C0A38] text-white text-[22px] font-light shadow-md hover:border-[#4C2685] transition-all cursor-pointer"
             aria-label="Close explore gallery"
           >
             ×
@@ -540,15 +540,15 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
                 <button
                   type="button"
                   onClick={() => onSelect({ tab: 'operate' })}
-                  className="w-full rounded-2xl border border-[#202B3C] bg-[#111724] px-4 py-3 flex items-center justify-between gap-3 cursor-pointer hover:border-[#384A66] transition-colors"
+                  className="w-full rounded-2xl border border-[#2A1657] bg-[#1C0A38] px-4 py-3 flex items-center justify-between gap-3 cursor-pointer hover:border-[#3A2169] transition-colors"
                 >
                   <span className="text-left">
                     <span className="block text-[12px] font-extrabold text-white">Operate</span>
-                    <span className="block text-[10px] text-[#7E8B9B]">
+                    <span className="block text-[10px] text-[#A99BD1]">
                       The operator desk — health, queues, commerce, audit
                     </span>
                   </span>
-                  <span aria-hidden className="text-[16px] text-[#7E8B9B]">⚙</span>
+                  <span aria-hidden className="text-[16px] text-[#A99BD1]">⚙</span>
                 </button>
               )}
 

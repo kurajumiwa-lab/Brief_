@@ -38,20 +38,20 @@ const TABS: { id: Tab; label: string }[] = [
 
 function Card({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-4 space-y-2">
-      <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#111111]/50">{title}</p>
-      {note && <p className="text-[10px] leading-snug text-[#111111]/45">{note}</p>}
+    <div className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-4 space-y-2">
+      <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#251045]/50">{title}</p>
+      {note && <p className="text-[10px] leading-snug text-[#251045]/45">{note}</p>}
       {children}
     </div>
   );
 }
 
 function Empty({ children }: { children: React.ReactNode }) {
-  return <p className="text-[11px] text-[#111111]/50">{children}</p>;
+  return <p className="text-[11px] text-[#251045]/50">{children}</p>;
 }
 
 function Row({ children }: { children: React.ReactNode }) {
-  return <div className="flex items-center justify-between gap-2 text-[11px] text-[#111111]/80">{children}</div>;
+  return <div className="flex items-center justify-between gap-2 text-[11px] text-[#251045]/80">{children}</div>;
 }
 
 /** A labelled yes/no that never invents a third state. */
@@ -59,9 +59,9 @@ function Fact({ ok, label, detail }: { ok: boolean | null; label: string; detail
   return (
     <Row>
       <span>{label}</span>
-      <span className={`font-extrabold ${ok === false ? 'text-[#111111]' : 'text-[#111111]/60'}`}>
+      <span className={`font-extrabold ${ok === false ? 'text-[#251045]' : 'text-[#251045]/60'}`}>
         {ok === null ? 'unknown' : ok ? 'yes' : 'NO'}
-        {detail ? <span className="ml-1 font-bold text-[#111111]/40">{detail}</span> : null}
+        {detail ? <span className="ml-1 font-bold text-[#251045]/40">{detail}</span> : null}
       </span>
     </Row>
   );
@@ -77,28 +77,28 @@ export function AdminDesk({ open, onClose, me }: { open: boolean; onClose: () =>
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#111111]/30 backdrop-blur-sm overflow-y-auto">
-      <div className="max-w-3xl mx-auto min-h-full bg-[#FAFAFA]">
-        <div className="sticky top-0 z-10 bg-[#FAFAFA]/95 border-b border-[#E5E7EB] px-4 pt-5 pb-3">
+    <div className="fixed inset-0 z-50 bg-[#5B2EA6]/30 backdrop-blur-sm overflow-y-auto">
+      <div className="max-w-3xl mx-auto min-h-full bg-[#F1EDF7]">
+        <div className="sticky top-0 z-10 bg-[#F1EDF7]/95 border-b border-[#D6CFE4] px-4 pt-5 pb-3">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-lg font-extrabold text-[#111111]">Operate</h2>
-              <p className="text-[10px] text-[#111111]/60 leading-snug">
+              <h2 className="text-lg font-extrabold text-[#251045]">Operate</h2>
+              <p className="text-[10px] text-[#251045]/60 leading-snug">
                 The operator desk. Every action here is capability-checked again
                 on the server and written to the audit log. You carry:
                 <span className="font-bold"> {caps.length > 0 ? caps.join(', ') : 'no operator capability'}</span>.
               </p>
             </div>
             <button onClick={onClose} aria-label="Close the operator desk"
-              className="shrink-0 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] p-2 cursor-pointer">
-              <X className="w-4 h-4 text-[#111111]" />
+              className="shrink-0 rounded-xl border border-[#D6CFE4] bg-[#FBFAFD] p-2 cursor-pointer">
+              <X className="w-4 h-4 text-[#251045]" />
             </button>
           </div>
           <div className="mt-3 flex gap-1.5 overflow-x-auto pb-1">
             {TABS.map((t) => (
               <button key={t.id} onClick={() => setTab(t.id)}
                 className={`shrink-0 rounded-full px-3 py-1.5 text-[10px] font-extrabold cursor-pointer ${
-                  tab === t.id ? 'bg-[#111111] text-[#FFFFFF]' : 'bg-[#FFFFFF] text-[#111111]/70 border border-[#E5E7EB]'
+                  tab === t.id ? 'bg-[#5B2EA6] text-[#FFFFFF]' : 'bg-[#FBFAFD] text-[#251045]/70 border border-[#D6CFE4]'
                 }`}>
                 {t.label}
               </button>
@@ -164,13 +164,13 @@ function HealthTab({ tick, can, refresh }: { tick: number; can: (c: string) => b
         {errors.length === 0 ? <Empty>No recorded errors.</Empty> : errors.slice(-8).reverse().map((e, i) => (
           <Row key={e.id ?? i}>
             <span className="min-w-0 truncate">{String(e.kind ?? e.action ?? 'error')}</span>
-            <span className="shrink-0 text-[9px] text-[#111111]/40">{String(e.at ?? e.createdAt ?? '').slice(0, 16)}</span>
+            <span className="shrink-0 text-[9px] text-[#251045]/40">{String(e.at ?? e.createdAt ?? '').slice(0, 16)}</span>
           </Row>
         ))}
       </Card>
       {can('ops.run') ? (
         <button onClick={() => void backup()}
-          className="w-full rounded-xl bg-[#111111] px-3 py-2.5 text-[11px] font-extrabold text-[#FFFFFF] cursor-pointer">
+          className="w-full rounded-xl bg-[#5B2EA6] px-3 py-2.5 text-[11px] font-extrabold text-[#FFFFFF] cursor-pointer">
           Take a backup now (audited)
         </button>
       ) : (
@@ -212,15 +212,15 @@ function AttentionTab({ tick, can, refresh }: { tick: number; can: (c: string) =
         {reports === null ? <Empty>loading…</Empty>
           : reports.length === 0 ? <Empty>No open reports.</Empty>
           : reports.map((r) => (
-            <div key={r.id} className="rounded-xl border border-[#E5E7EB] p-2.5 space-y-1">
-              <Row><span>{String(r.reason ?? r.kind ?? 'report')}</span><span className="text-[9px] text-[#111111]/40">{String(r.createdAt ?? '').slice(0, 10)}</span></Row>
-              <p className="text-[10px] text-[#111111]/50">object {String(r.objectId ?? r.targetId ?? '?')}</p>
+            <div key={r.id} className="rounded-xl border border-[#D6CFE4] p-2.5 space-y-1">
+              <Row><span>{String(r.reason ?? r.kind ?? 'report')}</span><span className="text-[9px] text-[#251045]/40">{String(r.createdAt ?? '').slice(0, 10)}</span></Row>
+              <p className="text-[10px] text-[#251045]/50">object {String(r.objectId ?? r.targetId ?? '?')}</p>
               {can('moderate') ? (
                 <div className="flex gap-1.5 pt-1">
                   <button onClick={() => void act(() => briefApi.resolveOpsReport(r.id, 'dismiss', 'reviewed at the desk'), 'dismissed')}
-                    className="rounded-lg border border-[#E5E7EB] px-2 py-1 text-[9px] font-extrabold cursor-pointer">Dismiss</button>
+                    className="rounded-lg border border-[#D6CFE4] px-2 py-1 text-[9px] font-extrabold cursor-pointer">Dismiss</button>
                   <button onClick={() => void act(() => briefApi.resolveOpsReport(r.id, 'remove', 'removed from discovery at the desk'), 'removed from discovery')}
-                    className="rounded-lg bg-[#111111] px-2 py-1 text-[9px] font-extrabold text-[#FFFFFF] cursor-pointer">Remove from discovery</button>
+                    className="rounded-lg bg-[#5B2EA6] px-2 py-1 text-[9px] font-extrabold text-[#FFFFFF] cursor-pointer">Remove from discovery</button>
                 </div>
               ) : <Empty>Deciding needs the moderate capability.</Empty>}
             </div>
@@ -231,16 +231,16 @@ function AttentionTab({ tick, can, refresh }: { tick: number; can: (c: string) =
         {queue === null ? <Empty>loading…</Empty>
           : queue.length === 0 ? <Empty>The review queue is empty.</Empty>
           : queue.map((r) => (
-            <div key={r.id} className="rounded-xl border border-[#E5E7EB] p-2.5 space-y-1">
+            <div key={r.id} className="rounded-xl border border-[#D6CFE4] p-2.5 space-y-1">
               <Row>
                 <span className="font-extrabold">{String(r.kind)}</span>
-                <span className="text-[9px] text-[#111111]/40">submitted {String(r.submittedAt ?? '').slice(0, 10)}</span>
+                <span className="text-[9px] text-[#251045]/40">submitted {String(r.submittedAt ?? '').slice(0, 10)}</span>
               </Row>
-              <p className="text-[10px] text-[#111111]/50">user {String(r.userId ?? '?')}{r.note ? ` — “${String(r.note)}”` : ''}</p>
+              <p className="text-[10px] text-[#251045]/50">user {String(r.userId ?? '?')}{r.note ? ` — “${String(r.note)}”` : ''}</p>
               {/* White-label KYC assist: the provider's outcome codes, shown as
                   EVIDENCE for the reviewer -- never an auto-verdict. */}
               {r.providerAssist && (
-                <p className="text-[9px] text-[#111111]/40">
+                <p className="text-[9px] text-[#251045]/40">
                   provider check ({String(r.providerAssist.provider)}):{' '}
                   {r.providerAssist.ok
                     ? `${String(r.providerAssist.resultCode ?? '')} ${String(r.providerAssist.resultText ?? '')}`.trim() || 'no detail returned'
@@ -261,7 +261,7 @@ function AttentionTab({ tick, can, refresh }: { tick: number; can: (c: string) =
           : disputes.slice(0, 10).map((d) => (
             <Row key={d.id}>
               <span className="min-w-0 truncate">{String(d.reason ?? 'dispute')}</span>
-              <span className="shrink-0 text-[9px] text-[#111111]/40">order {String(d.orderId ?? '?').slice(0, 12)}</span>
+              <span className="shrink-0 text-[9px] text-[#251045]/40">order {String(d.orderId ?? '?').slice(0, 12)}</span>
             </Row>
           ))}
       </Card>
@@ -275,7 +275,7 @@ function AttentionTab({ tick, can, refresh }: { tick: number; can: (c: string) =
                 {String(l.status)}
                 {l.status === 'removed' && l.removedReason ? ` — ${String(l.removedReason)}` : ''}
               </span>
-              <span className="shrink-0 text-[9px] text-[#111111]/40">KES {String(l.priceKes ?? l.price ?? '?')}</span>
+              <span className="shrink-0 text-[9px] text-[#251045]/40">KES {String(l.priceKes ?? l.price ?? '?')}</span>
             </Row>
           ))}
       </Card>
@@ -289,13 +289,13 @@ function DecideRow({ onDecide }: { onDecide: (decision: 'approved' | 'rejected',
     <div className="space-y-1.5 pt-1">
       <input value={reason} onChange={(e) => setReason(e.target.value)}
         placeholder="reason (a rejection without one is refused)"
-        className="w-full rounded-lg border border-[#E5E7EB] px-2 py-1.5 text-[10px]" />
+        className="w-full rounded-lg border border-[#D6CFE4] px-2 py-1.5 text-[10px]" />
       <div className="flex gap-1.5">
         <button onClick={() => onDecide('approved', reason || 'approved at the desk')}
-          className="rounded-lg bg-[#111111] px-2 py-1 text-[9px] font-extrabold text-[#FFFFFF] cursor-pointer">Approve</button>
+          className="rounded-lg bg-[#5B2EA6] px-2 py-1 text-[9px] font-extrabold text-[#FFFFFF] cursor-pointer">Approve</button>
         <button onClick={() => onDecide('rejected', reason)}
           disabled={!reason.trim()}
-          className="rounded-lg border border-[#E5E7EB] px-2 py-1 text-[9px] font-extrabold cursor-pointer disabled:opacity-40">Reject</button>
+          className="rounded-lg border border-[#D6CFE4] px-2 py-1 text-[9px] font-extrabold cursor-pointer disabled:opacity-40">Reject</button>
       </div>
     </div>
   );
@@ -322,7 +322,7 @@ function IngestionTab({ tick }: { tick: number }) {
       </Card>
       <Card title="Ingest status" note="What the sources layer reports about itself right now.">
         {ingest === null ? <Empty>loading…</Empty> : (
-          <pre className="overflow-x-auto rounded-xl bg-[#111111] px-3 py-2 text-[9px] leading-relaxed text-[#FFFFFF]/90">
+          <pre className="overflow-x-auto rounded-xl bg-[#5B2EA6] px-3 py-2 text-[9px] leading-relaxed text-[#FFFFFF]/90">
             {JSON.stringify(ingest, null, 2).slice(0, 1200)}
           </pre>
         )}
@@ -355,13 +355,13 @@ function ContentTab({ tick, can, refresh }: { tick: number; can: (c: string) => 
         {cols === null ? <Empty>loading…</Empty>
           : cols.length === 0 ? <Empty>No collections.</Empty>
           : cols.map((c) => (
-            <div key={c.id ?? c.key} className="rounded-xl border border-[#E5E7EB] p-2.5 space-y-1">
-              <Row><span className="font-extrabold">{String(c.title ?? c.key)}</span><span className="text-[9px] text-[#111111]/40">{String(c.status ?? '')}</span></Row>
+            <div key={c.id ?? c.key} className="rounded-xl border border-[#D6CFE4] p-2.5 space-y-1">
+              <Row><span className="font-extrabold">{String(c.title ?? c.key)}</span><span className="text-[9px] text-[#251045]/40">{String(c.status ?? '')}</span></Row>
               {can('moderate') && (
                 <div className="flex gap-1.5 pt-1">
                   {['publish', 'archive'].map((a) => (
                     <button key={a} onClick={() => void transition(String(c.key), a)}
-                      className="rounded-lg border border-[#E5E7EB] px-2 py-1 text-[9px] font-extrabold cursor-pointer">{a}</button>
+                      className="rounded-lg border border-[#D6CFE4] px-2 py-1 text-[9px] font-extrabold cursor-pointer">{a}</button>
                   ))}
                 </div>
               )}
@@ -372,9 +372,9 @@ function ContentTab({ tick, can, refresh }: { tick: number; can: (c: string) => 
         {!can('admin') ? <Empty>Seeding needs the admin capability.</Empty> : (
           <div className="flex gap-1.5">
             <button onClick={async () => { const r = await briefApi.seedDemo(); setNote(r.ok ? 'demo content seeded' : r.error); refresh(); }}
-              className="rounded-lg border border-[#E5E7EB] px-2 py-1 text-[9px] font-extrabold cursor-pointer">Seed demo</button>
+              className="rounded-lg border border-[#D6CFE4] px-2 py-1 text-[9px] font-extrabold cursor-pointer">Seed demo</button>
             <button onClick={async () => { const r = await briefApi.clearDemo(); setNote(r.ok ? 'demo content cleared' : r.error); refresh(); }}
-              className="rounded-lg bg-[#111111] px-2 py-1 text-[9px] font-extrabold text-[#FFFFFF] cursor-pointer">Clear demo</button>
+              className="rounded-lg bg-[#5B2EA6] px-2 py-1 text-[9px] font-extrabold text-[#FFFFFF] cursor-pointer">Clear demo</button>
           </div>
         )}
       </Card>
@@ -419,10 +419,10 @@ function MediaTab({ tick, can, refresh }: { tick: number; can: (c: string) => bo
           <div className="space-y-1.5">
             {(['kind', 'key', 'url', 'alt'] as const).map((f) => (
               <input key={f} value={(form as any)[f]} onChange={(e) => setForm({ ...form, [f]: e.target.value })}
-                placeholder={f} className="w-full rounded-lg border border-[#E5E7EB] px-2 py-1.5 text-[10px]" />
+                placeholder={f} className="w-full rounded-lg border border-[#D6CFE4] px-2 py-1.5 text-[10px]" />
             ))}
             <button onClick={() => void record()}
-              className="rounded-lg bg-[#111111] px-2 py-1.5 text-[9px] font-extrabold text-[#FFFFFF] cursor-pointer">Record</button>
+              className="rounded-lg bg-[#5B2EA6] px-2 py-1.5 text-[9px] font-extrabold text-[#FFFFFF] cursor-pointer">Record</button>
           </div>
         </Card>
       ) : <Empty>Recording media needs the ops.run capability.</Empty>}
@@ -456,7 +456,7 @@ function CommerceTab({ tick, can, refresh }: { tick: number; can: (c: string) =>
             <Row><span>checked (settled orders)</span><span className="font-extrabold">{String(settle.checked ?? settle.settledOrders ?? '?')}</span></Row>
             <Row><span>discrepancies</span><span className="font-extrabold">{String((settle.discrepancies ?? []).length)}</span></Row>
             {(settle.discrepancies ?? []).slice(0, 8).map((d: any, i: number) => (
-              <Row key={i}><span className="text-[#111111]">{String(d.kind)}</span><span className="text-[9px] text-[#111111]/40">{String(d.orderId ?? d.intentId ?? '')}</span></Row>
+              <Row key={i}><span className="text-[#251045]">{String(d.kind)}</span><span className="text-[9px] text-[#251045]/40">{String(d.orderId ?? d.intentId ?? '')}</span></Row>
             ))}
           </>
         )}
@@ -466,13 +466,13 @@ function CommerceTab({ tick, can, refresh }: { tick: number; can: (c: string) =>
           <>
             <Row><span>discrepancies</span><span className="font-extrabold">{String((pay.discrepancies ?? []).length)}</span></Row>
             {(pay.discrepancies ?? []).slice(0, 8).map((d: any, i: number) => (
-              <Row key={i}><span className="text-[#111111]">{String(d.kind)}</span><span className="text-[9px] text-[#111111]/40">{String(d.intentId ?? '')}</span></Row>
+              <Row key={i}><span className="text-[#251045]">{String(d.kind)}</span><span className="text-[9px] text-[#251045]/40">{String(d.intentId ?? '')}</span></Row>
             ))}
             {(pay.discrepancies ?? []).length === 0 && <Empty>No intent discrepancies.</Empty>}
           </>
         )}
       </Card>
-      <button onClick={refresh} className="w-full rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] px-3 py-2 text-[11px] font-extrabold cursor-pointer">
+      <button onClick={refresh} className="w-full rounded-xl border border-[#D6CFE4] bg-[#FBFAFD] px-3 py-2 text-[11px] font-extrabold cursor-pointer">
         Re-run reconciliation
       </button>
     </>
@@ -507,13 +507,13 @@ function SecurityTab({ tick, can, refresh }: { tick: number; can: (c: string) =>
         {!can('admin') ? <Empty>Assigning roles needs the admin capability.</Empty> : (
           <div className="space-y-1.5">
             <input value={roles.userId} onChange={(e) => setRoles({ ...roles, userId: e.target.value })}
-              placeholder="user id or handle" className="w-full rounded-lg border border-[#E5E7EB] px-2 py-1.5 text-[10px]" />
+              placeholder="user id or handle" className="w-full rounded-lg border border-[#D6CFE4] px-2 py-1.5 text-[10px]" />
             <input value={roles.roles} onChange={(e) => setRoles({ ...roles, roles: e.target.value })}
-              placeholder="roles (viewer, operator, reviewer, finance, admin)" className="w-full rounded-lg border border-[#E5E7EB] px-2 py-1.5 text-[10px]" />
+              placeholder="roles (viewer, operator, reviewer, finance, admin)" className="w-full rounded-lg border border-[#D6CFE4] px-2 py-1.5 text-[10px]" />
             <input value={roles.reason} onChange={(e) => setRoles({ ...roles, reason: e.target.value })}
-              placeholder="reason (written to the audit log)" className="w-full rounded-lg border border-[#E5E7EB] px-2 py-1.5 text-[10px]" />
+              placeholder="reason (written to the audit log)" className="w-full rounded-lg border border-[#D6CFE4] px-2 py-1.5 text-[10px]" />
             <button onClick={() => void submit()} disabled={!roles.userId.trim() || !roles.reason.trim()}
-              className="rounded-lg bg-[#111111] px-2 py-1.5 text-[9px] font-extrabold text-[#FFFFFF] cursor-pointer disabled:opacity-40">
+              className="rounded-lg bg-[#5B2EA6] px-2 py-1.5 text-[9px] font-extrabold text-[#FFFFFF] cursor-pointer disabled:opacity-40">
               Write roles
             </button>
           </div>
@@ -525,7 +525,7 @@ function SecurityTab({ tick, can, refresh }: { tick: number; can: (c: string) =>
           : audit.slice(0, 15).map((a, i) => (
             <Row key={a.id ?? i}>
               <span className="min-w-0 truncate font-bold">{String(a.action)}</span>
-              <span className="shrink-0 text-[9px] text-[#111111]/40">{String(a.at ?? a.createdAt ?? '').slice(0, 16)}</span>
+              <span className="shrink-0 text-[9px] text-[#251045]/40">{String(a.at ?? a.createdAt ?? '').slice(0, 16)}</span>
             </Row>
           ))}
       </Card>
@@ -535,7 +535,7 @@ function SecurityTab({ tick, can, refresh }: { tick: number; can: (c: string) =>
           : mailLog.map((m, i) => (
             <Row key={m.id ?? i}>
               <span className="min-w-0 truncate">{String(m.kind ?? m.event ?? 'email event')}</span>
-              <span className="shrink-0 text-[9px] text-[#111111]/40">{String(m.at ?? m.createdAt ?? '').slice(0, 16)}</span>
+              <span className="shrink-0 text-[9px] text-[#251045]/40">{String(m.at ?? m.createdAt ?? '').slice(0, 16)}</span>
             </Row>
           ))}
       </Card>

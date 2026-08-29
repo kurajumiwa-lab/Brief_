@@ -31,10 +31,10 @@ export function ArenaShelf({ games, activity, onOpen }: ArenaShelfProps) {
     <section>
       <div className="flex items-end justify-between gap-3 mb-2.5">
         <div>
-          <h3 className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#111111]">
+          <h3 className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#251045]">
             Your games
           </h3>
-          <p className="text-[10px] text-[#111111]/60 mt-0.5">Tap a title to set up a match</p>
+          <p className="text-[10px] text-[#251045]/60 mt-0.5">Tap a title to set up a match</p>
         </div>
       </div>
 
@@ -55,7 +55,7 @@ export function ArenaShelf({ games, activity, onOpen }: ArenaShelfProps) {
             >
               <div
                 className="relative aspect-[3/4] rounded-2xl overflow-hidden border transition-all"
-                style={{ borderColor: live ? '#111111' : '#E5E7EB' }}
+                style={{ borderColor: live ? '#251045' : '#D6CFE4' }}
               >
                 <img
                   src={theme.art}
@@ -78,7 +78,7 @@ export function ArenaShelf({ games, activity, onOpen }: ArenaShelfProps) {
                 <div className="absolute top-2.5 left-2.5">
                   <span
                     className="text-[8px] font-extrabold tracking-[0.2em] px-1.5 py-0.5 rounded-md"
-                    style={{ color: '#FFFFFF', background: '#111111' }}
+                    style={{ color: '#FFFFFF', background: '#251045' }}
                   >
                     {theme.providerMark}
                   </span>

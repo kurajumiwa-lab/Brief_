@@ -10,27 +10,27 @@
    ============================================================================= */
 
 :root {
-  /* --- Color: the minimalist palette — white surfaces, ink type, neutral
-       lines. Typography is strictly black (this ink) on light surfaces and
-       white over dark imagery; muted/faint are the SAME ink at lower alpha,
-       so hierarchy comes from weight and size, never hue. --- */
-  --ground:         #FAFAFA;  /* base background — soft off-white */
-  --surface:        #FFFFFF;  /* raised cards, banners */
-  --overlay-scrim:  #F3F4F6;  /* neutral scrim wash */
-  --hairline:       #E5E7EB;  /* borders, dividers */
+  /* --- Color: the violet/lavender system (from the user's three reference
+       shots, extracted by pixel analysis): a lavender page, deep-violet ink,
+       one electric-violet accent family. Muted/faint are the SAME ink at
+       lower alpha, so hierarchy still comes from weight and size first. --- */
+  --ground:         #D8D2E1;  /* base background — the lavender page */
+  --surface:        #FBFAFD;  /* raised cards, banners */
+  --overlay-scrim:  #E9E4F2;  /* violet-tinted scrim wash */
+  --hairline:       #D6CFE4;  /* borders, dividers */
 
-  --ink:            #111111;  /* primary text — ink black */
-  --ink-dim:        rgba(17, 17, 17, 0.62);  /* secondary text — same ink, lower alpha */
-  --ink-faint:      rgba(17, 17, 17, 0.45);  /* tertiary/meta: timestamps, counters */
+  --ink:            #251045;  /* primary text — deep violet ink */
+  --ink-dim:        rgba(37, 16, 69, 0.62);  /* secondary text — same ink, lower alpha */
+  --ink-faint:      rgba(37, 16, 69, 0.45);  /* tertiary/meta: timestamps, counters */
 
-  --signal-live:    #111111;  /* live/active state ONLY — the one accent is ink */
-  --signal-arena:   #111111;  /* Arena / tournament system ONLY — ink */
-  --signal-urgent:  #111111;  /* countdown / closing-soon / expiring ONLY — ink */
+  --signal-live:    #5B2EA6;  /* live/active state ONLY — primary violet */
+  --signal-arena:   #6C3EC9;  /* Arena / tournament system ONLY — bright violet */
+  --signal-urgent:  #B6441C;  /* countdown / closing-soon / expiring ONLY — ember */
 
-  --tea:            #111111;  /* Tea category — neutral system */
-  --today:          #111111;  /* Today category */
-  --pursuits:       #111111;  /* Pursuits category */
-  --quests:         #111111;  /* Quests (shares live — quests ARE the live layer) */
+  --tea:            #5B2EA6;  /* Tea category — violet system */
+  --today:          #5B2EA6;  /* Today category */
+  --pursuits:       #5B2EA6;  /* Pursuits category */
+  --quests:         #5B2EA6;  /* Quests (shares live — quests ARE the live layer) */
 
   /* --- Type (§3) --- */
   --font-display: 'Fraunces', Georgia, serif;
@@ -172,45 +172,45 @@ html, body {
    coexist with the earlier tokens so non-home surfaces are unaffected.
    ============================================================================= */
 :root {
-  /* Color — M3 tokens mapped onto the minimalist light system. Every accent
-     is ink; every surface is white/off-white; every line is neutral. */
-  --m3-background:             #FAFAFA;
-  --m3-surface:                #FAFAFA;
-  --m3-surface-dim:            #F3F4F6;
-  --m3-surface-bright:         #FFFFFF;
-  --m3-surface-container-lowest: #FFFFFF;
-  --m3-surface-container-low:  #F3F4F6;
-  --m3-surface-container:      #FFFFFF;
-  --m3-surface-container-high: #F3F4F6;
-  --m3-surface-container-highest: #E5E7EB;
-  --m3-surface-variant:        #E5E7EB;
+  /* Color — M3 tokens mapped onto the violet/lavender system. The accent is
+     the violet family; surfaces are lavender-white; lines are violet-tinted. */
+  --m3-background:             #D8D2E1;
+  --m3-surface:                #D8D2E1;
+  --m3-surface-dim:            #E9E4F2;
+  --m3-surface-bright:         #FBFAFD;
+  --m3-surface-container-lowest: #FBFAFD;
+  --m3-surface-container-low:  #E9E4F2;
+  --m3-surface-container:      #FBFAFD;
+  --m3-surface-container-high: #E9E4F2;
+  --m3-surface-container-highest: #D6CFE4;
+  --m3-surface-variant:        #D6CFE4;
 
-  --m3-primary:                #111111;
-  --m3-primary-fixed:          #111111;
-  --m3-primary-fixed-dim:      #111111;
-  --m3-primary-container:      #111111;
+  --m3-primary:                #5B2EA6;
+  --m3-primary-fixed:          #5B2EA6;
+  --m3-primary-fixed-dim:      #6C3EC9;
+  --m3-primary-container:      #5B2EA6;
   --m3-on-primary:             #FFFFFF;
   --m3-on-primary-container:   #FFFFFF;
 
-  --m3-secondary:              #111111;
-  --m3-secondary-fixed:        #111111;
-  --m3-secondary-fixed-dim:    #111111;
-  --m3-secondary-container:    #F3F4F6;
-  --m3-on-secondary-container: #111111;
+  --m3-secondary:              #6C3EC9;
+  --m3-secondary-fixed:        #6C3EC9;
+  --m3-secondary-fixed-dim:    #6C3EC9;
+  --m3-secondary-container:    #E9E4F2;
+  --m3-on-secondary-container: #251045;
 
-  --m3-tertiary:               #111111;
-  --m3-tertiary-container:     #F3F4F6;
-  --m3-on-tertiary-container:  #111111;
+  --m3-tertiary:               #B6441C;
+  --m3-tertiary-container:     #E9E4F2;
+  --m3-on-tertiary-container:  #251045;
 
-  --m3-error:                  #111111;
-  --m3-error-container:        #111111;
+  --m3-error:                  #B42318;
+  --m3-error-container:        #B42318;
 
-  --m3-outline:                #E5E7EB;
-  --m3-outline-variant:        #E5E7EB;
-  --m3-on-surface:             #111111;
-  --m3-on-surface-variant:     rgba(17, 17, 17, 0.62);
-  --m3-on-background:          #111111;
-  --m3-inverse-surface:        #111111;
+  --m3-outline:                #D6CFE4;
+  --m3-outline-variant:        #D6CFE4;
+  --m3-on-surface:             #251045;
+  --m3-on-surface-variant:     rgba(37, 16, 69, 0.62);
+  --m3-on-background:          #251045;
+  --m3-inverse-surface:        #251045;
 
   /* Type — M3 */
   --m3-font-headline: 'Plus Jakarta Sans', 'Inter', sans-serif;
@@ -218,11 +218,11 @@ html, body {
   --m3-font-code:    'JetBrains Mono', monospace;
 }
 
-/* Status ring (the "new" story affordance) — ink arc for new, hairline full
-   ring once seen. Strictly neutral. */
+/* Status ring (the "new" story affordance) — violet arc for new, hairline
+   full ring once seen. */
 .m3-status-ring {
-  background: conic-gradient(from 180deg at 50% 50%, #111111 0deg, #111111 120deg, transparent 120deg, transparent 360deg);
+  background: conic-gradient(from 180deg at 50% 50%, #5B2EA6 0deg, #5B2EA6 120deg, transparent 120deg, transparent 360deg);
 }
 .m3-status-ring-seen {
-  background: conic-gradient(from 180deg at 50% 50%, #E5E7EB 0deg, #E5E7EB 360deg);
+  background: conic-gradient(from 180deg at 50% 50%, #D6CFE4 0deg, #D6CFE4 360deg);
 }

@@ -115,7 +115,9 @@ async function main() {
       await act(async () => { await new Promise((r) => setTimeout(r, 30)); });
       check('story renders', body().includes('The designed story'));
       check('hero photo rendered', Boolean(document.querySelector('img[src*="hero.jpg"]')));
-      check('theme applied (noir surface)', Boolean(document.querySelector('[style*="rgb(17, 17, 17)"]')));
+      // Noir is the NIGHT EDITION of the violet system: white ink on deep
+      // violet #251045 (was black #111111 before the retheme).
+      check('theme applied (noir surface)', Boolean(document.querySelector('[style*="rgb(37, 16, 69)"]')));
       check('gallery shows every editor photo',
         document.querySelectorAll('img[src*="g1.jpg"], img[src*="g2.jpg"]').length === 2);
       check('like count shown', body().includes('4 likes'));

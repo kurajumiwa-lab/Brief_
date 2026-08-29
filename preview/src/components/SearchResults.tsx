@@ -17,7 +17,7 @@ function ResultRow({ title, image, onClick }: { title: string; image?: string | 
   const content = (
     <>
       {image && <img src={image} alt="" aria-hidden="true" loading="lazy" className="h-12 w-12 shrink-0 rounded-xl object-cover" />}
-      <h3 className="min-w-0 flex-1 truncate px-1 text-[14px] font-semibold text-[#111111]">{title}</h3>
+      <h3 className="min-w-0 flex-1 truncate px-1 text-[14px] font-semibold text-[#251045]">{title}</h3>
     </>
   );
 
@@ -27,7 +27,7 @@ function ResultRow({ title, image, onClick }: { title: string; image?: string | 
         type="button"
         onClick={onClick}
         aria-label={title}
-        className="flex w-full items-center gap-3 rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-2 text-left transition-colors hover:border-[#111111]"
+        className="flex w-full items-center gap-3 rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-2 text-left transition-colors hover:border-[#6C3EC9]"
       >
         {content}
       </button>
@@ -35,7 +35,7 @@ function ResultRow({ title, image, onClick }: { title: string; image?: string | 
   }
 
   return (
-    <div className="flex w-full items-center gap-3 rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-2 text-left">
+    <div className="flex w-full items-center gap-3 rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-2 text-left">
       {content}
     </div>
   );
@@ -59,7 +59,7 @@ export function SearchResults({ query, onOpenObject }: { query: string; onOpenOb
   }, [query]);
 
   if (!query.trim()) return null;
-  if (loading) return <div className="h-16 animate-pulse rounded-2xl bg-[#FFFFFF]" aria-label="Searching" />;
+  if (loading) return <div className="h-16 animate-pulse rounded-2xl bg-[#FBFAFD]" aria-label="Searching" />;
   if (!results) return null;
 
   const total = results.counts.objects + results.counts.tea + results.counts.vendors + results.counts.collections;
@@ -67,7 +67,7 @@ export function SearchResults({ query, onOpenObject }: { query: string; onOpenOb
 
   return (
     <section className="mx-auto mb-6 max-w-5xl space-y-2">
-      <h2 className="px-1 text-[11px] font-bold uppercase tracking-[0.22em] text-[#111111]/60">Results</h2>
+      <h2 className="px-1 text-[11px] font-bold uppercase tracking-[0.22em] text-[#251045]/60">Results</h2>
       {results.objects.slice(0, 6).map((object) => (
         <ResultRow
           key={object.id}

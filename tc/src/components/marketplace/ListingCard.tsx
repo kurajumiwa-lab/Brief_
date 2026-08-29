@@ -35,36 +35,36 @@ export function ListingCard({ listing, onOpen }: ListingCardProps) {
   return (
     <button
       onClick={() => onOpen(listing.id)}
-      className="w-full text-left bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-3 space-y-1.5 cursor-pointer hover:border-[#E5E7EB] transition"
+      className="w-full text-left bg-[#FBFAFD] border border-[#D6CFE4] rounded-2xl p-3 space-y-1.5 cursor-pointer hover:border-[#D6CFE4] transition"
     >
       <div className="flex items-start justify-between gap-3">
-        <p className="text-xs font-extrabold text-[#111111] min-w-0">{listing.title}</p>
-        <span className="shrink-0 text-[9px] px-2 py-0.5 rounded-full bg-[#E5E7EB] text-[#111111]/60">
+        <p className="text-xs font-extrabold text-[#251045] min-w-0">{listing.title}</p>
+        <span className="shrink-0 text-[9px] px-2 py-0.5 rounded-full bg-[#D6CFE4] text-[#251045]/60">
           {TYPE_LABEL[listing.type] ?? listing.type}
         </span>
       </div>
 
-      <p className="text-sm font-extrabold text-[#111111]">
+      <p className="text-sm font-extrabold text-[#251045]">
         {money(listing.price, listing.currency)}
       </p>
 
       {listing.vendor && (
-        <p className="text-[10px] text-[#111111]/60">{listing.vendor.displayName}</p>
+        <p className="text-[10px] text-[#251045]/60">{listing.vendor.displayName}</p>
       )}
 
       {/* Optional by design: a mobile service has no single location. */}
       {listing.locationName && (
-        <p className="text-[10px] text-[#111111]/40">{listing.locationName}</p>
+        <p className="text-[10px] text-[#251045]/40">{listing.locationName}</p>
       )}
 
       {/* Stock only when it is genuinely tracked. null means "not tracked",
           which is different from zero and must not render as "0 left". */}
       {listing.quantityAvailable !== null && listing.quantityAvailable > 0 && (
-        <p className="text-[10px] text-[#111111]/40">{listing.quantityAvailable} available</p>
+        <p className="text-[10px] text-[#251045]/40">{listing.quantityAvailable} available</p>
       )}
 
       {!listing.orderable && listing.unorderableReason && (
-        <p className="text-[10px] text-[#111111]">{listing.unorderableReason}</p>
+        <p className="text-[10px] text-[#251045]">{listing.unorderableReason}</p>
       )}
     </button>
   );

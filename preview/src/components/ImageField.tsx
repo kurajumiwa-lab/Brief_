@@ -126,28 +126,28 @@ export function ImageField({
   if (value) {
     return (
       <div>
-        <p className="text-[11px] font-bold text-[#111111]">{label}</p>
+        <p className="text-[11px] font-bold text-[#251045]">{label}</p>
         <div className="mt-1 flex items-center gap-2">
           <img
             src={value}
             alt=""
-            className="h-14 w-20 shrink-0 rounded-lg border border-[#E5E7EB] object-cover"
+            className="h-14 w-20 shrink-0 rounded-lg border border-[#D6CFE4] object-cover"
           />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[10px] text-[#111111]/60">{value}</p>
+            <p className="truncate text-[10px] text-[#251045]/60">{value}</p>
             <div className="mt-1 flex gap-1.5">
               <button
                 type="button"
                 onClick={() => inputRef.current?.click()}
                 disabled={busy}
-                className="rounded-md border border-[#E5E7EB] px-2 py-1 text-[10px] font-bold text-[#111111] cursor-pointer disabled:opacity-40"
+                className="rounded-md border border-[#D6CFE4] px-2 py-1 text-[10px] font-bold text-[#251045] cursor-pointer disabled:opacity-40"
               >
                 Replace
               </button>
               <button
                 type="button"
                 onClick={() => onChange?.(null)}
-                className="rounded-md border border-[#E5E7EB] px-2 py-1 text-[10px] font-bold text-[#111111]/60 cursor-pointer"
+                className="rounded-md border border-[#D6CFE4] px-2 py-1 text-[10px] font-bold text-[#251045]/60 cursor-pointer"
               >
                 Remove
               </button>
@@ -169,28 +169,28 @@ export function ImageField({
 
   return (
     <div>
-      <p className="text-[11px] font-bold text-[#111111]">{label}</p>
-      {hint && <p className="text-[9px] text-[#111111]/50">{hint}</p>}
+      <p className="text-[11px] font-bold text-[#251045]">{label}</p>
+      {hint && <p className="text-[9px] text-[#251045]/50">{hint}</p>}
 
       <div
         onDragOver={(e) => e.preventDefault()}
         onDrop={onDrop}
-        className={`mt-1 rounded-xl border border-dashed border-[#E5E7EB] bg-[#FAFAFA] ${compact ? 'p-2.5' : 'p-4'} text-center`}
+        className={`mt-1 rounded-xl border border-dashed border-[#D6CFE4] bg-[#F1EDF7] ${compact ? 'p-2.5' : 'p-4'} text-center`}
       >
         {busy ? (
-          <p className="text-[10px] text-[#111111]/60">Uploading {progress}…</p>
+          <p className="text-[10px] text-[#251045]/60">Uploading {progress}…</p>
         ) : (
           <>
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#111111] px-3 py-1.5 text-[10px] font-extrabold text-[#FFFFFF] cursor-pointer hover:bg-[#000000]"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#5B2EA6] px-3 py-1.5 text-[10px] font-extrabold text-[#FFFFFF] cursor-pointer hover:bg-[#000000]"
             >
               {multiple ? <UploadCloud className="h-3.5 w-3.5" /> : <ImagePlus className="h-3.5 w-3.5" />}
               {multiple ? 'Choose photos' : 'Choose photo'}
             </button>
             {!compact && (
-              <p className="mt-1.5 text-[9px] text-[#111111]/40">
+              <p className="mt-1.5 text-[9px] text-[#251045]/40">
                 or drop {multiple ? 'them' : 'it'} here · {formats}
               </p>
             )}
@@ -216,7 +216,7 @@ export function ImageField({
             value={link}
             onChange={(e) => setLink(e.target.value)}
             placeholder="https://…/photo.jpg"
-            className="flex-1 rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-2.5 py-1.5 text-[11px] text-[#111111] outline-none focus:border-[#111111]"
+            className="flex-1 rounded-lg border border-[#D6CFE4] bg-[#F1EDF7] px-2.5 py-1.5 text-[11px] text-[#251045] outline-none focus:border-[#6C3EC9]"
           />
           <button
             type="button"
@@ -228,7 +228,7 @@ export function ImageField({
               else onChange?.(url);
               setLink('');
             }}
-            className="rounded-lg bg-[#111111] px-2.5 py-1.5 text-[10px] font-extrabold text-[#FFFFFF] cursor-pointer disabled:opacity-40"
+            className="rounded-lg bg-[#5B2EA6] px-2.5 py-1.5 text-[10px] font-extrabold text-[#FFFFFF] cursor-pointer disabled:opacity-40"
           >
             Use
           </button>
@@ -237,14 +237,14 @@ export function ImageField({
         <button
           type="button"
           onClick={() => setUseLink(true)}
-          className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-bold text-[#111111]/60 underline cursor-pointer"
+          className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-bold text-[#251045]/60 underline cursor-pointer"
         >
           <Link2 className="h-3 w-3" /> Use a link instead
         </button>
       )}
 
       {persisted === false && (
-        <p className="mt-1 text-[9px] text-[#111111]/40">
+        <p className="mt-1 text-[9px] text-[#251045]/40">
           Photos are stored on this server's disk: they survive a restart, not a redeploy to a fresh container.
         </p>
       )}

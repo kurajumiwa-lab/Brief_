@@ -96,15 +96,15 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-[#FAFAFA]" role="dialog" aria-modal="true" aria-label="Story studio">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-[#F1EDF7]" role="dialog" aria-modal="true" aria-label="Story studio">
       {/* top bar */}
-      <div className="sticky top-0 z-10 border-b border-[#E5E7EB] bg-[#FFFFFF]/95 backdrop-blur-md">
+      <div className="sticky top-0 z-10 border-b border-[#D6CFE4] bg-[#FBFAFD]/95 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
           <div className="min-w-0">
-            <p className="text-[13px] font-extrabold text-[#111111] truncate">
+            <p className="text-[13px] font-extrabold text-[#251045] truncate">
               {article ? 'Edit story' : 'New story'}
             </p>
-            <p className="text-[10px] text-[#111111]/50">
+            <p className="text-[10px] text-[#251045]/50">
               Design it here — readers see exactly this.
             </p>
           </div>
@@ -112,7 +112,7 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
             <button
               type="button"
               onClick={onClose}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] text-[#111111] cursor-pointer"
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#D6CFE4] text-[#251045] cursor-pointer"
               aria-label="Close studio"
             >
               <X className="h-4 w-4" />
@@ -121,7 +121,7 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
               type="button"
               onClick={() => void save(false)}
               disabled={!canSave}
-              className="h-8 rounded-lg border border-[#111111] px-3 text-[11px] font-extrabold text-[#111111] cursor-pointer disabled:opacity-40"
+              className="h-8 rounded-lg border border-[#6C3EC9] px-3 text-[11px] font-extrabold text-[#251045] cursor-pointer disabled:opacity-40"
             >
               {busy ? '…' : 'Save'}
             </button>
@@ -129,7 +129,7 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
               type="button"
               onClick={() => void save(true)}
               disabled={!canSave}
-              className="h-8 rounded-lg bg-[#111111] px-3 text-[11px] font-extrabold text-[#FFFFFF] cursor-pointer disabled:opacity-40"
+              className="h-8 rounded-lg bg-[#5B2EA6] px-3 text-[11px] font-extrabold text-[#FFFFFF] cursor-pointer disabled:opacity-40"
             >
               {busy ? '…' : 'Publish'}
             </button>
@@ -141,32 +141,32 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
         {/* ---------------- CONTROLS ---------------- */}
         <div className="space-y-4">
           {/* write */}
-          <section className="rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-4 space-y-2.5">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#111111]">Write</p>
+          <section className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-4 space-y-2.5">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#251045]">Write</p>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Headline"
-              className="w-full rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-3 py-2 text-[14px] font-bold text-[#111111] outline-none focus:border-[#111111]"
+              className="w-full rounded-lg border border-[#D6CFE4] bg-[#F1EDF7] px-3 py-2 text-[14px] font-bold text-[#251045] outline-none focus:border-[#6C3EC9]"
             />
             <input
               value={dek}
               onChange={(e) => setDek(e.target.value)}
               placeholder="Dek (one-line summary)"
-              className="w-full rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-3 py-2 text-[12px] text-[#111111] outline-none focus:border-[#111111]"
+              className="w-full rounded-lg border border-[#D6CFE4] bg-[#F1EDF7] px-3 py-2 text-[12px] text-[#251045] outline-none focus:border-[#6C3EC9]"
             />
             <textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
               placeholder="Body — hook → what's happening → why it matters → what you can do."
               rows={6}
-              className="w-full rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-3 py-2 text-[12px] leading-relaxed text-[#111111] outline-none focus:border-[#111111]"
+              className="w-full rounded-lg border border-[#D6CFE4] bg-[#F1EDF7] px-3 py-2 text-[12px] leading-relaxed text-[#251045] outline-none focus:border-[#6C3EC9]"
             />
             <div className="flex gap-2">
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-2 py-1.5 text-[11px] text-[#111111]"
+                className="rounded-lg border border-[#D6CFE4] bg-[#F1EDF7] px-2 py-1.5 text-[11px] text-[#251045]"
               >
                 {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
@@ -174,14 +174,14 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="Location"
-                className="flex-1 rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-3 py-2 text-[12px] text-[#111111] outline-none focus:border-[#111111]"
+                className="flex-1 rounded-lg border border-[#D6CFE4] bg-[#F1EDF7] px-3 py-2 text-[12px] text-[#251045] outline-none focus:border-[#6C3EC9]"
               />
             </div>
           </section>
 
           {/* theme presets */}
-          <section className="rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-4 space-y-2">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#111111]">Theme</p>
+          <section className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-4 space-y-2">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#251045]">Theme</p>
             <div className="grid grid-cols-2 gap-2">
               {STORY_THEMES.map((t) => {
                 const active = design.theme === t.id;
@@ -192,9 +192,9 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
                     onClick={() => patchDesign({ theme: t.id })}
                     className="rounded-xl border p-2.5 text-left cursor-pointer transition-all"
                     style={{
-                      borderColor: active ? '#111111' : '#E5E7EB',
+                      borderColor: active ? '#251045' : '#D6CFE4',
                       background: t.surface,
-                      boxShadow: active ? '0 0 0 1px #111111' : undefined
+                      boxShadow: active ? '0 0 0 1px #6C3EC9' : undefined
                     }}
                   >
                     <p className="text-[11px] font-extrabold" style={{ color: t.ink }}>{t.label}</p>
@@ -207,8 +207,8 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
           </section>
 
           {/* layout presets */}
-          <section className="rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-4 space-y-2">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#111111]">Layout</p>
+          <section className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-4 space-y-2">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#251045]">Layout</p>
             <div className="grid grid-cols-2 gap-2">
               {STORY_LAYOUTS.map((l) => {
                 const active = design.layout === l.id;
@@ -218,24 +218,24 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
                     type="button"
                     onClick={() => patchDesign({ layout: l.id })}
                     className="rounded-xl border p-2.5 text-left cursor-pointer transition-all"
-                    style={{ borderColor: active ? '#111111' : '#E5E7EB', background: '#FFFFFF', boxShadow: active ? '0 0 0 1px #111111' : undefined }}
+                    style={{ borderColor: active ? '#5B2EA6' : '#D6CFE4', background: '#FBFAFD', boxShadow: active ? '0 0 0 1px #6C3EC9' : undefined }}
                   >
                     {/* mini wireframe of the layout */}
                     <div className="flex h-9 gap-1">
                       {l.id !== 'center' && l.id !== 'left' && (
-                        <div className="flex h-9 w-9 flex-col justify-end gap-0.5 rounded border border-[#E5E7EB] bg-[#FAFAFA] p-0.5">
-                          <div className="h-1 w-3/4 rounded-full bg-[#111111]" />
-                          <div className="h-0.5 w-full rounded-full bg-[#E5E7EB]" />
+                        <div className="flex h-9 w-9 flex-col justify-end gap-0.5 rounded border border-[#D6CFE4] bg-[#F1EDF7] p-0.5">
+                          <div className="h-1 w-3/4 rounded-full bg-[#5B2EA6]" />
+                          <div className="h-0.5 w-full rounded-full bg-[#D6CFE4]" />
                         </div>
                       )}
-                      <div className={`flex flex-1 flex-col justify-end gap-0.5 rounded border border-[#E5E7EB] bg-[#FAFAFA] p-0.5 ${l.id === 'center' ? 'items-center' : l.id === 'left' ? 'items-start' : l.id === 'split' ? 'items-start' : 'items-start'}`}>
-                        <div className="h-1.5 w-2/3 rounded-full bg-[#111111]" />
-                        <div className="h-0.5 w-full rounded-full bg-[#E5E7EB]" />
-                        <div className="h-0.5 w-1/2 rounded-full bg-[#E5E7EB]" />
+                      <div className={`flex flex-1 flex-col justify-end gap-0.5 rounded border border-[#D6CFE4] bg-[#F1EDF7] p-0.5 ${l.id === 'center' ? 'items-center' : l.id === 'left' ? 'items-start' : l.id === 'split' ? 'items-start' : 'items-start'}`}>
+                        <div className="h-1.5 w-2/3 rounded-full bg-[#5B2EA6]" />
+                        <div className="h-0.5 w-full rounded-full bg-[#D6CFE4]" />
+                        <div className="h-0.5 w-1/2 rounded-full bg-[#D6CFE4]" />
                       </div>
                     </div>
-                    <p className="mt-1.5 text-[11px] font-extrabold text-[#111111]">{l.label}</p>
-                    <p className="text-[9px] leading-tight text-[#111111]/50">{l.blurb}</p>
+                    <p className="mt-1.5 text-[11px] font-extrabold text-[#251045]">{l.label}</p>
+                    <p className="text-[9px] leading-tight text-[#251045]/50">{l.blurb}</p>
                   </button>
                 );
               })}
@@ -243,25 +243,25 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
           </section>
 
           {/* freehand */}
-          <section className="rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-4 space-y-3">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#111111]">Freehand</p>
+          <section className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-4 space-y-3">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#251045]">Freehand</p>
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-[11px] font-bold text-[#111111]">Accent colour</p>
-                <p className="text-[9px] text-[#111111]/50">Kicker, rules and highlights.</p>
+                <p className="text-[11px] font-bold text-[#251045]">Accent colour</p>
+                <p className="text-[9px] text-[#251045]/50">Kicker, rules and highlights.</p>
               </div>
               <div className="flex items-center gap-1.5">
                 <input
                   type="color"
-                  value={design.accent ?? '#111111'}
+                  value={design.accent ?? '#251045'}
                   onChange={(e) => patchDesign({ accent: e.target.value.toUpperCase() })}
-                  className="h-7 w-9 cursor-pointer rounded border border-[#E5E7EB] bg-[#FFFFFF] p-0.5"
+                  className="h-7 w-9 cursor-pointer rounded border border-[#D6CFE4] bg-[#FBFAFD] p-0.5"
                   aria-label="Accent colour"
                 />
                 <button
                   type="button"
                   onClick={() => patchDesign({ accent: null })}
-                  className="rounded-md border border-[#E5E7EB] px-1.5 py-1 text-[9px] font-bold text-[#111111]/60 cursor-pointer"
+                  className="rounded-md border border-[#D6CFE4] px-1.5 py-1 text-[9px] font-bold text-[#251045]/60 cursor-pointer"
                 >
                   Clear
                 </button>
@@ -269,8 +269,8 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
             </div>
             <div>
               <div className="flex items-center justify-between">
-                <p className="text-[11px] font-bold text-[#111111]">Hero overlay</p>
-                <span className="text-[10px] font-mono text-[#111111]/60">{Math.round(design.overlay * 100)}%</span>
+                <p className="text-[11px] font-bold text-[#251045]">Hero overlay</p>
+                <span className="text-[10px] font-mono text-[#251045]/60">{Math.round(design.overlay * 100)}%</span>
               </div>
               <input
                 type="range"
@@ -281,13 +281,13 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
                 className="mt-1 w-full cursor-pointer accent-black"
                 aria-label="Hero overlay strength"
               />
-              <p className="text-[9px] text-[#111111]/50">How dark the veil over the lead photo is — for readable type.</p>
+              <p className="text-[9px] text-[#251045]/50">How dark the veil over the lead photo is — for readable type.</p>
             </div>
           </section>
 
           {/* photos */}
-          <section className="rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-4 space-y-3">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#111111]">Photos</p>
+          <section className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-4 space-y-3">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#251045]">Photos</p>
             <ImageField
               label="Lead photo"
               hint="Used as the story's background on the home shelf and its hero."
@@ -310,24 +310,24 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
               {images.length > 0 && (
                 <div className="mt-2 grid grid-cols-3 gap-1.5">
                   {images.map((url) => (
-                    <div key={url} className="group relative overflow-hidden rounded-lg border border-[#E5E7EB]">
+                    <div key={url} className="group relative overflow-hidden rounded-lg border border-[#D6CFE4]">
                       <img src={url} alt="" className="h-16 w-full object-cover" />
-                      <div className="absolute inset-0 flex items-center justify-center gap-1 bg-[#111111]/0 opacity-0 transition-all group-hover:bg-[#111111]/45 group-hover:opacity-100">
+                      <div className="absolute inset-0 flex items-center justify-center gap-1 bg-[#5B2EA6]/0 opacity-0 transition-all group-hover:bg-[#5B2EA6]/45 group-hover:opacity-100">
                         <button
                           type="button"
                           onClick={() => makeHero(url)}
                           title="Make this the lead photo"
-                          className="rounded-md bg-[#FFFFFF] p-1 cursor-pointer"
+                          className="rounded-md bg-[#FBFAFD] p-1 cursor-pointer"
                         >
-                          <Star className="h-3 w-3 text-[#111111]" />
+                          <Star className="h-3 w-3 text-[#251045]" />
                         </button>
                         <button
                           type="button"
                           onClick={() => setImages((imgs) => imgs.filter((u) => u !== url))}
                           title="Remove"
-                          className="rounded-md bg-[#FFFFFF] p-1 cursor-pointer"
+                          className="rounded-md bg-[#FBFAFD] p-1 cursor-pointer"
                         >
-                          <Trash2 className="h-3 w-3 text-[#111111]" />
+                          <Trash2 className="h-3 w-3 text-[#251045]" />
                         </button>
                       </div>
                     </div>
@@ -338,28 +338,28 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
           </section>
 
           {error && (
-            <p className="rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] p-2.5 text-[11px] text-[#111111]">{error}</p>
+            <p className="rounded-xl border border-[#D6CFE4] bg-[#FBFAFD] p-2.5 text-[11px] text-[#251045]">{error}</p>
           )}
         </div>
 
         {/* ---------------- LIVE PREVIEW ---------------- */}
         <div className="lg:sticky lg:top-20 lg:self-start">
-          <div className="rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-3">
+          <div className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-3">
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#111111]">Live preview</p>
-              <span className="text-[9px] text-[#111111]/40">as readers will see it</span>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#251045]">Live preview</p>
+              <span className="text-[9px] text-[#251045]/40">as readers will see it</span>
             </div>
-            <div className="overflow-hidden rounded-xl border border-[#E5E7EB]">
+            <div className="overflow-hidden rounded-xl border border-[#D6CFE4]">
               <StoryView article={previewArticle} design={design} mode="preview" />
             </div>
             {images.length > 0 && (
               <div className="mt-2">
-                <p className="text-[9px] uppercase tracking-[0.14em] text-[#111111]/40">
+                <p className="text-[9px] uppercase tracking-[0.14em] text-[#251045]/40">
                   Gallery · {images.length} photo{images.length === 1 ? '' : 's'} in the reader
                 </p>
                 <div className="mt-1 grid grid-cols-4 gap-1.5">
                   {images.map((url) => (
-                    <img key={url} src={url} alt="" className="h-12 w-full rounded-md border border-[#E5E7EB] object-cover" />
+                    <img key={url} src={url} alt="" className="h-12 w-full rounded-md border border-[#D6CFE4] object-cover" />
                   ))}
                 </div>
               </div>

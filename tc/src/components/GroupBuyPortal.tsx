@@ -185,14 +185,14 @@ export function GroupBuyPortal() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-extrabold text-[#111111]">Group Buy</h2>
-        <p className="text-[10px] text-[#111111]/60">
+        <h2 className="text-lg font-extrabold text-[#251045]">Group Buy</h2>
+        <p className="text-[10px] text-[#251045]/60">
           Chama cycles and group orders — contributions, receipts and the pipeline, tracked by the engine.
         </p>
       </div>
 
-      {state === 'loading' && <p className="text-xs text-[#111111]/60">Loading…</p>}
-      {state === 'error' && <p className="text-xs text-[#111111]">{error}</p>}
+      {state === 'loading' && <p className="text-xs text-[#251045]/60">Loading…</p>}
+      {state === 'error' && <p className="text-xs text-[#251045]">{error}</p>}
 
       {state === 'ready' && (
         <>
@@ -206,9 +206,9 @@ export function GroupBuyPortal() {
                   onClick={() => { setSelectedId(b.id); setLastReceipt(null); }}
                   className="rounded-lg border px-2.5 py-1 text-[10px] font-extrabold cursor-pointer"
                   style={{
-                    borderColor: b.id === selected?.id ? '#111111' : '#E5E7EB',
-                    background: b.id === selected?.id ? '#111111' : '#FFFFFF',
-                    color: b.id === selected?.id ? '#FFFFFF' : '#111111'
+                    borderColor: b.id === selected?.id ? '#251045' : '#D6CFE4',
+                    background: b.id === selected?.id ? '#251045' : '#FFFFFF',
+                    color: b.id === selected?.id ? '#FFFFFF' : '#251045'
                   }}
                 >
                   {b.title}
@@ -218,34 +218,34 @@ export function GroupBuyPortal() {
           )}
 
           {!selected && (
-            <div className="rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-4">
-              <p className="text-[13px] font-bold text-[#111111]">No group buys yet.</p>
-              <p className="mt-1 text-[11px] text-[#111111]/60">Open the first chama cycle or group order below.</p>
+            <div className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-4">
+              <p className="text-[13px] font-bold text-[#251045]">No group buys yet.</p>
+              <p className="mt-1 text-[11px] text-[#251045]/60">Open the first chama cycle or group order below.</p>
             </div>
           )}
 
           {/* create form */}
-          <div className="rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-3.5">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#111111]">Open a buy</p>
+          <div className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-3.5">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#251045]">Open a buy</p>
             <div className="mt-2 flex flex-wrap gap-2">
               <input
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 placeholder="Title (e.g. Unga December cycle)"
-                className="min-w-[180px] flex-1 rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-3 py-2 text-[12px] text-[#111111] outline-none focus:border-[#111111]"
+                className="min-w-[180px] flex-1 rounded-lg border border-[#D6CFE4] bg-[#F1EDF7] px-3 py-2 text-[12px] text-[#251045] outline-none focus:border-[#6C3EC9]"
               />
               <input
                 value={newTarget}
                 onChange={(e) => setNewTarget(e.target.value)}
                 inputMode="numeric"
                 placeholder="Target KSh"
-                className="w-32 rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-3 py-2 text-[12px] text-[#111111] outline-none focus:border-[#111111]"
+                className="w-32 rounded-lg border border-[#D6CFE4] bg-[#F1EDF7] px-3 py-2 text-[12px] text-[#251045] outline-none focus:border-[#6C3EC9]"
               />
               <button
                 type="button"
                 onClick={() => void create()}
                 disabled={creating || !newTitle.trim() || !newTarget.trim()}
-                className="rounded-lg bg-[#111111] px-4 py-2 text-[11px] font-extrabold text-[#FFFFFF] cursor-pointer disabled:opacity-40"
+                className="rounded-lg bg-[#5B2EA6] px-4 py-2 text-[11px] font-extrabold text-[#FFFFFF] cursor-pointer disabled:opacity-40"
               >
                 {creating ? '…' : 'Open'}
               </button>
@@ -255,20 +255,20 @@ export function GroupBuyPortal() {
           {selected && (
             <>
               {/* the ledger stepper */}
-              <div className="rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-4">
+              <div className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-4">
                 <div className="mb-3 flex items-baseline justify-between gap-2">
                   <div>
-                    <p className="text-[14px] font-extrabold text-[#111111]">{selected.title}</p>
-                    <p className="text-[10px] text-[#111111]/60">
+                    <p className="text-[14px] font-extrabold text-[#251045]">{selected.title}</p>
+                    <p className="text-[10px] text-[#251045]/60">
                       {money(selected.total)} of {money(selected.targetAmount)} · {selected.progressPct}% · {selected.contributionCount} contribution{selected.contributionCount === 1 ? '' : 's'}
                     </p>
                   </div>
-                  <span className="rounded-md bg-[#111111] px-2 py-0.5 text-[9px] font-extrabold text-[#FFFFFF]">
+                  <span className="rounded-md bg-[#5B2EA6] px-2 py-0.5 text-[9px] font-extrabold text-[#FFFFFF]">
                     {selected.stages[selected.stageIndex]?.label}
                   </span>
                 </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-[#E5E7EB]">
-                  <div className="h-full rounded-full bg-[#111111] transition-all" style={{ width: `${selected.progressPct}%` }} />
+                <div className="h-1.5 overflow-hidden rounded-full bg-[#D6CFE4]">
+                  <div className="h-full rounded-full bg-[#5B2EA6] transition-all" style={{ width: `${selected.progressPct}%` }} />
                 </div>
                 <div className="mt-4">
                   <StageStepper stages={selected.stages} currentIndex={selected.stageIndex} />
@@ -278,7 +278,7 @@ export function GroupBuyPortal() {
                   <button
                     type="button"
                     onClick={() => void advance(selected.stages[selected.stageIndex + 1].id)}
-                    className="mt-3 rounded-lg border border-[#111111] px-3 py-1.5 text-[11px] font-extrabold text-[#111111] cursor-pointer"
+                    className="mt-3 rounded-lg border border-[#6C3EC9] px-3 py-1.5 text-[11px] font-extrabold text-[#251045] cursor-pointer"
                   >
                     Mark: {selected.stages[selected.stageIndex + 1].label}
                   </button>
@@ -287,12 +287,12 @@ export function GroupBuyPortal() {
 
               {/* PRICED BARGAIN (T2): ladder pricing, per-head joins.
                   The price is the SERVER's, derived from the live count. */}
-              <div className="rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-4 space-y-3">
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#111111]">Bargain pricing</p>
+              <div className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-4 space-y-3">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#251045]">Bargain pricing</p>
 
                 {!bargain ? (
                   <>
-                    <p className="text-[11px] leading-snug text-[#111111]/60">
+                    <p className="text-[11px] leading-snug text-[#251045]/60">
                       Price this buy per head instead of pooling: each band drops the price for everyone who joins after it fills.
                       The ladder must climb in heads and fall in price — the server refuses anything else.
                     </p>
@@ -305,24 +305,24 @@ export function GroupBuyPortal() {
                             inputMode="numeric"
                             aria-label={`band ${i + 1} minimum heads`}
                             placeholder="heads"
-                            className="w-20 rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-2.5 py-1.5 text-[12px] text-[#111111]"
+                            className="w-20 rounded-lg border border-[#D6CFE4] bg-[#F1EDF7] px-2.5 py-1.5 text-[12px] text-[#251045]"
                           />
-                          <span className="text-[10px] text-[#111111]/40">+ people at</span>
+                          <span className="text-[10px] text-[#251045]/40">+ people at</span>
                           <input
                             value={t.pricePerHead}
                             onChange={(e) => setTierRows((rows) => rows.map((r, j) => j === i ? { ...r, pricePerHead: e.target.value } : r))}
                             inputMode="numeric"
                             aria-label={`band ${i + 1} price per head`}
                             placeholder="KSh / head"
-                            className="w-24 rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-2.5 py-1.5 text-[12px] text-[#111111]"
+                            className="w-24 rounded-lg border border-[#D6CFE4] bg-[#F1EDF7] px-2.5 py-1.5 text-[12px] text-[#251045]"
                           />
-                          <span className="text-[10px] text-[#111111]/40">each</span>
+                          <span className="text-[10px] text-[#251045]/40">each</span>
                         </div>
                       ))}
                       <button
                         type="button"
                         onClick={() => setTierRows((rows) => [...rows, { min: '', pricePerHead: '' }])}
-                        className="text-[10px] font-extrabold text-[#111111]/60 cursor-pointer"
+                        className="text-[10px] font-extrabold text-[#251045]/60 cursor-pointer"
                       >
                         + add a band
                       </button>
@@ -334,68 +334,68 @@ export function GroupBuyPortal() {
                         inputMode="numeric"
                         aria-label="maximum participants"
                         placeholder="max heads (optional)"
-                        className="w-40 rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-2.5 py-1.5 text-[12px] text-[#111111]"
+                        className="w-40 rounded-lg border border-[#D6CFE4] bg-[#F1EDF7] px-2.5 py-1.5 text-[12px] text-[#251045]"
                       />
                       <input
                         type="datetime-local"
                         value={bargainExpiry}
                         onChange={(e) => setBargainExpiry(e.target.value)}
                         aria-label="expiry"
-                        className="rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-2.5 py-1.5 text-[12px] text-[#111111]"
+                        className="rounded-lg border border-[#D6CFE4] bg-[#F1EDF7] px-2.5 py-1.5 text-[12px] text-[#251045]"
                       />
                       <button
                         type="button"
                         onClick={() => void priceBargain()}
                         disabled={bargainBusy}
-                        className="rounded-lg bg-[#111111] px-4 py-2 text-[11px] font-extrabold text-[#FFFFFF] cursor-pointer disabled:opacity-40"
+                        className="rounded-lg bg-[#5B2EA6] px-4 py-2 text-[11px] font-extrabold text-[#FFFFFF] cursor-pointer disabled:opacity-40"
                       >
                         {bargainBusy ? '…' : 'Price this bargain'}
                       </button>
                     </div>
-                    {bargainNote && <p className="text-[11px] text-[#111111]">{bargainNote}</p>}
+                    {bargainNote && <p className="text-[11px] text-[#251045]">{bargainNote}</p>}
                   </>
                 ) : (
                   <>
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                      <div className="rounded-lg bg-[#FAFAFA] p-2">
-                        <p className="text-[9px] text-[#111111]/50">in the room</p>
-                        <p className="text-[14px] font-extrabold text-[#111111]">{bargain.participants}{bargain.requiredParticipants ? ` / ${bargain.requiredParticipants} needed` : ''}</p>
+                      <div className="rounded-lg bg-[#F1EDF7] p-2">
+                        <p className="text-[9px] text-[#251045]/50">in the room</p>
+                        <p className="text-[14px] font-extrabold text-[#251045]">{bargain.participants}{bargain.requiredParticipants ? ` / ${bargain.requiredParticipants} needed` : ''}</p>
                       </div>
-                      <div className="rounded-lg bg-[#FAFAFA] p-2">
-                        <p className="text-[9px] text-[#111111]/50">join now at</p>
-                        <p className="text-[14px] font-extrabold text-[#111111]">{bargain.currentPricePerHead != null ? money(bargain.currentPricePerHead) : '—'}</p>
-                        <p className="text-[9px] text-[#111111]/40">{bargain.currentTierLabel ?? ''}</p>
+                      <div className="rounded-lg bg-[#F1EDF7] p-2">
+                        <p className="text-[9px] text-[#251045]/50">join now at</p>
+                        <p className="text-[14px] font-extrabold text-[#251045]">{bargain.currentPricePerHead != null ? money(bargain.currentPricePerHead) : '—'}</p>
+                        <p className="text-[9px] text-[#251045]/40">{bargain.currentTierLabel ?? ''}</p>
                       </div>
-                      <div className="rounded-lg bg-[#FAFAFA] p-2">
-                        <p className="text-[9px] text-[#111111]/50">next band</p>
-                        <p className="text-[14px] font-extrabold text-[#111111]">
+                      <div className="rounded-lg bg-[#F1EDF7] p-2">
+                        <p className="text-[9px] text-[#251045]/50">next band</p>
+                        <p className="text-[14px] font-extrabold text-[#251045]">
                           {bargain.nextTier ? money(bargain.nextTier.pricePerHead) : 'best price'}
                         </p>
-                        <p className="text-[9px] text-[#111111]/40">
+                        <p className="text-[9px] text-[#251045]/40">
                           {bargain.nextTier ? `${bargain.nextTier.needs} more join${bargain.nextTier.needs === 1 ? '' : 's'}` : 'room at the final band'}
                         </p>
                       </div>
-                      <div className="rounded-lg bg-[#FAFAFA] p-2">
-                        <p className="text-[9px] text-[#111111]/50">settles at</p>
-                        <p className="text-[14px] font-extrabold text-[#111111]">{money(bargain.settlesAt)}</p>
-                        <p className="text-[9px] text-[#111111]/40">if the room fills</p>
+                      <div className="rounded-lg bg-[#F1EDF7] p-2">
+                        <p className="text-[9px] text-[#251045]/50">settles at</p>
+                        <p className="text-[14px] font-extrabold text-[#251045]">{money(bargain.settlesAt)}</p>
+                        <p className="text-[9px] text-[#251045]/40">if the room fills</p>
                       </div>
                     </div>
 
                     {bargain.expiresAt && (
-                      <p className="text-[10px] text-[#111111]/60">
+                      <p className="text-[10px] text-[#251045]/60">
                         {bargain.expired
                           ? 'This bargain has expired — no more joins.'
                           : `Open until ${new Date(bargain.expiresAt).toLocaleString('en-KE')} — the server\\u2019s clock decides, not yours.`}
                       </p>
                     )}
                     {bargain.maxParticipants != null && (
-                      <p className="text-[10px] text-[#111111]/60">
+                      <p className="text-[10px] text-[#251045]/60">
                         {bargain.spotsLeft === 0 ? 'Full — every spot is taken.' : `${bargain.spotsLeft} spot${bargain.spotsLeft === 1 ? '' : 's'} left of ${bargain.maxParticipants}.`}
                       </p>
                     )}
                     {bargain.requiredParticipants != null && (
-                      <p className="text-[10px] text-[#111111]/60">
+                      <p className="text-[10px] text-[#251045]/60">
                         {bargain.minimumMet ? 'The minimum is met — this bargain will execute.' : `Waiting for ${bargain.requiredParticipants - bargain.participants} more before the bargain executes.`}
                       </p>
                     )}
@@ -405,41 +405,41 @@ export function GroupBuyPortal() {
                         type="button"
                         onClick={() => void joinOrLeave()}
                         disabled={bargainBusy || bargain.expired}
-                        className="rounded-lg bg-[#111111] px-4 py-2 text-[11px] font-extrabold text-[#FFFFFF] cursor-pointer disabled:opacity-40"
+                        className="rounded-lg bg-[#5B2EA6] px-4 py-2 text-[11px] font-extrabold text-[#FFFFFF] cursor-pointer disabled:opacity-40"
                       >
                         {bargainBusy ? '…' : mySeat ? 'Leave the bargain' : 'Join at the current price'}
                       </button>
-                      <span className="text-[9px] leading-snug text-[#111111]/50">
+                      <span className="text-[9px] leading-snug text-[#251045]/50">
                         You commit at today\\u2019s band; if a better band fills later, everyone settles at the final price.
                         Money moves only through the ordinary chain — nothing is charged here.
                       </span>
                     </div>
-                    {joinNote && <p className="text-[11px] text-[#111111]">{joinNote}</p>}
+                    {joinNote && <p className="text-[11px] text-[#251045]">{joinNote}</p>}
                   </>
                 )}
               </div>
 
               {/* the 3-field intake */}
-              <div className="rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-4 space-y-2.5">
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#111111]">Record a contribution</p>
+              <div className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-4 space-y-2.5">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#251045]">Record a contribution</p>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                   <input
                     value={memberRef}
                     onChange={(e) => setMemberRef(e.target.value)}
                     placeholder="Member ID"
-                    className="rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-3 py-2 text-[12px] text-[#111111] outline-none focus:border-[#111111]"
+                    className="rounded-lg border border-[#D6CFE4] bg-[#F1EDF7] px-3 py-2 text-[12px] text-[#251045] outline-none focus:border-[#6C3EC9]"
                   />
                   <input
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     inputMode="numeric"
                     placeholder="Amount KSh"
-                    className="rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-3 py-2 text-[12px] text-[#111111] outline-none focus:border-[#111111]"
+                    className="rounded-lg border border-[#D6CFE4] bg-[#F1EDF7] px-3 py-2 text-[12px] text-[#251045] outline-none focus:border-[#6C3EC9]"
                   />
                   <select
                     value={source}
                     onChange={(e) => setSource(e.target.value)}
-                    className="rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-2 py-2 text-[12px] text-[#111111]"
+                    className="rounded-lg border border-[#D6CFE4] bg-[#F1EDF7] px-2 py-2 text-[12px] text-[#251045]"
                     aria-label="Payment source"
                   >
                     {SOURCES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
@@ -449,24 +449,24 @@ export function GroupBuyPortal() {
                   type="button"
                   onClick={() => void contribute()}
                   disabled={busy || !memberRef.trim() || !Number(amount)}
-                  className="w-full rounded-lg bg-[#111111] py-2.5 text-[12px] font-extrabold text-[#FFFFFF] cursor-pointer disabled:opacity-40"
+                  className="w-full rounded-lg bg-[#5B2EA6] py-2.5 text-[12px] font-extrabold text-[#FFFFFF] cursor-pointer disabled:opacity-40"
                 >
                   {busy ? 'Recording…' : 'Record contribution'}
                 </button>
-                <p className="text-[9px] leading-snug text-[#111111]/50">
+                <p className="text-[9px] leading-snug text-[#251045]/50">
                   A contribution is a ledger record with a verifiable receipt — and it notifies the group's routed
                   channels automatically. No payment rail is connected, so nothing pretends money moved.
                 </p>
 
-                {intakeError && <p className="text-[11px] text-[#111111]">{intakeError}</p>}
+                {intakeError && <p className="text-[11px] text-[#251045]">{intakeError}</p>}
 
                 {/* the structured receipt */}
                 {lastReceipt && (
-                  <div className="rounded-xl border border-[#111111] bg-[#FAFAFA] p-3">
-                    <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#111111]">Ledger receipt</p>
+                  <div className="rounded-xl border border-[#6C3EC9] bg-[#F1EDF7] p-3">
+                    <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#251045]">Ledger receipt</p>
                     <div className="mt-1 flex items-center justify-between gap-2 text-[11px]">
-                      <span className="font-bold text-[#111111]">{lastReceipt.memberRef} · {money(lastReceipt.amount)}</span>
-                      <span className="font-mono text-[10px] text-[#111111]/60">#{lastReceipt.receiptHash.slice(0, 12)}</span>
+                      <span className="font-bold text-[#251045]">{lastReceipt.memberRef} · {money(lastReceipt.amount)}</span>
+                      <span className="font-mono text-[10px] text-[#251045]/60">#{lastReceipt.receiptHash.slice(0, 12)}</span>
                     </div>
                   </div>
                 )}
@@ -474,17 +474,17 @@ export function GroupBuyPortal() {
 
               {/* the contributions feed */}
               {selected.contributions.length > 0 && (
-                <div className="rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-4">
-                  <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#111111]">
+                <div className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-4">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#251045]">
                     Contributions ({selected.contributionCount})
                   </p>
                   <div className="mt-2 space-y-1.5">
                     {selected.contributions.map((c) => (
                       <div key={c.id} className="flex items-center justify-between gap-2 text-[11px]">
-                        <span className="min-w-0 truncate font-semibold text-[#111111]">{c.memberRef}</span>
-                        <span className="shrink-0 font-mono text-[#111111]">{money(c.amount)}</span>
-                        <span className="shrink-0 rounded-full border border-[#E5E7EB] px-1.5 py-0.5 text-[8px] font-bold uppercase text-[#111111]/60">{c.source}</span>
-                        <span className="shrink-0 font-mono text-[9px] text-[#111111]/40">#{c.receiptHash.slice(0, 8)}</span>
+                        <span className="min-w-0 truncate font-semibold text-[#251045]">{c.memberRef}</span>
+                        <span className="shrink-0 font-mono text-[#251045]">{money(c.amount)}</span>
+                        <span className="shrink-0 rounded-full border border-[#D6CFE4] px-1.5 py-0.5 text-[8px] font-bold uppercase text-[#251045]/60">{c.source}</span>
+                        <span className="shrink-0 font-mono text-[9px] text-[#251045]/40">#{c.receiptHash.slice(0, 8)}</span>
                       </div>
                     ))}
                   </div>

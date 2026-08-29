@@ -181,7 +181,7 @@ function ShelfCardView({
       className={`group relative shrink-0 overflow-hidden rounded-xl text-left transition-all hover:-translate-y-0.5 cursor-pointer ${
         isDark
           ? 'border border-[#222B3A] hover:border-[#00DF8F] shadow-lg'
-          : 'border border-[#E5E7EB] hover:border-[#111111]'
+          : 'border border-[#D6CFE4] hover:border-[#6C3EC9]'
       } ${
         compact ? 'w-full min-h-[76px] sm:min-h-[82px]' : 'w-[144px] min-h-[102px] sm:w-auto sm:min-h-[108px]'
       }`}
@@ -202,14 +202,14 @@ function ShelfCardView({
         }}
       />
       {locked && service && (
-        <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-[#090B10]/85 px-1.5 py-0.5 text-[7px] font-extrabold uppercase tracking-[0.14em] text-[#FFFFFF]">
+        <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-[#150826]/85 px-1.5 py-0.5 text-[7px] font-extrabold uppercase tracking-[0.14em] text-[#FFFFFF]">
           <Lock className="h-2 w-2" /> {service.unlocksAfter}
         </span>
       )}
       {!locked && card.priority && (
         <span
           className={`absolute right-2 top-2 rounded-full px-1.5 py-0.5 text-[7px] font-extrabold uppercase tracking-[0.14em] ${
-            isDark ? 'bg-[#00DF8F] text-[#0A0D14]' : 'bg-[#111111] text-[#FFFFFF]'
+            isDark ? 'bg-[#00DF8F] text-[#150826]' : 'bg-[#5B2EA6] text-[#FFFFFF]'
           }`}
         >
           Free to play
@@ -218,14 +218,14 @@ function ShelfCardView({
       {!locked && card.featured && (
         <span
           className={`absolute right-2 top-2 rounded-full px-1.5 py-0.5 text-[7px] font-extrabold uppercase tracking-[0.14em] ${
-            isDark ? 'bg-[#00DF8F] text-[#0A0D14]' : 'bg-[#FFFFFF] text-[#111111]'
+            isDark ? 'bg-[#00DF8F] text-[#150826]' : 'bg-[#FBFAFD] text-[#251045]'
           }`}
         >
           Featured
         </span>
       )}
       {card.id === 'play' && playOpenCount === 0 && (
-        <span className="absolute right-2 top-2 rounded-full border border-[#FFFFFF]/35 bg-[#090B10]/85 px-1.5 py-0.5 text-[7px] font-extrabold uppercase tracking-[0.14em] text-[#FFFFFF]">
+        <span className="absolute right-2 top-2 rounded-full border border-[#FFFFFF]/35 bg-[#150826]/85 px-1.5 py-0.5 text-[7px] font-extrabold uppercase tracking-[0.14em] text-[#FFFFFF]">
           Quiet now
         </span>
       )}
@@ -233,7 +233,7 @@ function ShelfCardView({
         className={`absolute left-2 top-2 flex items-center justify-center rounded-md ${
           isDark
             ? 'bg-[#151D2A]/90 border border-[#2B374C] text-[#00DF8F]'
-            : 'bg-[#111111]/85 text-[#FFFFFF]'
+            : 'bg-[#5B2EA6]/85 text-[#FFFFFF]'
         } ${compact ? 'h-5 w-5' : 'h-6 w-6'}`}
       >
         <Icon className={compact ? 'h-2.5 w-2.5' : 'h-3 w-3'} />
@@ -270,7 +270,7 @@ export function MainShelf({
         <div>
           <p
             className={`text-[9px] font-extrabold uppercase tracking-[0.18em] ${
-              isDark ? 'text-[#00DF8F]' : 'text-[#111111]/50'
+              isDark ? 'text-[#00DF8F]' : 'text-[#251045]/50'
             }`}
           >
             Main shelf
@@ -278,7 +278,7 @@ export function MainShelf({
           <h2
             id="main-shelf-title"
             className={`mt-0.5 text-[16px] font-extrabold tracking-[-0.02em] ${
-              isDark ? 'text-[#FFFFFF]' : 'text-[#111111]'
+              isDark ? 'text-[#FFFFFF]' : 'text-[#251045]'
             }`}
           >
             What do you want to do?
@@ -286,7 +286,7 @@ export function MainShelf({
         </div>
         <span
           className={`inline-flex items-center gap-1 text-[9px] font-bold ${
-            isDark ? 'text-[#8B98A9]' : 'text-[#111111]/45'
+            isDark ? 'text-[#AE9FD6]' : 'text-[#251045]/45'
           }`}
         >
           <ArrowRight className="h-2.5 w-2.5" /> swipe or tap
@@ -307,7 +307,7 @@ export function MainShelf({
         ))}
       </div>
       {!compact && (
-        <p className={`px-1 text-[9.5px] leading-snug ${isDark ? 'text-[#8B98A9]' : 'text-[#111111]/45'}`}>
+        <p className={`px-1 text-[9.5px] leading-snug ${isDark ? 'text-[#AE9FD6]' : 'text-[#251045]/45'}`}>
           The shelf is the shortcut. Use the menu for less frequent tools and region settings.
         </p>
       )}
