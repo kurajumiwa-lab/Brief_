@@ -214,8 +214,10 @@ const mount = async (element) => {
 };
 
 const openCampaignsTab = async () => {
+  // 'My Layer' is the destination (was labelled 'Saved'); the campaigns tab
+  // lives in its Groups bundle as 'Events'.
   const my = Array.from(document.querySelectorAll('button')).find((b) =>
-    text(b).startsWith('Saved')
+    text(b).startsWith('My Layer')
   );
   if (my) await click(my);
   // The saved-layer tab ships as 'Events' (SAVED_TABS.campaigns); the suite

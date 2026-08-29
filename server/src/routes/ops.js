@@ -1,7 +1,7 @@
 // OPS ROUTES — extracted from index.js (zero behaviour change).
 // Each route keeps its original body verbatim; only its home file changed.
 import { store } from '../store.js';
-import { callerId } from '../identity.js';
+import { callerId, PLATFORM_ROLES } from '../identity.js';
 import * as ops from '../ops.js';
 import * as ledger from '../domain/ledger.js';
 import * as settlement from '../domain/settlement.js';
@@ -9,7 +9,7 @@ import * as payment from '../domain/payment.js';
 import * as analytics from '../domain/analytics.js';
 import * as trust from '../domain/trust.js';
 import * as seed from '../domain/seed.js';
-import { requireAuth } from './helpers.js';
+import { requireAuth, requireCap, recordAudit } from './helpers.js';
 
 export function register(app) {
 /**
@@ -18,7 +18,7 @@ export function register(app) {
  */
 
 app.get('/api/ops/diagnostics', (req, res) => {
-  if (!requireAuth(req, res)) return;
+  if (!requireCap(req, res, 'ops.read')) return;
   res.json({
     startup: ops.startupDiagnostics({ store, capabilities: { payments: ledger.providerStatus() } }),
     readiness: ops.readiness({ store, reconcilers: [
@@ -39,8 +39,10 @@ app.get('/api/ops/diagnostics', (req, res) => {
 /** Take a backup on demand. Atomic-write store, so a copy is consistent. */
 
 app.post('/api/ops/backup', (req, res) => {
-  if (!requireAuth(req, res)) return;
+  const me = requireCap(req, res, 'ops.run');
+  if (!me) return;
   const result = ops.backup(store);
+  if (result.ok) recordAudit('ops.backup', { actorId: me, objectType: 'store', objectId: result.file, after: { size: result.size } });
   if (!result.ok) return res.status(400).json(result);
   res.json({ ...result, pruned: ops.pruneBackups(store) });
 });
@@ -50,24 +52,26 @@ app.post('/api/ops/backup', (req, res) => {
 
 
 app.get('/api/ops/analytics', (req, res) => {
-  if (!requireAuth(req, res)) return;
+  if (!requireCap(req, res, 'ops.read')) return;
   res.json({ analytics: analytics.dashboard() });
 });
 
 
 
 app.get('/api/ops/reports', (req, res) => {
-  if (!requireAuth(req, res)) return;
+  if (!requireCap(req, res, 'ops.read')) return;
   res.json({ reports: trust.openReports() });
 });
 
 
 
 app.post('/api/ops/reports/:id/resolve', (req, res) => {
-  const me = requireAuth(req, res);
+  const me = requireCap(req, res, 'moderate');
   if (!me) return;
   try {
-    res.json({ report: trust.resolveReport(req.params.id, me, req.body?.action ?? 'dismiss') });
+    const report = trust.resolveReport(req.params.id, me, req.body?.action ?? 'dismiss');
+    recordAudit('ops.report.resolve', { actorId: me, objectType: 'report', objectId: req.params.id, after: { status: report?.status ?? null }, reason: req.body?.reason ?? null });
+    res.json({ report });
   } catch (e) {
     res.status(400).json({ error: String(e.message ?? e) });
   }
@@ -76,15 +80,43 @@ app.post('/api/ops/reports/:id/resolve', (req, res) => {
 
 
 app.get('/api/ops/contributors', (req, res) => {
-  if (!requireAuth(req, res)) return;
+  if (!requireCap(req, res, 'ops.read')) return;
   res.json({ contributors: trust.contributorLeaderboard() });
 });
 
 
 
 app.get('/api/ops/unverified', (req, res) => {
-  if (!requireAuth(req, res)) return;
+  if (!requireCap(req, res, 'ops.read')) return;
   res.json({ objects: store.filter('objects', (o) => o.verificationStatus === 'unverified' && o.publication !== 'removed') });
+});
+
+
+/**
+ * T8 (F4 Attention): every dispute, platform-wide. A disputed order is
+ * deliberately TERMINAL in the order state machine -- there is no half
+ * resolution flow -- so the operator's duty is visibility, not a pretend
+ * resolve button. Rows are read-only here; remedies live in refunds,
+ * moderation and the ledger, each audited on its own route.
+ */
+app.get('/api/ops/disputes', (req, res) => {
+  if (!requireCap(req, res, 'ops.read')) return;
+  const rows = store.all('disputes').slice().sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  res.json({ disputes: rows });
+});
+
+
+/**
+ * T8 (F4 Attention): the resale listing wall -- active listings plus the
+ * removed ones WITH their reasons, so the moderation loop
+ * (flag -> inspect -> decide -> audit) can be read end to end after the fact.
+ * Removal itself stays on its own moderate-capability route, audited there.
+ */
+app.get('/api/ops/ticket-listings', (req, res) => {
+  if (!requireCap(req, res, 'ops.read')) return;
+  const rows = store.all('ticketListings').slice()
+    .sort((a, b) => String(b.createdAt ?? '').localeCompare(String(a.createdAt ?? '')));
+  res.json({ listings: rows });
 });
 
 
@@ -100,15 +132,56 @@ app.get('/api/ops/unverified', (req, res) => {
  */
 
 app.post('/api/ops/seed', (req, res) => {
-  if (!requireAuth(req, res)) return;
-  res.json({ seeded: seed.runSeed() });
+  const me = requireCap(req, res, 'admin');
+  if (!me) return;
+  const seeded = seed.runSeed();
+  recordAudit('ops.seed', { actorId: me, objectType: 'store', after: { seeded: seeded?.length ?? seeded } });
+  res.json({ seeded });
 });
 
 
 
+/**
+ * The append-only audit trail, newest first. Every consequential operator
+ * action lands here via recordAudit(). Readable by any operator role because
+ * the question it answers -- "who did what, when" -- is not privileged.
+ */
+app.get('/api/ops/audit', (req, res) => {
+  if (!requireCap(req, res, 'ops.read')) return;
+  const limit = Math.min(Number(req.query.limit) || 100, 500);
+  const rows = store.all('auditLog').slice(-limit).reverse();
+  res.json({ audit: rows, total: store.all('auditLog').length });
+});
+
+/**
+ * Assign or clear platform roles for a user. Admin-only, audited with
+ * before/after. Roles are never read from this request for authorisation --
+ * only written to the target user's own row.
+ */
+app.post('/api/ops/roles', (req, res) => {
+  const me = requireCap(req, res, 'admin');
+  if (!me) return;
+  const userId = String(req.body?.userId ?? '').trim();
+  const roles = Array.isArray(req.body?.roles) ? req.body.roles : [];
+  const valid = [...new Set(roles.map(String))].filter((r) => PLATFORM_ROLES.includes(r));
+  const user = store.find('users', (u) => u.id === userId || u.handle === userId);
+  if (!user) return res.status(404).json({ error: 'user not found' });
+  const before = Array.isArray(user.platformRoles) ? user.platformRoles : [];
+  store.update('users', user.id, { platformRoles: valid });
+  recordAudit('ops.roles.set', {
+    actorId: me, objectType: 'user', objectId: user.id,
+    before: { platformRoles: before }, after: { platformRoles: valid },
+    reason: req.body?.reason ?? null
+  });
+  res.json({ user: { id: user.id, handle: user.handle, platformRoles: valid } });
+});
+
 app.post('/api/ops/seed/clear', (req, res) => {
-  if (!requireAuth(req, res)) return;
-  res.json({ cleared: seed.clearSeed() });
+  const me = requireCap(req, res, 'admin');
+  if (!me) return;
+  const cleared = seed.clearSeed();
+  recordAudit('ops.seed.clear', { actorId: me, objectType: 'store', after: { cleared: cleared?.length ?? cleared } });
+  res.json({ cleared });
 });
 }
 

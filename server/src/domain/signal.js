@@ -38,6 +38,24 @@ export const SIGNAL_TYPES = [
   'campaign_viewed',
   'campaign_shared',
   'campaign_banner_created',
+  // Ticket resale market (Tikiti T1): a seat is a real-world thing whose
+  // ownership and availability change — every change is a signal Pulse can
+  // surface, never a silent state flip.
+  'ticket_listed',
+  'ticket_order_opened',
+  'ticket_transferred',
+  'ticket_order_refunded',
+  'ticket_voided',
+  // Bargain tiers (Tikiti T2): a room crossing a price band is news.
+  'bargain_tier_reached',
+  // Contribution campaigns (Tikiti T3): updates + goal reached.
+  'campaign_update_posted',
+  'campaign_goal_reached',
+  // Verification (Tikiti T6): a review decision changed someone's standing.
+  'verification_decision',
+  // Fraud (Tikiti T10): a listing was auto-flagged for review.
+  'ticket_flagged',
+  'arena_contest_cancelled',
   'campaign_registration_started',
   'campaign_registered',
   'campaign_registration_updated',
@@ -91,16 +109,6 @@ export const SIGNAL_TYPES = [
   'order_cancelled',
   'sync_completed',
   'sync_failed',
-  // --- Auction (Batch 4) ---------------------------------------------------
-  // A bid is an event, not money. These record price discovery; the money
-  // events for a won auction are the ORDER's, emitted by the existing
-  // commerce signals, because an auction settles through the ordinary chain.
-  'auction_opened',
-  'bid_placed',
-  'auction_closed',
-  'auction_order_raised',
-  'auction_winner_defaulted',
-  'auction_cancelled',
   // --- Yard Engine / advertising ------------------------------------------
   'advertiser_campaign_created',
   'advertiser_campaign_submitted',

@@ -27,6 +27,7 @@
 // ---------------------------------------------------------------------------
 
 import { store, newId } from '../store.js';
+import * as epl from './epl.js';
 
 export const POSITIONS = ['GK', 'DEF', 'MID', 'FWD'];
 
@@ -233,7 +234,12 @@ export function submitTeam(competitionId, userId, { playerIds, captainId }) {
   // THE LOCK. Checked against the server clock, not the request.
   if (isLocked(c)) throw new Error('this competition is locked; teams can no longer be changed');
 
-  const problems = validateSquad(competitionId, playerIds, captainId);
+  const problems = [
+    ...validateSquad(competitionId, playerIds, captainId),
+    // The optional EPL budget (Tikiti T5): unaffordable squads are refused
+    // with the arithmetic, not silently trimmed.
+    ...epl.budgetProblems(competitionId, playerIds)
+  ];
   if (problems.length) {
     const err = new Error(problems[0]);
     err.problems = problems;

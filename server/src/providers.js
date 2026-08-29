@@ -24,14 +24,20 @@
 // ---------------------------------------------------------------------------
 
 import * as tuma from './connectors/tuma.js';
+import * as paystack from './connectors/paystack.js';
 
-export const COLLECTION_PROVIDERS = { tuma };
+// Registry order is the fallback: the FIRST configured provider collects.
+// BRIEF_COLLECTION_PROVIDER overrides it deliberately (it must name a
+// provider that is actually configured, or it is ignored -- never guessed).
+export const COLLECTION_PROVIDERS = { tuma, paystack };
 // Intentionally empty. No disbursement provider has been selected; register
 // one here to enable merchant payouts. Do not add one unless instructed.
 export const DISBURSEMENT_PROVIDERS = {};
 
 /** The active collection provider's name, or null when none is configured. */
 export function activeCollectionProvider() {
+  const preferred = process.env.BRIEF_COLLECTION_PROVIDER;
+  if (preferred && COLLECTION_PROVIDERS[preferred]?.isConfigured()) return preferred;
   for (const [name, p] of Object.entries(COLLECTION_PROVIDERS)) {
     if (p.isConfigured()) return name;
   }

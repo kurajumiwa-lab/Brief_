@@ -4,7 +4,7 @@
 
 import * as calendar from '../domain/calendar.js';
 import * as campaigns from '../domain/campaign.js';
-import { requireAuth } from './helpers.js';
+import { requireAuth, requireCap, recordAudit } from './helpers.js';
 import { requireFeature } from '../features.js';
 
 export function register(app) {
@@ -28,9 +28,11 @@ export function register(app) {
   });
 
   app.post('/api/calendar/sweep', (req, res) => {
-    const me = requireAuth(req, res);
+    const me = requireCap(req, res, 'ops.run');
     if (!me) return;
-    res.json(calendar.sweep());
+    const result = calendar.sweep();
+    recordAudit('calendar.sweep', { actorId: me, objectType: 'calendar', after: result });
+    res.json(result);
   });
 
   app.get('/api/calendar/campaigns/:campaignId/waitlist', (req, res) => {

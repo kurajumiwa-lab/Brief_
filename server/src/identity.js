@@ -19,6 +19,7 @@
 // ---------------------------------------------------------------------------
 
 import { devAuthAllowed } from './domain/auth.js';
+import { store } from './store.js';
 
 // The existing single-user constant. Pre-existing routes already assume this
 // identity for source membership and provenance; circles now match them.
@@ -178,4 +179,64 @@ export function canGovernObject(store, req, objectId) {
       (m) => m.sourceId === l.sourceId && m.userId === me && m.accessGranted
     )
   );
+}
+
+// ---------------------------------------------------------------------------
+// PLATFORM ROLES (operator surface authorisation)
+//
+// Circle roles govern circles. These govern the PLATFORM: the /api/ops and
+// /api/admin surfaces, sweeps, reconciliation, seeding and moderation.
+//
+// Roles come from exactly two places, and never from a request:
+//   1. the user's own row (platformRoles), assigned by an admin; and
+//   2. deployment bootstrap lists (BRIEF_ADMINS / BRIEF_REVIEWERS /
+//      BRIEF_FINANCE / BRIEF_OPERATORS), so a fresh deploy can name its
+//      operators without hand-editing a data file.
+//
+// Capabilities are additive per role, so a route asks for a CAPABILITY, never
+// for a role name -- adding a role later cannot silently widen old routes.
+// ---------------------------------------------------------------------------
+
+export const PLATFORM_ROLES = ['viewer', 'operator', 'reviewer', 'finance', 'admin'];
+
+export const ROLE_CAPABILITIES = {
+  viewer: ['ops.read'],
+  operator: ['ops.read', 'ops.run'],
+  reviewer: ['ops.read', 'ops.run', 'moderate'],
+  finance: ['ops.read', 'ops.run', 'finance'],
+  admin: ['ops.read', 'ops.run', 'moderate', 'finance', 'admin']
+};
+
+function envHandles(name) {
+  const raw = process.env[name];
+  if (!raw) return [];
+  return String(raw).split(',').map((h) => h.trim().toLowerCase()).filter(Boolean);
+}
+
+/** The caller's platform roles: stored assignment ∪ deployment bootstrap. */
+export function platformRolesOf(userId) {
+  if (!userId) return [];
+  const user = store.find('users', (u) => u.id === userId);
+  const stored = Array.isArray(user?.platformRoles) ? user.platformRoles : [];
+  const handle = typeof user?.handle === 'string' ? user.handle.toLowerCase() : null;
+  const bootstrapped = [
+    ...(handle && envHandles('BRIEF_ADMINS').includes(handle) ? ['admin'] : []),
+    ...(handle && envHandles('BRIEF_REVIEWERS').includes(handle) ? ['reviewer'] : []),
+    ...(handle && envHandles('BRIEF_FINANCE').includes(handle) ? ['finance'] : []),
+    ...(handle && envHandles('BRIEF_OPERATORS').includes(handle) ? ['operator'] : [])
+  ];
+  const all = [...new Set([...stored, ...bootstrapped])];
+  return all.filter((r) => PLATFORM_ROLES.includes(r));
+}
+
+export function capabilitiesOf(userId) {
+  const caps = new Set();
+  for (const role of platformRolesOf(userId)) {
+    for (const cap of ROLE_CAPABILITIES[role] ?? []) caps.add(cap);
+  }
+  return [...caps];
+}
+
+export function hasCapability(userId, capability) {
+  return capabilitiesOf(userId).includes(capability);
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity, CheckCircle2, Clock, Coins, Flame, Lock, RefreshCw, Trophy } from 'lucide-react';
+import { Activity, CheckCircle2, Clock, Coins, Flame, Lock, Trophy } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
 import type { LigiLine, LigiOverview, LigiPoolPlayer } from '../api/briefApi';
 
@@ -87,17 +87,6 @@ export function Ligi({ meId = null, onToast }: LigiProps) {
   const lines: LigiLine[] = gw?.houseLines ?? [];
   const lineFor = (playerId: string) => lines.find((l) => l.playerId === playerId) ?? null;
 
-  const runTick = async () => {
-    setBusy('tick');
-    const res = await briefApi.tickLigi();
-    setBusy(null);
-    if (res.ok) {
-      onToast?.(res.data.changed ? 'The week moved on.' : 'Nothing to move yet.');
-      void load();
-    } else {
-      onToast?.(res.error);
-    }
-  };
 
   const takeSeat = async (slot: 'free' | 'cash') => {
     if (!gw) return;
@@ -165,18 +154,9 @@ export function Ligi({ meId = null, onToast }: LigiProps) {
             <h2 className="mt-0.5 font-display text-[20px] font-semibold tracking-tight">{data.game.name}</h2>
             <p className="mt-0.5 text-[11px] text-[#FFFFFF]/70">{data.game.tagline}</p>
           </div>
-          <button
-            type="button"
-            onClick={() => void runTick()}
-            disabled={busy !== null}
-            title="Re-run the automated pass. Idempotent."
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-[#FFFFFF]/25 px-2.5 py-1.5 text-[10px] font-extrabold text-[#FFFFFF] disabled:opacity-40 cursor-pointer"
-          >
-            <RefreshCw className="h-3 w-3" /> {busy === 'tick' ? 'Running…' : 'Sync'}
-          </button>
         </div>
         <p className="mt-2 text-[9.5px] leading-snug text-[#FFFFFF]/55">
-          Weeks open, lock, price and settle on their own. No commissioner sets a line and nobody scores a week by hand.
+          Weeks open, lock, price and settle on their own — on the system clock, not on a button. No commissioner sets a line and nobody scores a week by hand.
         </p>
       </div>
 

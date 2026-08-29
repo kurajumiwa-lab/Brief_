@@ -3,6 +3,7 @@ import { X, Star, Trash2 } from 'lucide-react';
 import { STORY_THEMES, STORY_LAYOUTS, designOf, type StoryDesign } from './storyDesign';
 import { StoryView } from './StoryView';
 import { ImageField } from './ImageField';
+import { MediaLibrary } from './MediaLibrary';
 import * as briefApi from '../api/briefApi';
 
 // ---------------------------------------------------------------------------
@@ -283,6 +284,11 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
               hint="Used as the story's background on the home shelf and its hero."
               value={heroImage || null}
               onChange={(url) => setHeroImage(url ?? '')}
+            />
+            {/* The reuse half of the upload loop: every file you have
+                uploaded, reusable as the hero or a gallery photo. */}
+            <MediaLibrary
+              onUse={(url) => setHeroImage(url)}
             />
             <div>
               <ImageField

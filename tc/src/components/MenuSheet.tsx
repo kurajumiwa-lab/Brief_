@@ -2,20 +2,22 @@ import React from 'react';
 import { ChevronLeft, Copy, Share2, ShieldCheck, CheckCircle2, Sparkles, Plus, Briefcase, CalendarDays, FileText, ArrowRight, Lock } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
 import type { AuthedUser } from '../api/briefApi';
-import type { CommandCentre, Wallet as WalletType } from '../api/types';
+import type { CommandCentre } from '../api/types';
 import { MainShelf } from './MainShelf';
 
 export type MenuTarget =
-  | { tab: 'nearby'; section?: 'stream' | 'tea' | 'market' | 'quests' | 'pursuits' | 'today' }
-  | { tab: 'arena'; section?: 'lobby' | 'ligi' | 'challenges' | 'tournaments' | 'leaderboard' }
+  | { tab: 'nearby'; section?: 'stream' | 'tea' | 'market' | 'quests' | 'pursuits' | 'today' | 'events' }
+  | { tab: 'arena'; section?: 'lobby' | 'ligi' | 'epl' | 'challenges' | 'tournaments' | 'leaderboard' }
   | { tab: 'mylayer'; section?:
       | 'saved' | 'activity' | 'arena' | 'points' | 'circles' | 'groups'
-      | 'campaigns' | 'mediakit' | 'opportunities' | 'messages' | 'subscriptions' }
+      | 'campaigns' | 'mediakit' | 'opportunities' | 'messages' | 'subscriptions'
+      | 'verification' }
   | { tab: 'workflows'; section?:
       | 'cockpit' | 'command' | 'active' | 'completed' | 'inbox'
       | 'sources' | 'money' | 'vault' | 'gate' | 'tea'
       | 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'ai' }
-  | { tab: 'capture' };
+  | { tab: 'capture' }
+  | { tab: 'operate' };
 
 export interface GeoCity {
   lat: number;
@@ -29,6 +31,8 @@ export interface MenuSheetProps {
   onSelect: (target: MenuTarget) => void;
   onSelectCity: (city: GeoCity) => void;
   selectedLocation: string;
+  /** Operator desk entry (F4): offered only when the session may operate. */
+  canOperate?: boolean;
 }
 
 type MediaKit = {
@@ -97,25 +101,22 @@ function HostValueCard({
   const [me, setMe] = React.useState<AuthedUser | null>(null);
   const [kit, setKit] = React.useState<MediaKit>(null);
   const [command, setCommand] = React.useState<CommandCentre | null>(null);
-  const [wallet, setWallet] = React.useState<WalletType | null>(null);
   const [kitKnown, setKitKnown] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
 
   React.useEffect(() => {
     let live = true;
     (async () => {
-      const [who, media, centre, pay] = await Promise.all([
+      const [who, media, centre] = await Promise.all([
         briefApi.whoAmI(),
         briefApi.getMyMediaKit(),
-        briefApi.getCommandCentre(),
-        briefApi.getWallet()
+        briefApi.getCommandCentre()
       ]);
       if (!live) return;
       setMe(who.ok ? who.data : null);
       setKit(media.ok ? (media.data as MediaKit) : null);
       setKitKnown(true);
       setCommand(centre.ok ? centre.data : null);
-      setWallet(pay.ok ? pay.data : null);
     })();
     return () => {
       live = false;
@@ -310,6 +311,18 @@ function HostValueCard({
               {copied ? 'Copied' : 'Copy'}
             </button>
           </div>
+
+          {/* Sign out: the end of the session loop. The token is revoked
+              server-side; the local copy is cleared inside logout() either
+              way, and the app re-opens signed out. */}
+          {me && (
+            <button
+              onClick={() => void briefApi.logout().then(() => window.location.reload())}
+              className="mt-3 w-full h-10 rounded-xl border border-[#28354A] bg-transparent text-white/70 text-[12px] font-extrabold cursor-pointer hover:border-[#7E8B9B] transition-colors"
+            >
+              Sign out
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -436,7 +449,7 @@ function RegionGallery({
 
 // --- MenuSheet Main Dialog --------------------------------------------------
 
-export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocation }: MenuSheetProps) {
+export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocation, canOperate = false }: MenuSheetProps) {
   const [cardOpen, setCardOpen] = React.useState(false);
 
   React.useEffect(() => {
@@ -518,6 +531,26 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
 
               {/* 3. Quick Actions glass container */}
               <QuickActions onSelect={onSelect} />
+
+              {/* 3.5 Operator entry (F4/T8): the desk is an overlay, never a
+                  sixth destination, and it is only OFFERED to sessions that
+                  carry an operator capability — the server re-checks every
+                  single call it makes. */}
+              {canOperate && (
+                <button
+                  type="button"
+                  onClick={() => onSelect({ tab: 'operate' })}
+                  className="w-full rounded-2xl border border-[#202B3C] bg-[#111724] px-4 py-3 flex items-center justify-between gap-3 cursor-pointer hover:border-[#384A66] transition-colors"
+                >
+                  <span className="text-left">
+                    <span className="block text-[12px] font-extrabold text-white">Operate</span>
+                    <span className="block text-[10px] text-[#7E8B9B]">
+                      The operator desk — health, queues, commerce, audit
+                    </span>
+                  </span>
+                  <span aria-hidden className="text-[16px] text-[#7E8B9B]">⚙</span>
+                </button>
+              )}
 
               {/* 4. More To Come section */}
               <MoreToCome />

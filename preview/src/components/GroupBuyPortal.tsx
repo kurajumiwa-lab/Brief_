@@ -110,6 +110,78 @@ export function GroupBuyPortal() {
     await load();
   };
 
+  // --- priced bargains (Tikiti T2) ------------------------------------------
+  // A buy may price PER HEAD instead of pooling: the price falls as the room
+  // fills. Everything about the price is derived server-side; this panel only
+  // sends the ladder and shows the server's own view back.
+  const [bargain, setBargain] = useState<briefApi.BargainView | null>(null);
+  const [tierRows, setTierRows] = useState<{ min: string; pricePerHead: string }[]>([
+    { min: '1', pricePerHead: '' },
+    { min: '5', pricePerHead: '' },
+    { min: '10', pricePerHead: '' }
+  ]);
+  const [bargainMax, setBargainMax] = useState('');
+  const [bargainExpiry, setBargainExpiry] = useState('');
+  const [bargainBusy, setBargainBusy] = useState(false);
+  const [bargainNote, setBargainNote] = useState<string | null>(null);
+  const [joinNote, setJoinNote] = useState<string | null>(null);
+
+  const loadBargain = useCallback(async (id: string) => {
+    setBargain(null);
+    const res = await briefApi.getGroupBuy(id);
+    if (res.ok) setBargain(res.data.bargain);
+  }, []);
+
+  useEffect(() => {
+    if (selectedId) { void loadBargain(selectedId); setJoinNote(null); }
+  }, [selectedId, loadBargain]);
+
+  const priceBargain = async () => {
+    if (!selected || bargainBusy) return;
+    const tiers = tierRows
+      .filter((t) => t.min.trim() && t.pricePerHead.trim())
+      .map((t) => ({ min: Number(t.min), pricePerHead: Number(t.pricePerHead) }));
+    if (tiers.length === 0) { setBargainNote('Give the ladder at least one band: a minimum head-count and a price per head.'); return; }
+    setBargainBusy(true);
+    setBargainNote(null);
+    const res = await briefApi.priceGroupBuyBargain(selected.id, {
+      tiers,
+      maxParticipants: bargainMax.trim() ? Number(bargainMax) : null,
+      // A datetime-local value has no timezone; the server owns the wall
+      // anyway, so send it parsed as-is from the local clock.
+      expiresAt: bargainExpiry ? new Date(bargainExpiry).toISOString() : null
+    });
+    setBargainBusy(false);
+    if (!res.ok) { setBargainNote(res.error); return; }
+    setBargainNote('Priced. The price each joiner pays now falls as the room fills.');
+    await load();
+    await loadBargain(selected.id);
+  };
+
+  const [mySeat, setMySeat] = useState(false);
+
+  const joinOrLeave = async () => {
+    if (!selected) return;
+    setBargainBusy(true);
+    setJoinNote(null);
+    if (!mySeat) {
+      const res = await briefApi.joinBargain(selected.id);
+      setBargainBusy(false);
+      if (!res.ok) { setJoinNote(res.error); return; }
+      setMySeat(true);
+      setJoinNote(res.data.changed
+        ? `In at KSh ${res.data.participant.priceAtJoin.toLocaleString()} per head (${res.data.participant.tierLabelAtJoin}).`
+        : 'You are already in this bargain.');
+    } else {
+      const res = await briefApi.leaveBargain(selected.id);
+      setBargainBusy(false);
+      if (!res.ok) { setJoinNote(res.error); return; }
+      setMySeat(false);
+      setJoinNote('You left the bargain; your spot opened again.');
+    }
+    await loadBargain(selected.id);
+  };
+
   return (
     <div className="space-y-4">
       <div>
@@ -210,6 +282,140 @@ export function GroupBuyPortal() {
                   >
                     Mark: {selected.stages[selected.stageIndex + 1].label}
                   </button>
+                )}
+              </div>
+
+              {/* PRICED BARGAIN (T2): ladder pricing, per-head joins.
+                  The price is the SERVER's, derived from the live count. */}
+              <div className="rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-4 space-y-3">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#111111]">Bargain pricing</p>
+
+                {!bargain ? (
+                  <>
+                    <p className="text-[11px] leading-snug text-[#111111]/60">
+                      Price this buy per head instead of pooling: each band drops the price for everyone who joins after it fills.
+                      The ladder must climb in heads and fall in price — the server refuses anything else.
+                    </p>
+                    <div className="space-y-1.5">
+                      {tierRows.map((t, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <input
+                            value={t.min}
+                            onChange={(e) => setTierRows((rows) => rows.map((r, j) => j === i ? { ...r, min: e.target.value } : r))}
+                            inputMode="numeric"
+                            aria-label={`band ${i + 1} minimum heads`}
+                            placeholder="heads"
+                            className="w-20 rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-2.5 py-1.5 text-[12px] text-[#111111]"
+                          />
+                          <span className="text-[10px] text-[#111111]/40">+ people at</span>
+                          <input
+                            value={t.pricePerHead}
+                            onChange={(e) => setTierRows((rows) => rows.map((r, j) => j === i ? { ...r, pricePerHead: e.target.value } : r))}
+                            inputMode="numeric"
+                            aria-label={`band ${i + 1} price per head`}
+                            placeholder="KSh / head"
+                            className="w-24 rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-2.5 py-1.5 text-[12px] text-[#111111]"
+                          />
+                          <span className="text-[10px] text-[#111111]/40">each</span>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setTierRows((rows) => [...rows, { min: '', pricePerHead: '' }])}
+                        className="text-[10px] font-extrabold text-[#111111]/60 cursor-pointer"
+                      >
+                        + add a band
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <input
+                        value={bargainMax}
+                        onChange={(e) => setBargainMax(e.target.value)}
+                        inputMode="numeric"
+                        aria-label="maximum participants"
+                        placeholder="max heads (optional)"
+                        className="w-40 rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-2.5 py-1.5 text-[12px] text-[#111111]"
+                      />
+                      <input
+                        type="datetime-local"
+                        value={bargainExpiry}
+                        onChange={(e) => setBargainExpiry(e.target.value)}
+                        aria-label="expiry"
+                        className="rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-2.5 py-1.5 text-[12px] text-[#111111]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => void priceBargain()}
+                        disabled={bargainBusy}
+                        className="rounded-lg bg-[#111111] px-4 py-2 text-[11px] font-extrabold text-[#FFFFFF] cursor-pointer disabled:opacity-40"
+                      >
+                        {bargainBusy ? '…' : 'Price this bargain'}
+                      </button>
+                    </div>
+                    {bargainNote && <p className="text-[11px] text-[#111111]">{bargainNote}</p>}
+                  </>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                      <div className="rounded-lg bg-[#FAFAFA] p-2">
+                        <p className="text-[9px] text-[#111111]/50">in the room</p>
+                        <p className="text-[14px] font-extrabold text-[#111111]">{bargain.participants}{bargain.requiredParticipants ? ` / ${bargain.requiredParticipants} needed` : ''}</p>
+                      </div>
+                      <div className="rounded-lg bg-[#FAFAFA] p-2">
+                        <p className="text-[9px] text-[#111111]/50">join now at</p>
+                        <p className="text-[14px] font-extrabold text-[#111111]">{bargain.currentPricePerHead != null ? money(bargain.currentPricePerHead) : '—'}</p>
+                        <p className="text-[9px] text-[#111111]/40">{bargain.currentTierLabel ?? ''}</p>
+                      </div>
+                      <div className="rounded-lg bg-[#FAFAFA] p-2">
+                        <p className="text-[9px] text-[#111111]/50">next band</p>
+                        <p className="text-[14px] font-extrabold text-[#111111]">
+                          {bargain.nextTier ? money(bargain.nextTier.pricePerHead) : 'best price'}
+                        </p>
+                        <p className="text-[9px] text-[#111111]/40">
+                          {bargain.nextTier ? `${bargain.nextTier.needs} more join${bargain.nextTier.needs === 1 ? '' : 's'}` : 'room at the final band'}
+                        </p>
+                      </div>
+                      <div className="rounded-lg bg-[#FAFAFA] p-2">
+                        <p className="text-[9px] text-[#111111]/50">settles at</p>
+                        <p className="text-[14px] font-extrabold text-[#111111]">{money(bargain.settlesAt)}</p>
+                        <p className="text-[9px] text-[#111111]/40">if the room fills</p>
+                      </div>
+                    </div>
+
+                    {bargain.expiresAt && (
+                      <p className="text-[10px] text-[#111111]/60">
+                        {bargain.expired
+                          ? 'This bargain has expired — no more joins.'
+                          : `Open until ${new Date(bargain.expiresAt).toLocaleString('en-KE')} — the server\\u2019s clock decides, not yours.`}
+                      </p>
+                    )}
+                    {bargain.maxParticipants != null && (
+                      <p className="text-[10px] text-[#111111]/60">
+                        {bargain.spotsLeft === 0 ? 'Full — every spot is taken.' : `${bargain.spotsLeft} spot${bargain.spotsLeft === 1 ? '' : 's'} left of ${bargain.maxParticipants}.`}
+                      </p>
+                    )}
+                    {bargain.requiredParticipants != null && (
+                      <p className="text-[10px] text-[#111111]/60">
+                        {bargain.minimumMet ? 'The minimum is met — this bargain will execute.' : `Waiting for ${bargain.requiredParticipants - bargain.participants} more before the bargain executes.`}
+                      </p>
+                    )}
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => void joinOrLeave()}
+                        disabled={bargainBusy || bargain.expired}
+                        className="rounded-lg bg-[#111111] px-4 py-2 text-[11px] font-extrabold text-[#FFFFFF] cursor-pointer disabled:opacity-40"
+                      >
+                        {bargainBusy ? '…' : mySeat ? 'Leave the bargain' : 'Join at the current price'}
+                      </button>
+                      <span className="text-[9px] leading-snug text-[#111111]/50">
+                        You commit at today\\u2019s band; if a better band fills later, everyone settles at the final price.
+                        Money moves only through the ordinary chain — nothing is charged here.
+                      </span>
+                    </div>
+                    {joinNote && <p className="text-[11px] text-[#111111]">{joinNote}</p>}
+                  </>
                 )}
               </div>
 

@@ -14,13 +14,19 @@ export function register(app) {
   app.use('/api/media', requireFeature('media'));
 
   /** Provider status: which image providers are configured (usually none). */
-  app.get('/api/media/status', (_req, res) => {
+  /**
+   * Storage truth: provider + on-disk health. Deliberately available to any
+   * signed-in user — §18: the upload surface must expose the real durability
+   * of local bytes rather than implying cloud persistence.
+   */
+  app.get('/api/media/status', (req, res) => {
+    if (!requireAuth(req, res)) return;
     res.json({ media: media.providerStatus(), uploads: upload.storageStatus() });
   });
 
   /** Record a category/editorial image (editor-only; the route gates auth). */
   app.post('/api/admin/media', (req, res) => {
-    const me = requireAuth(req, res);
+    const me = requireCap(req, res, 'ops.run');
     if (!me) return;
     try {
       res.status(201).json({

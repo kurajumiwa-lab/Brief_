@@ -1,5 +1,5 @@
 // COLLECTIONS ROUTES — public resolution + editorial management.
-import { requireAuth } from './helpers.js';
+import { requireAuth, requireCap, recordAudit } from './helpers.js';
 import { requireFeature } from '../features.js';
 import * as collection from '../domain/collection.js';
 
@@ -21,16 +21,17 @@ export function register(app) {
   // --- Editorial (authenticated) --------------------------------------------
 
   app.get('/api/admin/collections', (req, res) => {
-    const me = requireAuth(req, res);
-    if (!me) return;
+    if (!requireCap(req, res, 'moderate')) return;
     res.json({ collections: collection.listAll() });
   });
 
   app.post('/api/admin/collections', (req, res) => {
-    const me = requireAuth(req, res);
+    const me = requireCap(req, res, 'moderate');
     if (!me) return;
     try {
-      res.status(201).json({ collection: collection.createCollection(req.body ?? {}) });
+      const created = collection.createCollection(req.body ?? {});
+      recordAudit('collection.create', { actorId: me, objectType: 'collection', objectId: created?.id, after: { key: created?.key, title: created?.title } });
+      res.status(201).json({ collection: created });
     } catch (e) {
       res.status(400).json({ error: String(e.message ?? e) });
     }

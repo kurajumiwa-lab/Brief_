@@ -135,7 +135,7 @@ export function transitionTransaction(id, next, note = '') {
 
 export function listTransactions({ limit = 50 } = {}) {
   return store
-    .all('ledgerTransactions')
+    .filter('ledgerTransactions', (t) => !userId || t.counterparty === userId)
     .slice()
     .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
     .slice(0, limit);
@@ -145,8 +145,13 @@ export function listTransactions({ limit = 50 } = {}) {
  * Balance is COMPUTED, never stored. Inflows are positive amounts, outflows
  * negative, exactly as recorded.
  */
-export function walletBalance(currency = 'KES') {
-  const rows = store.filter('ledgerTransactions', (t) => t.currency === currency);
+export function walletBalance(currency = 'KES', userId = null) {
+  // Scoped to one actor when a userId is given: a wallet shown to a user must
+  // be THEIR money, folded from rows they are the counterparty on. The
+  // platform-wide fold is an operator view (finance capability), not a
+  // personal balance shown on a personal screen.
+  const rows = store.filter('ledgerTransactions',
+    (t) => t.currency === currency && (!userId || t.counterparty === userId));
   let balance = 0;
   let pending = 0;
   for (const t of rows) {

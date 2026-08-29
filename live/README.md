@@ -5,7 +5,16 @@ These are **not** unit tests. They run against a **running server** and the
 same path a real browser takes, including the Vite preview proxy.
 
     cd preview && npx vite build && npx vite preview      # :4173
-    NODE_ENV=production PORT=8787 node server/src/index.js
+    NODE_ENV=production PORT=8787 \\
+      BRIEF_OPERATORS=liveop \\
+      BRIEF_FINANCE=liveop \\
+      node server/src/index.js
+
+Phases 2 and 4 exercise the capability-guarded operator surface, so the
+API must be started with `BRIEF_OPERATORS=liveop BRIEF_FINANCE=liveop`.
+The suites register (or log in) that handle themselves: `liveop` reads
+diagnostics/reconciliation (ops.read + finance), and phase 4 also proves
+a plain user gets 403 `forbidden_capability` first.
 
     node live/2-commerce-over-http.mjs
     node live/3-public-campaign.mjs

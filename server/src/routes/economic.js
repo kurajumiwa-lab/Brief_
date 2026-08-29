@@ -7,22 +7,33 @@ import * as campaigns from '../domain/campaign.js';
 import * as signals from '../domain/signal.js';
 import * as settlement from '../domain/settlement.js';
 import * as payment from '../domain/payment.js';
-import { requireAuth } from './helpers.js';
+import { requireAuth, requireCap } from './helpers.js';
 
 import { requireFeature } from '../features.js';
 
 export function register(app) {
 app.use('/api/economic', requireFeature('economic'));
 app.use('/api/transactions', requireFeature('economic'));
+// A wallet is personal. It requires a caller and folds only the rows that
+// caller is the counterparty on (see ledger.walletBalance). The anonymous
+// platform-wide fold this route used to return was neither authenticated nor
+// anyone's actual balance.
 app.get('/api/economic/wallet', (req, res) => {
-  res.json(ledger.walletBalance(String(req.query?.currency || 'KES')));
+  const me = requireAuth(req, res);
+  if (!me) return;
+  res.json(ledger.walletBalance(String(req.query?.currency || 'KES'), me));
 });
 
 
 
+// The ledger a user reads is their own: rows where they are the
+// counterparty. The full platform ledger is an operator view behind the
+// finance capability, not a default feed.
 app.get('/api/transactions', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
   res.json({
-    transactions: ledger.listTransactions({ limit: Math.min(Number(req.query.limit) || 50, 200) }),
+    transactions: ledger.listTransactions({ limit: Math.min(Number(req.query.limit) || 50, 200), userId: me }),
     provider: ledger.providerStatus()
   });
 });
@@ -89,13 +100,15 @@ app.post('/api/transactions/:id/transition', (req, res) => {
 /** Payment reconciliation. Operator visibility over provider references. */
 
 app.get('/api/economic/payments/reconcile', (req, res) => {
+  if (!requireCap(req, res, 'finance')) return;
   if (!requireAuth(req, res)) return;
   res.json({ reconciliation: payment.reconcileIntents() });
 });
 
 
 
-app.get('/api/economic/reconcile', (_req, res) => {
+app.get('/api/economic/reconcile', (req, res) => {
+  if (!requireCap(req, res, 'finance')) return;
   res.json({ reconciliation: settlement.reconcile() });
 });
 }

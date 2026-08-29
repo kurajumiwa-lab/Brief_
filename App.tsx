@@ -15,6 +15,13 @@ import { AwaitingPayment } from './components/AwaitingPayment';
 import { SourcesPanel } from './components/SourcesPanel';
 import { ConnectedGroups } from './components/ConnectedGroups';
 import { MoneyPanel } from './components/MoneyPanel';
+import { ResaleDesk } from './components/ResaleDesk';
+import { MyTickets } from './components/MyTickets';
+import { EventResale } from './components/EventResale';
+import { EventsHub } from './components/EventsHub';
+import { VerificationPanel } from './components/VerificationPanel';
+import { PulseScreen } from './components/PulseScreen';
+import { EplDesk } from './components/EplDesk';
 import { Vault } from './components/vault/Vault';
 import { CheckIn } from './components/CheckIn';
 import { HostCommand } from './components/HostCommand';
@@ -67,6 +74,7 @@ import {
   Sparkles,
   Plus,
   Terminal,
+  Activity,
   MapPin,
   Users,
   Briefcase,
@@ -100,6 +108,7 @@ import {
   ChevronLeft
 } from 'lucide-react';
 import { MenuSheet } from './components/MenuSheet';
+import { AdminDesk } from './components/AdminDesk';
 import type { MenuTarget } from './components/MenuSheet';
 import { PlayAs } from './components/PlayAs';
 import type { LucideIcon } from 'lucide-react';
@@ -146,17 +155,19 @@ export type ProtocolAction =
   | 'follow';
 
 // --- Navigation -------------------------------------------------------------
-// Four screens. Each answers one question: where do I discover, play, find my
-// own things, or do work. Menu is an overlay, not a fifth room. Pulse was
-// retired: town-dashboard metrics attracted nobody in the commune, and the
-// useful bits (today, group chatter) already live in Around and Saved.
+// Five screens (§2, §20). Each answers one question: where do I discover,
+// play, find my own things, do work, or see what CHANGED. Menu is an overlay,
+// not a sixth room. Pulse is back change-first: notifications, confirmations,
+// kept-object changes, group signals, event reminders and workflow
+// completions — never the retired town-metrics vanity reading.
 export type Destination =
   | 'nearby'
   | 'arena'
   | 'mylayer'
-  | 'workflows';
+  | 'workflows'
+  | 'pulse';
 
-// The four screens, defined once and consumed by both the desktop rail and the
+// The five screens, defined once and consumed by both the desktop rail and the
 // mobile dock so the two can never drift apart.
 export const DESTINATIONS: {
   id: Destination;
@@ -166,7 +177,8 @@ export const DESTINATIONS: {
   { id: 'nearby', label: ROOM.nearby.label, hint: ROOM.nearby.hint },
   { id: 'arena', label: ROOM.arena.label, hint: ROOM.arena.hint },
   { id: 'mylayer', label: ROOM.mylayer.label, hint: ROOM.mylayer.hint },
-  { id: 'workflows', label: ROOM.workflows.label, hint: ROOM.workflows.hint }
+  { id: 'workflows', label: ROOM.workflows.label, hint: ROOM.workflows.hint },
+  { id: 'pulse', label: ROOM.pulse.label, hint: ROOM.pulse.hint }
 ];
 
 // Icons kept separate from DESTINATIONS so the data stays plain and the
@@ -175,16 +187,18 @@ const DESTINATION_ICONS: Record<Destination, LucideIcon> = {
   nearby: MapPin,
   arena: Award,
   mylayer: Bookmark,
-  workflows: Briefcase
+  workflows: Briefcase,
+  pulse: Activity
 };
 
-export type NearbySection = 'stream' | 'tea' | 'today' | 'pursuits' | 'quests' | 'market';
+export type NearbySection = 'stream' | 'tea' | 'today' | 'pursuits' | 'quests' | 'market' | 'events';
 export type MyLayerSection =
   | 'saved' | 'activity' | 'arena' | 'points' | 'circles' | 'groups' | 'campaigns'
-  | 'mediakit' | 'opportunities' | 'messages' | 'subscriptions';
+  | 'mediakit' | 'opportunities' | 'messages' | 'subscriptions' | 'tickets'
+  | 'verification';
 // Workflows secondary: a Journey is either in progress or finished. Inbox and
 // Sources are kept -- they are existing workflow surfaces, not new screens.
-export type WorkflowSection = 'cockpit' | 'command' | 'active' | 'completed' | 'inbox' | 'sources' | 'money' | 'vault' | 'gate' | 'tea' | 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'ai' | 'engine' | 'groupbuy';
+export type WorkflowSection = 'cockpit' | 'command' | 'active' | 'completed' | 'inbox' | 'sources' | 'money' | 'vault' | 'gate' | 'tea' | 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'ai' | 'engine' | 'groupbuy' | 'resale';
 // Pulse secondary. Pulse is the information layer: freshness, local signals,
 // what groups are surfacing, and emerging activity. It is not an assistant.
 export type PulseSection = 'now' | 'local' | 'groups' | 'signals';
@@ -364,16 +378,6 @@ export interface BriefPost {
  * no `value` field at all, so a surface cannot read a number that was never
  * measured -- it is a compile error, not a runtime 0.
  */
-export type CivicMetric =
-  | { label: string; available: true; value: number; unit?: string; caption: string }
-  | { label: string; available: false; reason: string };
-
-export interface TownHealth {
-  metrics: CivicMetric[];
-  /** Freshness over objects Brief holds. Null when there is nothing to measure. */
-  infoFreshnessPct: number | null;
-}
-
 // ----------------------------------------------------------------------------
 // Type-derived helpers (must live BELOW the type declarations above)
 // ----------------------------------------------------------------------------
@@ -4521,80 +4525,6 @@ const INITIAL_POSTS: BriefPost[] = [];
  */
 const INITIAL_JOURNEYS: Journey[] = [];
 
-/**
- * Derives civic metrics from records Brief actually holds.
- *
- * The rule this function exists to enforce:
- *
- *     no underlying records -> no number -> honest empty state
- *
- * Freshness is genuinely derivable: it is the share of objects carrying a
- * verification date that has not expired, computed by the same getFreshness()
- * the cards use. Everything else on the old dashboard -- businesses helped,
- * events attended, knowledge resolved, community contributions -- would
- * require outcome tracking Brief does not do. Those are reported as
- * unavailable with the reason, not filled with a plausible-looking integer.
- */
-const deriveTownHealth = (
-  objects: BriefObject[],
-  journeys: Journey[],
-  now: Date = new Date()
-): TownHealth => {
-  const dated = objects.filter((o) => getFreshness(o, now) !== null);
-  const fresh = dated.filter((o) => {
-    const f = getFreshness(o, now);
-    return f !== null && f.level !== 'stale';
-  });
-
-  const infoFreshnessPct =
-    dated.length > 0 ? Math.round((fresh.length / dated.length) * 1000) / 10 : null;
-
-  const completedJourneys = journeys.filter((j) => j.isCompleted).length;
-
-  const metrics: CivicMetric[] = [
-    infoFreshnessPct === null
-      ? {
-          label: 'Freshness',
-          available: false,
-          reason: 'No object carries a verification date yet, so freshness cannot be measured.'
-        }
-      : {
-          label: 'Freshness',
-          available: true,
-          value: infoFreshnessPct,
-          unit: '%',
-          caption: `${fresh.length} of ${dated.length} dated objects still within their verification window`
-        },
-    {
-      label: 'Journeys',
-      available: true,
-      value: completedJourneys,
-      caption: completedJourneys === 1 ? 'journey completed' : 'journeys completed'
-    },
-    {
-      label: 'Businesses',
-      available: false,
-      reason: 'Brief does not track business outcomes. Nothing records whether a business was helped.'
-    },
-    {
-      label: 'Events',
-      available: false,
-      reason: 'Attendance is only known for campaigns you run. There is no town-wide attendance record.'
-    },
-    {
-      label: 'Opportunities',
-      available: false,
-      reason: 'Brief does not know whether an opportunity was acted on after you left the app.'
-    },
-    {
-      label: 'Community',
-      available: false,
-      reason: 'Contributions are recorded per Circle. There is no town-wide contribution count.'
-    }
-  ];
-
-  return { metrics, infoFreshnessPct };
-};
 
 export const getObjectTypeMeta = (type: ObjectType) => {
   switch (type) {
@@ -4703,6 +4633,19 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
   const [done, setDone] = useState<null | { status: string; ticketCode?: string | null }>(null);
   const [waitlistBusy, setWaitlistBusy] = useState(false);
   const [waitlistMessage, setWaitlistMessage] = useState<string | null>(null);
+  // Contribution pots (T3): the supporter states what they are putting in.
+  const [amount, setAmount] = useState('');
+  // Updates feed: the organiser's own words, read from the public route.
+  const [updates, setUpdates] = useState<briefApi.CampaignUpdatePost[] | null>(null);
+
+  React.useEffect(() => {
+    let live = true;
+    setUpdates(null);
+    void briefApi.getCampaignUpdatesBySlug(slug).then((res) => {
+      if (live) setUpdates(res.ok ? res.data : []);
+    });
+    return () => { live = false; };
+  }, [slug, load.data?.registered]);
 
   const fetchCampaign = React.useCallback(async () => {
     setLoad({ status: 'loading', data: null, error: null });
@@ -4732,7 +4675,10 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
       attendeeRef,
       name: name.trim() === '' ? undefined : name.trim(),
       contact: contact.trim() === '' ? undefined : contact.trim(),
-      trackingHash
+      trackingHash,
+      // Pots only: a whole-shillings amount the supporter states themselves.
+      // The server refuses it on fixed-price events.
+      amount: amount.trim() ? Number(amount) : undefined
     });
     setBusy(false);
     if (!res.ok) {
@@ -4806,6 +4752,64 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                 <p className="text-xs text-[#111111]/60 leading-relaxed">{c.description}</p>
               )}
             </div>
+
+            {/* Contribution pot (T3): a goal, stated amounts, settled-only
+                progress, and contributors as a COUNT. Nobody is listed. */}
+            {c.goalAmount != null && (
+              <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 space-y-2">
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#111111]/50">
+                    Contribution pot
+                  </p>
+                  {c.endsAt && (
+                    <p className="text-[10px] text-[#111111]/60">
+                      {Date.parse(c.endsAt) <= Date.now()
+                        ? 'Deadline passed'
+                        : `Open until ${c.endsAt.slice(0, 10)}`}
+                    </p>
+                  )}
+                </div>
+                <div className="h-2 overflow-hidden rounded-full" style={{ background: 'var(--ground)' }}>
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${Math.min(100, Math.round(((c.raised ?? 0) / c.goalAmount) * 100))}%`,
+                      background: 'var(--signal-live)'
+                    }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="font-extrabold text-[#111111]">
+                    {c.currency} {(c.raised ?? 0).toLocaleString()} of {c.goalAmount.toLocaleString()}
+                  </span>
+                  <span className="text-[#111111]/60">
+                    {(c.contributors ?? 0)} contribution{(c.contributors ?? 0) === 1 ? '' : 's'}
+                  </span>
+                </div>
+                <p className="text-[9px] leading-snug text-[#111111]/50">
+                  Progress counts SETTLED money only — a pledge that has not settled is not raised.
+                  Contributors are counted, never listed.
+                </p>
+              </div>
+            )}
+
+            {/* Updates (T3): the organiser's posts, newest first. */}
+            {updates !== null && updates.length > 0 && (
+              <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 space-y-3">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#111111]/50">
+                  Updates
+                </p>
+                {updates.map((u) => (
+                  <div key={u.id} className="space-y-0.5">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p className="text-xs font-extrabold text-[#111111]">{u.title}</p>
+                      <p className="shrink-0 text-[9px] text-[#111111]/40">{u.createdAt.slice(0, 10)}</p>
+                    </div>
+                    <p className="text-[11px] leading-snug text-[#111111]/60">{u.body}</p>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 space-y-2">
               {c.startsAt && (
@@ -4960,14 +4964,40 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                       className="w-full bg-[#FFFFFF] text-[#111111] text-sm rounded-xl px-3 py-3 border border-[#E5E7EB] focus:border-[#111111] focus:outline-none"
                     />
                   </div>
+                  {/* Pots (T3): the supporter states a whole-shillings amount.
+                      Fixed-price events never show this — the price is the price. */}
+                  {c.goalAmount != null && (
+                    <div>
+                      <label className="block text-[9px] text-[#111111]/40 mb-1">
+                        Your contribution ({c.currency})
+                      </label>
+                      <input
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        inputMode="numeric"
+                        placeholder="Whole shillings you are putting in"
+                        className="w-full bg-[#FFFFFF] text-[#111111] text-sm rounded-xl px-3 py-3 border border-[#E5E7EB] focus:border-[#111111] focus:outline-none"
+                      />
+                      <p className="mt-1 text-[9px] text-[#111111]/40 leading-snug">
+                        State what you are putting in. It counts toward the pot once the money
+                        settles; contributors are counted, never listed.
+                      </p>
+                    </div>
+                  )}
                   <button
-                    disabled={busy}
+                    disabled={busy || (c.goalAmount != null && !Number(amount))}
                     onClick={submit}
                     className="w-full py-4 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-sm cursor-pointer disabled:opacity-40"
                   >
-                    {busy ? 'Registering...' : c.price === 0 ? 'Register' : `Register - ${c.currency} ${c.price.toLocaleString()}`}
+                    {busy
+                      ? 'Registering...'
+                      : c.goalAmount != null
+                      ? `Contribute${amount.trim() ? ` ${c.currency} ${Number(amount).toLocaleString()}` : ''}`
+                      : c.price === 0
+                      ? 'Register'
+                      : `Register - ${c.currency} ${c.price.toLocaleString()}`}
                   </button>
-                  {c.price > 0 && (
+                  {(c.price > 0 || c.goalAmount != null) && (
                     <p className="text-[10px] text-[#111111]/40 leading-snug text-center">
                       No online payment is connected yet. Your spot is held and you
                       arrange payment with the organiser.
@@ -4975,6 +5005,11 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                   )}
                 </div>
               )}
+
+            {/* Commerce only inside context: this event's own resale seats.
+                Holders list seats they cannot use; buying here holds the seat
+                at the listed price while money is settled with the seller. */}
+            {load.status === 'ready' && <EventResale slug={c.slug} />}
           </>
         )}
       </div>
@@ -4996,11 +5031,6 @@ export function App() {
   const [objects, setObjects] = useState<BriefObject[]>(INITIAL_OBJECTS);
   const [journeys, setJourneys] = useState<Journey[]>(INITIAL_JOURNEYS);
   // Derived, never stored. Nothing can set a civic metric by hand.
-  const townHealth = useMemo(
-    () => deriveTownHealth(objects, journeys),
-    [objects, journeys]
-  );
-
   // My Activity starts empty. The two seeded relationships claimed the user
   // had "discovered" and "engaged with" specific objects they had never seen
   // -- a fabricated claim about the person using Brief, and one that pointed
@@ -5035,6 +5065,7 @@ export function App() {
     bootRoute.workflow !== 'active' ? 'screen' : 'queue'
   );
   const [menuOpen, setMenuOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
   const [sessionUser, setSessionUser] = useState<briefApi.AuthedUser | null>(null);
 
   // --- Onboarding & the service ladder ---------------------------------------
@@ -5073,8 +5104,8 @@ export function App() {
   // --- Ingestion backend (real connectors) ---------------------------------
   // The client holds no tokens. It talks to the ingestion server, which owns
   // every secret. When the server is not running these panels degrade to an
-  // explicit "not connected" state rather than pretending.
-  const INGEST_API = '/ingest';
+  // explicit "not connected" state rather than pretending. The proxy prefix
+  // lives in src/api/briefApi.ts, which is the only place that fetches.
   const [connectorStatus, setConnectorStatus] = useState<{
     online: boolean;
     checked: boolean;
@@ -5088,13 +5119,13 @@ export function App() {
   const [briefItSaved, setBriefItSaved] = useState<string | null>(null);
 
   const refreshConnectors = React.useCallback(async () => {
-    // Sources go through briefApi like everything else: one API layer, one
-    // set of response guards. Capabilities/status have no binding yet and
-    // stay inline until they earn one.
+    // Everything goes through briefApi: one API layer, one set of response
+    // guards, no fetch() outside src/api (spec 4). Capabilities/status that
+    // fail their shape guard degrade to null exactly as before.
     const [srcRes, capRes, statRes] = await Promise.all([
       briefApi.getSources(),
-      fetch(`${INGEST_API}/api/capabilities`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-      fetch(`${INGEST_API}/api/status`).then((r) => (r.ok ? r.json() : null)).catch(() => null)
+      briefApi.getConnectorCapabilities(),
+      briefApi.getIngestStatus()
     ]);
 
     if (!srcRes.ok) {
@@ -5106,9 +5137,9 @@ export function App() {
     setConnectorStatus({
       online: true,
       checked: true,
-      capabilities: capRes,
+      capabilities: capRes.ok ? capRes.data : null,
       liveSources: srcRes.data,
-      stats: statRes
+      stats: statRes.ok ? statRes.data : null
     });
   }, []);
 
@@ -5241,6 +5272,21 @@ export function App() {
   }, [sessionUser]);
 
   React.useEffect(() => { void refreshOnboarding(); }, [refreshOnboarding]);
+
+  // The ladder card renders on the Home stream, and its rungs are derived
+  // server-side from REAL rows — a saved object, a confirmed one. Those rows
+  // change while the app is open, so the ladder is re-read from the server
+  // every time Home comes back into view. getLadder() is exactly that half:
+  // the ladder alone, without dragging onboarding state along with it.
+  React.useEffect(() => {
+    if (!sessionUser) return;
+    if (activeTab !== 'nearby') return;
+    void briefApi.getLadder().then((res) => {
+      if (res.ok) {
+        setOnboardingState((prev) => (prev ? { ...prev, ladder: res.data } : prev));
+      }
+    });
+  }, [sessionUser, activeTab]);
 
   // Seeing a populated feed is the moment Brief has shown its point. Recorded
   // once per session, and only when real rows actually arrived.
@@ -5857,6 +5903,30 @@ export function App() {
     showToast('Payment confirmed');
   };
 
+  // --- T3: the organiser authors updates the public page shows -------------
+  const [updateTitle, setUpdateTitle] = useState('');
+  const [updateBody, setUpdateBody] = useState('');
+  const [updateBusy, setUpdateBusy] = useState(false);
+  const [updateNote, setUpdateNote] = useState<string | null>(null);
+
+  const postUpdate = async (campaignId: string) => {
+    if (!updateTitle.trim() || !updateBody.trim() || updateBusy) return;
+    setUpdateBusy(true);
+    setUpdateNote(null);
+    const res = await briefApi.postCampaignUpdate(campaignId, {
+      title: updateTitle.trim(),
+      body: updateBody.trim()
+    });
+    setUpdateBusy(false);
+    if (!res.ok) {
+      setUpdateNote(res.error);
+      return;
+    }
+    setUpdateTitle('');
+    setUpdateBody('');
+    setUpdateNote('Posted. It is on the public page now.');
+  };
+
   const setRegStatus = async (
     campaignId: string,
     registrationId: string,
@@ -6200,6 +6270,37 @@ export function App() {
   // Watch (prompt 21): records intent to monitor. No polling, no fake alerts --
   // diffObjects is the engine this will drive once ingestion supplies a second
   // version of a record.
+  // --- §8 verify / report: the crowd-checking half of object trust ----------
+  // "I was there" (confirm) and "this is wrong" (report) had server routes
+  // and no buttons. Both hit the real endpoints; both show the server's own
+  // answer or refusal.
+  const [objectCheckBusy, setObjectCheckBusy] = useState<string | null>(null);
+  const [reportForObject, setReportForObject] = useState<string | null>(null);
+
+  const handleConfirmObject = async (object: BriefObject) => {
+    setObjectCheckBusy(object.id);
+    const res = await briefApi.confirmObject(object.id);
+    setObjectCheckBusy(null);
+    if (!res.ok) {
+      showToast(res.error ?? 'Could not record your confirmation.');
+      return;
+    }
+    showToast(`Confirmed — ${res.data.confirmationCount} confirmation${res.data.confirmationCount === 1 ? '' : 's'} on record.`);
+    await loadObjects();
+  };
+
+  const handleReportObject = async (object: BriefObject, reason: string) => {
+    setObjectCheckBusy(object.id);
+    const res = await briefApi.reportObject(object.id, reason);
+    setObjectCheckBusy(null);
+    setReportForObject(null);
+    if (!res.ok) {
+      showToast(res.error ?? 'Could not record your report.');
+      return;
+    }
+    showToast('Reported. A moderator sees it; the record stays up until then.');
+  };
+
   const handleToggleWatch = (object: BriefObject) => {
     const isWatching = watchedIds.has(object.id);
 
@@ -6809,7 +6910,7 @@ export function App() {
   }, [arenaGameId]);
 
   const [arenaSection, setArenaSection] = useState<
-    'lobby' | 'ligi' | 'challenges' | 'tournaments' | 'leaderboard'
+    'lobby' | 'ligi' | 'epl' | 'challenges' | 'tournaments' | 'leaderboard'
   >(bootRoute.arena);
 
   // Challenges addressed to this user, awaiting a decision.
@@ -6817,52 +6918,6 @@ export function App() {
   // Runs over the access-checked indexes, so an inaccessible group can never
   // contribute a signal.
   // Workflows secondary is derived from real Journey data, not a new store.
-  // PULSE derivations. Every one reads existing state -- posts, objects,
-  // groups the user already belongs to. Nothing here is generated or inferred
-  // by a model; Pulse is a reading of the information layer, not an assistant.
-  const pulseNow = useMemo(
-    () =>
-      [...posts]
-        .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
-        .slice(0, 6),
-    [posts]
-  );
-
-  const pulseNotices = useMemo(
-    () => posts.filter((p) => p.kind === 'notice' || p.kind === 'news'),
-    [posts]
-  );
-
-  const pulseRecentlyVerified = useMemo(
-    () =>
-      objects
-        .filter((obj) => obj.isVerified && obj.lastVerifiedAt)
-        .sort((a, b) => (b.lastVerifiedAt ?? '').localeCompare(a.lastVerifiedAt ?? ''))
-        .slice(0, 5),
-    [objects]
-  );
-
-  // What the groups you are already in are surfacing. Membership is never
-  // invented: this walks visibleGroups only.
-  const pulseGroupSignals = useMemo(() => {
-    const out: {
-      id: string;
-      groupName: string;
-      text: string;
-      at: string;
-    }[] = [];
-    for (const group of visibleGroups) {
-      for (const entry of groupIndexes[group.id] ?? []) {
-        out.push({
-          id: `pulse_${entry.id}`,
-          groupName: group.name,
-          text: entry.originalText,
-          at: entry.sentAt
-        });
-      }
-    }
-    return out.sort((a, b) => b.at.localeCompare(a.at)).slice(0, 6);
-  }, [visibleGroups, groupIndexes]);
 
   const activeJourneys = useMemo(() => journeys.filter((j) => !j.isCompleted), [journeys]);
   const completedJourneys = useMemo(() => journeys.filter((j) => j.isCompleted), [journeys]);
@@ -7099,6 +7154,20 @@ export function App() {
     showToast(res.data?.disputed ? 'Players disagreed. Brief does not pick a winner.' : 'Result confirmed.');
   };
 
+  // Abandon: the honest exit for a match that never happened. The server
+  // decides who may abandon (and when); a refusal says why.
+  const handleAbandonMatch = async (match: ArenaMatch) => {
+    setArenaBusyId(match.id);
+    const res = await briefApi.abandonArenaMatch(match.id, 'never started');
+    setArenaBusyId(null);
+    if (!res.ok) {
+      showToast(res.error ?? 'Could not abandon this match.');
+      return;
+    }
+    await refreshArenaMatches();
+    showToast('Match abandoned.');
+  };
+
   // Venues that actually host the selected game, nearest first.
   // Live activity per game: open challenges plus players checked in at a
   // venue. Drives the count on each game chip, so the selector is dynamic.
@@ -7296,6 +7365,12 @@ export function App() {
 
   const handleMenuSelect = (target: MenuTarget) => {
     setMenuOpen(false);
+    // The operator desk is not a consumer destination and is not ladder-gated:
+    // authority is the session's capabilities, checked again per call.
+    if (target.tab === 'operate') {
+      setAdminOpen(true);
+      return;
+    }
     // The ladder shapes what is OFFERED, never what is permitted: authority
     // still lives on the server. A surface whose rung has not been climbed
     // says which step opens it and points at that step instead of dropping
@@ -7344,11 +7419,12 @@ export function App() {
     campaignId: openCampaignId,
     capture: captureOpen,
     menu: menuOpen,
+    admin: adminOpen,
     landed: false
   }), [
     activeTab, nearbySection, myLayerSection, workflowSection, arenaSection,
     selectedObjectForDetail, pendingObjectId, selectedTeaSlug, openCampaignId,
-    captureOpen, menuOpen
+    captureOpen, menuOpen, adminOpen
   ]);
 
   const writeUrl = useCallback((route: BriefRoute, mode: 'push' | 'replace') => {
@@ -7367,6 +7443,7 @@ export function App() {
     setWorkflowView(route.dest === 'workflows' && route.workflow !== 'active' ? 'screen' : 'queue');
     setArenaSection(route.arena);
     setMenuOpen(route.menu);
+    setAdminOpen(route.admin);
     setCaptureOpen(route.capture);
     setSelectedTeaSlug(route.teaSlug);
     setOpenCampaignId(route.campaignId);
@@ -7379,19 +7456,20 @@ export function App() {
 
   const dismissOverlay = useCallback(() => {
     const st = typeof window !== 'undefined' ? window.history.state : null;
-    const overlayState = isBriefRoute(st) && (st.menu || st.capture || st.objectId || st.teaSlug || st.campaignId);
+    const overlayState = isBriefRoute(st) && (st.menu || st.capture || st.admin || st.objectId || st.teaSlug || st.campaignId);
     if (overlayState && !st.landed && typeof window !== 'undefined' && window.history.length > 1) {
       window.history.back();
       return;
     }
     skipUrl.current = true;
     setMenuOpen(false);
+    setAdminOpen(false);
     setCaptureOpen(false);
     setSelectedTeaSlug(null);
     setOpenCampaignId(null);
     setPendingObjectId(null);
     setSelectedObjectForDetailRaw(null);
-    writeUrl({ ...currentRoute(), menu: false, capture: false, objectId: null, teaSlug: null, campaignId: null }, 'replace');
+    writeUrl({ ...currentRoute(), menu: false, admin: false, capture: false, objectId: null, teaSlug: null, campaignId: null }, 'replace');
   }, [currentRoute, writeUrl]);
 
   useEffect(() => {
@@ -7412,11 +7490,11 @@ export function App() {
       skipUrl.current = false;
       return;
     }
-    const overlay = menuOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail) || Boolean(pendingObjectId);
+    const overlay = menuOpen || adminOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail) || Boolean(pendingObjectId);
     writeUrl(currentRoute(), overlay ? 'push' : 'replace');
   }, [
     activeTab, nearbySection, myLayerSection, workflowSection, arenaSection,
-    menuOpen, captureOpen, selectedTeaSlug, openCampaignId,
+    menuOpen, adminOpen, captureOpen, selectedTeaSlug, openCampaignId,
     selectedObjectForDetail, pendingObjectId, currentRoute, writeUrl
   ]);
 
@@ -7702,7 +7780,8 @@ export function App() {
                   ['today', `${HOME_MORE.today}${dailyBrief.length > 0 ? ' *' : ''}`],
                   ['pursuits', `${HOME_MORE.pursuits}${pursuits.length > 0 ? ` (${pursuits.length})` : ''}`],
                   ['quests', `${HOME_MORE.quests}${openQuests.length > 0 ? ` (${openQuests.length})` : ''}`],
-                  ['market', HOME_MORE.market]
+                  ['market', HOME_MORE.market],
+                  ['events', HOME_MORE.events]
                 ] as [NearbySection, string][]).map(([id, label]) => (
                   <button
                     key={id}
@@ -7782,6 +7861,12 @@ export function App() {
                 </button>
               ))}
             </div>
+          </div>
+        )}
+
+        {activeTab === 'pulse' && (
+          <div className="max-w-3xl mx-auto px-4 py-6">
+            <PulseScreen />
           </div>
         )}
 
@@ -8878,6 +8963,7 @@ export function App() {
               {([
                 ['lobby', 'Lobby'],
                 ['ligi', 'Ligi'],
+                ['epl', 'EPL'],
                 ['challenges', `Challenges${challenges.length > 0 ? ` (${challenges.length})` : ''}`],
                 ['tournaments', `Tournaments${arenaTournaments.length > 0 ? ` (${arenaTournaments.length})` : ''}`],
                 ['leaderboard', 'Leaderboard']
@@ -8898,6 +8984,10 @@ export function App() {
 
             {arenaSection === 'ligi' && (
               <Ligi meId={sessionUser?.id ?? null} onToast={showToast} />
+            )}
+
+            {arenaSection === 'epl' && (
+              <EplDesk meId={sessionUser?.id ?? null} onToast={showToast} />
             )}
 
             {arenaSection === 'lobby' && (
@@ -9138,6 +9228,7 @@ export function App() {
                         <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleReportMatch(m, me)} className="px-2.5 py-1.5 rounded-lg bg-[#111111] text-[#FFFFFF] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">I won</button>
                         <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleReportMatch(m, opponent ?? null)} className="px-2.5 py-1.5 rounded-lg border border-[#E5E7EB] text-[#111111] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">They won</button>
                         <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleReportMatch(m, null)} className="px-2.5 py-1.5 rounded-lg border border-[#E5E7EB] text-[#111111] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">Draw</button>
+                        <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleAbandonMatch(m)} className="px-2.5 py-1.5 rounded-lg border border-[#E5E7EB] text-[#111111]/60 text-[10px] font-extrabold cursor-pointer disabled:opacity-40">Never happened</button>
                       </div>
                     )}
                     {canConfirm && (
@@ -9188,6 +9279,12 @@ export function App() {
           </div>
         )}
 
+        {activeTab === 'nearby' && nearbySection === 'events' && (
+          <div className="max-w-3xl mx-auto px-4 py-6">
+            <EventsHub />
+          </div>
+        )}
+
         {activeTab === 'nearby' && nearbySection === 'market' && (
           <div className="max-w-3xl mx-auto px-4 py-6">
             <Marketplace />
@@ -9214,6 +9311,18 @@ export function App() {
             formatSourceDate={formatSourceDate}
             handleRunCommand={handleRunCommand}
             setSelectedObjectForDetail={setSelectedObjectForDetail}
+          />
+        )}
+
+        {activeTab === 'mylayer' && myLayerSection === 'tickets' && (
+          <MyTickets
+            onSell={() => {
+              // Selling is a Workflows → Sell act: the money side of the seat
+              // lives with the rest of the money, not in the personal layer.
+              setActiveTab('workflows');
+              setWorkflowView('screen');
+              setWorkflowSection('resale');
+            }}
           />
         )}
 
@@ -9541,6 +9650,12 @@ export function App() {
           </div>
         )}
 
+        {activeTab === 'mylayer' && myLayerSection === 'verification' && (
+          <div className="max-w-3xl mx-auto px-4 py-6">
+            <VerificationPanel />
+          </div>
+        )}
+
         {activeTab === 'mylayer' && myLayerSection === 'subscriptions' && (
           <div className="max-w-2xl mx-auto px-4 py-6">
             <SubscriptionsPanel />
@@ -9551,6 +9666,10 @@ export function App() {
           <div className="max-w-3xl mx-auto px-4 py-6">
             <MoneyPanel />
           </div>
+        )}
+
+        {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'resale' && (
+          <ResaleDesk />
         )}
 
         {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'cockpit' && (
@@ -10124,6 +10243,38 @@ export function App() {
                         </p>
                       </div>
                     )}
+
+                  {/* POST AN UPDATE (T3): the organiser's words land on the
+                      public page — the loop supporters read. */}
+                  <div className="space-y-2">
+                    <h3 className="text-[9px] text-[#111111]/40">
+                      Post an update
+                    </h3>
+                    <input
+                      value={updateTitle}
+                      onChange={(e) => setUpdateTitle(e.target.value)}
+                      placeholder="Update title (e.g. Halfway there)"
+                      aria-label="update title"
+                      className="w-full bg-[#FFFFFF] text-[#111111] text-xs rounded-xl px-3 py-2.5 border border-[#E5E7EB] focus:border-[#111111] focus:outline-none"
+                    />
+                    <textarea
+                      value={updateBody}
+                      onChange={(e) => setUpdateBody(e.target.value)}
+                      placeholder="What the people supporting this should know"
+                      aria-label="update body"
+                      rows={3}
+                      className="w-full bg-[#FFFFFF] text-[#111111] text-xs rounded-xl px-3 py-2.5 border border-[#E5E7EB] focus:border-[#111111] focus:outline-none resize-none"
+                    />
+                    <button
+                      type="button"
+                      disabled={updateBusy || !updateTitle.trim() || !updateBody.trim()}
+                      onClick={() => void postUpdate(campaignDetail.id)}
+                      className="px-4 py-2 rounded-xl bg-[#111111] text-[#FFFFFF] text-[11px] font-extrabold cursor-pointer disabled:opacity-40"
+                    >
+                      {updateBusy ? 'Posting…' : 'Post update'}
+                    </button>
+                    {updateNote && <p className="text-[10px] text-[#111111]/60 break-words">{updateNote}</p>}
+                  </div>
 
                   {/* REGISTRATIONS */}
                   <div className="space-y-2">
@@ -11220,10 +11371,43 @@ export function App() {
                           : 'bg-[#FFFFFF] border-[#E5E7EB] text-[#111111]/60'
                       }`}
                     >
-                      <Eye className="w-3.5 h-3.5" />
+                      <Eye className="h-3.5 w-3.5" />
                       {watchedIds.has(selectedObjectForDetail.id) ? 'Watching' : 'Watch'}
                     </button>
                   </div>
+
+                  {/* §8: the crowd-checking row. Confirm says "I know this is
+                      true"; report says "this is wrong" with a reason. Both
+                      are real server records, not local flags. */}
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => void handleConfirmObject(selectedObjectForDetail)}
+                      disabled={objectCheckBusy === selectedObjectForDetail.id}
+                      className="flex-1 min-w-fit py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E5E7EB] text-[#111111]/70 font-bold text-[11px] cursor-pointer disabled:opacity-50"
+                    >
+                      {objectCheckBusy === selectedObjectForDetail.id ? 'Recording…' : '✓ I can confirm this'}
+                    </button>
+                    <button
+                      onClick={() => setReportForObject(reportForObject === selectedObjectForDetail.id ? null : selectedObjectForDetail.id)}
+                      className="flex-1 min-w-fit py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E5E7EB] text-[#111111]/50 font-bold text-[11px] cursor-pointer"
+                    >
+                      Report
+                    </button>
+                  </div>
+                  {reportForObject === selectedObjectForDetail.id && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {['wrong details', 'spam', 'offensive', 'no longer true'].map((reason) => (
+                        <button
+                          key={reason}
+                          onClick={() => void handleReportObject(selectedObjectForDetail, reason)}
+                          disabled={objectCheckBusy === selectedObjectForDetail.id}
+                          className="px-3 py-1.5 rounded-full border border-[#E5E7EB] text-[11px] font-bold text-[#111111]/70 cursor-pointer disabled:opacity-50"
+                        >
+                          {reason}
+                        </button>
+                      ))}
+                    </div>
+                  )}
 
                   {watchedIds.has(selectedObjectForDetail.id) && (
                     <p className="text-[10px] text-[#111111]/40 text-center">
@@ -11605,7 +11789,9 @@ export function App() {
         onSelect={handleMenuSelect}
         onSelectCity={chooseCity}
         selectedLocation={selectedLocation}
+        canOperate={briefApi.isOperator(sessionUser)}
       />
+      <AdminDesk open={adminOpen} onClose={dismissOverlay} me={sessionUser} />
 
       <footer className="border-t border-[#E5E7EB] mt-12 py-6 text-xs text-[#111111]/60 text-center">
         Everything Happening Around You

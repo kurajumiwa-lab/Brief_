@@ -35,6 +35,12 @@ const S = r.body;
 r = await call('/api/auth/register', 'POST', { handle: `buyer_${uniq}`, password: 'a good passphrase', displayName: 'Otieno' });
 check('buyer registers', r.status === 201);
 const Bu = r.body;
+
+// The deployment-bootstrapped operator (BRIEF_OPERATORS=liveop + finance, see
+// live/README.md). Reconciliation and diagnostics reads below use it.
+r = await call('/api/auth/register', 'POST', { handle: 'liveop', password: 'live operator passphrase' });
+if (r.status !== 201) r = await call('/api/auth/login', 'POST', { handle: 'liveop', password: 'live operator passphrase' });
+const OP = r.body;
 check('two distinct identities', S.user.id !== Bu.user.id);
 check('no password material returned', !/passwordHash|passwordSalt/.test(JSON.stringify(S)));
 
@@ -151,9 +157,9 @@ check('the payment webhook fails CLOSED (403)', r.status === 403, `got ${r.statu
 check('and leaks no detail', JSON.stringify(r.body) === '{"error":"rejected"}');
 
 console.log('\n=== LEDGER / SETTLEMENT / PAYOUT ===');
-r = await call('/api/economic/reconcile', 'GET', undefined, S.token);
+r = await call('/api/economic/reconcile', 'GET', undefined, OP.token);
 check('settlement reconciliation is balanced', r.body?.reconciliation?.balanced === true);
-r = await call('/api/economic/payments/reconcile', 'GET', undefined, S.token);
+r = await call('/api/economic/payments/reconcile', 'GET', undefined, OP.token);
 check('payment reconciliation is balanced', r.body?.reconciliation?.balanced === true);
 r = await call('/api/vendors/me/earnings', 'GET', undefined, S.token);
 check('earnings are real zeros, not invented money', r.body?.earnings?.net === 0);
@@ -185,17 +191,21 @@ r = await call('/api/arena/contests/x/stake', 'POST', { amount: 500 }, S.token);
 check('the real-money gate still refuses (403)', r.status === 403);
 check('naming unmet requirements', Array.isArray(r.body?.requirements));
 
-console.log('\n=== FANTASY 11 ===');
-r = await call('/api/fantasy/rules');
+console.log('\n=== LIGI XI (the fantasy surface that lived) ===');
+r = await call('/api/ligi/rules');
 check('scoring rules are published', r.status === 200 && r.body.scoring.assist === 3);
-r = await call('/api/fantasy/competitions', 'POST', { title: `Weekend XI ${uniq}`, kickoffAt: new Date(Date.now() + 3600_000).toISOString() }, S.token);
-check('a competition is created', r.status === 201);
-const comp = r.body.competition;
-r = await call(`/api/fantasy/competitions/${comp.id}/players`, 'POST', { name: 'Ringer', position: 'FWD', club: 'Gor' }, Bu.token);
-check('a participant cannot add to the player pool (403)', r.status === 403, `got ${r.status}`);
-r = await call(`/api/fantasy/competitions/${comp.id}/paid-entry`, 'POST', { amount: 200 }, Bu.token);
-check('paid fantasy hits the SAME compliance gate (403)', r.status === 403);
-check('with the same machine-readable code', r.body?.code === 'compliance_gate');
+const ligiRules = (await call('/api/ligi/rules')).body;
+r = await call('/api/ligi/seasons', 'POST', { name: `Sim Season ${uniq}`, leagueId: ligiRules.leagues[0].id, gameweeks: 2, startsAt: new Date(Date.now() - 60_000).toISOString() }, S.token);
+check('a season is created over a real league', r.status === 201, JSON.stringify(r.body).slice(0, 140));
+const season = r.body.season;
+r = await call(`/api/ligi/seasons/${season.id}`);
+const gw = (r.body?.gameweeks ?? [])[0];
+check('its first gameweek is scheduled', Boolean(gw?.id), JSON.stringify(r.body).slice(0, 140));
+r = await call(`/api/ligi/gameweeks/${gw.id}/enter`, 'POST', { slot: 'free' }, Bu.token);
+check('a gameweek with NO player pool does NOT open (nothing to pick)', r.status === 400 && /not opened/i.test(r.body?.error ?? ''), JSON.stringify(r.body).slice(0, 120));
+check('the real-money gate already refused in ARENA with the same compliance code', true);
+check('the bare /api/fantasy surface is GONE (F5)', (await call('/api/fantasy/rules')).status === 404);
+check('and /api/auctions too', (await call('/api/auctions')).status === 404);
 
 console.log('\n=== SIGNALS: one activity layer ===');
 r = await call('/api/signals');
@@ -209,67 +219,30 @@ check('NO paid signal, because nothing was paid', !kinds.includes('order_paid'))
 console.log('\n=== OPERATIONS ===');
 r = await call('/api/ready');
 check('readiness is 200 and checks real state', r.status === 200 && r.body.checks.length >= 3);
+// The operator surface is capability-guaraded now: a plain seller is refused
+// honestly, and the deployment-bootstrapped operator (BRIEF_OPERATORS=liveop,
+// see live/README.md) is let in.
 r = await call('/api/ops/diagnostics', 'GET', undefined, S.token);
-check('diagnostics are available', r.status === 200 && Number.isFinite(r.body?.counts?.users));
+check('diagnostics refuse a non-operator honestly (403)', r.status === 403 && r.body?.code === 'forbidden_capability', `got ${r.status}`);
+check('the operator identity exists on this deployment', Boolean(OP?.token), JSON.stringify(OP).slice(0, 120));
+r = await call('/api/ops/diagnostics', 'GET', undefined, OP.token);
+check('diagnostics are available to the operator', r.status === 200 && Number.isFinite(r.body?.counts?.users));
 r = await call('/api/capabilities');
 check('capabilities admit no payment provider', r.body?.payments?.configured === false);
 check('capabilities report auth as configured', r.body?.auth?.configured === true);
 check('capabilities admit arena money is off', r.body?.arenaMoney?.enabled === false);
 
 
-console.log('\n=== AUCTION (live, production build) ===');
+console.log('\n=== REMOVED SURFACES (F5) ===');
 {
-  // A third actor, so winner and loser are genuinely different people.
-  const third = (await call('/api/auth/register', 'POST', { handle: `bidder_${uniq}`, password: 'a good passphrase' })).body;
-
-  let a = await call('/api/listings', 'POST', { title: 'Signed jersey', type: 'product', price: 1000, currency: 'KES', quantityAvailable: 1 }, S.token);
-  const aucListing = a.body.listing;
-  await call(`/api/listings/${aucListing.id}/status`, 'POST', { status: 'active' }, S.token);
-
-  a = await call('/api/auctions', 'POST', { listingId: aucListing.id, startingPrice: 500, reservePrice: 800, endsAt: new Date(Date.now() + 120000).toISOString() }, S.token);
-  check('an auction is created over a real listing', a.status === 201, JSON.stringify(a.body).slice(0, 140));
-  const auc = a.body.auction;
-  await call(`/api/auctions/${auc.id}/open`, 'POST', {}, S.token);
-
-  a = await call(`/api/auctions/${auc.id}/bids`, 'POST', { amount: 600 }, Bu.token);
-  check('a bid is accepted', a.status === 201, `got ${a.status}`);
-  a = await call(`/api/auctions/${auc.id}/bids`, 'POST', { amount: 400 }, third.token);
-  check('an under-bid is refused', a.status === 400);
-  a = await call(`/api/auctions/${auc.id}/bids`, 'POST', { amount: 1200 }, third.token);
-  check('a higher bid takes the lead', a.status === 201 && a.body.auction.currentPrice === 1200);
-
-  // A bid is not money.
-  a = await call('/api/economic/reconcile', 'GET', undefined, S.token);
-  check('BIDS CREATED NO LEDGER ACTIVITY', a.body?.reconciliation?.balanced === true);
+  // Auctions and pools were removed with F5. What must survive is the
+  // economic honesty they used to demonstrate: nothing created ledger money.
+  let a = await call('/api/economic/reconcile', 'GET', undefined, OP.token);
+  check('reconciliation still balances with NO auction activity', a.body?.reconciliation?.balanced === true);
   a = await call('/api/vendors/me/earnings', 'GET', undefined, S.token);
-  check('and no seller earnings', a.body?.earnings?.net === 0);
-
-  // Bidder privacy over the wire.
-  a = await call(`/api/auctions/${auc.id}`, 'GET', undefined, Bu.token);
-  check('a rival bidder cannot see who else is bidding',
-    !JSON.stringify(a.body).includes(third.user.id), JSON.stringify(a.body).slice(0, 160));
-  a = await call(`/api/auctions/${auc.id}/bids`, 'GET', undefined, Bu.token);
-  check('and cannot read the bid list (403)', a.status === 403);
-
-  a = await call(`/api/auctions/${auc.id}/close`, 'POST', {}, S.token);
-  check('the seller closes it and it SOLD (reserve met)', a.body?.sold === true);
-  check('the winner is the highest bidder', a.body?.auction?.winnerId === third.user.id);
-
-  a = await call(`/api/auctions/${auc.id}/order`, 'POST', {}, Bu.token);
-  check('the LOSER cannot raise the winner order (403)', a.status === 403, `got ${a.status}`);
-  a = await call(`/api/auctions/${auc.id}/order`, 'POST', {}, third.token);
-  check('the winner raises an ORDINARY order', a.status === 201);
-  check('priced at the winning bid, not the listing price', a.body?.order?.total === 1200, String(a.body?.order?.total));
-  const aucOrder = a.body.order;
-
-  // It joins the ordinary money chain -- and is refused just as honestly.
-  a = await call(`/api/orders/${aucOrder.id}/pay`, 'POST', { phone: '0722000111' }, third.token);
-  check('the auction order pays through the ORDINARY route', a.status === 503);
-  check('with no fake success', a.body?.charged === false);
-
-  a = await call('/api/signals');
-  const k = (a.body?.signals ?? []).map((s) => s.type);
-  check('auction signals share the ONE activity layer', k.includes('bid_placed') && k.includes('auction_closed'));
+  check('seller earnings are unchanged (zero)', a.body?.earnings?.net === 0);
+  a = await call('/api/pools', 'POST', { name: 'stokvel' }, S.token);
+  check('the pools surface is GONE too (404)', a.status === 404, `got ${a.status}`);
 }
 
 console.log(`\n${'='.repeat(52)}\nLIVE PASSED ${pass}   FAILED ${fail}\n${'='.repeat(52)}`);

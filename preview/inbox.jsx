@@ -62,7 +62,7 @@ async function main(){
   // No seeds, and nothing invented to pad the grid.
   check('stream renders exactly what the server returned', baseline===1, String(baseline));
 
-  await goto('Inbox','Create','Review');
+  await goto('Workflows','Create','Review');
   check('Inbox tab opens', body().includes('Messages from connected sources'));
   check('empty state is honest', body().includes('never as published objects'));
 
@@ -72,10 +72,10 @@ async function main(){
   check('raw message shown beside the draft', inbox.includes('asking for a friend'));
 
   console.log('\n=== Parsed, but NOT published ===');
-  await click(btn('Home'));
+  await click(btn('Nearby'));
   const afterFetch=cards().length;
   check('stream UNCHANGED after parsing', afterFetch===baseline, `${baseline} -> ${afterFetch}`);
-  await goto('Inbox','Create','Review');
+  await goto('Workflows','Create','Review');
 
   console.log('\n=== Provenance + honesty on drafts ===');
   check('shows source channel', inbox.includes('Nairobi Traders (Telegram)')||inbox.includes('Kilimani Notices (WhatsApp)'));
@@ -93,7 +93,7 @@ async function main(){
   const pub=btn('Publish to Brief');
   check('publish control present', !!pub);
   if(pub) await click(pub);
-  await click(btn('Home'));
+  await click(btn('Nearby'));
   const afterPublish=cards().length;
   check('stream grew by exactly 1', afterPublish===baseline+1, `${baseline} -> ${afterPublish}`);
   check('published object is searchable in stream', body().includes('Solar installation'));
@@ -111,11 +111,11 @@ async function main(){
   }
 
   console.log('\n=== Discard removes from review, adds nothing ===');
-  await goto('Inbox','Create','Review');
+  await goto('Workflows','Create','Review');
   const before=cards().length;
   const disc=btn('Discard');
   if(disc) await click(disc);
-  await click(btn('Home'));
+  await click(btn('Nearby'));
   check('discard publishes nothing', cards().length===before||cards().length===afterPublish);
   console.log(`\n${'='.repeat(46)}\nPASSED ${pass}   FAILED ${fail}\n${'='.repeat(46)}`);
   process.exit(fail?1:0);

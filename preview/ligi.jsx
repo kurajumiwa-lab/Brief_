@@ -94,7 +94,6 @@ global.fetch = async (url, init) => {
       stakeKind:'units', unitsBankroll:100, teamPoints:null, unitsStaked:0, unitsReturned:null,
       netUnits:null, won:null, settledAt:null } });
   }
-  if (path.includes('/api/ligi/tick')) return send({ at:new Date().toISOString(), actions:[], changed:false });
   if (path.includes('/api/ligi')) {
     const view = JSON.parse(JSON.stringify(OVERVIEW));
     if (entered) {

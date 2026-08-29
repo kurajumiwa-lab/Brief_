@@ -234,25 +234,94 @@ function HostPanel({ vault, onChanged }: { vault: VaultType; onChanged: () => vo
 
 function Requests({ vault, onChanged }: { vault: VaultType; onChanged: () => void }) {
   const requests = vault.requests ?? [];
-  if (!requests.length) return null;
+  const [fresh, setFresh] = React.useState<VaultRequest[] | null>(null);
+  const [freshError, setFreshError] = React.useState<string | null>(null);
+  const [routeFor, setRouteFor] = React.useState<string | null>(null);
+  const [vendorId, setVendorId] = React.useState('');
+  const [routeBusy, setRouteBusy] = React.useState(false);
+  const [routeError, setRouteError] = React.useState<string | null>(null);
+
+  // Re-read the request list from the server on demand. The vault view
+  // carries requests at load time; this is the refresh half that had no
+  // caller — listVaultRequests exists precisely for it.
+  const reload = async () => {
+    setFreshError(null);
+    const res = await briefApi.listVaultRequests(vault.id);
+    if (res.ok) setFresh(res.data); else setFreshError(res.error);
+  };
+
+  // The host routes an open request to a vendor. The server decides whether
+  // the caller may route and whether the vendor exists; a refusal is shown
+  // verbatim rather than swallowed.
+  const route = async (requestId: string) => {
+    const v = vendorId.trim();
+    if (!v) return;
+    setRouteBusy(true); setRouteError(null);
+    const res = await briefApi.routeVaultRequest(vault.id, requestId, v);
+    setRouteBusy(false);
+    if (!res.ok) { setRouteError(res.error); return; }
+    setRouteFor(null); setVendorId('');
+    onChanged();
+  };
+
+  if (!requests.length && !fresh) return null;
+  const rows = fresh ?? requests;
 
   return (
     <Card className="p-3 space-y-2">
-      <p className="text-[11px] font-extrabold text-[#111111]">Requests</p>
-      {requests.map((r: VaultRequest) => (
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[11px] font-extrabold text-[#111111]">Requests</p>
+        <button onClick={() => { if (fresh) { setFresh(null); return; } void reload(); }}
+          className="text-[10px] font-extrabold text-[#111111]/60 cursor-pointer">
+          {fresh ? 'Show loaded' : 'Refresh'}
+        </button>
+      </div>
+      {freshError && <p className="text-[10px] text-[#111111]">{freshError}</p>}
+      {rows.map((r: VaultRequest) => (
         <div key={r.id} className="bg-[#FAFAFA] border border-[#E5E7EB] rounded-lg p-2.5 flex items-center justify-between gap-2">
           <div className="min-w-0">
             <p className="text-xs text-[#111111] truncate">{r.description}</p>
-            <p className="text-[9px] text-[#111111]/40 mt-0.5">{r.status}</p>
+            <p className="text-[9px] text-[#111111]/40 mt-0.5">
+              {r.status}{r.status === 'routed' && r.vendorId ? ` → ${r.vendorId}` : ''}
+            </p>
           </div>
-          {vault.role === 'vendor' && (r.status === 'routed' || r.status === 'open') && (
-            <button onClick={async () => { await briefApi.acceptVaultRequest(vault.id, r.id); onChanged(); }}
-              className="shrink-0 px-2.5 py-1.5 rounded-lg bg-[#111111] text-[#FFFFFF] text-[10px] font-extrabold cursor-pointer">
-              Accept
-            </button>
-          )}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {(vault.role === 'host' || vault.role === 'admin') && r.status === 'open' && (
+              routeFor === r.id ? (
+                <>
+                  <input
+                    value={vendorId}
+                    onChange={(e) => setVendorId(e.target.value)}
+                    placeholder="vendor id"
+                    aria-label="vendor id to route to"
+                    className="w-28 px-2 py-1 rounded-lg border border-[#E5E7EB] text-[10px] text-[#111111]"
+                  />
+                  <button onClick={() => void route(r.id)} disabled={routeBusy || !vendorId.trim()}
+                    className="px-2.5 py-1.5 rounded-lg bg-[#111111] text-[#FFFFFF] text-[10px] font-extrabold cursor-pointer disabled:opacity-50">
+                    {routeBusy ? '…' : 'Route'}
+                  </button>
+                  <button onClick={() => { setRouteFor(null); setRouteError(null); }}
+                    className="px-2 py-1.5 rounded-lg border border-[#E5E7EB] text-[10px] font-bold text-[#111111]/60 cursor-pointer">
+                    ×
+                  </button>
+                </>
+              ) : (
+                <button onClick={() => setRouteFor(r.id)}
+                  className="px-2.5 py-1.5 rounded-lg border border-[#E5E7EB] text-[10px] font-extrabold text-[#111111] cursor-pointer">
+                  Route
+                </button>
+              )
+            )}
+            {vault.role === 'vendor' && (r.status === 'routed' || r.status === 'open') && (
+              <button onClick={async () => { await briefApi.acceptVaultRequest(vault.id, r.id); onChanged(); }}
+                className="px-2.5 py-1.5 rounded-lg bg-[#111111] text-[#FFFFFF] text-[10px] font-extrabold cursor-pointer">
+                Accept
+              </button>
+            )}
+          </div>
         </div>
       ))}
+      {routeError && <p className="text-[10px] text-[#111111]">{routeError}</p>}
     </Card>
   );
 }

@@ -8,17 +8,19 @@
 // This module is pure. No React, no fetch, no window.
 // ---------------------------------------------------------------------------
 
-export type Destination = 'nearby' | 'arena' | 'mylayer' | 'workflows';
+export type Destination = 'nearby' | 'arena' | 'mylayer' | 'workflows' | 'pulse';
 
-export type NearbySection = 'stream' | 'tea' | 'today' | 'pursuits' | 'quests' | 'market';
+export type NearbySection = 'stream' | 'tea' | 'today' | 'pursuits' | 'quests' | 'market' | 'events';
 export type MyLayerSection =
   | 'saved' | 'activity' | 'arena' | 'points' | 'circles' | 'groups' | 'campaigns'
-  | 'mediakit' | 'opportunities' | 'messages' | 'subscriptions';
+  | 'mediakit' | 'opportunities' | 'messages' | 'subscriptions' | 'tickets'
+  | 'verification';
 export type WorkflowSection =
   | 'cockpit' | 'command' | 'active' | 'completed' | 'inbox'
   | 'sources' | 'money' | 'vault' | 'gate' | 'tea'
-  | 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'ai' | 'engine' | 'groupbuy';
-export type ArenaSection = 'lobby' | 'ligi' | 'challenges' | 'tournaments' | 'leaderboard';
+  | 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'ai' | 'engine'
+  | 'groupbuy' | 'resale';
+export type ArenaSection = 'lobby' | 'ligi' | 'epl' | 'challenges' | 'tournaments' | 'leaderboard';
 
 export type BriefRoute = {
   dest: Destination;
@@ -31,6 +33,8 @@ export type BriefRoute = {
   campaignId: string | null;
   capture: boolean;
   menu: boolean;
+  /** Operator desk overlay (F4) — not a consumer destination. */
+  admin: boolean;
   /** True when the user landed on this URL (share / reload), not via in-app push. */
   landed: boolean;
 };
@@ -46,20 +50,21 @@ export const DEFAULT_ROUTE: BriefRoute = {
   campaignId: null,
   capture: false,
   menu: false,
+  admin: false,
   landed: false
 };
 
-const NEARBY: NearbySection[] = ['stream', 'tea', 'today', 'pursuits', 'quests', 'market'];
+const NEARBY: NearbySection[] = ['stream', 'tea', 'today', 'pursuits', 'quests', 'market', 'events'];
 const MYLAYER: MyLayerSection[] = [
   'saved', 'activity', 'arena', 'points', 'circles', 'groups', 'campaigns',
-  'mediakit', 'opportunities', 'messages', 'subscriptions'
+  'mediakit', 'opportunities', 'messages', 'subscriptions', 'verification'
 ];
 const WORKFLOW: WorkflowSection[] = [
   'cockpit', 'command', 'active', 'completed', 'inbox',
   'sources', 'money', 'vault', 'gate', 'tea',
   'campaigns', 'matches', 'distribution', 'calendar', 'vendors', 'ai', 'engine', 'groupbuy'
 ];
-const ARENA: ArenaSection[] = ['lobby', 'ligi', 'challenges', 'tournaments', 'leaderboard'];
+const ARENA: ArenaSection[] = ['lobby', 'ligi', 'epl', 'challenges', 'tournaments', 'leaderboard'];
 
 function isOne<T extends string>(list: T[], value: string): value is T {
   return (list as string[]).includes(value);
@@ -81,6 +86,7 @@ export function parsePath(pathname: string, search = ''): BriefRoute {
   const q = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search);
 
   if (q.get('menu') === '1') route.menu = true;
+  if (q.get('admin') === '1') route.admin = true;
   if (q.get('capture') === '1') route.capture = true;
   const campaign = q.get('campaign');
   if (campaign) route.campaignId = campaign;
@@ -119,6 +125,11 @@ export function parsePath(pathname: string, search = ''): BriefRoute {
     return route;
   }
 
+  if (root === 'pulse') {
+    route.dest = 'pulse';
+    return route;
+  }
+
   // Public campaign pages are a server route. The SPA still boots; leave dest
   // as Around so a missing campaign does not invent a fifth room.
   if (root === 'c') {
@@ -132,7 +143,9 @@ export function parsePath(pathname: string, search = ''): BriefRoute {
 export function toPath(route: BriefRoute): string {
   let path = '/around';
 
-  if (route.dest === 'arena') {
+  if (route.dest === 'pulse') {
+    path = '/pulse';
+  } else if (route.dest === 'arena') {
     path = route.arena === 'lobby' ? '/play' : `/play/${route.arena}`;
   } else if (route.dest === 'mylayer') {
     path = route.mylayer === 'saved' ? '/saved' : `/saved/${route.mylayer}`;
@@ -148,6 +161,7 @@ export function toPath(route: BriefRoute): string {
 
   const q = new URLSearchParams();
   if (route.menu) q.set('menu', '1');
+  if (route.admin) q.set('admin', '1');
   if (route.capture) q.set('capture', '1');
   if (route.campaignId) q.set('campaign', route.campaignId);
   const qs = q.toString();
@@ -171,5 +185,5 @@ export function samePlace(a: BriefRoute, b: BriefRoute): boolean {
 export function isBriefRoute(value: unknown): value is BriefRoute {
   if (!value || typeof value !== 'object') return false;
   const r = value as BriefRoute;
-  return r.dest === 'nearby' || r.dest === 'arena' || r.dest === 'mylayer' || r.dest === 'workflows';
+  return r.dest === 'nearby' || r.dest === 'arena' || r.dest === 'mylayer' || r.dest === 'workflows' || r.dest === 'pulse';
 }

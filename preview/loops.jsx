@@ -117,7 +117,7 @@ async function main() {
   };
 
   console.log('=== Play cards complete their loop ===');
-  await click(btn('Play'));
+  await click(btn('Arena'));
   check('Play is a place on the URL', window.location.pathname === '/play' || window.location.pathname.startsWith('/play'));
   await click(btn('Challenges'));
   check('Challenges live at /play/challenges', window.location.pathname === '/play/challenges');

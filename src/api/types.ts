@@ -413,6 +413,78 @@ export interface ProviderStatus {
  * Balances are COMPUTED by the server from recorded rows. Zero transactions
  * means zero, never a placeholder.
  */
+// ---------------------------------------------------------------------------
+// TICKET RESALE MARKET (Tikiti T1)
+//
+// A ticket is one admitted seat born from a confirmed registration. Its scan
+// code carries a version: every ownership change bumps the version and kills
+// every previously printed QR. Money never moves here without a settled
+// ledger row (see Wallet/Transaction — the ledger is the only truth).
+// ---------------------------------------------------------------------------
+
+export interface ResaleTicket {
+  readonly id: string;
+  readonly eventId: string;
+  readonly eventTitle: string | null;
+  readonly code: string;
+  /** What the holder's QR must carry right now: "CODE#version". */
+  readonly scanCode: string;
+  readonly codeVersion: number;
+  readonly status: 'valid' | 'void';
+  readonly activeListingId: string | null;
+  readonly issuedAt: string;
+  readonly transfers: ReadonlyArray<{
+    at: string;
+    kind: 'purchase' | 'gift' | 'refund_revert';
+    codeVersionAfter: number;
+  }>;
+}
+
+export interface ResaleListing {
+  readonly id: string;
+  readonly eventId: string;
+  readonly eventTitle: string | null;
+  readonly price: number;
+  currency: string;
+  readonly note: string | null;
+  readonly expiresAt: string | null;
+  readonly createdAt: string;
+  readonly cheapest: boolean;
+  readonly seller: { displayName: string; joinedAt: string | null } | null;
+  readonly transferCount: number;
+}
+
+/** The seller's own listing row (Workflows → Sell). Raw state, not a shop view. */
+export interface ResaleListingRow {
+  readonly id: string;
+  readonly ticketId: string;
+  readonly sellerId: string;
+  readonly eventId: string;
+  readonly price: number;
+  currency: string;
+  readonly status: 'active' | 'pending' | 'sold' | 'cancelled' | 'expired' | 'removed';
+  readonly note: string | null;
+  readonly expiresAt: string | null;
+  readonly createdAt: string;
+  readonly soldAt: string | null;
+  readonly removedReason: string | null;
+}
+
+export interface TicketOrder {
+  readonly id: string;
+  readonly reference: string;
+  readonly status: 'pending' | 'completed' | 'cancelled' | 'refunded';
+  readonly unitPrice: number;
+  readonly fee: number;
+  readonly total: number;
+  currency: string;
+  readonly listingId: string;
+  readonly ticketId: string;
+  readonly eventId: string;
+  readonly createdAt: string;
+  readonly cancelledAt: string | null;
+}
+
 export interface Wallet {
   readonly balance: number;
   readonly pending: number;
@@ -615,6 +687,12 @@ export interface PublicCampaign {
   soldOut: boolean;
   /** Aggregate social proof: HOW MANY are registered, never WHO. */
   registered: number;
+  /** Contribution pots only (null for fixed-price events). */
+  goalAmount?: number | null;
+  /** Derived from SETTLED ledger rows only; null when there is no goal. */
+  raised?: number | null;
+  /** HOW MANY contributions, never WHO. */
+  contributors?: number | null;
 }
 
 export interface Registration {

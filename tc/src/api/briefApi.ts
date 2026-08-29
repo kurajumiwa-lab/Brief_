@@ -19,6 +19,10 @@
 import type {
   ApiResult,
   Block,
+  ResaleTicket,
+  ResaleListing,
+  ResaleListingRow,
+  TicketOrder,
   CapabilityUnavailable,
   Circle,
   CircleCreate,
@@ -543,6 +547,100 @@ export function getSignals(opts: { circleId?: string; limit?: number } = {}): Pr
 // ECONOMIC
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// TICKET RESALE MARKET (Tikiti T1). All fetches live here (§4); the UI never
+// sees a raw response shape. The scan code version is part of the ticket
+// object, so a stale QR is impossible to render by accident.
+// ---------------------------------------------------------------------------
+
+export function getEventResaleListings(eventId: string): Promise<ApiResult<{ listings: ResaleListing[] }>> {
+  return request(`/api/ticket-market/events/${encodeURIComponent(eventId)}/listings`, undefined, (r) =>
+    Array.isArray(r?.listings) ? r : undefined);
+}
+
+export function getMyTickets(): Promise<ApiResult<{ tickets: ResaleTicket[] }>> {
+  return request('/api/ticket-market/me/tickets', undefined, (r) =>
+    Array.isArray(r?.tickets) ? r : undefined);
+}
+
+export function getMyResaleDesk(): Promise<ApiResult<{ listings: ResaleListingRow[]; orders: TicketOrder[] }>> {
+  return request('/api/ticket-market/me/listings', undefined, (r) =>
+    Array.isArray(r?.listings) && Array.isArray(r?.orders)
+      ? { listings: r.listings, orders: r.orders }
+      : undefined);
+}
+
+export function createResaleListing(
+  ticketId: string,
+  price: number,
+  note?: string
+): Promise<ApiResult<{ listing: ResaleListing }>> {
+  return request('/api/ticket-market/listings', {
+    method: 'POST',
+    body: JSON.stringify({ ticketId, price, note: note ?? null })
+  });
+}
+
+export function cancelResaleListing(listingId: string): Promise<ApiResult<{ listing: ResaleListing; changed: boolean }>> {
+  return request(`/api/ticket-market/listings/${encodeURIComponent(listingId)}/cancel`, { method: 'POST', body: '{}' });
+}
+
+export function openTicketOrder(listingId: string): Promise<ApiResult<{ order: TicketOrder }>> {
+  return request('/api/ticket-market/orders', {
+    method: 'POST',
+    body: JSON.stringify({ listingId })
+  });
+}
+
+export function cancelTicketOrder(orderId: string): Promise<ApiResult<{ order: TicketOrder; changed: boolean }>> {
+  return request(`/api/ticket-market/orders/${encodeURIComponent(orderId)}/cancel`, { method: 'POST', body: '{}' });
+}
+
+/**
+ * Pay for a ticket order. With no payment provider configured the server
+ * answers 503 charged:false — an honest refusal, surfaced here as the error
+ * result with the server's own detail, never a fake success.
+ */
+export function payTicketOrder(orderId: string): Promise<ApiResult<{ charged: boolean }>> {
+  return request(`/api/ticket-market/orders/${encodeURIComponent(orderId)}/pay`, { method: 'POST', body: '{}' });
+}
+
+export function settleTicketOrder(orderId: string, transactionId: string): Promise<ApiResult<{ order: TicketOrder; changed: boolean }>> {
+  return request(`/api/ticket-market/orders/${encodeURIComponent(orderId)}/settle`, {
+    method: 'POST',
+    body: JSON.stringify({ transactionId })
+  });
+}
+
+export function refundTicketOrder(orderId: string): Promise<ApiResult<{ order: TicketOrder; changed: boolean }>> {
+  return request(`/api/ticket-market/orders/${encodeURIComponent(orderId)}/refund`, { method: 'POST', body: '{}' });
+}
+
+export function giftTicket(ticketId: string, toUserId: string): Promise<ApiResult<{ ticket: ResaleTicket }>> {
+  return request(`/api/ticket-market/tickets/${encodeURIComponent(ticketId)}/transfer`, {
+    method: 'POST',
+    body: JSON.stringify({ toUserId })
+  });
+}
+
+/** Gifting in the UI addresses people by handle — what people actually know. */
+export function giftTicketToHandle(ticketId: string, toHandle: string): Promise<ApiResult<{ ticket: ResaleTicket }>> {
+  return request(`/api/ticket-market/tickets/${encodeURIComponent(ticketId)}/transfer`, {
+    method: 'POST',
+    body: JSON.stringify({ toHandle })
+  });
+}
+
+/**
+ * The seller confirms receiving the money out-of-band. Brief records a real
+ * settled ledger row and moves the seat — this is how a sale completes while
+ * no payment provider is connected, and it is the seller's attestation, never
+ * Brief pretending it collected the money.
+ */
+export function confirmTicketOrderReceived(orderId: string): Promise<ApiResult<{ order: TicketOrder; changed: boolean }>> {
+  return request(`/api/ticket-market/orders/${encodeURIComponent(orderId)}/confirm-received`, { method: 'POST', body: '{}' });
+}
+
 export function getWallet(currency = 'KES'): Promise<ApiResult<Wallet>> {
   // Validated rather than passed through: a 200 with an empty body would
   // otherwise reach the UI as a wallet with `undefined` balance, which is
@@ -720,7 +818,7 @@ export interface PublicRegisterResult {
 
 export function registerForCampaign(
   slug: string,
-  body: { attendeeRef: string; name?: string; contact?: string; trackingHash?: string }
+  body: { attendeeRef: string; name?: string; contact?: string; trackingHash?: string; amount?: number }
 ): Promise<ApiResult<PublicRegisterResult>> {
   return request(
     `/api/public/campaigns/${encodeURIComponent(slug)}/register`,
@@ -919,6 +1017,48 @@ export function markNotificationsRead(idOrAll?: string): Promise<ApiResult<any>>
 
 export function getSources(): Promise<ApiResult<Source[]>> {
   return request('/api/sources', undefined, (r) => areSources(r?.sources));
+}
+
+// Connector capability + ingestion status. These were the last two fetch()
+// calls living outside this file (inlined in App.tsx "until they earn a
+// binding"): they have earned one. Same proxy prefix, same session header,
+// same response guards as everything else.
+export type ConnectorCapabilities = {
+  telegram?: Record<string, unknown>;
+  web?: Record<string, unknown>;
+  rss?: Record<string, unknown>;
+  whatsapp?: Record<string, unknown>;
+  manual?: Record<string, unknown>;
+  payments?: Record<string, unknown>;
+  arenaMoney?: Record<string, unknown>;
+  auth?: Record<string, unknown>;
+  outbound?: Record<string, unknown>;
+  features?: Record<string, unknown>;
+};
+
+export function getConnectorCapabilities(): Promise<ApiResult<ConnectorCapabilities>> {
+  return request('/api/capabilities', undefined, (r) =>
+    r && typeof r === 'object' && typeof r.manual === 'object'
+      ? (r as ConnectorCapabilities)
+      : undefined);
+}
+
+export type IngestStatus = {
+  sources: number;
+  connected: number;
+  rawItems: number;
+  objects: number;
+  relationships: number;
+  errors: number;
+  queue: Record<string, unknown>;
+  lastSyncRuns: unknown[];
+};
+
+export function getIngestStatus(): Promise<ApiResult<IngestStatus>> {
+  return request('/api/status', undefined, (r) =>
+    typeof r?.sources === 'number' && typeof r?.objects === 'number'
+      ? (r as IngestStatus)
+      : undefined);
 }
 
 export interface SourceCreate {
@@ -1305,6 +1445,9 @@ export interface AuthedUser {
   displayName: string;
   personId?: string;
   devFallback?: boolean;
+  /** Platform roles + derived capabilities (operator surface). Server truth. */
+  platformRoles?: string[];
+  capabilities?: string[];
 }
 
 export interface PersonStanding {
@@ -1801,13 +1944,6 @@ export function placeLigiWager(
     `/api/ligi/gameweeks/${encodeURIComponent(gameweekId)}/wagers`,
     { method: 'POST', body: JSON.stringify(wager) },
     (r) => (r?.wager ? { wager: r.wager, unitsRemaining: Number(r.unitsRemaining ?? 0) } : undefined)
-  );
-}
-
-/** Run the automated pass now. Idempotent, so calling it is never destructive. */
-export function tickLigi(): Promise<ApiResult<{ at: string; actions: unknown[]; changed: boolean }>> {
-  return request('/api/ligi/tick', { method: 'POST', body: '{}' }, (r) =>
-    r && Array.isArray(r.actions) ? { at: String(r.at), actions: r.actions, changed: Boolean(r.changed) } : undefined
   );
 }
 
@@ -2644,6 +2780,463 @@ export function contributeGroupBuy(id: string, body: { memberRef: string; amount
 export function advanceGroupBuyStage(id: string, to: string): Promise<ApiResult<GroupBuy>> {
   return request(`/api/engine/group-buys/${encodeURIComponent(id)}/stage`, { method: 'POST', body: JSON.stringify({ to }) }, (r) =>
     r?.groupBuy ? (r.groupBuy as GroupBuy) : undefined
+  );
+}
+
+// --- Priced bargains (Tikiti T2) -----------------------------------------------
+
+export interface BargainTier {
+  min: number;
+  max: number | null;
+  pricePerHead: number;
+  label: string | null;
+}
+
+/**
+ * The honest price view the server derives: what a joiner pays NOW, the next
+ * band and what it needs, and what everyone settles at if the room fills.
+ * Nothing here is client-computed.
+ */
+export interface BargainView {
+  participants: number;
+  requiredParticipants: number | null;
+  maxParticipants: number | null;
+  spotsLeft: number | null;
+  currentPricePerHead: number | null;
+  currentTierLabel: string | null;
+  nextTier: { at: number; pricePerHead: number; needs: number } | null;
+  settlesAt: number;
+  expiresAt: string | null;
+  expired: boolean;
+  minimumMet: boolean;
+}
+
+export interface GroupBuyWithBargain {
+  groupBuy: GroupBuy;
+  bargain: BargainView | null;
+}
+
+/** One buy with its derived bargain view (owner-only route). */
+export function getGroupBuy(id: string): Promise<ApiResult<GroupBuyWithBargain>> {
+  return request(`/api/engine/group-buys/${encodeURIComponent(id)}`, undefined, (r) =>
+    r?.groupBuy ? { groupBuy: r.groupBuy as GroupBuy, bargain: (r.bargain ?? null) as BargainView | null } : undefined
+  );
+}
+
+/**
+ * Attach per-head pricing bands to a buy. The ladder must climb down in price
+ * as participation climbs up; the server refuses anything else, and the
+ * refusal text is the useful part.
+ */
+export function priceGroupBuyBargain(
+  id: string,
+  body: {
+    tiers: { min: number; pricePerHead: number; max?: number | null; label?: string | null }[];
+    minParticipants?: number | null;
+    maxParticipants?: number | null;
+    expiresAt?: string | null;
+  }
+): Promise<ApiResult<GroupBuy>> {
+  return request(
+    `/api/engine/group-buys/${encodeURIComponent(id)}/pricing`,
+    { method: 'POST', body: JSON.stringify(body) },
+    (r) => (r?.buy ? (r.buy as GroupBuy) : undefined)
+  );
+}
+
+/**
+ * Join a priced bargain. There is deliberately no price argument: the price is
+ * derived server-side from the live count at the moment of joining.
+ */
+export function joinBargain(id: string): Promise<ApiResult<{
+  participant: { id: string; priceAtJoin: number; tierLabelAtJoin: string; status: string };
+  changed: boolean;
+}>> {
+  return request(
+    `/api/engine/group-buys/${encodeURIComponent(id)}/join`,
+    { method: 'POST', body: '{}' },
+    (r) => (r?.participant ? { participant: r.participant, changed: Boolean(r.changed) } : undefined)
+  );
+}
+
+/** Leave before the bargain executes; the spot opens again. */
+export function leaveBargain(id: string): Promise<ApiResult<{
+  participant: { id: string; status: string };
+  changed: boolean;
+}>> {
+  return request(
+    `/api/engine/group-buys/${encodeURIComponent(id)}/leave`,
+    { method: 'POST', body: '{}' },
+    (r) => (r?.participant ? { participant: r.participant, changed: Boolean(r.changed) } : undefined)
+  );
+}
+
+// --- Campaign updates (Tikiti T3) ----------------------------------------------
+
+export interface CampaignUpdatePost {
+  id: string;
+  campaignId: string;
+  title: string;
+  body: string;
+  createdAt: string;
+}
+
+/** Updates on a published campaign, addressed by its PUBLIC slug. */
+export function getCampaignUpdatesBySlug(slug: string): Promise<ApiResult<CampaignUpdatePost[]>> {
+  return request(
+    `/api/public/campaigns/${encodeURIComponent(slug)}/updates`,
+    undefined,
+    (r) => (Array.isArray(r?.updates) ? (r.updates as CampaignUpdatePost[]) : undefined)
+  );
+}
+
+/** The organiser authors an update; supporters read it on the public page. */
+export function postCampaignUpdate(
+  campaignId: string,
+  body: { title: string; body: string }
+): Promise<ApiResult<CampaignUpdatePost>> {
+  return request(
+    `/api/campaigns/${encodeURIComponent(campaignId)}/updates`,
+    { method: 'POST', body: JSON.stringify(body) },
+    (r) => (r?.update ? (r.update as CampaignUpdatePost) : undefined)
+  );
+}
+
+// --- Verification (Tikiti T6) ----------------------------------------------------
+
+export type AccountVerificationKind = 'email' | 'phone' | 'identity';
+export type VerificationStatus = 'pending' | 'approved' | 'rejected' | 'revoked';
+
+export interface VerificationRecord {
+  id: string;
+  kind: AccountVerificationKind;
+  status: VerificationStatus;
+  providerRef: string | null;
+  note: string | null;
+  submittedAt: string;
+  reviewedAt: string | null;
+  /** The reviewer's own reason, shown verbatim. */
+  reason: string | null;
+}
+
+export function submitVerification(body: {
+  kind: AccountVerificationKind; providerRef?: string | null; note?: string | null;
+}): Promise<ApiResult<{ record: VerificationRecord; changed: boolean }>> {
+  return request('/api/verification', { method: 'POST', body: JSON.stringify(body) }, (r) =>
+    r?.record ? { record: r.record as VerificationRecord, changed: Boolean(r.changed) } : undefined
+  );
+}
+
+/** My records and my DERIVED standing (never a stored second truth). */
+export function getMyVerification(): Promise<ApiResult<{
+  records: VerificationRecord[];
+  standing: Record<string, 'verified' | 'pending' | 'unverified'>;
+}>> {
+  return request('/api/verification/me', undefined, (r) =>
+    Array.isArray(r?.records) ? { records: r.records as VerificationRecord[], standing: r.standing ?? {} } : undefined
+  );
+}
+
+// --- Email topic subscriptions (Tikiti T7) -----------------------------------------
+
+export const EMAIL_TOPICS = [
+  'event_announcements', 'new_ticket_listings', 'bargain_alerts',
+  'contribution_updates', 'arena_announcements', 'product_updates'
+] as const;
+export type EmailTopic = typeof EMAIL_TOPICS[number];
+
+export const EMAIL_TOPIC_LABELS: Record<EmailTopic, string> = {
+  event_announcements: 'Events',
+  new_ticket_listings: 'Ticket resale',
+  bargain_alerts: 'Bargain bands',
+  contribution_updates: 'Causes you back',
+  arena_announcements: 'Arena',
+  product_updates: 'Brief itself'
+};
+
+export function subscribeEmailTopics(email: string, topics: string[]): Promise<ApiResult<{
+  subscription: { email: string; status: string; topics: string[]; token?: string };
+  delivery: string;
+  changed: boolean;
+}>> {
+  return request('/api/email-subscriptions', { method: 'POST', body: JSON.stringify({ email, topics }) }, (r) =>
+    r?.subscription ? { subscription: r.subscription, delivery: String(r.delivery ?? ''), changed: Boolean(r.changed) } : undefined
+  );
+}
+
+export function confirmEmailSubscription(token: string): Promise<ApiResult<{ ok: true; already: boolean; topics: string[] }>> {
+  return request(`/api/email-subscriptions/confirm?token=${encodeURIComponent(token)}`, undefined, (r) =>
+    r?.ok === true ? { ok: true, already: Boolean(r.already), topics: r.topics ?? [] } : undefined
+  );
+}
+
+/** Leaving a list needs no account: the token (or the address) is enough. */
+export function unsubscribeEmail(tokenOrEmail: string): Promise<ApiResult<{ ok: true; already: boolean }>> {
+  return request('/api/email-subscriptions/unsubscribe', { method: 'POST', body: JSON.stringify({ token: tokenOrEmail }) }, (r) =>
+    r?.ok === true ? { ok: true, already: Boolean(r.already) } : undefined
+  );
+}
+
+// ---------------------------------------------------------------------------
+// OPERATOR SURFACE (F4 / Tikiti T8). Every call here is capability-gated
+// server-side (ops.read / ops.run / moderate / finance / admin); the client
+// mirrors the gating only to decide what to OFFER. 403 bodies name
+// `requiredCapability`, which the desk shows verbatim.
+// ---------------------------------------------------------------------------
+
+/** True when the session may operate at all (any operator capability). */
+export const OPERATOR_CAPABILITIES = ['ops.read', 'ops.run', 'moderate', 'finance', 'admin'] as const;
+
+export function isOperator(user: { capabilities?: string[] | null } | null | undefined): boolean {
+  const caps = user?.capabilities ?? [];
+  return OPERATOR_CAPABILITIES.some((c) => caps.includes(c));
+}
+
+const isRowArray = (v: unknown): v is Record<string, any>[] => Array.isArray(v);
+
+export function getOpsDiagnostics(): Promise<ApiResult<Record<string, any>>> {
+  return request('/api/ops/diagnostics', undefined, (r) => (r && typeof r === 'object' && 'counts' in r ? r : undefined));
+}
+
+export function opsBackup(): Promise<ApiResult<{ ok: boolean; file?: string; size?: number }>> {
+  return request('/api/ops/backup', { method: 'POST', body: '{}' }, (r) => (r?.ok === true ? r : undefined));
+}
+
+export function getOpsAnalytics(): Promise<ApiResult<{ analytics: Record<string, any> }>> {
+  return request('/api/ops/analytics', undefined, (r) => (r && typeof r.analytics === 'object' ? r as { analytics: Record<string, any> } : undefined));
+}
+
+export function getOpsReports(): Promise<ApiResult<Record<string, any>[]>> {
+  return request('/api/ops/reports', undefined, (r) => (isRowArray(r?.reports) ? r.reports : undefined));
+}
+
+export function resolveOpsReport(id: string, action: 'dismiss' | 'remove', reason: string): Promise<ApiResult<Record<string, any>>> {
+  return request(`/api/ops/reports/${encodeURIComponent(id)}/resolve`, { method: 'POST', body: JSON.stringify({ action, reason }) }, (r) => r ?? undefined);
+}
+
+export function getOpsUnverified(): Promise<ApiResult<Record<string, any>[]>> {
+  return request('/api/ops/unverified', undefined, (r) => (isRowArray(r?.objects) ? r.objects : undefined));
+}
+
+export function getOpsContributors(): Promise<ApiResult<Record<string, any>[]>> {
+  return request('/api/ops/contributors', undefined, (r) => (isRowArray(r?.contributors) ? r.contributors : undefined));
+}
+
+export function getOpsDisputes(): Promise<ApiResult<Record<string, any>[]>> {
+  return request('/api/ops/disputes', undefined, (r) => (isRowArray(r?.disputes) ? r.disputes : undefined));
+}
+
+export function getOpsTicketListings(): Promise<ApiResult<Record<string, any>[]>> {
+  return request('/api/ops/ticket-listings', undefined, (r) => (isRowArray(r?.listings) ? r.listings : undefined));
+}
+
+export function getOpsVerificationQueue(): Promise<ApiResult<Record<string, any>[]>> {
+  return request('/api/ops/verification', undefined, (r) => (isRowArray(r?.queue) ? r.queue : undefined));
+}
+
+export function opsVerificationDecision(id: string, decision: 'approved' | 'rejected', reason: string): Promise<ApiResult<Record<string, any>>> {
+  return request(`/api/ops/verification/${encodeURIComponent(id)}/decision`, { method: 'POST', body: JSON.stringify({ decision, reason }) }, (r) => r ?? undefined);
+}
+
+export function opsVerificationRevoke(id: string, reason: string): Promise<ApiResult<Record<string, any>>> {
+  return request(`/api/ops/verification/${encodeURIComponent(id)}/revoke`, { method: 'POST', body: JSON.stringify({ reason }) }, (r) => r ?? undefined);
+}
+
+export function getOpsEmailLog(limit = 50): Promise<ApiResult<Record<string, any>[]>> {
+  return request(`/api/ops/email-log?limit=${limit}`, undefined, (r) => (isRowArray(r?.log) ? r.log : undefined));
+}
+
+export function getOpsAudit(limit = 100): Promise<ApiResult<{ audit: Record<string, any>[]; total: number }>> {
+  return request(`/api/ops/audit?limit=${limit}`, undefined, (r) => (isRowArray(r?.audit) && Number.isFinite(r?.total) ? r : undefined));
+}
+
+export function setPlatformRoles(userId: string, roles: string[], reason: string): Promise<ApiResult<Record<string, any>>> {
+  return request('/api/ops/roles', { method: 'POST', body: JSON.stringify({ userId, roles, reason }) }, (r) => r ?? undefined);
+}
+
+export function getEconomicReconcile(): Promise<ApiResult<Record<string, any>>> {
+  return request('/api/economic/reconcile', undefined, (r) => (r && typeof r.reconciliation === 'object' ? r : undefined));
+}
+
+export function getPaymentsReconcile(): Promise<ApiResult<Record<string, any>>> {
+  return request('/api/economic/payments/reconcile', undefined, (r) => (r && typeof r.reconciliation === 'object' ? r : undefined));
+}
+
+
+/** Editorial collections (moderate capability). */
+export function getAdminCollections(): Promise<ApiResult<Record<string, any>[]>> {
+  return request('/api/admin/collections', undefined, (r) => (isRowArray(r?.collections) ? r.collections : undefined));
+}
+
+export function transitionAdminCollection(key: string, action: string): Promise<ApiResult<Record<string, any>>> {
+  return request(`/api/admin/collections/${encodeURIComponent(key)}/${encodeURIComponent(action)}`, { method: 'POST', body: '{}' }, (r) => r ?? undefined);
+}
+
+/** Record an editorial/library image (ops.run). Validation is the server's. */
+export function recordAdminMedia(fields: {
+  kind?: string; key?: string; url?: string; alt?: string | null; attribution?: string | null; status?: string;
+}): Promise<ApiResult<Record<string, any>>> {
+  return request('/api/admin/media', { method: 'POST', body: JSON.stringify(fields) }, (r) => r ?? undefined);
+}
+
+// --- Events hub (Tikiti T4) ------------------------------------------------------
+
+export interface EventListing {
+  /** The public identity; internal ids stay private. */
+  slug: string;
+  title: string;
+  category: string;
+  categoryLabel: string;
+  location: string | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  price: number;
+  currency: string;
+  goalAmount: number | null;
+  featured: boolean;
+  /** COUNTED registrations, never a seeded number. */
+  popularity: number;
+}
+
+export function browseEvents(opts: {
+  category?: string; location?: string; from?: string; to?: string;
+  featured?: boolean; sort?: 'date' | 'popularity'; limit?: number;
+} = {}): Promise<ApiResult<{ events: EventListing[]; total: number }>> {
+  const q = new URLSearchParams();
+  if (opts.category) q.set('category', opts.category);
+  if (opts.location) q.set('location', opts.location);
+  if (opts.from) q.set('from', opts.from);
+  if (opts.to) q.set('to', opts.to);
+  if (opts.featured) q.set('featured', '1');
+  if (opts.sort) q.set('sort', opts.sort);
+  if (opts.limit) q.set('limit', String(opts.limit));
+  const qs = q.toString();
+  return request(`/api/events${qs ? `?${qs}` : ''}`, undefined, (r) =>
+    Array.isArray(r?.events) ? { events: r.events as EventListing[], total: Number(r.total ?? r.events.length) } : undefined
+  );
+}
+
+export function getEventCategories(): Promise<ApiResult<{ categories: string[]; labels: Record<string, string> }>> {
+  return request('/api/events/categories', undefined, (r) =>
+    Array.isArray(r?.categories) ? { categories: r.categories, labels: r.labels ?? {} } : undefined
+  );
+}
+
+// --- EPL contest rooms (Tikiti T5) ------------------------------------------------
+
+export interface EplProviderStatus {
+  configured: boolean;
+  reason?: string;
+}
+
+export interface EplClubRow { id: string; name: string; shortName?: string | null }
+
+export interface EplCatalogPlayer {
+  id: string;
+  name: string;
+  club: string;
+  position: 'GK' | 'DEF' | 'MID' | 'FWD';
+  price: number;
+  /** 'seed' or a provider name -- never invented. */
+  source: string;
+}
+
+export function getEplClubs(): Promise<ApiResult<{ clubs: EplClubRow[]; provider: EplProviderStatus }>> {
+  return request('/api/epl/clubs', undefined, (r) =>
+    Array.isArray(r?.clubs) ? { clubs: r.clubs, provider: r.provider ?? { configured: false } } : undefined
+  );
+}
+
+export function getEplCatalog(opts: { club?: string; position?: string } = {}): Promise<ApiResult<{ players: EplCatalogPlayer[]; provider: EplProviderStatus }>> {
+  const q = new URLSearchParams();
+  if (opts.club) q.set('club', opts.club);
+  if (opts.position) q.set('position', opts.position);
+  const qs = q.toString();
+  return request(`/api/epl/catalog${qs ? `?${qs}` : ''}`, undefined, (r) =>
+    Array.isArray(r?.players) ? { players: r.players, provider: r.provider ?? { configured: false } } : undefined
+  );
+}
+
+export type EplLobbyState =
+  | 'waiting_for_players' | 'open' | 'full' | 'in_progress'
+  | 'completed' | 'cancelled';
+
+export interface EplRoomRow {
+  id: string;
+  title: string;
+  status: string;
+  kickoffAt: string;
+  budgetKes: number | null;
+  minEntries: number | null;
+  maxEntries: number | null;
+  mine: boolean;
+  lobbyState: EplLobbyState;
+  entries: number;
+}
+
+export function listEplRooms(): Promise<ApiResult<EplRoomRow[]>> {
+  return request('/api/epl/competitions', undefined, (r) =>
+    Array.isArray(r?.competitions) ? (r.competitions as EplRoomRow[]) : undefined
+  );
+}
+
+export function createEplRoom(body: {
+  title: string; kickoffAt: string;
+  budgetKes?: number | null; minEntries?: number | null; maxEntries?: number | null;
+}): Promise<ApiResult<{ competition: { id: string; title: string; status: string; budgetKes: number | null; minEntries: number | null; maxEntries: number | null }; lobbyState: EplLobbyState }>> {
+  return request('/api/epl/competitions', { method: 'POST', body: JSON.stringify(body) }, (r) =>
+    r?.competition ? { competition: r.competition, lobbyState: r.lobbyState } : undefined
+  );
+}
+
+/** Import the (seed or provider) catalog into a room's pool. Organiser-only. */
+export function importEplPool(competitionId: string, club?: string): Promise<ApiResult<{ imported: number }>> {
+  return request(
+    `/api/epl/competitions/${encodeURIComponent(competitionId)}/pool/import`,
+    { method: 'POST', body: JSON.stringify(club ? { club } : {}) },
+    (r) => (typeof r?.imported === 'number' ? { imported: r.imported } : undefined)
+  );
+}
+
+/**
+ * Seat a team in a room. No price is sent; the server derives everything and
+ * a refusal carries the arithmetic.
+ */
+export function submitEplEntry(
+  competitionId: string,
+  body: { playerIds: string[]; captainId: string }
+): Promise<ApiResult<{
+  created: boolean;
+  entry: { id: string; playerIds: string[]; captainId: string | null; points: number | null };
+  lobbyState: EplLobbyState;
+  entries: number;
+}>> {
+  return request(
+    `/api/epl/competitions/${encodeURIComponent(competitionId)}/entries`,
+    { method: 'POST', body: JSON.stringify(body) },
+    (r) => (r?.entry ? { created: Boolean(r.created), entry: r.entry, lobbyState: r.lobbyState, entries: Number(r.entries ?? 0) } : undefined)
+  );
+}
+
+/** The waiting-room wall: cancel an underfilled room, or lock a filled one. */
+export function settleEplLobby(competitionId: string): Promise<ApiResult<{
+  competition: { id: string; status: string; cancelledReason?: string | null };
+  changed: boolean;
+  lobbyState: EplLobbyState;
+}>> {
+  return request(
+    `/api/epl/competitions/${encodeURIComponent(competitionId)}/settle-lobby`,
+    { method: 'POST', body: '{}' },
+    (r) => (r?.competition ? { competition: r.competition, changed: Boolean(r.changed), lobbyState: r.lobbyState } : undefined)
+  );
+}
+
+export function getEplStandings(competitionId: string): Promise<ApiResult<{
+  competition: { id: string; title: string; status: string };
+  standings: { entryId: string; userId: string; points: number | null; rank: number | null }[];
+}>> {
+  return request(`/api/epl/competitions/${encodeURIComponent(competitionId)}/standings`, undefined, (r) =>
+    r?.competition ? { competition: r.competition, standings: r.standings ?? [] } : undefined
   );
 }
 

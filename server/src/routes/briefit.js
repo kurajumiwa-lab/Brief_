@@ -158,6 +158,17 @@ app.post('/api/brief-it/save', (req, res) => {
     result = { ok: true, created: true, objectId: object.id, object };
   }
 
+  // The route's own contract says the object is attributed to the caller via
+  // `capturedBy`. For captures that entered through the shared manual source
+  // this stamp was missing, so the 'confirmed' notification (and the
+  // capturer-governs rule) silently found nobody to attach to. Stamped ONLY
+  // on objects this request created -- a duplicate belongs to whoever
+  // captured it first.
+  if (!duplicate && result?.objectId) {
+    const stamped = store.update('objects', result.objectId, { capturedBy: callerId(req) });
+    if (result.object) result.object = stamped;
+  }
+
   res.json({ ok: true, rawItemId: row.id, duplicate, result });
 });
 }

@@ -179,7 +179,14 @@ export async function requestPayment(intentId, { fetchImpl = fetch } = {}) {
     providerMerchantRef: res.merchantRequestId ?? null,
     providerPaymentId: res.paymentId ?? null
   });
-  return { ok: true, providerRef: res.checkoutRequestId, customerMessage: res.customerMessage };
+  return {
+    ok: true,
+    providerRef: res.checkoutRequestId,
+    // Hosted-checkout providers (Paystack) hand the payer a URL; STK
+    // providers (Tuma) do not. Additive either way.
+    authorizationUrl: res.authorizationUrl ?? null,
+    customerMessage: res.customerMessage
+  };
 }
 
 // ---------------------------------------------------------------------------

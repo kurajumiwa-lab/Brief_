@@ -2,10 +2,13 @@
 // People should recognise the words from other apps.
 
 export const ROOM = {
-  nearby: { label: 'Home', hint: "What's happening near you" },
-  arena: { label: 'Play', hint: 'Find people to play with' },
-  mylayer: { label: 'Saved', hint: 'Places and events you kept' },
-  workflows: { label: 'Inbox', hint: 'Things waiting for you' }
+  // §2: exactly these destinations, in the brief's own words. The ids are the
+  // stable contract (URLs, tests); the labels are what the brief calls them.
+  nearby: { label: 'Nearby', hint: "What's happening near you" },
+  arena: { label: 'Arena', hint: 'Find people to play with' },
+  mylayer: { label: 'My Layer', hint: 'Places and events you kept' },
+  workflows: { label: 'Workflows', hint: "What's waiting on you" },
+  pulse: { label: 'Pulse', hint: 'What changed that matters' }
 } as const;
 
 export const HOME_MORE: Record<string, string> = {
@@ -13,7 +16,8 @@ export const HOME_MORE: Record<string, string> = {
   today: 'Today',
   pursuits: 'Alerts',
   quests: 'Jobs',
-  market: 'Shop'
+  market: 'Shop',
+  events: "What's on"
 };
 
 export const SAVED_TABS: Record<string, string> = {
@@ -27,7 +31,9 @@ export const SAVED_TABS: Record<string, string> = {
   mediakit: 'Profile',
   opportunities: 'Offers',
   messages: 'Messages',
-  subscriptions: 'Plans'
+  subscriptions: 'Plans',
+  tickets: 'My tickets',
+  verification: 'Verify'
 };
 
 export const INBOX_TABS: Record<string, string> = {
@@ -38,6 +44,7 @@ export const INBOX_TABS: Record<string, string> = {
   inbox: 'Review',
   sources: 'Feeds',
   money: 'Payments',
+  resale: 'Resale',
   vault: 'Records',
   gate: 'Check-in',
   tea: 'Editor',
@@ -87,7 +94,7 @@ export const WORKFLOW_BUNDLES = [
   { id: 'create', label: 'Create', hint: 'Write, review and publish',
     sections: ['cockpit', 'inbox', 'tea', 'distribution', 'calendar', 'ai'] },
   { id: 'sell', label: 'Sell', hint: 'Events, shelves and the money they make',
-    sections: ['campaigns', 'vendors', 'money', 'groupbuy'] },
+    sections: ['campaigns', 'vendors', 'money', 'resale', 'groupbuy'] },
   { id: 'run', label: 'Run', hint: 'Operate what is already live',
     sections: ['command', 'active', 'completed', 'matches', 'engine'] },
   { id: 'records', label: 'Records', hint: 'What happened, attested',
@@ -96,7 +103,7 @@ export const WORKFLOW_BUNDLES = [
 
 export const SAVED_BUNDLES = [
   { id: 'kept', label: 'Kept', hint: 'What you kept, and your own history',
-    sections: ['saved', 'activity', 'points', 'campaigns'] },
+    sections: ['saved', 'activity', 'points', 'campaigns', 'tickets', 'verification'] },
   { id: 'groups', label: 'Groups', hint: 'Circles, chats and matches',
     sections: ['circles', 'groups', 'arena'] },
   { id: 'creator', label: 'Creator', hint: 'Your public side',

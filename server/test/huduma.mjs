@@ -8,6 +8,7 @@
 //   node test/huduma.mjs
 // ---------------------------------------------------------------------------
 
+import './test-env.mjs';
 import { store } from '../src/store.js';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
@@ -15,7 +16,7 @@ import fs from 'node:fs';
 // A fresh, isolated data dir for this suite.
 const DATA_DIR = '/tmp/huduma-test-data';
 fs.rmSync(DATA_DIR, { recursive: true, force: true });
-process.env.BRIEF_DATA_DIR = DATA_DIR;
+// BRIEF_DATA_DIR set by ./test-env.mjs (imported first).
 // A fixed 32-byte master key for the crypto tests (64 hex chars).
 process.env.HUDUMA_MASTER_KEY = '0'.repeat(64);
 

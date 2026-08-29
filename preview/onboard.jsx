@@ -297,7 +297,7 @@ async function main() {
   check('home shows the position on the ladder', /Step 4 of 5/.test(home));
   check('home carries the lock chrome', /Opens after:/.test(home));
 
-  await h.goto('Saved');
+  await h.goto('My Layer');
   const saved = h.body();
   check('the Saved screen shows no "opens after" chrome', !/Opens after:/.test(saved));
   check('the Saved screen shows no next-step card', document.querySelectorAll('[data-testid="next-step"]').length === 0);
@@ -307,7 +307,7 @@ async function main() {
     /Kept/.test(saved) && /Groups/.test(saved) && /Creator/.test(saved) && /Events/.test(saved),
     saved.slice(0, 200));
 
-  await h.goto('Inbox');
+  await h.goto('Workflows');
   const actions = h.body();
   check('the Actions desk shows no "opens after" chrome', !/Opens after:/.test(actions));
   check('the Actions desk shows no next-step card', document.querySelectorAll('[data-testid="next-step"]').length === 0);

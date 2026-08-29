@@ -6,7 +6,8 @@
 // explicit, authorised act, never available to an anonymous consumer.
 import { callerId } from '../identity.js';
 import * as tea from '../domain/tea.js';
-import { requireAuth } from './helpers.js';
+import { store } from '../store.js';
+import { requireAuth, requireCap, recordAudit } from './helpers.js';
 import { requireFeature } from '../features.js';
 
 export function register(app) {
@@ -71,8 +72,7 @@ export function register(app) {
 
   /** Full editorial list, including drafts (for the desk). */
   app.get('/api/admin/tea', (req, res) => {
-    const me = requireAuth(req, res);
-    if (!me) return;
+    if (!requireCap(req, res, 'moderate')) return;
     res.json({ articles: tea.listAll({ status: req.query.status ?? null }) });
   });
 
@@ -100,12 +100,32 @@ export function register(app) {
     }
   });
 
-  /** Drive a status transition: submit/approve/publish/schedule/…/archive. */
+  /**
+   * Drive a status transition.
+   *
+   * Creator powers (any signed-in editor of their own desk): submit (send for
+   * review) and unpublish (withdraw). Everything else -- approve, publish,
+   * schedule, expire, archive -- is a MODERATION act on the public story
+   * layer, so it requires the "moderate" capability and is audited.
+   */
+  const CREATOR_ACTIONS = new Set(['submit', 'unpublish']);
   app.post('/api/admin/tea/:id/:action', (req, res) => {
-    const me = requireAuth(req, res);
+    const action = String(req.params.action ?? '');
+    const me = CREATOR_ACTIONS.has(action)
+      ? requireAuth(req, res)
+      : requireCap(req, res, 'moderate');
     if (!me) return;
     try {
-      res.json({ article: tea.transition(req.params.id, req.params.action) });
+      const before = tea.listAll({}).find?.((a) => a.id === req.params.id)?.status
+        ?? (store.find('teaArticles', (a) => a.id === req.params.id) ?? {}).status ?? null;
+      const article = tea.transition(req.params.id, action);
+      if (!CREATOR_ACTIONS.has(action)) {
+        recordAudit(`tea.${action}`, {
+          actorId: me, objectType: 'tea_article', objectId: req.params.id,
+          before: { status: before }, after: { status: article?.status ?? null }
+        });
+      }
+      res.json({ article });
     } catch (e) {
       const msg = String(e.message ?? e);
       res.status(/not found/.test(msg) ? 404 : 400).json({ error: msg });

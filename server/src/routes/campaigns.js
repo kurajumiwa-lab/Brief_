@@ -5,6 +5,7 @@ import { store } from '../store.js';
 import { callerId } from '../identity.js';
 import * as campaigns from '../domain/campaign.js';
 import * as checkin from '../domain/checkin.js';
+import * as ticketMarket from '../domain/ticketMarket.js';
 import * as signals from '../domain/signal.js';
 import * as ledger from '../domain/ledger.js';
 import * as analytics from '../domain/analytics.js';
@@ -51,6 +52,7 @@ app.post('/api/campaigns', (req, res) => {
       endsAt: req.body?.endsAt,
       capacity: req.body?.capacity === undefined ? null : req.body.capacity,
       price: req.body?.price === undefined ? 0 : Number(req.body.price),
+      goalAmount: req.body?.goalAmount ?? null,
       currency: req.body?.currency,
       circleId: req.body?.circleId ?? null,
       metadata: req.body?.metadata,
@@ -182,18 +184,23 @@ app.post('/api/campaigns/:id/registrations/:regId/confirm-payment', (req, res) =
   if (!row || row.campaignId !== c.id) {
     return res.status(404).json({ error: 'registration not found' });
   }
-  if (c.price <= 0) {
+  if (c.price <= 0 && !row.amount) {
     return res.status(400).json({ error: 'campaign is free; nothing to confirm' });
   }
   if (row.status !== 'started') {
     return res.status(409).json({ error: `registration is ${row.status}, not awaiting payment` });
   }
   try {
+    // A pot settles the supporter's stated amount; an event settles its
+    // fixed price. One row, the amount that actually changed hands.
     let tx = ledger.createTransaction({
-      amount: c.price,
+      amount: row.amount ?? c.price,
       currency: c.currency,
       type: 'sale',
       description: `Payment confirmed by organiser for ${c.title}`,
+      // The money belongs to the person who paid (the registration's bound
+      // identity), not to the organiser confirming it arrived.
+      counterparty: row.userId ?? null,
       campaignId: c.id,
       registrationId: row.id,
       circleId: c.circleId ?? null,
@@ -249,8 +256,24 @@ app.post('/api/campaigns/:id/registrations/:regId/status', (req, res) => {
 
 app.get('/api/tickets/:code', (req, res) => {
   if (!requireAuth(req, res)) return;
-  const registration = checkin.lookupTicket(req.params.code);
-  if (!registration) return res.status(404).json({ error: 'ticket not found' });
+  // Resale-aware resolution: a transferred ticket only answers to its
+  // CURRENT code version. The scanned payload is "CODE#n"; the # never
+  // survives a URL, so the version travels as ?v=n and is recomposed here.
+  const scanned = req.query.v != null ? `${req.params.code}#${req.query.v}` : req.params.code;
+  const gate = ticketMarket.resolveGateCode(scanned);
+  if (!gate.ok) {
+    if (gate.reason === 'stale_code') {
+      return res.status(409).json({
+        error: 'This code is no longer valid — the ticket was transferred and has a newer code.',
+        reason: 'stale_code'
+      });
+    }
+    if (gate.reason === 'void') {
+      return res.status(410).json({ error: 'This ticket was voided and cannot be used.', reason: 'void' });
+    }
+    return res.status(404).json({ error: 'ticket not found' });
+  }
+  const registration = gate.registration;
   const view = checkin.ticketView(registration);
   // Only the campaign's host may inspect a ticket — a code must not be a way
   // to read the roster anonymously.
@@ -265,12 +288,30 @@ app.get('/api/tickets/:code', (req, res) => {
 app.post('/api/tickets/:code/check-in', (req, res) => {
   const me = requireAuth(req, res);
   if (!me) return;
-  const registration = checkin.lookupTicket(req.params.code);
+  // The gate scans ONE code per seat, and only the CURRENT version admits:
+  // every transfer kills the previous QR outright. ("CODE#n" arrives as
+  // ?v=n because a # is a URL fragment and never reaches the server.)
+  const scannedIn = req.query.v != null ? `${req.params.code}#${req.query.v}` : req.params.code;
+  const gate = ticketMarket.resolveGateCode(scannedIn);
+  if (!gate.ok) {
+    if (gate.reason === 'stale_code') {
+      return res.status(409).json({
+        error: 'This code is no longer valid — the ticket was transferred and has a newer code.',
+        reason: 'stale_code'
+      });
+    }
+    if (gate.reason === 'void') {
+      return res.status(410).json({ error: 'This ticket was voided and cannot be used.', reason: 'void' });
+    }
+    return res.status(404).json({ error: 'ticket not found' });
+  }
+  const registration = gate.registration;
+  const scannedBase = gate.ticket ? gate.ticket.code : String(req.params.code).toUpperCase();
   if (!registration) return res.status(404).json({ error: 'ticket not found' });
   const c = store.find('campaigns', (x) => x.id === registration.campaignId);
   if (!c || c.ownerId !== me) return res.status(404).json({ error: 'ticket not found' });
 
-  const result = checkin.checkIn(req.params.code, me);
+  const result = checkin.checkIn(scannedBase, me);
   if (!result.ok) {
     const status = result.reason === 'cancelled' ? 410
       : result.reason === 'unpaid' ? 402
@@ -292,6 +333,33 @@ app.post('/api/tickets/:code/check-in', (req, res) => {
   });
 });
 
+
+// --- T3: campaign updates (owner authors; public reads) ---------------------
+
+app.post('/api/campaigns/:id/updates', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  try {
+    const update = campaigns.postCampaignUpdate(me, req.params.id, {
+      title: req.body?.title, body: req.body?.body
+    });
+    res.status(201).json({ update });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message ?? e) });
+  }
+});
+
+app.get('/api/campaigns/:id/updates', (req, res) => {
+  res.json({ updates: campaigns.listCampaignUpdates(req.params.id) });
+});
+
+// The PUBLIC page is slug-addressed (it never learns internal ids), so the
+// updates feed is readable by slug too — published campaigns only.
+app.get('/api/public/campaigns/:slug/updates', (req, res) => {
+  const c = campaigns.getPublicBySlug(req.params.slug);
+  if (!c) return res.status(404).json({ error: 'campaign not found' });
+  res.json({ updates: campaigns.listCampaignUpdates(c.id) });
+});
 
 // --- PUBLIC (no authentication; only published/live campaigns resolve) ------
 
@@ -325,6 +393,7 @@ app.post('/api/public/campaigns/:slug/register', (req, res) => {
       attendeeRef: req.body?.attendeeRef,
       name: req.body?.name ?? null,
       contact: req.body?.contact ?? null,
+      amount: req.body?.amount ?? null,
       trackingHash: trackingHash ? String(trackingHash) : null,
       // Only a verified session binds. Dev-fallback / anonymous walk-ins are
       // not guessed to be the local user.

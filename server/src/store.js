@@ -64,6 +64,15 @@ const EMPTY = {
   // metrics are derived, never stored. See src/domain/campaign.js.
   campaigns: [],
   registrations: [],
+  // P2P ticket resale (Tikiti integration T1). A ticket is ONE admitted
+  // seat, born from a confirmed campaign registration; its scannable code
+  // IS the registration's gate code, versioned so a transfer kills every
+  // prior QR. ledgerTransactions remains the only economic truth — these
+  // rows are inventory, provenance and state machines, never money.
+  tickets: [],
+  ticketListings: [],
+  ticketOrders: [],
+  ticketTransfers: [],
   // Standalone public banners are a presentation layer over a published
   // campaign. They carry no second event or payment state.
   campaignBanners: [],
@@ -91,21 +100,18 @@ const EMPTY = {
 
   // Fantasy 11. Non-economic core: pool, entries, stats and derived scores.
   // No Fantasy wallet -- paid entry would use the one ledger, once legal.
+  // The bare /api/fantasy HTTP surface was removed (F5); the domain engine
+  // lives on behind Ligi and the EPL contest routes.
   fantasyCompetitions: [],
   fantasyPlayers: [],
   fantasyEntries: [],
   fantasyStats: [],
+
+  // --- Commerce -------------------------------------------------------------
   vendors: [],
   listings: [],
   orders: [],
   disputes: [],
-  // Auction. Price discovery over an existing listing. A BID IS NOT MONEY --
-  // bids live here, entirely separate from ledgerTransactions, so that
-  // nothing scanning the ledger can ever mistake an offer for income. A won
-  // auction produces an ordinary order, which settles through the ordinary
-  // chain. There is no auction wallet and no auction balance.
-  auctions: [],
-  bids: [],
 
   // --- The Vault -----------------------------------------------------------
   // A persistent context layer wrapping a real-world activity. A Vault is NOT
@@ -183,14 +189,6 @@ const EMPTY = {
   vendorRecommendations: [],
   outboundMessages: [],
 
-  // --- Cooperative pools (four-screen build A) -----------------------------
-  // Chama / Stokvel / Esusu / Sou-Sou rotating savings (ROSCA). Contributions
-  // are ledger transactions; the rotation is a derived schedule. See
-  // domain/pool.js.
-  pools: [],
-  poolMembers: [],
-  poolRotations: [],
-
   // --- Distribution (four-screen build B) ----------------------------------
   // UTM click attribution: one row per tracked click. See domain/distribution.js.
   clickEvents: [],
@@ -233,6 +231,9 @@ const EMPTY = {
   // --- Arena entities (server models) -------------------------------------
   // A player's game identity is NOT their Brief account: one person holds many.
   arenaPlayers: [],
+  // T5: the shared EPL player catalog. Rows carry their source; 'seed' rows
+  // 'seed' rows are clearly mock development data.
+  eplCatalog: [],
   arenaVenues: [],
   arenaTournaments: [],
   arenaResults: [], // agreed match results; leaderboards are derived from these
@@ -268,7 +269,17 @@ const EMPTY = {
   // verifiable receipt digests. Money records also ride the one ledger —
   // there is deliberately no second balance here.
   groupBuys: [],
-  groupBuyContributions: []
+  groupBuyContributions: [],
+  // T2: a bargain's committed participants (per-head pricing bands).
+  groupBuyParticipants: [],
+  // T3: owner-authored updates on a contribution campaign.
+  campaignUpdates: [],
+  // T6: KYC verification records. No identity documents are ever stored --
+  // only status, provider reference and review provenance.
+  verificationRecords: [],
+  // T7: email subscriptions with double opt-in + delivery log.
+  emailSubscriptions: [],
+  emailLog: []
 };
 
 function ensureDir() {

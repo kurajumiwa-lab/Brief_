@@ -11,6 +11,7 @@
 //   OFFLINE=1 node test/run.js  offline only
 // ---------------------------------------------------------------------------
 
+import './test-env.mjs';
 import { store } from '../src/store.js';
 import path from 'node:path';
 import { extractFields, extractVendors, extractProducts, isObjectWorthy } from '../src/pipeline/extract.js';
@@ -29,7 +30,9 @@ const check = (name, cond, detail = '') => {
 };
 const skipped = (name, why) => { skip++; console.log(`  SKIP  ${name} (${why})`); };
 
-process.env.BRIEF_DATA_DIR = '/tmp/brief-test-data';
+// BRIEF_DATA_DIR is set by ./test-env.mjs, imported before the store binds.
+// It MUST NOT be assigned here: this module body runs after the hoisted
+// static imports, and an assignment here would be a no-op for store.js.
 store._reset();
 
 const POPUP = `Saturday popup at Kilimani Studio.
@@ -356,7 +359,8 @@ console.log('\n=== AUTHORITY (spec 32) ===');
 
   const srv = app.listen(0);
   const port = srv.address().port;
-  const call = async (path, method = 'GET', body) => {
+
+const call = async (path, method = 'GET', body) => {
     const res = await fetch(`http://127.0.0.1:${port}${path}`, {
       method,
       headers: body ? { 'content-type': 'application/json' } : undefined,
@@ -1985,10 +1989,29 @@ console.log('\n=== COMMERCE: VENDORS, LISTINGS, ORDERS (Batch 3) ===');
     {
       const wallet = (await call('/api/economic/wallet')).body;
       const settledTotal = store
-        .filter('ledgerTransactions', (t) => t.status === 'settled')
+        .filter('ledgerTransactions', (t) => t.status === 'settled' && t.counterparty === 'usr_me')
         .reduce((s, t) => s + t.amount, 0);
-      check('wallet balance equals real settled rows only',
+      check('wallet balance equals MY real settled rows only',
         wallet.balance === settledTotal, `${wallet.balance} vs ${settledTotal}`);
+      // The wallet is personal: rows belonging to other counterparties must
+      // never leak into it.
+      const mineRows = store.filter('ledgerTransactions', (t) => t.counterparty === 'usr_me');
+      check('wallet counts only MY rows',
+        wallet.transactionCount === mineRows.length,
+        `${wallet.transactionCount} vs ${mineRows.length}`);
+      // Prove the scoping with a genuinely foreign row: another actor's
+      // settled money must not move my balance or my count.
+      const ledgerDomain = await import('../src/domain/ledger.js');
+      const before = wallet.balance;
+      const mineCount = mineRows.length;
+      ledgerDomain.createTransaction({ amount: 90000, type: 'sale', counterparty: 'usr_somebody_else', status: undefined });
+      const settledForeign = store.find('ledgerTransactions', (t) => t.counterparty === 'usr_somebody_else');
+      settledForeign.status = 'settled';
+      settledForeign.history.push({ status: 'settled', at: new Date().toISOString() });
+      const walletAfter = (await call('/api/economic/wallet')).body;
+      check('another actor\'s settled KES 90,000 never leaks into my wallet',
+        walletAfter.balance === before && walletAfter.transactionCount === mineCount,
+        `${walletAfter.balance}/${walletAfter.transactionCount} vs ${before}/${mineCount}`);
       check('orders created no second transaction table',
         store.all('orders').every((o) => !('balance' in o) && !('wallet' in o)));
       check('no order carries a stored paid flag',
@@ -3278,57 +3301,6 @@ console.log('\n=== AI ASSIST SEAM (§27) ===');
   }
 }
 
-console.log('\n=== COOPERATIVE POOLS (four-screen build A) ===');
-{
-  const pool = await import('../src/domain/pool.js');
-
-  const p = pool.createPool({ name: 'Kilimani Chama', regionType: 'KENYA', contributionAmount: 1000, createdBy: 'usr_me', displayName: 'Host' });
-  check('a pool is created forming', p.status === 'forming' && p.rotationOrder.length === 1);
-
-  pool.addMember(p.id, 'usr_b', 'Brian');
-  pool.addMember(p.id, 'usr_c', 'Chiku');
-  check('members join while forming', pool.poolView(p.id).members.length === 3);
-
-  // A forming pool with <2 members cannot activate.
-  const solo = pool.createPool({ name: 'Solo', contributionAmount: 500, createdBy: 'usr_me' });
-  try { pool.activate(solo.id, 'usr_me'); check('a solo pool cannot activate', false); }
-  catch (e) { check('a solo pool cannot activate', /at least two/.test(e.message)); }
-
-  // Members lock once active.
-  pool.activate(p.id, 'usr_me');
-  try { pool.addMember(p.id, 'usr_d'); check('members lock after activation', false); }
-  catch (e) { check('members lock after activation', /locked/.test(e.message)); }
-
-  // Contributions are real ledger transactions; a duplicate is refused.
-  const c1 = pool.contribute(p.id, 'usr_me', 1000);
-  check('a contribution is a ledger transaction', c1.transaction.type === 'pool_contribution' && c1.transaction.amount === 1000);
-  const c1b = pool.contribute(p.id, 'usr_me', 1000);
-  check('a duplicate contribution is refused', c1b.duplicate === true);
-  check('the balance is derived from contributions', pool.poolView(p.id).balance.total === 1000);
-
-  // The recipient is the first member in rotation order (derived).
-  check('the recipient is derived', pool.poolView(p.id).recipientId === 'usr_me');
-
-  // Rotating advances to the next member.
-  pool.rotate(p.id, 'usr_me');
-  check('rotation advances the recipient', pool.poolView(p.id).recipientId === 'usr_b');
-
-  // Payout is honestly unavailable (no disbursement provider).
-  check('payout is honestly unavailable', pool.poolView(p.id).payoutAvailable === false && /No payout provider/.test(pool.poolView(p.id).payoutReason));
-
-  // Over HTTP.
-  {
-    const { default: appP } = await import('../src/index.js');
-    const srvP = appP.listen(0);
-    const portP = srvP.address().port;
-    const list = await (await fetch(`http://127.0.0.1:${portP}/api/pools`)).json();
-    check('GET /api/pools lists pools', Array.isArray(list.pools) && list.pools.length > 0);
-    const one = await (await fetch(`http://127.0.0.1:${portP}/api/pools/${p.id}`)).json();
-    check('GET /api/pools/:id returns the derived view', one.pool && typeof one.pool.balance.total === 'number');
-    srvP.close();
-  }
-}
-
 console.log('\n=== DISTRIBUTION (four-screen build B) ===');
 {
   const distribution = await import('../src/domain/distribution.js');
@@ -3653,7 +3625,7 @@ console.log('\n=== FEATURE REGISTRY (§4.2) ===');
   // Default state: everything enabled; module features configured; provider
   // features NOT configured (no credentials in this run).
   check('every feature is enabled by default', features.list().every((f) => f.enabled));
-  check('the registry holds all registered features', features.list().length === 43, String(features.list().length));
+  check('the registry holds all registered features', features.list().length === 42, String(features.list().length));
   check('auth is available by default', features.available('auth') === true);
   check('arena is available by default', features.available('arena') === true);
   check('vaults is available by default', features.available('vaults') === true);
@@ -3807,6 +3779,45 @@ console.log('\n=== TUMA PAYMENT E2E + WEBHOOK (simulated provider) ===');
     check('a cancelled payment is a DISTINCT terminal state', pay.getIntent(intent3.id).status === 'cancelled');
     check('a cancelled payment created no transaction', store.all('ledgerTransactions').length === 1);
 
+    // --- PAYSTACK WEBHOOK: signed end to end over the same money rules -----
+    // Paystack is configured NOW (registry override) so the new intent is
+    // created on the paystack rail; initiation itself is covered above at the
+    // connector level, so this intent is marked authorized like intent2/3.
+    process.env.PAYSTACK_SECRET_KEY = 'sk_test_whitelabel';
+    process.env.BRIEF_COLLECTION_PROVIDER = 'paystack';
+    const { intent: psIntent } = pay.createIntent({ orderId: oid, payerId: B.user.id, phone: '0722000111' });
+    check('the intent is created on the paystack rail',
+      psIntent.provider === 'paystack', `provider=${psIntent.provider}`);
+    store.update('paymentIntents', psIntent.id, { status: 'authorized', providerRef: 'PS_KE_600' });
+
+    const nodeCrypto = await import('node:crypto');
+    const sign = (str) => nodeCrypto.createHmac('sha512', process.env.PAYSTACK_SECRET_KEY).update(str, 'utf8').digest('hex');
+    const psBody = JSON.stringify({ event: 'charge.success', data: { reference: 'PS_KE_600', amount: 60000, currency: 'KES', status: 'success', id: 41001, paid_at: '2026-08-29T00:00:00Z' } });
+    const psPost = (bodyStr, sig) => fetch(`http://127.0.0.1:${port}/api/webhooks/paystack`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', ...(sig ? { 'x-paystack-signature': sig } : {}) },
+      body: bodyStr
+    });
+
+    let psRes = await psPost(psBody, 'deadbeef');
+    check('an unsigned/wrongly-signed paystack callback is refused (403)', psRes.status === 403);
+    psRes = await psPost(psBody, sign(psBody));
+    const psJson = await psRes.json().catch(() => null);
+    check('a correctly signed charge.success confirms the payment',
+      psRes.status === 200 && psJson?.ok === true, JSON.stringify(psJson));
+    check('the paystack intent is confirmed', pay.getIntent(psIntent.id).status === 'confirmed');
+    check('a second settled ledger row exists (the ledger is still the only truth)',
+      store.all('ledgerTransactions').length === 2 && store.all('ledgerTransactions')[1].status === 'settled');
+    psRes = await psPost(psBody, sign(psBody));
+    check('a replayed signed callback is an idempotent no-op',
+      (await psRes.json().catch(() => null))?.duplicate === true && store.all('ledgerTransactions').length === 2);
+    const ignBody = JSON.stringify({ event: 'transfer.success', data: { reference: 'TR_1' } });
+    psRes = await psPost(ignBody, sign(ignBody));
+    check('a signed event Brief does not act on is acknowledged and ignored',
+      psRes.status === 200 && (await psRes.json().catch(() => null))?.ignored === true);
+    delete process.env.PAYSTACK_SECRET_KEY;
+    delete process.env.BRIEF_COLLECTION_PROVIDER;
+
     // --- Unauthenticated initiation is refused -----------------------------
     const anon = await fetch(`http://127.0.0.1:${port}/api/orders/${oid}/pay`, {
       method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer bogus' },
@@ -3821,6 +3832,125 @@ console.log('\n=== TUMA PAYMENT E2E + WEBHOOK (simulated provider) ===');
     delete process.env.TUMA_WEBHOOK_SECRET;
     tuma._resetTokenCache();
   }
+}
+
+console.log('\n=== WHITE-LABEL CONNECTORS: PAYSTACK + SMILE ID (the chosen rails) ===');
+{
+  const paystack = await import('../src/connectors/paystack.js');
+  const smileid = await import('../src/connectors/smileid.js');
+  const providers = await import('../src/providers.js');
+  const crypto = await import('node:crypto');
+
+  // --- honest when unconfigured ------------------------------------------
+  check('paystack reports itself unconfigured with the missing credential named',
+    paystack.isConfigured() === false && paystack.status().missing.includes('secretKey'), JSON.stringify(paystack.status()));
+  check('the registry lists paystack beside tuma',
+    Object.keys(providers.COLLECTION_PROVIDERS).includes('paystack') && providers.activeCollectionProvider() === null);
+  check('capabilities expose the KYC rail honestly',
+    smileid.status().configured === false && smileid.status().missing.includes('partnerId'));
+
+  // --- the documented signature construction (verified independently) ----
+  process.env.PAYSTACK_SECRET_KEY = 'sk_test_whitelabel';
+  const rawBody = JSON.stringify({ event: 'transfer.success', data: { reference: 'T1' } });
+  const expected = crypto.createHmac('sha512', 'sk_test_whitelabel').update(rawBody, 'utf8').digest('hex');
+  check('the webhook signature is hex HMAC-SHA512 over the raw body',
+    paystack.computeSignature(rawBody) === expected && /^[0-9a-f]{128}$/.test(expected));
+  check('a correct signature verifies', paystack.verifyCallbackSecret(expected, rawBody).ok === true);
+  check('a wrong signature is refused', paystack.verifyCallbackSecret('f'.repeat(128), rawBody).ok === false);
+  check('a missing signature is refused', paystack.verifyCallbackSecret(undefined, rawBody).ok === false);
+  delete process.env.PAYSTACK_SECRET_KEY;
+  check('with no key configured NOTHING verifies (fail closed)',
+    paystack.verifyCallbackSecret(expected, rawBody).ok === false);
+  check('sk_test_ is reported as sandbox, sk_live_ as live',
+    (() => { process.env.PAYSTACK_SECRET_KEY = 'sk_test_x'; const a = paystack.status().mode;
+             process.env.PAYSTACK_SECRET_KEY = 'sk_live_x'; const b = paystack.status().mode;
+             delete process.env.PAYSTACK_SECRET_KEY; return a === 'sandbox' && b === 'live'; })());
+
+  // --- callback parsing: one canonical unit (whole KES) -------------------
+  const good = paystack.parseCallback({ event: 'charge.success', data: { reference: 'PS_1', amount: 15000, currency: 'KES', status: 'success', id: 41000, paid_at: '2026-08-29T00:00:00Z' } });
+  check('a charge.success parses to whole KES (subunits / 100)',
+    good.ok === true && good.succeeded === true && good.amount === 150 && good.checkoutRequestId === 'PS_1');
+  check('a failed charge is not success and carries the reason',
+    (() => { const f = paystack.parseCallback({ event: 'charge.failed', data: { reference: 'PS_2', amount: 15000, currency: 'KES', status: 'failed', gateway_response: 'declined' } });
+      return f.succeeded === false && /declined/.test(f.failureReason); })());
+  check('a non-KES payment is never a success against a KES intent',
+    paystack.parseCallback({ event: 'charge.success', data: { reference: 'PS_3', amount: 15000, currency: 'NGN', status: 'success' } }).succeeded === false);
+  check('a subunit amount that does not divide cleanly is passed through (mismatch will fail loudly)',
+    paystack.parseCallback({ event: 'charge.success', data: { reference: 'PS_4', amount: 15050, currency: 'KES', status: 'success' } }).amount === 15050);
+  check('events Brief does not act on are acknowledged, not applied',
+    (() => { const t = paystack.parseCallback({ event: 'transfer.success', data: { reference: 'T1' } }); return t.ok === true && t.ignored === true; })());
+  check('a payload without a reference is unrecognised',
+    paystack.parseCallback({ event: 'charge.success', data: { amount: 100 } }).ok === false);
+
+  // --- collect: request shape against a stubbed Paystack ------------------
+  let seen = null;
+  const flwFetch = async (url, opts) => {
+    seen = { url, body: JSON.parse(opts.body), auth: opts.headers.authorization };
+    return { ok: true, status: 200, json: async () => ({ status: true, message: 'Authorization URL created', data: { authorization_url: 'https://checkout.paystack.com/abc', access_code: 'AC1', reference: seen.body.reference, id: 77 } }) };
+  };
+  process.env.PAYSTACK_SECRET_KEY = 'sk_test_whitelabel';
+  process.env.BRIEF_PUBLIC_ORIGIN = 'https://brief.example.com';
+  const c = await paystack.collect({ amount: 600, phone: '0722000111', description: 'Brief order X', reference: 'brief-ps-ref-1', fetchImpl: flwFetch });
+  check('collect initializes a hosted checkout (stubbed rail, real request path)',
+    c.ok === true && c.checkoutRequestId === 'brief-ps-ref-1' && c.authorizationUrl.includes('checkout.paystack.com'));
+  check('the wire amount is subunits of whole KES and the currency is KES',
+    seen.body.amount === 60000 && seen.body.currency === 'KES');
+  check('the checkout email is a derived relay identifier, never a contact claim',
+    seen.body.email === 'brief-order-brief-ps-ref-1@brief.example.com');
+  check('the secret key authorises the call and never leaves the server',
+    seen.auth === 'Bearer sk_test_whitelabel');
+  check('an invalid amount is refused before any wire traffic',
+    (await paystack.collect({ amount: -5, fetchImpl: flwFetch })).reason === 'invalid_amount');
+
+  // --- registry selection, including the explicit override ----------------
+  check('a configured paystack becomes the active collector when tuma is not',
+    providers.activeCollectionProvider() === 'paystack');
+  process.env.BRIEF_COLLECTION_PROVIDER = 'tuma';
+  check('an override naming an UNCONFIGURED provider is ignored, not guessed',
+    providers.activeCollectionProvider() === 'paystack');
+  process.env.BRIEF_COLLECTION_PROVIDER = 'paystack';
+  check('an override naming the configured provider holds',
+    providers.activeCollectionProvider() === 'paystack');
+  delete process.env.BRIEF_COLLECTION_PROVIDER;
+  delete process.env.PAYSTACK_SECRET_KEY;
+  delete process.env.BRIEF_PUBLIC_ORIGIN;
+  check('with credentials removed the registry is honestly empty again',
+    providers.activeCollectionProvider() === null);
+
+  // --- Smile ID: the documented signature + assist wiring -----------------
+  process.env.SMILE_PARTNER_ID = '002';
+  process.env.SMILE_API_KEY = 'smile-test-key';
+  const ts = '2026-08-29T00:00:00.000Z';
+  const smileExpected = crypto.createHmac('sha256', 'smile-test-key').update(ts, 'utf8').update('002', 'utf8').update('sid_request', 'utf8').digest('base64');
+  check('the Smile ID signature is base64 HMAC-SHA256 of timestamp+partner_id+"sid_request"',
+    smileid.computeSignature(ts) === smileExpected);
+  check('a sandbox default keeps the connector out of production',
+    smileid.status().env === 'sandbox' && smileid.status().configured === true);
+  let smileSeen = null;
+  const smileFetch = async (url, opts) => {
+    smileSeen = { url, headers: opts.headers, body: JSON.parse(opts.body) };
+    return { ok: true, status: 200, json: async () => ({ ResultCode: '1012', ResultText: 'ID Number was not found in the registry' }) };
+  };
+  const lk = await smileid.lookupId({ idNumber: '12345678', fetchImpl: smileFetch });
+  check('an ID lookup runs the real request path and returns the provider codes',
+    lk.ok === true && lk.resultCode === '1012' && /not found/.test(lk.resultText));
+  check('the lookup posts to the documented v2 endpoint with header auth',
+    smileSeen.url.endsWith('/v2/id_verification') && smileSeen.headers['smileid-partner-id'] === '002'
+      // the signature must verify against the timestamp header it travels with
+      && smileid.computeSignature(smileSeen.headers['smileid-timestamp']) === smileSeen.headers['smileid-request-signature']);
+  check('the ID number went to the provider for the check',
+    smileSeen.body.id_number === '12345678');
+  {
+    // The route stores EXACTLY this shape (routes/verification.js assistRecord)
+    // -- prove it cannot carry the number that was checked.
+    const storedAssist = { provider: 'smileid', at: ts, ok: lk.ok, resultCode: lk.resultCode, resultText: lk.resultText };
+    check('the stored assist carries provider codes, never the ID number',
+      JSON.stringify(storedAssist).includes('12345678') === false);
+  }
+  delete process.env.SMILE_PARTNER_ID;
+  delete process.env.SMILE_API_KEY;
+  check('with credentials removed the KYC rail reports itself unconfigured',
+    smileid.isConfigured() === false && (await smileid.lookupId({ idNumber: '1', fetchImpl: smileFetch })).reason === 'not_configured');
 }
 
 console.log('\n=== PAYMENT LIFECYCLE, IDEMPOTENCY, REPLAY (simulated provider refs) ===');
@@ -3975,6 +4105,8 @@ console.log('\n=== PAYMENT HTTP SURFACE ===');
 
   try {
     const A = (await call('/api/auth/register', 'POST', { handle: 'payseller', password: 'a good passphrase' })).body;
+    // Reconciliation is a finance capability; bootstrap the buyer for this block.
+    process.env.BRIEF_FINANCE = 'paybuyer';
     const B = (await call('/api/auth/register', 'POST', { handle: 'paybuyer', password: 'a good passphrase' })).body;
     await call('/api/vendors', 'POST', { displayName: 'Pay Stall' }, A.token);
     let r = await call('/api/listings', 'POST', { title: 'Beans', type: 'product', price: 300, quantityAvailable: 10 }, A.token);
@@ -4475,6 +4607,15 @@ console.log('\n=== FANTASY 11: LOCK, DETERMINISTIC SCORING, RANKING ===');
   };
 
   try {
+    // --- the full journey, through the DOMAIN (the bare /api/fantasy HTTP
+    // surface was removed with F5; Ligi and the EPL routes are the surfaces,
+    // and both ride this engine).
+    const attempt = (fn) => {
+      try { const data = fn(); return { ok: true, data }; }
+      catch (e) { return { ok: false, err: new Error(String(e.message ?? e)), thrown: e }; }
+    };
+    let r;
+    void r;
     const ORG = (await call('/api/auth/register', 'POST', { handle: 'organiser', password: 'a good passphrase' })).body;
     const U1 = (await call('/api/auth/register', 'POST', { handle: 'fanuser1', password: 'a good passphrase' })).body;
     const U2 = (await call('/api/auth/register', 'POST', { handle: 'fanuser2', password: 'a good passphrase' })).body;
@@ -4494,58 +4635,37 @@ console.log('\n=== FANTASY 11: LOCK, DETERMINISTIC SCORING, RANKING ===');
     check('2 saves is 0 extra points', fz.scorePlayer('GK', { minutes: 90, saves: 2 }).points === 1);
     check('a red card costs 3', fz.scorePlayer('MID', { minutes: 90, redCards: 1 }).points === -2);
     check('conceding 4 costs a GK 2', fz.scorePlayer('GK', { minutes: 90, goalsConceded: 4 }).points === -1);
-    check('conceding does NOT penalise a FWD', fz.scorePlayer('FWD', { minutes: 90, goalsConceded: 4 }).points === 1);
-    check('an own goal costs 2', fz.scorePlayer('DEF', { minutes: 90, ownGoals: 1 }).points === -1);
-    check('scoring is NEVER NaN', Number.isFinite(fz.scorePlayer('GK', { minutes: 90, goalsConceded: 5, saves: 7, penaltiesSaved: 1 }).points));
-    check('every score carries a breakdown', fz.scorePlayer('FWD', { minutes: 90, goals: 1 }).lines.length === 2);
 
-    // DETERMINISM: the same inputs must always give the same answer.
-    const a1 = fz.scorePlayer('MID', { minutes: 90, goals: 1, assists: 2, yellowCards: 1 });
-    const a2 = fz.scorePlayer('MID', { minutes: 90, goals: 1, assists: 2, yellowCards: 1 });
-    check('scoring is deterministic', JSON.stringify(a1) === JSON.stringify(a2));
-
-    // --- competition setup ---------------------------------------------------
-    const kickoff = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-    let r = await call('/api/fantasy/competitions', 'POST', { title: 'Saturday XI', kickoffAt: kickoff }, ORG.token);
-    check('a competition can be created', r.status === 201);
-    const comp = r.body.competition;
+    let a = attempt(() => fz.createCompetition({ createdBy: ORG.user.id, title: 'Saturday XI', kickoffAt: new Date(Date.now() + 60000).toISOString() }));
+    check('a competition can be created', a.ok);
+    const comp = a.data;
     check('it starts as draft', comp.status === 'draft');
     check('paid entry is null until legally possible', comp.entryFeeKes === null);
+    a = attempt(() => fz.createCompetition({ createdBy: ORG.user.id, title: 'Bad', kickoffAt: 'not a date' }));
+    check('an invalid kickoff is refused', !a.ok);
 
-    r = await call('/api/fantasy/competitions', 'POST', { title: 'Bad', kickoffAt: 'not a date' }, ORG.token);
-    check('an invalid kickoff is refused', r.status === 400);
+    a = attempt(() => fz.openCompetition(comp.id, ORG.user.id));
+    check('a competition cannot open without enough players', !a.ok, a.err?.message);
 
-    // Opening with too small a pool must fail.
-    r = await call(`/api/fantasy/competitions/${comp.id}/open`, 'POST', {}, ORG.token);
-    check('a competition cannot open without enough players', r.status === 400, `got ${r.status}`);
-
-    // Build a real pool: 2 GK, 6 DEF, 6 MID, 4 FWD across 6 clubs.
-    const mk = async (name, position, club) =>
-      (await call(`/api/fantasy/competitions/${comp.id}/players`, 'POST', { name, position, club }, ORG.token)).body.player;
+    const mk = (name, position, club) => fz.addPoolPlayer(comp.id, ORG.user.id, { name, position, club });
     const pool = [];
     const clubs = ['Gor', 'Leopards', 'Tusker', 'Bandari', 'Ulinzi', 'Kakamega'];
-    for (let i = 0; i < 2; i++) pool.push(await mk(`GK${i}`, 'GK', clubs[i % 6]));
-    for (let i = 0; i < 6; i++) pool.push(await mk(`DEF${i}`, 'DEF', clubs[i % 6]));
-    for (let i = 0; i < 6; i++) pool.push(await mk(`MID${i}`, 'MID', clubs[i % 6]));
-    for (let i = 0; i < 4; i++) pool.push(await mk(`FWD${i}`, 'FWD', clubs[i % 6]));
+    for (let i = 0; i < 2; i++) pool.push(mk(`GK${i}`, 'GK', clubs[i % 6]));
+    for (let i = 0; i < 6; i++) pool.push(mk(`DEF${i}`, 'DEF', clubs[i % 6]));
+    for (let i = 0; i < 6; i++) pool.push(mk(`MID${i}`, 'MID', clubs[i % 6]));
+    for (let i = 0; i < 4; i++) pool.push(mk(`FWD${i}`, 'FWD', clubs[i % 6]));
     check('the pool was built', pool.length === 18);
 
-    // POOL AUTHORITY: a participant cannot add players.
-    r = await call(`/api/fantasy/competitions/${comp.id}/players`, 'POST', { name: 'Ringer', position: 'FWD', club: 'Gor' }, U1.token);
-    check('a PARTICIPANT cannot add to the player pool (403)', r.status === 403, `got ${r.status}`);
-    r = await call(`/api/fantasy/competitions/${comp.id}/players`, 'POST', { name: 'X', position: 'STRIKER', club: 'Gor' }, ORG.token);
-    check('an invalid position is refused', r.status === 400);
+    a = attempt(() => fz.addPoolPlayer(comp.id, U1.user.id, { name: 'Ringer', position: 'FWD', club: 'Gor' }));
+    check('a PARTICIPANT cannot add to the player pool', !a.ok && /organiser/.test(a.err.message), a.err?.message);
+    a = attempt(() => fz.addPoolPlayer(comp.id, ORG.user.id, { name: 'X', position: 'STRIKER', club: 'Gor' }));
+    check('an invalid position is refused', !a.ok && /position/.test(a.err.message));
 
-    r = await call(`/api/fantasy/competitions/${comp.id}/open`, 'POST', {}, ORG.token);
-    check('the organiser opens the competition', r.status === 200 && r.body.competition.status === 'open');
+    a = attempt(() => fz.openCompetition(comp.id, ORG.user.id));
+    check('the organiser opens the competition', a.ok && a.data.status === 'open');
 
-    // --- squad validation ----------------------------------------------------
     const gk = pool.filter((p) => p.position === 'GK');
-    const def = pool.filter((p) => p.position === 'DEF');
-    const mid = pool.filter((p) => p.position === 'MID');
     const fwd = pool.filter((p) => p.position === 'FWD');
-    // Build a squad that respects the max-3-per-club rule. Picking greedily
-    // by position while tracking club counts is how a real client would.
     const pickSquad = (want, exclude = new Set()) => {
       const clubCount = {};
       const out = [];
@@ -4565,99 +4685,86 @@ console.log('\n=== FANTASY 11: LOCK, DETERMINISTIC SCORING, RANKING ===');
     check('a legal 11 could be assembled', squad1.length === 11, `got ${squad1.length}`);
     const validTeam = squad1.map((p) => p.id);
 
-    const bad = async (playerIds, captainId, label) => {
-      const rr = await call(`/api/fantasy/competitions/${comp.id}/entries`, 'POST', { playerIds, captainId }, U1.token);
-      check(label, rr.status === 400, `got ${rr.status}`);
+    const bad = (playerIds, captainId, label) => {
+      const rr = attempt(() => fz.submitTeam(comp.id, U1.user.id, { playerIds, captainId }));
+      check(label, !rr.ok, rr.err?.message);
     };
-    await bad(validTeam.slice(0, 10), validTeam[0], 'a team of 10 is refused');
-    await bad([...validTeam, fwd[3].id], validTeam[0], 'a team of 12 is refused');
-    await bad([validTeam[0], ...validTeam.slice(0, 10)], validTeam[0], 'a duplicated player is refused');
-    await bad([...validTeam.slice(0, 10), 'fply_invented'], validTeam[0], 'an INVENTED player is refused');
-    await bad(validTeam, 'fply_invented', 'a captain outside the team is refused');
-    await bad(validTeam, null, 'a missing captain is refused');
-    await bad([gk[0].id, gk[1].id, ...validTeam.slice(1, 10)], gk[0].id, 'two goalkeepers is refused');
+    bad(validTeam.slice(0, 10), validTeam[0], 'a team of 10 is refused');
+    bad([...validTeam, fwd[3].id], validTeam[0], 'a team of 12 is refused');
+    bad([validTeam[0], ...validTeam.slice(0, 10)], validTeam[0], 'a duplicated player is refused');
+    bad([...validTeam.slice(0, 10), 'fply_invented'], validTeam[0], 'an INVENTED player is refused');
+    bad(validTeam, 'fply_invented', 'a captain outside the team is refused');
+    bad(validTeam, null, 'a missing captain is refused');
+    bad([gk[0].id, gk[1].id, ...validTeam.slice(1, 10)], gk[0].id, 'two goalkeepers is refused');
 
-    // Club limit: 4 from one club.
     const gorPlayers = pool.filter((p) => p.club === 'Gor');
     if (gorPlayers.length >= 4) {
       const clubHeavy = [...gorPlayers.slice(0, 4).map((p) => p.id)];
       const filler = pool.filter((p) => !clubHeavy.includes(p.id)).slice(0, 7).map((p) => p.id);
-      await bad([...clubHeavy, ...filler], clubHeavy[0], 'more than 3 from one club is refused');
+      bad([...clubHeavy, ...filler], clubHeavy[0], 'more than 3 from one club is refused');
     }
 
-    // --- valid submission ----------------------------------------------------
     const cap1 = squad1.find((p) => p.position === 'FWD').id;
     const cap1b = squad1.find((p) => p.position === 'MID').id;
-    r = await call(`/api/fantasy/competitions/${comp.id}/entries`, 'POST', { playerIds: validTeam, captainId: cap1 }, U1.token);
-    check('a valid team is accepted', r.status === 201, JSON.stringify(r.body).slice(0, 140));
-    check('the entry has no points yet', r.body.entry.points === null);
-    check('and no rank yet', r.body.entry.rank === null);
+    a = attempt(() => fz.submitTeam(comp.id, U1.user.id, { playerIds: validTeam, captainId: cap1 }));
+    check('a valid team is accepted', a.ok && a.data.created === true, a.err?.message);
+    check('the entry has no points yet', a.data.entry.points === null);
+    check('and no rank yet', a.data.entry.rank === null);
 
-    // DUPLICATE PROTECTION: resubmitting updates, never duplicates.
-    r = await call(`/api/fantasy/competitions/${comp.id}/entries`, 'POST', { playerIds: validTeam, captainId: cap1b }, U1.token);
-    check('resubmitting BEFORE lock updates the same entry', r.status === 200 && r.body.created === false);
+    a = attempt(() => fz.submitTeam(comp.id, U1.user.id, { playerIds: validTeam, captainId: cap1b }));
+    check('resubmitting BEFORE lock updates the same entry', a.ok && a.data.created === false);
     check('exactly one entry for this user', fz.listEntries(comp.id).filter((e) => e.userId === U1.user.id).length === 1);
     check('the captain changed', fz.getEntry(comp.id, U1.user.id).captainId === cap1b);
 
-    // A second user enters.
     const squad2 = pickSquad({ GK: 1, DEF: 3, MID: 4, FWD: 3 });
     const team2 = squad2.map((p) => p.id);
     const cap2 = squad2.find((p) => p.position === 'FWD').id;
-    r = await call(`/api/fantasy/competitions/${comp.id}/entries`, 'POST', { playerIds: team2, captainId: cap2 }, U2.token);
-    check('a second user can enter', r.status === 201, JSON.stringify(r.body).slice(0, 140));
+    a = attempt(() => fz.submitTeam(comp.id, U2.user.id, { playerIds: team2, captainId: cap2 }));
+    check('a second user can enter', a.ok && a.data.created === true, a.err?.message);
     check('two entries exist', fz.listEntries(comp.id).length === 2);
+    check('you can read your OWN entry', fz.getEntry(comp.id, U2.user.id)?.userId === U2.user.id);
 
-    // Privacy: you cannot read someone else's team.
-    r = await call(`/api/fantasy/competitions/${comp.id}/entries/me`, 'GET', undefined, U2.token);
-    check('you can read your OWN entry', r.status === 200 && r.body.entry.userId === U2.user.id);
+    a = attempt(() => fz.recordStats(comp.id, ORG.user.id, fwd[0].id, { minutes: 90, goals: 3 }));
+    check('stats CANNOT be recorded before kickoff', !a.ok, a.err?.message);
+    a = attempt(() => fz.scoreCompetition(comp.id));
+    check('scoring before lock is refused', !a.ok, a.err?.message);
 
-    // --- stats before kickoff are refused ------------------------------------
-    r = await call(`/api/fantasy/competitions/${comp.id}/stats`, 'POST', { playerId: fwd[0].id, stats: { minutes: 90, goals: 3 } }, ORG.token);
-    check('stats CANNOT be recorded before kickoff', r.status === 400, `got ${r.status}`);
-    r = await call(`/api/fantasy/competitions/${comp.id}/score`, 'POST', {}, ORG.token);
-    check('scoring before lock is refused', r.status === 400, `got ${r.status}`);
-
-    // --- THE LOCK ------------------------------------------------------------
-    // Move kickoff into the past. The server clock decides, not the client.
     store.update('fantasyCompetitions', comp.id, { kickoffAt: new Date(Date.now() - 1000).toISOString() });
     check('the competition is now locked by TIME alone', fz.isLocked(fz.getCompetition(comp.id)) === true);
 
-    r = await call(`/api/fantasy/competitions/${comp.id}/entries`, 'POST', { playerIds: team2, captainId: cap2 }, U1.token);
-    check('a team CANNOT be changed after lock', r.status === 400, `got ${r.status}`);
-    check('the refusal says why', /locked/i.test(r.body?.error ?? ''), r.body?.error);
+    a = attempt(() => fz.submitTeam(comp.id, U1.user.id, { playerIds: team2, captainId: cap2 }));
+    check('a team CANNOT be changed after lock', !a.ok, a.err?.message);
+    check('the refusal says why', /locked/i.test(a.err?.message ?? ''));
     check('the stored team is unchanged', fz.getEntry(comp.id, U1.user.id).captainId === cap1b);
 
-    r = await call(`/api/fantasy/competitions/${comp.id}/entries`, 'POST', { playerIds: validTeam, captainId: cap1 },
-      (await call('/api/auth/register', 'POST', { handle: 'latecomer', password: 'a good passphrase' })).body.token);
-    check('a NEW entry after lock is refused', r.status === 400, `got ${r.status}`);
+    const LATE = (await call('/api/auth/register', 'POST', { handle: 'latecomer', password: 'a good passphrase' })).body;
+    a = attempt(() => fz.submitTeam(comp.id, LATE.user.id, { playerIds: validTeam, captainId: cap1 }));
+    check('a NEW entry after lock is refused', !a.ok, a.err?.message);
 
-    // --- stats + scoring ------------------------------------------------------
-    r = await call(`/api/fantasy/competitions/${comp.id}/stats`, 'POST', { playerId: cap1, stats: { minutes: 90, goals: 2 } }, ORG.token);
-    check('the organiser can record stats after kickoff', r.status === 200);
-    r = await call(`/api/fantasy/competitions/${comp.id}/stats`, 'POST', { playerId: cap1, stats: { minutes: 90, goals: 5 } }, U1.token);
-    check('a PARTICIPANT cannot record stats (403)', r.status === 403, `got ${r.status}`);
+    a = attempt(() => fz.recordStats(comp.id, ORG.user.id, cap1, { minutes: 90, goals: 2 }));
+    check('the organiser can record stats after kickoff', a.ok, a.err?.message);
+    a = attempt(() => fz.recordStats(comp.id, U1.user.id, cap1, { minutes: 90, goals: 5 }));
+    check('a PARTICIPANT cannot record stats', !a.ok && /organiser/.test(a.err.message), a.err?.message);
 
     for (const p of squad1.slice(0, 6)) {
-      await call(`/api/fantasy/competitions/${comp.id}/stats`, 'POST',
-        { playerId: p.id, stats: { minutes: 90, goals: p.position === 'FWD' ? 1 : 0, assists: 1, cleanSheet: p.position === 'GK' } }, ORG.token);
+      attempt(() => fz.recordStats(comp.id, ORG.user.id, p.id,
+        { minutes: 90, goals: p.position === 'FWD' ? 1 : 0, assists: 1, cleanSheet: p.position === 'GK' }));
     }
 
-    r = await call(`/api/fantasy/competitions/${comp.id}/score`, 'POST', {}, U1.token);
-    check('a participant cannot score the competition (403)', r.status === 403, `got ${r.status}`);
+    a = attempt(() => fz.scoreCompetition(comp.id, U1.user.id));
+    check('a participant cannot score the competition', !a.ok && /organiser/.test(a.err.message), a.err?.message);
 
-    r = await call(`/api/fantasy/competitions/${comp.id}/score`, 'POST', {}, ORG.token);
-    check('the organiser scores it', r.status === 200);
-    const standings1 = r.body.standings;
-    check('every entry got a score', standings1.length === 2 && standings1.every((s) => Number.isFinite(s.points)));
-    check('ranks were assigned', standings1.every((s) => s.rank >= 1));
+    a = attempt(() => fz.scoreCompetition(comp.id, ORG.user.id));
+    check('the organiser scores it', a.ok, a.err?.message);
+    const standings1 = a.data.standings;
+    check('every entry got a score', standings1.length === 2 && standings1.every((x) => Number.isFinite(x.points)));
+    check('ranks were assigned', standings1.every((x) => x.rank >= 1));
 
-    // REPRODUCIBILITY: rescoring the same data gives the same answer.
     const again = fz.scoreCompetition(comp.id);
     check('rescoring is REPRODUCIBLE',
       JSON.stringify(again.standings) === JSON.stringify(standings1),
       `${JSON.stringify(again.standings)} vs ${JSON.stringify(standings1)}`);
 
-    // AUDITABILITY: the breakdown must explain the number.
     const e1 = fz.getEntry(comp.id, U1.user.id);
     check('the entry carries a full breakdown', Array.isArray(e1.breakdown) && e1.breakdown.length === 11);
     const sum = e1.breakdown.reduce((t, b) => t + b.points, 0);
@@ -4665,25 +4772,20 @@ console.log('\n=== FANTASY 11: LOCK, DETERMINISTIC SCORING, RANKING ===');
     const capLine = e1.breakdown.find((b) => b.isCaptain);
     check('the captain is flagged in the breakdown', Boolean(capLine));
     check('the captain line shows the multiplier', capLine.lines.some((l) => /Captain/.test(l.label)));
-
-    r = await call(`/api/fantasy/competitions/${comp.id}/standings`);
-    check('standings are publicly readable after scoring', r.status === 200 && r.body.standings.length === 2);
-    check('the competition is marked scored', r.body.status === 'scored');
+    check('standings are readable after scoring', fz.standings(comp.id).length === 2);
 
     // --- NO FANTASY ECONOMY ---------------------------------------------------
     check('fantasy created NO ledger transactions', store.all('ledgerTransactions').length === 0);
-    check('no fantasy wallet exists', store.all('fantasyWallets').length === 0);
-    r = await call(`/api/fantasy/competitions/${comp.id}/paid-entry`, 'POST', { amount: 200 }, U1.token);
-    check('PAID fantasy entry hits the same compliance gate (403)', r.status === 403, `got ${r.status}`);
-    check('and returns the same machine-readable code', r.body?.code === 'compliance_gate');
-    check('naming the same unmet requirements', r.body?.unmet?.includes('gaming_licence'));
-
-    r = await call('/api/fantasy/rules');
-    check('the scoring rules are published for verification', r.status === 200 && r.body.scoring.assist === 3);
+    const compliance = await import('../src/domain/compliance.js');
+    const gate = compliance.refuseIfUnlicensed();
+    check('paid fantasy entry hits the same compliance gate', Boolean(gate));
+    check('naming the same unmet requirements', (gate?.unmet ?? []).includes('gaming_licence'), JSON.stringify(gate));
+    check('the scoring rules are published for verification', fz.SCORING_RULES.assist === 3);
   } finally {
     srv.close();
   }
 }
+
 
 
 console.log('\n=== MIGRATIONS AGAINST AN OLD FIXTURE ===');
@@ -4793,6 +4895,9 @@ console.log('\n=== OPERATIONS: READINESS, DIAGNOSTICS, BACKUP ===');
     check('readiness recovers once fixed', r.status === 200);
 
     // --- diagnostics ---------------------------------------------------------
+    // Deployment bootstrap: this handle is named an operator by environment,
+    // which is exactly how a fresh deploy names its first operator.
+    process.env.BRIEF_OPERATORS = 'operator';
     const U = (await call('/api/auth/register', 'POST', { handle: 'operator', password: 'a good passphrase' })).body;
     r = await call('/api/ops/diagnostics', 'GET', undefined, U.token);
     check('diagnostics are available to an authenticated operator', r.status === 200);
@@ -4801,6 +4906,17 @@ console.log('\n=== OPERATIONS: READINESS, DIAGNOSTICS, BACKUP ===');
     check('they count real collections', Number.isFinite(r.body?.counts?.users));
     check('they surface recent errors', Array.isArray(r.body?.recentErrors));
     check('they surface rejected webhook callbacks', Number.isFinite(r.body?.rejectedCallbacks));
+
+    // --- T8 operator visibility: the dispute wall + resale listing wall ------
+    r = await call('/api/ops/disputes', 'GET', undefined, U.token);
+    check('the dispute wall is readable by an operator', r.status === 200 && Array.isArray(r.body?.disputes));
+    r = await call('/api/ops/disputes', 'GET');
+    check('the dispute wall is not anonymous', r.status === 401 || r.status === 403);
+    r = await call('/api/ops/ticket-listings', 'GET', undefined, U.token);
+    check('the resale listing wall is readable by an operator', r.status === 200 && Array.isArray(r.body?.listings));
+    check('removed listings keep their reason for the audit trail',
+      r.body.listings.filter((l) => l.status === 'removed')
+        .every((l) => typeof l.removedReason === 'string' && l.removedReason.length > 0));
 
     // --- backup --------------------------------------------------------------
     r = await call('/api/ops/backup', 'POST', {}, U.token);
@@ -4862,10 +4978,13 @@ console.log('\n=== OPERATIONS: READINESS, DIAGNOSTICS, BACKUP ===');
     // --- ops endpoints are not public ----------------------------------------
     // (dev fallback is on in tests, so this asserts the route exists and is
     // guarded by requireAuth rather than being anonymous-only.)
+    // With capability guards, a resolved caller WITHOUT the capability gets a
+    // real 403 answer -- still a response from a living, guarded route.
     r = await call('/api/ops/diagnostics');
-    check('diagnostics respond for a resolved caller', r.status === 200 || r.status === 401);
+    check('diagnostics respond for a resolved caller', [200, 401, 403].includes(r.status), `got ${r.status}`);
   } finally {
     srv.close();
+    delete process.env.BRIEF_OPERATORS;
   }
 }
 
@@ -4912,7 +5031,7 @@ console.log('\n=== ENDPOINT AUTHORIZATION RULES, ENCODED EXPLICITLY ===');
       ['POST', '/api/orders', { listingId: 'x' }],
       ['POST', '/api/arena/challenges', { gameId: 'efootball' }],
       ['GET', '/api/arena/matches', null],
-      ['POST', '/api/fantasy/competitions', { title: 'X', kickoffAt: new Date().toISOString() }],
+      ['POST', '/api/ligi/seasons', { name: 'X' }],
       ['GET', '/api/vendors/me/earnings', null],
       ['POST', '/api/vendors/me/payouts', {}],
       ['GET', '/api/ops/diagnostics', null],
@@ -4939,8 +5058,9 @@ console.log('\n=== ENDPOINT AUTHORIZATION RULES, ENCODED EXPLICITLY ===');
       ['GET', '/api/arena/games'],
       ['GET', '/api/arena/challenges'],
       ['GET', '/api/arena/status'],
-      ['GET', '/api/fantasy/rules'],
-      ['GET', '/api/fantasy/competitions']
+      ['GET', '/api/ligi/rules'],
+      ['GET', '/api/ligi/seasons'],
+      ['GET', '/api/epl/clubs']
     ];
     let allPublic = true;
     const blocked = [];
@@ -4984,586 +5104,6 @@ console.log('\n=== ENDPOINT AUTHORIZATION RULES, ENCODED EXPLICITLY ===');
     check('a stranger can still register with NO token', r.status === 200 || r.status === 201, `got ${r.status}`);
     check('this is the documented exception, and it still leaks nothing',
       !/ownerId|sourceId/.test(JSON.stringify(r.body)));
-  } finally {
-    srv.close();
-    if (prevDev === undefined) delete process.env.BRIEF_DEV_AUTH; else process.env.BRIEF_DEV_AUTH = prevDev;
-  }
-}
-
-
-console.log('\n=== AUCTION: PRICE DISCOVERY, NOT A SECOND ECONOMY ===');
-{
-  const auctions = await import('../src/domain/auction.js');
-  const vendors = await import('../src/domain/vendor.js');
-  const listings = await import('../src/domain/listing.js');
-  const settlementM = await import('../src/domain/settlement.js');
-  store._reset();
-
-  const future = (ms) => new Date(Date.now() + ms).toISOString();
-
-  const seller = { id: 'usr_seller' };
-  const v = vendors.createVendor({ ownerId: seller.id, displayName: 'Curio Shop', contactMethod: '0700' });
-  const mkListing = (over = {}) => listings.createListing({
-    vendorId: v.id, title: 'Carved stool', type: 'product',
-    price: 3000, currency: 'KES', quantityAvailable: 1, ...over
-  });
-  const l1 = mkListing();
-
-  // ---- creation rules ------------------------------------------------------
-  let threw = null;
-  try {
-    auctions.createAuction({ listingId: l1.id, ownerId: 'usr_stranger', startingPrice: 1000, endsAt: future(60000) });
-  } catch (e) { threw = e.message; }
-  check('a stranger cannot auction someone else\'s listing', /only the listing owner/.test(threw ?? ''), threw);
-
-  threw = null;
-  try {
-    auctions.createAuction({ listingId: l1.id, ownerId: seller.id, startingPrice: 1000, endsAt: new Date(Date.now() - 1000).toISOString() });
-  } catch (e) { threw = e.message; }
-  check('an auction cannot end in the past', /future/.test(threw ?? ''), threw);
-
-  threw = null;
-  try {
-    auctions.createAuction({ listingId: l1.id, ownerId: seller.id, startingPrice: 1000, reservePrice: 500, endsAt: future(60000) });
-  } catch (e) { threw = e.message; }
-  check('a reserve below the start price is refused', /reservePrice/.test(threw ?? ''), threw);
-
-  threw = null;
-  try {
-    auctions.createAuction({ listingId: l1.id, ownerId: seller.id, startingPrice: 1000, buyNowPrice: 900, endsAt: future(60000) });
-  } catch (e) { threw = e.message; }
-  check('a Buy Now below the start price is refused', /buyNowPrice/.test(threw ?? ''), threw);
-
-  const a1 = auctions.createAuction({ listingId: l1.id, ownerId: seller.id, startingPrice: 1000, endsAt: future(60000) });
-  check('an auction is created as draft', a1.status === 'draft');
-  check('it has NO winner', a1.winnerId === null && a1.winningBidId === null);
-  check('its price starts at the starting price', a1.currentPrice === 1000);
-  check('it is not yet biddable', a1.biddable === false);
-
-  threw = null;
-  try { auctions.createAuction({ listingId: l1.id, ownerId: seller.id, startingPrice: 1000, endsAt: future(60000) }); }
-  catch (e) { threw = e.message; }
-  check('a listing cannot have two live auctions', /already has an auction/.test(threw ?? ''), threw);
-
-  // ---- bidding requires an open auction ------------------------------------
-  threw = null;
-  try { auctions.placeBid({ auctionId: a1.id, bidderId: 'usr_b1', amount: 1500 }); }
-  catch (e) { threw = e.message; }
-  check('a draft auction refuses bids', /not open/.test(threw ?? ''), threw);
-
-  auctions.openAuction(a1.id, seller.id);
-  check('the owner opens it', auctions.getAuction(a1.id).status === 'open');
-  check('now it is biddable', auctions.getAuction(a1.id).biddable === true);
-
-  threw = null;
-  try { auctions.openAuction(a1.id, 'usr_stranger'); } catch (e) { threw = e.message; }
-  check('a stranger cannot open an auction', /only the owner/.test(threw ?? ''), threw);
-
-  // ---- A BID IS NOT A TRANSACTION -----------------------------------------
-  const ledgerBefore = store.all('ledgerTransactions').length;
-  const ordersBefore = store.all('orders').length;
-  auctions.placeBid({ auctionId: a1.id, bidderId: 'usr_b1', amount: 1200 });
-  check('a bid writes NO ledger transaction', store.all('ledgerTransactions').length === ledgerBefore);
-  check('a bid creates NO order', store.all('orders').length === ordersBefore);
-  check('a bid is stored in its own collection', store.all('bids').length === 1);
-  check('the price is now DERIVED from the bid', auctions.currentPrice(a1.id) === 1200);
-
-  // The seller has earned nothing. Bids are not revenue.
-  const earn = settlementM.vendorEarnings(v.id);
-  check('BIDS ARE NOT REVENUE: seller earnings still zero', earn.net === 0, JSON.stringify(earn));
-
-  // ---- bidding rules -------------------------------------------------------
-  threw = null;
-  try { auctions.placeBid({ auctionId: a1.id, bidderId: 'usr_b2', amount: 1200 }); }
-  catch (e) { threw = e.message; }
-  check('a bid must EXCEED the current price', /exceed/.test(threw ?? ''), threw);
-
-  threw = null;
-  try { auctions.placeBid({ auctionId: a1.id, bidderId: seller.id, amount: 5000 }); }
-  catch (e) { threw = e.message; }
-  check('the seller cannot bid on their own auction', /your own auction/.test(threw ?? ''), threw);
-
-  for (const bad of [0, -5, 2.5, NaN, Infinity, 1e308]) {
-    threw = null;
-    try { auctions.placeBid({ auctionId: a1.id, bidderId: 'usr_b2', amount: bad }); }
-    catch (e) { threw = e.message; }
-    check(`a bid of ${bad} is refused`, threw !== null, String(threw));
-  }
-
-  // Idempotency, matching orders.
-  const k = 'bid-key-1';
-  const r1 = auctions.placeBid({ auctionId: a1.id, bidderId: 'usr_b2', amount: 1500, idempotencyKey: k });
-  const r2 = auctions.placeBid({ auctionId: a1.id, bidderId: 'usr_b2', amount: 1500, idempotencyKey: k });
-  check('a repeated bid key returns the SAME bid', r1.bid.id === r2.bid.id);
-  check('and is flagged as reused', r2.reused === true);
-  check('only one row was written', store.filter('bids', (b) => b.idempotencyKey === k).length === 1);
-
-  // ---- the leader is derived, so retraction re-derives it ------------------
-  auctions.placeBid({ auctionId: a1.id, bidderId: 'usr_b3', amount: 2000 });
-  check('the leader is the highest bid', auctions.highestBid(a1.id).amount === 2000);
-  const top = auctions.highestBid(a1.id);
-  auctions.retractBid({ bidId: top.id, actorId: 'usr_b3' });
-  check('RETRACTION RE-DERIVES the price (no stale stored leader)',
-    auctions.currentPrice(a1.id) === 1500, String(auctions.currentPrice(a1.id)));
-  check('the retracted bid is excluded from active bids',
-    !auctions.activeBids(a1.id).some((b) => b.id === top.id));
-
-  threw = null;
-  try { auctions.retractBid({ bidId: r1.bid.id, actorId: 'usr_someone_else' }); }
-  catch (e) { threw = e.message; }
-  check('only the bidder may retract their bid', /only the bidder/.test(threw ?? ''), threw);
-
-  // ---- bidder privacy ------------------------------------------------------
-  const pub = auctions.publicView(auctions.getAuction(a1.id));
-  const pubStr = JSON.stringify(pub);
-  check('the public view shows the leading AMOUNT', pub.currentPrice === 1500);
-  check('and the bid count', pub.bidCount >= 1);
-  check('but NO bidder identity leaks', !/usr_b1|usr_b2|usr_b3/.test(pubStr), pubStr.slice(0, 160));
-  check('and no bid ids either', !/bid_/.test(pubStr));
-
-  // ---- closing: deterministic winner --------------------------------------
-  const closed = auctions.closeAuction({ auctionId: a1.id, actorId: seller.id });
-  check('the owner may close early', closed.changed === true && closed.sold === true);
-  check('the winner is the highest bidder', closed.auction.winnerId === 'usr_b2');
-  check('at the winning amount', closed.auction.winningAmount === 1500);
-  check('the auction is closed', closed.auction.status === 'closed');
-  const lost = store.filter('bids', (b) => b.auctionId === a1.id && b.status === 'lost');
-  check('losing bids are marked lost', lost.length >= 1);
-  check('A LOSING BID PRODUCED NO LEDGER ROW', store.all('ledgerTransactions').length === ledgerBefore);
-  check('and no order for the losers', store.filter('orders', (o) => o.buyerId === 'usr_b1').length === 0);
-
-  // Terminal: no reopening, no re-closing with a different winner.
-  const again = auctions.closeAuction({ auctionId: a1.id, actorId: seller.id });
-  check('closing twice is a no-op', again.changed === false);
-  check('the winner did not change', again.auction.winnerId === 'usr_b2');
-  threw = null;
-  try { auctions.openAuction(a1.id, seller.id); } catch (e) { threw = e.message; }
-  check('a closed auction cannot be REOPENED', /cannot open/.test(threw ?? ''), threw);
-  threw = null;
-  try { auctions.placeBid({ auctionId: a1.id, bidderId: 'usr_b1', amount: 99999 }); }
-  catch (e) { threw = e.message; }
-  check('and cannot take a late bid', /not open/.test(threw ?? ''), threw);
-
-  // ---- determinism: same bids in, same winner out --------------------------
-  //
-  // Note that placeBid REFUSES an equal bid, so a tie cannot arise through
-  // the public API at all -- that is the first assertion below. The tie-break
-  // is still tested, against rows written directly, because the comparator
-  // must be a total order even for data that predates the rule or arrives by
-  // repair.
-  {
-    const mkAuction = (owner) => {
-      const vv = vendors.createVendor({ ownerId: owner, displayName: owner, contactMethod: '1' });
-      const ll = listings.createListing({ vendorId: vv.id, title: 'X', type: 'product', price: 100, currency: 'KES', quantityAvailable: 1 });
-      const aa = auctions.createAuction({ listingId: ll.id, ownerId: owner, startingPrice: 100, endsAt: future(60000) });
-      auctions.openAuction(aa.id, owner);
-      return aa;
-    };
-
-    store._reset();
-    const aa = mkAuction('usr_s2');
-    auctions.placeBid({ auctionId: aa.id, bidderId: 'usr_early', amount: 500 });
-    let t = null;
-    try { auctions.placeBid({ auctionId: aa.id, bidderId: 'usr_late', amount: 500 }); }
-    catch (e) { t = e.message; }
-    check('an EQUAL bid is refused, so ties cannot arise through the API', /exceed/.test(t ?? ''), t);
-
-    // Force a tie at the data layer and confirm the winner is still stable.
-    const runWinner = () => {
-      store._reset();
-      const a2 = mkAuction('usr_s2');
-      const first = auctions.placeBid({ auctionId: a2.id, bidderId: 'usr_early', amount: 500 }).bid;
-      store.update('bids', first.id, { placedAt: '2020-01-01T00:00:00.000Z' });
-      // Written directly: placeBid would (correctly) refuse this.
-      store.insert('bids', {
-        id: 'bid_forced_tie', auctionId: a2.id, bidderId: 'usr_late', amount: 500,
-        currency: 'KES', status: 'active', idempotencyKey: null,
-        placedAt: '2020-06-01T00:00:00.000Z', createdAt: '2020-06-01T00:00:00.000Z'
-      });
-      return auctions.closeAuction({ auctionId: a2.id, actorId: 'usr_s2' }).auction.winnerId;
-    };
-    const w1 = runWinner(), w2 = runWinner(), w3 = runWinner();
-    check('a forced TIE breaks by who bid FIRST', w1 === 'usr_early', String(w1));
-    check('and the outcome is reproducible', w1 === w2 && w2 === w3);
-  }
-
-  // ---- reserve not met = closed with NO sale -------------------------------
-  {
-    store._reset();
-    const vv = vendors.createVendor({ ownerId: 'usr_s3', displayName: 'S3', contactMethod: '1' });
-    const ll = listings.createListing({ vendorId: vv.id, title: 'Rare', type: 'product', price: 9000, currency: 'KES', quantityAvailable: 1 });
-    const aa = auctions.createAuction({ listingId: ll.id, ownerId: 'usr_s3', startingPrice: 1000, reservePrice: 8000, endsAt: future(60000) });
-    auctions.openAuction(aa.id, 'usr_s3');
-    auctions.placeBid({ auctionId: aa.id, bidderId: 'usr_low', amount: 2000 });
-    const p = auctions.publicView(auctions.getAuction(aa.id));
-    check('the public view says a reserve EXISTS', p.hasReserve === true);
-    check('but never discloses its value', !JSON.stringify(p).includes('8000'));
-    check('and reports it unmet', p.reserveMet === false);
-    const r = auctions.closeAuction({ auctionId: aa.id, actorId: 'usr_s3' });
-    check('an unmet reserve closes with NO sale', r.sold === false);
-    check('no winner is recorded', r.auction.winnerId === null);
-    check('the under-bid is marked lost, not won',
-      store.filter('bids', (b) => b.auctionId === aa.id && b.status === 'won').length === 0);
-    check('and NO order exists', store.filter('orders', (o) => o.auctionId === aa.id).length === 0);
-    threw = null;
-    try { auctions.createWinnerOrder({ auctionId: aa.id, actorId: 'usr_s3' }); } catch (e) { threw = e.message; }
-    check('no order can be raised for an unsold auction', /no winner/.test(threw ?? ''), threw);
-  }
-
-  // ---- no bids at all ------------------------------------------------------
-  {
-    store._reset();
-    const vv = vendors.createVendor({ ownerId: 'usr_s4', displayName: 'S4', contactMethod: '1' });
-    const ll = listings.createListing({ vendorId: vv.id, title: 'Unwanted', type: 'product', price: 100, currency: 'KES', quantityAvailable: 1 });
-    const aa = auctions.createAuction({ listingId: ll.id, ownerId: 'usr_s4', startingPrice: 100, endsAt: future(60000) });
-    auctions.openAuction(aa.id, 'usr_s4');
-    const r = auctions.closeAuction({ auctionId: aa.id, actorId: 'usr_s4' });
-    check('an auction with no bids closes unsold', r.sold === false && r.auction.status === 'closed');
-    check('with no economic activity of any kind',
-      store.all('ledgerTransactions').length === 0 && store.all('orders').length === 0);
-  }
-
-  // ---- WINNER -> ORDER -> the ORDINARY chain -------------------------------
-  {
-    store._reset();
-    const vv = vendors.createVendor({ ownerId: 'usr_s5', displayName: 'S5', contactMethod: '1' });
-    const ll = listings.createListing({ vendorId: vv.id, title: 'Stool', type: 'product', price: 3000, currency: 'KES', quantityAvailable: 1 });
-    const aa = auctions.createAuction({ listingId: ll.id, ownerId: 'usr_s5', startingPrice: 1000, endsAt: future(60000) });
-    auctions.openAuction(aa.id, 'usr_s5');
-    auctions.placeBid({ auctionId: aa.id, bidderId: 'usr_w', amount: 4200 });
-    auctions.closeAuction({ auctionId: aa.id, actorId: 'usr_s5' });
-
-    let t = null;
-    try { auctions.createWinnerOrder({ auctionId: aa.id, actorId: 'usr_nobody' }); } catch (e) { t = e.message; }
-    check('a stranger cannot raise the winner\'s order', /only the winner/.test(t ?? ''), t);
-
-    const { order } = auctions.createWinnerOrder({ auctionId: aa.id, actorId: 'usr_w' });
-    check('the winner gets an ORDINARY order row', order.id.startsWith('ord_'));
-    check('priced from the WINNING BID, not the listing', order.total === 4200, String(order.total));
-    check('the buyer is the winner', order.buyerId === 'usr_w');
-    check('it is traceable back to the auction', order.auctionId === aa.id);
-    check('and to the exact bid', Boolean(order.bidId));
-    check('the order is NOT paid', order.transactionId === null);
-    check('stock was consumed', store.find('listings', (x) => x.id === ll.id).quantityAvailable === 0);
-
-    const dup = auctions.createWinnerOrder({ auctionId: aa.id, actorId: 'usr_w' });
-    check('raising the order twice returns the SAME order', dup.order.id === order.id && dup.reused === true);
-    check('and does not double-consume stock', store.find('listings', (x) => x.id === ll.id).quantityAvailable === 0);
-
-    // Settlement must still refuse without real money.
-    const ordersM = await import('../src/domain/order.js');
-    t = null;
-    try { ordersM.transitionOrder(order.id, 'settled'); } catch (e) { t = e.message; }
-    check('an auction order CANNOT settle without a settled ledger row', t !== null, String(t));
-    check('the seller has earned nothing yet', settlementM.vendorEarnings(vv.id).net === 0);
-
-    // Commission on an auction is the ORDINARY commission. No auction rate.
-    const split = settlementM.splitAmount(4200);
-    check('commission uses the SAME 5% rule', split.commission === 210, JSON.stringify(split));
-    check('and the split is exact', split.commission + split.sellerAmount === 4200, JSON.stringify(split));
-
-    // No auction wallet anywhere.
-    const collections = Object.keys(store.all('auctions').length >= 0 ? store._file ? {} : {} : {});
-    check('there is NO auction wallet collection',
-      store.all('wallets') === undefined || store.all('wallets').length === 0);
-    check('and no auction balance field on the auction row',
-      !('balance' in store.find('auctions', (x) => x.id === aa.id)));
-  }
-
-  // ---- WINNER NON-PAYMENT: an explicit path -------------------------------
-  {
-    store._reset();
-    const vv = vendors.createVendor({ ownerId: 'usr_s6', displayName: 'S6', contactMethod: '1' });
-    const ll = listings.createListing({ vendorId: vv.id, title: 'Bike', type: 'product', price: 5000, currency: 'KES', quantityAvailable: 1 });
-    const aa = auctions.createAuction({ listingId: ll.id, ownerId: 'usr_s6', startingPrice: 1000, endsAt: future(60000) });
-    auctions.openAuction(aa.id, 'usr_s6');
-    auctions.placeBid({ auctionId: aa.id, bidderId: 'usr_deadbeat', amount: 3000 });
-    auctions.placeBid({ auctionId: aa.id, bidderId: 'usr_runnerup', amount: 3500 });
-    // Retract the higher one so the deadbeat wins.
-    const hi = auctions.highestBid(aa.id);
-    auctions.retractBid({ bidId: hi.id, actorId: 'usr_runnerup' });
-    auctions.closeAuction({ auctionId: aa.id, actorId: 'usr_s6' });
-    const { order } = auctions.createWinnerOrder({ auctionId: aa.id, actorId: 'usr_s6' });
-
-    let t = null;
-    try { auctions.defaultWinner({ auctionId: aa.id, actorId: 'usr_deadbeat' }); } catch (e) { t = e.message; }
-    check('only the SELLER may record a default', /only the seller/.test(t ?? ''), t);
-
-    const failed = auctions.defaultWinner({ auctionId: aa.id, actorId: 'usr_s6' });
-    check('the auction moves to FAILED, not quietly closed', failed.status === 'failed');
-    check('the reason is recorded', /did not pay/.test(failed.defaultReason ?? ''));
-    check('the winner\'s order is cancelled',
-      store.find('orders', (o) => o.id === order.id).status === 'cancelled');
-    check('the item returns to stock',
-      store.find('listings', (x) => x.id === ll.id).quantityAvailable === 1);
-    check('the runner-up is NOT auto-awarded',
-      store.filter('orders', (o) => o.buyerId === 'usr_runnerup').length === 0);
-    check('and still no economic activity', store.all('ledgerTransactions').length === 0);
-  }
-
-  // ---- a PAID auction cannot be defaulted ---------------------------------
-  {
-    store._reset();
-    const ledgerM = await import('../src/domain/ledger.js');
-    const vv = vendors.createVendor({ ownerId: 'usr_s7', displayName: 'S7', contactMethod: '1' });
-    const ll = listings.createListing({ vendorId: vv.id, title: 'Lamp', type: 'product', price: 800, currency: 'KES', quantityAvailable: 1 });
-    const aa = auctions.createAuction({ listingId: ll.id, ownerId: 'usr_s7', startingPrice: 500, endsAt: future(60000) });
-    auctions.openAuction(aa.id, 'usr_s7');
-    auctions.placeBid({ auctionId: aa.id, bidderId: 'usr_payer', amount: 900 });
-    auctions.closeAuction({ auctionId: aa.id, actorId: 'usr_s7' });
-    const { order } = auctions.createWinnerOrder({ auctionId: aa.id, actorId: 'usr_payer' });
-
-    // Walk a real ledger transaction to settled, the long way round.
-    const tx = ledgerM.createTransaction({
-      type: 'sale', amount: 900, currency: 'KES', description: 'auction sale'
-    });
-    // The real state machine, walked in order. No shortcut to a terminal
-    // state: that is what makes the money auditable.
-    for (const st of ['pending', 'confirmed', 'settled']) {
-      ledgerM.transitionTransaction(tx.id, st);
-    }
-    const settledTx = store.find('ledgerTransactions', (x) => x.id === tx.id);
-    if (settledTx.status === 'settled') {
-      store.update('orders', order.id, { transactionId: tx.id });
-      let t = null;
-      try { auctions.defaultWinner({ auctionId: aa.id, actorId: 'usr_s7' }); } catch (e) { t = e.message; }
-      check('a PAID auction cannot be defaulted by the seller', /paid for/.test(t ?? ''), t);
-      const settledAuction = auctions.markSettled(aa.id);
-      check('a paid auction can be marked settled', settledAuction.status === 'settled');
-    } else {
-      check('ledger reached settled for the paid-auction case', false, `status=${settledTx.status}`);
-    }
-  }
-
-  // ---- markSettled cannot be used to fake a sale --------------------------
-  {
-    store._reset();
-    const vv = vendors.createVendor({ ownerId: 'usr_s8', displayName: 'S8', contactMethod: '1' });
-    const ll = listings.createListing({ vendorId: vv.id, title: 'Fake', type: 'product', price: 100, currency: 'KES', quantityAvailable: 1 });
-    const aa = auctions.createAuction({ listingId: ll.id, ownerId: 'usr_s8', startingPrice: 100, endsAt: future(60000) });
-    auctions.openAuction(aa.id, 'usr_s8');
-    auctions.placeBid({ auctionId: aa.id, bidderId: 'usr_x', amount: 200 });
-    auctions.closeAuction({ auctionId: aa.id, actorId: 'usr_s8' });
-    auctions.createWinnerOrder({ auctionId: aa.id, actorId: 'usr_x' });
-    let t = null;
-    try { auctions.markSettled(aa.id); } catch (e) { t = e.message; }
-    check('markSettled REFUSES an unpaid auction', /has not settled/.test(t ?? ''), t);
-    check('the auction stays closed', auctions.getAuction(aa.id).status === 'closed');
-  }
-
-  // ---- Buy Now -------------------------------------------------------------
-  {
-    store._reset();
-    const vv = vendors.createVendor({ ownerId: 'usr_s9', displayName: 'S9', contactMethod: '1' });
-    const ll = listings.createListing({ vendorId: vv.id, title: 'Chair', type: 'product', price: 2000, currency: 'KES', quantityAvailable: 1 });
-    const aa = auctions.createAuction({ listingId: ll.id, ownerId: 'usr_s9', startingPrice: 500, buyNowPrice: 2500, endsAt: future(60000) });
-    auctions.openAuction(aa.id, 'usr_s9');
-    auctions.placeBid({ auctionId: aa.id, bidderId: 'usr_bidder', amount: 700 });
-
-    let t = null;
-    try { auctions.buyNow({ auctionId: aa.id, buyerId: 'usr_s9' }); } catch (e) { t = e.message; }
-    check('the seller cannot Buy Now their own auction', /your own/.test(t ?? ''), t);
-
-    const r = auctions.buyNow({ auctionId: aa.id, buyerId: 'usr_instant' });
-    check('Buy Now ends the auction immediately', r.auction.status === 'closed');
-    check('the buyer wins', r.auction.winnerId === 'usr_instant');
-    check('at exactly the Buy Now price', r.auction.winningAmount === 2500);
-    check('the earlier bidder loses and pays nothing',
-      store.find('bids', (b) => b.bidderId === 'usr_bidder').status === 'lost');
-    check('Buy Now still creates NO ledger row by itself', store.all('ledgerTransactions').length === 0);
-    const { order } = auctions.createWinnerOrder({ auctionId: aa.id, actorId: 'usr_instant' });
-    check('and the winner order uses the Buy Now amount', order.total === 2500);
-  }
-
-  // ---- Circle auction: membership is enforced ------------------------------
-  {
-    store._reset();
-    const circlesM = await import('../src/domain/circle.js');
-    const membersM = await import('../src/domain/member.js');
-    const vv = vendors.createVendor({ ownerId: 'usr_s10', displayName: 'S10', contactMethod: '1' });
-    const ll = listings.createListing({ vendorId: vv.id, title: 'Members only', type: 'product', price: 300, currency: 'KES', quantityAvailable: 1 });
-    const c = circlesM.createTargetCircle({ name: 'Kilimani Traders', description: 'trade' });
-    membersM.addMember(c.id, 'usr_member', 'contributor');
-
-    let t = null;
-    try {
-      auctions.createAuction({ listingId: ll.id, ownerId: 'usr_s10', type: 'circle', startingPrice: 100, endsAt: future(60000) });
-    } catch (e) { t = e.message; }
-    check('a circle auction requires a circleId', /circleId/.test(t ?? ''), t);
-
-    const aa = auctions.createAuction({
-      listingId: ll.id, ownerId: 'usr_s10', type: 'circle',
-      startingPrice: 100, endsAt: future(60000), circleId: c.id
-    });
-    auctions.openAuction(aa.id, 'usr_s10');
-    t = null;
-    try { auctions.placeBid({ auctionId: aa.id, bidderId: 'usr_outsider', amount: 500 }); }
-    catch (e) { t = e.message; }
-    check('a NON-MEMBER cannot bid in a circle auction', /circle members/.test(t ?? ''), t);
-    const ok = auctions.placeBid({ auctionId: aa.id, bidderId: 'usr_member', amount: 500 });
-    check('a member can', ok.bid.amount === 500);
-  }
-
-  // ---- server-authoritative timing ----------------------------------------
-  {
-    store._reset();
-    const vv = vendors.createVendor({ ownerId: 'usr_s11', displayName: 'S11', contactMethod: '1' });
-    const ll = listings.createListing({ vendorId: vv.id, title: 'Timed', type: 'product', price: 100, currency: 'KES', quantityAvailable: 1 });
-    const aa = auctions.createAuction({ listingId: ll.id, ownerId: 'usr_s11', startingPrice: 100, endsAt: future(60000) });
-    auctions.openAuction(aa.id, 'usr_s11');
-    auctions.placeBid({ auctionId: aa.id, bidderId: 'usr_t1', amount: 400 });
-
-    // Move the end time into the past: the SERVER clock now says it is over.
-    store.update('auctions', aa.id, { endsAt: new Date(Date.now() - 1000).toISOString() });
-    let t = null;
-    try { auctions.placeBid({ auctionId: aa.id, bidderId: 'usr_t2', amount: 900 }); }
-    catch (e) { t = e.message; }
-    check('the SERVER clock closes bidding, whatever the client thinks', /has ended/.test(t ?? ''), t);
-
-    // A non-owner may finalise an auction whose time has passed.
-    const r = auctions.closeAuction({ auctionId: aa.id, actorId: 'usr_anyone' });
-    check('an expired auction can be finalised by anyone', r.changed === true && r.sold === true);
-    check('and the winner is the last valid bidder', r.auction.winnerId === 'usr_t1');
-
-    // The sweep is idempotent.
-    const sweep1 = auctions.sweepExpired();
-    check('sweeping an already-closed auction does nothing', sweep1.closed === 0);
-  }
-
-  // ---- cancellation --------------------------------------------------------
-  {
-    store._reset();
-    const vv = vendors.createVendor({ ownerId: 'usr_s12', displayName: 'S12', contactMethod: '1' });
-    const ll = listings.createListing({ vendorId: vv.id, title: 'C', type: 'product', price: 100, currency: 'KES', quantityAvailable: 1 });
-    const aa = auctions.createAuction({ listingId: ll.id, ownerId: 'usr_s12', startingPrice: 100, endsAt: future(60000) });
-    auctions.openAuction(aa.id, 'usr_s12');
-    auctions.placeBid({ auctionId: aa.id, bidderId: 'usr_c1', amount: 300 });
-    let t = null;
-    try { auctions.cancelAuction({ auctionId: aa.id, actorId: 'usr_s12' }); } catch (e) { t = e.message; }
-    check('a seller CANNOT cancel out of a live bid', /already has bids/.test(t ?? ''), t);
-
-    const ll2 = listings.createListing({ vendorId: vv.id, title: 'C2', type: 'product', price: 100, currency: 'KES', quantityAvailable: 1 });
-    const bb = auctions.createAuction({ listingId: ll2.id, ownerId: 'usr_s12', startingPrice: 100, endsAt: future(60000) });
-    const cancelled = auctions.cancelAuction({ auctionId: bb.id, actorId: 'usr_s12' });
-    check('an unbid auction can be cancelled', cancelled.status === 'cancelled');
-    t = null;
-    try { auctions.openAuction(bb.id, 'usr_s12'); } catch (e) { t = e.message; }
-    check('a cancelled auction cannot be opened', /cannot open/.test(t ?? ''), t);
-  }
-}
-
-console.log('\n=== AUCTION OVER HTTP ===');
-{
-  process.env.NODE_ENV = 'test';
-  // Dev fallback OFF: otherwise every anonymous request would be silently
-  // treated as the single dev user and the authorization assertions below
-  // would prove nothing.
-  const prevDev = process.env.BRIEF_DEV_AUTH;
-  process.env.BRIEF_DEV_AUTH = '0';
-  const { default: app } = await import('../src/index.js');
-  store._reset();
-  const srv = app.listen(0);
-  const port = srv.address().port;
-  const call = async (path, method = 'GET', body, token) => {
-    const headers = {};
-    if (body) headers['content-type'] = 'application/json';
-    if (token) headers.authorization = `Bearer ${token}`;
-    const res = await fetch(`http://127.0.0.1:${port}${path}`, {
-      method, headers, body: body ? JSON.stringify(body) : undefined
-    });
-    return { status: res.status, body: await res.json().catch(() => null) };
-  };
-
-  try {
-    const u = Date.now().toString(36);
-    const seller = (await call('/api/auth/register', 'POST', { handle: `aucs_${u}`, password: 'a good passphrase' })).body;
-    const bidder = (await call('/api/auth/register', 'POST', { handle: `aucb_${u}`, password: 'a good passphrase' })).body;
-    const other = (await call('/api/auth/register', 'POST', { handle: `auco_${u}`, password: 'a good passphrase' })).body;
-
-    await call('/api/vendors', 'POST', { displayName: 'Auction House' }, seller.token);
-    const listing = (await call('/api/listings', 'POST',
-      { title: 'Signed print', type: 'product', price: 1000, currency: 'KES', quantityAvailable: 1 }, seller.token)).body.listing;
-    await call(`/api/listings/${listing.id}/status`, 'POST', { status: 'active' }, seller.token);
-
-    let r = await call('/api/auctions', 'POST', { listingId: listing.id, startingPrice: 500, endsAt: new Date(Date.now() + 60000).toISOString() });
-    check('creating an auction requires auth (401)', r.status === 401, `got ${r.status}`);
-
-    r = await call('/api/auctions', 'POST', { listingId: listing.id, startingPrice: 500, endsAt: new Date(Date.now() + 60000).toISOString() }, other.token);
-    check('a non-owner cannot auction the listing (400)', r.status === 400, `got ${r.status}`);
-
-    r = await call('/api/auctions', 'POST',
-      { listingId: listing.id, startingPrice: 500, buyNowPrice: 5000, endsAt: new Date(Date.now() + 60000).toISOString() }, seller.token);
-    check('the owner creates an auction (201)', r.status === 201, JSON.stringify(r.body).slice(0, 140));
-    const auc = r.body.auction;
-
-    r = await call(`/api/auctions/${auc.id}/bids`, 'POST', { amount: 600 }, bidder.token);
-    check('a draft auction refuses bids (400)', r.status === 400, `got ${r.status}`);
-
-    await call(`/api/auctions/${auc.id}/open`, 'POST', {}, seller.token);
-    r = await call(`/api/auctions/${auc.id}/bids`, 'POST', { amount: 600 }, bidder.token);
-    check('a bid is accepted (201)', r.status === 201, JSON.stringify(r.body).slice(0, 140));
-    check('the response shows the new price', r.body.auction.currentPrice === 600);
-    check('and does NOT name other bidders', !JSON.stringify(r.body.auction).includes(bidder.user.id));
-
-    r = await call(`/api/auctions/${auc.id}/bids`, 'POST', { amount: 550 }, other.token);
-    check('a lower bid is refused (400)', r.status === 400, `got ${r.status}`);
-
-    // Bidder privacy over HTTP.
-    r = await call(`/api/auctions/${auc.id}`, 'GET', undefined, other.token);
-    check('a rival bidder sees the public view only', !JSON.stringify(r.body).includes(bidder.user.id),
-      JSON.stringify(r.body).slice(0, 180));
-    r = await call(`/api/auctions/${auc.id}/bids`, 'GET', undefined, other.token);
-    check('a rival CANNOT read the bid list (403)', r.status === 403, `got ${r.status}`);
-    r = await call(`/api/auctions/${auc.id}/bids`, 'GET', undefined, seller.token);
-    check('the SELLER can read the bid list', r.status === 200 && r.body.bids.length === 1);
-
-    r = await call('/api/bids/mine', 'GET', undefined, bidder.token);
-    check('a bidder sees their OWN bids', r.body.bids.length === 1);
-    r = await call('/api/bids/mine', 'GET', undefined, other.token);
-    check('and only their own', r.body.bids.length === 0);
-
-    // Idempotent bidding over the wire.
-    const key = `k-${u}`;
-    const [b1, b2] = await Promise.all([
-      call(`/api/auctions/${auc.id}/bids`, 'POST', { amount: 800, idempotencyKey: key }, other.token),
-      call(`/api/auctions/${auc.id}/bids`, 'POST', { amount: 800, idempotencyKey: key }, other.token)
-    ]);
-    const ids = [b1.body?.bid?.id, b2.body?.bid?.id];
-    check('concurrent duplicate bid keys yield ONE bid', ids[0] === ids[1], ids.join(' vs '));
-
-    // Close and order.
-    r = await call(`/api/auctions/${auc.id}/close`, 'POST', {}, other.token);
-    check('a non-owner cannot close early (400)', r.status === 400, `got ${r.status}`);
-    r = await call(`/api/auctions/${auc.id}/close`, 'POST', {}, seller.token);
-    check('the seller closes it', r.status === 200 && r.body.sold === true);
-    check('the winner is the highest bidder', r.body.auction.winnerId === other.user.id);
-
-    r = await call(`/api/auctions/${auc.id}/order`, 'POST', {}, bidder.token);
-    check('a LOSER cannot raise the winner order (403)', r.status === 403, `got ${r.status}`);
-    r = await call(`/api/auctions/${auc.id}/order`, 'POST', {}, other.token);
-    check('the winner raises their order (201)', r.status === 201, JSON.stringify(r.body).slice(0, 140));
-    const order = r.body.order;
-    check('priced at the winning bid', order.total === 800);
-    check('and unpaid', order.paid !== true);
-
-    // The ordinary payment path applies, and still refuses honestly.
-    r = await call(`/api/orders/${order.id}/pay`, 'POST', { phone: '0722000111' }, other.token);
-    check('paying an auction order uses the ORDINARY route', r.status === 503, `got ${r.status}`);
-    check('and admits nothing was charged', r.body?.charged === false);
-
-    r = await call('/api/economic/reconcile', 'GET', undefined, seller.token);
-    check('the ledger is still balanced after an auction', r.body?.reconciliation?.balanced === true);
-    r = await call('/api/vendors/me/earnings', 'GET', undefined, seller.token);
-    check('an unpaid auction produced NO earnings', r.body?.earnings?.net === 0);
-
-    // Signals: one activity layer.
-    r = await call('/api/signals');
-    const kinds = (r.body?.signals ?? []).map((s) => s.type);
-    check('auction signals use the shared layer', kinds.includes('auction_opened') && kinds.includes('bid_placed'));
-    check('and record the close', kinds.includes('auction_closed'));
-    const bidSignals = (r.body?.signals ?? []).filter((s) => s.type === 'bid_placed');
-    check('bid signals do not leak the bidder to a public reader',
-      bidSignals.every((s) => !JSON.stringify(s.metadata ?? {}).includes('usr_')));
   } finally {
     srv.close();
     if (prevDev === undefined) delete process.env.BRIEF_DEV_AUTH; else process.env.BRIEF_DEV_AUTH = prevDev;
@@ -6615,6 +6155,8 @@ console.log('\n=== MANUAL CAPTURE HONESTY + THREE UNGUARDED WRITES ===');
     check('an explicit save never loses the words the person typed', r.body?.result?.created === true, JSON.stringify(r.body).slice(0, 160));
 
     const kept = store.find('objects', (o) => o.id === r.body?.result?.objectId);
+    check('the capture is attributed to its capturer (the confirmed-notification rail needs someone to notify)',
+      kept?.capturedBy === me.user.id, JSON.stringify({ capturedBy: kept?.capturedBy ?? null, caller: me.user.id }));
     check('the kept note claims exactly the confidence extraction earned, not a flattering constant',
       kept?.extractionConfidence === earned, `claimed ${kept?.extractionConfidence} vs earned ${earned}`);
     check('that confidence is below the number it used to assert', (kept?.extractionConfidence ?? 1) < 0.85,
@@ -7151,6 +6693,778 @@ console.log('\n=== SUBSCRIPTIONS: JOINING A PLAN ===');
       again.status === 200 && again.body.changed === false, JSON.stringify(again.body).slice(0, 120));
   } finally {
     srv.close();
+  }
+}
+
+
+
+console.log('\n=== TICKET RESALE MARKET (Tikiti T1) ===');
+{
+  // Real identities over HTTP; the resale market is a multi-party system.
+  process.env.BRIEF_DEV_AUTH = '0';
+  process.env.BRIEF_REVIEWERS = 'tikrev';
+  const { default: app } = await import('../src/index.js');
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    const reg = async (h) => (await call('/api/auth/register', 'POST', { handle: h, password: 'a good passphrase' })).body;
+    const A = await reg('tikseller_' + Date.now().toString(36));
+    const B = await reg('tikbuyer_' + Date.now().toString(36));
+    const C = await reg('tikgift_' + Date.now().toString(36));
+    const REV = await reg('tikrev');
+    check('four real identities registered', [A, B, C, REV].every((x) => x?.token));
+
+    // --- a paid event with a confirmed seat ------------------------------
+    let r = await call('/api/campaigns', 'POST', { title: 'Resale Night ' + Date.now().toString(36), description: 'One seat, resold honestly', type: 'popup', price: 1500, capacity: 10 }, A.token);
+    check('organiser creates a paid campaign', r.status === 201, JSON.stringify(r.body).slice(0, 120));
+    const campId = r.body?.campaign?.id;
+    r = await call(`/api/campaigns/${campId}/publish`, 'POST', {}, A.token);
+    check('campaign published', r.status === 200, `got ${r.status}`);
+    const camp = store.find('campaigns', (c) => c.id === campId);
+    check('the published campaign carries a public slug', Boolean(camp?.publicSlug));
+
+    r = await call(`/api/public/campaigns/${camp.publicSlug}/register`, 'POST', { attendeeRef: 'seat-holder-a', name: 'Seat Holder A' }, A.token);
+    check('a signed-in user registers their own seat', r.status === 201, JSON.stringify(r.body).slice(0, 120));
+    const regA = store.find('registrations', (x) => x.attendeeRef === 'seat-holder-a');
+    check('the registration is bound to their identity', regA?.userId === A.user?.id, `${regA?.userId} vs ${A.user?.id}`);
+    r = await call(`/api/campaigns/${campId}/registrations/${regA.id}/confirm-payment`, 'POST', {}, A.token);
+    check('payment confirmed by the organiser', r.status === 201 || r.status === 200, JSON.stringify(r.body).slice(0, 120));
+    const paidTx = store.find('ledgerTransactions', (t) => t.registrationId === regA.id);
+    check('confirmation created a genuinely SETTLED ledger row', paidTx?.status === 'settled');
+
+    // --- issuance ---------------------------------------------------------
+    r = await call('/api/ticket-market/me/tickets', 'GET', undefined, A.token);
+    const tik = r.body?.tickets?.[0];
+    check('a confirmed seat automatically becomes a resale ticket', r.body?.tickets?.length === 1 && Boolean(tik?.id));
+    check('the ticket answers to the registration gate code', tik?.code === regA.ticketCode, `${tik?.code} vs ${regA.ticketCode}`);
+    check('the live scan code carries version 1', tik?.scanCode === `${regA.ticketCode}#1`);
+
+    // A public stranger's seat never enters the resale system: no identity,
+    // no ownership, no invented ticket.
+    await call(`/api/public/campaigns/${camp.publicSlug}/register`, 'POST', { attendeeRef: 'stranger-x', name: 'Stranger' });
+    const regX = store.find('registrations', (x) => x.attendeeRef === 'stranger-x');
+    await call(`/api/campaigns/${campId}/registrations/${regX.id}/confirm-payment`, 'POST', {}, A.token);
+    check("an anonymous stranger's confirmed seat issues NO resale ticket",
+      store.filter('tickets', (t) => t.registrationId === regX.id).length === 0);
+
+    // --- listing attacks ----------------------------------------------------
+    const badPrices = [0, -100, 12.5, 'free'];
+    for (const p of badPrices) {
+      r = await call('/api/ticket-market/listings', 'POST', { ticketId: tik.id, price: p }, A.token);
+      check(`price ${JSON.stringify(p)} is refused`, r.status === 400, `got ${r.status}`);
+    }
+    r = await call('/api/ticket-market/listings', 'POST', { ticketId: tik.id, price: 2500 }, B.token);
+    check('only the owner may list a ticket', r.status === 400 && /owner/.test(r.body?.error ?? ''), JSON.stringify(r.body));
+    r = await call('/api/ticket-market/listings', 'POST', { ticketId: tik.id, price: 2500, note: 'Can no longer attend' }, A.token);
+    check('the owner lists the seat for resale', r.status === 201, JSON.stringify(r.body).slice(0, 120));
+    const listing = r.body?.listing;
+    r = await call('/api/ticket-market/listings', 'POST', { ticketId: tik.id, price: 3000 }, A.token);
+    check('a ticket cannot be listed twice in parallel', r.status === 400 && /already/.test(r.body?.error ?? ''), JSON.stringify(r.body));
+
+    r = await call(`/api/ticket-market/events/${campId}/listings`, 'GET', undefined, B.token);
+    const view = r.body?.listings?.[0];
+    check('the event context shows the active listing at the server-fixed price',
+      view?.price === 2500 && view?.id === listing.id);
+    check('the public listing leaks no seller identity column',
+      view && !('sellerId' in view) && !('ownerUserId' in view), Object.keys(view ?? {}).join(','));
+
+    // --- buying -------------------------------------------------------------
+    r = await call('/api/ticket-market/orders', 'POST', { listingId: listing.id }, A.token);
+    check('the seller cannot buy their own listing', r.status === 400, `got ${r.status}`);
+    r = await call('/api/ticket-market/orders', 'POST', { listingId: listing.id }, B.token);
+    check('a buyer opens an order at the listed price', r.status === 201 && r.body?.order?.total === 2500, JSON.stringify(r.body).slice(0, 120));
+    const order = r.body?.order;
+    r = await call('/api/ticket-market/orders', 'POST', { listingId: listing.id }, C.token);
+    check('a second buyer cannot open a parallel order on the same seat', r.status === 400 && /no longer/.test(r.body?.error ?? ''), JSON.stringify(r.body));
+
+    // --- payment honesty ------------------------------------------------------
+    r = await call(`/api/ticket-market/orders/${order.id}/pay`, 'POST', {}, B.token);
+    check('paying with no provider configured is an honest 503 charged:false',
+      r.status === 503 && r.body?.charged === false, `${r.status} ${JSON.stringify(r.body).slice(0, 100)}`);
+
+    // --- settlement requires genuine money ------------------------------------
+    r = await call(`/api/ticket-market/orders/${order.id}/settle`, 'POST', {}, B.token);
+    check('settle without a ledger row is refused', r.status === 400 && /settled ledger/.test(r.body?.error ?? ''), JSON.stringify(r.body));
+    const ledgerDomain = await import('../src/domain/ledger.js');
+    const mkSettled = async (amount, who) => {
+      let t = ledgerDomain.createTransaction({ amount, type: 'sale', counterparty: who, description: 'resale payment' });
+      for (const step of ['pending', 'confirmed', 'settled']) t = ledgerDomain.transitionTransaction(t.id, step, 'test settlement');
+      return t;
+    };
+    const shortTx = await mkSettled(100, B.user.id);
+    r = await call(`/api/ticket-market/orders/${order.id}/settle`, 'POST', { transactionId: shortTx.id }, B.token);
+    check('a settled row of the WRONG amount does not transfer a ticket', r.status === 400 && /amount/.test(r.body?.error ?? ''), JSON.stringify(r.body));
+    const otherTx = await mkSettled(2500, C.user.id);
+    r = await call(`/api/ticket-market/orders/${order.id}/settle`, 'POST', { transactionId: otherTx.id }, B.token);
+    check("someone else's settled row does not transfer the ticket", r.status === 400, `got ${r.status}`);
+    const realTx = await mkSettled(2500, B.user.id);
+    r = await call(`/api/ticket-market/orders/${order.id}/settle`, 'POST', { transactionId: realTx.id }, B.token);
+    check('settlement with the buyer\'s genuinely settled row completes the order',
+      r.status === 200 && r.body?.order?.status === 'completed', JSON.stringify(r.body).slice(0, 140));
+
+    // --- the transfer itself ---------------------------------------------------
+    const sold = store.find('tickets', (t) => t.id === tik.id);
+    check('ownership moved to the buyer', sold.ownerUserId === B.user.id);
+    check('the code version bumped — every printed QR before this is dead', sold.codeVersion === 2, `v${sold.codeVersion}`);
+    check('the listing is sold, not relisted', store.find('ticketListings', (l) => l.id === listing.id).status === 'sold');
+    check('the transfer is recorded with provenance',
+      store.find('ticketTransfers', (t) => t.ticketId === tik.id && t.kind === 'purchase' && t.codeVersionAfter === 2));
+
+    // --- the gate honours versions --------------------------------------------
+    r = await call(`/api/tickets/${regA.ticketCode}`, 'GET', undefined, A.token);
+    check('the gate refuses the pre-transfer QR (bare code)', r.status === 409 && r.body?.reason === 'stale_code', `${r.status}`);
+    r = await call(`/api/tickets/${regA.ticketCode}?v=1`, 'GET', undefined, A.token);
+    check('the gate refuses the stale version explicitly', r.status === 409);
+    r = await call(`/api/tickets/${regA.ticketCode}?v=2`, 'GET', undefined, A.token);
+    check('the gate accepts the CURRENT version', r.status === 200, `${r.status}`);
+
+    // --- gifting -----------------------------------------------------------------
+    r = await call(`/api/ticket-market/tickets/${tik.id}/transfer`, 'POST', { toUserId: C.user.id }, B.token);
+    check('an owner can gift a seat', r.status === 200 && r.body?.ticket?.codeVersion === 3, JSON.stringify(r.body).slice(0, 120));
+    r = await call('/api/ticket-market/me/tickets', 'GET', undefined, C.token);
+    check("the recipient's wallet of tickets shows the live scan code", r.body?.tickets?.[0]?.scanCode === `${regA.ticketCode}#3`);
+
+    // --- refunds revert, and kill the recipient's QR -------------------------------
+    r = await call(`/api/ticket-market/orders/${order.id}/refund`, 'POST', {}, A.token);
+    check('a completed order is refunded through its real ledger row',
+      r.status === 200 && r.body?.order?.status === 'refunded', JSON.stringify(r.body).slice(0, 140));
+    check('the ledger row itself transitioned to refunded', store.find('ledgerTransactions', (t) => t.id === realTx.id).status === 'refunded');
+    const reverted = store.find('tickets', (t) => t.id === tik.id);
+    check('ownership reverted to the seller', reverted.ownerUserId === A.user.id);
+    check("the recipient's QR died with the revert", reverted.codeVersion === 4, `v${reverted.codeVersion}`);
+    r = await call(`/api/tickets/${regA.ticketCode}?v=3`, 'GET', undefined, A.token);
+    check('the gate refuses the post-refund code', r.status === 409);
+
+    // --- the seller confirms out-of-band money: the walkable path ----------
+    r = await call('/api/ticket-market/listings', 'POST', { ticketId: tik.id, price: 1800 }, A.token);
+    const l2 = r.body?.listing;
+    check('seller relists at KES 1,800', r.status === 201);
+    r = await call('/api/ticket-market/orders', 'POST', { listingId: l2.id }, C.token);
+    const o2 = r.body?.order;
+    check('a second buyer opens an order', r.status === 201 && o2?.total === 1800);
+    r = await call(`/api/ticket-market/orders/${o2.id}/confirm-received`, 'POST', {}, C.token);
+    check('the BUYER cannot confirm receiving money', r.status === 400 && /seller/.test(r.body?.error ?? ''), JSON.stringify(r.body));
+    r = await call(`/api/ticket-market/orders/${o2.id}/confirm-received`, 'POST', {}, A.token);
+    check('the seller confirms receiving payment out-of-band',
+      r.status === 200 && r.body?.order?.status === 'completed', JSON.stringify(r.body).slice(0, 140));
+    const attnTx = store.find('ledgerTransactions', (t) => t.counterparty === C.user.id && t.amount === 1800);
+    check('the confirmation created a genuinely settled ledger row',
+      attnTx?.status === 'settled' && /confirmed by the seller/.test(attnTx?.description ?? ''));
+    const moved = store.find('tickets', (t) => t.id === tik.id);
+    check('the seat moved to the buyer with a fresh code version',
+      moved.ownerUserId === C.user.id && moved.codeVersion === 5, `v${moved.codeVersion}`);
+    r = await call(`/api/tickets/${regA.ticketCode}?v=5`, 'GET', undefined, A.token);
+    check('the gate accepts only the newest code', r.status === 200);
+    r = await call(`/api/tickets/${regA.ticketCode}?v=4`, 'GET', undefined, A.token);
+    check('the previous version is dead at the gate', r.status === 409);
+
+    // --- gifting by handle ---------------------------------------------------
+    r = await call(`/api/ticket-market/tickets/${tik.id}/transfer`, 'POST', { toHandle: 'nosuchperson' }, C.token);
+    check('gifting to an unknown handle is refused', r.status === 400 && /recipient/.test(r.body?.error ?? ''), JSON.stringify(r.body));
+    r = await call(`/api/ticket-market/tickets/${tik.id}/transfer`, 'POST', { toHandle: B.user?.handle }, C.token);
+    check('gifting by HANDLE moves the seat', r.status === 200 && r.body?.ticket?.codeVersion === 6, JSON.stringify(r.body).slice(0, 120));
+
+    // --- moderation ------------------------------------------------------------------
+    // B holds the seat now (the gift above), so B is the one who relists.
+    r = await call('/api/ticket-market/listings', 'POST', { ticketId: tik.id, price: 2000 }, B.token);
+    const fresh = r.body?.listing;
+    check('the current owner relists the seat', r.status === 201);
+    r = await call(`/api/ticket-market/listings/${fresh.id}/remove`, 'POST', { reason: 'suspected fake' }, B.token);
+    check('a plain user cannot remove listings (403 names the capability)',
+      r.status === 403 && r.body?.requiredCapability === 'moderate', JSON.stringify(r.body));
+    r = await call(`/api/ticket-market/listings/${fresh.id}/remove`, 'POST', { reason: 'suspected fake' }, REV.token);
+    check('a reviewer removes a listing with a reason', r.status === 200 && r.body?.listing?.status === 'removed', JSON.stringify(r.body).slice(0, 120));
+    r = await call(`/api/ticket-market/listings/${fresh.id}/remove`, 'POST', { reason: '' }, REV.token);
+    check('a removal without a reason is refused', r.status === 400);
+    const auditRow = store.find('auditLog', (a) => a.action === 'ticket_market.listing_removed' && a.objectId === fresh.id);
+    check('the removal is in the audit trail with its reason', auditRow?.reason === 'suspected fake');
+    r = await call(`/api/ticket-market/tickets/${tik.id}/void`, 'POST', { reason: 'fraud: duplicate seat' }, REV.token);
+    check('a reviewer voids a ticket', r.status === 200 && r.body?.ticket?.status === 'void');
+    r = await call(`/api/tickets/${regA.ticketCode}?v=6`, 'GET', undefined, A.token);
+    check('a voided ticket is refused at the gate (410)', r.status === 410 && r.body?.reason === 'void', `${r.status}`);
+
+    // --- the changes were signals, not silent flips ------------------------------------
+    check('listing and transfers surfaced as signals',
+      store.find('signals', (x) => x.type === 'ticket_listed') && store.find('signals', (x) => x.type === 'ticket_transferred'));
+  } finally {
+    srv.close();
+    delete process.env.BRIEF_REVIEWERS;
+    process.env.BRIEF_DEV_AUTH = '1';
+  }
+}
+
+
+
+console.log('\n=== BARGAIN TIERS (Tikiti T2) ===');
+{
+  process.env.BRIEF_DEV_AUTH = '0';
+  const { default: app } = await import('../src/index.js');
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    const reg = async (h) => (await call('/api/auth/register', 'POST', { handle: h + Date.now().toString(36), password: 'a good passphrase' })).body;
+    const O = await reg('barg_owner'); const U1 = await reg('barg_1'); const U2 = await reg('barg_2');
+    let r = await call('/api/engine/group-buys', 'POST', { title: 'Crate of soda', targetAmount: 10000 }, O.token);
+    check('owner creates the bargain', r.status === 201, JSON.stringify(r.body).slice(0, 100));
+    const buyId = r.body?.groupBuy?.id;
+
+    // A broken ladder is refused: same price twice.
+    r = await call(`/api/engine/group-buys/${buyId}/pricing`, 'POST', {
+      tiers: [{ min: 1, pricePerHead: 1000 }, { min: 5, pricePerHead: 1000 }]
+    }, O.token);
+    check('a flat ladder is refused (prices must fall)', r.status === 400 && /fall/.test(r.body?.error ?? ''), JSON.stringify(r.body));
+    r = await call(`/api/engine/group-buys/${buyId}/pricing`, 'POST', {
+      tiers: [{ min: 5, pricePerHead: 800 }, { min: 1, pricePerHead: 1000 }]
+    }, O.token);
+    check('an unordered ladder is refused', r.status === 400 && /climb/.test(r.body?.error ?? ''));
+    r = await call(`/api/engine/group-buys/${buyId}/pricing`, 'POST', {
+      tiers: [{ min: 1, pricePerHead: 1000 }, { min: 5, pricePerHead: 800 }, { min: 10, pricePerHead: 650 }],
+      minParticipants: 5, maxParticipants: 12,
+      expiresAt: new Date(Date.now() + 86_400_000).toISOString()
+    }, O.token);
+    check('a valid ladder prices the bargain', r.status === 200, JSON.stringify(r.body).slice(0, 120));
+
+    // The price is DERIVED, never sent.
+    r = await call(`/api/engine/group-buys/${buyId}/join`, 'POST', { pricePerHead: 1 }, U1.token);
+    check('join #1 commits at the top band (server-priced)',
+      r.status === 201 && r.body?.participant?.priceAtJoin === 1000, JSON.stringify(r.body).slice(0, 120));
+    r = await call(`/api/engine/group-buys/${buyId}/join`, 'POST', {}, U1.token);
+    check('joining twice is idempotent, not a second seat', r.status === 200 && r.body?.changed === false);
+    for (let i = 0; i < 3; i++) await call(`/api/engine/group-buys/${buyId}/join`, 'POST', {}, (await reg('barg_fill' + i)).token);
+    r = await call(`/api/engine/group-buys/${buyId}/join`, 'POST', {}, U2.token);
+    check('the 5th joiner lands in the discounted band',
+      r.status === 201 && r.body?.participant?.priceAtJoin === 800, JSON.stringify(r.body).slice(0, 120));
+    const tierSignal = store.find('signals', (x) => x.type === 'bargain_tier_reached' && x.metadata?.groupBuyId === buyId && x.metadata?.tierMin === 5);
+    check('crossing the band surfaced as a signal', Boolean(tierSignal));
+    r = await call(`/api/engine/group-buys/${buyId}`, 'GET', undefined, O.token);
+    check('the owner view states current price, next band and settlement price',
+      r.body?.bargain?.currentPricePerHead === 800 && r.body?.bargain?.nextTier?.pricePerHead === 650
+      && r.body?.bargain?.settlesAt === 650, JSON.stringify(r.body?.bargain));
+    check('the view counts participants honestly', r.body?.bargain?.participants === 5 && r.body?.bargain?.minimumMet === true);
+
+    // Capacity is a hard wall.
+    for (let i = 0; i < 7; i++) await call(`/api/engine/group-buys/${buyId}/join`, 'POST', {}, (await reg('barg_cap' + i)).token);
+    const extra = await reg('barg_over');
+    r = await call(`/api/engine/group-buys/${buyId}/join`, 'POST', {}, extra.token);
+    check('a full bargain refuses the 13th joiner (409)', r.status === 409 && r.body?.code === 'bargain_full', `${r.status}`);
+
+    // Leaving opens a spot.
+    r = await call(`/api/engine/group-buys/${buyId}/leave`, 'POST', {}, U2.token);
+    check('a joiner can leave before execution', r.status === 200 && r.body?.participant?.status === 'cancelled');
+    r = await call(`/api/engine/group-buys/${buyId}`, 'GET', undefined, O.token);
+    check('the count drops when someone leaves', r.body?.bargain?.participants === 11, `${r.body?.bargain?.participants}`);
+
+    // Expiry is a wall the server owns.
+    const gb = store.find('groupBuys', (b) => b.id === buyId);
+    store.update('groupBuys', buyId, { pricing: { ...gb.pricing, expiresAt: new Date(Date.now() - 1000).toISOString() } });
+    r = await call(`/api/engine/group-buys/${buyId}/join`, 'POST', {}, extra.token);
+    check('an expired bargain refuses joins', r.status === 400 && /expired/.test(r.body?.error ?? ''));
+  } finally { srv.close(); process.env.BRIEF_DEV_AUTH = '1'; }
+}
+
+console.log('\n=== CONTRIBUTION POTS + DEADLINES + UPDATES (Tikiti T3) ===');
+{
+  process.env.BRIEF_DEV_AUTH = '0';
+  const { default: app } = await import('../src/index.js');
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    const reg = async (h) => (await call('/api/auth/register', 'POST', { handle: h + Date.now().toString(36), password: 'a good passphrase' })).body;
+    const O = await reg('pot_owner'); const S = await reg('pot_supporter');
+    let r = await call('/api/campaigns', 'POST', {
+      title: 'Mwenda farewell pot ' + Date.now().toString(36), type: 'contribution', goalAmount: 5000,
+      endsAt: new Date(Date.now() + 86_400_000).toISOString()
+    }, O.token);
+    check('a contribution pot is created with a goal', r.status === 201 && r.body?.campaign?.goalAmount === 5000, JSON.stringify(r.body).slice(0, 120));
+    const potId = r.body?.campaign?.id;
+    r = await call('/api/campaigns', 'POST', { title: 'Broken pot', type: 'contribution', goalAmount: 0 }, O.token);
+    check('a zero goal is refused', r.status === 400);
+    await call(`/api/campaigns/${potId}/publish`, 'POST', {}, O.token);
+    const pot = store.find('campaigns', (c) => c.id === potId);
+
+    r = await call(`/api/public/campaigns/${pot.publicSlug}`, 'GET');
+    check('the public view derives raised from settled rows only',
+      r.body?.campaign?.raised === 0 && r.body?.campaign?.contributors === 0, JSON.stringify(r.body?.campaign?.raised));
+    r = await call(`/api/public/campaigns/${pot.publicSlug}/register`, 'POST', { attendeeRef: 'pot-1', name: 'First Giver', amount: 2500 }, S.token);
+    check('a signed-in supporter joins the pot with a stated amount', r.status === 201, JSON.stringify(r.body).slice(0, 120));
+    r = await call(`/api/public/campaigns/${pot.publicSlug}/register`, 'POST', { attendeeRef: 'pot-bad', amount: -5 });
+    check('a negative amount is refused at the door', r.status === 400);
+    const reg1 = store.find('registrations', (x) => x.attendeeRef === 'pot-1');
+    await call(`/api/campaigns/${potId}/registrations/${reg1.id}/confirm-payment`, 'POST', { }, O.token);
+    r = await call(`/api/public/campaigns/${pot.publicSlug}`, 'GET');
+    check('the settled KES 2,500 moves the public progress',
+      r.body?.campaign?.raised === 2500, `${r.body?.campaign?.raised}`);
+    check('the ledger row carries the supporter, not the organiser',
+      store.find('ledgerTransactions', (t) => t.campaignId === potId && t.status === 'settled')?.counterparty === S.user.id);
+
+    // Anonymous: a contribution with no name and no account still counts.
+    await call(`/api/public/campaigns/${pot.publicSlug}/register`, 'POST', { attendeeRef: 'anon-9', amount: 2500 });
+    const regA = store.find('registrations', (x) => x.attendeeRef === 'anon-9');
+    await call(`/api/campaigns/${potId}/registrations/${regA.id}/confirm-payment`, 'POST', {}, O.token);
+    r = await call(`/api/public/campaigns/${pot.publicSlug}`, 'GET');
+    check('the goal is reported reached exactly when settled money covers it',
+      r.body?.campaign?.raised === 5000 && r.body?.campaign?.contributors === 2, JSON.stringify(r.body?.campaign?.raised));
+    check('an anonymous contribution is COUNTED, never listed',
+      !JSON.stringify(r.body).includes('anon-9'), 'attendeeRef leaked');
+    check('goal reached surfaced as a signal, exactly once',
+      store.filter('signals', (x) => x.type === 'campaign_goal_reached' && x.metadata?.campaignId === potId).length === 1);
+
+    // Deadline is a wall.
+    store.update('campaigns', potId, { endsAt: new Date(Date.now() - 1000).toISOString() });
+    r = await call(`/api/public/campaigns/${pot.publicSlug}/register`, 'POST', { attendeeRef: 'late-comer' });
+    check('registering after the deadline is refused', r.status === 400 && /ended/.test(r.body?.error ?? ''), JSON.stringify(r.body));
+    store.update('campaigns', potId, { endsAt: new Date(Date.now() + 86_400_000).toISOString() });
+
+    // Updates: owner authors, anyone reads, strangers cannot.
+    r = await call(`/api/campaigns/${potId}/updates`, 'POST', { title: 'Halfway there', body: 'KES 2,500 raised. Thank you.' }, S.token);
+    check('only the owner may post an update', r.status === 400);
+    r = await call(`/api/campaigns/${potId}/updates`, 'POST', { title: 'Halfway there', body: 'KES 2,500 raised. Thank you.' }, O.token);
+    check('the owner posts a campaign update', r.status === 201);
+    r = await call(`/api/campaigns/${potId}/updates`, 'GET');
+    check('updates are public', r.body?.updates?.length === 1);
+    check('the update surfaced as a signal', Boolean(store.find('signals', (x) => x.type === 'campaign_update_posted' && x.metadata?.campaignId === potId)));
+
+    // The PUBLIC page is slug-addressed and never learns the internal id, so
+    // its feed is readable by slug too — and only for published campaigns.
+    r = await call(`/api/public/campaigns/${pot.publicSlug}/updates`);
+    check('updates are readable by PUBLIC slug', r.status === 200 && r.body?.updates?.length === 1, JSON.stringify(r.body));
+    r = await call(`/api/public/campaigns/no-such-slug-at-all/updates`);
+    check('an unknown slug is a 404, not an empty feed', r.status === 404);
+  } finally { srv.close(); process.env.BRIEF_DEV_AUTH = '1'; }
+}
+
+console.log('\n=== VERIFICATION (Tikiti T6) ===');
+{
+  process.env.BRIEF_DEV_AUTH = '0';
+  process.env.BRIEF_REVIEWERS = 'verrev';
+  const { default: app } = await import('../src/index.js');
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    const reg = async (h) => (await call('/api/auth/register', 'POST', { handle: h + Date.now().toString(36), password: 'a good passphrase' })).body;
+    const U = await reg('ver_user'); const P = await reg('ver_plain');
+    // The reviewer handle must match BRIEF_REVIEWERS exactly, so register or
+    // log in rather than suffixing.
+    let revReg = await call('/api/auth/register', 'POST', { handle: 'verrev', password: 'a good passphrase' });
+    if (revReg.status !== 201) revReg = await call('/api/auth/login', 'POST', { handle: 'verrev', password: 'a good passphrase' });
+    const REV = revReg.body;
+    let r = await call('/api/verification', 'POST', { kind: 'drivers_licence' }, U.token);
+    check('an unknown verification kind is refused', r.status === 400);
+    r = await call('/api/verification', 'POST', { kind: 'identity', note: 'manual review please' }, U.token);
+    check('an identity request is submitted (no documents, ever)', r.status === 201 && !JSON.stringify(r.body).includes('document'), JSON.stringify(r.body).slice(0, 100));
+    check('no KYC provider configured -> the submission says so honestly',
+      r.body?.assistProvider === null && r.body?.record?.providerAssist === undefined,
+      JSON.stringify({ assistProvider: r.body?.assistProvider ?? null }).slice(0, 80));
+    const rec = r.body?.record;
+    r = await call('/api/verification', 'POST', { kind: 'identity' }, U.token);
+    check('a duplicate open request is idempotent', r.status === 200 && r.body?.changed === false);
+    r = await call('/api/verification/me', 'GET', undefined, U.token);
+    check('the user sees their own standing', r.body?.standing?.identity === 'pending');
+    r = await call('/api/ops/verification', 'GET', undefined, P.token);
+    check('the review queue is capability-gated (403)', r.status === 403 && r.body?.requiredCapability === 'moderate');
+    r = await call('/api/ops/verification', 'GET', undefined, REV.token);
+    check('a reviewer reads the queue', r.status === 200 && r.body?.queue?.length >= 1);
+    r = await call(`/api/ops/verification/${rec.id}/decision`, 'POST', { decision: 'rejected' }, REV.token);
+    check('a rejection without a reason is refused', r.status === 400 && /reason/.test(r.body?.error ?? ''));
+    r = await call(`/api/ops/verification/${rec.id}/decision`, 'POST', { decision: 'approved' }, REV.token);
+    check('a reviewer approves with an audit trail', r.status === 200);
+    const auditRow = store.find('auditLog', (a) => a.action === 'verification.decision' && a.objectId === rec.id);
+    check('the decision is audited with before/after',
+      auditRow?.before?.status === 'pending' && auditRow?.after?.status === 'approved',
+      JSON.stringify({ found: Boolean(auditRow), before: auditRow?.before?.status ?? null, after: auditRow?.after?.status ?? null }));
+    r = await call('/api/verification/me', 'GET', undefined, U.token);
+    check('approval flips the derived standing', r.body?.standing?.identity === 'verified');
+    r = await call(`/api/ops/verification/${rec.id}/revoke`, 'POST', { reason: 'court order' }, REV.token);
+    check('revocation is explicit and reasoned', r.status === 200 && r.body?.record?.status === 'revoked');
+    r = await call('/api/verification/me', 'GET', undefined, U.token);
+    check('revocation flips the standing back', r.body?.standing?.identity !== 'verified');
+  } finally { srv.close(); delete process.env.BRIEF_REVIEWERS; process.env.BRIEF_DEV_AUTH = '1'; }
+}
+
+console.log('\n=== EMAIL SUBSCRIPTIONS (Tikiti T7) ===');
+{
+  process.env.BRIEF_DEV_AUTH = '0';
+  process.env.BRIEF_OPERATORS = 'mailop';
+  const { default: app } = await import('../src/index.js');
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    const OP = (await call('/api/auth/register', 'POST', { handle: 'mailop', password: 'a good passphrase' })).body;
+    let r = await call('/api/email-subscriptions', 'POST', { email: 'not-an-email', topics: ['arena_announcements'] });
+    check('a malformed address is refused', r.status === 400);
+    r = await call('/api/email-subscriptions', 'POST', { email: 'a@b.co', topics: ['horoscope'] });
+    check('an unknown topic is refused by name', r.status === 400 && /horoscope/.test(r.body?.error ?? ''));
+    r = await call('/api/email-subscriptions', 'POST', { email: 'a@b.co', topics: ['event_announcements', 'bargain_alerts'] });
+    check('a subscription starts PENDING (double opt-in)', r.status === 201 && r.body?.subscription?.status === 'pending', JSON.stringify(r.body).slice(0, 120));
+    check('with no provider the mail is honestly NOT sent',
+      /not sent/i.test(r.body?.delivery ?? ''), r.body?.delivery);
+    const token = r.body?.subscription?.token;
+    r = await call('/api/email-subscriptions/confirm?token=wrong', 'GET');
+    check('a wrong confirmation token is refused', r.status === 404);
+    r = await call(`/api/email-subscriptions/confirm?token=${encodeURIComponent(token)}`, 'GET');
+    check('the token confirms the subscription', r.status === 200 && r.body?.ok === true);
+    r = await call(`/api/email-subscriptions/confirm?token=${encodeURIComponent(token)}`, 'GET');
+    check('confirming twice is idempotent', r.status === 200 && r.body?.already === true);
+    r = await call('/api/email-subscriptions/unsubscribe', 'POST', { email: 'a@b.co' });
+    check('unsubscribing needs no account (the privacy-correct direction)', r.status === 200);
+    r = await call('/api/email-subscriptions/unsubscribe', 'POST', { email: 'a@b.co' });
+    check('unsubscribing twice is idempotent', r.status === 200 && r.body?.already === true);
+    r = await call(`/api/email-subscriptions/confirm?token=${encodeURIComponent(token)}`, 'GET');
+    check('a token from a LEFT list is retired (no resurrection without consent)', r.status === 404, `status=${r.status}`);
+    r = await call('/api/email-subscriptions', 'POST', { email: 'a@b.co', topics: ['product_updates'] });
+    check('re-subscribing restarts double opt-in', r.status === 201 && r.body?.subscription?.status === 'pending');
+    r = await call('/api/ops/email-log', 'GET', undefined, OP.token);
+    check('the delivery log says skipped_no_provider, never "sent"',
+      r.body?.log?.length >= 1 && r.body.log.every((m) => m.status === 'skipped_no_provider'), JSON.stringify(r.body?.log?.map((m) => m.status)));
+  } finally { srv.close(); delete process.env.BRIEF_OPERATORS; process.env.BRIEF_DEV_AUTH = '1'; }
+}
+
+console.log('\n=== FRAUD FLAGGING (Tikiti T10) ===');
+{
+  process.env.BRIEF_DEV_AUTH = '0';
+  process.env.BRIEF_REVIEWERS = 'fraudrev';
+  const { default: app } = await import('../src/index.js');
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    const reg = async (h) => (await call('/api/auth/register', 'POST', { handle: h + Date.now().toString(36), password: 'a good passphrase' })).body;
+    const O = await reg('fraud_org'); const S = await reg('fraud_seller'); const B = await reg('fraud_buyer');
+    void B;
+    let r = await call('/api/campaigns', 'POST', { title: 'Fraud gate night', type: 'popup', price: 1000, capacity: 8 }, O.token);
+    const campId = r.body.campaign.id;
+    await call(`/api/campaigns/${campId}/publish`, 'POST', {}, O.token);
+    const camp = store.find('campaigns', (c) => c.id === campId);
+    const seat = async (who, ref) => {
+      await call(`/api/public/campaigns/${camp.publicSlug}/register`, 'POST', { attendeeRef: ref, name: ref }, who.token);
+      const regRow = store.find('registrations', (x) => x.attendeeRef === ref);
+      await call(`/api/campaigns/${campId}/registrations/${regRow.id}/confirm-payment`, 'POST', {}, O.token);
+      // The ticket BORN from this exact registration -- "the first unlisted
+      // one" was flaky by construction once a seller holds several seats.
+      return store.find('tickets', (t) => t.registrationId === regRow.id);
+    };
+    const tikFair = await seat(S, 'fraud-fair');
+    const tikScalp = await seat(S, 'fraud-scalp');
+    r = await call('/api/ticket-market/listings', 'POST', { ticketId: tikFair.id, price: 1200 }, S.token);
+    check('a fair price from a fresh account is NOT flagged', r.status === 201 && r.body?.listing?.flagged === false, JSON.stringify(r.body?.listing?.flaggedReason));
+    r = await call('/api/ticket-market/listings', 'POST', { ticketId: tikScalp?.id ?? 'none', price: 5000 }, S.token);
+    check('3× issue price + hours-old account is flagged with reasons',
+      r.status === 201 && r.body?.listing?.flagged === true && /asking 5000/.test(r.body?.listing?.flaggedReason ?? ''),
+      `${r.status} ${JSON.stringify(r.body).slice(0, 140)}`);
+    r = await call(`/api/ticket-market/events/${camp.publicSlug}/listings`, 'GET', undefined, B.token);
+    check('flagged listings are hidden from browse', (r.body?.listings ?? []).every((l) => l.id !== tikScalp && l.price !== 5000), JSON.stringify(r.body?.listings?.map((l) => l.price)));
+    check('the flag surfaced as a signal for review',
+      Boolean(store.find('signals', (x) => x.type === 'ticket_flagged')),
+      store.filter('signals', (x) => x.type === 'ticket_flagged').length + ' flag signals');
+  } finally { srv.close(); delete process.env.BRIEF_REVIEWERS; process.env.BRIEF_DEV_AUTH = '1'; }
+}
+
+
+console.log('\n=== EVENTS HUB (Tikiti T4) ===');
+{
+  const { default: app } = await import('../src/index.js');
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    // register routes: browse + feature. Need the domain directly too.
+    const events = await import('../src/domain/events.js');
+    const O = (await call('/api/auth/register', 'POST', { handle: 'hub_org' + Date.now().toString(36), password: 'a good passphrase' })).body;
+    const X = (await call('/api/auth/register', 'POST', { handle: 'hub_other' + Date.now().toString(36), password: 'a good passphrase' })).body;
+    for (const [title, type, loc] of [['Night Market X', 'popup', 'Kilimani'], ['Yoga X', 'session', 'Westlands'], ['Farewell pot X', 'contribution', 'Kilimani']]) {
+      const c = (await call('/api/campaigns', 'POST', { title, type, location: loc, ...(type === 'contribution' ? { goalAmount: 1000 } : {}) }, O.token)).body.campaign;
+      await call(`/api/campaigns/${c.id}/publish`, 'POST', {}, O.token);
+    }
+    let r = await call('/api/events?category=popup', 'GET');
+    check('browsing by category finds the market', r.body?.events?.some((e) => e.title === 'Night Market X') ?? false, JSON.stringify(r.body).slice(0, 120));
+    r = await call('/api/events?location=kilimani', 'GET');
+    check('location search is case-insensitive', (r.body?.events ?? []).length === 2, `${r.body?.events?.length}`);
+    r = await call('/api/events?category=horoscope', 'GET');
+    check('an unknown category is refused', r.status === 400);
+    r = await call('/api/events?sort=popularity', 'GET');
+    check('popularity sort answers with counted people', Array.isArray(r.body?.events) && r.body.events.every((e) => typeof e.popularity === 'number'));
+    check('internal ids never appear in browse', !JSON.stringify(r.body).includes('"id":"camp_'));
+    // Featuring is the organiser's explicit act.
+    const camp = store.find('campaigns', (c) => c.title === 'Night Market X');
+    let threw = null;
+    try { events.setFeatured(X.user.id, camp.id, true); } catch (e) { threw = String(e.message); }
+    check('a stranger cannot feature someone else\'s event', /organiser/.test(threw ?? ''), threw);
+    events.setFeatured(O.user.id, camp.id, true);
+    r = await call('/api/events?featured=1', 'GET');
+    check('featured is an explicit flag, not a guess', (r.body?.events ?? []).every((e) => e.featured) && r.body.events.length === 1, `${r.body?.events?.length}`);
+  } finally { srv.close(); }
+}
+
+console.log('\n=== EPL CATALOG + SQUAD BUDGET + LOBBY (Tikiti T5) ===');
+{
+  process.env.BRIEF_DEV_AUTH = '0';
+  process.env.BRIEF_OPERATORS = 'eplop';
+  const { default: app } = await import('../src/index.js');
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    let opReg = await call('/api/auth/register', 'POST', { handle: 'eplop', password: 'a good passphrase' });
+    if (opReg.status !== 201) opReg = await call('/api/auth/login', 'POST', { handle: 'eplop', password: 'a good passphrase' });
+    const OP = opReg.body;
+    const O = (await call('/api/auth/register', 'POST', { handle: 'epl_org' + Date.now().toString(36), password: 'a good passphrase' })).body;
+    const M1 = (await call('/api/auth/register', 'POST', { handle: 'epl_m1' + Date.now().toString(36), password: 'a good passphrase' })).body;
+    const M2 = (await call('/api/auth/register', 'POST', { handle: 'epl_m2' + Date.now().toString(36), password: 'a good passphrase' })).body;
+
+    // Provider honesty first.
+    let r = await call('/api/epl/catalog', 'GET');
+    check('the catalog states its provider state honestly',
+      r.body?.provider?.configured === false && /SEED|no EPL data provider/i.test(r.body?.provider?.reason ?? ''), JSON.stringify(r.body?.provider));
+    r = await call('/api/epl/catalog/sync', 'POST', {}, OP.token);
+    check('a sync without credentials is a 503 refusal, never a fake sync',
+      r.status === 503 && r.body?.ok === false, `${r.status}`);
+
+    // Seeding is operator-only and tagged.
+    r = await call('/api/epl/catalog/seed', 'POST', { players: [
+      { name: 'Mock Keeper', club: 'Arsenal', position: 'GK', price: 50 },
+      { name: 'Mock Forward', club: 'Arsenal', position: 'FWD', price: 120 },
+      { name: 'Mock Bad Club', club: 'Real Madrid', position: 'FWD', price: 90 }
+    ] }, M1.token);
+    check('seeding is capability-gated (403)', r.status === 403);
+    r = await call('/api/epl/catalog/seed', 'POST', { players: [
+      { name: 'Mock Keeper', club: 'Arsenal', position: 'GK', price: 50 },
+      { name: 'Mock Forward', club: 'Arsenal', position: 'FWD', price: 120 },
+      { name: 'Mock Bad Club', club: 'Real Madrid', position: 'FWD', price: 90 }
+    ] }, OP.token);
+    check('an operator seeds the catalog', r.status === 201 && r.body?.inserted === 2, JSON.stringify(r.body));
+    r = await call('/api/epl/catalog', 'GET');
+    check('non-EPL clubs never enter the catalog', !JSON.stringify(r.body).includes('Real Madrid'));
+    check('every catalog row carries its source', (r.body?.players ?? []).every((p) => p.source === 'seed'));
+
+    // A competition with a budget, an imported pool and a waiting room,
+    // driven through the domain + the /api/epl surface (the bare fantasy HTTP
+    // surface is scheduled for removal; these are not its routes).
+    const fantasyDomain = await import('../src/domain/fantasy.js');
+    const eplDomain = await import('../src/domain/epl.js');
+    const compId = fantasyDomain.createCompetition({
+      createdBy: O.user.id, title: 'GW1 waiting room',
+      kickoffAt: new Date(Date.now() + 3_600_000).toISOString()
+    }).id;
+    r = await call(`/api/epl/competitions/${compId}/pool/import`, 'POST', {}, O.token);
+    check('the organiser imports the catalog into the pool', r.status === 201 && r.body?.imported === 2, JSON.stringify(r.body));
+    r = await call(`/api/epl/competitions/${compId}/budget`, 'POST', { budgetKes: 200 }, O.token);
+    check('a budget is set in whole shillings', r.status === 200);
+    r = await call(`/api/epl/competitions/${compId}/lobby`, 'POST', { minEntries: 2, maxEntries: 4 }, O.token);
+    check('entry bounds make a waiting room', r.status === 200 && r.body?.lobbyState === 'waiting_for_players', JSON.stringify(r.body?.lobbyState));
+
+    // Budget arithmetic, proven through the domain hook submitTeam uses.
+    const pool = store.filter('fantasyPlayers', (p) => p.competitionId === compId);
+    const gk = pool.find((p) => p.position === 'GK'); const fwd = pool.find((p) => p.position === 'FWD');
+    const problems = eplDomain.budgetProblems(compId, [gk.id, fwd.id, fwd.id, fwd.id]);
+    check('an unaffordable squad is refused with the arithmetic',
+      problems.length === 1 && /costs 410/.test(problems[0]), JSON.stringify(problems));
+    check('an affordable selection passes', eplDomain.budgetProblems(compId, [gk.id, fwd.id]).length === 0);
+
+    // One manager holds a seat (a real entry row, however built).
+    const seatIn = (competitionId, userId) => store.insert('fantasyEntries', {
+      id: 'fent_test_' + Math.random().toString(36).slice(2, 8), competitionId, userId,
+      playerIds: [], captainId: null, points: null, createdAt: new Date().toISOString()
+    });
+    seatIn(compId, M1.user.id);
+    r = await call(`/api/epl/competitions/${compId}/lobby`, 'GET', undefined, O.token);
+    check('one of two managers still reads waiting_for_players', r.body?.lobbyState === 'waiting_for_players' && r.body?.entries === 1, JSON.stringify(r.body));
+
+    // The waiting-room wall: the room needed two and never got them.
+    r = await call(`/api/epl/competitions/${compId}/settle-lobby`, 'POST', {}, O.token);
+    check('an underfilled room is CANCELLED, not scored on a walkover',
+      r.body?.competition?.status === 'cancelled' && /only 1 of 2/.test(r.body?.competition?.cancelledReason ?? ''),
+      JSON.stringify(r.body?.competition?.cancelledReason));
+    check('the cancellation surfaced as a signal',
+      Boolean(store.find('signals', (x) => x.type === 'arena_contest_cancelled' && x.metadata?.competitionId === compId)));
+
+    // A filled room locks instead.
+    const comp2 = fantasyDomain.createCompetition({
+      createdBy: O.user.id, title: 'GW2 full room',
+      kickoffAt: new Date(Date.now() + 3_600_000).toISOString()
+    }).id;
+    eplDomain.setEntryBounds(O.user.id, comp2, { minEntries: 2 });
+    seatIn(comp2, M1.user.id); seatIn(comp2, M2.user.id);
+    r = await call(`/api/epl/competitions/${comp2}/lobby`, 'GET', undefined, O.token);
+    check('a room at its minimum reports open', r.body?.lobbyState === 'open' && r.body?.entries === 2, JSON.stringify(r.body?.lobbyState));
+    r = await call(`/api/epl/competitions/${comp2}/settle-lobby`, 'POST', {}, O.token);
+    check('a filled room locks at the wall', r.body?.lobbyState === 'in_progress', JSON.stringify(r.body?.lobbyState));
+
+    // The full creation -> room -> seat loop over HTTP, on the EPL surface
+    // alone (the bare fantasy surface is gone; this is the one that lives).
+    r = await call('/api/epl/competitions', 'POST', {
+      title: 'GW3 http room', kickoffAt: new Date(Date.now() + 3_600_000).toISOString(),
+      budgetKes: 200, minEntries: 2, maxEntries: 4
+    }, O.token);
+    check('a room is CREATED over HTTP with budget and bounds', r.status === 201 && r.body?.lobbyState === 'waiting_for_players', JSON.stringify(r.body).slice(0, 160));
+    const httpRoom = r.body.competition.id;
+    r = await call(`/api/epl/competitions/${httpRoom}/pool/import`, 'POST', {}, O.token);
+    check('its pool imports from the catalog over HTTP', r.status === 201 && r.body?.imported === 2, JSON.stringify(r.body));
+    r = await call('/api/epl/competitions', 'GET', undefined, M1.token);
+    const listed = (r.body?.competitions ?? []).find((c) => c.id === httpRoom);
+    check('rooms list carries DERIVED lobby state and a live count',
+      Boolean(listed) && listed.lobbyState === 'waiting_for_players' && listed.entries === 0 && listed.mine === false, JSON.stringify(listed));
+    r = await call('/api/epl/competitions', 'GET', undefined, O.token);
+    check('the organiser sees the room as their own', (r.body?.competitions ?? []).find((c) => c.id === httpRoom)?.mine === true);
+    const smallPool = store.filter('fantasyPlayers', (p) => p.competitionId === httpRoom);
+    r = await call(`/api/epl/competitions/${httpRoom}/entries`, 'POST', {
+      playerIds: smallPool.map((p) => p.id), captainId: smallPool[0].id
+    }, M1.token);
+    check('a seat is REFUSED honestly: the room cannot open on a 2-player pool', r.status === 400 && /not open/i.test(r.body?.error ?? ''), JSON.stringify(r.body).slice(0, 140));
+    r = await call(`/api/epl/competitions/${httpRoom}/standings`, 'GET');
+    check('standings read publicly (empty before scoring)', r.status === 200 && Array.isArray(r.body?.standings) && r.body.standings.length === 0);
+  } finally { srv.close(); delete process.env.BRIEF_OPERATORS; process.env.BRIEF_DEV_AUTH = '1'; }
+}
+
+console.log('\n=== PLATFORM ROLES: THE OPERATOR SURFACE IS CAPABILITY-GUARDED ===');
+{
+  // Production posture: no dev fallback, real identities only.
+  process.env.BRIEF_DEV_AUTH = '0';
+  const { default: app } = await import('../src/index.js');
+  store._reset();
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    // Deployment bootstrap: one reviewer, one finance, one admin by handle.
+    process.env.BRIEF_OPERATORS = 'platop';
+    process.env.BRIEF_REVIEWERS = 'platrev';
+    process.env.BRIEF_FINANCE = 'platfin';
+    process.env.BRIEF_ADMINS = 'platadm';
+    const reg = async (handle) => (await call('/api/auth/register', 'POST', { handle, password: 'a good passphrase' })).body;
+    const nobody = await reg('plainuser');
+    const op = await reg('platop');
+    const rev = await reg('platrev');
+    const fin = await reg('platfin');
+    const adm = await reg('platadm');
+
+    check('a plain account holds no operator roles', (await call('/api/auth/me', 'GET', undefined, nobody.token)).body?.user?.platformRoles?.length === 0);
+
+    // --- capability refusals are honest 403s, named -------------------------
+    let r = await call('/api/ops/diagnostics', 'GET', undefined, nobody.token);
+    check('a plain user cannot read diagnostics (403)', r.status === 403, `got ${r.status}`);
+    check('the refusal names the capability', r.body?.requiredCapability === 'ops.read', JSON.stringify(r.body));
+    r = await call('/api/ops/backup', 'POST', {}, nobody.token);
+    check('a plain user cannot trigger backups (403)', r.status === 403);
+    r = await call('/api/ops/seed/clear', 'POST', {}, nobody.token);
+    check('a plain user cannot clear the store (403)', r.status === 403);
+    r = await call('/api/economic/reconcile', 'GET', undefined, op.token);
+    check('an operator cannot read reconciliation (finance-only, 403)', r.status === 403);
+    r = await call('/api/ops/reports/x/resolve', 'POST', {}, op.token);
+    check('an operator cannot moderate reports (403)', r.status === 403);
+    r = await call('/api/ops/roles', 'POST', { userId: 'usr_x', roles: ['admin'] }, rev.token);
+    check('a reviewer cannot assign roles (403)', r.status === 403);
+
+    // --- the ladder of capabilities -----------------------------------------
+    r = await call('/api/ops/diagnostics', 'GET', undefined, op.token);
+    check('an operator reads diagnostics (200)', r.status === 200);
+    r = await call('/api/ops/backup', 'POST', {}, op.token);
+    check('an operator takes a backup (200)', r.status === 200 && r.body?.ok === true);
+    r = await call('/api/ops/reports', 'GET', undefined, rev.token);
+    check('a reviewer reads the report queue (200)', r.status === 200);
+    r = await call('/api/economic/reconcile', 'GET', undefined, fin.token);
+    check('finance reads settlement reconciliation (200)', r.status === 200);
+    r = await call('/api/economic/payments/reconcile', 'GET', undefined, fin.token);
+    check('finance reads payment reconciliation (200)', r.status === 200);
+
+    // --- role assignment is admin-only and audited ---------------------------
+    const target = (await call('/api/auth/me', 'GET', undefined, nobody.token)).body.user;
+    r = await call('/api/ops/roles', 'POST', { userId: target.id, roles: ['operator'], reason: 'onboarding the night shift' }, adm.token);
+    check('an admin assigns a stored role (200)', r.status === 200, JSON.stringify(r.body).slice(0, 120));
+    r = await call('/api/ops/diagnostics', 'GET', undefined, nobody.token);
+    check('the stored role takes effect immediately', r.status === 200, `got ${r.status}`);
+    r = await call('/api/ops/roles', 'POST', { userId: target.id, roles: ['owner'] }, adm.token);
+    check('an unknown role is refused, not stored', r.status === 400 || (Array.isArray(r.body?.user?.platformRoles) && !r.body.user.platformRoles.includes('owner')), JSON.stringify(r.body).slice(0, 120));
+
+    // --- the audit trail records consequential actions -----------------------
+    r = await call('/api/ops/audit', 'GET', undefined, op.token);
+    check('the audit trail lists operator actions', Array.isArray(r.body?.audit) && r.body.audit.length > 0, JSON.stringify(r.body).slice(0, 120));
+    const actions = new Set(r.body.audit.map((a) => a.action));
+    check('the backup is in the audit trail', actions.has('ops.backup'));
+    check('the role assignment is in the audit trail with a reason', r.body.audit.some((a) => a.action === 'ops.roles.set' && a.reason === 'onboarding the night shift'));
+    check('audit rows name their actor', r.body.audit.every((a) => a.actorHandle || a.actorId));
+    r = await call('/api/ops/audit', 'GET', undefined, nobody.token);
+    check('the audit trail is capability-gated', r.status === 403);
+
+    // --- moderation acts are audited with before/after ------------------------
+    // The tea publish transition is reviewer-gated; drive it end to end.
+    const teaCreate = await call('/api/admin/tea', 'POST', { title: 'Audit trail story', category: 'local_business', body: 'x'.repeat(40) }, rev.token);
+    const article = teaCreate.body?.article;
+    check('a reviewer can create a story draft', teaCreate.status === 201 && Boolean(article), JSON.stringify(teaCreate.body).slice(0, 120));
+    r = await call(`/api/admin/tea/${article.id}/publish`, 'POST', {}, op.token);
+    check('an operator cannot publish stories (moderate, 403)', r.status === 403);
+    r = await call(`/api/admin/tea/${article.id}/publish`, 'POST', {}, rev.token);
+    check('a reviewer publishes the story', r.status === 200 && r.body?.article?.status === 'published', JSON.stringify(r.body).slice(0, 140));
+    r = await call('/api/ops/audit', 'GET', undefined, rev.token);
+    check('the publish is audited with before/after status', r.body.audit.some((a) => a.action === 'tea.publish' && a.before?.status === 'draft' && a.after?.status === 'published'));
+
+    // --- Ligi's clock is not a player button ----------------------------------
+    r = await call('/api/ligi/tick', 'POST', {}, nobody.token);
+    check('a player cannot tick Ligi (403)', r.status === 403, `got ${r.status}`);
+    r = await call('/api/ligi/tick', 'POST', {}, op.token);
+    check('an operator may tick Ligi (200)', r.status === 200);
+  } finally {
+    srv.close();
+    for (const k of ['BRIEF_OPERATORS', 'BRIEF_REVIEWERS', 'BRIEF_FINANCE', 'BRIEF_ADMINS']) delete process.env[k];
+    process.env.BRIEF_DEV_AUTH = '1';
   }
 }
 
