@@ -113,16 +113,16 @@ node live/8-mshikano.mjs              # cooperation network: intents, matches,
                                       # two-sided confirmation, trust evidence
 ```
 
-**Current state: 3601 assertions, 0 failing** — measured 2026-08-29 against a
+**Current state: 3622 assertions, 0 failing** — measured 2026-08-29 against a
 production build over HTTP, not inherited from an earlier report.
 
 | Suite | Result |
 |---|---|
-| `server/test/run.js` | 1912 passed / 0 failed / 1 skipped |
+| `server/test/run.js` | 1922 passed / 0 failed / 1 skipped |
 | `server/test/livecamp.mjs` | 111 passed / 0 failed |
-| `./run-suites.sh` (38 client suites) | 1321 passed / 0 failed |
+| `./run-suites.sh` (38 client suites) | 1324 passed / 0 failed |
 | `tc` strict typecheck | exit 0 |
-| `live/` against the production build | 43 + 27 + 82 + 18 + 35 + 26 + 26 = 257 / 0 |
+| `live/` against the production build | 43 + 27 + 82 + 18 + 35 + 26 + 34 = 265 / 0 |
 
 The server suite hits real third parties (BBC's RSS feed, GitHub's robots.txt,
 Telegram's API). Those tests **skip** rather than pass when the network is
@@ -187,8 +187,11 @@ proposer cannot self-confirm, nobody outside the pair can respond, and only
 confirmed rows reach the graph. Trust is counted evidence — confirmed
 cooperations, repeat partners, recommendations, a verified identity — never a
 star rating, and the level says what it means in words. "Who can help?"
-answers with real people, active businesses and published guides, and keeps
-groups honestly **empty** until real groups exist. Nothing under
+answers with real people, active businesses, published guides and **real
+circles** that match the question (with their true member count) — and stays
+empty, saying so, when nothing matches. A member who says a cooperation did
+not go as written can **dispute** it: the credit is withdrawn from both
+records, the reason is kept, and the row stays listed. Nothing under
 `/api/mshikano/*` is reachable without an account. See
 [`MSHIKANO-INTEGRATION-REPORT.md`](MSHIKANO-INTEGRATION-REPORT.md).
 

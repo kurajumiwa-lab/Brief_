@@ -76,11 +76,12 @@ The list is deduped (38 suites) and every number above is from after the fix.
 
 | Gap | Status | Note |
 |---|---|---|
-| Groups in who-can-help | 🟠 | Honestly empty until real groups exist; either group matching gets built or the gap stays visible |
+| Groups in who-can-help | 🟢 | Built 2026-08-29: real circles matching the question answer with their true member count; nothing matches → `[]` with `counts.groups: 0` (proven in the suite and live) |
 | Capability parity (collections `:key/:action`) | 🟢 | Closed 2026-08-29: publish/unpublish/archive now require the `moderate` capability and are audited with before/after status; plain member 403 `forbidden_capability` proven in the suite and against the production build |
 | Business model | 🟠 | Deliberately none — no fees, no cut, no pay-to-be-seen. Deferred by decision, not by omission |
-| Trust disputes | 🟡 | Counted in evidence (`disputed` partnerships) but no dispute-filing flow yet |
+| Trust disputes | 🟢 | Flow built 2026-08-29: either partner disputes a confirmed cooperation with a reason; the credit is withdrawn from the graph and both trust records, the reason kept, the row stays listed, the partner notified |
 | Guides in who-can-help | 🟡 | Sourced from published tea articles — real, but not cooperation-specific knowledge |
+| Dispute resolution | 🟠 | A dispute withdraws the credit and records the reason; no mediator flow to resolve one back yet |
 
 ## 5. How to verify
 
