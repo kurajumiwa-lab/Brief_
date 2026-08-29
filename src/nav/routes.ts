@@ -10,7 +10,7 @@
 
 export type Destination = 'nearby' | 'arena' | 'mylayer' | 'workflows';
 
-export type NearbySection = 'stream' | 'tea' | 'today' | 'pursuits' | 'quests' | 'market' | 'events';
+export type NearbySection = 'stream' | 'tea' | 'today' | 'pursuits' | 'quests' | 'market' | 'events' | 'mshikano';
 export type MyLayerSection =
   | 'saved' | 'activity' | 'arena' | 'points' | 'circles' | 'groups' | 'campaigns'
   | 'mediakit' | 'opportunities' | 'messages' | 'subscriptions' | 'tickets'
@@ -54,7 +54,7 @@ export const DEFAULT_ROUTE: BriefRoute = {
   landed: false
 };
 
-const NEARBY: NearbySection[] = ['stream', 'tea', 'today', 'pursuits', 'quests', 'market', 'events'];
+const NEARBY: NearbySection[] = ['stream', 'tea', 'today', 'pursuits', 'quests', 'market', 'events', 'mshikano'];
 const MYLAYER: MyLayerSection[] = [
   'saved', 'activity', 'arena', 'points', 'circles', 'groups', 'campaigns',
   'mediakit', 'opportunities', 'messages', 'subscriptions', 'verification'

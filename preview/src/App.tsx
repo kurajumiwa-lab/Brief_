@@ -20,6 +20,7 @@ import { ResaleDesk } from './components/ResaleDesk';
 import { MyTickets } from './components/MyTickets';
 import { EventResale } from './components/EventResale';
 import { EventsHub } from './components/EventsHub';
+import { MshikanoDesk } from './components/MshikanoDesk';
 import { VerificationPanel } from './components/VerificationPanel';
 import { EplDesk } from './components/EplDesk';
 import { Vault } from './components/vault/Vault';
@@ -200,7 +201,7 @@ const DESTINATION_ICONS: Record<Destination, LucideIcon> = {
   workflows: Briefcase
 };
 
-export type NearbySection = 'stream' | 'tea' | 'today' | 'pursuits' | 'quests' | 'market' | 'events';
+export type NearbySection = 'stream' | 'tea' | 'today' | 'pursuits' | 'quests' | 'market' | 'events' | 'mshikano';
 export type MyLayerSection =
   | 'saved' | 'activity' | 'arena' | 'points' | 'circles' | 'groups' | 'campaigns'
   | 'mediakit' | 'opportunities' | 'messages' | 'subscriptions' | 'tickets'
@@ -9412,6 +9413,10 @@ export function App() {
           <div className="max-w-3xl mx-auto px-4 py-6">
             <Marketplace />
           </div>
+        )}
+
+        {activeTab === 'nearby' && nearbySection === 'mshikano' && (
+          <MshikanoDesk />
         )}
 
         {activeTab === 'mylayer' && myLayerSection === 'groups' && (

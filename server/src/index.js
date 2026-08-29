@@ -67,6 +67,7 @@ import { register as advertisingRoutes } from './routes/advertising.js';
 import { register as calendarRoutes } from './routes/calendar.js';
 import { register as hudumaRoutes } from './routes/huduma.js';
 import { register as engineRoutes } from './routes/engine.js';
+import { register as coopRoutes } from './routes/coop.js';
 import { register as groupBuyRoutes } from './routes/groupbuy.js';
 
 const app = express();
@@ -205,6 +206,7 @@ advertisingRoutes(app);
 calendarRoutes(app);
 hudumaRoutes(app);
 engineRoutes(app);
+coopRoutes(app);
 groupBuyRoutes(app);
 
 // --- Production frontend serving -------------------------------------------

@@ -3625,7 +3625,7 @@ console.log('\n=== FEATURE REGISTRY (§4.2) ===');
   // Default state: everything enabled; module features configured; provider
   // features NOT configured (no credentials in this run).
   check('every feature is enabled by default', features.list().every((f) => f.enabled));
-  check('the registry holds all registered features', features.list().length === 41, String(features.list().length));
+  check('the registry holds all registered features', features.list().length === 42, String(features.list().length));
   check('auth is available by default', features.available('auth') === true);
   check('arena is available by default', features.available('arena') === true);
   check('vaults is available by default', features.available('vaults') === true);
@@ -7223,6 +7223,95 @@ console.log('\n=== EPL CATALOG + SQUAD BUDGET + LOBBY (Tikiti T5) ===');
     r = await call(`/api/epl/competitions/${httpRoom}/standings`, 'GET', undefined, M1.token);
     check('a signed-in manager reads standings (empty before scoring)', r.status === 200 && Array.isArray(r.body?.standings) && r.body.standings.length === 0);
   } finally { srv.close(); delete process.env.BRIEF_OPERATORS; process.env.BRIEF_DEV_AUTH = '1'; }
+}
+
+
+console.log('\n=== MSHIKANO: the cooperation network (post -> match -> confirm -> trust) ===');
+{
+  process.env.BRIEF_DEV_AUTH = '0'; // the gate's anonymous check needs no dev fallback
+  const { default: app } = await import('../src/index.js');
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    const A = (await call('/api/auth/register', 'POST', { handle: 'mshi_a' + Date.now().toString(36), password: 'a good passphrase' })).body;
+    const B = (await call('/api/auth/register', 'POST', { handle: 'mshi_b' + Date.now().toString(36), password: 'a good passphrase' })).body;
+    const C = (await call('/api/auth/register', 'POST', { handle: 'mshi_c' + Date.now().toString(36), password: 'a good passphrase' })).body;
+
+    // The four intents.
+    let r = await call('/api/mshikano/posts', 'POST', { intent: 'swap', title: 'nothing' }, A.token);
+    check('an unknown intent is refused by name', r.status === 400 && /intent/.test(r.body?.error ?? ''));
+    r = await call('/api/mshikano/posts', 'POST', { intent: 'have', title: '1 tonne of mangoes', town: 'Wote', county: 'Makueni' }, A.token);
+    check('a HAVE posts honestly', r.status === 201 && r.body?.post?.intent === 'have', JSON.stringify(r.body).slice(0, 100));
+    const mangoes = r.body.post.id;
+    r = await call('/api/mshikano/posts', 'POST', { intent: 'need', title: '500 kg mangoes every week', town: 'Gikomba', county: 'Nairobi' }, B.token);
+    check('a NEED posts honestly', r.status === 201);
+    const buyerNeed = r.body.post.id;
+    await call('/api/mshikano/posts', 'POST', { intent: 'can_help', title: 'Refrigerated transport Nairobi Makueni mangoes' }, C.token);
+
+    // Matching: complementary only, with reasons.
+    r = await call(`/api/mshikano/posts/${buyerNeed}/matches`, 'GET', undefined, B.token);
+    const matches = r.body?.matches ?? [];
+    check('a NEED matches HAVEs (and CAN HELPs) that share its words',
+      matches.length >= 1 && matches.some((m) => m.post.title.includes('mangoes')), JSON.stringify(matches.map((m) => m.post?.title)).slice(0, 160));
+    check('every match carries its WHY in words',
+      matches.every((m) => Array.isArray(m.reasons) && (m.reasons.length === 0 || m.reasons.every((x) => typeof x === 'string'))));
+    check('your own posts never match themselves back',
+      !matches.some((m) => m.post.mine));
+    r = await call(`/api/mshikano/posts/${mangoes}/matches`, 'GET', undefined, A.token);
+    check('a HAVE finds the complementary NEED',
+      (r.body?.matches ?? []).some((m) => m.post.title.includes('mangoes') && m.post.intent === 'need'));
+
+    // The relationship: BOTH parties must confirm.
+    r = await call('/api/mshikano/cooperations', 'POST', { postId: buyerNeed, partnerUserId: A.user.id, summary: 'mangoes weekly' }, B.token);
+    check('a cooperation is proposed', r.status === 201 && r.body?.cooperation?.status === 'pending');
+    const partnership = r.body.cooperation.id;
+    r = await call(`/api/mshikano/cooperations/${partnership}/respond`, 'POST', { accept: true }, C.token);
+    check('a bystander cannot confirm someone else\'s cooperation (403)', r.status === 403);
+    r = await call(`/api/mshikano/cooperations/${partnership}/respond`, 'POST', { accept: true }, A.token);
+    check('the named partner confirms it', r.status === 200 && r.body?.cooperation?.status === 'confirmed');
+
+    // Trust is EVIDENCE from confirmed rows, never stars.
+    r = await call(`/api/mshikano/trust/${A.user.id}`, 'GET', undefined, B.token);
+    check('one confirmed cooperation lifts trust to cooperating', r.body?.level === 'cooperating' && r.body?.evidence?.confirmedCooperations === 1, JSON.stringify(r.body?.evidence));
+    check('trust says its level in words', typeof r.body?.levelWords === 'string' && r.body.levelWords.length > 10);
+    r = await call(`/api/mshikano/trust/${C.user.id}`, 'GET', undefined, B.token);
+    check('zero cooperations is an honest NEW, not zero stars', r.body?.level === 'new' && r.body?.evidence?.confirmedCooperations === 0);
+    r = await call(`/api/mshikano/cooperations/${partnership}/recommend`, 'POST', { note: 'Delivered on time, quality mangoes' }, A.token);
+    check('a partner recommends in words', r.status === 200 && r.body?.cooperation?.recommendations?.length === 1);
+    r = await call(`/api/mshikano/cooperations/${partnership}/recommend`, 'POST', { note: 'again' }, A.token);
+    check('double-recommending the same cooperation is refused', r.status === 400);
+    r = await call(`/api/mshikano/trust/${A.user.id}`, 'GET', undefined, B.token);
+    check('the recommendation counts as evidence for the receiver',
+      r.body?.evidence?.recommendations === 0, JSON.stringify(r.body?.evidence)); // A WROTE it; it counts for B
+    r = await call(`/api/mshikano/trust/${B.user.id}`, 'GET', undefined, A.token);
+    check('the recommendation appears on the receiver\'s trust',
+      r.body?.evidence?.recommendations === 1 && (r.body?.recommendationNotes ?? [])[0]?.note?.includes('quality mangoes'));
+
+    // The graph.
+    r = await call('/api/mshikano/graph', 'GET', undefined, B.token);
+    check('the graph records who helped whom', r.body?.totals?.confirmed === 1 && r.body?.helped?.length + r.body?.received?.length === 1, JSON.stringify(r.body?.totals));
+
+    // Who can help?
+    r = await call('/api/mshikano/who-can-help?q=who+can+help+me+start+a+poultry+business+in+Bungoma', 'GET', undefined, A.token);
+    check('the question answers with grouped, real rows only',
+      r.status === 200 && typeof r.body?.counts?.people === 'number' && Array.isArray(r.body?.guides), JSON.stringify(r.body?.counts));
+    check('an empty answer is EMPTY, not padded',
+      r.body.counts.people + r.body.counts.businesses + r.body.counts.guides === 0
+        || r.body.people.every((p) => /poultry|business|bungoma/i.test(p.title)));
+
+    // The app gate still owns the door.
+    r = await call('/api/mshikano/posts');
+    check('Mshikano is members-only (401 anonymous)', r.status === 401 && r.body?.gate === 'account_required');
+  } finally {
+    srv.close();
+  }
 }
 
 console.log('\n=== PLATFORM ROLES: THE OPERATOR SURFACE IS CAPABILITY-GUARDED ===');

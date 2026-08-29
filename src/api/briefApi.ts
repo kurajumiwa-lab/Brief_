@@ -3262,3 +3262,139 @@ export function stageOrder(
     (r) => (isOrder(r?.order) ? { order: r.order, changed: Boolean(r.changed) } : undefined)
   );
 }
+// ---------------------------------------------------------------------------
+// MSHIKANO — the peer-to-peer cooperation network. Four intents, complementary
+// matching, two-party-confirmed cooperations, evidence-based trust.
+// ---------------------------------------------------------------------------
+
+export type CoopIntent = 'have' | 'need' | 'can_help' | 'looking_for';
+
+export interface CoopTrust {
+  userId: string;
+  level: 'new' | 'cooperating' | 'proven' | 'established';
+  levelWords: string;
+  evidence: {
+    confirmedCooperations: number;
+    repeatPartners: number;
+    recommendations: number;
+    identityVerified: boolean;
+    disputes: number;
+  };
+  recommendationNotes: { by: { displayName: string }; note: string; at: string }[];
+}
+
+export interface CoopPost {
+  id: string;
+  intent: CoopIntent;
+  intentLabel: string;
+  title: string;
+  body: string | null;
+  category: string | null;
+  town: string | null;
+  county: string | null;
+  createdAt: string;
+  status: string;
+  mine: boolean;
+  author: { id: string; handle: string | null; displayName: string };
+  trust: CoopTrust | null;
+}
+
+export interface CoopMatch {
+  post: CoopPost;
+  sharedCount: number;
+  reasons: string[];
+  score: number;
+}
+
+export interface CoopCooperation {
+  id: string;
+  postId: string | null;
+  fromUserId: string;
+  toUserId: string;
+  summary: string | null;
+  status: 'pending' | 'confirmed' | 'declined';
+  recommendations: { byUserId: string; forUserId: string; note: string; at: string }[];
+  createdAt: string;
+  confirmedAt: string | null;
+  direction?: 'outgoing' | 'incoming';
+  partner?: { id: string; displayName: string };
+}
+
+export function createCoopPost(body: {
+  intent: CoopIntent; title: string; body?: string | null;
+  category?: string | null; town?: string | null; county?: string | null;
+}): Promise<ApiResult<{ post: CoopPost }>> {
+  return request('/api/mshikano/posts', { method: 'POST', body: JSON.stringify(body) }, (r) => (r?.post ? { post: r.post as CoopPost } : undefined));
+}
+
+export function listCoopPosts(opts: { intent?: string; q?: string; county?: string; mine?: boolean } = {}): Promise<ApiResult<{ posts: CoopPost[] }>> {
+  const qs = new URLSearchParams();
+  if (opts.intent) qs.set('intent', opts.intent);
+  if (opts.q) qs.set('q', opts.q);
+  if (opts.county) qs.set('county', opts.county);
+  if (opts.mine) qs.set('mine', '1');
+  const suffix = qs.toString() ? `?${qs.toString()}` : '';
+  return request(`/api/mshikano/posts${suffix}`, undefined, (r) => (Array.isArray(r?.posts) ? { posts: r.posts as CoopPost[] } : undefined));
+}
+
+export function coopMatches(postId: string): Promise<ApiResult<{ matches: CoopMatch[] }>> {
+  return request(`/api/mshikano/posts/${encodeURIComponent(postId)}/matches`, undefined, (r) => (Array.isArray(r?.matches) ? { matches: r.matches as CoopMatch[] } : undefined));
+}
+
+export function proposeCooperation(body: { postId?: string | null; partnerUserId: string; summary?: string | null }): Promise<ApiResult<{ cooperation: CoopCooperation }>> {
+  return request('/api/mshikano/cooperations', { method: 'POST', body: JSON.stringify(body) }, (r) => (r?.cooperation ? { cooperation: r.cooperation as CoopCooperation } : undefined));
+}
+
+export interface CoopCooperations {
+  pending: CoopCooperation[];
+  confirmed: CoopCooperation[];
+  declined: CoopCooperation[];
+}
+
+export function listCooperations(): Promise<ApiResult<CoopCooperations>> {
+  return request('/api/mshikano/cooperations', undefined, (r): CoopCooperations | undefined =>
+    Array.isArray(r?.pending) && Array.isArray(r?.confirmed) && Array.isArray(r?.declined)
+      ? { pending: r.pending, confirmed: r.confirmed, declined: r.declined }
+      : undefined);
+}
+
+export function respondCooperation(id: string, accept: boolean): Promise<ApiResult<{ cooperation: CoopCooperation }>> {
+  return request(`/api/mshikano/cooperations/${encodeURIComponent(id)}/respond`, { method: 'POST', body: JSON.stringify({ accept }) }, (r) => (r?.cooperation ? { cooperation: r.cooperation as CoopCooperation } : undefined));
+}
+
+export function recommendCooperation(id: string, note: string): Promise<ApiResult<{ cooperation: CoopCooperation }>> {
+  return request(`/api/mshikano/cooperations/${encodeURIComponent(id)}/recommend`, { method: 'POST', body: JSON.stringify({ note }) }, (r) => (r?.cooperation ? { cooperation: r.cooperation as CoopCooperation } : undefined));
+}
+
+export interface CoopGraph {
+  totals: { confirmed: number; helped: number; received: number; repeatPartners: number };
+  helped: { with: { displayName: string }; at: string; summary: string | null }[];
+  received: { with: { displayName: string }; at: string; summary: string | null }[];
+}
+
+export function coopGraph(): Promise<ApiResult<CoopGraph>> {
+  return request('/api/mshikano/graph', undefined, (r): CoopGraph | undefined =>
+    r?.totals && Array.isArray(r?.helped) && Array.isArray(r?.received)
+      ? { totals: r.totals, helped: r.helped, received: r.received }
+      : undefined);
+}
+
+export function coopTrust(userId: string): Promise<ApiResult<CoopTrust>> {
+  return request(`/api/mshikano/trust/${encodeURIComponent(userId)}`, undefined, (r) => (r?.evidence ? r as CoopTrust : undefined));
+}
+
+export interface WhoCanHelpAnswer {
+  query: string;
+  counts: { people: number; businesses: number; groups: number; guides: number };
+  people: CoopPost[];
+  businesses: CoopPost[];
+  guides: { slug: string; title: string }[];
+}
+
+export function whoCanHelp(q: string): Promise<ApiResult<WhoCanHelpAnswer>> {
+  return request(`/api/mshikano/who-can-help?q=${encodeURIComponent(q)}`, undefined, (r): WhoCanHelpAnswer | undefined =>
+    r?.counts && Array.isArray(r?.people) && Array.isArray(r?.guides)
+      ? { query: r.query ?? q, counts: r.counts, people: r.people, businesses: r.businesses ?? [], guides: r.guides }
+      : undefined);
+}
+

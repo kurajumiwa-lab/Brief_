@@ -6,7 +6,7 @@ import type { CommandCentre } from '../api/types';
 import { MainShelf } from './MainShelf';
 
 export type MenuTarget =
-  | { tab: 'nearby'; section?: 'stream' | 'tea' | 'market' | 'quests' | 'pursuits' | 'today' | 'events' }
+  | { tab: 'nearby'; section?: 'stream' | 'tea' | 'market' | 'quests' | 'pursuits' | 'today' | 'events' | 'mshikano' }
   | { tab: 'arena'; section?: 'lobby' | 'epl' | 'challenges' | 'tournaments' | 'leaderboard' }
   | { tab: 'mylayer'; section?:
       | 'saved' | 'activity' | 'arena' | 'points' | 'circles' | 'groups'

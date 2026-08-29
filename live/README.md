@@ -21,6 +21,7 @@ a plain user gets 403 `forbidden_capability` first.
     node live/4-full-chain.mjs
     node live/5-release-smoke.mjs
     RELEASE_SMOKE_WRITES=1 node live/5-release-smoke.mjs
+    node live/8-mshikano.mjs
 
 Run the API in **production** mode. Outside production the single-user
 development fallback silently answers every unauthenticated request as

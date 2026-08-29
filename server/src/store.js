@@ -224,6 +224,9 @@ const EMPTY = {
   // T5: the shared EPL player catalog. Rows carry their source; 'seed' rows
   // 'seed' rows are clearly mock development data.
   eplCatalog: [],
+  // Mshikano: cooperation posts + two-party-confirmed partnerships.
+  coopPosts: [],
+  coopPartnerships: [],
   arenaVenues: [],
   arenaTournaments: [],
   arenaResults: [], // agreed match results; leaderboards are derived from these
