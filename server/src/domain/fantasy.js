@@ -140,7 +140,7 @@ export function lockCompetition(id) {
  * Organiser-only. This is what stops a participant inventing a striker who
  * scores six goals a game.
  */
-export function addPoolPlayer(competitionId, actorId, { name, position, club, price = 0 }) {
+export function addPoolPlayer(competitionId, actorId, { name, position, club, price = 0, source = null }) {
   const c = getCompetition(competitionId);
   if (!c) throw new Error('competition not found');
   if (c.createdBy !== actorId) throw new Error('only the organiser may change the player pool');
@@ -156,6 +156,9 @@ export function addPoolPlayer(competitionId, actorId, { name, position, club, pr
     position,
     club: String(club).trim().slice(0, 60),
     price: Number.isFinite(price) ? price : 0,
+    // Provenance travels WITH the row: a pool built from the SEED catalog
+    // says so, so the room can state its data source in words.
+    source,
     createdAt: new Date().toISOString()
   });
 }

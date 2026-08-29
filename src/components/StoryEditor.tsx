@@ -74,7 +74,16 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
     }
     if (publish) {
       const id = (res.data as any)?.id ?? article?.id;
-      await briefApi.transitionTea(id, 'publish');
+      const pub = await briefApi.transitionTea(id, 'publish');
+      if (!pub.ok) {
+        // The story is SAVED (as a draft); only the publish was refused.
+        // Closing silently here would hide a real refusal -- show it, keep
+        // the studio open, and let the desk show the saved draft.
+        setBusy(false);
+        setError(`Saved as a draft — publish was refused: ${pub.error}`);
+        onSaved();
+        return;
+      }
     }
     setBusy(false);
     onSaved();

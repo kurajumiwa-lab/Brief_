@@ -40,6 +40,20 @@ export function catalogPlayers({ club = null, position = null } = {}) {
   return rows.sort((a, b) => a.name.localeCompare(b.name));
 }
 
+import { defaultSeedRows } from './eplSeed.js';
+
+/**
+ * Boot-time bootstrap: if the catalog is EMPTY (a fresh deployment, or one
+ * whose operator never seeded), insert the default SEED roster so the game is
+ * playable -- rooms can draw a pool and managers can pick an XI. Idempotent:
+ * a catalog that already has rows is left exactly as it is, whatever its
+ * source. Returns the number of rows inserted (0 when nothing was needed).
+ */
+export function ensureCatalogSeeded() {
+  if (store.all('eplCatalog').length > 0) return 0;
+  return seedCatalog(defaultSeedRows()).length;
+}
+
 export function seedCatalog(rows) {
   // SEED data, tagged as itself. It exists so the game is playable in
   // development; it is never presented as live EPL data.
@@ -116,8 +130,42 @@ export function importPool(competitionId, actorId, { club = null } = {}) {
     throw err;
   }
   return rows.map((p) => fantasy.addPoolPlayer(competitionId, actorId, {
-    name: p.name, position: p.position, club: p.club, price: p.price
+    name: p.name, position: p.position, club: p.club, price: p.price, source: p.source ?? 'seed'
   }));
+}
+
+/**
+ * The cheapest LEGAL XI a manager could field from these players (greedy on
+ * the squad minimums: 1 GK + 3 DEF + 2 MID + 1 FWD, then the 4 cheapest
+ * remaining rows), or null when the rows cannot field a squad at all. Used
+ * to refuse budgets that would brick a room before anyone could seat.
+ */
+export function cheapestSquadCost(players) {
+  const byPos = (pos) => players.filter((p) => p.position === pos)
+    .map((p) => p.price).sort((a, b) => a - b);
+  const gk = byPos('GK'), def = byPos('DEF'), mid = byPos('MID'), fwd = byPos('FWD');
+  if (gk.length < 1 || def.length < 3 || mid.length < 2 || fwd.length < 1) return null;
+  // The 4 extras respect the per-position MAXIMA (1 GK, 5 DEF, 5 MID, 3 FWD):
+  // a "cheapest XI" with five goalkeepers is not a squad anyone could field.
+  const rest = [...def.slice(3, 5), ...mid.slice(2, 5), ...fwd.slice(1, 3)]
+    .sort((a, b) => a - b).slice(0, 4);
+  if (rest.length < 4) return null; // cannot field 11 at all under the maxima
+  return gk[0] + def[0] + def[1] + def[2] + mid[0] + mid[1] + fwd[0]
+    + rest.reduce((t, p) => t + p, 0);
+}
+
+/**
+ * A budget a manager could never meet is refused HERE, with the arithmetic,
+ * instead of bricking the room at seat time. Floor comes from the room's own
+ * pool when it has one, else the catalog the pool would be drawn from.
+ */
+export function assertBudgetFeasible(competitionId, budgetKes) {
+  const pool = competitionId ? fantasy.playerPool(competitionId) : [];
+  const rows = pool.length > 0 ? pool : catalogPlayers();
+  const floor = cheapestSquadCost(rows);
+  if (floor != null && budgetKes < floor) {
+    throw new Error(`a budget of ${budgetKes} cannot seat any squad - the cheapest XI here costs ${floor}`);
+  }
 }
 
 // --- budget ----------------------------------------------------------------------
@@ -128,6 +176,7 @@ export function setBudget(actorId, competitionId, budgetKes) {
   if (c.createdBy !== actorId) throw new Error('only the organiser may set the budget');
   const budget = Math.trunc(Number(budgetKes));
   if (!Number.isSafeInteger(budget) || budget <= 0) throw new Error('a budget is whole shillings above zero');
+  assertBudgetFeasible(competitionId, budget);
   return store.update('fantasyCompetitions', competitionId, { budgetKes: budget });
 }
 

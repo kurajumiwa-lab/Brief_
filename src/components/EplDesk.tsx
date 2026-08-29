@@ -81,11 +81,14 @@ export function EplDesk({ meId, onToast }: { meId: string | null; onToast: (msg:
 
   const loadRoomDetail = React.useCallback(async (id: string) => {
     setSeatNote(null);
-    const [cat, st] = await Promise.all([
-      briefApi.getEplCatalog(),
+    // THE PICKER READS THE ROOM'S OWN POOL. Its rows are distinct from the
+    // catalog rows they were imported from; picking catalog ids was refused
+    // by the server as 'unknown player' -- the last link in the dead-end.
+    const [poolRes, st] = await Promise.all([
+      briefApi.getEplPool(id),
       briefApi.getEplStandings(id)
     ]);
-    if (cat.ok) setPool(cat.data.players);
+    if (poolRes.ok) setPool(poolRes.data.players);
     if (st.ok) setStandings(st.data.standings);
   }, []);
 
@@ -118,7 +121,10 @@ export function EplDesk({ meId, onToast }: { meId: string | null; onToast: (msg:
     const res = await briefApi.importEplPool(id);
     setBusy(false);
     if (!res.ok) { setFormNote(res.error); return; }
-    setFormNote(`${res.data.imported} catalog players imported into this room's pool.`);
+    setFormNote(
+      `${res.data.imported} catalog players imported — the room is ${res.data.opened ? 'OPEN for picking' : 'still a draft'}`
+      + (res.data.openNote ? ` (${res.data.openNote})` : '')
+    );
     await loadRooms();
     if (selectedId === id) await loadRoomDetail(id);
   };
@@ -167,6 +173,11 @@ export function EplDesk({ meId, onToast }: { meId: string | null; onToast: (msg:
         </p>
         {providerNote && (
           <p className="mt-1 text-[9px] leading-snug text-[#111111]/40">{providerNote}</p>
+        )}
+        {!meId && (
+          <p className="mt-1 text-[10px] font-bold text-[#111111]/70">
+            Browsing is open — sign in to open a room or seat an XI.
+          </p>
         )}
       </div>
 

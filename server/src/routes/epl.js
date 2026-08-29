@@ -13,12 +13,12 @@ export function register(app) {
     res.json({ clubs: epl.EPL_CLUBS, provider: epl.providerStatus() });
   });
 
-  // Rooms list. Open ones anyone may browse; the caller's own drafts included
-  // so an organiser can find their room again. Every row carries its DERIVED
-  // lobby state and a live entry count.
+  // Rooms list. PUBLIC: browsing rooms is a read, not an act -- a signed-out
+  // visitor sees the same rooms (creating a room and seating an XI still ask
+  // for a session). Every row carries its DERIVED lobby state and a live
+  // entry count; 'mine' is true only for the room's organiser.
   app.get('/api/epl/competitions', (req, res) => {
-    const me = requireAuth(req, res);
-    if (!me) return;
+    const me = callerId(req);
     const rows = fantasy.listCompetitions({ status: null }).map((c) => ({
       id: c.id,
       title: c.title,
@@ -41,15 +41,25 @@ export function register(app) {
    * budget and the room bounds set at creation instead of after the fact.
    */
   app.post('/api/epl/competitions', (req, res) => {
+    // Same self-heal as the catalog read: feasibility arithmetic needs rows.
+    epl.ensureCatalogSeeded();
     const me = requireAuth(req, res);
     if (!me) return;
     try {
+      // Validate EVERYTHING that can be validated before the room exists.
+      // Creating the row and failing on its budget left a phantom room the
+      // organiser was told had failed -- half a transaction is no transaction.
+      const budget = req.body?.budgetKes != null ? Math.trunc(Number(req.body.budgetKes)) : null;
+      if (req.body?.budgetKes != null) {
+        if (!Number.isSafeInteger(budget) || budget <= 0) throw new Error('a budget is whole shillings above zero');
+        epl.assertBudgetFeasible(null, budget); // catalog floor; the room has no pool yet
+      }
       const c = fantasy.createCompetition({
         createdBy: me,
         title: req.body?.title,
         kickoffAt: req.body?.kickoffAt
       });
-      if (req.body?.budgetKes != null) epl.setBudget(me, c.id, req.body.budgetKes);
+      if (budget != null) epl.setBudget(me, c.id, budget);
       if (req.body?.minEntries != null || req.body?.maxEntries != null) {
         epl.setEntryBounds(me, c.id, {
           minEntries: req.body?.minEntries ?? null,
@@ -96,6 +106,10 @@ export function register(app) {
   });
 
   app.get('/api/epl/catalog', (req, res) => {
+    // Self-heal: a genuinely empty catalog (fresh deploy, restored-empty
+    // store) draws the clearly-tagged SEED roster so the game is playable.
+    // No-op the moment the catalog has rows, whatever their source.
+    epl.ensureCatalogSeeded();
     res.json({
       players: epl.catalogPlayers({ club: req.query?.club ?? null, position: req.query?.position ?? null }),
       provider: epl.providerStatus()
@@ -124,12 +138,44 @@ export function register(app) {
     res.status(result.ok ? 200 : 503).json(result);
   });
 
+  /**
+   * A room's imported pool -- the rows a manager actually picks from. These
+   * are DISTINCT from the catalog rows they were imported from (a pool row
+   * belongs to its room), so the seat picker must read THIS endpoint, not the
+   * catalog: submitting catalog ids was refused as 'unknown player'.
+   */
+  app.get('/api/epl/competitions/:id/pool', (req, res) => {
+    const c = fantasy.getCompetition(req.params.id);
+    if (!c) return res.status(404).json({ error: 'competition not found' });
+    res.json({ players: fantasy.playerPool(req.params.id) });
+  });
+
   app.post('/api/epl/competitions/:id/pool/import', (req, res) => {
+    // Same self-heal as the catalog read: importing from an empty catalog
+    // would otherwise seat nobody, ever.
+    epl.ensureCatalogSeeded();
     const me = requireAuth(req, res);
     if (!me) return;
     try {
       const imported = epl.importPool(req.params.id, me, { club: req.body?.club ?? null });
-      res.status(201).json({ imported: imported.length });
+      // OPEN THE ROOM. A draft room can never seat an XI (submitTeam refuses
+      // drafts), and on this surface import IS the organiser saying "open for
+      // picking". openCompetition re-checks organiser + pool sufficiency, so
+      // this can never open an unplayable room. Without it every room stayed
+      // a draft forever -- the dead-end screen.
+      let opened = false;
+      let openNote = null;
+      if (fantasy.getCompetition(req.params.id)?.status === 'draft') {
+        try {
+          opened = Boolean(fantasy.openCompetition(req.params.id, me));
+        } catch (e) {
+          // The import SUCCEEDED; the room just cannot open yet (e.g. a club
+          // filter left fewer than 11 players). Say why, keep it a draft the
+          // organiser can top up with another import.
+          openNote = String(e.message ?? e);
+        }
+      }
+      res.status(201).json({ imported: imported.length, opened, openNote });
     } catch (e) {
       res.status(e.code === 'catalog_empty' ? 409 : 400).json({ error: String(e.message ?? e) });
     }

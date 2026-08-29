@@ -7101,18 +7101,36 @@ console.log('\n=== EPL CATALOG + SQUAD BUDGET + LOBBY (Tikiti T5) ===');
       kickoffAt: new Date(Date.now() + 3_600_000).toISOString()
     }).id;
     r = await call(`/api/epl/competitions/${compId}/pool/import`, 'POST', {}, O.token);
-    check('the organiser imports the catalog into the pool', r.status === 201 && r.body?.imported === 2, JSON.stringify(r.body));
-    r = await call(`/api/epl/competitions/${compId}/budget`, 'POST', { budgetKes: 200 }, O.token);
+    // The catalog self-heals with the SEED roster, so the count is a lower
+    // bound; the DETERMINISTIC fact is that the organiser's own seeded rows
+    // are in the pool.
+    const poolAfterImport = store.filter('fantasyPlayers', (p) => p.competitionId === compId);
+    check('the organiser imports the catalog into the pool (their rows included)',
+      r.status === 201 && r.body?.imported >= 2
+        && poolAfterImport.some((p) => p.name === 'Mock Keeper')
+        && poolAfterImport.some((p) => p.name === 'Mock Forward'),
+      JSON.stringify({ imported: r.body?.imported }));
+    // 700 sits ABOVE the seed-catalog floor (the cheapest legal XI costs 550):
+    // budgets below it are now refused at set time -- a room nobody could
+    // ever seat is not a room.
+    r = await call(`/api/epl/competitions/${compId}/budget`, 'POST', { budgetKes: 700 }, O.token);
     check('a budget is set in whole shillings', r.status === 200);
     r = await call(`/api/epl/competitions/${compId}/lobby`, 'POST', { minEntries: 2, maxEntries: 4 }, O.token);
     check('entry bounds make a waiting room', r.status === 200 && r.body?.lobbyState === 'waiting_for_players', JSON.stringify(r.body?.lobbyState));
 
     // Budget arithmetic, proven through the domain hook submitTeam uses.
     const pool = store.filter('fantasyPlayers', (p) => p.competitionId === compId);
-    const gk = pool.find((p) => p.position === 'GK'); const fwd = pool.find((p) => p.position === 'FWD');
-    const problems = eplDomain.budgetProblems(compId, [gk.id, fwd.id, fwd.id, fwd.id]);
+    // Pick the organiser's known-price rows BY NAME: the pool also carries
+    // the auto-seeded defaults, whose prices would make the arithmetic
+    // non-deterministic.
+    const gk = pool.find((p) => p.name === 'Mock Keeper'); const fwd = pool.find((p) => p.name === 'Mock Forward');
+    const defs = pool.filter((p) => p.position === 'DEF').sort((a, b) => a.name.localeCompare(b.name)).slice(0, 3);
+    const mids = pool.filter((p) => p.position === 'MID').sort((a, b) => a.name.localeCompare(b.name)).slice(0, 4);
+    const dearXI = [gk.id, fwd.id, fwd.id, fwd.id, ...defs.map((p) => p.id), ...mids.map((p) => p.id)];
+    const dearCost = gk.price + 3 * fwd.price + defs.reduce((t, p) => t + p.price, 0) + mids.reduce((t, p) => t + p.price, 0);
+    const problems = eplDomain.budgetProblems(compId, dearXI);
     check('an unaffordable squad is refused with the arithmetic',
-      problems.length === 1 && /costs 410/.test(problems[0]), JSON.stringify(problems));
+      problems.length === 1 && problems[0].includes(`costs ${dearCost} but the budget is 700`), JSON.stringify(problems));
     check('an affordable selection passes', eplDomain.budgetProblems(compId, [gk.id, fwd.id]).length === 0);
 
     // One manager holds a seat (a real entry row, however built).
@@ -7148,23 +7166,42 @@ console.log('\n=== EPL CATALOG + SQUAD BUDGET + LOBBY (Tikiti T5) ===');
     // alone (the bare fantasy surface is gone; this is the one that lives).
     r = await call('/api/epl/competitions', 'POST', {
       title: 'GW3 http room', kickoffAt: new Date(Date.now() + 3_600_000).toISOString(),
-      budgetKes: 200, minEntries: 2, maxEntries: 4
+      budgetKes: 700, minEntries: 2, maxEntries: 4
     }, O.token);
     check('a room is CREATED over HTTP with budget and bounds', r.status === 201 && r.body?.lobbyState === 'waiting_for_players', JSON.stringify(r.body).slice(0, 160));
     const httpRoom = r.body.competition.id;
     r = await call(`/api/epl/competitions/${httpRoom}/pool/import`, 'POST', {}, O.token);
-    check('its pool imports from the catalog over HTTP', r.status === 201 && r.body?.imported === 2, JSON.stringify(r.body));
+    check('its pool imports from the catalog over HTTP',
+      r.status === 201 && r.body?.imported >= 2, JSON.stringify({ imported: r.body?.imported }));
+    check('importing the pool OPENS the room (the draft dead-end is gone)',
+      r.body?.opened === true && fantasyDomain.getCompetition(httpRoom)?.status === 'open',
+      JSON.stringify({ opened: r.body?.opened, status: fantasyDomain.getCompetition(httpRoom)?.status }));
+    r = await call(`/api/epl/competitions/${httpRoom}/pool`, 'GET', undefined, O.token);
+    check('the room pool reads back for the seat picker',
+      r.status === 200 && (r.body?.players ?? []).length >= 2, JSON.stringify(r.body?.players?.length));
+    r = await call('/api/epl/competitions', 'POST', {
+      title: 'GW4 impossible room', kickoffAt: new Date(Date.now() + 3_600_000).toISOString(),
+      budgetKes: 1, minEntries: 2, maxEntries: 4
+    }, O.token);
+    check('a budget no squad could meet is refused at CREATION, with the arithmetic',
+      r.status === 400 && /cannot seat any squad/.test(r.body?.error ?? ''), r.body?.error);
+    r = await call('/api/epl/competitions', 'GET');
+    check('the refused creation left no phantom room',
+      !(r.body?.competitions ?? []).some((x) => x.title === 'GW4 impossible room'));
     r = await call('/api/epl/competitions', 'GET', undefined, M1.token);
     const listed = (r.body?.competitions ?? []).find((c) => c.id === httpRoom);
     check('rooms list carries DERIVED lobby state and a live count',
       Boolean(listed) && listed.lobbyState === 'waiting_for_players' && listed.entries === 0 && listed.mine === false, JSON.stringify(listed));
     r = await call('/api/epl/competitions', 'GET', undefined, O.token);
     check('the organiser sees the room as their own', (r.body?.competitions ?? []).find((c) => c.id === httpRoom)?.mine === true);
+    // The room is OPEN now (import opens it), so the honest refusal left to
+    // prove is the squad SHAPE: two players are not a team, and the server
+    // says so rather than accepting a half-seat.
     const smallPool = store.filter('fantasyPlayers', (p) => p.competitionId === httpRoom);
     r = await call(`/api/epl/competitions/${httpRoom}/entries`, 'POST', {
-      playerIds: smallPool.map((p) => p.id), captainId: smallPool[0].id
+      playerIds: smallPool.slice(0, 2).map((p) => p.id), captainId: smallPool[0].id
     }, M1.token);
-    check('a seat is REFUSED honestly: the room cannot open on a 2-player pool', r.status === 400 && /not open/i.test(r.body?.error ?? ''), JSON.stringify(r.body).slice(0, 140));
+    check('a malformed seat is REFUSED honestly (a team is eleven)', r.status === 400 && /exactly 11/.test(r.body?.error ?? ''), JSON.stringify(r.body).slice(0, 140));
     r = await call(`/api/epl/competitions/${httpRoom}/standings`, 'GET');
     check('standings read publicly (empty before scoring)', r.status === 200 && Array.isArray(r.body?.standings) && r.body.standings.length === 0);
   } finally { srv.close(); delete process.env.BRIEF_OPERATORS; process.env.BRIEF_DEV_AUTH = '1'; }
@@ -7266,6 +7303,25 @@ console.log('\n=== PLATFORM ROLES: THE OPERATOR SURFACE IS CAPABILITY-GUARDED ==
     check('a reviewer (moderate) publishes on behalf of another author', r.status === 200);
     r = await call(`/api/admin/tea/${article.id}/archive`, 'POST', {}, nobody.token);
     check("archiving someone else's story still needs moderation (403)", r.status === 403);
+
+    // --- the story LIST is scoped, not capability-walled ----------------------
+    r = await call('/api/admin/tea', 'GET', undefined, nobody.token);
+    check('a plain editor reads the story list without any capability', r.status === 200 && Array.isArray(r.body?.articles));
+    check('and sees only their own work plus published stories',
+      r.body.articles.every((a) => a.createdBy === nobody.user.id || a.status === 'published'),
+      JSON.stringify(r.body.articles.map((a) => [a.title, a.status])).slice(0, 160));
+    r = await call('/api/admin/tea', 'GET');
+    check('an anonymous caller still cannot list the desk (401)', r.status === 401);
+
+    // --- EPL: browsing is public, the catalog bootstraps, rooms list ----------
+    r = await call('/api/epl/competitions');
+    check('the EPL rooms list is a public read (no session)', r.status === 200 && Array.isArray(r.body?.competitions), `got ${r.status}`);
+    r = await call('/api/epl/catalog');
+    const cat = r.body?.players ?? [];
+    check('a fresh deployment auto-seeds the catalog (game is playable)', cat.length >= 200, `players=${cat.length}`);
+    check('every auto-seeded row states its source honestly', cat.every((x) => x.source === 'seed'));
+    check('the seeded squads cover all twenty clubs',
+      new Set(cat.map((x) => x.club)).size === 20, `clubs=${new Set(cat.map((x) => x.club)).size}`);
     r = await call('/api/ops/audit', 'GET', undefined, rev.token);
     check('every publish is audited with before/after status, author or moderator',
       r.body.audit.some((a) => a.action === 'tea.publish' && a.before?.status === 'draft' && a.after?.status === 'published'));

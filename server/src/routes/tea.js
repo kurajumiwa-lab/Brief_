@@ -4,7 +4,7 @@
 // ever reachable here (domain.getBySlug / listPublished enforce it).
 // Editorial: create/edit/transition. Gated by requireAuth; publishing is an
 // explicit, authorised act, never available to an anonymous consumer.
-import { callerId } from '../identity.js';
+import { callerId, hasCapability } from '../identity.js';
 import * as tea from '../domain/tea.js';
 import { store } from '../store.js';
 import { requireAuth, requireCap, recordAudit } from './helpers.js';
@@ -70,10 +70,21 @@ export function register(app) {
 
   // --- Tea Desk (editorial workflow) ----------------------------------------
 
-  /** Full editorial list, including drafts (for the desk). */
+  /**
+   * The editorial list, SCOPED to what the caller may actually see:
+   * a moderator gets everything; any other signed-in editor gets their OWN
+   * drafts plus every published story. (The desk used to demand 'moderate'
+   * for the whole list, which left a plain author staring at a 403 instead
+   * of their own work -- the desk must be usable by the people writing.)
+   */
   app.get('/api/admin/tea', (req, res) => {
-    if (!requireCap(req, res, 'moderate')) return;
-    res.json({ articles: tea.listAll({ status: req.query.status ?? null }) });
+    const me = requireAuth(req, res);
+    if (!me) return;
+    const all = tea.listAll({ status: req.query.status ?? null });
+    const mine = hasCapability(me, 'moderate')
+      ? all
+      : all.filter((a) => a.createdBy === me || a.status === 'published');
+    res.json({ articles: mine });
   });
 
   /** Create a draft (or a ready article) — editor only. */

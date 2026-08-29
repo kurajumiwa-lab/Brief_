@@ -64,7 +64,15 @@ export function ImageField({
   useEffect(() => {
     let cancelled = false;
     void briefApi.getMediaStatus().then((res) => {
-      if (cancelled || !res.ok) return;
+      if (cancelled) return;
+      if (!res.ok) {
+        // Most often a signed-out session: uploads need one. Say it once,
+        // honestly, instead of failing at pick time with no context.
+        if (/sign|401|unauthor/i.test(res.error ?? '')) {
+          setError('Sign in to upload images — an external link still works.');
+        }
+        return;
+      }
       setLimitMb(Math.round(res.data.uploads.maxBytes / 1048576));
       setPersisted(res.data.uploads.persisted);
     });

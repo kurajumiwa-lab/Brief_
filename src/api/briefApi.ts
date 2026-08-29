@@ -2972,12 +2972,23 @@ export function createEplRoom(body: {
   );
 }
 
+/** A room's imported pool -- the rows picks are validated against. */
+export function getEplPool(competitionId: string): Promise<ApiResult<{ players: EplCatalogPlayer[] }>> {
+  return request(
+    `/api/epl/competitions/${encodeURIComponent(competitionId)}/pool`,
+    undefined,
+    (r) => (Array.isArray(r?.players) ? { players: r.players as EplCatalogPlayer[] } : undefined)
+  );
+}
+
 /** Import the (seed or provider) catalog into a room's pool. Organiser-only. */
-export function importEplPool(competitionId: string, club?: string): Promise<ApiResult<{ imported: number }>> {
+export function importEplPool(competitionId: string, club?: string): Promise<ApiResult<{ imported: number; opened: boolean; openNote: string | null }>> {
   return request(
     `/api/epl/competitions/${encodeURIComponent(competitionId)}/pool/import`,
     { method: 'POST', body: JSON.stringify(club ? { club } : {}) },
-    (r) => (typeof r?.imported === 'number' ? { imported: r.imported } : undefined)
+    (r) => (typeof r?.imported === 'number'
+      ? { imported: r.imported, opened: Boolean(r?.opened), openNote: (r?.openNote as string | null) ?? null }
+      : undefined)
   );
 }
 

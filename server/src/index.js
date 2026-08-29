@@ -21,6 +21,7 @@ import * as ops from './ops.js';
 import * as workflow from './domain/workflow.js';
 import * as campaigns from './domain/campaign.js';
 import * as ledger from './domain/ledger.js';
+import * as epl from './domain/epl.js';
 import * as telegram from './connectors/telegram.js';
 import * as whatsapp from './connectors/whatsapp.js';
 import * as compliance from './domain/compliance.js';
@@ -298,6 +299,12 @@ if (process.env.NODE_ENV !== 'test') {
   // volume), and take rolling snapshots so a crash or forced kill never loses
   // more than the last interval. The graceful-shutdown backup still runs too.
   ops.restoreLatestBackupIfEmpty(store);
+  // EPL playability bootstrap: an empty catalog gets the clearly-tagged SEED
+  // roster so rooms can draw a pool. No-op when the catalog already has rows.
+  {
+    const seeded = epl.ensureCatalogSeeded();
+    if (seeded > 0) ops.logInfo('epl_catalog_autoseed', { inserted: seeded, source: 'seed' });
+  }
   ops.installPeriodicBackup(store, {
     intervalMs: Number(process.env.BRIEF_BACKUP_INTERVAL_MS) || 15 * 60 * 1000
   });
