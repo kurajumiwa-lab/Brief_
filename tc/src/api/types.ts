@@ -687,6 +687,12 @@ export interface PublicCampaign {
   soldOut: boolean;
   /** Aggregate social proof: HOW MANY are registered, never WHO. */
   registered: number;
+  /** Contribution pots only (null for fixed-price events). */
+  goalAmount?: number | null;
+  /** Derived from SETTLED ledger rows only; null when there is no goal. */
+  raised?: number | null;
+  /** HOW MANY contributions, never WHO. */
+  contributors?: number | null;
 }
 
 export interface Registration {

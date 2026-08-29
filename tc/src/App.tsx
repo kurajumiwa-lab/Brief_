@@ -4706,6 +4706,19 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
   const [done, setDone] = useState<null | { status: string; ticketCode?: string | null }>(null);
   const [waitlistBusy, setWaitlistBusy] = useState(false);
   const [waitlistMessage, setWaitlistMessage] = useState<string | null>(null);
+  // Contribution pots (T3): the supporter states what they are putting in.
+  const [amount, setAmount] = useState('');
+  // Updates feed: the organiser's own words, read from the public route.
+  const [updates, setUpdates] = useState<briefApi.CampaignUpdatePost[] | null>(null);
+
+  React.useEffect(() => {
+    let live = true;
+    setUpdates(null);
+    void briefApi.getCampaignUpdatesBySlug(slug).then((res) => {
+      if (live) setUpdates(res.ok ? res.data : []);
+    });
+    return () => { live = false; };
+  }, [slug, load.data?.registered]);
 
   const fetchCampaign = React.useCallback(async () => {
     setLoad({ status: 'loading', data: null, error: null });
@@ -4735,7 +4748,10 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
       attendeeRef,
       name: name.trim() === '' ? undefined : name.trim(),
       contact: contact.trim() === '' ? undefined : contact.trim(),
-      trackingHash
+      trackingHash,
+      // Pots only: a whole-shillings amount the supporter states themselves.
+      // The server refuses it on fixed-price events.
+      amount: amount.trim() ? Number(amount) : undefined
     });
     setBusy(false);
     if (!res.ok) {
@@ -4809,6 +4825,64 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                 <p className="text-xs text-[#111111]/60 leading-relaxed">{c.description}</p>
               )}
             </div>
+
+            {/* Contribution pot (T3): a goal, stated amounts, settled-only
+                progress, and contributors as a COUNT. Nobody is listed. */}
+            {c.goalAmount != null && (
+              <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 space-y-2">
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#111111]/50">
+                    Contribution pot
+                  </p>
+                  {c.endsAt && (
+                    <p className="text-[10px] text-[#111111]/60">
+                      {Date.parse(c.endsAt) <= Date.now()
+                        ? 'Deadline passed'
+                        : `Open until ${c.endsAt.slice(0, 10)}`}
+                    </p>
+                  )}
+                </div>
+                <div className="h-2 overflow-hidden rounded-full" style={{ background: 'var(--ground)' }}>
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${Math.min(100, Math.round(((c.raised ?? 0) / c.goalAmount) * 100))}%`,
+                      background: 'var(--signal-live)'
+                    }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="font-extrabold text-[#111111]">
+                    {c.currency} {(c.raised ?? 0).toLocaleString()} of {c.goalAmount.toLocaleString()}
+                  </span>
+                  <span className="text-[#111111]/60">
+                    {(c.contributors ?? 0)} contribution{(c.contributors ?? 0) === 1 ? '' : 's'}
+                  </span>
+                </div>
+                <p className="text-[9px] leading-snug text-[#111111]/50">
+                  Progress counts SETTLED money only — a pledge that has not settled is not raised.
+                  Contributors are counted, never listed.
+                </p>
+              </div>
+            )}
+
+            {/* Updates (T3): the organiser's posts, newest first. */}
+            {updates !== null && updates.length > 0 && (
+              <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 space-y-3">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#111111]/50">
+                  Updates
+                </p>
+                {updates.map((u) => (
+                  <div key={u.id} className="space-y-0.5">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p className="text-xs font-extrabold text-[#111111]">{u.title}</p>
+                      <p className="shrink-0 text-[9px] text-[#111111]/40">{u.createdAt.slice(0, 10)}</p>
+                    </div>
+                    <p className="text-[11px] leading-snug text-[#111111]/60">{u.body}</p>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-4 space-y-2">
               {c.startsAt && (
@@ -4963,14 +5037,40 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                       className="w-full bg-[#FFFFFF] text-[#111111] text-sm rounded-xl px-3 py-3 border border-[#E5E7EB] focus:border-[#111111] focus:outline-none"
                     />
                   </div>
+                  {/* Pots (T3): the supporter states a whole-shillings amount.
+                      Fixed-price events never show this — the price is the price. */}
+                  {c.goalAmount != null && (
+                    <div>
+                      <label className="block text-[9px] text-[#111111]/40 mb-1">
+                        Your contribution ({c.currency})
+                      </label>
+                      <input
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        inputMode="numeric"
+                        placeholder="Whole shillings you are putting in"
+                        className="w-full bg-[#FFFFFF] text-[#111111] text-sm rounded-xl px-3 py-3 border border-[#E5E7EB] focus:border-[#111111] focus:outline-none"
+                      />
+                      <p className="mt-1 text-[9px] text-[#111111]/40 leading-snug">
+                        State what you are putting in. It counts toward the pot once the money
+                        settles; contributors are counted, never listed.
+                      </p>
+                    </div>
+                  )}
                   <button
-                    disabled={busy}
+                    disabled={busy || (c.goalAmount != null && !Number(amount))}
                     onClick={submit}
                     className="w-full py-4 rounded-xl bg-[#111111] text-[#FFFFFF] font-extrabold text-sm cursor-pointer disabled:opacity-40"
                   >
-                    {busy ? 'Registering...' : c.price === 0 ? 'Register' : `Register - ${c.currency} ${c.price.toLocaleString()}`}
+                    {busy
+                      ? 'Registering...'
+                      : c.goalAmount != null
+                      ? `Contribute${amount.trim() ? ` ${c.currency} ${Number(amount).toLocaleString()}` : ''}`
+                      : c.price === 0
+                      ? 'Register'
+                      : `Register - ${c.currency} ${c.price.toLocaleString()}`}
                   </button>
-                  {c.price > 0 && (
+                  {(c.price > 0 || c.goalAmount != null) && (
                     <p className="text-[10px] text-[#111111]/40 leading-snug text-center">
                       No online payment is connected yet. Your spot is held and you
                       arrange payment with the organiser.
@@ -5878,6 +5978,30 @@ export function App() {
     }
     await openCampaign(campaignId);
     showToast('Payment confirmed');
+  };
+
+  // --- T3: the organiser authors updates the public page shows -------------
+  const [updateTitle, setUpdateTitle] = useState('');
+  const [updateBody, setUpdateBody] = useState('');
+  const [updateBusy, setUpdateBusy] = useState(false);
+  const [updateNote, setUpdateNote] = useState<string | null>(null);
+
+  const postUpdate = async (campaignId: string) => {
+    if (!updateTitle.trim() || !updateBody.trim() || updateBusy) return;
+    setUpdateBusy(true);
+    setUpdateNote(null);
+    const res = await briefApi.postCampaignUpdate(campaignId, {
+      title: updateTitle.trim(),
+      body: updateBody.trim()
+    });
+    setUpdateBusy(false);
+    if (!res.ok) {
+      setUpdateNote(res.error);
+      return;
+    }
+    setUpdateTitle('');
+    setUpdateBody('');
+    setUpdateNote('Posted. It is on the public page now.');
   };
 
   const setRegStatus = async (
@@ -10209,6 +10333,38 @@ export function App() {
                         </p>
                       </div>
                     )}
+
+                  {/* POST AN UPDATE (T3): the organiser's words land on the
+                      public page — the loop supporters read. */}
+                  <div className="space-y-2">
+                    <h3 className="text-[9px] text-[#111111]/40">
+                      Post an update
+                    </h3>
+                    <input
+                      value={updateTitle}
+                      onChange={(e) => setUpdateTitle(e.target.value)}
+                      placeholder="Update title (e.g. Halfway there)"
+                      aria-label="update title"
+                      className="w-full bg-[#FFFFFF] text-[#111111] text-xs rounded-xl px-3 py-2.5 border border-[#E5E7EB] focus:border-[#111111] focus:outline-none"
+                    />
+                    <textarea
+                      value={updateBody}
+                      onChange={(e) => setUpdateBody(e.target.value)}
+                      placeholder="What the people supporting this should know"
+                      aria-label="update body"
+                      rows={3}
+                      className="w-full bg-[#FFFFFF] text-[#111111] text-xs rounded-xl px-3 py-2.5 border border-[#E5E7EB] focus:border-[#111111] focus:outline-none resize-none"
+                    />
+                    <button
+                      type="button"
+                      disabled={updateBusy || !updateTitle.trim() || !updateBody.trim()}
+                      onClick={() => void postUpdate(campaignDetail.id)}
+                      className="px-4 py-2 rounded-xl bg-[#111111] text-[#FFFFFF] text-[11px] font-extrabold cursor-pointer disabled:opacity-40"
+                    >
+                      {updateBusy ? 'Posting…' : 'Post update'}
+                    </button>
+                    {updateNote && <p className="text-[10px] text-[#111111]/60 break-words">{updateNote}</p>}
+                  </div>
 
                   {/* REGISTRATIONS */}
                   <div className="space-y-2">

@@ -818,7 +818,7 @@ export interface PublicRegisterResult {
 
 export function registerForCampaign(
   slug: string,
-  body: { attendeeRef: string; name?: string; contact?: string; trackingHash?: string }
+  body: { attendeeRef: string; name?: string; contact?: string; trackingHash?: string; amount?: number }
 ): Promise<ApiResult<PublicRegisterResult>> {
   return request(
     `/api/public/campaigns/${encodeURIComponent(slug)}/register`,
@@ -2777,6 +2777,125 @@ export function contributeGroupBuy(id: string, body: { memberRef: string; amount
 export function advanceGroupBuyStage(id: string, to: string): Promise<ApiResult<GroupBuy>> {
   return request(`/api/engine/group-buys/${encodeURIComponent(id)}/stage`, { method: 'POST', body: JSON.stringify({ to }) }, (r) =>
     r?.groupBuy ? (r.groupBuy as GroupBuy) : undefined
+  );
+}
+
+// --- Priced bargains (Tikiti T2) -----------------------------------------------
+
+export interface BargainTier {
+  min: number;
+  max: number | null;
+  pricePerHead: number;
+  label: string | null;
+}
+
+/**
+ * The honest price view the server derives: what a joiner pays NOW, the next
+ * band and what it needs, and what everyone settles at if the room fills.
+ * Nothing here is client-computed.
+ */
+export interface BargainView {
+  participants: number;
+  requiredParticipants: number | null;
+  maxParticipants: number | null;
+  spotsLeft: number | null;
+  currentPricePerHead: number | null;
+  currentTierLabel: string | null;
+  nextTier: { at: number; pricePerHead: number; needs: number } | null;
+  settlesAt: number;
+  expiresAt: string | null;
+  expired: boolean;
+  minimumMet: boolean;
+}
+
+export interface GroupBuyWithBargain {
+  groupBuy: GroupBuy;
+  bargain: BargainView | null;
+}
+
+/** One buy with its derived bargain view (owner-only route). */
+export function getGroupBuy(id: string): Promise<ApiResult<GroupBuyWithBargain>> {
+  return request(`/api/engine/group-buys/${encodeURIComponent(id)}`, undefined, (r) =>
+    r?.groupBuy ? { groupBuy: r.groupBuy as GroupBuy, bargain: (r.bargain ?? null) as BargainView | null } : undefined
+  );
+}
+
+/**
+ * Attach per-head pricing bands to a buy. The ladder must climb down in price
+ * as participation climbs up; the server refuses anything else, and the
+ * refusal text is the useful part.
+ */
+export function priceGroupBuyBargain(
+  id: string,
+  body: {
+    tiers: { min: number; pricePerHead: number; max?: number | null; label?: string | null }[];
+    minParticipants?: number | null;
+    maxParticipants?: number | null;
+    expiresAt?: string | null;
+  }
+): Promise<ApiResult<GroupBuy>> {
+  return request(
+    `/api/engine/group-buys/${encodeURIComponent(id)}/pricing`,
+    { method: 'POST', body: JSON.stringify(body) },
+    (r) => (r?.buy ? (r.buy as GroupBuy) : undefined)
+  );
+}
+
+/**
+ * Join a priced bargain. There is deliberately no price argument: the price is
+ * derived server-side from the live count at the moment of joining.
+ */
+export function joinBargain(id: string): Promise<ApiResult<{
+  participant: { id: string; priceAtJoin: number; tierLabelAtJoin: string; status: string };
+  changed: boolean;
+}>> {
+  return request(
+    `/api/engine/group-buys/${encodeURIComponent(id)}/join`,
+    { method: 'POST', body: '{}' },
+    (r) => (r?.participant ? { participant: r.participant, changed: Boolean(r.changed) } : undefined)
+  );
+}
+
+/** Leave before the bargain executes; the spot opens again. */
+export function leaveBargain(id: string): Promise<ApiResult<{
+  participant: { id: string; status: string };
+  changed: boolean;
+}>> {
+  return request(
+    `/api/engine/group-buys/${encodeURIComponent(id)}/leave`,
+    { method: 'POST', body: '{}' },
+    (r) => (r?.participant ? { participant: r.participant, changed: Boolean(r.changed) } : undefined)
+  );
+}
+
+// --- Campaign updates (Tikiti T3) ----------------------------------------------
+
+export interface CampaignUpdatePost {
+  id: string;
+  campaignId: string;
+  title: string;
+  body: string;
+  createdAt: string;
+}
+
+/** Updates on a published campaign, addressed by its PUBLIC slug. */
+export function getCampaignUpdatesBySlug(slug: string): Promise<ApiResult<CampaignUpdatePost[]>> {
+  return request(
+    `/api/public/campaigns/${encodeURIComponent(slug)}/updates`,
+    undefined,
+    (r) => (Array.isArray(r?.updates) ? (r.updates as CampaignUpdatePost[]) : undefined)
+  );
+}
+
+/** The organiser authors an update; supporters read it on the public page. */
+export function postCampaignUpdate(
+  campaignId: string,
+  body: { title: string; body: string }
+): Promise<ApiResult<CampaignUpdatePost>> {
+  return request(
+    `/api/campaigns/${encodeURIComponent(campaignId)}/updates`,
+    { method: 'POST', body: JSON.stringify(body) },
+    (r) => (r?.update ? (r.update as CampaignUpdatePost) : undefined)
   );
 }
 

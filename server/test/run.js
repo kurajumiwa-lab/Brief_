@@ -6873,6 +6873,13 @@ console.log('\n=== CONTRIBUTION POTS + DEADLINES + UPDATES (Tikiti T3) ===');
     r = await call(`/api/campaigns/${potId}/updates`, 'GET');
     check('updates are public', r.body?.updates?.length === 1);
     check('the update surfaced as a signal', Boolean(store.find('signals', (x) => x.type === 'campaign_update_posted' && x.metadata?.campaignId === potId)));
+
+    // The PUBLIC page is slug-addressed and never learns the internal id, so
+    // its feed is readable by slug too — and only for published campaigns.
+    r = await call(`/api/public/campaigns/${pot.publicSlug}/updates`);
+    check('updates are readable by PUBLIC slug', r.status === 200 && r.body?.updates?.length === 1, JSON.stringify(r.body));
+    r = await call(`/api/public/campaigns/no-such-slug-at-all/updates`);
+    check('an unknown slug is a 404, not an empty feed', r.status === 404);
   } finally { srv.close(); process.env.BRIEF_DEV_AUTH = '1'; }
 }
 

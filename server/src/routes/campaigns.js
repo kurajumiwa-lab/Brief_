@@ -353,6 +353,14 @@ app.get('/api/campaigns/:id/updates', (req, res) => {
   res.json({ updates: campaigns.listCampaignUpdates(req.params.id) });
 });
 
+// The PUBLIC page is slug-addressed (it never learns internal ids), so the
+// updates feed is readable by slug too — published campaigns only.
+app.get('/api/public/campaigns/:slug/updates', (req, res) => {
+  const c = campaigns.getPublicBySlug(req.params.slug);
+  if (!c) return res.status(404).json({ error: 'campaign not found' });
+  res.json({ updates: campaigns.listCampaignUpdates(c.id) });
+});
+
 // --- PUBLIC (no authentication; only published/live campaigns resolve) ------
 
 
