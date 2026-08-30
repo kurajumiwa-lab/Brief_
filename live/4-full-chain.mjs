@@ -153,9 +153,11 @@ check('settlement is refused without real money', r.status === 400, `got ${r.sta
 
 console.log('\n=== WEBHOOK SECURITY ===');
 r = await call('/api/webhooks/tuma/anything', 'POST', { status: 'completed', checkout_request_id: 'ws_X', result_code: 0 });
-// App gate: the webhook surface is closed to sessionless callers too — still
-// fails CLOSED, now one step earlier (401 at the gate, before signature work).
-check('the payment webhook fails CLOSED (401 at the app gate)', r.status === 401, `got ${r.status}`);
+// The webhook namespace passes the session gate BY DESIGN (machine callers
+// carry no account) and fails closed on its OWN credential instead: 403 from
+// the route's secret check here. Real Tuma callbacks with the right secret
+// pass; this one, with a guessed secret, must not.
+check('the payment webhook fails CLOSED on its own credential', r.status === 401 || r.status === 403, `got ${r.status}`);
 check('and leaks no detail', !JSON.stringify(r.body ?? {}).includes('checkout'));
 
 console.log('\n=== LEDGER / SETTLEMENT / PAYOUT ===');

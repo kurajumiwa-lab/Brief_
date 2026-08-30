@@ -313,3 +313,73 @@ export const capabilities = {
   channels: 'conditional - the bot must be a member/admin of the channel',
   notes: 'Backfilling old posts requires MTProto (user account auth), which is a different authorization model and is not implemented.'
 };
+
+// ---------------------------------------------------------------------------
+// TG ONBOARDING — the START handshake.
+//
+// The onboarding loop this completes: a person finds the bot, taps START,
+// and the bot answers with ONE button — "Open Brief" — which launches the
+// Mini App; initData then signs them in (/api/telegram/init) and the normal
+// onboarding flow runs inside Telegram.
+//
+// Honesty: with no bot token or no public origin configured there is no
+// button to open, so the handshake is reported as not configured rather
+// than sending a message that goes nowhere.
+// ---------------------------------------------------------------------------
+
+/** Pure classifier: is this update a private-chat command we should answer?
+ *  (Group traffic stays ingestion; nobody wants a bot answering /start in a
+ *  busy group.) */
+export function classifyOnboardingCommand(update) {
+  const msg = update?.message ?? update?.edited_message;
+  if (!msg || !msg.chat) return null;
+  if (msg.chat.type !== 'private') return null;
+  const text = String(msg.text ?? '').trim();
+  if (!text.startsWith('/')) return null;
+  const cmd = text.split(/[\s@]/)[0].toLowerCase();
+  if (cmd === '/start' || cmd === '/help') return { command: cmd, chatId: msg.chat.id };
+  return null;
+}
+
+/** The Mini App URL this deployment can offer, or null when it cannot. */
+export function miniAppUrl() {
+  const base = process.env.BRIEF_PUBLIC_ORIGIN ?? process.env.BRIEF_PUBLIC_BASE ?? null;
+  return base ? String(base).replace(/\/$/, '') : null;
+}
+
+/** Send the START reply: text + one inline web_app button. Fail-closed. */
+export async function sendWebAppButton(chatId, text) {
+  const url = miniAppUrl();
+  if (!process.env.TELEGRAM_BOT_TOKEN) {
+    return { ok: false, error: 'TELEGRAM_BOT_TOKEN not set — the bot cannot answer START' };
+  }
+  if (!url) {
+    return { ok: false, error: 'BRIEF_PUBLIC_ORIGIN not set — there is no Mini App URL to open' };
+  }
+  return call('sendMessage', {
+    chat_id: chatId,
+    text,
+    reply_markup: {
+      inline_keyboard: [[{ text: 'Open Brief', web_app: { url } }]]
+    }
+  });
+}
+
+/** Set the chat MENU BUTTON to the Mini App (the other discovery path). */
+export async function setChatMenuButton() {
+  const url = miniAppUrl();
+  if (!url) return { ok: false, error: 'BRIEF_PUBLIC_ORIGIN not set' };
+  return call('setChatMenuButton', {
+    menu_button: { type: 'web_app', text: 'Brief', web_app: { url } }
+  });
+}
+
+/** The two commands the bot advertises on its command list. */
+export async function setMyCommands() {
+  return call('setMyCommands', {
+    commands: [
+      { command: 'start', description: 'Open Brief' },
+      { command: 'help', description: 'How Brief works' }
+    ]
+  });
+}

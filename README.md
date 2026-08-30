@@ -126,12 +126,12 @@ node live/14-members-desk.mjs         # the members desk: directory, rungs,
                                       # funnel, immediate audited suspension
 ```
 
-**Current state: 3996 assertions, 0 failing** — measured 2026-08-30 against a
+**Current state: 4045 assertions, 0 failing** — measured 2026-08-30 against a
 production build over HTTP, not inherited from an earlier report.
 
 | Suite | Result |
 |---|---|
-| `server/test/run.js` | 2056 passed / 0 failed / 1 skipped |
+| `server/test/run.js` | 2072 passed / 0 failed / 1 skipped |
 | `server/test/livecamp.mjs` | 111 passed / 0 failed |
 | `./run-suites.sh` (45 client suites) | 1420 passed / 0 failed |
 | `tc` strict typecheck | exit 0 |
@@ -365,3 +365,12 @@ The Menu owns the lower **2/3** of the screen; the top 1/3 stays the live app be
 - **`scripts/preflight.mjs`** — the go-live checklist executed against a live deployment (REQUIRED/WARN/OFF tiers; exit 0 = ready). `node scripts/preflight.mjs https://host --admin-token <jwt>`.
 - **Legal** — `GET /api/legal/terms` and `GET /api/legal/privacy`: public (readable before an account exists), versioned and dated, and written to match what the product actually does — points are not money, fees confirmed by an operator, Brief not a party to WhatsApp shop sales, stakes off without a licence, no identity documents stored (Kenya DPA 2019). The app footer links both.
 - **`DEPLOYMENT.md`** — the full runbook: Docker / Railway / bare VPS, data durability, the complete env table, and the go-live checklist.
+
+
+## TG onboarding + WhatsApp basic (the connector essentials)
+
+- **The START handshake** — a private `/start` or `/help` in the bot is answered, not ingested: the webhook replies with one button, **"Open Brief"**, which launches the Mini App at `BRIEF_PUBLIC_ORIGIN`; `initData` then signs the person in (`/api/telegram/init`, already existing) and onboarding runs inside Telegram. With no bot token or public origin the handshake is honestly reported as not sent. Group traffic through the same webhook still ingests as discovery content.
+- **`scripts/telegram-setup.mjs`** — the one-time wiring: proves the token (`getMe`), sets the webhook + secret header, makes the chat menu button the Mini App, sets `/start` + `/help`, reads back `getWebhookInfo`.
+- **WhatsApp basic** — inbound messages to the business number now earn a one-line ack ("Received. Your message is saved in Brief.") through the Cloud API when `WHATSAPP_ACCESS_TOKEN` + `WHATSAPP_PHONE_NUMBER_ID` are set; unconfigured, the webhook response *says* the ack was skipped. `sendText` fails closed with the reason.
+- **The webhook namespace is exempt from the session gate** — machine callbacks (Telegram, WhatsApp, Tuma, Paystack) carry their own credentials (secret header / HMAC), so the account gate must not stop them. Found by the new tests: the gate had been 401-ing real provider callbacks while old tests passed only because they carried a member token. Each webhook still fails closed on its own credential.
+- **`CONNECTORS.md`** — the map: which file does what, which env vars each seam needs, where to get them (BotFather, Meta app dashboard), the webhook URLs to register, curl tests, and the honest limits (WhatsApp groups are not ingestable; Pochi has no API).

@@ -100,7 +100,7 @@ app.post('/api/connectors/telegram/webhook-config', async (req, res) => {
  * returns 200 immediately, and extracts on the queue (spec 29).
  */
 
-app.post('/api/webhooks/telegram', (req, res) => {
+app.post('/api/webhooks/telegram', async (req, res) => {
   // FAIL CLOSED. This guard previously ran only `if (secret)`, so an
   // unconfigured deployment skipped authentication entirely and any anonymous
   // caller could inject raw items and auto-create sources. An absent secret is
@@ -118,6 +118,24 @@ app.post('/api/webhooks/telegram', (req, res) => {
 
   const gate = allow('tg-webhook', 240, 60);
   if (!gate.ok) return res.status(429).json({ error: 'rate limited' });
+
+  // TG ONBOARDING: a private /start or /help is the START handshake, not
+  // content. Answer it with the Mini App button and never ingest it as a
+  // raw item. With no token or origin the handshake is honestly reported
+  // as not configured — it does not silently fall into the feed either.
+  const cmd = telegram.classifyOnboardingCommand(req.body ?? {});
+  if (cmd) {
+    const text =
+      cmd.command === '/start'
+        ? 'Karibu. Brief is everything happening around you — and yours to keep. Tap below to open it right here in Telegram.'
+        : 'Tap Open Brief to use Brief inside Telegram. Everything else works exactly as it does in the app.';
+    const sent = await telegram.sendWebAppButton(cmd.chatId, text);
+    return res.json(
+      sent.ok
+        ? { ok: true, onboarded: cmd.command, sent: true }
+        : { ok: true, onboarded: cmd.command, sent: false, reason: sent.error }
+    );
+  }
 
   // A payload that can never succeed must be refused with 400, not 500.
   // Telegram and Meta retry on 5xx but not on 4xx, so returning 500 for
@@ -244,7 +262,7 @@ app.get('/api/webhooks/whatsapp', (req, res) => {
 
 
 
-app.post('/api/webhooks/whatsapp', (req, res) => {
+app.post('/api/webhooks/whatsapp', async (req, res) => {
   const sig = whatsapp.verifySignature(req.rawBody ?? Buffer.from(''), req.get('x-hub-signature-256'));
   if (!sig.ok) {
     recordError('whatsapp', null, `rejected webhook: ${sig.error}`);
@@ -275,7 +293,21 @@ app.post('/api/webhooks/whatsapp', (req, res) => {
     const { row, duplicate } = storeRawItem({ ...msg, sourceId: source.id });
     if (!duplicate) { enqueue(`wa:${row.id}`, () => processRawItem(row.id)); stored++; }
   }
-  res.json({ ok: true, received: messages.length, stored });
+
+  // BASIC ACK: the sender learns their message landed. Only when sending is
+  // actually configured — otherwise the response SAYS the ack was skipped
+  // instead of pretending one went out.
+  let acknowledged = false;
+  let ackReason = null;
+  if (stored > 0 && whatsapp.isSendConfigured()) {
+    const first = messages[0];
+    const ack = await whatsapp.sendText(first.from, 'Received. Your message is saved in Brief.');
+    acknowledged = ack.ok;
+    if (!ack.ok) ackReason = ack.error;
+  } else if (stored > 0) {
+    ackReason = 'WhatsApp sending is not configured (WHA_TSAPP_ACCESS_TOKEN / WHA_TSAPP_PHONE_NUMBER_ID)'.replace(/WHA_TSAPP/g, 'WHATSAPP');
+  }
+  res.json({ ok: true, received: messages.length, stored, acknowledged, ...(ackReason ? { ackReason } : {}) });
 });
 
 

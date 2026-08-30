@@ -81,6 +81,9 @@ export function normalizeWebhook(payload) {
           externalId: msg.id,
           messageId: msg.id,
           author: contact?.profile?.name || msg.from || null,
+          // The sender's wa_id, for replies (the basic ack). Kept alongside
+          // the display name because a reply needs the address, not the name.
+          from: msg.from || null,
           text,
           media,
           publishedAt: msg.timestamp ? new Date(Number(msg.timestamp) * 1000).toISOString() : null,
@@ -106,3 +109,50 @@ export const capabilities = {
   workaround: 'Exported chat text can be pasted through the manual connector, which keeps provenance honest.',
   refused: 'Unofficial web-reverse-engineering libraries are not used: they breach the WhatsApp ToS and risk a permanent ban.'
 };
+
+// ---------------------------------------------------------------------------
+// WHATSAPP BASIC SEND — the Cloud API text message, fail-closed.
+//
+// Receiving needs APP_SECRET + VERIFY_TOKEN (webhooks). SENDING needs a
+// permanent access token + the phone number id from the Meta app dashboard.
+// Without them sendText refuses with the reason; nothing pretends to send.
+// ---------------------------------------------------------------------------
+
+const GRAPH = 'https://graph.facebook.com/v20.0';
+
+export function isSendConfigured() {
+  return Boolean(process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID);
+}
+
+/** Send a plain text message to a WhatsApp user (wa id or full number). */
+export async function sendText(to, body) {
+  if (!isSendConfigured()) {
+    return {
+      ok: false,
+      error: 'WHATSAPP_ACCESS_TOKEN / WHATSAPP_PHONE_NUMBER_ID not set — Brief cannot send on WhatsApp'
+    };
+  }
+  try {
+    const res = await fetch(`${GRAPH}/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to: String(to).replace(/[^\d]/g, ''),
+        type: 'text',
+        text: { preview_url: false, body: String(body ?? '').slice(0, 4096) }
+      })
+    });
+    const parsed = await res.json().catch(() => ({}));
+    if (!res.ok || parsed?.error) {
+      return { ok: false, status: res.status, error: parsed?.error?.message ?? `HTTP ${res.status}` };
+    }
+    return { ok: true, messageId: parsed?.messages?.[0]?.id ?? null };
+  } catch (e) {
+    return { ok: false, error: String(e.message ?? e) };
+  }
+}

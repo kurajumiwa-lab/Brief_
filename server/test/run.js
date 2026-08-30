@@ -8106,6 +8106,97 @@ console.log('\n=== LEGAL: the documents a real deployment owes its members ===')
 }
 
 
+
+console.log('\n=== TG ONBOARDING + WHATSAPP BASIC: the handshake seams ===');
+{
+  // The START handshake answers a person, it does not ingest them; the ack
+  // only claims to have been sent when sending is truly configured.
+  process.env.BRIEF_DEV_AUTH = '0';
+  const { default: app } = await import('../src/index.js');
+  store._reset();
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, headers = {}) => {
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers: { ...(body ? { 'content-type': 'application/json' } : {}), ...headers }, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    const telegram = await import('../src/connectors/telegram.js');
+    const whatsapp = await import('../src/connectors/whatsapp.js');
+    process.env.TELEGRAM_WEBHOOK_SECRET = 'testsecret';
+    const H = { 'x-telegram-bot-api-secret-token': 'testsecret' };
+
+    // The pure classifier.
+    check('a private /start is classified as the handshake', telegram.classifyOnboardingCommand({ message: { chat: { id: 1, type: 'private' }, text: '/start' } })?.command === '/start');
+    check('a group /start is NOT the handshake (groups are content)', telegram.classifyOnboardingCommand({ message: { chat: { id: -100, type: 'group', title: 'G' }, text: '/start' } }) === null);
+    check('ordinary private chat text is not a command', telegram.classifyOnboardingCommand({ message: { chat: { id: 1, type: 'private' }, text: 'hello there' } }) === null);
+
+    // The webhook: handshake, unconfigured-honestly.
+    const before = store.all('rawItems').length;
+    let r = await call('/api/webhooks/telegram', 'POST', { update_id: 1, message: { message_id: 1, date: 1755400000, chat: { id: 555, type: 'private' }, from: { id: 555 }, text: '/start' } }, H);
+    check('a private /start is answered, not ingested', r.status === 200 && r.body?.onboarded === '/start', JSON.stringify(r.body));
+    check('it created no raw item (a handshake is not content)', store.all('rawItems').length === before);
+    check('with no token/origin the bot honestly says it did not send', r.body?.sent === false && /TELEGRAM_BOT_TOKEN|BRIEF_PUBLIC_ORIGIN/.test(r.body?.reason ?? ''), JSON.stringify(r.body?.reason));
+    r = await call('/api/webhooks/telegram', 'POST', { update_id: 2, message: { message_id: 2, date: 1755400001, chat: { id: -100777, type: 'group', title: 'Real Group' }, from: { id: 9 }, text: 'Actual content for the feed' } }, H);
+    check('group traffic still ingests through the same webhook', r.status === 200 && r.body?.rawItemId, JSON.stringify(r.body).slice(0, 90));
+
+    // WhatsApp: sending fails closed without credentials; the ack says so.
+    delete process.env.WHATSAPP_ACCESS_TOKEN;
+    delete process.env.WHATSAPP_PHONE_NUMBER_ID;
+    check('whatsapp sendText refuses with the reason when unconfigured', (await whatsapp.sendText('254712345678', 'hi')).ok === false && /WHATSAPP_ACCESS_TOKEN/.test((await whatsapp.sendText('254712345678', 'hi')).error));
+    check('isSendConfigured is honest', whatsapp.isSendConfigured() === false);
+
+    // The webhook ack path, end to end with a valid signature.
+    process.env.WHATSAPP_APP_SECRET = 'test-app-secret';
+    process.env.WHATSAPP_VERIFY_TOKEN = 'test-verify';
+    const payload = JSON.stringify({ entry: [{ changes: [{ value: { metadata: { phone_number_id: 'PN1' }, contacts: [{ wa_id: '254712345678', profile: { name: 'Wanjiku' } }], messages: [{ id: 'wamid.X1', from: '254712345678', timestamp: '1755400000', text: { body: 'Fresh produce at the market today' } }] } }] }] });
+    const crypto = await import('node:crypto');
+    const sig = 'sha256=' + crypto.createHmac('sha256', 'test-app-secret').update(payload).digest('hex');
+    r = await call('/api/webhooks/whatsapp', 'POST', JSON.parse(payload), { 'x-hub-signature-256': sig, 'content-type': 'application/json' });
+    check('a signed inbound message stores', r.status === 200 && r.body?.stored === 1, JSON.stringify(r.body).slice(0, 120));
+    check('the ack is honestly NOT claimed when sending is unconfigured', r.body?.acknowledged === false && /WHATSAPP_ACCESS_TOKEN/.test(r.body?.ackReason ?? ''), JSON.stringify(r.body));
+    const norm = whatsapp.normalizeWebhook(JSON.parse(payload));
+    check('the normalized row carries the sender address for replies', norm?.[0]?.from === '254712345678' && norm?.[0]?.author === 'Wanjiku', JSON.stringify(norm?.[0]));
+    // The GET handshake still works.
+    const g = await fetch(`http://127.0.0.1:${port}/api/webhooks/whatsapp?hub.mode=subscribe&hub.verify_token=test-verify&hub.challenge=778899`);
+    check('the Meta subscription handshake echoes the challenge', g.status === 200 && (await g.text()) === '778899');
+    const bad = await fetch(`http://127.0.0.1:${port}/api/webhooks/whatsapp?hub.mode=subscribe&hub.verify_token=wrong&hub.challenge=1`);
+    check('a wrong verify token is refused', bad.status === 403);
+
+    // sendText happy path, stubbed at the network edge.
+    process.env.WHATSAPP_ACCESS_TOKEN = 'test-token';
+    process.env.WHATSAPP_PHONE_NUMBER_ID = 'PN1';
+    const origFetch = globalThis.fetch;
+    // Stub ONLY the Cloud API edge; everything else passes through.
+    const stubGraph = async (url, init) => {
+      if (String(url).includes('graph.facebook.com')) {
+        return { ok: true, status: 200, json: async () => ({ messages: [{ id: 'wamid.OUT1' }] }) };
+      }
+      return origFetch(url, init);
+    };
+    globalThis.fetch = stubGraph;
+    const sent = await whatsapp.sendText('254712345678', 'Received.');
+    globalThis.fetch = origFetch;
+    check('with credentials configured, sendText posts to the Cloud API', sent.ok === true && sent.messageId === 'wamid.OUT1', JSON.stringify(sent));
+
+    // A second inbound now gets the ack (still stubbed).
+    const payload2 = JSON.stringify({ entry: [{ changes: [{ value: { metadata: { phone_number_id: 'PN1' }, contacts: [{ wa_id: '254712345678', profile: { name: 'Wanjiku' } }], messages: [{ id: 'wamid.X2', from: '254712345678', timestamp: '1755400099', text: { body: 'Another one' } }] } }] }] });
+    const sig2 = 'sha256=' + crypto.createHmac('sha256', 'test-app-secret').update(payload2).digest('hex');
+    globalThis.fetch = async (url, init) => {
+      if (String(url).includes('graph.facebook.com')) {
+        return { ok: true, status: 200, json: async () => ({ messages: [{ id: 'wamid.OUT2' }] }) };
+      }
+      return origFetch(url, init);
+    };
+    r = await call('/api/webhooks/whatsapp', 'POST', JSON.parse(payload2), { 'x-hub-signature-256': sig2, 'content-type': 'application/json' });
+    globalThis.fetch = origFetch;
+    check('a configured deployment acknowledges the sender', r.body?.acknowledged === true, JSON.stringify(r.body));
+  } finally {
+    srv.close();
+  }
+}
+
+
 console.log(`\n${'='.repeat(52)}\nPASSED ${pass}   FAILED ${fail}   SKIPPED ${skip}\n${'='.repeat(52)}`);
 process.exit(fail ? 1 : 0);
 
