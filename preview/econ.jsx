@@ -42,7 +42,8 @@ async function main(){
   console.log('\n=== Brief Points remain honest (a record, not currency) ===');
   await click(btn('My Layer'));
   await click(btn('Points'));
-  check('points stated as not cash', /not cash and have no monetary value/i.test(body()));
+  check('points stated honestly: contributions are not cash, referral cash is pool-backed',
+    /One level deep/i.test(body()) && /No entry fee/i.test(body()) && /backed by money Brief actually earned/i.test(body()));
 
   console.log(`\n${'='.repeat(46)}\nPASSED ${pass}   FAILED ${fail}\n${'='.repeat(46)}`);
   process.exit(fail?1:0);

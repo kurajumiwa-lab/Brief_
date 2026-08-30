@@ -62,6 +62,10 @@ const EMPTY = {
   payouts: [],
   // Service fees paid to Brief via Pochi la Biashara (manual M-Pesa code flow).
   servicePayments: [],
+  // Referral reward events (append-only, deduped by key) and point-to-cash
+  // conversions paid from the derived rewards pool.
+  referralEvents: [],
+  referralConversions: [],
   // Creator distribution layer. A campaign wraps an existing object; its
   // metrics are derived, never stored. See src/domain/campaign.js.
   campaigns: [],

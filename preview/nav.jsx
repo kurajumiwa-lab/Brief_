@@ -111,7 +111,7 @@ async function main(){
   check('the Creator bundle exposes its own sections',
     ['Profile','Offers','Messages','Plans'].every((s) => !!sub(s)));
   await goto('My Layer','Kept','Points');
-  check('Brief Points shown', /Brief Points/i.test(body()));
+  check('Contribution Points shown', /Contribution Points/i.test(body()));
   check('points not summed into one total', !/Total points/i.test(body()));
 
   console.log('\n=== Workflows holds operational tools ===');

@@ -7419,6 +7419,112 @@ console.log('\n=== SERVICE FEES: POCHI LA BIASHARA, MANUAL-FIRST (§ expansion 8
   }
 }
 
+
+console.log('\n=== REFERRALS: REWARDS WITH A MATHEMATICAL EDGE, NOT A PYRAMID ===');
+{
+  // The three structural rules under test: depth capped at ONE level, no
+  // entry fee anywhere, and every shilling of cash paid out backed by real
+  // confirmed revenue in the derived pool.
+  process.env.BRIEF_DEV_AUTH = '0';
+  process.env.BRIEF_FINANCE = 'refinf';
+  const { default: app } = await import('../src/index.js');
+  const referrals = await import('../src/domain/referrals.js');
+  store._reset();
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    const reg = async (handle, ref) => (await call('/api/auth/register', 'POST', { handle: handle + Date.now().toString(36), password: 'a good passphrase', ...(ref ? { ref } : {}) })).body;
+    const A = await reg('refa');
+    const ACODE = referrals.referralCodeOf(A.user.id); // derived from the handle
+    check('the code is derived from the handle', /^REFA[A-Z0-9]+$/.test(ACODE ?? ''), ACODE);
+
+    // --- depth is ONE level, credited once ----------------------------------
+    const B = await reg('refb', ACODE);
+    let r = await call('/api/referrals/mine', 'GET', undefined, A.token);
+    check('mine returns the same code', r.body?.code === ACODE, r.body?.code);
+    check('a real signup credits the direct referrer once', r.body?.balance?.earned === 100, JSON.stringify(r.body?.balance));
+    check('the surface states the depth cap', r.body?.maxDepth === 1);
+    const C = await reg('refc', referrals.referralCodeOf(B.user.id));
+    r = await call('/api/referrals/mine', 'GET', undefined, A.token);
+    check("B's own referral does NOT credit A (depth stops at one)", r.body?.balance?.earned === 100, JSON.stringify(r.body?.balance));
+    r = await call('/api/referrals/mine', 'GET', undefined, B.token);
+    check('B is credited for C directly', r.body?.balance?.earned === 100, JSON.stringify(r.body?.balance));
+    await reg('refb2', ACODE); // a different new member through A's code
+    r = await call('/api/referrals/mine', 'GET', undefined, A.token);
+    check('each new member credits once, per member', r.body?.balance?.earned === 200, JSON.stringify(r.body?.balance));
+
+    // --- purchases earn points; referred purchases credit the referrer ------
+    const S = await reg('refseller');
+    await call('/api/vendors', 'POST', { displayName: 'Ref Seller', description: 'goods', contactMethod: '0700 000000' }, S.token);
+    const mk = await call('/api/listings', 'POST', { title: 'Crate of tomatoes', description: 'Grade A', type: 'product', price: 10000, currency: 'KES', locationName: 'Wote' }, S.token);
+    const listingId = mk.body.listing.id;
+    await call(`/api/listings/${listingId}/status`, 'POST', { status: 'active' }, S.token);
+    const o1 = await call('/api/orders', 'POST', { listingId, quantity: 1 }, B.token);
+    await call(`/api/orders/${o1.body.order.id}/fulfil`, 'POST', {}, S.token);
+    r = await call('/api/referrals/mine', 'GET', undefined, B.token);
+    check('a fulfilled purchase earns the buyer points', r.body?.balance?.earned === 100 + 500, JSON.stringify(r.body?.balance));
+    r = await call('/api/referrals/mine', 'GET', undefined, A.token);
+    check("the referrer earns the same, once per order", r.body?.balance?.earned === 200 + 500, JSON.stringify(r.body?.balance));
+    await call(`/api/orders/${o1.body.order.id}/fulfil`, 'POST', {}, S.token); // replay
+    r = await call('/api/referrals/mine', 'GET', undefined, A.token);
+    check('replaying fulfilment mints nothing', r.body?.balance?.earned === 700, JSON.stringify(r.body?.balance));
+
+    // --- event traffic: deduped, capped, worth one point --------------------
+    const camp = await call('/api/campaigns', 'POST', { title: 'Referral Night ' + Date.now().toString(36), description: 'x', type: 'event', startsAt: new Date(Date.now() + 86400000).toISOString() }, A.token);
+    const pub = await call(`/api/campaigns/${camp.body.campaign.id}/publish`, 'POST', {}, A.token);
+    const owned = await call(`/api/campaigns/${camp.body.campaign.id}`, 'GET', undefined, A.token);
+    const slug = owned.body?.campaign?.publicSlug; // the PUBLIC slug, one link to paste anywhere
+    await call(`/api/public/campaigns/${slug}?via=${ACODE}`, 'GET');
+    await call(`/api/public/campaigns/${slug}?via=${ACODE}`, 'GET');
+    r = await call('/api/referrals/mine', 'GET', undefined, A.token);
+    check('link traffic is deduped per visitor per day', r.body?.balance?.earned === 701, JSON.stringify(r.body?.balance));
+    // The daily cap, exercised directly against the domain.
+    for (let i = 0; i < 55; i++) referrals.recordTraffic(ACODE, 'captest-visitor-' + i);
+    r = await call('/api/referrals/mine', 'GET', undefined, A.token);
+    check('traffic points stop at the daily cap', r.body?.balance?.earned === 750, JSON.stringify(r.body?.balance)); // 1 http visit + 49 more = the 50/day cap
+    await call(`/api/public/campaigns/${slug}/register`, 'POST', { attendeeRef: 'guest-1', via: ACODE });
+    await call(`/api/public/campaigns/${slug}/register`, 'POST', { attendeeRef: 'guest-1', via: ACODE });
+    r = await call('/api/referrals/mine', 'GET', undefined, A.token);
+    check('an event registration through the link earns, once per attendee', r.body?.balance?.earned === 775, JSON.stringify(r.body?.balance)); // 750 + 25, once
+
+    // --- the pool: cash only from real confirmed revenue --------------------
+    r = await call('/api/referrals/convert', 'POST', { points: 500 }, A.token);
+    check('conversion is refused when the pool holds nothing (409)', r.status === 409 && /pool/i.test(r.body?.error ?? ''), JSON.stringify(r.body).slice(0, 140));
+    const payer = await reg('refpayer');
+    const payer2 = await reg('refpayer2');
+    const feeCode = () => 'RF' + Math.random().toString(36).toUpperCase().slice(2, 9);
+    const fee = await call('/api/fees/pay', 'POST', { service: 'store_monthly', mpesaCode: feeCode() }, payer.token);
+    const fee2 = await call('/api/fees/pay', 'POST', { service: 'store_monthly', mpesaCode: feeCode() }, payer2.token);
+    const fin = (await call('/api/auth/register', 'POST', { handle: 'refinf', password: 'a good passphrase' })).body;
+    await call(`/api/fees/${fee.body.fee.id}/respond`, 'POST', { accept: true }, fin.token);
+    await call(`/api/fees/${fee2.body.fee.id}/respond`, 'POST', { accept: true }, fin.token);
+    r = await call('/api/referrals/mine', 'GET', undefined, A.token);
+    check('confirmed fees grow the pool by their fixed fraction', r.body?.pool?.backingKes === 50 && r.body?.pool?.availableKes === 50, JSON.stringify(r.body?.pool)); // 10% of 2 x 250
+    r = await call('/api/referrals/convert', 'POST', { points: 750 }, A.token);
+    check('overdrawing the pool is refused (409)', r.status === 409, JSON.stringify(r.body).slice(0, 120));
+    r = await call('/api/referrals/convert', 'POST', { points: 500 }, A.token);
+    check('a conversion inside the pool goes PENDING', r.status === 201 && r.body?.conversion?.status === 'pending' && r.body?.conversion?.kes === 50, `${r.status} ${JSON.stringify(r.body).slice(0, 140)}`);
+    const conv = r.body.conversion.id;
+    r = await call('/api/referrals/convert', 'POST', { points: 500 }, A.token);
+    check('the pool is spent — a second conversion is refused', r.status === 400 || r.status === 409, `got ${r.status}`);
+    r = await call(`/api/referrals/conversions/${conv}/respond`, 'POST', { accept: true }, A.token);
+    check('a member cannot confirm their own payout (403 finance)', r.status === 403);
+    r = await call(`/api/referrals/conversions/${conv}/respond`, 'POST', { accept: true }, fin.token);
+    check('finance confirms the manual M-Pesa payout', r.status === 200 && r.body?.conversion?.status === 'confirmed');
+    r = await call('/api/referrals/all', 'GET', undefined, fin.token);
+    check('paid never exceeds backing — the anti-pyramid invariant', r.body?.pool?.paidOrPromisedKes <= r.body?.pool?.backingKes, JSON.stringify(r.body?.pool));
+  } finally {
+    srv.close();
+  }
+}
+
 console.log('\n=== PLATFORM ROLES: THE OPERATOR SURFACE IS CAPABILITY-GUARDED ===');
 {
   // Production posture: no dev fallback, real identities only.

@@ -1,6 +1,7 @@
 // AUTH ROUTES — extracted from index.js (zero behaviour change).
 // Each route keeps its original body verbatim; only its home file changed.
 import * as auth from '../domain/auth.js';
+import * as referrals from '../domain/referrals.js';
 import * as federated from '../domain/federated.js';
 import * as onboarding from '../domain/onboarding.js';
 import * as person from '../domain/person.js';
@@ -27,6 +28,9 @@ app.post('/api/auth/register', (req, res) => {
     // real moment of sign-up.
     onboarding.ensureProfile(user.id);
     onboarding.recordEvent(user.id, 'signed_in', { provider: 'password', created: true });
+    // Referral attribution: a code the new member brought with them credits
+    // the DIRECT referrer only, once — depth is hard-capped at one level.
+    try { referrals.recordSignup(user.id, req.body?.ref ?? req.body?.refCode ?? null); } catch { /* attribution must never break registration */ }
     res.status(201).json({
       user: { ...auth.publicUser(user), personId: mine.id },
       token,

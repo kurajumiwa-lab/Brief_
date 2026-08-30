@@ -25,6 +25,7 @@ import { VerificationPanel } from './components/VerificationPanel';
 import { EplDesk } from './components/EplDesk';
 import { Vault } from './components/vault/Vault';
 import ServiceFees from './components/ServiceFees';
+import RewardsDesk from './components/RewardsDesk';
 import { CheckIn } from './components/CheckIn';
 import { HostCommand } from './components/HostCommand';
 import { TickerBanner, PromptBanner, JumbotronBanner } from './components/SignalBanner';
@@ -9369,33 +9370,12 @@ export function App() {
         )}
 
         {activeTab === 'mylayer' && myLayerSection === 'points' && (
-          <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
-            <div>
-              <h2 className="text-lg font-extrabold text-[#251045]">My Points</h2>
-              <p className="text-[11px] text-[#251045]/60 leading-snug mt-1">
-                Points are not cash and have no monetary value.
-              </p>
-            </div>
-            <div className="bg-[#FBFAFD] border border-[#D6CFE4] rounded-2xl p-4 space-y-2">
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="text-[10px] text-[#251045]/40">
-                  Brief Points
-                </span>
-                <span className="text-lg font-extrabold text-[#251045]">
-                  {myContribution.settledPoints.toLocaleString()}
-                </span>
-              </div>
-              <p className="text-[10px] text-[#251045]/60">
-                Progress <span className="text-[#251045]/60">{myRank}</span> -{' '}
-                {myContribution.accepted} accepted contributions
-              </p>
-              {pendingCount > 0 && (
-                <p className="text-[10px] text-[#251045]">
-                  {pendingCount} submitted, awaiting review. Worth nothing yet.
-                </p>
-              )}
-            </div>
-          </div>
+          <RewardsDesk
+            settledPoints={myContribution.settledPoints}
+            rank={myRank}
+            accepted={myContribution.accepted}
+            pending={pendingCount}
+          />
         )}
 
         {activeTab === 'mylayer' && myLayerSection === 'circles' && (

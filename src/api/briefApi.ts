@@ -3441,3 +3441,43 @@ export function payServiceFee(service: string, mpesaCode: string): Promise<ApiRe
   return request('/api/fees/pay', { method: 'POST', body: JSON.stringify({ service, mpesaCode }) }, (r) =>
     isServiceFee(r?.fee) ? { fee: r.fee } : undefined);
 }
+
+// ---------------------------------------------------------------------------
+// Referrals — rewards with a mathematical edge, not a pyramid: depth is ONE
+// level, there is no entry fee, and points become cash only from a pool
+// backed by real confirmed revenue.
+// ---------------------------------------------------------------------------
+
+export interface ReferralPool { backingKes: number; paidOrPromisedKes: number; availableKes: number }
+export interface ReferralBalance { earned: number; locked: number; available: number }
+export interface ReferralEvent { id: string; kind: string; points: number; valueKes: number; at: string }
+export interface ReferralConversion { id: string; points: number; kes: number; status: 'pending' | 'confirmed' | 'refused'; refusedReason: string | null; createdAt: string }
+export interface MyReferrals {
+  code: string; maxDepth: number; link: string;
+  balance: ReferralBalance; pool: ReferralPool;
+  conversion: { ptsToKes: number; minPoints: number };
+  events: ReferralEvent[]; conversions: ReferralConversion[];
+}
+export interface ShareMessage { code: string; slug: string | null; url: string; message: string; waMe: string }
+
+export function myReferrals(): Promise<ApiResult<MyReferrals>> {
+  return request('/api/referrals/mine', undefined, (r): MyReferrals | undefined =>
+    typeof r?.code === 'string' && r?.balance?.available >= 0 && Array.isArray(r?.events) && Array.isArray(r?.conversions)
+      ? r as MyReferrals
+      : undefined);
+}
+
+export function referralShare(slug?: string): Promise<ApiResult<ShareMessage>> {
+  const q = slug ? `?slug=${encodeURIComponent(slug)}` : '';
+  return request(`/api/referrals/share${q}`, undefined, (r): ShareMessage | undefined =>
+    typeof r?.code === 'string' && typeof r?.message === 'string' && typeof r?.waMe === 'string'
+      ? { code: r.code, slug: r.slug ?? null, url: r.url, message: r.message, waMe: r.waMe }
+      : undefined);
+}
+
+export function convertReferralPoints(points: number): Promise<ApiResult<{ conversion: ReferralConversion }>> {
+  return request('/api/referrals/convert', { method: 'POST', body: JSON.stringify({ points }) }, (r) =>
+    typeof r?.conversion?.id === 'string' && typeof r?.conversion?.kes === 'number'
+      ? { conversion: r.conversion as ReferralConversion }
+      : undefined);
+}

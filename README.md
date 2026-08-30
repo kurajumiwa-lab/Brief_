@@ -113,18 +113,20 @@ node live/8-mshikano.mjs              # cooperation network: intents, matches,
                                       # two-sided confirmation, trust evidence
 node live/9-pochi-fees.mjs            # service fees via Pochi la Biashara:
                                       # M-PESA code, pending -> finance confirms
+node live/10-referrals.mjs            # referrals: one level, no entry fee,
+                                      # cash only from the revenue-backed pool
 ```
 
-**Current state: 3664 assertions, 0 failing** — measured 2026-08-29 against a
+**Current state: 3711 assertions, 0 failing** — measured 2026-08-29 against a
 production build over HTTP, not inherited from an earlier report.
 
 | Suite | Result |
 |---|---|
-| `server/test/run.js` | 1941 passed / 0 failed / 1 skipped |
+| `server/test/run.js` | 1962 passed / 0 failed / 1 skipped |
 | `server/test/livecamp.mjs` | 111 passed / 0 failed |
-| `./run-suites.sh` (39 client suites) | 1331 passed / 0 failed |
+| `./run-suites.sh` (40 client suites) | 1340 passed / 0 failed |
 | `tc` strict typecheck | exit 0 |
-| `live/` against the production build | 43 + 27 + 82 + 18 + 35 + 26 + 34 + 16 = 281 / 0 |
+| `live/` against the production build | 43 + 27 + 82 + 18 + 35 + 26 + 34 + 16 + 17 = 298 / 0 |
 
 The server suite hits real third parties (BBC's RSS feed, GitHub's robots.txt,
 Telegram's API). Those tests **skip** rather than pass when the network is
@@ -237,6 +239,19 @@ disagree with the first.
 auction amounts from the winning bid row; a client posting `{price: 1}` against
 a 2500 listing gets an order for 2500. Settlement is refused unless a genuinely
 settled ledger transaction backs it.
+
+**Referrals are rewards, not a pyramid.** Members earn points for bringing
+people, products, services and real traffic: a code is derived from the
+handle, signups credit the direct referrer once, fulfilled orders credit the
+buyer and the referrer, event links (`?via=code`) count unique visits —
+deduped per visitor per day and capped daily — and event registrations earn
+once per attendee. Three structural rules keep it honest, and the tests pin
+them: **depth is hard-capped at one level** (a referral of a referral credits
+nobody above), **there is no entry fee anywhere**, and points convert to
+cash **only from a pool backed by a fixed fraction of confirmed service-fee
+revenue** — floor(10%) minus what is already paid or promised, refused with
+the reason when empty. Payouts are manual M-Pesa sends confirmed by finance,
+carried in the one economic layer. See `domain/referrals.js`.
 
 **Brief's own services are paid by Pochi la Biashara, manually.** Pochi has
 no developer API, so nothing pretends otherwise: the price lives in one
