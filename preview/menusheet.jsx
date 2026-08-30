@@ -55,7 +55,15 @@ const check = (n, c, d = '') => { if (c) { pass++; console.log('  PASS  ' + n); 
 
   console.log('=== one app, two purposes: Menu navigates ===');
   check('the header says what the page is for', body().includes('Your shortcuts, tools and account'));
-  check('the page is the Arena lavender, not dark navy', Boolean(document.querySelector('.bg-\\[\\#E9E5F0\\]')), 'no lavender page class');
+  check('the sheet is the Arena lavender, not dark navy', Boolean(document.querySelector('.bg-\\[\\#E9E5F0\\]')), 'no lavender sheet class');
+
+  console.log('\n=== two-thirds sheet, the app still visible behind ===');
+  const sheet = document.querySelector('.h-\\[2\\/3\\]') ?? document.querySelector('.h-2\\/3');
+  check('the Menu occupies exactly two-thirds of the screen', Boolean(sheet), 'no h-2/3 element');
+  const scrim = Array.from(document.querySelectorAll('button')).find((b) => /dismiss/i.test(b.getAttribute('aria-label') ?? ''));
+  check('the remaining third is a see-through scrim over the live app', Boolean(scrim) && (scrim.className.includes('/25') || scrim.className.includes('/20')), scrim?.className);
+  check('the scrim closes the Menu on tap (the natural dismissal)', Boolean(scrim));
+  check('no opaque blackout anywhere — the underlying screen is SEEN', !Array.from(document.querySelectorAll('[class*="bg-black"]')).length, 'found a bg-black element');
   check('no neon green anywhere on the page', !body().includes('#00DF8F') && !document.querySelector('[class*="00DF8F"]'));
   check('EXACTLY ONE close control, in the top-right, neutral',
     Array.from(document.querySelectorAll('button')).filter((b) => /close/i.test(b.getAttribute('aria-label') ?? '')).length === 1

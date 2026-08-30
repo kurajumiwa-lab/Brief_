@@ -3676,3 +3676,39 @@ export function getMyEscrows(): Promise<ApiResult<MyEscrows>> {
   return request('/api/escrows/mine', undefined, (r): MyEscrows | undefined =>
     Array.isArray(r?.rows) && r?.totals ? r as MyEscrows : undefined);
 }
+
+// ---------------------------------------------------------------------------
+// MEMBERS (admin) — the directory for onboarding real people. Derived rows;
+// suspension is immediate and audited server-side.
+// ---------------------------------------------------------------------------
+
+export interface MemberOnboarding { rung: string | null; latestEvent: string | null; latestAt: string | null; finished: boolean }
+export interface MemberRow {
+  id: string; handle: string; displayName: string; createdAt: string | null;
+  status: 'active' | 'suspended' | string; platformRoles: string[];
+  verification: 'approved' | 'pending' | 'none' | string;
+  onboarding: MemberOnboarding; shop: { name: string } | null;
+}
+export interface MembersPage { rows: MemberRow[]; total: number; page: number; pageSize: number }
+export interface OnboardingFunnel {
+  funnel: Record<string, number>;
+  members: MemberRow[];
+  totals: { members: number; withAnyEvent: number; finishedOnboarding: number };
+  rungs: { id: string; label: string }[];
+  note: string;
+}
+
+export function listMembers(query = '', page = 0): Promise<ApiResult<MembersPage>> {
+  return request(`/api/ops/members?q=${encodeURIComponent(query)}&page=${page}`, undefined, (r): MembersPage | undefined =>
+    Array.isArray(r?.rows) && typeof r?.total === 'number' ? r as MembersPage : undefined);
+}
+
+export function onboardingFunnel(): Promise<ApiResult<OnboardingFunnel>> {
+  return request('/api/ops/onboarding', undefined, (r): OnboardingFunnel | undefined =>
+    r?.totals && r?.rungs ? r as OnboardingFunnel : undefined);
+}
+
+export function setMemberStatus(id: string, status: 'active' | 'suspended', reason = ''): Promise<ApiResult<{ user: MemberRow; changed: boolean; sessionsRevoked: number }>> {
+  return request(`/api/ops/members/${encodeURIComponent(id)}/status`, { method: 'POST', body: JSON.stringify({ status, reason }) }, (r): { user: MemberRow; changed: boolean; sessionsRevoked: number } | undefined =>
+    r?.user ? r as { user: MemberRow; changed: boolean; sessionsRevoked: number } : undefined);
+}

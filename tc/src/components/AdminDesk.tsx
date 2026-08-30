@@ -1,6 +1,6 @@
 import React from 'react';
 import * as briefApi from '../api/briefApi';
-import type { AuthedUser } from '../api/briefApi';
+import type { AuthedUser, MemberRow, MembersPage, OnboardingFunnel } from '../api/briefApi';
 import { X } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -23,9 +23,10 @@ import { X } from 'lucide-react';
 // number is ever shown that a real row does not back.
 // ---------------------------------------------------------------------------
 
-type Tab = 'health' | 'attention' | 'ingestion' | 'content' | 'media' | 'commerce' | 'security' | 'diagnostics';
+type Tab = 'members' | 'health' | 'attention' | 'ingestion' | 'content' | 'media' | 'commerce' | 'security' | 'diagnostics';
 
 const TABS: { id: Tab; label: string }[] = [
+  { id: 'members', label: 'Members' },
   { id: 'health', label: 'Health' },
   { id: 'attention', label: 'Attention' },
   { id: 'ingestion', label: 'Ingestion' },
@@ -106,6 +107,7 @@ export function AdminDesk({ open, onClose, me }: { open: boolean; onClose: () =>
           </div>
         </div>
         <div className="p-4 space-y-4">
+          {tab === 'members' && <MembersTab tick={tick} can={can} refresh={refresh} />}
           {tab === 'health' && <HealthTab tick={tick} can={can} refresh={refresh} />}
           {tab === 'attention' && <AttentionTab tick={tick} can={can} refresh={refresh} />}
           {tab === 'ingestion' && <IngestionTab tick={tick} />}
@@ -117,6 +119,175 @@ export function AdminDesk({ open, onClose, me }: { open: boolean; onClose: () =>
         </div>
       </div>
     </div>
+  );
+}
+
+// --- Members: onboarding real people ------------------------------------------
+
+function MembersTab({ tick, can, refresh }: { tick: number; can: (c: string) => boolean; refresh: () => void }) {
+  const [query, setQuery] = React.useState('');
+  const [page, setPage] = React.useState<MembersPage | null>(null);
+  const [funnel, setFunnel] = React.useState<OnboardingFunnel | null>(null);
+  const [selected, setSelected] = React.useState<MemberRow | null>(null);
+  const [reason, setReason] = React.useState('');
+  const [note, setNote] = React.useState<string | null>(null);
+  const [busy, setBusy] = React.useState(false);
+
+  React.useEffect(() => {
+    let live = true;
+    void briefApi.listMembers(query).then((r) => { if (live) setPage(r.ok ? r.data : null); });
+    return () => { live = false; };
+  }, [tick, query]);
+
+  React.useEffect(() => {
+    let live = true;
+    void briefApi.onboardingFunnel().then((r) => { if (live) setFunnel(r.ok ? r.data : null); });
+    return () => { live = false; };
+  }, [tick]);
+
+  const act = async (fn: () => Promise<{ ok: boolean; error?: string }>, okText: () => string) => {
+    if (busy) return;
+    setBusy(true); setNote(null);
+    const r = await fn();
+    setBusy(false);
+    if (!r.ok) { setNote(r.error ?? 'the desk refused that'); return; }
+    setNote(okText());
+    refresh();
+    const refreshed = await briefApi.listMembers(query);
+    if (refreshed.ok) setPage(refreshed.data);
+    if (selected) {
+      const again = await briefApi.listMembers(selected.handle);
+      if (again.ok) setSelected(again.data.rows.find((x) => x.id === selected.id) ?? null);
+    }
+  };
+
+  const suspend = (m: MemberRow) => void act(
+    () => briefApi.setMemberStatus(m.id, 'suspended', reason),
+    () => `Suspended — ${m.handle} is locked out now.`
+  );
+  const reinstate = (m: MemberRow) => void act(
+    () => briefApi.setMemberStatus(m.id, 'active', ''),
+    () => `${m.handle} can sign in again.`
+  );
+  const toggleRole = (m: MemberRow, role: string) => {
+    const has = m.platformRoles.includes(role);
+    const next = has ? m.platformRoles.filter((x) => x !== role) : [...m.platformRoles, role];
+    return void act(
+      () => briefApi.setPlatformRoles(m.id, next, has ? `removed ${role} at the members desk` : `granted ${role} at the members desk`),
+      () => `${has ? 'Removed' : 'Granted'} ${role} for ${m.handle} — audited.`
+    );
+  };
+
+  const RUNG_LABEL: Record<string, string> = Object.fromEntries((funnel?.rungs ?? []).map((r) => [r.id, r.label]));
+
+  return (
+    <>
+      {note && <Empty>{note}</Empty>}
+
+      {!can('admin') ? (
+        <Card title="Members" note="The directory needs the admin capability.">
+          <Empty>You carry {can('operator') ? 'operator' : 'no desk'} capability — ask an admin for access.</Empty>
+        </Card>
+      ) : (
+        <>
+          <Card title="Onboarding" note={funnel?.note ?? 'Every count is a scan of real rows.'}>
+            {funnel === null ? <Empty>loading…</Empty> : (
+              <>
+                <Row>
+                  <span>Members</span><span className="font-extrabold">{funnel.totals.members}</span>
+                </Row>
+                <Row>
+                  <span>Started (any event)</span><span className="font-extrabold">{funnel.totals.withAnyEvent}</span>
+                </Row>
+                <Row>
+                  <span>Finished onboarding</span><span className="font-extrabold">{funnel.totals.finishedOnboarding}</span>
+                </Row>
+                {Object.keys(funnel.funnel).length > 0 && (
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    {Object.entries(funnel.funnel).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, n]) => (
+                      <span key={name} className="rounded-full bg-[#F1EDF7] px-2 py-0.5 text-[9px] font-bold text-[#251045]/70">{name} · {n}</span>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </Card>
+
+          <Card title="Directory" note="Search by handle or name. Suspended members are locked out on their next request, not their next login.">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="search members…"
+              className="w-full rounded-lg border border-[#D6CFE4] bg-[#FFFFFF] px-2.5 py-1.5 text-[11px] outline-none focus:border-[#5B2EA6]"
+            />
+            {page === null ? <Empty>loading…</Empty>
+              : page.rows.length === 0 ? <Empty>No members match “{query}”.</Empty>
+              : page.rows.map((m) => (
+                <button key={m.id} type="button" onClick={() => { setSelected(m); setNote(null); setReason(''); }}
+                  className={`w-full rounded-xl border px-2.5 py-2 text-left cursor-pointer ${selected?.id === m.id ? 'border-[#5B2EA6] bg-[#FFFFFF]' : 'border-[#D6CFE4] bg-[#FFFFFF]'}`}>
+                  <Row>
+                    <span className="min-w-0 truncate font-extrabold">{m.displayName}</span>
+                    <span className="shrink-0 text-[9px] text-[#251045]/45">{String(m.createdAt ?? '').slice(0, 10)}</span>
+                  </Row>
+                  <Row>
+                    <span className="text-[9px] text-[#251045]/50">@{m.handle}</span>
+                    <span className="flex gap-1">
+                      {m.status !== 'active' && <span className="rounded-full bg-[#B3261E]/10 px-1.5 py-0.5 text-[8px] font-extrabold text-[#B3261E]">{m.status}</span>}
+                      {m.verification === 'approved' && <span className="rounded-full bg-[#2E6B3F]/10 px-1.5 py-0.5 text-[8px] font-extrabold text-[#2E6B3F]">verified</span>}
+                      {m.platformRoles.map((r) => <span key={r} className="rounded-full bg-[#5B2EA6]/10 px-1.5 py-0.5 text-[8px] font-extrabold text-[#5B2EA6]">{r}</span>)}
+                    </span>
+                  </Row>
+                  <p className="mt-0.5 text-[9px] text-[#251045]/50 truncate">
+                    {m.onboarding.rung ? `Climbed to: ${RUNG_LABEL[m.onboarding.rung] ?? m.onboarding.rung}` : 'No rung yet'}
+                    {m.onboarding.latestEvent ? ` · last: ${m.onboarding.latestEvent}` : ''}
+                  </p>
+                </button>
+              ))}
+            {page && <Empty>{page.total} member{page.total === 1 ? '' : 's'}{page.total > page.pageSize ? ` — showing the newest ${page.pageSize}` : ''}</Empty>}
+          </Card>
+
+          {selected && (
+            <Card title={`@${selected.handle}`} note="Roles and suspension are audited with before/after. A suspension needs a reason.">
+              <Row>
+                <span>Status</span>
+                <span className={`font-extrabold ${selected.status === 'active' ? 'text-[#2E6B3F]' : 'text-[#B3261E]'}`}>{selected.status}</span>
+              </Row>
+              <div className="pt-1">
+                <p className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-[#251045]/45 pt-1">Platform roles</p>
+                <div className="flex flex-wrap gap-1 pt-1">
+                  {['operator', 'reviewer', 'finance', 'admin'].map((role) => (
+                    <button key={role} type="button" onClick={() => toggleRole(selected, role)}
+                      className={`rounded-full px-2 py-0.5 text-[9px] font-extrabold cursor-pointer border ${
+                        selected.platformRoles.includes(role)
+                          ? 'bg-[#5B2EA6] text-[#FFFFFF] border-[#5B2EA6]'
+                          : 'bg-[#FBFAFD] text-[#251045]/60 border-[#D6CFE4]'
+                      }`}>
+                      {role}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {selected.status === 'active' ? (
+                <div className="space-y-1.5 pt-2">
+                  <input value={reason} onChange={(e) => setReason(e.target.value)}
+                    placeholder="why suspend? (audited)"
+                    className="w-full rounded-lg border border-[#D6CFE4] bg-[#FFFFFF] px-2.5 py-1.5 text-[10px] outline-none focus:border-[#5B2EA6]" />
+                  <button type="button" onClick={() => suspend(selected)} disabled={busy || reason.trim().length < 4}
+                    className="rounded-lg border border-[#B3261E]/30 bg-[#B3261E]/5 px-3 py-1.5 text-[10px] font-extrabold text-[#B3261E] cursor-pointer disabled:opacity-40">
+                    Suspend — locks them out now
+                  </button>
+                </div>
+              ) : (
+                <button type="button" onClick={() => reinstate(selected)} disabled={busy}
+                  className="mt-2 rounded-lg border border-[#2E6B3F]/30 bg-[#2E6B3F]/5 px-3 py-1.5 text-[10px] font-extrabold text-[#2E6B3F] cursor-pointer disabled:opacity-40">
+                  Reinstate
+                </button>
+              )}
+            </Card>
+          )}
+        </>
+      )}
+    </>
   );
 }
 

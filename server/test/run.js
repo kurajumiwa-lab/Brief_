@@ -7984,6 +7984,93 @@ console.log('\n=== DUKA BOOK, POOLED RESTOCKS, ESCROW-AS-RECORDS ===');
 }
 
 
+
+console.log('\n=== MEMBERS: the admin directory for onboarding real people ===');
+{
+  // Who is here, where they stopped, what an operator may do about it. The
+  // directory is derived; suspension revokes every session NOW and lands in
+  // the audit log; roles ride the existing audited route.
+  process.env.BRIEF_DEV_AUTH = '0';
+  const { default: app } = await import('../src/index.js');
+  store._reset();
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    const reg = async (h) => (await call('/api/auth/register', 'POST', { handle: h + Date.now().toString(36), password: 'a good passphrase', displayName: h.toUpperCase() })).body;
+    const admin = await reg('memadmin');
+    store.update('users', admin.user.id, { platformRoles: ['admin'] });
+    const newcomer = await reg('newbie');
+    const climber = await reg('climber');
+
+    // Gate: not everyone gets the directory.
+    let r = await call('/api/ops/members');
+    check('the directory is members-only (401)', r.status === 401);
+    r = await call('/api/ops/members', 'GET', undefined, newcomer.token);
+    check('the directory is admin-only (403)', r.status === 403, `got ${r.status}`);
+
+    // A newcomer with no events says so honestly.
+    r = await call('/api/ops/members', 'GET', undefined, admin.token);
+    check('the directory lists real members, newest first', r.body?.total >= 3 && r.body?.rows?.[0]?.handle.includes('climber'), JSON.stringify(r.body?.rows?.[0]?.handle));
+    const newbieRow = r.body.rows.find((x) => x.handle.includes('newbie'));
+    check('a member who only registered has climbed exactly one rung', newbieRow?.onboarding?.rung === 'identity' && newbieRow?.onboarding?.latestEvent === 'signed_in', JSON.stringify(newbieRow?.onboarding));
+
+    // Search.
+    r = await call('/api/ops/members?q=NEWB', 'GET', undefined, admin.token);
+    check('search finds by display name', r.body?.total === 1 && r.body?.rows?.[0]?.handle.includes('newbie'), JSON.stringify(r.body?.total));
+
+    // The climber climbs: onboarding events drive the derived rung.
+    const onboarding = await import('../src/domain/onboarding.js');
+    onboarding.ensureProfile(climber.user.id);
+    onboarding.recordEvent(climber.user.id, 'signed_in');
+    onboarding.recordEvent(climber.user.id, 'goal_chosen');
+    onboarding.recordEvent(climber.user.id, 'object_saved');
+    r = await call('/api/ops/members?q=climber', 'GET', undefined, admin.token);
+    check('the rung is derived from recorded events (value, not contribute)', r.body?.rows?.[0]?.onboarding?.rung === 'value', JSON.stringify(r.body?.rows?.[0]?.onboarding));
+    check('the latest event is named, not guessed', r.body?.rows?.[0]?.onboarding?.latestEvent === 'object_saved');
+
+    // The funnel.
+    r = await call('/api/ops/onboarding', 'GET', undefined, admin.token);
+    check('the funnel counts real events only', (r.body?.funnel?.object_saved ?? 0) >= 1 && (r.body?.funnel?.capture_saved ?? 0) === 0, JSON.stringify(r.body?.funnel));
+    check('the totals are scans, not counters', r.body?.totals?.members >= 3 && r.body?.totals?.withAnyEvent >= 1, JSON.stringify(r.body?.totals));
+    r = await call('/api/ops/onboarding');
+    check('the funnel is admin-only too (401)', r.status === 401);
+
+    // Suspension: immediate, audited, with a reason.
+    r = await call(`/api/ops/members/${newcomer.user.id}/status`, 'POST', { status: 'suspended', reason: 'no' }, admin.token);
+    check('a thin suspension reason is refused', r.status === 400 && /say why/.test(r.body?.error ?? ''), JSON.stringify(r.body));
+    r = await call(`/api/ops/members/${newcomer.user.id}/status`, 'POST', { status: 'suspended', reason: 'spam signups from this handle' }, admin.token);
+    check('suspension takes with sessions revoked', r.status === 200 && r.body?.changed === true && r.body?.sessionsRevoked >= 1 && r.body?.user?.status === 'suspended', JSON.stringify(r.body).slice(0, 140));
+    r = await call('/api/auth/me', 'GET', undefined, newcomer.token);
+    check('the suspended member is locked out on the NEXT request', r.status === 401, `got ${r.status}`);
+    r = await call('/api/auth/login', 'POST', { handle: newcomer.user.handle, password: 'a good passphrase' });
+    check('and refused a new login', r.status === 401 || (r.body?.user?.status ?? '') === 'suspended', `got ${r.status}`);
+    r = await call(`/api/ops/members/${newcomer.user.id}/status`, 'POST', { status: 'suspended', reason: 'same decision again' }, admin.token);
+    check('re-suspending is an idempotent no-op', r.status === 200 && r.body?.changed === false);
+    r = await call(`/api/ops/members/${newcomer.user.id}/status`, 'POST', { status: 'active' }, admin.token);
+    check('reinstate works and is audited', r.status === 200 && r.body?.changed === true && r.body?.user?.status === 'active');
+    r = await call('/api/auth/login', 'POST', { handle: newcomer.user.handle, password: 'a good passphrase' });
+    check('the reinstated member can sign in again', r.status === 200);
+    const audited = store.filter('auditLog', (a) => a.action === 'ops.member.status');
+    check('both status changes are in the audit log with before/after', audited.length === 2 && audited.every((a) => a.before?.status && a.after?.status), JSON.stringify(audited.length));
+
+    // Roles still ride their own audited route; the directory shows them.
+    r = await call('/api/ops/roles', 'POST', { userId: climber.user.id, roles: ['operator'], reason: 'running the desk this week' }, admin.token);
+    check('roles are written through the existing audited route', r.status === 200 && Array.isArray(r.body?.user?.platformRoles));
+    r = await call('/api/ops/members?q=climber', 'GET', undefined, admin.token);
+    check('the directory reflects the role without storing it twice', r.body?.rows?.[0]?.platformRoles?.includes('operator') === true, JSON.stringify(r.body?.rows?.[0]?.platformRoles));
+  } finally {
+    srv.close();
+  }
+}
+
+
 console.log(`\n${'='.repeat(52)}\nPASSED ${pass}   FAILED ${fail}   SKIPPED ${skip}\n${'='.repeat(52)}`);
 process.exit(fail ? 1 : 0);
 

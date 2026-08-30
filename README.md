@@ -122,18 +122,20 @@ node live/12-whatsapp-shop.mjs        # WhatsApp shop: formatting, wa.me link,
 node live/13-duka-book.mjs            # the SME layer: logged sales + derived
                                       # book, idempotent offline replays, pooled
                                       # restocks, escrow records — over HTTP
+node live/14-members-desk.mjs         # the members desk: directory, rungs,
+                                      # funnel, immediate audited suspension
 ```
 
-**Current state: 3889 assertions, 0 failing** — measured 2026-08-30 against a
+**Current state: 3953 assertions, 0 failing** — measured 2026-08-30 against a
 production build over HTTP, not inherited from an earlier report.
 
 | Suite | Result |
 |---|---|
-| `server/test/run.js` | 2028 passed / 0 failed / 1 skipped |
+| `server/test/run.js` | 2048 passed / 0 failed / 1 skipped |
 | `server/test/livecamp.mjs` | 111 passed / 0 failed |
-| `./run-suites.sh` (44 client suites) | 1404 passed / 0 failed |
+| `./run-suites.sh` (45 client suites) | 1420 passed / 0 failed |
 | `tc` strict typecheck | exit 0 |
-| `live/` against the production build | 43+27+82+18+35+26+34+16+17+14+17+13 = 342 / 0 |
+| `live/` against the production build | 43+27+82+18+35+26+34+16+17+14+17+13+11 = 353 / 0 |
 
 The server suite hits real third parties (BBC's RSS feed, GitHub's robots.txt,
 Telegram's API). Those tests **skip** rather than pass when the network is
@@ -339,3 +341,18 @@ The SME-digitization build (see `MARKET-GAPS-ADVISORY.md`), all on existing seam
 - **Pooled restocks** — "pool this item" opens a real Group Buy (`POST /api/shop/mine/pool`): the shopkeeper declares the bulk unit cost and a goal, pledges their own units, and the engine's funding → escrow → dispatched → delivered stepper takes over. Other shops contribute; the share text is a forwardable WhatsApp call (`*RESTOCK POOL*`).
 - **Escrow-as-records** — `GET /api/escrows/mine` derives what is HELD and what is RELEASED for one member across every escrow pattern (group buys, ticket resale orders; HudumaLink citizen escrow stays phone-keyed at the operator desk). Records only: Brief moves no money.
 - **The offline shell** — PWA manifest + service worker (`preview/public/`): hashed assets cache-first, navigations network-first with a cached-shell fallback, and the API is NEVER cached (a cached read pretending to be live is a lie). Writes survive a dead signal through `src/api/offlineQueue.ts`: a failed POST is parked in localStorage with its clientKey, the surface says "queued", and the browser's `online` event drains the queue oldest-first; server-side idempotency makes a double-send harmless. Refusals on replay land in `deadLetters`, visible — never silently deleted.
+
+
+## The members desk (onboarding real people)
+
+The admin side of onboarding, in the Operate desk's first tab:
+
+- **Directory** — `GET /api/ops/members?q=` (admin-only): handle, name, joined date, status, platform roles, verification, whether they run a shop, and the rung they actually climbed — all derived per request. The rung mapping is honest: `reach` has no named activation event yet, so nobody is shown as having reached it.
+- **Onboarding funnel** — `GET /api/ops/onboarding`: counts of real activation events, members with any event, finished onboarding. "A member with no events has genuinely not started."
+- **Suspension** — `POST /api/ops/members/:id/status`: a suspension **revokes every live session immediately** (locked out on the next request, not the next login), refuses new logins, requires an audited reason, and lands in the audit log with before/after. Reinstatement is the same route.
+- **Roles** — grant/revoke operator/reviewer/finance/admin chips in the member panel, riding the existing audited `/api/ops/roles`.
+- The first admin of a deployment is named by the `BRIEF_ADMINS` bootstrap env (the same mechanism as `BRIEF_OPERATORS`).
+
+## Menu: a two-thirds sheet
+
+The Menu owns the lower **2/3** of the screen; the top 1/3 stays the live app behind a light scrim (tap it to close). One close control remains (the header ×), the dock stays visible above the sheet, and the lavender/card/purple visual system is unchanged — the Menu is part of the same product, not a screen that replaces it.

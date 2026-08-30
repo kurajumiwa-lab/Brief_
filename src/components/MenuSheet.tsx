@@ -362,13 +362,27 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
   if (!open) return null;
 
   return (
-    // A destination, not a dismissal: z-50 sits BENEATH the dock (z-55), so
-    // the bottom navigation stays visible and tappable while Menu is open.
+    // TWO-THIRDS, on purpose: the Menu sheet owns the lower 2/3 of the
+    // screen and the top 1/3 stays the live app, dimmed just enough to read
+    // the sheet — the Menu is part of this product, not a different screen
+    // that replaces it. z-50 sits beneath the dock (z-55), so the bottom
+    // navigation stays visible and tappable while the Menu is open.
     <div
       role="dialog"
       aria-label="Menu"
-      className="fixed inset-0 z-[50] flex flex-col bg-[#E9E5F0]"
+      className="fixed inset-0 z-[50] flex flex-col justify-end"
     >
+      {/* The exposed third: the underlying screen, seen through a light
+          scrim. Tapping it closes — the natural dismissal, not a control. */}
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Dismiss menu"
+        className="flex-1 min-h-0 bg-[#251045]/25 backdrop-blur-[2px] cursor-pointer"
+      />
+
+      {/* The sheet: exactly two-thirds of the screen. */}
+      <div className="h-2/3 max-h-[calc(100vh*0.6667)] bg-[#E9E5F0] border-t border-[#D6CFE4] rounded-t-[28px] shadow-2xl flex flex-col overflow-hidden">
       <header className="shrink-0 flex items-start justify-between gap-3 px-4 pt-5 pb-3 sm:max-w-3xl sm:w-full sm:mx-auto">
         <div>
           <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#251045]/45">Menu</p>
@@ -426,6 +440,7 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
           <Lock className="h-3 w-3 shrink-0" aria-hidden="true" />
           Coming later — Courses · Data desk · Premium
         </p>
+      </div>
       </div>
     </div>
   );
