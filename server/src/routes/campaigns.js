@@ -4,6 +4,7 @@ import crypto from 'node:crypto';
 import { store } from '../store.js';
 import { callerId } from '../identity.js';
 import * as campaigns from '../domain/campaign.js';
+import * as referrals from '../domain/referrals.js';
 import * as checkin from '../domain/checkin.js';
 import * as ticketMarket from '../domain/ticketMarket.js';
 import * as signals from '../domain/signal.js';
@@ -376,6 +377,9 @@ app.get('/api/public/campaigns/:slug', (req, res) => {
     .digest('hex')
     .slice(0, 16);
   campaigns.recordView(c, viewerRef);
+  // Traffic attribution for the member whose link brought the visitor:
+  // deduped per visitor per day, capped per day, worth one point each.
+  try { referrals.recordTraffic(req.query?.via ?? req.query?.ref ?? null, viewerRef); } catch { /* attribution must never break a public read */ }
   res.json({ campaign: campaigns.publicView(c) });
 });
 
@@ -399,6 +403,12 @@ app.post('/api/public/campaigns/:slug/register', (req, res) => {
       // not guessed to be the local user.
       userId: req.auth?.userId ?? null
     });
+    // The member whose link brought this registration earns event points —
+    // deduped by campaign + attendee, credited after the row is real.
+    const viaCode = req.body?.via ?? req.query?.via ?? null;
+    if (viaCode) {
+      try { referrals.recordEventSignup(viaCode, c.id, req.body?.attendeeRef); } catch { /* attribution must never break a registration */ }
+    }
     // Only the registrant's own record, never the roster. The ticketCode is
     // the attendee's own gate credential, so it is returned to THEM (and only
     // to them) here — a code is the thing they show at the gate, not a roster

@@ -33,6 +33,7 @@ export interface AlertFeedItemLike {
 
 /** Notification kinds routed to the destination they actually belong to. */
 const KIND_TO_DESTINATION: Record<string, Destination> = {
+  coop: 'nearby', // Mshikano cooperation proposals + confirmations
   challenge: 'arena',
   workflow: 'workflows',
   confirmed: 'mylayer',

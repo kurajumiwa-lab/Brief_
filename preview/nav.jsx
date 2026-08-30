@@ -43,8 +43,8 @@ async function main(){
 
   console.log('\n=== Main sheet is a gallery of real entry points ===');
   check('main shelf is visible on Home', body().includes('What do you want to do?'));
-  const shelfIds = ['around', 'play', 'events', 'create', 'share', 'groups'];
-  check('main shelf has six labelled doors', shelfIds.every((id) => Boolean(document.querySelector(`[data-shelf-id="${id}"]`))));
+  const shelfIds = ['around', 'mshikano', 'play', 'events', 'create', 'share', 'groups'];
+  check('main shelf has seven labelled doors (incl. Mshikano)', shelfIds.every((id) => Boolean(document.querySelector(`[data-shelf-id="${id}"]`))));
   const shareShelfCard = document.querySelector('[data-shelf-id="share"]');
   if (shareShelfCard) await click(shareShelfCard);
   check('WhatsApp shelf door lands in distribution', /WhatsApp \+ home shelf|Distribution kits/i.test(body()));
@@ -111,7 +111,7 @@ async function main(){
   check('the Creator bundle exposes its own sections',
     ['Profile','Offers','Messages','Plans'].every((s) => !!sub(s)));
   await goto('My Layer','Kept','Points');
-  check('Brief Points shown', /Brief Points/i.test(body()));
+  check('Contribution Points shown', /Contribution Points/i.test(body()));
   check('points not summed into one total', !/Total points/i.test(body()));
 
   console.log('\n=== Workflows holds operational tools ===');

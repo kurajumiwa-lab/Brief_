@@ -3625,7 +3625,7 @@ console.log('\n=== FEATURE REGISTRY (§4.2) ===');
   // Default state: everything enabled; module features configured; provider
   // features NOT configured (no credentials in this run).
   check('every feature is enabled by default', features.list().every((f) => f.enabled));
-  check('the registry holds all registered features', features.list().length === 41, String(features.list().length));
+  check('the registry holds all registered features', features.list().length === 42, String(features.list().length));
   check('auth is available by default', features.available('auth') === true);
   check('arena is available by default', features.available('arena') === true);
   check('vaults is available by default', features.available('vaults') === true);
@@ -7225,6 +7225,405 @@ console.log('\n=== EPL CATALOG + SQUAD BUDGET + LOBBY (Tikiti T5) ===');
   } finally { srv.close(); delete process.env.BRIEF_OPERATORS; process.env.BRIEF_DEV_AUTH = '1'; }
 }
 
+
+console.log('\n=== MSHIKANO: the cooperation network (post -> match -> confirm -> trust) ===');
+{
+  process.env.BRIEF_DEV_AUTH = '0'; // the gate's anonymous check needs no dev fallback
+  const { default: app } = await import('../src/index.js');
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    const A = (await call('/api/auth/register', 'POST', { handle: 'mshi_a' + Date.now().toString(36), password: 'a good passphrase' })).body;
+    const B = (await call('/api/auth/register', 'POST', { handle: 'mshi_b' + Date.now().toString(36), password: 'a good passphrase' })).body;
+    const C = (await call('/api/auth/register', 'POST', { handle: 'mshi_c' + Date.now().toString(36), password: 'a good passphrase' })).body;
+
+    // The four intents.
+    let r = await call('/api/mshikano/posts', 'POST', { intent: 'swap', title: 'nothing' }, A.token);
+    check('an unknown intent is refused by name', r.status === 400 && /intent/.test(r.body?.error ?? ''));
+    r = await call('/api/mshikano/posts', 'POST', { intent: 'have', title: '1 tonne of mangoes', town: 'Wote', county: 'Makueni' }, A.token);
+    check('a HAVE posts honestly', r.status === 201 && r.body?.post?.intent === 'have', JSON.stringify(r.body).slice(0, 100));
+    const mangoes = r.body.post.id;
+    r = await call('/api/mshikano/posts', 'POST', { intent: 'need', title: '500 kg mangoes every week', town: 'Gikomba', county: 'Nairobi' }, B.token);
+    check('a NEED posts honestly', r.status === 201);
+    const buyerNeed = r.body.post.id;
+    await call('/api/mshikano/posts', 'POST', { intent: 'can_help', title: 'Refrigerated transport Nairobi Makueni mangoes' }, C.token);
+
+    // Matching: complementary only, with reasons.
+    r = await call(`/api/mshikano/posts/${buyerNeed}/matches`, 'GET', undefined, B.token);
+    const matches = r.body?.matches ?? [];
+    check('a NEED matches HAVEs (and CAN HELPs) that share its words',
+      matches.length >= 1 && matches.some((m) => m.post.title.includes('mangoes')), JSON.stringify(matches.map((m) => m.post?.title)).slice(0, 160));
+    check('every match carries its WHY in words',
+      matches.every((m) => Array.isArray(m.reasons) && (m.reasons.length === 0 || m.reasons.every((x) => typeof x === 'string'))));
+    check('your own posts never match themselves back',
+      !matches.some((m) => m.post.mine));
+    r = await call(`/api/mshikano/posts/${mangoes}/matches`, 'GET', undefined, A.token);
+    check('a HAVE finds the complementary NEED',
+      (r.body?.matches ?? []).some((m) => m.post.title.includes('mangoes') && m.post.intent === 'need'));
+
+    // The relationship: BOTH parties must confirm.
+    r = await call('/api/mshikano/cooperations', 'POST', { postId: buyerNeed, partnerUserId: A.user.id, summary: 'mangoes weekly' }, B.token);
+    check('a cooperation is proposed', r.status === 201 && r.body?.cooperation?.status === 'pending');
+    const partnership = r.body.cooperation.id;
+    r = await call(`/api/mshikano/cooperations/${partnership}/respond`, 'POST', { accept: true }, C.token);
+    check('a bystander cannot confirm someone else\'s cooperation (403)', r.status === 403);
+    r = await call(`/api/mshikano/cooperations/${partnership}/respond`, 'POST', { accept: true }, A.token);
+    check('the named partner confirms it', r.status === 200 && r.body?.cooperation?.status === 'confirmed');
+
+    // Trust is EVIDENCE from confirmed rows, never stars.
+    r = await call(`/api/mshikano/trust/${A.user.id}`, 'GET', undefined, B.token);
+    check('one confirmed cooperation lifts trust to cooperating', r.body?.level === 'cooperating' && r.body?.evidence?.confirmedCooperations === 1, JSON.stringify(r.body?.evidence));
+    check('trust says its level in words', typeof r.body?.levelWords === 'string' && r.body.levelWords.length > 10);
+    r = await call(`/api/mshikano/trust/${C.user.id}`, 'GET', undefined, B.token);
+    check('zero cooperations is an honest NEW, not zero stars', r.body?.level === 'new' && r.body?.evidence?.confirmedCooperations === 0);
+    r = await call(`/api/mshikano/cooperations/${partnership}/recommend`, 'POST', { note: 'Delivered on time, quality mangoes' }, A.token);
+    check('a partner recommends in words', r.status === 200 && r.body?.cooperation?.recommendations?.length === 1);
+    r = await call(`/api/mshikano/cooperations/${partnership}/recommend`, 'POST', { note: 'again' }, A.token);
+    check('double-recommending the same cooperation is refused', r.status === 400);
+    r = await call(`/api/mshikano/trust/${A.user.id}`, 'GET', undefined, B.token);
+    check('the recommendation counts as evidence for the receiver',
+      r.body?.evidence?.recommendations === 0, JSON.stringify(r.body?.evidence)); // A WROTE it; it counts for B
+    r = await call(`/api/mshikano/trust/${B.user.id}`, 'GET', undefined, A.token);
+    check('the recommendation appears on the receiver\'s trust',
+      r.body?.evidence?.recommendations === 1 && (r.body?.recommendationNotes ?? [])[0]?.note?.includes('quality mangoes'));
+
+    // The graph.
+    r = await call('/api/mshikano/graph', 'GET', undefined, B.token);
+    check('the graph records who helped whom', r.body?.totals?.confirmed === 1 && r.body?.helped?.length + r.body?.received?.length === 1, JSON.stringify(r.body?.totals));
+
+    // Who can help?
+    r = await call('/api/mshikano/who-can-help?q=who+can+help+me+start+a+poultry+business+in+Bungoma', 'GET', undefined, A.token);
+    check('the question answers with grouped, real rows only',
+      r.status === 200 && typeof r.body?.counts?.people === 'number' && Array.isArray(r.body?.guides), JSON.stringify(r.body?.counts));
+    check('an empty answer is EMPTY, not padded',
+      r.body.counts.people + r.body.counts.businesses + r.body.counts.groups + r.body.counts.guides === 0
+        || (r.body.people.every((p) => /poultry|business|bungoma/i.test(p.title)) && r.body.counts.groups === 0));
+
+    // Groups answer from REAL circles, with their real member count.
+    r = await call('/api/circles', 'POST', { name: 'Bungoma Poultry Circle', description: 'members who help each other keep poultry in Bungoma' }, B.token);
+    check('a member starts a real circle', r.status === 201, JSON.stringify(r.body).slice(0, 120));
+    r = await call('/api/mshikano/who-can-help?q=who+can+help+me+start+a+poultry+business+in+Bungoma', 'GET', undefined, A.token);
+    check('a matching circle answers as a group', r.body?.counts?.groups === 1 && r.body.groups[0]?.name === 'Bungoma Poultry Circle', JSON.stringify(r.body?.groups));
+    check('the group carries its REAL member count (the founder)', r.body?.groups?.[0]?.members === 1, JSON.stringify(r.body?.groups?.[0]));
+    r = await call('/api/mshikano/who-can-help?q=who+repairs+kyozo+phones+overnight', 'GET', undefined, A.token);
+    check('a question nothing matches keeps groups EMPTY', r.body?.counts?.groups === 0 && r.body.groups.length === 0, JSON.stringify(r.body?.counts));
+
+    // A dispute withdraws the credit and keeps the record.
+    r = await call(`/api/mshikano/cooperations/${partnership}/dispute`, 'POST', { reason: 'never delivered the second batch' }, C.token);
+    check('an outsider cannot dispute (403)', r.status === 403, `got ${r.status}`);
+    r = await call(`/api/mshikano/cooperations/${partnership}/dispute`, 'POST', { reason: 'x' }, A.token);
+    check('a dispute needs a real reason (400)', r.status === 400, `got ${r.status}`);
+    r = await call(`/api/mshikano/cooperations/${partnership}/dispute`, 'POST', { reason: 'never delivered the second batch' }, A.token);
+    check('a partner disputes the cooperation', r.status === 200 && r.body?.cooperation?.status === 'disputed' && r.body?.cooperation?.dispute?.note?.includes('second batch'), JSON.stringify(r.body?.cooperation?.dispute));
+    r = await call('/api/mshikano/cooperations', 'GET', undefined, A.token);
+    check('a disputed cooperation stays LISTED for the partners', (r.body?.disputed ?? []).some((d) => d.id === partnership), JSON.stringify(r.body?.disputed?.map((d) => d.id)));
+    r = await call('/api/mshikano/graph', 'GET', undefined, B.token);
+    check('the disputed link leaves the confirmed graph', r.body?.totals?.confirmed === 0, JSON.stringify(r.body?.totals));
+    r = await call(`/api/mshikano/trust/${A.user.id}`, 'GET', undefined, B.token);
+    check('the dispute is COUNTED as evidence on both records', r.body?.evidence?.disputes >= 1, JSON.stringify(r.body?.evidence));
+
+    // The app gate still owns the door.
+    r = await call('/api/mshikano/posts');
+    check('Mshikano is members-only (401 anonymous)', r.status === 401 && r.body?.gate === 'account_required');
+  } finally {
+    srv.close();
+  }
+}
+
+
+console.log('\n=== SERVICE FEES: POCHI LA BIASHARA, MANUAL-FIRST (§ expansion 8) ===');
+{
+  // Pochi has no API: the member submits the M-Pesa code, a finance-capable
+  // operator confirms it, and money truth stays in the ledger.
+  process.env.BRIEF_DEV_AUTH = '0';
+  process.env.BRIEF_FINANCE = 'feetestfin';
+  process.env.BRIEF_POCHI_NUMBER = '0700000000';
+  const { default: app } = await import('../src/index.js');
+  store._reset();
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    const reg = async (handle) => (await call('/api/auth/register', 'POST', { handle: handle + Date.now().toString(36), password: 'a good passphrase' })).body;
+    const member = await reg('feemember');
+    const fin = (await call('/api/auth/register', 'POST', { handle: 'feetestfin', password: 'a good passphrase' })).body;
+
+    // The gate still owns the door.
+    let r = await call('/api/fees/mine');
+    check('service fees are members-only (401 anonymous)', r.status === 401);
+
+    // The catalog is the only price list, and the Pochi number is stated.
+    r = await call('/api/fees/mine', 'GET', undefined, member.token);
+    check('mine returns the catalog and the member rows', r.status === 200 && Array.isArray(r.body?.services) && Array.isArray(r.body?.fees));
+    check('the Pochi number is shown when configured', r.body?.pochi === '0700000000');
+    const svc = r.body.services.find((x) => x.key === 'store_monthly');
+    check('the catalog carries a positive server-side price', svc && svc.amountKes > 0);
+
+    // The amount cannot come from the client. Unknown service refused.
+    r = await call('/api/fees/pay', 'POST', { service: 'gold_tier', mpesaCode: 'QJD31X5K2S' }, member.token);
+    check('an unknown service is refused', r.status === 400);
+    r = await call('/api/fees/pay', 'POST', { service: 'store_monthly', mpesaCode: 'short' }, member.token);
+    check('a malformed M-Pesa code is refused', r.status === 400 && /confirmation code/i.test(r.body?.error ?? ''));
+    r = await call('/api/fees/pay', 'POST', { service: 'store_monthly', mpesaCode: 'QJD31X5K2S', amountKes: 1 }, member.token);
+    check('a payment records PENDING whatever amount the client posts', r.status === 201 && r.body?.fee?.status === 'pending', JSON.stringify(r.body?.fee).slice(0, 120));
+    check('the amount is the CATALOG amount, not the posted one', r.body?.fee?.amountKes === svc.amountKes);
+    const feeId = r.body.fee.id;
+    r = await call('/api/fees/pay', 'POST', { service: 'store_monthly', mpesaCode: 'QJD31X5K2S' }, member.token);
+    check('the same M-Pesa code cannot be recorded twice (409)', r.status === 409, `got ${r.status}`);
+
+    // Only finance may confirm a code.
+    r = await call(`/api/fees/${feeId}/respond`, 'POST', { accept: true }, member.token);
+    check('a plain member cannot confirm their own code (403)', r.status === 403 && r.body?.requiredCapability === 'finance', JSON.stringify(r.body).slice(0, 120));
+    r = await call(`/api/fees/${feeId}/respond`, 'POST', { accept: false }, fin.token);
+    check('refusing without a reason is refused', r.status === 400);
+    r = await call(`/api/fees/${feeId}/respond`, 'POST', { accept: true }, fin.token);
+    check('finance confirms the code', r.status === 200 && r.body?.fee?.status === 'confirmed' && !!r.body?.fee?.confirmedAt, JSON.stringify(r.body?.fee).slice(0, 140));
+
+    // The member sees the confirmed state and is notified.
+    r = await call('/api/fees/mine', 'GET', undefined, member.token);
+    check('the member sees their confirmed fee', (r.body?.fees ?? []).some((f) => f.id === feeId && f.status === 'confirmed'));
+    r = await call('/api/notifications', 'GET', undefined, member.token);
+    check('the member was notified of the confirmation', (r.body?.notifications ?? []).some((n) => /confirmed/i.test(n.title ?? '')), JSON.stringify(r.body).slice(0, 120));
+
+    // Refusal keeps the reason and fails the ledger row.
+    const second = await call('/api/fees/pay', 'POST', { service: 'promotion_weekly', mpesaCode: 'SBK4R9T2XA' }, member.token);
+    r = await call(`/api/fees/${second.body.fee.id}/respond`, 'POST', { accept: false, note: 'code not found in the M-Pesa statement' }, fin.token);
+    check('finance refuses with a reason that stays on the row', r.status === 200 && r.body?.fee?.status === 'refused' && /statement/.test(r.body?.fee?.refusedReason ?? ''), JSON.stringify(r.body?.fee).slice(0, 140));
+    r = await call('/api/fees/pay', 'POST', { service: 'store_monthly', mpesaCode: 'SBK4R9T2XA' }, member.token);
+    check('a refused code stays locked (409)', r.status === 409, `got ${r.status}`);
+
+    // Revenue is derived from rows, finance-only, never stored.
+    r = await call('/api/fees/all', 'GET', undefined, member.token);
+    check('the finance ledger is finance-only (403)', r.status === 403);
+    r = await call('/api/fees/all', 'GET', undefined, fin.token);
+    check('confirmed revenue is the sum of confirmed rows only', r.body?.confirmedRevenueKes === svc.amountKes, JSON.stringify(r.body?.confirmedRevenueKes));
+
+    // The gate again, at the end.
+    r = await call('/api/fees/all');
+    check('the finance route is members-only too (401)', r.status === 401);
+  } finally {
+    srv.close();
+  }
+}
+
+
+console.log('\n=== REFERRALS: REWARDS WITH A MATHEMATICAL EDGE, NOT A PYRAMID ===');
+{
+  // The three structural rules under test: depth capped at ONE level, no
+  // entry fee anywhere, and every shilling of cash paid out backed by real
+  // confirmed revenue in the derived pool.
+  process.env.BRIEF_DEV_AUTH = '0';
+  process.env.BRIEF_FINANCE = 'refinf';
+  const { default: app } = await import('../src/index.js');
+  const referrals = await import('../src/domain/referrals.js');
+  store._reset();
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    const reg = async (handle, ref) => (await call('/api/auth/register', 'POST', { handle: handle + Date.now().toString(36), password: 'a good passphrase', ...(ref ? { ref } : {}) })).body;
+    const A = await reg('refa');
+    const ACODE = referrals.referralCodeOf(A.user.id); // derived from the handle
+    check('the code is derived from the handle', /^REFA[A-Z0-9]+$/.test(ACODE ?? ''), ACODE);
+
+    // --- depth is ONE level, credited once ----------------------------------
+    const B = await reg('refb', ACODE);
+    let r = await call('/api/referrals/mine', 'GET', undefined, A.token);
+    check('mine returns the same code', r.body?.code === ACODE, r.body?.code);
+    check('a real signup credits the direct referrer once', r.body?.balance?.earned === 100, JSON.stringify(r.body?.balance));
+    check('the surface states the depth cap', r.body?.maxDepth === 1);
+    const C = await reg('refc', referrals.referralCodeOf(B.user.id));
+    r = await call('/api/referrals/mine', 'GET', undefined, A.token);
+    check("B's own referral does NOT credit A (depth stops at one)", r.body?.balance?.earned === 100, JSON.stringify(r.body?.balance));
+    r = await call('/api/referrals/mine', 'GET', undefined, B.token);
+    check('B is credited for C directly', r.body?.balance?.earned === 100, JSON.stringify(r.body?.balance));
+    await reg('refb2', ACODE); // a different new member through A's code
+    r = await call('/api/referrals/mine', 'GET', undefined, A.token);
+    check('each new member credits once, per member', r.body?.balance?.earned === 200, JSON.stringify(r.body?.balance));
+
+    // --- purchases earn points; referred purchases credit the referrer ------
+    const S = await reg('refseller');
+    await call('/api/vendors', 'POST', { displayName: 'Ref Seller', description: 'goods', contactMethod: '0700 000000' }, S.token);
+    const mk = await call('/api/listings', 'POST', { title: 'Crate of tomatoes', description: 'Grade A', type: 'product', price: 10000, currency: 'KES', locationName: 'Wote' }, S.token);
+    const listingId = mk.body.listing.id;
+    await call(`/api/listings/${listingId}/status`, 'POST', { status: 'active' }, S.token);
+    const o1 = await call('/api/orders', 'POST', { listingId, quantity: 1 }, B.token);
+    await call(`/api/orders/${o1.body.order.id}/fulfil`, 'POST', {}, S.token);
+    r = await call('/api/referrals/mine', 'GET', undefined, B.token);
+    check('a fulfilled purchase earns the buyer points', r.body?.balance?.earned === 100 + 500, JSON.stringify(r.body?.balance));
+    r = await call('/api/referrals/mine', 'GET', undefined, A.token);
+    check("the referrer earns the same, once per order", r.body?.balance?.earned === 200 + 500, JSON.stringify(r.body?.balance));
+    await call(`/api/orders/${o1.body.order.id}/fulfil`, 'POST', {}, S.token); // replay
+    r = await call('/api/referrals/mine', 'GET', undefined, A.token);
+    check('replaying fulfilment mints nothing', r.body?.balance?.earned === 700, JSON.stringify(r.body?.balance));
+
+    // --- event traffic: deduped, capped, worth one point --------------------
+    const camp = await call('/api/campaigns', 'POST', { title: 'Referral Night ' + Date.now().toString(36), description: 'x', type: 'event', startsAt: new Date(Date.now() + 86400000).toISOString() }, A.token);
+    const pub = await call(`/api/campaigns/${camp.body.campaign.id}/publish`, 'POST', {}, A.token);
+    const owned = await call(`/api/campaigns/${camp.body.campaign.id}`, 'GET', undefined, A.token);
+    const slug = owned.body?.campaign?.publicSlug; // the PUBLIC slug, one link to paste anywhere
+    await call(`/api/public/campaigns/${slug}?via=${ACODE}`, 'GET');
+    await call(`/api/public/campaigns/${slug}?via=${ACODE}`, 'GET');
+    r = await call('/api/referrals/mine', 'GET', undefined, A.token);
+    check('link traffic is deduped per visitor per day', r.body?.balance?.earned === 701, JSON.stringify(r.body?.balance));
+    // The daily cap, exercised directly against the domain.
+    for (let i = 0; i < 55; i++) referrals.recordTraffic(ACODE, 'captest-visitor-' + i);
+    r = await call('/api/referrals/mine', 'GET', undefined, A.token);
+    check('traffic points stop at the daily cap', r.body?.balance?.earned === 750, JSON.stringify(r.body?.balance)); // 1 http visit + 49 more = the 50/day cap
+    await call(`/api/public/campaigns/${slug}/register`, 'POST', { attendeeRef: 'guest-1', via: ACODE });
+    await call(`/api/public/campaigns/${slug}/register`, 'POST', { attendeeRef: 'guest-1', via: ACODE });
+    r = await call('/api/referrals/mine', 'GET', undefined, A.token);
+    check('an event registration through the link earns, once per attendee', r.body?.balance?.earned === 775, JSON.stringify(r.body?.balance)); // 750 + 25, once
+
+    // --- the pool: cash only from real confirmed revenue --------------------
+    r = await call('/api/referrals/convert', 'POST', { points: 500 }, A.token);
+    check('conversion is refused when the pool holds nothing (409)', r.status === 409 && /pool/i.test(r.body?.error ?? ''), JSON.stringify(r.body).slice(0, 140));
+    const payer = await reg('refpayer');
+    const payer2 = await reg('refpayer2');
+    const feeCode = () => 'RF' + Math.random().toString(36).toUpperCase().slice(2, 9);
+    const fee = await call('/api/fees/pay', 'POST', { service: 'store_monthly', mpesaCode: feeCode() }, payer.token);
+    const fee2 = await call('/api/fees/pay', 'POST', { service: 'store_monthly', mpesaCode: feeCode() }, payer2.token);
+    const fin = (await call('/api/auth/register', 'POST', { handle: 'refinf', password: 'a good passphrase' })).body;
+    await call(`/api/fees/${fee.body.fee.id}/respond`, 'POST', { accept: true }, fin.token);
+    await call(`/api/fees/${fee2.body.fee.id}/respond`, 'POST', { accept: true }, fin.token);
+    r = await call('/api/referrals/mine', 'GET', undefined, A.token);
+    check('confirmed fees grow the pool by their fixed fraction', r.body?.pool?.backingKes === 50 && r.body?.pool?.availableKes === 50, JSON.stringify(r.body?.pool)); // 10% of 2 x 250
+    r = await call('/api/referrals/convert', 'POST', { points: 750 }, A.token);
+    check('overdrawing the pool is refused (409)', r.status === 409, JSON.stringify(r.body).slice(0, 120));
+    r = await call('/api/referrals/convert', 'POST', { points: 500 }, A.token);
+    check('a conversion inside the pool goes PENDING', r.status === 201 && r.body?.conversion?.status === 'pending' && r.body?.conversion?.kes === 50, `${r.status} ${JSON.stringify(r.body).slice(0, 140)}`);
+    const conv = r.body.conversion.id;
+    r = await call('/api/referrals/convert', 'POST', { points: 500 }, A.token);
+    check('the pool is spent — a second conversion is refused', r.status === 400 || r.status === 409, `got ${r.status}`);
+    r = await call(`/api/referrals/conversions/${conv}/respond`, 'POST', { accept: true }, A.token);
+    check('a member cannot confirm their own payout (403 finance)', r.status === 403);
+    r = await call(`/api/referrals/conversions/${conv}/respond`, 'POST', { accept: true }, fin.token);
+    check('finance confirms the manual M-Pesa payout', r.status === 200 && r.body?.conversion?.status === 'confirmed');
+    r = await call('/api/referrals/all', 'GET', undefined, fin.token);
+    check('paid never exceeds backing — the anti-pyramid invariant', r.body?.pool?.paidOrPromisedKes <= r.body?.pool?.backingKes, JSON.stringify(r.body?.pool));
+  } finally {
+    srv.close();
+  }
+}
+
+
+console.log('\n=== ARENA PROGRESSION: XP, LEVELS, MISSIONS, SEASON — ALL DERIVED ===');
+{
+  // The retention layer under the existing Arena: XP and Coins are POINTS
+  // (they buy nothing, cash out nowhere), totals are derived from append-only
+  // events, ratings/streaks replay confirmed matches, missions are daily and
+  // real, and the live strip counts real things only.
+  process.env.BRIEF_DEV_AUTH = '0';
+  const { default: app } = await import('../src/index.js');
+  const progress = await import('../src/domain/arenaProgress.js');
+  store._reset();
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    const reg = async (h) => (await call('/api/auth/register', 'POST', { handle: h + Date.now().toString(36), password: 'a good passphrase' })).body;
+    const A = await reg('xpa'); const B = await reg('xpb');
+
+    let r = await call('/api/arena/progress/me');
+    check('progress is members-only (401)', r.status === 401);
+
+    // Two players, one challenge, one confirmed match.
+    const pa = (await call('/api/arena/players', 'POST', { gameId: 'efootball', gamerTag: 'XPA' }, A.token)).body.player;
+    const pb = (await call('/api/arena/players', 'POST', { gameId: 'efootball', gamerTag: 'XPB' }, B.token)).body.player;
+    const ch = (await call('/api/arena/challenges', 'POST', { gameId: 'efootball', mode: '1v1', stake: 'friendly', openForHours: 2 }, A.token)).body.challenge;
+    const acc = await call(`/api/arena/challenges/${ch.id}/accept`, 'POST', {}, B.token);
+    const matchId = acc.body.match.id;
+    await call(`/api/arena/matches/${matchId}/report`, 'POST', { winnerPlayerId: A.user.id, scoreLine: '3-1' }, A.token);
+    const conf = await call(`/api/arena/matches/${matchId}/confirm`, 'POST', {}, B.token);
+
+    // --- the confirmation is the earning moment -----------------------------
+    r = await call('/api/arena/progress/me', 'GET', undefined, A.token);
+    check('the winner earned XP and coins from one confirmation',
+      r.body?.profile?.totalXp === 100 && r.body?.profile?.totalCoins === 25, JSON.stringify(r.body?.profile));
+    check('level 1 at 100 XP with the bar showing progress',
+      r.body?.profile?.level === 1 && r.body?.profile?.xpIntoLevel === 100, JSON.stringify(r.body?.profile));
+    r = await call('/api/arena/progress/me', 'GET', undefined, B.token);
+    check('the loser earns participation XP, no coins',
+      r.body?.profile?.totalXp === 30 && r.body?.profile?.totalCoins === 0, JSON.stringify(r.body?.profile));
+
+    // Replaying confirmation mints nothing (idempotent by match key).
+    await call(`/api/arena/matches/${matchId}/confirm`, 'POST', {}, B.token);
+    r = await call('/api/arena/progress/me', 'GET', undefined, A.token);
+    check('re-confirming mints nothing', r.body?.profile?.totalXp === 100, JSON.stringify(r.body?.profile?.totalXp));
+
+    // --- rating, streak, winrate replay from confirmed rows ------------------
+    const statsA = r.body?.players?.find((x) => x.id === pa.id)?.stats;
+    r = await call('/api/arena/progress/me', 'GET', undefined, A.token);
+    const sA = r.body?.players?.find((x) => x.id === pa.id)?.stats;
+    check('the winner has a justified rating above start', sA?.rating > 1000, JSON.stringify(sA));
+    check('the winner is on a 1-win streak with a 100% rate', sA?.streak === 1 && sA?.winRate === 100, JSON.stringify(sA));
+    check('rating is a replay, not a stored number — the loser sits below start',
+      (await call('/api/arena/progress/me', 'GET', undefined, B.token)).body?.players?.[0]?.stats?.rating < 1000);
+
+    // --- missions: daily, derived, claimable once -----------------------------
+    r = await call('/api/arena/progress/me', 'GET', undefined, A.token);
+    const m1 = r.body?.missions?.find((x) => x.key === 'play_1');
+    const m2 = r.body?.missions?.find((x) => x.key === 'win_2');
+    check('play_1 is complete after one confirmed match', m1?.complete === true && m1?.claimable === true, JSON.stringify(m1));
+    check('win_2 is honestly incomplete (1 of 2)', m2?.progress === 1 && m2?.complete === false, JSON.stringify(m2));
+    r = await call('/api/arena/missions/win_2/claim', 'POST', {}, A.token);
+    check('claiming an incomplete mission is refused with the reason', r.status === 400, JSON.stringify(r.body).slice(0, 100));
+    r = await call('/api/arena/missions/play_1/claim', 'POST', {}, A.token);
+    check('claiming a complete mission grants its XP', r.status === 201 && r.body?.profile?.totalXp === 150, JSON.stringify(r.body?.profile).slice(0, 100));
+    r = await call('/api/arena/missions/play_1/claim', 'POST', {}, A.token);
+    check('a mission claims once per day', r.status === 400 && /already claimed/.test(r.body?.error ?? ''), JSON.stringify(r.body).slice(0, 100));
+
+    // --- rivals appear from repeated play -------------------------------------
+    // (one more match between the same two)
+    const ch2 = (await call('/api/arena/challenges', 'POST', { gameId: 'efootball', mode: '1v1', stake: 'friendly', openForHours: 2 }, B.token)).body.challenge;
+    const acc2 = await call(`/api/arena/challenges/${ch2.id}/accept`, 'POST', {}, A.token);
+    await call(`/api/arena/matches/${acc2.body.match.id}/report`, 'POST', { winnerPlayerId: A.user.id }, B.token);
+    await call(`/api/arena/matches/${acc2.body.match.id}/confirm`, 'POST', {}, A.token);
+    r = await call('/api/arena/progress/me', 'GET', undefined, A.token);
+    check('a repeated opponent becomes a rival with a head-to-head record',
+      (r.body?.rivals ?? []).some((x) => x.userId === B.user.id && x.played === 2 && x.iWon === 2), JSON.stringify(r.body?.rivals));
+
+    // --- the live strip counts real things only -------------------------------
+    r = await call('/api/arena/live', 'GET', undefined, A.token);
+    check('live counts real activity (2 players active, real challenges)', r.body?.playersActiveLastHour === 2 && r.body?.openChallenges >= 0, JSON.stringify(r.body));
+    check('the strip carries the season and its days remaining', r.body?.season?.id === 'season-01' && r.body?.season?.daysRemaining > 0, JSON.stringify(r.body?.season));
+
+    // --- season leaderboard with a YOU row ------------------------------------
+    r = await call('/api/arena/season/leaderboard', 'GET', undefined, A.token);
+    check('the season leaderboard ranks XP earners', r.body?.rows?.[0]?.xp >= r.body?.rows?.[1]?.xp && r.body?.rows?.length >= 2, JSON.stringify(r.body?.rows?.slice(0, 2)));
+    check('the YOU row is personal and true', r.body?.you?.rank === 1 && r.body?.you?.userId === A.user.id, JSON.stringify(r.body?.you));
+    r = await call('/api/arena/season/leaderboard', 'GET', undefined, B.token);
+    check('the YOU row follows the caller', r.body?.you?.rank === 2, JSON.stringify(r.body?.you));
+  } finally {
+    srv.close();
+  }
+}
+
 console.log('\n=== PLATFORM ROLES: THE OPERATOR SURFACE IS CAPABILITY-GUARDED ===');
 {
   // Production posture: no dev fallback, real identities only.
@@ -7281,6 +7680,19 @@ console.log('\n=== PLATFORM ROLES: THE OPERATOR SURFACE IS CAPABILITY-GUARDED ==
     check('finance reads settlement reconciliation (200)', r.status === 200);
     r = await call('/api/economic/payments/reconcile', 'GET', undefined, fin.token);
     check('finance reads payment reconciliation (200)', r.status === 200);
+
+    // --- editorial transitions are moderation acts (the collections cap gap) --
+    r = await call('/api/admin/collections', 'POST', { title: 'Reviewer picks', kind: 'rule', rule: { type: 'place' } }, rev.token);
+    check('a reviewer creates a collection (201)', r.status === 201, JSON.stringify(r.body).slice(0, 120));
+    const colKey = r.body?.collection?.key;
+    r = await call(`/api/admin/collections/${colKey}/publish`, 'POST', {}, nobody.token);
+    check('a plain member cannot publish a collection (403)', r.status === 403, `got ${r.status}`);
+    check('the refusal names the moderate capability', r.body?.requiredCapability === 'moderate', JSON.stringify(r.body).slice(0, 120));
+    r = await call(`/api/admin/collections/${colKey}/publish`, 'POST', {}, rev.token);
+    check('a reviewer publishes the collection (200)', r.status === 200 && r.body?.collection?.status === 'published', JSON.stringify(r.body).slice(0, 120));
+    r = await call(`/api/collections/${colKey}`, 'GET', undefined, nobody.token);
+    check('the published collection resolves for a member', r.body?.collection?.status === 'published', JSON.stringify(r.body).slice(0, 120));
+
 
     // --- role assignment is admin-only and audited ---------------------------
     const target = (await call('/api/auth/me', 'GET', undefined, nobody.token)).body.user;
@@ -7359,6 +7771,305 @@ console.log('\n=== PLATFORM ROLES: THE OPERATOR SURFACE IS CAPABILITY-GUARDED ==
     process.env.BRIEF_DEV_AUTH = '1';
   }
 }
+
+
+console.log('\n=== WHATSAPP SHOP: BUILD ON BRIEF, SELL IN WHATSAPP ===');
+{
+  // The architecture under test: Brief builds the shop, WhatsApp IS the shop.
+  // The output is real WhatsApp formatting (*bold*, _italic_) + a wa.me deep
+  // link. No WhatsApp payments by design. Drafting is free; publishing is
+  // gated on a CONFIRMED store service row, never a client-sent flag.
+  process.env.BRIEF_DEV_AUTH = '0';
+  process.env.BRIEF_FINANCE = 'shopfin';
+  process.env.BRIEF_POCHI_NUMBER = '0700000000';
+  const { default: app } = await import('../src/index.js');
+  store._reset();
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    const reg = async (handle) => (await call('/api/auth/register', 'POST', { handle: handle + Date.now().toString(36), password: 'a good passphrase' })).body;
+    const seller = await reg('shopseller');
+    const fin = (await call('/api/auth/register', 'POST', { handle: 'shopfin', password: 'a good passphrase' })).body;
+
+    let r = await call('/api/shop/mine');
+    check('the shop is members-only (401)', r.status === 401);
+    r = await call('/api/shop/mine', 'GET', undefined, seller.token);
+    check('a new member starts with an honest blank draft', r.body?.shop?.id === null && r.body?.shop?.status === 'draft' && r.body?.share === null, JSON.stringify(r.body?.shop).slice(0, 120));
+    check('the store service is honestly inactive before any payment', r.body?.store?.active === false && r.body?.store?.priceKes === 250, JSON.stringify(r.body?.store));
+
+    // Validation that refuses, with reasons.
+    r = await call('/api/shop/mine', 'PUT', { name: 'M', orderNumber: '+254712345678', items: [{ name: 'Sukuma', priceKes: 50 }] }, seller.token);
+    check('a one-letter shop name is refused', r.status === 400 && /name/.test(r.body?.error ?? ''), JSON.stringify(r.body?.error));
+    r = await call('/api/shop/mine', 'PUT', { name: 'Mama Njeria Fresh', orderNumber: 'not-a-phone', items: [{ name: 'Sukuma', priceKes: 50 }] }, seller.token);
+    check('an unreachable order number is refused', r.status === 400 && /phone/.test(r.body?.error ?? ''));
+    r = await call('/api/shop/mine', 'PUT', { name: 'Mama Njeria Fresh', orderNumber: '+254712345678', items: [] }, seller.token);
+    check('an empty price list is refused', r.status === 400 && /at least one item/.test(r.body?.error ?? ''));
+
+    // Save for real.
+    r = await call('/api/shop/mine', 'PUT', {
+      name: 'Mama Njeria Fresh', tagline: 'Fresh groceries, Kilimani', orderNumber: '+254 712 345 678',
+      items: [
+        { name: 'Sukuma Wiki', priceKes: 50 },
+        { name: 'Tomatoes (kg)', priceKes: 120, note: 'organic' },
+        { name: 'Free-range eggs (tray)', priceKes: 450 }
+      ]
+    }, seller.token);
+    check('the draft saves', r.status === 201 && r.body?.shop?.status === 'draft', JSON.stringify(r.body?.shop).slice(0, 120));
+
+    // The output is REAL WhatsApp formatting.
+    const text = r.body?.share?.text ?? '';
+    check('the name is WhatsApp-bold', text.includes('*Mama Njeria Fresh*'), JSON.stringify(text.slice(0, 60)));
+    check('the tagline is WhatsApp-italic', text.includes('_Fresh groceries, Kilimani_'));
+    check('prices are whole shillings in bold', text.includes('Sukuma Wiki — *KES 50*') && text.includes('Tomatoes (kg) — *KES 120* _organic_'));
+    check('the order instruction is included', /reply with the item number/.test(text));
+    const waMe = r.body?.share?.waMe ?? '';
+    check('the wa.me link carries the number and the encoded catalog', waMe.startsWith('https://wa.me/254712345678?text='), waMe.slice(0, 50));
+    check('the catalog in the link is the same text, URL-encoded', decodeURIComponent(waMe.split('text=')[1] ?? '') === text);
+    check('the share is honest: a draft is not shareable', r.body?.share?.shareable === false);
+
+    // Publishing is gated on a CONFIRMED service row, not a flag.
+    r = await call('/api/shop/mine/publish', 'POST', {}, seller.token);
+    check('publishing without the store service is refused (409)', r.status === 409, `got ${r.status}`);
+    check('the refusal names the service and the price, machine-readably', r.body?.requiresService === 'store_monthly' && /KES 250/.test(r.body?.error ?? ''), JSON.stringify(r.body));
+
+    // A PENDING payment is not trust: only a confirmed row activates.
+    const code = 'WC' + Math.random().toString(36).toUpperCase().slice(2, 10);
+    const fee = (await call('/api/fees/pay', 'POST', { service: 'store_monthly', mpesaCode: code }, seller.token)).body.fee;
+    r = await call('/api/shop/mine/publish', 'POST', {}, seller.token);
+    check('a pending Pochi code does not activate the store', r.status === 409, `got ${r.status}`);
+    r = await call(`/api/fees/${fee.id}/respond`, 'POST', { accept: true }, fin.token);
+    check('finance confirms the code', r.status === 200 && r.body?.fee?.status === 'confirmed');
+    r = await call('/api/shop/mine/publish', 'POST', {}, seller.token);
+    check('publishing works once the service is CONFIRMED', r.status === 200 && r.body?.shop?.status === 'published' && r.body?.share?.shareable === true, JSON.stringify(r.body?.shop?.status));
+    check('the store service is derived active with an end date', r.body?.store?.active === true && Boolean(r.body?.store?.activeUntil), JSON.stringify(r.body?.store));
+    r = await call('/api/shop/mine/publish', 'POST', {}, seller.token);
+    check('publishing twice is an idempotent no-op', r.status === 200 && r.body?.changed === false);
+
+    // One member, one shop: saving again edits in place.
+    r = await call('/api/shop/mine', 'PUT', {
+      name: 'Mama Njeria Fresh', tagline: 'Fresh groceries, Kilimani', orderNumber: '+254 712 345 678',
+      items: [{ name: 'Sukuma Wiki', priceKes: 60 }]
+    }, seller.token);
+    check('saving again edits the same shop (no second row)', r.status === 201 && store.all('shops').length === 1 && r.body?.share?.text.includes('*KES 60*'), JSON.stringify(store.all('shops').length));
+
+    // Unpublish is the honest off-switch, and works.
+    r = await call('/api/shop/mine/unpublish', 'POST', {}, seller.token);
+    check('unpublishing returns to draft and honesty', r.status === 200 && r.body?.shop?.status === 'draft' && r.body?.share?.shareable === false);
+
+    // Another member's shop is invisible.
+    const other = await reg('shopother');
+    r = await call('/api/shop/mine', 'GET', undefined, other.token);
+    check('one shop is one member — another member sees their own blank', r.body?.shop?.id === null);
+  } finally {
+    srv.close();
+  }
+}
+
+
+
+console.log('\n=== DUKA BOOK, POOLED RESTOCKS, ESCROW-AS-RECORDS ===');
+{
+  // The paper-ledger replacement: sales are LOGGED facts (Brief never claims
+  // to see inside WhatsApp), every total is derived, a replayed offline write
+  // is a no-op, pooled restocks open real Group Buys, and one read layer
+  // shows funds held across every escrow pattern.
+  process.env.BRIEF_DEV_AUTH = '0';
+  const { default: app } = await import('../src/index.js');
+  store._reset();
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    const reg = async (h) => (await call('/api/auth/register', 'POST', { handle: h + Date.now().toString(36), password: 'a good passphrase' })).body;
+    const duka = await reg('duka');
+
+    let r = await call('/api/shop/mine/book');
+    check('the book is members-only (401)', r.status === 401);
+
+    // A shop with stock on two items — the book joins sales to the list.
+    r = await call('/api/shop/mine', 'PUT', {
+      name: 'Kilimani Duka', tagline: 'Everyday things', orderNumber: '+254700111222',
+      items: [
+        { name: 'Cooking oil (L)', priceKes: 350, stockQty: 6 },
+        { name: 'Unga 2kg', priceKes: 210, stockQty: 20 },
+        { name: 'Matchboxes', priceKes: 10, stockQty: 3 }
+      ]
+    }, duka.token);
+    check('a shop with stock saves', r.status === 201 && r.body?.shop?.items?.[0]?.stockQty === 6, JSON.stringify(r.body?.shop?.items?.[0]));
+
+    // Logging sales: the 3-field intake.
+    r = await call('/api/shop/mine/sales', 'POST', { name: 'Cooking oil (L)', qty: 2, unitKes: 350 }, duka.token);
+    check('a sale logs', r.status === 201 && r.body?.sale?.amountKes === 700, JSON.stringify(r.body?.sale));
+    await call('/api/shop/mine/sales', 'POST', { name: 'Unga 2kg', qty: 3, unitKes: 210 }, duka.token);
+    await call('/api/shop/mine/sales', 'POST', { name: 'Cooking oil (L)', qty: 1, unitKes: 350, channel: 'whatsapp' }, duka.token);
+
+    // The offline queue replay: same clientKey, never a second sale.
+    r = await call('/api/shop/mine/sales', 'POST', { name: 'Cooking oil (L)', qty: 1, unitKes: 350, clientKey: 'off-1' }, duka.token);
+    check('an offline write lands with its key', r.status === 201 && r.body?.replayed === false);
+    r = await call('/api/shop/mine/sales', 'POST', { name: 'Cooking oil (L)', qty: 1, unitKes: 350, clientKey: 'off-1' }, duka.token);
+    check('replaying the same key is a no-op that returns the original row', r.status === 200 && r.body?.replayed === true && r.body?.sale?.clientKey === 'off-1');
+
+    // The derived book.
+    r = await call('/api/shop/mine/book', 'GET', undefined, duka.token);
+    const book = r.body;
+    check('today sums the logged rows', book?.today?.kes === 700 + 630 + 350 + 350, JSON.stringify(book?.today));
+    check('top items are ranked by quantity', book?.topItems?.[0]?.name === 'Cooking oil (L)' && book?.topItems?.[0]?.qty === 4, JSON.stringify(book?.topItems));
+    check('low stock is derived from the list minus the week', book?.lowStock?.some((i) => i.name === 'Cooking oil (L)' && i.remaining === 2), JSON.stringify(book?.lowStock));
+    check('the book states its own honesty', /WhatsApp are yours to record/.test(book?.note ?? ''));
+
+    // Validation that refuses.
+    r = await call('/api/shop/mine/sales', 'POST', { name: 'Unga 2kg', qty: 0, unitKes: 210 }, duka.token);
+    check('a zero quantity is refused', r.status === 400 && /quantity/.test(r.body?.error ?? ''));
+
+    // Pooled restock: a real Group Buy on the existing engine.
+    r = await call('/api/shop/mine/pool', 'POST', { itemName: 'Cooking oil (L)', unitCostKes: 260, goalUnits: 10, myUnits: 3 }, duka.token);
+    check('a pool opens as a real Group Buy with the owner pledge', r.status === 201 && r.body?.pool?.targetAmount === 2600 && r.body?.pool?.total === 780 && r.body?.pool?.stage === 'funding', JSON.stringify(r.body?.pool).slice(0, 140));
+    check('the share text is forwardable WhatsApp formatting', (r.body?.share?.text ?? '').includes('*RESTOCK POOL*') && (r.body?.share?.text ?? '').includes('KES 260/unit'));
+    check('the share link opens the shopkeeper\'s WhatsApp with the pool text', (r.body?.share?.waMe ?? '').startsWith('https://wa.me/254700111222?text='), r.body?.share?.waMe?.slice(0, 40));
+    r = await call('/api/shop/mine/pool', 'POST', { itemName: 'Not On The List', unitCostKes: 100, goalUnits: 5, myUnits: 1 }, duka.token);
+    check('pooling an item that is not on the list is refused', r.status === 400 && /price list/.test(r.body?.error ?? ''));
+    // A pool that is NOT yet covered stays funding — no premature target.
+    const poolId = (await call('/api/shop/mine/pool', 'POST', { itemName: 'Unga 2kg', unitCostKes: 180, goalUnits: 5, myUnits: 2 }, duka.token)).body.pool.id;
+    r = await call(`/api/engine/group-buys/${poolId}`, 'GET', undefined, duka.token);
+    check('an uncovered pool honestly stays funding', r.body?.groupBuy?.stage === 'funding' && r.body?.groupBuy?.total === 360, JSON.stringify(r.body?.groupBuy?.stage));
+    // A neighbour duka pools the rest — and the engine notices the target
+    // itself; nobody has to click it.
+    const neighbour = await reg('dukanext');
+    r = await call(`/api/engine/group-buys/${poolId}/contribute`, 'POST', { memberRef: 'Neighbour duka', amount: 540, source: 'mpesa' }, neighbour.token);
+    check('the engine reaches the target the moment contributions cover it', r.body?.stageChanged === true && r.body?.total === 900, JSON.stringify(r.body));
+    r = await call(`/api/engine/group-buys/${poolId}`, 'GET', undefined, duka.token);
+    check('the stepper says target_met', r.body?.groupBuy?.stage === 'target_met', JSON.stringify(r.body?.groupBuy?.stage));
+
+    // Escrow-as-records: one view across the patterns.
+    r = await call('/api/escrows/mine');
+    check('escrow records are members-only (401)', r.status === 401);
+    r = await call('/api/escrows/mine', 'GET', undefined, duka.token);
+    check('pools at funding are pending, not held', r.body?.rows?.every((x) => x.kind === 'group_buy') && r.body?.rows?.some((x) => x.state === 'pending' && x.role === 'owner'), JSON.stringify(r.body?.rows?.map((x) => x.state)));
+    await call(`/api/engine/group-buys/${poolId}/stage`, 'POST', { to: 'escrow' }, duka.token);
+    r = await call('/api/escrows/mine', 'GET', undefined, duka.token);
+    check('at the escrow stage the pool is HELD', r.body?.rows?.some((x) => x.refId === poolId && x.state === 'locked' && x.amountKes === 900), JSON.stringify(r.body?.rows?.find((x) => x.refId === poolId)));
+    await call(`/api/engine/group-buys/${poolId}/stage`, 'POST', { to: 'dispatched' }, duka.token);
+    await call(`/api/engine/group-buys/${poolId}/stage`, 'POST', { to: 'delivered' }, duka.token);
+    r = await call('/api/escrows/mine', 'GET', undefined, duka.token);
+    check('delivery RELEASES the record', r.body?.rows?.find((x) => x.refId === poolId)?.state === 'released');
+    check('totals are derived', r.body?.totals?.heldKes === 0 && r.body?.totals?.releasedKes === 900, JSON.stringify(r.body?.totals));
+
+    // The ticket adapter is pinned to the real row shape: if the shape
+    // drifts, this fails loudly instead of silently hiding ticket escrows.
+    store.insert('ticketOrders', {
+      id: 'tord_pin1', reference: 'TKT-PIN1', buyerId: duka.user.id, listingId: 'list_x',
+      sellerId: 'usr_someoneelse', ticketId: 'tk_x', eventId: 'ev_x', status: 'pending',
+      unitPrice: 500, fee: 0, total: 500, currency: 'KES', ledgerTxId: null,
+      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), cancelledAt: null
+    });
+    r = await call('/api/escrows/mine', 'GET', undefined, duka.token);
+    check('a ticket order between sale and receipt is HELD for the buyer',
+      r.body?.rows?.some((x) => x.kind === 'ticket' && x.role === 'buyer' && x.state === 'locked' && x.amountKes === 500), JSON.stringify(r.body?.rows?.find((x) => x.kind === 'ticket')));
+  } finally {
+    srv.close();
+  }
+}
+
+
+
+console.log('\n=== MEMBERS: the admin directory for onboarding real people ===');
+{
+  // Who is here, where they stopped, what an operator may do about it. The
+  // directory is derived; suspension revokes every session NOW and lands in
+  // the audit log; roles ride the existing audited route.
+  process.env.BRIEF_DEV_AUTH = '0';
+  const { default: app } = await import('../src/index.js');
+  store._reset();
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    const reg = async (h) => (await call('/api/auth/register', 'POST', { handle: h + Date.now().toString(36), password: 'a good passphrase', displayName: h.toUpperCase() })).body;
+    const admin = await reg('memadmin');
+    store.update('users', admin.user.id, { platformRoles: ['admin'] });
+    const newcomer = await reg('newbie');
+    const climber = await reg('climber');
+
+    // Gate: not everyone gets the directory.
+    let r = await call('/api/ops/members');
+    check('the directory is members-only (401)', r.status === 401);
+    r = await call('/api/ops/members', 'GET', undefined, newcomer.token);
+    check('the directory is admin-only (403)', r.status === 403, `got ${r.status}`);
+
+    // A newcomer with no events says so honestly.
+    r = await call('/api/ops/members', 'GET', undefined, admin.token);
+    check('the directory lists real members, newest first', r.body?.total >= 3 && r.body?.rows?.[0]?.handle.includes('climber'), JSON.stringify(r.body?.rows?.[0]?.handle));
+    const newbieRow = r.body.rows.find((x) => x.handle.includes('newbie'));
+    check('a member who only registered has climbed exactly one rung', newbieRow?.onboarding?.rung === 'identity' && newbieRow?.onboarding?.latestEvent === 'signed_in', JSON.stringify(newbieRow?.onboarding));
+
+    // Search.
+    r = await call('/api/ops/members?q=NEWB', 'GET', undefined, admin.token);
+    check('search finds by display name', r.body?.total === 1 && r.body?.rows?.[0]?.handle.includes('newbie'), JSON.stringify(r.body?.total));
+
+    // The climber climbs: onboarding events drive the derived rung.
+    const onboarding = await import('../src/domain/onboarding.js');
+    onboarding.ensureProfile(climber.user.id);
+    onboarding.recordEvent(climber.user.id, 'signed_in');
+    onboarding.recordEvent(climber.user.id, 'goal_chosen');
+    onboarding.recordEvent(climber.user.id, 'object_saved');
+    r = await call('/api/ops/members?q=climber', 'GET', undefined, admin.token);
+    check('the rung is derived from recorded events (value, not contribute)', r.body?.rows?.[0]?.onboarding?.rung === 'value', JSON.stringify(r.body?.rows?.[0]?.onboarding));
+    check('the latest event is named, not guessed', r.body?.rows?.[0]?.onboarding?.latestEvent === 'object_saved');
+
+    // The funnel.
+    r = await call('/api/ops/onboarding', 'GET', undefined, admin.token);
+    check('the funnel counts real events only', (r.body?.funnel?.object_saved ?? 0) >= 1 && (r.body?.funnel?.capture_saved ?? 0) === 0, JSON.stringify(r.body?.funnel));
+    check('the totals are scans, not counters', r.body?.totals?.members >= 3 && r.body?.totals?.withAnyEvent >= 1, JSON.stringify(r.body?.totals));
+    r = await call('/api/ops/onboarding');
+    check('the funnel is admin-only too (401)', r.status === 401);
+
+    // Suspension: immediate, audited, with a reason.
+    r = await call(`/api/ops/members/${newcomer.user.id}/status`, 'POST', { status: 'suspended', reason: 'no' }, admin.token);
+    check('a thin suspension reason is refused', r.status === 400 && /say why/.test(r.body?.error ?? ''), JSON.stringify(r.body));
+    r = await call(`/api/ops/members/${newcomer.user.id}/status`, 'POST', { status: 'suspended', reason: 'spam signups from this handle' }, admin.token);
+    check('suspension takes with sessions revoked', r.status === 200 && r.body?.changed === true && r.body?.sessionsRevoked >= 1 && r.body?.user?.status === 'suspended', JSON.stringify(r.body).slice(0, 140));
+    r = await call('/api/auth/me', 'GET', undefined, newcomer.token);
+    check('the suspended member is locked out on the NEXT request', r.status === 401, `got ${r.status}`);
+    r = await call('/api/auth/login', 'POST', { handle: newcomer.user.handle, password: 'a good passphrase' });
+    check('and refused a new login', r.status === 401 || (r.body?.user?.status ?? '') === 'suspended', `got ${r.status}`);
+    r = await call(`/api/ops/members/${newcomer.user.id}/status`, 'POST', { status: 'suspended', reason: 'same decision again' }, admin.token);
+    check('re-suspending is an idempotent no-op', r.status === 200 && r.body?.changed === false);
+    r = await call(`/api/ops/members/${newcomer.user.id}/status`, 'POST', { status: 'active' }, admin.token);
+    check('reinstate works and is audited', r.status === 200 && r.body?.changed === true && r.body?.user?.status === 'active');
+    r = await call('/api/auth/login', 'POST', { handle: newcomer.user.handle, password: 'a good passphrase' });
+    check('the reinstated member can sign in again', r.status === 200);
+    const audited = store.filter('auditLog', (a) => a.action === 'ops.member.status');
+    check('both status changes are in the audit log with before/after', audited.length === 2 && audited.every((a) => a.before?.status && a.after?.status), JSON.stringify(audited.length));
+
+    // Roles still ride their own audited route; the directory shows them.
+    r = await call('/api/ops/roles', 'POST', { userId: climber.user.id, roles: ['operator'], reason: 'running the desk this week' }, admin.token);
+    check('roles are written through the existing audited route', r.status === 200 && Array.isArray(r.body?.user?.platformRoles));
+    r = await call('/api/ops/members?q=climber', 'GET', undefined, admin.token);
+    check('the directory reflects the role without storing it twice', r.body?.rows?.[0]?.platformRoles?.includes('operator') === true, JSON.stringify(r.body?.rows?.[0]?.platformRoles));
+  } finally {
+    srv.close();
+  }
+}
+
 
 console.log(`\n${'='.repeat(52)}\nPASSED ${pass}   FAILED ${fail}   SKIPPED ${skip}\n${'='.repeat(52)}`);
 process.exit(fail ? 1 : 0);

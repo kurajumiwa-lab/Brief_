@@ -37,11 +37,25 @@ export function register(app) {
     }
   });
 
+  // Publishing, unpublishing and archiving change the PUBLIC story layer —
+  // moderation acts, like tea's publish/unpublish: they require the
+  // "moderate" capability, and every transition is audited with its
+  // before/after status. (This route once asked only for an identity, which
+  // let any signed-in member publish a collection; closed with the cap gap.)
   app.post('/api/admin/collections/:key/:action', (req, res) => {
-    const me = requireAuth(req, res);
+    const me = requireCap(req, res, 'moderate');
     if (!me) return;
     try {
-      res.json({ collection: collection.transitionCollection(req.params.key, req.params.action) });
+      const before = collection.getCollection(req.params.key)?.status ?? null;
+      const row = collection.transitionCollection(req.params.key, req.params.action);
+      recordAudit('collection.transition', {
+        actorId: me,
+        objectType: 'collection',
+        objectId: row?.id,
+        before: { status: before },
+        after: { status: row?.status ?? null }
+      });
+      res.json({ collection: row });
     } catch (e) {
       const msg = String(e.message ?? e);
       res.status(/not found/.test(msg) ? 404 : 400).json({ error: msg });

@@ -52,9 +52,11 @@ export const INBOX_TABS: Record<string, string> = {
   distribution: 'Distribution',
   calendar: 'Calendar',
   vendors: 'Vendors',
+  shop: 'WhatsApp Shop',
   ai: 'AI review',
   engine: 'Engine',
-  groupbuy: 'Group Buy'
+  groupbuy: 'Group Buy',
+  fees: 'Services'
 };
 
 export const MENU_QUICK: Record<string, string> = {
@@ -93,11 +95,11 @@ export const WORKFLOW_BUNDLES = [
   { id: 'create', label: 'Create', hint: 'Write, review and publish',
     sections: ['cockpit', 'inbox', 'tea', 'distribution', 'calendar', 'ai'] },
   { id: 'sell', label: 'Sell', hint: 'Events, shelves and the money they make',
-    sections: ['campaigns', 'vendors', 'money', 'resale', 'groupbuy'] },
+    sections: ['campaigns', 'vendors', 'shop', 'money', 'resale', 'groupbuy'] },
   { id: 'run', label: 'Run', hint: 'Operate what is already live',
     sections: ['command', 'active', 'completed', 'matches', 'engine'] },
   { id: 'records', label: 'Records', hint: 'What happened, attested',
-    sections: ['vault', 'gate', 'sources'] }
+    sections: ['vault', 'gate', 'sources', 'fees'] }
 ] as const;
 
 export const SAVED_BUNDLES = [

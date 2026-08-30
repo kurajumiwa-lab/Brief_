@@ -10,7 +10,7 @@
 
 export type Destination = 'nearby' | 'arena' | 'mylayer' | 'workflows';
 
-export type NearbySection = 'stream' | 'tea' | 'today' | 'pursuits' | 'quests' | 'market' | 'events';
+export type NearbySection = 'stream' | 'tea' | 'today' | 'pursuits' | 'quests' | 'market' | 'events' | 'mshikano';
 export type MyLayerSection =
   | 'saved' | 'activity' | 'arena' | 'points' | 'circles' | 'groups' | 'campaigns'
   | 'mediakit' | 'opportunities' | 'messages' | 'subscriptions' | 'tickets'
@@ -18,8 +18,8 @@ export type MyLayerSection =
 export type WorkflowSection =
   | 'cockpit' | 'command' | 'active' | 'completed' | 'inbox'
   | 'sources' | 'money' | 'vault' | 'gate' | 'tea'
-  | 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'ai' | 'engine'
-  | 'groupbuy' | 'resale';
+  | 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'shop' | 'ai' | 'engine'
+  | 'groupbuy' | 'resale' | 'fees';
 export type ArenaSection = 'lobby' | 'epl' | 'challenges' | 'tournaments' | 'leaderboard';
 
 export type BriefRoute = {
@@ -54,7 +54,7 @@ export const DEFAULT_ROUTE: BriefRoute = {
   landed: false
 };
 
-const NEARBY: NearbySection[] = ['stream', 'tea', 'today', 'pursuits', 'quests', 'market', 'events'];
+const NEARBY: NearbySection[] = ['stream', 'tea', 'today', 'pursuits', 'quests', 'market', 'events', 'mshikano'];
 const MYLAYER: MyLayerSection[] = [
   'saved', 'activity', 'arena', 'points', 'circles', 'groups', 'campaigns',
   'mediakit', 'opportunities', 'messages', 'subscriptions', 'verification'
@@ -62,7 +62,7 @@ const MYLAYER: MyLayerSection[] = [
 const WORKFLOW: WorkflowSection[] = [
   'cockpit', 'command', 'active', 'completed', 'inbox',
   'sources', 'money', 'vault', 'gate', 'tea',
-  'campaigns', 'matches', 'distribution', 'calendar', 'vendors', 'ai', 'engine', 'groupbuy'
+  'campaigns', 'matches', 'distribution', 'calendar', 'vendors', 'shop', 'ai', 'engine', 'groupbuy', 'fees'
 ];
 const ARENA: ArenaSection[] = ['lobby', 'epl', 'challenges', 'tournaments', 'leaderboard'];
 

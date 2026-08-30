@@ -82,7 +82,10 @@ const DEFINITIONS = [
   // Engine: sync core + universal router + tier guardrails. Runs against the
   // local store; the router's webhook signing and outbound channels fail
   // closed (named, honest) until their credentials exist.
-  { key: 'engine', domain: 'engine', label: 'Engine (sync + router + tiers)', configured: () => true }
+  { key: 'engine', domain: 'engine', label: 'Engine (sync + router + tiers)', configured: () => true },
+  // Mshikano: the peer-to-peer cooperation network. Local store, no
+  // credential needed; every trust number derives from confirmed rows.
+  { key: 'mshikano', domain: 'coop', label: 'Mshikano cooperation network', configured: () => true }
 ];
 
 const byKey = new Map(DEFINITIONS.map((d) => [d.key, d]));

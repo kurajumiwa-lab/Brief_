@@ -60,6 +60,20 @@ const EMPTY = {
   // Disbursements to sellers. A payout is a RECORD of money sent, not a
   // balance -- withdrawable is always derived as (settled net - paid - pending).
   payouts: [],
+  // Service fees paid to Brief via Pochi la Biashara (manual M-Pesa code flow).
+  servicePayments: [],
+  // Referral reward events (append-only, deduped by key) and point-to-cash
+  // conversions paid from the derived rewards pool.
+  referralEvents: [],
+
+  // WhatsApp shops: the builder state. The storefront is WhatsApp itself —
+  // the share output (formatted text + wa.me link) is derived, never stored.
+  shops: [],
+
+  // Duka book: logged sales (the paper-ledger replacement). Rows are facts;
+  // every total, top-item and low-stock flag is DERIVED at read time.
+  shopSales: [],
+  referralConversions: [],
   // Creator distribution layer. A campaign wraps an existing object; its
   // metrics are derived, never stored. See src/domain/campaign.js.
   campaigns: [],
@@ -221,9 +235,14 @@ const EMPTY = {
   // --- Arena entities (server models) -------------------------------------
   // A player's game identity is NOT their Brief account: one person holds many.
   arenaPlayers: [],
+  // Arena progression: append-only XP/coin events (idempotent by key).
+  arenaEvents: [],
   // T5: the shared EPL player catalog. Rows carry their source; 'seed' rows
   // 'seed' rows are clearly mock development data.
   eplCatalog: [],
+  // Mshikano: cooperation posts + two-party-confirmed partnerships.
+  coopPosts: [],
+  coopPartnerships: [],
   arenaVenues: [],
   arenaTournaments: [],
   arenaResults: [], // agreed match results; leaderboards are derived from these

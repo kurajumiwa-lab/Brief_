@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, CalendarDays, Flame, Lock, MessageCircle, Plus, Sparkles, Trophy, Users } from 'lucide-react';
+import {Heart,  ArrowRight, CalendarDays, Flame, Lock, MessageCircle, Plus, Sparkles, Trophy, Users } from 'lucide-react';
 import type { MenuTarget } from './MenuSheet';
 import type { Ladder } from '../api/briefApi';
 import { serviceForSurface } from './ladder';
@@ -84,6 +84,15 @@ const SHELF_CARDS: ShelfCard[] = [
     image: communityArt,
     target: { tab: 'nearby', section: 'stream' },
     Icon: Sparkles
+  },
+  {
+    id: 'mshikano',
+    eyebrow: 'COOPERATE',
+    title: 'Mshikano',
+    detail: 'Have, need, can help, looking for — find your complement',
+    image: communityArt,
+    target: { tab: 'nearby', section: 'mshikano' },
+    Icon: Heart
   },
   {
     id: 'play',

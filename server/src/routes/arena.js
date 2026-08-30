@@ -2,6 +2,7 @@
 // Each route keeps its original body verbatim; only its home file changed.
 import { callerId } from '../identity.js';
 import * as arena from '../domain/arena.js';
+import * as progress from '../domain/arenaProgress.js';
 import * as person from '../domain/person.js';
 import * as signals from '../domain/signal.js';
 import * as notifications from '../domain/notifications.js';
@@ -210,7 +211,12 @@ app.post('/api/arena/matches/:id/confirm', (req, res) => {
         }
       }
     }
-    res.json(out);
+    // The confirming player's own earnings, for the match-result toast.
+    const mineRows = Array.isArray(out.rewards) ? out.rewards.filter((e) => e.userId === me) : [];
+    res.json({
+      ...out,
+      yourRewards: mineRows.length > 0 ? { xp: mineRows.reduce((t, e) => t + (e.xp ?? 0), 0), coins: mineRows.reduce((t, e) => t + (e.coins ?? 0), 0) } : null
+    });
   } catch (e) {
     res.status(400).json({ error: String(e.message ?? e) });
   }
@@ -305,6 +311,52 @@ app.get('/api/arena/tournaments', (req, res) => {
 
 app.get('/api/arena/leaderboard', (req, res) => {
   res.json({ leaderboard: arena.leaderboard(req.query.gameId ?? 'efootball') });
+});
+
+// --- progression: the retention layer under the existing surfaces -----------
+
+/** My Arena identity: level, XP, coins, missions, rivals, season rank. */
+app.get('/api/arena/progress/me', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  const players = arena.listPlayers().filter((p) => p.userId === me).map((p) => ({
+    ...p,
+    stats: progress.playerGameStats(p.id)
+  }));
+  res.json({
+    profile: progress.profileOf(me),
+    missions: progress.missionsFor(me),
+    rivals: progress.rivalsFor(me),
+    seasonRank: progress.mySeasonRank(me),
+    players
+  });
+});
+
+/** The honest live strip: real counts, zero when quiet. */
+app.get('/api/arena/live', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  res.json(progress.liveNow());
+});
+
+/** Missions are daily, derived from today's confirmed matches; claim is
+ *  idempotent per day per mission. */
+app.post('/api/arena/missions/:key/claim', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  try {
+    const row = progress.claimMission(me, req.params.key);
+    res.status(201).json({ claimed: row, missions: progress.missionsFor(me), profile: progress.profileOf(me) });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message ?? e) });
+  }
+});
+
+/** Season leaderboard (XP this season) with the caller's own row. */
+app.get('/api/arena/season/leaderboard', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  res.json({ ...progress.seasonLeaderboard({}), you: progress.mySeasonRank(me) });
 });
 }
 

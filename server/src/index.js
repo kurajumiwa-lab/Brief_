@@ -42,6 +42,9 @@ import { register as objectsRoutes } from './routes/objects.js';
 import { register as circlesRoutes } from './routes/circles.js';
 import { register as triageRoutes } from './routes/triage.js';
 import { register as economicRoutes } from './routes/economic.js';
+import { register as feesRoutes } from './routes/fees.js';
+import { register as shopRoutes } from './routes/shop.js';
+import { register as referralsRoutes } from './routes/referrals.js';
 import { register as commerceRoutes } from './routes/commerce.js';
 import { register as commandRoutes } from './routes/command.js';
 import { register as campaignsRoutes } from './routes/campaigns.js';
@@ -67,6 +70,7 @@ import { register as advertisingRoutes } from './routes/advertising.js';
 import { register as calendarRoutes } from './routes/calendar.js';
 import { register as hudumaRoutes } from './routes/huduma.js';
 import { register as engineRoutes } from './routes/engine.js';
+import { register as coopRoutes } from './routes/coop.js';
 import { register as groupBuyRoutes } from './routes/groupbuy.js';
 
 const app = express();
@@ -180,6 +184,9 @@ objectsRoutes(app);
 circlesRoutes(app);
 triageRoutes(app);
 economicRoutes(app);
+feesRoutes(app);
+shopRoutes(app);
+referralsRoutes(app);
 commerceRoutes(app);
 commandRoutes(app);
 campaignsRoutes(app);
@@ -205,6 +212,7 @@ advertisingRoutes(app);
 calendarRoutes(app);
 hudumaRoutes(app);
 engineRoutes(app);
+coopRoutes(app);
 groupBuyRoutes(app);
 
 // --- Production frontend serving -------------------------------------------

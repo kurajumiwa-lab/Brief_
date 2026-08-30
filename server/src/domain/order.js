@@ -27,6 +27,7 @@
 // ---------------------------------------------------------------------------
 
 import { store, newId } from '../store.js';
+import * as referrals from './referrals.js';
 import * as listings from './listing.js';
 import { personIdForUser } from './person.js';
 
@@ -279,7 +280,14 @@ export function transitionOrder(id, next, { note = '' } = {}) {
   if (next === 'fulfilled') patch.fulfilledAt = now;
   if (next === 'settled') patch.settledAt = now;
 
-  return { order: hydrate(store.update('orders', id, patch)), changed: true };
+  const updated = store.update('orders', id, patch);
+  // FULFILMENT IS THE EARNING MOMENT for referral and purchase points: the
+  // goods actually reached the buyer. Idempotent per order, capped by the
+  // rewards pool at conversion — never a mint.
+  if (next === 'fulfilled') {
+    try { referrals.recordOrder(id); } catch { /* rewards must never break an order */ }
+  }
+  return { order: hydrate(updated), changed: true };
 }
 
 /**

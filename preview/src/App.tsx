@@ -20,9 +20,13 @@ import { ResaleDesk } from './components/ResaleDesk';
 import { MyTickets } from './components/MyTickets';
 import { EventResale } from './components/EventResale';
 import { EventsHub } from './components/EventsHub';
+import { MshikanoDesk } from './components/MshikanoDesk';
 import { VerificationPanel } from './components/VerificationPanel';
 import { EplDesk } from './components/EplDesk';
 import { Vault } from './components/vault/Vault';
+import ServiceFees from './components/ServiceFees';
+import { WhatsAppShopBuilder } from './components/WhatsAppShopBuilder';
+import RewardsDesk from './components/RewardsDesk';
 import { CheckIn } from './components/CheckIn';
 import { HostCommand } from './components/HostCommand';
 import { TickerBanner, PromptBanner, JumbotronBanner } from './components/SignalBanner';
@@ -37,6 +41,7 @@ import { TriageQueue } from './components/TriageQueue';
 import { Quests } from './components/Quests';
 import type { GeoPoint } from './components/LocationChip';
 import { ArenaShelf } from './components/ArenaShelf';
+import { ArenaPulse, SeasonStrip } from './components/ArenaPulse';
 import { MainShelf } from './components/MainShelf';
 import { Onboarding } from './components/Onboarding';
 import { NextStep } from './components/NextStep';
@@ -200,14 +205,14 @@ const DESTINATION_ICONS: Record<Destination, LucideIcon> = {
   workflows: Briefcase
 };
 
-export type NearbySection = 'stream' | 'tea' | 'today' | 'pursuits' | 'quests' | 'market' | 'events';
+export type NearbySection = 'stream' | 'tea' | 'today' | 'pursuits' | 'quests' | 'market' | 'events' | 'mshikano';
 export type MyLayerSection =
   | 'saved' | 'activity' | 'arena' | 'points' | 'circles' | 'groups' | 'campaigns'
   | 'mediakit' | 'opportunities' | 'messages' | 'subscriptions' | 'tickets'
   | 'verification';
 // Workflows secondary: a Journey is either in progress or finished. Inbox and
 // Sources are kept -- they are existing workflow surfaces, not new screens.
-export type WorkflowSection = 'cockpit' | 'command' | 'active' | 'completed' | 'inbox' | 'sources' | 'money' | 'vault' | 'gate' | 'tea' | 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'ai' | 'engine' | 'groupbuy' | 'resale';
+export type WorkflowSection = 'cockpit' | 'command' | 'active' | 'completed' | 'inbox' | 'sources' | 'money' | 'vault' | 'gate' | 'tea' | 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'shop' | 'ai' | 'engine' | 'groupbuy' | 'resale' | 'fees';
 // Pulse secondary. Pulse is the information layer: freshness, local signals,
 // what groups are surfacing, and emerging activity. It is not an assistant.
 export type PulseSection = 'now' | 'local' | 'groups' | 'signals';
@@ -5074,6 +5079,14 @@ export function App() {
     bootRoute.workflow !== 'active' ? 'screen' : 'queue'
   );
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // The offline queue drains itself the moment the browser says the signal is
+  // back. Server-side idempotency keys make a double-flush harmless.
+  React.useEffect(() => {
+    const flush = () => { void briefApi.flushOfflineQueue(); };
+    window.addEventListener('online', flush);
+    return () => window.removeEventListener('online', flush);
+  }, []);
   const [adminOpen, setAdminOpen] = useState(false);
   const [sessionUser, setSessionUser] = useState<briefApi.AuthedUser | null>(null);
 
@@ -7216,7 +7229,12 @@ export function App() {
       return;
     }
     await refreshArenaMatches();
-    showToast(res.data?.disputed ? 'Players disagreed. Brief does not pick a winner.' : 'Result confirmed.');
+    if (res.data?.disputed) {
+      showToast('Players disagreed. Brief does not pick a winner.');
+      return;
+    }
+    const rw = res.data?.yourRewards;
+    showToast(rw ? `Match confirmed · +${rw.xp} XP${rw.coins ? ` · +${rw.coins} Arena Coins` : ''}` : 'Result confirmed.');
   };
 
   // Abandon: the honest exit for a match that never happened. The server
@@ -8847,6 +8865,8 @@ export function App() {
               </div>
             )}
 
+            <ArenaPulse />
+
             <ArenaShelf
               games={ARENA_GAMES}
               activity={arenaActivity}
@@ -9219,6 +9239,7 @@ export function App() {
 
             {arenaSection === 'leaderboard' && (
               <div className="space-y-2">
+                <SeasonStrip />
                 {arenaLeaderboard.length === 0 && (
                   <p className="text-xs text-[#251045]/60">No confirmed results yet for {arenaGame.name}.</p>
                 )}
@@ -9367,33 +9388,12 @@ export function App() {
         )}
 
         {activeTab === 'mylayer' && myLayerSection === 'points' && (
-          <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
-            <div>
-              <h2 className="text-lg font-extrabold text-[#251045]">My Points</h2>
-              <p className="text-[11px] text-[#251045]/60 leading-snug mt-1">
-                Points are not cash and have no monetary value.
-              </p>
-            </div>
-            <div className="bg-[#FBFAFD] border border-[#D6CFE4] rounded-2xl p-4 space-y-2">
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="text-[10px] text-[#251045]/40">
-                  Brief Points
-                </span>
-                <span className="text-lg font-extrabold text-[#251045]">
-                  {myContribution.settledPoints.toLocaleString()}
-                </span>
-              </div>
-              <p className="text-[10px] text-[#251045]/60">
-                Progress <span className="text-[#251045]/60">{myRank}</span> -{' '}
-                {myContribution.accepted} accepted contributions
-              </p>
-              {pendingCount > 0 && (
-                <p className="text-[10px] text-[#251045]">
-                  {pendingCount} submitted, awaiting review. Worth nothing yet.
-                </p>
-              )}
-            </div>
-          </div>
+          <RewardsDesk
+            settledPoints={myContribution.settledPoints}
+            rank={myRank}
+            accepted={myContribution.accepted}
+            pending={pendingCount}
+          />
         )}
 
         {activeTab === 'mylayer' && myLayerSection === 'circles' && (
@@ -9412,6 +9412,10 @@ export function App() {
           <div className="max-w-3xl mx-auto px-4 py-6">
             <Marketplace />
           </div>
+        )}
+
+        {activeTab === 'nearby' && nearbySection === 'mshikano' && (
+          <MshikanoDesk />
         )}
 
         {activeTab === 'mylayer' && myLayerSection === 'groups' && (
@@ -9809,6 +9813,16 @@ export function App() {
 
         {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'vault' && (
           <Vault />
+        )}
+
+        {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'fees' && (
+          <div className="max-w-3xl mx-auto px-4 py-6">
+            <ServiceFees />
+          </div>
+        )}
+
+        {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'shop' && (
+          <WhatsAppShopBuilder onOpenFees={() => setWorkflowSection('fees')} />
         )}
 
         {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'tea' && (

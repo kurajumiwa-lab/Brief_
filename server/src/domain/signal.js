@@ -89,6 +89,7 @@ export const SIGNAL_TYPES = [
   'listing_paused',
   'listing_archived',
   'order_placed',
+  'coop_confirmed',
   'order_stage_changed',
   // Money genuinely confirmed by a payment provider. Emitted only from the
   // webhook path after a real ledger transaction exists.

@@ -10,6 +10,7 @@ import * as analytics from '../domain/analytics.js';
 import * as trust from '../domain/trust.js';
 import * as seed from '../domain/seed.js';
 import { requireAuth, requireCap, recordAudit } from './helpers.js';
+import * as members from '../domain/members.js';
 
 export function register(app) {
 /**
@@ -158,6 +159,30 @@ app.get('/api/ops/audit', (req, res) => {
  * before/after. Roles are never read from this request for authorisation --
  * only written to the target user's own row.
  */
+// --- MEMBERS: the admin's directory for onboarding real people -------------
+
+app.get('/api/ops/members', (req, res) => {
+  const me = requireCap(req, res, 'admin');
+  if (!me) return;
+  res.json(members.listMembers({ query: req.query?.q ?? '', page: Number(req.query?.page ?? 0) || 0 }));
+});
+
+app.get('/api/ops/onboarding', (req, res) => {
+  const me = requireCap(req, res, 'admin');
+  if (!me) return;
+  res.json(members.onboardingView());
+});
+
+app.post('/api/ops/members/:id/status', (req, res) => {
+  const me = requireCap(req, res, 'admin');
+  if (!me) return;
+  try {
+    res.json(members.setMemberStatus(me, req.params.id, { status: req.body?.status, reason: req.body?.reason ?? '' }));
+  } catch (e) {
+    res.status(e.status ?? 400).json({ error: String(e.message ?? e) });
+  }
+});
+
 app.post('/api/ops/roles', (req, res) => {
   const me = requireCap(req, res, 'admin');
   if (!me) return;

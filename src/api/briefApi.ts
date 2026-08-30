@@ -91,6 +91,7 @@ import type {
   CheckInResult,
   CommandCentre
 } from './types';
+import { enqueue, replayQueue, queueDepth, type QueuedWrite } from './offlineQueue';
 import { asTarget } from './types';
 import {
   areBlocks, areCampaigns, areCircles, areMembers, areRegistrations,
@@ -250,13 +251,74 @@ async function send<T>(
     }
     return { ok: true, data };
   } catch (e) {
-    // Network failure, offline server, aborted request.
+    // Network failure, offline server, aborted request. A WRITE is not lost:
+    // it is parked with a clientKey and replays after reconnect — the
+    // server-side idempotency makes the replay safe. A read is just offline.
+    const method = (init.method ?? 'GET').toUpperCase();
+    if (method !== 'GET' && method !== 'HEAD') {
+      const body = typeof init.body === 'string' ? init.body : null;
+      const token = getSessionToken();
+      enqueue({
+        path,
+        method,
+        body,
+        // The key travels in the body itself; a re-tap replaces, not doubles.
+        clientKey: (body ? clientKeyOf(body) : null) ?? `auto_${method}_${path}_${Date.now().toString(36)}`,
+        headers: token ? { authorization: `Bearer ${token}` } : undefined
+      });
+      return {
+        ok: false,
+        status: null,
+        queued: true,
+        error: 'You are offline — this change is queued and will send itself when you reconnect.'
+      };
+    }
     return {
       ok: false,
       status: null,
       error: e instanceof Error ? e.message : 'network error'
     };
   }
+}
+
+/** Pull a clientKey out of a JSON body, if the caller sent one. */
+function clientKeyOf(body: string): string | null {
+  try {
+    const parsed = JSON.parse(body);
+    return typeof parsed?.clientKey === 'string' ? parsed.clientKey : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Replay the offline queue through the same fetch contract. Called on the
+ * browser's 'online' event. Idempotent server keys make double-sends harmless.
+ */
+export async function flushOfflineQueue(): Promise<number> {
+  return replayQueue(async (w: QueuedWrite) => {
+    const headers: Record<string, string> = {};
+    if (w.body) headers['content-type'] = 'application/json';
+    const token = getSessionToken();
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`${INGEST_API}${w.path}`, {
+      method: w.method,
+      headers,
+      body: w.body ?? undefined
+    });
+    if (res.ok) return { ok: true };
+    const text = await res.text().catch(() => '');
+    let errMsg = `replay failed with status ${res.status}`;
+    try {
+      errMsg = JSON.parse(text)?.error ?? errMsg;
+    } catch {}
+    return { ok: false, error: errMsg };
+  });
+}
+
+/** How many writes are parked, for a badge if a surface wants one. */
+export function offlineQueueDepth(): number {
+  return queueDepth();
 }
 
 // ---------------------------------------------------------------------------
@@ -3261,4 +3323,392 @@ export function stageOrder(
     { method: 'POST', body: JSON.stringify({ stage, note }) },
     (r) => (isOrder(r?.order) ? { order: r.order, changed: Boolean(r.changed) } : undefined)
   );
+}
+// ---------------------------------------------------------------------------
+// MSHIKANO — the peer-to-peer cooperation network. Four intents, complementary
+// matching, two-party-confirmed cooperations, evidence-based trust.
+// ---------------------------------------------------------------------------
+
+export type CoopIntent = 'have' | 'need' | 'can_help' | 'looking_for';
+
+export interface CoopTrust {
+  userId: string;
+  level: 'new' | 'cooperating' | 'proven' | 'established';
+  levelWords: string;
+  evidence: {
+    confirmedCooperations: number;
+    repeatPartners: number;
+    recommendations: number;
+    identityVerified: boolean;
+    disputes: number;
+  };
+  recommendationNotes: { by: { displayName: string }; note: string; at: string }[];
+}
+
+export interface CoopPost {
+  id: string;
+  intent: CoopIntent;
+  intentLabel: string;
+  title: string;
+  body: string | null;
+  category: string | null;
+  town: string | null;
+  county: string | null;
+  createdAt: string;
+  status: string;
+  mine: boolean;
+  author: { id: string; handle: string | null; displayName: string };
+  trust: CoopTrust | null;
+}
+
+export interface CoopMatch {
+  post: CoopPost;
+  sharedCount: number;
+  reasons: string[];
+  score: number;
+}
+
+export interface CoopCooperation {
+  id: string;
+  postId: string | null;
+  fromUserId: string;
+  toUserId: string;
+  summary: string | null;
+  status: 'pending' | 'confirmed' | 'declined' | 'disputed';
+  recommendations: { byUserId: string; forUserId: string; note: string; at: string }[];
+  createdAt: string;
+  confirmedAt: string | null;
+  disputedAt?: string | null;
+  dispute?: { byUserId: string; note: string; at: string } | null;
+  direction?: 'outgoing' | 'incoming';
+  partner?: { id: string; displayName: string };
+}
+
+export function createCoopPost(body: {
+  intent: CoopIntent; title: string; body?: string | null;
+  category?: string | null; town?: string | null; county?: string | null;
+}): Promise<ApiResult<{ post: CoopPost }>> {
+  return request('/api/mshikano/posts', { method: 'POST', body: JSON.stringify(body) }, (r) => (r?.post ? { post: r.post as CoopPost } : undefined));
+}
+
+export function listCoopPosts(opts: { intent?: string; q?: string; county?: string; mine?: boolean } = {}): Promise<ApiResult<{ posts: CoopPost[] }>> {
+  const qs = new URLSearchParams();
+  if (opts.intent) qs.set('intent', opts.intent);
+  if (opts.q) qs.set('q', opts.q);
+  if (opts.county) qs.set('county', opts.county);
+  if (opts.mine) qs.set('mine', '1');
+  const suffix = qs.toString() ? `?${qs.toString()}` : '';
+  return request(`/api/mshikano/posts${suffix}`, undefined, (r) => (Array.isArray(r?.posts) ? { posts: r.posts as CoopPost[] } : undefined));
+}
+
+export function coopMatches(postId: string): Promise<ApiResult<{ matches: CoopMatch[] }>> {
+  return request(`/api/mshikano/posts/${encodeURIComponent(postId)}/matches`, undefined, (r) => (Array.isArray(r?.matches) ? { matches: r.matches as CoopMatch[] } : undefined));
+}
+
+export function proposeCooperation(body: { postId?: string | null; partnerUserId: string; summary?: string | null }): Promise<ApiResult<{ cooperation: CoopCooperation }>> {
+  return request('/api/mshikano/cooperations', { method: 'POST', body: JSON.stringify(body) }, (r) => (r?.cooperation ? { cooperation: r.cooperation as CoopCooperation } : undefined));
+}
+
+export interface CoopCooperations {
+  pending: CoopCooperation[];
+  confirmed: CoopCooperation[];
+  declined: CoopCooperation[];
+  disputed: CoopCooperation[];
+}
+
+export function listCooperations(): Promise<ApiResult<CoopCooperations>> {
+  return request('/api/mshikano/cooperations', undefined, (r): CoopCooperations | undefined =>
+    Array.isArray(r?.pending) && Array.isArray(r?.confirmed) && Array.isArray(r?.declined) && Array.isArray(r?.disputed)
+      ? { pending: r.pending, confirmed: r.confirmed, declined: r.declined, disputed: r.disputed }
+      : undefined);
+}
+
+export function respondCooperation(id: string, accept: boolean): Promise<ApiResult<{ cooperation: CoopCooperation }>> {
+  return request(`/api/mshikano/cooperations/${encodeURIComponent(id)}/respond`, { method: 'POST', body: JSON.stringify({ accept }) }, (r) => (r?.cooperation ? { cooperation: r.cooperation as CoopCooperation } : undefined));
+}
+
+export function recommendCooperation(id: string, note: string): Promise<ApiResult<{ cooperation: CoopCooperation }>> {
+  return request(`/api/mshikano/cooperations/${encodeURIComponent(id)}/recommend`, { method: 'POST', body: JSON.stringify({ note }) }, (r) => (r?.cooperation ? { cooperation: r.cooperation as CoopCooperation } : undefined));
+}
+
+export function disputeCooperation(id: string, reason: string): Promise<ApiResult<{ cooperation: CoopCooperation }>> {
+  return request(`/api/mshikano/cooperations/${encodeURIComponent(id)}/dispute`, { method: 'POST', body: JSON.stringify({ reason }) }, (r) => (r?.cooperation ? { cooperation: r.cooperation as CoopCooperation } : undefined));
+}
+
+export interface CoopGraph {
+  totals: { confirmed: number; helped: number; received: number; repeatPartners: number };
+  helped: { with: { displayName: string }; at: string; summary: string | null }[];
+  received: { with: { displayName: string }; at: string; summary: string | null }[];
+}
+
+export function coopGraph(): Promise<ApiResult<CoopGraph>> {
+  return request('/api/mshikano/graph', undefined, (r): CoopGraph | undefined =>
+    r?.totals && Array.isArray(r?.helped) && Array.isArray(r?.received)
+      ? { totals: r.totals, helped: r.helped, received: r.received }
+      : undefined);
+}
+
+export function coopTrust(userId: string): Promise<ApiResult<CoopTrust>> {
+  return request(`/api/mshikano/trust/${encodeURIComponent(userId)}`, undefined, (r) => (r?.evidence ? r as CoopTrust : undefined));
+}
+
+export interface WhoCanHelpAnswer {
+  query: string;
+  counts: { people: number; businesses: number; groups: number; guides: number };
+  people: CoopPost[];
+  businesses: CoopPost[];
+  groups: { id: string; name: string; description: string | null; visibility: string | null; members: number }[];
+  guides: { slug: string; title: string }[];
+}
+
+export function whoCanHelp(q: string): Promise<ApiResult<WhoCanHelpAnswer>> {
+  return request(`/api/mshikano/who-can-help?q=${encodeURIComponent(q)}`, undefined, (r): WhoCanHelpAnswer | undefined =>
+    r?.counts && Array.isArray(r?.people) && Array.isArray(r?.guides) && Array.isArray(r?.groups)
+      ? {
+          query: r.query ?? q,
+          counts: r.counts,
+          people: r.people,
+          businesses: r.businesses ?? [],
+          groups: r.groups,
+          guides: r.guides
+        }
+      : undefined);
+}
+
+// ---------------------------------------------------------------------------
+// Service fees — paying Brief through Pochi la Biashara (manual M-Pesa code
+// flow; Pochi has no developer API). Amounts come from the server catalog.
+// ---------------------------------------------------------------------------
+
+export interface ServiceCatalogItem { key: string; label: string; amountKes: number }
+export interface ServiceFee {
+  id: string; userId: string; service: string; label: string; amountKes: number;
+  mpesaCode: string; status: 'pending' | 'confirmed' | 'refused';
+  refusedReason: string | null; confirmedAt: string | null; createdAt: string; ledgerId: string;
+}
+export interface MyServiceFees { pochi: string | null; services: ServiceCatalogItem[]; fees: ServiceFee[] }
+
+const isServiceFee = (f: any): f is ServiceFee =>
+  typeof f?.id === 'string' && typeof f?.amountKes === 'number' &&
+  typeof f?.mpesaCode === 'string' && (['pending', 'confirmed', 'refused'] as const).includes(f?.status);
+
+export function myServiceFees(): Promise<ApiResult<MyServiceFees>> {
+  return request('/api/fees/mine', undefined, (r): MyServiceFees | undefined =>
+    Array.isArray(r?.services) && Array.isArray(r?.fees) && r.fees.every(isServiceFee)
+      ? { pochi: r.pochi ?? null, services: r.services, fees: r.fees }
+      : undefined);
+}
+
+export function payServiceFee(service: string, mpesaCode: string): Promise<ApiResult<{ fee: ServiceFee }>> {
+  return request('/api/fees/pay', { method: 'POST', body: JSON.stringify({ service, mpesaCode }) }, (r) =>
+    isServiceFee(r?.fee) ? { fee: r.fee } : undefined);
+}
+
+// ---------------------------------------------------------------------------
+// Referrals — rewards with a mathematical edge, not a pyramid: depth is ONE
+// level, there is no entry fee, and points become cash only from a pool
+// backed by real confirmed revenue.
+// ---------------------------------------------------------------------------
+
+export interface ReferralPool { backingKes: number; paidOrPromisedKes: number; availableKes: number }
+export interface ReferralBalance { earned: number; locked: number; available: number }
+export interface ReferralEvent { id: string; kind: string; points: number; valueKes: number; at: string }
+export interface ReferralConversion { id: string; points: number; kes: number; status: 'pending' | 'confirmed' | 'refused'; refusedReason: string | null; createdAt: string }
+export interface MyReferrals {
+  code: string; maxDepth: number; link: string;
+  balance: ReferralBalance; pool: ReferralPool;
+  conversion: { ptsToKes: number; minPoints: number };
+  events: ReferralEvent[]; conversions: ReferralConversion[];
+}
+export interface ShareMessage { code: string; slug: string | null; url: string; message: string; waMe: string }
+
+export function myReferrals(): Promise<ApiResult<MyReferrals>> {
+  return request('/api/referrals/mine', undefined, (r): MyReferrals | undefined =>
+    typeof r?.code === 'string' && r?.balance?.available >= 0 && Array.isArray(r?.events) && Array.isArray(r?.conversions)
+      ? r as MyReferrals
+      : undefined);
+}
+
+export function referralShare(slug?: string): Promise<ApiResult<ShareMessage>> {
+  const q = slug ? `?slug=${encodeURIComponent(slug)}` : '';
+  return request(`/api/referrals/share${q}`, undefined, (r): ShareMessage | undefined =>
+    typeof r?.code === 'string' && typeof r?.message === 'string' && typeof r?.waMe === 'string'
+      ? { code: r.code, slug: r.slug ?? null, url: r.url, message: r.message, waMe: r.waMe }
+      : undefined);
+}
+
+export function convertReferralPoints(points: number): Promise<ApiResult<{ conversion: ReferralConversion }>> {
+  return request('/api/referrals/convert', { method: 'POST', body: JSON.stringify({ points }) }, (r) =>
+    typeof r?.conversion?.id === 'string' && typeof r?.conversion?.kes === 'number'
+      ? { conversion: r.conversion as ReferralConversion }
+      : undefined);
+}
+
+// ---------------------------------------------------------------------------
+// ARENA PROGRESSION — the retention layer. XP and Arena Coins are POINTS:
+// they buy nothing and cash out nowhere. Totals are derived server-side from
+// confirmed matches and claimed missions; ratings/streaks are replays.
+// ---------------------------------------------------------------------------
+
+export interface ArenaProfile {
+  userId: string; level: number; xpIntoLevel: number; xpPerLevel: number;
+  seasonXp: number; seasonCoins: number; totalXp: number; totalCoins: number; matchesToday: number;
+}
+export interface ArenaMission {
+  key: string; label: string; target: number; hint: string;
+  reward: { xp: number; coins: number }; progress: number; complete: boolean; claimed: boolean; claimable: boolean;
+}
+export interface ArenaRival { userId: string; displayName: string; played: number; iWon: number; theyWon: number }
+export interface ArenaPlayerStats { playerId: string; rating: number; streak: number; played: number; won: number; winRate: number | null }
+export interface ArenaSeason { id: string; label: string; startedAt: string; endsAt: string; daysRemaining: number }
+export interface MyArenaProgress {
+  profile: ArenaProfile; missions: ArenaMission[]; rivals: ArenaRival[];
+  seasonRank: { rank: number; xp: number; coins: number } | null;
+  players: (ArenaPlayerStats & { gamerTag: string })[];
+}
+export interface ArenaLive {
+  playersActiveLastHour: number; matchesAwaitingConfirmation: number; openChallenges: number; season: ArenaSeason;
+}
+
+export function myArenaProgress(): Promise<ApiResult<MyArenaProgress>> {
+  return request('/api/arena/progress/me', undefined, (r): MyArenaProgress | undefined =>
+    r?.profile?.xpPerLevel > 0 && Array.isArray(r?.missions) && Array.isArray(r?.players)
+      ? r as MyArenaProgress
+      : undefined);
+}
+
+export function arenaLive(): Promise<ApiResult<ArenaLive>> {
+  return request('/api/arena/live', undefined, (r): ArenaLive | undefined =>
+    r?.season?.daysRemaining >= 0 && typeof r?.playersActiveLastHour === 'number'
+      ? r as ArenaLive
+      : undefined);
+}
+
+export function claimArenaMission(key: string): Promise<ApiResult<{ claimed: { xp: number; coins: number }; missions: ArenaMission[]; profile: ArenaProfile }>> {
+  return request(`/api/arena/missions/${encodeURIComponent(key)}/claim`, { method: 'POST', body: '{}' }, (r) =>
+    r?.claimed && Array.isArray(r?.missions) ? r as { claimed: { xp: number; coins: number }; missions: ArenaMission[]; profile: ArenaProfile } : undefined);
+}
+
+export function arenaSeasonLeaderboard(): Promise<ApiResult<{ season: ArenaSeason; rows: { rank: number; userId: string; displayName: string; xp: number; coins: number }[]; you: { rank: number; xp: number; coins: number } | null }>> {
+  return request('/api/arena/season/leaderboard', undefined, (r) =>
+    Array.isArray(r?.rows) ? r as { season: ArenaSeason; rows: { rank: number; userId: string; displayName: string; xp: number; coins: number }[]; you: { rank: number; xp: number; coins: number } | null } : undefined);
+}
+
+// ---------------------------------------------------------------------------
+// WHATSAPP SHOP — build on Brief, sell in WhatsApp. The shop row is the
+// builder state; the storefront is the WhatsApp conversation itself. The
+// share (formatted text + wa.me link) is DERIVED server-side, and publishing
+// is gated on a confirmed store-service payment (Pochi la Biashara).
+// ---------------------------------------------------------------------------
+
+export interface ShopItem { id: string; name: string; priceKes: number; note: string | null }
+export interface Shop {
+  id: string | null; ownerId: string; name: string; tagline: string; orderNumber: string;
+  items: ShopItem[]; status: 'draft' | 'published'; publishedAt: string | null;
+}
+export interface ShopStoreService { priceKes: number; active: boolean; activeUntil: string | null }
+export interface ShopView {
+  shop: Shop;
+  store: ShopStoreService;
+  share: { text: string; waMe: string; shareable: boolean } | null;
+}
+
+export function getMyShop(): Promise<ApiResult<ShopView>> {
+  return request('/api/shop/mine', undefined, (r): ShopView | undefined =>
+    r?.shop && typeof r?.store?.active === 'boolean' ? r as ShopView : undefined);
+}
+
+export function saveMyShop(body: { name: string; tagline: string; orderNumber: string; items: { name: string; priceKes: number; note?: string }[] }): Promise<ApiResult<ShopView>> {
+  return request('/api/shop/mine', { method: 'PUT', body: JSON.stringify(body) }, (r): ShopView | undefined =>
+    r?.shop?.id ? r as ShopView : undefined);
+}
+
+export function publishMyShop(): Promise<ApiResult<ShopView & { changed: boolean }>> {
+  return request('/api/shop/mine/publish', { method: 'POST', body: '{}' }, (r): (ShopView & { changed: boolean }) | undefined =>
+    r?.shop ? r as ShopView & { changed: boolean } : undefined);
+}
+
+export function unpublishMyShop(): Promise<ApiResult<ShopView & { changed: boolean }>> {
+  return request('/api/shop/mine/unpublish', { method: 'POST', body: '{}' }, (r): (ShopView & { changed: boolean }) | undefined =>
+    r?.shop ? r as ShopView & { changed: boolean } : undefined);
+}
+
+// ---------------------------------------------------------------------------
+// THE DUKA BOOK + POOLED RESTOCKS + ESCROW RECORDS
+//
+// The book holds what the shopkeeper LOGS (Brief never claims to see inside
+// WhatsApp); every total is derived server-side. Sales carry a clientKey so
+// the offline queue can replay them safely. Escrow rows are RECORDS of funds
+// held between two sides — Brief moves no money itself.
+// ---------------------------------------------------------------------------
+
+export interface ShopSale { id: string; name: string; qty: number; unitKes: number; amountKes: number; channel: string; day: string; createdAt: string; clientKey: string | null }
+export interface ShopBook {
+  shop: { id: string | null; name: string; status: string };
+  today: { sales: number; items: number; kes: number };
+  yesterday: { sales: number; items: number; kes: number };
+  week: { sales: number; items: number; kes: number };
+  topItems: { name: string; qty: number }[];
+  items: { name: string; priceKes: number; stockQty: number | null; soldWeek: number; remaining: number | null }[];
+  lowStock: { name: string; remaining: number }[];
+  recent: ShopSale[];
+  note: string;
+}
+export interface EscrowRow { id: string; kind: 'group_buy' | 'ticket'; refId: string; title: string; role: string; state: 'pending' | 'locked' | 'released' | 'refunded'; amountKes: number; updatedAt: string }
+export interface MyEscrows { rows: EscrowRow[]; totals: { heldKes: number; releasedKes: number; heldCount: number }; note: string }
+
+export function getMyBook(): Promise<ApiResult<ShopBook>> {
+  return request('/api/shop/mine/book', undefined, (r): ShopBook | undefined =>
+    r?.today && Array.isArray(r?.topItems) ? r as ShopBook : undefined);
+}
+
+export function logShopSale(body: { name: string; qty: number; unitKes: number; channel?: string; clientKey?: string }): Promise<ApiResult<{ sale: ShopSale; replayed: boolean }>> {
+  return request('/api/shop/mine/sales', { method: 'POST', body: JSON.stringify(body) }, (r): { sale: ShopSale; replayed: boolean } | undefined =>
+    r?.sale ? r as { sale: ShopSale; replayed: boolean } : undefined);
+}
+
+export function poolRestock(body: { itemName: string; unitCostKes: number; goalUnits: number; myUnits: number }): Promise<ApiResult<{ pool: { id: string; title: string; targetAmount: number; total: number; stage: string }; share: { text: string; waMe: string } }>> {
+  return request('/api/shop/mine/pool', { method: 'POST', body: JSON.stringify(body) }, (r): { pool: { id: string; title: string; targetAmount: number; total: number; stage: string }; share: { text: string; waMe: string } } | undefined =>
+    r?.pool ? r as { pool: { id: string; title: string; targetAmount: number; total: number; stage: string }; share: { text: string; waMe: string } } : undefined);
+}
+
+export function getMyEscrows(): Promise<ApiResult<MyEscrows>> {
+  return request('/api/escrows/mine', undefined, (r): MyEscrows | undefined =>
+    Array.isArray(r?.rows) && r?.totals ? r as MyEscrows : undefined);
+}
+
+// ---------------------------------------------------------------------------
+// MEMBERS (admin) — the directory for onboarding real people. Derived rows;
+// suspension is immediate and audited server-side.
+// ---------------------------------------------------------------------------
+
+export interface MemberOnboarding { rung: string | null; latestEvent: string | null; latestAt: string | null; finished: boolean }
+export interface MemberRow {
+  id: string; handle: string; displayName: string; createdAt: string | null;
+  status: 'active' | 'suspended' | string; platformRoles: string[];
+  verification: 'approved' | 'pending' | 'none' | string;
+  onboarding: MemberOnboarding; shop: { name: string } | null;
+}
+export interface MembersPage { rows: MemberRow[]; total: number; page: number; pageSize: number }
+export interface OnboardingFunnel {
+  funnel: Record<string, number>;
+  members: MemberRow[];
+  totals: { members: number; withAnyEvent: number; finishedOnboarding: number };
+  rungs: { id: string; label: string }[];
+  note: string;
+}
+
+export function listMembers(query = '', page = 0): Promise<ApiResult<MembersPage>> {
+  return request(`/api/ops/members?q=${encodeURIComponent(query)}&page=${page}`, undefined, (r): MembersPage | undefined =>
+    Array.isArray(r?.rows) && typeof r?.total === 'number' ? r as MembersPage : undefined);
+}
+
+export function onboardingFunnel(): Promise<ApiResult<OnboardingFunnel>> {
+  return request('/api/ops/onboarding', undefined, (r): OnboardingFunnel | undefined =>
+    r?.totals && r?.rungs ? r as OnboardingFunnel : undefined);
+}
+
+export function setMemberStatus(id: string, status: 'active' | 'suspended', reason = ''): Promise<ApiResult<{ user: MemberRow; changed: boolean; sessionsRevoked: number }>> {
+  return request(`/api/ops/members/${encodeURIComponent(id)}/status`, { method: 'POST', body: JSON.stringify({ status, reason }) }, (r): { user: MemberRow; changed: boolean; sessionsRevoked: number } | undefined =>
+    r?.user ? r as { user: MemberRow; changed: boolean; sessionsRevoked: number } : undefined);
 }

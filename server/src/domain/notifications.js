@@ -15,7 +15,7 @@
 
 import { store, newId } from '../store.js';
 
-export const NOTIFICATION_KINDS = ['confirmed', 'challenge', 'saved_changed', 'event_soon', 'system', 'workflow'];
+export const NOTIFICATION_KINDS = ['confirmed', 'challenge', 'saved_changed', 'event_soon', 'system', 'workflow', 'coop'];
 
 export function notify(userId, { kind = 'system', title, body = null, objectId = null, challengeId = null, metadata = {} }) {
   if (!userId) return null;

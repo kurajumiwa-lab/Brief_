@@ -3,7 +3,10 @@
 An information layer for what is happening around you. Brief structures what
 communities already post — on Telegram, on the web, in feeds — into objects you
 can find, verify and act on. It is deliberately **not** a marketplace: commerce
-happens inside context, reached through discovery.
+happens inside context, reached through discovery. And through **Mshikano**,
+members cooperate directly — stating what they have, need, can help with or
+are looking for — building a record of confirmed cooperation rather than a
+wall of ratings.
 
 ---
 
@@ -14,11 +17,12 @@ App.tsx              Client application shell (React + TS)
 src/api/             Typed API client -- the ONLY place fetch() is called
 src/components/      Extracted client surfaces (Circles, Marketplace, Pulse, ...)
 server/              Backend: connectors, pipeline, domain modules, HTTP API
-  src/domain/        16 domain modules (auth, payment, settlement, ledger,
-                     arena, fantasy, auction, order, listing, campaign, ...)
+  src/domain/        17 domain modules (auth, payment, settlement, ledger,
+                     arena, fantasy, auction, order, listing, campaign,
+                     coop, ...)
   src/ops.js         Structured logging, readiness, diagnostics, backup
-  test/run.js        Server suite (1217 assertions)
-preview/             Vite dev server + the jsdom client suites (23 suites)
+  test/run.js        Server suite (1907 assertions)
+preview/             Vite dev server + the jsdom client suites (38 suites)
 tc/                  Strict TypeScript typecheck harness
 live/                Smoke tests against the PRODUCTION build over HTTP
 uploads/             Screenshots of the deployed app
@@ -102,18 +106,36 @@ node live/2-commerce-over-http.mjs    # buyer journey, two real actors
 node live/3-public-campaign.mjs       # public distribution
 node live/4-full-chain.mjs            # identity -> ... -> payout, Arena,
                                       # Fantasy, Auction, ops
+node live/5-release-smoke.mjs         # release handshake & feed shape
+node live/6-completion-walk.mjs       # walk every loop end to end
+node live/7-android-bug-replay.mjs    # replay the reported bugs
+node live/8-mshikano.mjs              # cooperation network: intents, matches,
+                                      # two-sided confirmation, trust evidence
+node live/9-pochi-fees.mjs            # service fees via Pochi la Biashara:
+                                      # M-PESA code, pending -> finance confirms
+node live/10-referrals.mjs            # referrals: one level, no entry fee,
+                                      # cash only from the revenue-backed pool
+node live/11-arena-progression.mjs    # Arena retention layer: XP/Coins/missions/
+                                      # season/rivals/rating replay, over HTTP
+node live/12-whatsapp-shop.mjs        # WhatsApp shop: formatting, wa.me link,
+                                      # publish gated on a confirmed Pochi fee
+node live/13-duka-book.mjs            # the SME layer: logged sales + derived
+                                      # book, idempotent offline replays, pooled
+                                      # restocks, escrow records — over HTTP
+node live/14-members-desk.mjs         # the members desk: directory, rungs,
+                                      # funnel, immediate audited suspension
 ```
 
-**Current state: 3420 assertions, 0 failing** — measured 2026-08-28 against a
+**Current state: 3953 assertions, 0 failing** — measured 2026-08-30 against a
 production build over HTTP, not inherited from an earlier report.
 
 | Suite | Result |
 |---|---|
-| `server/test/run.js` | 1832 passed / 0 failed / 3 skipped |
+| `server/test/run.js` | 2048 passed / 0 failed / 1 skipped |
 | `server/test/livecamp.mjs` | 111 passed / 0 failed |
-| `./run-suites.sh` (34 client suites) | 1274 passed / 0 failed |
+| `./run-suites.sh` (45 client suites) | 1420 passed / 0 failed |
 | `tc` strict typecheck | exit 0 |
-| `live/` against the production build | 43 + 27 + 91 + 16 + 26 = 203 / 0 |
+| `live/` against the production build | 43+27+82+18+35+26+34+16+17+14+17+13+11 = 353 / 0 |
 
 The server suite hits real third parties (BBC's RSS feed, GitHub's robots.txt,
 Telegram's API). Those tests **skip** rather than pass when the network is
@@ -168,6 +190,24 @@ free seat is the whole game, staked in units that have no cash value; the cash
 seat is listed, priced, and refused with the five requirements it is missing.
 See [`LIGI.md`](LIGI.md).
 
+**Mshikano: the unit is the relationship.** The cooperation network lives
+under Nearby (the five-destination rule holds — it is a secondary surface, the
+seventh door on the main shelf). Members post in one of four intents — have,
+need, can help, looking for — and matching joins only complements
+(HAVE↔NEED, CAN_HELP↔LOOKING_FOR), every match explaining itself with reasons
+in words. A cooperation exists only when **both sides confirm it**: the
+proposer cannot self-confirm, nobody outside the pair can respond, and only
+confirmed rows reach the graph. Trust is counted evidence — confirmed
+cooperations, repeat partners, recommendations, a verified identity — never a
+star rating, and the level says what it means in words. "Who can help?"
+answers with real people, active businesses, published guides and **real
+circles** that match the question (with their true member count) — and stays
+empty, saying so, when nothing matches. A member who says a cooperation did
+not go as written can **dispute** it: the credit is withdrawn from both
+records, the reason is kept, and the row stays listed. Nothing under
+`/api/mshikano/*` is reachable without an account. See
+[`MSHIKANO-INTEGRATION-REPORT.md`](MSHIKANO-INTEGRATION-REPORT.md).
+
 **No fabricated data.** The rule the ingestion pipeline exists to enforce is
 that a field which was not stated stays unstated. "Saturday popup" yields a
 day, never a calendar date. Messages with nothing concrete in them produce no
@@ -209,6 +249,28 @@ auction amounts from the winning bid row; a client posting `{price: 1}` against
 a 2500 listing gets an order for 2500. Settlement is refused unless a genuinely
 settled ledger transaction backs it.
 
+**Referrals are rewards, not a pyramid.** Members earn points for bringing
+people, products, services and real traffic: a code is derived from the
+handle, signups credit the direct referrer once, fulfilled orders credit the
+buyer and the referrer, event links (`?via=code`) count unique visits —
+deduped per visitor per day and capped daily — and event registrations earn
+once per attendee. Three structural rules keep it honest, and the tests pin
+them: **depth is hard-capped at one level** (a referral of a referral credits
+nobody above), **there is no entry fee anywhere**, and points convert to
+cash **only from a pool backed by a fixed fraction of confirmed service-fee
+revenue** — floor(10%) minus what is already paid or promised, refused with
+the reason when empty. Payouts are manual M-Pesa sends confirmed by finance,
+carried in the one economic layer. See `domain/referrals.js`.
+
+**Brief's own services are paid by Pochi la Biashara, manually.** Pochi has
+no developer API, so nothing pretends otherwise: the price lives in one
+server-side catalog (`domain/fees.js`), the member pays Brief's Pochi number
+in their M-PESA app and submits the confirmation code, and the fee stays
+**pending** — a service never activates on trust alone — until a
+finance-capable operator confirms the code. One M-PESA code is one payment,
+ever; a refused code stays locked with its reason on the row; and revenue is
+derived by scanning confirmed rows in the one economic layer.
+
 **Honest refusal over fake success.** No payment provider is connected, so
 paying returns **503 with `charged:false`** and a stated reason -- it never
 fabricates a payment. Real-money Arena and paid Fantasy return **403
@@ -242,3 +304,55 @@ Install command:   npm install
 Environment variables for the client need the `VITE_` prefix to be exposed to
 the browser. The ingestion server's secrets must **never** carry that prefix —
 they stay server-side.
+
+## Arena progression (retention layer)
+
+XP and Arena Coins are **points, not money** — they buy nothing, cash out nowhere, and never touch the ledger. Every number is **derived**: ratings/streaks are a single-pass chronological replay of confirmed matches; totals come from idempotent grant events (`arena:match:<mid>:<uid>`) and once-daily mission claims (`arena:mission:<day>:<key>:<uid>`).
+
+- `GET /api/arena/progress/me` — level (500 XP/level), season XP, coins, daily missions, rivals (≥2 confirmed matches), season rank, per-player stats.
+- `GET /api/arena/live` — real counts only: active in last hour, awaiting confirmation, open challenges, Season 01 clock.
+- `POST /api/arena/missions/:key/claim` — once per day; incomplete missions refuse with the reason.
+- `GET /api/arena/season/leaderboard` — ranked XP rows plus the caller's `you` row.
+- `confirm` responses include `yourRewards` for the confirming player's toast.
+- Client: `ArenaPulse` in the lobby (tagline "Play. Compete. Build your record.", honest quiet states) and `SeasonStrip` above the per-game leaderboard. No new navigation.
+
+
+## WhatsApp shop (build on Brief, sell in WhatsApp)
+
+The architecture is stated in the product, not hidden: **Brief builds the shop, WhatsApp IS the shop.** A member writes a name, a one-liner, an order number and a price list; Brief derives the exact WhatsApp message (real formatting — `*bold*`, `_italic_` — that survives a screenshot, a status post and a broadcast) plus a `wa.me` deep link that opens a chat with the catalog pre-filled. The conversation is where selling happens; Brief does not sit in the middle.
+
+- No WhatsApp payments, by design. Buyers and sellers arrange money the way they already do (Pochi la Biashara, till, send money).
+- Drafting is free. **Publishing is gated** on the `store_monthly` service (KES 250/month) — paid through the same manual Pochi flow as every Brief fee and activated only when a finance-capable operator confirms the M-Pesa code. A pending code opens nothing.
+- One shop per member; up to 40 items so a forwarded list stays readable; the share output is derived, never stored.
+- Photos belong in the free WhatsApp Business catalog (500 items, 10 images) — this builder makes the price list people actually forward. The panel says so.
+- Routes: `GET/PUT /api/shop/mine`, `POST /api/shop/mine/publish|unpublish`; the publish refusal is machine-readable (`requiresService`) and the client deep-links to the fee desk.
+- Client: `WhatsAppShopBuilder` under Workflows → Sell → WhatsApp Shop, and a door in the redesigned Menu.
+
+## Menu, redesigned as part of the same app
+
+The Menu was rebuilt to the Arena screen's visual system instead of a dark modal: lavender page, white cards, deep-purple actions, and gold reserved for membership status alone. It is a full navigation surface beneath the dock (the bottom nav stays visible), with exactly one close control. The account is one compact card (standing derived on demand), Explore is a four-door icon grid — no photography, since Menu navigates while the home screen explores — Quick Actions are compact rows in one card, and coming-later items are a single quiet line. `preview/menusheet.jsx` holds the rules (one `×`, no neon, no `img`).
+
+
+## The Duka layer: book, pools, escrow records, offline shell
+
+The SME-digitization build (see `MARKET-GAPS-ADVISORY.md`), all on existing seams:
+
+- **The Duka book** — the paper-ledger replacement. Brief never claims to see inside WhatsApp: the shopkeeper LOGS a sale in 3 fields (item, qty, price) and everything is derived — today/yesterday/7-day totals, top items, low stock (price-list stock minus the week). `GET /api/shop/mine/book`, `POST /api/shop/mine/sales`. Sales carry a `clientKey`; a replay of the same key returns the original row (`replayed: true`), never a second sale.
+- **Pooled restocks** — "pool this item" opens a real Group Buy (`POST /api/shop/mine/pool`): the shopkeeper declares the bulk unit cost and a goal, pledges their own units, and the engine's funding → escrow → dispatched → delivered stepper takes over. Other shops contribute; the share text is a forwardable WhatsApp call (`*RESTOCK POOL*`).
+- **Escrow-as-records** — `GET /api/escrows/mine` derives what is HELD and what is RELEASED for one member across every escrow pattern (group buys, ticket resale orders; HudumaLink citizen escrow stays phone-keyed at the operator desk). Records only: Brief moves no money.
+- **The offline shell** — PWA manifest + service worker (`preview/public/`): hashed assets cache-first, navigations network-first with a cached-shell fallback, and the API is NEVER cached (a cached read pretending to be live is a lie). Writes survive a dead signal through `src/api/offlineQueue.ts`: a failed POST is parked in localStorage with its clientKey, the surface says "queued", and the browser's `online` event drains the queue oldest-first; server-side idempotency makes a double-send harmless. Refusals on replay land in `deadLetters`, visible — never silently deleted.
+
+
+## The members desk (onboarding real people)
+
+The admin side of onboarding, in the Operate desk's first tab:
+
+- **Directory** — `GET /api/ops/members?q=` (admin-only): handle, name, joined date, status, platform roles, verification, whether they run a shop, and the rung they actually climbed — all derived per request. The rung mapping is honest: `reach` has no named activation event yet, so nobody is shown as having reached it.
+- **Onboarding funnel** — `GET /api/ops/onboarding`: counts of real activation events, members with any event, finished onboarding. "A member with no events has genuinely not started."
+- **Suspension** — `POST /api/ops/members/:id/status`: a suspension **revokes every live session immediately** (locked out on the next request, not the next login), refuses new logins, requires an audited reason, and lands in the audit log with before/after. Reinstatement is the same route.
+- **Roles** — grant/revoke operator/reviewer/finance/admin chips in the member panel, riding the existing audited `/api/ops/roles`.
+- The first admin of a deployment is named by the `BRIEF_ADMINS` bootstrap env (the same mechanism as `BRIEF_OPERATORS`).
+
+## Menu: a two-thirds sheet
+
+The Menu owns the lower **2/3** of the screen; the top 1/3 stays the live app behind a light scrim (tap it to close). One close control remains (the header ×), the dock stays visible above the sheet, and the lavender/card/purple visual system is unchanged — the Menu is part of the same product, not a screen that replaces it.

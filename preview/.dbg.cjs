@@ -1,0 +1,26 @@
+const { JSDOM } = require('jsdom');
+const dom = new JSDOM('<!DOCTYPE html><html><body><div id="root"></div></body></html>', { url: 'https://brief.test/', pretendToBeVisual: true });
+global.window = dom.window; global.document = dom.window.document;
+Object.defineProperty(globalThis, 'navigator', { value: dom.window.navigator, writable: true, configurable: true });
+global.HTMLElement = dom.window.HTMLElement; global.Element = dom.window.Element; global.Node = dom.window.Node;
+global.MouseEvent = dom.window.MouseEvent; global.getComputedStyle = dom.window.getComputedStyle;
+global.IS_REACT_ACT_ENVIRONMENT = true;
+require('./suiteauth.cjs').installSuiteSession();
+const React = require('react'); const { createRoot } = require('react-dom/client'); const { act } = require('react-dom/test-utils');
+global.fetch = async (url) => { const p = String(url); const send=(b,s=200)=>({ok:s<400,status:s,text:async()=>JSON.stringify(b),json:async()=>b});
+  if (p.includes('/api/auth/me')) return send({user:{id:'usr_1',handle:'njeria',displayName:'Mama Njeria'}});
+  if (p.includes('/api/creator/mediakit/mine')) return send({mediaKit:{displayName:'Mama Njeria',contactMethod:'+254712345678',audience:{views:1200}}});
+  if (p.includes('/api/host/command')) return send({money:{grossSettled:0,currency:'KES'},people:{checkedIn:3},campaigns:[{id:'c1'}]});
+  if (p.includes('/api/person/me')) return send({standing:{bought:2}});
+  return {ok:false,status:404,text:async()=>'{}',json:async()=>({})}; };
+(async () => {
+  const { MenuSheet } = await import('../src/components/MenuSheet.tsx');
+  const root = createRoot(document.getElementById('root'));
+  await act(async()=>{root.render(React.createElement(MenuSheet,{open:true,onClose:()=>{},onSelect:()=>{},onSelectCity:()=>{},selectedLocation:'Nairobi, Kenya'}));});
+  await act(async()=>{await new Promise(r=>setTimeout(r,10));});
+  const btns=Array.from(document.querySelectorAll('button'));
+  const vb=btns.find(b=>(b.textContent||'').trim()==='View →');
+  await act(async()=>{vb.dispatchEvent(new dom.window.MouseEvent('click',{bubbles:true,cancelable:true}));});
+  const t=(document.body.textContent||'').replace(/\s+/g,' ');
+  console.log('SEGMENT:', t.slice(t.indexOf('Platinum'), t.indexOf('Explore')));
+})();
