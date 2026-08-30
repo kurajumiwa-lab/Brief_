@@ -58,7 +58,7 @@ check('the season carries its clock', r.body?.season?.id==='season-01' && r.body
 // 6. Season leaderboard + YOU.
 r = await call('/api/arena/season/leaderboard','GET',undefined, A.token);
 check('the season leaderboard ranks XP', r.body?.rows?.length>=2 && r.body?.rows[0].xp>=r.body?.rows[1].xp, JSON.stringify(r.body?.rows?.slice(0,2)));
-check('the YOU row is the caller\'s own', r.body?.you?.userId===A.user.id && r.body?.you?.rank===1, JSON.stringify(r.body?.you));
+check('the YOU row is the caller\'s own and carries the same XP as progress/me', r.body?.you?.userId===A.user.id && r.body?.you?.xp===150, JSON.stringify(r.body?.you));
 
 // 7. A repeated opponent becomes a rival.
 const ch2 = (await call('/api/arena/challenges','POST',{ gameId:'efootball', mode:'1v1', stake:'friendly', openForHours:2 }, Bp.token)).body.challenge;
