@@ -157,7 +157,8 @@ app.use(ops.requestLogger);
 //   /api/ready               deploy-platform health checks
 //   /api/email-subscriptions  the newsletter surface -- subscribing and
 //                           UNSUBSCRIBING must work account-less (privacy)
-const PUBLIC_WITHOUT_SESSION = /^\/(auth|public\/campaigns|health|ready|readiness|media\/file|config|release|email-subscriptions)(\/|$)/;
+//   /api/legal/*           the terms + privacy notice - rights must be readable BEFORE an account exists
+const PUBLIC_WITHOUT_SESSION = /^\/(auth|public\/campaigns|health|ready|readiness|media\/file|config|release|email-subscriptions|legal)(\/|$)/;
 app.use('/api', (req, res, next) => {
   if (PUBLIC_WITHOUT_SESSION.test(req.path)) return next();
   const me = callerId(req);

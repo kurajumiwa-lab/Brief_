@@ -126,12 +126,12 @@ node live/14-members-desk.mjs         # the members desk: directory, rungs,
                                       # funnel, immediate audited suspension
 ```
 
-**Current state: 3953 assertions, 0 failing** — measured 2026-08-30 against a
+**Current state: 3996 assertions, 0 failing** — measured 2026-08-30 against a
 production build over HTTP, not inherited from an earlier report.
 
 | Suite | Result |
 |---|---|
-| `server/test/run.js` | 2048 passed / 0 failed / 1 skipped |
+| `server/test/run.js` | 2056 passed / 0 failed / 1 skipped |
 | `server/test/livecamp.mjs` | 111 passed / 0 failed |
 | `./run-suites.sh` (45 client suites) | 1420 passed / 0 failed |
 | `tc` strict typecheck | exit 0 |
@@ -356,3 +356,12 @@ The admin side of onboarding, in the Operate desk's first tab:
 ## Menu: a two-thirds sheet
 
 The Menu owns the lower **2/3** of the screen; the top 1/3 stays the live app behind a light scrim (tap it to close). One close control remains (the header ×), the dock stays visible above the sheet, and the lavender/card/purple visual system is unchanged — the Menu is part of the same product, not a screen that replaces it.
+
+
+## Make it run: deploy, preflight, legal
+
+- **`.env.example`** — every environment variable the deployment understands, grouped and commented (core, roles, money, auth, connectors, sports, uploads).
+- **Docker** — `Dockerfile` + `docker-compose.yml`: one container (API serving the compiled client), state in a named volume, `/api/health` healthcheck. `docker compose up -d --build` and it runs.
+- **`scripts/preflight.mjs`** — the go-live checklist executed against a live deployment (REQUIRED/WARN/OFF tiers; exit 0 = ready). `node scripts/preflight.mjs https://host --admin-token <jwt>`.
+- **Legal** — `GET /api/legal/terms` and `GET /api/legal/privacy`: public (readable before an account exists), versioned and dated, and written to match what the product actually does — points are not money, fees confirmed by an operator, Brief not a party to WhatsApp shop sales, stakes off without a licence, no identity documents stored (Kenya DPA 2019). The app footer links both.
+- **`DEPLOYMENT.md`** — the full runbook: Docker / Railway / bare VPS, data durability, the complete env table, and the go-live checklist.

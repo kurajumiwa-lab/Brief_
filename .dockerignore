@@ -1,0 +1,13 @@
+node_modules
+tc
+preview/node_modules
+preview/dist
+server/node_modules
+server/data
+server/test
+uploads
+.git
+.env
+*.md
+docs
+live

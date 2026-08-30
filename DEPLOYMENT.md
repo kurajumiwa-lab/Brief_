@@ -1,57 +1,76 @@
 # Brief — production deployment & durability
 
-## What runs where
+## Three ways to run it
 
-- **Build:** `npm run build:client` (Vite → `preview/dist`), registered in
-  `railway.json` as `buildCommand`.
-- **Start:** `npm start` → `cd server && npm start` → `node src/index.js`.
-- **Port:** `PORT` (Railway sets 8080). Express serves the API and, in
-  production, the compiled frontend + SPA fallback (see `DEPLOYMENT-FIX-REPORT.md`).
+### 1) Docker (self-host, one command)
+```bash
+cp .env.example .env        # fill in what your deployment uses
+docker compose up -d --build
+node scripts/preflight.mjs http://127.0.0.1:8080
+```
+The container builds the client, runs the server (which serves the compiled
+frontend at `/`), keeps ALL state in the `brief-data` volume, and health-checks
+itself against `/api/health`. Put TLS in front (Caddy/nginx) and set
+`BRIEF_PUBLIC_ORIGIN` to the public URL.
+
+### 2) Railway (already wired: `railway.json`, `Procfile`, `nixpacks.toml`)
+Build `npm run build:client`, start `npm start`, port from `PORT`. **Attach a
+volume** at `/data` and set `BRIEF_DATA_DIR=/data` — the container filesystem is
+ephemeral and wipes the default path on every redeploy.
+
+### 3) Any VPS with Node 20
+```bash
+git clone <repo> && cd Brief_
+npm install && npm run build:client
+cp .env.example .env && $EDITOR .env
+BRIEF_DATA_DIR=/var/lib/brief PORT=8787 node server/src/index.js
+```
+Run it under systemd (`Restart=always`, `EnvironmentFile=`), put TLS in front,
+and mount `/var/lib/brief` on real disk.
 
 ## Data durability (the one thing to get right)
 
-Brief's store is a synchronous JSON document store (`BRIEF_DATA_DIR/brief.json`,
-default `server/data`). It writes atomically and takes snapshots, but **Railway's
-container filesystem is ephemeral**: everything under the default path is wiped
-on every redeploy. That is why the discovery surface resets to empty after a
-fresh deploy.
+The store is a synchronous JSON document store (`$BRIEF_DATA_DIR/brief.json`).
+**The volume is the durability guarantee**; snapshots are the crash-recovery
+guarantee:
 
-### Fix: attach a persistent volume
+- Snapshots on a cadence (`BRIEF_BACKUP_INTERVAL_MS`, default 15 min; newest 14 kept).
+- Boot restore from the newest snapshot if the data file is missing/empty.
+- Graceful-shutdown backup on SIGTERM/SIGINT; corrupt files are moved aside, not fatal.
+- Uploads are files on the same disk — keep `BRIEF_UPLOAD_DIR` on the volume too.
 
-1. In Railway → your service → **Volumes**, add a volume, e.g. named `brief-data`,
-   mount path `/data`.
-2. Set the environment variable **`BRIEF_DATA_DIR=/data`**.
-3. Redeploy. The store (and its `backups/` snapshots) now live on the volume and
-   survive redeploys.
+## Environment
 
-### Defense in depth (already in code)
+`.env.example` is the complete, commented list. The essentials:
 
-- **Snapshots on a cadence** — `BRIEF_BACKUP_INTERVAL_MS` (default 15 min)
-  copies the data file into `backups/`; the newest 14 are kept.
-- **Boot restore** — if the data file is missing/empty but a snapshot exists
-  (e.g. a volume re-attached after a crash), the server restores the newest one.
-- **Graceful-shutdown backup** — a final snapshot is taken on SIGTERM/SIGINT.
-- **Corrupt-file recovery** — an unreadable data file is moved aside, not fatal.
+| Var | Purpose |
+|---|---|
+| `PORT` / `NODE_ENV` | listen port / production |
+| `BRIEF_DATA_DIR` | **point at a persistent volume** |
+| `BRIEF_PUBLIC_ORIGIN` | canonical origin for share links + callbacks (unset = surfaces say so honestly) |
+| `BRIEF_ADMINS` / `BRIEF_OPERATORS` / `BRIEF_REVIEWERS` / `BRIEF_FINANCE` | comma-separated handles bootstrapped with capabilities at startup — **the members desk needs an admin here** |
+| `BRIEF_POCHI_NUMBER` | the Pochi number members pay service fees to (unset = the fee surface says so) |
+| `BRIEF_GAMING_LICENCE_ID` | real-money arena stakes stay off without it |
+| `GOOGLE_CLIENT_ID` (+ `VITE_GOOGLE_CLIENT_ID` in the client build) | Google sign-in; unset = 503 with a reason |
+| `TELEGRAM_*` / `WHATSAPP_*` / `TUMA_*` / `HUDUMA_*` | connector seams — each fails closed until set |
 
-> Note: snapshots alone do NOT survive an ephemeral filesystem. The volume is
-> the durability guarantee; snapshots are the crash-recovery guarantee.
+## Go-live checklist
 
-## Environment variables
+1. Volume mounted, `BRIEF_DATA_DIR` set; restart and confirm the data survives.
+2. `BRIEF_ADMINS` names your operator handle; sign in once.
+3. `BRIEF_POCHI_NUMBER` set if you will collect service fees; a
+   `BRIEF_FINANCE` handle exists to confirm M-Pesa codes.
+4. `BRIEF_PUBLIC_ORIGIN` set to the real URL behind TLS.
+5. `node scripts/preflight.mjs https://<host> --admin-token <jwt>` —
+   **exit 0 and "READY"** is the gate. Warnings are read, not ignored.
+6. Seed starter content if the deployment is empty: `npm run seed`
+   (marked `seedBatch`, removable with `npm run seed:clear`).
+7. Legal: `/api/legal/terms` + `/api/legal/privacy` are public and versioned;
+   read them and adjust the copy to your operation before onboarding.
 
-| Var | Purpose | Required |
-|---|---|---|
-| `PORT` | Listen port (Railway sets it) | yes |
-| `BRIEF_DATA_DIR` | Data dir (point at the volume) | for durability |
-| `BRIEF_PUBLIC_ORIGIN` | Canonical origin for share links + Tuma callback | for distribution/payments |
-| `BRIEF_BACKUP_INTERVAL_MS` | Snapshot cadence (default 900000) | no |
-| `TUMA_EMAIL` / `TUMA_API_KEY` / `TUMA_WEBHOOK_SECRET` | Payment collection (server-side only) | for live payments |
-| `HANDOFF_SECRET` | Signs vault handoff/entry tokens | for Vault |
-| `TELEGRAM_BOT_TOKEN` / `TELEGRAM_WEBHOOK_SECRET` / `WHATSAPP_APP_SECRET` / `WHATSAPP_VERIFY_TOKEN` | Ingestion connectors | per connector |
+## What "run" means, honestly
 
-## Demo content
-
-`npm run seed` populates the discovery surface with realistic Nairobi-local demo
-content through the real extraction pipeline (marked `seedBatch`, removable with
-`npm run seed:clear`). It creates no money records. Seed the deployed instance
-via Railway's shell (`npm run seed`) to see the product behave before real
-ingestion is connected.
+No payment provider configured → payouts/collect **refuse with a reason**. No
+WhatsApp/Telegram credentials → ingestion connectors stay off. No gaming
+licence → arena stakes refuse at the compliance gate. These are the intended
+states, reported truthfully by `/api/capabilities`, not gaps to paper over.

@@ -26,6 +26,7 @@ import { EplDesk } from './components/EplDesk';
 import { Vault } from './components/vault/Vault';
 import ServiceFees from './components/ServiceFees';
 import { WhatsAppShopBuilder } from './components/WhatsAppShopBuilder';
+import { LegalScreen } from './components/LegalScreen';
 import RewardsDesk from './components/RewardsDesk';
 import { CheckIn } from './components/CheckIn';
 import { HostCommand } from './components/HostCommand';
@@ -5079,6 +5080,7 @@ export function App() {
     bootRoute.workflow !== 'active' ? 'screen' : 'queue'
   );
   const [menuOpen, setMenuOpen] = useState(false);
+  const [legalOpen, setLegalOpen] = useState<'terms' | 'privacy' | null>(null);
 
   // The offline queue drains itself the moment the browser says the signal is
   // back. Server-side idempotency keys make a double-flush harmless.
@@ -11940,9 +11942,16 @@ export function App() {
       />
       <AdminDesk open={adminOpen} onClose={dismissOverlay} me={sessionUser} />
 
-      <footer className="border-t border-[#D6CFE4] mt-12 py-6 text-xs text-[#251045]/60 text-center">
-        Everything Happening Around You
+      <footer className="border-t border-[#D6CFE4] mt-12 py-6 text-xs text-[#251045]/60 text-center space-y-1">
+        <p>Everything Happening Around You</p>
+        <p>
+          <button type="button" onClick={() => setLegalOpen('terms')} className="underline cursor-pointer">Terms of Service</button>
+          <span className="mx-1.5">·</span>
+          <button type="button" onClick={() => setLegalOpen('privacy')} className="underline cursor-pointer">Privacy Notice</button>
+        </p>
       </footer>
+
+      <LegalScreen open={legalOpen !== null} slug={legalOpen ?? 'terms'} onClose={() => setLegalOpen(null)} />
 
     </div>
   );

@@ -3712,3 +3712,10 @@ export function setMemberStatus(id: string, status: 'active' | 'suspended', reas
   return request(`/api/ops/members/${encodeURIComponent(id)}/status`, { method: 'POST', body: JSON.stringify({ status, reason }) }, (r): { user: MemberRow; changed: boolean; sessionsRevoked: number } | undefined =>
     r?.user ? r as { user: MemberRow; changed: boolean; sessionsRevoked: number } : undefined);
 }
+
+// LEGAL — public, versioned, readable before an account exists.
+export interface LegalDoc { slug: string; title: string; version: number; effective: string; body: string }
+export function getLegalDoc(slug: 'terms' | 'privacy'): Promise<ApiResult<LegalDoc>> {
+  return request(`/api/legal/${slug}`, undefined, (r): LegalDoc | undefined =>
+    r?.body && typeof r?.version === 'number' ? r as LegalDoc : undefined);
+}

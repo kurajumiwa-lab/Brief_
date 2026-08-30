@@ -1,0 +1,17 @@
+# BRIEF — self-hosted in one command:
+#   cp .env.example .env   (fill in what you use)
+#   docker compose up -d --build
+#   node scripts/preflight.mjs http://127.0.0.1:8080
+# Data (the store + its backups + uploads) lives in the named volume: it
+# survives redeploys. The healthcheck is the server's own /api/health.
+services:
+  brief:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    env_file: .env
+    volumes:
+      - brief-data:/data
+volumes:
+  brief-data:

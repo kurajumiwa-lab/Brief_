@@ -1,6 +1,7 @@
 // HEALTH ROUTES — extracted from index.js (zero behaviour change).
 // Each route keeps its original body verbatim; only its home file changed.
 import { store } from '../store.js';
+import { legalDoc, legalIndex } from '../domain/legal.js';
 import { queueStats } from '../queue.js';
 import { callerId, authStatus } from '../identity.js';
 import * as ops from '../ops.js';
@@ -89,6 +90,18 @@ app.get('/api/capabilities', (_req, res) => {
 });
 
 
+
+// LEGAL — public, unauthenticated, versioned. Every deployment serves the
+// documents it owes its members; no surface may invent its own terms.
+app.get('/api/legal', (_req, res) => {
+  res.json(legalIndex());
+});
+
+app.get('/api/legal/:slug', (req, res) => {
+  const doc = legalDoc(req.params.slug);
+  if (!doc) return res.status(404).json({ error: 'no such document' });
+  res.json(doc);
+});
 
 app.get('/api/status', (_req, res) => {
   const sources = store.all('sources');

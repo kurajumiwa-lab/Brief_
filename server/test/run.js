@@ -8071,6 +8071,41 @@ console.log('\n=== MEMBERS: the admin directory for onboarding real people ===')
 }
 
 
+
+console.log('\n=== LEGAL: the documents a real deployment owes its members ===');
+{
+  process.env.BRIEF_DEV_AUTH = '0';
+  const { default: app } = await import('../src/index.js');
+  store._reset();
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    // Public by design: nobody should have to sign in to read their rights.
+    let r = await call('/api/legal');
+    check('the index lists both documents, versioned and dated', r.status===200 && r.body?.docs?.length===2 && r.body.docs.every((d)=>d.version>=1 && d.effective), JSON.stringify(r.body?.docs?.length));
+    r = await call('/api/legal/terms');
+    check('the terms are public and match the product as built', r.status===200 && /Pochi la Biashara/.test(r.body?.body ?? '') && /Points are not money|points are not money/i.test(r.body?.body ?? ''), '');
+    check('the terms say Brief is not a party to WhatsApp shop sales', /not a party/.test(r.body?.body ?? ''));
+    check('the terms state the stakes rule honestly', /DISABLED unless .* gaming licence/.test(r.body?.body ?? ''));
+    r = await call('/api/legal/privacy');
+    check('the privacy notice cites the Kenya DPA 2019', /Data Protection Act, 2019/.test(r.body?.body ?? ''));
+    check('it states no identity documents are stored (the codebase rule)', /No identity documents are stored/.test(r.body?.body ?? ''));
+    check('it names the rights: access, correct, erase', /access, correct, export or erase/.test(r.body?.body ?? ''));
+    r = await call('/api/legal/nonexistent');
+    check('an unknown document is a 404, not a blank 200', r.status===404, r.status);
+  } finally {
+    srv.close();
+  }
+}
+
+
 console.log(`\n${'='.repeat(52)}\nPASSED ${pass}   FAILED ${fail}   SKIPPED ${skip}\n${'='.repeat(52)}`);
 process.exit(fail ? 1 : 0);
 
