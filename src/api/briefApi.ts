@@ -3413,3 +3413,31 @@ export function whoCanHelp(q: string): Promise<ApiResult<WhoCanHelpAnswer>> {
       : undefined);
 }
 
+// ---------------------------------------------------------------------------
+// Service fees — paying Brief through Pochi la Biashara (manual M-Pesa code
+// flow; Pochi has no developer API). Amounts come from the server catalog.
+// ---------------------------------------------------------------------------
+
+export interface ServiceCatalogItem { key: string; label: string; amountKes: number }
+export interface ServiceFee {
+  id: string; userId: string; service: string; label: string; amountKes: number;
+  mpesaCode: string; status: 'pending' | 'confirmed' | 'refused';
+  refusedReason: string | null; confirmedAt: string | null; createdAt: string; ledgerId: string;
+}
+export interface MyServiceFees { pochi: string | null; services: ServiceCatalogItem[]; fees: ServiceFee[] }
+
+const isServiceFee = (f: any): f is ServiceFee =>
+  typeof f?.id === 'string' && typeof f?.amountKes === 'number' &&
+  typeof f?.mpesaCode === 'string' && (['pending', 'confirmed', 'refused'] as const).includes(f?.status);
+
+export function myServiceFees(): Promise<ApiResult<MyServiceFees>> {
+  return request('/api/fees/mine', undefined, (r): MyServiceFees | undefined =>
+    Array.isArray(r?.services) && Array.isArray(r?.fees) && r.fees.every(isServiceFee)
+      ? { pochi: r.pochi ?? null, services: r.services, fees: r.fees }
+      : undefined);
+}
+
+export function payServiceFee(service: string, mpesaCode: string): Promise<ApiResult<{ fee: ServiceFee }>> {
+  return request('/api/fees/pay', { method: 'POST', body: JSON.stringify({ service, mpesaCode }) }, (r) =>
+    isServiceFee(r?.fee) ? { fee: r.fee } : undefined);
+}

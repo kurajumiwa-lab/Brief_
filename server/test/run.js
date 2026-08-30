@@ -7337,6 +7337,88 @@ console.log('\n=== MSHIKANO: the cooperation network (post -> match -> confirm -
   }
 }
 
+
+console.log('\n=== SERVICE FEES: POCHI LA BIASHARA, MANUAL-FIRST (§ expansion 8) ===');
+{
+  // Pochi has no API: the member submits the M-Pesa code, a finance-capable
+  // operator confirms it, and money truth stays in the ledger.
+  process.env.BRIEF_DEV_AUTH = '0';
+  process.env.BRIEF_FINANCE = 'feetestfin';
+  process.env.BRIEF_POCHI_NUMBER = '0700000000';
+  const { default: app } = await import('../src/index.js');
+  store._reset();
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    const reg = async (handle) => (await call('/api/auth/register', 'POST', { handle: handle + Date.now().toString(36), password: 'a good passphrase' })).body;
+    const member = await reg('feemember');
+    const fin = (await call('/api/auth/register', 'POST', { handle: 'feetestfin', password: 'a good passphrase' })).body;
+
+    // The gate still owns the door.
+    let r = await call('/api/fees/mine');
+    check('service fees are members-only (401 anonymous)', r.status === 401);
+
+    // The catalog is the only price list, and the Pochi number is stated.
+    r = await call('/api/fees/mine', 'GET', undefined, member.token);
+    check('mine returns the catalog and the member rows', r.status === 200 && Array.isArray(r.body?.services) && Array.isArray(r.body?.fees));
+    check('the Pochi number is shown when configured', r.body?.pochi === '0700000000');
+    const svc = r.body.services.find((x) => x.key === 'store_monthly');
+    check('the catalog carries a positive server-side price', svc && svc.amountKes > 0);
+
+    // The amount cannot come from the client. Unknown service refused.
+    r = await call('/api/fees/pay', 'POST', { service: 'gold_tier', mpesaCode: 'QJD31X5K2S' }, member.token);
+    check('an unknown service is refused', r.status === 400);
+    r = await call('/api/fees/pay', 'POST', { service: 'store_monthly', mpesaCode: 'short' }, member.token);
+    check('a malformed M-Pesa code is refused', r.status === 400 && /confirmation code/i.test(r.body?.error ?? ''));
+    r = await call('/api/fees/pay', 'POST', { service: 'store_monthly', mpesaCode: 'QJD31X5K2S', amountKes: 1 }, member.token);
+    check('a payment records PENDING whatever amount the client posts', r.status === 201 && r.body?.fee?.status === 'pending', JSON.stringify(r.body?.fee).slice(0, 120));
+    check('the amount is the CATALOG amount, not the posted one', r.body?.fee?.amountKes === svc.amountKes);
+    const feeId = r.body.fee.id;
+    r = await call('/api/fees/pay', 'POST', { service: 'store_monthly', mpesaCode: 'QJD31X5K2S' }, member.token);
+    check('the same M-Pesa code cannot be recorded twice (409)', r.status === 409, `got ${r.status}`);
+
+    // Only finance may confirm a code.
+    r = await call(`/api/fees/${feeId}/respond`, 'POST', { accept: true }, member.token);
+    check('a plain member cannot confirm their own code (403)', r.status === 403 && r.body?.requiredCapability === 'finance', JSON.stringify(r.body).slice(0, 120));
+    r = await call(`/api/fees/${feeId}/respond`, 'POST', { accept: false }, fin.token);
+    check('refusing without a reason is refused', r.status === 400);
+    r = await call(`/api/fees/${feeId}/respond`, 'POST', { accept: true }, fin.token);
+    check('finance confirms the code', r.status === 200 && r.body?.fee?.status === 'confirmed' && !!r.body?.fee?.confirmedAt, JSON.stringify(r.body?.fee).slice(0, 140));
+
+    // The member sees the confirmed state and is notified.
+    r = await call('/api/fees/mine', 'GET', undefined, member.token);
+    check('the member sees their confirmed fee', (r.body?.fees ?? []).some((f) => f.id === feeId && f.status === 'confirmed'));
+    r = await call('/api/notifications', 'GET', undefined, member.token);
+    check('the member was notified of the confirmation', (r.body?.notifications ?? []).some((n) => /confirmed/i.test(n.title ?? '')), JSON.stringify(r.body).slice(0, 120));
+
+    // Refusal keeps the reason and fails the ledger row.
+    const second = await call('/api/fees/pay', 'POST', { service: 'promotion_weekly', mpesaCode: 'SBK4R9T2XA' }, member.token);
+    r = await call(`/api/fees/${second.body.fee.id}/respond`, 'POST', { accept: false, note: 'code not found in the M-Pesa statement' }, fin.token);
+    check('finance refuses with a reason that stays on the row', r.status === 200 && r.body?.fee?.status === 'refused' && /statement/.test(r.body?.fee?.refusedReason ?? ''), JSON.stringify(r.body?.fee).slice(0, 140));
+    r = await call('/api/fees/pay', 'POST', { service: 'store_monthly', mpesaCode: 'SBK4R9T2XA' }, member.token);
+    check('a refused code stays locked (409)', r.status === 409, `got ${r.status}`);
+
+    // Revenue is derived from rows, finance-only, never stored.
+    r = await call('/api/fees/all', 'GET', undefined, member.token);
+    check('the finance ledger is finance-only (403)', r.status === 403);
+    r = await call('/api/fees/all', 'GET', undefined, fin.token);
+    check('confirmed revenue is the sum of confirmed rows only', r.body?.confirmedRevenueKes === svc.amountKes, JSON.stringify(r.body?.confirmedRevenueKes));
+
+    // The gate again, at the end.
+    r = await call('/api/fees/all');
+    check('the finance route is members-only too (401)', r.status === 401);
+  } finally {
+    srv.close();
+  }
+}
+
 console.log('\n=== PLATFORM ROLES: THE OPERATOR SURFACE IS CAPABILITY-GUARDED ===');
 {
   // Production posture: no dev fallback, real identities only.

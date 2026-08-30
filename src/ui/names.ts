@@ -54,7 +54,8 @@ export const INBOX_TABS: Record<string, string> = {
   vendors: 'Vendors',
   ai: 'AI review',
   engine: 'Engine',
-  groupbuy: 'Group Buy'
+  groupbuy: 'Group Buy',
+  fees: 'Services'
 };
 
 export const MENU_QUICK: Record<string, string> = {
@@ -97,7 +98,7 @@ export const WORKFLOW_BUNDLES = [
   { id: 'run', label: 'Run', hint: 'Operate what is already live',
     sections: ['command', 'active', 'completed', 'matches', 'engine'] },
   { id: 'records', label: 'Records', hint: 'What happened, attested',
-    sections: ['vault', 'gate', 'sources'] }
+    sections: ['vault', 'gate', 'sources', 'fees'] }
 ] as const;
 
 export const SAVED_BUNDLES = [

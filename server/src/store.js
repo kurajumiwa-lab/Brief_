@@ -60,6 +60,8 @@ const EMPTY = {
   // Disbursements to sellers. A payout is a RECORD of money sent, not a
   // balance -- withdrawable is always derived as (settled net - paid - pending).
   payouts: [],
+  // Service fees paid to Brief via Pochi la Biashara (manual M-Pesa code flow).
+  servicePayments: [],
   // Creator distribution layer. A campaign wraps an existing object; its
   // metrics are derived, never stored. See src/domain/campaign.js.
   campaigns: [],

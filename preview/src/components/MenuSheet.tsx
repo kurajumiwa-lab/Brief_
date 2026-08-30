@@ -14,7 +14,7 @@ export type MenuTarget =
       | 'verification' }
   | { tab: 'workflows'; section?:
       | 'cockpit' | 'command' | 'active' | 'completed' | 'inbox'
-      | 'sources' | 'money' | 'vault' | 'gate' | 'tea'
+      | 'sources' | 'money' | 'vault' | 'gate' | 'tea' | 'fees'
       | 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'ai' }
   | { tab: 'capture' }
   | { tab: 'operate' };

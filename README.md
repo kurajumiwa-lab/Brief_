@@ -111,18 +111,20 @@ node live/6-completion-walk.mjs       # walk every loop end to end
 node live/7-android-bug-replay.mjs    # replay the reported bugs
 node live/8-mshikano.mjs              # cooperation network: intents, matches,
                                       # two-sided confirmation, trust evidence
+node live/9-pochi-fees.mjs            # service fees via Pochi la Biashara:
+                                      # M-PESA code, pending -> finance confirms
 ```
 
-**Current state: 3622 assertions, 0 failing** — measured 2026-08-29 against a
+**Current state: 3664 assertions, 0 failing** — measured 2026-08-29 against a
 production build over HTTP, not inherited from an earlier report.
 
 | Suite | Result |
 |---|---|
-| `server/test/run.js` | 1922 passed / 0 failed / 1 skipped |
+| `server/test/run.js` | 1941 passed / 0 failed / 1 skipped |
 | `server/test/livecamp.mjs` | 111 passed / 0 failed |
-| `./run-suites.sh` (38 client suites) | 1324 passed / 0 failed |
+| `./run-suites.sh` (39 client suites) | 1331 passed / 0 failed |
 | `tc` strict typecheck | exit 0 |
-| `live/` against the production build | 43 + 27 + 82 + 18 + 35 + 26 + 34 = 265 / 0 |
+| `live/` against the production build | 43 + 27 + 82 + 18 + 35 + 26 + 34 + 16 = 281 / 0 |
 
 The server suite hits real third parties (BBC's RSS feed, GitHub's robots.txt,
 Telegram's API). Those tests **skip** rather than pass when the network is
@@ -235,6 +237,15 @@ disagree with the first.
 auction amounts from the winning bid row; a client posting `{price: 1}` against
 a 2500 listing gets an order for 2500. Settlement is refused unless a genuinely
 settled ledger transaction backs it.
+
+**Brief's own services are paid by Pochi la Biashara, manually.** Pochi has
+no developer API, so nothing pretends otherwise: the price lives in one
+server-side catalog (`domain/fees.js`), the member pays Brief's Pochi number
+in their M-PESA app and submits the confirmation code, and the fee stays
+**pending** — a service never activates on trust alone — until a
+finance-capable operator confirms the code. One M-PESA code is one payment,
+ever; a refused code stays locked with its reason on the row; and revenue is
+derived by scanning confirmed rows in the one economic layer.
 
 **Honest refusal over fake success.** No payment provider is connected, so
 paying returns **503 with `charged:false`** and a stated reason -- it never
