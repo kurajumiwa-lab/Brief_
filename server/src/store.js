@@ -227,6 +227,8 @@ const EMPTY = {
   // --- Arena entities (server models) -------------------------------------
   // A player's game identity is NOT their Brief account: one person holds many.
   arenaPlayers: [],
+  // Arena progression: append-only XP/coin events (idempotent by key).
+  arenaEvents: [],
   // T5: the shared EPL player catalog. Rows carry their source; 'seed' rows
   // 'seed' rows are clearly mock development data.
   eplCatalog: [],

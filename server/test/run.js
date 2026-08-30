@@ -7525,6 +7525,105 @@ console.log('\n=== REFERRALS: REWARDS WITH A MATHEMATICAL EDGE, NOT A PYRAMID ==
   }
 }
 
+
+console.log('\n=== ARENA PROGRESSION: XP, LEVELS, MISSIONS, SEASON — ALL DERIVED ===');
+{
+  // The retention layer under the existing Arena: XP and Coins are POINTS
+  // (they buy nothing, cash out nowhere), totals are derived from append-only
+  // events, ratings/streaks replay confirmed matches, missions are daily and
+  // real, and the live strip counts real things only.
+  process.env.BRIEF_DEV_AUTH = '0';
+  const { default: app } = await import('../src/index.js');
+  const progress = await import('../src/domain/arenaProgress.js');
+  store._reset();
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    const reg = async (h) => (await call('/api/auth/register', 'POST', { handle: h + Date.now().toString(36), password: 'a good passphrase' })).body;
+    const A = await reg('xpa'); const B = await reg('xpb');
+
+    let r = await call('/api/arena/progress/me');
+    check('progress is members-only (401)', r.status === 401);
+
+    // Two players, one challenge, one confirmed match.
+    const pa = (await call('/api/arena/players', 'POST', { gameId: 'efootball', gamerTag: 'XPA' }, A.token)).body.player;
+    const pb = (await call('/api/arena/players', 'POST', { gameId: 'efootball', gamerTag: 'XPB' }, B.token)).body.player;
+    const ch = (await call('/api/arena/challenges', 'POST', { gameId: 'efootball', mode: '1v1', stake: 'friendly', openForHours: 2 }, A.token)).body.challenge;
+    const acc = await call(`/api/arena/challenges/${ch.id}/accept`, 'POST', {}, B.token);
+    const matchId = acc.body.match.id;
+    await call(`/api/arena/matches/${matchId}/report`, 'POST', { winnerPlayerId: A.user.id, scoreLine: '3-1' }, A.token);
+    const conf = await call(`/api/arena/matches/${matchId}/confirm`, 'POST', {}, B.token);
+
+    // --- the confirmation is the earning moment -----------------------------
+    r = await call('/api/arena/progress/me', 'GET', undefined, A.token);
+    check('the winner earned XP and coins from one confirmation',
+      r.body?.profile?.totalXp === 100 && r.body?.profile?.totalCoins === 25, JSON.stringify(r.body?.profile));
+    check('level 1 at 100 XP with the bar showing progress',
+      r.body?.profile?.level === 1 && r.body?.profile?.xpIntoLevel === 100, JSON.stringify(r.body?.profile));
+    r = await call('/api/arena/progress/me', 'GET', undefined, B.token);
+    check('the loser earns participation XP, no coins',
+      r.body?.profile?.totalXp === 30 && r.body?.profile?.totalCoins === 0, JSON.stringify(r.body?.profile));
+
+    // Replaying confirmation mints nothing (idempotent by match key).
+    await call(`/api/arena/matches/${matchId}/confirm`, 'POST', {}, B.token);
+    r = await call('/api/arena/progress/me', 'GET', undefined, A.token);
+    check('re-confirming mints nothing', r.body?.profile?.totalXp === 100, JSON.stringify(r.body?.profile?.totalXp));
+
+    // --- rating, streak, winrate replay from confirmed rows ------------------
+    const statsA = r.body?.players?.find((x) => x.id === pa.id)?.stats;
+    r = await call('/api/arena/progress/me', 'GET', undefined, A.token);
+    const sA = r.body?.players?.find((x) => x.id === pa.id)?.stats;
+    check('the winner has a justified rating above start', sA?.rating > 1000, JSON.stringify(sA));
+    check('the winner is on a 1-win streak with a 100% rate', sA?.streak === 1 && sA?.winRate === 100, JSON.stringify(sA));
+    check('rating is a replay, not a stored number — the loser sits below start',
+      (await call('/api/arena/progress/me', 'GET', undefined, B.token)).body?.players?.[0]?.stats?.rating < 1000);
+
+    // --- missions: daily, derived, claimable once -----------------------------
+    r = await call('/api/arena/progress/me', 'GET', undefined, A.token);
+    const m1 = r.body?.missions?.find((x) => x.key === 'play_1');
+    const m2 = r.body?.missions?.find((x) => x.key === 'win_2');
+    check('play_1 is complete after one confirmed match', m1?.complete === true && m1?.claimable === true, JSON.stringify(m1));
+    check('win_2 is honestly incomplete (1 of 2)', m2?.progress === 1 && m2?.complete === false, JSON.stringify(m2));
+    r = await call('/api/arena/missions/win_2/claim', 'POST', {}, A.token);
+    check('claiming an incomplete mission is refused with the reason', r.status === 400, JSON.stringify(r.body).slice(0, 100));
+    r = await call('/api/arena/missions/play_1/claim', 'POST', {}, A.token);
+    check('claiming a complete mission grants its XP', r.status === 201 && r.body?.profile?.totalXp === 150, JSON.stringify(r.body?.profile).slice(0, 100));
+    r = await call('/api/arena/missions/play_1/claim', 'POST', {}, A.token);
+    check('a mission claims once per day', r.status === 400 && /already claimed/.test(r.body?.error ?? ''), JSON.stringify(r.body).slice(0, 100));
+
+    // --- rivals appear from repeated play -------------------------------------
+    // (one more match between the same two)
+    const ch2 = (await call('/api/arena/challenges', 'POST', { gameId: 'efootball', mode: '1v1', stake: 'friendly', openForHours: 2 }, B.token)).body.challenge;
+    const acc2 = await call(`/api/arena/challenges/${ch2.id}/accept`, 'POST', {}, A.token);
+    await call(`/api/arena/matches/${acc2.body.match.id}/report`, 'POST', { winnerPlayerId: A.user.id }, B.token);
+    await call(`/api/arena/matches/${acc2.body.match.id}/confirm`, 'POST', {}, A.token);
+    r = await call('/api/arena/progress/me', 'GET', undefined, A.token);
+    check('a repeated opponent becomes a rival with a head-to-head record',
+      (r.body?.rivals ?? []).some((x) => x.userId === B.user.id && x.played === 2 && x.iWon === 2), JSON.stringify(r.body?.rivals));
+
+    // --- the live strip counts real things only -------------------------------
+    r = await call('/api/arena/live', 'GET', undefined, A.token);
+    check('live counts real activity (2 players active, real challenges)', r.body?.playersActiveLastHour === 2 && r.body?.openChallenges >= 0, JSON.stringify(r.body));
+    check('the strip carries the season and its days remaining', r.body?.season?.id === 'season-01' && r.body?.season?.daysRemaining > 0, JSON.stringify(r.body?.season));
+
+    // --- season leaderboard with a YOU row ------------------------------------
+    r = await call('/api/arena/season/leaderboard', 'GET', undefined, A.token);
+    check('the season leaderboard ranks XP earners', r.body?.rows?.[0]?.xp >= r.body?.rows?.[1]?.xp && r.body?.rows?.length >= 2, JSON.stringify(r.body?.rows?.slice(0, 2)));
+    check('the YOU row is personal and true', r.body?.you?.rank === 1 && r.body?.you?.userId === A.user.id, JSON.stringify(r.body?.you));
+    r = await call('/api/arena/season/leaderboard', 'GET', undefined, B.token);
+    check('the YOU row follows the caller', r.body?.you?.rank === 2, JSON.stringify(r.body?.you));
+  } finally {
+    srv.close();
+  }
+}
+
 console.log('\n=== PLATFORM ROLES: THE OPERATOR SURFACE IS CAPABILITY-GUARDED ===');
 {
   // Production posture: no dev fallback, real identities only.

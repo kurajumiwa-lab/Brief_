@@ -8,7 +8,9 @@
 // WHAT ARENA IS NOT.
 //
 // It is NOT a second economy. There is no Arena wallet, no Arena balance and
-// no Arena transaction table. Paid contests route through the SAME compliance
+// no Arena transaction table. XP and Arena Coins (arenaProgress.js) are
+// progression POINTS: they buy nothing, cash out nowhere, and never touch the
+// ledger. Paid contests route through the SAME compliance
 // gate and, when they are ever legal here, the SAME ledger as everything else.
 // Free and ranked play -- which is what Brief can legally offer today -- needs
 // no money at all, and that is the part implemented here.
@@ -29,6 +31,7 @@
 
 import { store, newId } from '../store.js';
 import { personIdIfUser, resolveDisplayName } from './person.js';
+import * as arenaProgress from './arenaProgress.js';
 
 /** Games Brief actually knows about. A challenge for anything else is refused. */
 export const ARENA_GAMES = [
@@ -267,9 +270,15 @@ export function confirmResult(matchId, confirmerId, { winnerPlayerId = undefined
     confirmedByA: true,
     confirmedByB: true,
     winnerPlayerId: m.reportedWinnerId,
-    scoreLine: m.reportedScore
+    scoreLine: m.reportedScore,
+    confirmedAt: new Date().toISOString()
   };
-  return { match: store.update('arenaMatches', matchId, patch), changed: true, disputed: false };
+  const confirmed = store.update('arenaMatches', matchId, patch);
+  // PROGRESSION: a confirmed result is the only thing that earns. Idempotent
+  // per match, derived totals, never a stored counter.
+  let rewards = null;
+  try { rewards = arenaProgress.grantForConfirmedMatch(confirmed); } catch { /* progression must never break a confirmation */ }
+  return { match: confirmed, changed: true, disputed: false, rewards };
 }
 
 /** Either player can walk away from a match that never happened. */

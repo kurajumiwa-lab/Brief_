@@ -3481,3 +3481,53 @@ export function convertReferralPoints(points: number): Promise<ApiResult<{ conve
       ? { conversion: r.conversion as ReferralConversion }
       : undefined);
 }
+
+// ---------------------------------------------------------------------------
+// ARENA PROGRESSION — the retention layer. XP and Arena Coins are POINTS:
+// they buy nothing and cash out nowhere. Totals are derived server-side from
+// confirmed matches and claimed missions; ratings/streaks are replays.
+// ---------------------------------------------------------------------------
+
+export interface ArenaProfile {
+  userId: string; level: number; xpIntoLevel: number; xpPerLevel: number;
+  seasonXp: number; seasonCoins: number; totalXp: number; totalCoins: number; matchesToday: number;
+}
+export interface ArenaMission {
+  key: string; label: string; target: number; hint: string;
+  reward: { xp: number; coins: number }; progress: number; complete: boolean; claimed: boolean; claimable: boolean;
+}
+export interface ArenaRival { userId: string; displayName: string; played: number; iWon: number; theyWon: number }
+export interface ArenaPlayerStats { playerId: string; rating: number; streak: number; played: number; won: number; winRate: number | null }
+export interface ArenaSeason { id: string; label: string; startedAt: string; endsAt: string; daysRemaining: number }
+export interface MyArenaProgress {
+  profile: ArenaProfile; missions: ArenaMission[]; rivals: ArenaRival[];
+  seasonRank: { rank: number; xp: number; coins: number } | null;
+  players: (ArenaPlayerStats & { gamerTag: string })[];
+}
+export interface ArenaLive {
+  playersActiveLastHour: number; matchesAwaitingConfirmation: number; openChallenges: number; season: ArenaSeason;
+}
+
+export function myArenaProgress(): Promise<ApiResult<MyArenaProgress>> {
+  return request('/api/arena/progress/me', undefined, (r): MyArenaProgress | undefined =>
+    r?.profile?.xpPerLevel > 0 && Array.isArray(r?.missions) && Array.isArray(r?.players)
+      ? r as MyArenaProgress
+      : undefined);
+}
+
+export function arenaLive(): Promise<ApiResult<ArenaLive>> {
+  return request('/api/arena/live', undefined, (r): ArenaLive | undefined =>
+    r?.season?.daysRemaining >= 0 && typeof r?.playersActiveLastHour === 'number'
+      ? r as ArenaLive
+      : undefined);
+}
+
+export function claimArenaMission(key: string): Promise<ApiResult<{ claimed: { xp: number; coins: number }; missions: ArenaMission[]; profile: ArenaProfile }>> {
+  return request(`/api/arena/missions/${encodeURIComponent(key)}/claim`, { method: 'POST', body: '{}' }, (r) =>
+    r?.claimed && Array.isArray(r?.missions) ? r as { claimed: { xp: number; coins: number }; missions: ArenaMission[]; profile: ArenaProfile } : undefined);
+}
+
+export function arenaSeasonLeaderboard(): Promise<ApiResult<{ season: ArenaSeason; rows: { rank: number; userId: string; displayName: string; xp: number; coins: number }[]; you: { rank: number; xp: number; coins: number } | null }>> {
+  return request('/api/arena/season/leaderboard', undefined, (r) =>
+    Array.isArray(r?.rows) ? r as { season: ArenaSeason; rows: { rank: number; userId: string; displayName: string; xp: number; coins: number }[]; you: { rank: number; xp: number; coins: number } | null } : undefined);
+}

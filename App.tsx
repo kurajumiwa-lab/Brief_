@@ -40,6 +40,7 @@ import { TriageQueue } from './components/TriageQueue';
 import { Quests } from './components/Quests';
 import type { GeoPoint } from './components/LocationChip';
 import { ArenaShelf } from './components/ArenaShelf';
+import { ArenaPulse, SeasonStrip } from './components/ArenaPulse';
 import { MainShelf } from './components/MainShelf';
 import { Onboarding } from './components/Onboarding';
 import { NextStep } from './components/NextStep';
@@ -7219,7 +7220,12 @@ export function App() {
       return;
     }
     await refreshArenaMatches();
-    showToast(res.data?.disputed ? 'Players disagreed. Brief does not pick a winner.' : 'Result confirmed.');
+    if (res.data?.disputed) {
+      showToast('Players disagreed. Brief does not pick a winner.');
+      return;
+    }
+    const rw = res.data?.yourRewards;
+    showToast(rw ? `Match confirmed · +${rw.xp} XP${rw.coins ? ` · +${rw.coins} Arena Coins` : ''}` : 'Result confirmed.');
   };
 
   // Abandon: the honest exit for a match that never happened. The server
@@ -8850,6 +8856,8 @@ export function App() {
               </div>
             )}
 
+            <ArenaPulse />
+
             <ArenaShelf
               games={ARENA_GAMES}
               activity={arenaActivity}
@@ -9222,6 +9230,7 @@ export function App() {
 
             {arenaSection === 'leaderboard' && (
               <div className="space-y-2">
+                <SeasonStrip />
                 {arenaLeaderboard.length === 0 && (
                   <p className="text-xs text-[#251045]/60">No confirmed results yet for {arenaGame.name}.</p>
                 )}

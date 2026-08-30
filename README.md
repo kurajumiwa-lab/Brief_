@@ -117,7 +117,7 @@ node live/10-referrals.mjs            # referrals: one level, no entry fee,
                                       # cash only from the revenue-backed pool
 ```
 
-**Current state: 3711 assertions, 0 failing** — measured 2026-08-29 against a
+**Current state: 3757 assertions, 0 failing** — measured 2026-08-29 against a
 production build over HTTP, not inherited from an earlier report.
 
 | Suite | Result |
@@ -295,3 +295,14 @@ Install command:   npm install
 Environment variables for the client need the `VITE_` prefix to be exposed to
 the browser. The ingestion server's secrets must **never** carry that prefix —
 they stay server-side.
+
+## Arena progression (retention layer)
+
+XP and Arena Coins are **points, not money** — they buy nothing, cash out nowhere, and never touch the ledger. Every number is **derived**: ratings/streaks are a single-pass chronological replay of confirmed matches; totals come from idempotent grant events (`arena:match:<mid>:<uid>`) and once-daily mission claims (`arena:mission:<day>:<key>:<uid>`).
+
+- `GET /api/arena/progress/me` — level (500 XP/level), season XP, coins, daily missions, rivals (≥2 confirmed matches), season rank, per-player stats.
+- `GET /api/arena/live` — real counts only: active in last hour, awaiting confirmation, open challenges, Season 01 clock.
+- `POST /api/arena/missions/:key/claim` — once per day; incomplete missions refuse with the reason.
+- `GET /api/arena/season/leaderboard` — ranked XP rows plus the caller's `you` row.
+- `confirm` responses include `yourRewards` for the confirming player's toast.
+- Client: `ArenaPulse` in the lobby (tagline "Play. Compete. Build your record.", honest quiet states) and `SeasonStrip` above the per-game leaderboard. No new navigation.
