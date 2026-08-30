@@ -7772,6 +7772,107 @@ console.log('\n=== PLATFORM ROLES: THE OPERATOR SURFACE IS CAPABILITY-GUARDED ==
   }
 }
 
+
+console.log('\n=== WHATSAPP SHOP: BUILD ON BRIEF, SELL IN WHATSAPP ===');
+{
+  // The architecture under test: Brief builds the shop, WhatsApp IS the shop.
+  // The output is real WhatsApp formatting (*bold*, _italic_) + a wa.me deep
+  // link. No WhatsApp payments by design. Drafting is free; publishing is
+  // gated on a CONFIRMED store service row, never a client-sent flag.
+  process.env.BRIEF_DEV_AUTH = '0';
+  process.env.BRIEF_FINANCE = 'shopfin';
+  process.env.BRIEF_POCHI_NUMBER = '0700000000';
+  const { default: app } = await import('../src/index.js');
+  store._reset();
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    const reg = async (handle) => (await call('/api/auth/register', 'POST', { handle: handle + Date.now().toString(36), password: 'a good passphrase' })).body;
+    const seller = await reg('shopseller');
+    const fin = (await call('/api/auth/register', 'POST', { handle: 'shopfin', password: 'a good passphrase' })).body;
+
+    let r = await call('/api/shop/mine');
+    check('the shop is members-only (401)', r.status === 401);
+    r = await call('/api/shop/mine', 'GET', undefined, seller.token);
+    check('a new member starts with an honest blank draft', r.body?.shop?.id === null && r.body?.shop?.status === 'draft' && r.body?.share === null, JSON.stringify(r.body?.shop).slice(0, 120));
+    check('the store service is honestly inactive before any payment', r.body?.store?.active === false && r.body?.store?.priceKes === 250, JSON.stringify(r.body?.store));
+
+    // Validation that refuses, with reasons.
+    r = await call('/api/shop/mine', 'PUT', { name: 'M', orderNumber: '+254712345678', items: [{ name: 'Sukuma', priceKes: 50 }] }, seller.token);
+    check('a one-letter shop name is refused', r.status === 400 && /name/.test(r.body?.error ?? ''), JSON.stringify(r.body?.error));
+    r = await call('/api/shop/mine', 'PUT', { name: 'Mama Njeria Fresh', orderNumber: 'not-a-phone', items: [{ name: 'Sukuma', priceKes: 50 }] }, seller.token);
+    check('an unreachable order number is refused', r.status === 400 && /phone/.test(r.body?.error ?? ''));
+    r = await call('/api/shop/mine', 'PUT', { name: 'Mama Njeria Fresh', orderNumber: '+254712345678', items: [] }, seller.token);
+    check('an empty price list is refused', r.status === 400 && /at least one item/.test(r.body?.error ?? ''));
+
+    // Save for real.
+    r = await call('/api/shop/mine', 'PUT', {
+      name: 'Mama Njeria Fresh', tagline: 'Fresh groceries, Kilimani', orderNumber: '+254 712 345 678',
+      items: [
+        { name: 'Sukuma Wiki', priceKes: 50 },
+        { name: 'Tomatoes (kg)', priceKes: 120, note: 'organic' },
+        { name: 'Free-range eggs (tray)', priceKes: 450 }
+      ]
+    }, seller.token);
+    check('the draft saves', r.status === 201 && r.body?.shop?.status === 'draft', JSON.stringify(r.body?.shop).slice(0, 120));
+
+    // The output is REAL WhatsApp formatting.
+    const text = r.body?.share?.text ?? '';
+    check('the name is WhatsApp-bold', text.includes('*Mama Njeria Fresh*'), JSON.stringify(text.slice(0, 60)));
+    check('the tagline is WhatsApp-italic', text.includes('_Fresh groceries, Kilimani_'));
+    check('prices are whole shillings in bold', text.includes('Sukuma Wiki — *KES 50*') && text.includes('Tomatoes (kg) — *KES 120* _organic_'));
+    check('the order instruction is included', /reply with the item number/.test(text));
+    const waMe = r.body?.share?.waMe ?? '';
+    check('the wa.me link carries the number and the encoded catalog', waMe.startsWith('https://wa.me/254712345678?text='), waMe.slice(0, 50));
+    check('the catalog in the link is the same text, URL-encoded', decodeURIComponent(waMe.split('text=')[1] ?? '') === text);
+    check('the share is honest: a draft is not shareable', r.body?.share?.shareable === false);
+
+    // Publishing is gated on a CONFIRMED service row, not a flag.
+    r = await call('/api/shop/mine/publish', 'POST', {}, seller.token);
+    check('publishing without the store service is refused (409)', r.status === 409, `got ${r.status}`);
+    check('the refusal names the service and the price, machine-readably', r.body?.requiresService === 'store_monthly' && /KES 250/.test(r.body?.error ?? ''), JSON.stringify(r.body));
+
+    // A PENDING payment is not trust: only a confirmed row activates.
+    const code = 'WC' + Math.random().toString(36).toUpperCase().slice(2, 10);
+    const fee = (await call('/api/fees/pay', 'POST', { service: 'store_monthly', mpesaCode: code }, seller.token)).body.fee;
+    r = await call('/api/shop/mine/publish', 'POST', {}, seller.token);
+    check('a pending Pochi code does not activate the store', r.status === 409, `got ${r.status}`);
+    r = await call(`/api/fees/${fee.id}/respond`, 'POST', { accept: true }, fin.token);
+    check('finance confirms the code', r.status === 200 && r.body?.fee?.status === 'confirmed');
+    r = await call('/api/shop/mine/publish', 'POST', {}, seller.token);
+    check('publishing works once the service is CONFIRMED', r.status === 200 && r.body?.shop?.status === 'published' && r.body?.share?.shareable === true, JSON.stringify(r.body?.shop?.status));
+    check('the store service is derived active with an end date', r.body?.store?.active === true && Boolean(r.body?.store?.activeUntil), JSON.stringify(r.body?.store));
+    r = await call('/api/shop/mine/publish', 'POST', {}, seller.token);
+    check('publishing twice is an idempotent no-op', r.status === 200 && r.body?.changed === false);
+
+    // One member, one shop: saving again edits in place.
+    r = await call('/api/shop/mine', 'PUT', {
+      name: 'Mama Njeria Fresh', tagline: 'Fresh groceries, Kilimani', orderNumber: '+254 712 345 678',
+      items: [{ name: 'Sukuma Wiki', priceKes: 60 }]
+    }, seller.token);
+    check('saving again edits the same shop (no second row)', r.status === 201 && store.all('shops').length === 1 && r.body?.share?.text.includes('*KES 60*'), JSON.stringify(store.all('shops').length));
+
+    // Unpublish is the honest off-switch, and works.
+    r = await call('/api/shop/mine/unpublish', 'POST', {}, seller.token);
+    check('unpublishing returns to draft and honesty', r.status === 200 && r.body?.shop?.status === 'draft' && r.body?.share?.shareable === false);
+
+    // Another member's shop is invisible.
+    const other = await reg('shopother');
+    r = await call('/api/shop/mine', 'GET', undefined, other.token);
+    check('one shop is one member — another member sees their own blank', r.body?.shop?.id === null);
+  } finally {
+    srv.close();
+  }
+}
+
+
 console.log(`\n${'='.repeat(52)}\nPASSED ${pass}   FAILED ${fail}   SKIPPED ${skip}\n${'='.repeat(52)}`);
 process.exit(fail ? 1 : 0);
 

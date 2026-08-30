@@ -25,6 +25,7 @@ import { VerificationPanel } from './components/VerificationPanel';
 import { EplDesk } from './components/EplDesk';
 import { Vault } from './components/vault/Vault';
 import ServiceFees from './components/ServiceFees';
+import { WhatsAppShopBuilder } from './components/WhatsAppShopBuilder';
 import RewardsDesk from './components/RewardsDesk';
 import { CheckIn } from './components/CheckIn';
 import { HostCommand } from './components/HostCommand';
@@ -211,7 +212,7 @@ export type MyLayerSection =
   | 'verification';
 // Workflows secondary: a Journey is either in progress or finished. Inbox and
 // Sources are kept -- they are existing workflow surfaces, not new screens.
-export type WorkflowSection = 'cockpit' | 'command' | 'active' | 'completed' | 'inbox' | 'sources' | 'money' | 'vault' | 'gate' | 'tea' | 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'ai' | 'engine' | 'groupbuy' | 'resale' | 'fees';
+export type WorkflowSection = 'cockpit' | 'command' | 'active' | 'completed' | 'inbox' | 'sources' | 'money' | 'vault' | 'gate' | 'tea' | 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'shop' | 'ai' | 'engine' | 'groupbuy' | 'resale' | 'fees';
 // Pulse secondary. Pulse is the information layer: freshness, local signals,
 // what groups are surfacing, and emerging activity. It is not an assistant.
 export type PulseSection = 'now' | 'local' | 'groups' | 'signals';
@@ -9810,6 +9811,10 @@ export function App() {
           <div className="max-w-3xl mx-auto px-4 py-6">
             <ServiceFees />
           </div>
+        )}
+
+        {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'shop' && (
+          <WhatsAppShopBuilder onOpenFees={() => setWorkflowSection('fees')} />
         )}
 
         {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'tea' && (

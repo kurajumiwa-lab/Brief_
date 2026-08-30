@@ -65,6 +65,10 @@ const EMPTY = {
   // Referral reward events (append-only, deduped by key) and point-to-cash
   // conversions paid from the derived rewards pool.
   referralEvents: [],
+
+  // WhatsApp shops: the builder state. The storefront is WhatsApp itself —
+  // the share output (formatted text + wa.me link) is derived, never stored.
+  shops: [],
   referralConversions: [],
   // Creator distribution layer. A campaign wraps an existing object; its
   // metrics are derived, never stored. See src/domain/campaign.js.

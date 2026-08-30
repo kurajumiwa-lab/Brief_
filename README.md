@@ -115,18 +115,22 @@ node live/9-pochi-fees.mjs            # service fees via Pochi la Biashara:
                                       # M-PESA code, pending -> finance confirms
 node live/10-referrals.mjs            # referrals: one level, no entry fee,
                                       # cash only from the revenue-backed pool
+node live/11-arena-progression.mjs    # Arena retention layer: XP/Coins/missions/
+                                      # season/rivals/rating replay, over HTTP
+node live/12-whatsapp-shop.mjs        # WhatsApp shop: formatting, wa.me link,
+                                      # publish gated on a confirmed Pochi fee
 ```
 
-**Current state: 3757 assertions, 0 failing** — measured 2026-08-29 against a
+**Current state: 3828 assertions, 0 failing** — measured 2026-08-30 against a
 production build over HTTP, not inherited from an earlier report.
 
 | Suite | Result |
 |---|---|
-| `server/test/run.js` | 1962 passed / 0 failed / 1 skipped |
+| `server/test/run.js` | 2005 passed / 0 failed / 1 skipped |
 | `server/test/livecamp.mjs` | 111 passed / 0 failed |
-| `./run-suites.sh` (40 client suites) | 1340 passed / 0 failed |
+| `./run-suites.sh` (43 client suites) | 1383 passed / 0 failed |
 | `tc` strict typecheck | exit 0 |
-| `live/` against the production build | 43 + 27 + 82 + 18 + 35 + 26 + 34 + 16 + 17 = 298 / 0 |
+| `live/` against the production build | 43+27+82+18+35+26+34+16+17+14+17 = 329 / 0 |
 
 The server suite hits real third parties (BBC's RSS feed, GitHub's robots.txt,
 Telegram's API). Those tests **skip** rather than pass when the network is
@@ -306,3 +310,19 @@ XP and Arena Coins are **points, not money** — they buy nothing, cash out nowh
 - `GET /api/arena/season/leaderboard` — ranked XP rows plus the caller's `you` row.
 - `confirm` responses include `yourRewards` for the confirming player's toast.
 - Client: `ArenaPulse` in the lobby (tagline "Play. Compete. Build your record.", honest quiet states) and `SeasonStrip` above the per-game leaderboard. No new navigation.
+
+
+## WhatsApp shop (build on Brief, sell in WhatsApp)
+
+The architecture is stated in the product, not hidden: **Brief builds the shop, WhatsApp IS the shop.** A member writes a name, a one-liner, an order number and a price list; Brief derives the exact WhatsApp message (real formatting — `*bold*`, `_italic_` — that survives a screenshot, a status post and a broadcast) plus a `wa.me` deep link that opens a chat with the catalog pre-filled. The conversation is where selling happens; Brief does not sit in the middle.
+
+- No WhatsApp payments, by design. Buyers and sellers arrange money the way they already do (Pochi la Biashara, till, send money).
+- Drafting is free. **Publishing is gated** on the `store_monthly` service (KES 250/month) — paid through the same manual Pochi flow as every Brief fee and activated only when a finance-capable operator confirms the M-Pesa code. A pending code opens nothing.
+- One shop per member; up to 40 items so a forwarded list stays readable; the share output is derived, never stored.
+- Photos belong in the free WhatsApp Business catalog (500 items, 10 images) — this builder makes the price list people actually forward. The panel says so.
+- Routes: `GET/PUT /api/shop/mine`, `POST /api/shop/mine/publish|unpublish`; the publish refusal is machine-readable (`requiresService`) and the client deep-links to the fee desk.
+- Client: `WhatsAppShopBuilder` under Workflows → Sell → WhatsApp Shop, and a door in the redesigned Menu.
+
+## Menu, redesigned as part of the same app
+
+The Menu was rebuilt to the Arena screen's visual system instead of a dark modal: lavender page, white cards, deep-purple actions, and gold reserved for membership status alone. It is a full navigation surface beneath the dock (the bottom nav stays visible), with exactly one close control. The account is one compact card (standing derived on demand), Explore is a four-door icon grid — no photography, since Menu navigates while the home screen explores — Quick Actions are compact rows in one card, and coming-later items are a single quiet line. `preview/menusheet.jsx` holds the rules (one `×`, no neon, no `img`).

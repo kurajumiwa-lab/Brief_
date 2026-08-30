@@ -3531,3 +3531,42 @@ export function arenaSeasonLeaderboard(): Promise<ApiResult<{ season: ArenaSeaso
   return request('/api/arena/season/leaderboard', undefined, (r) =>
     Array.isArray(r?.rows) ? r as { season: ArenaSeason; rows: { rank: number; userId: string; displayName: string; xp: number; coins: number }[]; you: { rank: number; xp: number; coins: number } | null } : undefined);
 }
+
+// ---------------------------------------------------------------------------
+// WHATSAPP SHOP — build on Brief, sell in WhatsApp. The shop row is the
+// builder state; the storefront is the WhatsApp conversation itself. The
+// share (formatted text + wa.me link) is DERIVED server-side, and publishing
+// is gated on a confirmed store-service payment (Pochi la Biashara).
+// ---------------------------------------------------------------------------
+
+export interface ShopItem { id: string; name: string; priceKes: number; note: string | null }
+export interface Shop {
+  id: string | null; ownerId: string; name: string; tagline: string; orderNumber: string;
+  items: ShopItem[]; status: 'draft' | 'published'; publishedAt: string | null;
+}
+export interface ShopStoreService { priceKes: number; active: boolean; activeUntil: string | null }
+export interface ShopView {
+  shop: Shop;
+  store: ShopStoreService;
+  share: { text: string; waMe: string; shareable: boolean } | null;
+}
+
+export function getMyShop(): Promise<ApiResult<ShopView>> {
+  return request('/api/shop/mine', undefined, (r): ShopView | undefined =>
+    r?.shop && typeof r?.store?.active === 'boolean' ? r as ShopView : undefined);
+}
+
+export function saveMyShop(body: { name: string; tagline: string; orderNumber: string; items: { name: string; priceKes: number; note?: string }[] }): Promise<ApiResult<ShopView>> {
+  return request('/api/shop/mine', { method: 'PUT', body: JSON.stringify(body) }, (r): ShopView | undefined =>
+    r?.shop?.id ? r as ShopView : undefined);
+}
+
+export function publishMyShop(): Promise<ApiResult<ShopView & { changed: boolean }>> {
+  return request('/api/shop/mine/publish', { method: 'POST', body: '{}' }, (r): (ShopView & { changed: boolean }) | undefined =>
+    r?.shop ? r as ShopView & { changed: boolean } : undefined);
+}
+
+export function unpublishMyShop(): Promise<ApiResult<ShopView & { changed: boolean }>> {
+  return request('/api/shop/mine/unpublish', { method: 'POST', body: '{}' }, (r): (ShopView & { changed: boolean }) | undefined =>
+    r?.shop ? r as ShopView & { changed: boolean } : undefined);
+}

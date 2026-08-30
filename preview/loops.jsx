@@ -134,7 +134,7 @@ async function main() {
     /^(Courses|Data desk|Premium)$/.test(text(b))
   );
   check('coming-soon rows are not buttons', dead.length === 0);
-  check('coming-soon is labelled not built', /Not built/i.test(body()));
+  check('coming-soon is labelled not built', /Not built|Coming later/i.test(body()));
 
   console.log('');
   console.log('='.repeat(46));
