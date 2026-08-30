@@ -69,6 +69,10 @@ const EMPTY = {
   // WhatsApp shops: the builder state. The storefront is WhatsApp itself —
   // the share output (formatted text + wa.me link) is derived, never stored.
   shops: [],
+
+  // Duka book: logged sales (the paper-ledger replacement). Rows are facts;
+  // every total, top-item and low-stock flag is DERIVED at read time.
+  shopSales: [],
   referralConversions: [],
   // Creator distribution layer. A campaign wraps an existing object; its
   // metrics are derived, never stored. See src/domain/campaign.js.

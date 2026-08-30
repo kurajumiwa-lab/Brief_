@@ -1,7 +1,182 @@
 import React from 'react';
-import { Plus, Trash2, Copy, ExternalLink, Send, ShieldCheck, Store } from 'lucide-react';
+import { Plus, Trash2, Copy, ExternalLink, Send, ShieldCheck, Store, BookOpen } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
-import type { ShopView, ShopItem } from '../api/briefApi';
+import type { ShopView, ShopItem, ShopBook } from '../api/briefApi';
+
+
+// --- THE DUKA BOOK: the paper-ledger replacement, derived -------------------
+//
+// Brief never claims to see inside WhatsApp. The book holds what the
+// shopkeeper logs — 3 fields — and derives today, the week, top items and
+// low stock. A logged sale carries a clientKey so the OFFLINE QUEUE can
+// replay it safely when the signal returns.
+function TheBook({ items, onQueued }: { items: { name: string; priceKes: string }[]; onQueued?: (n: number) => void }) {
+  const [book, setBook] = React.useState<ShopBook | null>(null);
+  const [name, setName] = React.useState('');
+  const [qty, setQty] = React.useState('1');
+  const [note, setNote] = React.useState<string | null>(null);
+  const [busy, setBusy] = React.useState(false);
+
+  const load = React.useCallback(async () => {
+    const r = await briefApi.getMyBook();
+    if (r.ok) setBook(r.data);
+  }, []);
+  React.useEffect(() => { void load(); }, [load]);
+
+  const log = async () => {
+    if (busy || !name.trim()) return;
+    setBusy(true); setNote(null);
+    const item = items.find((i) => i.name === name);
+    const res = await briefApi.logShopSale({
+      name: name.trim(),
+      qty: Number(qty) || 1,
+      unitKes: item ? Number(item.priceKes) : undefined as unknown as number,
+      clientKey: `sale_${name.trim()}_${Date.now().toString(36)}`
+    });
+    setBusy(false);
+    if (res.ok) {
+      setNote(res.data.replayed ? 'Already recorded — nothing doubled.' : 'Logged.');
+      setQty('1');
+      await load();
+      return;
+    }
+    // undefined unitKes when the item is not on the list: ask for the price.
+    if (/unit price/.test(res.error)) {
+      const typed = window.prompt(`${name.trim()} is not on your price list — what did it sell for (KES)?`);
+      if (!typed) return;
+      setBusy(true);
+      const retry = await briefApi.logShopSale({ name: name.trim(), qty: Number(qty) || 1, unitKes: Number(typed.replace(/[^\d]/g, '')), clientKey: `sale_${name.trim()}_${Date.now().toString(36)}` });
+      setBusy(false);
+      if (retry.ok) { setNote('Logged.'); setQty('1'); await load(); return; }
+      if ((retry as { queued?: boolean }).queued) { setNote('Offline — queued. It will send itself when you reconnect.'); onQueued?.(briefApi.offlineQueueDepth()); return; }
+      setNote(retry.error);
+      return;
+    }
+    if ((res as { queued?: boolean }).queued) {
+      setNote('Offline — queued. It will send itself when you reconnect.');
+      onQueued?.(briefApi.offlineQueueDepth());
+      return;
+    }
+    setNote(res.error);
+  };
+
+  const kes = (n: number) => `KES ${n.toLocaleString()}`;
+
+  return (
+    <section aria-label="The book" className="bg-[#FFFFFF] border border-[#D6CFE4] rounded-2xl p-4 space-y-3">
+      <div className="flex items-center gap-2">
+        <BookOpen className="w-4 h-4 text-[#5B2EA6]" aria-hidden="true" />
+        <h3 className="text-[13px] font-extrabold text-[#251045]">The book</h3>
+        {book && <span className="text-[9px] text-[#251045]/45 ml-auto">derived, never stored</span>}
+      </div>
+
+      {book ? (
+        <>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { label: 'Today', d: book.today },
+              { label: 'Yesterday', d: book.yesterday },
+              { label: '7 days', d: book.week }
+            ].map(({ label, d }) => (
+              <div key={label} className="rounded-xl bg-[#F1EDF7] px-2.5 py-2">
+                <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-[#251045]/50">{label}</p>
+                <p className="text-[13px] font-extrabold text-[#251045] mt-0.5 truncate">{kes(d.kes)}</p>
+                <p className="text-[9px] text-[#251045]/55">{d.sales} sale{d.sales === 1 ? '' : 's'} · {d.items} item{d.items === 1 ? '' : 's'}</p>
+              </div>
+            ))}
+          </div>
+
+          {book.topItems.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {book.topItems.map((t, i) => (
+                <span key={t.name} className="px-2 py-0.5 rounded-full bg-[#F1EDF7] text-[10px] font-bold text-[#251045]/70">
+                  {i === 0 ? '🔥 ' : ''}{t.name} ×{t.qty}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {book.lowStock.length > 0 && (
+            <p className="text-[10px] font-bold text-[#B3261E]">
+              Low stock: {book.lowStock.map((i) => `${i.name} (${i.remaining})`).join(' · ')}
+            </p>
+          )}
+
+          <div className="flex items-center gap-1.5 pt-1 border-t border-[#D6CFE4]">
+            <input list="book-items" value={name} onChange={(e) => setName(e.target.value)} placeholder="What sold?" maxLength={60}
+              className="flex-1 min-w-0 rounded-lg border border-[#D6CFE4] bg-[#FBFAFD] px-2.5 py-1.5 text-[12px] font-bold text-[#251045] outline-none focus:border-[#5B2EA6]" />
+            <datalist id="book-items">
+              {items.map((i) => <option key={i.name} value={i.name} />)}
+            </datalist>
+            <input value={qty} onChange={(e) => setQty(e.target.value.replace(/[^\d]/g, ''))} placeholder="1" inputMode="numeric"
+              className="w-12 rounded-lg border border-[#D6CFE4] bg-[#FBFAFD] px-2 py-1.5 text-[12px] text-[#251045] outline-none focus:border-[#5B2EA6]" aria-label="quantity" />
+            <button type="button" onClick={() => void log()} disabled={busy || !name.trim()}
+              className="rounded-lg bg-[#5B2EA6] px-3 py-1.5 text-[11px] font-extrabold text-[#FFFFFF] disabled:opacity-40 cursor-pointer">Log</button>
+          </div>
+          {note && <p role="status" className="text-[10px] font-bold text-[#2E6B3F]">{note}</p>}
+          <p className="text-[9.5px] text-[#251045]/45 leading-snug">{book.note}</p>
+        </>
+      ) : (
+        <p className="text-[11px] text-[#251045]/55">Save the shop and the book opens — today, the week, what is moving, what is low.</p>
+      )}
+    </section>
+  );
+}
+
+// --- POOL A RESTOCK: the Shop ↔ Group Buy bridge -----------------------------
+function PoolACard({ items }: { items: { name: string; priceKes: string }[] }) {
+  const [itemName, setItemName] = React.useState('');
+  const [unitCost, setUnitCost] = React.useState('');
+  const [goal, setGoal] = React.useState('');
+  const [mine, setMine] = React.useState('');
+  const [out, setOut] = React.useState<{ text: string; waMe: string; target: number; total: number } | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+  const [busy, setBusy] = React.useState(false);
+
+  const pool = async () => {
+    if (busy) return;
+    setBusy(true); setError(null); setOut(null);
+    const res = await briefApi.poolRestock({ itemName, unitCostKes: Number(unitCost), goalUnits: Number(goal), myUnits: Number(mine) });
+    setBusy(false);
+    if (!res.ok) { setError(res.error); return; }
+    setOut({ text: res.data.share.text, waMe: res.data.share.waMe, target: res.data.pool.targetAmount, total: res.data.pool.total });
+  };
+
+  return (
+    <section aria-label="Pool a restock" className="bg-[#FFFFFF] border border-[#D6CFE4] rounded-2xl p-4 space-y-2.5">
+      <div className="flex items-baseline justify-between gap-2">
+        <h3 className="text-[13px] font-extrabold text-[#251045]">Pool a restock</h3>
+        <span className="text-[9px] text-[#251045]/45">bulk price, pooled demand</span>
+      </div>
+      <p className="text-[10.5px] text-[#251045]/60 leading-snug">
+        Pick an item you sell, say the bulk unit cost and a goal. Brief opens a Group Buy — other shops pool in, and everyone buys at the bulk price.
+      </p>
+      <div className="grid grid-cols-2 gap-1.5">
+        <input list="book-items" value={itemName} onChange={(e) => setItemName(e.target.value)} placeholder="Item (from your list)" maxLength={60}
+          className="col-span-2 rounded-lg border border-[#D6CFE4] bg-[#FBFAFD] px-2.5 py-1.5 text-[12px] font-bold text-[#251045] outline-none focus:border-[#5B2EA6]" />
+        <input value={unitCost} onChange={(e) => setUnitCost(e.target.value.replace(/[^\d]/g, ''))} placeholder="Bulk cost/unit (KES)" inputMode="numeric"
+          className="rounded-lg border border-[#D6CFE4] bg-[#FBFAFD] px-2.5 py-1.5 text-[12px] text-[#251045] outline-none focus:border-[#5B2EA6]" aria-label="bulk unit cost in shillings" />
+        <input value={goal} onChange={(e) => setGoal(e.target.value.replace(/[^\d]/g, ''))} placeholder="Goal (units)" inputMode="numeric"
+          className="rounded-lg border border-[#D6CFE4] bg-[#FBFAFD] px-2.5 py-1.5 text-[12px] text-[#251045] outline-none focus:border-[#5B2EA6]" aria-label="goal units" />
+        <input value={mine} onChange={(e) => setMine(e.target.value.replace(/[^\d]/g, ''))} placeholder="Your units" inputMode="numeric"
+          className="rounded-lg border border-[#D6CFE4] bg-[#FBFAFD] px-2.5 py-1.5 text-[12px] text-[#251045] outline-none focus:border-[#5B2EA6]" aria-label="your pledged units" />
+        <button type="button" onClick={() => void pool()} disabled={busy || !itemName || !unitCost || !goal || !mine}
+          className="rounded-lg bg-[#5B2EA6] px-3 py-1.5 text-[11px] font-extrabold text-[#FFFFFF] disabled:opacity-40 cursor-pointer">Open the pool</button>
+      </div>
+      {error && <p role="alert" className="text-[10.5px] font-bold text-[#B3261E]">{error}</p>}
+      {out && (
+        <div className="rounded-xl bg-[#E9E5F0] border border-[#D6CFE4] p-2.5 space-y-1.5">
+          <p className="text-[10.5px] font-bold text-[#251045]">Pool open — KES {out.total.toLocaleString()} of {out.target.toLocaleString()} pledged.</p>
+          <pre className="whitespace-pre-wrap font-sans text-[10.5px] leading-relaxed text-[#251045] select-all">{out.text}</pre>
+          <a href={out.waMe} target="_blank" rel="noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#5B2EA6] px-3 py-1.5 text-[10.5px] font-extrabold text-[#FFFFFF] no-underline">
+            <Send className="w-3 h-3" /> Call other shops on WhatsApp
+          </a>
+        </div>
+      )}
+    </section>
+  );
+}
 
 // WHATSAPP SHOP BUILDER — Brief builds the shop, WhatsApp IS the shop.
 // The preview on the right is the EXACT text (real WhatsApp formatting:
@@ -237,6 +412,10 @@ export function WhatsAppShopBuilder({ onOpenFees }: { onOpenFees: () => void }) 
           </div>
         </div>
       </div>
+
+      {/* The book and the pool: the shop's daily arithmetic, full width. */}
+      <TheBook items={items.map((i) => ({ name: i.name, priceKes: i.priceKes }))} />
+      <PoolACard items={items.map((i) => ({ name: i.name, priceKes: i.priceKes }))} />
     </div>
   );
 }

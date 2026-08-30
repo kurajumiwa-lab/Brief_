@@ -119,18 +119,21 @@ node live/11-arena-progression.mjs    # Arena retention layer: XP/Coins/missions
                                       # season/rivals/rating replay, over HTTP
 node live/12-whatsapp-shop.mjs        # WhatsApp shop: formatting, wa.me link,
                                       # publish gated on a confirmed Pochi fee
+node live/13-duka-book.mjs            # the SME layer: logged sales + derived
+                                      # book, idempotent offline replays, pooled
+                                      # restocks, escrow records — over HTTP
 ```
 
-**Current state: 3828 assertions, 0 failing** — measured 2026-08-30 against a
+**Current state: 3889 assertions, 0 failing** — measured 2026-08-30 against a
 production build over HTTP, not inherited from an earlier report.
 
 | Suite | Result |
 |---|---|
-| `server/test/run.js` | 2005 passed / 0 failed / 1 skipped |
+| `server/test/run.js` | 2028 passed / 0 failed / 1 skipped |
 | `server/test/livecamp.mjs` | 111 passed / 0 failed |
-| `./run-suites.sh` (43 client suites) | 1383 passed / 0 failed |
+| `./run-suites.sh` (44 client suites) | 1404 passed / 0 failed |
 | `tc` strict typecheck | exit 0 |
-| `live/` against the production build | 43+27+82+18+35+26+34+16+17+14+17 = 329 / 0 |
+| `live/` against the production build | 43+27+82+18+35+26+34+16+17+14+17+13 = 342 / 0 |
 
 The server suite hits real third parties (BBC's RSS feed, GitHub's robots.txt,
 Telegram's API). Those tests **skip** rather than pass when the network is
@@ -326,3 +329,13 @@ The architecture is stated in the product, not hidden: **Brief builds the shop, 
 ## Menu, redesigned as part of the same app
 
 The Menu was rebuilt to the Arena screen's visual system instead of a dark modal: lavender page, white cards, deep-purple actions, and gold reserved for membership status alone. It is a full navigation surface beneath the dock (the bottom nav stays visible), with exactly one close control. The account is one compact card (standing derived on demand), Explore is a four-door icon grid — no photography, since Menu navigates while the home screen explores — Quick Actions are compact rows in one card, and coming-later items are a single quiet line. `preview/menusheet.jsx` holds the rules (one `×`, no neon, no `img`).
+
+
+## The Duka layer: book, pools, escrow records, offline shell
+
+The SME-digitization build (see `MARKET-GAPS-ADVISORY.md`), all on existing seams:
+
+- **The Duka book** — the paper-ledger replacement. Brief never claims to see inside WhatsApp: the shopkeeper LOGS a sale in 3 fields (item, qty, price) and everything is derived — today/yesterday/7-day totals, top items, low stock (price-list stock minus the week). `GET /api/shop/mine/book`, `POST /api/shop/mine/sales`. Sales carry a `clientKey`; a replay of the same key returns the original row (`replayed: true`), never a second sale.
+- **Pooled restocks** — "pool this item" opens a real Group Buy (`POST /api/shop/mine/pool`): the shopkeeper declares the bulk unit cost and a goal, pledges their own units, and the engine's funding → escrow → dispatched → delivered stepper takes over. Other shops contribute; the share text is a forwardable WhatsApp call (`*RESTOCK POOL*`).
+- **Escrow-as-records** — `GET /api/escrows/mine` derives what is HELD and what is RELEASED for one member across every escrow pattern (group buys, ticket resale orders; HudumaLink citizen escrow stays phone-keyed at the operator desk). Records only: Brief moves no money.
+- **The offline shell** — PWA manifest + service worker (`preview/public/`): hashed assets cache-first, navigations network-first with a cached-shell fallback, and the API is NEVER cached (a cached read pretending to be live is a lie). Writes survive a dead signal through `src/api/offlineQueue.ts`: a failed POST is parked in localStorage with its clientKey, the surface says "queued", and the browser's `online` event drains the queue oldest-first; server-side idempotency makes a double-send harmless. Refusals on replay land in `deadLetters`, visible — never silently deleted.

@@ -5079,6 +5079,14 @@ export function App() {
     bootRoute.workflow !== 'active' ? 'screen' : 'queue'
   );
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // The offline queue drains itself the moment the browser says the signal is
+  // back. Server-side idempotency keys make a double-flush harmless.
+  React.useEffect(() => {
+    const flush = () => { void briefApi.flushOfflineQueue(); };
+    window.addEventListener('online', flush);
+    return () => window.removeEventListener('online', flush);
+  }, []);
   const [adminOpen, setAdminOpen] = useState(false);
   const [sessionUser, setSessionUser] = useState<briefApi.AuthedUser | null>(null);
 

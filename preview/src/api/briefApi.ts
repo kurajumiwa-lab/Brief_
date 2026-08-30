@@ -91,6 +91,7 @@ import type {
   CheckInResult,
   CommandCentre
 } from './types';
+import { enqueue, replayQueue, queueDepth, type QueuedWrite } from './offlineQueue';
 import { asTarget } from './types';
 import {
   areBlocks, areCampaigns, areCircles, areMembers, areRegistrations,
@@ -250,13 +251,74 @@ async function send<T>(
     }
     return { ok: true, data };
   } catch (e) {
-    // Network failure, offline server, aborted request.
+    // Network failure, offline server, aborted request. A WRITE is not lost:
+    // it is parked with a clientKey and replays after reconnect — the
+    // server-side idempotency makes the replay safe. A read is just offline.
+    const method = (init.method ?? 'GET').toUpperCase();
+    if (method !== 'GET' && method !== 'HEAD') {
+      const body = typeof init.body === 'string' ? init.body : null;
+      const token = getSessionToken();
+      enqueue({
+        path,
+        method,
+        body,
+        // The key travels in the body itself; a re-tap replaces, not doubles.
+        clientKey: (body ? clientKeyOf(body) : null) ?? `auto_${method}_${path}_${Date.now().toString(36)}`,
+        headers: token ? { authorization: `Bearer ${token}` } : undefined
+      });
+      return {
+        ok: false,
+        status: null,
+        queued: true,
+        error: 'You are offline — this change is queued and will send itself when you reconnect.'
+      };
+    }
     return {
       ok: false,
       status: null,
       error: e instanceof Error ? e.message : 'network error'
     };
   }
+}
+
+/** Pull a clientKey out of a JSON body, if the caller sent one. */
+function clientKeyOf(body: string): string | null {
+  try {
+    const parsed = JSON.parse(body);
+    return typeof parsed?.clientKey === 'string' ? parsed.clientKey : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Replay the offline queue through the same fetch contract. Called on the
+ * browser's 'online' event. Idempotent server keys make double-sends harmless.
+ */
+export async function flushOfflineQueue(): Promise<number> {
+  return replayQueue(async (w: QueuedWrite) => {
+    const headers: Record<string, string> = {};
+    if (w.body) headers['content-type'] = 'application/json';
+    const token = getSessionToken();
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`${INGEST_API}${w.path}`, {
+      method: w.method,
+      headers,
+      body: w.body ?? undefined
+    });
+    if (res.ok) return { ok: true };
+    const text = await res.text().catch(() => '');
+    let errMsg = `replay failed with status ${res.status}`;
+    try {
+      errMsg = JSON.parse(text)?.error ?? errMsg;
+    } catch {}
+    return { ok: false, error: errMsg };
+  });
+}
+
+/** How many writes are parked, for a badge if a surface wants one. */
+export function offlineQueueDepth(): number {
+  return queueDepth();
 }
 
 // ---------------------------------------------------------------------------
@@ -3569,4 +3631,48 @@ export function publishMyShop(): Promise<ApiResult<ShopView & { changed: boolean
 export function unpublishMyShop(): Promise<ApiResult<ShopView & { changed: boolean }>> {
   return request('/api/shop/mine/unpublish', { method: 'POST', body: '{}' }, (r): (ShopView & { changed: boolean }) | undefined =>
     r?.shop ? r as ShopView & { changed: boolean } : undefined);
+}
+
+// ---------------------------------------------------------------------------
+// THE DUKA BOOK + POOLED RESTOCKS + ESCROW RECORDS
+//
+// The book holds what the shopkeeper LOGS (Brief never claims to see inside
+// WhatsApp); every total is derived server-side. Sales carry a clientKey so
+// the offline queue can replay them safely. Escrow rows are RECORDS of funds
+// held between two sides — Brief moves no money itself.
+// ---------------------------------------------------------------------------
+
+export interface ShopSale { id: string; name: string; qty: number; unitKes: number; amountKes: number; channel: string; day: string; createdAt: string; clientKey: string | null }
+export interface ShopBook {
+  shop: { id: string | null; name: string; status: string };
+  today: { sales: number; items: number; kes: number };
+  yesterday: { sales: number; items: number; kes: number };
+  week: { sales: number; items: number; kes: number };
+  topItems: { name: string; qty: number }[];
+  items: { name: string; priceKes: number; stockQty: number | null; soldWeek: number; remaining: number | null }[];
+  lowStock: { name: string; remaining: number }[];
+  recent: ShopSale[];
+  note: string;
+}
+export interface EscrowRow { id: string; kind: 'group_buy' | 'ticket'; refId: string; title: string; role: string; state: 'pending' | 'locked' | 'released' | 'refunded'; amountKes: number; updatedAt: string }
+export interface MyEscrows { rows: EscrowRow[]; totals: { heldKes: number; releasedKes: number; heldCount: number }; note: string }
+
+export function getMyBook(): Promise<ApiResult<ShopBook>> {
+  return request('/api/shop/mine/book', undefined, (r): ShopBook | undefined =>
+    r?.today && Array.isArray(r?.topItems) ? r as ShopBook : undefined);
+}
+
+export function logShopSale(body: { name: string; qty: number; unitKes: number; channel?: string; clientKey?: string }): Promise<ApiResult<{ sale: ShopSale; replayed: boolean }>> {
+  return request('/api/shop/mine/sales', { method: 'POST', body: JSON.stringify(body) }, (r): { sale: ShopSale; replayed: boolean } | undefined =>
+    r?.sale ? r as { sale: ShopSale; replayed: boolean } : undefined);
+}
+
+export function poolRestock(body: { itemName: string; unitCostKes: number; goalUnits: number; myUnits: number }): Promise<ApiResult<{ pool: { id: string; title: string; targetAmount: number; total: number; stage: string }; share: { text: string; waMe: string } }>> {
+  return request('/api/shop/mine/pool', { method: 'POST', body: JSON.stringify(body) }, (r): { pool: { id: string; title: string; targetAmount: number; total: number; stage: string }; share: { text: string; waMe: string } } | undefined =>
+    r?.pool ? r as { pool: { id: string; title: string; targetAmount: number; total: number; stage: string }; share: { text: string; waMe: string } } : undefined);
+}
+
+export function getMyEscrows(): Promise<ApiResult<MyEscrows>> {
+  return request('/api/escrows/mine', undefined, (r): MyEscrows | undefined =>
+    Array.isArray(r?.rows) && r?.totals ? r as MyEscrows : undefined);
 }

@@ -530,7 +530,9 @@ export interface AuthStatus {
 
 export type ApiResult<T> =
   | { ok: true; data: T }
-  | { ok: false; error: string; status: number | null; errorBody?: any };
+  // queued: the write is PARKED for replay after reconnect (offline queue),
+  // not done. Surfaces say so instead of pretending success.
+  | { ok: false; error: string; status: number | null; errorBody?: any; queued?: boolean };
 
 /** UI-facing load state, so screens can render loading/empty/error honestly. */
 export interface LoadState<T> {

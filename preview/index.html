@@ -5,6 +5,10 @@
     <meta name="theme-color" content="#D8D2E1" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Brief</title>
+    <!-- The offline shell: installable, and it paints from cache when the
+         signal dies. Writes survive via the offline queue (idempotent,
+         server-deduped) — the API itself is never cached. -->
+    <link rel="manifest" href="/manifest.webmanifest" />
     <!-- Telegram WebApp SDK: enables Mini App auth (initData) when the app is
          opened inside Telegram. Harmless no-op outside Telegram. -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -33,5 +37,14 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-  </body>
+      <script>
+      // Feature-detected and fail-silent: no service worker support (or an
+      // insecure context) simply means no offline shell — the app still works.
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('/sw.js').catch(function () {});
+        });
+      }
+    </script>
+</body>
 </html>

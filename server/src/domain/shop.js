@@ -24,6 +24,7 @@
 import { store, newId } from '../store.js';
 import { SERVICE_CATALOG } from './fees.js';
 import { notify } from './notifications.js';
+import { createGroupBuy, contribute, getGroupBuy } from './groupbuy.js';
 
 const MAX_ITEMS = 40; // a forwarded price list must stay readable
 const STORE_DAYS = 30; // store_monthly is one calendar month of service
@@ -38,7 +39,11 @@ function cleanItem(raw, index) {
   if (!Number.isFinite(priceKes) || priceKes < 1 || priceKes > 1_000_000) {
     throw new Error(`item ${index + 1} (${name}) needs a price in whole shillings`);
   }
-  return { id: raw?.id ?? newId('shopitem'), name, priceKes, note: note || null };
+  const stockQty = raw?.stockQty == null || raw?.stockQty === '' ? null : Math.round(Number(raw.stockQty));
+  if (stockQty != null && (!Number.isInteger(stockQty) || stockQty < 0 || stockQty > 100000)) {
+    throw new Error(`item ${index + 1} (${name}): stock must be a whole number of units, or left blank`);
+  }
+  return { id: raw?.id ?? newId('shopitem'), name, priceKes, note: note || null, stockQty };
 }
 
 /** The member's single shop row, or a blank draft. One shop per member:
@@ -162,5 +167,155 @@ export function shopView(userId) {
     share: hasShop
       ? { text: whatsappText(shop), waMe: waMeLink(shop), shareable: shop.status === 'published' }
       : null
+  };
+}
+// --- The Duka Book (the paper-ledger replacement) ----------------------------
+//
+// HONESTY FIRST: orders that happen inside WhatsApp are not seen by Brief and
+// it never pretends otherwise. The Book is what the shopkeeper logs — a
+// 3-field sale record (item, qty, price) — and everything else is derived:
+// today, yesterday, the week, top items, low stock. Ten seconds a day beats a
+// shoebox of paper, and the logged rows are the only sales truth there is.
+//
+// clientKey: sales may arrive from the offline queue (see the PWA shell), so
+// recordSale is idempotent per (owner, clientKey) — a replayed write is a
+// no-op that returns the original row, never a second sale.
+
+const CHANNELS = ['counter', 'whatsapp', 'other'];
+
+/** Kenya-local calendar day (YYYY-MM-DD). The duka's "today" is Nairobi's. */
+function nairobiDay(iso = new Date().toISOString()) {
+  return new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Africa/Nairobi' });
+}
+
+export function recordSale(userId, { name, qty, unitKes, channel = 'counter', clientKey = null } = {}) {
+  const shop = store.find('shops', (s) => s.ownerId === userId);
+  if (!shop) throw new Error('save the shop first — the book belongs to it');
+  const cleanName = String(name ?? '').trim().slice(0, 60);
+  if (!cleanName) throw new Error('what sold? the item name is required');
+  const q = Number(qty);
+  if (!Number.isInteger(q) || q < 1 || q > 1000) throw new Error('quantity must be a whole number between 1 and 1000');
+  const unit = Math.round(Number(unitKes));
+  if (!Number.isFinite(unit) || unit < 1 || unit > 1_000_000) throw new Error('the unit price must be whole shillings');
+  if (!CHANNELS.includes(channel)) throw new Error(`channel must be one of ${CHANNELS.join(', ')}`);
+  const key = clientKey ? String(clientKey).trim().slice(0, 80) : null;
+
+  if (key) {
+    const existing = store.find('shopSales', (r) => r.ownerId === userId && r.clientKey === key);
+    if (existing) return { sale: existing, replayed: true };
+  }
+
+  const sale = store.insert('shopSales', {
+    id: newId('sale'),
+    ownerId: userId,
+    shopId: shop.id,
+    name: cleanName,
+    qty: q,
+    unitKes: unit,
+    amountKes: q * unit,
+    channel,
+    day: nairobiDay(),
+    clientKey: key,
+    createdAt: new Date().toISOString()
+  });
+  return { sale, replayed: false };
+}
+
+/** The whole book, derived. Nothing here is stored. */
+export function bookView(userId) {
+  const shop = myShop(userId);
+  const rows = store
+    .filter('shopSales', (r) => r.ownerId === userId)
+    .slice()
+    .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+
+  const today = nairobiDay();
+  const yesterday = nairobiDay(new Date(Date.now() - 86400000).toISOString());
+  const weekStart = nairobiDay(new Date(Date.now() - 6 * 86400000).toISOString());
+
+  const sumOf = (list) => ({
+    sales: list.length,
+    items: list.reduce((t, r) => t + r.qty, 0),
+    kes: list.reduce((t, r) => t + r.amountKes, 0)
+  });
+  const dayRows = (d) => rows.filter((r) => r.day === d);
+  const weekRows = rows.filter((r) => r.day >= weekStart);
+
+  // Per-item movement, joined against the price list so low stock is real.
+  const soldByItem = new Map();
+  for (const r of weekRows) soldByItem.set(r.name, (soldByItem.get(r.name) ?? 0) + r.qty);
+  const items = (shop.items ?? []).map((it) => ({
+    name: it.name,
+    priceKes: it.priceKes,
+    stockQty: it.stockQty ?? null,
+    soldWeek: soldByItem.get(it.name) ?? 0,
+    remaining: it.stockQty != null ? Math.max(0, it.stockQty - (soldByItem.get(it.name) ?? 0)) : null
+  }));
+
+  const topItems = [...soldByItem.entries()]
+    .map(([name, qty]) => ({ name, qty }))
+    .sort((a, b) => b.qty - a.qty)
+    .slice(0, 5);
+
+  return {
+    shop: { id: shop.id, name: shop.name, status: shop.status },
+    today: sumOf(dayRows(today)),
+    yesterday: sumOf(dayRows(yesterday)),
+    week: sumOf(weekRows),
+    topItems,
+    items,
+    lowStock: items.filter((it) => it.remaining != null && it.remaining <= 2),
+    recent: rows.slice(0, 8),
+    note: 'The book holds what you log. Sales that happen inside WhatsApp are yours to record — ten seconds keeps the book true.'
+  };
+}
+
+// --- Pool a restock (the Shop ↔ Group Buy bridge) ----------------------------
+//
+// "Wholesale aggregation" on the existing engine: the shopkeeper picks an
+// item THEY SELL, declares the bulk unit cost and a goal, pledges their own
+// units, and Brief opens a Group Buy whose target is the bulk cost of the
+// goal. Other shops contribute toward the same target; the money records,
+// escrow stages and receipts are the Group Buy engine's, unchanged. The
+// share text is the forwardable WhatsApp call for other shopkeepers.
+
+export function poolRestock(userId, { itemName, unitCostKes, goalUnits, myUnits, note = null } = {}) {
+  const shop = store.find('shops', (s) => s.ownerId === userId);
+  if (!shop) throw new Error('save the shop first');
+  const item = (shop.items ?? []).find((it) => it.name === String(itemName ?? '').trim());
+  if (!item) throw new Error('pool an item that is on your price list');
+
+  const unitCost = Math.round(Number(unitCostKes));
+  if (!Number.isFinite(unitCost) || unitCost < 1 || unitCost > 1_000_000) throw new Error('the bulk unit cost must be whole shillings');
+  const goal = Number(goalUnits);
+  if (!Number.isInteger(goal) || goal < 2 || goal > 1000) throw new Error('the goal must be at least 2 units (a pool needs others)');
+  const mine = Number(myUnits);
+  if (!Number.isInteger(mine) || mine < 1 || mine > goal) throw new Error('your pledge must be between 1 unit and the goal');
+
+  const target = unitCost * goal;
+  const buy = createGroupBuy({
+    ownerId: userId,
+    title: `Restock pool: ${item.name}`,
+    targetAmount: target,
+    note: note ? String(note).trim().slice(0, 200) : `Bulk ${unitCost.toLocaleString('en-KE')}/unit · goal ${goal} · pool by ${shop.name}`
+  });
+  contribute({ groupBuyId: buy.id, memberRef: `${shop.name} (owner)`, amount: unitCost * mine, source: 'mpesa' });
+
+  const poolText = [
+    '*RESTOCK POOL*',
+    `_${item.name} — pooled by ${shop.name}_`,
+    '',
+    `Bulk price: *KES ${unitCost.toLocaleString('en-KE')}/unit*`,
+    `Goal: ${goal} units (KES ${target.toLocaleString('en-KE')})`,
+    `Pledged so far: ${mine} units`,
+    '',
+    'Pool with me and we all buy at the bulk price.',
+    'Join in Brief → Workflows → Group Buy'
+  ].join('\n');
+
+  const view = getGroupBuy(buy.id);
+  return {
+    pool: view,
+    share: { text: poolText, waMe: `${waMeLink(shop).split('?')[0]}?text=${encodeURIComponent(poolText)}` }
   };
 }

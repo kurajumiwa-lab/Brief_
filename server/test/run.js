@@ -7873,6 +7873,117 @@ console.log('\n=== WHATSAPP SHOP: BUILD ON BRIEF, SELL IN WHATSAPP ===');
 }
 
 
+
+console.log('\n=== DUKA BOOK, POOLED RESTOCKS, ESCROW-AS-RECORDS ===');
+{
+  // The paper-ledger replacement: sales are LOGGED facts (Brief never claims
+  // to see inside WhatsApp), every total is derived, a replayed offline write
+  // is a no-op, pooled restocks open real Group Buys, and one read layer
+  // shows funds held across every escrow pattern.
+  process.env.BRIEF_DEV_AUTH = '0';
+  const { default: app } = await import('../src/index.js');
+  store._reset();
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, token) => {
+    const headers = {};
+    if (body) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    const reg = async (h) => (await call('/api/auth/register', 'POST', { handle: h + Date.now().toString(36), password: 'a good passphrase' })).body;
+    const duka = await reg('duka');
+
+    let r = await call('/api/shop/mine/book');
+    check('the book is members-only (401)', r.status === 401);
+
+    // A shop with stock on two items — the book joins sales to the list.
+    r = await call('/api/shop/mine', 'PUT', {
+      name: 'Kilimani Duka', tagline: 'Everyday things', orderNumber: '+254700111222',
+      items: [
+        { name: 'Cooking oil (L)', priceKes: 350, stockQty: 6 },
+        { name: 'Unga 2kg', priceKes: 210, stockQty: 20 },
+        { name: 'Matchboxes', priceKes: 10, stockQty: 3 }
+      ]
+    }, duka.token);
+    check('a shop with stock saves', r.status === 201 && r.body?.shop?.items?.[0]?.stockQty === 6, JSON.stringify(r.body?.shop?.items?.[0]));
+
+    // Logging sales: the 3-field intake.
+    r = await call('/api/shop/mine/sales', 'POST', { name: 'Cooking oil (L)', qty: 2, unitKes: 350 }, duka.token);
+    check('a sale logs', r.status === 201 && r.body?.sale?.amountKes === 700, JSON.stringify(r.body?.sale));
+    await call('/api/shop/mine/sales', 'POST', { name: 'Unga 2kg', qty: 3, unitKes: 210 }, duka.token);
+    await call('/api/shop/mine/sales', 'POST', { name: 'Cooking oil (L)', qty: 1, unitKes: 350, channel: 'whatsapp' }, duka.token);
+
+    // The offline queue replay: same clientKey, never a second sale.
+    r = await call('/api/shop/mine/sales', 'POST', { name: 'Cooking oil (L)', qty: 1, unitKes: 350, clientKey: 'off-1' }, duka.token);
+    check('an offline write lands with its key', r.status === 201 && r.body?.replayed === false);
+    r = await call('/api/shop/mine/sales', 'POST', { name: 'Cooking oil (L)', qty: 1, unitKes: 350, clientKey: 'off-1' }, duka.token);
+    check('replaying the same key is a no-op that returns the original row', r.status === 200 && r.body?.replayed === true && r.body?.sale?.clientKey === 'off-1');
+
+    // The derived book.
+    r = await call('/api/shop/mine/book', 'GET', undefined, duka.token);
+    const book = r.body;
+    check('today sums the logged rows', book?.today?.kes === 700 + 630 + 350 + 350, JSON.stringify(book?.today));
+    check('top items are ranked by quantity', book?.topItems?.[0]?.name === 'Cooking oil (L)' && book?.topItems?.[0]?.qty === 4, JSON.stringify(book?.topItems));
+    check('low stock is derived from the list minus the week', book?.lowStock?.some((i) => i.name === 'Cooking oil (L)' && i.remaining === 2), JSON.stringify(book?.lowStock));
+    check('the book states its own honesty', /WhatsApp are yours to record/.test(book?.note ?? ''));
+
+    // Validation that refuses.
+    r = await call('/api/shop/mine/sales', 'POST', { name: 'Unga 2kg', qty: 0, unitKes: 210 }, duka.token);
+    check('a zero quantity is refused', r.status === 400 && /quantity/.test(r.body?.error ?? ''));
+
+    // Pooled restock: a real Group Buy on the existing engine.
+    r = await call('/api/shop/mine/pool', 'POST', { itemName: 'Cooking oil (L)', unitCostKes: 260, goalUnits: 10, myUnits: 3 }, duka.token);
+    check('a pool opens as a real Group Buy with the owner pledge', r.status === 201 && r.body?.pool?.targetAmount === 2600 && r.body?.pool?.total === 780 && r.body?.pool?.stage === 'funding', JSON.stringify(r.body?.pool).slice(0, 140));
+    check('the share text is forwardable WhatsApp formatting', (r.body?.share?.text ?? '').includes('*RESTOCK POOL*') && (r.body?.share?.text ?? '').includes('KES 260/unit'));
+    check('the share link opens the shopkeeper\'s WhatsApp with the pool text', (r.body?.share?.waMe ?? '').startsWith('https://wa.me/254700111222?text='), r.body?.share?.waMe?.slice(0, 40));
+    r = await call('/api/shop/mine/pool', 'POST', { itemName: 'Not On The List', unitCostKes: 100, goalUnits: 5, myUnits: 1 }, duka.token);
+    check('pooling an item that is not on the list is refused', r.status === 400 && /price list/.test(r.body?.error ?? ''));
+    // A pool that is NOT yet covered stays funding — no premature target.
+    const poolId = (await call('/api/shop/mine/pool', 'POST', { itemName: 'Unga 2kg', unitCostKes: 180, goalUnits: 5, myUnits: 2 }, duka.token)).body.pool.id;
+    r = await call(`/api/engine/group-buys/${poolId}`, 'GET', undefined, duka.token);
+    check('an uncovered pool honestly stays funding', r.body?.groupBuy?.stage === 'funding' && r.body?.groupBuy?.total === 360, JSON.stringify(r.body?.groupBuy?.stage));
+    // A neighbour duka pools the rest — and the engine notices the target
+    // itself; nobody has to click it.
+    const neighbour = await reg('dukanext');
+    r = await call(`/api/engine/group-buys/${poolId}/contribute`, 'POST', { memberRef: 'Neighbour duka', amount: 540, source: 'mpesa' }, neighbour.token);
+    check('the engine reaches the target the moment contributions cover it', r.body?.stageChanged === true && r.body?.total === 900, JSON.stringify(r.body));
+    r = await call(`/api/engine/group-buys/${poolId}`, 'GET', undefined, duka.token);
+    check('the stepper says target_met', r.body?.groupBuy?.stage === 'target_met', JSON.stringify(r.body?.groupBuy?.stage));
+
+    // Escrow-as-records: one view across the patterns.
+    r = await call('/api/escrows/mine');
+    check('escrow records are members-only (401)', r.status === 401);
+    r = await call('/api/escrows/mine', 'GET', undefined, duka.token);
+    check('pools at funding are pending, not held', r.body?.rows?.every((x) => x.kind === 'group_buy') && r.body?.rows?.some((x) => x.state === 'pending' && x.role === 'owner'), JSON.stringify(r.body?.rows?.map((x) => x.state)));
+    await call(`/api/engine/group-buys/${poolId}/stage`, 'POST', { to: 'escrow' }, duka.token);
+    r = await call('/api/escrows/mine', 'GET', undefined, duka.token);
+    check('at the escrow stage the pool is HELD', r.body?.rows?.some((x) => x.refId === poolId && x.state === 'locked' && x.amountKes === 900), JSON.stringify(r.body?.rows?.find((x) => x.refId === poolId)));
+    await call(`/api/engine/group-buys/${poolId}/stage`, 'POST', { to: 'dispatched' }, duka.token);
+    await call(`/api/engine/group-buys/${poolId}/stage`, 'POST', { to: 'delivered' }, duka.token);
+    r = await call('/api/escrows/mine', 'GET', undefined, duka.token);
+    check('delivery RELEASES the record', r.body?.rows?.find((x) => x.refId === poolId)?.state === 'released');
+    check('totals are derived', r.body?.totals?.heldKes === 0 && r.body?.totals?.releasedKes === 900, JSON.stringify(r.body?.totals));
+
+    // The ticket adapter is pinned to the real row shape: if the shape
+    // drifts, this fails loudly instead of silently hiding ticket escrows.
+    store.insert('ticketOrders', {
+      id: 'tord_pin1', reference: 'TKT-PIN1', buyerId: duka.user.id, listingId: 'list_x',
+      sellerId: 'usr_someoneelse', ticketId: 'tk_x', eventId: 'ev_x', status: 'pending',
+      unitPrice: 500, fee: 0, total: 500, currency: 'KES', ledgerTxId: null,
+      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), cancelledAt: null
+    });
+    r = await call('/api/escrows/mine', 'GET', undefined, duka.token);
+    check('a ticket order between sale and receipt is HELD for the buyer',
+      r.body?.rows?.some((x) => x.kind === 'ticket' && x.role === 'buyer' && x.state === 'locked' && x.amountKes === 500), JSON.stringify(r.body?.rows?.find((x) => x.kind === 'ticket')));
+  } finally {
+    srv.close();
+  }
+}
+
+
 console.log(`\n${'='.repeat(52)}\nPASSED ${pass}   FAILED ${fail}   SKIPPED ${skip}\n${'='.repeat(52)}`);
 process.exit(fail ? 1 : 0);
 
