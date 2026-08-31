@@ -316,9 +316,6 @@ export function App() {
   // Which bundle each desk is showing is DERIVED from the open section rather
   // than stored: a deep link, a URL change or a notification jump cannot then
   // disagree with the chips, and there is no second source of truth to sync.
-  const activeWorkflowBundle = WORKFLOW_BUNDLES.find((b) =>
-    (b.sections as readonly string[]).includes(workflowSection)
-  ) ?? WORKFLOW_BUNDLES[0];
   // 'queue' is the landing view: one list of everything waiting on you. A tool
   // is only one tap deeper, filed under the bundle it belongs to.
   const [workflowView, setWorkflowView] = useState<'queue' | 'screen'>(
@@ -804,17 +801,6 @@ export function App() {
   };
 
 
-  const runBriefItPreview = async () => {
-    if (!briefItText.trim()) return;
-    setBriefItBusy(true);
-    setBriefItSaved(null);
-    try {
-      const res = await briefApi.previewBriefIt(briefItText);
-      setBriefItPreview(res.ok ? res.data : { error: res.error });
-    } finally {
-      setBriefItBusy(false);
-    }
-  };
 
   // Named runBriefItSave, not saveBriefIt: the latter is now the briefApi
   // binding, and shadowing it would be a trap for the next edit.
@@ -2187,8 +2173,6 @@ export function App() {
   // contribute a signal.
   // Workflows secondary is derived from real Journey data, not a new store.
 
-  const activeJourneys = useMemo(() => journeys.filter((j) => !j.isCompleted), [journeys]);
-  const completedJourneys = useMemo(() => journeys.filter((j) => j.isCompleted), [journeys]);
 
   const groupArenaSignals = useMemo(() => {
     const out: { id: string; groupName: string; summary: string; at: string }[] = [];
@@ -2420,10 +2404,6 @@ export function App() {
     return groups.filter((g) => g.items.length > 0 || g.expired.length > 0);
   }, [savedObjects]);
 
-  const pendingCandidates = useMemo(
-    () => candidates.filter((c) => !reviewed[c.id]),
-    [candidates, reviewed]
-  );
 
 
   // Computed once per render instead of on every call site in the modal.
@@ -2974,14 +2954,11 @@ export function App() {
         {/* WORKFLOWS */}
         {activeTab === 'workflows' && (
           <WorkflowsScreen
-            activeJourneys={activeJourneys}
             activeTab={activeTab}
-            activeWorkflowBundle={activeWorkflowBundle}
             briefItBusy={briefItBusy}
             briefItPreview={briefItPreview}
             briefItSaved={briefItSaved}
             briefItText={briefItText}
-            completedJourneys={completedJourneys}
             connectorStatus={connectorStatus}
             handleAcceptCandidate={handleAcceptCandidate}
             handleReceiveInbound={handleReceiveInbound}
@@ -2990,10 +2967,8 @@ export function App() {
             loadObjects={loadObjects}
             matches={matches}
             objects={objects}
-            pendingCandidates={pendingCandidates}
             refreshConnectors={refreshConnectors}
             reviewed={reviewed}
-            runBriefItPreview={runBriefItPreview}
             runBriefItSave={runBriefItSave}
             setBriefItPreview={setBriefItPreview}
             setBriefItSaved={setBriefItSaved}
@@ -3004,6 +2979,9 @@ export function App() {
             sources={sources}
             workflowSection={workflowSection}
             workflowView={workflowView}
+            candidates={candidates}
+            journeys={journeys}
+            setBriefItBusy={setBriefItBusy}
           />
         )}
 

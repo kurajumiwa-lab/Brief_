@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Briefcase, CheckCircle2, Circle } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
 import { WORKFLOW_BUNDLES, QUEUE_LABEL, QUEUE_CHIP, QUEUE_HINT, INBOX_TABS, ROOM } from '../ui/names';
@@ -21,7 +21,7 @@ import { TriageQueue } from '../components/TriageQueue';
 import { Vault } from '../components/vault/Vault';
 import { WhatsAppShopBuilder } from '../components/WhatsAppShopBuilder';
 import { YardEngineDesk } from '../components/YardEngineDesk';
-import type { ArenaMatch, BriefObject, CandidateStatus, Destination, Source, WorkflowSection } from '../model/core';
+import type { ArenaMatch, BriefObject, CandidateStatus, Destination, Source, WorkflowSection , IngestionCandidate, Journey } from '../model/core';
 
 // ---------------------------------------------------------------------------
 // WORKFLOWS SCREEN -- extracted from App.tsx (Phase 1: JSX move; shell keeps
@@ -30,14 +30,14 @@ import type { ArenaMatch, BriefObject, CandidateStatus, Destination, Source, Wor
 // ---------------------------------------------------------------------------
 
 export interface WorkflowsScreenProps {
-  activeJourneys: any;
+  candidates: IngestionCandidate[];
+  journeys: Journey[];
+  setBriefItBusy: React.Dispatch<React.SetStateAction<boolean>>;
   activeTab: Destination;
-  activeWorkflowBundle: any;
   briefItBusy: any;
   briefItPreview: any;
   briefItSaved: string | null;
   briefItText: any;
-  completedJourneys: any;
   connectorStatus: {
     online: boolean;
     checked: boolean;
@@ -52,10 +52,8 @@ export interface WorkflowsScreenProps {
   loadObjects: any;
   matches: ArenaMatch[];
   objects: BriefObject[];
-  pendingCandidates: any;
   refreshConnectors: any;
   reviewed: Record<string, CandidateStatus>;
-  runBriefItPreview: any;
   runBriefItSave: any;
   setBriefItPreview: React.Dispatch<React.SetStateAction<any>>;
   setBriefItSaved: React.Dispatch<React.SetStateAction<string | null>>;
@@ -70,14 +68,11 @@ export interface WorkflowsScreenProps {
 
 export function WorkflowsScreen(props: WorkflowsScreenProps) {
   const {
-    activeJourneys,
     activeTab,
-    activeWorkflowBundle,
     briefItBusy,
     briefItPreview,
     briefItSaved,
     briefItText,
-    completedJourneys,
     connectorStatus,
     handleAcceptCandidate,
     handleReceiveInbound,
@@ -86,10 +81,8 @@ export function WorkflowsScreen(props: WorkflowsScreenProps) {
     loadObjects,
     matches,
     objects,
-    pendingCandidates,
     refreshConnectors,
     reviewed,
-    runBriefItPreview,
     runBriefItSave,
     setBriefItPreview,
     setBriefItSaved,
@@ -100,7 +93,37 @@ export function WorkflowsScreen(props: WorkflowsScreenProps) {
     sources,
     workflowSection,
     workflowView,
+    candidates,
+    journeys,
+    setBriefItBusy,
   } = props;
+
+  // -- colocated from App (ownership pass) -----------------
+  const activeWorkflowBundle = WORKFLOW_BUNDLES.find((b) =>
+    (b.sections as readonly string[]).includes(workflowSection)
+  ) ?? WORKFLOW_BUNDLES[0];
+
+  const runBriefItPreview = async () => {
+    if (!briefItText.trim()) return;
+    setBriefItBusy(true);
+    setBriefItSaved(null);
+    try {
+      const res = await briefApi.previewBriefIt(briefItText);
+      setBriefItPreview(res.ok ? res.data : { error: res.error });
+    } finally {
+      setBriefItBusy(false);
+    }
+  };
+
+  const activeJourneys = useMemo(() => journeys.filter((j) => !j.isCompleted), [journeys]);
+
+  const completedJourneys = useMemo(() => journeys.filter((j) => j.isCompleted), [journeys]);
+
+  const pendingCandidates = useMemo(
+    () => candidates.filter((c) => !reviewed[c.id]),
+    [candidates, reviewed]
+  );
+
   return (
     <>
         {activeTab === 'workflows' && (
