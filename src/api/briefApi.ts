@@ -3797,6 +3797,13 @@ export interface PersonalState {
     dueAt: string | null;
     reason: string;
   }[];
+  /** The viewer's own entity follows (venue/business/publisher/organizer/community). */
+  followed: {
+    id: string;
+    kind: string;
+    entityKey: string;
+    name: string;
+  }[];
 }
 
 export interface PersonalFeedRow {
@@ -3868,4 +3875,147 @@ export function unsetRelevanceControl(kind: 'more' | 'less' | 'not_interested' |
 export function getNotificationCandidates(): Promise<ApiResult<{ candidates: PersonalState['notificationCandidates'] }>> {
   return request('/api/me/notification-candidates', undefined, (r) =>
     Array.isArray(r?.candidates) ? r as { candidates: PersonalState['notificationCandidates'] } : undefined);
+}
+
+// ---------------------------------------------------------------------------
+// ENTITY LAYER — followable entities, entity pages, the Following feed
+// ---------------------------------------------------------------------------
+
+export type EntityKind = 'venue' | 'business' | 'publisher' | 'organizer' | 'community';
+
+/** One public entity projection, exactly as the server shapes it. */
+export interface BriefEntity {
+  kind: EntityKind;
+  id: string;
+  entityKey: string;
+  name: string;
+  slug: string;
+  summary: string | null;
+  description: string | null;
+  imageUrl: string | null;
+  category: string | null;
+  location: { area: string | null; county: string | null } | null;
+  locationName: string | null;
+  sourceNames: string[];
+  trust: { degraded: boolean; disabled: boolean; corroborated: boolean };
+  isFollowed: boolean;
+  followCount: number;
+  objects: {
+    id: string;
+    type: string;
+    title: string;
+    summary: string | null;
+    imageUrl: string | null;
+    locationName: string | null;
+    category: string | null;
+    area: string | null;
+    county: string | null;
+    temporal: {
+      status: string;
+      startsAt?: string | null;
+      endsAt?: string | null;
+      deadlineAt?: string | null;
+    } | null;
+    sourceNames: string[];
+  }[];
+}
+
+function isBriefEntity(raw: any): BriefEntity | undefined {
+  if (raw && typeof raw.kind === 'string' && typeof raw.name === 'string'
+    && typeof raw.entityKey === 'string' && Array.isArray(raw.objects)) {
+    return raw as BriefEntity;
+  }
+  return undefined;
+}
+
+/** A public entity page. Works without a session (stable shareable URL). */
+export function getEntity(id: string): Promise<ApiResult<{ entity: BriefEntity }>> {
+  return request(`/api/entities/${encodeURIComponent(id)}`, undefined, (r) =>
+    isBriefEntity(r?.entity) ? r as { entity: BriefEntity } : undefined);
+}
+
+/** Resolve an entity by exact name (for "Venue · X" / "Source · X" links). */
+export function getEntityByName(kind: EntityKind, name: string): Promise<ApiResult<{ entity: BriefEntity | null }>> {
+  return request(`/api/entities/by-name?kind=${encodeURIComponent(kind)}&name=${encodeURIComponent(name)}`, undefined, (r) =>
+    r && ('entity' in r) ? r as { entity: BriefEntity | null } : undefined);
+}
+
+/** Follow an entity (authenticated, self-scoped, idempotent). */
+export function followEntity(id: string): Promise<ApiResult<{ followed: boolean; already: boolean; followCount: number }>> {
+  return request(`/api/entities/${encodeURIComponent(id)}/follow`, { method: 'POST', body: '{}' }, (r) =>
+    r && typeof r.followed === 'boolean' ? r as { followed: boolean; already: boolean; followCount: number } : undefined);
+}
+
+/** Unfollow an entity (authenticated, self-scoped, idempotent). */
+export function unfollowEntity(id: string): Promise<ApiResult<{ unfollowed: boolean; already: boolean; followCount: number }>> {
+  return request(`/api/entities/${encodeURIComponent(id)}/follow`, { method: 'DELETE', body: '{}' }, (r) =>
+    r && typeof r.unfollowed === 'boolean' ? r as { unfollowed: boolean; already: boolean; followCount: number } : undefined);
+}
+
+/** The viewer's follow list, grouped by kind (management surface). */
+export interface FollowsGroups {
+  groups: Record<string, {
+    kind: string;
+    id: string;
+    entityKey: string;
+    name: string;
+    category: string | null;
+    imageUrl: string | null;
+    location: { area: string | null; county: string | null } | null;
+    sourceNames: string[];
+    objectCount: number;
+    followedAt: string | null;
+  }[]>;
+  total: number;
+  kindLabels: Record<string, string>;
+}
+
+export function getMyFollows(): Promise<ApiResult<FollowsGroups>> {
+  return request('/api/me/follows', undefined, (r) =>
+    r && r.groups && typeof r.total === 'number' ? r as FollowsGroups : undefined);
+}
+
+/** The Following feed: sections per followed entity, objects ranked by discovery. */
+export interface FollowingSection {
+  kind: string;
+  entityId: string;
+  entityKey: string;
+  name: string;
+  category: string | null;
+  imageUrl: string | null;
+  location: { area: string | null; county: string | null } | null;
+  objects: {
+    id: string;
+    type: string;
+    title: string;
+    summary: string | null;
+    imageUrl: string | null;
+    locationName: string | null;
+    category: string | null;
+    area: string | null;
+    county: string | null;
+    temporal: {
+      status: string;
+      startsAt?: string | null;
+      deadlineAt?: string | null;
+    } | null;
+    score: number | null;
+  }[];
+}
+
+export function getMyFollowingFeed(): Promise<ApiResult<{ sections: FollowingSection[]; total: number }>> {
+  return request('/api/me/following', undefined, (r) =>
+    Array.isArray(r?.sections) ? r as { sections: FollowingSection[]; total: number } : undefined);
+}
+
+/** Analytics: record that the viewer opened an object from an entity page. */
+export function recordEntityObjectOpened(id: string, objectId: string): Promise<ApiResult<{ ok: boolean }>> {
+  return request(`/api/entities/${encodeURIComponent(id)}/object-opened`, { method: 'POST', body: JSON.stringify({ objectId }) }, (r) =>
+    r && r.ok === true ? r as { ok: boolean } : undefined);
+}
+
+/** Analytics: record that the viewer opened a source from an entity page. */
+export function recordSourceOpened(id: string, sourceId: string): Promise<ApiResult<{ ok: boolean }>> {
+  return request(`/api/entities/${encodeURIComponent(id)}/source-opened`, { method: 'POST', body: JSON.stringify({ sourceId }) }, (r) =>
+    r && r.ok === true ? r as { ok: boolean } : undefined);
 }

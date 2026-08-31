@@ -17,6 +17,7 @@
 import { store, newId } from '../store.js';
 import { getProfile } from './onboarding.js';
 import { lifecycleOf, publishedAtOf } from './discovery.js';
+import { entityKeysOfObject } from './entities.js';
 
 export const INTEREST_KINDS = ['location', 'type', 'topic'];
 
@@ -295,7 +296,7 @@ export function savedIdsOf(userId) {
  * "Less like this" (−12) and "not interested" (excluded entirely) demote;
  * nothing is ever demoted by absence of personalization.
  */
-export function personalBoost(object, interests, relevance) {
+export function personalBoost(object, interests, relevance, followedEntityKeys = null) {
   if (!object?.id) return { boost: 0, reasons: [] };
   let boost = 0;
   const reasons = [];
@@ -313,6 +314,17 @@ export function personalBoost(object, interests, relevance) {
   // Weak engagement signals: the user actually opened/saved/shared this row.
   if (engagementHits(object.id)) { boost += 3; reasons.push('engaged'); }
 
+  // An EXPLICIT entity follow is a stronger signal than any inferred
+  // preference: the user named this venue/business/publisher/organizer/
+  // community themselves. Still bounded — the global score (trust, temporal,
+  // corroboration) stays primary, so an important alert is never displaced
+  // by an ordinary offer just because its venue is followed.
+  let followed = false;
+  if (followedEntityKeys && followedEntityKeys.size) {
+    followed = entityKeysOfObject(object).some((k) => followedEntityKeys.has(k));
+    if (followed) { boost += 8; reasons.push('followed'); }
+  }
+
   // Explicit controls outrank everything derived.
   if (relevance.more.has(object.id)) { boost += 8; reasons.push('more'); }
   if (relevance.less.has(object.id)) { boost -= 12; reasons.push('less'); }
@@ -320,7 +332,13 @@ export function personalBoost(object, interests, relevance) {
   if (sourceHidden(object, relevance.hiddenSources)) { boost -= 12; reasons.push('hidden_source'); }
 
   const everyday = ['offer', 'product', 'service', 'knowledge'].includes(object.type);
-  const cap = everyday ? 6 : 12;
+  // Followed content may rise above the inferred-preference cap, but stays
+  // tightly bounded so a very important alert (high trust, corroborated,
+  // fresh) is never displaced by an ordinary offer just because its venue is
+  // followed — no echo chamber. Everyday caps: 6 inferred / 8 followed.
+  // Other types: 12 inferred / 16 followed (a followed venue's upcoming event
+  // may rank high, but never above a corroborated local alert).
+  const cap = everyday ? (followed ? 8 : 6) : (followed ? 16 : 12);
   return { boost: Math.min(boost, cap), reasons };
 }
 
@@ -330,9 +348,9 @@ export function personalBoost(object, interests, relevance) {
  * (which already carries trust + temporal + source diversity) as the stable
  * tie-break, so no personalization can collapse diversity.
  */
-export function rankPersonalized(objects, { interests, relevance, scores = null } = {}) {
+export function rankPersonalized(objects, { interests, relevance, scores = null, followedEntityKeys = null } = {}) {
   const withIndex = objects.map((o, index) => {
-    const boost = personalBoost(o, interests, relevance);
+    const boost = personalBoost(o, interests, relevance, followedEntityKeys);
     // Global score first: the discovery pipeline already stamped `.score`;
     // an explicit map wins when the caller computed scores separately.
     const base = scores && scores.has(o.id) ? scores.get(o.id) : (o.score ?? 0);

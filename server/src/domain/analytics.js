@@ -39,7 +39,14 @@ function engagementCounts() {
     shares: signalMeta('object_shared').length,
     betaSignups: signalMeta('arena_beta_joined').length,
     challengesCreated: signalMeta('arena_challenge_opened').length,
-    matchesCompleted: signalMeta('arena_result_confirmed').length
+    matchesCompleted: signalMeta('arena_result_confirmed').length,
+    // Entity layer: exactly the five tracked acts from the following brief —
+    // viewed, followed, unfollowed, entity object opened, source opened.
+    entityViews: signalMeta('entity_viewed').length,
+    entityFollows: signalMeta('entity_followed').length,
+    entityUnfollows: signalMeta('entity_unfollowed').length,
+    entityObjectOpens: signalMeta('entity_object_opened').length,
+    sourceOpens: signalMeta('source_opened').length
   };
 }
 

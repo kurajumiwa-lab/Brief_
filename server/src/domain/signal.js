@@ -128,7 +128,16 @@ export const SIGNAL_TYPES = [
   'waitlist_joined',
   'waitlist_offered',
   'waitlist_expired',
-  'waitlist_registered'
+  'waitlist_registered',
+  // --- Entity layer (Following + Circles) -----------------------------------
+  // Emitted by real user acts on followable entities, never by renders.
+  // entity_object_opened and source_opened carry objectId/sourceId so the
+  // analytics dashboard can derive entity engagement without a second table.
+  'entity_viewed',
+  'entity_followed',
+  'entity_unfollowed',
+  'entity_object_opened',
+  'source_opened'
 ];
 
 export function emitSignal({ type, circleId = null, blockId = null, sourceId = null, objectId = null, actorId = null, value = null, metadata = {} }) {

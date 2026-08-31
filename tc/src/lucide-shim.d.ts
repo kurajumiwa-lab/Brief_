@@ -31,4 +31,5 @@ declare module 'lucide-react' {
   export const ClipboardList: LucideIcon; export const Clock3: LucideIcon; export const Target: LucideIcon;
   export const ImagePlus: LucideIcon; export const UploadCloud: LucideIcon; export const Link2: LucideIcon;
   export const Wrench: LucideIcon; export const Package: LucideIcon; export const Info: LucideIcon;
+  export const ArrowLeft: LucideIcon;
 }

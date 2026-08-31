@@ -11,6 +11,9 @@ import {
 import type { ArenaMoneyStatus } from './api/types';
 import QRCode from 'qrcode';
 import { deriveDestinationAlerts, readLastSeen, writeLastSeen, alertLabel, type DestinationAlerts } from './nav/alerts';
+import { EntityPage } from './components/EntityPage';
+import { FollowingSurface } from './components/FollowingSurface';
+import { EntityChip } from './components/EntityChip';
 import { CampaignDistribution } from './components/CampaignDistribution';
 import { AwaitingPayment } from './components/AwaitingPayment';
 import { SourcesPanel } from './components/SourcesPanel';
@@ -793,6 +796,41 @@ export const getSourceKindChip = (object: BriefObject): string | null => {
       ? 'WhatsApp'
       : kind;
   return label;
+};
+
+/**
+ * The entity links a card may carry — "Hosted by X" (organizer from
+ * structured metadata), "Venue · X" (structured venue field, or the card's
+ * own entity when the object IS a place), "Source · X" (single-source
+ * provenance). Each is resolved to a real entity by EntityChip; nothing is
+ * linked unless an entity exists.
+ */
+export const entityChipsFor = (object: BriefObject): { kind: 'venue' | 'organizer' | 'publisher' | 'business' | 'community'; name?: string; directId?: string }[] => {
+  const chips: { kind: 'venue' | 'organizer' | 'publisher' | 'business' | 'community'; name?: string; directId?: string }[] = [];
+  const meta = object.metadata ?? {};
+  if (object.type === 'place') {
+    chips.push({ kind: 'venue', name: object.title, directId: `venue:${object.id}` });
+  }
+  const venueName = typeof meta.venue === 'string' && meta.venue.trim() ? meta.venue.trim() : null;
+  if (venueName && object.type !== 'place') {
+    chips.push({ kind: 'venue', name: venueName });
+  }
+  const hostName = typeof meta.hostedBy === 'string' && meta.hostedBy.trim()
+    ? meta.hostedBy.trim()
+    : (typeof meta.organizer === 'string' && meta.organizer.trim() ? meta.organizer.trim() : null);
+  if (hostName) chips.push({ kind: 'organizer', name: hostName });
+  if ((object.sourceCount ?? object.sourceNames?.length ?? 0) === 1 && object.sourceNames?.[0]) {
+    chips.push({ kind: 'publisher', name: object.sourceNames[0] });
+  }
+  const bizName = typeof meta.businessName === 'string' && meta.businessName.trim() ? meta.businessName.trim() : null;
+  if (bizName && object.type === 'offer') {
+    chips.push({ kind: 'business', name: bizName });
+  }
+  const communityName = typeof meta.community === 'string' && meta.community.trim() ? meta.community.trim() : null;
+  if (communityName) {
+    chips.push({ kind: 'community', name: communityName });
+  }
+  return chips;
 };
 
 /** Corroboration, explicitly not certainty: "Confirmed across 2 sources". */
@@ -6044,6 +6082,21 @@ export function App() {
     void loadPersonal();
   };
 
+  /** Unfollow an entity (venue/business/publisher/organizer/community). */
+  const unfollowEntityOne = async (id: string) => {
+    const res = await briefApi.unfollowEntity(id);
+    if (!res.ok) { showToast(res.error ?? 'Could not unfollow.'); return; }
+    setPersonalState((p) => p
+      ? { ...p, followed: p.followed.filter((f) => f.id !== id) }
+      : p);
+    void loadPersonal();
+  };
+
+  /** Open an entity page from a chip or card link. */
+  const openEntityPage = (id: string) => {
+    setEntityPageId(id);
+  };
+
   // An explicit relevance control, persisted. Tapping an active control
   // undoes it — the user can always change their mind.
   const tuneObject = async (kind: 'more' | 'less' | 'not_interested' | 'hide_source', object: BriefObject) => {
@@ -6189,6 +6242,10 @@ export function App() {
   const [selectedObjectForDetail, setSelectedObjectForDetailRaw] = useState<BriefObject | null>(null);
   const [selectedTeaSlug, setSelectedTeaSlug] = useState<string | null>(bootRoute.teaSlug);
   const [pendingObjectId, setPendingObjectId] = useState<string | null>(bootRoute.objectId);
+  /** The followable entity page (venue/business/publisher/organizer/community). */
+  const [entityPageId, setEntityPageId] = useState<string | null>(bootRoute.entityId);
+  /** The Following surface overlay (feed + management). */
+  const [followingOpen, setFollowingOpen] = useState(false);
 
   // Opening an object marks it seen, which is what keeps the Daily Brief's
   // "New" section honest instead of showing the same items forever.
@@ -8224,6 +8281,7 @@ export function App() {
     objectId: selectedObjectForDetail?.id ?? pendingObjectId,
     teaSlug: selectedTeaSlug,
     campaignId: openCampaignId,
+    entityId: entityPageId,
     capture: captureOpen,
     menu: menuOpen,
     admin: adminOpen,
@@ -8231,7 +8289,7 @@ export function App() {
   }), [
     activeTab, nearbySection, myLayerSection, workflowSection, arenaSection,
     selectedObjectForDetail, pendingObjectId, selectedTeaSlug, openCampaignId,
-    captureOpen, menuOpen, adminOpen
+    entityPageId, captureOpen, menuOpen, adminOpen
   ]);
 
   const writeUrl = useCallback((route: BriefRoute, mode: 'push' | 'replace') => {
@@ -8254,6 +8312,7 @@ export function App() {
     setCaptureOpen(route.capture);
     setSelectedTeaSlug(route.teaSlug);
     setOpenCampaignId(route.campaignId);
+    setEntityPageId(route.entityId);
     if (route.objectId) setPendingObjectId(route.objectId);
     else {
       setPendingObjectId(null);
@@ -8263,7 +8322,7 @@ export function App() {
 
   const dismissOverlay = useCallback(() => {
     const st = typeof window !== 'undefined' ? window.history.state : null;
-    const overlayState = isBriefRoute(st) && (st.menu || st.capture || st.admin || st.objectId || st.teaSlug || st.campaignId);
+    const overlayState = isBriefRoute(st) && (st.menu || st.capture || st.admin || st.objectId || st.teaSlug || st.campaignId || st.entityId);
     if (overlayState && !st.landed && typeof window !== 'undefined' && window.history.length > 1) {
       window.history.back();
       return;
@@ -8276,7 +8335,8 @@ export function App() {
     setOpenCampaignId(null);
     setPendingObjectId(null);
     setSelectedObjectForDetailRaw(null);
-    writeUrl({ ...currentRoute(), menu: false, admin: false, capture: false, objectId: null, teaSlug: null, campaignId: null }, 'replace');
+    setEntityPageId(null);
+    writeUrl({ ...currentRoute(), menu: false, admin: false, capture: false, objectId: null, teaSlug: null, campaignId: null, entityId: null }, 'replace');
   }, [currentRoute, writeUrl]);
 
   useEffect(() => {
@@ -8297,18 +8357,19 @@ export function App() {
       skipUrl.current = false;
       return;
     }
-    const overlay = menuOpen || adminOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail) || Boolean(pendingObjectId);
+    const overlay = menuOpen || adminOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail) || Boolean(pendingObjectId) || Boolean(entityPageId) || followingOpen;
     writeUrl(currentRoute(), overlay ? 'push' : 'replace');
   }, [
     activeTab, nearbySection, myLayerSection, workflowSection, arenaSection,
     menuOpen, adminOpen, captureOpen, selectedTeaSlug, openCampaignId,
-    selectedObjectForDetail, pendingObjectId, currentRoute, writeUrl
+    selectedObjectForDetail, pendingObjectId, entityPageId, followingOpen,
+    currentRoute, writeUrl
   ]);
 
   useEffect(() => {
     const tg = (typeof window !== 'undefined' ? (window as any).Telegram?.WebApp : null);
     if (!tg?.BackButton) return;
-    const show = menuOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail);
+    const show = menuOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail) || Boolean(entityPageId) || followingOpen;
     try {
       if (show) tg.BackButton.show();
       else tg.BackButton.hide();
@@ -8318,7 +8379,7 @@ export function App() {
     return () => {
       try { tg.BackButton.offClick?.(handler); } catch { /* */ }
     };
-  }, [menuOpen, captureOpen, selectedTeaSlug, openCampaignId, selectedObjectForDetail, dismissOverlay]);
+  }, [menuOpen, captureOpen, selectedTeaSlug, openCampaignId, selectedObjectForDetail, entityPageId, followingOpen, dismissOverlay]);
 
   useEffect(() => {
     if (!pendingObjectId) return;
@@ -8335,7 +8396,7 @@ export function App() {
     return () => { live = false; };
   }, [pendingObjectId, objects, selectedObjectForDetail]);
 
-  const isAnyModalActive = Boolean(openCampaignId) || createStep !== 'closed' || captureOpen || Boolean(selectedObjectForDetail) || Boolean(selectedTeaSlug);
+  const isAnyModalActive = Boolean(openCampaignId) || createStep !== 'closed' || captureOpen || Boolean(selectedObjectForDetail) || Boolean(selectedTeaSlug) || Boolean(entityPageId) || followingOpen;
 
   // THE APP GATE (product decision 2026-08-29): NO ACCESS WITHOUT AN ACCOUNT.
   // Signed out, the app does not render at all -- no feed, no shelf, no
@@ -8588,19 +8649,34 @@ export function App() {
                       skippable and never blocks the Brief. */}
                   {discoveryTab === 'home' && sessionUser && personalState && (
                     <section className="mb-8" aria-label="My Brief">
-                      <div className="mb-3 flex items-center justify-between px-1">
+                      <div className="mb-3 flex items-center justify-between gap-2 px-1">
                         <h2 className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#251045]/60">
                           My Brief
                         </h2>
-                        {personalHasInterests && (
+                        <div className="flex items-center gap-2">
                           <button
                             type="button"
-                            onClick={() => setPersonalBriefDismissed(false)}
-                            className="rounded-full border border-[#D6CFE4] bg-[#FBFAFD] px-3 py-1 text-[10px] font-extrabold text-[#251045]/60 cursor-pointer hover:border-[#6C3EC9]"
+                            onClick={() => setFollowingOpen(true)}
+                            className="flex items-center gap-1.5 rounded-full border border-[#D6CFE4] bg-[#FBFAFD] px-3 py-1 text-[10px] font-extrabold text-[#251045]/60 cursor-pointer hover:border-[#6C3EC9]"
                           >
-                            Edit
+                            <Users className="h-3 w-3" />
+                            Following
+                            {(personalState.followed ?? []).length > 0 && (
+                              <span className="rounded-full bg-[#5B2EA6] px-1.5 text-[9px] font-extrabold text-white">
+                                {(personalState.followed ?? []).length}
+                              </span>
+                            )}
                           </button>
-                        )}
+                          {personalHasInterests && (
+                            <button
+                              type="button"
+                              onClick={() => setPersonalBriefDismissed(false)}
+                              className="rounded-full border border-[#D6CFE4] bg-[#FBFAFD] px-3 py-1 text-[10px] font-extrabold text-[#251045]/60 cursor-pointer hover:border-[#6C3EC9]"
+                            >
+                              Edit
+                            </button>
+                          )}
+                        </div>
                       </div>
 
                       {/* ONBOARDING — where + what, as chips. Skipping closes
@@ -8757,6 +8833,28 @@ export function App() {
                               </button>
                             );
                           })}
+                          {(personalState.followed ?? []).map((f) => (
+                            <button
+                              key={f.id}
+                              type="button"
+                              onClick={() => openEntityPage(f.id)}
+                              title={`Open ${f.name}`}
+                              className="flex items-center gap-1 rounded-full border border-[#6C3EC9] bg-[#E9E0F5] px-3 py-1.5 text-[11px] font-extrabold text-[#5B2EA6] cursor-pointer"
+                            >
+                              {f.name}
+                            </button>
+                          ))}
+                          {(personalState.followed ?? []).map((f) => (
+                            <button
+                              key={`unf_${f.id}`}
+                              type="button"
+                              onClick={() => void unfollowEntityOne(f.id)}
+                              title={`Stop following ${f.name}`}
+                              className="flex items-center gap-1 rounded-full border border-dashed border-[#D6CFE4] px-2 py-1 text-[9px] font-bold text-[#251045]/40 cursor-pointer hover:border-[#C0392B] hover:text-[#C0392B]"
+                            >
+                              <X className="h-2.5 w-2.5" /> {f.kind}
+                            </button>
+                          ))}
                           {personalState.suggestedLocations
                             .filter((loc) => !personalInterests.locations.includes(loc))
                             .slice(0, 5)
@@ -8833,6 +8931,17 @@ export function App() {
                                           {briefWhenLabel(obj)}
                                         </span>
                                       )}
+                                      <span className="mt-0.5 flex flex-wrap gap-1">
+                                        {entityChipsFor(obj).slice(0, 2).map((chip, ci) => (
+                                          <EntityChip
+                                            key={`${chip.kind}_${chip.name ?? chip.directId}_${ci}`}
+                                            kind={chip.kind}
+                                            name={chip.name}
+                                            directId={chip.directId}
+                                            onOpenEntity={openEntityPage}
+                                          />
+                                        ))}
+                                      </span>
                                     </span>
                                   </button>
                                 ))}
@@ -8958,6 +9067,17 @@ export function App() {
                                         {briefWhenLabel(obj)}
                                       </span>
                                     )}
+                                    <span className="mt-0.5 flex flex-wrap gap-1">
+                                      {entityChipsFor(obj).slice(0, 2).map((chip, ci) => (
+                                        <EntityChip
+                                          key={`${chip.kind}_${chip.name ?? chip.directId}_${ci}`}
+                                          kind={chip.kind}
+                                          name={chip.name}
+                                          directId={chip.directId}
+                                          onOpenEntity={openEntityPage}
+                                        />
+                                      ))}
+                                    </span>
                                   </span>
                                 </button>
                               ))}
@@ -9396,6 +9516,24 @@ export function App() {
                                   <p className="mt-1 text-[9px] font-semibold text-[#FFFFFF]/75 truncate">
                                     {bits.join(' · ')}
                                   </p>
+                                );
+                              })()}
+                              {(() => {
+                                const chips = entityChipsFor(obj);
+                                if (chips.length === 0) return null;
+                                return (
+                                  <div className="mt-1.5 flex flex-wrap gap-1">
+                                    {chips.map((chip, i) => (
+                                      <EntityChip
+                                        key={`${chip.kind}_${chip.name ?? chip.directId}_${i}`}
+                                        kind={chip.kind}
+                                        name={chip.name}
+                                        directId={chip.directId}
+                                        onOpenEntity={openEntityPage}
+                                        className="bg-[#150826]/70 text-[#F1EDF7] hover:bg-[#5B2EA6] hover:text-white"
+                                      />
+                                    ))}
+                                  </div>
                                 );
                               })()}
                               {level === 3 && destVendors.length > 0 && (
@@ -13326,6 +13464,40 @@ export function App() {
         canOperate={briefApi.isOperator(sessionUser)}
       />
       <AdminDesk open={adminOpen} onClose={dismissOverlay} me={sessionUser} />
+
+      {/* ENTITY LAYER — the followable entity page and the Following surface. */}
+      {entityPageId && (
+        <EntityPage
+          entityId={entityPageId}
+          authed={Boolean(sessionUser)}
+          origin={publicOrigin}
+          onClose={dismissOverlay}
+          onOpenObject={(raw) => {
+            if (!raw?.id) return;
+            const local = objects.find((o) => o.id === String(raw.id));
+            setSelectedObjectForDetail(local ?? objectFromServer(raw));
+          }}
+          onRequireAuth={() => showToast('Sign in to follow this.')}
+          onFollowChanged={() => void loadPersonal()}
+        />
+      )}
+      {followingOpen && (
+        <FollowingSurface
+          authed={Boolean(sessionUser)}
+          onClose={dismissOverlay}
+          onOpenObject={(raw) => {
+            if (!raw?.id) return;
+            const local = objects.find((o) => o.id === String(raw.id));
+            setSelectedObjectForDetail(local ?? objectFromServer(raw));
+          }}
+          onOpenEntity={(id) => {
+            setFollowingOpen(false);
+            setEntityPageId(id);
+          }}
+          onRequireAuth={() => showToast('Sign in to follow this.')}
+          onFollowChanged={() => void loadPersonal()}
+        />
+      )}
 
       <footer className="border-t border-[#D6CFE4] mt-12 py-6 text-xs text-[#251045]/60 text-center">
         Everything Happening Around You

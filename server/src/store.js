@@ -169,6 +169,12 @@ const EMPTY = {
   // relationship graph already models "saved"; this is the durable copy so
   // saves survive across devices and sessions.
   saves: [],
+  // --- Following (entity layer) --------------------------------------------
+  // A user follows an ENTITY, never a raw object list: one row per
+  // (user, entity kind, entity key). Entities themselves are DERIVED from
+  // existing records (objects, sources, circles) — nothing is duplicated
+  // here, this store only holds the follow edges.
+  entityFollows: [],
   // Append-only audit trail of consequential mutations (who/what/when/from/to).
   // Never pruned by the app; the operator decides.
   auditLog: [],

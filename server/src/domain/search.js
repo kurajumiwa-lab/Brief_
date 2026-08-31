@@ -21,6 +21,7 @@ import { store } from '../store.js';
 import * as media from './media.js';
 import * as discovery from './discovery.js';
 import * as publicFeed from './publicFeed.js';
+import * as entities from './entities.js';
 
 /** True when any extracted field contains the (already-lowercased) needle. */
 function matchOn(needle, ...extractors) {
@@ -90,8 +91,9 @@ export function search(q, filters = {}) {
     return {
       query: q ?? '',
       filters: { type: null, location: null, date: null, source: null },
-      counts: { objects: 0, tea: 0, vendors: 0, collections: 0 },
-      objects: [], tea: [], vendors: [], collections: []
+      counts: { objects: 0, tea: 0, vendors: 0, collections: 0, entities: 0 },
+      objects: [], tea: [], vendors: [], collections: [],
+      entities: [], entityTotal: 0, entityMatch: null
     };
   }
 
@@ -157,6 +159,13 @@ export function search(q, filters = {}) {
     .slice(0, 10)
     .map((c) => ({ id: c.id, key: c.key, title: c.title, description: c.description }));
 
+  // Entity search EXTENDS object search: followable entities (venues,
+  // businesses, publishers, organizers, communities) whose name matches the
+  // query, ranked by match strength then live content. Object results stay
+  // first-class — entities are an additional surface, never a replacement.
+  const entityHits = entities.searchEntities(q, 4);
+  const entityIds = new Set(entityHits.entities.map((e) => e.id));
+
   return {
     query: q ?? '',
     filters: {
@@ -165,7 +174,18 @@ export function search(q, filters = {}) {
       date: filters.date ?? null,
       source: filters.source ?? null
     },
-    counts: { objects: projected.length, tea: tea.length, vendors: vendors.length, collections: collections.length },
-    objects: projected, tea, vendors, collections
+    counts: {
+      objects: projected.length,
+      tea: tea.length,
+      vendors: vendors.length,
+      collections: collections.length,
+      entities: entityHits.count
+    },
+    objects: projected, tea, vendors, collections,
+    entities: entityHits.entities,
+    entityTotal: entityHits.count,
+    // Convenience for the client: when the query names exactly one entity,
+    // the caller may jump straight to its page.
+    entityMatch: entityIds.size === 1 ? [...entityIds][0] : null
   };
 }

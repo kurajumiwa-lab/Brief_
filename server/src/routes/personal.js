@@ -9,6 +9,7 @@
 // ---------------------------------------------------------------------------
 
 import * as personal from '../domain/personal.js';
+import * as entities from '../domain/entities.js';
 import { discoverable } from '../domain/discovery.js';
 import { requireAuth } from './helpers.js';
 import { emitSignal } from '../domain/signal.js';
@@ -30,8 +31,19 @@ function personalStateFor(me) {
     },
     topics: personal.TOPICS,
     suggestedLocations: personal.SUGGESTED_LOCATIONS,
-    notificationCandidates: personal.notificationCandidates(me)
+    notificationCandidates: personal.notificationCandidates(me),
+    // The viewer's own entity follows (management surface + feed boosting).
+    followed: entities.listFollows(me).map((f) => ({
+      id: f.id, kind: f.kind, entityKey: f.entityKey, name: f.name
+    }))
   };
+}
+
+/** The set of entity keys the caller explicitly follows. */
+function followedEntityKeysOf(me) {
+  const set = new Set();
+  for (const f of entities.listFollows(me)) set.add(`${f.kind}:${f.entityKey}`);
+  return set;
 }
 
 export function register(app) {
@@ -68,8 +80,10 @@ export function register(app) {
 
     const interests = personal.seedFromOnboarding(me);
     const relevance = personal.relevanceOf(me);
+    const followedEntityKeys = followedEntityKeysOf(me);
     const hasPersonal = interests.locations.length > 0 || interests.types.length > 0 || interests.topics.length > 0
-      || relevance.more.size > 0 || relevance.less.size > 0 || relevance.notInterested.size > 0 || relevance.hiddenSources.size > 0;
+      || relevance.more.size > 0 || relevance.less.size > 0 || relevance.notInterested.size > 0 || relevance.hiddenSources.size > 0
+      || followedEntityKeys.size > 0;
 
     // No preferences → the unchanged global feed, order and diversity intact.
     // Personalization is a boost on top of the global discovery ranking, not
@@ -83,7 +97,7 @@ export function register(app) {
       return;
     }
 
-    const ranked = personal.rankPersonalized(globalObjects, { interests, relevance });
+    const ranked = personal.rankPersonalized(globalObjects, { interests, relevance, followedEntityKeys });
     const kept = ranked.filter(({ object }) => !personal.excludedFromPersonal(object, relevance));
 
     json(res, {
