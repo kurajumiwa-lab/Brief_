@@ -6,11 +6,21 @@
 // the markup: enough for title/description/date/price, and honest about the
 // fact that it is not a full DOM parser.
 //
+// RESOURCE PROTECTION: every fetch is bounded — a timeout, a manual redirect
+// cap, a response-size limit and a content-type sanity check — so a hostile or
+// misbehaving upstream can never hold a socket open or balloon memory. A
+// failure returns { ok: false, error } and the caller moves on to the next
+// source; one broken site never stops the others.
+//
 // SSRF guard: private/loopback/link-local hosts are rejected outright, so a
 // user-supplied URL cannot be used to probe the internal network (spec 32).
 // ---------------------------------------------------------------------------
 
 const UA = 'BriefBot/1.0 (+https://brief.example/bot; information layer)';
+
+const MAX_REDIRECTS = 5;
+const MAX_PAGE_BYTES = 2 * 1024 * 1024;   // 2 MB of HTML is more than enough
+const MAX_FEED_BYTES = 5 * 1024 * 1024;   // feeds can be large-ish
 
 function isBlockedHost(hostname) {
   const h = hostname.toLowerCase();
@@ -37,22 +47,66 @@ export function validateUrl(raw) {
   return { ok: true, url: u };
 }
 
-async function get(url, timeoutMs = 12000, headers = {}) {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-  try {
-    const res = await fetch(url, {
-      headers: { 'user-agent': UA, accept: '*/*', ...headers },
-      redirect: 'follow',
-      signal: ctrl.signal
-    });
-    const text = await res.text();
-    return { ok: res.ok, status: res.status, text, finalUrl: res.url };
-  } catch (err) {
-    return { ok: false, status: 0, error: err.name === 'AbortError' ? 'timeout' : String(err.message) };
-  } finally {
+/**
+ * Bounded HTTP GET.
+ *
+ *   timeout        hard AbortController deadline
+ *   maxRedirects   manual 3xx following (so a redirect loop ends, not spirals)
+ *   maxBytes       content-length pre-check + post-read cap
+ *
+ * Never throws — every failure path returns { ok: false, error }.
+ */
+async function get(url, { timeoutMs = 12000, headers = {}, maxBytes = MAX_PAGE_BYTES, maxRedirects = MAX_REDIRECTS } = {}) {
+  let current = url;
+  for (let hop = 0; hop <= maxRedirects; hop++) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+    let res;
+    try {
+      res = await fetch(current, {
+        headers: { 'user-agent': UA, accept: '*/*', ...headers },
+        redirect: 'manual',
+        signal: ctrl.signal
+      });
+    } catch (err) {
+      clearTimeout(timer);
+      return { ok: false, status: 0, error: err.name === 'AbortError' ? 'timeout' : String(err.message ?? err) };
+    }
     clearTimeout(timer);
+
+    // Redirects are followed explicitly, so we can cap the count.
+    if ([301, 302, 303, 307, 308].includes(res.status)) {
+      const loc = res.headers.get('location');
+      if (!loc) return { ok: false, status: res.status, error: 'redirect without a location header' };
+      try { current = new URL(loc, current).toString(); }
+      catch { return { ok: false, status: res.status, error: 'invalid redirect target' }; }
+      continue;
+    }
+
+    // Size guard — honour a declared content-length, then cap the actual read.
+    const declared = Number(res.headers.get('content-length') ?? 0);
+    if (declared > maxBytes) {
+      try { await res.body?.cancel(); } catch { /* best-effort */ }
+      return { ok: false, status: res.status, error: `response exceeds the ${maxBytes}-byte limit` };
+    }
+    let buf;
+    try {
+      buf = await res.arrayBuffer();
+    } catch (err) {
+      return { ok: false, status: 0, error: err.name === 'AbortError' ? 'timeout' : String(err.message ?? err) };
+    }
+    if (buf.byteLength > maxBytes) {
+      return { ok: false, status: res.status, error: `response exceeds the ${maxBytes}-byte limit` };
+    }
+    return {
+      ok: res.ok,
+      status: res.status,
+      text: Buffer.from(buf).toString('utf8'),
+      finalUrl: current,
+      contentType: res.headers.get('content-type') ?? null
+    };
   }
+  return { ok: false, status: 0, error: `too many redirects (more than ${maxRedirects})` };
 }
 
 /**
@@ -64,7 +118,7 @@ export async function robotsAllows(targetUrl) {
   const v = validateUrl(targetUrl);
   if (!v.ok) return { allowed: false, reason: v.error };
   const robotsUrl = `${v.url.origin}/robots.txt`;
-  const res = await get(robotsUrl, 8000);
+  const res = await get(robotsUrl, { timeoutMs: 8000 });
   if (!res.ok || !res.text) return { allowed: true, reason: 'no robots.txt' };
 
   // Group parsing: consecutive User-agent lines share one rule block, and a
@@ -147,7 +201,7 @@ function meta(html, ...names) {
       `<meta[^>]+(?:property|name)=["']${name}["'][^>]*content=["']([^"']*)["']`, 'i'
     );
     const alt = new RegExp(
-      `<meta[^>]+content=["']([^"']*)["'][^>]*(?:property|name)=["']${name}["']`, 'i'
+      `<meta[^>]+content=["']([^"']*)[^>]*(?:property|name)=["']${name}["']`, 'i'
     );
     const m = html.match(re) || html.match(alt);
     if (m) return decode(m[1]);
@@ -155,7 +209,50 @@ function meta(html, ...names) {
   return null;
 }
 
-/** Fetch a page and pull out what is genuinely stated in the markup. */
+/** A <link rel="..."> href, for canonical/alternate. */
+function linkRel(html, rel) {
+  const m = html.match(new RegExp(`<link[^>]+rel=["']${rel}["'][^>]*>`, 'i'));
+  if (!m) return null;
+  const href = m[0].match(/href=["']([^"']+)["']/i);
+  return href ? decode(href[1]) : null;
+}
+
+/** Every JSON-LD node in the page, parsed. Malformed blocks are skipped. */
+function jsonLdNodes(html) {
+  const nodes = [];
+  for (const m of html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+    try {
+      const parsed = JSON.parse(m[1].trim());
+      const arr = Array.isArray(parsed) ? parsed : [parsed, ...(parsed['@graph'] ?? [])];
+      for (const n of arr) if (n && typeof n === 'object') nodes.push(n);
+    } catch { /* malformed JSON-LD is common; ignore it */ }
+  }
+  return nodes;
+}
+
+/** A JSON-LD string value that may be a plain string or an {name} object. */
+function ldName(value) {
+  if (typeof value === 'string') return value.trim() || null;
+  if (value && typeof value === 'object' && typeof value.name === 'string') return value.name.trim() || null;
+  return null;
+}
+
+function ldImages(node) {
+  const out = [];
+  const img = node?.image;
+  const push = (v) => {
+    const s = typeof v === 'string' ? v : (v && typeof v.url === 'string' ? v.url : null);
+    if (s && !out.includes(s)) out.push(s);
+  };
+  if (Array.isArray(img)) img.forEach(push);
+  else push(img);
+  return out;
+}
+
+/**
+ * Fetch a page and pull out what is genuinely stated in the markup. Prefers
+ * OpenGraph, then JSON-LD, then standard article metadata. Never guesses.
+ */
 export async function fetchPage(rawUrl) {
   const v = validateUrl(rawUrl);
   if (!v.ok) return { ok: false, error: v.error };
@@ -163,33 +260,42 @@ export async function fetchPage(rawUrl) {
   const robots = await robotsAllows(rawUrl);
   if (!robots.allowed) return { ok: false, error: `blocked: ${robots.reason}`, robots };
 
-  const res = await get(v.url.toString());
+  const res = await get(v.url.toString(), { maxBytes: MAX_PAGE_BYTES });
   if (!res.ok) {
     return { ok: false, error: res.error || `HTTP ${res.status}`, status: res.status };
+  }
+  // Content-type sanity: a page must look like markup. Missing content-type is
+  // tolerated (many servers omit it); a binary body is refused.
+  if (res.contentType && !/html|xml|text/i.test(res.contentType)) {
+    return { ok: false, error: `unsupported content type ${res.contentType}`, status: res.status };
   }
 
   const html = res.text;
   const titleTag = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
 
   // JSON-LD is the only place a page states an event date unambiguously.
-  let ld = null;
-  for (const m of html.matchAll(
-    /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
-  )) {
-    try {
-      const parsed = JSON.parse(m[1].trim());
-      const arr = Array.isArray(parsed) ? parsed : [parsed, ...(parsed['@graph'] ?? [])];
-      const ev = arr.find((n) => n && /Event|Product|Place/i.test(String(n['@type'] ?? '')));
-      if (ev) { ld = ev; break; }
-    } catch { /* malformed JSON-LD is common; ignore it */ }
-  }
+  const nodes = jsonLdNodes(html);
+  const ld = nodes.find((n) => /Event|Product|Place|Article|NewsArticle|Organization|LocalBusiness/i.test(String(n['@type'] ?? ''))) ?? null;
+  const ldType = ld ? String(Array.isArray(ld['@type']) ? ld['@type'][0] : ld['@type']) : null;
 
+  const ldImagesList = ld ? ldImages(ld) : [];
   const body = html
     .replace(/<script[\s\S]*?<\/script>/gi, ' ')
     .replace(/<style[\s\S]*?<\/style>/gi, ' ')
     .replace(/<[^>]+>/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+
+  const categories = [];
+  const section = meta(html, 'article:section');
+  if (section) categories.push(section);
+  for (const key of ['keywords', 'news_keywords']) {
+    const kw = meta(html, key);
+    if (kw) for (const c of kw.split(',').map((s) => s.trim()).filter(Boolean)) categories.push(c);
+  }
+  for (const c of [].concat(ld?.articleSection ?? [], ld?.keywords ?? [])) {
+    if (typeof c === 'string' && c.trim() && !categories.includes(c.trim())) categories.push(c.trim());
+  }
 
   return {
     ok: true,
@@ -198,15 +304,22 @@ export async function fetchPage(rawUrl) {
     extracted: {
       title: meta(html, 'og:title', 'twitter:title') || (titleTag ? decode(titleTag[1]) : null),
       description: meta(html, 'og:description', 'description', 'twitter:description'),
-      image: meta(html, 'og:image', 'twitter:image'),
+      image: meta(html, 'og:image', 'twitter:image') || ldImagesList[0] || null,
       siteName: meta(html, 'og:site_name'),
+      canonicalUrl: linkRel(html, 'canonical') || meta(html, 'og:url') || res.finalUrl,
+      author: meta(html, 'article:author', 'author') || ldName(ld?.author) || ldName(ld?.creator) || null,
+      publisher: meta(html, 'og:site_name') || ldName(ld?.publisher) || null,
+      categories: [...new Set(categories)].slice(0, 12),
       publishedAt: meta(html, 'article:published_time', 'datePublished') ?? ld?.datePublished ?? ld?.startDate ?? null,
       // Structured data only. We never guess a price from body text here.
       startDate: ld?.startDate ?? null,
       endDate: ld?.endDate ?? null,
-      locationName: ld?.location?.name ?? ld?.location?.address?.addressLocality ?? null,
+      locationName: ldName(ld?.location) ?? ld?.location?.address?.addressLocality ?? null,
+      venue: ldName(ld?.location),
+      organizer: ldName(ld?.organizer) ?? ldName(ld?.performer) ?? null,
       price: ld?.offers?.price ? Number(ld.offers.price) : null,
-      currency: ld?.offers?.priceCurrency ?? null
+      currency: ld?.offers?.priceCurrency ?? null,
+      ldType
     },
     text: body.slice(0, 4000)
   };
@@ -217,8 +330,10 @@ export async function fetchFeed(rawUrl) {
   const v = validateUrl(rawUrl);
   if (!v.ok) return { ok: false, error: v.error };
 
-  const res = await get(v.url.toString(), 12000, {
-    accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*'
+  const res = await get(v.url.toString(), {
+    timeoutMs: 12000,
+    maxBytes: MAX_FEED_BYTES,
+    headers: { accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*' }
   });
   if (!res.ok) return { ok: false, error: res.error || `HTTP ${res.status}`, status: res.status };
 
@@ -251,12 +366,41 @@ export async function fetchFeed(rawUrl) {
     }
     const title = pick(b, 'title');
     if (!title && !link) continue;
+
+    // Canonical link: Atom's rel="alternate", or the first present link.
+    let canonical = null;
+    const alt = b.match(/<link[^>]+rel=["']alternate["'][^>]+href=["']([^"']+)["']/i);
+    if (alt) canonical = decode(alt[1]);
+
+    // Categories may repeat; each <category> is one tag.
+    const cats = [];
+    for (const cm of b.matchAll(/<category[^>]*>([\s\S]*?)<\/category>/gi)) {
+      const c = decode(cm[1].replace(/<[^>]+>/g, ' '));
+      if (c) cats.push(c);
+    }
+
+    // Enclosure / media — an image or attachment URL, never mandatory.
+    let enclosure = null;
+    for (const re of [
+      /<enclosure[^>]+url=["']([^"']+)["']/i,
+      /<media:content[^>]+url=["']([^"']+)["']/i,
+      /<media:thumbnail[^>]+url=["']([^"']+)["']/i,
+      /<image>[^>]*<url>([\s\S]*?)<\/url>/i
+    ]) {
+      const em = b.match(re);
+      if (em) { enclosure = decode(em[1]); break; }
+    }
+
     items.push({
       title,
       link,
+      canonicalUrl: canonical || link || null,
       description: pick(b, 'description', 'summary', 'content'),
       publishedAt: pick(b, 'pubDate', 'published', 'updated', 'dc:date'),
-      guid: pick(b, 'guid', 'id') || link || title
+      guid: pick(b, 'guid', 'id') || canonical || link || title,
+      author: pick(b, 'author', 'dc:creator', 'media:credit'),
+      categories: cats.slice(0, 12),
+      enclosure
     });
   }
 
@@ -274,12 +418,12 @@ export const capabilities = {
     receive: 'yes - real HTTP GET',
     robots: 'yes - robots.txt consulted and honoured before fetching',
     ssrf: 'yes - private, loopback and link-local hosts refused',
-    limits: 'regex/JSON-LD extraction, not a full DOM parser; JS-rendered pages yield little'
+    limits: 'timeout + redirect cap + 2MB size limit + content-type check; regex/JSON-LD extraction, not a full DOM parser'
   },
   rss: {
     connector: 'rss',
     authenticate: 'n/a - public feeds',
     receive: 'yes - real HTTP GET, RSS 2.0 + Atom parsed',
-    limits: 'authenticated or paywalled feeds are not supported'
+    limits: 'timeout + redirect cap + 5MB size limit; authenticated or paywalled feeds are not supported'
   }
 };

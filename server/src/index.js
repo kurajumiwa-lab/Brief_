@@ -24,6 +24,7 @@ import * as ledger from './domain/ledger.js';
 import * as epl from './domain/epl.js';
 import * as telegram from './connectors/telegram.js';
 import * as whatsapp from './connectors/whatsapp.js';
+import * as scheduler from './pipeline/scheduler.js';
 import * as compliance from './domain/compliance.js';
 import * as calendar from './domain/calendar.js';
 import * as demoSeed from './domain/seed.js';
@@ -148,6 +149,9 @@ app.use(ops.requestLogger);
 //                           gating it would break the product's purpose
 //   /api/health, /api/readiness  ops probes
 //   /api/media/file/*      images referenced by the public share pages
+//   /api/media/telegram/*  Telegram image references resolved at render time
+//                          for public feed cards (object id is an unlisted
+//                          handle; the route still enforces publication=public)
 // Everything else -- feed, EPL, objects, signals -- answers 401 until the
 // caller has an account. The client enforces the same rule with a wall; this
 // is the enforcement that actually matters.
@@ -157,7 +161,17 @@ app.use(ops.requestLogger);
 //   /api/ready               deploy-platform health checks
 //   /api/email-subscriptions  the newsletter surface -- subscribing and
 //                           UNSUBSCRIBING must work account-less (privacy)
-const PUBLIC_WITHOUT_SESSION = /^\/(auth|public\/campaigns|health|ready|readiness|media\/file|config|release|email-subscriptions)(\/|$)/;
+//   /api/webhooks/*          machine-to-machine inbound callbacks (Telegram,
+//                           WhatsApp, Tuma, Paystack). Each verifies its OWN
+//                           credential (secret header, HMAC signature, or a
+//                           secret path segment), so it must not ALSO demand a
+//                           Brief session -- a provider callback has no Brief
+//                           account. This is what lets a real Telegram update
+//                           reach the ingestion pipeline in production.
+//   /api/telegram/init       Telegram Mini App auth -- the HMAC initData is
+//                           the credential; no Brief session exists yet.
+//   /api/huduma/webhooks/*   M-Pesa Daraja callbacks, secret path segment.
+const PUBLIC_WITHOUT_SESSION = /^\/(auth|public\/(campaigns|feed)|health|ready|readiness|media\/(file|telegram)|config|release|email-subscriptions|webhooks|telegram\/init|huduma\/webhooks)(\/|$)/;
 app.use('/api', (req, res, next) => {
   if (PUBLIC_WITHOUT_SESSION.test(req.path)) return next();
   const me = callerId(req);
@@ -360,6 +374,12 @@ if (process.env.NODE_ENV !== 'test') {
   calendar.installSweep({
     intervalMs: Number(process.env.BRIEF_CALENDAR_INTERVAL_MS) || 60 * 1000
   });
+  // Web/RSS ingestion: poll enabled sources on a cadence so feeds arrive
+  // without a manual sync. Idempotent (dedup by source+item), per-source
+  // isolated, and off in tests.
+  scheduler.installPoller({
+    intervalMs: Number(process.env.BRIEF_INGEST_INTERVAL_MS) || 15 * 60 * 1000
+  });
 
   const server = app.listen(PORT, '0.0.0.0', () => {
     const diag = ops.startupDiagnostics({
@@ -380,6 +400,25 @@ if (process.env.NODE_ENV !== 'test') {
       auth: authStatus().configured,
       arenaMoney: compliance.arenaMoneyStatus().enabled
     });
+    // The synchronous `configured` flag above is only half the truth. Fire the
+    // verified getMe + getWebhookInfo round trip once at boot so an operator
+    // sees whether Telegram is genuinely operational (token valid + webhook
+    // installed), without blocking startup. Never logs the token.
+    if (telegram.isConfigured()) {
+      telegram.status().then((s) => {
+        ops.logInfo('telegram_status', {
+          operational: s.operational,
+          bot: s.bot?.username ?? null,
+          webhookUrl: s.webhook?.url ?? null,
+          pendingUpdateCount: s.webhook?.pendingUpdateCount ?? null,
+          diagnostic: s.diagnostic ?? null
+        });
+      }).catch((e) => {
+        // status() is designed not to throw, but a boot-time probe must never
+        // become an unhandled rejection that shows up as a crash.
+        ops.logWarn('telegram_status_check_failed', { message: String(e?.message ?? e) });
+      });
+    }
     // Anything that would surprise an operator is said out loud at boot,
     // rather than discovered at the first real payment.
     for (const p of diag.problems) ops.logError('startup_problem', { problem: p });

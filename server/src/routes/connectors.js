@@ -5,6 +5,8 @@ import { store, newId } from '../store.js';
 import { callerId } from '../identity.js';
 import { enqueue, allow, withBackoff } from '../queue.js';
 import { storeRawItem, processRawItem } from '../pipeline/ingest.js';
+import * as scheduler from '../pipeline/scheduler.js';
+import { normalizeRssItem, normalizeWebPage } from '../pipeline/normalize.js';
 import * as telegram from '../connectors/telegram.js';
 import * as whatsapp from '../connectors/whatsapp.js';
 import * as web from '../connectors/web.js';
@@ -76,6 +78,43 @@ app.get('/api/connectors/telegram/verify', async (_req, res) => {
 });
 
 
+/**
+ * Verified connector status (spec 2 / 4 / 12).
+ *
+ * This is the honest answer to "is Telegram genuinely working?" -- not
+ * `Boolean(process.env.TELEGRAM_BOT_TOKEN)` but a real getMe + getWebhookInfo
+ * round trip. `configured` means a token exists; `operational` means the Bot
+ * API authenticates AND a webhook is installed and free of a persistent error.
+ * Nothing here ever carries the token or the webhook secret.
+ */
+app.get('/api/connectors/telegram/status', async (_req, res) => {
+  res.json(await telegram.status());
+});
+
+
+/**
+ * Webhook inspection (spec 4). Reads the live getWebhookInfo without mutating
+ * anything: URL, pending update count, and any persistent delivery error.
+ * Exposed separately from `status` so an operator can check the delivery rail
+ * without re-verifying the bot identity.
+ */
+app.get('/api/connectors/telegram/webhook-info', async (_req, res) => {
+  const info = await telegram.getWebhookInfo();
+  if (!info.ok) return res.status(info.unconfigured ? 503 : 502).json(info);
+  const w = info.result ?? {};
+  res.json({
+    ok: true,
+    url: w.url ?? null,
+    hasCustomCertificate: Boolean(w.has_custom_certificate),
+    pendingUpdateCount: Number.isFinite(w.pending_update_count) ? w.pending_update_count : null,
+    lastErrorMessage: w.last_error_message ?? null,
+    lastErrorDate: w.last_error_date ? new Date(w.last_error_date * 1000).toISOString() : null,
+    maxConnections: w.max_connections ?? null,
+    allowedUpdates: Array.isArray(w.allowed_updates) ? w.allowed_updates : null
+  });
+});
+
+
 
 app.post('/api/connectors/telegram/webhook-config', async (req, res) => {
   // Operator: this rewrites the connector's live webhook configuration.
@@ -89,9 +128,22 @@ app.post('/api/connectors/telegram/webhook-config', async (req, res) => {
     secret = crypto.randomBytes(24).toString('hex');
     process.env.TELEGRAM_WEBHOOK_SECRET = secret;
   }
+
+  // IDEMPOTENT REGISTRATION (spec 4). setWebhook on every call would reset the
+  // pending-update counter and churn the secret, so first read the live state
+  // and only call setWebhook when the URL actually differs. Re-registering an
+  // identical URL is a no-op, never a second competing webhook.
+  const current = await telegram.getWebhookInfo();
+  const currentUrl = (current.ok && current.result?.url) ? current.result.url : null;
+  if (currentUrl === url) {
+    telegram.resetStatusCache();
+    return res.json({ ok: true, changed: false, already: url });
+  }
+
   const result = await telegram.setWebhook(url, secret);
+  telegram.resetStatusCache();
   // The secret is NOT returned to the client.
-  res.status(result.ok ? 200 : 502).json({ ok: result.ok, error: result.error ?? null });
+  res.status(result.ok ? 200 : 502).json({ ok: result.ok, changed: result.ok, error: result.error ?? null });
 });
 
 
@@ -294,6 +346,7 @@ app.post('/api/connectors/web/fetch', async (req, res) => {
   const page = await web.fetchPage(url);
   if (!page.ok) {
     recordError('web', sourceId, page.error);
+    if (sourceId) scheduler.markSourceHealth(sourceId, { ok: false, error: page.error });
     return res.status(422).json(page);
   }
 
@@ -308,6 +361,13 @@ app.post('/api/connectors/web/fetch', async (req, res) => {
       externalId: page.finalUrl,
       accessType: 'public',
       connectionStatus: 'connected',
+      // A one-off manual fetch does not auto-enrol the page in recurring
+      // polling; the owner opts in via PATCH /api/sources/:id.
+      enabled: false,
+      healthState: 'never',
+      lastAttemptAt: null,
+      lastSuccessAt: null,
+      lastError: null,
       confidence: 0.5,
       lastSyncedAt: now(),
       lastMessageAt: page.extracted.publishedAt,
@@ -316,22 +376,12 @@ app.post('/api/connectors/web/fetch', async (req, res) => {
     });
   } else {
     store.update('sources', source.id, { connectionStatus: 'connected', lastSyncedAt: now() });
+    scheduler.markSourceHealth(source.id, { ok: true, lastMessageAt: page.extracted.publishedAt ?? null });
   }
 
   // Feed the page's own words to the same extractor every other connector uses.
-  const text = [page.extracted.title, page.extracted.description, page.text]
-    .filter(Boolean).join('\n');
-
-  const { row, duplicate } = storeRawItem({
-    sourceId: source.id,
-    externalId: page.finalUrl,
-    messageId: null,
-    author: page.extracted.siteName ?? null,
-    text,
-    media: page.extracted.image ? [{ kind: 'image', reference: page.extracted.image }] : [],
-    publishedAt: page.extracted.publishedAt,
-    rawUrl: page.finalUrl
-  });
+  const payload = normalizeWebPage({ source, page, url: page.finalUrl });
+  const { row, duplicate } = storeRawItem(payload);
   const result = duplicate ? { ok: true, duplicate: true } : processRawItem(row.id);
   res.json({ ok: true, source, page: page.extracted, robots: page.robots, rawItemId: row.id, duplicate, result });
 });
@@ -351,6 +401,7 @@ app.post('/api/connectors/rss/sync', async (req, res) => {
   const feed = await web.fetchFeed(target);
   if (!feed.ok) {
     recordError('rss', sourceId, feed.error);
+    if (sourceId) scheduler.markSourceHealth(sourceId, { ok: false, error: feed.error });
     return res.status(422).json(feed);
   }
 
@@ -368,6 +419,13 @@ app.post('/api/connectors/rss/sync', async (req, res) => {
       externalId: target,
       accessType: 'public',
       connectionStatus: 'connected',
+      // A one-off manual sync does not auto-enrol the feed in recurring
+      // polling; the owner opts in via PATCH /api/sources/:id.
+      enabled: false,
+      healthState: 'never',
+      lastAttemptAt: null,
+      lastSuccessAt: null,
+      lastError: null,
       confidence: 0.55,
       lastSyncedAt: now(),
       lastMessageAt: null,
@@ -376,26 +434,45 @@ app.post('/api/connectors/rss/sync', async (req, res) => {
     });
   } else {
     store.update('sources', source.id, { connectionStatus: 'connected', lastSyncedAt: now() });
+    scheduler.markSourceHealth(source.id, { ok: true });
   }
 
   const items = feed.items.slice(0, Number(limit) || 10);
   let stored = 0;
   for (const item of items) {
-    const { row, duplicate } = storeRawItem({
-      sourceId: source.id,
-      externalId: item.guid,
-      messageId: null,
-      author: feed.feedTitle ?? null,
-      text: [item.title, item.description].filter(Boolean).join('\n'),
-      media: [],
-      publishedAt: item.publishedAt ? new Date(item.publishedAt).toISOString() : null,
-      rawUrl: item.link
-    });
+    const { row, duplicate } = storeRawItem(normalizeRssItem({ source, item, feedTitle: feed.feedTitle }));
     if (!duplicate) { enqueue(`rss:${row.id}`, () => processRawItem(row.id)); stored++; }
   }
 
-  store.insert('syncRuns', { id: newId('sync'), connector: 'rss', at: now(), received: feed.items.length, stored });
+  store.insert('syncRuns', { id: newId('sync'), connector: 'rss', sourceId: source.id, at: now(), received: feed.items.length, stored });
   res.json({ ok: true, source, received: feed.items.length, stored });
+});
+
+
+// --- Automatic ingestion (scheduler-driven Web/RSS polling) -----------------
+
+/**
+ * Trigger a poll now: one source (body.sourceId) or every enabled RSS/Web
+ * source. This is the same code path the recurring poller runs, so an operator
+ * can force a catch-up without waiting for the interval. Authenticated +
+ * ops.run: it makes outbound requests and writes objects.
+ */
+app.post('/api/connectors/ingest/poll', async (req, res) => {
+  const op = requireCap(req, res, 'ops.run');
+  if (!op) return;
+  const { sourceId } = req.body ?? {};
+  const result = sourceId
+    ? await scheduler.pollSource(sourceId)
+    : await scheduler.runPollRound();
+  res.json(result);
+});
+
+/**
+ * Real Web/RSS connector health. Reflects registered sources and the last real
+ * fetch outcome, never a static flag. Public read (it names no credentials).
+ */
+app.get('/api/connectors/ingest/status', (_req, res) => {
+  res.json({ web: scheduler.ingestStatus('web'), rss: scheduler.ingestStatus('rss') });
 });
 }
 

@@ -218,6 +218,240 @@ console.log('\n=== BRIEF IT PREVIEW (spec 16 / 17) ===');
   check('preview writes NOTHING to the store', store.all('objects').length === objectsBefore);
 }
 
+// ---------------------------------------------------------------------------
+// INTELLIGENT CONTENT PIPELINE (Telegram -> object)
+//
+// The ten content types a post can become, the richer location (county / area
+// / landmark) and time (canonical date, start/end time, recurrence) extraction,
+// media association, and the "never force a message into an object" rule.
+// ---------------------------------------------------------------------------
+
+console.log('\n=== CONTENT TYPE CLASSIFICATION (10 content types) ===');
+{
+  const t = (s) => extractFields(s).fields.type;
+  check('a business (salon) is a business', t('Glow Salon Nairobi offers hair and nail services, Mon-Sat') === 'business');
+  check('a business (company) is a business', t('Safiri Travels Ltd — tours and safaris company') === 'business');
+  check('a promotion is an offer', t('50% off all items this weekend only') === 'offer');
+  check('a flash sale is an offer', t('Flash sale: buy one get one free today') === 'offer');
+  check('a job post is an opportunity', t('We are hiring! Barista wanted at a Westlands cafe') === 'opportunity');
+  check('a vacancy is an opportunity', t('Vacancy: Accounts assistant, apply before Friday') === 'opportunity');
+  check('a warning is an alert', t('Security alert: road closed along Ngong Road tonight') === 'alert');
+  check('a power cut is an alert', t('Power outage in Kileleshwa until 6PM') === 'alert');
+  check('a community meeting is an announcement', t('Community meeting this Sunday at the estate grounds') === 'announcement');
+  check('a funeral notice is an announcement', t('Funeral announcement for Mama Akinyi this Saturday') === 'announcement');
+  check('a news headline is news', t('Breaking: Nairobi County opens new bus terminus') === 'news');
+  check('a press release is news', t('Press release from the county health office') === 'news');
+  check('general information is knowledge', t('A guide to making mandazi at home') === 'knowledge');
+  check('a product listing is a product', t('Second hand sofa for sale, good condition') === 'product');
+  check('a service listing is a service', t('Plumber available for repairs in South B') === 'service');
+  // The existing vocabulary still holds, alongside the new types.
+  check('an event is still an experience', t('Night market at Westlands Square') === 'experience');
+  check('a place is still a place', t('Our shop is at Kilimani Centre') === 'place');
+}
+
+console.log('\n=== LOCATION: counties / estates / landmarks (never invented) ===');
+{
+  const f = (s) => extractFields(s).fields;
+  const nai = f('Open mic night at The Alchemist, Westlands, Nairobi');
+  check('county extracted from a mention', nai.county === 'Nairobi', nai.county);
+  check('estate extracted from a mention', nai.area === 'Westlands', nai.area);
+  check('landmark extracted from a mention', nai.landmark === 'The Alchemist', nai.landmark);
+  check('location provenance recorded', Array.isArray(nai.locationEvidence) && nai.locationEvidence.length >= 3);
+  check('location confidence reflects the match', typeof nai.locationConfidence === 'number');
+
+  const buru = f('Meeting at Buruburu Social Hall');
+  check('a non-Nairobi estate is still classified', buru.area === 'Buruburu', buru.area);
+  check('a venue captured as free text', buru.locationName === 'Buruburu Social Hall', buru.locationName);
+
+  const nak = f('Farmers fair in Nakuru next week');
+  check('a non-Nairobi county is classified', nak.county === 'Nakuru', nak.county);
+  check('no area invented when none is present', nak.area === undefined);
+
+  const none = f('Come hang out with us sometime');
+  check('no county invented from prose', none.county === undefined);
+  check('no area invented from prose', none.area === undefined);
+  check('no landmark invented from prose', none.landmark === undefined);
+}
+
+console.log('\n=== TIME: canonical dates, start/end times, recurrence ===');
+{
+  const f = (s) => extractFields(s).fields;
+  const dated = f('Conference on 15 September 2026, 9AM-5PM');
+  check('full date becomes a canonical ISO date', dated.dateCanonical === '2026-09-15', dated.dateCanonical);
+  check('start time normalised', dated.startTime === '09:00', dated.startTime);
+  check('end time normalised', dated.endTime === '17:00', dated.endTime);
+  check('canonical event timestamp composed', dated.eventStart === '2026-09-15T09:00:00', dated.eventStart);
+  check('event end timestamp composed', dated.eventEnd === '2026-09-15T17:00:00', dated.eventEnd);
+
+  const monthFirst = f('Deadline: September 15, 2026');
+  check('month-first full date parsed', monthFirst.dateCanonical === '2026-09-15', monthFirst.dateCanonical);
+  check('deadline canonicalised from its own date', monthFirst.deadlineCanonical === '2026-09-15', monthFirst.deadlineCanonical);
+
+  const noYear = f('Market on 15 August');
+  check('a day+month with no year is NOT given a fake year', noYear.dateText === '15 August' && noYear.dateCanonical === undefined, JSON.stringify(noYear.dateText));
+
+  const recur = f('Yoga every Saturday at 8AM');
+  check('recurring schedule captured as text', recur.recurrence === 'every saturday', recur.recurrence);
+  check('a weekday is NOT resolved to a date', recur.dayOfWeek === 'saturday' && recur.dateCanonical === undefined);
+  check('a single clock time becomes a start time', recur.startTime === '08:00', recur.startTime);
+  check('no end time invented for a single time', recur.endTime === undefined);
+
+  const sat = f('Saturday popup');
+  check('a lone weekday is a day, never a timestamp', sat.dayOfWeek === 'saturday' && sat.eventStart === undefined);
+}
+
+console.log('\n=== 8 REALISTIC PIPELINE FIXTURES ===');
+{
+  // Sources: one public channel (its posts become publicly discoverable) and
+  // member sources for everything else.
+  store.insert('sources', {
+    id: 'src_fx_pub', name: 'Nairobi Events Channel', type: 'telegram_channel', platform: 'telegram',
+    accessType: 'public', connectionStatus: 'connected', confidence: 0.6,
+    url: 'https://t.me/nairobi_events', externalId: '-2001', createdAt: new Date().toISOString()
+  });
+  store.insert('sources', {
+    id: 'src_fx_member', name: 'Kilimani Community', type: 'telegram_group', platform: 'telegram',
+    accessType: 'member_access', connectionStatus: 'connected', confidence: 0.6,
+    url: null, externalId: '-2002', createdAt: new Date().toISOString()
+  });
+  const ingest = (sourceId, externalId, text, media) => {
+    const { row } = storeRawItem({
+      sourceId, externalId, messageId: externalId.split(':')[1] ?? '1',
+      author: 'poster', text, media: media ?? [],
+      publishedAt: '2026-08-15T10:00:00Z',
+      rawUrl: `https://t.me/nairobi_events/${externalId.split(':')[1] ?? '1'}`
+    });
+    const result = processRawItem(row.id);
+    return { rowId: row.id, result, object: result.objectId ? store.find('objects', (o) => o.id === result.objectId) : null };
+  };
+
+  // 1 — EVENT ANNOUNCEMENT --------------------------------------------------
+  const ev = ingest('src_fx_pub', '-2001:101',
+    'Night Market at The Alchemist this Saturday.\n\nLive music, food and craft vendors.\n\nKES 500 entry. Gates open 4PM to 10PM.\n\nWestlands, Nairobi.');
+  check('fixture 1 creates an object', ev.result.ok && ev.result.created === true);
+  check('fixture 1 is an event (experience)', ev.object?.type === 'experience', ev.object?.type);
+  check('fixture 1 event price', ev.object?.metadata?.price === 500);
+  check('fixture 1 event time range', ev.object?.metadata?.timeRange === '16:00-22:00', ev.object?.metadata?.timeRange);
+  check('fixture 1 venue', ev.object?.locationName === 'The Alchemist', ev.object?.locationName);
+  check('fixture 1 county + estate', ev.object?.metadata?.county === 'Nairobi' && ev.object?.metadata?.area === 'Westlands');
+  check('fixture 1 landmark', ev.object?.metadata?.landmark === 'The Alchemist');
+  check('fixture 1 is public (public source)', ev.object?.publication === 'public', ev.object?.publication);
+
+  // 2 — BUSINESS PROMOTION ---------------------------------------------------
+  const promo = ingest('src_fx_member', '-2002:201',
+    'Nairobi Threads Boutique — End of month sale!\n\n50% off all dresses and jeans this week.\n\nVisit us at Lavington Mall, ground floor.\n\nOpen Mon to Sat, 9AM - 6PM.');
+  check('fixture 2 creates an object', promo.result.ok && promo.result.created === true);
+  check('fixture 2 is an offer', promo.object?.type === 'offer', promo.object?.type);
+  check('fixture 2 promotion has no invented price', promo.object?.metadata?.price === undefined);
+  check('fixture 2 store hours', promo.object?.metadata?.timeRange === '09:00-18:00', promo.object?.metadata?.timeRange);
+  check('fixture 2 venue', promo.object?.locationName === 'Lavington Mall', promo.object?.locationName);
+  check('fixture 2 estate', promo.object?.metadata?.area === 'Lavington', promo.object?.metadata?.area);
+
+  // 3 — JOB POST ---------------------------------------------------------------
+  const job = ingest('src_fx_member', '-2002:301',
+    'We are hiring! Customer Care Associate at Safiri Travels.\n\nLocation: Westlands, Nairobi.\n\nFull time. Apply by 15 September 2026.\n\nSend CV to careers@safiri.co.ke or DM us.');
+  check('fixture 3 creates an object', job.result.ok && job.result.created === true);
+  check('fixture 3 is an opportunity (job)', job.object?.type === 'opportunity', job.object?.type);
+  check('fixture 3 deadline captured', job.object?.metadata?.deadline === '15 September 2026', job.object?.metadata?.deadline);
+  check('fixture 3 deadline canonicalised', job.object?.metadata?.deadlineCanonical === '2026-09-15', job.object?.metadata?.deadlineCanonical);
+  check('fixture 3 job location county', job.object?.metadata?.county === 'Nairobi' && job.object?.metadata?.area === 'Westlands');
+
+  // 4 — COMMUNITY ANNOUNCEMENT ------------------------------------------------
+  const ann = ingest('src_fx_member', '-2002:401',
+    'ANNOUNCEMENT: Residents of Buruburu Phase 5.\n\nCommunity meeting this Sunday 3pm at Buruburu Social Hall.\n\nAgenda: water rationing schedule and security.\n\nAll members are invited.');
+  check('fixture 4 creates an object', ann.result.ok && ann.result.created === true);
+  check('fixture 4 is an announcement', ann.object?.type === 'announcement', ann.object?.type);
+  check('fixture 4 meeting venue', ann.object?.locationName === 'Buruburu Social Hall', ann.object?.locationName);
+  check('fixture 4 estate', ann.object?.metadata?.area === 'Buruburu', ann.object?.metadata?.area);
+  check('fixture 4 start time (single clock time)', ann.object?.metadata?.startTime === '15:00', ann.object?.metadata?.startTime);
+  check('fixture 4 day of week', ann.object?.metadata?.dayOfWeek === 'sunday', ann.object?.metadata?.dayOfWeek);
+
+  // 5 — NEWS / ARTICLE ----------------------------------------------------------
+  const news = ingest('src_fx_member', '-2002:501',
+    'Daily Nation — Breaking: Nairobi County announces new matatu termini for the CBD.\n\nThe county government has gazetted new pick-up points along Moi Avenue effective 1 October 2026.\n\nRead more: https://example.com/news/matatu-termini');
+  check('fixture 5 creates an object', news.result.ok && news.result.created === true);
+  check('fixture 5 is news', news.object?.type === 'news', news.object?.type);
+  check('fixture 5 county + area', news.object?.metadata?.county === 'Nairobi' && news.object?.metadata?.area === 'CBD');
+  check('fixture 5 landmark (road)', news.object?.metadata?.landmark === 'Moi Avenue', news.object?.metadata?.landmark);
+  check('fixture 5 canonical date', news.object?.metadata?.dateCanonical === '2026-10-01', news.object?.metadata?.dateCanonical);
+  check('fixture 5 source url retained', news.object?.metadata?.url?.startsWith('https://example.com'), news.object?.metadata?.url);
+
+  // 6 — IMAGE + CAPTION (media association) ------------------------------------
+  const caption = 'Fresh farm produce for sale at Kenyatta Market.\n\nSukuma wiki KES 40, Tomatoes KES 60 a kilo.\n\nOpen daily 6AM-1PM. Nairobi.';
+  const img = ingest('src_fx_member', '-2002:601', caption,
+    [{ kind: 'image', reference: 'AgADfile_high', caption }]);
+  check('fixture 6 creates an object', img.result.ok && img.result.created === true);
+  check('fixture 6 is a product listing', img.object?.type === 'product', img.object?.type);
+  check('fixture 6 associates the Telegram image (file id, not a fake URL)',
+    img.object?.imageReference === 'AgADfile_high' && img.object?.imageSourceType === 'telegram', img.object?.imageSourceType);
+  check('fixture 6 marks the image as needing server-side resolution', img.object?.imageNeedsResolution === true);
+  check('fixture 6 preserves source attribution', typeof img.object?.imageAttribution === 'string' && img.object?.imageAttribution.length > 0);
+  check('fixture 6 image alt is the caption', img.object?.imageAlt === caption, (img.object?.imageAlt ?? '').slice(0, 30));
+  {
+    const media = await import('../src/domain/media.js');
+    const r = media.resolveMedia(img.object);
+    check('fixture 6 resolves at the exact level', r.level === 'exact', r.level);
+    check('fixture 6 resolution honestly needs a fetch', r.image?.needsResolution === true && r.image?.reference === 'AgADfile_high');
+    check('fixture 6 never presents the file id as a url', r.image?.url === null);
+  }
+  check('fixture 6 product children created', img.result.childIds.length >= 2, String(img.result.childIds.length));
+
+  // The web path: a real http(s) image URL is stored and resolves directly.
+  const webImg = ingest('src_fx_member', '-2002:602',
+    'Second hand sofa for sale, Nairobi. KES 15000.',
+    [{ kind: 'image', reference: 'https://example.com/sofa.jpg' }]);
+  check('a web image URL is stored directly', webImg.object?.imageUrl === 'https://example.com/sofa.jpg', webImg.object?.imageUrl);
+  check('a web image is not marked for telegram resolution', webImg.object?.imageSourceType === 'web');
+
+  // 7 — DUPLICATE POST (dedup across sources) ----------------------------------
+  const dup1 = ingest('src_fx_member', '-2002:701',
+    'Craft fair at Zawadi Gardens this Saturday.\n\nKES 150 entry. 9AM-5PM. 6 vendors.');
+  const dup2 = ingest('src_fx_pub', '-2001:702',
+    'Saturday craft fair at Zawadi Gardens. Entry KES 150. 9AM-5PM.');
+  check('fixture 7 first post creates the event', dup1.result.created === true);
+  check('fixture 7 second post is a duplicate (merged)', dup2.result.merged === true && dup2.result.created === false);
+  check('fixture 7 both posts point at ONE object', dup1.object.id === dup2.object.id);
+  check('fixture 7 escalated to cross-source confirmation',
+    store.find('objects', (o) => o.id === dup1.object.id).verificationStatus === 'cross_source_confirmed');
+  check('fixture 7 event has two sources',
+    store.filter('objectSources', (s) => s.objectId === dup1.object.id).length === 2);
+
+  // 8 — AMBIGUOUS / GENERAL POST ------------------------------------------------
+  const gen = ingest('src_fx_member', '-2002:801',
+    'A guide to replacing a lost Huduma Namba in Nairobi.\n\nYou need your ID, a passport photo, and KES 100 for processing.\n\nSteps: visit the Huduma Centre, fill the form, pay at the counter.');
+  check('fixture 8 general info becomes a knowledge object', gen.result.ok && gen.result.created === true && gen.object?.type === 'knowledge', gen.object?.type);
+  check('fixture 8 general info keeps its county', gen.object?.metadata?.county === 'Nairobi');
+  check('fixture 8 general info keeps its price', gen.object?.metadata?.price === 100);
+
+  const ambiguous = ingest('src_fx_member', '-2002:802',
+    'Hey everyone, hope you\'re all doing well. See you around!');
+  check('fixture 8 an ambiguous chat is NOT forced into an object', ambiguous.result.created === false);
+  const ambRaw = store.find('rawItems', (r) => r.id === ambiguous.rowId);
+  check('fixture 8 the ambiguous message stays as source content',
+    ambRaw?.processingStatus === 'rejected' && ambRaw?.objectId === undefined, ambRaw?.processingStatus);
+  check('fixture 8 the original text is preserved verbatim',
+    ambRaw?.text === 'Hey everyone, hope you\'re all doing well. See you around!');
+
+  // FEED: newly ingested Telegram objects surface in the EXISTING public feed.
+  {
+    const { default: app } = await import('../src/index.js');
+    const srv = app.listen(0);
+    const port = srv.address().port;
+    try {
+      const res = await fetch(`http://127.0.0.1:${port}/api/public/feed`);
+      const body = await res.json();
+      const rows = [...body.feed.hero, ...body.feed.discovery, ...body.feed.opportunities, ...body.feed.more];
+      const titles = rows.map((r) => r.title).join(' | ');
+      check('the ingested event is visible in the existing public feed',
+        titles.includes('Night Market at The Alchemist'), titles.slice(0, 120));
+      check('a private (member) post is NOT in the public feed',
+        !titles.includes('Nairobi Threads Boutique'));
+    } finally {
+      srv.close();
+    }
+  }
+}
+
 console.log('\n=== WHATSAPP SECURITY (spec 13 / 32) ===');
 {
   process.env.WHATSAPP_APP_SECRET = 'shh';
@@ -265,6 +499,230 @@ console.log('\n=== TELEGRAM NORMALIZATION (spec 10-12) ===');
   check('history limitation documented', telegram.capabilities.history.startsWith('no'));
 }
 
+console.log('\n=== TELEGRAM CHANNEL POSTS, MEDIA & EDITS (spec 10-12) ===');
+{
+  // channel_post: the bot is a member of a channel and Telegram pushes the post.
+  const channel = telegram.normalizeUpdate({
+    update_id: 99,
+    channel_post: {
+      message_id: 88, date: 1755400000,
+      chat: { id: -100555, title: 'Nairobi Events', type: 'channel', username: 'nairobievents' },
+      text: 'Night market at Westlands Square. KES 500 entry. 20 vendors.'
+    }
+  });
+  check('channel_post normalised', channel !== null && channel.externalId === '-100555:88', channel?.externalId);
+  check('channel source carries channel identity',
+    channel.chat.type === 'channel' && channel.chat.title === 'Nairobi Events');
+  check('channel permalink built from username', channel.rawUrl === 'https://t.me/nairobievents/88');
+
+  // photo + caption: the caption is ingested as text, the file_id is preserved.
+  const photo = telegram.normalizeUpdate({
+    channel_post: {
+      message_id: 89, date: 1755400000,
+      chat: { id: -100555, type: 'channel', username: 'nairobievents' },
+      caption: 'Popup Saturday at Kilimani Studio. KES 300 entry. 12 vendors.',
+      photo: [
+        { file_id: 'AgADfile_low', width: 320, height: 200 },
+        { file_id: 'AgADfile_high', width: 1280, height: 800 }
+      ]
+    }
+  });
+  check('photo caption becomes the text', photo !== null &&
+    photo.text === 'Popup Saturday at Kilimani Studio. KES 300 entry. 12 vendors.');
+  check('photo media preserved with the largest file_id',
+    photo.media.length === 1 && photo.media[0].kind === 'image' && photo.media[0].reference === 'AgADfile_high');
+  check('photo media carries its caption', photo.media[0].caption === 'Popup Saturday at Kilimani Studio. KES 300 entry. 12 vendors.');
+
+  // document: file_id + file_name preserved, never downloaded.
+  const doc = telegram.normalizeUpdate({
+    channel_post: {
+      message_id: 90, date: 1755400000,
+      chat: { id: -100555, type: 'channel' },
+      caption: 'Price list for Saturday.',
+      document: { file_id: 'BQADdoc_1', file_name: 'prices.pdf' }
+    }
+  });
+  check('document media preserved', doc.media.length === 1 && doc.media[0].kind === 'document' && doc.media[0].reference === 'BQADdoc_1');
+  check('document file name preserved', doc.media[0].caption === 'prices.pdf');
+
+  // edited_channel_post / edited_message are ingested like their originals.
+  const edited = telegram.normalizeUpdate({
+    edited_channel_post: {
+      message_id: 88, date: 1755400000, edit_date: 1755400100,
+      chat: { id: -100555, type: 'channel', username: 'nairobievents' },
+      text: 'Night market at Westlands Square. KES 450 entry. 20 vendors.'
+    }
+  });
+  check('edited_channel_post normalised', edited !== null && edited.externalId === '-100555:88');
+  check('edited text is the edited body', edited.text.includes('KES 450 entry'));
+
+  const editedMsg = telegram.normalizeUpdate({
+    edited_message: {
+      message_id: 91, date: 1755400000, edit_date: 1755400100,
+      chat: { id: -1001, type: 'supergroup', username: 'g' },
+      text: 'Popup Sunday at Westlands. KES 200 entry.'
+    }
+  });
+  check('edited_message normalised', editedMsg !== null && editedMsg.externalId === '-1001:91');
+
+  // A caption-less photo has no usable text and is ignored, not an error.
+  check('caption-less photo ignored', telegram.normalizeUpdate({
+    channel_post: { message_id: 92, date: 1, chat: { id: -1, type: 'channel' }, photo: [{ file_id: 'x' }] }
+  }) === null);
+}
+
+console.log('\n=== TELEGRAM STATUS, REDACTION & WEBHOOK REGISTRATION (spec 2 / 4 / 12) ===');
+{
+  const originalFetch = globalThis.fetch;
+  const FAKE_TOKEN = '987654321:AA_test_secret_for_redaction';
+  const jsonResponse = (body, status = 200) => new Response(JSON.stringify(body), { status });
+
+  // --- redaction: the token must never survive in any surfaced string ---------
+  process.env.TELEGRAM_BOT_TOKEN = FAKE_TOKEN;
+  telegram.resetStatusCache();
+  check('redactSecrets strips the token', telegram.redactSecrets(`url ${FAKE_TOKEN} gone`).indexOf(FAKE_TOKEN) === -1);
+  check('redactSecrets leaves other text intact', telegram.redactSecrets('hello world') === 'hello world');
+  check('redactSecrets is a no-op for non-strings', telegram.redactSecrets(42) === 42);
+  check('redactSecrets masks the token in a getMe-style error',
+    telegram.redactSecrets(`getMe failed: ${FAKE_TOKEN}`) === 'getMe failed: [REDACTED]');
+
+  // --- status() with no token: honest false, no secret -----------------------
+  delete process.env.TELEGRAM_BOT_TOKEN;
+  telegram.resetStatusCache();
+  const unconf = await telegram.status();
+  check('status unconfigured reports configured:false', unconf.configured === false && unconf.operational === false);
+  check('status unconfigured names the missing config', /TELEGRAM_BOT_TOKEN/.test(unconf.diagnostic ?? ''));
+  check('status unconfigured leaks no token', !JSON.stringify(unconf).includes(FAKE_TOKEN));
+
+  // --- status() with a healthy mocked Bot API ---------------------------------
+  process.env.TELEGRAM_BOT_TOKEN = FAKE_TOKEN;
+  globalThis.fetch = async (url) => {
+    const u = String(url);
+    if (u.includes('/getMe')) return jsonResponse({ ok: true, result: { id: 123, username: 'brief_bot', can_read_all_group_messages: false, can_join_groups: true } });
+    if (u.includes('/getWebhookInfo')) return jsonResponse({ ok: true, result: { url: 'https://brief.example.com/api/webhooks/telegram', pending_update_count: 0, last_error_message: '', allowed_updates: ['channel_post'] } });
+    return jsonResponse({ ok: false, description: 'not found' }, 404);
+  };
+  telegram.resetStatusCache();
+  const ok = await telegram.status();
+  check('status operational when getMe + webhook are healthy', ok.operational === true && ok.configured === true);
+  check('status reports the bot identity', ok.bot.username === 'brief_bot' && ok.bot.id === 123);
+  check('status reports webhook url + pending count',
+    ok.webhook.url === 'https://brief.example.com/api/webhooks/telegram' && ok.webhook.pendingUpdateCount === 0);
+  check('status snapshot cached for sync consumers', telegram.statusSnapshot()?.operational === true);
+
+  // --- status() with no webhook installed -------------------------------------
+  globalThis.fetch = async (url) => {
+    if (String(url).includes('/getMe')) return jsonResponse({ ok: true, result: { id: 123, username: 'brief_bot' } });
+    if (String(url).includes('/getWebhookInfo')) return jsonResponse({ ok: true, result: { url: '' } });
+    return jsonResponse({ ok: false, description: 'not found' }, 404);
+  };
+  telegram.resetStatusCache();
+  const nowebhook = await telegram.status();
+  check('status not operational when no webhook is installed', nowebhook.operational === false && nowebhook.bot !== null);
+  check('status names the missing webhook', /no webhook/.test(nowebhook.diagnostic ?? ''));
+
+  // --- status() with a persistent webhook delivery error ----------------------
+  globalThis.fetch = async (url) => {
+    if (String(url).includes('/getMe')) return jsonResponse({ ok: true, result: { id: 123, username: 'brief_bot' } });
+    if (String(url).includes('/getWebhookInfo')) return jsonResponse({ ok: true, result: { url: 'https://brief.example.com/api/webhooks/telegram', last_error_message: 'SSL error' } });
+    return jsonResponse({ ok: false, description: 'not found' }, 404);
+  };
+  telegram.resetStatusCache();
+  const err = await telegram.status();
+  check('status not operational on a persistent webhook error', err.operational === false && /SSL error/.test(err.diagnostic ?? ''));
+
+  // --- status() with an auth failure never exposes the token ------------------
+  globalThis.fetch = async () => jsonResponse({ ok: false, description: 'Unauthorized' }, 401);
+  telegram.resetStatusCache();
+  const badAuth = await telegram.status();
+  check('status not operational on getMe auth failure', badAuth.operational === false && badAuth.configured === true);
+  check('auth-failure diagnostic never contains the token', !JSON.stringify(badAuth).includes(FAKE_TOKEN));
+
+  // --- idempotent webhook registration via the setWebhook seam -----------------
+  // Re-registering the SAME url must not issue a competing setWebhook. The
+  // connector's setWebhook always posts, but the ROUTE compares getWebhookInfo
+  // first. Prove the seam the route relies on reports the current url so a
+  // caller can skip a redundant setWebhook.
+  globalThis.fetch = async (url) => {
+    if (String(url).includes('/getWebhookInfo')) return jsonResponse({ ok: true, result: { url: 'https://brief.example.com/api/webhooks/telegram', pending_update_count: 0 } });
+    if (String(url).includes('/setWebhook')) return jsonResponse({ ok: true, result: true });
+    return jsonResponse({ ok: false, description: 'not found' }, 404);
+  };
+  telegram.resetStatusCache();
+  const info = await telegram.getWebhookInfo();
+  check('webhook info reports the live url', info.ok && info.result.url === 'https://brief.example.com/api/webhooks/telegram');
+  const set = await telegram.setWebhook('https://brief.example.com/api/webhooks/telegram', 'secret');
+  check('setWebhook is supported when needed', set.ok === true);
+
+  globalThis.fetch = originalFetch;
+  telegram.resetStatusCache();
+  delete process.env.TELEGRAM_BOT_TOKEN;
+}
+
+console.log('\n=== TELEGRAM PRODUCTION WEBHOOK GATE (spec 11 / 12) ===');
+{
+  // In production the dev fallback is off, so an anonymous request has NO
+  // identity. A provider webhook (authenticated by its own secret header, not
+  // a Brief session) must still reach its handler -- otherwise real Telegram
+  // channel_post updates would be refused 401 before ever being ingested.
+  process.env.NODE_ENV = 'test';
+  process.env.BRIEF_DEV_AUTH = '0';
+  process.env.TELEGRAM_WEBHOOK_SECRET = 'prod-gate-secret';
+  const { default: app } = await import('../src/index.js');
+  const { drained } = await import('../src/queue.js');
+  store._reset();
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (path, method = 'GET', body, headers = {}) => {
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, {
+      method, headers: { ...(body ? { 'content-type': 'application/json' } : {}), ...headers },
+      body: body ? JSON.stringify(body) : undefined
+    });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  try {
+    // The gate is intact for ordinary private routes.
+    const priv = await call('/api/status');
+    check('anonymous private route is still refused (401)', priv.status === 401, `got ${priv.status}`);
+
+    // The webhook, with the correct secret header, passes the gate.
+    const update = {
+      update_id: 5001,
+      channel_post: { message_id: 4243, date: 1755400000, chat: { id: -100777, type: 'channel', username: 'prodbotchan' }, text: 'Saturday popup at Kilimani Studio. KES 300 entry. 12 vendors.' }
+    };
+    const good = await call('/api/webhooks/telegram', 'POST', update, { 'x-telegram-bot-api-secret-token': 'prod-gate-secret' });
+    check('a channel_post webhook reaches the handler without a session', good.status === 200, `got ${good.status} ${JSON.stringify(good.body)}`);
+    check('the production webhook stored a raw item', Boolean(good.body?.rawItemId));
+
+    await drained();
+    const src = store.find('sources', (s) => s.externalId === '-100777');
+    check('the channel_post created a telegram_channel source', Boolean(src) && src.type === 'telegram_channel', src?.type);
+    const raw = src ? store.find('rawItems', (r) => r.sourceId === src.id) : null;
+    check('the raw item reached processed state', raw?.processingStatus === 'processed', raw?.processingStatus);
+    check('an object was produced end to end', Boolean(raw?.objectId));
+
+    // A public channel (has a username) yields a publicly discoverable object.
+    const obj = raw ? store.find('objects', (o) => o.id === raw.objectId) : null;
+    check('the channel-post object is publicly discoverable', obj?.publication === 'public', obj?.publication);
+
+    // The same update again must dedupe to the same single object.
+    const replay = await call('/api/webhooks/telegram', 'POST', update, { 'x-telegram-bot-api-secret-token': 'prod-gate-secret' });
+    check('replayed channel_post is a duplicate', replay.body?.duplicate === true);
+    check('exactly one raw item for the channel post', store.filter('rawItems', (r) => r.sourceId === src.id).length === 1);
+    check('exactly one object for the channel post', store.filter('objects', (o) => o.id === raw.objectId).length === 1);
+
+    // The public feed (anonymous, no session) surfaces the object.
+    const feed = await call('/api/public/feed');
+    check('the public feed is anonymous-reachable', feed.status === 200, `got ${feed.status}`);
+    const titles = JSON.stringify(feed.body);
+    check('the channel-post object is visible in the public feed', titles.includes('Kilimani Studio'), titles.slice(0, 120));
+  } finally {
+    srv.close();
+    delete process.env.BRIEF_DEV_AUTH;
+    delete process.env.TELEGRAM_WEBHOOK_SECRET;
+  }
+}
+
 console.log('\n=== SSRF GUARD (spec 32) ===');
 {
   for (const bad of ['http://localhost/x', 'http://127.0.0.1/x', 'http://169.254.169.254/latest/meta-data',
@@ -272,6 +730,281 @@ console.log('\n=== SSRF GUARD (spec 32) ===');
     check(`refused ${bad}`, !web.validateUrl(bad).ok);
   }
   check('ordinary https URL allowed', web.validateUrl('https://example.com/page').ok);
+}
+
+// ---------------------------------------------------------------------------
+// WEB + RSS INGESTION (offline) — the whole connector surface driven against
+// fixture HTTP served by a mocked fetch, so parsing, normalization, dedup,
+// persistence and failure isolation are proven without a network.
+// ---------------------------------------------------------------------------
+console.log('\n=== WEB + RSS INGESTION (offline) ===');
+{
+  const scheduler = await import('../src/pipeline/scheduler.js');
+  const normalize = await import('../src/pipeline/normalize.js');
+
+  const RSS_XML = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel>
+<title>Nairobi Tech News</title><link>https://feeds.example</link><description>Tech news from Nairobi</description>
+<item>
+  <title>Breaking: Nairobi County opens new bus terminus</title>
+  <link>https://example.com/news/bus-terminus</link>
+  <guid>https://example.com/news/bus-terminus</guid>
+  <pubDate>Tue, 15 Sep 2026 09:00:00 GMT</pubDate>
+  <category>transport</category>
+  <description>The county opens a new terminus along Moi Avenue.</description>
+</item>
+<item>
+  <title>New startup hub opens in Westlands</title>
+  <link>https://example.com/article</link>
+  <guid>https://example.com/article</guid>
+  <pubDate>Wed, 16 Sep 2026 08:00:00 GMT</pubDate>
+  <author>jane@example.com (Jane Doe)</author>
+  <category>startups</category>
+  <category>westlands</category>
+  <description>A new co-working hub opens in Westlands, Nairobi this week.</description>
+  <enclosure url="https://feeds.example/img/hub.jpg" type="image/jpeg" length="12345"/>
+</item>
+</channel></rss>`;
+
+  const ATOM_XML = `<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+<title>Nairobi Events</title>
+<entry>
+  <title>Night Market this Saturday</title>
+  <id>tag:example,2026:entry-1</id>
+  <link rel="alternate" href="https://nairobievents.example/night-market"/>
+  <updated>2026-09-10T09:00:00Z</updated>
+  <published>2026-09-10T09:00:00Z</published>
+  <author><name>Events Desk</name></author>
+  <summary>Night market in Nairobi this Saturday.</summary>
+</entry>
+</feed>`;
+
+  const ARTICLE_HTML = `<html><head>
+<title>Fallback title</title>
+<meta property="og:title" content="New startup hub opens in Westlands">
+<meta property="og:description" content="A new co-working hub opens in Westlands, Nairobi this week.">
+<meta property="og:image" content="https://example.com/img/hub.jpg">
+<meta property="og:site_name" content="Kenya Tech">
+<meta property="article:published_time" content="2026-09-16T08:00:00Z">
+<meta name="author" content="Jane Doe">
+<link rel="canonical" href="https://example.com/article">
+</head><body><p>A new co-working hub opens in Westlands, Nairobi this week.</p></body></html>`;
+
+  const EVENT_HTML = `<html><head><title>Workshop</title>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Event","name":"Startup Workshop","startDate":"2026-09-15T09:00:00Z","endDate":"2026-09-15T17:00:00Z","location":{"@type":"Place","name":"Sarit Centre","address":{"addressLocality":"Westlands"}},"organizer":{"@type":"Organization","name":"Tech Hub"},"offers":{"@type":"Offer","price":"500","priceCurrency":"KES"}}
+</script></head><body>Join us for a startup workshop at Sarit Centre.</body></html>`;
+
+  const SPARSE_HTML = `<html><head><title>Just a title</title>
+<meta property="og:title" content="Just a title"></head><body></body></html>`;
+
+  // Two similar-titled but distinct articles: near-identical titles, different
+  // canonical URLs and different (non-similar) locations. They MUST stay two
+  // objects — a title match alone is never enough to merge.
+  const SIMILAR_XML = `<rss version="2.0"><channel><title>R</title>
+<item><title>Weekend market returns to Nairobi</title><link>https://example.com/a1</link><guid>https://example.com/a1</guid><description>Weekend market returns</description></item>
+<item><title>Weekend market returns to Mombasa</title><link>https://example.com/a2</link><guid>https://example.com/a2</guid><description>Weekend market returns</description></item>
+</channel></rss>`;
+
+  const originalFetch = globalThis.fetch;
+  const resp = (body, status = 200, type = 'text/html') =>
+    new Response(body, { status, headers: { 'content-type': type } });
+
+  globalThis.fetch = async (url) => {
+    const u = String(url);
+    if (u.endsWith('/robots.txt')) {
+      // example.com disallows only /robots-blocked; everyone else is open.
+      if (u.startsWith('https://example.com/')) {
+        return resp('User-agent: *\nDisallow: /robots-blocked\n', 200, 'text/plain');
+      }
+      return resp('', 404);
+    }
+    switch (u) {
+      case 'https://feeds.example/rss.xml': return resp(RSS_XML, 200, 'application/rss+xml');
+      case 'https://feeds.example/atom.xml': return resp(ATOM_XML, 200, 'application/atom+xml');
+      case 'https://feeds.example/empty.xml': return resp('<rss version="2.0"><channel><title>Empty</title></channel></rss>', 200, 'application/rss+xml');
+      case 'https://feeds.example/malformed': return resp('<html><body>not a feed</body></html>', 200, 'text/html');
+      case 'https://example.com/article': return resp(ARTICLE_HTML, 200);
+      case 'https://example.com/event': return resp(EVENT_HTML, 200);
+      case 'https://example.com/sparse': return resp(SPARSE_HTML, 200);
+      case 'https://example.com/robots-blocked': return resp('<html>secret</html>', 200);
+      case 'https://example.com/error': return resp('boom', 500);
+      case 'https://broken.example/feed.xml': return resp('boom', 500);
+      case 'https://good2.example/rss.xml': return resp(RSS_XML, 200, 'application/rss+xml');
+      default: return resp('not found', 404);
+    }
+  };
+
+  const src = (id, name, type, url) => store.insert('sources', {
+    id, name, type, platform: type === 'rss' ? 'rss' : 'web', url,
+    externalId: url, accessType: 'public', connectionStatus: 'connected',
+    enabled: true, healthState: 'never', lastAttemptAt: null, lastSuccessAt: null, lastError: null,
+    confidence: 0.55, lastSyncedAt: null, lastMessageAt: null,
+    createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+  });
+
+  try {
+    // --- RSS parsing ----------------------------------------------------------
+    const rss = await web.fetchFeed('https://feeds.example/rss.xml');
+    check('RSS 2.0 feed parsed', rss.ok === true, rss.error);
+    check('RSS feed title captured', rss.feedTitle === 'Nairobi Tech News', rss.feedTitle);
+    check('RSS items extracted', rss.items.length === 2, String(rss.items.length));
+    const news = rss.items[0];
+    check('RSS item guid', news.guid === 'https://example.com/news/bus-terminus');
+    check('RSS item link + canonical', news.link === 'https://example.com/news/bus-terminus' && news.canonicalUrl === news.link);
+    check('RSS item publication date parsed', Boolean(news.publishedAt), news.publishedAt);
+    check('RSS item categories', news.categories.includes('transport'), JSON.stringify(news.categories));
+    const art = rss.items[1];
+    check('RSS item author', /Jane Doe/.test(art.author ?? ''), art.author);
+    check('RSS item categories plural', ['startups', 'westlands'].every((c) => art.categories.includes(c)));
+    check('RSS enclosure captured', art.enclosure === 'https://feeds.example/img/hub.jpg', art.enclosure);
+
+    // --- Atom parsing -----------------------------------------------------------
+    const atom = await web.fetchFeed('https://feeds.example/atom.xml');
+    check('Atom feed parsed', atom.ok === true, atom.error);
+    check('Atom entry extracted', atom.items.length === 1 && atom.items[0].title === 'Night Market this Saturday');
+    check('Atom canonical link (rel=alternate)', atom.items[0].canonicalUrl === 'https://nairobievents.example/night-market', atom.items[0].canonicalUrl);
+    check('Atom entry id used as guid', atom.items[0].guid === 'tag:example,2026:entry-1', atom.items[0].guid);
+
+    // --- missing dates + malformed ----------------------------------------------
+    const empty = await web.fetchFeed('https://feeds.example/empty.xml');
+    check('a feed with no items yields an empty list', empty.ok === true && empty.items.length === 0);
+    const bad = await web.fetchFeed('https://feeds.example/malformed');
+    check('a non-feed response is refused honestly', bad.ok === false && /not RSS or Atom/.test(bad.error ?? ''), bad.error);
+    const bad2 = await web.fetchFeed('https://example.com/article'); // HTML, not a feed
+    check('an HTML page refused as a feed', bad2.ok === false);
+
+    // --- web parsing ------------------------------------------------------------
+    const page = await web.fetchPage('https://example.com/article');
+    check('page fetched', page.ok === true, page.error);
+    check('og:title preferred over <title>', page.extracted.title === 'New startup hub opens in Westlands', page.extracted.title);
+    check('og:description captured', /co-working/.test(page.extracted.description ?? ''));
+    check('og:image captured', page.extracted.image === 'https://example.com/img/hub.jpg');
+    check('site name captured', page.extracted.siteName === 'Kenya Tech');
+    check('published time captured', Boolean(page.extracted.publishedAt));
+    check('author captured', page.extracted.author === 'Jane Doe', page.extracted.author);
+    check('canonical link captured', page.extracted.canonicalUrl === 'https://example.com/article', page.extracted.canonicalUrl);
+
+    const ev = await web.fetchPage('https://example.com/event');
+    check('JSON-LD event page parsed', ev.ok === true && ev.extracted.ldType === 'Event', ev.extracted.ldType);
+    check('JSON-LD start date', ev.extracted.startDate === '2026-09-15T09:00:00Z', ev.extracted.startDate);
+    check('JSON-LD venue', ev.extracted.locationName === 'Sarit Centre', ev.extracted.locationName);
+    check('JSON-LD organizer', ev.extracted.organizer === 'Tech Hub', ev.extracted.organizer);
+    check('JSON-LD price + currency', ev.extracted.price === 500 && ev.extracted.currency === 'KES');
+
+    const sparse = await web.fetchPage('https://example.com/sparse');
+    check('missing image is null, not invented', sparse.extracted.image === null);
+    check('missing publication date is null, not invented', sparse.extracted.publishedAt === null);
+
+    const gone = await web.fetchPage('https://example.com/error');
+    check('an inaccessible page fails gracefully', gone.ok === false && gone.status === 500, JSON.stringify(gone.status));
+
+    const blocked = await web.fetchPage('https://example.com/robots-blocked');
+    check('robots.txt Disallow is honoured for pages', blocked.ok === false && /blocked/.test(blocked.error ?? ''), blocked.error);
+
+    // --- pipeline: RSS -> raw item -> object --------------------------------------
+    store._reset();
+    const rssSrc = src('src_rss', 'Nairobi Tech News', 'rss', 'https://feeds.example/rss.xml');
+    const r1 = await scheduler.pollSource('src_rss');
+    check('RSS poll succeeds', r1.ok === true, JSON.stringify(r1));
+    check('RSS poll received 2 items', r1.received === 2, String(r1.received));
+    check('RSS poll stored 2 raw items', r1.stored === 2, String(r1.stored));
+    const rssRaws = store.filter('rawItems', (r) => r.sourceId === 'src_rss');
+    check('RSS items persisted as raw items', rssRaws.length === 2);
+    const newsObj = store.find('objects', (o) => o.title?.includes('bus terminus'));
+    check('RSS news item classified as news', newsObj?.type === 'news', newsObj?.type);
+    check('RSS news county extracted', newsObj?.metadata?.county === 'Nairobi', newsObj?.metadata?.county);
+    check('RSS news source url retained', newsObj?.metadata?.url === 'https://example.com/news/bus-terminus', newsObj?.metadata?.url);
+    const hubObj = store.find('objects', (o) => o.title?.includes('startup hub'));
+    check('RSS article image associated (enclosure)', hubObj?.imageUrl === 'https://feeds.example/img/hub.jpg', hubObj?.imageUrl);
+    check('RSS source health is ok after success', store.find('sources', (s) => s.id === 'src_rss').healthState === 'ok');
+    check('RSS poll recorded a sync run', store.filter('syncRuns', (r) => r.sourceId === 'src_rss').length === 1);
+    check('RSS objects are publicly discoverable', store.find('objects', (o) => o.id === newsObj.id).publication === 'public');
+
+    // --- pipeline: web -> raw item -> object (event) ------------------------------
+    const webSrc = src('src_web', 'Event page', 'webpage', 'https://example.com/event');
+    const r2 = await scheduler.pollSource('src_web');
+    check('web poll succeeds', r2.ok === true, JSON.stringify(r2));
+    const evObj = store.find('objects', (o) => o.metadata?.organizer === 'Tech Hub');
+    check('JSON-LD event becomes an experience object', evObj?.type === 'experience', evObj?.type);
+    check('event venue extracted', evObj?.locationName === 'Sarit Centre', evObj?.locationName);
+    check('event organizer retained', evObj?.metadata?.organizer === 'Tech Hub', evObj?.metadata?.organizer);
+    check('event date canonicalised', evObj?.metadata?.dateCanonical === '2026-09-15', evObj?.metadata?.dateCanonical);
+    check('event price retained', evObj?.metadata?.price === 500 && evObj?.metadata?.currency === 'KES');
+
+    // --- dedup: duplicate RSS delivery --------------------------------------------
+    const beforeDup = store.all('objects').length;
+    const r3 = await scheduler.pollSource('src_rss');
+    check('re-polling the same RSS feed is idempotent', r3.ok === true && r3.stored === 0 && r3.skipped === 2, JSON.stringify({ stored: r3.stored, skipped: r3.skipped }));
+    check('re-poll created no duplicate objects', store.all('objects').length === beforeDup, `${beforeDup} -> ${store.all('objects').length}`);
+
+    // --- dedup: same article from RSS and Web -------------------------------------
+    store._reset();
+    const rA = src('srcA', 'RSS', 'rss', 'https://feeds.example/rss.xml');
+    const wA = src('srcW', 'Web', 'webpage', 'https://example.com/article');
+    await scheduler.pollSource('srcA');
+    const hubsAfterRss = store.filter('objects', (o) => o.title?.includes('startup hub')).length;
+    await scheduler.pollSource('srcW');
+    const hubsAfterWeb = store.filter('objects', (o) => o.title?.includes('startup hub')).length;
+    check('same article from RSS then Web is ONE object', hubsAfterRss === 1 && hubsAfterWeb === 1, `${hubsAfterRss} -> ${hubsAfterWeb}`);
+    const merged = store.find('objects', (o) => o.title?.includes('startup hub'));
+    check('RSS + Web article merged to cross-source confirmation',
+      merged?.verificationStatus === 'cross_source_confirmed', merged?.verificationStatus);
+    check('the merged object cites both sources',
+      store.filter('objectSources', (s) => s.objectId === merged.id).length === 2);
+
+    // --- dedup: distinct similar articles stay separate ---------------------------
+    store._reset();
+    store.insert('sources', { id: 'src_dup', name: 'Dup', type: 'rss', url: 'https://good2.example/rss.xml', accessType: 'public', enabled: true });
+    globalThis.fetch = async (url) => {
+      const u = String(url);
+      if (u.endsWith('/robots.txt')) return resp('', 404);
+      if (u === 'https://good2.example/rss.xml') return resp(SIMILAR_XML, 200, 'application/rss+xml');
+      return resp('not found', 404);
+    };
+    const rr = await scheduler.pollSource('src_dup');
+    check('similar-titled distinct articles are both stored', rr.stored === 2, String(rr.stored));
+    check('distinct articles remain separate objects', store.filter('objects', (o) => o.type !== 'identity').length === 2);
+
+    // --- failure isolation ---------------------------------------------------------
+    store._reset();
+    src('src_bad', 'Broken', 'rss', 'https://broken.example/feed.xml');
+    src('src_good', 'Good', 'rss', 'https://good2.example/rss.xml');
+    globalThis.fetch = async (url) => {
+      const u = String(url);
+      if (u.endsWith('/robots.txt')) return resp('', 404);
+      if (u === 'https://broken.example/feed.xml') return resp('boom', 500);
+      if (u === 'https://good2.example/rss.xml') return resp(SIMILAR_XML, 200, 'application/rss+xml');
+      return resp('not found', 404);
+    };
+    const round = await scheduler.runPollRound();
+    check('a poll round runs every enabled source', round.ok === true && round.sources === 2, JSON.stringify(round.sources));
+    const badRes = round.results.find((x) => x.source === 'src_bad');
+    const goodRes = round.results.find((x) => x.source === 'src_good');
+    check('the broken source fails honestly', badRes?.ok === false, JSON.stringify(badRes?.error));
+    check('the healthy source still succeeds', goodRes?.ok === true && goodRes?.stored === 2, JSON.stringify(goodRes?.stored));
+    check('broken source health records the error', store.find('sources', (s) => s.id === 'src_bad').healthState === 'error');
+    check('healthy source health is ok', store.find('sources', (s) => s.id === 'src_good').healthState === 'ok');
+    check('the broken source stored nothing', store.filter('rawItems', (r) => r.sourceId === 'src_bad').length === 0);
+    check('the healthy source ingested real objects', store.filter('objects', (o) => o.type !== 'identity').length === 2);
+
+    // --- connector health reflects real state --------------------------------------
+    const status = scheduler.ingestStatus('rss');
+    check('ingest status counts enabled sources', status.sourcesEnabled === 2, String(status.sourcesEnabled));
+    check('ingest status reports health per source', status.health.ok === 1 && status.health.error === 1, JSON.stringify(status.health));
+
+    // --- source registry: enabled toggle -------------------------------------------
+    store._reset();
+    const toggled = src('src_t', 'Tog', 'rss', 'https://feeds.example/rss.xml');
+    check('a pollable source starts enabled', toggled.enabled === true && toggled.healthState === 'never');
+    check('enabled sources are discovered by the poller', scheduler.enabledPollableSources().some((s) => s.id === 'src_t'));
+    store.update('sources', 'src_t', { enabled: false });
+    check('disabling a source removes it from the poller', !scheduler.enabledPollableSources().some((s) => s.id === 'src_t'));
+  } finally {
+    globalThis.fetch = originalFetch;
+    store._reset();
+  }
 }
 
 // --- LIVE NETWORK TESTS ------------------------------------------------------
@@ -3188,6 +3921,66 @@ console.log('\n=== PUBLIC FEED API (home-feed) ===');
   check('public feed validates incomplete location',
     (await fetch(`http://127.0.0.1:${portPF}/api/public/feed?lat=1`)).status === 400);
   srvPF.close();
+}
+
+console.log('\n=== TELEGRAM IMAGE RESOLUTION (render-time, token stays server-side) ===');
+{
+  const tgPublic = 'tg_img_public';
+  const tgPrivate = 'tg_img_private';
+  store.insert('objects', {
+    id: tgPublic,
+    type: 'product',
+    title: 'Telegram image product',
+    summary: 'Carries an unresolved Telegram file id',
+    publication: 'public',
+    imageReference: 'AgADfile_public',
+    imageSourceType: 'telegram',
+    imageNeedsResolution: true,
+    createdAt: new Date().toISOString()
+  });
+  store.insert('objects', {
+    id: tgPrivate,
+    type: 'product',
+    title: 'Private telegram image product',
+    summary: 'Must never resolve publicly',
+    publication: 'source_members',
+    imageReference: 'AgADfile_private',
+    imageSourceType: 'telegram',
+    imageNeedsResolution: true,
+    createdAt: new Date().toISOString()
+  });
+
+  const { default: appTg } = await import('../src/index.js');
+  const srvTg = appTg.listen(0);
+  const portTg = srvTg.address().port;
+
+  // The public feed projects the reference as a resolve PATH, not the file id,
+  // and never embeds a token or the raw reference in the payload.
+  const feedRes = await fetch(`http://127.0.0.1:${portTg}/api/public/feed?limit=10`);
+  const feedBody = await feedRes.json();
+  const feedRows = [...feedBody.feed.hero, ...feedBody.feed.discovery, ...feedBody.feed.opportunities, ...feedBody.feed.more];
+  const tgRow = feedRows.find((o) => o.id === tgPublic);
+  const feedRaw = JSON.stringify(feedBody);
+  check('public feed projects telegram media as a resolve path', tgRow?.media?.url === `/api/media/telegram/${tgPublic}`, tgRow?.media?.url);
+  check('public feed never leaks the telegram file id', !feedRaw.includes('AgADfile_public'));
+  check('public feed never leaks a bot token', !feedRaw.includes('bot') && !feedRaw.includes('api.telegram.org'));
+  check('private telegram image stays out of the public feed', !feedRaw.includes(tgPrivate));
+
+  // The resolve endpoint streams bytes for public objects, and refuses (404)
+  // for unknown or non-public objects. With no token configured it fails
+  // gracefully with an honest media_unavailable, never a fabricated image.
+  const unknownRes = await fetch(`http://127.0.0.1:${portTg}/api/media/telegram/nope`);
+  check('resolve endpoint 404s an unknown object', unknownRes.status === 404);
+  const privateRes = await fetch(`http://127.0.0.1:${portTg}/api/media/telegram/${tgPrivate}`);
+  check('resolve endpoint 404s a private object', privateRes.status === 404);
+  const publicRes = await fetch(`http://127.0.0.1:${portTg}/api/media/telegram/${tgPublic}`);
+  check('resolve endpoint answers (graceful failure) without a token',
+    publicRes.status === 502, String(publicRes.status));
+  const publicErr = await publicRes.json().catch(() => ({}));
+  check('resolve failure names the reason, not a fake url',
+    publicErr?.code === 'media_unavailable' && typeof publicErr?.error === 'string');
+
+  srvTg.close();
 }
 
 console.log('\n=== COLLECTIONS (home-feed §47) ===');

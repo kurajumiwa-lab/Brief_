@@ -56,11 +56,35 @@ token before committing to webhook mode.
 
 ### 2c. Verify (the honest checks)
 
-1. `GET /api/capabilities` now reports `telegram.configured: true`.
-2. Send the bot a message: *"Saturday popup at Kilimani Studio, KES 300
-   entry, 4PM-10PM"*.
-3. Open Brief → the object appears in the ranked feed with Telegram as its
+1. `GET /api/connectors/telegram/status` reports `operational: true` — a real
+   `getMe` + `getWebhookInfo` round trip, not just "a token string is set".
+   (`/api/capabilities` still reports `telegram.configured` synchronously; its
+   `telegram.verified` field carries the last verified connectivity result.)
+2. `GET /api/connectors/telegram/webhook-info` shows the live webhook URL,
+   pending-update count and any persistent delivery error.
+3. Post a message the bot can see (a DM, or a `channel_post` from a channel the
+   bot was added to): *"Saturday popup at Kilimani Studio, KES 300 entry,
+   4PM-10PM"*.
+4. Open Brief → the object appears in the ranked feed with Telegram as its
    provenance source.
+
+---
+
+## Channel ingestion (`channel_post`)
+
+Brief ingests `channel_post` updates as well as direct messages. For Telegram to
+deliver a channel's posts to the bot, ALL of these must be true:
+
+1. **The bot must be added to the channel.** A human admin adds it
+   (Bot API cannot join a channel on its own).
+2. **The bot must have permission to read posts.** Add it as an administrator
+   (or at minimum with read-post access).
+3. **Telegram must actually deliver `channel_post` updates.** The webhook is
+   registered with `allowed_updates` including `channel_post` and
+   `edited_channel_post` (the connector's `setWebhook` does this).
+
+Brief cannot read a channel's *historical* posts through the Bot API. It only
+processes posts Telegram delivers to the bot from the moment the bot is added.
 
 ---
 
@@ -69,11 +93,18 @@ token before committing to webhook mode.
 - **No outbound replies.** Brief has no send connector yet (see the
   architecture report §4.3). The bot ingests; it does not reply, remind, or
   confirm. That is a real, unbuilt rail — not something to fake.
-- **No group ingestion.** The bot takes DMs only. Group messages are refused,
-  matching the WhatsApp connector's behaviour.
+- **No backfill of history.** A bot sees only posts made after it joined a
+  channel/chat. Old posts require MTProto (a user account), which is not
+  implemented.
 - **Unconfigured until the token is set.** Until `TELEGRAM_BOT_TOKEN` exists,
-  Telegram routes return 503 "not configured" and the dashboard shows "Needs
-  authorization". This is correct, not a bug.
+  `telegram/status` reports `configured: false` with a diagnostic, and the
+  dashboard shows "Needs authorization". This is correct, not a bug.
+
+> **Webhook registration needs an operator.** `POST
+> /api/connectors/telegram/webhook-config` requires an authenticated session
+> holding the `ops.run` capability (it records an audit entry). The call is
+> idempotent: if the webhook URL already matches, it returns `{changed:false}`
+> instead of re-registering.
 
 ---
 

@@ -92,6 +92,10 @@ import {
   MoreHorizontal,
   Clock,
   Tag,
+  Megaphone,
+  AlertTriangle,
+  BadgePercent,
+  Globe,
   Trash2,
   Circle,
   Award,
@@ -144,7 +148,12 @@ export type ObjectType =
   | 'product'
   | 'service'
   | 'document'
-  | 'conversation';
+  | 'conversation'
+  | 'business'
+  | 'offer'
+  | 'alert'
+  | 'announcement'
+  | 'news';
 
 export type ProtocolAction =
   | 'discover'
@@ -236,6 +245,10 @@ export interface BriefObject {
   validityWindowDays?: number;
   isVerified?: boolean;
   imageUrl?: string;
+  /** A provider image reference (e.g. a Telegram file_id) awaiting server-side
+   *  resolution; the render URL is derived from it, never the raw id. */
+  imageReference?: string;
+  imageNeedsResolution?: boolean;
   /** Server-labelled temporary demo content; never a client-side fixture flag. */
   testContent?: { label: string; expiresAt: string | null };
 
@@ -617,6 +630,16 @@ const getObjectActionLabel = (type: ObjectType): string => {
       return 'Discuss';
     case 'document':
       return 'Open';
+    case 'business':
+      return 'View';
+    case 'offer':
+      return 'View';
+    case 'alert':
+      return 'Read';
+    case 'announcement':
+      return 'Read';
+    case 'news':
+      return 'Read';
     default:
       return 'View';
   }
@@ -775,7 +798,12 @@ const TYPE_AFFINITY: Partial<Record<ObjectType, ObjectType[]>> = {
   knowledge: ['service', 'opportunity', 'identity'],
   experience: ['place', 'community', 'identity'],
   identity: ['product', 'service', 'knowledge'],
-  place: ['experience', 'identity']
+  place: ['experience', 'identity'],
+  business: ['product', 'service', 'opportunity', 'identity'],
+  offer: ['product', 'service', 'opportunity', 'knowledge'],
+  alert: ['knowledge', 'announcement', 'news'],
+  announcement: ['knowledge', 'news', 'experience', 'opportunity'],
+  news: ['announcement', 'alert', 'knowledge', 'experience', 'opportunity']
 };
 
 const areTypesAffine = (a: ObjectType, b: ObjectType): boolean =>
@@ -798,6 +826,16 @@ const getTypePlural = (type: ObjectType): string => {
       return 'guides';
     case 'identity':
       return 'organisations';
+    case 'business':
+      return 'businesses';
+    case 'offer':
+      return 'offers';
+    case 'alert':
+      return 'alerts';
+    case 'announcement':
+      return 'announcements';
+    case 'news':
+      return 'updates';
     default:
       return 'objects';
   }
@@ -4467,7 +4505,12 @@ export const objectFromServer = (row: any): BriefObject => {
   createdAt: String(row?.createdAt ?? new Date().toISOString()),
   // Feed projections expose media/action as nested public fields; keep the
   // first-party detail view compatible without reintroducing private fields.
-  imageUrl: row?.imageUrl ?? row?.media?.url ?? undefined,
+  imageUrl:
+    row?.imageUrl ??
+    row?.media?.url ??
+    ((row?.imageReference || row?.media?.reference) && row?.id
+      ? briefApi.mediaFileUrl(`/api/media/telegram/${String(row?.id)}`)
+      : undefined),
   actionUrl: row?.actionUrl ?? row?.action?.url ?? undefined,
   actionType: row?.actionType ?? row?.action?.type ?? undefined,
   actionLabel: row?.actionLabel ?? row?.action?.label ?? undefined,
@@ -4552,6 +4595,11 @@ export const getObjectTypeMeta = (type: ObjectType) => {
     case 'community': return { label: 'Community', icon: <Users className="w-3.5 h-3.5" /> };
     case 'document': return { label: 'Document', icon: <Tag className="w-3.5 h-3.5" /> };
     case 'conversation': return { label: 'Conversation', icon: <MessageCircle className="w-3.5 h-3.5" /> };
+    case 'business': return { label: 'Business', icon: <Building2 className="w-3.5 h-3.5" /> };
+    case 'offer': return { label: 'Offer', icon: <BadgePercent className="w-3.5 h-3.5" /> };
+    case 'alert': return { label: 'Alert', icon: <AlertTriangle className="w-3.5 h-3.5" /> };
+    case 'announcement': return { label: 'Announcement', icon: <Megaphone className="w-3.5 h-3.5" /> };
+    case 'news': return { label: 'News', icon: <Globe className="w-3.5 h-3.5" /> };
     default: return { label: 'Object', icon: <Sparkles className="w-3.5 h-3.5" /> };
   }
 };
@@ -6322,7 +6370,12 @@ export function App() {
       { type: 'product', label: 'Products' },
       { type: 'experience', label: 'Events' },
       { type: 'knowledge', label: 'Information' },
-      { type: 'identity', label: 'Organisations' }
+      { type: 'identity', label: 'Organisations' },
+      { type: 'business', label: 'Businesses' },
+      { type: 'offer', label: 'Offers' },
+      { type: 'news', label: 'News' },
+      { type: 'alert', label: 'Alerts' },
+      { type: 'announcement', label: 'Announcements' }
     ];
 
     return order

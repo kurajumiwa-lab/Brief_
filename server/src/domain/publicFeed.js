@@ -36,10 +36,23 @@ function publicMetadata(metadata) {
   return Object.keys(out).length > 0 ? out : null;
 }
 
-function publicMedia(media) {
-  if (!media || typeof media !== 'object' || typeof media.url !== 'string' || !media.url.trim()) {
-    return null;
+function publicMedia(media, objectId) {
+  if (!media || typeof media !== 'object') return null;
+
+  // A Telegram (or provider) image reference we hold but have not resolved to a
+  // URL yet. Project it as a server-side resolve path rather than dropping the
+  // image: the resolve endpoint turns the file_id into bytes at render time and
+  // the bot token never appears in this payload. The path is ROOT-relative --
+  // the client prefixes it with the ingestion proxy exactly like an upload.
+  if (media.needsResolution && typeof media.reference === 'string' && objectId) {
+    return {
+      url: `/api/media/telegram/${objectId}`,
+      alt: stringOrNull(media.alt),
+      attribution: stringOrNull(media.attribution)
+    };
   }
+
+  if (typeof media.url !== 'string' || !media.url.trim()) return null;
   return {
     url: media.url,
     alt: stringOrNull(media.alt),
@@ -83,7 +96,7 @@ export function publicObject(object) {
     lastVerifiedAt: object.lastVerifiedAt ?? null,
     validityWindowDays: Number.isFinite(object.validityWindowDays) ? object.validityWindowDays : null,
     metadata: publicMetadata(object.metadata),
-    media: publicMedia(object.media),
+    media: publicMedia(object.media, object.id),
     action: publicAction(object),
     createdAt: object.createdAt ?? null,
     ...(temporaryTestContent(object) ? { testContent: temporaryTestContent(object) } : {})

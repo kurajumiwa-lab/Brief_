@@ -61,7 +61,10 @@ app.post('/api/sources', (req, res) => {
   }
 
   // A source is never born "connected". Connection is proved by a connector,
-  // not asserted by whoever created the row (spec 2).
+  // not asserted by whoever created the row (spec 2). RSS/WEB sources are
+  // pollable: they start enabled with a fresh health state and are picked up
+  // by the recurring poller.
+  const pollable = ['rss', 'webpage', 'website'].includes(type);
   const source = store.insert('sources', {
     id: newId('src'),
     name,
@@ -73,6 +76,11 @@ app.post('/api/sources', (req, res) => {
     ownerName: ownerName ?? null,
     accessType: accessType ?? 'public',
     connectionStatus: type === 'manual' ? 'connected' : 'needs_authorization',
+    enabled: pollable,
+    healthState: pollable ? 'never' : null,
+    lastAttemptAt: null,
+    lastSuccessAt: null,
+    lastError: null,
     confidence: 0.5,
     lastSyncedAt: null,
     lastMessageAt: null,
@@ -94,6 +102,57 @@ app.post('/api/sources', (req, res) => {
   res.status(201).json({ source });
 });
 
+
+
+/**
+ * Update a source: rename, change its URL, or enable/disable polling.
+ *
+ * AUTHORIZATION: only a caller with a granted membership on the source may
+ * mutate it (the same rule as deletion). `enabled` toggles whether the
+ * recurring poller visits it — no credentials are ever accepted or stored.
+ */
+app.patch('/api/sources/:id', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  const source = store.find('sources', (x) => x.id === req.params.id);
+  if (!source) return res.status(404).json({ error: 'source not found' });
+
+  const mine = store.find(
+    'sourceMemberships',
+    (m) => m.sourceId === source.id && m.userId === me && m.accessGranted
+  );
+  if (!mine) return res.status(403).json({ error: 'only a member of this source may update it' });
+
+  const { name, url, description, enabled } = req.body ?? {};
+  const patch = {};
+  if (name !== undefined) {
+    if (!String(name).trim()) return res.status(400).json({ error: 'name cannot be empty' });
+    patch.name = String(name).trim();
+  }
+  if (url !== undefined) {
+    if (url !== null) {
+      const v = web.validateUrl(url);
+      if (!v.ok) return res.status(400).json({ error: v.error });
+    }
+    patch.url = url;
+    patch.connectionStatus = 'needs_authorization';
+    patch.healthState = 'never';
+    patch.lastSuccessAt = null;
+    patch.lastError = null;
+  }
+  if (description !== undefined) patch.description = description ?? null;
+  if (enabled !== undefined) {
+    if (typeof enabled !== 'boolean') return res.status(400).json({ error: 'enabled must be a boolean' });
+    // Only pollable kinds honour `enabled`; anything else stays non-polled.
+    if (enabled && !['rss', 'webpage', 'website'].includes(source.type)) {
+      return res.status(400).json({ error: `source type ${source.type} is not pollable` });
+    }
+    patch.enabled = enabled;
+  }
+
+  const updated = store.update('sources', source.id, patch);
+  res.json({ source: updated });
+});
 
 
 app.delete('/api/sources/:id', (req, res) => {

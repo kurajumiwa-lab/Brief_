@@ -31,7 +31,7 @@ Upload: assets/telegram/bot-avatar-512.png
 start - What Brief is and how to post
 help - How your message becomes a thing to act on
 
-## 6. (Optional) remove the join-to-groups privacy gap (send /setjoingroups)
-Set to: Disable
-— so the bot is never added to groups; Brief ingests per-user DMs only, which
-matches the WhatsApp behaviour already in the app.
+## 6. Group vs channel access (send /setjoingroups)
+Leave as-is if you plan to add the bot to a CHANNEL (Brief ingests channel_post
+updates). If you only want per-user DMs, set to: Disable — so the bot is never
+added to groups. A human admin must add the bot to any channel it should read.
