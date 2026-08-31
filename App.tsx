@@ -323,9 +323,6 @@ export function App() {
   const activeWorkflowBundle = WORKFLOW_BUNDLES.find((b) =>
     (b.sections as readonly string[]).includes(workflowSection)
   ) ?? WORKFLOW_BUNDLES[0];
-  const activeSavedBundle = SAVED_BUNDLES.find((b) =>
-    (b.sections as readonly string[]).includes(myLayerSection)
-  ) ?? SAVED_BUNDLES[0];
   // 'queue' is the landing view: one list of everything waiting on you. A tool
   // is only one tap deeper, filed under the bundle it belongs to.
   const [workflowView, setWorkflowView] = useState<'queue' | 'screen'>(
@@ -1399,13 +1396,6 @@ export function App() {
     openCampaign(campaignId);
   };
 
-  const campaignsLive = (campaignState.data ?? []).filter(
-    (c) => c.status === 'published' || c.status === 'live'
-  );
-  const campaignsDraft = (campaignState.data ?? []).filter((c) => c.status === 'draft');
-  const campaignsPast = (campaignState.data ?? []).filter(
-    (c) => c.status === 'closed' || c.status === 'completed' || c.status === 'cancelled'
-  );
 
   // Card button. Uses the same resolver as the detail view so a given label
   // means the same thing in both places. Anything without a real destination
@@ -1699,29 +1689,6 @@ export function App() {
     [objects, relationships]
   );
 
-  const savedGroups = useMemo(() => {
-    const order: { type: ObjectType; label: string }[] = [
-      { type: 'place', label: 'Places' },
-      { type: 'service', label: 'Services' },
-      { type: 'opportunity', label: 'Opportunities' },
-      { type: 'product', label: 'Products' },
-      { type: 'experience', label: 'Events' },
-      { type: 'knowledge', label: 'Information' },
-      { type: 'identity', label: 'Organisations' },
-      { type: 'business', label: 'Businesses' },
-      { type: 'offer', label: 'Offers' },
-      { type: 'news', label: 'News' },
-      { type: 'alert', label: 'Alerts' },
-      { type: 'announcement', label: 'Announcements' }
-    ];
-
-    return order
-      .map(({ type, label }) => ({
-        label,
-        items: savedObjects.filter((obj) => obj.type === type)
-      }))
-      .filter(({ items }) => items.length > 0);
-  }, [savedObjects]);
 
   // One graph instance over the live state. Components ask it questions
   // instead of re-deriving relationship rules inline.
@@ -1801,15 +1768,6 @@ export function App() {
   };
 
   // Optional personal label on an existing saved edge (prompt 10).
-  const handleSetSaveLabel = (object: BriefObject, label: SaveLabel) => {
-    setRelationships((prev) =>
-      prev.map((r) =>
-        r.targetId === object.id && r.verb === 'saved'
-          ? { ...r, label: r.label === label ? undefined : label, updatedAt: new Date().toISOString() }
-          : r
-      )
-    );
-  };
 
   // Share (prompt 11): a plain, honest text payload. Web Share when the
   // browser offers it, clipboard otherwise. No invented links, no marketing.
@@ -2114,42 +2072,11 @@ export function App() {
     [openGroup, groupIndexes]
   );
 
-  const unansweredQuestions = useMemo(
-    () => getUnansweredQuestions(groupIndex),
-    [groupIndex]
-  );
 
-  const handleRevokeGroup = (id: string) => {
-    setGroups((prev) =>
-      prev.map((g) => (g.id === id ? { ...g, access: 'revoked' as GroupAccess } : g))
-    );
-    if (openGroupId === id) setOpenGroupId(null);
-    showToast('Access revoked. Brief will stop reading this group.');
-  };
 
   // Saving keeps the group record intact and points back at it. Brief does not
   // claim authorship of anything a member wrote.
-  const handleSaveGroupEntry = (entry: GroupKnowledgeEntry) => {
-    const group = visibleGroups.find((g) => g.id === entry.groupId);
-    if (!group || !group.permissions?.canRetain) {
-      showToast('This group does not allow saving.');
-      return;
-    }
-    setSavedGroupEntryIds((prev) =>
-      prev.includes(entry.id) ? prev : [...prev, entry.id]
-    );
-    showToast('Saved with its source.');
-  };
 
-  const handleViewSource = (entry: GroupKnowledgeEntry) => {
-    const group = visibleGroups.find((g) => g.id === entry.groupId);
-    // Brief states where it came from. It does not fabricate a deep link into
-    // a platform that may not support one.
-    showToast(
-      `${entry.source.sourceType} in ${group ? group.name : 'this group'} - ` +
-        `${formatSourceDate(entry.source.timestamp)}`
-    );
-  };
 
   // --- Participation ---------------------------------------------------------
   const [quests, setQuests] = useState<Quest[]>(INITIAL_QUESTS);
@@ -2164,12 +2091,7 @@ export function App() {
   // The wallet is derived from settled quests only. Submitted work is visible
   // but deliberately worth nothing until reviewed.
   const myContribution = useMemo(() => summariseContribution(quests), [quests]);
-  const myRank = useMemo(() => getBriefRank(myContribution), [myContribution]);
   const nextRank = useMemo(() => getNextRankRequirement(myContribution), [myContribution]);
-  const pendingCount = useMemo(
-    () => quests.filter((q) => q.status === 'submitted').length,
-    [quests]
-  );
 
   const handleSubmitQuest = (quest: Quest) => {
     setQuests((prev) =>
@@ -2200,7 +2122,6 @@ export function App() {
 
   // --- Arena -----------------------------------------------------------------
   // Who the viewer is in Arena. My-layer's match views use the same id.
-  const CURRENT_PLAYER_ID = sessionUser?.id ?? '';
   const [arenaBusyId, setArenaBusyId] = useState<string | null>(null);
   // The secondary game screen. null = closed; set to a game id to open the
   // match-setup surface behind a shelf tile.
@@ -2405,31 +2326,7 @@ export function App() {
   // Live activity per game: open challenges plus players checked in at a
   // venue. Drives the count on each game chip, so the selector is dynamic.
   const [savedGroupEntryIds, setSavedGroupEntryIds] = useState<string[]>([]);
-  const [commandText, setCommandText] = useState('');
-  const [commandResult, setCommandResult] = useState<GroupCommandResult | null>(null);
 
-  const handleRunCommand = (override?: string) => {
-    const raw = (override ?? commandText).trim();
-    if (raw === '' || !openGroup) return;
-
-    // A bare question is treated as /ask, so members never have to learn
-    // command syntax to get an answer.
-    const normalised = raw.startsWith('/') ? raw : `/ask ${raw}`;
-
-    const result = runGroupCommand(normalised, {
-      entries: groupIndex,
-      objects,
-      savedObjects,
-      now: new Date('2026-08-15T00:00:00Z')
-    });
-
-    if (!result) {
-      showToast('Unknown command');
-      setCommandResult(null);
-      return;
-    }
-    setCommandResult(result);
-  };
 
   // --- Sources ---------------------------------------------------------------
   const [sources, setSources] = useState<Source[]>(INITIAL_SOURCES);
@@ -2632,18 +2529,6 @@ export function App() {
     [candidates, reviewed]
   );
 
-  const handleUnsave = (object: BriefObject) => {
-    setRelationships((prev) =>
-      prev.filter(
-        (rel) => !(rel.targetId === object.id && rel.verb === 'saved')
-      )
-    );
-    // Durable copy stays in step: the server-side save is removed too.
-    void briefApi.unsaveObjectForMe(object.id).then((r) => {
-      if (r.ok) setPersonalState((p) => (p ? { ...p, saved: r.data.saved } : p));
-    });
-    showToast(`Removed "${object.title}" from your saved things.`);
-  };
 
   // Computed once per render instead of on every call site in the modal.
   const relatedObjects = selectedObjectForDetail
@@ -3044,18 +2929,11 @@ export function App() {
             bar stays five doors wide no matter how much is built. */}
         {activeTab === 'mylayer' && (
           <MyLayerScreen
-            CURRENT_PLAYER_ID={CURRENT_PLAYER_ID}
-            activeSavedBundle={activeSavedBundle}
             activeTab={activeTab}
             arenaBusyId={arenaBusyId}
             beginEdit={beginEdit}
             campaignBusy={campaignBusy}
             campaignState={campaignState}
-            campaignsDraft={campaignsDraft}
-            campaignsLive={campaignsLive}
-            campaignsPast={campaignsPast}
-            commandResult={commandResult}
-            commandText={commandText}
             draft={draft}
             graph={graph}
             groupIndex={groupIndex}
@@ -3067,29 +2945,18 @@ export function App() {
             handleExecuteProtocolAction={handleExecuteProtocolAction}
             handleRemoveCampaign={handleRemoveCampaign}
             handleReportMatch={handleReportMatch}
-            handleRevokeGroup={handleRevokeGroup}
-            handleRunCommand={handleRunCommand}
-            handleSaveGroupEntry={handleSaveGroupEntry}
-            handleSetSaveLabel={handleSetSaveLabel}
-            handleUnsave={handleUnsave}
-            handleViewSource={handleViewSource}
             loadCampaigns={loadCampaigns}
             matches={matches}
             myContribution={myContribution}
             myLayerSection={myLayerSection}
-            myRank={myRank}
             objects={objects}
             openCampaign={openCampaign}
             openGroup={openGroup}
-            pendingCount={pendingCount}
             relationships={relationships}
-            savedGroups={savedGroups}
             savedObjects={savedObjects}
             setActiveTab={setActiveTab}
             setCampaignActionError={setCampaignActionError}
             setCampaignBusy={setCampaignBusy}
-            setCommandResult={setCommandResult}
-            setCommandText={setCommandText}
             setCreateStep={setCreateStep}
             setDraft={setDraft}
             setMyLayerSection={setMyLayerSection}
@@ -3101,8 +2968,14 @@ export function App() {
             setWorkflowView={setWorkflowView}
             shareCampaign={shareCampaign}
             showToast={showToast}
-            unansweredQuestions={unansweredQuestions}
             visibleGroups={visibleGroups}
+            openGroupId={openGroupId}
+            quests={quests}
+            sessionUser={sessionUser}
+            setGroups={setGroups}
+            setPersonalState={setPersonalState}
+            setRelationships={setRelationships}
+            setSavedGroupEntryIds={setSavedGroupEntryIds}
           />
         )}
 

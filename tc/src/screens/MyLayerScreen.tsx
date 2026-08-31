@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
 import type { Campaign as ApiCampaign, CampaignType as ApiCampaignType } from '../api/types';
 import { SAVED_BUNDLES, SAVED_TABS } from '../ui/names';
-import type { ArenaMatch, BriefObject, ConnectedSource, Destination, GroupCommandResult, MyLayerSection, ObjectRelationship, WorkflowSection } from '../model/core';
-import { SAVE_LABELS, GROUP_MESSAGES, arenaPlayerLabel, formatSourceDate, getDistanceLabel, getUnansweredQuestions, isResultConfirmed, resolveAction } from '../model/core';
+import type { ArenaMatch, BriefObject, ConnectedSource, Destination, GroupCommandResult, MyLayerSection, ObjectRelationship, WorkflowSection , GroupAccess, GroupKnowledgeEntry, ObjectType, Quest, SaveLabel } from '../model/core';
+import { SAVE_LABELS, GROUP_MESSAGES, arenaPlayerLabel, formatSourceDate, getDistanceLabel, getUnansweredQuestions, isResultConfirmed, resolveAction , getBriefRank, runGroupCommand } from '../model/core';
 
 import { Bookmark } from 'lucide-react';
 import { Plus } from 'lucide-react';
@@ -31,8 +31,13 @@ import { VerificationPanel } from '../components/VerificationPanel';
 // ---------------------------------------------------------------------------
 
 export interface MyLayerScreenProps {
-  CURRENT_PLAYER_ID: any;
-  activeSavedBundle: any;
+  openGroupId: string | null;
+  quests: Quest[];
+  sessionUser: briefApi.AuthedUser | null;
+  setGroups: React.Dispatch<React.SetStateAction<ConnectedSource[]>>;
+  setPersonalState: React.Dispatch<React.SetStateAction<briefApi.PersonalState | null>>;
+  setRelationships: React.Dispatch<React.SetStateAction<ObjectRelationship[]>>;
+  setSavedGroupEntryIds: React.Dispatch<React.SetStateAction<string[]>>;
   activeTab: Destination;
   arenaBusyId: string | null;
   beginEdit: any;
@@ -42,11 +47,6 @@ export interface MyLayerScreenProps {
     data: ApiCampaign[] | null;
     error: string | null;
   };
-  campaignsDraft: any;
-  campaignsLive: any;
-  campaignsPast: any;
-  commandResult: GroupCommandResult | null;
-  commandText: any;
   draft: {
     title: string;
     type: ApiCampaignType;
@@ -67,29 +67,18 @@ export interface MyLayerScreenProps {
   handleExecuteProtocolAction: any;
   handleRemoveCampaign: any;
   handleReportMatch: any;
-  handleRevokeGroup: any;
-  handleRunCommand: any;
-  handleSaveGroupEntry: any;
-  handleSetSaveLabel: any;
-  handleUnsave: any;
-  handleViewSource: any;
   loadCampaigns: any;
   matches: ArenaMatch[];
   myContribution: any;
   myLayerSection: MyLayerSection;
-  myRank: any;
   objects: BriefObject[];
   openCampaign: any;
   openGroup: any;
-  pendingCount: any;
   relationships: ObjectRelationship[];
-  savedGroups: any;
   savedObjects: any;
   setActiveTab: React.Dispatch<React.SetStateAction<Destination>>;
   setCampaignActionError: React.Dispatch<React.SetStateAction<string | null>>;
   setCampaignBusy: React.Dispatch<React.SetStateAction<boolean>>;
-  setCommandResult: React.Dispatch<React.SetStateAction<GroupCommandResult | null>>;
-  setCommandText: any;
   setCreateStep: React.Dispatch<React.SetStateAction<'closed' | 'form' | 'preview' | 'published'>>;
   setDraft: React.Dispatch<React.SetStateAction<{
     title: string;
@@ -116,24 +105,16 @@ export interface MyLayerScreenProps {
   setWorkflowView: React.Dispatch<React.SetStateAction<'queue' | 'screen'>>;
   shareCampaign: any;
   showToast: any;
-  unansweredQuestions: any;
   visibleGroups: any;
 }
 
 export function MyLayerScreen(props: MyLayerScreenProps) {
   const {
-    CURRENT_PLAYER_ID,
-    activeSavedBundle,
     activeTab,
     arenaBusyId,
     beginEdit,
     campaignBusy,
     campaignState,
-    campaignsDraft,
-    campaignsLive,
-    campaignsPast,
-    commandResult,
-    commandText,
     draft,
     graph,
     groupIndex,
@@ -145,29 +126,18 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
     handleExecuteProtocolAction,
     handleRemoveCampaign,
     handleReportMatch,
-    handleRevokeGroup,
-    handleRunCommand,
-    handleSaveGroupEntry,
-    handleSetSaveLabel,
-    handleUnsave,
-    handleViewSource,
     loadCampaigns,
     matches,
     myContribution,
     myLayerSection,
-    myRank,
     objects,
     openCampaign,
     openGroup,
-    pendingCount,
     relationships,
-    savedGroups,
     savedObjects,
     setActiveTab,
     setCampaignActionError,
     setCampaignBusy,
-    setCommandResult,
-    setCommandText,
     setCreateStep,
     setDraft,
     setMyLayerSection,
@@ -179,9 +149,149 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
     setWorkflowView,
     shareCampaign,
     showToast,
-    unansweredQuestions,
     visibleGroups,
+    openGroupId,
+    quests,
+    sessionUser,
+    setGroups,
+    setPersonalState,
+    setRelationships,
+    setSavedGroupEntryIds,
   } = props;
+
+  // -- colocated from App (ownership pass) -----------------------------------
+  const activeSavedBundle = SAVED_BUNDLES.find((b) =>
+    (b.sections as readonly string[]).includes(myLayerSection)
+  ) ?? SAVED_BUNDLES[0];
+
+  const campaignsLive = (campaignState.data ?? []).filter(
+    (c) => c.status === 'published' || c.status === 'live'
+  );
+
+  const campaignsDraft = (campaignState.data ?? []).filter((c) => c.status === 'draft');
+
+  const campaignsPast = (campaignState.data ?? []).filter(
+    (c) => c.status === 'closed' || c.status === 'completed' || c.status === 'cancelled'
+  );
+
+  const savedGroups = useMemo(() => {
+    const order: { type: ObjectType; label: string }[] = [
+      { type: 'place', label: 'Places' },
+      { type: 'service', label: 'Services' },
+      { type: 'opportunity', label: 'Opportunities' },
+      { type: 'product', label: 'Products' },
+      { type: 'experience', label: 'Events' },
+      { type: 'knowledge', label: 'Information' },
+      { type: 'identity', label: 'Organisations' },
+      { type: 'business', label: 'Businesses' },
+      { type: 'offer', label: 'Offers' },
+      { type: 'news', label: 'News' },
+      { type: 'alert', label: 'Alerts' },
+      { type: 'announcement', label: 'Announcements' }
+    ];
+
+    return order
+      .map(({ type, label }) => ({
+        label,
+        items: savedObjects.filter((obj: any) => obj.type === type)
+      }))
+      .filter(({ items }) => items.length > 0);
+  }, [savedObjects]);
+
+  const handleSetSaveLabel = (object: BriefObject, label: SaveLabel) => {
+    setRelationships((prev) =>
+      prev.map((r) =>
+        r.targetId === object.id && r.verb === 'saved'
+          ? { ...r, label: r.label === label ? undefined : label, updatedAt: new Date().toISOString() }
+          : r
+      )
+    );
+  };
+
+  const unansweredQuestions = useMemo(
+    () => getUnansweredQuestions(groupIndex),
+    [groupIndex]
+  );
+
+  const handleRevokeGroup = (id: string) => {
+    setGroups((prev) =>
+      prev.map((g) => (g.id === id ? { ...g, access: 'revoked' as GroupAccess } : g))
+    );
+    if (openGroupId === id) setOpenGroupId(null);
+    showToast('Access revoked. Brief will stop reading this group.');
+  };
+
+  const handleSaveGroupEntry = (entry: GroupKnowledgeEntry) => {
+    const group = visibleGroups.find((g: any) => g.id === entry.groupId);
+    if (!group || !group.permissions?.canRetain) {
+      showToast('This group does not allow saving.');
+      return;
+    }
+    setSavedGroupEntryIds((prev) =>
+      prev.includes(entry.id) ? prev : [...prev, entry.id]
+    );
+    showToast('Saved with its source.');
+  };
+
+  const handleViewSource = (entry: GroupKnowledgeEntry) => {
+    const group = visibleGroups.find((g: any) => g.id === entry.groupId);
+    // Brief states where it came from. It does not fabricate a deep link into
+    // a platform that may not support one.
+    showToast(
+      `${entry.source.sourceType} in ${group ? group.name : 'this group'} - ` +
+        `${formatSourceDate(entry.source.timestamp)}`
+    );
+  };
+
+  const myRank = useMemo(() => getBriefRank(myContribution), [myContribution]);
+
+  const pendingCount = useMemo(
+    () => quests.filter((q: Quest) => q.status === 'submitted').length,
+    [quests]
+  );
+
+  const CURRENT_PLAYER_ID = sessionUser?.id ?? '';
+
+  const [commandText, setCommandText] = useState('');
+
+  const [commandResult, setCommandResult] = useState<GroupCommandResult | null>(null);
+
+  const handleRunCommand = (override?: string) => {
+    const raw = (override ?? commandText).trim();
+    if (raw === '' || !openGroup) return;
+
+    // A bare question is treated as /ask, so members never have to learn
+    // command syntax to get an answer.
+    const normalised = raw.startsWith('/') ? raw : `/ask ${raw}`;
+
+    const result = runGroupCommand(normalised, {
+      entries: groupIndex,
+      objects,
+      savedObjects,
+      now: new Date('2026-08-15T00:00:00Z')
+    });
+
+    if (!result) {
+      showToast('Unknown command');
+      setCommandResult(null);
+      return;
+    }
+    setCommandResult(result);
+  };
+
+  const handleUnsave = (object: BriefObject) => {
+    setRelationships((prev) =>
+      prev.filter(
+        (rel) => !(rel.targetId === object.id && rel.verb === 'saved')
+      )
+    );
+    // Durable copy stays in step: the server-side save is removed too.
+    void briefApi.unsaveObjectForMe(object.id).then((r) => {
+      if (r.ok) setPersonalState((p) => (p ? { ...p, saved: r.data.saved } : p));
+    });
+    showToast(`Removed "${object.title}" from your saved things.`);
+  };
+
   return (
     <>
 { (
