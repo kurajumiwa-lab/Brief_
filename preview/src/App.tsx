@@ -298,10 +298,6 @@ export function App() {
   // The discovery experience navigation: Home, Events, Explore, Offers,
   // Places, News, Opportunities. Categories only appear when the real data
   // has meaningful rows for them.
-  const [discoveryTab, setDiscoveryTab] = useState<
-    'home' | 'events' | 'explore' | 'offers' | 'places' | 'news' | 'opportunities'
-  >('home');
-  const [moreFilters, setMoreFilters] = useState<boolean>(false);
   // --- Personal Brief ----------------------------------------------------
   // The personal layer is the same object store re-ranked per user: we keep
   // the server's ORDERED ids plus the per-row boost, and map them onto the
@@ -666,12 +662,6 @@ export function App() {
     setSelectedLocation(c.label);
   }, []);
 
-  const clearLocation = React.useCallback(() => {
-    setLocError(null);
-    setUserLocation(null);
-    setFeedArea(null);
-    setSelectedLocation('Your area');
-  }, []);
 
   const loadObjects = React.useCallback(async (loc?: { lat: number; lng: number }) => {
     setObjectsLoad({ status: 'loading', error: null });
@@ -930,7 +920,6 @@ export function App() {
   const [selectedObjectType, setSelectedObjectType] = useState<string>('all');
   const [selectedLocation, setSelectedLocation] = useState<string>('Your area');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [pursuitDraft, setPursuitDraft] = useState<string>('');
   const [architectMode, setArchitectMode] = useState<boolean>(false);
   // Seen tracking for the Daily Brief: "New" means genuinely not yet opened.
   const [seenIds, setSeenIds] = useState<Set<string>>(new Set());
@@ -972,7 +961,6 @@ export function App() {
   // an explicit trigger so it never covers content unprompted; the physics is
   // the same springIntro curve the design system specifies.
   const [springOverlayOpen, setSpringOverlayOpen] = useState<boolean>(false);
-  const [feedReload, setFeedReload] = useState(0);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -1400,25 +1388,6 @@ export function App() {
   // Card button. Uses the same resolver as the detail view so a given label
   // means the same thing in both places. Anything without a real destination
   // opens the detail view rather than dead-ending.
-  const handlePrimaryAction = (object: BriefObject) => {
-    const action = resolveAction(object);
-
-    switch (action.kind) {
-      case 'external':
-      case 'map':
-        window.open(action.href, '_blank', 'noopener,noreferrer');
-        handleExecuteProtocolAction('discover', object, { silent: true });
-        return;
-
-      case 'phone':
-        window.location.href = action.href;
-        handleExecuteProtocolAction('contact', object, { silent: true });
-        return;
-
-      default:
-        setSelectedObjectForDetail(object);
-    }
-  };
 
   // Primary action from INSIDE the detail view: retarget the stream at this
   // object's type. A navigation decision, never a simulated transaction.
@@ -1865,50 +1834,9 @@ export function App() {
     );
   };
 
-  const handleSetPursuitStatus = (id: string, status: PursuitStatus) => {
-    setPursuits((prev) =>
-      prev.map((p) =>
-        p.id === id
-          ? { ...p, status, lastUpdatedAt: new Date().toISOString() }
-          : p
-      )
-    );
-  };
 
-  const handleTogglePursuitWatch = (id: string) => {
-    setPursuits((prev) =>
-      prev.map((p) =>
-        p.id === id
-          ? {
-              ...p,
-              watchChanges: !p.watchChanges,
-              lastUpdatedAt: new Date().toISOString()
-            }
-          : p
-      )
-    );
-  };
 
-  const handleTogglePursuitCondition = (id: string, condition: WatchCondition) => {
-    setPursuits((prev) =>
-      prev.map((p) => {
-        if (p.id !== id) return p;
-        const current = p.watchConditions ?? [];
-        return {
-          ...p,
-          watchConditions: current.includes(condition)
-            ? current.filter((c) => c !== condition)
-            : [...current, condition],
-          lastUpdatedAt: new Date().toISOString()
-        };
-      })
-    );
-  };
 
-  const handleRemovePursuit = (id: string) => {
-    setPursuits((prev) => prev.filter((p) => p.id !== id));
-    showToast('Pursuit removed');
-  };
 
   // --- Ingestion review state ------------------------------------------------
   // Candidates are parsed on demand and held here. They are NOT objects: until
@@ -2080,13 +2008,16 @@ export function App() {
 
   // --- Participation ---------------------------------------------------------
   const [quests, setQuests] = useState<Quest[]>(INITIAL_QUESTS);
-  const [rewards, setRewards] = useState<Reward[]>(REWARD_CATALOGUE);
+  const [discoveryTab, setDiscoveryTab] = useState<
+    'home' | 'events' | 'explore' | 'offers' | 'places' | 'news' | 'opportunities'
+  >('home');
+  const [moreFilters, setMoreFilters] = useState<boolean>(false);
+  const [pursuitDraft, setPursuitDraft] = useState<string>('');
+  const [feedReload, setFeedReload] = useState(0);
   const [boardMode, setBoardMode] = useState<'contributors' | 'earners'>('contributors');
 
-  const openQuests = useMemo(
-    () => quests.filter((q) => q.status === 'open'),
-    [quests]
-  );
+  const [rewards, setRewards] = useState<Reward[]>(REWARD_CATALOGUE);
+
 
   // The wallet is derived from settled quests only. Submitted work is visible
   // but deliberately worth nothing until reviewed.
@@ -2445,52 +2376,17 @@ export function App() {
 
   // The discovery-experience Daily Brief: TODAY / NEAR YOU / NOW / COMING UP
   // from real persisted rows. Only rendered when it has data.
-  const discoveryBrief = useMemo(
-    () =>
-      buildDiscoveryBrief({
-        objects,
-        area: feedArea,
-        geo: userLocation ? { lat: userLocation.lat, lng: userLocation.lng } : null
-      }),
-    [objects, feedArea, userLocation]
-  );
 
   // --- Personal Brief derivations -----------------------------------------
   // The personal order is the server's re-ranking of the SAME objects — the
   // ids are mapped onto `objects`, never duplicated into a second store.
-  const personalOrdered = useMemo(() => {
-    if (!personalFeedIds) return null;
-    const byId = new Map(objects.map((o) => [o.id, o]));
-    const out: { object: BriefObject; boost: number; reasons: string[] }[] = [];
-    for (const id of personalFeedIds) {
-      const object = byId.get(id);
-      if (!object) continue;
-      const p = personalBoostMap[id];
-      out.push({ object, boost: p?.boost ?? 0, reasons: p?.reasons ?? [] });
-    }
-    return out;
-  }, [personalFeedIds, personalBoostMap, objects]);
 
   const personalInterests = personalState?.interests ?? { locations: [], types: [], topics: [] };
   const personalHasInterests = personalInterests.locations.length > 0 || personalInterests.types.length > 0 || personalInterests.topics.length > 0;
 
-  const personalSections = useMemo(() => {
-    if (!personalOrdered || personalOrdered.length === 0) return [];
-    return buildPersonalSections({
-      ordered: personalOrdered,
-      interests: personalInterests,
-      topics: personalState?.topics ?? [],
-      personalized: personalHasInterests
-    });
-  }, [personalOrdered, personalInterests, personalState, personalHasInterests]);
 
   // Types that really exist in the loaded data — the onboarding chips are
   // never a hard-coded taxonomy, only what the objects themselves say.
-  const availableTypes = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const o of objects) counts[o.type] = (counts[o.type] ?? 0) + 1;
-    return Object.keys(counts) as ObjectType[];
-  }, [objects]);
 
   // The Personal Brief Saved surface: Upcoming / Active / News / Places /
   // Offers from the existing saved relationship graph. Expired or past rows
@@ -2535,7 +2431,6 @@ export function App() {
     ? getRelatedObjects(selectedObjectForDetail)
     : [];
 
-  const liveEdition = getCurrentEdition();
 
   // Newest first, promoted posts kept inline rather than pinned to the top --
   // paid distribution earns a slot in the feed, not the whole masthead.
@@ -2987,52 +2882,36 @@ export function App() {
             activeEdition={activeEdition}
             activeTab={activeTab}
             arenaActivity={arenaActivity}
-            availableTypes={availableTypes}
-            boardMode={boardMode}
             chooseCity={chooseCity}
-            clearLocation={clearLocation}
             dailyBrief={dailyBrief}
-            discoveryBrief={discoveryBrief}
-            discoveryTab={discoveryTab}
             editionPosts={editionPosts}
             feedArea={feedArea}
-            feedReload={feedReload}
             filteredObjects={filteredObjects}
             followOne={followOne}
             handleCreatePursuit={handleCreatePursuit}
             handleExecuteProtocolAction={handleExecuteProtocolAction}
             handleMenuSelect={handleMenuSelect}
-            handlePrimaryAction={handlePrimaryAction}
-            handleRemovePursuit={handleRemovePursuit}
-            handleSetPursuitStatus={handleSetPursuitStatus}
             handleSubmitQuest={handleSubmitQuest}
-            handleTogglePursuitCondition={handleTogglePursuitCondition}
-            handleTogglePursuitWatch={handleTogglePursuitWatch}
             homeFeedStatus={homeFeedStatus}
             ladder={ladder}
             likedPostIds={likedPostIds}
-            liveEdition={liveEdition}
             locError={locError}
             locate={locate}
             locating={locating}
             matches={matches}
-            moreFilters={moreFilters}
             nearbySection={nearbySection}
             nextStepHidden={nextStepHidden}
             noteActivation={noteActivation}
             objects={objects}
             openEntityPage={openEntityPage}
             openPostSubject={openPostSubject}
-            openQuests={openQuests}
             personalBriefDismissed={personalBriefDismissed}
             personalBusy={personalBusy}
             personalHasInterests={personalHasInterests}
             personalInterests={personalInterests}
             personalPicks={personalPicks}
             personalSavedGroups={personalSavedGroups}
-            personalSections={personalSections}
             personalState={personalState}
-            pursuitDraft={pursuitDraft}
             pursuitResults={pursuitResults}
             pursuits={pursuits}
             quests={quests}
@@ -3045,18 +2924,14 @@ export function App() {
             setActiveEdition={setActiveEdition}
             setActiveTab={setActiveTab}
             setArenaSection={setArenaSection}
-            setBoardMode={setBoardMode}
             setCaptureOpen={setCaptureOpen}
             setCollectionsOpen={setCollectionsOpen}
-            setDiscoveryTab={setDiscoveryTab}
             setFirstRunOpen={setFirstRunOpen}
             setFollowingOpen={setFollowingOpen}
             setHomeFeedStatus={setHomeFeedStatus}
-            setMoreFilters={setMoreFilters}
             setNearbySection={setNearbySection}
             setNextStepHidden={setNextStepHidden}
             setPersonalBriefDismissed={setPersonalBriefDismissed}
-            setPursuitDraft={setPursuitDraft}
             setSearchQuery={setSearchQuery}
             setSelectedObjectForDetail={setSelectedObjectForDetail}
             setSelectedObjectType={setSelectedObjectType}
@@ -3069,6 +2944,23 @@ export function App() {
             unfollowEntityOne={unfollowEntityOne}
             unfollowOne={unfollowOne}
             userLocation={userLocation}
+            setFeedArea={setFeedArea}
+            setLocError={setLocError}
+            setPursuits={setPursuits}
+            setSelectedLocation={setSelectedLocation}
+            setUserLocation={setUserLocation}
+            personalFeedIds={personalFeedIds}
+            personalBoostMap={personalBoostMap}
+            boardMode={boardMode}
+            discoveryTab={discoveryTab}
+            feedReload={feedReload}
+            moreFilters={moreFilters}
+            pursuitDraft={pursuitDraft}
+            setBoardMode={setBoardMode}
+            setDiscoveryTab={setDiscoveryTab}
+            setFeedReload={setFeedReload}
+            setMoreFilters={setMoreFilters}
+            setPursuitDraft={setPursuitDraft}
           />
         )}
 

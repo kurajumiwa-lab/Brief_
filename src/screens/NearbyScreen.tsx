@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { ArrowRight, Bookmark, FolderPlus, Heart, Newspaper, Plus, Search, ShieldCheck, Users, X } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
-import { DESTINATION_STATE_LABELS, TEA_EDITIONS, briefWhenLabel, entityChipsFor, formatCount, getCardLevel, getDestinationState, getDestinationVendors, getDistanceLabel, getEditionMeta, getLifecycleBadge, getObjectTypeMeta, getPostKindMeta, getPublishedLine, getRelativeTime, getSourceChip, isDestinationObject, objectFromServer, resolveAction } from '../model/core';
-import type { ObjectType } from '../model/core';
+import { DESTINATION_STATE_LABELS, TEA_EDITIONS, briefWhenLabel, entityChipsFor, formatCount, getCardLevel, getDestinationState, getDestinationVendors, getDistanceLabel, getEditionMeta, getLifecycleBadge, getObjectTypeMeta, getPostKindMeta, getPublishedLine, getRelativeTime, getSourceChip, isDestinationObject, objectFromServer, resolveAction , buildDiscoveryBrief, buildPersonalSections, getCurrentEdition } from '../model/core';
+import type { ObjectType , PursuitStatus, WatchCondition } from '../model/core';
 import type { BriefPost } from '../model/core';
 import { FILTERS, HOME_MORE } from '../ui/names';
 import { showsLadder } from '../components/ladder';
@@ -30,46 +30,49 @@ import type { GeoPoint } from '../components/LocationChip';
 // ---------------------------------------------------------------------------
 
 export interface NearbyScreenProps {
+  boardMode: 'contributors' | 'earners';
+  discoveryTab: 'home' | 'events' | 'explore' | 'offers' | 'places' | 'news' | 'opportunities';
+  feedReload: number;
+  moreFilters: boolean;
+  pursuitDraft: string;
+  setBoardMode: React.Dispatch<React.SetStateAction<'contributors' | 'earners'>>;
+  setDiscoveryTab: React.Dispatch<React.SetStateAction<'home' | 'events' | 'explore' | 'offers' | 'places' | 'news' | 'opportunities'>>;
+  setFeedReload: React.Dispatch<React.SetStateAction<number>>;
+  setMoreFilters: React.Dispatch<React.SetStateAction<boolean>>;
+  setPursuitDraft: React.Dispatch<React.SetStateAction<string>>;
+  personalFeedIds: string[] | null;
+  personalBoostMap: Record<string, { boost: number; reasons: string[] }>;
+  setFeedArea: React.Dispatch<React.SetStateAction<string | null>>;
+  setLocError: React.Dispatch<React.SetStateAction<string | null>>;
+  setPursuits: React.Dispatch<React.SetStateAction<Pursuit[]>>;
+  setSelectedLocation: React.Dispatch<React.SetStateAction<string>>;
+  setUserLocation: React.Dispatch<React.SetStateAction<GeoPoint | null>>;
   activeEdition: TeaEdition;
   activeTab: Destination;
   arenaActivity: Record<string, number>;
-  availableTypes: any;
-  boardMode: 'contributors' | 'earners';
   chooseCity: any;
-  clearLocation: any;
   dailyBrief: any;
-  discoveryBrief: any;
-  discoveryTab: 'home' | 'events' | 'explore' | 'offers' | 'places' | 'news' | 'opportunities';
   editionPosts: any;
   feedArea: string | null;
-  feedReload: any;
   filteredObjects: any;
   followOne: any;
   handleCreatePursuit: any;
   handleExecuteProtocolAction: any;
   handleMenuSelect: any;
-  handlePrimaryAction: any;
-  handleRemovePursuit: any;
-  handleSetPursuitStatus: any;
   handleSubmitQuest: any;
-  handleTogglePursuitCondition: any;
-  handleTogglePursuitWatch: any;
   homeFeedStatus: 'loading' | 'ready' | 'unavailable';
   ladder: any;
   likedPostIds: string[];
-  liveEdition: any;
   locError: string | null;
   locate: any;
   locating: any;
   matches: ArenaMatch[];
-  moreFilters: boolean;
   nearbySection: NearbySection;
   nextStepHidden: any;
   noteActivation: any;
   objects: BriefObject[];
   openEntityPage: any;
   openPostSubject: any;
-  openQuests: any;
 posts: BriefPost[];
     personalBriefDismissed: any;
   personalBusy: any;
@@ -77,9 +80,7 @@ posts: BriefPost[];
   personalInterests: any;
   personalPicks: { locations: string[]; types: string[]; topics: string[] };
   personalSavedGroups: any;
-  personalSections: any;
   personalState: briefApi.PersonalState | null;
-  pursuitDraft: string;
   pursuitResults: any;
   pursuits: Pursuit[];
   quests: Quest[];
@@ -92,18 +93,14 @@ posts: BriefPost[];
   setActiveEdition: React.Dispatch<React.SetStateAction<TeaEdition>>;
   setActiveTab: React.Dispatch<React.SetStateAction<Destination>>;
   setArenaSection: React.Dispatch<React.SetStateAction<'lobby' | 'epl' | 'challenges' | 'tournaments' | 'leaderboard'>>;
-  setBoardMode: React.Dispatch<React.SetStateAction<'contributors' | 'earners'>>;
   setCaptureOpen: any;
   setCollectionsOpen: any;
-  setDiscoveryTab: React.Dispatch<React.SetStateAction<'home' | 'events' | 'explore' | 'offers' | 'places' | 'news' | 'opportunities'>>;
   setFirstRunOpen: any;
   setFollowingOpen: any;
   setHomeFeedStatus: React.Dispatch<React.SetStateAction<'loading' | 'ready' | 'unavailable'>>;
-  setMoreFilters: React.Dispatch<React.SetStateAction<boolean>>;
   setNearbySection: React.Dispatch<React.SetStateAction<NearbySection>>;
   setNextStepHidden: any;
   setPersonalBriefDismissed: any;
-  setPursuitDraft: React.Dispatch<React.SetStateAction<string>>;
   setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
   setSelectedObjectForDetail: any;
   setSelectedObjectType: React.Dispatch<React.SetStateAction<string>>;
@@ -125,52 +122,36 @@ export function NearbyScreen(props: NearbyScreenProps) {
     activeEdition,
     activeTab,
     arenaActivity,
-    availableTypes,
-    boardMode,
     chooseCity,
-    clearLocation,
     dailyBrief,
-    discoveryBrief,
-    discoveryTab,
     editionPosts,
     feedArea,
-    feedReload,
     filteredObjects,
     followOne,
     handleCreatePursuit,
     handleExecuteProtocolAction,
     handleMenuSelect,
-    handlePrimaryAction,
-    handleRemovePursuit,
-    handleSetPursuitStatus,
     handleSubmitQuest,
-    handleTogglePursuitCondition,
-    handleTogglePursuitWatch,
     homeFeedStatus,
     ladder,
     likedPostIds,
-    liveEdition,
     locError,
     locate,
     locating,
     matches,
-    moreFilters,
     nearbySection,
     nextStepHidden,
     noteActivation,
     objects,
     openEntityPage,
     openPostSubject,
-    openQuests,
     personalBriefDismissed,
     personalBusy,
     personalHasInterests,
     personalInterests,
     personalPicks,
     personalSavedGroups,
-    personalSections,
     personalState,
-    pursuitDraft,
     pursuitResults,
     pursuits,
     quests,
@@ -183,18 +164,14 @@ export function NearbyScreen(props: NearbyScreenProps) {
     setActiveEdition,
     setActiveTab,
     setArenaSection,
-    setBoardMode,
     setCaptureOpen,
     setCollectionsOpen,
-    setDiscoveryTab,
     setFirstRunOpen,
     setFollowingOpen,
     setHomeFeedStatus,
-    setMoreFilters,
     setNearbySection,
     setNextStepHidden,
     setPersonalBriefDismissed,
-    setPursuitDraft,
     setSearchQuery,
     setSelectedObjectForDetail,
     setSelectedObjectType,
@@ -207,7 +184,149 @@ export function NearbyScreen(props: NearbyScreenProps) {
     unfollowEntityOne,
     unfollowOne,
     userLocation,
+    setFeedArea,
+    setLocError,
+    setPursuits,
+    setSelectedLocation,
+    setUserLocation,
+    personalFeedIds,
+    personalBoostMap,
+    boardMode,
+    discoveryTab,
+    feedReload,
+    moreFilters,
+    pursuitDraft,
+    setBoardMode,
+    setDiscoveryTab,
+    setFeedReload,
+    setMoreFilters,
+    setPursuitDraft,
   } = props;
+
+  // -- colocated from App (ownership pass) -----------------
+
+
+  const clearLocation = React.useCallback(() => {
+    setLocError(null);
+    setUserLocation(null);
+    setFeedArea(null);
+    setSelectedLocation('Your area');
+  }, []);
+
+
+
+  const handlePrimaryAction = (object: BriefObject) => {
+    const action = resolveAction(object);
+
+    switch (action.kind) {
+      case 'external':
+      case 'map':
+        window.open(action.href, '_blank', 'noopener,noreferrer');
+        handleExecuteProtocolAction('discover', object, { silent: true });
+        return;
+
+      case 'phone':
+        window.location.href = action.href;
+        handleExecuteProtocolAction('contact', object, { silent: true });
+        return;
+
+      default:
+        setSelectedObjectForDetail(object);
+    }
+  };
+
+  const handleSetPursuitStatus = (id: string, status: PursuitStatus) => {
+    setPursuits((prev) =>
+      prev.map((p) =>
+        p.id === id
+          ? { ...p, status, lastUpdatedAt: new Date().toISOString() }
+          : p
+      )
+    );
+  };
+
+  const handleTogglePursuitWatch = (id: string) => {
+    setPursuits((prev) =>
+      prev.map((p) =>
+        p.id === id
+          ? {
+              ...p,
+              watchChanges: !p.watchChanges,
+              lastUpdatedAt: new Date().toISOString()
+            }
+          : p
+      )
+    );
+  };
+
+  const handleTogglePursuitCondition = (id: string, condition: WatchCondition) => {
+    setPursuits((prev) =>
+      prev.map((p) => {
+        if (p.id !== id) return p;
+        const current = p.watchConditions ?? [];
+        return {
+          ...p,
+          watchConditions: current.includes(condition)
+            ? current.filter((c) => c !== condition)
+            : [...current, condition],
+          lastUpdatedAt: new Date().toISOString()
+        };
+      })
+    );
+  };
+
+  const handleRemovePursuit = (id: string) => {
+    setPursuits((prev) => prev.filter((p) => p.id !== id));
+    showToast('Pursuit removed');
+  };
+
+
+  const openQuests = useMemo(
+    () => quests.filter((q) => q.status === 'open'),
+    [quests]
+  );
+
+  const discoveryBrief = useMemo(
+    () =>
+      buildDiscoveryBrief({
+        objects,
+        area: feedArea,
+        geo: userLocation ? { lat: userLocation.lat, lng: userLocation.lng } : null
+      }),
+    [objects, feedArea, userLocation]
+  );
+
+  const personalOrdered = useMemo(() => {
+    if (!personalFeedIds) return null;
+    const byId = new Map(objects.map((o) => [o.id, o]));
+    const out: { object: BriefObject; boost: number; reasons: string[] }[] = [];
+    for (const id of personalFeedIds) {
+      const object = byId.get(id);
+      if (!object) continue;
+      const p = personalBoostMap[id];
+      out.push({ object, boost: p?.boost ?? 0, reasons: p?.reasons ?? [] });
+    }
+    return out;
+  }, [personalFeedIds, personalBoostMap, objects]);
+
+  const personalSections = useMemo(() => {
+    if (!personalOrdered || personalOrdered.length === 0) return [];
+    return buildPersonalSections({
+      ordered: personalOrdered,
+      interests: personalInterests,
+      topics: personalState?.topics ?? [],
+      personalized: personalHasInterests
+    });
+  }, [personalOrdered, personalInterests, personalState, personalHasInterests]);
+
+  const availableTypes = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const o of objects) counts[o.type] = (counts[o.type] ?? 0) + 1;
+    return Object.keys(counts) as ObjectType[];
+  }, [objects]);
+
+  const liveEdition = getCurrentEdition();
+
   return (
     <>
 { (
