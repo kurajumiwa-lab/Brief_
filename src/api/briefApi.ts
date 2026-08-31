@@ -2891,6 +2891,26 @@ export function resolveOpsReport(id: string, action: 'dismiss' | 'remove', reaso
   return request(`/api/ops/reports/${encodeURIComponent(id)}/resolve`, { method: 'POST', body: JSON.stringify({ action, reason }) }, (r) => r ?? undefined);
 }
 
+export function getOpsCorrections(): Promise<ApiResult<Record<string, any>[]>> {
+  return request('/api/ops/corrections', undefined, (r) => (isRowArray(r?.corrections) ? r.corrections : undefined));
+}
+
+export function opsCreateCorrection(objectId: string, field: string, value: string, reason: string, isMeta = false): Promise<ApiResult<Record<string, any>>> {
+  return request('/api/ops/corrections', { method: 'POST', body: JSON.stringify({ objectId, field, value, reason, isMeta }) }, (r) => (r?.correction ? r : undefined));
+}
+
+export function opsRejectCorrection(id: string, reason: string): Promise<ApiResult<Record<string, any>>> {
+  return request(`/api/ops/corrections/${encodeURIComponent(id)}/reject`, { method: 'POST', body: JSON.stringify({ reason }) }, (r) => (r?.correction ? r : undefined));
+}
+
+export function getOpsSourceTrust(): Promise<ApiResult<Record<string, any>[]>> {
+  return request('/api/ops/sources/trust', undefined, (r) => (isRowArray(r?.sources) ? r.sources : undefined));
+}
+
+export function opsSetSourceTrust(id: string, status: 'trusted' | 'normal' | 'degraded' | 'disabled', reason: string): Promise<ApiResult<Record<string, any>>> {
+  return request(`/api/ops/sources/${encodeURIComponent(id)}/trust`, { method: 'POST', body: JSON.stringify({ status, reason }) }, (r) => (r?.source ? r : undefined));
+}
+
 export function getOpsUnverified(): Promise<ApiResult<Record<string, any>[]>> {
   return request('/api/ops/unverified', undefined, (r) => (isRowArray(r?.objects) ? r.objects : undefined));
 }

@@ -148,6 +148,10 @@ const EMPTY = {
   // Abuse/spam reports. A report is a request for review, not a removal: it
   // has a lifecycle (open -> dismissed / actioned) and never auto-deletes.
   reports: [],
+  // Operator corrections: one row per corrected field, preserving the ORIGINAL
+  // source value next to the corrected value (who/when/why). The object's
+  // provenance is never rewritten; this log is the history.
+  corrections: [],
   // In-app notifications. A notification is a real, derived event (something
   // was confirmed, a challenge was accepted, a saved thing changed). Push is a
   // separate, still-unconnected rail — these are the local inbox.

@@ -44,6 +44,7 @@
 
 import { store } from '../store.js';
 import * as trust from './trust.js';
+import * as sourceTrust from './sourceTrust.js';
 import { similarity } from '../pipeline/ingest.js';
 
 // ---------------------------------------------------------------------------
@@ -468,6 +469,11 @@ export function rankObject(object, ctx = {}) {
   // Staleness penalty.
   if (isStale(object, nowMs)) score -= 3;
 
+  // Source-level trust (operator decision, not a public rating): degraded
+  // sources are ranked lower, never hidden. "Trusted" grants no boost.
+  const trustStanding = sourceTrust.trustOfObject(object);
+  if (trustStanding.degraded) score -= 20;
+
   return score;
 }
 
@@ -623,6 +629,27 @@ export function diversify(ranked, { maxConsecutiveType = 2, maxConsecutiveAlert 
 // ---------------------------------------------------------------------------
 
 /** Safe, public temporal fields — derived from existing evidence. */
+/**
+ * Attach the trust-layer projection fields to a single object row: source
+ * names/count/platforms, first publication time, temporal lifecycle, and the
+ * verification standing. Used by feed paths that return raw rows (no
+ * location/ranking) so every consumer sees the same honest trust fields.
+ */
+export function enrichTrustFields(object, now = new Date()) {
+  if (!object) return null;
+  const sources = sourcesOf(object);
+  return {
+    ...object,
+    sourceNames: sources.map((s) => s.name).slice(0, 3),
+    sourceCount: sources.length,
+    sourcePlatforms: sources.map((s) => s.platform).filter(Boolean).slice(0, 3),
+    publishedAt: publishedAtOf(object),
+    temporal: temporalFields(object, now),
+    verificationStatus: trust.verificationLevel(object.id),
+    confirmationCount: trust.confirmationCount(object.id)
+  };
+}
+
 export function temporalFields(object, now = new Date()) {
   const life = lifecycleOf(object, now);
   const out = {
@@ -676,6 +703,9 @@ export function discoverableStream({ near = null, radiusKm = null, area = null, 
   if (!includeExpired) {
     objects = objects.filter((o) => !isStale(o, now));
   }
+  // A source marked disabled by an operator stops contributing to the
+  // default feed (its content stays reachable directly). Trust never deletes.
+  objects = objects.filter((o) => !sourceTrust.trustOfObject(o).disabled);
 
   const scored = objects.map((o) => {
     const c = coordsOf(o);

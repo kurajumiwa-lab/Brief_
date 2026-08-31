@@ -101,7 +101,17 @@ export function confirmObject(objectId, actorId) {
 // REPORTING + MODERATION
 // ---------------------------------------------------------------------------
 
-export const REPORT_REASONS = ['wrong', 'spam', 'offensive', 'duplicate', 'expired', 'other'];
+export const REPORT_REASONS = [
+  'wrong',
+  'spam',
+  'offensive',
+  'duplicate',
+  'expired',
+  'cancelled',
+  'wrong_location',
+  'wrong_date',
+  'other'
+];
 
 export function reportObject({ objectId, actorId, reason = 'wrong', note = null }) {
   if (!store.find('objects', (o) => o.id === objectId)) throw new Error('object not found');
@@ -131,6 +141,24 @@ export function reportObject({ objectId, actorId, reason = 'wrong', note = null 
 export function openReports() {
   return store.filter('reports', (r) => r.status === 'open')
     .slice().sort((a, b) => (a.createdAt > b.createdAt ? 1 : -1));
+}
+
+/** How many open (unresolved) reports currently point at an object. */
+export function openReportCount(objectId) {
+  return store.filter('reports', (r) => r.objectId === objectId && r.status === 'open').length;
+}
+
+/** The object row behind a report, when it still exists (never the row itself). */
+export function reportTarget(report) {
+  if (!report?.objectId) return null;
+  const object = store.find('objects', (o) => o.id === report.objectId);
+  if (!object) return null;
+  return {
+    id: object.id,
+    type: object.type,
+    title: object.title,
+    publication: object.publication
+  };
 }
 
 /**

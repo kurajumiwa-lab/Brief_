@@ -49,7 +49,8 @@ function toServerRow(o) {
     category: o.category ?? null,
     summary: o.summary ?? '',
     locationName: o.locationName ?? null,
-    verificationStatus: o.isVerified ? 'verified' : 'unverified',
+    verificationStatus: o.verificationStatus ?? (o.isVerified ? 'verified' : 'unverified'),
+    confirmationCount: o.confirmationCount ?? undefined,
     lastVerifiedAt: o.lastVerifiedAt ?? null,
     validityWindowDays: o.validityWindowDays ?? null,
     publication: o.publication ?? 'public',
@@ -57,7 +58,15 @@ function toServerRow(o) {
     createdAt: o.createdAt ?? '2026-01-01T00:00:00Z',
     provenance,
     relationships,
-    sourceCount: provenance.length,
+    sourceCount: o.sourceCount ?? provenance.length,
+    // Trust-layer fields the real /api/objects + discovery routes project:
+    // they ride through objectFromServer exactly as the server sends them.
+    sourceNames: o.sourceNames ?? undefined,
+    sourcePlatforms: o.sourcePlatforms ?? undefined,
+    publishedAt: o.publishedAt ?? undefined,
+    temporal: o.temporal ?? undefined,
+    corrections: o.corrections ?? undefined,
+    openReportCount: o.openReportCount ?? undefined,
 
     // Presentational fields the server does not model. objectFromServer
     // ignores them; they ride along so fixture-driven suites can still assert

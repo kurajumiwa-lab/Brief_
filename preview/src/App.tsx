@@ -143,6 +143,7 @@ export type ObjectType =
   | 'place'
   | 'identity'
   | 'experience'
+  | 'event'
   | 'opportunity'
   | 'knowledge'
   | 'community'
@@ -266,6 +267,25 @@ export interface BriefObject {
   /** Real source names for attribution ("From Telegram" = the actual name). */
   sourceNames?: string[];
   sourceCount?: number;
+  /** Source channel kinds ("telegram", "web", ...) — "Source · Telegram". */
+  sourcePlatforms?: string[];
+  /** The server's verification standing: unverified | source_confirmed |
+   *  cross_source_confirmed | community_confirmed. Corroboration, not truth. */
+  verificationStatus?: string;
+  /** How many independent people confirmed this object. Derived server-side. */
+  confirmationCount?: number;
+  /** Operator corrections applied to this object (original vs corrected). */
+  corrections?: {
+    id: string;
+    field: string;
+    isMeta?: boolean;
+    originalValue: string | null;
+    correctedValue: string;
+    reason: string;
+    createdAt: string;
+  }[];
+  /** Open (unresolved) user reports currently flagging this object. */
+  openReportCount?: number;
   /** Server-labelled temporary demo content; never a client-side fixture flag. */
   testContent?: { label: string; expiresAt: string | null };
 
@@ -724,6 +744,127 @@ const getRelativeTime = (iso: string, now: Date = new Date()): string => {
   const hours = Math.round(mins / 60);
   if (hours < 24) return `${hours}h`;
   return `${Math.round(hours / 24)}d`;
+};
+
+// ---------------------------------------------------------------------------
+// TRUST DISPLAY (trust layer). Every label is derived from real fields the
+// server already projects (publishedAt, sourceNames/sourceCount, temporal,
+// verificationStatus) — never invented, never a raw confidence number.
+// ---------------------------------------------------------------------------
+
+/** Human publication freshness: "Just now", "18 min ago", "Today", "Yesterday",
+ *  "3 days ago", else the date. Null when there is no timestamp to read. */
+export const getRelativeFreshness = (iso?: string | null, now: Date = new Date()): string | null => {
+  if (!iso) return null;
+  const t = new Date(iso).getTime();
+  if (!Number.isFinite(t)) return null;
+  const diffMs = now.getTime() - t;
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins} min ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24 && new Date(t).toDateString() === now.toDateString()) return 'Today';
+  const yesterday = new Date(now.getTime() - 86400000);
+  if (new Date(t).toDateString() === yesterday.toDateString()) return 'Yesterday';
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days} days ago`;
+  return new Date(t).toISOString().slice(0, 10);
+};
+
+/**
+ * The compact source indicator: "Source · Nation" for a single source,
+ * "Sources · 3" for several. Null when provenance says nothing.
+ */
+export const getSourceChip = (object: BriefObject): string | null => {
+  const names = object.sourceNames ?? [];
+  const count = object.sourceCount ?? names.length;
+  if (count >= 2) return `Sources · ${count}`;
+  if (names.length === 1) return `Source · ${names[0]}`;
+  return null;
+};
+
+/** "Source · Telegram" — the channel kind, when known. */
+export const getSourceKindChip = (object: BriefObject): string | null => {
+  const kind = object.sourcePlatforms?.[0];
+  if (!kind) return null;
+  const label = kind === 'telegram_channel' || kind === 'telegram_group'
+    ? 'Telegram'
+    : kind === 'whatsapp_channel' || kind === 'whatsapp_group'
+      ? 'WhatsApp'
+      : kind;
+  return label;
+};
+
+/** Corroboration, explicitly not certainty: "Confirmed across 2 sources". */
+export const getCorroborationLabel = (object: BriefObject): string | null => {
+  const count = object.sourceCount ?? object.sourceNames?.length ?? 0;
+  if (count >= 2) return `Confirmed across ${count} sources`;
+  if (object.verificationStatus === 'community_confirmed' && object.confirmationCount) {
+    return `Confirmed by ${object.confirmationCount} people`;
+  }
+  return null;
+};
+
+/**
+ * The lifecycle badge for time-sensitive types. For offers: Expired only when
+ * the server's temporal says so; for events: Ended when past, Upcoming with a
+ * "tomorrow · 8:00 PM" preview when a start time exists. Never claims a state
+ * the data does not back.
+ */
+export const getLifecycleBadge = (object: BriefObject, now: Date = new Date()): { label: string; expired: boolean } | null => {
+  const temporal = object.temporal;
+  if (!temporal) return null;
+  const status = temporal.status;
+  const type = object.type;
+
+  if (type === 'offer') {
+    if (status === 'expired') return { label: 'Expired', expired: true };
+    if (status === 'active') return { label: 'Offer active', expired: false };
+    return null;
+  }
+
+  // The pipeline classifies events as 'experience'; 'event' is accepted too
+  // for rows a connector may still label that way.
+  if (type === 'experience' || type === 'event') {
+    if (status === 'past') return { label: 'Ended', expired: true };
+    if (status === 'happening') return { label: 'Happening now', expired: false };
+    if (status === 'upcoming' && temporal.startsAt) {
+      return { label: getEventStartPreview(temporal.startsAt, now), expired: false };
+    }
+    if (status === 'upcoming') return { label: 'Upcoming', expired: false };
+    if (status === 'recurring') return { label: 'Recurring', expired: false };
+    return null;
+  }
+
+  if (type === 'opportunity' && status === 'past') {
+    return { label: 'Closed', expired: true };
+  }
+  if (type === 'alert' || type === 'announcement' || type === 'news') {
+    if (status === 'expired') return { label: 'Expired', expired: true };
+  }
+  return null;
+};
+
+/** "Tomorrow · 8:00 PM" / "Today · 4:00 PM" / "Saturday · 10:00 AM". */
+export const getEventStartPreview = (startsAt: string, now: Date = new Date()): string => {
+  const t = new Date(startsAt).getTime();
+  if (!Number.isFinite(t)) return 'Upcoming';
+  const time = new Date(t).toLocaleTimeString('en-KE', { hour: 'numeric', minute: '2-digit' });
+  const day = new Date(t).toDateString() === now.toDateString()
+    ? 'Today'
+    : new Date(t).toDateString() === new Date(now.getTime() + 86400000).toDateString()
+      ? 'Tomorrow'
+      : new Date(t).toLocaleDateString('en-KE', { weekday: 'long' });
+  return `${day} · ${time}`;
+};
+
+/** "Published {freshness}" — publication age, never confused with event time. */
+export const getPublishedLine = (object: BriefObject, now: Date = new Date()): string | null => {
+  const stamp = object.publishedAt ?? object.createdAt;
+  if (!stamp) return null;
+  const fresh = getRelativeFreshness(stamp, now);
+  if (!fresh) return null;
+  return `Published ${fresh.toLowerCase()}`;
 };
 
 const formatCount = (n: number): string =>
@@ -4639,12 +4780,35 @@ export const objectFromServer = (row: any): BriefObject => {
   category: row?.category ? String(row.category) : 'Uncategorised',
   summary: String(row?.summary ?? ''),
   locationName: row?.locationName ?? undefined,
-  isVerified: row?.verificationStatus === 'verified',
+  // The server's levels are unverified | source_confirmed |
+  // cross_source_confirmed | community_confirmed. A "verified" claim in the
+  // UI is only made at the corroborated/community tiers — a single source is
+  // reported as such, never dressed up as verified.
+  verificationStatus: typeof row?.verificationStatus === 'string' ? row.verificationStatus : undefined,
+  isVerified: ['verified', 'cross_source_confirmed', 'community_confirmed'].includes(row?.verificationStatus),
+  confirmationCount: Number.isInteger(row?.confirmationCount) ? row.confirmationCount : undefined,
   lastVerifiedAt: row?.lastVerifiedAt ?? undefined,
   validityWindowDays: row?.validityWindowDays ?? undefined,
   sourceType: row?.provenance?.[0]?.platform ?? undefined,
   sourceUrl: row?.sourceUrl ?? row?.provenance?.[0]?.sourceUrl ?? undefined,
   sourceId: row?.provenance?.[0]?.sourceId ?? undefined,
+  sourcePlatforms: Array.isArray(row?.sourcePlatforms)
+    ? row.sourcePlatforms.filter((s: unknown) => typeof s === 'string')
+    : undefined,
+  corrections: Array.isArray(row?.corrections) && row.corrections.length > 0
+    ? row.corrections
+        .map((c: any) => ({
+          id: String(c?.id ?? ''),
+          field: String(c?.field ?? ''),
+          isMeta: c?.isMeta === true,
+          originalValue: c?.originalValue === null || c?.originalValue === undefined ? null : String(c.originalValue),
+          correctedValue: String(c?.correctedValue ?? ''),
+          reason: String(c?.reason ?? ''),
+          createdAt: String(c?.createdAt ?? '')
+        }))
+        .filter((c: any) => c.field)
+    : undefined,
+  openReportCount: Number.isInteger(row?.openReportCount) ? row.openReportCount : undefined,
   metadata: Object.keys(meta).length > 0 ? meta : undefined,
   createdAt: String(row?.createdAt ?? new Date().toISOString()),
   // Feed projections expose media/action as nested public fields; keep the
@@ -6638,10 +6802,25 @@ export function App() {
     const action = resolveAction(object);
     const origin = publicOrigin || (typeof window !== 'undefined' ? window.location.origin : null);
     const shareUrl = objectShareUrl(origin, object.id);
+    // Trust layer: a shared object carries its source, freshness and current
+    // status, so an expired offer is never shared as active and a cancelled
+    // event is never shared as confirmed.
+    const sourceChip = getSourceChip(object);
+    const published = getPublishedLine(object);
+    const life = getLifecycleBadge(object);
+    const statusLine = life
+      ? (life.expired ? `Status: ${life.label}` : `Status: ${life.label}`)
+      : null;
+    const sourceLine = sourceChip
+      ? sourceChip.replace(/^Source · /, 'Source: ').replace(/^Sources · /, 'Sources: ')
+      : null;
     const lines = [
       object.title,
       object.category,
       object.locationName ? `Location: ${object.locationName}` : null,
+      sourceLine,
+      published ? published : null,
+      statusLine,
       action.kind !== 'none' ? `Action: ${action.label}` : null,
       shareUrl ? shareUrl : null,
       !shareUrl && object.sourceUrl ? `Source: ${object.sourceUrl}` : null
@@ -8543,11 +8722,35 @@ export function App() {
                                   {status}
                                 </span>
                               )}
+                              {(() => {
+                                const life = getLifecycleBadge(obj);
+                                if (!life) return null;
+                                return (
+                                  <span className={`rounded-full px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] ${
+                                    life.expired
+                                      ? 'bg-[#150826]/80 text-[#FFFFFF]'
+                                      : 'bg-[#F1EDF7]/75 text-[#251045]'
+                                  }`}>
+                                    {life.label}
+                                  </span>
+                                );
+                              })()}
                             </div>
                             <div className="absolute inset-x-3 bottom-3">
                               <h3 className="line-clamp-3 pr-2 text-[14px] font-semibold leading-snug text-[#FFFFFF]">
                                 {obj.title}
                               </h3>
+                              {(() => {
+                                const sourceChip = getSourceChip(obj);
+                                const published = getPublishedLine(obj);
+                                if (!sourceChip && !published) return null;
+                                const bits = [sourceChip, published].filter(Boolean);
+                                return (
+                                  <p className="mt-1 text-[9px] font-semibold text-[#FFFFFF]/75 truncate">
+                                    {bits.join(' · ')}
+                                  </p>
+                                );
+                              })()}
                               {level === 3 && destVendors.length > 0 && (
                                 <p className="mt-1 text-[10px] font-semibold text-[#FFFFFF]">
                                   {destVendors.length} {destVendors.length === 1 ? 'vendor' : 'vendors'} inside
@@ -11584,14 +11787,14 @@ export function App() {
                         {(() => {
                           const stamp = selectedObjectForDetail.publishedAt
                             ?? selectedObjectForDetail.createdAt;
+                          const published = getPublishedLine(selectedObjectForDetail);
                           if (!stamp) return null;
                           const d = new Date(stamp);
                           if (!Number.isFinite(d.getTime())) return null;
+                          const absolute = d.toLocaleDateString('en-KE', { weekday: 'short', day: 'numeric', month: 'short' });
                           return (
                             <span>
-                              {d.toLocaleDateString('en-KE', { weekday: 'short', day: 'numeric', month: 'short' })}
-                              {' · '}
-                              {d.toLocaleTimeString('en-KE', { hour: 'numeric', minute: '2-digit' })}
+                              {published ? `${published} · ` : ''}{absolute}
                             </span>
                           );
                         })()}
@@ -11722,47 +11925,105 @@ export function App() {
                   </div>
                 )}
 
-                {/* Trust, freshness and provenance (prompts 12/13/14).
-                    One quiet row answering: who said this, was it checked,
-                    how recently, and where did it come from. A score is
-                    labelled as a confidence signal, never as a guarantee. */}
+                {/* About this information (trust layer). One quiet block
+                    answering: who said this, how recently, across how many
+                    sources, is it still current, and has it been corrected.
+                    Corroboration is shown as corroboration — never as truth. */}
                 {(() => {
                   const subject = selectedObjectForDetail;
                   const fresh = getFreshness(subject);
+                  const sourceChip = getSourceChip(subject);
+                  const sourceKind = getSourceKindChip(subject);
+                  const corroboration = getCorroborationLabel(subject);
+                  const published = getPublishedLine(subject);
+                  const life = getLifecycleBadge(subject);
+                  const corrections = Array.isArray(subject.corrections) && subject.corrections.length > 0
+                    ? subject.corrections
+                    : null;
                   const hasTrust =
                     subject.isVerified ||
-                    Boolean(subject.creatorName) ||
                     Boolean(fresh) ||
                     Boolean(subject.sourceUrl) ||
-                    (Array.isArray(subject.sourceNames) && subject.sourceNames.length > 0);
+                    Boolean(sourceChip) ||
+                    Boolean(published) ||
+                    Boolean(corroboration) ||
+                    Boolean(life) ||
+                    Boolean(corrections) ||
+                    (subject.openReportCount ?? 0) > 0;
 
                   if (!hasTrust) return null;
 
-                  const freshTone =
-                    fresh?.level === 'stale' || fresh?.level === 'aging'
-                      ? 'text-[#251045]'
-                      : 'text-[#251045]';
+                  const CORRECTION_LABELS: Record<string, string> = {
+                    title: 'Title',
+                    type: 'Type',
+                    summary: 'Summary',
+                    category: 'Category',
+                    locationName: 'Location',
+                    venue: 'Venue',
+                    organizer: 'Organizer',
+                    dateCanonical: 'Date',
+                    eventStart: 'Start time',
+                    eventEnd: 'End time',
+                    deadlineCanonical: 'Deadline',
+                    operatingHours: 'Hours',
+                    price: 'Price',
+                    statusBadge: 'Status'
+                  };
 
                   return (
                     <div className="bg-[#F1EDF7] border border-[#D6CFE4] rounded-xl px-4 py-3 space-y-2">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <ShieldCheck className="w-4 h-4 text-[#251045] shrink-0" />
-                          <span className="text-xs font-bold truncate">
-                            {subject.creatorName || 'Provider not stated'}
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck className="w-4 h-4 text-[#251045] shrink-0" />
+                        <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#251045]/60">
+                          About this information
+                        </span>
+                        {subject.isVerified && (
+                          <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-[#5B2EA6] text-[#FFFFFF] shrink-0">
+                            VERIFIED
                           </span>
-                          {subject.isVerified && (
-                            <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-[#5B2EA6] text-[#FFFFFF] shrink-0">
-                              VERIFIED
+                        )}
+                      </div>
+
+                      {/* Provider — stated when known, absence stated plainly. */}
+                      <p className="text-[10px] font-bold text-[#251045]/70">
+                        {subject.creatorName ? `Provider: ${subject.creatorName}` : 'Provider not stated'}
+                      </p>
+
+                      {/* Source — real names, never internal ids. */}
+                      {subject.sourceNames && subject.sourceNames.length > 0 && (
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-[10px] font-bold text-[#251045]/80 truncate">
+                            From {subject.sourceNames.slice(0, 3).join(', ')}
+                          </span>
+                          {sourceKind && (
+                            <span className="shrink-0 rounded-full bg-[#FBFAFD] border border-[#D6CFE4] px-1.5 py-0.5 text-[8px] font-bold text-[#251045]/50">
+                              {sourceKind}
+                            </span>
+                          )}
+                          {sourceChip && sourceChip !== `Source · ${subject.sourceNames[0]}` && (
+                            <span className="shrink-0 text-[9px] font-bold text-[#251045]/40">
+                              {sourceChip}
                             </span>
                           )}
                         </div>
+                      )}
 
-                      </div>
+                      {/* Published — publication age, separate from event time. */}
+                      {published && (
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-[10px] font-bold text-[#251045]/70">
+                            {published}
+                          </span>
+                          <span className="text-[10px] text-[#251045]/40">
+                            {new Date(subject.publishedAt ?? subject.createdAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
+                        </div>
+                      )}
 
+                      {/* Verification freshness — when this was last checked. */}
                       {fresh && (
                         <div className="flex items-center justify-between gap-3">
-                          <span className={`text-[10px] font-bold ${freshTone}`}>
+                          <span className="text-[10px] font-bold text-[#251045]/70">
                             {fresh.label}
                           </span>
                           <span className="text-[10px] text-[#251045]/40">
@@ -11771,15 +12032,39 @@ export function App() {
                         </div>
                       )}
 
-                      {/* Source transparency on every item: the real source
-                          name(s) — "From City Wire", "From Kilimani Notices"
-                          — never an internal id. */}
-                      {subject.sourceNames && subject.sourceNames.length > 0 && (
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-[10px] font-bold text-[#251045]/70 truncate">
-                            From {subject.sourceNames.slice(0, 3).join(', ')}
-                          </span>
+                      {/* Corroboration — a count, explicitly not certainty. */}
+                      {corroboration && (
+                        <p className="text-[10px] font-bold text-[#251045]/70">
+                          {corroboration}
+                        </p>
+                      )}
+
+                      {/* Current status for time-sensitive content. */}
+                      {life && (
+                        <p className={`text-[10px] font-extrabold ${life.expired ? 'text-[#8A1E2D]' : 'text-[#251045]/70'}`}>
+                          {life.label}
+                        </p>
+                      )}
+
+                      {/* Operator corrections: original fact + corrected value. */}
+                      {corrections && (
+                        <div className="space-y-1 border-t border-[#D6CFE4]/70 pt-2">
+                          {corrections.map((c) => (
+                            <p key={c.id} className="text-[10px] text-[#251045]/70 leading-snug">
+                              Corrected {CORRECTION_LABELS[c.field] ?? c.field}
+                              {c.originalValue !== null && c.originalValue !== c.correctedValue
+                                ? <> — was “{c.originalValue}”, now “{c.correctedValue}”</>
+                                : <> to “{c.correctedValue}”</>}
+                            </p>
+                          ))}
                         </div>
+                      )}
+
+                      {/* Under review: an open user report flags this object. */}
+                      {(subject.openReportCount ?? 0) > 0 && (
+                        <p className="text-[10px] font-bold text-[#8A1E2D]">
+                          Reported for review
+                        </p>
                       )}
 
                       <p className="text-[10px] text-[#251045]/40 leading-snug">

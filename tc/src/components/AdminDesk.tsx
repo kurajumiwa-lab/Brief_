@@ -359,7 +359,16 @@ function AttentionTab({ tick, can, refresh }: { tick: number; can: (c: string) =
   const [queue, setQueue] = React.useState<Record<string, any>[] | null>(null);
   const [disputes, setDisputes] = React.useState<Record<string, any>[] | null>(null);
   const [listings, setListings] = React.useState<Record<string, any>[] | null>(null);
+  const [corrections, setCorrections] = React.useState<Record<string, any>[] | null>(null);
+  const [trustSources, setTrustSources] = React.useState<Record<string, any>[] | null>(null);
   const [note, setNote] = React.useState<string | null>(null);
+
+  // Compact "correct a field" form (trust layer). Corrected values keep the
+  // ORIGINAL source fact on the correction row; provenance is never rewritten.
+  const [corrObjectId, setCorrObjectId] = React.useState('');
+  const [corrField, setCorrField] = React.useState('title');
+  const [corrValue, setCorrValue] = React.useState('');
+  const [corrReason, setCorrReason] = React.useState('');
 
   React.useEffect(() => {
     let live = true;
@@ -367,6 +376,8 @@ function AttentionTab({ tick, can, refresh }: { tick: number; can: (c: string) =
     void briefApi.getOpsVerificationQueue().then((r) => { if (live) setQueue(r.ok ? r.data : []); });
     void briefApi.getOpsDisputes().then((r) => { if (live) setDisputes(r.ok ? r.data : []); });
     void briefApi.getOpsTicketListings().then((r) => { if (live) setListings(r.ok ? r.data : []); });
+    void briefApi.getOpsCorrections().then((r) => { if (live) setCorrections(r.ok ? r.data : []); });
+    void briefApi.getOpsSourceTrust().then((r) => { if (live) setTrustSources(r.ok ? r.data : []); });
     return () => { live = false; };
   }, [tick]);
 
@@ -385,7 +396,11 @@ function AttentionTab({ tick, can, refresh }: { tick: number; can: (c: string) =
           : reports.map((r) => (
             <div key={r.id} className="rounded-xl border border-[#D6CFE4] p-2.5 space-y-1">
               <Row><span>{String(r.reason ?? r.kind ?? 'report')}</span><span className="text-[9px] text-[#251045]/40">{String(r.createdAt ?? '').slice(0, 10)}</span></Row>
-              <p className="text-[10px] text-[#251045]/50">object {String(r.objectId ?? r.targetId ?? '?')}</p>
+              <p className="text-[10px] text-[#251045]/50">
+                {r.target?.title ? `“${String(r.target.title)}”` : `object ${String(r.objectId ?? r.targetId ?? '?')}`}
+                {r.target?.type ? ` · ${String(r.target.type)}` : ''}
+                {r.note ? ` — “${String(r.note)}”` : ''}
+              </p>
               {can('moderate') ? (
                 <div className="flex gap-1.5 pt-1">
                   <button onClick={() => void act(() => briefApi.resolveOpsReport(r.id, 'dismiss', 'reviewed at the desk'), 'dismissed')}
@@ -394,6 +409,107 @@ function AttentionTab({ tick, can, refresh }: { tick: number; can: (c: string) =
                     className="rounded-lg bg-[#5B2EA6] px-2 py-1 text-[9px] font-extrabold text-[#FFFFFF] cursor-pointer">Remove from discovery</button>
                 </div>
               ) : <Empty>Deciding needs the moderate capability.</Empty>}
+            </div>
+          ))}
+      </Card>
+
+      <Card title="Corrections" note="Fix a bad extracted field. The ORIGINAL source value is preserved on the correction row; provenance is never rewritten. Both apply and reject are audited.">
+        {corrections === null ? <Empty>loading…</Empty>
+          : corrections.length === 0 ? <Empty>No corrections yet.</Empty>
+          : corrections.map((c) => (
+            <div key={c.id} className="rounded-xl border border-[#D6CFE4] p-2.5 space-y-1">
+              <Row>
+                <span className="font-extrabold">{String(c.field)}</span>
+                <span className="text-[9px] text-[#251045]/40">
+                  {String(c.status)} · {String(c.createdAt ?? '').slice(0, 10)}
+                </span>
+              </Row>
+              <p className="text-[10px] text-[#251045]/50">
+                {String(c.objectId ?? '?')} — {c.originalValue === null ? 'no prior value' : `was “${String(c.originalValue)}”`}
+                {' '}→ now “{String(c.correctedValue)}”
+              </p>
+              {c.status === 'applied' && can('moderate') && (
+                <div className="flex gap-1.5 pt-1">
+                  <button onClick={() => void act(() => briefApi.opsRejectCorrection(c.id, 'rejected at the desk'), 'correction rejected')}
+                    className="rounded-lg border border-[#D6CFE4] px-2 py-1 text-[9px] font-extrabold cursor-pointer">Reject</button>
+                </div>
+              )}
+            </div>
+          ))}
+        {can('moderate') && (
+          <div className="rounded-xl border border-[#D6CFE4] p-2.5 space-y-1.5">
+            <p className="text-[10px] font-extrabold text-[#251045]/60">Correct a field</p>
+            <div className="flex flex-wrap gap-1.5">
+              <input
+                value={corrObjectId}
+                onChange={(e) => setCorrObjectId(e.target.value)}
+                placeholder="object id"
+                className="min-w-0 flex-1 rounded-lg border border-[#D6CFE4] px-2 py-1 text-[10px]"
+              />
+              <select value={corrField} onChange={(e) => setCorrField(e.target.value)} className="rounded-lg border border-[#D6CFE4] px-2 py-1 text-[10px]">
+                {['title', 'type', 'summary', 'category', 'locationName', 'venue', 'organizer', 'dateCanonical', 'eventStart', 'eventEnd', 'deadlineCanonical', 'operatingHours', 'price'].map((f) => (
+                  <option key={f} value={f}>{f}</option>
+                ))}
+              </select>
+              <input
+                value={corrValue}
+                onChange={(e) => setCorrValue(e.target.value)}
+                placeholder="corrected value"
+                className="min-w-0 flex-1 rounded-lg border border-[#D6CFE4] px-2 py-1 text-[10px]"
+              />
+              <input
+                value={corrReason}
+                onChange={(e) => setCorrReason(e.target.value)}
+                placeholder="why (audited)"
+                className="min-w-0 flex-1 rounded-lg border border-[#D6CFE4] px-2 py-1 text-[10px]"
+              />
+              <button
+                onClick={() => {
+                  if (!corrObjectId.trim() || !corrValue.trim()) {
+                    setNote('object id and corrected value are required');
+                    return;
+                  }
+                  const isMeta = !['title', 'type', 'summary', 'category', 'locationName'].includes(corrField);
+                  void act(
+                    () => briefApi.opsCreateCorrection(corrObjectId.trim(), corrField, corrValue.trim(), corrReason.trim() || 'corrected at the desk', isMeta),
+                    'correction applied'
+                  );
+                  setCorrValue(''); setCorrReason('');
+                }}
+                className="rounded-lg bg-[#5B2EA6] px-2.5 py-1 text-[9px] font-extrabold text-[#FFFFFF] cursor-pointer"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        )}
+      </Card>
+
+      <Card title="Source trust" note="An operator decision about a source's standing — never a public rating, never 'this source is always true'. Degraded ranks lower; disabled stops contributing to the default feed (content stays reachable directly).">
+        {trustSources === null ? <Empty>loading…</Empty>
+          : trustSources.length === 0 ? <Empty>No sources registered.</Empty>
+          : trustSources.map((s) => (
+            <div key={s.id} className="rounded-xl border border-[#D6CFE4] p-2.5 space-y-1">
+              <Row>
+                <span className="font-extrabold">{String(s.name)}</span>
+                <span className="text-[9px] font-extrabold uppercase text-[#251045]/60">{String(s.trustStatus)}</span>
+              </Row>
+              <p className="text-[10px] text-[#251045]/50">
+                {String(s.type ?? '?')} · {Number(s.objectsCreated ?? 0)} objects
+                {s.trustReason ? ` — “${String(s.trustReason)}”` : ''}
+              </p>
+              {can('moderate') ? (
+                <div className="flex gap-1.5 pt-1">
+                  {(['trusted', 'normal', 'degraded', 'disabled'] as const).map((st) => (
+                    <button key={st} onClick={() => void act(() => briefApi.opsSetSourceTrust(s.id, st, `set to ${st} at the desk`), `source ${st}`)}
+                      className={`rounded-lg border px-2 py-1 text-[9px] font-extrabold cursor-pointer ${
+                        s.trustStatus === st ? 'bg-[#5B2EA6] border-[#5B2EA6] text-[#FFFFFF]' : 'border-[#D6CFE4] text-[#251045]/70'
+                      }`}>
+                      {st}
+                    </button>
+                  ))}
+                </div>
+              ) : <Empty>Setting trust needs the moderate capability.</Empty>}
             </div>
           ))}
       </Card>
