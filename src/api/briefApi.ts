@@ -1047,26 +1047,78 @@ export function reportObject(id: string, reason: string): Promise<ApiResult<any>
   return request(`/api/objects/${encodeURIComponent(id)}/report`, { method: 'POST', body: JSON.stringify({ reason }) }, (r) => (r?.report ? r : undefined));
 }
 
+/** One notification row as served by the in-app center. */
 export interface Notification {
   id: string;
   kind: string;
+  type: string;
   title: string;
   body: string | null;
   objectId: string | null;
+  entityId: string | null;
+  collectionId: string | null;
+  imageUrl: string | null;
+  sourceName: string | null;
+  context: string | null;
+  /** Deep-link target: object:… | entity:… | location:… | collection:… */
+  dest: string | null;
+  priority: 'important' | 'normal' | 'low';
+  status: string;
   read: boolean;
+  readAt: string | null;
+  dedupeKey: string | null;
+  metadata: Record<string, unknown> | null;
   createdAt: string;
+  entityName?: string | null;
+  object?: {
+    id: string;
+    type: string;
+    title: string | null;
+    status: string | null;
+    imageUrl: string | null;
+    sourceNames: string[];
+  } | null;
 }
 
-export function getNotifications(unreadOnly = false): Promise<ApiResult<{ notifications: Notification[]; unread: number }>> {
+export interface NotificationPrefs {
+  categories: Record<string, boolean>;
+  generatedAt?: string | null;
+}
+
+export function getNotifications(unreadOnly = false): Promise<ApiResult<{ notifications: Notification[]; unread: number; preferences: NotificationPrefs }>> {
   const q = unreadOnly ? '?unread=1' : '';
   return request(`/api/notifications${q}`, undefined, (r) =>
     Array.isArray(r?.notifications) ? r : undefined
   );
 }
 
-export function markNotificationsRead(idOrAll?: string): Promise<ApiResult<any>> {
-  const body = idOrAll === undefined ? { all: true } : { id: idOrAll };
+/**
+ * Mark read (default) / unread (`read: false`) for one notification, or mark
+ * all read with no id. Returns the notified row(s) + fresh unread count.
+ */
+export function markNotificationsRead(idOrAll?: string, read = true): Promise<ApiResult<any>> {
+  const body = idOrAll === undefined ? { all: true } : { id: idOrAll, read };
   return request('/api/notifications/read', { method: 'POST', body: JSON.stringify(body) }, (r) => r);
+}
+
+/** A tap on a notification: marks read server-side + records `opened`. */
+export function openNotification(id: string): Promise<ApiResult<{ notification: Notification; unread: number }>> {
+  return request(`/api/notifications/${encodeURIComponent(id)}/open`, { method: 'POST', body: '{}' }, (r) =>
+    r?.notification ? r : undefined
+  );
+}
+
+export function getNotificationPreferences(): Promise<ApiResult<{ preferences: NotificationPrefs }>> {
+  return request('/api/notifications/preferences', undefined, (r) =>
+    r?.preferences ? r : undefined
+  );
+}
+
+/** Patch category toggles: { categories: { events: false, … } }. */
+export function updateNotificationPreferences(categories: Record<string, boolean>): Promise<ApiResult<{ ok: boolean; preferences: Record<string, boolean>; changed: boolean }>> {
+  return request('/api/notifications/preferences', { method: 'PUT', body: JSON.stringify({ categories }) }, (r) =>
+    r?.preferences ? r : undefined
+  );
 }
 
 // ---------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   Copy, Share2, Plus, CalendarDays, MessageCircle, Briefcase, Zap,
-  MapPin, Trophy, Sparkles, Send, Settings, Lock, ArrowRight
+  MapPin, Trophy, Sparkles, Send, Settings, Lock, ArrowRight, Bell
 } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
 import type { AuthedUser } from '../api/briefApi';
@@ -34,6 +34,7 @@ export type MenuTarget =
       | 'sources' | 'money' | 'vault' | 'gate' | 'tea' | 'fees'
       | 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'shop' | 'ai' }
   | { tab: 'capture' }
+  | { tab: 'notifications' }
   | { tab: 'operate' };
 
 export interface GeoCity {
@@ -48,6 +49,8 @@ export interface MenuSheetProps {
   onSelect: (target: MenuTarget) => void;
   onSelectCity: (city: GeoCity) => void;
   selectedLocation: string;
+  /** Unread notification count passed to the Updates row; shown when > 0. */
+  unread?: number;
   /** Operator desk entry (F4): offered only when the session may operate. */
   canOperate?: boolean;
 }
@@ -259,18 +262,19 @@ function ExploreGrid({ onSelect }: { onSelect: (target: MenuTarget) => void }) {
 
 // --- QUICK ACTIONS: one card, compact rows, fast to scan ----------------------
 
-const QUICK: { label: string; detail: string; Icon: React.ComponentType<{ className?: string }>; target: MenuTarget }[] = [
+const QUICK: { label: string; detail: string; Icon: React.ComponentType<{ className?: string }>; target: MenuTarget; unread?: number }[] = [
   { label: 'New', detail: 'Capture something useful', Icon: Plus, target: { tab: 'capture' } },
+  { label: 'Updates', detail: 'What changed while you were away', Icon: Bell, target: { tab: 'notifications' } },
   { label: 'Calendar', detail: 'Keep a date in view', Icon: CalendarDays, target: { tab: 'workflows', section: 'calendar' } },
   { label: 'Inbox', detail: 'Review what needs you', Icon: MessageCircle, target: { tab: 'workflows', section: 'inbox' } },
   { label: 'Records', detail: 'Open your vaults', Icon: Briefcase, target: { tab: 'workflows', section: 'vault' } },
   { label: 'Dashboard', detail: 'See what is moving', Icon: Zap, target: { tab: 'workflows', section: 'command' } }
 ];
 
-function QuickActions({ onSelect }: { onSelect: (target: MenuTarget) => void }) {
+function QuickActions({ onSelect, unread }: { onSelect: (target: MenuTarget) => void; unread: number }) {
   return (
     <section aria-label="Quick actions" className="bg-[#FFFFFF] border border-[#D6CFE4] rounded-2xl overflow-hidden">
-      {QUICK.map(({ label, detail, Icon, target }, i) => (
+      {QUICK.map(({ label, detail, Icon, target, unread: rowUnread }, i) => (
         <button
           key={label}
           type="button"
@@ -286,6 +290,11 @@ function QuickActions({ onSelect }: { onSelect: (target: MenuTarget) => void }) 
             <span className="block text-[12.5px] font-extrabold text-[#251045] leading-tight">{label}</span>
             <span className="block text-[9.5px] text-[#251045]/50 truncate">{detail}</span>
           </span>
+          {rowUnread !== undefined && unread > 0 && (
+            <span className="shrink-0 rounded-full bg-[#B3261E] px-1.5 py-0.5 text-[9px] font-extrabold text-white">
+              {unread > 99 ? '99+' : unread}
+            </span>
+          )}
           <ArrowRight className="h-4 w-4 text-[#251045]/30 shrink-0" aria-hidden="true" />
         </button>
       ))}
@@ -344,7 +353,7 @@ const SectionLabel = ({ children }: { children: React.ReactNode }) => (
   <p className="px-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#251045]/45">{children}</p>
 );
 
-export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocation, canOperate = false }: MenuSheetProps) {
+export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocation, unread = 0, canOperate = false }: MenuSheetProps) {
   React.useEffect(() => {
     if (!open) return;
     const html = document.documentElement;
@@ -411,7 +420,7 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
 
         <div className="space-y-2">
           <SectionLabel>Quick actions</SectionLabel>
-          <QuickActions onSelect={onSelect} />
+          <QuickActions onSelect={onSelect} unread={unread} />
         </div>
 
         <div className="space-y-2">

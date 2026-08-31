@@ -15,6 +15,7 @@ import QRCode from 'qrcode';
 import { deriveDestinationAlerts, readLastSeen, writeLastSeen, alertLabel, type DestinationAlerts } from './nav/alerts';
 import { EntityPage } from './components/EntityPage';
 import { FollowingSurface } from './components/FollowingSurface';
+import { NotificationCenter } from './components/NotificationCenter';
 import { LocationPage } from './components/LocationPage';
 import { RelatedContent } from './components/RelatedContent';
 import { CollectionsSurface } from './components/CollectionsSurface';
@@ -6205,6 +6206,9 @@ export function App() {
         nearby: readLastSeen('nearby'),
         arena: readLastSeen('arena')
       };
+      // The bell badge is the same real unread count the center shows; the
+      // interval + visibility refetch keeps it fresh while someone is away.
+      setNotifUnread(notifRes && notifRes.ok ? notifRes.data?.unread ?? 0 : 0);
       setDestinationAlerts(deriveDestinationAlerts({
         notifications: notifRes && notifRes.ok ? notifRes.data?.notifications ?? [] : null,
         rooms: roomsRes && roomsRes.ok ? roomsRes.data ?? [] : null,
@@ -6265,6 +6269,10 @@ export function App() {
   const [followingOpen, setFollowingOpen] = useState(bootRoute.following);
   /** The personal Collections surface overlay. */
   const [collectionsOpen, setCollectionsOpen] = useState(bootRoute.collections);
+  /** The in-app notification center overlay (the return loop). */
+  const [notificationsOpen, setNotificationsOpen] = useState(bootRoute.notifications);
+  /** Unread notification count; only shown when non-zero ("subtle nav entry"). */
+  const [notifUnread, setNotifUnread] = useState(0);
   /** A shared collection page opened from /collections/:id. */
   const [collectionRouteId, setCollectionRouteId] = useState<string | null>(bootRoute.collectionId);
   /** "Add to collection" picker open inside the detail modal. */
@@ -8258,6 +8266,12 @@ export function App() {
       setAdminOpen(true);
       return;
     }
+    // The notification center is an account surface, not a ladder rung:
+    // what shows there is whatever the server says changed for THIS user.
+    if (target.tab === 'notifications') {
+      setNotificationsOpen(true);
+      return;
+    }
     // The ladder shapes what is OFFERED, never what is permitted: authority
     // still lives on the server. A surface whose rung has not been climbed
     // says which step opens it and points at that step instead of dropping
@@ -8311,13 +8325,14 @@ export function App() {
     menu: menuOpen,
     following: followingOpen,
     collections: collectionsOpen,
+    notifications: notificationsOpen,
     admin: adminOpen,
     landed: false
   }), [
     activeTab, nearbySection, myLayerSection, workflowSection, arenaSection,
     selectedObjectForDetail, pendingObjectId, selectedTeaSlug, openCampaignId,
     entityPageId, locationName, collectionRouteId, captureOpen, menuOpen,
-    followingOpen, collectionsOpen, adminOpen
+    followingOpen, collectionsOpen, notificationsOpen, adminOpen
   ]);
 
   const writeUrl = useCallback((route: BriefRoute, mode: 'push' | 'replace') => {
@@ -8345,6 +8360,7 @@ export function App() {
     setCollectionRouteId(route.collectionId);
     setFollowingOpen(route.following);
     setCollectionsOpen(route.collections);
+    setNotificationsOpen(route.notifications);
     if (route.objectId) setPendingObjectId(route.objectId);
     else {
       setPendingObjectId(null);
@@ -8354,7 +8370,7 @@ export function App() {
 
   const dismissOverlay = useCallback(() => {
     const st = typeof window !== 'undefined' ? window.history.state : null;
-    const overlayState = isBriefRoute(st) && (st.menu || st.capture || st.admin || st.objectId || st.teaSlug || st.campaignId || st.entityId || st.locationName || st.collectionId || st.following || st.collections);
+    const overlayState = isBriefRoute(st) && (st.menu || st.capture || st.admin || st.objectId || st.teaSlug || st.campaignId || st.entityId || st.locationName || st.collectionId || st.following || st.collections || st.notifications);
     if (overlayState && !st.landed && typeof window !== 'undefined' && window.history.length > 1) {
       window.history.back();
       return;
@@ -8372,8 +8388,9 @@ export function App() {
     setCollectionRouteId(null);
     setFollowingOpen(false);
     setCollectionsOpen(false);
+    setNotificationsOpen(false);
     setCollectionPickerFor(null);
-    writeUrl({ ...currentRoute(), menu: false, admin: false, capture: false, objectId: null, teaSlug: null, campaignId: null, entityId: null, locationName: null, collectionId: null, following: false, collections: false }, 'replace');
+    writeUrl({ ...currentRoute(), menu: false, admin: false, capture: false, objectId: null, teaSlug: null, campaignId: null, entityId: null, locationName: null, collectionId: null, following: false, collections: false, notifications: false }, 'replace');
   }, [currentRoute, writeUrl]);
 
   useEffect(() => {
@@ -8394,20 +8411,20 @@ export function App() {
       skipUrl.current = false;
       return;
     }
-    const overlay = menuOpen || adminOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail) || Boolean(pendingObjectId) || Boolean(entityPageId) || Boolean(locationName) || Boolean(collectionRouteId) || followingOpen || collectionsOpen;
+    const overlay = menuOpen || adminOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail) || Boolean(pendingObjectId) || Boolean(entityPageId) || Boolean(locationName) || Boolean(collectionRouteId) || followingOpen || collectionsOpen || notificationsOpen;
     writeUrl(currentRoute(), overlay ? 'push' : 'replace');
   }, [
     activeTab, nearbySection, myLayerSection, workflowSection, arenaSection,
     menuOpen, adminOpen, captureOpen, selectedTeaSlug, openCampaignId,
     selectedObjectForDetail, pendingObjectId, entityPageId, locationName, collectionRouteId,
-    followingOpen, collectionsOpen,
+    followingOpen, collectionsOpen, notificationsOpen,
     currentRoute, writeUrl
   ]);
 
   useEffect(() => {
     const tg = (typeof window !== 'undefined' ? (window as any).Telegram?.WebApp : null);
     if (!tg?.BackButton) return;
-    const show = menuOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail) || Boolean(entityPageId) || Boolean(locationName) || Boolean(collectionRouteId) || followingOpen || collectionsOpen;
+    const show = menuOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail) || Boolean(entityPageId) || Boolean(locationName) || Boolean(collectionRouteId) || followingOpen || collectionsOpen || notificationsOpen;
     try {
       if (show) tg.BackButton.show();
       else tg.BackButton.hide();
@@ -8417,7 +8434,7 @@ export function App() {
     return () => {
       try { tg.BackButton.offClick?.(handler); } catch { /* */ }
     };
-  }, [menuOpen, captureOpen, selectedTeaSlug, openCampaignId, selectedObjectForDetail, entityPageId, locationName, collectionRouteId, followingOpen, collectionsOpen, dismissOverlay]);
+  }, [menuOpen, captureOpen, selectedTeaSlug, openCampaignId, selectedObjectForDetail, entityPageId, locationName, collectionRouteId, followingOpen, collectionsOpen, notificationsOpen, dismissOverlay]);
 
   useEffect(() => {
     if (!pendingObjectId) return;
@@ -8446,7 +8463,7 @@ export function App() {
     return () => { live = false; };
   }, [selectedObjectForDetail?.id]);
 
-  const isAnyModalActive = Boolean(openCampaignId) || createStep !== 'closed' || captureOpen || Boolean(selectedObjectForDetail) || Boolean(selectedTeaSlug) || Boolean(entityPageId) || Boolean(locationName) || Boolean(collectionRouteId) || followingOpen || collectionsOpen;
+  const isAnyModalActive = Boolean(openCampaignId) || createStep !== 'closed' || captureOpen || Boolean(selectedObjectForDetail) || Boolean(selectedTeaSlug) || Boolean(entityPageId) || Boolean(locationName) || Boolean(collectionRouteId) || followingOpen || collectionsOpen || notificationsOpen;
 
   // THE APP GATE (product decision 2026-08-29): NO ACCESS WITHOUT AN ACCOUNT.
   // Signed out, the app does not render at all -- no feed, no shelf, no
@@ -8610,6 +8627,31 @@ export function App() {
               </button>
             );
           })}
+          {/* Bell — the subtle return-loop entry. Badge only when non-zero. */}
+          <button
+            type="button"
+            onClick={() => setNotificationsOpen(true)}
+            title="Updates"
+            aria-label={notifUnread > 0 ? `Updates, ${notifUnread} unread` : 'Updates'}
+            className={`relative mt-auto flex items-center gap-3 px-5 py-3 cursor-pointer transition-colors ${
+              notificationsOpen ? 'text-[#251045] bg-[#FBFAFD] font-extrabold' : 'text-[#251045] hover:text-[#251045]'
+            }`}
+          >
+            <span className="relative shrink-0">
+              <Bell className="w-5 h-5" />
+              {notifUnread > 0 && (
+                <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#B3261E] px-1 text-[9px] font-extrabold text-[#FFFFFF]">
+                  {notifUnread > 99 ? '99+' : notifUnread}
+                </span>
+              )}
+            </span>
+            <span className="min-w-0 opacity-0 group-hover/rail:opacity-100 transition-opacity">
+              <span className="block text-[13px] font-extrabold whitespace-nowrap">Updates</span>
+              {notifUnread > 0 && (
+                <span className="block text-[9px] font-bold whitespace-nowrap text-[#B3261E]">{notifUnread} unread</span>
+              )}
+            </span>
+          </button>
         </nav>
 
         {/* Main Stream. pb-24 on mobile clears the bottom bar. */}
@@ -8722,6 +8764,20 @@ export function App() {
                             {(personalState.followed ?? []).length > 0 && (
                               <span className="rounded-full bg-[#5B2EA6] px-1.5 text-[9px] font-extrabold text-white">
                                 {(personalState.followed ?? []).length}
+                              </span>
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setNotificationsOpen(true)}
+                            aria-label={notifUnread > 0 ? `Updates, ${notifUnread} unread` : 'Updates'}
+                            className="relative flex items-center gap-1.5 rounded-full border border-[#D6CFE4] bg-[#FBFAFD] px-3 py-1 text-[10px] font-extrabold text-[#251045]/60 cursor-pointer hover:border-[#6C3EC9]"
+                          >
+                            <Bell className="h-3 w-3" />
+                            Updates
+                            {notifUnread > 0 && (
+                              <span className="rounded-full bg-[#B3261E] px-1.5 text-[9px] font-extrabold text-white">
+                                {notifUnread > 99 ? '99+' : notifUnread}
                               </span>
                             )}
                           </button>
@@ -13548,6 +13604,7 @@ export function App() {
         onSelect={handleMenuSelect}
         onSelectCity={chooseCity}
         selectedLocation={selectedLocation}
+        unread={notifUnread}
         canOperate={briefApi.isOperator(sessionUser)}
       />
       <AdminDesk open={adminOpen} onClose={dismissOverlay} me={sessionUser} />
@@ -13626,6 +13683,48 @@ export function App() {
             setMyLayerSection('saved');
           }}
           onChanged={() => void loadPersonal()}
+        />
+      )}
+      {notificationsOpen && (
+        <NotificationCenter
+          authed={Boolean(sessionUser)}
+          onClose={dismissOverlay}
+          onChanged={setNotifUnread}
+          onOpen={(n) => {
+            const dest = n.dest ?? null;
+            if (dest?.startsWith('object:')) {
+              const id = dest.slice('object:'.length);
+              const local = objects.find((o) => o.id === String(id));
+              setNotificationsOpen(false);
+              if (local) {
+                setSelectedObjectForDetail(local);
+                return;
+              }
+              // Not on the device's loaded feed: open the existing detail
+              // endpoint so the deep link still lands on the real object.
+              void briefApi.getObject(id).then((res) => {
+                if (res.ok) setSelectedObjectForDetail(objectFromServer(res.data));
+              });
+              return;
+            }
+            if (dest?.startsWith('entity:')) {
+              setNotificationsOpen(false);
+              setEntityPageId(dest.slice('entity:'.length));
+              return;
+            }
+            if (dest?.startsWith('location:')) {
+              setNotificationsOpen(false);
+              openLocationPage(dest.slice('location:'.length));
+              return;
+            }
+            if (dest?.startsWith('collection:')) {
+              setNotificationsOpen(false);
+              setCollectionRouteId(dest.slice('collection:'.length));
+              return;
+            }
+            // No server destination: close instead of inventing a page.
+            setNotificationsOpen(false);
+          }}
         />
       )}
       {collectionRouteId && (
