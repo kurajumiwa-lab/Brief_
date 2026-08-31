@@ -1,5 +1,8 @@
 import React from 'react';
-import { Heart } from 'lucide-react';
+import {
+  Heart, CalendarDays, Megaphone, Tag, Store, MapPin, Newspaper,
+  Briefcase, Sparkles, Wrench, Package, BookOpen, Info
+} from 'lucide-react';
 import * as briefApi from '../api/briefApi';
 import { WireSection } from './WireSection';
 import { StandaloneBanner } from './StandaloneBanner';
@@ -20,6 +23,16 @@ interface FeedComposerProps {
   onOpenTag?: (tag: string) => void;
   typeFilter?: string;
   onFeedStatus?: (status: 'loading' | 'ready' | 'unavailable') => void;
+  /** A named locality the feed is scoped to (never invented). */
+  area?: string | null;
+  /** A geo point the feed is scoped to. */
+  geo?: { lat: number; lng: number; radiusKm?: number } | null;
+  /** A content-type category the feed is scoped to (server-side browse). */
+  type?: string | null;
+  /** Preloaded feed data — when present the component does not fetch. */
+  feed?: FeedData | null;
+  /** Explore mode: one uniform grid of everything, no hero or sections. */
+  browse?: boolean;
 }
 
 interface FeedData {
@@ -42,6 +55,140 @@ const T = {
   muted: 'rgba(37,16,69,0.62)',
   green: '#251045'
 };
+
+// ---------------------------------------------------------------------------
+// CARD INTELLIGENCE — the WHAT / WHERE / WHEN / WHY / SOURCE on every card,
+// derived only from the safe public fields the feed endpoint exposes.
+// ---------------------------------------------------------------------------
+
+const TYPE_LABELS: Record<string, string> = {
+  event: 'Event',
+  experience: 'Event',
+  business: 'Business',
+  offer: 'Offer',
+  alert: 'Alert',
+  announcement: 'Notice',
+  news: 'News',
+  place: 'Place',
+  opportunity: 'Opportunity',
+  service: 'Service',
+  product: 'Product',
+  knowledge: 'Guide'
+};
+
+function typeLabel(item: FeedObject): string | null {
+  return TYPE_LABELS[String(item?.type ?? '')] ?? null;
+}
+
+function shortDate(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return null;
+  const today = new Date();
+  const tomorrow = new Date(today.getTime() + 86400000);
+  const sameDay = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  if (sameDay(date, today)) return 'Today';
+  if (sameDay(date, tomorrow)) return 'Tomorrow';
+  return date.toLocaleDateString('en-KE', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+function timeOf(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return null;
+  return date.toLocaleTimeString('en-KE', { hour: 'numeric', minute: '2-digit' });
+}
+
+/** A short WHEN line from the safe temporal projection (never invented). */
+function whenLabel(item: FeedObject): string | null {
+  const t = item?.temporal;
+  if (!t || typeof t !== 'object') return null;
+  const day = (v: unknown) => shortDate(v);
+  const time = (v: unknown) => timeOf(v);
+
+  if (t.status === 'happening') return 'Happening now';
+  if (t.status === 'upcoming') {
+    const start = day(t.startsAt);
+    const parsed = typeof t.startsAt === 'string' ? new Date(t.startsAt) : null;
+    const hasClock = parsed && Number.isFinite(parsed.getTime()) && !(parsed.getHours() === 0 && parsed.getMinutes() === 0);
+    if (start && hasClock) return `${start} ${time(t.startsAt)}`;
+    if (start) return start;
+    return 'Upcoming';
+  }
+  if (t.status === 'past') {
+    const start = day(t.startsAt);
+    return start ? `Ended ${start}` : 'Ended';
+  }
+  if (t.status === 'recurring') return 'Recurring';
+  if (t.status === 'undated') {
+    if (typeof t.dayOfWeek === 'string') {
+      return t.dayOfWeek.charAt(0).toUpperCase() + t.dayOfWeek.slice(1);
+    }
+    return null;
+  }
+  if (t.status === 'active') {
+    const dl = day(t.deadlineAt);
+    return dl ? `Ends ${dl}` : 'Ongoing';
+  }
+  if (t.status === 'no_deadline') return 'Ongoing';
+  if (t.status === 'expired') {
+    const dl = day(t.deadlineAt);
+    return dl ? `Ended ${dl}` : 'Expired';
+  }
+  if (t.status === 'current') {
+    // Fresh news/announcements get a gentle age readout from their timestamp.
+    const created = item?.createdAt;
+    if (typeof created === 'string' && typeLabel(item) === 'News') {
+      const ageMs = Date.now() - Date.parse(created);
+      if (Number.isFinite(ageMs) && ageMs > 0 && ageMs < 86400000) {
+        const hours = Math.max(1, Math.round(ageMs / 3600000));
+        return hours < 1 ? 'Just now' : `${hours}h ago`;
+      }
+    }
+    return null;
+  }
+  return null;
+}
+
+/** A one-line WHY it matters, when the safe fields justify one. */
+function whyLabel(item: FeedObject): string | null {
+  if (item?.type === 'alert') return 'Alert';
+  const t = item?.temporal;
+  if (t?.status === 'happening') return 'Live now';
+  if (t?.status === 'active' && typeof t.deadlineAt === 'string') {
+    const ms = Date.parse(t.deadlineAt) - Date.now();
+    if (Number.isFinite(ms) && ms > 0 && ms < 3 * 86400000) return 'Ending soon';
+  }
+  if (t?.status === 'upcoming' && typeof t.startsAt === 'string') {
+    const ms = Date.parse(t.startsAt) - Date.now();
+    if (Number.isFinite(ms) && ms > 0 && ms < 86400000) return 'Tomorrow';
+  }
+  if (item?.verificationStatus === 'community_confirmed' || item?.verificationStatus === 'cross_source_confirmed') {
+    return 'Confirmed';
+  }
+  return null;
+}
+
+function whereLabel(item: FeedObject): string | null {
+  const name = String(item?.locationName ?? '').trim();
+  if (name) return name;
+  const area = String(item?.metadata?.area ?? '').trim();
+  const county = String(item?.metadata?.county ?? '').trim();
+  if (area && county) return `${area}, ${county}`;
+  return area || county || null;
+}
+
+function sourceLabel(item: FeedObject): string | null {
+  const names = Array.isArray(item?.sourceNames) ? item.sourceNames.filter((s: unknown) => typeof s === 'string') : [];
+  const count = typeof item?.sourceCount === 'number' ? item.sourceCount : names.length;
+  if (!names.length && !count) return null;
+  if (names.length >= 1) {
+    const extra = count > names.length ? ` +${count - names.length}` : '';
+    return `${names[0]}${extra}`;
+  }
+  return `${count} ${count === 1 ? 'source' : 'sources'}`;
+}
 
 function feedUpdatedAt(value: unknown): string | null {
   if (typeof value !== 'string') return null;
@@ -82,14 +229,37 @@ function PhotoTitleCard({
   onOpen: (obj: FeedObject) => void;
   className?: string;
 }) {
-  const image = imageOf(item);
+  const [imgFailed, setImgFailed] = React.useState(false);
+  const image = imgFailed ? null : imageOf(item);
   const title = titleOf(item);
+  const type = typeLabel(item);
+  const when = whenLabel(item);
+  const where = whereLabel(item);
+  const why = whyLabel(item);
+  const source = sourceLabel(item);
+  const isAlert = item?.type === 'alert';
+  const meta = [when, where].filter(Boolean).join(' · ');
+
+  // A strong, type-specific glyph when a real photo does not exist — the
+  // type IS the visual. Never a grey box, never a fabricated image.
+  const TypeGlyph = item?.type === 'alert' ? Megaphone
+    : item?.type === 'experience' || item?.type === 'event' ? CalendarDays
+      : item?.type === 'offer' ? Tag
+        : item?.type === 'place' ? MapPin
+          : item?.type === 'news' ? Newspaper
+            : item?.type === 'business' || item?.type === 'service' ? Store
+              : item?.type === 'opportunity' ? Briefcase
+                : item?.type === 'announcement' ? Megaphone
+                  : item?.type === 'product' ? Package
+                    : item?.type === 'knowledge' ? BookOpen
+                      : Sparkles;
+  const glyphTint = isAlert ? '#BE2036' : '#6C3EC9';
 
   return (
     <button
       type="button"
       onClick={() => onOpen(item)}
-      aria-label={title}
+      aria-label={`${title}${when ? `, ${when}` : ''}${where ? `, ${where}` : ''}`}
       className={`group relative block min-h-[190px] overflow-hidden rounded-2xl border text-left transition-transform duration-200 hover:-translate-y-0.5 hover:border-[#6C3EC9] active:scale-[0.99] ${className}`}
       style={{ borderColor: T.line, background: T.surface }}
     >
@@ -99,13 +269,23 @@ function PhotoTitleCard({
           alt=""
           aria-hidden="true"
           loading="lazy"
+          onError={() => setImgFailed(true)}
           className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
         />
       ) : (
         <div
-          className="absolute inset-0"
-          style={{ background: `linear-gradient(135deg, ${T.surface} 0%, ${T.bg} 100%)` }}
-        />
+          className="absolute inset-0 flex items-center justify-center"
+          style={{ background: isAlert
+            ? 'linear-gradient(135deg, #FBEDEF 0%, #F5D8DD 100%)'
+            : `linear-gradient(135deg, ${T.surface} 0%, ${T.bg} 100%)` }}
+        >
+          <TypeGlyph
+            className="h-10 w-10 opacity-40"
+            style={{ color: glyphTint }}
+            aria-hidden="true"
+            strokeWidth={1.6}
+          />
+        </div>
       )}
       {image && (
         <div
@@ -113,9 +293,49 @@ function PhotoTitleCard({
           style={{ background: 'linear-gradient(180deg, rgba(9,11,16,0.04) 22%, rgba(9,11,16,0.82) 100%)' }}
         />
       )}
-      <h3 className="absolute inset-x-4 bottom-4 line-clamp-3 text-[15px] font-semibold leading-snug" style={{ color: image ? '#FFFFFF' : T.ink }}>
-        {title}
-      </h3>
+      {/* WHAT + WHY: type chip and urgency chip, top corners. */}
+      {type && (
+        <span
+          className="absolute left-3 top-3 rounded-full px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.12em]"
+          style={image
+            ? { background: 'rgba(9,11,16,0.66)', color: '#FFFFFF' }
+            : { background: 'rgba(37,16,69,0.08)', color: T.ink }}
+        >
+          {type}
+        </span>
+      )}
+      {why && (
+        <span
+          className="absolute right-3 top-3 rounded-full px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.12em]"
+          style={isAlert
+            ? { background: image ? 'rgba(190,32,54,0.92)' : 'rgba(190,32,54,0.12)', color: image ? '#FFFFFF' : '#BE2036' }
+            : { background: image ? 'rgba(9,11,16,0.66)' : 'rgba(37,16,69,0.08)', color: image ? '#FFFFFF' : T.ink }}
+        >
+          {why}
+        </span>
+      )}
+      {/* WHEN · WHERE above the title, SOURCE below it. */}
+      <div className="absolute inset-x-4 bottom-4">
+        {meta && (
+          <p
+            className="mb-1 line-clamp-1 text-[10px] font-semibold tracking-wide"
+            style={{ color: image ? 'rgba(255,255,255,0.85)' : T.muted }}
+          >
+            {meta}
+          </p>
+        )}
+        <h3 className="line-clamp-3 text-[15px] font-semibold leading-snug" style={{ color: image ? '#FFFFFF' : T.ink }}>
+          {title}
+        </h3>
+        {source && (
+          <p
+            className="mt-1 line-clamp-1 text-[9px] font-semibold uppercase tracking-[0.1em]"
+            style={{ color: image ? 'rgba(255,255,255,0.6)' : T.muted }}
+          >
+            {source}
+          </p>
+        )}
+      </div>
     </button>
   );
 }
@@ -129,27 +349,44 @@ function TitleRow({
   onOpen: (obj: FeedObject) => void;
   image?: boolean;
 }) {
-  const source = imageOf(item);
+  const thumb = imageOf(item);
   const title = titleOf(item);
+  const type = typeLabel(item);
+  const when = whenLabel(item);
+  const where = whereLabel(item);
+  const source = sourceLabel(item);
+  const meta = [type, when, where].filter(Boolean).join(' · ');
   return (
     <button
       type="button"
       onClick={() => onOpen(item)}
-      aria-label={title}
+      aria-label={`${title}${when ? `, ${when}` : ''}${where ? `, ${where}` : ''}`}
       className="group flex min-h-16 w-full items-center gap-3 rounded-2xl border p-2 text-left transition-colors hover:border-[#6C3EC9]"
       style={{ borderColor: T.line, background: T.surface }}
     >
-      {image && source && (
-        <img src={source} alt="" aria-hidden="true" loading="lazy" className="h-12 w-12 shrink-0 rounded-xl object-cover" />
+      {image && thumb && (
+        <img src={thumb} alt="" aria-hidden="true" loading="lazy" className="h-12 w-12 shrink-0 rounded-xl object-cover" />
       )}
-      <h3 className="min-w-0 flex-1 truncate px-1 text-[14px] font-semibold" style={{ color: T.ink }}>
-        {title}
-      </h3>
+      <span className="min-w-0 flex-1 px-1">
+        <h3 className="truncate text-[14px] font-semibold" style={{ color: T.ink }}>
+          {title}
+        </h3>
+        {meta && (
+          <p className="mt-0.5 truncate text-[10px] font-semibold" style={{ color: T.muted }}>
+            {meta}
+          </p>
+        )}
+        {source && (
+          <p className="mt-0.5 truncate text-[9px] font-semibold uppercase tracking-[0.1em]" style={{ color: T.muted }}>
+            {source}
+          </p>
+        )}
+      </span>
     </button>
   );
 }
 
-export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all', onFeedStatus }: FeedComposerProps) {
+export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all', onFeedStatus, area, geo, type, feed: preloadedFeed, browse = false }: FeedComposerProps) {
   const [state, setState] = React.useState<{
     status: 'loading' | 'ready';
     feed: FeedData | null;
@@ -189,11 +426,22 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
   };
 
   React.useEffect(() => {
+    // A preloaded feed (parent already fetched for this exact scope) is
+    // authoritative — the component renders it without a second request.
+    if (preloadedFeed) {
+      setState({ status: 'ready', feed: preloadedFeed });
+      onFeedStatus?.('ready');
+      return;
+    }
     let live = true;
     onFeedStatus?.('loading');
     (async () => {
       const [feedRes, collectionRes, bannerRes] = await Promise.all([
-        briefApi.getFeed(),
+        briefApi.getFeed({
+          ...(geo ? { lat: geo.lat, lng: geo.lng, radiusKm: geo.radiusKm } : {}),
+          ...(area ? { area } : {}),
+          ...(type ? { type } : {})
+        }),
         briefApi.getCollections(),
         briefApi.getCampaignBanners()
       ]);
@@ -204,7 +452,8 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
       if (bannerRes.ok) setBanners(bannerRes.data as any[]);
     })();
     return () => { live = false; };
-  }, [onFeedStatus]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onFeedStatus, area, geo?.lat, geo?.lng, geo?.radiusKm, type, preloadedFeed]);
 
   if (state.status === 'loading') {
     return (
@@ -225,11 +474,12 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
 
   const all = [...(feed.hero ?? []), ...(feed.discovery ?? []), ...(feed.opportunities ?? []), ...(feed.more ?? [])];
   const unique = Array.from(new Map(all.filter((item) => item?.id).map((item) => [item.id, item])).values());
-  const filtered = typeFilter === 'all'
-    ? unique
-    : unique.filter((item) => item.type === typeFilter);
-  const hero = filtered[0] ?? null;
-  const withoutHero = filtered.filter((item) => item.id !== hero?.id);
+  // When the parent scoped the feed server-side (a category tab), the rows are
+  // already that category — the legacy client-side filter only applies to the
+  // unsorted Home mix.
+  const scoped = type ? unique : (typeFilter === 'all' ? unique : unique.filter((item) => item.type === typeFilter));
+  const hero = scoped[0] ?? null;
+  const withoutHero = scoped.filter((item) => item.id !== hero?.id);
   const discovery = withoutHero.filter((item) => item.type !== 'experience' && item.type !== 'opportunity');
   const opportunities = withoutHero.filter((item) => item.type === 'opportunity');
   const events = withoutHero.filter((item) => item.type === 'experience');
@@ -242,27 +492,43 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
   const temporary = [...unique, feed.tea].find((item) => item?.testContent);
   const temporaryExpiry = testExpiryLabel(temporary?.testContent?.expiresAt);
   if (!hasContent) {
-    // Honest emptiness: say WHAT this feed is and WHERE its content comes
-    // from, instead of a bare label that reads like a bug. Never invent
-    // rows to fill the space (the no-fake-live-data rule).
+    // Honest emptiness, scoped to what the person actually asked for: the
+    // filter, the place, the category. Never invent rows to fill the space
+    // (the no-fake-live-data rule).
+    const EmptyIcon = type === 'news' ? Newspaper
+      : type === 'offer' || type === 'opportunity' ? Tag
+        : type === 'place' ? MapPin
+          : type === 'experience' || type === 'event' ? CalendarDays
+            : type === 'alert' ? Megaphone
+              : Info;
+    const EmptyTitle = type
+      ? `No ${TYPE_LABELS[type]?.toLowerCase() ?? 'items'} in ${area ?? 'this area'} yet`
+      : area
+        ? `Nothing new in ${area} yet`
+        : 'Nothing here yet';
+    const EmptyBody = area
+      ? 'When people around here publish events, offers, news and openings, they will appear in this feed. Nothing is hidden — there is simply no real data for this place yet.'
+      : type
+        ? `This category only shows real published content. When the first ${TYPE_LABELS[type]?.toLowerCase() ?? 'item'} arrives in ${area ?? 'this area'}, it will appear here.`
+        : 'This feed fills with what people publish around you: events, offers, news, places and alerts. It is empty because nothing has been published yet — not because something failed.';
     return (
       <>
         <WireSection />
         <section
-          aria-label="Live brief feed is empty"
-          className="mx-1 rounded-2xl border p-5 text-center"
+          aria-label={`No ${type ?? 'content'} in ${area ?? 'this area'}`}
+          className="mx-1 rounded-2xl border p-6 text-center"
           style={{ borderColor: T.line, background: T.surface }}
         >
-          <h2 className="text-base font-semibold" style={{ color: T.ink }}>Nothing nearby — yet</h2>
+          <EmptyIcon className="mx-auto h-7 w-7" style={{ color: T.muted }} aria-hidden="true" />
+          <h2 className="mt-3 text-base font-semibold" style={{ color: T.ink }}>{EmptyTitle}</h2>
           <p className="mx-auto mt-2 max-w-sm text-[12px] leading-relaxed" style={{ color: T.muted }}>
-            This feed fills with what people publish around you: stories from the
-            Tea studio, marketplace listings, events and pinned banners. It is
-            empty because nothing has been published yet — not because
-            something failed.
+            {EmptyBody}
           </p>
-          <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: T.muted }}>
-            Publish a story or open a room and it appears here
-          </p>
+          {(area || geo) && (
+            <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: T.muted }}>
+              Try another location
+            </p>
+          )}
         </section>
       </>
     );
@@ -286,8 +552,21 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
           Live Brief feed · refreshed {updatedAt}
         </p>
       )}
+      {/* Explore: the whole catalog in one uniform grid. No hero, no section
+          splits — browse is browse. */}
+      {browse && scoped.length > 0 && (
+        <section>
+          <SectionTitle>Explore</SectionTitle>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {scoped.slice(0, 24).map((item) => (
+              <PhotoTitleCard key={item.id} item={item} onOpen={onOpen} className="min-h-[170px] sm:min-h-[210px]" />
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* A single visual lead. */}
-      {hero && (
+      {!browse && hero && (
         <PhotoTitleCard
           item={hero}
           onOpen={onOpen}
@@ -295,7 +574,7 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
         />
       )}
 
-      {banners.length > 0 && (
+      {!browse && banners.length > 0 && (
         <section>
           <SectionTitle>Featured</SectionTitle>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -306,7 +585,7 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
         </section>
       )}
 
-      {feed.tea && (
+      {!browse && feed.tea && (
         <section>
           <SectionTitle>Stories</SectionTitle>
           <button
@@ -347,7 +626,18 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
         </section>
       )}
 
-      {discovery.length > 0 && (
+      {!browse && type && withoutHero.length > 0 && (
+        <section>
+          <SectionTitle>{TYPE_LABELS[type] ?? 'Latest'}</SectionTitle>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {withoutHero.slice(0, 12).map((item) => (
+              <PhotoTitleCard key={item.id} item={item} onOpen={onOpen} className="min-h-[190px] sm:min-h-[220px]" />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {!type && discovery.length > 0 && (
         <section>
           <SectionTitle>Nearby</SectionTitle>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -358,7 +648,7 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
         </section>
       )}
 
-      {opportunities.length > 0 && (
+      {!type && opportunities.length > 0 && (
         <section>
           <SectionTitle>Offers</SectionTitle>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -369,7 +659,7 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
         </section>
       )}
 
-      {events.length > 0 && (
+      {!type && events.length > 0 && (
         <section>
           <SectionTitle>Upcoming</SectionTitle>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">

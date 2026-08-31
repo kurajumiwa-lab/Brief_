@@ -39,6 +39,7 @@ import { Pursuits } from './components/Pursuits';
 import { Inbox } from './components/Inbox';
 import { TriageQueue } from './components/TriageQueue';
 import { Quests } from './components/Quests';
+import { LocationChip } from './components/LocationChip';
 import type { GeoPoint } from './components/LocationChip';
 import { ArenaShelf } from './components/ArenaShelf';
 import { ArenaPulse, SeasonStrip } from './components/ArenaPulse';
@@ -249,6 +250,22 @@ export interface BriefObject {
    *  resolution; the render URL is derived from it, never the raw id. */
   imageReference?: string;
   imageNeedsResolution?: boolean;
+  /** Real additional source images (news galleries, event photo sets). Never
+   *  fabricated — the server only projects images that exist in provenance. */
+  gallery?: { url: string; alt?: string; attribution?: string | null }[];
+  /** When the story was first published anywhere in its provenance. */
+  publishedAt?: string;
+  /** The server's temporal lifecycle projection (status/startsAt/deadlineAt). */
+  temporal?: {
+    status?: string;
+    startsAt?: string | null;
+    endsAt?: string | null;
+    deadlineAt?: string | null;
+    dayOfWeek?: string | null;
+  };
+  /** Real source names for attribution ("From Telegram" = the actual name). */
+  sourceNames?: string[];
+  sourceCount?: number;
   /** Server-labelled temporary demo content; never a client-side fixture flag. */
   testContent?: { label: string; expiresAt: string | null };
 
@@ -1815,6 +1832,133 @@ const buildDailyBrief = (input: {
   return sections.filter(
     (section) => section.objects.length > 0 || section.pursuits.length > 0
   );
+};
+
+// ============================================================================
+// DISCOVERY DAILY BRIEF — TODAY / NEAR YOU / NOW / COMING UP
+// ----------------------------------------------------------------------------
+// The compact "Today's Brief" layer of the discovery experience. Every row
+// comes from a REAL persisted object's temporal projection (the server's
+// lifecycle fields, never the wall clock guessing). Sections appear only when
+// they have data — no hardcoded samples, no padding.
+// ============================================================================
+
+export interface DiscoveryBriefSection {
+  key: 'today' | 'near' | 'now' | 'coming';
+  title: string;
+  objects: BriefObject[];
+}
+
+const startOfLocalDay = (d: Date) => {
+  const out = new Date(d);
+  out.setHours(0, 0, 0, 0);
+  return out;
+};
+
+const isSameLocalDay = (a: Date, b: Date) =>
+  a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+
+const isEventType = (o: BriefObject) => o.type === 'experience' || String(o.type) === 'event';
+
+export const buildDiscoveryBrief = (input: {
+  objects: BriefObject[];
+  area?: string | null;
+  geo?: { lat: number; lng: number } | null;
+}): DiscoveryBriefSection[] => {
+  const now = new Date();
+  const todayStart = startOfLocalDay(now);
+  const tomorrowStart = new Date(todayStart.getTime() + 86400000);
+  const yesterdayStart = new Date(todayStart.getTime() - 86400000);
+
+  const parsed = (v: unknown): Date | null => {
+    if (typeof v !== 'string') return null;
+    const d = new Date(v);
+    return Number.isFinite(d.getTime()) ? d : null;
+  };
+
+  const today: BriefObject[] = [];
+  const near: BriefObject[] = [];
+  const nowSection: BriefObject[] = [];
+  const coming: BriefObject[] = [];
+  const placed = new Set<string>();
+
+  for (const o of input.objects) {
+    const t = o.temporal;
+    const status = t?.status ?? '';
+    const startsAt = parsed(t?.startsAt ?? o.metadata?.eventStart ?? o.metadata?.dateCanonical);
+    const deadlineAt = parsed(t?.deadlineAt ?? o.metadata?.deadlineCanonical);
+
+    // TODAY — events actually happening today, and things expiring today.
+    if (isEventType(o) && startsAt && startsAt >= yesterdayStart && startsAt < tomorrowStart) {
+      if (!placed.has(o.id)) { placed.add(o.id); today.push(o); }
+      continue;
+    }
+    if ((o.type === 'offer' || o.type === 'opportunity') && deadlineAt && deadlineAt >= todayStart && deadlineAt < tomorrowStart) {
+      if (!placed.has(o.id)) { placed.add(o.id); today.push(o); }
+      continue;
+    }
+    if (status === 'happening') {
+      if (!placed.has(o.id)) { placed.add(o.id); today.push(o); }
+      continue;
+    }
+
+    // NOW — current alerts, fresh news, active offers. Places and businesses
+    // are "current" too, but they are not breaking activity: they belong in
+    // NEAR YOU, not NOW.
+    const isNowType = o.type === 'alert' || o.type === 'news' || o.type === 'offer'
+      || o.type === 'opportunity' || o.type === 'announcement';
+    if (isNowType && (status === 'current' || status === 'active' || status === 'no_deadline')) {
+      if (!placed.has(o.id)) { placed.add(o.id); nowSection.push(o); }
+      continue;
+    }
+
+    // COMING UP — important upcoming events (ranked, so the most relevant
+    // ones surface here).
+    if (isEventType(o) && status === 'upcoming') {
+      if (!placed.has(o.id)) { placed.add(o.id); coming.push(o); }
+      continue;
+    }
+
+    // NEAR YOU — everything else with a real locality signal.
+    const dist = o.metadata?.distanceKm;
+    const area = String(o.metadata?.area ?? o.metadata?.county ?? '').trim();
+    if (typeof dist === 'number' || area || o.locationName) {
+      if (!placed.has(o.id)) { placed.add(o.id); near.push(o); }
+    }
+  }
+
+  const sections: DiscoveryBriefSection[] = [];
+  if (today.length > 0) sections.push({ key: 'today', title: 'TODAY', objects: today });
+  if (near.length > 0) sections.push({ key: 'near', title: 'NEAR YOU', objects: near });
+  if (nowSection.length > 0) sections.push({ key: 'now', title: 'NOW', objects: nowSection });
+  if (coming.length > 0) sections.push({ key: 'coming', title: 'COMING UP', objects: coming });
+  return sections;
+};
+
+/** A compact WHEN line for Today's Brief rows, from real temporal data. */
+const briefWhenLabel = (o: BriefObject): string | null => {
+  const t = o.temporal;
+  const fmt = (v: unknown) => {
+    if (typeof v !== 'string') return null;
+    const d = new Date(v);
+    if (!Number.isFinite(d.getTime())) return null;
+    const now = new Date();
+    if (isSameLocalDay(d, now)) {
+      return `Today ${d.toLocaleTimeString('en-KE', { hour: 'numeric', minute: '2-digit' })}`;
+    }
+    return d.toLocaleDateString('en-KE', { weekday: 'short', day: 'numeric', month: 'short' });
+  };
+  if (t?.status === 'happening') return 'Happening now';
+  if (t?.status === 'upcoming') return fmt(t.startsAt) ?? 'Upcoming';
+  if (t?.status === 'active') {
+    const dl = fmt(t.deadlineAt);
+    return dl ? `Ends ${dl.replace('Today ', 'today ')}` : 'Ongoing';
+  }
+  if (t?.status === 'current' || t?.status === 'no_deadline') return 'Now';
+  if (t?.status === 'past' && t.startsAt) return `Ended ${fmt(t.startsAt)}`;
+  if (o.metadata?.eventStart) return fmt(o.metadata.eventStart);
+  if (o.metadata?.deadlineCanonical) return `Ends ${fmt(o.metadata.deadlineCanonical)}`;
+  return null;
 };
 
 // ============================================================================
@@ -4499,7 +4643,7 @@ export const objectFromServer = (row: any): BriefObject => {
   lastVerifiedAt: row?.lastVerifiedAt ?? undefined,
   validityWindowDays: row?.validityWindowDays ?? undefined,
   sourceType: row?.provenance?.[0]?.platform ?? undefined,
-  sourceUrl: row?.provenance?.[0]?.sourceUrl ?? undefined,
+  sourceUrl: row?.sourceUrl ?? row?.provenance?.[0]?.sourceUrl ?? undefined,
   sourceId: row?.provenance?.[0]?.sourceId ?? undefined,
   metadata: Object.keys(meta).length > 0 ? meta : undefined,
   createdAt: String(row?.createdAt ?? new Date().toISOString()),
@@ -4511,6 +4655,25 @@ export const objectFromServer = (row: any): BriefObject => {
     ((row?.imageReference || row?.media?.reference) && row?.id
       ? briefApi.mediaFileUrl(`/api/media/telegram/${String(row?.id)}`)
       : undefined),
+  // Indexed gallery images resolve like the cover (server-side Telegram
+  // resolution at /api/media/telegram/:id/:index, or direct web URLs).
+  gallery: Array.isArray(row?.gallery) && row.gallery.length > 0
+    ? row.gallery
+        .map((g: any) => {
+          const url = typeof g?.url === 'string' ? g.url : null;
+          if (!url) return null;
+          return {
+            url,
+            alt: typeof g?.alt === 'string' ? g.alt : undefined,
+            attribution: g?.attribution ?? null
+          };
+        })
+        .filter(Boolean)
+    : undefined,
+  publishedAt: typeof row?.publishedAt === 'string' ? row.publishedAt : undefined,
+  temporal: row?.temporal && typeof row.temporal === 'object' ? row.temporal : undefined,
+  sourceNames: Array.isArray(row?.sourceNames) ? row.sourceNames.filter((s: unknown) => typeof s === 'string') : undefined,
+  sourceCount: Number.isInteger(row?.sourceCount) ? row.sourceCount : undefined,
   actionUrl: row?.actionUrl ?? row?.action?.url ?? undefined,
   actionType: row?.actionType ?? row?.action?.type ?? undefined,
   actionLabel: row?.actionLabel ?? row?.action?.label ?? undefined,
@@ -5109,6 +5272,12 @@ export function App() {
   const [activeTab, setActiveTab] = useState<Destination>(bootRoute.dest);
   const [homeFeedStatus, setHomeFeedStatus] = useState<'loading' | 'ready' | 'unavailable'>('loading');
   const [nearbySection, setNearbySection] = useState<NearbySection>(bootRoute.nearby);
+  // The discovery experience navigation: Home, Events, Explore, Offers,
+  // Places, News, Opportunities. Categories only appear when the real data
+  // has meaningful rows for them.
+  const [discoveryTab, setDiscoveryTab] = useState<
+    'home' | 'events' | 'explore' | 'offers' | 'places' | 'news' | 'opportunities'
+  >('home');
   const [moreFilters, setMoreFilters] = useState<boolean>(false);
   const [myLayerSection, setMyLayerSection] = useState<MyLayerSection>(bootRoute.mylayer);
   const [workflowSection, setWorkflowSection] = useState<WorkflowSection>(bootRoute.workflow);
@@ -5421,6 +5590,9 @@ export function App() {
   // explicit device-location grant or a manual city tap — never inferred,
   // never fabricated. Null means "everywhere" (the global ranked feed).
   const [userLocation, setUserLocation] = useState<GeoPoint | null>(null);
+  // A named locality scope for the discovery feed (a city or district tap).
+  // Null means the feed is geo- or globally scoped, never inferred.
+  const [feedArea, setFeedArea] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
   const [locError, setLocError] = useState<string | null>(null);
 
@@ -5439,6 +5611,9 @@ export function App() {
           lng: pos.coords.longitude,
           label: 'your location'
         });
+        // A precise device fix scopes the feed by distance; it is not a
+        // named area.
+        setFeedArea(null);
         setSelectedLocation('your location');
       },
       () => {
@@ -5452,12 +5627,16 @@ export function App() {
   const chooseCity = React.useCallback((c: GeoPoint) => {
     setLocError(null);
     setUserLocation(c);
+    // Named places scope the discovery feed by area (county/area matching),
+    // which is far more precise for districts than a raw point + radius.
+    setFeedArea(c.area ?? null);
     setSelectedLocation(c.label);
   }, []);
 
   const clearLocation = React.useCallback(() => {
     setLocError(null);
     setUserLocation(null);
+    setFeedArea(null);
     setSelectedLocation('Your area');
   }, []);
 
@@ -5624,28 +5803,7 @@ export function App() {
   // an explicit trigger so it never covers content unprompted; the physics is
   // the same springIntro curve the design system specifies.
   const [springOverlayOpen, setSpringOverlayOpen] = useState<boolean>(false);
-  const [demoBusy, setDemoBusy] = useState<boolean>(false);
-  const [demoSeeded, setDemoSeeded] = useState<boolean>(false);
-  const [demoExpiresAt, setDemoExpiresAt] = useState<string | null>(null);
   const [feedReload, setFeedReload] = useState(0);
-
-  // Seed demo content in-process (the CLI wrote to a file the running server
-  // never re-read). Populates the empty surface through the real pipeline.
-  const handleLoadDemo = async () => {
-    setDemoBusy(true);
-    const res = await briefApi.seedDemo();
-    setDemoBusy(false);
-    if (res.ok) {
-      setDemoSeeded(true);
-      setDemoExpiresAt(res.data.seeded?.seedExpiresAt ?? null);
-      setFeedReload((value) => value + 1);
-      showToast(res.data.seeded?.expired ? 'Demo content has expired and was not reused.' : 'Temporary demo content loaded.');
-      void loadObjects();
-      void refreshConnectors();
-    } else {
-      showToast(res.error ?? 'Could not load demo content.');
-    }
-  };
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -7449,6 +7607,18 @@ export function App() {
     [objects, pursuits, pursuitResults, savedIdSet, watchedIds, seenIds]
   );
 
+  // The discovery-experience Daily Brief: TODAY / NEAR YOU / NOW / COMING UP
+  // from real persisted rows. Only rendered when it has data.
+  const discoveryBrief = useMemo(
+    () =>
+      buildDiscoveryBrief({
+        objects,
+        area: feedArea,
+        geo: userLocation ? { lat: userLocation.lat, lng: userLocation.lng } : null
+      }),
+    [objects, feedArea, userLocation]
+  );
+
   const pendingCandidates = useMemo(
     () => candidates.filter((c) => !reviewed[c.id]),
     [candidates, reviewed]
@@ -7839,9 +8009,19 @@ export function App() {
         {activeTab === 'nearby' && (
           <div className="max-w-5xl mx-auto px-0 sm:px-4 pt-2">
             <div className="mb-5">
-              <div className="flex items-center justify-between px-1 pb-3">
+              <div className="flex items-center justify-between gap-3 px-1 pb-3">
                 <h1 className="font-display text-2xl font-semibold tracking-tight text-[#251045]">Home</h1>
-                <span className="text-[10px] uppercase tracking-[0.2em] text-[#251045]/40">Nearby</span>
+                <div className="flex items-center gap-2">
+                  <LocationChip
+                    label={selectedLocation}
+                    locating={locating}
+                    locError={locError}
+                    hasLocation={Boolean(userLocation)}
+                    onLocate={locate}
+                    onSelectCity={chooseCity}
+                    onClearLocation={clearLocation}
+                  />
+                </div>
               </div>
               {runtimeCheck === 'old' && (
                 <div className="mb-3 flex items-start justify-between gap-3 rounded-2xl border border-[#6C3EC9] bg-[#FBFAFD] px-4 py-3">
@@ -7898,26 +8078,70 @@ export function App() {
                       showToast(info.unlocksAfter ? `Opens after: ${info.unlocksAfter}` : 'Not open yet');
                     }}
                   />
-                  {homeFeedStatus === 'ready' && objects.length === 0 && !demoSeeded && (
-                    <div className="rounded-2xl border border-dashed border-[#D6CFE4] bg-[#FBFAFD] px-4 py-3">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div>
-                          <p className="text-[11px] font-extrabold text-[#251045]">The stream is out of supply</p>
-                          <p className="mt-1 text-[10px] leading-snug text-[#251045]/55">No live objects have arrived yet. Load a temporary server-side preview for testing; it expires automatically and is never treated as live news.</p>
-                        </div>
-                        <button type="button" onClick={() => void handleLoadDemo()} disabled={demoBusy} className="shrink-0 rounded-lg bg-[#5B2EA6] px-3 py-2 text-[10px] font-extrabold text-[#FFFFFF] disabled:opacity-50">
-                          {demoBusy ? 'Loading…' : 'Load test preview'}
-                        </button>
+                  {/* No demo seeding on Home: when production data is thin the
+                      FeedComposer below renders honest, contextual empty
+                      states — the no-fake-live-data rule. */}
+                  {/* TODAY'S BRIEF — the compact discovery summary: TODAY /
+                      NEAR YOU / NOW / COMING UP, every row a real persisted
+                      object. Only rendered when it has data. */}
+                  {discoveryTab === 'home' && discoveryBrief.length > 0 && (
+                    <section className="mb-8" aria-label="Today's Brief">
+                      <h2 className="mb-3 px-1 text-[11px] font-bold uppercase tracking-[0.22em] text-[#251045]/60">
+                        Today's Brief
+                      </h2>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {discoveryBrief.map((section) => (
+                          <div
+                            key={section.key}
+                            className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-3"
+                          >
+                            <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-[#251045]/50">
+                              {section.title}
+                            </p>
+                            <div className="mt-2 space-y-0.5">
+                              {section.objects.slice(0, 4).map((obj) => (
+                                <button
+                                  key={obj.id}
+                                  type="button"
+                                  onClick={() => setSelectedObjectForDetail(obj)}
+                                  className="flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 text-left transition-colors hover:bg-[#E9E4F2] cursor-pointer"
+                                >
+                                  {obj.imageUrl ? (
+                                    <img
+                                      src={obj.imageUrl}
+                                      alt=""
+                                      aria-hidden="true"
+                                      loading="lazy"
+                                      className="h-9 w-9 shrink-0 rounded-lg object-cover"
+                                    />
+                                  ) : (
+                                    <span
+                                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[15px]"
+                                      style={{ background: '#F1EDF7', color: '#6C3EC9' }}
+                                      aria-hidden="true"
+                                    >
+                                      {getObjectTypeMeta(obj.type).label.charAt(0)}
+                                    </span>
+                                  )}
+                                  <span className="min-w-0 flex-1">
+                                    <span className="block truncate text-[12px] font-semibold text-[#251045]">
+                                      {obj.title}
+                                    </span>
+                                    {briefWhenLabel(obj) && (
+                                      <span className="block truncate text-[9px] font-semibold text-[#251045]/55">
+                                        {briefWhenLabel(obj)}
+                                      </span>
+                                    )}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    </div>
+                    </section>
                   )}
-                  {homeFeedStatus === 'ready' && objects.length === 0 && demoSeeded && (
-                    <div className="rounded-2xl border border-dashed border-[#D6CFE4] bg-[#FBFAFD] px-4 py-3">
-                      <p className="text-[11px] font-extrabold text-[#251045]">Test preview is out of time</p>
-                      <p className="mt-1 text-[10px] leading-snug text-[#251045]/55">This temporary cohort has expired and was not reused. Clear it explicitly before starting another release test.</p>
-                      {demoExpiresAt && <p className="mt-2 text-[9px] font-bold text-[#251045]/40">Ended {new Date(demoExpiresAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'short' })}.</p>}
-                    </div>
-                  )}
+
                   {/* FEED COMPOSER — the composed, deduplicated magazine feed:
                       hero → tea → discovery → opportunities. Real server rows via
                       /api/feed; card variety by type, never a repeating grid. */}
@@ -7925,6 +8149,15 @@ export function App() {
                     key={feedReload}
                     typeFilter={selectedObjectType}
                     onFeedStatus={setHomeFeedStatus}
+                    area={feedArea}
+                    geo={userLocation ? { lat: userLocation.lat, lng: userLocation.lng, radiusKm: 40 } : null}
+                    type={discoveryTab === 'events' ? 'experience'
+                      : discoveryTab === 'offers' ? 'offer'
+                        : discoveryTab === 'places' ? 'place'
+                          : discoveryTab === 'news' ? 'news'
+                            : discoveryTab === 'opportunities' ? 'opportunity'
+                              : null}
+                    browse={discoveryTab === 'explore'}
                     onOpen={(raw) => {
                       if (!raw?.id) return;
                       const local = objects.find((object) => object.id === String(raw.id));
@@ -7939,31 +8172,59 @@ export function App() {
                 </>
               )}
             </div>
-            {/* Primary discovery categories — the spec's limited four, not the
-                old overloaded pill rows. Selecting one always returns to the
-                stream (typed by that category); Tea/Today/Pursuits/Quests and
-                the remaining types live behind "More" so they never permanently
-                occupy the feed. This lives in the OUTER nearby block so it is
-                reachable from every section. */}
+            {/* Discovery navigation — Home, Events, Explore, Offers, Places,
+                News, Opportunities. A category appears only when the real
+                persisted data has rows for it; nothing is ever padded to make
+                a tab exist. Selecting a category scopes the feed server-side
+                (type= on /api/feed); Explore is the whole catalog in one grid.
+                Tea/Today/Pursuits/Quests and the remaining types live behind
+                "More" so they never permanently occupy the feed. Lives in the
+                OUTER nearby block so it is reachable from every section. */}
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
-              {[
-                { id: 'all', label: FILTERS.all },
-                { id: 'place', label: FILTERS.place },
-                { id: 'experience', label: FILTERS.experience },
-                { id: 'opportunity', label: FILTERS.opportunity },
-              ].map((filter) => (
-                <button
-                  key={filter.id}
-                  onClick={() => { setSelectedObjectType(filter.id); setNearbySection('stream'); }}
-                  className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border transition ${
-                    nearbySection === 'stream' && selectedObjectType === filter.id
-                      ? 'bg-[#5B2EA6] text-[#FFFFFF] border-[#6C3EC9]'
-                      : 'bg-[#FBFAFD] text-[#251045] border-[#D6CFE4] hover:border-[#6C3EC9]'
-                  }`}
-                >
-                  {filter.label}
-                </button>
-              ))}
+              {(() => {
+                const counts: Record<string, number> = {};
+                for (const o of objects) {
+                  counts[o.type] = (counts[o.type] ?? 0) + 1;
+                }
+                const has = (types: string[]) => types.some((t) => (counts[t] ?? 0) > 0);
+                const tabs = [
+                  { id: 'home', label: 'Home', types: null as string[] | null },
+                  { id: 'events', label: 'Events', types: ['experience', 'event'] },
+                  { id: 'explore', label: 'Explore', types: null as string[] | null },
+                  { id: 'offers', label: 'Offers', types: ['offer'] },
+                  { id: 'places', label: 'Places', types: ['place'] },
+                  { id: 'news', label: 'News', types: ['news'] },
+                  { id: 'opportunities', label: 'Opportunities', types: ['opportunity'] }
+                ];
+                return tabs
+                  .filter((tab) => !tab.types || has(tab.types))
+                  .map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => {
+                        setDiscoveryTab(tab.id as typeof discoveryTab);
+                        // Keep the legacy client-side filter in step so the
+                        // fallback grid matches the tab when the composed
+                        // feed is unavailable.
+                        const type = tab.id === 'events' ? 'experience'
+                          : tab.id === 'offers' ? 'offer'
+                            : tab.id === 'places' ? 'place'
+                              : tab.id === 'news' ? 'news'
+                                : tab.id === 'opportunities' ? 'opportunity'
+                                  : 'all';
+                        setSelectedObjectType(type);
+                        setNearbySection('stream');
+                      }}
+                      className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border transition ${
+                        nearbySection === 'stream' && discoveryTab === tab.id
+                          ? 'bg-[#5B2EA6] text-[#FFFFFF] border-[#6C3EC9]'
+                          : 'bg-[#FBFAFD] text-[#251045] border-[#D6CFE4] hover:border-[#6C3EC9]'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ));
+              })()}
               <button
                 onClick={() => setMoreFilters((v) => !v)}
                 className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border transition ${
@@ -8348,14 +8609,6 @@ export function App() {
                             className="rounded-full bg-[#5B2EA6] px-4 py-2 text-[11px] font-bold text-[#FFFFFF]"
                           >
                             Add
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleLoadDemo}
-                            disabled={demoBusy}
-                            className="rounded-full border border-[#D6CFE4] px-4 py-2 text-[11px] font-bold text-[#251045]/60 disabled:opacity-50"
-                          >
-                            {demoBusy ? 'Loading' : 'Demo'}
                           </button>
                         </div>
                       </>
@@ -11200,40 +11453,79 @@ export function App() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="overflow-y-auto flex-1 pb-safe pb-8 sm:pb-5">
-              {/* Hero */}
-              {selectedObjectForDetail.imageUrl && (
-                <div className="relative h-56 sm:h-72">
-                  <img
-                    src={selectedObjectForDetail.imageUrl}
-                    alt={selectedObjectForDetail.title}
-                    className="w-full h-full object-cover"
-                  />
+              {/* Hero — the cover photo, or the first real gallery image when
+                  a news story has photos but no cover. */}
+              {(() => {
+                const heroUrl = selectedObjectForDetail.imageUrl
+                  ?? selectedObjectForDetail.gallery?.[0]?.url
+                  ?? null;
+                if (!heroUrl) return null;
+                return (
+                  <div className="relative h-56 sm:h-72">
+                    <img
+                      src={heroUrl}
+                      alt={selectedObjectForDetail.title}
+                      className="w-full h-full object-cover"
+                    />
 
-                  <button
-                    onClick={() => setSelectedObjectForDetail(null)}
-                    className="absolute top-4 right-4 p-2 rounded-full bg-[#F1EDF7]/80 text-[#251045] border border-[#D6CFE4]"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
+                    <button
+                      onClick={() => setSelectedObjectForDetail(null)}
+                      className="absolute top-4 right-4 p-2 rounded-full bg-[#F1EDF7]/80 text-[#251045] border border-[#D6CFE4]"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
 
-                  <div className="absolute bottom-4 left-4 flex gap-2">
-                    <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#F1EDF7]/85 text-[#251045] border border-[#D6CFE4]">
-                      {selectedObjectForDetail.category}
-                    </span>
-
-                    {selectedObjectForDetail.isVerified && (
-                      <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#5B2EA6] text-[#FFFFFF]">
-                        Verified
+                    <div className="absolute bottom-4 left-4 flex gap-2">
+                      <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#F1EDF7]/85 text-[#251045] border border-[#D6CFE4]">
+                        {selectedObjectForDetail.category}
                       </span>
-                    )}
+
+                      {selectedObjectForDetail.isVerified && (
+                        <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#5B2EA6] text-[#FFFFFF]">
+                          Verified
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
+
+              {/* Gallery — the object's other REAL source photos, opened in a
+                  new tab. Never fabricated; only rows the server projected. */}
+              {(() => {
+                const heroUrl = selectedObjectForDetail.imageUrl
+                  ?? selectedObjectForDetail.gallery?.[0]?.url
+                  ?? null;
+                const rest = (selectedObjectForDetail.gallery ?? [])
+                  .filter((img) => img.url !== heroUrl);
+                if (rest.length === 0) return null;
+                return (
+                  <div className="grid grid-cols-3 gap-2 px-5 pt-4">
+                    {rest.slice(0, 6).map((img) => (
+                      <a
+                        key={img.url}
+                        href={img.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={img.alt ?? 'Photo'}
+                        className="block aspect-square overflow-hidden rounded-xl border border-[#D6CFE4] transition-transform hover:scale-[1.02]"
+                      >
+                        <img
+                          src={img.url}
+                          alt={img.alt ?? ''}
+                          loading="lazy"
+                          className="h-full w-full object-cover"
+                        />
+                      </a>
+                    ))}
+                  </div>
+                );
+              })()}
 
               {/* Without a hero image the close button and chips disappeared
                   entirely, leaving backdrop-click as the only way out. This is
                   the same control set, laid out for an imageless record. */}
-              {!selectedObjectForDetail.imageUrl && (
+              {!selectedObjectForDetail.imageUrl && !selectedObjectForDetail.gallery?.[0]?.url && (
                 <div className="flex items-center justify-between gap-2 p-4 border-b border-[#D6CFE4]">
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#F1EDF7]/85 text-[#251045] border border-[#D6CFE4]">
@@ -11273,6 +11565,65 @@ export function App() {
                   <p className="text-sm text-[#251045] mt-2 leading-relaxed">
                     {selectedObjectForDetail.summary}
                   </p>
+
+                  {/* News detail — publisher, publication time, relevant
+                      location, and the prominent "Read original" action.
+                      Headline + concise summary only: the full article lives
+                      at the original link, never reproduced here. */}
+                  {selectedObjectForDetail.type === 'news' && (
+                    <div className="mt-4 space-y-3">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] font-semibold text-[#251045]/60">
+                        {(() => {
+                          const publisher = selectedObjectForDetail.sourceNames?.[0]
+                            ?? (selectedObjectForDetail.sourceCount
+                              ? `${selectedObjectForDetail.sourceCount} ${selectedObjectForDetail.sourceCount === 1 ? 'source' : 'sources'}`
+                              : null);
+                          if (!publisher) return null;
+                          return <span>From {publisher}</span>;
+                        })()}
+                        {(() => {
+                          const stamp = selectedObjectForDetail.publishedAt
+                            ?? selectedObjectForDetail.createdAt;
+                          if (!stamp) return null;
+                          const d = new Date(stamp);
+                          if (!Number.isFinite(d.getTime())) return null;
+                          return (
+                            <span>
+                              {d.toLocaleDateString('en-KE', { weekday: 'short', day: 'numeric', month: 'short' })}
+                              {' · '}
+                              {d.toLocaleTimeString('en-KE', { hour: 'numeric', minute: '2-digit' })}
+                            </span>
+                          );
+                        })()}
+                        {(() => {
+                          const place = selectedObjectForDetail.locationName
+                            ?? selectedObjectForDetail.metadata?.area
+                            ?? selectedObjectForDetail.metadata?.county;
+                          if (!place) return null;
+                          return <span>· {place}</span>;
+                        })()}
+                      </div>
+
+                      {(() => {
+                        const readUrl = selectedObjectForDetail.sourceUrl
+                          ?? (selectedObjectForDetail.actionType === 'external'
+                            ? selectedObjectForDetail.actionUrl
+                            : null);
+                        if (!readUrl) return null;
+                        return (
+                          <a
+                            href={readUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 rounded-full bg-[#5B2EA6] px-5 py-2.5 text-[12px] font-extrabold text-[#FFFFFF] transition-opacity hover:opacity-90"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            Read original
+                          </a>
+                        );
+                      })()}
+                    </div>
+                  )}
                 </div>
 
                 {/* Facts -- generated from metadata, empty fields omitted */}
@@ -11382,7 +11733,8 @@ export function App() {
                     subject.isVerified ||
                     Boolean(subject.creatorName) ||
                     Boolean(fresh) ||
-                    Boolean(subject.sourceUrl);
+                    Boolean(subject.sourceUrl) ||
+                    (Array.isArray(subject.sourceNames) && subject.sourceNames.length > 0);
 
                   if (!hasTrust) return null;
 
@@ -11415,6 +11767,17 @@ export function App() {
                           </span>
                           <span className="text-[10px] text-[#251045]/40">
                             checked {fresh.verifiedOn}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Source transparency on every item: the real source
+                          name(s) — "From City Wire", "From Kilimani Notices"
+                          — never an internal id. */}
+                      {subject.sourceNames && subject.sourceNames.length > 0 && (
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-[10px] font-bold text-[#251045]/70 truncate">
+                            From {subject.sourceNames.slice(0, 3).join(', ')}
                           </span>
                         </div>
                       )}

@@ -2086,13 +2086,33 @@ export function getTeaArticle(slug: string): Promise<ApiResult<any>> {
 }
 
 /** The composed home feed (hero/discovery/opportunities/more + featured tea). */
-export function getFeed(opts: { lat?: number; lng?: number; radiusKm?: number } = {}): Promise<ApiResult<any>> {
+export interface FeedRequest {
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
+  /** A named locality (county/area/landmark/venue) — never defaulted. */
+  area?: string;
+  /** A content-type category (event, offer, place, news, ...). */
+  type?: string;
+  limit?: number;
+  offset?: number;
+}
+
+function feedQuery(opts: FeedRequest): string {
   const params = new URLSearchParams();
   if (opts.lat !== undefined) params.set('lat', String(opts.lat));
   if (opts.lng !== undefined) params.set('lng', String(opts.lng));
   if (opts.radiusKm !== undefined) params.set('radiusKm', String(opts.radiusKm));
-  const q = params.toString() ? `?${params.toString()}` : '';
-  return request(`/api/feed${q}`, undefined, (r) => (
+  if (opts.area) params.set('area', opts.area);
+  if (opts.type) params.set('type', opts.type);
+  if (opts.limit !== undefined) params.set('limit', String(opts.limit));
+  if (opts.offset !== undefined) params.set('offset', String(opts.offset));
+  return params.toString();
+}
+
+export function getFeed(opts: FeedRequest = {}): Promise<ApiResult<any>> {
+  const q = feedQuery(opts);
+  return request(`/api/feed${q ? `?${q}` : ''}`, undefined, (r) => (
     r?.feed
       ? { ...r.feed, _meta: r.meta ?? null, _mediaProvider: r.mediaProvider ?? null }
       : undefined
@@ -2104,14 +2124,9 @@ export function getFeed(opts: { lat?: number; lng?: number; radiusKm?: number } 
  * title/media composition as getFeed, but uses the explicit public URL so
  * integrations do not depend on the first-party alias.
  */
-export function getPublicFeed(opts: { lat?: number; lng?: number; radiusKm?: number; limit?: number } = {}): Promise<ApiResult<any>> {
-  const params = new URLSearchParams();
-  if (opts.lat !== undefined) params.set('lat', String(opts.lat));
-  if (opts.lng !== undefined) params.set('lng', String(opts.lng));
-  if (opts.radiusKm !== undefined) params.set('radiusKm', String(opts.radiusKm));
-  if (opts.limit !== undefined) params.set('limit', String(opts.limit));
-  const q = params.toString() ? `?${params.toString()}` : '';
-  return request(`/api/public/feed${q}`, undefined, (r) => (r?.feed ? r.feed : undefined));
+export function getPublicFeed(opts: FeedRequest = {}): Promise<ApiResult<any>> {
+  const q = feedQuery(opts);
+  return request(`/api/public/feed${q ? `?${q}` : ''}`, undefined, (r) => (r?.feed ? r.feed : undefined));
 }
 
 // --- Tea Desk (editorial admin) ---------------------------------------------
@@ -2153,9 +2168,26 @@ export function getCollection(key: string): Promise<ApiResult<any>> {
   );
 }
 
-/** Cross-entity search: objects + Tea + vendors + collections. */
-export function searchAll(q: string): Promise<ApiResult<any>> {
-  return request(`/api/search?q=${encodeURIComponent(q)}`, undefined, (r) => (r?.results ? r.results : undefined));
+/**
+ * Cross-entity search: objects + Tea + vendors + collections. Filters map to
+ * fields the server already stores: type, location (county/area/landmark/
+ * venue), date (YYYY-MM-DD), source (source id or name).
+ */
+export interface SearchFilters {
+  type?: string;
+  location?: string;
+  date?: string;
+  source?: string;
+}
+
+export function searchAll(q: string, filters: SearchFilters = {}): Promise<ApiResult<any>> {
+  const params = new URLSearchParams();
+  if (q) params.set('q', q);
+  for (const [key, value] of Object.entries(filters)) {
+    if (value) params.set(key, value);
+  }
+  const qs = params.toString();
+  return request(`/api/search${qs ? `?${qs}` : ''}`, undefined, (r) => (r?.results ? r.results : undefined));
 }
 
 // --- Lobby (Arena: 1-tap room codes) ----------------------------------------

@@ -10,6 +10,7 @@ import { requireFeature } from '../features.js';
 import { store } from '../store.js';
 import * as media from '../domain/media.js';
 import * as upload from '../domain/upload.js';
+import * as publicFeed from '../domain/publicFeed.js';
 import * as telegram from '../connectors/telegram.js';
 
 export function register(app) {
@@ -118,15 +119,36 @@ export function register(app) {
    * ONLY for objects that are actually public, and the object id is the same
    * unlisted-handle trade-off the upload route already documents.
    *
+   * An optional `:index` selects the Nth image from the object's provenance
+   * (gallery support): galleries expose `/api/media/telegram/:objectId/:index`
+   * URLs and the index is resolved against the same collectObjectImages() scan
+   * the projection used, so it always points at the same photo. Without an
+   * index the endpoint keeps the original cover-image behaviour.
+   *
    * A deleted / inaccessible file returns 404/410 honestly; it never surfaces
    * a token-bearing URL or a fake image.
    */
-  app.get('/api/media/telegram/:objectId', async (req, res) => {
+  app.get('/api/media/telegram/:objectId/:index?', async (req, res) => {
     const object = store.find('objects', (o) => o.id === req.params.objectId);
-    if (!object || object.publication !== 'public' || !object.imageReference) {
+    if (!object || object.publication !== 'public') {
       return res.status(404).json({ error: 'not found', code: 'not_found' });
     }
-    const result = await telegram.getFileBytes(object.imageReference);
+    let reference = object.imageReference;
+    if (req.params.index !== undefined) {
+      const index = Number(req.params.index);
+      const images = publicFeed.collectObjectImages(object.id);
+      const image = Number.isInteger(index) && index >= 0 ? images[index] : null;
+      // Web URLs are served directly by the client; only Telegram references
+      // go through this resolver.
+      if (!image || !image.reference || /^https?:\/\//i.test(image.reference)) {
+        return res.status(404).json({ error: 'not found', code: 'not_found' });
+      }
+      reference = image.reference;
+    }
+    if (!reference) {
+      return res.status(404).json({ error: 'not found', code: 'not_found' });
+    }
+    const result = await telegram.getFileBytes(reference);
     if (!result.ok) {
       const status = result.status === 413 ? 413 : (result.status === 404 ? 410 : 502);
       return res.status(status).json({

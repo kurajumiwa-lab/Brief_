@@ -16,7 +16,7 @@ import { store, newId } from '../store.js';
 import { extractFields, extractVendors, extractProducts, isObjectWorthy } from './extract.js';
 
 /** Character-bigram Dice coefficient: steady on short trader names. */
-function similarity(a, b) {
+export function similarity(a, b) {
   const norm = (v) => v.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
   const x = norm(a);
   const y = norm(b);

@@ -9,6 +9,24 @@ const React=require('react');const{createRoot}=require('react-dom/client');const
 const App=require('./src/App.tsx').default;
 async function main(){
   dom.window.open=()=>null;
+  // The discovery tabs are data-driven: a category only appears when real
+  // persisted rows exist for it. Serve a small real-shaped cohort (places,
+  // experiences, opportunities — deliberately NO offers or news) so the
+  // honest visibility rules can be asserted both ways.
+  const nowIso = new Date().toISOString();
+  const navObjects = [
+    { id: 'nav_place_1', type: 'place', title: 'Nav Place', summary: '', category: null, publication: 'public', createdAt: nowIso, metadata: {}, locationName: 'Nairobi' },
+    { id: 'nav_event_1', type: 'experience', title: 'Nav Event', summary: '', category: null, publication: 'public', createdAt: nowIso, metadata: { eventStart: nowIso }, locationName: 'Nairobi' },
+    { id: 'nav_opp_1', type: 'opportunity', title: 'Nav Opportunity', summary: '', category: null, publication: 'public', createdAt: nowIso, metadata: {}, locationName: 'Nairobi' }
+  ];
+  global.fetch = async (input) => {
+    const u = String((typeof input === 'string' ? input : input?.url) ?? input);
+    if (u.includes('/api/objects')) {
+      const body = JSON.stringify({ objects: navObjects });
+      return { ok: true, status: 200, text: async () => body, json: async () => JSON.parse(body) };
+    }
+    throw new Error('network down: suite backend is intentionally unreachable');
+  };
   const root=createRoot(document.getElementById('root'));
   await act(async()=>{root.render(React.createElement(App));});
   const text=el=>(el.textContent||'').replace(/\s+/g,' ').trim();
@@ -73,10 +91,17 @@ async function main(){
 
   console.log('\n=== Nearby holds discovery sections ===');
   await click(btn('Nearby'));
-  // Primary categories are the limited four; Tea/Today/Pursuits/Quests live
-  // behind "More" (filter overload removed) but remain reachable.
-  for(const s of ['All','Places','Events','Offers'])
-    check(`Nearby > ${s}`, !!btn(s));
+  // Discovery navigation: Home, Events, Explore, Offers, Places, News,
+  // Opportunities — a category only appears when the real data has rows for
+  // it. The fixture has places/experiences/opportunities but NO offers or
+  // news, so those tabs must be honestly absent. (The MainShelf carries an
+  // "Events" door too, so tab lookups skip shelf cards.)
+  const tabBtn = (t) => Array.from(document.querySelectorAll('button'))
+    .find(b => !b.dataset?.shelfId && (text(b) === t || text(b).startsWith(t)));
+  for(const s of ['Home','Events','Explore','Places','Opportunities'])
+    check(`Nearby > ${s}`, !!tabBtn(s));
+  check('Offers tab hidden without offer data', !tabBtn('Offers'));
+  check('News tab hidden without news data', !tabBtn('News'));
   const more=btn('More');
   check('a More control exists', !!more);
   await click(more);
