@@ -82,6 +82,7 @@ app.post('/api/sources', (req, res) => {
     lastSuccessAt: null,
     lastError: null,
     confidence: 0.5,
+    trustStatus: 'normal',
     lastSyncedAt: null,
     lastMessageAt: null,
     createdAt: now(),

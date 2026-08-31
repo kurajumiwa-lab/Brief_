@@ -19,6 +19,10 @@ export interface GeoPoint {
   lat: number;
   lng: number;
   label: string;
+  /** A named locality (county/area) this point stands for, when it has one —
+   *  district and city taps scope the feed by area matching. Device fixes
+   *  carry no area; they scope by distance only. */
+  area?: string;
 }
 
 export interface LocationChipProps {
@@ -31,11 +35,19 @@ export interface LocationChipProps {
   onClearLocation: () => void;
 }
 
-const CITIES: GeoPoint[] = [
-  { lat: -1.2921, lng: 36.8219, label: 'Nairobi' },
-  { lat: -4.0435, lng: 39.6682, label: 'Mombasa' },
-  { lat: -0.0917, lng: 34.768, label: 'Kisumu' },
-  { lat: -0.3031, lng: 36.08, label: 'Nakuru' }
+// The discovery experience's location surface: the city plus its districts.
+// Every entry is a real place the extraction gazetteer knows; nothing here
+// is inferred about the viewer.
+export const CITIES: GeoPoint[] = [
+  { lat: -1.2921, lng: 36.8219, label: 'Nairobi', area: 'Nairobi' },
+  { lat: -1.2636, lng: 36.8034, label: 'Westlands', area: 'Westlands' },
+  { lat: -1.2921, lng: 36.7808, label: 'Kilimani', area: 'Kilimani' },
+  { lat: -1.2833, lng: 36.8167, label: 'CBD', area: 'CBD' },
+  { lat: -1.253, lng: 36.899, label: 'Kasarani', area: 'Kasarani' },
+  { lat: -1.3959, lng: 36.7388, label: 'Rongai', area: 'Rongai' },
+  { lat: -4.0435, lng: 39.6682, label: 'Mombasa', area: 'Mombasa' },
+  { lat: -0.0917, lng: 34.768, label: 'Kisumu', area: 'Kisumu' },
+  { lat: -0.3031, lng: 36.08, label: 'Nakuru', area: 'Nakuru' }
 ];
 
 export function LocationChip({ label, locating, locError, hasLocation, onLocate, onSelectCity, onClearLocation }: LocationChipProps) {

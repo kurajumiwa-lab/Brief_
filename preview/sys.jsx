@@ -14,8 +14,12 @@ async function main(){
   const modal=()=>document.querySelector('.fixed.inset-0.z-50');
   const mt=()=>{const m=modal();return m?text(m):'';};
   const cards=()=>Array.from(document.querySelectorAll('div.grid > div[class*="cursor-pointer"]'));
-  const openByTitle=async t=>{const c=cards().find(c=>text(c).includes(t)); if(!c)return false; await click(c); return true;};
-  const closeModal=async()=>{const m=modal(); if(m) await click(m);};
+  // Click helpers settle after each interaction: dismissOverlay closes modals
+  // via history.back(), which jsdom processes asynchronously — reading the
+  // modal immediately after a click races the queued back-navigation and can
+  // observe the PREVIOUS overlay (or re-open it after the next click).
+  const openByTitle=async t=>{const c=cards().find(c=>text(c).includes(t)); if(!c)return false; await click(c); await h.settle(); return true;};
+  const closeModal=async()=>{const m=modal(); if(m){ await click(m); await h.settle(); }};
   let pass=0,fail=0;
   const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;console.log('  FAIL  '+n+(d?' -> '+d:''));}};
 
@@ -53,6 +57,9 @@ async function main(){
 
   console.log('\n=== PROMPT 13/14: freshness + trust ===');
   await openByTitle('Maji Mazuri Farmers');
+  // Let the modal's async data (graph edges, feed state) settle so the
+  // captured text reflects the fully rendered modal, not a mid-commit frame.
+  await h.settle();
   const t=mt();
   check('shows verification date', /checked \d{4}-\d{2}-\d{2}/.test(t), t.slice(0,240));
   check('shows a freshness label', /Recently verified|Verified|Verification aging|Verification expired/.test(t));
@@ -68,7 +75,13 @@ async function main(){
   // object actually carries, not an invented one.
   check('"You can" offers the action the data supports',
     !t.includes('You can') || t.includes('Get directions'), t.slice(0,200));
-  check('has Nearby section', t.includes('More from this area') && t.includes('Nearby'));
+  // The modal's nearby surface is the Related rail ("Continue exploring"),
+  // which ranks same-area and same-operator objects from real persisted
+  // fields. The old standalone "More from this area" rail starved once the
+  // Related rail absorbed location scoring, so the suite asserts the rail
+  // the modal actually renders.
+  await h.settle();
+  check('has nearby rail', t.includes('Nearby places and vendors') && t.includes('nearby'), t.slice(0, 400));
   const watchBtn=Array.from(modal().querySelectorAll('button')).find(b=>text(b)==='Watch');
   check('Watch button present', !!watchBtn);
   if(watchBtn){

@@ -2086,13 +2086,33 @@ export function getTeaArticle(slug: string): Promise<ApiResult<any>> {
 }
 
 /** The composed home feed (hero/discovery/opportunities/more + featured tea). */
-export function getFeed(opts: { lat?: number; lng?: number; radiusKm?: number } = {}): Promise<ApiResult<any>> {
+export interface FeedRequest {
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
+  /** A named locality (county/area/landmark/venue) — never defaulted. */
+  area?: string;
+  /** A content-type category (event, offer, place, news, ...). */
+  type?: string;
+  limit?: number;
+  offset?: number;
+}
+
+function feedQuery(opts: FeedRequest): string {
   const params = new URLSearchParams();
   if (opts.lat !== undefined) params.set('lat', String(opts.lat));
   if (opts.lng !== undefined) params.set('lng', String(opts.lng));
   if (opts.radiusKm !== undefined) params.set('radiusKm', String(opts.radiusKm));
-  const q = params.toString() ? `?${params.toString()}` : '';
-  return request(`/api/feed${q}`, undefined, (r) => (
+  if (opts.area) params.set('area', opts.area);
+  if (opts.type) params.set('type', opts.type);
+  if (opts.limit !== undefined) params.set('limit', String(opts.limit));
+  if (opts.offset !== undefined) params.set('offset', String(opts.offset));
+  return params.toString();
+}
+
+export function getFeed(opts: FeedRequest = {}): Promise<ApiResult<any>> {
+  const q = feedQuery(opts);
+  return request(`/api/feed${q ? `?${q}` : ''}`, undefined, (r) => (
     r?.feed
       ? { ...r.feed, _meta: r.meta ?? null, _mediaProvider: r.mediaProvider ?? null }
       : undefined
@@ -2104,14 +2124,9 @@ export function getFeed(opts: { lat?: number; lng?: number; radiusKm?: number } 
  * title/media composition as getFeed, but uses the explicit public URL so
  * integrations do not depend on the first-party alias.
  */
-export function getPublicFeed(opts: { lat?: number; lng?: number; radiusKm?: number; limit?: number } = {}): Promise<ApiResult<any>> {
-  const params = new URLSearchParams();
-  if (opts.lat !== undefined) params.set('lat', String(opts.lat));
-  if (opts.lng !== undefined) params.set('lng', String(opts.lng));
-  if (opts.radiusKm !== undefined) params.set('radiusKm', String(opts.radiusKm));
-  if (opts.limit !== undefined) params.set('limit', String(opts.limit));
-  const q = params.toString() ? `?${params.toString()}` : '';
-  return request(`/api/public/feed${q}`, undefined, (r) => (r?.feed ? r.feed : undefined));
+export function getPublicFeed(opts: FeedRequest = {}): Promise<ApiResult<any>> {
+  const q = feedQuery(opts);
+  return request(`/api/public/feed${q ? `?${q}` : ''}`, undefined, (r) => (r?.feed ? r.feed : undefined));
 }
 
 // --- Tea Desk (editorial admin) ---------------------------------------------
@@ -2153,9 +2168,26 @@ export function getCollection(key: string): Promise<ApiResult<any>> {
   );
 }
 
-/** Cross-entity search: objects + Tea + vendors + collections. */
-export function searchAll(q: string): Promise<ApiResult<any>> {
-  return request(`/api/search?q=${encodeURIComponent(q)}`, undefined, (r) => (r?.results ? r.results : undefined));
+/**
+ * Cross-entity search: objects + Tea + vendors + collections. Filters map to
+ * fields the server already stores: type, location (county/area/landmark/
+ * venue), date (YYYY-MM-DD), source (source id or name).
+ */
+export interface SearchFilters {
+  type?: string;
+  location?: string;
+  date?: string;
+  source?: string;
+}
+
+export function searchAll(q: string, filters: SearchFilters = {}): Promise<ApiResult<any>> {
+  const params = new URLSearchParams();
+  if (q) params.set('q', q);
+  for (const [key, value] of Object.entries(filters)) {
+    if (value) params.set(key, value);
+  }
+  const qs = params.toString();
+  return request(`/api/search${qs ? `?${qs}` : ''}`, undefined, (r) => (r?.results ? r.results : undefined));
 }
 
 // --- Lobby (Arena: 1-tap room codes) ----------------------------------------
@@ -2857,6 +2889,26 @@ export function getOpsReports(): Promise<ApiResult<Record<string, any>[]>> {
 
 export function resolveOpsReport(id: string, action: 'dismiss' | 'remove', reason: string): Promise<ApiResult<Record<string, any>>> {
   return request(`/api/ops/reports/${encodeURIComponent(id)}/resolve`, { method: 'POST', body: JSON.stringify({ action, reason }) }, (r) => r ?? undefined);
+}
+
+export function getOpsCorrections(): Promise<ApiResult<Record<string, any>[]>> {
+  return request('/api/ops/corrections', undefined, (r) => (isRowArray(r?.corrections) ? r.corrections : undefined));
+}
+
+export function opsCreateCorrection(objectId: string, field: string, value: string, reason: string, isMeta = false): Promise<ApiResult<Record<string, any>>> {
+  return request('/api/ops/corrections', { method: 'POST', body: JSON.stringify({ objectId, field, value, reason, isMeta }) }, (r) => (r?.correction ? r : undefined));
+}
+
+export function opsRejectCorrection(id: string, reason: string): Promise<ApiResult<Record<string, any>>> {
+  return request(`/api/ops/corrections/${encodeURIComponent(id)}/reject`, { method: 'POST', body: JSON.stringify({ reason }) }, (r) => (r?.correction ? r : undefined));
+}
+
+export function getOpsSourceTrust(): Promise<ApiResult<Record<string, any>[]>> {
+  return request('/api/ops/sources/trust', undefined, (r) => (isRowArray(r?.sources) ? r.sources : undefined));
+}
+
+export function opsSetSourceTrust(id: string, status: 'trusted' | 'normal' | 'degraded' | 'disabled', reason: string): Promise<ApiResult<Record<string, any>>> {
+  return request(`/api/ops/sources/${encodeURIComponent(id)}/trust`, { method: 'POST', body: JSON.stringify({ status, reason }) }, (r) => (r?.source ? r : undefined));
 }
 
 export function getOpsUnverified(): Promise<ApiResult<Record<string, any>[]>> {
@@ -3711,4 +3763,444 @@ export function onboardingFunnel(): Promise<ApiResult<OnboardingFunnel>> {
 export function setMemberStatus(id: string, status: 'active' | 'suspended', reason = ''): Promise<ApiResult<{ user: MemberRow; changed: boolean; sessionsRevoked: number }>> {
   return request(`/api/ops/members/${encodeURIComponent(id)}/status`, { method: 'POST', body: JSON.stringify({ status, reason }) }, (r): { user: MemberRow; changed: boolean; sessionsRevoked: number } | undefined =>
     r?.user ? r as { user: MemberRow; changed: boolean; sessionsRevoked: number } : undefined);
+}
+
+// ---------------------------------------------------------------------------
+// PERSONAL BRIEF — interests, personal feed, saves, relevance controls
+// ---------------------------------------------------------------------------
+
+export interface PersonalTopic {
+  id: string;
+  label: string;
+  keywords: string[];
+}
+
+export interface PersonalState {
+  interests: {
+    locations: string[];
+    types: string[];
+    topics: string[];
+  };
+  saved: string[];
+  relevance: {
+    more: string[];
+    less: string[];
+    notInterested: string[];
+    hiddenSources: string[];
+  };
+  topics: PersonalTopic[];
+  suggestedLocations: string[];
+  notificationCandidates: {
+    kind: string;
+    objectId: string;
+    title: string;
+    dueAt: string | null;
+    reason: string;
+  }[];
+  /** The viewer's own entity follows (venue/business/publisher/organizer/community). */
+  followed: {
+    id: string;
+    kind: string;
+    entityKey: string;
+    name: string;
+  }[];
+}
+
+export interface PersonalFeedRow {
+  personal?: { boost: number; reasons: string[] };
+}
+
+function isPersonalState(raw: any): PersonalState | undefined {
+  if (raw && raw.interests && Array.isArray(raw.saved) && Array.isArray(raw.topics)) return raw as PersonalState;
+  return undefined;
+}
+
+/** The caller's whole personal state in one round trip. */
+export function getPersonalState(): Promise<ApiResult<PersonalState>> {
+  return request('/api/me', undefined, isPersonalState);
+}
+
+/** The personal feed: the same global objects, re-ranked per user. */
+export function getPersonalFeed(opts: { limit?: number } = {}): Promise<ApiResult<{ objects: any[]; personalized: boolean }>> {
+  const params = new URLSearchParams();
+  if (opts.limit !== undefined) params.set('limit', String(opts.limit));
+  const qs = params.toString();
+  return request(`/api/me/feed${qs ? `?${qs}` : ''}`, undefined, (r): { objects: any[]; personalized: boolean } | undefined =>
+    Array.isArray(r?.objects) ? r as { objects: any[]; personalized: boolean } : undefined);
+}
+
+/** Batch-replace interests (lightweight onboarding). */
+export function putInterests(body: { locations?: string[]; types?: string[]; topics?: string[] }): Promise<ApiResult<{ ok: boolean; interests: PersonalState['interests'] }>> {
+  return request('/api/me/interests', { method: 'PUT', body: JSON.stringify(body) }, (r) =>
+    r?.interests ? r as { ok: boolean; interests: PersonalState['interests'] } : undefined);
+}
+
+/** Follow one location / type / topic. */
+export function followInterest(kind: 'location' | 'type' | 'topic', value: string): Promise<ApiResult<{ ok: boolean; interests: PersonalState['interests'] }>> {
+  return request('/api/me/interests', { method: 'POST', body: JSON.stringify({ kind, value }) }, (r) =>
+    r?.interests ? r as { ok: boolean; interests: PersonalState['interests'] } : undefined);
+}
+
+/** Unfollow one location / type / topic. */
+export function unfollowInterest(kind: 'location' | 'type' | 'topic', value: string): Promise<ApiResult<{ ok: boolean; interests: PersonalState['interests'] }>> {
+  return request('/api/me/interests', { method: 'DELETE', body: JSON.stringify({ kind, value }) }, (r) =>
+    r?.interests ? r as { ok: boolean; interests: PersonalState['interests'] } : undefined);
+}
+
+/** Server-persisted save (the durable copy of the client bookmark). */
+export function saveObjectForMe(objectId: string): Promise<ApiResult<{ ok: boolean; saved: string[] }>> {
+  return request(`/api/me/saved/${encodeURIComponent(objectId)}`, { method: 'POST', body: '{}' }, (r) =>
+    Array.isArray(r?.saved) ? r as { ok: boolean; saved: string[] } : undefined);
+}
+
+/** Remove a server-persisted save. */
+export function unsaveObjectForMe(objectId: string): Promise<ApiResult<{ ok: boolean; saved: string[] }>> {
+  return request(`/api/me/saved/${encodeURIComponent(objectId)}`, { method: 'DELETE', body: '{}' }, (r) =>
+    Array.isArray(r?.saved) ? r as { ok: boolean; saved: string[] } : undefined);
+}
+
+/** Explicit relevance control: more | less | not_interested | hide_source. */
+export function setRelevanceControl(kind: 'more' | 'less' | 'not_interested' | 'hide_source', target: { objectId?: string; sourceId?: string }): Promise<ApiResult<{ ok: boolean; relevance: PersonalState['relevance'] }>> {
+  return request('/api/me/relevance', { method: 'POST', body: JSON.stringify({ kind, ...target }) }, (r) =>
+    r?.relevance ? r as { ok: boolean; relevance: PersonalState['relevance'] } : undefined);
+}
+
+/** Undo an explicit relevance control. */
+export function unsetRelevanceControl(kind: 'more' | 'less' | 'not_interested' | 'hide_source', target: { objectId?: string; sourceId?: string }): Promise<ApiResult<{ ok: boolean; relevance: PersonalState['relevance'] }>> {
+  return request('/api/me/relevance', { method: 'DELETE', body: JSON.stringify({ kind, ...target }) }, (r) =>
+    r?.relevance ? r as { ok: boolean; relevance: PersonalState['relevance'] } : undefined);
+}
+
+/** Notification candidates — the data model only; nothing is sent. */
+export function getNotificationCandidates(): Promise<ApiResult<{ candidates: PersonalState['notificationCandidates'] }>> {
+  return request('/api/me/notification-candidates', undefined, (r) =>
+    Array.isArray(r?.candidates) ? r as { candidates: PersonalState['notificationCandidates'] } : undefined);
+}
+
+// ---------------------------------------------------------------------------
+// ENTITY LAYER — followable entities, entity pages, the Following feed
+// ---------------------------------------------------------------------------
+
+export type EntityKind = 'venue' | 'business' | 'publisher' | 'organizer' | 'community';
+
+/** One public entity projection, exactly as the server shapes it. */
+export interface BriefEntity {
+  kind: EntityKind;
+  id: string;
+  entityKey: string;
+  name: string;
+  slug: string;
+  summary: string | null;
+  description: string | null;
+  imageUrl: string | null;
+  category: string | null;
+  location: { area: string | null; county: string | null } | null;
+  locationName: string | null;
+  sourceNames: string[];
+  trust: { degraded: boolean; disabled: boolean; corroborated: boolean };
+  isFollowed: boolean;
+  followCount: number;
+  objects: {
+    id: string;
+    type: string;
+    title: string;
+    summary: string | null;
+    imageUrl: string | null;
+    locationName: string | null;
+    category: string | null;
+    area: string | null;
+    county: string | null;
+    temporal: {
+      status: string;
+      startsAt?: string | null;
+      endsAt?: string | null;
+      deadlineAt?: string | null;
+    } | null;
+    sourceNames: string[];
+  }[];
+}
+
+function isBriefEntity(raw: any): BriefEntity | undefined {
+  if (raw && typeof raw.kind === 'string' && typeof raw.name === 'string'
+    && typeof raw.entityKey === 'string' && Array.isArray(raw.objects)) {
+    return raw as BriefEntity;
+  }
+  return undefined;
+}
+
+/** A public entity page. Works without a session (stable shareable URL). */
+export function getEntity(id: string): Promise<ApiResult<{ entity: BriefEntity }>> {
+  return request(`/api/entities/${encodeURIComponent(id)}`, undefined, (r) =>
+    isBriefEntity(r?.entity) ? r as { entity: BriefEntity } : undefined);
+}
+
+/** Resolve an entity by exact name (for "Venue · X" / "Source · X" links). */
+export function getEntityByName(kind: EntityKind, name: string): Promise<ApiResult<{ entity: BriefEntity | null }>> {
+  return request(`/api/entities/by-name?kind=${encodeURIComponent(kind)}&name=${encodeURIComponent(name)}`, undefined, (r) =>
+    r && ('entity' in r) ? r as { entity: BriefEntity | null } : undefined);
+}
+
+/** Follow an entity (authenticated, self-scoped, idempotent). */
+export function followEntity(id: string): Promise<ApiResult<{ followed: boolean; already: boolean; followCount: number }>> {
+  return request(`/api/entities/${encodeURIComponent(id)}/follow`, { method: 'POST', body: '{}' }, (r) =>
+    r && typeof r.followed === 'boolean' ? r as { followed: boolean; already: boolean; followCount: number } : undefined);
+}
+
+/** Unfollow an entity (authenticated, self-scoped, idempotent). */
+export function unfollowEntity(id: string): Promise<ApiResult<{ unfollowed: boolean; already: boolean; followCount: number }>> {
+  return request(`/api/entities/${encodeURIComponent(id)}/follow`, { method: 'DELETE', body: '{}' }, (r) =>
+    r && typeof r.unfollowed === 'boolean' ? r as { unfollowed: boolean; already: boolean; followCount: number } : undefined);
+}
+
+/** The viewer's follow list, grouped by kind (management surface). */
+export interface FollowsGroups {
+  groups: Record<string, {
+    kind: string;
+    id: string;
+    entityKey: string;
+    name: string;
+    category: string | null;
+    imageUrl: string | null;
+    location: { area: string | null; county: string | null } | null;
+    sourceNames: string[];
+    objectCount: number;
+    followedAt: string | null;
+  }[]>;
+  total: number;
+  kindLabels: Record<string, string>;
+}
+
+export function getMyFollows(): Promise<ApiResult<FollowsGroups>> {
+  return request('/api/me/follows', undefined, (r) =>
+    r && r.groups && typeof r.total === 'number' ? r as FollowsGroups : undefined);
+}
+
+/** The Following feed: sections per followed entity, objects ranked by discovery. */
+export interface FollowingSection {
+  kind: string;
+  entityId: string;
+  entityKey: string;
+  name: string;
+  category: string | null;
+  imageUrl: string | null;
+  location: { area: string | null; county: string | null } | null;
+  objects: {
+    id: string;
+    type: string;
+    title: string;
+    summary: string | null;
+    imageUrl: string | null;
+    locationName: string | null;
+    category: string | null;
+    area: string | null;
+    county: string | null;
+    temporal: {
+      status: string;
+      startsAt?: string | null;
+      deadlineAt?: string | null;
+    } | null;
+    score: number | null;
+  }[];
+}
+
+export function getMyFollowingFeed(): Promise<ApiResult<{ sections: FollowingSection[]; total: number }>> {
+  return request('/api/me/following', undefined, (r) =>
+    Array.isArray(r?.sections) ? r as { sections: FollowingSection[]; total: number } : undefined);
+}
+
+/** Analytics: record that the viewer opened an object from an entity page. */
+export function recordEntityObjectOpened(id: string, objectId: string): Promise<ApiResult<{ ok: boolean }>> {
+  return request(`/api/entities/${encodeURIComponent(id)}/object-opened`, { method: 'POST', body: JSON.stringify({ objectId }) }, (r) =>
+    r && r.ok === true ? r as { ok: boolean } : undefined);
+}
+
+/** Analytics: record that the viewer opened a source from an entity page. */
+export function recordSourceOpened(id: string, sourceId: string): Promise<ApiResult<{ ok: boolean }>> {
+  return request(`/api/entities/${encodeURIComponent(id)}/source-opened`, { method: 'POST', body: JSON.stringify({ sourceId }) }, (r) =>
+    r && r.ok === true ? r as { ok: boolean } : undefined);
+}
+
+// ---------------------------------------------------------------------------
+// LOCAL ACTIVITY GRAPH — location pages, related content, nearby.
+// ---------------------------------------------------------------------------
+
+export interface GraphObject {
+  id: string;
+  type: string;
+  title: string;
+  summary: string;
+  locationName?: string | null;
+  area?: string | null;
+  county?: string | null;
+  landmark?: string | null;
+  imageUrl?: string | null;
+  media?: { url?: string | null } | null;
+  gallery?: { url: string }[] | null;
+  temporal?: { status: string; startsAt?: string | null; deadlineAt?: string | null } | null;
+  sourceNames?: string[];
+  sourceCount?: number;
+  degraded?: boolean;
+  distanceKm?: number;
+}
+
+export interface GraphEdge {
+  verb: string;
+  label: string;
+  confidence: 'structured' | 'provenance' | 'relationship';
+  location?: { name: string; kind: string; county: string | null } | null;
+  objects: GraphObject[];
+}
+
+export interface LocationActivity {
+  counts: { happeningNow: number; today: number; comingUp: number; latest: number };
+  happeningNow: GraphObject[];
+  today: GraphObject[];
+  comingUp: GraphObject[];
+  latest: GraphObject[];
+}
+
+export interface LocationPage {
+  location: { name: string; kind: string; county: string | null; areas?: string[] };
+  activity: LocationActivity;
+  sections: Record<string, GraphObject[]>;
+  map: { available: boolean; items: GraphObject[] };
+  nearby: { available: boolean; reason: string | null; items: GraphObject[] };
+}
+
+/** A public location discovery page (/explore/:name). */
+export function getLocationPage(name: string): Promise<ApiResult<LocationPage>> {
+  return request(`/api/locations/${encodeURIComponent(name)}`, undefined, (r) =>
+    r && r.location && r.activity ? r as LocationPage : undefined);
+}
+
+/** The explore index: every location with live content, most active first. */
+export function getLocationIndex(): Promise<ApiResult<{ locations: { name: string; kind: string; county: string | null; counts: { happeningNow: number; today: number; comingUp: number; latest: number } }[] }>> {
+  return request('/api/locations', undefined, (r) =>
+    Array.isArray(r?.locations) ? r as { locations: { name: string; kind: string; county: string | null; counts: { happeningNow: number; today: number; comingUp: number; latest: number } }[] } : undefined);
+}
+
+/** Related content for a detail page — the object graph. */
+export function getObjectGraph(objectId: string): Promise<ApiResult<{ object: GraphObject; edges: GraphEdge[] }>> {
+  return request(`/api/graph/object/${encodeURIComponent(objectId)}`, undefined, (r) =>
+    r && Array.isArray(r.edges) ? r as { object: GraphObject; edges: GraphEdge[] } : undefined);
+}
+
+/** Nearby discovery over genuinely stored coordinates. */
+export function getNearby(opts: { lat?: number; lng?: number; radiusKm?: number; area?: string } = {}): Promise<ApiResult<{ available: boolean; reason: string | null; items: GraphObject[] }>> {
+  const params = new URLSearchParams();
+  if (opts.lat !== undefined && opts.lng !== undefined) {
+    params.set('lat', String(opts.lat));
+    params.set('lng', String(opts.lng));
+  }
+  if (opts.area) params.set('area', opts.area);
+  if (opts.radiusKm) params.set('radiusKm', String(opts.radiusKm));
+  const qs = params.toString();
+  return request(`/api/nearby${qs ? `?${qs}` : ''}`, undefined, (r) =>
+    r && typeof r.available === 'boolean' ? r as { available: boolean; reason: string | null; items: GraphObject[] } : undefined);
+}
+
+// ---------------------------------------------------------------------------
+// PERSONAL COLLECTIONS — named groups of object references.
+// ---------------------------------------------------------------------------
+
+export type CollectionVisibility = 'private' | 'public';
+
+export interface CollectionCover {
+  kind: 'custom' | 'single' | 'mosaic' | 'none';
+  url?: string;
+  urls?: string[];
+}
+
+export interface BriefCollectionSummary {
+  id: string;
+  name: string;
+  description: string;
+  visibility: CollectionVisibility;
+  createdAt: string;
+  updatedAt: string;
+  count: number;
+  cover: CollectionCover;
+  locations: { areas: string[]; counties: string[] };
+}
+
+export interface CollectionItem {
+  id: string;
+  addedAt: string;
+  position: number;
+  object: any;
+}
+
+export interface CollectionPage {
+  id: string;
+  name: string;
+  description: string;
+  visibility: CollectionVisibility;
+  coverImage: string | null;
+  createdAt: string;
+  updatedAt: string;
+  count: number;
+  cover: CollectionCover;
+  locations: { areas: string[]; counties: string[] };
+  items: CollectionItem[];
+}
+
+/** The owner's collections, optionally searched by name or item title. */
+export function listCollections(q = ''): Promise<ApiResult<{ collections: BriefCollectionSummary[] }>> {
+  const qs = q.trim() ? `?q=${encodeURIComponent(q.trim())}` : '';
+  return request(`/api/me/collections${qs}`, undefined, (r) =>
+    r && Array.isArray(r.collections) ? r as { collections: BriefCollectionSummary[] } : undefined);
+}
+
+/** Create a collection (private by default). */
+export function createCollection(input: { name: string; description?: string; coverImage?: string | null; visibility?: CollectionVisibility }): Promise<ApiResult<{ ok: boolean; collection: BriefCollectionSummary }>> {
+  return request('/api/me/collections', { method: 'POST', body: JSON.stringify(input) }, (r) =>
+    r && r.collection ? r as { ok: boolean; collection: BriefCollectionSummary } : undefined);
+}
+
+/** Owner-only rename / description / cover / visibility. */
+export function updateCollection(id: string, patch: { name?: string; description?: string; coverImage?: string | null; visibility?: CollectionVisibility }): Promise<ApiResult<{ ok: boolean; collection: BriefCollectionSummary }>> {
+  return request(`/api/me/collections/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(patch) }, (r) =>
+    r && r.collection ? r as { ok: boolean; collection: BriefCollectionSummary } : undefined);
+}
+
+/** Owner-only delete. The objects themselves are never touched. */
+export function deleteCollection(id: string): Promise<ApiResult<{ ok: boolean }>> {
+  return request(`/api/me/collections/${encodeURIComponent(id)}`, { method: 'DELETE', body: '{}' }, (r) =>
+    r && r.ok === true ? r as { ok: boolean } : undefined);
+}
+
+/** The owner's full collection view (items resolved live). */
+export function getMyCollection(id: string): Promise<ApiResult<{ collection: CollectionPage }>> {
+  return request(`/api/me/collections/${encodeURIComponent(id)}`, undefined, (r) =>
+    r && r.collection && Array.isArray(r.collection.items) ? r as { collection: CollectionPage } : undefined);
+}
+
+/** Add an object reference. Idempotent; public objects only. */
+export function addToCollection(collectionId: string, objectId: string): Promise<ApiResult<{ ok: boolean; added: boolean; collectionId: string }>> {
+  return request(`/api/me/collections/${encodeURIComponent(collectionId)}/items`, { method: 'POST', body: JSON.stringify({ objectId }) }, (r) =>
+    r && r.ok === true ? r as { ok: boolean; added: boolean; collectionId: string } : undefined);
+}
+
+/** Remove an object reference. */
+export function removeFromCollection(collectionId: string, objectId: string): Promise<ApiResult<{ ok: boolean; removed: boolean }>> {
+  return request(`/api/me/collections/${encodeURIComponent(collectionId)}/items/${encodeURIComponent(objectId)}`, { method: 'DELETE', body: '{}' }, (r) =>
+    r && r.ok === true ? r as { ok: boolean; removed: boolean } : undefined);
+}
+
+/** Owner-only reorder: objectIds defines the new order. */
+export function reorderCollection(collectionId: string, objectIds: string[]): Promise<ApiResult<{ ok: boolean }>> {
+  return request(`/api/me/collections/${encodeURIComponent(collectionId)}/items/order`, { method: 'PUT', body: JSON.stringify({ objectIds }) }, (r) =>
+    r && r.ok === true ? r as { ok: boolean } : undefined);
+}
+
+/** The PUBLIC shareable page (only public objects; 404 for private/unknown). */
+export function getPublicCollection(id: string): Promise<ApiResult<{ collection: CollectionPage }>> {
+  return request(`/api/collections/personal/${encodeURIComponent(id)}`, undefined, (r) =>
+    r && r.collection && Array.isArray(r.collection.items) ? r as { collection: CollectionPage } : undefined);
+}
+
+/** Share a public collection: returns the stable URL. */
+export function shareCollection(id: string): Promise<ApiResult<{ ok: boolean; url: string | null }>> {
+  return request(`/api/me/collections/${encodeURIComponent(id)}/share`, { method: 'POST', body: '{}' }, (r) =>
+    r && r.ok === true ? r as { ok: boolean; url: string | null } : undefined);
 }

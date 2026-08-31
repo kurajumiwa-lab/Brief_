@@ -148,10 +148,33 @@ const EMPTY = {
   // Abuse/spam reports. A report is a request for review, not a removal: it
   // has a lifecycle (open -> dismissed / actioned) and never auto-deletes.
   reports: [],
+  // Operator corrections: one row per corrected field, preserving the ORIGINAL
+  // source value next to the corrected value (who/when/why). The object's
+  // provenance is never rewritten; this log is the history.
+  corrections: [],
   // In-app notifications. A notification is a real, derived event (something
   // was confirmed, a challenge was accepted, a saved thing changed). Push is a
   // separate, still-unconnected rail — these are the local inbox.
   notifications: [],
+  // --- Personal Brief ------------------------------------------------------
+  // A user's explicit interests: one row per (user, kind, value) where kind is
+  // location | type | topic. Idempotent by design — re-following is a no-op.
+  // These are PRIVATE to the owner and never appear on public endpoints.
+  userInterests: [],
+  // Explicit relevance controls: one row per (user, kind, target) where kind
+  // is more | less | not_interested | hide_source. The user said this out
+  // loud; nothing is inferred. Also private to the owner.
+  userRelevance: [],
+  // Server-persisted bookmarks: one row per (user, object). The client-side
+  // relationship graph already models "saved"; this is the durable copy so
+  // saves survive across devices and sessions.
+  saves: [],
+  // --- Following (entity layer) --------------------------------------------
+  // A user follows an ENTITY, never a raw object list: one row per
+  // (user, entity kind, entity key). Entities themselves are DERIVED from
+  // existing records (objects, sources, circles) — nothing is duplicated
+  // here, this store only holds the follow edges.
+  entityFollows: [],
   // Append-only audit trail of consequential mutations (who/what/when/from/to).
   // Never pruned by the app; the operator decides.
   auditLog: [],
@@ -176,6 +199,14 @@ const EMPTY = {
   // Named, data-driven groupings over real objects (rule or curated). See
   // domain/collection.js.
   collections: [],
+
+  // --- Personal collections (Collections brief) ----------------------------
+  // USER-owned named groups of object REFERENCES. Membership lives in
+  // personalCollectionItems; the objects themselves are never duplicated.
+  // Quick-save reuses the existing `saves` rows ("Saved"). See
+  // domain/collections.js — distinct from the editorial domain/collection.js.
+  personalCollections: [],
+  personalCollectionItems: [],
 
   // --- Yard Engine / creator advertising -----------------------------------
   // These are additive operational shelves. Identity remains in `people`,

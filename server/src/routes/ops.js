@@ -8,6 +8,8 @@ import * as settlement from '../domain/settlement.js';
 import * as payment from '../domain/payment.js';
 import * as analytics from '../domain/analytics.js';
 import * as trust from '../domain/trust.js';
+import * as corrections from '../domain/corrections.js';
+import * as sourceTrust from '../domain/sourceTrust.js';
 import * as seed from '../domain/seed.js';
 import { requireAuth, requireCap, recordAudit } from './helpers.js';
 import * as members from '../domain/members.js';
@@ -61,7 +63,14 @@ app.get('/api/ops/analytics', (req, res) => {
 
 app.get('/api/ops/reports', (req, res) => {
   if (!requireCap(req, res, 'ops.read')) return;
-  res.json({ reports: trust.openReports() });
+  // Enrich each report with the object it points at (title/type/publication)
+  // so the reviewer can see what they are deciding about without a second
+  // lookup. Never the object row itself.
+  const reports = trust.openReports().map((r) => ({
+    ...r,
+    target: trust.reportTarget(r)
+  }));
+  res.json({ reports });
 });
 
 
@@ -83,6 +92,99 @@ app.post('/api/ops/reports/:id/resolve', (req, res) => {
 app.get('/api/ops/contributors', (req, res) => {
   if (!requireCap(req, res, 'ops.read')) return;
   res.json({ contributors: trust.contributorLeaderboard() });
+});
+
+
+// --- Corrections (trust layer) ----------------------------------------------
+// A lightweight fix for bad extracted information. The correction row keeps
+// the ORIGINAL source value verbatim; the object's provenance is never
+// rewritten. Creating a correction applies it; rejecting marks the row and
+// the operator corrects back explicitly if a fix was wrong. Both steps are
+// audited with a reason.
+
+app.get('/api/ops/corrections', (req, res) => {
+  if (!requireCap(req, res, 'ops.read')) return;
+  const { objectId, status } = req.query ?? {};
+  try {
+    res.json({
+      corrections: corrections.listCorrections({
+        objectId: typeof objectId === 'string' ? objectId : null,
+        status: typeof status === 'string' ? status : null
+      })
+    });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message ?? e) });
+  }
+});
+
+app.post('/api/ops/corrections', (req, res) => {
+  const me = requireCap(req, res, 'moderate');
+  if (!me) return;
+  const { objectId, field, value, reason, isMeta } = req.body ?? {};
+  try {
+    const result = corrections.correctObject({
+      objectId, field, value, reason, isMeta: isMeta === true,
+      operatorId: me
+    });
+    recordAudit('ops.correction.apply', {
+      actorId: me,
+      objectType: 'correction',
+      objectId: result.correction.id,
+      before: { objectId, field, original: result.correction.originalValue },
+      after: { value: result.correction.correctedValue, changed: result.changed },
+      reason: result.correction.reason
+    });
+    res.status(201).json({ correction: result.correction, changed: result.changed });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message ?? e) });
+  }
+});
+
+app.post('/api/ops/corrections/:id/reject', (req, res) => {
+  const me = requireCap(req, res, 'moderate');
+  if (!me) return;
+  try {
+    const result = corrections.rejectCorrection(req.params.id, me, req.body?.reason);
+    recordAudit('ops.correction.reject', {
+      actorId: me,
+      objectType: 'correction',
+      objectId: req.params.id,
+      reason: result.correction.decisionReason
+    });
+    res.json({ correction: result.correction });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message ?? e) });
+  }
+});
+
+
+// --- Source-level trust (trust layer) ---------------------------------------
+// An operator decision about a source's standing. Never a public rating:
+// it influences ranking/discovery only (degraded ranks lower, disabled stops
+// contributing to the default feed). "Trusted" grants no ranking boost.
+
+app.get('/api/ops/sources/trust', (req, res) => {
+  if (!requireCap(req, res, 'ops.read')) return;
+  res.json({ sources: sourceTrust.sourceTrustList() });
+});
+
+app.post('/api/ops/sources/:id/trust', (req, res) => {
+  const me = requireCap(req, res, 'moderate');
+  if (!me) return;
+  const { status, reason } = req.body ?? {};
+  try {
+    const source = sourceTrust.setSourceTrust(req.params.id, me, status, reason);
+    recordAudit('ops.source.trust', {
+      actorId: me,
+      objectType: 'source',
+      objectId: req.params.id,
+      after: { trustStatus: source.trustStatus },
+      reason: source.trustReason
+    });
+    res.json({ source });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message ?? e) });
+  }
 });
 
 

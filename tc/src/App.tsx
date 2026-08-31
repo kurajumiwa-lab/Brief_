@@ -5,12 +5,22 @@ import {
   toPath,
   objectShareUrl,
   isBriefRoute,
+  explorePath,
+  collectionPath,
   DEFAULT_ROUTE,
   type BriefRoute
 } from './nav/routes';
 import type { ArenaMoneyStatus } from './api/types';
 import QRCode from 'qrcode';
 import { deriveDestinationAlerts, readLastSeen, writeLastSeen, alertLabel, type DestinationAlerts } from './nav/alerts';
+import { EntityPage } from './components/EntityPage';
+import { FollowingSurface } from './components/FollowingSurface';
+import { LocationPage } from './components/LocationPage';
+import { RelatedContent } from './components/RelatedContent';
+import { CollectionsSurface } from './components/CollectionsSurface';
+import { CollectionPage } from './components/CollectionPage';
+import { CollectionPicker } from './components/CollectionPicker';
+import { EntityChip } from './components/EntityChip';
 import { CampaignDistribution } from './components/CampaignDistribution';
 import { AwaitingPayment } from './components/AwaitingPayment';
 import { SourcesPanel } from './components/SourcesPanel';
@@ -39,6 +49,7 @@ import { Pursuits } from './components/Pursuits';
 import { Inbox } from './components/Inbox';
 import { TriageQueue } from './components/TriageQueue';
 import { Quests } from './components/Quests';
+import { LocationChip } from './components/LocationChip';
 import type { GeoPoint } from './components/LocationChip';
 import { ArenaShelf } from './components/ArenaShelf';
 import { ArenaPulse, SeasonStrip } from './components/ArenaPulse';
@@ -76,6 +87,7 @@ import {
   Building2,
   Search,
   Sparkles,
+  FolderPlus,
   Plus,
   Terminal,
   Activity,
@@ -142,6 +154,7 @@ export type ObjectType =
   | 'place'
   | 'identity'
   | 'experience'
+  | 'event'
   | 'opportunity'
   | 'knowledge'
   | 'community'
@@ -249,6 +262,41 @@ export interface BriefObject {
    *  resolution; the render URL is derived from it, never the raw id. */
   imageReference?: string;
   imageNeedsResolution?: boolean;
+  /** Real additional source images (news galleries, event photo sets). Never
+   *  fabricated — the server only projects images that exist in provenance. */
+  gallery?: { url: string; alt?: string; attribution?: string | null }[];
+  /** When the story was first published anywhere in its provenance. */
+  publishedAt?: string;
+  /** The server's temporal lifecycle projection (status/startsAt/deadlineAt). */
+  temporal?: {
+    status?: string;
+    startsAt?: string | null;
+    endsAt?: string | null;
+    deadlineAt?: string | null;
+    dayOfWeek?: string | null;
+  };
+  /** Real source names for attribution ("From Telegram" = the actual name). */
+  sourceNames?: string[];
+  sourceCount?: number;
+  /** Source channel kinds ("telegram", "web", ...) — "Source · Telegram". */
+  sourcePlatforms?: string[];
+  /** The server's verification standing: unverified | source_confirmed |
+   *  cross_source_confirmed | community_confirmed. Corroboration, not truth. */
+  verificationStatus?: string;
+  /** How many independent people confirmed this object. Derived server-side. */
+  confirmationCount?: number;
+  /** Operator corrections applied to this object (original vs corrected). */
+  corrections?: {
+    id: string;
+    field: string;
+    isMeta?: boolean;
+    originalValue: string | null;
+    correctedValue: string;
+    reason: string;
+    createdAt: string;
+  }[];
+  /** Open (unresolved) user reports currently flagging this object. */
+  openReportCount?: number;
   /** Server-labelled temporary demo content; never a client-side fixture flag. */
   testContent?: { label: string; expiresAt: string | null };
 
@@ -707,6 +755,162 @@ const getRelativeTime = (iso: string, now: Date = new Date()): string => {
   const hours = Math.round(mins / 60);
   if (hours < 24) return `${hours}h`;
   return `${Math.round(hours / 24)}d`;
+};
+
+// ---------------------------------------------------------------------------
+// TRUST DISPLAY (trust layer). Every label is derived from real fields the
+// server already projects (publishedAt, sourceNames/sourceCount, temporal,
+// verificationStatus) — never invented, never a raw confidence number.
+// ---------------------------------------------------------------------------
+
+/** Human publication freshness: "Just now", "18 min ago", "Today", "Yesterday",
+ *  "3 days ago", else the date. Null when there is no timestamp to read. */
+export const getRelativeFreshness = (iso?: string | null, now: Date = new Date()): string | null => {
+  if (!iso) return null;
+  const t = new Date(iso).getTime();
+  if (!Number.isFinite(t)) return null;
+  const diffMs = now.getTime() - t;
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins} min ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24 && new Date(t).toDateString() === now.toDateString()) return 'Today';
+  const yesterday = new Date(now.getTime() - 86400000);
+  if (new Date(t).toDateString() === yesterday.toDateString()) return 'Yesterday';
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days} days ago`;
+  return new Date(t).toISOString().slice(0, 10);
+};
+
+/**
+ * The compact source indicator: "Source · Nation" for a single source,
+ * "Sources · 3" for several. Null when provenance says nothing.
+ */
+export const getSourceChip = (object: BriefObject): string | null => {
+  const names = object.sourceNames ?? [];
+  const count = object.sourceCount ?? names.length;
+  if (count >= 2) return `Sources · ${count}`;
+  if (names.length === 1) return `Source · ${names[0]}`;
+  return null;
+};
+
+/** "Source · Telegram" — the channel kind, when known. */
+export const getSourceKindChip = (object: BriefObject): string | null => {
+  const kind = object.sourcePlatforms?.[0];
+  if (!kind) return null;
+  const label = kind === 'telegram_channel' || kind === 'telegram_group'
+    ? 'Telegram'
+    : kind === 'whatsapp_channel' || kind === 'whatsapp_group'
+      ? 'WhatsApp'
+      : kind;
+  return label;
+};
+
+/**
+ * The entity links a card may carry — "Hosted by X" (organizer from
+ * structured metadata), "Venue · X" (structured venue field, or the card's
+ * own entity when the object IS a place), "Source · X" (single-source
+ * provenance). Each is resolved to a real entity by EntityChip; nothing is
+ * linked unless an entity exists.
+ */
+export const entityChipsFor = (object: BriefObject): { kind: 'venue' | 'organizer' | 'publisher' | 'business' | 'community'; name?: string; directId?: string }[] => {
+  const chips: { kind: 'venue' | 'organizer' | 'publisher' | 'business' | 'community'; name?: string; directId?: string }[] = [];
+  const meta = object.metadata ?? {};
+  if (object.type === 'place') {
+    chips.push({ kind: 'venue', name: object.title, directId: `venue:${object.id}` });
+  }
+  const venueName = typeof meta.venue === 'string' && meta.venue.trim() ? meta.venue.trim() : null;
+  if (venueName && object.type !== 'place') {
+    chips.push({ kind: 'venue', name: venueName });
+  }
+  const hostName = typeof meta.hostedBy === 'string' && meta.hostedBy.trim()
+    ? meta.hostedBy.trim()
+    : (typeof meta.organizer === 'string' && meta.organizer.trim() ? meta.organizer.trim() : null);
+  if (hostName) chips.push({ kind: 'organizer', name: hostName });
+  if ((object.sourceCount ?? object.sourceNames?.length ?? 0) === 1 && object.sourceNames?.[0]) {
+    chips.push({ kind: 'publisher', name: object.sourceNames[0] });
+  }
+  const bizName = typeof meta.businessName === 'string' && meta.businessName.trim() ? meta.businessName.trim() : null;
+  if (bizName && object.type === 'offer') {
+    chips.push({ kind: 'business', name: bizName });
+  }
+  const communityName = typeof meta.community === 'string' && meta.community.trim() ? meta.community.trim() : null;
+  if (communityName) {
+    chips.push({ kind: 'community', name: communityName });
+  }
+  return chips;
+};
+
+/** Corroboration, explicitly not certainty: "Confirmed across 2 sources". */
+export const getCorroborationLabel = (object: BriefObject): string | null => {
+  const count = object.sourceCount ?? object.sourceNames?.length ?? 0;
+  if (count >= 2) return `Confirmed across ${count} sources`;
+  if (object.verificationStatus === 'community_confirmed' && object.confirmationCount) {
+    return `Confirmed by ${object.confirmationCount} people`;
+  }
+  return null;
+};
+
+/**
+ * The lifecycle badge for time-sensitive types. For offers: Expired only when
+ * the server's temporal says so; for events: Ended when past, Upcoming with a
+ * "tomorrow · 8:00 PM" preview when a start time exists. Never claims a state
+ * the data does not back.
+ */
+export const getLifecycleBadge = (object: BriefObject, now: Date = new Date()): { label: string; expired: boolean } | null => {
+  const temporal = object.temporal;
+  if (!temporal) return null;
+  const status = temporal.status;
+  const type = object.type;
+
+  if (type === 'offer') {
+    if (status === 'expired') return { label: 'Expired', expired: true };
+    if (status === 'active') return { label: 'Offer active', expired: false };
+    return null;
+  }
+
+  // The pipeline classifies events as 'experience'; 'event' is accepted too
+  // for rows a connector may still label that way.
+  if (type === 'experience' || type === 'event') {
+    if (status === 'past') return { label: 'Ended', expired: true };
+    if (status === 'happening') return { label: 'Happening now', expired: false };
+    if (status === 'upcoming' && temporal.startsAt) {
+      return { label: getEventStartPreview(temporal.startsAt, now), expired: false };
+    }
+    if (status === 'upcoming') return { label: 'Upcoming', expired: false };
+    if (status === 'recurring') return { label: 'Recurring', expired: false };
+    return null;
+  }
+
+  if (type === 'opportunity' && status === 'past') {
+    return { label: 'Closed', expired: true };
+  }
+  if (type === 'alert' || type === 'announcement' || type === 'news') {
+    if (status === 'expired') return { label: 'Expired', expired: true };
+  }
+  return null;
+};
+
+/** "Tomorrow · 8:00 PM" / "Today · 4:00 PM" / "Saturday · 10:00 AM". */
+export const getEventStartPreview = (startsAt: string, now: Date = new Date()): string => {
+  const t = new Date(startsAt).getTime();
+  if (!Number.isFinite(t)) return 'Upcoming';
+  const time = new Date(t).toLocaleTimeString('en-KE', { hour: 'numeric', minute: '2-digit' });
+  const day = new Date(t).toDateString() === now.toDateString()
+    ? 'Today'
+    : new Date(t).toDateString() === new Date(now.getTime() + 86400000).toDateString()
+      ? 'Tomorrow'
+      : new Date(t).toLocaleDateString('en-KE', { weekday: 'long' });
+  return `${day} · ${time}`;
+};
+
+/** "Published {freshness}" — publication age, never confused with event time. */
+export const getPublishedLine = (object: BriefObject, now: Date = new Date()): string | null => {
+  const stamp = object.publishedAt ?? object.createdAt;
+  if (!stamp) return null;
+  const fresh = getRelativeFreshness(stamp, now);
+  if (!fresh) return null;
+  return `Published ${fresh.toLowerCase()}`;
 };
 
 const formatCount = (n: number): string =>
@@ -1815,6 +2019,260 @@ const buildDailyBrief = (input: {
   return sections.filter(
     (section) => section.objects.length > 0 || section.pursuits.length > 0
   );
+};
+
+// ============================================================================
+// DISCOVERY DAILY BRIEF — TODAY / NEAR YOU / NOW / COMING UP
+// ----------------------------------------------------------------------------
+// The compact "Today's Brief" layer of the discovery experience. Every row
+// comes from a REAL persisted object's temporal projection (the server's
+// lifecycle fields, never the wall clock guessing). Sections appear only when
+// they have data — no hardcoded samples, no padding.
+// ============================================================================
+
+export interface DiscoveryBriefSection {
+  key: 'today' | 'near' | 'now' | 'coming';
+  title: string;
+  objects: BriefObject[];
+}
+
+const startOfLocalDay = (d: Date) => {
+  const out = new Date(d);
+  out.setHours(0, 0, 0, 0);
+  return out;
+};
+
+const isSameLocalDay = (a: Date, b: Date) =>
+  a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+
+const isEventType = (o: BriefObject) => o.type === 'experience' || String(o.type) === 'event';
+
+export const buildDiscoveryBrief = (input: {
+  objects: BriefObject[];
+  area?: string | null;
+  geo?: { lat: number; lng: number } | null;
+}): DiscoveryBriefSection[] => {
+  const now = new Date();
+  const todayStart = startOfLocalDay(now);
+  const tomorrowStart = new Date(todayStart.getTime() + 86400000);
+  const yesterdayStart = new Date(todayStart.getTime() - 86400000);
+
+  const parsed = (v: unknown): Date | null => {
+    if (typeof v !== 'string') return null;
+    const d = new Date(v);
+    return Number.isFinite(d.getTime()) ? d : null;
+  };
+
+  const today: BriefObject[] = [];
+  const near: BriefObject[] = [];
+  const nowSection: BriefObject[] = [];
+  const coming: BriefObject[] = [];
+  const placed = new Set<string>();
+
+  for (const o of input.objects) {
+    const t = o.temporal;
+    const status = t?.status ?? '';
+    const startsAt = parsed(t?.startsAt ?? o.metadata?.eventStart ?? o.metadata?.dateCanonical);
+    const deadlineAt = parsed(t?.deadlineAt ?? o.metadata?.deadlineCanonical);
+
+    // TODAY — events actually happening today, and things expiring today.
+    if (isEventType(o) && startsAt && startsAt >= yesterdayStart && startsAt < tomorrowStart) {
+      if (!placed.has(o.id)) { placed.add(o.id); today.push(o); }
+      continue;
+    }
+    if ((o.type === 'offer' || o.type === 'opportunity') && deadlineAt && deadlineAt >= todayStart && deadlineAt < tomorrowStart) {
+      if (!placed.has(o.id)) { placed.add(o.id); today.push(o); }
+      continue;
+    }
+    if (status === 'happening') {
+      if (!placed.has(o.id)) { placed.add(o.id); today.push(o); }
+      continue;
+    }
+
+    // NOW — current alerts, fresh news, active offers. Places and businesses
+    // are "current" too, but they are not breaking activity: they belong in
+    // NEAR YOU, not NOW.
+    const isNowType = o.type === 'alert' || o.type === 'news' || o.type === 'offer'
+      || o.type === 'opportunity' || o.type === 'announcement';
+    if (isNowType && (status === 'current' || status === 'active' || status === 'no_deadline')) {
+      if (!placed.has(o.id)) { placed.add(o.id); nowSection.push(o); }
+      continue;
+    }
+
+    // COMING UP — important upcoming events (ranked, so the most relevant
+    // ones surface here).
+    if (isEventType(o) && status === 'upcoming') {
+      if (!placed.has(o.id)) { placed.add(o.id); coming.push(o); }
+      continue;
+    }
+
+    // NEAR YOU — everything else with a real locality signal.
+    const dist = o.metadata?.distanceKm;
+    const area = String(o.metadata?.area ?? o.metadata?.county ?? '').trim();
+    if (typeof dist === 'number' || area || o.locationName) {
+      if (!placed.has(o.id)) { placed.add(o.id); near.push(o); }
+    }
+  }
+
+  const sections: DiscoveryBriefSection[] = [];
+  if (today.length > 0) sections.push({ key: 'today', title: 'TODAY', objects: today });
+  if (near.length > 0) sections.push({ key: 'near', title: 'NEAR YOU', objects: near });
+  if (nowSection.length > 0) sections.push({ key: 'now', title: 'NOW', objects: nowSection });
+  if (coming.length > 0) sections.push({ key: 'coming', title: 'COMING UP', objects: coming });
+  return sections;
+};
+
+// The report reasons the SERVER actually accepts. The client buttons send
+// these exact ids; labels are for people. Aligned with trust.js REPORT_REASONS.
+export const REPORT_REASONS: { id: string; label: string }[] = [
+  { id: 'wrong', label: 'Incorrect information' },
+  { id: 'spam', label: 'Spam' },
+  { id: 'offensive', label: 'Offensive' },
+  { id: 'duplicate', label: 'Duplicate' },
+  { id: 'expired', label: 'Expired' },
+  { id: 'cancelled', label: 'Event cancelled' },
+  { id: 'wrong_location', label: 'Wrong location' },
+  { id: 'wrong_date', label: 'Wrong date/time' },
+  { id: 'other', label: 'Other' }
+];
+
+// ============================================================================
+// PERSONAL BRIEF — MY BRIEF / YOUR BRIEF / AROUND YOU / TODAY / COMING UP /
+// FOR YOU. Built from the SAME persisted objects the global feed uses, in the
+// server's personal order (the re-ranking, never a second object store).
+// Sections appear only when real data backs them — no empty sections, no
+// manufactured rows.
+// ============================================================================
+
+export interface PersonalBriefSection {
+  key: 'your' | 'around' | 'today' | 'coming' | 'foryou';
+  title: string;
+  objects: BriefObject[];
+}
+
+const matchesFollowedTopics = (o: BriefObject, topics: { id: string; label: string; keywords: string[] }[], followed: string[]): string[] => {
+  if (!followed.length) return [];
+  const text = [
+    o.title, o.summary, o.category,
+    ...(Array.isArray(o.metadata?.categories) ? (o.metadata.categories as string[]) : [])
+  ].filter((v): v is string => typeof v === 'string' && v.length > 0).join(' ').toLowerCase();
+  if (!text) return [];
+  const hits: string[] = [];
+  for (const topic of topics) {
+    if (!followed.includes(topic.id)) continue;
+    if (topic.keywords.some((k) => text.includes(k))) hits.push(topic.id);
+  }
+  return hits;
+};
+
+export const buildPersonalSections = (input: {
+  ordered: { object: BriefObject; boost: number; reasons: string[] }[];
+  interests: { locations: string[]; types: string[]; topics: string[] };
+  topics: { id: string; label: string; keywords: string[] }[];
+  personalized: boolean;
+}): PersonalBriefSection[] => {
+  const now = new Date();
+  const todayStart = startOfLocalDay(now);
+  const tomorrowStart = new Date(todayStart.getTime() + 86400000);
+
+  const parsed = (v: unknown): Date | null => {
+    if (typeof v !== 'string') return null;
+    const d = new Date(v);
+    return Number.isFinite(d.getTime()) ? d : null;
+  };
+
+  const your: BriefObject[] = [];
+  const around: BriefObject[] = [];
+  const today: BriefObject[] = [];
+  const coming: BriefObject[] = [];
+  const foryou: BriefObject[] = [];
+  const placed = new Set<string>();
+
+  for (const { object: o, boost, reasons } of input.ordered) {
+    const t = o.temporal;
+    const status = t?.status ?? '';
+    const startsAt = parsed(t?.startsAt ?? o.metadata?.eventStart);
+    const deadlineAt = parsed(t?.deadlineAt ?? o.metadata?.deadlineCanonical);
+
+    // YOUR BRIEF — the user's own top of the feed: rows personalization
+    // actually moved (explicit boost, never fabricated).
+    if (input.personalized && boost > 0 && your.length < 4) {
+      if (!placed.has(o.id)) { placed.add(o.id); your.push(o); }
+      continue;
+    }
+
+    // TODAY — events actually happening today, and things expiring today
+    // (the same real temporal rules as the global brief).
+    if (isEventType(o) && startsAt && startsAt >= todayStart && startsAt < tomorrowStart) {
+      if (!placed.has(o.id)) { placed.add(o.id); today.push(o); }
+      continue;
+    }
+    if ((o.type === 'offer' || o.type === 'opportunity') && deadlineAt && deadlineAt >= todayStart && deadlineAt < tomorrowStart) {
+      if (!placed.has(o.id)) { placed.add(o.id); today.push(o); }
+      continue;
+    }
+    if (status === 'happening') {
+      if (!placed.has(o.id)) { placed.add(o.id); today.push(o); }
+      continue;
+    }
+
+    // COMING UP — upcoming events in the personal order.
+    if (isEventType(o) && status === 'upcoming') {
+      if (!placed.has(o.id)) { placed.add(o.id); coming.push(o); }
+      continue;
+    }
+
+    // FOR YOU — followed types and matched topics, capped so it stays a
+    // suggestion rail rather than a second feed.
+    const typeMatch = input.interests.types.includes(o.type);
+    const topicMatch = matchesFollowedTopics(o, input.topics, input.interests.topics).length > 0;
+    if (input.personalized && (typeMatch || topicMatch) && foryou.length < 4) {
+      if (!placed.has(o.id)) { placed.add(o.id); foryou.push(o); }
+      continue;
+    }
+
+    // AROUND YOU — everything else with a real locality signal, in the
+    // personal order. Never fabricated: only rows that say where they are.
+    const area = String(o.metadata?.area ?? o.metadata?.county ?? '').trim();
+    const dist = o.metadata?.distanceKm;
+    if (typeof dist === 'number' || area || o.locationName) {
+      if (!placed.has(o.id)) { placed.add(o.id); around.push(o); }
+    }
+  }
+
+  const sections: PersonalBriefSection[] = [];
+  if (your.length > 0) sections.push({ key: 'your', title: 'YOUR BRIEF', objects: your });
+  if (around.length > 0) sections.push({ key: 'around', title: 'AROUND YOU', objects: around });
+  if (today.length > 0) sections.push({ key: 'today', title: 'TODAY', objects: today });
+  if (coming.length > 0) sections.push({ key: 'coming', title: 'COMING UP', objects: coming });
+  if (foryou.length > 0) sections.push({ key: 'foryou', title: 'FOR YOU', objects: foryou });
+  return sections;
+};
+
+/** A compact WHEN line for Today's Brief rows, from real temporal data. */
+const briefWhenLabel = (o: BriefObject): string | null => {
+  const t = o.temporal;
+  const fmt = (v: unknown) => {
+    if (typeof v !== 'string') return null;
+    const d = new Date(v);
+    if (!Number.isFinite(d.getTime())) return null;
+    const now = new Date();
+    if (isSameLocalDay(d, now)) {
+      return `Today ${d.toLocaleTimeString('en-KE', { hour: 'numeric', minute: '2-digit' })}`;
+    }
+    return d.toLocaleDateString('en-KE', { weekday: 'short', day: 'numeric', month: 'short' });
+  };
+  if (t?.status === 'happening') return 'Happening now';
+  if (t?.status === 'upcoming') return fmt(t.startsAt) ?? 'Upcoming';
+  if (t?.status === 'active') {
+    const dl = fmt(t.deadlineAt);
+    return dl ? `Ends ${dl.replace('Today ', 'today ')}` : 'Ongoing';
+  }
+  if (t?.status === 'current' || t?.status === 'no_deadline') return 'Now';
+  if (t?.status === 'past' && t.startsAt) return `Ended ${fmt(t.startsAt)}`;
+  if (o.metadata?.eventStart) return fmt(o.metadata.eventStart);
+  if (o.metadata?.deadlineCanonical) return `Ends ${fmt(o.metadata.deadlineCanonical)}`;
+  return null;
 };
 
 // ============================================================================
@@ -4495,12 +4953,35 @@ export const objectFromServer = (row: any): BriefObject => {
   category: row?.category ? String(row.category) : 'Uncategorised',
   summary: String(row?.summary ?? ''),
   locationName: row?.locationName ?? undefined,
-  isVerified: row?.verificationStatus === 'verified',
+  // The server's levels are unverified | source_confirmed |
+  // cross_source_confirmed | community_confirmed. A "verified" claim in the
+  // UI is only made at the corroborated/community tiers — a single source is
+  // reported as such, never dressed up as verified.
+  verificationStatus: typeof row?.verificationStatus === 'string' ? row.verificationStatus : undefined,
+  isVerified: ['verified', 'cross_source_confirmed', 'community_confirmed'].includes(row?.verificationStatus),
+  confirmationCount: Number.isInteger(row?.confirmationCount) ? row.confirmationCount : undefined,
   lastVerifiedAt: row?.lastVerifiedAt ?? undefined,
   validityWindowDays: row?.validityWindowDays ?? undefined,
   sourceType: row?.provenance?.[0]?.platform ?? undefined,
-  sourceUrl: row?.provenance?.[0]?.sourceUrl ?? undefined,
+  sourceUrl: row?.sourceUrl ?? row?.provenance?.[0]?.sourceUrl ?? undefined,
   sourceId: row?.provenance?.[0]?.sourceId ?? undefined,
+  sourcePlatforms: Array.isArray(row?.sourcePlatforms)
+    ? row.sourcePlatforms.filter((s: unknown) => typeof s === 'string')
+    : undefined,
+  corrections: Array.isArray(row?.corrections) && row.corrections.length > 0
+    ? row.corrections
+        .map((c: any) => ({
+          id: String(c?.id ?? ''),
+          field: String(c?.field ?? ''),
+          isMeta: c?.isMeta === true,
+          originalValue: c?.originalValue === null || c?.originalValue === undefined ? null : String(c.originalValue),
+          correctedValue: String(c?.correctedValue ?? ''),
+          reason: String(c?.reason ?? ''),
+          createdAt: String(c?.createdAt ?? '')
+        }))
+        .filter((c: any) => c.field)
+    : undefined,
+  openReportCount: Number.isInteger(row?.openReportCount) ? row.openReportCount : undefined,
   metadata: Object.keys(meta).length > 0 ? meta : undefined,
   createdAt: String(row?.createdAt ?? new Date().toISOString()),
   // Feed projections expose media/action as nested public fields; keep the
@@ -4511,6 +4992,25 @@ export const objectFromServer = (row: any): BriefObject => {
     ((row?.imageReference || row?.media?.reference) && row?.id
       ? briefApi.mediaFileUrl(`/api/media/telegram/${String(row?.id)}`)
       : undefined),
+  // Indexed gallery images resolve like the cover (server-side Telegram
+  // resolution at /api/media/telegram/:id/:index, or direct web URLs).
+  gallery: Array.isArray(row?.gallery) && row.gallery.length > 0
+    ? row.gallery
+        .map((g: any) => {
+          const url = typeof g?.url === 'string' ? g.url : null;
+          if (!url) return null;
+          return {
+            url,
+            alt: typeof g?.alt === 'string' ? g.alt : undefined,
+            attribution: g?.attribution ?? null
+          };
+        })
+        .filter(Boolean)
+    : undefined,
+  publishedAt: typeof row?.publishedAt === 'string' ? row.publishedAt : undefined,
+  temporal: row?.temporal && typeof row.temporal === 'object' ? row.temporal : undefined,
+  sourceNames: Array.isArray(row?.sourceNames) ? row.sourceNames.filter((s: unknown) => typeof s === 'string') : undefined,
+  sourceCount: Number.isInteger(row?.sourceCount) ? row.sourceCount : undefined,
   actionUrl: row?.actionUrl ?? row?.action?.url ?? undefined,
   actionType: row?.actionType ?? row?.action?.type ?? undefined,
   actionLabel: row?.actionLabel ?? row?.action?.label ?? undefined,
@@ -5109,7 +5609,26 @@ export function App() {
   const [activeTab, setActiveTab] = useState<Destination>(bootRoute.dest);
   const [homeFeedStatus, setHomeFeedStatus] = useState<'loading' | 'ready' | 'unavailable'>('loading');
   const [nearbySection, setNearbySection] = useState<NearbySection>(bootRoute.nearby);
+  // The discovery experience navigation: Home, Events, Explore, Offers,
+  // Places, News, Opportunities. Categories only appear when the real data
+  // has meaningful rows for them.
+  const [discoveryTab, setDiscoveryTab] = useState<
+    'home' | 'events' | 'explore' | 'offers' | 'places' | 'news' | 'opportunities'
+  >('home');
   const [moreFilters, setMoreFilters] = useState<boolean>(false);
+  // --- Personal Brief ----------------------------------------------------
+  // The personal layer is the same object store re-ranked per user: we keep
+  // the server's ORDERED ids plus the per-row boost, and map them onto the
+  // existing `objects` list — never a second object store on the client.
+  const [personalState, setPersonalState] = useState<briefApi.PersonalState | null>(null);
+  const [personalFeedIds, setPersonalFeedIds] = useState<string[] | null>(null);
+  const [personalBoostMap, setPersonalBoostMap] = useState<Record<string, { boost: number; reasons: string[] }>>({});
+  // Onboarding is optional and never blocks: skipping just closes the card.
+  const [personalBriefDismissed, setPersonalBriefDismissed] = useState(false);
+  const [personalBusy, setPersonalBusy] = useState(false);
+  const [personalPicks, setPersonalPicks] = useState<{ locations: string[]; types: string[]; topics: string[] }>({
+    locations: [], types: [], topics: []
+  });
   const [myLayerSection, setMyLayerSection] = useState<MyLayerSection>(bootRoute.mylayer);
   const [workflowSection, setWorkflowSection] = useState<WorkflowSection>(bootRoute.workflow);
   // Which bundle each desk is showing is DERIVED from the open section rather
@@ -5421,6 +5940,9 @@ export function App() {
   // explicit device-location grant or a manual city tap — never inferred,
   // never fabricated. Null means "everywhere" (the global ranked feed).
   const [userLocation, setUserLocation] = useState<GeoPoint | null>(null);
+  // A named locality scope for the discovery feed (a city or district tap).
+  // Null means the feed is geo- or globally scoped, never inferred.
+  const [feedArea, setFeedArea] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
   const [locError, setLocError] = useState<string | null>(null);
 
@@ -5439,6 +5961,9 @@ export function App() {
           lng: pos.coords.longitude,
           label: 'your location'
         });
+        // A precise device fix scopes the feed by distance; it is not a
+        // named area.
+        setFeedArea(null);
         setSelectedLocation('your location');
       },
       () => {
@@ -5452,12 +5977,16 @@ export function App() {
   const chooseCity = React.useCallback((c: GeoPoint) => {
     setLocError(null);
     setUserLocation(c);
+    // Named places scope the discovery feed by area (county/area matching),
+    // which is far more precise for districts than a raw point + radius.
+    setFeedArea(c.area ?? null);
     setSelectedLocation(c.label);
   }, []);
 
   const clearLocation = React.useCallback(() => {
     setLocError(null);
     setUserLocation(null);
+    setFeedArea(null);
     setSelectedLocation('Your area');
   }, []);
 
@@ -5478,6 +6007,128 @@ export function App() {
   React.useEffect(() => {
     void loadObjects(userLocation ? { lat: userLocation.lat, lng: userLocation.lng } : undefined);
   }, [loadObjects, userLocation]);
+
+  // Personal Brief: interests, saves, controls and the personal re-ranking.
+  // All private to the signed-in user; anonymous callers simply stay global.
+  const loadPersonal = React.useCallback(async () => {
+    if (!sessionUser) return;
+    const [st, fd] = await Promise.all([
+      briefApi.getPersonalState(),
+      briefApi.getPersonalFeed({ limit: 60 })
+    ]);
+    if (st.ok) setPersonalState(st.data);
+    if (fd.ok) {
+      setPersonalFeedIds(fd.data.objects.map((o: any) => o.id));
+      const map: Record<string, { boost: number; reasons: string[] }> = {};
+      for (const o of fd.data.objects as any[]) {
+        map[o.id] = o.personal ?? { boost: 0, reasons: [] };
+      }
+      setPersonalBoostMap(map);
+    }
+  }, [sessionUser]);
+
+  React.useEffect(() => { void loadPersonal(); }, [loadPersonal]);
+
+  // Seed server-persisted saves into the client relationship graph — the
+  // durable copy, so saves survive across devices. Only ADDS missing edges;
+  // the relationship graph stays the single live source for the UI.
+  React.useEffect(() => {
+    if (!personalState || personalState.saved.length === 0) return;
+    setRelationships((prev) => {
+      const have = new Set(prev.filter((r) => r.verb === 'saved').map((r) => r.targetId));
+      const missing = personalState.saved.filter((id) => !have.has(id) && objects.some((o) => o.id === id));
+      if (missing.length === 0) return prev;
+      const nowIso = new Date().toISOString();
+      return [
+        ...prev,
+        ...missing.map((id) => ({
+          id: `rel_srv_${id}`,
+          sourceType: 'identity' as ObjectType,
+          sourceId: 'usr_me',
+          verb: 'saved' as const,
+          targetType: (objects.find((o) => o.id === id)?.type ?? 'knowledge') as ObjectType,
+          targetId: id,
+          state: 'engaged' as FlowState,
+          updatedAt: nowIso
+        }))
+      ];
+    });
+  }, [personalState, objects]);
+
+  const togglePersonalPick = (group: 'locations' | 'types' | 'topics', value: string) =>
+    setPersonalPicks((p) => ({
+      ...p,
+      [group]: p[group].includes(value) ? p[group].filter((v) => v !== value) : [...p[group], value]
+    }));
+
+  const savePersonalBrief = async () => {
+    setPersonalBusy(true);
+    const res = await briefApi.putInterests(personalPicks);
+    setPersonalBusy(false);
+    if (!res.ok) {
+      showToast(res.error ?? 'Could not save your Brief.');
+      return;
+    }
+    setPersonalState((p) => (p ? { ...p, interests: res.data.interests } : p));
+    setPersonalBriefDismissed(false);
+    setPersonalPicks({ locations: [], types: [], topics: [] });
+    showToast('Your Brief is set.');
+    void loadPersonal();
+  };
+
+  const followOne = async (kind: 'location' | 'type' | 'topic', value: string) => {
+    const res = await briefApi.followInterest(kind, value);
+    if (!res.ok) { showToast(res.error ?? 'Could not follow that.'); return; }
+    setPersonalState((p) => (p ? { ...p, interests: res.data.interests } : p));
+    void loadPersonal();
+  };
+
+  const unfollowOne = async (kind: 'location' | 'type' | 'topic', value: string) => {
+    const res = await briefApi.unfollowInterest(kind, value);
+    if (!res.ok) { showToast(res.error ?? 'Could not unfollow.'); return; }
+    setPersonalState((p) => (p ? { ...p, interests: res.data.interests } : p));
+    void loadPersonal();
+  };
+
+  /** Unfollow an entity (venue/business/publisher/organizer/community). */
+  const unfollowEntityOne = async (id: string) => {
+    const res = await briefApi.unfollowEntity(id);
+    if (!res.ok) { showToast(res.error ?? 'Could not unfollow.'); return; }
+    setPersonalState((p) => p
+      ? { ...p, followed: p.followed.filter((f) => f.id !== id) }
+      : p);
+    void loadPersonal();
+  };
+
+  /** Open an entity page from a chip or card link. */
+  const openEntityPage = (id: string) => {
+    setEntityPageId(id);
+  };
+
+  /** Open the public location discovery page (/explore/:name). */
+  const openLocationPage = (name: string) => {
+    setLocationName(name);
+  };
+
+  // An explicit relevance control, persisted. Tapping an active control
+  // undoes it — the user can always change their mind.
+  const tuneObject = async (kind: 'more' | 'less' | 'not_interested' | 'hide_source', object: BriefObject) => {
+    const list = personalState?.relevance ?? { more: [], less: [], notInterested: [], hiddenSources: [] };
+    const active = kind === 'hide_source'
+      ? list.hiddenSources.includes(object.sourceId ?? '')
+      : kind === 'not_interested'
+        ? list.notInterested.includes(object.id)
+        : list[kind].includes(object.id);
+    const res = active
+      ? await briefApi.unsetRelevanceControl(kind, kind === 'hide_source' ? { sourceId: object.sourceId } : { objectId: object.id })
+      : await briefApi.setRelevanceControl(kind, kind === 'hide_source' ? { sourceId: object.sourceId } : { objectId: object.id });
+    if (!res.ok) { showToast(res.error ?? 'Could not record that.'); return; }
+    setPersonalState((p) => (p ? { ...p, relevance: res.data.relevance } : p));
+    showToast(active ? 'Reverted.' : kind === 'more' ? 'More like this — saved.'
+      : kind === 'less' ? 'Less like this — saved.'
+        : kind === 'not_interested' ? 'Noted. Fewer of these.' : 'This source hidden for you.');
+    void loadPersonal();
+  };
 
 
   const runBriefItPreview = async () => {
@@ -5602,8 +6253,22 @@ export function App() {
   const [seenIds, setSeenIds] = useState<Set<string>>(new Set());
 
   const [selectedObjectForDetail, setSelectedObjectForDetailRaw] = useState<BriefObject | null>(null);
+  /** The object graph (related content) for the open detail modal. */
+  const [detailGraph, setDetailGraph] = useState<briefApi.GraphEdge[] | null>(null);
   const [selectedTeaSlug, setSelectedTeaSlug] = useState<string | null>(bootRoute.teaSlug);
   const [pendingObjectId, setPendingObjectId] = useState<string | null>(bootRoute.objectId);
+  /** The followable entity page (venue/business/publisher/organizer/community). */
+  const [entityPageId, setEntityPageId] = useState<string | null>(bootRoute.entityId);
+  /** The public location discovery page (/explore/:name). */
+  const [locationName, setLocationName] = useState<string | null>(bootRoute.locationName);
+  /** The Following surface overlay (feed + management). */
+  const [followingOpen, setFollowingOpen] = useState(false);
+  /** The personal Collections surface overlay. */
+  const [collectionsOpen, setCollectionsOpen] = useState(false);
+  /** A shared collection page opened from /collections/:id. */
+  const [collectionRouteId, setCollectionRouteId] = useState<string | null>(bootRoute.collectionId);
+  /** "Add to collection" picker open inside the detail modal. */
+  const [collectionPickerFor, setCollectionPickerFor] = useState<string | null>(null);
 
   // Opening an object marks it seen, which is what keeps the Daily Brief's
   // "New" section honest instead of showing the same items forever.
@@ -5624,28 +6289,7 @@ export function App() {
   // an explicit trigger so it never covers content unprompted; the physics is
   // the same springIntro curve the design system specifies.
   const [springOverlayOpen, setSpringOverlayOpen] = useState<boolean>(false);
-  const [demoBusy, setDemoBusy] = useState<boolean>(false);
-  const [demoSeeded, setDemoSeeded] = useState<boolean>(false);
-  const [demoExpiresAt, setDemoExpiresAt] = useState<string | null>(null);
   const [feedReload, setFeedReload] = useState(0);
-
-  // Seed demo content in-process (the CLI wrote to a file the running server
-  // never re-read). Populates the empty surface through the real pipeline.
-  const handleLoadDemo = async () => {
-    setDemoBusy(true);
-    const res = await briefApi.seedDemo();
-    setDemoBusy(false);
-    if (res.ok) {
-      setDemoSeeded(true);
-      setDemoExpiresAt(res.data.seeded?.seedExpiresAt ?? null);
-      setFeedReload((value) => value + 1);
-      showToast(res.data.seeded?.expired ? 'Demo content has expired and was not reused.' : 'Temporary demo content loaded.');
-      void loadObjects();
-      void refreshConnectors();
-    } else {
-      showToast(res.error ?? 'Could not load demo content.');
-    }
-  };
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -6134,7 +6778,14 @@ export function App() {
 
     // The aha moment, reported once it has actually happened. "saved" is the
     // activation event Brief measures itself on; opening is the step before it.
-    if (action === 'save') noteActivation('object_saved', { objectId: object.id, type: object.type });
+    if (action === 'save') {
+      noteActivation('object_saved', { objectId: object.id, type: object.type });
+      // Durable copy: the same save, persisted server-side, so it survives
+      // across devices. Best-effort — the local graph stays the live source.
+      void briefApi.saveObjectForMe(object.id).then((r) => {
+        if (r.ok) setPersonalState((p) => (p ? { ...p, saved: r.data.saved } : p));
+      });
+    }
     else if (action === 'discover' || action === 'read') noteActivation('object_opened', { objectId: object.id });
 
     setRelationships(prev => {
@@ -6480,10 +7131,25 @@ export function App() {
     const action = resolveAction(object);
     const origin = publicOrigin || (typeof window !== 'undefined' ? window.location.origin : null);
     const shareUrl = objectShareUrl(origin, object.id);
+    // Trust layer: a shared object carries its source, freshness and current
+    // status, so an expired offer is never shared as active and a cancelled
+    // event is never shared as confirmed.
+    const sourceChip = getSourceChip(object);
+    const published = getPublishedLine(object);
+    const life = getLifecycleBadge(object);
+    const statusLine = life
+      ? (life.expired ? `Status: ${life.label}` : `Status: ${life.label}`)
+      : null;
+    const sourceLine = sourceChip
+      ? sourceChip.replace(/^Source · /, 'Source: ').replace(/^Sources · /, 'Sources: ')
+      : null;
     const lines = [
       object.title,
       object.category,
       object.locationName ? `Location: ${object.locationName}` : null,
+      sourceLine,
+      published ? published : null,
+      statusLine,
       action.kind !== 'none' ? `Action: ${action.label}` : null,
       shareUrl ? shareUrl : null,
       !shareUrl && object.sourceUrl ? `Source: ${object.sourceUrl}` : null
@@ -7449,6 +8115,87 @@ export function App() {
     [objects, pursuits, pursuitResults, savedIdSet, watchedIds, seenIds]
   );
 
+  // The discovery-experience Daily Brief: TODAY / NEAR YOU / NOW / COMING UP
+  // from real persisted rows. Only rendered when it has data.
+  const discoveryBrief = useMemo(
+    () =>
+      buildDiscoveryBrief({
+        objects,
+        area: feedArea,
+        geo: userLocation ? { lat: userLocation.lat, lng: userLocation.lng } : null
+      }),
+    [objects, feedArea, userLocation]
+  );
+
+  // --- Personal Brief derivations -----------------------------------------
+  // The personal order is the server's re-ranking of the SAME objects — the
+  // ids are mapped onto `objects`, never duplicated into a second store.
+  const personalOrdered = useMemo(() => {
+    if (!personalFeedIds) return null;
+    const byId = new Map(objects.map((o) => [o.id, o]));
+    const out: { object: BriefObject; boost: number; reasons: string[] }[] = [];
+    for (const id of personalFeedIds) {
+      const object = byId.get(id);
+      if (!object) continue;
+      const p = personalBoostMap[id];
+      out.push({ object, boost: p?.boost ?? 0, reasons: p?.reasons ?? [] });
+    }
+    return out;
+  }, [personalFeedIds, personalBoostMap, objects]);
+
+  const personalInterests = personalState?.interests ?? { locations: [], types: [], topics: [] };
+  const personalHasInterests = personalInterests.locations.length > 0 || personalInterests.types.length > 0 || personalInterests.topics.length > 0;
+
+  const personalSections = useMemo(() => {
+    if (!personalOrdered || personalOrdered.length === 0) return [];
+    return buildPersonalSections({
+      ordered: personalOrdered,
+      interests: personalInterests,
+      topics: personalState?.topics ?? [],
+      personalized: personalHasInterests
+    });
+  }, [personalOrdered, personalInterests, personalState, personalHasInterests]);
+
+  // Types that really exist in the loaded data — the onboarding chips are
+  // never a hard-coded taxonomy, only what the objects themselves say.
+  const availableTypes = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const o of objects) counts[o.type] = (counts[o.type] ?? 0) + 1;
+    return Object.keys(counts) as ObjectType[];
+  }, [objects]);
+
+  // The Personal Brief Saved surface: Upcoming / Active / News / Places /
+  // Offers from the existing saved relationship graph. Expired or past rows
+  // read as expired — they are never disguised as active.
+  const personalSavedGroups = useMemo(() => {
+    const nowMs = Date.now();
+    const groups: { key: string; title: string; items: BriefObject[]; expired: BriefObject[] }[] = [
+      { key: 'upcoming', title: 'Upcoming', items: [], expired: [] },
+      { key: 'active', title: 'Active', items: [], expired: [] },
+      { key: 'news', title: 'News', items: [], expired: [] },
+      { key: 'places', title: 'Places', items: [], expired: [] },
+      { key: 'offers', title: 'Offers', items: [], expired: [] }
+    ];
+    for (const o of savedObjects) {
+      const t = o.temporal;
+      const status = t?.status ?? '';
+      const startsAt = t?.startsAt ? Date.parse(t.startsAt) : NaN;
+      const deadlineAt = t?.deadlineAt ? Date.parse(t.deadlineAt) : NaN;
+      const isEvent = o.type === 'experience' || o.type === 'event';
+      const expired = status === 'expired' || status === 'past'
+        || (Number.isFinite(deadlineAt) && deadlineAt < nowMs)
+        || (isEvent && Number.isFinite(startsAt) && startsAt < nowMs);
+      let group: { key: string; title: string; items: BriefObject[]; expired: BriefObject[] };
+      if (isEvent) group = groups[0];                       // Upcoming
+      else if (o.type === 'news' || o.type === 'announcement' || o.type === 'alert') group = groups[2]; // News
+      else if (o.type === 'place' || o.type === 'business') group = groups[3];   // Places
+      else if (o.type === 'offer') group = groups[4];       // Offers
+      else group = groups[1];                               // Active (opportunities, services, ...)
+      if (expired) group.expired.push(o); else group.items.push(o);
+    }
+    return groups.filter((g) => g.items.length > 0 || g.expired.length > 0);
+  }, [savedObjects]);
+
   const pendingCandidates = useMemo(
     () => candidates.filter((c) => !reviewed[c.id]),
     [candidates, reviewed]
@@ -7460,6 +8207,10 @@ export function App() {
         (rel) => !(rel.targetId === object.id && rel.verb === 'saved')
       )
     );
+    // Durable copy stays in step: the server-side save is removed too.
+    void briefApi.unsaveObjectForMe(object.id).then((r) => {
+      if (r.ok) setPersonalState((p) => (p ? { ...p, saved: r.data.saved } : p));
+    });
     showToast(`Removed "${object.title}" from your saved things.`);
   };
 
@@ -7553,6 +8304,9 @@ export function App() {
     objectId: selectedObjectForDetail?.id ?? pendingObjectId,
     teaSlug: selectedTeaSlug,
     campaignId: openCampaignId,
+    entityId: entityPageId,
+    locationName,
+    collectionId: collectionRouteId,
     capture: captureOpen,
     menu: menuOpen,
     admin: adminOpen,
@@ -7560,7 +8314,7 @@ export function App() {
   }), [
     activeTab, nearbySection, myLayerSection, workflowSection, arenaSection,
     selectedObjectForDetail, pendingObjectId, selectedTeaSlug, openCampaignId,
-    captureOpen, menuOpen, adminOpen
+    entityPageId, locationName, collectionRouteId, captureOpen, menuOpen, adminOpen
   ]);
 
   const writeUrl = useCallback((route: BriefRoute, mode: 'push' | 'replace') => {
@@ -7583,6 +8337,9 @@ export function App() {
     setCaptureOpen(route.capture);
     setSelectedTeaSlug(route.teaSlug);
     setOpenCampaignId(route.campaignId);
+    setEntityPageId(route.entityId);
+    setLocationName(route.locationName);
+    setCollectionRouteId(route.collectionId);
     if (route.objectId) setPendingObjectId(route.objectId);
     else {
       setPendingObjectId(null);
@@ -7592,7 +8349,7 @@ export function App() {
 
   const dismissOverlay = useCallback(() => {
     const st = typeof window !== 'undefined' ? window.history.state : null;
-    const overlayState = isBriefRoute(st) && (st.menu || st.capture || st.admin || st.objectId || st.teaSlug || st.campaignId);
+    const overlayState = isBriefRoute(st) && (st.menu || st.capture || st.admin || st.objectId || st.teaSlug || st.campaignId || st.entityId || st.locationName || st.collectionId);
     if (overlayState && !st.landed && typeof window !== 'undefined' && window.history.length > 1) {
       window.history.back();
       return;
@@ -7605,7 +8362,11 @@ export function App() {
     setOpenCampaignId(null);
     setPendingObjectId(null);
     setSelectedObjectForDetailRaw(null);
-    writeUrl({ ...currentRoute(), menu: false, admin: false, capture: false, objectId: null, teaSlug: null, campaignId: null }, 'replace');
+    setEntityPageId(null);
+    setLocationName(null);
+    setCollectionRouteId(null);
+    setCollectionPickerFor(null);
+    writeUrl({ ...currentRoute(), menu: false, admin: false, capture: false, objectId: null, teaSlug: null, campaignId: null, entityId: null, locationName: null, collectionId: null }, 'replace');
   }, [currentRoute, writeUrl]);
 
   useEffect(() => {
@@ -7626,18 +8387,20 @@ export function App() {
       skipUrl.current = false;
       return;
     }
-    const overlay = menuOpen || adminOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail) || Boolean(pendingObjectId);
+    const overlay = menuOpen || adminOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail) || Boolean(pendingObjectId) || Boolean(entityPageId) || Boolean(locationName) || Boolean(collectionRouteId) || followingOpen || collectionsOpen;
     writeUrl(currentRoute(), overlay ? 'push' : 'replace');
   }, [
     activeTab, nearbySection, myLayerSection, workflowSection, arenaSection,
     menuOpen, adminOpen, captureOpen, selectedTeaSlug, openCampaignId,
-    selectedObjectForDetail, pendingObjectId, currentRoute, writeUrl
+    selectedObjectForDetail, pendingObjectId, entityPageId, locationName, collectionRouteId,
+    followingOpen, collectionsOpen,
+    currentRoute, writeUrl
   ]);
 
   useEffect(() => {
     const tg = (typeof window !== 'undefined' ? (window as any).Telegram?.WebApp : null);
     if (!tg?.BackButton) return;
-    const show = menuOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail);
+    const show = menuOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail) || Boolean(entityPageId) || Boolean(locationName) || Boolean(collectionRouteId) || followingOpen || collectionsOpen;
     try {
       if (show) tg.BackButton.show();
       else tg.BackButton.hide();
@@ -7647,7 +8410,7 @@ export function App() {
     return () => {
       try { tg.BackButton.offClick?.(handler); } catch { /* */ }
     };
-  }, [menuOpen, captureOpen, selectedTeaSlug, openCampaignId, selectedObjectForDetail, dismissOverlay]);
+  }, [menuOpen, captureOpen, selectedTeaSlug, openCampaignId, selectedObjectForDetail, entityPageId, locationName, collectionRouteId, followingOpen, collectionsOpen, dismissOverlay]);
 
   useEffect(() => {
     if (!pendingObjectId) return;
@@ -7664,7 +8427,19 @@ export function App() {
     return () => { live = false; };
   }, [pendingObjectId, objects, selectedObjectForDetail]);
 
-  const isAnyModalActive = Boolean(openCampaignId) || createStep !== 'closed' || captureOpen || Boolean(selectedObjectForDetail) || Boolean(selectedTeaSlug);
+  // The LOCAL ACTIVITY GRAPH for the open detail modal: related content from
+  // real relationships only (the server never keyword-matches). Cleared when
+  // the modal closes so stale edges never linger on the next object.
+  useEffect(() => {
+    if (!selectedObjectForDetail?.id) { setDetailGraph(null); return; }
+    let live = true;
+    briefApi.getObjectGraph(selectedObjectForDetail.id).then((res) => {
+      if (live) setDetailGraph(res.ok ? res.data.edges : []);
+    });
+    return () => { live = false; };
+  }, [selectedObjectForDetail?.id]);
+
+  const isAnyModalActive = Boolean(openCampaignId) || createStep !== 'closed' || captureOpen || Boolean(selectedObjectForDetail) || Boolean(selectedTeaSlug) || Boolean(entityPageId) || Boolean(locationName) || Boolean(collectionRouteId) || followingOpen || collectionsOpen;
 
   // THE APP GATE (product decision 2026-08-29): NO ACCESS WITHOUT AN ACCOUNT.
   // Signed out, the app does not render at all -- no feed, no shelf, no
@@ -7839,9 +8614,19 @@ export function App() {
         {activeTab === 'nearby' && (
           <div className="max-w-5xl mx-auto px-0 sm:px-4 pt-2">
             <div className="mb-5">
-              <div className="flex items-center justify-between px-1 pb-3">
+              <div className="flex items-center justify-between gap-3 px-1 pb-3">
                 <h1 className="font-display text-2xl font-semibold tracking-tight text-[#251045]">Home</h1>
-                <span className="text-[10px] uppercase tracking-[0.2em] text-[#251045]/40">Nearby</span>
+                <div className="flex items-center gap-2">
+                  <LocationChip
+                    label={selectedLocation}
+                    locating={locating}
+                    locError={locError}
+                    hasLocation={Boolean(userLocation)}
+                    onLocate={locate}
+                    onSelectCity={chooseCity}
+                    onClearLocation={clearLocation}
+                  />
+                </div>
               </div>
               {runtimeCheck === 'old' && (
                 <div className="mb-3 flex items-start justify-between gap-3 rounded-2xl border border-[#6C3EC9] bg-[#FBFAFD] px-4 py-3">
@@ -7898,26 +8683,462 @@ export function App() {
                       showToast(info.unlocksAfter ? `Opens after: ${info.unlocksAfter}` : 'Not open yet');
                     }}
                   />
-                  {homeFeedStatus === 'ready' && objects.length === 0 && !demoSeeded && (
-                    <div className="rounded-2xl border border-dashed border-[#D6CFE4] bg-[#FBFAFD] px-4 py-3">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div>
-                          <p className="text-[11px] font-extrabold text-[#251045]">The stream is out of supply</p>
-                          <p className="mt-1 text-[10px] leading-snug text-[#251045]/55">No live objects have arrived yet. Load a temporary server-side preview for testing; it expires automatically and is never treated as live news.</p>
+                  {/* No demo seeding on Home: when production data is thin the
+                      FeedComposer below renders honest, contextual empty
+                      states — the no-fake-live-data rule. */}
+                  {/* MY BRIEF — the personal daily-city-briefing layer. The
+                      SAME persisted objects, re-ranked per user; sections
+                      render only when real data backs them; onboarding is
+                      skippable and never blocks the Brief. */}
+                  {discoveryTab === 'home' && sessionUser && personalState && (
+                    <section className="mb-8" aria-label="My Brief">
+                      <div className="mb-3 flex items-center justify-between gap-2 px-1">
+                        <h2 className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#251045]/60">
+                          My Brief
+                        </h2>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setCollectionsOpen(true)}
+                            className="flex items-center gap-1.5 rounded-full border border-[#D6CFE4] bg-[#FBFAFD] px-3 py-1 text-[10px] font-extrabold text-[#251045]/60 cursor-pointer hover:border-[#6C3EC9]"
+                          >
+                            <FolderPlus className="h-3 w-3" />
+                            Collections
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setFollowingOpen(true)}
+                            className="flex items-center gap-1.5 rounded-full border border-[#D6CFE4] bg-[#FBFAFD] px-3 py-1 text-[10px] font-extrabold text-[#251045]/60 cursor-pointer hover:border-[#6C3EC9]"
+                          >
+                            <Users className="h-3 w-3" />
+                            Following
+                            {(personalState.followed ?? []).length > 0 && (
+                              <span className="rounded-full bg-[#5B2EA6] px-1.5 text-[9px] font-extrabold text-white">
+                                {(personalState.followed ?? []).length}
+                              </span>
+                            )}
+                          </button>
+                          {personalHasInterests && (
+                            <button
+                              type="button"
+                              onClick={() => setPersonalBriefDismissed(false)}
+                              className="rounded-full border border-[#D6CFE4] bg-[#FBFAFD] px-3 py-1 text-[10px] font-extrabold text-[#251045]/60 cursor-pointer hover:border-[#6C3EC9]"
+                            >
+                              Edit
+                            </button>
+                          )}
                         </div>
-                        <button type="button" onClick={() => void handleLoadDemo()} disabled={demoBusy} className="shrink-0 rounded-lg bg-[#5B2EA6] px-3 py-2 text-[10px] font-extrabold text-[#FFFFFF] disabled:opacity-50">
-                          {demoBusy ? 'Loading…' : 'Load test preview'}
-                        </button>
                       </div>
-                    </div>
+
+                      {/* ONBOARDING — where + what, as chips. Skipping closes
+                          the card; the Brief stays fully global until then. */}
+                      {!personalHasInterests && !personalBriefDismissed && (
+                        <div className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <h3 className="text-sm font-extrabold text-[#251045]">
+                                Make this your Brief
+                              </h3>
+                              <p className="mt-0.5 text-[11px] text-[#251045]/55">
+                                Your daily city briefing: the same Brief feed,
+                                ordered around the places and things you follow.
+                                Skip anytime — nothing is blocked.
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setPersonalBriefDismissed(true)}
+                              className="shrink-0 rounded-full border border-[#D6CFE4] px-3 py-1 text-[10px] font-extrabold text-[#251045]/50 cursor-pointer"
+                            >
+                              Skip
+                            </button>
+                          </div>
+
+                          <p className="mt-4 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#251045]/45">
+                            Where do you want your Brief?
+                          </p>
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {personalState.suggestedLocations.map((loc) => (
+                              <button
+                                key={loc}
+                                type="button"
+                                onClick={() => togglePersonalPick('locations', loc)}
+                                className={`rounded-full border px-3 py-1.5 text-[11px] font-bold cursor-pointer transition ${
+                                  personalPicks.locations.includes(loc)
+                                    ? 'bg-[#5B2EA6] text-[#FFFFFF] border-[#6C3EC9]'
+                                    : 'bg-[#FBFAFD] text-[#251045]/70 border-[#D6CFE4] hover:border-[#6C3EC9]'
+                                }`}
+                              >
+                                {loc}
+                              </button>
+                            ))}
+                          </div>
+
+                          <p className="mt-4 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#251045]/45">
+                            What do you care about?
+                          </p>
+                          {availableTypes.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              {availableTypes.map((t) => (
+                                <button
+                                  key={t}
+                                  type="button"
+                                  onClick={() => togglePersonalPick('types', t)}
+                                  className={`rounded-full border px-3 py-1.5 text-[11px] font-bold cursor-pointer transition ${
+                                    personalPicks.types.includes(t)
+                                      ? 'bg-[#5B2EA6] text-[#FFFFFF] border-[#6C3EC9]'
+                                      : 'bg-[#FBFAFD] text-[#251045]/70 border-[#D6CFE4] hover:border-[#6C3EC9]'
+                                  }`}
+                                >
+                                  {getObjectTypeMeta(t).label}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                          {personalState.topics.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              {personalState.topics.slice(0, 8).map((topic) => (
+                                <button
+                                  key={topic.id}
+                                  type="button"
+                                  onClick={() => togglePersonalPick('topics', topic.id)}
+                                  className={`rounded-full border px-3 py-1.5 text-[11px] font-bold cursor-pointer transition ${
+                                    personalPicks.topics.includes(topic.id)
+                                      ? 'bg-[#5B2EA6] text-[#FFFFFF] border-[#6C3EC9]'
+                                      : 'bg-[#FBFAFD] text-[#251045]/70 border-[#D6CFE4] hover:border-[#6C3EC9]'
+                                  }`}
+                                >
+                                  {topic.label}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="mt-4 flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => void savePersonalBrief()}
+                              disabled={personalBusy || (personalPicks.locations.length === 0 && personalPicks.types.length === 0 && personalPicks.topics.length === 0)}
+                              className="rounded-full bg-[#5B2EA6] px-4 py-2 text-[11px] font-extrabold text-[#FFFFFF] cursor-pointer disabled:opacity-40"
+                            >
+                              {personalBusy ? 'Saving…' : 'Build my Brief'}
+                            </button>
+                            <span className="text-[10px] text-[#251045]/40">
+                              Pick anything, or skip — your feed stays global.
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {!personalHasInterests && personalBriefDismissed && (
+                        <p className="rounded-2xl border border-dashed border-[#D6CFE4] px-4 py-3 text-[11px] text-[#251045]/50">
+                          Your Brief is global until you follow places or topics.{' '}
+                          <button
+                            type="button"
+                            onClick={() => setPersonalBriefDismissed(false)}
+                            className="font-extrabold text-[#5B2EA6] cursor-pointer"
+                          >
+                            Personalize
+                          </button>
+                        </p>
+                      )}
+
+                      {/* FOLLOWING — the chips you follow, each with an
+                          obvious unfollow; plus quick-adds for what is left. */}
+                      {personalHasInterests && (
+                        <div className="mb-4 flex flex-wrap items-center gap-1.5">
+                          {personalInterests.locations.map((loc) => (
+                            <button
+                              key={`loc_${loc}`}
+                              type="button"
+                              onClick={() => void unfollowOne('location', loc)}
+                              title={`Stop following ${loc}`}
+                              className="flex items-center gap-1 rounded-full bg-[#5B2EA6] px-3 py-1.5 text-[11px] font-extrabold text-[#FFFFFF] cursor-pointer"
+                            >
+                              {loc} <X className="h-3 w-3" />
+                            </button>
+                          ))}
+                          {personalInterests.types.map((t) => (
+                            <button
+                              key={`typ_${t}`}
+                              type="button"
+                              onClick={() => void unfollowOne('type', t)}
+                              title={`Stop following ${getObjectTypeMeta(t as ObjectType).label}`}
+                              className="flex items-center gap-1 rounded-full border border-[#6C3EC9] bg-[#F1EDF7] px-3 py-1.5 text-[11px] font-extrabold text-[#5B2EA6] cursor-pointer"
+                            >
+                              {getObjectTypeMeta(t as ObjectType).label} <X className="h-3 w-3" />
+                            </button>
+                          ))}
+                          {personalInterests.topics.map((topicId) => {
+                            const topic = personalState.topics.find((t) => t.id === topicId);
+                            if (!topic) return null;
+                            return (
+                              <button
+                                key={`top_${topicId}`}
+                                type="button"
+                                onClick={() => void unfollowOne('topic', topicId)}
+                                title={`Stop following ${topic.label}`}
+                                className="flex items-center gap-1 rounded-full border border-[#6C3EC9] bg-[#F1EDF7] px-3 py-1.5 text-[11px] font-extrabold text-[#5B2EA6] cursor-pointer"
+                              >
+                                {topic.label} <X className="h-3 w-3" />
+                              </button>
+                            );
+                          })}
+                          {(personalState.followed ?? []).map((f) => (
+                            <button
+                              key={f.id}
+                              type="button"
+                              onClick={() => openEntityPage(f.id)}
+                              title={`Open ${f.name}`}
+                              className="flex items-center gap-1 rounded-full border border-[#6C3EC9] bg-[#E9E0F5] px-3 py-1.5 text-[11px] font-extrabold text-[#5B2EA6] cursor-pointer"
+                            >
+                              {f.name}
+                            </button>
+                          ))}
+                          {(personalState.followed ?? []).map((f) => (
+                            <button
+                              key={`unf_${f.id}`}
+                              type="button"
+                              onClick={() => void unfollowEntityOne(f.id)}
+                              title={`Stop following ${f.name}`}
+                              className="flex items-center gap-1 rounded-full border border-dashed border-[#D6CFE4] px-2 py-1 text-[9px] font-bold text-[#251045]/40 cursor-pointer hover:border-[#C0392B] hover:text-[#C0392B]"
+                            >
+                              <X className="h-2.5 w-2.5" /> {f.kind}
+                            </button>
+                          ))}
+                          {personalState.suggestedLocations
+                            .filter((loc) => !personalInterests.locations.includes(loc))
+                            .slice(0, 5)
+                            .map((loc) => (
+                              <button
+                                key={`add_${loc}`}
+                                type="button"
+                                onClick={() => void followOne('location', loc)}
+                                className="flex items-center gap-1 rounded-full border border-dashed border-[#D6CFE4] px-3 py-1.5 text-[11px] font-bold text-[#251045]/45 cursor-pointer hover:border-[#6C3EC9]"
+                              >
+                                <Plus className="h-3 w-3" /> {loc}
+                              </button>
+                            ))}
+                          {availableTypes
+                            .filter((t) => !personalInterests.types.includes(t))
+                            .slice(0, 3)
+                            .map((t) => (
+                              <button
+                                key={`addt_${t}`}
+                                type="button"
+                                onClick={() => void followOne('type', t)}
+                                className="flex items-center gap-1 rounded-full border border-dashed border-[#D6CFE4] px-3 py-1.5 text-[11px] font-bold text-[#251045]/45 cursor-pointer hover:border-[#6C3EC9]"
+                              >
+                                <Plus className="h-3 w-3" /> {getObjectTypeMeta(t).label}
+                              </button>
+                            ))}
+                        </div>
+                      )}
+
+                      {/* PERSONAL SECTIONS — YOUR BRIEF / AROUND YOU / TODAY /
+                          COMING UP / FOR YOU. Only non-empty sections render,
+                          and every row is a real persisted object. */}
+                      {personalSections.length > 0 && (
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          {personalSections.map((section) => (
+                            <div
+                              key={section.key}
+                              className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-3"
+                            >
+                              <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-[#251045]/50">
+                                {section.title}
+                              </p>
+                              <div className="mt-2 space-y-0.5">
+                                {section.objects.slice(0, 4).map((obj) => (
+                                  <button
+                                    key={obj.id}
+                                    type="button"
+                                    onClick={() => setSelectedObjectForDetail(obj)}
+                                    className="flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 text-left transition-colors hover:bg-[#E9E4F2] cursor-pointer"
+                                  >
+                                    {obj.imageUrl ? (
+                                      <img
+                                        src={obj.imageUrl}
+                                        alt=""
+                                        aria-hidden="true"
+                                        loading="lazy"
+                                        className="h-9 w-9 shrink-0 rounded-lg object-cover"
+                                      />
+                                    ) : (
+                                      <span
+                                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[15px]"
+                                        style={{ background: '#F1EDF7', color: '#6C3EC9' }}
+                                        aria-hidden="true"
+                                      >
+                                        {getObjectTypeMeta(obj.type).label.charAt(0)}
+                                      </span>
+                                    )}
+                                    <span className="min-w-0 flex-1">
+                                      <span className="block truncate text-[12px] font-semibold text-[#251045]">
+                                        {obj.title}
+                                      </span>
+                                      {briefWhenLabel(obj) && (
+                                        <span className="block truncate text-[9px] font-semibold text-[#251045]/55">
+                                          {briefWhenLabel(obj)}
+                                        </span>
+                                      )}
+                                      <span className="mt-0.5 flex flex-wrap gap-1">
+                                        {entityChipsFor(obj).slice(0, 2).map((chip, ci) => (
+                                          <EntityChip
+                                            key={`${chip.kind}_${chip.name ?? chip.directId}_${ci}`}
+                                            kind={chip.kind}
+                                            name={chip.name}
+                                            directId={chip.directId}
+                                            onOpenEntity={openEntityPage}
+                                          />
+                                        ))}
+                                      </span>
+                                    </span>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* SAVED — grouped Upcoming / Active / News / Places /
+                          Offers. Expired rows read as expired, never active. */}
+                      {personalSavedGroups.length > 0 && (
+                        <div className="mt-4 rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-3">
+                          <div className="mb-2 flex items-center gap-2">
+                            <Bookmark className="h-3.5 w-3.5 text-[#251045]/60" />
+                            <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-[#251045]/50">
+                              Saved
+                            </p>
+                          </div>
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            {personalSavedGroups.map((group) => (
+                              <div key={group.key}>
+                                <p className="text-[10px] font-extrabold text-[#251045]/70">
+                                  {group.title}
+                                  <span className="ml-1.5 text-[10px] font-bold text-[#251045]/40">
+                                    {group.items.length + group.expired.length}
+                                  </span>
+                                </p>
+                                <div className="mt-1.5 space-y-0.5">
+                                  {group.items.slice(0, 3).map((obj) => (
+                                    <button
+                                      key={obj.id}
+                                      type="button"
+                                      onClick={() => setSelectedObjectForDetail(obj)}
+                                      className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-[#E9E4F2] cursor-pointer"
+                                    >
+                                      <span className="min-w-0 flex-1">
+                                        <span className="block truncate text-[11px] font-semibold text-[#251045]">
+                                          {obj.title}
+                                        </span>
+                                        {briefWhenLabel(obj) && (
+                                          <span className="block truncate text-[9px] font-semibold text-[#251045]/50">
+                                            {briefWhenLabel(obj)}
+                                          </span>
+                                        )}
+                                      </span>
+                                    </button>
+                                  ))}
+                                  {group.expired.slice(0, 3).map((obj) => (
+                                    <button
+                                      key={obj.id}
+                                      type="button"
+                                      onClick={() => setSelectedObjectForDetail(obj)}
+                                      className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-[#E9E4F2] cursor-pointer opacity-60"
+                                    >
+                                      <span className="min-w-0 flex-1">
+                                        <span className="block truncate text-[11px] font-semibold text-[#251045] line-through">
+                                          {obj.title}
+                                        </span>
+                                        <span className="block truncate text-[9px] font-bold text-[#B45309]">
+                                          Expired
+                                        </span>
+                                      </span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </section>
                   )}
-                  {homeFeedStatus === 'ready' && objects.length === 0 && demoSeeded && (
-                    <div className="rounded-2xl border border-dashed border-[#D6CFE4] bg-[#FBFAFD] px-4 py-3">
-                      <p className="text-[11px] font-extrabold text-[#251045]">Test preview is out of time</p>
-                      <p className="mt-1 text-[10px] leading-snug text-[#251045]/55">This temporary cohort has expired and was not reused. Clear it explicitly before starting another release test.</p>
-                      {demoExpiresAt && <p className="mt-2 text-[9px] font-bold text-[#251045]/40">Ended {new Date(demoExpiresAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'short' })}.</p>}
-                    </div>
+
+                  {/* TODAY'S BRIEF — the compact discovery summary: TODAY /
+                      NEAR YOU / NOW / COMING UP, every row a real persisted
+                      object. Only rendered when it has data. */}
+                  {discoveryTab === 'home' && discoveryBrief.length > 0 && (
+                    <section className="mb-8" aria-label="Today's Brief">
+                      <h2 className="mb-3 px-1 text-[11px] font-bold uppercase tracking-[0.22em] text-[#251045]/60">
+                        Today's Brief
+                      </h2>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {discoveryBrief.map((section) => (
+                          <div
+                            key={section.key}
+                            className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-3"
+                          >
+                            <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-[#251045]/50">
+                              {section.title}
+                            </p>
+                            <div className="mt-2 space-y-0.5">
+                              {section.objects.slice(0, 4).map((obj) => (
+                                <button
+                                  key={obj.id}
+                                  type="button"
+                                  onClick={() => setSelectedObjectForDetail(obj)}
+                                  className="flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 text-left transition-colors hover:bg-[#E9E4F2] cursor-pointer"
+                                >
+                                  {obj.imageUrl ? (
+                                    <img
+                                      src={obj.imageUrl}
+                                      alt=""
+                                      aria-hidden="true"
+                                      loading="lazy"
+                                      className="h-9 w-9 shrink-0 rounded-lg object-cover"
+                                    />
+                                  ) : (
+                                    <span
+                                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[15px]"
+                                      style={{ background: '#F1EDF7', color: '#6C3EC9' }}
+                                      aria-hidden="true"
+                                    >
+                                      {getObjectTypeMeta(obj.type).label.charAt(0)}
+                                    </span>
+                                  )}
+                                  <span className="min-w-0 flex-1">
+                                    <span className="block truncate text-[12px] font-semibold text-[#251045]">
+                                      {obj.title}
+                                    </span>
+                                    {briefWhenLabel(obj) && (
+                                      <span className="block truncate text-[9px] font-semibold text-[#251045]/55">
+                                        {briefWhenLabel(obj)}
+                                      </span>
+                                    )}
+                                    <span className="mt-0.5 flex flex-wrap gap-1">
+                                      {entityChipsFor(obj).slice(0, 2).map((chip, ci) => (
+                                        <EntityChip
+                                          key={`${chip.kind}_${chip.name ?? chip.directId}_${ci}`}
+                                          kind={chip.kind}
+                                          name={chip.name}
+                                          directId={chip.directId}
+                                          onOpenEntity={openEntityPage}
+                                        />
+                                      ))}
+                                    </span>
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
                   )}
+
                   {/* FEED COMPOSER — the composed, deduplicated magazine feed:
                       hero → tea → discovery → opportunities. Real server rows via
                       /api/feed; card variety by type, never a repeating grid. */}
@@ -7925,6 +9146,15 @@ export function App() {
                     key={feedReload}
                     typeFilter={selectedObjectType}
                     onFeedStatus={setHomeFeedStatus}
+                    area={feedArea}
+                    geo={userLocation ? { lat: userLocation.lat, lng: userLocation.lng, radiusKm: 40 } : null}
+                    type={discoveryTab === 'events' ? 'experience'
+                      : discoveryTab === 'offers' ? 'offer'
+                        : discoveryTab === 'places' ? 'place'
+                          : discoveryTab === 'news' ? 'news'
+                            : discoveryTab === 'opportunities' ? 'opportunity'
+                              : null}
+                    browse={discoveryTab === 'explore'}
                     onOpen={(raw) => {
                       if (!raw?.id) return;
                       const local = objects.find((object) => object.id === String(raw.id));
@@ -7939,31 +9169,59 @@ export function App() {
                 </>
               )}
             </div>
-            {/* Primary discovery categories — the spec's limited four, not the
-                old overloaded pill rows. Selecting one always returns to the
-                stream (typed by that category); Tea/Today/Pursuits/Quests and
-                the remaining types live behind "More" so they never permanently
-                occupy the feed. This lives in the OUTER nearby block so it is
-                reachable from every section. */}
+            {/* Discovery navigation — Home, Events, Explore, Offers, Places,
+                News, Opportunities. A category appears only when the real
+                persisted data has rows for it; nothing is ever padded to make
+                a tab exist. Selecting a category scopes the feed server-side
+                (type= on /api/feed); Explore is the whole catalog in one grid.
+                Tea/Today/Pursuits/Quests and the remaining types live behind
+                "More" so they never permanently occupy the feed. Lives in the
+                OUTER nearby block so it is reachable from every section. */}
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
-              {[
-                { id: 'all', label: FILTERS.all },
-                { id: 'place', label: FILTERS.place },
-                { id: 'experience', label: FILTERS.experience },
-                { id: 'opportunity', label: FILTERS.opportunity },
-              ].map((filter) => (
-                <button
-                  key={filter.id}
-                  onClick={() => { setSelectedObjectType(filter.id); setNearbySection('stream'); }}
-                  className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border transition ${
-                    nearbySection === 'stream' && selectedObjectType === filter.id
-                      ? 'bg-[#5B2EA6] text-[#FFFFFF] border-[#6C3EC9]'
-                      : 'bg-[#FBFAFD] text-[#251045] border-[#D6CFE4] hover:border-[#6C3EC9]'
-                  }`}
-                >
-                  {filter.label}
-                </button>
-              ))}
+              {(() => {
+                const counts: Record<string, number> = {};
+                for (const o of objects) {
+                  counts[o.type] = (counts[o.type] ?? 0) + 1;
+                }
+                const has = (types: string[]) => types.some((t) => (counts[t] ?? 0) > 0);
+                const tabs = [
+                  { id: 'home', label: 'Home', types: null as string[] | null },
+                  { id: 'events', label: 'Events', types: ['experience', 'event'] },
+                  { id: 'explore', label: 'Explore', types: null as string[] | null },
+                  { id: 'offers', label: 'Offers', types: ['offer'] },
+                  { id: 'places', label: 'Places', types: ['place'] },
+                  { id: 'news', label: 'News', types: ['news'] },
+                  { id: 'opportunities', label: 'Opportunities', types: ['opportunity'] }
+                ];
+                return tabs
+                  .filter((tab) => !tab.types || has(tab.types))
+                  .map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => {
+                        setDiscoveryTab(tab.id as typeof discoveryTab);
+                        // Keep the legacy client-side filter in step so the
+                        // fallback grid matches the tab when the composed
+                        // feed is unavailable.
+                        const type = tab.id === 'events' ? 'experience'
+                          : tab.id === 'offers' ? 'offer'
+                            : tab.id === 'places' ? 'place'
+                              : tab.id === 'news' ? 'news'
+                                : tab.id === 'opportunities' ? 'opportunity'
+                                  : 'all';
+                        setSelectedObjectType(type);
+                        setNearbySection('stream');
+                      }}
+                      className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border transition ${
+                        nearbySection === 'stream' && discoveryTab === tab.id
+                          ? 'bg-[#5B2EA6] text-[#FFFFFF] border-[#6C3EC9]'
+                          : 'bg-[#FBFAFD] text-[#251045] border-[#D6CFE4] hover:border-[#6C3EC9]'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ));
+              })()}
               <button
                 onClick={() => setMoreFilters((v) => !v)}
                 className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border transition ${
@@ -8220,10 +9478,46 @@ export function App() {
               );
             })()}
 
+            {/* Search (Local Activity Graph brief): typing a venue, business
+                or organizer name surfaces the objects CONNECTED to it —
+                events at the venue, offers from the business — alongside the
+                matching entities themselves. Search stays object-first:
+                results never hide the global stream, and the input is a
+                quiet row above it. */}
+            {homeFeedStatus === 'ready' && (
+              <div className="mx-auto mb-4 max-w-5xl px-1">
+                <label className="relative block">
+                  <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#251045]/40" />
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search venues, businesses, organizers, areas…"
+                    aria-label="Search Brief"
+                    className="w-full rounded-full border border-[#D6CFE4] bg-[#FBFAFD] py-2.5 pl-10 pr-10 text-[13px] font-semibold text-[#251045] outline-none transition-colors placeholder:text-[#251045]/35 focus:border-[#6C3EC9]"
+                  />
+                  {searchQuery !== '' && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      aria-label="Clear search"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-[#251045]/40 transition-colors hover:text-[#251045] cursor-pointer"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </label>
+              </div>
+            )}
+
             {/* Search stays above the visual stream, but the cards themselves
                 are title-first. */}
             {searchQuery.trim() !== '' && (
-              <SearchResults query={searchQuery} onOpenObject={(o) => setSelectedObjectForDetail(objectFromServer(o))} />
+              <SearchResults
+                query={searchQuery}
+                onOpenObject={(o) => setSelectedObjectForDetail(objectFromServer(o))}
+                onOpenEntity={openEntityPage}
+              />
             )}
 
             {/* The legacy object stream is a fallback for deployments where the
@@ -8282,11 +9576,53 @@ export function App() {
                                   {status}
                                 </span>
                               )}
+                              {(() => {
+                                const life = getLifecycleBadge(obj);
+                                if (!life) return null;
+                                return (
+                                  <span className={`rounded-full px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] ${
+                                    life.expired
+                                      ? 'bg-[#150826]/80 text-[#FFFFFF]'
+                                      : 'bg-[#F1EDF7]/75 text-[#251045]'
+                                  }`}>
+                                    {life.label}
+                                  </span>
+                                );
+                              })()}
                             </div>
                             <div className="absolute inset-x-3 bottom-3">
                               <h3 className="line-clamp-3 pr-2 text-[14px] font-semibold leading-snug text-[#FFFFFF]">
                                 {obj.title}
                               </h3>
+                              {(() => {
+                                const sourceChip = getSourceChip(obj);
+                                const published = getPublishedLine(obj);
+                                if (!sourceChip && !published) return null;
+                                const bits = [sourceChip, published].filter(Boolean);
+                                return (
+                                  <p className="mt-1 text-[9px] font-semibold text-[#FFFFFF]/75 truncate">
+                                    {bits.join(' · ')}
+                                  </p>
+                                );
+                              })()}
+                              {(() => {
+                                const chips = entityChipsFor(obj);
+                                if (chips.length === 0) return null;
+                                return (
+                                  <div className="mt-1.5 flex flex-wrap gap-1">
+                                    {chips.map((chip, i) => (
+                                      <EntityChip
+                                        key={`${chip.kind}_${chip.name ?? chip.directId}_${i}`}
+                                        kind={chip.kind}
+                                        name={chip.name}
+                                        directId={chip.directId}
+                                        onOpenEntity={openEntityPage}
+                                        className="bg-[#150826]/70 text-[#F1EDF7] hover:bg-[#5B2EA6] hover:text-white"
+                                      />
+                                    ))}
+                                  </div>
+                                );
+                              })()}
                               {level === 3 && destVendors.length > 0 && (
                                 <p className="mt-1 text-[10px] font-semibold text-[#FFFFFF]">
                                   {destVendors.length} {destVendors.length === 1 ? 'vendor' : 'vendors'} inside
@@ -8348,14 +9684,6 @@ export function App() {
                             className="rounded-full bg-[#5B2EA6] px-4 py-2 text-[11px] font-bold text-[#FFFFFF]"
                           >
                             Add
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleLoadDemo}
-                            disabled={demoBusy}
-                            className="rounded-full border border-[#D6CFE4] px-4 py-2 text-[11px] font-bold text-[#251045]/60 disabled:opacity-50"
-                          >
-                            {demoBusy ? 'Loading' : 'Demo'}
                           </button>
                         </div>
                       </>
@@ -11200,40 +12528,79 @@ export function App() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="overflow-y-auto flex-1 pb-safe pb-8 sm:pb-5">
-              {/* Hero */}
-              {selectedObjectForDetail.imageUrl && (
-                <div className="relative h-56 sm:h-72">
-                  <img
-                    src={selectedObjectForDetail.imageUrl}
-                    alt={selectedObjectForDetail.title}
-                    className="w-full h-full object-cover"
-                  />
+              {/* Hero — the cover photo, or the first real gallery image when
+                  a news story has photos but no cover. */}
+              {(() => {
+                const heroUrl = selectedObjectForDetail.imageUrl
+                  ?? selectedObjectForDetail.gallery?.[0]?.url
+                  ?? null;
+                if (!heroUrl) return null;
+                return (
+                  <div className="relative h-56 sm:h-72">
+                    <img
+                      src={heroUrl}
+                      alt={selectedObjectForDetail.title}
+                      className="w-full h-full object-cover"
+                    />
 
-                  <button
-                    onClick={() => setSelectedObjectForDetail(null)}
-                    className="absolute top-4 right-4 p-2 rounded-full bg-[#F1EDF7]/80 text-[#251045] border border-[#D6CFE4]"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
+                    <button
+                      onClick={() => setSelectedObjectForDetail(null)}
+                      className="absolute top-4 right-4 p-2 rounded-full bg-[#F1EDF7]/80 text-[#251045] border border-[#D6CFE4]"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
 
-                  <div className="absolute bottom-4 left-4 flex gap-2">
-                    <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#F1EDF7]/85 text-[#251045] border border-[#D6CFE4]">
-                      {selectedObjectForDetail.category}
-                    </span>
-
-                    {selectedObjectForDetail.isVerified && (
-                      <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#5B2EA6] text-[#FFFFFF]">
-                        Verified
+                    <div className="absolute bottom-4 left-4 flex gap-2">
+                      <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#F1EDF7]/85 text-[#251045] border border-[#D6CFE4]">
+                        {selectedObjectForDetail.category}
                       </span>
-                    )}
+
+                      {selectedObjectForDetail.isVerified && (
+                        <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#5B2EA6] text-[#FFFFFF]">
+                          Verified
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
+
+              {/* Gallery — the object's other REAL source photos, opened in a
+                  new tab. Never fabricated; only rows the server projected. */}
+              {(() => {
+                const heroUrl = selectedObjectForDetail.imageUrl
+                  ?? selectedObjectForDetail.gallery?.[0]?.url
+                  ?? null;
+                const rest = (selectedObjectForDetail.gallery ?? [])
+                  .filter((img) => img.url !== heroUrl);
+                if (rest.length === 0) return null;
+                return (
+                  <div className="grid grid-cols-3 gap-2 px-5 pt-4">
+                    {rest.slice(0, 6).map((img) => (
+                      <a
+                        key={img.url}
+                        href={img.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={img.alt ?? 'Photo'}
+                        className="block aspect-square overflow-hidden rounded-xl border border-[#D6CFE4] transition-transform hover:scale-[1.02]"
+                      >
+                        <img
+                          src={img.url}
+                          alt={img.alt ?? ''}
+                          loading="lazy"
+                          className="h-full w-full object-cover"
+                        />
+                      </a>
+                    ))}
+                  </div>
+                );
+              })()}
 
               {/* Without a hero image the close button and chips disappeared
                   entirely, leaving backdrop-click as the only way out. This is
                   the same control set, laid out for an imageless record. */}
-              {!selectedObjectForDetail.imageUrl && (
+              {!selectedObjectForDetail.imageUrl && !selectedObjectForDetail.gallery?.[0]?.url && (
                 <div className="flex items-center justify-between gap-2 p-4 border-b border-[#D6CFE4]">
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#F1EDF7]/85 text-[#251045] border border-[#D6CFE4]">
@@ -11273,6 +12640,65 @@ export function App() {
                   <p className="text-sm text-[#251045] mt-2 leading-relaxed">
                     {selectedObjectForDetail.summary}
                   </p>
+
+                  {/* News detail — publisher, publication time, relevant
+                      location, and the prominent "Read original" action.
+                      Headline + concise summary only: the full article lives
+                      at the original link, never reproduced here. */}
+                  {selectedObjectForDetail.type === 'news' && (
+                    <div className="mt-4 space-y-3">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] font-semibold text-[#251045]/60">
+                        {(() => {
+                          const publisher = selectedObjectForDetail.sourceNames?.[0]
+                            ?? (selectedObjectForDetail.sourceCount
+                              ? `${selectedObjectForDetail.sourceCount} ${selectedObjectForDetail.sourceCount === 1 ? 'source' : 'sources'}`
+                              : null);
+                          if (!publisher) return null;
+                          return <span>From {publisher}</span>;
+                        })()}
+                        {(() => {
+                          const stamp = selectedObjectForDetail.publishedAt
+                            ?? selectedObjectForDetail.createdAt;
+                          const published = getPublishedLine(selectedObjectForDetail);
+                          if (!stamp) return null;
+                          const d = new Date(stamp);
+                          if (!Number.isFinite(d.getTime())) return null;
+                          const absolute = d.toLocaleDateString('en-KE', { weekday: 'short', day: 'numeric', month: 'short' });
+                          return (
+                            <span>
+                              {published ? `${published} · ` : ''}{absolute}
+                            </span>
+                          );
+                        })()}
+                        {(() => {
+                          const place = selectedObjectForDetail.locationName
+                            ?? selectedObjectForDetail.metadata?.area
+                            ?? selectedObjectForDetail.metadata?.county;
+                          if (!place) return null;
+                          return <span>· {place}</span>;
+                        })()}
+                      </div>
+
+                      {(() => {
+                        const readUrl = selectedObjectForDetail.sourceUrl
+                          ?? (selectedObjectForDetail.actionType === 'external'
+                            ? selectedObjectForDetail.actionUrl
+                            : null);
+                        if (!readUrl) return null;
+                        return (
+                          <a
+                            href={readUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 rounded-full bg-[#5B2EA6] px-5 py-2.5 text-[12px] font-extrabold text-[#FFFFFF] transition-opacity hover:opacity-90"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            Read original
+                          </a>
+                        );
+                      })()}
+                    </div>
+                  )}
                 </div>
 
                 {/* Facts -- generated from metadata, empty fields omitted */}
@@ -11371,52 +12797,146 @@ export function App() {
                   </div>
                 )}
 
-                {/* Trust, freshness and provenance (prompts 12/13/14).
-                    One quiet row answering: who said this, was it checked,
-                    how recently, and where did it come from. A score is
-                    labelled as a confidence signal, never as a guarantee. */}
+                {/* About this information (trust layer). One quiet block
+                    answering: who said this, how recently, across how many
+                    sources, is it still current, and has it been corrected.
+                    Corroboration is shown as corroboration — never as truth. */}
                 {(() => {
                   const subject = selectedObjectForDetail;
                   const fresh = getFreshness(subject);
+                  const sourceChip = getSourceChip(subject);
+                  const sourceKind = getSourceKindChip(subject);
+                  const corroboration = getCorroborationLabel(subject);
+                  const published = getPublishedLine(subject);
+                  const life = getLifecycleBadge(subject);
+                  const corrections = Array.isArray(subject.corrections) && subject.corrections.length > 0
+                    ? subject.corrections
+                    : null;
                   const hasTrust =
                     subject.isVerified ||
-                    Boolean(subject.creatorName) ||
                     Boolean(fresh) ||
-                    Boolean(subject.sourceUrl);
+                    Boolean(subject.sourceUrl) ||
+                    Boolean(sourceChip) ||
+                    Boolean(published) ||
+                    Boolean(corroboration) ||
+                    Boolean(life) ||
+                    Boolean(corrections) ||
+                    (subject.openReportCount ?? 0) > 0;
 
                   if (!hasTrust) return null;
 
-                  const freshTone =
-                    fresh?.level === 'stale' || fresh?.level === 'aging'
-                      ? 'text-[#251045]'
-                      : 'text-[#251045]';
+                  const CORRECTION_LABELS: Record<string, string> = {
+                    title: 'Title',
+                    type: 'Type',
+                    summary: 'Summary',
+                    category: 'Category',
+                    locationName: 'Location',
+                    venue: 'Venue',
+                    organizer: 'Organizer',
+                    dateCanonical: 'Date',
+                    eventStart: 'Start time',
+                    eventEnd: 'End time',
+                    deadlineCanonical: 'Deadline',
+                    operatingHours: 'Hours',
+                    price: 'Price',
+                    statusBadge: 'Status'
+                  };
 
                   return (
                     <div className="bg-[#F1EDF7] border border-[#D6CFE4] rounded-xl px-4 py-3 space-y-2">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <ShieldCheck className="w-4 h-4 text-[#251045] shrink-0" />
-                          <span className="text-xs font-bold truncate">
-                            {subject.creatorName || 'Provider not stated'}
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck className="w-4 h-4 text-[#251045] shrink-0" />
+                        <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#251045]/60">
+                          About this information
+                        </span>
+                        {subject.isVerified && (
+                          <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-[#5B2EA6] text-[#FFFFFF] shrink-0">
+                            VERIFIED
                           </span>
-                          {subject.isVerified && (
-                            <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-[#5B2EA6] text-[#FFFFFF] shrink-0">
-                              VERIFIED
+                        )}
+                      </div>
+
+                      {/* Provider — stated when known, absence stated plainly. */}
+                      <p className="text-[10px] font-bold text-[#251045]/70">
+                        {subject.creatorName ? `Provider: ${subject.creatorName}` : 'Provider not stated'}
+                      </p>
+
+                      {/* Source — real names, never internal ids. */}
+                      {subject.sourceNames && subject.sourceNames.length > 0 && (
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-[10px] font-bold text-[#251045]/80 truncate">
+                            From {subject.sourceNames.slice(0, 3).join(', ')}
+                          </span>
+                          {sourceKind && (
+                            <span className="shrink-0 rounded-full bg-[#FBFAFD] border border-[#D6CFE4] px-1.5 py-0.5 text-[8px] font-bold text-[#251045]/50">
+                              {sourceKind}
+                            </span>
+                          )}
+                          {sourceChip && sourceChip !== `Source · ${subject.sourceNames[0]}` && (
+                            <span className="shrink-0 text-[9px] font-bold text-[#251045]/40">
+                              {sourceChip}
                             </span>
                           )}
                         </div>
+                      )}
 
-                      </div>
+                      {/* Published — publication age, separate from event time. */}
+                      {published && (
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-[10px] font-bold text-[#251045]/70">
+                            {published}
+                          </span>
+                          <span className="text-[10px] text-[#251045]/40">
+                            {new Date(subject.publishedAt ?? subject.createdAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
+                        </div>
+                      )}
 
+                      {/* Verification freshness — when this was last checked. */}
                       {fresh && (
                         <div className="flex items-center justify-between gap-3">
-                          <span className={`text-[10px] font-bold ${freshTone}`}>
+                          <span className="text-[10px] font-bold text-[#251045]/70">
                             {fresh.label}
                           </span>
                           <span className="text-[10px] text-[#251045]/40">
                             checked {fresh.verifiedOn}
                           </span>
                         </div>
+                      )}
+
+                      {/* Corroboration — a count, explicitly not certainty. */}
+                      {corroboration && (
+                        <p className="text-[10px] font-bold text-[#251045]/70">
+                          {corroboration}
+                        </p>
+                      )}
+
+                      {/* Current status for time-sensitive content. */}
+                      {life && (
+                        <p className={`text-[10px] font-extrabold ${life.expired ? 'text-[#8A1E2D]' : 'text-[#251045]/70'}`}>
+                          {life.label}
+                        </p>
+                      )}
+
+                      {/* Operator corrections: original fact + corrected value. */}
+                      {corrections && (
+                        <div className="space-y-1 border-t border-[#D6CFE4]/70 pt-2">
+                          {corrections.map((c) => (
+                            <p key={c.id} className="text-[10px] text-[#251045]/70 leading-snug">
+                              Corrected {CORRECTION_LABELS[c.field] ?? c.field}
+                              {c.originalValue !== null && c.originalValue !== c.correctedValue
+                                ? <> — was “{c.originalValue}”, now “{c.correctedValue}”</>
+                                : <> to “{c.correctedValue}”</>}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Under review: an open user report flags this object. */}
+                      {(subject.openReportCount ?? 0) > 0 && (
+                        <p className="text-[10px] font-bold text-[#8A1E2D]">
+                          Reported for review
+                        </p>
                       )}
 
                       <p className="text-[10px] text-[#251045]/40 leading-snug">
@@ -11574,7 +13094,27 @@ export function App() {
                       <Eye className="h-3.5 w-3.5" />
                       {watchedIds.has(selectedObjectForDetail.id) ? 'Watching' : 'Watch'}
                     </button>
+
+                    <button
+                      onClick={() => setCollectionPickerFor(selectedObjectForDetail.id)}
+                      className="flex-1 py-2.5 rounded-xl bg-[#FBFAFD] border border-[#6C3EC9]/50 text-[#5B2EA6] font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <FolderPlus className="w-3.5 h-3.5" />
+                      Add to collection
+                    </button>
                   </div>
+
+                  {/* Add-to-collection picker (Collections brief). Renders
+                      inside the object modal so organizing never leaves the
+                      object. */}
+                  {collectionPickerFor === selectedObjectForDetail.id && (
+                    <div className="mt-3">
+                      <CollectionPicker
+                        objectId={selectedObjectForDetail.id}
+                        onChanged={() => void loadPersonal()}
+                      />
+                    </div>
+                  )}
 
                   {/* §8: the crowd-checking row. Confirm says "I know this is
                       true"; report says "this is wrong" with a reason. Both
@@ -11596,14 +13136,14 @@ export function App() {
                   </div>
                   {reportForObject === selectedObjectForDetail.id && (
                     <div className="flex flex-wrap gap-1.5">
-                      {['wrong details', 'spam', 'offensive', 'no longer true'].map((reason) => (
+                      {REPORT_REASONS.map((reason) => (
                         <button
-                          key={reason}
-                          onClick={() => void handleReportObject(selectedObjectForDetail, reason)}
+                          key={reason.id}
+                          onClick={() => void handleReportObject(selectedObjectForDetail, reason.id)}
                           disabled={objectCheckBusy === selectedObjectForDetail.id}
                           className="px-3 py-1.5 rounded-full border border-[#D6CFE4] text-[11px] font-bold text-[#251045]/70 cursor-pointer disabled:opacity-50"
                         >
-                          {reason}
+                          {reason.label}
                         </button>
                       ))}
                     </div>
@@ -11614,6 +13154,45 @@ export function App() {
                       Brief will track changes to this record. Alerts are not live yet.
                     </p>
                   )}
+
+                  {/* Personal Brief tuning — explicit controls the user said
+                      out loud, persisted, always reversible. Shown only for a
+                      signed-in caller with the personal layer loaded. */}
+                  {sessionUser && personalState && (() => {
+                    const rel = personalState.relevance;
+                    const { sourceId: detailSourceId } = selectedObjectForDetail;
+                    const buttons: { kind: 'more' | 'less' | 'not_interested' | 'hide_source'; label: string; active: boolean }[] = [
+                      { kind: 'more', label: 'More like this', active: rel.more.includes(selectedObjectForDetail.id) },
+                      { kind: 'less', label: 'Less like this', active: rel.less.includes(selectedObjectForDetail.id) },
+                      { kind: 'not_interested', label: 'Not interested', active: rel.notInterested.includes(selectedObjectForDetail.id) },
+                      ...(detailSourceId
+                        ? [{ kind: 'hide_source' as const, label: 'Hide this source', active: rel.hiddenSources.includes(detailSourceId) }]
+                        : [])
+                    ];
+                    if (buttons.length === 0) return null;
+                    return (
+                      <div className="border-t border-[#D6CFE4]/70 pt-3 mt-1">
+                        <p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-[#251045]/40 mb-2">
+                          Tune this in your Brief
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {buttons.map((b) => (
+                            <button
+                              key={b.kind}
+                              onClick={() => void tuneObject(b.kind, selectedObjectForDetail)}
+                              className={`px-2.5 py-1.5 rounded-full border text-[10px] font-bold cursor-pointer transition ${
+                                b.active
+                                  ? 'bg-[#5B2EA6] text-[#FFFFFF] border-[#6C3EC9]'
+                                  : 'bg-[#FBFAFD] text-[#251045]/60 border-[#D6CFE4] hover:border-[#6C3EC9]'
+                              }`}
+                            >
+                              {b.active ? `✓ ${b.label}` : b.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Why this appeared (prompt 7). Every reason is computed
@@ -11644,53 +13223,26 @@ export function App() {
                   );
                 })()}
 
-                {/* Nearby (prompt 16). Distinct from Related: this answers
-                    "what else is around here", not "what goes with this".
-                    Anything already shown in Related is filtered out so the
-                    two rails never duplicate each other. */}
-                {(() => {
-                  const shown = new Set(relatedObjects.map((r) => r.item.id));
-                  const near = graph
-                    .nearby(selectedObjectForDetail, 8)
-                    .filter((o) => !shown.has(o.id))
-                    .slice(0, 4);
+                {/* LOCAL ACTIVITY GRAPH — related content for this object.
+                    Every section is a REAL relationship (structured venue /
+                    organizer / business fields, provenance, or persisted
+                    relationship rows); the server never keyword-matches and
+                    weak links never serialize. The location edge links into
+                    the public /explore/:name surface. */}
+                {detailGraph && (
+                  <div className="mt-6 pt-5 border-t border-[#D6CFE4]">
+                    <RelatedContent
+                      edges={detailGraph}
+                      onOpenObject={(raw) => {
+                        if (!raw?.id) return;
+                        const local = objects.find((o) => o.id === String(raw.id));
+                        setSelectedObjectForDetail(local ?? objectFromServer(raw));
+                      }}
+                      onOpenLocation={openLocationPage}
+                    />
+                  </div>
+                )}
 
-                  if (near.length === 0) return null;
-
-                  return (
-                    <div className="mt-6 pt-5 border-t border-[#D6CFE4]">
-                      <p className="text-[10px] text-[#251045]">
-                        More from this area
-                      </p>
-                      <h3 className="text-sm font-extrabold mt-1 mb-3">Nearby</h3>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        {near.map((obj) => {
-                          const dist = getDistanceLabel(obj);
-                          return (
-                            <button
-                              key={obj.id}
-                              onClick={() => setSelectedObjectForDetail(obj)}
-                              className="text-left bg-[#FBFAFD] border border-[#D6CFE4] hover:border-[#D6CFE4] rounded-xl p-3 cursor-pointer transition"
-                            >
-                              <p className="text-[9px] text-[#251045]/40">
-                                {getObjectTypeMeta(obj.type).label}
-                              </p>
-                              <p className="text-[11px] font-bold text-[#251045] leading-snug mt-0.5 line-clamp-2">
-                                {obj.title}
-                              </p>
-                              {dist && (
-                                <p className="text-[9px] text-[#251045]/60 mt-1">
-                                  {dist}
-                                </p>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })()}
 
                 {/* WHAT'S HERE (rework 4/5). The destination detail becomes a
                     mini directory: who is trading, what they sell, and a hop
@@ -11993,6 +13545,94 @@ export function App() {
       />
       <AdminDesk open={adminOpen} onClose={dismissOverlay} me={sessionUser} />
 
+      {/* ENTITY LAYER — the followable entity page and the Following surface. */}
+      {entityPageId && (
+        <EntityPage
+          entityId={entityPageId}
+          authed={Boolean(sessionUser)}
+          origin={publicOrigin}
+          onClose={dismissOverlay}
+          onOpenObject={(raw) => {
+            if (!raw?.id) return;
+            const local = objects.find((o) => o.id === String(raw.id));
+            setSelectedObjectForDetail(local ?? objectFromServer(raw));
+          }}
+          onOpenLocation={openLocationPage}
+          onRequireAuth={() => showToast('Sign in to follow this.')}
+          onFollowChanged={() => void loadPersonal()}
+        />
+      )}
+      {followingOpen && (
+        <FollowingSurface
+          authed={Boolean(sessionUser)}
+          onClose={dismissOverlay}
+          onOpenObject={(raw) => {
+            if (!raw?.id) return;
+            const local = objects.find((o) => o.id === String(raw.id));
+            setSelectedObjectForDetail(local ?? objectFromServer(raw));
+          }}
+          onOpenEntity={(id) => {
+            setFollowingOpen(false);
+            setEntityPageId(id);
+          }}
+          onRequireAuth={() => showToast('Sign in to follow this.')}
+          onFollowChanged={() => void loadPersonal()}
+        />
+      )}
+
+      {/* LOCAL ACTIVITY GRAPH — the public location discovery page. */}
+      {locationName && (
+        <LocationPage
+          name={locationName}
+          authed={Boolean(sessionUser)}
+          followedLocations={personalState?.interests?.locations ?? []}
+          onClose={dismissOverlay}
+          onOpenObject={(raw) => {
+            if (!raw?.id) return;
+            const local = objects.find((o) => o.id === String(raw.id));
+            setSelectedObjectForDetail(local ?? objectFromServer(raw));
+          }}
+          onOpenLocation={openLocationPage}
+          onRequireAuth={() => showToast('Sign in to follow this area.')}
+          onFollowLocation={(loc) => {
+            if (!sessionUser) { showToast('Sign in to follow this area.'); return; }
+            void followOne('location', loc);
+          }}
+        />
+      )}
+
+      {/* COLLECTIONS — the personal layer. The surface opens from the header;
+          a shared /collections/:id link renders the public page directly. */}
+      {collectionsOpen && (
+        <CollectionsSurface
+          authed={Boolean(sessionUser)}
+          savedCount={(personalState?.saved ?? []).length}
+          onClose={dismissOverlay}
+          onOpenObject={(raw) => {
+            if (!raw?.id) return;
+            const local = objects.find((o) => o.id === String(raw.id));
+            setSelectedObjectForDetail(local ?? objectFromServer(raw));
+          }}
+          onOpenSaved={() => {
+            setCollectionsOpen(false);
+            setActiveTab('mylayer');
+            setMyLayerSection('saved');
+          }}
+          onChanged={() => void loadPersonal()}
+        />
+      )}
+      {collectionRouteId && (
+        <CollectionPage
+          collectionId={collectionRouteId}
+          mode="public"
+          onClose={dismissOverlay}
+          onOpenObject={(raw) => {
+            if (!raw?.id) return;
+            const local = objects.find((o) => o.id === String(raw.id));
+            setSelectedObjectForDetail(local ?? objectFromServer(raw));
+          }}
+        />
+      )}
       <footer className="border-t border-[#D6CFE4] mt-12 py-6 text-xs text-[#251045]/60 text-center">
         Everything Happening Around You
       </footer>

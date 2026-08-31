@@ -4,6 +4,7 @@ import { store } from '../store.js';
 import { callerId, authStatus, canGovernObject } from '../identity.js';
 import * as discovery from '../domain/discovery.js';
 import * as trust from '../domain/trust.js';
+import * as corrections from '../domain/corrections.js';
 import * as signals from '../domain/signal.js';
 import * as notifications from '../domain/notifications.js';
 import * as campaigns from '../domain/campaign.js';
@@ -39,8 +40,12 @@ app.get('/api/objects', (req, res) => {
     });
     if (publication) objects = objects.filter((o) => o.publication === publication);
   } else {
-    objects = store.all('objects');
-    if (publication) objects = objects.filter((o) => o.publication === publication);
+    // The plain path returns raw rows — attach the same trust projection the
+    // ranked feed carries (sources, publication time, lifecycle, verification)
+    // so every consumer sees consistent trust fields.
+    objects = store.all('objects')
+      .filter((o) => !publication || o.publication === publication)
+      .map((o) => discovery.enrichTrustFields(o));
   }
 
   const enriched = objects.map((o) => {
@@ -190,7 +195,17 @@ app.get('/api/objects/:id', (req, res) => {
   if (object.publication !== 'public' && !campaigns.mayAttachObject(callerId(req), object)) {
     return res.status(404).json({ error: 'object not found' });
   }
-  res.json({ object });
+  // Trust-layer enrichments for the authenticated detail view: applied
+  // corrections (original vs corrected, for honest display) and how many
+  // open reports currently flag this object ("under review"). Never the raw
+  // reporter identities — those stay operator-side.
+  res.json({
+    object: {
+      ...object,
+      corrections: corrections.appliedCorrections(object.id),
+      openReportCount: trust.openReportCount(object.id)
+    }
+  });
 });
 
 

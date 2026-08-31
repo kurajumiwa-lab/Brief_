@@ -33,6 +33,9 @@ import { recordError } from './routes/helpers.js';
 import { callerId } from './identity.js';
 import { register as authRoutes } from './routes/auth.js';
 import { register as onboardingRoutes } from './routes/onboarding.js';
+import { register as personalRoutes } from './routes/personal.js';
+import { register as entitiesRoutes } from './routes/entities.js';
+import { register as graphRoutes } from './routes/graph.js';
 import { register as healthRoutes } from './routes/health.js';
 import { register as opsRoutes } from './routes/ops.js';
 import { register as arenaRoutes } from './routes/arena.js';
@@ -61,6 +64,7 @@ import { register as wireRoutes } from './routes/wire.js';
 import { register as mediaRoutes } from './routes/media.js';
 import { register as feedRoutes } from './routes/feed.js';
 import { register as collectionsRoutes } from './routes/collections.js';
+import { register as personalCollectionsRoutes } from './routes/personalCollections.js';
 import { register as searchRoutes } from './routes/search.js';
 import { register as assistRoutes } from './routes/assist.js';
 import { register as distributionRoutes } from './routes/distribution.js';
@@ -171,7 +175,11 @@ app.use(ops.requestLogger);
 //   /api/telegram/init       Telegram Mini App auth -- the HMAC initData is
 //                           the credential; no Brief session exists yet.
 //   /api/huduma/webhooks/*   M-Pesa Daraja callbacks, secret path segment.
-const PUBLIC_WITHOUT_SESSION = /^\/(auth|public\/(campaigns|feed)|health|ready|readiness|media\/(file|telegram)|config|release|email-subscriptions|webhooks|telegram\/init|huduma\/webhooks)(\/|$)/;
+//   /api/locations*, /api/graph/*, /api/nearby  the LOCAL ACTIVITY GRAPH
+//                           (public location discovery pages like /explore/
+//                           kilimani, related content, nearby) — every payload
+//                           is the public projection of public objects only
+const PUBLIC_WITHOUT_SESSION = /^\/(auth|entities|locations|graph|nearby|collections\/personal|public\/(campaigns|feed)|health|ready|readiness|media\/(file|telegram)|config|release|email-subscriptions|webhooks|telegram\/init|huduma\/webhooks)(\/|$)/;
 app.use('/api', (req, res, next) => {
   if (PUBLIC_WITHOUT_SESSION.test(req.path)) return next();
   const me = callerId(req);
@@ -188,6 +196,9 @@ app.use('/api', (req, res, next) => {
 // ---------------------------------------------------------------------------
 authRoutes(app);
 onboardingRoutes(app);
+personalRoutes(app);
+entitiesRoutes(app);
+graphRoutes(app);
 healthRoutes(app);
 opsRoutes(app);
 arenaRoutes(app);
@@ -216,6 +227,7 @@ wireRoutes(app);
 mediaRoutes(app);
 feedRoutes(app);
 collectionsRoutes(app);
+personalCollectionsRoutes(app);
 searchRoutes(app);
 assistRoutes(app);
 distributionRoutes(app);

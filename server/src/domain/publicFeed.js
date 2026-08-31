@@ -8,6 +8,7 @@
 // ---------------------------------------------------------------------------
 
 import * as feed from './feed.js';
+import { store } from '../store.js';
 
 const PUBLIC_METADATA_KEYS = [
   'price',
@@ -19,9 +20,21 @@ const PUBLIC_METADATA_KEYS = [
   'rating',
   'reviewsCount',
   'distanceKm',
-  'statusBadge'
+  'statusBadge',
+  // Extracted locality + event facts: safe discovery fields that already
+  // exist on the row, useful to cards and filters.
+  'area',
+  'county',
+  'landmark',
+  'venue',
+  'organizer',
+  'dateCanonical',
+  'eventStart',
+  'eventEnd',
+  'deadlineCanonical',
+  'dayOfWeek',
+  'recurrence'
 ];
-
 function stringOrNull(value) {
   return typeof value === 'string' && value.trim() ? value : null;
 }
@@ -60,6 +73,56 @@ function publicMedia(media, objectId) {
   };
 }
 
+/**
+ * Collect the object's REAL source images, in a stable order, with public
+ * URLs. Telegram file references cannot be exposed as URLs, so each one
+ * resolves to `/api/media/telegram/:objectId/:index` and the resolve endpoint
+ * scans with this SAME function — the index always points at the same photo.
+ * Deduplicated by reference/url so one photo never renders twice.
+ */
+export function collectObjectImages(objectId) {
+  const sourceRows = store.filter('objectSources', (s) => s.objectId === objectId);
+  const seen = new Set();
+  const out = [];
+  for (const s of sourceRows) {
+    const raw = s.rawItemId ? store.find('rawItems', (r) => r.id === s.rawItemId) : null;
+    const mediaList = Array.isArray(raw?.media) ? raw.media : [];
+    for (const entry of mediaList) {
+      if (entry?.kind !== 'image') continue;
+      const key = typeof entry.reference === 'string' && entry.reference
+        ? `ref:${entry.reference}`
+        : (typeof entry.url === 'string' && entry.url ? `url:${entry.url}` : null);
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      out.push({
+        reference: typeof entry.reference === 'string' && entry.reference ? entry.reference : null,
+        url: typeof entry.url === 'string' && entry.url.trim() ? entry.url : null,
+        alt: stringOrNull(entry.caption ?? entry.alt),
+        attribution: stringOrNull(entry.attribution)
+      });
+      if (out.length >= 5) break;
+    }
+    if (out.length >= 5) break;
+  }
+  return out;
+}
+
+/**
+ * A gallery of the object's REAL source images, when more than one exists.
+ * Built from the raw items its provenance points at (Telegram posts and web
+ * pages can carry several photos); the same resolve rule as the cover image.
+ * Absent when there is only one image — the cover already shows it.
+ */
+function publicGallery(objectId) {
+  const images = collectObjectImages(objectId);
+  if (images.length < 2) return null;
+  return images.map((img, index) => ({
+    url: img.url ?? `/api/media/telegram/${objectId}/${index}`,
+    alt: img.alt,
+    attribution: img.attribution
+  }));
+}
+
 function publicAction(object) {
   const allowedTypes = new Set(['internal', 'external', 'phone', 'map']);
   const type = allowedTypes.has(object?.actionType) ? object.actionType : null;
@@ -85,6 +148,40 @@ function temporaryTestContent(row) {
 /** A public object contains useful discovery fields, never the object row. */
 export function publicObject(object) {
   if (!object || object.publication !== 'public') return null;
+
+  const temporal = object.temporal;
+  const temporalOut = temporal && typeof temporal === 'object'
+    ? {
+        status: typeof temporal.status === 'string' ? temporal.status : 'current',
+        startsAt: temporal.startsAt ?? null,
+        endsAt: temporal.endsAt ?? null,
+        deadlineAt: temporal.deadlineAt ?? null,
+        expiresAt: temporal.expiresAt ?? null,
+        ...(typeof temporal.dayOfWeek === 'string' ? { dayOfWeek: temporal.dayOfWeek } : {}),
+        ...(temporal.recurring === true ? { recurring: true } : {})
+      }
+    : null;
+
+  const sourceNames = Array.isArray(object.sourceNames)
+    ? object.sourceNames.filter((s) => typeof s === 'string').slice(0, 3)
+    : [];
+  const sourcePlatforms = Array.isArray(object.sourcePlatforms)
+    ? object.sourcePlatforms.filter((s) => typeof s === 'string').slice(0, 3)
+    : [];
+
+  const gallery = publicGallery(object.id);
+
+  // The original link the item came from: the first provenance row's stated
+  // URL, else the source's own homepage. This is the honest "Read original"
+  // target — an external URL, never an internal id.
+  const sourceRows = store.filter('objectSources', (s) => s.objectId === object.id);
+  let sourceUrl = null;
+  for (const s of sourceRows) {
+    if (typeof s.sourceUrl === 'string' && /^https?:\/\//i.test(s.sourceUrl)) { sourceUrl = s.sourceUrl; break; }
+    const src = s.sourceId ? store.find('sources', (x) => x.id === s.sourceId) : null;
+    if (src && typeof src.url === 'string' && /^https?:\/\//i.test(src.url)) { sourceUrl = src.url; break; }
+  }
+
   return {
     id: object.id,
     type: object.type,
@@ -92,13 +189,25 @@ export function publicObject(object) {
     category: stringOrNull(object.category),
     summary: typeof object.summary === 'string' ? object.summary : '',
     locationName: stringOrNull(object.locationName),
+    sourceUrl,
     verificationStatus: stringOrNull(object.verificationStatus),
     lastVerifiedAt: object.lastVerifiedAt ?? null,
     validityWindowDays: Number.isFinite(object.validityWindowDays) ? object.validityWindowDays : null,
     metadata: publicMetadata(object.metadata),
     media: publicMedia(object.media, object.id),
+    gallery,
     action: publicAction(object),
     createdAt: object.createdAt ?? null,
+    // When the story was first published anywhere in its provenance.
+    publishedAt: typeof object.publishedAt === 'string' ? object.publishedAt : null,
+    // Discovery intelligence projection (additive, safe): the temporal
+    // lifecycle and the visible provenance count. Internal scores never leave
+    // the server.
+    temporal: temporalOut,
+    sourceNames: sourceNames.length ? sourceNames : null,
+    sourceCount: Number.isInteger(object.sourceCount) && object.sourceCount > 0 ? object.sourceCount : null,
+    sourcePlatforms: sourcePlatforms.length ? sourcePlatforms : null,
+    clusterSize: Number.isInteger(object.clusterSize) && object.clusterSize > 1 ? object.clusterSize : null,
     ...(temporaryTestContent(object) ? { testContent: temporaryTestContent(object) } : {})
   };
 }
