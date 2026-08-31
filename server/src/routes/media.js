@@ -7,8 +7,10 @@ import fs from 'node:fs';
 import multer from 'multer';
 import { requireAuth } from './helpers.js';
 import { requireFeature } from '../features.js';
+import { store } from '../store.js';
 import * as media from '../domain/media.js';
 import * as upload from '../domain/upload.js';
+import * as telegram from '../connectors/telegram.js';
 
 export function register(app) {
   app.use('/api/media', requireFeature('media'));
@@ -103,6 +105,44 @@ export function register(app) {
   app.get('/api/media/mine', (req, res) => {
     if (!requireAuth(req, res)) return;
     res.json({ uploads: upload.listUploads(req.auth.userId) });
+  });
+
+  /**
+   * Resolve a Telegram image reference to its bytes at render time.
+   *
+   * Ingestion stores the Bot API `file_id` (never a public URL); this endpoint
+   * is the second half of media association. It resolves the reference through
+   * getFile server-side, fetches the bytes with the token (which never leaves
+   * the server), and streams them back. Readable WITHOUT a session because a
+   * published feed card has to render for someone who has not signed in -- but
+   * ONLY for objects that are actually public, and the object id is the same
+   * unlisted-handle trade-off the upload route already documents.
+   *
+   * A deleted / inaccessible file returns 404/410 honestly; it never surfaces
+   * a token-bearing URL or a fake image.
+   */
+  app.get('/api/media/telegram/:objectId', async (req, res) => {
+    const object = store.find('objects', (o) => o.id === req.params.objectId);
+    if (!object || object.publication !== 'public' || !object.imageReference) {
+      return res.status(404).json({ error: 'not found', code: 'not_found' });
+    }
+    const result = await telegram.getFileBytes(object.imageReference);
+    if (!result.ok) {
+      const status = result.status === 413 ? 413 : (result.status === 404 ? 410 : 502);
+      return res.status(status).json({
+        error: result.error,
+        code: result.status === 413 ? 'file_too_large' : 'media_unavailable'
+      });
+    }
+    res.setHeader('content-type', result.contentType);
+    res.setHeader('content-length', String(result.buffer.length));
+    // The bytes behind a file_id can change (Telegram may re-serve), so cache
+    // briefly rather than forever.
+    res.setHeader('cache-control', 'public, max-age=300');
+    res.setHeader('x-content-type-options', 'nosniff');
+    res.setHeader('content-security-policy', "default-src 'none'; sandbox");
+    res.setHeader('content-disposition', 'inline');
+    res.end(result.buffer);
   });
 
   /** Remove one of your own uploads, bytes and all. */

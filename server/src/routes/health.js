@@ -11,6 +11,7 @@ import * as compliance from '../domain/compliance.js';
 import * as telegram from '../connectors/telegram.js';
 import * as smileid from '../connectors/smileid.js';
 import * as web from '../connectors/web.js';
+import * as scheduler from '../pipeline/scheduler.js';
 import * as whatsapp from '../connectors/whatsapp.js';
 import * as outbound from '../outbound.js';
 import * as features from '../features.js';
@@ -60,10 +61,22 @@ app.get('/api/ready', (_req, res) => {
 
 
 app.get('/api/capabilities', (_req, res) => {
+  const tgStatus = telegram.statusSnapshot();
   res.json({
-    telegram: { ...telegram.capabilities, configured: telegram.isConfigured() },
-    web: web.capabilities.web,
-    rss: web.capabilities.rss,
+    telegram: {
+      ...telegram.capabilities,
+      configured: telegram.isConfigured(),
+      // Distinguished from `configured`: this is the last VERIFIED result of a
+      // real getMe + getWebhookInfo round trip (or null when never checked).
+      // `operational` is the single honest "telegram: true" signal (spec 12).
+      verified: tgStatus
+        ? { operational: tgStatus.operational, bot: tgStatus.bot, diagnostic: tgStatus.diagnostic, checkedAt: tgStatus.checkedAt }
+        : null
+    },
+    // Web/RSS capability plus real health: registered sources and their last
+    // real fetch outcome, never a static flag.
+    web: { ...web.capabilities.web, status: scheduler.ingestStatus('web') },
+    rss: { ...web.capabilities.rss, status: scheduler.ingestStatus('rss') },
     whatsapp: { ...whatsapp.capabilities, configured: whatsapp.isConfigured() },
     manual: {
       connector: 'manual',

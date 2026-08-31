@@ -50,7 +50,7 @@ const DUPLICATE_THRESHOLD = 0.72;
  */
 export function storeRawItem({
   sourceId, externalId, messageId, author, text, media,
-  publishedAt, rawUrl
+  publishedAt, rawUrl, canonicalUrl, categories, structured
 }) {
   const existing = store.find(
     'rawItems',
@@ -69,6 +69,12 @@ export function storeRawItem({
     publishedAt: publishedAt ?? null,
     retrievedAt: new Date().toISOString(),
     rawUrl: rawUrl ?? null,
+    // Provenance extras (Web/RSS): the canonical/article URL is a strong dedup
+    // and audit key; `structured` carries metadata-derived facts (JSON-LD, og:)
+    // that the text parser is allowed to adopt as fill-ins only.
+    canonicalUrl: canonicalUrl ?? null,
+    categories: categories ?? [],
+    structured: structured ?? null,
     processingStatus: 'pending',
     createdAt: new Date().toISOString()
   };
@@ -92,6 +98,7 @@ function findCanonical(fields) {
         similarity(fields.locationName, obj.locationName) > 0.6) ||
       (fields.dayOfWeek && obj.metadata?.dayOfWeek === fields.dayOfWeek) ||
       (fields.dateText && obj.metadata?.dateText === fields.dateText) ||
+      (fields.url && obj.metadata?.url && fields.url === obj.metadata.url) ||
       (fields.price !== undefined && obj.metadata?.price === fields.price);
     if (!corroborates) continue;
     if (!best || score > best.score) best = { obj, score };
@@ -142,6 +149,35 @@ function defaultPublication(source) {
   return source.accessType === 'public' ? 'public' : 'source_members';
 }
 
+/**
+ * MEDIA ASSOCIATION (spec: associate source images/media with the object).
+ *
+ * Telegram delivers a Bot API `file_id`, not a public URL, so it is stored as
+ * a reference that a server-side `getFile` call can later resolve — the token
+ * never leaves the server and the id is never presented as a fake URL. A web
+ * connector delivers a real http(s) URL, which is stored directly.
+ * Attribution is always preserved (source name / author).
+ */
+function mediaFields(raw, source, title) {
+  const image = (raw.media ?? []).find((m) => m.kind === 'image');
+  if (!image) return {};
+  const ref = image.reference;
+  const out = {
+    imageAlt: image.caption || title || null,
+    imageAttribution: source?.name || raw.author || null,
+    imageConfidence: 0.9
+  };
+  if (ref && /^https?:\/\//i.test(ref)) {
+    out.imageUrl = ref;
+    out.imageSourceType = 'web';
+  } else if (ref) {
+    out.imageReference = ref;
+    out.imageSourceType = 'telegram';
+    out.imageNeedsResolution = true;
+  }
+  return out;
+}
+
 function relate(sourceObjId, verb, targetObjId) {
   const existing = store.find(
     'relationships',
@@ -172,7 +208,27 @@ export function processRawItem(rawItemId) {
 
   store.update('rawItems', raw.id, { processingStatus: 'processing' });
 
-  const { fields, evidence, confidence } = extractFields(raw.text);
+  const extracted = extractFields(raw.text);
+  const fields = { ...extracted.fields };
+  const evidence = [...extracted.evidence];
+  const confidence = extracted.confidence;
+
+  // STRUCTURED FACTS (Web/RSS metadata: JSON-LD, OpenGraph, feed fields).
+  // These FILL IN gaps only — they never overwrite a value the free text
+  // itself yielded, and each is tagged in the evidence so a reviewer can see
+  // it came from connector metadata rather than the words.
+  const structured = raw.structured ?? {};
+  for (const [k, v] of Object.entries(structured)) {
+    if (v == null || v === '') continue;
+    if (fields[k] !== undefined) continue;
+    fields[k] = v;
+    evidence.push({ field: k, value: String(v), evidence: 'connector metadata' });
+  }
+  // The canonical/article URL is provenance and a strong dedup key.
+  if (!fields.url && raw.canonicalUrl) {
+    fields.url = raw.canonicalUrl;
+    evidence.push({ field: 'url', value: raw.canonicalUrl, evidence: 'canonical link' });
+  }
 
   if (!isObjectWorthy(fields)) {
     store.update('rawItems', raw.id, {
@@ -183,8 +239,12 @@ export function processRawItem(rawItemId) {
   }
 
   const metadata = {};
-  for (const k of ['price', 'currency', 'timeRange', 'dayOfWeek', 'dateText',
-                   'vendorCount', 'contactPhone', 'contactName', 'deadline', 'categories']) {
+  for (const k of ['price', 'currency', 'timeRange', 'startTime', 'endTime',
+                   'dayOfWeek', 'dateText', 'dateCanonical', 'eventStart', 'eventEnd',
+                   'recurrence', 'vendorCount', 'contactPhone', 'contactName',
+                   'deadline', 'deadlineCanonical', 'county', 'area', 'landmark',
+                   'locationConfidence', 'locationEvidence', 'url', 'handles',
+                   'organizer', 'venue', 'publisher', 'author', 'categories']) {
     if (fields[k] !== undefined) metadata[k] = fields[k];
   }
   // Fields we could not establish are explicitly marked unknown rather than
@@ -194,6 +254,7 @@ export function processRawItem(rawItemId) {
   if (unknown.length) metadata.unknownFields = unknown;
 
   const match = findCanonical(fields);
+  const image = mediaFields(raw, source, fields.title);
   let object;
   let merged = false;
 
@@ -204,6 +265,10 @@ export function processRawItem(rawItemId) {
     object = match.obj;
     const patch = {};
     if (!object.locationName && fields.locationName) patch.locationName = fields.locationName;
+    // Fill in media only if the canonical object has none yet.
+    for (const [k, v] of Object.entries(image)) {
+      if (object[k] === undefined || object[k] === null) patch[k] = v;
+    }
     const meta = { ...object.metadata };
     for (const [k, v] of Object.entries(metadata)) {
       if (k === 'unknownFields') continue;
@@ -223,6 +288,7 @@ export function processRawItem(rawItemId) {
       summary: raw.text.slice(0, 240),
       locationName: fields.locationName ?? null,
       metadata,
+      ...image,
       isFixture: false,
       publication: defaultPublication(source),
       verificationStatus: 'unverified',

@@ -62,15 +62,35 @@ export const SOURCE_LEVELS = ['exact', 'venue', 'location', 'category', 'none'];
 /** Read the exact image an object already carries, if any. */
 function exactImage(object) {
   const url = object?.imageUrl ?? object?.heroImage ?? null;
-  if (!url) return null;
-  return {
-    url,
-    level: 'exact',
-    sourceType: 'exact',
-    alt: object?.imageAlt ?? object?.title ?? null,
-    attribution: object?.imageAttribution ?? null,
-    confidence: typeof object?.imageConfidence === 'number' ? object.imageConfidence : 0.9
-  };
+  if (url) {
+    return {
+      url,
+      level: 'exact',
+      sourceType: 'exact',
+      alt: object?.imageAlt ?? object?.title ?? null,
+      attribution: object?.imageAttribution ?? null,
+      confidence: typeof object?.imageConfidence === 'number' ? object.imageConfidence : 0.9
+    };
+  }
+  // A Telegram file_id (or any provider reference) is an exact image we hold
+  // but have not yet resolved to a URL. Report it honestly: the level is
+  // still 'exact', the reference is preserved, and `needsResolution` says a
+  // server-side fetch is required before it can be rendered. We never present
+  // the file id as a URL.
+  const ref = object?.imageReference ?? null;
+  if (ref) {
+    return {
+      url: null,
+      reference: ref,
+      level: 'exact',
+      sourceType: object?.imageSourceType ?? 'telegram',
+      alt: object?.imageAlt ?? object?.title ?? null,
+      attribution: object?.imageAttribution ?? null,
+      confidence: typeof object?.imageConfidence === 'number' ? object.imageConfidence : 0.9,
+      needsResolution: object?.imageNeedsResolution !== false
+    };
+  }
+  return null;
 }
 
 /** The venue/organiser image — the vendor or provider the object is attached to. */

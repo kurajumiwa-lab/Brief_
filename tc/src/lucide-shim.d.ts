@@ -26,6 +26,7 @@ declare module 'lucide-react' {
   export const Copy: LucideIcon;
   export const Zap: LucideIcon; export const Play: LucideIcon;
   export const Ticket: LucideIcon; export const AlertTriangle: LucideIcon;
+  export const Megaphone: LucideIcon; export const BadgePercent: LucideIcon; export const Globe: LucideIcon;
   export const Repeat: LucideIcon; export const Star: LucideIcon;
   export const ClipboardList: LucideIcon; export const Clock3: LucideIcon; export const Target: LucideIcon;
   export const ImagePlus: LucideIcon; export const UploadCloud: LucideIcon; export const Link2: LucideIcon;

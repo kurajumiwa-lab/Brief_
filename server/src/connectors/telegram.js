@@ -58,7 +58,9 @@ async function call(method, params, timeoutMs = 10000) {
     }
     return { ok: true, result: body.result };
   } catch (err) {
-    return { ok: false, error: err.name === 'AbortError' ? 'timeout' : String(err.message) };
+    // redactSecrets guards against a transport layer ever folding the request
+    // URL (which embeds the bot token) into an error string.
+    return { ok: false, error: err.name === 'AbortError' ? 'timeout' : redactSecrets(String(err?.message ?? err)) };
   } finally {
     clearTimeout(timer);
   }
@@ -77,6 +79,118 @@ export async function verify() {
       canJoinGroups: res.result.can_join_groups ?? false
     }
   };
+}
+
+/**
+ * Defensive secret redaction. The bot token must never appear in a log line,
+ * an API response, an error message or a frontend bundle. Nothing in this file
+ * deliberately emits the token, but a network layer could fold the request URL
+ * into an error string, so every external-facing string passes through here.
+ */
+export function redactSecrets(text) {
+  if (typeof text !== 'string') return text;
+  const t = token();
+  return t ? text.split(t).join('[REDACTED]') : text;
+}
+
+/**
+ * CONNECTOR HEALTH (spec 2 / 12).
+ *
+ * `isConfigured()` is the synchronous "a token exists" answer. This is the
+ * richer, verified answer: it actually calls getMe (authentication) and
+ * getWebhookInfo (delivery state) so `operational` can mean "the Bot API
+ * authenticates AND a webhook is installed" rather than "a string is set".
+ *
+ * The result is cached for a short TTL because /api/capabilities and the boot
+ * log both consult it, and neither should hammer Telegram on every poll.
+ * `resetStatusCache()` clears it (tests, and after a webhook-config change).
+ */
+const statusCache = { at: 0, ttlMs: 60_000, value: null };
+
+export function resetStatusCache() {
+  statusCache.at = 0;
+  statusCache.value = null;
+}
+
+/**
+ * Synchronous read of the last verified status, without a network call.
+ * Returns null until `status()` has run at least once. Used by /api/capabilities
+ * and the boot log, which must stay synchronous; a null here means "not yet
+ * verified", which is honestly reported rather than guessed.
+ */
+export function statusSnapshot() {
+  return statusCache.value;
+}
+
+export async function status() {
+  const nowMs = Date.now();
+  if (statusCache.value && nowMs - statusCache.at < statusCache.ttlMs) {
+    return statusCache.value;
+  }
+
+  const result = await computeStatus();
+  statusCache.at = nowMs;
+  statusCache.value = result;
+  return result;
+}
+
+async function computeStatus() {
+  const base = {
+    configured: isConfigured(),
+    operational: false,
+    checkedAt: new Date().toISOString(),
+    bot: null,
+    webhook: null,
+    diagnostic: null
+  };
+
+  if (!isConfigured()) {
+    base.diagnostic = 'TELEGRAM_BOT_TOKEN is not set';
+    return base;
+  }
+
+  // 1. Authentication: getMe.
+  const me = await verify();
+  if (!me.ok) {
+    base.diagnostic = redactSecrets(`getMe failed: ${me.error ?? 'unknown error'}`);
+    return base;
+  }
+  base.bot = {
+    id: me.bot.id,
+    username: me.bot.username ?? null,
+    canReadAllGroupMessages: me.bot.canReadAllGroupMessages,
+    canJoinGroups: me.bot.canJoinGroups
+  };
+
+  // 2. Delivery: getWebhookInfo.
+  const info = await getWebhookInfo();
+  if (!info.ok) {
+    base.diagnostic = `getWebhookInfo failed: ${info.error ?? 'unknown error'}`;
+    return base;
+  }
+  const w = info.result ?? {};
+  base.webhook = {
+    url: w.url ?? null,
+    hasCustomCertificate: Boolean(w.has_custom_certificate),
+    pendingUpdateCount: Number.isFinite(w.pending_update_count) ? w.pending_update_count : null,
+    lastErrorMessage: w.last_error_message ?? null,
+    lastErrorDate: w.last_error_date ? new Date(w.last_error_date * 1000).toISOString() : null,
+    maxConnections: w.max_connections ?? null,
+    allowedUpdates: Array.isArray(w.allowed_updates) ? w.allowed_updates : null
+  };
+
+  if (!base.webhook.url) {
+    base.diagnostic = 'bot authenticates but no webhook is installed';
+    return base;
+  }
+  if (base.webhook.lastErrorMessage) {
+    base.diagnostic = `webhook reports an error: ${base.webhook.lastErrorMessage}`;
+    return base;
+  }
+
+  base.operational = true;
+  base.diagnostic = null;
+  return base;
 }
 
 // ---------------------------------------------------------------------------
@@ -183,6 +297,75 @@ export async function getWebhookInfo() {
 /** Confirm the bot can actually see a given chat before claiming access. */
 export async function getChat(chatId) {
   return call('getChat', { chat_id: chatId });
+}
+
+/**
+ * Resolve a media file_id to its Bot API file_path.
+ *
+ * Returns the RELATIVE `file_path` (e.g. "photos/file_12.jpg"), never the
+ * token-embedding download URL. The caller builds `https://api.telegram.org/
+ * file/bot<TOKEN>/<file_path>` server-side when it actually needs the bytes,
+ * so the token is never serialized onto an object or into a client payload.
+ * This is the second half of media association: ingestion stores the file_id,
+ * this call is what turns it into a fetchable path at render time.
+ */
+export async function getFile(fileId) {
+  const res = await call('getFile', { file_id: fileId });
+  if (!res.ok) return res;
+  return {
+    ok: true,
+    filePath: res.result.file_path ?? null,
+    fileSize: res.result.file_size ?? null
+  };
+}
+
+/**
+ * Build the Bot API download URL for a resolved file_path. This is the ONLY
+ * place the token is folded into a file URL, and the URL is never returned to
+ * the client -- callers use it server-side to fetch bytes they then re-serve.
+ * The token stays on the server (spec 28).
+ */
+export function fileDownloadUrl(filePath) {
+  if (!isConfigured() || !filePath) return null;
+  return `${API}/file/bot${token()}/${filePath}`;
+}
+
+/**
+ * Resolve a media `file_id` and fetch its bytes server-side, so a render-time
+ * consumer can show the image without ever seeing the bot token. Honest
+ * failure: a deleted/inaccessible file comes back as `ok:false` (and its HTTP
+ * status) rather than a fabricated URL. The buffer is capped so a hostile or
+ * oversized file can never be pulled into memory unbounded.
+ */
+export async function getFileBytes(fileId, maxBytes = 10 * 1024 * 1024) {
+  const resolved = await getFile(fileId);
+  if (!resolved.ok) return resolved;
+  const url = fileDownloadUrl(resolved.filePath);
+  if (!url) {
+    return { ok: false, error: 'TELEGRAM_BOT_TOKEN is not set', unconfigured: true };
+  }
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      return { ok: false, status: res.status, error: `telegram file ${res.status}` };
+    }
+    const declared = Number(res.headers.get('content-length') || 0);
+    if (declared > maxBytes) {
+      return { ok: false, status: 413, error: 'file too large' };
+    }
+    const buffer = Buffer.from(await res.arrayBuffer());
+    if (buffer.length > maxBytes) {
+      return { ok: false, status: 413, error: 'file too large' };
+    }
+    return {
+      ok: true,
+      buffer,
+      contentType: res.headers.get('content-type') || 'application/octet-stream',
+      filePath: resolved.filePath
+    };
+  } catch (err) {
+    return { ok: false, error: redactSecrets(String(err?.message ?? err)) };
+  }
 }
 
 /**
