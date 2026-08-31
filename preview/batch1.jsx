@@ -20,7 +20,7 @@ require('./suiteauth.cjs').installSuiteSession();
 const React=require('react');const{createRoot}=require('react-dom/client');const{act}=require('react-dom/test-utils');
 const App=require('./src/App.tsx').default;
 const fs=require('fs');
-const appSrc=fs.readFileSync(__dirname+'/src/App.tsx','utf8');
+const appSrc=(fs.readFileSync(__dirname+'/src/App.tsx','utf8') + '\n' + fs.readFileSync(__dirname+'/src/model/core.tsx','utf8'));
 let pass=0,fail=0;
 const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;console.log('  FAIL  '+n+(d?' -> '+d:''));}};
 

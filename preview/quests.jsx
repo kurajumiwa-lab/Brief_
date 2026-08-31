@@ -132,7 +132,7 @@ const QUEST_FIXTURES = [
   }
 ];
 
-const src=fs.readFileSync(__dirname+'/src/App.tsx','utf8');
+const src=(fs.readFileSync(__dirname+'/src/App.tsx','utf8') + '\n' + fs.readFileSync(__dirname+'/src/model/core.tsx','utf8'));
 const code=src.replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
 async function main(){
   dom.window.open=()=>null;

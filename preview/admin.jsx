@@ -13,7 +13,7 @@ const fs = require('fs');
 const AdminDesk = require('./src/components/AdminDesk.tsx').AdminDesk;
 const MenuSheet = require('./src/components/MenuSheet.tsx').MenuSheet;
 const briefSrc = fs.readFileSync(__dirname + '/src/api/briefApi.ts', 'utf8');
-const appSrc = fs.readFileSync(__dirname + '/src/App.tsx', 'utf8');
+const appSrc = (fs.readFileSync(__dirname + '/src/App.tsx', 'utf8') + '\n' + fs.readFileSync(__dirname + '/src/model/core.tsx', 'utf8'));
 const routesSrc = fs.readFileSync(__dirname + '/src/nav/routes.ts', 'utf8');
 const deskSrc = fs.readFileSync(__dirname + '/src/components/AdminDesk.tsx', 'utf8');
 

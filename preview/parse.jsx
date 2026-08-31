@@ -1,4 +1,4 @@
-const src=require('fs').readFileSync(__dirname + '/src/App.tsx','utf8');
+const src=(require('fs').readFileSync(__dirname + '/src/App.tsx','utf8') + '\n' + require('fs').readFileSync(__dirname + '/src/model/core.tsx','utf8'));
 let pass=0,fail=0;
 const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;console.log('  FAIL  '+n+(d?' -> '+d:''));}};
 // Mirror the shipped rules

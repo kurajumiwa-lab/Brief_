@@ -1182,7 +1182,7 @@ async function main() {
 
   // ---- source-level guarantees -------------------------------------------
   console.log('=== SOURCE INVARIANTS ===');
-  const src = require('fs').readFileSync(__dirname + '/src/App.tsx', 'utf8');
+  const src = (require('fs').readFileSync(__dirname + '/src/App.tsx', 'utf8') + '\n' + require('fs').readFileSync(__dirname + '/src/model/core.tsx', 'utf8'));
   ok(!/setRegistrations\s*\(\s*\d/.test(src), 'no local registration counter is ever set');
   ok(!/campaign\.registrations\s*=/.test(src), 'campaign.registrations is never assigned');
   ok(!/campaign\.revenue/.test(src), 'no frontend revenue field is invented');

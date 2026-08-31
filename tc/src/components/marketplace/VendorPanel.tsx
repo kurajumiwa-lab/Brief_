@@ -1,4 +1,5 @@
 import React from 'react';
+import { BoostSheet } from '../BoostSheet';
 import type { Listing, Order, Vendor, VendorEarnings } from '../../api/types';
 import { money } from './ListingCard';
 import { OrderStatus } from './OrderStatus';
@@ -71,6 +72,7 @@ export function VendorPanel({
   onFulfil,
   onSettle
 }: VendorPanelProps) {
+  const [promoteFor, setPromoteFor] = React.useState<Listing | null>(null);
   // --- not a seller yet ----------------------------------------------------
   if (!vendor) {
     return (
@@ -243,7 +245,16 @@ export function VendorPanel({
               </div>
               {(NEXT_ACTIONS[l.status] ?? []).length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
-                  {(NEXT_ACTIONS[l.status] ?? []).map((a) => (
+                  {l.status === 'active' && (
+                <button
+                  type="button"
+                  onClick={() => setPromoteFor(l)}
+                  className="mr-1.5 cursor-pointer rounded-full border border-[#5B2EA6] px-3 py-1 text-[10px] font-extrabold text-[#5B2EA6] hover:bg-[#F1EDF7]"
+                >
+                  Promote
+                </button>
+              )}
+              {(NEXT_ACTIONS[l.status] ?? []).map((a) => (
                     <button
                       key={a.status}
                       onClick={() => onSetStatus(l.id, a.status)}
@@ -280,6 +291,14 @@ export function VendorPanel({
           ))
         )}
       </div>
+
+      {promoteFor && (
+        <BoostSheet
+          listingId={promoteFor.id}
+          listingTitle={promoteFor.title}
+          onClose={() => setPromoteFor(null)}
+        />
+      )}
     </div>
   );
 }

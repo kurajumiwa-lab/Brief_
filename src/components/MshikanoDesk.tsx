@@ -1,4 +1,5 @@
 import React from 'react';
+import { LeadPackSheet } from './LeadPackSheet';
 import { Heart, Search } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
 import type { CoopIntent, CoopPost, CoopMatch, CoopCooperation, WhoCanHelpAnswer } from '../api/briefApi';
@@ -63,6 +64,7 @@ export function MshikanoDesk() {
   const [county, setCounty] = React.useState('');
 
   // matches drawer
+  const [introFor, setIntroFor] = React.useState<CoopPost | null>(null);
   const [matchesFor, setMatchesFor] = React.useState<{ post: CoopPost; rows: CoopMatch[] } | null>(null);
 
   // cooperations
@@ -325,6 +327,15 @@ export function MshikanoDesk() {
                     {m.reasons.length > 0 && (
                       <p className="mt-0.5 text-[9px] text-[#5B2EA6] font-bold">Why: {m.reasons.join(' · ')}</p>
                     )}
+                    {!m.post.mine && (
+                      <button
+                        type="button"
+                        onClick={() => setIntroFor(m.post)}
+                        className="mt-1.5 cursor-pointer rounded-full border border-[#5B2EA6] px-2.5 py-0.5 text-[9px] font-extrabold text-[#5B2EA6] hover:bg-[#F1EDF7]"
+                      >
+                        Get introduced — priority
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -372,6 +383,14 @@ export function MshikanoDesk() {
             </p>
           ))}
         </section>
+      )}
+      {introFor && (
+        <LeadPackSheet
+          postId={introFor.id}
+          postTitle={introFor.title}
+          onClose={() => setIntroFor(null)}
+          onPaid={() => setIntroFor(null)}
+        />
       )}
     </div>
   );

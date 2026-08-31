@@ -273,6 +273,11 @@ console.log('\n=== DOMAIN: NOTIFICATION CANDIDATES ===');
   const upcoming = mkObject('obj_pers_ntf_event', { type: 'event', title: 'Kilimani food festival', area: 'Kilimani', eventDays: 3 });
   // Saved event starting within a day.
   const savedSoon = mkObject('obj_pers_ntf_saved', { type: 'event', title: 'Jazz night', area: 'Westlands', eventDays: 0 });
+  // 'eventDays: 0' means 'today at 18:00' -- after 6pm the fixture is in the
+  // PAST and the reminder window (0-1 days ahead) can never see it. Anchor
+  // to the wall clock instead: starting six hours from whenever the suite
+  // runs, which is always 'soon'.
+  store.update('objects', savedSoon.id, { metadata: { ...(savedSoon.metadata ?? {}), eventStart: new Date(Date.now() + 6 * 3600000).toISOString() } });
   personal.saveObject(u, savedSoon.id);
   // Offer expiring within 24 hours.
   const expiring = mkObject('obj_pers_ntf_offer', { type: 'offer', title: 'Flash sale', area: 'Kilimani', deadlineDays: 0 });
