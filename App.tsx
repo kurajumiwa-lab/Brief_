@@ -6262,9 +6262,9 @@ export function App() {
   /** The public location discovery page (/explore/:name). */
   const [locationName, setLocationName] = useState<string | null>(bootRoute.locationName);
   /** The Following surface overlay (feed + management). */
-  const [followingOpen, setFollowingOpen] = useState(false);
+  const [followingOpen, setFollowingOpen] = useState(bootRoute.following);
   /** The personal Collections surface overlay. */
-  const [collectionsOpen, setCollectionsOpen] = useState(false);
+  const [collectionsOpen, setCollectionsOpen] = useState(bootRoute.collections);
   /** A shared collection page opened from /collections/:id. */
   const [collectionRouteId, setCollectionRouteId] = useState<string | null>(bootRoute.collectionId);
   /** "Add to collection" picker open inside the detail modal. */
@@ -8309,12 +8309,15 @@ export function App() {
     collectionId: collectionRouteId,
     capture: captureOpen,
     menu: menuOpen,
+    following: followingOpen,
+    collections: collectionsOpen,
     admin: adminOpen,
     landed: false
   }), [
     activeTab, nearbySection, myLayerSection, workflowSection, arenaSection,
     selectedObjectForDetail, pendingObjectId, selectedTeaSlug, openCampaignId,
-    entityPageId, locationName, collectionRouteId, captureOpen, menuOpen, adminOpen
+    entityPageId, locationName, collectionRouteId, captureOpen, menuOpen,
+    followingOpen, collectionsOpen, adminOpen
   ]);
 
   const writeUrl = useCallback((route: BriefRoute, mode: 'push' | 'replace') => {
@@ -8340,6 +8343,8 @@ export function App() {
     setEntityPageId(route.entityId);
     setLocationName(route.locationName);
     setCollectionRouteId(route.collectionId);
+    setFollowingOpen(route.following);
+    setCollectionsOpen(route.collections);
     if (route.objectId) setPendingObjectId(route.objectId);
     else {
       setPendingObjectId(null);
@@ -8349,7 +8354,7 @@ export function App() {
 
   const dismissOverlay = useCallback(() => {
     const st = typeof window !== 'undefined' ? window.history.state : null;
-    const overlayState = isBriefRoute(st) && (st.menu || st.capture || st.admin || st.objectId || st.teaSlug || st.campaignId || st.entityId || st.locationName || st.collectionId);
+    const overlayState = isBriefRoute(st) && (st.menu || st.capture || st.admin || st.objectId || st.teaSlug || st.campaignId || st.entityId || st.locationName || st.collectionId || st.following || st.collections);
     if (overlayState && !st.landed && typeof window !== 'undefined' && window.history.length > 1) {
       window.history.back();
       return;
@@ -8365,8 +8370,10 @@ export function App() {
     setEntityPageId(null);
     setLocationName(null);
     setCollectionRouteId(null);
+    setFollowingOpen(false);
+    setCollectionsOpen(false);
     setCollectionPickerFor(null);
-    writeUrl({ ...currentRoute(), menu: false, admin: false, capture: false, objectId: null, teaSlug: null, campaignId: null, entityId: null, locationName: null, collectionId: null }, 'replace');
+    writeUrl({ ...currentRoute(), menu: false, admin: false, capture: false, objectId: null, teaSlug: null, campaignId: null, entityId: null, locationName: null, collectionId: null, following: false, collections: false }, 'replace');
   }, [currentRoute, writeUrl]);
 
   useEffect(() => {

@@ -39,6 +39,10 @@ export type BriefRoute = {
   collectionId: string | null;
   capture: boolean;
   menu: boolean;
+  /** The Following surface overlay (feed + follow management). */
+  following: boolean;
+  /** The personal Collections surface overlay. */
+  collections: boolean;
   /** Operator desk overlay (F4) — not a consumer destination. */
   admin: boolean;
   /** True when the user landed on this URL (share / reload), not via in-app push. */
@@ -59,6 +63,8 @@ export const DEFAULT_ROUTE: BriefRoute = {
   collectionId: null,
   capture: false,
   menu: false,
+  following: false,
+  collections: false,
   admin: false,
   landed: false
 };
@@ -97,6 +103,8 @@ export function parsePath(pathname: string, search = ''): BriefRoute {
   if (q.get('menu') === '1') route.menu = true;
   if (q.get('admin') === '1') route.admin = true;
   if (q.get('capture') === '1') route.capture = true;
+  if (q.get('following') === '1') route.following = true;
+  if (q.get('collections') === '1') route.collections = true;
   const campaign = q.get('campaign');
   if (campaign) route.campaignId = campaign;
 
@@ -192,6 +200,8 @@ export function toPath(route: BriefRoute): string {
   if (route.menu) q.set('menu', '1');
   if (route.admin) q.set('admin', '1');
   if (route.capture) q.set('capture', '1');
+  if (route.following) q.set('following', '1');
+  if (route.collections) q.set('collections', '1');
   if (route.campaignId) q.set('campaign', route.campaignId);
   const qs = q.toString();
   return qs ? `${path}?${qs}` : path;

@@ -272,6 +272,17 @@ async function main() {
     const collectionsBtn = h2.buttons().find((b) => text(b).includes('Collections'));
     await h2.click(collectionsBtn);
     await h2.settle();
+    // The surface's Back must dismiss it IN-APP (same overlay contract as
+    // Following) and keep the session running.
+    const surfaceBack = dialogButtons(h2, 'Collections').find((b) => text(b) === 'Back' || b.getAttribute('aria-label') === 'Back');
+    check('collections surface offers Back', Boolean(surfaceBack));
+    await h2.click(surfaceBack);
+    await h2.settle();
+    await h2.settle();
+    check('collections Back dismisses the surface in-app', !Boolean(inDialog(h2, 'Collections')));
+    check('collections Back keeps the app running', Boolean(h2.buttons().find((b) => text(b).includes('Collections'))));
+    await h2.click(h2.buttons().find((b) => text(b).includes('Collections')));
+    await h2.settle();
     const card = dialogButtons(h2, 'Collections').find((b) => text(b).includes('Weekend Plans'));
     check('collection card lists its real count', text(card).includes('4 items'), text(card));
     await h2.click(card);
