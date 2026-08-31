@@ -140,6 +140,7 @@ import { MoneyBand } from './components/MoneyBand';
 import { ArenaScreen } from './screens/ArenaScreen';
 import { MyLayerScreen } from './screens/MyLayerScreen';
 import { NearbyScreen } from './screens/NearbyScreen';
+import { WorkflowsScreen } from './screens/WorkflowsScreen';
 import {
   ALL_GROUPS,
   ARENA_GAMES,
@@ -3198,93 +3199,7 @@ export function App() {
           />
         )}
 
-        {activeTab === 'workflows' && (
-          <div className="max-w-3xl mx-auto px-4 pt-3 pb-1">
-            <div className="flex items-end justify-between gap-2 pb-2">
-              <div className="min-w-0">
-                <h1 className="text-lg font-extrabold text-[#251045] tracking-tight">
-                  {workflowView === 'queue' ? ROOM.workflows.label : `Workflows — ${activeWorkflowBundle.label}`}
-                </h1>
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#251045]/50 mt-0.5">
-                  {workflowView === 'queue' ? `${QUEUE_LABEL} — ${QUEUE_HINT}` : activeWorkflowBundle.hint}
-                </p>
-              </div>
-              {/* No count on the queue: how much is waiting is the queue's own
-                  answer, and a header badge would be a second, worse copy. */}
-              {workflowView === 'screen' && (
-                <span className="text-[10px] font-bold uppercase tracking-[0.14em] bg-[#E9E4F2] text-[#251045]/60 px-2.5 py-1 rounded-full">
-                  {activeWorkflowBundle.sections.length} screens
-                </span>
-              )}
-            </div>
 
-            {/* The landing row. The queue is first because it is the reason you
-                opened the Inbox; the bundles are the tools, filed by job. */}
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-2">
-              <button
-                onClick={() => {
-                  // Back to the desk's default section as well, so the URL
-                  // says /actions while the queue is what you are looking at.
-                  // A path that names a tool you are not reading is a small
-                  // lie, and it is what a shared link would carry.
-                  setWorkflowSection('active');
-                  setWorkflowView('queue');
-                }}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
-                  workflowView === 'queue'
-                    ? 'bg-[#5B2EA6] text-[#FFFFFF] border-[#6C3EC9]'
-                    : 'bg-[#FBFAFD] text-[#251045] border-[#D6CFE4]'
-                }`}
-              >
-                {QUEUE_CHIP}
-              </button>
-              {WORKFLOW_BUNDLES.map((bundle) => (
-                <button
-                  key={bundle.id}
-                  onClick={() => {
-                    setWorkflowSection(bundle.sections[0] as WorkflowSection);
-                    setWorkflowView('screen');
-                  }}
-                  className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
-                    workflowView === 'screen' && activeWorkflowBundle.id === bundle.id
-                      ? 'bg-[#5B2EA6] text-[#FFFFFF] border-[#6C3EC9]'
-                      : 'bg-[#FBFAFD] text-[#251045] border-[#D6CFE4]'
-                  }`}
-                >
-                  {bundle.label}
-                </button>
-              ))}
-            </div>
-
-            {workflowView === 'screen' && (
-              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5 border-t border-[#D6CFE4] pt-2">
-                {activeWorkflowBundle.sections.map((id) => (
-                  <button
-                    key={id}
-                    onClick={() => setWorkflowSection(id as WorkflowSection)}
-                    className={`shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition cursor-pointer ${
-                      workflowSection === id
-                        ? 'bg-[#5B2EA6] text-[#FFFFFF]'
-                        : 'text-[#251045]/60 hover:text-[#251045] bg-[#F1EDF7]'
-                    }`}
-                  >
-                    {INBOX_TABS[id]}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'workflows' && workflowView === 'queue' && (
-          <TriageQueue
-            onOpenSection={(section) => {
-              setWorkflowSection(section as WorkflowSection);
-              setWorkflowView('screen');
-            }}
-            onNotice={(message) => showToast(message)}
-          />
-        )}
 
 
         {/* TEA */}
@@ -3292,116 +3207,39 @@ export function App() {
         {/* MY LAYER */}
 
         {/* WORKFLOWS */}
-        {activeTab === 'workflows' &&
-          workflowView === 'screen' &&
-          (workflowSection === 'active' || workflowSection === 'completed') && (
-          <section className="space-y-5">
-            <ActionsEngine
-              online={connectorStatus.online}
-              checked={connectorStatus.checked}
-              capabilities={connectorStatus.capabilities as any}
-              liveSourceCount={connectorStatus.liveSources.length}
-              stats={connectorStatus.stats as any}
-            />
-            <div className="bg-[#FBFAFD] border border-[#D6CFE4] rounded-2xl p-5">
-              <div className="flex items-center gap-2 mb-2">
-                <Briefcase className="w-4 h-4 text-[#251045]" />
-                <span className="text-[10px] text-[#251045]">
-                  Workflows
-                </span>
-              </div>
-
-              <h2 className="text-xl font-extrabold">
-                Things you can actually do.
-              </h2>
-
-              <p className="text-xs text-[#251045] mt-1">
-                {workflowSection === 'completed'
-                  ? 'Processes you have already finished.'
-                  : 'Follow a process instead of figuring it out from scratch.'}
-              </p>
-            </div>
-
-            {(workflowSection === 'completed' ? completedJourneys : activeJourneys)
-              .length === 0 && (
-              workflowSection === 'completed' ? (
-                <p className="text-xs text-[#251045]/60">
-                  Nothing finished yet. Your wins will collect here.
-                </p>
-              ) : (
-                <PromptBanner
-                  line1="Zero active. Your move."
-                  line2="Connect a channel or capture the first thing — that's what fills this board."
-                  action="Connect a source"
-                  onAction={() => setWorkflowSection('sources')}
-                />
-              )
-            )}
-
-            {(workflowSection === 'completed' ? completedJourneys : activeJourneys).map((journey) => (
-              <div
-                key={journey.id}
-                className="bg-[#FBFAFD] border border-[#D6CFE4] rounded-2xl overflow-hidden"
-              >
-                <div className="p-5">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <span className="text-[10px] text-[#251045]">
-                        {journey.category}
-                      </span>
-
-                      <h3 className="text-lg font-extrabold mt-1">
-                        {journey.title}
-                      </h3>
-
-                      <p className="text-xs text-[#251045] mt-1">
-                        {journey.description}
-                      </p>
-                    </div>
-
-                    <span className="text-xs font-bold text-[#251045]">
-                      {journey.progressPercent}%
-                    </span>
-                  </div>
-
-                  <div className="h-1.5 bg-[#F1EDF7] rounded-full mt-5 overflow-hidden">
-                    <div
-                      className="h-full bg-[#5B2EA6] rounded-full"
-                      style={{ width: `${journey.progressPercent}%` }}
-                    />
-                  </div>
-                </div>
-
-                <div className="border-t border-[#D6CFE4]">
-                  {journey.steps.map((step) => (
-                    <div
-                      key={step.id}
-                      className="flex items-center gap-3 p-4 border-b border-[#D6CFE4] last:border-b-0"
-                    >
-                      {step.isCompleted ? (
-                        <CheckCircle2 className="w-5 h-5 text-[#251045] shrink-0" />
-                      ) : (
-                        <Circle className="w-5 h-5 text-[#251045]/60 shrink-0" />
-                      )}
-
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-extrabold">
-                          {step.title}
-                        </p>
-                        <p className="text-[10px] text-[#251045]/60">
-                          {step.description}
-                        </p>
-                      </div>
-
-                      <span className="text-[9px] text-[#251045]">
-                        {step.statusLabel}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </section>
+        {activeTab === 'workflows' && (
+          <WorkflowsScreen
+            activeJourneys={activeJourneys}
+            activeTab={activeTab}
+            activeWorkflowBundle={activeWorkflowBundle}
+            briefItBusy={briefItBusy}
+            briefItPreview={briefItPreview}
+            briefItSaved={briefItSaved}
+            briefItText={briefItText}
+            completedJourneys={completedJourneys}
+            connectorStatus={connectorStatus}
+            handleAcceptCandidate={handleAcceptCandidate}
+            handleReceiveInbound={handleReceiveInbound}
+            handleRejectCandidate={handleRejectCandidate}
+            inboundBusy={inboundBusy}
+            loadObjects={loadObjects}
+            matches={matches}
+            objects={objects}
+            pendingCandidates={pendingCandidates}
+            refreshConnectors={refreshConnectors}
+            reviewed={reviewed}
+            runBriefItPreview={runBriefItPreview}
+            runBriefItSave={runBriefItSave}
+            setBriefItPreview={setBriefItPreview}
+            setBriefItSaved={setBriefItSaved}
+            setBriefItText={setBriefItText}
+            setWorkflowSection={setWorkflowSection}
+            setWorkflowView={setWorkflowView}
+            showToast={showToast}
+            sources={sources}
+            workflowSection={workflowSection}
+            workflowView={workflowView}
+          />
         )}
 
         {/* INTELLIGENCE */}
@@ -3435,105 +3273,20 @@ export function App() {
 
 
 
-        {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'money' && (
-          <div className="max-w-3xl mx-auto px-4 py-6">
-            <MoneyPanel />
-          </div>
-        )}
-
-        {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'resale' && (
-          <ResaleDesk />
-        )}
-
-        {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'cockpit' && (
-          <div className="max-w-3xl mx-auto px-4 pt-4">
-            <CreatorCockpit />
-          </div>
-        )}
-
-        {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'command' && (
-          <div className="max-w-3xl mx-auto px-4 py-6">
-            <HostCommand />
-          </div>
-        )}
-
-        {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'vault' && (
-          <Vault />
-        )}
-
-        {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'fees' && (
-          <div className="max-w-3xl mx-auto px-4 py-6">
-            <ServiceFees />
-          </div>
-        )}
-
-        {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'shop' && (
-          <WhatsAppShopBuilder onOpenFees={() => setWorkflowSection('fees')} />
-        )}
-
-        {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'tea' && (
-          <div className="max-w-3xl mx-auto px-4 pt-4">
-            <TeaDesk />
-          </div>
-        )}
-
-        {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'engine' && (
-          <EnginePanel
-            // Deltas that touch the object stream silently refresh the home
-            // feed — the "never loading" feel, wired to real data.
-            onObjectsChanged={() => { void loadObjects(); }}
-          />
-        )}
-
-        {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'groupbuy' && (
-          <GroupBuyPortal />
-        )}
-
-        {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'gate' && (
-          <CheckIn />
-        )}
-
-        {activeTab === 'workflows' &&
-          workflowView === 'screen' &&
-          ['campaigns', 'matches', 'distribution', 'calendar', 'vendors', 'ai'].includes(workflowSection) && (
-            <div className="max-w-3xl mx-auto px-4 py-6">
-              <YardEngineDesk section={workflowSection as YardSection} />
-            </div>
-          )}
-
-        {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'sources' && (
-          <SourcesPanel
-            connectorStatus={connectorStatus}
-            sources={sources}
-            objects={objects}
-            briefItText={briefItText}
-            setBriefItText={setBriefItText}
-            briefItPreview={briefItPreview}
-            briefItBusy={briefItBusy}
-            briefItSaved={briefItSaved}
-            setBriefItPreview={setBriefItPreview}
-            setBriefItSaved={setBriefItSaved}
-            runBriefItPreview={runBriefItPreview}
-            runBriefItSave={runBriefItSave}
-            refreshConnectors={refreshConnectors}
-            getSourceHealth={getSourceHealth}
-            getSourceHealthLabel={getSourceHealthLabel}
-          />
-        )}
 
 
-        {activeTab === 'workflows' && workflowView === 'screen' && workflowSection === 'inbox' && (
-          <Inbox
-            pendingCandidates={pendingCandidates}
-            reviewed={reviewed}
-            objects={objects}
-            sources={sources}
-            handleAcceptCandidate={handleAcceptCandidate}
-            handleRejectCandidate={handleRejectCandidate}
-            handleReceiveInbound={handleReceiveInbound}
-            inboundBusy={inboundBusy}
-          />
-        )}
+
+
+
+
+
+
+
+
+
+
+
+
 
         </main>
       </div>
