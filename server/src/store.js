@@ -200,6 +200,14 @@ const EMPTY = {
   // domain/collection.js.
   collections: [],
 
+  // --- Personal collections (Collections brief) ----------------------------
+  // USER-owned named groups of object REFERENCES. Membership lives in
+  // personalCollectionItems; the objects themselves are never duplicated.
+  // Quick-save reuses the existing `saves` rows ("Saved"). See
+  // domain/collections.js — distinct from the editorial domain/collection.js.
+  personalCollections: [],
+  personalCollectionItems: [],
+
   // --- Yard Engine / creator advertising -----------------------------------
   // These are additive operational shelves. Identity remains in `people`,
   // money remains in `ledgerTransactions`, and content remains in `objects`.

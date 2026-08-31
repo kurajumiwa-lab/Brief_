@@ -70,9 +70,6 @@ function toServerRow(o) {
     temporal: o.temporal ?? undefined,
     corrections: o.corrections ?? undefined,
     openReportCount: o.openReportCount ?? undefined,
-    confirmationCount: o.confirmationCount ?? undefined,
-    lastVerifiedAt: o.lastVerifiedAt ?? undefined,
-    validityWindowDays: o.validityWindowDays ?? undefined,
     sourceId: o.sourceId ?? undefined,
 
     // Presentational fields the server does not model. objectFromServer
@@ -99,8 +96,11 @@ function toServerRow(o) {
  */
 async function boot(opts = {}) {
   const { JSDOM } = require('jsdom');
+  // startPath lets a suite boot the app directly on a route (e.g. a shared
+  // /collections/:id page) exactly like a landed share link.
+  const bootUrl = opts.startPath ? new URL(opts.startPath, 'https://brief.test/').href : 'https://brief.test/';
   const dom = new JSDOM('<!DOCTYPE html><html><body><div id="root"></div></body></html>',
-    { url: 'https://brief.test/', pretendToBeVisual: true });
+    { url: bootUrl, pretendToBeVisual: true });
 
   global.window = dom.window;
   // Node >=21 ships a getter-only `navigator` global, so a plain

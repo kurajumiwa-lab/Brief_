@@ -35,6 +35,8 @@ export type BriefRoute = {
   entityId: string | null;
   /** A public location discovery page (/explore/kilimani). */
   locationName: string | null;
+  /** A shared personal collection page (/collections/:id). */
+  collectionId: string | null;
   capture: boolean;
   menu: boolean;
   /** Operator desk overlay (F4) — not a consumer destination. */
@@ -54,6 +56,7 @@ export const DEFAULT_ROUTE: BriefRoute = {
   campaignId: null,
   entityId: null,
   locationName: null,
+  collectionId: null,
   capture: false,
   menu: false,
   admin: false,
@@ -151,6 +154,13 @@ export function parsePath(pathname: string, search = ''): BriefRoute {
     return route;
   }
 
+  // Shared personal collection pages: /collections/<id>. The id is a
+  // server-side random id — never guessable from a name.
+  if (root === 'collections' && parts[1]) {
+    route.collectionId = decodePart(parts[1]);
+    return route;
+  }
+
   return route;
 }
 
@@ -162,6 +172,8 @@ export function toPath(route: BriefRoute): string {
     path = `/e/${encodeURIComponent(route.entityId)}`;
   } else if (route.locationName) {
     path = `/explore/${encodeURIComponent(route.locationName)}`;
+  } else if (route.collectionId) {
+    path = `/collections/${encodeURIComponent(route.collectionId)}`;
   } else if (route.dest === 'arena') {
     path = route.arena === 'lobby' ? '/play' : `/play/${route.arena}`;
   } else if (route.dest === 'mylayer') {
@@ -197,6 +209,17 @@ export function entityPath(id: string): string {
 /** Public path for a location discovery page (/explore/kilimani). */
 export function explorePath(name: string): string {
   return `/explore/${encodeURIComponent(name)}`;
+}
+
+/** Stable public path for a shared collection page (/collections/:id). */
+export function collectionPath(id: string): string {
+  return `/collections/${encodeURIComponent(id)}`;
+}
+
+/** Absolute share URL for a shared collection, or null without an origin. */
+export function collectionShareUrl(origin: string | null, id: string): string | null {
+  if (!origin) return null;
+  return `${origin.replace(/\/+$/, '')}${collectionPath(id)}`;
 }
 
 /** Absolute share URL, or null when Brief has no origin to name. */

@@ -4098,3 +4098,109 @@ export function getNearby(opts: { lat?: number; lng?: number; radiusKm?: number;
   return request(`/api/nearby${qs ? `?${qs}` : ''}`, undefined, (r) =>
     r && typeof r.available === 'boolean' ? r as { available: boolean; reason: string | null; items: GraphObject[] } : undefined);
 }
+
+// ---------------------------------------------------------------------------
+// PERSONAL COLLECTIONS — named groups of object references.
+// ---------------------------------------------------------------------------
+
+export type CollectionVisibility = 'private' | 'public';
+
+export interface CollectionCover {
+  kind: 'custom' | 'single' | 'mosaic' | 'none';
+  url?: string;
+  urls?: string[];
+}
+
+export interface BriefCollectionSummary {
+  id: string;
+  name: string;
+  description: string;
+  visibility: CollectionVisibility;
+  createdAt: string;
+  updatedAt: string;
+  count: number;
+  cover: CollectionCover;
+  locations: { areas: string[]; counties: string[] };
+}
+
+export interface CollectionItem {
+  id: string;
+  addedAt: string;
+  position: number;
+  object: any;
+}
+
+export interface CollectionPage {
+  id: string;
+  name: string;
+  description: string;
+  visibility: CollectionVisibility;
+  coverImage: string | null;
+  createdAt: string;
+  updatedAt: string;
+  count: number;
+  cover: CollectionCover;
+  locations: { areas: string[]; counties: string[] };
+  items: CollectionItem[];
+}
+
+/** The owner's collections, optionally searched by name or item title. */
+export function listCollections(q = ''): Promise<ApiResult<{ collections: BriefCollectionSummary[] }>> {
+  const qs = q.trim() ? `?q=${encodeURIComponent(q.trim())}` : '';
+  return request(`/api/me/collections${qs}`, undefined, (r) =>
+    r && Array.isArray(r.collections) ? r as { collections: BriefCollectionSummary[] } : undefined);
+}
+
+/** Create a collection (private by default). */
+export function createCollection(input: { name: string; description?: string; coverImage?: string | null; visibility?: CollectionVisibility }): Promise<ApiResult<{ ok: boolean; collection: BriefCollectionSummary }>> {
+  return request('/api/me/collections', { method: 'POST', body: JSON.stringify(input) }, (r) =>
+    r && r.collection ? r as { ok: boolean; collection: BriefCollectionSummary } : undefined);
+}
+
+/** Owner-only rename / description / cover / visibility. */
+export function updateCollection(id: string, patch: { name?: string; description?: string; coverImage?: string | null; visibility?: CollectionVisibility }): Promise<ApiResult<{ ok: boolean; collection: BriefCollectionSummary }>> {
+  return request(`/api/me/collections/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(patch) }, (r) =>
+    r && r.collection ? r as { ok: boolean; collection: BriefCollectionSummary } : undefined);
+}
+
+/** Owner-only delete. The objects themselves are never touched. */
+export function deleteCollection(id: string): Promise<ApiResult<{ ok: boolean }>> {
+  return request(`/api/me/collections/${encodeURIComponent(id)}`, { method: 'DELETE', body: '{}' }, (r) =>
+    r && r.ok === true ? r as { ok: boolean } : undefined);
+}
+
+/** The owner's full collection view (items resolved live). */
+export function getMyCollection(id: string): Promise<ApiResult<{ collection: CollectionPage }>> {
+  return request(`/api/me/collections/${encodeURIComponent(id)}`, undefined, (r) =>
+    r && r.collection && Array.isArray(r.collection.items) ? r as { collection: CollectionPage } : undefined);
+}
+
+/** Add an object reference. Idempotent; public objects only. */
+export function addToCollection(collectionId: string, objectId: string): Promise<ApiResult<{ ok: boolean; added: boolean; collectionId: string }>> {
+  return request(`/api/me/collections/${encodeURIComponent(collectionId)}/items`, { method: 'POST', body: JSON.stringify({ objectId }) }, (r) =>
+    r && r.ok === true ? r as { ok: boolean; added: boolean; collectionId: string } : undefined);
+}
+
+/** Remove an object reference. */
+export function removeFromCollection(collectionId: string, objectId: string): Promise<ApiResult<{ ok: boolean; removed: boolean }>> {
+  return request(`/api/me/collections/${encodeURIComponent(collectionId)}/items/${encodeURIComponent(objectId)}`, { method: 'DELETE', body: '{}' }, (r) =>
+    r && r.ok === true ? r as { ok: boolean; removed: boolean } : undefined);
+}
+
+/** Owner-only reorder: objectIds defines the new order. */
+export function reorderCollection(collectionId: string, objectIds: string[]): Promise<ApiResult<{ ok: boolean }>> {
+  return request(`/api/me/collections/${encodeURIComponent(collectionId)}/items/order`, { method: 'PUT', body: JSON.stringify({ objectIds }) }, (r) =>
+    r && r.ok === true ? r as { ok: boolean } : undefined);
+}
+
+/** The PUBLIC shareable page (only public objects; 404 for private/unknown). */
+export function getPublicCollection(id: string): Promise<ApiResult<{ collection: CollectionPage }>> {
+  return request(`/api/collections/personal/${encodeURIComponent(id)}`, undefined, (r) =>
+    r && r.collection && Array.isArray(r.collection.items) ? r as { collection: CollectionPage } : undefined);
+}
+
+/** Share a public collection: returns the stable URL. */
+export function shareCollection(id: string): Promise<ApiResult<{ ok: boolean; url: string | null }>> {
+  return request(`/api/me/collections/${encodeURIComponent(id)}/share`, { method: 'POST', body: '{}' }, (r) =>
+    r && r.ok === true ? r as { ok: boolean; url: string | null } : undefined);
+}

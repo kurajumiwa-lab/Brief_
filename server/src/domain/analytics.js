@@ -46,7 +46,14 @@ function engagementCounts() {
     entityFollows: signalMeta('entity_followed').length,
     entityUnfollows: signalMeta('entity_unfollowed').length,
     entityObjectOpens: signalMeta('entity_object_opened').length,
-    sourceOpens: signalMeta('source_opened').length
+    sourceOpens: signalMeta('source_opened').length,
+    // Collections layer: the five tracked acts from the collections brief —
+    // created, opened, shared, item removed, plus saves (already counted
+    // above as `saves`). No extra personal data is collected.
+    collectionsCreated: signalMeta('collection_created').length,
+    collectionsOpened: signalMeta('collection_opened').length,
+    collectionsShared: signalMeta('collection_shared').length,
+    collectionItemsRemoved: signalMeta('collection_item_removed').length
   };
 }
 

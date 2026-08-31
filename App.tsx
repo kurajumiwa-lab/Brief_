@@ -6,6 +6,7 @@ import {
   objectShareUrl,
   isBriefRoute,
   explorePath,
+  collectionPath,
   DEFAULT_ROUTE,
   type BriefRoute
 } from './nav/routes';
@@ -16,6 +17,9 @@ import { EntityPage } from './components/EntityPage';
 import { FollowingSurface } from './components/FollowingSurface';
 import { LocationPage } from './components/LocationPage';
 import { RelatedContent } from './components/RelatedContent';
+import { CollectionsSurface } from './components/CollectionsSurface';
+import { CollectionPage } from './components/CollectionPage';
+import { CollectionPicker } from './components/CollectionPicker';
 import { EntityChip } from './components/EntityChip';
 import { CampaignDistribution } from './components/CampaignDistribution';
 import { AwaitingPayment } from './components/AwaitingPayment';
@@ -83,6 +87,7 @@ import {
   Building2,
   Search,
   Sparkles,
+  FolderPlus,
   Plus,
   Terminal,
   Activity,
@@ -6258,6 +6263,12 @@ export function App() {
   const [locationName, setLocationName] = useState<string | null>(bootRoute.locationName);
   /** The Following surface overlay (feed + management). */
   const [followingOpen, setFollowingOpen] = useState(false);
+  /** The personal Collections surface overlay. */
+  const [collectionsOpen, setCollectionsOpen] = useState(false);
+  /** A shared collection page opened from /collections/:id. */
+  const [collectionRouteId, setCollectionRouteId] = useState<string | null>(bootRoute.collectionId);
+  /** "Add to collection" picker open inside the detail modal. */
+  const [collectionPickerFor, setCollectionPickerFor] = useState<string | null>(null);
 
   // Opening an object marks it seen, which is what keeps the Daily Brief's
   // "New" section honest instead of showing the same items forever.
@@ -8295,6 +8306,7 @@ export function App() {
     campaignId: openCampaignId,
     entityId: entityPageId,
     locationName,
+    collectionId: collectionRouteId,
     capture: captureOpen,
     menu: menuOpen,
     admin: adminOpen,
@@ -8302,7 +8314,7 @@ export function App() {
   }), [
     activeTab, nearbySection, myLayerSection, workflowSection, arenaSection,
     selectedObjectForDetail, pendingObjectId, selectedTeaSlug, openCampaignId,
-    entityPageId, locationName, captureOpen, menuOpen, adminOpen
+    entityPageId, locationName, collectionRouteId, captureOpen, menuOpen, adminOpen
   ]);
 
   const writeUrl = useCallback((route: BriefRoute, mode: 'push' | 'replace') => {
@@ -8327,6 +8339,7 @@ export function App() {
     setOpenCampaignId(route.campaignId);
     setEntityPageId(route.entityId);
     setLocationName(route.locationName);
+    setCollectionRouteId(route.collectionId);
     if (route.objectId) setPendingObjectId(route.objectId);
     else {
       setPendingObjectId(null);
@@ -8336,7 +8349,7 @@ export function App() {
 
   const dismissOverlay = useCallback(() => {
     const st = typeof window !== 'undefined' ? window.history.state : null;
-    const overlayState = isBriefRoute(st) && (st.menu || st.capture || st.admin || st.objectId || st.teaSlug || st.campaignId || st.entityId || st.locationName);
+    const overlayState = isBriefRoute(st) && (st.menu || st.capture || st.admin || st.objectId || st.teaSlug || st.campaignId || st.entityId || st.locationName || st.collectionId);
     if (overlayState && !st.landed && typeof window !== 'undefined' && window.history.length > 1) {
       window.history.back();
       return;
@@ -8351,7 +8364,9 @@ export function App() {
     setSelectedObjectForDetailRaw(null);
     setEntityPageId(null);
     setLocationName(null);
-    writeUrl({ ...currentRoute(), menu: false, admin: false, capture: false, objectId: null, teaSlug: null, campaignId: null, entityId: null, locationName: null }, 'replace');
+    setCollectionRouteId(null);
+    setCollectionPickerFor(null);
+    writeUrl({ ...currentRoute(), menu: false, admin: false, capture: false, objectId: null, teaSlug: null, campaignId: null, entityId: null, locationName: null, collectionId: null }, 'replace');
   }, [currentRoute, writeUrl]);
 
   useEffect(() => {
@@ -8372,19 +8387,20 @@ export function App() {
       skipUrl.current = false;
       return;
     }
-    const overlay = menuOpen || adminOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail) || Boolean(pendingObjectId) || Boolean(entityPageId) || Boolean(locationName) || followingOpen;
+    const overlay = menuOpen || adminOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail) || Boolean(pendingObjectId) || Boolean(entityPageId) || Boolean(locationName) || Boolean(collectionRouteId) || followingOpen || collectionsOpen;
     writeUrl(currentRoute(), overlay ? 'push' : 'replace');
   }, [
     activeTab, nearbySection, myLayerSection, workflowSection, arenaSection,
     menuOpen, adminOpen, captureOpen, selectedTeaSlug, openCampaignId,
-    selectedObjectForDetail, pendingObjectId, entityPageId, locationName, followingOpen,
+    selectedObjectForDetail, pendingObjectId, entityPageId, locationName, collectionRouteId,
+    followingOpen, collectionsOpen,
     currentRoute, writeUrl
   ]);
 
   useEffect(() => {
     const tg = (typeof window !== 'undefined' ? (window as any).Telegram?.WebApp : null);
     if (!tg?.BackButton) return;
-    const show = menuOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail) || Boolean(entityPageId) || Boolean(locationName) || followingOpen;
+    const show = menuOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail) || Boolean(entityPageId) || Boolean(locationName) || Boolean(collectionRouteId) || followingOpen || collectionsOpen;
     try {
       if (show) tg.BackButton.show();
       else tg.BackButton.hide();
@@ -8394,7 +8410,7 @@ export function App() {
     return () => {
       try { tg.BackButton.offClick?.(handler); } catch { /* */ }
     };
-  }, [menuOpen, captureOpen, selectedTeaSlug, openCampaignId, selectedObjectForDetail, entityPageId, locationName, followingOpen, dismissOverlay]);
+  }, [menuOpen, captureOpen, selectedTeaSlug, openCampaignId, selectedObjectForDetail, entityPageId, locationName, collectionRouteId, followingOpen, collectionsOpen, dismissOverlay]);
 
   useEffect(() => {
     if (!pendingObjectId) return;
@@ -8423,7 +8439,7 @@ export function App() {
     return () => { live = false; };
   }, [selectedObjectForDetail?.id]);
 
-  const isAnyModalActive = Boolean(openCampaignId) || createStep !== 'closed' || captureOpen || Boolean(selectedObjectForDetail) || Boolean(selectedTeaSlug) || Boolean(entityPageId) || Boolean(locationName) || followingOpen;
+  const isAnyModalActive = Boolean(openCampaignId) || createStep !== 'closed' || captureOpen || Boolean(selectedObjectForDetail) || Boolean(selectedTeaSlug) || Boolean(entityPageId) || Boolean(locationName) || Boolean(collectionRouteId) || followingOpen || collectionsOpen;
 
   // THE APP GATE (product decision 2026-08-29): NO ACCESS WITHOUT AN ACCOUNT.
   // Signed out, the app does not render at all -- no feed, no shelf, no
@@ -8681,6 +8697,14 @@ export function App() {
                           My Brief
                         </h2>
                         <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setCollectionsOpen(true)}
+                            className="flex items-center gap-1.5 rounded-full border border-[#D6CFE4] bg-[#FBFAFD] px-3 py-1 text-[10px] font-extrabold text-[#251045]/60 cursor-pointer hover:border-[#6C3EC9]"
+                          >
+                            <FolderPlus className="h-3 w-3" />
+                            Collections
+                          </button>
                           <button
                             type="button"
                             onClick={() => setFollowingOpen(true)}
@@ -13070,7 +13094,27 @@ export function App() {
                       <Eye className="h-3.5 w-3.5" />
                       {watchedIds.has(selectedObjectForDetail.id) ? 'Watching' : 'Watch'}
                     </button>
+
+                    <button
+                      onClick={() => setCollectionPickerFor(selectedObjectForDetail.id)}
+                      className="flex-1 py-2.5 rounded-xl bg-[#FBFAFD] border border-[#6C3EC9]/50 text-[#5B2EA6] font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <FolderPlus className="w-3.5 h-3.5" />
+                      Add to collection
+                    </button>
                   </div>
+
+                  {/* Add-to-collection picker (Collections brief). Renders
+                      inside the object modal so organizing never leaves the
+                      object. */}
+                  {collectionPickerFor === selectedObjectForDetail.id && (
+                    <div className="mt-3">
+                      <CollectionPicker
+                        objectId={selectedObjectForDetail.id}
+                        onChanged={() => void loadPersonal()}
+                      />
+                    </div>
+                  )}
 
                   {/* §8: the crowd-checking row. Confirm says "I know this is
                       true"; report says "this is wrong" with a reason. Both
@@ -13553,6 +13597,39 @@ export function App() {
           onFollowLocation={(loc) => {
             if (!sessionUser) { showToast('Sign in to follow this area.'); return; }
             void followOne('location', loc);
+          }}
+        />
+      )}
+
+      {/* COLLECTIONS — the personal layer. The surface opens from the header;
+          a shared /collections/:id link renders the public page directly. */}
+      {collectionsOpen && (
+        <CollectionsSurface
+          authed={Boolean(sessionUser)}
+          savedCount={(personalState?.saved ?? []).length}
+          onClose={dismissOverlay}
+          onOpenObject={(raw) => {
+            if (!raw?.id) return;
+            const local = objects.find((o) => o.id === String(raw.id));
+            setSelectedObjectForDetail(local ?? objectFromServer(raw));
+          }}
+          onOpenSaved={() => {
+            setCollectionsOpen(false);
+            setActiveTab('mylayer');
+            setMyLayerSection('saved');
+          }}
+          onChanged={() => void loadPersonal()}
+        />
+      )}
+      {collectionRouteId && (
+        <CollectionPage
+          collectionId={collectionRouteId}
+          mode="public"
+          onClose={dismissOverlay}
+          onOpenObject={(raw) => {
+            if (!raw?.id) return;
+            const local = objects.find((o) => o.id === String(raw.id));
+            setSelectedObjectForDetail(local ?? objectFromServer(raw));
           }}
         />
       )}

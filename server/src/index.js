@@ -64,6 +64,7 @@ import { register as wireRoutes } from './routes/wire.js';
 import { register as mediaRoutes } from './routes/media.js';
 import { register as feedRoutes } from './routes/feed.js';
 import { register as collectionsRoutes } from './routes/collections.js';
+import { register as personalCollectionsRoutes } from './routes/personalCollections.js';
 import { register as searchRoutes } from './routes/search.js';
 import { register as assistRoutes } from './routes/assist.js';
 import { register as distributionRoutes } from './routes/distribution.js';
@@ -178,7 +179,7 @@ app.use(ops.requestLogger);
 //                           (public location discovery pages like /explore/
 //                           kilimani, related content, nearby) — every payload
 //                           is the public projection of public objects only
-const PUBLIC_WITHOUT_SESSION = /^\/(auth|entities|locations|graph|nearby|public\/(campaigns|feed)|health|ready|readiness|media\/(file|telegram)|config|release|email-subscriptions|webhooks|telegram\/init|huduma\/webhooks)(\/|$)/;
+const PUBLIC_WITHOUT_SESSION = /^\/(auth|entities|locations|graph|nearby|collections\/personal|public\/(campaigns|feed)|health|ready|readiness|media\/(file|telegram)|config|release|email-subscriptions|webhooks|telegram\/init|huduma\/webhooks)(\/|$)/;
 app.use('/api', (req, res, next) => {
   if (PUBLIC_WITHOUT_SESSION.test(req.path)) return next();
   const me = callerId(req);
@@ -226,6 +227,7 @@ wireRoutes(app);
 mediaRoutes(app);
 feedRoutes(app);
 collectionsRoutes(app);
+personalCollectionsRoutes(app);
 searchRoutes(app);
 assistRoutes(app);
 distributionRoutes(app);

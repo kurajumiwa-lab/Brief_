@@ -296,7 +296,25 @@ export function savedIdsOf(userId) {
  * "Less like this" (−12) and "not interested" (excluded entirely) demote;
  * nothing is ever demoted by absence of personalization.
  */
-export function personalBoost(object, interests, relevance, followedEntityKeys = null) {
+/**
+ * Weak derived type preference from SAVES (Collections brief). Only types the
+ * user has saved at least SAVE_AFFINITY_MIN times count, so a single save
+ * never implies a permanent preference. The boost it feeds is deliberately
+ * smaller than an explicit interest type.
+ */
+export const SAVE_AFFINITY_MIN = 3;
+
+export function saveAffinityTypes(userId, min = SAVE_AFFINITY_MIN) {
+  const byType = {};
+  for (const row of store.filter('saves', (s) => s.userId === userId)) {
+    const obj = store.find('objects', (o) => o.id === row.objectId);
+    if (!obj?.type) continue;
+    byType[obj.type] = (byType[obj.type] ?? 0) + 1;
+  }
+  return new Set(Object.entries(byType).filter(([, n]) => n >= min).map(([t]) => t));
+}
+
+export function personalBoost(object, interests, relevance, followedEntityKeys = null, saveAffinity = null) {
   if (!object?.id) return { boost: 0, reasons: [] };
   let boost = 0;
   const reasons = [];
@@ -313,6 +331,12 @@ export function personalBoost(object, interests, relevance, followedEntityKeys =
 
   // Weak engagement signals: the user actually opened/saved/shared this row.
   if (engagementHits(object.id)) { boost += 3; reasons.push('engaged'); }
+
+  // Repeated saves (≥ SAVE_AFFINITY_MIN of the same type) are a WEAK type
+  // preference — smaller than the explicit +4 and never from a single save.
+  if (saveAffinity && saveAffinity.has(object.type)) {
+    boost += 2; reasons.push('saved_type');
+  }
 
   // An EXPLICIT entity follow is a stronger signal than any inferred
   // preference: the user named this venue/business/publisher/organizer/
@@ -348,9 +372,9 @@ export function personalBoost(object, interests, relevance, followedEntityKeys =
  * (which already carries trust + temporal + source diversity) as the stable
  * tie-break, so no personalization can collapse diversity.
  */
-export function rankPersonalized(objects, { interests, relevance, scores = null, followedEntityKeys = null } = {}) {
+export function rankPersonalized(objects, { interests, relevance, scores = null, followedEntityKeys = null, saveAffinity = null } = {}) {
   const withIndex = objects.map((o, index) => {
-    const boost = personalBoost(o, interests, relevance, followedEntityKeys);
+    const boost = personalBoost(o, interests, relevance, followedEntityKeys, saveAffinity);
     // Global score first: the discovery pipeline already stamped `.score`;
     // an explicit map wins when the caller computed scores separately.
     const base = scores && scores.has(o.id) ? scores.get(o.id) : (o.score ?? 0);
