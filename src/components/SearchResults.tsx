@@ -5,14 +5,24 @@ import type { SearchFilters } from '../api/briefApi';
 // ---------------------------------------------------------------------------
 // SEARCH RESULTS — title-first results for the home surface, with filters
 // that map to fields the server already stores (type, location, date, source).
+//
+// The LOCAL ACTIVITY GRAPH extends the results: followable entities (venues,
+// businesses, publishers, organizers, communities) whose name matches appear
+// as a first-class section — tapping one opens its entity page — and the
+// object results already include the objects CONNECTED to a venue/business
+// search (events there, offers from it) because the server matches the
+// structured graph fields. Object search stays first; entities extend it.
 // ---------------------------------------------------------------------------
 
 interface Results {
-  counts: { objects: number; tea: number; vendors: number; collections: number };
+  counts: { objects: number; tea: number; vendors: number; collections: number; entities: number };
   objects: any[];
   tea: any[];
   vendors: any[];
   collections: any[];
+  entities: any[];
+  entityTotal: number;
+  entityMatch: string | null;
 }
 
 const T = { muted: 'rgba(37,16,69,0.62)', ink: '#251045', line: '#D6CFE4', surface: '#FBFAFD' };
@@ -32,6 +42,14 @@ const TYPE_OPTIONS = [
   ['knowledge', 'Guides']
 ];
 
+const ENTITY_KIND_LABEL: Record<string, string> = {
+  venue: 'Place',
+  business: 'Business',
+  publisher: 'Publisher',
+  organizer: 'Organizer',
+  community: 'Community'
+};
+
 function metaLine(object: any): string | null {
   const bits: string[] = [];
   if (object?.type) bits.push(String(object.type));
@@ -46,6 +64,8 @@ function metaLine(object: any): string | null {
     bits.push('Happening now');
   }
   if (object?.locationName) bits.push(String(object.locationName));
+  else if (object?.area) bits.push(String(object.area));
+  else if (object?.county) bits.push(String(object.county));
   else if (object?.metadata?.area) bits.push(String(object.metadata.area));
   else if (object?.metadata?.county) bits.push(String(object.metadata.county));
   return bits.length ? bits.join(' · ') : null;
@@ -97,10 +117,16 @@ function ResultRow({ title, image, meta, source, onClick }: {
   );
 }
 
-export function SearchResults({ query, onOpenObject }: { query: string; onOpenObject: (o: any) => void }) {
+export function SearchResults({ query, onOpenObject, onOpenEntity }: {
+  query: string;
+  onOpenObject: (o: any) => void;
+  /** Open a followable entity page (id = "kind:key"). */
+  onOpenEntity?: (entityId: string) => void;
+}) {
   const [results, setResults] = React.useState<Results | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [filters, setFilters] = React.useState<SearchFilters>({});
+  const [jumpedEntity, setJumpedEntity] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (!query.trim() && !filters.type && !filters.location && !filters.date && !filters.source) {
@@ -124,7 +150,7 @@ export function SearchResults({ query, onOpenObject }: { query: string; onOpenOb
   if (!results) return null;
 
   const total = results.counts.objects + results.counts.tea + results.counts.vendors + results.counts.collections;
-  if (total === 0) return null;
+  if (total === 0 && results.entities.length === 0) return null;
 
   const setFilter = (key: keyof SearchFilters, value: string) => {
     setFilters((prev) => {
@@ -134,6 +160,23 @@ export function SearchResults({ query, onOpenObject }: { query: string; onOpenOb
       return next;
     });
   };
+
+  // Single-hit jump: when the query names EXACTLY one entity and the query is
+  // the entity's full name, open its page directly. Partial queries never
+  // jump — typing must not trap the searcher. Runs once per entity id.
+  const exactEntity = results.entityMatch
+    ? results.entities.find((e) => e.id === results.entityMatch) ?? null
+    : null;
+  const shouldJump = Boolean(
+    exactEntity && onOpenEntity
+    && query.trim().toLowerCase() === String(exactEntity.name ?? '').toLowerCase()
+    && jumpedEntity !== exactEntity.id
+  );
+  React.useEffect(() => {
+    if (!shouldJump || !exactEntity || !onOpenEntity) return;
+    setJumpedEntity(exactEntity.id);
+    onOpenEntity(exactEntity.id);
+  }, [shouldJump, exactEntity?.id, onOpenEntity]);
 
   return (
     <section className="mx-auto mb-6 max-w-5xl space-y-2">
@@ -178,6 +221,41 @@ export function SearchResults({ query, onOpenObject }: { query: string; onOpenOb
           </button>
         )}
       </div>
+
+      {/* ENTITY SECTION — the graph's followable layer. A venue/business/
+          publisher/organizer/community whose name matches appears here,
+          tappable into its entity page. Object results stay first-class. */}
+      {results.entities.length > 0 && (
+        <div className="space-y-1.5 pt-1">
+          <p className="px-1 text-[10px] font-extrabold uppercase tracking-[0.18em]" style={{ color: T.muted }}>
+            {results.entityTotal === 1 ? 'Entity' : 'Entities'}
+          </p>
+          {results.entities.map((entity) => (
+            <button
+              key={entity.id}
+              type="button"
+              onClick={() => onOpenEntity?.(entity.id)}
+              className="flex w-full items-center gap-3 rounded-2xl border border-[#6C3EC9]/30 bg-[#F1EDF7]/60 p-2 text-left transition-colors hover:border-[#6C3EC9] cursor-pointer"
+              aria-label={entity.name}
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#5B2EA6] to-[#3A2169] text-[10px] font-extrabold uppercase text-white">
+                {ENTITY_KIND_LABEL[entity.kind]?.slice(0, 2) ?? entity.kind?.slice(0, 2)}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[14px] font-semibold" style={{ color: T.ink }}>{entity.name}</span>
+                <span className="block truncate text-[10px] font-semibold" style={{ color: T.muted }}>
+                  {ENTITY_KIND_LABEL[entity.kind] ?? entity.kind}
+                  {entity.location?.area ? ` · ${entity.location.area}` : ''}
+                  {entity.location?.county ? `, ${entity.location.county}` : ''}
+                  {typeof entity.followCount === 'number' ? ` · ${entity.followCount} follower${entity.followCount === 1 ? '' : 's'}` : ''}
+                </span>
+              </span>
+              <span className="rounded-full bg-[#5B2EA6] px-2.5 py-1 text-[10px] font-extrabold text-white">Open</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       {results.objects.slice(0, 8).map((object) => (
         <ResultRow
           key={object.id}

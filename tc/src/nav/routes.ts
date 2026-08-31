@@ -33,6 +33,8 @@ export type BriefRoute = {
   campaignId: string | null;
   /** A followable entity (venue/business/publisher/organizer/community) page. */
   entityId: string | null;
+  /** A public location discovery page (/explore/kilimani). */
+  locationName: string | null;
   capture: boolean;
   menu: boolean;
   /** Operator desk overlay (F4) — not a consumer destination. */
@@ -51,6 +53,7 @@ export const DEFAULT_ROUTE: BriefRoute = {
   teaSlug: null,
   campaignId: null,
   entityId: null,
+  locationName: null,
   capture: false,
   menu: false,
   admin: false,
@@ -142,6 +145,12 @@ export function parsePath(pathname: string, search = ''): BriefRoute {
     return route;
   }
 
+  // Public location discovery pages: /explore/<location> (e.g. kilimani).
+  if (root === 'explore' && parts[1]) {
+    route.locationName = decodePart(parts[1]);
+    return route;
+  }
+
   return route;
 }
 
@@ -151,6 +160,8 @@ export function toPath(route: BriefRoute): string {
 
   if (route.entityId) {
     path = `/e/${encodeURIComponent(route.entityId)}`;
+  } else if (route.locationName) {
+    path = `/explore/${encodeURIComponent(route.locationName)}`;
   } else if (route.dest === 'arena') {
     path = route.arena === 'lobby' ? '/play' : `/play/${route.arena}`;
   } else if (route.dest === 'mylayer') {
@@ -181,6 +192,11 @@ export function objectPath(id: string): string {
 /** Stable public path for an entity page (id = "kind:key"). */
 export function entityPath(id: string): string {
   return `/e/${encodeURIComponent(id)}`;
+}
+
+/** Public path for a location discovery page (/explore/kilimani). */
+export function explorePath(name: string): string {
+  return `/explore/${encodeURIComponent(name)}`;
 }
 
 /** Absolute share URL, or null when Brief has no origin to name. */

@@ -34,6 +34,8 @@ interface EntityPageProps {
   origin: string | null;
   onClose: () => void;
   onOpenObject: (object: any) => void;
+  /** Open the public location discovery page (/explore/:name). */
+  onOpenLocation?: (name: string) => void;
   onRequireAuth: () => void;
   /** Called after a follow/unfollow lands so callers can refresh state. */
   onFollowChanged?: () => void;
@@ -159,7 +161,7 @@ function Section({ title, count, children }: { title: string; count: number; chi
   );
 }
 
-export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, onRequireAuth, onFollowChanged }: EntityPageProps) {
+export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, onOpenLocation, onRequireAuth, onFollowChanged }: EntityPageProps) {
   const [entity, setEntity] = useState<BriefEntity | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'notfound' | 'error'>('loading');
   const [busy, setBusy] = useState(false);
@@ -350,10 +352,15 @@ export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, on
                 {/* Meta line */}
                 <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-semibold text-[rgba(37,16,69,0.62)]">
                   {(entity.location?.area || entity.location?.county) && (
-                    <span className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => onOpenLocation?.(entity.location?.area ?? entity.location?.county ?? '')}
+                      className="flex items-center gap-1 rounded-full bg-[#F1EDF7] px-2 py-0.5 text-[10px] font-bold text-[#5B2EA6] transition-colors hover:bg-[#5B2EA6] hover:text-white"
+                      title={`Explore ${entity.location.area ?? entity.location.county}`}
+                    >
                       <MapPin className="h-3.5 w-3.5" />
                       {[entity.location.area, entity.location.county].filter(Boolean).join(', ')}
-                    </span>
+                    </button>
                   )}
                   {entity.sourceNames.length > 0 && (
                     <span className="flex items-center gap-1">

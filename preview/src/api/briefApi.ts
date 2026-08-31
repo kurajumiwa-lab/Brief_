@@ -4019,3 +4019,82 @@ export function recordSourceOpened(id: string, sourceId: string): Promise<ApiRes
   return request(`/api/entities/${encodeURIComponent(id)}/source-opened`, { method: 'POST', body: JSON.stringify({ sourceId }) }, (r) =>
     r && r.ok === true ? r as { ok: boolean } : undefined);
 }
+
+// ---------------------------------------------------------------------------
+// LOCAL ACTIVITY GRAPH — location pages, related content, nearby.
+// ---------------------------------------------------------------------------
+
+export interface GraphObject {
+  id: string;
+  type: string;
+  title: string;
+  summary: string;
+  locationName?: string | null;
+  area?: string | null;
+  county?: string | null;
+  landmark?: string | null;
+  imageUrl?: string | null;
+  media?: { url?: string | null } | null;
+  gallery?: { url: string }[] | null;
+  temporal?: { status: string; startsAt?: string | null; deadlineAt?: string | null } | null;
+  sourceNames?: string[];
+  sourceCount?: number;
+  degraded?: boolean;
+  distanceKm?: number;
+}
+
+export interface GraphEdge {
+  verb: string;
+  label: string;
+  confidence: 'structured' | 'provenance' | 'relationship';
+  location?: { name: string; kind: string; county: string | null } | null;
+  objects: GraphObject[];
+}
+
+export interface LocationActivity {
+  counts: { happeningNow: number; today: number; comingUp: number; latest: number };
+  happeningNow: GraphObject[];
+  today: GraphObject[];
+  comingUp: GraphObject[];
+  latest: GraphObject[];
+}
+
+export interface LocationPage {
+  location: { name: string; kind: string; county: string | null; areas?: string[] };
+  activity: LocationActivity;
+  sections: Record<string, GraphObject[]>;
+  map: { available: boolean; items: GraphObject[] };
+  nearby: { available: boolean; reason: string | null; items: GraphObject[] };
+}
+
+/** A public location discovery page (/explore/:name). */
+export function getLocationPage(name: string): Promise<ApiResult<LocationPage>> {
+  return request(`/api/locations/${encodeURIComponent(name)}`, undefined, (r) =>
+    r && r.location && r.activity ? r as LocationPage : undefined);
+}
+
+/** The explore index: every location with live content, most active first. */
+export function getLocationIndex(): Promise<ApiResult<{ locations: { name: string; kind: string; county: string | null; counts: { happeningNow: number; today: number; comingUp: number; latest: number } }[] }>> {
+  return request('/api/locations', undefined, (r) =>
+    Array.isArray(r?.locations) ? r as { locations: { name: string; kind: string; county: string | null; counts: { happeningNow: number; today: number; comingUp: number; latest: number } }[] } : undefined);
+}
+
+/** Related content for a detail page — the object graph. */
+export function getObjectGraph(objectId: string): Promise<ApiResult<{ object: GraphObject; edges: GraphEdge[] }>> {
+  return request(`/api/graph/object/${encodeURIComponent(objectId)}`, undefined, (r) =>
+    r && Array.isArray(r.edges) ? r as { object: GraphObject; edges: GraphEdge[] } : undefined);
+}
+
+/** Nearby discovery over genuinely stored coordinates. */
+export function getNearby(opts: { lat?: number; lng?: number; radiusKm?: number; area?: string } = {}): Promise<ApiResult<{ available: boolean; reason: string | null; items: GraphObject[] }>> {
+  const params = new URLSearchParams();
+  if (opts.lat !== undefined && opts.lng !== undefined) {
+    params.set('lat', String(opts.lat));
+    params.set('lng', String(opts.lng));
+  }
+  if (opts.area) params.set('area', opts.area);
+  if (opts.radiusKm) params.set('radiusKm', String(opts.radiusKm));
+  const qs = params.toString();
+  return request(`/api/nearby${qs ? `?${qs}` : ''}`, undefined, (r) =>
+    r && typeof r.available === 'boolean' ? r as { available: boolean; reason: string | null; items: GraphObject[] } : undefined);
+}

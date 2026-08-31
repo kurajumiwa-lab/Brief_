@@ -97,7 +97,15 @@ export function search(q, filters = {}) {
     };
   }
 
-  const queryMatch = matchOn(needle, (x) => x.title, (x) => x.summary, (x) => x.locationName, (x) => x.category, (x) => x.metadata?.area, (x) => x.metadata?.county);
+  const queryMatch = matchOn(
+    needle,
+    (x) => x.title, (x) => x.summary, (x) => x.locationName, (x) => x.category,
+    (x) => x.metadata?.area, (x) => x.metadata?.county,
+    // Graph-aware fields: a venue/business/organizer search must surface the
+    // objects CONNECTED to it (events there, offers from it, things it hosts).
+    (x) => x.metadata?.venue, (x) => x.metadata?.organizer,
+    (x) => x.metadata?.hostedBy, (x) => x.metadata?.businessName
+  );
   let objects = store.filter('objects', (o) => o.publication === 'public')
     .filter((o) => !needle || queryMatch(o))
     .filter((o) => matchFilters(o, filters))

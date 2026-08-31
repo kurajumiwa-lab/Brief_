@@ -35,6 +35,7 @@ import { register as authRoutes } from './routes/auth.js';
 import { register as onboardingRoutes } from './routes/onboarding.js';
 import { register as personalRoutes } from './routes/personal.js';
 import { register as entitiesRoutes } from './routes/entities.js';
+import { register as graphRoutes } from './routes/graph.js';
 import { register as healthRoutes } from './routes/health.js';
 import { register as opsRoutes } from './routes/ops.js';
 import { register as arenaRoutes } from './routes/arena.js';
@@ -173,7 +174,11 @@ app.use(ops.requestLogger);
 //   /api/telegram/init       Telegram Mini App auth -- the HMAC initData is
 //                           the credential; no Brief session exists yet.
 //   /api/huduma/webhooks/*   M-Pesa Daraja callbacks, secret path segment.
-const PUBLIC_WITHOUT_SESSION = /^\/(auth|entities|public\/(campaigns|feed)|health|ready|readiness|media\/(file|telegram)|config|release|email-subscriptions|webhooks|telegram\/init|huduma\/webhooks)(\/|$)/;
+//   /api/locations*, /api/graph/*, /api/nearby  the LOCAL ACTIVITY GRAPH
+//                           (public location discovery pages like /explore/
+//                           kilimani, related content, nearby) — every payload
+//                           is the public projection of public objects only
+const PUBLIC_WITHOUT_SESSION = /^\/(auth|entities|locations|graph|nearby|public\/(campaigns|feed)|health|ready|readiness|media\/(file|telegram)|config|release|email-subscriptions|webhooks|telegram\/init|huduma\/webhooks)(\/|$)/;
 app.use('/api', (req, res, next) => {
   if (PUBLIC_WITHOUT_SESSION.test(req.path)) return next();
   const me = callerId(req);
@@ -192,6 +197,7 @@ authRoutes(app);
 onboardingRoutes(app);
 personalRoutes(app);
 entitiesRoutes(app);
+graphRoutes(app);
 healthRoutes(app);
 opsRoutes(app);
 arenaRoutes(app);

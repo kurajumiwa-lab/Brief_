@@ -5,6 +5,7 @@ import {
   toPath,
   objectShareUrl,
   isBriefRoute,
+  explorePath,
   DEFAULT_ROUTE,
   type BriefRoute
 } from './nav/routes';
@@ -13,6 +14,8 @@ import QRCode from 'qrcode';
 import { deriveDestinationAlerts, readLastSeen, writeLastSeen, alertLabel, type DestinationAlerts } from './nav/alerts';
 import { EntityPage } from './components/EntityPage';
 import { FollowingSurface } from './components/FollowingSurface';
+import { LocationPage } from './components/LocationPage';
+import { RelatedContent } from './components/RelatedContent';
 import { EntityChip } from './components/EntityChip';
 import { CampaignDistribution } from './components/CampaignDistribution';
 import { AwaitingPayment } from './components/AwaitingPayment';
@@ -6097,6 +6100,11 @@ export function App() {
     setEntityPageId(id);
   };
 
+  /** Open the public location discovery page (/explore/:name). */
+  const openLocationPage = (name: string) => {
+    setLocationName(name);
+  };
+
   // An explicit relevance control, persisted. Tapping an active control
   // undoes it — the user can always change their mind.
   const tuneObject = async (kind: 'more' | 'less' | 'not_interested' | 'hide_source', object: BriefObject) => {
@@ -6240,10 +6248,14 @@ export function App() {
   const [seenIds, setSeenIds] = useState<Set<string>>(new Set());
 
   const [selectedObjectForDetail, setSelectedObjectForDetailRaw] = useState<BriefObject | null>(null);
+  /** The object graph (related content) for the open detail modal. */
+  const [detailGraph, setDetailGraph] = useState<briefApi.GraphEdge[] | null>(null);
   const [selectedTeaSlug, setSelectedTeaSlug] = useState<string | null>(bootRoute.teaSlug);
   const [pendingObjectId, setPendingObjectId] = useState<string | null>(bootRoute.objectId);
   /** The followable entity page (venue/business/publisher/organizer/community). */
   const [entityPageId, setEntityPageId] = useState<string | null>(bootRoute.entityId);
+  /** The public location discovery page (/explore/:name). */
+  const [locationName, setLocationName] = useState<string | null>(bootRoute.locationName);
   /** The Following surface overlay (feed + management). */
   const [followingOpen, setFollowingOpen] = useState(false);
 
@@ -8282,6 +8294,7 @@ export function App() {
     teaSlug: selectedTeaSlug,
     campaignId: openCampaignId,
     entityId: entityPageId,
+    locationName,
     capture: captureOpen,
     menu: menuOpen,
     admin: adminOpen,
@@ -8289,7 +8302,7 @@ export function App() {
   }), [
     activeTab, nearbySection, myLayerSection, workflowSection, arenaSection,
     selectedObjectForDetail, pendingObjectId, selectedTeaSlug, openCampaignId,
-    entityPageId, captureOpen, menuOpen, adminOpen
+    entityPageId, locationName, captureOpen, menuOpen, adminOpen
   ]);
 
   const writeUrl = useCallback((route: BriefRoute, mode: 'push' | 'replace') => {
@@ -8313,6 +8326,7 @@ export function App() {
     setSelectedTeaSlug(route.teaSlug);
     setOpenCampaignId(route.campaignId);
     setEntityPageId(route.entityId);
+    setLocationName(route.locationName);
     if (route.objectId) setPendingObjectId(route.objectId);
     else {
       setPendingObjectId(null);
@@ -8322,7 +8336,7 @@ export function App() {
 
   const dismissOverlay = useCallback(() => {
     const st = typeof window !== 'undefined' ? window.history.state : null;
-    const overlayState = isBriefRoute(st) && (st.menu || st.capture || st.admin || st.objectId || st.teaSlug || st.campaignId || st.entityId);
+    const overlayState = isBriefRoute(st) && (st.menu || st.capture || st.admin || st.objectId || st.teaSlug || st.campaignId || st.entityId || st.locationName);
     if (overlayState && !st.landed && typeof window !== 'undefined' && window.history.length > 1) {
       window.history.back();
       return;
@@ -8336,7 +8350,8 @@ export function App() {
     setPendingObjectId(null);
     setSelectedObjectForDetailRaw(null);
     setEntityPageId(null);
-    writeUrl({ ...currentRoute(), menu: false, admin: false, capture: false, objectId: null, teaSlug: null, campaignId: null, entityId: null }, 'replace');
+    setLocationName(null);
+    writeUrl({ ...currentRoute(), menu: false, admin: false, capture: false, objectId: null, teaSlug: null, campaignId: null, entityId: null, locationName: null }, 'replace');
   }, [currentRoute, writeUrl]);
 
   useEffect(() => {
@@ -8357,19 +8372,19 @@ export function App() {
       skipUrl.current = false;
       return;
     }
-    const overlay = menuOpen || adminOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail) || Boolean(pendingObjectId) || Boolean(entityPageId) || followingOpen;
+    const overlay = menuOpen || adminOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail) || Boolean(pendingObjectId) || Boolean(entityPageId) || Boolean(locationName) || followingOpen;
     writeUrl(currentRoute(), overlay ? 'push' : 'replace');
   }, [
     activeTab, nearbySection, myLayerSection, workflowSection, arenaSection,
     menuOpen, adminOpen, captureOpen, selectedTeaSlug, openCampaignId,
-    selectedObjectForDetail, pendingObjectId, entityPageId, followingOpen,
+    selectedObjectForDetail, pendingObjectId, entityPageId, locationName, followingOpen,
     currentRoute, writeUrl
   ]);
 
   useEffect(() => {
     const tg = (typeof window !== 'undefined' ? (window as any).Telegram?.WebApp : null);
     if (!tg?.BackButton) return;
-    const show = menuOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail) || Boolean(entityPageId) || followingOpen;
+    const show = menuOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail) || Boolean(entityPageId) || Boolean(locationName) || followingOpen;
     try {
       if (show) tg.BackButton.show();
       else tg.BackButton.hide();
@@ -8379,7 +8394,7 @@ export function App() {
     return () => {
       try { tg.BackButton.offClick?.(handler); } catch { /* */ }
     };
-  }, [menuOpen, captureOpen, selectedTeaSlug, openCampaignId, selectedObjectForDetail, entityPageId, followingOpen, dismissOverlay]);
+  }, [menuOpen, captureOpen, selectedTeaSlug, openCampaignId, selectedObjectForDetail, entityPageId, locationName, followingOpen, dismissOverlay]);
 
   useEffect(() => {
     if (!pendingObjectId) return;
@@ -8396,7 +8411,19 @@ export function App() {
     return () => { live = false; };
   }, [pendingObjectId, objects, selectedObjectForDetail]);
 
-  const isAnyModalActive = Boolean(openCampaignId) || createStep !== 'closed' || captureOpen || Boolean(selectedObjectForDetail) || Boolean(selectedTeaSlug) || Boolean(entityPageId) || followingOpen;
+  // The LOCAL ACTIVITY GRAPH for the open detail modal: related content from
+  // real relationships only (the server never keyword-matches). Cleared when
+  // the modal closes so stale edges never linger on the next object.
+  useEffect(() => {
+    if (!selectedObjectForDetail?.id) { setDetailGraph(null); return; }
+    let live = true;
+    briefApi.getObjectGraph(selectedObjectForDetail.id).then((res) => {
+      if (live) setDetailGraph(res.ok ? res.data.edges : []);
+    });
+    return () => { live = false; };
+  }, [selectedObjectForDetail?.id]);
+
+  const isAnyModalActive = Boolean(openCampaignId) || createStep !== 'closed' || captureOpen || Boolean(selectedObjectForDetail) || Boolean(selectedTeaSlug) || Boolean(entityPageId) || Boolean(locationName) || followingOpen;
 
   // THE APP GATE (product decision 2026-08-29): NO ACCESS WITHOUT AN ACCOUNT.
   // Signed out, the app does not render at all -- no feed, no shelf, no
@@ -9427,10 +9454,46 @@ export function App() {
               );
             })()}
 
+            {/* Search (Local Activity Graph brief): typing a venue, business
+                or organizer name surfaces the objects CONNECTED to it —
+                events at the venue, offers from the business — alongside the
+                matching entities themselves. Search stays object-first:
+                results never hide the global stream, and the input is a
+                quiet row above it. */}
+            {homeFeedStatus === 'ready' && (
+              <div className="mx-auto mb-4 max-w-5xl px-1">
+                <label className="relative block">
+                  <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#251045]/40" />
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search venues, businesses, organizers, areas…"
+                    aria-label="Search Brief"
+                    className="w-full rounded-full border border-[#D6CFE4] bg-[#FBFAFD] py-2.5 pl-10 pr-10 text-[13px] font-semibold text-[#251045] outline-none transition-colors placeholder:text-[#251045]/35 focus:border-[#6C3EC9]"
+                  />
+                  {searchQuery !== '' && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      aria-label="Clear search"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-[#251045]/40 transition-colors hover:text-[#251045] cursor-pointer"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </label>
+              </div>
+            )}
+
             {/* Search stays above the visual stream, but the cards themselves
                 are title-first. */}
             {searchQuery.trim() !== '' && (
-              <SearchResults query={searchQuery} onOpenObject={(o) => setSelectedObjectForDetail(objectFromServer(o))} />
+              <SearchResults
+                query={searchQuery}
+                onOpenObject={(o) => setSelectedObjectForDetail(objectFromServer(o))}
+                onOpenEntity={openEntityPage}
+              />
             )}
 
             {/* The legacy object stream is a fallback for deployments where the
@@ -13116,53 +13179,26 @@ export function App() {
                   );
                 })()}
 
-                {/* Nearby (prompt 16). Distinct from Related: this answers
-                    "what else is around here", not "what goes with this".
-                    Anything already shown in Related is filtered out so the
-                    two rails never duplicate each other. */}
-                {(() => {
-                  const shown = new Set(relatedObjects.map((r) => r.item.id));
-                  const near = graph
-                    .nearby(selectedObjectForDetail, 8)
-                    .filter((o) => !shown.has(o.id))
-                    .slice(0, 4);
+                {/* LOCAL ACTIVITY GRAPH — related content for this object.
+                    Every section is a REAL relationship (structured venue /
+                    organizer / business fields, provenance, or persisted
+                    relationship rows); the server never keyword-matches and
+                    weak links never serialize. The location edge links into
+                    the public /explore/:name surface. */}
+                {detailGraph && (
+                  <div className="mt-6 pt-5 border-t border-[#D6CFE4]">
+                    <RelatedContent
+                      edges={detailGraph}
+                      onOpenObject={(raw) => {
+                        if (!raw?.id) return;
+                        const local = objects.find((o) => o.id === String(raw.id));
+                        setSelectedObjectForDetail(local ?? objectFromServer(raw));
+                      }}
+                      onOpenLocation={openLocationPage}
+                    />
+                  </div>
+                )}
 
-                  if (near.length === 0) return null;
-
-                  return (
-                    <div className="mt-6 pt-5 border-t border-[#D6CFE4]">
-                      <p className="text-[10px] text-[#251045]">
-                        More from this area
-                      </p>
-                      <h3 className="text-sm font-extrabold mt-1 mb-3">Nearby</h3>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        {near.map((obj) => {
-                          const dist = getDistanceLabel(obj);
-                          return (
-                            <button
-                              key={obj.id}
-                              onClick={() => setSelectedObjectForDetail(obj)}
-                              className="text-left bg-[#FBFAFD] border border-[#D6CFE4] hover:border-[#D6CFE4] rounded-xl p-3 cursor-pointer transition"
-                            >
-                              <p className="text-[9px] text-[#251045]/40">
-                                {getObjectTypeMeta(obj.type).label}
-                              </p>
-                              <p className="text-[11px] font-bold text-[#251045] leading-snug mt-0.5 line-clamp-2">
-                                {obj.title}
-                              </p>
-                              {dist && (
-                                <p className="text-[9px] text-[#251045]/60 mt-1">
-                                  {dist}
-                                </p>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })()}
 
                 {/* WHAT'S HERE (rework 4/5). The destination detail becomes a
                     mini directory: who is trading, what they sell, and a hop
@@ -13477,6 +13513,7 @@ export function App() {
             const local = objects.find((o) => o.id === String(raw.id));
             setSelectedObjectForDetail(local ?? objectFromServer(raw));
           }}
+          onOpenLocation={openLocationPage}
           onRequireAuth={() => showToast('Sign in to follow this.')}
           onFollowChanged={() => void loadPersonal()}
         />
@@ -13499,6 +13536,26 @@ export function App() {
         />
       )}
 
+      {/* LOCAL ACTIVITY GRAPH — the public location discovery page. */}
+      {locationName && (
+        <LocationPage
+          name={locationName}
+          authed={Boolean(sessionUser)}
+          followedLocations={personalState?.interests?.locations ?? []}
+          onClose={dismissOverlay}
+          onOpenObject={(raw) => {
+            if (!raw?.id) return;
+            const local = objects.find((o) => o.id === String(raw.id));
+            setSelectedObjectForDetail(local ?? objectFromServer(raw));
+          }}
+          onOpenLocation={openLocationPage}
+          onRequireAuth={() => showToast('Sign in to follow this area.')}
+          onFollowLocation={(loc) => {
+            if (!sessionUser) { showToast('Sign in to follow this area.'); return; }
+            void followOne('location', loc);
+          }}
+        />
+      )}
       <footer className="border-t border-[#D6CFE4] mt-12 py-6 text-xs text-[#251045]/60 text-center">
         Everything Happening Around You
       </footer>
