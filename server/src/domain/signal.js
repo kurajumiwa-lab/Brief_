@@ -145,7 +145,15 @@ export const SIGNAL_TYPES = [
   'collection_created',
   'collection_opened',
   'collection_shared',
-  'collection_item_removed'
+  'collection_item_removed',
+  // --- Notifications (in-app return loop) -----------------------------------
+  // The four tracked acts from the notifications brief: a notification was
+  // generated, opened, marked read, or a preference changed. Emitted by the
+  // domain/notifications.js service when those actions really happen.
+  'notification_generated',
+  'notification_opened',
+  'notification_marked_read',
+  'notification_pref_changed'
 ];
 
 export function emitSignal({ type, circleId = null, blockId = null, sourceId = null, objectId = null, actorId = null, value = null, metadata = {} }) {

@@ -116,6 +116,69 @@ if (publicCampaign) {
 r = await call('/api/capabilities', 'GET', undefined, token);
 check('GET /api/capabilities reports payments honestly', r.status === 200 && r.body?.payments?.configured === false);
 
+// ---------------------------------------------------------------------------
+// RETURN LOOP — the live journey: follow/save → real change → notification →
+// center → open → read persists. A second user (reviewer, bootstrap env) is
+// used ONLY so the change goes through the real HTTP moderation route; every
+// assertion below is on the smoke user's own rows.
+// ---------------------------------------------------------------------------
+
+// 13. Save a real object (server-persisted, exactly like the client button).
+if (first) {
+  r = await call(`/api/me/saved/${first.id}`, 'POST', {}, token);
+  check('save persists via the real API', r.status === 200 && Array.isArray(r.body?.saved) && r.body.saved.includes(first.id), JSON.stringify(r.body?.saved));
+}
+
+// 14. Follow the object's location (explicit interest, idempotent).
+if (first) {
+  const loc = first.locationName ?? first.metadata?.area ?? 'Kilimani';
+  r = await call('/api/me/interests', 'POST', { kind: 'location', value: loc }, token);
+  check('location follow persists', r.status === 200 && (r.body?.interests?.locations ?? []).includes(loc), JSON.stringify(r.body?.interests?.locations));
+}
+
+// 15. A real change: a reviewer applies a correction to the saved object.
+const reviewerHandle = `smokerev${Date.now()}`;
+process.env.BRIEF_REVIEWERS = reviewerHandle;
+const reviewer = await call('/api/auth/register', 'POST', { handle: reviewerHandle, password: 'a good passphrase', displayName: 'Smoke Reviewer' });
+check('reviewer bootstrap grants moderate', reviewer.status === 201 && typeof reviewer.body?.token === 'string', 'status ' + reviewer.status);
+const reviewerToken = reviewer.body?.token;
+if (first) {
+  r = await call('/api/ops/corrections', 'POST', { objectId: first.id, field: 'summary', value: 'Corrected by live smoke', reason: 'Live verification' }, reviewerToken);
+  check('correction applies through the real ops route', r.status === 201 && r.body?.changed === true, JSON.stringify(r.body));
+}
+
+// 16. The center sees the change: correction row + unread count.
+const notifList = await call('/api/notifications', 'GET', undefined, token);
+const rows = Array.isArray(notifList.body?.notifications) ? notifList.body.notifications : [];
+const correctionRow = rows.find((n) => n.type === 'correction' && n.objectId === first?.id);
+check('GET /api/notifications returns the correction', notifList.status === 200 && Boolean(correctionRow), JSON.stringify(rows.map((n) => ({ type: n.type, objectId: n.objectId }))));
+check('unread count is real and non-zero', Number.isInteger(notifList.body?.unread) && notifList.body.unread >= 1, String(notifList.body?.unread));
+check('correction row deep-links to the existing object', correctionRow?.dest === `object:${first?.id}`, String(correctionRow?.dest));
+check('correction row renders the current object status', typeof correctionRow?.object?.status === 'string' && correctionRow.object.status.length > 0, JSON.stringify(correctionRow?.object));
+
+// 17. Open it: read state + unread drop, then read persists across lists.
+if (correctionRow) {
+  r = await call(`/api/notifications/${correctionRow.id}/open`, 'POST', {}, token);
+  check('open marks read + records readAt', r.status === 200 && r.body?.notification?.read === true && typeof r.body?.notification?.readAt === 'string', JSON.stringify(r.body?.notification));
+  check('open drops the unread count', Number.isInteger(r.body?.unread) && r.body.unread === (notifList.body.unread) - 1, `${r.body?.unread} vs ${notifList.body.unread}`);
+  r = await call('/api/notifications?unread=1', 'GET', undefined, token);
+  check('read persists (absent from unread list)', r.status === 200 && !(r.body?.notifications ?? []).some((n) => n.id === correctionRow.id));
+}
+
+// 18. Preferences: simple category toggle; existing rows are never deleted.
+r = await call('/api/notifications/preferences', 'GET', undefined, token);
+const cats = r.body?.preferences?.categories;
+check('preferences expose the seven categories', r.status === 200 && typeof cats === 'object' && cats && Object.keys(cats).length === 7, JSON.stringify(cats));
+r = await call('/api/notifications/preferences', 'PUT', { categories: { offers: false } }, token);
+check('toggle applies (changed: true)', r.status === 200 && r.body?.ok === true && r.body?.changed === true, JSON.stringify(r.body));
+r = await call('/api/notifications', 'GET', undefined, token);
+check('toggling OFF never deletes existing rows', r.status === 200 && (r.body?.notifications ?? []).length >= rows.length, String(r.body?.notifications?.length));
+
+// 19. Privacy: the reviewer's center never sees the smoke user's row.
+r = await call('/api/notifications', 'GET', undefined, reviewerToken);
+const reviewerRows = Array.isArray(r.body?.notifications) ? r.body.notifications : [];
+check('notifications never leak across users', r.status === 200 && !reviewerRows.some((n) => n.objectId === first?.id), JSON.stringify(reviewerRows.map((n) => n.objectId)));
+
 srv.close();
 console.log(`\nSmoke: ${pass} passed / ${fail} failed`);
 process.exit(fail ? 1 : 0);

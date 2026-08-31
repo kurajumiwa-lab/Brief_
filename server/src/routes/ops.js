@@ -11,6 +11,7 @@ import * as trust from '../domain/trust.js';
 import * as corrections from '../domain/corrections.js';
 import * as sourceTrust from '../domain/sourceTrust.js';
 import * as seed from '../domain/seed.js';
+import * as notifications from '../domain/notifications.js';
 import { requireAuth, requireCap, recordAudit } from './helpers.js';
 import * as members from '../domain/members.js';
 
@@ -126,6 +127,9 @@ app.post('/api/ops/corrections', (req, res) => {
       objectId, field, value, reason, isMeta: isMeta === true,
       operatorId: me
     });
+    // A real correction is exactly the kind of change the return loop exists
+    // for: notify anyone who saved or follows the corrected object.
+    try { notifications.generateAll(); } catch { /* never break moderation */ }
     recordAudit('ops.correction.apply', {
       actorId: me,
       objectType: 'correction',

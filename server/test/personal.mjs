@@ -272,7 +272,10 @@ console.log('\n=== DOMAIN: NOTIFICATION CANDIDATES ===');
   // New event in a followed location within 14 days.
   const upcoming = mkObject('obj_pers_ntf_event', { type: 'event', title: 'Kilimani food festival', area: 'Kilimani', eventDays: 3 });
   // Saved event starting within a day.
-  const savedSoon = mkObject('obj_pers_ntf_saved', { type: 'event', title: 'Jazz night', area: 'Westlands', eventDays: 0 });
+  // "Starting soon" per the candidate window (daysTo <= 1). Tomorrow 18:00 is
+  // always inside that window regardless of what time the suite runs — today
+  // 18:00 is already in the past after 6pm, which made this check flaky.
+  const savedSoon = mkObject('obj_pers_ntf_saved', { type: 'event', title: 'Jazz night', area: 'Westlands', eventDays: 1 });
   personal.saveObject(u, savedSoon.id);
   // Offer expiring within 24 hours.
   const expiring = mkObject('obj_pers_ntf_offer', { type: 'offer', title: 'Flash sale', area: 'Kilimani', deadlineDays: 0 });

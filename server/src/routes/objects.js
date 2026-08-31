@@ -15,7 +15,6 @@ import { requireFeature } from '../features.js';
 
 export function register(app) {
 app.use('/api/objects', requireFeature('objects'));
-app.use('/api/notifications', requireFeature('objects'));
 // --- Objects + provenance (spec 4, 33, 35) -----------------------------------
 
 
@@ -150,35 +149,6 @@ app.post('/api/objects/:id/view', (req, res) => {
   signals.emitSignal({ type: 'object_viewed', actorId: me, objectId: req.params.id, metadata: { objectId: req.params.id } });
   res.json({ ok: true });
 });
-
-
-// --- Notifications (in-app inbox) -------------------------------------------
-
-
-app.get('/api/notifications', (req, res) => {
-  const me = requireAuth(req, res);
-  if (!me) return;
-  res.json({
-    notifications: notifications.listNotifications(me, { unreadOnly: req.query.unread === '1' }),
-    unread: notifications.unreadCount(me)
-  });
-});
-
-
-
-app.post('/api/notifications/read', (req, res) => {
-  const me = requireAuth(req, res);
-  if (!me) return;
-  if (req.body?.all) {
-    res.json(notifications.markAllRead(me));
-    return;
-  }
-  const n = notifications.markRead(me, req.body?.id);
-  if (!n) return res.status(404).json({ error: 'notification not found' });
-  res.json({ notification: n });
-});
-
-
 
 
 /**

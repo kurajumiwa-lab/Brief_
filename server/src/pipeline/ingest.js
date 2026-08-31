@@ -14,6 +14,9 @@
 
 import { store, newId } from '../store.js';
 import { extractFields, extractVendors, extractProducts, isObjectWorthy } from './extract.js';
+// The return loop: new canonical content fans out to interested users. Lazy
+// by design — generateAll is noise-free when nobody follows/saves anything.
+import { generateAll } from '../domain/notifications.js';
 
 /** Character-bigram Dice coefficient: steady on short trader names. */
 export function similarity(a, b) {
@@ -365,6 +368,11 @@ export function processRawItem(rawItemId) {
   }
 
   store.update('rawItems', raw.id, { processingStatus: 'processed', objectId: object.id });
+
+  // Notify interested users about the canonical object (created or merged).
+  // Dedup/coalesce inside notifications keeps this quiet; a failure here must
+  // never fail ingestion.
+  try { generateAll(); } catch { /* notification fan-out is best-effort */ }
 
   return {
     ok: true,

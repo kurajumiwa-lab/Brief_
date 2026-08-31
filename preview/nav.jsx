@@ -181,7 +181,7 @@ async function main(){
   check('rail hidden on mobile widths', !!rail && rail.className.includes('hidden'));
   check('rail is sticky and full height', !!rail && /sticky/.test(rail.className));
   check('bottom bar fixed to viewport bottom', !!bar && /fixed/.test(bar.className)&&/bottom-0/.test(bar.className));
-  check('rail has Menu plus 4 screens', !!rail && rail.querySelectorAll('button').length===5, rail?String(rail.querySelectorAll('button').length):'no rail');
+  check('rail has Menu plus 4 screens plus Updates', !!rail && rail.querySelectorAll('button').length===6, rail?String(rail.querySelectorAll('button').length):'no rail');
   check('bar has Menu plus 4 screens', !!bar && bar.querySelectorAll('button').length===5);
 
   console.log('\n=== Both navs stay in sync ===');

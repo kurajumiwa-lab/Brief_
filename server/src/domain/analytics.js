@@ -53,7 +53,13 @@ function engagementCounts() {
     collectionsCreated: signalMeta('collection_created').length,
     collectionsOpened: signalMeta('collection_opened').length,
     collectionsShared: signalMeta('collection_shared').length,
-    collectionItemsRemoved: signalMeta('collection_item_removed').length
+    collectionItemsRemoved: signalMeta('collection_item_removed').length,
+    // Notifications: the four tracked acts from the return-loop brief. The
+    // notification count itself lives in `counts` below; these are events.
+    notificationsGenerated: signalMeta('notification_generated').length,
+    notificationsOpened: signalMeta('notification_opened').length,
+    notificationsRead: signalMeta('notification_marked_read').length,
+    notificationPrefChanges: signalMeta('notification_pref_changed').length
   };
 }
 
