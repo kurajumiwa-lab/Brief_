@@ -2076,6 +2076,133 @@ export const buildDiscoveryBrief = (input: {
   return sections;
 };
 
+// The report reasons the SERVER actually accepts. The client buttons send
+// these exact ids; labels are for people. Aligned with trust.js REPORT_REASONS.
+export const REPORT_REASONS: { id: string; label: string }[] = [
+  { id: 'wrong', label: 'Incorrect information' },
+  { id: 'spam', label: 'Spam' },
+  { id: 'offensive', label: 'Offensive' },
+  { id: 'duplicate', label: 'Duplicate' },
+  { id: 'expired', label: 'Expired' },
+  { id: 'cancelled', label: 'Event cancelled' },
+  { id: 'wrong_location', label: 'Wrong location' },
+  { id: 'wrong_date', label: 'Wrong date/time' },
+  { id: 'other', label: 'Other' }
+];
+
+// ============================================================================
+// PERSONAL BRIEF — MY BRIEF / YOUR BRIEF / AROUND YOU / TODAY / COMING UP /
+// FOR YOU. Built from the SAME persisted objects the global feed uses, in the
+// server's personal order (the re-ranking, never a second object store).
+// Sections appear only when real data backs them — no empty sections, no
+// manufactured rows.
+// ============================================================================
+
+export interface PersonalBriefSection {
+  key: 'your' | 'around' | 'today' | 'coming' | 'foryou';
+  title: string;
+  objects: BriefObject[];
+}
+
+const matchesFollowedTopics = (o: BriefObject, topics: { id: string; label: string; keywords: string[] }[], followed: string[]): string[] => {
+  if (!followed.length) return [];
+  const text = [
+    o.title, o.summary, o.category,
+    ...(Array.isArray(o.metadata?.categories) ? (o.metadata.categories as string[]) : [])
+  ].filter((v): v is string => typeof v === 'string' && v.length > 0).join(' ').toLowerCase();
+  if (!text) return [];
+  const hits: string[] = [];
+  for (const topic of topics) {
+    if (!followed.includes(topic.id)) continue;
+    if (topic.keywords.some((k) => text.includes(k))) hits.push(topic.id);
+  }
+  return hits;
+};
+
+export const buildPersonalSections = (input: {
+  ordered: { object: BriefObject; boost: number; reasons: string[] }[];
+  interests: { locations: string[]; types: string[]; topics: string[] };
+  topics: { id: string; label: string; keywords: string[] }[];
+  personalized: boolean;
+}): PersonalBriefSection[] => {
+  const now = new Date();
+  const todayStart = startOfLocalDay(now);
+  const tomorrowStart = new Date(todayStart.getTime() + 86400000);
+
+  const parsed = (v: unknown): Date | null => {
+    if (typeof v !== 'string') return null;
+    const d = new Date(v);
+    return Number.isFinite(d.getTime()) ? d : null;
+  };
+
+  const your: BriefObject[] = [];
+  const around: BriefObject[] = [];
+  const today: BriefObject[] = [];
+  const coming: BriefObject[] = [];
+  const foryou: BriefObject[] = [];
+  const placed = new Set<string>();
+
+  for (const { object: o, boost, reasons } of input.ordered) {
+    const t = o.temporal;
+    const status = t?.status ?? '';
+    const startsAt = parsed(t?.startsAt ?? o.metadata?.eventStart);
+    const deadlineAt = parsed(t?.deadlineAt ?? o.metadata?.deadlineCanonical);
+
+    // YOUR BRIEF — the user's own top of the feed: rows personalization
+    // actually moved (explicit boost, never fabricated).
+    if (input.personalized && boost > 0 && your.length < 4) {
+      if (!placed.has(o.id)) { placed.add(o.id); your.push(o); }
+      continue;
+    }
+
+    // TODAY — events actually happening today, and things expiring today
+    // (the same real temporal rules as the global brief).
+    if (isEventType(o) && startsAt && startsAt >= todayStart && startsAt < tomorrowStart) {
+      if (!placed.has(o.id)) { placed.add(o.id); today.push(o); }
+      continue;
+    }
+    if ((o.type === 'offer' || o.type === 'opportunity') && deadlineAt && deadlineAt >= todayStart && deadlineAt < tomorrowStart) {
+      if (!placed.has(o.id)) { placed.add(o.id); today.push(o); }
+      continue;
+    }
+    if (status === 'happening') {
+      if (!placed.has(o.id)) { placed.add(o.id); today.push(o); }
+      continue;
+    }
+
+    // COMING UP — upcoming events in the personal order.
+    if (isEventType(o) && status === 'upcoming') {
+      if (!placed.has(o.id)) { placed.add(o.id); coming.push(o); }
+      continue;
+    }
+
+    // FOR YOU — followed types and matched topics, capped so it stays a
+    // suggestion rail rather than a second feed.
+    const typeMatch = input.interests.types.includes(o.type);
+    const topicMatch = matchesFollowedTopics(o, input.topics, input.interests.topics).length > 0;
+    if (input.personalized && (typeMatch || topicMatch) && foryou.length < 4) {
+      if (!placed.has(o.id)) { placed.add(o.id); foryou.push(o); }
+      continue;
+    }
+
+    // AROUND YOU — everything else with a real locality signal, in the
+    // personal order. Never fabricated: only rows that say where they are.
+    const area = String(o.metadata?.area ?? o.metadata?.county ?? '').trim();
+    const dist = o.metadata?.distanceKm;
+    if (typeof dist === 'number' || area || o.locationName) {
+      if (!placed.has(o.id)) { placed.add(o.id); around.push(o); }
+    }
+  }
+
+  const sections: PersonalBriefSection[] = [];
+  if (your.length > 0) sections.push({ key: 'your', title: 'YOUR BRIEF', objects: your });
+  if (around.length > 0) sections.push({ key: 'around', title: 'AROUND YOU', objects: around });
+  if (today.length > 0) sections.push({ key: 'today', title: 'TODAY', objects: today });
+  if (coming.length > 0) sections.push({ key: 'coming', title: 'COMING UP', objects: coming });
+  if (foryou.length > 0) sections.push({ key: 'foryou', title: 'FOR YOU', objects: foryou });
+  return sections;
+};
+
 /** A compact WHEN line for Today's Brief rows, from real temporal data. */
 const briefWhenLabel = (o: BriefObject): string | null => {
   const t = o.temporal;
@@ -5443,6 +5570,19 @@ export function App() {
     'home' | 'events' | 'explore' | 'offers' | 'places' | 'news' | 'opportunities'
   >('home');
   const [moreFilters, setMoreFilters] = useState<boolean>(false);
+  // --- Personal Brief ----------------------------------------------------
+  // The personal layer is the same object store re-ranked per user: we keep
+  // the server's ORDERED ids plus the per-row boost, and map them onto the
+  // existing `objects` list — never a second object store on the client.
+  const [personalState, setPersonalState] = useState<briefApi.PersonalState | null>(null);
+  const [personalFeedIds, setPersonalFeedIds] = useState<string[] | null>(null);
+  const [personalBoostMap, setPersonalBoostMap] = useState<Record<string, { boost: number; reasons: string[] }>>({});
+  // Onboarding is optional and never blocks: skipping just closes the card.
+  const [personalBriefDismissed, setPersonalBriefDismissed] = useState(false);
+  const [personalBusy, setPersonalBusy] = useState(false);
+  const [personalPicks, setPersonalPicks] = useState<{ locations: string[]; types: string[]; topics: string[] }>({
+    locations: [], types: [], topics: []
+  });
   const [myLayerSection, setMyLayerSection] = useState<MyLayerSection>(bootRoute.mylayer);
   const [workflowSection, setWorkflowSection] = useState<WorkflowSection>(bootRoute.workflow);
   // Which bundle each desk is showing is DERIVED from the open section rather
@@ -5821,6 +5961,108 @@ export function App() {
   React.useEffect(() => {
     void loadObjects(userLocation ? { lat: userLocation.lat, lng: userLocation.lng } : undefined);
   }, [loadObjects, userLocation]);
+
+  // Personal Brief: interests, saves, controls and the personal re-ranking.
+  // All private to the signed-in user; anonymous callers simply stay global.
+  const loadPersonal = React.useCallback(async () => {
+    if (!sessionUser) return;
+    const [st, fd] = await Promise.all([
+      briefApi.getPersonalState(),
+      briefApi.getPersonalFeed({ limit: 60 })
+    ]);
+    if (st.ok) setPersonalState(st.data);
+    if (fd.ok) {
+      setPersonalFeedIds(fd.data.objects.map((o: any) => o.id));
+      const map: Record<string, { boost: number; reasons: string[] }> = {};
+      for (const o of fd.data.objects as any[]) {
+        map[o.id] = o.personal ?? { boost: 0, reasons: [] };
+      }
+      setPersonalBoostMap(map);
+    }
+  }, [sessionUser]);
+
+  React.useEffect(() => { void loadPersonal(); }, [loadPersonal]);
+
+  // Seed server-persisted saves into the client relationship graph — the
+  // durable copy, so saves survive across devices. Only ADDS missing edges;
+  // the relationship graph stays the single live source for the UI.
+  React.useEffect(() => {
+    if (!personalState || personalState.saved.length === 0) return;
+    setRelationships((prev) => {
+      const have = new Set(prev.filter((r) => r.verb === 'saved').map((r) => r.targetId));
+      const missing = personalState.saved.filter((id) => !have.has(id) && objects.some((o) => o.id === id));
+      if (missing.length === 0) return prev;
+      const nowIso = new Date().toISOString();
+      return [
+        ...prev,
+        ...missing.map((id) => ({
+          id: `rel_srv_${id}`,
+          sourceType: 'identity' as ObjectType,
+          sourceId: 'usr_me',
+          verb: 'saved' as const,
+          targetType: (objects.find((o) => o.id === id)?.type ?? 'knowledge') as ObjectType,
+          targetId: id,
+          state: 'engaged' as FlowState,
+          updatedAt: nowIso
+        }))
+      ];
+    });
+  }, [personalState, objects]);
+
+  const togglePersonalPick = (group: 'locations' | 'types' | 'topics', value: string) =>
+    setPersonalPicks((p) => ({
+      ...p,
+      [group]: p[group].includes(value) ? p[group].filter((v) => v !== value) : [...p[group], value]
+    }));
+
+  const savePersonalBrief = async () => {
+    setPersonalBusy(true);
+    const res = await briefApi.putInterests(personalPicks);
+    setPersonalBusy(false);
+    if (!res.ok) {
+      showToast(res.error ?? 'Could not save your Brief.');
+      return;
+    }
+    setPersonalState((p) => (p ? { ...p, interests: res.data.interests } : p));
+    setPersonalBriefDismissed(false);
+    setPersonalPicks({ locations: [], types: [], topics: [] });
+    showToast('Your Brief is set.');
+    void loadPersonal();
+  };
+
+  const followOne = async (kind: 'location' | 'type' | 'topic', value: string) => {
+    const res = await briefApi.followInterest(kind, value);
+    if (!res.ok) { showToast(res.error ?? 'Could not follow that.'); return; }
+    setPersonalState((p) => (p ? { ...p, interests: res.data.interests } : p));
+    void loadPersonal();
+  };
+
+  const unfollowOne = async (kind: 'location' | 'type' | 'topic', value: string) => {
+    const res = await briefApi.unfollowInterest(kind, value);
+    if (!res.ok) { showToast(res.error ?? 'Could not unfollow.'); return; }
+    setPersonalState((p) => (p ? { ...p, interests: res.data.interests } : p));
+    void loadPersonal();
+  };
+
+  // An explicit relevance control, persisted. Tapping an active control
+  // undoes it — the user can always change their mind.
+  const tuneObject = async (kind: 'more' | 'less' | 'not_interested' | 'hide_source', object: BriefObject) => {
+    const list = personalState?.relevance ?? { more: [], less: [], notInterested: [], hiddenSources: [] };
+    const active = kind === 'hide_source'
+      ? list.hiddenSources.includes(object.sourceId ?? '')
+      : kind === 'not_interested'
+        ? list.notInterested.includes(object.id)
+        : list[kind].includes(object.id);
+    const res = active
+      ? await briefApi.unsetRelevanceControl(kind, kind === 'hide_source' ? { sourceId: object.sourceId } : { objectId: object.id })
+      : await briefApi.setRelevanceControl(kind, kind === 'hide_source' ? { sourceId: object.sourceId } : { objectId: object.id });
+    if (!res.ok) { showToast(res.error ?? 'Could not record that.'); return; }
+    setPersonalState((p) => (p ? { ...p, relevance: res.data.relevance } : p));
+    showToast(active ? 'Reverted.' : kind === 'more' ? 'More like this — saved.'
+      : kind === 'less' ? 'Less like this — saved.'
+        : kind === 'not_interested' ? 'Noted. Fewer of these.' : 'This source hidden for you.');
+    void loadPersonal();
+  };
 
 
   const runBriefItPreview = async () => {
@@ -6456,7 +6698,14 @@ export function App() {
 
     // The aha moment, reported once it has actually happened. "saved" is the
     // activation event Brief measures itself on; opening is the step before it.
-    if (action === 'save') noteActivation('object_saved', { objectId: object.id, type: object.type });
+    if (action === 'save') {
+      noteActivation('object_saved', { objectId: object.id, type: object.type });
+      // Durable copy: the same save, persisted server-side, so it survives
+      // across devices. Best-effort — the local graph stays the live source.
+      void briefApi.saveObjectForMe(object.id).then((r) => {
+        if (r.ok) setPersonalState((p) => (p ? { ...p, saved: r.data.saved } : p));
+      });
+    }
     else if (action === 'discover' || action === 'read') noteActivation('object_opened', { objectId: object.id });
 
     setRelationships(prev => {
@@ -7798,6 +8047,75 @@ export function App() {
     [objects, feedArea, userLocation]
   );
 
+  // --- Personal Brief derivations -----------------------------------------
+  // The personal order is the server's re-ranking of the SAME objects — the
+  // ids are mapped onto `objects`, never duplicated into a second store.
+  const personalOrdered = useMemo(() => {
+    if (!personalFeedIds) return null;
+    const byId = new Map(objects.map((o) => [o.id, o]));
+    const out: { object: BriefObject; boost: number; reasons: string[] }[] = [];
+    for (const id of personalFeedIds) {
+      const object = byId.get(id);
+      if (!object) continue;
+      const p = personalBoostMap[id];
+      out.push({ object, boost: p?.boost ?? 0, reasons: p?.reasons ?? [] });
+    }
+    return out;
+  }, [personalFeedIds, personalBoostMap, objects]);
+
+  const personalInterests = personalState?.interests ?? { locations: [], types: [], topics: [] };
+  const personalHasInterests = personalInterests.locations.length > 0 || personalInterests.types.length > 0 || personalInterests.topics.length > 0;
+
+  const personalSections = useMemo(() => {
+    if (!personalOrdered || personalOrdered.length === 0) return [];
+    return buildPersonalSections({
+      ordered: personalOrdered,
+      interests: personalInterests,
+      topics: personalState?.topics ?? [],
+      personalized: personalHasInterests
+    });
+  }, [personalOrdered, personalInterests, personalState, personalHasInterests]);
+
+  // Types that really exist in the loaded data — the onboarding chips are
+  // never a hard-coded taxonomy, only what the objects themselves say.
+  const availableTypes = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const o of objects) counts[o.type] = (counts[o.type] ?? 0) + 1;
+    return Object.keys(counts) as ObjectType[];
+  }, [objects]);
+
+  // The Personal Brief Saved surface: Upcoming / Active / News / Places /
+  // Offers from the existing saved relationship graph. Expired or past rows
+  // read as expired — they are never disguised as active.
+  const personalSavedGroups = useMemo(() => {
+    const nowMs = Date.now();
+    const groups: { key: string; title: string; items: BriefObject[]; expired: BriefObject[] }[] = [
+      { key: 'upcoming', title: 'Upcoming', items: [], expired: [] },
+      { key: 'active', title: 'Active', items: [], expired: [] },
+      { key: 'news', title: 'News', items: [], expired: [] },
+      { key: 'places', title: 'Places', items: [], expired: [] },
+      { key: 'offers', title: 'Offers', items: [], expired: [] }
+    ];
+    for (const o of savedObjects) {
+      const t = o.temporal;
+      const status = t?.status ?? '';
+      const startsAt = t?.startsAt ? Date.parse(t.startsAt) : NaN;
+      const deadlineAt = t?.deadlineAt ? Date.parse(t.deadlineAt) : NaN;
+      const isEvent = o.type === 'experience' || o.type === 'event';
+      const expired = status === 'expired' || status === 'past'
+        || (Number.isFinite(deadlineAt) && deadlineAt < nowMs)
+        || (isEvent && Number.isFinite(startsAt) && startsAt < nowMs);
+      let group: { key: string; title: string; items: BriefObject[]; expired: BriefObject[] };
+      if (isEvent) group = groups[0];                       // Upcoming
+      else if (o.type === 'news' || o.type === 'announcement' || o.type === 'alert') group = groups[2]; // News
+      else if (o.type === 'place' || o.type === 'business') group = groups[3];   // Places
+      else if (o.type === 'offer') group = groups[4];       // Offers
+      else group = groups[1];                               // Active (opportunities, services, ...)
+      if (expired) group.expired.push(o); else group.items.push(o);
+    }
+    return groups.filter((g) => g.items.length > 0 || g.expired.length > 0);
+  }, [savedObjects]);
+
   const pendingCandidates = useMemo(
     () => candidates.filter((c) => !reviewed[c.id]),
     [candidates, reviewed]
@@ -7809,6 +8127,10 @@ export function App() {
         (rel) => !(rel.targetId === object.id && rel.verb === 'saved')
       )
     );
+    // Durable copy stays in step: the server-side save is removed too.
+    void briefApi.unsaveObjectForMe(object.id).then((r) => {
+      if (r.ok) setPersonalState((p) => (p ? { ...p, saved: r.data.saved } : p));
+    });
     showToast(`Removed "${object.title}" from your saved things.`);
   };
 
@@ -8260,6 +8582,331 @@ export function App() {
                   {/* No demo seeding on Home: when production data is thin the
                       FeedComposer below renders honest, contextual empty
                       states — the no-fake-live-data rule. */}
+                  {/* MY BRIEF — the personal daily-city-briefing layer. The
+                      SAME persisted objects, re-ranked per user; sections
+                      render only when real data backs them; onboarding is
+                      skippable and never blocks the Brief. */}
+                  {discoveryTab === 'home' && sessionUser && personalState && (
+                    <section className="mb-8" aria-label="My Brief">
+                      <div className="mb-3 flex items-center justify-between px-1">
+                        <h2 className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#251045]/60">
+                          My Brief
+                        </h2>
+                        {personalHasInterests && (
+                          <button
+                            type="button"
+                            onClick={() => setPersonalBriefDismissed(false)}
+                            className="rounded-full border border-[#D6CFE4] bg-[#FBFAFD] px-3 py-1 text-[10px] font-extrabold text-[#251045]/60 cursor-pointer hover:border-[#6C3EC9]"
+                          >
+                            Edit
+                          </button>
+                        )}
+                      </div>
+
+                      {/* ONBOARDING — where + what, as chips. Skipping closes
+                          the card; the Brief stays fully global until then. */}
+                      {!personalHasInterests && !personalBriefDismissed && (
+                        <div className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <h3 className="text-sm font-extrabold text-[#251045]">
+                                Make this your Brief
+                              </h3>
+                              <p className="mt-0.5 text-[11px] text-[#251045]/55">
+                                Your daily city briefing: the same Brief feed,
+                                ordered around the places and things you follow.
+                                Skip anytime — nothing is blocked.
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setPersonalBriefDismissed(true)}
+                              className="shrink-0 rounded-full border border-[#D6CFE4] px-3 py-1 text-[10px] font-extrabold text-[#251045]/50 cursor-pointer"
+                            >
+                              Skip
+                            </button>
+                          </div>
+
+                          <p className="mt-4 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#251045]/45">
+                            Where do you want your Brief?
+                          </p>
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {personalState.suggestedLocations.map((loc) => (
+                              <button
+                                key={loc}
+                                type="button"
+                                onClick={() => togglePersonalPick('locations', loc)}
+                                className={`rounded-full border px-3 py-1.5 text-[11px] font-bold cursor-pointer transition ${
+                                  personalPicks.locations.includes(loc)
+                                    ? 'bg-[#5B2EA6] text-[#FFFFFF] border-[#6C3EC9]'
+                                    : 'bg-[#FBFAFD] text-[#251045]/70 border-[#D6CFE4] hover:border-[#6C3EC9]'
+                                }`}
+                              >
+                                {loc}
+                              </button>
+                            ))}
+                          </div>
+
+                          <p className="mt-4 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#251045]/45">
+                            What do you care about?
+                          </p>
+                          {availableTypes.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              {availableTypes.map((t) => (
+                                <button
+                                  key={t}
+                                  type="button"
+                                  onClick={() => togglePersonalPick('types', t)}
+                                  className={`rounded-full border px-3 py-1.5 text-[11px] font-bold cursor-pointer transition ${
+                                    personalPicks.types.includes(t)
+                                      ? 'bg-[#5B2EA6] text-[#FFFFFF] border-[#6C3EC9]'
+                                      : 'bg-[#FBFAFD] text-[#251045]/70 border-[#D6CFE4] hover:border-[#6C3EC9]'
+                                  }`}
+                                >
+                                  {getObjectTypeMeta(t).label}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                          {personalState.topics.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              {personalState.topics.slice(0, 8).map((topic) => (
+                                <button
+                                  key={topic.id}
+                                  type="button"
+                                  onClick={() => togglePersonalPick('topics', topic.id)}
+                                  className={`rounded-full border px-3 py-1.5 text-[11px] font-bold cursor-pointer transition ${
+                                    personalPicks.topics.includes(topic.id)
+                                      ? 'bg-[#5B2EA6] text-[#FFFFFF] border-[#6C3EC9]'
+                                      : 'bg-[#FBFAFD] text-[#251045]/70 border-[#D6CFE4] hover:border-[#6C3EC9]'
+                                  }`}
+                                >
+                                  {topic.label}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="mt-4 flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => void savePersonalBrief()}
+                              disabled={personalBusy || (personalPicks.locations.length === 0 && personalPicks.types.length === 0 && personalPicks.topics.length === 0)}
+                              className="rounded-full bg-[#5B2EA6] px-4 py-2 text-[11px] font-extrabold text-[#FFFFFF] cursor-pointer disabled:opacity-40"
+                            >
+                              {personalBusy ? 'Saving…' : 'Build my Brief'}
+                            </button>
+                            <span className="text-[10px] text-[#251045]/40">
+                              Pick anything, or skip — your feed stays global.
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {!personalHasInterests && personalBriefDismissed && (
+                        <p className="rounded-2xl border border-dashed border-[#D6CFE4] px-4 py-3 text-[11px] text-[#251045]/50">
+                          Your Brief is global until you follow places or topics.{' '}
+                          <button
+                            type="button"
+                            onClick={() => setPersonalBriefDismissed(false)}
+                            className="font-extrabold text-[#5B2EA6] cursor-pointer"
+                          >
+                            Personalize
+                          </button>
+                        </p>
+                      )}
+
+                      {/* FOLLOWING — the chips you follow, each with an
+                          obvious unfollow; plus quick-adds for what is left. */}
+                      {personalHasInterests && (
+                        <div className="mb-4 flex flex-wrap items-center gap-1.5">
+                          {personalInterests.locations.map((loc) => (
+                            <button
+                              key={`loc_${loc}`}
+                              type="button"
+                              onClick={() => void unfollowOne('location', loc)}
+                              title={`Stop following ${loc}`}
+                              className="flex items-center gap-1 rounded-full bg-[#5B2EA6] px-3 py-1.5 text-[11px] font-extrabold text-[#FFFFFF] cursor-pointer"
+                            >
+                              {loc} <X className="h-3 w-3" />
+                            </button>
+                          ))}
+                          {personalInterests.types.map((t) => (
+                            <button
+                              key={`typ_${t}`}
+                              type="button"
+                              onClick={() => void unfollowOne('type', t)}
+                              title={`Stop following ${getObjectTypeMeta(t as ObjectType).label}`}
+                              className="flex items-center gap-1 rounded-full border border-[#6C3EC9] bg-[#F1EDF7] px-3 py-1.5 text-[11px] font-extrabold text-[#5B2EA6] cursor-pointer"
+                            >
+                              {getObjectTypeMeta(t as ObjectType).label} <X className="h-3 w-3" />
+                            </button>
+                          ))}
+                          {personalInterests.topics.map((topicId) => {
+                            const topic = personalState.topics.find((t) => t.id === topicId);
+                            if (!topic) return null;
+                            return (
+                              <button
+                                key={`top_${topicId}`}
+                                type="button"
+                                onClick={() => void unfollowOne('topic', topicId)}
+                                title={`Stop following ${topic.label}`}
+                                className="flex items-center gap-1 rounded-full border border-[#6C3EC9] bg-[#F1EDF7] px-3 py-1.5 text-[11px] font-extrabold text-[#5B2EA6] cursor-pointer"
+                              >
+                                {topic.label} <X className="h-3 w-3" />
+                              </button>
+                            );
+                          })}
+                          {personalState.suggestedLocations
+                            .filter((loc) => !personalInterests.locations.includes(loc))
+                            .slice(0, 5)
+                            .map((loc) => (
+                              <button
+                                key={`add_${loc}`}
+                                type="button"
+                                onClick={() => void followOne('location', loc)}
+                                className="flex items-center gap-1 rounded-full border border-dashed border-[#D6CFE4] px-3 py-1.5 text-[11px] font-bold text-[#251045]/45 cursor-pointer hover:border-[#6C3EC9]"
+                              >
+                                <Plus className="h-3 w-3" /> {loc}
+                              </button>
+                            ))}
+                          {availableTypes
+                            .filter((t) => !personalInterests.types.includes(t))
+                            .slice(0, 3)
+                            .map((t) => (
+                              <button
+                                key={`addt_${t}`}
+                                type="button"
+                                onClick={() => void followOne('type', t)}
+                                className="flex items-center gap-1 rounded-full border border-dashed border-[#D6CFE4] px-3 py-1.5 text-[11px] font-bold text-[#251045]/45 cursor-pointer hover:border-[#6C3EC9]"
+                              >
+                                <Plus className="h-3 w-3" /> {getObjectTypeMeta(t).label}
+                              </button>
+                            ))}
+                        </div>
+                      )}
+
+                      {/* PERSONAL SECTIONS — YOUR BRIEF / AROUND YOU / TODAY /
+                          COMING UP / FOR YOU. Only non-empty sections render,
+                          and every row is a real persisted object. */}
+                      {personalSections.length > 0 && (
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          {personalSections.map((section) => (
+                            <div
+                              key={section.key}
+                              className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-3"
+                            >
+                              <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-[#251045]/50">
+                                {section.title}
+                              </p>
+                              <div className="mt-2 space-y-0.5">
+                                {section.objects.slice(0, 4).map((obj) => (
+                                  <button
+                                    key={obj.id}
+                                    type="button"
+                                    onClick={() => setSelectedObjectForDetail(obj)}
+                                    className="flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 text-left transition-colors hover:bg-[#E9E4F2] cursor-pointer"
+                                  >
+                                    {obj.imageUrl ? (
+                                      <img
+                                        src={obj.imageUrl}
+                                        alt=""
+                                        aria-hidden="true"
+                                        loading="lazy"
+                                        className="h-9 w-9 shrink-0 rounded-lg object-cover"
+                                      />
+                                    ) : (
+                                      <span
+                                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[15px]"
+                                        style={{ background: '#F1EDF7', color: '#6C3EC9' }}
+                                        aria-hidden="true"
+                                      >
+                                        {getObjectTypeMeta(obj.type).label.charAt(0)}
+                                      </span>
+                                    )}
+                                    <span className="min-w-0 flex-1">
+                                      <span className="block truncate text-[12px] font-semibold text-[#251045]">
+                                        {obj.title}
+                                      </span>
+                                      {briefWhenLabel(obj) && (
+                                        <span className="block truncate text-[9px] font-semibold text-[#251045]/55">
+                                          {briefWhenLabel(obj)}
+                                        </span>
+                                      )}
+                                    </span>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* SAVED — grouped Upcoming / Active / News / Places /
+                          Offers. Expired rows read as expired, never active. */}
+                      {personalSavedGroups.length > 0 && (
+                        <div className="mt-4 rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-3">
+                          <div className="mb-2 flex items-center gap-2">
+                            <Bookmark className="h-3.5 w-3.5 text-[#251045]/60" />
+                            <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-[#251045]/50">
+                              Saved
+                            </p>
+                          </div>
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            {personalSavedGroups.map((group) => (
+                              <div key={group.key}>
+                                <p className="text-[10px] font-extrabold text-[#251045]/70">
+                                  {group.title}
+                                  <span className="ml-1.5 text-[10px] font-bold text-[#251045]/40">
+                                    {group.items.length + group.expired.length}
+                                  </span>
+                                </p>
+                                <div className="mt-1.5 space-y-0.5">
+                                  {group.items.slice(0, 3).map((obj) => (
+                                    <button
+                                      key={obj.id}
+                                      type="button"
+                                      onClick={() => setSelectedObjectForDetail(obj)}
+                                      className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-[#E9E4F2] cursor-pointer"
+                                    >
+                                      <span className="min-w-0 flex-1">
+                                        <span className="block truncate text-[11px] font-semibold text-[#251045]">
+                                          {obj.title}
+                                        </span>
+                                        {briefWhenLabel(obj) && (
+                                          <span className="block truncate text-[9px] font-semibold text-[#251045]/50">
+                                            {briefWhenLabel(obj)}
+                                          </span>
+                                        )}
+                                      </span>
+                                    </button>
+                                  ))}
+                                  {group.expired.slice(0, 3).map((obj) => (
+                                    <button
+                                      key={obj.id}
+                                      type="button"
+                                      onClick={() => setSelectedObjectForDetail(obj)}
+                                      className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-[#E9E4F2] cursor-pointer opacity-60"
+                                    >
+                                      <span className="min-w-0 flex-1">
+                                        <span className="block truncate text-[11px] font-semibold text-[#251045] line-through">
+                                          {obj.title}
+                                        </span>
+                                        <span className="block truncate text-[9px] font-bold text-[#B45309]">
+                                          Expired
+                                        </span>
+                                      </span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </section>
+                  )}
+
                   {/* TODAY'S BRIEF — the compact discovery summary: TODAY /
                       NEAR YOU / NOW / COMING UP, every row a real persisted
                       object. Only rendered when it has data. */}
@@ -12244,14 +12891,14 @@ export function App() {
                   </div>
                   {reportForObject === selectedObjectForDetail.id && (
                     <div className="flex flex-wrap gap-1.5">
-                      {['wrong details', 'spam', 'offensive', 'no longer true'].map((reason) => (
+                      {REPORT_REASONS.map((reason) => (
                         <button
-                          key={reason}
-                          onClick={() => void handleReportObject(selectedObjectForDetail, reason)}
+                          key={reason.id}
+                          onClick={() => void handleReportObject(selectedObjectForDetail, reason.id)}
                           disabled={objectCheckBusy === selectedObjectForDetail.id}
                           className="px-3 py-1.5 rounded-full border border-[#D6CFE4] text-[11px] font-bold text-[#251045]/70 cursor-pointer disabled:opacity-50"
                         >
-                          {reason}
+                          {reason.label}
                         </button>
                       ))}
                     </div>
@@ -12262,6 +12909,45 @@ export function App() {
                       Brief will track changes to this record. Alerts are not live yet.
                     </p>
                   )}
+
+                  {/* Personal Brief tuning — explicit controls the user said
+                      out loud, persisted, always reversible. Shown only for a
+                      signed-in caller with the personal layer loaded. */}
+                  {sessionUser && personalState && (() => {
+                    const rel = personalState.relevance;
+                    const { sourceId: detailSourceId } = selectedObjectForDetail;
+                    const buttons: { kind: 'more' | 'less' | 'not_interested' | 'hide_source'; label: string; active: boolean }[] = [
+                      { kind: 'more', label: 'More like this', active: rel.more.includes(selectedObjectForDetail.id) },
+                      { kind: 'less', label: 'Less like this', active: rel.less.includes(selectedObjectForDetail.id) },
+                      { kind: 'not_interested', label: 'Not interested', active: rel.notInterested.includes(selectedObjectForDetail.id) },
+                      ...(detailSourceId
+                        ? [{ kind: 'hide_source' as const, label: 'Hide this source', active: rel.hiddenSources.includes(detailSourceId) }]
+                        : [])
+                    ];
+                    if (buttons.length === 0) return null;
+                    return (
+                      <div className="border-t border-[#D6CFE4]/70 pt-3 mt-1">
+                        <p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-[#251045]/40 mb-2">
+                          Tune this in your Brief
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {buttons.map((b) => (
+                            <button
+                              key={b.kind}
+                              onClick={() => void tuneObject(b.kind, selectedObjectForDetail)}
+                              className={`px-2.5 py-1.5 rounded-full border text-[10px] font-bold cursor-pointer transition ${
+                                b.active
+                                  ? 'bg-[#5B2EA6] text-[#FFFFFF] border-[#6C3EC9]'
+                                  : 'bg-[#FBFAFD] text-[#251045]/60 border-[#D6CFE4] hover:border-[#6C3EC9]'
+                              }`}
+                            >
+                              {b.active ? `✓ ${b.label}` : b.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Why this appeared (prompt 7). Every reason is computed

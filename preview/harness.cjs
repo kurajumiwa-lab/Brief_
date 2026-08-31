@@ -32,6 +32,9 @@ function toServerRow(o) {
   for (const id of o.relatedObjectIds ?? []) {
     relationships.push({ verb: 'related_to', targetId: id, target: null });
   }
+  // Fixtures may declare any extra relationship verb (e.g. 'saved') directly;
+  // the Personal Brief surfaces read these exactly like the live server rows.
+  for (const rel of o.relationships ?? []) relationships.push(rel);
 
   const provenance = (o.sourceType || o.sourceId || o.sourceUrl)
     ? [{
@@ -67,6 +70,10 @@ function toServerRow(o) {
     temporal: o.temporal ?? undefined,
     corrections: o.corrections ?? undefined,
     openReportCount: o.openReportCount ?? undefined,
+    confirmationCount: o.confirmationCount ?? undefined,
+    lastVerifiedAt: o.lastVerifiedAt ?? undefined,
+    validityWindowDays: o.validityWindowDays ?? undefined,
+    sourceId: o.sourceId ?? undefined,
 
     // Presentational fields the server does not model. objectFromServer
     // ignores them; they ride along so fixture-driven suites can still assert
@@ -127,14 +134,16 @@ async function boot(opts = {}) {
 
   // The app gate (no access without an account): give the suite a session.
   try { dom.window.localStorage.setItem('brief_session', 'suite-runner-token'); } catch {}
-  global.fetch = async (url) => {
+  global.fetch = async (url, init = {}) => {
     const u = String(url);
     if (u.includes('/api/auth/me')) {
       // The app gate: the suite runs signed in.
       return reply({ user: { id: 'usr_suite_runner', handle: 'suite_runner', displayName: 'Suite Runner', personId: 'per_suite_runner' }, method: 'password' });
     }
     for (const [frag, body] of Object.entries(routes)) {
-      if (u.includes(frag)) return reply(typeof body === 'function' ? body(u) : body);
+      if (u.includes(frag)) return reply(typeof body === 'function'
+        ? body({ url: u, method: init?.method ?? 'GET', body: init?.body })
+        : body);
     }
     if (u.includes('/api/objects')) return reply({ objects });
     if (u.includes('/api/raw-items')) return reply({ rawItems: opts.rawItems ?? [] });

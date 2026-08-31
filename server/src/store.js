@@ -156,6 +156,19 @@ const EMPTY = {
   // was confirmed, a challenge was accepted, a saved thing changed). Push is a
   // separate, still-unconnected rail — these are the local inbox.
   notifications: [],
+  // --- Personal Brief ------------------------------------------------------
+  // A user's explicit interests: one row per (user, kind, value) where kind is
+  // location | type | topic. Idempotent by design — re-following is a no-op.
+  // These are PRIVATE to the owner and never appear on public endpoints.
+  userInterests: [],
+  // Explicit relevance controls: one row per (user, kind, target) where kind
+  // is more | less | not_interested | hide_source. The user said this out
+  // loud; nothing is inferred. Also private to the owner.
+  userRelevance: [],
+  // Server-persisted bookmarks: one row per (user, object). The client-side
+  // relationship graph already models "saved"; this is the durable copy so
+  // saves survive across devices and sessions.
+  saves: [],
   // Append-only audit trail of consequential mutations (who/what/when/from/to).
   // Never pruned by the app; the operator decides.
   auditLog: [],

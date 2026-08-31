@@ -33,6 +33,7 @@ import { recordError } from './routes/helpers.js';
 import { callerId } from './identity.js';
 import { register as authRoutes } from './routes/auth.js';
 import { register as onboardingRoutes } from './routes/onboarding.js';
+import { register as personalRoutes } from './routes/personal.js';
 import { register as healthRoutes } from './routes/health.js';
 import { register as opsRoutes } from './routes/ops.js';
 import { register as arenaRoutes } from './routes/arena.js';
@@ -188,6 +189,7 @@ app.use('/api', (req, res, next) => {
 // ---------------------------------------------------------------------------
 authRoutes(app);
 onboardingRoutes(app);
+personalRoutes(app);
 healthRoutes(app);
 opsRoutes(app);
 arenaRoutes(app);

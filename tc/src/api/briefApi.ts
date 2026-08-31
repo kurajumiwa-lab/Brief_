@@ -3764,3 +3764,108 @@ export function setMemberStatus(id: string, status: 'active' | 'suspended', reas
   return request(`/api/ops/members/${encodeURIComponent(id)}/status`, { method: 'POST', body: JSON.stringify({ status, reason }) }, (r): { user: MemberRow; changed: boolean; sessionsRevoked: number } | undefined =>
     r?.user ? r as { user: MemberRow; changed: boolean; sessionsRevoked: number } : undefined);
 }
+
+// ---------------------------------------------------------------------------
+// PERSONAL BRIEF — interests, personal feed, saves, relevance controls
+// ---------------------------------------------------------------------------
+
+export interface PersonalTopic {
+  id: string;
+  label: string;
+  keywords: string[];
+}
+
+export interface PersonalState {
+  interests: {
+    locations: string[];
+    types: string[];
+    topics: string[];
+  };
+  saved: string[];
+  relevance: {
+    more: string[];
+    less: string[];
+    notInterested: string[];
+    hiddenSources: string[];
+  };
+  topics: PersonalTopic[];
+  suggestedLocations: string[];
+  notificationCandidates: {
+    kind: string;
+    objectId: string;
+    title: string;
+    dueAt: string | null;
+    reason: string;
+  }[];
+}
+
+export interface PersonalFeedRow {
+  personal?: { boost: number; reasons: string[] };
+}
+
+function isPersonalState(raw: any): PersonalState | undefined {
+  if (raw && raw.interests && Array.isArray(raw.saved) && Array.isArray(raw.topics)) return raw as PersonalState;
+  return undefined;
+}
+
+/** The caller's whole personal state in one round trip. */
+export function getPersonalState(): Promise<ApiResult<PersonalState>> {
+  return request('/api/me', undefined, isPersonalState);
+}
+
+/** The personal feed: the same global objects, re-ranked per user. */
+export function getPersonalFeed(opts: { limit?: number } = {}): Promise<ApiResult<{ objects: any[]; personalized: boolean }>> {
+  const params = new URLSearchParams();
+  if (opts.limit !== undefined) params.set('limit', String(opts.limit));
+  const qs = params.toString();
+  return request(`/api/me/feed${qs ? `?${qs}` : ''}`, undefined, (r): { objects: any[]; personalized: boolean } | undefined =>
+    Array.isArray(r?.objects) ? r as { objects: any[]; personalized: boolean } : undefined);
+}
+
+/** Batch-replace interests (lightweight onboarding). */
+export function putInterests(body: { locations?: string[]; types?: string[]; topics?: string[] }): Promise<ApiResult<{ ok: boolean; interests: PersonalState['interests'] }>> {
+  return request('/api/me/interests', { method: 'PUT', body: JSON.stringify(body) }, (r) =>
+    r?.interests ? r as { ok: boolean; interests: PersonalState['interests'] } : undefined);
+}
+
+/** Follow one location / type / topic. */
+export function followInterest(kind: 'location' | 'type' | 'topic', value: string): Promise<ApiResult<{ ok: boolean; interests: PersonalState['interests'] }>> {
+  return request('/api/me/interests', { method: 'POST', body: JSON.stringify({ kind, value }) }, (r) =>
+    r?.interests ? r as { ok: boolean; interests: PersonalState['interests'] } : undefined);
+}
+
+/** Unfollow one location / type / topic. */
+export function unfollowInterest(kind: 'location' | 'type' | 'topic', value: string): Promise<ApiResult<{ ok: boolean; interests: PersonalState['interests'] }>> {
+  return request('/api/me/interests', { method: 'DELETE', body: JSON.stringify({ kind, value }) }, (r) =>
+    r?.interests ? r as { ok: boolean; interests: PersonalState['interests'] } : undefined);
+}
+
+/** Server-persisted save (the durable copy of the client bookmark). */
+export function saveObjectForMe(objectId: string): Promise<ApiResult<{ ok: boolean; saved: string[] }>> {
+  return request(`/api/me/saved/${encodeURIComponent(objectId)}`, { method: 'POST', body: '{}' }, (r) =>
+    Array.isArray(r?.saved) ? r as { ok: boolean; saved: string[] } : undefined);
+}
+
+/** Remove a server-persisted save. */
+export function unsaveObjectForMe(objectId: string): Promise<ApiResult<{ ok: boolean; saved: string[] }>> {
+  return request(`/api/me/saved/${encodeURIComponent(objectId)}`, { method: 'DELETE', body: '{}' }, (r) =>
+    Array.isArray(r?.saved) ? r as { ok: boolean; saved: string[] } : undefined);
+}
+
+/** Explicit relevance control: more | less | not_interested | hide_source. */
+export function setRelevanceControl(kind: 'more' | 'less' | 'not_interested' | 'hide_source', target: { objectId?: string; sourceId?: string }): Promise<ApiResult<{ ok: boolean; relevance: PersonalState['relevance'] }>> {
+  return request('/api/me/relevance', { method: 'POST', body: JSON.stringify({ kind, ...target }) }, (r) =>
+    r?.relevance ? r as { ok: boolean; relevance: PersonalState['relevance'] } : undefined);
+}
+
+/** Undo an explicit relevance control. */
+export function unsetRelevanceControl(kind: 'more' | 'less' | 'not_interested' | 'hide_source', target: { objectId?: string; sourceId?: string }): Promise<ApiResult<{ ok: boolean; relevance: PersonalState['relevance'] }>> {
+  return request('/api/me/relevance', { method: 'DELETE', body: JSON.stringify({ kind, ...target }) }, (r) =>
+    r?.relevance ? r as { ok: boolean; relevance: PersonalState['relevance'] } : undefined);
+}
+
+/** Notification candidates — the data model only; nothing is sent. */
+export function getNotificationCandidates(): Promise<ApiResult<{ candidates: PersonalState['notificationCandidates'] }>> {
+  return request('/api/me/notification-candidates', undefined, (r) =>
+    Array.isArray(r?.candidates) ? r as { candidates: PersonalState['notificationCandidates'] } : undefined);
+}
