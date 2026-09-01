@@ -1434,12 +1434,32 @@ export function OverlaysShell(props: OverlaysShellProps) {
                       className="w-full h-full object-cover"
                     />
 
-                    <button
-                      onClick={() => setSelectedObjectForDetail(null)}
-                      className="absolute top-4 right-4 p-2 rounded-full bg-[#171A20]/80 text-[#F7F7F8] border border-[#222630]"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
+                    {/* §16 — the top action bar: save, share, close. Save and
+                        share ride the hero so the primary actions are always
+                        one thumb away; close (back) stays top-right. */}
+                    <div className="absolute top-4 right-4 flex items-center gap-2">
+                      <button
+                        onClick={() => handleExecuteProtocolAction('save', selectedObjectForDetail)}
+                        aria-label="Save"
+                        className="p-2 rounded-full bg-[#171A20]/80 text-[#F7F7F8] border border-[#222630] hover:border-[#22E6E0]"
+                      >
+                        <Bookmark className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleShare(selectedObjectForDetail)}
+                        aria-label="Share"
+                        className="p-2 rounded-full bg-[#171A20]/80 text-[#F7F7F8] border border-[#222630] hover:border-[#22E6E0]"
+                      >
+                        <Share2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setSelectedObjectForDetail(null)}
+                        aria-label="Close"
+                        className="p-2 rounded-full bg-[#171A20]/80 text-[#F7F7F8] border border-[#222630] hover:border-[#FF5D6C]"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
 
                     <div className="absolute bottom-4 left-4 flex gap-2">
                       <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#171A20]/85 text-[#F7F7F8] border border-[#222630]">
@@ -1505,12 +1525,29 @@ export function OverlaysShell(props: OverlaysShellProps) {
                     )}
                   </div>
 
-                  <button
-                    onClick={dismissOverlay}
-                    className="p-2 rounded-full bg-[#171A20]/80 text-[#F7F7F8] border border-[#222630]"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleExecuteProtocolAction('save', selectedObjectForDetail)}
+                      aria-label="Save"
+                      className="p-2 rounded-full bg-[#171A20]/80 text-[#F7F7F8] border border-[#222630] hover:border-[#22E6E0]"
+                    >
+                      <Bookmark className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleShare(selectedObjectForDetail)}
+                      aria-label="Share"
+                      className="p-2 rounded-full bg-[#171A20]/80 text-[#F7F7F8] border border-[#222630] hover:border-[#22E6E0]"
+                    >
+                      <Share2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={dismissOverlay}
+                      aria-label="Close"
+                      className="p-2 rounded-full bg-[#171A20]/80 text-[#F7F7F8] border border-[#222630] hover:border-[#FF5D6C]"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -1527,6 +1564,30 @@ export function OverlaysShell(props: OverlaysShellProps) {
                   <h2 className="text-2xl font-extrabold text-[#F7F7F8]">
                     {selectedObjectForDetail.title}
                   </h2>
+
+                  {/* §16 — the at-a-glance meta line: distance · location ·
+                      freshness. All real, all optional; nothing renders when
+                      the server didn't compute it. */}
+                  {(() => {
+                    const dist = getDistanceLabel(selectedObjectForDetail);
+                    const place = selectedObjectForDetail.locationName
+                      ?? selectedObjectForDetail.metadata?.area
+                      ?? selectedObjectForDetail.metadata?.county
+                      ?? null;
+                    const fresh = getFreshness(selectedObjectForDetail);
+                    const bits = [dist, place, fresh?.label].filter(Boolean);
+                    if (bits.length === 0) return null;
+                    return (
+                      <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] font-semibold text-[#F7F7F8]/70">
+                        {bits.map((b, i) => (
+                          <span key={i} className="inline-flex items-center gap-2">
+                            {i > 0 && <span aria-hidden="true" className="text-[#F7F7F8]/40">·</span>}
+                            {b}
+                          </span>
+                        ))}
+                      </p>
+                    );
+                  })()}
 
                   <p className="text-sm text-[#F7F7F8] mt-2 leading-relaxed">
                     {selectedObjectForDetail.summary}
