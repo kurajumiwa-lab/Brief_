@@ -25,6 +25,10 @@ import '../styles/arenaArcade.css';
 export interface ArenaScreenProps {
   sessionUser: briefApi.AuthedUser | null;
   arenaActivity: Record<string, number>;
+  /** Available players (opted-in availability), from the real server. */
+  arenaPlayers: any[];
+  /** Real Arena venues, from the real server. */
+  arenaVenues: any[];
   matches: ArenaMatch[];
   setMatches: React.Dispatch<React.SetStateAction<ArenaMatch[]>>;
   refreshArenaMatches: () => Promise<void>;
@@ -36,7 +40,7 @@ export interface ArenaScreenProps {
 }
 
 export function ArenaScreen({
-  sessionUser, arenaActivity, matches, setMatches, refreshArenaMatches,
+  sessionUser, arenaActivity, arenaPlayers, arenaVenues, matches, setMatches, refreshArenaMatches,
   arenaBusyId, setArenaBusyId, showToast, arenaSection, setArenaSection
 }: ArenaScreenProps) {
   const [soundMuted, setSoundMuted] = useState<boolean>(() => soundEngine.getMuted());
@@ -593,7 +597,70 @@ export function ArenaScreen({
         )}
 
         {arenaSection === 'lobby' && (
-          <LobbyBoard gameId={({ pubg: 'pubg_mobile', cod: 'cod_mobile', ea_fc: 'fc_mobile' } as Record<string, string>)[arenaGameId] ?? arenaGameId} />
+          <div className="space-y-4">
+            <LobbyBoard gameId={({ pubg: 'pubg_mobile', cod: 'cod_mobile', ea_fc: 'fc_mobile' } as Record<string, string>)[arenaGameId] ?? arenaGameId} />
+
+            {/* §18 — Nearby players: real, opted-in availability from the
+                server. Filtered to the current game. Empty is honest. */}
+            <section aria-label="Nearby players">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <h3 className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]">Nearby players</h3>
+                <span className="text-[10px] font-bold text-[#F7F7F8]/60">{arenaGame.name}</span>
+              </div>
+              {(() => {
+                const serverGame = CLIENT_TO_SERVER_GAME[arenaGameId] ?? arenaGameId;
+                const rows = (arenaPlayers ?? []).filter((p: any) => p?.gameId === serverGame);
+                if (rows.length === 0) {
+                  return <p className="text-xs text-[#F7F7F8]/60">No one has gone available for {arenaGame.name} right now.</p>;
+                }
+                return (
+                  <div className="space-y-1.5">
+                    {rows.slice(0, 8).map((p: any, i: number) => {
+                      const meta = [p?.mode, p?.format, p?.locationKind].filter(Boolean).join(' · ');
+                      return (
+                        <div key={`${p?.userId ?? p?.personId ?? 'p'}_${i}`} className="flex items-center justify-between gap-2 rounded-xl bg-[#12151A] border border-[#222630] px-3 py-2">
+                          <div className="min-w-0">
+                            <p className="text-[12px] font-bold text-[#F7F7F8] truncate">{p?.displayName ?? 'Player'}</p>
+                            {meta && <p className="text-[10px] text-[#F7F7F8]/60 truncate">{meta}</p>}
+                          </div>
+                          <span className="shrink-0 flex items-center gap-1 rounded-full bg-[#171A20] px-2 py-0.5 text-[9px] font-extrabold text-[#38E879]">
+                            <span className="h-1 w-1 rounded-full bg-[#38E879]" aria-hidden="true" />
+                            Available
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </section>
+
+            {/* §18 — Venues: real Arena venues from the server, filtered to the
+                current game. Empty is honest — no fabricated gyms or hubs. */}
+            <section aria-label="Venues">
+              <h3 className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]">Venues</h3>
+              {(() => {
+                const serverGame = CLIENT_TO_SERVER_GAME[arenaGameId] ?? arenaGameId;
+                const rows = (arenaVenues ?? []).filter((v: any) => Array.isArray(v?.gameIds) && v.gameIds.includes(serverGame));
+                if (rows.length === 0) {
+                  return <p className="text-xs text-[#F7F7F8]/60">No venues listed for {arenaGame.name} yet.</p>;
+                }
+                return (
+                  <div className="space-y-1.5">
+                    {rows.slice(0, 6).map((v: any, i: number) => (
+                      <div key={v?.id ?? `v_${i}`} className="flex items-center justify-between gap-2 rounded-xl bg-[#12151A] border border-[#222630] px-3 py-2">
+                        <div className="min-w-0">
+                          <p className="text-[12px] font-bold text-[#F7F7F8] truncate">{v?.name}</p>
+                          {v?.location && <p className="text-[10px] text-[#F7F7F8]/60 truncate">{v.location}</p>}
+                        </div>
+                        {v?.contact && <span className="shrink-0 text-[10px] font-semibold text-[#F7F7F8]/70">{v.contact}</span>}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </section>
+          </div>
         )}
 
         {arenaSection === 'challenges' && (

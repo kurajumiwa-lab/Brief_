@@ -1737,6 +1737,8 @@ export function App() {
           <ArenaScreen
             sessionUser={sessionUser}
             arenaActivity={arenaActivity}
+            arenaPlayers={arenaPlayers}
+            arenaVenues={arenaVenues}
             matches={matches}
             setMatches={setMatches}
             refreshArenaMatches={refreshArenaMatches}

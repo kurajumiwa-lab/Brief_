@@ -68,6 +68,12 @@ async function main(){
   check('no fake points balance', !/Arena Points/.test(body()));
   check('no account marketplace', !/Established eFootball account/.test(body()));
 
+  console.log('\n=== Players + venues read the server (empty is honest) ===');
+  await click(btn('Lobby'));
+  b = body();
+  check('nearby players honest empty state', /No one has gone available/.test(b));
+  check('venues honest empty state', /No venues listed/.test(b));
+
   console.log('\n=== Tournaments + leaderboard read the server (empty is honest) ===');
   await click(btn('Tournaments'));
   b=body();
