@@ -148,61 +148,69 @@ export function DockNav(props: { activeTab: any, destinationAlerts: any, dockOn:
         type="button"
         aria-label="Show navigation"
         onClick={() => setDockOn(true)}
-        className={`md:hidden fixed bottom-0 left-1/2 z-[55] -translate-x-1/2 h-5 w-16 rounded-t-full bg-[#12151A] border border-b-0 border-[#222630] cursor-pointer transition-transform ${
+        className={`md:hidden fixed bottom-3 left-1/2 z-[55] -translate-x-1/2 h-2 w-12 rounded-full bg-[#222630] cursor-pointer transition-transform ${
           dockOn || isAnyModalActive ? 'translate-y-full pointer-events-none hidden' : ''
         } ${isAnyModalActive ? 'hidden' : ''}`}
-      >
-        <span className="mx-auto mt-1.5 block h-1 w-8 rounded-full bg-[#D1D5DB]" />
-      </button>
+        aria-hidden={dockOn || isAnyModalActive ? true : undefined}
+      />
 
+      {/* Floating dock — §11: a rounded, elevated pill that floats above the
+          content instead of a full-width bar, with the selected item picked
+          out by the orange accent. Safe-area aware, high contrast. */}
       <nav
         aria-label="Primary"
-        className={`md:hidden fixed bottom-0 inset-x-0 z-[55] bg-[#12151A]/98 backdrop-blur-xl border-t border-[#222630] flex shadow-lg transition-transform duration-200 ${
-          dockOn && !isAnyModalActive ? 'translate-y-0' : 'translate-y-full hidden pointer-events-none'
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }}
+        className={`md:hidden fixed bottom-0 inset-x-0 z-[55] px-3 transition-transform duration-200 ${
+          dockOn && !isAnyModalActive ? 'translate-y-0' : 'translate-y-full pointer-events-none'
         }`}
       >
-        <button
-          type="button"
-          onClick={() => { setMenuOpen((v: any) => !v); setDockOn(true); }}
-          aria-label="Menu"
-          aria-expanded={menuOpen}
-          title="Menu"
-          className={`flex-1 flex flex-col items-center justify-center gap-1 pt-2 pb-2 cursor-pointer transition-colors ${
-            menuOpen ? 'text-[var(--brief-green)] font-bold border-t-2 border-[var(--brief-green)]' : 'text-[var(--brief-muted)]'
-          }`}
-        >
-          <Menu className="w-5 h-5" />
-          <span className="text-[12px] font-extrabold leading-none">Menu</span>
-        </button>
-        {DESTINATIONS.map((d) => {
-          const active = activeTab === d.id;
-          const Icon = DESTINATION_ICONS[d.id];
-          return (
-            <button
-              key={d.id}
-              onClick={() => goToDestination(d.id)}
-              aria-current={active ? 'page' : undefined}
-              className={`flex-1 flex flex-col items-center justify-center gap-1 pt-2 pb-2 cursor-pointer transition-colors ${
-                active ? 'text-[var(--brief-green)] font-bold border-t-2 border-[var(--brief-green)]' : 'text-[var(--brief-muted)]'
-              }`}
-            >
-              <span className="relative">
-                <Icon className="w-5 h-5" />
-                <span className="absolute -right-2 -top-1.5">
-                  <ActivityDot n={destinationAlerts[d.id] ?? 0} />
+        <div className="mx-auto flex max-w-md items-stretch gap-0.5 rounded-[24px] border border-[#222630] bg-[#12151A]/95 px-1.5 py-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+          <button
+            type="button"
+            onClick={() => { setMenuOpen((v: any) => !v); setDockOn(true); }}
+            aria-label="Menu"
+            aria-expanded={menuOpen}
+            title="Menu"
+            className={`flex flex-1 flex-col items-center justify-center gap-1 rounded-2xl py-1.5 cursor-pointer transition-colors ${
+              menuOpen ? 'text-[#FF5A1F]' : 'text-[#6E737C] hover:text-[#A7ACB5]'
+            }`}
+          >
+            <span className={`flex h-7 w-11 items-center justify-center rounded-full transition-colors ${menuOpen ? 'bg-[#FF5A1F] text-[#0D0F12]' : ''}`}>
+              <Menu className="w-5 h-5" />
+            </span>
+            <span className="text-[11px] font-bold leading-none">Menu</span>
+          </button>
+          {DESTINATIONS.map((d) => {
+            const active = activeTab === d.id;
+            const Icon = DESTINATION_ICONS[d.id];
+            return (
+              <button
+                key={d.id}
+                onClick={() => goToDestination(d.id)}
+                aria-current={active ? 'page' : undefined}
+                title={d.hint}
+                className={`flex flex-1 flex-col items-center justify-center gap-1 rounded-2xl py-1.5 cursor-pointer transition-colors ${
+                  active ? 'text-[#FF5A1F]' : 'text-[#6E737C] hover:text-[#A7ACB5]'
+                }`}
+              >
+                <span className={`relative flex h-7 w-11 items-center justify-center rounded-full transition-colors ${active ? 'bg-[#FF5A1F] text-[#0D0F12]' : ''}`}>
+                  <Icon className="w-5 h-5" />
+                  <span className="absolute -right-1 -top-1">
+                    <ActivityDot n={destinationAlerts[d.id] ?? 0} />
+                  </span>
                 </span>
-              </span>
-              <span className="text-[12px] font-extrabold leading-none">
-                {d.label}
-              </span>
-              {(destinationAlerts[d.id] ?? 0) > 0 && (
-                <span className="sr-only">
-                  {destinationAlerts[d.id]} update{(destinationAlerts[d.id] ?? 0) > 1 ? 's' : ''}
+                <span className="text-[11px] font-bold leading-none">
+                  {d.label}
                 </span>
-              )}
-            </button>
-          );
-        })}
+                {(destinationAlerts[d.id] ?? 0) > 0 && (
+                  <span className="sr-only">
+                    {destinationAlerts[d.id]} update{(destinationAlerts[d.id] ?? 0) > 1 ? 's' : ''}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </nav>
     </>
   );

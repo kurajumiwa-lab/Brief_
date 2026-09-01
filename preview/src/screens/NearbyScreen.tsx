@@ -339,7 +339,23 @@ export function NearbyScreen(props: NearbyScreenProps) {
           <div className="max-w-5xl mx-auto px-0 sm:px-4 pt-2">
             <div className="mb-5">
               <div className="flex items-center justify-between gap-3 px-1 pb-3">
-                <h1 className="font-display text-2xl font-semibold tracking-tight text-[#F7F7F8]">Home</h1>
+                <div className="flex min-w-0 items-center gap-3">
+                  {sessionUser && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('mylayer')}
+                      aria-label="Your profile"
+                      title="Your profile"
+                      className="shrink-0 flex h-9 w-9 items-center justify-center rounded-full border border-[#222630] bg-gradient-to-br from-[#FF5A1F] to-[#22E6E0] text-[13px] font-black text-[#0D0F12] shadow-md cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0"
+                    >
+                      {(sessionUser.displayName || sessionUser.handle || '?').charAt(0).toUpperCase()}
+                    </button>
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#6E737C]">Around you</p>
+                    <h1 className="truncate font-display text-xl font-semibold leading-tight tracking-tight text-[#F7F7F8] sm:text-2xl">Home</h1>
+                  </div>
+                </div>
                 <div className="flex items-center gap-2">
                   <LocationChip
                     label={selectedLocation}
