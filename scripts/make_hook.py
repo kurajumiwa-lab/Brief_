@@ -156,6 +156,7 @@ names_names = set(re.findall(r"export (?:const|function|type|interface|class) (\
 def strip_noise(body):
     body = re.sub(r"/\*.*?\*/", ' ', body, flags=re.S)
     body = re.sub(r"//[^\n]*", ' ', body)
+    body = re.sub(r"(?<=[(,:=!\s])/(?:[^/\\\n]|\\.)+/[gimsuy]*", ' ', body)
     body = re.sub(r"'(?:[^'\\]|\\.)*'", "''", body)
     body = re.sub(r'"(?:[^"\\]|\\.)*"', '""', body)
     body = re.sub(r"`(?:[^`\\]|\\.)*`", '``', body, flags=re.S)
@@ -178,7 +179,7 @@ def locals_in(body):
     for m in re.finditer(r"\bfunction\s+\w*\s*\(([^)]*)\)", body):
         loc |= {t.strip().split(':')[0].strip().rstrip('?')
                 for t in m.group(1).split(',') if re.match(r'^\w+', t.strip())}
-    for m in re.finditer(r"\(([\w\s,{}[\].:'\"?]*)\)\s*(?::[^{=]+)?=>", body):
+    for m in re.finditer(r"\(([\w\s,{}[\].;:'\"?]*)\)\s*(?::[^{=]+)?=>", body):
         for t in m.group(1).split(','):
             t = t.strip()
             if not t:
