@@ -142,6 +142,7 @@ import { MyLayerScreen } from './screens/MyLayerScreen';
 import { NearbyScreen } from './screens/NearbyScreen';
 import { WorkflowsScreen } from './screens/WorkflowsScreen';
 import { OverlaysShell } from './screens/OverlaysShell';
+import { useAlertsPulse } from './shell/hooks/useAlertsPulse';
 import { useSessionBoot } from './shell/hooks/useSessionBoot';
 import { useSessionLocation } from './shell/hooks/useSessionLocation';
 import { useProtocolActions } from './shell/hooks/useProtocolActions';
@@ -549,51 +550,14 @@ export function App() {
   // public feed items / EPL rooms newer than the last time this viewer
   // opened that destination. First visit baselines silently; unreachable
   // services contribute zero. Never a decorative dot.
-  const [destinationAlerts, setDestinationAlerts] = useState<DestinationAlerts>({ nearby: 0, arena: 0, mylayer: 0, workflows: 0 });
-  const alertsTick = React.useRef(0);
+  const {
+    alertsTick,
+    destinationAlerts,
+    setDestinationAlerts,
+  } = useAlertsPulse({
+  });
 
-  React.useEffect(() => {
-    let cancelled = false;
-    const derive = async () => {
-      const tick = ++alertsTick.current;
-      const [notifRes, roomsRes, feedRes] = await Promise.all([
-        briefApi.getNotifications(true).catch(() => null),
-        briefApi.listEplRooms().catch(() => null),
-        briefApi.getPublicFeed({}).catch(() => null)
-      ]);
-      if (cancelled || tick !== alertsTick.current) return;
-      const feed = (feedRes && feedRes.ok ? feedRes.data?.feed : null) ?? null;
-      const feedItems = feed
-        ? [
-            ...(Array.isArray(feed.hero) ? feed.hero : []),
-            ...(Array.isArray(feed.discovery) ? feed.discovery : []),
-            ...(Array.isArray(feed.opportunities) ? feed.opportunities : []),
-            ...(Array.isArray(feed.more) ? feed.more : []),
-            ...(Array.isArray(feed.moreTea) ? feed.moreTea : []),
-            ...(feed.tea ? [feed.tea] : [])
-          ]
-        : [];
-      const lastSeen = {
-        nearby: readLastSeen('nearby'),
-        arena: readLastSeen('arena')
-      };
-      setDestinationAlerts(deriveDestinationAlerts({
-        notifications: notifRes && notifRes.ok ? notifRes.data?.notifications ?? [] : null,
-        rooms: roomsRes && roomsRes.ok ? roomsRes.data ?? [] : null,
-        feedItems,
-        lastSeen
-      }));
-    };
-    void derive();
-    const interval = window.setInterval(() => { void derive(); }, 60_000);
-    const onVisible = () => { if (document.visibilityState === 'visible') void derive(); };
-    document.addEventListener('visibilitychange', onVisible);
-    return () => {
-      cancelled = true;
-      window.clearInterval(interval);
-      document.removeEventListener('visibilitychange', onVisible);
-    };
-  }, []);
+
 
   const goToDestination = (id: Destination) => {
     setMenuOpen(false);
