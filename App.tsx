@@ -142,6 +142,7 @@ import { MyLayerScreen } from './screens/MyLayerScreen';
 import { NearbyScreen } from './screens/NearbyScreen';
 import { WorkflowsScreen } from './screens/WorkflowsScreen';
 import { OverlaysShell } from './screens/OverlaysShell';
+import { useTuning } from './shell/hooks/useTuning';
 import { useAlertsPulse } from './shell/hooks/useAlertsPulse';
 import { useSessionBoot } from './shell/hooks/useSessionBoot';
 import { useSessionLocation } from './shell/hooks/useSessionLocation';
@@ -520,23 +521,6 @@ export function App() {
 
   // An explicit relevance control, persisted. Tapping an active control
   // undoes it — the user can always change their mind.
-  const tuneObject = async (kind: 'more' | 'less' | 'not_interested' | 'hide_source', object: BriefObject) => {
-    const list = personalState?.relevance ?? { more: [], less: [], notInterested: [], hiddenSources: [] };
-    const active = kind === 'hide_source'
-      ? list.hiddenSources.includes(object.sourceId ?? '')
-      : kind === 'not_interested'
-        ? list.notInterested.includes(object.id)
-        : list[kind].includes(object.id);
-    const res = active
-      ? await briefApi.unsetRelevanceControl(kind, kind === 'hide_source' ? { sourceId: object.sourceId } : { objectId: object.id })
-      : await briefApi.setRelevanceControl(kind, kind === 'hide_source' ? { sourceId: object.sourceId } : { objectId: object.id });
-    if (!res.ok) { showToast(res.error ?? 'Could not record that.'); return; }
-    setPersonalState((p) => (p ? { ...p, relevance: res.data.relevance } : p));
-    showToast(active ? 'Reverted.' : kind === 'more' ? 'More like this — saved.'
-      : kind === 'less' ? 'Less like this — saved.'
-        : kind === 'not_interested' ? 'Noted. Fewer of these.' : 'This source hidden for you.');
-    void loadPersonal();
-  };
 
 
 
@@ -854,6 +838,15 @@ export function App() {
     setPersonalPicks,
     showToast,
   });
+  const {
+    tuneObject,
+  } = useTuning({
+    loadPersonal,
+    personalState,
+    setPersonalState,
+    showToast,
+  });
+
   const {
     detailGraph,
     handleConfirmObject,
