@@ -14,9 +14,9 @@
 //   collect, parseCallback(), verifyCallbackSecret()
 //   ...and for disbursement providers, disburse() + isPayoutConfigured()
 //
-// Adding another provider (Paystack, SasaPay, Flutterwave, ...) is: write a
-// connector file + add ONE line to the map below. Nothing else changes,
-// because every domain module and route reaches providers through this file.
+// Adding another provider later (if one is ever chosen) is: write a connector
+// file + add it to the map below. Today the map is Tuma-only by deliberate
+// choice — one rail, fully integrated, nothing to guess.
 //
 // The rest of Brief NEVER depends on Tuma API details directly. Domain code
 // calls the provider-neutral operations here; the connector files are the only
@@ -24,24 +24,18 @@
 // ---------------------------------------------------------------------------
 
 import * as tuma from './connectors/tuma.js';
-import * as paystack from './connectors/paystack.js';
 
-// Registry order is the fallback: the FIRST configured provider collects.
-// BRIEF_COLLECTION_PROVIDER overrides it deliberately (it must name a
-// provider that is actually configured, or it is ignored -- never guessed).
-export const COLLECTION_PROVIDERS = { tuma, paystack };
+// TUMA IS THE SOLE PAYMENT PROVIDER. One rail, one contract, no fallback
+// guessing: if Tuma is not configured, Brief honestly reports "no provider"
+// rather than silently trying another rail.
+export const COLLECTION_PROVIDERS = { tuma };
 // Intentionally empty. No disbursement provider has been selected; register
 // one here to enable merchant payouts. Do not add one unless instructed.
 export const DISBURSEMENT_PROVIDERS = {};
 
-/** The active collection provider's name, or null when none is configured. */
+/** The active collection provider's name, or null when Tuma is unconfigured. */
 export function activeCollectionProvider() {
-  const preferred = process.env.BRIEF_COLLECTION_PROVIDER;
-  if (preferred && COLLECTION_PROVIDERS[preferred]?.isConfigured()) return preferred;
-  for (const [name, p] of Object.entries(COLLECTION_PROVIDERS)) {
-    if (p.isConfigured()) return name;
-  }
-  return null;
+  return tuma.isConfigured() ? 'tuma' : null;
 }
 
 /** The active disbursement provider's name, or null when none is configured. */

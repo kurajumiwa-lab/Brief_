@@ -4572,45 +4572,6 @@ console.log('\n=== TUMA PAYMENT E2E + WEBHOOK (simulated provider) ===');
     check('a cancelled payment is a DISTINCT terminal state', pay.getIntent(intent3.id).status === 'cancelled');
     check('a cancelled payment created no transaction', store.all('ledgerTransactions').length === 1);
 
-    // --- PAYSTACK WEBHOOK: signed end to end over the same money rules -----
-    // Paystack is configured NOW (registry override) so the new intent is
-    // created on the paystack rail; initiation itself is covered above at the
-    // connector level, so this intent is marked authorized like intent2/3.
-    process.env.PAYSTACK_SECRET_KEY = 'sk_test_whitelabel';
-    process.env.BRIEF_COLLECTION_PROVIDER = 'paystack';
-    const { intent: psIntent } = pay.createIntent({ orderId: oid, payerId: B.user.id, phone: '0722000111' });
-    check('the intent is created on the paystack rail',
-      psIntent.provider === 'paystack', `provider=${psIntent.provider}`);
-    store.update('paymentIntents', psIntent.id, { status: 'authorized', providerRef: 'PS_KE_600' });
-
-    const nodeCrypto = await import('node:crypto');
-    const sign = (str) => nodeCrypto.createHmac('sha512', process.env.PAYSTACK_SECRET_KEY).update(str, 'utf8').digest('hex');
-    const psBody = JSON.stringify({ event: 'charge.success', data: { reference: 'PS_KE_600', amount: 60000, currency: 'KES', status: 'success', id: 41001, paid_at: '2026-08-29T00:00:00Z' } });
-    const psPost = (bodyStr, sig) => fetch(`http://127.0.0.1:${port}/api/webhooks/paystack`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', ...(sig ? { 'x-paystack-signature': sig } : {}) },
-      body: bodyStr
-    });
-
-    let psRes = await psPost(psBody, 'deadbeef');
-    check('an unsigned/wrongly-signed paystack callback is refused (403)', psRes.status === 403);
-    psRes = await psPost(psBody, sign(psBody));
-    const psJson = await psRes.json().catch(() => null);
-    check('a correctly signed charge.success confirms the payment',
-      psRes.status === 200 && psJson?.ok === true, JSON.stringify(psJson));
-    check('the paystack intent is confirmed', pay.getIntent(psIntent.id).status === 'confirmed');
-    check('a second settled ledger row exists (the ledger is still the only truth)',
-      store.all('ledgerTransactions').length === 2 && store.all('ledgerTransactions')[1].status === 'settled');
-    psRes = await psPost(psBody, sign(psBody));
-    check('a replayed signed callback is an idempotent no-op',
-      (await psRes.json().catch(() => null))?.duplicate === true && store.all('ledgerTransactions').length === 2);
-    const ignBody = JSON.stringify({ event: 'transfer.success', data: { reference: 'TR_1' } });
-    psRes = await psPost(ignBody, sign(ignBody));
-    check('a signed event Brief does not act on is acknowledged and ignored',
-      psRes.status === 200 && (await psRes.json().catch(() => null))?.ignored === true);
-    delete process.env.PAYSTACK_SECRET_KEY;
-    delete process.env.BRIEF_COLLECTION_PROVIDER;
-
     // --- Unauthenticated initiation is refused -----------------------------
     const anon = await fetch(`http://127.0.0.1:${port}/api/orders/${oid}/pay`, {
       method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer bogus' },
@@ -4627,90 +4588,14 @@ console.log('\n=== TUMA PAYMENT E2E + WEBHOOK (simulated provider) ===');
   }
 }
 
-console.log('\n=== WHITE-LABEL CONNECTORS: PAYSTACK + SMILE ID (the chosen rails) ===');
+console.log('\n=== SMILE ID — the KYC rail (sole white-label connector) ===');
 {
-  const paystack = await import('../src/connectors/paystack.js');
   const smileid = await import('../src/connectors/smileid.js');
-  const providers = await import('../src/providers.js');
   const crypto = await import('node:crypto');
 
-  // --- honest when unconfigured ------------------------------------------
-  check('paystack reports itself unconfigured with the missing credential named',
-    paystack.isConfigured() === false && paystack.status().missing.includes('secretKey'), JSON.stringify(paystack.status()));
-  check('the registry lists paystack beside tuma',
-    Object.keys(providers.COLLECTION_PROVIDERS).includes('paystack') && providers.activeCollectionProvider() === null);
   check('capabilities expose the KYC rail honestly',
     smileid.status().configured === false && smileid.status().missing.includes('partnerId'));
 
-  // --- the documented signature construction (verified independently) ----
-  process.env.PAYSTACK_SECRET_KEY = 'sk_test_whitelabel';
-  const rawBody = JSON.stringify({ event: 'transfer.success', data: { reference: 'T1' } });
-  const expected = crypto.createHmac('sha512', 'sk_test_whitelabel').update(rawBody, 'utf8').digest('hex');
-  check('the webhook signature is hex HMAC-SHA512 over the raw body',
-    paystack.computeSignature(rawBody) === expected && /^[0-9a-f]{128}$/.test(expected));
-  check('a correct signature verifies', paystack.verifyCallbackSecret(expected, rawBody).ok === true);
-  check('a wrong signature is refused', paystack.verifyCallbackSecret('f'.repeat(128), rawBody).ok === false);
-  check('a missing signature is refused', paystack.verifyCallbackSecret(undefined, rawBody).ok === false);
-  delete process.env.PAYSTACK_SECRET_KEY;
-  check('with no key configured NOTHING verifies (fail closed)',
-    paystack.verifyCallbackSecret(expected, rawBody).ok === false);
-  check('sk_test_ is reported as sandbox, sk_live_ as live',
-    (() => { process.env.PAYSTACK_SECRET_KEY = 'sk_test_x'; const a = paystack.status().mode;
-             process.env.PAYSTACK_SECRET_KEY = 'sk_live_x'; const b = paystack.status().mode;
-             delete process.env.PAYSTACK_SECRET_KEY; return a === 'sandbox' && b === 'live'; })());
-
-  // --- callback parsing: one canonical unit (whole KES) -------------------
-  const good = paystack.parseCallback({ event: 'charge.success', data: { reference: 'PS_1', amount: 15000, currency: 'KES', status: 'success', id: 41000, paid_at: '2026-08-29T00:00:00Z' } });
-  check('a charge.success parses to whole KES (subunits / 100)',
-    good.ok === true && good.succeeded === true && good.amount === 150 && good.checkoutRequestId === 'PS_1');
-  check('a failed charge is not success and carries the reason',
-    (() => { const f = paystack.parseCallback({ event: 'charge.failed', data: { reference: 'PS_2', amount: 15000, currency: 'KES', status: 'failed', gateway_response: 'declined' } });
-      return f.succeeded === false && /declined/.test(f.failureReason); })());
-  check('a non-KES payment is never a success against a KES intent',
-    paystack.parseCallback({ event: 'charge.success', data: { reference: 'PS_3', amount: 15000, currency: 'NGN', status: 'success' } }).succeeded === false);
-  check('a subunit amount that does not divide cleanly is passed through (mismatch will fail loudly)',
-    paystack.parseCallback({ event: 'charge.success', data: { reference: 'PS_4', amount: 15050, currency: 'KES', status: 'success' } }).amount === 15050);
-  check('events Brief does not act on are acknowledged, not applied',
-    (() => { const t = paystack.parseCallback({ event: 'transfer.success', data: { reference: 'T1' } }); return t.ok === true && t.ignored === true; })());
-  check('a payload without a reference is unrecognised',
-    paystack.parseCallback({ event: 'charge.success', data: { amount: 100 } }).ok === false);
-
-  // --- collect: request shape against a stubbed Paystack ------------------
-  let seen = null;
-  const flwFetch = async (url, opts) => {
-    seen = { url, body: JSON.parse(opts.body), auth: opts.headers.authorization };
-    return { ok: true, status: 200, json: async () => ({ status: true, message: 'Authorization URL created', data: { authorization_url: 'https://checkout.paystack.com/abc', access_code: 'AC1', reference: seen.body.reference, id: 77 } }) };
-  };
-  process.env.PAYSTACK_SECRET_KEY = 'sk_test_whitelabel';
-  process.env.BRIEF_PUBLIC_ORIGIN = 'https://brief.example.com';
-  const c = await paystack.collect({ amount: 600, phone: '0722000111', description: 'Brief order X', reference: 'brief-ps-ref-1', fetchImpl: flwFetch });
-  check('collect initializes a hosted checkout (stubbed rail, real request path)',
-    c.ok === true && c.checkoutRequestId === 'brief-ps-ref-1' && c.authorizationUrl.includes('checkout.paystack.com'));
-  check('the wire amount is subunits of whole KES and the currency is KES',
-    seen.body.amount === 60000 && seen.body.currency === 'KES');
-  check('the checkout email is a derived relay identifier, never a contact claim',
-    seen.body.email === 'brief-order-brief-ps-ref-1@brief.example.com');
-  check('the secret key authorises the call and never leaves the server',
-    seen.auth === 'Bearer sk_test_whitelabel');
-  check('an invalid amount is refused before any wire traffic',
-    (await paystack.collect({ amount: -5, fetchImpl: flwFetch })).reason === 'invalid_amount');
-
-  // --- registry selection, including the explicit override ----------------
-  check('a configured paystack becomes the active collector when tuma is not',
-    providers.activeCollectionProvider() === 'paystack');
-  process.env.BRIEF_COLLECTION_PROVIDER = 'tuma';
-  check('an override naming an UNCONFIGURED provider is ignored, not guessed',
-    providers.activeCollectionProvider() === 'paystack');
-  process.env.BRIEF_COLLECTION_PROVIDER = 'paystack';
-  check('an override naming the configured provider holds',
-    providers.activeCollectionProvider() === 'paystack');
-  delete process.env.BRIEF_COLLECTION_PROVIDER;
-  delete process.env.PAYSTACK_SECRET_KEY;
-  delete process.env.BRIEF_PUBLIC_ORIGIN;
-  check('with credentials removed the registry is honestly empty again',
-    providers.activeCollectionProvider() === null);
-
-  // --- Smile ID: the documented signature + assist wiring -----------------
   process.env.SMILE_PARTNER_ID = '002';
   process.env.SMILE_API_KEY = 'smile-test-key';
   const ts = '2026-08-29T00:00:00.000Z';
@@ -4729,13 +4614,10 @@ console.log('\n=== WHITE-LABEL CONNECTORS: PAYSTACK + SMILE ID (the chosen rails
     lk.ok === true && lk.resultCode === '1012' && /not found/.test(lk.resultText));
   check('the lookup posts to the documented v2 endpoint with header auth',
     smileSeen.url.endsWith('/v2/id_verification') && smileSeen.headers['smileid-partner-id'] === '002'
-      // the signature must verify against the timestamp header it travels with
       && smileid.computeSignature(smileSeen.headers['smileid-timestamp']) === smileSeen.headers['smileid-request-signature']);
   check('the ID number went to the provider for the check',
     smileSeen.body.id_number === '12345678');
   {
-    // The route stores EXACTLY this shape (routes/verification.js assistRecord)
-    // -- prove it cannot carry the number that was checked.
     const storedAssist = { provider: 'smileid', at: ts, ok: lk.ok, resultCode: lk.resultCode, resultText: lk.resultText };
     check('the stored assist carries provider codes, never the ID number',
       JSON.stringify(storedAssist).includes('12345678') === false);
