@@ -104,6 +104,19 @@ while i < RET:
 SHELL_NAMES = set()
 for name, (s, e, kind, exported, g) in DECLS.items():
     SHELL_NAMES.update(exported)
+# names returned by other hooks are valid shell identifiers too
+he = re.finditer(r"^  const \{([\s\S]*?)\n  \} = use\w+\(\{", joined, re.M)
+for m in he:
+    start_ln = joined[:m.start()].count('\n')
+    # whole-call end: find the closing '  });' line
+    rel = joined[m.end():]
+    close = re.search(r"\n  \}\);", rel)
+    end_ln = start_ln + joined[m.start():m.end()+close.end()].count('\n') + 1
+    for n in m.group(1).split(','):
+        n = n.strip()
+        if n:
+            DECLS[n] = (start_ln, end_ln, 'hookret', [n], None)
+            SHELL_NAMES.add(n)
 
 # ---- resolve requested names ---------------------------------------------------
 plan_names = []   # decl keys

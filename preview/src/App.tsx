@@ -142,6 +142,7 @@ import { MyLayerScreen } from './screens/MyLayerScreen';
 import { NearbyScreen } from './screens/NearbyScreen';
 import { WorkflowsScreen } from './screens/WorkflowsScreen';
 import { OverlaysShell } from './screens/OverlaysShell';
+import { useWatchAndShare } from './shell/hooks/useWatchAndShare';
 import { usePersonalLayer } from './shell/hooks/usePersonalLayer';
 import { useIngestionDesk } from './shell/hooks/useIngestionDesk';
 import { useArenaData } from './shell/hooks/useArenaData';
@@ -854,7 +855,6 @@ export function App() {
 
   const [selectedObjectForDetail, setSelectedObjectForDetailRaw] = useState<BriefObject | null>(null);
   /** The object graph (related content) for the open detail modal. */
-  const [detailGraph, setDetailGraph] = useState<briefApi.GraphEdge[] | null>(null);
   const [selectedTeaSlug, setSelectedTeaSlug] = useState<string | null>(bootRoute.teaSlug);
   const [pendingObjectId, setPendingObjectId] = useState<string | null>(bootRoute.objectId);
   /** The followable entity page (venue/business/publisher/organizer/community). */
@@ -1286,6 +1286,25 @@ export function App() {
     setPersonalPicks,
     showToast,
   });
+  const {
+    detailGraph,
+    handleConfirmObject,
+    handleReportObject,
+    handleShare,
+    handleToggleWatch,
+    objectCheckBusy,
+    reportForObject,
+    setDetailGraph,
+    setObjectCheckBusy,
+    setReportForObject,
+  } = useWatchAndShare({
+    loadObjects,
+    publicOrigin,
+    setRelationships,
+    showToast,
+    watchedIds,
+  });
+
 
 
   // Discovery ranking (destination rework 16). A destination happening today
@@ -1354,116 +1373,14 @@ export function App() {
   // "I was there" (confirm) and "this is wrong" (report) had server routes
   // and no buttons. Both hit the real endpoints; both show the server's own
   // answer or refusal.
-  const [objectCheckBusy, setObjectCheckBusy] = useState<string | null>(null);
-  const [reportForObject, setReportForObject] = useState<string | null>(null);
 
-  const handleConfirmObject = async (object: BriefObject) => {
-    setObjectCheckBusy(object.id);
-    const res = await briefApi.confirmObject(object.id);
-    setObjectCheckBusy(null);
-    if (!res.ok) {
-      showToast(res.error ?? 'Could not record your confirmation.');
-      return;
-    }
-    showToast(`Confirmed — ${res.data.confirmationCount} confirmation${res.data.confirmationCount === 1 ? '' : 's'} on record.`);
-    await loadObjects();
-  };
 
-  const handleReportObject = async (object: BriefObject, reason: string) => {
-    setObjectCheckBusy(object.id);
-    const res = await briefApi.reportObject(object.id, reason);
-    setObjectCheckBusy(null);
-    setReportForObject(null);
-    if (!res.ok) {
-      showToast(res.error ?? 'Could not record your report.');
-      return;
-    }
-    showToast('Reported. A moderator sees it; the record stays up until then.');
-  };
 
-  const handleToggleWatch = (object: BriefObject) => {
-    const isWatching = watchedIds.has(object.id);
-
-    setRelationships((prev) => {
-      if (isWatching) {
-        return prev.filter(
-          (r) => !(r.targetId === object.id && r.verb === 'watched')
-        );
-      }
-      return [
-        ...prev,
-        {
-          id: `rel_watch_${object.id}`,
-          sourceType: 'identity' as ObjectType,
-          sourceId: 'usr_me',
-          verb: 'watched',
-          targetType: object.type,
-          targetId: object.id,
-          state: 'engaged' as FlowState,
-          updatedAt: new Date().toISOString()
-        }
-      ];
-    });
-
-    showToast(
-      isWatching
-        ? `Stopped watching ${object.title}`
-        : `Watching ${object.title} for changes`
-    );
-  };
 
   // Optional personal label on an existing saved edge (prompt 10).
 
   // Share (prompt 11): a plain, honest text payload. Web Share when the
   // browser offers it, clipboard otherwise. No invented links, no marketing.
-  const handleShare = async (object: BriefObject) => {
-    const action = resolveAction(object);
-    const origin = publicOrigin || (typeof window !== 'undefined' ? window.location.origin : null);
-    const shareUrl = objectShareUrl(origin, object.id);
-    // Trust layer: a shared object carries its source, freshness and current
-    // status, so an expired offer is never shared as active and a cancelled
-    // event is never shared as confirmed.
-    const sourceChip = getSourceChip(object);
-    const published = getPublishedLine(object);
-    const life = getLifecycleBadge(object);
-    const statusLine = life
-      ? (life.expired ? `Status: ${life.label}` : `Status: ${life.label}`)
-      : null;
-    const sourceLine = sourceChip
-      ? sourceChip.replace(/^Source · /, 'Source: ').replace(/^Sources · /, 'Sources: ')
-      : null;
-    const lines = [
-      object.title,
-      object.category,
-      object.locationName ? `Location: ${object.locationName}` : null,
-      sourceLine,
-      published ? published : null,
-      statusLine,
-      action.kind !== 'none' ? `Action: ${action.label}` : null,
-      shareUrl ? shareUrl : null,
-      !shareUrl && object.sourceUrl ? `Source: ${object.sourceUrl}` : null
-    ].filter(Boolean) as string[];
-
-    const payload = lines.join('\n');
-    const nav = navigator as Navigator & {
-      share?: (data: { title: string; text: string; url?: string }) => Promise<void>;
-    };
-
-    try {
-      if (typeof nav.share === 'function') {
-        await nav.share({ title: object.title, text: payload, url: shareUrl ?? undefined });
-        return;
-      }
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(payload);
-        showToast(shareUrl ? 'Link copied' : 'Copied to clipboard');
-        return;
-      }
-      showToast('Sharing unavailable on this device');
-    } catch {
-      // A user dismissing the share sheet is not an error worth shouting about.
-    }
-  };
 
   // --- Pursuits --------------------------------------------------------------
   // Standing intents. Matching is recomputed from live objects rather than
