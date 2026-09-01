@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Zap } from 'lucide-react';
 import { StageStepper } from './StageStepper';
 import type { ArenaChallenge, ArenaMatch } from '../App';
+import { soundEngine } from '../utils/SoundEngine';
 
 // ---------------------------------------------------------------------------
 // MATCH QUEUE PANEL — the "High-Frequency Gaming State" package.
@@ -73,7 +74,7 @@ export function MatchQueuePanel({
         {/* Instant Queue Matching badge: real availability state */}
         <button
           type="button"
-          onClick={onToggleAvailability}
+          onClick={() => { soundEngine.play('tap'); onToggleAvailability(); }}
           disabled={busy}
           className="flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-extrabold cursor-pointer disabled:opacity-40 transition-all"
           style={{
@@ -96,7 +97,7 @@ export function MatchQueuePanel({
             <button
               key={m}
               type="button"
-              onClick={() => setMode(m)}
+              onClick={() => { soundEngine.play('tap'); setMode(m); }}
               className="rounded-lg border px-2.5 py-1 text-[10px] font-extrabold cursor-pointer transition-all"
               style={{
                 background: mode === m ? '#251045' : '#FFFFFF',
@@ -114,7 +115,7 @@ export function MatchQueuePanel({
             <button
               key={v}
               type="button"
-              onClick={() => setIface(v)}
+              onClick={() => { soundEngine.play('tap'); setIface(v); }}
               className="rounded-lg border px-2.5 py-1 text-[10px] font-extrabold cursor-pointer transition-all"
               style={{
                 background: iface === v ? '#251045' : '#FFFFFF',
@@ -147,7 +148,10 @@ export function MatchQueuePanel({
             </p>
             <button
               type="button"
-              onClick={() => onEnterQueue({ stake: mode, note: `${iface} interface` })}
+              onClick={() => {
+                soundEngine.play('heavyTap');
+                onEnterQueue({ stake: mode, note: `${iface} interface` });
+              }}
               disabled={busy}
               className="shrink-0 rounded-lg bg-[#5B2EA6] px-3.5 py-2 text-[11px] font-extrabold text-[#FFFFFF] cursor-pointer disabled:opacity-40"
             >

@@ -10,6 +10,9 @@ import { ArenaGameScreen } from '../components/ArenaGameScreen';
 import { MatchQueuePanel } from '../components/MatchQueuePanel';
 import { EplDesk } from '../components/EplDesk';
 import { LobbyBoard } from '../components/LobbyBoard';
+import { soundEngine } from '../utils/SoundEngine';
+import { ArenaSoundToggleIcon } from '../components/arena/GameIcons';
+import '../styles/arenaArcade.css';
 
 // ---------------------------------------------------------------------------
 // ARENA SCREEN — colocated from App.tsx (Phase 1 extraction).
@@ -36,6 +39,7 @@ export function ArenaScreen({
   sessionUser, arenaActivity, matches, setMatches, refreshArenaMatches,
   arenaBusyId, setArenaBusyId, showToast, arenaSection, setArenaSection
 }: ArenaScreenProps) {
+  const [soundMuted, setSoundMuted] = useState<boolean>(() => soundEngine.getMuted());
   const [arenaTestGame, setArenaTestGame] = useState<string>('efootball');
   const [arenaTestMode, setArenaTestMode] = useState<string>('1v1 Match');
   const [arenaTestStake, setArenaTestStake] = useState<ArenaStakeKind>('friendly');
@@ -57,6 +61,13 @@ export function ArenaScreen({
   const [arenaTournaments, setArenaTournaments] = useState<any[]>([]);
   const [arenaLeaderboard, setArenaLeaderboard] = useState<any[]>([]);
   const CURRENT_PLAYER_ID = sessionUser?.id ?? '';
+
+  const toggleSound = () => {
+    const next = soundMuted ? false : true;
+    soundEngine.setMuted(next);
+    setSoundMuted(next);
+    if (!next) soundEngine.play('tap');
+  };
 
   React.useEffect(() => {
     if (!sessionUser) return;
@@ -257,12 +268,24 @@ export function ArenaScreen({
   }, []);
 
   return (
-      <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
-        <div>
-          <h2 className="text-lg font-extrabold text-[#251045]">Arena</h2>
-          <p className="text-[11px] text-[#251045]/60 leading-snug mt-1">
-            Gather with people to play. Not a competition — host challenges and run live match tests.
-          </p>
+    <div className="arena-arcade-theme max-w-3xl mx-auto px-4 py-6 space-y-5">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-extrabold text-[#251045]">Arena</h2>
+            <p className="text-[11px] text-[#251045]/60 leading-snug mt-1">
+              Gather with people to play. Not a competition — host challenges and run live match tests.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={toggleSound}
+            aria-label={soundMuted ? 'Unmute Arena sound effects' : 'Mute Arena sound effects'}
+            title={soundMuted ? 'Turn sound effects on' : 'Turn sound effects off'}
+            className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#D6CFE4] bg-[#FBFAFD] px-2.5 py-2 text-[10px] font-extrabold text-[#251045] transition-colors hover:border-[#6C3EC9] cursor-pointer"
+          >
+            <ArenaSoundToggleIcon isMuted={soundMuted} size={16} color="#251045" />
+            <span className="hidden sm:inline">{soundMuted ? 'Sound off' : 'Sound on'}</span>
+          </button>
         </div>
 
         {sessionUser && (
@@ -362,7 +385,7 @@ export function ArenaScreen({
             </div>
             <button
               type="button"
-              onClick={() => setArenaTestCreatorOpen((v) => !v)}
+              onClick={() => { soundEngine.play('tap'); setArenaTestCreatorOpen((v) => !v); }}
               className="px-3 py-1.5 rounded-xl border border-[#D6CFE4] text-[11px] font-extrabold text-[#251045] hover:border-[#6C3EC9] transition-colors cursor-pointer"
             >
               {arenaTestCreatorOpen ? 'Close' : 'Create Test'}
@@ -382,6 +405,7 @@ export function ArenaScreen({
                       key={g.id}
                       type="button"
                       onClick={() => {
+                        soundEngine.play('tap');
                         setArenaTestGame(g.id);
                         setArenaTestMode(g.modes[0] ?? '1v1 Match');
                       }}
@@ -414,7 +438,7 @@ export function ArenaScreen({
                     <button
                       key={m}
                       type="button"
-                      onClick={() => setArenaTestMode(m)}
+                      onClick={() => { soundEngine.play('tap'); setArenaTestMode(m); }}
                       className={`px-3 py-1.5 rounded-lg text-[11px] font-extrabold border transition-all cursor-pointer ${
                         arenaTestMode === m
                           ? 'bg-[#5B2EA6] text-[#FFFFFF] border-[#6C3EC9]'
@@ -441,7 +465,7 @@ export function ArenaScreen({
                     <button
                       key={s}
                       type="button"
-                      onClick={() => setArenaTestStake(s)}
+                      onClick={() => { soundEngine.play('tap'); setArenaTestStake(s); }}
                       className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
                         arenaTestStake === s
                           ? 'bg-[#5B2EA6] text-[#FFFFFF] border-[#6C3EC9]'
@@ -466,7 +490,7 @@ export function ArenaScreen({
                       <button
                         key={amt}
                         type="button"
-                        onClick={() => setArenaTestFee(amt)}
+                        onClick={() => { soundEngine.play('tap'); setArenaTestFee(amt); }}
                         className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold border cursor-pointer ${
                           arenaTestFee === amt
                             ? 'bg-[#5B2EA6] text-[#FFFFFF] border-[#6C3EC9]'
@@ -516,7 +540,7 @@ export function ArenaScreen({
                     <button
                       key={mins}
                       type="button"
-                      onClick={() => setArenaTestDuration(Number(mins))}
+                      onClick={() => { soundEngine.play('tap'); setArenaTestDuration(Number(mins)); }}
                       className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold border cursor-pointer ${
                         arenaTestDuration === mins
                           ? 'bg-[#5B2EA6] text-[#FFFFFF] border-[#6C3EC9]'
@@ -533,7 +557,7 @@ export function ArenaScreen({
               <button
                 type="button"
                 disabled={arenaBusyId === 'create'}
-                onClick={() => void handleLaunchArenaTest()}
+                onClick={() => { soundEngine.play('heavyTap'); void handleLaunchArenaTest(); }}
                 className="w-full py-3 rounded-xl bg-[#5B2EA6] hover:bg-[#000000] text-[#FFFFFF] text-xs font-black cursor-pointer disabled:opacity-50 transition-all flex items-center justify-center gap-2"
               >
                 {arenaBusyId === 'create' ? 'Launching…' : '🚀 Launch Arena Test Match'}
@@ -552,7 +576,7 @@ export function ArenaScreen({
           ] as [typeof arenaSection, string][]).map(([key, label]) => (
             <button
               key={key}
-              onClick={() => setArenaSection(key)}
+              onClick={() => { soundEngine.play('tap'); setArenaSection(key); }}
               className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer border ${
                 arenaSection === key
                   ? 'bg-[#FBFAFD] text-[#251045] border-[#6C3EC9]'
@@ -577,7 +601,7 @@ export function ArenaScreen({
             <button
               type="button"
               disabled={arenaBusyId === 'create'}
-              onClick={() => void handleCreateChallenge()}
+              onClick={() => { soundEngine.play('heavyTap'); void handleCreateChallenge(); }}
               className="w-full h-10 rounded-xl bg-[#5B2EA6] text-[#FFFFFF] text-[12px] font-extrabold cursor-pointer disabled:opacity-40"
             >
               {arenaBusyId === 'create' ? 'Opening…' : `Open a ${arenaGame.modes[0] ?? '1v1'} challenge`}
@@ -604,7 +628,7 @@ export function ArenaScreen({
                     <button
                       type="button"
                       disabled={arenaBusyId === c.id || taken || c.status === 'cancelled'}
-                      onClick={() => void handleCancelChallenge(c)}
+                      onClick={() => { soundEngine.play('tap'); void handleCancelChallenge(c); }}
                       className="shrink-0 px-3 py-1.5 rounded-xl border border-[#D6CFE4] text-[#251045] text-[11px] font-extrabold cursor-pointer disabled:opacity-40"
                     >
                       Cancel
@@ -613,7 +637,7 @@ export function ArenaScreen({
                     <button
                       type="button"
                       disabled={arenaBusyId === c.id || expired || taken}
-                      onClick={() => void handleAcceptChallenge(c)}
+                      onClick={() => { soundEngine.play('heavyTap'); void handleAcceptChallenge(c); }}
                       className="shrink-0 px-3 py-1.5 rounded-xl bg-[#5B2EA6] text-[#FFFFFF] text-[11px] font-extrabold cursor-pointer disabled:opacity-40"
                       title={expired ? 'This challenge has expired' : taken ? 'Already accepted' : undefined}
                     >
@@ -635,7 +659,7 @@ export function ArenaScreen({
               <button
                 key={t.id}
                 type="button"
-                onClick={() => setOpenedTournament(t)}
+                onClick={() => { soundEngine.play('tap'); setOpenedTournament(t); }}
                 className="w-full text-left bg-[#FBFAFD] border border-[#D6CFE4] rounded-2xl p-3 cursor-pointer"
               >
                 <p className="text-xs font-extrabold text-[#251045]">{t.title}</p>
@@ -655,7 +679,7 @@ export function ArenaScreen({
                   </div>
                   <button
                     type="button"
-                    onClick={() => setOpenedTournament(null)}
+                    onClick={() => { soundEngine.play('tap'); setOpenedTournament(null); }}
                     className="text-[10px] font-extrabold text-[#251045]/60 cursor-pointer"
                   >
                     Close
@@ -682,7 +706,7 @@ export function ArenaScreen({
               <button
                 key={row.playerId}
                 type="button"
-                onClick={() => setOpenedStanding(row)}
+                onClick={() => { soundEngine.play('tap'); setOpenedStanding(row); }}
                 className="w-full bg-[#FBFAFD] border border-[#D6CFE4] rounded-2xl p-3 flex items-center justify-between gap-2 text-left cursor-pointer"
               >
                 <div className="flex items-center gap-3">
@@ -698,7 +722,7 @@ export function ArenaScreen({
                   <p className="text-xs font-extrabold text-[#251045]">{openedStanding.player}</p>
                   <button
                     type="button"
-                    onClick={() => setOpenedStanding(null)}
+                    onClick={() => { soundEngine.play('tap'); setOpenedStanding(null); }}
                     className="text-[10px] font-extrabold text-[#251045]/60 cursor-pointer"
                   >
                     Close

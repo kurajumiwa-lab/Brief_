@@ -13,7 +13,7 @@ for dest in preview/src tc/src; do
   # Mirror the whole tree rather than named files: a new subdirectory
   # (src/components/circle/) was silently missed by the old per-glob copy,
   # which is exactly how the stale-copy trap reappears.
-  rm -rf "$dest/api" "$dest/shell" "$dest/model" "$dest/screens" "$dest/components" "$dest/nav" "$dest/ui" "$dest/assets" "$dest/engine"
+  rm -rf "$dest/api" "$dest/shell" "$dest/model" "$dest/screens" "$dest/components" "$dest/nav" "$dest/ui" "$dest/assets" "$dest/engine" "$dest/utils" "$dest/styles"
   mkdir -p "$dest"
   cp App.tsx "$dest/App.tsx"
   cp -R src/api "$dest/api"
@@ -28,6 +28,10 @@ for dest in preview/src tc/src; do
   cp -R src/engine "$dest/engine"
   cp -R src/model "$dest/model"
   cp -R src/screens "$dest/screens"
+  # Utility/service modules (e.g. SoundEngine) and scoped stylesheets (e.g.
+  # arenaArcade.css) are imported by screens/components, so mirror them too.
+  cp -R src/utils "$dest/utils"
+  cp -R src/styles "$dest/styles"
 done
 
-echo "synced App.tsx + src/model + src/api + src/components + src/nav + src/ui + src/assets + src/engine -> preview/src, tc/src"
+echo "synced App.tsx + src/model + src/api + src/components + src/nav + src/ui + src/assets + src/engine + src/utils + src/styles -> preview/src, tc/src"
