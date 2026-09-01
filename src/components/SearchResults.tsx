@@ -1,7 +1,8 @@
 import React from 'react';
-import { SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal, MapPin, CalendarDays, Megaphone, Tag, Newspaper, Store, Briefcase, Package, BookOpen, Sparkles } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
 import type { SearchFilters } from '../api/briefApi';
+import { objectFromServer, getObjectTypeMeta, getDistanceLabel } from '../model/core';
 
 // ---------------------------------------------------------------------------
 // SEARCH RESULTS — title-first results for the home surface, with filters
@@ -51,27 +52,6 @@ const ENTITY_KIND_LABEL: Record<string, string> = {
   community: 'Community'
 };
 
-function metaLine(object: any): string | null {
-  const bits: string[] = [];
-  if (object?.type) bits.push(String(object.type));
-  const t = object?.temporal;
-  if (t?.status === 'upcoming' && typeof t.startsAt === 'string') {
-    const d = new Date(t.startsAt);
-    if (Number.isFinite(d.getTime())) bits.push(`On ${d.toLocaleDateString('en-KE', { day: 'numeric', month: 'short' })}`);
-  } else if (t?.status === 'active' && typeof t.deadlineAt === 'string') {
-    const d = new Date(t.deadlineAt);
-    if (Number.isFinite(d.getTime())) bits.push(`Closes ${d.toLocaleDateString('en-KE', { day: 'numeric', month: 'short' })}`);
-  } else if (t?.status === 'happening') {
-    bits.push('Happening now');
-  }
-  if (object?.locationName) bits.push(String(object.locationName));
-  else if (object?.area) bits.push(String(object.area));
-  else if (object?.county) bits.push(String(object.county));
-  else if (object?.metadata?.area) bits.push(String(object.metadata.area));
-  else if (object?.metadata?.county) bits.push(String(object.metadata.county));
-  return bits.length ? bits.join(' · ') : null;
-}
-
 function sourceLine(object: any): string | null {
   const names = Array.isArray(object?.sourceNames) ? object.sourceNames.filter((s: unknown) => typeof s === 'string') : [];
   if (names.length) {
@@ -115,6 +95,73 @@ function ResultRow({ title, image, meta, source, onClick }: {
     <div className={cls} style={style}>
       {content}
     </div>
+  );
+}
+
+// §14 — object results use the SAME visual language as Home: image-first,
+// with the type badge, verification state, and distance. The object is mapped
+// through objectFromServer (same as the feed) so isVerified and distance are
+// computed identically. Nothing here is invented — every chip is a real field.
+function ObjectResultCard({ object, onClick }: { object: any; onClick: () => void }) {
+  const mapped = objectFromServer(object);
+  const image = mapped.imageUrl ?? mapped.gallery?.[0]?.url ?? null;
+  const typeLabel = getObjectTypeMeta(mapped.type).label;
+  const dist = getDistanceLabel(mapped);
+  const place = mapped.locationName ?? mapped.metadata?.area ?? mapped.metadata?.county ?? null;
+  const metaBits = [dist, place].filter(Boolean);
+
+  const TypeGlyph = mapped.type === 'alert' ? Megaphone
+    : mapped.type === 'experience' || mapped.type === 'event' ? CalendarDays
+      : mapped.type === 'offer' ? Tag
+        : mapped.type === 'place' ? MapPin
+          : mapped.type === 'news' ? Newspaper
+            : mapped.type === 'business' || mapped.type === 'service' ? Store
+              : mapped.type === 'opportunity' ? Briefcase
+                : mapped.type === 'product' ? Package
+                  : mapped.type === 'knowledge' ? BookOpen
+                    : Sparkles;
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={mapped.title}
+      className="group flex w-full items-center gap-3 rounded-2xl border border-[#222630] bg-[#12151A] p-2 text-left transition-colors hover:border-[#22E6E0] cursor-pointer"
+    >
+      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl">
+        {image ? (
+          <img src={image} alt="" aria-hidden="true" loading="lazy" className="h-full w-full object-cover" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#1D2027] to-[#0D0F12]">
+            <TypeGlyph className="h-6 w-6 text-[#22E6E0]" aria-hidden="true" strokeWidth={1.6} />
+          </div>
+        )}
+        {mapped.isVerified && (
+          <span className="absolute bottom-1 left-1 rounded-full bg-[#FF5A1F] px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-wide text-[#0D0F12]">
+            ✓
+          </span>
+        )}
+      </div>
+
+      <span className="min-w-0 flex-1">
+        <span className="flex flex-wrap items-center gap-1.5">
+          <span className="rounded-full bg-[#171A20] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-[#F7F7F8]/70">
+            {typeLabel}
+          </span>
+          {metaBits.length > 0 && (
+            <span className="truncate text-[10px] font-semibold text-[#F7F7F8]/60">
+              {metaBits.join(' · ')}
+            </span>
+          )}
+        </span>
+        <span className="mt-1 block truncate text-[14px] font-semibold text-[#F7F7F8] leading-tight">{mapped.title}</span>
+        {sourceLine(object) && (
+          <span className="mt-0.5 block truncate text-[9px] font-semibold uppercase tracking-[0.1em] text-[#F7F7F8]/60">
+            {sourceLine(object)}
+          </span>
+        )}
+      </span>
+    </button>
   );
 }
 
@@ -361,12 +408,9 @@ export function SearchResults({ query, onOpenObject, onOpenEntity }: {
       )}
 
       {results.objects.slice(0, 8).map((object) => (
-        <ResultRow
+        <ObjectResultCard
           key={object.id}
-          title={object.title}
-          image={object.imageUrl ?? object.media?.url}
-          meta={metaLine(object)}
-          source={sourceLine(object)}
+          object={object}
           onClick={() => onOpenObject(object)}
         />
       ))}
