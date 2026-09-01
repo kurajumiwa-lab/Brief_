@@ -1,4 +1,5 @@
 import React from 'react';
+import { SlidersHorizontal } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
 import type { SearchFilters } from '../api/briefApi';
 
@@ -127,6 +128,9 @@ export function SearchResults({ query, onOpenObject, onOpenEntity }: {
   const [loading, setLoading] = React.useState(false);
   const [filters, setFilters] = React.useState<SearchFilters>({});
   const [jumpedEntity, setJumpedEntity] = React.useState<string | null>(null);
+  // §15 — filters open as a mobile bottom sheet with a draft + Apply.
+  const [sheetOpen, setSheetOpen] = React.useState(false);
+  const [draft, setDraft] = React.useState<SearchFilters>({});
 
   React.useEffect(() => {
     if (!query.trim() && !filters.type && !filters.location && !filters.date && !filters.source) {
@@ -161,6 +165,22 @@ export function SearchResults({ query, onOpenObject, onOpenEntity }: {
     });
   };
 
+  const activeFilterCount = ['type', 'location', 'date', 'source'].filter((k) => filters[k as keyof SearchFilters]).length;
+
+  const openSheet = () => {
+    setDraft(filters);
+    setSheetOpen(true);
+  };
+  const applySheet = () => {
+    setFilters(draft);
+    setSheetOpen(false);
+  };
+  const resetSheet = () => {
+    setDraft({});
+    setFilters({});
+    setSheetOpen(false);
+  };
+
   // Single-hit jump: when the query names EXACTLY one entity and the query is
   // the entity's full name, open its page directly. Partial queries never
   // jump — typing must not trap the searcher. Runs once per entity id.
@@ -181,46 +201,130 @@ export function SearchResults({ query, onOpenObject, onOpenEntity }: {
   return (
     <section className="mx-auto mb-6 max-w-5xl space-y-2">
       <h2 className="px-1 text-[11px] font-bold uppercase tracking-[0.22em]" style={{ color: T.muted }}>Results</h2>
-      {/* Filters: existing fields only — type, location, date, source. */}
-      <div className="flex flex-wrap items-center gap-2 px-1">
-        <select
-          aria-label="Filter by type"
-          value={filters.type ?? ''}
-          onChange={(e) => setFilter('type', e.target.value)}
-          className="rounded-full border px-3 py-1.5 text-[12px] font-semibold"
-          style={{ borderColor: T.line, background: T.surface, color: T.ink }}
+      {/* §15 — filters live behind a pill that opens a bottom sheet. The four
+          dimensions are the ones the server actually filters on (type,
+          location, date, source) — nothing here is decorative. */}
+      <div className="flex items-center gap-2 px-1">
+        <button
+          type="button"
+          onClick={openSheet}
+          aria-label="Filter results"
+          aria-expanded={sheetOpen}
+          className="flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-colors hover:border-[#22E6E0] cursor-pointer"
+          style={{ borderColor: activeFilterCount > 0 ? '#FF5A1F' : T.line, background: T.surface, color: T.ink }}
         >
-          {TYPE_OPTIONS.map(([value, label]) => (
-            <option key={value || 'all'} value={value}>{label}</option>
-          ))}
-        </select>
-        <input
-          aria-label="Filter by location"
-          placeholder="Location (e.g. Kisumu)"
-          value={filters.location ?? ''}
-          onChange={(e) => setFilter('location', e.target.value)}
-          className="w-40 rounded-full border px-3 py-1.5 text-[12px] font-semibold outline-none focus:border-[#22E6E0]"
-          style={{ borderColor: T.line, background: T.surface, color: T.ink }}
-        />
-        <input
-          aria-label="Filter by date"
-          type="date"
-          value={filters.date ?? ''}
-          onChange={(e) => setFilter('date', e.target.value)}
-          className="rounded-full border px-3 py-1.5 text-[12px] font-semibold"
-          style={{ borderColor: T.line, background: T.surface, color: T.ink }}
-        />
-        {(filters.type || filters.location || filters.date || filters.source) && (
+          <SlidersHorizontal className="h-3.5 w-3.5" style={{ color: activeFilterCount > 0 ? '#FF5A1F' : T.muted }} />
+          Filters
+          {activeFilterCount > 0 && (
+            <span className="rounded-full bg-[#FF5A1F] px-1.5 py-0.5 text-[9px] font-extrabold text-[#0D0F12]">{activeFilterCount}</span>
+          )}
+        </button>
+        {activeFilterCount > 0 && (
           <button
             type="button"
             onClick={() => setFilters({})}
-            className="rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-colors hover:border-[#22E6E0]"
-            style={{ borderColor: T.line, background: T.surface, color: T.ink }}
+            className="rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-colors hover:border-[#22E6E0] cursor-pointer"
+            style={{ borderColor: T.line, background: T.surface, color: T.muted }}
           >
-            Clear filters
+            Clear
           </button>
         )}
       </div>
+
+      {/* The filter sheet — §15: a mobile bottom sheet with pill/segmented
+          controls and Reset/Apply. */}
+      {sheetOpen && (
+        <div role="dialog" aria-label="Filter results" className="fixed inset-0 z-[70] flex flex-col justify-end">
+          <button
+            type="button"
+            onClick={() => setSheetOpen(false)}
+            aria-label="Dismiss filters"
+            className="flex-1 min-h-0 bg-[#0D0F12]/25 backdrop-blur-[2px] cursor-pointer"
+          />
+          <div className="brief-sheet-up max-h-[78vh] overflow-y-auto bg-[#1D2027] border-t border-[#222630] rounded-t-[28px] shadow-2xl px-4 pb-6 pt-5" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}>
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-[16px] font-black tracking-tight text-[#F7F7F8]">Filter results</h3>
+              <button type="button" onClick={() => setSheetOpen(false)} aria-label="Close filters" className="h-9 w-9 flex items-center justify-center rounded-full bg-[#12151A] border border-[#222630] text-[#F7F7F8] text-[18px] font-light hover:border-[#FF5A1F] cursor-pointer">×</button>
+            </div>
+
+            <div className="space-y-5">
+              {/* TYPE — pills (segmented, single choice). */}
+              <fieldset>
+                <legend className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/60">Type</legend>
+                <div className="flex flex-wrap gap-1.5">
+                  {TYPE_OPTIONS.map(([value, label]) => {
+                    const selected = (draft.type ?? '') === value;
+                    return (
+                      <button
+                        key={value || 'all'}
+                        type="button"
+                        onClick={() => setDraft((d) => ({ ...d, type: value || undefined }))}
+                        aria-pressed={selected}
+                        className={`rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-colors cursor-pointer ${selected ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]' : 'bg-[#12151A] text-[#F7F7F8]/70 border-[#222630] hover:border-[#22E6E0]'}`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </fieldset>
+
+              {/* LOCATION */}
+              <label className="block">
+                <span className="mb-2 block text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/60">Location</span>
+                <input
+                  aria-label="Filter by location"
+                  placeholder="Anywhere (e.g. Kisumu)"
+                  value={draft.location ?? ''}
+                  onChange={(e) => setDraft((d) => ({ ...d, location: e.target.value || undefined }))}
+                  className="w-full rounded-xl border border-[#222630] bg-[#12151A] px-3 py-2.5 text-[13px] font-semibold text-[#F7F7F8] outline-none focus:border-[#22E6E0] placeholder:text-[#F7F7F8]/60"
+                />
+              </label>
+
+              {/* DATE */}
+              <label className="block">
+                <span className="mb-2 block text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/60">Date</span>
+                <input
+                  aria-label="Filter by date"
+                  type="date"
+                  value={draft.date ?? ''}
+                  onChange={(e) => setDraft((d) => ({ ...d, date: e.target.value || undefined }))}
+                  className="w-full rounded-xl border border-[#222630] bg-[#12151A] px-3 py-2.5 text-[13px] font-semibold text-[#F7F7F8] outline-none focus:border-[#22E6E0]"
+                />
+              </label>
+
+              {/* SOURCE */}
+              <label className="block">
+                <span className="mb-2 block text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/60">Source</span>
+                <input
+                  aria-label="Filter by source"
+                  placeholder="Any source (e.g. City Wire)"
+                  value={draft.source ?? ''}
+                  onChange={(e) => setDraft((d) => ({ ...d, source: e.target.value || undefined }))}
+                  className="w-full rounded-xl border border-[#222630] bg-[#12151A] px-3 py-2.5 text-[13px] font-semibold text-[#F7F7F8] outline-none focus:border-[#22E6E0] placeholder:text-[#F7F7F8]/60"
+                />
+              </label>
+            </div>
+
+            <div className="mt-6 flex gap-2">
+              <button
+                type="button"
+                onClick={resetSheet}
+                className="h-11 flex-1 rounded-xl border border-[#222630] bg-transparent text-[13px] font-extrabold text-[#F7F7F8]/70 cursor-pointer hover:text-[#F7F7F8]"
+              >
+                Reset
+              </button>
+              <button
+                type="button"
+                onClick={applySheet}
+                className="h-11 flex-1 rounded-xl bg-[#FF5A1F] text-[13px] font-extrabold text-[#0D0F12] cursor-pointer"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ENTITY SECTION — the graph's followable layer. A venue/business/
           publisher/organizer/community whose name matches appears here,

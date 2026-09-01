@@ -211,6 +211,39 @@ export function NearbyScreen(props: NearbyScreenProps) {
 
   // -- colocated from App (ownership pass) -----------------
 
+  // §14 — recent searches: real, user's own queries, persisted locally. Never
+  // seeded with fake "popular" terms.
+  const RECENT_KEY = 'brief.recentSearches.v1';
+  const [recentSearches, setRecentSearches] = React.useState<string[]>(() => {
+    try {
+      const raw = window.localStorage.getItem(RECENT_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed.filter((s) => typeof s === 'string').slice(0, 6) : [];
+    } catch { return []; }
+  });
+  const [searchFocused, setSearchFocused] = React.useState(false);
+
+  const commitRecentSearch = React.useCallback((term: string) => {
+    const t = term.trim();
+    if (!t) return;
+    setRecentSearches((prev) => {
+      const next = [t, ...prev.filter((p) => p.toLowerCase() !== t.toLowerCase())].slice(0, 6);
+      try { window.localStorage.setItem(RECENT_KEY, JSON.stringify(next)); } catch { /* private mode */ }
+      return next;
+    });
+  }, []);
+
+  // Nearby categories — derived from the REAL objects in the current feed,
+  // most frequent first. Nothing invented; the chips only appear when data
+  // actually has categories.
+  const nearbyCategories = React.useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const o of objects) {
+      const c = (o as any).category;
+      if (typeof c === 'string' && c.trim()) counts.set(c.trim(), (counts.get(c.trim()) ?? 0) + 1);
+    }
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([c]) => c).slice(0, 8);
+  }, [objects]);
 
   const clearLocation = React.useCallback(() => {
     setLocError(null);
@@ -969,7 +1002,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                       className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border transition ${
                         nearbySection === 'stream' && discoveryTab === tab.id
                           ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]'
-                          : 'bg-[#12151A] text-[#0D0F12] border-[#222630] hover:border-[#22E6E0]'
+                          : 'bg-[#12151A] text-[#F7F7F8]/70 border-[#222630] hover:border-[#22E6E0]'
                       }`}
                     >
                       {tab.label}
@@ -1006,7 +1039,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                     className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
                       nearbySection === id
                         ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]'
-                        : 'bg-[#12151A] text-[#0D0F12] border-[#222630]'
+                        : 'bg-[#12151A] text-[#F7F7F8]/70 border-[#222630]'
                     }`}
                   >
                     {label}
@@ -1022,7 +1055,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                     className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
                       nearbySection === 'stream' && selectedObjectType === filter.id
                         ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]'
-                        : 'bg-[#12151A] text-[#0D0F12] border-[#222630]'
+                        : 'bg-[#12151A] text-[#F7F7F8]/70 border-[#222630]'
                     }`}
                   >
                     {filter.label}
@@ -1127,6 +1160,9 @@ export function NearbyScreen(props: NearbyScreenProps) {
                     type="search"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => setSearchFocused(true)}
+                    onBlur={() => setSearchFocused(false)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') commitRecentSearch(searchQuery); }}
                     placeholder="Search venues, businesses, organizers, areas…"
                     aria-label="Search Brief"
                     className="w-full rounded-full border border-[#222630] bg-[#12151A] py-2.5 pl-10 pr-10 text-[13px] font-semibold text-[#F7F7F8] outline-none transition-colors placeholder:text-[#F7F7F8]/60 focus:border-[#22E6E0]"
@@ -1142,6 +1178,49 @@ export function NearbyScreen(props: NearbyScreenProps) {
                     </button>
                   )}
                 </label>
+                {/* §14 — the search surface: recent searches (real, yours) and
+                    nearby categories (derived from the live feed), shown only
+                    while the field is empty and focused. */}
+                {searchQuery === '' && searchFocused && (recentSearches.length > 0 || nearbyCategories.length > 0) && (
+                  <div className="mt-3 space-y-3">
+                    {recentSearches.length > 0 && (
+                      <div>
+                        <p className="mb-1.5 px-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/60">Recent</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {recentSearches.map((term) => (
+                            <button
+                              key={term}
+                              type="button"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => setSearchQuery(term)}
+                              className="rounded-full border border-[#222630] bg-[#12151A] px-3 py-1.5 text-[12px] font-semibold text-[#F7F7F8]/70 transition-colors hover:border-[#22E6E0] cursor-pointer"
+                            >
+                              {term}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {nearbyCategories.length > 0 && (
+                      <div>
+                        <p className="mb-1.5 px-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/60">Nearby categories</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {nearbyCategories.map((cat) => (
+                            <button
+                              key={cat}
+                              type="button"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => setSearchQuery(cat)}
+                              className="rounded-full border border-[#222630] bg-[#171A20] px-3 py-1.5 text-[12px] font-semibold text-[#F7F7F8]/70 transition-colors hover:border-[#FF5A1F] cursor-pointer"
+                            >
+                              {cat}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
@@ -1274,7 +1353,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                                       handlePrimaryAction(obj);
                                     }
                                   }}
-                                  className="rounded-full border border-[#22E6E0]/70 bg-[#171A20]/60 px-2.5 py-1 text-[10px] font-bold text-[#0D0F12] transition-colors hover:bg-[#FF5A1F] hover:text-[#F7F7F8]"
+                                  className="rounded-full border border-[#22E6E0]/70 bg-[#171A20]/60 px-2.5 py-1 text-[10px] font-bold text-[#F7F7F8]/80 transition-colors hover:bg-[#FF5A1F] hover:text-[#0D0F12]"
                                 >
                                   {level === 3 && destVendors.length > 0 ? "See what's here" : resolveAction(obj).label}
                                 </button>
@@ -1375,7 +1454,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                     className={`shrink-0 flex items-center gap-1.5 rounded-full px-3 py-1.5 border transition cursor-pointer ${
                       isActive
                         ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]'
-                        : 'bg-[#12151A] text-[#0D0F12] border-[#222630] hover:border-[#22E6E0]'
+                        : 'bg-[#12151A] text-[#F7F7F8]/70 border-[#222630] hover:border-[#22E6E0]'
                     }`}
                   >
                     <Icon className="w-3.5 h-3.5 shrink-0" />

@@ -301,7 +301,7 @@ export function EplDesk({ meId, onToast }: { meId: string | null; onToast: (msg:
                             key={p.id}
                             type="button"
                             onClick={() => togglePick(p.id)}
-                            className={`text-left rounded-lg border px-2 py-1.5 cursor-pointer ${picked ? 'border-[#22E6E0] bg-[#FF5A1F] text-[#0D0F12]' : 'border-[#222630] bg-[#171A20] text-[#0D0F12]'}`}
+                            className={`text-left rounded-lg border px-2 py-1.5 cursor-pointer ${picked ? 'border-[#22E6E0] bg-[#FF5A1F] text-[#0D0F12]' : 'border-[#222630] bg-[#171A20] text-[#F7F7F8]/70'}`}
                           >
                             <p className="text-[10px] font-extrabold truncate">{p.name}</p>
                             <p className={`text-[9px] ${picked ? 'text-[#F7F7F8]/70' : 'text-[#F7F7F8]/60'}`}>

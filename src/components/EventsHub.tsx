@@ -84,7 +84,7 @@ export function EventsHub() {
         <button
           onClick={() => setCategory(null)}
           className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer border ${
-            category === null ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]' : 'bg-[#12151A] text-[#0D0F12] border-[#222630]'
+            category === null ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]' : 'bg-[#12151A] text-[#F7F7F8]/70 border-[#222630]'
           }`}
         >
           Everything
@@ -94,7 +94,7 @@ export function EventsHub() {
             key={c}
             onClick={() => setCategory(category === c ? null : c)}
             className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer border ${
-              category === c ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]' : 'bg-[#12151A] text-[#0D0F12] border-[#222630]'
+              category === c ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]' : 'bg-[#12151A] text-[#F7F7F8]/70 border-[#222630]'
             }`}
           >
             {labels[c] ?? c}
@@ -131,7 +131,7 @@ export function EventsHub() {
           <button
             onClick={() => setFeaturedOnly((v) => !v)}
             className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer border ${
-              featuredOnly ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]' : 'bg-[#12151A] text-[#0D0F12] border-[#222630]'
+              featuredOnly ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]' : 'bg-[#12151A] text-[#F7F7F8]/70 border-[#222630]'
             }`}
           >
             ★ Featured only

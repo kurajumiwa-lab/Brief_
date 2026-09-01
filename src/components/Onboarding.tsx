@@ -428,7 +428,7 @@ export function Onboarding({
                   className={`rounded-full border px-3 py-1.5 text-[11px] font-extrabold transition cursor-pointer ${
                     placeLabel === city.label
                       ? 'border-[#22E6E0] bg-[#FF5A1F] text-[#0D0F12]'
-                      : 'border-[#222630] text-[#0D0F12] hover:border-[#22E6E0]'
+                      : 'border-[#222630] text-[#F7F7F8]/70 hover:border-[#22E6E0]'
                   }`}
                 >
                   {city.label}

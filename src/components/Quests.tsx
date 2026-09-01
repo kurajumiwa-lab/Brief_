@@ -228,7 +228,7 @@ export function Quests({
             className={`px-3 py-1.5 rounded-xl text-[10px] font-extrabold cursor-pointer border ${
               boardMode === 'contributors'
                 ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]'
-                : 'bg-[#12151A] text-[#0D0F12] border-[#222630]'
+                : 'bg-[#12151A] text-[#F7F7F8]/70 border-[#222630]'
             }`}
           >
             Top Contributors
@@ -238,7 +238,7 @@ export function Quests({
             className={`px-3 py-1.5 rounded-xl text-[10px] font-extrabold cursor-pointer border ${
               boardMode === 'earners'
                 ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]'
-                : 'bg-[#12151A] text-[#0D0F12] border-[#222630]'
+                : 'bg-[#12151A] text-[#F7F7F8]/70 border-[#222630]'
             }`}
           >
             Top Earners

@@ -121,14 +121,14 @@ export function FollowingSurface({ authed, onClose, onOpenObject, onOpenEntity, 
             <button
               type="button"
               onClick={() => setTab('following')}
-              className={`rounded-full px-3 py-1 text-[11px] font-bold transition-colors ${tab === 'following' ? 'bg-[#FF5A1F] text-[#0D0F12]' : 'text-[#0D0F12] hover:bg-[#171A20]'}`}
+              className={`rounded-full px-3 py-1 text-[11px] font-bold transition-colors ${tab === 'following' ? 'bg-[#FF5A1F] text-[#0D0F12]' : 'text-[#F7F7F8]/70 hover:bg-[#171A20]'}`}
             >
               Following
             </button>
             <button
               type="button"
               onClick={() => setTab('manage')}
-              className={`rounded-full px-3 py-1 text-[11px] font-bold transition-colors ${tab === 'manage' ? 'bg-[#FF5A1F] text-[#0D0F12]' : 'text-[#0D0F12] hover:bg-[#171A20]'}`}
+              className={`rounded-full px-3 py-1 text-[11px] font-bold transition-colors ${tab === 'manage' ? 'bg-[#FF5A1F] text-[#0D0F12]' : 'text-[#F7F7F8]/70 hover:bg-[#171A20]'}`}
             >
               Manage{follows && follows.total > 0 ? ` (${follows.total})` : ''}
             </button>

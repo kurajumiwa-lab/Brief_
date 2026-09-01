@@ -272,7 +272,7 @@ export function Marketplace({ currentUserId = 'usr_me' }: MarketplaceProps = {})
           className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
             section === s.id
               ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]'
-              : 'bg-[#12151A] text-[#0D0F12] border-[#222630]'
+              : 'bg-[#12151A] text-[#F7F7F8]/70 border-[#222630]'
           }`}
         >
           {s.label}

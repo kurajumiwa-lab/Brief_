@@ -412,7 +412,7 @@ export function ArenaScreen({
                       className={`px-3 py-2 rounded-xl text-left border transition-all cursor-pointer ${
                         arenaTestGame === g.id
                           ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0] shadow-xs'
-                          : 'bg-[#171A20] text-[#0D0F12] border-[#222630] hover:border-[#22E6E0]/40'
+                          : 'bg-[#171A20] text-[#F7F7F8]/70 border-[#222630] hover:border-[#22E6E0]/40'
                       }`}
                     >
                       <p className="text-[11px] font-black truncate">{g.name}</p>
@@ -442,7 +442,7 @@ export function ArenaScreen({
                       className={`px-3 py-1.5 rounded-lg text-[11px] font-extrabold border transition-all cursor-pointer ${
                         arenaTestMode === m
                           ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]'
-                          : 'bg-[#12151A] text-[#0D0F12] border-[#222630] hover:border-[#22E6E0]/40'
+                          : 'bg-[#12151A] text-[#F7F7F8]/70 border-[#222630] hover:border-[#22E6E0]/40'
                       }`}
                     >
                       {m}
@@ -469,7 +469,7 @@ export function ArenaScreen({
                       className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
                         arenaTestStake === s
                           ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]'
-                          : 'bg-[#12151A] text-[#0D0F12] border-[#222630] hover:border-[#22E6E0]/40'
+                          : 'bg-[#12151A] text-[#F7F7F8]/70 border-[#222630] hover:border-[#22E6E0]/40'
                       }`}
                     >
                       <p className="text-[11px] font-black">{label}</p>
@@ -494,7 +494,7 @@ export function ArenaScreen({
                         className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold border cursor-pointer ${
                           arenaTestFee === amt
                             ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]'
-                            : 'bg-[#171A20] text-[#0D0F12] border-[#222630]'
+                            : 'bg-[#171A20] text-[#F7F7F8]/70 border-[#222630]'
                         }`}
                       >
                         KES {amt}
@@ -544,7 +544,7 @@ export function ArenaScreen({
                       className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold border cursor-pointer ${
                         arenaTestDuration === mins
                           ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]'
-                          : 'bg-[#171A20] text-[#0D0F12] border-[#222630]'
+                          : 'bg-[#171A20] text-[#F7F7F8]/70 border-[#222630]'
                       }`}
                     >
                       {lbl}
