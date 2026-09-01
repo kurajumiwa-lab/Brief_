@@ -1589,6 +1589,7 @@ export function App() {
             openGroupId={openGroupId}
             quests={quests}
             sessionUser={sessionUser}
+            selectedLocation={selectedLocation}
             setGroups={setGroups}
             setPersonalState={setPersonalState}
             setRelationships={setRelationships}

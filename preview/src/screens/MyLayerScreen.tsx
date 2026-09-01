@@ -34,6 +34,7 @@ export interface MyLayerScreenProps {
   openGroupId: string | null;
   quests: Quest[];
   sessionUser: briefApi.AuthedUser | null;
+  selectedLocation: string;
   setGroups: React.Dispatch<React.SetStateAction<ConnectedSource[]>>;
   setPersonalState: React.Dispatch<React.SetStateAction<briefApi.PersonalState | null>>;
   setRelationships: React.Dispatch<React.SetStateAction<ObjectRelationship[]>>;
@@ -153,6 +154,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
     openGroupId,
     quests,
     sessionUser,
+    selectedLocation,
     setGroups,
     setPersonalState,
     setRelationships,
@@ -296,11 +298,53 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
     <>
 { (
           <div className="max-w-3xl mx-auto px-4 pt-3 pb-1">
+            {/* §12 — immersive profile header. Every field is real: the monogram
+                comes from the display name, the counts are the actual saved
+                objects / groups / matches already held in this screen. Nothing
+                here is decorative or invented. */}
+            {sessionUser && (
+              <section aria-label="Your profile" className="mb-3 overflow-hidden rounded-2xl border border-[#222630] bg-[#12151A]">
+                <div className="relative h-16 bg-gradient-to-r from-[#FF5A1F] via-[#FF5A1F]/70 to-[#22E6E0]/50" aria-hidden="true" />
+                <div className="px-4 pb-3.5 -mt-6">
+                  <div className="flex items-end gap-3">
+                    <div className="h-14 w-14 shrink-0 rounded-2xl border-2 border-[#12151A] bg-gradient-to-br from-[#FF5A1F] to-[#22E6E0] flex items-center justify-center text-[20px] font-black text-[#0D0F12] shadow-lg" aria-hidden="true">
+                      {(sessionUser.displayName || sessionUser.handle || '?').charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1 pb-0.5">
+                      <h1 className="truncate text-[17px] font-extrabold tracking-tight text-[#F7F7F8] leading-tight">
+                        {sessionUser.displayName || sessionUser.handle || 'You'}
+                      </h1>
+                      <p className="truncate text-[11px] font-semibold text-[#F7F7F8]/70">
+                        {sessionUser.handle ? `@${sessionUser.handle}` : ''}
+                        {sessionUser.handle && selectedLocation && selectedLocation !== 'Your area' ? ' · ' : ''}
+                        {selectedLocation && selectedLocation !== 'Your area' ? selectedLocation : ''}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2" aria-label="Contribution summary">
+                    {(() => {
+                      const stats: { label: string; value: number }[] = [
+                        { label: 'saved', value: (savedObjects ?? []).length },
+                        { label: 'groups', value: (groups ?? []).length },
+                        { label: 'matches', value: (matches ?? []).length }
+                      ];
+                      if (stats.every((s) => s.value === 0)) return null;
+                      return stats.map((s) => (
+                        <div key={s.label} className="rounded-xl bg-[#171A20] px-3 py-1.5">
+                          <p className="text-[13px] font-extrabold text-[#F7F7F8] leading-none">{s.value}</p>
+                          <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.1em] text-[#F7F7F8]/70">{s.label}</p>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                </div>
+              </section>
+            )}
             <div className="flex items-end justify-between gap-2 pb-2">
               <div className="min-w-0">
-                <h1 className="text-lg font-extrabold text-[#F7F7F8] tracking-tight">
+                <h2 className="text-lg font-extrabold text-[#F7F7F8] tracking-tight">
                   Your Layer — Things you've kept
-                </h1>
+                </h2>
                 <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#F7F7F8]/70 mt-0.5">
                   {activeSavedBundle.hint}
                 </p>

@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   Copy, Share2, Plus, CalendarDays, MessageCircle, Briefcase, Zap,
-  MapPin, Trophy, Sparkles, Send, Settings, Lock, ArrowRight, Bell
+  MapPin, Trophy, Sparkles, Send, Settings, Lock, ArrowRight, Bell, Search
 } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
 import type { AuthedUser } from '../api/briefApi';
@@ -263,6 +263,7 @@ function ExploreGrid({ onSelect }: { onSelect: (target: MenuTarget) => void }) {
 // --- QUICK ACTIONS: one card, compact rows, fast to scan ----------------------
 
 const QUICK: { label: string; detail: string; Icon: React.ComponentType<{ className?: string }>; target: MenuTarget; unread?: number }[] = [
+  { label: 'Search', detail: 'Find a place, event or person', Icon: Search, target: { tab: 'nearby', section: 'stream' } },
   { label: 'New', detail: 'Capture something useful', Icon: Plus, target: { tab: 'capture' } },
   { label: 'Updates', detail: 'What changed while you were away', Icon: Bell, target: { tab: 'notifications' } },
   { label: 'Calendar', detail: 'Keep a date in view', Icon: CalendarDays, target: { tab: 'workflows', section: 'calendar' } },
@@ -390,14 +391,20 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
         className="flex-1 min-h-0 bg-[#0D0F12]/25 backdrop-blur-[2px] cursor-pointer"
       />
 
-      {/* The sheet: exactly two-thirds of the screen. */}
-      <div className="h-2/3 max-h-[calc(100vh*0.6667)] bg-[#1D2027] border-t border-[#222630] rounded-t-[28px] shadow-2xl flex flex-col overflow-hidden">
+      {/* The sheet: exactly two-thirds of the screen, sliding up from the
+          bottom edge, safe-area aware so it never sits under a gesture bar. */}
+      <div className="brief-sheet-up h-2/3 max-h-[calc(100vh*0.6667)] bg-[#1D2027] border-t border-[#222630] rounded-t-[28px] shadow-2xl flex flex-col overflow-hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <header className="shrink-0 flex items-start justify-between gap-3 px-4 pt-5 pb-3 sm:max-w-3xl sm:w-full sm:mx-auto">
-        <div>
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#F7F7F8]/60">Menu</p>
-          <h1 className="mt-0.5 text-[19px] sm:text-[21px] font-black tracking-tight text-[#F7F7F8]">
-            Your shortcuts, tools and account
-          </h1>
+        <div className="flex items-center gap-2.5">
+          {/* §13 — the Brief mark: a small, ownable brand mark, not another
+              product's logo. */}
+          <span className="h-8 w-8 shrink-0 rounded-lg bg-[#FF5A1F] text-[#0D0F12] flex items-center justify-center text-[14px] font-black" aria-hidden="true">B</span>
+          <div>
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#F7F7F8]/60">Brief · Menu</p>
+            <h1 className="mt-0.5 text-[19px] sm:text-[21px] font-black tracking-tight text-[#F7F7F8]">
+              Your shortcuts, tools and account
+            </h1>
+          </div>
         </div>
         {/* The ONE close control. Neutral, top-right, where it belongs. */}
         <button
