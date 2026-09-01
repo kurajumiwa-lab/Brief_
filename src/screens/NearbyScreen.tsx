@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { ArrowRight, Bookmark, FolderPlus, Heart, Newspaper, Plus, Search, ShieldCheck, Users, X } from 'lucide-react';
+import { Bell, ArrowRight, Bookmark, FolderPlus, Heart, Newspaper, Plus, Search, ShieldCheck, Users, X  } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
 import { DESTINATION_STATE_LABELS, TEA_EDITIONS, briefWhenLabel, entityChipsFor, formatCount, getCardLevel, getDestinationState, getDestinationVendors, getDistanceLabel, getEditionMeta, getLifecycleBadge, getObjectTypeMeta, getPostKindMeta, getPublishedLine, getRelativeTime, getSourceChip, isDestinationObject, objectFromServer, resolveAction , buildDiscoveryBrief, buildPersonalSections, getCurrentEdition } from '../model/core';
 import type { ObjectType , PursuitStatus, WatchCondition } from '../model/core';
@@ -95,6 +95,9 @@ posts: BriefPost[];
   setArenaSection: React.Dispatch<React.SetStateAction<'lobby' | 'epl' | 'challenges' | 'tournaments' | 'leaderboard'>>;
   setCaptureOpen: any;
   setCollectionsOpen: any;
+  notificationsOpen: any;
+  notifUnread: any;
+  setNotificationsOpen: any;
   setFirstRunOpen: any;
   setFollowingOpen: any;
   setHomeFeedStatus: React.Dispatch<React.SetStateAction<'loading' | 'ready' | 'unavailable'>>;
@@ -166,6 +169,9 @@ export function NearbyScreen(props: NearbyScreenProps) {
     setArenaSection,
     setCaptureOpen,
     setCollectionsOpen,
+    notificationsOpen,
+    notifUnread,
+    setNotificationsOpen,
     setFirstRunOpen,
     setFollowingOpen,
     setHomeFeedStatus,
@@ -433,6 +439,20 @@ export function NearbyScreen(props: NearbyScreenProps) {
                             {(personalState.followed ?? []).length > 0 && (
                               <span className="rounded-full bg-[#5B2EA6] px-1.5 text-[9px] font-extrabold text-white">
                                 {(personalState.followed ?? []).length}
+                              </span>
+                            )}
+                          </button>
+<button
+                            type="button"
+                            onClick={() => setNotificationsOpen(true)}
+                            aria-label={notifUnread > 0 ? `Updates, ${notifUnread} unread` : 'Updates'}
+                            className="relative flex items-center gap-1.5 rounded-full border border-[#D6CFE4] bg-[#FBFAFD] px-3 py-1 text-[10px] font-extrabold text-[#251045]/60 cursor-pointer hover:border-[#6C3EC9]"
+                          >
+                            <Bell className="h-3 w-3" />
+                            Updates
+                            {notifUnread > 0 && (
+                              <span className="rounded-full bg-[#B3261E] px-1.5 text-[9px] font-extrabold text-white">
+                                {notifUnread > 99 ? '99+' : notifUnread}
                               </span>
                             )}
                           </button>

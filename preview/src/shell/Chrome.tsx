@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, Sparkles } from 'lucide-react';
+import { Bell, Menu, Sparkles } from 'lucide-react';
 import { ActivityDot, DESTINATIONS, DESTINATION_ICONS } from '../model/core';
 
 
@@ -48,8 +48,8 @@ export function StatusToasts(props: { setSpringOverlayOpen: any, springOverlayOp
   );
 }
 
-export function DesktopRail(props: { activeTab: any, destinationAlerts: any, goToDestination: any, menuOpen: any, setMenuOpen: any }) {
-  const { activeTab, destinationAlerts, goToDestination, menuOpen, setMenuOpen } = props;
+export function DesktopRail(props: { activeTab: any, destinationAlerts: any, goToDestination: any, menuOpen: any, setMenuOpen: any , notificationsOpen: any, notifUnread: any, setNotificationsOpen: any }) {
+  const { activeTab, destinationAlerts, goToDestination, menuOpen, setMenuOpen, notificationsOpen, notifUnread, setNotificationsOpen } = props;
   return (
     <>
         <nav
@@ -110,6 +110,31 @@ export function DesktopRail(props: { activeTab: any, destinationAlerts: any, goT
               </button>
             );
           })}
+        {/* Bell — the subtle return-loop entry. Badge only when non-zero. */}
+          <button
+            type="button"
+            onClick={() => setNotificationsOpen(true)}
+            title="Updates"
+            aria-label={notifUnread > 0 ? `Updates, ${notifUnread} unread` : 'Updates'}
+            className={`relative mt-auto flex items-center gap-3 px-5 py-3 cursor-pointer transition-colors ${
+              notificationsOpen ? 'text-[#251045] bg-[#FBFAFD] font-extrabold' : 'text-[#251045] hover:text-[#251045]'
+            }`}
+          >
+            <span className="relative shrink-0">
+              <Bell className="w-5 h-5" />
+              {notifUnread > 0 && (
+                <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#B3261E] px-1 text-[9px] font-extrabold text-[#FFFFFF]">
+                  {notifUnread > 99 ? '99+' : notifUnread}
+                </span>
+              )}
+            </span>
+            <span className="min-w-0 opacity-0 group-hover/rail:opacity-100 transition-opacity">
+              <span className="block text-[13px] font-extrabold whitespace-nowrap">Updates</span>
+              {notifUnread > 0 && (
+                <span className="block text-[9px] font-bold whitespace-nowrap text-[#B3261E]">{notifUnread} unread</span>
+              )}
+            </span>
+          </button>
         </nav>
     </>
   );

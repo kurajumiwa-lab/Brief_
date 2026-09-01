@@ -25,6 +25,8 @@ check('/saved/circles', parsePath('/saved/circles').dest === 'mylayer' && parseP
 check('/actions/money', parsePath('/actions/money').dest === 'workflows' && parsePath('/actions/money').workflow === 'money');
 check('menu query', parsePath('/around', '?menu=1').menu === true);
 check('capture query', parsePath('/around', 'capture=1').capture === true);
+check('following query is a real overlay', parsePath('/around', '?following=1').following === true);
+check('collections query is a real overlay', parsePath('/saved', '?collections=1').collections === true);
 check('unknown path falls back to Around', parsePath('/nope').dest === 'nearby');
 check('/c/slug stays a public page (Around dest)', parsePath('/c/saturday-sale').dest === 'nearby' && !parsePath('/c/saturday-sale').objectId);
 
@@ -44,6 +46,18 @@ check(
 check(
   'menu overlay stays on the query',
   toPath({ ...DEFAULT_ROUTE, menu: true }) === '/around?menu=1'
+);
+check(
+  'following overlay round-trips on the query',
+  toPath(parsePath('/around', '?following=1')) === '/around?following=1'
+);
+check(
+  'collections overlay round-trips on the query',
+  toPath(parsePath('/saved', '?collections=1')) === '/saved?collections=1'
+);
+check(
+  'closing the following overlay strips the flag',
+  toPath(DEFAULT_ROUTE) === '/around'
 );
 
 console.log('');

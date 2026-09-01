@@ -15,6 +15,7 @@ import QRCode from 'qrcode';
 import { deriveDestinationAlerts, readLastSeen, writeLastSeen, alertLabel, type DestinationAlerts } from './nav/alerts';
 import { EntityPage } from './components/EntityPage';
 import { FollowingSurface } from './components/FollowingSurface';
+import { NotificationCenter } from './components/NotificationCenter';
 import { LocationPage } from './components/LocationPage';
 import { RelatedContent } from './components/RelatedContent';
 import { CollectionsSurface } from './components/CollectionsSurface';
@@ -535,12 +536,6 @@ export function App() {
   // public feed items / EPL rooms newer than the last time this viewer
   // opened that destination. First visit baselines silently; unreachable
   // services contribute zero. Never a decorative dot.
-  const {
-    alertsTick,
-    destinationAlerts,
-    setDestinationAlerts,
-  } = useAlertsPulse({
-  });
 
 
 
@@ -620,9 +615,22 @@ export function App() {
   /** The public location discovery page (/explore/:name). */
   const [locationName, setLocationName] = useState<string | null>(bootRoute.locationName);
   /** The Following surface overlay (feed + management). */
-  const [followingOpen, setFollowingOpen] = useState(false);
+  const [followingOpen, setFollowingOpen] = useState(bootRoute.following);
   /** The personal Collections surface overlay. */
-  const [collectionsOpen, setCollectionsOpen] = useState(false);
+  const [collectionsOpen, setCollectionsOpen] = useState(bootRoute.collections);
+  /** The in-app notification center overlay (the return loop). */
+  const [notificationsOpen, setNotificationsOpen] = useState(bootRoute.notifications);
+  /** Unread notification count; only shown when non-zero ("subtle nav entry"). */
+  const [notifUnread, setNotifUnread] = useState(0);
+
+  const {
+    alertsTick,
+    destinationAlerts,
+    setDestinationAlerts,
+  } = useAlertsPulse({
+    setNotifUnread,
+  });
+
   /** A shared collection page opened from /collections/:id. */
   const [collectionRouteId, setCollectionRouteId] = useState<string | null>(bootRoute.collectionId);
   /** "Add to collection" picker open inside the detail modal. */
@@ -1250,6 +1258,12 @@ export function App() {
       setAdminOpen(true);
       return;
     }
+    // The notification center is an account surface, not a ladder rung:
+    // what shows there is whatever the server says changed for THIS user.
+    if (target.tab === 'notifications') {
+      setNotificationsOpen(true);
+      return;
+    }
     // The ladder shapes what is OFFERED, never what is permitted: authority
     // still lives on the server. A surface whose rung has not been climbed
     // says which step opens it and points at that step instead of dropping
@@ -1301,12 +1315,16 @@ export function App() {
     collectionId: collectionRouteId,
     capture: captureOpen,
     menu: menuOpen,
+    following: followingOpen,
+    collections: collectionsOpen,
+    notifications: notificationsOpen,
     admin: adminOpen,
     landed: false
   }), [
     activeTab, nearbySection, myLayerSection, workflowSection, arenaSection,
     selectedObjectForDetail, pendingObjectId, selectedTeaSlug, openCampaignId,
-    entityPageId, locationName, collectionRouteId, captureOpen, menuOpen, adminOpen
+    entityPageId, locationName, collectionRouteId, captureOpen, menuOpen,
+    followingOpen, collectionsOpen, notificationsOpen, adminOpen
   ]);
 
   const writeUrl = useCallback((route: BriefRoute, mode: 'push' | 'replace') => {
@@ -1332,6 +1350,9 @@ export function App() {
     setEntityPageId(route.entityId);
     setLocationName(route.locationName);
     setCollectionRouteId(route.collectionId);
+    setFollowingOpen(route.following);
+    setCollectionsOpen(route.collections);
+    setNotificationsOpen(route.notifications);
     if (route.objectId) setPendingObjectId(route.objectId);
     else {
       setPendingObjectId(null);
@@ -1341,7 +1362,7 @@ export function App() {
 
   const dismissOverlay = useCallback(() => {
     const st = typeof window !== 'undefined' ? window.history.state : null;
-    const overlayState = isBriefRoute(st) && (st.menu || st.capture || st.admin || st.objectId || st.teaSlug || st.campaignId || st.entityId || st.locationName || st.collectionId);
+    const overlayState = isBriefRoute(st) && (st.menu || st.capture || st.admin || st.objectId || st.teaSlug || st.campaignId || st.entityId || st.locationName || st.collectionId || st.following || st.collections || st.notifications);
     if (overlayState && !st.landed && typeof window !== 'undefined' && window.history.length > 1) {
       window.history.back();
       return;
@@ -1357,8 +1378,11 @@ export function App() {
     setEntityPageId(null);
     setLocationName(null);
     setCollectionRouteId(null);
+    setFollowingOpen(false);
+    setCollectionsOpen(false);
+    setNotificationsOpen(false);
     setCollectionPickerFor(null);
-    writeUrl({ ...currentRoute(), menu: false, admin: false, capture: false, objectId: null, teaSlug: null, campaignId: null, entityId: null, locationName: null, collectionId: null }, 'replace');
+    writeUrl({ ...currentRoute(), menu: false, admin: false, capture: false, objectId: null, teaSlug: null, campaignId: null, entityId: null, locationName: null, collectionId: null, following: false, collections: false, notifications: false }, 'replace');
   }, [currentRoute, writeUrl]);
 
   useEffect(() => {
@@ -1379,20 +1403,20 @@ export function App() {
       skipUrl.current = false;
       return;
     }
-    const overlay = menuOpen || adminOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail) || Boolean(pendingObjectId) || Boolean(entityPageId) || Boolean(locationName) || Boolean(collectionRouteId) || followingOpen || collectionsOpen;
+    const overlay = menuOpen || adminOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail) || Boolean(pendingObjectId) || Boolean(entityPageId) || Boolean(locationName) || Boolean(collectionRouteId) || followingOpen || collectionsOpen || notificationsOpen;
     writeUrl(currentRoute(), overlay ? 'push' : 'replace');
   }, [
     activeTab, nearbySection, myLayerSection, workflowSection, arenaSection,
     menuOpen, adminOpen, captureOpen, selectedTeaSlug, openCampaignId,
     selectedObjectForDetail, pendingObjectId, entityPageId, locationName, collectionRouteId,
-    followingOpen, collectionsOpen,
+    followingOpen, collectionsOpen, notificationsOpen,
     currentRoute, writeUrl
   ]);
 
   useEffect(() => {
     const tg = (typeof window !== 'undefined' ? (window as any).Telegram?.WebApp : null);
     if (!tg?.BackButton) return;
-    const show = menuOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail) || Boolean(entityPageId) || Boolean(locationName) || Boolean(collectionRouteId) || followingOpen || collectionsOpen;
+    const show = menuOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail) || Boolean(entityPageId) || Boolean(locationName) || Boolean(collectionRouteId) || followingOpen || collectionsOpen || notificationsOpen;
     try {
       if (show) tg.BackButton.show();
       else tg.BackButton.hide();
@@ -1402,7 +1426,7 @@ export function App() {
     return () => {
       try { tg.BackButton.offClick?.(handler); } catch { /* */ }
     };
-  }, [menuOpen, captureOpen, selectedTeaSlug, openCampaignId, selectedObjectForDetail, entityPageId, locationName, collectionRouteId, followingOpen, collectionsOpen, dismissOverlay]);
+  }, [menuOpen, captureOpen, selectedTeaSlug, openCampaignId, selectedObjectForDetail, entityPageId, locationName, collectionRouteId, followingOpen, collectionsOpen, notificationsOpen, dismissOverlay]);
 
   useEffect(() => {
     if (!pendingObjectId) return;
@@ -1431,7 +1455,7 @@ export function App() {
     return () => { live = false; };
   }, [selectedObjectForDetail?.id]);
 
-  const isAnyModalActive = Boolean(openCampaignId) || createStep !== 'closed' || captureOpen || Boolean(selectedObjectForDetail) || Boolean(selectedTeaSlug) || Boolean(entityPageId) || Boolean(locationName) || Boolean(collectionRouteId) || followingOpen || collectionsOpen;
+  const isAnyModalActive = Boolean(openCampaignId) || createStep !== 'closed' || captureOpen || Boolean(selectedObjectForDetail) || Boolean(selectedTeaSlug) || Boolean(entityPageId) || Boolean(locationName) || Boolean(collectionRouteId) || followingOpen || collectionsOpen || notificationsOpen;
 
   // THE APP GATE (product decision 2026-08-29): NO ACCESS WITHOUT AN ACCOUNT.
   // Signed out, the app does not render at all -- no feed, no shelf, no
@@ -1510,7 +1534,7 @@ export function App() {
           and place live on the dock / shelf, not as a lid over the house. */}
       <div className="flex-1 flex w-full">
 
-      <DesktopRail activeTab={activeTab} destinationAlerts={destinationAlerts} goToDestination={goToDestination} menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
+      <DesktopRail activeTab={activeTab} destinationAlerts={destinationAlerts} goToDestination={goToDestination} menuOpen={menuOpen} setMenuOpen={setMenuOpen} notificationsOpen={notificationsOpen} notifUnread={notifUnread} setNotificationsOpen={setNotificationsOpen} />
 
         {/* DESKTOP / TABLET RAIL. Full height now the header is gone. */}
 
@@ -1624,6 +1648,9 @@ export function App() {
             setArenaSection={setArenaSection}
             setCaptureOpen={setCaptureOpen}
             setCollectionsOpen={setCollectionsOpen}
+            notificationsOpen={notificationsOpen}
+            notifUnread={notifUnread}
+            setNotificationsOpen={setNotificationsOpen}
             setFirstRunOpen={setFirstRunOpen}
             setFollowingOpen={setFollowingOpen}
             setHomeFeedStatus={setHomeFeedStatus}
@@ -1855,6 +1882,11 @@ export function App() {
         chooseCity={chooseCity}
         collectionRouteId={collectionRouteId}
         collectionsOpen={collectionsOpen}
+        notificationsOpen={notificationsOpen}
+        notifUnread={notifUnread}
+        setNotificationsOpen={setNotificationsOpen}
+        setNotifUnread={setNotifUnread}
+        setCollectionRouteId={setCollectionRouteId}
         entityPageId={entityPageId}
         followOne={followOne}
         followingOpen={followingOpen}

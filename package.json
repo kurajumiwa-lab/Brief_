@@ -17,6 +17,7 @@
     "start:dev": "cd server && npm start",
     "dev": "cd preview && npm run dev",
     "test": "cd server && npm test",
+    "test:notifications": "node server/test/notifications.mjs",
     "test:yard": "npm --workspace=server run test:yard",
     "test:client": "./run-suites.sh",
     "test:typecheck": "cd tc && npx tsc -p tsconfig.json",

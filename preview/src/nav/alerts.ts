@@ -17,6 +17,7 @@ import type { Destination } from '../App';
 
 export interface AlertNotificationLike {
   kind: string;
+  type?: string;
   read: boolean;
   createdAt?: string;
 }
@@ -31,8 +32,19 @@ export interface AlertFeedItemLike {
   updatedAt?: string | null;
 }
 
-/** Notification kinds routed to the destination they actually belong to. */
+/** Notification kinds/types routed to the destination they actually belong to. */
 const KIND_TO_DESTINATION: Record<string, Destination> = {
+  // Return-loop types: what changed in the world (Nearby) vs the user's own
+  // saved/cared-about layer (My Layer).
+  following: 'nearby',
+  location: 'nearby',
+  alert: 'nearby',
+  source_update: 'nearby',
+  event: 'mylayer',
+  offer: 'mylayer',
+  collection: 'mylayer',
+  correction: 'mylayer',
+  // Legacy kinds.
   coop: 'nearby', // Mshikano cooperation proposals + confirmations
   challenge: 'arena',
   workflow: 'workflows',
@@ -105,7 +117,9 @@ export function deriveDestinationAlerts(input: {
 
   for (const n of input.notifications ?? []) {
     if (n.read) continue;
-    const dest = KIND_TO_DESTINATION[n.kind];
+    // New rows carry both `kind` and `type`; prefer `type` (the surface's
+    // word) and fall back to legacy `kind`.
+    const dest = KIND_TO_DESTINATION[n.type ?? n.kind];
     if (dest) out[dest] += 1;
   }
 

@@ -34,6 +34,15 @@ const iso = (offsetMs) => new Date(now.getTime() + offsetMs).toISOString();
 // calendar form cannot produce.
 const tomorrow9am = (() => { const d = new Date(now); d.setDate(d.getDate() + 1); d.setHours(9, 0, 0, 0); return d.toISOString(); })();
 const day = (offsetDays) => new Date(now.getTime() + offsetDays * 86400000).toISOString().slice(0, 10);
+// A fixed 10:00 tomorrow — the old now+29h fixture flipped to "day after
+// tomorrow" whenever the suite ran after ~19:00 local (same time-of-day
+// flake class as personal.mjs).
+const tomorrowAtTen = () => {
+  const d = new Date(now.getTime());
+  d.setDate(d.getDate() + 1);
+  d.setHours(10, 0, 0, 0);
+  return d.toISOString();
+};
 
 const feed = {
   hero: [],
@@ -110,8 +119,8 @@ const feed = {
       summary: 'Bring your portfolio.',
       createdAt: iso(-2 * 3600000),
       locationName: 'Kilimani Studio',
-      media: null, metadata: { area: 'Kilimani', eventStart: tomorrow9am },
-      temporal: { status: 'upcoming', startsAt: tomorrow9am, endsAt: null, deadlineAt: null, expiresAt: null },
+      media: null, metadata: { area: 'Kilimani', eventStart: tomorrowAtTen() },
+      temporal: { status: 'upcoming', startsAt: tomorrowAtTen(), endsAt: null, deadlineAt: null, expiresAt: null },
       sourceNames: ['Creator Hub', 'City Wire'], sourceCount: 2
     }
   ],

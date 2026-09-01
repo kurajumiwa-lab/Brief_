@@ -6,6 +6,7 @@ import type { Campaign as ApiCampaign, CampaignType as ApiCampaignType, Registra
 import type { CircleDetail as ApiCircleDetail } from '../api/briefApi';
 import { CollectionPage } from '../components/CollectionPage';
 import { CollectionsSurface } from '../components/CollectionsSurface';
+import { NotificationCenter } from '../components/NotificationCenter';
 import { EntityPage } from '../components/EntityPage';
 import { FollowingSurface } from '../components/FollowingSurface';
 import { LocationPage } from '../components/LocationPage';
@@ -36,6 +37,11 @@ export interface OverlaysShellProps {
   selectedLocation: string;
   setActiveTab: React.Dispatch<React.SetStateAction<Destination>>;
   setCollectionsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  notificationsOpen: boolean;
+  notifUnread: number;
+  setNotificationsOpen: any;
+  setNotifUnread: any;
+  setCollectionRouteId: any;
   setEntityPageId: React.Dispatch<React.SetStateAction<string | null>>;
   setFollowingOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setMyLayerSection: React.Dispatch<React.SetStateAction<MyLayerSection>>;
@@ -238,6 +244,11 @@ export function OverlaysShell(props: OverlaysShellProps) {
     selectedLocation,
     setActiveTab,
     setCollectionsOpen,
+    notificationsOpen,
+    notifUnread,
+    setNotificationsOpen,
+    setNotifUnread,
+    setCollectionRouteId,
     setEntityPageId,
     setFollowingOpen,
     setMyLayerSection,
@@ -2395,6 +2406,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
         onSelect={handleMenuSelect}
         onSelectCity={chooseCity}
         selectedLocation={selectedLocation}
+        unread={notifUnread}
         canOperate={briefApi.isOperator(sessionUser)}
       />
       {entityPageId && (
@@ -2467,6 +2479,49 @@ export function OverlaysShell(props: OverlaysShellProps) {
           onChanged={() => void loadPersonal()}
         />
       )}
+{notificationsOpen && (
+        <NotificationCenter
+          authed={Boolean(sessionUser)}
+          onClose={dismissOverlay}
+          onChanged={setNotifUnread}
+          onOpen={(n) => {
+            const dest = n.dest ?? null;
+            if (dest?.startsWith('object:')) {
+              const id = dest.slice('object:'.length);
+              const local = objects.find((o) => o.id === String(id));
+              setNotificationsOpen(false);
+              if (local) {
+                setSelectedObjectForDetail(local);
+                return;
+              }
+              // Not on the device's loaded feed: open the existing detail
+              // endpoint so the deep link still lands on the real object.
+              void briefApi.getObject(id).then((res) => {
+                if (res.ok) setSelectedObjectForDetail(objectFromServer(res.data));
+              });
+              return;
+            }
+            if (dest?.startsWith('entity:')) {
+              setNotificationsOpen(false);
+              setEntityPageId(dest.slice('entity:'.length));
+              return;
+            }
+            if (dest?.startsWith('location:')) {
+              setNotificationsOpen(false);
+              openLocationPage(dest.slice('location:'.length));
+              return;
+            }
+            if (dest?.startsWith('collection:')) {
+              setNotificationsOpen(false);
+              setCollectionRouteId(dest.slice('collection:'.length));
+              return;
+            }
+            // No server destination: close instead of inventing a page.
+            setNotificationsOpen(false);
+          }}
+        />
+      )}
+
       {collectionRouteId && (
         <CollectionPage
           collectionId={collectionRouteId}

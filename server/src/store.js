@@ -156,6 +156,10 @@ const EMPTY = {
   // was confirmed, a challenge was accepted, a saved thing changed). Push is a
   // separate, still-unconnected rail — these are the local inbox.
   notifications: [],
+  // One row per user: which notification categories they want (following,
+  // events, offers, alerts, news, locations, saved) plus the watermark of the
+  // last generation sweep. The row is created lazily with defaults ON.
+  notificationPrefs: [],
   // --- Personal Brief ------------------------------------------------------
   // A user's explicit interests: one row per (user, kind, value) where kind is
   // location | type | topic. Idempotent by design — re-following is a no-op.

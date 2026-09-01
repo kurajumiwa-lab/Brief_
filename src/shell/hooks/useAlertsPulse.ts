@@ -9,12 +9,12 @@ import * as briefApi from '../../api/briefApi';
 // ---------------------------------------------------------------------------
 
 export interface UseAlertsPulseParams {
-
+  setNotifUnread: any;
 }
 
 export function useAlertsPulse(params: UseAlertsPulseParams) {
   const {
-
+    setNotifUnread
   } = params;
 
   const [destinationAlerts, setDestinationAlerts] = useState<DestinationAlerts>({ nearby: 0, arena: 0, mylayer: 0, workflows: 0 });
@@ -42,6 +42,9 @@ export function useAlertsPulse(params: UseAlertsPulseParams) {
             ...(feed.tea ? [feed.tea] : [])
           ]
         : [];
+      // The bell badge is the same real unread count the center shows; the
+      // interval + visibility refetch keeps it fresh while someone is away.
+      setNotifUnread(notifRes && notifRes.ok ? notifRes.data?.unread ?? 0 : 0);
       const lastSeen = {
         nearby: readLastSeen('nearby'),
         arena: readLastSeen('arena')

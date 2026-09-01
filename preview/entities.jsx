@@ -195,6 +195,10 @@ async function main() {
           ],
           total: 1
         }),
+        '/api/entities/venue%3Aobj_ent_venue': () => entityPayload('venue:obj_ent_venue', {
+          isFollowed: true,
+          objects: []
+        }),
         '/api/me/follows': () => servedFollows,
         '/api/me/feed': () => ({ objects: [], interests: { locations: [], types: [], topics: [] }, personalized: false }),
         '/api/me': () => ({
@@ -214,6 +218,48 @@ async function main() {
     check('following feed renders the venue section', h.body().includes('Suite gig at the studio'));
     check('feed rows carry real temporal info', h.body().includes('On '));
     check('feed section links to the entity', h.body().includes('Kilimani Studio'));
+
+    // Back and X must dismiss the surface IN-APP: the panel closes and the
+    // session keeps running (the regression exited the whole site instead).
+    const surfaceBtn = (label) => {
+      const overlay = Array.from(h.document.querySelectorAll('.fixed.inset-0.z-50')).pop();
+      return overlay
+        ? Array.from(overlay.querySelectorAll('button')).find((b) => text(b) === label || b.getAttribute('aria-label') === label)
+        : null;
+    };
+    const reopenFollowing = async () => {
+      await h.click(h.buttons().find((b) => text(b).startsWith('Following')));
+      await h.settle();
+    };
+    const appRunning = () => Boolean(h.buttons().find((b) => text(b).startsWith('Following')));
+
+    await h.click(surfaceBtn('Back'));
+    await h.settle();
+    await h.settle();
+    check('Following Back closes the surface in-app', !h.body().includes('Suite gig at the studio'), h.body().slice(0, 120));
+    check('Following Back keeps the app running', appRunning());
+
+    await reopenFollowing();
+    await h.click(surfaceBtn('Close'));
+    await h.settle();
+    await h.settle();
+    check('Following X closes the surface in-app', !h.body().includes('Suite gig at the studio'), h.body().slice(0, 120));
+    check('Following X keeps the app running', appRunning());
+
+    // An entity opened from the surface must close back INTO the surface,
+    // never out of the app.
+    await reopenFollowing();
+    const sectionHeader = () => {
+      const overlay = Array.from(h.document.querySelectorAll('.fixed.inset-0.z-50')).pop();
+      return overlay ? Array.from(overlay.querySelectorAll('button')).find((b) => text(b).includes('Kilimani Studio')) : null;
+    };
+    await h.click(sectionHeader());
+    await h.settle();
+    check('surface section opens the entity page in-app', h.dom.window.location.pathname.startsWith('/e/'), h.dom.window.location.href);
+    await h.click(surfaceBtn('Close'));
+    await h.settle();
+    await h.settle();
+    check('entity close returns to the Following surface', h.body().includes('Suite gig at the studio'), h.body().slice(0, 120));
 
     await h.click(h.btn('Manage (1)'));
     await h.settle();
