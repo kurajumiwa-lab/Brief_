@@ -142,6 +142,7 @@ import { MyLayerScreen } from './screens/MyLayerScreen';
 import { NearbyScreen } from './screens/NearbyScreen';
 import { WorkflowsScreen } from './screens/WorkflowsScreen';
 import { OverlaysShell } from './screens/OverlaysShell';
+import { useSessionLocation } from './shell/hooks/useSessionLocation';
 import { useProtocolActions } from './shell/hooks/useProtocolActions';
 import { useBriefItFlow } from './shell/hooks/useBriefItFlow';
 import { useGroupsDesk } from './shell/hooks/useGroupsDesk';
@@ -380,57 +381,14 @@ export function App() {
   // every secret. When the server is not running these panels degrade to an
   // explicit "not connected" state rather than pretending. The proxy prefix
   // lives in src/api/briefApi.ts, which is the only place that fetches.
-  const [connectorStatus, setConnectorStatus] = useState<{
-    online: boolean;
-    checked: boolean;
-    capabilities: Record<string, any> | null;
-    liveSources: any[];
-    stats: Record<string, any> | null;
-  }>({ online: false, checked: false, capabilities: null, liveSources: [], stats: null });
 
-  const refreshConnectors = React.useCallback(async () => {
-    // Everything goes through briefApi: one API layer, one set of response
-    // guards, no fetch() outside src/api (spec 4). Capabilities/status that
-    // fail their shape guard degrade to null exactly as before.
-    const [srcRes, capRes, statRes] = await Promise.all([
-      briefApi.getSources(),
-      briefApi.getConnectorCapabilities(),
-      briefApi.getIngestStatus()
-    ]);
 
-    if (!srcRes.ok) {
-      // A dead connector server must never break Brief (spec 30).
-      setConnectorStatus((prev) => ({ ...prev, online: false, checked: true }));
-      return;
-    }
-
-    setConnectorStatus({
-      online: true,
-      checked: true,
-      capabilities: capRes.ok ? capRes.data : null,
-      liveSources: srcRes.data,
-      stats: statRes.ok ? statRes.data : null
-    });
-  }, []);
-
-  React.useEffect(() => {
-    // Connector state (capabilities + live stats) backs both the Sources tab
-    // AND the Actions dashboard's pipeline/ingest cards, so refresh it for any
-    // workflows view — not just Sources.
-    if (activeTab === 'workflows') {
-      void refreshConnectors();
-    }
-  }, [activeTab, workflowSection, refreshConnectors]);
 
   // --- Objects from the server ----------------------------------------------
   // Brief holds no seeded objects. Everything discoverable arrives from the
   // ingestion pipeline, so this is the only way the stream gets populated.
   // A failure leaves the list empty and records why, rather than substituting
   // placeholder content.
-  const [objectsLoad, setObjectsLoad] = useState<{
-    status: 'idle' | 'loading' | 'ready' | 'error';
-    error: string | null;
-  }>({ status: 'idle', error: null });
 
   // --- Session bootstrap -----------------------------------------------------
   // In production the development auth fallback is off and there is no login
@@ -620,40 +578,9 @@ export function App() {
   // A viewer's coarse position, for "what's around me". Set only by an
   // explicit device-location grant or a manual city tap — never inferred,
   // never fabricated. Null means "everywhere" (the global ranked feed).
-  const [userLocation, setUserLocation] = useState<GeoPoint | null>(null);
   // A named locality scope for the discovery feed (a city or district tap).
   // Null means the feed is geo- or globally scoped, never inferred.
-  const [feedArea, setFeedArea] = useState<string | null>(null);
-  const [locating, setLocating] = useState(false);
-  const [locError, setLocError] = useState<string | null>(null);
 
-  const locate = React.useCallback(() => {
-    if (typeof navigator === 'undefined' || !('geolocation' in navigator)) {
-      setLocError('This browser has no location service — tap a city instead.');
-      return;
-    }
-    setLocating(true);
-    setLocError(null);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocating(false);
-        setUserLocation({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          label: 'your location'
-        });
-        // A precise device fix scopes the feed by distance; it is not a
-        // named area.
-        setFeedArea(null);
-        setSelectedLocation('your location');
-      },
-      () => {
-        setLocating(false);
-        setLocError('Location unavailable — tap a city instead.');
-      },
-      { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 }
-    );
-  }, []);
 
   const chooseCity = React.useCallback((c: GeoPoint) => {
     setLocError(null);
@@ -665,39 +592,8 @@ export function App() {
   }, []);
 
 
-  const loadObjects = React.useCallback(async (loc?: { lat: number; lng: number }) => {
-    setObjectsLoad({ status: 'loading', error: null });
-    // The ranked discovery feed: freshness + trust + engagement, server-derived.
-    // When a location is set, it is also geo-scoped (distanceKm per object).
-    const res = await briefApi.discoverObjects(loc ? { lat: loc.lat, lng: loc.lng, radiusKm: 40 } : {});
-    if (res.ok) {
-      setObjects((res.data as any[]).map(objectFromServer));
-      setObjectsLoad({ status: 'ready', error: null });
-    } else {
-      setObjects([]);
-      setObjectsLoad({ status: 'error', error: res.error });
-    }
-  }, []);
-  const {
-    briefItBusy,
-    briefItPreview,
-    briefItSaved,
-    briefItText,
-    runBriefItSave,
-    setBriefItBusy,
-    setBriefItPreview,
-    setBriefItSaved,
-    setBriefItText,
-  } = useBriefItFlow({
-    loadObjects,
-    noteActivation,
-    refreshConnectors,
-  });
 
 
-  React.useEffect(() => {
-    void loadObjects(userLocation ? { lat: userLocation.lat, lng: userLocation.lng } : undefined);
-  }, [loadObjects, userLocation]);
 
   // Personal Brief: interests, saves, controls and the personal re-ranking.
   // All private to the signed-in user; anonymous callers simply stay global.
@@ -841,6 +737,45 @@ export function App() {
   };
   const [selectedObjectType, setSelectedObjectType] = useState<string>('all');
   const [selectedLocation, setSelectedLocation] = useState<string>('Your area');
+  const {
+    connectorStatus,
+    feedArea,
+    loadObjects,
+    locError,
+    locate,
+    locating,
+    objectsLoad,
+    refreshConnectors,
+    setConnectorStatus,
+    setFeedArea,
+    setLocError,
+    setLocating,
+    setObjectsLoad,
+    setUserLocation,
+    userLocation,
+  } = useSessionLocation({
+    activeTab,
+    setObjects,
+    setSelectedLocation,
+    workflowSection,
+  });
+
+  const {
+    briefItBusy,
+    briefItPreview,
+    briefItSaved,
+    briefItText,
+    runBriefItSave,
+    setBriefItBusy,
+    setBriefItPreview,
+    setBriefItSaved,
+    setBriefItText,
+  } = useBriefItFlow({
+    loadObjects,
+    noteActivation,
+    refreshConnectors,
+  });
+
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [architectMode, setArchitectMode] = useState<boolean>(false);
   // Seen tracking for the Daily Brief: "New" means genuinely not yet opened.
