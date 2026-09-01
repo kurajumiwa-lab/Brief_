@@ -1,6 +1,7 @@
 // Phase 3 note: overlay copy moved into src/screens/OverlaysShell.tsx; the
 // invariants asserted here are behavioral, so include that file.
-const src = (require('fs').readFileSync(__dirname + '/src/App.tsx','utf8') + '\n' + require('fs').readFileSync(__dirname + '/src/model/core.tsx','utf8') + '\n' + require('fs').readFileSync(__dirname + '/src/screens/OverlaysShell.tsx','utf8'));
+// Phase 4 note: state/handler clusters moved into src/shell/hooks/*.ts.
+const src = (require('fs').readFileSync(__dirname + '/src/App.tsx','utf8') + '\n' + require('fs').readFileSync(__dirname + '/src/model/core.tsx','utf8') + '\n' + require('fs').readFileSync(__dirname + '/src/screens/OverlaysShell.tsx','utf8') + '\n' + require('fs').readdirSync(__dirname + '/src/shell/hooks').map(f => require('fs').readFileSync(__dirname + '/src/shell/hooks/' + f, 'utf8')).join('\n'));
 let pass=0,fail=0;
 const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;console.log('  FAIL  '+n+(d?' -> '+d:''));}};
 
