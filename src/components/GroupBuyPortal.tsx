@@ -307,7 +307,7 @@ export function GroupBuyPortal() {
                             placeholder="heads"
                             className="w-20 rounded-lg border border-[#222630] bg-[#171A20] px-2.5 py-1.5 text-[12px] text-[#F7F7F8]"
                           />
-                          <span className="text-[10px] text-[#F7F7F8]/40">+ people at</span>
+                          <span className="text-[10px] text-[#F7F7F8]/60">+ people at</span>
                           <input
                             value={t.pricePerHead}
                             onChange={(e) => setTierRows((rows) => rows.map((r, j) => j === i ? { ...r, pricePerHead: e.target.value } : r))}
@@ -316,7 +316,7 @@ export function GroupBuyPortal() {
                             placeholder="KSh / head"
                             className="w-24 rounded-lg border border-[#222630] bg-[#171A20] px-2.5 py-1.5 text-[12px] text-[#F7F7F8]"
                           />
-                          <span className="text-[10px] text-[#F7F7F8]/40">each</span>
+                          <span className="text-[10px] text-[#F7F7F8]/60">each</span>
                         </div>
                       ))}
                       <button
@@ -358,27 +358,27 @@ export function GroupBuyPortal() {
                   <>
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                       <div className="rounded-lg bg-[#171A20] p-2">
-                        <p className="text-[9px] text-[#F7F7F8]/50">in the room</p>
+                        <p className="text-[9px] text-[#F7F7F8]/70">in the room</p>
                         <p className="text-[14px] font-extrabold text-[#F7F7F8]">{bargain.participants}{bargain.requiredParticipants ? ` / ${bargain.requiredParticipants} needed` : ''}</p>
                       </div>
                       <div className="rounded-lg bg-[#171A20] p-2">
-                        <p className="text-[9px] text-[#F7F7F8]/50">join now at</p>
+                        <p className="text-[9px] text-[#F7F7F8]/70">join now at</p>
                         <p className="text-[14px] font-extrabold text-[#F7F7F8]">{bargain.currentPricePerHead != null ? money(bargain.currentPricePerHead) : '—'}</p>
-                        <p className="text-[9px] text-[#F7F7F8]/40">{bargain.currentTierLabel ?? ''}</p>
+                        <p className="text-[9px] text-[#F7F7F8]/60">{bargain.currentTierLabel ?? ''}</p>
                       </div>
                       <div className="rounded-lg bg-[#171A20] p-2">
-                        <p className="text-[9px] text-[#F7F7F8]/50">next band</p>
+                        <p className="text-[9px] text-[#F7F7F8]/70">next band</p>
                         <p className="text-[14px] font-extrabold text-[#F7F7F8]">
                           {bargain.nextTier ? money(bargain.nextTier.pricePerHead) : 'best price'}
                         </p>
-                        <p className="text-[9px] text-[#F7F7F8]/40">
+                        <p className="text-[9px] text-[#F7F7F8]/60">
                           {bargain.nextTier ? `${bargain.nextTier.needs} more join${bargain.nextTier.needs === 1 ? '' : 's'}` : 'room at the final band'}
                         </p>
                       </div>
                       <div className="rounded-lg bg-[#171A20] p-2">
-                        <p className="text-[9px] text-[#F7F7F8]/50">settles at</p>
+                        <p className="text-[9px] text-[#F7F7F8]/70">settles at</p>
                         <p className="text-[14px] font-extrabold text-[#F7F7F8]">{money(bargain.settlesAt)}</p>
-                        <p className="text-[9px] text-[#F7F7F8]/40">if the room fills</p>
+                        <p className="text-[9px] text-[#F7F7F8]/60">if the room fills</p>
                       </div>
                     </div>
 
@@ -409,7 +409,7 @@ export function GroupBuyPortal() {
                       >
                         {bargainBusy ? '…' : mySeat ? 'Leave the bargain' : 'Join at the current price'}
                       </button>
-                      <span className="text-[9px] leading-snug text-[#F7F7F8]/50">
+                      <span className="text-[9px] leading-snug text-[#F7F7F8]/70">
                         You commit at today\\u2019s band; if a better band fills later, everyone settles at the final price.
                         Money moves only through the ordinary chain — nothing is charged here.
                       </span>
@@ -453,7 +453,7 @@ export function GroupBuyPortal() {
                 >
                   {busy ? 'Recording…' : 'Record contribution'}
                 </button>
-                <p className="text-[9px] leading-snug text-[#F7F7F8]/50">
+                <p className="text-[9px] leading-snug text-[#F7F7F8]/70">
                   A contribution is a ledger record with a verifiable receipt — and it notifies the group's routed
                   channels automatically. No payment rail is connected, so nothing pretends money moved.
                 </p>
@@ -484,7 +484,7 @@ export function GroupBuyPortal() {
                         <span className="min-w-0 truncate font-semibold text-[#F7F7F8]">{c.memberRef}</span>
                         <span className="shrink-0 font-mono text-[#F7F7F8]">{money(c.amount)}</span>
                         <span className="shrink-0 rounded-full border border-[#222630] px-1.5 py-0.5 text-[8px] font-bold uppercase text-[#F7F7F8]/60">{c.source}</span>
-                        <span className="shrink-0 font-mono text-[9px] text-[#F7F7F8]/40">#{c.receiptHash.slice(0, 8)}</span>
+                        <span className="shrink-0 font-mono text-[9px] text-[#F7F7F8]/60">#{c.receiptHash.slice(0, 8)}</span>
                       </div>
                     ))}
                   </div>

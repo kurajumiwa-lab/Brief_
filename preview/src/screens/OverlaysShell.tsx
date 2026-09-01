@@ -276,7 +276,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                   {campaignDetail ? campaignDetail.title : 'Campaign'}
                 </h2>
                 {campaignDetail && (
-                  <p className="text-[9px] text-[#F7F7F8]/40 mt-0.5">
+                  <p className="text-[9px] text-[#F7F7F8]/60 mt-0.5">
                     {campaignDetail.type} &middot; {campaignDetail.status}
                   </p>
                 )}
@@ -310,7 +310,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
               {campaignDetail && editDraft && (
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-[9px] text-[#F7F7F8]/40 mb-1">Title</label>
+                    <label className="block text-[9px] text-[#F7F7F8]/60 mb-1">Title</label>
                     <input
                       value={editDraft.title}
                       onChange={(e) => setEditDraft((d) => (d ? { ...d, title: e.target.value } : d))}
@@ -318,7 +318,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                     />
                   </div>
                   <div>
-                    <label className="block text-[9px] text-[#F7F7F8]/40 mb-1">Description</label>
+                    <label className="block text-[9px] text-[#F7F7F8]/60 mb-1">Description</label>
                     <textarea
                       value={editDraft.description}
                       onChange={(e) => setEditDraft((d) => (d ? { ...d, description: e.target.value } : d))}
@@ -327,7 +327,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                     />
                   </div>
                   <div>
-                    <label className="block text-[9px] text-[#F7F7F8]/40 mb-1">When</label>
+                    <label className="block text-[9px] text-[#F7F7F8]/60 mb-1">When</label>
                     <input
                       type="datetime-local"
                       value={editDraft.startsAt}
@@ -336,7 +336,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                     />
                   </div>
                   <div>
-                    <label className="block text-[9px] text-[#F7F7F8]/40 mb-1">Where</label>
+                    <label className="block text-[9px] text-[#F7F7F8]/60 mb-1">Where</label>
                     <input
                       value={editDraft.location}
                       onChange={(e) => setEditDraft((d) => (d ? { ...d, location: e.target.value } : d))}
@@ -345,7 +345,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[9px] text-[#F7F7F8]/40 mb-1">Spots</label>
+                      <label className="block text-[9px] text-[#F7F7F8]/60 mb-1">Spots</label>
                       <input
                         inputMode="numeric"
                         disabled={campaignDetail.status !== 'draft'}
@@ -356,7 +356,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                       />
                     </div>
                     <div>
-                      <label className="block text-[9px] text-[#F7F7F8]/40 mb-1">Price (KES)</label>
+                      <label className="block text-[9px] text-[#F7F7F8]/60 mb-1">Price (KES)</label>
                       <input
                         inputMode="numeric"
                         value={editDraft.price}
@@ -367,7 +367,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                     </div>
                   </div>
                   {campaignDetail.status !== 'draft' && (
-                    <p className="text-[9px] text-[#F7F7F8]/40 leading-snug">
+                    <p className="text-[9px] text-[#F7F7F8]/60 leading-snug">
                       Spots cannot change after publishing. People have already
                       registered against this number.
                     </p>
@@ -416,13 +416,13 @@ export function OverlaysShell(props: OverlaysShellProps) {
 
                   {/* PEOPLE */}
                   <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-4 space-y-2">
-                    <h3 className="text-[9px] text-[#F7F7F8]/40">
+                    <h3 className="text-[9px] text-[#F7F7F8]/60">
                       People
                     </h3>
                     <p className="text-xl font-extrabold text-[#F7F7F8]">
                       {campaignDetail.metrics.slotsTaken}
                       {campaignDetail.metrics.capacity !== null && (
-                        <span className="text-[#F7F7F8]/40"> / {campaignDetail.metrics.capacity}</span>
+                        <span className="text-[#F7F7F8]/60"> / {campaignDetail.metrics.capacity}</span>
                       )}
                     </p>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-1">
@@ -451,7 +451,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
 
                   {/* MONEY */}
                   <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-4 space-y-2">
-                    <h3 className="text-[9px] text-[#F7F7F8]/40">
+                    <h3 className="text-[9px] text-[#F7F7F8]/60">
                       Money
                     </h3>
                     {campaignDetail.price === 0 ? (
@@ -474,7 +474,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                             {campaignDetail.metrics.revenuePending.toLocaleString()}
                           </span>
                         </div>
-                        <p className="text-[9px] text-[#F7F7F8]/40 leading-snug">
+                        <p className="text-[9px] text-[#F7F7F8]/60 leading-snug">
                           Pending is money that has not arrived.
                         </p>
                       </>
@@ -483,7 +483,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
 
                   {/* CAMPAIGN */}
                   <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-4 space-y-1">
-                    <h3 className="text-[9px] text-[#F7F7F8]/40">
+                    <h3 className="text-[9px] text-[#F7F7F8]/60">
                       Campaign
                     </h3>
                     <div className="flex items-baseline justify-between gap-2">
@@ -520,7 +520,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                           : `${campaignDetail.metrics.conversionPct}%`}
                       </span>
                     </div>
-                    <p className="text-[9px] text-[#F7F7F8]/40 leading-snug pt-1">
+                    <p className="text-[9px] text-[#F7F7F8]/60 leading-snug pt-1">
                       Different devices is a rough count, not people. Times you shared counts your own taps, not how many people saw it.
                     </p>
                   </div>
@@ -528,7 +528,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                   {/* WHAT PEOPLE ARE GETTING */}
                   {campaignDetail.object && (
                     <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-4 space-y-1">
-                      <h3 className="text-[9px] text-[#F7F7F8]/40">
+                      <h3 className="text-[9px] text-[#F7F7F8]/60">
                         What people get
                       </h3>
                       <p className="text-xs text-[#F7F7F8]">{campaignDetail.object.title}</p>
@@ -537,12 +537,12 @@ export function OverlaysShell(props: OverlaysShellProps) {
                           {campaignDetail.object.summary}
                         </p>
                       )}
-                      <p className="text-[9px] text-[#F7F7F8]/40 pt-0.5">
+                      <p className="text-[9px] text-[#F7F7F8]/60 pt-0.5">
                         {campaignDetail.object.type}
                         {campaignDetail.ownsObject === false && ' \u00b7 existing item'}
                       </p>
                       {campaignDetail.ownsObject === false && (
-                        <p className="text-[9px] text-[#F7F7F8]/40 leading-snug">
+                        <p className="text-[9px] text-[#F7F7F8]/60 leading-snug">
                           Publishing the campaign does not change it.
                         </p>
                       )}
@@ -580,7 +580,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                                 className="w-full text-left px-2 py-2 rounded-lg hover:bg-[#12151A] cursor-pointer disabled:opacity-40"
                               >
                                 <p className="text-[11px] text-[#F7F7F8] truncate">{o.title}</p>
-                                <p className="text-[9px] text-[#F7F7F8]/40">
+                                <p className="text-[9px] text-[#F7F7F8]/60">
                                   {o.type}
                                 </p>
                               </button>
@@ -599,7 +599,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                   {/* TARGET */}
                   {campaignCircle.status === 'loading' && (
                     <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-4 space-y-1">
-                      <h3 className="text-[9px] text-[#F7F7F8]/40">
+                      <h3 className="text-[9px] text-[#F7F7F8]/60">
                         Target
                       </h3>
                       <p className="text-[11px] text-[#F7F7F8]/60">Loading target...</p>
@@ -608,7 +608,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
 
                   {campaignCircle.status === 'error' && (
                     <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-4 space-y-1">
-                      <h3 className="text-[9px] text-[#F7F7F8]/40">
+                      <h3 className="text-[9px] text-[#F7F7F8]/60">
                         Target
                       </h3>
                       <p className="text-[11px] text-[#F7F7F8]">Target unavailable.</p>
@@ -625,7 +625,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                       campaignCircle.data.circle.targetValue > 0
                     ) && (
                       <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-4 space-y-1">
-                        <h3 className="text-[9px] text-[#F7F7F8]/40">
+                        <h3 className="text-[9px] text-[#F7F7F8]/60">
                           Target
                         </h3>
                         <p className="text-[11px] text-[#F7F7F8]">
@@ -642,7 +642,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                     campaignCircle.data.circle.targetValue !== null &&
                     campaignCircle.data.circle.targetValue > 0 && (
                       <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-4 space-y-2">
-                        <h3 className="text-[9px] text-[#F7F7F8]/40">
+                        <h3 className="text-[9px] text-[#F7F7F8]/60">
                           Target
                         </h3>
                         <p className="text-xs text-[#F7F7F8]">
@@ -652,7 +652,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                           <span className="text-sm font-extrabold text-[#F7F7F8]">
                             {campaignCircle.data.circle.currentValue.toLocaleString()}
                           </span>
-                          <span className="text-[10px] text-[#F7F7F8]/40">
+                          <span className="text-[10px] text-[#F7F7F8]/60">
                             of {campaignCircle.data.circle.targetValue.toLocaleString()}
                           </span>
                         </div>
@@ -669,7 +669,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                             }}
                           />
                         </div>
-                        <p className="text-[9px] text-[#F7F7F8]/40 leading-snug">
+                        <p className="text-[9px] text-[#F7F7F8]/60 leading-snug">
                           Progress comes from settled transactions in
                           {' '}{campaignCircle.data.circle.name}, not from this campaign.
                         </p>
@@ -679,7 +679,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                   {/* POST AN UPDATE (T3): the organiser's words land on the
                       public page — the loop supporters read. */}
                   <div className="space-y-2">
-                    <h3 className="text-[9px] text-[#F7F7F8]/40">
+                    <h3 className="text-[9px] text-[#F7F7F8]/60">
                       Post an update
                     </h3>
                     <input
@@ -710,7 +710,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
 
                   {/* REGISTRATIONS */}
                   <div className="space-y-2">
-                    <h3 className="text-[9px] text-[#F7F7F8]/40">
+                    <h3 className="text-[9px] text-[#F7F7F8]/60">
                       Registrations
                     </h3>
 
@@ -754,7 +754,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                             <p className="text-xs text-[#F7F7F8] truncate">
                               {r.name || r.attendeeRef}
                             </p>
-                            <p className="text-[9px] text-[#F7F7F8]/40 mt-0.5">
+                            <p className="text-[9px] text-[#F7F7F8]/60 mt-0.5">
                               {r.status.replace('_', ' ')}
                             </p>
                           </div>
@@ -888,7 +888,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
               {createStep === 'form' && (
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-[9px] text-[#F7F7F8]/40 mb-1">What is it</label>
+                    <label className="block text-[9px] text-[#F7F7F8]/60 mb-1">What is it</label>
                     <div className="flex flex-wrap gap-1.5">
                       {(['popup', 'session', 'drop', 'event'] as ApiCampaignType[]).map((t) => (
                         <button
@@ -907,7 +907,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                   </div>
 
                   <div>
-                    <label className="block text-[9px] text-[#F7F7F8]/40 mb-1">Title</label>
+                    <label className="block text-[9px] text-[#F7F7F8]/60 mb-1">Title</label>
                     <input
                       value={draft.title}
                       onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
@@ -917,7 +917,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                   </div>
 
                   <div>
-                    <label className="block text-[9px] text-[#F7F7F8]/40 mb-1">Description</label>
+                    <label className="block text-[9px] text-[#F7F7F8]/60 mb-1">Description</label>
                     <textarea
                       value={draft.description}
                       onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
@@ -928,7 +928,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                   </div>
 
                   <div>
-                    <label className="block text-[9px] text-[#F7F7F8]/40 mb-1">
+                    <label className="block text-[9px] text-[#F7F7F8]/60 mb-1">
                       What people get
                     </label>
                     {objectPicker.selected ? (
@@ -982,14 +982,14 @@ export function OverlaysShell(props: OverlaysShellProps) {
                               className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-[#12151A] cursor-pointer"
                             >
                               <p className="text-[11px] text-[#F7F7F8] truncate">{o.title}</p>
-                              <p className="text-[9px] text-[#F7F7F8]/40">
+                              <p className="text-[9px] text-[#F7F7F8]/60">
                                 {o.type}
                               </p>
                             </button>
                           ))}
                         <button
                           onClick={() => setObjectPicker((p) => ({ ...p, open: false }))}
-                          className="w-full text-[10px] text-[#F7F7F8]/40 underline underline-offset-2 cursor-pointer py-1"
+                          className="w-full text-[10px] text-[#F7F7F8]/60 underline underline-offset-2 cursor-pointer py-1"
                         >
                           Cancel
                         </button>
@@ -998,7 +998,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                   </div>
 
                   <div>
-                    <label className="block text-[9px] text-[#F7F7F8]/40 mb-1">When</label>
+                    <label className="block text-[9px] text-[#F7F7F8]/60 mb-1">When</label>
                     <input
                       type="datetime-local"
                       value={draft.startsAt}
@@ -1008,7 +1008,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                   </div>
 
                   <div>
-                    <label className="block text-[9px] text-[#F7F7F8]/40 mb-1">Where</label>
+                    <label className="block text-[9px] text-[#F7F7F8]/60 mb-1">Where</label>
                     <input
                       value={draft.location}
                       onChange={(e) => setDraft((d) => ({ ...d, location: e.target.value }))}
@@ -1019,7 +1019,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[9px] text-[#F7F7F8]/40 mb-1">Spots</label>
+                      <label className="block text-[9px] text-[#F7F7F8]/60 mb-1">Spots</label>
                       <input
                         inputMode="numeric"
                         value={draft.capacity}
@@ -1029,7 +1029,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                       />
                     </div>
                     <div>
-                      <label className="block text-[9px] text-[#F7F7F8]/40 mb-1">Price (KES)</label>
+                      <label className="block text-[9px] text-[#F7F7F8]/60 mb-1">Price (KES)</label>
                       <input
                         inputMode="numeric"
                         value={draft.price}
@@ -1048,7 +1048,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                     This is what people will see. Nothing is public yet.
                   </p>
                   <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-4 space-y-1.5">
-                    <p className="text-[9px] text-[#F7F7F8]/40">{draft.type}</p>
+                    <p className="text-[9px] text-[#F7F7F8]/60">{draft.type}</p>
                     <p className="text-sm font-extrabold text-[#F7F7F8]">{draft.title}</p>
                     {draft.description && (
                       <p className="text-[11px] text-[#F7F7F8]/60 leading-snug">{draft.description}</p>
@@ -1103,7 +1103,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                   })()}
                   <button
                     onClick={() => { setCreateStep('closed'); openCampaign(publishedCampaign.id); }}
-                    className="w-full text-[10px] text-[#F7F7F8]/40 underline underline-offset-2 cursor-pointer"
+                    className="w-full text-[10px] text-[#F7F7F8]/60 underline underline-offset-2 cursor-pointer"
                   >
                     Open campaign
                   </button>
@@ -1206,7 +1206,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                     }}
                     rows={5}
                     placeholder="Paste or type anything (e.g. news update, meetup announcement, listing...)"
-                    className="w-full bg-[#12151A] border border-[#222630] rounded-xl px-3 py-2.5 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/40 outline-none focus:border-[#22E6E0] resize-none"
+                    className="w-full bg-[#12151A] border border-[#222630] rounded-xl px-3 py-2.5 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/60 outline-none focus:border-[#22E6E0] resize-none"
                   />
 
                   {!capturePreview && (
@@ -1215,7 +1215,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                       disabled={captureText.trim() === ''}
                       className={`w-full py-3 rounded-xl font-extrabold text-xs transition ${
                         captureText.trim() === ''
-                          ? 'bg-[#12151A] text-[#0D0F12]/40 cursor-not-allowed border border-[#222630]'
+                          ? 'bg-[#12151A] text-[#F7F7F8]/60 cursor-not-allowed border border-[#222630]'
                           : 'bg-[#FF5A1F] text-[#0D0F12] cursor-pointer hover:bg-[#000000]'
                       }`}
                     >
@@ -1235,7 +1235,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                           <p className="text-[10px] text-[#F7F7F8]/60 mt-1">
                             {capturePreview.rejectionReason}
                           </p>
-                          <p className="text-[10px] text-[#F7F7F8]/40 mt-1">
+                          <p className="text-[10px] text-[#F7F7F8]/60 mt-1">
                             Nothing was saved.
                           </p>
                           <button
@@ -1281,7 +1281,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                             </p>
                           )}
 
-                          <p className="text-[9px] text-[#F7F7F8]/40">
+                          <p className="text-[9px] text-[#F7F7F8]/60">
                             Unverified. Saved as your own capture.
                           </p>
                         </div>
@@ -1331,7 +1331,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                           className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition cursor-pointer border ${
                             directType === typeVal
                               ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]'
-                              : 'bg-[#171A20] text-[#0D0F12]/70 border-[#222630] hover:text-[#0D0F12]'
+                              : 'bg-[#171A20] text-[#F7F7F8]/70 border-[#222630] hover:text-[#F7F7F8]'
                           }`}
                         >
                           {label}
@@ -1349,7 +1349,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                       value={directTitle}
                       onChange={(e) => setDirectTitle(e.target.value)}
                       placeholder="e.g. Community Tech Meetup this Saturday"
-                      className="w-full bg-[#12151A] border border-[#222630] rounded-xl px-3 py-2 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/40 outline-none focus:border-[#22E6E0]"
+                      className="w-full bg-[#12151A] border border-[#222630] rounded-xl px-3 py-2 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/60 outline-none focus:border-[#22E6E0]"
                     />
                   </div>
 
@@ -1362,7 +1362,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                       onChange={(e) => setCaptureText(e.target.value)}
                       rows={4}
                       placeholder="Write your news or post details here..."
-                      className="w-full bg-[#12151A] border border-[#222630] rounded-xl px-3 py-2 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/40 outline-none focus:border-[#22E6E0] resize-none"
+                      className="w-full bg-[#12151A] border border-[#222630] rounded-xl px-3 py-2 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/60 outline-none focus:border-[#22E6E0] resize-none"
                     />
                   </div>
 
@@ -1375,7 +1375,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                       value={directLocation}
                       onChange={(e) => setDirectLocation(e.target.value)}
                       placeholder="e.g. Alchemist Bar, Westlands, Nairobi"
-                      className="w-full bg-[#12151A] border border-[#222630] rounded-xl px-3 py-2 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/40 outline-none focus:border-[#22E6E0]"
+                      className="w-full bg-[#12151A] border border-[#222630] rounded-xl px-3 py-2 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/60 outline-none focus:border-[#22E6E0]"
                     />
                   </div>
 
@@ -1393,7 +1393,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                       onClick={() => void handleDirectPost()}
                       className={`flex-[2] py-2.5 rounded-xl font-extrabold text-[11px] transition ${
                         !directTitle.trim() || !captureText.trim()
-                          ? 'bg-[#222630] text-[#0D0F12]/40 cursor-not-allowed'
+                          ? 'bg-[#222630] text-[#F7F7F8]/60 cursor-not-allowed'
                           : 'bg-[#FF5A1F] text-[#0D0F12] cursor-pointer hover:bg-[#000000]'
                       }`}
                     >
@@ -1759,12 +1759,12 @@ export function OverlaysShell(props: OverlaysShellProps) {
                             From {subject.sourceNames.slice(0, 3).join(', ')}
                           </span>
                           {sourceKind && (
-                            <span className="shrink-0 rounded-full bg-[#12151A] border border-[#222630] px-1.5 py-0.5 text-[8px] font-bold text-[#F7F7F8]/50">
+                            <span className="shrink-0 rounded-full bg-[#12151A] border border-[#222630] px-1.5 py-0.5 text-[8px] font-bold text-[#F7F7F8]/70">
                               {sourceKind}
                             </span>
                           )}
                           {sourceChip && sourceChip !== `Source · ${subject.sourceNames[0]}` && (
-                            <span className="shrink-0 text-[9px] font-bold text-[#F7F7F8]/40">
+                            <span className="shrink-0 text-[9px] font-bold text-[#F7F7F8]/60">
                               {sourceChip}
                             </span>
                           )}
@@ -1777,7 +1777,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                           <span className="text-[10px] font-bold text-[#F7F7F8]/70">
                             {published}
                           </span>
-                          <span className="text-[10px] text-[#F7F7F8]/40">
+                          <span className="text-[10px] text-[#F7F7F8]/60">
                             {new Date(subject.publishedAt ?? subject.createdAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })}
                           </span>
                         </div>
@@ -1789,7 +1789,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                           <span className="text-[10px] font-bold text-[#F7F7F8]/70">
                             {fresh.label}
                           </span>
-                          <span className="text-[10px] text-[#F7F7F8]/40">
+                          <span className="text-[10px] text-[#F7F7F8]/60">
                             checked {fresh.verifiedOn}
                           </span>
                         </div>
@@ -1830,7 +1830,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                         </p>
                       )}
 
-                      <p className="text-[10px] text-[#F7F7F8]/40 leading-snug">
+                      <p className="text-[10px] text-[#F7F7F8]/60 leading-snug">
                         Verification records when this was last checked. It is
                         not a guarantee of accuracy.
                       </p>
@@ -1859,7 +1859,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
 
                   return (
                     <div className="space-y-2">
-                      <p className="text-[10px] text-[#F7F7F8]/40">
+                      <p className="text-[10px] text-[#F7F7F8]/60">
                         You can
                       </p>
                       <div className="flex flex-wrap gap-2">
@@ -2020,7 +2020,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                     </button>
                     <button
                       onClick={() => setReportForObject(reportForObject === selectedObjectForDetail.id ? null : selectedObjectForDetail.id)}
-                      className="flex-1 min-w-fit py-2.5 rounded-xl bg-[#12151A] border border-[#222630] text-[#F7F7F8]/50 font-bold text-[11px] cursor-pointer"
+                      className="flex-1 min-w-fit py-2.5 rounded-xl bg-[#12151A] border border-[#222630] text-[#F7F7F8]/70 font-bold text-[11px] cursor-pointer"
                     >
                       Report
                     </button>
@@ -2041,7 +2041,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                   )}
 
                   {watchedIds.has(selectedObjectForDetail.id) && (
-                    <p className="text-[10px] text-[#F7F7F8]/40 text-center">
+                    <p className="text-[10px] text-[#F7F7F8]/60 text-center">
                       Brief will track changes to this record. Alerts are not live yet.
                     </p>
                   )}
@@ -2063,7 +2063,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                     if (buttons.length === 0) return null;
                     return (
                       <div className="border-t border-[#222630]/70 pt-3 mt-1">
-                        <p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/40 mb-2">
+                        <p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/60 mb-2">
                           Tune this in your Brief
                         </p>
                         <div className="flex flex-wrap gap-1.5">
@@ -2074,7 +2074,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                               className={`px-2.5 py-1.5 rounded-full border text-[10px] font-bold cursor-pointer transition ${
                                 b.active
                                   ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]'
-                                  : 'bg-[#12151A] text-[#0D0F12]/60 border-[#222630] hover:border-[#22E6E0]'
+                                  : 'bg-[#12151A] text-[#F7F7F8]/70 border-[#222630] hover:border-[#22E6E0]'
                               }`}
                             >
                               {b.active ? `✓ ${b.label}` : b.label}
@@ -2100,7 +2100,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
 
                   return (
                     <details className="group">
-                      <summary className="text-[10px] text-[#F7F7F8]/40 cursor-pointer list-none">
+                      <summary className="text-[10px] text-[#F7F7F8]/60 cursor-pointer list-none">
                         Why this appeared
                       </summary>
                       <div className="mt-2 space-y-1">
@@ -2273,7 +2273,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                                       {dest.title}
                                     </span>
                                   </div>
-                                  <span className="text-[9px] text-[#F7F7F8]/40">
+                                  <span className="text-[9px] text-[#F7F7F8]/60">
                                     {DESTINATION_STATE_LABELS[state]}
                                     {dest.locationName ? ` - ${dest.locationName}` : ''}
                                   </span>
@@ -2300,7 +2300,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                                   <span className="block text-xs text-[#F7F7F8] truncate">
                                     {item.title}
                                   </span>
-                                  <span className="block text-[9px] text-[#F7F7F8]/40">
+                                  <span className="block text-[9px] text-[#F7F7F8]/60">
                                     {item.category}
                                   </span>
                                 </span>

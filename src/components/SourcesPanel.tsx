@@ -79,7 +79,7 @@ export function SourcesPanel({
           onChange={(e) => setBriefItText(e.target.value)}
           rows={4}
           placeholder="Saturday popup at Kilimani Studio. 12 vendors. KES 300 entry. 4PM-10PM."
-          className="w-full mt-2 bg-[#171A20] border border-[#222630] rounded-xl p-3 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/40"
+          className="w-full mt-2 bg-[#171A20] border border-[#222630] rounded-xl p-3 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/60"
         />
         <div className="flex items-center gap-2 mt-2">
           <button
@@ -131,7 +131,7 @@ export function SourcesPanel({
                 <div className="mt-1.5 space-y-1">
                   {Object.entries(briefItPreview.fields ?? {}).map(([k, v]) => (
                     <div key={k} className="flex items-baseline justify-between gap-3">
-                      <span className="text-[10px] text-[#F7F7F8]/40">{k}</span>
+                      <span className="text-[10px] text-[#F7F7F8]/60">{k}</span>
                       <span className="text-[11px] text-[#F7F7F8] text-right truncate">
                         {Array.isArray(v) ? v.join(', ') : String(v)}
                       </span>
@@ -150,7 +150,7 @@ export function SourcesPanel({
                     ))}
                   </div>
                 )}
-                <p className="text-[9px] text-[#F7F7F8]/40 mt-2">
+                <p className="text-[9px] text-[#F7F7F8]/60 mt-2">
                   Extraction confidence {Math.round((briefItPreview.confidence ?? 0) * 100)}%.
                   Nothing has been saved yet.
                 </p>
@@ -221,7 +221,7 @@ export function SourcesPanel({
             </div>
 
             {connectorStatus.stats && (
-              <p className="text-[9px] text-[#F7F7F8]/40 mt-2">
+              <p className="text-[9px] text-[#F7F7F8]/60 mt-2">
                 {connectorStatus.stats.rawItems} raw items -{' '}
                 {connectorStatus.stats.objects} objects -{' '}
                 {connectorStatus.stats.relationships} links -{' '}
@@ -238,7 +238,7 @@ export function SourcesPanel({
                   {connectorStatus.liveSources.map((src: any) => (
                     <div key={src.id} className="flex items-baseline justify-between gap-3">
                       <span className="text-[11px] text-[#F7F7F8] truncate">{src.name}</span>
-                      <span className="text-[9px] text-[#F7F7F8]/40 shrink-0">
+                      <span className="text-[9px] text-[#F7F7F8]/60 shrink-0">
                         {src.platform} - {src.itemsProcessed} processed
                         {src.objectsCreated > 0 ? ` - ${src.objectsCreated} objects` : ''}
                       </span>
@@ -270,7 +270,7 @@ export function SourcesPanel({
                 <p className="text-sm font-extrabold text-[#F7F7F8]">
                   {source.name}
                 </p>
-                <p className="text-[9px] text-[#F7F7F8]/40 mt-0.5">
+                <p className="text-[9px] text-[#F7F7F8]/60 mt-0.5">
                   {source.type}
                 </p>
               </div>
@@ -286,11 +286,11 @@ export function SourcesPanel({
             )}
 
             <div className="flex items-center gap-4 pt-1">
-              <span className="text-[9px] text-[#F7F7F8]/40">
+              <span className="text-[9px] text-[#F7F7F8]/60">
                 {source.ingestionCount} received
               </span>
               {source.lastSuccessfulIngestionAt && (
-                <span className="text-[9px] text-[#F7F7F8]/40">
+                <span className="text-[9px] text-[#F7F7F8]/60">
                   last {source.lastSuccessfulIngestionAt.slice(0, 10)}
                 </span>
               )}

@@ -22,7 +22,7 @@ const STATUS_STYLE: Record<string, string> = {
   active: 'bg-[#12151A] text-[#F7F7F8]',
   paused: 'bg-[#12151A] text-[#F7F7F8]',
   sold_out: 'bg-[#12151A] text-[#F7F7F8]',
-  archived: 'bg-[#222630] text-[#F7F7F8]/40'
+  archived: 'bg-[#222630] text-[#F7F7F8]/60'
 };
 
 // Which moves the UI offers from each state. Mirrors the server's table; the
@@ -78,7 +78,7 @@ export function VendorPanel({
     return (
       <div className="space-y-3">
         <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-4 space-y-3">
-          <h4 className="text-[11px] font-extrabold text-[#F7F7F8]/40">
+          <h4 className="text-[11px] font-extrabold text-[#F7F7F8]/60">
             Start selling
           </h4>
           <p className="text-xs text-[#F7F7F8]/60">
@@ -123,7 +123,7 @@ export function VendorPanel({
         <h4 className="text-sm font-extrabold text-[#F7F7F8]">{vendor.displayName}</h4>
         {vendor.description && <p className="text-xs text-[#F7F7F8]/60">{vendor.description}</p>}
         {vendor.verification.facts.map((f) => (
-          <p key={f.kind} className="text-[10px] text-[#F7F7F8]/40">
+          <p key={f.kind} className="text-[10px] text-[#F7F7F8]/60">
             {f.label}
           </p>
         ))}
@@ -135,13 +135,13 @@ export function VendorPanel({
           like a balance they could withdraw. */}
       {earnings && earnings.orderCount > 0 && (
         <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-4 space-y-1">
-          <h4 className="text-[11px] font-extrabold text-[#F7F7F8]/40">
+          <h4 className="text-[11px] font-extrabold text-[#F7F7F8]/60">
             Settled earnings
           </h4>
           <p className="text-lg font-extrabold text-[#F7F7F8]">
             {money(earnings.net, earnings.currency)}
           </p>
-          <p className="text-[10px] text-[#F7F7F8]/40">
+          <p className="text-[10px] text-[#F7F7F8]/60">
             From {earnings.orderCount} settled order{earnings.orderCount === 1 ? '' : 's'} -{' '}
             {money(earnings.gross, earnings.currency)} less {money(earnings.commission, earnings.currency)}{' '}
             platform commission
@@ -155,7 +155,7 @@ export function VendorPanel({
 
       {/* --- new listing ---------------------------------------------------- */}
       <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-4 space-y-2">
-        <h4 className="text-[11px] font-extrabold text-[#F7F7F8]/40">
+        <h4 className="text-[11px] font-extrabold text-[#F7F7F8]/60">
           New listing
         </h4>
         <input
@@ -211,7 +211,7 @@ export function VendorPanel({
         >
           Create listing
         </button>
-        <p className="text-[10px] text-[#F7F7F8]/40">
+        <p className="text-[10px] text-[#F7F7F8]/60">
           New listings start as a draft. Publish when you are ready to take orders.
         </p>
         {notice && <p className="text-[10px] text-[#F7F7F8]">{notice}</p>}
@@ -219,7 +219,7 @@ export function VendorPanel({
 
       {/* --- my listings ----------------------------------------------------- */}
       <div className="space-y-2">
-        <h4 className="text-[11px] font-extrabold text-[#F7F7F8]/40">
+        <h4 className="text-[11px] font-extrabold text-[#F7F7F8]/60">
           My listings
         </h4>
         {listings.length === 0 ? (
@@ -230,7 +230,7 @@ export function VendorPanel({
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-xs font-extrabold text-[#F7F7F8]">{l.title}</p>
-                  <p className="text-[10px] text-[#F7F7F8]/40">
+                  <p className="text-[10px] text-[#F7F7F8]/60">
                     {money(l.price, l.currency)}
                     {l.quantityAvailable !== null ? ` - ${l.quantityAvailable} left` : ''}
                   </p>
@@ -273,7 +273,7 @@ export function VendorPanel({
 
       {/* --- orders received -------------------------------------------------- */}
       <div className="space-y-2">
-        <h4 className="text-[11px] font-extrabold text-[#F7F7F8]/40">
+        <h4 className="text-[11px] font-extrabold text-[#F7F7F8]/60">
           Orders received{pendingOrders.length > 0 ? ` (${pendingOrders.length} to fulfil)` : ''}
         </h4>
         {orders.length === 0 ? (

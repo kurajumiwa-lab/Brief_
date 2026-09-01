@@ -50,7 +50,7 @@ export function AwaitingPayment({
         <p className="text-[11px] font-extrabold text-[#F7F7F8]">
           {held.length} awaiting payment
         </p>
-        <p className="text-[9px] text-[#F7F7F8]/40">
+        <p className="text-[9px] text-[#F7F7F8]/60">
           Spot held
         </p>
       </div>
@@ -67,7 +67,7 @@ export function AwaitingPayment({
           <div className="min-w-0">
             <p className="text-xs text-[#F7F7F8] truncate">{r.name || r.attendeeRef}</p>
             {r.contact && (
-              <p className="text-[9px] text-[#F7F7F8]/40 truncate mt-0.5">{r.contact}</p>
+              <p className="text-[9px] text-[#F7F7F8]/60 truncate mt-0.5">{r.contact}</p>
             )}
           </div>
           <button

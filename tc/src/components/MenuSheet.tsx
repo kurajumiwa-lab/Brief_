@@ -189,7 +189,7 @@ function LocalCard({ onSelect }: { onSelect: (target: MenuTarget) => void }) {
           <div className="grid grid-cols-2 gap-2">
             {standing.map((s) => (
               <div key={s.label} className="rounded-xl bg-[#171A20] px-2.5 py-2">
-                <p className="text-[9.5px] font-bold uppercase tracking-[0.1em] text-[#F7F7F8]/50">{s.label}</p>
+                <p className="text-[9.5px] font-bold uppercase tracking-[0.1em] text-[#F7F7F8]/70">{s.label}</p>
                 <p className="text-[12px] font-extrabold text-[#F7F7F8] mt-0.5 truncate">{s.value}</p>
               </div>
             ))}
@@ -219,7 +219,7 @@ function LocalCard({ onSelect }: { onSelect: (target: MenuTarget) => void }) {
               Sign out
             </button>
           )}
-          <p className="text-[9.5px] text-[#F7F7F8]/45 leading-snug">
+          <p className="text-[9.5px] text-[#F7F7F8]/60 leading-snug">
             Standing is derived from what actually happened — settled money, arrivals, views. Nothing here is decorative.
           </p>
         </div>
@@ -288,14 +288,14 @@ function QuickActions({ onSelect, unread }: { onSelect: (target: MenuTarget) => 
           </span>
           <span className="flex-1 min-w-0">
             <span className="block text-[12.5px] font-extrabold text-[#F7F7F8] leading-tight">{label}</span>
-            <span className="block text-[9.5px] text-[#F7F7F8]/50 truncate">{detail}</span>
+            <span className="block text-[9.5px] text-[#F7F7F8]/70 truncate">{detail}</span>
           </span>
           {rowUnread !== undefined && unread > 0 && (
             <span className="shrink-0 rounded-full bg-[#FF5D6C] px-1.5 py-0.5 text-[9px] font-extrabold text-white">
               {unread > 99 ? '99+' : unread}
             </span>
           )}
-          <ArrowRight className="h-4 w-4 text-[#F7F7F8]/30 shrink-0" aria-hidden="true" />
+          <ArrowRight className="h-4 w-4 text-[#F7F7F8]/60 shrink-0" aria-hidden="true" />
         </button>
       ))}
     </section>
@@ -350,7 +350,7 @@ function RegionGallery({
 // --- The page ----------------------------------------------------------------
 
 const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-  <p className="px-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/45">{children}</p>
+  <p className="px-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/60">{children}</p>
 );
 
 export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocation, unread = 0, canOperate = false }: MenuSheetProps) {
@@ -394,7 +394,7 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
       <div className="h-2/3 max-h-[calc(100vh*0.6667)] bg-[#1D2027] border-t border-[#222630] rounded-t-[28px] shadow-2xl flex flex-col overflow-hidden">
       <header className="shrink-0 flex items-start justify-between gap-3 px-4 pt-5 pb-3 sm:max-w-3xl sm:w-full sm:mx-auto">
         <div>
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#F7F7F8]/45">Menu</p>
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#F7F7F8]/60">Menu</p>
           <h1 className="mt-0.5 text-[19px] sm:text-[21px] font-black tracking-tight text-[#F7F7F8]">
             Your shortcuts, tools and account
           </h1>
@@ -439,13 +439,13 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
             </span>
             <span className="flex-1 min-w-0 text-left">
               <span className="block text-[12.5px] font-extrabold text-[#F7F7F8] leading-tight">Operate</span>
-              <span className="block text-[9.5px] text-[#F7F7F8]/50 truncate">The operator desk — health, queues, commerce, audit</span>
+              <span className="block text-[9.5px] text-[#F7F7F8]/70 truncate">The operator desk — health, queues, commerce, audit</span>
             </span>
-            <ArrowRight className="h-4 w-4 text-[#F7F7F8]/30 shrink-0" aria-hidden="true" />
+            <ArrowRight className="h-4 w-4 text-[#F7F7F8]/60 shrink-0" aria-hidden="true" />
           </button>
         )}
 
-        <p className="flex items-center gap-1.5 px-1 pt-1 text-[9.5px] text-[#F7F7F8]/40">
+        <p className="flex items-center gap-1.5 px-1 pt-1 text-[9.5px] text-[#F7F7F8]/60">
           <Lock className="h-3 w-3 shrink-0" aria-hidden="true" />
           Coming later — Courses · Data desk · Premium
         </p>

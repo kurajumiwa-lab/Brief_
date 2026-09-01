@@ -239,7 +239,7 @@ export function Onboarding({
           <button
             type="button"
             onClick={() => void finish(true)}
-            className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/45 hover:text-[#F7F7F8] cursor-pointer"
+            className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/60 hover:text-[#F7F7F8] cursor-pointer"
           >
             {step === 1 ? 'Later' : 'Skip'}
           </button>
@@ -249,7 +249,7 @@ export function Onboarding({
         {step === 1 && (
           <div className="px-5 pb-5 pt-3 space-y-3.5">
             <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#F7F7F8]/45">Step 1 of 3</p>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#F7F7F8]/60">Step 1 of 3</p>
               <h2 className="mt-1 font-display text-[22px] font-semibold leading-tight tracking-tight text-[#F7F7F8]">
                 What is happening around you, kept in one place.
               </h2>
@@ -261,7 +261,7 @@ export function Onboarding({
             {clientId && <div ref={googleSlot} className="flex justify-center" data-testid="google-button" />}
 
             {clientId && !googleReady && (
-              <p className="text-center text-[10px] text-[#F7F7F8]/45">Loading Google…</p>
+              <p className="text-center text-[10px] text-[#F7F7F8]/60">Loading Google…</p>
             )}
 
             {!clientId && (
@@ -342,7 +342,7 @@ export function Onboarding({
 
             {error && <p className="text-[10.5px] font-bold text-[#FF5D6C]">{error}</p>}
 
-            <p className="flex items-start gap-1.5 text-[10px] leading-snug text-[#F7F7F8]/45">
+            <p className="flex items-start gap-1.5 text-[10px] leading-snug text-[#F7F7F8]/60">
               <ShieldCheck className="mt-[1px] h-3 w-3 shrink-0" />
               <span>
                 Telegram is not required to be a member. If you open Brief inside Telegram it signs you in there too —
@@ -356,7 +356,7 @@ export function Onboarding({
         {step === 2 && (
           <div className="px-5 pb-5 pt-3 space-y-3.5">
             <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#F7F7F8]/45">Step 2 of 3</p>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#F7F7F8]/60">Step 2 of 3</p>
               <h2 className="mt-1 font-display text-[20px] font-semibold leading-tight tracking-tight text-[#F7F7F8]">
                 What brought you here?
               </h2>
@@ -397,7 +397,7 @@ export function Onboarding({
         {step === 3 && (
           <div className="px-5 pb-5 pt-3 space-y-3.5">
             <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#F7F7F8]/45">Step 3 of 3</p>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#F7F7F8]/60">Step 3 of 3</p>
               <h2 className="mt-1 font-display text-[20px] font-semibold leading-tight tracking-tight text-[#F7F7F8]">
                 Where should Brief look?
               </h2>
@@ -444,7 +444,7 @@ export function Onboarding({
             >
               <Sparkles className="h-3.5 w-3.5" /> Show me what is around
             </button>
-            <p className="flex items-start gap-1.5 text-[10px] leading-snug text-[#F7F7F8]/45">
+            <p className="flex items-start gap-1.5 text-[10px] leading-snug text-[#F7F7F8]/60">
               <Check className="mt-[1px] h-3 w-3 shrink-0" />
               <span>
                 Hosting, selling, banners and the money desk are not set up now. They open as you go, once there is

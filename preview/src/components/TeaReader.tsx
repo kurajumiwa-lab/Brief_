@@ -100,7 +100,7 @@ export function TeaReader({ slug, onClose }: { slug: string; onClose: () => void
                     <p className="text-[12px] font-bold text-[#F7F7F8]">
                       {likeState.count} like{likeState.count === 1 ? '' : 's'}
                     </p>
-                    <p className="text-[10px] text-[#F7F7F8]/50">The public rating — recorded by readers, derived from real rows.</p>
+                    <p className="text-[10px] text-[#F7F7F8]/70">The public rating — recorded by readers, derived from real rows.</p>
                   </div>
                   <button
                     type="button"

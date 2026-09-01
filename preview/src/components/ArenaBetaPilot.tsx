@@ -90,13 +90,13 @@ function Metric({
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-[10px] font-bold text-[#F7F7F8]/60">{label}</span>
         <span className="font-mono text-[12px] font-extrabold text-[#F7F7F8]">
-          {known ? value : '—'} <span className="font-sans text-[9px] font-bold text-[#F7F7F8]/40">/ {target}</span>
+          {known ? value : '—'} <span className="font-sans text-[9px] font-bold text-[#F7F7F8]/60">/ {target}</span>
         </span>
       </div>
       <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#1D2027]">
         <div className="h-full rounded-full bg-[#FF5A1F] transition-all" style={{ width: `${pct}%` }} />
       </div>
-      <p className="mt-1.5 text-[9px] text-[#F7F7F8]/40">pilot target</p>
+      <p className="mt-1.5 text-[9px] text-[#F7F7F8]/60">pilot target</p>
     </div>
   );
 }
@@ -174,7 +174,7 @@ export function ArenaBetaPilot({
                 {copied ? 'Invite copied' : 'Copy invite'}
               </button>
             </div>
-            <p className="mt-3 text-[10px] text-[#F7F7F8]/50">
+            <p className="mt-3 text-[10px] text-[#F7F7F8]/70">
               Free entry. No cash prize or payment rail is promised yet. The first job is proving that players show up and play.
             </p>
           </div>
@@ -212,7 +212,7 @@ export function ArenaBetaPilot({
             <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#F7F7F8]">Pilot scoreboard</p>
             <h2 className="mt-1 text-[17px] font-extrabold tracking-[-0.02em]">Measure matches, not traffic.</h2>
           </div>
-          <span className="text-[10px] text-[#F7F7F8]/45">
+          <span className="text-[10px] text-[#F7F7F8]/60">
             {summary ? 'Live from Arena records' : 'Waiting for live records'}
           </span>
         </div>
@@ -223,7 +223,7 @@ export function ArenaBetaPilot({
           <Metric label="2+ matches" value={summary?.actual.playersWithTwoMatches ?? null} target={summary?.targets.playersWithTwoMatches ?? 20} />
         </div>
         {!summary && (
-          <p className="mt-3 text-[10px] leading-snug text-[#F7F7F8]/50">
+          <p className="mt-3 text-[10px] leading-snug text-[#F7F7F8]/70">
             The test plan is ready, but the live counter is unavailable. We will not fill it with a guessed population.
           </p>
         )}
@@ -267,7 +267,7 @@ export function ArenaBetaPilot({
             })}
           </div>
           <div className="mt-3 rounded-xl bg-[#1D2027] p-3">
-            <p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/50">Message to test</p>
+            <p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/70">Message to test</p>
             <p className="mt-1 text-[12px] font-extrabold text-[#F7F7F8]">“{selected.message}”</p>
           </div>
           {joined && (
@@ -372,7 +372,7 @@ export function ArenaBetaPilot({
         </div>
       </div>
 
-      <p className="flex items-start gap-2 px-1 text-[10px] leading-snug text-[#F7F7F8]/50">
+      <p className="flex items-start gap-2 px-1 text-[10px] leading-snug text-[#F7F7F8]/70">
         <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#F7F7F8]" />
         Trust rule: profiles, match history, community rules, and anti-cheating expectations come before prizes or paid competition.
       </p>

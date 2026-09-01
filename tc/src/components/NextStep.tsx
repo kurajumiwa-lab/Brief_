@@ -40,7 +40,7 @@ export function NextStep({ ladder, onAct, onDismiss, compact = false }: NextStep
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-[#F7F7F8]/45">
+          <p className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-[#F7F7F8]/60">
             Step {done + 1} of {total}
           </p>
           <h3 className="mt-0.5 text-[14px] font-extrabold tracking-tight text-[#F7F7F8]">{next.label}</h3>
@@ -50,7 +50,7 @@ export function NextStep({ ladder, onAct, onDismiss, compact = false }: NextStep
           <button
             type="button"
             onClick={onDismiss}
-            className="shrink-0 text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/40 hover:text-[#F7F7F8] cursor-pointer"
+            className="shrink-0 text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/60 hover:text-[#F7F7F8] cursor-pointer"
           >
             Hide
           </button>
@@ -76,14 +76,14 @@ export function NextStep({ ladder, onAct, onDismiss, compact = false }: NextStep
           {next.cta} <ArrowRight className="h-3 w-3" />
         </button>
         {nextService && (
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#F7F7F8]/50">
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#F7F7F8]/70">
             <Lock className="h-3 w-3" /> opens {nextService.label}
           </span>
         )}
       </div>
 
       {!compact && ladder.reached.length > 0 && (
-        <p className="mt-2 flex items-center gap-1 text-[10px] text-[#F7F7F8]/45">
+        <p className="mt-2 flex items-center gap-1 text-[10px] text-[#F7F7F8]/60">
           <Check className="h-3 w-3" />
           {ladder.rungs.filter((r) => r.reached).slice(-1)[0]?.how ?? 'Done so far'}
         </p>

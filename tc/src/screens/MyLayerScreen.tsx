@@ -301,7 +301,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                 <h1 className="text-lg font-extrabold text-[#F7F7F8] tracking-tight">
                   Your Layer — Things you've kept
                 </h1>
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#F7F7F8]/50 mt-0.5">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#F7F7F8]/70 mt-0.5">
                   {activeSavedBundle.hint}
                 </p>
               </div>
@@ -332,7 +332,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                   className={`shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition cursor-pointer ${
                     myLayerSection === id
                       ? 'bg-[#FF5A1F] text-[#0D0F12]'
-                      : 'text-[#0D0F12]/60 hover:text-[#0D0F12] bg-[#171A20]'
+                      : 'text-[#F7F7F8]/70 hover:text-[#F7F7F8] bg-[#171A20]'
                   }`}
                 >
                   {SAVED_TABS[id]}
@@ -473,7 +473,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                                 className={`text-[9px] font-bold px-2 py-0.5 rounded-full border cursor-pointer transition ${
                                   active
                                     ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]'
-                                    : 'bg-transparent text-[#0D0F12]/40 border-[#222630] hover:border-[#222630]'
+                                    : 'bg-transparent text-[#F7F7F8]/60 border-[#222630] hover:border-[#222630]'
                                 }`}
                               >
                                 {label}
@@ -496,7 +496,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
 
               return (
                 <div className="mt-8 pt-5 border-t border-[#222630]">
-                  <p className="text-[10px] text-[#F7F7F8]/40 mb-3">
+                  <p className="text-[10px] text-[#F7F7F8]/60 mb-3">
                     Recent activity
                   </p>
                   <div className="space-y-1.5">
@@ -521,7 +521,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
 
             {savedObjects.length === 0 && (
               <div className="py-14 text-center">
-                <Bookmark className="w-8 h-8 mx-auto mb-3 text-[#F7F7F8]/40" />
+                <Bookmark className="w-8 h-8 mx-auto mb-3 text-[#F7F7F8]/60" />
                 <p className="font-display text-lg font-semibold text-[#F7F7F8]">Nothing kept yet.</p>
                 <p className="mt-1 text-xs text-[#F7F7F8]/60">
                   Save a place or opportunity and it will sit here, quiet and waiting.
@@ -562,7 +562,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                       <p className="text-xs text-[#F7F7F8] flex-1 min-w-0 truncate">
                         {obj ? obj.title : rel.targetId}
                       </p>
-                      <span className="text-[9px] text-[#F7F7F8]/40 shrink-0">
+                      <span className="text-[9px] text-[#F7F7F8]/60 shrink-0">
                         {rel.updatedAt.slice(0, 10)}
                       </span>
                     </button>
@@ -579,7 +579,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                 Your matches. Play is recorded when both players confirm a result.
               </p>
             </div>
-            <h3 className="text-[11px] font-extrabold text-[#F7F7F8]/40">
+            <h3 className="text-[11px] font-extrabold text-[#F7F7F8]/60">
               My Matches
             </h3>
             {matches.length === 0 && (
@@ -750,7 +750,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
 
             {campaignState.status === 'ready' && campaignsLive.length > 0 && (
               <div className="space-y-2">
-                <h3 className="text-[9px] text-[#F7F7F8]/40">
+                <h3 className="text-[9px] text-[#F7F7F8]/60">
                   Live
                 </h3>
                 {campaignsLive.map((c: any) => (
@@ -820,7 +820,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
 
             {campaignState.status === 'ready' && campaignsDraft.length > 0 && (
               <div className="space-y-2">
-                <h3 className="text-[9px] text-[#F7F7F8]/40">
+                <h3 className="text-[9px] text-[#F7F7F8]/60">
                   Drafts
                 </h3>
                 {campaignsDraft.map((c: any) => (
@@ -832,7 +832,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                       <p className="text-sm font-extrabold text-[#F7F7F8] truncate">
                         {c.title || 'Untitled'}
                       </p>
-                      <p className="text-[9px] text-[#F7F7F8]/40 mt-0.5">
+                      <p className="text-[9px] text-[#F7F7F8]/60 mt-0.5">
                         {c.type} - not published
                       </p>
                     </div>
@@ -876,7 +876,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
 
             {campaignState.status === 'ready' && campaignsPast.length > 0 && (
               <div className="space-y-2">
-                <h3 className="text-[9px] text-[#F7F7F8]/40">
+                <h3 className="text-[9px] text-[#F7F7F8]/60">
                   Finished
                 </h3>
                 {campaignsPast.map((c: any) => (
@@ -888,7 +888,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                     <div className="shrink-0 flex items-center gap-1.5">
                       <button
                         onClick={() => openCampaign(c.id)}
-                        className="text-[10px] text-[#F7F7F8]/40 underline underline-offset-2 cursor-pointer"
+                        className="text-[10px] text-[#F7F7F8]/60 underline underline-offset-2 cursor-pointer"
                       >
                         {c.status}
                       </button>

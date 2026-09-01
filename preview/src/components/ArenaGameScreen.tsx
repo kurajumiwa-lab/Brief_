@@ -211,7 +211,7 @@ export function ArenaGameScreen({
               {m}
             </span>
           ))}
-          <span className="ml-auto text-[10px] text-[#F7F7F8]/40">
+          <span className="ml-auto text-[10px] text-[#F7F7F8]/60">
             {game.accountTransferPolicy === 'not_supported'
               ? 'Account transfer: not supported'
               : game.accountTransferPolicy === 'restricted'
@@ -227,7 +227,7 @@ export function ArenaGameScreen({
             <p className="text-sm font-extrabold text-[#F7F7F8] truncate">
               {myTag ? myTag : 'No tag set yet'}
             </p>
-            <p className="text-[10px] text-[#F7F7F8]/40 mt-0.5">
+            <p className="text-[10px] text-[#F7F7F8]/60 mt-0.5">
               {availabilityOn ? 'Available to play now' : 'Showing as offline'}
             </p>
           </div>
@@ -279,7 +279,7 @@ export function ArenaGameScreen({
                 </Chip>
               ))}
             </div>
-            <p className="text-[10px] text-[#F7F7F8]/40 mt-1.5">
+            <p className="text-[10px] text-[#F7F7F8]/60 mt-1.5">
               {STAKES.find((s) => s.id === stake)?.hint}
             </p>
           </div>
@@ -371,7 +371,7 @@ export function ArenaGameScreen({
             <h3 className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]">
               Open matches
             </h3>
-            <span className="text-[10px] text-[#F7F7F8]/40">{challenges.length}</span>
+            <span className="text-[10px] text-[#F7F7F8]/60">{challenges.length}</span>
           </div>
           {challenges.length === 0 && (
             <p className="text-xs text-[#F7F7F8]/60">No open challenges for {game.name}. Be the first.</p>
@@ -454,7 +454,7 @@ export function ArenaGameScreen({
           </button>
         </div>
 
-        <p className="text-center text-[10px] text-[#F7F7F8]/40 pt-1">
+        <p className="text-center text-[10px] text-[#F7F7F8]/60 pt-1">
           Arena is for gathering to play — not gambling. Stake terms are agreed between players.
         </p>
       </div>

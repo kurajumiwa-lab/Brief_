@@ -85,12 +85,12 @@ export function CircleTasks({
 
         {/* Who holds it. Stated plainly; never inferred. */}
         {state?.status === 'assigned' && (
-          <p className="text-[10px] text-[#F7F7F8]/40">
+          <p className="text-[10px] text-[#F7F7F8]/60">
             {mine ? 'Assigned to you' : `Assigned to ${state.assigneeId}`}
           </p>
         )}
         {state?.status === 'completed' && (
-          <p className="text-[10px] text-[#F7F7F8]/40">
+          <p className="text-[10px] text-[#F7F7F8]/60">
             Completed by {state.completedBy ?? 'unknown'}
             {state.completedAt ? ` on ${state.completedAt.slice(0, 10)}` : ''}
           </p>
@@ -129,7 +129,7 @@ export function CircleTasks({
 
         {/* An observer is told why, rather than shown a button that 403s. */}
         {state?.status === 'open' && myRole === 'observer' && (
-          <p className="text-[10px] text-[#F7F7F8]/40">
+          <p className="text-[10px] text-[#F7F7F8]/60">
             Observers cannot take on tasks.
           </p>
         )}
@@ -166,11 +166,11 @@ export function CircleTasks({
 }
 
 const Heading = ({ children }: { children: React.ReactNode }) => (
-  <h3 className="text-[11px] font-extrabold text-[#F7F7F8]/40">
+  <h3 className="text-[11px] font-extrabold text-[#F7F7F8]/60">
     {children}
   </h3>
 );
 
 const SubHeading = ({ children }: { children: React.ReactNode }) => (
-  <p className="text-[10px] text-[#F7F7F8]/40">{children}</p>
+  <p className="text-[10px] text-[#F7F7F8]/60">{children}</p>
 );

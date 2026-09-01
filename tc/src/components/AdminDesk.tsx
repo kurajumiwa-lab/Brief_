@@ -40,15 +40,15 @@ const TABS: { id: Tab; label: string }[] = [
 function Card({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
   return (
     <div className="rounded-2xl border border-[#222630] bg-[#12151A] p-4 space-y-2">
-      <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/50">{title}</p>
-      {note && <p className="text-[10px] leading-snug text-[#F7F7F8]/45">{note}</p>}
+      <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/70">{title}</p>
+      {note && <p className="text-[10px] leading-snug text-[#F7F7F8]/60">{note}</p>}
       {children}
     </div>
   );
 }
 
 function Empty({ children }: { children: React.ReactNode }) {
-  return <p className="text-[11px] text-[#F7F7F8]/50">{children}</p>;
+  return <p className="text-[11px] text-[#F7F7F8]/70">{children}</p>;
 }
 
 function Row({ children }: { children: React.ReactNode }) {
@@ -62,7 +62,7 @@ function Fact({ ok, label, detail }: { ok: boolean | null; label: string; detail
       <span>{label}</span>
       <span className={`font-extrabold ${ok === false ? 'text-[#F7F7F8]' : 'text-[#F7F7F8]/60'}`}>
         {ok === null ? 'unknown' : ok ? 'yes' : 'NO'}
-        {detail ? <span className="ml-1 font-bold text-[#F7F7F8]/40">{detail}</span> : null}
+        {detail ? <span className="ml-1 font-bold text-[#F7F7F8]/60">{detail}</span> : null}
       </span>
     </Row>
   );
@@ -99,7 +99,7 @@ export function AdminDesk({ open, onClose, me }: { open: boolean; onClose: () =>
             {TABS.map((t) => (
               <button key={t.id} onClick={() => setTab(t.id)}
                 className={`shrink-0 rounded-full px-3 py-1.5 text-[10px] font-extrabold cursor-pointer ${
-                  tab === t.id ? 'bg-[#FF5A1F] text-[#0D0F12]' : 'bg-[#12151A] text-[#0D0F12]/70 border border-[#222630]'
+                  tab === t.id ? 'bg-[#FF5A1F] text-[#0D0F12]' : 'bg-[#12151A] text-[#F7F7F8]/70 border border-[#222630]'
                 }`}>
                 {t.label}
               </button>
@@ -227,17 +227,17 @@ function MembersTab({ tick, can, refresh }: { tick: number; can: (c: string) => 
                   className={`w-full rounded-xl border px-2.5 py-2 text-left cursor-pointer ${selected?.id === m.id ? 'border-[#FF5A1F] bg-[#12151A]' : 'border-[#222630] bg-[#12151A]'}`}>
                   <Row>
                     <span className="min-w-0 truncate font-extrabold">{m.displayName}</span>
-                    <span className="shrink-0 text-[9px] text-[#F7F7F8]/45">{String(m.createdAt ?? '').slice(0, 10)}</span>
+                    <span className="shrink-0 text-[9px] text-[#F7F7F8]/60">{String(m.createdAt ?? '').slice(0, 10)}</span>
                   </Row>
                   <Row>
-                    <span className="text-[9px] text-[#F7F7F8]/50">@{m.handle}</span>
+                    <span className="text-[9px] text-[#F7F7F8]/70">@{m.handle}</span>
                     <span className="flex gap-1">
                       {m.status !== 'active' && <span className="rounded-full bg-[#FF5D6C]/10 px-1.5 py-0.5 text-[8px] font-extrabold text-[#FF5D6C]">{m.status}</span>}
                       {m.verification === 'approved' && <span className="rounded-full bg-[#38E879]/10 px-1.5 py-0.5 text-[8px] font-extrabold text-[#38E879]">verified</span>}
                       {m.platformRoles.map((r) => <span key={r} className="rounded-full bg-[#FF5A1F]/10 px-1.5 py-0.5 text-[8px] font-extrabold text-[#FF5A1F]">{r}</span>)}
                     </span>
                   </Row>
-                  <p className="mt-0.5 text-[9px] text-[#F7F7F8]/50 truncate">
+                  <p className="mt-0.5 text-[9px] text-[#F7F7F8]/70 truncate">
                     {m.onboarding.rung ? `Climbed to: ${RUNG_LABEL[m.onboarding.rung] ?? m.onboarding.rung}` : 'No rung yet'}
                     {m.onboarding.latestEvent ? ` · last: ${m.onboarding.latestEvent}` : ''}
                   </p>
@@ -253,14 +253,14 @@ function MembersTab({ tick, can, refresh }: { tick: number; can: (c: string) => 
                 <span className={`font-extrabold ${selected.status === 'active' ? 'text-[#38E879]' : 'text-[#FF5D6C]'}`}>{selected.status}</span>
               </Row>
               <div className="pt-1">
-                <p className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-[#F7F7F8]/45 pt-1">Platform roles</p>
+                <p className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-[#F7F7F8]/60 pt-1">Platform roles</p>
                 <div className="flex flex-wrap gap-1 pt-1">
                   {['operator', 'reviewer', 'finance', 'admin'].map((role) => (
                     <button key={role} type="button" onClick={() => toggleRole(selected, role)}
                       className={`rounded-full px-2 py-0.5 text-[9px] font-extrabold cursor-pointer border ${
                         selected.platformRoles.includes(role)
                           ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#FF5A1F]'
-                          : 'bg-[#12151A] text-[#0D0F12]/60 border-[#222630]'
+                          : 'bg-[#12151A] text-[#F7F7F8]/70 border-[#222630]'
                       }`}>
                       {role}
                     </button>
@@ -335,7 +335,7 @@ function HealthTab({ tick, can, refresh }: { tick: number; can: (c: string) => b
         {errors.length === 0 ? <Empty>No recorded errors.</Empty> : errors.slice(-8).reverse().map((e, i) => (
           <Row key={e.id ?? i}>
             <span className="min-w-0 truncate">{String(e.kind ?? e.action ?? 'error')}</span>
-            <span className="shrink-0 text-[9px] text-[#F7F7F8]/40">{String(e.at ?? e.createdAt ?? '').slice(0, 16)}</span>
+            <span className="shrink-0 text-[9px] text-[#F7F7F8]/60">{String(e.at ?? e.createdAt ?? '').slice(0, 16)}</span>
           </Row>
         ))}
       </Card>
@@ -395,8 +395,8 @@ function AttentionTab({ tick, can, refresh }: { tick: number; can: (c: string) =
           : reports.length === 0 ? <Empty>No open reports.</Empty>
           : reports.map((r) => (
             <div key={r.id} className="rounded-xl border border-[#222630] p-2.5 space-y-1">
-              <Row><span>{String(r.reason ?? r.kind ?? 'report')}</span><span className="text-[9px] text-[#F7F7F8]/40">{String(r.createdAt ?? '').slice(0, 10)}</span></Row>
-              <p className="text-[10px] text-[#F7F7F8]/50">
+              <Row><span>{String(r.reason ?? r.kind ?? 'report')}</span><span className="text-[9px] text-[#F7F7F8]/60">{String(r.createdAt ?? '').slice(0, 10)}</span></Row>
+              <p className="text-[10px] text-[#F7F7F8]/70">
                 {r.target?.title ? `“${String(r.target.title)}”` : `object ${String(r.objectId ?? r.targetId ?? '?')}`}
                 {r.target?.type ? ` · ${String(r.target.type)}` : ''}
                 {r.note ? ` — “${String(r.note)}”` : ''}
@@ -420,11 +420,11 @@ function AttentionTab({ tick, can, refresh }: { tick: number; can: (c: string) =
             <div key={c.id} className="rounded-xl border border-[#222630] p-2.5 space-y-1">
               <Row>
                 <span className="font-extrabold">{String(c.field)}</span>
-                <span className="text-[9px] text-[#F7F7F8]/40">
+                <span className="text-[9px] text-[#F7F7F8]/60">
                   {String(c.status)} · {String(c.createdAt ?? '').slice(0, 10)}
                 </span>
               </Row>
-              <p className="text-[10px] text-[#F7F7F8]/50">
+              <p className="text-[10px] text-[#F7F7F8]/70">
                 {String(c.objectId ?? '?')} — {c.originalValue === null ? 'no prior value' : `was “${String(c.originalValue)}”`}
                 {' '}→ now “{String(c.correctedValue)}”
               </p>
@@ -494,7 +494,7 @@ function AttentionTab({ tick, can, refresh }: { tick: number; can: (c: string) =
                 <span className="font-extrabold">{String(s.name)}</span>
                 <span className="text-[9px] font-extrabold uppercase text-[#F7F7F8]/60">{String(s.trustStatus)}</span>
               </Row>
-              <p className="text-[10px] text-[#F7F7F8]/50">
+              <p className="text-[10px] text-[#F7F7F8]/70">
                 {String(s.type ?? '?')} · {Number(s.objectsCreated ?? 0)} objects
                 {s.trustReason ? ` — “${String(s.trustReason)}”` : ''}
               </p>
@@ -503,7 +503,7 @@ function AttentionTab({ tick, can, refresh }: { tick: number; can: (c: string) =
                   {(['trusted', 'normal', 'degraded', 'disabled'] as const).map((st) => (
                     <button key={st} onClick={() => void act(() => briefApi.opsSetSourceTrust(s.id, st, `set to ${st} at the desk`), `source ${st}`)}
                       className={`rounded-lg border px-2 py-1 text-[9px] font-extrabold cursor-pointer ${
-                        s.trustStatus === st ? 'bg-[#FF5A1F] border-[#FF5A1F] text-[#0D0F12]' : 'border-[#222630] text-[#0D0F12]/70'
+                        s.trustStatus === st ? 'bg-[#FF5A1F] border-[#FF5A1F] text-[#0D0F12]' : 'border-[#222630] text-[#F7F7F8]/70'
                       }`}>
                       {st}
                     </button>
@@ -521,13 +521,13 @@ function AttentionTab({ tick, can, refresh }: { tick: number; can: (c: string) =
             <div key={r.id} className="rounded-xl border border-[#222630] p-2.5 space-y-1">
               <Row>
                 <span className="font-extrabold">{String(r.kind)}</span>
-                <span className="text-[9px] text-[#F7F7F8]/40">submitted {String(r.submittedAt ?? '').slice(0, 10)}</span>
+                <span className="text-[9px] text-[#F7F7F8]/60">submitted {String(r.submittedAt ?? '').slice(0, 10)}</span>
               </Row>
-              <p className="text-[10px] text-[#F7F7F8]/50">user {String(r.userId ?? '?')}{r.note ? ` — “${String(r.note)}”` : ''}</p>
+              <p className="text-[10px] text-[#F7F7F8]/70">user {String(r.userId ?? '?')}{r.note ? ` — “${String(r.note)}”` : ''}</p>
               {/* White-label KYC assist: the provider's outcome codes, shown as
                   EVIDENCE for the reviewer -- never an auto-verdict. */}
               {r.providerAssist && (
-                <p className="text-[9px] text-[#F7F7F8]/40">
+                <p className="text-[9px] text-[#F7F7F8]/60">
                   provider check ({String(r.providerAssist.provider)}):{' '}
                   {r.providerAssist.ok
                     ? `${String(r.providerAssist.resultCode ?? '')} ${String(r.providerAssist.resultText ?? '')}`.trim() || 'no detail returned'
@@ -548,7 +548,7 @@ function AttentionTab({ tick, can, refresh }: { tick: number; can: (c: string) =
           : disputes.slice(0, 10).map((d) => (
             <Row key={d.id}>
               <span className="min-w-0 truncate">{String(d.reason ?? 'dispute')}</span>
-              <span className="shrink-0 text-[9px] text-[#F7F7F8]/40">order {String(d.orderId ?? '?').slice(0, 12)}</span>
+              <span className="shrink-0 text-[9px] text-[#F7F7F8]/60">order {String(d.orderId ?? '?').slice(0, 12)}</span>
             </Row>
           ))}
       </Card>
@@ -562,7 +562,7 @@ function AttentionTab({ tick, can, refresh }: { tick: number; can: (c: string) =
                 {String(l.status)}
                 {l.status === 'removed' && l.removedReason ? ` — ${String(l.removedReason)}` : ''}
               </span>
-              <span className="shrink-0 text-[9px] text-[#F7F7F8]/40">KES {String(l.priceKes ?? l.price ?? '?')}</span>
+              <span className="shrink-0 text-[9px] text-[#F7F7F8]/60">KES {String(l.priceKes ?? l.price ?? '?')}</span>
             </Row>
           ))}
       </Card>
@@ -643,7 +643,7 @@ function ContentTab({ tick, can, refresh }: { tick: number; can: (c: string) => 
           : cols.length === 0 ? <Empty>No collections.</Empty>
           : cols.map((c) => (
             <div key={c.id ?? c.key} className="rounded-xl border border-[#222630] p-2.5 space-y-1">
-              <Row><span className="font-extrabold">{String(c.title ?? c.key)}</span><span className="text-[9px] text-[#F7F7F8]/40">{String(c.status ?? '')}</span></Row>
+              <Row><span className="font-extrabold">{String(c.title ?? c.key)}</span><span className="text-[9px] text-[#F7F7F8]/60">{String(c.status ?? '')}</span></Row>
               {can('moderate') && (
                 <div className="flex gap-1.5 pt-1">
                   {['publish', 'archive'].map((a) => (
@@ -743,7 +743,7 @@ function CommerceTab({ tick, can, refresh }: { tick: number; can: (c: string) =>
             <Row><span>checked (settled orders)</span><span className="font-extrabold">{String(settle.checked ?? settle.settledOrders ?? '?')}</span></Row>
             <Row><span>discrepancies</span><span className="font-extrabold">{String((settle.discrepancies ?? []).length)}</span></Row>
             {(settle.discrepancies ?? []).slice(0, 8).map((d: any, i: number) => (
-              <Row key={i}><span className="text-[#F7F7F8]">{String(d.kind)}</span><span className="text-[9px] text-[#F7F7F8]/40">{String(d.orderId ?? d.intentId ?? '')}</span></Row>
+              <Row key={i}><span className="text-[#F7F7F8]">{String(d.kind)}</span><span className="text-[9px] text-[#F7F7F8]/60">{String(d.orderId ?? d.intentId ?? '')}</span></Row>
             ))}
           </>
         )}
@@ -753,7 +753,7 @@ function CommerceTab({ tick, can, refresh }: { tick: number; can: (c: string) =>
           <>
             <Row><span>discrepancies</span><span className="font-extrabold">{String((pay.discrepancies ?? []).length)}</span></Row>
             {(pay.discrepancies ?? []).slice(0, 8).map((d: any, i: number) => (
-              <Row key={i}><span className="text-[#F7F7F8]">{String(d.kind)}</span><span className="text-[9px] text-[#F7F7F8]/40">{String(d.intentId ?? '')}</span></Row>
+              <Row key={i}><span className="text-[#F7F7F8]">{String(d.kind)}</span><span className="text-[9px] text-[#F7F7F8]/60">{String(d.intentId ?? '')}</span></Row>
             ))}
             {(pay.discrepancies ?? []).length === 0 && <Empty>No intent discrepancies.</Empty>}
           </>
@@ -812,7 +812,7 @@ function SecurityTab({ tick, can, refresh }: { tick: number; can: (c: string) =>
           : audit.slice(0, 15).map((a, i) => (
             <Row key={a.id ?? i}>
               <span className="min-w-0 truncate font-bold">{String(a.action)}</span>
-              <span className="shrink-0 text-[9px] text-[#F7F7F8]/40">{String(a.at ?? a.createdAt ?? '').slice(0, 16)}</span>
+              <span className="shrink-0 text-[9px] text-[#F7F7F8]/60">{String(a.at ?? a.createdAt ?? '').slice(0, 16)}</span>
             </Row>
           ))}
       </Card>
@@ -822,7 +822,7 @@ function SecurityTab({ tick, can, refresh }: { tick: number; can: (c: string) =>
           : mailLog.map((m, i) => (
             <Row key={m.id ?? i}>
               <span className="min-w-0 truncate">{String(m.kind ?? m.event ?? 'email event')}</span>
-              <span className="shrink-0 text-[9px] text-[#F7F7F8]/40">{String(m.at ?? m.createdAt ?? '').slice(0, 16)}</span>
+              <span className="shrink-0 text-[9px] text-[#F7F7F8]/60">{String(m.at ?? m.createdAt ?? '').slice(0, 16)}</span>
             </Row>
           ))}
       </Card>

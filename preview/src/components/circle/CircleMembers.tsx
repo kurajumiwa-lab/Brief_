@@ -71,7 +71,7 @@ export function CircleMembers({
 
   return (
     <div>
-      <h3 className="text-[11px] font-extrabold text-[#F7F7F8]/40 mb-2">
+      <h3 className="text-[11px] font-extrabold text-[#F7F7F8]/60 mb-2">
         Members
       </h3>
 
@@ -140,7 +140,7 @@ export function CircleMembers({
                     <p className="text-xs font-extrabold text-[#F7F7F8] truncate">
                       {member.userId}
                     </p>
-                    <p className="text-[9px] text-[#F7F7F8]/40 mt-0.5">
+                    <p className="text-[9px] text-[#F7F7F8]/60 mt-0.5">
                       {ROLE_LABEL[member.role] ?? member.role}
                     </p>
                   </div>
@@ -251,7 +251,7 @@ export function CircleMembers({
                         )}
 
                         {ev.evidence.length === 0 ? (
-                          <p className="text-[10px] text-[#F7F7F8]/40">
+                          <p className="text-[10px] text-[#F7F7F8]/60">
                             No recorded activity in this circle yet.
                           </p>
                         ) : (
@@ -262,7 +262,7 @@ export function CircleMembers({
                                 className="flex items-center gap-2 text-[10px] text-[#F7F7F8]/60"
                               >
                                 <span className="min-w-0 truncate">{item.label}</span>
-                                <span className="text-[9px] text-[#F7F7F8]/40 ml-auto shrink-0">
+                                <span className="text-[9px] text-[#F7F7F8]/60 ml-auto shrink-0">
                                   {item.at.slice(0, 10)}
                                 </span>
                               </li>

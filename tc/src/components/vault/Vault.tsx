@@ -17,7 +17,7 @@ import type { Vault as VaultType, Footstep, VaultRequest, ResolutionItem } from 
 const TONE = {
   text: 'text-[#F7F7F8]',
   dim: 'text-[#F7F7F8]/60',
-  faint: 'text-[#F7F7F8]/40',
+  faint: 'text-[#F7F7F8]/60',
   accent: 'text-[#F7F7F8]',
   gold: 'text-[#F7F7F8]',
   warn: 'text-[#F7F7F8]',
@@ -125,7 +125,7 @@ function Timeline({ vaultId }: { vaultId: string }) {
 
       {days.map((d) => (
         <div key={d.day} className="space-y-1">
-          <p className="text-[9px] text-[#F7F7F8]/40 mt-3 mb-1">{d.day}</p>
+          <p className="text-[9px] text-[#F7F7F8]/60 mt-3 mb-1">{d.day}</p>
           {d.items.map((f) => (
             <div key={f.id} className="flex items-start gap-2.5 py-1.5 border-b border-[#222630] last:border-0">
               <span
@@ -134,7 +134,7 @@ function Timeline({ vaultId }: { vaultId: string }) {
               />
               <div className="min-w-0">
                 <p className="text-[11px] leading-snug text-[#F7F7F8]">{f.narrative}</p>
-                <p className="text-[9px] text-[#F7F7F8]/40 mt-0.5">
+                <p className="text-[9px] text-[#F7F7F8]/60 mt-0.5">
                   {timeOf(f.createdAt)}
                   {f.channel && f.channel !== 'web' ? ` · via ${f.channel}` : ''}
                 </p>
@@ -193,7 +193,7 @@ function HostPanel({ vault, onChanged }: { vault: VaultType; onChanged: () => vo
 
       <div className="flex gap-1.5">
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name"
-          className="flex-1 min-w-0 bg-[#171A20] border border-[#222630] rounded-lg px-2.5 py-1.5 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/40 outline-none focus:border-[#22E6E0]" />
+          className="flex-1 min-w-0 bg-[#171A20] border border-[#222630] rounded-lg px-2.5 py-1.5 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/60 outline-none focus:border-[#22E6E0]" />
         <select value={role} onChange={(e) => setRole(e.target.value)}
           className="bg-[#171A20] border border-[#222630] rounded-lg px-2 py-1.5 text-xs text-[#F7F7F8] outline-none">
           <option value="guest">Guest</option>
@@ -219,7 +219,7 @@ function HostPanel({ vault, onChanged }: { vault: VaultType; onChanged: () => vo
 
       {handoff && (
         <div className="bg-[#171A20] border border-[#222630] rounded-lg p-2 space-y-1">
-          <p className="text-[9px] text-[#F7F7F8]/40">Handoff link (single-use):</p>
+          <p className="text-[9px] text-[#F7F7F8]/60">Handoff link (single-use):</p>
           <p className="text-[10px] text-[#F7F7F8] break-all select-all">{handoff}</p>
         </div>
       )}
@@ -281,7 +281,7 @@ function Requests({ vault, onChanged }: { vault: VaultType; onChanged: () => voi
         <div key={r.id} className="bg-[#171A20] border border-[#222630] rounded-lg p-2.5 flex items-center justify-between gap-2">
           <div className="min-w-0">
             <p className="text-xs text-[#F7F7F8] truncate">{r.description}</p>
-            <p className="text-[9px] text-[#F7F7F8]/40 mt-0.5">
+            <p className="text-[9px] text-[#F7F7F8]/60 mt-0.5">
               {r.status}{r.status === 'routed' && r.vendorId ? ` → ${r.vendorId}` : ''}
             </p>
           </div>
@@ -370,7 +370,7 @@ function VaultDetail({ vault, onBack, onChanged }: { vault: VaultType; onBack: (
       {vault.role !== 'vendor' && (
         <Card className="p-3 space-y-2">
           <input value={ask} onChange={(e) => setAsk(e.target.value)} placeholder="Ask a question…"
-            className="w-full bg-[#171A20] border border-[#222630] rounded-lg px-3 py-2 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/40 outline-none focus:border-[#22E6E0]" />
+            className="w-full bg-[#171A20] border border-[#222630] rounded-lg px-3 py-2 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/60 outline-none focus:border-[#22E6E0]" />
           <button onClick={askQuestion} disabled={!ask.trim()}
             className="w-full py-2 rounded-lg bg-[#12151A] text-[#F7F7F8] text-[10px] font-extrabold border border-[#222630] cursor-pointer disabled:opacity-40">
             Ask
@@ -381,7 +381,7 @@ function VaultDetail({ vault, onBack, onChanged }: { vault: VaultType; onBack: (
       {vault.role !== 'vendor' && (
         <Card className="p-3 space-y-2">
           <input value={request} onChange={(e) => setRequest(e.target.value)} placeholder="Request something (e.g. extra chairs)…"
-            className="w-full bg-[#171A20] border border-[#222630] rounded-lg px-3 py-2 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/40 outline-none focus:border-[#22E6E0]" />
+            className="w-full bg-[#171A20] border border-[#222630] rounded-lg px-3 py-2 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/60 outline-none focus:border-[#22E6E0]" />
           <button onClick={makeRequest} disabled={!request.trim()}
             className="w-full py-2 rounded-lg bg-[#12151A] text-[#F7F7F8] text-[10px] font-extrabold border border-[#222630] cursor-pointer disabled:opacity-40">
             Request
@@ -399,7 +399,7 @@ function VaultDetail({ vault, onBack, onChanged }: { vault: VaultType; onBack: (
 function Stat({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
   return (
     <div className="bg-[#12151A] border border-[#222630] rounded-lg px-3 py-2">
-      <p className="text-[9px] text-[#F7F7F8]/40">{label}</p>
+      <p className="text-[9px] text-[#F7F7F8]/60">{label}</p>
       <p className={`text-sm font-extrabold ${accent ? 'text-[#F7F7F8]' : 'text-[#F7F7F8]'}`}>{value}</p>
     </div>
   );
@@ -455,7 +455,7 @@ function VaultHome({ onOpen, refreshKey }: { onOpen: (v: VaultType) => void; ref
       {creating && (
         <Card className="p-3 space-y-2">
           <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="What is this activity?"
-            className="w-full bg-[#171A20] border border-[#222630] rounded-lg px-3 py-2 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/40 outline-none focus:border-[#22E6E0]" />
+            className="w-full bg-[#171A20] border border-[#222630] rounded-lg px-3 py-2 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/60 outline-none focus:border-[#22E6E0]" />
           <div className="flex gap-1.5">
             <select value={type} onChange={(e) => setType(e.target.value)}
               className="flex-1 bg-[#171A20] border border-[#222630] rounded-lg px-2 py-1.5 text-xs text-[#F7F7F8] outline-none">
@@ -483,7 +483,7 @@ function VaultHome({ onOpen, refreshKey }: { onOpen: (v: VaultType) => void; ref
 
       <div className="relative">
         <input value={q} onChange={(e) => void search(e.target.value)} placeholder="Search people, requests, payments…"
-          className="w-full bg-[#12151A] border border-[#222630] rounded-xl px-3 py-2.5 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/40 outline-none focus:border-[#22E6E0]" />
+          className="w-full bg-[#12151A] border border-[#222630] rounded-xl px-3 py-2.5 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/60 outline-none focus:border-[#22E6E0]" />
       </div>
       {results.length > 0 && (
         <Card className="p-3 space-y-1.5">
@@ -491,7 +491,7 @@ function VaultHome({ onOpen, refreshKey }: { onOpen: (v: VaultType) => void; ref
             <button key={r.vaultId} onClick={() => { const v = vaults.find((x) => x.id === r.vaultId); if (v) onOpen(v); }}
               className="w-full text-left bg-[#171A20] border border-[#222630] rounded-lg p-2.5 cursor-pointer">
               <p className="text-xs font-extrabold text-[#F7F7F8]">{r.title}</p>
-              <p className="text-[9px] text-[#F7F7F8]/40 truncate">{r.matches.map((m) => m.snippet).join(' · ')}</p>
+              <p className="text-[9px] text-[#F7F7F8]/60 truncate">{r.matches.map((m) => m.snippet).join(' · ')}</p>
             </button>
           ))}
         </Card>
@@ -520,7 +520,7 @@ function VaultHome({ onOpen, refreshKey }: { onOpen: (v: VaultType) => void; ref
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="text-sm font-extrabold text-[#F7F7F8] truncate">{v.title}</p>
-                <p className="text-[9px] text-[#F7F7F8]/40 mt-0.5">{v.type} · {v.role}</p>
+                <p className="text-[9px] text-[#F7F7F8]/60 mt-0.5">{v.type} · {v.role}</p>
               </div>
               <span className={`shrink-0 text-[9px] px-2 py-0.5 rounded-full ${
                 v.status === 'settled' ? 'bg-[#12151A] text-[#F7F7F8]' : 'bg-[#12151A] text-[#F7F7F8]'

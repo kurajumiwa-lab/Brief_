@@ -20,7 +20,7 @@
 
   --ink:            #F7F7F8;  /* primary text — light ink */
   --ink-dim:        #A7ACB5;  /* secondary text */
-  --ink-faint:      #6E737C;  /* tertiary/meta: timestamps, counters */
+  --ink-faint:      #8A93A6;  /* tertiary/meta: timestamps, counters — >=4.5:1 */
 
   --signal-live:    #38E879;  /* live/active state ONLY — success green */
   --signal-arena:   #22E6E0;  /* Arena / tournament system ONLY — cyan */

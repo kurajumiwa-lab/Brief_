@@ -355,7 +355,7 @@ export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, on
                     <button
                       type="button"
                       onClick={() => onOpenLocation?.(entity.location?.area ?? entity.location?.county ?? '')}
-                      className="flex items-center gap-1 rounded-full bg-[#171A20] px-2 py-0.5 text-[10px] font-bold text-[#FF5A1F] transition-colors hover:bg-[#FF5A1F] hover:text-[#0D0F12]"
+                      className="flex items-center gap-1 rounded-full bg-[#171A20] px-2 py-0.5 text-[10px] font-bold text-[#FF5A1F] transition-colors hover:bg-[#FF5A1F] hover:text-[#F7F7F8]"
                       title={`Explore ${entity.location.area ?? entity.location.county}`}
                     >
                       <MapPin className="h-3.5 w-3.5" />

@@ -502,13 +502,13 @@ export function NearbyScreen(props: NearbyScreenProps) {
                             <button
                               type="button"
                               onClick={() => setPersonalBriefDismissed(true)}
-                              className="shrink-0 rounded-full border border-[#222630] px-3 py-1 text-[10px] font-extrabold text-[#F7F7F8]/50 cursor-pointer"
+                              className="shrink-0 rounded-full border border-[#222630] px-3 py-1 text-[10px] font-extrabold text-[#F7F7F8]/70 cursor-pointer"
                             >
                               Skip
                             </button>
                           </div>
 
-                          <p className="mt-4 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/45">
+                          <p className="mt-4 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/60">
                             Where do you want your Brief?
                           </p>
                           <div className="mt-2 flex flex-wrap gap-1.5">
@@ -520,7 +520,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                                 className={`rounded-full border px-3 py-1.5 text-[11px] font-bold cursor-pointer transition ${
                                   personalPicks.locations.includes(loc)
                                     ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]'
-                                    : 'bg-[#12151A] text-[#0D0F12]/70 border-[#222630] hover:border-[#22E6E0]'
+                                    : 'bg-[#12151A] text-[#F7F7F8]/70 border-[#222630] hover:border-[#22E6E0]'
                                 }`}
                               >
                                 {loc}
@@ -528,7 +528,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                             ))}
                           </div>
 
-                          <p className="mt-4 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/45">
+                          <p className="mt-4 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/60">
                             What do you care about?
                           </p>
                           {availableTypes.length > 0 && (
@@ -541,7 +541,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                                   className={`rounded-full border px-3 py-1.5 text-[11px] font-bold cursor-pointer transition ${
                                     personalPicks.types.includes(t)
                                       ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]'
-                                      : 'bg-[#12151A] text-[#0D0F12]/70 border-[#222630] hover:border-[#22E6E0]'
+                                      : 'bg-[#12151A] text-[#F7F7F8]/70 border-[#222630] hover:border-[#22E6E0]'
                                   }`}
                                 >
                                   {getObjectTypeMeta(t).label}
@@ -559,7 +559,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                                   className={`rounded-full border px-3 py-1.5 text-[11px] font-bold cursor-pointer transition ${
                                     personalPicks.topics.includes(topic.id)
                                       ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]'
-                                      : 'bg-[#12151A] text-[#0D0F12]/70 border-[#222630] hover:border-[#22E6E0]'
+                                      : 'bg-[#12151A] text-[#F7F7F8]/70 border-[#222630] hover:border-[#22E6E0]'
                                   }`}
                                 >
                                   {topic.label}
@@ -577,7 +577,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                             >
                               {personalBusy ? 'Saving…' : 'Build my Brief'}
                             </button>
-                            <span className="text-[10px] text-[#F7F7F8]/40">
+                            <span className="text-[10px] text-[#F7F7F8]/60">
                               Pick anything, or skip — your feed stays global.
                             </span>
                           </div>
@@ -585,7 +585,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                       )}
 
                       {!personalHasInterests && personalBriefDismissed && (
-                        <p className="rounded-2xl border border-dashed border-[#222630] px-4 py-3 text-[11px] text-[#F7F7F8]/50">
+                        <p className="rounded-2xl border border-dashed border-[#222630] px-4 py-3 text-[11px] text-[#F7F7F8]/70">
                           Your Brief is global until you follow places or topics.{' '}
                           <button
                             type="button"
@@ -655,7 +655,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                               type="button"
                               onClick={() => void unfollowEntityOne(f.id)}
                               title={`Stop following ${f.name}`}
-                              className="flex items-center gap-1 rounded-full border border-dashed border-[#222630] px-2 py-1 text-[9px] font-bold text-[#F7F7F8]/40 cursor-pointer hover:border-[#FF5D6C] hover:text-[#FF5D6C]"
+                              className="flex items-center gap-1 rounded-full border border-dashed border-[#222630] px-2 py-1 text-[9px] font-bold text-[#F7F7F8]/60 cursor-pointer hover:border-[#FF5D6C] hover:text-[#FF5D6C]"
                             >
                               <X className="h-2.5 w-2.5" /> {f.kind}
                             </button>
@@ -668,7 +668,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                                 key={`add_${loc}`}
                                 type="button"
                                 onClick={() => void followOne('location', loc)}
-                                className="flex items-center gap-1 rounded-full border border-dashed border-[#222630] px-3 py-1.5 text-[11px] font-bold text-[#F7F7F8]/45 cursor-pointer hover:border-[#22E6E0]"
+                                className="flex items-center gap-1 rounded-full border border-dashed border-[#222630] px-3 py-1.5 text-[11px] font-bold text-[#F7F7F8]/60 cursor-pointer hover:border-[#22E6E0]"
                               >
                                 <Plus className="h-3 w-3" /> {loc}
                               </button>
@@ -681,7 +681,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                                 key={`addt_${t}`}
                                 type="button"
                                 onClick={() => void followOne('type', t)}
-                                className="flex items-center gap-1 rounded-full border border-dashed border-[#222630] px-3 py-1.5 text-[11px] font-bold text-[#F7F7F8]/45 cursor-pointer hover:border-[#22E6E0]"
+                                className="flex items-center gap-1 rounded-full border border-dashed border-[#222630] px-3 py-1.5 text-[11px] font-bold text-[#F7F7F8]/60 cursor-pointer hover:border-[#22E6E0]"
                               >
                                 <Plus className="h-3 w-3" /> {getObjectTypeMeta(t).label}
                               </button>
@@ -699,7 +699,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                               key={section.key}
                               className="rounded-2xl border border-[#222630] bg-[#12151A] p-3"
                             >
-                              <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-[#F7F7F8]/50">
+                              <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-[#F7F7F8]/70">
                                 {section.title}
                               </p>
                               <div className="mt-2 space-y-0.5">
@@ -762,7 +762,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                         <div className="mt-4 rounded-2xl border border-[#222630] bg-[#12151A] p-3">
                           <div className="mb-2 flex items-center gap-2">
                             <Bookmark className="h-3.5 w-3.5 text-[#F7F7F8]/60" />
-                            <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-[#F7F7F8]/50">
+                            <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-[#F7F7F8]/70">
                               Saved
                             </p>
                           </div>
@@ -771,7 +771,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                               <div key={group.key}>
                                 <p className="text-[10px] font-extrabold text-[#F7F7F8]/70">
                                   {group.title}
-                                  <span className="ml-1.5 text-[10px] font-bold text-[#F7F7F8]/40">
+                                  <span className="ml-1.5 text-[10px] font-bold text-[#F7F7F8]/60">
                                     {group.items.length + group.expired.length}
                                   </span>
                                 </p>
@@ -788,7 +788,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                                           {obj.title}
                                         </span>
                                         {briefWhenLabel(obj) && (
-                                          <span className="block truncate text-[9px] font-semibold text-[#F7F7F8]/50">
+                                          <span className="block truncate text-[9px] font-semibold text-[#F7F7F8]/70">
                                             {briefWhenLabel(obj)}
                                           </span>
                                         )}
@@ -835,7 +835,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                             key={section.key}
                             className="rounded-2xl border border-[#222630] bg-[#12151A] p-3"
                           >
-                            <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-[#F7F7F8]/50">
+                            <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-[#F7F7F8]/70">
                               {section.title}
                             </p>
                             <div className="mt-2 space-y-0.5">
@@ -981,7 +981,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                 className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border transition ${
                   moreFilters
                     ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]'
-                    : 'bg-[#12151A] text-[#0D0F12]/60 border-[#222630] hover:border-[#22E6E0]'
+                    : 'bg-[#12151A] text-[#F7F7F8]/70 border-[#222630] hover:border-[#22E6E0]'
                 }`}
               >
                 More
@@ -1112,21 +1112,21 @@ export function NearbyScreen(props: NearbyScreenProps) {
             {homeFeedStatus === 'ready' && (
               <div className="mx-auto mb-4 max-w-5xl px-1">
                 <label className="relative block">
-                  <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#F7F7F8]/40" />
+                  <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#F7F7F8]/60" />
                   <input
                     type="search"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search venues, businesses, organizers, areas…"
                     aria-label="Search Brief"
-                    className="w-full rounded-full border border-[#222630] bg-[#12151A] py-2.5 pl-10 pr-10 text-[13px] font-semibold text-[#F7F7F8] outline-none transition-colors placeholder:text-[#F7F7F8]/35 focus:border-[#22E6E0]"
+                    className="w-full rounded-full border border-[#222630] bg-[#12151A] py-2.5 pl-10 pr-10 text-[13px] font-semibold text-[#F7F7F8] outline-none transition-colors placeholder:text-[#F7F7F8]/60 focus:border-[#22E6E0]"
                   />
                   {searchQuery !== '' && (
                     <button
                       type="button"
                       onClick={() => setSearchQuery('')}
                       aria-label="Clear search"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-[#F7F7F8]/40 transition-colors hover:text-[#F7F7F8] cursor-pointer"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-[#F7F7F8]/60 transition-colors hover:text-[#F7F7F8] cursor-pointer"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -1242,7 +1242,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                                         name={chip.name}
                                         directId={chip.directId}
                                         onOpenEntity={openEntityPage}
-                                        className="bg-[#08090B]/70 text-[#171A20] hover:bg-[#FF5A1F] hover:text-[#0D0F12]"
+                                        className="bg-[#08090B]/70 text-[#171A20] hover:bg-[#FF5A1F] hover:text-[#F7F7F8]"
                                       />
                                     ))}
                                   </div>
@@ -1264,7 +1264,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                                       handlePrimaryAction(obj);
                                     }
                                   }}
-                                  className="rounded-full border border-[#22E6E0]/70 bg-[#171A20]/60 px-2.5 py-1 text-[10px] font-bold text-[#0D0F12] transition-colors hover:bg-[#FF5A1F] hover:text-[#0D0F12]"
+                                  className="rounded-full border border-[#22E6E0]/70 bg-[#171A20]/60 px-2.5 py-1 text-[10px] font-bold text-[#0D0F12] transition-colors hover:bg-[#FF5A1F] hover:text-[#F7F7F8]"
                                 >
                                   {level === 3 && destVendors.length > 0 ? "See what's here" : resolveAction(obj).label}
                                 </button>
@@ -1543,7 +1543,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
             {dailyBrief.length === 0 && (
               <div className="border border-dashed border-[#222630] rounded-2xl p-8 text-center">
                 <p className="text-xs text-[#F7F7F8]/60">Nothing to report.</p>
-                <p className="text-[10px] text-[#F7F7F8]/40 mt-1">
+                <p className="text-[10px] text-[#F7F7F8]/60 mt-1">
                   Save something, or start a pursuit, and this fills itself in.
                 </p>
               </div>
@@ -1567,7 +1567,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                     className="w-full text-left bg-[#12151A] border border-[#222630] hover:border-[#222630] rounded-xl p-3 cursor-pointer transition"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[9px] text-[#F7F7F8]/40">
+                      <span className="text-[9px] text-[#F7F7F8]/60">
                         {getObjectTypeMeta(obj.type).label}
                       </span>
                       {getDistanceLabel(obj) && (
@@ -1594,7 +1594,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                     className="w-full text-left bg-[#12151A] border border-[#222630] rounded-xl p-3 cursor-pointer"
                   >
                     <p className="text-[11px] text-[#F7F7F8]/60">{pursuit.query}</p>
-                    <p className="text-[9px] text-[#F7F7F8]/40 mt-0.5">
+                    <p className="text-[9px] text-[#F7F7F8]/60 mt-0.5">
                       Nothing useful yet. Brief is still looking.
                     </p>
                   </button>

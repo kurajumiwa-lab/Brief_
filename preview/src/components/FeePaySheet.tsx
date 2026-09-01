@@ -75,7 +75,7 @@ export function FeePaySheet({ title, intro, serviceKeys, target, afterSubmit, on
             <Wallet className="h-4 w-4 text-[#FF5A1F]" aria-hidden="true" />
             <h2 className="text-[13px] font-extrabold text-[#F7F7F8]">{title}</h2>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="cursor-pointer rounded-full p-1 text-[#F7F7F8]/50 hover:bg-[#171A20]">
+          <button type="button" onClick={onClose} aria-label="Close" className="cursor-pointer rounded-full p-1 text-[#F7F7F8]/70 hover:bg-[#171A20]">
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
@@ -119,7 +119,7 @@ export function FeePaySheet({ title, intro, serviceKeys, target, afterSubmit, on
               onChange={(e) => setCode(e.target.value.toUpperCase())}
               placeholder="M-PESA code, e.g. QJD31X5K2S"
               aria-label="M-Pesa confirmation code"
-              className="w-full rounded-xl border border-[#222630] bg-[#12151A] px-3 py-2 text-[12px] font-semibold text-[#F7F7F8] outline-none placeholder:text-[#F7F7F8]/35 focus:border-[#22E6E0]"
+              className="w-full rounded-xl border border-[#222630] bg-[#12151A] px-3 py-2 text-[12px] font-semibold text-[#F7F7F8] outline-none placeholder:text-[#F7F7F8]/60 focus:border-[#22E6E0]"
             />
 
             <button

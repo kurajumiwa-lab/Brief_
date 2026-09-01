@@ -58,7 +58,7 @@ export function ArenaPulse() {
             </span>
           </>
         ) : (
-          <span className="px-2 py-0.5 rounded-lg bg-[#171A20] text-[10px] font-bold text-[#F7F7F8]/50">…</span>
+          <span className="px-2 py-0.5 rounded-lg bg-[#171A20] text-[10px] font-bold text-[#F7F7F8]/70">…</span>
         )}
       </div>
 
@@ -66,7 +66,7 @@ export function ArenaPulse() {
       {me && (
         <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-4 space-y-2">
           <div className="flex items-baseline justify-between gap-3">
-            <span className="text-[10px] uppercase tracking-[0.14em] text-[#F7F7F8]/50">Your Arena record</span>
+            <span className="text-[10px] uppercase tracking-[0.14em] text-[#F7F7F8]/70">Your Arena record</span>
             <span className="text-[11px] font-extrabold text-[#FF5A1F]">Level {me.profile.level}</span>
           </div>
           <div className="h-1.5 rounded-full bg-[#171A20] overflow-hidden" role="progressbar" aria-valuenow={me.profile.xpIntoLevel} aria-valuemax={me.profile.xpPerLevel}>
@@ -103,7 +103,7 @@ export function ArenaPulse() {
                 <button type="button" onClick={() => void claim(m.key)} disabled={busy}
                   className="rounded-lg bg-[#FF5A1F] px-2.5 py-1 text-[10px] font-extrabold text-[#0D0F12] disabled:opacity-40">Claim</button>
               ) : (
-                <span className="text-[9px] font-bold text-[#F7F7F8]/40">{m.progress}/{m.target}</span>
+                <span className="text-[9px] font-bold text-[#F7F7F8]/60">{m.progress}/{m.target}</span>
               )}
             </div>
           ))}
@@ -141,7 +141,7 @@ export function SeasonStrip() {
   if (!data) return null;
   return (
     <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-3 space-y-1.5">
-      <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/50">
+      <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/70">
         {data.season.label} · {data.season.daysRemaining} days remaining
       </p>
       {data.you ? (

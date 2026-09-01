@@ -128,18 +128,18 @@ export function CollectionsSurface({ authed, savedCount, onClose, onOpenObject, 
 
         {/* Search — scoped to the owner's own collections/items. */}
         <label className="relative mb-4 block">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#F7F7F8]/35" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#F7F7F8]/60" />
           <input
             type="search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search your collections and items…"
             aria-label="Search collections"
-            className="w-full rounded-full border border-[#222630] bg-[#12151A] py-2 pl-9 pr-9 text-[12px] font-semibold text-[#F7F7F8] outline-none placeholder:text-[#F7F7F8]/35 focus:border-[#22E6E0]"
+            className="w-full rounded-full border border-[#222630] bg-[#12151A] py-2 pl-9 pr-9 text-[12px] font-semibold text-[#F7F7F8] outline-none placeholder:text-[#F7F7F8]/60 focus:border-[#22E6E0]"
           />
           {q && (
             <button type="button" onClick={() => setQ('')} aria-label="Clear search"
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-[#F7F7F8]/40 hover:text-[#F7F7F8] cursor-pointer">
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-[#F7F7F8]/60 hover:text-[#F7F7F8] cursor-pointer">
               <X className="h-3.5 w-3.5" />
             </button>
           )}

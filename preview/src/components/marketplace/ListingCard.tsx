@@ -54,13 +54,13 @@ export function ListingCard({ listing, onOpen }: ListingCardProps) {
 
       {/* Optional by design: a mobile service has no single location. */}
       {listing.locationName && (
-        <p className="text-[10px] text-[#F7F7F8]/40">{listing.locationName}</p>
+        <p className="text-[10px] text-[#F7F7F8]/60">{listing.locationName}</p>
       )}
 
       {/* Stock only when it is genuinely tracked. null means "not tracked",
           which is different from zero and must not render as "0 left". */}
       {listing.quantityAvailable !== null && listing.quantityAvailable > 0 && (
-        <p className="text-[10px] text-[#F7F7F8]/40">{listing.quantityAvailable} available</p>
+        <p className="text-[10px] text-[#F7F7F8]/60">{listing.quantityAvailable} available</p>
       )}
 
       {!listing.orderable && listing.unorderableReason && (

@@ -265,7 +265,7 @@ export function MshikanoDesk() {
       <section aria-label="Cooperation posts" className="space-y-3">
         <div className="flex flex-wrap items-center gap-1.5">
           <button type="button" onClick={() => setFilter(null)} aria-pressed={filter === null}
-            className={`rounded-full px-3 py-1 text-[10px] font-extrabold ${filter === null ? 'bg-[#FF5A1F] text-[#0D0F12]' : 'border border-[#222630] text-[#0D0F12]/70'}`}>
+            className={`rounded-full px-3 py-1 text-[10px] font-extrabold ${filter === null ? 'bg-[#FF5A1F] text-[#0D0F12]' : 'border border-[#222630] text-[#F7F7F8]/70'}`}>
             All
           </button>
           {INTENTS.map((it) => (
@@ -276,7 +276,7 @@ export function MshikanoDesk() {
           ))}
         </div>
 
-        {posts === null && <p className="text-[11px] text-[#F7F7F8]/50">Loading the network…</p>}
+        {posts === null && <p className="text-[11px] text-[#F7F7F8]/70">Loading the network…</p>}
         {posts !== null && posts.length === 0 && (
           <div className="rounded-2xl border border-dashed border-[#222630] bg-[#12151A] px-4 py-3">
             <p className="text-[11px] font-extrabold text-[#F7F7F8]">Nothing here yet</p>
@@ -293,7 +293,7 @@ export function MshikanoDesk() {
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
                   <span aria-hidden="true" className={`h-2 w-2 rounded-full ${INTENTS.find((i) => i.id === p.intent)?.dot}`} />
-                  <span className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/50">{p.intentLabel}</span>
+                  <span className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/70">{p.intentLabel}</span>
                 </div>
                 <h3 className="mt-0.5 text-[13px] font-bold leading-snug text-[#F7F7F8]">{p.title}</h3>
                 <p className="text-[9px] text-[#F7F7F8]/55">

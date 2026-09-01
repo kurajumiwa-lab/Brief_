@@ -51,13 +51,13 @@ export function VendorProfile({ vendor, listings, onBack, onOpenListing }: Vendo
         )}
 
         {vendor.contactMethod && (
-          <p className="text-[10px] text-[#F7F7F8]/40">Contact: {vendor.contactMethod}</p>
+          <p className="text-[10px] text-[#F7F7F8]/60">Contact: {vendor.contactMethod}</p>
         )}
       </div>
 
       {/* Verification. Shown only when something was genuinely checked. */}
       <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-4 space-y-2">
-        <h4 className="text-[11px] font-extrabold text-[#F7F7F8]/40">
+        <h4 className="text-[11px] font-extrabold text-[#F7F7F8]/60">
           Verification
         </h4>
         {evidence.length === 0 ? (
@@ -86,7 +86,7 @@ export function VendorProfile({ vendor, listings, onBack, onOpenListing }: Vendo
       </div>
 
       <div className="space-y-2">
-        <h4 className="text-[11px] font-extrabold text-[#F7F7F8]/40">
+        <h4 className="text-[11px] font-extrabold text-[#F7F7F8]/60">
           Listings
         </h4>
         {listings.length === 0 ? (

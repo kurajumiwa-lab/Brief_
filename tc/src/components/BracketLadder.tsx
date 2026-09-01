@@ -82,7 +82,7 @@ export function BracketLadder({ entrants, displayName, accent = 'var(--signal-ar
       <span className="flex-1 truncate text-[10px] font-semibold text-[#F7F7F8]">
         {m.a ? displayName(m.a) : '—'}
       </span>
-      <span className="text-[9px] text-[#F7F7F8]/40">vs</span>
+      <span className="text-[9px] text-[#F7F7F8]/60">vs</span>
       <span className="flex-1 truncate text-right text-[10px] font-semibold text-[#F7F7F8]">
         {m.b ? displayName(m.b) : m.note === 'bye' ? <span className="text-[#F7F7F8]/60">bye</span> : '—'}
       </span>
@@ -94,7 +94,7 @@ export function BracketLadder({ entrants, displayName, accent = 'var(--signal-ar
       <div className="flex min-w-max gap-4 py-2">
         {rounds.map((round, r) => (
           <div key={r} className="flex flex-col justify-around gap-2">
-            {r === 0 && <p className="text-[8px] font-extrabold uppercase tracking-wider text-[#F7F7F8]/40">Round 1</p>}
+            {r === 0 && <p className="text-[8px] font-extrabold uppercase tracking-wider text-[#F7F7F8]/60">Round 1</p>}
             {round.map((m, i) => (
               <div
                 key={i}

@@ -94,8 +94,8 @@ export function ResaleDesk() {
 
       {/* --- your seats ------------------------------------------------- */}
       <section className="space-y-3">
-        <h3 className="text-[10px] font-bold uppercase tracking-wide text-[#F7F7F8]/50">Seats you can list</h3>
-        {tickets.status === 'loading' && <p className="text-xs text-[#F7F7F8]/50">Loading your seats…</p>}
+        <h3 className="text-[10px] font-bold uppercase tracking-wide text-[#F7F7F8]/70">Seats you can list</h3>
+        {tickets.status === 'loading' && <p className="text-xs text-[#F7F7F8]/70">Loading your seats…</p>}
         {tickets.status === 'error' && (
           <div className="border border-[#222630] rounded-xl p-4 text-center space-y-2">
             <p className="text-xs text-[#F7F7F8]/70">{tickets.error}</p>
@@ -114,7 +114,7 @@ export function ResaleDesk() {
           <div key={t.id} className="border border-[#222630] rounded-2xl p-4 space-y-3">
             <div className="flex items-start justify-between gap-3">
               <p className="text-xs font-extrabold text-[#F7F7F8] truncate">{t.eventTitle ?? 'Event'}</p>
-              <span className="text-[10px] text-[#F7F7F8]/50 shrink-0">code v{t.codeVersion}</span>
+              <span className="text-[10px] text-[#F7F7F8]/70 shrink-0">code v{t.codeVersion}</span>
             </div>
             {listFor === t.id ? (
               <div className="space-y-2">
@@ -148,7 +148,7 @@ export function ResaleDesk() {
                     Not now
                   </button>
                 </div>
-                <p className="text-[10px] text-[#F7F7F8]/50">
+                <p className="text-[10px] text-[#F7F7F8]/70">
                   Whole shillings only. The server refuses anything else — a fraction is a price nobody set.
                 </p>
               </div>
@@ -166,8 +166,8 @@ export function ResaleDesk() {
 
       {/* --- active listings --------------------------------------------- */}
       <section className="space-y-3">
-        <h3 className="text-[10px] font-bold uppercase tracking-wide text-[#F7F7F8]/50">Your listings</h3>
-        {desk.status === 'loading' && <p className="text-xs text-[#F7F7F8]/50">Loading listings…</p>}
+        <h3 className="text-[10px] font-bold uppercase tracking-wide text-[#F7F7F8]/70">Your listings</h3>
+        {desk.status === 'loading' && <p className="text-xs text-[#F7F7F8]/70">Loading listings…</p>}
         {desk.status === 'error' && <p className="text-xs text-[#F7F7F8]/70">{desk.error}</p>}
         {desk.status === 'ready' && activeListings.length === 0 && (
           <p className="text-[11px] text-[#F7F7F8]/60 border border-[#222630] rounded-xl p-4">
@@ -181,7 +181,7 @@ export function ResaleDesk() {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-xs font-extrabold text-[#F7F7F8]">{money(l.price, l.currency)}</p>
-                  <p className="text-[10px] text-[#F7F7F8]/50 mt-0.5">{LISTING_LABEL[l.status] ?? l.status}</p>
+                  <p className="text-[10px] text-[#F7F7F8]/70 mt-0.5">{LISTING_LABEL[l.status] ?? l.status}</p>
                 </div>
                 {l.status === 'active' && (
                   <button
@@ -217,7 +217,7 @@ export function ResaleDesk() {
                       Refund instead
                     </button>
                   </div>
-                  <p className="text-[10px] text-[#F7F7F8]/50">
+                  <p className="text-[10px] text-[#F7F7F8]/70">
                     Only confirm money that actually arrived. The confirmation writes a settled row to
                     the ledger under your name — it is your attestation, auditable.
                   </p>
@@ -229,7 +229,7 @@ export function ResaleDesk() {
         {desk.status === 'ready' && finishedListings.length > 0 && (
           <div className="space-y-1">
             {finishedListings.map((l) => (
-              <p key={l.id} className="text-[10px] text-[#F7F7F8]/50 flex items-center justify-between border-b border-[#1D2027] pb-1">
+              <p key={l.id} className="text-[10px] text-[#F7F7F8]/70 flex items-center justify-between border-b border-[#1D2027] pb-1">
                 <span>{money(l.price, l.currency)} · {LISTING_LABEL[l.status] ?? l.status}{l.removedReason ? ` — ${l.removedReason}` : ''}</span>
                 <span>{new Date(l.createdAt).toLocaleDateString()}</span>
               </p>
@@ -240,8 +240,8 @@ export function ResaleDesk() {
 
       {/* --- orders where you are the buyer -------------------------------- */}
       <section className="space-y-3">
-        <h3 className="text-[10px] font-bold uppercase tracking-wide text-[#F7F7F8]/50">Seats you are buying</h3>
-        {desk.status !== 'ready' && <p className="text-xs text-[#F7F7F8]/50">Loading orders…</p>}
+        <h3 className="text-[10px] font-bold uppercase tracking-wide text-[#F7F7F8]/70">Seats you are buying</h3>
+        {desk.status !== 'ready' && <p className="text-xs text-[#F7F7F8]/70">Loading orders…</p>}
         {(() => {
           if (desk.status !== 'ready') return null;
           // Seller orders are the ones sitting under my own listings; every

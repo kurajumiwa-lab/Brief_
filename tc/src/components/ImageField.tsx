@@ -170,7 +170,7 @@ export function ImageField({
   return (
     <div>
       <p className="text-[11px] font-bold text-[#F7F7F8]">{label}</p>
-      {hint && <p className="text-[9px] text-[#F7F7F8]/50">{hint}</p>}
+      {hint && <p className="text-[9px] text-[#F7F7F8]/70">{hint}</p>}
 
       <div
         onDragOver={(e) => e.preventDefault()}
@@ -190,7 +190,7 @@ export function ImageField({
               {multiple ? 'Choose photos' : 'Choose photo'}
             </button>
             {!compact && (
-              <p className="mt-1.5 text-[9px] text-[#F7F7F8]/40">
+              <p className="mt-1.5 text-[9px] text-[#F7F7F8]/60">
                 or drop {multiple ? 'them' : 'it'} here · {formats}
               </p>
             )}
@@ -244,7 +244,7 @@ export function ImageField({
       )}
 
       {persisted === false && (
-        <p className="mt-1 text-[9px] text-[#F7F7F8]/40">
+        <p className="mt-1 text-[9px] text-[#F7F7F8]/60">
           Photos are stored on this server's disk: they survive a restart, not a redeploy to a fresh container.
         </p>
       )}

@@ -133,7 +133,7 @@ export function MoneyPanel() {
             </div>
           </div>
 
-          <p className="text-[10px] text-[#F7F7F8]/40">
+          <p className="text-[10px] text-[#F7F7F8]/60">
             Derived from {wallet.data.transactionCount}{' '}
             {wallet.data.transactionCount === 1 ? 'transaction' : 'transactions'}.
           </p>
@@ -155,7 +155,7 @@ export function MoneyPanel() {
 
       {/* LEDGER */}
       <div>
-        <h3 className="text-[11px] font-extrabold text-[#F7F7F8]/40 mb-2">
+        <h3 className="text-[11px] font-extrabold text-[#F7F7F8]/60 mb-2">
           Transactions
         </h3>
 

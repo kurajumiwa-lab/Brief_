@@ -87,7 +87,7 @@ export function MyTickets({ onSell }: { onSell?: () => void }) {
       )}
 
       {load.status === 'loading' && (
-        <div className="text-xs text-[#F7F7F8]/50 py-8 text-center">Loading your tickets…</div>
+        <div className="text-xs text-[#F7F7F8]/70 py-8 text-center">Loading your tickets…</div>
       )}
 
       {load.status === 'error' && (
@@ -117,7 +117,7 @@ export function MyTickets({ onSell }: { onSell?: () => void }) {
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-xs font-extrabold text-[#F7F7F8] truncate">{t.eventTitle ?? 'Event'}</p>
-              <p className="text-[10px] text-[#F7F7F8]/50 mt-0.5">
+              <p className="text-[10px] text-[#F7F7F8]/70 mt-0.5">
                 {t.status === 'void' ? 'Voided — this seat cannot be used' : `Code version ${t.codeVersion}`}
               </p>
             </div>
@@ -137,7 +137,7 @@ export function MyTickets({ onSell }: { onSell?: () => void }) {
               <TicketQr code={t.scanCode} />
               <div className="min-w-0 space-y-1 text-center sm:text-left">
                 <p className="font-mono text-sm font-bold text-[#F7F7F8] tracking-wide break-all">{t.scanCode}</p>
-                <p className="text-[10px] text-[#F7F7F8]/50">
+                <p className="text-[10px] text-[#F7F7F8]/70">
                   Show this at the gate. The <span className="font-bold">#{t.codeVersion}</span> is the
                   version — a scan of an older version is refused.
                 </p>

@@ -206,12 +206,12 @@ export function EnginePanel({ onObjectsChanged }: EnginePanelProps) {
           <h3 className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]">
             Tenancy cockpit
           </h3>
-          <span className="text-[9px] text-[#F7F7F8]/40">financial pipelines · live gaming · entry</span>
+          <span className="text-[9px] text-[#F7F7F8]/60">financial pipelines · live gaming · entry</span>
         </div>
 
         {/* financial summaries: group buys with live steppers */}
         <div className="space-y-2">
-          <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/40">Group buys</p>
+          <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/60">Group buys</p>
           {groupBuys.length === 0 && (
             <p className="text-[10px] text-[#F7F7F8]/60">No active chama cycles or group orders.</p>
           )}
@@ -232,7 +232,7 @@ export function EnginePanel({ onObjectsChanged }: EnginePanelProps) {
 
         {/* live gaming alerts: real match states */}
         <div className="space-y-1.5">
-          <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/40">Gaming alerts</p>
+          <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/60">Gaming alerts</p>
           {matches.length === 0 && (
             <p className="text-[10px] text-[#F7F7F8]/60">No matches in flight.</p>
           )}
@@ -253,7 +253,7 @@ export function EnginePanel({ onObjectsChanged }: EnginePanelProps) {
 
         {/* the active entry */}
         <div className="space-y-1">
-          <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/40">Event entry</p>
+          <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/60">Event entry</p>
           {ticket?.active && ticket.ticket ? (
             <p className="text-[10px] text-[#F7F7F8]">
               <span className="font-extrabold">{ticket.ticket.eventTitle}</span>
@@ -317,7 +317,7 @@ export function EnginePanel({ onObjectsChanged }: EnginePanelProps) {
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               placeholder="Route name"
-              className="flex-1 rounded-lg border border-[#222630] bg-[#12151A] px-2.5 py-1.5 text-[11px] text-[#F7F7F8] placeholder:text-[#F7F7F8]/40 focus:outline-none"
+              className="flex-1 rounded-lg border border-[#222630] bg-[#12151A] px-2.5 py-1.5 text-[11px] text-[#F7F7F8] placeholder:text-[#F7F7F8]/60 focus:outline-none"
             />
             <select
               value={form.signalType}
@@ -334,7 +334,7 @@ export function EnginePanel({ onObjectsChanged }: EnginePanelProps) {
               value={form.url}
               onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))}
               placeholder="https://your-endpoint/hook"
-              className="flex-1 rounded-lg border border-[#222630] bg-[#12151A] px-2.5 py-1.5 text-[11px] text-[#F7F7F8] placeholder:text-[#F7F7F8]/40 focus:outline-none"
+              className="flex-1 rounded-lg border border-[#222630] bg-[#12151A] px-2.5 py-1.5 text-[11px] text-[#F7F7F8] placeholder:text-[#F7F7F8]/60 focus:outline-none"
             />
             <button
               type="button"
@@ -354,7 +354,7 @@ export function EnginePanel({ onObjectsChanged }: EnginePanelProps) {
         {/* the dispatch ledger — real outcomes only */}
         {deliveries.length > 0 && (
           <div className="space-y-1">
-            <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/40">
+            <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/60">
               Dispatch ledger
             </p>
             {deliveries.slice(0, 5).map((d) => (

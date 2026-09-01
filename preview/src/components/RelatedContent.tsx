@@ -54,7 +54,7 @@ export function RelatedContent({ edges, onOpenObject, onOpenLocation }: {
             <h4 className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]">
               {EDGE_ICON[edge.verb]}
               {edge.label}
-              <span className="text-[#F7F7F8]/40">· {edge.objects.length}</span>
+              <span className="text-[#F7F7F8]/60">· {edge.objects.length}</span>
             </h4>
             {edge.location && onOpenLocation && (
               <button

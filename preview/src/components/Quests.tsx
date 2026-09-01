@@ -79,7 +79,7 @@ export function Quests({
       {/* Wallet. Settled and pending are never added together. */}
       <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-4 space-y-2">
         <div className="flex items-baseline justify-between gap-3">
-          <span className="text-[10px] text-[#F7F7F8]/40">
+          <span className="text-[10px] text-[#F7F7F8]/60">
             Brief Points
           </span>
           <span className="text-lg font-extrabold text-[#F7F7F8]">
@@ -110,7 +110,7 @@ export function Quests({
         </div>
         {/* Only ever states a real remaining requirement. */}
         {nextRank && (
-          <p className="text-[10px] text-[#F7F7F8]/40">
+          <p className="text-[10px] text-[#F7F7F8]/60">
             {nextRank.rank} needs {nextRank.needAccepted} more accepted
             {nextRank.needRate > 0
               ? ` and ${nextRank.needRate}% higher accuracy`
@@ -124,7 +124,7 @@ export function Quests({
           An unfunded pool says so rather than rendering "KES 0" as though a
           real fund existed and happened to be empty. */}
       <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-4">
-        <p className="text-[10px] text-[#F7F7F8]/40">
+        <p className="text-[10px] text-[#F7F7F8]/60">
           Community pool - {COMMUNITY_POOL.periodLabel}
         </p>
         {COMMUNITY_POOL.totalKes > 0 ? (
@@ -146,7 +146,7 @@ export function Quests({
       </div>
 
       <div>
-        <h3 className="text-[11px] font-extrabold text-[#F7F7F8]/40 mb-2">
+        <h3 className="text-[11px] font-extrabold text-[#F7F7F8]/60 mb-2">
           Open jobs
         </h3>
         <div className="space-y-2">
@@ -166,7 +166,7 @@ export function Quests({
                   </p>
                   <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
                     {q.locationName && (
-                      <span className="text-[9px] text-[#F7F7F8]/40">
+                      <span className="text-[9px] text-[#F7F7F8]/60">
                         {q.locationName}
                         {typeof q.distanceKm === 'number'
                           ? ` - ${q.distanceKm} km`
@@ -200,7 +200,7 @@ export function Quests({
       {/* Rejections stay visible with their reason. */}
       {quests.some((q) => q.status === 'rejected') && (
         <div>
-          <h3 className="text-[11px] font-extrabold text-[#F7F7F8]/40 mb-2">
+          <h3 className="text-[11px] font-extrabold text-[#F7F7F8]/60 mb-2">
             Not accepted
           </h3>
           <div className="space-y-2">
@@ -261,7 +261,7 @@ export function Quests({
                 key={person.id}
                 className="bg-[#12151A] border border-[#222630] rounded-2xl p-3 flex items-center gap-3"
               >
-                <span className="text-[10px] text-[#F7F7F8]/40 w-4 shrink-0">
+                <span className="text-[10px] text-[#F7F7F8]/60 w-4 shrink-0">
                   {i + 1}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -271,7 +271,7 @@ export function Quests({
                       {getBriefRank(person.contribution)}
                     </span>
                   </p>
-                  <p className="text-[9px] text-[#F7F7F8]/40 mt-0.5">
+                  <p className="text-[9px] text-[#F7F7F8]/60 mt-0.5">
                     {person.locationName} - {person.contribution.accepted} accepted
                     {typeof rate === 'number' ? ` - ${rate}% accepted` : ''}
                     {typeof pct === 'number' ? ` - top ${pct}%` : ''}

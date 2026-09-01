@@ -81,7 +81,7 @@ export function CircleVotes({
         </div>
 
         {/* Turnout, from real rows on both sides. */}
-        <p className="text-[10px] text-[#F7F7F8]/40">
+        <p className="text-[10px] text-[#F7F7F8]/60">
           {tally?.totalVotes ?? 0} of {tally?.eligibleCount ?? 0} eligible{' '}
           {(tally?.eligibleCount ?? 0) === 1 ? 'member' : 'members'} voted
         </p>
@@ -99,7 +99,7 @@ export function CircleVotes({
                   >
                     {r.option}
                   </span>
-                  <span className="text-[10px] text-[#F7F7F8]/40 shrink-0">
+                  <span className="text-[10px] text-[#F7F7F8]/60 shrink-0">
                     {r.count} {r.count === 1 ? 'vote' : 'votes'}
                     {/* Dash, not 0%: nobody has voted, so there is no share
                         to report. */}
@@ -150,7 +150,7 @@ export function CircleVotes({
         )}
 
         {!isClosed && myRole === 'observer' && (
-          <p className="text-[10px] text-[#F7F7F8]/40">Observers cannot vote.</p>
+          <p className="text-[10px] text-[#F7F7F8]/60">Observers cannot vote.</p>
         )}
 
         {!isClosed && isCoordinator && (
@@ -188,11 +188,11 @@ export function CircleVotes({
 }
 
 const Heading = ({ children }: { children: React.ReactNode }) => (
-  <h3 className="text-[11px] font-extrabold text-[#F7F7F8]/40">
+  <h3 className="text-[11px] font-extrabold text-[#F7F7F8]/60">
     {children}
   </h3>
 );
 
 const SubHeading = ({ children }: { children: React.ReactNode }) => (
-  <p className="text-[10px] text-[#F7F7F8]/40">{children}</p>
+  <p className="text-[10px] text-[#F7F7F8]/60">{children}</p>
 );

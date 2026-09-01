@@ -99,7 +99,7 @@ export function MediaLibrary({ onUse }: MediaLibraryProps) {
                     <p className="truncate text-[10px] font-bold text-[#F7F7F8]">
                       {m.originalName ?? 'unnamed upload'}
                     </p>
-                    <p className="text-[9px] text-[#F7F7F8]/40">
+                    <p className="text-[9px] text-[#F7F7F8]/60">
                       {(m.bytes / 1024).toFixed(0)} KB · {m.createdAt.slice(0, 10)}
                     </p>
                   </div>

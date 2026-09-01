@@ -67,7 +67,7 @@ function TheBook({ items, onQueued }: { items: { name: string; priceKes: string 
       <div className="flex items-center gap-2">
         <BookOpen className="w-4 h-4 text-[#FF5A1F]" aria-hidden="true" />
         <h3 className="text-[13px] font-extrabold text-[#F7F7F8]">The book</h3>
-        {book && <span className="text-[9px] text-[#F7F7F8]/45 ml-auto">derived, never stored</span>}
+        {book && <span className="text-[9px] text-[#F7F7F8]/60 ml-auto">derived, never stored</span>}
       </div>
 
       {book ? (
@@ -79,7 +79,7 @@ function TheBook({ items, onQueued }: { items: { name: string; priceKes: string 
               { label: '7 days', d: book.week }
             ].map(({ label, d }) => (
               <div key={label} className="rounded-xl bg-[#171A20] px-2.5 py-2">
-                <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-[#F7F7F8]/50">{label}</p>
+                <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-[#F7F7F8]/70">{label}</p>
                 <p className="text-[13px] font-extrabold text-[#F7F7F8] mt-0.5 truncate">{kes(d.kes)}</p>
                 <p className="text-[9px] text-[#F7F7F8]/55">{d.sales} sale{d.sales === 1 ? '' : 's'} · {d.items} item{d.items === 1 ? '' : 's'}</p>
               </div>
@@ -114,7 +114,7 @@ function TheBook({ items, onQueued }: { items: { name: string; priceKes: string 
               className="rounded-lg bg-[#FF5A1F] px-3 py-1.5 text-[11px] font-extrabold text-[#0D0F12] disabled:opacity-40 cursor-pointer">Log</button>
           </div>
           {note && <p role="status" className="text-[10px] font-bold text-[#38E879]">{note}</p>}
-          <p className="text-[9.5px] text-[#F7F7F8]/45 leading-snug">{book.note}</p>
+          <p className="text-[9.5px] text-[#F7F7F8]/60 leading-snug">{book.note}</p>
         </>
       ) : (
         <p className="text-[11px] text-[#F7F7F8]/55">Save the shop and the book opens — today, the week, what is moving, what is low.</p>
@@ -146,7 +146,7 @@ function PoolACard({ items }: { items: { name: string; priceKes: string }[] }) {
     <section aria-label="Pool a restock" className="bg-[#12151A] border border-[#222630] rounded-2xl p-4 space-y-2.5">
       <div className="flex items-baseline justify-between gap-2">
         <h3 className="text-[13px] font-extrabold text-[#F7F7F8]">Pool a restock</h3>
-        <span className="text-[9px] text-[#F7F7F8]/45">bulk price, pooled demand</span>
+        <span className="text-[9px] text-[#F7F7F8]/60">bulk price, pooled demand</span>
       </div>
       <p className="text-[10.5px] text-[#F7F7F8]/60 leading-snug">
         Pick an item you sell, say the bulk unit cost and a goal. Brief opens a Group Buy — other shops pool in, and everyone buys at the bulk price.
@@ -284,17 +284,17 @@ export function WhatsAppShopBuilder({ onOpenFees }: { onOpenFees: () => void }) 
         <div className="space-y-3">
           <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-4 space-y-3">
             <label className="block space-y-1">
-              <span className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#F7F7F8]/50">Shop name</span>
+              <span className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#F7F7F8]/70">Shop name</span>
               <input value={name} onChange={(e) => setName(e.target.value)} maxLength={40} placeholder="Mama Njeria Fresh"
                 className="w-full rounded-xl border border-[#222630] bg-[#12151A] px-3 py-2 text-[13px] font-bold text-[#F7F7F8] outline-none focus:border-[#FF5A1F]" />
             </label>
             <label className="block space-y-1">
-              <span className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#F7F7F8]/50">One line about it</span>
+              <span className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#F7F7F8]/70">One line about it</span>
               <input value={tagline} onChange={(e) => setTagline(e.target.value)} maxLength={60} placeholder="Fresh groceries, Kilimani"
                 className="w-full rounded-xl border border-[#222630] bg-[#12151A] px-3 py-2 text-[12px] text-[#F7F7F8] outline-none focus:border-[#FF5A1F]" />
             </label>
             <label className="block space-y-1">
-              <span className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#F7F7F8]/50">WhatsApp number customers order on</span>
+              <span className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#F7F7F8]/70">WhatsApp number customers order on</span>
               <input value={orderNumber} onChange={(e) => setOrderNumber(e.target.value)} maxLength={20} placeholder="+254 712 345 678" inputMode="tel"
                 className="w-full rounded-xl border border-[#222630] bg-[#12151A] px-3 py-2 text-[13px] text-[#F7F7F8] outline-none focus:border-[#FF5A1F]" />
             </label>
@@ -302,8 +302,8 @@ export function WhatsAppShopBuilder({ onOpenFees }: { onOpenFees: () => void }) 
 
           <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-4 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#F7F7F8]/50">Price list</span>
-              <span className="text-[9px] text-[#F7F7F8]/45">{items.length} item{items.length === 1 ? '' : 's'} · keep it forwardable</span>
+              <span className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#F7F7F8]/70">Price list</span>
+              <span className="text-[9px] text-[#F7F7F8]/60">{items.length} item{items.length === 1 ? '' : 's'} · keep it forwardable</span>
             </div>
             {items.map((item, idx) => (
               <div key={idx} className="flex items-center gap-1.5">
@@ -314,7 +314,7 @@ export function WhatsAppShopBuilder({ onOpenFees }: { onOpenFees: () => void }) 
                 <input value={item.note} onChange={(e) => setItems(items.map((it, i) => i === idx ? { ...it, note: e.target.value } : it))} placeholder="note (optional)" maxLength={40}
                   className="w-24 rounded-lg border border-[#222630] bg-[#12151A] px-2 py-1.5 text-[11px] text-[#F7F7F8]/70 outline-none focus:border-[#FF5A1F]" aria-label={`note on item ${idx + 1}`} />
                 <button type="button" onClick={() => setItems(items.filter((_, i) => i !== idx))} disabled={items.length === 1}
-                  className="h-7 w-7 shrink-0 flex items-center justify-center rounded-lg text-[#F7F7F8]/40 hover:text-[#FF5D6C] disabled:opacity-30 cursor-pointer" aria-label={`remove item ${idx + 1}`}>
+                  className="h-7 w-7 shrink-0 flex items-center justify-center rounded-lg text-[#F7F7F8]/60 hover:text-[#FF5D6C] disabled:opacity-30 cursor-pointer" aria-label={`remove item ${idx + 1}`}>
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -360,7 +360,7 @@ export function WhatsAppShopBuilder({ onOpenFees }: { onOpenFees: () => void }) 
         <div className="space-y-2">
           <div className="flex items-center gap-2 px-1">
             <Store className="w-3.5 h-3.5 text-[#FF5A1F]" aria-hidden="true" />
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#F7F7F8]/50">What customers receive</p>
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#F7F7F8]/70">What customers receive</p>
           </div>
           {view?.share ? (
             <>
@@ -368,7 +368,7 @@ export function WhatsAppShopBuilder({ onOpenFees }: { onOpenFees: () => void }) 
                 <div className="rounded-xl rounded-tl-sm bg-[#12151A] border border-[#222630]/60 p-3 max-h-[380px] overflow-y-auto">
                   <pre className="whitespace-pre-wrap font-sans text-[11.5px] leading-relaxed text-[#F7F7F8] select-all">{view.share.text}</pre>
                 </div>
-                <p className="mt-1.5 px-1 text-[9px] text-[#F7F7F8]/50">*stars* render bold and _underscores_ italic in WhatsApp — this is the exact text.</p>
+                <p className="mt-1.5 px-1 text-[9px] text-[#F7F7F8]/70">*stars* render bold and _underscores_ italic in WhatsApp — this is the exact text.</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <button type="button" onClick={() => void copyText()}
@@ -393,7 +393,7 @@ export function WhatsAppShopBuilder({ onOpenFees }: { onOpenFees: () => void }) 
           )}
 
           <div className="rounded-2xl bg-[#12151A] border border-[#222630] p-3.5 space-y-1">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#F7F7F8]/50">Store service</p>
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#F7F7F8]/70">Store service</p>
             {view?.store.active ? (
               <p className="text-[11px] font-bold text-[#38E879]">Active until {new Date(view.store.activeUntil ?? '').toLocaleDateString()} — publishing is unlocked.</p>
             ) : (
@@ -406,7 +406,7 @@ export function WhatsAppShopBuilder({ onOpenFees }: { onOpenFees: () => void }) 
                 </button>
               </>
             )}
-            <p className="text-[9.5px] text-[#F7F7F8]/50 leading-snug pt-1 border-t border-[#222630]">
+            <p className="text-[9.5px] text-[#F7F7F8]/70 leading-snug pt-1 border-t border-[#222630]">
               Photos belong in the free WhatsApp Business catalog (500 items, 10 images) — this builder makes the price list people forward.
             </p>
           </div>

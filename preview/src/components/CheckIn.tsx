@@ -16,7 +16,7 @@ import QRCode from 'qrcode';
 
 const TONE = {
   dim: 'text-[#F7F7F8]/60',
-  faint: 'text-[#F7F7F8]/40',
+  faint: 'text-[#F7F7F8]/60',
   gold: 'text-[#F7F7F8]',
   accent: 'text-[#F7F7F8]',
   danger: 'text-[#F7F7F8]',
@@ -80,7 +80,7 @@ export function CheckIn() {
     <div className="max-w-3xl mx-auto px-4 py-4 space-y-3">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-lg font-extrabold text-[#F7F7F8]">The Gate</h2>
-        <p className="text-[9px] text-[#F7F7F8]/40">check-in</p>
+        <p className="text-[9px] text-[#F7F7F8]/60">check-in</p>
       </div>
 
       <div className="bg-[#12151A] border border-[#222630] rounded-xl p-3 space-y-2">
@@ -89,7 +89,7 @@ export function CheckIn() {
           onChange={(e) => { setCode(e.target.value); setTicket(null); setError(null); setResult(null); }}
           onKeyDown={(e) => { if (e.key === 'Enter') void lookup(code); }}
           placeholder="Ticket code, e.g. BRF-XXXX-XXXX-XXXX"
-          className="w-full bg-[#171A20] border border-[#222630] rounded-lg px-3 py-2.5 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/40 outline-none focus:border-[#22E6E0]"
+          className="w-full bg-[#171A20] border border-[#222630] rounded-lg px-3 py-2.5 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/60 outline-none focus:border-[#22E6E0]"
         />
         <button
           onClick={() => void lookup(code)}
@@ -128,7 +128,7 @@ export function CheckIn() {
           <div className="flex items-center gap-3">
             <TicketQr code={ticket.code} />
             <div className="space-y-1 min-w-0">
-              <p className="text-[9px] text-[#F7F7F8]/40">Ticket code</p>
+              <p className="text-[9px] text-[#F7F7F8]/60">Ticket code</p>
               <p className="text-[11px] text-[#F7F7F8] break-all select-all">{ticket.code}</p>
               <p className={`text-[10px] ${ticket.paid ? TONE.accent : TONE.danger}`}>
                 {ticket.paid ? 'Paid' : 'Unpaid'}
@@ -157,7 +157,7 @@ export function CheckIn() {
         </div>
       )}
 
-      <p className="text-[9px] text-[#F7F7F8]/40 leading-snug">
+      <p className="text-[9px] text-[#F7F7F8]/60 leading-snug">
         The code is the scannable value. A gate operator can scan it with any
         QR reader, or type it by hand. Admission is recorded once and never
         double-counted.

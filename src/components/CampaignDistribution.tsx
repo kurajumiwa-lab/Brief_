@@ -70,7 +70,7 @@ export function CampaignDistribution({
   return (
     <div className="space-y-2">
       <div className="bg-[#12151A] border border-[#222630] rounded-xl p-3">
-        <p className="text-[9px] text-[#F7F7F8]/40 mb-1">
+        <p className="text-[9px] text-[#F7F7F8]/60 mb-1">
           Your link
         </p>
         <p className="text-[10px] text-[#F7F7F8] break-all">{link.url}</p>
@@ -114,7 +114,7 @@ export function CampaignDistribution({
         ))}
       </div>
 
-      <p className="text-[9px] text-[#F7F7F8]/40 leading-snug">
+      <p className="text-[9px] text-[#F7F7F8]/60 leading-snug">
         For Instagram or TikTok, copy the link and paste it into your bio or
         caption.
       </p>

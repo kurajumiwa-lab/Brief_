@@ -23,7 +23,7 @@ const LOBBY_STYLE: Record<string, string> = {
   full: 'bg-[#222630] text-[#F7F7F8]',
   in_progress: 'bg-[#FF5A1F] text-[#F7F7F8]',
   completed: 'bg-[#12151A] text-[#F7F7F8]',
-  cancelled: 'bg-[#222630] text-[#F7F7F8]/40'
+  cancelled: 'bg-[#222630] text-[#F7F7F8]/60'
 };
 const LOBBY_LABEL: Record<string, string> = {
   waiting_for_players: 'waiting for players',
@@ -172,7 +172,7 @@ export function EplDesk({ meId, onToast }: { meId: string | null; onToast: (msg:
           seats until the deployment is licensed.
         </p>
         {providerNote && (
-          <p className="mt-1 text-[9px] leading-snug text-[#F7F7F8]/40">{providerNote}</p>
+          <p className="mt-1 text-[9px] leading-snug text-[#F7F7F8]/60">{providerNote}</p>
         )}
         {!meId && (
           <p className="mt-1 text-[10px] font-bold text-[#F7F7F8]/70">
@@ -304,7 +304,7 @@ export function EplDesk({ meId, onToast }: { meId: string | null; onToast: (msg:
                             className={`text-left rounded-lg border px-2 py-1.5 cursor-pointer ${picked ? 'border-[#22E6E0] bg-[#FF5A1F] text-[#0D0F12]' : 'border-[#222630] bg-[#171A20] text-[#0D0F12]'}`}
                           >
                             <p className="text-[10px] font-extrabold truncate">{p.name}</p>
-                            <p className={`text-[9px] ${picked ? 'text-[#F7F7F8]/70' : 'text-[#F7F7F8]/40'}`}>
+                            <p className={`text-[9px] ${picked ? 'text-[#F7F7F8]/70' : 'text-[#F7F7F8]/60'}`}>
                               {p.position} · {p.club} · {p.price}
                             </p>
                           </button>
@@ -333,7 +333,7 @@ export function EplDesk({ meId, onToast }: { meId: string | null; onToast: (msg:
                       </button>
                     </div>
                     {seatNote && <p className="text-[10px] text-[#F7F7F8] break-words">{seatNote}</p>}
-                    <p className="text-[9px] leading-snug text-[#F7F7F8]/40">
+                    <p className="text-[9px] leading-snug text-[#F7F7F8]/60">
                       Catalog rows are {pool[0]?.source === 'seed' ? 'SEED data (no provider configured) — real licensed data arrives when a provider is connected' : `from ${pool[0]?.source}`}.
                       Squad rules, the budget and the lock are enforced server-side.
                     </p>
@@ -342,7 +342,7 @@ export function EplDesk({ meId, onToast }: { meId: string | null; onToast: (msg:
 
                 {standings !== null && standings.length > 0 && (
                   <div className="space-y-1">
-                    <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/40">Standings</p>
+                    <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/60">Standings</p>
                     {standings.map((s) => (
                       <div key={s.userId} className="flex items-center justify-between text-[10px] text-[#F7F7F8]">
                         <span className="truncate">{s.userId === meId ? 'You' : s.userId}</span>
@@ -357,7 +357,7 @@ export function EplDesk({ meId, onToast }: { meId: string | null; onToast: (msg:
         ))}
       </div>
 
-      <p className="text-[9px] leading-snug text-[#F7F7F8]/40">
+      <p className="text-[9px] leading-snug text-[#F7F7F8]/60">
         {clubs.length > 0 ? `${clubs.length} licensed EPL clubs in the catalog. ` : ''}
         Cash entry stays refused until this deployment holds a gaming licence — the compliance gate names what is missing.
       </p>

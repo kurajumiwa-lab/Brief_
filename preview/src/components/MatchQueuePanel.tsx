@@ -135,7 +135,7 @@ export function MatchQueuePanel({
           <>
             <div className="mb-2 flex items-center justify-between">
               <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/60">Your pipeline</p>
-              <span className="text-[9px] font-mono text-[#F7F7F8]/40">
+              <span className="text-[9px] font-mono text-[#F7F7F8]/60">
                 {latestMatch ? 'match' : 'challenge'} {latestMatch?.id ?? latestChallenge?.id}
               </span>
             </div>

@@ -60,7 +60,7 @@ export function TicketBar() {
           <button
             type="button"
             onClick={() => setDismissed(true)}
-            className="shrink-0 text-[#F7F7F8]/40 cursor-pointer hover:text-[#F7F7F8]"
+            className="shrink-0 text-[#F7F7F8]/60 cursor-pointer hover:text-[#F7F7F8]"
             aria-label="Hide ticket bar"
           >
             <X className="h-3.5 w-3.5" />
@@ -80,7 +80,7 @@ export function TicketBar() {
             <button
               type="button"
               onClick={() => setDismissedDelta(`${t.registrationId}:${delta.at}`)}
-              className="shrink-0 text-[9px] font-extrabold text-[#F7F7F8]/50 cursor-pointer hover:text-[#F7F7F8]"
+              className="shrink-0 text-[9px] font-extrabold text-[#F7F7F8]/70 cursor-pointer hover:text-[#F7F7F8]"
             >
               Got it
             </button>

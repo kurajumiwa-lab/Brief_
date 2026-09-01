@@ -59,11 +59,11 @@ export function ListingDetail({
         )}
 
         {listing.locationName && (
-          <p className="text-[10px] text-[#F7F7F8]/40">Location: {listing.locationName}</p>
+          <p className="text-[10px] text-[#F7F7F8]/60">Location: {listing.locationName}</p>
         )}
 
         {listing.quantityAvailable !== null && (
-          <p className="text-[10px] text-[#F7F7F8]/40">
+          <p className="text-[10px] text-[#F7F7F8]/60">
             {listing.quantityAvailable > 0
               ? `${listing.quantityAvailable} available`
               : 'None available'}
@@ -83,7 +83,7 @@ export function ListingDetail({
       {listing.orderable ? (
         <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-extrabold text-[#F7F7F8]/40">
+            <span className="text-[10px] font-extrabold text-[#F7F7F8]/60">
               Quantity
             </span>
             <button
@@ -101,7 +101,7 @@ export function ListingDetail({
             </button>
           </div>
 
-          <p className="text-[10px] text-[#F7F7F8]/40">
+          <p className="text-[10px] text-[#F7F7F8]/60">
             Estimated total {money(previewTotal, listing.currency)} - confirmed by the server when
             you order
           </p>
@@ -114,7 +114,7 @@ export function ListingDetail({
             {busy ? 'Placing order...' : 'Place order'}
           </button>
 
-          <p className="text-[10px] text-[#F7F7F8]/40">
+          <p className="text-[10px] text-[#F7F7F8]/60">
             Placing an order does not pay for it. You arrange payment with the seller directly.
           </p>
         </div>

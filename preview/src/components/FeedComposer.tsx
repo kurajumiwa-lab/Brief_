@@ -544,11 +544,11 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
             <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]">{temporary.testContent.label}</p>
             <p className="mt-1 text-[10px] leading-snug text-[#F7F7F8]/55">Temporary welcome content for release testing. It will leave the public feed at the expiry above and will not be silently reseeded.</p>
           </div>
-          <span className="shrink-0 text-right text-[9px] font-bold text-[#F7F7F8]/45">{temporaryExpiry ? `until ${temporaryExpiry}` : 'temporary'}</span>
+          <span className="shrink-0 text-right text-[9px] font-bold text-[#F7F7F8]/60">{temporaryExpiry ? `until ${temporaryExpiry}` : 'temporary'}</span>
         </div>
       )}
       {updatedAt && (
-        <p className="px-1 text-[10px] text-[#F7F7F8]/45">
+        <p className="px-1 text-[10px] text-[#F7F7F8]/60">
           Live Brief feed · refreshed {updatedAt}
         </p>
       )}

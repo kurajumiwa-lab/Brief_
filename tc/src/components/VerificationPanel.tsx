@@ -26,7 +26,7 @@ const STATUS_STYLE: Record<string, string> = {
   pending: 'bg-[#222630] text-[#F7F7F8]/60',
   approved: 'bg-[#FF5A1F] text-[#F7F7F8]',
   rejected: 'bg-[#12151A] text-[#F7F7F8]',
-  revoked: 'bg-[#222630] text-[#F7F7F8]/40'
+  revoked: 'bg-[#222630] text-[#F7F7F8]/60'
 };
 
 export function VerificationPanel() {
@@ -81,7 +81,7 @@ export function VerificationPanel() {
       <div className="grid grid-cols-3 gap-2">
         {(['email', 'phone', 'identity'] as AccountVerificationKind[]).map((k) => (
           <div key={k} className="rounded-2xl border border-[#222630] bg-[#12151A] p-3">
-            <p className="text-[9px] uppercase tracking-[0.14em] text-[#F7F7F8]/40">{KIND_LABEL[k]}</p>
+            <p className="text-[9px] uppercase tracking-[0.14em] text-[#F7F7F8]/60">{KIND_LABEL[k]}</p>
             <p className="mt-1 text-[12px] font-extrabold text-[#F7F7F8] capitalize">
               {standing[k] ?? 'unverified'}
             </p>
@@ -144,7 +144,7 @@ export function VerificationPanel() {
                 </span>
               </div>
               {r.note && <p className="text-[10px] text-[#F7F7F8]/60">{r.note}</p>}
-              <p className="text-[9px] text-[#F7F7F8]/40">
+              <p className="text-[9px] text-[#F7F7F8]/60">
                 submitted {r.submittedAt.slice(0, 10)}
                 {r.reviewedAt ? ` · reviewed ${r.reviewedAt.slice(0, 10)}` : ' · awaiting review'}
               </p>

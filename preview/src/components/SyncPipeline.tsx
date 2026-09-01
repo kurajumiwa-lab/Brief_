@@ -90,13 +90,13 @@ export function SyncPipeline({ run, pending }: SyncPipelineProps) {
                 <p className="mt-2 text-[10px] font-extrabold text-[#F7F7F8] leading-tight">
                   {node.label}
                 </p>
-                <p className="text-[9px] text-[#F7F7F8]/40 leading-tight">{node.caption}</p>
+                <p className="text-[9px] text-[#F7F7F8]/60 leading-tight">{node.caption}</p>
                 {/* real timing, or the honest absence of one */}
                 <p className="mt-1 text-[9px] font-mono" style={{ color: stage?.ms != null ? '#F7F7F8' : 'rgba(17,17,17,0.4)' }}>
                   {stage?.ms != null ? `${stage.ms}ms` : state === 'blocked' ? 'held' : '—'}
                 </p>
                 {stage?.detail && (
-                  <p className="mt-0.5 text-[8px] text-[#F7F7F8]/40 leading-tight line-clamp-2 px-0.5">
+                  <p className="mt-0.5 text-[8px] text-[#F7F7F8]/60 leading-tight line-clamp-2 px-0.5">
                     {stage.detail}
                   </p>
                 )}
@@ -121,7 +121,7 @@ export function SyncPipeline({ run, pending }: SyncPipelineProps) {
       </div>
 
       {!run && (
-        <p className="mt-3 text-center text-[10px] text-[#F7F7F8]/40">
+        <p className="mt-3 text-center text-[10px] text-[#F7F7F8]/60">
           The pipeline runs the moment the engine beats — nothing here is animated for show.
         </p>
       )}

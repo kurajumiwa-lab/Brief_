@@ -133,7 +133,7 @@ export function WorkflowsScreen(props: WorkflowsScreenProps) {
                 <h1 className="text-lg font-extrabold text-[#F7F7F8] tracking-tight">
                   {workflowView === 'queue' ? ROOM.workflows.label : `Workflows — ${activeWorkflowBundle.label}`}
                 </h1>
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#F7F7F8]/50 mt-0.5">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#F7F7F8]/70 mt-0.5">
                   {workflowView === 'queue' ? `${QUEUE_LABEL} — ${QUEUE_HINT}` : activeWorkflowBundle.hint}
                 </p>
               </div>
@@ -193,7 +193,7 @@ export function WorkflowsScreen(props: WorkflowsScreenProps) {
                     className={`shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition cursor-pointer ${
                       workflowSection === id
                         ? 'bg-[#FF5A1F] text-[#0D0F12]'
-                        : 'text-[#0D0F12]/60 hover:text-[#0D0F12] bg-[#171A20]'
+                        : 'text-[#F7F7F8]/70 hover:text-[#F7F7F8] bg-[#171A20]'
                     }`}
                   >
                     {INBOX_TABS[id]}

@@ -89,7 +89,7 @@ export function WireSection() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="px-1 text-[11px] font-bold uppercase tracking-[0.22em] text-[#F7F7F8]/60">News</h2>
-          <p className="mt-1 px-1 text-[10px] leading-snug text-[#F7F7F8]/45">
+          <p className="mt-1 px-1 text-[10px] leading-snug text-[#F7F7F8]/60">
             {wire?.source ? `Live from ${wire.source}` : 'Live news wire'}
             {time ? ` · checked ${time}` : ''}
           </p>
@@ -121,7 +121,7 @@ export function WireSection() {
         <>
           {wire?.kenya?.length ? (
             <div className="space-y-2">
-              <p className="px-1 text-[9px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/45">Kenya</p>
+              <p className="px-1 text-[9px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/60">Kenya</p>
               <div className="grid gap-2 sm:grid-cols-2">
                 {wire.kenya.slice(0, 6).map((item) => <Row key={item.id} item={item} />)}
               </div>
@@ -129,7 +129,7 @@ export function WireSection() {
           ) : null}
           {wire?.world?.length ? (
             <div className="space-y-2">
-              <p className="px-1 text-[9px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/45">World</p>
+              <p className="px-1 text-[9px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/60">World</p>
               <div className="grid gap-2 sm:grid-cols-2">
                 {wire.world.slice(0, 6).map((item) => <Row key={item.id} item={item} />)}
               </div>

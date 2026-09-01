@@ -137,7 +137,7 @@ export function PayOrder({ order, onPaid }: PayOrderProps) {
             onChange={(e) => setPhone(e.target.value)}
             placeholder="M-Pesa number, e.g. 0722 000 111"
             inputMode="tel"
-            className="w-full bg-[#171A20] border border-[#222630] rounded-lg px-3 py-2 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/40 outline-none focus:border-[#22E6E0]"
+            className="w-full bg-[#171A20] border border-[#222630] rounded-lg px-3 py-2 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/60 outline-none focus:border-[#22E6E0]"
           />
           <button
             onClick={pay}
@@ -146,7 +146,7 @@ export function PayOrder({ order, onPaid }: PayOrderProps) {
           >
             {busy ? 'Requesting payment…' : 'Pay now'}
           </button>
-          <p className="text-[9px] text-[#F7F7F8]/40 leading-snug">
+          <p className="text-[9px] text-[#F7F7F8]/60 leading-snug">
             A prompt is sent to your phone. Confirmation appears only after
             Brief verifies the payment.
           </p>

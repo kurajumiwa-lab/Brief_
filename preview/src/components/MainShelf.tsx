@@ -279,7 +279,7 @@ export function MainShelf({
         <div>
           <p
             className={`text-[9px] font-extrabold uppercase tracking-[0.18em] ${
-              isDark ? 'text-[#38E879]' : 'text-[#F7F7F8]/50'
+              isDark ? 'text-[#38E879]' : 'text-[#F7F7F8]/70'
             }`}
           >
             Main shelf
@@ -295,7 +295,7 @@ export function MainShelf({
         </div>
         <span
           className={`inline-flex items-center gap-1 text-[9px] font-bold ${
-            isDark ? 'text-[#A7ACB5]' : 'text-[#F7F7F8]/45'
+            isDark ? 'text-[#A7ACB5]' : 'text-[#F7F7F8]/60'
           }`}
         >
           <ArrowRight className="h-2.5 w-2.5" /> swipe or tap
@@ -316,7 +316,7 @@ export function MainShelf({
         ))}
       </div>
       {!compact && (
-        <p className={`px-1 text-[9.5px] leading-snug ${isDark ? 'text-[#A7ACB5]' : 'text-[#F7F7F8]/45'}`}>
+        <p className={`px-1 text-[9.5px] leading-snug ${isDark ? 'text-[#A7ACB5]' : 'text-[#F7F7F8]/60'}`}>
           The shelf is the shortcut. Use the menu for less frequent tools and region settings.
         </p>
       )}

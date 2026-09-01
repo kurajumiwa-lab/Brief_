@@ -396,7 +396,7 @@ export function ArenaScreen({
             <div className="space-y-3 pt-3 border-t border-[#1D2027]">
               {/* Game Selection */}
               <div>
-                <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#F7F7F8]/50 mb-1.5">
+                <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#F7F7F8]/70 mb-1.5">
                   Target Game
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
@@ -416,7 +416,7 @@ export function ArenaScreen({
                       }`}
                     >
                       <p className="text-[11px] font-black truncate">{g.name}</p>
-                      <p className={`text-[8.5px] truncate mt-0.5 ${arenaTestGame === g.id ? 'text-[#F7F7F8]/70' : 'text-[#F7F7F8]/50'}`}>
+                      <p className={`text-[8.5px] truncate mt-0.5 ${arenaTestGame === g.id ? 'text-[#F7F7F8]/70' : 'text-[#F7F7F8]/70'}`}>
                         {g.modes.length} modes
                       </p>
                     </button>
@@ -426,7 +426,7 @@ export function ArenaScreen({
 
               {/* Mode / Format Selection */}
               <div>
-                <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#F7F7F8]/50 mb-1.5">
+                <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#F7F7F8]/70 mb-1.5">
                   Match Format & Mode
                 </label>
                 <div className="flex flex-wrap gap-1.5">
@@ -453,7 +453,7 @@ export function ArenaScreen({
 
               {/* Stake / Tier Selection */}
               <div>
-                <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#F7F7F8]/50 mb-1.5">
+                <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#F7F7F8]/70 mb-1.5">
                   Test Tier & Stake
                 </label>
                 <div className="grid grid-cols-3 gap-1.5">
@@ -473,7 +473,7 @@ export function ArenaScreen({
                       }`}
                     >
                       <p className="text-[11px] font-black">{label}</p>
-                      <p className={`text-[8.5px] ${arenaTestStake === s ? 'text-[#F7F7F8]/70' : 'text-[#F7F7F8]/50'}`}>{hint}</p>
+                      <p className={`text-[8.5px] ${arenaTestStake === s ? 'text-[#F7F7F8]/70' : 'text-[#F7F7F8]/70'}`}>{hint}</p>
                     </button>
                   ))}
                 </div>
@@ -482,7 +482,7 @@ export function ArenaScreen({
               {/* Entry fee input if prize stake */}
               {arenaTestStake === 'entry_fee' && (
                 <div>
-                  <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#F7F7F8]/50 mb-1">
+                  <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#F7F7F8]/70 mb-1">
                     Entry Fee / Prize Stake (KES)
                   </label>
                   <div className="flex items-center gap-2">
@@ -513,7 +513,7 @@ export function ArenaScreen({
 
               {/* Rules / Notes */}
               <div>
-                <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#F7F7F8]/50 mb-1">
+                <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#F7F7F8]/70 mb-1">
                   Match Notes & Objectives (Optional)
                 </label>
                 <input
@@ -527,7 +527,7 @@ export function ArenaScreen({
 
               {/* Duration Window */}
               <div>
-                <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#F7F7F8]/50 mb-1">
+                <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#F7F7F8]/70 mb-1">
                   Time Window
                 </label>
                 <div className="flex gap-1.5">
@@ -710,7 +710,7 @@ export function ArenaScreen({
                 className="w-full bg-[#12151A] border border-[#222630] rounded-2xl p-3 flex items-center justify-between gap-2 text-left cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-[11px] font-bold text-[#F7F7F8]/40 w-4">{i + 1}</span>
+                  <span className="text-[11px] font-bold text-[#F7F7F8]/60 w-4">{i + 1}</span>
                   <span className="text-xs font-extrabold text-[#F7F7F8]">{row.player}</span>
                 </div>
                 <span className="text-[10px] text-[#F7F7F8]/60">{row.won} won · {row.played} played</span>
@@ -732,7 +732,7 @@ export function ArenaScreen({
                   {openedStanding.won} won · {openedStanding.played} played
                   {typeof openedStanding.winRate === 'number' ? ` · ${Math.round(openedStanding.winRate * 100)}%` : ''}
                 </p>
-                <p className="text-[10px] text-[#F7F7F8]/40">Confirmed results only. Brief does not invent a rating.</p>
+                <p className="text-[10px] text-[#F7F7F8]/60">Confirmed results only. Brief does not invent a rating.</p>
               </div>
             )}
           </div>

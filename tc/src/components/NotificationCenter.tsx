@@ -210,7 +210,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
           <img src={n.imageUrl} alt="" aria-hidden="true" loading="lazy" className="h-14 w-14 shrink-0 rounded-xl object-cover" />
         ) : (
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[#171A20]">
-            <ImageOff className="h-4 w-4 text-[#F7F7F8]/30" />
+            <ImageOff className="h-4 w-4 text-[#F7F7F8]/60" />
           </div>
         )}
 
@@ -231,14 +231,14 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
                 {statusLine}
               </span>
             )}
-            <span className="text-[9px] font-semibold text-[#F7F7F8]/40">{freshness(n.createdAt)}</span>
+            <span className="text-[9px] font-semibold text-[#F7F7F8]/60">{freshness(n.createdAt)}</span>
           </div>
           <p className={`mt-1 line-clamp-2 text-[12.5px] leading-snug ${n.read ? 'text-[#F7F7F8]/70' : 'font-bold text-[#F7F7F8]'}`}>
             {n.title}
           </p>
           {n.body && <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-[#F7F7F8]/55">{n.body}</p>}
           {n.sourceName && (
-            <p className="mt-1 text-[9.5px] font-semibold text-[#F7F7F8]/45">{n.sourceName}</p>
+            <p className="mt-1 text-[9.5px] font-semibold text-[#F7F7F8]/60">{n.sourceName}</p>
           )}
           {n.context && (
             <p className="mt-0.5 text-[9.5px] font-semibold text-[#FF5A1F]/70">{n.context}</p>
@@ -322,7 +322,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
                   className={`flex items-center justify-between gap-1 rounded-xl border px-2.5 py-1.5 text-[10px] font-bold transition-colors ${
                     prefs[key] !== false
                       ? 'border-[#22E6E0]/40 bg-[#171A20] text-[#F7F7F8]'
-                      : 'border-[#222630] bg-[#12151A] text-[#F7F7F8]/40'
+                      : 'border-[#222630] bg-[#12151A] text-[#F7F7F8]/60'
                   }`}
                 >
                   <span className="truncate">{CATEGORY_LABELS[key]}</span>
@@ -330,7 +330,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
                 </button>
               ))}
             </div>
-            <p className="mt-2 text-[9.5px] leading-snug text-[#F7F7F8]/45">
+            <p className="mt-2 text-[9.5px] leading-snug text-[#F7F7F8]/60">
               Categories you turn off stop new notifications; everything already here stays until you dismiss it.
             </p>
           </div>
@@ -355,7 +355,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
 
           {authed && !loading && error && rows?.length === 0 && (
             <div className="flex flex-col items-center gap-3 px-6 py-20 text-center">
-              <BellOff className="h-8 w-8 text-[#F7F7F8]/30" />
+              <BellOff className="h-8 w-8 text-[#F7F7F8]/60" />
               <p className="max-w-xs text-[12px] font-semibold text-[#F7F7F8]/60">{error}</p>
             </div>
           )}
@@ -396,7 +396,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
 
               {earlierRows.length > 0 && (
                 <section aria-label="Earlier">
-                  <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/50">
+                  <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/70">
                     Earlier {now.toLocaleDateString('en-KE', { month: 'short', year: 'numeric' })}
                   </p>
                   <div className="grid gap-2 sm:grid-cols-2">
@@ -408,7 +408,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
                           aria-label="Mark unread"
                           title="Mark unread"
                           onClick={(e) => { e.stopPropagation(); void setRead(n, false); }}
-                          className="absolute right-2 top-2 rounded-full bg-[#12151A]/90 p-1 text-[#F7F7F8]/40 opacity-0 transition-opacity hover:text-[#FF5A1F] group-hover:opacity-100"
+                          className="absolute right-2 top-2 rounded-full bg-[#12151A]/90 p-1 text-[#F7F7F8]/60 opacity-0 transition-opacity hover:text-[#FF5A1F] group-hover:opacity-100"
                         >
                           <Bell className="h-3 w-3" />
                         </button>
@@ -419,7 +419,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
               )}
 
               {busyId && (
-                <p className="flex items-center gap-2 text-[10px] font-semibold text-[#F7F7F8]/45">
+                <p className="flex items-center gap-2 text-[10px] font-semibold text-[#F7F7F8]/60">
                   <Check className="h-3 w-3" /> Updating…
                 </p>
               )}

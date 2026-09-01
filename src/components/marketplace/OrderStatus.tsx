@@ -65,7 +65,7 @@ export function OrderStatus({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-extrabold text-[#F7F7F8]">{order.listingTitle}</p>
-          <p className="text-[10px] text-[#F7F7F8]/40">
+          <p className="text-[10px] text-[#F7F7F8]/60">
             {order.quantity} x {money(order.unitPrice, order.currency)}
           </p>
         </div>
@@ -84,7 +84,7 @@ export function OrderStatus({
       </p>
 
       {/* Payment stated as its own fact, always. Never inferred from status. */}
-      <p className="text-[10px] text-[#F7F7F8]/40">
+      <p className="text-[10px] text-[#F7F7F8]/60">
         {order.paid
           ? 'Paid - settled transaction on record'
           : 'Not paid yet - no settled payment is on record for this order'}

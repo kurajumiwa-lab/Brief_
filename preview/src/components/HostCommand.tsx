@@ -20,7 +20,7 @@ const money = (n: number, c: string) => `${c} ${n.toLocaleString()}`;
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="bg-[#12151A] border border-[#222630] rounded-xl p-3 space-y-2">
-      <p className="text-[9px] text-[#F7F7F8]/40">{title}</p>
+      <p className="text-[9px] text-[#F7F7F8]/60">{title}</p>
       {children}
     </div>
   );
@@ -30,7 +30,7 @@ function Big({ value, label, accent = false }: { value: string; label: string; a
   return (
     <div>
       <p className={`text-xl font-extrabold ${accent ? 'text-[#F7F7F8]' : 'text-[#F7F7F8]'}`}>{value}</p>
-      <p className="text-[9px] text-[#F7F7F8]/40">{label}</p>
+      <p className="text-[9px] text-[#F7F7F8]/60">{label}</p>
     </div>
   );
 }
@@ -84,7 +84,7 @@ export function HostCommand() {
             ))}
             {d.upcoming.length > 0 && (
               <div className="pt-1 border-t border-[#222630]">
-                <p className="text-[9px] text-[#F7F7F8]/40 mb-1">Upcoming</p>
+                <p className="text-[9px] text-[#F7F7F8]/60 mb-1">Upcoming</p>
                 {d.upcoming.map((u) => (
                   <p key={u.id} className="text-xs text-[#F7F7F8] truncate">
                     {u.title} · {u.startsAt.slice(0, 16).replace('T', ' ')}
@@ -109,7 +109,7 @@ export function HostCommand() {
           ]}
         />
         {d.money.campaignCount === 0 && (
-          <p className="text-[10px] text-[#F7F7F8]/40">No campaigns yet.</p>
+          <p className="text-[10px] text-[#F7F7F8]/60">No campaigns yet.</p>
         )}
       </Section>
 
@@ -142,7 +142,7 @@ export function HostCommand() {
             { label: 'Arrived', value: d.people.checkedIn }
           ]}
         />
-        <p className="text-[9px] text-[#F7F7F8]/40 leading-snug">
+        <p className="text-[9px] text-[#F7F7F8]/60 leading-snug">
           Views are page loads, not people. A refresh counts twice.
         </p>
       </Section>

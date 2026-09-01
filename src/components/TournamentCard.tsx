@@ -46,11 +46,11 @@ export function TournamentCard({
     <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-3">
       <div className="flex items-baseline justify-between gap-3">
         <p className="text-xs font-extrabold text-[#F7F7F8]">{name}</p>
-        <span className="text-[9px] text-[#F7F7F8]/40 shrink-0">
+        <span className="text-[9px] text-[#F7F7F8]/60 shrink-0">
           {registered}/{capacity}
         </span>
       </div>
-      <p className="text-[9px] text-[#F7F7F8]/40 mt-0.5">
+      <p className="text-[9px] text-[#F7F7F8]/60 mt-0.5">
         Hosted by {organizerName} - {status}
       </p>
       {prizeDescription && (
@@ -61,7 +61,7 @@ export function TournamentCard({
       {rewardPoints > 0 ? (
         <div className="mt-2 pt-2 border-t border-[#222630]">
           <div className="flex items-baseline justify-between gap-3">
-            <span className="text-[9px] text-[#F7F7F8]/40">Organizer earned</span>
+            <span className="text-[9px] text-[#F7F7F8]/60">Organizer earned</span>
             <span className="text-xs font-extrabold text-[#F7F7F8]">
               {rewardPoints.toLocaleString()}
             </span>

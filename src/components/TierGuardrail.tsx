@@ -34,7 +34,7 @@ export function TierGuardrail({ guardrail }: TierGuardrailProps) {
   if (!guardrail) {
     return (
       <div className="rounded-2xl border border-[#222630] bg-[#12151A] p-4">
-        <p className="text-[10px] text-[#F7F7F8]/40">Tier guardrail unavailable.</p>
+        <p className="text-[10px] text-[#F7F7F8]/60">Tier guardrail unavailable.</p>
       </div>
     );
   }

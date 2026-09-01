@@ -60,8 +60,8 @@ export function EventResale({ slug }: { slug: string }) {
   if (load.status === 'loading') {
     return (
       <div className="border-t border-[#222630] pt-4">
-        <h3 className="text-[10px] font-bold uppercase tracking-wide text-[#F7F7F8]/50 mb-2">Resale tickets</h3>
-        <p className="text-xs text-[#F7F7F8]/50 py-2">Checking for resale seats…</p>
+        <h3 className="text-[10px] font-bold uppercase tracking-wide text-[#F7F7F8]/70 mb-2">Resale tickets</h3>
+        <p className="text-xs text-[#F7F7F8]/70 py-2">Checking for resale seats…</p>
       </div>
     );
   }
@@ -71,7 +71,7 @@ export function EventResale({ slug }: { slug: string }) {
   if (load.status === 'error') {
     return (
       <div className="border-t border-[#222630] pt-4 space-y-2">
-        <h3 className="text-[10px] font-bold uppercase tracking-wide text-[#F7F7F8]/50">Resale tickets</h3>
+        <h3 className="text-[10px] font-bold uppercase tracking-wide text-[#F7F7F8]/70">Resale tickets</h3>
         <p className="text-[11px] text-[#F7F7F8]/70">Resale seats could not be loaded right now. {load.error}</p>
         <button onClick={() => void fetchListings()} className="text-xs font-bold text-[#F7F7F8] underline cursor-pointer">
           Try again
@@ -83,8 +83,8 @@ export function EventResale({ slug }: { slug: string }) {
   return (
     <div className="border-t border-[#222630] pt-4 space-y-3">
       <div className="flex items-baseline justify-between gap-2">
-        <h3 className="text-[10px] font-bold uppercase tracking-wide text-[#F7F7F8]/50">Resale tickets</h3>
-        <span className="text-[10px] text-[#F7F7F8]/40">{load.data?.length ?? 0} listed</span>
+        <h3 className="text-[10px] font-bold uppercase tracking-wide text-[#F7F7F8]/70">Resale tickets</h3>
+        <span className="text-[10px] text-[#F7F7F8]/60">{load.data?.length ?? 0} listed</span>
       </div>
 
       {load.data?.length === 0 && (
@@ -114,7 +114,7 @@ export function EventResale({ slug }: { slug: string }) {
               Let it go
             </button>
           </div>
-          <p className="text-[10px] text-[#F7F7F8]/50">
+          <p className="text-[10px] text-[#F7F7F8]/70">
             Track this order under Workflows → Sell → Resale.
           </p>
         </div>
@@ -127,9 +127,9 @@ export function EventResale({ slug }: { slug: string }) {
           <div key={l.id} className="border border-[#222630] rounded-2xl p-3 flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-xs font-extrabold text-[#F7F7F8]">
-                {money(l.price, l.currency)} {l.cheapest && <span className="text-[9px] font-bold text-[#F7F7F8]/50">· cheapest</span>}
+                {money(l.price, l.currency)} {l.cheapest && <span className="text-[9px] font-bold text-[#F7F7F8]/70">· cheapest</span>}
               </p>
-              <p className="text-[10px] text-[#F7F7F8]/50 truncate">
+              <p className="text-[10px] text-[#F7F7F8]/70 truncate">
                 {l.seller?.displayName ?? 'A Brief member'}
                 {l.seller?.joinedAt ? ` · member since ${new Date(l.seller.joinedAt).getFullYear()}` : ''}
                 {l.transferCount > 0 ? ` · resold ${l.transferCount}×` : ''}
@@ -147,7 +147,7 @@ export function EventResale({ slug }: { slug: string }) {
         ))}
       </div>
 
-      <p className="text-[10px] text-[#F7F7F8]/40">
+      <p className="text-[10px] text-[#F7F7F8]/60">
         Every transfer re-issues the seat's code; a printed or screenshotted old code stops working.
       </p>
     </div>

@@ -28,7 +28,7 @@ export function CircleTarget({ circle, compact = false }: CircleTargetProps) {
   const hasTarget = circle.targetValue !== null && circle.progressPct !== null;
 
   if (!hasTarget) {
-    return <p className="text-[10px] text-[#F7F7F8]/40">No target set.</p>;
+    return <p className="text-[10px] text-[#F7F7F8]/60">No target set.</p>;
   }
 
   const pct = circle.progressPct as number;
@@ -51,7 +51,7 @@ export function CircleTarget({ circle, compact = false }: CircleTargetProps) {
       </p>
 
       {!compact && (
-        <p className="text-[10px] text-[#F7F7F8]/40 mt-0.5">
+        <p className="text-[10px] text-[#F7F7F8]/60 mt-0.5">
           {circle.contributorCount === 0
             ? 'No contributors yet.'
             : `${circle.contributorCount} ${
@@ -62,7 +62,7 @@ export function CircleTarget({ circle, compact = false }: CircleTargetProps) {
       )}
 
       {circle.deadline && (
-        <p className="text-[10px] text-[#F7F7F8]/40 mt-0.5">
+        <p className="text-[10px] text-[#F7F7F8]/60 mt-0.5">
           Deadline {circle.deadline.slice(0, 10)}
         </p>
       )}

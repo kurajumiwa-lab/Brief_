@@ -142,7 +142,7 @@ export function EventsHub() {
           >
             Sort: {sort === 'date' ? 'soonest first' : 'most people first'}
           </button>
-          <span className="ml-auto text-[10px] text-[#F7F7F8]/40">
+          <span className="ml-auto text-[10px] text-[#F7F7F8]/60">
             {rows === null ? '' : `${rows.length} shown${total > rows.length ? ` of ${total}` : ''}`}
           </span>
         </div>
@@ -166,7 +166,7 @@ export function EventsHub() {
           >
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/40">
+                <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/60">
                   {e.categoryLabel}
                 </p>
                 <p className="text-sm font-extrabold text-[#F7F7F8] truncate">{e.title}</p>

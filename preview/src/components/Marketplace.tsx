@@ -360,7 +360,7 @@ export function Marketplace({ currentUserId = 'usr_me' }: MarketplaceProps = {})
                     {fresh[o.id] && fresh[o.id] !== 'error' ? 'Hide record' : 'Server record'}
                   </button>
                   {fresh[o.id] === 'loading' && (
-                    <p className="text-[10px] text-[#F7F7F8]/40 mt-1">Fetching this order's current record…</p>
+                    <p className="text-[10px] text-[#F7F7F8]/60 mt-1">Fetching this order's current record…</p>
                   )}
                   {fresh[o.id] === 'error' && (
                     <p className="text-[10px] text-[#F7F7F8] mt-1">Could not load this order.</p>
@@ -381,14 +381,14 @@ export function Marketplace({ currentUserId = 'usr_me' }: MarketplaceProps = {})
           )}
           {disputes.length > 0 && (
             <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-3 space-y-2">
-              <h4 className="text-[11px] font-extrabold text-[#F7F7F8]/40">
+              <h4 className="text-[11px] font-extrabold text-[#F7F7F8]/60">
                 Problems you reported
               </h4>
               {disputes.map((d) => (
                 <div key={d.id} className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-[10px] font-bold text-[#F7F7F8] truncate">{d.reason}</p>
-                    <p className="text-[9px] text-[#F7F7F8]/40">
+                    <p className="text-[9px] text-[#F7F7F8]/60">
                       {d.orderId} · raised {d.createdAt.slice(0, 10)}
                     </p>
                   </div>
@@ -397,7 +397,7 @@ export function Marketplace({ currentUserId = 'usr_me' }: MarketplaceProps = {})
                   </span>
                 </div>
               ))}
-              <p className="text-[9px] text-[#F7F7F8]/40">
+              <p className="text-[9px] text-[#F7F7F8]/60">
                 A dispute marks the order as contested. No refund is implied —
                 no money has moved.
               </p>

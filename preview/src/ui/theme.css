@@ -10,7 +10,7 @@
      elevated  #222630   top elevation, hairlines
      ink       #F7F7F8   primary text
      ink-dim   #A7ACB5   secondary text
-     ink-faint #6E737C   meta / timestamps
+     ink-faint #8A93A6   meta / timestamps (>=4.5:1 on ground/surface)
      accent    #FF5A1F   warm electric orange  (primary)
      accent-2  #22E6E0   cyan/turquoise        (secondary)
      success   #38E879   success / live
@@ -27,7 +27,7 @@
   --brief-card: #12151A;
   --brief-ink: #F7F7F8;
   --brief-muted: #A7ACB5;
-  --brief-faint: #6E737C;
+  --brief-faint: #8A93A6;
   --brief-line: #222630;
   --brief-green: #FF5A1F;   /* primary accent = warm electric orange (legacy name kept) */
   --brief-green-ink: #0D0F12;  /* text on the accent — dark, for contrast on orange */

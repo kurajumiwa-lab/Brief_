@@ -4709,7 +4709,7 @@ const GameGlyph: React.FC<{
       <span
         className={`absolute -bottom-0.5 -right-0.5 min-w-[15px] px-1 rounded-full text-[8px] font-extrabold text-center leading-[15px] ${
           empty
-            ? 'bg-[#12151A] text-[#0D0F12]/40'
+            ? 'bg-[#12151A] text-[#F7F7F8]/60'
             : full
             ? 'bg-[#FF5A1F] text-[#0D0F12]'
             : 'bg-[#FF5A1F] text-[#0D0F12]'
@@ -5174,7 +5174,7 @@ function PublicShareRow({ title, description }: { title: string; description: st
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#12151A] text-[#F7F7F8] text-[10px] font-extrabold border border-[#222630] cursor-pointer">
         <Share2 className="w-3 h-3" /> {copied ? 'Copied' : 'Copy link'}
       </button>
-      <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#12151A] text-[#F7F7F8]/40 text-[10px] border border-[#222630]" title="Scan to open">
+      <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#12151A] text-[#F7F7F8]/60 text-[10px] border border-[#222630]" title="Scan to open">
         <ExternalLink className="w-3 h-3" /> QR
       </span>
     </div>
@@ -5328,7 +5328,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
             {c.goalAmount != null && (
               <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-4 space-y-2">
                 <div className="flex items-baseline justify-between gap-2">
-                  <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/50">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/70">
                     Contribution pot
                   </p>
                   {c.endsAt && (
@@ -5356,7 +5356,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                     {(c.contributors ?? 0)} contribution{(c.contributors ?? 0) === 1 ? '' : 's'}
                   </span>
                 </div>
-                <p className="text-[9px] leading-snug text-[#F7F7F8]/50">
+                <p className="text-[9px] leading-snug text-[#F7F7F8]/70">
                   Progress counts SETTLED money only — a pledge that has not settled is not raised.
                   Contributors are counted, never listed.
                 </p>
@@ -5366,14 +5366,14 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
             {/* Updates (T3): the organiser's posts, newest first. */}
             {updates !== null && updates.length > 0 && (
               <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-4 space-y-3">
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/50">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/70">
                   Updates
                 </p>
                 {updates.map((u) => (
                   <div key={u.id} className="space-y-0.5">
                     <div className="flex items-baseline justify-between gap-2">
                       <p className="text-xs font-extrabold text-[#F7F7F8]">{u.title}</p>
-                      <p className="shrink-0 text-[9px] text-[#F7F7F8]/40">{u.createdAt.slice(0, 10)}</p>
+                      <p className="shrink-0 text-[9px] text-[#F7F7F8]/60">{u.createdAt.slice(0, 10)}</p>
                     </div>
                     <p className="text-[11px] leading-snug text-[#F7F7F8]/60">{u.body}</p>
                   </div>
@@ -5458,9 +5458,9 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                   <div className="flex items-center gap-3 pt-1">
                     <PublicTicketQr code={done.ticketCode} />
                     <div className="min-w-0 space-y-1">
-                      <p className="text-[9px] text-[#F7F7F8]/40">Your ticket</p>
+                      <p className="text-[9px] text-[#F7F7F8]/60">Your ticket</p>
                       <p className="text-[11px] text-[#F7F7F8] break-all select-all">{done.ticketCode}</p>
-                      <p className="text-[10px] text-[#F7F7F8]/40 leading-snug">Show this code at the gate.</p>
+                      <p className="text-[10px] text-[#F7F7F8]/60 leading-snug">Show this code at the gate.</p>
                     </div>
                   </div>
                 )}
@@ -5513,7 +5513,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                     </div>
                   )}
                   <div>
-                    <label className="block text-[9px] text-[#F7F7F8]/40 mb-1">
+                    <label className="block text-[9px] text-[#F7F7F8]/60 mb-1">
                       Your name
                     </label>
                     <input
@@ -5524,7 +5524,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                     />
                   </div>
                   <div>
-                    <label className="block text-[9px] text-[#F7F7F8]/40 mb-1">
+                    <label className="block text-[9px] text-[#F7F7F8]/60 mb-1">
                       Phone or email
                     </label>
                     <input
@@ -5538,7 +5538,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                       Fixed-price events never show this — the price is the price. */}
                   {c.goalAmount != null && (
                     <div>
-                      <label className="block text-[9px] text-[#F7F7F8]/40 mb-1">
+                      <label className="block text-[9px] text-[#F7F7F8]/60 mb-1">
                         Your contribution ({c.currency})
                       </label>
                       <input
@@ -5548,7 +5548,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                         placeholder="Whole shillings you are putting in"
                         className="w-full bg-[#12151A] text-[#F7F7F8] text-sm rounded-xl px-3 py-3 border border-[#222630] focus:border-[#22E6E0] focus:outline-none"
                       />
-                      <p className="mt-1 text-[9px] text-[#F7F7F8]/40 leading-snug">
+                      <p className="mt-1 text-[9px] text-[#F7F7F8]/60 leading-snug">
                         State what you are putting in. It counts toward the pot once the money
                         settles; contributors are counted, never listed.
                       </p>
@@ -5568,7 +5568,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                       : `Register - ${c.currency} ${c.price.toLocaleString()}`}
                   </button>
                   {(c.price > 0 || c.goalAmount != null) && (
-                    <p className="text-[10px] text-[#F7F7F8]/40 leading-snug text-center">
+                    <p className="text-[10px] text-[#F7F7F8]/60 leading-snug text-center">
                       No online payment is connected yet. Your spot is held and you
                       arrange payment with the organiser.
                     </p>
@@ -5584,7 +5584,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
         )}
       </div>
 
-      <footer className="border-t border-[#222630] py-6 text-[10px] text-[#F7F7F8]/40 text-center">
+      <footer className="border-t border-[#222630] py-6 text-[10px] text-[#F7F7F8]/60 text-center">
         Brief
       </footer>
     </div>

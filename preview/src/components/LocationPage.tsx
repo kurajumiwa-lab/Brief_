@@ -96,7 +96,7 @@ function Section({ title, icon, objects, onOpenObject }: {
     <section aria-label={title} className="mb-5">
       <h3 className="mb-2 flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]">
         {icon}{title}
-        <span className="text-[#F7F7F8]/45">· {objects.length}</span>
+        <span className="text-[#F7F7F8]/60">· {objects.length}</span>
       </h3>
       <div className="grid gap-2 sm:grid-cols-2">
         {objects.slice(0, 8).map((o) => (
@@ -147,7 +147,7 @@ export function LocationPage({ name, authed, followedLocations, onClose, onOpenO
           <button type="button" onClick={onClose} className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[12px] font-bold text-[#F7F7F8] transition-colors hover:bg-[#171A20]">
             <ArrowLeft className="h-4 w-4" /> Back
           </button>
-          <span className="truncate text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#F7F7F8]/50">
+          <span className="truncate text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#F7F7F8]/70">
             Explore
           </span>
           <button type="button" onClick={onClose} aria-label="Close" className="rounded-full p-2 text-[#F7F7F8] transition-colors hover:bg-[#171A20]">
@@ -191,7 +191,7 @@ export function LocationPage({ name, authed, followedLocations, onClose, onOpenO
                   </button>
                 )}
                 {page.location.kind === 'county' && Array.isArray(page.location.areas) && page.location.areas.length > 0 && (
-                  <span className="rounded-full bg-[#171A20] px-2 py-0.5 text-[#F7F7F8]/50">
+                  <span className="rounded-full bg-[#171A20] px-2 py-0.5 text-[#F7F7F8]/70">
                     {page.location.areas.length} areas
                   </span>
                 )}
@@ -226,7 +226,7 @@ export function LocationPage({ name, authed, followedLocations, onClose, onOpenO
                   ['Latest', page.activity.counts.latest, <Newspaper key="i" className="h-3.5 w-3.5" />]
                 ] as const).map(([label, count, icon]) => (
                   <div key={label} className="rounded-2xl border border-[#222630] bg-[#12151A] px-2 py-2.5 text-center shadow-sm">
-                    <div className="flex items-center justify-center gap-1 text-[9px] font-extrabold uppercase tracking-[0.1em] text-[#F7F7F8]/50">
+                    <div className="flex items-center justify-center gap-1 text-[9px] font-extrabold uppercase tracking-[0.1em] text-[#F7F7F8]/70">
                       {icon}{label}
                     </div>
                     <p className="mt-1 text-[22px] font-extrabold leading-none text-[#F7F7F8]">{count}</p>
@@ -253,7 +253,7 @@ export function LocationPage({ name, authed, followedLocations, onClose, onOpenO
                 </p>
               )}
 
-              <p className="mt-6 flex items-center gap-1.5 text-[9px] font-semibold text-[#F7F7F8]/45">
+              <p className="mt-6 flex items-center gap-1.5 text-[9px] font-semibold text-[#F7F7F8]/60">
                 <Users className="h-3 w-3" /> Live from Brief objects — shared via {explorePath(page.location.name)}
               </p>
             </div>

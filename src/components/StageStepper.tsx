@@ -50,7 +50,7 @@ export function StageStepper({ stages, currentIndex, compact = false }: StageSte
                 {stage.label}
               </p>
               {!compact && stage.blurb && (
-                <p className="mt-0.5 hidden text-[8px] leading-tight text-[#F7F7F8]/40 sm:block">{stage.blurb}</p>
+                <p className="mt-0.5 hidden text-[8px] leading-tight text-[#F7F7F8]/60 sm:block">{stage.blurb}</p>
               )}
             </div>
             {!isLast && (

@@ -152,7 +152,7 @@ export function TriageQueue({ onOpenSection, onNotice }: TriageQueueProps) {
       <div className="max-w-3xl mx-auto px-4 py-6">
         <div className="border border-dashed border-[#222630] rounded-2xl p-8 text-center">
           <p className="text-xs font-extrabold text-[#F7F7F8]">Sign in to see what is waiting</p>
-          <p className="text-[10px] text-[#F7F7F8]/50 mt-1">
+          <p className="text-[10px] text-[#F7F7F8]/70 mt-1">
             The queue is yours alone — tasks handed to you, orders on your shelf,
             doors you are opening, messages to review. Nobody is signed in, so
             there is nothing to show rather than nothing waiting.
@@ -167,7 +167,7 @@ export function TriageQueue({ onOpenSection, onNotice }: TriageQueueProps) {
       <div className="max-w-3xl mx-auto px-4 py-6">
         <div className="border border-dashed border-[#222630] rounded-2xl p-8 text-center">
           <p className="text-xs font-extrabold text-[#F7F7F8]">The queue could not be read</p>
-          <p className="text-[10px] text-[#F7F7F8]/50 mt-1">{unavailableReason}</p>
+          <p className="text-[10px] text-[#F7F7F8]/70 mt-1">{unavailableReason}</p>
           <button
             onClick={() => { setStatus('loading'); void load(); }}
             className="mt-3 px-3 py-2 rounded-xl bg-[#FF5A1F] text-[#0D0F12] font-extrabold text-[11px] cursor-pointer"
@@ -209,7 +209,7 @@ export function TriageQueue({ onOpenSection, onNotice }: TriageQueueProps) {
       {items.length === 0 && (
         <div className="border border-dashed border-[#222630] rounded-2xl p-8 text-center">
           <p className="text-xs font-extrabold text-[#F7F7F8]">Nothing is waiting on you</p>
-          <p className="text-[10px] text-[#F7F7F8]/50 mt-1">
+          <p className="text-[10px] text-[#F7F7F8]/70 mt-1">
             When a task is handed to you, an order lands on your shelf, a door needs
             opening, or a message arrives, it appears here.
           </p>
@@ -226,18 +226,18 @@ export function TriageQueue({ onOpenSection, onNotice }: TriageQueueProps) {
           >
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/45">
+                <span className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/60">
                   {KIND_LABEL[item.kind]}
                 </span>
                 {item.kind === 'task' && (
-                  <span className="text-[9px] font-bold text-[#F7F7F8]/45">{item.circleName}</span>
+                  <span className="text-[9px] font-bold text-[#F7F7F8]/60">{item.circleName}</span>
                 )}
                 {item.kind === 'checkin' && item.status === 'open' && (
                   <span className="text-[9px] font-extrabold text-[#F7F7F8] bg-[#1D2027] px-1.5 py-0.5 rounded-full">
                     Open now
                   </span>
                 )}
-                <span className="text-[9px] font-bold text-[#F7F7F8]/35">
+                <span className="text-[9px] font-bold text-[#F7F7F8]/60">
                   waiting {waited(item.daysWaiting)}
                 </span>
               </div>

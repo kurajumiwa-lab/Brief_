@@ -104,7 +104,7 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
             <p className="text-[13px] font-extrabold text-[#F7F7F8] truncate">
               {article ? 'Edit story' : 'New story'}
             </p>
-            <p className="text-[10px] text-[#F7F7F8]/50">
+            <p className="text-[10px] text-[#F7F7F8]/70">
               Design it here — readers see exactly this.
             </p>
           </div>
@@ -235,7 +235,7 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
                       </div>
                     </div>
                     <p className="mt-1.5 text-[11px] font-extrabold text-[#F7F7F8]">{l.label}</p>
-                    <p className="text-[9px] leading-tight text-[#F7F7F8]/50">{l.blurb}</p>
+                    <p className="text-[9px] leading-tight text-[#F7F7F8]/70">{l.blurb}</p>
                   </button>
                 );
               })}
@@ -248,7 +248,7 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-[11px] font-bold text-[#F7F7F8]">Accent colour</p>
-                <p className="text-[9px] text-[#F7F7F8]/50">Kicker, rules and highlights.</p>
+                <p className="text-[9px] text-[#F7F7F8]/70">Kicker, rules and highlights.</p>
               </div>
               <div className="flex items-center gap-1.5">
                 <input
@@ -281,7 +281,7 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
                 className="mt-1 w-full cursor-pointer accent-black"
                 aria-label="Hero overlay strength"
               />
-              <p className="text-[9px] text-[#F7F7F8]/50">How dark the veil over the lead photo is — for readable type.</p>
+              <p className="text-[9px] text-[#F7F7F8]/70">How dark the veil over the lead photo is — for readable type.</p>
             </div>
           </section>
 
@@ -347,14 +347,14 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
           <div className="rounded-2xl border border-[#222630] bg-[#12151A] p-3">
             <div className="mb-2 flex items-center justify-between">
               <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]">Live preview</p>
-              <span className="text-[9px] text-[#F7F7F8]/40">as readers will see it</span>
+              <span className="text-[9px] text-[#F7F7F8]/60">as readers will see it</span>
             </div>
             <div className="overflow-hidden rounded-xl border border-[#222630]">
               <StoryView article={previewArticle} design={design} mode="preview" />
             </div>
             {images.length > 0 && (
               <div className="mt-2">
-                <p className="text-[9px] uppercase tracking-[0.14em] text-[#F7F7F8]/40">
+                <p className="text-[9px] uppercase tracking-[0.14em] text-[#F7F7F8]/60">
                   Gallery · {images.length} photo{images.length === 1 ? '' : 's'} in the reader
                 </p>
                 <div className="mt-1 grid grid-cols-4 gap-1.5">

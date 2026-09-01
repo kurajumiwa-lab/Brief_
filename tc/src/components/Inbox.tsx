@@ -68,7 +68,7 @@ export function Inbox({
           <p className="text-xs text-[#F7F7F8]/60">
             No messages awaiting review.
           </p>
-          <p className="text-[10px] text-[#F7F7F8]/40 mt-1">
+          <p className="text-[10px] text-[#F7F7F8]/60 mt-1">
             Connected sources appear here as drafts, never as published objects.
           </p>
         </div>
@@ -97,7 +97,7 @@ export function Inbox({
             </div>
 
             {/* The raw message, always visible next to what was made of it. */}
-            <p className="text-[11px] text-[#F7F7F8]/40 italic leading-snug border-l-2 border-[#222630] pl-2">
+            <p className="text-[11px] text-[#F7F7F8]/60 italic leading-snug border-l-2 border-[#222630] pl-2">
               {candidate.message.text}
             </p>
 
@@ -134,7 +134,7 @@ export function Inbox({
 
             {candidate.suggestedLinks.length > 0 && (
               <div className="space-y-1">
-                <p className="text-[9px] text-[#F7F7F8]/40">
+                <p className="text-[9px] text-[#F7F7F8]/60">
                   Connects to
                 </p>
                 {candidate.suggestedLinks.map((link) => (
@@ -167,7 +167,7 @@ export function Inbox({
               </div>
             )}
 
-            <p className="text-[9px] text-[#F7F7F8]/40">
+            <p className="text-[9px] text-[#F7F7F8]/60">
               Unverified. No trust score until reviewed.
             </p>
 

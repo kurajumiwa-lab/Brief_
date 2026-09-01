@@ -160,7 +160,7 @@ export function CreatorCockpit() {
             </div>
             <button
               onClick={() => void toggle(w)}
-              className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-bold cursor-pointer ${w.enabled ? 'bg-[#FF5A1F] text-[#0D0F12]' : 'bg-[#12151A] text-[#0D0F12]/60 border border-[#222630]'}`}
+              className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-bold cursor-pointer ${w.enabled ? 'bg-[#FF5A1F] text-[#0D0F12]' : 'bg-[#12151A] text-[#F7F7F8]/70 border border-[#222630]'}`}
             >
               {w.enabled ? 'On' : 'Off'}
             </button>
@@ -171,12 +171,12 @@ export function CreatorCockpit() {
       {/* Recent runs */}
       {runs.length > 0 && (
         <div className="space-y-2">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#F7F7F8]/40">Recent activity</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#F7F7F8]/60">Recent activity</p>
           {runs.slice(0, 8).map((r) => (
             <div key={r.id} className="rounded-lg border border-[#222630] bg-[#12151A] px-3 py-2 text-[10px] text-[#F7F7F8]/60">
               <span className="text-[#F7F7F8]">{r.signalType}</span>
               {' → '}{r.results.map((x: any) => `${x.action}${x.ok ? ' ✓' : ' ✗'}`).join(', ')}
-              <span className="float-right text-[#F7F7F8]/40">{new Date(r.at).toLocaleTimeString()}</span>
+              <span className="float-right text-[#F7F7F8]/60">{new Date(r.at).toLocaleTimeString()}</span>
             </div>
           ))}
         </div>

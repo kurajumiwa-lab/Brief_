@@ -70,7 +70,7 @@ export function Pursuits({
           value={pursuitDraft}
           onChange={(e) => setPursuitDraft(e.target.value)}
           placeholder="find a plumber near me"
-          className="flex-1 bg-[#12151A] border border-[#222630] rounded-xl px-3 py-2.5 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/40 outline-none focus:border-[#222630]"
+          className="flex-1 bg-[#12151A] border border-[#222630] rounded-xl px-3 py-2.5 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/60 outline-none focus:border-[#222630]"
         />
         <button
           type="submit"
@@ -83,7 +83,7 @@ export function Pursuits({
       {pursuits.length === 0 && (
         <div className="border border-dashed border-[#222630] rounded-2xl p-8 text-center">
           <p className="text-xs text-[#F7F7F8]/60">Nothing being pursued yet.</p>
-          <p className="text-[10px] text-[#F7F7F8]/40 mt-1">
+          <p className="text-[10px] text-[#F7F7F8]/60 mt-1">
             Ask for something above, or start one from any object.
           </p>
         </div>
@@ -127,7 +127,7 @@ export function Pursuits({
 
             {!dormant && (
               <>
-                <p className="text-[10px] text-[#F7F7F8]/40">
+                <p className="text-[10px] text-[#F7F7F8]/60">
                   {results.length > 0
                     ? `${results.length} match${results.length === 1 ? '' : 'es'} in Brief`
                     : 'Nothing matching yet'}
@@ -166,7 +166,7 @@ export function Pursuits({
                           className="w-full text-left bg-[#12151A] border border-[#222630] hover:border-[#222630] rounded-xl p-2.5 cursor-pointer transition"
                         >
                           <div className="flex items-center justify-between gap-2">
-                            <span className="text-[9px] text-[#F7F7F8]/40">
+                            <span className="text-[9px] text-[#F7F7F8]/60">
                               {getObjectTypeMeta(match.item.type).label}
                             </span>
                             {distance && (
@@ -200,7 +200,7 @@ export function Pursuits({
                     className={`text-[9px] font-bold px-2 py-0.5 rounded-full border cursor-pointer transition ${
                       pursuit.status === status
                         ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]'
-                        : 'bg-transparent text-[#0D0F12]/40 border-[#222630] hover:border-[#222630]'
+                        : 'bg-transparent text-[#F7F7F8]/60 border-[#222630] hover:border-[#222630]'
                     }`}
                   >
                     {status}
@@ -213,7 +213,7 @@ export function Pursuits({
                 className={`text-[9px] font-bold px-2 py-0.5 rounded-full border cursor-pointer transition ${
                   pursuit.watchChanges
                     ? 'bg-[#12151A] text-[#F7F7F8] border-[#222630]'
-                    : 'bg-transparent text-[#F7F7F8]/40 border-[#222630] hover:border-[#222630]'
+                    : 'bg-transparent text-[#F7F7F8]/60 border-[#222630] hover:border-[#222630]'
                 }`}
               >
                 watch changes
@@ -224,7 +224,7 @@ export function Pursuits({
                 nothing is monitoring in the background yet. */}
             {pursuit.watchChanges && (
               <div className="space-y-1.5 pt-1">
-                <p className="text-[9px] text-[#F7F7F8]/40">
+                <p className="text-[9px] text-[#F7F7F8]/60">
                   Tell me about
                 </p>
                 <div className="flex flex-wrap gap-1.5">
@@ -242,7 +242,7 @@ export function Pursuits({
                           className={`text-[9px] font-bold px-2 py-0.5 rounded-full border cursor-pointer transition ${
                             on
                               ? 'bg-[#12151A] text-[#F7F7F8] border-[#222630]'
-                              : 'bg-transparent text-[#F7F7F8]/40 border-[#222630] hover:border-[#222630]'
+                              : 'bg-transparent text-[#F7F7F8]/60 border-[#222630] hover:border-[#222630]'
                           }`}
                         >
                           {WATCH_CONDITION_LABELS[condition]}
@@ -251,7 +251,7 @@ export function Pursuits({
                     }
                   )}
                 </div>
-                <p className="text-[9px] text-[#F7F7F8]/40">
+                <p className="text-[9px] text-[#F7F7F8]/60">
                   Alerts are not live yet. Brief records what matters to you.
                 </p>
               </div>

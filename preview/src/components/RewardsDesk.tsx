@@ -60,7 +60,7 @@ export default function RewardsDesk({ settledPoints, rank, accepted, pending }: 
           a different currency with a different story. */}
       <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-4 space-y-2">
         <div className="flex items-baseline justify-between gap-3">
-          <span className="text-[10px] text-[#F7F7F8]/40">Contribution Points</span>
+          <span className="text-[10px] text-[#F7F7F8]/60">Contribution Points</span>
           <span className="text-lg font-extrabold text-[#F7F7F8]">{settledPoints.toLocaleString()}</span>
         </div>
         <p className="text-[10px] text-[#F7F7F8]/60">Progress {rank} - {accepted} accepted contributions</p>
@@ -87,7 +87,7 @@ export default function RewardsDesk({ settledPoints, rank, accepted, pending }: 
 
           <section aria-label="Points balance" className="rounded-2xl border border-[#222630] bg-[#12151A] p-4 space-y-2">
             <div className="flex items-baseline justify-between gap-3">
-              <span className="text-[10px] text-[#F7F7F8]/40">Referral points</span>
+              <span className="text-[10px] text-[#F7F7F8]/60">Referral points</span>
               <span className="text-lg font-extrabold text-[#F7F7F8]">{data.balance.available.toLocaleString()}</span>
             </div>
             <p className="text-[10px] text-[#F7F7F8]/60">

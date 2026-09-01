@@ -340,7 +340,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-extrabold text-[#F7F7F8]">{circle.name}</p>
-          <p className="text-[9px] text-[#F7F7F8]/40 mt-0.5">
+          <p className="text-[9px] text-[#F7F7F8]/60 mt-0.5">
             {TYPE_LABEL[circle.type] ?? circle.type} &middot; {circle.status}
             {circle.viewerRole ? ` \u00b7 you are ${circle.viewerRole}` : ''}
           </p>
@@ -390,7 +390,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
           </span>
         )}
         {mode === 'closed' && (
-          <span className="text-[10px] text-[#F7F7F8]/40">
+          <span className="text-[10px] text-[#F7F7F8]/60">
             Invite only — a coordinator has to add you
           </span>
         )}
@@ -457,7 +457,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
             >
               {creating ? 'Starting…' : 'Start circle'}
             </button>
-            <p className="text-[10px] text-[#F7F7F8]/50">
+            <p className="text-[10px] text-[#F7F7F8]/70">
               You become its coordinator, so you can add other people.
             </p>
           </form>
@@ -486,7 +486,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
             <p className="text-xs text-[#F7F7F8]/60">
               There are no circles here yet.
             </p>
-            <p className="text-[10px] text-[#F7F7F8]/40 mt-1">
+            <p className="text-[10px] text-[#F7F7F8]/60 mt-1">
               Start one, or join an open one when somebody starts it.
             </p>
           </div>
@@ -494,7 +494,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
 
         {mine.length > 0 && (
           <div className="space-y-2">
-            <h3 className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/45">
+            <h3 className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/60">
               Circles you are in ({mine.length})
             </h3>
             {mine.map((circle) => card(circle, 'mine'))}
@@ -506,7 +506,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
             <p className="text-xs text-[#F7F7F8]/60">
               You are not part of any Circle yet.
             </p>
-            <p className="text-[10px] text-[#F7F7F8]/40 mt-1">
+            <p className="text-[10px] text-[#F7F7F8]/60 mt-1">
               The ones below are open — joining takes one press.
             </p>
           </div>
@@ -514,7 +514,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
 
         {joinable.length > 0 && (
           <div className="space-y-2">
-            <h3 className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/45">
+            <h3 className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/60">
               Open to join ({joinable.length})
             </h3>
             {joinable.map((circle) => card(circle, 'joinable'))}
@@ -523,7 +523,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
 
         {closed.length > 0 && (
           <div className="space-y-2">
-            <h3 className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/45">
+            <h3 className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/60">
               Invite only ({closed.length})
             </h3>
             {closed.map((circle) => card(circle, 'closed'))}
@@ -562,7 +562,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
           <div className="mt-2 flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h2 className="text-lg font-extrabold text-[#F7F7F8]">{open.name}</h2>
-              <p className="text-[9px] text-[#F7F7F8]/40 mt-0.5">
+              <p className="text-[9px] text-[#F7F7F8]/60 mt-0.5">
                 {TYPE_LABEL[open.type] ?? open.type} &middot; {open.visibility}
                 {myRole ? ` \u00b7 you are ${myRole}` : ' \u00b7 not a member'}
               </p>
@@ -584,7 +584,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
                 {busyId === open.id ? 'Joining…' : 'Join circle'}
               </button>
             ) : (
-              <span className="shrink-0 text-[10px] text-[#F7F7F8]/40">
+              <span className="shrink-0 text-[10px] text-[#F7F7F8]/60">
                 Invite only
               </span>
             )}
@@ -597,7 +597,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
           )}
           {/* Leaving is honest about what it does and does not undo. */}
           {myRole && (
-            <p className="text-[10px] text-[#F7F7F8]/40 mt-1">
+            <p className="text-[10px] text-[#F7F7F8]/60 mt-1">
               Leaving removes your membership. Work you were holding keeps your
               name on it, and money that settled stays settled.
             </p>
@@ -612,7 +612,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
                 className={`px-3 py-1.5 rounded-xl text-[10px] font-extrabold cursor-pointer ${
                   section === s.id
                     ? 'bg-[#FF5A1F] text-[#0D0F12]'
-                    : 'bg-[#12151A] border border-[#222630] text-[#0D0F12]/60'
+                    : 'bg-[#12151A] border border-[#222630] text-[#F7F7F8]/70'
                 }`}
               >
                 {s.label}
@@ -631,7 +631,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
             <div className="space-y-4">
               {open.goal && (
                 <div>
-                  <h3 className="text-[11px] font-extrabold text-[#F7F7F8]/40 mb-1">
+                  <h3 className="text-[11px] font-extrabold text-[#F7F7F8]/60 mb-1">
                     Purpose
                   </h3>
                   <p className="text-[11px] text-[#F7F7F8] leading-snug">{open.goal}</p>
@@ -639,7 +639,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
               )}
 
               <div>
-                <h3 className="text-[11px] font-extrabold text-[#F7F7F8]/40 mb-2">
+                <h3 className="text-[11px] font-extrabold text-[#F7F7F8]/60 mb-2">
                   Target
                 </h3>
                 <CircleTarget circle={open} />
@@ -657,7 +657,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
               {/* Blocks that are neither tasks nor votes -- notes, pins and
                   anything wrapping an extracted object. */}
               <div>
-                <h3 className="text-[11px] font-extrabold text-[#F7F7F8]/40 mb-2">
+                <h3 className="text-[11px] font-extrabold text-[#F7F7F8]/60 mb-2">
                   Blocks
                 </h3>
                 {detail.blocks.filter((b) => b.type !== 'task' && b.type !== 'vote')
@@ -677,7 +677,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
                           </p>
                           <p className="text-xs text-[#F7F7F8] mt-1">{block.content}</p>
                           {block.sources.length > 0 && block.sources[0].sourceName && (
-                            <p className="text-[9px] text-[#F7F7F8]/40 mt-1">
+                            <p className="text-[9px] text-[#F7F7F8]/60 mt-1">
                               via {block.sources[0].sourceName}
                             </p>
                           )}

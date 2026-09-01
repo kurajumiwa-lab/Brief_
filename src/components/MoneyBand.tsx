@@ -156,7 +156,7 @@ export function MoneyBand({ objects, areaHint, onOpenSection, onOpenItem, minTot
               Money opportunities
             </h2>
           </div>
-          <p className="text-[10px] font-semibold text-[#F7F7F8]/50">
+          <p className="text-[10px] font-semibold text-[#F7F7F8]/70">
             {areaHint ? `around ${areaHint}` : 'across Brief — set your area to focus'}
           </p>
         </div>
