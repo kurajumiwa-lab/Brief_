@@ -30,3 +30,10 @@ declare module '*.svg' {
   const src: string;
   export default src;
 }
+
+// Scoped stylesheets imported by screens (Vite bundles them; tsc only needs to
+// know they exist as side-effect modules).
+declare module '*.css' {
+  const src: string;
+  export default src;
+}

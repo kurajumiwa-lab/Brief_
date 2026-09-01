@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { ArenaGame, ArenaChallenge } from '../App';
 import { themeFor } from './arenaTheme';
+import { soundEngine } from '../utils/SoundEngine';
 
 // ---------------------------------------------------------------------------
 // ARENA GAME SCREEN — the secondary screen behind a shelf tile.
@@ -83,7 +84,7 @@ function Chip({
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={() => { soundEngine.play('tap'); onClick(); }}
       className="px-2.5 py-1.5 rounded-lg text-[11px] font-extrabold border transition-all cursor-pointer"
       style={{
         // Active: black fill, white type. Inactive: recessed neutral on the card.
@@ -128,6 +129,7 @@ export function ArenaGameScreen({
 
   const handleCreate = () => {
     if (!canCreate) return;
+    soundEngine.play('heavyTap');
     onCreateChallenge({
       mode,
       stake,
@@ -161,7 +163,7 @@ export function ArenaGameScreen({
         <div className="relative flex items-center justify-between px-4 pt-4">
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => { soundEngine.play('tap'); onClose(); }}
             className="flex items-center gap-1 rounded-full px-2.5 py-1.5 text-[11px] font-extrabold cursor-pointer"
             style={{ background: 'rgba(21,8,38,0.6)', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.28)' }}
           >
@@ -230,7 +232,7 @@ export function ArenaGameScreen({
           <button
             type="button"
             disabled={availabilityBusy}
-            onClick={onToggleAvailability}
+            onClick={() => { soundEngine.play('tap'); onToggleAvailability(); }}
             className="shrink-0 rounded-xl px-3 py-2 text-[11px] font-extrabold cursor-pointer disabled:opacity-40"
             style={{
               background: availabilityOn ? INK : PAGE,
@@ -299,7 +301,7 @@ export function ArenaGameScreen({
                   <button
                     key={v}
                     type="button"
-                    onClick={() => setEntryFee(String(v))}
+                    onClick={() => { soundEngine.play('tap'); setEntryFee(String(v)); }}
                     className="rounded-lg border px-2 py-1 text-[10px] font-bold text-[#251045]/60 cursor-pointer"
                     style={{ borderColor: LINE }}
                   >
@@ -407,7 +409,7 @@ export function ArenaGameScreen({
                   <button
                     type="button"
                     disabled={busy || taken || c.status === 'cancelled'}
-                    onClick={() => onCancelChallenge(c)}
+                    onClick={() => { soundEngine.play('tap'); onCancelChallenge(c); }}
                     className="shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-extrabold cursor-pointer disabled:opacity-40"
                     style={{ border: `1px solid ${LINE}`, color: INK }}
                   >
@@ -417,7 +419,7 @@ export function ArenaGameScreen({
                   <button
                     type="button"
                     disabled={busy || expired || taken}
-                    onClick={() => onAcceptChallenge(c)}
+                    onClick={() => { soundEngine.play('heavyTap'); onAcceptChallenge(c); }}
                     className="shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-extrabold cursor-pointer disabled:opacity-40"
                     style={{ background: INK, color: '#FFFFFF' }}
                     title={expired ? 'This challenge has expired' : taken ? 'Already accepted' : undefined}
@@ -434,7 +436,7 @@ export function ArenaGameScreen({
         <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
-            onClick={onViewLeaderboard}
+            onClick={() => { soundEngine.play('tap'); onViewLeaderboard(); }}
             className="rounded-xl py-2.5 text-[11px] font-extrabold cursor-pointer"
             style={{ border: `1px solid ${LINE}`, background: CARD, color: INK }}
           >
@@ -442,7 +444,7 @@ export function ArenaGameScreen({
           </button>
           <button
             type="button"
-            onClick={onViewTournaments}
+            onClick={() => { soundEngine.play('tap'); onViewTournaments(); }}
             className="rounded-xl py-2.5 text-[11px] font-extrabold cursor-pointer"
             style={{ border: `1px solid ${LINE}`, background: CARD, color: INK }}
           >

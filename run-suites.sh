@@ -26,9 +26,12 @@ for f in $SUITES; do
        --format=cjs --loader:.tsx=tsx --loader:.webp=empty --external:jsdom > ".tmp.$f.build" 2>&1; then
     printf "  %-9s BUILD FAILED\n" "$f"
     head -5 ".tmp.$f.build" | sed 's/^/      /'
-    broken="$broken $f"; rm -f ".tmp.$f.cjs" ".tmp.$f.build"; continue
+    broken="$broken $f"; rm -f ".tmp.$f.cjs" ".tmp.$f.build" ".tmp.$f.css"; continue
   fi
   rm -f ".tmp.$f.build"
+  # Bundling a tree that imports CSS emits a sibling .css (ArenaScreen imports
+  # arenaArcade.css). Clean it too so a suite run leaves no stray artifact.
+  rm -f ".tmp.$f.css"
 
   out=$(timeout 180 node ".tmp.$f.cjs" 2>&1); code=$?
   rm -f ".tmp.$f.cjs"

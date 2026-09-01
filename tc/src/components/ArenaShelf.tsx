@@ -1,6 +1,7 @@
 import React from 'react';
 import type { ArenaGame, ArenaGameId } from '../App';
 import { themeFor } from './arenaTheme';
+import { soundEngine } from '../utils/SoundEngine';
 
 // ---------------------------------------------------------------------------
 // ARENA SHELF — the minimalist, image-forward game selector.
@@ -49,7 +50,10 @@ export function ArenaShelf({ games, activity, onOpen }: ArenaShelfProps) {
               key={g.id}
               type="button"
               data-game-id={g.id}
-              onClick={() => onOpen(g.id)}
+              onClick={() => {
+                soundEngine.play('tap');
+                onOpen(g.id);
+              }}
               aria-label={`Open ${g.name}`}
               className="group snap-start shrink-0 w-[150px] sm:w-[164px] md:w-auto text-left cursor-pointer focus:outline-none"
             >

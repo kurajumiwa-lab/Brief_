@@ -2,6 +2,7 @@ import React from 'react';
 import { Users } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
 import type { MyReferrals } from '../api/briefApi';
+import { soundEngine } from '../utils/SoundEngine';
 
 // REWARDS — referrals, points, and cash from a pool that real revenue backs.
 // The surface states the three anti-pyramid rules in plain words, because a
@@ -75,7 +76,7 @@ export default function RewardsDesk({ settledPoints, rank, accepted, pending }: 
             </div>
             <p className="text-lg font-extrabold tracking-widest text-[#5B2EA6]">{data.code}</p>
             <p className="text-[10px] text-[#251045]/60 break-all">{data.link}</p>
-            <button type="button" onClick={() => void copyShare()}
+            <button type="button" onClick={() => { soundEngine.play('tap'); void copyShare(); }}
               className="rounded-lg bg-[#5B2EA6] px-3 py-2 text-[11px] font-extrabold text-[#FFFFFF]">
               Copy WhatsApp share message
             </button>
@@ -97,7 +98,7 @@ export default function RewardsDesk({ settledPoints, rank, accepted, pending }: 
                 placeholder={`at least ${data.conversion.minPoints} points`}
                 aria-label="Points to convert"
                 className="flex-1 rounded-lg border border-[#D6CFE4] bg-[#F1EDF7] px-3 py-2 text-[12px] text-[#251045]" />
-              <button type="button" onClick={() => void convert()} disabled={busy || !points}
+              <button type="button" onClick={() => { soundEngine.play('heavyTap'); void convert(); }} disabled={busy || !points}
                 className="rounded-lg bg-[#5B2EA6] px-3 py-2 text-[11px] font-extrabold text-[#FFFFFF] disabled:opacity-40">
                 Convert
               </button>
