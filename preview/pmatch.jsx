@@ -41,6 +41,22 @@ check('permit pursuit finds the guide', permit.some(m=>m.item.id==='knw_permit_g
 const market=match('market day events this saturday');
 check('event pursuit finds market day', market.some(m=>m.item.title.includes('Market Day')));
 
+console.log('\n=== Null-safe scoring (the blank-page-on-typing fix) ===');
+// A sparse row — missing category/summary/type, the exact shape the public
+// feed can hand back (category is stringOrNull server-side) — must score
+// zero, never throw. An unguarded .toLowerCase() here crashed the render on
+// the first keystroke and blanked the screen.
+const sparse = { id: 'sparse_1', title: 'Kijiji Market', category: null, summary: null, type: null, locationName: null, metadata: {} };
+let sparseScore = null;
+let threw = false;
+try { sparseScore = App.scoreObjectForPhrase(sparse, 'market'); } catch (e) { threw = true; }
+check('a sparse row scores instead of throwing', !threw && typeof sparseScore === 'number', String(sparseScore));
+check('a sparse row still matches on its title', sparseScore > 0);
+const nullTitle = { id: 'sparse_2', title: null, category: null, summary: null, type: null, metadata: {} };
+let nt = 0;
+try { nt = App.scoreObjectForPhrase(nullTitle, 'x'); } catch (e) { nt = -1; }
+check('a fully-null row scores 0, never throws', nt === 0, String(nt));
+
 console.log('\n=== No fabrication ===');
 check('helicopter mechanic -> 0 results', match('find a helicopter mechanic')  .length===0);
 check('crypto exchange -> 0 results', match('find a crypto exchange').length===0);

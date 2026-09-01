@@ -1629,12 +1629,19 @@ export const scoreObjectForPhrase = (object: BriefObject, phrase: string): numbe
   const query = phrase.trim().toLowerCase();
   if (query === '') return 0;
 
-  const title = object.title.toLowerCase();
-  const category = object.category.toLowerCase();
-  const summary = object.summary.toLowerCase();
-  const location = (object.locationName ?? '').toLowerCase();
-  const creator = (object.creatorName ?? '').toLowerCase();
-  const status = (object.metadata?.statusBadge ?? '').toLowerCase();
+  // NULL-SAFE by construction. The feed can carry objects whose title/type
+  // are absent and whose category is stringOrNull(...) on the server — an
+  // unguarded `.toLowerCase()` here threw on the first keystroke, crashing the
+  // render (React unmounts the tree → a blank screen). Every field is coerced
+  // to '' before matching so a sparse row simply scores zero instead of
+  // throwing.
+  const title = String(object.title ?? '').toLowerCase();
+  const category = String(object.category ?? '').toLowerCase();
+  const summary = String(object.summary ?? '').toLowerCase();
+  const location = String(object.locationName ?? '').toLowerCase();
+  const creator = String(object.creatorName ?? '').toLowerCase();
+  const status = String(object.metadata?.statusBadge ?? '').toLowerCase();
+  const type = String(object.type ?? '').toLowerCase();
 
   let score = 0;
   if (title === query) score += 100;
@@ -1644,7 +1651,7 @@ export const scoreObjectForPhrase = (object: BriefObject, phrase: string): numbe
   if (category === query) score += 30;
   else if (category.includes(query)) score += 18;
 
-  if (object.type.includes(query)) score += 16;
+  if (type.includes(query)) score += 16;
   if (creator.includes(query)) score += 12;
   if (location.includes(query)) score += 10;
   if (status.includes(query)) score += 6;
