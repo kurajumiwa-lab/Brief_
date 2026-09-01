@@ -142,6 +142,7 @@ import { MyLayerScreen } from './screens/MyLayerScreen';
 import { NearbyScreen } from './screens/NearbyScreen';
 import { WorkflowsScreen } from './screens/WorkflowsScreen';
 import { OverlaysShell } from './screens/OverlaysShell';
+import { useIngestionDesk } from './shell/hooks/useIngestionDesk';
 import { useArenaData } from './shell/hooks/useArenaData';
 import { useCaptureFlow } from './shell/hooks/useCaptureFlow';
 import { useCampaignHub } from './shell/hooks/useCampaignHub';
@@ -1565,102 +1566,32 @@ export function App() {
   // --- Ingestion review state ------------------------------------------------
   // Candidates are parsed on demand and held here. They are NOT objects: until
   // a reviewer accepts one, nothing reaches the graph, search, or My Layer.
-  const [candidates, setCandidates] = useState<IngestionCandidate[]>([]);
-  const [reviewed, setReviewed] = useState<Record<string, CandidateStatus>>({});
+  const {
+    candidates,
+    handleAcceptCandidate,
+    handleReceiveInbound,
+    handleRejectCandidate,
+    inboundBusy,
+    reviewed,
+    setCandidates,
+    setInboundBusy,
+    setReviewed,
+  } = useIngestionDesk({
+    objects,
+    setObjects,
+    showToast,
+    connectorStatus,
+  });
+
 
   // Pulls the real inbound queue: messages as they actually arrived from
   // connected sources. Brief ships with no sample traffic, so on a system with
   // nothing connected this correctly finds nothing -- "no new messages" is a
   // true report about an empty queue, not a UI that failed to load.
-  const [inboundBusy, setInboundBusy] = useState(false);
 
-  const handleReceiveInbound = async () => {
-    setInboundBusy(true);
-    // Only unprocessed messages: anything already turned into an object is not
-    // waiting on a reviewer, and re-parsing it would invite a duplicate.
-    //
-    // Sources are fetched alongside them because a message's channel and
-    // label live on its source row. Reusing whatever happened to be cached
-    // would mean provenance renders only if the user had visited the Sources
-    // panel first -- so a draft would silently lose its origin.
-    const [res, srcRes] = await Promise.all([
-      briefApi.getRawItems({ status: 'pending' }),
-      briefApi.getSources()
-    ]);
-    setInboundBusy(false);
-
-    if (!res.ok) {
-      showToast(`Could not reach the inbox: ${res.error}`);
-      return;
-    }
-
-    const knownSources: any[] = srcRes.ok ? srcRes.data : connectorStatus.liveSources;
-
-    const known = new Set(candidates.map((c) => c.message.id));
-    const CHANNELS: SourceType[] = ['telegram', 'whatsapp', 'web', 'rss', 'api', 'manual'];
-    const sourceFor = (sourceId: string) =>
-      knownSources.find((s: any) => s?.id === sourceId) ?? null;
-    const labelFor = (sourceId: string) => sourceFor(sourceId)?.name ?? sourceId;
-    // The channel is whatever the source says it is. An unrecognised platform
-    // falls back to 'manual' rather than being guessed into a specific network.
-    const channelFor = (sourceId: string): SourceType => {
-      const raw = sourceFor(sourceId);
-      const claimed = (raw?.platform ?? raw?.type ?? '').toLowerCase();
-      return CHANNELS.find((c) => c === claimed) ?? 'manual';
-    };
-
-    const fresh = res.data
-      .filter((item) => !known.has(item.id))
-      .map((item) =>
-        parseInboundMessage(
-          {
-            id: item.id,
-            channel: channelFor(item.sourceId),
-            sourceId: item.sourceId,
-            sourceLabel: labelFor(item.sourceId),
-            text: item.text,
-            receivedAt: item.publishedAt ?? item.retrievedAt ?? item.createdAt ?? new Date().toISOString(),
-            sourceUrl: item.rawUrl ?? undefined
-          },
-          objects
-        )
-      );
-
-    if (fresh.length === 0) {
-      showToast('No new messages');
-      return;
-    }
-
-    setCandidates((prev) => [...prev, ...fresh]);
-    showToast(`${fresh.length} message(s) parsed for review`);
-  };
 
   // Accepting is the ONLY path from message to object, and it is manual.
-  const handleAcceptCandidate = (candidate: IngestionCandidate) => {
-    const accepted: BriefObject = { ...candidate.draft };
 
-    // Apply suggested links only on acceptance -- a reviewer confirming the
-    // parse is what makes a proposed edge real.
-    for (const link of candidate.suggestedLinks) {
-      if (link.relation === 'locationObjectId' && !accepted.locationObjectId) {
-        accepted.locationObjectId = link.objectId;
-      } else if (link.relation === 'relatedObjectIds') {
-        accepted.relatedObjectIds = [
-          ...(accepted.relatedObjectIds ?? []),
-          link.objectId
-        ];
-      }
-    }
-
-    setObjects((prev) => [accepted, ...prev]);
-    setReviewed((prev) => ({ ...prev, [candidate.id]: 'accepted' }));
-    showToast(`Published: ${accepted.title.slice(0, 40)}`);
-  };
-
-  const handleRejectCandidate = (candidate: IngestionCandidate) => {
-    setReviewed((prev) => ({ ...prev, [candidate.id]: 'rejected' }));
-    showToast('Discarded');
-  };
 
   // --- Group intelligence layer ----------------------------------------------
   // Access state is live: revoking a group must immediately remove it and its
