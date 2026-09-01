@@ -12,7 +12,8 @@
 // Each provider is a connector module exposing a common shape:
 //   capabilities, isConfigured(), status(),
 //   collect, parseCallback(), verifyCallbackSecret()
-//   ...and for disbursement providers, disburse() + isPayoutConfigured()
+//   ...and for disbursement providers, disburse(), isPayoutConfigured(),
+//   payoutFee(amount) and a result parser.
 //
 // Adding another provider later (if one is ever chosen) is: write a connector
 // file + add it to the map below. Today the map is Tuma-only by deliberate
@@ -24,14 +25,17 @@
 // ---------------------------------------------------------------------------
 
 import * as tuma from './connectors/tuma.js';
+import * as mpesa from './connectors/mpesa.js';
 
-// TUMA IS THE SOLE PAYMENT PROVIDER. One rail, one contract, no fallback
+// TUMA IS THE SOLE COLLECTION PROVIDER. One rail, one contract, no fallback
 // guessing: if Tuma is not configured, Brief honestly reports "no provider"
 // rather than silently trying another rail.
 export const COLLECTION_PROVIDERS = { tuma };
-// Intentionally empty. No disbursement provider has been selected; register
-// one here to enable merchant payouts. Do not add one unless instructed.
-export const DISBURSEMENT_PROVIDERS = {};
+// M-PESA DARAJA B2C is the disbursement provider: the cheapest payout rail in
+// Kenya (flat M-Pesa "send money" tariff, capped KES 108, free API, no
+// aggregator markup). Unconfigured until the B2C credentials are set, in
+// which case activeDisbursementProvider() honestly returns null.
+export const DISBURSEMENT_PROVIDERS = { mpesa };
 
 /** The active collection provider's name, or null when Tuma is unconfigured. */
 export function activeCollectionProvider() {

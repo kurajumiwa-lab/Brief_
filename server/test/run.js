@@ -5006,6 +5006,122 @@ console.log('\n=== PAYOUT: SETTLED EARNINGS -> DISBURSEMENT ===');
     settle.vendorEarnings(v.id).payoutAvailable === false);
 }
 
+console.log('\n=== DISBURSEMENT: M-PESA B2C RAIL (tariff, parse, disburse, fee pass-through) ===');
+{
+  const mpesa = await import('../src/connectors/mpesa.js');
+  const settle = await import('../src/domain/settlement.js');
+
+  // --- the flat tariff: exact bands, capped, pass-through at cost -----------
+  check('B2C fee is 0 under KES 100', mpesa.b2cFee(50) === 0 && mpesa.b2cFee(100) === 0);
+  check('B2C fee 101-500 is 7', mpesa.b2cFee(500) === 7);
+  check('B2C fee 501-1000 is 13', mpesa.b2cFee(1000) === 13);
+  check('B2C fee 1001-1500 is 23', mpesa.b2cFee(1500) === 23);
+  check('B2C fee 1501-2500 is 33', mpesa.b2cFee(2500) === 33);
+  check('B2C fee 2501-3500 is 53', mpesa.b2cFee(3500) === 53);
+  check('B2C fee 3501-5000 is 57', mpesa.b2cFee(5000) === 57);
+  check('B2C fee 5001-7500 is 78', mpesa.b2cFee(7500) === 78);
+  check('B2C fee 7501-10000 is 90', mpesa.b2cFee(10000) === 90);
+  check('B2C fee 10001-15000 is 100', mpesa.b2cFee(15000) === 100);
+  check('B2C fee 15001-20000 is 105', mpesa.b2cFee(20000) === 105);
+  check('B2C fee 20001+ is capped at 108', mpesa.b2cFee(35000) === 108 && mpesa.b2cFee(250000) === 108);
+  check('B2C fee refuses nonsense', mpesa.b2cFee(-5) === null && mpesa.b2cFee('x') === null && mpesa.b2cFee(0) === null);
+
+  // --- parse the asynchronous B2C result -------------------------------
+  const okRes = mpesa.parseB2CResult({ Result: { ResultCode: 0, ConversationID: 'AG_1', TransactionID: 'TXN1', ResultDesc: 'accepted' } });
+  check('B2C result parses success', okRes.ok && okRes.succeeded === true && okRes.conversationId === 'AG_1' && okRes.transactionId === 'TXN1');
+  const failRes = mpesa.parseB2CResult({ Result: { ResultCode: 1, ConversationID: 'AG_2', ResultDesc: 'insufficient funds' } });
+  check('B2C result parses failure', failRes.ok && failRes.succeeded === false && /insufficient/i.test(failRes.failureReason));
+  check('B2C result rejects junk', mpesa.parseB2CResult({ nonsense: true }).ok === false);
+
+  // --- disburse fails closed without credentials ------------------------
+  const noCred = await mpesa.disburse({ amount: 1000, phone: '0722000111', fetchImpl: async () => { throw new Error('must not be called'); } });
+  check('disburse fails closed when unconfigured', noCred.ok === false && noCred.reason === 'not_configured');
+  check('missing credentials are named', Array.isArray(noCred.missing) && noCred.missing.length > 0);
+
+  // --- disburse happy path with a mocked fetch (env set + restored) -----
+  const saved = {};
+  const keys = ['MPESA_ENV', 'MPESA_CONSUMER_KEY', 'MPESA_CONSUMER_SECRET', 'MPESA_SHORTCODE',
+    'MPESA_CALLBACK_SECRET', 'MPESA_B2C_INITIATOR', 'MPESA_B2C_SECURITY_CREDENTIAL', 'BRIEF_PUBLIC_ORIGIN'];
+  for (const k of keys) saved[k] = process.env[k];
+  try {
+    process.env.MPESA_ENV = 'sandbox';
+    process.env.MPESA_CONSUMER_KEY = 'ck';
+    process.env.MPESA_CONSUMER_SECRET = 'cs';
+    process.env.MPESA_SHORTCODE = '600000';
+    process.env.MPESA_CALLBACK_SECRET = 'callsec';
+    process.env.MPESA_B2C_INITIATOR = 'initiator';
+    process.env.MPESA_B2C_SECURITY_CREDENTIAL = 'cred';
+    process.env.BRIEF_PUBLIC_ORIGIN = 'https://brief.test';
+    mpesa._resetTokenCache();
+    const calls = [];
+    const fetchImpl = async (url, opts) => {
+      calls.push({ url: String(url), opts });
+      if (String(url).includes('/oauth/v1/generate')) {
+        return { ok: true, status: 200, json: async () => ({ access_token: 'tok', expires_in: 3000 }) };
+      }
+      return { ok: true, status: 200, json: async () => ({ ConversationID: 'AG_CONV_X', OriginatorConversationID: 'OG_X', ResponseCode: '0', ResponseDescription: 'accepted' }) };
+    };
+    const sent = await mpesa.disburse({ amount: 1500, phone: '0722000111', remarks: 'Brief payout', fetchImpl });
+    check('disburse succeeds against Daraja', sent.ok === true);
+    check('disburse returns the ConversationID as providerRef', sent.providerRef === 'AG_CONV_X');
+    const b2cCall = calls.find((c) => c.url.includes('/mpesa/b2c/'));
+    check('the B2C endpoint was hit', Boolean(b2cCall));
+    const payload = b2cCall ? JSON.parse(b2cCall.opts.body) : {};
+    check('B2C amount is whole shillings', payload.Amount === 1500);
+    check('B2C recipient is normalised to 254...', payload.PartyB === '254722000111');
+    check('B2C CommandID is BusinessPayment', payload.CommandID === 'BusinessPayment');
+    check('B2C ResultURL embeds the secret path', String(payload.ResultURL).includes('/api/webhooks/mpesa-b2c/'));
+    check('B2C PartyA is the shortcode', payload.PartyA === '600000');
+  } finally {
+    for (const k of keys) { if (saved[k] === undefined) delete process.env[k]; else process.env[k] = saved[k]; }
+    mpesa._resetTokenCache();
+  }
+
+  // --- fee pass-through: a provider WITH a fee reduces the payout amount ---
+  const vendors = await import('../src/domain/vendor.js');
+  const listings = await import('../src/domain/listing.js');
+  const ordersD = await import('../src/domain/order.js');
+  const led = await import('../src/domain/ledger.js');
+  const providers = await import('../src/providers.js');
+  store._reset();
+
+  const v = vendors.createVendor({ ownerId: 'usr_fee', displayName: 'Fee Stall' });
+  const l = listings.createListing({ vendorId: v.id, title: 'Widget', type: 'product', price: 1000, currency: 'KES', quantityAvailable: 10 });
+  listings.transitionListing(l.id, 'active');
+  const o = ordersD.createOrder({ listingId: l.id, buyerId: 'usr_fee_buyer', quantity: 1 });
+  const tx = led.createTransaction({ amount: o.total, currency: 'KES', type: 'sale' });
+  led.transitionTransaction(tx.id, 'pending');
+  led.transitionTransaction(tx.id, 'confirmed');
+  led.transitionTransaction(tx.id, 'settled');
+  ordersD.attachTransaction(o.id, tx.id);
+  ordersD.transitionOrder(o.id, 'fulfilled');
+  ordersD.transitionOrder(o.id, 'settled');
+
+  providers.DISBURSEMENT_PROVIDERS.feeRail = {
+    isPayoutConfigured: () => true,
+    status: () => ({ provider: 'feeRail', configured: true }),
+    payoutFee: (amount) => mpesa.b2cFee(amount),
+    disburse: async () => ({ ok: true, providerRef: 'FEE_1' })
+  };
+
+  let e = settle.vendorEarnings(v.id);
+  check('fee rail: net is 950 (1000 - 5%)', e.net === 950, `got ${e.net}`);
+  check('fee rail: withdrawable is 950', e.withdrawable === 950);
+
+  const { payout } = settle.requestPayout({ vendorId: v.id, requestedBy: 'usr_fee', phone: '0722000111' });
+  check('payout grossAmount is the withdrawable (950)', payout.grossAmount === 950, `got ${payout.grossAmount}`);
+  check('payout fee is the flat tariff for 950 (13)', payout.fee === 13, `got ${payout.fee}`);
+  check('payout amount is net of the fee (937)', payout.amount === 937, `got ${payout.amount}`);
+  check('fee + amount === gross (exact pass-through, no leak)', payout.fee + payout.amount === payout.grossAmount);
+
+  // sendPayout dispatches the NET amount, not the gross.
+  const sent = await settle.sendPayout(payout.id, { fetchImpl: async () => ({ ok: true, status: 200, json: async () => ({}) }) });
+  check('sendPayout goes through the fee rail', sent.ok === true && sent.providerRef === 'FEE_1');
+
+  delete providers.DISBURSEMENT_PROVIDERS.feeRail;
+  check('with the fee rail removed, payout is unavailable again', settle.vendorEarnings(v.id).payoutAvailable === false);
+}
+
 console.log('\n=== PAYOUT OVER HTTP: 503 / provider_unavailable (no provider) ===');
 {
   process.env.NODE_ENV = 'test';

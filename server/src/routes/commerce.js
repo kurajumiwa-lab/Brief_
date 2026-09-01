@@ -10,6 +10,7 @@ import * as ledger from '../domain/ledger.js';
 import * as payment from '../domain/payment.js';
 import * as settlement from '../domain/settlement.js';
 import * as tuma from '../connectors/tuma.js';
+import * as mpesa from '../connectors/mpesa.js';
 import * as vendorSyndication from '../domain/vendorSyndication.js';
 import * as signals from '../domain/signal.js';
 import { requireAuth, now, recordError } from './helpers.js';
@@ -24,6 +25,7 @@ app.use('/api/disputes', requireFeature('commerce'));
 app.use('/api/orders/:id/pay', requireFeature('payments'));
 app.use('/api/orders/:id/payments', requireFeature('payments'));
 app.use('/api/webhooks/tuma', requireFeature('payments'));
+app.use('/api/webhooks/mpesa-b2c', requireFeature('payouts'));
 app.use('/api/vendors/me/payouts', requireFeature('payouts'));
 // ---------------------------------------------------------------------------
 // COMMERCE (Batch 3): vendors, listings, orders, fulfilment, disputes.
@@ -681,6 +683,47 @@ app.post('/api/webhooks/tuma/:secret', (req, res) => {
     });
   }
 
+  res.json({ ok: true, duplicate: Boolean(applied.duplicate) });
+});
+
+
+/**
+ * M-Pesa Daraja B2C payout result callback.
+ *
+ * Daraja does not sign callbacks, so the deployment-controlled defence is the
+ * secret path segment (MPESA_CALLBACK_SECRET). The REAL check is inside
+ * confirmPayout(): the ConversationID must match a payout Brief issued. It
+ * fails closed. Every callback is persisted before processing so a replay or
+ * malformed payload is auditable, mirroring the Tuma route.
+ */
+
+app.post('/api/webhooks/mpesa-b2c/:secret', (req, res) => {
+  const check = mpesa.verifyCallbackSecret(req.params.secret);
+  store.insert('paymentCallbacks', {
+    id: newId('cb'), provider: 'mpesa-b2c', accepted: check.ok,
+    reason: check.reason ?? null, body: req.body ?? null, at: now()
+  });
+  if (!check.ok) {
+    recordError('mpesa_b2c_webhook', null, `rejected callback: ${check.reason}`);
+    return res.status(403).json({ error: 'rejected' });
+  }
+
+  const parsed = mpesa.parseB2CResult(req.body);
+  if (!parsed.ok) {
+    recordError('mpesa_b2c_webhook', null, 'unrecognised callback payload');
+    return res.status(400).json({ error: 'unrecognised payload' });
+  }
+
+  const applied = settlement.confirmPayout({
+    providerRef: parsed.conversationId,
+    succeeded: parsed.succeeded,
+    failureReason: parsed.failureReason
+  });
+  if (!applied.ok) {
+    recordError('mpesa_b2c_webhook', null, `callback not applied: ${applied.reason}`);
+    // 200 to Daraja: a retry will not help, and Daraja retries on non-2xx.
+    return res.status(200).json({ ok: false, reason: applied.reason });
+  }
   res.json({ ok: true, duplicate: Boolean(applied.duplicate) });
 });
 

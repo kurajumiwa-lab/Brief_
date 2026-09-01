@@ -1,9 +1,15 @@
 // ---------------------------------------------------------------------------
-// M-PESA DARAJA CONNECTOR (COLLECTION / STK PUSH)
+// M-PESA DARAJA CONNECTOR (COLLECTION / STK PUSH  +  DISBURSEMENT / B2C)
 //
-// The blueprint specifies Safaricom's own Daraja API for the escrow STK loop.
-// This is the direct Daraja integration (distinct from the Tuma gateway used
-// elsewhere in the repo) so HudumaLink can run on a merchant's own Daraja app.
+// The direct Daraja integration (distinct from the Tuma gateway used for
+// marketplace collection). Two rails live here:
+//
+//   COLLECTION    STK Push (C2B)  -- escrow/order payment for HudumaLink.
+//   DISBURSEMENT  B2C BusinessPayment  -- merchant/seller payouts. Chosen
+//                 because it is the CHEAPEST payout rail in Kenya: a flat
+//                 M-Pesa "send money" tariff capped at KES 108, with no
+//                 aggregator markup and a free API. The flat fee is passed
+//                 through to the recipient at exact cost (see b2cFee()).
 //
 // THE REAL DARAJA CONTRACT (https://developer.safaricom.co.ke):
 //
@@ -13,25 +19,32 @@
 //                 Authorization: Basic base64(consumer_key:consumer_secret)
 //                 -> access_token (valid ~1h)
 //   STK Push      POST /mpesa/stkpush/v1/process
-//                 Authorization: Bearer <access_token>
 //                 Password = base64(Shortcode + Passkey + Timestamp)
-//                 Timestamp = YYYYMMDDHHmmss
-//   Callback      Daraja POSTs to CallBackURL (no signature) with
-//                 Body.stkCallback.{ResultCode, ResultDesc, CheckoutRequestID,
-//                 CallbackMetadata.Item[]}
+//   B2C Payout    POST /mpesa/b2c/v3/paymentrequest
+//                 { InitiatorName, SecurityCredential, CommandID:'BusinessPayment',
+//                   Amount, PartyA (shortcode), PartyB (recipient phone),
+//                   QueueTimeOutURL, ResultURL, Occasion }
+//                 -> { ConversationID, OriginatorConversationID, ResponseCode }
+//   B2C Result    Daraja POSTs asynchronously to ResultURL with
+//                 Result.{ResultCode, ConversationID, TransactionID, ...}
 //
 // AUTHENTICITY OF A CALLBACK:
 //   Daraja does not sign callbacks. The deployment-controlled defence is a
-//   secret path segment in the CallBackURL (the only part we fully control),
-//   AND the real check: the callback must carry a CheckoutRequestID we issued,
-//   for an amount that matches the order total. We state this plainly rather
-//   than claim a signature Daraja does not perform.
+//   secret path segment in the callback URL (the only part we fully control),
+//   AND the real check: the callback must carry a reference we issued (STK
+//   CheckoutRequestID / B2C ConversationID) for an amount that matches what we
+//   stored. We state this plainly rather than claim a signature Daraja does
+//   not perform.
 //
 // CREDENTIALS (server-side only; never in any client bundle):
 //   MPESA_CONSUMER_KEY, MPESA_CONSUMER_SECRET  -- Daraja app credentials
-//   MPESA_PASSKEY          -- the Lipa Na M-Pesa Online passkey
-//   MPESA_SHORTCODE        -- the paybill/till (e.g. 174379 sandbox)
+//   MPESA_PASSKEY          -- the Lipa Na M-Pesa Online passkey (STK only)
+//   MPESA_SHORTCODE        -- the paybill/till / org shortcode (PartyA for B2C)
 //   MPESA_CALLBACK_SECRET  -- a secret we invent for the callback path segment
+//   MPESA_B2C_INITIATOR            -- the B2C API initiator username
+//   MPESA_B2C_SECURITY_CREDENTIAL  -- that initiator's password, RSA-encrypted
+//                                    against the Daraja cert and base64'd (see
+//                                    Safaricom's B2C setup; generated once).
 //   MPESA_ENV              -- 'sandbox' (default) or 'production'
 //   BRIEF_PUBLIC_ORIGIN    -- the public origin, to build the callback URL
 // ---------------------------------------------------------------------------
@@ -40,11 +53,11 @@ import crypto from 'node:crypto';
 
 export const capabilities = {
   connector: 'mpesa-daraja',
-  rail: 'Safaricom M-Pesa Daraja STK Push (C2B)',
+  rail: 'Safaricom M-Pesa Daraja',
   authenticate: 'OAuth2 client_credentials (Basic)',
-  collect: 'STK Push',
-  disburse: null, // Daraja B2B/B2C payout is a separate, unplugged rail
-  callbacks: 'HTTPS callback with server-side amount + CheckoutRequestID re-verification'
+  collect: 'STK Push (C2B)',
+  disburse: 'B2C BusinessPayment (merchant -> customer payout)',
+  callbacks: 'HTTPS callback with server-side reference + amount re-verification'
 };
 
 function env(name) {
@@ -103,6 +116,8 @@ export function status() {
     callbackUrl: callbackUrl(),
     configured: isConfigured(),
     missing: missingCredentials(),
+    payoutConfigured: isPayoutConfigured(),
+    payoutMissing: payoutMissingCredentials(),
     reason: isConfigured() ? null
       : `M-Pesa is not configured. Missing: ${missingCredentials().join(', ')}.`
   };
@@ -294,4 +309,155 @@ export function verifyCallbackSecret(providedSecret) {
   const b = Buffer.from(expected);
   if (a.length !== b.length) return { ok: false, reason: 'bad_secret' };
   return crypto.timingSafeEqual(a, b) ? { ok: true } : { ok: false, reason: 'bad_secret' };
+}
+
+// ---------------------------------------------------------------------------
+// B2C DISBURSEMENT (PAYOUT)
+// ---------------------------------------------------------------------------
+
+/**
+ * The flat M-Pesa B2C ("send money to a mobile number") tariff, in whole
+ * KES. Source: Safaricom's published M-Pesa transfer charges — the column
+ * "Transfer to M-PESA Users / Pochi la Biashara / Business till to Customer".
+ * Capped at KES 108 for any amount. Being a FLAT fee (not a percentage), it
+ * can be passed through to a recipient at exact cost — no rounding, no markup.
+ */
+const B2C_TARIFF = [
+  { upTo: 49, fee: 0 },
+  { upTo: 100, fee: 0 },
+  { upTo: 500, fee: 7 },
+  { upTo: 1000, fee: 13 },
+  { upTo: 1500, fee: 23 },
+  { upTo: 2500, fee: 33 },
+  { upTo: 3500, fee: 53 },
+  { upTo: 5000, fee: 57 },
+  { upTo: 7500, fee: 78 },
+  { upTo: 10000, fee: 90 },
+  { upTo: 15000, fee: 100 },
+  { upTo: 20000, fee: 105 },
+  { upTo: 35000, fee: 108 },
+  { upTo: 50000, fee: 108 },
+  { upTo: 250000, fee: 108 }
+];
+
+/** The B2C fee for a payout amount, in whole KES. Null for a nonsense amount. */
+export function b2cFee(amount) {
+  const a = Math.round(Number(amount));
+  if (!Number.isFinite(a) || a <= 0) return null;
+  for (const band of B2C_TARIFF) {
+    if (a <= band.upTo) return band.fee;
+  }
+  return 108; // above the highest published band: stay at the cap
+}
+
+/** Provider-neutral alias so settlement.js can quote a fee without knowing the rail. */
+export function payoutFee(amount) {
+  return b2cFee(amount) ?? 0;
+}
+
+/** The URL Daraja POSTs the asynchronous B2C result to. */
+export function b2cResultUrl() {
+  const origin = publicOrigin();
+  const secret = env('MPESA_CALLBACK_SECRET');
+  if (!origin || !secret) return null;
+  return `${origin}/api/webhooks/mpesa-b2c/${encodeURIComponent(secret)}`;
+}
+
+/** Everything B2C needs to actually disburse. Fail-closed, like the STK loop. */
+export function payoutCredentialState() {
+  return {
+    consumerKey: Boolean(env('MPESA_CONSUMER_KEY')),
+    consumerSecret: Boolean(env('MPESA_CONSUMER_SECRET')),
+    shortcode: Boolean(env('MPESA_SHORTCODE')),
+    callbackSecret: Boolean(env('MPESA_CALLBACK_SECRET')),
+    publicOrigin: Boolean(publicOrigin()),
+    b2cInitiator: Boolean(env('MPESA_B2C_INITIATOR')),
+    b2cSecurityCredential: Boolean(env('MPESA_B2C_SECURITY_CREDENTIAL'))
+  };
+}
+
+/** Can Brief actually send a payout? Requires the full end-to-end B2C chain. */
+export function isPayoutConfigured() {
+  return Object.values(payoutCredentialState()).every(Boolean);
+}
+
+export function payoutMissingCredentials() {
+  return Object.entries(payoutCredentialState()).filter(([, p]) => !p).map(([k]) => k);
+}
+
+/**
+ * Send money to a customer (B2C). The amount is supplied by the SERVER from a
+ * stored payout row — never by the client. Returns the ConversationID as
+ * providerRef; the actual success/failure arrives later on the ResultURL and
+ * is applied by settlement.confirmPayout().
+ */
+export async function disburse({ amount, phone, remarks = 'Brief payout', fetchImpl = fetch }) {
+  if (!isPayoutConfigured()) {
+    return { ok: false, reason: 'not_configured', missing: payoutMissingCredentials() };
+  }
+  const msisdn = normalisePhone(phone);
+  if (!msisdn) return { ok: false, reason: 'invalid_phone' };
+  const whole = Math.round(Number(amount));
+  if (!Number.isFinite(whole) || whole <= 0) return { ok: false, reason: 'invalid_amount' };
+
+  const tok = await accessToken({ fetchImpl });
+  if (!tok.ok) return { ok: false, reason: tok.reason, detail: tok };
+
+  const note = String(remarks).slice(0, 100);
+  const payload = {
+    InitiatorName: env('MPESA_B2C_INITIATOR'),
+    SecurityCredential: env('MPESA_B2C_SECURITY_CREDENTIAL'),
+    CommandID: 'BusinessPayment',
+    Amount: whole,
+    PartyA: env('MPESA_SHORTCODE'),
+    PartyB: msisdn,
+    Remarks: note,
+    QueueTimeOutURL: b2cResultUrl(),
+    ResultURL: b2cResultUrl(),
+    Occasion: note
+  };
+
+  try {
+    const res = await fetchImpl(`${baseUrl()}/mpesa/b2c/v3/paymentrequest`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${tok.token}`, 'content-type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const body = await res.json().catch(() => null);
+    if (!res.ok || String(body?.ResponseCode) !== '0') {
+      return { ok: false, reason: 'disburse_rejected', status: res.status, body };
+    }
+    return {
+      ok: true,
+      providerRef: body.ConversationID ?? null,
+      originatorConversationId: body.OriginatorConversationID ?? null
+    };
+  } catch (e) {
+    return { ok: false, reason: 'network_error', message: String(e.message ?? e) };
+  }
+}
+
+/**
+ * Parse the asynchronous B2C result Daraja POSTs to the ResultURL. Extracts
+ * only; the caller (settlement.confirmPayout) reconciles the ConversationID
+ * against a stored payout. ResultCode 0 => success.
+ */
+export function parseB2CResult(body) {
+  const result = body?.Result;
+  if (!result || typeof result !== 'object') return { ok: false, reason: 'unrecognised_payload' };
+
+  const resultCode = result.ResultCode === undefined || result.ResultCode === null
+    ? null : Number(result.ResultCode);
+  const succeeded = resultCode === 0;
+
+  return {
+    ok: true,
+    conversationId: result.ConversationID ?? null,
+    originatorConversationId: result.OriginatorConversationID ?? null,
+    transactionId: result.TransactionID ?? null,
+    resultCode,
+    resultDesc: result.ResultDesc ?? null,
+    succeeded,
+    failureReason: succeeded ? null : (result.ResultDesc ?? null)
+  };
 }

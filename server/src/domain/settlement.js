@@ -1,11 +1,12 @@
 // ---------------------------------------------------------------------------
 // SETTLEMENT & COMMISSION
 //
-// HONEST SCOPE. This module computes how a settled order's money DIVIDES. It
-// does not move money, and it cannot: no payment provider is connected (see
-// domain/ledger.js). What it does is make the arithmetic real and derivable so
-// that when a provider is attached, the numbers it disburses already exist and
-// have been tested.
+// HONEST SCOPE. This module computes how a settled order's money DIVIDES, and
+// requests/sends payouts through the connected disbursement provider (M-Pesa
+// Daraja B2C -- see providers.js). The payout FEE is the flat M-Pesa "send
+// money" tariff, passed through to the recipient at exact cost: the recipient
+// receives (withdrawable - fee), and Brief's total outlay is exactly the
+// withdrawable. No markup, no rounding games.
 //
 // THREE RULES.
 //
@@ -260,6 +261,21 @@ export function reconcile(currency = 'KES') {
 export const PAYOUT_STATUS = ['requested', 'processing', 'paid', 'failed'];
 
 /**
+ * The fee the active disbursement provider charges to send `amount`, in whole
+ * KES. For M-Pesa B2C this is the flat tariff (see mpesa.b2cFee). 0 when no
+ * provider is configured or the rail has no fee -- so callers can always
+ * subtract it safely.
+ */
+export function disbursementFee(amount) {
+  const name = activeDisbursementProvider();
+  if (!name) return 0;
+  const p = disbursementProvider(name);
+  if (!p || typeof p.payoutFee !== 'function') return 0;
+  const fee = p.payoutFee(amount);
+  return Number.isFinite(fee) && fee > 0 ? fee : 0;
+}
+
+/**
  * Request a payout for a vendor.
  *
  * The AMOUNT IS DERIVED, never supplied. A caller asking for "all of it" is
@@ -298,15 +314,25 @@ export function requestPayout({ vendorId, requestedBy, phone = null, idempotency
     );
   }
   if (!activeDisbursementProvider()) {
-    // Refuse rather than queue a payout Brief has no way to fulfil. No
-    // disbursement provider is connected (Tuma documents no payout endpoint,
-    // and no other payout rail has been selected), so a payout is genuinely
-    // unavailable -- never silently recorded as successful.
+    // Refuse rather than queue a payout Brief has no way to fulfil. The
+    // disbursement provider (M-Pesa B2C) is not configured, so a payout is
+    // genuinely unavailable -- never silently recorded as successful.
     const err = new Error(
       'payouts are unavailable: no disbursement provider is configured'
     );
     err.code = 'provider_unavailable';
     throw err;
+  }
+
+  // The flat provider fee is passed through at exact cost. `amount` is what
+  // the recipient actually receives; `fee` is the rail's tariff; `grossAmount`
+  // is the withdrawable before the fee, so nothing is ever silently shaved.
+  const grossAmount = earnings.withdrawable;
+  const fee = disbursementFee(grossAmount);
+  const amount = grossAmount - fee;
+  if (amount <= 0) {
+    // A payout smaller than its own fee would move nothing. Refuse honestly.
+    throw new Error('withdrawable amount is smaller than the payout fee');
   }
 
   const now = new Date().toISOString();
@@ -315,7 +341,9 @@ export function requestPayout({ vendorId, requestedBy, phone = null, idempotency
     vendorId,
     ownerId: vendor.ownerId,
     // Derived from settled orders. Not a client-supplied figure.
-    amount: earnings.withdrawable,
+    amount,
+    fee,
+    grossAmount,
     currency: earnings.currency,
     phone: phone ? normalisePhone(phone) : null,
     status: 'requested',
@@ -330,13 +358,10 @@ export function requestPayout({ vendorId, requestedBy, phone = null, idempotency
 }
 
 /**
- * Send a requested payout through the provider.
- *
- * No disbursement provider is connected (Tuma documents no payout endpoint,
- * and no other payout rail has been selected), so this refuses honestly
- * rather than pretending to move money. Registering a provider in
- * DISBURSEMENT_PROVIDERS and implementing its `disburse()` is the only change
- * needed to re-enable real payouts.
+ * Send a requested payout through the provider. The provider (M-Pesa B2C)
+ * returns a ConversationID as providerRef; the final result arrives later on
+ * the ResultURL and is applied by confirmPayout(). If no provider is
+ * configured this refuses honestly rather than pretending to move money.
  */
 export async function sendPayout(payoutId, { fetchImpl = fetch } = {}) {
   const payout = store.find('payouts', (p) => p.id === payoutId);
