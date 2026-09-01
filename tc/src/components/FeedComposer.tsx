@@ -179,6 +179,18 @@ function whereLabel(item: FeedObject): string | null {
   return area || county || null;
 }
 
+/** Distance readout when the feed is geo-scoped. Real data only — the field
+ *  is absent unless the server actually computed a distance. */
+function distanceLabel(item: FeedObject): string | null {
+  const raw = item?.metadata?.distanceKm ?? item?.distanceKm;
+  if (raw === undefined || raw === null || raw === '') return null;
+  const d = Number(raw);
+  if (!Number.isFinite(d)) return null;
+  if (d < 0.1) return 'Right here';
+  if (d < 1) return `${Math.round(d * 1000)} m away`;
+  return `${d} km away`;
+}
+
 function sourceLabel(item: FeedObject): string | null {
   const names = Array.isArray(item?.sourceNames) ? item.sourceNames.filter((s: unknown) => typeof s === 'string') : [];
   const count = typeof item?.sourceCount === 'number' ? item.sourceCount : names.length;
@@ -235,10 +247,11 @@ function PhotoTitleCard({
   const type = typeLabel(item);
   const when = whenLabel(item);
   const where = whereLabel(item);
+  const dist = distanceLabel(item);
   const why = whyLabel(item);
   const source = sourceLabel(item);
   const isAlert = item?.type === 'alert';
-  const meta = [when, where].filter(Boolean).join(' · ');
+  const meta = [when, where, dist].filter(Boolean).join(' · ');
 
   // A strong, type-specific glyph when a real photo does not exist — the
   // type IS the visual. Never a grey box, never a fabricated image.
@@ -354,8 +367,9 @@ function TitleRow({
   const type = typeLabel(item);
   const when = whenLabel(item);
   const where = whereLabel(item);
+  const dist = distanceLabel(item);
   const source = sourceLabel(item);
-  const meta = [type, when, where].filter(Boolean).join(' · ');
+  const meta = [type, when, where, dist].filter(Boolean).join(' · ');
   return (
     <button
       type="button"

@@ -1089,6 +1089,16 @@ export function NearbyScreen(props: NearbyScreenProps) {
                             <h3 className="line-clamp-2 text-[14px] font-semibold leading-snug text-[#F7F7F8]">
                               {obj.title}
                             </h3>
+                            {(() => {
+                              const dist = getDistanceLabel(obj);
+                              const loc = obj.locationName ? String(obj.locationName).trim() : null;
+                              if (!dist && !loc) return null;
+                              return (
+                                <p className="mt-0.5 text-[10px] font-semibold text-[#F7F7F8]/80">
+                                  {[dist, loc].filter(Boolean).join(' · ')}
+                                </p>
+                              );
+                            })()}
                             {vendors.length > 0 && (
                               <p className="mt-1 text-[10px] font-semibold text-[#F7F7F8]">
                                 {vendors.length} {vendors.length === 1 ? 'vendor' : 'vendors'} inside

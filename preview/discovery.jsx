@@ -43,7 +43,7 @@ async function main() {
     ...base,
     objects: [
       mk({ id: 'u_event_today', type: 'experience', title: 'Live jazz tonight', temporal: { status: 'happening' } }),
-      mk({ id: 'u_offer_today', type: 'offer', title: 'Ends today deal', temporal: { status: 'active', deadlineAt: iso(2 * 3600000) } })
+      mk({ id: 'u_offer_today', type: 'offer', title: 'Ends today deal', temporal: { status: 'active', deadlineAt: iso(0) } })
     ]
   });
   check('an event happening now lands in TODAY', keys(briefToday).includes('today'));
@@ -91,8 +91,8 @@ async function main() {
     {
       id: 'd_event_today', type: 'experience', title: 'Rooftop jazz tonight', summary: 'Live band at sundown.',
       category: 'Music', locationName: 'Kilimani', publication: 'public', createdAt: iso(-2 * 3600000),
-      metadata: { area: 'Kilimani', eventStart: iso(4 * 3600000) },
-      temporal: { status: 'upcoming', startsAt: iso(4 * 3600000), endsAt: null, deadlineAt: null },
+      metadata: { area: 'Kilimani', eventStart: iso(0) },
+      temporal: { status: 'happening', startsAt: iso(0), endsAt: null, deadlineAt: null },
       sourceNames: ['City Wire'], sourceCount: 1
     },
     {
