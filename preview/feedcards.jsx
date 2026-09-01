@@ -28,6 +28,11 @@ const { FeedComposer } = require('./src/components/FeedComposer.tsx');
 
 const now = new Date();
 const iso = (offsetMs) => new Date(now.getTime() + offsetMs).toISOString();
+// Calendar-relative, never wall-clock-relative: 'tomorrow 09:00' is always
+// labelled Tomorrow, at any hour the suite runs. An offset like now+29h
+// flips to a weekday name when run late in the evening -- a flake the
+// calendar form cannot produce.
+const tomorrow9am = (() => { const d = new Date(now); d.setDate(d.getDate() + 1); d.setHours(9, 0, 0, 0); return d.toISOString(); })();
 const day = (offsetDays) => new Date(now.getTime() + offsetDays * 86400000).toISOString().slice(0, 10);
 // A fixed 10:00 tomorrow — the old now+29h fixture flipped to "day after
 // tomorrow" whenever the suite ran after ~19:00 local (same time-of-day

@@ -26,8 +26,29 @@ import { notify } from './notifications.js';
 /** The single price list. To change a price, change it HERE. */
 export const SERVICE_CATALOG = {
   store_monthly: { label: 'Your store on Brief — one month', amountKes: 250 },
-  promotion_weekly: { label: 'Promote a listing for one week', amountKes: 500 }
+  promotion_weekly: { label: 'Promote a listing for one week', amountKes: 500 },
+  promotion_daily: { label: 'Promote a listing for one day', amountKes: 40 },
+  lead_intro: { label: 'Priority introduction to one match', amountKes: 100 }
 };
+
+/**
+ * What a payment was FOR, when the member says so. A boost points at the
+ * listing being boosted; a lead_intro points at the coop post the member
+ * wants a warm introduction to. Optional, client-declared, and never trusted
+ * for pricing -- the amount still comes from the catalog alone. It exists so
+ * the operator confirming the M-Pesa code can see (and deliver) the thing
+ * that was paid for.
+ */
+const TARGET_KINDS = new Set(['listing', 'coop_post', 'shop', 'object']);
+
+function sanitiseTarget(raw) {
+  if (raw == null) return null;
+  const kind = String(raw.kind ?? '').trim();
+  const id = String(raw.id ?? '').trim();
+  const title = String(raw.title ?? '').trim();
+  if (!TARGET_KINDS.has(kind) || !id) return null;
+  return { kind, id: id.slice(0, 64), title: title.slice(0, 120) };
+}
 
 export function catalogView() {
   return Object.entries(SERVICE_CATALOG).map(([key, s]) => ({ key, label: s.label, amountKes: s.amountKes }));
@@ -38,12 +59,13 @@ export function catalogView() {
 // confirms the code is real, which is the part software cannot know.
 const CODE_SHAPE = /^[A-Z0-9]{8,12}$/;
 
-export function payServiceFee(actorId, { service, mpesaCode } = {}) {
+export function payServiceFee(actorId, { service, mpesaCode, target: targetRaw } = {}) {
   if (!actorId) throw new Error('sign in to pay for a service');
   const entry = SERVICE_CATALOG[service];
   if (!entry) throw new Error('unknown service');
   const code = String(mpesaCode ?? '').trim().toUpperCase();
   if (!CODE_SHAPE.test(code)) throw new Error('that does not look like an M-Pesa confirmation code');
+  const target = sanitiseTarget(targetRaw);
 
   // One M-Pesa code is one payment, ever. A refused code stays locked too:
   // the operator already judged it invalid, and retrying the same code
@@ -57,9 +79,9 @@ export function payServiceFee(actorId, { service, mpesaCode } = {}) {
   const tx = createTransaction({
     amount: entry.amountKes,
     type: 'service_fee',
-    description: `${entry.label} (M-Pesa ${code})`,
+    description: `${entry.label}${target ? ` — ${target.title || target.id}` : ''} (M-Pesa ${code})`,
     counterparty: actorId,
-    metadata: { service, mpesaCode: code }
+    metadata: { service, mpesaCode: code, ...(target ? { target } : {}) }
   });
   transitionTransaction(tx.id, 'pending', 'awaiting confirmation of the M-Pesa code');
 
@@ -70,6 +92,7 @@ export function payServiceFee(actorId, { service, mpesaCode } = {}) {
     label: entry.label,
     amountKes: entry.amountKes,
     mpesaCode: code,
+    target,
     ledgerId: tx.id,
     status: 'pending',
     confirmedBy: null,

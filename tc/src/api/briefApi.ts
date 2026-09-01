@@ -3585,10 +3585,13 @@ export function whoCanHelp(q: string): Promise<ApiResult<WhoCanHelpAnswer>> {
 // ---------------------------------------------------------------------------
 
 export interface ServiceCatalogItem { key: string; label: string; amountKes: number }
+export interface ServiceFeeTarget { kind: 'listing' | 'coop_post' | 'shop' | 'object'; id: string; title: string }
 export interface ServiceFee {
   id: string; userId: string; service: string; label: string; amountKes: number;
   mpesaCode: string; status: 'pending' | 'confirmed' | 'refused';
   refusedReason: string | null; confirmedAt: string | null; createdAt: string; ledgerId: string;
+  /** What the payment was for (a boosted listing, an intro to a match…). */
+  target?: ServiceFeeTarget | null;
 }
 export interface MyServiceFees { pochi: string | null; services: ServiceCatalogItem[]; fees: ServiceFee[] }
 
@@ -3603,8 +3606,11 @@ export function myServiceFees(): Promise<ApiResult<MyServiceFees>> {
       : undefined);
 }
 
-export function payServiceFee(service: string, mpesaCode: string): Promise<ApiResult<{ fee: ServiceFee }>> {
-  return request('/api/fees/pay', { method: 'POST', body: JSON.stringify({ service, mpesaCode }) }, (r) =>
+export function payServiceFee(service: string, mpesaCode: string, target?: ServiceFeeTarget): Promise<ApiResult<{ fee: ServiceFee }>> {
+  // NOTE: no amount ever leaves this client. The price is the server
+  // catalog's; the body carries only which service, the M-Pesa code, and
+  // what the payment was for.
+  return request('/api/fees/pay', { method: 'POST', body: JSON.stringify({ service, mpesaCode, ...(target ? { target } : {}) }) }, (r) =>
     isServiceFee(r?.fee) ? { fee: r.fee } : undefined);
 }
 

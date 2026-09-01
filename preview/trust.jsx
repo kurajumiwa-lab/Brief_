@@ -19,6 +19,17 @@ const { boot } = require('./harness.cjs');
 const Mod = require('./src/App.tsx');
 
 async function main() {
+  // Calendar labels (Today / Yesterday / Tomorrow) are civil-day based. Suites
+  // run around the clock in UTC, so pin the clock at local 14:00 to keep /-5h,
+  // /-26h and /+20h offsets on the intended side of midnight.
+  const RealDate = Date;
+  const FROZEN = (() => { const d = new RealDate(); d.setHours(14, 0, 0, 0); return d; })();
+  globalThis.Date = class extends RealDate {
+    constructor(...args) { super(...(args.length ? args : [FROZEN.getTime()])); }
+    static now() { return FROZEN.getTime(); }
+    static parse(...a) { return RealDate.parse(...a); }
+    static UTC(...a) { return RealDate.UTC(...a); }
+  };
   const now = new Date();
   const iso = (offsetMs) => new Date(now.getTime() + offsetMs).toISOString();
   let pass = 0;
@@ -71,7 +82,11 @@ async function main() {
   check('published line uses publication time', Mod.getPublishedLine(mk({ publishedAt: iso(-18 * 60000), createdAt: iso(-30 * 60000) }), now) === 'Published 18 min ago');
   check('no publishedAt falls back to createdAt', Mod.getPublishedLine(mk({ createdAt: iso(-5 * 3600000) }), now) === 'Published today');
   check('no timestamps -> null', Mod.getPublishedLine(mk({ createdAt: undefined })) === null);
-  check('event preview today', Mod.getEventStartPreview(iso(3 * 3600000), now) === `Today · ${new Date(now.getTime() + 3 * 3600000).toLocaleTimeString('en-KE', { hour: 'numeric', minute: '2-digit' })}`);
+  // Calendar-anchored, like feedcards' tomorrow9am: 'today at 11:45' is
+  // labelled Today no matter what hour the suite runs. An offset like now+3h
+  // rolls into tomorrow after 9pm and flakes.
+  const today1145 = (() => { const d = new Date(now); d.setHours(11, 45, 0, 0); return d; })();
+  check('event preview today', Mod.getEventStartPreview(today1145.toISOString(), now) === `Today · ${today1145.toLocaleTimeString('en-KE', { hour: 'numeric', minute: '2-digit' })}`);
   check('event preview tomorrow', Mod.getEventStartPreview(iso(20 * 3600000), now) === `Tomorrow · ${new Date(now.getTime() + 20 * 3600000).toLocaleTimeString('en-KE', { hour: 'numeric', minute: '2-digit' })}`);
 
   console.log('\n=== Expiry / stale: never presents expired as active ===');
