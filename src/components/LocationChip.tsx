@@ -1,27 +1,25 @@
 import React from 'react';
-import { MapPin, Compass } from 'lucide-react';
+import { MapPin, Compass, X } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
 // LOCATION CHIP — the single home for location control.
 //
-// The standalone relative-map card and the "What's happening around you" hero
-// bar were removed from the home screen. The one structure that other code
-// truly depends on — the viewer's coarse location, which scopes the ranked
-// feed (distance ranking) — moved HERE, into the header chip.
-//
-// Tapping the chip opens a small menu with the same honest options the map
-// used to carry: device location, a city, or "show everywhere". Null location
-// still means "everywhere" (the global ranked feed); nothing is ever inferred
-// or fabricated.
+// §10: tapping the chip opens a polished BOTTOM SHEET — "Where should Brief
+// look?" — instead of a floating dropdown. The sheet offers the same honest
+// options, in a mobile-first layout:
+//   * Use my location  (device fix; scopes the feed by distance)
+//   * a city/district  (real gazetteer places; scopes by area matching)
+//   * Show everywhere  (null location; the global ranked feed)
+// Nothing here is inferred or fabricated about the viewer, and there is no
+// fake "recent areas" list — the places are the ones the extraction
+// gazetteer actually knows.
 // ---------------------------------------------------------------------------
 
 export interface GeoPoint {
   lat: number;
   lng: number;
   label: string;
-  /** A named locality (county/area) this point stands for, when it has one —
-   *  district and city taps scope the feed by area matching. Device fixes
-   *  carry no area; they scope by distance only. */
+  /** A named locality (county/area) this point stands for, when it has one — */
   area?: string;
 }
 
@@ -35,9 +33,6 @@ export interface LocationChipProps {
   onClearLocation: () => void;
 }
 
-// The discovery experience's location surface: the city plus its districts.
-// Every entry is a real place the extraction gazetteer knows; nothing here
-// is inferred about the viewer.
 export const CITIES: GeoPoint[] = [
   { lat: -1.2921, lng: 36.8219, label: 'Nairobi', area: 'Nairobi' },
   { lat: -1.2636, lng: 36.8034, label: 'Westlands', area: 'Westlands' },
@@ -57,7 +52,7 @@ export function LocationChip({ label, locating, locError, hasLocation, onLocate,
     <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        aria-haspopup="menu"
+        aria-haspopup="dialog"
         aria-expanded={open}
         className="flex items-center gap-1.5 bg-[#12151A] text-[#F7F7F8] text-xs font-bold px-3 py-1.5 rounded-full border border-[#222630] hover:border-[#22E6E0] transition-colors cursor-pointer"
       >
@@ -66,45 +61,84 @@ export function LocationChip({ label, locating, locError, hasLocation, onLocate,
       </button>
 
       {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-full mt-2 z-50 w-64 rounded-xl border border-[#222630] bg-[#12151A] p-2 shadow-2xl">
-            <button
-              onClick={() => { onLocate(); }}
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-semibold text-[#F7F7F8] hover:bg-[#1D2027] cursor-pointer"
-            >
-              <Compass className="w-3.5 h-3.5 text-[#F7F7F8]" />
-              {locating ? 'Locating…' : 'Use my location'}
-            </button>
-            {locError && <p className="px-3 py-1 text-[10px] text-[#F7F7F8]">{locError}</p>}
-
-            <div className="my-1 h-px bg-[#222630]" />
-            <p className="px-3 py-1 text-[10px] uppercase tracking-[0.08em] text-[#F7F7F8]/60">Or tap a city</p>
-            <div className="flex flex-wrap gap-1 px-2 pb-1">
-              {CITIES.map((c) => (
-                <button
-                  key={c.label}
-                  onClick={() => { onSelectCity(c); setOpen(false); }}
-                  className="rounded-full border border-[#222630] px-3 py-1 text-[11px] font-semibold text-[#F7F7F8]/60 hover:border-[#22E6E0] hover:text-[#F7F7F8] cursor-pointer"
-                >
-                  {c.label}
-                </button>
-              ))}
+        <div role="dialog" aria-label="Choose location" className="fixed inset-0 z-[70] flex flex-col justify-end">
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            aria-label="Dismiss location sheet"
+            className="flex-1 min-h-0 bg-[#0D0F12]/25 backdrop-blur-[2px] cursor-pointer"
+          />
+          <div
+            className="brief-sheet-up max-h-[70vh] overflow-y-auto bg-[#1D2027] border-t border-[#222630] rounded-t-[28px] shadow-2xl px-4 pb-6 pt-5"
+            style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#F7F7F8]/60">Location</p>
+                <h3 className="mt-0.5 text-[17px] font-black tracking-tight text-[#F7F7F8]">Where should Brief look?</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="Close location sheet"
+                className="h-9 w-9 flex items-center justify-center rounded-full bg-[#12151A] border border-[#222630] text-[#F7F7F8] text-[18px] font-light hover:border-[#FF5A1F] cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
 
+            {/* Use my location — the primary, most-convenient choice. */}
+            <button
+              type="button"
+              onClick={() => { onLocate(); }}
+              className="flex w-full items-center gap-3 rounded-2xl bg-[#FF5A1F] px-4 py-3.5 text-left text-[13px] font-extrabold text-[#0D0F12] cursor-pointer transition-opacity hover:opacity-90"
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#0D0F12]/10">
+                <Compass className="h-5 w-5" />
+              </span>
+              <span className="min-w-0 flex-1">
+                {locating ? 'Locating…' : 'Use my location'}
+              </span>
+            </button>
+            {locError && <p className="mt-2 px-1 text-[11px] font-semibold text-[#FF5D6C]">{locError}</p>}
+
+            {/* Cities/districts — real gazetteer places, as tappable pills. */}
+            <p className="mb-2 mt-5 px-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/60">
+              Or choose a place
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {CITIES.map((c) => {
+                const selected = label === c.label;
+                return (
+                  <button
+                    key={c.label}
+                    type="button"
+                    onClick={() => { onSelectCity(c); setOpen(false); }}
+                    aria-pressed={selected}
+                    className={`rounded-xl border px-2 py-2.5 text-[12px] font-semibold transition-colors cursor-pointer ${
+                      selected
+                        ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]'
+                        : 'bg-[#12151A] text-[#F7F7F8]/70 border-[#222630] hover:border-[#22E6E0]'
+                    }`}
+                  >
+                    {c.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Show everywhere — return to the global feed. */}
             {hasLocation && (
-              <>
-                <div className="my-1 h-px bg-[#222630]" />
-                <button
-                  onClick={() => { onClearLocation(); setOpen(false); }}
-                  className="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-[#F7F7F8]/60 hover:bg-[#1D2027] cursor-pointer"
-                >
-                  Show everywhere
-                </button>
-              </>
+              <button
+                type="button"
+                onClick={() => { onClearLocation(); setOpen(false); }}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border border-[#222630] bg-transparent px-4 py-3 text-[12px] font-bold text-[#F7F7F8]/70 cursor-pointer hover:text-[#F7F7F8]"
+              >
+                Show everywhere
+              </button>
             )}
           </div>
-        </>
+        </div>
       )}
     </div>
   );
