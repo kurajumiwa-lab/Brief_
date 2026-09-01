@@ -3192,6 +3192,20 @@ export function App() {
         updateNote={updateNote}
         updateTitle={updateTitle}
         watchedIds={watchedIds}
+        chooseCity={chooseCity}
+        collectionRouteId={collectionRouteId}
+        collectionsOpen={collectionsOpen}
+        entityPageId={entityPageId}
+        followOne={followOne}
+        followingOpen={followingOpen}
+        handleMenuSelect={handleMenuSelect}
+        menuOpen={menuOpen}
+        selectedLocation={selectedLocation}
+        setActiveTab={setActiveTab}
+        setCollectionsOpen={setCollectionsOpen}
+        setEntityPageId={setEntityPageId}
+        setFollowingOpen={setFollowingOpen}
+        setMyLayerSection={setMyLayerSection}
       />
 
       {/* CREATE CAMPAIGN. Type -> details -> preview -> publish. The preview
@@ -3232,104 +3246,14 @@ export function App() {
         }}
       />
 
-      <MenuSheet
-        open={menuOpen}
-        onClose={dismissOverlay}
-        onSelect={handleMenuSelect}
-        onSelectCity={chooseCity}
-        selectedLocation={selectedLocation}
-        canOperate={briefApi.isOperator(sessionUser)}
-      />
       <AdminDesk open={adminOpen} onClose={dismissOverlay} me={sessionUser} />
 
       {/* ENTITY LAYER — the followable entity page and the Following surface. */}
-      {entityPageId && (
-        <EntityPage
-          entityId={entityPageId}
-          authed={Boolean(sessionUser)}
-          origin={publicOrigin}
-          onClose={dismissOverlay}
-          onOpenObject={(raw) => {
-            if (!raw?.id) return;
-            const local = objects.find((o) => o.id === String(raw.id));
-            setSelectedObjectForDetail(local ?? objectFromServer(raw));
-          }}
-          onOpenLocation={openLocationPage}
-          onRequireAuth={() => showToast('Sign in to follow this.')}
-          onFollowChanged={() => void loadPersonal()}
-        />
-      )}
-      {followingOpen && (
-        <FollowingSurface
-          authed={Boolean(sessionUser)}
-          onClose={dismissOverlay}
-          onOpenObject={(raw) => {
-            if (!raw?.id) return;
-            const local = objects.find((o) => o.id === String(raw.id));
-            setSelectedObjectForDetail(local ?? objectFromServer(raw));
-          }}
-          onOpenEntity={(id) => {
-            setFollowingOpen(false);
-            setEntityPageId(id);
-          }}
-          onRequireAuth={() => showToast('Sign in to follow this.')}
-          onFollowChanged={() => void loadPersonal()}
-        />
-      )}
 
       {/* LOCAL ACTIVITY GRAPH — the public location discovery page. */}
-      {locationName && (
-        <LocationPage
-          name={locationName}
-          authed={Boolean(sessionUser)}
-          followedLocations={personalState?.interests?.locations ?? []}
-          onClose={dismissOverlay}
-          onOpenObject={(raw) => {
-            if (!raw?.id) return;
-            const local = objects.find((o) => o.id === String(raw.id));
-            setSelectedObjectForDetail(local ?? objectFromServer(raw));
-          }}
-          onOpenLocation={openLocationPage}
-          onRequireAuth={() => showToast('Sign in to follow this area.')}
-          onFollowLocation={(loc) => {
-            if (!sessionUser) { showToast('Sign in to follow this area.'); return; }
-            void followOne('location', loc);
-          }}
-        />
-      )}
 
       {/* COLLECTIONS — the personal layer. The surface opens from the header;
           a shared /collections/:id link renders the public page directly. */}
-      {collectionsOpen && (
-        <CollectionsSurface
-          authed={Boolean(sessionUser)}
-          savedCount={(personalState?.saved ?? []).length}
-          onClose={dismissOverlay}
-          onOpenObject={(raw) => {
-            if (!raw?.id) return;
-            const local = objects.find((o) => o.id === String(raw.id));
-            setSelectedObjectForDetail(local ?? objectFromServer(raw));
-          }}
-          onOpenSaved={() => {
-            setCollectionsOpen(false);
-            setActiveTab('mylayer');
-            setMyLayerSection('saved');
-          }}
-          onChanged={() => void loadPersonal()}
-        />
-      )}
-      {collectionRouteId && (
-        <CollectionPage
-          collectionId={collectionRouteId}
-          mode="public"
-          onClose={dismissOverlay}
-          onOpenObject={(raw) => {
-            if (!raw?.id) return;
-            const local = objects.find((o) => o.id === String(raw.id));
-            setSelectedObjectForDetail(local ?? objectFromServer(raw));
-          }}
-        />
-      )}
       <footer className="border-t border-[#D6CFE4] mt-12 py-6 text-xs text-[#251045]/60 text-center">
         Everything Happening Around You
       </footer>

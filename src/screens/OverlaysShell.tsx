@@ -1,9 +1,15 @@
 import React from 'react';
 import { ArrowRight, Bookmark, Building2, CheckCircle2, ExternalLink, Eye, FolderPlus, MapPin, Search, Share2, ShieldCheck, User, X } from 'lucide-react';
-import type { ArenaMatch, BriefObject, IngestionCandidate, ObjectType, Pursuit, Source } from '../model/core';
+import type { ArenaMatch, BriefObject, IngestionCandidate, ObjectType, Pursuit, Source , Destination, MyLayerSection } from '../model/core';
 import * as briefApi from '../api/briefApi';
 import type { Campaign as ApiCampaign, CampaignType as ApiCampaignType, Registration as ApiRegistration } from '../api/types';
 import type { CircleDetail as ApiCircleDetail } from '../api/briefApi';
+import { CollectionPage } from '../components/CollectionPage';
+import { CollectionsSurface } from '../components/CollectionsSurface';
+import { EntityPage } from '../components/EntityPage';
+import { FollowingSurface } from '../components/FollowingSurface';
+import { LocationPage } from '../components/LocationPage';
+import { MenuSheet } from '../components/MenuSheet';
 import { AwaitingPayment } from '../components/AwaitingPayment';
 import { CampaignDistribution } from '../components/CampaignDistribution';
 import { CollectionPicker } from '../components/CollectionPicker';
@@ -19,6 +25,20 @@ import { DESTINATION_STATE_LABELS, REPORT_REASONS, buildKeyFacts, buildMapsHref,
 // ---------------------------------------------------------------------------
 
 export interface OverlaysShellProps {
+  chooseCity: any;
+  collectionRouteId: string | null;
+  collectionsOpen: boolean;
+  entityPageId: string | null;
+  followOne: any;
+  followingOpen: boolean;
+  handleMenuSelect: any;
+  menuOpen: boolean;
+  selectedLocation: string;
+  setActiveTab: React.Dispatch<React.SetStateAction<Destination>>;
+  setCollectionsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setEntityPageId: React.Dispatch<React.SetStateAction<string | null>>;
+  setFollowingOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setMyLayerSection: React.Dispatch<React.SetStateAction<MyLayerSection>>;
   attachObjectToCampaign: any;
   beginEdit: any;
   campaignActionError: string | null;
@@ -207,6 +227,20 @@ export function OverlaysShell(props: OverlaysShellProps) {
     updateNote,
     updateTitle,
     watchedIds,
+    chooseCity,
+    collectionRouteId,
+    collectionsOpen,
+    entityPageId,
+    followOne,
+    followingOpen,
+    handleMenuSelect,
+    menuOpen,
+    selectedLocation,
+    setActiveTab,
+    setCollectionsOpen,
+    setEntityPageId,
+    setFollowingOpen,
+    setMyLayerSection,
   } = props;
   return (
     <>
@@ -2354,6 +2388,96 @@ export function OverlaysShell(props: OverlaysShellProps) {
             </div>
           </div>
         </div>
+      )}
+      <MenuSheet
+        open={menuOpen}
+        onClose={dismissOverlay}
+        onSelect={handleMenuSelect}
+        onSelectCity={chooseCity}
+        selectedLocation={selectedLocation}
+        canOperate={briefApi.isOperator(sessionUser)}
+      />
+      {entityPageId && (
+        <EntityPage
+          entityId={entityPageId}
+          authed={Boolean(sessionUser)}
+          origin={publicOrigin}
+          onClose={dismissOverlay}
+          onOpenObject={(raw) => {
+            if (!raw?.id) return;
+            const local = objects.find((o) => o.id === String(raw.id));
+            setSelectedObjectForDetail(local ?? objectFromServer(raw));
+          }}
+          onOpenLocation={openLocationPage}
+          onRequireAuth={() => showToast('Sign in to follow this.')}
+          onFollowChanged={() => void loadPersonal()}
+        />
+      )}
+      {followingOpen && (
+        <FollowingSurface
+          authed={Boolean(sessionUser)}
+          onClose={dismissOverlay}
+          onOpenObject={(raw) => {
+            if (!raw?.id) return;
+            const local = objects.find((o) => o.id === String(raw.id));
+            setSelectedObjectForDetail(local ?? objectFromServer(raw));
+          }}
+          onOpenEntity={(id) => {
+            setFollowingOpen(false);
+            setEntityPageId(id);
+          }}
+          onRequireAuth={() => showToast('Sign in to follow this.')}
+          onFollowChanged={() => void loadPersonal()}
+        />
+      )}
+      {locationName && (
+        <LocationPage
+          name={locationName}
+          authed={Boolean(sessionUser)}
+          followedLocations={personalState?.interests?.locations ?? []}
+          onClose={dismissOverlay}
+          onOpenObject={(raw) => {
+            if (!raw?.id) return;
+            const local = objects.find((o) => o.id === String(raw.id));
+            setSelectedObjectForDetail(local ?? objectFromServer(raw));
+          }}
+          onOpenLocation={openLocationPage}
+          onRequireAuth={() => showToast('Sign in to follow this area.')}
+          onFollowLocation={(loc) => {
+            if (!sessionUser) { showToast('Sign in to follow this area.'); return; }
+            void followOne('location', loc);
+          }}
+        />
+      )}
+      {collectionsOpen && (
+        <CollectionsSurface
+          authed={Boolean(sessionUser)}
+          savedCount={(personalState?.saved ?? []).length}
+          onClose={dismissOverlay}
+          onOpenObject={(raw) => {
+            if (!raw?.id) return;
+            const local = objects.find((o) => o.id === String(raw.id));
+            setSelectedObjectForDetail(local ?? objectFromServer(raw));
+          }}
+          onOpenSaved={() => {
+            setCollectionsOpen(false);
+            setActiveTab('mylayer');
+            setMyLayerSection('saved');
+          }}
+          onChanged={() => void loadPersonal()}
+        />
+      )}
+      {collectionRouteId && (
+        <CollectionPage
+          collectionId={collectionRouteId}
+          mode="public"
+          onClose={dismissOverlay}
+          onOpenObject={(raw) => {
+            if (!raw?.id) return;
+            const local = objects.find((o) => o.id === String(raw.id));
+            setSelectedObjectForDetail(local ?? objectFromServer(raw));
+          }}
+        />
       )}
     </>
   );

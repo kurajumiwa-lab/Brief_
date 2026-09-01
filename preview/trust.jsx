@@ -19,6 +19,17 @@ const { boot } = require('./harness.cjs');
 const Mod = require('./src/App.tsx');
 
 async function main() {
+  // Calendar labels (Today / Yesterday / Tomorrow) are civil-day based. Suites
+  // run around the clock in UTC, so pin the clock at local 14:00 to keep /-5h,
+  // /-26h and /+20h offsets on the intended side of midnight.
+  const RealDate = Date;
+  const FROZEN = (() => { const d = new RealDate(); d.setHours(14, 0, 0, 0); return d; })();
+  globalThis.Date = class extends RealDate {
+    constructor(...args) { super(...(args.length ? args : [FROZEN.getTime()])); }
+    static now() { return FROZEN.getTime(); }
+    static parse(...a) { return RealDate.parse(...a); }
+    static UTC(...a) { return RealDate.UTC(...a); }
+  };
   const now = new Date();
   const iso = (offsetMs) => new Date(now.getTime() + offsetMs).toISOString();
   let pass = 0;
