@@ -10,11 +10,13 @@ import { ALL_GROUPS, GROUP_MESSAGES, buildGroupIndex, canUserAccessGroup } from 
 // ---------------------------------------------------------------------------
 
 export interface UseGroupsDeskParams {
+  connectorStatus: any;
 
 }
 
 export function useGroupsDesk(params: UseGroupsDeskParams) {
   const {
+    connectorStatus,
 
   } = params;
 
@@ -44,6 +46,33 @@ export function useGroupsDesk(params: UseGroupsDeskParams) {
     () => (openGroup ? groupIndexes[openGroup.id] ?? [] : []),
     [openGroup, groupIndexes]
   );
+
+  React.useEffect(() => {
+    if (!connectorStatus.online) return;
+    setGroups(
+      connectorStatus.liveSources
+        .filter((src: any) =>
+          src?.platform === 'telegram' || src?.platform === 'whatsapp')
+        .map((src: any): ConnectedSource => ({
+          id: src.id,
+          name: src.name,
+          platform: src.platform === 'telegram' ? 'telegram' : 'whatsapp',
+          description: src.description ?? undefined,
+          // A membership row is the only thing that proves access. Without
+          // one, a private group is not readable and says so.
+          access:
+            src.membership?.accessGranted
+              ? 'member'
+              : src.accessType === 'public'
+              ? 'authorised'
+              : 'pending',
+          // Author retention is the group's decision. The server does not
+          // model it yet, so Brief assumes the privacy-preserving answer.
+          retainAuthors: false,
+          lastActivityAt: src.lastMessageAt ?? undefined
+        }))
+    );
+  }, [connectorStatus.online, connectorStatus.liveSources]);
 
   return {
     groupIndex,

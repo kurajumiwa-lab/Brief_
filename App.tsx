@@ -1005,38 +1005,13 @@ export function App() {
     setOpenGroupId,
     visibleGroups,
   } = useGroupsDesk({
+    connectorStatus,
   });
 
   // --- Connected sources ----------------------------------------------------
   // The groups Brief may read. Derived from the server's source rows: a
   // source with a granted membership is one the user is in, anything else is
   // only readable if it is public. Access is never assumed.
-  React.useEffect(() => {
-    if (!connectorStatus.online) return;
-    setGroups(
-      connectorStatus.liveSources
-        .filter((src: any) =>
-          src?.platform === 'telegram' || src?.platform === 'whatsapp')
-        .map((src: any): ConnectedSource => ({
-          id: src.id,
-          name: src.name,
-          platform: src.platform === 'telegram' ? 'telegram' : 'whatsapp',
-          description: src.description ?? undefined,
-          // A membership row is the only thing that proves access. Without
-          // one, a private group is not readable and says so.
-          access:
-            src.membership?.accessGranted
-              ? 'member'
-              : src.accessType === 'public'
-              ? 'authorised'
-              : 'pending',
-          // Author retention is the group's decision. The server does not
-          // model it yet, so Brief assumes the privacy-preserving answer.
-          retainAuthors: false,
-          lastActivityAt: src.lastMessageAt ?? undefined
-        }))
-    );
-  }, [connectorStatus.online, connectorStatus.liveSources]);
 
   // The ONLY list any part of the UI may iterate. Everything else is invisible.
 
