@@ -142,6 +142,9 @@ import { MyLayerScreen } from './screens/MyLayerScreen';
 import { NearbyScreen } from './screens/NearbyScreen';
 import { WorkflowsScreen } from './screens/WorkflowsScreen';
 import { OverlaysShell } from './screens/OverlaysShell';
+import { useBriefItFlow } from './shell/hooks/useBriefItFlow';
+import { useGroupsDesk } from './shell/hooks/useGroupsDesk';
+import { useQuestsAndRewards } from './shell/hooks/useQuestsAndRewards';
 import { useDiscoveryFeed } from './shell/hooks/useDiscoveryFeed';
 import { useWatchAndShare } from './shell/hooks/useWatchAndShare';
 import { usePersonalLayer } from './shell/hooks/usePersonalLayer';
@@ -383,10 +386,6 @@ export function App() {
     liveSources: any[];
     stats: Record<string, any> | null;
   }>({ online: false, checked: false, capabilities: null, liveSources: [], stats: null });
-  const [briefItText, setBriefItText] = useState('');
-  const [briefItPreview, setBriefItPreview] = useState<any>(null);
-  const [briefItBusy, setBriefItBusy] = useState(false);
-  const [briefItSaved, setBriefItSaved] = useState<string | null>(null);
 
   const refreshConnectors = React.useCallback(async () => {
     // Everything goes through briefApi: one API layer, one set of response
@@ -678,6 +677,22 @@ export function App() {
       setObjectsLoad({ status: 'error', error: res.error });
     }
   }, []);
+  const {
+    briefItBusy,
+    briefItPreview,
+    briefItSaved,
+    briefItText,
+    runBriefItSave,
+    setBriefItBusy,
+    setBriefItPreview,
+    setBriefItSaved,
+    setBriefItText,
+  } = useBriefItFlow({
+    loadObjects,
+    noteActivation,
+    refreshConnectors,
+  });
+
 
   React.useEffect(() => {
     void loadObjects(userLocation ? { lat: userLocation.lat, lng: userLocation.lng } : undefined);
@@ -748,30 +763,6 @@ export function App() {
 
   // Named runBriefItSave, not saveBriefIt: the latter is now the briefApi
   // binding, and shadowing it would be a trap for the next edit.
-  const runBriefItSave = async () => {
-    setBriefItBusy(true);
-    const res = await briefApi.saveBriefIt(briefItText);
-    if (res.ok) {
-      const result: any = res.data.result;
-      setBriefItSaved(
-        result?.merged
-          ? 'Merged into an object Brief already had.'
-          : result?.created
-          ? 'Saved to Brief.'
-          : result?.reason ?? 'Nothing object-worthy found.'
-      );
-      setBriefItPreview(null);
-      setBriefItText('');
-      // A capture is the "contribute" rung. The server also sees the manual
-      // source membership this creates; the event just timestamps the moment.
-      if (result?.created || result?.merged) noteActivation('capture_saved', {});
-      void refreshConnectors();
-      void loadObjects();
-    } else {
-      setBriefItSaved(res.error);
-    }
-    setBriefItBusy(false);
-  };
 
   // Both navs call this, so selecting a destination behaves identically on
   // desktop and mobile: you land on that destination's main section.
@@ -1310,7 +1301,18 @@ export function App() {
   // --- Group intelligence layer ----------------------------------------------
   // Access state is live: revoking a group must immediately remove it and its
   // information, which is why groups are state rather than a constant.
-  const [groups, setGroups] = useState<ConnectedSource[]>(ALL_GROUPS);
+  const {
+    groupIndex,
+    groupIndexes,
+    groups,
+    openGroup,
+    openGroupId,
+    setGroups,
+    setOpenGroupId,
+    visibleGroups,
+  } = useGroupsDesk({
+  });
+
   // --- Connected sources ----------------------------------------------------
   // The groups Brief may read. Derived from the server's source rows: a
   // source with a granted membership is one the user is in, anything else is
@@ -1341,33 +1343,13 @@ export function App() {
         }))
     );
   }, [connectorStatus.online, connectorStatus.liveSources]);
-  const [openGroupId, setOpenGroupId] = useState<string | null>(null);
 
   // The ONLY list any part of the UI may iterate. Everything else is invisible.
-  const visibleGroups = useMemo(
-    () => groups.filter(canUserAccessGroup),
-    [groups]
-  );
 
   // Indexes are built per accessible group. An inaccessible group yields an
   // empty index by construction, so there is nothing to leak.
-  const groupIndexes = useMemo(() => {
-    const map: Record<string, GroupKnowledgeEntry[]> = {};
-    for (const group of visibleGroups) {
-      map[group.id] = buildGroupIndex(GROUP_MESSAGES, group);
-    }
-    return map;
-  }, [visibleGroups]);
 
-  const openGroup = useMemo(
-    () => visibleGroups.find((g) => g.id === openGroupId) ?? null,
-    [visibleGroups, openGroupId]
-  );
 
-  const groupIndex = useMemo(
-    () => (openGroup ? groupIndexes[openGroup.id] ?? [] : []),
-    [openGroup, groupIndexes]
-  );
 
 
 
@@ -1376,7 +1358,19 @@ export function App() {
 
 
   // --- Participation ---------------------------------------------------------
-  const [quests, setQuests] = useState<Quest[]>(INITIAL_QUESTS);
+  const {
+    handleRedeem,
+    handleSubmitQuest,
+    myContribution,
+    nextRank,
+    quests,
+    rewards,
+    setQuests,
+    setRewards,
+  } = useQuestsAndRewards({
+    showToast,
+  });
+
   const [discoveryTab, setDiscoveryTab] = useState<
     'home' | 'events' | 'explore' | 'offers' | 'places' | 'news' | 'opportunities'
   >('home');
@@ -1385,40 +1379,12 @@ export function App() {
   const [feedReload, setFeedReload] = useState(0);
   const [boardMode, setBoardMode] = useState<'contributors' | 'earners'>('contributors');
 
-  const [rewards, setRewards] = useState<Reward[]>(REWARD_CATALOGUE);
 
 
   // The wallet is derived from settled quests only. Submitted work is visible
   // but deliberately worth nothing until reviewed.
-  const myContribution = useMemo(() => summariseContribution(quests), [quests]);
-  const nextRank = useMemo(() => getNextRankRequirement(myContribution), [myContribution]);
 
-  const handleSubmitQuest = (quest: Quest) => {
-    setQuests((prev) =>
-      prev.map((q) =>
-        q.id === quest.id
-          ? { ...q, status: 'submitted' as QuestStatus, submittedAt: new Date().toISOString() }
-          : q
-      )
-    );
-    // Deliberately does NOT say "you earned N points".
-    showToast('Submitted for review. Points settle only if accepted.');
-  };
 
-  const handleRedeem = (reward: Reward) => {
-    const gate = canRedeem(reward, {
-      settledPoints: myContribution.settledPoints,
-      region: 'Nairobi'
-    });
-    if (!gate.allowed) {
-      showToast(gate.reason);
-      return;
-    }
-    setRewards((prev) =>
-      prev.map((r) => (r.id === reward.id ? { ...r, remaining: r.remaining - 1 } : r))
-    );
-    showToast(`Claimed. ${reward.providerName} will honour this reward.`);
-  };
 
   // --- Arena -----------------------------------------------------------------
   // Who the viewer is in Arena. My-layer's match views use the same id.
