@@ -65,11 +65,11 @@ export function MatchQueuePanel({
   const inFlight = stageIndex >= 0;
 
   return (
-    <div className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-4 space-y-3.5">
+    <div className="rounded-2xl border border-[#222630] bg-[#12151A] p-4 space-y-3.5">
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#251045]">Match queue</p>
-          <p className="text-[10px] text-[#251045]/60 truncate">{gameName} · open play or ranked</p>
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]">Match queue</p>
+          <p className="text-[10px] text-[#F7F7F8]/60 truncate">{gameName} · open play or ranked</p>
         </div>
         {/* Instant Queue Matching badge: real availability state */}
         <button
@@ -78,13 +78,13 @@ export function MatchQueuePanel({
           disabled={busy}
           className="flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-extrabold cursor-pointer disabled:opacity-40 transition-all"
           style={{
-            background: availabilityOn ? '#251045' : '#F1EDF7',
-            color: availabilityOn ? '#FFFFFF' : '#251045',
-            border: '1px solid #5B2EA6'
+            background: availabilityOn ? '#FF5A1F' : '#171A20',
+            color: availabilityOn ? '#F7F7F8' : '#F7F7F8',
+            border: '1px solid #FF5A1F'
           }}
           title={availabilityOn ? 'You are listed as available — turn off' : 'Go available for instant queue matching'}
         >
-          <Zap className="h-3 w-3" style={{ fill: availabilityOn ? '#FFFFFF' : 'none' }} />
+          <Zap className="h-3 w-3" style={{ fill: availabilityOn ? '#F7F7F8' : 'none' }} />
           {availabilityOn ? 'Instant Queue Matching' : 'Go Instant'}
         </button>
       </div>
@@ -92,7 +92,7 @@ export function MatchQueuePanel({
       {/* inline queue toggles — immediate feedback, no submit step */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] font-bold text-[#251045]/60">Mode</span>
+          <span className="text-[10px] font-bold text-[#F7F7F8]/60">Mode</span>
           {(['friendly', 'ranked'] as const).map((m) => (
             <button
               key={m}
@@ -100,9 +100,9 @@ export function MatchQueuePanel({
               onClick={() => { soundEngine.play('tap'); setMode(m); }}
               className="rounded-lg border px-2.5 py-1 text-[10px] font-extrabold cursor-pointer transition-all"
               style={{
-                background: mode === m ? '#251045' : '#FFFFFF',
-                color: mode === m ? '#FFFFFF' : '#251045',
-                borderColor: mode === m ? '#251045' : '#D6CFE4'
+                background: mode === m ? '#FF5A1F' : '#12151A',
+                color: mode === m ? '#F7F7F8' : '#F7F7F8',
+                borderColor: mode === m ? '#FF5A1F' : '#222630'
               }}
             >
               {m === 'friendly' ? 'Casual' : 'Ranked'}
@@ -110,7 +110,7 @@ export function MatchQueuePanel({
           ))}
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] font-bold text-[#251045]/60">Interface</span>
+          <span className="text-[10px] font-bold text-[#F7F7F8]/60">Interface</span>
           {(['touch', 'controller'] as const).map((v) => (
             <button
               key={v}
@@ -118,9 +118,9 @@ export function MatchQueuePanel({
               onClick={() => { soundEngine.play('tap'); setIface(v); }}
               className="rounded-lg border px-2.5 py-1 text-[10px] font-extrabold cursor-pointer transition-all"
               style={{
-                background: iface === v ? '#251045' : '#FFFFFF',
-                color: iface === v ? '#FFFFFF' : '#251045',
-                borderColor: iface === v ? '#251045' : '#D6CFE4'
+                background: iface === v ? '#FF5A1F' : '#12151A',
+                color: iface === v ? '#F7F7F8' : '#F7F7F8',
+                borderColor: iface === v ? '#FF5A1F' : '#222630'
               }}
             >
               {v === 'touch' ? 'Touch' : 'Controller'}
@@ -130,12 +130,12 @@ export function MatchQueuePanel({
       </div>
 
       {/* the visualizer: the REAL pipeline of the player's own flow */}
-      <div className="rounded-xl border border-[#D6CFE4] bg-[#F1EDF7] p-3">
+      <div className="rounded-xl border border-[#222630] bg-[#171A20] p-3">
         {inFlight ? (
           <>
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#251045]/60">Your pipeline</p>
-              <span className="text-[9px] font-mono text-[#251045]/40">
+              <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/60">Your pipeline</p>
+              <span className="text-[9px] font-mono text-[#F7F7F8]/40">
                 {latestMatch ? 'match' : 'challenge'} {latestMatch?.id ?? latestChallenge?.id}
               </span>
             </div>
@@ -143,7 +143,7 @@ export function MatchQueuePanel({
           </>
         ) : (
           <div className="flex items-center justify-between gap-2">
-            <p className="text-[10px] text-[#251045]/60">
+            <p className="text-[10px] text-[#F7F7F8]/60">
               Idle — no open queue. Enter with {mode === 'friendly' ? 'Casual' : 'Ranked'} · {iface === 'touch' ? 'Touch' : 'Controller'}.
             </p>
             <button
@@ -153,7 +153,7 @@ export function MatchQueuePanel({
                 onEnterQueue({ stake: mode, note: `${iface} interface` });
               }}
               disabled={busy}
-              className="shrink-0 rounded-lg bg-[#5B2EA6] px-3.5 py-2 text-[11px] font-extrabold text-[#FFFFFF] cursor-pointer disabled:opacity-40"
+              className="shrink-0 rounded-lg bg-[#FF5A1F] px-3.5 py-2 text-[11px] font-extrabold text-[#0D0F12] cursor-pointer disabled:opacity-40"
             >
               {busy ? 'Entering…' : 'Enter queue'}
             </button>

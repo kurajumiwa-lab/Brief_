@@ -49,18 +49,18 @@ export function RelatedContent({ edges, onOpenObject, onOpenLocation }: {
   return (
     <div className="space-y-5">
       {edges.map((edge) => (
-        <section key={`${edge.verb}_${edge.label}`} aria-label={edge.label} className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-3">
+        <section key={`${edge.verb}_${edge.label}`} aria-label={edge.label} className="rounded-2xl border border-[#222630] bg-[#12151A] p-3">
           <div className="mb-2 flex items-center justify-between gap-2">
-            <h4 className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#251045]">
+            <h4 className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]">
               {EDGE_ICON[edge.verb]}
               {edge.label}
-              <span className="text-[#251045]/40">· {edge.objects.length}</span>
+              <span className="text-[#F7F7F8]/40">· {edge.objects.length}</span>
             </h4>
             {edge.location && onOpenLocation && (
               <button
                 type="button"
                 onClick={() => onOpenLocation(edge.location?.name ?? '')}
-                className="flex items-center gap-1 rounded-full bg-[#5B2EA6] px-2.5 py-1 text-[9px] font-extrabold text-white transition-colors hover:bg-[#4A2391]"
+                className="flex items-center gap-1 rounded-full bg-[#FF5A1F] px-2.5 py-1 text-[9px] font-extrabold text-[#0D0F12] transition-colors hover:bg-[#E04D15]"
               >
                 View area <ArrowUpRight className="h-3 w-3" />
               </button>
@@ -75,18 +75,18 @@ export function RelatedContent({ edges, onOpenObject, onOpenLocation }: {
                   key={o.id}
                   type="button"
                   onClick={() => onOpenObject(o)}
-                  className="group flex items-center gap-2.5 rounded-xl border border-[#D6CFE4] bg-white p-2 text-left shadow-sm transition-transform hover:-translate-y-0.5 hover:border-[#6C3EC9]"
+                  className="group flex items-center gap-2.5 rounded-xl border border-[#222630] bg-[#12151A] p-2 text-left shadow-sm transition-transform hover:-translate-y-0.5 hover:border-[#22E6E0]"
                 >
                   {image ? (
                     <img src={image} alt="" aria-hidden="true" loading="lazy" className="h-11 w-11 shrink-0 rounded-lg object-cover" />
                   ) : (
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#3A2169] to-[#2A1657] text-[9px] font-bold uppercase text-[#F1EDF7]">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#1D2027] to-[#0D0F12] text-[9px] font-bold uppercase text-[#171A20]">
                       {o.type.slice(0, 4)}
                     </div>
                   )}
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[11px] font-semibold text-[#251045] group-hover:text-[#5B2EA6]">{o.title}</span>
-                    <span className="flex flex-wrap items-center gap-1 text-[9px] font-semibold text-[#251045]/55">
+                    <span className="block truncate text-[11px] font-semibold text-[#F7F7F8] group-hover:text-[#FF5A1F]">{o.title}</span>
+                    <span className="flex flex-wrap items-center gap-1 text-[9px] font-semibold text-[#F7F7F8]/55">
                       {l && <span className="flex items-center gap-0.5"><Clock className="h-2.5 w-2.5" />{l}</span>}
                       {(o.area || o.county) && <span>{[o.area, o.county].filter(Boolean).join(', ')}</span>}
                     </span>

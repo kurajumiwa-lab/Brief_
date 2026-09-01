@@ -180,13 +180,13 @@ export function CreatorProfilePanel() {
             {input('Name', 'fullName', 'Your public name')}
             <div className="grid grid-cols-2 gap-2">{input('Regions', 'regions', 'KE, NG')}{input('Niches', 'nicheTags', 'events, fashion')}</div>
             <div className="grid gap-2 sm:grid-cols-3">{input('Instagram', 'instagram', 'https://instagram.com/...')}{input('Facebook', 'facebook', 'https://facebook.com/...')}{input('TikTok', 'tiktok', 'https://tiktok.com/@...')}</div>
-            <button type="button" disabled={busy || !form.fullName.trim()} onClick={() => void saveProfile()} className="rounded-full px-4 py-2 text-[11px] font-bold cursor-pointer disabled:opacity-40" style={{ background: T.primary, color: '#FFFFFF' }}>Save profile</button>
+            <button type="button" disabled={busy || !form.fullName.trim()} onClick={() => void saveProfile()} className="rounded-full px-4 py-2 text-[11px] font-bold cursor-pointer disabled:opacity-40" style={{ background: T.primary, color: '#0D0F12' }}>Save profile</button>
           </div>
 
           <div className="rounded-xl border p-4 space-y-3" style={{ borderColor: T.outlineVariant, background: T.container }}>
             <p className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: T.primary }}>Rate cards</p>
             <div className="grid gap-2 sm:grid-cols-2"><select value={card.serviceType} onChange={(e) => setCard((old) => ({ ...old, serviceType: e.target.value }))} className="rounded-lg border px-2 py-2 text-[12px]" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }}><option value="WHATSAPP_STATUS">WhatsApp Status</option><option value="FB_POST">Facebook post</option><option value="DEDICATED_CAMPAIGN">Dedicated campaign</option><option value="EVENT_APPEARANCE">Event appearance</option></select><input value={card.basePrice} onChange={(e) => setCard((old) => ({ ...old, basePrice: e.target.value }))} placeholder="Base price" type="number" className="rounded-lg border px-3 py-2 text-[12px] outline-none" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }} /></div>
-            <div className="flex gap-2"><select value={card.currency} onChange={(e) => setCard((old) => ({ ...old, currency: e.target.value }))} className="rounded-lg border px-2 py-2 text-[12px]" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }}><option>KES</option><option>NGN</option><option>ZAR</option><option>USD</option></select><input value={card.regions} onChange={(e) => setCard((old) => ({ ...old, regions: e.target.value }))} placeholder="Regions" className="flex-1 rounded-lg border px-3 py-2 text-[12px] outline-none" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }} /><button type="button" disabled={busy || !card.basePrice} onClick={() => void createCard()} className="rounded-lg px-3 py-2 text-[11px] font-bold cursor-pointer disabled:opacity-40" style={{ background: T.primary, color: '#FFFFFF' }}><Plus className="h-3.5 w-3.5" /></button></div>
+            <div className="flex gap-2"><select value={card.currency} onChange={(e) => setCard((old) => ({ ...old, currency: e.target.value }))} className="rounded-lg border px-2 py-2 text-[12px]" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }}><option>KES</option><option>NGN</option><option>ZAR</option><option>USD</option></select><input value={card.regions} onChange={(e) => setCard((old) => ({ ...old, regions: e.target.value }))} placeholder="Regions" className="flex-1 rounded-lg border px-3 py-2 text-[12px] outline-none" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }} /><button type="button" disabled={busy || !card.basePrice} onClick={() => void createCard()} className="rounded-lg px-3 py-2 text-[11px] font-bold cursor-pointer disabled:opacity-40" style={{ background: T.primary, color: '#0D0F12' }}><Plus className="h-3.5 w-3.5" /></button></div>
             {cards.length === 0 ? <Empty text="No rate cards yet." /> : <div className="space-y-2">{cards.map((item) => <div key={item.id} className="flex items-center justify-between gap-2 rounded-lg border p-2" style={{ borderColor: T.outlineVariant }}><div className="min-w-0"><p className="text-[12px] font-semibold truncate" style={{ color: T.onSurface }}>{item.serviceType}</p><p className="text-[10px]" style={{ color: T.onSurfaceVariant }}>{item.currency} {Number(item.basePrice).toLocaleString()} · {item.status}</p></div>{item.status === 'draft' && <button type="button" disabled={busy} onClick={() => void publishCard(item.id)} className="text-[10px] font-bold cursor-pointer" style={{ color: T.primary }}>Publish</button>}</div>)}</div>}
           </div>
         </>
@@ -228,7 +228,7 @@ export function OpportunitiesPanel() {
               </div>
               {o.status === 'pending' && (
                 <div className="mt-2 flex gap-1">
-                  <button onClick={() => void respond(o.id, 'accept')} className="flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-bold cursor-pointer" style={{ background: T.primary, color: '#FFFFFF' }}>
+                  <button onClick={() => void respond(o.id, 'accept')} className="flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-bold cursor-pointer" style={{ background: T.primary, color: '#0D0F12' }}>
                     <Check className="h-3 w-3" /> Accept
                   </button>
                   <button onClick={() => void respond(o.id, 'decline')} className="flex items-center gap-1 rounded-full border px-3 py-1 text-[11px] font-bold cursor-pointer" style={{ borderColor: T.outlineVariant, color: T.onSurfaceVariant }}>
@@ -452,7 +452,7 @@ export function SubscriptionsPanel() {
           className="rounded-lg px-3 py-1.5 text-[11px] font-bold cursor-pointer"
           style={{
             background: mode === 'mine' ? T.primary : T.container,
-            color: mode === 'mine' ? '#FFFFFF' : T.onSurfaceVariant,
+            color: mode === 'mine' ? '#F7F7F8' : T.onSurfaceVariant,
             border: `1px solid ${T.outlineVariant}`
           }}
         >
@@ -463,7 +463,7 @@ export function SubscriptionsPanel() {
           className="rounded-lg px-3 py-1.5 text-[11px] font-bold cursor-pointer"
           style={{
             background: mode === 'join' ? T.primary : T.container,
-            color: mode === 'join' ? '#FFFFFF' : T.onSurfaceVariant,
+            color: mode === 'join' ? '#F7F7F8' : T.onSurfaceVariant,
             border: `1px solid ${T.outlineVariant}`
           }}
         >
@@ -474,7 +474,7 @@ export function SubscriptionsPanel() {
           className="rounded-lg px-3 py-1.5 text-[11px] font-bold cursor-pointer"
           style={{
             background: mode === 'topics' ? T.primary : T.container,
-            color: mode === 'topics' ? '#FFFFFF' : T.onSurfaceVariant,
+            color: mode === 'topics' ? '#F7F7F8' : T.onSurfaceVariant,
             border: `1px solid ${T.outlineVariant}`
           }}
         >
@@ -496,7 +496,7 @@ export function SubscriptionsPanel() {
             <select value={interval} onChange={(e) => setInterval(e.target.value)} className="rounded-lg border px-2 py-2 text-[12px]" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }}>
               <option value="weekly">weekly</option><option value="monthly">monthly</option><option value="yearly">yearly</option>
             </select>
-            <button onClick={() => void create()} disabled={busy || !title.trim() || !price} className="rounded-lg px-3 py-2 text-[12px] font-bold cursor-pointer disabled:opacity-40" style={{ background: T.primary, color: '#FFFFFF' }}>
+            <button onClick={() => void create()} disabled={busy || !title.trim() || !price} className="rounded-lg px-3 py-2 text-[12px] font-bold cursor-pointer disabled:opacity-40" style={{ background: T.primary, color: '#0D0F12' }}>
               <Plus className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -561,7 +561,7 @@ export function SubscriptionsPanel() {
               onClick={() => void subscribe()}
               disabled={topicBusy || !email.trim() || topics.length === 0}
               className="rounded-lg px-4 py-2 text-[11px] font-bold cursor-pointer disabled:opacity-40"
-              style={{ background: T.primary, color: '#FFFFFF' }}
+              style={{ background: T.primary, color: '#0D0F12' }}
             >
               {topicBusy ? '…' : 'Subscribe (double opt-in)'}
             </button>
@@ -587,7 +587,7 @@ export function SubscriptionsPanel() {
                 className="flex-1 rounded-lg border px-3 py-2 text-[12px] outline-none"
                 style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }}
               />
-              <button onClick={() => void confirm()} disabled={topicBusy || !confirmToken.trim()} className="rounded-lg px-3 py-2 text-[11px] font-bold cursor-pointer disabled:opacity-40" style={{ background: T.primary, color: '#FFFFFF' }}>
+              <button onClick={() => void confirm()} disabled={topicBusy || !confirmToken.trim()} className="rounded-lg px-3 py-2 text-[11px] font-bold cursor-pointer disabled:opacity-40" style={{ background: T.primary, color: '#0D0F12' }}>
                 Confirm
               </button>
             </div>
@@ -653,7 +653,7 @@ export function SubscriptionsPanel() {
                     onClick={() => void join(s.id)}
                     disabled={joining === s.id}
                     className="rounded-lg px-3 py-1.5 text-[11px] font-bold cursor-pointer disabled:opacity-40"
-                    style={{ background: T.primary, color: '#FFFFFF' }}
+                    style={{ background: T.primary, color: '#0D0F12' }}
                   >
                     {joining === s.id ? 'Joining…' : 'Join'}
                   </button>

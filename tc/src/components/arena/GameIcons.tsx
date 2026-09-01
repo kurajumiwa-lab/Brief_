@@ -75,7 +75,7 @@ export const ArenaTrophyIcon: React.FC<IconProps> = ({
 
 export const ArenaChestIcon: React.FC<IconProps> = ({
   size = 28,
-  color = '#E040FB',
+  color = '#22E6E0',
   className = ''
 }) => (
   <svg
@@ -92,7 +92,7 @@ export const ArenaChestIcon: React.FC<IconProps> = ({
 
 export const ArenaPlayIcon: React.FC<IconProps> = ({
   size = 32,
-  color = '#FFFFFF',
+  color = '#F7F7F8',
   className = ''
 }) => (
   <svg
@@ -112,7 +112,7 @@ export const ArenaSoundToggleIcon: React.FC<{
   size?: number;
   color?: string;
   className?: string;
-}> = ({ isMuted, size = 24, color = '#FFFFFF', className = '' }) => (
+}> = ({ isMuted, size = 24, color = '#F7F7F8', className = '' }) => (
   <svg
     width={size}
     height={size}
@@ -153,7 +153,7 @@ export const ArcadeCoinIcon: React.FC<IconProps> = ({
     aria-hidden="true"
   >
     <circle cx="12" cy="12" r="10" fill={color} />
-    <circle cx="12" cy="12" r="7" fill="none" stroke="#FFFFFF" strokeWidth="1.5" opacity="0.55" />
-    <path d="M9 8h5.2c1.75 0 3.2 1.4 3.2 3.1 0 1.6-1.3 2.9-2.9 2.9H11v2H9V8zm2 1.7v2.6h3.1c.79 0 1.5-.6 1.5-1.3s-.71-1.3-1.5-1.3H11z" fill="#7A4E00" />
+    <circle cx="12" cy="12" r="7" fill="none" stroke="#F7F7F8" strokeWidth="1.5" opacity="0.55" />
+    <path d="M9 8h5.2c1.75 0 3.2 1.4 3.2 3.1 0 1.6-1.3 2.9-2.9 2.9H11v2H9V8zm2 1.7v2.6h3.1c.79 0 1.5-.6 1.5-1.3s-.71-1.3-1.5-1.3H11z" fill="#FF5A1F" />
   </svg>
 );

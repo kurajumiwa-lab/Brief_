@@ -25,7 +25,7 @@ interface Results {
   entityMatch: string | null;
 }
 
-const T = { muted: 'rgba(37,16,69,0.62)', ink: '#251045', line: '#D6CFE4', surface: '#FBFAFD' };
+const T = { muted: 'rgba(247, 247, 248,0.62)', ink: '#F7F7F8', line: '#222630', surface: '#12151A' };
 
 const TYPE_OPTIONS = [
   ['', 'All types'],
@@ -100,7 +100,7 @@ function ResultRow({ title, image, meta, source, onClick }: {
     </>
   );
 
-  const cls = `flex w-full items-center gap-3 rounded-2xl border p-2 text-left transition-colors ${onClick ? 'hover:border-[#6C3EC9]' : ''}`;
+  const cls = `flex w-full items-center gap-3 rounded-2xl border p-2 text-left transition-colors ${onClick ? 'hover:border-[#22E6E0]' : ''}`;
   const style = { borderColor: T.line, background: T.surface };
 
   if (onClick) {
@@ -146,7 +146,7 @@ export function SearchResults({ query, onOpenObject, onOpenEntity }: {
 
   const hasAnyQuery = Boolean(query.trim() || filters.type || filters.location || filters.date || filters.source);
   if (!hasAnyQuery) return null;
-  if (loading) return <div className="h-16 animate-pulse rounded-2xl bg-[#FBFAFD]" aria-label="Searching" />;
+  if (loading) return <div className="h-16 animate-pulse rounded-2xl bg-[#12151A]" aria-label="Searching" />;
   if (!results) return null;
 
   const total = results.counts.objects + results.counts.tea + results.counts.vendors + results.counts.collections;
@@ -199,7 +199,7 @@ export function SearchResults({ query, onOpenObject, onOpenEntity }: {
           placeholder="Location (e.g. Kisumu)"
           value={filters.location ?? ''}
           onChange={(e) => setFilter('location', e.target.value)}
-          className="w-40 rounded-full border px-3 py-1.5 text-[12px] font-semibold outline-none focus:border-[#6C3EC9]"
+          className="w-40 rounded-full border px-3 py-1.5 text-[12px] font-semibold outline-none focus:border-[#22E6E0]"
           style={{ borderColor: T.line, background: T.surface, color: T.ink }}
         />
         <input
@@ -214,7 +214,7 @@ export function SearchResults({ query, onOpenObject, onOpenEntity }: {
           <button
             type="button"
             onClick={() => setFilters({})}
-            className="rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-colors hover:border-[#6C3EC9]"
+            className="rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-colors hover:border-[#22E6E0]"
             style={{ borderColor: T.line, background: T.surface, color: T.ink }}
           >
             Clear filters
@@ -235,10 +235,10 @@ export function SearchResults({ query, onOpenObject, onOpenEntity }: {
               key={entity.id}
               type="button"
               onClick={() => onOpenEntity?.(entity.id)}
-              className="flex w-full items-center gap-3 rounded-2xl border border-[#6C3EC9]/30 bg-[#F1EDF7]/60 p-2 text-left transition-colors hover:border-[#6C3EC9] cursor-pointer"
+              className="flex w-full items-center gap-3 rounded-2xl border border-[#22E6E0]/30 bg-[#171A20]/60 p-2 text-left transition-colors hover:border-[#22E6E0] cursor-pointer"
               aria-label={entity.name}
             >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#5B2EA6] to-[#3A2169] text-[10px] font-extrabold uppercase text-white">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#FF5A1F] to-[#1D2027] text-[10px] font-extrabold uppercase text-white">
                 {ENTITY_KIND_LABEL[entity.kind]?.slice(0, 2) ?? entity.kind?.slice(0, 2)}
               </span>
               <span className="min-w-0 flex-1">
@@ -250,7 +250,7 @@ export function SearchResults({ query, onOpenObject, onOpenEntity }: {
                   {typeof entity.followCount === 'number' ? ` · ${entity.followCount} follower${entity.followCount === 1 ? '' : 's'}` : ''}
                 </span>
               </span>
-              <span className="rounded-full bg-[#5B2EA6] px-2.5 py-1 text-[10px] font-extrabold text-white">Open</span>
+              <span className="rounded-full bg-[#FF5A1F] px-2.5 py-1 text-[10px] font-extrabold text-[#0D0F12]">Open</span>
             </button>
           ))}
         </div>

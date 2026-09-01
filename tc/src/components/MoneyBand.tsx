@@ -148,15 +148,15 @@ export function MoneyBand({ objects, areaHint, onOpenSection, onOpenItem, minTot
 
   return (
     <section aria-label="Money opportunities" className="mx-auto mb-6 max-w-5xl">
-      <div className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-4">
+      <div className="rounded-2xl border border-[#222630] bg-[#12151A] p-4">
         <div className="mb-3 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-[#5B2EA6]" aria-hidden="true" />
-            <h2 className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#251045]">
+            <TrendingUp className="h-4 w-4 text-[#FF5A1F]" aria-hidden="true" />
+            <h2 className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#F7F7F8]">
               Money opportunities
             </h2>
           </div>
-          <p className="text-[10px] font-semibold text-[#251045]/50">
+          <p className="text-[10px] font-semibold text-[#F7F7F8]/50">
             {areaHint ? `around ${areaHint}` : 'across Brief — set your area to focus'}
           </p>
         </div>
@@ -165,16 +165,16 @@ export function MoneyBand({ objects, areaHint, onOpenSection, onOpenItem, minTot
           {model.rows.map((row) => {
             const Icon = ROW_ICON[row.key];
             return (
-              <div key={row.key} className="rounded-xl border border-[#E3DEEE] bg-[#FFFFFF] p-3">
+              <div key={row.key} className="rounded-xl border border-[#1D2027] bg-[#12151A] p-3">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="flex items-center gap-1.5 text-[12px] font-extrabold text-[#251045]">
-                    <Icon className="h-3.5 w-3.5 text-[#5B2EA6]" aria-hidden="true" />
+                  <p className="flex items-center gap-1.5 text-[12px] font-extrabold text-[#F7F7F8]">
+                    <Icon className="h-3.5 w-3.5 text-[#FF5A1F]" aria-hidden="true" />
                     {row.count} {row.label}
                   </p>
                   <button
                     type="button"
                     onClick={() => onOpenSection(row.section)}
-                    className="cursor-pointer rounded-full border border-[#D6CFE4] px-2.5 py-1 text-[10px] font-extrabold text-[#5B2EA6] hover:bg-[#F1EDF7]"
+                    className="cursor-pointer rounded-full border border-[#222630] px-2.5 py-1 text-[10px] font-extrabold text-[#FF5A1F] hover:bg-[#171A20]"
                   >
                     Open
                   </button>
@@ -187,9 +187,9 @@ export function MoneyBand({ objects, areaHint, onOpenSection, onOpenItem, minTot
                         onClick={() => onOpenItem?.(row, item)}
                         className="flex w-full cursor-pointer items-baseline justify-between gap-2 text-left"
                       >
-                        <span className="min-w-0 truncate text-[11px] font-semibold text-[#251045]/80">{item.title}</span>
+                        <span className="min-w-0 truncate text-[11px] font-semibold text-[#F7F7F8]/80">{item.title}</span>
                         {/* A sub-line is only rendered when the detail really exists. */}
-                        {item.sub && <span className="shrink-0 text-[10px] font-bold text-[#251045]/55">{item.sub}</span>}
+                        {item.sub && <span className="shrink-0 text-[10px] font-bold text-[#F7F7F8]/55">{item.sub}</span>}
                       </button>
                     </li>
                   ))}

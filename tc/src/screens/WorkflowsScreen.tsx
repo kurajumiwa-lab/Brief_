@@ -130,17 +130,17 @@ export function WorkflowsScreen(props: WorkflowsScreenProps) {
           <div className="max-w-3xl mx-auto px-4 pt-3 pb-1">
             <div className="flex items-end justify-between gap-2 pb-2">
               <div className="min-w-0">
-                <h1 className="text-lg font-extrabold text-[#251045] tracking-tight">
+                <h1 className="text-lg font-extrabold text-[#F7F7F8] tracking-tight">
                   {workflowView === 'queue' ? ROOM.workflows.label : `Workflows — ${activeWorkflowBundle.label}`}
                 </h1>
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#251045]/50 mt-0.5">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#F7F7F8]/50 mt-0.5">
                   {workflowView === 'queue' ? `${QUEUE_LABEL} — ${QUEUE_HINT}` : activeWorkflowBundle.hint}
                 </p>
               </div>
               {/* No count on the queue: how much is waiting is the queue's own
                   answer, and a header badge would be a second, worse copy. */}
               {workflowView === 'screen' && (
-                <span className="text-[10px] font-bold uppercase tracking-[0.14em] bg-[#E9E4F2] text-[#251045]/60 px-2.5 py-1 rounded-full">
+                <span className="text-[10px] font-bold uppercase tracking-[0.14em] bg-[#1D2027] text-[#F7F7F8]/60 px-2.5 py-1 rounded-full">
                   {activeWorkflowBundle.sections.length} screens
                 </span>
               )}
@@ -160,8 +160,8 @@ export function WorkflowsScreen(props: WorkflowsScreenProps) {
                 }}
                 className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
                   workflowView === 'queue'
-                    ? 'bg-[#5B2EA6] text-[#FFFFFF] border-[#6C3EC9]'
-                    : 'bg-[#FBFAFD] text-[#251045] border-[#D6CFE4]'
+                    ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]'
+                    : 'bg-[#12151A] text-[#0D0F12] border-[#222630]'
                 }`}
               >
                 {QUEUE_CHIP}
@@ -175,8 +175,8 @@ export function WorkflowsScreen(props: WorkflowsScreenProps) {
                   }}
                   className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
                     workflowView === 'screen' && activeWorkflowBundle.id === bundle.id
-                      ? 'bg-[#5B2EA6] text-[#FFFFFF] border-[#6C3EC9]'
-                      : 'bg-[#FBFAFD] text-[#251045] border-[#D6CFE4]'
+                      ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]'
+                      : 'bg-[#12151A] text-[#0D0F12] border-[#222630]'
                   }`}
                 >
                   {bundle.label}
@@ -185,15 +185,15 @@ export function WorkflowsScreen(props: WorkflowsScreenProps) {
             </div>
 
             {workflowView === 'screen' && (
-              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5 border-t border-[#D6CFE4] pt-2">
+              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5 border-t border-[#222630] pt-2">
                 {activeWorkflowBundle.sections.map((id: any) => (
                   <button
                     key={id}
                     onClick={() => setWorkflowSection(id as WorkflowSection)}
                     className={`shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition cursor-pointer ${
                       workflowSection === id
-                        ? 'bg-[#5B2EA6] text-[#FFFFFF]'
-                        : 'text-[#251045]/60 hover:text-[#251045] bg-[#F1EDF7]'
+                        ? 'bg-[#FF5A1F] text-[#0D0F12]'
+                        : 'text-[#0D0F12]/60 hover:text-[#0D0F12] bg-[#171A20]'
                     }`}
                   >
                     {INBOX_TABS[id]}
@@ -223,10 +223,10 @@ export function WorkflowsScreen(props: WorkflowsScreenProps) {
               liveSourceCount={connectorStatus.liveSources.length}
               stats={connectorStatus.stats as any}
             />
-            <div className="bg-[#FBFAFD] border border-[#D6CFE4] rounded-2xl p-5">
+            <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-2">
-                <Briefcase className="w-4 h-4 text-[#251045]" />
-                <span className="text-[10px] text-[#251045]">
+                <Briefcase className="w-4 h-4 text-[#F7F7F8]" />
+                <span className="text-[10px] text-[#F7F7F8]">
                   Workflows
                 </span>
               </div>
@@ -235,7 +235,7 @@ export function WorkflowsScreen(props: WorkflowsScreenProps) {
                 Things you can actually do.
               </h2>
 
-              <p className="text-xs text-[#251045] mt-1">
+              <p className="text-xs text-[#F7F7F8] mt-1">
                 {workflowSection === 'completed'
                   ? 'Processes you have already finished.'
                   : 'Follow a process instead of figuring it out from scratch.'}
@@ -245,7 +245,7 @@ export function WorkflowsScreen(props: WorkflowsScreenProps) {
             {(workflowSection === 'completed' ? completedJourneys : activeJourneys)
               .length === 0 && (
               workflowSection === 'completed' ? (
-                <p className="text-xs text-[#251045]/60">
+                <p className="text-xs text-[#F7F7F8]/60">
                   Nothing finished yet. Your wins will collect here.
                 </p>
               ) : (
@@ -261,12 +261,12 @@ export function WorkflowsScreen(props: WorkflowsScreenProps) {
             {(workflowSection === 'completed' ? completedJourneys : activeJourneys).map((journey: any) => (
               <div
                 key={journey.id}
-                className="bg-[#FBFAFD] border border-[#D6CFE4] rounded-2xl overflow-hidden"
+                className="bg-[#12151A] border border-[#222630] rounded-2xl overflow-hidden"
               >
                 <div className="p-5">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <span className="text-[10px] text-[#251045]">
+                      <span className="text-[10px] text-[#F7F7F8]">
                         {journey.category}
                       </span>
 
@@ -274,46 +274,46 @@ export function WorkflowsScreen(props: WorkflowsScreenProps) {
                         {journey.title}
                       </h3>
 
-                      <p className="text-xs text-[#251045] mt-1">
+                      <p className="text-xs text-[#F7F7F8] mt-1">
                         {journey.description}
                       </p>
                     </div>
 
-                    <span className="text-xs font-bold text-[#251045]">
+                    <span className="text-xs font-bold text-[#F7F7F8]">
                       {journey.progressPercent}%
                     </span>
                   </div>
 
-                  <div className="h-1.5 bg-[#F1EDF7] rounded-full mt-5 overflow-hidden">
+                  <div className="h-1.5 bg-[#171A20] rounded-full mt-5 overflow-hidden">
                     <div
-                      className="h-full bg-[#5B2EA6] rounded-full"
+                      className="h-full bg-[#FF5A1F] rounded-full"
                       style={{ width: `${journey.progressPercent}%` }}
                     />
                   </div>
                 </div>
 
-                <div className="border-t border-[#D6CFE4]">
+                <div className="border-t border-[#222630]">
                   {journey.steps.map((step: any) => (
                     <div
                       key={step.id}
-                      className="flex items-center gap-3 p-4 border-b border-[#D6CFE4] last:border-b-0"
+                      className="flex items-center gap-3 p-4 border-b border-[#222630] last:border-b-0"
                     >
                       {step.isCompleted ? (
-                        <CheckCircle2 className="w-5 h-5 text-[#251045] shrink-0" />
+                        <CheckCircle2 className="w-5 h-5 text-[#F7F7F8] shrink-0" />
                       ) : (
-                        <Circle className="w-5 h-5 text-[#251045]/60 shrink-0" />
+                        <Circle className="w-5 h-5 text-[#F7F7F8]/60 shrink-0" />
                       )}
 
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-extrabold">
                           {step.title}
                         </p>
-                        <p className="text-[10px] text-[#251045]/60">
+                        <p className="text-[10px] text-[#F7F7F8]/60">
                           {step.description}
                         </p>
                       </div>
 
-                      <span className="text-[9px] text-[#251045]">
+                      <span className="text-[9px] text-[#F7F7F8]">
                         {step.statusLabel}
                       </span>
                     </div>

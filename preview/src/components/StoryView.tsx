@@ -74,7 +74,7 @@ export function StoryView({ article: a, design, mode = 'read' }: StoryViewProps)
           <img src={hero} alt="" className="absolute inset-0 h-full w-full object-cover" />
           <div className="absolute inset-0" style={{ background: heroVeil(d) }} />
           <div className={`absolute inset-x-0 bottom-0 ${mode === 'preview' ? 'p-4' : 'p-6'}`}>
-            <Meta a={a} inkDim="rgba(255,255,255,0.75)" accent="#FFFFFF" />
+            <Meta a={a} inkDim="rgba(255,255,255,0.75)" accent="#F7F7F8" />
             <div className="mt-2">{Title}</div>
             {Dek && <div className="mt-1">{Dek}</div>}
           </div>

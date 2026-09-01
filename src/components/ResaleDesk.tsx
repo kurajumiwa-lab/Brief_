@@ -78,43 +78,43 @@ export function ResaleDesk() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
       <div>
-        <h2 className="text-base font-extrabold text-[#251045]">Resale</h2>
-        <p className="text-xs text-[#251045]/60 mt-1">
+        <h2 className="text-base font-extrabold text-[#F7F7F8]">Resale</h2>
+        <p className="text-xs text-[#F7F7F8]/60 mt-1">
           Sell a seat you hold. Brief sets the price you type and never lets a buyer pay less;
           when money arrives out-of-band you confirm it — that confirmation is what moves the seat.
         </p>
       </div>
 
       {notice && (
-        <div className="text-xs bg-[#F4F1FA] border border-[#D6CFE4] rounded-xl px-3 py-2.5 text-[#251045]">{notice}</div>
+        <div className="text-xs bg-[#171A20] border border-[#222630] rounded-xl px-3 py-2.5 text-[#F7F7F8]">{notice}</div>
       )}
       {actionError && (
-        <div className="text-xs border border-[#6C3EC9] rounded-xl px-3 py-2.5 text-[#251045]">{actionError}</div>
+        <div className="text-xs border border-[#22E6E0] rounded-xl px-3 py-2.5 text-[#F7F7F8]">{actionError}</div>
       )}
 
       {/* --- your seats ------------------------------------------------- */}
       <section className="space-y-3">
-        <h3 className="text-[10px] font-bold uppercase tracking-wide text-[#251045]/50">Seats you can list</h3>
-        {tickets.status === 'loading' && <p className="text-xs text-[#251045]/50">Loading your seats…</p>}
+        <h3 className="text-[10px] font-bold uppercase tracking-wide text-[#F7F7F8]/50">Seats you can list</h3>
+        {tickets.status === 'loading' && <p className="text-xs text-[#F7F7F8]/50">Loading your seats…</p>}
         {tickets.status === 'error' && (
-          <div className="border border-[#D6CFE4] rounded-xl p-4 text-center space-y-2">
-            <p className="text-xs text-[#251045]/70">{tickets.error}</p>
-            <button onClick={() => void load()} className="text-xs font-bold text-[#251045] underline cursor-pointer">Try again</button>
+          <div className="border border-[#222630] rounded-xl p-4 text-center space-y-2">
+            <p className="text-xs text-[#F7F7F8]/70">{tickets.error}</p>
+            <button onClick={() => void load()} className="text-xs font-bold text-[#F7F7F8] underline cursor-pointer">Try again</button>
           </div>
         )}
         {tickets.status === 'ready' && listable.length === 0 && (
-          <div className="border border-[#D6CFE4] rounded-xl p-5 text-center">
-            <p className="text-xs font-bold text-[#251045]">Nothing to list right now</p>
-            <p className="text-[11px] text-[#251045]/60 mt-1">
+          <div className="border border-[#222630] rounded-xl p-5 text-center">
+            <p className="text-xs font-bold text-[#F7F7F8]">Nothing to list right now</p>
+            <p className="text-[11px] text-[#F7F7F8]/60 mt-1">
               Seats you hold appear here (My Layer → Kept → My tickets) unless they are already listed.
             </p>
           </div>
         )}
         {tickets.status === 'ready' && listable.map((t) => (
-          <div key={t.id} className="border border-[#D6CFE4] rounded-2xl p-4 space-y-3">
+          <div key={t.id} className="border border-[#222630] rounded-2xl p-4 space-y-3">
             <div className="flex items-start justify-between gap-3">
-              <p className="text-xs font-extrabold text-[#251045] truncate">{t.eventTitle ?? 'Event'}</p>
-              <span className="text-[10px] text-[#251045]/50 shrink-0">code v{t.codeVersion}</span>
+              <p className="text-xs font-extrabold text-[#F7F7F8] truncate">{t.eventTitle ?? 'Event'}</p>
+              <span className="text-[10px] text-[#F7F7F8]/50 shrink-0">code v{t.codeVersion}</span>
             </div>
             {listFor === t.id ? (
               <div className="space-y-2">
@@ -124,13 +124,13 @@ export function ResaleDesk() {
                     onChange={(e) => setPrice(e.target.value)}
                     inputMode="numeric"
                     placeholder="price in whole KES"
-                    className="text-xs bg-[#FBFAFD] text-[#251045] rounded-xl px-3 py-2 border border-[#D6CFE4] focus:border-[#6C3EC9] focus:outline-none w-40"
+                    className="text-xs bg-[#12151A] text-[#F7F7F8] rounded-xl px-3 py-2 border border-[#222630] focus:border-[#22E6E0] focus:outline-none w-40"
                   />
                   <input
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     placeholder="why you're selling (optional)"
-                    className="flex-1 min-w-40 text-xs bg-[#FBFAFD] text-[#251045] rounded-xl px-3 py-2 border border-[#D6CFE4] focus:border-[#6C3EC9] focus:outline-none"
+                    className="flex-1 min-w-40 text-xs bg-[#12151A] text-[#F7F7F8] rounded-xl px-3 py-2 border border-[#222630] focus:border-[#22E6E0] focus:outline-none"
                   />
                 </div>
                 <div className="flex gap-2">
@@ -140,22 +140,22 @@ export function ResaleDesk() {
                       () => briefApi.createResaleListing(t.id, Number(price), note.trim() || undefined),
                       `Listed at ${money(Number(price), 'KES')}. Buyers see it in the event's resale section.`
                     )}
-                    className="text-xs font-bold px-3 py-2 rounded-xl bg-[#5B2EA6] text-[#FFFFFF] cursor-pointer disabled:opacity-40"
+                    className="text-xs font-bold px-3 py-2 rounded-xl bg-[#FF5A1F] text-[#0D0F12] cursor-pointer disabled:opacity-40"
                   >
                     Put it up for sale
                   </button>
-                  <button onClick={() => { setListFor(null); setPrice(''); setNote(''); }} className="text-xs text-[#251045]/60 cursor-pointer">
+                  <button onClick={() => { setListFor(null); setPrice(''); setNote(''); }} className="text-xs text-[#F7F7F8]/60 cursor-pointer">
                     Not now
                   </button>
                 </div>
-                <p className="text-[10px] text-[#251045]/50">
+                <p className="text-[10px] text-[#F7F7F8]/50">
                   Whole shillings only. The server refuses anything else — a fraction is a price nobody set.
                 </p>
               </div>
             ) : (
               <button
                 onClick={() => { setListFor(t.id); setActionError(null); }}
-                className="text-xs font-bold px-3 py-2 rounded-xl bg-[#5B2EA6] text-[#FFFFFF] cursor-pointer"
+                className="text-xs font-bold px-3 py-2 rounded-xl bg-[#FF5A1F] text-[#0D0F12] cursor-pointer"
               >
                 List this seat
               </button>
@@ -166,36 +166,36 @@ export function ResaleDesk() {
 
       {/* --- active listings --------------------------------------------- */}
       <section className="space-y-3">
-        <h3 className="text-[10px] font-bold uppercase tracking-wide text-[#251045]/50">Your listings</h3>
-        {desk.status === 'loading' && <p className="text-xs text-[#251045]/50">Loading listings…</p>}
-        {desk.status === 'error' && <p className="text-xs text-[#251045]/70">{desk.error}</p>}
+        <h3 className="text-[10px] font-bold uppercase tracking-wide text-[#F7F7F8]/50">Your listings</h3>
+        {desk.status === 'loading' && <p className="text-xs text-[#F7F7F8]/50">Loading listings…</p>}
+        {desk.status === 'error' && <p className="text-xs text-[#F7F7F8]/70">{desk.error}</p>}
         {desk.status === 'ready' && activeListings.length === 0 && (
-          <p className="text-[11px] text-[#251045]/60 border border-[#D6CFE4] rounded-xl p-4">
+          <p className="text-[11px] text-[#F7F7F8]/60 border border-[#222630] rounded-xl p-4">
             No active listings. When you list a seat it appears here with its orders.
           </p>
         )}
         {desk.status === 'ready' && activeListings.map((l) => {
           const held = orders.find((o) => o.listingId === l.id && o.status === 'pending');
           return (
-            <div key={l.id} className="border border-[#D6CFE4] rounded-2xl p-4 space-y-2">
+            <div key={l.id} className="border border-[#222630] rounded-2xl p-4 space-y-2">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-extrabold text-[#251045]">{money(l.price, l.currency)}</p>
-                  <p className="text-[10px] text-[#251045]/50 mt-0.5">{LISTING_LABEL[l.status] ?? l.status}</p>
+                  <p className="text-xs font-extrabold text-[#F7F7F8]">{money(l.price, l.currency)}</p>
+                  <p className="text-[10px] text-[#F7F7F8]/50 mt-0.5">{LISTING_LABEL[l.status] ?? l.status}</p>
                 </div>
                 {l.status === 'active' && (
                   <button
                     disabled={busy}
                     onClick={() => void act(() => briefApi.cancelResaleListing(l.id), 'Listing pulled. The seat is yours to list again.')}
-                    className="text-xs px-3 py-2 rounded-xl border border-[#D6CFE4] text-[#251045] cursor-pointer disabled:opacity-40"
+                    className="text-xs px-3 py-2 rounded-xl border border-[#222630] text-[#F7F7F8] cursor-pointer disabled:opacity-40"
                   >
                     Pull listing
                   </button>
                 )}
               </div>
               {held && (
-                <div className="border-t border-[#D6CFE4] pt-2 space-y-2">
-                  <p className="text-[11px] text-[#251045]/80">
+                <div className="border-t border-[#222630] pt-2 space-y-2">
+                  <p className="text-[11px] text-[#F7F7F8]/80">
                     A buyer is holding this seat at {money(held.total, held.currency)} ({ORDER_LABEL[held.status]}).
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -205,19 +205,19 @@ export function ResaleDesk() {
                         () => briefApi.confirmTicketOrderReceived(held.id),
                         `Payment confirmed — the seat moved to the buyer and their code is live. Recorded in the ledger.`
                       )}
-                      className="text-xs font-bold px-3 py-2 rounded-xl bg-[#5B2EA6] text-[#FFFFFF] cursor-pointer disabled:opacity-40"
+                      className="text-xs font-bold px-3 py-2 rounded-xl bg-[#FF5A1F] text-[#0D0F12] cursor-pointer disabled:opacity-40"
                     >
                       I received {money(held.total, held.currency)}
                     </button>
                     <button
                       disabled={busy}
                       onClick={() => void act(() => briefApi.refundTicketOrder(held.id), 'Refunded — the seat is back with you and the buyer\u2019s code is dead.')}
-                      className="text-xs px-3 py-2 rounded-xl border border-[#D6CFE4] text-[#251045] cursor-pointer disabled:opacity-40"
+                      className="text-xs px-3 py-2 rounded-xl border border-[#222630] text-[#F7F7F8] cursor-pointer disabled:opacity-40"
                     >
                       Refund instead
                     </button>
                   </div>
-                  <p className="text-[10px] text-[#251045]/50">
+                  <p className="text-[10px] text-[#F7F7F8]/50">
                     Only confirm money that actually arrived. The confirmation writes a settled row to
                     the ledger under your name — it is your attestation, auditable.
                   </p>
@@ -229,7 +229,7 @@ export function ResaleDesk() {
         {desk.status === 'ready' && finishedListings.length > 0 && (
           <div className="space-y-1">
             {finishedListings.map((l) => (
-              <p key={l.id} className="text-[10px] text-[#251045]/50 flex items-center justify-between border-b border-[#E9E4F2] pb-1">
+              <p key={l.id} className="text-[10px] text-[#F7F7F8]/50 flex items-center justify-between border-b border-[#1D2027] pb-1">
                 <span>{money(l.price, l.currency)} · {LISTING_LABEL[l.status] ?? l.status}{l.removedReason ? ` — ${l.removedReason}` : ''}</span>
                 <span>{new Date(l.createdAt).toLocaleDateString()}</span>
               </p>
@@ -240,8 +240,8 @@ export function ResaleDesk() {
 
       {/* --- orders where you are the buyer -------------------------------- */}
       <section className="space-y-3">
-        <h3 className="text-[10px] font-bold uppercase tracking-wide text-[#251045]/50">Seats you are buying</h3>
-        {desk.status !== 'ready' && <p className="text-xs text-[#251045]/50">Loading orders…</p>}
+        <h3 className="text-[10px] font-bold uppercase tracking-wide text-[#F7F7F8]/50">Seats you are buying</h3>
+        {desk.status !== 'ready' && <p className="text-xs text-[#F7F7F8]/50">Loading orders…</p>}
         {(() => {
           if (desk.status !== 'ready') return null;
           // Seller orders are the ones sitting under my own listings; every
@@ -250,20 +250,20 @@ export function ResaleDesk() {
           const asBuyer = orders.filter((o) => !myListingIds.has(o.listingId));
           if (asBuyer.length === 0) {
             return (
-              <p className="text-[11px] text-[#251045]/60 border border-[#D6CFE4] rounded-xl p-4">
+              <p className="text-[11px] text-[#F7F7F8]/60 border border-[#222630] rounded-xl p-4">
                 No open purchases. When you buy a resale seat from an event's page, payment happens with
                 the seller and is tracked here until the seat is yours.
               </p>
             );
           }
           return asBuyer.map((o) => (
-            <div key={o.id} className="border border-[#D6CFE4] rounded-2xl p-4 space-y-2">
-              <p className="text-xs font-extrabold text-[#251045]">
+            <div key={o.id} className="border border-[#222630] rounded-2xl p-4 space-y-2">
+              <p className="text-xs font-extrabold text-[#F7F7F8]">
                 {money(o.total, o.currency)} · {ORDER_LABEL[o.status] ?? o.status}
               </p>
               {o.status === 'pending' ? (
                 <>
-                  <p className="text-[11px] text-[#251045]/70">
+                  <p className="text-[11px] text-[#F7F7F8]/70">
                     Arrange {money(o.total, o.currency)} with the seller. When they confirm receiving it, the
                     seat moves to you and your code appears in My tickets. Brief cannot collect this payment
                     itself — no provider is connected.
@@ -271,18 +271,18 @@ export function ResaleDesk() {
                   <button
                     disabled={busy}
                     onClick={() => void act(() => briefApi.cancelTicketOrder(o.id), 'Order cancelled — the seat is back on the market.')}
-                    className="text-xs px-3 py-2 rounded-xl border border-[#D6CFE4] text-[#251045] cursor-pointer disabled:opacity-40"
+                    className="text-xs px-3 py-2 rounded-xl border border-[#222630] text-[#F7F7F8] cursor-pointer disabled:opacity-40"
                   >
                     Cancel this order
                   </button>
                 </>
               ) : o.status === 'completed' ? (
-                <p className="text-[11px] text-[#251045]/70">
+                <p className="text-[11px] text-[#F7F7F8]/70">
                   Completed — the seat is in My tickets under your code. A refund returns it to the seller;
                   ask here and the seller confirms it from their listing.
                 </p>
               ) : (
-                <p className="text-[11px] text-[#251045]/70">This order is closed.</p>
+                <p className="text-[11px] text-[#F7F7F8]/70">This order is closed.</p>
               )}
             </div>
           ));

@@ -15,23 +15,23 @@ import type { Vault as VaultType, Footstep, VaultRequest, ResolutionItem } from 
 // ---------------------------------------------------------------------------
 
 const TONE = {
-  text: 'text-[#251045]',
-  dim: 'text-[#251045]/60',
-  faint: 'text-[#251045]/40',
-  accent: 'text-[#251045]',
-  gold: 'text-[#251045]',
-  warn: 'text-[#251045]',
-  danger: 'text-[#251045]'
+  text: 'text-[#F7F7F8]',
+  dim: 'text-[#F7F7F8]/60',
+  faint: 'text-[#F7F7F8]/40',
+  accent: 'text-[#F7F7F8]',
+  gold: 'text-[#F7F7F8]',
+  warn: 'text-[#F7F7F8]',
+  danger: 'text-[#F7F7F8]'
 };
 
 const CATEGORY_TONE: Record<string, string> = {
-  people: '#251045',
+  people: '#F7F7F8',
   messages: '#374151',
   commerce: '#52525B',
-  payments: '#251045',
+  payments: '#F7F7F8',
   vendors: '#52525B',
   system: '#9CA3AF',
-  decisions: '#251045'
+  decisions: '#F7F7F8'
 };
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -61,7 +61,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
     <button
       onClick={onClick}
       className={`shrink-0 px-2.5 py-1 rounded-full text-[10px] font-extrabold border cursor-pointer transition ${
-        active ? 'bg-[#5B2EA6] text-[#FFFFFF] border-[#6C3EC9]' : 'bg-[#FBFAFD] text-[#251045] border-[#D6CFE4]'
+        active ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]' : 'bg-[#12151A] text-[#0D0F12] border-[#222630]'
       }`}
     >
       {children}
@@ -70,7 +70,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
 }
 
 function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return <div className={`bg-[#FBFAFD] border border-[#D6CFE4] rounded-xl ${className}`}>{children}</div>;
+  return <div className={`bg-[#12151A] border border-[#222630] rounded-xl ${className}`}>{children}</div>;
 }
 
 // ---------------------------------------------------------------------------
@@ -125,16 +125,16 @@ function Timeline({ vaultId }: { vaultId: string }) {
 
       {days.map((d) => (
         <div key={d.day} className="space-y-1">
-          <p className="text-[9px] text-[#251045]/40 mt-3 mb-1">{d.day}</p>
+          <p className="text-[9px] text-[#F7F7F8]/40 mt-3 mb-1">{d.day}</p>
           {d.items.map((f) => (
-            <div key={f.id} className="flex items-start gap-2.5 py-1.5 border-b border-[#D6CFE4] last:border-0">
+            <div key={f.id} className="flex items-start gap-2.5 py-1.5 border-b border-[#222630] last:border-0">
               <span
                 className="mt-1.5 shrink-0 w-2 h-2 rounded-full"
                 style={{ background: CATEGORY_TONE[f.category] ?? '#9CA3AF' }}
               />
               <div className="min-w-0">
-                <p className="text-[11px] leading-snug text-[#251045]">{f.narrative}</p>
-                <p className="text-[9px] text-[#251045]/40 mt-0.5">
+                <p className="text-[11px] leading-snug text-[#F7F7F8]">{f.narrative}</p>
+                <p className="text-[9px] text-[#F7F7F8]/40 mt-0.5">
                   {timeOf(f.createdAt)}
                   {f.channel && f.channel !== 'web' ? ` · via ${f.channel}` : ''}
                 </p>
@@ -147,7 +147,7 @@ function Timeline({ vaultId }: { vaultId: string }) {
       {page.nextCursor !== null && (
         <button
           onClick={() => void load(filter === 'All' ? undefined : filter.toLowerCase(), page.nextCursor!)}
-          className="w-full py-2 rounded-lg bg-[#FBFAFD] text-[#251045] text-[10px] font-extrabold border border-[#D6CFE4] cursor-pointer"
+          className="w-full py-2 rounded-lg bg-[#12151A] text-[#F7F7F8] text-[10px] font-extrabold border border-[#222630] cursor-pointer"
         >
           Load earlier
         </button>
@@ -189,41 +189,41 @@ function HostPanel({ vault, onChanged }: { vault: VaultType; onChanged: () => vo
 
   return (
     <Card className="p-3 space-y-2">
-      <p className="text-[11px] font-extrabold text-[#251045]">Host</p>
+      <p className="text-[11px] font-extrabold text-[#F7F7F8]">Host</p>
 
       <div className="flex gap-1.5">
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name"
-          className="flex-1 min-w-0 bg-[#F1EDF7] border border-[#D6CFE4] rounded-lg px-2.5 py-1.5 text-xs text-[#251045] placeholder:text-[#251045]/40 outline-none focus:border-[#6C3EC9]" />
+          className="flex-1 min-w-0 bg-[#171A20] border border-[#222630] rounded-lg px-2.5 py-1.5 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/40 outline-none focus:border-[#22E6E0]" />
         <select value={role} onChange={(e) => setRole(e.target.value)}
-          className="bg-[#F1EDF7] border border-[#D6CFE4] rounded-lg px-2 py-1.5 text-xs text-[#251045] outline-none">
+          className="bg-[#171A20] border border-[#222630] rounded-lg px-2 py-1.5 text-xs text-[#F7F7F8] outline-none">
           <option value="guest">Guest</option>
           <option value="vendor">Vendor</option>
           <option value="admin">Admin</option>
         </select>
         <button onClick={addParticipant} disabled={busy || !name.trim()}
-          className="px-2.5 py-1.5 rounded-lg bg-[#5B2EA6] text-[#FFFFFF] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">
+          className="px-2.5 py-1.5 rounded-lg bg-[#FF5A1F] text-[#0D0F12] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">
           Add
         </button>
       </div>
 
       <div className="flex flex-wrap gap-1.5">
         <button onClick={makeHandoff} disabled={busy}
-          className="px-2.5 py-1.5 rounded-lg bg-[#FBFAFD] text-[#251045] text-[10px] font-extrabold border border-[#D6CFE4] cursor-pointer disabled:opacity-40">
+          className="px-2.5 py-1.5 rounded-lg bg-[#12151A] text-[#F7F7F8] text-[10px] font-extrabold border border-[#222630] cursor-pointer disabled:opacity-40">
           Continue elsewhere
         </button>
         <button onClick={async () => { await briefApi.closeVault(vault.id); onChanged(); }}
-          className="px-2.5 py-1.5 rounded-lg bg-[#FBFAFD] text-[#251045] text-[10px] font-extrabold border border-[#D6CFE4] cursor-pointer">
+          className="px-2.5 py-1.5 rounded-lg bg-[#12151A] text-[#F7F7F8] text-[10px] font-extrabold border border-[#222630] cursor-pointer">
           Close vault
         </button>
       </div>
 
       {handoff && (
-        <div className="bg-[#F1EDF7] border border-[#D6CFE4] rounded-lg p-2 space-y-1">
-          <p className="text-[9px] text-[#251045]/40">Handoff link (single-use):</p>
-          <p className="text-[10px] text-[#251045] break-all select-all">{handoff}</p>
+        <div className="bg-[#171A20] border border-[#222630] rounded-lg p-2 space-y-1">
+          <p className="text-[9px] text-[#F7F7F8]/40">Handoff link (single-use):</p>
+          <p className="text-[10px] text-[#F7F7F8] break-all select-all">{handoff}</p>
         </div>
       )}
-      {note && <p className="text-[10px] text-[#251045]">{note}</p>}
+      {note && <p className="text-[10px] text-[#F7F7F8]">{note}</p>}
     </Card>
   );
 }
@@ -270,18 +270,18 @@ function Requests({ vault, onChanged }: { vault: VaultType; onChanged: () => voi
   return (
     <Card className="p-3 space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[11px] font-extrabold text-[#251045]">Requests</p>
+        <p className="text-[11px] font-extrabold text-[#F7F7F8]">Requests</p>
         <button onClick={() => { if (fresh) { setFresh(null); return; } void reload(); }}
-          className="text-[10px] font-extrabold text-[#251045]/60 cursor-pointer">
+          className="text-[10px] font-extrabold text-[#F7F7F8]/60 cursor-pointer">
           {fresh ? 'Show loaded' : 'Refresh'}
         </button>
       </div>
-      {freshError && <p className="text-[10px] text-[#251045]">{freshError}</p>}
+      {freshError && <p className="text-[10px] text-[#F7F7F8]">{freshError}</p>}
       {rows.map((r: VaultRequest) => (
-        <div key={r.id} className="bg-[#F1EDF7] border border-[#D6CFE4] rounded-lg p-2.5 flex items-center justify-between gap-2">
+        <div key={r.id} className="bg-[#171A20] border border-[#222630] rounded-lg p-2.5 flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-xs text-[#251045] truncate">{r.description}</p>
-            <p className="text-[9px] text-[#251045]/40 mt-0.5">
+            <p className="text-xs text-[#F7F7F8] truncate">{r.description}</p>
+            <p className="text-[9px] text-[#F7F7F8]/40 mt-0.5">
               {r.status}{r.status === 'routed' && r.vendorId ? ` → ${r.vendorId}` : ''}
             </p>
           </div>
@@ -294,34 +294,34 @@ function Requests({ vault, onChanged }: { vault: VaultType; onChanged: () => voi
                     onChange={(e) => setVendorId(e.target.value)}
                     placeholder="vendor id"
                     aria-label="vendor id to route to"
-                    className="w-28 px-2 py-1 rounded-lg border border-[#D6CFE4] text-[10px] text-[#251045]"
+                    className="w-28 px-2 py-1 rounded-lg border border-[#222630] text-[10px] text-[#F7F7F8]"
                   />
                   <button onClick={() => void route(r.id)} disabled={routeBusy || !vendorId.trim()}
-                    className="px-2.5 py-1.5 rounded-lg bg-[#5B2EA6] text-[#FFFFFF] text-[10px] font-extrabold cursor-pointer disabled:opacity-50">
+                    className="px-2.5 py-1.5 rounded-lg bg-[#FF5A1F] text-[#0D0F12] text-[10px] font-extrabold cursor-pointer disabled:opacity-50">
                     {routeBusy ? '…' : 'Route'}
                   </button>
                   <button onClick={() => { setRouteFor(null); setRouteError(null); }}
-                    className="px-2 py-1.5 rounded-lg border border-[#D6CFE4] text-[10px] font-bold text-[#251045]/60 cursor-pointer">
+                    className="px-2 py-1.5 rounded-lg border border-[#222630] text-[10px] font-bold text-[#F7F7F8]/60 cursor-pointer">
                     ×
                   </button>
                 </>
               ) : (
                 <button onClick={() => setRouteFor(r.id)}
-                  className="px-2.5 py-1.5 rounded-lg border border-[#D6CFE4] text-[10px] font-extrabold text-[#251045] cursor-pointer">
+                  className="px-2.5 py-1.5 rounded-lg border border-[#222630] text-[10px] font-extrabold text-[#F7F7F8] cursor-pointer">
                   Route
                 </button>
               )
             )}
             {vault.role === 'vendor' && (r.status === 'routed' || r.status === 'open') && (
               <button onClick={async () => { await briefApi.acceptVaultRequest(vault.id, r.id); onChanged(); }}
-                className="px-2.5 py-1.5 rounded-lg bg-[#5B2EA6] text-[#FFFFFF] text-[10px] font-extrabold cursor-pointer">
+                className="px-2.5 py-1.5 rounded-lg bg-[#FF5A1F] text-[#0D0F12] text-[10px] font-extrabold cursor-pointer">
                 Accept
               </button>
             )}
           </div>
         </div>
       ))}
-      {routeError && <p className="text-[10px] text-[#251045]">{routeError}</p>}
+      {routeError && <p className="text-[10px] text-[#F7F7F8]">{routeError}</p>}
     </Card>
   );
 }
@@ -348,12 +348,12 @@ function VaultDetail({ vault, onBack, onChanged }: { vault: VaultType; onBack: (
 
   return (
     <div className="space-y-3">
-      <button onClick={onBack} className="text-[10px] font-extrabold text-[#251045] cursor-pointer">← Vaults</button>
+      <button onClick={onBack} className="text-[10px] font-extrabold text-[#F7F7F8] cursor-pointer">← Vaults</button>
 
       <div>
         <div className="flex items-center justify-between gap-2">
-          <h2 className="text-lg font-extrabold text-[#251045] leading-tight">{vault.title}</h2>
-          <span className="shrink-0 text-[9px] px-2 py-0.5 rounded-full bg-[#FBFAFD] text-[#251045]">{vault.status}</span>
+          <h2 className="text-lg font-extrabold text-[#F7F7F8] leading-tight">{vault.title}</h2>
+          <span className="shrink-0 text-[9px] px-2 py-0.5 rounded-full bg-[#12151A] text-[#F7F7F8]">{vault.status}</span>
         </div>
         <p className={`text-[10px] ${TONE.faint} mt-0.5`}>{vault.type} · {vault.visibility}</p>
         {vault.description && <p className={`text-xs ${TONE.dim} mt-1`}>{vault.description}</p>}
@@ -370,9 +370,9 @@ function VaultDetail({ vault, onBack, onChanged }: { vault: VaultType; onBack: (
       {vault.role !== 'vendor' && (
         <Card className="p-3 space-y-2">
           <input value={ask} onChange={(e) => setAsk(e.target.value)} placeholder="Ask a question…"
-            className="w-full bg-[#F1EDF7] border border-[#D6CFE4] rounded-lg px-3 py-2 text-xs text-[#251045] placeholder:text-[#251045]/40 outline-none focus:border-[#6C3EC9]" />
+            className="w-full bg-[#171A20] border border-[#222630] rounded-lg px-3 py-2 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/40 outline-none focus:border-[#22E6E0]" />
           <button onClick={askQuestion} disabled={!ask.trim()}
-            className="w-full py-2 rounded-lg bg-[#FBFAFD] text-[#251045] text-[10px] font-extrabold border border-[#D6CFE4] cursor-pointer disabled:opacity-40">
+            className="w-full py-2 rounded-lg bg-[#12151A] text-[#F7F7F8] text-[10px] font-extrabold border border-[#222630] cursor-pointer disabled:opacity-40">
             Ask
           </button>
         </Card>
@@ -381,9 +381,9 @@ function VaultDetail({ vault, onBack, onChanged }: { vault: VaultType; onBack: (
       {vault.role !== 'vendor' && (
         <Card className="p-3 space-y-2">
           <input value={request} onChange={(e) => setRequest(e.target.value)} placeholder="Request something (e.g. extra chairs)…"
-            className="w-full bg-[#F1EDF7] border border-[#D6CFE4] rounded-lg px-3 py-2 text-xs text-[#251045] placeholder:text-[#251045]/40 outline-none focus:border-[#6C3EC9]" />
+            className="w-full bg-[#171A20] border border-[#222630] rounded-lg px-3 py-2 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/40 outline-none focus:border-[#22E6E0]" />
           <button onClick={makeRequest} disabled={!request.trim()}
-            className="w-full py-2 rounded-lg bg-[#FBFAFD] text-[#251045] text-[10px] font-extrabold border border-[#D6CFE4] cursor-pointer disabled:opacity-40">
+            className="w-full py-2 rounded-lg bg-[#12151A] text-[#F7F7F8] text-[10px] font-extrabold border border-[#222630] cursor-pointer disabled:opacity-40">
             Request
           </button>
         </Card>
@@ -398,9 +398,9 @@ function VaultDetail({ vault, onBack, onChanged }: { vault: VaultType; onBack: (
 
 function Stat({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
   return (
-    <div className="bg-[#FBFAFD] border border-[#D6CFE4] rounded-lg px-3 py-2">
-      <p className="text-[9px] text-[#251045]/40">{label}</p>
-      <p className={`text-sm font-extrabold ${accent ? 'text-[#251045]' : 'text-[#251045]'}`}>{value}</p>
+    <div className="bg-[#12151A] border border-[#222630] rounded-lg px-3 py-2">
+      <p className="text-[9px] text-[#F7F7F8]/40">{label}</p>
+      <p className={`text-sm font-extrabold ${accent ? 'text-[#F7F7F8]' : 'text-[#F7F7F8]'}`}>{value}</p>
     </div>
   );
 }
@@ -445,9 +445,9 @@ function VaultHome({ onOpen, refreshKey }: { onOpen: (v: VaultType) => void; ref
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-lg font-extrabold text-[#251045]">The Vault</h2>
+        <h2 className="text-lg font-extrabold text-[#F7F7F8]">The Vault</h2>
         <button onClick={() => setCreating((c) => !c)}
-          className="px-3 py-1.5 rounded-full bg-[#5B2EA6] text-[#FFFFFF] text-[10px] font-extrabold cursor-pointer">
+          className="px-3 py-1.5 rounded-full bg-[#FF5A1F] text-[#0D0F12] text-[10px] font-extrabold cursor-pointer">
           + New vault
         </button>
       </div>
@@ -455,10 +455,10 @@ function VaultHome({ onOpen, refreshKey }: { onOpen: (v: VaultType) => void; ref
       {creating && (
         <Card className="p-3 space-y-2">
           <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="What is this activity?"
-            className="w-full bg-[#F1EDF7] border border-[#D6CFE4] rounded-lg px-3 py-2 text-xs text-[#251045] placeholder:text-[#251045]/40 outline-none focus:border-[#6C3EC9]" />
+            className="w-full bg-[#171A20] border border-[#222630] rounded-lg px-3 py-2 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/40 outline-none focus:border-[#22E6E0]" />
           <div className="flex gap-1.5">
             <select value={type} onChange={(e) => setType(e.target.value)}
-              className="flex-1 bg-[#F1EDF7] border border-[#D6CFE4] rounded-lg px-2 py-1.5 text-xs text-[#251045] outline-none">
+              className="flex-1 bg-[#171A20] border border-[#222630] rounded-lg px-2 py-1.5 text-xs text-[#F7F7F8] outline-none">
               <option value="gathering">Gathering</option>
               <option value="event">Event</option>
               <option value="marketplace">Market</option>
@@ -467,7 +467,7 @@ function VaultHome({ onOpen, refreshKey }: { onOpen: (v: VaultType) => void; ref
               <option value="deal">Deal</option>
             </select>
             <select value={visibility} onChange={(e) => setVisibility(e.target.value)}
-              className="flex-1 bg-[#F1EDF7] border border-[#D6CFE4] rounded-lg px-2 py-1.5 text-xs text-[#251045] outline-none">
+              className="flex-1 bg-[#171A20] border border-[#222630] rounded-lg px-2 py-1.5 text-xs text-[#F7F7F8] outline-none">
               <option value="private">Private</option>
               <option value="public">Public</option>
               <option value="invite_only">Invite only</option>
@@ -475,7 +475,7 @@ function VaultHome({ onOpen, refreshKey }: { onOpen: (v: VaultType) => void; ref
             </select>
           </div>
           <button onClick={create} disabled={!title.trim()}
-            className="w-full py-2 rounded-lg bg-[#5B2EA6] text-[#FFFFFF] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">
+            className="w-full py-2 rounded-lg bg-[#FF5A1F] text-[#0D0F12] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">
             Create
           </button>
         </Card>
@@ -483,15 +483,15 @@ function VaultHome({ onOpen, refreshKey }: { onOpen: (v: VaultType) => void; ref
 
       <div className="relative">
         <input value={q} onChange={(e) => void search(e.target.value)} placeholder="Search people, requests, payments…"
-          className="w-full bg-[#FBFAFD] border border-[#D6CFE4] rounded-xl px-3 py-2.5 text-xs text-[#251045] placeholder:text-[#251045]/40 outline-none focus:border-[#6C3EC9]" />
+          className="w-full bg-[#12151A] border border-[#222630] rounded-xl px-3 py-2.5 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/40 outline-none focus:border-[#22E6E0]" />
       </div>
       {results.length > 0 && (
         <Card className="p-3 space-y-1.5">
           {results.map((r) => (
             <button key={r.vaultId} onClick={() => { const v = vaults.find((x) => x.id === r.vaultId); if (v) onOpen(v); }}
-              className="w-full text-left bg-[#F1EDF7] border border-[#D6CFE4] rounded-lg p-2.5 cursor-pointer">
-              <p className="text-xs font-extrabold text-[#251045]">{r.title}</p>
-              <p className="text-[9px] text-[#251045]/40 truncate">{r.matches.map((m) => m.snippet).join(' · ')}</p>
+              className="w-full text-left bg-[#171A20] border border-[#222630] rounded-lg p-2.5 cursor-pointer">
+              <p className="text-xs font-extrabold text-[#F7F7F8]">{r.title}</p>
+              <p className="text-[9px] text-[#F7F7F8]/40 truncate">{r.matches.map((m) => m.snippet).join(' · ')}</p>
             </button>
           ))}
         </Card>
@@ -499,37 +499,37 @@ function VaultHome({ onOpen, refreshKey }: { onOpen: (v: VaultType) => void; ref
 
       {resolution.length > 0 && (
         <Card className="p-3 space-y-1.5">
-          <p className="text-[11px] font-extrabold text-[#251045]">Needs attention</p>
+          <p className="text-[11px] font-extrabold text-[#F7F7F8]">Needs attention</p>
           {resolution.map((r, i) => (
             <div key={i} className="flex items-center justify-between gap-2">
-              <p className="text-[10px] text-[#251045] truncate">{r.vaultTitle} · {r.description ?? r.kind}</p>
+              <p className="text-[10px] text-[#F7F7F8] truncate">{r.vaultTitle} · {r.description ?? r.kind}</p>
             </div>
           ))}
         </Card>
       )}
 
-      {status === 'loading' && <p className="text-xs text-[#251045]/60">Loading…</p>}
-      {status === 'error' && <p className="text-xs text-[#251045]">Could not load vaults.</p>}
+      {status === 'loading' && <p className="text-xs text-[#F7F7F8]/60">Loading…</p>}
+      {status === 'error' && <p className="text-xs text-[#F7F7F8]">Could not load vaults.</p>}
       {status === 'ready' && vaults.length === 0 && (
-        <p className="text-xs text-[#251045]/60">No vaults yet. A vault wraps a real activity — a gathering, a market, a deal.</p>
+        <p className="text-xs text-[#F7F7F8]/60">No vaults yet. A vault wraps a real activity — a gathering, a market, a deal.</p>
       )}
 
       {vaults.filter((v) => v.status !== 'closed' && v.status !== 'archived').map((v) => (
         <button key={v.id} onClick={() => onOpen(v)} className="w-full text-left">
-          <Card className="p-3 hover:border-[#D6CFE4] transition">
+          <Card className="p-3 hover:border-[#222630] transition">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <p className="text-sm font-extrabold text-[#251045] truncate">{v.title}</p>
-                <p className="text-[9px] text-[#251045]/40 mt-0.5">{v.type} · {v.role}</p>
+                <p className="text-sm font-extrabold text-[#F7F7F8] truncate">{v.title}</p>
+                <p className="text-[9px] text-[#F7F7F8]/40 mt-0.5">{v.type} · {v.role}</p>
               </div>
               <span className={`shrink-0 text-[9px] px-2 py-0.5 rounded-full ${
-                v.status === 'settled' ? 'bg-[#FBFAFD] text-[#251045]' : 'bg-[#FBFAFD] text-[#251045]'
+                v.status === 'settled' ? 'bg-[#12151A] text-[#F7F7F8]' : 'bg-[#12151A] text-[#F7F7F8]'
               }`}>{v.status}</span>
             </div>
-            <div className="flex gap-3 mt-2 text-[10px] text-[#251045]/60">
+            <div className="flex gap-3 mt-2 text-[10px] text-[#F7F7F8]/60">
               <span>{v.metrics.participantCount} people</span>
               {v.metrics.requestCount > 0 && <span>{v.metrics.requestCount} requests</span>}
-              {v.metrics.pendingKes > 0 && <span className="text-[#251045]">{money(v.metrics.pendingKes)} pending</span>}
+              {v.metrics.pendingKes > 0 && <span className="text-[#F7F7F8]">{money(v.metrics.pendingKes)} pending</span>}
             </div>
           </Card>
         </button>

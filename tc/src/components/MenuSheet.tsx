@@ -160,37 +160,37 @@ function LocalCard({ onSelect }: { onSelect: (target: MenuTarget) => void }) {
   };
 
   return (
-    <section aria-label="Your account" className="bg-[#FFFFFF] border border-[#D6CFE4] rounded-2xl p-3.5">
+    <section aria-label="Your account" className="bg-[#12151A] border border-[#222630] rounded-2xl p-3.5">
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-[#251045] text-[#FFFFFF] flex items-center justify-center text-[13px] font-black shrink-0" aria-hidden="true">
+        <div className="h-10 w-10 rounded-xl bg-[#FF5A1F] text-[#0D0F12] flex items-center justify-center text-[13px] font-black shrink-0" aria-hidden="true">
           {initials(displayName)}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[14px] font-extrabold text-[#251045] truncate leading-tight">{displayName}</p>
+          <p className="text-[14px] font-extrabold text-[#F7F7F8] truncate leading-tight">{displayName}</p>
           <p className="mt-0.5 flex items-center gap-1.5 text-[10px] leading-none min-w-0">
-            <span className="px-1.5 py-0.5 rounded-full bg-[#E5B558] text-[#2C1C04] font-extrabold tracking-wide shrink-0">
+            <span className="px-1.5 py-0.5 rounded-full bg-[#FFCC66] text-[#0D0F12] font-extrabold tracking-wide shrink-0">
               Platinum Member
             </span>
-            <span className="text-[#251045]/55 truncate">{settled} settled</span>
+            <span className="text-[#F7F7F8]/55 truncate">{settled} settled</span>
           </p>
         </div>
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-extrabold text-[#5B2EA6] hover:bg-[#F1EDF7] cursor-pointer"
+          className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-extrabold text-[#FF5A1F] hover:bg-[#171A20] cursor-pointer"
         >
           {open ? 'Close' : 'View'} →
         </button>
       </div>
 
       {open && (
-        <div className="mt-3 pt-3 border-t border-[#D6CFE4] space-y-3">
+        <div className="mt-3 pt-3 border-t border-[#222630] space-y-3">
           <div className="grid grid-cols-2 gap-2">
             {standing.map((s) => (
-              <div key={s.label} className="rounded-xl bg-[#F1EDF7] px-2.5 py-2">
-                <p className="text-[9.5px] font-bold uppercase tracking-[0.1em] text-[#251045]/50">{s.label}</p>
-                <p className="text-[12px] font-extrabold text-[#251045] mt-0.5 truncate">{s.value}</p>
+              <div key={s.label} className="rounded-xl bg-[#171A20] px-2.5 py-2">
+                <p className="text-[9.5px] font-bold uppercase tracking-[0.1em] text-[#F7F7F8]/50">{s.label}</p>
+                <p className="text-[12px] font-extrabold text-[#F7F7F8] mt-0.5 truncate">{s.value}</p>
               </div>
             ))}
           </div>
@@ -198,14 +198,14 @@ function LocalCard({ onSelect }: { onSelect: (target: MenuTarget) => void }) {
             <button
               type="button"
               onClick={() => void shareCard()}
-              className="flex-1 h-9 rounded-xl bg-[#5B2EA6] text-[#FFFFFF] text-[11.5px] font-extrabold flex items-center justify-center gap-1.5 cursor-pointer"
+              className="flex-1 h-9 rounded-xl bg-[#FF5A1F] text-[#0D0F12] text-[11.5px] font-extrabold flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <Share2 className="h-3.5 w-3.5" /> Share profile
             </button>
             <button
               type="button"
               onClick={() => void copyCard()}
-              className="h-9 px-3.5 rounded-xl border border-[#D6CFE4] bg-[#FBFAFD] text-[#251045] text-[11.5px] font-extrabold flex items-center justify-center gap-1.5 cursor-pointer"
+              className="h-9 px-3.5 rounded-xl border border-[#222630] bg-[#12151A] text-[#F7F7F8] text-[11.5px] font-extrabold flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <Copy className="h-3.5 w-3.5" /> {copied ? 'Copied' : 'Copy'}
             </button>
@@ -214,12 +214,12 @@ function LocalCard({ onSelect }: { onSelect: (target: MenuTarget) => void }) {
             <button
               type="button"
               onClick={() => void briefApi.logout().then(() => window.location.reload())}
-              className="w-full h-9 rounded-xl border border-[#D6CFE4] bg-transparent text-[#251045]/60 text-[11.5px] font-extrabold cursor-pointer hover:text-[#251045]"
+              className="w-full h-9 rounded-xl border border-[#222630] bg-transparent text-[#F7F7F8]/60 text-[11.5px] font-extrabold cursor-pointer hover:text-[#F7F7F8]"
             >
               Sign out
             </button>
           )}
-          <p className="text-[9.5px] text-[#251045]/45 leading-snug">
+          <p className="text-[9.5px] text-[#F7F7F8]/45 leading-snug">
             Standing is derived from what actually happened — settled money, arrivals, views. Nothing here is decorative.
           </p>
         </div>
@@ -246,13 +246,13 @@ function ExploreGrid({ onSelect }: { onSelect: (target: MenuTarget) => void }) {
             key={label}
             type="button"
             onClick={() => onSelect(target)}
-            className="bg-[#FFFFFF] border border-[#D6CFE4] rounded-2xl p-3 text-left hover:border-[#5B2EA6] transition-colors cursor-pointer"
+            className="bg-[#12151A] border border-[#222630] rounded-2xl p-3 text-left hover:border-[#FF5A1F] transition-colors cursor-pointer"
           >
-            <span className="h-8 w-8 rounded-xl bg-[#F1EDF7] flex items-center justify-center">
-              <Icon className="h-4 w-4 text-[#5B2EA6]" />
+            <span className="h-8 w-8 rounded-xl bg-[#171A20] flex items-center justify-center">
+              <Icon className="h-4 w-4 text-[#FF5A1F]" />
             </span>
-            <p className="mt-2 text-[13px] font-extrabold text-[#251045] leading-tight">{label}</p>
-            <p className="mt-0.5 text-[9.5px] text-[#251045]/55 leading-snug">{detail}</p>
+            <p className="mt-2 text-[13px] font-extrabold text-[#F7F7F8] leading-tight">{label}</p>
+            <p className="mt-0.5 text-[9.5px] text-[#F7F7F8]/55 leading-snug">{detail}</p>
           </button>
         ))}
       </div>
@@ -273,29 +273,29 @@ const QUICK: { label: string; detail: string; Icon: React.ComponentType<{ classN
 
 function QuickActions({ onSelect, unread }: { onSelect: (target: MenuTarget) => void; unread: number }) {
   return (
-    <section aria-label="Quick actions" className="bg-[#FFFFFF] border border-[#D6CFE4] rounded-2xl overflow-hidden">
+    <section aria-label="Quick actions" className="bg-[#12151A] border border-[#222630] rounded-2xl overflow-hidden">
       {QUICK.map(({ label, detail, Icon, target, unread: rowUnread }, i) => (
         <button
           key={label}
           type="button"
           onClick={() => onSelect(target)}
-          className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-left hover:bg-[#FBFAFD] transition-colors cursor-pointer ${
-            i > 0 ? 'border-t border-[#D6CFE4]' : ''
+          className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-left hover:bg-[#12151A] transition-colors cursor-pointer ${
+            i > 0 ? 'border-t border-[#222630]' : ''
           }`}
         >
-          <span className="h-7 w-7 rounded-lg bg-[#F1EDF7] flex items-center justify-center shrink-0">
-            <Icon className="h-3.5 w-3.5 text-[#5B2EA6]" />
+          <span className="h-7 w-7 rounded-lg bg-[#171A20] flex items-center justify-center shrink-0">
+            <Icon className="h-3.5 w-3.5 text-[#FF5A1F]" />
           </span>
           <span className="flex-1 min-w-0">
-            <span className="block text-[12.5px] font-extrabold text-[#251045] leading-tight">{label}</span>
-            <span className="block text-[9.5px] text-[#251045]/50 truncate">{detail}</span>
+            <span className="block text-[12.5px] font-extrabold text-[#F7F7F8] leading-tight">{label}</span>
+            <span className="block text-[9.5px] text-[#F7F7F8]/50 truncate">{detail}</span>
           </span>
           {rowUnread !== undefined && unread > 0 && (
-            <span className="shrink-0 rounded-full bg-[#B3261E] px-1.5 py-0.5 text-[9px] font-extrabold text-white">
+            <span className="shrink-0 rounded-full bg-[#FF5D6C] px-1.5 py-0.5 text-[9px] font-extrabold text-white">
               {unread > 99 ? '99+' : unread}
             </span>
           )}
-          <ArrowRight className="h-4 w-4 text-[#251045]/30 shrink-0" aria-hidden="true" />
+          <ArrowRight className="h-4 w-4 text-[#F7F7F8]/30 shrink-0" aria-hidden="true" />
         </button>
       ))}
     </section>
@@ -331,12 +331,12 @@ function RegionGallery({
               aria-pressed={selected}
               className={`rounded-xl border p-2.5 text-center transition-colors cursor-pointer ${
                 selected
-                  ? 'border-[#5B2EA6] bg-[#FFFFFF] shadow-sm'
-                  : 'border-[#D6CFE4] bg-[#FFFFFF] hover:border-[#5B2EA6]'
+                  ? 'border-[#FF5A1F] bg-[#12151A] shadow-sm'
+                  : 'border-[#222630] bg-[#12151A] hover:border-[#FF5A1F]'
               }`}
             >
               <span className="block text-[20px] leading-none" aria-hidden="true">{region.flag}</span>
-              <span className={`mt-1 block truncate text-[10px] font-extrabold ${selected ? 'text-[#5B2EA6]' : 'text-[#251045]'}`}>
+              <span className={`mt-1 block truncate text-[10px] font-extrabold ${selected ? 'text-[#FF5A1F]' : 'text-[#F7F7F8]'}`}>
                 {region.label}
               </span>
             </button>
@@ -350,7 +350,7 @@ function RegionGallery({
 // --- The page ----------------------------------------------------------------
 
 const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-  <p className="px-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#251045]/45">{children}</p>
+  <p className="px-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/45">{children}</p>
 );
 
 export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocation, unread = 0, canOperate = false }: MenuSheetProps) {
@@ -387,15 +387,15 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
         type="button"
         onClick={onClose}
         aria-label="Dismiss menu"
-        className="flex-1 min-h-0 bg-[#251045]/25 backdrop-blur-[2px] cursor-pointer"
+        className="flex-1 min-h-0 bg-[#0D0F12]/25 backdrop-blur-[2px] cursor-pointer"
       />
 
       {/* The sheet: exactly two-thirds of the screen. */}
-      <div className="h-2/3 max-h-[calc(100vh*0.6667)] bg-[#E9E5F0] border-t border-[#D6CFE4] rounded-t-[28px] shadow-2xl flex flex-col overflow-hidden">
+      <div className="h-2/3 max-h-[calc(100vh*0.6667)] bg-[#1D2027] border-t border-[#222630] rounded-t-[28px] shadow-2xl flex flex-col overflow-hidden">
       <header className="shrink-0 flex items-start justify-between gap-3 px-4 pt-5 pb-3 sm:max-w-3xl sm:w-full sm:mx-auto">
         <div>
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#251045]/45">Menu</p>
-          <h1 className="mt-0.5 text-[19px] sm:text-[21px] font-black tracking-tight text-[#251045]">
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#F7F7F8]/45">Menu</p>
+          <h1 className="mt-0.5 text-[19px] sm:text-[21px] font-black tracking-tight text-[#F7F7F8]">
             Your shortcuts, tools and account
           </h1>
         </div>
@@ -404,7 +404,7 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
           type="button"
           onClick={onClose}
           aria-label="Close menu"
-          className="h-10 w-10 shrink-0 flex items-center justify-center rounded-full bg-[#FFFFFF] border border-[#D6CFE4] text-[#251045] text-[20px] font-light hover:border-[#5B2EA6] transition-colors cursor-pointer"
+          className="h-10 w-10 shrink-0 flex items-center justify-center rounded-full bg-[#12151A] border border-[#222630] text-[#F7F7F8] text-[20px] font-light hover:border-[#FF5A1F] transition-colors cursor-pointer"
         >
           ×
         </button>
@@ -432,20 +432,20 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
           <button
             type="button"
             onClick={() => onSelect({ tab: 'operate' })}
-            className="w-full bg-[#FFFFFF] border border-[#D6CFE4] rounded-2xl px-3.5 py-2.5 flex items-center gap-3 hover:border-[#5B2EA6] transition-colors cursor-pointer"
+            className="w-full bg-[#12151A] border border-[#222630] rounded-2xl px-3.5 py-2.5 flex items-center gap-3 hover:border-[#FF5A1F] transition-colors cursor-pointer"
           >
-            <span className="h-7 w-7 rounded-lg bg-[#F1EDF7] flex items-center justify-center shrink-0">
-              <Settings className="h-3.5 w-3.5 text-[#5B2EA6]" />
+            <span className="h-7 w-7 rounded-lg bg-[#171A20] flex items-center justify-center shrink-0">
+              <Settings className="h-3.5 w-3.5 text-[#FF5A1F]" />
             </span>
             <span className="flex-1 min-w-0 text-left">
-              <span className="block text-[12.5px] font-extrabold text-[#251045] leading-tight">Operate</span>
-              <span className="block text-[9.5px] text-[#251045]/50 truncate">The operator desk — health, queues, commerce, audit</span>
+              <span className="block text-[12.5px] font-extrabold text-[#F7F7F8] leading-tight">Operate</span>
+              <span className="block text-[9.5px] text-[#F7F7F8]/50 truncate">The operator desk — health, queues, commerce, audit</span>
             </span>
-            <ArrowRight className="h-4 w-4 text-[#251045]/30 shrink-0" aria-hidden="true" />
+            <ArrowRight className="h-4 w-4 text-[#F7F7F8]/30 shrink-0" aria-hidden="true" />
           </button>
         )}
 
-        <p className="flex items-center gap-1.5 px-1 pt-1 text-[9.5px] text-[#251045]/40">
+        <p className="flex items-center gap-1.5 px-1 pt-1 text-[9.5px] text-[#F7F7F8]/40">
           <Lock className="h-3 w-3 shrink-0" aria-hidden="true" />
           Coming later — Courses · Data desk · Premium
         </p>

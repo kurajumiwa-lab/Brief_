@@ -71,15 +71,15 @@ export function CircleMembers({
 
   return (
     <div>
-      <h3 className="text-[11px] font-extrabold text-[#251045]/40 mb-2">
+      <h3 className="text-[11px] font-extrabold text-[#F7F7F8]/40 mb-2">
         Members
       </h3>
 
       {members.length === 0 && !canGovern && (
-        <p className="text-xs text-[#251045]/60">No members yet.</p>
+        <p className="text-xs text-[#F7F7F8]/60">No members yet.</p>
       )}
       {members.length === 0 && canGovern && (
-        <p className="text-xs text-[#251045]/60">
+        <p className="text-xs text-[#F7F7F8]/60">
           No members yet — invite someone below.
         </p>
       )}
@@ -90,9 +90,9 @@ export function CircleMembers({
         {canGovern && (
           <form
             onSubmit={handleInvite}
-            className="bg-[#FBFAFD] border border-[#D6CFE4] rounded-2xl p-3 space-y-2"
+            className="bg-[#12151A] border border-[#222630] rounded-2xl p-3 space-y-2"
           >
-            <p className="text-[10px] font-extrabold text-[#251045]/60">
+            <p className="text-[10px] font-extrabold text-[#F7F7F8]/60">
               Invite a member
             </p>
             <div className="flex items-center gap-2">
@@ -101,13 +101,13 @@ export function CircleMembers({
                 onChange={(e) => setInviteId(e.target.value)}
                 placeholder="member id (usr_…)"
                 aria-label="invite member id"
-                className="min-w-0 flex-1 px-2.5 py-1.5 rounded-xl border border-[#D6CFE4] text-[10px] text-[#251045]"
+                className="min-w-0 flex-1 px-2.5 py-1.5 rounded-xl border border-[#222630] text-[10px] text-[#F7F7F8]"
               />
               <select
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value as Member['role'])}
                 aria-label="invite role"
-                className="px-2 py-1.5 rounded-xl border border-[#D6CFE4] text-[10px] text-[#251045]"
+                className="px-2 py-1.5 rounded-xl border border-[#222630] text-[10px] text-[#F7F7F8]"
               >
                 {GOV_ROLES.map((r) => (
                   <option key={r} value={r}>
@@ -118,7 +118,7 @@ export function CircleMembers({
               <button
                 type="submit"
                 disabled={!inviteId.trim() || busyUserId === 'invite'}
-                className="shrink-0 px-3 py-1.5 rounded-xl bg-[#5B2EA6] text-[#FFFFFF] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+                className="shrink-0 px-3 py-1.5 rounded-xl bg-[#FF5A1F] text-[#0D0F12] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
               >
                 Invite
               </button>
@@ -133,20 +133,20 @@ export function CircleMembers({
             return (
               <div
                 key={member.id}
-                className="bg-[#FBFAFD] border border-[#D6CFE4] rounded-2xl p-3 space-y-2"
+                className="bg-[#12151A] border border-[#222630] rounded-2xl p-3 space-y-2"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-xs font-extrabold text-[#251045] truncate">
+                    <p className="text-xs font-extrabold text-[#F7F7F8] truncate">
                       {member.userId}
                     </p>
-                    <p className="text-[9px] text-[#251045]/40 mt-0.5">
+                    <p className="text-[9px] text-[#F7F7F8]/40 mt-0.5">
                       {ROLE_LABEL[member.role] ?? member.role}
                     </p>
                   </div>
                   <button
                     onClick={() => onToggle(member.userId)}
-                    className="shrink-0 text-[10px] font-extrabold text-[#251045] cursor-pointer"
+                    className="shrink-0 text-[10px] font-extrabold text-[#F7F7F8] cursor-pointer"
                   >
                     {open ? 'Hide' : 'Evidence'}
                   </button>
@@ -162,7 +162,7 @@ export function CircleMembers({
                       onChange={(e) => onRole?.(member.userId, e.target.value as Member['role'])}
                       aria-label={`role for ${member.userId}`}
                       disabled={busyUserId === member.userId}
-                      className="px-2 py-1 rounded-xl border border-[#D6CFE4] text-[9px] text-[#251045] cursor-pointer disabled:opacity-50"
+                      className="px-2 py-1 rounded-xl border border-[#222630] text-[9px] text-[#F7F7F8] cursor-pointer disabled:opacity-50"
                     >
                       {GOV_ROLES.map((r) => (
                         <option key={r} value={r}>
@@ -175,13 +175,13 @@ export function CircleMembers({
                         <button
                           onClick={() => { setConfirmRemove(null); onRemove?.(member.userId); }}
                           disabled={busyUserId === member.userId}
-                          className="px-2.5 py-1 rounded-xl bg-[#5B2EA6] text-[#FFFFFF] font-extrabold text-[9px] cursor-pointer disabled:opacity-50"
+                          className="px-2.5 py-1 rounded-xl bg-[#FF5A1F] text-[#0D0F12] font-extrabold text-[9px] cursor-pointer disabled:opacity-50"
                         >
                           Confirm remove
                         </button>
                         <button
                           onClick={() => setConfirmRemove(null)}
-                          className="px-2.5 py-1 rounded-xl border border-[#D6CFE4] font-bold text-[9px] text-[#251045]/60 cursor-pointer"
+                          className="px-2.5 py-1 rounded-xl border border-[#222630] font-bold text-[9px] text-[#F7F7F8]/60 cursor-pointer"
                         >
                           Keep
                         </button>
@@ -190,7 +190,7 @@ export function CircleMembers({
                       <button
                         onClick={() => setConfirmRemove(member.userId)}
                         disabled={busyUserId === member.userId}
-                        className="ml-auto px-2.5 py-1 rounded-xl border border-[#D6CFE4] font-bold text-[9px] text-[#251045]/60 cursor-pointer disabled:opacity-50"
+                        className="ml-auto px-2.5 py-1 rounded-xl border border-[#222630] font-bold text-[9px] text-[#F7F7F8]/60 cursor-pointer disabled:opacity-50"
                       >
                         Remove
                       </button>
@@ -204,7 +204,7 @@ export function CircleMembers({
                     {member.trust.evidence.map((e) => (
                       <span
                         key={e.kind}
-                        className="text-[9px] px-2 py-0.5 rounded-full bg-[#FBFAFD] text-[#251045]"
+                        className="text-[9px] px-2 py-0.5 rounded-full bg-[#12151A] text-[#F7F7F8]"
                       >
                         {e.label}
                       </span>
@@ -213,12 +213,12 @@ export function CircleMembers({
                 )}
 
                 {open && (
-                  <div className="pt-1 space-y-2 border-t border-[#D6CFE4]">
+                  <div className="pt-1 space-y-2 border-t border-[#222630]">
                     {/* Plain factual counts from the server. */}
                     {member.trust.facts.length > 0 && (
                       <ul className="space-y-0.5 mt-2">
                         {member.trust.facts.map((f) => (
-                          <li key={f.kind} className="text-[10px] text-[#251045]/60">
+                          <li key={f.kind} className="text-[10px] text-[#F7F7F8]/60">
                             {f.label}
                           </li>
                         ))}
@@ -226,11 +226,11 @@ export function CircleMembers({
                     )}
 
                     {ev === 'loading' && (
-                      <p className="text-[10px] text-[#251045]/60">Loading evidence...</p>
+                      <p className="text-[10px] text-[#F7F7F8]/60">Loading evidence...</p>
                     )}
 
                     {ev === 'error' && (
-                      <p className="text-[10px] text-[#251045]">
+                      <p className="text-[10px] text-[#F7F7F8]">
                         Couldn't load this member's history.
                       </p>
                     )}
@@ -242,7 +242,7 @@ export function CircleMembers({
                             {ev.summary.map((s) => (
                               <span
                                 key={s.kind}
-                                className="text-[9px] px-2 py-0.5 rounded-full bg-[#F1EDF7] border border-[#D6CFE4] text-[#251045]/60"
+                                className="text-[9px] px-2 py-0.5 rounded-full bg-[#171A20] border border-[#222630] text-[#F7F7F8]/60"
                               >
                                 {s.label}
                               </span>
@@ -251,7 +251,7 @@ export function CircleMembers({
                         )}
 
                         {ev.evidence.length === 0 ? (
-                          <p className="text-[10px] text-[#251045]/40">
+                          <p className="text-[10px] text-[#F7F7F8]/40">
                             No recorded activity in this circle yet.
                           </p>
                         ) : (
@@ -259,10 +259,10 @@ export function CircleMembers({
                             {ev.evidence.slice(0, 10).map((item) => (
                               <li
                                 key={item.signalId}
-                                className="flex items-center gap-2 text-[10px] text-[#251045]/60"
+                                className="flex items-center gap-2 text-[10px] text-[#F7F7F8]/60"
                               >
                                 <span className="min-w-0 truncate">{item.label}</span>
-                                <span className="text-[9px] text-[#251045]/40 ml-auto shrink-0">
+                                <span className="text-[9px] text-[#F7F7F8]/40 ml-auto shrink-0">
                                   {item.at.slice(0, 10)}
                                 </span>
                               </li>

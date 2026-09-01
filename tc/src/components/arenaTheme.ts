@@ -59,9 +59,9 @@ export interface ArenaThemeConfig {
 
 // One neutral system for every title: identity comes from the art + words.
 const NEUTRAL = {
-  accent: '#251045',
-  accent2: '#251045',
-  background: '#F1EDF7'
+  accent: '#F7F7F8',
+  accent2: '#F7F7F8',
+  background: '#171A20'
 };
 
 export const ARENA_THEMES: Record<ArenaGameId, ArenaThemeConfig> = {

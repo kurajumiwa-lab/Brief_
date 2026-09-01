@@ -67,10 +67,12 @@ const STAKES: { id: ArenaStakeKind; label: string; hint: string }[] = [
 ];
 
 // The one neutral system the whole screen speaks.
-const INK = '#251045';
-const PAGE = '#F1EDF7';
-const CARD = '#FBFAFD';
-const LINE = '#D6CFE4';
+const INK = '#F7F7F8';
+const PAGE = '#08090B';
+const CARD = '#12151A';
+const LINE = '#222630';
+const ACCENT = '#FF5A1F';
+const ON_ACCENT = '#0D0F12';
 
 function Chip({
   active,
@@ -88,9 +90,9 @@ function Chip({
       className="px-2.5 py-1.5 rounded-lg text-[11px] font-extrabold border transition-all cursor-pointer"
       style={{
         // Active: black fill, white type. Inactive: recessed neutral on the card.
-        background: active ? INK : PAGE,
-        color: active ? '#FFFFFF' : INK,
-        borderColor: active ? INK : LINE
+        background: active ? ACCENT : PAGE,
+        color: active ? ON_ACCENT : INK,
+        borderColor: active ? ACCENT : LINE
       }}
     >
       {children}
@@ -165,7 +167,7 @@ export function ArenaGameScreen({
             type="button"
             onClick={() => { soundEngine.play('tap'); onClose(); }}
             className="flex items-center gap-1 rounded-full px-2.5 py-1.5 text-[11px] font-extrabold cursor-pointer"
-            style={{ background: 'rgba(21,8,38,0.6)', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.28)' }}
+            style={{ background: 'rgba(8, 9, 11,0.6)', color: '#F7F7F8', border: '1px solid rgba(255,255,255,0.28)' }}
           >
             <span aria-hidden="true">‹</span> Back
           </button>
@@ -173,7 +175,7 @@ export function ArenaGameScreen({
             className="rounded-full px-2 py-1 text-[9px] font-extrabold tracking-wide"
             style={{
               background: 'rgba(9,11,16,0.8)',
-              color: '#FFFFFF',
+              color: '#F7F7F8',
               border: '1px solid rgba(255,255,255,0.28)'
             }}
           >
@@ -185,14 +187,14 @@ export function ArenaGameScreen({
         <div className="absolute inset-x-0 bottom-0 px-4 pb-3">
           <span
             className="text-[9px] font-extrabold tracking-[0.2em] px-1.5 py-0.5 rounded-md"
-            style={{ color: '#FFFFFF', background: INK }}
+            style={{ color: ON_ACCENT, background: ACCENT }}
           >
             {theme.providerMark}
           </span>
-          <p className="mt-1.5 text-[9px] font-bold uppercase tracking-[0.16em] text-[#FFFFFF]/75">
+          <p className="mt-1.5 text-[9px] font-bold uppercase tracking-[0.16em] text-[#F7F7F8]/75">
             {theme.provider} · {theme.themeName}
           </p>
-          <h2 className="text-2xl font-extrabold leading-none text-[#FFFFFF]">{game.name}</h2>
+          <h2 className="text-2xl font-extrabold leading-none text-[#F7F7F8]">{game.name}</h2>
         </div>
       </div>
 
@@ -209,7 +211,7 @@ export function ArenaGameScreen({
               {m}
             </span>
           ))}
-          <span className="ml-auto text-[10px] text-[#251045]/40">
+          <span className="ml-auto text-[10px] text-[#F7F7F8]/40">
             {game.accountTransferPolicy === 'not_supported'
               ? 'Account transfer: not supported'
               : game.accountTransferPolicy === 'restricted'
@@ -221,11 +223,11 @@ export function ArenaGameScreen({
         {/* you in this game */}
         <div className="rounded-2xl border p-3.5 flex items-center justify-between gap-3" style={{ borderColor: LINE, background: CARD }}>
           <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-[0.15em] text-[#251045]/60">You in {game.shortName}</p>
-            <p className="text-sm font-extrabold text-[#251045] truncate">
+            <p className="text-[10px] uppercase tracking-[0.15em] text-[#F7F7F8]/60">You in {game.shortName}</p>
+            <p className="text-sm font-extrabold text-[#F7F7F8] truncate">
               {myTag ? myTag : 'No tag set yet'}
             </p>
-            <p className="text-[10px] text-[#251045]/40 mt-0.5">
+            <p className="text-[10px] text-[#F7F7F8]/40 mt-0.5">
               {availabilityOn ? 'Available to play now' : 'Showing as offline'}
             </p>
           </div>
@@ -235,9 +237,9 @@ export function ArenaGameScreen({
             onClick={() => { soundEngine.play('tap'); onToggleAvailability(); }}
             className="shrink-0 rounded-xl px-3 py-2 text-[11px] font-extrabold cursor-pointer disabled:opacity-40"
             style={{
-              background: availabilityOn ? INK : PAGE,
-              color: availabilityOn ? '#FFFFFF' : INK,
-              border: `1px solid ${availabilityOn ? INK : LINE}`
+              background: availabilityOn ? ACCENT : PAGE,
+              color: availabilityOn ? ON_ACCENT : INK,
+              border: `1px solid ${availabilityOn ? ACCENT : LINE}`
             }}
           >
             {availabilityBusy ? '…' : availabilityOn ? 'Online' : 'Go online'}
@@ -247,17 +249,17 @@ export function ArenaGameScreen({
         {/* ---------- MATCH COMPOSER ---------- */}
         <div className="rounded-2xl border p-3.5 space-y-3.5" style={{ borderColor: LINE, background: CARD }}>
           <div className="flex items-center justify-between">
-            <h3 className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#251045]">
+            <h3 className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]">
               Set up a match
             </h3>
-            <span className="text-[10px] font-mono text-[#251045]">
+            <span className="text-[10px] font-mono text-[#F7F7F8]">
               {mode} · {STAKES.find((s) => s.id === stake)?.label}
             </span>
           </div>
 
           {/* mode */}
           <div>
-            <p className="text-[10px] text-[#251045]/60 mb-1.5">Mode</p>
+            <p className="text-[10px] text-[#F7F7F8]/60 mb-1.5">Mode</p>
             <div className="flex flex-wrap gap-1.5">
               {game.modes.map((m) => (
                 <Chip key={m} active={mode === m} onClick={() => setMode(m)}>
@@ -269,7 +271,7 @@ export function ArenaGameScreen({
 
           {/* stake */}
           <div>
-            <p className="text-[10px] text-[#251045]/60 mb-1.5">Stake</p>
+            <p className="text-[10px] text-[#F7F7F8]/60 mb-1.5">Stake</p>
             <div className="flex flex-wrap gap-1.5">
               {STAKES.map((s) => (
                 <Chip key={s.id} active={stake === s.id} onClick={() => setStake(s.id)}>
@@ -277,7 +279,7 @@ export function ArenaGameScreen({
                 </Chip>
               ))}
             </div>
-            <p className="text-[10px] text-[#251045]/40 mt-1.5">
+            <p className="text-[10px] text-[#F7F7F8]/40 mt-1.5">
               {STAKES.find((s) => s.id === stake)?.hint}
             </p>
           </div>
@@ -285,24 +287,24 @@ export function ArenaGameScreen({
           {/* entry fee (only when staked) */}
           {stake === 'entry_fee' && (
             <div>
-              <p className="text-[10px] text-[#251045]/60 mb-1.5">Entry fee (KES)</p>
+              <p className="text-[10px] text-[#F7F7F8]/60 mb-1.5">Entry fee (KES)</p>
               <div className="flex items-center gap-2">
-                <span className="text-[12px] font-extrabold text-[#251045]/60">KES</span>
+                <span className="text-[12px] font-extrabold text-[#F7F7F8]/60">KES</span>
                 <input
                   type="number"
                   inputMode="numeric"
                   min={1}
                   value={entryFee}
                   onChange={(e) => setEntryFee(e.target.value)}
-                  className="w-28 rounded-lg border px-2.5 py-1.5 text-[12px] font-extrabold text-[#251045] focus:outline-none"
-                  style={{ background: PAGE, borderColor: feeValid ? INK : LINE }}
+                  className="w-28 rounded-lg border px-2.5 py-1.5 text-[12px] font-extrabold text-[#F7F7F8] focus:outline-none"
+                  style={{ background: PAGE, borderColor: feeValid ? ACCENT : LINE }}
                 />
                 {[50, 100, 200].map((v) => (
                   <button
                     key={v}
                     type="button"
                     onClick={() => { soundEngine.play('tap'); setEntryFee(String(v)); }}
-                    className="rounded-lg border px-2 py-1 text-[10px] font-bold text-[#251045]/60 cursor-pointer"
+                    className="rounded-lg border px-2 py-1 text-[10px] font-bold text-[#F7F7F8]/60 cursor-pointer"
                     style={{ borderColor: LINE }}
                   >
                     {v}
@@ -311,7 +313,7 @@ export function ArenaGameScreen({
               </div>
               {/* Honesty-critical caveat: rendered in the readable secondary tier
                   so "no money is taken" is never missed. */}
-              <p className="text-[10px] text-[#251045]/60 mt-1.5 leading-snug">
+              <p className="text-[10px] text-[#F7F7F8]/60 mt-1.5 leading-snug">
                 Staked matches record the agreed fee. Prize payouts are not active until Arena's
                 compliance rail is enabled — no money is taken now.
               </p>
@@ -320,7 +322,7 @@ export function ArenaGameScreen({
 
           {/* open window */}
           <div>
-            <p className="text-[10px] text-[#251045]/60 mb-1.5">Open for</p>
+            <p className="text-[10px] text-[#F7F7F8]/60 mb-1.5">Open for</p>
             <div className="flex flex-wrap gap-1.5">
               {WINDOWS.map((w) => (
                 <Chip
@@ -336,14 +338,14 @@ export function ArenaGameScreen({
 
           {/* note */}
           <div>
-            <p className="text-[10px] text-[#251045]/60 mb-1.5">Note (optional)</p>
+            <p className="text-[10px] text-[#F7F7F8]/60 mb-1.5">Note (optional)</p>
             <input
               type="text"
               maxLength={80}
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="e.g. Westlands, PS5, friendly lobby"
-              className="w-full rounded-lg border px-2.5 py-2 text-[12px] text-[#251045] focus:outline-none"
+              className="w-full rounded-lg border px-2.5 py-2 text-[12px] text-[#F7F7F8] focus:outline-none"
               style={{ background: PAGE, borderColor: LINE, color: INK }}
             />
           </div>
@@ -353,7 +355,7 @@ export function ArenaGameScreen({
             disabled={!canCreate}
             onClick={handleCreate}
             className="w-full h-11 rounded-xl text-[13px] font-extrabold cursor-pointer disabled:opacity-40"
-            style={{ background: INK, color: '#FFFFFF' }}
+            style={{ background: ACCENT, color: ON_ACCENT }}
           >
             {creating
               ? 'Opening…'
@@ -366,13 +368,13 @@ export function ArenaGameScreen({
         {/* ---------- OPEN MATCHES FOR THIS TITLE ---------- */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <h3 className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#251045]">
+            <h3 className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]">
               Open matches
             </h3>
-            <span className="text-[10px] text-[#251045]/40">{challenges.length}</span>
+            <span className="text-[10px] text-[#F7F7F8]/40">{challenges.length}</span>
           </div>
           {challenges.length === 0 && (
-            <p className="text-xs text-[#251045]/60">No open challenges for {game.name}. Be the first.</p>
+            <p className="text-xs text-[#F7F7F8]/60">No open challenges for {game.name}. Be the first.</p>
           )}
           {challenges.map((c) => {
             const mine = Boolean(myPlayerId) && c.createdByPlayerId === myPlayerId;
@@ -386,7 +388,7 @@ export function ArenaGameScreen({
                 style={{ borderColor: LINE, background: CARD, border: `1px solid ${LINE}` }}
               >
                 <div className="min-w-0">
-                  <p className="text-xs font-extrabold text-[#251045]">
+                  <p className="text-xs font-extrabold text-[#F7F7F8]">
                     {c.mode} ·{' '}
                     {c.stake === 'friendly'
                       ? 'Friendly'
@@ -395,11 +397,11 @@ export function ArenaGameScreen({
                       : 'Staked'}
                   </p>
                   {c.entryFeeKes ? (
-                    <p className="text-[10px] font-mono text-[#251045]">
+                    <p className="text-[10px] font-mono text-[#F7F7F8]">
                       KES {c.entryFeeKes}
                     </p>
                   ) : null}
-                  <p className="text-[10px] text-[#251045]/60 mt-0.5">
+                  <p className="text-[10px] text-[#F7F7F8]/60 mt-0.5">
                     {mine ? 'Your challenge' : 'Open challenge'}
                     {expired ? ' · expired' : ''}
                     {taken ? ' · taken' : ''}
@@ -421,7 +423,7 @@ export function ArenaGameScreen({
                     disabled={busy || expired || taken}
                     onClick={() => { soundEngine.play('heavyTap'); onAcceptChallenge(c); }}
                     className="shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-extrabold cursor-pointer disabled:opacity-40"
-                    style={{ background: INK, color: '#FFFFFF' }}
+                    style={{ background: ACCENT, color: ON_ACCENT }}
                     title={expired ? 'This challenge has expired' : taken ? 'Already accepted' : undefined}
                   >
                     Accept
@@ -452,7 +454,7 @@ export function ArenaGameScreen({
           </button>
         </div>
 
-        <p className="text-center text-[10px] text-[#251045]/40 pt-1">
+        <p className="text-center text-[10px] text-[#F7F7F8]/40 pt-1">
           Arena is for gathering to play — not gambling. Stake terms are agreed between players.
         </p>
       </div>

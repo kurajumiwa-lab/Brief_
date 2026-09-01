@@ -24,13 +24,13 @@ import type { Transaction, Wallet } from '../api/types';
  */
 
 const STATUS_TONE: Record<string, string> = {
-  settled: 'text-[#251045]',
-  confirmed: 'text-[#251045]',
-  held: 'text-[#251045]',
-  pending: 'text-[#251045]',
-  created: 'text-[#251045]/60',
-  failed: 'text-[#251045]',
-  refunded: 'text-[#251045]'
+  settled: 'text-[#F7F7F8]',
+  confirmed: 'text-[#F7F7F8]',
+  held: 'text-[#F7F7F8]',
+  pending: 'text-[#F7F7F8]',
+  created: 'text-[#F7F7F8]/60',
+  failed: 'text-[#F7F7F8]',
+  refunded: 'text-[#F7F7F8]'
 };
 
 const money = (amount: number, currency: string) =>
@@ -80,25 +80,25 @@ export function MoneyPanel() {
   return (
     <section className="space-y-4">
       <div>
-        <h2 className="text-lg font-extrabold text-[#251045]">Money</h2>
-        <p className="text-[11px] text-[#251045]/60 leading-snug mt-1">
+        <h2 className="text-lg font-extrabold text-[#F7F7F8]">Money</h2>
+        <p className="text-[11px] text-[#F7F7F8]/60 leading-snug mt-1">
           Every figure here is derived from real transactions. Brief stores no
           balance and cannot move money.
         </p>
       </div>
 
       {(wallet.status === 'loading' || wallet.status === 'idle') && (
-        <p className="text-xs text-[#251045]/60">Loading...</p>
+        <p className="text-xs text-[#F7F7F8]/60">Loading...</p>
       )}
 
       {wallet.status === 'error' && (
-        <div className="border border-[#D6CFE4] bg-[#FBFAFD] rounded-2xl p-4">
-          <p className="text-[11px] text-[#251045] leading-snug">
+        <div className="border border-[#222630] bg-[#12151A] rounded-2xl p-4">
+          <p className="text-[11px] text-[#F7F7F8] leading-snug">
             Couldn't load your wallet. {wallet.error}
           </p>
           <button
             onClick={load}
-            className="mt-2 text-[10px] font-extrabold text-[#251045] cursor-pointer"
+            className="mt-2 text-[10px] font-extrabold text-[#F7F7F8] cursor-pointer"
           >
             Try again
           </button>
@@ -108,32 +108,32 @@ export function MoneyPanel() {
       {wallet.status === 'ready' && wallet.data && (
         <>
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-[#FBFAFD] border border-[#D6CFE4] rounded-2xl p-4">
-              <p className="text-[10px] text-[#251045]/60">
+            <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-4">
+              <p className="text-[10px] text-[#F7F7F8]/60">
                 Available
               </p>
-              <p className="text-2xl font-extrabold text-[#251045] mt-1">
+              <p className="text-2xl font-extrabold text-[#F7F7F8] mt-1">
                 {money(wallet.data.balance, wallet.data.currency)}
               </p>
-              <p className="text-[10px] text-[#251045] mt-1">
+              <p className="text-[10px] text-[#F7F7F8] mt-1">
                 Settled transactions only
               </p>
             </div>
 
-            <div className="bg-[#FBFAFD] border border-[#D6CFE4] rounded-2xl p-4">
-              <p className="text-[10px] text-[#251045]/60">
+            <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-4">
+              <p className="text-[10px] text-[#F7F7F8]/60">
                 Pending
               </p>
-              <p className="text-2xl font-extrabold text-[#251045] mt-1">
+              <p className="text-2xl font-extrabold text-[#F7F7F8] mt-1">
                 {money(wallet.data.pending, wallet.data.currency)}
               </p>
-              <p className="text-[10px] text-[#251045] mt-1">
+              <p className="text-[10px] text-[#F7F7F8] mt-1">
                 Not yet settled
               </p>
             </div>
           </div>
 
-          <p className="text-[10px] text-[#251045]/40">
+          <p className="text-[10px] text-[#F7F7F8]/40">
             Derived from {wallet.data.transactionCount}{' '}
             {wallet.data.transactionCount === 1 ? 'transaction' : 'transactions'}.
           </p>
@@ -141,11 +141,11 @@ export function MoneyPanel() {
           {/* Payment provider. "Not connected" is the truth and is stated as
               such -- Brief never implies money can move when it cannot. */}
           {!wallet.data.provider.configured && (
-            <div className="border border-dashed border-[#D6CFE4] rounded-2xl p-4">
-              <p className="text-[11px] font-extrabold text-[#251045]">
+            <div className="border border-dashed border-[#222630] rounded-2xl p-4">
+              <p className="text-[11px] font-extrabold text-[#F7F7F8]">
                 No payment provider connected
               </p>
-              <p className="text-[10px] text-[#251045]/60 mt-1 leading-snug">
+              <p className="text-[10px] text-[#F7F7F8]/60 mt-1 leading-snug">
                 {wallet.data.provider.reason}
               </p>
             </div>
@@ -155,19 +155,19 @@ export function MoneyPanel() {
 
       {/* LEDGER */}
       <div>
-        <h3 className="text-[11px] font-extrabold text-[#251045]/40 mb-2">
+        <h3 className="text-[11px] font-extrabold text-[#F7F7F8]/40 mb-2">
           Transactions
         </h3>
 
         {ledger.status === 'error' && (
-          <p className="text-[11px] text-[#251045]">
+          <p className="text-[11px] text-[#F7F7F8]">
             Couldn't load transactions. {ledger.error}
           </p>
         )}
 
         {ledger.status === 'ready' && (ledger.data ?? []).length === 0 && (
-          <div className="border border-dashed border-[#D6CFE4] rounded-2xl p-8 text-center">
-            <p className="text-xs text-[#251045]/60">No transactions yet.</p>
+          <div className="border border-dashed border-[#222630] rounded-2xl p-8 text-center">
+            <p className="text-xs text-[#F7F7F8]/60">No transactions yet.</p>
           </div>
         )}
 
@@ -175,19 +175,19 @@ export function MoneyPanel() {
           {(ledger.data ?? []).map((tx) => (
             <div
               key={tx.id}
-              className="bg-[#FBFAFD] border border-[#D6CFE4] rounded-2xl p-3 flex items-center gap-3"
+              className="bg-[#12151A] border border-[#222630] rounded-2xl p-3 flex items-center gap-3"
             >
               <span
                 className={`text-[9px] shrink-0 ${
-                  STATUS_TONE[tx.status] ?? 'text-[#251045]/60'
+                  STATUS_TONE[tx.status] ?? 'text-[#F7F7F8]/60'
                 }`}
               >
                 {tx.status}
               </span>
-              <p className="text-xs text-[#251045] flex-1 min-w-0 truncate">
+              <p className="text-xs text-[#F7F7F8] flex-1 min-w-0 truncate">
                 {tx.description || tx.type}
               </p>
-              <span className="text-xs font-extrabold text-[#251045] shrink-0">
+              <span className="text-xs font-extrabold text-[#F7F7F8] shrink-0">
                 {money(tx.amount, tx.currency)}
               </span>
             </div>
@@ -196,9 +196,9 @@ export function MoneyPanel() {
       </div>
 
       {/* PAYOUTS -- explicitly unavailable, using the server's own reason. */}
-      <div className="border border-dashed border-[#D6CFE4] rounded-2xl p-4">
-        <p className="text-[11px] font-extrabold text-[#251045]">Payouts</p>
-        <p className="text-[10px] text-[#251045]/60 mt-1 leading-snug">
+      <div className="border border-dashed border-[#222630] rounded-2xl p-4">
+        <p className="text-[11px] font-extrabold text-[#F7F7F8]">Payouts</p>
+        <p className="text-[10px] text-[#F7F7F8]/60 mt-1 leading-snug">
           {disbursements.reason}
         </p>
       </div>

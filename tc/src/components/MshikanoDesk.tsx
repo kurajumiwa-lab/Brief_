@@ -18,10 +18,10 @@ import type { CoopIntent, CoopPost, CoopMatch, CoopCooperation, WhoCanHelpAnswer
 
 /** The grouped answer to "who can help?" — real rows only, empty stated. */
 const INTENTS: { id: CoopIntent; label: string; chip: string; dot: string }[] = [
-  { id: 'have', label: 'Have', chip: 'bg-[#1F7A33]', dot: 'bg-[#1F7A33]' },
+  { id: 'have', label: 'Have', chip: 'bg-[#38E879]', dot: 'bg-[#38E879]' },
   { id: 'need', label: 'Need', chip: 'bg-[#3556A8]', dot: 'bg-[#3556A8]' },
-  { id: 'can_help', label: 'Can help', chip: 'bg-[#6C3EC9]', dot: 'bg-[#6C3EC9]' },
-  { id: 'looking_for', label: 'Looking for', chip: 'bg-[#B6441C]', dot: 'bg-[#B6441C]' }
+  { id: 'can_help', label: 'Can help', chip: 'bg-[#22E6E0]', dot: 'bg-[#22E6E0]' },
+  { id: 'looking_for', label: 'Looking for', chip: 'bg-[#FFCC66]', dot: 'bg-[#FFCC66]' }
 ];
 
 const LEVEL_WORDS: Record<string, string> = {
@@ -40,11 +40,11 @@ function TrustChip({ trust }: { trust: CoopPost['trust'] }) {
   return (
     <span
       aria-label={LEVEL_WORDS[trust.level] ?? trust.levelWords}
-      className="inline-flex items-center gap-1 rounded-full border border-[#D6CFE4] bg-[#FBFAFD] px-2 py-0.5 text-[9px] font-bold text-[#251045]/70"
+      className="inline-flex items-center gap-1 rounded-full border border-[#222630] bg-[#12151A] px-2 py-0.5 text-[9px] font-bold text-[#F7F7F8]/70"
     >
       <span
         aria-hidden="true"
-        className={`h-1.5 w-1.5 rounded-full ${trust.level === 'new' ? 'bg-[#8F84A8]' : 'bg-[#5B2EA6]'}`}
+        className={`h-1.5 w-1.5 rounded-full ${trust.level === 'new' ? 'bg-[#6E737C]' : 'bg-[#FF5A1F]'}`}
       />
       {trust.level === 'new' ? 'new member' : bits.join(' · ')}
     </span>
@@ -148,17 +148,17 @@ export function MshikanoDesk() {
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
       <header className="space-y-1">
         <div className="flex items-center gap-2">
-          <Heart className="w-5 h-5 text-[#5B2EA6]" aria-hidden="true" />
-          <h1 className="font-display text-2xl font-semibold tracking-tight text-[#251045]">Mshikano</h1>
+          <Heart className="w-5 h-5 text-[#FF5A1F]" aria-hidden="true" />
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-[#F7F7F8]">Mshikano</h1>
         </div>
-        <p className="text-[11px] leading-snug text-[#251045]/60">
+        <p className="text-[11px] leading-snug text-[#F7F7F8]/60">
           What one person has can help another. Post it, find your complement, work together —
           and both of you confirm it so trust is earned, never bought.
         </p>
       </header>
 
       {/* Composer */}
-      <section aria-label="Post to the cooperation network" className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-4 space-y-3">
+      <section aria-label="Post to the cooperation network" className="rounded-2xl border border-[#222630] bg-[#12151A] p-4 space-y-3">
         <div className="flex flex-wrap gap-1.5" role="group" aria-label="Choose an intent">
           {INTENTS.map((it) => (
             <button
@@ -167,10 +167,10 @@ export function MshikanoDesk() {
               onClick={() => setIntent(it.id)}
               aria-pressed={intent === it.id}
               className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-extrabold transition-colors ${
-                intent === it.id ? `${it.chip} text-[#FFFFFF]` : 'border border-[#D6CFE4] text-[#251045]/70 bg-[#FBFAFD]'
+                intent === it.id ? `${it.chip} text-[#F7F7F8]` : 'border border-[#222630] text-[#F7F7F8]/70 bg-[#12151A]'
               }`}
             >
-              <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${intent === it.id ? 'bg-[#FFFFFF]' : it.dot}`} />
+              <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${intent === it.id ? 'bg-[#12151A]' : it.dot}`} />
               {it.label}
             </button>
           ))}
@@ -180,30 +180,30 @@ export function MshikanoDesk() {
           onChange={(e) => setTitle(e.target.value)}
           rows={2}
           placeholder="e.g. 1 tonne of mangoes in Makueni · reliable electrician in Kisumu · solar training for three people"
-          className="w-full rounded-lg border border-[#D6CFE4] bg-[#F1EDF7] px-3 py-2 text-[12px] text-[#251045] outline-none focus:border-[#6C3EC9]"
+          className="w-full rounded-lg border border-[#222630] bg-[#171A20] px-3 py-2 text-[12px] text-[#F7F7F8] outline-none focus:border-[#22E6E0]"
         />
         <div className="flex gap-2">
           <input value={town} onChange={(e) => setTown(e.target.value)} placeholder="Town" aria-label="Town"
-            className="w-28 rounded-lg border border-[#D6CFE4] bg-[#F1EDF7] px-2.5 py-1.5 text-[11px] text-[#251045]" />
+            className="w-28 rounded-lg border border-[#222630] bg-[#171A20] px-2.5 py-1.5 text-[11px] text-[#F7F7F8]" />
           <input value={county} onChange={(e) => setCounty(e.target.value)} placeholder="County" aria-label="County"
-            className="w-32 rounded-lg border border-[#D6CFE4] bg-[#F1EDF7] px-2.5 py-1.5 text-[11px] text-[#251045]" />
+            className="w-32 rounded-lg border border-[#222630] bg-[#171A20] px-2.5 py-1.5 text-[11px] text-[#F7F7F8]" />
           <button
             type="button"
             onClick={() => void submit()}
             disabled={busy || title.trim().length < 4}
-            className="ml-auto rounded-lg bg-[#5B2EA6] px-4 py-2 text-[11px] font-extrabold text-[#FFFFFF] disabled:opacity-40"
+            className="ml-auto rounded-lg bg-[#FF5A1F] px-4 py-2 text-[11px] font-extrabold text-[#0D0F12] disabled:opacity-40"
           >
             Post it
           </button>
         </div>
-        {note && <p role="status" className="text-[11px] font-bold text-[#251045]/70">{note}</p>}
+        {note && <p role="status" className="text-[11px] font-bold text-[#F7F7F8]/70">{note}</p>}
       </section>
 
       {/* Who can help? */}
-      <section aria-label="Who can help" className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-4 space-y-2">
+      <section aria-label="Who can help" className="rounded-2xl border border-[#222630] bg-[#12151A] p-4 space-y-2">
         <div className="flex items-center gap-2">
-          <Search className="w-4 h-4 text-[#5B2EA6]" aria-hidden="true" />
-          <h2 className="text-[13px] font-extrabold text-[#251045]">Who can help?</h2>
+          <Search className="w-4 h-4 text-[#FF5A1F]" aria-hidden="true" />
+          <h2 className="text-[13px] font-extrabold text-[#F7F7F8]">Who can help?</h2>
         </div>
         <div className="flex gap-2">
           <input
@@ -212,29 +212,29 @@ export function MshikanoDesk() {
             onKeyDown={(e) => { if (e.key === 'Enter') void ask(); }}
             placeholder="I need someone who can help me start a poultry business in Bungoma"
             aria-label="Ask who can help"
-            className="flex-1 rounded-lg border border-[#D6CFE4] bg-[#F1EDF7] px-3 py-2 text-[12px] text-[#251045]"
+            className="flex-1 rounded-lg border border-[#222630] bg-[#171A20] px-3 py-2 text-[12px] text-[#F7F7F8]"
           />
           <button type="button" onClick={() => void ask()} disabled={busy || question.trim().length < 3}
-            className="rounded-lg bg-[#5B2EA6] px-3 py-2 text-[11px] font-extrabold text-[#FFFFFF] disabled:opacity-40">
+            className="rounded-lg bg-[#FF5A1F] px-3 py-2 text-[11px] font-extrabold text-[#0D0F12] disabled:opacity-40">
             Ask
           </button>
         </div>
         {answer && (
           <div className="space-y-2">
-            <p className="text-[11px] font-extrabold text-[#251045]">
+            <p className="text-[11px] font-extrabold text-[#F7F7F8]">
               {answer.counts.people} {answer.counts.people === 1 ? 'person' : 'people'} · {answer.counts.businesses} {answer.counts.businesses === 1 ? 'business' : 'businesses'} · {answer.counts.groups} {answer.counts.groups === 1 ? 'group' : 'groups'} · {answer.counts.guides} {answer.counts.guides === 1 ? 'guide' : 'guides'}
               {answer.counts.people + answer.counts.businesses + answer.counts.groups + answer.counts.guides === 0 && ' — nobody has posted this yet. Post what you need; the network fills in around it.'}
             </p>
             {answer.groups.map((g) => (
-              <div key={g.id} className="rounded-xl border border-[#D6CFE4] px-3 py-2">
-                <p className="text-[11px] font-bold text-[#251045]">{g.name}</p>
-                <p className="text-[9px] text-[#251045]/55">{g.members} {g.members === 1 ? 'member' : 'members'}{g.description ? ` · ${g.description.slice(0, 70)}` : ''}</p>
+              <div key={g.id} className="rounded-xl border border-[#222630] px-3 py-2">
+                <p className="text-[11px] font-bold text-[#F7F7F8]">{g.name}</p>
+                <p className="text-[9px] text-[#F7F7F8]/55">{g.members} {g.members === 1 ? 'member' : 'members'}{g.description ? ` · ${g.description.slice(0, 70)}` : ''}</p>
               </div>
             ))}
             {[...answer.people, ...answer.businesses].slice(0, 6).map((p) => (
-              <div key={p.id} className="rounded-xl border border-[#D6CFE4] px-3 py-2">
-                <p className="text-[11px] font-bold text-[#251045]">{p.title}</p>
-                <p className="text-[9px] text-[#251045]/55">{p.author.displayName}{p.county ? ` · ${p.county}` : ''} · {p.intentLabel}</p>
+              <div key={p.id} className="rounded-xl border border-[#222630] px-3 py-2">
+                <p className="text-[11px] font-bold text-[#F7F7F8]">{p.title}</p>
+                <p className="text-[9px] text-[#F7F7F8]/55">{p.author.displayName}{p.county ? ` · ${p.county}` : ''} · {p.intentLabel}</p>
               </div>
             ))}
           </div>
@@ -243,18 +243,18 @@ export function MshikanoDesk() {
 
       {/* Pending confirmations */}
       {coops && coops.pending.filter((c) => c.direction === 'incoming').length > 0 && (
-        <section aria-label="Confirm a cooperation" className="rounded-2xl border border-[#6C3EC9] bg-[#FBFAFD] p-4 space-y-2">
-          <h2 className="text-[13px] font-extrabold text-[#251045]">Someone says you worked together</h2>
+        <section aria-label="Confirm a cooperation" className="rounded-2xl border border-[#22E6E0] bg-[#12151A] p-4 space-y-2">
+          <h2 className="text-[13px] font-extrabold text-[#F7F7F8]">Someone says you worked together</h2>
           {coops.pending.filter((c) => c.direction === 'incoming').map((c) => (
-            <div key={c.id} className="flex items-center justify-between gap-2 rounded-xl border border-[#D6CFE4] px-3 py-2">
-              <p className="text-[11px] text-[#251045]">
+            <div key={c.id} className="flex items-center justify-between gap-2 rounded-xl border border-[#222630] px-3 py-2">
+              <p className="text-[11px] text-[#F7F7F8]">
                 <span className="font-bold">{c.partner?.displayName}</span>{c.summary ? ` — ${c.summary}` : ''}
               </p>
               <span className="flex gap-1.5 shrink-0">
                 <button type="button" onClick={() => void respond(c.id, true)} disabled={busy}
-                  className="rounded-lg bg-[#5B2EA6] px-3 py-1.5 text-[10px] font-extrabold text-[#FFFFFF]">Confirm</button>
+                  className="rounded-lg bg-[#FF5A1F] px-3 py-1.5 text-[10px] font-extrabold text-[#0D0F12]">Confirm</button>
                 <button type="button" onClick={() => void respond(c.id, false)} disabled={busy}
-                  className="rounded-lg border border-[#D6CFE4] px-3 py-1.5 text-[10px] font-extrabold text-[#251045]/70">Decline</button>
+                  className="rounded-lg border border-[#222630] px-3 py-1.5 text-[10px] font-extrabold text-[#F7F7F8]/70">Decline</button>
               </span>
             </div>
           ))}
@@ -265,22 +265,22 @@ export function MshikanoDesk() {
       <section aria-label="Cooperation posts" className="space-y-3">
         <div className="flex flex-wrap items-center gap-1.5">
           <button type="button" onClick={() => setFilter(null)} aria-pressed={filter === null}
-            className={`rounded-full px-3 py-1 text-[10px] font-extrabold ${filter === null ? 'bg-[#251045] text-[#FFFFFF]' : 'border border-[#D6CFE4] text-[#251045]/70'}`}>
+            className={`rounded-full px-3 py-1 text-[10px] font-extrabold ${filter === null ? 'bg-[#FF5A1F] text-[#0D0F12]' : 'border border-[#222630] text-[#0D0F12]/70'}`}>
             All
           </button>
           {INTENTS.map((it) => (
             <button key={it.id} type="button" onClick={() => setFilter(it.id)} aria-pressed={filter === it.id}
-              className={`rounded-full px-3 py-1 text-[10px] font-extrabold ${filter === it.id ? `${it.chip} text-[#FFFFFF]` : 'border border-[#D6CFE4] text-[#251045]/70'}`}>
+              className={`rounded-full px-3 py-1 text-[10px] font-extrabold ${filter === it.id ? `${it.chip} text-[#F7F7F8]` : 'border border-[#222630] text-[#F7F7F8]/70'}`}>
               {it.label}
             </button>
           ))}
         </div>
 
-        {posts === null && <p className="text-[11px] text-[#251045]/50">Loading the network…</p>}
+        {posts === null && <p className="text-[11px] text-[#F7F7F8]/50">Loading the network…</p>}
         {posts !== null && posts.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-[#D6CFE4] bg-[#FBFAFD] px-4 py-3">
-            <p className="text-[11px] font-extrabold text-[#251045]">Nothing here yet</p>
-            <p className="mt-1 text-[10px] leading-snug text-[#251045]/55">
+          <div className="rounded-2xl border border-dashed border-[#222630] bg-[#12151A] px-4 py-3">
+            <p className="text-[11px] font-extrabold text-[#F7F7F8]">Nothing here yet</p>
+            <p className="mt-1 text-[10px] leading-snug text-[#F7F7F8]/55">
               No {filter ? INTENTS.find((i) => i.id === filter)?.label.toLowerCase() : ''} posts yet. The network starts
               with the first honest post — yours.
             </p>
@@ -288,15 +288,15 @@ export function MshikanoDesk() {
         )}
 
         {posts?.map((p) => (
-          <article key={p.id} className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-3.5 space-y-2">
+          <article key={p.id} className="rounded-2xl border border-[#222630] bg-[#12151A] p-3.5 space-y-2">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
                   <span aria-hidden="true" className={`h-2 w-2 rounded-full ${INTENTS.find((i) => i.id === p.intent)?.dot}`} />
-                  <span className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#251045]/50">{p.intentLabel}</span>
+                  <span className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/50">{p.intentLabel}</span>
                 </div>
-                <h3 className="mt-0.5 text-[13px] font-bold leading-snug text-[#251045]">{p.title}</h3>
-                <p className="text-[9px] text-[#251045]/55">
+                <h3 className="mt-0.5 text-[13px] font-bold leading-snug text-[#F7F7F8]">{p.title}</h3>
+                <p className="text-[9px] text-[#F7F7F8]/55">
                   {p.author.displayName}{p.town ? ` · ${p.town}` : ''}{p.county ? `, ${p.county}` : ''}
                 </p>
               </div>
@@ -305,33 +305,33 @@ export function MshikanoDesk() {
             <div className="flex gap-1.5">
               {!p.mine && (
                 <button type="button" onClick={() => void markWorked(p)} disabled={busy}
-                  className="rounded-lg bg-[#5B2EA6] px-3 py-1.5 text-[10px] font-extrabold text-[#FFFFFF] disabled:opacity-40">
+                  className="rounded-lg bg-[#FF5A1F] px-3 py-1.5 text-[10px] font-extrabold text-[#0D0F12] disabled:opacity-40">
                   We worked together
                 </button>
               )}
               <button type="button" onClick={() => void openMatches(p)}
                 aria-expanded={matchesFor?.post.id === p.id}
-                className="rounded-lg border border-[#6C3EC9] px-3 py-1.5 text-[10px] font-extrabold text-[#5B2EA6]">
+                className="rounded-lg border border-[#22E6E0] px-3 py-1.5 text-[10px] font-extrabold text-[#FF5A1F]">
                 {matchesFor?.post.id === p.id ? 'Hide matches' : 'See matches'}
               </button>
             </div>
             {matchesFor?.post.id === p.id && (
-              <div className="space-y-1.5 border-t border-[#D6CFE4] pt-2">
+              <div className="space-y-1.5 border-t border-[#222630] pt-2">
                 {matchesFor.rows.length === 0 && (
-                  <p className="text-[10px] text-[#251045]/55">No complement posted yet — a {p.intent === 'have' ? 'NEED' : p.intent === 'need' ? 'HAVE' : p.intent === 'can_help' ? 'LOOKING FOR' : 'CAN HELP'} for this will match here.</p>
+                  <p className="text-[10px] text-[#F7F7F8]/55">No complement posted yet — a {p.intent === 'have' ? 'NEED' : p.intent === 'need' ? 'HAVE' : p.intent === 'can_help' ? 'LOOKING FOR' : 'CAN HELP'} for this will match here.</p>
                 )}
                 {matchesFor.rows.map((m) => (
-                  <div key={m.post.id} className="rounded-xl bg-[#F1EDF7] px-3 py-2">
-                    <p className="text-[11px] font-bold text-[#251045]">{m.post.title}</p>
-                    <p className="text-[9px] text-[#251045]/55">{m.post.author.displayName}{m.post.county ? ` · ${m.post.county}` : ''}</p>
+                  <div key={m.post.id} className="rounded-xl bg-[#171A20] px-3 py-2">
+                    <p className="text-[11px] font-bold text-[#F7F7F8]">{m.post.title}</p>
+                    <p className="text-[9px] text-[#F7F7F8]/55">{m.post.author.displayName}{m.post.county ? ` · ${m.post.county}` : ''}</p>
                     {m.reasons.length > 0 && (
-                      <p className="mt-0.5 text-[9px] text-[#5B2EA6] font-bold">Why: {m.reasons.join(' · ')}</p>
+                      <p className="mt-0.5 text-[9px] text-[#FF5A1F] font-bold">Why: {m.reasons.join(' · ')}</p>
                     )}
                     {!m.post.mine && (
                       <button
                         type="button"
                         onClick={() => setIntroFor(m.post)}
-                        className="mt-1.5 cursor-pointer rounded-full border border-[#5B2EA6] px-2.5 py-0.5 text-[9px] font-extrabold text-[#5B2EA6] hover:bg-[#F1EDF7]"
+                        className="mt-1.5 cursor-pointer rounded-full border border-[#FF5A1F] px-2.5 py-0.5 text-[9px] font-extrabold text-[#FF5A1F] hover:bg-[#171A20]"
                       >
                         Get introduced — priority
                       </button>
@@ -345,11 +345,11 @@ export function MshikanoDesk() {
       </section>
 
       {coops && coops.confirmed.length > 0 && (
-        <section aria-label="Confirmed cooperations" className="rounded-2xl border border-[#D6CFE4] bg-[#FBFAFD] p-4 space-y-1.5">
-          <h2 className="text-[13px] font-extrabold text-[#251045]">Your cooperation graph</h2>
+        <section aria-label="Confirmed cooperations" className="rounded-2xl border border-[#222630] bg-[#12151A] p-4 space-y-1.5">
+          <h2 className="text-[13px] font-extrabold text-[#F7F7F8]">Your cooperation graph</h2>
           {coops.confirmed.slice(0, 6).map((c) => (
             <div key={c.id} className="space-y-1">
-              <p className="text-[10px] text-[#251045]/70">
+              <p className="text-[10px] text-[#F7F7F8]/70">
                 🤝 {c.direction === 'outgoing' ? 'You proposed' : 'Confirmed with'} <span className="font-bold">{c.partner?.displayName}</span>
                 {c.confirmedAt ? ` · ${new Date(c.confirmedAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'short' })}` : ''}
               </p>
@@ -358,15 +358,15 @@ export function MshikanoDesk() {
                   <input value={disputeReason} onChange={(e) => setDisputeReason(e.target.value)}
                     placeholder="Say what went wrong — both sides will see it"
                     aria-label="Dispute reason"
-                    className="flex-1 rounded-lg border border-[#D6CFE4] bg-[#F1EDF7] px-2 py-1 text-[10px] text-[#251045]" />
+                    className="flex-1 rounded-lg border border-[#222630] bg-[#171A20] px-2 py-1 text-[10px] text-[#F7F7F8]" />
                   <button type="button" onClick={() => void dispute(c.id)} disabled={busy || disputeReason.trim().length < 4}
-                    className="rounded-lg bg-[#8A3B3B] px-2 py-1 text-[9px] font-extrabold text-[#FFFFFF] disabled:opacity-40">Send</button>
+                    className="rounded-lg bg-[#FF5D6C] px-2 py-1 text-[9px] font-extrabold text-[#F7F7F8] disabled:opacity-40">Send</button>
                   <button type="button" onClick={() => { setDisputeFor(null); setDisputeReason(''); }}
-                    className="rounded-lg border border-[#D6CFE4] px-2 py-1 text-[9px] font-bold text-[#251045]">Keep it</button>
+                    className="rounded-lg border border-[#222630] px-2 py-1 text-[9px] font-bold text-[#F7F7F8]">Keep it</button>
                 </div>
               ) : (
                 <button type="button" onClick={() => { setDisputeFor(c.id); setDisputeReason(''); }}
-                  className="text-[9px] font-bold text-[#8A3B3B]/80 underline">Did not go as written?</button>
+                  className="text-[9px] font-bold text-[#FF5D6C]/80 underline">Did not go as written?</button>
               )}
             </div>
           ))}
@@ -375,10 +375,10 @@ export function MshikanoDesk() {
 
       {/* Disputed — the credit is withdrawn, the record stays */}
       {coops && coops.disputed.length > 0 && (
-        <section aria-label="Disputed cooperations" className="rounded-2xl border border-[#8A3B3B]/40 bg-[#FBFAFD] p-4 space-y-1.5">
-          <h2 className="text-[13px] font-extrabold text-[#8A3B3B]">Disputed — no longer counts for anyone</h2>
+        <section aria-label="Disputed cooperations" className="rounded-2xl border border-[#FF5D6C]/40 bg-[#12151A] p-4 space-y-1.5">
+          <h2 className="text-[13px] font-extrabold text-[#FF5D6C]">Disputed — no longer counts for anyone</h2>
           {coops.disputed.slice(0, 6).map((c) => (
-            <p key={c.id} className="text-[10px] text-[#251045]/70">
+            <p key={c.id} className="text-[10px] text-[#F7F7F8]/70">
               ⚠️ With <span className="font-bold">{c.partner?.displayName}</span> — “{c.dispute?.note ?? ''}”. The confirmation is withdrawn until this is resolved.
             </p>
           ))}

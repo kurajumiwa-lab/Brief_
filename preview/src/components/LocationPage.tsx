@@ -55,31 +55,31 @@ function GraphCard({ object, onOpenObject }: { object: GraphObject; onOpenObject
     <button
       type="button"
       onClick={() => onOpenObject(object)}
-      className="group flex w-full items-stretch gap-2.5 rounded-2xl border border-[#D6CFE4] bg-white p-2 text-left shadow-sm transition-transform hover:-translate-y-0.5 hover:border-[#6C3EC9]"
+      className="group flex w-full items-stretch gap-2.5 rounded-2xl border border-[#222630] bg-[#12151A] p-2 text-left shadow-sm transition-transform hover:-translate-y-0.5 hover:border-[#22E6E0]"
     >
       {image ? (
         <img src={image} alt="" aria-hidden="true" loading="lazy" className="h-16 w-16 shrink-0 rounded-xl object-cover" />
       ) : (
-        <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-xl bg-gradient-to-br from-[#3A2169] to-[#2A1657] text-[#F1EDF7]">
+        <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-xl bg-gradient-to-br from-[#1D2027] to-[#0D0F12] text-[#171A20]">
           {TYPE_ICON[object.type] ?? <Flame className="h-3.5 w-3.5" />}
           <span className="text-[8px] font-bold uppercase tracking-wider">{object.type.slice(0, 8)}</span>
         </div>
       )}
       <div className="min-w-0 py-0.5">
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-[#6C3EC9]">{object.type}</span>
-          {line && <span className="text-[9px] font-semibold text-[#251045]/60">{line}</span>}
+          <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-[#22E6E0]">{object.type}</span>
+          {line && <span className="text-[9px] font-semibold text-[#F7F7F8]/60">{line}</span>}
           {typeof object.distanceKm === 'number' && (
-            <span className="rounded-full bg-[#F1EDF7] px-1.5 py-0.5 text-[9px] font-bold text-[#5B2EA6]">
+            <span className="rounded-full bg-[#171A20] px-1.5 py-0.5 text-[9px] font-bold text-[#FF5A1F]">
               {object.distanceKm < 1 ? '<1 km' : `${object.distanceKm} km`}
             </span>
           )}
         </div>
-        <h4 className="mt-0.5 line-clamp-2 text-[12px] font-semibold leading-snug text-[#251045] group-hover:text-[#5B2EA6]">
+        <h4 className="mt-0.5 line-clamp-2 text-[12px] font-semibold leading-snug text-[#F7F7F8] group-hover:text-[#FF5A1F]">
           {object.title}
         </h4>
         {(object.area || object.county || object.locationName) && (
-          <p className="mt-0.5 flex items-center gap-1 truncate text-[9px] font-semibold text-[#251045]/55">
+          <p className="mt-0.5 flex items-center gap-1 truncate text-[9px] font-semibold text-[#F7F7F8]/55">
             <MapPin className="h-2.5 w-2.5" /> {object.locationName ?? [object.area, object.county].filter(Boolean).join(', ')}
           </p>
         )}
@@ -94,9 +94,9 @@ function Section({ title, icon, objects, onOpenObject }: {
   if (!objects || objects.length === 0) return null;
   return (
     <section aria-label={title} className="mb-5">
-      <h3 className="mb-2 flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#251045]">
+      <h3 className="mb-2 flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]">
         {icon}{title}
-        <span className="text-[#251045]/45">· {objects.length}</span>
+        <span className="text-[#F7F7F8]/45">· {objects.length}</span>
       </h3>
       <div className="grid gap-2 sm:grid-cols-2">
         {objects.slice(0, 8).map((o) => (
@@ -136,21 +136,21 @@ export function LocationPage({ name, authed, followedLocations, onClose, onOpenO
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col justify-end overflow-hidden bg-[#150826]/85 backdrop-blur-md sm:justify-center sm:p-4"
+      className="fixed inset-0 z-50 flex flex-col justify-end overflow-hidden bg-[#08090B]/85 backdrop-blur-md sm:justify-center sm:p-4"
       onClick={onClose}
     >
       <div
-        className="flex h-[94vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl border border-[#D6CFE4] bg-[#FBFAFD] shadow-2xl mb-safe sm:h-[88vh] sm:rounded-3xl"
+        className="flex h-[94vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl border border-[#222630] bg-[#12151A] shadow-2xl mb-safe sm:h-[88vh] sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between gap-2 border-b border-[#D6CFE4] px-4 py-3">
-          <button type="button" onClick={onClose} className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[12px] font-bold text-[#251045] transition-colors hover:bg-[#F1EDF7]">
+        <div className="flex items-center justify-between gap-2 border-b border-[#222630] px-4 py-3">
+          <button type="button" onClick={onClose} className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[12px] font-bold text-[#F7F7F8] transition-colors hover:bg-[#171A20]">
             <ArrowLeft className="h-4 w-4" /> Back
           </button>
-          <span className="truncate text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#251045]/50">
+          <span className="truncate text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#F7F7F8]/50">
             Explore
           </span>
-          <button type="button" onClick={onClose} aria-label="Close" className="rounded-full p-2 text-[#251045] transition-colors hover:bg-[#F1EDF7]">
+          <button type="button" onClick={onClose} aria-label="Close" className="rounded-full p-2 text-[#F7F7F8] transition-colors hover:bg-[#171A20]">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -158,19 +158,19 @@ export function LocationPage({ name, authed, followedLocations, onClose, onOpenO
         <div className="flex-1 overflow-y-auto pb-safe">
           {missing && (
             <div className="flex flex-col items-center gap-3 px-6 py-24 text-center">
-              <Globe2 className="h-8 w-8 text-[#5B2EA6]" />
-              <p className="max-w-xs text-[13px] font-semibold text-[#251045]">
+              <Globe2 className="h-8 w-8 text-[#FF5A1F]" />
+              <p className="max-w-xs text-[13px] font-semibold text-[#F7F7F8]">
                 We don't have that location on Brief.
               </p>
-              <p className="max-w-xs text-[12px] leading-relaxed text-[#251045]/60">
+              <p className="max-w-xs text-[12px] leading-relaxed text-[#F7F7F8]/60">
                 Locations appear here only when real information names them — nothing is invented.
               </p>
             </div>
           )}
 
           {!missing && !page && (
-            <div className="flex flex-col items-center justify-center gap-3 py-24 text-[#251045]/60">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#6C3EC9] border-t-transparent" />
+            <div className="flex flex-col items-center justify-center gap-3 py-24 text-[#F7F7F8]/60">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#22E6E0] border-t-transparent" />
               <p className="text-[12px] font-semibold">Loading {name}…</p>
             </div>
           )}
@@ -178,31 +178,31 @@ export function LocationPage({ name, authed, followedLocations, onClose, onOpenO
           {page && (
             <div className="px-4 pb-10 pt-5 sm:px-5">
               {/* Header: name, kind, hierarchy, follow. */}
-              <div className="mb-1 flex flex-wrap items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#5B2EA6]">
-                <span className="rounded-full bg-[#F1EDF7] px-2 py-0.5">{KIND_LABEL[page.location.kind] ?? page.location.kind}</span>
+              <div className="mb-1 flex flex-wrap items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#FF5A1F]">
+                <span className="rounded-full bg-[#171A20] px-2 py-0.5">{KIND_LABEL[page.location.kind] ?? page.location.kind}</span>
                 {page.location.county && page.location.kind !== 'county' && (
                   <button
                     type="button"
                     onClick={() => onOpenLocation(page.location.county ?? '')}
-                    className="rounded-full bg-[#F1EDF7] px-2 py-0.5 hover:bg-[#E9E0F5]"
+                    className="rounded-full bg-[#171A20] px-2 py-0.5 hover:bg-[#1D2027]"
                     title={`Explore ${page.location.county}`}
                   >
                     {page.location.county}
                   </button>
                 )}
                 {page.location.kind === 'county' && Array.isArray(page.location.areas) && page.location.areas.length > 0 && (
-                  <span className="rounded-full bg-[#F1EDF7] px-2 py-0.5 text-[#251045]/50">
+                  <span className="rounded-full bg-[#171A20] px-2 py-0.5 text-[#F7F7F8]/50">
                     {page.location.areas.length} areas
                   </span>
                 )}
               </div>
               <div className="mb-3 flex items-center justify-between gap-3">
-                <h2 className="text-[26px] font-extrabold leading-tight text-[#251045]">{page.location.name}</h2>
+                <h2 className="text-[26px] font-extrabold leading-tight text-[#F7F7F8]">{page.location.name}</h2>
                 {authed ? (
                   <button
                     type="button"
                     onClick={() => onFollowLocation(page.location.name)}
-                    className={`flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-[12px] font-extrabold transition-colors ${followed ? 'bg-[#5B2EA6] text-white' : 'bg-[#5B2EA6] text-white hover:bg-[#4A2391]'}`}
+                    className={`flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-[12px] font-extrabold transition-colors ${followed ? 'bg-[#FF5A1F] text-[#0D0F12]' : 'bg-[#FF5A1F] text-[#0D0F12] hover:bg-[#E04D15]'}`}
                   >
                     {followed ? <><Check className="h-3.5 w-3.5" /> Following area</> : <><Plus className="h-3.5 w-3.5" /> Follow this area</>}
                   </button>
@@ -210,7 +210,7 @@ export function LocationPage({ name, authed, followedLocations, onClose, onOpenO
                   <button
                     type="button"
                     onClick={onRequireAuth}
-                    className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#5B2EA6] px-4 py-2 text-[12px] font-extrabold text-white transition-colors hover:bg-[#4A2391]"
+                    className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#FF5A1F] px-4 py-2 text-[12px] font-extrabold text-[#0D0F12] transition-colors hover:bg-[#E04D15]"
                   >
                     <Plus className="h-3.5 w-3.5" /> Follow this area
                   </button>
@@ -225,11 +225,11 @@ export function LocationPage({ name, authed, followedLocations, onClose, onOpenO
                   ['Coming up', page.activity.counts.comingUp, <CalendarDays key="i" className="h-3.5 w-3.5" />],
                   ['Latest', page.activity.counts.latest, <Newspaper key="i" className="h-3.5 w-3.5" />]
                 ] as const).map(([label, count, icon]) => (
-                  <div key={label} className="rounded-2xl border border-[#D6CFE4] bg-white px-2 py-2.5 text-center shadow-sm">
-                    <div className="flex items-center justify-center gap-1 text-[9px] font-extrabold uppercase tracking-[0.1em] text-[#251045]/50">
+                  <div key={label} className="rounded-2xl border border-[#222630] bg-[#12151A] px-2 py-2.5 text-center shadow-sm">
+                    <div className="flex items-center justify-center gap-1 text-[9px] font-extrabold uppercase tracking-[0.1em] text-[#F7F7F8]/50">
                       {icon}{label}
                     </div>
-                    <p className="mt-1 text-[22px] font-extrabold leading-none text-[#251045]">{count}</p>
+                    <p className="mt-1 text-[22px] font-extrabold leading-none text-[#F7F7F8]">{count}</p>
                   </div>
                 ))}
               </div>
@@ -245,7 +245,7 @@ export function LocationPage({ name, authed, followedLocations, onClose, onOpenO
               <Section title="Nearby" icon={<MapPin className="h-3 w-3" />} objects={page.nearby.items} onOpenObject={onOpenObject} />
 
               {page.nearby.available === false && (
-                <p className="mb-5 flex items-center gap-1.5 rounded-xl bg-[#F1EDF7] px-3 py-2 text-[10px] font-semibold text-[#251045]/60">
+                <p className="mb-5 flex items-center gap-1.5 rounded-xl bg-[#171A20] px-3 py-2 text-[10px] font-semibold text-[#F7F7F8]/60">
                   <Globe2 className="h-3 w-3" />
                   {page.nearby.reason === 'no_coordinates'
                     ? `${page.location.name} is a text-based location — no map coordinates exist for it, so nearby distance is not shown.`
@@ -253,7 +253,7 @@ export function LocationPage({ name, authed, followedLocations, onClose, onOpenO
                 </p>
               )}
 
-              <p className="mt-6 flex items-center gap-1.5 text-[9px] font-semibold text-[#251045]/45">
+              <p className="mt-6 flex items-center gap-1.5 text-[9px] font-semibold text-[#F7F7F8]/45">
                 <Users className="h-3 w-3" /> Live from Brief objects — shared via {explorePath(page.location.name)}
               </p>
             </div>

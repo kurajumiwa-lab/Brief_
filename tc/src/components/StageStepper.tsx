@@ -35,9 +35,9 @@ export function StageStepper({ stages, currentIndex, compact = false }: StageSte
               <div
                 className="flex h-8 w-8 items-center justify-center rounded-full border text-[11px] font-extrabold transition-all"
                 style={{
-                  background: done || active ? '#251045' : '#FFFFFF',
-                  color: done || active ? '#FFFFFF' : 'rgba(17,17,17,0.4)',
-                  borderColor: done || active ? '#251045' : '#D6CFE4',
+                  background: done || active ? '#FF5A1F' : '#12151A',
+                  color: done || active ? '#F7F7F8' : 'rgba(17,17,17,0.4)',
+                  borderColor: done || active ? '#FF5A1F' : '#222630',
                   opacity: active ? 1 : done ? 0.9 : 1
                 }}
               >
@@ -45,19 +45,19 @@ export function StageStepper({ stages, currentIndex, compact = false }: StageSte
               </div>
               <p
                 className="mt-1.5 text-[9px] font-extrabold leading-tight"
-                style={{ color: active ? '#251045' : done ? 'rgba(17,17,17,0.7)' : 'rgba(17,17,17,0.4)' }}
+                style={{ color: active ? '#F7F7F8' : done ? 'rgba(17,17,17,0.7)' : 'rgba(17,17,17,0.4)' }}
               >
                 {stage.label}
               </p>
               {!compact && stage.blurb && (
-                <p className="mt-0.5 hidden text-[8px] leading-tight text-[#251045]/40 sm:block">{stage.blurb}</p>
+                <p className="mt-0.5 hidden text-[8px] leading-tight text-[#F7F7F8]/40 sm:block">{stage.blurb}</p>
               )}
             </div>
             {!isLast && (
               <div className="flex items-center pt-[15px] px-0.5" aria-hidden="true">
                 <div
                   className="h-[2px] w-3 rounded-full sm:w-6"
-                  style={{ background: i < currentIndex ? '#251045' : '#D6CFE4' }}
+                  style={{ background: i < currentIndex ? '#FF5A1F' : '#222630' }}
                 />
               </div>
             )}

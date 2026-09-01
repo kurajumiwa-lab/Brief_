@@ -28,7 +28,7 @@ export function CircleTarget({ circle, compact = false }: CircleTargetProps) {
   const hasTarget = circle.targetValue !== null && circle.progressPct !== null;
 
   if (!hasTarget) {
-    return <p className="text-[10px] text-[#251045]/40">No target set.</p>;
+    return <p className="text-[10px] text-[#F7F7F8]/40">No target set.</p>;
   }
 
   const pct = circle.progressPct as number;
@@ -37,21 +37,21 @@ export function CircleTarget({ circle, compact = false }: CircleTargetProps) {
 
   return (
     <div>
-      <div className="h-1.5 bg-[#F1EDF7] rounded-full overflow-hidden">
+      <div className="h-1.5 bg-[#171A20] rounded-full overflow-hidden">
         <div
-          className={`h-full ${reached ? 'bg-[#5B2EA6]' : 'bg-[#5B2EA6]'}`}
+          className={`h-full ${reached ? 'bg-[#FF5A1F]' : 'bg-[#FF5A1F]'}`}
           style={{ width: `${Math.min(100, pct)}%` }}
         />
       </div>
 
-      <p className="text-[10px] text-[#251045] mt-1">
+      <p className="text-[10px] text-[#F7F7F8] mt-1">
         {circle.currentValue.toLocaleString()} of {target.toLocaleString()}{' '}
         &middot; {Math.round(pct)}% &middot; from {circle.settledCount} settled{' '}
         {circle.settledCount === 1 ? 'contribution' : 'contributions'}
       </p>
 
       {!compact && (
-        <p className="text-[10px] text-[#251045]/40 mt-0.5">
+        <p className="text-[10px] text-[#F7F7F8]/40 mt-0.5">
           {circle.contributorCount === 0
             ? 'No contributors yet.'
             : `${circle.contributorCount} ${
@@ -62,7 +62,7 @@ export function CircleTarget({ circle, compact = false }: CircleTargetProps) {
       )}
 
       {circle.deadline && (
-        <p className="text-[10px] text-[#251045]/40 mt-0.5">
+        <p className="text-[10px] text-[#F7F7F8]/40 mt-0.5">
           Deadline {circle.deadline.slice(0, 10)}
         </p>
       )}
