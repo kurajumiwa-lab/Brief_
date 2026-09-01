@@ -142,6 +142,7 @@ import { MyLayerScreen } from './screens/MyLayerScreen';
 import { NearbyScreen } from './screens/NearbyScreen';
 import { WorkflowsScreen } from './screens/WorkflowsScreen';
 import { OverlaysShell } from './screens/OverlaysShell';
+import { useArenaData } from './shell/hooks/useArenaData';
 import { useCaptureFlow } from './shell/hooks/useCaptureFlow';
 import { useCampaignHub } from './shell/hooks/useCampaignHub';
 import {
@@ -1776,18 +1777,47 @@ export function App() {
 
   // --- Arena -----------------------------------------------------------------
   // Who the viewer is in Arena. My-layer's match views use the same id.
-  const [arenaBusyId, setArenaBusyId] = useState<string | null>(null);
+  const {
+    arenaActivity,
+    arenaBetaBusy,
+    arenaBetaSummary,
+    arenaBusyId,
+    arenaMoney,
+    arenaPlayers,
+    arenaVenues,
+    groupArenaSignals,
+    handleAbandonMatch,
+    handleConfirmMatch,
+    handleJoinArenaBeta,
+    handleReportMatch,
+    mapServerMatch,
+    matches,
+    refreshArenaBeta,
+    refreshArenaMatches,
+    setArenaActivity,
+    setArenaBetaBusy,
+    setArenaBetaSummary,
+    setArenaBusyId,
+    setArenaMoney,
+    setArenaPlayers,
+    setArenaVenues,
+    setMatches,
+  } = useArenaData({
+    groupIndexes,
+    sessionUser,
+    showToast,
+    visibleGroups,
+  });
+
   // The secondary game screen. null = closed; set to a game id to open the
   // match-setup surface behind a shelf tile.
 
-  const [arenaActivity, setArenaActivity] = useState<Record<string, number>>({});
   // Challenges come from the SERVER, not a fixture: a challenge is a real,
   // persisted, attributable record. `ARENA_CHALLENGES` is gone from the state.
 
   // Whether real-money contests are legally available HERE. Fetched from the
   // server rather than hardcoded, because the answer depends on licensing and
   // connected payment rails, not on what the UI would like to show.
-  const [arenaMoney, setArenaMoney] = useState<ArenaMoneyStatus | null>(null);
   useEffect(() => {
     briefApi.getArenaMoneyStatus().then((r) => {
       if (r.ok) setArenaMoney(r.data);
@@ -1797,62 +1827,11 @@ export function App() {
   // The eFootball beta is the first controlled Arena test. Its counters are
   // aggregate server projections; a missing response stays visibly unavailable
   // rather than becoming a fabricated zero-population claim.
-  const [arenaBetaSummary, setArenaBetaSummary] = useState<ArenaBetaSummary | null>(null);
-  const [arenaBetaBusy, setArenaBetaBusy] = useState(false);
-  const refreshArenaBeta = React.useCallback(async () => {
-    const res = await briefApi.getArenaBeta();
-    if (res.ok) setArenaBetaSummary(res.data);
-  }, []);
   useEffect(() => { void refreshArenaBeta(); }, [refreshArenaBeta, sessionUser]);
 
-  const handleJoinArenaBeta = async (segment: ArenaBetaSegment) => {
-    if (!sessionUser) {
-      showToast('Your account is still loading — try again in a moment.');
-      return;
-    }
-    setArenaBetaBusy(true);
-    // Preserve a real campaign source when a player arrives from a tagged
-    // community/creator link; otherwise record the in-product entry point.
-    const acquisitionSource = typeof window !== 'undefined'
-      ? new URLSearchParams(window.location.search).get('utm_source') ?? 'arena_beta_card'
-      : 'arena_beta_card';
-    const res = await briefApi.joinArenaBeta({
-      segment,
-      acquisitionSource
-    });
-    setArenaBetaBusy(false);
-    if (!res.ok) {
-      showToast(res.error ?? 'Could not save your pilot spot.');
-      return;
-    }
-    await refreshArenaBeta();
-    showToast(res.data.reused ? 'You are already on the pilot list.' : 'You are on the pilot list. Add your game tag to play.');
-  };
 
-  const [matches, setMatches] = useState<ArenaMatch[]>([]);
 
-  const mapServerMatch = (m: any): ArenaMatch => ({
-    id: String(m.id),
-    challengeId: String(m.challengeId ?? ''),
-    gameId: (SERVER_TO_CLIENT_GAME[m.gameId] ?? m.gameId) as ArenaGameId,
-    playerAId: String(m.playerAId),
-    playerBId: String(m.playerBId),
-    playerAName: m.playerAName ? String(m.playerAName) : undefined,
-    playerBName: m.playerBName ? String(m.playerBName) : undefined,
-    playedAt: m.createdAt ?? m.playedAt ?? new Date().toISOString(),
-    winnerPlayerId: m.winnerPlayerId ?? undefined,
-    scoreLine: m.scoreLine ?? undefined,
-    confirmedByA: m.confirmedByA ?? undefined,
-    confirmedByB: m.confirmedByB ?? undefined,
-    status: m.status,
-    reportedBy: m.reportedBy ?? null
-  });
 
-  const refreshArenaMatches = React.useCallback(async () => {
-    const res = await briefApi.getArenaMatches();
-    if (!res.ok) return;
-    setMatches(res.data.map(mapServerMatch));
-  }, []);
   useEffect(() => { void refreshArenaMatches(); }, [refreshArenaMatches]);
 
   // Availability is the user's own switch. Defaults to the seeded record and
@@ -1860,8 +1839,6 @@ export function App() {
   // Arena entities come from the SERVER — real persisted rows, never a
   // fixture. The fabricated client-side economy (points ledger, gift cards,
   // fake availability/reliability, account listings, venue check-ins) is gone.
-  const [arenaPlayers, setArenaPlayers] = useState<any[]>([]);
-  const [arenaVenues, setArenaVenues] = useState<any[]>([]);
 
   React.useEffect(() => {
     let live = true;
@@ -1911,68 +1888,12 @@ export function App() {
   // Workflows secondary is derived from real Journey data, not a new store.
 
 
-  const groupArenaSignals = useMemo(() => {
-    const out: { id: string; groupName: string; summary: string; at: string }[] = [];
-    for (const group of visibleGroups) {
-      const entries = groupIndexes[group.id] ?? [];
-      for (const entry of entries) {
-        const hit = detectMatchRequest(entry, ARENA_GAMES);
-        if (!hit) continue;
-        const game = ARENA_GAMES.find((g) => g.id === hit.gameId);
-        out.push({
-          id: `sig_${entry.id}`,
-          groupName: group.name,
-          summary: `Someone is looking for a ${game ? game.name : 'game'} match.`,
-          at: entry.sentAt
-        });
-      }
-    }
-    return out;
-  }, [visibleGroups, groupIndexes]);
 
 
-  const handleReportMatch = async (match: ArenaMatch, winnerPlayerId: string | null) => {
-    setArenaBusyId(match.id);
-    const res = await briefApi.reportArenaMatch(match.id, { winnerPlayerId });
-    setArenaBusyId(null);
-    if (!res.ok) {
-      showToast(res.error ?? 'Could not report this result.');
-      return;
-    }
-    await refreshArenaMatches();
-    showToast('Result reported. The other player still has to confirm.');
-  };
 
-  const handleConfirmMatch = async (match: ArenaMatch) => {
-    setArenaBusyId(match.id);
-    const res = await briefApi.confirmArenaMatch(match.id);
-    setArenaBusyId(null);
-    if (!res.ok) {
-      showToast(res.error ?? 'Could not confirm this result.');
-      return;
-    }
-    await refreshArenaMatches();
-    if (res.data?.disputed) {
-      showToast('Players disagreed. Brief does not pick a winner.');
-      return;
-    }
-    const rw = res.data?.yourRewards;
-    showToast(rw ? `Match confirmed · +${rw.xp} XP${rw.coins ? ` · +${rw.coins} Arena Coins` : ''}` : 'Result confirmed.');
-  };
 
   // Abandon: the honest exit for a match that never happened. The server
   // decides who may abandon (and when); a refusal says why.
-  const handleAbandonMatch = async (match: ArenaMatch) => {
-    setArenaBusyId(match.id);
-    const res = await briefApi.abandonArenaMatch(match.id, 'never started');
-    setArenaBusyId(null);
-    if (!res.ok) {
-      showToast(res.error ?? 'Could not abandon this match.');
-      return;
-    }
-    await refreshArenaMatches();
-    showToast('Match abandoned.');
-  };
 
   // Venues that actually host the selected game, nearest first.
   // Live activity per game: open challenges plus players checked in at a

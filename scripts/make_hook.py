@@ -17,6 +17,10 @@ import re, sys, json, os
 HOOK = sys.argv[1]                       # e.g. useCampaignHub
 NAMES = sys.argv[2].split(',')           # csv of decl names / state bases
 EXTRA_PARAMS = (sys.argv[3].split(',') if len(sys.argv) > 3 and not sys.argv[3].startswith('--') else [])
+ALLOW = set()
+for a in sys.argv:
+    if a.startswith('--allow='):
+        ALLOW = set(a.split('=', 1)[1].split(','))
 APPLY = any(a == '--apply' for a in sys.argv[3:])
 
 APP = 'App.tsx'
@@ -144,7 +148,7 @@ TSWORDS = {'string','number','boolean','readonly','never','void','null',
            'undefined','any','unknown','keyof','Partial','Record','object'}
 
 imp_named = set()
-for grp, mod in re.findall(r"import \{([^}]+)\} from '([^']+)'", joined, re.S):
+for grp, mod in re.findall(r"import(?: type)? \{([^}]+)\} from '([^']+)'", joined, re.S):
     imp_named |= {t.strip().split(' as ')[-1] for t in grp.split(',') if t.strip()}
 imp_named |= set(re.findall(r"^import (\w+) from", joined, re.M))
 imp_named |= set(re.findall(r"import \* as (\w+) from", joined))
@@ -212,7 +216,7 @@ idents = set(re.findall(r"\b([A-Za-z_]\w*)\b", body))
 
 known = (GLOBALS | KW | TSWORDS | imp_named | core_names | names_names |
          moved_exported | loc | members | colonkeys | typewords | {'briefApi'})
-unknown = sorted(idents - known)
+unknown = sorted((idents - known) - ALLOW)
 
 params, bad = [], []
 for u in unknown:
