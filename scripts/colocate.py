@@ -94,6 +94,15 @@ def find_decls():
 
 DECLS = find_decls()
 SHELL_VARS = set(DECLS)
+# hook-returned names behave like shell decls for callers
+he = re.finditer(r"^  const \{([\s\S]*?)\n  \} = use\w+\(\{", joined, re.M)
+for m in he:
+    ln = joined[:m.start()].count('\n')
+    for n in m.group(1).split(','):
+        n = n.strip()
+        if n:
+            DECLS.setdefault(n, ('const', ln, None, None))
+SHELL_VARS = set(DECLS)
 
 def base_of(name):
     if name in DECLS and DECLS[name][0] == 'setter':
