@@ -13,10 +13,11 @@ for dest in preview/src tc/src; do
   # Mirror the whole tree rather than named files: a new subdirectory
   # (src/components/circle/) was silently missed by the old per-glob copy,
   # which is exactly how the stale-copy trap reappears.
-  rm -rf "$dest/api" "$dest/model" "$dest/screens" "$dest/components" "$dest/nav" "$dest/ui" "$dest/assets" "$dest/engine"
+  rm -rf "$dest/api" "$dest/shell" "$dest/model" "$dest/screens" "$dest/components" "$dest/nav" "$dest/ui" "$dest/assets" "$dest/engine"
   mkdir -p "$dest"
   cp App.tsx "$dest/App.tsx"
   cp -R src/api "$dest/api"
+  cp -R src/shell "$dest/shell"
   cp -R src/components "$dest/components"
   cp -R src/nav "$dest/nav"
   cp -R src/ui "$dest/ui"

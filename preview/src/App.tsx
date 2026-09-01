@@ -142,6 +142,7 @@ import { MyLayerScreen } from './screens/MyLayerScreen';
 import { NearbyScreen } from './screens/NearbyScreen';
 import { WorkflowsScreen } from './screens/WorkflowsScreen';
 import { OverlaysShell } from './screens/OverlaysShell';
+import { useCampaignHub } from './shell/hooks/useCampaignHub';
 import {
   ALL_GROUPS,
   ARENA_GAMES,
@@ -989,130 +990,79 @@ export function App() {
     return () => { live = false; };
   }, []);
 
-  const [campaignState, setCampaignState] = useState<{
-    status: 'idle' | 'loading' | 'ready' | 'error';
-    data: ApiCampaign[] | null;
-    error: string | null;
-  }>({ status: 'idle', data: null, error: null });
+  const {
+    attachObjectToCampaign,
+    beginEdit,
+    campaignActionError,
+    campaignBusy,
+    campaignCircle,
+    campaignDetail,
+    campaignRegs,
+    campaignState,
+    confirmPayment,
+    copyCampaignLink,
+    createStep,
+    draft,
+    editDraft,
+    handleRemoveCampaign,
+    loadAttachableObjects,
+    loadCampaigns,
+    objectPicker,
+    openCampaign,
+    openCampaignId,
+    postUpdate,
+    publishDraft,
+    publishedCampaign,
+    saveCampaignEdit,
+    setCampaignActionError,
+    setCampaignBusy,
+    setCampaignCircle,
+    setCampaignDetail,
+    setCampaignRegs,
+    setCampaignState,
+    setCreateStep,
+    setDraft,
+    setEditDraft,
+    setObjectPicker,
+    setOpenCampaignId,
+    setPublishedCampaign,
+    setRegStatus,
+    setUpdateBody,
+    setUpdateBusy,
+    setUpdateNote,
+    setUpdateTitle,
+    shareCampaign,
+    submitDraft,
+    updateBody,
+    updateBusy,
+    updateNote,
+    updateTitle,
+  } = useCampaignHub({
+    loadObjects,
+    setObjects,
+    publicOrigin,
+    setPublicOrigin,
+    showToast,
+  });
 
-  const [openCampaignId, setOpenCampaignId] = useState<string | null>(bootRoute.campaignId);
-  const [campaignDetail, setCampaignDetail] = useState<ApiCampaign | null>(null);
-  const [campaignRegs, setCampaignRegs] = useState<{
-    status: 'idle' | 'loading' | 'ready' | 'error';
-    data: ApiRegistration[] | null;
-    error: string | null;
-  }>({ status: 'idle', data: null, error: null });
 
-  const [campaignBusy, setCampaignBusy] = useState<boolean>(false);
-  const [campaignActionError, setCampaignActionError] = useState<string | null>(null);
+
 
   // Create flow. `preview` is a screen, not a stored object: nothing is sent
   // to the server between 'form' and the user pressing Publish.
-  const [createStep, setCreateStep] = useState<'closed' | 'form' | 'preview' | 'published'>('closed');
-  const [draft, setDraft] = useState<{
-    title: string;
-    type: ApiCampaignType;
-    description: string;
-    location: string;
-    startsAt: string;
-    capacity: string;
-    price: string;
-    circleId: string;
-  }>({
-    title: '',
-    type: 'popup',
-    description: '',
-    location: '',
-    startsAt: '',
-    capacity: '',
-    price: '',
-    circleId: ''
-  });
-  const [publishedCampaign, setPublishedCampaign] = useState<ApiCampaign | null>(null);
 
   // Attachable existing objects. Loaded only when the creator asks, because
   // most campaigns are something new and the list is noise until it is wanted.
-  const [objectPicker, setObjectPicker] = useState<{
-    open: boolean;
-    status: 'idle' | 'loading' | 'ready' | 'error';
-    data: any[] | null;
-    error: string | null;
-    selected: { id: string; title: string } | null;
-  }>({ open: false, status: 'idle', data: null, error: null, selected: null });
 
-  const loadAttachableObjects = async () => {
-    setObjectPicker((p) => ({ ...p, open: true, status: 'loading', error: null }));
-    const res = await briefApi.getObjects();
-    if (res.ok) {
-      setObjectPicker((p) => ({ ...p, status: 'ready', data: res.data, error: null }));
-    } else {
-      setObjectPicker((p) => ({ ...p, status: 'error', data: null, error: res.error }));
-    }
-  };
 
   // Editing an existing draft. Separate from `draft` (the create flow) so a
   // half-finished new campaign is never confused with an edit in progress.
-  const [editDraft, setEditDraft] = useState<{
-    title: string;
-    description: string;
-    location: string;
-    startsAt: string;
-    price: string;
-    capacity: string;
-  } | null>(null);
 
   // The Circle a campaign is attached to, if any. Read separately because the
   // campaign row carries only `circleId`; the target's progress lives on the
   // Circle and is derived there from settled transactions.
-  const [campaignCircle, setCampaignCircle] = useState<{
-    status: 'idle' | 'loading' | 'ready' | 'error';
-    data: ApiCircleDetail | null;
-    error: string | null;
-  }>({ status: 'idle', data: null, error: null });
 
-  const loadCampaigns = async () => {
-    setCampaignState((prev) => ({ ...prev, status: 'loading', error: null }));
-    // Config is read alongside the list so share links are correct as soon as
-    // a campaign can be shared. A failure here is not fatal: publicOrigin
-    // stays null and the share UI reports that honestly.
-    briefApi.getConfig().then((c) => {
-      if (c.ok) setPublicOrigin(c.data.publicOrigin);
-    });
-    const res = await briefApi.getCampaigns();
-    if (res.ok) {
-      setCampaignState({ status: 'ready', data: res.data, error: null });
-    } else {
-      // No fallback to seeded data. An unreachable server means we say so.
-      setCampaignState({ status: 'error', data: null, error: res.error });
-    }
-  };
 
-  const openCampaign = async (id: string) => {
-    setOpenCampaignId(id);
-    setCampaignDetail(null);
-    setCampaignActionError(null);
-    setCampaignRegs({ status: 'loading', data: null, error: null });
-    const [detail, regs] = await Promise.all([
-      briefApi.getCampaign(id),
-      briefApi.getCampaignRegistrations(id)
-    ]);
-    if (detail.ok) setCampaignDetail(detail.data);
-    else setCampaignActionError(detail.error);
-    if (regs.ok) setCampaignRegs({ status: 'ready', data: regs.data, error: null });
-    else setCampaignRegs({ status: 'error', data: null, error: regs.error });
-
-    // A campaign may be attached to a Circle carrying a Target. The target's
-    // progress is derived on the server from settled transactions -- this only
-    // reads it. Nothing here writes progress.
-    if (detail.ok && detail.data.circleId) {
-      setCampaignCircle({ status: 'loading', data: null, error: null });
-      const circle = await briefApi.getCircle(detail.data.circleId);
-      if (circle.ok) setCampaignCircle({ status: 'ready', data: circle.data, error: null });
-      else setCampaignCircle({ status: 'error', data: null, error: circle.error });
-    } else {
-      setCampaignCircle({ status: 'idle', data: null, error: null });
-    }
-  };
 
   /**
    * Save an edit to a draft. Only the fields the server declares writable are
@@ -1128,186 +1078,19 @@ export function App() {
    * same picker as the create flow; adds no new primitive and copies no
    * object data.
    */
-  const attachObjectToCampaign = async (campaignId: string, objectId: string) => {
-    setCampaignBusy(true);
-    setCampaignActionError(null);
-    const res = await briefApi.updateCampaign(campaignId, { objectId });
-    setCampaignBusy(false);
-    setObjectPicker((p) => ({ ...p, open: false, selected: null }));
-    if (!res.ok) {
-      setCampaignActionError(res.error);
-      return;
-    }
-    await openCampaign(campaignId);
-    showToast('Item linked');
-  };
 
-  const saveCampaignEdit = async (campaign: ApiCampaign) => {
-    if (!editDraft) return;
-    setCampaignBusy(true);
-    setCampaignActionError(null);
-    const price = editDraft.price.trim() === '' ? 0 : Number(editDraft.price);
-    const capacity = editDraft.capacity.trim() === '' ? null : Number(editDraft.capacity);
-    const res = await briefApi.updateCampaign(campaign.id, {
-      title: editDraft.title.trim(),
-      description: editDraft.description.trim(),
-      location: editDraft.location.trim() === '' ? null : editDraft.location.trim(),
-      startsAt: editDraft.startsAt.trim() === '' ? null : editDraft.startsAt.trim(),
-      price: Number.isFinite(price) ? price : 0,
-      ...(campaign.status === 'draft'
-        ? { capacity: capacity !== null && Number.isFinite(capacity) ? capacity : null }
-        : {})
-    });
-    setCampaignBusy(false);
-    if (!res.ok) {
-      setCampaignActionError(res.error);
-      return;
-    }
-    setCampaignDetail(res.data);
-    setEditDraft(null);
-    loadCampaigns();
-    showToast('Saved');
-  };
 
-  const handleRemoveCampaign = async (campaignId: string) => {
-    setCampaignBusy(true);
-    setCampaignActionError(null);
-    try {
-      const allCampaigns = campaignState.data ?? [];
-      const c = allCampaigns.find((x) => x.id === campaignId) || campaignDetail;
-      if (c && c.status !== 'cancelled' && c.status !== 'closed') {
-        try { await briefApi.campaignAction(campaignId, 'cancel'); } catch {}
-      }
-      await briefApi.deleteCampaign(campaignId);
-      setCampaignState((prev) => ({
-        ...prev,
-        data: (prev.data ?? []).filter((item) => item.id !== campaignId)
-      }));
-      if (c?.objectId) {
-        setObjects((prev) => prev.filter((o) => o.id !== c.objectId));
-      }
-      setOpenCampaignId(null);
-      setCampaignDetail(null);
-      setEditDraft(null);
-      showToast('Event removed.');
-      void loadCampaigns();
-      void loadObjects();
-    } catch (e: any) {
-      setCampaignActionError(String(e.message || e));
-    } finally {
-      setCampaignBusy(false);
-    }
-  };
 
-  const beginEdit = (c: ApiCampaign) => {
-    setCampaignActionError(null);
-    setEditDraft({
-      title: c.title,
-      description: c.description,
-      location: c.location ?? '',
-      startsAt: c.startsAt ? c.startsAt.slice(0, 16) : '',
-      price: c.price === 0 ? '' : String(c.price),
-      capacity: c.capacity === null ? '' : String(c.capacity)
-    });
-  };
 
   /** Share uses the platform sheet where it exists, clipboard otherwise. */
-  const shareCampaign = async (campaign: ApiCampaign) => {
-    const link = briefApi.campaignShareLink(campaign.publicSlug, publicOrigin);
-    if (!link.available) {
-      showToast('No public link configured yet');
-      return;
-    }
-    briefApi.shareCampaign(campaign.id, 'native');
-    const url = link.url;
-    const nav = typeof navigator !== 'undefined' ? (navigator as any) : null;
-    if (nav && typeof nav.share === 'function') {
-      try {
-        await nav.share({ title: campaign.title, url });
-        return;
-      } catch {
-        // User dismissed the sheet, or the browser refused. Fall through to
-        // copy rather than reporting a failure they did not cause.
-      }
-    }
-    if (nav && nav.clipboard && typeof nav.clipboard.writeText === 'function') {
-      try {
-        await nav.clipboard.writeText(url);
-        showToast('Link copied');
-        return;
-      } catch {
-        // fall through
-      }
-    }
-    showToast(url);
-  };
 
-  const copyCampaignLink = async (slug: string, campaignId?: string) => {
-    const link = briefApi.campaignShareLink(slug, publicOrigin);
-    if (!link.available) {
-      showToast('No public link configured yet');
-      return;
-    }
-    if (campaignId) briefApi.shareCampaign(campaignId, 'link');
-    const url = link.url;
-    const nav = typeof navigator !== 'undefined' ? (navigator as any) : null;
-    if (nav && nav.clipboard && typeof nav.clipboard.writeText === 'function') {
-      try {
-        await nav.clipboard.writeText(url);
-        showToast('Link copied');
-        return;
-      } catch {
-        // fall through
-      }
-    }
-    showToast(url);
-  };
 
-  const submitDraft = async () => {
-    setCampaignBusy(true);
-    setCampaignActionError(null);
-    const capacity = draft.capacity.trim() === '' ? null : Number(draft.capacity);
-    const price = draft.price.trim() === '' ? 0 : Number(draft.price);
-    const res = await briefApi.createCampaign({
-      title: draft.title.trim(),
-      type: draft.type,
-      description: draft.description.trim(),
-      location: draft.location.trim() === '' ? null : draft.location.trim(),
-      startsAt: draft.startsAt.trim() === '' ? null : draft.startsAt.trim(),
-      capacity: capacity !== null && Number.isFinite(capacity) ? capacity : null,
-      price: Number.isFinite(price) ? price : 0,
-      circleId: draft.circleId === '' ? null : draft.circleId,
-      // Attach an existing item when one was chosen. The server checks
-      // authority and refuses if the creator may not use it.
-      objectId: objectPicker.selected ? objectPicker.selected.id : null
-    });
-    setCampaignBusy(false);
-    if (!res.ok) {
-      setCampaignActionError(res.error);
-      return null;
-    }
-    return res.data;
-  };
 
   /**
    * Publish goes through the real transition endpoint. If the server refuses
    * the transition the campaign stays a draft on screen: there is no local
    * `status = 'live'` anywhere in this file.
    */
-  const publishDraft = async () => {
-    const created = await submitDraft();
-    if (!created) return;
-    setCampaignBusy(true);
-    const res = await briefApi.campaignAction(created.id, 'publish');
-    setCampaignBusy(false);
-    if (!res.ok) {
-      setCampaignActionError(res.error);
-      return;
-    }
-    setPublishedCampaign(res.data);
-    setCreateStep('published');
-    loadCampaigns();
-  };
 
   /**
    * The organiser confirms money actually arrived for a held spot.
@@ -1318,58 +1101,10 @@ export function App() {
    * refetches rather than optimistically patching, so what is displayed is
    * always what the server derived.
    */
-  const confirmPayment = async (campaignId: string, registrationId: string) => {
-    setCampaignBusy(true);
-    setCampaignActionError(null);
-    const res = await briefApi.confirmRegistrationPayment(campaignId, registrationId);
-    setCampaignBusy(false);
-    if (!res.ok) {
-      setCampaignActionError(res.error);
-      return;
-    }
-    await openCampaign(campaignId);
-    showToast('Payment confirmed');
-  };
 
   // --- T3: the organiser authors updates the public page shows -------------
-  const [updateTitle, setUpdateTitle] = useState('');
-  const [updateBody, setUpdateBody] = useState('');
-  const [updateBusy, setUpdateBusy] = useState(false);
-  const [updateNote, setUpdateNote] = useState<string | null>(null);
 
-  const postUpdate = async (campaignId: string) => {
-    if (!updateTitle.trim() || !updateBody.trim() || updateBusy) return;
-    setUpdateBusy(true);
-    setUpdateNote(null);
-    const res = await briefApi.postCampaignUpdate(campaignId, {
-      title: updateTitle.trim(),
-      body: updateBody.trim()
-    });
-    setUpdateBusy(false);
-    if (!res.ok) {
-      setUpdateNote(res.error);
-      return;
-    }
-    setUpdateTitle('');
-    setUpdateBody('');
-    setUpdateNote('Posted. It is on the public page now.');
-  };
 
-  const setRegStatus = async (
-    campaignId: string,
-    registrationId: string,
-    status: 'checked_in' | 'no_show'
-  ) => {
-    setCampaignBusy(true);
-    const res = await briefApi.setRegistrationStatus(campaignId, registrationId, status);
-    setCampaignBusy(false);
-    if (!res.ok) {
-      setCampaignActionError(res.error);
-      return;
-    }
-    // Refetch instead of patching state: the metrics block must move with it.
-    openCampaign(campaignId);
-  };
 
 
   // Card button. Uses the same resolver as the detail view so a given label
