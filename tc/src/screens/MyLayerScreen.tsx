@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
+import { BadgeCheck } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
 import type { Campaign as ApiCampaign, CampaignType as ApiCampaignType } from '../api/types';
 import { SAVED_BUNDLES, SAVED_TABS } from '../ui/names';
@@ -247,6 +249,21 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
 
   const myRank = useMemo(() => getBriefRank(myContribution), [myContribution]);
 
+  // §12 — trust/verification + standing, fetched from the real server. The
+  // profile header shows only what the server actually records: which
+  // verification kinds (phone/email/identity) are approved, and the derived
+  // activity standing (hosted/bought/arrived/registered). Nothing invented.
+  const [profileVerification, setProfileVerification] = useState<Record<string, 'verified' | 'pending' | 'unverified'> | null>(null);
+  const [profileStanding, setProfileStanding] = useState<briefApi.PersonStanding | null>(null);
+
+  React.useEffect(() => {
+    if (!sessionUser) return;
+    let live = true;
+    briefApi.getMyVerification().then((r) => { if (live && r.ok) setProfileVerification(r.data.standing); });
+    briefApi.getPersonMe().then((r) => { if (live && r.ok) setProfileStanding(r.data.standing ?? null); });
+    return () => { live = false; };
+  }, [sessionUser]);
+
   const pendingCount = useMemo(
     () => quests.filter((q: Quest) => q.status === 'submitted').length,
     [quests]
@@ -321,12 +338,39 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                       </p>
                     </div>
                   </div>
+
+                  {/* §12 — trust & verification. Real server standing only: the
+                      rank is derived from accepted contribution, and the
+                      verified chips are the kinds the server has actually
+                      approved. Neither is invented. */}
+                  <div className="mt-2.5 flex flex-wrap items-center gap-1.5" aria-label="Trust and verification">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[#171A20] border border-[#222630] px-2.5 py-1 text-[10px] font-extrabold text-[#F7F7F8]">
+                      <ShieldCheck className="h-3 w-3 text-[#22E6E0]" aria-hidden="true" />
+                      {myRank}
+                    </span>
+                    {profileVerification && (() => {
+                      const kinds: [string, string][] = [['phone', 'Phone'], ['email', 'Email'], ['identity', 'Identity']];
+                      const verified = kinds.filter(([k]) => profileVerification[k] === 'verified');
+                      if (verified.length === 0) return null;
+                      return verified.map(([k, label]) => (
+                        <span key={k} className="inline-flex items-center gap-1 rounded-full bg-[#171A20] border border-[#222630] px-2.5 py-1 text-[10px] font-bold text-[#F7F7F8]/70">
+                          <BadgeCheck className="h-3 w-3 text-[#38E879]" aria-hidden="true" />
+                          {label}
+                        </span>
+                      ));
+                    })()}
+                  </div>
+
+                  {/* §12 — contribution summary. Every number is real: saved
+                      comes from the user's own kept objects; hosted/bought/
+                      arrived come from the server's derived standing. */}
                   <div className="mt-3 flex flex-wrap gap-2" aria-label="Contribution summary">
                     {(() => {
                       const stats: { label: string; value: number }[] = [
                         { label: 'saved', value: (savedObjects ?? []).length },
-                        { label: 'groups', value: (groups ?? []).length },
-                        { label: 'matches', value: (matches ?? []).length }
+                        { label: 'hosted', value: profileStanding?.hosted ?? 0 },
+                        { label: 'arrived', value: profileStanding?.arrived ?? 0 },
+                        { label: 'bought', value: profileStanding?.bought ?? 0 }
                       ];
                       if (stats.every((s) => s.value === 0)) return null;
                       return stats.map((s) => (
