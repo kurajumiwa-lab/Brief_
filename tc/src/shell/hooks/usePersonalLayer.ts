@@ -104,34 +104,6 @@ export function usePersonalLayer(params: UsePersonalLayerParams) {
     void loadPersonal();
   };
 
-  const savedObjects = useMemo(
-    () =>
-      objects.filter((obj: any) =>
-        relationships.some(
-          (rel) => rel.targetId === obj.id && rel.verb === 'saved'
-        )
-      ),
-    [objects, relationships]
-  );
-
-  const watchedIds = useMemo(
-    () => new Set(relationships.filter((r) => r.verb === 'watched').map((r) => r.targetId)),
-    [relationships]
-  );
-
-  const savedIdSet = useMemo(
-    () => new Set<string>(savedObjects.map((o: any) => o.id)),
-    [savedObjects]
-  );
-
-  const relatedToSavedIds = useMemo(() => {
-    const out = new Set<string>();
-    for (const saved of savedObjects) {
-      for (const rel of getRelatedObjects(saved)) out.add(rel.item.id);
-    }
-    return out;
-  }, [savedObjects, objects]);
-
   const getRelatedObjects = (object: BriefObject): ScoredRelation[] => {
     const explicit = new Set(
       [
@@ -258,6 +230,35 @@ export function usePersonalLayer(params: UsePersonalLayerParams) {
 
     return scored.slice(0, 4);
   };
+
+  const savedObjects = useMemo(
+    () =>
+      objects.filter((obj: any) =>
+        relationships.some(
+          (rel) => rel.targetId === obj.id && rel.verb === 'saved'
+        )
+      ),
+    [objects, relationships]
+  );
+
+  const watchedIds = useMemo(
+    () => new Set(relationships.filter((r) => r.verb === 'watched').map((r) => r.targetId)),
+    [relationships]
+  );
+
+  const savedIdSet = useMemo(
+    () => new Set<string>(savedObjects.map((o: any) => o.id)),
+    [savedObjects]
+  );
+
+  const relatedToSavedIds = useMemo(() => {
+    const out = new Set<string>();
+    for (const saved of savedObjects) {
+      for (const rel of getRelatedObjects(saved)) out.add(rel.item.id);
+    }
+    return out;
+  }, [savedObjects, objects]);
+
 
   return {
     getRelatedObjects,
