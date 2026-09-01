@@ -1,7 +1,8 @@
 import React from 'react';
 import {
   Copy, Share2, Plus, CalendarDays, MessageCircle, Briefcase, Zap,
-  MapPin, Trophy, Sparkles, Send, Settings, Lock, ArrowRight, Bell, Search
+  MapPin, Trophy, Sparkles, Send, Settings, Lock, ArrowRight, Bell, Search,
+  Bookmark, Users, Store
 } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
 import type { AuthedUser } from '../api/briefApi';
@@ -162,18 +163,27 @@ function LocalCard({ onSelect }: { onSelect: (target: MenuTarget) => void }) {
   return (
     <section aria-label="Your account" className="bg-[#12151A] border border-[#222630] rounded-2xl p-3.5">
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-[#FF5A1F] text-[#0D0F12] flex items-center justify-center text-[13px] font-black shrink-0" aria-hidden="true">
-          {initials(displayName)}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-[14px] font-extrabold text-[#F7F7F8] truncate leading-tight">{displayName}</p>
-          <p className="mt-0.5 flex items-center gap-1.5 text-[10px] leading-none min-w-0">
-            <span className="px-1.5 py-0.5 rounded-full bg-[#FFCC66] text-[#0D0F12] font-extrabold tracking-wide shrink-0">
-              Platinum Member
+        {/* §13 — the account identity doubles as the Profile door: tapping your
+            name/avatar opens your full profile (My Layer). */}
+        <button
+          type="button"
+          onClick={() => onSelect({ tab: 'mylayer', section: 'saved' })}
+          aria-label="Open your profile"
+          className="flex min-w-0 flex-1 items-center gap-3 text-left cursor-pointer"
+        >
+          <span className="h-10 w-10 rounded-xl bg-[#FF5A1F] text-[#0D0F12] flex items-center justify-center text-[13px] font-black shrink-0" aria-hidden="true">
+            {initials(displayName)}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[14px] font-extrabold text-[#F7F7F8] leading-tight">{displayName}</span>
+            <span className="mt-0.5 flex items-center gap-1.5 text-[10px] leading-none min-w-0">
+              <span className="px-1.5 py-0.5 rounded-full bg-[#FFCC66] text-[#0D0F12] font-extrabold tracking-wide shrink-0">
+                Platinum Member
+              </span>
+              <span className="text-[#F7F7F8]/55 truncate">{settled} settled</span>
             </span>
-            <span className="text-[#F7F7F8]/55 truncate">{settled} settled</span>
-          </p>
-        </div>
+          </span>
+        </button>
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
@@ -228,11 +238,15 @@ function LocalCard({ onSelect }: { onSelect: (target: MenuTarget) => void }) {
   );
 }
 
-// --- EXPLORE: four doors, icons not photography ------------------------------
+// --- EXPLORE: doors, icons not photography ------------------------------------
+// Every door goes to a real surface. No dead buttons, no invented state.
 
 const EXPLORE: { label: string; detail: string; Icon: React.ComponentType<{ className?: string }>; target: MenuTarget }[] = [
   { label: 'Nearby', detail: 'Places, events and useful things', Icon: MapPin, target: { tab: 'nearby', section: 'stream' } },
+  { label: 'Saved', detail: 'Things you kept', Icon: Bookmark, target: { tab: 'mylayer', section: 'saved' } },
   { label: 'Arena', detail: 'Matches, rivals and seasons', Icon: Trophy, target: { tab: 'arena', section: 'lobby' } },
+  { label: 'Communities', detail: 'Groups and circles', Icon: Users, target: { tab: 'mylayer', section: 'circles' } },
+  { label: 'Marketplace', detail: 'Buy and sell nearby', Icon: Store, target: { tab: 'nearby', section: 'market' } },
   { label: 'EPL Fantasy', detail: 'Fantasy football, weekly', Icon: Sparkles, target: { tab: 'arena', section: 'epl' } },
   { label: 'WhatsApp Shop', detail: 'Your price list, in WhatsApp', Icon: Send, target: { tab: 'workflows', section: 'shop' } }
 ];

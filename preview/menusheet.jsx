@@ -71,6 +71,9 @@ const check = (n, c, d = '') => { if (c) { pass++; console.log('  PASS  ' + n); 
 
   console.log('\n=== the Local card: compressed, honest ===');
   check('the account is one compact card', body().includes('Mama Njeria'));
+  check('the identity opens the profile (My Layer)', Boolean(btnByLabel('Open your profile')));
+  await click(btnByLabel('Open your profile'));
+  check('profile door routes to Saved', picked?.tab === 'mylayer' && picked?.section === 'saved', JSON.stringify(picked));
   check('membership stays gold — the ONLY gold', body().includes('Platinum Member'));
   check('the settled figure is on the same line, muted', body().includes('KES 0 settled'));
   check('View opens the standing, derived from real rows', Boolean(btnByLabel('View →')));
@@ -80,13 +83,17 @@ const check = (n, c, d = '') => { if (c) { pass++; console.log('  PASS  ' + n); 
   check('sign out lives inside the account, not on the page chrome', body().includes('Sign out'));
 
   console.log('\n=== explore: icons + typography, no photography ===');
-  check('four doors as a grid, not a horizontal shelf',
-    ['Nearby', 'Arena', 'EPL Fantasy', 'WhatsApp Shop'].every((k) => body().includes(k)));
+  check('doors as a grid, not a horizontal shelf',
+    ['Nearby', 'Saved', 'Arena', 'Communities', 'Marketplace', 'EPL Fantasy', 'WhatsApp Shop'].every((k) => body().includes(k)));
   check('no photographic shelf cards inside Menu', document.querySelectorAll('img').length === 0);
   await click(Array.from(document.querySelectorAll('button')).find((b) => text(b).includes('WhatsApp Shop')));
   check('the WhatsApp Shop door routes to the builder', picked?.tab === 'workflows' && picked?.section === 'shop', JSON.stringify(picked));
   await click(Array.from(document.querySelectorAll('button')).find((b) => text(b).startsWith('Arena')));
   check('the Arena door routes to the lobby', picked?.tab === 'arena' && picked?.section === 'lobby', JSON.stringify(picked));
+  await click(Array.from(document.querySelectorAll('button')).find((b) => text(b).includes('Communities')));
+  check('the Communities door routes to circles', picked?.tab === 'mylayer' && picked?.section === 'circles', JSON.stringify(picked));
+  await click(Array.from(document.querySelectorAll('button')).find((b) => text(b).includes('Marketplace')));
+  check('the Marketplace door routes to the market', picked?.tab === 'nearby' && picked?.section === 'market', JSON.stringify(picked));
 
   console.log('\n=== quick actions: compact rows, fast to scan ===');
   check('five rows in one card',
