@@ -93,7 +93,7 @@ while i < RET:
         DECLS[m3.group(1)] = (i, e, 'fn', [m3.group(1)], None)
         i = e
         continue
-    m4 = re.match(r"^  useEffect\(", l)
+    m4 = re.match(r"^  (?:React\.)?useEffect\(", l)
     if m4:
         e = decl_end(i)
         DECLS[f'effect@{i+1}'] = (i, e, 'effect', [f'effect@{i+1}'], None)
@@ -108,6 +108,11 @@ for name, (s, e, kind, exported, g) in DECLS.items():
 # ---- resolve requested names ---------------------------------------------------
 plan_names = []   # decl keys
 for n in NAMES:
+    if n.startswith('effect@'):
+        want = n.split('@')[1]
+        hit = [k for k in DECLS if k.startswith('effect@') and DECLS[k][0] == int(want)-1]
+        assert hit, f'no effect at line {want}'
+        plan_names.append(hit[0]); continue
     if n in DECLS:
         plan_names.append(n)
     else:
@@ -123,12 +128,24 @@ plan_names = sorted(set(plan_names), key=lambda k: DECLS[k][0])
 
 moved_exported = set()
 for k in plan_names:
+    if DECLS[k][2] == 'effect':
+        continue  # effects have no names
     moved_exported.update(DECLS[k][3])
 spans = [(DECLS[k][0], DECLS[k][1]) for k in plan_names]
 for (a, b), (c, d) in zip(spans, spans[1:]):
     assert b <= c, f'overlap in moves {a}-{b} vs {c}-{d}'
 move_text = {k: lines[DECLS[k][0]:DECLS[k][1]] for k in plan_names}
 hook_pos = min(s for s, _ in spans)
+
+
+def param_decl_end(name):
+    """End line of the param's own decl (App-side), or None."""
+    if name in DECLS:
+        return DECLS[name][1]
+    for k, v in DECLS.items():
+        if name in v[3]:
+            return v[1]
+    return None
 
 # ---- dep closure ---------------------------------------------------------------
 GLOBALS = {'React','useState','useEffect','useMemo','useCallback','useRef',
@@ -211,7 +228,7 @@ body = strip_noise(blob)
 loc = locals_in(blob)
 members = set(re.findall(r"\.(\w+)", body))
 colonkeys = set(re.findall(r"(?:^|[{,\s])(\w+)\s*:", body, re.M))
-typewords = set(re.findall(r":\s*([A-Za-z_]\w*)", body))
+typewords = set(re.findall(r":\s*([A-Za-z_]\w*)", body)) | set(re.findall(r"\bas (x)", body.replace('}', ' ')) if False else re.findall(r"\bas ([A-Za-z_]\w*)", body))
 idents = set(re.findall(r"\b([A-Za-z_]\w*)\b", body))
 
 known = (GLOBALS | KW | TSWORDS | imp_named | core_names | names_names |
@@ -235,7 +252,7 @@ scan = lines[:]
 for s, e in spans:
     for k in range(s, e):
         scan[k] = ''
-scan_text = '\n'.join(scan)
+scan_text = '\n'.join('' if re.match(r'^\s*//', l) else l for l in scan)
 def owner_decl_key(ln):
     """Enclosing top-level decl key for a 0-based shell line, else None."""
     best = None
@@ -268,6 +285,31 @@ if problems:
 moved_blob = '\n'.join(joined[off[DECLS[k][0]]:off[DECLS[k][1]]] for k in plan_names)
 type_tokens = sorted({t for t in re.findall(r"\b([A-Z][A-Za-z0-9]*)\b", strip_noise(moved_blob))})
 
+# hook call must come after every param's decl (params are read at call time)
+late = []
+for pn in params:
+    pe = param_decl_end(pn)
+    if pe is not None and pe > hook_pos:
+        late.append((pn, pe))
+if late:
+    new_pos = max(pe for _, pe in late)
+    print(f'REPOSITION: params declared after earliest span; moving hook call '
+          f'from line {hook_pos + 1} to {new_pos}')
+    late2 = []
+    for n in moved_exported:
+        for m in re.finditer(rf"\b{n}\b", scan_text):
+            ln = scan_text[:m.start()].count('\n')
+            if hook_pos <= ln < new_pos:
+                ok_owner = owner_decl_key(ln)
+                ok_kind = DECLS[ok_owner][2] if ok_owner else None
+                if ok_kind in ('const', 'fn') and ok_owner is not None and                    not re.match(r"^  const \w+ = (useMemo|useCallback)", lines[DECLS[ok_owner][0]]):
+                    continue
+                late2.append((n, ln + 1, ok_owner, ok_kind))
+    if late2:
+        print('REPOSITION BLOCKED by eager uses in gap:', late2[:10])
+        problems = late2
+    else:
+        hook_pos = new_pos
 if not APPLY or bad or problems:
     sys.exit(1 if (bad or problems) else 0)
 

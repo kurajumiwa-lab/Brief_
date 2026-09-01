@@ -142,6 +142,7 @@ import { MyLayerScreen } from './screens/MyLayerScreen';
 import { NearbyScreen } from './screens/NearbyScreen';
 import { WorkflowsScreen } from './screens/WorkflowsScreen';
 import { OverlaysShell } from './screens/OverlaysShell';
+import { usePersonalLayer } from './shell/hooks/usePersonalLayer';
 import { useIngestionDesk } from './shell/hooks/useIngestionDesk';
 import { useArenaData } from './shell/hooks/useArenaData';
 import { useCaptureFlow } from './shell/hooks/useCaptureFlow';
@@ -289,10 +290,8 @@ export function App() {
   // -- a fabricated claim about the person using Brief, and one that pointed
   // at seed objects that no longer exist. Relationships are created by real
   // interaction from here on.
-  const [relationships, setRelationships] = useState<ObjectRelationship[]>([]);
 
   const [posts] = useState<BriefPost[]>(INITIAL_POSTS);
-  const [likedPostIds, setLikedPostIds] = useState<string[]>([]);
   const [activeEdition, setActiveEdition] = useState<TeaEdition>(() =>
     getCurrentEdition()
   );
@@ -307,7 +306,6 @@ export function App() {
   // The personal layer is the same object store re-ranked per user: we keep
   // the server's ORDERED ids plus the per-row boost, and map them onto the
   // existing `objects` list — never a second object store on the client.
-  const [personalState, setPersonalState] = useState<briefApi.PersonalState | null>(null);
   const [personalFeedIds, setPersonalFeedIds] = useState<string[] | null>(null);
   const [personalBoostMap, setPersonalBoostMap] = useState<Record<string, { boost: number; reasons: string[] }>>({});
   // Onboarding is optional and never blocks: skipping just closes the card.
@@ -707,73 +705,12 @@ export function App() {
   // Seed server-persisted saves into the client relationship graph — the
   // durable copy, so saves survive across devices. Only ADDS missing edges;
   // the relationship graph stays the single live source for the UI.
-  React.useEffect(() => {
-    if (!personalState || personalState.saved.length === 0) return;
-    setRelationships((prev) => {
-      const have = new Set(prev.filter((r) => r.verb === 'saved').map((r) => r.targetId));
-      const missing = personalState.saved.filter((id) => !have.has(id) && objects.some((o) => o.id === id));
-      if (missing.length === 0) return prev;
-      const nowIso = new Date().toISOString();
-      return [
-        ...prev,
-        ...missing.map((id) => ({
-          id: `rel_srv_${id}`,
-          sourceType: 'identity' as ObjectType,
-          sourceId: 'usr_me',
-          verb: 'saved' as const,
-          targetType: (objects.find((o) => o.id === id)?.type ?? 'knowledge') as ObjectType,
-          targetId: id,
-          state: 'engaged' as FlowState,
-          updatedAt: nowIso
-        }))
-      ];
-    });
-  }, [personalState, objects]);
 
-  const togglePersonalPick = (group: 'locations' | 'types' | 'topics', value: string) =>
-    setPersonalPicks((p) => ({
-      ...p,
-      [group]: p[group].includes(value) ? p[group].filter((v) => v !== value) : [...p[group], value]
-    }));
 
-  const savePersonalBrief = async () => {
-    setPersonalBusy(true);
-    const res = await briefApi.putInterests(personalPicks);
-    setPersonalBusy(false);
-    if (!res.ok) {
-      showToast(res.error ?? 'Could not save your Brief.');
-      return;
-    }
-    setPersonalState((p) => (p ? { ...p, interests: res.data.interests } : p));
-    setPersonalBriefDismissed(false);
-    setPersonalPicks({ locations: [], types: [], topics: [] });
-    showToast('Your Brief is set.');
-    void loadPersonal();
-  };
 
-  const followOne = async (kind: 'location' | 'type' | 'topic', value: string) => {
-    const res = await briefApi.followInterest(kind, value);
-    if (!res.ok) { showToast(res.error ?? 'Could not follow that.'); return; }
-    setPersonalState((p) => (p ? { ...p, interests: res.data.interests } : p));
-    void loadPersonal();
-  };
 
-  const unfollowOne = async (kind: 'location' | 'type' | 'topic', value: string) => {
-    const res = await briefApi.unfollowInterest(kind, value);
-    if (!res.ok) { showToast(res.error ?? 'Could not unfollow.'); return; }
-    setPersonalState((p) => (p ? { ...p, interests: res.data.interests } : p));
-    void loadPersonal();
-  };
 
   /** Unfollow an entity (venue/business/publisher/organizer/community). */
-  const unfollowEntityOne = async (id: string) => {
-    const res = await briefApi.unfollowEntity(id);
-    if (!res.ok) { showToast(res.error ?? 'Could not unfollow.'); return; }
-    setPersonalState((p) => p
-      ? { ...p, followed: p.followed.filter((f) => f.id !== id) }
-      : p);
-    void loadPersonal();
-  };
 
   /** Open an entity page from a chip or card link. */
   const openEntityPage = (id: string) => {
@@ -1323,6 +1260,33 @@ export function App() {
 
     return scored.slice(0, 4);
   };
+  const {
+    followOne,
+    likedPostIds,
+    personalState,
+    relatedToSavedIds,
+    relationships,
+    savePersonalBrief,
+    savedIdSet,
+    savedObjects,
+    setLikedPostIds,
+    setPersonalState,
+    setRelationships,
+    togglePersonalPick,
+    unfollowEntityOne,
+    unfollowOne,
+    watchedIds,
+  } = usePersonalLayer({
+    getRelatedObjects,
+    loadPersonal,
+    objects,
+    personalPicks,
+    setPersonalBriefDismissed,
+    setPersonalBusy,
+    setPersonalPicks,
+    showToast,
+  });
+
 
   // Discovery ranking (destination rework 16). A destination happening today
   // with vendors in it outranks an old generic listing -- but this is time and
@@ -1373,15 +1337,6 @@ export function App() {
 
   // STEP 4 My Layer: saved objects grouped by type, derived from the existing
   // relationships state. No parallel data structure.
-  const savedObjects = useMemo(
-    () =>
-      objects.filter((obj) =>
-        relationships.some(
-          (rel) => rel.targetId === obj.id && rel.verb === 'saved'
-        )
-      ),
-    [objects, relationships]
-  );
 
 
   // One graph instance over the live state. Components ask it questions
@@ -1391,10 +1346,6 @@ export function App() {
     [objects, relationships]
   );
 
-  const watchedIds = useMemo(
-    () => new Set(relationships.filter((r) => r.verb === 'watched').map((r) => r.targetId)),
-    [relationships]
-  );
 
   // Watch (prompt 21): records intent to monitor. No polling, no fake alerts --
   // diffObjects is the engine this will drive once ingestion supplies a second
@@ -1872,18 +1823,7 @@ export function App() {
 
 
 
-  const savedIdSet = useMemo(
-    () => new Set(savedObjects.map((o) => o.id)),
-    [savedObjects]
-  );
 
-  const relatedToSavedIds = useMemo(() => {
-    const out = new Set<string>();
-    for (const saved of savedObjects) {
-      for (const rel of getRelatedObjects(saved)) out.add(rel.item.id);
-    }
-    return out;
-  }, [savedObjects, objects]);
 
   const dailyBrief = useMemo(
     () =>
