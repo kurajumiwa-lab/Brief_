@@ -1145,41 +1145,6 @@ export function App() {
   // fixture. The fabricated client-side economy (points ledger, gift cards,
   // fake availability/reliability, account listings, venue check-ins) is gone.
 
-  React.useEffect(() => {
-    let live = true;
-    (async () => {
-      const [p, v, g, rooms] = await Promise.all([
-        briefApi.getArenaPlayers(),
-        briefApi.getArenaVenues(),
-        briefApi.getArenaGames(),
-        briefApi.getLobbyRooms()
-      ]);
-      if (!live) return;
-      if (p.ok) setArenaPlayers(p.data as any[]);
-      if (v.ok) setArenaVenues(v.data as any[]);
-      const counts: Record<string, number> = {};
-      const bump = (key: string, n = 1) => {
-        const client = SERVER_TO_CLIENT_GAME[key] ?? key;
-        counts[client] = (counts[client] ?? 0) + n;
-      };
-      if (g.ok) {
-        for (const [k, val] of Object.entries(g.data.activity ?? {})) {
-          if (typeof val !== 'number' || val < 0) continue;
-          const client = SERVER_TO_CLIENT_GAME[k] ?? k;
-          counts[client] = Math.max(counts[client] ?? 0, val);
-        }
-      }
-      if (rooms.ok) {
-        for (const r of rooms.data as any[]) {
-          if (!r?.gameId) continue;
-          if (r.status === 'started' || r.status === 'closed') continue;
-          bump(String(r.gameId), 1);
-        }
-      }
-      setArenaActivity(counts);
-    })();
-    return () => { live = false; };
-  }, []);
 
 
   const [arenaSection, setArenaSection] = useState<
