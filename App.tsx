@@ -58,6 +58,7 @@ import { MainShelf } from './components/MainShelf';
 import { Onboarding } from './components/Onboarding';
 import { NextStep } from './components/NextStep';
 import { isSurfaceUnlocked, shouldOpenFirstRun, showsLadder, unlockHint } from './components/ladder';
+import { WairoFloatingWidget } from './components/wairo/WairoFloatingWidget';
 import { arrivalSource, linkTokenFrom, urlWithoutArrivalParams, type ArrivalChannel } from './components/arrival';
 import { ArenaBetaPilot } from './components/ArenaBetaPilot';
 import type { ArenaBetaSegment, ArenaBetaSummary } from './api/types';
@@ -1952,6 +1953,9 @@ export function App() {
       <footer className="border-t border-[#D6CFE4] mt-12 py-6 text-xs text-[#251045]/60 text-center">
         Everything Happening Around You
       </footer>
+
+      {/* WAIRO QUANTUM DELIVERY MINI APP EMBEDDED COMPANION */}
+      <WairoFloatingWidget />
 
     </div>
   );
