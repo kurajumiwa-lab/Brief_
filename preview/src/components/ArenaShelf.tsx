@@ -37,7 +37,7 @@ interface ArenaShelfProps {
   onLaunchTemplate?: (template: CustomLeagueTemplate) => void;
 }
 
-// Built-in blended challenge templates
+// Built-in blended challenge templates across games
 const DEFAULT_BLENDED_TEMPLATES: CustomLeagueTemplate[] = [
   {
     id: 'tpl-golden-goal-duel',
@@ -66,21 +66,8 @@ const DEFAULT_BLENDED_TEMPLATES: CustomLeagueTemplate[] = [
     isPrivate: false
   },
   {
-    id: 'tpl-coop-syndicate',
-    title: '2v2 Co-op Pinboard Syndicate',
-    gameId: 'efootball',
-    gameName: 'eFootball',
-    format: '2v2 Co-op Syndicate',
-    entryFeeKes: 0,
-    prizePoolKes: 0,
-    maxPlayers: 32,
-    openWindow: 'Weekly Ladder',
-    rules: 'Free entry for verified clan duos. Match coordination inside Brief Arena room.',
-    isPrivate: false
-  },
-  {
     id: 'tpl-warzone-stakes',
-    title: 'Sniper Duel / 1v1 Custom Room',
+    title: '1v1 Sniper Duel: Killhouse / Gulag',
     gameId: 'cod',
     gameName: 'Call of Duty Mobile',
     format: 'Custom Staked 1v1',
@@ -88,7 +75,20 @@ const DEFAULT_BLENDED_TEMPLATES: CustomLeagueTemplate[] = [
     prizePoolKes: 4000,
     maxPlayers: 8,
     openWindow: 'Live Queue',
-    rules: 'Custom private room match. Killhouse sniper only. Coordinate room invite in Brief.',
+    rules: 'Bolt-action snipers only (DL Q33/Locus). First to 10 kills. Quickscope duel.',
+    isPrivate: false
+  },
+  {
+    id: 'tpl-pubg-chicken',
+    title: 'Erangel Staked Drop: Winner Dinner',
+    gameId: 'pubg',
+    gameName: 'PUBG Mobile',
+    format: 'Custom Staked 1v1',
+    entryFeeKes: 250,
+    prizePoolKes: 3500,
+    maxPlayers: 16,
+    openWindow: 'Live Queue',
+    rules: 'Custom private room drop in Erangel. Last surviving player/squad takes match pot.',
     isPrivate: false
   }
 ];

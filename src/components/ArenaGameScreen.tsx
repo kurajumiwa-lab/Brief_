@@ -22,10 +22,19 @@ import {
   Radio,
   Share2,
   Lock,
-  Hash
+  Hash,
+  Crosshair,
+  Target
 } from 'lucide-react';
 import { CustomLeagueModal } from './arena/CustomLeagueModal';
 import { EfootballHighlightBanner, EfootballEventsHub } from './arena/EfootballShowcase';
+import { getGamePlacards, ArenaPlacard } from './arena/GamePlacardsData';
+import { 
+  CodCustomRoomHub, 
+  PubgCustomRoomHub, 
+  EaFcCustomMatchHub, 
+  FcMobileCustomHub 
+} from './arena/GameSpecificHubs';
 
 export type ArenaStakeKind = 'friendly' | 'ranked' | 'entry_fee';
 
@@ -83,77 +92,22 @@ export function ArenaGameScreen({
   onViewLeaderboard,
   onViewTournaments
 }: ArenaGameScreenProps) {
-  const theme = themeFor(game.id);
+  const theme = themeFor(game.id as any);
   const [mode, setMode] = useState<string>(game.modes[0] ?? '1v1');
   const [stake, setStake] = useState<ArenaStakeKind>('friendly');
   const [entryFee, setEntryFee] = useState<string>('100');
   const [roomNote, setRoomNote] = useState<string>('');
   const [windowMinutes, setWindowMinutes] = useState<number>(120);
   const [isLeagueModalOpen, setIsLeagueModalOpen] = useState<boolean>(false);
-  const [selectedPlacardForDetails, setSelectedPlacardForDetails] = useState<any | null>(null);
+  const [selectedPlacardForDetails, setSelectedPlacardForDetails] = useState<ArenaPlacard | null>(null);
 
   const feeNum = Number(entryFee);
   const feeValid = Number.isFinite(feeNum) && Number.isInteger(feeNum) && feeNum > 0;
   const creating = busyId === 'create';
   const canCreate = !creating && (stake !== 'entry_fee' || feeValid);
 
-  // Placard Cards tailored to community challenges
-  const communityPlacards = [
-    {
-      id: 'golden-goal',
-      title: 'Golden Goal: Sudden Death Duel',
-      tag: 'COMMUNITY PLACARD',
-      tagColor: '#F59E0B',
-      endsIn: '4 day(s) 12 hr(s)',
-      bgGradient: 'from-[#1A1408] via-[#2A1F0C] to-[#0D1117]',
-      desc: 'First player to score a goal wins immediately. Room code shared in Brief chat upon acceptance.',
-      rewards: ['🏆 +40 Elo', '🪙 Winner Takes Pot', 'Rank Badge'],
-      multiplier: 'Sudden Death Rules',
-      defaultMode: '1v1',
-      defaultStake: 'ranked' as ArenaStakeKind,
-    },
-    {
-      id: 'beat-the-clock',
-      title: 'Beat the Clock: 5-Min Blitz',
-      tag: 'CLAN BLITZ',
-      tagColor: '#EF4444',
-      endsIn: '6 day(s) 18 hr(s)',
-      bgGradient: 'from-[#2D0B0B] via-[#451212] to-[#1F0707]',
-      desc: 'Score within the high-intensity blitz window. Clean sheets and hat-tricks grant double community rep.',
-      rewards: ['⚡ Blitz Rep', '👟 Clan Trophy', 'KES 1,200 Stakes'],
-      multiplier: '+150% Blitz Bonus',
-      defaultMode: '1v1',
-      defaultStake: 'entry_fee' as ArenaStakeKind,
-      defaultFee: 150,
-    },
-    {
-      id: 'coop-pinboard',
-      title: '2v2 Co-op Clan Syndicate',
-      tag: '2v2 CO-OP SQUAD',
-      tagColor: '#00BFEF',
-      endsIn: '13 day(s) 18 hr(s)',
-      bgGradient: 'from-[#0B1B2A] via-[#173247] to-[#0D1117]',
-      desc: 'Join alone or with a clan partner. Coordinate 2v2 co-op squad room invites directly in Brief.',
-      rewards: ['⭐ Co-op Pin', '💎 30k Clan Rep', 'Leaderboard +60'],
-      multiplier: '+200% Team Multiplier',
-      defaultMode: '2v2',
-      defaultStake: 'friendly' as ArenaStakeKind,
-    },
-    {
-      id: 'african-derby',
-      title: `${game.shortName} Nairobi Derby League`,
-      tag: 'REGIONAL LEAGUE',
-      tagColor: '#EC4899',
-      endsIn: '5 day(s) 6 hr(s)',
-      bgGradient: 'from-[#2B0E1E] via-[#42152F] to-[#0D1117]',
-      desc: `Weekly regional tournament for African players in ${game.name}. Staked and ranked duel lobbies open.`,
-      rewards: ['🎁 Derby Cup', '🪙 500 Pts', 'KES 2,500 Pool'],
-      multiplier: '+220% Derby Stakes',
-      defaultMode: game.modes[0] ?? '1v1',
-      defaultStake: 'entry_fee' as ArenaStakeKind,
-      defaultFee: 250,
-    }
-  ];
+  // Placard Cards tailored strictly to THIS game's actual rules & genre
+  const communityPlacards = getGamePlacards(game.id, game.shortName, game.name);
 
   const handleCreate = () => {
     if (!canCreate) return;
@@ -167,13 +121,26 @@ export function ArenaGameScreen({
     });
   };
 
-  const handleLaunchPlacard = (p: typeof communityPlacards[0]) => {
+  const handleLaunchPlacard = (p: ArenaPlacard) => {
     soundEngine.play('heavyTap');
     onCreateChallenge({
       mode: p.defaultMode,
       stake: p.defaultStake,
       entryFeeKes: p.defaultFee,
       note: `${p.title} - ${p.tag}`,
+      openMinutes: 120
+    });
+  };
+
+  const handleLaunchCustomHubDuel = (customMode: string, note: string) => {
+    soundEngine.play('heavyTap');
+    setMode(customMode);
+    setRoomNote(note);
+    onCreateChallenge({
+      mode: customMode,
+      stake: 'entry_fee',
+      entryFeeKes: 150,
+      note,
       openMinutes: 120
     });
   };
@@ -280,10 +247,10 @@ export function ArenaGameScreen({
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-xs font-black uppercase tracking-[0.18em] text-[#0D1117]">
-                Live Community Challenge Placards
+                Live #{game.shortName.toLowerCase()} Challenge Placards
               </h3>
               <p className="text-[11px] text-[#0D1117]/60">
-                Lifted challenge templates: Golden Goal, Speed Blitz & Squad Pinboards
+                Authentic game-specific competition formats & community prize pools
               </p>
             </div>
           </div>
@@ -356,7 +323,7 @@ export function ArenaGameScreen({
           </div>
         </section>
 
-        {/* ================= EFOOTBALL SHOWCASE & SELECTION CONTRACTS ================= */}
+        {/* ================= GAME-SPECIFIC INTERACTIVE HUBS ================= */}
         {game.id === 'efootball' && (
           <div className="space-y-6">
             <EfootballHighlightBanner
@@ -390,6 +357,22 @@ export function ArenaGameScreen({
           </div>
         )}
 
+        {game.id === 'cod' && (
+          <CodCustomRoomHub onLaunchCustomDuel={handleLaunchCustomHubDuel} />
+        )}
+
+        {game.id === 'pubg' && (
+          <PubgCustomRoomHub onLaunchCustomDuel={handleLaunchCustomHubDuel} />
+        )}
+
+        {game.id === 'ea_fc' && (
+          <EaFcCustomMatchHub onLaunchCustomDuel={handleLaunchCustomHubDuel} />
+        )}
+
+        {game.id === 'fc_mobile' && (
+          <FcMobileCustomHub onLaunchCustomDuel={handleLaunchCustomHubDuel} />
+        )}
+
         {/* ================= MATCHROOM COMPOSER (STAKED / RANKED / FRIENDLY) ================= */}
         <div className="rounded-3xl bg-white border border-[#E5E8EC] p-5 sm:p-6 space-y-4 shadow-xs">
           <div className="flex items-center justify-between border-b border-[#EFF1F4] pb-3">
@@ -398,22 +381,21 @@ export function ArenaGameScreen({
                 Open a Matchroom in #{game.shortName.toLowerCase()}-hub
               </h3>
               <p className="text-[11px] text-[#0D1117]/60">
-                Coordinate duel format, KES stakes, and share your room invite
+                Set mode, stakes, room code & wait for opponent to join
               </p>
             </div>
-            <span className="text-xs font-mono font-bold text-[#FF5A1F]">
-              {mode} • {STAKES.find((s) => s.id === stake)?.label}
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-black/5 text-[#0D1117]">
+              {theme.providerMark} MATCHMAKER
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            
-            {/* Mode Selector */}
+          {/* Mode Selector */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1.5">
+              <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1">
                 Game Mode
               </label>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-2">
                 {game.modes.map((m) => (
                   <button
                     key={m}
@@ -429,12 +411,12 @@ export function ArenaGameScreen({
               </div>
             </div>
 
-            {/* Stake Selector */}
+            {/* Stake Type */}
             <div>
-              <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1.5">
-                Stake Type
+              <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1">
+                Stake / Type
               </label>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex space-x-2">
                 {STAKES.map((s) => (
                   <button
                     key={s.id}
@@ -486,14 +468,14 @@ export function ArenaGameScreen({
           {/* Room PIN / Note */}
           <div>
             <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1">
-              Room Note & Invite Code (e.g. "PS5 Nairobi / Room Code #4920")
+              Room Note & Invite Code (e.g. "{game.shortName} Room Code #8849")
             </label>
             <input
               type="text"
               maxLength={80}
               value={roomNote}
               onChange={(e) => setRoomNote(e.target.value)}
-              placeholder="e.g. Host on PS5, room code 8849, 10-min match"
+              placeholder="e.g. Host on PS5 / Mobile, room code 8849, agreed settings"
               className="w-full rounded-xl border border-gray-300 bg-gray-50 px-3 py-2 text-xs text-[#0D1117] focus:outline-none focus:border-[#FF5A1F]"
             />
           </div>
