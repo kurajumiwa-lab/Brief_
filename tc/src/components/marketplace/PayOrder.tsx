@@ -29,12 +29,12 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const STATUS_TONE: Record<string, string> = {
-  intent: 'text-[#F7F7F8]',
-  authorized: 'text-[#F7F7F8]',
-  confirmed: 'text-[#F7F7F8]',
-  failed: 'text-[#F7F7F8]',
-  cancelled: 'text-[#F7F7F8]',
-  reversed: 'text-[#F7F7F8]'
+  intent: 'text-[#0D1117]',
+  authorized: 'text-[#0D1117]',
+  confirmed: 'text-[#0D1117]',
+  failed: 'text-[#0D1117]',
+  cancelled: 'text-[#0D1117]',
+  reversed: 'text-[#0D1117]'
 };
 
 const TERMINAL = new Set(['confirmed', 'failed', 'cancelled', 'reversed']);
@@ -110,19 +110,19 @@ export function PayOrder({ order, onPaid }: PayOrderProps) {
   const inFlight = status === 'intent' || status === 'authorized';
 
   return (
-    <div className="bg-[#12151A] border border-[#222630] rounded-xl p-3 space-y-2">
+    <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-xl p-3 space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[11px] font-extrabold text-[#F7F7F8]">Pay with M-Pesa</p>
+        <p className="text-[11px] font-extrabold text-[#0D1117]">Pay with M-Pesa</p>
       </div>
 
-      <p className="text-sm font-extrabold text-[#F7F7F8]">
+      <p className="text-sm font-extrabold text-[#0D1117]">
         {money(order.total, order.currency)}
       </p>
 
-      {error && <p className="text-[10px] text-[#F7F7F8]">{error}</p>}
+      {error && <p className="text-[10px] text-[#0D1117]">{error}</p>}
 
       {status && (
-        <p className={`text-[11px] font-bold ${STATUS_TONE[status] ?? 'text-[#F7F7F8]/60'}`}>
+        <p className={`text-[11px] font-bold ${STATUS_TONE[status] ?? 'text-[#0D1117]/60'}`}>
           {STATUS_LABEL[status] ?? status}
           {status === 'failed' && intent?.failureReason
             ? ` — ${intent.failureReason}`
@@ -137,16 +137,16 @@ export function PayOrder({ order, onPaid }: PayOrderProps) {
             onChange={(e) => setPhone(e.target.value)}
             placeholder="M-Pesa number, e.g. 0722 000 111"
             inputMode="tel"
-            className="w-full bg-[#171A20] border border-[#222630] rounded-lg px-3 py-2 text-xs text-[#F7F7F8] placeholder:text-[#F7F7F8]/60 outline-none focus:border-[#22E6E0]"
+            className="w-full bg-[#F0F2F5] border border-[#E5E8EC] rounded-lg px-3 py-2 text-xs text-[#0D1117] placeholder:text-[#0D1117]/60 outline-none focus:border-[#2563EB]"
           />
           <button
             onClick={pay}
             disabled={busy || phone.trim().length < 9}
-            className="w-full px-3 py-2 rounded-lg bg-[#FF5A1F] text-[#0D0F12] font-extrabold text-[11px] cursor-pointer disabled:opacity-40"
+            className="w-full px-3 py-2 rounded-lg bg-[#FF5A1F] text-[#0D1117] font-extrabold text-[11px] cursor-pointer disabled:opacity-40"
           >
             {busy ? 'Requesting payment…' : 'Pay now'}
           </button>
-          <p className="text-[9px] text-[#F7F7F8]/60 leading-snug">
+          <p className="text-[9px] text-[#0D1117]/60 leading-snug">
             A prompt is sent to your phone. Confirmation appears only after
             Brief verifies the payment.
           </p>
@@ -154,7 +154,7 @@ export function PayOrder({ order, onPaid }: PayOrderProps) {
       )}
 
       {inFlight && (
-        <p className="text-[10px] text-[#F7F7F8]/60 leading-snug">
+        <p className="text-[10px] text-[#0D1117]/60 leading-snug">
           Check your phone for the M-Pesa prompt and enter your PIN. This
           screen updates automatically once the payment is verified.
         </p>

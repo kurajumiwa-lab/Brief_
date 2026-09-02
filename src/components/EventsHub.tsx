@@ -72,8 +72,8 @@ export function EventsHub() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-extrabold text-[#F7F7F8]">What's on</h2>
-        <p className="text-[10px] text-[#F7F7F8]/60 leading-snug">
+        <h2 className="text-lg font-extrabold text-[#0D1117]">What's on</h2>
+        <p className="text-[10px] text-[#0D1117]/60 leading-snug">
           Everything published around you — popups, sessions, drops, events and causes.
           Popularity is counted people, never a seeded number.
         </p>
@@ -84,7 +84,7 @@ export function EventsHub() {
         <button
           onClick={() => setCategory(null)}
           className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer border ${
-            category === null ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]' : 'bg-[#12151A] text-[#F7F7F8]/70 border-[#222630]'
+            category === null ? 'bg-[#FF5A1F] text-[#0D1117] border-[#2563EB]' : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
           }`}
         >
           Everything
@@ -94,7 +94,7 @@ export function EventsHub() {
             key={c}
             onClick={() => setCategory(category === c ? null : c)}
             className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer border ${
-              category === c ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]' : 'bg-[#12151A] text-[#F7F7F8]/70 border-[#222630]'
+              category === c ? 'bg-[#FF5A1F] text-[#0D1117] border-[#2563EB]' : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
             }`}
           >
             {labels[c] ?? c}
@@ -103,55 +103,55 @@ export function EventsHub() {
       </div>
 
       {/* filters */}
-      <div className="rounded-2xl border border-[#222630] bg-[#12151A] p-3 space-y-2">
+      <div className="rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] p-3 space-y-2">
         <div className="flex flex-wrap gap-2">
           <input
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             placeholder="Near (location)"
             aria-label="location filter"
-            className="min-w-[140px] flex-1 rounded-lg border border-[#222630] bg-[#171A20] px-3 py-2 text-[12px] text-[#F7F7F8]"
+            className="min-w-[140px] flex-1 rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117]"
           />
           <input
             type="date"
             value={from}
             onChange={(e) => setFrom(e.target.value)}
             aria-label="from date"
-            className="rounded-lg border border-[#222630] bg-[#171A20] px-2.5 py-2 text-[12px] text-[#F7F7F8]"
+            className="rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-2.5 py-2 text-[12px] text-[#0D1117]"
           />
           <input
             type="date"
             value={to}
             onChange={(e) => setTo(e.target.value)}
             aria-label="to date"
-            className="rounded-lg border border-[#222630] bg-[#171A20] px-2.5 py-2 text-[12px] text-[#F7F7F8]"
+            className="rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-2.5 py-2 text-[12px] text-[#0D1117]"
           />
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => setFeaturedOnly((v) => !v)}
             className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer border ${
-              featuredOnly ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]' : 'bg-[#12151A] text-[#F7F7F8]/70 border-[#222630]'
+              featuredOnly ? 'bg-[#FF5A1F] text-[#0D1117] border-[#2563EB]' : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
             }`}
           >
             ★ Featured only
           </button>
           <button
             onClick={() => setSort(sort === 'date' ? 'popularity' : 'date')}
-            className="px-2.5 py-1 rounded-lg text-[10px] font-extrabold border border-[#222630] bg-[#12151A] text-[#F7F7F8] cursor-pointer"
+            className="px-2.5 py-1 rounded-lg text-[10px] font-extrabold border border-[#E5E8EC] bg-[#FFFFFF] text-[#0D1117] cursor-pointer"
           >
             Sort: {sort === 'date' ? 'soonest first' : 'most people first'}
           </button>
-          <span className="ml-auto text-[10px] text-[#F7F7F8]/60">
+          <span className="ml-auto text-[10px] text-[#0D1117]/60">
             {rows === null ? '' : `${rows.length} shown${total > rows.length ? ` of ${total}` : ''}`}
           </span>
         </div>
       </div>
 
-      {error && <p className="text-xs text-[#F7F7F8]">{error}</p>}
-      {busy && rows === null && <p className="text-xs text-[#F7F7F8]/60">Loading…</p>}
+      {error && <p className="text-xs text-[#0D1117]">{error}</p>}
+      {busy && rows === null && <p className="text-xs text-[#0D1117]/60">Loading…</p>}
       {rows !== null && rows.length === 0 && !error && (
-        <p className="text-xs text-[#F7F7F8]/60">
+        <p className="text-xs text-[#0D1117]/60">
           Nothing matches. Widen the window or clear a filter — an honest empty
           beat a filled screen.
         </p>
@@ -162,22 +162,22 @@ export function EventsHub() {
           <button
             key={e.slug}
             onClick={() => open(e.slug)}
-            className="w-full text-left bg-[#12151A] border border-[#222630] rounded-2xl p-3.5 space-y-1.5 cursor-pointer hover:border-[#22E6E0]"
+            className="w-full text-left bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-3.5 space-y-1.5 cursor-pointer hover:border-[#2563EB]"
           >
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/60">
+                <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#0D1117]/60">
                   {e.categoryLabel}
                 </p>
-                <p className="text-sm font-extrabold text-[#F7F7F8] truncate">{e.title}</p>
+                <p className="text-sm font-extrabold text-[#0D1117] truncate">{e.title}</p>
               </div>
               {e.featured && (
-                <span className="shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-[#FF5A1F] text-[#0D0F12]">
+                <span className="shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-[#FF5A1F] text-[#0D1117]">
                   ★ Featured
                 </span>
               )}
             </div>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-[#F7F7F8]/60">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-[#0D1117]/60">
               {e.startsAt && <span>{e.startsAt.slice(0, 10)}</span>}
               {e.location && <span className="truncate">{e.location}</span>}
               <span>{e.goalAmount != null ? 'Cause / pot' : money(e.price, e.currency)}</span>

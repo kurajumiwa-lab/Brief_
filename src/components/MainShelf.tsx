@@ -189,8 +189,8 @@ function ShelfCardView({
       data-shelf-id={card.id}
       className={`group relative shrink-0 overflow-hidden rounded-xl text-left transition-all hover:-translate-y-0.5 cursor-pointer ${
         isDark
-          ? 'border border-[#222B3A] hover:border-[#38E879] shadow-lg'
-          : 'border border-[#222630] hover:border-[#22E6E0]'
+          ? 'border border-[#222B3A] hover:border-[#16A34A] shadow-lg'
+          : 'border border-[#E5E8EC] hover:border-[#2563EB]'
       } ${
         compact ? 'w-full min-h-[76px] sm:min-h-[82px]' : 'w-[144px] min-h-[102px] sm:w-auto sm:min-h-[108px]'
       }`}
@@ -211,14 +211,14 @@ function ShelfCardView({
         }}
       />
       {locked && service && (
-        <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-[#08090B]/85 px-1.5 py-0.5 text-[7px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]">
+        <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-[#0D1117]/85 px-1.5 py-0.5 text-[7px] font-extrabold uppercase tracking-[0.14em] text-[#0D1117]">
           <Lock className="h-2 w-2" /> {service.unlocksAfter}
         </span>
       )}
       {!locked && card.priority && (
         <span
           className={`absolute right-2 top-2 rounded-full px-1.5 py-0.5 text-[7px] font-extrabold uppercase tracking-[0.14em] ${
-            isDark ? 'bg-[#38E879] text-[#08090B]' : 'bg-[#FF5A1F] text-[#0D0F12]'
+            isDark ? 'bg-[#16A34A] text-[#0D1117]' : 'bg-[#FF5A1F] text-[#0D1117]'
           }`}
         >
           Free to play
@@ -227,22 +227,22 @@ function ShelfCardView({
       {!locked && card.featured && (
         <span
           className={`absolute right-2 top-2 rounded-full px-1.5 py-0.5 text-[7px] font-extrabold uppercase tracking-[0.14em] ${
-            isDark ? 'bg-[#38E879] text-[#08090B]' : 'bg-[#12151A] text-[#F7F7F8]'
+            isDark ? 'bg-[#16A34A] text-[#0D1117]' : 'bg-[#FFFFFF] text-[#0D1117]'
           }`}
         >
           Featured
         </span>
       )}
       {card.id === 'play' && playOpenCount === 0 && (
-        <span className="absolute right-2 top-2 rounded-full border border-[#222630]/35 bg-[#08090B]/85 px-1.5 py-0.5 text-[7px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]">
+        <span className="absolute right-2 top-2 rounded-full border border-[#E5E8EC]/35 bg-[#0D1117]/85 px-1.5 py-0.5 text-[7px] font-extrabold uppercase tracking-[0.14em] text-[#0D1117]">
           Quiet now
         </span>
       )}
       <span
         className={`absolute left-2 top-2 flex items-center justify-center rounded-md ${
           isDark
-            ? 'bg-[#151D2A]/90 border border-[#2B374C] text-[#38E879]'
-            : 'bg-[#FF5A1F]/85 text-[#F7F7F8]'
+            ? 'bg-[#151D2A]/90 border border-[#2B374C] text-[#16A34A]'
+            : 'bg-[#FF5A1F]/85 text-[#0D1117]'
         } ${compact ? 'h-5 w-5' : 'h-6 w-6'}`}
       >
         <Icon className={compact ? 'h-2.5 w-2.5' : 'h-3 w-3'} />
@@ -250,13 +250,13 @@ function ShelfCardView({
       <div className={`absolute inset-x-2.5 ${compact ? 'bottom-2' : 'bottom-2.5'}`}>
         <p
           className={`text-[7.5px] font-extrabold uppercase tracking-[0.16em] ${
-            isDark ? 'text-[#38E879]' : 'text-[#F7F7F8]/75'
+            isDark ? 'text-[#16A34A]' : 'text-[#0D1117]/75'
           }`}
         >
           {card.eyebrow}
         </p>
-        <p className={`mt-0.5 font-extrabold leading-tight text-[#F7F7F8] ${compact ? 'text-[12px]' : 'text-[13px]'}`}>{card.title}</p>
-        <p className="mt-0.5 line-clamp-1 text-[9px] leading-snug text-[#F7F7F8]/80">
+        <p className={`mt-0.5 font-extrabold leading-tight text-[#0D1117] ${compact ? 'text-[12px]' : 'text-[13px]'}`}>{card.title}</p>
+        <p className="mt-0.5 line-clamp-1 text-[9px] leading-snug text-[#0D1117]/80">
           {locked && service ? `Opens after: ${service.unlocksAfter}` : detail}
         </p>
       </div>
@@ -279,7 +279,7 @@ export function MainShelf({
         <div>
           <p
             className={`text-[9px] font-extrabold uppercase tracking-[0.18em] ${
-              isDark ? 'text-[#38E879]' : 'text-[#F7F7F8]/70'
+              isDark ? 'text-[#16A34A]' : 'text-[#0D1117]/70'
             }`}
           >
             Main shelf
@@ -287,7 +287,7 @@ export function MainShelf({
           <h2
             id="main-shelf-title"
             className={`mt-0.5 text-[16px] font-extrabold tracking-[-0.02em] ${
-              isDark ? 'text-[#F7F7F8]' : 'text-[#F7F7F8]'
+              isDark ? 'text-[#0D1117]' : 'text-[#0D1117]'
             }`}
           >
             What do you want to do?
@@ -295,7 +295,7 @@ export function MainShelf({
         </div>
         <span
           className={`inline-flex items-center gap-1 text-[9px] font-bold ${
-            isDark ? 'text-[#A7ACB5]' : 'text-[#F7F7F8]/60'
+            isDark ? 'text-[#5A6472]' : 'text-[#0D1117]/60'
           }`}
         >
           <ArrowRight className="h-2.5 w-2.5" /> swipe or tap
@@ -316,7 +316,7 @@ export function MainShelf({
         ))}
       </div>
       {!compact && (
-        <p className={`px-1 text-[9.5px] leading-snug ${isDark ? 'text-[#A7ACB5]' : 'text-[#F7F7F8]/60'}`}>
+        <p className={`px-1 text-[9.5px] leading-snug ${isDark ? 'text-[#5A6472]' : 'text-[#0D1117]/60'}`}>
           The shelf is the shortcut. Use the menu for less frequent tools and region settings.
         </p>
       )}

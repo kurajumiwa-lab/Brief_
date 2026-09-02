@@ -57,14 +57,14 @@ export function MediaLibrary({ onUse }: MediaLibraryProps) {
   };
 
   return (
-    <div className="rounded-xl border border-[#222630] bg-[#171A20] p-3 space-y-2">
+    <div className="rounded-xl border border-[#E5E8EC] bg-[#F0F2F5] p-3 space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/60">
+        <p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-[#0D1117]/60">
           Your media library
         </p>
         <button
           onClick={() => setOpen((v) => !v)}
-          className="text-[10px] font-extrabold text-[#F7F7F8] cursor-pointer"
+          className="text-[10px] font-extrabold text-[#0D1117] cursor-pointer"
         >
           {open ? 'Hide' : 'Show'}
         </button>
@@ -73,13 +73,13 @@ export function MediaLibrary({ onUse }: MediaLibraryProps) {
       {open && (
         <>
           {error && (
-            <p className="text-[10px] text-[#F7F7F8]">{error}</p>
+            <p className="text-[10px] text-[#0D1117]">{error}</p>
           )}
           {rows === null && (
-            <p className="text-[10px] text-[#F7F7F8]/60">Loading…</p>
+            <p className="text-[10px] text-[#0D1117]/60">Loading…</p>
           )}
           {rows !== null && rows.length === 0 && !error && (
-            <p className="text-[10px] text-[#F7F7F8]/60">
+            <p className="text-[10px] text-[#0D1117]/60">
               No uploads yet. Files you add above collect here, ready to reuse.
             </p>
           )}
@@ -88,31 +88,31 @@ export function MediaLibrary({ onUse }: MediaLibraryProps) {
               {rows.map((m) => (
                 <li
                   key={m.id}
-                  className="flex items-center gap-2 rounded-lg bg-[#12151A] border border-[#222630] px-2 py-1.5"
+                  className="flex items-center gap-2 rounded-lg bg-[#FFFFFF] border border-[#E5E8EC] px-2 py-1.5"
                 >
                   <img
                     src={m.url}
                     alt=""
-                    className="h-8 w-8 shrink-0 rounded-md object-cover bg-[#171A20]"
+                    className="h-8 w-8 shrink-0 rounded-md object-cover bg-[#F0F2F5]"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[10px] font-bold text-[#F7F7F8]">
+                    <p className="truncate text-[10px] font-bold text-[#0D1117]">
                       {m.originalName ?? 'unnamed upload'}
                     </p>
-                    <p className="text-[9px] text-[#F7F7F8]/60">
+                    <p className="text-[9px] text-[#0D1117]/60">
                       {(m.bytes / 1024).toFixed(0)} KB · {m.createdAt.slice(0, 10)}
                     </p>
                   </div>
                   <button
                     onClick={() => onUse(m.url)}
-                    className="shrink-0 px-2 py-1 rounded-lg bg-[#FF5A1F] text-[#0D0F12] font-extrabold text-[9px] cursor-pointer"
+                    className="shrink-0 px-2 py-1 rounded-lg bg-[#FF5A1F] text-[#0D1117] font-extrabold text-[9px] cursor-pointer"
                   >
                     Use
                   </button>
                   <button
                     onClick={() => handleDelete(m.id)}
                     disabled={busyId === m.id}
-                    className="shrink-0 px-2 py-1 rounded-lg border border-[#222630] font-bold text-[9px] text-[#F7F7F8]/60 cursor-pointer disabled:opacity-50"
+                    className="shrink-0 px-2 py-1 rounded-lg border border-[#E5E8EC] font-bold text-[9px] text-[#0D1117]/60 cursor-pointer disabled:opacity-50"
                   >
                     {busyId === m.id ? '…' : 'Delete'}
                   </button>
@@ -120,7 +120,7 @@ export function MediaLibrary({ onUse }: MediaLibraryProps) {
               ))}
             </ul>
           )}
-          {note && <p className="text-[10px] text-[#F7F7F8]/70">{note}</p>}
+          {note && <p className="text-[10px] text-[#0D1117]/70">{note}</p>}
         </>
       )}
     </div>

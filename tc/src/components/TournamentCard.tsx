@@ -43,42 +43,42 @@ export function TournamentCard({
   const [bracketOpen, setBracketOpen] = React.useState(false);
 
   return (
-    <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-3">
+    <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-3">
       <div className="flex items-baseline justify-between gap-3">
-        <p className="text-xs font-extrabold text-[#F7F7F8]">{name}</p>
-        <span className="text-[9px] text-[#F7F7F8]/60 shrink-0">
+        <p className="text-xs font-extrabold text-[#0D1117]">{name}</p>
+        <span className="text-[9px] text-[#0D1117]/60 shrink-0">
           {registered}/{capacity}
         </span>
       </div>
-      <p className="text-[9px] text-[#F7F7F8]/60 mt-0.5">
+      <p className="text-[9px] text-[#0D1117]/60 mt-0.5">
         Hosted by {organizerName} - {status}
       </p>
       {prizeDescription && (
-        <p className="text-[10px] text-[#F7F7F8] mt-1">{prizeDescription}</p>
+        <p className="text-[10px] text-[#0D1117] mt-1">{prizeDescription}</p>
       )}
 
       {/* Organizer reward, itemised. Shown honestly, including zero. */}
       {rewardPoints > 0 ? (
-        <div className="mt-2 pt-2 border-t border-[#222630]">
+        <div className="mt-2 pt-2 border-t border-[#E5E8EC]">
           <div className="flex items-baseline justify-between gap-3">
-            <span className="text-[9px] text-[#F7F7F8]/60">Organizer earned</span>
-            <span className="text-xs font-extrabold text-[#F7F7F8]">
+            <span className="text-[9px] text-[#0D1117]/60">Organizer earned</span>
+            <span className="text-xs font-extrabold text-[#0D1117]">
               {rewardPoints.toLocaleString()}
             </span>
           </div>
           {rewardLines.map((l) => (
             <div key={l.label} className="flex items-baseline justify-between gap-3">
-              <span className="text-[9px] text-[#F7F7F8]/60">{l.label}</span>
-              <span className="text-[9px] text-[#F7F7F8]/60">+{l.points.toLocaleString()}</span>
+              <span className="text-[9px] text-[#0D1117]/60">{l.label}</span>
+              <span className="text-[9px] text-[#0D1117]/60">+{l.points.toLocaleString()}</span>
             </div>
           ))}
         </div>
       ) : (
-        <p className="text-[9px] text-[#F7F7F8]/60 mt-1">Organizer reward: none - {rewardReason}</p>
+        <p className="text-[9px] text-[#0D1117]/60 mt-1">Organizer reward: none - {rewardReason}</p>
       )}
 
       {status !== 'completed' && (
-        <p className="text-[9px] text-[#F7F7F8] mt-1">
+        <p className="text-[9px] text-[#0D1117] mt-1">
           Each player who completes adds {marginalValue} points for the organizer.
         </p>
       )}
@@ -87,12 +87,12 @@ export function TournamentCard({
       <button
         onClick={() => setBracketOpen((o) => !o)}
         aria-expanded={bracketOpen}
-        className="mt-2 w-full rounded-lg border border-[#222630] px-3 py-1.5 text-[10px] font-bold text-[#F7F7F8] transition-colors active:border-[#222630]"
+        className="mt-2 w-full rounded-lg border border-[#E5E8EC] px-3 py-1.5 text-[10px] font-bold text-[#0D1117] transition-colors active:border-[#E5E8EC]"
       >
         {bracketOpen ? 'Hide bracket' : 'View bracket'}
       </button>
       {bracketOpen && (
-        <div className="brief-rise-in mt-2 border-t border-[#222630] pt-2">
+        <div className="brief-rise-in mt-2 border-t border-[#E5E8EC] pt-2">
           <BracketLadder entrants={entrants} displayName={displayName} />
         </div>
       )}

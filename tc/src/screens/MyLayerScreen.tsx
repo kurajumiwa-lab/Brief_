@@ -320,18 +320,18 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                 objects / groups / matches already held in this screen. Nothing
                 here is decorative or invented. */}
             {sessionUser && (
-              <section aria-label="Your profile" className="mb-3 overflow-hidden rounded-2xl border border-[#222630] bg-[#12151A]">
-                <div className="relative h-16 bg-gradient-to-r from-[#FF5A1F] via-[#FF5A1F]/70 to-[#22E6E0]/50" aria-hidden="true" />
+              <section aria-label="Your profile" className="mb-3 overflow-hidden rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF]">
+                <div className="relative h-16 bg-gradient-to-r from-[#FF5A1F] via-[#FF5A1F]/70 to-[#2563EB]/50" aria-hidden="true" />
                 <div className="px-4 pb-3.5 -mt-6">
                   <div className="flex items-end gap-3">
-                    <div className="h-14 w-14 shrink-0 rounded-2xl border-2 border-[#12151A] bg-gradient-to-br from-[#FF5A1F] to-[#22E6E0] flex items-center justify-center text-[20px] font-black text-[#0D0F12] shadow-lg" aria-hidden="true">
+                    <div className="h-14 w-14 shrink-0 rounded-2xl border-2 border-[#FFFFFF] bg-gradient-to-br from-[#FF5A1F] to-[#2563EB] flex items-center justify-center text-[20px] font-black text-[#0D1117] shadow-lg" aria-hidden="true">
                       {(sessionUser.displayName || sessionUser.handle || '?').charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1 pb-0.5">
-                      <h1 className="truncate text-[17px] font-extrabold tracking-tight text-[#F7F7F8] leading-tight">
+                      <h1 className="truncate text-[17px] font-extrabold tracking-tight text-[#0D1117] leading-tight">
                         {sessionUser.displayName || sessionUser.handle || 'You'}
                       </h1>
-                      <p className="truncate text-[11px] font-semibold text-[#F7F7F8]/70">
+                      <p className="truncate text-[11px] font-semibold text-[#0D1117]/70">
                         {sessionUser.handle ? `@${sessionUser.handle}` : ''}
                         {sessionUser.handle && selectedLocation && selectedLocation !== 'Your area' ? ' · ' : ''}
                         {selectedLocation && selectedLocation !== 'Your area' ? selectedLocation : ''}
@@ -344,8 +344,8 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                       verified chips are the kinds the server has actually
                       approved. Neither is invented. */}
                   <div className="mt-2.5 flex flex-wrap items-center gap-1.5" aria-label="Trust and verification">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[#171A20] border border-[#222630] px-2.5 py-1 text-[10px] font-extrabold text-[#F7F7F8]">
-                      <ShieldCheck className="h-3 w-3 text-[#22E6E0]" aria-hidden="true" />
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[#F0F2F5] border border-[#E5E8EC] px-2.5 py-1 text-[10px] font-extrabold text-[#0D1117]">
+                      <ShieldCheck className="h-3 w-3 text-[#2563EB]" aria-hidden="true" />
                       {myRank}
                     </span>
                     {profileVerification && (() => {
@@ -353,8 +353,8 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                       const verified = kinds.filter(([k]) => profileVerification[k] === 'verified');
                       if (verified.length === 0) return null;
                       return verified.map(([k, label]) => (
-                        <span key={k} className="inline-flex items-center gap-1 rounded-full bg-[#171A20] border border-[#222630] px-2.5 py-1 text-[10px] font-bold text-[#F7F7F8]/70">
-                          <BadgeCheck className="h-3 w-3 text-[#38E879]" aria-hidden="true" />
+                        <span key={k} className="inline-flex items-center gap-1 rounded-full bg-[#F0F2F5] border border-[#E5E8EC] px-2.5 py-1 text-[10px] font-bold text-[#0D1117]/70">
+                          <BadgeCheck className="h-3 w-3 text-[#16A34A]" aria-hidden="true" />
                           {label}
                         </span>
                       ));
@@ -374,9 +374,9 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                       ];
                       if (stats.every((s) => s.value === 0)) return null;
                       return stats.map((s) => (
-                        <div key={s.label} className="rounded-xl bg-[#171A20] px-3 py-1.5">
-                          <p className="text-[13px] font-extrabold text-[#F7F7F8] leading-none">{s.value}</p>
-                          <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.1em] text-[#F7F7F8]/70">{s.label}</p>
+                        <div key={s.label} className="rounded-xl bg-[#F0F2F5] px-3 py-1.5">
+                          <p className="text-[13px] font-extrabold text-[#0D1117] leading-none">{s.value}</p>
+                          <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.1em] text-[#0D1117]/70">{s.label}</p>
                         </div>
                       ));
                     })()}
@@ -386,14 +386,14 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
             )}
             <div className="flex items-end justify-between gap-2 pb-2">
               <div className="min-w-0">
-                <h2 className="text-lg font-extrabold text-[#F7F7F8] tracking-tight">
+                <h2 className="text-lg font-extrabold text-[#0D1117] tracking-tight">
                   Your Layer — Things you've kept
                 </h2>
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#F7F7F8]/70 mt-0.5">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#0D1117]/70 mt-0.5">
                   {activeSavedBundle.hint}
                 </p>
               </div>
-              <span className="text-[10px] font-bold uppercase tracking-[0.14em] bg-[#1D2027] text-[#F7F7F8]/60 px-2.5 py-1 rounded-full">
+              <span className="text-[10px] font-bold uppercase tracking-[0.14em] bg-[#EFF1F4] text-[#0D1117]/60 px-2.5 py-1 rounded-full">
                 {activeSavedBundle.sections.length} screens
               </span>
             </div>
@@ -404,23 +404,23 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                   onClick={() => setMyLayerSection(bundle.sections[0] as MyLayerSection)}
                   className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
                     activeSavedBundle.id === bundle.id
-                      ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]'
-                      : 'bg-[#12151A] text-[#F7F7F8]/70 border-[#222630]'
+                      ? 'bg-[#FF5A1F] text-[#0D1117] border-[#2563EB]'
+                      : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
                   }`}
                 >
                   {bundle.label}
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5 border-t border-[#222630] pt-2">
+            <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5 border-t border-[#E5E8EC] pt-2">
               {activeSavedBundle.sections.map((id: any) => (
                 <button
                   key={id}
                   onClick={() => setMyLayerSection(id as MyLayerSection)}
                   className={`shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition cursor-pointer ${
                     myLayerSection === id
-                      ? 'bg-[#FF5A1F] text-[#0D0F12]'
-                      : 'text-[#F7F7F8]/70 hover:text-[#F7F7F8] bg-[#171A20]'
+                      ? 'bg-[#FF5A1F] text-[#0D1117]'
+                      : 'text-[#0D1117]/70 hover:text-[#0D1117] bg-[#F0F2F5]'
                   }`}
                 >
                   {SAVED_TABS[id]}
@@ -431,17 +431,17 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
         )}
         {myLayerSection === 'saved' && (
           <section className="space-y-4">
-            <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-5">
+            <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-2">
-                <Bookmark className="w-4 h-4 text-[#F7F7F8]" />
-                <span className="text-[10px] text-[#F7F7F8]">
+                <Bookmark className="w-4 h-4 text-[#0D1117]" />
+                <span className="text-[10px] text-[#0D1117]">
                   Your saved things
                 </span>
               </div>
 
               <h2 className="text-xl font-extrabold">Things you've kept.</h2>
 
-              <p className="text-xs text-[#F7F7F8] mt-1">
+              <p className="text-xs text-[#0D1117] mt-1">
                 {savedObjects.length > 0
                   ? `${savedObjects.length} saved across ${savedGroups.length} ${
                       savedGroups.length === 1 ? 'section' : 'sections'
@@ -453,10 +453,10 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
             {savedGroups.map((group: any) => (
               <div key={group.label}>
                 <div className="flex items-baseline gap-2 mb-2 px-1">
-                  <h3 className="text-[11px] font-extrabold text-[#F7F7F8]">
+                  <h3 className="text-[11px] font-extrabold text-[#0D1117]">
                     {group.label}
                   </h3>
-                  <span className="text-[10px] text-[#F7F7F8]/60">
+                  <span className="text-[10px] text-[#0D1117]/60">
                     {group.items.length}
                   </span>
                 </div>
@@ -469,7 +469,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                     return (
                       <div
                         key={obj.id}
-                        className="bg-[#12151A] border border-[#222630] hover:border-[#22E6E0] rounded-2xl p-3 transition"
+                        className="bg-[#FFFFFF] border border-[#E5E8EC] hover:border-[#2563EB] rounded-2xl p-3 transition"
                       >
                         <button
                           onClick={() => setSelectedObjectForDetail(obj)}
@@ -485,14 +485,14 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                             )}
 
                             <div className="min-w-0 flex-1">
-                              <div className="text-[9px] text-[#F7F7F8]/60">
+                              <div className="text-[9px] text-[#0D1117]/60">
                                 {obj.category}
                               </div>
-                              <div className="text-xs font-extrabold mt-0.5 line-clamp-2 group-hover:text-[#F7F7F8]">
+                              <div className="text-xs font-extrabold mt-0.5 line-clamp-2 group-hover:text-[#0D1117]">
                                 {obj.title}
                               </div>
                               {distance && (
-                                <div className="text-[10px] text-[#F7F7F8]/60 mt-1">
+                                <div className="text-[10px] text-[#0D1117]/60 mt-1">
                                   {distance}
                                 </div>
                               )}
@@ -504,7 +504,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                           {action.kind === 'internal' || action.kind === 'none' ? (
                             <button
                               onClick={() => setSelectedObjectForDetail(obj)}
-                              className="flex-1 py-2 rounded-xl bg-[#12151A] border border-[#222630] text-[#F7F7F8] font-extrabold text-[11px] cursor-pointer"
+                              className="flex-1 py-2 rounded-xl bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117] font-extrabold text-[11px] cursor-pointer"
                             >
                               View details
                             </button>
@@ -524,7 +524,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                                   { silent: true }
                                 )
                               }
-                              className="flex-1 py-2 rounded-xl bg-[#FF5A1F] text-[#0D0F12] font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer"
+                              className="flex-1 py-2 rounded-xl bg-[#FF5A1F] text-[#0D1117] font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer"
                             >
                               {action.label}
                               <ArrowRight className="w-3 h-3" />
@@ -534,7 +534,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                           <button
                             onClick={() => handleCreatePursuit(obj.title)}
                             title="Pursue similar"
-                            className="p-2 rounded-xl bg-[#12151A] text-[#F7F7F8] border border-[#222630] hover:border-[#22E6E0] cursor-pointer"
+                            className="p-2 rounded-xl bg-[#FFFFFF] text-[#0D1117] border border-[#E5E8EC] hover:border-[#2563EB] cursor-pointer"
                           >
                             <Search className="w-3.5 h-3.5" />
                           </button>
@@ -542,7 +542,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                           <button
                             onClick={() => handleUnsave(obj)}
                             title="Remove from saved"
-                            className="p-2 rounded-xl bg-[#12151A] text-[#F7F7F8] border border-[#222630] hover:border-[#22E6E0] cursor-pointer"
+                            className="p-2 rounded-xl bg-[#FFFFFF] text-[#0D1117] border border-[#E5E8EC] hover:border-[#2563EB] cursor-pointer"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -560,8 +560,8 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                                 onClick={() => handleSetSaveLabel(obj, label)}
                                 className={`text-[9px] font-bold px-2 py-0.5 rounded-full border cursor-pointer transition ${
                                   active
-                                    ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]'
-                                    : 'bg-transparent text-[#F7F7F8]/60 border-[#222630] hover:border-[#222630]'
+                                    ? 'bg-[#FF5A1F] text-[#0D1117] border-[#2563EB]'
+                                    : 'bg-transparent text-[#0D1117]/60 border-[#E5E8EC] hover:border-[#E5E8EC]'
                                 }`}
                               >
                                 {label}
@@ -583,8 +583,8 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
               if (recent.length === 0) return null;
 
               return (
-                <div className="mt-8 pt-5 border-t border-[#222630]">
-                  <p className="text-[10px] text-[#F7F7F8]/60 mb-3">
+                <div className="mt-8 pt-5 border-t border-[#E5E8EC]">
+                  <p className="text-[10px] text-[#0D1117]/60 mb-3">
                     Recent activity
                   </p>
                   <div className="space-y-1.5">
@@ -594,10 +594,10 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                         onClick={() => setSelectedObjectForDetail(entry.object)}
                         className="w-full text-left flex items-center gap-2 py-1.5 cursor-pointer"
                       >
-                        <span className="text-[9px] text-[#F7F7F8] w-20 shrink-0">
+                        <span className="text-[9px] text-[#0D1117] w-20 shrink-0">
                           {entry.verb}
                         </span>
-                        <span className="text-[11px] text-[#F7F7F8]/60 truncate">
+                        <span className="text-[11px] text-[#0D1117]/60 truncate">
                           {entry.object.title}
                         </span>
                       </button>
@@ -609,9 +609,9 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
 
             {savedObjects.length === 0 && (
               <div className="py-14 text-center">
-                <Bookmark className="w-8 h-8 mx-auto mb-3 text-[#F7F7F8]/60" />
-                <p className="font-display text-lg font-semibold text-[#F7F7F8]">Nothing kept yet.</p>
-                <p className="mt-1 text-xs text-[#F7F7F8]/60">
+                <Bookmark className="w-8 h-8 mx-auto mb-3 text-[#0D1117]/60" />
+                <p className="font-display text-lg font-semibold text-[#0D1117]">Nothing kept yet.</p>
+                <p className="mt-1 text-xs text-[#0D1117]/60">
                   Save a place or opportunity and it will sit here, quiet and waiting.
                 </p>
               </div>
@@ -621,13 +621,13 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
         {myLayerSection === 'activity' && (
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
             <div>
-              <h2 className="text-lg font-extrabold text-[#F7F7F8]">My Activity</h2>
-              <p className="text-[11px] text-[#F7F7F8]/60 leading-snug mt-1">
+              <h2 className="text-lg font-extrabold text-[#0D1117]">My Activity</h2>
+              <p className="text-[11px] text-[#0D1117]/60 leading-snug mt-1">
                 What you have saved, watched and acted on.
               </p>
             </div>
             {relationships.length === 0 && (
-              <p className="text-xs text-[#F7F7F8]/60">Nothing yet.</p>
+              <p className="text-xs text-[#0D1117]/60">Nothing yet.</p>
             )}
             <div className="space-y-2">
               {[...relationships]
@@ -642,15 +642,15 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                       onClick={() => {
                         if (obj) setSelectedObjectForDetail(obj);
                       }}
-                      className="w-full bg-[#12151A] border border-[#222630] rounded-2xl p-3 flex items-center gap-3 text-left cursor-pointer disabled:cursor-default disabled:opacity-70"
+                      className="w-full bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-3 flex items-center gap-3 text-left cursor-pointer disabled:cursor-default disabled:opacity-70"
                     >
-                      <span className="text-[9px] text-[#F7F7F8] shrink-0">
+                      <span className="text-[9px] text-[#0D1117] shrink-0">
                         {rel.verb}
                       </span>
-                      <p className="text-xs text-[#F7F7F8] flex-1 min-w-0 truncate">
+                      <p className="text-xs text-[#0D1117] flex-1 min-w-0 truncate">
                         {obj ? obj.title : rel.targetId}
                       </p>
-                      <span className="text-[9px] text-[#F7F7F8]/60 shrink-0">
+                      <span className="text-[9px] text-[#0D1117]/60 shrink-0">
                         {rel.updatedAt.slice(0, 10)}
                       </span>
                     </button>
@@ -662,16 +662,16 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
         {myLayerSection === 'arena' && (
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
             <div>
-              <h2 className="text-lg font-extrabold text-[#F7F7F8]">Your Arena</h2>
-              <p className="text-[11px] text-[#F7F7F8]/60 leading-snug mt-1">
+              <h2 className="text-lg font-extrabold text-[#0D1117]">Your Arena</h2>
+              <p className="text-[11px] text-[#0D1117]/60 leading-snug mt-1">
                 Your matches. Play is recorded when both players confirm a result.
               </p>
             </div>
-            <h3 className="text-[11px] font-extrabold text-[#F7F7F8]/60">
+            <h3 className="text-[11px] font-extrabold text-[#0D1117]/60">
               My Matches
             </h3>
             {matches.length === 0 && (
-              <p className="text-xs text-[#F7F7F8]/60">
+              <p className="text-xs text-[#0D1117]/60">
                 No matches yet. Accept a challenge in Arena to start one.
               </p>
             )}
@@ -685,11 +685,11 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                 const canReport = status === 'scheduled' && Boolean(me);
                 const opponent = m.playerAId === me ? m.playerBId : m.playerAId;
                 return (
-                  <div key={m.id} className="bg-[#12151A] border border-[#222630] rounded-2xl p-3 space-y-2">
-                    <p className="text-xs text-[#F7F7F8]">
+                  <div key={m.id} className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-3 space-y-2">
+                    <p className="text-xs text-[#0D1117]">
                       {arenaPlayerLabel(m.playerAId, me || null, m.playerAName)} vs {arenaPlayerLabel(m.playerBId, me || null, m.playerBName)}
                     </p>
-                    <p className="text-[10px] text-[#F7F7F8]/60">
+                    <p className="text-[10px] text-[#0D1117]/60">
                       {status === 'confirmed'
                         ? (m.scoreLine || 'Confirmed')
                         : status === 'disputed'
@@ -702,14 +702,14 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                     </p>
                     {canReport && (
                       <div className="flex flex-wrap gap-1.5">
-                        <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleReportMatch(m, me)} className="px-2.5 py-1.5 rounded-lg bg-[#FF5A1F] text-[#0D0F12] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">I won</button>
-                        <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleReportMatch(m, opponent ?? null)} className="px-2.5 py-1.5 rounded-lg border border-[#222630] text-[#F7F7F8] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">They won</button>
-                        <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleReportMatch(m, null)} className="px-2.5 py-1.5 rounded-lg border border-[#222630] text-[#F7F7F8] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">Draw</button>
-                        <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleAbandonMatch(m)} className="px-2.5 py-1.5 rounded-lg border border-[#222630] text-[#F7F7F8]/60 text-[10px] font-extrabold cursor-pointer disabled:opacity-40">Never happened</button>
+                        <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleReportMatch(m, me)} className="px-2.5 py-1.5 rounded-lg bg-[#FF5A1F] text-[#0D1117] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">I won</button>
+                        <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleReportMatch(m, opponent ?? null)} className="px-2.5 py-1.5 rounded-lg border border-[#E5E8EC] text-[#0D1117] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">They won</button>
+                        <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleReportMatch(m, null)} className="px-2.5 py-1.5 rounded-lg border border-[#E5E8EC] text-[#0D1117] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">Draw</button>
+                        <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleAbandonMatch(m)} className="px-2.5 py-1.5 rounded-lg border border-[#E5E8EC] text-[#0D1117]/60 text-[10px] font-extrabold cursor-pointer disabled:opacity-40">Never happened</button>
                       </div>
                     )}
                     {canConfirm && (
-                      <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleConfirmMatch(m)} className="px-3 py-1.5 rounded-lg bg-[#FF5A1F] text-[#0D0F12] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">
+                      <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleConfirmMatch(m)} className="px-3 py-1.5 rounded-lg bg-[#FF5A1F] text-[#0D1117] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">
                         Confirm result
                       </button>
                     )}
@@ -772,8 +772,8 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                 who turns up. Every figure below is read from the server. */}
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <h2 className="text-lg font-extrabold text-[#F7F7F8]">Events</h2>
-                <p className="text-[11px] text-[#F7F7F8]/60 leading-snug mt-1">
+                <h2 className="text-lg font-extrabold text-[#0D1117]">Events</h2>
+                <p className="text-[11px] text-[#0D1117]/60 leading-snug mt-1">
                   Things you are putting out into the world. Publish once, share
                   one link, see who registered.
                 </p>
@@ -791,7 +791,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                   });
                   setCreateStep('form');
                 }}
-                className="shrink-0 px-3 py-2 rounded-xl bg-[#FF5A1F] text-[#0D0F12] font-extrabold text-[11px] cursor-pointer flex items-center gap-1"
+                className="shrink-0 px-3 py-2 rounded-xl bg-[#FF5A1F] text-[#0D1117] font-extrabold text-[11px] cursor-pointer flex items-center gap-1"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Create
@@ -801,29 +801,29 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
             {campaignState.status === 'idle' && (
               <button
                 onClick={loadCampaigns}
-                className="w-full border border-[#222630] rounded-2xl p-4 text-xs font-extrabold text-[#F7F7F8] cursor-pointer"
+                className="w-full border border-[#E5E8EC] rounded-2xl p-4 text-xs font-extrabold text-[#0D1117] cursor-pointer"
               >
                 Load my campaigns
               </button>
             )}
 
             {campaignState.status === 'loading' && (
-              <div className="border border-[#222630] rounded-2xl p-8 text-center">
-                <p className="text-xs text-[#F7F7F8]/60">Loading campaigns...</p>
+              <div className="border border-[#E5E8EC] rounded-2xl p-8 text-center">
+                <p className="text-xs text-[#0D1117]/60">Loading campaigns...</p>
               </div>
             )}
 
             {campaignState.status === 'error' && (
-              <div className="border border-[#222630] bg-[#12151A] rounded-2xl p-4 space-y-2">
-                <p className="text-xs text-[#F7F7F8] font-extrabold">
+              <div className="border border-[#E5E8EC] bg-[#FFFFFF] rounded-2xl p-4 space-y-2">
+                <p className="text-xs text-[#0D1117] font-extrabold">
                   Couldn't load campaigns. Try again.
                 </p>
-                <p className="text-[10px] text-[#F7F7F8]/60 break-words">
+                <p className="text-[10px] text-[#0D1117]/60 break-words">
                   {campaignState.error}
                 </p>
                 <button
                   onClick={loadCampaigns}
-                  className="px-3 py-1.5 rounded-xl bg-[#FF5A1F] text-[#0D0F12] font-extrabold text-[10px] cursor-pointer"
+                  className="px-3 py-1.5 rounded-xl bg-[#FF5A1F] text-[#0D1117] font-extrabold text-[10px] cursor-pointer"
                 >
                   Retry
                 </button>
@@ -831,46 +831,46 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
             )}
 
             {campaignState.status === 'ready' && (campaignState.data ?? []).length === 0 && (
-              <div className="border border-dashed border-[#222630] rounded-2xl p-8 text-center">
-                <p className="text-xs text-[#F7F7F8]/60">You haven't created a campaign yet.</p>
+              <div className="border border-dashed border-[#E5E8EC] rounded-2xl p-8 text-center">
+                <p className="text-xs text-[#0D1117]/60">You haven't created a campaign yet.</p>
               </div>
             )}
 
             {campaignState.status === 'ready' && campaignsLive.length > 0 && (
               <div className="space-y-2">
-                <h3 className="text-[9px] text-[#F7F7F8]/60">
+                <h3 className="text-[9px] text-[#0D1117]/60">
                   Live
                 </h3>
                 {campaignsLive.map((c: any) => (
                   <div
                     key={c.id}
-                    className="bg-[#12151A] border border-[#222630] rounded-2xl p-4 space-y-2"
+                    className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-4 space-y-2"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-sm font-extrabold text-[#F7F7F8] truncate">{c.title}</p>
-                        <p className="text-[10px] text-[#F7F7F8]/60 mt-0.5 truncate">
+                        <p className="text-sm font-extrabold text-[#0D1117] truncate">{c.title}</p>
+                        <p className="text-[10px] text-[#0D1117]/60 mt-0.5 truncate">
                           {[c.location, c.startsAt ? c.startsAt.slice(0, 16).replace('T', ' ') : null]
                             .filter(Boolean)
                             .join(' \u00b7 ') || 'No place or time set'}
                         </p>
                       </div>
-                      <span className="shrink-0 text-[9px] text-[#F7F7F8]">
+                      <span className="shrink-0 text-[9px] text-[#0D1117]">
                         {c.status}
                       </span>
                     </div>
 
                     {/* Capacity is printed from server values only. */}
                     <div className="flex flex-wrap gap-x-4 gap-y-1">
-                      <span className="text-[11px] text-[#F7F7F8]">
+                      <span className="text-[11px] text-[#0D1117]">
                         {c.metrics.slotsTaken}
                         {c.metrics.capacity === null ? ' registered' : ` / ${c.metrics.capacity}`}
                       </span>
-                      <span className="text-[11px] text-[#F7F7F8]">
+                      <span className="text-[11px] text-[#0D1117]">
                         {c.metrics.currency} {c.metrics.revenueSettled.toLocaleString()} settled
                       </span>
                       {c.metrics.revenuePending > 0 && (
-                        <span className="text-[11px] text-[#F7F7F8]">
+                        <span className="text-[11px] text-[#0D1117]">
                           {c.metrics.currency} {c.metrics.revenuePending.toLocaleString()} pending
                         </span>
                       )}
@@ -879,13 +879,13 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                     <div className="flex items-center gap-2 pt-1">
                       <button
                         onClick={() => openCampaign(c.id)}
-                        className="px-3 py-1.5 rounded-xl bg-[#FF5A1F] text-[#0D0F12] font-extrabold text-[10px] cursor-pointer"
+                        className="px-3 py-1.5 rounded-xl bg-[#FF5A1F] text-[#0D1117] font-extrabold text-[10px] cursor-pointer"
                       >
                         Open
                       </button>
                       <button
                         onClick={() => shareCampaign(c)}
-                        className="px-3 py-1.5 rounded-xl border border-[#222630] text-[#F7F7F8] font-extrabold text-[10px] cursor-pointer flex items-center gap-1"
+                        className="px-3 py-1.5 rounded-xl border border-[#E5E8EC] text-[#0D1117] font-extrabold text-[10px] cursor-pointer flex items-center gap-1"
                       >
                         <Share2 className="w-3 h-3" />
                         Share
@@ -908,26 +908,26 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
 
             {campaignState.status === 'ready' && campaignsDraft.length > 0 && (
               <div className="space-y-2">
-                <h3 className="text-[9px] text-[#F7F7F8]/60">
+                <h3 className="text-[9px] text-[#0D1117]/60">
                   Drafts
                 </h3>
                 {campaignsDraft.map((c: any) => (
                   <div
                     key={c.id}
-                    className="bg-[#12151A] border border-[#222630] rounded-2xl p-4 flex items-center justify-between gap-3"
+                    className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-4 flex items-center justify-between gap-3"
                   >
                     <div className="min-w-0">
-                      <p className="text-sm font-extrabold text-[#F7F7F8] truncate">
+                      <p className="text-sm font-extrabold text-[#0D1117] truncate">
                         {c.title || 'Untitled'}
                       </p>
-                      <p className="text-[9px] text-[#F7F7F8]/60 mt-0.5">
+                      <p className="text-[9px] text-[#0D1117]/60 mt-0.5">
                         {c.type} - not published
                       </p>
                     </div>
                     <div className="shrink-0 flex items-center gap-1.5">
                       <button
                         onClick={() => { openCampaign(c.id); beginEdit(c); }}
-                        className="px-3 py-1.5 rounded-xl border border-[#222630] text-[#F7F7F8] font-extrabold text-[10px] cursor-pointer"
+                        className="px-3 py-1.5 rounded-xl border border-[#E5E8EC] text-[#0D1117] font-extrabold text-[10px] cursor-pointer"
                       >
                         Edit
                       </button>
@@ -942,7 +942,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                           loadCampaigns();
                           showToast('Published');
                         }}
-                        className="px-3 py-1.5 rounded-xl bg-[#FF5A1F] text-[#0D0F12] font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
+                        className="px-3 py-1.5 rounded-xl bg-[#FF5A1F] text-[#0D1117] font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
                       >
                         Publish
                       </button>
@@ -964,19 +964,19 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
 
             {campaignState.status === 'ready' && campaignsPast.length > 0 && (
               <div className="space-y-2">
-                <h3 className="text-[9px] text-[#F7F7F8]/60">
+                <h3 className="text-[9px] text-[#0D1117]/60">
                   Finished
                 </h3>
                 {campaignsPast.map((c: any) => (
                   <div
                     key={c.id}
-                    className="bg-[#12151A] border border-[#222630] rounded-2xl p-3 flex items-center justify-between gap-3"
+                    className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-3 flex items-center justify-between gap-3"
                   >
-                    <p className="text-xs text-[#F7F7F8]/60 truncate">{c.title}</p>
+                    <p className="text-xs text-[#0D1117]/60 truncate">{c.title}</p>
                     <div className="shrink-0 flex items-center gap-1.5">
                       <button
                         onClick={() => openCampaign(c.id)}
-                        className="text-[10px] text-[#F7F7F8]/60 underline underline-offset-2 cursor-pointer"
+                        className="text-[10px] text-[#0D1117]/60 underline underline-offset-2 cursor-pointer"
                       >
                         {c.status}
                       </button>

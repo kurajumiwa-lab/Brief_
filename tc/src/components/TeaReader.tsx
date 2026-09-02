@@ -55,16 +55,16 @@ export function TeaReader({ slug, onClose }: { slug: string; onClose: () => void
   const gallery: string[] = Array.isArray(state.article?.images) ? state.article.images : [];
 
   return (
-    <div className="fixed inset-0 z-[70] overflow-y-auto bg-[#08090B]/90 backdrop-blur-md" onClick={onClose}>
+    <div className="fixed inset-0 z-[70] overflow-y-auto bg-[#0D1117]/90 backdrop-blur-md" onClick={onClose}>
       <div className="mx-auto min-h-full max-w-2xl px-4 py-8" onClick={(e) => e.stopPropagation()}>
-        <button onClick={onClose} className="mb-4 text-[12px] font-bold text-[#F7F7F8]/60 cursor-pointer">← Back</button>
+        <button onClick={onClose} className="mb-4 text-[12px] font-bold text-[#0D1117]/60 cursor-pointer">← Back</button>
 
-        {state.status === 'loading' && <p className="text-sm text-[#F7F7F8]/60">Loading…</p>}
+        {state.status === 'loading' && <p className="text-sm text-[#0D1117]/60">Loading…</p>}
 
         {state.status === 'missing' && (
-          <div className="rounded-2xl border border-[#222630] bg-[#12151A] p-5">
-            <p className="text-sm font-bold text-[#F7F7F8]">This story is not available.</p>
-            <p className="mt-1 text-[12px] text-[#F7F7F8]/60">It may be unpublished, expired, or the link is wrong.</p>
+          <div className="rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] p-5">
+            <p className="text-sm font-bold text-[#0D1117]">This story is not available.</p>
+            <p className="mt-1 text-[12px] text-[#0D1117]/60">It may be unpublished, expired, or the link is wrong.</p>
           </div>
         )}
 
@@ -73,19 +73,19 @@ export function TeaReader({ slug, onClose }: { slug: string; onClose: () => void
           return (
             <article className="space-y-4">
               {/* the designed story — exactly what the editor previewed */}
-              <div className="overflow-hidden rounded-2xl border border-[#222630]">
+              <div className="overflow-hidden rounded-2xl border border-[#E5E8EC]">
                 <StoryView article={a} design={design} mode="read" />
               </div>
 
               {/* the gallery: every photo the editor added, for the viewer */}
               {gallery.length > 0 && (
-                <section className="rounded-2xl border border-[#222630] bg-[#12151A] p-4">
-                  <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]">
+                <section className="rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] p-4">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#0D1117]">
                     Gallery · {gallery.length} photo{gallery.length === 1 ? '' : 's'}
                   </p>
                   <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
                     {gallery.map((url) => (
-                      <a key={url} href={url} target="_blank" rel="noreferrer" className="overflow-hidden rounded-xl border border-[#222630]">
+                      <a key={url} href={url} target="_blank" rel="noreferrer" className="overflow-hidden rounded-xl border border-[#E5E8EC]">
                         <img src={url} alt="" loading="lazy" className="h-32 w-full object-cover transition-transform duration-300 hover:scale-[1.03]" />
                       </a>
                     ))}
@@ -94,13 +94,13 @@ export function TeaReader({ slug, onClose }: { slug: string; onClose: () => void
               )}
 
               {/* the like bar — the public rating */}
-              <section className="rounded-2xl border border-[#222630] bg-[#12151A] p-4">
+              <section className="rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-[12px] font-bold text-[#F7F7F8]">
+                    <p className="text-[12px] font-bold text-[#0D1117]">
                       {likeState.count} like{likeState.count === 1 ? '' : 's'}
                     </p>
-                    <p className="text-[10px] text-[#F7F7F8]/70">The public rating — recorded by readers, derived from real rows.</p>
+                    <p className="text-[10px] text-[#0D1117]/70">The public rating — recorded by readers, derived from real rows.</p>
                   </div>
                   <button
                     type="button"
@@ -108,20 +108,20 @@ export function TeaReader({ slug, onClose }: { slug: string; onClose: () => void
                     disabled={likeState.busy}
                     className="flex h-10 items-center gap-2 rounded-xl border px-4 text-[12px] font-extrabold cursor-pointer disabled:opacity-40 transition-all"
                     style={{
-                      background: likeState.liked ? '#FF5A1F' : '#12151A',
-                      color: likeState.liked ? '#F7F7F8' : '#F7F7F8',
-                      borderColor: '#F7F7F8'
+                      background: likeState.liked ? '#FF5A1F' : '#FFFFFF',
+                      color: likeState.liked ? '#0D1117' : '#0D1117',
+                      borderColor: '#0D1117'
                     }}
                     aria-pressed={likeState.liked}
                   >
                     <Heart
                       className="h-4 w-4"
-                      style={{ fill: likeState.liked ? (accent === '#F7F7F8' ? '#F7F7F8' : accent === '#F7F7F8' ? '#F7F7F8' : accent) : 'none', stroke: likeState.liked ? 'currentColor' : 'currentColor' }}
+                      style={{ fill: likeState.liked ? (accent === '#0D1117' ? '#0D1117' : accent === '#0D1117' ? '#0D1117' : accent) : 'none', stroke: likeState.liked ? 'currentColor' : 'currentColor' }}
                     />
                     {likeState.liked ? 'Liked' : 'Like'}
                   </button>
                 </div>
-                {likeState.note && <p className="mt-2 text-[10px] text-[#F7F7F8]/60">{likeState.note}</p>}
+                {likeState.note && <p className="mt-2 text-[10px] text-[#0D1117]/60">{likeState.note}</p>}
               </section>
 
               {a.source && (
@@ -131,11 +131,11 @@ export function TeaReader({ slug, onClose }: { slug: string; onClose: () => void
                 </p>
               )}
               {(a.relatedContent?.length > 0 || a.relatedPlaces?.length > 0 || a.relatedEvents?.length > 0) && (
-                <div className="rounded-xl border border-[#222630] bg-[#12151A] p-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#F7F7F8]">Related</p>
+                <div className="rounded-xl border border-[#E5E8EC] bg-[#FFFFFF] p-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#0D1117]">Related</p>
                   <div className="mt-1 flex flex-wrap gap-2">
                     {[...(a.relatedPlaces ?? []), ...(a.relatedEvents ?? []), ...(a.relatedContent ?? [])].map((r: string, i: number) => (
-                      <span key={i} className="rounded-full border border-[#222630] px-2 py-0.5 text-[10px] text-[#F7F7F8]/60">{r}</span>
+                      <span key={i} className="rounded-full border border-[#E5E8EC] px-2 py-0.5 text-[10px] text-[#0D1117]/60">{r}</span>
                     ))}
                   </div>
                 </div>

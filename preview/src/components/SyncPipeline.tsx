@@ -37,12 +37,12 @@ export function SyncPipeline({ run, pending }: SyncPipelineProps) {
   }).length;
 
   return (
-    <div className="rounded-2xl border border-[#222630] bg-[#12151A] p-4">
+    <div className="rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] p-4">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]">
+        <h3 className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#0D1117]">
           Pipeline
         </h3>
-        <span className="text-[10px] font-mono text-[#F7F7F8]/60">
+        <span className="text-[10px] font-mono text-[#0D1117]/60">
           {run
             ? run.inSync
               ? `in sync · ${run.version?.slice(0, 8) ?? ''}`
@@ -71,32 +71,32 @@ export function SyncPipeline({ run, pending }: SyncPipelineProps) {
                   }`}
                   style={{
                     background:
-                      state === 'done' ? '#F7F7F8' :
-                      state === 'active' ? '#171A20' :
-                      state === 'blocked' ? '#171A20' :
-                      '#F7F7F8',
+                      state === 'done' ? '#0D1117' :
+                      state === 'active' ? '#F0F2F5' :
+                      state === 'blocked' ? '#F0F2F5' :
+                      '#0D1117',
                     color:
-                      state === 'done' ? '#F7F7F8' :
-                      state === 'active' ? '#F7F7F8' :
-                      state === 'blocked' ? '#F7F7F8/60' :
-                      '#F7F7F8/40',
+                      state === 'done' ? '#0D1117' :
+                      state === 'active' ? '#0D1117' :
+                      state === 'blocked' ? '#0D1117/60' :
+                      '#0D1117/40',
                     borderColor:
-                      state === 'done' ? '#F7F7F8' :
-                      state === 'active' ? '#FF5A1F' : '#222630'
+                      state === 'done' ? '#0D1117' :
+                      state === 'active' ? '#FF5A1F' : '#E5E8EC'
                   }}
                 >
                   {state === 'done' ? '✓' : state === 'blocked' ? '⏸' : i + 1}
                 </div>
-                <p className="mt-2 text-[10px] font-extrabold text-[#F7F7F8] leading-tight">
+                <p className="mt-2 text-[10px] font-extrabold text-[#0D1117] leading-tight">
                   {node.label}
                 </p>
-                <p className="text-[9px] text-[#F7F7F8]/60 leading-tight">{node.caption}</p>
+                <p className="text-[9px] text-[#0D1117]/60 leading-tight">{node.caption}</p>
                 {/* real timing, or the honest absence of one */}
-                <p className="mt-1 text-[9px] font-mono" style={{ color: stage?.ms != null ? '#F7F7F8' : 'rgba(17,17,17,0.4)' }}>
+                <p className="mt-1 text-[9px] font-mono" style={{ color: stage?.ms != null ? '#0D1117' : 'rgba(17,17,17,0.4)' }}>
                   {stage?.ms != null ? `${stage.ms}ms` : state === 'blocked' ? 'held' : '—'}
                 </p>
                 {stage?.detail && (
-                  <p className="mt-0.5 text-[8px] text-[#F7F7F8]/60 leading-tight line-clamp-2 px-0.5">
+                  <p className="mt-0.5 text-[8px] text-[#0D1117]/60 leading-tight line-clamp-2 px-0.5">
                     {stage.detail}
                   </p>
                 )}
@@ -110,7 +110,7 @@ export function SyncPipeline({ run, pending }: SyncPipelineProps) {
                     style={{
                       background:
                         stageFor(run, NODES[i + 1].id) && !pending
-                          ? '#FF5A1F' : '#222630'
+                          ? '#FF5A1F' : '#E5E8EC'
                     }}
                   />
                 </div>
@@ -121,7 +121,7 @@ export function SyncPipeline({ run, pending }: SyncPipelineProps) {
       </div>
 
       {!run && (
-        <p className="mt-3 text-center text-[10px] text-[#F7F7F8]/60">
+        <p className="mt-3 text-center text-[10px] text-[#0D1117]/60">
           The pipeline runs the moment the engine beats — nothing here is animated for show.
         </p>
       )}

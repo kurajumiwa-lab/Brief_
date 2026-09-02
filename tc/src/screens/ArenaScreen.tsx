@@ -275,8 +275,8 @@ export function ArenaScreen({
     <div className="arena-arcade-theme max-w-3xl mx-auto px-4 py-6 space-y-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-extrabold text-[#F7F7F8]">Arena</h2>
-            <p className="text-[11px] text-[#F7F7F8]/60 leading-snug mt-1">
+            <h2 className="text-lg font-extrabold text-[#0D1117]">Arena</h2>
+            <p className="text-[11px] text-[#0D1117]/60 leading-snug mt-1">
               Gather with people to play. Not a competition — host challenges and run live match tests.
             </p>
           </div>
@@ -285,9 +285,9 @@ export function ArenaScreen({
             onClick={toggleSound}
             aria-label={soundMuted ? 'Unmute Arena sound effects' : 'Mute Arena sound effects'}
             title={soundMuted ? 'Turn sound effects on' : 'Turn sound effects off'}
-            className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#222630] bg-[#12151A] px-2.5 py-2 text-[10px] font-extrabold text-[#F7F7F8] transition-colors hover:border-[#22E6E0] cursor-pointer"
+            className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#E5E8EC] bg-[#FFFFFF] px-2.5 py-2 text-[10px] font-extrabold text-[#0D1117] transition-colors hover:border-[#2563EB] cursor-pointer"
           >
-            <ArenaSoundToggleIcon isMuted={soundMuted} size={16} color="#F7F7F8" />
+            <ArenaSoundToggleIcon isMuted={soundMuted} size={16} color="#0D1117" />
             <span className="hidden sm:inline">{soundMuted ? 'Sound off' : 'Sound on'}</span>
           </button>
         </div>
@@ -372,35 +372,35 @@ export function ArenaScreen({
         />
 
         {/* ARENA DIRECT TEST & CHALLENGE STUDIO */}
-        <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
+        <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
           <div className="flex items-center justify-between gap-2">
             <div>
               <div className="flex items-center gap-2">
-                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-[#FF5A1F] text-[#0D0F12] text-[10px] font-black">
+                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-[#FF5A1F] text-[#0D1117] text-[10px] font-black">
                   ⚡
                 </span>
-                <h3 className="text-[14px] font-black text-[#F7F7F8] tracking-tight">
+                <h3 className="text-[14px] font-black text-[#0D1117] tracking-tight">
                   Arena Test & Challenge Studio
                 </h3>
               </div>
-              <p className="text-[11px] text-[#F7F7F8]/60 mt-0.5">
+              <p className="text-[11px] text-[#0D1117]/60 mt-0.5">
                 Configure and launch a live test match or challenge with all options listed.
               </p>
             </div>
             <button
               type="button"
               onClick={() => { soundEngine.play('tap'); setArenaTestCreatorOpen((v) => !v); }}
-              className="px-3 py-1.5 rounded-xl border border-[#222630] text-[11px] font-extrabold text-[#F7F7F8] hover:border-[#22E6E0] transition-colors cursor-pointer"
+              className="px-3 py-1.5 rounded-xl border border-[#E5E8EC] text-[11px] font-extrabold text-[#0D1117] hover:border-[#2563EB] transition-colors cursor-pointer"
             >
               {arenaTestCreatorOpen ? 'Close' : 'Create Test'}
             </button>
           </div>
 
           {arenaTestCreatorOpen && (
-            <div className="space-y-3 pt-3 border-t border-[#1D2027]">
+            <div className="space-y-3 pt-3 border-t border-[#EFF1F4]">
               {/* Game Selection */}
               <div>
-                <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#F7F7F8]/70 mb-1.5">
+                <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#0D1117]/70 mb-1.5">
                   Target Game
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
@@ -415,12 +415,12 @@ export function ArenaScreen({
                       }}
                       className={`px-3 py-2 rounded-xl text-left border transition-all cursor-pointer ${
                         arenaTestGame === g.id
-                          ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0] shadow-xs'
-                          : 'bg-[#171A20] text-[#F7F7F8]/70 border-[#222630] hover:border-[#22E6E0]/40'
+                          ? 'bg-[#FF5A1F] text-[#0D1117] border-[#2563EB] shadow-xs'
+                          : 'bg-[#F0F2F5] text-[#0D1117]/70 border-[#E5E8EC] hover:border-[#2563EB]/40'
                       }`}
                     >
                       <p className="text-[11px] font-black truncate">{g.name}</p>
-                      <p className={`text-[8.5px] truncate mt-0.5 ${arenaTestGame === g.id ? 'text-[#F7F7F8]/70' : 'text-[#F7F7F8]/70'}`}>
+                      <p className={`text-[8.5px] truncate mt-0.5 ${arenaTestGame === g.id ? 'text-[#0D1117]/70' : 'text-[#0D1117]/70'}`}>
                         {g.modes.length} modes
                       </p>
                     </button>
@@ -430,7 +430,7 @@ export function ArenaScreen({
 
               {/* Mode / Format Selection */}
               <div>
-                <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#F7F7F8]/70 mb-1.5">
+                <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#0D1117]/70 mb-1.5">
                   Match Format & Mode
                 </label>
                 <div className="flex flex-wrap gap-1.5">
@@ -445,8 +445,8 @@ export function ArenaScreen({
                       onClick={() => { soundEngine.play('tap'); setArenaTestMode(m); }}
                       className={`px-3 py-1.5 rounded-lg text-[11px] font-extrabold border transition-all cursor-pointer ${
                         arenaTestMode === m
-                          ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]'
-                          : 'bg-[#12151A] text-[#F7F7F8]/70 border-[#222630] hover:border-[#22E6E0]/40'
+                          ? 'bg-[#FF5A1F] text-[#0D1117] border-[#2563EB]'
+                          : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC] hover:border-[#2563EB]/40'
                       }`}
                     >
                       {m}
@@ -457,7 +457,7 @@ export function ArenaScreen({
 
               {/* Stake / Tier Selection */}
               <div>
-                <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#F7F7F8]/70 mb-1.5">
+                <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#0D1117]/70 mb-1.5">
                   Test Tier & Stake
                 </label>
                 <div className="grid grid-cols-3 gap-1.5">
@@ -472,12 +472,12 @@ export function ArenaScreen({
                       onClick={() => { soundEngine.play('tap'); setArenaTestStake(s); }}
                       className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
                         arenaTestStake === s
-                          ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]'
-                          : 'bg-[#12151A] text-[#F7F7F8]/70 border-[#222630] hover:border-[#22E6E0]/40'
+                          ? 'bg-[#FF5A1F] text-[#0D1117] border-[#2563EB]'
+                          : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC] hover:border-[#2563EB]/40'
                       }`}
                     >
                       <p className="text-[11px] font-black">{label}</p>
-                      <p className={`text-[8.5px] ${arenaTestStake === s ? 'text-[#F7F7F8]/70' : 'text-[#F7F7F8]/70'}`}>{hint}</p>
+                      <p className={`text-[8.5px] ${arenaTestStake === s ? 'text-[#0D1117]/70' : 'text-[#0D1117]/70'}`}>{hint}</p>
                     </button>
                   ))}
                 </div>
@@ -486,7 +486,7 @@ export function ArenaScreen({
               {/* Entry fee input if prize stake */}
               {arenaTestStake === 'entry_fee' && (
                 <div>
-                  <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#F7F7F8]/70 mb-1">
+                  <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#0D1117]/70 mb-1">
                     Entry Fee / Prize Stake (KES)
                   </label>
                   <div className="flex items-center gap-2">
@@ -497,8 +497,8 @@ export function ArenaScreen({
                         onClick={() => { soundEngine.play('tap'); setArenaTestFee(amt); }}
                         className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold border cursor-pointer ${
                           arenaTestFee === amt
-                            ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]'
-                            : 'bg-[#171A20] text-[#F7F7F8]/70 border-[#222630]'
+                            ? 'bg-[#FF5A1F] text-[#0D1117] border-[#2563EB]'
+                            : 'bg-[#F0F2F5] text-[#0D1117]/70 border-[#E5E8EC]'
                         }`}
                       >
                         KES {amt}
@@ -509,7 +509,7 @@ export function ArenaScreen({
                       value={arenaTestFee}
                       onChange={(e) => setArenaTestFee(e.target.value)}
                       placeholder="Amount"
-                      className="w-24 px-2.5 py-1 text-[11px] font-bold rounded-lg border border-[#222630] focus:border-[#22E6E0] outline-none"
+                      className="w-24 px-2.5 py-1 text-[11px] font-bold rounded-lg border border-[#E5E8EC] focus:border-[#2563EB] outline-none"
                     />
                   </div>
                 </div>
@@ -517,7 +517,7 @@ export function ArenaScreen({
 
               {/* Rules / Notes */}
               <div>
-                <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#F7F7F8]/70 mb-1">
+                <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#0D1117]/70 mb-1">
                   Match Notes & Objectives (Optional)
                 </label>
                 <input
@@ -525,13 +525,13 @@ export function ArenaScreen({
                   value={arenaTestRules}
                   onChange={(e) => setArenaTestRules(e.target.value)}
                   placeholder="e.g. Test new squad, 90 mins, no extra time"
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-[#222630] focus:border-[#22E6E0] outline-none"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-[#E5E8EC] focus:border-[#2563EB] outline-none"
                 />
               </div>
 
               {/* Duration Window */}
               <div>
-                <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#F7F7F8]/70 mb-1">
+                <label className="block text-[9px] font-extrabold uppercase tracking-wider text-[#0D1117]/70 mb-1">
                   Time Window
                 </label>
                 <div className="flex gap-1.5">
@@ -547,8 +547,8 @@ export function ArenaScreen({
                       onClick={() => { soundEngine.play('tap'); setArenaTestDuration(Number(mins)); }}
                       className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold border cursor-pointer ${
                         arenaTestDuration === mins
-                          ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]'
-                          : 'bg-[#171A20] text-[#F7F7F8]/70 border-[#222630]'
+                          ? 'bg-[#FF5A1F] text-[#0D1117] border-[#2563EB]'
+                          : 'bg-[#F0F2F5] text-[#0D1117]/70 border-[#E5E8EC]'
                       }`}
                     >
                       {lbl}
@@ -562,7 +562,7 @@ export function ArenaScreen({
                 type="button"
                 disabled={arenaBusyId === 'create'}
                 onClick={() => { soundEngine.play('heavyTap'); void handleLaunchArenaTest(); }}
-                className="w-full py-3 rounded-xl bg-[#FF5A1F] hover:bg-[#000000] text-[#0D0F12] text-xs font-black cursor-pointer disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-xl bg-[#FF5A1F] hover:bg-[#000000] text-[#0D1117] text-xs font-black cursor-pointer disabled:opacity-50 transition-all flex items-center justify-center gap-2"
               >
                 {arenaBusyId === 'create' ? 'Launching…' : '🚀 Launch Arena Test Match'}
               </button>
@@ -583,8 +583,8 @@ export function ArenaScreen({
               onClick={() => { soundEngine.play('tap'); setArenaSection(key); }}
               className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer border ${
                 arenaSection === key
-                  ? 'bg-[#12151A] text-[#F7F7F8] border-[#22E6E0]'
-                  : 'bg-[#12151A] text-[#F7F7F8] border-[#222630]'
+                  ? 'bg-[#FFFFFF] text-[#0D1117] border-[#2563EB]'
+                  : 'bg-[#FFFFFF] text-[#0D1117] border-[#E5E8EC]'
               }`}
             >
               {label}
@@ -604,27 +604,27 @@ export function ArenaScreen({
                 server. Filtered to the current game. Empty is honest. */}
             <section aria-label="Nearby players">
               <div className="flex items-center justify-between gap-2 mb-2">
-                <h3 className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]">Nearby players</h3>
-                <span className="text-[10px] font-bold text-[#F7F7F8]/60">{arenaGame.name}</span>
+                <h3 className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#0D1117]">Nearby players</h3>
+                <span className="text-[10px] font-bold text-[#0D1117]/60">{arenaGame.name}</span>
               </div>
               {(() => {
                 const serverGame = CLIENT_TO_SERVER_GAME[arenaGameId] ?? arenaGameId;
                 const rows = (arenaPlayers ?? []).filter((p: any) => p?.gameId === serverGame);
                 if (rows.length === 0) {
-                  return <p className="text-xs text-[#F7F7F8]/60">No one has gone available for {arenaGame.name} right now.</p>;
+                  return <p className="text-xs text-[#0D1117]/60">No one has gone available for {arenaGame.name} right now.</p>;
                 }
                 return (
                   <div className="space-y-1.5">
                     {rows.slice(0, 8).map((p: any, i: number) => {
                       const meta = [p?.mode, p?.format, p?.locationKind].filter(Boolean).join(' · ');
                       return (
-                        <div key={`${p?.userId ?? p?.personId ?? 'p'}_${i}`} className="flex items-center justify-between gap-2 rounded-xl bg-[#12151A] border border-[#222630] px-3 py-2">
+                        <div key={`${p?.userId ?? p?.personId ?? 'p'}_${i}`} className="flex items-center justify-between gap-2 rounded-xl bg-[#FFFFFF] border border-[#E5E8EC] px-3 py-2">
                           <div className="min-w-0">
-                            <p className="text-[12px] font-bold text-[#F7F7F8] truncate">{p?.displayName ?? 'Player'}</p>
-                            {meta && <p className="text-[10px] text-[#F7F7F8]/60 truncate">{meta}</p>}
+                            <p className="text-[12px] font-bold text-[#0D1117] truncate">{p?.displayName ?? 'Player'}</p>
+                            {meta && <p className="text-[10px] text-[#0D1117]/60 truncate">{meta}</p>}
                           </div>
-                          <span className="shrink-0 flex items-center gap-1 rounded-full bg-[#171A20] px-2 py-0.5 text-[9px] font-extrabold text-[#38E879]">
-                            <span className="h-1 w-1 rounded-full bg-[#38E879]" aria-hidden="true" />
+                          <span className="shrink-0 flex items-center gap-1 rounded-full bg-[#F0F2F5] px-2 py-0.5 text-[9px] font-extrabold text-[#16A34A]">
+                            <span className="h-1 w-1 rounded-full bg-[#16A34A]" aria-hidden="true" />
                             Available
                           </span>
                         </div>
@@ -638,22 +638,22 @@ export function ArenaScreen({
             {/* §18 — Venues: real Arena venues from the server, filtered to the
                 current game. Empty is honest — no fabricated gyms or hubs. */}
             <section aria-label="Venues">
-              <h3 className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]">Venues</h3>
+              <h3 className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#0D1117]">Venues</h3>
               {(() => {
                 const serverGame = CLIENT_TO_SERVER_GAME[arenaGameId] ?? arenaGameId;
                 const rows = (arenaVenues ?? []).filter((v: any) => Array.isArray(v?.gameIds) && v.gameIds.includes(serverGame));
                 if (rows.length === 0) {
-                  return <p className="text-xs text-[#F7F7F8]/60">No venues listed for {arenaGame.name} yet.</p>;
+                  return <p className="text-xs text-[#0D1117]/60">No venues listed for {arenaGame.name} yet.</p>;
                 }
                 return (
                   <div className="space-y-1.5">
                     {rows.slice(0, 6).map((v: any, i: number) => (
-                      <div key={v?.id ?? `v_${i}`} className="flex items-center justify-between gap-2 rounded-xl bg-[#12151A] border border-[#222630] px-3 py-2">
+                      <div key={v?.id ?? `v_${i}`} className="flex items-center justify-between gap-2 rounded-xl bg-[#FFFFFF] border border-[#E5E8EC] px-3 py-2">
                         <div className="min-w-0">
-                          <p className="text-[12px] font-bold text-[#F7F7F8] truncate">{v?.name}</p>
-                          {v?.location && <p className="text-[10px] text-[#F7F7F8]/60 truncate">{v.location}</p>}
+                          <p className="text-[12px] font-bold text-[#0D1117] truncate">{v?.name}</p>
+                          {v?.location && <p className="text-[10px] text-[#0D1117]/60 truncate">{v.location}</p>}
                         </div>
-                        {v?.contact && <span className="shrink-0 text-[10px] font-semibold text-[#F7F7F8]/70">{v.contact}</span>}
+                        {v?.contact && <span className="shrink-0 text-[10px] font-semibold text-[#0D1117]/70">{v.contact}</span>}
                       </div>
                     ))}
                   </div>
@@ -669,23 +669,23 @@ export function ArenaScreen({
               type="button"
               disabled={arenaBusyId === 'create'}
               onClick={() => { soundEngine.play('heavyTap'); void handleCreateChallenge(); }}
-              className="w-full h-10 rounded-xl bg-[#FF5A1F] text-[#0D0F12] text-[12px] font-extrabold cursor-pointer disabled:opacity-40"
+              className="w-full h-10 rounded-xl bg-[#FF5A1F] text-[#0D1117] text-[12px] font-extrabold cursor-pointer disabled:opacity-40"
             >
               {arenaBusyId === 'create' ? 'Opening…' : `Open a ${arenaGame.modes[0] ?? '1v1'} challenge`}
             </button>
             {challenges.length === 0 && (
-              <p className="text-xs text-[#F7F7F8]/60">No open challenges for {arenaGame.name} right now.</p>
+              <p className="text-xs text-[#0D1117]/60">No open challenges for {arenaGame.name} right now.</p>
             )}
             {challenges.map((c) => {
               const mine = Boolean(CURRENT_PLAYER_ID) && c.createdByPlayerId === CURRENT_PLAYER_ID;
               const expired = Boolean(c.openUntil) && c.openUntil <= new Date().toISOString();
               const taken = c.status === 'accepted' || Boolean(c.acceptedByPlayerId);
               return (
-                <div key={c.id} className="bg-[#12151A] border border-[#222630] rounded-2xl p-3 flex items-center justify-between gap-2">
+                <div key={c.id} className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-3 flex items-center justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="text-xs font-extrabold text-[#F7F7F8]">{c.mode} · {c.stake === 'friendly' ? 'Friendly' : c.stake === 'ranked' ? 'Ranked' : 'Entry fee'}</p>
-                    {c.entryFeeKes ? <p className="text-[10px] text-[#F7F7F8]/60">KES {c.entryFeeKes}</p> : null}
-                    <p className="text-[10px] text-[#F7F7F8]/60 mt-0.5">
+                    <p className="text-xs font-extrabold text-[#0D1117]">{c.mode} · {c.stake === 'friendly' ? 'Friendly' : c.stake === 'ranked' ? 'Ranked' : 'Entry fee'}</p>
+                    {c.entryFeeKes ? <p className="text-[10px] text-[#0D1117]/60">KES {c.entryFeeKes}</p> : null}
+                    <p className="text-[10px] text-[#0D1117]/60 mt-0.5">
                       {mine ? 'Your challenge' : 'Open challenge'}
                       {expired ? ' · expired' : ''}
                       {taken ? ' · taken' : ''}
@@ -696,7 +696,7 @@ export function ArenaScreen({
                       type="button"
                       disabled={arenaBusyId === c.id || taken || c.status === 'cancelled'}
                       onClick={() => { soundEngine.play('tap'); void handleCancelChallenge(c); }}
-                      className="shrink-0 px-3 py-1.5 rounded-xl border border-[#222630] text-[#F7F7F8] text-[11px] font-extrabold cursor-pointer disabled:opacity-40"
+                      className="shrink-0 px-3 py-1.5 rounded-xl border border-[#E5E8EC] text-[#0D1117] text-[11px] font-extrabold cursor-pointer disabled:opacity-40"
                     >
                       Cancel
                     </button>
@@ -705,7 +705,7 @@ export function ArenaScreen({
                       type="button"
                       disabled={arenaBusyId === c.id || expired || taken}
                       onClick={() => { soundEngine.play('heavyTap'); void handleAcceptChallenge(c); }}
-                      className="shrink-0 px-3 py-1.5 rounded-xl bg-[#FF5A1F] text-[#0D0F12] text-[11px] font-extrabold cursor-pointer disabled:opacity-40"
+                      className="shrink-0 px-3 py-1.5 rounded-xl bg-[#FF5A1F] text-[#0D1117] text-[11px] font-extrabold cursor-pointer disabled:opacity-40"
                       title={expired ? 'This challenge has expired' : taken ? 'Already accepted' : undefined}
                     >
                       Accept
@@ -720,26 +720,26 @@ export function ArenaScreen({
         {arenaSection === 'tournaments' && (
           <div className="space-y-2">
             {arenaTournaments.filter((t) => !t.gameId || (SERVER_TO_CLIENT_GAME[t.gameId] ?? t.gameId) === arenaGameId).length === 0 && (
-              <p className="text-xs text-[#F7F7F8]/60">No tournaments yet for {arenaGame.name}.</p>
+              <p className="text-xs text-[#0D1117]/60">No tournaments yet for {arenaGame.name}.</p>
             )}
             {arenaTournaments.filter((t) => !t.gameId || (SERVER_TO_CLIENT_GAME[t.gameId] ?? t.gameId) === arenaGameId).map((t) => (
               <button
                 key={t.id}
                 type="button"
                 onClick={() => { soundEngine.play('tap'); setOpenedTournament(t); }}
-                className="w-full text-left bg-[#12151A] border border-[#222630] rounded-2xl p-3 cursor-pointer"
+                className="w-full text-left bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-3 cursor-pointer"
               >
-                <p className="text-xs font-extrabold text-[#F7F7F8]">{t.title}</p>
-                {t.startsAt && <p className="text-[10px] text-[#F7F7F8]/60 mt-0.5">{t.startsAt.slice(0, 16).replace('T', ' ')}</p>}
-                <p className="text-[10px] text-[#F7F7F8] mt-1">Open</p>
+                <p className="text-xs font-extrabold text-[#0D1117]">{t.title}</p>
+                {t.startsAt && <p className="text-[10px] text-[#0D1117]/60 mt-0.5">{t.startsAt.slice(0, 16).replace('T', ' ')}</p>}
+                <p className="text-[10px] text-[#0D1117] mt-1">Open</p>
               </button>
             ))}
             {openedTournament && (
-              <div className="bg-[#12151A] border border-[#22E6E0] rounded-2xl p-3 space-y-2">
+              <div className="bg-[#FFFFFF] border border-[#2563EB] rounded-2xl p-3 space-y-2">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="text-xs font-extrabold text-[#F7F7F8]">{openedTournament.title}</p>
-                    <p className="text-[10px] text-[#F7F7F8]/60 mt-0.5">
+                    <p className="text-xs font-extrabold text-[#0D1117]">{openedTournament.title}</p>
+                    <p className="text-[10px] text-[#0D1117]/60 mt-0.5">
                       {openedTournament.status || 'open'}
                       {openedTournament.startsAt ? ` · ${String(openedTournament.startsAt).slice(0, 16).replace('T', ' ')}` : ''}
                     </p>
@@ -747,15 +747,15 @@ export function ArenaScreen({
                   <button
                     type="button"
                     onClick={() => { soundEngine.play('tap'); setOpenedTournament(null); }}
-                    className="text-[10px] font-extrabold text-[#F7F7F8]/60 cursor-pointer"
+                    className="text-[10px] font-extrabold text-[#0D1117]/60 cursor-pointer"
                   >
                     Close
                   </button>
                 </div>
                 {openedTournament.maxPlayers != null && (
-                  <p className="text-[11px] text-[#F7F7F8]/60">Cap {openedTournament.maxPlayers}</p>
+                  <p className="text-[11px] text-[#0D1117]/60">Cap {openedTournament.maxPlayers}</p>
                 )}
-                <p className="text-[11px] text-[#F7F7F8]/60 leading-snug">
+                <p className="text-[11px] text-[#0D1117]/60 leading-snug">
                   Registration is not on the server yet. Brief will not pretend you can join.
                 </p>
               </div>
@@ -767,39 +767,39 @@ export function ArenaScreen({
           <div className="space-y-2">
             <SeasonStrip />
             {arenaLeaderboard.length === 0 && (
-              <p className="text-xs text-[#F7F7F8]/60">No confirmed results yet for {arenaGame.name}.</p>
+              <p className="text-xs text-[#0D1117]/60">No confirmed results yet for {arenaGame.name}.</p>
             )}
             {arenaLeaderboard.map((row, i) => (
               <button
                 key={row.playerId}
                 type="button"
                 onClick={() => { soundEngine.play('tap'); setOpenedStanding(row); }}
-                className="w-full bg-[#12151A] border border-[#222630] rounded-2xl p-3 flex items-center justify-between gap-2 text-left cursor-pointer"
+                className="w-full bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-3 flex items-center justify-between gap-2 text-left cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-[11px] font-bold text-[#F7F7F8]/60 w-4">{i + 1}</span>
-                  <span className="text-xs font-extrabold text-[#F7F7F8]">{row.player}</span>
+                  <span className="text-[11px] font-bold text-[#0D1117]/60 w-4">{i + 1}</span>
+                  <span className="text-xs font-extrabold text-[#0D1117]">{row.player}</span>
                 </div>
-                <span className="text-[10px] text-[#F7F7F8]/60">{row.won} won · {row.played} played</span>
+                <span className="text-[10px] text-[#0D1117]/60">{row.won} won · {row.played} played</span>
               </button>
             ))}
             {openedStanding && (
-              <div className="bg-[#12151A] border border-[#22E6E0] rounded-2xl p-3 space-y-1">
+              <div className="bg-[#FFFFFF] border border-[#2563EB] rounded-2xl p-3 space-y-1">
                 <div className="flex items-start justify-between gap-2">
-                  <p className="text-xs font-extrabold text-[#F7F7F8]">{openedStanding.player}</p>
+                  <p className="text-xs font-extrabold text-[#0D1117]">{openedStanding.player}</p>
                   <button
                     type="button"
                     onClick={() => { soundEngine.play('tap'); setOpenedStanding(null); }}
-                    className="text-[10px] font-extrabold text-[#F7F7F8]/60 cursor-pointer"
+                    className="text-[10px] font-extrabold text-[#0D1117]/60 cursor-pointer"
                   >
                     Close
                   </button>
                 </div>
-                <p className="text-[11px] text-[#F7F7F8]/60">
+                <p className="text-[11px] text-[#0D1117]/60">
                   {openedStanding.won} won · {openedStanding.played} played
                   {typeof openedStanding.winRate === 'number' ? ` · ${Math.round(openedStanding.winRate * 100)}%` : ''}
                 </p>
-                <p className="text-[10px] text-[#F7F7F8]/60">Confirmed results only. Brief does not invent a rating.</p>
+                <p className="text-[10px] text-[#0D1117]/60">Confirmed results only. Brief does not invent a rating.</p>
               </div>
             )}
           </div>

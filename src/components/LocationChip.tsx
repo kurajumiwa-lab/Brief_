@@ -54,9 +54,9 @@ export function LocationChip({ label, locating, locError, hasLocation, onLocate,
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="dialog"
         aria-expanded={open}
-        className="flex items-center gap-1.5 bg-[#12151A] text-[#F7F7F8] text-xs font-bold px-3 py-1.5 rounded-full border border-[#222630] hover:border-[#22E6E0] transition-colors cursor-pointer"
+        className="flex items-center gap-1.5 bg-[#FFFFFF] text-[#0D1117] text-xs font-bold px-3 py-1.5 rounded-full border border-[#E5E8EC] hover:border-[#2563EB] transition-colors cursor-pointer"
       >
-        <MapPin className="w-3.5 h-3.5 text-[#F7F7F8]" />
+        <MapPin className="w-3.5 h-3.5 text-[#0D1117]" />
         <span>{label}</span>
       </button>
 
@@ -66,22 +66,22 @@ export function LocationChip({ label, locating, locError, hasLocation, onLocate,
             type="button"
             onClick={() => setOpen(false)}
             aria-label="Dismiss location sheet"
-            className="flex-1 min-h-0 bg-[#0D0F12]/25 backdrop-blur-[2px] cursor-pointer"
+            className="flex-1 min-h-0 bg-[#0D1117]/25 backdrop-blur-[2px] cursor-pointer"
           />
           <div
-            className="brief-sheet-up max-h-[70vh] overflow-y-auto bg-[#1D2027] border-t border-[#222630] rounded-t-[28px] shadow-2xl px-4 pb-6 pt-5"
+            className="brief-sheet-up max-h-[70vh] overflow-y-auto bg-[#EFF1F4] border-t border-[#E5E8EC] rounded-t-[28px] shadow-2xl px-4 pb-6 pt-5"
             style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}
           >
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#F7F7F8]/60">Location</p>
-                <h3 className="mt-0.5 text-[17px] font-black tracking-tight text-[#F7F7F8]">Where should Brief look?</h3>
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#0D1117]/60">Location</p>
+                <h3 className="mt-0.5 text-[17px] font-black tracking-tight text-[#0D1117]">Where should Brief look?</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close location sheet"
-                className="h-9 w-9 flex items-center justify-center rounded-full bg-[#12151A] border border-[#222630] text-[#F7F7F8] text-[18px] font-light hover:border-[#FF5A1F] cursor-pointer"
+                className="h-9 w-9 flex items-center justify-center rounded-full bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117] text-[18px] font-light hover:border-[#FF5A1F] cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -91,19 +91,19 @@ export function LocationChip({ label, locating, locError, hasLocation, onLocate,
             <button
               type="button"
               onClick={() => { onLocate(); }}
-              className="flex w-full items-center gap-3 rounded-2xl bg-[#FF5A1F] px-4 py-3.5 text-left text-[13px] font-extrabold text-[#0D0F12] cursor-pointer transition-opacity hover:opacity-90"
+              className="flex w-full items-center gap-3 rounded-2xl bg-[#FF5A1F] px-4 py-3.5 text-left text-[13px] font-extrabold text-[#0D1117] cursor-pointer transition-opacity hover:opacity-90"
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#0D0F12]/10">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#0D1117]/10">
                 <Compass className="h-5 w-5" />
               </span>
               <span className="min-w-0 flex-1">
                 {locating ? 'Locating…' : 'Use my location'}
               </span>
             </button>
-            {locError && <p className="mt-2 px-1 text-[11px] font-semibold text-[#FF5D6C]">{locError}</p>}
+            {locError && <p className="mt-2 px-1 text-[11px] font-semibold text-[#DC2626]">{locError}</p>}
 
             {/* Cities/districts — real gazetteer places, as tappable pills. */}
-            <p className="mb-2 mt-5 px-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/60">
+            <p className="mb-2 mt-5 px-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#0D1117]/60">
               Or choose a place
             </p>
             <div className="grid grid-cols-3 gap-2">
@@ -117,8 +117,8 @@ export function LocationChip({ label, locating, locError, hasLocation, onLocate,
                     aria-pressed={selected}
                     className={`rounded-xl border px-2 py-2.5 text-[12px] font-semibold transition-colors cursor-pointer ${
                       selected
-                        ? 'bg-[#FF5A1F] text-[#0D0F12] border-[#22E6E0]'
-                        : 'bg-[#12151A] text-[#F7F7F8]/70 border-[#222630] hover:border-[#22E6E0]'
+                        ? 'bg-[#FF5A1F] text-[#0D1117] border-[#2563EB]'
+                        : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC] hover:border-[#2563EB]'
                     }`}
                   >
                     {c.label}
@@ -132,7 +132,7 @@ export function LocationChip({ label, locating, locError, hasLocation, onLocate,
               <button
                 type="button"
                 onClick={() => { onClearLocation(); setOpen(false); }}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border border-[#222630] bg-transparent px-4 py-3 text-[12px] font-bold text-[#F7F7F8]/70 cursor-pointer hover:text-[#F7F7F8]"
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border border-[#E5E8EC] bg-transparent px-4 py-3 text-[12px] font-bold text-[#0D1117]/70 cursor-pointer hover:text-[#0D1117]"
               >
                 Show everywhere
               </button>

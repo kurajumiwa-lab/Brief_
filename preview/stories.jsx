@@ -116,7 +116,7 @@ async function main() {
       check('story renders', body().includes('The designed story'));
       check('hero photo rendered', Boolean(document.querySelector('img[src*="hero.jpg"]')));
       // Noir is the NIGHT EDITION: light ink on near-black charcoal (#08090B).
-      check('theme applied (noir surface)', Boolean(document.querySelector('[style*="rgb(8, 9, 11)"]')));
+      check('theme applied (noir surface)', Boolean(document.querySelector('[style*="rgb(13, 17, 23)"]')));
       check('gallery shows every editor photo',
         document.querySelectorAll('img[src*="g1.jpg"], img[src*="g2.jpg"]').length === 2);
       check('like count shown', body().includes('4 likes'));

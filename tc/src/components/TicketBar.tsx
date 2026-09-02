@@ -42,25 +42,25 @@ export function TicketBar() {
       role="status"
       aria-label="Active event entry"
     >
-      <div className="overflow-hidden rounded-2xl border border-[#22E6E0] bg-[#12151A] shadow-lg">
+      <div className="overflow-hidden rounded-2xl border border-[#2563EB] bg-[#FFFFFF] shadow-lg">
         {/* the locked gate pass */}
         <div className="flex items-center gap-3 px-3.5 py-2.5">
           <span
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
-            style={{ background: t.entryState === 'upcoming' ? '#171A20' : '#FF5A1F', border: '1px solid #FF5A1F' }}
+            style={{ background: t.entryState === 'upcoming' ? '#F0F2F5' : '#FF5A1F', border: '1px solid #FF5A1F' }}
           >
-            <Ticket className="h-4 w-4" style={{ color: t.entryState === 'upcoming' ? '#FF5A1F' : '#12151A' }} />
+            <Ticket className="h-4 w-4" style={{ color: t.entryState === 'upcoming' ? '#FF5A1F' : '#FFFFFF' }} />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[12px] font-extrabold text-[#F7F7F8]">{t.eventTitle}</p>
-            <p className="text-[10px] font-mono text-[#F7F7F8]/60">
+            <p className="truncate text-[12px] font-extrabold text-[#0D1117]">{t.eventTitle}</p>
+            <p className="text-[10px] font-mono text-[#0D1117]/60">
               Event Entry: {stateLabel} — Ticket #{shortCode}
             </p>
           </div>
           <button
             type="button"
             onClick={() => setDismissed(true)}
-            className="shrink-0 text-[#F7F7F8]/60 cursor-pointer hover:text-[#F7F7F8]"
+            className="shrink-0 text-[#0D1117]/60 cursor-pointer hover:text-[#0D1117]"
             aria-label="Hide ticket bar"
           >
             <X className="h-3.5 w-3.5" />
@@ -69,18 +69,18 @@ export function TicketBar() {
 
         {/* the inline delta alert — the engine's rerouting notice */}
         {showDelta && (
-          <div className="flex items-start gap-2 border-t border-dashed border-[#222630] bg-[#171A20] px-3.5 py-2">
-            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#F7F7F8]" />
+          <div className="flex items-start gap-2 border-t border-dashed border-[#E5E8EC] bg-[#F0F2F5] px-3.5 py-2">
+            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0D1117]" />
             <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-bold leading-snug text-[#F7F7F8]">
+              <p className="text-[10px] font-bold leading-snug text-[#0D1117]">
                 Event details changed since your ticket was issued.
               </p>
-              <p className="text-[9px] leading-snug text-[#F7F7F8]/60">Check the event page — your entry stays valid.</p>
+              <p className="text-[9px] leading-snug text-[#0D1117]/60">Check the event page — your entry stays valid.</p>
             </div>
             <button
               type="button"
               onClick={() => setDismissedDelta(`${t.registrationId}:${delta.at}`)}
-              className="shrink-0 text-[9px] font-extrabold text-[#F7F7F8]/70 cursor-pointer hover:text-[#F7F7F8]"
+              className="shrink-0 text-[9px] font-extrabold text-[#0D1117]/70 cursor-pointer hover:text-[#0D1117]"
             >
               Got it
             </button>

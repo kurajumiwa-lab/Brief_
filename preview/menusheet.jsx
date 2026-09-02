@@ -55,7 +55,7 @@ const check = (n, c, d = '') => { if (c) { pass++; console.log('  PASS  ' + n); 
 
   console.log('=== one app, two purposes: Menu navigates ===');
   check('the header says what the page is for', body().includes('Your shortcuts, tools and account'));
-  check('the sheet is the Arena dark surface, not dark navy', Boolean(document.querySelector('.bg-\\[\\#1D2027\\]')), 'no dark-surface sheet class');
+  check('the sheet is the light surface, not dark navy', Boolean(document.querySelector('.bg-\\[\\#EFF1F4\\]')), 'no light-surface sheet class');
 
   console.log('\n=== two-thirds sheet, the app still visible behind ===');
   const sheet = document.querySelector('.h-\\[2\\/3\\]') ?? document.querySelector('.h-2\\/3');

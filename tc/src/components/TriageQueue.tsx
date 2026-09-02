@@ -142,7 +142,7 @@ export function TriageQueue({ onOpenSection, onNotice }: TriageQueueProps) {
   if (status === 'loading') {
     return (
       <div className="max-w-3xl mx-auto px-4 py-6">
-        <p className="text-[11px] text-[#F7F7F8]/60">Reading what is waiting on you…</p>
+        <p className="text-[11px] text-[#0D1117]/60">Reading what is waiting on you…</p>
       </div>
     );
   }
@@ -150,9 +150,9 @@ export function TriageQueue({ onOpenSection, onNotice }: TriageQueueProps) {
   if (status === 'signed-out') {
     return (
       <div className="max-w-3xl mx-auto px-4 py-6">
-        <div className="border border-dashed border-[#222630] rounded-2xl p-8 text-center">
-          <p className="text-xs font-extrabold text-[#F7F7F8]">Sign in to see what is waiting</p>
-          <p className="text-[10px] text-[#F7F7F8]/70 mt-1">
+        <div className="border border-dashed border-[#E5E8EC] rounded-2xl p-8 text-center">
+          <p className="text-xs font-extrabold text-[#0D1117]">Sign in to see what is waiting</p>
+          <p className="text-[10px] text-[#0D1117]/70 mt-1">
             The queue is yours alone — tasks handed to you, orders on your shelf,
             doors you are opening, messages to review. Nobody is signed in, so
             there is nothing to show rather than nothing waiting.
@@ -165,12 +165,12 @@ export function TriageQueue({ onOpenSection, onNotice }: TriageQueueProps) {
   if (status === 'unavailable') {
     return (
       <div className="max-w-3xl mx-auto px-4 py-6">
-        <div className="border border-dashed border-[#222630] rounded-2xl p-8 text-center">
-          <p className="text-xs font-extrabold text-[#F7F7F8]">The queue could not be read</p>
-          <p className="text-[10px] text-[#F7F7F8]/70 mt-1">{unavailableReason}</p>
+        <div className="border border-dashed border-[#E5E8EC] rounded-2xl p-8 text-center">
+          <p className="text-xs font-extrabold text-[#0D1117]">The queue could not be read</p>
+          <p className="text-[10px] text-[#0D1117]/70 mt-1">{unavailableReason}</p>
           <button
             onClick={() => { setStatus('loading'); void load(); }}
-            className="mt-3 px-3 py-2 rounded-xl bg-[#FF5A1F] text-[#0D0F12] font-extrabold text-[11px] cursor-pointer"
+            className="mt-3 px-3 py-2 rounded-xl bg-[#FF5A1F] text-[#0D1117] font-extrabold text-[11px] cursor-pointer"
           >
             Try again
           </button>
@@ -185,31 +185,31 @@ export function TriageQueue({ onOpenSection, onNotice }: TriageQueueProps) {
     <div className="max-w-3xl mx-auto px-4 py-4 space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[11px] text-[#F7F7F8]/60 leading-snug">
+          <p className="text-[11px] text-[#0D1117]/60 leading-snug">
             Everything blocked on you right now, newest waiting first. Nothing here is
             suggested work — it is all real rows that name you.
           </p>
         </div>
         <button
           onClick={() => { setStatus('loading'); void load(); }}
-          className="shrink-0 px-3 py-2 rounded-xl bg-[#12151A] border border-[#222630] text-[#F7F7F8] font-extrabold text-[11px] cursor-pointer"
+          className="shrink-0 px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117] font-extrabold text-[11px] cursor-pointer"
         >
           Refresh
         </button>
       </div>
 
       {refusal && (
-        <div className="rounded-xl border border-[#222630] bg-[#171A20] px-3 py-2">
-          <p className="text-[11px] text-[#F7F7F8]">
+        <div className="rounded-xl border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2">
+          <p className="text-[11px] text-[#0D1117]">
             Not done: {refusal}. The item is still in the queue.
           </p>
         </div>
       )}
 
       {items.length === 0 && (
-        <div className="border border-dashed border-[#222630] rounded-2xl p-8 text-center">
-          <p className="text-xs font-extrabold text-[#F7F7F8]">Nothing is waiting on you</p>
-          <p className="text-[10px] text-[#F7F7F8]/70 mt-1">
+        <div className="border border-dashed border-[#E5E8EC] rounded-2xl p-8 text-center">
+          <p className="text-xs font-extrabold text-[#0D1117]">Nothing is waiting on you</p>
+          <p className="text-[10px] text-[#0D1117]/70 mt-1">
             When a task is handed to you, an order lands on your shelf, a door needs
             opening, or a message arrives, it appears here.
           </p>
@@ -222,39 +222,39 @@ export function TriageQueue({ onOpenSection, onNotice }: TriageQueueProps) {
         return (
           <div
             key={`${item.kind}:${item.id}`}
-            className="rounded-2xl border border-[#222630] bg-[#12151A] p-3.5 flex items-start justify-between gap-3"
+            className="rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] p-3.5 flex items-start justify-between gap-3"
           >
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/60">
+                <span className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#0D1117]/60">
                   {KIND_LABEL[item.kind]}
                 </span>
                 {item.kind === 'task' && (
-                  <span className="text-[9px] font-bold text-[#F7F7F8]/60">{item.circleName}</span>
+                  <span className="text-[9px] font-bold text-[#0D1117]/60">{item.circleName}</span>
                 )}
                 {item.kind === 'checkin' && item.status === 'open' && (
-                  <span className="text-[9px] font-extrabold text-[#F7F7F8] bg-[#1D2027] px-1.5 py-0.5 rounded-full">
+                  <span className="text-[9px] font-extrabold text-[#0D1117] bg-[#EFF1F4] px-1.5 py-0.5 rounded-full">
                     Open now
                   </span>
                 )}
-                <span className="text-[9px] font-bold text-[#F7F7F8]/60">
+                <span className="text-[9px] font-bold text-[#0D1117]/60">
                   waiting {waited(item.daysWaiting)}
                 </span>
               </div>
 
               <button
                 onClick={() => open(item)}
-                className="mt-1 block text-[13px] font-extrabold text-[#F7F7F8] text-left hover:underline cursor-pointer"
+                className="mt-1 block text-[13px] font-extrabold text-[#0D1117] text-left hover:underline cursor-pointer"
               >
                 {item.title}
               </button>
 
               {item.detail && (
-                <p className="text-[11px] text-[#F7F7F8]/55 mt-0.5 line-clamp-2">{item.detail}</p>
+                <p className="text-[11px] text-[#0D1117]/55 mt-0.5 line-clamp-2">{item.detail}</p>
               )}
 
               {item.kind === 'checkin' && (
-                <p className="text-[11px] text-[#F7F7F8]/70 mt-1">
+                <p className="text-[11px] text-[#0D1117]/70 mt-1">
                   {item.pending} still to check in · {item.checkedIn} checked in
                 </p>
               )}
@@ -268,7 +268,7 @@ export function TriageQueue({ onOpenSection, onNotice }: TriageQueueProps) {
                     else void act(item, button.action);
                   }}
                   disabled={busy}
-                  className="px-2.5 py-1.5 rounded-lg bg-[#FF5A1F] text-[#0D0F12] text-[10px] font-extrabold cursor-pointer disabled:opacity-50"
+                  className="px-2.5 py-1.5 rounded-lg bg-[#FF5A1F] text-[#0D1117] text-[10px] font-extrabold cursor-pointer disabled:opacity-50"
                 >
                   {busy ? '…' : button.label}
                 </button>
@@ -277,7 +277,7 @@ export function TriageQueue({ onOpenSection, onNotice }: TriageQueueProps) {
                 <button
                   onClick={() => void act(item, 'release')}
                   disabled={busy}
-                  className="px-2.5 py-1 rounded-lg border border-[#222630] text-[10px] font-bold text-[#F7F7F8]/60 cursor-pointer disabled:opacity-50"
+                  className="px-2.5 py-1 rounded-lg border border-[#E5E8EC] text-[10px] font-bold text-[#0D1117]/60 cursor-pointer disabled:opacity-50"
                 >
                   Hand back
                 </button>

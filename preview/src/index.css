@@ -10,34 +10,34 @@
    ============================================================================= */
 
 :root {
-  /* --- Color: the dark charcoal system. Near-black page, light ink, warm
-       electric-orange accent with a cyan secondary. Hierarchy comes from
-       weight and size first; muted/faint are the SAME ink at reduced alpha. --- */
-  --ground:         #08090B;  /* base background — near-black charcoal */
-  --surface:        #12151A;  /* raised cards, banners */
-  --overlay-scrim:  #0D0F12;  /* dark scrim wash */
-  --hairline:       #222630;  /* borders, dividers (elevated, subtle) */
+  /* --- Color: the LIGHT system. White page, dark ink, warm orange accent with
+       a blue secondary. Hierarchy comes from weight and size first; muted/
+       faint are the SAME ink at reduced alpha. --- */
+  --ground:         #F7F8FA;  /* base background — very light */
+  --surface:        #FFFFFF;  /* raised cards, banners */
+  --overlay-scrim:  #0D1117;  /* dark scrim wash (over the light page) */
+  --hairline:       #E5E8EC;  /* borders, dividers */
 
-  --ink:            #F7F7F8;  /* primary text — light ink */
-  --ink-dim:        #A7ACB5;  /* secondary text */
-  --ink-faint:      #8A93A6;  /* tertiary/meta: timestamps, counters — >=4.5:1 */
+  --ink:            #0D1117;  /* primary text — dark ink */
+  --ink-dim:        #5A6472;  /* secondary text */
+  --ink-faint:      #7A8494;  /* tertiary/meta: timestamps, counters — >=4.5:1 */
 
-  --signal-live:    #38E879;  /* live/active state ONLY — success green */
-  --signal-arena:   #22E6E0;  /* Arena / tournament system ONLY — cyan */
-  --signal-urgent:  #FF5D6C;  /* countdown / closing-soon / expiring ONLY — danger */
+  --signal-live:    #16A34A;  /* live/active state ONLY — success green */
+  --signal-arena:   #2563EB;  /* Arena / tournament system ONLY — blue */
+  --signal-urgent:  #DC2626;  /* countdown / closing-soon / expiring ONLY — danger */
 
   --tea:            #FF5A1F;  /* Tea category — warm orange */
-  --today:          #22E6E0;  /* Today category — cyan */
-  --pursuits:       #38E879;  /* Pursuits category — green */
-  --quests:         #38E879;  /* Quests (shares live — quests ARE the live layer) */
+  --today:          #2563EB;  /* Today category — blue */
+  --pursuits:       #16A34A;  /* Pursuits category — green */
+  --quests:         #16A34A;  /* Quests (shares live — quests ARE the live layer) */
 
   /* --- Spec-named accent tokens (§3) --- */
-  --accent:      #FF5A1F;   /* warm electric orange (primary) */
-  --accent-2:    #22E6E0;   /* cyan/turquoise (secondary) */
-  --accent-ink:  #0D0F12;   /* text on the accent */
-  --success:     #38E879;
-  --warning:     #FFCC66;
-  --danger:      #FF5D6C;
+  --accent:      #FF5A1F;   /* warm orange (primary) */
+  --accent-2:    #2563EB;   /* blue (secondary) */
+  --accent-ink:  #0D1117;   /* text on the orange accent — dark, for contrast */
+  --success:     #16A34A;
+  --warning:     #B45309;
+  --danger:      #DC2626;
 
   /* --- Shape language (§5) --- */
   --radius-card:  24px;
@@ -198,44 +198,44 @@ html, body {
    coexist with the earlier tokens so non-home surfaces are unaffected.
    ============================================================================= */
 :root {
-  /* Color — M3 tokens mapped onto the dark charcoal + orange/cyan system. */
-  --m3-background:             #08090B;
-  --m3-surface:                #08090B;
-  --m3-surface-dim:            #0D0F12;
-  --m3-surface-bright:         #171A20;
-  --m3-surface-container-lowest: #12151A;
-  --m3-surface-container-low:  #171A20;
-  --m3-surface-container:      #12151A;
-  --m3-surface-container-high: #1D2027;
-  --m3-surface-container-highest: #222630;
-  --m3-surface-variant:        #222630;
+  /* Color — M3 tokens mapped onto the light + orange/blue system. */
+  --m3-background:             #F7F8FA;
+  --m3-surface:                #F7F8FA;
+  --m3-surface-dim:            #F0F2F5;
+  --m3-surface-bright:         #FFFFFF;
+  --m3-surface-container-lowest: #FFFFFF;
+  --m3-surface-container-low:  #F0F2F5;
+  --m3-surface-container:      #FFFFFF;
+  --m3-surface-container-high: #EFF1F4;
+  --m3-surface-container-highest: #E5E8EC;
+  --m3-surface-variant:        #E5E8EC;
 
   --m3-primary:                #FF5A1F;
   --m3-primary-fixed:          #FF5A1F;
-  --m3-primary-fixed-dim:      #22E6E0;
+  --m3-primary-fixed-dim:      #2563EB;
   --m3-primary-container:      #FF5A1F;
-  --m3-on-primary:             #0D0F12;
-  --m3-on-primary-container:   #0D0F12;
+  --m3-on-primary:             #0D1117;
+  --m3-on-primary-container:   #0D1117;
 
-  --m3-secondary:              #22E6E0;
-  --m3-secondary-fixed:        #22E6E0;
-  --m3-secondary-fixed-dim:    #22E6E0;
-  --m3-secondary-container:    #171A20;
-  --m3-on-secondary-container: #F7F7F8;
+  --m3-secondary:              #2563EB;
+  --m3-secondary-fixed:        #2563EB;
+  --m3-secondary-fixed-dim:    #2563EB;
+  --m3-secondary-container:    #F0F2F5;
+  --m3-on-secondary-container: #0D1117;
 
-  --m3-tertiary:               #FFCC66;
-  --m3-tertiary-container:     #171A20;
-  --m3-on-tertiary-container:  #F7F7F8;
+  --m3-tertiary:               #B45309;
+  --m3-tertiary-container:     #F0F2F5;
+  --m3-on-tertiary-container:  #0D1117;
 
-  --m3-error:                  #FF5D6C;
-  --m3-error-container:        #FF5D6C;
+  --m3-error:                  #DC2626;
+  --m3-error-container:        #DC2626;
 
-  --m3-outline:                #222630;
-  --m3-outline-variant:        #222630;
-  --m3-on-surface:             #F7F7F8;
-  --m3-on-surface-variant:     #A7ACB5;
-  --m3-on-background:          #F7F7F8;
-  --m3-inverse-surface:        #F7F7F8;
+  --m3-outline:                #E5E8EC;
+  --m3-outline-variant:        #E5E8EC;
+  --m3-on-surface:             #0D1117;
+  --m3-on-surface-variant:     #5A6472;
+  --m3-on-background:          #0D1117;
+  --m3-inverse-surface:        #0D1117;
 
   /* Type — M3 */
   --m3-font-headline: 'Plus Jakarta Sans', 'Inter', sans-serif;
@@ -249,5 +249,5 @@ html, body {
   background: conic-gradient(from 180deg at 50% 50%, #FF5A1F 0deg, #FF5A1F 120deg, transparent 120deg, transparent 360deg);
 }
 .m3-status-ring-seen {
-  background: conic-gradient(from 180deg at 50% 50%, #222630 0deg, #222630 360deg);
+  background: conic-gradient(from 180deg at 50% 50%, #E5E8EC 0deg, #E5E8EC 360deg);
 }

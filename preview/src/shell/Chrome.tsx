@@ -16,7 +16,7 @@ export function StatusToasts(props: { setSpringOverlayOpen: any, springOverlayOp
   return (
     <>
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#FF5A1F] text-[#0D0F12] px-4 py-2.5 rounded-xl font-extrabold shadow-2xl flex items-center gap-2">
+        <div className="fixed bottom-6 right-6 z-50 bg-[#FF5A1F] text-[#0D1117] px-4 py-2.5 rounded-xl font-extrabold shadow-2xl flex items-center gap-2">
           <Sparkles className="w-4 h-4 shrink-0" />
           <span className="text-xs">{toastMessage}</span>
         </div>
@@ -28,16 +28,16 @@ export function StatusToasts(props: { setSpringOverlayOpen: any, springOverlayOp
             onClick={() => setSpringOverlayOpen(false)}
             className="fixed inset-0 z-[60] bg-black/45 backdrop-blur-[8px] transition-opacity"
           />
-          <div className="brief-spring-modal fixed top-1/2 left-1/2 z-[70] w-[calc(100%-48px)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[#22E6E0]/25 bg-[#12151A]/90 px-6 py-8 text-center shadow-2xl">
+          <div className="brief-spring-modal fixed top-1/2 left-1/2 z-[70] w-[calc(100%-48px)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[#2563EB]/25 bg-[#FFFFFF]/90 px-6 py-8 text-center shadow-2xl">
             <div className="text-4xl mb-4">⏳</div>
             <h3 className="text-xl font-bold mb-2">Nothing to do here?</h3>
-            <p className="text-sm text-[#F7F7F8]/60 leading-relaxed mb-6">
+            <p className="text-sm text-[#0D1117]/60 leading-relaxed mb-6">
               The current timeline is looking ultra quiet. Let's look into a
               different zone.
             </p>
             <button
               onClick={() => setSpringOverlayOpen(false)}
-              className="w-full py-4 rounded-lg bg-[#12151A] border border-[#22E6E0]/30 text-[#F7F7F8] text-[15px] font-bold flex items-center justify-center gap-2 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 hover:border-[#22E6E0]/70 active:translate-y-0.5 active:scale-[0.96] active:border-white"
+              className="w-full py-4 rounded-lg bg-[#FFFFFF] border border-[#2563EB]/30 text-[#0D1117] text-[15px] font-bold flex items-center justify-center gap-2 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 hover:border-[#2563EB]/70 active:translate-y-0.5 active:scale-[0.96] active:border-white"
             >
               🗓️ Check a Different Time
             </button>
@@ -54,7 +54,7 @@ export function DesktopRail(props: { activeTab: any, destinationAlerts: any, goT
     <>
         <nav
           aria-label="Primary"
-          className="hidden md:flex flex-col shrink-0 w-[76px] hover:w-60 transition-all duration-200 border-r border-[#222630] bg-[#12151A] sticky top-0 h-screen py-4 group/rail overflow-hidden"
+          className="hidden md:flex flex-col shrink-0 w-[76px] hover:w-60 transition-all duration-200 border-r border-[#E5E8EC] bg-[#FFFFFF] sticky top-0 h-screen py-4 group/rail overflow-hidden"
         >
           <button
             type="button"
@@ -62,7 +62,7 @@ export function DesktopRail(props: { activeTab: any, destinationAlerts: any, goT
             title="Menu"
             aria-expanded={menuOpen}
             className={`relative flex items-center gap-3 px-5 py-3 cursor-pointer transition-colors ${
-              menuOpen ? 'text-[#F7F7F8] bg-[#12151A] font-extrabold' : 'text-[#F7F7F8] hover:text-[#F7F7F8]'
+              menuOpen ? 'text-[#0D1117] bg-[#FFFFFF] font-extrabold' : 'text-[#0D1117] hover:text-[#0D1117]'
             }`}
           >
             <span
@@ -86,8 +86,8 @@ export function DesktopRail(props: { activeTab: any, destinationAlerts: any, goT
                 aria-current={active ? 'page' : undefined}
                 className={`relative flex items-center gap-3 px-5 py-3 cursor-pointer transition-colors ${
                   active
-                    ? 'text-[#F7F7F8] bg-[#12151A] font-extrabold'
-                    : 'text-[#F7F7F8] hover:text-[#F7F7F8]'
+                    ? 'text-[#0D1117] bg-[#FFFFFF] font-extrabold'
+                    : 'text-[#0D1117] hover:text-[#0D1117]'
                 }`}
               >
                 {/* Active marker on the edge, not a heavy filled pill. */}
@@ -117,13 +117,13 @@ export function DesktopRail(props: { activeTab: any, destinationAlerts: any, goT
             title="Updates"
             aria-label={notifUnread > 0 ? `Updates, ${notifUnread} unread` : 'Updates'}
             className={`relative mt-auto flex items-center gap-3 px-5 py-3 cursor-pointer transition-colors ${
-              notificationsOpen ? 'text-[#F7F7F8] bg-[#12151A] font-extrabold' : 'text-[#F7F7F8] hover:text-[#F7F7F8]'
+              notificationsOpen ? 'text-[#0D1117] bg-[#FFFFFF] font-extrabold' : 'text-[#0D1117] hover:text-[#0D1117]'
             }`}
           >
             <span className="relative shrink-0">
               <Bell className="w-5 h-5" />
               {notifUnread > 0 && (
-                <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#FF5D6C] px-1 text-[9px] font-extrabold text-[#F7F7F8]">
+                <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#DC2626] px-1 text-[9px] font-extrabold text-[#0D1117]">
                   {notifUnread > 99 ? '99+' : notifUnread}
                 </span>
               )}
@@ -131,7 +131,7 @@ export function DesktopRail(props: { activeTab: any, destinationAlerts: any, goT
             <span className="min-w-0 opacity-0 group-hover/rail:opacity-100 transition-opacity">
               <span className="block text-[13px] font-extrabold whitespace-nowrap">Updates</span>
               {notifUnread > 0 && (
-                <span className="block text-[9px] font-bold whitespace-nowrap text-[#FF5D6C]">{notifUnread} unread</span>
+                <span className="block text-[9px] font-bold whitespace-nowrap text-[#DC2626]">{notifUnread} unread</span>
               )}
             </span>
           </button>
@@ -148,7 +148,7 @@ export function DockNav(props: { activeTab: any, destinationAlerts: any, dockOn:
         type="button"
         aria-label="Show navigation"
         onClick={() => setDockOn(true)}
-        className={`md:hidden fixed bottom-3 left-1/2 z-[55] -translate-x-1/2 h-2 w-12 rounded-full bg-[#222630] cursor-pointer transition-transform ${
+        className={`md:hidden fixed bottom-3 left-1/2 z-[55] -translate-x-1/2 h-2 w-12 rounded-full bg-[#E5E8EC] cursor-pointer transition-transform ${
           dockOn || isAnyModalActive ? 'translate-y-full pointer-events-none hidden' : ''
         } ${isAnyModalActive ? 'hidden' : ''}`}
         aria-hidden={dockOn || isAnyModalActive ? true : undefined}
@@ -164,7 +164,7 @@ export function DockNav(props: { activeTab: any, destinationAlerts: any, dockOn:
           dockOn && !isAnyModalActive ? 'translate-y-0' : 'translate-y-full pointer-events-none'
         }`}
       >
-        <div className="mx-auto flex max-w-md items-stretch gap-0.5 rounded-[24px] border border-[#222630] bg-[#12151A]/95 px-1.5 py-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+        <div className="mx-auto flex max-w-md items-stretch gap-0.5 rounded-[24px] border border-[#E5E8EC] bg-[#FFFFFF]/95 px-1.5 py-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.55)] backdrop-blur-xl">
           <button
             type="button"
             onClick={() => { setMenuOpen((v: any) => !v); setDockOn(true); }}
@@ -172,10 +172,10 @@ export function DockNav(props: { activeTab: any, destinationAlerts: any, dockOn:
             aria-expanded={menuOpen}
             title="Menu"
             className={`flex flex-1 flex-col items-center justify-center gap-1 rounded-2xl py-1.5 cursor-pointer transition-colors ${
-              menuOpen ? 'text-[#FF5A1F]' : 'text-[#6E737C] hover:text-[#A7ACB5]'
+              menuOpen ? 'text-[#FF5A1F]' : 'text-[#7A8494] hover:text-[#5A6472]'
             }`}
           >
-            <span className={`flex h-7 w-11 items-center justify-center rounded-full transition-colors ${menuOpen ? 'bg-[#FF5A1F] text-[#0D0F12]' : ''}`}>
+            <span className={`flex h-7 w-11 items-center justify-center rounded-full transition-colors ${menuOpen ? 'bg-[#FF5A1F] text-[#0D1117]' : ''}`}>
               <Menu className="w-5 h-5" />
             </span>
             <span className="text-[11px] font-bold leading-none">Menu</span>
@@ -190,10 +190,10 @@ export function DockNav(props: { activeTab: any, destinationAlerts: any, dockOn:
                 aria-current={active ? 'page' : undefined}
                 title={d.hint}
                 className={`flex flex-1 flex-col items-center justify-center gap-1 rounded-2xl py-1.5 cursor-pointer transition-colors ${
-                  active ? 'text-[#FF5A1F]' : 'text-[#6E737C] hover:text-[#A7ACB5]'
+                  active ? 'text-[#FF5A1F]' : 'text-[#7A8494] hover:text-[#5A6472]'
                 }`}
               >
-                <span className={`relative flex h-7 w-11 items-center justify-center rounded-full transition-colors ${active ? 'bg-[#FF5A1F] text-[#0D0F12]' : ''}`}>
+                <span className={`relative flex h-7 w-11 items-center justify-center rounded-full transition-colors ${active ? 'bg-[#FF5A1F] text-[#0D1117]' : ''}`}>
                   <Icon className="w-5 h-5" />
                   <span className="absolute -right-1 -top-1">
                     <ActivityDot n={destinationAlerts[d.id] ?? 0} />

@@ -212,7 +212,7 @@ export function ActivityDot({ n }: { n: number }) {
   return (
     <span
       aria-hidden="true"
-      className="brief-alert-dot inline-flex items-center justify-center min-w-[15px] h-[15px] px-[3px] rounded-full bg-[#FF5D6C] text-[#F7F7F8] text-[8px] font-extrabold leading-none shadow-[0_0_0_1.5px_#08090B]"
+      className="brief-alert-dot inline-flex items-center justify-center min-w-[15px] h-[15px] px-[3px] rounded-full bg-[#DC2626] text-[#0D1117] text-[8px] font-extrabold leading-none shadow-[0_0_0_1.5px_#0D1117]"
     >
       {n > 1 ? alertLabel(n) : ''}
     </span>
@@ -739,15 +739,15 @@ export const getPostKindMeta = (
 ): { label: string; tone: string } => {
   switch (kind) {
     case 'news':
-      return { label: 'News', tone: 'text-[#F7F7F8] border-[#222630]' };
+      return { label: 'News', tone: 'text-[#0D1117] border-[#E5E8EC]' };
     case 'notice':
-      return { label: 'Notice', tone: 'text-[#F7F7F8] border-[#22E6E0]' };
+      return { label: 'Notice', tone: 'text-[#0D1117] border-[#2563EB]' };
     case 'chatter':
-      return { label: 'Chatter', tone: 'text-[#F7F7F8] border-[#222630]' };
+      return { label: 'Chatter', tone: 'text-[#0D1117] border-[#E5E8EC]' };
     case 'question':
-      return { label: 'Question', tone: 'text-[#F7F7F8] border-[#22E6E0]' };
+      return { label: 'Question', tone: 'text-[#0D1117] border-[#2563EB]' };
     case 'promo':
-      return { label: 'Promoted', tone: 'text-[#F7F7F8] border-[#22E6E0]' };
+      return { label: 'Promoted', tone: 'text-[#0D1117] border-[#2563EB]' };
   }
 };
 
@@ -4708,12 +4708,12 @@ const GameGlyph: React.FC<{
   const ratio = Math.max(0, Math.min(1, playerCount / ceiling));
   const full = typeof capacity === 'number' && capacity > 0 && playerCount >= capacity;
   const empty = playerCount <= 0;
-  const color = empty ? '#9CA3AF' : full ? '#F7F7F8' : '#6B7280';
+  const color = empty ? '#5A6472' : full ? '#0D1117' : '#5A6472';
 
   return (
     <span className="relative inline-flex shrink-0" title={label}>
       <svg width="40" height="40" viewBox="0 0 40 40" role="img" aria-label={label}>
-        <circle cx="20" cy="20" r={radius} fill="none" stroke="#222630" strokeWidth="2.5" />
+        <circle cx="20" cy="20" r={radius} fill="none" stroke="#E5E8EC" strokeWidth="2.5" />
         {/* Live arc. Nothing is drawn when the count is genuinely zero. */}
         {!empty && (
           <circle
@@ -4734,7 +4734,7 @@ const GameGlyph: React.FC<{
             cy="20"
             r={radius}
             fill="none"
-            stroke="#222630"
+            stroke="#E5E8EC"
             strokeWidth="2.5"
             strokeDasharray="2 4"
           />
@@ -4744,10 +4744,10 @@ const GameGlyph: React.FC<{
       <span
         className={`absolute -bottom-0.5 -right-0.5 min-w-[15px] px-1 rounded-full text-[8px] font-extrabold text-center leading-[15px] ${
           empty
-            ? 'bg-[#12151A] text-[#F7F7F8]/60'
+            ? 'bg-[#FFFFFF] text-[#0D1117]/60'
             : full
-            ? 'bg-[#FF5A1F] text-[#0D0F12]'
-            : 'bg-[#FF5A1F] text-[#0D0F12]'
+            ? 'bg-[#FF5A1F] text-[#0D1117]'
+            : 'bg-[#FF5A1F] text-[#0D1117]'
         }`}
       >
         {playerCount}
@@ -5168,12 +5168,12 @@ function PublicTicketQr({ code, size = 128 }: { code: string; size?: number }) {
   const [dataUrl, setDataUrl] = React.useState<string | null>(null);
   React.useEffect(() => {
     let live = true;
-    QRCode.toDataURL(code, { width: size, margin: 1, color: { dark: '#F7F7F8', light: '#12151A' } })
+    QRCode.toDataURL(code, { width: size, margin: 1, color: { dark: '#0D1117', light: '#FFFFFF' } })
       .then((u) => { if (live) setDataUrl(u); })
       .catch(() => { if (live) setDataUrl(null); });
     return () => { live = false; };
   }, [code, size]);
-  if (!dataUrl) return <div className="w-28 h-28 bg-[#171A20] border border-[#222630] rounded-lg" />;
+  if (!dataUrl) return <div className="w-28 h-28 bg-[#F0F2F5] border border-[#E5E8EC] rounded-lg" />;
   return <img src={dataUrl} alt={`Ticket ${code}`} className="w-28 h-28 rounded-lg" />;
 }
 
@@ -5198,18 +5198,18 @@ function PublicShareRow({ title, description }: { title: string; description: st
   return (
     <div className="flex flex-wrap gap-1.5">
       <a href={wa} target="_blank" rel="noreferrer"
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#12151A] text-[#F7F7F8] text-[10px] font-extrabold border border-[#222630]">
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FFFFFF] text-[#0D1117] text-[10px] font-extrabold border border-[#E5E8EC]">
         <MessageCircle className="w-3 h-3" /> WhatsApp
       </a>
       <a href={tg} target="_blank" rel="noreferrer"
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#12151A] text-[#F7F7F8] text-[10px] font-extrabold border border-[#222630]">
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FFFFFF] text-[#0D1117] text-[10px] font-extrabold border border-[#E5E8EC]">
         <ExternalLink className="w-3 h-3" /> Telegram
       </a>
       <button onClick={copy}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#12151A] text-[#F7F7F8] text-[10px] font-extrabold border border-[#222630] cursor-pointer">
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FFFFFF] text-[#0D1117] text-[10px] font-extrabold border border-[#E5E8EC] cursor-pointer">
         <Share2 className="w-3 h-3" /> {copied ? 'Copied' : 'Copy link'}
       </button>
-      <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#12151A] text-[#F7F7F8]/60 text-[10px] border border-[#222630]" title="Scan to open">
+      <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FFFFFF] text-[#0D1117]/60 text-[10px] border border-[#E5E8EC]" title="Scan to open">
         <ExternalLink className="w-3 h-3" /> QR
       </span>
     </div>
@@ -5318,7 +5318,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
   const c = load.data;
 
   return (
-    <div className="min-h-screen bg-[#08090B] text-[#0D0F12] font-sans selection:bg-[#FF5A1F] selection:text-[#0D0F12] flex flex-col">
+    <div className="min-h-screen bg-[#0D1117] text-[#0D1117] font-sans selection:bg-[#FF5A1F] selection:text-[#0D1117] flex flex-col">
       <div className="flex-1 w-full max-w-lg mx-auto px-4 py-8 space-y-5">
         <div className="flex items-center gap-2">
           <svg width="18" height="18" viewBox="0 0 26 26" aria-hidden="true">
@@ -5328,15 +5328,15 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
         </div>
 
         {load.status === 'loading' && (
-          <p className="text-xs text-[#F7F7F8]/60 py-12 text-center">Loading...</p>
+          <p className="text-xs text-[#0D1117]/60 py-12 text-center">Loading...</p>
         )}
 
         {load.status === 'error' && (
-          <div className="border border-[#222630] bg-[#12151A] rounded-2xl p-5 space-y-2">
-            <p className="text-sm font-extrabold text-[#F7F7F8]">{load.error}</p>
+          <div className="border border-[#E5E8EC] bg-[#FFFFFF] rounded-2xl p-5 space-y-2">
+            <p className="text-sm font-extrabold text-[#0D1117]">{load.error}</p>
             <button
               onClick={fetchCampaign}
-              className="px-3 py-1.5 rounded-xl bg-[#FF5A1F] text-[#0D0F12] font-extrabold text-[10px] cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-[#FF5A1F] text-[#0D1117] font-extrabold text-[10px] cursor-pointer"
             >
               Try again
             </button>
@@ -5346,28 +5346,28 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
         {load.status === 'ready' && c && (
           <>
             <div className="space-y-2">
-              <p className="text-[9px] text-[#F7F7F8]">
+              <p className="text-[9px] text-[#0D1117]">
                 {c.type}
               </p>
               <h1 className="text-2xl font-extrabold leading-tight">{c.title}</h1>
               {c.creator && (
-                <p className="text-[11px] text-[#F7F7F8] font-extrabold">by {c.creator}</p>
+                <p className="text-[11px] text-[#0D1117] font-extrabold">by {c.creator}</p>
               )}
               {c.description && (
-                <p className="text-xs text-[#F7F7F8]/60 leading-relaxed">{c.description}</p>
+                <p className="text-xs text-[#0D1117]/60 leading-relaxed">{c.description}</p>
               )}
             </div>
 
             {/* Contribution pot (T3): a goal, stated amounts, settled-only
                 progress, and contributors as a COUNT. Nobody is listed. */}
             {c.goalAmount != null && (
-              <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-4 space-y-2">
+              <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-4 space-y-2">
                 <div className="flex items-baseline justify-between gap-2">
-                  <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/70">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#0D1117]/70">
                     Contribution pot
                   </p>
                   {c.endsAt && (
-                    <p className="text-[10px] text-[#F7F7F8]/60">
+                    <p className="text-[10px] text-[#0D1117]/60">
                       {Date.parse(c.endsAt) <= Date.now()
                         ? 'Deadline passed'
                         : `Open until ${c.endsAt.slice(0, 10)}`}
@@ -5384,14 +5384,14 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                   />
                 </div>
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="font-extrabold text-[#F7F7F8]">
+                  <span className="font-extrabold text-[#0D1117]">
                     {c.currency} {(c.raised ?? 0).toLocaleString()} of {c.goalAmount.toLocaleString()}
                   </span>
-                  <span className="text-[#F7F7F8]/60">
+                  <span className="text-[#0D1117]/60">
                     {(c.contributors ?? 0)} contribution{(c.contributors ?? 0) === 1 ? '' : 's'}
                   </span>
                 </div>
-                <p className="text-[9px] leading-snug text-[#F7F7F8]/70">
+                <p className="text-[9px] leading-snug text-[#0D1117]/70">
                   Progress counts SETTLED money only — a pledge that has not settled is not raised.
                   Contributors are counted, never listed.
                 </p>
@@ -5400,55 +5400,55 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
 
             {/* Updates (T3): the organiser's posts, newest first. */}
             {updates !== null && updates.length > 0 && (
-              <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-4 space-y-3">
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]/70">
+              <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-4 space-y-3">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#0D1117]/70">
                   Updates
                 </p>
                 {updates.map((u) => (
                   <div key={u.id} className="space-y-0.5">
                     <div className="flex items-baseline justify-between gap-2">
-                      <p className="text-xs font-extrabold text-[#F7F7F8]">{u.title}</p>
-                      <p className="shrink-0 text-[9px] text-[#F7F7F8]/60">{u.createdAt.slice(0, 10)}</p>
+                      <p className="text-xs font-extrabold text-[#0D1117]">{u.title}</p>
+                      <p className="shrink-0 text-[9px] text-[#0D1117]/60">{u.createdAt.slice(0, 10)}</p>
                     </div>
-                    <p className="text-[11px] leading-snug text-[#F7F7F8]/60">{u.body}</p>
+                    <p className="text-[11px] leading-snug text-[#0D1117]/60">{u.body}</p>
                   </div>
                 ))}
               </div>
             )}
 
-            <div className="bg-[#12151A] border border-[#222630] rounded-2xl p-4 space-y-2">
+            <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-4 space-y-2">
               {c.startsAt && (
                 <div className="flex items-center gap-2">
-                  <Clock className="w-3.5 h-3.5 text-[#F7F7F8] shrink-0" />
-                  <span className="text-xs text-[#F7F7F8]">
+                  <Clock className="w-3.5 h-3.5 text-[#0D1117] shrink-0" />
+                  <span className="text-xs text-[#0D1117]">
                     {c.startsAt.slice(0, 16).replace('T', ' ')}
                   </span>
                 </div>
               )}
               {c.location && (
                 <div className="flex items-center gap-2">
-                  <MapPin className="w-3.5 h-3.5 text-[#F7F7F8] shrink-0" />
-                  <span className="text-xs text-[#F7F7F8]">{c.location}</span>
+                  <MapPin className="w-3.5 h-3.5 text-[#0D1117] shrink-0" />
+                  <span className="text-xs text-[#0D1117]">{c.location}</span>
                 </div>
               )}
               <div className="flex items-center gap-2">
-                <Tag className="w-3.5 h-3.5 text-[#F7F7F8] shrink-0" />
-                <span className="text-xs text-[#F7F7F8]">
+                <Tag className="w-3.5 h-3.5 text-[#0D1117] shrink-0" />
+                <span className="text-xs text-[#0D1117]">
                   {c.price === 0 ? 'Free' : `${c.currency} ${c.price.toLocaleString()}`}
                 </span>
               </div>
               {c.remaining !== null && (
                 <div className="flex items-center gap-2">
-                  <Users className="w-3.5 h-3.5 text-[#F7F7F8] shrink-0" />
-                  <span className="text-xs text-[#F7F7F8]">
+                  <Users className="w-3.5 h-3.5 text-[#0D1117] shrink-0" />
+                  <span className="text-xs text-[#0D1117]">
                     {c.soldOut ? 'Full' : `${c.remaining} spots left`}
                   </span>
                 </div>
               )}
               {c.registered > 0 && (
                 <div className="flex items-center gap-2">
-                  <Users className="w-3.5 h-3.5 text-[#F7F7F8] shrink-0" />
-                  <span className="text-xs text-[#F7F7F8]">
+                  <Users className="w-3.5 h-3.5 text-[#0D1117] shrink-0" />
+                  <span className="text-xs text-[#0D1117]">
                     {c.registered} {c.registered === 1 ? 'person' : 'people'} registered
                   </span>
                 </div>
@@ -5456,8 +5456,8 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
               {c.capacity !== null && c.remaining !== null && c.capacity > 0 && (
                 <div className="space-y-1 pt-1">
                   <div className="flex items-center justify-between text-[10px]">
-                    <span className="text-[#F7F7F8]/60">Spots filled</span>
-                    <span className="font-mono-live text-[#F7F7F8]">
+                    <span className="text-[#0D1117]/60">Spots filled</span>
+                    <span className="font-mono-live text-[#0D1117]">
                       {c.capacity - c.remaining} / {c.capacity}
                     </span>
                   </div>
@@ -5477,14 +5477,14 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
             <PublicShareRow title={c.title} description={c.description} />
 
             {done && (
-              <div className="border border-[#222630] bg-[#12151A] rounded-2xl p-5 space-y-3">
+              <div className="border border-[#E5E8EC] bg-[#FFFFFF] rounded-2xl p-5 space-y-3">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-[#F7F7F8] shrink-0" />
-                  <p className="text-sm font-extrabold text-[#F7F7F8]">
+                  <CheckCircle2 className="w-4 h-4 text-[#0D1117] shrink-0" />
+                  <p className="text-sm font-extrabold text-[#0D1117]">
                     {done.status === 'started' ? "You have a spot held" : "You're registered"}
                   </p>
                 </div>
-                <p className="text-[11px] text-[#F7F7F8]/60 leading-snug">
+                <p className="text-[11px] text-[#0D1117]/60 leading-snug">
                   {done.status === 'started'
                     ? 'Your spot is held. It is confirmed once payment is arranged with the organiser.'
                     : 'The organiser can see you on their list.'}
@@ -5493,9 +5493,9 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                   <div className="flex items-center gap-3 pt-1">
                     <PublicTicketQr code={done.ticketCode} />
                     <div className="min-w-0 space-y-1">
-                      <p className="text-[9px] text-[#F7F7F8]/60">Your ticket</p>
-                      <p className="text-[11px] text-[#F7F7F8] break-all select-all">{done.ticketCode}</p>
-                      <p className="text-[10px] text-[#F7F7F8]/60 leading-snug">Show this code at the gate.</p>
+                      <p className="text-[9px] text-[#0D1117]/60">Your ticket</p>
+                      <p className="text-[11px] text-[#0D1117] break-all select-all">{done.ticketCode}</p>
+                      <p className="text-[10px] text-[#0D1117]/60 leading-snug">Show this code at the gate.</p>
                     </div>
                   </div>
                 )}
@@ -5503,37 +5503,37 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
             )}
 
             {!done && (c.status === 'closed' || c.status === 'completed' || c.status === 'cancelled') && (
-              <div className="border border-[#222630] rounded-2xl p-5">
-                <p className="text-sm font-extrabold text-[#F7F7F8]/60">
+              <div className="border border-[#E5E8EC] rounded-2xl p-5">
+                <p className="text-sm font-extrabold text-[#0D1117]/60">
                   Registration is closed.
                 </p>
               </div>
             )}
 
             {!done && c.soldOut && c.status !== 'closed' && c.status !== 'cancelled' && (
-              <div className="border border-[#222630] rounded-2xl p-5 space-y-3">
-                <p className="text-sm font-extrabold text-[#F7F7F8]">This one is full.</p>
+              <div className="border border-[#E5E8EC] rounded-2xl p-5 space-y-3">
+                <p className="text-sm font-extrabold text-[#0D1117]">This one is full.</p>
                 <div className="space-y-2">
                   <input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Name"
-                    className="w-full bg-[#12151A] text-[#F7F7F8] text-sm rounded-xl px-3 py-3 border border-[#222630] focus:border-[#22E6E0] focus:outline-none"
+                    className="w-full bg-[#FFFFFF] text-[#0D1117] text-sm rounded-xl px-3 py-3 border border-[#E5E8EC] focus:border-[#2563EB] focus:outline-none"
                   />
                   <input
                     value={contact}
                     onChange={(e) => setContact(e.target.value)}
                     placeholder="Phone or email"
-                    className="w-full bg-[#12151A] text-[#F7F7F8] text-sm rounded-xl px-3 py-3 border border-[#222630] focus:border-[#22E6E0] focus:outline-none"
+                    className="w-full bg-[#FFFFFF] text-[#0D1117] text-sm rounded-xl px-3 py-3 border border-[#E5E8EC] focus:border-[#2563EB] focus:outline-none"
                   />
                   <button
                     disabled={waitlistBusy}
                     onClick={joinWaitlist}
-                    className="w-full py-3 rounded-xl border border-[#22E6E0] text-[#F7F7F8] font-extrabold text-xs cursor-pointer disabled:opacity-40"
+                    className="w-full py-3 rounded-xl border border-[#2563EB] text-[#0D1117] font-extrabold text-xs cursor-pointer disabled:opacity-40"
                   >
                     {waitlistBusy ? 'Saving...' : 'Join wait list'}
                   </button>
-                  {waitlistMessage && <p className="text-[10px] text-[#F7F7F8]/60">{waitlistMessage}</p>}
+                  {waitlistMessage && <p className="text-[10px] text-[#0D1117]/60">{waitlistMessage}</p>}
                 </div>
               </div>
             )}
@@ -5543,37 +5543,37 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
               (c.status === 'published' || c.status === 'live') && (
                 <div className="space-y-3">
                   {regError && (
-                    <div className="border border-[#222630] bg-[#12151A] rounded-xl p-3">
-                      <p className="text-[11px] text-[#F7F7F8] break-words">{regError}</p>
+                    <div className="border border-[#E5E8EC] bg-[#FFFFFF] rounded-xl p-3">
+                      <p className="text-[11px] text-[#0D1117] break-words">{regError}</p>
                     </div>
                   )}
                   <div>
-                    <label className="block text-[9px] text-[#F7F7F8]/60 mb-1">
+                    <label className="block text-[9px] text-[#0D1117]/60 mb-1">
                       Your name
                     </label>
                     <input
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Name"
-                      className="w-full bg-[#12151A] text-[#F7F7F8] text-sm rounded-xl px-3 py-3 border border-[#222630] focus:border-[#22E6E0] focus:outline-none"
+                      className="w-full bg-[#FFFFFF] text-[#0D1117] text-sm rounded-xl px-3 py-3 border border-[#E5E8EC] focus:border-[#2563EB] focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[9px] text-[#F7F7F8]/60 mb-1">
+                    <label className="block text-[9px] text-[#0D1117]/60 mb-1">
                       Phone or email
                     </label>
                     <input
                       value={contact}
                       onChange={(e) => setContact(e.target.value)}
                       placeholder="So the organiser can reach you"
-                      className="w-full bg-[#12151A] text-[#F7F7F8] text-sm rounded-xl px-3 py-3 border border-[#222630] focus:border-[#22E6E0] focus:outline-none"
+                      className="w-full bg-[#FFFFFF] text-[#0D1117] text-sm rounded-xl px-3 py-3 border border-[#E5E8EC] focus:border-[#2563EB] focus:outline-none"
                     />
                   </div>
                   {/* Pots (T3): the supporter states a whole-shillings amount.
                       Fixed-price events never show this — the price is the price. */}
                   {c.goalAmount != null && (
                     <div>
-                      <label className="block text-[9px] text-[#F7F7F8]/60 mb-1">
+                      <label className="block text-[9px] text-[#0D1117]/60 mb-1">
                         Your contribution ({c.currency})
                       </label>
                       <input
@@ -5581,9 +5581,9 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                         onChange={(e) => setAmount(e.target.value)}
                         inputMode="numeric"
                         placeholder="Whole shillings you are putting in"
-                        className="w-full bg-[#12151A] text-[#F7F7F8] text-sm rounded-xl px-3 py-3 border border-[#222630] focus:border-[#22E6E0] focus:outline-none"
+                        className="w-full bg-[#FFFFFF] text-[#0D1117] text-sm rounded-xl px-3 py-3 border border-[#E5E8EC] focus:border-[#2563EB] focus:outline-none"
                       />
-                      <p className="mt-1 text-[9px] text-[#F7F7F8]/60 leading-snug">
+                      <p className="mt-1 text-[9px] text-[#0D1117]/60 leading-snug">
                         State what you are putting in. It counts toward the pot once the money
                         settles; contributors are counted, never listed.
                       </p>
@@ -5592,7 +5592,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                   <button
                     disabled={busy || (c.goalAmount != null && !Number(amount))}
                     onClick={submit}
-                    className="w-full py-4 rounded-xl bg-[#FF5A1F] text-[#0D0F12] font-extrabold text-sm cursor-pointer disabled:opacity-40"
+                    className="w-full py-4 rounded-xl bg-[#FF5A1F] text-[#0D1117] font-extrabold text-sm cursor-pointer disabled:opacity-40"
                   >
                     {busy
                       ? 'Registering...'
@@ -5603,7 +5603,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                       : `Register - ${c.currency} ${c.price.toLocaleString()}`}
                   </button>
                   {(c.price > 0 || c.goalAmount != null) && (
-                    <p className="text-[10px] text-[#F7F7F8]/60 leading-snug text-center">
+                    <p className="text-[10px] text-[#0D1117]/60 leading-snug text-center">
                       No online payment is connected yet. Your spot is held and you
                       arrange payment with the organiser.
                     </p>
@@ -5619,7 +5619,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
         )}
       </div>
 
-      <footer className="border-t border-[#222630] py-6 text-[10px] text-[#F7F7F8]/60 text-center">
+      <footer className="border-t border-[#E5E8EC] py-6 text-[10px] text-[#0D1117]/60 text-center">
         Brief
       </footer>
     </div>

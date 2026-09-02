@@ -41,45 +41,45 @@ export const STORY_THEMES: StoryTheme[] = [
     id: 'classic',
     label: 'Classic',
     blurb: 'Clean paper, dark ink.',
-    surface: '#F7F7F8',
-    ink: '#0D0F12',
-    inkDim: 'rgba(13, 15, 18, 0.62)',
+    surface: '#FFFFFF',
+    ink: '#0D1117',
+    inkDim: 'rgba(13, 17, 23, 0.62)',
     defaultAccent: '#FF5A1F',
     titleClass: 'font-display text-3xl font-bold leading-tight',
-    line: '#D1D5DB'
+    line: '#E5E8EC'
   },
   {
     id: 'noir',
     label: 'Noir',
     blurb: 'Night edition — light ink on near-black.',
-    surface: '#08090B',
-    ink: '#F7F7F8',
-    inkDim: 'rgba(247, 247, 248, 0.65)',
+    surface: '#0D1117',
+    ink: '#FFFFFF',
+    inkDim: 'rgba(255, 255, 255, 0.65)',
     defaultAccent: '#FF5A1F',
     titleClass: 'font-display text-3xl font-bold leading-tight',
-    line: 'rgba(247, 247, 248, 0.22)'
+    line: 'rgba(255, 255, 255, 0.22)'
   },
   {
     id: 'poster',
     label: 'Poster',
     blurb: 'Big display type, loud and simple.',
-    surface: '#F7F7F8',
-    ink: '#0D0F12',
-    inkDim: 'rgba(13, 15, 18, 0.55)',
+    surface: '#FFFFFF',
+    ink: '#0D1117',
+    inkDim: 'rgba(13, 17, 23, 0.55)',
     defaultAccent: '#FF5A1F',
     titleClass: 'text-4xl font-extrabold leading-[1.05] tracking-tight',
-    line: '#0D0F12'
+    line: '#0D1117'
   },
   {
     id: 'gazette',
     label: 'Gazette',
     blurb: 'Warm paper, ruled and quiet.',
-    surface: '#F7F7F8',
-    ink: '#0D0F12',
-    inkDim: 'rgba(13, 15, 18, 0.62)',
+    surface: '#FFF8F0',
+    ink: '#0D1117',
+    inkDim: 'rgba(13, 17, 23, 0.62)',
     defaultAccent: '#FF5A1F',
     titleClass: 'font-display text-2xl font-bold leading-snug',
-    line: '#6E737C'
+    line: '#7A8494'
   }
 ];
 

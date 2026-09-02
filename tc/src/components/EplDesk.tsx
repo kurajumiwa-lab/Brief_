@@ -18,12 +18,12 @@ import type { EplRoomRow, EplCatalogPlayer } from '../api/briefApi';
 // ---------------------------------------------------------------------------
 
 const LOBBY_STYLE: Record<string, string> = {
-  waiting_for_players: 'bg-[#222630] text-[#F7F7F8]/60',
-  open: 'bg-[#FF5A1F] text-[#F7F7F8]',
-  full: 'bg-[#222630] text-[#F7F7F8]',
-  in_progress: 'bg-[#FF5A1F] text-[#F7F7F8]',
-  completed: 'bg-[#12151A] text-[#F7F7F8]',
-  cancelled: 'bg-[#222630] text-[#F7F7F8]/60'
+  waiting_for_players: 'bg-[#E5E8EC] text-[#0D1117]/60',
+  open: 'bg-[#FF5A1F] text-[#0D1117]',
+  full: 'bg-[#E5E8EC] text-[#0D1117]',
+  in_progress: 'bg-[#FF5A1F] text-[#0D1117]',
+  completed: 'bg-[#FFFFFF] text-[#0D1117]',
+  cancelled: 'bg-[#E5E8EC] text-[#0D1117]/60'
 };
 const LOBBY_LABEL: Record<string, string> = {
   waiting_for_players: 'waiting for players',
@@ -165,39 +165,39 @@ export function EplDesk({ meId, onToast }: { meId: string | null; onToast: (msg:
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-extrabold text-[#F7F7F8]">EPL contest rooms</h2>
-        <p className="text-[10px] text-[#F7F7F8]/60 leading-snug">
+        <h2 className="text-lg font-extrabold text-[#0D1117]">EPL contest rooms</h2>
+        <p className="text-[10px] text-[#0D1117]/60 leading-snug">
           Pick an XI from the licensed catalog under a budget; the room fills or
           it is cancelled honestly at kickoff — no walkover scoring, no cash
           seats until the deployment is licensed.
         </p>
         {providerNote && (
-          <p className="mt-1 text-[9px] leading-snug text-[#F7F7F8]/60">{providerNote}</p>
+          <p className="mt-1 text-[9px] leading-snug text-[#0D1117]/60">{providerNote}</p>
         )}
         {!meId && (
-          <p className="mt-1 text-[10px] font-bold text-[#F7F7F8]/70">
+          <p className="mt-1 text-[10px] font-bold text-[#0D1117]/70">
             Browsing is open — sign in to open a room or seat an XI.
           </p>
         )}
       </div>
 
       {/* create a room */}
-      <div className="rounded-2xl border border-[#222630] bg-[#12151A] p-3.5 space-y-2">
-        <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#F7F7F8]">Open a room</p>
+      <div className="rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] p-3.5 space-y-2">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#0D1117]">Open a room</p>
         <div className="flex flex-wrap gap-2">
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Room name (e.g. GW4 Nairobi)"
             aria-label="room name"
-            className="min-w-[160px] flex-1 rounded-lg border border-[#222630] bg-[#171A20] px-3 py-2 text-[12px] text-[#F7F7F8]"
+            className="min-w-[160px] flex-1 rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117]"
           />
           <input
             type="datetime-local"
             value={kickoff}
             onChange={(e) => setKickoff(e.target.value)}
             aria-label="kickoff"
-            className="rounded-lg border border-[#222630] bg-[#171A20] px-2.5 py-2 text-[12px] text-[#F7F7F8]"
+            className="rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-2.5 py-2 text-[12px] text-[#0D1117]"
           />
           <input
             value={budget}
@@ -205,7 +205,7 @@ export function EplDesk({ meId, onToast }: { meId: string | null; onToast: (msg:
             inputMode="numeric"
             placeholder="Budget KSh"
             aria-label="squad budget"
-            className="w-28 rounded-lg border border-[#222630] bg-[#171A20] px-3 py-2 text-[12px] text-[#F7F7F8]"
+            className="w-28 rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117]"
           />
           <input
             value={minEntries}
@@ -213,24 +213,24 @@ export function EplDesk({ meId, onToast }: { meId: string | null; onToast: (msg:
             inputMode="numeric"
             placeholder="Min managers"
             aria-label="minimum managers"
-            className="w-28 rounded-lg border border-[#222630] bg-[#171A20] px-3 py-2 text-[12px] text-[#F7F7F8]"
+            className="w-28 rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117]"
           />
           <button
             type="button"
             onClick={() => void createRoom()}
             disabled={busy || !title.trim() || !kickoff}
-            className="rounded-lg bg-[#FF5A1F] px-4 py-2 text-[11px] font-extrabold text-[#0D0F12] cursor-pointer disabled:opacity-40"
+            className="rounded-lg bg-[#FF5A1F] px-4 py-2 text-[11px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
           >
             {busy ? '…' : 'Open room'}
           </button>
         </div>
-        {formNote && <p className="text-[11px] text-[#F7F7F8]">{formNote}</p>}
+        {formNote && <p className="text-[11px] text-[#0D1117]">{formNote}</p>}
       </div>
 
-      {error && <p className="text-xs text-[#F7F7F8]">{error}</p>}
-      {rooms === null && <p className="text-xs text-[#F7F7F8]/60">Loading rooms…</p>}
+      {error && <p className="text-xs text-[#0D1117]">{error}</p>}
+      {rooms === null && <p className="text-xs text-[#0D1117]/60">Loading rooms…</p>}
       {rooms !== null && rooms.length === 0 && !error && (
-        <p className="text-xs text-[#F7F7F8]/60">No rooms yet. Open one — the waiting room is honest about being empty.</p>
+        <p className="text-xs text-[#0D1117]/60">No rooms yet. Open one — the waiting room is honest about being empty.</p>
       )}
 
       {/* rooms */}
@@ -238,7 +238,7 @@ export function EplDesk({ meId, onToast }: { meId: string | null; onToast: (msg:
         {(rooms ?? []).map((r) => (
           <div
             key={r.id}
-            className={`rounded-2xl border bg-[#12151A] p-3.5 space-y-2 ${selectedId === r.id ? 'border-[#22E6E0]' : 'border-[#222630]'}`}
+            className={`rounded-2xl border bg-[#FFFFFF] p-3.5 space-y-2 ${selectedId === r.id ? 'border-[#2563EB]' : 'border-[#E5E8EC]'}`}
           >
             <button
               type="button"
@@ -246,10 +246,10 @@ export function EplDesk({ meId, onToast }: { meId: string | null; onToast: (msg:
               className="w-full text-left flex items-start justify-between gap-2 cursor-pointer"
             >
               <div className="min-w-0">
-                <p className="text-sm font-extrabold text-[#F7F7F8] truncate">
+                <p className="text-sm font-extrabold text-[#0D1117] truncate">
                   {r.title}{r.mine ? ' · yours' : ''}
                 </p>
-                <p className="text-[10px] text-[#F7F7F8]/60">
+                <p className="text-[10px] text-[#0D1117]/60">
                   kickoff {r.kickoffAt.slice(0, 16).replace('T', ' ')}
                   {r.budgetKes != null ? ` · budget KSh ${r.budgetKes.toLocaleString()}` : ''}
                   {r.minEntries != null ? ` · needs ${r.minEntries}` : ''}
@@ -262,14 +262,14 @@ export function EplDesk({ meId, onToast }: { meId: string | null; onToast: (msg:
             </button>
 
             {selectedId === r.id && (
-              <div className="space-y-2 border-t border-[#222630] pt-2">
+              <div className="space-y-2 border-t border-[#E5E8EC] pt-2">
                 {r.mine && (
                   <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
                       onClick={() => void importPool(r.id)}
                       disabled={busy}
-                      className="rounded-lg border border-[#22E6E0] px-3 py-1.5 text-[10px] font-extrabold text-[#F7F7F8] cursor-pointer disabled:opacity-40"
+                      className="rounded-lg border border-[#2563EB] px-3 py-1.5 text-[10px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
                     >
                       Import catalog pool
                     </button>
@@ -277,7 +277,7 @@ export function EplDesk({ meId, onToast }: { meId: string | null; onToast: (msg:
                       type="button"
                       onClick={() => void settle(r.id)}
                       disabled={busy}
-                      className="rounded-lg bg-[#FF5A1F] px-3 py-1.5 text-[10px] font-extrabold text-[#0D0F12] cursor-pointer disabled:opacity-40"
+                      className="rounded-lg bg-[#FF5A1F] px-3 py-1.5 text-[10px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
                     >
                       Settle the waiting room
                     </button>
@@ -287,9 +287,9 @@ export function EplDesk({ meId, onToast }: { meId: string | null; onToast: (msg:
                 {/* seat picker: the catalog the room drew from */}
                 {pool !== null && pool.length > 0 && r.status !== 'cancelled' && (
                   <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-[10px] text-[#F7F7F8]/60">
+                    <div className="flex items-center justify-between text-[10px] text-[#0D1117]/60">
                       <span>Pick 11 (1 GK · 3+ DEF · 2+ MID · 1+ FWD · max 3 per club)</span>
-                      <span className={spend > (r.budgetKes ?? Infinity) ? 'font-extrabold text-[#F7F7F8]' : ''}>
+                      <span className={spend > (r.budgetKes ?? Infinity) ? 'font-extrabold text-[#0D1117]' : ''}>
                         {pickCount}/11 · KSh {spend.toLocaleString()}{r.budgetKes != null ? ` of ${r.budgetKes.toLocaleString()}` : ''}
                       </span>
                     </div>
@@ -301,10 +301,10 @@ export function EplDesk({ meId, onToast }: { meId: string | null; onToast: (msg:
                             key={p.id}
                             type="button"
                             onClick={() => togglePick(p.id)}
-                            className={`text-left rounded-lg border px-2 py-1.5 cursor-pointer ${picked ? 'border-[#22E6E0] bg-[#FF5A1F] text-[#0D0F12]' : 'border-[#222630] bg-[#171A20] text-[#F7F7F8]/70'}`}
+                            className={`text-left rounded-lg border px-2 py-1.5 cursor-pointer ${picked ? 'border-[#2563EB] bg-[#FF5A1F] text-[#0D1117]' : 'border-[#E5E8EC] bg-[#F0F2F5] text-[#0D1117]/70'}`}
                           >
                             <p className="text-[10px] font-extrabold truncate">{p.name}</p>
-                            <p className={`text-[9px] ${picked ? 'text-[#F7F7F8]/70' : 'text-[#F7F7F8]/60'}`}>
+                            <p className={`text-[9px] ${picked ? 'text-[#0D1117]/70' : 'text-[#0D1117]/60'}`}>
                               {p.position} · {p.club} · {p.price}
                             </p>
                           </button>
@@ -316,7 +316,7 @@ export function EplDesk({ meId, onToast }: { meId: string | null; onToast: (msg:
                         value={captainId ?? ''}
                         onChange={(e) => setCaptainId(e.target.value || null)}
                         aria-label="captain"
-                        className="rounded-lg border border-[#222630] bg-[#171A20] px-2.5 py-2 text-[11px] text-[#F7F7F8]"
+                        className="rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-2.5 py-2 text-[11px] text-[#0D1117]"
                       >
                         <option value="">Choose captain (×2)</option>
                         {pool.filter((p) => picks.includes(p.id)).map((p) => (
@@ -327,13 +327,13 @@ export function EplDesk({ meId, onToast }: { meId: string | null; onToast: (msg:
                         type="button"
                         onClick={() => void seat()}
                         disabled={busy || pickCount !== 11 || !captainId}
-                        className="rounded-lg bg-[#FF5A1F] px-4 py-2 text-[11px] font-extrabold text-[#0D0F12] cursor-pointer disabled:opacity-40"
+                        className="rounded-lg bg-[#FF5A1F] px-4 py-2 text-[11px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
                       >
                         {busy ? '…' : 'Seat my XI'}
                       </button>
                     </div>
-                    {seatNote && <p className="text-[10px] text-[#F7F7F8] break-words">{seatNote}</p>}
-                    <p className="text-[9px] leading-snug text-[#F7F7F8]/60">
+                    {seatNote && <p className="text-[10px] text-[#0D1117] break-words">{seatNote}</p>}
+                    <p className="text-[9px] leading-snug text-[#0D1117]/60">
                       Catalog rows are {pool[0]?.source === 'seed' ? 'SEED data (no provider configured) — real licensed data arrives when a provider is connected' : `from ${pool[0]?.source}`}.
                       Squad rules, the budget and the lock are enforced server-side.
                     </p>
@@ -342,9 +342,9 @@ export function EplDesk({ meId, onToast }: { meId: string | null; onToast: (msg:
 
                 {standings !== null && standings.length > 0 && (
                   <div className="space-y-1">
-                    <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/60">Standings</p>
+                    <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#0D1117]/60">Standings</p>
                     {standings.map((s) => (
-                      <div key={s.userId} className="flex items-center justify-between text-[10px] text-[#F7F7F8]">
+                      <div key={s.userId} className="flex items-center justify-between text-[10px] text-[#0D1117]">
                         <span className="truncate">{s.userId === meId ? 'You' : s.userId}</span>
                         <span className="font-mono">{s.points ?? '—'} pts</span>
                       </div>
@@ -357,7 +357,7 @@ export function EplDesk({ meId, onToast }: { meId: string | null; onToast: (msg:
         ))}
       </div>
 
-      <p className="text-[9px] leading-snug text-[#F7F7F8]/60">
+      <p className="text-[9px] leading-snug text-[#0D1117]/60">
         {clubs.length > 0 ? `${clubs.length} licensed EPL clubs in the catalog. ` : ''}
         Cash entry stays refused until this deployment holds a gaming licence — the compliance gate names what is missing.
       </p>

@@ -45,15 +45,15 @@ export function CampaignDistribution({
   // canonical slug instead of a URL guessed from the current host.
   if (!link.available) {
     return (
-      <div className="bg-[#12151A] border border-[#222630] rounded-xl p-3 space-y-1">
-        <p className="text-[11px] text-[#F7F7F8] font-extrabold">
+      <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-xl p-3 space-y-1">
+        <p className="text-[11px] text-[#0D1117] font-extrabold">
           No public link configured yet.
         </p>
-        <p className="text-[10px] text-[#F7F7F8]/60 leading-snug">
+        <p className="text-[10px] text-[#0D1117]/60 leading-snug">
           Your campaign is live. Once a public address is set up for this Brief,
           your link will be:
         </p>
-        <p className="text-[10px] text-[#F7F7F8] break-all">
+        <p className="text-[10px] text-[#0D1117] break-all">
           /c/{link.slug}
         </p>
       </div>
@@ -69,17 +69,17 @@ export function CampaignDistribution({
 
   return (
     <div className="space-y-2">
-      <div className="bg-[#12151A] border border-[#222630] rounded-xl p-3">
-        <p className="text-[9px] text-[#F7F7F8]/60 mb-1">
+      <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-xl p-3">
+        <p className="text-[9px] text-[#0D1117]/60 mb-1">
           Your link
         </p>
-        <p className="text-[10px] text-[#F7F7F8] break-all">{link.url}</p>
+        <p className="text-[10px] text-[#0D1117] break-all">{link.url}</p>
       </div>
 
       <div className="flex items-center gap-2">
         <button
           onClick={onCopy}
-          className={`flex-1 rounded-xl bg-[#FF5A1F] text-[#0D0F12] font-extrabold cursor-pointer ${
+          className={`flex-1 rounded-xl bg-[#FF5A1F] text-[#0D1117] font-extrabold cursor-pointer ${
             compact ? 'py-2.5 text-[11px]' : 'py-3 text-xs'
           }`}
         >
@@ -88,7 +88,7 @@ export function CampaignDistribution({
         {onNativeShare && (
           <button
             onClick={onNativeShare}
-            className={`rounded-xl border border-[#222630] text-[#F7F7F8] font-extrabold cursor-pointer ${
+            className={`rounded-xl border border-[#E5E8EC] text-[#0D1117] font-extrabold cursor-pointer ${
               compact ? 'px-4 py-2.5 text-[11px]' : 'px-4 py-3 text-xs'
             }`}
           >
@@ -107,14 +107,14 @@ export function CampaignDistribution({
             target="_blank"
             rel="noreferrer noopener"
             onClick={() => onShare(ch)}
-            className="px-3 py-1.5 rounded-full border border-[#222630] text-[#F7F7F8] font-extrabold text-[10px] cursor-pointer"
+            className="px-3 py-1.5 rounded-full border border-[#E5E8EC] text-[#0D1117] font-extrabold text-[10px] cursor-pointer"
           >
             {label}
           </a>
         ))}
       </div>
 
-      <p className="text-[9px] text-[#F7F7F8]/60 leading-snug">
+      <p className="text-[9px] text-[#0D1117]/60 leading-snug">
         For Instagram or TikTok, copy the link and paste it into your bio or
         caption.
       </p>

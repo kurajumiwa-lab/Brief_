@@ -85,9 +85,9 @@ export function CollectionPicker({ objectId, onChanged }: {
   };
 
   return (
-    <div className="rounded-2xl border border-[#222630] bg-[#12151A] p-3 shadow-sm">
+    <div className="rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] p-3 shadow-sm">
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#0D1117]">
           Add to collection
         </p>
         {!creating && (
@@ -107,21 +107,21 @@ export function CollectionPicker({ objectId, onChanged }: {
             onKeyDown={(e) => { if (e.key === 'Enter') create(); if (e.key === 'Escape') setCreating(false); }}
             placeholder="Collection name"
             aria-label="New collection name"
-            className="min-w-0 flex-1 rounded-xl border border-[#222630] px-2.5 py-1.5 text-[12px] font-semibold text-[#F7F7F8] outline-none focus:border-[#22E6E0]"
+            className="min-w-0 flex-1 rounded-xl border border-[#E5E8EC] px-2.5 py-1.5 text-[12px] font-semibold text-[#0D1117] outline-none focus:border-[#2563EB]"
           />
           <button type="button" onClick={create} disabled={busy || !name.trim()}
-            className="rounded-full bg-[#FF5A1F] px-3 py-1.5 text-[10px] font-extrabold text-[#0D0F12] cursor-pointer disabled:opacity-40">
+            className="rounded-full bg-[#FF5A1F] px-3 py-1.5 text-[10px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40">
             Create
           </button>
           <button type="button" onClick={() => setCreating(false)} aria-label="Cancel"
-            className="rounded-full border border-[#222630] p-1.5 text-[#F7F7F8]/60 cursor-pointer">
+            className="rounded-full border border-[#E5E8EC] p-1.5 text-[#0D1117]/60 cursor-pointer">
             <X className="h-3 w-3" />
           </button>
         </div>
       )}
 
       {collections.length === 0 && !creating ? (
-        <p className="py-2 text-center text-[11px] font-semibold text-[rgba(247, 247, 248,0.55)]">
+        <p className="py-2 text-center text-[11px] font-semibold text-[rgba(13, 17, 23,0.55)]">
           No collections yet — create one to start organizing.
         </p>
       ) : (
@@ -131,27 +131,27 @@ export function CollectionPicker({ objectId, onChanged }: {
             return (
               <button key={c.id} type="button" onClick={() => toggle(c)} disabled={busy}
                 className={`flex w-full items-center gap-2 rounded-xl border px-2.5 py-2 text-left cursor-pointer transition-colors disabled:opacity-50 ${
-                  isMember ? 'border-[#22E6E0] bg-[#171A20]' : 'border-[#222630] bg-[#12151A] hover:border-[#22E6E0]/50'
+                  isMember ? 'border-[#2563EB] bg-[#F0F2F5]' : 'border-[#E5E8EC] bg-[#FFFFFF] hover:border-[#2563EB]/50'
                 }`}>
                 <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${
-                  isMember ? 'border-[#FF5A1F] bg-[#FF5A1F] text-[#0D0F12]' : 'border-[#222630] text-transparent'
+                  isMember ? 'border-[#FF5A1F] bg-[#FF5A1F] text-[#0D1117]' : 'border-[#E5E8EC] text-transparent'
                 }`}>
                   <Check className="h-3 w-3" />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[12px] font-bold text-[#F7F7F8]">{c.name}</span>
-                  <span className="block text-[9px] font-semibold text-[rgba(247, 247, 248,0.55)]">
+                  <span className="block truncate text-[12px] font-bold text-[#0D1117]">{c.name}</span>
+                  <span className="block text-[9px] font-semibold text-[rgba(13, 17, 23,0.55)]">
                     {c.count} {c.count === 1 ? 'item' : 'items'} · {c.visibility}
                   </span>
                 </span>
-                <FolderPlus className="h-3.5 w-3.5 shrink-0 text-[rgba(247, 247, 248,0.4)]" />
+                <FolderPlus className="h-3.5 w-3.5 shrink-0 text-[rgba(13, 17, 23,0.4)]" />
               </button>
             );
           })}
         </div>
       )}
 
-      <p className="mt-2 text-[9px] font-semibold text-[rgba(247, 247, 248,0.45)]">
+      <p className="mt-2 text-[9px] font-semibold text-[rgba(13, 17, 23,0.45)]">
         This only adds a reference — the object itself is never copied.
       </p>
     </div>

@@ -32,10 +32,10 @@ export function ArenaShelf({ games, activity, onOpen }: ArenaShelfProps) {
     <section>
       <div className="flex items-end justify-between gap-3 mb-2.5">
         <div>
-          <h3 className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#F7F7F8]">
+          <h3 className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#0D1117]">
             Your games
           </h3>
-          <p className="text-[10px] text-[#F7F7F8]/60 mt-0.5">Tap a title to set up a match</p>
+          <p className="text-[10px] text-[#0D1117]/60 mt-0.5">Tap a title to set up a match</p>
         </div>
       </div>
 
@@ -59,7 +59,7 @@ export function ArenaShelf({ games, activity, onOpen }: ArenaShelfProps) {
             >
               <div
                 className="relative aspect-[3/4] rounded-2xl overflow-hidden border transition-all"
-                style={{ borderColor: live ? '#FF5A1F' : '#222630' }}
+                style={{ borderColor: live ? '#FF5A1F' : '#E5E8EC' }}
               >
                 <img
                   src={theme.art}
@@ -82,7 +82,7 @@ export function ArenaShelf({ games, activity, onOpen }: ArenaShelfProps) {
                 <div className="absolute top-2.5 left-2.5">
                   <span
                     className="text-[8px] font-extrabold tracking-[0.2em] px-1.5 py-0.5 rounded-md"
-                    style={{ color: '#0D0F12', background: '#FF5A1F' }}
+                    style={{ color: '#0D1117', background: '#FF5A1F' }}
                   >
                     {theme.providerMark}
                   </span>
@@ -94,31 +94,31 @@ export function ArenaShelf({ games, activity, onOpen }: ArenaShelfProps) {
                   style={{
                     // Solid enough to keep white type readable over any art.
                     background: 'rgba(9,11,16,0.9)',
-                    color: '#F7F7F8',
-                    border: `1px solid ${live ? '#F7F7F8' : 'rgba(255,255,255,0.28)'}`
+                    color: '#FFFFFF',
+                    border: `1px solid ${live ? '#FFFFFF' : 'rgba(255,255,255,0.28)'}`
                   }}
                 >
                   <span
                     className="inline-block h-1 w-1 rounded-full"
-                    style={{ background: live ? '#FF5A1F' : 'rgba(247,247,248,0.12)' }}
+                    style={{ background: live ? '#FF5A1F' : 'rgba(255,255,255,0.12)' }}
                   />
                   {live ? 'LIVE' : 'QUIET'}
                 </span>
 
                 {/* title block — white over the veiled art (dark surface) */}
                 <div className="absolute inset-x-0 bottom-0 p-2.5">
-                  <p className="text-[8px] font-bold uppercase tracking-[0.16em] text-[#F7F7F8]/75">
+                  <p className="text-[8px] font-bold uppercase tracking-[0.16em] text-[#FFFFFF]/75">
                     {theme.provider}
                   </p>
-                  <h4 className="text-[13px] font-extrabold leading-tight text-[#F7F7F8]">
+                  <h4 className="text-[13px] font-extrabold leading-tight text-[#FFFFFF]">
                     {g.shortName}
                   </h4>
                   <div className="mt-1 flex items-center justify-between gap-2">
-                    <span className="text-[9px] font-mono text-[#F7F7F8]/70">
+                    <span className="text-[9px] font-mono text-[#FFFFFF]/70">
                       {live ? `${count} open now` : 'no open matches'}
                     </span>
                     <span
-                      className="text-[9px] font-extrabold text-[#F7F7F8] opacity-0 transition-opacity group-hover:opacity-100"
+                      className="text-[9px] font-extrabold text-[#FFFFFF] opacity-0 transition-opacity group-hover:opacity-100"
                     >
                       Open →
                     </span>

@@ -1,61 +1,61 @@
-/* One Brief. The dark charcoal system: near-black page, light ink, and a
-   warm electric-orange accent with a cyan secondary. Hierarchy comes from
-   weight and size first; muted/faint are the SAME ink at reduced alpha.
+/* One Brief. The LIGHT system: white page, dark ink, and a blue + orange
+   accent pair. Hierarchy comes from weight and size first; muted/faint are
+   the SAME ink at reduced alpha.
 
-   §3 palette (dark charcoal + orange/cyan):
-     ground    #08090B   primary background
-     surface   #12151A   cards
-     surface-2 #171A20   raised cards, input wells
-     surface-3 #1D2027   elevated / hover
-     elevated  #222630   top elevation, hairlines
-     ink       #F7F7F8   primary text
-     ink-dim   #A7ACB5   secondary text
-     ink-faint #8A93A6   meta / timestamps (>=4.5:1 on ground/surface)
-     accent    #FF5A1F   warm electric orange  (primary)
-     accent-2  #22E6E0   cyan/turquoise        (secondary)
-     success   #38E879   success / live
-     warning   #FFCC66   warning
-     danger    #FF5D6C   danger / urgent
+   Palette (light + blue/orange):
+     ground    #F7F8FA   primary background (very light)
+     surface   #FFFFFF   cards
+     surface-2 #F0F2F5   raised cards, input wells
+     surface-3 #EFF1F4   elevated / hover
+     elevated  #E5E8EC   top elevation, hairlines
+     ink       #0D1117   primary text
+     ink-dim   #5A6472   secondary text
+     ink-faint #7A8494   meta / timestamps (>=4.5:1 on ground/surface)
+     accent    #FF5A1F   warm orange (primary)
+     accent-2  #2563EB   blue (secondary)
+     success   #16A34A   success / live
+     warning   #B45309   warning
+     danger    #DC2626   danger / urgent
 
-   `--brief-green` is a legacy name; it now resolves to the orange accent.
-   All consumers were migrated by the palette remap (scripts committed with
-   the change), so the name is the ONLY thing that stays "green". */
+   `--brief-green` is a legacy name; it resolves to the orange accent.
+   All consumers were migrated by the palette remap, so the name is the ONLY
+   thing that stays "green". */
 
 :root {
   /* --- Canonical Brief tokens --- */
-  --brief-bg: #08090B;
-  --brief-card: #12151A;
-  --brief-ink: #F7F7F8;
-  --brief-muted: #A7ACB5;
-  --brief-faint: #8A93A6;
-  --brief-line: #222630;
-  --brief-green: #FF5A1F;   /* primary accent = warm electric orange (legacy name kept) */
-  --brief-green-ink: #0D0F12;  /* text on the accent — dark, for contrast on orange */
-  --brief-warn: #FFCC66;
-  --brief-danger: #FF5D6C;
+  --brief-bg: #F7F8FA;
+  --brief-card: #FFFFFF;
+  --brief-ink: #0D1117;
+  --brief-muted: #5A6472;
+  --brief-faint: #7A8494;
+  --brief-line: #E5E8EC;
+  --brief-green: #FF5A1F;   /* primary accent = warm orange (legacy name kept) */
+  --brief-green-ink: #0D1117;  /* text on the orange accent — dark, for contrast */
+  --brief-warn: #B45309;
+  --brief-danger: #DC2626;
 
   /* --- Semantic aliases (kept stable so consumers never broke) --- */
   --ground: var(--brief-bg);
   --surface: var(--brief-card);
-  --surface-2: #171A20;
-  --surface-3: #1D2027;
-  --elevated: #222630;
+  --surface-2: #F0F2F5;
+  --surface-3: #EFF1F4;
+  --elevated: #E5E8EC;
   --hairline: var(--brief-line);
-  --overlay-scrim: #0D0F12;
+  --overlay-scrim: #0D1117;
   --ink: var(--brief-ink);
   --ink-dim: var(--brief-muted);
   --ink-faint: var(--brief-faint);
-  --signal-live: #38E879;     /* live/fresh — success green */
-  --signal-arena: #22E6E0;    /* Arena — cyan */
-  --signal-urgent: #FF5D6C;   /* countdown / closing soon — danger */
+  --signal-live: #16A34A;     /* live/fresh — success green */
+  --signal-arena: #2563EB;    /* Arena — blue */
+  --signal-urgent: #DC2626;   /* countdown / closing soon — danger */
 
   /* --- Spec-named accent tokens (§3) --- */
   --accent: #FF5A1F;
-  --accent-2: #22E6E0;
-  --accent-ink: #0D0F12;
-  --success: #38E879;
-  --warning: #FFCC66;
-  --danger: #FF5D6C;
+  --accent-2: #2563EB;
+  --accent-ink: #0D1117;
+  --success: #16A34A;
+  --warning: #B45309;
+  --danger: #DC2626;
 
   /* --- Shape language (§5) --- */
   --radius-card: 24px;
@@ -72,13 +72,13 @@
   --text-body: 15px;
   --text-meta: 12px;
 
-  /* --- M3 aliases, mapped onto the dark system --- */
+  /* --- M3 aliases, mapped onto the light system --- */
   --m3-surface: var(--brief-bg);
   --m3-surface-container: var(--brief-card);
-  --m3-surface-container-low: #171A20;
+  --m3-surface-container-low: #F0F2F5;
   --m3-primary: #FF5A1F;
-  --m3-on-primary: #0D0F12;
-  --m3-secondary-container: #171A20;
+  --m3-on-primary: #FFFFFF;
+  --m3-secondary-container: #F0F2F5;
   --m3-on-surface: var(--brief-ink);
   --m3-on-surface-variant: var(--brief-muted);
   --m3-outline: var(--brief-line);
@@ -107,5 +107,5 @@ button, [role="button"] {
 }
 .brief-tap:active {
   transform: scale(0.98);
-  filter: brightness(0.92);
+  filter: brightness(0.96);
 }
