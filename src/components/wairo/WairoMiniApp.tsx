@@ -28,6 +28,7 @@ import {
 import { 
   WairoDelivery, 
   WairoLocation, 
+  WairoMessage,
   LOGISTICS_SERVICES, 
   MOCK_ORDERS, 
   MOCK_MESSAGES, 
@@ -58,7 +59,7 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
   onCloseMiniView
 }) => {
   const [activeTab, setActiveTab] = useState<'home' | 'orders' | 'deliver' | 'messages' | 'partner'>('home');
-  const [messages, setMessages] = useState(MOCK_MESSAGES);
+  const [messages, setMessages] = useState<WairoMessage[]>(MOCK_MESSAGES);
   const [newMessageText, setNewMessageText] = useState('');
   const [soundOn, setSoundOn] = useState(true);
   const [unreadNotifications, setUnreadNotifications] = useState(2);

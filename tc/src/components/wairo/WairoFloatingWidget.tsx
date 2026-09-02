@@ -47,19 +47,8 @@ export const WairoFloatingWidget: React.FC = () => {
     }));
   };
 
-  // Auto-progress simulated delivery
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveDelivery(prev => {
-        if (prev.progressPercent >= 98) return prev;
-        return {
-          ...prev,
-          progressPercent: Math.min(98, +(prev.progressPercent + 0.15).toFixed(1)),
-        };
-      });
-    }, 2500);
-    return () => clearInterval(timer);
-  }, []);
+  // Simulated delivery initial state
+
 
   return (
     <aside aria-label="Wairo Kenyan Marketplace Logistics Companion" data-wairo-widget="true">
@@ -98,7 +87,7 @@ export const WairoFloatingWidget: React.FC = () => {
                   WAIRO
                 </span>
                 <span className="text-[9px] px-1 rounded bg-[#F58220] text-white font-bold font-mono">
-                  90% PAYOUT
+                  90/10 PAYOUT
                 </span>
               </div>
               <span className="text-xs font-bold text-white leading-tight">

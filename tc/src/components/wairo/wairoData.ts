@@ -51,6 +51,7 @@ export interface WairoDelivery {
   status: string;
   progressPercent: number;
   etaMinutes: number;
+  speed?: number;
   destination: string;
   locationId: string;
   senderLocation: string;
@@ -72,6 +73,16 @@ export interface WairoDelivery {
     done: boolean;
     active?: boolean;
   }[];
+}
+
+export interface WairoMessage {
+  id: string;
+  sender: 'pilot' | 'system' | 'user';
+  name: string;
+  role: string;
+  avatar: string;
+  time: string;
+  text: string;
 }
 
 export const LOCATIONS: WairoLocation[] = [
@@ -398,7 +409,7 @@ export const MOCK_ORDERS = [
   },
 ];
 
-export const MOCK_MESSAGES = [
+export const MOCK_MESSAGES: WairoMessage[] = [
   {
     id: 'msg-1',
     sender: 'pilot' as const,

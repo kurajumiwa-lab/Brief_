@@ -32,6 +32,7 @@ for dest in preview/src tc/src; do
   # arenaArcade.css) are imported by screens/components, so mirror them too.
   cp -R src/utils "$dest/utils"
   cp -R src/styles "$dest/styles"
+  cp src/*.d.ts "$dest/" 2>/dev/null || true
 done
 
 echo "synced App.tsx + src/model + src/api + src/components + src/nav + src/ui + src/assets + src/engine + src/utils + src/styles -> preview/src, tc/src"

@@ -106,7 +106,7 @@ export function ArenaShelf({ games, activity, onOpen, onLaunchTemplate }: ArenaS
               </h3>
             </div>
             <p className="text-[11px] text-[#0D1117]/60 mt-0.5">
-              Discord for African Gamers • Connect, challenge players & organize clan matches
+              Discord for African Gamers • Find open matches, challenge players & organize clan tournaments
             </p>
           </div>
 

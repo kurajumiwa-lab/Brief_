@@ -249,4 +249,4 @@ async function main() {
   console.log(`\nPASS ${pass} FAIL ${fail}`);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main().then(() => { process.exit(fail ? 1 : 0); }).catch((e) => { console.error(e); process.exit(1); });

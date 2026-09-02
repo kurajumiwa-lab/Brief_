@@ -9,7 +9,7 @@
  * singleton and the mute preference is persisted under its own key.
  */
 
-type SoundType = 'tap' | 'heavyTap' | 'reward' | 'victory' | 'defeat' | 'countdown' | 'matchReady';
+type SoundType = 'tap' | 'heavyTap' | 'reward' | 'victory' | 'defeat' | 'countdown' | 'matchReady' | 'cheer';
 
 const MUTE_KEY = 'brief_arena_sound_muted';
 
@@ -103,6 +103,7 @@ class SoundEngine {
           this.synthesizeReward();
           break;
         case 'victory':
+        case 'cheer':
           this.synthesizeVictory();
           break;
         case 'defeat':
