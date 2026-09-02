@@ -25,6 +25,7 @@ import {
   Hash
 } from 'lucide-react';
 import { CustomLeagueModal } from './arena/CustomLeagueModal';
+import { EfootballHighlightBanner, EfootballEventsHub } from './arena/EfootballShowcase';
 
 export type ArenaStakeKind = 'friendly' | 'ranked' | 'entry_fee';
 
@@ -354,6 +355,40 @@ export function ArenaGameScreen({
             ))}
           </div>
         </section>
+
+        {/* ================= EFOOTBALL SHOWCASE & SELECTION CONTRACTS ================= */}
+        {game.id === 'efootball' && (
+          <div className="space-y-6">
+            <EfootballHighlightBanner
+              onSelectContract={(player) => {
+                soundEngine.play('victory');
+              }}
+              onOpenDetails={() => {
+                soundEngine.play('tap');
+              }}
+            />
+
+            <section aria-label="eFootball Events">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <h3 className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#0D1117]">
+                  Tournaments & Match Events
+                </h3>
+                <span className="text-[10px] font-bold text-[#FF5A1F]">eFootball Season Hub</span>
+              </div>
+              <EfootballEventsHub
+                onEnterEvent={(ev) => {
+                  soundEngine.play('heavyTap');
+                  onCreateChallenge({
+                    mode: ev.title,
+                    stake: 'friendly',
+                    note: `Event: ${ev.title} (${ev.category})`,
+                    openMinutes: 120
+                  });
+                }}
+              />
+            </section>
+          </div>
+        )}
 
         {/* ================= MATCHROOM COMPOSER (STAKED / RANKED / FRIENDLY) ================= */}
         <div className="rounded-3xl bg-white border border-[#E5E8EC] p-5 sm:p-6 space-y-4 shadow-xs">

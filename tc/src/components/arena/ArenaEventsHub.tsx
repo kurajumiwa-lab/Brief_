@@ -240,7 +240,7 @@ export const ArenaEventsHub: React.FC<ArenaEventsHubProps> = ({ onEnterEvent, my
 
   const handleConfirmEnter = () => {
     if (!enteringEvent) return;
-    soundEngine.play('cheer');
+    soundEngine.play('victory');
     onEnterEvent(enteringEvent);
     setEnteringEvent(null);
   };

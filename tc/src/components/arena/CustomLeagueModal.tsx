@@ -60,7 +60,7 @@ export const CustomLeagueModal: React.FC<CustomLeagueModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    soundEngine.play('cheer');
+    soundEngine.play('victory');
 
     const newLeague: CustomLeagueTemplate = {
       id: `league-${Date.now()}`,

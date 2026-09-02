@@ -76,6 +76,9 @@ declare module 'lucide-react' {
   export const Mail: LucideIcon;
   export const Volume2: LucideIcon;
   export const VolumeX: LucideIcon;
+  export const Download: LucideIcon;
+  export const Maximize2: LucideIcon;
+  export const RotateCcw: LucideIcon;
   export const X: LucideIcon;
   export const FileText: LucideIcon;
   export const Image: LucideIcon;

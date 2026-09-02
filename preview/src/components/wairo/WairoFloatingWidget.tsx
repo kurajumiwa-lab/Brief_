@@ -87,7 +87,9 @@ export const WairoFloatingWidget: React.FC = () => {
                   WAIRO
                 </span>
                 <span className="text-[9px] px-1 rounded bg-[#F58220] text-white font-bold font-mono">
+                <span className="text-[9px] px-1 rounded bg-[#F58220] text-white font-bold font-mono">
                   90/10 PAYOUT
+                </span>
                 </span>
               </div>
               <span className="text-xs font-bold text-white leading-tight">

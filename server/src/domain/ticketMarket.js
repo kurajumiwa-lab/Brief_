@@ -121,10 +121,24 @@ export function issueForRegistration(registration) {
 export function ticketOwnerView(ticket) {
   if (!ticket) return null;
   const campaign = store.find('campaigns', (c) => c.id === ticket.eventId);
+  const registration = store.find('registrations', (r) => r.id === ticket.registrationId);
+  const listing = ticket.activeListingId ? store.find('ticketListings', (l) => l.id === ticket.activeListingId) : null;
   return {
     id: ticket.id,
     eventId: ticket.eventId,
     eventTitle: campaign?.title ?? null,
+    eventSlug: campaign?.publicSlug ?? null,
+    eventLocation: campaign?.location ?? null,
+    eventStartsAt: campaign?.startsAt ?? null,
+    eventEndsAt: campaign?.endsAt ?? null,
+    eventType: campaign?.type ?? null,
+    eventDescription: campaign?.description ?? null,
+    attendeeName: registration?.name ?? null,
+    entryStatus: registration?.status ?? 'registered',
+    checkedInAt: registration?.checkedInAt ?? null,
+    issuePrice: ticket.issuePrice ?? campaign?.price ?? 0,
+    currency: campaign?.currency ?? 'KES',
+    listingPrice: listing ? listing.price : null,
     code: ticket.code,
     // What the holder's QR must carry RIGHT NOW. Bump-aware.
     scanCode: `${ticket.code}#${ticket.codeVersion}`,

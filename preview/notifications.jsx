@@ -247,6 +247,7 @@ async function main() {
   h.dom.window.close();
 
   console.log(`\nPASS ${pass} FAIL ${fail}`);
+  process.exit(fail ? 1 : 0);
 }
 
 main().then(() => { process.exit(fail ? 1 : 0); }).catch((e) => { console.error(e); process.exit(1); });

@@ -40,8 +40,8 @@ export const LiveTelemetryModal: React.FC<LiveTelemetryModalProps> = ({
     playSound('open');
 
     const interval = setInterval(() => {
-      setSpeed(prev => Math.min(65, Math.max(35, Math.round(prev + (Math.random() * 4 - 2)))));
-      setSimulatedProgress(prev => {
+      setSpeed((prev: number) => Math.min(65, Math.max(35, Math.round(prev + (Math.random() * 4 - 2)))));
+      setSimulatedProgress((prev: number) => {
         if (prev >= 98) return 98;
         return +(prev + 0.15).toFixed(1);
       });

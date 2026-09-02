@@ -10,6 +10,7 @@ import { ArenaGameScreen } from '../components/ArenaGameScreen';
 import { MatchQueuePanel } from '../components/MatchQueuePanel';
 import { EplDesk } from '../components/EplDesk';
 import { LobbyBoard } from '../components/LobbyBoard';
+import { EfootballHighlightBanner, EfootballEventsHub } from '../components/arena/EfootballShowcase';
 import { soundEngine } from '../utils/SoundEngine';
 import { ArenaSoundToggleIcon } from '../components/arena/GameIcons';
 import '../styles/arenaArcade.css';
@@ -333,7 +334,7 @@ export function ArenaScreen({
         <ArenaShelf
           games={ARENA_GAMES}
           activity={arenaActivity}
-          onOpen={(id) => { setArenaGameId(id); setArenaOpenGame(id); }}
+          onOpen={(id) => { setArenaGameId(id as ArenaGameId); setArenaOpenGame(id as ArenaGameId); }}
           onLaunchTemplate={(tpl) => {
             showToast(`Template "${tpl.title}" selected. Opening ${tpl.gameName} lobby...`);
             setArenaGameId(tpl.gameId as ArenaGameId);
@@ -604,6 +605,37 @@ export function ArenaScreen({
 
         {arenaSection === 'lobby' && (
           <div className="space-y-4">
+            {/* eFootball Highlight Season Banner (Clones Image 1) */}
+            <EfootballHighlightBanner
+              onSelectContract={(player) => {
+                showToast(`Drafted ${player.name} (${player.rating} ${player.position}) to your squad!`);
+              }}
+              onOpenDetails={() => {
+                showToast('Highlight Season Details: Max overall rating reflects peak level condition.');
+              }}
+            />
+
+            {/* eFootball Events & Challenge Hub (Clones Images 2 & 3) */}
+            <section aria-label="eFootball Events">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <h3 className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#0D1117]">
+                  Tournaments & Match Events
+                </h3>
+                <span className="text-[10px] font-bold text-[#FF5A1F]">eFootball Season Hub</span>
+              </div>
+              <EfootballEventsHub
+                onEnterEvent={(ev) => {
+                  soundEngine.play('heavyTap');
+                  void handleCreateChallenge({
+                    mode: ev.title,
+                    stake: 'friendly',
+                    note: `Event: ${ev.title} (${ev.category})`
+                  });
+                }}
+                onCreateCustomMatch={() => setArenaSection('challenges')}
+              />
+            </section>
+
             <LobbyBoard gameId={({ pubg: 'pubg_mobile', cod: 'cod_mobile', ea_fc: 'fc_mobile' } as Record<string, string>)[arenaGameId] ?? arenaGameId} />
 
             {/* §18 — Nearby players: real, opted-in availability from the

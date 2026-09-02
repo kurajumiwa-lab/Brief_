@@ -1,71 +1,81 @@
 import React, { useState } from 'react';
-import type { ArenaGame, ArenaGameId } from '../App';
-import { themeFor } from './arenaTheme';
-import { soundEngine } from '../utils/SoundEngine';
 import { 
+  Plus, 
+  Play, 
+  Users, 
   Trophy, 
   Flame, 
-  Clock, 
-  Users, 
-  Plus, 
-  ArrowUpRight, 
-  Shield, 
-  Play, 
-  Star,
-  Gamepad2,
+  Zap, 
   Sparkles,
-  Zap,
+  Shield,
+  Clock,
+  ChevronRight,
+  Gamepad2,
+  Lock,
+  ArrowRight,
   Radio,
   MessageSquare,
   Hash
 } from 'lucide-react';
+import { themeFor } from './arenaTheme';
 import { CustomLeagueModal, CustomLeagueTemplate } from './arena/CustomLeagueModal';
+import { soundEngine } from '../utils/SoundEngine';
 
-export interface ArenaShelfProps {
-  games: ArenaGame[];
+export interface GameCatalogItem {
+  id: string;
+  name: string;
+  shortName: string;
+  modes: string[];
+  primaryMode?: string;
+  badge?: string;
+}
+
+interface ArenaShelfProps {
+  games: GameCatalogItem[];
   activity: Record<string, number>;
-  onOpen: (id: ArenaGameId) => void;
+  onOpen: (gameId: string) => void;
   onLaunchTemplate?: (template: CustomLeagueTemplate) => void;
 }
 
+// Built-in blended challenge templates
 const DEFAULT_BLENDED_TEMPLATES: CustomLeagueTemplate[] = [
   {
-    id: 'tpl-golden-goal',
-    title: 'Golden Goal: Sudden Death Matchroom',
+    id: 'tpl-golden-goal-duel',
+    title: 'Golden Goal: Sudden Death Duel',
     gameId: 'efootball',
     gameName: 'eFootball',
     format: 'Golden Goal',
-    entryFeeKes: 150,
-    prizePoolKes: 1200,
-    maxPlayers: 8,
-    openWindow: 'Room Open Now',
-    rules: 'Sudden death 1v1. Coordinate room code in Brief chat. 1st goal wins match immediately.',
+    entryFeeKes: 200,
+    prizePoolKes: 1800,
+    maxPlayers: 16,
+    openWindow: 'Live Queue (Instant Start)',
+    rules: 'First player to score in normal time wins match immediately. Room code shared in chat.',
     isPrivate: false
   },
   {
-    id: 'tpl-beat-the-clock',
-    title: 'Beat the Clock: 5-Min Clan Blitz',
+    id: 'tpl-nairobi-derby',
+    title: 'Nairobi Derby Cup (Weekend Showdown)',
     gameId: 'ea_fc',
     gameName: 'EA FC 25',
-    format: 'Beat the Clock',
-    entryFeeKes: 200,
-    prizePoolKes: 1600,
-    maxPlayers: 8,
-    openWindow: 'Closes in 2h',
-    rules: 'High-speed clan tournament. Host shares match lobby code; winner uploads scoreline.',
+    format: 'Knockout Cup',
+    entryFeeKes: 500,
+    prizePoolKes: 7500,
+    maxPlayers: 16,
+    openWindow: 'Registration open until Sat 18:00',
+    rules: 'Authentic 90-min matches. ET + Penalties enabled. Stream or screenshot confirmation.',
     isPrivate: false
   },
   {
     id: 'tpl-coop-syndicate',
-    title: '2v2 Co-op Clan War Syndicate',
+    title: '2v2 Co-op Pinboard Syndicate',
     gameId: 'efootball',
     gameName: 'eFootball',
     format: '2v2 Co-op Syndicate',
-    entryFeeKes: 300,
-    prizePoolKes: 4800,
-    maxPlayers: 16,
-    openWindow: 'Weekend Special',
-    rules: '2v2 squad teamplay. Voice & text coordination inside Brief Arena room.',
+    entryFeeKes: 0,
+    prizePoolKes: 0,
+    maxPlayers: 32,
+    openWindow: 'Weekly Ladder',
+    rules: 'Free entry for verified clan duos. Match coordination inside Brief Arena room.',
     isPrivate: false
   },
   {
@@ -74,7 +84,7 @@ const DEFAULT_BLENDED_TEMPLATES: CustomLeagueTemplate[] = [
     gameId: 'cod',
     gameName: 'Call of Duty Mobile',
     format: 'Custom Staked 1v1',
-    entryFeeKes: 500,
+    entryFeeKes: 300,
     prizePoolKes: 4000,
     maxPlayers: 8,
     openWindow: 'Live Queue',
@@ -126,27 +136,37 @@ export function ArenaShelf({ games, activity, onOpen, onLaunchTemplate }: ArenaS
         {/* Gallery Cover Tiles (Server / Game Hub Cards) */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {games.map((g) => {
-            const theme = themeFor(g.id);
+            const theme = themeFor(g.id as any);
             const count = activity[g.id] ?? 0;
             const live = count > 0;
+
             return (
-              <button
+              <div
                 key={g.id}
-                type="button"
-                data-game-id={g.id}
+                role="button"
+                tabIndex={0}
+                aria-label={`Open ${g.name} Hub`}
                 onClick={() => {
-                  soundEngine.play('tap');
+                  soundEngine.play('heavyTap');
                   onOpen(g.id);
                 }}
-                className="group relative aspect-[3/4] rounded-2xl overflow-hidden border transition-all cursor-pointer text-left shadow-md hover:scale-[1.03] duration-300"
-                style={{ borderColor: live ? '#FF5A1F' : '#E5E8EC' }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    soundEngine.play('heavyTap');
+                    onOpen(g.id);
+                  }
+                }}
+                className="group relative h-48 sm:h-52 rounded-2xl overflow-hidden border border-[#E5E8EC] hover:border-[#FF5A1F]/50 shadow-sm hover:shadow-xl transition-all duration-300 text-left cursor-pointer transform hover:-translate-y-1 bg-[#0D1117]"
               >
+                {/* Background Game Art */}
                 <img
                   src={theme.art}
                   alt={g.name}
-                  loading="lazy"
-                  className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110 opacity-80 group-hover:opacity-100"
                 />
+
+                {/* Dark Vignette Overlay */}
                 <div
                   className="absolute inset-0"
                   style={{
@@ -159,7 +179,7 @@ export function ArenaShelf({ games, activity, onOpen, onLaunchTemplate }: ArenaS
                 <div className="absolute top-2.5 left-2.5">
                   <span
                     className="text-[8px] font-extrabold tracking-[0.2em] px-1.5 py-0.5 rounded-md shadow"
-                    style={{ color: '#0D1117', background: '#FF5A1F' }}
+                    style={{ background: '#FF5A1F', color: '#FFFFFF' }}
                   >
                     {theme.providerMark}
                   </span>
@@ -169,9 +189,9 @@ export function ArenaShelf({ games, activity, onOpen, onLaunchTemplate }: ArenaS
                 <span
                   className="absolute top-2.5 right-2.5 flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[8px] font-extrabold"
                   style={{
-                    background: 'rgba(9,11,16,0.9)',
+                    background: live ? 'rgba(255,90,31,0.9)' : 'rgba(0,0,0,0.6)',
                     color: '#FFFFFF',
-                    border: `1px solid ${live ? '#FF5A1F' : 'rgba(255,255,255,0.28)'}`
+                    backdropFilter: 'blur(4px)'
                   }}
                 >
                   <span
@@ -199,7 +219,7 @@ export function ArenaShelf({ games, activity, onOpen, onLaunchTemplate }: ArenaS
                     </span>
                   </div>
                 </div>
-              </button>
+              </div>
             );
           })}
         </div>
@@ -225,12 +245,13 @@ export function ArenaShelf({ games, activity, onOpen, onLaunchTemplate }: ArenaS
             return (
               <div
                 key={tpl.id}
-                className="rounded-3xl bg-gradient-to-br from-[#0B1B2A] via-[#173247] to-[#0B1B2A] border border-[#173247] text-white p-4 sm:p-5 shadow-xl flex flex-col justify-between group hover:border-[#00BFEF]/50 transition-all"
+                className="relative rounded-2xl overflow-hidden border border-white/10 p-4 flex flex-col justify-between shadow-lg text-white"
+                style={{ background: 'linear-gradient(135deg, #131B26 0%, #0D1117 100%)' }}
               >
-                {/* Top Placard Tag & Status */}
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center space-x-1.5">
-                    <span className="text-[9px] font-mono font-black uppercase px-2 py-0.5 rounded-full bg-[#FF5A1F] text-white">
+                {/* Header Tag */}
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-[9px] font-black tracking-widest px-2 py-0.5 rounded-full uppercase bg-[#FF5A1F] text-white">
                       {tpl.format}
                     </span>
                     <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-black/40 text-[#00BFEF] font-bold">
@@ -238,18 +259,18 @@ export function ArenaShelf({ games, activity, onOpen, onLaunchTemplate }: ArenaS
                     </span>
                   </div>
 
-                  <div className="flex items-center space-x-1 text-[10px] font-mono text-gray-300 bg-black/40 px-2 py-0.5 rounded">
-                    <Clock className="w-3 h-3 text-[#FF5A1F]" />
+                  <span className="text-[10px] font-mono text-gray-400 flex items-center space-x-1">
+                    <Clock className="w-3 h-3 text-[#F58220]" />
                     <span>{tpl.openWindow}</span>
-                  </div>
+                  </span>
                 </div>
 
                 {/* Title & Rules */}
-                <div className="my-2 space-y-1">
-                  <h4 className="text-base font-black text-white group-hover:text-[#00BFEF] transition-colors">
+                <div className="space-y-1">
+                  <h4 className="text-base font-black text-white leading-snug">
                     {tpl.title}
                   </h4>
-                  <p className="text-xs text-[#DCE2E6]/75 line-clamp-2">
+                  <p className="text-[11px] text-gray-300 line-clamp-2">
                     {tpl.rules}
                   </p>
                 </div>
@@ -276,8 +297,8 @@ export function ArenaShelf({ games, activity, onOpen, onLaunchTemplate }: ArenaS
                   <button
                     type="button"
                     onClick={() => {
-                      soundEngine.play('tap');
-                      onOpen(tpl.gameId as ArenaGameId);
+                      soundEngine.play('heavyTap');
+                      onOpen(tpl.gameId);
                     }}
                     className="flex-1 py-2.5 rounded-xl bg-white hover:bg-gray-100 text-[#0D1117] font-black text-xs uppercase tracking-wider flex items-center justify-center space-x-1.5 shadow-md transition-all cursor-pointer"
                   >
@@ -289,7 +310,7 @@ export function ArenaShelf({ games, activity, onOpen, onLaunchTemplate }: ArenaS
                     type="button"
                     onClick={() => {
                       soundEngine.play('tap');
-                      onOpen(tpl.gameId as ArenaGameId);
+                      if (onLaunchTemplate) onLaunchTemplate(tpl);
                     }}
                     className="px-4 py-2.5 rounded-xl bg-black/50 hover:bg-black/80 border border-white/15 text-white font-bold text-xs uppercase tracking-wider cursor-pointer"
                   >
@@ -297,6 +318,10 @@ export function ArenaShelf({ games, activity, onOpen, onLaunchTemplate }: ArenaS
                   </button>
                 </div>
 
+                <div className="mt-2 flex items-center justify-between text-[10px] text-gray-400">
+                  <span>Max Players: <b className="text-white">{tpl.maxPlayers}</b></span>
+                  <span className="text-emerald-400 font-bold">● Matchmaking Active</span>
+                </div>
               </div>
             );
           })}
@@ -304,16 +329,15 @@ export function ArenaShelf({ games, activity, onOpen, onLaunchTemplate }: ArenaS
       </section>
 
       {/* Custom League Creator Modal */}
-      <CustomLeagueModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        gameId="efootball"
-        gameName="eFootball"
-        onCreateLeague={handleCreateLeague}
-      />
-
+      {isCreateModalOpen && (
+        <CustomLeagueModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          onCreateLeague={handleCreateLeague}
+          gameId={games[0]?.id ?? 'efootball'}
+          gameName={games[0]?.name ?? 'eFootball'}
+        />
+      )}
     </div>
   );
 }
-
-export default ArenaShelf;
