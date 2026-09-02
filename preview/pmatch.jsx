@@ -57,6 +57,15 @@ let nt = 0;
 try { nt = App.scoreObjectForPhrase(nullTitle, 'x'); } catch (e) { nt = -1; }
 check('a fully-null row scores 0, never throws', nt === 0, String(nt));
 
+// The SAME crash class lived in isDestinationObject(): a place with
+// category === null threw `.toLowerCase()` on the filtered search stream.
+let destThrew = false;
+let destResult = false;
+try { destResult = App.isDestinationObject({ id: 's3', type: 'place', category: null, title: 'Null Market', summary: '', metadata: {} }); }
+catch (e) { destThrew = true; }
+check('a place with null category is not a destination (no throw)', !destThrew && destResult === false, String(destResult));
+check('a real market place still IS a destination', App.isDestinationObject({ id: 's4', type: 'place', category: 'Market', title: 'M', summary: '', metadata: {} }) === true);
+
 console.log('\n=== No fabrication ===');
 check('helicopter mechanic -> 0 results', match('find a helicopter mechanic')  .length===0);
 check('crypto exchange -> 0 results', match('find a crypto exchange').length===0);

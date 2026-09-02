@@ -497,7 +497,11 @@ const DESTINATION_CATEGORIES = [
 export const isDestinationObject = (object: BriefObject): boolean => {
   if (object.type === 'experience') return true;
   if (object.type !== 'place') return false;
-  const category = object.category.toLowerCase();
+  // NULL-SAFE: the server projects category through stringOrNull(), so a place
+  // can arrive with category === null. An unguarded `.toLowerCase()` here threw
+  // on the first search keystroke (the filtered stream renders
+  // isDestinationObject per row), crashing the tree → a frozen blank screen.
+  const category = String(object.category ?? '').toLowerCase();
   return DESTINATION_CATEGORIES.some((word) => category.includes(word));
 };
 
