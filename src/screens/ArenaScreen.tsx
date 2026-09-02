@@ -10,7 +10,6 @@ import { ArenaGameScreen } from '../components/ArenaGameScreen';
 import { MatchQueuePanel } from '../components/MatchQueuePanel';
 import { EplDesk } from '../components/EplDesk';
 import { LobbyBoard } from '../components/LobbyBoard';
-import { ArenaEventsHub } from '../components/arena/ArenaEventsHub';
 import { soundEngine } from '../utils/SoundEngine';
 import { ArenaSoundToggleIcon } from '../components/arena/GameIcons';
 import '../styles/arenaArcade.css';
@@ -330,22 +329,19 @@ export function ArenaScreen({
 
         <ArenaPulse />
 
-        {/* eFootball & Live Event Cards System (Cloned backgrounds & reward tiers) */}
-        <ArenaEventsHub
-          myTag={myGameTag}
-          onEnterEvent={(ev) => {
-            showToast(`Entered ${ev.title}. Searching opponent lobby...`);
-            void handleCreateChallenge({ mode: ev.matchType, stake: 'ranked', note: `${ev.title} - ${ev.category}` });
-          }}
-        />
-
+        {/* PRIMARY GAMES GALLERY & BLENDED TEMPLATES HUB */}
         <ArenaShelf
           games={ARENA_GAMES}
           activity={arenaActivity}
           onOpen={(id) => { setArenaGameId(id); setArenaOpenGame(id); }}
+          onLaunchTemplate={(tpl) => {
+            showToast(`Template "${tpl.title}" selected. Opening ${tpl.gameName} lobby...`);
+            setArenaGameId(tpl.gameId as ArenaGameId);
+            setArenaOpenGame(tpl.gameId as ArenaGameId);
+          }}
         />
 
-        {/* Secondary screen: the match-setup surface behind a shelf tile. */}
+        {/* Secondary screen: immersive game-specific UI surface behind a gallery card */}
         {arenaOpenGame && (
           <ArenaGameScreen
             game={ARENA_GAMES.find((g) => g.id === arenaOpenGame) ?? ARENA_GAMES[0]}
