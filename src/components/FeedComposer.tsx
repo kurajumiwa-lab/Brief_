@@ -80,6 +80,18 @@ function typeLabel(item: FeedObject): string | null {
   return TYPE_LABELS[String(item?.type ?? '')] ?? null;
 }
 
+// §8/§9 — the trust state, rendered as a single honest word on the card.
+// The server's verification lifecycle is unverified → source_confirmed →
+// cross_source_confirmed → community_confirmed. Only the corroborated tiers
+// read as "verified"; a single source never gets dressed up. Nothing here is
+// invented — the string comes straight off the projected row.
+function verifiedLabel(item: FeedObject): string | null {
+  const status = String(item?.verificationStatus ?? '');
+  if (status === 'community_confirmed') return 'Community confirmed';
+  if (status === 'cross_source_confirmed' || status === 'verified') return 'Verified';
+  return null;
+}
+
 function shortDate(value: unknown): string | null {
   if (typeof value !== 'string') return null;
   const date = new Date(value);
@@ -315,6 +327,16 @@ function PhotoTitleCard({
             : { background: 'rgba(247, 247, 248,0.08)', color: T.ink }}
         >
           {type}
+        </span>
+      )}
+      {/* §8 — the trust badge, only when the object is genuinely corroborated.
+          Sits under the type chip; a single source never shows it. */}
+      {verifiedLabel(item) && (
+        <span
+          className="absolute left-3 top-9 rounded-full px-2 py-0.5 text-[8px] font-extrabold uppercase tracking-[0.12em]"
+          style={{ background: '#FF5A1F', color: '#0D0F12' }}
+        >
+          ✓ {verifiedLabel(item)}
         </span>
       )}
       {why && (

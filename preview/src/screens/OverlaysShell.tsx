@@ -2068,38 +2068,62 @@ export function OverlaysShell(props: OverlaysShellProps) {
                     </div>
                   )}
 
-                  {/* §8: the crowd-checking row. Confirm says "I know this is
-                      true"; report says "this is wrong" with a reason. Both
-                      are real server records, not local flags. */}
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      onClick={() => void handleConfirmObject(selectedObjectForDetail)}
-                      disabled={objectCheckBusy === selectedObjectForDetail.id}
-                      className="flex-1 min-w-fit py-2.5 rounded-xl bg-[#12151A] border border-[#222630] text-[#F7F7F8]/70 font-bold text-[11px] cursor-pointer disabled:opacity-50"
-                    >
-                      {objectCheckBusy === selectedObjectForDetail.id ? 'Recording…' : '✓ I can confirm this'}
-                    </button>
-                    <button
-                      onClick={() => setReportForObject(reportForObject === selectedObjectForDetail.id ? null : selectedObjectForDetail.id)}
-                      className="flex-1 min-w-fit py-2.5 rounded-xl bg-[#12151A] border border-[#222630] text-[#F7F7F8]/70 font-bold text-[11px] cursor-pointer"
-                    >
-                      Report
-                    </button>
-                  </div>
-                  {reportForObject === selectedObjectForDetail.id && (
-                    <div className="flex flex-wrap gap-1.5">
-                      {REPORT_REASONS.map((reason) => (
-                        <button
-                          key={reason.id}
-                          onClick={() => void handleReportObject(selectedObjectForDetail, reason.id)}
-                          disabled={objectCheckBusy === selectedObjectForDetail.id}
-                          className="px-3 py-1.5 rounded-full border border-[#222630] text-[11px] font-bold text-[#F7F7F8]/70 cursor-pointer disabled:opacity-50"
-                        >
-                          {reason.label}
-                        </button>
-                      ))}
+                  {/* §17 — community confirmation, the three-way crowd check.
+                      "Is this still accurate?" with three honest answers:
+                      Confirm (a real server confirmation), Not accurate (opens
+                      the report reasons), and Not sure (declines to weigh in —
+                      no record, nothing invented). The "Confirmed by N people"
+                      readout is the object's real derived count. */}
+                  <div className="rounded-2xl border border-[#222630] bg-[#171A20] p-3 space-y-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[11px] font-extrabold text-[#F7F7F8]">Is this still accurate?</p>
+                      {(selectedObjectForDetail.confirmationCount ?? 0) > 0 && (
+                        <span className="shrink-0 rounded-full bg-[#12151A] border border-[#222630] px-2 py-0.5 text-[9px] font-extrabold text-[#38E879]">
+                          Confirmed by {selectedObjectForDetail.confirmationCount} {selectedObjectForDetail.confirmationCount === 1 ? 'person' : 'people'}
+                        </span>
+                      )}
                     </div>
-                  )}
+                    <div className="grid grid-cols-3 gap-1.5">
+                      <button
+                        onClick={() => void handleConfirmObject(selectedObjectForDetail)}
+                        disabled={objectCheckBusy === selectedObjectForDetail.id}
+                        className="py-2.5 rounded-xl bg-[#FF5A1F] text-[#0D0F12] text-[11px] font-extrabold cursor-pointer disabled:opacity-50"
+                      >
+                        {objectCheckBusy === selectedObjectForDetail.id ? '…' : 'Yes, accurate'}
+                      </button>
+                      <button
+                        onClick={() => setReportForObject(reportForObject === selectedObjectForDetail.id ? null : selectedObjectForDetail.id)}
+                        aria-expanded={reportForObject === selectedObjectForDetail.id}
+                        className={`py-2.5 rounded-xl border text-[11px] font-bold cursor-pointer ${
+                          reportForObject === selectedObjectForDetail.id
+                            ? 'bg-[#12151A] border-[#FF5D6C] text-[#FF5D6C]'
+                            : 'bg-[#12151A] border-[#222630] text-[#F7F7F8]/70'
+                        }`}
+                      >
+                        Not accurate
+                      </button>
+                      <button
+                        onClick={() => setReportForObject(null)}
+                        className="py-2.5 rounded-xl bg-[#12151A] border border-[#222630] text-[#F7F7F8]/60 text-[11px] font-bold cursor-pointer"
+                      >
+                        Not sure
+                      </button>
+                    </div>
+                    {reportForObject === selectedObjectForDetail.id && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {REPORT_REASONS.map((reason) => (
+                          <button
+                            key={reason.id}
+                            onClick={() => void handleReportObject(selectedObjectForDetail, reason.id)}
+                            disabled={objectCheckBusy === selectedObjectForDetail.id}
+                            className="px-3 py-1.5 rounded-full border border-[#222630] text-[11px] font-bold text-[#F7F7F8]/70 cursor-pointer disabled:opacity-50"
+                          >
+                            {reason.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
                   {watchedIds.has(selectedObjectForDetail.id) && (
                     <p className="text-[10px] text-[#F7F7F8]/60 text-center">

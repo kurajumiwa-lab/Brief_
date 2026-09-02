@@ -304,7 +304,8 @@ async function main() {
     const title = Array.from(h.document.querySelectorAll('h3')).find((el) => h.text(el).includes('Personal suite reportable event'));
     if (title) await h.click(title);
     await h.settle();
-    await h.click(h.btn('Report'));
+    // §17: the three-way crowd check — "Not accurate" opens the report reasons.
+    await h.click(h.btn('Not accurate'));
     await h.settle();
     const body = h.body();
     check('Incorrect information reason present', body.includes('Incorrect information'));
