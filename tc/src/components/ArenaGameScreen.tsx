@@ -17,9 +17,14 @@ import {
   Sparkles,
   ArrowRight,
   ChevronLeft,
-  X
+  X,
+  MessageSquare,
+  Radio,
+  Share2,
+  Lock,
+  Hash
 } from 'lucide-react';
-import { CustomLeagueModal, CustomLeagueTemplate } from './arena/CustomLeagueModal';
+import { CustomLeagueModal } from './arena/CustomLeagueModal';
 
 export type ArenaStakeKind = 'friendly' | 'ranked' | 'entry_fee';
 
@@ -55,9 +60,9 @@ const WINDOWS: { label: string; minutes: number }[] = [
 ];
 
 const STAKES: { id: ArenaStakeKind; label: string; hint: string }[] = [
-  { id: 'friendly', label: 'Friendly', hint: 'Play for fun · no fee' },
-  { id: 'ranked', label: 'Ranked', hint: 'Counts on your record' },
-  { id: 'entry_fee', label: 'Staked (KES)', hint: 'Agreed entry fee' }
+  { id: 'friendly', label: 'Friendly', hint: 'Play for fun · Room code duel' },
+  { id: 'ranked', label: 'Ranked', hint: 'Counts towards African Leaderboard' },
+  { id: 'entry_fee', label: 'Staked (KES)', hint: 'Agreed match stake' }
 ];
 
 export function ArenaGameScreen({
@@ -81,7 +86,7 @@ export function ArenaGameScreen({
   const [mode, setMode] = useState<string>(game.modes[0] ?? '1v1');
   const [stake, setStake] = useState<ArenaStakeKind>('friendly');
   const [entryFee, setEntryFee] = useState<string>('100');
-  const [note, setNote] = useState<string>('');
+  const [roomNote, setRoomNote] = useState<string>('');
   const [windowMinutes, setWindowMinutes] = useState<number>(120);
   const [isLeagueModalOpen, setIsLeagueModalOpen] = useState<boolean>(false);
   const [selectedPlacardForDetails, setSelectedPlacardForDetails] = useState<any | null>(null);
@@ -91,30 +96,30 @@ export function ArenaGameScreen({
   const creating = busyId === 'create';
   const canCreate = !creating && (stake !== 'entry_fee' || feeValid);
 
-  // Game-specific placard cards lifted from screenshot design
-  const gamePlacards = [
+  // Placard Cards tailored to community challenges
+  const communityPlacards = [
     {
       id: 'golden-goal',
-      title: 'Golden Goal: Sudden Death',
-      tag: 'CHALLENGE PLACARD',
+      title: 'Golden Goal: Sudden Death Duel',
+      tag: 'COMMUNITY PLACARD',
       tagColor: '#F59E0B',
       endsIn: '4 day(s) 12 hr(s)',
       bgGradient: 'from-[#1A1408] via-[#2A1F0C] to-[#0D1117]',
-      desc: 'Golden Goal rules apply. The first player to score a goal wins immediately.',
-      rewards: ['🏆 10,000 Exp', '🪙 50 Coins', 'Rank +40 Elo'],
-      multiplier: 'Sudden Death',
+      desc: 'First player to score a goal wins immediately. Room code shared in Brief chat upon acceptance.',
+      rewards: ['🏆 +40 Elo', '🪙 Winner Takes Pot', 'Rank Badge'],
+      multiplier: 'Sudden Death Rules',
       defaultMode: '1v1',
       defaultStake: 'ranked' as ArenaStakeKind,
     },
     {
       id: 'beat-the-clock',
-      title: 'Beat the Clock: Speed Blitz',
-      tag: 'BLITZ TOURNAMENT',
+      title: 'Beat the Clock: 5-Min Blitz',
+      tag: 'CLAN BLITZ',
       tagColor: '#EF4444',
       endsIn: '6 day(s) 18 hr(s)',
       bgGradient: 'from-[#2D0B0B] via-[#451212] to-[#1F0707]',
-      desc: 'Score within the high-intensity time frame. Double points for clean sheets and fast goals.',
-      rewards: ['👟 Skill Token x2', '⚡ 15,000 Exp', 'KES 1,200 Pool'],
+      desc: 'Score within the high-intensity blitz window. Clean sheets and hat-tricks grant double community rep.',
+      rewards: ['⚡ Blitz Rep', '👟 Clan Trophy', 'KES 1,200 Stakes'],
       multiplier: '+150% Blitz Bonus',
       defaultMode: '1v1',
       defaultStake: 'entry_fee' as ArenaStakeKind,
@@ -122,26 +127,26 @@ export function ArenaGameScreen({
     },
     {
       id: 'coop-pinboard',
-      title: '2v2 Co-op Pinboard Syndicate',
-      tag: 'CO-OP SQUAD',
+      title: '2v2 Co-op Clan Syndicate',
+      tag: '2v2 CO-OP SQUAD',
       tagColor: '#00BFEF',
       endsIn: '13 day(s) 18 hr(s)',
       bgGradient: 'from-[#0B1B2A] via-[#173247] to-[#0D1117]',
-      desc: 'Join alone or pair up with a friend for 2v2 or 3v3 teamplay matches.',
-      rewards: ['⭐ Co-op Badge', '👟 Skill Token x1', '💎 30k GP'],
+      desc: 'Join alone or with a clan partner. Coordinate 2v2 co-op squad room invites directly in Brief.',
+      rewards: ['⭐ Co-op Pin', '💎 30k Clan Rep', 'Leaderboard +60'],
       multiplier: '+200% Team Multiplier',
       defaultMode: '2v2',
       defaultStake: 'friendly' as ArenaStakeKind,
     },
     {
-      id: 'derby-showdown',
-      title: `${game.shortName} Championship Derby`,
-      tag: 'LEAGUE SPECIAL',
+      id: 'african-derby',
+      title: `${game.shortName} Nairobi Derby League`,
+      tag: 'REGIONAL LEAGUE',
       tagColor: '#EC4899',
       endsIn: '5 day(s) 6 hr(s)',
       bgGradient: 'from-[#2B0E1E] via-[#42152F] to-[#0D1117]',
-      desc: `Field your strongest squad in ${game.name}. Staked and ranked challenge matches open.`,
-      rewards: ['🎁 Chance Deal', '🪙 500 Pts', 'KES 2,500 Pool'],
+      desc: `Weekly regional tournament for African players in ${game.name}. Staked and ranked duel lobbies open.`,
+      rewards: ['🎁 Derby Cup', '🪙 500 Pts', 'KES 2,500 Pool'],
       multiplier: '+220% Derby Stakes',
       defaultMode: game.modes[0] ?? '1v1',
       defaultStake: 'entry_fee' as ArenaStakeKind,
@@ -156,12 +161,12 @@ export function ArenaGameScreen({
       mode,
       stake,
       entryFeeKes: stake === 'entry_fee' ? feeNum : undefined,
-      note: note.trim() ? note.trim() : undefined,
+      note: roomNote.trim() ? roomNote.trim() : undefined,
       openMinutes: windowMinutes
     });
   };
 
-  const handleLaunchPlacard = (p: typeof gamePlacards[0]) => {
+  const handleLaunchPlacard = (p: typeof communityPlacards[0]) => {
     soundEngine.play('heavyTap');
     onCreateChallenge({
       mode: p.defaultMode,
@@ -177,10 +182,10 @@ export function ArenaGameScreen({
       className="fixed inset-0 z-50 overflow-y-auto bg-[#F7F8FA] text-[#0D1117]"
       role="dialog"
       aria-modal="true"
-      aria-label={`${game.name} Arena Game Screen`}
+      aria-label={`${game.name} Arena Stage`}
     >
       
-      {/* ================= HERO SECTION (SHOUTS THE GAME'S VISUAL IDENTITY) ================= */}
+      {/* ================= HERO STAGE (SHOUTS THE GAME'S UI & DISCORD COMMUNITY IDENTITY) ================= */}
       <div className="relative h-60 sm:h-64 overflow-hidden shadow-xl">
         <img src={theme.art} alt={game.name} className="absolute inset-0 h-full w-full object-cover scale-105" />
         <div
@@ -199,12 +204,12 @@ export function ArenaGameScreen({
             className="flex items-center space-x-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold bg-black/60 hover:bg-black/80 text-white border border-white/20 backdrop-blur-md cursor-pointer transition-all"
           >
             <ChevronLeft className="w-4 h-4" />
-            <span>Games Gallery</span>
+            <span>Gaming Hubs</span>
           </button>
 
           <div className="flex items-center space-x-2">
             <span className="rounded-full px-3 py-1 text-[10px] font-mono font-black tracking-wider bg-[#FF5A1F] text-white shadow-md">
-              {activity > 0 ? `${activity} LIVE PLAYERS` : 'LOBBY IDLE'}
+              {activity > 0 ? `${activity} IN LOBBY` : 'COMMUNITY READY'}
             </span>
           </div>
         </div>
@@ -213,7 +218,7 @@ export function ArenaGameScreen({
         <div className="absolute inset-x-0 bottom-0 px-4 sm:px-6 pb-4 z-10 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
           <div>
             <span className="text-[10px] font-black tracking-[0.2em] px-2 py-0.5 rounded-md bg-[#FF5A1F] text-white uppercase shadow">
-              {theme.providerMark} • {theme.themeName}
+              {theme.providerMark} • AFRICAN COMMUNITY HUB
             </span>
             <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight mt-1">
               {game.name}
@@ -230,7 +235,7 @@ export function ArenaGameScreen({
               className="px-4 py-2 rounded-xl bg-white text-[#0D1117] font-black text-xs uppercase tracking-wider flex items-center space-x-1.5 shadow-lg hover:bg-gray-100 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 text-[#FF5A1F]" />
-              <span>Create Private League</span>
+              <span>Create Tournament Room</span>
             </button>
           </div>
         </div>
@@ -239,15 +244,18 @@ export function ArenaGameScreen({
       {/* ================= MAIN CONTAINER ================= */}
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
         
-        {/* Identity & Availability Bar */}
+        {/* Identity & Room Coordinator Bar */}
         <div className="rounded-2xl bg-white border border-[#E5E8EC] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
           <div>
             <span className="text-[10px] font-mono uppercase tracking-wider text-gray-500 font-bold block">
-              YOUR GAMER TAG IN {game.shortName}:
+              YOUR GAMER TAG (DISCORD FOR AFRICA SYNC):
             </span>
             <span className="text-base font-black text-[#0D1117]">
-              {myTag ? `🎮 ${myTag}` : 'No Gamer Tag Registered'}
+              {myTag ? `🎮 ${myTag}` : 'No Tag Linked — Tap "Play As" on Lobby to set'}
             </span>
+            <p className="text-[11px] text-gray-500 mt-0.5">
+              Opponents copy your tag to invite you in-game (PSN / Xbox / Mobile ID).
+            </p>
           </div>
 
           <div className="flex items-center space-x-2.5">
@@ -261,26 +269,26 @@ export function ArenaGameScreen({
                   : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200'
               }`}
             >
-              {availabilityBusy ? 'Updating…' : availabilityOn ? '● Online & Ready' : 'Go Online to Match'}
+              {availabilityBusy ? 'Updating…' : availabilityOn ? '● Ready for Duels' : 'Go Online to Match'}
             </button>
           </div>
         </div>
 
-        {/* ================= GAME-SPECIFIC PLACARD CARDS (LIFTED DIRECTLY FROM SCREENSHOT FORMAT) ================= */}
+        {/* ================= GAME-SPECIFIC PLACARD CARDS ================= */}
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-xs font-black uppercase tracking-[0.18em] text-[#0D1117]">
-                Featured {game.shortName} Challenge Placards
+                Live Community Challenge Placards
               </h3>
               <p className="text-[11px] text-[#0D1117]/60">
-                Lifted competition formats: Golden Goal, Speed Blitz & Squad Pinboard Challenges
+                Lifted challenge templates: Golden Goal, Speed Blitz & Squad Pinboards
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {gamePlacards.map((placard) => (
+            {communityPlacards.map((placard) => (
               <div
                 key={placard.id}
                 className={`rounded-3xl bg-gradient-to-br ${placard.bgGradient} border border-white/10 text-white p-5 shadow-xl flex flex-col justify-between group hover:border-[#00BFEF]/50 transition-all`}
@@ -319,7 +327,7 @@ export function ArenaGameScreen({
                   ))}
                 </div>
 
-                {/* Dual Pill Buttons (Enter & Details) */}
+                {/* Dual Pill Buttons (Enter Room & Details) */}
                 <div className="pt-3 border-t border-white/10 flex items-center space-x-2">
                   <button
                     type="button"
@@ -327,7 +335,7 @@ export function ArenaGameScreen({
                     className="flex-1 py-2.5 rounded-xl bg-white hover:bg-gray-100 text-[#0D1117] font-black text-xs uppercase tracking-wider flex items-center justify-center space-x-1.5 shadow-md transition-all cursor-pointer"
                   >
                     <Play className="w-3.5 h-3.5 fill-current" />
-                    <span>Enter Placard</span>
+                    <span>Enter Room</span>
                   </button>
 
                   <button
@@ -338,7 +346,7 @@ export function ArenaGameScreen({
                     }}
                     className="px-4 py-2.5 rounded-xl bg-black/50 hover:bg-black/80 border border-white/20 text-white font-bold text-xs uppercase tracking-wider cursor-pointer"
                   >
-                    Details
+                    Rules
                   </button>
                 </div>
 
@@ -347,15 +355,15 @@ export function ArenaGameScreen({
           </div>
         </section>
 
-        {/* ================= MATCH COMPOSER (STAKED / RANKED / FRIENDLY) ================= */}
+        {/* ================= MATCHROOM COMPOSER (STAKED / RANKED / FRIENDLY) ================= */}
         <div className="rounded-3xl bg-white border border-[#E5E8EC] p-5 sm:p-6 space-y-4 shadow-xs">
           <div className="flex items-center justify-between border-b border-[#EFF1F4] pb-3">
             <div>
               <h3 className="text-xs font-black uppercase tracking-[0.16em] text-[#0D1117]">
-                Open a Match / Challenge in {game.name}
+                Open a Matchroom in #{game.shortName.toLowerCase()}-hub
               </h3>
               <p className="text-[11px] text-[#0D1117]/60">
-                Choose format, stakes in KES, and time window
+                Coordinate duel format, KES stakes, and share your room invite
               </p>
             </div>
             <span className="text-xs font-mono font-bold text-[#FF5A1F]">
@@ -413,7 +421,7 @@ export function ArenaGameScreen({
           {stake === 'entry_fee' && (
             <div className="p-3.5 bg-gray-50 border border-gray-200 rounded-2xl flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-bold uppercase text-gray-500 block">Entry Fee per Player</span>
+                <span className="text-[10px] font-bold uppercase text-gray-500 block">Agreed Stake per Player</span>
                 <div className="flex items-center space-x-1 mt-1">
                   <span className="font-mono text-sm font-bold text-gray-500">KES</span>
                   <input
@@ -440,9 +448,24 @@ export function ArenaGameScreen({
             </div>
           )}
 
+          {/* Room PIN / Note */}
+          <div>
+            <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1">
+              Room Note & Invite Code (e.g. "PS5 Nairobi / Room Code #4920")
+            </label>
+            <input
+              type="text"
+              maxLength={80}
+              value={roomNote}
+              onChange={(e) => setRoomNote(e.target.value)}
+              placeholder="e.g. Host on PS5, room code 8849, 10-min match"
+              className="w-full rounded-xl border border-gray-300 bg-gray-50 px-3 py-2 text-xs text-[#0D1117] focus:outline-none focus:border-[#FF5A1F]"
+            />
+          </div>
+
           {/* Open Window */}
           <div className="flex items-center space-x-2">
-            <span className="text-[10px] font-bold text-gray-500 uppercase">Open For:</span>
+            <span className="text-[10px] font-bold text-gray-500 uppercase">Room Open For:</span>
             {WINDOWS.map((w) => (
               <button
                 key={w.minutes}
@@ -465,27 +488,27 @@ export function ArenaGameScreen({
             className="w-full py-3 rounded-2xl bg-gradient-to-r from-[#FF5A1F] to-[#FF8A00] hover:brightness-110 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-[#FF5A1F]/25 flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50"
           >
             {creating ? (
-              <span>Publishing Challenge…</span>
+              <span>Opening Matchroom…</span>
             ) : stake === 'entry_fee' ? (
-              <span>Open Staked {mode} Match (KES {feeValid ? feeNum : '—'})</span>
+              <span>Open Staked {mode} Matchroom (KES {feeValid ? feeNum : '—'})</span>
             ) : (
-              <span>Open {stake === 'ranked' ? 'Ranked' : 'Friendly'} {mode} Challenge</span>
+              <span>Open {stake === 'ranked' ? 'Ranked' : 'Friendly'} {mode} Duel</span>
             )}
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
 
-        {/* ================= OPEN MATCHES & CHALLENGES LIST ================= */}
+        {/* ================= OPEN MATCHES & ROOM INVITES ================= */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-black uppercase tracking-[0.16em] text-[#0D1117]">
-              Open Match Lobby ({challenges.length})
+              Open Matchrooms ({challenges.length})
             </h3>
           </div>
 
           {challenges.length === 0 ? (
             <div className="p-6 rounded-2xl bg-white border border-[#E5E8EC] text-center text-xs text-gray-500">
-              No open challenges in {game.name} right now. Open a challenge or pick a placard template above!
+              No open matchrooms in #{game.shortName.toLowerCase()}-hub right now. Open a room or launch a placard template above!
             </div>
           ) : (
             <div className="space-y-2">
@@ -507,7 +530,7 @@ export function ArenaGameScreen({
                         </span>
                       </div>
                       <span className="text-[11px] text-gray-500 block mt-0.5">
-                        {mine ? 'Your open challenge' : 'Challenger ready to play'}
+                        {mine ? 'Your open matchroom' : 'Challenger ready in room'}
                       </span>
                     </div>
 
@@ -519,7 +542,7 @@ export function ArenaGameScreen({
                           onClick={() => { soundEngine.play('tap'); onCancelChallenge(c); }}
                           className="px-3 py-1.5 rounded-xl text-xs font-bold border border-gray-300 text-gray-700 hover:bg-gray-100 cursor-pointer"
                         >
-                          Cancel
+                          Close Room
                         </button>
                       ) : (
                         <button
@@ -528,7 +551,7 @@ export function ArenaGameScreen({
                           onClick={() => { soundEngine.play('heavyTap'); onAcceptChallenge(c); }}
                           className="px-4 py-1.5 rounded-xl bg-[#0D1117] hover:bg-[#1E2633] text-white font-bold text-xs uppercase tracking-wider cursor-pointer"
                         >
-                          Accept Duel
+                          Join & Duel
                         </button>
                       )}
                     </div>
@@ -563,7 +586,7 @@ export function ArenaGameScreen({
             <p className="text-xs text-gray-300 leading-relaxed">{selectedPlacardForDetails.desc}</p>
 
             <div className="p-3 bg-[#173247] rounded-2xl space-y-1 text-xs">
-              <span className="font-bold text-white block">Event Multiplier & Rules:</span>
+              <span className="font-bold text-white block">Room Coordination & Rules:</span>
               <span className="text-[#00BFEF] font-mono">{selectedPlacardForDetails.multiplier}</span>
             </div>
 
@@ -576,7 +599,7 @@ export function ArenaGameScreen({
               }}
               className="w-full py-3 rounded-xl bg-gradient-to-r from-[#FF5A1F] to-[#FF8A00] text-white font-bold text-xs uppercase tracking-wider cursor-pointer"
             >
-              Enter Placard Competition
+              Enter Room & Challenge
             </button>
           </div>
         </div>
