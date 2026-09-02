@@ -763,6 +763,9 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
               setWorkflowView('screen');
               setWorkflowSection('resale');
             }}
+            onBrowseEvents={() => {
+              setActiveTab('nearby');
+            }}
           />
         )}
         {myLayerSection === 'campaigns' && (

@@ -33,4 +33,11 @@ export const ClipboardList: LucideIcon; export const Clock3: LucideIcon; export 
 export const ImagePlus: LucideIcon; export const UploadCloud: LucideIcon; export const Link2: LucideIcon;
 export const Wrench: LucideIcon; export const Package: LucideIcon; export const Info: LucideIcon;
 export const ArrowLeft: LucideIcon; export const Settings2: LucideIcon; export const ImageOff: LucideIcon; export const CircleAlert: LucideIcon; export const CheckCheck: LucideIcon; export const BellOff: LucideIcon; export const SlidersHorizontal: LucideIcon;
+export const QrCode: LucideIcon; export const Download: LucideIcon; export const Calendar: LucideIcon; export const History: LucideIcon; export const Receipt: LucideIcon; export const Share: LucideIcon; export const HelpCircle: LucideIcon; export const TicketCheck: LucideIcon; export const Gift: LucideIcon; export const DollarSign: LucideIcon; export const EyeOff: LucideIcon; export const Maximize2: LucideIcon; export const Minimize2: LucideIcon; export const Filter: LucideIcon; export const Sparkle: LucideIcon; export const Layers: LucideIcon;
+export const Swords: LucideIcon; export const Shield: LucideIcon; export const ChevronRight: LucideIcon; export const RotateCcw: LucideIcon;
+export const Bike: LucideIcon; export const Truck: LucideIcon; export const Footprints: LucideIcon; export const Car: LucideIcon;
+export const Code2: LucideIcon; export const Radio: LucideIcon; export const Crosshair: LucideIcon; export const Navigation: LucideIcon;
+export const Smartphone: LucideIcon; export const Home: LucideIcon; export const Mail: LucideIcon; export const Volume2: LucideIcon;
+export const VolumeX: LucideIcon; export const Code: LucideIcon;
+export const MessageSquare: LucideIcon; export const Hash: LucideIcon; export const Gamepad2: LucideIcon;
 }

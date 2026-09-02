@@ -102,11 +102,11 @@ export function ArenaShelf({ games, activity, onOpen, onLaunchTemplate }: ArenaS
             <div className="flex items-center space-x-2">
               <span className="w-2 h-2 rounded-full bg-[#FF5A1F] animate-pulse"></span>
               <h3 className="text-xs font-black uppercase tracking-[0.18em] text-[#0D1117]">
-                Gaming Communities & Match Hubs
+                Your games & Match Hubs
               </h3>
             </div>
             <p className="text-[11px] text-[#0D1117]/60 mt-0.5">
-              Discord for African Gamers • Connect, challenge players & organize clan matches
+              Find matches, connect with players & organize clan games across African hubs
             </p>
           </div>
 
