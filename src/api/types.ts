@@ -426,6 +426,18 @@ export interface ResaleTicket {
   readonly id: string;
   readonly eventId: string;
   readonly eventTitle: string | null;
+  readonly eventSlug?: string | null;
+  readonly eventLocation?: string | null;
+  readonly eventStartsAt?: string | null;
+  readonly eventEndsAt?: string | null;
+  readonly eventType?: string | null;
+  readonly eventDescription?: string | null;
+  readonly attendeeName?: string | null;
+  readonly entryStatus?: string | null;
+  readonly checkedInAt?: string | null;
+  readonly issuePrice?: number;
+  readonly currency?: string;
+  readonly listingPrice?: number | null;
   readonly code: string;
   /** What the holder's QR must carry right now: "CODE#version". */
   readonly scanCode: string;

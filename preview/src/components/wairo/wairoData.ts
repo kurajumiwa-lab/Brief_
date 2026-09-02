@@ -64,6 +64,7 @@ export interface WairoDelivery {
   fareKes: number;
   driverReturnKes: number;
   platformFeeKes: number;
+  speed?: number;
   isConsolidatedBatch?: boolean;
   timeline: {
     time: string;
@@ -398,10 +399,20 @@ export const MOCK_ORDERS = [
   },
 ];
 
-export const MOCK_MESSAGES = [
+export interface WairoMessage {
+  id: string;
+  sender: 'pilot' | 'system' | 'user';
+  name: string;
+  role: string;
+  avatar: string;
+  time: string;
+  text: string;
+}
+
+export const MOCK_MESSAGES: WairoMessage[] = [
   {
     id: 'msg-1',
-    sender: 'pilot' as const,
+    sender: 'pilot',
     name: 'Erick Mwangi (Courier Rider)',
     role: 'Logbook-Verified Rider',
     avatar: '🛵',
@@ -410,7 +421,7 @@ export const MOCK_MESSAGES = [
   },
   {
     id: 'msg-2',
-    sender: 'system' as const,
+    sender: 'system',
     name: 'Wairo Auction & Dispatch Engine',
     role: 'Automated Dispatch Core',
     avatar: '⚙️',

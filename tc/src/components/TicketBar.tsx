@@ -12,7 +12,7 @@ import { getEngineTicketBar, type EngineTicketBar } from '../api/briefApi';
 // email. Dismissal is per-session; the entry itself stays.
 // ---------------------------------------------------------------------------
 
-export function TicketBar() {
+export function TicketBar({ onOpenTickets }: { onOpenTickets?: () => void } = {}) {
   const [bar, setBar] = useState<EngineTicketBar | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const [dismissedDelta, setDismissedDelta] = useState<string | null>(null);
@@ -45,17 +45,22 @@ export function TicketBar() {
       <div className="overflow-hidden rounded-2xl border border-[#2563EB] bg-[#FFFFFF] shadow-lg">
         {/* the locked gate pass */}
         <div className="flex items-center gap-3 px-3.5 py-2.5">
-          <span
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
-            style={{ background: t.entryState === 'upcoming' ? '#F0F2F5' : '#FF5A1F', border: '1px solid #FF5A1F' }}
+          <div
+            onClick={onOpenTickets}
+            className={`flex items-center gap-3 min-w-0 flex-1 ${onOpenTickets ? 'cursor-pointer' : ''}`}
           >
-            <Ticket className="h-4 w-4" style={{ color: t.entryState === 'upcoming' ? '#FF5A1F' : '#FFFFFF' }} />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[12px] font-extrabold text-[#0D1117]">{t.eventTitle}</p>
-            <p className="text-[10px] font-mono text-[#0D1117]/60">
-              Event Entry: {stateLabel} — Ticket #{shortCode}
-            </p>
+            <span
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+              style={{ background: t.entryState === 'upcoming' ? '#F0F2F5' : '#FF5A1F', border: '1px solid #FF5A1F' }}
+            >
+              <Ticket className="h-4 w-4" style={{ color: t.entryState === 'upcoming' ? '#FF5A1F' : '#FFFFFF' }} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[12px] font-extrabold text-[#0D1117]">{t.eventTitle}</p>
+              <p className="text-[10px] font-mono text-[#0D1117]/60">
+                Event Entry: {stateLabel} — Ticket #{shortCode}
+              </p>
+            </div>
           </div>
           <button
             type="button"

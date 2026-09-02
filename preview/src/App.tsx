@@ -1912,7 +1912,12 @@ export function App() {
 
       {/* Package 3: the dynamic ticket bar — the active gate pass, locked to
           the bottom of the screen, with inline delta alerts. */}
-      <TicketBar />
+      <TicketBar
+        onOpenTickets={() => {
+          setActiveTab('mylayer');
+          setMyLayerSection('tickets');
+        }}
+      />
 
       {/* DETAIL LAYER */}
 
