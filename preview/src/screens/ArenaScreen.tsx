@@ -10,6 +10,7 @@ import { ArenaGameScreen } from '../components/ArenaGameScreen';
 import { MatchQueuePanel } from '../components/MatchQueuePanel';
 import { EplDesk } from '../components/EplDesk';
 import { LobbyBoard } from '../components/LobbyBoard';
+import { ArenaEventsHub } from '../components/arena/ArenaEventsHub';
 import { soundEngine } from '../utils/SoundEngine';
 import { ArenaSoundToggleIcon } from '../components/arena/GameIcons';
 import '../styles/arenaArcade.css';
@@ -328,6 +329,15 @@ export function ArenaScreen({
         )}
 
         <ArenaPulse />
+
+        {/* eFootball & Live Event Cards System (Cloned backgrounds & reward tiers) */}
+        <ArenaEventsHub
+          myTag={myGameTag}
+          onEnterEvent={(ev) => {
+            showToast(`Entered ${ev.title}. Searching opponent lobby...`);
+            void handleCreateChallenge({ mode: ev.matchType, stake: 'ranked', note: `${ev.title} - ${ev.category}` });
+          }}
+        />
 
         <ArenaShelf
           games={ARENA_GAMES}
