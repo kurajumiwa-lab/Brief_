@@ -1,6 +1,28 @@
 import React, { useState } from 'react';
-import { X, Rocket, ArrowRight, Zap } from 'lucide-react';
-import { SERVICES, LOCATIONS, WairoDelivery, WairoLocation, WairoService } from './wairoData';
+import { 
+  X, 
+  Bike, 
+  Truck, 
+  Footprints, 
+  Car, 
+  ArrowRight, 
+  ShieldCheck, 
+  Check, 
+  Sparkles, 
+  MapPin, 
+  Zap, 
+  DollarSign,
+  Briefcase
+} from 'lucide-react';
+import { 
+  LOGISTICS_SERVICES, 
+  LOCATIONS, 
+  WairoDelivery, 
+  WairoLocation, 
+  LogisticsService, 
+  computeAuctionBids, 
+  LogisticsType 
+} from './wairoData';
 import { playSound } from './wairoAudio';
 
 interface DispatchModalProps {
@@ -16,14 +38,21 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
   onDispatchSuccess,
   currentLocation,
 }) => {
-  const [selectedService, setSelectedService] = useState<WairoService>(SERVICES[0]);
+  const [selectedService, setSelectedService] = useState<LogisticsService>(LOGISTICS_SERVICES[0]);
   const [selectedDest, setSelectedDest] = useState<WairoLocation>(currentLocation || LOCATIONS[0]);
-  const [itemDescription, setItemDescription] = useState('Brief Information Pod & Tech Assets');
-  const [receiverName, setReceiverName] = useState('Nairobi Metro Hub (+254...)');
-  const [prioritySpeed, setPrioritySpeed] = useState<'standard' | 'turbo'>('turbo');
+  const [itemDescription, setItemDescription] = useState('Business Documents & Tech Assets');
+  const [receiverContact, setReceiverContact] = useState('Jane Doe (+254 700 123 456)');
+  const [selectedBidOption, setSelectedBidOption] = useState<'auction' | 'branded' | 'consolidated' | 'wayfarer'>('auction');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen) return null;
+
+  const bids = computeAuctionBids(selectedService.id, selectedDest);
+  const activeBid = bids.find(b => 
+    selectedBidOption === 'branded' ? b.isBrandedCompany :
+    selectedBidOption === 'wayfarer' ? b.vehicleType === 'car' :
+    b.matchScore >= 95
+  ) || bids[0];
 
   const handleDispatch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,29 +63,34 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
       setIsSubmitting(false);
       playSound('success');
 
+      const fare = activeBid.bidPriceKes;
+      const driverTake = Math.round(fare * 0.90); // 90% payout
+      const platformTake = fare - driverTake;
+
       const newOrder: WairoDelivery = {
-        trackingId: `WR-${Math.floor(1000 + Math.random() * 9000)}-NX`,
+        trackingId: `WR-KEN-${Math.floor(1000 + Math.random() * 9000)}-NX`,
+        serviceType: selectedService.id,
         status: 'IN TRANSIT',
-        progressPercent: 12,
-        etaMinutes: selectedDest.etaMins,
+        progressPercent: 15,
+        etaMinutes: activeBid.etaMins,
         destination: selectedDest.fullName,
         locationId: selectedDest.id,
-        pilotName: selectedService.id === 'quantum-express' ? 'Captain Kael' : 'Autonomous Drone AI-7',
-        pilotCallsign: 'Hover Pilot Active',
-        droneId: selectedService.id === 'quantum-express' ? 'Hyper-Hovercraft MK-IV' : 'Vortex-X4 Quad',
-        serviceType: selectedService.title,
+        senderLocation: 'Nairobi CBD Central Hub',
+        providerName: activeBid.companyName,
+        carrierType: `${selectedService.title} (${activeBid.vehicleModel})`,
+        courierName: `${activeBid.driverName} (${activeBid.isLogbookVerifiedOwner ? 'Logbook Verified' : 'Vetted Partner'})`,
+        courierPhone: '+254 712 998 877',
+        vehicleType: activeBid.vehicleModel,
+        vehiclePlate: activeBid.plateNo,
         packageSummary: itemDescription,
-        altitude: 140,
-        speed: 88,
-        battery: 100,
-        quantumLink: '100% SECURE',
-        departedTime: 'Just Now',
-        estimatedArrival: `in ${selectedDest.etaMins} mins`,
+        fareKes: fare,
+        driverReturnKes: driverTake,
+        platformFeeKes: platformTake,
         timeline: [
-          { time: 'Just now', title: 'Order Dispatched', desc: 'Loaded into secure aerial transport pod', done: true, active: true },
-          { time: 'In 2 mins', title: 'Ascending to Corridor', desc: `Air Corridor ${selectedDest.droneCorridor}`, done: false },
-          { time: `In ${selectedDest.etaMins - 2} mins`, title: 'Cruising to Dropzone', desc: `Approaching ${selectedDest.name}`, done: false },
-          { time: `In ${selectedDest.etaMins} mins`, title: 'Touchdown & Drop Hand-off', desc: `Precision descent at ${selectedDest.fullName}`, done: false },
+          { time: 'Just now', title: 'Private Auction Match Settled', desc: `Assigned: ${activeBid.companyName} (${activeBid.trustScore}% Trust)`, done: true, active: true },
+          { time: 'In 3 mins', title: 'Package Collection & Seal', desc: 'Tamper-evident verification tag applied', done: false },
+          { time: `In ${Math.max(5, activeBid.etaMins - 5)} mins`, title: 'Courier En Route', desc: `Transit corridor: ${selectedDest.transitCorridor}`, done: false },
+          { time: `In ${activeBid.etaMins} mins`, title: 'Drop-off & OTP Settlement', desc: `Hand-off at ${selectedDest.fullName}`, done: false },
         ],
       };
 
@@ -73,11 +107,11 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
         <div className="p-4 sm:p-5 border-b border-[#173247] flex items-center justify-between bg-gradient-to-r from-[#0B1B2A] via-[#173247] to-[#0B1B2A]">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-xl bg-[#F58220]/20 border border-[#F58220]/40 flex items-center justify-center text-[#F58220]">
-              <Rocket className="w-5 h-5" />
+              <Bike className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-base sm:text-lg text-white">Dispatch Quantum Drone</h3>
-              <p className="text-xs text-[#DCE2E6]/70">On-demand aerial courier within Nairobi airspace</p>
+              <h3 className="font-bold text-base sm:text-lg text-white">Kenyan Logistics & Errands Dispatch</h3>
+              <p className="text-xs text-[#DCE2E6]/70">Courier, Consolidated Cargo & Errands with 90% Provider Return</p>
             </div>
           </div>
           <button
@@ -94,13 +128,13 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
         {/* Form Body */}
         <form onSubmit={handleDispatch} className="p-5 max-h-[72vh] overflow-y-auto space-y-4">
           
-          {/* Service Selector */}
+          {/* Logistics Service Option Picker */}
           <div>
             <label className="block text-xs font-semibold text-[#DCE2E6]/80 uppercase tracking-wider mb-2">
-              Select Courier Vessel
+              Select Logistics Category
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-              {SERVICES.slice(0, 3).map((srv) => {
+            <div className="grid grid-cols-2 gap-2">
+              {LOGISTICS_SERVICES.map((srv) => {
                 const isSelected = selectedService.id === srv.id;
                 return (
                   <button
@@ -116,14 +150,20 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
                         : 'bg-[#173247]/40 border-white/5 hover:border-white/20'
                     }`}
                   >
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-black/40 text-[#00BFEF] font-bold block w-max mb-1.5">
-                      {srv.badge}
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-black/40 text-[#00BFEF] font-bold">
+                        {srv.badge}
+                      </span>
+                      {srv.id === 'courier' && <Bike className="w-3.5 h-3.5 text-[#F58220]" />}
+                      {srv.id === 'consolidated' && <Truck className="w-3.5 h-3.5 text-[#00BFEF]" />}
+                      {srv.id === 'errands' && <Footprints className="w-3.5 h-3.5 text-[#19D8F5]" />}
+                      {srv.id === 'wayfarer' && <Car className="w-3.5 h-3.5 text-[#FF9D24]" />}
+                    </div>
+                    <h4 className="font-bold text-xs text-white leading-tight mt-1.5">{srv.title}</h4>
+                    <span className="text-[11px] text-[#F58220] font-mono font-semibold block mt-0.5">
+                      Base: KES {srv.baseKes}
                     </span>
-                    <h4 className="font-bold text-xs text-white leading-tight">{srv.title}</h4>
-                    <span className="text-[11px] text-[#F58220] font-mono font-semibold block mt-1">
-                      KES {srv.priceKes}
-                    </span>
-                    <span className="text-[10px] text-[#DCE2E6]/60 block">{srv.speed}</span>
+                    <span className="text-[10px] text-emerald-400 block font-mono">{srv.driverSharePercent}% Provider Return</span>
                   </button>
                 );
               })}
@@ -133,7 +173,7 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
           {/* Destination Selector */}
           <div>
             <label className="block text-xs font-semibold text-[#DCE2E6]/80 uppercase tracking-wider mb-2">
-              Destination Dropzone
+              Drop Location (Nairobi & Inter-County)
             </label>
             <select
               value={selectedDest.id}
@@ -145,75 +185,102 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
             >
               {LOCATIONS.map((loc) => (
                 <option key={loc.id} value={loc.id} className="bg-[#0B1B2A] text-white">
-                  📍 {loc.name} — {loc.fullName} ({loc.etaMins} mins ETA • {loc.distanceKm} km)
+                  📍 {loc.name} ({loc.county}) — {loc.fullName} • {loc.etaMins}m ETA
                 </option>
               ))}
             </select>
           </div>
 
+          {/* Private Reverse-Auction Bid Selector */}
+          <div>
+            <label className="block text-xs font-semibold text-[#DCE2E6]/80 uppercase tracking-wider mb-2 flex items-center justify-between">
+              <span>Mathematical Private Auction Bids</span>
+              <span className="text-[10px] text-[#00BFEF] font-mono">No Public Bidding Spam</span>
+            </label>
+            <div className="space-y-2">
+              {bids.slice(0, 3).map((bid) => {
+                const isChosen = activeBid.providerId === bid.providerId;
+                return (
+                  <div
+                    key={bid.providerId}
+                    onClick={() => {
+                      playSound('click');
+                      if (bid.isBrandedCompany) setSelectedBidOption('branded');
+                      else if (bid.vehicleType === 'car') setSelectedBidOption('wayfarer');
+                      else setSelectedBidOption('auction');
+                    }}
+                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                      isChosen 
+                        ? 'bg-[#F58220]/15 border-[#F58220] shadow-md shadow-[#F58220]/20' 
+                        : 'bg-[#173247]/40 border-white/5 hover:border-white/20'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-bold text-xs text-white">{bid.companyName}</span>
+                        {bid.isLogbookVerifiedOwner && (
+                          <span className="text-[9px] px-1 rounded bg-emerald-500/20 text-emerald-400 font-bold">
+                            ✓ OWNER LOGBOOK
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-[#DCE2E6]/70 mt-0.5">{bid.vehicleModel} • {bid.driverName}</p>
+                      <span className="text-[10px] font-mono text-[#00BFEF] block mt-0.5">
+                        ★ {bid.trustScore}% Trust • {bid.etaMins}m ETA • {bid.insuranceCovered ? '100% Insured' : 'Standard Cover'}
+                      </span>
+                    </div>
+
+                    <div className="text-right">
+                      <span className="text-sm font-mono font-bold text-white block">KES {bid.bidPriceKes}</span>
+                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${isChosen ? 'bg-[#F58220] text-white' : 'bg-white/10 text-gray-300'}`}>
+                        {isChosen ? 'SELECTED' : 'CHOOSE'}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Package details */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-[#DCE2E6]/70 mb-1">Package Contents</label>
+              <label className="block text-xs text-[#DCE2E6]/70 mb-1">Package / Task Details</label>
               <input
                 type="text"
                 value={itemDescription}
                 onChange={(e) => setItemDescription(e.target.value)}
-                placeholder="e.g. Verified Goods"
+                placeholder="e.g. Legal Documents, Groceries"
                 className="w-full bg-[#173247]/70 border border-[#173247] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#00BFEF]"
                 required
               />
             </div>
             <div>
-              <label className="block text-xs text-[#DCE2E6]/70 mb-1">Receiver Contact</label>
+              <label className="block text-xs text-[#DCE2E6]/70 mb-1">Recipient Name & Contact</label>
               <input
                 type="text"
-                value={receiverName}
-                onChange={(e) => setReceiverName(e.target.value)}
-                placeholder="e.g. (+254...)"
+                value={receiverContact}
+                onChange={(e) => setReceiverContact(e.target.value)}
+                placeholder="e.g. Maya (+254...)"
                 className="w-full bg-[#173247]/70 border border-[#173247] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#00BFEF]"
                 required
               />
             </div>
           </div>
 
-          {/* Speed toggle */}
-          <div className="p-3.5 bg-[#173247]/40 border border-white/5 rounded-2xl flex items-center justify-between text-xs">
-            <div className="flex items-center space-x-2.5">
-              <Zap className="w-4 h-4 text-[#F58220]" />
+          {/* Fair Provider Return Breakdown (90% Payout) */}
+          <div className="p-3.5 bg-gradient-to-r from-[#0B1B2A] to-[#173247] border border-[#00BFEF]/30 rounded-2xl space-y-2">
+            <div className="flex items-center justify-between">
               <div>
-                <span className="font-bold text-white block">Quantum Priority Flight</span>
-                <span className="text-[11px] text-[#DCE2E6]/60">Zero-latency corridor clearance</span>
+                <span className="text-[10px] uppercase font-mono text-[#00BFEF]">Total Delivery Fare (M-Pesa)</span>
+                <div className="flex items-baseline space-x-1.5">
+                  <span className="text-xl font-bold font-mono text-white">KES {activeBid.bidPriceKes}</span>
+                </div>
               </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                playSound('click');
-                setPrioritySpeed(prev => prev === 'turbo' ? 'standard' : 'turbo');
-              }}
-              className={`px-3 py-1 rounded-full font-mono text-[11px] font-bold transition-all cursor-pointer ${
-                prioritySpeed === 'turbo'
-                  ? 'bg-[#F58220] text-white shadow-md shadow-[#F58220]/30'
-                  : 'bg-white/10 text-gray-300'
-              }`}
-            >
-              {prioritySpeed === 'turbo' ? '⚡ TURBO ACTIVE' : 'STANDARD'}
-            </button>
-          </div>
-
-          {/* Cost Summary */}
-          <div className="p-3.5 bg-gradient-to-r from-[#0B1B2A] to-[#173247] border border-[#00BFEF]/30 rounded-2xl flex items-center justify-between">
-            <div>
-              <span className="text-[10px] uppercase font-mono text-[#00BFEF]">Total Flight Fare</span>
-              <div className="flex items-baseline space-x-1.5">
-                <span className="text-xl font-bold font-mono text-white">KES {selectedService.priceKes}</span>
-                <span className="text-xs text-[#DCE2E6]/60 font-mono">(${selectedService.priceUsd} USD)</span>
+              <div className="text-right font-mono text-xs">
+                <span className="text-emerald-400 font-bold block">Rider Take: KES {Math.round(activeBid.bidPriceKes * 0.9)} (90%)</span>
+                <span className="text-gray-400 text-[10px] block">Platform Fee: KES {Math.round(activeBid.bidPriceKes * 0.1)} (10%)</span>
               </div>
-            </div>
-            <div className="text-right">
-              <span className="text-[10px] text-emerald-400 block font-mono">✓ Carbon Neutral</span>
-              <span className="text-xs text-[#F58220] font-bold">{selectedDest.etaMins} Min Delivery</span>
             </div>
           </div>
 
@@ -226,11 +293,11 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
             {isSubmitting ? (
               <span className="flex items-center space-x-2">
                 <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                <span>Locking Air Corridor...</span>
+                <span>Settling Private Reverse-Auction...</span>
               </span>
             ) : (
               <span className="flex items-center space-x-2">
-                <span>Confirm & Dispatch Hover-Drone</span>
+                <span>Confirm & Dispatch Courier</span>
                 <ArrowRight className="w-4 h-4" />
               </span>
             )}

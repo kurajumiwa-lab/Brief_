@@ -8,7 +8,11 @@ import {
   Clock, 
   MapPin, 
   CheckCircle2, 
-  Volume2
+  Bike,
+  Truck,
+  DollarSign,
+  TrendingUp,
+  Award
 } from 'lucide-react';
 import { WairoDelivery, WairoLocation } from './wairoData';
 import { playSound } from './wairoAudio';
@@ -27,10 +31,8 @@ export const LiveTelemetryModal: React.FC<LiveTelemetryModalProps> = ({
   selectedLocation 
 }) => {
   const [activeTab, setActiveTab] = useState<'radar' | 'camera' | 'telemetry'>('radar');
-  const [simulatedProgress, setSimulatedProgress] = useState(activeDelivery.progressPercent || 68);
-  const [altitude, setAltitude] = useState(activeDelivery.altitude || 128);
-  const [speed, setSpeed] = useState(activeDelivery.speed || 84);
-  const [battery, setBattery] = useState(activeDelivery.battery || 89);
+  const [simulatedProgress, setSimulatedProgress] = useState(activeDelivery.progressPercent || 72);
+  const [speed, setSpeed] = useState(activeDelivery.speed || 48);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -38,8 +40,7 @@ export const LiveTelemetryModal: React.FC<LiveTelemetryModalProps> = ({
     playSound('open');
 
     const interval = setInterval(() => {
-      setAltitude(prev => Math.min(160, Math.max(90, Math.round(prev + (Math.random() * 4 - 2)))));
-      setSpeed(prev => Math.min(96, Math.max(72, Math.round(prev + (Math.random() * 3 - 1.5)))));
+      setSpeed(prev => Math.min(65, Math.max(35, Math.round(prev + (Math.random() * 4 - 2)))));
       setSimulatedProgress(prev => {
         if (prev >= 98) return 98;
         return +(prev + 0.15).toFixed(1);
@@ -49,7 +50,7 @@ export const LiveTelemetryModal: React.FC<LiveTelemetryModalProps> = ({
     return () => clearInterval(interval);
   }, [isOpen]);
 
-  // Canvas radar animation
+  // Canvas route map animation
   useEffect(() => {
     if (!isOpen || activeTab !== 'radar') return;
     const canvas = canvasRef.current;
@@ -59,108 +60,96 @@ export const LiveTelemetryModal: React.FC<LiveTelemetryModalProps> = ({
     if (!ctx) return;
 
     let animationFrameId: number;
-    let angle = 0;
+    let scanPos = 0;
 
     const render = () => {
       const width = canvas.width;
       const height = canvas.height;
-      const centerX = width / 2;
-      const centerY = height / 2;
-      const radius = Math.min(centerX, centerY) - 15;
 
-      // Clear with deep space navy
+      // Dark space navy background
       ctx.fillStyle = '#0B1B2A';
       ctx.fillRect(0, 0, width, height);
 
-      // Draw radar background circles
-      ctx.strokeStyle = 'rgba(0, 191, 239, 0.2)';
+      // Grid lines
+      ctx.strokeStyle = 'rgba(0, 191, 239, 0.12)';
       ctx.lineWidth = 1;
-      for (let r = radius * 0.25; r <= radius; r += radius * 0.25) {
+      for (let x = 0; x <= width; x += 30) {
         ctx.beginPath();
-        ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
+      for (let y = 0; y <= height; y += 30) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
         ctx.stroke();
       }
 
-      // Draw crosshairs
+      // Highway route lines (e.g. Southern Bypass / Waiyaki Way)
+      ctx.strokeStyle = '#173247';
+      ctx.lineWidth = 8;
       ctx.beginPath();
-      ctx.moveTo(centerX - radius, centerY);
-      ctx.lineTo(centerX + radius, centerY);
-      ctx.moveTo(centerX, centerY - radius);
-      ctx.lineTo(centerX, centerY + radius);
+      ctx.moveTo(40, height - 50);
+      ctx.quadraticCurveTo(width * 0.4, 40, width - 50, height * 0.4);
       ctx.stroke();
 
-      // Draw flight path line
-      ctx.strokeStyle = 'rgba(245, 130, 32, 0.6)';
-      ctx.setLineDash([4, 4]);
+      // Active GPS route
+      ctx.strokeStyle = '#00BFEF';
+      ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.moveTo(centerX - 90, centerY + 60);
-      ctx.quadraticCurveTo(centerX - 20, centerY - 40, centerX + 80, centerY - 60);
+      ctx.moveTo(40, height - 50);
+      ctx.quadraticCurveTo(width * 0.4, 40, width - 50, height * 0.4);
       ctx.stroke();
-      ctx.setLineDash([]);
 
-      // Draw destination waypoint (Lang'ata)
-      ctx.fillStyle = '#F58220';
-      ctx.beginPath();
-      ctx.arc(centerX + 80, centerY - 60, 6, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.font = '10px monospace';
-      ctx.fillText(selectedLocation.name || "Lang'ata", centerX + 90, centerY - 55);
-
-      // Draw origin
+      // Origin Point (CBD Hub)
       ctx.fillStyle = '#00BFEF';
       ctx.beginPath();
-      ctx.arc(centerX - 90, centerY + 60, 5, 0, Math.PI * 2);
+      ctx.arc(40, height - 50, 6, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillText("Hub Alpha", centerX - 120, centerY + 75);
+      ctx.font = '10px monospace';
+      ctx.fillText("Nairobi CBD Depot", 15, height - 30);
 
-      // Draw Drone current position
+      // Destination Point (Lang'ata)
+      ctx.fillStyle = '#F58220';
+      ctx.beginPath();
+      ctx.arc(width - 50, height * 0.4, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillText(selectedLocation.fullName, width - 130, height * 0.4 - 15);
+
+      // Courier current location interpolation
       const progressFraction = simulatedProgress / 100;
-      const droneX = (centerX - 90) + (centerX + 80 - (centerX - 90)) * progressFraction;
-      const droneY = (centerY + 60) + (centerY - 60 - (centerY + 60)) * progressFraction;
+      const t = progressFraction;
+      const p0 = { x: 40, y: height - 50 };
+      const p1 = { x: width * 0.4, y: 40 };
+      const p2 = { x: width - 50, y: height * 0.4 };
 
-      // Drone pulsing ring
-      ctx.strokeStyle = 'rgba(0, 191, 239, 0.8)';
+      // Quadratic bezier curve interpolation
+      const courierX = (1 - t) * (1 - t) * p0.x + 2 * (1 - t) * t * p1.x + t * t * p2.x;
+      const courierY = (1 - t) * (1 - t) * p0.y + 2 * (1 - t) * t * p1.y + t * t * p2.y;
+
+      // Courier pulse marker
+      ctx.strokeStyle = 'rgba(245, 130, 32, 0.8)';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(droneX, droneY, 12, 0, Math.PI * 2);
+      ctx.arc(courierX, courierY, 14, 0, Math.PI * 2);
       ctx.stroke();
 
-      // Drone center dot
-      ctx.fillStyle = '#19D8F5';
+      ctx.fillStyle = '#F58220';
       ctx.beginPath();
-      ctx.arc(droneX, droneY, 4, 0, Math.PI * 2);
+      ctx.arc(courierX, courierY, 5, 0, Math.PI * 2);
       ctx.fill();
 
-      // Drone label
       ctx.fillStyle = '#19D8F5';
-      ctx.fillText("⚡ 5Y-WRO", droneX + 12, droneY - 10);
+      ctx.fillText(`🛵 ${activeDelivery.courierName} (${speed} km/h)`, courierX + 12, courierY - 8);
 
-      // Radar Sweep line
-      angle += 0.035;
-      const sweepX = centerX + radius * Math.cos(angle);
-      const sweepY = centerY + radius * Math.sin(angle);
-
-      // Sweep gradient sector
-      const sweepGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
-      sweepGradient.addColorStop(0, 'rgba(0, 191, 239, 0.35)');
-      sweepGradient.addColorStop(1, 'rgba(0, 191, 239, 0.0)');
-
-      ctx.save();
+      // Scanline effect
+      scanPos = (scanPos + 2) % width;
+      ctx.strokeStyle = 'rgba(0, 191, 239, 0.2)';
       ctx.beginPath();
-      ctx.moveTo(centerX, centerY);
-      ctx.arc(centerX, centerY, radius, angle - 0.5, angle);
-      ctx.closePath();
-      ctx.fillStyle = sweepGradient;
-      ctx.fill();
-
-      // Main sweep line
-      ctx.strokeStyle = '#00BFEF';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(centerX, centerY);
-      ctx.lineTo(sweepX, sweepY);
+      ctx.moveTo(scanPos, 0);
+      ctx.lineTo(scanPos, height);
       ctx.stroke();
-      ctx.restore();
 
       animationFrameId = requestAnimationFrame(render);
     };
@@ -170,7 +159,7 @@ export const LiveTelemetryModal: React.FC<LiveTelemetryModalProps> = ({
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-  }, [isOpen, activeTab, simulatedProgress, selectedLocation]);
+  }, [isOpen, activeTab, simulatedProgress, selectedLocation, speed]);
 
   if (!isOpen) return null;
 
@@ -186,12 +175,12 @@ export const LiveTelemetryModal: React.FC<LiveTelemetryModalProps> = ({
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h3 className="font-bold text-lg text-white">Live Quantum Telemetry</h3>
+                <h3 className="font-bold text-lg text-white">Live Courier & Transit Telemetry</h3>
                 <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-[#F58220]/20 text-[#F58220] border border-[#F58220]/40 font-semibold tracking-wider">
-                  LIVE STREAM
+                  GPS ACTIVE
                 </span>
               </div>
-              <p className="text-xs text-[#DCE2E6]/70">Drone 5Y-WRO • Sector Corridor: {selectedLocation.droneCorridor}</p>
+              <p className="text-xs text-[#DCE2E6]/70">Corridor: {selectedLocation.transitCorridor} • OTP: 8849</p>
             </div>
           </div>
 
@@ -220,7 +209,7 @@ export const LiveTelemetryModal: React.FC<LiveTelemetryModalProps> = ({
             }`}
           >
             <Crosshair className="w-3.5 h-3.5" />
-            <span>Airspace Radar</span>
+            <span>GPS Route Map</span>
           </button>
           
           <button
@@ -235,7 +224,7 @@ export const LiveTelemetryModal: React.FC<LiveTelemetryModalProps> = ({
             }`}
           >
             <Navigation className="w-3.5 h-3.5" />
-            <span>Pilot Optical Cam</span>
+            <span>Carrier Dashboard</span>
           </button>
 
           <button
@@ -250,14 +239,14 @@ export const LiveTelemetryModal: React.FC<LiveTelemetryModalProps> = ({
             }`}
           >
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Quantum Security</span>
+            <span>Provider Economics (90%)</span>
           </button>
         </div>
 
         {/* Modal Main Viewport */}
         <div className="p-5 overflow-y-auto max-h-[75vh] space-y-5">
           
-          {/* Main Visual Display */}
+          {/* Main Display Box */}
           <div className="relative w-full h-64 sm:h-72 rounded-2xl overflow-hidden border border-[#173247] bg-[#061019] flex items-center justify-center">
             {activeTab === 'radar' && (
               <canvas 
@@ -271,37 +260,35 @@ export const LiveTelemetryModal: React.FC<LiveTelemetryModalProps> = ({
             {activeTab === 'camera' && (
               <div className="relative w-full h-full bg-[#0B1B2A] flex items-center justify-center">
                 <img 
-                  src="/assets/wairo/wairo_mobile_ui.png" 
-                  alt="Pilot Camera HUD"
+                  src="/assets/wairo/wairo_hero.png" 
+                  alt="Courier Logistics Vehicle"
                   className="w-full h-full object-cover opacity-60"
                 />
                 <div className="absolute inset-0 bg-[#0B1B2A]/40 backdrop-blur-[1px]"></div>
                 
-                {/* HUD Overlay Graphics */}
                 <div className="absolute inset-0 p-4 flex flex-col justify-between pointer-events-none">
                   <div className="flex justify-between items-center text-[10px] font-mono text-[#00BFEF]">
                     <div className="bg-[#0B1B2A]/90 px-2.5 py-1 rounded border border-[#00BFEF]/30 flex items-center space-x-2">
-                      <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
-                      <span>LIVE FEED // 4K OPTICAL</span>
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                      <span>COURIER: {activeDelivery.courierName}</span>
                     </div>
                     <div className="bg-[#0B1B2A]/90 px-2.5 py-1 rounded border border-[#00BFEF]/30">
-                      GRID: {selectedLocation.coordinates}
+                      PLATE: {activeDelivery.vehiclePlate}
                     </div>
                   </div>
 
-                  {/* Crosshair Target */}
                   <div className="self-center flex flex-col items-center">
                     <div className="w-20 h-20 border border-[#00BFEF]/60 rounded-full flex items-center justify-center animate-pulse">
-                      <div className="w-3 h-3 bg-[#F58220] rounded-full"></div>
+                      <Bike className="w-8 h-8 text-[#F58220]" />
                     </div>
                     <span className="text-[10px] font-mono text-[#F58220] mt-1 bg-[#0B1B2A]/80 px-2 rounded">
-                      DESTINATION LOCK: {selectedLocation.name}
+                      DESTINATION: {selectedLocation.name}
                     </span>
                   </div>
 
                   <div className="flex justify-between items-center text-[10px] font-mono text-[#DCE2E6]">
-                    <span>PILOT: CAPTAIN KAEL</span>
-                    <span className="text-[#00BFEF]">STABILIZER: 100% OK</span>
+                    <span>STATUS: IN TRANSIT ({speed} km/h)</span>
+                    <span className="text-[#00BFEF]">SECURITY CODE: OTP 8849</span>
                   </div>
                 </div>
               </div>
@@ -313,31 +300,31 @@ export const LiveTelemetryModal: React.FC<LiveTelemetryModalProps> = ({
                   <div className="flex items-center space-x-3">
                     <ShieldCheck className="w-7 h-7 text-[#00BFEF]" />
                     <div>
-                      <h4 className="font-bold text-white text-sm">Quantum Encryption Handshake</h4>
-                      <p className="text-xs text-[#00BFEF]">4096-bit AES Elliptic Curve Key</p>
+                      <h4 className="font-bold text-white text-sm">Provider Fair Economics Model</h4>
+                      <p className="text-xs text-[#00BFEF]">90% Direct Driver Return vs Uber's ~72%</p>
                     </div>
                   </div>
-                  <span className="px-3 py-1 bg-[#00BFEF]/20 text-[#00BFEF] rounded-full text-xs font-mono font-bold">
-                    VERIFIED SECURE
+                  <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-xs font-mono font-bold">
+                    M-PESA B2C
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 text-xs font-mono">
                   <div className="p-2.5 rounded-xl bg-black/30 border border-white/5">
-                    <span className="text-[#DCE2E6]/60 block text-[10px]">DROP ZONE AUTH:</span>
-                    <span className="text-white font-bold">NFC Handshake Confirmed</span>
+                    <span className="text-[#DCE2E6]/60 block text-[10px]">TOTAL FARE:</span>
+                    <span className="text-white font-bold">KES {activeDelivery.fareKes}</span>
                   </div>
                   <div className="p-2.5 rounded-xl bg-black/30 border border-white/5">
-                    <span className="text-[#DCE2E6]/60 block text-[10px]">CORRIDOR RADAR:</span>
-                    <span className="text-emerald-400 font-bold">No Bird / Drone Conflict</span>
+                    <span className="text-[#DCE2E6]/60 block text-[10px]">COURIER TAKE (90%):</span>
+                    <span className="text-emerald-400 font-bold">KES {activeDelivery.driverReturnKes}</span>
                   </div>
                   <div className="p-2.5 rounded-xl bg-black/30 border border-white/5">
-                    <span className="text-[#DCE2E6]/60 block text-[10px]">BAROMETRIC SENSOR:</span>
-                    <span className="text-white font-bold">1013.25 hPa (Optimal)</span>
+                    <span className="text-[#DCE2E6]/60 block text-[10px]">PLATFORM FEE (10%):</span>
+                    <span className="text-white font-bold">KES {activeDelivery.platformFeeKes}</span>
                   </div>
                   <div className="p-2.5 rounded-xl bg-black/30 border border-white/5">
-                    <span className="text-[#DCE2E6]/60 block text-[10px]">ESTIMATED WIND:</span>
-                    <span className="text-[#00BFEF] font-bold">4 kts South-East</span>
+                    <span className="text-[#DCE2E6]/60 block text-[10px]">VEHICLE OWNERSHIP:</span>
+                    <span className="text-[#00BFEF] font-bold">Logbook Verified ✓</span>
                   </div>
                 </div>
               </div>
@@ -347,27 +334,27 @@ export const LiveTelemetryModal: React.FC<LiveTelemetryModalProps> = ({
           {/* Real-Time Telemetry Stats Row */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-[#173247]/60 border border-[#00BFEF]/20 rounded-2xl p-3 flex flex-col items-center text-center">
-              <span className="text-[10px] uppercase font-mono text-[#DCE2E6]/70">Altitude</span>
-              <span className="text-lg sm:text-xl font-bold font-mono text-[#00BFEF]">{altitude} m</span>
-              <span className="text-[10px] text-emerald-400">Above Ground Level</span>
+              <span className="text-[10px] uppercase font-mono text-[#DCE2E6]/70">Transit Speed</span>
+              <span className="text-lg sm:text-xl font-bold font-mono text-[#00BFEF]">{speed} km/h</span>
+              <span className="text-[10px] text-emerald-400">Road Corridor</span>
             </div>
 
             <div className="bg-[#173247]/60 border border-[#00BFEF]/20 rounded-2xl p-3 flex flex-col items-center text-center">
-              <span className="text-[10px] uppercase font-mono text-[#DCE2E6]/70">Air Speed</span>
-              <span className="text-lg sm:text-xl font-bold font-mono text-[#F58220]">{speed} km/h</span>
-              <span className="text-[10px] text-[#FF9D24]">Cruising Mode</span>
+              <span className="text-[10px] uppercase font-mono text-[#DCE2E6]/70">Courier Take</span>
+              <span className="text-lg sm:text-xl font-bold font-mono text-emerald-400">90%</span>
+              <span className="text-[10px] text-emerald-300">KES {activeDelivery.driverReturnKes}</span>
             </div>
 
             <div className="bg-[#173247]/60 border border-[#00BFEF]/20 rounded-2xl p-3 flex flex-col items-center text-center">
-              <span className="text-[10px] uppercase font-mono text-[#DCE2E6]/70">Battery Pack</span>
-              <span className="text-lg sm:text-xl font-bold font-mono text-emerald-400">{battery}%</span>
-              <span className="text-[10px] text-emerald-300">Dual Li-Solid Core</span>
+              <span className="text-[10px] uppercase font-mono text-[#DCE2E6]/70">Security OTP</span>
+              <span className="text-lg sm:text-xl font-bold font-mono text-[#F58220]">8849</span>
+              <span className="text-[10px] text-[#FF9D24]">Release Code</span>
             </div>
 
             <div className="bg-[#173247]/60 border border-[#00BFEF]/20 rounded-2xl p-3 flex flex-col items-center text-center">
               <span className="text-[10px] uppercase font-mono text-[#DCE2E6]/70">ETA Arrival</span>
               <span className="text-lg sm:text-xl font-bold font-mono text-white">{selectedLocation.etaMins} mins</span>
-              <span className="text-[10px] text-[#00BFEF]">Target: {selectedLocation.name}</span>
+              <span className="text-[10px] text-[#00BFEF]">To: {selectedLocation.name}</span>
             </div>
           </div>
 
@@ -376,10 +363,10 @@ export const LiveTelemetryModal: React.FC<LiveTelemetryModalProps> = ({
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center space-x-2">
                 <Clock className="w-3.5 h-3.5 text-[#00BFEF]" />
-                <span>Flight Route Progress ({Math.round(simulatedProgress)}%)</span>
+                <span>Transit Progress ({Math.round(simulatedProgress)}%)</span>
               </h4>
               <span className="text-xs text-[#F58220] font-mono font-bold">
-                {selectedLocation.distanceKm} km Total Distance
+                {selectedLocation.distanceKm} km Distance
               </span>
             </div>
 
@@ -421,13 +408,12 @@ export const LiveTelemetryModal: React.FC<LiveTelemetryModalProps> = ({
 
           <button
             onClick={() => {
-              playSound('radar');
-              alert(`Sounding precision landing beacon at ${selectedLocation.fullName}! Hover-drone aligned.`);
+              playSound('click');
+              alert(`OTP 8849 shared with courier rider (${activeDelivery.courierName}). Hand-off confirmed.`);
             }}
             className="px-4 py-2 rounded-xl bg-[#F58220] hover:bg-[#FF9D24] text-white font-bold text-xs flex items-center space-x-2 shadow-lg shadow-[#F58220]/30 transition-all cursor-pointer"
           >
-            <span>Activate Drop Beacon</span>
-            <Radio className="w-3.5 h-3.5" />
+            <span>Confirm OTP Hand-off</span>
           </button>
         </div>
 

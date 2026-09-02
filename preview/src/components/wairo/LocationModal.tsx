@@ -1,5 +1,5 @@
-import React from 'react';
-import { X, MapPin, Navigation, Clock, Check, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, MapPin, Navigation, Clock, Check, Sparkles, Truck } from 'lucide-react';
 import { LOCATIONS, WairoLocation } from './wairoData';
 import { playSound } from './wairoAudio';
 
@@ -16,7 +16,15 @@ export const LocationModal: React.FC<LocationModalProps> = ({
   selectedLocation,
   onSelectLocation,
 }) => {
+  const [filterMode, setFilterMode] = useState<'all' | 'nairobi' | 'intercounty'>('all');
+
   if (!isOpen) return null;
+
+  const filteredLocations = LOCATIONS.filter(l => {
+    if (filterMode === 'nairobi') return !l.isInterCounty;
+    if (filterMode === 'intercounty') return l.isInterCounty;
+    return true;
+  });
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
@@ -30,7 +38,7 @@ export const LocationModal: React.FC<LocationModalProps> = ({
             </div>
             <div>
               <h3 className="font-bold text-sm text-white">Select Drop Location</h3>
-              <p className="text-[11px] text-[#DCE2E6]/60">Nairobi Metro Drone Express Zones</p>
+              <p className="text-[11px] text-[#DCE2E6]/60">Nairobi Metro & Inter-County Corridors</p>
             </div>
           </div>
           <button
@@ -44,9 +52,33 @@ export const LocationModal: React.FC<LocationModalProps> = ({
           </button>
         </div>
 
+        {/* Filter Pills */}
+        <div className="flex px-4 pt-3 space-x-2 text-xs">
+          {[
+            { id: 'all', label: 'All Corridors' },
+            { id: 'nairobi', label: 'Nairobi Metro' },
+            { id: 'intercounty', label: 'Inter-County Transit' },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => {
+                playSound('click');
+                setFilterMode(tab.id as any);
+              }}
+              className={`px-3 py-1 rounded-xl text-[11px] font-semibold transition-colors cursor-pointer ${
+                filterMode === tab.id
+                  ? 'bg-[#00BFEF] text-[#0B1B2A] font-bold'
+                  : 'bg-white/5 text-gray-300 hover:bg-white/10'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
         {/* Location List */}
-        <div className="p-4 max-h-[60vh] overflow-y-auto space-y-2.5">
-          {LOCATIONS.map((loc) => {
+        <div className="p-4 max-h-[55vh] overflow-y-auto space-y-2.5">
+          {filteredLocations.map((loc) => {
             const isSelected = selectedLocation.id === loc.id;
             return (
               <button
@@ -66,13 +98,13 @@ export const LocationModal: React.FC<LocationModalProps> = ({
                   <div className={`mt-0.5 w-7 h-7 rounded-xl flex items-center justify-center text-xs font-bold ${
                     isSelected ? 'bg-[#F58220] text-white' : 'bg-white/10 text-[#00BFEF]'
                   }`}>
-                    {isSelected ? <Check className="w-4 h-4" /> : <Navigation className="w-3.5 h-3.5" />}
+                    {isSelected ? <Check className="w-4 h-4" /> : loc.isInterCounty ? <Truck className="w-3.5 h-3.5" /> : <Navigation className="w-3.5 h-3.5" />}
                   </div>
                   <div>
                     <div className="flex items-center space-x-2">
                       <span className="font-bold text-sm text-white">{loc.name}</span>
                       <span className="text-[10px] px-2 py-0.5 rounded bg-black/40 text-[#DCE2E6]/80 font-mono">
-                        {loc.zone}
+                        {loc.county}
                       </span>
                     </div>
                     <p className="text-xs text-[#DCE2E6]/70 mt-0.5">{loc.fullName}</p>
@@ -82,7 +114,7 @@ export const LocationModal: React.FC<LocationModalProps> = ({
                         <span>{loc.etaMins} mins ETA</span>
                       </span>
                       <span>•</span>
-                      <span>{loc.distanceKm} km flight</span>
+                      <span>{loc.distanceKm} km transit</span>
                     </div>
                   </div>
                 </div>
@@ -103,7 +135,7 @@ export const LocationModal: React.FC<LocationModalProps> = ({
         <div className="p-3.5 bg-[#07111a] border-t border-[#173247] flex items-center justify-between text-xs text-[#DCE2E6]/80">
           <span className="flex items-center space-x-1.5">
             <Sparkles className="w-3.5 h-3.5 text-[#00BFEF]" />
-            <span>Automated rooftop beacon locks enabled</span>
+            <span>Courier & Consolidated freight matching active</span>
           </span>
         </div>
 

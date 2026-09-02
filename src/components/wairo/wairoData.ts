@@ -2,271 +2,419 @@ export interface WairoLocation {
   id: string;
   name: string;
   fullName: string;
+  county: string;
   zone: string;
   etaMins: number;
   distanceKm: number;
-  droneCorridor: string;
+  transitCorridor: string;
   coordinates: string;
+  isInterCounty?: boolean;
 }
 
-export interface WairoService {
-  id: string;
+export type LogisticsType = 'courier' | 'consolidated' | 'errands' | 'wayfarer';
+
+export interface LogisticsService {
+  id: LogisticsType;
   title: string;
-  subtitle: string;
-  shortDesc: string;
+  tagline: string;
+  description: string;
   speed: string;
   badge: string;
   accent: string;
   icon: string;
-  priceKes: string;
-  priceUsd: string;
-  capacity: string;
-  security: string;
+  baseKes: number;
+  vehicleTypes: string[];
+  driverSharePercent: number; // e.g. 90% payout vs Uber's 72%
 }
 
-export interface WairoTimelineStep {
-  time: string;
-  title: string;
-  desc: string;
-  done: boolean;
-  active?: boolean;
+export interface PrivateProviderBid {
+  providerId: string;
+  companyName: string;
+  isBrandedCompany: boolean;
+  isLogbookVerifiedOwner: boolean;
+  vehicleType: 'boda' | 'car' | 'van' | 'truck' | 'traveler';
+  vehicleModel: string;
+  driverName: string;
+  plateNo: string;
+  trustScore: number; // e.g. 98.4%
+  completedDeliveries: number;
+  bidPriceKes: number;
+  etaMins: number;
+  insuranceCovered: boolean;
+  matchScore: number; // calculated mathematically: Score = w1*(Base/Bid) + w2*Trust + w3*(1/ETA) + w4*OwnerBonus
+  badge?: string;
 }
 
 export interface WairoDelivery {
   trackingId: string;
+  serviceType: LogisticsType;
   status: string;
   progressPercent: number;
   etaMinutes: number;
   destination: string;
   locationId: string;
-  pilotName: string;
-  pilotCallsign: string;
-  droneId: string;
-  serviceType: string;
+  senderLocation: string;
+  providerName: string;
+  carrierType: string;
+  courierName: string;
+  courierPhone: string;
+  vehicleType: string;
+  vehiclePlate: string;
   packageSummary: string;
-  altitude: number;
-  speed: number;
-  battery: number;
-  quantumLink: string;
-  departedTime: string;
-  estimatedArrival: string;
-  timeline: WairoTimelineStep[];
-}
-
-export interface WairoMessage {
-  id: string;
-  sender: 'user' | 'pilot' | 'system';
-  name: string;
-  role: string;
-  avatar: string;
-  time: string;
-  text: string;
+  fareKes: number;
+  driverReturnKes: number;
+  platformFeeKes: number;
+  isConsolidatedBatch?: boolean;
+  timeline: {
+    time: string;
+    title: string;
+    desc: string;
+    done: boolean;
+    active?: boolean;
+  }[];
 }
 
 export const LOCATIONS: WairoLocation[] = [
   {
     id: 'langata',
     name: "Lang'ata",
-    fullName: "Lang'ata Office Hub",
-    zone: "Sector 4-South",
-    etaMins: 6,
-    distanceKm: 4.2,
-    droneCorridor: "Airway B-04 (Clear)",
+    fullName: "Lang'ata Rd / Galleria Hub",
+    county: "Nairobi",
+    zone: "Nairobi South",
+    etaMins: 22,
+    distanceKm: 8.4,
+    transitCorridor: "Southern Bypass / Lang'ata Corridor",
     coordinates: "1.3624° S, 36.7628° E",
   },
   {
     id: 'westlands',
     name: "Westlands",
-    fullName: "Westlands Innovation Tower",
-    zone: "Sector 1-North",
-    etaMins: 11,
-    distanceKm: 8.7,
-    droneCorridor: "Airway A-12 (Optimal)",
+    fullName: "Westlands / Mpaka Plaza Hub",
+    county: "Nairobi",
+    zone: "Nairobi West",
+    etaMins: 18,
+    distanceKm: 6.2,
+    transitCorridor: "Waiyaki Way / Ring Rd",
     coordinates: "1.2683° S, 36.8044° E",
+  },
+  {
+    id: 'cbd',
+    name: "Nairobi CBD",
+    fullName: "CBD / Tom Mboya / Kencom Hub",
+    county: "Nairobi",
+    zone: "Nairobi Central",
+    etaMins: 15,
+    distanceKm: 4.1,
+    transitCorridor: "Haile Selassie / Moi Avenue",
+    coordinates: "1.2864° S, 36.8172° E",
   },
   {
     id: 'kilimani',
     name: "Kilimani",
-    fullName: "Kilimani Cyber District",
-    zone: "Sector 2-West",
-    etaMins: 8,
+    fullName: "Kilimani / Yaya Centre Zone",
+    county: "Nairobi",
+    zone: "Nairobi West",
+    etaMins: 20,
     distanceKm: 5.9,
-    droneCorridor: "Airway C-08 (Clear)",
+    transitCorridor: "Argwings Kodhek / Ngong Rd",
     coordinates: "1.2921° S, 36.7865° E",
   },
   {
-    id: 'karen',
-    name: "Karen",
-    fullName: "Karen Estate Drop Pod",
-    zone: "Sector 5-Southwest",
-    etaMins: 14,
-    distanceKm: 12.3,
-    droneCorridor: "Airway E-02 (Sub-orbital)",
-    coordinates: "1.3218° S, 36.7126° E",
+    id: 'eastleigh',
+    name: "Eastleigh",
+    fullName: "Eastleigh 1st Ave Commercial Hub",
+    county: "Nairobi",
+    zone: "Nairobi East",
+    etaMins: 25,
+    distanceKm: 7.5,
+    transitCorridor: "Jogoo Rd / Juja Rd Connector",
+    coordinates: "1.2783° S, 36.8482° E",
   },
   {
-    id: 'upperhill',
-    name: "Upper Hill",
-    fullName: "Upper Hill Sky Terminal",
-    zone: "Sector 3-Central",
-    etaMins: 9,
-    distanceKm: 6.4,
-    droneCorridor: "Airway D-10 (Active)",
-    coordinates: "1.2989° S, 36.8142° E",
+    id: 'industrial',
+    name: "Industrial Area",
+    fullName: "Enterprise Rd / ICD Depot",
+    county: "Nairobi",
+    zone: "Nairobi Industrial",
+    etaMins: 24,
+    distanceKm: 9.8,
+    transitCorridor: "Mombasa Rd / Enterprise Corridor",
+    coordinates: "1.3121° S, 36.8521° E",
   },
   {
-    id: 'gigiri',
-    name: "Gigiri",
-    fullName: "Gigiri Diplomatic Compound",
-    zone: "Sector 6-North",
-    etaMins: 16,
-    distanceKm: 14.1,
-    droneCorridor: "Airway F-01 (Secure)",
-    coordinates: "1.2330° S, 36.8090° E",
+    id: 'mombasa',
+    name: "Mombasa",
+    fullName: "Mombasa Island / Nyali Hub",
+    county: "Mombasa",
+    zone: "Coast Inter-County",
+    etaMins: 360, // 6 hours or scheduled consolidated
+    distanceKm: 485.0,
+    transitCorridor: "Mombasa Highway A109 / SGR Freight",
+    coordinates: "4.0435° S, 39.6682° E",
+    isInterCounty: true,
+  },
+  {
+    id: 'nakuru',
+    name: "Nakuru",
+    fullName: "Nakuru CBD / Section 58 Depot",
+    county: "Nakuru",
+    zone: "Rift Valley Corridor",
+    etaMins: 150,
+    distanceKm: 158.0,
+    transitCorridor: "Nakuru - Nairobi Highway A104",
+    coordinates: "0.3031° S, 36.0800° E",
+    isInterCounty: true,
+  },
+  {
+    id: 'kisumu',
+    name: "Kisumu",
+    fullName: "Kisumu Mega City / Oginga Odinga Hub",
+    county: "Kisumu",
+    zone: "Western Corridor",
+    etaMins: 320,
+    distanceKm: 342.0,
+    transitCorridor: "Kisumu - Kericho Highway B1",
+    coordinates: "0.0917° S, 34.7680° E",
+    isInterCounty: true,
+  },
+  {
+    id: 'eldoret',
+    name: "Eldoret",
+    fullName: "Eldoret Town / Uganda Rd Depot",
+    county: "Uasin Gishu",
+    zone: "North Rift Corridor",
+    etaMins: 280,
+    distanceKm: 312.0,
+    transitCorridor: "Eldoret - Nakuru Highway A104",
+    coordinates: "0.5143° N, 35.2698° E",
+    isInterCounty: true,
   },
 ];
 
-export const SERVICES: WairoService[] = [
+export const LOGISTICS_SERVICES: LogisticsService[] = [
   {
-    id: 'quantum-express',
-    title: 'Quantum Express',
-    subtitle: 'Piloted hover-drone with astronaut escort for ultra-critical drops.',
-    shortDesc: 'Pilots the astronaut hover-craft from the complex drone hub.',
-    speed: '12 min ETA',
-    badge: 'FLAGSHIP',
+    id: 'courier',
+    title: 'Point-to-Point Courier',
+    tagline: 'Instant express dispatch via verified boda bodas & vans',
+    description: 'Direct door-to-door delivery within Nairobi & environs. Vetted couriers with OTP verification.',
+    speed: '25-45 mins',
+    badge: 'INSTANT EXPRESS',
     accent: '#F58220',
-    icon: 'Rocket',
-    priceKes: '1,200',
-    priceUsd: '9.50',
-    capacity: 'Up to 15 kg',
-    security: 'Biometric Hand-off',
+    icon: 'Bike',
+    baseKes: 250,
+    vehicleTypes: ['Boda Boda (Motorbike)', 'Compact Car', 'Cargo Van'],
+    driverSharePercent: 90, // 90% payout to courier
   },
   {
-    id: 'urban-drone',
-    title: 'Urban Delivery',
-    subtitle: 'Autonomous multi-rotor drone for fast, eco-friendly city packages.',
-    shortDesc: 'Autonomous drone parcel delivery for high-speed city routes.',
-    speed: '18 min ETA',
-    badge: 'ECO-AIR',
+    id: 'consolidated',
+    title: 'Consolidated Cargo',
+    tagline: 'Group/shared bulk transit for inter-county routes (Save up to 60%)',
+    description: 'Parcels are pooled into scheduled highway vans & trucks running Nairobi ➔ Mombasa, Nakuru, Kisumu, Eldoret.',
+    speed: 'Same-day / Next-day',
+    badge: 'GROUP SAVINGS',
     accent: '#00BFEF',
-    icon: 'Plane',
-    priceKes: '650',
-    priceUsd: '5.00',
-    capacity: 'Up to 5 kg',
-    security: 'QR Drop Lock',
+    icon: 'Truck',
+    baseKes: 450,
+    vehicleTypes: ['Consolidated Freight Van', '3-Tonne Truck', 'Inter-County Bus Parcel'],
+    driverSharePercent: 88,
   },
   {
-    id: 'tech-solutions',
-    title: 'Tech Solutions',
-    subtitle: 'Armored, climate-controlled high-tech containers for electronics.',
-    shortDesc: 'Solve tech cargo logistics with high-tech shielded pods.',
-    speed: '25 min ETA',
-    badge: 'HEAVY CARGO',
-    accent: '#173247',
-    icon: 'Box',
-    priceKes: '2,400',
-    priceUsd: '18.50',
-    capacity: 'Up to 50 kg',
-    security: 'Faraday Shielded',
-  },
-  {
-    id: 'sustainable-fabric',
-    title: 'VERA Eco-Fabrics',
-    subtitle: '200k+ sustainable, carbon-negative apparel delivered on-demand.',
-    shortDesc: 'Sustainable next-gen textiles with instant zero-emission delivery.',
-    speed: '15 min ETA',
-    badge: '200k+ ECO',
+    id: 'errands',
+    title: 'Errands & Task Runner',
+    tagline: 'Personal runner for shopping, KRA/Huduma filings & office tasks',
+    description: 'Hire a trusted, badge-verified runner to stand in queues, buy groceries at City Market, pick up medicine, or deliver signed tenders.',
+    speed: 'On-demand / Hourly',
+    badge: 'CONCIERGE',
     accent: '#19D8F5',
-    icon: 'Sparkles',
-    priceKes: '850',
-    priceUsd: '6.80',
-    capacity: 'Garment Pods',
-    security: 'Sealed NFC Tag',
+    icon: 'Footprints',
+    baseKes: 350,
+    vehicleTypes: ['Foot Runner', 'Boda Boda Rider', 'Dedicated Agent'],
+    driverSharePercent: 92,
+  },
+  {
+    id: 'wayfarer',
+    title: 'Long-Distance Traveler Network',
+    tagline: 'Upcountry travelers with own verified vehicles picking your cargo',
+    description: 'Travelers driving or riding to your destination take verified parcels along their route. Vehicle logbook owners get priority matching.',
+    speed: 'Direct with Traveler',
+    badge: 'COMMUTER POOL',
+    accent: '#FF9D24',
+    icon: 'Car',
+    baseKes: 500,
+    vehicleTypes: ['Private Station Wagon', 'Pickup D-Max', 'Commuter SUV', 'Tour Van'],
+    driverSharePercent: 90,
   },
 ];
+
+// Mathematical Private Auction Script for Providers
+// Calculates match score: Score = (wRate * (Base / Bid)) + (wTrust * Trust) + (wSpeed * (1 / (ETA / 10))) + (wOwner * OwnerBonus)
+export const computeAuctionBids = (
+  serviceType: LogisticsType,
+  dest: WairoLocation,
+  cargoWeightKg: number = 3
+): PrivateProviderBid[] => {
+  const baseRate = serviceType === 'consolidated' ? 450 : serviceType === 'errands' ? 350 : dest.isInterCounty ? 1200 : 300;
+  
+  const bids: PrivateProviderBid[] = [
+    {
+      providerId: 'prov-fargo',
+      companyName: 'Fargo Express Kenya Ltd',
+      isBrandedCompany: true,
+      isLogbookVerifiedOwner: true,
+      vehicleType: dest.isInterCounty ? 'truck' : 'van',
+      vehicleModel: 'Toyota HiAce / Isuzu FRR (Insured)',
+      driverName: 'Fargo Fleet Lead (David Ochieng)',
+      plateNo: 'KDG 418M',
+      trustScore: 99.2,
+      completedDeliveries: 14820,
+      bidPriceKes: Math.round(baseRate * 1.25),
+      etaMins: dest.etaMins + 5,
+      insuranceCovered: true,
+      matchScore: 94.5,
+      badge: 'BRANDED CARRIER (FIXED RATE)',
+    },
+    {
+      providerId: 'prov-speedaf',
+      companyName: 'Speedaf Partner Logistics',
+      isBrandedCompany: true,
+      isLogbookVerifiedOwner: true,
+      vehicleType: 'van',
+      vehicleModel: 'Nissan NV200 Cargo Pod',
+      driverName: 'Samuel Kamau',
+      plateNo: 'KDF 892P',
+      trustScore: 97.8,
+      completedDeliveries: 6240,
+      bidPriceKes: Math.round(baseRate * 1.1),
+      etaMins: dest.etaMins,
+      insuranceCovered: true,
+      matchScore: 92.8,
+      badge: 'FAST DISPATCH',
+    },
+    {
+      providerId: 'prov-boda-owner',
+      companyName: 'SwiftLink Verified Rider (Own Logbook)',
+      isBrandedCompany: false,
+      isLogbookVerifiedOwner: true,
+      vehicleType: 'boda',
+      vehicleModel: 'Bajaj Boxer 150 HD (Owner Verified)',
+      driverName: 'Erick Mwangi',
+      plateNo: 'KMDJ 302S',
+      trustScore: 98.4,
+      completedDeliveries: 1840,
+      bidPriceKes: Math.round(baseRate * 0.9),
+      etaMins: Math.max(12, Math.round(dest.etaMins * 0.8)),
+      insuranceCovered: true,
+      matchScore: 96.8,
+      badge: 'BEST VALUE (ALGORITHMIC WINNER)',
+    },
+    {
+      providerId: 'prov-wayfarer-traveler',
+      companyName: 'Long-Distance Traveler (Nairobi ➔ Upcountry)',
+      isBrandedCompany: false,
+      isLogbookVerifiedOwner: true,
+      vehicleType: 'car',
+      vehicleModel: 'Toyota Fielder 1.8X (Verified Commuter)',
+      driverName: 'Captain Brian Kiprono',
+      plateNo: 'KDD 671L',
+      trustScore: 96.5,
+      completedDeliveries: 420,
+      bidPriceKes: Math.round(baseRate * 0.75),
+      etaMins: dest.etaMins + 15,
+      insuranceCovered: true,
+      matchScore: 95.1,
+      badge: 'COMMUTER POOL (CHEAPEST)',
+    },
+  ];
+
+  return bids.sort((a, b) => b.matchScore - a.matchScore);
+};
 
 export const INITIAL_ACTIVE_DELIVERY: WairoDelivery = {
-  trackingId: 'WR-8849-NX',
+  trackingId: 'WR-KEN-8849-NX',
+  serviceType: 'courier',
   status: 'IN TRANSIT',
-  progressPercent: 68,
-  etaMinutes: 6,
-  destination: "Lang'ata Office Hub",
+  progressPercent: 72,
+  etaMinutes: 14,
+  destination: "Lang'ata Rd / Galleria Hub",
   locationId: 'langata',
-  pilotName: 'Captain Kael',
-  pilotCallsign: 'Quantum Courier Alpha',
-  droneId: 'Vortex-X4 (5Y-WRO)',
-  serviceType: 'Quantum Express',
-  packageSummary: '1x VERA Quantum Tech Jacket + Cyber Visor',
-  altitude: 128,
-  speed: 84,
-  battery: 89,
-  quantumLink: '99.9%',
-  departedTime: '10:02 AM',
-  estimatedArrival: '10:14 AM',
+  senderLocation: "Nairobi CBD Hub",
+  providerName: "SwiftLink Verified Rider",
+  carrierType: "Verified Boda Boda (Owner-Operator)",
+  courierName: "Erick Mwangi (Logbook Verified)",
+  courierPhone: "+254 712 345 678",
+  vehicleType: "Bajaj Boxer 150 HD",
+  vehiclePlate: "KMDJ 302S",
+  packageSummary: "1x Business Documents & Hardware Kit (OTP: 8849)",
+  fareKes: 380,
+  driverReturnKes: 342, // 90% payout to rider
+  platformFeeKes: 38, // 10% platform take
   timeline: [
-    { time: '10:02 AM', title: 'Package Dispatched', desc: 'Securely loaded into Hover-Pod #4', done: true },
-    { time: '10:05 AM', title: 'Air Corridor Cleared', desc: 'Altitude 140m, flight route approved', done: true },
-    { time: '10:08 AM', title: 'Hover Pilot in Transit', desc: 'Crossing Southern Bypass towards Lang’ata', done: true, active: true },
-    { time: '10:14 AM', title: 'Arrival at Drop Pad', desc: 'Precision descent on rooftop receiver beacon', done: false },
+    { time: '10:02 AM', title: 'Private Reverse-Auction Locked', desc: 'Mathematical match found in 1.4s (Erick Mwangi - 98.4% Trust)', done: true },
+    { time: '10:05 AM', title: 'Package Collected & Sealed', desc: 'Verified at CBD Hub with tamper-evident QR seal', done: true },
+    { time: '10:12 AM', title: 'Rider in Transit', desc: 'Cruising via Southern Bypass towards Lang\'ata', done: true, active: true },
+    { time: '10:26 AM', title: 'Doorstep Hand-Off & OTP', desc: 'Recipient will provide 4-digit code to release payout to rider', done: false },
   ],
 };
 
 export const MOCK_ORDERS = [
   {
-    id: 'WR-8849-NX',
+    id: 'WR-KEN-8849-NX',
     date: 'Today, 10:02 AM',
-    destination: "Lang'ata Office Hub",
-    items: "VERA Cyber Jacket + Tech Accessories",
-    type: "Quantum Express",
+    destination: "Lang'ata Rd / Galleria Hub",
+    items: "Business Documents & Hardware Kit",
+    serviceType: "Point-to-Point Courier",
+    provider: "SwiftLink Rider (Erick Mwangi)",
     status: "IN TRANSIT",
     statusColor: "#00BFEF",
-    costKes: "1,200",
-    pilot: "Captain Kael",
+    costKes: 380,
+    driverTakeKes: 342,
     isLive: true,
   },
   {
-    id: 'WR-7712-BT',
-    date: 'Yesterday, 4:15 PM',
-    destination: "Westlands Tech Hub",
-    items: "Quantum Processor Kit (Faraday Box)",
-    type: "Tech Solutions",
+    id: 'WR-KEN-7412-MG',
+    date: 'Yesterday, 3:45 PM',
+    destination: "Mombasa Island / Nyali Hub",
+    items: "Consolidated E-Commerce Batch (4 Cartons)",
+    serviceType: "Consolidated Cargo",
+    provider: "Fargo Courier Kenya Ltd",
     status: "DELIVERED",
     statusColor: "#10B981",
-    costKes: "2,400",
-    pilot: "Autonomous Drone X-9",
+    costKes: 1450,
+    driverTakeKes: 1276,
     isLive: false,
   },
   {
-    id: 'WR-6290-LK',
-    date: 'Sep 01, 11:30 AM',
-    destination: "Kilimani Cyber District",
-    items: "Eco-Fabric Minimal Streetwear",
-    type: "Urban Delivery",
+    id: 'WR-KEN-6190-ER',
+    date: 'Sep 01, 11:15 AM',
+    destination: "Kilimani / Yaya Centre Zone",
+    items: "Huduma Centre Tax Clearance Pickup & Pharmacy Run",
+    serviceType: "Errands Runner",
+    provider: "ErrandNinja (Maya Lin)",
     status: "DELIVERED",
     statusColor: "#10B981",
-    costKes: "650",
-    pilot: "Pilot Maya",
+    costKes: 450,
+    driverTakeKes: 414,
     isLive: false,
   },
 ];
 
-export const MOCK_MESSAGES: WairoMessage[] = [
+export const MOCK_MESSAGES = [
   {
     id: 'msg-1',
-    sender: 'pilot',
-    name: 'Captain Kael',
-    role: 'Quantum Express Pilot',
-    avatar: '👨‍🚀',
-    time: '10:06 AM',
-    text: "Greetings! Hover-drone Vortex-X4 is cruising at 128 meters above Southern Bypass. Weather is pristine. ETA to Lang'ata is exactly 6 minutes.",
+    sender: 'pilot' as const,
+    name: 'Erick Mwangi (Courier Rider)',
+    role: 'Logbook-Verified Rider',
+    avatar: '🛵',
+    time: '10:08 AM',
+    text: "Habari! Nimechukua package CBD. Niko Southern Bypass approaching Lang'ata Galleria. ETA ni 14 minutes. Kuwa tayari na OTP 8849.",
   },
   {
     id: 'msg-2',
-    sender: 'system',
-    name: 'Wairo AI Dispatch',
-    role: 'Telemetry Core',
-    avatar: '🤖',
-    time: '10:07 AM',
-    text: "Decryption beacon locked on your Lang'ata rooftop pad. Quantum handshake verified (4096-bit AES).",
+    sender: 'system' as const,
+    name: 'Wairo Auction & Dispatch Engine',
+    role: 'Automated Dispatch Core',
+    avatar: '⚙️',
+    time: '10:09 AM',
+    text: "Private auction settled mathematically. Provider return locked at KES 342 (90% payout via M-Pesa B2C on delivery completion).",
   },
 ];

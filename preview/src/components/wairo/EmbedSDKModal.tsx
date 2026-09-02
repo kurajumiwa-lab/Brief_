@@ -10,7 +10,7 @@ interface EmbedSDKModalProps {
 export const EmbedSDKModal: React.FC<EmbedSDKModalProps> = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState<'react' | 'script' | 'iframe' | 'webcomponent'>('react');
   const [copied, setCopied] = useState(false);
-  const [widgetPosition, setWidgetPosition] = useState('bottom-right');
+  const [widgetPosition, setWidgetPosition] = useState('right-edge');
   const [accentColor, setAccentColor] = useState('#F58220');
 
   if (!isOpen) return null;
@@ -18,72 +18,79 @@ export const EmbedSDKModal: React.FC<EmbedSDKModalProps> = ({ isOpen, onClose })
   const getEmbedCode = () => {
     switch (activeTab) {
       case 'react':
-        return `// 1. Install Wairo Mini App SDK
-npm install @wairo/mini-app-sdk
+        return `// 1. Install Wairo Kenyan Logistics & Errands SDK
+npm install @wairo/kenya-logistics-sdk
 
 // 2. Import & Mount in your WebApp
-import { WairoMiniAppProvider, WairoDeliveryWidget } from '@wairo/mini-app-sdk';
-import '@wairo/mini-app-sdk/dist/style.css';
+import { WairoLogisticsProvider, WairoDeliveryCompanion } from '@wairo/kenya-logistics-sdk';
+import '@wairo/kenya-logistics-sdk/dist/style.css';
 
-export default function MyWebApp() {
+export default function MyKenyanMarketplace() {
   return (
-    <WairoMiniAppProvider 
-      apiKey="wro_live_9942_ke_nairobi"
+    <WairoLogisticsProvider 
+      apiKey="wro_live_ke_nairobi_9942"
       defaultLocation="langata"
+      currency="KES"
+      payoutModel={{
+        driverSharePercent: 90, // 90% payout via M-Pesa B2C
+        settlementMethod: "mpesa_instant"
+      }}
       theme={{
         accentColor: "${accentColor}",
         background: "#0B1B2A",
-        dockPosition: "${widgetPosition}"
+        dockPosition: "${widgetPosition}" // minimal right-edge note tab
       }}
     >
-      <StoreCheckout onPaymentComplete={(order) => {
-        // Automatically triggers aerial delivery in the Wairo companion
+      <StoreCheckout onOrderCreated={(order) => {
+        // Automatically dispatches private reverse-auction for courier / consolidated shipping
       }} />
-      <WairoDeliveryWidget mode="floating-drawer" />
-    </WairoMiniAppProvider>
+      <WairoDeliveryCompanion mode="right-edge-drawer" />
+    </WairoLogisticsProvider>
   );
 }`;
 
       case 'script':
-        return `<!-- Place this snippet before the closing </body> tag of your webapp -->
+        return `<!-- Embed Wairo Kenya Courier & Errands Widget into any web page -->
 <script 
-  src="https://cdn.wairo.tech/sdk/v2.4/wairo-miniapp.min.js" 
-  data-wairo-api-key="wro_live_9942_ke_nairobi"
-  data-position="${widgetPosition}"
+  src="https://cdn.wairo.tech/sdk/v2.5/wairo-kenya-logistics.min.js" 
+  data-wairo-api-key="wro_live_ke_nairobi_9942"
+  data-position="right-edge"
   data-accent="${accentColor}"
   data-default-dropzone="langata"
+  data-currency="KES"
   async>
 </script>
 
-<!-- Trigger programmatically anytime from your host app: -->
-<button onclick="window.WairoSDK.open({ destination: 'langata' })">
-  Track Delivery with Wairo
+<!-- Open the Wairo Courier & Errands Mini App on demand -->
+<button onclick="window.WairoSDK.open({ service: 'courier', destination: 'langata' })">
+  Dispatch Courier (90% Driver Return)
 </button>`;
 
       case 'iframe':
-        return `<!-- Standard iframe embed for any dashboard or client portal -->
+        return `<!-- Standard iframe embed for logistics dashboards or checkout portals -->
 <iframe 
-  src="https://app.wairo.tech/embed?location=langata&theme=quantum-navy&accent=${encodeURIComponent(accentColor)}"
+  src="https://app.wairo.tech/kenya/embed?location=langata&accent=${encodeURIComponent(accentColor)}&services=courier,consolidated,errands"
   width="412" 
   height="780" 
   frameborder="0"
-  allow="geolocation; microphone"
+  allow="geolocation"
   style="border-radius: 36px; box-shadow: 0 20px 40px rgba(11, 27, 42, 0.4); border: 1px solid #173247;"
-  title="Wairo Delivery Mini App">
+  title="Wairo Kenyan Logistics Mini App">
 </iframe>`;
 
       case 'webcomponent':
         return `<!-- Web Component Micro-Frontend -->
-<script type="module" src="https://cdn.wairo.tech/elements/wairo-element.js"></script>
+<script type="module" src="https://cdn.wairo.tech/elements/wairo-kenya.js"></script>
 
-<wairo-mini-app
-  api-key="wro_live_9942_ke_nairobi"
-  active-dropzone="langata"
+<wairo-kenya-logistics
+  api-key="wro_live_ke_nairobi_9942"
+  active-corridor="langata"
+  driver-payout="90"
   palette-primary="#0B1B2A"
   palette-accent="${accentColor}"
   palette-cyan="#00BFEF"
-  display-mode="companion-drawer">
-</wairo-mini-app>`;
+  display-mode="right-edge-tab">
+</wairo-kenya-logistics>`;
 
       default:
         return '';
@@ -109,12 +116,12 @@ export default function MyWebApp() {
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h3 className="font-bold text-base sm:text-lg text-white">Wairo Mini App Embed & SDK</h3>
+                <h3 className="font-bold text-base sm:text-lg text-white">Wairo Kenya Logistics & Errands SDK</h3>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#00BFEF]/20 text-[#00BFEF] border border-[#00BFEF]/40 font-bold">
-                  v2.4.0
+                  v2.5.0 KE
                 </span>
               </div>
-              <p className="text-xs text-[#DCE2E6]/70">Integrate Wairo Quantum Delivery into any WebApp or Super-App</p>
+              <p className="text-xs text-[#DCE2E6]/70">Courier, Consolidated Cargo, Errands & 90% Provider Returns</p>
             </div>
           </div>
           <button
@@ -158,66 +165,13 @@ export default function MyWebApp() {
           })}
         </div>
 
-        {/* Customization controls */}
-        <div className="p-4 bg-[#173247]/30 border-b border-[#173247] grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-          <div>
-            <label className="block text-[11px] text-[#DCE2E6]/70 mb-1 font-mono">Widget Dock Position:</label>
-            <div className="flex space-x-2">
-              {['bottom-right', 'bottom-left', 'side-drawer', 'inline-modal'].map((pos) => (
-                <button
-                  key={pos}
-                  onClick={() => {
-                    playSound('click');
-                    setWidgetPosition(pos);
-                  }}
-                  className={`px-2.5 py-1 rounded-lg text-[10px] font-mono border transition-all cursor-pointer ${
-                    widgetPosition === pos
-                      ? 'bg-[#F58220] border-[#F58220] text-white font-bold'
-                      : 'bg-black/30 border-white/10 text-[#DCE2E6]/70 hover:border-white/30'
-                  }`}
-                >
-                  {pos}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-[11px] text-[#DCE2E6]/70 mb-1 font-mono">Primary Brand Color:</label>
-            <div className="flex items-center space-x-2">
-              {[
-                { hex: '#F58220', name: 'Safety Orange' },
-                { hex: '#00BFEF', name: 'Wairo Cyan' },
-                { hex: '#19D8F5', name: 'Electric Cyan' },
-                { hex: '#10B981', name: 'Emerald' },
-              ].map((c) => (
-                <button
-                  key={c.hex}
-                  onClick={() => {
-                    playSound('click');
-                    setAccentColor(c.hex);
-                  }}
-                  className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono border transition-all cursor-pointer ${
-                    accentColor === c.hex
-                      ? 'border-white bg-white/10 text-white font-bold'
-                      : 'border-white/10 text-[#DCE2E6]/60'
-                  }`}
-                >
-                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: c.hex }}></span>
-                  <span>{c.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
         {/* Code Snippet Box */}
         <div className="p-5 overflow-y-auto max-h-[50vh]">
           <div className="relative rounded-2xl bg-[#061019] border border-[#173247] p-4 font-mono text-xs text-[#DCE2E6]">
             <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10 text-[11px] text-[#00BFEF]">
               <span className="flex items-center space-x-2">
                 <span className="w-2 h-2 rounded-full bg-[#00BFEF] animate-pulse"></span>
-                <span>INTEGRATION SNIPPET</span>
+                <span>INTEGRATION SNIPPET (KENYAN LOGISTICS)</span>
               </span>
               <button
                 onClick={handleCopy}
@@ -236,7 +190,7 @@ export default function MyWebApp() {
 
         {/* Footer */}
         <div className="p-4 bg-[#07111a] border-t border-[#173247] flex items-center justify-between">
-          <span className="text-xs text-[#DCE2E6]/60">Need custom enterprise superapp integration? Contact Wairo API Operations.</span>
+          <span className="text-xs text-[#DCE2E6]/60">Supports M-Pesa B2C automated disbursements and reverse-auction webhooks.</span>
           <button
             onClick={() => {
               playSound('click');

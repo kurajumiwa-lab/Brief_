@@ -6,20 +6,34 @@ import {
   MapPin, 
   ChevronDown, 
   ArrowUpRight, 
-  Rocket, 
-  Plane, 
-  Box, 
+  Bike, 
+  Truck, 
+  Footprints, 
+  Car, 
   Home, 
   ClipboardList, 
   Send, 
   Mail, 
   ChevronRight,
-  QrCode, 
+  ShieldCheck, 
   Volume2, 
   VolumeX, 
-  Code
+  Code,
+  TrendingUp,
+  Award,
+  CheckCircle2,
+  DollarSign,
+  Briefcase
 } from 'lucide-react';
-import { WairoDelivery, WairoLocation, SERVICES, MOCK_ORDERS, MOCK_MESSAGES, WairoMessage } from './wairoData';
+import { 
+  WairoDelivery, 
+  WairoLocation, 
+  LOGISTICS_SERVICES, 
+  MOCK_ORDERS, 
+  MOCK_MESSAGES, 
+  computeAuctionBids, 
+  LogisticsType 
+} from './wairoData';
 import { playSound, toggleSound } from './wairoAudio';
 
 interface WairoMiniAppProps {
@@ -43,14 +57,15 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
   isMiniView = false,
   onCloseMiniView
 }) => {
-  const [activeTab, setActiveTab] = useState<'home' | 'orders' | 'deliver' | 'messages' | 'account'>('home');
-  const [messages, setMessages] = useState<WairoMessage[]>(MOCK_MESSAGES);
+  const [activeTab, setActiveTab] = useState<'home' | 'orders' | 'deliver' | 'messages' | 'partner'>('home');
+  const [messages, setMessages] = useState(MOCK_MESSAGES);
   const [newMessageText, setNewMessageText] = useState('');
   const [soundOn, setSoundOn] = useState(true);
   const [unreadNotifications, setUnreadNotifications] = useState(2);
   const [showNotificationsModal, setShowNotificationsModal] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [selectedLogisticsType, setSelectedLogisticsType] = useState<LogisticsType>('courier');
+
+  const auctionBids = computeAuctionBids(selectedLogisticsType, selectedLocation);
 
   const handleSoundToggle = () => {
     const next = toggleSound();
@@ -63,11 +78,11 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
     if (!newMessageText.trim()) return;
 
     playSound('click');
-    const userMsg: WairoMessage = {
+    const userMsg = {
       id: `user-${Date.now()}`,
-      sender: 'user',
-      name: 'You (Drop Hub)',
-      role: 'Client',
+      sender: 'user' as const,
+      name: 'You (Client)',
+      role: 'Sender / Recipient',
       avatar: '👤',
       time: 'Just now',
       text: newMessageText,
@@ -79,19 +94,17 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
 
     setTimeout(() => {
       playSound('message');
-      let replyText = `Captain Kael here: Roger that on "${userQuery}". Approaching ${selectedLocation.name} corridor at 84 km/h. Landing beacon active.`;
-      if (userQuery.toLowerCase().includes('eta') || userQuery.toLowerCase().includes('time')) {
-        replyText = `Telemetry indicates ${selectedLocation.etaMins} minutes remaining until touchdown at ${selectedLocation.fullName}.`;
-      } else if (userQuery.toLowerCase().includes('package') || userQuery.toLowerCase().includes('order')) {
-        replyText = `Your shipment (${activeDelivery.packageSummary}) is sealed inside Pod 4 with active NFC beacon.`;
+      let replyText = `Erick Mwangi (Courier): Nimekupata! Approaching ${selectedLocation.name} via Southern Bypass. ETA ni ${selectedLocation.etaMins} mins. OTP ni 8849.`;
+      if (userQuery.toLowerCase().includes('fare') || userQuery.toLowerCase().includes('price') || userQuery.toLowerCase().includes('mpesa')) {
+        replyText = `Fare ni KES ${activeDelivery.fareKes}. Payout ya KES ${activeDelivery.driverReturnKes} (90%) itatumwa kwa M-Pesa ukithibitisha OTP.`;
       }
 
       setMessages(prev => [...prev, {
         id: `pilot-${Date.now()}`,
-        sender: 'pilot',
-        name: 'Captain Kael',
-        role: 'Quantum Express Pilot',
-        avatar: '👨‍🚀',
+        sender: 'pilot' as const,
+        name: 'Erick Mwangi (Verified Rider)',
+        role: 'Courier Partner (90% Payout)',
+        avatar: '🛵',
         time: 'Just now',
         text: replyText,
       }]);
@@ -106,12 +119,11 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
         <span className="font-mono text-[13px] font-bold">10:09</span>
         
         {/* Dynamic Island Pill */}
-        <div className="w-24 h-5 bg-[#0B1B2A] rounded-full flex items-center justify-center px-2 space-x-1.5 shadow-sm">
+        <div className="w-28 h-5 bg-[#0B1B2A] rounded-full flex items-center justify-center px-2 space-x-1.5 shadow-sm">
           <span className="w-2 h-2 rounded-full bg-[#00BFEF] animate-pulse"></span>
-          <span className="text-[9px] font-mono text-white font-bold tracking-wider">WAIRO LIVE</span>
+          <span className="text-[9px] font-mono text-white font-bold tracking-wider">WAIRO LOGISTICS</span>
         </div>
 
-        {/* Status Icons */}
         <div className="flex items-center space-x-1.5 text-[11px]">
           <span>5G</span>
           <div className="w-4 h-2 border border-[#0B1B2A] rounded-sm p-0.5 flex items-center">
@@ -126,30 +138,32 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
           <button 
             onClick={() => {
               playSound('click');
-              setActiveTab('account');
+              setActiveTab('partner');
             }}
             className="w-9 h-9 rounded-full bg-white border border-[#DCE2E6] flex items-center justify-center shadow-xs text-[#0B1B2A] hover:bg-[#DCE2E6]/40 transition-colors cursor-pointer"
+            title="Courier & Driver Partner Portal"
           >
             <User className="w-4 h-4 text-[#0B1B2A]" />
           </button>
           
-          {/* Stylized Brand Logo */}
           <div 
             onClick={() => {
               playSound('click');
               setActiveTab('home');
             }}
-            className="cursor-pointer flex items-center space-x-1"
+            className="cursor-pointer flex flex-col items-start"
           >
-            <span className="text-xl font-black tracking-tighter text-[#0B1B2A] lowercase font-mono">
+            <span className="text-xl font-black tracking-tighter text-[#0B1B2A] lowercase font-mono leading-none">
               wai<span className="text-[#00BFEF]">ro</span>
+            </span>
+            <span className="text-[8px] font-mono font-extrabold uppercase text-[#F58220] tracking-wider">
+              Kenyan Logistics & Errands
             </span>
           </div>
         </div>
 
         {/* Header Right Actions */}
         <div className="flex items-center space-x-2">
-          {/* Sound Toggle */}
           <button
             onClick={handleSoundToggle}
             title={soundOn ? 'Sound FX Enabled' : 'Muted'}
@@ -158,18 +172,6 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
             {soundOn ? <Volume2 className="w-3.5 h-3.5 text-[#00BFEF]" /> : <VolumeX className="w-3.5 h-3.5 text-gray-400" />}
           </button>
 
-          {/* Search Button */}
-          <button 
-            onClick={() => {
-              playSound('click');
-              setShowSearchModal(true);
-            }}
-            className="w-8 h-8 rounded-full bg-white border border-[#DCE2E6] flex items-center justify-center text-[#0B1B2A] hover:bg-[#DCE2E6]/40 transition-colors cursor-pointer"
-          >
-            <Search className="w-3.5 h-3.5 text-[#0B1B2A]" />
-          </button>
-
-          {/* Notification Bell with Badge */}
           <button 
             onClick={() => {
               playSound('click');
@@ -186,11 +188,10 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
             )}
           </button>
 
-          {/* If embedded in mini-drawer mode, show dock */}
           {isMiniView && onCloseMiniView && (
             <button
               onClick={onCloseMiniView}
-              className="px-2 py-1 bg-[#0B1B2A] text-white text-xs font-bold rounded-lg ml-1"
+              className="px-2 py-1 bg-[#0B1B2A] text-white text-xs font-bold rounded-lg ml-1 cursor-pointer"
             >
               Dock
             </button>
@@ -198,14 +199,14 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
         </div>
       </div>
 
-      {/* Main Scrollable App Canvas */}
+      {/* Main Scrollable Canvas */}
       <div className="flex-1 overflow-y-auto px-5 pt-3 pb-24 space-y-4">
         
         {/* ================= VIEW: HOME TAB ================= */}
         {activeTab === 'home' && (
           <div className="space-y-4">
             
-            {/* Top Location Selector Chip */}
+            {/* Location Selector Chip */}
             <div className="flex items-center justify-between">
               <button
                 onClick={() => {
@@ -221,136 +222,213 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
 
               <div className="flex items-center space-x-1.5 text-[11px] font-mono text-[#173247]">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                <span className="font-semibold">{selectedLocation.etaMins}m Corridor Lock</span>
+                <span className="font-semibold">{selectedLocation.zone}</span>
               </div>
             </div>
 
-            {/* Main Punchy Typography Hero */}
+            {/* Marketplace Headline */}
             <div className="pt-1">
-              <h1 className="text-[26px] sm:text-[28px] font-black text-[#0B1B2A] leading-[1.1] tracking-tight">
-                Quantum-Speed Delivery.<br />
-                <span className="text-[#0B1B2A]/80 font-bold">Effortless Living.</span>
+              <h1 className="text-[24px] sm:text-[26px] font-black text-[#0B1B2A] leading-[1.1] tracking-tight">
+                Kenyan Courier & Errands.<br />
+                <span className="text-[#00BFEF] font-bold">Better Returns for Providers.</span>
               </h1>
+              <p className="text-xs text-[#173247]/80 mt-1 leading-relaxed">
+                Choose private branded carriers, consolidated cargo, or verified owner-operator couriers.
+              </p>
             </div>
 
-            {/* 3 Horizontal Service Cards */}
-            <div className="grid grid-cols-3 gap-2.5 pt-1">
-              {SERVICES.slice(0, 3).map((service, idx) => (
-                <div
-                  key={service.id}
-                  onClick={() => {
-                    playSound('click');
-                    onOpenDispatchModal();
-                  }}
-                  className="bg-[#0B1B2A] hover:bg-[#173247] rounded-2xl p-3 text-white flex flex-col justify-between border border-[#173247] shadow-lg transition-all transform hover:-translate-y-0.5 cursor-pointer min-h-[145px]"
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="w-7 h-7 rounded-xl bg-white/10 flex items-center justify-center text-[#00BFEF]">
-                      {idx === 0 && <Rocket className="w-4 h-4 text-[#F58220]" />}
-                      {idx === 1 && <Plane className="w-4 h-4 text-[#00BFEF]" />}
-                      {idx === 2 && <Box className="w-4 h-4 text-[#19D8F5]" />}
+            {/* 4 Category Pill Switcher */}
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              {LOGISTICS_SERVICES.map((srv) => {
+                const isSelected = selectedLogisticsType === srv.id;
+                return (
+                  <button
+                    key={srv.id}
+                    onClick={() => {
+                      playSound('click');
+                      setSelectedLogisticsType(srv.id);
+                    }}
+                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                      isSelected
+                        ? 'bg-[#0B1B2A] text-white border-[#00BFEF] shadow-lg shadow-[#00BFEF]/20'
+                        : 'bg-white border-[#DCE2E6] text-[#0B1B2A] hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-bold ${
+                        isSelected ? 'bg-[#00BFEF]/20 text-[#00BFEF]' : 'bg-gray-100 text-gray-700'
+                      }`}>
+                        {srv.badge}
+                      </span>
+                      {srv.id === 'courier' && <Bike className="w-4 h-4 text-[#F58220]" />}
+                      {srv.id === 'consolidated' && <Truck className="w-4 h-4 text-[#00BFEF]" />}
+                      {srv.id === 'errands' && <Footprints className="w-4 h-4 text-[#19D8F5]" />}
+                      {srv.id === 'wayfarer' && <Car className="w-4 h-4 text-[#FF9D24]" />}
                     </div>
-                    <ArrowUpRight className="w-3.5 h-3.5 text-[#DCE2E6]/60" />
-                  </div>
 
-                  <div className="mt-2">
-                    <h3 className="text-xs font-bold leading-snug">{service.title}</h3>
-                    <p className="text-[9px] text-[#DCE2E6]/70 line-clamp-2 mt-1 leading-tight font-sans">
-                      {service.shortDesc}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                    <div className="mt-2">
+                      <h3 className="font-bold text-xs leading-tight">{srv.title}</h3>
+                      <div className="flex items-center justify-between mt-1 text-[10px] font-mono">
+                        <span className={isSelected ? 'text-[#F58220] font-bold' : 'text-[#0B1B2A] font-bold'}>
+                          From KES {srv.baseKes}
+                        </span>
+                        <span className="text-emerald-500 font-semibold">{srv.driverSharePercent}% Payout</span>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
 
-            {/* Large Active Delivery Hero Card */}
+            {/* Active Delivery Card with Live Route & Provider Breakdown */}
             <div className="relative rounded-[28px] bg-gradient-to-br from-[#0B1B2A] via-[#173247] to-[#0B1B2A] border border-[#173247] text-white p-4 sm:p-5 shadow-2xl overflow-hidden group">
               
-              <div className="flex items-center space-x-3 sm:space-x-4">
-                
-                {/* Character Portrait */}
-                <div className="relative w-24 sm:w-28 h-32 sm:h-36 rounded-2xl overflow-hidden border border-[#00BFEF]/40 shadow-lg bg-[#061019] flex-shrink-0">
-                  <img 
-                    src="/assets/wairo/wairo_mobile_ui.png" 
-                    alt="Wairo Astronaut Pilot"
-                    className="w-full h-full object-cover object-top scale-125 translate-y-1"
-                  />
-                  <div className="absolute bottom-1 left-1 right-1 bg-black/70 backdrop-blur-xs rounded-md px-1.5 py-0.5 text-[8px] font-mono text-[#00BFEF] text-center font-bold">
-                    PILOT KAEL
+              <div className="flex items-start justify-between border-b border-white/10 pb-3 mb-3">
+                <div className="flex items-center space-x-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-[#00BFEF]/20 border border-[#00BFEF]/40 flex items-center justify-center text-[#00BFEF]">
+                    <Bike className="w-4 h-4 text-[#F58220]" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-mono text-[#00BFEF] font-bold block">ACTIVE SHIPMENT • {activeDelivery.trackingId}</span>
+                    <h3 className="font-bold text-sm text-white">{activeDelivery.carrierType}</h3>
                   </div>
                 </div>
 
-                {/* Delivery Information & Telemetry */}
-                <div className="flex-1 min-w-0 space-y-1.5">
-                  <h2 className="text-sm sm:text-base font-bold text-white tracking-tight leading-tight">
-                    Your Current<br />
-                    <span className="text-[#00BFEF]">Wairo</span> Delivery
-                  </h2>
+                <div className="text-right">
+                  <span className="text-[10px] font-mono text-emerald-400 font-bold block">90% RIDER PAYOUT</span>
+                  <span className="text-xs text-[#F58220] font-mono font-bold">KES {activeDelivery.fareKes} Total</span>
+                </div>
+              </div>
 
-                  <div className="pt-0.5">
-                    <span className="text-[10px] uppercase font-mono text-[#DCE2E6]/70 block">Status:</span>
-                    <div className="flex items-center space-x-1.5">
-                      <span className="w-2 h-2 rounded-full bg-[#00BFEF] animate-ping"></span>
-                      <span className="text-xs font-black font-mono tracking-wider text-[#00BFEF]">
-                        {activeDelivery.status}
+              {/* Rider & Route Telemetry */}
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between items-center bg-black/30 p-2.5 rounded-xl border border-white/5">
+                  <div>
+                    <span className="text-[10px] text-gray-400 block font-mono">ASSIGNED COURIER:</span>
+                    <span className="font-bold text-white flex items-center space-x-1">
+                      <span>{activeDelivery.courierName}</span>
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 inline" />
+                    </span>
+                    <span className="text-[10px] text-[#00BFEF] font-mono">{activeDelivery.vehicleType} • {activeDelivery.vehiclePlate}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] text-gray-400 block font-mono">STATUS:</span>
+                    <span className="text-[#00BFEF] font-mono font-bold">{activeDelivery.status} ({activeDelivery.etaMinutes}m ETA)</span>
+                  </div>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="w-full bg-black/50 h-2 rounded-full overflow-hidden border border-white/5">
+                  <div 
+                    className="h-full bg-gradient-to-r from-[#00BFEF] to-[#F58220] rounded-full transition-all duration-700"
+                    style={{ width: `${activeDelivery.progressPercent}%` }}
+                  ></div>
+                </div>
+
+                {/* CTA Action */}
+                <div className="pt-1 flex gap-2">
+                  <button
+                    onClick={() => {
+                      playSound('radar');
+                      onOpenTelemetry();
+                    }}
+                    className="flex-1 py-2 rounded-xl bg-[#F58220] hover:bg-[#FF9D24] text-white font-bold text-xs flex items-center justify-center space-x-1.5 shadow-lg shadow-[#F58220]/30 transition-all cursor-pointer"
+                  >
+                    <span>Track Live Route</span>
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      playSound('click');
+                      setActiveTab('messages');
+                    }}
+                    className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs flex items-center justify-center space-x-1 cursor-pointer"
+                  >
+                    <Mail className="w-3.5 h-3.5" />
+                    <span>Call / Chat</span>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Mathematical Reverse-Auction Matcher Showcase */}
+            <div className="p-4 rounded-2xl bg-white border border-[#DCE2E6] space-y-3 shadow-xs">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold text-[#0B1B2A] flex items-center space-x-1.5">
+                    <span>Mathematical Auction Engine</span>
+                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-blue-100 text-[#00BFEF] font-bold">
+                      PRIVATE BIDS
+                    </span>
+                  </h4>
+                  <p className="text-[10px] text-gray-600">
+                    Optimal algorithmic matches for {selectedLocation.name} (Calculated via trust, rate & vehicle ownership score)
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {auctionBids.slice(0, 3).map((bid) => (
+                  <div 
+                    key={bid.providerId}
+                    className="p-2.5 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-between hover:border-[#00BFEF] transition-colors"
+                  >
+                    <div className="space-y-0.5">
+                      <div className="flex items-center space-x-1.5">
+                        <span className="font-bold text-xs text-[#0B1B2A]">{bid.companyName}</span>
+                        {bid.insuranceCovered && (
+                          <span className="text-[9px] px-1 rounded bg-emerald-100 text-emerald-700 font-bold">
+                            ✓ INSURED
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-gray-600 block">{bid.vehicleModel} • Driver: {bid.driverName}</span>
+                      <span className="text-[9px] font-mono text-[#00BFEF] font-bold">
+                        ★ {bid.trustScore}% Trust Score • {bid.etaMins}m ETA
                       </span>
                     </div>
-                  </div>
 
-                  {/* Progress Bar */}
-                  <div className="w-full bg-black/50 h-2 rounded-full overflow-hidden border border-white/5">
-                    <div 
-                      className="h-full bg-gradient-to-r from-[#00BFEF] to-[#19D8F5] rounded-full transition-all duration-700"
-                      style={{ width: `${activeDelivery.progressPercent}%` }}
-                    ></div>
+                    <div className="text-right">
+                      <span className="text-xs font-mono font-bold text-[#F58220] block">
+                        KES {bid.bidPriceKes}
+                      </span>
+                      <button
+                        onClick={() => {
+                          playSound('click');
+                          onOpenDispatchModal();
+                        }}
+                        className="mt-1 px-2.5 py-1 rounded-lg bg-[#0B1B2A] hover:bg-[#173247] text-white text-[10px] font-bold cursor-pointer"
+                      >
+                        Select
+                      </button>
+                    </div>
                   </div>
-
-                  {/* Destination */}
-                  <div className="pt-0.5">
-                    <span className="text-[10px] uppercase font-mono text-[#DCE2E6]/70 block">Destination:</span>
-                    <span className="text-xs font-bold text-white truncate block">
-                      {selectedLocation.fullName || activeDelivery.destination}
-                    </span>
-                  </div>
-
-                  {/* Track Live CTA Button */}
-                  <div className="pt-1">
-                    <button
-                      onClick={() => {
-                        playSound('radar');
-                        onOpenTelemetry();
-                      }}
-                      className="w-full py-2 px-3.5 rounded-xl bg-[#F58220] hover:bg-[#FF9D24] text-white font-bold text-xs flex items-center justify-center space-x-1.5 shadow-lg shadow-[#F58220]/30 transition-all cursor-pointer"
-                    >
-                      <span>Track Live</span>
-                      <ArrowUpRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-
+                ))}
               </div>
             </div>
 
-            {/* Quick Dispatch Action Banner */}
-            <div className="p-4 rounded-2xl bg-white border border-[#DCE2E6] flex items-center justify-between shadow-xs">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-xl bg-[#00BFEF]/15 text-[#00BFEF] flex items-center justify-center">
-                  <Rocket className="w-5 h-5" />
+            {/* Provider Payout Proposition Banner */}
+            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-[#0B1B2A] to-[#173247] text-white flex items-center justify-between">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-8 h-8 rounded-xl bg-[#F58220]/20 text-[#F58220] flex items-center justify-center font-bold">
+                  90%
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-[#0B1B2A]">Need something delivered?</h4>
-                  <p className="text-[10px] text-[#173247]/70">Dispatch a drone to any Nairobi sector</p>
+                  <h5 className="font-bold text-xs">Drive / Ride with Wairo</h5>
+                  <p className="text-[10px] text-[#DCE2E6]/70">Earn 90% payout on every drop via M-Pesa</p>
                 </div>
               </div>
 
               <button
                 onClick={() => {
                   playSound('click');
-                  onOpenDispatchModal();
+                  setActiveTab('partner');
                 }}
-                className="px-3.5 py-1.5 rounded-xl bg-[#0B1B2A] hover:bg-[#173247] text-white font-bold text-xs shadow-md transition-colors cursor-pointer"
+                className="px-3 py-1.5 rounded-xl bg-[#F58220] hover:bg-[#FF9D24] text-white font-bold text-xs cursor-pointer"
               >
-                Send Now
+                Join Fleet
               </button>
             </div>
 
@@ -361,50 +439,30 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
         {activeTab === 'orders' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-[#0B1B2A]">Your Delivery Activity</h2>
-              <span className="text-xs font-mono text-[#F58220] font-bold">3 Shipments</span>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-[#0B1B2A] text-white border border-[#173247] space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#00BFEF]/20 text-[#00BFEF] font-bold">
-                  ACTIVE FLIGHT • {activeDelivery.trackingId}
-                </span>
-                <span className="text-xs text-[#F58220] font-bold">ETA: {selectedLocation.etaMins} mins</span>
-              </div>
-              <div>
-                <h4 className="font-bold text-sm text-white">{activeDelivery.packageSummary}</h4>
-                <p className="text-xs text-[#DCE2E6]/70">{selectedLocation.fullName}</p>
-              </div>
-              <button
-                onClick={() => {
-                  playSound('radar');
-                  onOpenTelemetry();
-                }}
-                className="w-full py-2 bg-[#F58220] text-white font-bold text-xs rounded-xl flex items-center justify-center space-x-1.5 cursor-pointer"
-              >
-                <span>View Full Telemetry & Radar</span>
-                <ArrowUpRight className="w-3.5 h-3.5" />
-              </button>
+              <h2 className="text-lg font-bold text-[#0B1B2A]">Delivery Receipts & History</h2>
+              <span className="text-xs font-mono text-[#F58220] font-bold">3 Trips</span>
             </div>
 
             <div className="space-y-2.5">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#173247]/70">Completed Drops</h3>
-              {MOCK_ORDERS.filter(o => !o.isLive).map((order) => (
-                <div key={order.id} className="p-3.5 rounded-2xl bg-white border border-[#DCE2E6] flex items-center justify-between">
-                  <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-xs">
-                      ✓
-                    </div>
+              {MOCK_ORDERS.map((order) => (
+                <div key={order.id} className="p-3.5 rounded-2xl bg-white border border-[#DCE2E6] space-y-2">
+                  <div className="flex items-start justify-between">
                     <div>
                       <span className="text-[10px] font-mono text-gray-500">{order.id} • {order.date}</span>
-                      <h5 className="font-bold text-xs text-[#0B1B2A]">{order.items}</h5>
-                      <span className="text-[11px] text-gray-600">{order.destination}</span>
+                      <h4 className="font-bold text-xs text-[#0B1B2A]">{order.items}</h4>
+                      <p className="text-[11px] text-gray-600">{order.destination}</p>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs font-mono font-bold text-[#0B1B2A]">KES {order.costKes}</span>
+                      <span className="block text-[10px] font-bold font-mono" style={{ color: order.statusColor }}>
+                        {order.status}
+                      </span>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <span className="text-xs font-mono font-bold text-[#0B1B2A]">KES {order.costKes}</span>
-                    <span className="block text-[10px] text-emerald-600 font-semibold">{order.status}</span>
+
+                  <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[10px] font-mono text-gray-600">
+                    <span>Provider: <strong className="text-[#0B1B2A]">{order.provider}</strong></span>
+                    <span className="text-emerald-600">Rider Take: KES {order.driverTakeKes} (90%)</span>
                   </div>
                 </div>
               ))}
@@ -416,9 +474,11 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
         {activeTab === 'deliver' && (
           <div className="space-y-4">
             <div className="p-4 rounded-2xl bg-gradient-to-r from-[#0B1B2A] to-[#173247] text-white space-y-2">
-              <span className="text-[10px] uppercase font-mono text-[#00BFEF]">Instant Air Transport</span>
-              <h2 className="text-base font-bold">Book Aerial Courier Pod</h2>
-              <p className="text-xs text-[#DCE2E6]/70">Sub-orbital drone corridor delivery across Nairobi.</p>
+              <span className="text-[10px] uppercase font-mono text-[#00BFEF]">Instant Dispatch</span>
+              <h2 className="text-base font-bold">Post Parcel or Errand Request</h2>
+              <p className="text-xs text-[#DCE2E6]/70">
+                Private registered companies and owner-operator couriers will submit algorithmic bids in seconds.
+              </p>
               <button
                 onClick={() => {
                   playSound('click');
@@ -426,8 +486,8 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
                 }}
                 className="mt-2 w-full py-2.5 rounded-xl bg-[#F58220] hover:bg-[#FF9D24] text-white font-bold text-xs flex items-center justify-center space-x-2 shadow-lg cursor-pointer"
               >
-                <Rocket className="w-4 h-4" />
                 <span>Launch New Dispatch Form</span>
+                <ArrowUpRight className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -438,21 +498,12 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
           <div className="flex flex-col h-[420px] space-y-3">
             <div className="flex items-center justify-between border-b border-[#DCE2E6] pb-2">
               <div className="flex items-center space-x-2">
-                <span className="text-lg">👨‍🚀</span>
+                <span className="text-lg">🛵</span>
                 <div>
-                  <h4 className="font-bold text-xs text-[#0B1B2A]">Captain Kael & AI Comms</h4>
-                  <span className="text-[10px] text-emerald-600 font-mono">● Encrypted Channel</span>
+                  <h4 className="font-bold text-xs text-[#0B1B2A]">Erick Mwangi (Courier Partner)</h4>
+                  <span className="text-[10px] text-emerald-600 font-mono">● Active Delivery Comms</span>
                 </div>
               </div>
-              <button
-                onClick={() => {
-                  playSound('radar');
-                  onOpenTelemetry();
-                }}
-                className="text-[10px] font-mono text-[#00BFEF] hover:underline"
-              >
-                HUD Live
-              </button>
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-2.5 p-1">
@@ -481,7 +532,7 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
                 type="text"
                 value={newMessageText}
                 onChange={(e) => setNewMessageText(e.target.value)}
-                placeholder="Message hover pilot..."
+                placeholder="Message your courier rider..."
                 className="flex-1 bg-white border border-[#DCE2E6] rounded-xl px-3 py-2 text-xs text-[#0B1B2A] focus:outline-none focus:border-[#00BFEF]"
               />
               <button
@@ -494,41 +545,60 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
           </div>
         )}
 
-        {/* ================= VIEW: ACCOUNT TAB ================= */}
-        {activeTab === 'account' && (
+        {/* ================= VIEW: PARTNER PORTAL TAB ================= */}
+        {activeTab === 'partner' && (
           <div className="space-y-4">
             <div className="p-4 rounded-2xl bg-[#0B1B2A] text-white border border-[#173247] space-y-3">
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#00BFEF] to-[#F58220] flex items-center justify-center text-xl font-bold text-white shadow-md">
-                  W
+                  🇰🇪
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm text-white">Wairo Prime Member</h3>
-                  <p className="text-[11px] text-[#00BFEF] font-mono">ID: #WR-NAIROBI-8849</p>
+                  <h3 className="font-bold text-sm text-white">Courier & Carrier Hub</h3>
+                  <p className="text-[11px] text-[#00BFEF] font-mono">Kenya Logistics Partner Registry</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10 text-xs font-mono">
+                <div className="p-2 rounded-xl bg-black/30">
+                  <span className="text-gray-400 block text-[10px]">DRIVER PAYOUT:</span>
+                  <span className="text-[#F58220] font-bold">90% of Fare</span>
+                </div>
+                <div className="p-2 rounded-xl bg-black/30">
+                  <span className="text-gray-400 block text-[10px]">DISBURSEMENT:</span>
+                  <span className="text-emerald-400 font-bold">Instant M-Pesa</span>
                 </div>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <button
-                onClick={() => {
-                  playSound('click');
-                  onOpenSDKModal();
-                }}
-                className="w-full p-3.5 rounded-2xl bg-white border border-[#00BFEF]/40 hover:border-[#00BFEF] flex items-center justify-between text-left transition-colors cursor-pointer group shadow-xs"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 rounded-xl bg-[#00BFEF]/15 text-[#00BFEF] flex items-center justify-center">
-                    <Code className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h5 className="font-bold text-xs text-[#0B1B2A]">Embed Wairo in Another WebApp</h5>
-                    <p className="text-[10px] text-gray-500">Get React SDK, iFrame, or CDN Script</p>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
-              </button>
+            <div className="p-3.5 rounded-2xl bg-white border border-[#DCE2E6] space-y-2 text-xs">
+              <h4 className="font-bold text-[#0B1B2A] flex items-center space-x-1.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                <span>Vehicle & Logbook Ownership Boost</span>
+              </h4>
+              <p className="text-gray-600 text-[11px] leading-relaxed">
+                Riders and drivers who own their motorbike, car, or van with a verified logbook receive priority matching in the private reverse-auction script and reduced platform deductions.
+              </p>
             </div>
+
+            <button
+              onClick={() => {
+                playSound('click');
+                onOpenSDKModal();
+              }}
+              className="w-full p-3.5 rounded-2xl bg-white border border-[#00BFEF]/40 hover:border-[#00BFEF] flex items-center justify-between text-left transition-colors cursor-pointer group shadow-xs"
+            >
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-xl bg-[#00BFEF]/15 text-[#00BFEF] flex items-center justify-center">
+                  <Code className="w-4 h-4" />
+                </div>
+                <div>
+                  <h5 className="font-bold text-xs text-[#0B1B2A]">Embed Wairo in Any E-Commerce WebApp</h5>
+                  <p className="text-[10px] text-gray-500">React SDK, iFrame, or CDN Script</p>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
+            </button>
           </div>
         )}
 
@@ -539,9 +609,9 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
         {[
           { id: 'home', label: 'Home', icon: Home },
           { id: 'orders', label: 'Orders', icon: ClipboardList },
-          { id: 'deliver', label: 'Deliver', icon: Rocket },
-          { id: 'messages', label: 'Messages', icon: Mail },
-          { id: 'account', label: 'Account', icon: User },
+          { id: 'deliver', label: 'Book', icon: Bike },
+          { id: 'messages', label: 'Comms', icon: Mail },
+          { id: 'partner', label: 'Partner', icon: Briefcase },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -589,35 +659,14 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
             </div>
             <div className="space-y-2 text-xs">
               <div className="p-2 rounded bg-[#173247] border-l-2 border-[#F58220]">
-                <span className="font-bold text-[#F58220] block">Corridor Cleared</span>
-                <span className="text-[11px] text-gray-300">Hover-drone 5Y-WRO cleared for {selectedLocation.name} airspace.</span>
+                <span className="font-bold text-[#F58220] block">Private Bid Settled</span>
+                <span className="text-[11px] text-gray-300">SwiftLink Rider Erick Mwangi assigned (98.4% Trust).</span>
+              </div>
+              <div className="p-2 rounded bg-[#173247] border-l-2 border-[#00BFEF]">
+                <span className="font-bold text-[#00BFEF] block">Consolidated Batch Ready</span>
+                <span className="text-[11px] text-gray-300">Nairobi ➔ Mombasa highway van departs at 2:00 PM.</span>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Search Modal */}
-      {showSearchModal && (
-        <div className="absolute inset-0 z-40 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[#0B1B2A] border border-[#173247] rounded-2xl p-4 w-full max-w-xs text-white space-y-3">
-            <div className="flex justify-between items-center border-b border-white/10 pb-2">
-              <span className="font-bold text-xs text-white">Search Wairo Hub</span>
-              <button 
-                onClick={() => setShowSearchModal(false)}
-                className="text-gray-400 hover:text-white"
-              >
-                ✕
-              </button>
-            </div>
-            <input
-              type="text"
-              autoFocus
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search drops, orders, locations..."
-              className="w-full bg-[#173247] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#00BFEF]"
-            />
           </div>
         </div>
       )}
