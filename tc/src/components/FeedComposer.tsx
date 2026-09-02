@@ -205,6 +205,34 @@ function distanceLabel(item: FeedObject): string | null {
   return `${d} km away`;
 }
 
+/** §8 — the type-specific fact line. Events show attendance (or capacity),
+ *  opportunities show the value and who is offering it. Only REAL projected
+ *  fields; renders nothing when the data does not carry them. */
+function factLine(item: FeedObject): string | null {
+  const m = item?.metadata ?? {};
+  const type = String(item?.type ?? '');
+  const num = (v: unknown): number | null => {
+    if (v === null || v === undefined || v === '') return null;
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  };
+
+  if (type === 'experience' || type === 'event') {
+    const going = num(m.attendeesCount);
+    const spots = num(m.capacity);
+    const bits = [going !== null ? `${going} going` : null, spots !== null ? `${spots} spots` : null].filter(Boolean);
+    return bits.length ? bits.join(' · ') : null;
+  }
+  if (type === 'opportunity') {
+    const price = num(m.price);
+    const value = price !== null ? `${m.currency || 'KES'} ${price.toLocaleString()}` : null;
+    const by = typeof m.organizer === 'string' && m.organizer.trim() ? `by ${m.organizer.trim()}` : null;
+    const bits = [value, by].filter(Boolean);
+    return bits.length ? bits.join(' · ') : null;
+  }
+  return null;
+}
+
 function sourceLabel(item: FeedObject): string | null {
   const names = Array.isArray(item?.sourceNames) ? item.sourceNames.filter((s: unknown) => typeof s === 'string') : [];
   const count = typeof item?.sourceCount === 'number' ? item.sourceCount : names.length;
@@ -371,6 +399,14 @@ function PhotoTitleCard({
         <h3 className="line-clamp-3 text-[15px] font-semibold leading-snug" style={{ color: image ? '#F7F7F8' : T.ink }}>
           {title}
         </h3>
+        {factLine(item) && (
+          <p
+            className="mt-1 line-clamp-1 text-[10px] font-semibold"
+            style={{ color: image ? 'rgba(255,255,255,0.85)' : T.muted }}
+          >
+            {factLine(item)}
+          </p>
+        )}
         {source && (
           <p
             className="mt-1 line-clamp-1 text-[9px] font-semibold uppercase tracking-[0.1em]"
