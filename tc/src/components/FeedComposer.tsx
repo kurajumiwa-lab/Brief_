@@ -80,15 +80,17 @@ function typeLabel(item: FeedObject): string | null {
   return TYPE_LABELS[String(item?.type ?? '')] ?? null;
 }
 
-// §8/§9 — the trust state, rendered as a single honest word on the card.
-// The server's verification lifecycle is unverified → source_confirmed →
-// cross_source_confirmed → community_confirmed. Only the corroborated tiers
-// read as "verified"; a single source never gets dressed up. Nothing here is
-// invented — the string comes straight off the projected row.
-function verifiedLabel(item: FeedObject): string | null {
+// §8/§9 — the trust state, rendered as one honest word on the card, with a
+// DISTINCT tone per tier (§9). The server's lifecycle is unverified →
+// source_confirmed → cross_source_confirmed → community_confirmed. Only the
+// corroborated tiers read as "verified"; a single source is muted, never
+// dressed up. Nothing here is invented — the string comes straight off the
+// projected row.
+function trustBadge(item: FeedObject): { label: string; tone: 'muted' | 'cyan' | 'green' } | null {
   const status = String(item?.verificationStatus ?? '');
-  if (status === 'community_confirmed') return 'Community confirmed';
-  if (status === 'cross_source_confirmed' || status === 'verified') return 'Verified';
+  if (status === 'community_confirmed') return { label: 'Community confirmed', tone: 'green' };
+  if (status === 'cross_source_confirmed' || status === 'verified') return { label: 'Verified', tone: 'cyan' };
+  if (status === 'source_confirmed') return { label: 'Source confirmed', tone: 'muted' };
   return null;
 }
 
@@ -329,16 +331,23 @@ function PhotoTitleCard({
           {type}
         </span>
       )}
-      {/* §8 — the trust badge, only when the object is genuinely corroborated.
-          Sits under the type chip; a single source never shows it. */}
-      {verifiedLabel(item) && (
-        <span
-          className="absolute left-3 top-9 rounded-full px-2 py-0.5 text-[8px] font-extrabold uppercase tracking-[0.12em]"
-          style={{ background: '#FF5A1F', color: '#0D0F12' }}
-        >
-          ✓ {verifiedLabel(item)}
-        </span>
-      )}
+      {/* §8/§9 — the trust badge, with a distinct tone per tier. Only the
+          corroborated tiers show; a single source is muted, community is
+          green, cross-source is cyan. */}
+      {trustBadge(item) && (() => {
+        const b = trustBadge(item)!;
+        const glyph = b.tone === 'green' ? '✓' : b.tone === 'cyan' ? '●' : '◉';
+        const bg = b.tone === 'green' ? '#38E879' : b.tone === 'cyan' ? '#22E6E0' : 'rgba(247,247,248,0.16)';
+        const fg = b.tone === 'muted' ? '#F7F7F8' : '#0D0F12';
+        return (
+          <span
+            className="absolute left-3 top-9 rounded-full px-2 py-0.5 text-[8px] font-extrabold uppercase tracking-[0.12em]"
+            style={{ background: bg, color: fg }}
+          >
+            {glyph} {b.label}
+          </span>
+        );
+      })()}
       {why && (
         <span
           className="absolute right-3 top-3 rounded-full px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.12em]"

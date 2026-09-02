@@ -853,6 +853,37 @@ export const getCorroborationLabel = (object: BriefObject): string | null => {
 };
 
 /**
+ * §9 — the trust state as a DISTINCT visual tier. The server's lifecycle is
+ *   unverified -> source_confirmed -> cross_source_confirmed ->
+ *   community_confirmed. Each corroborated tier maps to its own honest label
+ *   and tone, so a single source is never dressed up as "verified", and the
+ *   community tier (human confirmation) is visually distinct from the
+ *   cross-source tier (corroboration). Corroboration, not truth — every word
+ *   comes straight off the projected row, never invented.
+ */
+export interface TrustState {
+  tier: 'unverified' | 'source_confirmed' | 'cross_source_confirmed' | 'community_confirmed';
+  /** The badge word, or null when the tier shows no badge (unverified). */
+  label: string | null;
+  /** Semantic tone for distinct visual states (§9). */
+  tone: 'none' | 'muted' | 'cyan' | 'green';
+}
+
+export const trustStateOf = (object: BriefObject): TrustState => {
+  const status = object.verificationStatus;
+  if (status === 'community_confirmed') {
+    return { tier: 'community_confirmed', label: 'Community confirmed', tone: 'green' };
+  }
+  if (status === 'cross_source_confirmed' || status === 'verified') {
+    return { tier: 'cross_source_confirmed', label: 'Verified', tone: 'cyan' };
+  }
+  if (status === 'source_confirmed') {
+    return { tier: 'source_confirmed', label: 'Source confirmed', tone: 'muted' };
+  }
+  return { tier: 'unverified', label: null, tone: 'none' };
+};
+
+/**
  * The lifecycle badge for time-sensitive types. For offers: Expired only when
  * the server's temporal says so; for events: Ended when past, Upcoming with a
  * "tomorrow · 8:00 PM" preview when a start time exists. Never claims a state

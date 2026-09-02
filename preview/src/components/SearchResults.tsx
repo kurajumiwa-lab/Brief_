@@ -2,7 +2,7 @@ import React from 'react';
 import { SlidersHorizontal, MapPin, CalendarDays, Megaphone, Tag, Newspaper, Store, Briefcase, Package, BookOpen, Sparkles } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
 import type { SearchFilters } from '../api/briefApi';
-import { objectFromServer, getObjectTypeMeta, getDistanceLabel } from '../model/core';
+import { objectFromServer, getObjectTypeMeta, getDistanceLabel, trustStateOf } from '../model/core';
 
 // ---------------------------------------------------------------------------
 // SEARCH RESULTS — title-first results for the home surface, with filters
@@ -136,11 +136,19 @@ function ObjectResultCard({ object, onClick }: { object: any; onClick: () => voi
             <TypeGlyph className="h-6 w-6 text-[#22E6E0]" aria-hidden="true" strokeWidth={1.6} />
           </div>
         )}
-        {mapped.isVerified && (
-          <span className="absolute bottom-1 left-1 rounded-full bg-[#FF5A1F] px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-wide text-[#0D0F12]">
-            ✓
-          </span>
-        )}
+        {(() => {
+          const t = trustStateOf(mapped);
+          const tone = t.tone === 'green' ? { glyph: '✓', bg: '#38E879', fg: '#0D0F12' }
+            : t.tone === 'cyan' ? { glyph: '●', bg: '#22E6E0', fg: '#0D0F12' }
+            : t.tone === 'muted' ? { glyph: '◉', bg: 'rgba(247,247,248,0.9)', fg: '#0D0F12' }
+            : null;
+          if (!tone) return null;
+          return (
+            <span className="absolute bottom-1 left-1 rounded-full px-1.5 py-0.5 text-[8px] font-extrabold" style={{ background: tone.bg, color: tone.fg }} aria-label={t.label ?? undefined}>
+              {tone.glyph}
+            </span>
+          );
+        })()}
       </div>
 
       <span className="min-w-0 flex-1">

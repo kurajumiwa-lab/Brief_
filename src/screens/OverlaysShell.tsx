@@ -16,7 +16,7 @@ import { CampaignDistribution } from '../components/CampaignDistribution';
 import { CollectionPicker } from '../components/CollectionPicker';
 import { RelatedContent } from '../components/RelatedContent';
 import { TeaReader } from '../components/TeaReader';
-import { DESTINATION_STATE_LABELS, REPORT_REASONS, buildKeyFacts, buildMapsHref, buildTelHref, getActionNote, getAppearanceReasons, getCorroborationLabel, getDestinationAccess, getDestinationState, getDestinationVendors, getDistanceLabel, getFreshness, getLifecycleBadge, getObjectTypeMeta, getPublishedLine, getReasonChip, getRelatedHeading, getSourceChip, getSourceKindChip, getSuggestedActions, getVendorDestinations, getVendorOfferings, isDestinationObject, objectFromServer, resolveAction } from '../model/core';
+import { DESTINATION_STATE_LABELS, REPORT_REASONS, buildKeyFacts, buildMapsHref, buildTelHref, getActionNote, getAppearanceReasons, getCorroborationLabel, getDestinationAccess, getDestinationState, getDestinationVendors, getDistanceLabel, getFreshness, getLifecycleBadge, getObjectTypeMeta, getPublishedLine, getReasonChip, getRelatedHeading, getSourceChip, getSourceKindChip, getSuggestedActions, getVendorDestinations, getVendorOfferings, isDestinationObject, objectFromServer, resolveAction, trustStateOf } from '../model/core';
 
 // ---------------------------------------------------------------------------
 // OVERLAYS SHELL -- the full-screen sheets that float above every tab:
@@ -138,6 +138,15 @@ export interface OverlaysShellProps {
   updateTitle: string;
   watchedIds: any;
 }
+
+// §9 — the trust tier's badge colours, shared across the object detail.
+// community = green (human corroboration), cross-source = cyan, single source
+// = muted. Unverified renders nothing. Same tiers as trustStateOf in core.
+const TRUST_TONE: Record<string, { glyph: string; bg: string; fg: string }> = {
+  green: { glyph: '✓', bg: '#38E879', fg: '#0D0F12' },
+  cyan: { glyph: '●', bg: '#22E6E0', fg: '#0D0F12' },
+  muted: { glyph: '◉', bg: 'rgba(247,247,248,0.16)', fg: '#F7F7F8' }
+};
 
 export function OverlaysShell(props: OverlaysShellProps) {
   const {
@@ -1466,11 +1475,16 @@ export function OverlaysShell(props: OverlaysShellProps) {
                         {selectedObjectForDetail.category}
                       </span>
 
-                      {selectedObjectForDetail.isVerified && (
-                        <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#FF5A1F] text-[#0D0F12]">
-                          Verified
-                        </span>
-                      )}
+                      {(() => {
+                        const t = trustStateOf(selectedObjectForDetail);
+                        const tone = TRUST_TONE[t.tone];
+                        if (!t.label || !tone) return null;
+                        return (
+                          <span className="text-[10px] font-extrabold px-3 py-1 rounded-full" style={{ background: tone.bg, color: tone.fg }}>
+                            {tone.glyph} {t.label}
+                          </span>
+                        );
+                      })()}
                     </div>
                   </div>
                 );
@@ -1518,11 +1532,16 @@ export function OverlaysShell(props: OverlaysShellProps) {
                       {selectedObjectForDetail.category}
                     </span>
 
-                    {selectedObjectForDetail.isVerified && (
-                      <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#FF5A1F] text-[#0D0F12]">
-                        Verified
-                      </span>
-                    )}
+                    {(() => {
+                      const t = trustStateOf(selectedObjectForDetail);
+                      const tone = TRUST_TONE[t.tone];
+                      if (!t.label || !tone) return null;
+                      return (
+                        <span className="text-[10px] font-extrabold px-3 py-1 rounded-full" style={{ background: tone.bg, color: tone.fg }}>
+                          {tone.glyph} {t.label}
+                        </span>
+                      );
+                    })()}
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -1801,11 +1820,16 @@ export function OverlaysShell(props: OverlaysShellProps) {
                         <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#F7F7F8]/60">
                           About this information
                         </span>
-                        {subject.isVerified && (
-                          <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-[#FF5A1F] text-[#0D0F12] shrink-0">
-                            VERIFIED
-                          </span>
-                        )}
+                        {(() => {
+                          const t = trustStateOf(subject);
+                          const tone = TRUST_TONE[t.tone];
+                          if (!t.label || !tone) return null;
+                          return (
+                            <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full shrink-0 uppercase" style={{ background: tone.bg, color: tone.fg }}>
+                              {tone.glyph} {t.label}
+                            </span>
+                          );
+                        })()}
                       </div>
 
                       {/* Provider — stated when known, absence stated plainly. */}

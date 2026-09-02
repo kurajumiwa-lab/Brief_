@@ -113,6 +113,16 @@ async function main() {
   check('openReportCount survives the mapping', Mod.objectFromServer({ openReportCount: 2 }).openReportCount === 2);
   check('sourcePlatforms survive the mapping', Mod.objectFromServer({ sourcePlatforms: ['telegram_channel'] }).sourcePlatforms?.[0] === 'telegram_channel');
 
+  // §9 — trust tiers are DISTINCT visual states, never a single "verified".
+  console.log('\n=== §9: distinct trust tiers ===');
+  check('unverified -> no badge', Mod.trustStateOf(Mod.objectFromServer({ verificationStatus: 'unverified' })).label === null);
+  const src = Mod.trustStateOf(Mod.objectFromServer({ verificationStatus: 'source_confirmed' }));
+  check('source_confirmed -> muted "Source confirmed"', src.label === 'Source confirmed' && src.tone === 'muted');
+  const cross = Mod.trustStateOf(Mod.objectFromServer({ verificationStatus: 'cross_source_confirmed' }));
+  check('cross_source_confirmed -> cyan "Verified"', cross.label === 'Verified' && cross.tone === 'cyan');
+  const comm = Mod.trustStateOf(Mod.objectFromServer({ verificationStatus: 'community_confirmed' }));
+  check('community_confirmed -> green "Community confirmed"', comm.label === 'Community confirmed' && comm.tone === 'green');
+
   // --- 2. Feed cards carry the compact trust row ---------------------------
   console.log('\n=== Feed cards: source + freshness + status ===');
   {
