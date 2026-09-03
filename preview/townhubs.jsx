@@ -375,6 +375,7 @@ async function main() {
   check('renders Universal Publisher title', text12.includes('UNIVERSAL PUBLISHER') && text12.includes('Publish Event & Gathering'));
   check('shows multi-type tabs: event, product, announcement', text12.includes('Event / Popup') && text12.includes('Product / Duka') && text12.includes('Announcement'));
   check('shows multi-image picker widget', text12.includes('Photos & Media') && text12.includes('Add Photo'));
+  check('shows 3-step wizard progression', text12.includes('1. Content & Type') && text12.includes('2. Media & Logistics') && text12.includes('3. Preview & Post'));
 
   // Switch to Product tab
   const productTabBtn = Array.from(host12.querySelectorAll('button')).find(b => b.textContent.includes('Product / Duka'));
@@ -384,6 +385,25 @@ async function main() {
     });
   }
   check('adapts form to product pricing and category fields', host12.textContent.includes('Pricing & Inventory') && host12.textContent.includes('Price (KES)'));
+
+  // Switch to Step 3 (Live Preview & Post)
+  const step3Btn = Array.from(host12.querySelectorAll('button')).find(b => b.textContent.includes('3. Preview & Post'));
+  if (step3Btn) {
+    await act(async () => {
+      step3Btn.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+  }
+  check('renders live card feed preview on Step 3', host12.textContent.includes('Live Feed Preview') && host12.textContent.includes('Publish PRODUCT'));
+
+  // Test Discard Draft Protection Dialog
+  const closeBtn = host12.querySelector('button[aria-label="Close modal"]');
+  if (closeBtn) {
+    await act(async () => {
+      closeBtn.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+  }
+  check('triggers discard draft protection modal on close', host12.textContent.includes('Discard Draft?') && host12.textContent.includes('Keep Editing'));
+
   await act(async () => { root12.unmount(); host12.remove(); });
 
   console.log(`\nPASSED ${pass}   FAILED ${fail}`);
