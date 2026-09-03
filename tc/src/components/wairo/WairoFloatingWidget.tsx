@@ -1,28 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
-  Package, 
   Bike, 
-  Truck, 
-  Footprints, 
-  Car, 
   X, 
   Smartphone, 
-  ArrowUpRight, 
-  Radio, 
-  CheckCircle2, 
   ChevronLeft,
   ChevronRight,
-  Sparkles,
   ShieldCheck,
-  TrendingUp,
-  MapPin
+  MapPin,
+  Sparkles
 } from 'lucide-react';
 import { WairoMiniApp } from './WairoMiniApp';
 import { LiveTelemetryModal } from './LiveTelemetryModal';
 import { LocationModal } from './LocationModal';
 import { DispatchModal } from './DispatchModal';
 import { EmbedSDKModal } from './EmbedSDKModal';
-import { LOCATIONS, INITIAL_ACTIVE_DELIVERY, WairoLocation, WairoDelivery, LogisticsType } from './wairoData';
+import { LOCATIONS, INITIAL_ACTIVE_DELIVERY, WairoLocation, WairoDelivery } from './wairoData';
 import { playSound } from './wairoAudio';
 
 export const WairoFloatingWidget: React.FC = () => {
@@ -47,61 +39,64 @@ export const WairoFloatingWidget: React.FC = () => {
     }));
   };
 
-  // Simulated delivery initial state
-
-
   return (
     <aside aria-label="Wairo Kenyan Marketplace Logistics Companion" data-wairo-widget="true">
       
-      {/* ================= MINIMALIST RIGHT-EDGE NOTE-TAB TOGGLE ================= */}
-      {/* Docked neatly on the right screen edge like a sticky note edit tab.
-          Never overlaps or tampers with the bottom navigation bar. */}
+      {/* ================= REFINED NATIVE RIGHT-EDGE PILL ================= */}
+      {/* Soft rounded squircle, subtle gray border, ambient shadow, clean light theme */}
       {!isOpen && (
         <div 
           style={{ 
             position: 'fixed', 
             right: 0, 
-            top: '45%', 
+            top: '48%', 
             transform: 'translateY(-50%)', 
             zIndex: 42 
           }}
         >
           <button
+            type="button"
             onClick={() => {
               playSound('open');
               setIsOpen(true);
             }}
-            title="Open Wairo Courier, Consolidated Cargo & Errands Marketplace"
-            className="group flex items-center bg-[#0B1B2A] hover:bg-[#173247] text-white pl-3 pr-2 py-3 rounded-l-2xl border-l-2 border-y-2 border-r-0 border-[#00BFEF] shadow-2xl transition-all duration-300 hover:pl-4 cursor-pointer"
+            title="Open Wairo Courier & Errands Companion"
+            style={{
+              boxShadow: '0px 8px 24px rgba(0, 0, 0, 0.06), 0px 2px 6px rgba(0, 0, 0, 0.04)'
+            }}
+            className="group flex items-center bg-white/95 hover:bg-white text-[#0D1117] pl-3.5 pr-2.5 py-3 rounded-l-2xl border-l border-y border-r-0 border-[#E5E8EC] backdrop-blur-md transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98] hover:border-[#FF5A1F]/40 cursor-pointer"
           >
-            {/* Minimal glowing status pip & orange note accent */}
-            <div className="flex flex-col items-center mr-2 space-y-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#00BFEF] animate-pulse"></span>
-              <div className="w-1.5 h-6 bg-[#F58220] rounded-full"></div>
+            {/* Soft Courier Icon Container */}
+            <div className="w-8 h-8 rounded-xl bg-[#F0F2F5] group-hover:bg-[#FFF3EC] flex items-center justify-center mr-2.5 shrink-0 transition-colors">
+              <Bike className="w-4 h-4 text-[#FF5A1F]" />
             </div>
 
-            {/* Vertical / Compact Note Label */}
-            <div className="flex flex-col items-start text-left">
-              <div className="flex items-center space-x-1.5">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-[#00BFEF] font-extrabold">
+            {/* Typography & Status Hierarchy */}
+            <div className="flex flex-col items-start text-left pr-1">
+              <div className="flex items-center space-x-1.5 mb-0.5">
+                <span className="text-[11px] font-black uppercase tracking-wider text-[#0D1117]">
                   WAIRO
                 </span>
-                <span className="text-[9px] px-1 rounded bg-[#F58220] text-white font-bold font-mono">
-                <span className="text-[9px] px-1 rounded bg-[#F58220] text-white font-bold font-mono">
-                  90/10 PAYOUT
-                </span>
+                <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/70">
+                  90/10 Payout
                 </span>
               </div>
-              <span className="text-xs font-bold text-white leading-tight">
+              
+              <span className="text-xs font-extrabold text-[#0D1117]/85 leading-snug">
                 Courier & Errands
               </span>
-              <span className="text-[9px] text-[#DCE2E6]/70 font-mono mt-0.5">
-                📍 {selectedLocation.name} • {activeDelivery.status}
-              </span>
+              
+              {/* Secondary Status Row with Soft Live Pulse Dot */}
+              <div className="flex items-center space-x-1.5 mt-1 text-[9.5px] font-mono text-[#0D1117]/55">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                <span className="truncate max-w-[110px]">
+                  {selectedLocation.name} • {activeDelivery.status}
+                </span>
+              </div>
             </div>
 
-            {/* Chevron prompt */}
-            <div className="ml-2 text-[#00BFEF] group-hover:-translate-x-1 transition-transform">
+            {/* Subtle Expansion Chevron */}
+            <div className="ml-1.5 text-[#0D1117]/40 group-hover:text-[#FF5A1F] group-hover:-translate-x-0.5 transition-all">
               <ChevronLeft className="w-4 h-4" />
             </div>
           </button>
@@ -116,28 +111,31 @@ export const WairoFloatingWidget: React.FC = () => {
             right: '12px', 
             top: '60px', 
             bottom: '72px', 
-            zIndex: 45 
+            zIndex: 45,
+            boxShadow: '0px 20px 48px rgba(0, 0, 0, 0.12), 0px 4px 12px rgba(0, 0, 0, 0.06)'
           }} 
-          className="w-[94vw] sm:w-[410px] shadow-2xl flex flex-col"
+          className="w-[94vw] sm:w-[410px] rounded-3xl flex flex-col overflow-hidden border border-[#E5E8EC] bg-white animate-in slide-in-from-right-4 duration-300"
         >
           <div className="relative w-full h-full flex flex-col">
             
-            {/* Top drawer controls */}
-            <div className="absolute -top-3.5 right-4 z-50 flex items-center space-x-1.5 bg-[#0B1B2A] border border-[#173247] px-2 py-0.5 rounded-full shadow-lg">
+            {/* Top drawer header controls */}
+            <div className="absolute top-3 right-3 z-50 flex items-center space-x-1.5 bg-white/90 backdrop-blur-md border border-[#E5E8EC] p-1 rounded-full shadow-sm">
               <button
+                type="button"
                 onClick={() => setIsFullPhoneMode(true)}
-                title="Expand to Full Smartphone Canvas"
-                className="text-[#00BFEF] hover:text-white p-1 cursor-pointer"
+                title="Expand to Full Smartphone View"
+                className="text-gray-500 hover:text-[#0D1117] p-1 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
               >
                 <Smartphone className="w-3.5 h-3.5" />
               </button>
               <button
+                type="button"
                 onClick={() => {
                   playSound('click');
                   setIsOpen(false);
                 }}
                 title="Dock back to right edge tab"
-                className="text-gray-400 hover:text-white p-1 cursor-pointer"
+                className="text-gray-500 hover:text-[#0D1117] p-1 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -159,13 +157,17 @@ export const WairoFloatingWidget: React.FC = () => {
 
       {/* ================= FULL MODAL SMARTPHONE VIEW ================= */}
       {isOpen && isFullPhoneMode && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 50 }} className="bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="relative w-[380px] sm:w-[412px] h-[780px] sm:h-[840px] bg-[#0B1B2A] rounded-[50px] p-3 shadow-2xl border-4 border-[#173247] ring-8 ring-black/40 flex flex-col">
+        <div 
+          style={{ position: 'fixed', inset: 0, zIndex: 50 }} 
+          className="bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+        >
+          <div className="relative w-[380px] sm:w-[412px] h-[780px] sm:h-[840px] bg-[#0D1117] rounded-[48px] p-3 shadow-2xl border-4 border-gray-800 ring-8 ring-black/40 flex flex-col">
             
             {/* Top Close / Dock back */}
             <button
+              type="button"
               onClick={() => setIsFullPhoneMode(false)}
-              className="absolute -top-10 right-0 px-3 py-1 bg-white/10 hover:bg-white/20 text-white rounded-full text-xs font-semibold flex items-center space-x-1 cursor-pointer"
+              className="absolute -top-10 right-0 px-3.5 py-1 bg-white/10 hover:bg-white/20 text-white rounded-full text-xs font-semibold flex items-center space-x-1 cursor-pointer transition-colors"
             >
               <span>Dock to Right Edge Tab</span>
               <X className="w-3.5 h-3.5" />
