@@ -97,8 +97,8 @@ export const WairoFloatingWidget: React.FC = () => {
               {/* Secondary Status Row with Soft Live Pulse Dot */}
               <div className="flex items-center space-x-1.5 mt-1 text-[9.5px] font-mono text-[#0D1117]/55">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                <span className="truncate max-w-[110px]">
-                  {selectedLocation.name} • {activeDelivery.status}
+                <span className="truncate max-w-[130px]">
+                  Courier & Errands Only • {selectedLocation.name}
                 </span>
               </div>
             </div>

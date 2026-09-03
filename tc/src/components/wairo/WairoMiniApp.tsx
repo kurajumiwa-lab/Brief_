@@ -243,13 +243,13 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
                 <span className="text-[#00BFEF] font-bold">Better Returns for Providers.</span>
               </h1>
               <p className="text-xs text-[#173247]/80 mt-1 leading-relaxed">
-                Choose private branded carriers, consolidated cargo, or verified owner-operator couriers.
+                Direct point-to-point courier and verified errand runner services with transparent 90% M-Pesa payouts.
               </p>
             </div>
 
-            {/* 4 Category Pill Switcher */}
+            {/* Dedicated Category Switcher: Courier & Errands Only */}
             <div className="grid grid-cols-2 gap-2 pt-1">
-              {LOGISTICS_SERVICES.map((srv) => {
+              {LOGISTICS_SERVICES.filter(s => s.id === 'courier' || s.id === 'errands').map((srv) => {
                 const isSelected = selectedLogisticsType === srv.id;
                 return (
                   <button
@@ -258,7 +258,7 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
                       playSound('click');
                       setSelectedLogisticsType(srv.id);
                     }}
-                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                    className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
                       isSelected
                         ? 'bg-[#0B1B2A] text-white border-[#00BFEF] shadow-lg shadow-[#00BFEF]/20'
                         : 'bg-white border-[#DCE2E6] text-[#0B1B2A] hover:bg-gray-50'
@@ -271,12 +271,10 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
                         {srv.badge}
                       </span>
                       {srv.id === 'courier' && <Bike className="w-4 h-4 text-[#F58220]" />}
-                      {srv.id === 'consolidated' && <Truck className="w-4 h-4 text-[#00BFEF]" />}
                       {srv.id === 'errands' && <Footprints className="w-4 h-4 text-[#19D8F5]" />}
-                      {srv.id === 'wayfarer' && <Car className="w-4 h-4 text-[#FF9D24]" />}
                     </div>
 
-                    <div className="mt-2">
+                    <div className="mt-2.5">
                       <h3 className="font-bold text-xs leading-tight">{srv.title}</h3>
                       <div className="flex items-center justify-between mt-1 text-[10px] font-mono">
                         <span className={isSelected ? 'text-[#F58220] font-bold' : 'text-[#0B1B2A] font-bold'}>
