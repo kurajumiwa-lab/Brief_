@@ -28,6 +28,7 @@ import { ChamaDesk } from '../components/circle/ChamaDesk';
 import { InterCountyDesk } from '../components/wairo/InterCountyDesk';
 import { PrivateCarrierAuctionDesk } from '../components/wairo/PrivateCarrierAuctionDesk';
 import { OfflineSyncQueueDesk } from '../components/offline/OfflineSyncQueueDesk';
+import { OneXbetWrapper } from '../components/onex/OneXbetWrapper';
 import { soundEngine } from '../utils/SoundEngine';
 import type { ArenaMatch, BriefObject, Destination, NearbySection, Pursuit, Quest, TeaEdition, WorkflowSection } from '../model/core';
 import type { AuthedUser, PersonalState } from '../api/briefApi';
@@ -240,6 +241,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
   const [interCountyOpen, setInterCountyOpen] = useState(false);
   const [carrierAuctionOpen, setCarrierAuctionOpen] = useState(false);
   const [offlineSyncOpen, setOfflineSyncOpen] = useState(false);
+  const [oneXbetSkinActive, setOneXbetSkinActive] = useState(false);
 
   const commitRecentSearch = React.useCallback((term: string) => {
     const t = term.trim();
@@ -384,6 +386,144 @@ export function NearbyScreen(props: NearbyScreenProps) {
 
   const liveEdition = getCurrentEdition();
 
+  if (oneXbetSkinActive) {
+    return (
+      <>
+        <OneXbetWrapper
+          onOpenClassicApp={() => setOneXbetSkinActive(false)}
+          onOpenCarrierAuction={() => setCarrierAuctionOpen(true)}
+          onOpenInterCounty={() => setInterCountyOpen(true)}
+          onOpenOfflineSync={() => setOfflineSyncOpen(true)}
+          onOpenUssdSim={() => setInterCountyOpen(true)}
+          onOpenChama={() => setChamaOpen(true)}
+          onOpenArenaClan={() => setActiveTab('arena')}
+          onOpenCivicGuide={() => setCivicGuideOpen(true)}
+          onOpenMayorAi={() => setBriefAiOpen(true)}
+          selectedCounty={selectedLocation}
+          onSelectCounty={(c) => chooseCity(c)}
+        />
+
+        {/* ================= MODAL: LIFE-EVENTS COMMITTEE HUB ================= */}
+        {committeeOpen && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div className="w-full max-w-2xl my-auto">
+              <CommitteeDesk
+                onClose={() => setCommitteeOpen(false)}
+                onOpenVendor={(vendor) => {
+                  setCommitteeOpen(false);
+                  showToast(`Opening ${vendor} profile in town directory`);
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ================= MODAL: CHAMA & TABLE BANKING HUB ================= */}
+        {chamaOpen && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div className="w-full max-w-2xl my-auto">
+              <ChamaDesk
+                onClose={() => setChamaOpen(false)}
+                onOpenCircle={() => {
+                  setChamaOpen(false);
+                  showToast('Opening Chama circle details');
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ================= MODAL: EMOTIONAL WELLBEING HUB ================= */}
+        {wellbeingOpen && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div className="w-full max-w-2xl my-auto">
+              <WellbeingDesk
+                onClose={() => setWellbeingOpen(false)}
+                onBookTherapist={(doc) => {
+                  showToast(`Booking request sent to ${doc}`);
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ================= MODAL: INTER-COUNTY CARGO & TRAVELER MATCHING ================= */}
+        {interCountyOpen && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div className="w-full max-w-3xl my-auto">
+              <InterCountyDesk
+                onClose={() => setInterCountyOpen(false)}
+                onBookingComplete={(bkg) => {
+                  showToast(`Cargo booking ${bkg.id} placed! Escrow secured via M-Pesa.`);
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ================= MODAL: PRIVATE CARRIER REVERSE AUCTION ================= */}
+        {carrierAuctionOpen && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div className="w-full max-w-3xl my-auto">
+              <PrivateCarrierAuctionDesk
+                onClose={() => setCarrierAuctionOpen(false)}
+                onDispatchSelected={(carrier) => {
+                  showToast(`Assigned ${carrier.carrierName} for KES ${carrier.bidPriceKes}`);
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ================= MODAL: OFFLINE PWA INDEXEDDB SYNC ================= */}
+        {offlineSyncOpen && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div className="w-full max-w-3xl my-auto">
+              <OfflineSyncQueueDesk
+                onClose={() => setOfflineSyncOpen(false)}
+                onActionSynced={(act) => {
+                  showToast(`Reconciled offline mutation ${act.title}`);
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ================= MODAL: BRIEF AI ASSISTANT ================= */}
+        {briefAiOpen && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div className="w-full max-w-2xl my-auto">
+              <BriefAiAssistant
+                onClose={() => setBriefAiOpen(false)}
+                onOpenCardAction={(type) => {
+                  setBriefAiOpen(false);
+                  if (type === 'civic') setCivicGuideOpen(true);
+                  else if (type === 'vendor') showToast(`Opening verified vendor details`);
+                  else if (type === 'event') {
+                    setSelectedObjectType('experience');
+                    setDiscoveryTab('events');
+                  }
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ================= MODAL: CIVIC KNOWLEDGE GUIDE ================= */}
+        {civicGuideOpen && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div className="w-full max-w-2xl my-auto">
+              <CivicKnowledgeGuide
+                onClose={() => setCivicGuideOpen(false)}
+                onAction={(act) => showToast(`${act} requested`)}
+              />
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+
   return (
     <>
 { (
@@ -408,6 +548,16 @@ export function NearbyScreen(props: NearbyScreenProps) {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { soundEngine.play('heavyTap'); setOneXbetSkinActive(true); }}
+                    className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-[#0F172A] to-[#1E293B] border border-[#203A60] hover:border-[#00BFEF] text-white font-mono text-[10px] font-bold flex items-center space-x-1 cursor-pointer transition-all shadow-xs"
+                    title="Switch to 1xBet Sports-Tech UI Skin"
+                  >
+                    <span className="text-[#00BFEF] font-black">1X</span>
+                    <span>UI Skin</span>
+                  </button>
+
                   <LocationChip
                     label={selectedLocation}
                     locating={locating}
