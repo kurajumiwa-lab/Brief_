@@ -27,6 +27,7 @@ const { WellbeingDesk } = require('./src/components/wellbeing/WellbeingDesk.tsx'
 const { CivicKnowledgeGuide } = require('./src/components/civic/CivicKnowledgeGuide.tsx');
 const { BriefAiAssistant } = require('./src/components/ai/BriefAiAssistant.tsx');
 const { ChamaDesk } = require('./src/components/circle/ChamaDesk.tsx');
+const { UssdSimulatorDesk } = require('./src/components/offline/UssdSimulatorDesk.tsx');
 
 let pass = 0, fail = 0;
 const check = (name, cond, detail = '') => {
@@ -197,6 +198,33 @@ async function main() {
   }
   check('shows table loans and interest', host6.textContent.includes('Table Banking Loans') && host6.textContent.includes('5% Int'));
   await act(async () => { root6.unmount(); host6.remove(); });
+
+  // --- 7. UssdSimulatorDesk (2G GSM / SMS Fallback) ---
+  console.log('\n--- 7. UssdSimulatorDesk ---');
+  const host7 = document.createElement('div');
+  document.body.appendChild(host7);
+  const root7 = createRoot(host7);
+  await act(async () => {
+    root7.render(React.createElement(UssdSimulatorDesk, {
+      onClose: () => {},
+      onAction: () => {}
+    }));
+  });
+
+  const text7 = host7.textContent;
+  check('renders USSD Fallback title', text7.includes('SMS & USSD Fallback Gateway'));
+  check('shows retro LCD dial prompt', text7.includes('*483*88#') && text7.includes('SAFARICOM 2G'));
+  check('renders dial and keypad buttons', text7.includes('DIAL') && text7.includes('END / CLR'));
+
+  // Switch to SMS tab
+  const smsTabBtn = Array.from(host7.querySelectorAll('button')).find(b => b.textContent.includes('Two-Way SMS Shortcode'));
+  if (smsTabBtn) {
+    await act(async () => {
+      smsTabBtn.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+  }
+  check('shows shortcode gateway and sample dispatches', host7.textContent.includes('22880') && host7.textContent.includes('WAIRO DISPATCH'));
+  await act(async () => { root7.unmount(); host7.remove(); });
 
   console.log(`\nPASSED ${pass}   FAILED ${fail}`);
   process.exit(fail ? 1 : 0);

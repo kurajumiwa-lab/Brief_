@@ -23,7 +23,8 @@ import {
   Award,
   CheckCircle2,
   DollarSign,
-  Briefcase
+  Briefcase,
+  Radio
 } from 'lucide-react';
 import { 
   WairoDelivery, 
@@ -42,6 +43,7 @@ interface WairoMiniAppProps {
   onOpenLocationModal: () => void;
   onOpenDispatchModal: () => void;
   onOpenSDKModal: () => void;
+  onOpenUssdSim?: () => void;
   selectedLocation: WairoLocation;
   activeDelivery: WairoDelivery;
   isMiniView?: boolean;
@@ -53,6 +55,7 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
   onOpenLocationModal, 
   onOpenDispatchModal, 
   onOpenSDKModal,
+  onOpenUssdSim,
   selectedLocation, 
   activeDelivery,
   isMiniView = false,
@@ -600,6 +603,28 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
               </div>
               <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
             </button>
+
+            {onOpenUssdSim && (
+              <button
+                type="button"
+                onClick={() => {
+                  playSound('click');
+                  onOpenUssdSim();
+                }}
+                className="w-full p-3.5 rounded-2xl bg-white border border-emerald-500/40 hover:border-emerald-500 flex items-center justify-between text-left transition-colors cursor-pointer group shadow-xs"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <Radio className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h5 className="font-bold text-xs text-[#0B1B2A]">Simulate 2G USSD (*483*88#) & SMS</h5>
+                    <p className="text-[10px] text-gray-500">For non-smartphone couriers & feature phones</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            )}
           </div>
         )}
 

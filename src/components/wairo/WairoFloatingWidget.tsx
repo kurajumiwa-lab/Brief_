@@ -14,6 +14,7 @@ import { LiveTelemetryModal } from './LiveTelemetryModal';
 import { LocationModal } from './LocationModal';
 import { DispatchModal } from './DispatchModal';
 import { EmbedSDKModal } from './EmbedSDKModal';
+import { UssdSimulatorDesk } from '../offline/UssdSimulatorDesk';
 import { LOCATIONS, INITIAL_ACTIVE_DELIVERY, WairoLocation, WairoDelivery } from './wairoData';
 import { playSound } from './wairoAudio';
 
@@ -28,6 +29,7 @@ export const WairoFloatingWidget: React.FC = () => {
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [isDispatchModalOpen, setIsDispatchModalOpen] = useState(false);
   const [isSDKModalOpen, setIsSDKModalOpen] = useState(false);
+  const [isUssdOpen, setIsUssdOpen] = useState(false);
 
   const handleSelectLocation = (loc: WairoLocation) => {
     setSelectedLocation(loc);
@@ -146,6 +148,7 @@ export const WairoFloatingWidget: React.FC = () => {
               onOpenLocationModal={() => setIsLocationModalOpen(true)}
               onOpenDispatchModal={() => setIsDispatchModalOpen(true)}
               onOpenSDKModal={() => setIsSDKModalOpen(true)}
+              onOpenUssdSim={() => setIsUssdOpen(true)}
               selectedLocation={selectedLocation}
               activeDelivery={activeDelivery}
               isMiniView={true}
@@ -179,6 +182,7 @@ export const WairoFloatingWidget: React.FC = () => {
                 onOpenLocationModal={() => setIsLocationModalOpen(true)}
                 onOpenDispatchModal={() => setIsDispatchModalOpen(true)}
                 onOpenSDKModal={() => setIsSDKModalOpen(true)}
+                onOpenUssdSim={() => setIsUssdOpen(true)}
                 selectedLocation={selectedLocation}
                 activeDelivery={activeDelivery}
               />
@@ -217,6 +221,15 @@ export const WairoFloatingWidget: React.FC = () => {
         isOpen={isSDKModalOpen}
         onClose={() => setIsSDKModalOpen(false)}
       />
+
+      {/* ================= USSD / SMS SIMULATOR MODAL ================= */}
+      {isUssdOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 60 }} className="bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="w-full max-w-3xl my-auto">
+            <UssdSimulatorDesk onClose={() => setIsUssdOpen(false)} />
+          </div>
+        </div>
+      )}
     </aside>
   );
 };
