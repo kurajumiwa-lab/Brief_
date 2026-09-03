@@ -32,6 +32,7 @@ const { InterCountyDesk } = require('./src/components/wairo/InterCountyDesk.tsx'
 const { PrivateCarrierAuctionDesk } = require('./src/components/wairo/PrivateCarrierAuctionDesk.tsx');
 const { OfflineSyncQueueDesk } = require('./src/components/offline/OfflineSyncQueueDesk.tsx');
 const { ArenaClanCoordination } = require('./src/components/arena/ArenaClanCoordination.tsx');
+const { UniversalCreatePostModal } = require('./src/components/posts/UniversalCreatePostModal.tsx');
 
 let pass = 0, fail = 0;
 const check = (name, cond, detail = '') => {
@@ -355,6 +356,35 @@ async function main() {
   }
   check('shows offline local table stores', host11.textContent.includes('wairo_offline_deliveries') && host11.textContent.includes('duka_offline_sales'));
   await act(async () => { root11.unmount(); host11.remove(); });
+
+  // --- 12. UniversalCreatePostModal (Single Consolidated Post Publisher) ---
+  console.log('\n--- 12. UniversalCreatePostModal ---');
+  const host12 = document.createElement('div');
+  document.body.appendChild(host12);
+  const root12 = createRoot(host12);
+  await act(async () => {
+    root12.render(React.createElement(UniversalCreatePostModal, {
+      isOpen: true,
+      initialPostType: 'event',
+      onClose: () => {},
+      onPostCreated: () => {}
+    }));
+  });
+
+  const text12 = host12.textContent;
+  check('renders Universal Publisher title', text12.includes('UNIVERSAL PUBLISHER') && text12.includes('Publish Event & Gathering'));
+  check('shows multi-type tabs: event, product, announcement', text12.includes('Event / Popup') && text12.includes('Product / Duka') && text12.includes('Announcement'));
+  check('shows multi-image picker widget', text12.includes('Photos & Media') && text12.includes('Add Photo'));
+
+  // Switch to Product tab
+  const productTabBtn = Array.from(host12.querySelectorAll('button')).find(b => b.textContent.includes('Product / Duka'));
+  if (productTabBtn) {
+    await act(async () => {
+      productTabBtn.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+  }
+  check('adapts form to product pricing and category fields', host12.textContent.includes('Pricing & Inventory') && host12.textContent.includes('Price (KES)'));
+  await act(async () => { root12.unmount(); host12.remove(); });
 
   console.log(`\nPASSED ${pass}   FAILED ${fail}`);
   process.exit(fail ? 1 : 0);

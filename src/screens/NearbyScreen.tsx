@@ -28,6 +28,7 @@ import { ChamaDesk } from '../components/circle/ChamaDesk';
 import { InterCountyDesk } from '../components/wairo/InterCountyDesk';
 import { PrivateCarrierAuctionDesk } from '../components/wairo/PrivateCarrierAuctionDesk';
 import { OfflineSyncQueueDesk } from '../components/offline/OfflineSyncQueueDesk';
+import { UniversalCreatePostModal } from '../components/posts/UniversalCreatePostModal';
 import { soundEngine } from '../utils/SoundEngine';
 import type { ArenaMatch, BriefObject, Destination, NearbySection, Pursuit, Quest, TeaEdition, WorkflowSection } from '../model/core';
 import type { AuthedUser, PersonalState } from '../api/briefApi';
@@ -240,6 +241,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
   const [interCountyOpen, setInterCountyOpen] = useState(false);
   const [carrierAuctionOpen, setCarrierAuctionOpen] = useState(false);
   const [offlineSyncOpen, setOfflineSyncOpen] = useState(false);
+  const [createPostModalOpen, setCreatePostModalOpen] = useState(false);
 
   const commitRecentSearch = React.useCallback((term: string) => {
     const t = term.trim();
@@ -408,6 +410,16 @@ export function NearbyScreen(props: NearbyScreenProps) {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { soundEngine.play('heavyTap'); setCreatePostModalOpen(true); }}
+                    className="px-3 py-1.5 rounded-xl bg-[#0D1117] hover:bg-[#1E293B] text-white font-bold text-xs flex items-center space-x-1.5 shadow-sm cursor-pointer transition-all active:scale-95"
+                    title="Publish Event, Product or Announcement"
+                  >
+                    <Plus className="w-3.5 h-3.5 text-[#FF5A1F]" />
+                    <span>Post</span>
+                  </button>
+
                   <LocationChip
                     label={selectedLocation}
                     locating={locating}
@@ -1987,6 +1999,17 @@ export function NearbyScreen(props: NearbyScreenProps) {
               />
             </div>
           </div>
+        )}
+
+        {/* ================= MODAL: UNIVERSAL CREATE POST ================= */}
+        {createPostModalOpen && (
+          <UniversalCreatePostModal
+            isOpen={createPostModalOpen}
+            onClose={() => setCreatePostModalOpen(false)}
+            onPostCreated={(post) => {
+              showToast(`Published ${post.type.toUpperCase()}: "${post.title}"`);
+            }}
+          />
         )}
 
         {/* ================= MODAL: BRIEF AI ASSISTANT ================= */}
