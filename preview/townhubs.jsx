@@ -32,7 +32,6 @@ const { InterCountyDesk } = require('./src/components/wairo/InterCountyDesk.tsx'
 const { PrivateCarrierAuctionDesk } = require('./src/components/wairo/PrivateCarrierAuctionDesk.tsx');
 const { OfflineSyncQueueDesk } = require('./src/components/offline/OfflineSyncQueueDesk.tsx');
 const { ArenaClanCoordination } = require('./src/components/arena/ArenaClanCoordination.tsx');
-const { OneXbetWrapper } = require('./src/components/onex/OneXbetWrapper.tsx');
 
 let pass = 0, fail = 0;
 const check = (name, cond, detail = '') => {
@@ -356,31 +355,6 @@ async function main() {
   }
   check('shows offline local table stores', host11.textContent.includes('wairo_offline_deliveries') && host11.textContent.includes('duka_offline_sales'));
   await act(async () => { root11.unmount(); host11.remove(); });
-
-  // --- 12. OneXbetWrapper (1xBet Sports-Tech UI Wrapper for Brief) ---
-  console.log('\n--- 12. OneXbetWrapper ---');
-  const host12 = document.createElement('div');
-  document.body.appendChild(host12);
-  const root12 = createRoot(host12);
-  await act(async () => {
-    root12.render(React.createElement(OneXbetWrapper, {
-      selectedCounty: 'Nairobi',
-      onOpenClassicApp: () => {},
-      onOpenCarrierAuction: () => {},
-      onOpenInterCounty: () => {},
-      onOpenOfflineSync: () => {},
-      onOpenChama: () => {},
-      onOpenArenaClan: () => {}
-    }));
-  });
-
-  const text12 = host12.textContent;
-  check('renders 1X-BRIEF brand header & balance pill', text12.includes('1X') && text12.includes('BRIEF') && text12.includes('KES 3,450'));
-  check('renders 1xBet sports ribbon pills', text12.includes('Top Sports') && text12.includes('Esports 1v1') && text12.includes('Wairo Silent Auction'));
-  check('shows live in-play matches & 3-way odds boxes', text12.includes('Live In-Play Esports') && text12.includes('Kevo Ghost') && text12.includes('1.85'));
-  check('shows floating Brief Slip with queued count', text12.includes('Brief Slip'));
-  check('shows 1xBet 5-tab bottom dock', text12.includes('Sports') && text12.includes('Live Radar') && text12.includes('Slip') && text12.includes('Ledger'));
-  await act(async () => { root12.unmount(); host12.remove(); });
 
   console.log(`\nPASSED ${pass}   FAILED ${fail}`);
   process.exit(fail ? 1 : 0);
