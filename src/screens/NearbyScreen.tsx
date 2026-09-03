@@ -25,6 +25,7 @@ import { WellbeingDesk } from '../components/wellbeing/WellbeingDesk';
 import { BriefAiAssistant } from '../components/ai/BriefAiAssistant';
 import { CivicKnowledgeGuide } from '../components/civic/CivicKnowledgeGuide';
 import { ChamaDesk } from '../components/circle/ChamaDesk';
+import { InterCountyDesk } from '../components/wairo/InterCountyDesk';
 import { soundEngine } from '../utils/SoundEngine';
 import type { ArenaMatch, BriefObject, Destination, NearbySection, Pursuit, Quest, TeaEdition, WorkflowSection } from '../model/core';
 import type { AuthedUser, PersonalState } from '../api/briefApi';
@@ -234,6 +235,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
   const [wellbeingOpen, setWellbeingOpen] = useState(false);
   const [briefAiOpen, setBriefAiOpen] = useState(false);
   const [civicGuideOpen, setCivicGuideOpen] = useState(false);
+  const [interCountyOpen, setInterCountyOpen] = useState(false);
 
   const commitRecentSearch = React.useCallback((term: string) => {
     const t = term.trim();
@@ -497,7 +499,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                         <span className="text-[10px] font-mono text-gray-500 font-bold">4 Live Hubs</span>
                       </div>
 
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
                         <button
                           type="button"
                           onClick={() => { soundEngine.play('heavyTap'); setCommitteeOpen(true); }}
@@ -546,6 +548,23 @@ export function NearbyScreen(props: NearbyScreenProps) {
                           <div className="mt-2">
                             <span className="font-black text-xs block text-white leading-tight">Wellbeing Hub</span>
                             <span className="text-[10px] text-emerald-200/70 block mt-0.5">Circles & Therapists</span>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => { soundEngine.play('heavyTap'); setInterCountyOpen(true); }}
+                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0A101D] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xl">🚚</span>
+                            <span className="text-[8px] font-mono uppercase bg-[#00BFEF] text-[#0D1117] px-1.5 py-0.5 rounded font-black">
+                              4-County Hub
+                            </span>
+                          </div>
+                          <div className="mt-2">
+                            <span className="font-black text-xs block text-white leading-tight">Inter-County Cargo</span>
+                            <span className="text-[10px] text-cyan-200/70 block mt-0.5">Mombasa • Kisumu</span>
                           </div>
                         </button>
 
@@ -1884,6 +1903,20 @@ export function NearbyScreen(props: NearbyScreenProps) {
                 onClose={() => setWellbeingOpen(false)}
                 onBookTherapist={(doc) => {
                   showToast(`Booking request sent to ${doc}`);
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ================= MODAL: INTER-COUNTY CARGO & TRAVELER MATCHING ================= */}
+        {interCountyOpen && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div className="w-full max-w-3xl my-auto">
+              <InterCountyDesk
+                onClose={() => setInterCountyOpen(false)}
+                onBookingComplete={(bkg) => {
+                  showToast(`Cargo booking ${bkg.id} placed! Escrow secured via M-Pesa.`);
                 }}
               />
             </div>

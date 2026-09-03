@@ -28,6 +28,8 @@ const { CivicKnowledgeGuide } = require('./src/components/civic/CivicKnowledgeGu
 const { BriefAiAssistant } = require('./src/components/ai/BriefAiAssistant.tsx');
 const { ChamaDesk } = require('./src/components/circle/ChamaDesk.tsx');
 const { UssdSimulatorDesk } = require('./src/components/offline/UssdSimulatorDesk.tsx');
+const { InterCountyDesk } = require('./src/components/wairo/InterCountyDesk.tsx');
+const { ArenaClanCoordination } = require('./src/components/arena/ArenaClanCoordination.tsx');
 
 let pass = 0, fail = 0;
 const check = (name, cond, detail = '') => {
@@ -225,6 +227,78 @@ async function main() {
   }
   check('shows shortcode gateway and sample dispatches', host7.textContent.includes('22880') && host7.textContent.includes('WAIRO DISPATCH'));
   await act(async () => { root7.unmount(); host7.remove(); });
+
+  // --- 8. InterCountyDesk (Long Distance Traveler & Cargo Matching) ---
+  console.log('\n--- 8. InterCountyDesk ---');
+  const host8 = document.createElement('div');
+  document.body.appendChild(host8);
+  const root8 = createRoot(host8);
+  await act(async () => {
+    root8.render(React.createElement(InterCountyDesk, {
+      onClose: () => {},
+      onBookingComplete: () => {}
+    }));
+  });
+
+  const text8 = host8.textContent;
+  check('renders Inter-County title', text8.includes('Long-Distance Traveler & Cargo Matching'));
+  check('shows inter-county routes and counties', text8.includes('Mombasa') && text8.includes('Kisumu') && text8.includes('Nairobi'));
+  check('shows logbook verified badge', text8.includes('LOGBOOK VERIFIED'));
+
+  // Switch to Post Trip tab
+  const postTripBtn = Array.from(host8.querySelectorAll('button')).find(b => b.textContent.includes('Post Your Trip'));
+  if (postTripBtn) {
+    await act(async () => {
+      postTripBtn.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+  }
+  check('shows post trip form & 90% payout info', host8.textContent.includes('Earn 90% Commission') && host8.textContent.includes('Publish Inter-County Route'));
+
+  // Switch to My Bookings tab
+  const myBookingsBtn = Array.from(host8.querySelectorAll('button')).find(b => b.textContent.includes('My Cargo Bookings'));
+  if (myBookingsBtn) {
+    await act(async () => {
+      myBookingsBtn.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+  }
+  check('shows parcel escrow release PIN', host8.textContent.includes('Recipient Drop-off Release PIN') && host8.textContent.includes('7419'));
+  await act(async () => { root8.unmount(); host8.remove(); });
+
+  // --- 9. ArenaClanCoordination (Discord for Africa & Scrim Coordinator) ---
+  console.log('\n--- 9. ArenaClanCoordination ---');
+  const host9 = document.createElement('div');
+  document.body.appendChild(host9);
+  const root9 = createRoot(host9);
+  await act(async () => {
+    root9.render(React.createElement(ArenaClanCoordination, {
+      onClose: () => {},
+      onJoinMatch: () => {}
+    }));
+  });
+
+  const text9 = host9.textContent;
+  check('renders Arena Clan Hub title', text9.includes('Arena Clan Hub & Matchmaking'));
+  check('shows top African clans and tags', text9.includes('Nairobi Phantoms') && text9.includes('[NBO]') && text9.includes('Mombasa Cyber-Sharks'));
+  check('shows Discord voice channel lounge', text9.includes('Voice: Nairobi Scrim Lobbies #1') && text9.includes('Recruiting Open'));
+
+  // Switch to M-Pesa Staked tab
+  const stakedTabBtn = Array.from(host9.querySelectorAll('button')).find(b => b.textContent.includes('M-Pesa Staked Duels'));
+  if (stakedTabBtn) {
+    await act(async () => {
+      stakedTabBtn.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+  }
+  check('shows staked challenge lobbies and prize pools', host9.textContent.includes('M-Pesa Staked Challenge Lobbies') && host9.textContent.includes('KES 900'));
+
+  // Switch to Tournament Bracket tab
+  const bracketTabBtn = Array.from(host9.querySelectorAll('button')).find(b => b.textContent.includes('County Tournament Brackets'));
+  if (bracketTabBtn) {
+    await act(async () => {
+      bracketTabBtn.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+  }
+  check('shows single elimination bracket and rounds', host9.textContent.includes('Quarterfinals') && host9.textContent.includes('Semifinals') && host9.textContent.includes('Grand Final'));
+  await act(async () => { root9.unmount(); host9.remove(); });
 
   console.log(`\nPASSED ${pass}   FAILED ${fail}`);
   process.exit(fail ? 1 : 0);

@@ -11,6 +11,7 @@ import { MatchQueuePanel } from '../components/MatchQueuePanel';
 import { EplDesk } from '../components/EplDesk';
 import { LobbyBoard } from '../components/LobbyBoard';
 import { EfootballHighlightBanner, EfootballEventsHub } from '../components/arena/EfootballShowcase';
+import { ArenaClanCoordination } from '../components/arena/ArenaClanCoordination';
 import { soundEngine } from '../utils/SoundEngine';
 import { ArenaSoundToggleIcon } from '../components/arena/GameIcons';
 import '../styles/arenaArcade.css';
@@ -58,6 +59,7 @@ export function ArenaScreen({
   const [arenaOpenGame, setArenaOpenGame] = useState<ArenaGameId | null>(null);
   const [playAsConfirmed, setPlayAsConfirmed] = useState(false);
   const [myGameTag, setMyGameTag] = useState<string | null>(null);
+  const [clanModalOpen, setClanModalOpen] = useState(false);
   const [tagDraft, setTagDraft] = useState('');
   const [tagBusy, setTagBusy] = useState(false);
   const [availabilityOn, setAvailabilityOn] = useState(false);
@@ -577,6 +579,32 @@ export function ArenaScreen({
           )}
         </div>
 
+        {/* Discord for Africa Clan & Scrim Coordination Banner */}
+        <div className="p-3.5 rounded-2xl bg-gradient-to-r from-[#0F172A] via-[#1E293B] to-[#0A0D14] border border-white/10 text-white flex items-center justify-between shadow-md">
+          <div className="flex items-center space-x-3">
+            <div className="w-9 h-9 rounded-xl bg-[#FF5A1F] text-white flex items-center justify-center font-black text-sm shadow-sm">
+              🎮
+            </div>
+            <div>
+              <div className="flex items-center space-x-1.5">
+                <span className="font-black text-xs text-white">African Clans & Discord Hub</span>
+                <span className="text-[9px] font-mono bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded font-bold border border-emerald-500/30">
+                  ● Live Voice & Scrims
+                </span>
+              </div>
+              <p className="text-[10px] text-gray-300">Nairobi Phantoms, Mombasa Sharks & M-Pesa Staked Duels</p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => { soundEngine.play('heavyTap'); setClanModalOpen(true); }}
+            className="px-3.5 py-1.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-xs cursor-pointer transition-all shadow-xs"
+          >
+            Open Hub
+          </button>
+        </div>
+
         <div className="flex flex-wrap gap-1.5">
           {([
             ['lobby', 'Lobby'],
@@ -809,6 +837,20 @@ export function ArenaScreen({
                 <p className="text-[10px] text-[#0D1117]/60">Confirmed results only. Brief does not invent a rating.</p>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ================= MODAL: CLAN & TOURNAMENT COORDINATION ================= */}
+        {clanModalOpen && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div className="w-full max-w-3xl my-auto">
+              <ArenaClanCoordination
+                onClose={() => setClanModalOpen(false)}
+                onJoinMatch={(duel) => {
+                  showToast(`Joined duel in room ${duel.roomCode}`);
+                }}
+              />
+            </div>
           </div>
         )}
       </div>
