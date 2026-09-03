@@ -167,7 +167,7 @@ async function main() {
 
   const text5 = host5.textContent;
   check('renders Town Concierge header', text5.includes('Town Concierge') && text5.includes('The Mayor'));
-  check('renders greeting message', text5.includes('Hello Nyabs!') && text5.includes('Town Concierge'));
+  check('renders greeting message', text5.includes('Hello Neighbor!') && text5.includes('Town Concierge'));
   await act(async () => { root5.unmount(); host5.remove(); });
 
   console.log(`\nPASSED ${pass}   FAILED ${fail}`);

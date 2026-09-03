@@ -46,7 +46,7 @@ export function BriefAiAssistant({
     {
       id: 'm-1',
       sender: 'ai',
-      text: "Hello Nyabs! 👑 I'm your Town Concierge (The Mayor). How can I help you connect with people, gigs, permits, or events in your town today?",
+      text: "Hello Neighbor! 👑 I'm your Town Concierge (The Mayor). How can I help you connect with people, gigs, permits, or events in your town today?",
       time: 'Just now'
     }
   ]);

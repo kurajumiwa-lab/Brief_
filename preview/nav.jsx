@@ -187,10 +187,10 @@ async function main(){
   console.log('\n=== Both navs stay in sync ===');
   const railBtns=()=>Array.from(rail.querySelectorAll('button'));
   const barBtns=()=>Array.from(bar.querySelectorAll('button'));
-  await click(barBtns()[2]);
+  await click(barBtns()[4]);
   check('tapping bottom bar changes destination', /Gather with people to play/i.test(body()));
-  check('rail reflects the same active item', railBtns()[2].getAttribute('aria-current')==='page');
-  check('bar reflects the same active item', barBtns()[2].getAttribute('aria-current')==='page');
+  check('rail reflects the same active item', railBtns()[4].getAttribute('aria-current')==='page');
+  check('bar reflects the same active item', barBtns()[4].getAttribute('aria-current')==='page');
   await click(railBtns()[1]);
   check('clicking rail changes destination', /Everything Happening Around You/i.test(body()));
   check('bar follows the rail', barBtns()[1].getAttribute('aria-current')==='page');

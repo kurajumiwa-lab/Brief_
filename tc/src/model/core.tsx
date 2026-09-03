@@ -200,9 +200,9 @@ export const DESTINATIONS: {
   hint: string;
 }[] = [
   { id: 'nearby', label: ROOM.nearby.label, hint: ROOM.nearby.hint },
-  { id: 'arena', label: ROOM.arena.label, hint: ROOM.arena.hint },
   { id: 'mylayer', label: ROOM.mylayer.label, hint: ROOM.mylayer.hint },
-  { id: 'workflows', label: ROOM.workflows.label, hint: ROOM.workflows.hint }
+  { id: 'workflows', label: ROOM.workflows.label, hint: ROOM.workflows.hint },
+  { id: 'arena', label: ROOM.arena.label, hint: ROOM.arena.hint }
 ];
 
 // The red activity dot for a sidebar title. Dot for 1 update, dot + count

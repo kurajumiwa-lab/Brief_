@@ -327,10 +327,11 @@ export function ArenaGameScreen({
         {game.id === 'efootball' && (
           <div className="space-y-6">
             <EfootballHighlightBanner
-              onSelectContract={(player) => {
+              onLaunchChallenge={() => {
                 soundEngine.play('victory');
+                onCreateChallenge({ stake: 'entry_fee', entryFeeKes: 100, mode: 'Golden Goal', openMinutes: 120 });
               }}
-              onOpenDetails={() => {
+              onOpenMatches={() => {
                 soundEngine.play('tap');
               }}
             />
@@ -338,17 +339,18 @@ export function ArenaGameScreen({
             <section aria-label="eFootball Events">
               <div className="flex items-center justify-between gap-2 mb-2">
                 <h3 className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#0D1117]">
-                  Tournaments & Match Events
+                  Regional Tournaments & Match Events
                 </h3>
-                <span className="text-[10px] font-bold text-[#FF5A1F]">eFootball Season Hub</span>
+                <span className="text-[10px] font-bold text-[#FF5A1F]">African Ladders Hub</span>
               </div>
               <EfootballEventsHub
                 onEnterEvent={(ev) => {
                   soundEngine.play('heavyTap');
                   onCreateChallenge({
                     mode: ev.title,
-                    stake: 'friendly',
-                    note: `Event: ${ev.title} (${ev.category})`,
+                    stake: ev.category === 'Staked Duel' ? 'entry_fee' : 'ranked',
+                    entryFeeKes: ev.entryFeeKes,
+                    note: `Tournament: ${ev.title} (${ev.region})`,
                     openMinutes: 120
                   });
                 }}
