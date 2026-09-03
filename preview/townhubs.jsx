@@ -29,6 +29,8 @@ const { BriefAiAssistant } = require('./src/components/ai/BriefAiAssistant.tsx')
 const { ChamaDesk } = require('./src/components/circle/ChamaDesk.tsx');
 const { UssdSimulatorDesk } = require('./src/components/offline/UssdSimulatorDesk.tsx');
 const { InterCountyDesk } = require('./src/components/wairo/InterCountyDesk.tsx');
+const { PrivateCarrierAuctionDesk } = require('./src/components/wairo/PrivateCarrierAuctionDesk.tsx');
+const { OfflineSyncQueueDesk } = require('./src/components/offline/OfflineSyncQueueDesk.tsx');
 const { ArenaClanCoordination } = require('./src/components/arena/ArenaClanCoordination.tsx');
 
 let pass = 0, fail = 0;
@@ -299,6 +301,60 @@ async function main() {
   }
   check('shows single elimination bracket and rounds', host9.textContent.includes('Quarterfinals') && host9.textContent.includes('Semifinals') && host9.textContent.includes('Grand Final'));
   await act(async () => { root9.unmount(); host9.remove(); });
+
+  // --- 10. PrivateCarrierAuctionDesk (Silent Math Reverse Auction) ---
+  console.log('\n--- 10. PrivateCarrierAuctionDesk ---');
+  const host10 = document.createElement('div');
+  document.body.appendChild(host10);
+  const root10 = createRoot(host10);
+  await act(async () => {
+    root10.render(React.createElement(PrivateCarrierAuctionDesk, {
+      onClose: () => {},
+      onDispatchSelected: () => {}
+    }));
+  });
+
+  const text10 = host10.textContent;
+  check('renders Carrier Reverse-Auction title', text10.includes('Carrier Reverse-Auction Engine'));
+  check('shows registered carriers and bids', text10.includes('Fargo Courier') && text10.includes('GreenWheels') && text10.includes('KES 220'));
+  check('shows math match scores', text10.includes('/100') && text10.includes('Price') && text10.includes('Trust'));
+
+  // Switch to Branded Fixed Rates tab
+  const fixedTabBtn = Array.from(host10.querySelectorAll('button')).find(b => b.textContent.includes('Branded Direct Booking'));
+  if (fixedTabBtn) {
+    await act(async () => {
+      fixedTabBtn.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+  }
+  check('shows branded direct booking & fixed rates', host10.textContent.includes('Direct Fixed-Rate Booking') && host10.textContent.includes('G4S Secure Logistics'));
+  await act(async () => { root10.unmount(); host10.remove(); });
+
+  // --- 11. OfflineSyncQueueDesk (PWA IndexedDB & Background Sync) ---
+  console.log('\n--- 11. OfflineSyncQueueDesk ---');
+  const host11 = document.createElement('div');
+  document.body.appendChild(host11);
+  const root11 = createRoot(host11);
+  await act(async () => {
+    root11.render(React.createElement(OfflineSyncQueueDesk, {
+      onClose: () => {},
+      onActionSynced: () => {}
+    }));
+  });
+
+  const text11 = host11.textContent;
+  check('renders Offline Sync Queue title', text11.includes('Offline Local Storage & Sync Queue'));
+  check('shows pending sync mutations and count', text11.includes('Pending Sync') && text11.includes('mutations'));
+  check('shows network state simulator pills', text11.includes('4G Online') && text11.includes('Offline'));
+
+  // Switch to IndexedDB inspect tab
+  const inspectTabBtn = Array.from(host11.querySelectorAll('button')).find(b => b.textContent.includes('IndexedDB Tables'));
+  if (inspectTabBtn) {
+    await act(async () => {
+      inspectTabBtn.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+  }
+  check('shows offline local table stores', host11.textContent.includes('wairo_offline_deliveries') && host11.textContent.includes('duka_offline_sales'));
+  await act(async () => { root11.unmount(); host11.remove(); });
 
   console.log(`\nPASSED ${pass}   FAILED ${fail}`);
   process.exit(fail ? 1 : 0);

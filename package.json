@@ -37,6 +37,7 @@
     "communities"
   ],
   "devDependencies": {
+    "lucide-react": "^1.40.0",
     "typescript": "^7.0.2"
   }
 }

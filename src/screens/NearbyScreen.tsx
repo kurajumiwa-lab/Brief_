@@ -26,6 +26,8 @@ import { BriefAiAssistant } from '../components/ai/BriefAiAssistant';
 import { CivicKnowledgeGuide } from '../components/civic/CivicKnowledgeGuide';
 import { ChamaDesk } from '../components/circle/ChamaDesk';
 import { InterCountyDesk } from '../components/wairo/InterCountyDesk';
+import { PrivateCarrierAuctionDesk } from '../components/wairo/PrivateCarrierAuctionDesk';
+import { OfflineSyncQueueDesk } from '../components/offline/OfflineSyncQueueDesk';
 import { soundEngine } from '../utils/SoundEngine';
 import type { ArenaMatch, BriefObject, Destination, NearbySection, Pursuit, Quest, TeaEdition, WorkflowSection } from '../model/core';
 import type { AuthedUser, PersonalState } from '../api/briefApi';
@@ -236,6 +238,8 @@ export function NearbyScreen(props: NearbyScreenProps) {
   const [briefAiOpen, setBriefAiOpen] = useState(false);
   const [civicGuideOpen, setCivicGuideOpen] = useState(false);
   const [interCountyOpen, setInterCountyOpen] = useState(false);
+  const [carrierAuctionOpen, setCarrierAuctionOpen] = useState(false);
+  const [offlineSyncOpen, setOfflineSyncOpen] = useState(false);
 
   const commitRecentSearch = React.useCallback((term: string) => {
     const t = term.trim();
@@ -599,6 +603,40 @@ export function NearbyScreen(props: NearbyScreenProps) {
                           <div className="mt-2">
                             <span className="font-black text-xs block text-white leading-tight">Civic Guides</span>
                             <span className="text-[10px] text-indigo-200/70 block mt-0.5">Permits & Licenses</span>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => { soundEngine.play('heavyTap'); setCarrierAuctionOpen(true); }}
+                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0B1B2A] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xl">⚖️</span>
+                            <span className="text-[8px] font-mono uppercase bg-[#2563EB] text-white px-1.5 py-0.5 rounded font-bold">
+                              Silent Bids
+                            </span>
+                          </div>
+                          <div className="mt-2">
+                            <span className="font-black text-xs block text-white leading-tight">Carrier Auction</span>
+                            <span className="text-[10px] text-blue-200/70 block mt-0.5">Math Match Engine</span>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => { soundEngine.play('heavyTap'); setOfflineSyncOpen(true); }}
+                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#064E3B] via-[#042F2E] to-[#022C22] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xl">📡</span>
+                            <span className="text-[8px] font-mono uppercase bg-emerald-500/30 text-emerald-300 px-1.5 py-0.5 rounded font-bold">
+                              IndexedDB
+                            </span>
+                          </div>
+                          <div className="mt-2">
+                            <span className="font-black text-xs block text-white leading-tight">Offline PWA Sync</span>
+                            <span className="text-[10px] text-emerald-200/70 block mt-0.5">Zero-Data Queue</span>
                           </div>
                         </button>
                       </div>
@@ -1917,6 +1955,34 @@ export function NearbyScreen(props: NearbyScreenProps) {
                 onClose={() => setInterCountyOpen(false)}
                 onBookingComplete={(bkg) => {
                   showToast(`Cargo booking ${bkg.id} placed! Escrow secured via M-Pesa.`);
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ================= MODAL: PRIVATE CARRIER REVERSE AUCTION ================= */}
+        {carrierAuctionOpen && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div className="w-full max-w-3xl my-auto">
+              <PrivateCarrierAuctionDesk
+                onClose={() => setCarrierAuctionOpen(false)}
+                onDispatchSelected={(carrier) => {
+                  showToast(`Assigned ${carrier.carrierName} for KES ${carrier.bidPriceKes}`);
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ================= MODAL: OFFLINE PWA INDEXEDDB SYNC ================= */}
+        {offlineSyncOpen && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div className="w-full max-w-3xl my-auto">
+              <OfflineSyncQueueDesk
+                onClose={() => setOfflineSyncOpen(false)}
+                onActionSynced={(act) => {
+                  showToast(`Reconciled offline mutation ${act.title}`);
                 }}
               />
             </div>
