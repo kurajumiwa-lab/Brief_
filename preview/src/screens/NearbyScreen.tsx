@@ -19,6 +19,12 @@ import { Pursuits } from '../components/Pursuits';
 import { Quests } from '../components/Quests';
 import { SearchResults } from '../components/SearchResults';
 import { TickerBanner } from '../components/SignalBanner';
+import { TodayOpportunities } from '../components/home/TodayOpportunities';
+import { CommitteeDesk } from '../components/life/CommitteeDesk';
+import { WellbeingDesk } from '../components/wellbeing/WellbeingDesk';
+import { BriefAiAssistant } from '../components/ai/BriefAiAssistant';
+import { CivicKnowledgeGuide } from '../components/civic/CivicKnowledgeGuide';
+import { soundEngine } from '../utils/SoundEngine';
 import type { ArenaMatch, BriefObject, Destination, NearbySection, Pursuit, Quest, TeaEdition, WorkflowSection } from '../model/core';
 import type { AuthedUser, PersonalState } from '../api/briefApi';
 import type { GeoPoint } from '../components/LocationChip';
@@ -222,6 +228,10 @@ export function NearbyScreen(props: NearbyScreenProps) {
     } catch { return []; }
   });
   const [searchFocused, setSearchFocused] = React.useState(false);
+  const [committeeOpen, setCommitteeOpen] = useState(false);
+  const [wellbeingOpen, setWellbeingOpen] = useState(false);
+  const [briefAiOpen, setBriefAiOpen] = useState(false);
+  const [civicGuideOpen, setCivicGuideOpen] = useState(false);
 
   const commitRecentSearch = React.useCallback((term: string) => {
     const t = term.trim();
@@ -447,6 +457,116 @@ export function NearbyScreen(props: NearbyScreenProps) {
                       />
                     </div>
                   )}
+
+                  {/* ================= TODAY'S OPPORTUNITIES STRIP ================= */}
+                  {discoveryTab === 'home' && (
+                    <div className="mb-6">
+                      <TodayOpportunities
+                        onSelectOpportunity={(opp) => {
+                          if (opp.category === 'gigs' || opp.category === 'grants') {
+                            setSelectedObjectType('opportunity');
+                            setDiscoveryTab('opportunities');
+                          } else if (opp.category === 'arena') {
+                            setActiveTab('arena');
+                          } else if (opp.category === 'learning') {
+                            setBriefAiOpen(true);
+                          } else if (opp.category === 'thrift') {
+                            setSelectedObjectType('product');
+                            setDiscoveryTab('explore');
+                          } else if (opp.category === 'events') {
+                            setSelectedObjectType('experience');
+                            setDiscoveryTab('events');
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {/* ================= TOWN CENTRE DISTRICTS & HUBS ================= */}
+                  {discoveryTab === 'home' && (
+                    <section className="mb-6 space-y-2.5" aria-label="Town Centre Districts">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-1.5">
+                          <span className="w-2 h-2 rounded-full bg-[#00BFEF] animate-pulse" />
+                          <h3 className="text-xs font-black uppercase tracking-[0.16em] text-[#0D1117]">
+                            Town Centre Districts & Services
+                          </h3>
+                        </div>
+                        <span className="text-[10px] font-mono text-gray-500 font-bold">4 Live Hubs</span>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                        <button
+                          type="button"
+                          onClick={() => { soundEngine.play('heavyTap'); setCommitteeOpen(true); }}
+                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#1E293B] to-[#0F172A] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xl">🕊️</span>
+                            <span className="text-[8px] font-mono uppercase bg-white/10 px-1.5 py-0.5 rounded text-white font-bold">
+                              72% Funded
+                            </span>
+                          </div>
+                          <div className="mt-2">
+                            <span className="font-black text-xs block text-white leading-tight">Life-Events Hub</span>
+                            <span className="text-[10px] text-gray-400 block mt-0.5">Burial & Harambee</span>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => { soundEngine.play('heavyTap'); setWellbeingOpen(true); }}
+                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#064E3B] to-[#022C22] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xl">💚</span>
+                            <span className="text-[8px] font-mono uppercase bg-emerald-500/30 text-emerald-300 px-1.5 py-0.5 rounded font-bold">
+                              Confidential
+                            </span>
+                          </div>
+                          <div className="mt-2">
+                            <span className="font-black text-xs block text-white leading-tight">Wellbeing Hub</span>
+                            <span className="text-[10px] text-emerald-200/70 block mt-0.5">Circles & Therapists</span>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => { soundEngine.play('heavyTap'); setBriefAiOpen(true); }}
+                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#7C2D12] to-[#431407] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xl">🤖</span>
+                            <span className="text-[8px] font-mono uppercase bg-[#FF5A1F] text-white px-1.5 py-0.5 rounded font-bold">
+                              The Mayor
+                            </span>
+                          </div>
+                          <div className="mt-2">
+                            <span className="font-black text-xs block text-white leading-tight">Town Concierge</span>
+                            <span className="text-[10px] text-orange-200/70 block mt-0.5">Local Guide</span>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => { soundEngine.play('heavyTap'); setCivicGuideOpen(true); }}
+                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#1E1B4B] to-[#0F0E2A] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xl">🏛️</span>
+                            <span className="text-[8px] font-mono uppercase bg-indigo-500/30 text-indigo-300 px-1.5 py-0.5 rounded font-bold">
+                              Verified
+                            </span>
+                          </div>
+                          <div className="mt-2">
+                            <span className="font-black text-xs block text-white leading-tight">Civic Guides</span>
+                            <span className="text-[10px] text-indigo-200/70 block mt-0.5">Permits & Licenses</span>
+                          </div>
+                        </button>
+                      </div>
+                    </section>
+                  )}
+
                   <MainShelf
                     onSelect={handleMenuSelect}
                     playOpenCount={arenaActivity.efootball ?? null}
@@ -1705,6 +1825,69 @@ export function NearbyScreen(props: NearbyScreenProps) {
             handleTogglePursuitCondition={handleTogglePursuitCondition}
             setSelectedObjectForDetail={setSelectedObjectForDetail}
           />
+        )}
+
+        {/* ================= MODAL: LIFE-EVENTS COMMITTEE HUB ================= */}
+        {committeeOpen && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div className="w-full max-w-2xl my-auto">
+              <CommitteeDesk
+                onClose={() => setCommitteeOpen(false)}
+                onOpenVendor={(vendor) => {
+                  setCommitteeOpen(false);
+                  showToast(`Opening ${vendor} profile in town directory`);
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ================= MODAL: EMOTIONAL WELLBEING HUB ================= */}
+        {wellbeingOpen && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div className="w-full max-w-2xl my-auto">
+              <WellbeingDesk
+                onClose={() => setWellbeingOpen(false)}
+                onBookTherapist={(doc) => {
+                  showToast(`Booking request sent to ${doc}`);
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ================= MODAL: BRIEF AI ASSISTANT ================= */}
+        {briefAiOpen && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div className="w-full max-w-2xl my-auto">
+              <BriefAiAssistant
+                onClose={() => setBriefAiOpen(false)}
+                onOpenCardAction={(type) => {
+                  setBriefAiOpen(false);
+                  if (type === 'civic') setCivicGuideOpen(true);
+                  else if (type === 'vendor') showToast(`Opening verified vendor details`);
+                  else if (type === 'event') {
+                    setSelectedObjectType('experience');
+                    setDiscoveryTab('events');
+                  }
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ================= MODAL: CIVIC KNOWLEDGE GUIDE ================= */}
+        {civicGuideOpen && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div className="w-full max-w-2xl my-auto">
+              <CivicKnowledgeGuide
+                onClose={() => setCivicGuideOpen(false)}
+                onAction={(act) => {
+                  showToast(`${act} recorded`);
+                }}
+              />
+            </div>
+          </div>
         )}
     </>
   );
