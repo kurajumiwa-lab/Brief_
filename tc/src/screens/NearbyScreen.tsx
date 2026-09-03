@@ -24,6 +24,7 @@ import { CommitteeDesk } from '../components/life/CommitteeDesk';
 import { WellbeingDesk } from '../components/wellbeing/WellbeingDesk';
 import { BriefAiAssistant } from '../components/ai/BriefAiAssistant';
 import { CivicKnowledgeGuide } from '../components/civic/CivicKnowledgeGuide';
+import { ChamaDesk } from '../components/circle/ChamaDesk';
 import { soundEngine } from '../utils/SoundEngine';
 import type { ArenaMatch, BriefObject, Destination, NearbySection, Pursuit, Quest, TeaEdition, WorkflowSection } from '../model/core';
 import type { AuthedUser, PersonalState } from '../api/briefApi';
@@ -229,6 +230,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
   });
   const [searchFocused, setSearchFocused] = React.useState(false);
   const [committeeOpen, setCommitteeOpen] = useState(false);
+  const [chamaOpen, setChamaOpen] = useState(false);
   const [wellbeingOpen, setWellbeingOpen] = useState(false);
   const [briefAiOpen, setBriefAiOpen] = useState(false);
   const [civicGuideOpen, setCivicGuideOpen] = useState(false);
@@ -495,7 +497,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                         <span className="text-[10px] font-mono text-gray-500 font-bold">4 Live Hubs</span>
                       </div>
 
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
                         <button
                           type="button"
                           onClick={() => { soundEngine.play('heavyTap'); setCommitteeOpen(true); }}
@@ -510,6 +512,23 @@ export function NearbyScreen(props: NearbyScreenProps) {
                           <div className="mt-2">
                             <span className="font-black text-xs block text-white leading-tight">Life-Events Hub</span>
                             <span className="text-[10px] text-gray-400 block mt-0.5">Burial & Harambee</span>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => { soundEngine.play('heavyTap'); setChamaOpen(true); }}
+                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#311042] to-[#1E092B] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xl">🌸</span>
+                            <span className="text-[8px] font-mono uppercase bg-amber-400/20 text-amber-300 px-1.5 py-0.5 rounded font-bold">
+                              Cycle 5 (KES 60k)
+                            </span>
+                          </div>
+                          <div className="mt-2">
+                            <span className="font-black text-xs block text-white leading-tight">Chama & Table Bank</span>
+                            <span className="text-[10px] text-purple-200/70 block mt-0.5">Merry-Go-Round</span>
                           </div>
                         </button>
 
@@ -1836,6 +1855,21 @@ export function NearbyScreen(props: NearbyScreenProps) {
                 onOpenVendor={(vendor) => {
                   setCommitteeOpen(false);
                   showToast(`Opening ${vendor} profile in town directory`);
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ================= MODAL: CHAMA & TABLE BANKING HUB ================= */}
+        {chamaOpen && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div className="w-full max-w-2xl my-auto">
+              <ChamaDesk
+                onClose={() => setChamaOpen(false)}
+                onOpenCircle={() => {
+                  setChamaOpen(false);
+                  showToast('Opening Chama circle details');
                 }}
               />
             </div>
