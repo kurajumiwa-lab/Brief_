@@ -15,6 +15,9 @@ import { LocationModal } from './LocationModal';
 import { DispatchModal } from './DispatchModal';
 import { EmbedSDKModal } from './EmbedSDKModal';
 import { UssdSimulatorDesk } from '../offline/UssdSimulatorDesk';
+import { InterCountyDesk } from './InterCountyDesk';
+import { PrivateCarrierAuctionDesk } from './PrivateCarrierAuctionDesk';
+import { OfflineSyncQueueDesk } from '../offline/OfflineSyncQueueDesk';
 import { LOCATIONS, INITIAL_ACTIVE_DELIVERY, WairoLocation, WairoDelivery } from './wairoData';
 import { playSound } from './wairoAudio';
 
@@ -30,6 +33,9 @@ export const WairoFloatingWidget: React.FC = () => {
   const [isDispatchModalOpen, setIsDispatchModalOpen] = useState(false);
   const [isSDKModalOpen, setIsSDKModalOpen] = useState(false);
   const [isUssdOpen, setIsUssdOpen] = useState(false);
+  const [isInterCountyOpen, setIsInterCountyOpen] = useState(false);
+  const [isCarrierAuctionOpen, setIsCarrierAuctionOpen] = useState(false);
+  const [isOfflineSyncOpen, setIsOfflineSyncOpen] = useState(false);
 
   const handleSelectLocation = (loc: WairoLocation) => {
     setSelectedLocation(loc);
@@ -149,6 +155,9 @@ export const WairoFloatingWidget: React.FC = () => {
               onOpenDispatchModal={() => setIsDispatchModalOpen(true)}
               onOpenSDKModal={() => setIsSDKModalOpen(true)}
               onOpenUssdSim={() => setIsUssdOpen(true)}
+              onOpenInterCounty={() => setIsInterCountyOpen(true)}
+              onOpenCarrierAuction={() => setIsCarrierAuctionOpen(true)}
+              onOpenOfflineSync={() => setIsOfflineSyncOpen(true)}
               selectedLocation={selectedLocation}
               activeDelivery={activeDelivery}
               isMiniView={true}
@@ -183,6 +192,9 @@ export const WairoFloatingWidget: React.FC = () => {
                 onOpenDispatchModal={() => setIsDispatchModalOpen(true)}
                 onOpenSDKModal={() => setIsSDKModalOpen(true)}
                 onOpenUssdSim={() => setIsUssdOpen(true)}
+                onOpenInterCounty={() => setIsInterCountyOpen(true)}
+                onOpenCarrierAuction={() => setIsCarrierAuctionOpen(true)}
+                onOpenOfflineSync={() => setIsOfflineSyncOpen(true)}
                 selectedLocation={selectedLocation}
                 activeDelivery={activeDelivery}
               />
@@ -227,6 +239,33 @@ export const WairoFloatingWidget: React.FC = () => {
         <div style={{ position: 'fixed', inset: 0, zIndex: 60 }} className="bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
           <div className="w-full max-w-3xl my-auto">
             <UssdSimulatorDesk onClose={() => setIsUssdOpen(false)} />
+          </div>
+        </div>
+      )}
+
+      {/* ================= INTER-COUNTY CARGO MODAL ================= */}
+      {isInterCountyOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 60 }} className="bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="w-full max-w-3xl my-auto">
+            <InterCountyDesk onClose={() => setIsInterCountyOpen(false)} />
+          </div>
+        </div>
+      )}
+
+      {/* ================= CARRIER REVERSE AUCTION MODAL ================= */}
+      {isCarrierAuctionOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 60 }} className="bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="w-full max-w-3xl my-auto">
+            <PrivateCarrierAuctionDesk onClose={() => setIsCarrierAuctionOpen(false)} />
+          </div>
+        </div>
+      )}
+
+      {/* ================= OFFLINE SYNC QUEUE MODAL ================= */}
+      {isOfflineSyncOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 60 }} className="bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="w-full max-w-3xl my-auto">
+            <OfflineSyncQueueDesk onClose={() => setIsOfflineSyncOpen(false)} />
           </div>
         </div>
       )}

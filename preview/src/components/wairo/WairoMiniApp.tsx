@@ -44,6 +44,9 @@ interface WairoMiniAppProps {
   onOpenDispatchModal: () => void;
   onOpenSDKModal: () => void;
   onOpenUssdSim?: () => void;
+  onOpenInterCounty?: () => void;
+  onOpenCarrierAuction?: () => void;
+  onOpenOfflineSync?: () => void;
   selectedLocation: WairoLocation;
   activeDelivery: WairoDelivery;
   isMiniView?: boolean;
@@ -56,6 +59,9 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
   onOpenDispatchModal, 
   onOpenSDKModal,
   onOpenUssdSim,
+  onOpenInterCounty,
+  onOpenCarrierAuction,
+  onOpenOfflineSync,
   selectedLocation, 
   activeDelivery,
   isMiniView = false,
@@ -620,6 +626,72 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
                   <div>
                     <h5 className="font-bold text-xs text-[#0B1B2A]">Simulate 2G USSD (*483*88#) & SMS</h5>
                     <p className="text-[10px] text-gray-500">For non-smartphone couriers & feature phones</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            )}
+
+            {onOpenInterCounty && (
+              <button
+                type="button"
+                onClick={() => {
+                  playSound('click');
+                  onOpenInterCounty();
+                }}
+                className="w-full p-3.5 rounded-2xl bg-white border border-[#00BFEF]/40 hover:border-[#00BFEF] flex items-center justify-between text-left transition-colors cursor-pointer group shadow-xs"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 rounded-xl bg-[#00BFEF]/15 text-[#00BFEF] flex items-center justify-center">
+                    <Truck className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h5 className="font-bold text-xs text-[#0B1B2A]">Inter-County Traveler & Cargo Matching</h5>
+                    <p className="text-[10px] text-gray-500">Nairobi ➔ Mombasa, Nakuru, Kisumu, Eldoret</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            )}
+
+            {onOpenCarrierAuction && (
+              <button
+                type="button"
+                onClick={() => {
+                  playSound('click');
+                  onOpenCarrierAuction();
+                }}
+                className="w-full p-3.5 rounded-2xl bg-white border border-blue-500/40 hover:border-blue-500 flex items-center justify-between text-left transition-colors cursor-pointer group shadow-xs"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center">
+                    <Award className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h5 className="font-bold text-xs text-[#0B1B2A]">Private Carrier Reverse-Auction Desk</h5>
+                    <p className="text-[10px] text-gray-500">Silent mathematical matching & fleet ranking</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            )}
+
+            {onOpenOfflineSync && (
+              <button
+                type="button"
+                onClick={() => {
+                  playSound('click');
+                  onOpenOfflineSync();
+                }}
+                className="w-full p-3.5 rounded-2xl bg-white border border-teal-500/40 hover:border-teal-500 flex items-center justify-between text-left transition-colors cursor-pointer group shadow-xs"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center">
+                    <Radio className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h5 className="font-bold text-xs text-[#0B1B2A]">PWA Offline IndexedDB Sync Queue</h5>
+                    <p className="text-[10px] text-gray-500">Zero-data offline mutations & background drain</p>
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
