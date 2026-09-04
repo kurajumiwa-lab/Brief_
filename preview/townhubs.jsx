@@ -32,7 +32,7 @@ const { InterCountyDesk } = require('./src/components/wairo/InterCountyDesk.tsx'
 const { PrivateCarrierAuctionDesk } = require('./src/components/wairo/PrivateCarrierAuctionDesk.tsx');
 const { OfflineSyncQueueDesk } = require('./src/components/offline/OfflineSyncQueueDesk.tsx');
 const { ArenaClanCoordination } = require('./src/components/arena/ArenaClanCoordination.tsx');
-const { UniversalCreatePostModal } = require('./src/components/posts/UniversalCreatePostModal.tsx');
+const { UniversalCreatePostModal, CreatePostSheet } = require('./src/components/posts/UniversalCreatePostModal.tsx');
 const { DiscoverScreen } = require('./src/screens/DiscoverScreen.tsx');
 
 let pass = 0, fail = 0;
@@ -431,6 +431,36 @@ async function main() {
   check('opens detail bottom sheet with direct WhatsApp & Telegram actions', host13.textContent.includes('WhatsApp') && host13.textContent.includes('Telegram') && host13.textContent.includes('Contact Organizer / Seller Directly:'));
 
   await act(async () => { root13.unmount(); host13.remove(); });
+
+  // --- 14. CreatePostSheet (2-Step Bottom Sheet Creator) ---
+  console.log('\n--- 14. CreatePostSheet ---');
+  const host14 = document.createElement('div');
+  document.body.appendChild(host14);
+  const root14 = createRoot(host14);
+  await act(async () => {
+    root14.render(React.createElement(CreatePostSheet, {
+      isOpen: true,
+      onClose: () => {},
+      onPostCreated: () => {}
+    }));
+  });
+
+  const text14 = host14.textContent;
+  check('renders Step 0 prompt', text14.includes('What are you sharing?'));
+  check('shows type options: Event, Product, Announce', text14.includes('Event') && text14.includes('Product') && text14.includes('Announce'));
+  check('shows Continue button', text14.includes('Continue'));
+
+  // Click Continue to advance to Step 1
+  const continueBtn = Array.from(host14.querySelectorAll('button')).find(b => b.textContent.includes('Continue'));
+  if (continueBtn) {
+    await act(async () => {
+      continueBtn.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+  }
+  check('advances to Step 1 Add the details', host14.textContent.includes('Add the details') && host14.textContent.includes('Tap to add photos'));
+  check('renders publish button on Step 1', host14.textContent.includes('Publish'));
+
+  await act(async () => { root14.unmount(); host14.remove(); });
 
   console.log(`\nPASSED ${pass}   FAILED ${fail}`);
   process.exit(fail ? 1 : 0);

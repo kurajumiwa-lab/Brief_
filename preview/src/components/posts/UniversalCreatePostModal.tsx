@@ -1477,3 +1477,5 @@ export function UniversalCreatePostModal({
     </div>
   );
 }
+
+export { CreatePostSheet } from './CreatePostSheet';
