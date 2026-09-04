@@ -28,6 +28,8 @@ import {
   SheetMaterial,
   MetalTag,
   WairoBookmark,
+  DiscoverBookmark,
+  WelcomingMat,
   BriefBuilderSection,
   GroupDemandRunDesk,
   GroupEventLogisticsDesk,
@@ -54,6 +56,7 @@ import { InterCountyDesk } from '../components/wairo/InterCountyDesk';
 import { UniversalCreatePostModal, Post } from '../components/posts/UniversalCreatePostModal';
 import { SheetDetailScreen, SheetDetailScreenProps } from './SheetDetailScreen';
 import { SubcategoryDrillScreen, SubcategoryDrillScreenProps } from './SubcategoryDrillScreen';
+import { DiscoverScreen } from './DiscoverScreen';
 import {
   NEIGHBORHOODS,
   Neighborhood,
@@ -117,6 +120,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
   const [demandRunOpen, setDemandRunOpen] = useState(false);
   const [eventLogisticsOpen, setEventLogisticsOpen] = useState(false);
   const [creatorDeskOpen, setCreatorDeskOpen] = useState(false);
+  const [discoverViewOpen, setDiscoverViewOpen] = useState(false);
 
   // Detail Screens Navigation Stack
   const [activeDetailScreen, setActiveDetailScreen] = useState<Omit<SheetDetailScreenProps, 'onClose'> | null>(null);
@@ -157,8 +161,14 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
   return (
     <div className="relative min-h-screen w-full bg-[#E8E4DD] text-[#1A1F2E] font-sans overflow-x-hidden selection:bg-[#E8985E]/30">
       
-      {/* ================= FLOATING WAIRO BOOKMARK (TOP-RIGHT) ================= */}
-      <div className="fixed top-2 right-4 z-40">
+      {/* ================= FLOATING DUAL BOOKMARKS (TOP-RIGHT) ================= */}
+      <div className="fixed top-2 right-4 z-40 flex items-start space-x-1.5 pointer-events-auto">
+        <DiscoverBookmark
+          onTap={() => {
+            soundEngine.play('tap');
+            setDiscoverViewOpen(true);
+          }}
+        />
         <WairoBookmark
           status="IN TRANSIT"
           location={wairoLocation.name}
@@ -173,7 +183,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
       <div className="max-w-xl mx-auto px-4 sm:px-6 pt-3 pb-36 min-h-screen">
         
         {/* ── COMPACT HEADER WITH NEIGHBORHOOD IDENTITY ── */}
-        <header className="pr-20 py-2 flex items-center justify-between">
+        <header className="pr-28 sm:pr-32 py-2 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#8B4FFF] to-[#E85D75] flex items-center justify-center text-white font-black text-lg shadow-md shrink-0">
               L
@@ -440,24 +450,30 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
               <IronSheet
                 material="steel"
                 title="Life-Events Hub"
-                subtitle="Burial & Harambee"
+                subtitle="Family Solidarity & Harambee"
                 emoji="🕊️"
-                badge="72% FUNDED"
+                badge="MUTUAL AID"
                 animationDelayMs={240}
                 onTap={() =>
                   openHubDetail({
                     material: 'steel',
                     title: 'Life-Events Hub',
-                    subtitle: 'Community-funded burial & harambee coordination',
+                    subtitle: 'Private clan coordination & respectful mutual aid',
                     emoji: '🕊️',
-                    badge: '72% FUNDED',
+                    badge: 'MUTUAL AID',
                     heroDescription:
-                      'When life hits, the community responds. Track contributions, coordinate logistics, honor traditions — all in one place.',
+                      'A private, discreet space for families and clans to coordinate support, track contributions respectfully, and assist each other through major life milestones.',
                     onJoinSuccess: () => setCommitteeOpen(true)
                   })
                 }
               />
             </div>
+
+            {/* Welcoming Mat: Discreet Support */}
+            <WelcomingMat
+              onOpenSolidarity={() => setCommitteeOpen(true)}
+              onOpenWellbeing={() => setWellbeingOpen(true)}
+            />
 
             {/* Subcategory Metal Tags Band */}
             <div className="pt-3 space-y-2">
@@ -1086,6 +1102,23 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
               }}
             />
           </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: 3D DISCOVER VIEW ================= */}
+      {discoverViewOpen && (
+        <div className="fixed inset-0 z-50 bg-[#F0EDE8] overflow-y-auto animate-fadeIn">
+          <div className="sticky top-3 left-3 z-50 p-3">
+            <button
+              type="button"
+              onClick={() => { soundEngine.play('tap'); setDiscoverViewOpen(false); }}
+              className="px-3.5 py-1.5 rounded-full bg-[#1A1F2E] text-white text-xs font-bold shadow-xl flex items-center space-x-1.5 cursor-pointer hover:bg-black transition-colors"
+            >
+              <X className="w-4 h-4" />
+              <span>Exit Discover</span>
+            </button>
+          </div>
+          <DiscoverScreen />
         </div>
       )}
 

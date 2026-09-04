@@ -155,11 +155,11 @@ export function CommitteeDesk({
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#FF5A1F] text-white">
-                LIFE-EVENT COMMITTEE
+              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#B8621F] text-white">
+                FAMILY SOLIDARITY CIRCLE · PRIVATE
               </span>
               <span className="text-xs text-[#DCE2E6]/70 flex items-center space-x-1">
-                <Users className="w-3.5 h-3.5 text-[#00BFEF]" />
+                <Users className="w-3.5 h-3.5 text-[#E8985E]" />
                 <span>24 Family & Clan Members</span>
               </span>
             </div>
@@ -167,7 +167,7 @@ export function CommitteeDesk({
               Dad's Burial Arrangements 🕊️
             </h2>
             <p className="text-xs text-[#DCE2E6]/80 mt-0.5">
-              St. Peter's Church, Kisii / Nyamataro • Sat, 25 May 2026
+              St. Peter's Church, Kisii / Nyamataro • Sat, 25 May 2026 (Private Circle)
             </p>
           </div>
 

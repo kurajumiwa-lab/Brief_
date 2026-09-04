@@ -31,6 +31,8 @@ import { DiscoverScreen, DiscoverSection } from './DiscoverScreen';
 import {
   BriefBuilderSection,
   WairoBookmark,
+  DiscoverBookmark,
+  WelcomingMat,
   GroupDemandRunDesk,
   GroupEventLogisticsDesk,
   CreatorPartnerDesk
@@ -401,10 +403,28 @@ export function NearbyScreen(props: NearbyScreenProps) {
 
   return (
     <>
-{ (
+      {/* ================= FLOATING DUAL BOOKMARKS (TOP-RIGHT) ================= */}
+      <div className="fixed top-2 right-4 z-40 flex items-start space-x-1.5 pointer-events-auto">
+        <DiscoverBookmark
+          onTap={() => {
+            soundEngine.play('tap');
+            setDiscoverViewOpen(true);
+          }}
+        />
+        <WairoBookmark
+          status="IN TRANSIT"
+          location={activeNeighborhood.name}
+          onTap={() => {
+            soundEngine.play('heavyTap');
+            setInterCountyOpen(true);
+          }}
+        />
+      </div>
+
+      { (
           <div className="max-w-5xl mx-auto px-0 sm:px-4 pt-2">
             <div className="mb-5">
-              <div className="flex items-center justify-between gap-3 px-1 pb-3">
+              <div className="flex items-center justify-between gap-3 px-1 pb-3 pr-28 sm:pr-32">
                 <div className="flex min-w-0 items-center gap-3">
                   {sessionUser && (
                     <button
@@ -423,16 +443,6 @@ export function NearbyScreen(props: NearbyScreenProps) {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => { soundEngine.play('tap'); setDiscoverViewOpen(true); }}
-                    className="px-3 py-1.5 rounded-xl bg-[#0B6E6E] hover:bg-[#14919B] text-white font-bold text-xs flex items-center space-x-1.5 shadow-sm cursor-pointer transition-all active:scale-95"
-                    title="Open 3D Discover View"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-[#E8985E]" />
-                    <span>Discover</span>
-                  </button>
-
                   <button
                     type="button"
                     onClick={() => { soundEngine.play('heavyTap'); setCreatePostModalOpen(true); }}
@@ -543,17 +553,17 @@ export function NearbyScreen(props: NearbyScreenProps) {
                         <button
                           type="button"
                           onClick={() => { soundEngine.play('heavyTap'); setCommitteeOpen(true); }}
-                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#1E293B] to-[#0F172A] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
+                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#292524] to-[#1C1917] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
                         >
                           <div className="flex items-center justify-between">
                             <span className="text-xl">🕊️</span>
-                            <span className="text-[8px] font-mono uppercase bg-white/10 px-1.5 py-0.5 rounded text-white font-bold">
-                              72% Funded
+                            <span className="text-[8px] font-mono uppercase bg-white/10 px-1.5 py-0.5 rounded text-stone-300 font-bold">
+                              Mutual Aid
                             </span>
                           </div>
                           <div className="mt-2">
-                            <span className="font-black text-xs block text-white leading-tight">Life-Events Hub</span>
-                            <span className="text-[10px] text-gray-400 block mt-0.5">Burial & Harambee</span>
+                            <span className="font-black text-xs block text-white leading-tight">Family Solidarity</span>
+                            <span className="text-[10px] text-stone-300 block mt-0.5">Quiet Clan Support</span>
                           </div>
                         </button>
 
@@ -1573,6 +1583,13 @@ export function NearbyScreen(props: NearbyScreenProps) {
                 )}
               </>
             )}
+
+            {/* ================= WELCOMING MAT: DISCREET MUTUAL AID & SOLIDARITY ================= */}
+            <WelcomingMat
+              onOpenSolidarity={() => setCommitteeOpen(true)}
+              onOpenWellbeing={() => setWellbeingOpen(true)}
+              className="max-w-5xl mx-auto px-1"
+            />
 
             {/* ================= CURATED NEIGHBORHOOD DISCOVERY MATRIX ================= */}
             <section className="mx-auto my-10 max-w-5xl px-1">
