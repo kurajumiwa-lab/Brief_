@@ -37,6 +37,7 @@ const { OfflineSyncQueueDesk } = require('./src/components/offline/OfflineSyncQu
 const { ArenaClanCoordination } = require('./src/components/arena/ArenaClanCoordination.tsx');
 const { UniversalCreatePostModal, CreatePostSheet } = require('./src/components/posts/UniversalCreatePostModal.tsx');
 const { DiscoverScreen } = require('./src/screens/DiscoverScreen.tsx');
+const { LandingScreen } = require('./src/screens/LandingScreen.tsx');
 
 let pass = 0, fail = 0;
 const check = (name, cond, detail = '') => {
@@ -532,6 +533,31 @@ async function main() {
   check('fires onTap callback on IronSheet click', sheetTapped === true);
 
   await act(async () => { root16.unmount(); host16.remove(); });
+
+  // --- 17. LandingScreen (Unified Sections, IronSheet Grid & Floating Wairo Bookmark) ---
+  console.log('\n--- 17. LandingScreen ---');
+  const host17 = document.createElement('div');
+  document.body.appendChild(host17);
+  const root17 = createRoot(host17);
+  await act(async () => {
+    root17.render(React.createElement(LandingScreen));
+  });
+
+  const text17 = host17.textContent;
+  check('renders LandingScreen header and Around You', text17.includes('AROUND YOU') && text17.includes('Home'));
+  check('shows section switcher tabs: Today, Districts, Shelf', text17.includes('Today') && text17.includes('Districts') && text17.includes('Shelf'));
+  check('renders Today section items: Paid Gigs, Pool Match', text17.includes('Paid Gigs') && text17.includes('Pool Match'));
+
+  // Switch to Districts section
+  const districtsTab = Array.from(host17.querySelectorAll('button')).find(b => b.textContent.trim() === 'Districts');
+  if (districtsTab) {
+    await act(async () => {
+      districtsTab.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+  }
+  check('shows Town Centre Districts and Quick Access tags', host17.textContent.includes('Town Centre Districts') && host17.textContent.includes('Life-Events Hub') && host17.textContent.includes('Quick Access'));
+
+  await act(async () => { root17.unmount(); host17.remove(); });
 
   console.log(`\nPASSED ${pass}   FAILED ${fail}`);
   process.exit(fail ? 1 : 0);
