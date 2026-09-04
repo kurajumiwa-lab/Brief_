@@ -31,6 +31,8 @@ const { UssdSimulatorDesk } = require('./src/components/offline/UssdSimulatorDes
 const { InterCountyDesk } = require('./src/components/wairo/InterCountyDesk.tsx');
 const { PrivateCarrierAuctionDesk } = require('./src/components/wairo/PrivateCarrierAuctionDesk.tsx');
 const { WairoBookmark } = require('./src/components/wairo/WairoBookmark.tsx');
+const { IronSheet } = require('./src/components/ui/IronSheet.tsx');
+const { MetalTag } = require('./src/components/ui/MetalTag.tsx');
 const { OfflineSyncQueueDesk } = require('./src/components/offline/OfflineSyncQueueDesk.tsx');
 const { ArenaClanCoordination } = require('./src/components/arena/ArenaClanCoordination.tsx');
 const { UniversalCreatePostModal, CreatePostSheet } = require('./src/components/posts/UniversalCreatePostModal.tsx');
@@ -491,6 +493,45 @@ async function main() {
   check('fires onTap callback when wax seal is tapped', bookmarkTapped === true);
 
   await act(async () => { root15.unmount(); host15.remove(); });
+
+  // --- 16. IronSheet & MetalTag (Tactile Brushed-Metal Materials) ---
+  console.log('\n--- 16. IronSheet & MetalTag ---');
+  const host16 = document.createElement('div');
+  document.body.appendChild(host16);
+  const root16 = createRoot(host16);
+  let sheetTapped = false;
+  await act(async () => {
+    root16.render(React.createElement('div', null,
+      React.createElement(IronSheet, {
+        material: 'copper',
+        title: 'Kilimani Life Events',
+        subtitle: 'Community weddings, harambee & gatherings',
+        emoji: '🌿',
+        badge: 'COMMUNITY',
+        onTap: () => { sheetTapped = true; }
+      }),
+      React.createElement(MetalTag, {
+        material: 'copper',
+        label: 'Harambee',
+        selected: true
+      })
+    ));
+  });
+
+  const text16 = host16.textContent;
+  check('renders IronSheet title and subtitle', text16.includes('Kilimani Life Events') && text16.includes('Community weddings'));
+  check('renders IronSheet badge and emoji', text16.includes('COMMUNITY') && text16.includes('🌿'));
+  check('renders MetalTag label', text16.includes('Harambee'));
+
+  const sheetCard = host16.querySelector('.rounded-\\[20px\\]');
+  if (sheetCard) {
+    await act(async () => {
+      sheetCard.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+  }
+  check('fires onTap callback on IronSheet click', sheetTapped === true);
+
+  await act(async () => { root16.unmount(); host16.remove(); });
 
   console.log(`\nPASSED ${pass}   FAILED ${fail}`);
   process.exit(fail ? 1 : 0);
