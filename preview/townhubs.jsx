@@ -39,6 +39,7 @@ const { UniversalCreatePostModal, CreatePostSheet } = require('./src/components/
 const { DiscoverScreen } = require('./src/screens/DiscoverScreen.tsx');
 const { LandingScreen } = require('./src/screens/LandingScreen.tsx');
 const { SheetDetailScreen } = require('./src/screens/SheetDetailScreen.tsx');
+const { SubcategoryDrillScreen } = require('./src/screens/SubcategoryDrillScreen.tsx');
 
 let pass = 0, fail = 0;
 const check = (name, cond, detail = '') => {
@@ -611,6 +612,38 @@ async function main() {
   check('fires onJoinSuccess callback on confirm', joinSuccessFired === true);
 
   await act(async () => { root18.unmount(); host18.remove(); });
+
+  // --- 19. SubcategoryDrillScreen (Subcategory Drilldown & Material Consistency) ---
+  console.log('\n--- 19. SubcategoryDrillScreen ---');
+  const host19 = document.createElement('div');
+  document.body.appendChild(host19);
+  const root19 = createRoot(host19);
+  let selectedItemFired = null;
+  await act(async () => {
+    root19.render(React.createElement(SubcategoryDrillScreen, {
+      material: 'copper',
+      parentCategory: 'Skills Workshop',
+      subcategory: 'Beginner',
+      onSelectItem: (item) => { selectedItemFired = item; }
+    }));
+  });
+
+  const text19 = host19.textContent;
+  check('renders SubcategoryDrillScreen parent category and subcategory', text19.includes('Skills Workshop') && text19.includes('Beginner'));
+  check('renders horizontal filters: All, Free, Certificate, Weekend, Online', text19.includes('All') && text19.includes('Certificate') && text19.includes('Weekend'));
+  check('renders sort options: Newest, Popular, Nearby', text19.includes('Newest') && text19.includes('Popular') && text19.includes('Nearby'));
+  check('renders 2-column IronSheet grid with items', text19.includes('Coffee Art') && text19.includes('Espresso 101'));
+
+  // Switch filter to Certificate
+  const certTag = Array.from(host19.querySelectorAll('button')).find(b => b.textContent.trim().includes('Certificate'));
+  if (certTag) {
+    await act(async () => {
+      certTag.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+  }
+  check('filters grid correctly to Certificate items', host19.textContent.includes('Espresso 101') && host19.textContent.includes('POS Basics'));
+
+  await act(async () => { root19.unmount(); host19.remove(); });
 
   console.log(`\nPASSED ${pass}   FAILED ${fail}`);
   process.exit(fail ? 1 : 0);
