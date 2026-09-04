@@ -835,6 +835,7 @@ export interface GroupDemandRun {
   id: string;
   groupId: string;
   groupName: string;
+  groupCategory: GroupCategory;
   neighborhoodId: string;
   title: string;
   itemDescription: string;
@@ -845,17 +846,29 @@ export interface GroupDemandRun {
   savingsKesPerUnit: number;
   deadlineIso: string;
   status: 'pledging' | 'threshold_reached' | 'dispatched' | 'settled';
+  creatorReferralCode?: string;
+  creatorAttributionId?: string;
+  creatorName?: string;
   supplier: {
     name: string;
     phone: string;
     location: string;
     rating: number;
+    paybillOrTill?: string;
   };
   wairoCarrierInfo?: {
     carrierName: string;
     vehiclePlate: string;
     etaMinutes: number;
+    trackingNumber?: string;
   };
+  pledges?: Array<{
+    userId: string;
+    userName: string;
+    quantity: number;
+    pledgedAt: string;
+    mPesaConfirmed: boolean;
+  }>;
 }
 
 export interface GroupEventLogistics {
@@ -883,6 +896,7 @@ export const DEMO_DEMAND_RUNS: GroupDemandRun[] = [
     id: 'run-kili-books-1',
     groupId: 'grp-kili-pta-6',
     groupName: 'Class 6 Parents CBC Consortium',
+    groupCategory: 'school_pta',
     neighborhoodId: 'kilimani',
     title: 'Grade 6 CBC Literature & Science Book Bundle',
     itemDescription: 'Direct publisher set of 6 approved CBC setbooks delivered in bulk to Kilimani Primary Gate.',
@@ -893,24 +907,35 @@ export const DEMO_DEMAND_RUNS: GroupDemandRun[] = [
     savingsKesPerUnit: 800,
     deadlineIso: 'This Friday · 5:00 PM',
     status: 'pledging',
+    creatorReferralCode: 'WAWERU-KILI',
+    creatorAttributionId: 'creator-waweru-1',
+    creatorName: 'Teacher Waweru (PTA Lead)',
     supplier: {
       name: 'Text Book Centre Wholesale Hub (Kijabe St)',
       phone: '+254 722 500 800',
       location: 'Kijabe Street CBD Depot',
-      rating: 4.96
+      rating: 4.96,
+      paybillOrTill: 'Buy Goods: 882910'
     },
     wairoCarrierInfo: {
       carrierName: 'Otieno (WAIRO Van Dispatch)',
       vehiclePlate: 'KME 412X',
-      etaMinutes: 25
-    }
+      etaMinutes: 25,
+      trackingNumber: 'WRO-KILI-8821'
+    },
+    pledges: [
+      { userId: 'usr-p1', userName: 'Mama Kevin', quantity: 2, pledgedAt: '1h ago', mPesaConfirmed: true },
+      { userId: 'usr-p2', userName: 'Baba Stacy', quantity: 1, pledgedAt: '2h ago', mPesaConfirmed: true },
+      { userId: 'usr-p3', userName: 'Mrs. Ombati', quantity: 3, pledgedAt: '3h ago', mPesaConfirmed: true }
+    ]
   },
   {
     id: 'run-sb-welfare-flour-2',
     groupId: 'grp-sb-plainsview-dukas',
     groupName: 'Plainsview Retailers Wholesale Run',
+    groupCategory: 'estate_association',
     neighborhoodId: 'south-b',
-    title: 'Ungu & Cooking Oil Estate Bundle (50 Carts)',
+    title: 'Unga & Cooking Oil Estate Bundle (50 Carts)',
     itemDescription: 'Direct mill grain consignment split across 36 estate dukas with zero broker markup.',
     targetQuantity: 50,
     currentPledged: 50,
@@ -919,17 +944,26 @@ export const DEMO_DEMAND_RUNS: GroupDemandRun[] = [
     savingsKesPerUnit: 550,
     deadlineIso: 'Today · Dispatched',
     status: 'threshold_reached',
+    creatorReferralCode: 'EVANS-SOUTHB',
+    creatorAttributionId: 'creator-maina-3',
+    creatorName: 'Evans Maina (Duka Anchor)',
     supplier: {
       name: 'Unga Farm Care Millers Depot',
       phone: '+254 711 900 120',
       location: 'Commercial Street Industrial Area',
-      rating: 4.92
+      rating: 4.92,
+      paybillOrTill: 'Paybill: 522522 / Acc: 119283'
     },
     wairoCarrierInfo: {
       carrierName: 'Kamau (WAIRO 3-Ton Truck)',
       vehiclePlate: 'KMD 119P',
-      etaMinutes: 10
-    }
+      etaMinutes: 10,
+      trackingNumber: 'WRO-SB-9932'
+    },
+    pledges: [
+      { userId: 'usr-p4', userName: 'Plainsview Corner Duka', quantity: 5, pledgedAt: 'Yesterday', mPesaConfirmed: true },
+      { userId: 'usr-p5', userName: 'Mariakani Mini-Mart', quantity: 8, pledgedAt: 'Yesterday', mPesaConfirmed: true }
+    ]
   }
 ];
 

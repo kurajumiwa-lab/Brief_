@@ -1,3 +1,5 @@
+import { GroupDemandRun, DEMO_DEMAND_RUNS } from './neighborhoods';
+
 /**
  * CREATOR PARTNER PROGRAM & GROUP ACTIVATION ENGINE
  * 
@@ -11,6 +13,19 @@
  */
 
 export type CreatorRole = 'community_creator' | 'institutional_organizer' | 'category_operator';
+
+export interface CreatorAttributionRecord {
+  referralCode: string;
+  creatorId: string;
+  creatorName: string;
+  groupId: string;
+  groupName: string;
+  groupCategory: string;
+  attachedAtIso: string;
+  lifetimeVolumeKes: number;
+  commissionRatePct: number;
+  isActive: boolean;
+}
 
 export interface CreatorProfile {
   id: string;
@@ -154,6 +169,12 @@ export const INITIAL_CREATOR_PROFILES: CreatorProfile[] = [
   }
 ];
 
+export function getCreatorByReferralCode(code: string): CreatorProfile | undefined {
+  if (!code) return undefined;
+  const normalized = code.trim().toUpperCase();
+  return INITIAL_CREATOR_PROFILES.find((c) => c.referralCode.toUpperCase() === normalized);
+}
+
 export function calculateCommission(
   coordinatedVolumeKes: number,
   platformTakeRatePct: number = 2.0, // Brief takes ~2% coordination fee
@@ -166,4 +187,28 @@ export function calculateCommission(
 
 export function checkGroupActivation(memberCount: number, completedRhythmsCount: number): boolean {
   return memberCount >= 10 && completedRhythmsCount >= 1;
+}
+
+export function recordCreatorAttribution(
+  groupId: string,
+  groupName: string,
+  groupCategory: string,
+  creatorRef: string,
+  volumeKes: number = 0
+): CreatorAttributionRecord | null {
+  const creator = getCreatorByReferralCode(creatorRef);
+  if (!creator) return null;
+
+  return {
+    referralCode: creator.referralCode,
+    creatorId: creator.id,
+    creatorName: creator.name,
+    groupId,
+    groupName,
+    groupCategory,
+    attachedAtIso: new Date().toISOString(),
+    lifetimeVolumeKes: volumeKes,
+    commissionRatePct: 15.0,
+    isActive: true
+  };
 }

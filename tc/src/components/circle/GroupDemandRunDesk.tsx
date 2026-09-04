@@ -10,7 +10,9 @@ import {
   ArrowRight,
   Info,
   X,
-  Plus
+  Plus,
+  Award,
+  CreditCard
 } from 'lucide-react';
 import { DEMO_DEMAND_RUNS, GroupDemandRun } from '../../model/neighborhoods';
 import { soundEngine } from '../../utils/SoundEngine';
@@ -38,18 +40,27 @@ export const GroupDemandRunDesk: React.FC<GroupDemandRunDeskProps> = ({
 
   const handlePledge = () => {
     soundEngine.play('victory');
+    const newPledge = {
+      userId: `usr-${Date.now()}`,
+      userName: 'You (Confirmed Member)',
+      quantity: pledgeCount,
+      pledgedAt: 'Just now',
+      mPesaConfirmed: true
+    };
+
     setRuns((prev) =>
       prev.map((r) =>
         r.id === activeRun.id
           ? {
               ...r,
               currentPledged: Math.min(r.targetQuantity, r.currentPledged + pledgeCount),
-              status: r.currentPledged + pledgeCount >= r.targetQuantity ? 'threshold_reached' : r.status
+              status: r.currentPledged + pledgeCount >= r.targetQuantity ? 'threshold_reached' : r.status,
+              pledges: [newPledge, ...(r.pledges || [])]
             }
           : r
       )
     );
-    showToast(`Pledged ${pledgeCount} bundle(s) for "${activeRun.title}"!`);
+    showToast(`Pledged ${pledgeCount} bundle(s) for "${activeRun.title}" via M-Pesa direct.`);
     onPledgeRun?.(activeRun.id, pledgeCount);
   };
 
@@ -128,12 +139,30 @@ export const GroupDemandRunDesk: React.FC<GroupDemandRunDeskProps> = ({
         <div className="p-5 rounded-2xl bg-white shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <span className="text-[10px] font-mono font-black uppercase text-[#B8621F] tracking-wide">
-                {activeRun.groupName}
-              </span>
-              <h3 className="text-lg font-black text-[#1A1F2E] leading-snug">
+              <div className="flex items-center space-x-2">
+                <span className="text-[10px] font-mono font-black uppercase text-[#B8621F] tracking-wide">
+                  {activeRun.groupName}
+                </span>
+                <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded-full bg-blue-50 text-blue-800 font-bold">
+                  {activeRun.groupCategory.replace('_', ' ')}
+                </span>
+              </div>
+              
+              <h3 className="text-lg font-black text-[#1A1F2E] leading-snug mt-1">
                 {activeRun.title}
               </h3>
+
+              {activeRun.creatorName && (
+                <div className="flex items-center space-x-1.5 mt-1 text-[11px] text-[#6B7280]">
+                  <Award className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                  <span>Organized by: <strong>{activeRun.creatorName}</strong></span>
+                  {activeRun.creatorReferralCode && (
+                    <span className="text-[10px] font-mono font-bold bg-amber-50 text-amber-800 px-1.5 py-0.2 rounded">
+                      REF: {activeRun.creatorReferralCode}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="flex items-center space-x-2">
@@ -206,6 +235,12 @@ export const GroupDemandRunDesk: React.FC<GroupDemandRunDeskProps> = ({
             </div>
             <p className="text-xs font-bold text-[#1A1F2E]">{activeRun.supplier.name}</p>
             <p className="text-[11px] text-[#6B7280]">{activeRun.supplier.location}</p>
+            {activeRun.supplier.paybillOrTill && (
+              <div className="flex items-center space-x-1.5 text-[11px] font-mono text-emerald-700 font-bold bg-emerald-50 px-2 py-1 rounded">
+                <CreditCard className="w-3.5 h-3.5" />
+                <span>{activeRun.supplier.paybillOrTill}</span>
+              </div>
+            )}
 
             <button
               type="button"
@@ -227,11 +262,42 @@ export const GroupDemandRunDesk: React.FC<GroupDemandRunDeskProps> = ({
             </div>
             <p className="text-xs font-bold text-[#1A1F2E]">{activeRun.wairoCarrierInfo?.carrierName}</p>
             <p className="text-[11px] text-[#6B7280]">Vehicle Plate: {activeRun.wairoCarrierInfo?.vehiclePlate}</p>
+            {activeRun.wairoCarrierInfo?.trackingNumber && (
+              <p className="text-[10px] font-mono text-gray-500">Tracking: {activeRun.wairoCarrierInfo.trackingNumber}</p>
+            )}
             <div className="inline-flex items-center space-x-1 text-[10px] font-mono text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded">
               <span>● Scheduled bulk gate drop</span>
             </div>
           </div>
         </div>
+
+        {/* Live Member Pledges Roster */}
+        {activeRun.pledges && activeRun.pledges.length > 0 && (
+          <div className="p-4 rounded-2xl bg-white shadow-sm space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black uppercase tracking-wider text-[#1A1F2E]">
+                Recent Group Pledges ({activeRun.pledges.length})
+              </span>
+              <span className="text-[10px] font-mono font-bold text-emerald-700">
+                Direct M-Pesa Confirmed
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {activeRun.pledges.slice(0, 6).map((p, idx) => (
+                <div key={idx} className="p-2.5 rounded-xl bg-[#F0EDE8] flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-[#1A1F2E] block">{p.userName}</span>
+                    <span className="text-[10px] text-[#6B7280]">{p.pledgedAt}</span>
+                  </div>
+                  <span className="text-xs font-black text-[#B8621F] px-2 py-0.5 rounded bg-white shadow-xs">
+                    {p.quantity} {p.quantity === 1 ? 'pack' : 'packs'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Action Row */}
         <div className="p-5 rounded-2xl bg-[#EFECE6] flex flex-col sm:flex-row sm:items-center justify-between gap-4">

@@ -140,17 +140,23 @@ export function Onboarding({
   const [handle, setHandle] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [googleReady, setGoogleReady] = React.useState(false);
+  const [creatorRefCode, setCreatorRefCode] = React.useState<string | null>(null);
   const googleSlot = React.useRef<HTMLDivElement | null>(null);
 
-  // Capture Creator Referral Attribution from query string
+  // Capture Creator Referral Attribution from query string or storage
   React.useEffect(() => {
     try {
-      if (typeof window !== 'undefined' && window.location?.search) {
-        const params = new URLSearchParams(window.location.search);
-        const ref = params.get('ref');
-        if (ref) {
-          window.localStorage.setItem('brief_creator_ref', ref.trim());
+      if (typeof window !== 'undefined') {
+        if (window.location?.search) {
+          const params = new URLSearchParams(window.location.search);
+          const ref = params.get('ref');
+          if (ref) {
+            window.localStorage.setItem('brief_creator_ref', ref.trim());
+            setCreatorRefCode(ref.trim());
+          }
         }
+        const stored = window.localStorage.getItem('brief_creator_ref');
+        if (stored) setCreatorRefCode(stored);
       }
     } catch {
       // Safe fallback
@@ -279,6 +285,12 @@ export function Onboarding({
         {/* ---------------------------------------------------------------- */}
         {step === 1 && (
           <div className="px-5 pb-5 pt-3 space-y-3.5">
+            {creatorRefCode && (
+              <div className="p-2.5 rounded-xl bg-amber-500/15 text-amber-900 text-xs font-bold flex items-center space-x-2">
+                <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                <span>Invited via Creator Partner Code: <strong>{creatorRefCode}</strong></span>
+              </div>
+            )}
             <div>
               <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#0D1117]/60">Step 1 of 3</p>
               <h2 className="mt-1 font-display text-[22px] font-semibold leading-tight tracking-tight text-[#0D1117]">
