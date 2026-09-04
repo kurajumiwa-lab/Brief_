@@ -38,6 +38,7 @@ const { ArenaClanCoordination } = require('./src/components/arena/ArenaClanCoord
 const { UniversalCreatePostModal, CreatePostSheet } = require('./src/components/posts/UniversalCreatePostModal.tsx');
 const { DiscoverScreen } = require('./src/screens/DiscoverScreen.tsx');
 const { LandingScreen } = require('./src/screens/LandingScreen.tsx');
+const { SheetDetailScreen } = require('./src/screens/SheetDetailScreen.tsx');
 
 let pass = 0, fail = 0;
 const check = (name, cond, detail = '') => {
@@ -558,6 +559,58 @@ async function main() {
   check('shows Town Centre Districts and Quick Access tags', host17.textContent.includes('Town Centre Districts') && host17.textContent.includes('Life-Events Hub') && host17.textContent.includes('Quick Access'));
 
   await act(async () => { root17.unmount(); host17.remove(); });
+
+  // --- 18. SheetDetailScreen (Tactile Material Details & Join Confirmation) ---
+  console.log('\n--- 18. SheetDetailScreen ---');
+  const host18 = document.createElement('div');
+  document.body.appendChild(host18);
+  const root18 = createRoot(host18);
+  let joinSuccessFired = false;
+  await act(async () => {
+    root18.render(React.createElement(SheetDetailScreen, {
+      material: 'copper',
+      title: 'Skills Workshop',
+      subtitle: '2:00 PM · Online Zoom',
+      emoji: '✨',
+      badge: 'LEARNING',
+      heroDescription: 'Join a workshop that connects local skills with real opportunities.',
+      onJoinSuccess: () => { joinSuccessFired = true; }
+    }));
+  });
+
+  const text18 = host18.textContent;
+  check('renders SheetDetailScreen title and badge', text18.includes('Skills Workshop') && text18.includes('LEARNING'));
+  check('shows subtabs: Overview, Related, Activity', text18.includes('Overview') && text18.includes('Related') && text18.includes('Activity'));
+  check('renders sticky action bar Join Now button', text18.includes('Join Now'));
+
+  // Switch to Related tab
+  const relatedTab = Array.from(host18.querySelectorAll('button')).find(b => b.textContent.trim() === 'Related');
+  if (relatedTab) {
+    await act(async () => {
+      relatedTab.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+  }
+  check('shows People Also Follow section on Related tab', host18.textContent.includes('People Also Follow') && host18.textContent.includes('Skills Marketplace'));
+
+  // Open Join confirmation sheet
+  const joinNowBtn = Array.from(host18.querySelectorAll('button')).find(b => b.textContent.trim() === 'Join Now');
+  if (joinNowBtn) {
+    await act(async () => {
+      joinNowBtn.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+  }
+  check('opens Join Confirmation sheet', host18.textContent.includes("YOU'RE JOINING") && host18.textContent.includes('Confirm ✓'));
+
+  // Click Confirm ✓
+  const confirmBtn = Array.from(host18.querySelectorAll('button')).find(b => b.textContent.trim() === 'Confirm ✓');
+  if (confirmBtn) {
+    await act(async () => {
+      confirmBtn.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+  }
+  check('fires onJoinSuccess callback on confirm', joinSuccessFired === true);
+
+  await act(async () => { root18.unmount(); host18.remove(); });
 
   console.log(`\nPASSED ${pass}   FAILED ${fail}`);
   process.exit(fail ? 1 : 0);
