@@ -9,3 +9,7 @@ export { ImageChip } from './ImageChip';
 export type { ImageChipProps } from './ImageChip';
 export { ShimmerCard } from './ShimmerCard';
 export type { ShimmerCardProps } from './ShimmerCard';
+export { FadeSlideUp } from './FadeSlideUp';
+export type { FadeSlideUpProps } from './FadeSlideUp';
+export { PulseGlow } from './PulseGlow';
+export type { PulseGlowProps } from './PulseGlow';
