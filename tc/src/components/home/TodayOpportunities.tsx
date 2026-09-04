@@ -1,14 +1,11 @@
 import React from 'react';
 import { 
-  Sparkles, 
   Briefcase, 
-  Gamepad2, 
+  Truck, 
   BookOpen, 
-  ShoppingBag, 
-  Video, 
-  Award, 
-  ArrowRight,
-  Clock
+  Coins, 
+  CalendarDays, 
+  Award
 } from 'lucide-react';
 import { soundEngine } from '../../utils/SoundEngine';
 
@@ -32,55 +29,55 @@ export function TodayOpportunities({
       id: 'opp-1',
       badge: '3',
       title: 'Paid Gigs',
-      subtitle: 'Waiter, Delivery, Cashier',
+      subtitle: 'Inventory, Delivery, Cashier',
       bgGradient: 'from-[#059669] to-[#10B981]',
       textColor: 'text-white',
       category: 'gigs'
     },
     {
       id: 'opp-2',
-      badge: '1',
-      title: 'Pool Match',
-      subtitle: 'needs 1 player · eFootball',
-      bgGradient: 'from-[#2563EB] to-[#3B82F6]',
+      badge: '90/10',
+      title: 'WAIRO Gate Run',
+      subtitle: 'Machakos ⇄ Nairobi Transit',
+      bgGradient: 'from-[#0B6E6E] to-[#14919B]',
       textColor: 'text-white',
-      category: 'arena'
+      category: 'cargo'
     },
     {
       id: 'opp-3',
-      badge: 'Free',
-      title: 'Skills Workshop',
-      subtitle: '2:00 PM · Online Zoom',
-      bgGradient: 'from-[#EA580C] to-[#F97316]',
+      badge: '-28%',
+      title: 'CBC Books Run',
+      subtitle: 'Grade 7/8 PTA Bulk Order',
+      bgGradient: 'from-[#B8621F] to-[#D97706]',
       textColor: 'text-white',
-      category: 'learning'
+      category: 'demand'
     },
     {
       id: 'opp-4',
-      badge: 'Bale',
-      title: 'Thrift Drop',
-      subtitle: '12:00 PM · Nyamataro Market',
-      bgGradient: 'from-[#0284C7] to-[#0EA5E9]',
+      badge: 'KES 60k',
+      title: 'Chama Table Bank',
+      subtitle: 'Cycle 5 Contribution Live',
+      bgGradient: 'from-[#4C1D95] to-[#7C3AED]',
       textColor: 'text-white',
-      category: 'thrift'
+      category: 'chama'
     },
     {
       id: 'opp-5',
-      badge: 'Creator',
-      title: 'J Segera',
-      subtitle: 'Live at 7:00 PM · Kisii Lounge',
-      bgGradient: 'from-[#7C3AED] to-[#8B5CF6]',
+      badge: 'Live',
+      title: 'Community Gigs',
+      subtitle: '7:00 PM · Acoustic Sets & Popups',
+      bgGradient: 'from-[#BE123C] to-[#E11D48]',
       textColor: 'text-white',
       category: 'events'
     },
     {
       id: 'opp-6',
-      badge: '2',
-      title: 'Grants',
-      subtitle: 'closing soon · Youth Fund',
-      bgGradient: 'from-[#65A30D] to-[#84CC16]',
+      badge: '15%',
+      title: 'Creator Program',
+      subtitle: 'Organizer Commission Ledger',
+      bgGradient: 'from-[#78350F] to-[#92400E]',
       textColor: 'text-white',
-      category: 'grants'
+      category: 'creator'
     }
   ];
 
@@ -130,3 +127,5 @@ export function TodayOpportunities({
     </section>
   );
 }
+
+export default TodayOpportunities;

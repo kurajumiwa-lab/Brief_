@@ -70,11 +70,11 @@ async function main() {
   const text1 = host1.textContent;
   check('renders Today Pulse header', text1.includes("Today's Opportunities"));
   check('renders Paid Gigs card', text1.includes('Paid Gigs'));
-  check('renders Pool Match card', text1.includes('Pool Match'));
-  check('renders Skills Workshop card', text1.includes('Skills Workshop'));
-  check('renders Thrift Drop card', text1.includes('Thrift Drop'));
-  check('renders Creator Live card', text1.includes('J Segera'));
-  check('renders Grants card', text1.includes('Grants'));
+  check('renders WAIRO Gate Run card', text1.includes('WAIRO Gate Run'));
+  check('renders CBC Books Run card', text1.includes('CBC Books Run'));
+  check('renders Chama Table Bank card', text1.includes('Chama Table Bank'));
+  check('renders Community Gigs card', text1.includes('Community Gigs'));
+  check('renders Creator Program card', text1.includes('Creator Program'));
 
   const gigBtn = Array.from(host1.querySelectorAll('button')).find(b => b.textContent.includes('Paid Gigs'));
   if (gigBtn) {

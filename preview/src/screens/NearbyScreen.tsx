@@ -516,20 +516,20 @@ export function NearbyScreen(props: NearbyScreenProps) {
                     <div className="mb-6">
                       <TodayOpportunities
                         onSelectOpportunity={(opp) => {
-                          if (opp.category === 'gigs' || opp.category === 'grants') {
+                          if (opp.category === 'gigs') {
                             setSelectedObjectType('opportunity');
                             setDiscoveryTab('opportunities');
-                          } else if (opp.category === 'arena') {
-                            setSelectedObjectType('experience');
-                            setDiscoveryTab('events');
-                          } else if (opp.category === 'learning') {
-                            showToast('Opening verified learning workshops');
-                          } else if (opp.category === 'thrift') {
-                            setSelectedObjectType('product');
-                            setDiscoveryTab('explore');
+                          } else if (opp.category === 'cargo') {
+                            setInterCountyOpen(true);
+                          } else if (opp.category === 'demand') {
+                            setDemandRunOpen(true);
+                          } else if (opp.category === 'chama') {
+                            setChamaOpen(true);
                           } else if (opp.category === 'events') {
                             setSelectedObjectType('experience');
                             setDiscoveryTab('events');
+                          } else if (opp.category === 'creator') {
+                            setCreatorDeskOpen(true);
                           }
                         }}
                       />
@@ -546,27 +546,29 @@ export function NearbyScreen(props: NearbyScreenProps) {
                             Town Centre Districts & Services
                           </h3>
                         </div>
-                        <span className="text-[10px] font-mono text-gray-500 font-bold">4 Live Hubs</span>
+                        <span className="text-[10px] font-mono text-gray-500 font-bold">6 Active Desks</span>
                       </div>
 
                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+                        {/* 1. WAIRO Cargo */}
                         <button
                           type="button"
-                          onClick={() => { soundEngine.play('heavyTap'); setCommitteeOpen(true); }}
-                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#292524] to-[#1C1917] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
+                          onClick={() => { soundEngine.play('heavyTap'); setInterCountyOpen(true); }}
+                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0A101D] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
                         >
                           <div className="flex items-center justify-between">
-                            <span className="text-xl">🕊️</span>
-                            <span className="text-[8px] font-mono uppercase bg-white/10 px-1.5 py-0.5 rounded text-stone-300 font-bold">
-                              Mutual Aid
+                            <span className="text-xl">🚚</span>
+                            <span className="text-[8px] font-mono uppercase bg-[#00BFEF] text-[#0D1117] px-1.5 py-0.5 rounded font-black">
+                              WAIRO 90/10
                             </span>
                           </div>
                           <div className="mt-2">
-                            <span className="font-black text-xs block text-white leading-tight">Family Solidarity</span>
-                            <span className="text-[10px] text-stone-300 block mt-0.5">Quiet Clan Support</span>
+                            <span className="font-black text-xs block text-white leading-tight">WAIRO Cargo</span>
+                            <span className="text-[10px] text-cyan-200/70 block mt-0.5">47 Counties Courier</span>
                           </div>
                         </button>
 
+                        {/* 2. Chama & Table Banking */}
                         <button
                           type="button"
                           onClick={() => { soundEngine.play('heavyTap'); setChamaOpen(true); }}
@@ -584,40 +586,25 @@ export function NearbyScreen(props: NearbyScreenProps) {
                           </div>
                         </button>
 
+                        {/* 3. CBC Bulk Runs */}
                         <button
                           type="button"
-                          onClick={() => { soundEngine.play('heavyTap'); setWellbeingOpen(true); }}
-                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#064E3B] to-[#022C22] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
+                          onClick={() => { soundEngine.play('heavyTap'); setDemandRunOpen(true); }}
+                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#292524] via-[#1C1917] to-[#0C0A09] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
                         >
                           <div className="flex items-center justify-between">
-                            <span className="text-xl">💚</span>
-                            <span className="text-[8px] font-mono uppercase bg-emerald-500/30 text-emerald-300 px-1.5 py-0.5 rounded font-bold">
-                              Confidential
+                            <span className="text-xl">📚</span>
+                            <span className="text-[8px] font-mono uppercase bg-[#B8621F] text-white px-1.5 py-0.5 rounded font-black">
+                              Bulk Runs
                             </span>
                           </div>
                           <div className="mt-2">
-                            <span className="font-black text-xs block text-white leading-tight">Wellbeing Hub</span>
-                            <span className="text-[10px] text-emerald-200/70 block mt-0.5">Circles & Therapists</span>
+                            <span className="font-black text-xs block text-white leading-tight">CBC School Books</span>
+                            <span className="text-[10px] text-amber-200/70 block mt-0.5">PTA & Wholesale</span>
                           </div>
                         </button>
 
-                        <button
-                          type="button"
-                          onClick={() => { soundEngine.play('heavyTap'); setInterCountyOpen(true); }}
-                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0A101D] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xl">🚚</span>
-                            <span className="text-[8px] font-mono uppercase bg-[#00BFEF] text-[#0D1117] px-1.5 py-0.5 rounded font-black">
-                              WAIRO 90/10
-                            </span>
-                          </div>
-                          <div className="mt-2">
-                            <span className="font-black text-xs block text-white leading-tight">WAIRO Cargo & Logistics</span>
-                            <span className="text-[10px] text-cyan-200/70 block mt-0.5">Courier · Errands · 47 Counties</span>
-                          </div>
-                        </button>
-
+                        {/* 4. Paid Gigs */}
                         <button
                           type="button"
                           onClick={() => {
@@ -635,82 +622,11 @@ export function NearbyScreen(props: NearbyScreenProps) {
                           </div>
                           <div className="mt-2">
                             <span className="font-black text-xs block text-white leading-tight">Paid Gigs Hub</span>
-                            <span className="text-[10px] text-emerald-200/70 block mt-0.5">Verified local micro-work</span>
+                            <span className="text-[10px] text-emerald-200/70 block mt-0.5">Verified micro-work</span>
                           </div>
                         </button>
 
-                        <button
-                          type="button"
-                          onClick={() => {
-                            soundEngine.play('tap');
-                            setSelectedObjectType('experience');
-                            setDiscoveryTab('events');
-                          }}
-                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#7C2D12] to-[#431407] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xl">🎉</span>
-                            <span className="text-[8px] font-mono uppercase bg-[#FF5A1F] text-white px-1.5 py-0.5 rounded font-bold">
-                              Events
-                            </span>
-                          </div>
-                          <div className="mt-2">
-                            <span className="font-black text-xs block text-white leading-tight">Events & Markets</span>
-                            <span className="text-[10px] text-orange-200/70 block mt-0.5">Gigs, markets & popups</span>
-                          </div>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => { soundEngine.play('heavyTap'); setCarrierAuctionOpen(true); }}
-                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0B1B2A] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xl">⚖️</span>
-                            <span className="text-[8px] font-mono uppercase bg-[#2563EB] text-white px-1.5 py-0.5 rounded font-bold">
-                              Silent Bids
-                            </span>
-                          </div>
-                          <div className="mt-2">
-                            <span className="font-black text-xs block text-white leading-tight">Carrier Auction</span>
-                            <span className="text-[10px] text-blue-200/70 block mt-0.5">Math Match Engine</span>
-                          </div>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => { soundEngine.play('heavyTap'); setOfflineSyncOpen(true); }}
-                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#064E3B] via-[#042F2E] to-[#022C22] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xl">📡</span>
-                            <span className="text-[8px] font-mono uppercase bg-emerald-500/30 text-emerald-300 px-1.5 py-0.5 rounded font-bold">
-                              IndexedDB
-                            </span>
-                          </div>
-                          <div className="mt-2">
-                            <span className="font-black text-xs block text-white leading-tight">Offline PWA Sync</span>
-                            <span className="text-[10px] text-emerald-200/70 block mt-0.5">Zero-Data Queue</span>
-                          </div>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => { soundEngine.play('heavyTap'); setDemandRunOpen(true); }}
-                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#292524] via-[#1C1917] to-[#0C0A09] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xl">📦</span>
-                            <span className="text-[8px] font-mono uppercase bg-[#B8621F] text-white px-1.5 py-0.5 rounded font-black">
-                              Bulk Runs
-                            </span>
-                          </div>
-                          <div className="mt-2">
-                            <span className="font-black text-xs block text-white leading-tight">Consolidated Goods</span>
-                            <span className="text-[10px] text-amber-200/70 block mt-0.5">Textbooks & Wholesale</span>
-                          </div>
-                        </button>
-
+                        {/* 5. Group Events & Touring */}
                         <button
                           type="button"
                           onClick={() => { soundEngine.play('heavyTap'); setEventLogisticsOpen(true); }}
@@ -723,11 +639,12 @@ export function NearbyScreen(props: NearbyScreenProps) {
                             </span>
                           </div>
                           <div className="mt-2">
-                            <span className="font-black text-xs block text-white leading-tight">Group Events & Retreats</span>
-                            <span className="text-[10px] text-indigo-200/70 block mt-0.5">Choirs & Alumni Charters</span>
+                            <span className="font-black text-xs block text-white leading-tight">Group Touring</span>
+                            <span className="text-[10px] text-indigo-200/70 block mt-0.5">Choirs & Charters</span>
                           </div>
                         </button>
 
+                        {/* 6. Creator Partner Desk */}
                         <button
                           type="button"
                           onClick={() => { soundEngine.play('heavyTap'); setCreatorDeskOpen(true); }}
@@ -740,7 +657,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                             </span>
                           </div>
                           <div className="mt-2">
-                            <span className="font-black text-xs block text-white leading-tight">Creator Partner Desk</span>
+                            <span className="font-black text-xs block text-white leading-tight">Creator Partner</span>
                             <span className="text-[10px] text-amber-200/70 block mt-0.5">Bring living groups</span>
                           </div>
                         </button>
