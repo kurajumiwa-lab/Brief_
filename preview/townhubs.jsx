@@ -674,6 +674,30 @@ async function main() {
 
   await act(async () => { root20.unmount(); host20.remove(); });
 
+  // --- 21. Material Continuity Law (Drilldown result -> Item Detail) ---
+  console.log('\n--- 21. Material Continuity Law ---');
+  const host21 = document.createElement('div');
+  document.body.appendChild(host21);
+  const root21 = createRoot(host21);
+  await act(async () => {
+    root21.render(React.createElement(SubcategoryDrillScreen, {
+      material: 'copper',
+      parentCategory: 'Skills Workshop',
+      subcategory: 'Beginner'
+    }));
+  });
+
+  // Tap "Espresso 101" result card inside SubcategoryDrillScreen
+  const espressoCard = Array.from(host21.querySelectorAll('button, div')).find(el => el.textContent.trim().startsWith('Espresso 101'));
+  if (espressoCard) {
+    await act(async () => {
+      espressoCard.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+  }
+  check('tapping Espresso 101 opens SheetDetailScreen for item in same copper material', host21.textContent.includes('Espresso 101') && host21.textContent.includes('PAID') && host21.textContent.includes('Join Now'));
+
+  await act(async () => { root21.unmount(); host21.remove(); });
+
   console.log(`\nPASSED ${pass}   FAILED ${fail}`);
   process.exit(fail ? 1 : 0);
 }

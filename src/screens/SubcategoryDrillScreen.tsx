@@ -13,7 +13,18 @@ import {
   IronSheet,
   MetalTag
 } from '../components/ui';
+import { SheetDetailScreen } from './SheetDetailScreen';
 import { soundEngine } from '../utils/SoundEngine';
+
+export interface SubcategoryItem {
+  title: string;
+  subtitle: string;
+  bigNumber?: string;
+  emoji?: string;
+  badge?: string;
+  type?: string;
+  heroDescription?: string;
+}
 
 export interface SubcategoryDrillScreenProps {
   material?: SheetMaterial;
@@ -21,7 +32,7 @@ export interface SubcategoryDrillScreenProps {
   subcategory?: string;
   subcategoryIcon?: React.ReactNode;
   onClose?: () => void;
-  onSelectItem?: (itemTitle: string) => void;
+  onSelectItem?: (item: SubcategoryItem | string) => void;
 }
 
 export const SubcategoryDrillScreen: React.FC<SubcategoryDrillScreenProps> = ({
@@ -36,21 +47,22 @@ export const SubcategoryDrillScreen: React.FC<SubcategoryDrillScreenProps> = ({
   const [selectedFilter, setSelectedFilter] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [activeItemDetail, setActiveItemDetail] = useState<SubcategoryItem | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   const palette = SHEET_MATERIALS[material] || SHEET_MATERIALS.copper;
   const sortOptions = ['Newest', 'Popular', 'Nearby'];
   const filterOptions = ['All', 'Free', 'Certificate', 'Weekend', 'Online'];
 
-  const items = [
-    { title: 'Coffee Art', subtitle: '2 slots · Sat 9AM', bigNumber: '2', badge: 'FREE', type: 'Free' },
-    { title: 'Espresso 101', subtitle: '4 slots · Sat 11AM', bigNumber: '4', badge: 'PAID', type: 'Certificate' },
-    { title: 'Latte Craft', subtitle: '6 slots · Sun 2PM', bigNumber: '6', badge: 'PAID', type: 'Weekend' },
-    { title: 'Bean Origins', subtitle: '8 slots · Online Zoom', bigNumber: '8', badge: 'FREE', type: 'Online' },
-    { title: 'Milk Steaming', subtitle: '10 slots · Mon 6PM', bigNumber: '10', badge: 'PAID', type: 'Weekend' },
-    { title: 'POS Basics', subtitle: '12 slots · Tue 10AM', bigNumber: '12', badge: 'FREE', type: 'Certificate' },
-    { title: 'Order Flow', subtitle: '14 slots · Wed 3PM', bigNumber: '14', badge: 'PAID', type: 'Online' },
-    { title: 'Cash Handling', subtitle: '16 slots · Thu 1PM', bigNumber: '16', badge: 'FREE', type: 'Free' }
+  const items: SubcategoryItem[] = [
+    { title: 'Coffee Art', subtitle: '2 slots · Sat 9AM', bigNumber: '2', badge: 'FREE', type: 'Free', emoji: '☕', heroDescription: 'Hands-on latte art, milk frothing, and pour control workshop with senior baristas.' },
+    { title: 'Espresso 101', subtitle: '4 slots · Sat 11AM', bigNumber: '4', badge: 'PAID', type: 'Certificate', emoji: '☕', heroDescription: 'Calibrate grind size, dose, and extraction ratios for professional espresso bars.' },
+    { title: 'Latte Craft', subtitle: '6 slots · Sun 2PM', bigNumber: '6', badge: 'PAID', type: 'Weekend', emoji: '🥛', heroDescription: 'Advanced microfoam texturing, rosettas, tulips, and speed pour training.' },
+    { title: 'Bean Origins', subtitle: '8 slots · Online Zoom', bigNumber: '8', badge: 'FREE', type: 'Online', emoji: '🌱', heroDescription: 'Explore Kenya AA single-origin profiles, processing methods, and cupping scores.' },
+    { title: 'Milk Steaming', subtitle: '10 slots · Mon 6PM', bigNumber: '10', badge: 'PAID', type: 'Weekend', emoji: '✨', heroDescription: 'Master wand angle, whirlpool dynamics, and silky temperature control.' },
+    { title: 'POS Basics', subtitle: '12 slots · Tue 10AM', bigNumber: '12', badge: 'FREE', type: 'Certificate', emoji: '💻', heroDescription: 'Fast touch POS order entry, split bills, M-Pesa till settlement, and inventory logging.' },
+    { title: 'Order Flow', subtitle: '14 slots · Wed 3PM', bigNumber: '14', badge: 'PAID', type: 'Online', emoji: '📋', heroDescription: 'Coordinate peak-hour ticket sequencing between dining floor and barista counter.' },
+    { title: 'Cash Handling', subtitle: '16 slots · Thu 1PM', bigNumber: '16', badge: 'FREE', type: 'Free', emoji: '💰', heroDescription: 'Daily float reconciliation, cash security procedures, and automated till balancing.' }
   ];
 
   const filteredItems = items.filter((item) => {
@@ -62,6 +74,12 @@ export const SubcategoryDrillScreen: React.FC<SubcategoryDrillScreenProps> = ({
   const showToast = (msg: string) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(null), 3000);
+  };
+
+  const handleItemTap = (item: SubcategoryItem) => {
+    soundEngine.play('tap');
+    setActiveItemDetail(item);
+    onSelectItem?.(item);
   };
 
   return (
@@ -261,11 +279,7 @@ export const SubcategoryDrillScreen: React.FC<SubcategoryDrillScreenProps> = ({
                   bigNumber={item.bigNumber}
                   badge={item.badge}
                   animationDelayMs={idx * 60}
-                  onTap={() => {
-                    soundEngine.play('tap');
-                    showToast(`Selected ${item.title}`);
-                    onSelectItem?.(item.title);
-                  }}
+                  onTap={() => handleItemTap(item)}
                 />
               ))}
             </div>
@@ -273,6 +287,24 @@ export const SubcategoryDrillScreen: React.FC<SubcategoryDrillScreenProps> = ({
         </main>
 
       </div>
+
+      {/* ================= NESTED ITEM DETAIL (Continuous Material Palette) ================= */}
+      {activeItemDetail && (
+        <div className="fixed inset-0 z-50 overflow-y-auto animate-slideUp bg-[#1A1F2E]">
+          <SheetDetailScreen
+            material={material}
+            title={activeItemDetail.title}
+            subtitle={activeItemDetail.subtitle}
+            emoji={activeItemDetail.emoji || '☕'}
+            badge={activeItemDetail.badge}
+            heroDescription={activeItemDetail.heroDescription || `Master ${activeItemDetail.title} with verified training and direct job placement in local venues.`}
+            onClose={() => setActiveItemDetail(null)}
+            onJoinSuccess={() => {
+              showToast(`✓ Registered for ${activeItemDetail.title}!`);
+            }}
+          />
+        </div>
+      )}
 
       {/* ================= TOAST ================= */}
       {toastMsg && (
