@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Bell, ArrowRight, Bookmark, FolderPlus, Heart, Newspaper, Plus, Search, ShieldCheck, Users, X, Sparkles } from 'lucide-react';
+import { Bell, ArrowRight, Bookmark, FolderPlus, Heart, MapPin, Newspaper, Plus, Search, ShieldCheck, Users, X, Sparkles } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
 import { DESTINATION_STATE_LABELS, TEA_EDITIONS, briefWhenLabel, entityChipsFor, formatCount, getCardLevel, getDestinationState, getDestinationVendors, getDistanceLabel, getEditionMeta, getLifecycleBadge, getObjectTypeMeta, getPostKindMeta, getPublishedLine, getRelativeTime, getSourceChip, isDestinationObject, objectFromServer, resolveAction , buildDiscoveryBrief, buildPersonalSections, getCurrentEdition } from '../model/core';
 import type { ObjectType , PursuitStatus, WatchCondition } from '../model/core';
@@ -443,15 +443,15 @@ export function NearbyScreen(props: NearbyScreenProps) {
                     <span>Post</span>
                   </button>
 
-                  <LocationChip
-                    label={selectedLocation}
-                    locating={locating}
-                    locError={locError}
-                    hasLocation={Boolean(userLocation)}
-                    onLocate={locate}
-                    onSelectCity={chooseCity}
-                    onClearLocation={clearLocation}
-                  />
+                  <button
+                    type="button"
+                    onClick={() => { soundEngine.play('tap'); setIsNeighborhoodPickerOpen(true); }}
+                    className="px-3 py-1.5 rounded-xl bg-black/5 hover:bg-black/10 text-[#1A1F2E] font-bold text-xs flex items-center space-x-1.5 shadow-sm cursor-pointer transition-all active:scale-95"
+                    title={`Current neighborhood: ${activeNeighborhood.name} (${activeNeighborhood.county})`}
+                  >
+                    <MapPin className="w-3.5 h-3.5 text-[#B8621F]" />
+                    <span className="truncate max-w-[120px]">Ward · {activeNeighborhood.name}</span>
+                  </button>
                 </div>
               </div>
               {runtimeCheck === 'old' && (
@@ -756,7 +756,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                   {discoveryTab === 'home' && sessionUser && personalState && (
                     <section className="mb-8" aria-label="My Brief">
                       <BriefBuilderSection
-                        suggestedLocations={personalState.suggestedLocations?.length ? personalState.suggestedLocations : ['Machakos', 'Kilimani', 'Westlands']}
+                        suggestedLocations={personalState.suggestedLocations?.length ? personalState.suggestedLocations : ['Machakos', 'Nairobi', 'Kilimani', 'Westlands', 'Eastlands']}
                         availableTypes={availableTypes.map(t => ({ id: t, label: getObjectTypeMeta(t).label }))}
                         topics={personalState.topics ?? []}
                         initialCities={personalPicks.locations}
@@ -770,10 +770,11 @@ export function NearbyScreen(props: NearbyScreenProps) {
                         onTopicToggle={(topicId) => togglePersonalPick('topics', topicId)}
                         onSkip={() => setPersonalBriefDismissed(true)}
                         onBuildBrief={({ cities, types, topics: selectedTopics }) => {
-                          (cities || []).forEach(c => { if (!personalPicks.locations.includes(c)) togglePersonalPick('locations', c); });
-                          (types || []).forEach(t => { if (!personalPicks.types.includes(t)) togglePersonalPick('types', t); });
-                          (selectedTopics || []).forEach(top => { if (!personalPicks.topics.includes(top)) togglePersonalPick('topics', top); });
-                          void savePersonalBrief();
+                          void savePersonalBrief({
+                            locations: cities ?? personalPicks.locations,
+                            types: types ?? personalPicks.types,
+                            topics: selectedTopics ?? personalPicks.topics
+                          });
                         }}
                         onOpenCollections={() => setCollectionsOpen(true)}
                         onOpenFollowing={() => setFollowingOpen(true)}
@@ -1572,6 +1573,190 @@ export function NearbyScreen(props: NearbyScreenProps) {
                 )}
               </>
             )}
+
+            {/* ================= CURATED NEIGHBORHOOD DISCOVERY MATRIX ================= */}
+            <section className="mx-auto my-10 max-w-5xl px-1">
+              <div className="rounded-[28px] bg-[#F7F7F5] p-6 sm:p-8 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-6 border-b border-black/[0.06]">
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <span className="w-2 h-2 rounded-full bg-[#B8621F]" />
+                      <h2 className="text-sm font-black uppercase tracking-widest text-[#1A1F2E]">
+                        {activeNeighborhood.name} Discovery & Operations
+                      </h2>
+                    </div>
+                    <p className="text-xs text-[#6B7280] mt-1 ml-4 font-medium">
+                      Verified community desks, bulk supply runs, and logistics corridors in {activeNeighborhood.county}
+                    </p>
+                  </div>
+                  <span className="self-start sm:self-auto text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#B8621F]/15 text-[#B8621F]">
+                    47 Counties Active
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+                  {/* Card 1: Chamas & Table Banking */}
+                  <button
+                    type="button"
+                    onClick={() => { soundEngine.play('heavyTap'); setChamaOpen(true); }}
+                    className="p-5 rounded-[20px] bg-white hover:bg-white/90 shadow-sm transition-all duration-200 cursor-pointer group flex flex-col justify-between text-left"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-2xl">🌸</span>
+                        <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-purple-50 text-purple-700">
+                          Table Bank
+                        </span>
+                      </div>
+                      <h3 className="text-sm font-black text-[#1A1F2E] mt-3 group-hover:text-[#B8621F] transition-colors">
+                        Chamas & Merry-Go-Rounds
+                      </h3>
+                      <p className="text-xs text-[#6B7280] mt-1 leading-relaxed">
+                        Join verified neighborhood savings circles, rotating payouts, and table banking pools.
+                      </p>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-black/[0.04] flex items-center justify-between w-full">
+                      <span className="text-[11px] font-bold text-[#B8621F]">Open Chama Desk →</span>
+                      <span className="text-[10px] text-[#9CA3AF] font-medium">Cycle 5 Live</span>
+                    </div>
+                  </button>
+
+                  {/* Card 2: Bulk CBC Textbook & Demand Runs */}
+                  <button
+                    type="button"
+                    onClick={() => { soundEngine.play('heavyTap'); setDemandRunOpen(true); }}
+                    className="p-5 rounded-[20px] bg-white hover:bg-white/90 shadow-sm transition-all duration-200 cursor-pointer group flex flex-col justify-between text-left"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-2xl">📚</span>
+                        <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                          CBC Run
+                        </span>
+                      </div>
+                      <h3 className="text-sm font-black text-[#1A1F2E] mt-3 group-hover:text-[#B8621F] transition-colors">
+                        CBC School Books & Wholesale
+                      </h3>
+                      <p className="text-xs text-[#6B7280] mt-1 leading-relaxed">
+                        Direct textbook and bulk supply orders aggregated at wholesale discount for PTAs & schools.
+                      </p>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-black/[0.04] flex items-center justify-between w-full">
+                      <span className="text-[11px] font-bold text-[#B8621F]">View Bulk Runs →</span>
+                      <span className="text-[10px] text-[#9CA3AF] font-medium">Save 28%</span>
+                    </div>
+                  </button>
+
+                  {/* Card 3: WAIRO Cargo & Inter-County Gate */}
+                  <button
+                    type="button"
+                    onClick={() => { soundEngine.play('heavyTap'); setInterCountyOpen(true); }}
+                    className="p-5 rounded-[20px] bg-white hover:bg-white/90 shadow-sm transition-all duration-200 cursor-pointer group flex flex-col justify-between text-left"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-2xl">🚚</span>
+                        <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700">
+                          47 Counties
+                        </span>
+                      </div>
+                      <h3 className="text-sm font-black text-[#1A1F2E] mt-3 group-hover:text-[#B8621F] transition-colors">
+                        WAIRO Cargo & Logistics Gate
+                      </h3>
+                      <p className="text-xs text-[#6B7280] mt-1 leading-relaxed">
+                        Inter-county parcel booking, direct carrier auctions, and town gate collection.
+                      </p>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-black/[0.04] flex items-center justify-between w-full">
+                      <span className="text-[11px] font-bold text-[#B8621F]">Send / Track Parcel →</span>
+                      <span className="text-[10px] text-[#9CA3AF] font-medium">Door & Stage</span>
+                    </div>
+                  </button>
+
+                  {/* Card 4: Group Event Touring & Logistics */}
+                  <button
+                    type="button"
+                    onClick={() => { soundEngine.play('heavyTap'); setEventLogisticsOpen(true); }}
+                    className="p-5 rounded-[20px] bg-white hover:bg-white/90 shadow-sm transition-all duration-200 cursor-pointer group flex flex-col justify-between text-left"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-2xl">🚌</span>
+                        <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
+                          Touring Ops
+                        </span>
+                      </div>
+                      <h3 className="text-sm font-black text-[#1A1F2E] mt-3 group-hover:text-[#B8621F] transition-colors">
+                        Choir, Sports & Retreat Charters
+                      </h3>
+                      <p className="text-xs text-[#6B7280] mt-1 leading-relaxed">
+                        Group transport charters, member roster check-ins, and target funding trackers.
+                      </p>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-black/[0.04] flex items-center justify-between w-full">
+                      <span className="text-[11px] font-bold text-[#B8621F]">Coordinate Event →</span>
+                      <span className="text-[10px] text-[#9CA3AF] font-medium">Live Rosters</span>
+                    </div>
+                  </button>
+
+                  {/* Card 5: Paid Gigs & Local Micro-Work */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundEngine.play('tap');
+                      setSelectedObjectType('opportunity');
+                      setDiscoveryTab('opportunities');
+                    }}
+                    className="p-5 rounded-[20px] bg-white hover:bg-white/90 shadow-sm transition-all duration-200 cursor-pointer group flex flex-col justify-between text-left"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-2xl">💼</span>
+                        <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                          Micro-Work
+                        </span>
+                      </div>
+                      <h3 className="text-sm font-black text-[#1A1F2E] mt-3 group-hover:text-[#B8621F] transition-colors">
+                        Local Verified Gigs
+                      </h3>
+                      <p className="text-xs text-[#6B7280] mt-1 leading-relaxed">
+                        Handyman tasks, inventory counters, event ushers, and local tutoring assignments.
+                      </p>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-black/[0.04] flex items-center justify-between w-full">
+                      <span className="text-[11px] font-bold text-[#B8621F]">Browse Gigs →</span>
+                      <span className="text-[10px] text-[#9CA3AF] font-medium">Daily Payouts</span>
+                    </div>
+                  </button>
+
+                  {/* Card 6: Creator Partner Program */}
+                  <button
+                    type="button"
+                    onClick={() => { soundEngine.play('heavyTap'); setCreatorDeskOpen(true); }}
+                    className="p-5 rounded-[20px] bg-white hover:bg-white/90 shadow-sm transition-all duration-200 cursor-pointer group flex flex-col justify-between text-left"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-2xl">🏅</span>
+                        <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">
+                          15% Net Cut
+                        </span>
+                      </div>
+                      <h3 className="text-sm font-black text-[#1A1F2E] mt-3 group-hover:text-[#B8621F] transition-colors">
+                        Creator Partner Program
+                      </h3>
+                      <p className="text-xs text-[#6B7280] mt-1 leading-relaxed">
+                        Earn 15% net commission on every bulk supply run, ticket sale, and cargo run for your community.
+                      </p>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-black/[0.04] flex items-center justify-between w-full">
+                      <span className="text-[11px] font-bold text-[#B8621F]">Open Creator Desk →</span>
+                      <span className="text-[10px] text-[#9CA3AF] font-medium">Instant Ledger</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </section>
           </>
         )}
         {nearbySection === 'tea' && (

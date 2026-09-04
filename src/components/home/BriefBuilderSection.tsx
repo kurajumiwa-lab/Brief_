@@ -34,7 +34,20 @@ export const BriefBuilderSection: React.FC<BriefBuilderSectionProps> = ({
   initialInterests = [],
   initialTypes = [],
   initialExpanded = false,
-  suggestedLocations = ['Machakos', 'Nairobi', 'Kilimani', 'Westlands', 'Kasarani', 'South B', "Lang'ata", 'Karen', 'Mombasa', 'Kisumu'],
+  suggestedLocations = [
+    'Machakos',
+    'Nairobi',
+    'Kilimani',
+    'Westlands',
+    'Eastlands',
+    'Nakuru',
+    'Kasarani',
+    'South B',
+    "Lang'ata",
+    'Karen',
+    'Mombasa',
+    'Kisumu'
+  ],
   availableTypes = [
     { id: 'experience', label: 'Experience' },
     { id: 'event', label: 'Event' },
@@ -47,7 +60,10 @@ export const BriefBuilderSection: React.FC<BriefBuilderSectionProps> = ({
     { id: 'food', label: 'Food' },
     { id: 'jobs', label: 'Jobs' },
     { id: 'entertainment', label: 'Entertainment' },
-    { id: 'community', label: 'Community' }
+    { id: 'community', label: 'Community' },
+    { id: 'cbc', label: 'CBC School Textbooks' },
+    { id: 'chama', label: 'Chamas & Table Banking' },
+    { id: 'wairo', label: 'WAIRO Cargo' }
   ],
   followedCount = 0,
   updatesCount = 0,
@@ -199,7 +215,7 @@ export const BriefBuilderSection: React.FC<BriefBuilderSectionProps> = ({
         </button>
       </div>
 
-      {/* ═══ THE EXPANDABLE INLINE ACCORDION (Hidden by default, pushes content down) ═══ */}
+      {/* ═══ THE EXPANDABLE INLINE ACCORDION (Pushes content down) ═══ */}
       {isExpanded && (
         <div className="mx-5 mb-4 p-5 rounded-[24px] bg-[#FAFAF8] shadow-lg animate-slideUp space-y-5 transition-all duration-300">
           
@@ -207,7 +223,7 @@ export const BriefBuilderSection: React.FC<BriefBuilderSectionProps> = ({
           <div className="flex items-start justify-between space-x-4">
             <div className="space-y-1">
               <h3 className="text-lg font-black text-[#1A1F2E] tracking-tight leading-tight">
-                Make Brief feel like your neighborhood
+                Make this your Brief
               </h3>
               <p className="text-xs text-[#6B7280] leading-relaxed font-medium">
                 Make this your Brief: ordered around the places and things you follow. Skip anytime — nothing is blocked.

@@ -565,9 +565,9 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                 actionButton={
                   <span
                     className="text-[10px] font-bold text-[#E8985E] cursor-pointer hover:underline"
-                    onClick={() => showToast('Opening Publications Catalog')}
+                    onClick={() => setDemandRunOpen(true)}
                   >
-                    Browse All
+                    Bulk Runs Desk →
                   </span>
                 }
               >
@@ -576,20 +576,20 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                   title="CBC Grade 7 Curriculum Guide"
                   category="EDUCATION"
                   subtitle="Madam Beatrice · Westlands"
-                  badge="VERIFIED"
+                  badge="BULK RUN"
                   badgeColor="#10B981"
                   accentColor="#38BDF8"
-                  onClick={() => showToast('Opened CBC Grade 7 Curriculum Guide')}
+                  onClick={() => setDemandRunOpen(true)}
                 />
                 <DarkShelfBookCard
                   id="kilimani-tech"
                   title="Kilimani Tech & Creator Bulletin"
-                  category="TECH & GIGS"
+                  category="CREATOR DESK"
                   subtitle="Weekly community signals"
-                  badge="HOT"
+                  badge="15% CUT"
                   badgeColor="#EF4444"
                   accentColor="#E8985E"
-                  onClick={() => showToast('Opened Kilimani Tech Bulletin')}
+                  onClick={() => setCreatorDeskOpen(true)}
                 />
                 <DarkShelfBookCard
                   id="nairobi-logistics"
@@ -599,19 +599,17 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                   badge="WAIRO"
                   badgeColor="#E8985E"
                   accentColor="#E8985E"
-                  onClick={() => {
-                    setWairoSheetOpen(true);
-                  }}
+                  onClick={() => setWairoSheetOpen(true)}
                 />
                 <DarkShelfBookCard
                   id="eastlands-league"
                   title="Eastlands Youth Cup Playbook"
-                  category="SPORTS"
+                  category="SPORTS LOGISTICS"
                   subtitle="Rosters & fixture schedules"
-                  badge="ROSTER"
+                  badge="TOURING"
                   badgeColor="#F59E0B"
                   accentColor="#10B981"
-                  onClick={() => showToast('Opened Eastlands Youth Playbook')}
+                  onClick={() => setEventLogisticsOpen(true)}
                 />
               </ShelfRow>
 
@@ -623,32 +621,39 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                 <DarkShelfBookCard
                   id="pass-events"
                   title="Nairobi Community Live Gigs"
-                  category="EVENTS"
-                  subtitle="Street markets & acoustic jams"
-                  badge="PASS"
+                  category="EVENTS & RETREATS"
+                  subtitle="Street markets & touring squads"
+                  badge="LOGISTICS"
                   badgeColor="#8B5CF6"
                   accentColor="#A78BFA"
-                  onClick={() => setSelectedSection(1)}
+                  onClick={() => setEventLogisticsOpen(true)}
                 />
                 <DarkShelfBookCard
                   id="pass-around"
                   title="Around You Radar"
                   category="LOCAL SIGNAL"
                   subtitle="Verified spots near Machakos"
-                  badge="NEARBY"
+                  badge="RADAR"
                   badgeColor="#10B981"
                   accentColor="#34D399"
-                  onClick={() => setSelectedSection(1)}
+                  onClick={() => openCategoryDetail({
+                    material: 'copper',
+                    title: 'Around You Radar',
+                    subtitle: 'Places, events, and people near me',
+                    emoji: '📍',
+                    badge: 'RADAR',
+                    heroDescription: 'Real-time verified community signals, local artisan popups, and neighborhood alerts curated by verified community champions.'
+                  })}
                 />
                 <DarkShelfBookCard
                   id="pass-mshiriki"
                   title="Mshiriki Community Polls"
-                  category="GOVERNANCE"
+                  category="HARAMBEE & LIFE"
                   subtitle="Have your say on neighborhood roads"
-                  badge="POLL"
+                  badge="COMMITTEE"
                   badgeColor="#EC4899"
                   accentColor="#F472B6"
-                  onClick={() => showToast('Opening Mshiriki Community Polls')}
+                  onClick={() => setCommitteeOpen(true)}
                 />
               </ShelfRow>
             </ModernDarkShelfWrapper>
@@ -657,12 +662,12 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
               <IronSheet
                 material="jade"
                 title="Community Events"
-                subtitle="Live gigs & street markets"
+                subtitle="Live gigs, street markets & retreats"
                 emoji="🎉"
-                badge="EVENTS"
+                badge="GATHERINGS"
                 height={130}
                 animationDelayMs={0}
-                onTap={() => setSelectedSection(1)}
+                onTap={() => setEventLogisticsOpen(true)}
               />
 
               <IronSheet
@@ -670,19 +675,28 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                 title="Around You"
                 subtitle="Places, events, and people near me"
                 emoji="📍"
+                badge="RADAR"
                 height={130}
                 animationDelayMs={100}
-                onTap={() => setSelectedSection(1)}
+                onTap={() => openCategoryDetail({
+                  material: 'copper',
+                  title: 'Around You',
+                  subtitle: 'Places, events, and people near me',
+                  emoji: '📍',
+                  badge: 'RADAR',
+                  heroDescription: 'Real-time verified community signals, local artisan popups, and neighborhood alerts curated by verified community champions.'
+                })}
               />
 
               <IronSheet
                 material="brass"
                 title="Mshiriki"
-                subtitle="Have your say · Community polls"
+                subtitle="Have your say · Community polls & harambee"
                 emoji="❤️"
+                badge="MUTUAL AID"
                 height={130}
                 animationDelayMs={200}
-                onTap={() => showToast('Opening Mshiriki Community Polls')}
+                onTap={() => setCommitteeOpen(true)}
               />
             </div>
           </div>
