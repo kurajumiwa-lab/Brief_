@@ -33,6 +33,7 @@ const { PrivateCarrierAuctionDesk } = require('./src/components/wairo/PrivateCar
 const { OfflineSyncQueueDesk } = require('./src/components/offline/OfflineSyncQueueDesk.tsx');
 const { ArenaClanCoordination } = require('./src/components/arena/ArenaClanCoordination.tsx');
 const { UniversalCreatePostModal } = require('./src/components/posts/UniversalCreatePostModal.tsx');
+const { DiscoverScreen } = require('./src/screens/DiscoverScreen.tsx');
 
 let pass = 0, fail = 0;
 const check = (name, cond, detail = '') => {
@@ -405,6 +406,31 @@ async function main() {
   check('triggers discard draft protection modal on close', host12.textContent.includes('Discard Draft?') && host12.textContent.includes('Keep Editing'));
 
   await act(async () => { root12.unmount(); host12.remove(); });
+
+  // --- 13. DiscoverScreen (Modern 3D Depth & Staggered GlassCard Hub) ---
+  console.log('\n--- 13. DiscoverScreen ---');
+  const host13 = document.createElement('div');
+  document.body.appendChild(host13);
+  const root13 = createRoot(host13);
+  await act(async () => {
+    root13.render(React.createElement(DiscoverScreen));
+  });
+
+  const text13 = host13.textContent;
+  check('renders Discover title and warm greeting', text13.includes('Discover') && text13.includes('Good morning'));
+  check('shows visual toggle category options', text13.includes('All') && text13.includes('Events') && text13.includes('Products') && text13.includes('News'));
+  check('renders floating action pill Create button', text13.includes('Create'));
+
+  // Tap first card to open detail bottom sheet
+  const firstCard = host13.querySelector('.rounded-\\[20px\\]');
+  if (firstCard) {
+    await act(async () => {
+      firstCard.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+  }
+  check('opens detail bottom sheet with direct WhatsApp & Telegram actions', host13.textContent.includes('WhatsApp') && host13.textContent.includes('Telegram') && host13.textContent.includes('Contact Organizer / Seller Directly:'));
+
+  await act(async () => { root13.unmount(); host13.remove(); });
 
   console.log(`\nPASSED ${pass}   FAILED ${fail}`);
   process.exit(fail ? 1 : 0);
