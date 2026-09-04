@@ -20,7 +20,7 @@
     "test:notifications": "node server/test/notifications.mjs",
     "test:yard": "npm --workspace=server run test:yard",
     "test:client": "./run-suites.sh",
-    "test:typecheck": "tsc -p tc/tsconfig.json",
+    "test:typecheck": "node ./node_modules/typescript/bin/tsc -p tc/tsconfig.json",
     "demo:vault": "node scripts/demo-vault.mjs",
     "seed": "node scripts/seed-demo.mjs",
     "seed:clear": "node scripts/seed-demo.mjs --clear",
