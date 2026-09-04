@@ -80,7 +80,7 @@ export const WairoFloatingWidget: React.FC<WairoFloatingWidgetProps> = ({
             onTap={() => {
               soundEngine.play('heavyTap');
               playSound('open');
-              setIsQuickSheetOpen(true);
+              setIsInterCountyOpen(true);
             }}
           />
         </div>

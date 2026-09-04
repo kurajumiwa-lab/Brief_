@@ -177,7 +177,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
           location={wairoLocation.name}
           onTap={() => {
             soundEngine.play('heavyTap');
-            setWairoSheetOpen(true);
+            setInterCountyOpen(true);
           }}
         />
       </div>
@@ -353,14 +353,14 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
 
               <IronSheet
                 material="copper"
-                title="WAIRO Logistics"
-                subtitle={`${activeNeighborhood.activeRiders[0]?.name || 'Otieno'} · ${activeNeighborhood.activeRiders[0]?.distance || '0.4 km'} · ${activeNeighborhood.activeRiders[0]?.eta || '3 mins'}`}
-                emoji="📦"
-                badge="90/10"
+                title="WAIRO Cargo"
+                subtitle="47-County Matatu SACCO & Heavy Freight"
+                emoji="🚚"
+                badge="CARGO 90/10"
                 animationDelayMs={160}
                 onTap={() => {
                   soundEngine.play('heavyTap');
-                  setWairoSheetOpen(true);
+                  setInterCountyOpen(true);
                 }}
               />
 
@@ -398,14 +398,14 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
             <div className="grid grid-cols-2 gap-3">
               <IronSheet
                 material="copper"
-                title="WAIRO Logistics & Cargo"
-                subtitle="Courier · Errands · 47 Counties"
+                title="WAIRO Cargo Desk"
+                subtitle="Inter-County Freight & SACCO Routes"
                 emoji="🚚"
-                badge="WAIRO 90/10"
+                badge="47 COUNTIES"
                 animationDelayMs={0}
                 onTap={() => {
                   soundEngine.play('heavyTap');
-                  setWairoSheetOpen(true);
+                  setInterCountyOpen(true);
                 }}
               />
 
@@ -485,18 +485,12 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
               </span>
               <div className="flex items-center space-x-2 overflow-x-auto pb-2">
                 <MetalTag
-                  label="WAIRO"
-                  icon={<Bike className="w-3.5 h-3.5" />}
-                  material="copper"
-                  selected={true}
-                  onTap={() => setWairoSheetOpen(true)}
-                />
-                <MetalTag
                   label="Cargo"
                   icon={<Truck className="w-3.5 h-3.5" />}
-                  material="steel"
+                  material="copper"
+                  selected={true}
                   onTap={() => {
-                    setWairoLocation(LOCATIONS[0]);
+                    soundEngine.play('tap');
                     setInterCountyOpen(true);
                   }}
                 />
@@ -615,13 +609,16 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                 />
                 <DarkShelfBookCard
                   id="nairobi-logistics"
-                  title="WAIRO Matatu & Cargo Guide"
-                  category="LOGISTICS"
+                  title="WAIRO 47-County Cargo Guide"
+                  category="CARGO LOGISTICS"
                   subtitle="Evans Maina · Industrial Area"
-                  badge="WAIRO"
+                  badge="CARGO"
                   badgeColor="#E8985E"
                   accentColor="#E8985E"
-                  onClick={() => setWairoSheetOpen(true)}
+                  onClick={() => {
+                    soundEngine.play('tap');
+                    setInterCountyOpen(true);
+                  }}
                 />
                 <DarkShelfBookCard
                   id="eastlands-league"

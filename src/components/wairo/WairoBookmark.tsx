@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bike } from 'lucide-react';
+import { Truck } from 'lucide-react';
 import { soundEngine } from '../../utils/SoundEngine';
 
 export interface WairoBookmarkProps {
@@ -13,7 +13,8 @@ export interface WairoBookmarkProps {
 /**
  * WairoBookmark
  * Tactile, small bookmark-style knob (max 56x88) with copper wax seal,
- * bike icon, pulsing status dot, and top ribbon.
+ * truck/cargo icon, pulsing status dot, and top ribbon.
+ * Directly routes to WAIRO Cargo & Inter-County Logistics.
  */
 export const WairoBookmark: React.FC<WairoBookmarkProps> = ({
   status = 'IN TRANSIT',
@@ -39,7 +40,7 @@ export const WairoBookmark: React.FC<WairoBookmarkProps> = ({
         transformOrigin: 'top center',
         ...style
       }}
-      title={`WAIRO · Courier & Errands (${status} • ${location})`}
+      title={`WAIRO Cargo · 47-County Logistics (${status} • ${location})`}
       aria-label="Wairo Courier Bookmark Seal"
     >
       {/* ── The Ribbon / String ── */}
@@ -70,8 +71,8 @@ export const WairoBookmark: React.FC<WairoBookmarkProps> = ({
             boxShadow: '0 4px 10px rgba(0, 0, 0, 0.35), inset 0 2px 3px rgba(255, 255, 255, 0.35), inset 0 -2px 3px rgba(0, 0, 0, 0.4)'
           }}
         >
-          {/* Embossed Bicycle Icon */}
-          <Bike className="w-5 h-5 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]" />
+          {/* Embossed Cargo Truck Icon */}
+          <Truck className="w-5 h-5 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]" />
 
           {/* Tiny Status LED Dot in Corner */}
           <div
