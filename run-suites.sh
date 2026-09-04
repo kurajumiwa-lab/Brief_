@@ -17,7 +17,7 @@ bash ./sync.sh > /dev/null || { echo "sync.sh FAILED"; exit 1; }
 cd preview || exit 1
 export PATH="../node_modules/.bin:$PATH"
 
-ALL="access admin alerts moneyband utf8 apic menusheet shopbuilder dukabook trust personal entities membersdesk fees rewards gate mshikano batch1 camp circleops capture collections commerce chain dest econ engine feedcards group groupui inbox ing joins loops media nav news notifications onboard orchestration parse person pmatch pure pursuit quests resale routes session stories sys townhubs"
+ALL="access admin alerts moneyband utf8 apic menusheet shopbuilder dukabook trust personal entities membersdesk fees rewards gate mshikano batch1 camp circleops capture collections commerce chain darkshelf dest econ engine feedcards group groupui inbox ing joins loops media nav news notifications onboard orchestration parse person pmatch pure pursuit quests resale routes session stories sys townhubs"
 SUITES="${*:-$ALL}"
 
 tot_p=0; tot_f=0; broken=""

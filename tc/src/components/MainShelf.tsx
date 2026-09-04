@@ -3,6 +3,7 @@ import { Heart, ArrowRight, CalendarDays, Flame, Lock, MessageCircle, Plus, Spar
 import type { MenuTarget } from './MenuSheet';
 import type { Ladder } from '../api/briefApi';
 import { serviceForSurface } from './ladder';
+import { ShelfPlank } from './shelf/ShelfPlank';
 
 import communityArt from '../assets/shelf/nairobi-community.webp';
 import shareArt from '../assets/shelf/whatsapp-share.webp';
@@ -158,6 +159,9 @@ function ShelfCardView({
       aria-label={locked && service ? `${card.title}: opens after ${service.unlocksAfter}` : `${card.title}: ${detail}`}
       data-locked={locked ? 'true' : undefined}
       data-shelf-id={card.id}
+      style={{
+        boxShadow: isDark ? '0 6px 10px rgba(0, 0, 0, 0.85)' : undefined,
+      }}
       className={`group relative shrink-0 overflow-hidden rounded-xl text-left transition-all hover:-translate-y-0.5 cursor-pointer ${
         isDark
           ? 'border border-[#222B3A] hover:border-[#16A34A] shadow-lg'
@@ -272,19 +276,22 @@ export function MainShelf({
           <ArrowRight className="h-2.5 w-2.5" /> swipe or tap
         </span>
       </div>
-      <div className={compact ? 'grid grid-cols-2 gap-2' : 'flex gap-2.5 overflow-x-auto pb-1 -mx-1 px-1 snap-x snap-mandatory sm:grid sm:grid-cols-3 sm:overflow-visible'}>
-        {shelfOrder(SHELF_CARDS).map((card) => (
-          <ShelfCardView
-            key={card.id}
-            card={card}
-            onSelect={onSelect}
-            compact={compact}
-            playOpenCount={playOpenCount}
-            theme={theme}
-            ladder={ladder}
-            onLocked={onLocked}
-          />
-        ))}
+      <div className="relative">
+        <div className={compact ? 'grid grid-cols-2 gap-2' : 'flex gap-2.5 overflow-x-auto pb-1 -mx-1 px-1 snap-x snap-mandatory sm:grid sm:grid-cols-3 sm:overflow-visible items-end'}>
+          {shelfOrder(SHELF_CARDS).map((card) => (
+            <ShelfCardView
+              key={card.id}
+              card={card}
+              onSelect={onSelect}
+              compact={compact}
+              playOpenCount={playOpenCount}
+              theme={theme}
+              ladder={ladder}
+              onLocked={onLocked}
+            />
+          ))}
+        </div>
+        {isDark && <ShelfPlank className="mt-1" />}
       </div>
       {!compact && (
         <p className={`px-1 text-[9.5px] leading-snug ${isDark ? 'text-[#5A6472]' : 'text-[#0D1117]/60'}`}>

@@ -31,7 +31,11 @@ import {
   BriefBuilderSection,
   GroupDemandRunDesk,
   GroupEventLogisticsDesk,
-  CreatorPartnerDesk
+  CreatorPartnerDesk,
+  ModernDarkShelfWrapper,
+  ShelfRow,
+  ShelfPlank,
+  DarkShelfBookCard
 } from '../components/ui';
 import { AppPalette } from '../styles/appPalette';
 import { WairoMiniApp } from '../components/wairo/WairoMiniApp';
@@ -547,19 +551,109 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
 
         {/* ================= SECTION 2: SHELF ================= */}
         {selectedSection === 2 && (
-          <div className="space-y-4 animate-fadeIn">
-            {/* Section Header Label */}
-            <div className="flex items-center justify-between pt-1 pb-2">
-              <div className="flex items-center space-x-2">
-                <span className="w-2 h-2 rounded-full bg-[#E8985E]" />
-                <span className="text-xs font-black tracking-widest uppercase text-[#1A1F2E]">
-                  My Shelf
-                </span>
-              </div>
-              <span className="text-[11px] font-semibold text-[#6B7280]">Your picks</span>
-            </div>
+          <div className="space-y-5 animate-fadeIn">
+            {/* Modern Dark Bookshelf Canvas */}
+            <ModernDarkShelfWrapper
+              title="My Shelf"
+              subtitle="Saved publications, community runs & local briefs"
+              badge="SLATE EDITION"
+            >
+              {/* Row 1: Saved Publications & Deep Guides */}
+              <ShelfRow
+                label="Community Publications"
+                countLabel="4 items"
+                actionButton={
+                  <span
+                    className="text-[10px] font-bold text-[#E8985E] cursor-pointer hover:underline"
+                    onClick={() => showToast('Opening Publications Catalog')}
+                  >
+                    Browse All
+                  </span>
+                }
+              >
+                <DarkShelfBookCard
+                  id="cbc-guide"
+                  title="CBC Grade 7 Curriculum Guide"
+                  category="EDUCATION"
+                  subtitle="Madam Beatrice · Westlands"
+                  badge="VERIFIED"
+                  badgeColor="#10B981"
+                  accentColor="#38BDF8"
+                  onClick={() => showToast('Opened CBC Grade 7 Curriculum Guide')}
+                />
+                <DarkShelfBookCard
+                  id="kilimani-tech"
+                  title="Kilimani Tech & Creator Bulletin"
+                  category="TECH & GIGS"
+                  subtitle="Weekly community signals"
+                  badge="HOT"
+                  badgeColor="#EF4444"
+                  accentColor="#E8985E"
+                  onClick={() => showToast('Opened Kilimani Tech Bulletin')}
+                />
+                <DarkShelfBookCard
+                  id="nairobi-logistics"
+                  title="WAIRO Matatu & Cargo Guide"
+                  category="LOGISTICS"
+                  subtitle="Evans Maina · Industrial Area"
+                  badge="WAIRO"
+                  badgeColor="#E8985E"
+                  accentColor="#E8985E"
+                  onClick={() => {
+                    setWairoSheetOpen(true);
+                  }}
+                />
+                <DarkShelfBookCard
+                  id="eastlands-league"
+                  title="Eastlands Youth Cup Playbook"
+                  category="SPORTS"
+                  subtitle="Rosters & fixture schedules"
+                  badge="ROSTER"
+                  badgeColor="#F59E0B"
+                  accentColor="#10B981"
+                  onClick={() => showToast('Opened Eastlands Youth Playbook')}
+                />
+              </ShelfRow>
 
-            <div className="space-y-3">
+              {/* Row 2: Community Passes & Signals */}
+              <ShelfRow
+                label="Community Passes & Sheets"
+                countLabel="3 active"
+              >
+                <DarkShelfBookCard
+                  id="pass-events"
+                  title="Nairobi Community Live Gigs"
+                  category="EVENTS"
+                  subtitle="Street markets & acoustic jams"
+                  badge="PASS"
+                  badgeColor="#8B5CF6"
+                  accentColor="#A78BFA"
+                  onClick={() => setSelectedSection(1)}
+                />
+                <DarkShelfBookCard
+                  id="pass-around"
+                  title="Around You Radar"
+                  category="LOCAL SIGNAL"
+                  subtitle="Verified spots near Machakos"
+                  badge="NEARBY"
+                  badgeColor="#10B981"
+                  accentColor="#34D399"
+                  onClick={() => setSelectedSection(1)}
+                />
+                <DarkShelfBookCard
+                  id="pass-mshiriki"
+                  title="Mshiriki Community Polls"
+                  category="GOVERNANCE"
+                  subtitle="Have your say on neighborhood roads"
+                  badge="POLL"
+                  badgeColor="#EC4899"
+                  accentColor="#F472B6"
+                  onClick={() => showToast('Opening Mshiriki Community Polls')}
+                />
+              </ShelfRow>
+            </ModernDarkShelfWrapper>
+
+            <div className="space-y-3 pt-1">
               <IronSheet
                 material="jade"
                 title="Community Events"

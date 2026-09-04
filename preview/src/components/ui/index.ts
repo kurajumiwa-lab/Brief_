@@ -31,3 +31,7 @@ export { GroupEventLogisticsDesk } from '../circle/GroupEventLogisticsDesk';
 export type { GroupEventLogisticsDeskProps } from '../circle/GroupEventLogisticsDesk';
 export { CreatorPartnerDesk } from '../creator/CreatorPartnerDesk';
 export type { CreatorPartnerDeskProps } from '../creator/CreatorPartnerDesk';
+export { ShelfPlank } from '../shelf/ShelfPlank';
+export type { ShelfPlankProps } from '../shelf/ShelfPlank';
+export { ModernDarkShelfWrapper, ShelfRow, DarkShelfBookCard, DARK_SHELF_TOKENS } from '../shelf/ModernDarkShelfWrapper';
+export type { ModernDarkShelfWrapperProps, ShelfRowProps, DarkShelfBookCardProps } from '../shelf/ModernDarkShelfWrapper';
