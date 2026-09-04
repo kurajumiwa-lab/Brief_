@@ -645,6 +645,35 @@ async function main() {
 
   await act(async () => { root19.unmount(); host19.remove(); });
 
+  // --- 20. End-to-End Material Route Navigation ---
+  console.log('\n--- 20. End-to-End Material Route Navigation ---');
+  const host20 = document.createElement('div');
+  document.body.appendChild(host20);
+  const root20 = createRoot(host20);
+  await act(async () => {
+    root20.render(React.createElement(LandingScreen));
+  });
+
+  // Tap "Paid Gigs" in LandingScreen
+  const paidGigsCard = Array.from(host20.querySelectorAll('button, div')).find(el => el.textContent.trim().startsWith('Paid Gigs'));
+  if (paidGigsCard) {
+    await act(async () => {
+      paidGigsCard.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+  }
+  check('tapping Paid Gigs navigates into SheetDetailScreen with GIGS badge', host20.textContent.includes('GIGS') && host20.textContent.includes('Explore Sub-Categories'));
+
+  // Tap "Beginner" MetalTag inside SheetDetailScreen to drill into SubcategoryDrillScreen
+  const beginnerTag = Array.from(host20.querySelectorAll('button, div')).find(el => el.textContent.trim() === 'Beginner');
+  if (beginnerTag) {
+    await act(async () => {
+      beginnerTag.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+  }
+  check('tapping Beginner tag drills into SubcategoryDrillScreen', host20.textContent.includes('Beginner') && host20.textContent.includes('Coffee Art'));
+
+  await act(async () => { root20.unmount(); host20.remove(); });
+
   console.log(`\nPASSED ${pass}   FAILED ${fail}`);
   process.exit(fail ? 1 : 0);
 }

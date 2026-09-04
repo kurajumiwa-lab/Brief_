@@ -33,6 +33,12 @@ export interface SheetDetailScreenProps {
   heroDescription?: string;
   onClose?: () => void;
   onJoinSuccess?: () => void;
+  onOpenSubcategoryDrill?: (params: {
+    material: SheetMaterial;
+    parent: string;
+    sub: string;
+    icon?: React.ReactNode;
+  }) => void;
 }
 
 export const SheetDetailScreen: React.FC<SheetDetailScreenProps> = ({
@@ -43,7 +49,8 @@ export const SheetDetailScreen: React.FC<SheetDetailScreenProps> = ({
   badge = 'GIGS',
   heroDescription = 'Join a verified community hub that connects local skills with real opportunities. Learn from vetted instructors, earn a certificate, and get matched to gigs that disburse within 48 hours via M-Pesa.',
   onClose,
-  onJoinSuccess
+  onJoinSuccess,
+  onOpenSubcategoryDrill
 }) => {
   const [selectedSubtab, setSelectedSubtab] = useState<0 | 1 | 2>(0);
   const [scrollOffset, setScrollOffset] = useState(0);
@@ -302,26 +309,66 @@ export const SheetDetailScreen: React.FC<SheetDetailScreenProps> = ({
                     icon={<BookOpen className="w-3.5 h-3.5" />}
                     material={material}
                     selected={true}
+                    onTap={() =>
+                      onOpenSubcategoryDrill?.({
+                        material,
+                        parent: title,
+                        sub: 'Beginner',
+                        icon: <BookOpen className="w-8 h-8" />
+                      })
+                    }
                   />
                   <MetalTag
                     label="Advanced"
                     icon={<TrendingUp className="w-3.5 h-3.5" />}
                     material={material}
+                    onTap={() =>
+                      onOpenSubcategoryDrill?.({
+                        material,
+                        parent: title,
+                        sub: 'Advanced',
+                        icon: <TrendingUp className="w-8 h-8" />
+                      })
+                    }
                   />
                   <MetalTag
                     label="Certified"
                     icon={<ShieldCheck className="w-3.5 h-3.5" />}
                     material={material}
+                    onTap={() =>
+                      onOpenSubcategoryDrill?.({
+                        material,
+                        parent: title,
+                        sub: 'Certified',
+                        icon: <ShieldCheck className="w-8 h-8" />
+                      })
+                    }
                   />
                   <MetalTag
                     label="Fast-track"
                     icon={<Zap className="w-3.5 h-3.5" />}
                     material={material}
+                    onTap={() =>
+                      onOpenSubcategoryDrill?.({
+                        material,
+                        parent: title,
+                        sub: 'Fast-track',
+                        icon: <Zap className="w-8 h-8" />
+                      })
+                    }
                   />
                   <MetalTag
                     label="Weekend Cohort"
                     icon={<CalendarDays className="w-3.5 h-3.5" />}
                     material={material}
+                    onTap={() =>
+                      onOpenSubcategoryDrill?.({
+                        material,
+                        parent: title,
+                        sub: 'Weekend Cohort',
+                        icon: <CalendarDays className="w-8 h-8" />
+                      })
+                    }
                   />
                 </div>
               </div>

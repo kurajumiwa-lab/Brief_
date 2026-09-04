@@ -36,6 +36,8 @@ import { InterCountyDesk } from '../components/wairo/InterCountyDesk';
 import { CivicKnowledgeGuide } from '../components/civic/CivicKnowledgeGuide';
 import { BriefAiAssistant } from '../components/ai/BriefAiAssistant';
 import { UniversalCreatePostModal, Post } from '../components/posts/UniversalCreatePostModal';
+import { SheetDetailScreen, SheetDetailScreenProps } from './SheetDetailScreen';
+import { SubcategoryDrillScreen, SubcategoryDrillScreenProps } from './SubcategoryDrillScreen';
 import { soundEngine } from '../utils/SoundEngine';
 
 export interface LandingScreenProps {
@@ -66,12 +68,31 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
   const [briefAiOpen, setBriefAiOpen] = useState(false);
   const [createPostOpen, setCreatePostOpen] = useState(false);
 
+  // Detail Screens Navigation Stack
+  const [activeDetailScreen, setActiveDetailScreen] = useState<Omit<SheetDetailScreenProps, 'onClose'> | null>(null);
+  const [activeDrillScreen, setActiveDrillScreen] = useState<Omit<SubcategoryDrillScreenProps, 'onClose'> | null>(null);
+
   // Toast
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(null), 3000);
+  };
+
+  const openCategoryDetail = (params: Omit<SheetDetailScreenProps, 'onClose'>) => {
+    soundEngine.play('tap');
+    setActiveDetailScreen(params);
+  };
+
+  const openHubDetail = (params: Omit<SheetDetailScreenProps, 'onClose'>) => {
+    soundEngine.play('tap');
+    setActiveDetailScreen(params);
+  };
+
+  const openSubcategoryDrill = (params: Omit<SubcategoryDrillScreenProps, 'onClose'>) => {
+    soundEngine.play('tap');
+    setActiveDrillScreen(params);
   };
 
   const sections = ['Today', 'Districts', 'Shelf'];
@@ -166,7 +187,17 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                 bigNumber="3"
                 badge="GIGS"
                 animationDelayMs={0}
-                onTap={() => showToast('Opening Paid Gigs board')}
+                onTap={() =>
+                  openCategoryDetail({
+                    material: 'jade',
+                    title: 'Paid Gigs',
+                    subtitle: 'Waiter · Delivery · Cashier · Live opportunities',
+                    emoji: '💼',
+                    badge: 'GIGS',
+                    heroDescription:
+                      'Verified local employers post gigs daily. Apply once, get matched instantly, and receive payment within 48 hours. No agency fees. No middlemen.'
+                  })
+                }
               />
 
               <IronSheet
@@ -189,7 +220,17 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                 emoji="✨"
                 badge="LEARNING"
                 animationDelayMs={160}
-                onTap={() => showToast('Opening Skills Workshop')}
+                onTap={() =>
+                  openCategoryDetail({
+                    material: 'copper',
+                    title: 'Skills Workshop',
+                    subtitle: '2:00 PM · Online Zoom',
+                    emoji: '✨',
+                    badge: 'LEARNING',
+                    heroDescription:
+                      'Join a workshop that connects local skills with real opportunities. Learn from vetted instructors, earn a certificate, and get matched to gigs that pay within 48 hours.'
+                  })
+                }
               />
 
               <IronSheet
@@ -199,7 +240,17 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                 emoji="👕"
                 badge="THRIFT"
                 animationDelayMs={240}
-                onTap={() => showToast('Opening Thrift Drop')}
+                onTap={() =>
+                  openCategoryDetail({
+                    material: 'brass',
+                    title: 'Thrift Drop',
+                    subtitle: '12:00 PM · Nyamataro Market',
+                    emoji: '👕',
+                    badge: 'THRIFT',
+                    heroDescription:
+                      'Exclusive local pre-loved fashion and gear drop. Reserve items directly with instant verified M-Pesa escrow.'
+                  })
+                }
               />
 
               <IronSheet
@@ -209,7 +260,17 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                 emoji="🎤"
                 badge="CREATOR"
                 animationDelayMs={320}
-                onTap={() => showToast('Opening Creator Live Event')}
+                onTap={() =>
+                  openCategoryDetail({
+                    material: 'obsidian',
+                    title: 'J Segera Live',
+                    subtitle: 'Live at 7:00 PM · Kisii Lounge',
+                    emoji: '🎤',
+                    badge: 'CREATOR',
+                    heroDescription:
+                      'Live creator acoustic session and Q&A. Connect with local fans and stream backstage access.'
+                  })
+                }
               />
             </div>
           </div>
@@ -238,7 +299,18 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                 emoji="🕊️"
                 badge="72% FUNDED"
                 animationDelayMs={0}
-                onTap={() => setCommitteeOpen(true)}
+                onTap={() =>
+                  openHubDetail({
+                    material: 'steel',
+                    title: 'Life-Events Hub',
+                    subtitle: 'Community-funded burial & harambee coordination',
+                    emoji: '🕊️',
+                    badge: '72% FUNDED',
+                    heroDescription:
+                      'When life hits, the community responds. Track contributions, coordinate logistics, honor traditions — all in one place.',
+                    onJoinSuccess: () => setCommitteeOpen(true)
+                  })
+                }
               />
 
               <IronSheet
@@ -248,7 +320,18 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                 emoji="🌸"
                 badge="CYCLE 5"
                 animationDelayMs={80}
-                onTap={() => setChamaOpen(true)}
+                onTap={() =>
+                  openHubDetail({
+                    material: 'obsidian',
+                    title: 'Chama & Table Bank',
+                    subtitle: 'Cycle 5 · 14 Members · KES 28,000 pool',
+                    emoji: '🌸',
+                    badge: 'CYCLE 5',
+                    heroDescription:
+                      'Transparent community savings, rotational payouts, and micro-loans with instant M-Pesa ledger verification.',
+                    onJoinSuccess: () => setChamaOpen(true)
+                  })
+                }
               />
 
               <IronSheet
@@ -258,7 +341,18 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                 emoji="💚"
                 badge="PRIVATE"
                 animationDelayMs={160}
-                onTap={() => setWellbeingOpen(true)}
+                onTap={() =>
+                  openHubDetail({
+                    material: 'zinc',
+                    title: 'Wellbeing Hub',
+                    subtitle: 'Private check-ins · Peer listeners',
+                    emoji: '💚',
+                    badge: 'PRIVATE',
+                    heroDescription:
+                      'Safe, confidential peer support and licensed counseling circles for youth and workers.',
+                    onJoinSuccess: () => setWellbeingOpen(true)
+                  })
+                }
               />
 
               <IronSheet
@@ -268,7 +362,18 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                 emoji="🚚"
                 badge="4-COUNTY"
                 animationDelayMs={240}
-                onTap={() => setInterCountyOpen(true)}
+                onTap={() =>
+                  openHubDetail({
+                    material: 'steel',
+                    title: 'Inter-County Cargo',
+                    subtitle: 'Mombasa · Nakuru · Kisumu · Eldoret',
+                    emoji: '🚚',
+                    badge: '4-COUNTY',
+                    heroDescription:
+                      'Shared carrier logistics for parcels and merchant freight across Kenya with scheduled pickups.',
+                    onJoinSuccess: () => setInterCountyOpen(true)
+                  })
+                }
               />
 
               <IronSheet
@@ -303,37 +408,73 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                   icon={<Heart className="w-3.5 h-3.5" />}
                   material="steel"
                   selected={true}
-                  onTap={() => setCommitteeOpen(true)}
+                  onTap={() =>
+                    openSubcategoryDrill({
+                      material: 'steel',
+                      parentCategory: 'Life-Events Hub',
+                      subcategory: 'Burial Logistics'
+                    })
+                  }
                 />
                 <MetalTag
                   label="Harambee"
                   icon={<Users className="w-3.5 h-3.5" />}
                   material="steel"
-                  onTap={() => setCommitteeOpen(true)}
+                  onTap={() =>
+                    openSubcategoryDrill({
+                      material: 'copper',
+                      parentCategory: 'Life-Events Hub',
+                      subcategory: 'Harambee Pledges'
+                    })
+                  }
                 />
                 <MetalTag
                   label="Chama"
                   icon={<Coins className="w-3.5 h-3.5" />}
                   material="obsidian"
-                  onTap={() => setChamaOpen(true)}
+                  onTap={() =>
+                    openSubcategoryDrill({
+                      material: 'obsidian',
+                      parentCategory: 'Chama & Table Bank',
+                      subcategory: 'Chama Cycles'
+                    })
+                  }
                 />
                 <MetalTag
                   label="Therapy"
                   icon={<Activity className="w-3.5 h-3.5" />}
                   material="zinc"
-                  onTap={() => setWellbeingOpen(true)}
+                  onTap={() =>
+                    openSubcategoryDrill({
+                      material: 'zinc',
+                      parentCategory: 'Wellbeing Hub',
+                      subcategory: 'Peer Therapy'
+                    })
+                  }
                 />
                 <MetalTag
                   label="Cargo"
                   icon={<Truck className="w-3.5 h-3.5" />}
                   material="steel"
-                  onTap={() => setInterCountyOpen(true)}
+                  onTap={() =>
+                    openSubcategoryDrill({
+                      material: 'steel',
+                      parentCategory: 'Inter-County Cargo',
+                      subcategory: 'Route Schedules'
+                    })
+                  }
                 />
                 <MetalTag
                   label="Permits"
                   icon={<FileText className="w-3.5 h-3.5" />}
                   material="brass"
-                  onTap={() => setCivicGuideOpen(true)}
+                  onTap={() =>
+                    openSubcategoryDrill({
+                      material: 'brass',
+                      parentCategory: 'Civic Guides',
+                      subcategory: 'County Permits'
+                    })
+                  }
                 />
               </div>
             </div>
@@ -597,6 +738,48 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
             showToast(`Published "${post.title}" to local feed!`);
           }}
         />
+      )}
+
+      {/* ================= FULL-SCREEN ROUTE: SHEET DETAIL SCREEN ================= */}
+      {activeDetailScreen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto animate-slideUp bg-[#1A1F2E]">
+          <SheetDetailScreen
+            material={activeDetailScreen.material}
+            title={activeDetailScreen.title}
+            subtitle={activeDetailScreen.subtitle}
+            emoji={activeDetailScreen.emoji}
+            badge={activeDetailScreen.badge}
+            heroDescription={activeDetailScreen.heroDescription}
+            onClose={() => setActiveDetailScreen(null)}
+            onJoinSuccess={() => {
+              activeDetailScreen.onJoinSuccess?.();
+            }}
+            onOpenSubcategoryDrill={(drill) => {
+              openSubcategoryDrill({
+                material: drill.material,
+                parentCategory: drill.parent,
+                subcategory: drill.sub,
+                subcategoryIcon: drill.icon
+              });
+            }}
+          />
+        </div>
+      )}
+
+      {/* ================= FULL-SCREEN ROUTE: SUBCATEGORY DRILL SCREEN ================= */}
+      {activeDrillScreen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto animate-slideUp bg-[#E8E4DD]">
+          <SubcategoryDrillScreen
+            material={activeDrillScreen.material}
+            parentCategory={activeDrillScreen.parentCategory}
+            subcategory={activeDrillScreen.subcategory}
+            subcategoryIcon={activeDrillScreen.subcategoryIcon}
+            onClose={() => setActiveDrillScreen(null)}
+            onSelectItem={(itemTitle) => {
+              showToast(`Selected "${itemTitle}"`);
+            }}
+          />
+        </div>
       )}
 
       {/* ================= TOAST NOTIFICATION ================= */}
