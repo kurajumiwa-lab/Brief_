@@ -19,3 +19,5 @@ export { IronSheet, SHEET_MATERIALS } from './IronSheet';
 export type { IronSheetProps, SheetMaterial, SheetPaletteConfig } from './IronSheet';
 export { MetalTag } from './MetalTag';
 export type { MetalTagProps } from './MetalTag';
+export { BriefBuilderSection } from '../home/BriefBuilderSection';
+export type { BriefBuilderSectionProps } from '../home/BriefBuilderSection';

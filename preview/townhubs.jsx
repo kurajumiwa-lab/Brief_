@@ -40,6 +40,7 @@ const { DiscoverScreen } = require('./src/screens/DiscoverScreen.tsx');
 const { LandingScreen } = require('./src/screens/LandingScreen.tsx');
 const { SheetDetailScreen } = require('./src/screens/SheetDetailScreen.tsx');
 const { SubcategoryDrillScreen } = require('./src/screens/SubcategoryDrillScreen.tsx');
+const { BriefBuilderSection } = require('./src/components/home/BriefBuilderSection.tsx');
 
 let pass = 0, fail = 0;
 const check = (name, cond, detail = '') => {
@@ -697,6 +698,53 @@ async function main() {
   check('tapping Espresso 101 opens SheetDetailScreen for item in same copper material', host21.textContent.includes('Espresso 101') && host21.textContent.includes('PAID') && host21.textContent.includes('Join Now'));
 
   await act(async () => { root21.unmount(); host21.remove(); });
+
+  // --- 22. BriefBuilderSection (Expandable City & Interest Selector) ---
+  console.log('\n--- 22. BriefBuilderSection ---');
+  const host22 = document.createElement('div');
+  document.body.appendChild(host22);
+  const root22 = createRoot(host22);
+  let briefCalibratedData = null;
+  await act(async () => {
+    root22.render(React.createElement(BriefBuilderSection, {
+      initialCities: ['Machakos'],
+      initialInterests: ['Jobs'],
+      onBuildBrief: (data) => { briefCalibratedData = data; }
+    }));
+  });
+
+  const text22 = host22.textContent;
+  check('renders BriefBuilderSection header trigger and minimal pills', text22.includes('Build my Brief') && text22.includes('Collections') && text22.includes('Following') && text22.includes('Updates'));
+
+  // Expand "Build my Brief"
+  const buildTrigger = Array.from(host22.querySelectorAll('button')).find(b => b.textContent.trim().includes('Build my Brief'));
+  if (buildTrigger) {
+    await act(async () => {
+      buildTrigger.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+  }
+  check('expands customize panel with WHERE DO YOU WANT YOUR BRIEF?', host22.textContent.includes('Make this your Brief') && host22.textContent.includes('WHERE DO YOU WANT YOUR BRIEF?'));
+  check('shows Kenyan cities and interest tags', host22.textContent.includes('Machakos') && host22.textContent.includes('Nairobi') && host22.textContent.includes('Jobs') && host22.textContent.includes('Knowledge'));
+
+  // Select another city: "Nairobi"
+  const nairobiTag = Array.from(host22.querySelectorAll('button')).find(b => b.textContent.trim() === 'Nairobi');
+  if (nairobiTag) {
+    await act(async () => {
+      nairobiTag.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+  }
+
+  // Click submit "Build my Brief" inside the panel (last button with text 'Build my Brief')
+  const buildButtons = Array.from(host22.querySelectorAll('button')).filter(b => b.textContent.trim() === 'Build my Brief');
+  const submitBtn = buildButtons[buildButtons.length - 1];
+  if (submitBtn) {
+    await act(async () => {
+      submitBtn.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+  }
+  check('submits customized brief with selected cities', briefCalibratedData && briefCalibratedData.cities.includes('Machakos') && briefCalibratedData.cities.includes('Nairobi'));
+
+  await act(async () => { root22.unmount(); host22.remove(); });
 
   console.log(`\nPASSED ${pass}   FAILED ${fail}`);
   process.exit(fail ? 1 : 0);

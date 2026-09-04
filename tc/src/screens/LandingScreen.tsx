@@ -24,7 +24,8 @@ import {
   IronSheet,
   SheetMaterial,
   MetalTag,
-  WairoBookmark
+  WairoBookmark,
+  BriefBuilderSection
 } from '../components/ui';
 import { AppPalette } from '../styles/appPalette';
 import { WairoMiniApp } from '../components/wairo/WairoMiniApp';
@@ -138,8 +139,19 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
           </div>
         </header>
 
+        {/* ── BRIEF BUILDER STRIP & CUSTOMIZER ── */}
+        <BriefBuilderSection
+          initialCities={['Machakos']}
+          onBuildBrief={({ cities, interests }) => {
+            showToast(`Brief calibrated for ${cities.length} places & ${interests.length} topics!`);
+          }}
+          onOpenCollections={() => showToast('Opening saved Collections')}
+          onOpenFollowing={() => showToast('Opening Following feed')}
+          onOpenUpdates={() => showToast('Checking recent Updates')}
+        />
+
         {/* ── SHARED SECTION SWITCHER ── */}
-        <div className="py-4">
+        <div className="py-2">
           <div className="p-1 rounded-full bg-[#1A1F2E]/[0.07] flex items-center">
             {sections.map((sec, idx) => {
               const isSelected = selectedSection === idx;
