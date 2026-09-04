@@ -7,7 +7,10 @@ import {
   ChevronRight,
   ShieldCheck,
   MapPin,
-  Sparkles
+  Sparkles,
+  Search,
+  Clock,
+  Plus
 } from 'lucide-react';
 import { WairoMiniApp } from './WairoMiniApp';
 import { LiveTelemetryModal } from './LiveTelemetryModal';
@@ -18,13 +21,25 @@ import { UssdSimulatorDesk } from '../offline/UssdSimulatorDesk';
 import { InterCountyDesk } from './InterCountyDesk';
 import { PrivateCarrierAuctionDesk } from './PrivateCarrierAuctionDesk';
 import { OfflineSyncQueueDesk } from '../offline/OfflineSyncQueueDesk';
+import { WairoBookmark } from './WairoBookmark';
+import { MetalTag } from '../ui/MetalTag';
 import { LOCATIONS, INITIAL_ACTIVE_DELIVERY, WairoLocation, WairoDelivery } from './wairoData';
 import { playSound } from './wairoAudio';
+import { soundEngine } from '../../utils/SoundEngine';
 
-export const WairoFloatingWidget: React.FC = () => {
+export interface WairoFloatingWidgetProps {
+  initialLocation?: WairoLocation;
+  triggerMode?: 'bookmark' | 'edge' | 'both';
+}
+
+export const WairoFloatingWidget: React.FC<WairoFloatingWidgetProps> = ({
+  initialLocation = LOCATIONS[0],
+  triggerMode = 'bookmark'
+}) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isQuickSheetOpen, setIsQuickSheetOpen] = useState(false);
   const [isFullPhoneMode, setIsFullPhoneMode] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState<WairoLocation>(LOCATIONS[0]);
+  const [selectedLocation, setSelectedLocation] = useState<WairoLocation>(initialLocation);
   const [activeDelivery, setActiveDelivery] = useState<WairoDelivery>(INITIAL_ACTIVE_DELIVERY);
 
   // Modals
@@ -47,12 +62,32 @@ export const WairoFloatingWidget: React.FC = () => {
     }));
   };
 
+  const openMiniAppDrawer = () => {
+    setIsQuickSheetOpen(false);
+    playSound('open');
+    setIsOpen(true);
+  };
+
   return (
     <aside aria-label="Wairo Kenyan Marketplace Logistics Companion" data-wairo-widget="true">
       
-      {/* ================= REFINED NATIVE RIGHT-EDGE PILL ================= */}
-      {/* Soft rounded squircle, subtle gray border, ambient shadow, clean light theme */}
-      {!isOpen && (
+      {/* ================= TOP-RIGHT FLOATING WAIRO BOOKMARK KNOB ================= */}
+      {(triggerMode === 'bookmark' || triggerMode === 'both') && !isOpen && !isQuickSheetOpen && (
+        <div style={{ position: 'fixed', top: 12, right: 16, zIndex: 30 }}>
+          <WairoBookmark 
+            status={activeDelivery.status.toUpperCase()}
+            location={selectedLocation.name}
+            onTap={() => {
+              soundEngine.play('heavyTap');
+              playSound('open');
+              setIsQuickSheetOpen(true);
+            }}
+          />
+        </div>
+      )}
+
+      {/* ================= RIGHT-EDGE PILL (WHEN TRIGGER MODE IS 'EDGE' OR 'BOTH') ================= */}
+      {(triggerMode === 'edge' || triggerMode === 'both') && !isOpen && !isQuickSheetOpen && (
         <div 
           style={{ 
             position: 'fixed', 
@@ -66,7 +101,7 @@ export const WairoFloatingWidget: React.FC = () => {
             type="button"
             onClick={() => {
               playSound('open');
-              setIsOpen(true);
+              setIsQuickSheetOpen(true);
             }}
             title="Open Wairo Courier & Errands Companion"
             style={{
@@ -74,12 +109,10 @@ export const WairoFloatingWidget: React.FC = () => {
             }}
             className="group flex items-center bg-white/95 hover:bg-white text-[#0D1117] pl-3.5 pr-2.5 py-3 rounded-l-2xl border-l border-y border-r-0 border-[#E5E8EC] backdrop-blur-md transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98] hover:border-[#FF5A1F]/40 cursor-pointer"
           >
-            {/* Soft Courier Icon Container */}
             <div className="w-8 h-8 rounded-xl bg-[#F0F2F5] group-hover:bg-[#FFF3EC] flex items-center justify-center mr-2.5 shrink-0 transition-colors">
               <Bike className="w-4 h-4 text-[#FF5A1F]" />
             </div>
 
-            {/* Typography & Status Hierarchy */}
             <div className="flex flex-col items-start text-left pr-1">
               <div className="flex items-center space-x-1.5 mb-0.5">
                 <span className="text-[11px] font-black uppercase tracking-wider text-[#0D1117]">
@@ -94,7 +127,6 @@ export const WairoFloatingWidget: React.FC = () => {
                 Courier & Errands
               </span>
               
-              {/* Secondary Status Row with Soft Live Pulse Dot */}
               <div className="flex items-center space-x-1.5 mt-1 text-[9.5px] font-mono text-[#0D1117]/55">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                 <span className="truncate max-w-[130px]">
@@ -103,11 +135,126 @@ export const WairoFloatingWidget: React.FC = () => {
               </div>
             </div>
 
-            {/* Subtle Expansion Chevron */}
             <div className="ml-1.5 text-[#0D1117]/40 group-hover:text-[#FF5A1F] group-hover:-translate-x-0.5 transition-all">
               <ChevronLeft className="w-4 h-4" />
             </div>
           </button>
+        </div>
+      )}
+
+      {/* ================= WAIRO QUICK BOTTOM SHEET ================= */}
+      {isQuickSheetOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex flex-col justify-end p-3 animate-fadeIn"
+          onClick={() => setIsQuickSheetOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg mx-auto rounded-[28px] p-6 text-white shadow-2xl animate-slideUp"
+            style={{
+              background: 'linear-gradient(135deg, #B8621F 0%, #8B4513 100%)',
+              boxShadow: '0 20px 48px rgba(0, 0, 0, 0.4)'
+            }}
+          >
+            {/* Top Badge & Close */}
+            <div className="flex items-center justify-between">
+              <div className="px-3 py-1 rounded-lg bg-white/20 text-white text-[10px] font-black tracking-wider uppercase">
+                WAIRO · 90/10 PAYOUT
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={openMiniAppDrawer}
+                  title="Open Full MiniApp Companion"
+                  className="px-2.5 py-1 rounded-full bg-white/20 hover:bg-white/30 text-white text-[11px] font-bold flex items-center space-x-1 cursor-pointer transition-colors"
+                >
+                  <Smartphone className="w-3.5 h-3.5" />
+                  <span>MiniApp</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsQuickSheetOpen(false)}
+                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Title & Status */}
+            <div className="mt-4 space-y-1">
+              <h2 className="text-2xl sm:text-3xl font-black text-white">
+                Courier & Errands
+              </h2>
+              <div className="flex items-center space-x-2 text-xs text-white/80">
+                <span className="w-2 h-2 rounded-full bg-[#2ECC71] animate-pulse" />
+                <span>Active: {activeDelivery.trackingId} • {activeDelivery.status.toUpperCase()}</span>
+                <span>•</span>
+                <span>{selectedLocation.name} (ETA: {activeDelivery.etaMinutes}m)</span>
+              </div>
+            </div>
+
+            {/* Action Tags */}
+            <div className="mt-6 grid grid-cols-3 gap-2">
+              <MetalTag
+                label="Track Live"
+                icon={<Search className="w-3.5 h-3.5" />}
+                material="copper"
+                selected={true}
+                onTap={() => {
+                  setIsQuickSheetOpen(false);
+                  setIsTelemetryOpen(true);
+                }}
+              />
+              <MetalTag
+                label="Dispatch"
+                icon={<Plus className="w-3.5 h-3.5" />}
+                material="copper"
+                onTap={() => {
+                  setIsQuickSheetOpen(false);
+                  setIsDispatchModalOpen(true);
+                }}
+              />
+              <MetalTag
+                label="Location"
+                icon={<MapPin className="w-3.5 h-3.5" />}
+                material="copper"
+                onTap={() => {
+                  setIsQuickSheetOpen(false);
+                  setIsLocationModalOpen(true);
+                }}
+              />
+            </div>
+
+            {/* Secondary Services Strip */}
+            <div className="mt-3 pt-3 border-t border-white/15 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsQuickSheetOpen(false);
+                  setIsInterCountyOpen(true);
+                }}
+                className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold text-left flex items-center justify-between cursor-pointer transition-colors"
+              >
+                <span>Inter-County Cargo</span>
+                <span className="text-[10px] text-white/70">90% Payout →</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsQuickSheetOpen(false);
+                  setIsCarrierAuctionOpen(true);
+                }}
+                className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold text-left flex items-center justify-between cursor-pointer transition-colors"
+              >
+                <span>Carrier Auction</span>
+                <span className="text-[10px] text-white/70">Math Engine →</span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -142,7 +289,7 @@ export const WairoFloatingWidget: React.FC = () => {
                   playSound('click');
                   setIsOpen(false);
                 }}
-                title="Dock back to right edge tab"
+                title="Close Wairo Companion"
                 className="text-gray-500 hover:text-[#0D1117] p-1 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
@@ -274,3 +421,4 @@ export const WairoFloatingWidget: React.FC = () => {
 };
 
 export { WairoBookmark } from './WairoBookmark';
+

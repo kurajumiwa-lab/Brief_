@@ -29,6 +29,13 @@ import {
 } from '../components/ui';
 import { AppPalette } from '../styles/appPalette';
 import { WairoMiniApp } from '../components/wairo/WairoMiniApp';
+import { LiveTelemetryModal } from '../components/wairo/LiveTelemetryModal';
+import { LocationModal } from '../components/wairo/LocationModal';
+import { DispatchModal } from '../components/wairo/DispatchModal';
+import { EmbedSDKModal } from '../components/wairo/EmbedSDKModal';
+import { PrivateCarrierAuctionDesk } from '../components/wairo/PrivateCarrierAuctionDesk';
+import { UssdSimulatorDesk } from '../components/offline/UssdSimulatorDesk';
+import { OfflineSyncQueueDesk } from '../components/offline/OfflineSyncQueueDesk';
 import { LOCATIONS, INITIAL_ACTIVE_DELIVERY, WairoLocation, WairoDelivery } from '../components/wairo/wairoData';
 import { CommitteeDesk } from '../components/life/CommitteeDesk';
 import { ChamaDesk } from '../components/circle/ChamaDesk';
@@ -59,6 +66,15 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
   const [wairoMiniAppOpen, setWairoMiniAppOpen] = useState(false);
   const [wairoLocation, setWairoLocation] = useState<WairoLocation>(LOCATIONS[0]);
   const [wairoDelivery, setWairoDelivery] = useState<WairoDelivery>(INITIAL_ACTIVE_DELIVERY);
+
+  // Wairo Submodals
+  const [isTelemetryOpen, setIsTelemetryOpen] = useState(false);
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  const [isDispatchModalOpen, setIsDispatchModalOpen] = useState(false);
+  const [isSDKModalOpen, setIsSDKModalOpen] = useState(false);
+  const [isCarrierAuctionOpen, setIsCarrierAuctionOpen] = useState(false);
+  const [isUssdOpen, setIsUssdOpen] = useState(false);
+  const [isOfflineSyncOpen, setIsOfflineSyncOpen] = useState(false);
 
   // Hub Desks Modals
   const [committeeOpen, setCommitteeOpen] = useState(false);
@@ -679,13 +695,83 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
               <X className="w-4 h-4" />
             </button>
             <WairoMiniApp
-              onOpenTelemetry={() => {}}
-              onOpenLocationModal={() => {}}
-              onOpenDispatchModal={() => {}}
-              onOpenSDKModal={() => {}}
+              onOpenTelemetry={() => setIsTelemetryOpen(true)}
+              onOpenLocationModal={() => setIsLocationModalOpen(true)}
+              onOpenDispatchModal={() => setIsDispatchModalOpen(true)}
+              onOpenSDKModal={() => setIsSDKModalOpen(true)}
+              onOpenUssdSim={() => setIsUssdOpen(true)}
+              onOpenInterCounty={() => setInterCountyOpen(true)}
+              onOpenCarrierAuction={() => setIsCarrierAuctionOpen(true)}
+              onOpenOfflineSync={() => setIsOfflineSyncOpen(true)}
               selectedLocation={wairoLocation}
               activeDelivery={wairoDelivery}
             />
+          </div>
+        </div>
+      )}
+
+      {/* ================= WAIRO INTEGRATED MODALS ================= */}
+      <LiveTelemetryModal 
+        isOpen={isTelemetryOpen} 
+        onClose={() => setIsTelemetryOpen(false)}
+        activeDelivery={wairoDelivery}
+        selectedLocation={wairoLocation}
+      />
+
+      <LocationModal 
+        isOpen={isLocationModalOpen}
+        onClose={() => setIsLocationModalOpen(false)}
+        selectedLocation={wairoLocation}
+        onSelectLocation={(loc) => {
+          setWairoLocation(loc);
+          setWairoDelivery(prev => ({
+            ...prev,
+            destination: loc.fullName,
+            locationId: loc.id,
+            etaMinutes: loc.etaMins,
+          }));
+        }}
+      />
+
+      <DispatchModal 
+        isOpen={isDispatchModalOpen}
+        onClose={() => setIsDispatchModalOpen(false)}
+        onDispatchSuccess={(newOrder) => {
+          setWairoDelivery(newOrder);
+          const found = LOCATIONS.find(l => l.id === newOrder.locationId);
+          if (found) setWairoLocation(found);
+        }}
+        currentLocation={wairoLocation}
+      />
+
+      <EmbedSDKModal 
+        isOpen={isSDKModalOpen}
+        onClose={() => setIsSDKModalOpen(false)}
+      />
+
+      {/* ================= USSD / SMS SIMULATOR MODAL ================= */}
+      {isUssdOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 60 }} className="bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="w-full max-w-3xl my-auto">
+            <UssdSimulatorDesk onClose={() => setIsUssdOpen(false)} />
+          </div>
+        </div>
+      )}
+
+      {/* ================= CARRIER REVERSE AUCTION MODAL ================= */}
+      {isCarrierAuctionOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 60 }} className="bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="w-full max-w-3xl my-auto">
+            <PrivateCarrierAuctionDesk onClose={() => setIsCarrierAuctionOpen(false)} />
+          </div>
+        </div>
+      )}
+
+      {/* ================= OFFLINE SYNC QUEUE MODAL ================= */}
+      {isOfflineSyncOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 60 }} className="bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="w-full max-w-3xl my-auto">
+            <OfflineSyncQueueDesk onClose={() => setIsOfflineSyncOpen(false)} />
           </div>
         </div>
       )}

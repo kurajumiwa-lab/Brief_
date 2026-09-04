@@ -15,6 +15,8 @@ export { PulseGlow } from './PulseGlow';
 export type { PulseGlowProps } from './PulseGlow';
 export { WairoBookmark } from '../wairo/WairoBookmark';
 export type { WairoBookmarkProps } from '../wairo/WairoBookmark';
+export { WairoFloatingWidget } from '../wairo/WairoFloatingWidget';
+export type { WairoFloatingWidgetProps } from '../wairo/WairoFloatingWidget';
 export { IronSheet, SHEET_MATERIALS } from './IronSheet';
 export type { IronSheetProps, SheetMaterial, SheetPaletteConfig } from './IronSheet';
 export { MetalTag } from './MetalTag';

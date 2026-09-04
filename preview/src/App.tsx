@@ -54,7 +54,7 @@ import { MainShelf } from './components/MainShelf';
 import { Onboarding } from './components/Onboarding';
 import { NextStep } from './components/NextStep';
 import { isSurfaceUnlocked, shouldOpenFirstRun, showsLadder, unlockHint } from './components/ladder';
-import { WairoBookmark } from './components/ui';
+import { WairoBookmark, WairoFloatingWidget } from './components/ui';
 import { arrivalSource, linkTokenFrom, urlWithoutArrivalParams, type ArrivalChannel } from './components/arrival';
 import { EnginePanel } from './components/EnginePanel';
 import { GroupBuyPortal } from './components/GroupBuyPortal';
@@ -1843,10 +1843,8 @@ export function App() {
 
       {/* COLLECTIONS — the personal layer. The surface opens from the header;
           a shared /collections/:id link renders the public page directly. */}
-      {/* WAIRO QUANTUM DELIVERY MINI APP EMBEDDED COMPANION (Minimal Top-Right Bookmark Knob) */}
-      <div style={{ position: 'fixed', top: 12, right: 16, zIndex: 30 }}>
-        <WairoBookmark />
-      </div>
+      {/* WAIRO QUANTUM DELIVERY MINI APP EMBEDDED COMPANION (Minimal Top-Right Bookmark Knob & Full Logistics Suite) */}
+      <WairoFloatingWidget triggerMode="bookmark" />
 
       <footer className="border-t border-[#D6CFE4] mt-12 py-6 text-xs text-[#251045]/60 text-center">
         Everything Happening Around You
