@@ -142,6 +142,21 @@ export function Onboarding({
   const [googleReady, setGoogleReady] = React.useState(false);
   const googleSlot = React.useRef<HTMLDivElement | null>(null);
 
+  // Capture Creator Referral Attribution from query string
+  React.useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && window.location?.search) {
+        const params = new URLSearchParams(window.location.search);
+        const ref = params.get('ref');
+        if (ref) {
+          window.localStorage.setItem('brief_creator_ref', ref.trim());
+        }
+      }
+    } catch {
+      // Safe fallback
+    }
+  }, []);
+
   // A person who is already signed in never sees the identity step again.
   React.useEffect(() => {
     if (signedIn && step === 1) setStep(2);

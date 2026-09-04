@@ -28,7 +28,10 @@ import {
   SheetMaterial,
   MetalTag,
   WairoBookmark,
-  BriefBuilderSection
+  BriefBuilderSection,
+  GroupDemandRunDesk,
+  GroupEventLogisticsDesk,
+  CreatorPartnerDesk
 } from '../components/ui';
 import { AppPalette } from '../styles/appPalette';
 import { WairoMiniApp } from '../components/wairo/WairoMiniApp';
@@ -107,6 +110,9 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
   const [wellbeingOpen, setWellbeingOpen] = useState(false);
   const [interCountyOpen, setInterCountyOpen] = useState(false);
   const [createPostOpen, setCreatePostOpen] = useState(false);
+  const [demandRunOpen, setDemandRunOpen] = useState(false);
+  const [eventLogisticsOpen, setEventLogisticsOpen] = useState(false);
+  const [creatorDeskOpen, setCreatorDeskOpen] = useState(false);
 
   // Detail Screens Navigation Stack
   const [activeDetailScreen, setActiveDetailScreen] = useState<Omit<SheetDetailScreenProps, 'onClose'> | null>(null);
@@ -516,6 +522,24 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                   material="steel"
                   onTap={() => setCommitteeOpen(true)}
                 />
+                <MetalTag
+                  label="Bulk Runs"
+                  icon={<Sparkles className="w-3.5 h-3.5 text-amber-300" />}
+                  material="copper"
+                  onTap={() => setDemandRunOpen(true)}
+                />
+                <MetalTag
+                  label="Event Ops"
+                  icon={<CalendarDays className="w-3.5 h-3.5" />}
+                  material="steel"
+                  onTap={() => setEventLogisticsOpen(true)}
+                />
+                <MetalTag
+                  label="Creators"
+                  icon={<Award className="w-3.5 h-3.5 text-amber-400" />}
+                  material="brass"
+                  onTap={() => setCreatorDeskOpen(true)}
+                />
               </div>
             </div>
           </div>
@@ -912,6 +936,48 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
               showToast(`Selected "${itemTitle}"`);
             }}
           />
+        </div>
+      )}
+
+      {/* ================= MODAL: GROUP DEMAND RUNS (INSTITUTIONAL / PTA GOODS) ================= */}
+      {demandRunOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="w-full max-w-3xl my-auto">
+            <GroupDemandRunDesk
+              onClose={() => setDemandRunOpen(false)}
+              onPledgeRun={(runId, qty) => {
+                showToast(`Pledged ${qty} bundle(s) on bulk run ${runId}`);
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: GROUP EVENT LOGISTICS (CHOIR, RETREAT, SPORTS) ================= */}
+      {eventLogisticsOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="w-full max-w-3xl my-auto">
+            <GroupEventLogisticsDesk
+              onClose={() => setEventLogisticsOpen(false)}
+              onContributeBudget={(evtId, amt) => {
+                showToast(`Contributed KES ${amt.toLocaleString()} to group event pool`);
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: CREATOR PARTNER DESK ================= */}
+      {creatorDeskOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="w-full max-w-3xl my-auto">
+            <CreatorPartnerDesk
+              onClose={() => setCreatorDeskOpen(false)}
+              onShareLink={(code) => {
+                showToast(`Attribution code ${code} generated`);
+              }}
+            />
+          </div>
         </div>
       )}
 

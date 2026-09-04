@@ -28,7 +28,13 @@ import { PrivateCarrierAuctionDesk } from '../components/wairo/PrivateCarrierAuc
 import { OfflineSyncQueueDesk } from '../components/offline/OfflineSyncQueueDesk';
 import { UniversalCreatePostModal } from '../components/posts/UniversalCreatePostModal';
 import { DiscoverScreen, DiscoverSection } from './DiscoverScreen';
-import { BriefBuilderSection, WairoBookmark } from '../components/ui';
+import {
+  BriefBuilderSection,
+  WairoBookmark,
+  GroupDemandRunDesk,
+  GroupEventLogisticsDesk,
+  CreatorPartnerDesk
+} from '../components/ui';
 import {
   NEIGHBORHOODS,
   Neighborhood,
@@ -246,6 +252,9 @@ export function NearbyScreen(props: NearbyScreenProps) {
   const [offlineSyncOpen, setOfflineSyncOpen] = useState(false);
   const [createPostModalOpen, setCreatePostModalOpen] = useState(false);
   const [discoverViewOpen, setDiscoverViewOpen] = useState(false);
+  const [demandRunOpen, setDemandRunOpen] = useState(false);
+  const [eventLogisticsOpen, setEventLogisticsOpen] = useState(false);
+  const [creatorDeskOpen, setCreatorDeskOpen] = useState(false);
 
   const commitRecentSearch = React.useCallback((term: string) => {
     const t = term.trim();
@@ -672,6 +681,57 @@ export function NearbyScreen(props: NearbyScreenProps) {
                           <div className="mt-2">
                             <span className="font-black text-xs block text-white leading-tight">Offline PWA Sync</span>
                             <span className="text-[10px] text-emerald-200/70 block mt-0.5">Zero-Data Queue</span>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => { soundEngine.play('heavyTap'); setDemandRunOpen(true); }}
+                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#292524] via-[#1C1917] to-[#0C0A09] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xl">📦</span>
+                            <span className="text-[8px] font-mono uppercase bg-[#B8621F] text-white px-1.5 py-0.5 rounded font-black">
+                              Bulk Runs
+                            </span>
+                          </div>
+                          <div className="mt-2">
+                            <span className="font-black text-xs block text-white leading-tight">Consolidated Goods</span>
+                            <span className="text-[10px] text-amber-200/70 block mt-0.5">Textbooks & Wholesale</span>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => { soundEngine.play('heavyTap'); setEventLogisticsOpen(true); }}
+                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#1E1B4B] via-[#312E81] to-[#1E1B4B] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xl">🚌</span>
+                            <span className="text-[8px] font-mono uppercase bg-indigo-400/30 text-indigo-300 px-1.5 py-0.5 rounded font-bold">
+                              Touring Ops
+                            </span>
+                          </div>
+                          <div className="mt-2">
+                            <span className="font-black text-xs block text-white leading-tight">Group Events & Retreats</span>
+                            <span className="text-[10px] text-indigo-200/70 block mt-0.5">Choirs & Alumni Charters</span>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => { soundEngine.play('heavyTap'); setCreatorDeskOpen(true); }}
+                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#451A03] via-[#78350F] to-[#451A03] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xl">🏅</span>
+                            <span className="text-[8px] font-mono uppercase bg-amber-400/30 text-amber-300 px-1.5 py-0.5 rounded font-bold">
+                              15% Cut
+                            </span>
+                          </div>
+                          <div className="mt-2">
+                            <span className="font-black text-xs block text-white leading-tight">Creator Partner Desk</span>
+                            <span className="text-[10px] text-amber-200/70 block mt-0.5">Bring living groups</span>
                           </div>
                         </button>
                       </div>
@@ -1951,6 +2011,48 @@ export function NearbyScreen(props: NearbyScreenProps) {
           onCallChampion={(phone: string) => showToast(`Calling ${activeNeighborhood.champion.name} (${phone})`)}
           onVouchRider={() => showToast(`Vouch form opened for ${activeNeighborhood.name}`)}
         />
+
+        {/* ================= MODAL: GROUP DEMAND RUNS (INSTITUTIONAL / PTA GOODS) ================= */}
+        {demandRunOpen && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div className="w-full max-w-3xl my-auto">
+              <GroupDemandRunDesk
+                onClose={() => setDemandRunOpen(false)}
+                onPledgeRun={(runId, qty) => {
+                  showToast(`Pledged ${qty} bundle(s) on bulk run ${runId}`);
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ================= MODAL: GROUP EVENT LOGISTICS (CHOIR, RETREAT, SPORTS) ================= */}
+        {eventLogisticsOpen && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div className="w-full max-w-3xl my-auto">
+              <GroupEventLogisticsDesk
+                onClose={() => setEventLogisticsOpen(false)}
+                onContributeBudget={(evtId, amt) => {
+                  showToast(`Contributed KES ${amt.toLocaleString()} to group event pool`);
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ================= MODAL: CREATOR PARTNER DESK ================= */}
+        {creatorDeskOpen && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div className="w-full max-w-3xl my-auto">
+              <CreatorPartnerDesk
+                onClose={() => setCreatorDeskOpen(false)}
+                onShareLink={(code) => {
+                  showToast(`Attribution code ${code} generated`);
+                }}
+              />
+            </div>
+          </div>
+        )}
     </>
   );
 }

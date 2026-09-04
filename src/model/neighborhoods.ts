@@ -805,13 +805,174 @@ export interface UserTrustProfile {
   trust_flags: string[];
 }
 
+export type GroupCategory =
+  | 'neighborhood'
+  | 'school_pta'
+  | 'church_fellowship'
+  | 'teacher_welfare'
+  | 'campus_association'
+  | 'alumni_network'
+  | 'sacco_branch'
+  | 'estate_association';
+
 export interface GroupTrustProfile {
   membership_type: 'invite_only' | 'champion_approved_public';
   trust_score: number;
   is_verified: boolean;
   visibility: 'private' | 'neighborhood' | 'citywide';
   dispute_count: number;
+  group_category?: GroupCategory;
+  creator_attribution?: {
+    creator_id: string;
+    creator_role: 'community_creator' | 'institutional_organizer' | 'category_operator';
+    activated_at?: string;
+    commission_rate_pct: number;
+    is_active: boolean;
+  };
 }
+
+export interface GroupDemandRun {
+  id: string;
+  groupId: string;
+  groupName: string;
+  neighborhoodId: string;
+  title: string;
+  itemDescription: string;
+  targetQuantity: number;
+  currentPledged: number;
+  unitWholesaleKes: number;
+  unitRetailKes: number;
+  savingsKesPerUnit: number;
+  deadlineIso: string;
+  status: 'pledging' | 'threshold_reached' | 'dispatched' | 'settled';
+  supplier: {
+    name: string;
+    phone: string;
+    location: string;
+    rating: number;
+  };
+  wairoCarrierInfo?: {
+    carrierName: string;
+    vehiclePlate: string;
+    etaMinutes: number;
+  };
+}
+
+export interface GroupEventLogistics {
+  id: string;
+  groupId: string;
+  groupName: string;
+  neighborhoodId: string;
+  eventName: string;
+  eventDate: string;
+  rosterCount: number;
+  targetBudgetKes: number;
+  pledgedBudgetKes: number;
+  gearLogisticsStatus: 'idle' | 'wairo_assigned' | 'in_transit' | 'delivered';
+  itinerary: string[];
+  suppliers: Array<{
+    category: 'Charter Bus' | 'Sound & Instruments' | 'Catering' | 'Accommodation';
+    name: string;
+    phone: string;
+    vouchedBy: string;
+  }>;
+}
+
+export const DEMO_DEMAND_RUNS: GroupDemandRun[] = [
+  {
+    id: 'run-kili-books-1',
+    groupId: 'grp-kili-pta-6',
+    groupName: 'Class 6 Parents CBC Consortium',
+    neighborhoodId: 'kilimani',
+    title: 'Grade 6 CBC Literature & Science Book Bundle',
+    itemDescription: 'Direct publisher set of 6 approved CBC setbooks delivered in bulk to Kilimani Primary Gate.',
+    targetQuantity: 40,
+    currentPledged: 32,
+    unitWholesaleKes: 2800,
+    unitRetailKes: 3600,
+    savingsKesPerUnit: 800,
+    deadlineIso: 'This Friday · 5:00 PM',
+    status: 'pledging',
+    supplier: {
+      name: 'Text Book Centre Wholesale Hub (Kijabe St)',
+      phone: '+254 722 500 800',
+      location: 'Kijabe Street CBD Depot',
+      rating: 4.96
+    },
+    wairoCarrierInfo: {
+      carrierName: 'Otieno (WAIRO Van Dispatch)',
+      vehiclePlate: 'KME 412X',
+      etaMinutes: 25
+    }
+  },
+  {
+    id: 'run-sb-welfare-flour-2',
+    groupId: 'grp-sb-plainsview-dukas',
+    groupName: 'Plainsview Retailers Wholesale Run',
+    neighborhoodId: 'south-b',
+    title: 'Ungu & Cooking Oil Estate Bundle (50 Carts)',
+    itemDescription: 'Direct mill grain consignment split across 36 estate dukas with zero broker markup.',
+    targetQuantity: 50,
+    currentPledged: 50,
+    unitWholesaleKes: 1650,
+    unitRetailKes: 2200,
+    savingsKesPerUnit: 550,
+    deadlineIso: 'Today · Dispatched',
+    status: 'threshold_reached',
+    supplier: {
+      name: 'Unga Farm Care Millers Depot',
+      phone: '+254 711 900 120',
+      location: 'Commercial Street Industrial Area',
+      rating: 4.92
+    },
+    wairoCarrierInfo: {
+      carrierName: 'Kamau (WAIRO 3-Ton Truck)',
+      vehiclePlate: 'KMD 119P',
+      etaMinutes: 10
+    }
+  }
+];
+
+export const DEMO_EVENT_LOGISTICS: GroupEventLogistics[] = [
+  {
+    id: 'evt-log-choir-1',
+    groupId: 'grp-kili-choir-retreat',
+    groupName: 'St. Jude Youth Choir Annual Retreat',
+    neighborhoodId: 'kilimani',
+    eventName: 'Naivasha Easter Music Camp & Workshop',
+    eventDate: 'Apr 11 – Apr 14, 2026',
+    rosterCount: 38,
+    targetBudgetKes: 180000,
+    pledgedBudgetKes: 154000,
+    gearLogisticsStatus: 'wairo_assigned',
+    itinerary: [
+      'Day 1 (07:00 AM): Departure from Yaya Stage via EasyCoach Charter',
+      'Day 1 (11:30 AM): Arrival & Gear Setup at Fisherman’s Camp Grounds',
+      'Day 2 (09:00 AM): Vocal Workshop & Recording Session',
+      'Day 3 (04:00 PM): Return Transit to Nairobi CBD'
+    ],
+    suppliers: [
+      {
+        category: 'Charter Bus',
+        name: 'Rift Valley Shuttles (51-Seater Scania)',
+        phone: '+254 722 819 012',
+        vouchedBy: 'Chairman Juma (Kilimani Stage 4)'
+      },
+      {
+        category: 'Sound & Instruments',
+        name: 'Acoustic Sound & Keyboards Hire',
+        phone: '+254 733 910 144',
+        vouchedBy: 'Pastor Kiprono'
+      },
+      {
+        category: 'Catering',
+        name: 'Mama Mboga Country Kitchen Catering',
+        phone: '+254 712 908 311',
+        vouchedBy: 'Madam Beatrice'
+      }
+    ]
+  }
+];
 
 export function isNewToNeighborhood(joinedDate?: string): boolean {
   if (!joinedDate) return true;
