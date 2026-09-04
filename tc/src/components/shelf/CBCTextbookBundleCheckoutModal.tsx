@@ -13,7 +13,9 @@ import {
   Clock, 
   ChevronRight,
   Zap,
-  Navigation
+  Navigation,
+  MapPin,
+  Check
 } from 'lucide-react';
 import { soundEngine } from '../../utils/SoundEngine';
 
@@ -98,6 +100,21 @@ export const SAMPLE_CBC_BUNDLES: CBCTextbookBundle[] = [
   }
 ];
 
+export const FARGO_DROP_POINTS = [
+  'Fargo Machakos Town (Posta Mall Hub)',
+  'Fargo Nairobi CBD (Haile Selassie Ave)',
+  'Fargo Westlands (Sarit Centre Staging)',
+  'Fargo Mombasa (Digo Road Station)',
+  'Fargo Kisumu (Mega City Mall Hub)',
+  'Fargo Nakuru (Kenyatta Ave Posta)',
+  'Fargo Eldoret (Rupa Mills Complex)',
+  'Fargo Thika (Commercial Street)',
+  'Fargo Nyeri (Kanisa Road Station)',
+  'Fargo Meru (Tom Mboya Street)',
+  'Fargo Kisii (Hospital Road Hub)',
+  'Fargo Kitui (Kalawa Road Branch)'
+];
+
 export interface CBCTextbookBundleCheckoutModalProps {
   isOpen: boolean;
   initialBundleId?: string;
@@ -121,7 +138,8 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
 }) => {
   const [selectedBundleId, setSelectedBundleId] = useState<string>(initialBundleId);
   const [quantity, setQuantity] = useState<number>(1);
-  const [deliveryType, setDeliveryType] = useState<'wairo_door' | 'wairo_gate' | 'sendy_express' | 'bolt_rapid' | 'pickup'>('wairo_door');
+  const [deliveryType, setDeliveryType] = useState<'fargo_pickup' | 'wairo_gate' | 'wairo_door' | 'sendy_express' | 'bolt_rapid' | 'pickup'>('fargo_pickup');
+  const [selectedFargoPoint, setSelectedFargoPoint] = useState<string>(FARGO_DROP_POINTS[0]);
   const [deliveryWard, setDeliveryWard] = useState<string>('Machakos Town (Gate 4)');
   const [parentName, setParentName] = useState<string>('Madam Beatrice Mwangi');
   const [parentPhone, setParentPhone] = useState<string>('0722 849 102');
@@ -132,14 +150,16 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
   if (!isOpen) return null;
 
   const currentBundle = SAMPLE_CBC_BUNDLES.find(b => b.id === selectedBundleId) || SAMPLE_CBC_BUNDLES[0];
-  const deliveryFeeKes = deliveryType === 'sendy_express' 
-    ? 450 
-    : deliveryType === 'bolt_rapid' 
-    ? 380 
-    : deliveryType === 'wairo_door' 
-    ? 250 
-    : deliveryType === 'wairo_gate' 
-    ? 120 
+  const deliveryFeeKes = deliveryType === 'fargo_pickup'
+    ? 50
+    : deliveryType === 'wairo_gate'
+    ? 120
+    : deliveryType === 'wairo_door'
+    ? 250
+    : deliveryType === 'sendy_express'
+    ? 450
+    : deliveryType === 'bolt_rapid'
+    ? 380
     : 0;
 
   const itemsSubtotalKes = currentBundle.bulkPriceKes * quantity;
@@ -157,13 +177,14 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
 
       const tracking = `WAIRO-${Math.floor(100000 + Math.random() * 900000)}`;
       const mpesaRef = `QKJ${Math.floor(100000 + Math.random() * 900000)}B`;
+      const locationText = deliveryType === 'fargo_pickup' ? selectedFargoPoint : deliveryWard;
 
       const orderData = {
         bundleId: currentBundle.id,
         grade: currentBundle.grade,
         bundleTitle: currentBundle.title,
         totalAmountKes,
-        deliveryLocation: deliveryWard,
+        deliveryLocation: locationText,
         deliveryType,
         paymentMethod: paymentSource === 'chama_table_bank' ? 'Chama Table Bank (Circle Payout)' : 'Direct M-Pesa STK',
         wairoTrackingCode: tracking,
@@ -216,7 +237,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
               <span>CBC Textbooks & WAIRO Courier</span>
             </h2>
             <p className="text-xs text-stone-300 mt-0.5">
-              Verified curriculum book packs delivered to your gate or home via WAIRO & Sendy/Bolt Express.
+              Verified curriculum book packs with Fargo KES 50 nationwide pickup or express door delivery.
             </p>
           </div>
 
@@ -282,8 +303,8 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                   <span className="font-bold text-right truncate max-w-[200px]">{completedOrder.bundleTitle}</span>
                 </div>
                 <div className="flex items-center justify-between border-b pb-2">
-                  <span className="text-gray-500 font-bold uppercase">Destination:</span>
-                  <span className="font-bold text-right">{completedOrder.deliveryLocation}</span>
+                  <span className="text-gray-500 font-bold uppercase">Collection Point:</span>
+                  <span className="font-bold text-right truncate max-w-[200px]">{completedOrder.deliveryLocation}</span>
                 </div>
                 <div className="flex items-center justify-between pt-1 text-sm font-black">
                   <span>TOTAL PAID:</span>
@@ -295,12 +316,16 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                 <div className="flex items-center space-x-2.5">
                   <Truck className="w-5 h-5 text-[#00BFEF] animate-bounce" />
                   <div>
-                    <span className="text-xs font-black block">WAIRO Express Assigned</span>
-                    <span className="text-[10px] text-cyan-300">Courier Partner in Transit</span>
+                    <span className="text-xs font-black block">
+                      {completedOrder.deliveryType === 'fargo_pickup' ? 'Fargo 200+ Network Dispatch' : 'WAIRO Express Assigned'}
+                    </span>
+                    <span className="text-[10px] text-cyan-300">
+                      {completedOrder.deliveryType === 'fargo_pickup' ? 'Next-Morning Pickup Ready at Station' : 'Courier Partner in Transit'}
+                    </span>
                   </div>
                 </div>
                 <span className="text-[10px] font-mono font-bold bg-white/20 px-2 py-1 rounded">
-                  Priority Dispatch
+                  Waybill Verified
                 </span>
               </div>
 
@@ -364,25 +389,35 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
 
               {/* Step 1: Delivery Location & Multi-Tier Mode */}
               <div className="space-y-2.5">
-                <label className="text-xs font-black uppercase tracking-wider text-[#1A1F2E] flex items-center justify-between">
-                  <span>1. WAIRO Delivery & Express Tiers</span>
-                  <span className="text-[10px] text-[#B8621F] font-bold">47 Counties Network</span>
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-black uppercase tracking-wider text-[#1A1F2E] flex items-center space-x-1.5">
+                    <span>1. Delivery Tier & Pickup Arbitrage</span>
+                  </label>
+                  <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                    Fargo 200+ Points: KES 50 Only
+                  </span>
+                </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {/* Option 1: Fargo Courier Pickup Point Arbitrage (KES 50) */}
                   <button
                     type="button"
-                    onClick={() => { soundEngine.play('tap'); setDeliveryType('wairo_door'); }}
-                    className={`p-3 rounded-xl text-left transition-all cursor-pointer flex flex-col justify-between ${
-                      deliveryType === 'wairo_door'
-                        ? 'bg-[#B8621F] text-white shadow-sm'
-                        : 'bg-white hover:bg-white/80 text-[#374151] shadow-xs'
+                    onClick={() => { soundEngine.play('tap'); setDeliveryType('fargo_pickup'); }}
+                    className={`p-3 rounded-xl text-left transition-all cursor-pointer flex flex-col justify-between ring-2 ${
+                      deliveryType === 'fargo_pickup'
+                        ? 'bg-[#0B6E6E] text-white ring-[#0B6E6E] shadow-sm'
+                        : 'bg-white hover:bg-emerald-50/50 text-[#374151] ring-emerald-400/40 shadow-xs'
                     }`}
                   >
-                    <Truck className="w-4 h-4 mb-1" />
+                    <div className="flex items-center justify-between">
+                      <MapPin className="w-4 h-4 mb-1 text-emerald-300" />
+                      <span className="text-[8px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-400 text-stone-900">
+                        TOP PICK
+                      </span>
+                    </div>
                     <div>
-                      <span className="text-xs font-bold block">Door Delivery</span>
-                      <span className="text-[10px] opacity-80">+KES 250</span>
+                      <span className="text-xs font-black block">Fargo Drop Point</span>
+                      <span className="text-[10px] font-bold opacity-90">KES 50 (200+ Hubs)</span>
                     </div>
                   </button>
 
@@ -398,7 +433,23 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                     <Building2 className="w-4 h-4 mb-1" />
                     <div>
                       <span className="text-xs font-bold block">Town Gate Desk</span>
-                      <span className="text-[10px] opacity-80">+KES 120</span>
+                      <span className="text-[10px] opacity-80">+KES 120 (SACCO)</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { soundEngine.play('tap'); setDeliveryType('wairo_door'); }}
+                    className={`p-3 rounded-xl text-left transition-all cursor-pointer flex flex-col justify-between ${
+                      deliveryType === 'wairo_door'
+                        ? 'bg-[#B8621F] text-white shadow-sm'
+                        : 'bg-white hover:bg-white/80 text-[#374151] shadow-xs'
+                    }`}
+                  >
+                    <Truck className="w-4 h-4 mb-1" />
+                    <div>
+                      <span className="text-xs font-bold block">Door Delivery</span>
+                      <span className="text-[10px] opacity-80">+KES 250</span>
                     </div>
                   </button>
 
@@ -451,15 +502,42 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                   </button>
                 </div>
 
-                <div className="p-3 rounded-xl bg-white shadow-xs flex items-center space-x-2">
-                  <span className="text-xs font-bold text-gray-500">Destination Ward:</span>
-                  <input
-                    type="text"
-                    value={deliveryWard}
-                    onChange={(e) => setDeliveryWard(e.target.value)}
-                    className="flex-1 text-xs font-bold text-[#1A1F2E] bg-transparent outline-none focus:text-[#B8621F]"
-                  />
-                </div>
+                {/* Fargo Point Selector or Ward Input */}
+                {deliveryType === 'fargo_pickup' ? (
+                  <div className="p-3 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-emerald-900 flex items-center space-x-1">
+                        <MapPin className="w-3.5 h-3.5 text-emerald-700" />
+                        <span>Select Nearest Fargo Drop-Off Station:</span>
+                      </span>
+                      <span className="text-[10px] font-mono text-emerald-700 font-bold">
+                        200+ Nationwide Hubs
+                      </span>
+                    </div>
+                    <select
+                      value={selectedFargoPoint}
+                      onChange={(e) => setSelectedFargoPoint(e.target.value)}
+                      className="w-full bg-white border border-emerald-300 rounded-xl px-3 py-2 text-xs font-bold text-[#1A1F2E] outline-none focus:border-emerald-600"
+                    >
+                      {FARGO_DROP_POINTS.map(fp => (
+                        <option key={fp} value={fp}>{fp}</option>
+                      ))}
+                    </select>
+                    <p className="text-[10px] text-emerald-800 leading-tight">
+                      💡 <b>Pickup-Point Arbitrage:</b> Instead of KES 250+ home delivery, collect your package safely at Fargo Courier counter for just KES 50.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="p-3 rounded-xl bg-white shadow-xs flex items-center space-x-2">
+                    <span className="text-xs font-bold text-gray-500">Destination Ward:</span>
+                    <input
+                      type="text"
+                      value={deliveryWard}
+                      onChange={(e) => setDeliveryWard(e.target.value)}
+                      className="flex-1 text-xs font-bold text-[#1A1F2E] bg-transparent outline-none focus:text-[#B8621F]"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Step 2: Payment Method (Chama Balance vs Direct M-Pesa) */}
@@ -521,8 +599,12 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                   <span className="font-mono font-bold">KES {itemsSubtotalKes.toLocaleString()}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-600">Freight & Logistics:</span>
-                  <span className="font-mono font-bold">KES {deliveryFeeKes.toLocaleString()}</span>
+                  <span className="text-gray-600">
+                    {deliveryType === 'fargo_pickup' ? 'Fargo 200+ Pickup Station:' : 'Freight & Logistics:'}
+                  </span>
+                  <span className="font-mono font-bold text-emerald-700">
+                    KES {deliveryFeeKes.toLocaleString()}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between text-sm font-black border-t border-gray-200 pt-2">
                   <span>Total Due:</span>
@@ -540,7 +622,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                   {isProcessing ? (
                     <div className="flex items-center space-x-2">
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>Securing CBC Bundle & Assigning Carrier...</span>
+                      <span>Securing CBC Bundle & Assigning Fargo/WAIRO Carrier...</span>
                     </div>
                   ) : (
                     <>

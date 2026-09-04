@@ -36,9 +36,9 @@ export function TodayOpportunities({
     },
     {
       id: 'opp-2',
-      badge: 'EXPRESS',
+      badge: 'KES 50',
       title: 'WAIRO Gate Run',
-      subtitle: 'Sendy / Bolt Express Tier Active',
+      subtitle: 'Fargo 200+ Hubs & Express Tier',
       bgGradient: 'from-[#0B6E6E] to-[#14919B]',
       textColor: 'text-white',
       category: 'cargo'

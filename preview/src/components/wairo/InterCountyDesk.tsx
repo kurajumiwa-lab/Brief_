@@ -22,11 +22,12 @@ import {
   Radio,
   Zap,
   Navigation,
-  Check
+  Check,
+  Layers
 } from 'lucide-react';
 import { soundEngine } from '../../utils/SoundEngine';
 
-export type DeliveryTier = 'standard_peer' | 'sendy_express' | 'bolt_instant';
+export type DeliveryTier = 'standard_peer' | 'sendy_express' | 'bolt_instant' | 'fargo_pickup';
 
 export interface InterCountyRoute {
   id: string;
@@ -36,7 +37,7 @@ export interface InterCountyRoute {
   plateNumber: string;
   hasLogbookVerified: boolean;
   tier: DeliveryTier;
-  partnerBrand?: 'Sendy' | 'Bolt' | 'WAIRO';
+  partnerBrand?: 'Fargo Courier' | 'Sendy' | 'Bolt' | 'WAIRO';
   insuranceCoverKes?: number;
   slaGuarantee?: string;
   fromCounty: string;
@@ -72,6 +73,30 @@ export interface ParcelBooking {
 }
 
 const INITIAL_ROUTES: InterCountyRoute[] = [
+  {
+    id: 'route-fargo-nationwide-0',
+    driverName: 'Fargo Courier 200+ Drop-Point Network',
+    driverPhone: 'Fargo Central Station (020 444 8000)',
+    vehicleType: 'Van / Pickup',
+    plateNumber: 'FARGO-47-COUNTY',
+    hasLogbookVerified: true,
+    tier: 'fargo_pickup',
+    partnerBrand: 'Fargo Courier',
+    insuranceCoverKes: 150000,
+    slaGuarantee: 'Next-Morning Counter Pickup at 200+ Stations (KES 50 Arbitrage)',
+    fromCounty: 'Nairobi',
+    fromHub: 'Fargo Central Hub (Haile Selassie Ave)',
+    toCounty: 'Mombasa',
+    toHub: 'Fargo Digo Road Counter (200+ Points)',
+    departureDate: 'Daily 6:00 PM Freight Consolidation',
+    departureTime: '18:00',
+    availableCapacityKg: 2500,
+    pricePerKgKes: 10,
+    baseFeeKes: 50,
+    status: 'scheduled',
+    reputationRating: 4.99,
+    totalTrips: 1850
+  },
   {
     id: 'route-sendy-msa-1',
     driverName: 'Sendy Freight Partner (3-Ton Van)',
@@ -223,7 +248,7 @@ export function InterCountyDesk({
 
   // Filter state
   const [filterCounty, setFilterCounty] = useState<string>('All');
-  const [selectedTierFilter, setSelectedTierFilter] = useState<'all' | 'sendy_express' | 'bolt_instant' | 'standard_peer'>('all');
+  const [selectedTierFilter, setSelectedTierFilter] = useState<'all' | 'fargo_pickup' | 'sendy_express' | 'bolt_instant' | 'standard_peer'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Booking modal form state
@@ -234,7 +259,6 @@ export function InterCountyDesk({
   const [recipientPhone, setRecipientPhone] = useState('');
   const [itemDescription, setItemDescription] = useState('');
   const [weightKg, setWeightKg] = useState<number>(5);
-  const [includeInsurance, setIncludeInsurance] = useState<boolean>(true);
 
   // Post Trip form state
   const [driverNameInput, setDriverNameInput] = useState('');
@@ -251,6 +275,23 @@ export function InterCountyDesk({
   // Active bookings list
   const [bookings, setBookings] = useState<ParcelBooking[]>([
     {
+      id: 'BKG-FARGO-102',
+      senderName: 'Madam Beatrice Mwangi',
+      senderPhone: '0722849102',
+      recipientName: 'Machakos PTA Secretary',
+      recipientPhone: '0721998877',
+      itemDescription: 'CBC Grade 7 Book Bundles (Fargo Drop Arbitrage)',
+      weightKg: 12,
+      routeId: 'route-fargo-nationwide-0',
+      tier: 'fargo_pickup',
+      partnerBrand: 'Fargo Courier 200+ Points',
+      fromCounty: 'Nairobi',
+      toCounty: 'Machakos',
+      feeKes: 170,
+      escrowStatus: 'held_in_escrow',
+      pinCode: '6192'
+    },
+    {
       id: 'BKG-7712',
       senderName: 'Dennis Kimani',
       senderPhone: '0712345678',
@@ -266,23 +307,6 @@ export function InterCountyDesk({
       feeKes: 700,
       escrowStatus: 'held_in_escrow',
       pinCode: '7419'
-    },
-    {
-      id: 'BKG-SENDY-9904',
-      senderName: 'Grace Wanjiku',
-      senderPhone: '0722849102',
-      recipientName: 'Mombasa Tech Supplies',
-      recipientPhone: '0711223344',
-      itemDescription: 'CBC Grade 7 Curriculum Guides (32 Packs)',
-      weightKg: 24,
-      routeId: 'route-sendy-msa-1',
-      tier: 'sendy_express',
-      partnerBrand: 'Sendy Freight Express',
-      fromCounty: 'Nairobi',
-      toCounty: 'Mombasa',
-      feeKes: 1690,
-      escrowStatus: 'in_transit',
-      pinCode: '3812'
     }
   ]);
 
@@ -416,7 +440,7 @@ export function InterCountyDesk({
               <Sparkles className="w-5 h-5 text-[#FF5A1F]" />
             </h2>
             <p className="text-xs text-indigo-200/80 mt-0.5 max-w-xl">
-              WAIRO multi-tier freight ecosystem: standard SACCO trunks, Sendy Freight Express, and Bolt Instant Rapid Dispatch across Kenya.
+              WAIRO multi-tier freight ecosystem: Fargo KES 50 pickup-point arbitrage, Sendy Freight Express, and Bolt Rapid Courier across Kenya.
             </p>
           </div>
 
@@ -434,16 +458,17 @@ export function InterCountyDesk({
         {/* Tier Badges Banner */}
         <div className="mt-4 pt-3 border-t border-white/10 flex items-center space-x-2 overflow-x-auto text-[11px] font-bold">
           <span className="text-gray-400 text-[10px] uppercase tracking-wider">Integrated Tiers:</span>
+          <span className="px-2.5 py-0.5 rounded-full bg-[#0B6E6E]/40 text-emerald-300 border border-emerald-400/40 flex items-center space-x-1">
+            <MapPin className="w-3 h-3 text-emerald-300" />
+            <span>Fargo 200+ Drop Points (KES 50 Arbitrage)</span>
+          </span>
           <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center space-x-1">
             <ShieldCheck className="w-3 h-3" />
-            <span>Sendy Freight Express (Insured)</span>
+            <span>Sendy Freight (Insured)</span>
           </span>
           <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center space-x-1">
             <Zap className="w-3 h-3" />
-            <span>Bolt Instant Rapid (Live GPS)</span>
-          </span>
-          <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-            WAIRO 90/10 Peer & SACCO Trunks
+            <span>Bolt Instant Rapid</span>
           </span>
         </div>
 
@@ -453,7 +478,7 @@ export function InterCountyDesk({
             { id: 'routes', label: 'Available Routes', count: routes.length },
             { id: 'post_trip', label: 'Post Your Trip (Earn 90%)' },
             { id: 'my_bookings', label: 'My Cargo Bookings', count: bookings.length },
-            { id: 'logbook_info', label: 'Logbook Ownership Boost' }
+            { id: 'logbook_info', label: 'Logbook & Arbitrage Model' }
           ].map(tab => (
             <button
               key={tab.id}
@@ -484,10 +509,11 @@ export function InterCountyDesk({
           
           {/* Controls Bar: Tier Filter, County Filter & Search */}
           <div className="space-y-2.5">
-            {/* Express Delivery Tier Switcher */}
+            {/* Express & Arbitrage Tier Switcher */}
             <div className="flex items-center space-x-1.5 overflow-x-auto pb-1">
               {[
                 { id: 'all', label: 'All Fleet Tiers' },
+                { id: 'fargo_pickup', label: 'Fargo 200+ Points 📦 (KES 50 Arbitrage)' },
                 { id: 'sendy_express', label: 'Sendy Express ⚡ (Insured Van)' },
                 { id: 'bolt_instant', label: 'Bolt Instant 🚀 (Rapid GPS)' },
                 { id: 'standard_peer', label: 'Standard SACCO & Peer' }
@@ -529,7 +555,7 @@ export function InterCountyDesk({
                 <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-2.5" />
                 <input
                   type="text"
-                  placeholder="Search Sendy, Bolt, plate, county..."
+                  placeholder="Search Fargo, Sendy, Bolt, plate..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-8 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:border-[#2563EB] w-full sm:w-56"
@@ -541,6 +567,7 @@ export function InterCountyDesk({
           {/* Routes Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
             {filteredRoutes.map((route) => {
+              const isFargo = route.tier === 'fargo_pickup';
               const isSendy = route.tier === 'sendy_express';
               const isBolt = route.tier === 'bolt_instant';
 
@@ -548,8 +575,10 @@ export function InterCountyDesk({
                 <div
                   key={route.id}
                   className={`border rounded-2xl p-4 transition-all shadow-xs space-y-3 relative group ${
-                    isSendy
-                      ? 'bg-emerald-50/40 border-emerald-300 hover:border-emerald-500'
+                    isFargo
+                      ? 'bg-emerald-50/60 border-emerald-400 hover:border-emerald-600 ring-1 ring-emerald-400/30'
+                      : isSendy
+                      ? 'bg-emerald-50/30 border-emerald-300 hover:border-emerald-500'
                       : isBolt
                       ? 'bg-amber-50/40 border-amber-300 hover:border-amber-500'
                       : 'bg-white border-[#E5E8EC] hover:border-[#00BFEF]'
@@ -560,6 +589,11 @@ export function InterCountyDesk({
                     <div className="space-y-0.5">
                       <div className="flex items-center space-x-1.5">
                         <span className="font-bold text-xs text-[#0D1117]">{route.driverName}</span>
+                        {isFargo && (
+                          <span className="bg-[#0B6E6E] text-white text-[9px] font-mono font-black px-1.5 py-0.5 rounded">
+                            FARGO 200+ POINTS
+                          </span>
+                        )}
                         {isSendy && (
                           <span className="bg-emerald-600 text-white text-[9px] font-mono font-black px-1.5 py-0.5 rounded">
                             SENDY EXPRESS
@@ -860,7 +894,7 @@ export function InterCountyDesk({
                     <span className="text-base font-black font-mono tracking-widest text-[#0D1117] bg-white px-3 py-1 rounded-lg border border-gray-300">
                       {b.pinCode}
                     </span>
-                    <span className="text-[10px] text-gray-500">Share with driver upon parcel collection</span>
+                    <span className="text-[10px] text-gray-500">Share with driver or Fargo agent upon parcel collection</span>
                   </div>
                 </div>
 
@@ -895,9 +929,21 @@ export function InterCountyDesk({
         </div>
       )}
 
-      {/* ================= TAB 4: LOGBOOK INFO ================= */}
+      {/* ================= TAB 4: LOGBOOK & ARBITRAGE INFO ================= */}
       {activeTab === 'logbook_info' && (
         <div className="p-5 sm:p-6 space-y-4 text-xs">
+          
+          {/* Pickup Point Arbitrage Spotlight */}
+          <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-950 space-y-2">
+            <h4 className="font-black text-sm flex items-center space-x-1.5 text-emerald-900">
+              <MapPin className="w-4 h-4 text-emerald-700" />
+              <span>Fargo Pickup-Point Arbitrage (KES 50 Nationwide Model)</span>
+            </h4>
+            <p className="text-[11px] text-emerald-900 leading-relaxed">
+              Instead of expensive door-to-door delivery (KES 250 - 450), Brief & Wairo partner with Fargo Courier's 200+ nationwide stations. Fargo charges a consolidated wholesale rate of <b>KES 30 per parcel</b>. You pay only <b>KES 50</b>, the platform retains <b>KES 20 spread</b>, and parents save over KES 200 vs home delivery. A true win-win!
+            </p>
+          </div>
+
           <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-200 text-indigo-950 space-y-2">
             <h4 className="font-black text-sm flex items-center space-x-1.5">
               <ShieldCheck className="w-4 h-4 text-indigo-600" />
@@ -915,8 +961,8 @@ export function InterCountyDesk({
             </div>
 
             <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200 space-y-1">
-              <span className="font-bold text-[#0D1117] block">2. Priority Matching</span>
-              <p className="text-[10px] text-gray-600 font-sans">Logbook-verified drivers appear at the top of shipper searches.</p>
+              <span className="font-bold text-[#0D1117] block">2. 200+ Drop Points</span>
+              <p className="text-[10px] text-gray-600 font-sans">Collect or drop at any verified Fargo counter nationwide.</p>
             </div>
 
             <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200 space-y-1">
@@ -1006,6 +1052,16 @@ export function InterCountyDesk({
                 </div>
               </div>
 
+              {selectedRoute.tier === 'fargo_pickup' && (
+                <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-950 text-[11px] space-y-1">
+                  <div className="flex items-center space-x-1 font-bold text-emerald-900">
+                    <MapPin className="w-3.5 h-3.5 text-emerald-700" />
+                    <span>Fargo 200+ Counter Pickup Arbitrage (KES 50)</span>
+                  </div>
+                  <p>Recipient collects at the nearest Fargo branch counter. Safe, fast, and saves KES 200+ vs home delivery.</p>
+                </div>
+              )}
+
               {selectedRoute.tier === 'sendy_express' && (
                 <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-[11px] space-y-1">
                   <div className="flex items-center space-x-1 font-bold">
@@ -1031,7 +1087,7 @@ export function InterCountyDesk({
                   <Lock className="w-3.5 h-3.5 text-blue-600" />
                   <span>Escrow Hold via M-Pesa</span>
                 </div>
-                <p>Funds remain securely in escrow until recipient gives the driver the 4-digit PIN upon arrival.</p>
+                <p>Funds remain securely in escrow until recipient gives the driver or Fargo agent the 4-digit PIN upon arrival.</p>
               </div>
 
               <button
