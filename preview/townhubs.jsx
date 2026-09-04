@@ -30,6 +30,7 @@ const { ChamaDesk } = require('./src/components/circle/ChamaDesk.tsx');
 const { UssdSimulatorDesk } = require('./src/components/offline/UssdSimulatorDesk.tsx');
 const { InterCountyDesk } = require('./src/components/wairo/InterCountyDesk.tsx');
 const { PrivateCarrierAuctionDesk } = require('./src/components/wairo/PrivateCarrierAuctionDesk.tsx');
+const { WairoBookmark } = require('./src/components/wairo/WairoBookmark.tsx');
 const { OfflineSyncQueueDesk } = require('./src/components/offline/OfflineSyncQueueDesk.tsx');
 const { ArenaClanCoordination } = require('./src/components/arena/ArenaClanCoordination.tsx');
 const { UniversalCreatePostModal, CreatePostSheet } = require('./src/components/posts/UniversalCreatePostModal.tsx');
@@ -461,6 +462,35 @@ async function main() {
   check('renders publish button on Step 1', host14.textContent.includes('Publish'));
 
   await act(async () => { root14.unmount(); host14.remove(); });
+
+  // --- 15. WairoBookmark (Wax-Seal Bookmark Widget) ---
+  console.log('\n--- 15. WairoBookmark ---');
+  const host15 = document.createElement('div');
+  document.body.appendChild(host15);
+  const root15 = createRoot(host15);
+  let bookmarkTapped = false;
+  await act(async () => {
+    root15.render(React.createElement(WairoBookmark, {
+      status: 'IN TRANSIT',
+      location: "Lang'ata",
+      onTap: () => { bookmarkTapped = true; }
+    }));
+  });
+
+  const text15 = host15.textContent;
+  check('renders WairoBookmark location tag', text15.includes("Lang'ata"));
+
+  const sealElem = host15.querySelector('[aria-label="Wairo Courier Bookmark Seal"]');
+  check('renders seal element with accessible aria-label', Boolean(sealElem));
+
+  if (sealElem) {
+    await act(async () => {
+      sealElem.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+  }
+  check('fires onTap callback when wax seal is tapped', bookmarkTapped === true);
+
+  await act(async () => { root15.unmount(); host15.remove(); });
 
   console.log(`\nPASSED ${pass}   FAILED ${fail}`);
   process.exit(fail ? 1 : 0);

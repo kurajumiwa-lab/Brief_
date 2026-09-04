@@ -272,3 +272,5 @@ export const WairoFloatingWidget: React.FC = () => {
     </aside>
   );
 };
+
+export { WairoBookmark } from './WairoBookmark';
