@@ -19,9 +19,14 @@ import {
   Lock,
   ChevronRight,
   Send,
-  Radio
+  Radio,
+  Zap,
+  Navigation,
+  Check
 } from 'lucide-react';
 import { soundEngine } from '../../utils/SoundEngine';
+
+export type DeliveryTier = 'standard_peer' | 'sendy_express' | 'bolt_instant';
 
 export interface InterCountyRoute {
   id: string;
@@ -30,6 +35,10 @@ export interface InterCountyRoute {
   vehicleType: 'Car Trunk' | 'Van / Pickup' | 'Motorbike (Long Range)' | 'Light Truck';
   plateNumber: string;
   hasLogbookVerified: boolean;
+  tier: DeliveryTier;
+  partnerBrand?: 'Sendy' | 'Bolt' | 'WAIRO';
+  insuranceCoverKes?: number;
+  slaGuarantee?: string;
   fromCounty: string;
   fromHub: string;
   toCounty: string;
@@ -53,6 +62,8 @@ export interface ParcelBooking {
   itemDescription: string;
   weightKg: number;
   routeId: string;
+  tier: DeliveryTier;
+  partnerBrand?: string;
   fromCounty: string;
   toCounty: string;
   feeKes: number;
@@ -62,12 +73,62 @@ export interface ParcelBooking {
 
 const INITIAL_ROUTES: InterCountyRoute[] = [
   {
+    id: 'route-sendy-msa-1',
+    driverName: 'Sendy Freight Partner (3-Ton Van)',
+    driverPhone: 'Sendy Dispatch (+254 709 *** 000)',
+    vehicleType: 'Van / Pickup',
+    plateNumber: 'KDB 910S (Sendy Fleet)',
+    hasLogbookVerified: true,
+    tier: 'sendy_express',
+    partnerBrand: 'Sendy',
+    insuranceCoverKes: 250000,
+    slaGuarantee: 'Same-Day 4hr Express Delivery',
+    fromCounty: 'Nairobi',
+    fromHub: 'Sendy Central Hub (Mombasa Rd)',
+    toCounty: 'Mombasa',
+    toHub: 'Sendy Nyali Fulfillment Gate',
+    departureDate: 'Today, 8:00 PM (Night Express)',
+    departureTime: '20:00',
+    availableCapacityKg: 850,
+    pricePerKgKes: 35,
+    baseFeeKes: 850,
+    status: 'scheduled',
+    reputationRating: 4.98,
+    totalTrips: 340
+  },
+  {
+    id: 'route-bolt-nkr-2',
+    driverName: 'Bolt Business Express Courier',
+    driverPhone: 'Bolt Rapid Dispatch (Live GPS)',
+    vehicleType: 'Car Trunk',
+    plateNumber: 'KDG 312B (Bolt Express)',
+    hasLogbookVerified: true,
+    tier: 'bolt_instant',
+    partnerBrand: 'Bolt',
+    insuranceCoverKes: 100000,
+    slaGuarantee: 'Instant Dispatch (Within 25 mins)',
+    fromCounty: 'Nairobi',
+    fromHub: 'Nairobi Kencom Direct Pickup',
+    toCounty: 'Nakuru',
+    toHub: 'Nakuru CBD Direct Doorstep',
+    departureDate: 'Immediate Dispatch (Live GPS)',
+    departureTime: 'Immediate',
+    availableCapacityKg: 75,
+    pricePerKgKes: 40,
+    baseFeeKes: 950,
+    status: 'boarding',
+    reputationRating: 4.97,
+    totalTrips: 215
+  },
+  {
     id: 'route-msa-1',
     driverName: 'Captain James Mwaura',
     driverPhone: '0722 *** 891',
     vehicleType: 'Car Trunk',
     plateNumber: 'KDG 492A',
     hasLogbookVerified: true,
+    tier: 'standard_peer',
+    partnerBrand: 'WAIRO',
     fromCounty: 'Nairobi',
     fromHub: 'CBD Kencom / Railways Hub',
     toCounty: 'Mombasa',
@@ -88,6 +149,8 @@ const INITIAL_ROUTES: InterCountyRoute[] = [
     vehicleType: 'Van / Pickup',
     plateNumber: 'KCS 109W',
     hasLogbookVerified: true,
+    tier: 'standard_peer',
+    partnerBrand: 'WAIRO',
     fromCounty: 'Nairobi',
     fromHub: 'Westlands Sarit Hub',
     toCounty: 'Kisumu',
@@ -108,6 +171,8 @@ const INITIAL_ROUTES: InterCountyRoute[] = [
     vehicleType: 'Car Trunk',
     plateNumber: 'KDH 881L',
     hasLogbookVerified: true,
+    tier: 'standard_peer',
+    partnerBrand: 'WAIRO',
     fromCounty: 'Nairobi',
     fromHub: 'Industrial Area Enterprise Rd',
     toCounty: 'Eldoret',
@@ -128,6 +193,8 @@ const INITIAL_ROUTES: InterCountyRoute[] = [
     vehicleType: 'Motorbike (Long Range)',
     plateNumber: 'KMDG 501M',
     hasLogbookVerified: false,
+    tier: 'standard_peer',
+    partnerBrand: 'WAIRO',
     fromCounty: 'Nairobi',
     fromHub: 'Kangemi / Uthiru Staging',
     toCounty: 'Nakuru',
@@ -156,6 +223,7 @@ export function InterCountyDesk({
 
   // Filter state
   const [filterCounty, setFilterCounty] = useState<string>('All');
+  const [selectedTierFilter, setSelectedTierFilter] = useState<'all' | 'sendy_express' | 'bolt_instant' | 'standard_peer'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Booking modal form state
@@ -166,6 +234,7 @@ export function InterCountyDesk({
   const [recipientPhone, setRecipientPhone] = useState('');
   const [itemDescription, setItemDescription] = useState('');
   const [weightKg, setWeightKg] = useState<number>(5);
+  const [includeInsurance, setIncludeInsurance] = useState<boolean>(true);
 
   // Post Trip form state
   const [driverNameInput, setDriverNameInput] = useState('');
@@ -190,11 +259,30 @@ export function InterCountyDesk({
       itemDescription: 'Electronics & Spare Parts (Box)',
       weightKg: 8,
       routeId: 'route-msa-1',
+      tier: 'standard_peer',
+      partnerBrand: 'WAIRO SACCO',
       fromCounty: 'Nairobi',
       toCounty: 'Mombasa',
       feeKes: 700,
       escrowStatus: 'held_in_escrow',
       pinCode: '7419'
+    },
+    {
+      id: 'BKG-SENDY-9904',
+      senderName: 'Grace Wanjiku',
+      senderPhone: '0722849102',
+      recipientName: 'Mombasa Tech Supplies',
+      recipientPhone: '0711223344',
+      itemDescription: 'CBC Grade 7 Curriculum Guides (32 Packs)',
+      weightKg: 24,
+      routeId: 'route-sendy-msa-1',
+      tier: 'sendy_express',
+      partnerBrand: 'Sendy Freight Express',
+      fromCounty: 'Nairobi',
+      toCounty: 'Mombasa',
+      feeKes: 1690,
+      escrowStatus: 'in_transit',
+      pinCode: '3812'
     }
   ]);
 
@@ -206,13 +294,17 @@ export function InterCountyDesk({
     if (filterCounty !== 'All' && r.toCounty !== filterCounty && r.fromCounty !== filterCounty) {
       return false;
     }
+    if (selectedTierFilter !== 'all' && r.tier !== selectedTierFilter) {
+      return false;
+    }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       return (
         r.toCounty.toLowerCase().includes(q) ||
         r.fromCounty.toLowerCase().includes(q) ||
         r.driverName.toLowerCase().includes(q) ||
-        r.plateNumber.toLowerCase().includes(q)
+        r.plateNumber.toLowerCase().includes(q) ||
+        (r.partnerBrand && r.partnerBrand.toLowerCase().includes(q))
       );
     }
     return true;
@@ -241,6 +333,8 @@ export function InterCountyDesk({
       itemDescription: itemDescription || 'General Cargo',
       weightKg,
       routeId: selectedRoute.id,
+      tier: selectedRoute.tier,
+      partnerBrand: selectedRoute.partnerBrand || 'WAIRO',
       fromCounty: selectedRoute.fromCounty,
       toCounty: selectedRoute.toCounty,
       feeKes: totalFee,
@@ -265,6 +359,8 @@ export function InterCountyDesk({
       vehicleType: vehicleTypeInput,
       plateNumber: plateInput || 'KDA 000X',
       hasLogbookVerified: hasLogbookInput,
+      tier: 'standard_peer',
+      partnerBrand: 'WAIRO',
       fromCounty: fromCountyInput,
       fromHub: fromHubInput,
       toCounty: toCountyInput,
@@ -320,7 +416,7 @@ export function InterCountyDesk({
               <Sparkles className="w-5 h-5 text-[#FF5A1F]" />
             </h2>
             <p className="text-xs text-indigo-200/80 mt-0.5 max-w-xl">
-              Turn empty car boots, pickup beds, and long-distance passenger trips into vetted, high-paying cargo routes with 4-digit PIN escrow security.
+              WAIRO multi-tier freight ecosystem: standard SACCO trunks, Sendy Freight Express, and Bolt Instant Rapid Dispatch across Kenya.
             </p>
           </div>
 
@@ -335,8 +431,24 @@ export function InterCountyDesk({
           )}
         </div>
 
+        {/* Tier Badges Banner */}
+        <div className="mt-4 pt-3 border-t border-white/10 flex items-center space-x-2 overflow-x-auto text-[11px] font-bold">
+          <span className="text-gray-400 text-[10px] uppercase tracking-wider">Integrated Tiers:</span>
+          <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center space-x-1">
+            <ShieldCheck className="w-3 h-3" />
+            <span>Sendy Freight Express (Insured)</span>
+          </span>
+          <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center space-x-1">
+            <Zap className="w-3 h-3" />
+            <span>Bolt Instant Rapid (Live GPS)</span>
+          </span>
+          <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+            WAIRO 90/10 Peer & SACCO Trunks
+          </span>
+        </div>
+
         {/* Tab Switcher */}
-        <div className="flex items-center space-x-1.5 mt-5 border-t border-white/10 pt-3 overflow-x-auto">
+        <div className="flex items-center space-x-1.5 mt-4 overflow-x-auto">
           {[
             { id: 'routes', label: 'Available Routes', count: routes.length },
             { id: 'post_trip', label: 'Post Your Trip (Earn 90%)' },
@@ -370,269 +482,346 @@ export function InterCountyDesk({
       {activeTab === 'routes' && (
         <div className="p-5 sm:p-6 space-y-4">
           
-          {/* Controls Bar: County Filter & Search */}
-          <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
-            <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 sm:pb-0">
-              {['All', 'Mombasa', 'Kisumu', 'Nakuru', 'Eldoret'].map(c => (
+          {/* Controls Bar: Tier Filter, County Filter & Search */}
+          <div className="space-y-2.5">
+            {/* Express Delivery Tier Switcher */}
+            <div className="flex items-center space-x-1.5 overflow-x-auto pb-1">
+              {[
+                { id: 'all', label: 'All Fleet Tiers' },
+                { id: 'sendy_express', label: 'Sendy Express ⚡ (Insured Van)' },
+                { id: 'bolt_instant', label: 'Bolt Instant 🚀 (Rapid GPS)' },
+                { id: 'standard_peer', label: 'Standard SACCO & Peer' }
+              ].map(t => (
                 <button
-                  key={c}
+                  key={t.id}
                   type="button"
-                  onClick={() => { soundEngine.play('tap'); setFilterCounty(c); }}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
-                    filterCounty === c
-                      ? 'bg-[#0D1117] text-white'
+                  onClick={() => { soundEngine.play('tap'); setSelectedTierFilter(t.id as any); }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                    selectedTierFilter === t.id
+                      ? 'bg-[#00BFEF] text-[#0D1117] font-black shadow-xs'
                       : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                   }`}
                 >
-                  {c}
+                  {t.label}
                 </button>
               ))}
             </div>
 
-            <div className="relative">
-              <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-2.5" />
-              <input
-                type="text"
-                placeholder="Search driver, county, plate..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:border-[#2563EB] w-full sm:w-56"
-              />
+            <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
+              <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 sm:pb-0">
+                {['All', 'Mombasa', 'Kisumu', 'Nakuru', 'Eldoret'].map(c => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => { soundEngine.play('tap'); setFilterCounty(c); }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+                      filterCounty === c
+                        ? 'bg-[#0D1117] text-white'
+                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                    }`}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-2.5" />
+                <input
+                  type="text"
+                  placeholder="Search Sendy, Bolt, plate, county..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:border-[#2563EB] w-full sm:w-56"
+                />
+              </div>
             </div>
           </div>
 
           {/* Routes Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-            {filteredRoutes.map((route) => (
-              <div
-                key={route.id}
-                className="bg-white border border-[#E5E8EC] hover:border-[#00BFEF] rounded-2xl p-4 transition-all shadow-xs space-y-3 relative group"
-              >
-                {/* Header row: Driver info & Verified badge */}
-                <div className="flex items-start justify-between">
-                  <div className="space-y-0.5">
-                    <div className="flex items-center space-x-1.5">
-                      <span className="font-bold text-xs text-[#0D1117]">{route.driverName}</span>
-                      {route.hasLogbookVerified && (
-                        <span className="inline-flex items-center space-x-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border border-emerald-200" title="Verified Logbook">
-                          <ShieldCheck className="w-2.5 h-2.5 text-emerald-600" />
-                          <span>LOGBOOK VERIFIED</span>
-                        </span>
+            {filteredRoutes.map((route) => {
+              const isSendy = route.tier === 'sendy_express';
+              const isBolt = route.tier === 'bolt_instant';
+
+              return (
+                <div
+                  key={route.id}
+                  className={`border rounded-2xl p-4 transition-all shadow-xs space-y-3 relative group ${
+                    isSendy
+                      ? 'bg-emerald-50/40 border-emerald-300 hover:border-emerald-500'
+                      : isBolt
+                      ? 'bg-amber-50/40 border-amber-300 hover:border-amber-500'
+                      : 'bg-white border-[#E5E8EC] hover:border-[#00BFEF]'
+                  }`}
+                >
+                  {/* Header row: Driver info & Tier badge */}
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center space-x-1.5">
+                        <span className="font-bold text-xs text-[#0D1117]">{route.driverName}</span>
+                        {isSendy && (
+                          <span className="bg-emerald-600 text-white text-[9px] font-mono font-black px-1.5 py-0.5 rounded">
+                            SENDY EXPRESS
+                          </span>
+                        )}
+                        {isBolt && (
+                          <span className="bg-amber-500 text-white text-[9px] font-mono font-black px-1.5 py-0.5 rounded">
+                            BOLT RAPID
+                          </span>
+                        )}
+                        {route.hasLogbookVerified && (
+                          <span className="inline-flex items-center space-x-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border border-emerald-200" title="Verified Logbook">
+                            <ShieldCheck className="w-2.5 h-2.5 text-emerald-600" />
+                            <span>LOGBOOK VERIFIED</span>
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center space-x-2 text-[10px] text-gray-500 font-mono">
+                        <span>{route.plateNumber}</span>
+                        <span>•</span>
+                        <span>{route.vehicleType}</span>
+                        <span>•</span>
+                        <span className="text-amber-600 font-bold">★ {route.reputationRating}</span>
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      <span className="text-xs font-black font-mono text-[#0D1117] bg-white px-2 py-1 rounded-lg border border-gray-200 block">
+                        KES {route.baseFeeKes}+
+                      </span>
+                      <span className="text-[9px] text-gray-500 font-mono">
+                        KES {route.pricePerKgKes}/kg
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Route Path Indicator */}
+                  <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-between text-xs">
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] font-mono text-gray-400 uppercase block">From</span>
+                      <span className="font-bold text-[#0D1117]">{route.fromCounty}</span>
+                      <span className="text-[10px] text-gray-500 block truncate max-w-[120px]">{route.fromHub}</span>
+                    </div>
+
+                    <ArrowRight className="w-4 h-4 text-[#00BFEF] shrink-0" />
+
+                    <div className="space-y-0.5 text-right">
+                      <span className="text-[10px] font-mono text-gray-400 uppercase block">To</span>
+                      <span className="font-bold text-[#0D1117]">{route.toCounty}</span>
+                      <span className="text-[10px] text-gray-500 block truncate max-w-[120px]">{route.toHub}</span>
+                    </div>
+                  </div>
+
+                  {/* Route Meta: Departure & Capacity */}
+                  <div className="flex items-center justify-between text-xs text-gray-600 pt-1 border-t border-gray-100 font-mono">
+                    <div className="flex items-center space-x-1">
+                      <Clock className="w-3.5 h-3.5 text-gray-400" />
+                      <span className="text-[11px] font-bold text-gray-700">{route.departureDate}</span>
+                    </div>
+
+                    <div className="flex items-center space-x-1">
+                      <Package className="w-3.5 h-3.5 text-emerald-600" />
+                      <span className="text-[11px] font-black text-emerald-700">{route.availableCapacityKg} kg space</span>
+                    </div>
+                  </div>
+
+                  {/* SLA guarantee or Insurance text */}
+                  {route.slaGuarantee && (
+                    <div className="p-1.5 rounded-lg bg-blue-50/70 text-blue-900 text-[10px] font-mono flex items-center justify-between">
+                      <span className="font-bold">⚡ SLA: {route.slaGuarantee}</span>
+                      {route.insuranceCoverKes && (
+                        <span className="text-emerald-700 font-bold">Insured up to KES {route.insuranceCoverKes.toLocaleString()}</span>
                       )}
                     </div>
-                    <div className="flex items-center space-x-2 text-[10px] text-gray-500 font-mono">
-                      <span>{route.plateNumber}</span>
-                      <span>•</span>
-                      <span>{route.vehicleType}</span>
-                      <span>•</span>
-                      <span className="text-amber-600 font-bold">★ {route.reputationRating}</span>
-                    </div>
-                  </div>
+                  )}
 
-                  <span className="text-xs font-black font-mono text-[#0D1117] bg-gray-50 px-2 py-1 rounded-lg border border-gray-200">
-                    KES {route.baseFeeKes}+
-                  </span>
-                </div>
-
-                {/* Route Path Indicator */}
-                <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-between text-xs">
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] font-mono text-gray-400 uppercase block">From</span>
-                    <span className="font-bold text-[#0D1117]">{route.fromCounty}</span>
-                    <span className="text-[10px] text-gray-500 block">{route.fromHub}</span>
-                  </div>
-
-                  <ArrowRight className="w-4 h-4 text-[#00BFEF] shrink-0" />
-
-                  <div className="space-y-0.5 text-right">
-                    <span className="text-[10px] font-mono text-gray-400 uppercase block">To</span>
-                    <span className="font-bold text-[#0D1117]">{route.toCounty}</span>
-                    <span className="text-[10px] text-gray-500 block">{route.toHub}</span>
-                  </div>
-                </div>
-
-                {/* Footer details & Action */}
-                <div className="flex items-center justify-between pt-1 text-xs">
-                  <div className="space-y-0.5">
-                    <div className="flex items-center space-x-1 text-gray-600 text-[11px]">
-                      <Clock className="w-3 h-3 text-gray-400" />
-                      <span>{route.departureDate}</span>
-                    </div>
-                    <span className="text-[10px] font-mono text-emerald-600 font-bold block">
-                      {route.availableCapacityKg} kg spare boot space
-                    </span>
-                  </div>
-
+                  {/* Booking Action Button */}
                   <button
                     type="button"
                     onClick={() => handleOpenBooking(route)}
-                    className="px-3.5 py-1.5 rounded-xl bg-[#0D1117] hover:bg-[#1E293B] text-white font-bold text-xs cursor-pointer transition-all shadow-xs active:scale-95 flex items-center space-x-1"
+                    className="w-full py-2.5 rounded-xl bg-[#0D1117] hover:bg-black text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center space-x-1.5 cursor-pointer transition-transform active:scale-[0.99] shadow-xs"
                   >
-                    <Package className="w-3.5 h-3.5 text-[#00BFEF]" />
-                    <span>Send Cargo</span>
+                    <span>Book Freight Slot ({route.partnerBrand || 'WAIRO'})</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-[#00BFEF]" />
                   </button>
                 </div>
-
-              </div>
-            ))}
+              );
+            })}
           </div>
-
         </div>
       )}
 
       {/* ================= TAB 2: POST YOUR TRIP ================= */}
       {activeTab === 'post_trip' && (
-        <form onSubmit={handlePostTrip} className="p-5 sm:p-6 space-y-4 max-w-xl mx-auto text-xs">
-          <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 space-y-1">
-            <div className="flex items-center space-x-1.5 font-bold">
-              <DollarSign className="w-4 h-4 text-emerald-600" />
-              <span>Earn 90% Commission on Unused Luggage Capacity</span>
+        <div className="p-5 sm:p-6 space-y-5">
+          <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 flex items-start justify-between gap-3">
+            <div className="space-y-1">
+              <span className="text-[10px] font-mono font-bold text-[#FF5A1F] uppercase tracking-wider">
+                COMMISSION TRANSPARENCY
+              </span>
+              <h4 className="text-sm font-black text-[#0D1117]">
+                Earn 90% Commission on Empty Trunk Space
+              </h4>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Traveling to Mombasa, Kisumu, Nakuru, or Eldoret? Carry vetted boxes and parcels. Get paid directly to your M-Pesa upon recipient PIN verification.
+              </p>
             </div>
-            <p className="text-[11px] text-emerald-800 leading-relaxed">
-              Traveling between counties? Fill your trunk or roof rack with parcels heading to the same destination. Verified logbook holders get priority matching.
-            </p>
+            <div className="p-3 rounded-2xl bg-[#FF5A1F] text-white font-mono font-black text-center shrink-0">
+              <span className="text-lg block leading-none">90%</span>
+              <span className="text-[9px] uppercase tracking-wider">PAYOUT</span>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="font-bold text-gray-700">Driver / Traveler Name</label>
+          <form onSubmit={handlePostTrip} className="space-y-3 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="font-bold text-gray-700">Driver / Vehicle Owner Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Samuel Kimani"
+                  value={driverNameInput}
+                  onChange={(e) => setDriverNameInput(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2563EB]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-gray-700">Vehicle Registration Plate</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. KDF 123A"
+                  value={plateInput}
+                  onChange={(e) => setPlateInput(e.target.value.toUpperCase())}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono uppercase outline-none focus:border-[#2563EB]"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="font-bold text-gray-700">Origin County & Staging Hub</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    required
+                    placeholder="From County"
+                    value={fromCountyInput}
+                    onChange={(e) => setFromCountyInput(e.target.value)}
+                    className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2563EB]"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Staging Hub"
+                    value={fromHubInput}
+                    onChange={(e) => setFromHubInput(e.target.value)}
+                    className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2563EB]"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-gray-700">Destination County & Drop Hub</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    required
+                    placeholder="To County"
+                    value={toCountyInput}
+                    onChange={(e) => setToCountyInput(e.target.value)}
+                    className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2563EB]"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Drop Hub"
+                    value={toHubInput}
+                    onChange={(e) => setToHubInput(e.target.value)}
+                    className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2563EB]"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <label className="font-bold text-gray-700">Vehicle Type</label>
+                <select
+                  value={vehicleTypeInput}
+                  onChange={(e) => setVehicleTypeInput(e.target.value as any)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2563EB]"
+                >
+                  <option value="Car Trunk">Private Car Boot (Trunk)</option>
+                  <option value="Van / Pickup">Pickup Bed / Commercial Van</option>
+                  <option value="Motorbike (Long Range)">Motorbike (Rear Rack)</option>
+                  <option value="Light Truck">Light Truck / Canter</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-gray-700">Departure Time</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Tomorrow, 6:00 AM"
+                  value={departureDateInput}
+                  onChange={(e) => setDepartureDateInput(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2563EB]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-gray-700">Available Space (kg)</label>
+                <input
+                  type="number"
+                  min="5"
+                  max="2000"
+                  value={capacityKgInput}
+                  onChange={(e) => setCapacityKgInput(Number(e.target.value))}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono outline-none focus:border-[#2563EB]"
+                />
+              </div>
+            </div>
+
+            <div className="p-3 bg-gray-50 border border-gray-200 rounded-2xl flex items-center justify-between">
+              <div className="space-y-0.5">
+                <span className="font-bold text-gray-800 text-xs block">I Own this Vehicle (Logbook Verified)</span>
+                <span className="text-[10px] text-gray-500">Verified owners receive 5-star priority ranking & instant escrow release.</span>
+              </div>
               <input
-                type="text"
-                required
-                placeholder="e.g. Dennis Kimani"
-                value={driverNameInput}
-                onChange={(e) => setDriverNameInput(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2563EB]"
+                type="checkbox"
+                checked={hasLogbookInput}
+                onChange={(e) => setHasLogbookInput(e.target.checked)}
+                className="w-4 h-4 accent-emerald-600 cursor-pointer"
               />
             </div>
 
-            <div className="space-y-1">
-              <label className="font-bold text-gray-700">Vehicle Number Plate</label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. KDF 123Z"
-                value={plateInput}
-                onChange={(e) => setPlateInput(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono outline-none focus:border-[#2563EB]"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="font-bold text-gray-700">Origin County & Hub</label>
-              <select
-                value={fromCountyInput}
-                onChange={(e) => {
-                  setFromCountyInput(e.target.value);
-                  setFromHubInput(`${e.target.value} Main Hub`);
-                }}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2563EB]"
-              >
-                <option value="Nairobi">Nairobi (Kencom / Westlands)</option>
-                <option value="Mombasa">Mombasa (Nyali / Posta)</option>
-                <option value="Nakuru">Nakuru (CBD / Westside)</option>
-                <option value="Kisumu">Kisumu (Mega City)</option>
-                <option value="Eldoret">Eldoret (Rupa Mall)</option>
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <label className="font-bold text-gray-700">Destination County & Hub</label>
-              <select
-                value={toCountyInput}
-                onChange={(e) => {
-                  setToCountyInput(e.target.value);
-                  setToHubInput(`${e.target.value} Central Hub`);
-                }}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2563EB]"
-              >
-                <option value="Mombasa">Mombasa (Nyali / Posta)</option>
-                <option value="Kisumu">Kisumu (Mega City)</option>
-                <option value="Nakuru">Nakuru (CBD / Westside)</option>
-                <option value="Eldoret">Eldoret (Rupa Mall)</option>
-                <option value="Nairobi">Nairobi (Kencom / Westlands)</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="space-y-1">
-              <label className="font-bold text-gray-700">Vehicle Type</label>
-              <select
-                value={vehicleTypeInput}
-                onChange={(e) => setVehicleTypeInput(e.target.value as any)}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2563EB]"
-              >
-                <option value="Car Trunk">Car Trunk (Saloons)</option>
-                <option value="Van / Pickup">Van / Pickup</option>
-                <option value="Motorbike (Long Range)">Motorbike (Long Range)</option>
-                <option value="Light Truck">Light Truck</option>
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <label className="font-bold text-gray-700">Spare Boot Space (kg)</label>
-              <input
-                type="number"
-                min="5"
-                max="500"
-                value={capacityKgInput}
-                onChange={(e) => setCapacityKgInput(Number(e.target.value))}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2563EB]"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="font-bold text-gray-700">Departure Schedule</label>
-              <input
-                type="text"
-                placeholder="e.g. Tomorrow 6:00 AM"
-                value={departureDateInput}
-                onChange={(e) => setDepartureDateInput(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2563EB]"
-              />
-            </div>
-          </div>
-
-          <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="logbookCheck"
-              checked={hasLogbookInput}
-              onChange={(e) => setHasLogbookInput(e.target.checked)}
-              className="rounded text-[#2563EB] focus:ring-0 cursor-pointer"
-            />
-            <label htmlFor="logbookCheck" className="text-gray-700 cursor-pointer text-xs">
-              <strong>I have a valid NTSA vehicle logbook / ownership certificate</strong> (Grants 90% payout & verified badge)
-            </label>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full py-3 rounded-2xl bg-[#FF5A1F] hover:bg-[#ff6f3b] text-white font-bold text-xs flex items-center justify-center space-x-2 shadow-md cursor-pointer transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Publish Inter-County Route</span>
-          </button>
-        </form>
+            <button
+              type="submit"
+              className="w-full py-3 rounded-2xl bg-[#0D1117] hover:bg-black text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center space-x-2 shadow-md cursor-pointer transition-all"
+            >
+              <Send className="w-4 h-4 text-[#00BFEF]" />
+              <span>Publish Inter-County Route</span>
+            </button>
+          </form>
+        </div>
       )}
 
-      {/* ================= TAB 3: MY CARGO BOOKINGS & PIN ESCROW ================= */}
+      {/* ================= TAB 3: MY BOOKINGS ================= */}
       {activeTab === 'my_bookings' && (
-        <div className="p-5 sm:p-6 space-y-4 text-xs">
+        <div className="p-5 sm:p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-black text-sm uppercase tracking-wider text-[#0D1117]">
-              Active Parcel Escrow & Verification PINs
+            <h3 className="text-xs font-black uppercase tracking-wider text-[#0D1117]">
+              Active Cross-County Parcel Escrows
             </h3>
-            <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-bold border border-emerald-200">
-              Escrow Secured via M-Pesa
-            </span>
+            <span className="text-[10px] font-mono text-gray-500">4-Digit PIN Release Active</span>
           </div>
 
-          {bookings.map(b => (
-            <div key={b.id} className="bg-white border border-[#E5E8EC] rounded-2xl p-4 space-y-3 shadow-xs">
+          {bookings.map((b) => (
+            <div
+              key={b.id}
+              className="p-4 rounded-2xl bg-white border border-[#E5E8EC] space-y-3 shadow-xs"
+            >
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center space-x-2">
@@ -640,6 +829,11 @@ export function InterCountyDesk({
                     <span className="text-[10px] bg-blue-50 text-[#2563EB] font-bold px-2 py-0.5 rounded border border-blue-200">
                       {b.fromCounty} ➔ {b.toCounty}
                     </span>
+                    {b.partnerBrand && (
+                      <span className="text-[9px] font-mono font-bold bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-200">
+                        {b.partnerBrand}
+                      </span>
+                    )}
                   </div>
                   <p className="font-bold text-xs mt-1 text-[#0D1117]">{b.itemDescription}</p>
                   <p className="text-[10px] text-gray-500">Weight: {b.weightKg} kg • Fee: KES {b.feeKes}</p>
@@ -741,6 +935,7 @@ export function InterCountyDesk({
               <div>
                 <span className="text-[10px] font-mono text-[#00BFEF] font-bold uppercase">Booking Parcel Transport</span>
                 <h3 className="font-black text-base text-[#0D1117]">{selectedRoute.fromCounty} ➔ {selectedRoute.toCounty}</h3>
+                <span className="text-[10px] font-mono text-gray-500">Tier: {selectedRoute.partnerBrand || 'WAIRO Standard'}</span>
               </div>
               <button
                 type="button"
@@ -810,6 +1005,26 @@ export function InterCountyDesk({
                   />
                 </div>
               </div>
+
+              {selectedRoute.tier === 'sendy_express' && (
+                <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-[11px] space-y-1">
+                  <div className="flex items-center space-x-1 font-bold">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Sendy Express Goods in Transit Insurance Active</span>
+                  </div>
+                  <p>Covers parcel loss or damage up to KES 250,000 under Sendy Kenya Commercial Logistics Policy.</p>
+                </div>
+              )}
+
+              {selectedRoute.tier === 'bolt_instant' && (
+                <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] space-y-1">
+                  <div className="flex items-center space-x-1 font-bold">
+                    <Navigation className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Bolt Rapid Live Telemetry & GPS Link</span>
+                  </div>
+                  <p>Recipient receives live SMS tracking link with driver coordinates and 25-minute pickup SLA.</p>
+                </div>
+              )}
 
               <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-[11px] space-y-1">
                 <div className="flex items-center space-x-1 font-bold">

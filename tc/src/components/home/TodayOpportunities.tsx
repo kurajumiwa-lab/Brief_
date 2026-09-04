@@ -36,9 +36,9 @@ export function TodayOpportunities({
     },
     {
       id: 'opp-2',
-      badge: '90/10',
+      badge: 'EXPRESS',
       title: 'WAIRO Gate Run',
-      subtitle: 'Machakos ⇄ Nairobi Transit',
+      subtitle: 'Sendy / Bolt Express Tier Active',
       bgGradient: 'from-[#0B6E6E] to-[#14919B]',
       textColor: 'text-white',
       category: 'cargo'

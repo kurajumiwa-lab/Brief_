@@ -11,7 +11,9 @@ import {
   Phone, 
   Building2, 
   Clock, 
-  ChevronRight
+  ChevronRight,
+  Zap,
+  Navigation
 } from 'lucide-react';
 import { soundEngine } from '../../utils/SoundEngine';
 
@@ -38,15 +40,15 @@ export const SAMPLE_CBC_BUNDLES: CBCTextbookBundle[] = [
     subtitle: 'KLB Topmark & Oxford Approved CBC Textbooks',
     curriculum: 'KICD Approved · CBC 2026 Edition',
     supplier: 'Textbook Centre & Westlands Book Depot (Verified Supplier Till: 541289)',
-    retailPriceKes: 6800,
-    bulkPriceKes: 4890,
+    retailPriceKes: 7200,
+    bulkPriceKes: 5180,
     discountPercent: 28,
     booksIncluded: [
-      'Mathematics Learner’s Book & Workbook Gr 7',
-      'Integrated Science Course Book Gr 7',
-      'Social Studies & Life Skills Gr 7',
-      'Kiswahili Tukufu & Insha Gr 7',
-      'English Literacy & Composition Gr 7',
+      'Mathematics Activities Gr 7 (KLB)',
+      'Integrated Science Coursebook Gr 7',
+      'English Literacy & Skills Reader Gr 7',
+      'Kiswahili Fasaha Gr 7 (Oxford)',
+      'Social Studies & Citizenship Gr 7',
       'Agriculture & Nutrition Gr 7'
     ],
     stockCount: 42,
@@ -119,7 +121,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
 }) => {
   const [selectedBundleId, setSelectedBundleId] = useState<string>(initialBundleId);
   const [quantity, setQuantity] = useState<number>(1);
-  const [deliveryType, setDeliveryType] = useState<'wairo_door' | 'wairo_gate' | 'pickup'>('wairo_door');
+  const [deliveryType, setDeliveryType] = useState<'wairo_door' | 'wairo_gate' | 'sendy_express' | 'bolt_rapid' | 'pickup'>('wairo_door');
   const [deliveryWard, setDeliveryWard] = useState<string>('Machakos Town (Gate 4)');
   const [parentName, setParentName] = useState<string>('Madam Beatrice Mwangi');
   const [parentPhone, setParentPhone] = useState<string>('0722 849 102');
@@ -130,7 +132,16 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
   if (!isOpen) return null;
 
   const currentBundle = SAMPLE_CBC_BUNDLES.find(b => b.id === selectedBundleId) || SAMPLE_CBC_BUNDLES[0];
-  const deliveryFeeKes = deliveryType === 'wairo_door' ? 250 : deliveryType === 'wairo_gate' ? 120 : 0;
+  const deliveryFeeKes = deliveryType === 'sendy_express' 
+    ? 450 
+    : deliveryType === 'bolt_rapid' 
+    ? 380 
+    : deliveryType === 'wairo_door' 
+    ? 250 
+    : deliveryType === 'wairo_gate' 
+    ? 120 
+    : 0;
+
   const itemsSubtotalKes = currentBundle.bulkPriceKes * quantity;
   const totalAmountKes = itemsSubtotalKes + deliveryFeeKes;
   const totalSavingsKes = (currentBundle.retailPriceKes - currentBundle.bulkPriceKes) * quantity;
@@ -179,24 +190,16 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
         className="w-full max-w-xl bg-[#FAFAF8] rounded-[28px] overflow-hidden shadow-2xl text-[#1A1F2E] animate-slideUp my-auto max-h-[92vh] flex flex-col"
       >
         {/* ================= MODAL HEADER ================= */}
-        <div className="bg-[#121318] text-white p-5 sm:p-6 relative shrink-0">
-          <div className="flex items-start justify-between">
-            <div className="space-y-1">
-              <div className="flex items-center space-x-2">
-                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#B8621F] text-white">
-                  1-CLICK CBC DEMAND RUN
-                </span>
-                <span className="text-xs text-emerald-400 font-bold flex items-center space-x-1">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>KICD Approved</span>
-                </span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-black text-white leading-tight">
-                CBC Textbooks & WAIRO Courier
-              </h2>
-              <p className="text-xs text-stone-400">
-                Aggregated PTA bulk prices · 28% wholesale discount · Door delivery
-              </p>
+        <div className="p-5 sm:p-6 bg-gradient-to-r from-[#1E293B] via-[#0F172A] to-[#111827] text-white space-y-3 shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-[#B8621F] text-white text-[10px] font-black uppercase tracking-wider">
+                1-CLICK BULK DESK
+              </span>
+              <span className="text-xs text-amber-300 font-bold flex items-center space-x-1">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>PTA Wholesale Direct</span>
+              </span>
             </div>
 
             <button
@@ -208,9 +211,18 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
             </button>
           </div>
 
-          {/* Grade Selector Strip */}
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center space-x-2">
+              <span>CBC Textbooks & WAIRO Courier</span>
+            </h2>
+            <p className="text-xs text-stone-300 mt-0.5">
+              Verified curriculum book packs delivered to your gate or home via WAIRO & Sendy/Bolt Express.
+            </p>
+          </div>
+
+          {/* Bundle Selector Pills */}
           {!completedOrder && (
-            <div className="flex items-center space-x-2 mt-4 overflow-x-auto no-scrollbar pt-1">
+            <div className="flex items-center space-x-2 overflow-x-auto pt-2 border-t border-white/10">
               {SAMPLE_CBC_BUNDLES.map(b => {
                 const isSelected = b.id === selectedBundleId;
                 return (
@@ -283,12 +295,12 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                 <div className="flex items-center space-x-2.5">
                   <Truck className="w-5 h-5 text-[#00BFEF] animate-bounce" />
                   <div>
-                    <span className="text-xs font-black block">WAIRO Rider Assigned</span>
-                    <span className="text-[10px] text-cyan-300">Evans Maina · In Transit to Gate</span>
+                    <span className="text-xs font-black block">WAIRO Express Assigned</span>
+                    <span className="text-[10px] text-cyan-300">Courier Partner in Transit</span>
                   </div>
                 </div>
                 <span className="text-[10px] font-mono font-bold bg-white/20 px-2 py-1 rounded">
-                  ETA 45 Mins
+                  Priority Dispatch
                 </span>
               </div>
 
@@ -350,14 +362,14 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                 </div>
               </div>
 
-              {/* Step 1: Delivery Location & Mode */}
+              {/* Step 1: Delivery Location & Multi-Tier Mode */}
               <div className="space-y-2.5">
                 <label className="text-xs font-black uppercase tracking-wider text-[#1A1F2E] flex items-center justify-between">
-                  <span>1. WAIRO Delivery Method</span>
-                  <span className="text-[10px] text-[#B8621F] font-bold">47 Counties Gate Network</span>
+                  <span>1. WAIRO Delivery & Express Tiers</span>
+                  <span className="text-[10px] text-[#B8621F] font-bold">47 Counties Network</span>
                 </label>
 
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => { soundEngine.play('tap'); setDeliveryType('wairo_door'); }}
@@ -387,6 +399,38 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                     <div>
                       <span className="text-xs font-bold block">Town Gate Desk</span>
                       <span className="text-[10px] opacity-80">+KES 120</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { soundEngine.play('tap'); setDeliveryType('sendy_express'); }}
+                    className={`p-3 rounded-xl text-left transition-all cursor-pointer flex flex-col justify-between ${
+                      deliveryType === 'sendy_express'
+                        ? 'bg-emerald-700 text-white shadow-sm'
+                        : 'bg-white hover:bg-white/80 text-[#374151] shadow-xs'
+                    }`}
+                  >
+                    <ShieldCheck className="w-4 h-4 mb-1 text-emerald-300" />
+                    <div>
+                      <span className="text-xs font-bold block">Sendy Express ⚡</span>
+                      <span className="text-[10px] opacity-80">+KES 450 (Insured)</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { soundEngine.play('tap'); setDeliveryType('bolt_rapid'); }}
+                    className={`p-3 rounded-xl text-left transition-all cursor-pointer flex flex-col justify-between ${
+                      deliveryType === 'bolt_rapid'
+                        ? 'bg-amber-600 text-white shadow-sm'
+                        : 'bg-white hover:bg-white/80 text-[#374151] shadow-xs'
+                    }`}
+                  >
+                    <Zap className="w-4 h-4 mb-1 text-amber-200" />
+                    <div>
+                      <span className="text-xs font-bold block">Bolt Instant 🚀</span>
+                      <span className="text-[10px] opacity-80">+KES 380 (Rapid GPS)</span>
                     </div>
                   </button>
 
@@ -452,29 +496,37 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                     onClick={() => { soundEngine.play('tap'); setPaymentSource('mpesa'); }}
                     className={`p-3 rounded-xl text-left transition-all cursor-pointer flex flex-col justify-between ${
                       paymentSource === 'mpesa'
-                        ? 'bg-[#059669] text-white shadow-sm'
+                        ? 'bg-[#008751] text-white shadow-sm'
                         : 'bg-white hover:bg-white/80 text-[#374151] shadow-xs'
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <Phone className="w-4 h-4 text-emerald-200" />
+                      <span className="text-xs font-black">M-PESA</span>
                       <span className="text-[8px] font-black uppercase bg-white/20 text-white px-1.5 py-0.5 rounded">
-                        STK Push
+                        Instant
                       </span>
                     </div>
                     <div className="mt-2">
-                      <span className="text-xs font-black block">M-Pesa Express</span>
-                      <span className="text-[10px] text-emerald-200">{parentPhone}</span>
+                      <span className="text-xs font-black block">Direct STK Push</span>
+                      <span className="text-[10px] text-emerald-200">Safaricom Secure</span>
                     </div>
                   </button>
                 </div>
               </div>
 
-              {/* Order Summary & Primary CTA */}
-              <div className="pt-2 border-t border-black/[0.06] space-y-3">
-                <div className="flex items-center justify-between text-sm font-black text-[#1A1F2E]">
-                  <span>Total Payable:</span>
-                  <span className="text-xl text-[#10B981]">
+              {/* Order Summary & Submit Bar */}
+              <div className="p-4 rounded-2xl bg-stone-100 space-y-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-gray-600">Subtotal ({quantity} bundle):</span>
+                  <span className="font-mono font-bold">KES {itemsSubtotalKes.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-gray-600">Freight & Logistics:</span>
+                  <span className="font-mono font-bold">KES {deliveryFeeKes.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm font-black border-t border-gray-200 pt-2">
+                  <span>Total Due:</span>
+                  <span className="text-emerald-700 font-mono text-base">
                     KES {totalAmountKes.toLocaleString()}
                   </span>
                 </div>
@@ -483,32 +535,25 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                   type="button"
                   disabled={isProcessing}
                   onClick={handleExecuteCheckout}
-                  className="w-full py-4 rounded-2xl bg-[#B8621F] hover:bg-[#9B5118] text-white font-black text-sm shadow-lg shadow-[#B8621F]/25 flex items-center justify-center space-x-2 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                  className="w-full py-3.5 rounded-2xl bg-[#0D1117] hover:bg-black text-white font-black text-xs uppercase tracking-wider flex items-center justify-center space-x-2 shadow-lg cursor-pointer transition-all active:scale-[0.99] disabled:opacity-50"
                 >
                   {isProcessing ? (
                     <div className="flex items-center space-x-2">
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>Securing CBC Bundle & WAIRO Rider...</span>
+                      <span>Securing CBC Bundle & Assigning Carrier...</span>
                     </div>
                   ) : (
                     <>
-                      <span>Confirm & Pay KES {totalAmountKes.toLocaleString()}</span>
-                      <ArrowRight className="w-4 h-4" />
+                      <span>1-Click Authorize & Dispatch (KES {totalAmountKes.toLocaleString()})</span>
+                      <ArrowRight className="w-4 h-4 text-[#FF5A1F]" />
                     </>
                   )}
                 </button>
-
-                <p className="text-[10px] text-center text-gray-500 font-medium">
-                  Protected by Brief 90-Day Neighborhood Trust & Verified Supplier Guarantee
-                </p>
               </div>
             </>
           )}
-
         </div>
       </div>
     </div>
   );
 };
-
-export default CBCTextbookBundleCheckoutModal;
