@@ -37,7 +37,8 @@ import {
   ModernDarkShelfWrapper,
   ShelfRow,
   ShelfPlank,
-  DarkShelfBookCard
+  DarkShelfBookCard,
+  CBCTextbookBundleCheckoutModal
 } from '../components/ui';
 import { AppPalette } from '../styles/appPalette';
 import { WairoMiniApp } from '../components/wairo/WairoMiniApp';
@@ -121,6 +122,8 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
   const [eventLogisticsOpen, setEventLogisticsOpen] = useState(false);
   const [creatorDeskOpen, setCreatorDeskOpen] = useState(false);
   const [discoverViewOpen, setDiscoverViewOpen] = useState(false);
+  const [cbcCheckoutOpen, setCbcCheckoutOpen] = useState(false);
+  const [activeCbcBundleId, setActiveCbcBundleId] = useState('cbc-g7');
 
   // Detail Screens Navigation Stack
   const [activeDetailScreen, setActiveDetailScreen] = useState<Omit<SheetDetailScreenProps, 'onClose'> | null>(null);
@@ -595,7 +598,10 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                   badge="BULK RUN"
                   badgeColor="#10B981"
                   accentColor="#38BDF8"
-                  onClick={() => setDemandRunOpen(true)}
+                  onClick={() => {
+                    setActiveCbcBundleId('cbc-g7');
+                    setCbcCheckoutOpen(true);
+                  }}
                 />
                 <DarkShelfBookCard
                   id="kilimani-tech"
@@ -1120,6 +1126,18 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
           </div>
           <DiscoverScreen />
         </div>
+      )}
+
+      {/* ================= MODAL: 1-CLICK CBC TEXTBOOK BUNDLE CHECKOUT ================= */}
+      {cbcCheckoutOpen && (
+        <CBCTextbookBundleCheckoutModal
+          isOpen={cbcCheckoutOpen}
+          initialBundleId={activeCbcBundleId}
+          onClose={() => setCbcCheckoutOpen(false)}
+          onOrderSuccess={(order) => {
+            showToast(`Confirmed ${order.grade} Textbooks order! Waybill: ${order.wairoTrackingCode}`);
+          }}
+        />
       )}
 
       {/* ================= TOAST NOTIFICATION ================= */}

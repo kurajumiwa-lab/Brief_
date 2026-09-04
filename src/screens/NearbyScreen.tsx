@@ -35,7 +35,8 @@ import {
   WelcomingMat,
   GroupDemandRunDesk,
   GroupEventLogisticsDesk,
-  CreatorPartnerDesk
+  CreatorPartnerDesk,
+  CBCTextbookBundleCheckoutModal
 } from '../components/ui';
 import {
   NEIGHBORHOODS,
@@ -235,6 +236,8 @@ export function NearbyScreen(props: NearbyScreenProps) {
   // §14 — recent searches: real, user's own queries, persisted locally. Never
   // seeded with fake "popular" terms.
   const RECENT_KEY = 'brief.recentSearches.v1';
+  const [cbcCheckoutOpen, setCbcCheckoutOpen] = useState(false);
+  const [activeCbcBundleId, setActiveCbcBundleId] = useState('cbc-g7');
   const [recentSearches, setRecentSearches] = React.useState<string[]>(() => {
     try {
       const raw = window.localStorage.getItem(RECENT_KEY);
@@ -522,7 +525,8 @@ export function NearbyScreen(props: NearbyScreenProps) {
                           } else if (opp.category === 'cargo') {
                             setInterCountyOpen(true);
                           } else if (opp.category === 'demand') {
-                            setDemandRunOpen(true);
+                            setActiveCbcBundleId('cbc-g7');
+                            setCbcCheckoutOpen(true);
                           } else if (opp.category === 'chama') {
                             setChamaOpen(true);
                           } else if (opp.category === 'events') {
@@ -1558,7 +1562,11 @@ export function NearbyScreen(props: NearbyScreenProps) {
                   {/* Card 2: Bulk CBC Textbook & Demand Runs */}
                   <button
                     type="button"
-                    onClick={() => { soundEngine.play('heavyTap'); setDemandRunOpen(true); }}
+                    onClick={() => {
+                      soundEngine.play('heavyTap');
+                      setActiveCbcBundleId('cbc-g7');
+                      setCbcCheckoutOpen(true);
+                    }}
                     className="p-5 rounded-[20px] bg-white hover:bg-white/90 shadow-sm transition-all duration-200 cursor-pointer group flex flex-col justify-between text-left"
                   >
                     <div>
@@ -2171,6 +2179,18 @@ export function NearbyScreen(props: NearbyScreenProps) {
               />
             </div>
           </div>
+        )}
+
+        {/* ================= MODAL: 1-CLICK CBC TEXTBOOK BUNDLE CHECKOUT ================= */}
+        {cbcCheckoutOpen && (
+          <CBCTextbookBundleCheckoutModal
+            isOpen={cbcCheckoutOpen}
+            initialBundleId={activeCbcBundleId}
+            onClose={() => setCbcCheckoutOpen(false)}
+            onOrderSuccess={(order) => {
+              showToast(`Confirmed ${order.grade} Textbooks order! Waybill: ${order.wairoTrackingCode}`);
+            }}
+          />
         )}
     </>
   );
