@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { ShelfPlank } from './ShelfPlank';
+import { soundEngine } from '../../utils/SoundEngine';
 
 export const DARK_SHELF_TOKENS = {
   canvasBase: '#0F1013',
@@ -25,6 +26,7 @@ export interface DarkShelfBookCardProps {
   image?: string;
   icon?: React.ComponentType<{ className?: string }>;
   onClick?: () => void;
+  onLongPress?: () => void;
   className?: string;
   locked?: boolean;
   unlockText?: string;
@@ -33,7 +35,7 @@ export interface DarkShelfBookCardProps {
 /**
  * Modern Dark Shelf Book/Item Card:
  * Seated physically flush on top of the shelf with high-contrast bottom contact shadow,
- * crisp borders, matte dark styling, and legibility.
+ * crisp borders, matte dark styling, 60fps haptic touch, and long-press peek preview.
  */
 export const DarkShelfBookCard: React.FC<DarkShelfBookCardProps> = ({
   id,
@@ -47,15 +49,51 @@ export const DarkShelfBookCard: React.FC<DarkShelfBookCardProps> = ({
   image,
   icon: Icon,
   onClick,
+  onLongPress,
   className = '',
   locked = false,
   unlockText,
 }) => {
+  const timerRef = useRef<any>(null);
+  const isLongPressRef = useRef(false);
+
+  const handleTouchStart = () => {
+    isLongPressRef.current = false;
+    timerRef.current = setTimeout(() => {
+      isLongPressRef.current = true;
+      soundEngine.play('tap');
+      soundEngine.triggerHaptic([25, 35, 50]);
+      onLongPress?.();
+    }, 450);
+  };
+
+  const handleTouchEnd = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (isLongPressRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    soundEngine.play('tap');
+    onClick?.();
+  };
+
   return (
     <button
       type="button"
       data-shelf-item-id={id}
-      onClick={onClick}
+      onClick={handleClick}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onMouseDown={handleTouchStart}
+      onMouseUp={handleTouchEnd}
+      onMouseLeave={handleTouchEnd}
       className={`group relative shrink-0 w-[140px] sm:w-[155px] h-[195px] sm:h-[215px] rounded-[3px] overflow-hidden text-left transition-all duration-200 hover:-translate-y-1.5 focus:outline-none cursor-pointer select-none ${className}`}
       style={{
         boxShadow: DARK_SHELF_TOKENS.bookCoverContactShadow,

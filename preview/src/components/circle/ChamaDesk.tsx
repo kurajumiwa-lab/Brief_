@@ -20,7 +20,14 @@ import {
   MessageCircle,
   Sparkles,
   Repeat,
-  Heart
+  Heart,
+  RefreshCw,
+  Truck,
+  Package,
+  BookOpen,
+  CheckCheck,
+  Layers,
+  Lock
 } from 'lucide-react';
 import { soundEngine } from '../../utils/SoundEngine';
 
@@ -51,6 +58,18 @@ export interface TableLoan {
   guarantors: string[];
 }
 
+export interface ChamaOrderDispatch {
+  id: string;
+  title: string;
+  category: string;
+  totalValueKes: number;
+  pooledUnits: number;
+  status: 'in_transit' | 'aggregating' | 'delivered';
+  courierRoute: string;
+  estArrival: string;
+  savingsPct: number;
+}
+
 export function ChamaDesk({
   onClose,
   onOpenCircle
@@ -58,7 +77,9 @@ export function ChamaDesk({
   onClose?: () => void;
   onOpenCircle?: (circleId: string) => void;
 }) {
-  const [activeTab, setActiveTab] = useState<'roster' | 'contributions' | 'loans' | 'minutes'>('roster');
+  const [activeTab, setActiveTab] = useState<'roster' | 'contributions' | 'loans' | 'orders' | 'minutes'>('roster');
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState('Just now');
   
   // Chama State
   const [members, setMembers] = useState<ChamaMemberCycle[]>([
@@ -103,6 +124,42 @@ export function ChamaDesk({
     }
   ]);
 
+  const [communityOrders] = useState<ChamaOrderDispatch[]>([
+    {
+      id: 'order-cbc-01',
+      title: 'CBC Grade 7 Curriculum Full 6-Book Pack',
+      category: 'Education & Curriculum',
+      totalValueKes: 76800,
+      pooledUnits: 32,
+      status: 'in_transit',
+      courierRoute: 'WAIRO Hub 4 (Nairobi CBD) ➔ Kilimani Drop Locker',
+      estArrival: 'Today, 4:30 PM',
+      savingsPct: 35
+    },
+    {
+      id: 'order-agri-02',
+      title: 'Mavuno Organic Cereal & Legume Planting Mix',
+      category: 'Agri-Inputs Co-Op',
+      totalValueKes: 48500,
+      pooledUnits: 20,
+      status: 'aggregating',
+      courierRoute: 'Nakuru Central Depot ➔ Machakos Gate Hub',
+      estArrival: 'Tomorrow, 9:00 AM',
+      savingsPct: 28
+    },
+    {
+      id: 'order-solar-03',
+      title: 'Eco-Solar Backup Battery Units (1200Wh)',
+      category: 'Clean Energy & Lighting',
+      totalValueKes: 115000,
+      pooledUnits: 6,
+      status: 'delivered',
+      courierRoute: 'WAIRO Cargo Express ➔ Kilimani Social Hall',
+      estArrival: 'Delivered (18 May)',
+      savingsPct: 40
+    }
+  ]);
+
   // Dialog States
   const [isLogPayOpen, setIsLogPayOpen] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState(members[10].id);
@@ -124,6 +181,18 @@ export function ChamaDesk({
   const outstandingMerryKes = cycleTargetPoolKes - totalCollectedMerryKes;
   const currentRecipient = members.find(m => m.payoutStatus === 'current_recipient') || members[0];
   const totalWelfareReserveKes = 142500 + totalCollectedWelfareKes;
+
+  const handlePullToRefresh = () => {
+    if (isSyncing) return;
+    setIsSyncing(true);
+    soundEngine.play('tap');
+    soundEngine.triggerHaptic([25, 45, 60]);
+    setTimeout(() => {
+      setIsSyncing(false);
+      setLastSyncTime('Just now');
+      soundEngine.play('reward');
+    }, 650);
+  };
 
   const handleConfirmMemberPayment = (e: React.FormEvent) => {
     e.preventDefault();
@@ -178,24 +247,23 @@ export function ChamaDesk({
     const text = `*Kilimani Traders & Agri Chama — Cycle 5 Update 🌸*\n\n` +
       `*Merry-Go-Round Pot:* KES ${totalCollectedMerryKes.toLocaleString()} / KES ${cycleTargetPoolKes.toLocaleString()} (${cyclePercentComplete}%)\n` +
       `*This Month Beneficiary:* ${currentRecipient.name} (KES ${cycleTargetPoolKes.toLocaleString()})\n` +
-      `*Pending Members:* ${pendingNames || 'None! All cleared 🎉'}\n` +
-      `*Welfare Treasury:* KES ${totalWelfareReserveKes.toLocaleString()}\n\n` +
-      `*Payment Details:* Send KES 5,500 via M-Pesa to Chama Pochi / Till: 0722001122\n\n` +
-      `_Track rotational roster & table banking on Brief Circles: https://brief.ke/circle/kilimani-chama_`;
+      `*Welfare Reserve Balance:* KES ${totalWelfareReserveKes.toLocaleString()}\n` +
+      `*Pending Members (${members.length - paidMembersCount}):* ${pendingNames || 'All Cleared!'}\n\n` +
+      `*Next Meeting:* Saturday, 14 June 2026 at 3:00 PM (Kilimani Social Hall)\n` +
+      `_Encrypted Ledger Ref: CHAMA-CYC5-2026_`;
 
     if (navigator.clipboard) {
       navigator.clipboard.writeText(text);
       setCopiedBroadcast(true);
-      setTimeout(() => setCopiedBroadcast(false), 3000);
+      setTimeout(() => setCopiedBroadcast(false), 2500);
     }
   };
 
   return (
-    <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-3xl overflow-hidden shadow-2xl text-[#0D1117] max-w-2xl mx-auto">
-      
-      {/* ================= HERO HEADER ================= */}
-      <div className="bg-gradient-to-br from-[#1E1B4B] via-[#0F172A] to-[#0D1117] text-white p-5 sm:p-6 relative">
-        <div className="flex items-start justify-between gap-3">
+    <div className="bg-white rounded-3xl overflow-hidden shadow-2xl max-w-2xl w-full border border-gray-100">
+      {/* ================= HEADER ================= */}
+      <div className="p-5 sm:p-6 bg-gradient-to-br from-[#0D1117] via-[#161B22] to-[#1E293B] text-white">
+        <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center space-x-2">
               <span className="text-[10px] font-mono font-black px-2.5 py-0.5 rounded-full bg-[#FF5A1F] text-white uppercase tracking-wider">
@@ -216,15 +284,26 @@ export function ChamaDesk({
             </p>
           </div>
 
-          {onClose && (
+          <div className="flex items-center space-x-2">
             <button
               type="button"
-              onClick={() => { soundEngine.play('tap'); onClose(); }}
+              onClick={handlePullToRefresh}
+              title="Sync Chama Ledger"
+              aria-label="Refresh Chama Ledger"
               className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white cursor-pointer transition-colors"
             >
-              <X className="w-4 h-4" />
+              <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-[#00BFEF]' : ''}`} />
             </button>
-          )}
+            {onClose && (
+              <button
+                type="button"
+                onClick={() => { soundEngine.play('tap'); onClose(); }}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white cursor-pointer transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Tab Strip */}
@@ -233,6 +312,7 @@ export function ChamaDesk({
             { id: 'roster', label: 'Payout Roster (12)' },
             { id: 'contributions', label: `Cycle 5 Contributions (${paidMembersCount}/12)` },
             { id: 'loans', label: `Table Banking (${loans.length})` },
+            { id: 'orders', label: `Bulk Buys & Cargo (${communityOrders.length})` },
             { id: 'minutes', label: 'Broadcast & Minutes' }
           ].map(tab => (
             <button
@@ -260,9 +340,14 @@ export function ChamaDesk({
               CURRENT POT: {currentRecipient.name.toUpperCase()} (ROUND 5)
             </span>
           </div>
-          <span className="text-xs font-mono font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-            {cyclePercentComplete}% COLLECTED
-          </span>
+          <div className="flex items-center space-x-2">
+            <span className="text-[10px] font-mono text-gray-500 hidden sm:inline">
+              Synced: {lastSyncTime}
+            </span>
+            <span className="text-xs font-mono font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+              {cyclePercentComplete}% COLLECTED
+            </span>
+          </div>
         </div>
 
         {/* Stepper Progress Bar */}
@@ -525,7 +610,74 @@ export function ChamaDesk({
         </div>
       )}
 
-      {/* ================= TAB 4: MINUTES & WHATSAPP BROADCAST ================= */}
+      {/* ================= TAB 4: BULK BUYS & CARGO DISPATCHES ================= */}
+      {activeTab === 'orders' && (
+        <div className="p-5 sm:p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-xs font-black uppercase tracking-wider text-[#0D1117] flex items-center space-x-1.5">
+                <span>Chama Bulk Procurement & WAIRO Dispatches</span>
+              </h3>
+              <p className="text-[11px] text-gray-500">Collective wholesale purchasing with door-to-door cargo logistics</p>
+            </div>
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-200">
+              {communityOrders.length} Active Runs
+            </span>
+          </div>
+
+          <div className="space-y-3">
+            {communityOrders.map(order => (
+              <div
+                key={order.id}
+                className="p-4 rounded-2xl bg-white border border-[#E5E8EC] space-y-2.5 shadow-xs"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                        {order.savingsPct}% WHOLESALE SAVING
+                      </span>
+                      <span className="text-[10px] font-mono text-gray-500">
+                        {order.category}
+                      </span>
+                    </div>
+                    <h4 className="text-xs font-black text-[#0D1117]">
+                      {order.title}
+                    </h4>
+                  </div>
+
+                  <div className="text-right font-mono">
+                    <span className="text-xs font-black text-[#0D1117] block">
+                      KES {order.totalValueKes.toLocaleString()}
+                    </span>
+                    <span className="text-[10px] text-gray-500">
+                      {order.pooledUnits} pooled units
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-gray-50 flex items-center justify-between text-[11px] text-gray-700 font-mono">
+                  <div className="flex items-center space-x-1.5 truncate max-w-[280px]">
+                    <Truck className="w-3.5 h-3.5 text-[#FF5A1F] shrink-0" />
+                    <span className="truncate">{order.courierRoute}</span>
+                  </div>
+                  <span className={`font-bold shrink-0 ${
+                    order.status === 'in_transit'
+                      ? 'text-amber-700'
+                      : order.status === 'delivered'
+                      ? 'text-emerald-700'
+                      : 'text-indigo-700'
+                  }`}>
+                    {order.estArrival}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ================= TAB 5: MINUTES & WHATSAPP BROADCAST ================= */}
       {activeTab === 'minutes' && (
         <div className="p-5 sm:p-6 space-y-4">
           <div className="p-4 rounded-2xl bg-[#F7F8FA] border border-[#E5E8EC] space-y-3">
@@ -722,8 +874,17 @@ export function ChamaDesk({
         </div>
       )}
 
+      {/* ── SECURE OFFLINE LEDGER STAMP ── */}
+      <div className="px-5 py-3 bg-gray-50/80 border-t border-gray-100 flex items-center justify-between text-[10px] font-mono text-gray-500">
+        <div className="flex items-center space-x-1.5">
+          <Lock className="w-3 h-3 text-emerald-600" />
+          <span>Offline P2P Ledger: <b>0x9B84...F2A</b></span>
+        </div>
+        <span>Zero-Trust M-Pesa Audited</span>
+      </div>
+
       {/* ── NON-PROMISES DISCLAIMER (NEIGHBORHOOD TRUST OS) ── */}
-      <div className="mt-6 p-4 rounded-2xl bg-black/5 text-[11px] text-gray-500 leading-relaxed space-y-1">
+      <div className="p-4 rounded-b-3xl bg-black/5 text-[11px] text-gray-500 leading-relaxed space-y-1">
         <span className="font-bold text-gray-700 block">Self-Governing Group Records</span>
         <p>
           Brief helps you organize your chama. Money moves directly between members through M-Pesa — Brief does not hold your funds and does not guarantee any payout. Your group governs itself.
