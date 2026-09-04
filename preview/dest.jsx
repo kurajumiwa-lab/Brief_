@@ -59,8 +59,8 @@ async function main(){
   check('still exactly two primary navs', navs.length===2, String(navs.length));
   const railText=navs.map(n=>text(n)).join(' ');
   check('no Marketplace/Shop/Store/Vendors primary', !/Marketplace|Shop\b|Store\b|Vendors/i.test(railText));
-  check('the four screens use the brief\'s own vocabulary',
-    /Nearby/.test(railText)&&/Arena/.test(railText)&&/Workflows/.test(railText)&&/My Layer/.test(railText));
+  check('the screens use the brief\'s own vocabulary',
+    /Nearby/.test(railText)&&/Workflows/.test(railText)&&/My Layer/.test(railText));
   // Product decision (2026-08-29): the Pulse page was removed.
   check('Pulse is not a destination', !/Pulse/.test(railText));
 

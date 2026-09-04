@@ -25,9 +25,8 @@ import type { CommandCentre } from '../api/types';
 
 export type MenuTarget =
   | { tab: 'nearby'; section?: 'stream' | 'tea' | 'market' | 'quests' | 'pursuits' | 'today' | 'events' | 'mshikano' }
-  | { tab: 'arena'; section?: 'lobby' | 'epl' | 'challenges' | 'tournaments' | 'leaderboard' }
   | { tab: 'mylayer'; section?:
-      | 'saved' | 'activity' | 'arena' | 'points' | 'circles' | 'groups'
+      | 'saved' | 'activity' | 'points' | 'circles' | 'groups'
       | 'campaigns' | 'mediakit' | 'opportunities' | 'messages' | 'subscriptions'
       | 'verification' }
   | { tab: 'workflows'; section?:
@@ -244,10 +243,10 @@ function LocalCard({ onSelect }: { onSelect: (target: MenuTarget) => void }) {
 const EXPLORE: { label: string; detail: string; Icon: React.ComponentType<{ className?: string }>; target: MenuTarget }[] = [
   { label: 'Nearby', detail: 'Places, events and useful things', Icon: MapPin, target: { tab: 'nearby', section: 'stream' } },
   { label: 'Saved', detail: 'Things you kept', Icon: Bookmark, target: { tab: 'mylayer', section: 'saved' } },
-  { label: 'Arena', detail: 'Matches, rivals and seasons', Icon: Trophy, target: { tab: 'arena', section: 'lobby' } },
+  { label: 'Events', detail: 'Local happenings and gatherings', Icon: Trophy, target: { tab: 'nearby', section: 'events' } },
   { label: 'Communities', detail: 'Groups and circles', Icon: Users, target: { tab: 'mylayer', section: 'circles' } },
   { label: 'Marketplace', detail: 'Buy and sell nearby', Icon: Store, target: { tab: 'nearby', section: 'market' } },
-  { label: 'EPL Fantasy', detail: 'Fantasy football, weekly', Icon: Sparkles, target: { tab: 'arena', section: 'epl' } },
+  { label: 'Mshikano', detail: 'Community mutual support & trust', Icon: Sparkles, target: { tab: 'nearby', section: 'mshikano' } },
   { label: 'WhatsApp Shop', detail: 'Your price list, in WhatsApp', Icon: Send, target: { tab: 'workflows', section: 'shop' } }
 ];
 

@@ -32,7 +32,7 @@ import { UniversalCreatePostModal } from '../components/posts/UniversalCreatePos
 import { DiscoverScreen } from './DiscoverScreen';
 import { BriefBuilderSection, WairoBookmark } from '../components/ui';
 import { soundEngine } from '../utils/SoundEngine';
-import type { ArenaMatch, BriefObject, Destination, NearbySection, Pursuit, Quest, TeaEdition, WorkflowSection } from '../model/core';
+import type { BriefObject, Destination, NearbySection, Pursuit, Quest, TeaEdition, WorkflowSection } from '../model/core';
 import type { AuthedUser, PersonalState } from '../api/briefApi';
 import type { GeoPoint } from '../components/LocationChip';
 
@@ -62,7 +62,6 @@ export interface NearbyScreenProps {
   setUserLocation: React.Dispatch<React.SetStateAction<GeoPoint | null>>;
   activeEdition: TeaEdition;
   activeTab: Destination;
-  arenaActivity: Record<string, number>;
   chooseCity: any;
   dailyBrief: any;
   editionPosts: any;
@@ -79,7 +78,6 @@ export interface NearbyScreenProps {
   locError: string | null;
   locate: any;
   locating: any;
-  matches: ArenaMatch[];
   nearbySection: NearbySection;
   nextStepHidden: any;
   noteActivation: any;
@@ -105,7 +103,6 @@ posts: BriefPost[];
   sessionUser: briefApi.AuthedUser | null;
   setActiveEdition: React.Dispatch<React.SetStateAction<TeaEdition>>;
   setActiveTab: React.Dispatch<React.SetStateAction<Destination>>;
-  setArenaSection: React.Dispatch<React.SetStateAction<'lobby' | 'epl' | 'challenges' | 'tournaments' | 'leaderboard'>>;
   setCaptureOpen: any;
   setCollectionsOpen: any;
   notificationsOpen: any;
@@ -137,7 +134,6 @@ export function NearbyScreen(props: NearbyScreenProps) {
 
     activeEdition,
     activeTab,
-    arenaActivity,
     chooseCity,
     dailyBrief,
     editionPosts,
@@ -154,7 +150,6 @@ export function NearbyScreen(props: NearbyScreenProps) {
     locError,
     locate,
     locating,
-    matches,
     nearbySection,
     nextStepHidden,
     noteActivation,
@@ -179,7 +174,6 @@ export function NearbyScreen(props: NearbyScreenProps) {
     sessionUser,
     setActiveEdition,
     setActiveTab,
-    setArenaSection,
     setCaptureOpen,
     setCollectionsOpen,
     notificationsOpen,
@@ -500,7 +494,8 @@ export function NearbyScreen(props: NearbyScreenProps) {
                             setSelectedObjectType('opportunity');
                             setDiscoveryTab('opportunities');
                           } else if (opp.category === 'arena') {
-                            setActiveTab('arena');
+                            setSelectedObjectType('experience');
+                            setDiscoveryTab('events');
                           } else if (opp.category === 'learning') {
                             setBriefAiOpen(true);
                           } else if (opp.category === 'thrift') {
@@ -670,7 +665,6 @@ export function NearbyScreen(props: NearbyScreenProps) {
 
                   <MainShelf
                     onSelect={handleMenuSelect}
-                    playOpenCount={arenaActivity.efootball ?? null}
                     ladder={ladder}
                     onLocked={(info) => {
                       noteActivation('service_locked_tapped', { card: info.cardId, requires: info.requires });
@@ -1706,7 +1700,6 @@ export function NearbyScreen(props: NearbyScreenProps) {
             setBoardMode={setBoardMode}
             handleSubmitQuest={handleSubmitQuest}
             setActiveTab={setActiveTab}
-            setArenaSection={setArenaSection}
           />
         )}
         {nearbySection === 'events' && (

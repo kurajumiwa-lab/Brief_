@@ -117,15 +117,13 @@ async function main() {
     }
   };
 
-  console.log('=== Play cards complete their loop ===');
-  await click(btn('Arena'));
-  check('Play is a place on the URL', window.location.pathname === '/play' || window.location.pathname.startsWith('/play'));
-  await click(btn('Challenges'));
-  check('Challenges live at /play/challenges', window.location.pathname === '/play/challenges');
-  check('Accept is a real button', Boolean(btn('Accept')));
-  check('open-challenge verb exists', /Open a 1v1 challenge/i.test(body()));
-  await click(btn('Accept'));
-  check('accept does not invent fixture names', !/Nyabs|Jay|Kip|Wanjiku/.test(body()));
+  console.log('=== Navigation cards complete their loop ===');
+  await click(btn('Nearby'));
+  check('Nearby is a place on the URL', window.location.pathname === '/around' || window.location.pathname.startsWith('/around'));
+  await click(btn('My Layer'));
+  check('My Layer is a place on the URL', window.location.pathname === '/saved' || window.location.pathname.startsWith('/saved'));
+  await click(btn('Workflows'));
+  check('Workflows is a place on the URL', window.location.pathname === '/actions' || window.location.pathname.startsWith('/actions'));
 
   console.log('\n=== Menu coming-soon is not a fake door ===');
   const menu = btn('Menu');

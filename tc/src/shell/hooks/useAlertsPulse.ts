@@ -17,7 +17,7 @@ export function useAlertsPulse(params: UseAlertsPulseParams) {
     setNotifUnread
   } = params;
 
-  const [destinationAlerts, setDestinationAlerts] = useState<DestinationAlerts>({ nearby: 0, arena: 0, mylayer: 0, workflows: 0 });
+  const [destinationAlerts, setDestinationAlerts] = useState<DestinationAlerts>({ nearby: 0, mylayer: 0, workflows: 0 });
 
   const alertsTick = React.useRef(0);
 
@@ -25,9 +25,8 @@ export function useAlertsPulse(params: UseAlertsPulseParams) {
     let cancelled = false;
     const derive = async () => {
       const tick = ++alertsTick.current;
-      const [notifRes, roomsRes, feedRes] = await Promise.all([
+      const [notifRes, feedRes] = await Promise.all([
         briefApi.getNotifications(true).catch(() => null),
-        briefApi.listEplRooms().catch(() => null),
         briefApi.getPublicFeed({}).catch(() => null)
       ]);
       if (cancelled || tick !== alertsTick.current) return;
@@ -46,12 +45,10 @@ export function useAlertsPulse(params: UseAlertsPulseParams) {
       // interval + visibility refetch keeps it fresh while someone is away.
       setNotifUnread(notifRes && notifRes.ok ? notifRes.data?.unread ?? 0 : 0);
       const lastSeen = {
-        nearby: readLastSeen('nearby'),
-        arena: readLastSeen('arena')
+        nearby: readLastSeen('nearby')
       };
       setDestinationAlerts(deriveDestinationAlerts({
         notifications: notifRes && notifRes.ok ? notifRes.data?.notifications ?? [] : null,
-        rooms: roomsRes && roomsRes.ok ? roomsRes.data ?? [] : null,
         feedItems,
         lastSeen
       }));

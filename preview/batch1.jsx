@@ -94,8 +94,8 @@ const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;con
   check('town-metrics vanity reading stays retired', !/deriveTownHealth|TownHealth|CivicMetric/.test(appSrc));
   // F2: CivicMetric/TownHealth retired with the vanity reading; Pulse is
   // change-first, so no metric shape can smuggle a value back in.
-  check('four screens (Pulse removed by product decision)',
-    (appSrc.match(/\{ id: '(nearby|arena|mylayer|workflows|pulse)'/g)||[]).length===4);
+  check('three primary destinations (Pulse removed, Arena separated)',
+    (appSrc.match(/\{ id: '(nearby|mylayer|workflows)'/g)||[]).length===3);
 
   console.log(`\n${'='.repeat(46)}\nPASSED ${pass}   FAILED ${fail}\n${'='.repeat(46)}`);
   process.exit(fail?1:0);

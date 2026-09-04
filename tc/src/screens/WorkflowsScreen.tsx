@@ -21,7 +21,7 @@ import { TriageQueue } from '../components/TriageQueue';
 import { Vault } from '../components/vault/Vault';
 import { WhatsAppShopBuilder } from '../components/WhatsAppShopBuilder';
 import { YardEngineDesk } from '../components/YardEngineDesk';
-import type { ArenaMatch, BriefObject, CandidateStatus, Destination, Source, WorkflowSection , IngestionCandidate, Journey } from '../model/core';
+import type { BriefObject, CandidateStatus, Destination, Source, WorkflowSection , IngestionCandidate, Journey } from '../model/core';
 
 // ---------------------------------------------------------------------------
 // WORKFLOWS SCREEN -- extracted from App.tsx (Phase 1: JSX move; shell keeps
@@ -50,7 +50,6 @@ export interface WorkflowsScreenProps {
   handleRejectCandidate: any;
   inboundBusy: any;
   loadObjects: any;
-  matches: ArenaMatch[];
   objects: BriefObject[];
   refreshConnectors: any;
   reviewed: Record<string, CandidateStatus>;
@@ -79,7 +78,6 @@ export function WorkflowsScreen(props: WorkflowsScreenProps) {
     handleRejectCandidate,
     inboundBusy,
     loadObjects,
-    matches,
     objects,
     refreshConnectors,
     reviewed,

@@ -1,5 +1,5 @@
 import React from 'react';
-import {Heart,  ArrowRight, CalendarDays, Flame, Lock, MessageCircle, Plus, Sparkles, Trophy, Users } from 'lucide-react';
+import { Heart, ArrowRight, CalendarDays, Flame, Lock, MessageCircle, Plus, Sparkles, Trophy, Users } from 'lucide-react';
 import type { MenuTarget } from './MenuSheet';
 import type { Ladder } from '../api/briefApi';
 import { serviceForSurface } from './ladder';
@@ -7,8 +7,6 @@ import { serviceForSurface } from './ladder';
 import communityArt from '../assets/shelf/nairobi-community.webp';
 import shareArt from '../assets/shelf/whatsapp-share.webp';
 import createArt from '../assets/shelf/host-create.webp';
-import efootballArt from '../assets/arena/efootball.webp';
-import eplArt from '../assets/arena/epl.webp';
 import eventArt from '../assets/shelf/event-gathering.webp';
 
 // ---------------------------------------------------------------------------
@@ -59,23 +57,6 @@ function shelfOrder(cards: ShelfCard[]): ShelfCard[] {
 }
 
 const SHELF_CARDS: ShelfCard[] = [
-  // PRIORITY LISTING. EPL is first on the shelf on purpose: it is the one
-  // card with a weekly rhythm behind it, so it is the one worth returning for.
-  // (Ligi — the African-league variant — was removed by product decision; EPL
-  // is the fantasy surface.) `priority` is not a synonym for `featured` —
-  // featured is a badge, priority is a POSITION, and the card is ordered by it
-  // rather than by hand so a future second priority card cannot quietly bury
-  // this one.
-  {
-    id: 'epl',
-    eyebrow: 'EPL · FANTASY FOOTBALL',
-    title: 'EPL',
-    detail: 'Fantasy football over the English Premier League · free to play',
-    image: eplArt,
-    target: { tab: 'arena', section: 'epl' },
-    Icon: Flame,
-    priority: true
-  },
   {
     id: 'around',
     eyebrow: 'DISCOVER',
@@ -83,7 +64,8 @@ const SHELF_CARDS: ShelfCard[] = [
     detail: 'Places, events and useful signals',
     image: communityArt,
     target: { tab: 'nearby', section: 'stream' },
-    Icon: Sparkles
+    Icon: Sparkles,
+    priority: true
   },
   {
     id: 'mshikano',
@@ -93,15 +75,6 @@ const SHELF_CARDS: ShelfCard[] = [
     image: communityArt,
     target: { tab: 'nearby', section: 'mshikano' },
     Icon: Heart
-  },
-  {
-    id: 'play',
-    eyebrow: 'ARENA',
-    title: 'Arena',
-    detail: 'Find a match or open a lobby',
-    image: efootballArt,
-    target: { tab: 'arena' },
-    Icon: Trophy
   },
   {
     id: 'events',
@@ -171,9 +144,7 @@ function ShelfCardView({
     'section' in card.target ? card.target.section ?? null : null
   );
   const locked = Boolean(service && !service.unlocked);
-  const detail = card.id === 'play' && playOpenCount !== null
-    ? playOpenCount > 0 ? `${playOpenCount} open match${playOpenCount === 1 ? '' : 'es'} · enter Arena` : 'No open matches yet · Arena is quiet'
-    : card.detail;
+  const detail = card.detail;
   return (
     <button
       type="button"

@@ -41,8 +41,6 @@ import RewardsDesk from './components/RewardsDesk';
 import { CheckIn } from './components/CheckIn';
 import { HostCommand } from './components/HostCommand';
 import { TickerBanner, PromptBanner, JumbotronBanner } from './components/SignalBanner';
-import { BracketLadder } from './components/BracketLadder';
-import { TournamentCard } from './components/TournamentCard';
 import { ActionsEngine } from './components/ActionsEngine';
 import { Circles } from './components/Circles';
 import { Marketplace } from './components/Marketplace';
@@ -52,22 +50,15 @@ import { TriageQueue } from './components/TriageQueue';
 import { Quests } from './components/Quests';
 import { LocationChip } from './components/LocationChip';
 import type { GeoPoint } from './components/LocationChip';
-import { ArenaShelf } from './components/ArenaShelf';
-import { ArenaPulse, SeasonStrip } from './components/ArenaPulse';
 import { MainShelf } from './components/MainShelf';
 import { Onboarding } from './components/Onboarding';
 import { NextStep } from './components/NextStep';
 import { isSurfaceUnlocked, shouldOpenFirstRun, showsLadder, unlockHint } from './components/ladder';
 import { WairoBookmark } from './components/ui';
 import { arrivalSource, linkTokenFrom, urlWithoutArrivalParams, type ArrivalChannel } from './components/arrival';
-import { ArenaBetaPilot } from './components/ArenaBetaPilot';
-import type { ArenaBetaSegment, ArenaBetaSummary } from './api/types';
 import { EnginePanel } from './components/EnginePanel';
 import { GroupBuyPortal } from './components/GroupBuyPortal';
-import { MatchQueuePanel } from './components/MatchQueuePanel';
 import { TicketBar } from './components/TicketBar';
-import { ArenaGameScreen } from './components/ArenaGameScreen';
-import type { ArenaStakeKind } from './components/ArenaGameScreen';
 import { LobbyBoard } from './components/LobbyBoard';
 import { FeedComposer } from './components/FeedComposer';
 import { WireSection } from './components/WireSection';
@@ -139,7 +130,6 @@ import {
   WORKFLOW_BUNDLES, SAVED_BUNDLES, QUEUE_LABEL, QUEUE_CHIP, QUEUE_HINT
 } from './ui/names';
 import { MoneyBand } from './components/MoneyBand';
-import { ArenaScreen } from './screens/ArenaScreen';
 import { MyLayerScreen } from './screens/MyLayerScreen';
 import { NearbyScreen } from './screens/NearbyScreen';
 import { WorkflowsScreen } from './screens/WorkflowsScreen';
@@ -157,7 +147,6 @@ import { useDiscoveryFeed } from './shell/hooks/useDiscoveryFeed';
 import { useWatchAndShare } from './shell/hooks/useWatchAndShare';
 import { usePersonalLayer } from './shell/hooks/usePersonalLayer';
 import { useIngestionDesk } from './shell/hooks/useIngestionDesk';
-import { useArenaData } from './shell/hooks/useArenaData';
 import { useCaptureFlow } from './shell/hooks/useCaptureFlow';
 import { useCampaignHub } from './shell/hooks/useCampaignHub';
 import {
@@ -559,7 +548,6 @@ export function App() {
       setWorkflowSection('active');
       setWorkflowView('queue');
     }
-    if (id === 'arena') setArenaSection('lobby');
   };
   const [selectedObjectType, setSelectedObjectType] = useState<string>('all');
   const [selectedLocation, setSelectedLocation] = useState<string>('Your area');
@@ -1058,76 +1046,8 @@ export function App() {
 
 
 
-  // --- Arena -----------------------------------------------------------------
-  // Who the viewer is in Arena. My-layer's match views use the same id.
-  const {
-    arenaActivity,
-    arenaBetaBusy,
-    arenaBetaSummary,
-    arenaBusyId,
-    arenaMoney,
-    arenaPlayers,
-    arenaVenues,
-    groupArenaSignals,
-    handleAbandonMatch,
-    handleConfirmMatch,
-    handleJoinArenaBeta,
-    handleReportMatch,
-    mapServerMatch,
-    matches,
-    refreshArenaBeta,
-    refreshArenaMatches,
-    setArenaActivity,
-    setArenaBetaBusy,
-    setArenaBetaSummary,
-    setArenaBusyId,
-    setArenaMoney,
-    setArenaPlayers,
-    setArenaVenues,
-    setMatches,
-  } = useArenaData({
-    groupIndexes,
-    sessionUser,
-    showToast,
-    visibleGroups,
-  });
-
-  // The secondary game screen. null = closed; set to a game id to open the
-  // match-setup surface behind a shelf tile.
-
-  // Challenges come from the SERVER, not a fixture: a challenge is a real,
-  // persisted, attributable record. `ARENA_CHALLENGES` is gone from the state.
-
-  // Whether real-money contests are legally available HERE. Fetched from the
-  // server rather than hardcoded, because the answer depends on licensing and
-  // connected payment rails, not on what the UI would like to show.
-  useEffect(() => {
-    briefApi.getArenaMoneyStatus().then((r) => {
-      if (r.ok) setArenaMoney(r.data);
-    });
-  }, []);
-
-  // The eFootball beta is the first controlled Arena test. Its counters are
-  // aggregate server projections; a missing response stays visibly unavailable
-  // rather than becoming a fabricated zero-population claim.
-  useEffect(() => { void refreshArenaBeta(); }, [refreshArenaBeta, sessionUser]);
-
-
-
-
-  useEffect(() => { void refreshArenaMatches(); }, [refreshArenaMatches]);
-
-  // Availability is the user's own switch. Defaults to the seeded record and
-  // is never flipped on by Brief.
-  // Arena entities come from the SERVER — real persisted rows, never a
-  // fixture. The fabricated client-side economy (points ledger, gift cards,
-  // fake availability/reliability, account listings, venue check-ins) is gone.
-
-
-
-  const [arenaSection, setArenaSection] = useState<
-    'lobby' | 'epl' | 'challenges' | 'tournaments' | 'leaderboard'
-  >(bootRoute.arena);
+  // Sub-navigation. Sections live INSIDE a destination, so the top
+  // bar stays three doors wide no matter how much is built.
 
   // Challenges addressed to this user, awaiting a decision.
   // Gaming activity detected in groups the user is ALREADY a member of.
@@ -1297,7 +1217,6 @@ export function App() {
       setWorkflowSection(target.section ?? 'cockpit');
       setWorkflowView(target.section ? 'screen' : 'queue');
     }
-    if (target.tab === 'arena') setArenaSection(target.section ?? 'lobby');
   };
 
   const skipUrl = useRef(false);
@@ -1307,7 +1226,6 @@ export function App() {
     nearby: nearbySection,
     mylayer: myLayerSection,
     workflow: workflowSection,
-    arena: arenaSection,
     objectId: selectedObjectForDetail?.id ?? pendingObjectId,
     teaSlug: selectedTeaSlug,
     campaignId: openCampaignId,
@@ -1322,7 +1240,7 @@ export function App() {
     admin: adminOpen,
     landed: false
   }), [
-    activeTab, nearbySection, myLayerSection, workflowSection, arenaSection,
+    activeTab, nearbySection, myLayerSection, workflowSection,
     selectedObjectForDetail, pendingObjectId, selectedTeaSlug, openCampaignId,
     entityPageId, locationName, collectionRouteId, captureOpen, menuOpen,
     followingOpen, collectionsOpen, notificationsOpen, adminOpen
@@ -1342,7 +1260,6 @@ export function App() {
     setMyLayerSection(route.mylayer);
     setWorkflowSection(route.workflow);
     setWorkflowView(route.dest === 'workflows' && route.workflow !== 'active' ? 'screen' : 'queue');
-    setArenaSection(route.arena);
     setMenuOpen(route.menu);
     setAdminOpen(route.admin);
     setCaptureOpen(route.capture);
@@ -1407,7 +1324,7 @@ export function App() {
     const overlay = menuOpen || adminOpen || captureOpen || Boolean(selectedTeaSlug) || Boolean(openCampaignId) || Boolean(selectedObjectForDetail) || Boolean(pendingObjectId) || Boolean(entityPageId) || Boolean(locationName) || Boolean(collectionRouteId) || followingOpen || collectionsOpen || notificationsOpen;
     writeUrl(currentRoute(), overlay ? 'push' : 'replace');
   }, [
-    activeTab, nearbySection, myLayerSection, workflowSection, arenaSection,
+    activeTab, nearbySection, myLayerSection, workflowSection,
     menuOpen, adminOpen, captureOpen, selectedTeaSlug, openCampaignId,
     selectedObjectForDetail, pendingObjectId, entityPageId, locationName, collectionRouteId,
     followingOpen, collectionsOpen, notificationsOpen,
@@ -1548,7 +1465,6 @@ export function App() {
         {activeTab === 'mylayer' && (
           <MyLayerScreen
             activeTab={activeTab}
-            arenaBusyId={arenaBusyId}
             beginEdit={beginEdit}
             campaignBusy={campaignBusy}
             campaignState={campaignState}
@@ -1557,14 +1473,10 @@ export function App() {
             groupIndex={groupIndex}
             groupIndexes={groupIndexes}
             groups={groups}
-            handleAbandonMatch={handleAbandonMatch}
-            handleConfirmMatch={handleConfirmMatch}
             handleCreatePursuit={handleCreatePursuit}
             handleExecuteProtocolAction={handleExecuteProtocolAction}
             handleRemoveCampaign={handleRemoveCampaign}
-            handleReportMatch={handleReportMatch}
             loadCampaigns={loadCampaigns}
-            matches={matches}
             myContribution={myContribution}
             myLayerSection={myLayerSection}
             objects={objects}
@@ -1605,7 +1517,6 @@ export function App() {
             posts={posts}
             activeEdition={activeEdition}
             activeTab={activeTab}
-            arenaActivity={arenaActivity}
             chooseCity={chooseCity}
             dailyBrief={dailyBrief}
             editionPosts={editionPosts}
@@ -1622,7 +1533,6 @@ export function App() {
             locError={locError}
             locate={locate}
             locating={locating}
-            matches={matches}
             nearbySection={nearbySection}
             nextStepHidden={nextStepHidden}
             noteActivation={noteActivation}
@@ -1647,7 +1557,6 @@ export function App() {
             sessionUser={sessionUser}
             setActiveEdition={setActiveEdition}
             setActiveTab={setActiveTab}
-            setArenaSection={setArenaSection}
             setCaptureOpen={setCaptureOpen}
             setCollectionsOpen={setCollectionsOpen}
             notificationsOpen={notificationsOpen}
@@ -1712,7 +1621,6 @@ export function App() {
             handleRejectCandidate={handleRejectCandidate}
             inboundBusy={inboundBusy}
             loadObjects={loadObjects}
-            matches={matches}
             objects={objects}
             refreshConnectors={refreshConnectors}
             reviewed={reviewed}
@@ -1729,25 +1637,6 @@ export function App() {
             candidates={candidates}
             journeys={journeys}
             setBriefItBusy={setBriefItBusy}
-          />
-        )}
-
-        {/* INTELLIGENCE */}
-
-        {activeTab === 'arena' && (
-          <ArenaScreen
-            sessionUser={sessionUser}
-            arenaActivity={arenaActivity}
-            arenaPlayers={arenaPlayers}
-            arenaVenues={arenaVenues}
-            matches={matches}
-            setMatches={setMatches}
-            refreshArenaMatches={refreshArenaMatches}
-            arenaBusyId={arenaBusyId}
-            setArenaBusyId={setArenaBusyId}
-            showToast={showToast}
-            arenaSection={arenaSection}
-            setArenaSection={setArenaSection}
           />
         )}
 
@@ -1830,7 +1719,6 @@ export function App() {
         loadCampaigns={loadCampaigns}
         loadPersonal={loadPersonal}
         locationName={locationName}
-        matches={matches}
         objectCheckBusy={objectCheckBusy}
         objectPicker={objectPicker}
         objects={objects}

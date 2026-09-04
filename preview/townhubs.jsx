@@ -34,7 +34,6 @@ const { WairoBookmark } = require('./src/components/wairo/WairoBookmark.tsx');
 const { IronSheet } = require('./src/components/ui/IronSheet.tsx');
 const { MetalTag } = require('./src/components/ui/MetalTag.tsx');
 const { OfflineSyncQueueDesk } = require('./src/components/offline/OfflineSyncQueueDesk.tsx');
-const { ArenaClanCoordination } = require('./src/components/arena/ArenaClanCoordination.tsx');
 const { UniversalCreatePostModal, CreatePostSheet } = require('./src/components/posts/UniversalCreatePostModal.tsx');
 const { DiscoverScreen } = require('./src/screens/DiscoverScreen.tsx');
 const { LandingScreen } = require('./src/screens/LandingScreen.tsx');
@@ -275,42 +274,6 @@ async function main() {
   check('shows parcel escrow release PIN', host8.textContent.includes('Recipient Drop-off Release PIN') && host8.textContent.includes('7419'));
   await act(async () => { root8.unmount(); host8.remove(); });
 
-  // --- 9. ArenaClanCoordination (Discord for Africa & Scrim Coordinator) ---
-  console.log('\n--- 9. ArenaClanCoordination ---');
-  const host9 = document.createElement('div');
-  document.body.appendChild(host9);
-  const root9 = createRoot(host9);
-  await act(async () => {
-    root9.render(React.createElement(ArenaClanCoordination, {
-      onClose: () => {},
-      onJoinMatch: () => {}
-    }));
-  });
-
-  const text9 = host9.textContent;
-  check('renders Arena Clan Hub title', text9.includes('Arena Clan Hub & Matchmaking'));
-  check('shows top African clans and tags', text9.includes('Nairobi Phantoms') && text9.includes('[NBO]') && text9.includes('Mombasa Cyber-Sharks'));
-  check('shows Discord voice channel lounge', text9.includes('Voice: Nairobi Scrim Lobbies #1') && text9.includes('Recruiting Open'));
-
-  // Switch to M-Pesa Staked tab
-  const stakedTabBtn = Array.from(host9.querySelectorAll('button')).find(b => b.textContent.includes('M-Pesa Staked Duels'));
-  if (stakedTabBtn) {
-    await act(async () => {
-      stakedTabBtn.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
-    });
-  }
-  check('shows staked challenge lobbies and prize pools', host9.textContent.includes('M-Pesa Staked Challenge Lobbies') && host9.textContent.includes('KES 900'));
-
-  // Switch to Tournament Bracket tab
-  const bracketTabBtn = Array.from(host9.querySelectorAll('button')).find(b => b.textContent.includes('County Tournament Brackets'));
-  if (bracketTabBtn) {
-    await act(async () => {
-      bracketTabBtn.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
-    });
-  }
-  check('shows single elimination bracket and rounds', host9.textContent.includes('Quarterfinals') && host9.textContent.includes('Semifinals') && host9.textContent.includes('Grand Final'));
-  await act(async () => { root9.unmount(); host9.remove(); });
-
   // --- 10. PrivateCarrierAuctionDesk (Silent Math Reverse Auction) ---
   console.log('\n--- 10. PrivateCarrierAuctionDesk ---');
   const host10 = document.createElement('div');
@@ -549,7 +512,7 @@ async function main() {
   const text17 = host17.textContent;
   check('renders LandingScreen header and Around You', text17.includes('AROUND YOU') && text17.includes('Home'));
   check('shows section switcher tabs: Today, Districts, Shelf', text17.includes('Today') && text17.includes('Districts') && text17.includes('Shelf'));
-  check('renders Today section items: Paid Gigs, Pool Match', text17.includes('Paid Gigs') && text17.includes('Pool Match'));
+  check('renders Today section items: Paid Gigs, Fresh Harvest', text17.includes('Paid Gigs') && text17.includes('Fresh Harvest'));
 
   // Switch to Districts section
   const districtsTab = Array.from(host17.querySelectorAll('button')).find(b => b.textContent.trim() === 'Districts');

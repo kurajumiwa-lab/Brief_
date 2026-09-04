@@ -46,7 +46,7 @@ const KIND_TO_DESTINATION: Record<string, Destination> = {
   correction: 'mylayer',
   // Legacy kinds.
   coop: 'nearby', // Mshikano cooperation proposals + confirmations
-  challenge: 'arena',
+  challenge: 'mylayer',
   workflow: 'workflows',
   confirmed: 'mylayer',
   saved_changed: 'mylayer',
@@ -113,20 +113,12 @@ export function deriveDestinationAlerts(input: {
 }): DestinationAlerts {
   const now = input.now ?? Date.now();
   const seen = input.lastSeen ?? {};
-  const out: DestinationAlerts = { nearby: 0, arena: 0, mylayer: 0, workflows: 0 };
+  const out: DestinationAlerts = { nearby: 0, mylayer: 0, workflows: 0 };
 
   for (const n of input.notifications ?? []) {
     if (n.read) continue;
-    // New rows carry both `kind` and `type`; prefer `type` (the surface's
-    // word) and fall back to legacy `kind`.
     const dest = KIND_TO_DESTINATION[n.type ?? n.kind];
     if (dest) out[dest] += 1;
-  }
-
-  const seenArena = seen.arena ?? now; // missing baseline = nothing new
-  for (const r of input.rooms ?? []) {
-    const t = r.createdAt ? Date.parse(r.createdAt) : 0;
-    if (Number.isFinite(t) && t > 0 && t > seenArena) out.arena += 1;
   }
 
   const seenNearby = seen.nearby ?? now;

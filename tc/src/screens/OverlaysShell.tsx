@@ -1,6 +1,6 @@
 import React from 'react';
 import { ArrowRight, Bookmark, Building2, CheckCircle2, ExternalLink, Eye, FolderPlus, MapPin, Search, Share2, ShieldCheck, User, X } from 'lucide-react';
-import type { ArenaMatch, BriefObject, IngestionCandidate, ObjectType, Pursuit, Source , Destination, MyLayerSection } from '../model/core';
+import type { BriefObject, IngestionCandidate, ObjectType, Pursuit, Source , Destination, MyLayerSection } from '../model/core';
 import * as briefApi from '../api/briefApi';
 import type { Campaign as ApiCampaign, CampaignType as ApiCampaignType, Registration as ApiRegistration } from '../api/types';
 import type { CircleDetail as ApiCircleDetail } from '../api/briefApi';
@@ -84,7 +84,6 @@ export interface OverlaysShellProps {
   loadCampaigns: any;
   loadPersonal: any;
   locationName: string | null;
-  matches: ArenaMatch[];
   objectCheckBusy: string | null;
   objectPicker: {     open: boolean;     status: 'idle' | 'loading' | 'ready' | 'error';     data: any[] | null;     error: string | null;     selected: { id: string; title: string } | null;   };
   objects: BriefObject[];
@@ -189,7 +188,6 @@ export function OverlaysShell(props: OverlaysShellProps) {
     loadCampaigns,
     loadPersonal,
     locationName,
-    matches,
     objectCheckBusy,
     objectPicker,
     objects,

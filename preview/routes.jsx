@@ -19,8 +19,6 @@ check('/around/tea is Tea', parsePath('/around/tea').nearby === 'tea');
 check('/around/o/x opens object', parsePath('/around/o/obj_1').objectId === 'obj_1');
 check('/o/x is a share alias', parsePath('/o/obj_1').objectId === 'obj_1');
 check('/around/t/slug is tea reader', parsePath('/around/t/morning-nairobi').teaSlug === 'morning-nairobi');
-check('/play is Play lobby', parsePath('/play').dest === 'arena' && parsePath('/play').arena === 'lobby');
-check('/play/challenges', parsePath('/play/challenges').arena === 'challenges');
 check('/saved/circles', parsePath('/saved/circles').dest === 'mylayer' && parsePath('/saved/circles').mylayer === 'circles');
 check('/actions/money', parsePath('/actions/money').dest === 'workflows' && parsePath('/actions/money').workflow === 'money');
 check('menu query', parsePath('/around', '?menu=1').menu === true);
@@ -36,8 +34,8 @@ check('object share path', objectPath('obj_1') === '/o/obj_1');
 check('share url needs an origin', objectShareUrl(null, 'obj_1') === null);
 check('share url joins origin', objectShareUrl('https://brief.example', 'obj_1') === 'https://brief.example/o/obj_1');
 check(
-  'play challenges round-trip',
-  toPath(parsePath('/play/challenges')) === '/play/challenges'
+  'saved circles round-trip',
+  toPath(parsePath('/saved/circles')) === '/saved/circles'
 );
 check(
   'tea reader round-trip',

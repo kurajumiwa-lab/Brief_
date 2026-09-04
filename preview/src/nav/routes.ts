@@ -8,11 +8,11 @@
 // This module is pure. No React, no fetch, no window.
 // ---------------------------------------------------------------------------
 
-export type Destination = 'nearby' | 'arena' | 'mylayer' | 'workflows';
+export type Destination = 'nearby' | 'mylayer' | 'workflows';
 
 export type NearbySection = 'stream' | 'tea' | 'today' | 'pursuits' | 'quests' | 'market' | 'events' | 'mshikano';
 export type MyLayerSection =
-  | 'saved' | 'activity' | 'arena' | 'points' | 'circles' | 'groups' | 'campaigns'
+  | 'saved' | 'activity' | 'points' | 'circles' | 'groups' | 'campaigns'
   | 'mediakit' | 'opportunities' | 'messages' | 'subscriptions' | 'tickets'
   | 'verification';
 export type WorkflowSection =
@@ -20,14 +20,12 @@ export type WorkflowSection =
   | 'sources' | 'money' | 'vault' | 'gate' | 'tea'
   | 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'shop' | 'ai' | 'engine'
   | 'groupbuy' | 'resale' | 'fees';
-export type ArenaSection = 'lobby' | 'epl' | 'challenges' | 'tournaments' | 'leaderboard';
 
 export type BriefRoute = {
   dest: Destination;
   nearby: NearbySection;
   mylayer: MyLayerSection;
   workflow: WorkflowSection;
-  arena: ArenaSection;
   objectId: string | null;
   teaSlug: string | null;
   campaignId: string | null;
@@ -56,7 +54,6 @@ export const DEFAULT_ROUTE: BriefRoute = {
   nearby: 'stream',
   mylayer: 'saved',
   workflow: 'active',
-  arena: 'lobby',
   objectId: null,
   teaSlug: null,
   campaignId: null,
@@ -74,7 +71,7 @@ export const DEFAULT_ROUTE: BriefRoute = {
 
 const NEARBY: NearbySection[] = ['stream', 'tea', 'today', 'pursuits', 'quests', 'market', 'events', 'mshikano'];
 const MYLAYER: MyLayerSection[] = [
-  'saved', 'activity', 'arena', 'points', 'circles', 'groups', 'campaigns',
+  'saved', 'activity', 'points', 'circles', 'groups', 'campaigns',
   'mediakit', 'opportunities', 'messages', 'subscriptions', 'verification'
 ];
 const WORKFLOW: WorkflowSection[] = [
@@ -82,7 +79,6 @@ const WORKFLOW: WorkflowSection[] = [
   'sources', 'money', 'vault', 'gate', 'tea',
   'campaigns', 'matches', 'distribution', 'calendar', 'vendors', 'shop', 'ai', 'engine', 'groupbuy', 'fees'
 ];
-const ARENA: ArenaSection[] = ['lobby', 'epl', 'challenges', 'tournaments', 'leaderboard'];
 
 function isOne<T extends string>(list: T[], value: string): value is T {
   return (list as string[]).includes(value);
@@ -128,12 +124,6 @@ export function parsePath(pathname: string, search = ''): BriefRoute {
     return route;
   }
 
-  if (root === 'play') {
-    route.dest = 'arena';
-    if (parts[1] && isOne(ARENA, parts[1])) route.arena = parts[1];
-    return route;
-  }
-
   if (root === 'saved') {
     route.dest = 'mylayer';
     if (parts[1] && isOne(MYLAYER, parts[1])) route.mylayer = parts[1];
@@ -146,15 +136,7 @@ export function parsePath(pathname: string, search = ''): BriefRoute {
     return route;
   }
 
-
-  // Public campaign pages are a server route. The SPA still boots; leave dest
-  // as Around so a missing campaign does not invent a fifth room.
-  if (root === 'c') {
-    return route;
-  }
-
-  // Public entity pages: /e/<entityId> where entityId is "kind:key" — the
-  // stable shareable URL for a venue/business/publisher/organizer/community.
+  // Public entity pages: /e/<entityId> where entityId is "kind:key"
   if (root === 'e' && parts[1]) {
     route.entityId = decodePart(parts[1]);
     return route;
@@ -166,8 +148,7 @@ export function parsePath(pathname: string, search = ''): BriefRoute {
     return route;
   }
 
-  // Shared personal collection pages: /collections/<id>. The id is a
-  // server-side random id — never guessable from a name.
+  // Shared personal collection pages: /collections/<id>.
   if (root === 'collections' && parts[1]) {
     route.collectionId = decodePart(parts[1]);
     return route;
@@ -186,8 +167,6 @@ export function toPath(route: BriefRoute): string {
     path = `/explore/${encodeURIComponent(route.locationName)}`;
   } else if (route.collectionId) {
     path = `/collections/${encodeURIComponent(route.collectionId)}`;
-  } else if (route.dest === 'arena') {
-    path = route.arena === 'lobby' ? '/play' : `/play/${route.arena}`;
   } else if (route.dest === 'mylayer') {
     path = route.mylayer === 'saved' ? '/saved' : `/saved/${route.mylayer}`;
   } else if (route.dest === 'workflows') {
@@ -216,34 +195,28 @@ export function objectPath(id: string): string {
   return `/o/${encodeURIComponent(id)}`;
 }
 
-/** Stable public path for an entity page (id = "kind:key"). */
 export function entityPath(id: string): string {
   return `/e/${encodeURIComponent(id)}`;
 }
 
-/** Public path for a location discovery page (/explore/kilimani). */
 export function explorePath(name: string): string {
   return `/explore/${encodeURIComponent(name)}`;
 }
 
-/** Stable public path for a shared collection page (/collections/:id). */
 export function collectionPath(id: string): string {
   return `/collections/${encodeURIComponent(id)}`;
 }
 
-/** Absolute share URL for a shared collection, or null without an origin. */
 export function collectionShareUrl(origin: string | null, id: string): string | null {
   if (!origin) return null;
   return `${origin.replace(/\/+$/, '')}${collectionPath(id)}`;
 }
 
-/** Absolute share URL, or null when Brief has no origin to name. */
 export function objectShareUrl(origin: string | null, id: string): string | null {
   if (!origin) return null;
   return `${origin.replace(/\/+$/, '')}${objectPath(id)}`;
 }
 
-/** Absolute share URL for an entity page, or null without an origin. */
 export function entityShareUrl(origin: string | null, id: string): string | null {
   if (!origin) return null;
   return `${origin.replace(/\/+$/, '')}${entityPath(id)}`;
@@ -256,5 +229,5 @@ export function samePlace(a: BriefRoute, b: BriefRoute): boolean {
 export function isBriefRoute(value: unknown): value is BriefRoute {
   if (!value || typeof value !== 'object') return false;
   const r = value as BriefRoute;
-  return r.dest === 'nearby' || r.dest === 'arena' || r.dest === 'mylayer' || r.dest === 'workflows';
+  return r.dest === 'nearby' || r.dest === 'mylayer' || r.dest === 'workflows';
 }

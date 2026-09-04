@@ -33,7 +33,6 @@ export interface QuestsProps {
   setBoardMode: (m: any) => void;
   handleSubmitQuest: (quest: Quest) => void;
   setActiveTab: (d: Destination) => void;
-  setArenaSection: (s: any) => void;
 }
 
 export function Quests({
@@ -42,8 +41,7 @@ export function Quests({
   boardMode,
   setBoardMode,
   handleSubmitQuest,
-  setActiveTab,
-  setArenaSection
+  setActiveTab
 }: QuestsProps) {
   // Derived from the same quest rows the board renders, so these can never
   // disagree with what is on screen. The wallet counts settled work only:

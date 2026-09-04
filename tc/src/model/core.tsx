@@ -40,8 +40,6 @@ import RewardsDesk from '../components/RewardsDesk';
 import { CheckIn } from '../components/CheckIn';
 import { HostCommand } from '../components/HostCommand';
 import { TickerBanner, PromptBanner, JumbotronBanner } from '../components/SignalBanner';
-import { BracketLadder } from '../components/BracketLadder';
-import { TournamentCard } from '../components/TournamentCard';
 import { ActionsEngine } from '../components/ActionsEngine';
 import { Circles } from '../components/Circles';
 import { Marketplace } from '../components/Marketplace';
@@ -51,21 +49,14 @@ import { TriageQueue } from '../components/TriageQueue';
 import { Quests } from '../components/Quests';
 import { LocationChip } from '../components/LocationChip';
 import type { GeoPoint } from '../components/LocationChip';
-import { ArenaShelf } from '../components/ArenaShelf';
-import { ArenaPulse, SeasonStrip } from '../components/ArenaPulse';
 import { MainShelf } from '../components/MainShelf';
 import { Onboarding } from '../components/Onboarding';
 import { NextStep } from '../components/NextStep';
 import { isSurfaceUnlocked, shouldOpenFirstRun, showsLadder, unlockHint } from '../components/ladder';
 import { arrivalSource, linkTokenFrom, urlWithoutArrivalParams, type ArrivalChannel } from '../components/arrival';
-import { ArenaBetaPilot } from '../components/ArenaBetaPilot';
-import type { ArenaBetaSegment, ArenaBetaSummary } from '../api/types';
 import { EnginePanel } from '../components/EnginePanel';
 import { GroupBuyPortal } from '../components/GroupBuyPortal';
-import { MatchQueuePanel } from '../components/MatchQueuePanel';
 import { TicketBar } from '../components/TicketBar';
-import { ArenaGameScreen } from '../components/ArenaGameScreen';
-import type { ArenaStakeKind } from '../components/ArenaGameScreen';
 import { LobbyBoard } from '../components/LobbyBoard';
 import { FeedComposer } from '../components/FeedComposer';
 import { WireSection } from '../components/WireSection';
@@ -188,11 +179,10 @@ export type ProtocolAction =
 // it simply has no dedicated page any more.
 export type Destination =
   | 'nearby'
-  | 'arena'
   | 'mylayer'
   | 'workflows';
 
-// The four screens, defined once and consumed by both the desktop rail and the
+// The screens, defined once and consumed by both the desktop rail and the
 // mobile dock so the two can never drift apart.
 export const DESTINATIONS: {
   id: Destination;
@@ -201,8 +191,7 @@ export const DESTINATIONS: {
 }[] = [
   { id: 'nearby', label: ROOM.nearby.label, hint: ROOM.nearby.hint },
   { id: 'mylayer', label: ROOM.mylayer.label, hint: ROOM.mylayer.hint },
-  { id: 'workflows', label: ROOM.workflows.label, hint: ROOM.workflows.hint },
-  { id: 'arena', label: ROOM.arena.label, hint: ROOM.arena.hint }
+  { id: 'workflows', label: ROOM.workflows.label, hint: ROOM.workflows.hint }
 ];
 
 // The red activity dot for a sidebar title. Dot for 1 update, dot + count
@@ -223,14 +212,13 @@ export function ActivityDot({ n }: { n: number }) {
 // component layer owns the visuals.
 export const DESTINATION_ICONS: Record<Destination, LucideIcon> = {
   nearby: MapPin,
-  arena: Award,
   mylayer: Bookmark,
   workflows: Briefcase
 };
 
 export type NearbySection = 'stream' | 'tea' | 'today' | 'pursuits' | 'quests' | 'market' | 'events' | 'mshikano';
 export type MyLayerSection =
-  | 'saved' | 'activity' | 'arena' | 'points' | 'circles' | 'groups' | 'campaigns'
+  | 'saved' | 'activity' | 'points' | 'circles' | 'groups' | 'campaigns'
   | 'mediakit' | 'opportunities' | 'messages' | 'subscriptions' | 'tickets'
   | 'verification';
 // Workflows secondary: a Journey is either in progress or finished. Inbox and

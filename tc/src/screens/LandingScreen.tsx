@@ -42,7 +42,7 @@ import { SubcategoryDrillScreen, SubcategoryDrillScreenProps } from './Subcatego
 import { soundEngine } from '../utils/SoundEngine';
 
 export interface LandingScreenProps {
-  onNavigateTab?: (tab: 'menu' | 'nearby' | 'mylayer' | 'workflows' | 'arena') => void;
+  onNavigateTab?: (tab: 'menu' | 'nearby' | 'mylayer' | 'workflows') => void;
   selectedLocation?: string;
 }
 
@@ -103,7 +103,6 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
     { id: 'nearby', label: 'Nearby', icon: MapPin, tab: 'nearby' as const },
     { id: 'mylayer', label: 'Layer', icon: Bookmark, tab: 'mylayer' as const },
     { id: 'workflows', label: 'Work', icon: Briefcase, tab: 'workflows' as const },
-    { id: 'arena', label: 'Arena', icon: Trophy, tab: 'arena' as const },
   ];
 
   return (
@@ -214,15 +213,22 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
 
               <IronSheet
                 material="steel"
-                title="Pool Match"
-                subtitle="Needs 1 player · eFootball"
-                bigNumber="1"
-                badge="ARENA"
+                title="Fresh Harvest"
+                subtitle="Avocados & Honey from Nyeri"
+                bigNumber="5"
+                badge="PRODUCE"
                 animationDelayMs={80}
-                onTap={() => {
-                  if (onNavigateTab) onNavigateTab('arena');
-                  else showToast('Opening Arena matchmaking');
-                }}
+                onTap={() =>
+                  openCategoryDetail({
+                    material: 'steel',
+                    title: 'Fresh Harvest Produce',
+                    subtitle: 'Farm-direct organics delivered to your doorstep',
+                    emoji: '🥑',
+                    badge: 'PRODUCE',
+                    heroDescription:
+                      'Direct partnership with smallholder cooperatives across Mt. Kenya and Rift Valley. Guaranteed freshness, verified fair-trade prices.'
+                  })
+                }
               />
 
               <IronSheet
@@ -510,16 +516,13 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
             <div className="space-y-3">
               <IronSheet
                 material="jade"
-                title="EPL Fantasy"
-                subtitle="Free to play · Season 3 live"
-                emoji="🔥"
-                badge="FREE"
+                title="Community Events"
+                subtitle="Live gigs & street markets"
+                emoji="🎉"
+                badge="EVENTS"
                 height={130}
                 animationDelayMs={0}
-                onTap={() => {
-                  if (onNavigateTab) onNavigateTab('arena');
-                  else showToast('Opening EPL Fantasy');
-                }}
+                onTap={() => setSelectedSection(1)}
               />
 
               <IronSheet

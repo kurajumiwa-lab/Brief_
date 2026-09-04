@@ -84,12 +84,12 @@ const check = (n, c, d = '') => { if (c) { pass++; console.log('  PASS  ' + n); 
 
   console.log('\n=== explore: icons + typography, no photography ===');
   check('doors as a grid, not a horizontal shelf',
-    ['Nearby', 'Saved', 'Arena', 'Communities', 'Marketplace', 'EPL Fantasy', 'WhatsApp Shop'].every((k) => body().includes(k)));
+    ['Nearby', 'Saved', 'Events', 'Communities', 'Marketplace', 'Mshikano', 'WhatsApp Shop'].every((k) => body().includes(k)));
   check('no photographic shelf cards inside Menu', document.querySelectorAll('img').length === 0);
   await click(Array.from(document.querySelectorAll('button')).find((b) => text(b).includes('WhatsApp Shop')));
   check('the WhatsApp Shop door routes to the builder', picked?.tab === 'workflows' && picked?.section === 'shop', JSON.stringify(picked));
-  await click(Array.from(document.querySelectorAll('button')).find((b) => text(b).startsWith('Arena')));
-  check('the Arena door routes to the lobby', picked?.tab === 'arena' && picked?.section === 'lobby', JSON.stringify(picked));
+  await click(Array.from(document.querySelectorAll('button')).find((b) => text(b).startsWith('Events')));
+  check('the Events door routes to nearby events', picked?.tab === 'nearby' && picked?.section === 'events', JSON.stringify(picked));
   await click(Array.from(document.querySelectorAll('button')).find((b) => text(b).includes('Communities')));
   check('the Communities door routes to circles', picked?.tab === 'mylayer' && picked?.section === 'circles', JSON.stringify(picked));
   await click(Array.from(document.querySelectorAll('button')).find((b) => text(b).includes('Marketplace')));

@@ -5,8 +5,8 @@ import { ShieldCheck } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
 import type { Campaign as ApiCampaign, CampaignType as ApiCampaignType } from '../api/types';
 import { SAVED_BUNDLES, SAVED_TABS } from '../ui/names';
-import type { ArenaMatch, BriefObject, ConnectedSource, Destination, GroupCommandResult, MyLayerSection, ObjectRelationship, WorkflowSection , GroupAccess, GroupKnowledgeEntry, ObjectType, Quest, SaveLabel } from '../model/core';
-import { SAVE_LABELS, GROUP_MESSAGES, arenaPlayerLabel, formatSourceDate, getDistanceLabel, getUnansweredQuestions, isResultConfirmed, resolveAction , getBriefRank, runGroupCommand } from '../model/core';
+import type { BriefObject, ConnectedSource, Destination, GroupCommandResult, MyLayerSection, ObjectRelationship, WorkflowSection , GroupAccess, GroupKnowledgeEntry, ObjectType, Quest, SaveLabel } from '../model/core';
+import { SAVE_LABELS, GROUP_MESSAGES, formatSourceDate, getDistanceLabel, getUnansweredQuestions, isResultConfirmed, resolveAction , getBriefRank, runGroupCommand } from '../model/core';
 
 import { Bookmark } from 'lucide-react';
 import { Plus } from 'lucide-react';
@@ -42,7 +42,6 @@ export interface MyLayerScreenProps {
   setRelationships: React.Dispatch<React.SetStateAction<ObjectRelationship[]>>;
   setSavedGroupEntryIds: React.Dispatch<React.SetStateAction<string[]>>;
   activeTab: Destination;
-  arenaBusyId: string | null;
   beginEdit: any;
   campaignBusy: boolean;
   campaignState: {
@@ -64,14 +63,10 @@ export interface MyLayerScreenProps {
   groupIndex: any;
   groupIndexes: any;
   groups: ConnectedSource[];
-  handleAbandonMatch: any;
-  handleConfirmMatch: any;
   handleCreatePursuit: any;
   handleExecuteProtocolAction: any;
   handleRemoveCampaign: any;
-  handleReportMatch: any;
   loadCampaigns: any;
-  matches: ArenaMatch[];
   myContribution: any;
   myLayerSection: MyLayerSection;
   objects: BriefObject[];
@@ -114,7 +109,6 @@ export interface MyLayerScreenProps {
 export function MyLayerScreen(props: MyLayerScreenProps) {
   const {
     activeTab,
-    arenaBusyId,
     beginEdit,
     campaignBusy,
     campaignState,
@@ -123,14 +117,10 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
     groupIndex,
     groupIndexes,
     groups,
-    handleAbandonMatch,
-    handleConfirmMatch,
     handleCreatePursuit,
     handleExecuteProtocolAction,
     handleRemoveCampaign,
-    handleReportMatch,
     loadCampaigns,
-    matches,
     myContribution,
     myLayerSection,
     objects,
@@ -656,66 +646,6 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                     </button>
                   );
                 })}
-            </div>
-          </div>
-        )}
-        {myLayerSection === 'arena' && (
-          <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
-            <div>
-              <h2 className="text-lg font-extrabold text-[#0D1117]">Your Arena</h2>
-              <p className="text-[11px] text-[#0D1117]/60 leading-snug mt-1">
-                Your matches. Play is recorded when both players confirm a result.
-              </p>
-            </div>
-            <h3 className="text-[11px] font-extrabold text-[#0D1117]/60">
-              My Matches
-            </h3>
-            {matches.length === 0 && (
-              <p className="text-xs text-[#0D1117]/60">
-                No matches yet. Accept a challenge in Arena to start one.
-              </p>
-            )}
-            <div className="space-y-2">
-              {matches.map((m) => {
-                const me = CURRENT_PLAYER_ID;
-                const status = m.status ?? (isResultConfirmed(m) ? 'confirmed' : 'scheduled');
-                const iReported = Boolean(me) && m.reportedBy === me;
-                const waiting = status === 'reported' && iReported;
-                const canConfirm = status === 'reported' && Boolean(me) && !iReported;
-                const canReport = status === 'scheduled' && Boolean(me);
-                const opponent = m.playerAId === me ? m.playerBId : m.playerAId;
-                return (
-                  <div key={m.id} className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-3 space-y-2">
-                    <p className="text-xs text-[#0D1117]">
-                      {arenaPlayerLabel(m.playerAId, me || null, m.playerAName)} vs {arenaPlayerLabel(m.playerBId, me || null, m.playerBName)}
-                    </p>
-                    <p className="text-[10px] text-[#0D1117]/60">
-                      {status === 'confirmed'
-                        ? (m.scoreLine || 'Confirmed')
-                        : status === 'disputed'
-                        ? 'Players disagreed. Brief does not pick a winner.'
-                        : status === 'abandoned'
-                        ? 'Abandoned'
-                        : waiting
-                        ? 'Waiting for the other player to confirm'
-                        : 'Result not confirmed by both players'}
-                    </p>
-                    {canReport && (
-                      <div className="flex flex-wrap gap-1.5">
-                        <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleReportMatch(m, me)} className="px-2.5 py-1.5 rounded-lg bg-[#FF5A1F] text-[#0D1117] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">I won</button>
-                        <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleReportMatch(m, opponent ?? null)} className="px-2.5 py-1.5 rounded-lg border border-[#E5E8EC] text-[#0D1117] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">They won</button>
-                        <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleReportMatch(m, null)} className="px-2.5 py-1.5 rounded-lg border border-[#E5E8EC] text-[#0D1117] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">Draw</button>
-                        <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleAbandonMatch(m)} className="px-2.5 py-1.5 rounded-lg border border-[#E5E8EC] text-[#0D1117]/60 text-[10px] font-extrabold cursor-pointer disabled:opacity-40">Never happened</button>
-                      </div>
-                    )}
-                    {canConfirm && (
-                      <button type="button" disabled={arenaBusyId === m.id} onClick={() => void handleConfirmMatch(m)} className="px-3 py-1.5 rounded-lg bg-[#FF5A1F] text-[#0D1117] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">
-                        Confirm result
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
             </div>
           </div>
         )}

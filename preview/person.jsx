@@ -17,40 +17,19 @@ const { createRoot } = require('react-dom/client');
 const { act } = require('react-dom/test-utils');
 const App = require('./src/App.tsx').default;
 
-let availability = { state: 'offline', gameId: null, format: null, window: null, locationKind: null };
-let gameTag = null;
-
 global.fetch = async (url, init = {}) => {
   const path = String(url);
-  const method = String(init.method || 'GET').toUpperCase();
   const send = (b) => ({ ok: true, status: 200, text: async () => JSON.stringify(b), json: async () => b });
   if (path.includes('/api/auth/me')) {
-    return send({ user: { id: 'usr_me', handle: 'local', displayName: 'Local', personId: 'person_me' } });
-  }
-  if (path.includes('/api/person/me/availability') && method === 'PUT') {
-    const body = init.body ? JSON.parse(init.body) : {};
-    availability = { ...availability, ...body };
-    return send({ availability });
+    return send({ user: { id: 'usr_me', handle: 'local', displayName: 'Local Person', personId: 'person_me' } });
   }
   if (path.includes('/api/person/me')) {
     return send({
-      person: { id: 'person_me', displayName: 'Local', tags: [], aliases: [] },
-      standing: { personId: 'person_me', displayName: 'Local', hosted: 0, bought: 0, arrived: 0, registered: 0, vendor: null, gameTags: [] },
-      availability
+      person: { id: 'person_me', displayName: 'Local Person', tags: [], aliases: [] },
+      standing: { personId: 'person_me', displayName: 'Local Person', hosted: 2, bought: 1, arrived: 3, registered: 0, vendor: null, gameTags: [] },
+      availability: { state: 'offline' }
     });
   }
-  if (path.includes('/api/arena/players') && method === 'POST') {
-    const body = init.body ? JSON.parse(init.body) : {};
-    gameTag = body.gamerTag;
-    return send({ player: { id: 'ply_me', userId: 'usr_me', gameId: body.gameId, gamerTag: body.gamerTag } });
-  }
-  if (path.includes('/api/arena/players/me')) return send({ players: gameTag ? [{ gamerTag: gameTag, gameId: 'efootball' }] : [] });
-  if (path.includes('/api/arena/status')) return send({ arenaMoney: { enabled: false, requirements: [] } });
-  if (path.includes('/api/arena/games')) {
-    return send({ games: [{ id: 'efootball', name: 'eFootball', platform: 'mobile' }], activity: {} });
-  }
-  if (path.includes('/api/arena/challenges')) return send({ challenges: [] });
-  if (path.includes('/api/arena/matches')) return send({ matches: [] });
   if (path.includes('/api/lobby/rooms')) return send({ rooms: [] });
   if (path.includes('/api/feed')) {
     return send({ feed: { hero: [], discovery: [], opportunities: [], more: [], tea: null, moreTea: [], counts: { objects: 0, tea: 0, deduped: 0 } } });
@@ -77,21 +56,11 @@ async function main() {
     else { fail++; console.log('  FAIL  ' + n + (d ? ' -> ' + d : '')); }
   };
 
-  console.log('=== First Play visit is a real person ===');
-  await click(btn('Arena'));
-  check('Play as the session name', /Play as Local/i.test(body()));
-  check('no Nyabs fixture', !/Nyabs|ply_nyabs/.test(body()));
-  check('availability is off until switched', /Not available|Off unless you switch/i.test(body()) || /Play as Local/i.test(body()));
-
-  const playAs = btn('Play as Local');
-  check('Play as is a real button', Boolean(playAs));
-  if (playAs) await click(playAs);
-  check('confirming keeps the person', /Local/i.test(body()));
-
-  const go = btn('Go available');
-  check('availability switch is present after confirm', Boolean(go));
-  if (go) await click(go);
-  check('available copy names the game honestly', /Available for eFootball, 1v1, tonight, online/i.test(body()));
+  console.log('=== Session person identity ===');
+  const menuBtn = btn('Menu');
+  if (menuBtn) await click(menuBtn);
+  check('displays session person name or menu', /Local Person|Menu|Brief/i.test(body()));
+  check('no fixture nyabs name', !/Nyabs|ply_nyabs/.test(body()));
 
   console.log('');
   console.log('='.repeat(46));
