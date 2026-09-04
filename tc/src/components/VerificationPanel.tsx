@@ -1,19 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import * as briefApi from '../api/briefApi';
 import type { AccountVerificationKind, VerificationRecord } from '../api/briefApi';
+import { SmileIdKycModal, SmileKycResult } from './trust/SmileIdKycModal';
+import { ShieldCheck, Zap, Sparkles, CheckCircle2 } from 'lucide-react';
+import { soundEngine } from '../utils/SoundEngine';
 
 // ---------------------------------------------------------------------------
 // VERIFICATION PANEL (Tikiti T6) — My Layer → Verify.
 //
-// Identity is verified by PEOPLE reviewing evidence, not by a self-declared
-// checkbox:
+// Identity is verified by PEOPLE reviewing evidence or by real-time
+// pan-African KYC APIs (Smile Identity for Kenyan National ID & 3D liveness):
 //   * a submission creates a pending record for a reviewer (capability-gated
 //     server-side; audited),
 //   * standing (verified / pending / unverified) is DERIVED from the records,
 //     never stored as a second truth,
 //   * a reviewer's reason is shown verbatim — a rejection that explains
 //     itself can be fixed; one that doesn't cannot,
-//   * no documents are ever collected here.
+//   * no documents are permanently stored on server unencrypted.
 // ---------------------------------------------------------------------------
 
 const KIND_LABEL: Record<AccountVerificationKind, string> = {
@@ -38,6 +41,10 @@ export function VerificationPanel() {
   const [note, setNote] = React.useState('');
   const [busy, setBusy] = React.useState(false);
   const [noteMsg, setNoteMsg] = React.useState<string | null>(null);
+
+  // Smile ID Instant KYC Modal
+  const [isSmileModalOpen, setIsSmileModalOpen] = useState(false);
+  const [smileSuccessInfo, setSmileSuccessInfo] = useState<SmileKycResult | null>(null);
 
   const load = React.useCallback(async () => {
     setError(null);
@@ -66,14 +73,25 @@ export function VerificationPanel() {
     await load();
   };
 
+  const handleSmileVerificationComplete = async (result: SmileKycResult) => {
+    setSmileSuccessInfo(result);
+    soundEngine.play('victory');
+    // Submit auto-verification evidence via API
+    await briefApi.submitVerification({
+      kind: 'identity',
+      providerRef: result.certificateRef,
+      note: `Smile ID Pan-African KYC: National ID ${result.idNumber} verified against Kenya IPRS with ${result.confidenceScore}% 3D liveness match.`
+    });
+    await load();
+  };
+
   return (
     <div className="space-y-4">
       <div>
         <h2 className="text-lg font-extrabold text-[#0D1117]">Verify</h2>
         <p className="text-[10px] text-[#0D1117]/60 leading-snug">
-          Verified email, phone and identity unlock the things the compliance
-          gates require. Reviews are human, recorded, and reversible — no
-          documents are collected here.
+          Verified email, phone and identity unlock the things compliance
+          gates require. Integrated with Smile Identity for real-time Kenyan National ID & 3D facial liveness verification.
         </p>
       </div>
 
@@ -89,9 +107,53 @@ export function VerificationPanel() {
         ))}
       </div>
 
-      {/* submit */}
+      {/* ── FAST KYC WITH SMILE IDENTITY (<10s) ── */}
+      <div className="p-4 rounded-2xl bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#111827] text-white space-y-3 shadow-sm">
+        <div className="flex items-start justify-between">
+          <div className="space-y-0.5">
+            <div className="flex items-center space-x-2">
+              <span className="px-2 py-0.5 rounded-full bg-[#00BFEF] text-[#0D1117] text-[9px] font-mono font-black uppercase tracking-wider">
+                SMILE IDENTITY KYC
+              </span>
+              <span className="text-[10px] font-mono text-emerald-400 font-bold">
+                &lt;10s Instant Check
+              </span>
+            </div>
+            <h3 className="text-xs font-black text-white mt-1 flex items-center space-x-1.5">
+              <span>Kenyan National ID & 3D Facial Liveness</span>
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            </h3>
+          </div>
+          <ShieldCheck className="w-6 h-6 text-[#00BFEF] shrink-0" />
+        </div>
+
+        <p className="text-[11px] text-slate-300 leading-relaxed">
+          Skip manual queue delays. Smile Identity validates your National ID, Passport, or Alien Card directly against the Kenya IPRS national population registry with 3D biometric anti-spoofing in under 10 seconds.
+        </p>
+
+        {smileSuccessInfo ? (
+          <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center space-x-2 text-emerald-300 text-xs font-mono">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>Smile Verified ({smileSuccessInfo.certificateRef})</span>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              soundEngine.play('heavyTap');
+              setIsSmileModalOpen(true);
+            }}
+            className="w-full py-2.5 rounded-xl bg-[#00BFEF] hover:bg-[#00a8d6] text-[#0D1117] font-black text-xs uppercase tracking-wider flex items-center justify-center space-x-2 shadow-md cursor-pointer transition-transform active:scale-[0.99]"
+          >
+            <Zap className="w-3.5 h-3.5" />
+            <span>Launch Smile Identity Instant Scan (&lt;10s)</span>
+          </button>
+        )}
+      </div>
+
+      {/* submit manual claim */}
       <div className="rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] p-4 space-y-2">
-        <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#0D1117]">Ask for a review</p>
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#0D1117]">Manual Operator Review</p>
         <div className="flex flex-wrap gap-1.5">
           {(['email', 'phone', 'identity'] as AccountVerificationKind[]).map((k) => (
             <button
@@ -157,6 +219,14 @@ export function VerificationPanel() {
           ))}
         </div>
       )}
+
+      {/* ================= MODAL: SMILE IDENTITY KYC ================= */}
+      <SmileIdKycModal
+        isOpen={isSmileModalOpen}
+        onClose={() => setIsSmileModalOpen(false)}
+        onVerificationComplete={handleSmileVerificationComplete}
+        initialDocType="national_id"
+      />
     </div>
   );
 }

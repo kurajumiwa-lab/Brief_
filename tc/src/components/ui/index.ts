@@ -27,6 +27,8 @@ export { BriefBuilderSection } from '../home/BriefBuilderSection';
 export type { BriefBuilderSectionProps } from '../home/BriefBuilderSection';
 export { UserTrustBadge, GroupTrustBadge } from '../trust/TrustBadges';
 export type { UserTrustBadgeProps, GroupTrustBadgeProps } from '../trust/TrustBadges';
+export { SmileIdKycModal } from '../trust/SmileIdKycModal';
+export type { SmileIdKycModalProps, SmileKycResult, DocType } from '../trust/SmileIdKycModal';
 export { GroupDemandRunDesk } from '../circle/GroupDemandRunDesk';
 export type { GroupDemandRunDeskProps } from '../circle/GroupDemandRunDesk';
 export { GroupEventLogisticsDesk } from '../circle/GroupEventLogisticsDesk';
