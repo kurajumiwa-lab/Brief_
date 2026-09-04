@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Bell, ArrowRight, Bookmark, FolderPlus, Heart, Newspaper, Plus, Search, ShieldCheck, Users, X  } from 'lucide-react';
+import { Bell, ArrowRight, Bookmark, FolderPlus, Heart, Newspaper, Plus, Search, ShieldCheck, Users, X, Sparkles } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
 import { DESTINATION_STATE_LABELS, TEA_EDITIONS, briefWhenLabel, entityChipsFor, formatCount, getCardLevel, getDestinationState, getDestinationVendors, getDistanceLabel, getEditionMeta, getLifecycleBadge, getObjectTypeMeta, getPostKindMeta, getPublishedLine, getRelativeTime, getSourceChip, isDestinationObject, objectFromServer, resolveAction , buildDiscoveryBrief, buildPersonalSections, getCurrentEdition } from '../model/core';
 import type { ObjectType , PursuitStatus, WatchCondition } from '../model/core';
@@ -29,6 +29,7 @@ import { InterCountyDesk } from '../components/wairo/InterCountyDesk';
 import { PrivateCarrierAuctionDesk } from '../components/wairo/PrivateCarrierAuctionDesk';
 import { OfflineSyncQueueDesk } from '../components/offline/OfflineSyncQueueDesk';
 import { UniversalCreatePostModal } from '../components/posts/UniversalCreatePostModal';
+import { DiscoverScreen } from './DiscoverScreen';
 import { soundEngine } from '../utils/SoundEngine';
 import type { ArenaMatch, BriefObject, Destination, NearbySection, Pursuit, Quest, TeaEdition, WorkflowSection } from '../model/core';
 import type { AuthedUser, PersonalState } from '../api/briefApi';
@@ -242,6 +243,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
   const [carrierAuctionOpen, setCarrierAuctionOpen] = useState(false);
   const [offlineSyncOpen, setOfflineSyncOpen] = useState(false);
   const [createPostModalOpen, setCreatePostModalOpen] = useState(false);
+  const [discoverViewOpen, setDiscoverViewOpen] = useState(false);
 
   const commitRecentSearch = React.useCallback((term: string) => {
     const t = term.trim();
@@ -410,6 +412,16 @@ export function NearbyScreen(props: NearbyScreenProps) {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { soundEngine.play('tap'); setDiscoverViewOpen(true); }}
+                    className="px-3 py-1.5 rounded-xl bg-[#0B6E6E] hover:bg-[#14919B] text-white font-bold text-xs flex items-center space-x-1.5 shadow-sm cursor-pointer transition-all active:scale-95"
+                    title="Open 3D Discover View"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-[#E8985E]" />
+                    <span>Discover</span>
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => { soundEngine.play('heavyTap'); setCreatePostModalOpen(true); }}
@@ -1998,6 +2010,23 @@ export function NearbyScreen(props: NearbyScreenProps) {
                 }}
               />
             </div>
+          </div>
+        )}
+
+        {/* ================= MODAL: 3D DISCOVER VIEW ================= */}
+        {discoverViewOpen && (
+          <div className="fixed inset-0 z-50 bg-[#F0EDE8] overflow-y-auto animate-fadeIn">
+            <div className="sticky top-3 left-3 z-50 p-3">
+              <button
+                type="button"
+                onClick={() => { soundEngine.play('tap'); setDiscoverViewOpen(false); }}
+                className="px-3.5 py-1.5 rounded-full bg-[#1A1F2E] text-white text-xs font-bold shadow-xl flex items-center space-x-1.5 cursor-pointer hover:bg-black transition-colors"
+              >
+                <X className="w-4 h-4" />
+                <span>Exit Discover</span>
+              </button>
+            </div>
+            <DiscoverScreen />
           </div>
         )}
 
