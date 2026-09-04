@@ -27,7 +27,9 @@ import {
   BookOpen,
   CheckCheck,
   Layers,
-  Lock
+  Lock,
+  Zap,
+  BadgeCheck
 } from 'lucide-react';
 import { soundEngine } from '../../utils/SoundEngine';
 
@@ -56,6 +58,10 @@ export interface TableLoan {
   status: 'active' | 'pending_approval' | 'repaid';
   dueDate: string;
   guarantors: string[];
+  pezeshaScore?: number;
+  creditGrade?: 'AAA' | 'AA' | 'A' | 'B';
+  repaymentSchedule?: string;
+  collectionChannel?: string;
 }
 
 export interface ChamaOrderDispatch {
@@ -108,7 +114,11 @@ export function ChamaDesk({
       purpose: 'Restock cereal shop stock (Nyamataro Market)',
       status: 'active',
       dueDate: '15 June 2026',
-      guarantors: ['Grace Wanjiku', 'Faith Mwangi']
+      guarantors: ['Grace Wanjiku', 'Faith Mwangi'],
+      pezeshaScore: 785,
+      creditGrade: 'AAA',
+      repaymentSchedule: 'Bi-Weekly M-Pesa STK Auto-Deduct',
+      collectionChannel: 'Pezesha Automated Rails'
     },
     {
       id: 'loan-2',
@@ -120,7 +130,11 @@ export function ChamaDesk({
       purpose: 'School fees top-up for high school term 2',
       status: 'pending_approval',
       dueDate: '20 July 2026',
-      guarantors: ['Jane Nyaboke', 'Sharon Moraa', 'Beatrice Ndinda']
+      guarantors: ['Jane Nyaboke', 'Sharon Moraa', 'Beatrice Ndinda'],
+      pezeshaScore: 742,
+      creditGrade: 'AA',
+      repaymentSchedule: 'Monthly Auto-Collection',
+      collectionChannel: 'Pezesha STK Scheduled Push'
     }
   ]);
 
@@ -169,6 +183,7 @@ export function ChamaDesk({
   const [loanBorrower, setLoanBorrower] = useState('Lilian Akinyi');
   const [loanPrincipal, setLoanPrincipal] = useState('10000');
   const [loanPurpose, setLoanPurpose] = useState('');
+  const [loanSchedule, setLoanSchedule] = useState<'bi_weekly' | 'monthly'>('bi_weekly');
   
   const [copiedBroadcast, setCopiedBroadcast] = useState(false);
 
@@ -226,7 +241,11 @@ export function ChamaDesk({
       purpose: loanPurpose.trim() || 'Business operating capital',
       status: 'pending_approval',
       dueDate: '15 July 2026',
-      guarantors: ['Grace Wanjiku']
+      guarantors: ['Grace Wanjiku'],
+      pezeshaScore: 760,
+      creditGrade: 'AAA',
+      repaymentSchedule: loanSchedule === 'bi_weekly' ? 'Bi-Weekly M-Pesa STK Auto-Deduct' : 'Monthly Auto-Collection',
+      collectionChannel: 'Pezesha White-Label Infrastructure'
     };
     setLoans(prev => [newLoan, ...prev]);
     setIsNewLoanOpen(false);
@@ -533,6 +552,25 @@ export function ChamaDesk({
       {/* ================= TAB 3: TABLE BANKING & MICRO-LOANS ================= */}
       {activeTab === 'loans' && (
         <div className="p-5 sm:p-6 space-y-4">
+          
+          {/* Pezesha White-Label Infrastructure Banner */}
+          <div className="p-3.5 rounded-2xl bg-gradient-to-r from-[#0F172A] to-[#1E293B] text-white flex items-center justify-between gap-3 shadow-xs">
+            <div className="space-y-0.5">
+              <div className="flex items-center space-x-1.5">
+                <span className="px-2 py-0.5 rounded-full bg-[#00BFEF] text-[#0D1117] text-[9px] font-mono font-black uppercase">
+                  PEZESHA API
+                </span>
+                <span className="text-[10px] font-bold text-emerald-400">
+                  Alternative Credit Scoring & STK Collections
+                </span>
+              </div>
+              <p className="text-[10px] text-slate-300">
+                Zero balance sheet risk • Automated M-Pesa repayment schedules • Institutional liquidity pool
+              </p>
+            </div>
+            <ShieldCheck className="w-5 h-5 text-[#00BFEF] shrink-0" />
+          </div>
+
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-xs font-black uppercase tracking-wider text-[#0D1117]">
@@ -563,6 +601,11 @@ export function ChamaDesk({
                       <span className="text-xs font-black text-[#0D1117]">
                         {loan.borrowerName}
                       </span>
+                      {loan.pezeshaScore && (
+                        <span className="text-[9px] font-mono font-black px-1.5 py-0.5 rounded bg-blue-50 text-[#2563EB] border border-blue-200">
+                          Pezesha: {loan.pezeshaScore} ({loan.creditGrade})
+                        </span>
+                      )}
                       <span className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded-full uppercase ${
                         loan.status === 'active'
                           ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
@@ -572,6 +615,11 @@ export function ChamaDesk({
                       </span>
                     </div>
                     <p className="text-xs text-gray-600 mt-1">{loan.purpose}</p>
+                    {loan.repaymentSchedule && (
+                      <p className="text-[10px] font-mono text-emerald-700 font-bold mt-0.5">
+                        ⚡ {loan.repaymentSchedule}
+                      </p>
+                    )}
                   </div>
 
                   <div className="text-right font-mono">
@@ -796,18 +844,26 @@ export function ChamaDesk({
         </div>
       )}
 
-      {/* ================= MODAL: APPLY TABLE LOAN ================= */}
+      {/* ================= MODAL: APPLY TABLE LOAN (PEZESHA API) ================= */}
       {isNewLoanOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-white border border-[#E5E8EC] rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl text-[#0D1117]">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <h4 className="text-sm font-black uppercase text-[#0D1117]">
-                Apply for Table Banking Loan
-              </h4>
+              <div>
+                <div className="flex items-center space-x-1.5">
+                  <span className="px-2 py-0.5 rounded-full bg-[#00BFEF] text-[#0D1117] text-[9px] font-mono font-black uppercase">
+                    PEZESHA LENDING API
+                  </span>
+                  <span className="text-[10px] text-emerald-600 font-bold">Instant Underwriting</span>
+                </div>
+                <h4 className="text-sm font-black uppercase text-[#0D1117] mt-1">
+                  Apply for Table Banking Loan
+                </h4>
+              </div>
               <button
                 type="button"
                 onClick={() => setIsNewLoanOpen(false)}
-                className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-600"
+                className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -815,7 +871,7 @@ export function ChamaDesk({
 
             <form onSubmit={handleApplyLoan} className="space-y-3 text-xs">
               <div>
-                <label className="block text-gray-700 font-bold mb-1">Applicant Name:</label>
+                <label className="block text-gray-700 font-bold mb-1">Applicant Member:</label>
                 <select
                   value={loanBorrower}
                   onChange={(e) => setLoanBorrower(e.target.value)}
@@ -838,12 +894,39 @@ export function ChamaDesk({
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono text-[#0D1117] focus:outline-none focus:border-[#2563EB]"
                 />
                 <span className="text-[10px] text-gray-500 mt-0.5 block font-mono">
-                  Interest: 5% monthly • Repayment: KES {(Number(loanPrincipal) * 1.05).toLocaleString()}
+                  Interest: 5% monthly • Total Repayment: KES {(Number(loanPrincipal) * 1.05).toLocaleString()}
                 </span>
               </div>
 
               <div>
-                <label className="block text-gray-700 font-bold mb-1">Loan Purpose:</label>
+                <label className="block text-gray-700 font-bold mb-1">Pezesha Repayment Schedule:</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setLoanSchedule('bi_weekly')}
+                    className={`p-2.5 rounded-xl text-left border text-[11px] font-bold ${
+                      loanSchedule === 'bi_weekly' ? 'border-[#00BFEF] bg-blue-50 text-blue-950' : 'border-gray-200 bg-gray-50'
+                    }`}
+                  >
+                    <span className="block font-black">Bi-Weekly STK</span>
+                    <span className="text-[9px] text-gray-500">Auto M-Pesa prompt</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setLoanSchedule('monthly')}
+                    className={`p-2.5 rounded-xl text-left border text-[11px] font-bold ${
+                      loanSchedule === 'monthly' ? 'border-[#00BFEF] bg-blue-50 text-blue-950' : 'border-gray-200 bg-gray-50'
+                    }`}
+                  >
+                    <span className="block font-black">Monthly Bullet</span>
+                    <span className="text-[9px] text-gray-500">Paybill auto-collect</span>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-bold mb-1">Loan Purpose & Business Use:</label>
                 <textarea
                   required
                   rows={2}
@@ -852,6 +935,14 @@ export function ChamaDesk({
                   onChange={(e) => setLoanPurpose(e.target.value)}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-xs text-[#0D1117] focus:outline-none focus:border-[#2563EB]"
                 />
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-950 text-[10px] space-y-0.5">
+                <span className="font-black flex items-center space-x-1">
+                  <BadgeCheck className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Pezesha Alternative Scoring Active (Grade AAA)</span>
+                </span>
+                <p>Based on {loanBorrower}&apos;s M-Pesa turnover and 100% rotational Chama repayment record.</p>
               </div>
 
               <div className="pt-2 flex gap-2">
@@ -864,9 +955,9 @@ export function ChamaDesk({
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 rounded-xl bg-[#FF5A1F] text-white font-black text-xs uppercase tracking-wider"
+                  className="flex-1 py-2.5 rounded-xl bg-[#0D1117] text-white font-black text-xs uppercase tracking-wider"
                 >
-                  Submit Application
+                  Submit for Pezesha Disbursal
                 </button>
               </div>
             </form>
@@ -874,13 +965,13 @@ export function ChamaDesk({
         </div>
       )}
 
-      {/* ── SECURE OFFLINE LEDGER STAMP ── */}
+      {/* ── SECURE OFFLINE LEDGER & PEZESHA STAMP ── */}
       <div className="px-5 py-3 bg-gray-50/80 border-t border-gray-100 flex items-center justify-between text-[10px] font-mono text-gray-500">
         <div className="flex items-center space-x-1.5">
           <Lock className="w-3 h-3 text-emerald-600" />
-          <span>Offline P2P Ledger: <b>0x9B84...F2A</b></span>
+          <span>Pezesha DCP Rails &amp; Offline P2P Ledger: <b>0x9B84...F2A</b></span>
         </div>
-        <span>Zero-Trust M-Pesa Audited</span>
+        <span>Zero Balance Sheet Risk</span>
       </div>
 
       {/* ── NON-PROMISES DISCLAIMER (NEIGHBORHOOD TRUST OS) ── */}
