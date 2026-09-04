@@ -29,6 +29,14 @@ import { OfflineSyncQueueDesk } from '../components/offline/OfflineSyncQueueDesk
 import { UniversalCreatePostModal } from '../components/posts/UniversalCreatePostModal';
 import { DiscoverScreen } from './DiscoverScreen';
 import { BriefBuilderSection, WairoBookmark } from '../components/ui';
+import {
+  NEIGHBORHOODS,
+  Neighborhood,
+  getPrimaryNeighborhood,
+  setPrimaryNeighborhood
+} from '../model/neighborhoods';
+import { NeighborhoodPickerModal } from '../components/neighborhood/NeighborhoodPickerModal';
+import { CommunityChampionModal } from '../components/neighborhood/CommunityChampionModal';
 import { soundEngine } from '../utils/SoundEngine';
 import type { BriefObject, Destination, NearbySection, Pursuit, Quest, TeaEdition, WorkflowSection } from '../model/core';
 import type { AuthedUser, PersonalState } from '../api/briefApi';
@@ -227,6 +235,9 @@ export function NearbyScreen(props: NearbyScreenProps) {
     } catch { return []; }
   });
   const [searchFocused, setSearchFocused] = React.useState(false);
+  const [activeNeighborhood, setActiveNeighborhood] = useState<Neighborhood>(() => getPrimaryNeighborhood());
+  const [isNeighborhoodPickerOpen, setIsNeighborhoodPickerOpen] = useState(false);
+  const [isChampionModalOpen, setIsChampionModalOpen] = useState(false);
   const [committeeOpen, setCommitteeOpen] = useState(false);
   const [chamaOpen, setChamaOpen] = useState(false);
   const [wellbeingOpen, setWellbeingOpen] = useState(false);
@@ -493,7 +504,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                             setSelectedObjectType('experience');
                             setDiscoveryTab('events');
                           } else if (opp.category === 'learning') {
-                            setBriefAiOpen(true);
+                            showToast('Opening verified learning workshops');
                           } else if (opp.category === 'thrift') {
                             setSelectedObjectType('product');
                             setDiscoveryTab('explore');
@@ -1919,6 +1930,27 @@ export function NearbyScreen(props: NearbyScreenProps) {
             }}
           />
         )}
+
+        {/* ================= MODAL: NEIGHBORHOOD PICKER (WEEK 2) ================= */}
+        <NeighborhoodPickerModal
+          isOpen={isNeighborhoodPickerOpen}
+          selectedId={activeNeighborhood.id}
+          onSelect={(nh: Neighborhood) => {
+            setActiveNeighborhood(nh);
+            setPrimaryNeighborhood(nh.id);
+            showToast(`Neighborhood updated to ${nh.name}`);
+          }}
+          onClose={() => setIsNeighborhoodPickerOpen(false)}
+        />
+
+        {/* ================= MODAL: COMMUNITY CHAMPION (WEEK 2) ================= */}
+        <CommunityChampionModal
+          isOpen={isChampionModalOpen}
+          neighborhood={activeNeighborhood}
+          onClose={() => setIsChampionModalOpen(false)}
+          onCallChampion={(phone: string) => showToast(`Calling ${activeNeighborhood.champion.name} (${phone})`)}
+          onVouchRider={() => showToast(`Vouch form opened for ${activeNeighborhood.name}`)}
+        />
     </>
   );
 }

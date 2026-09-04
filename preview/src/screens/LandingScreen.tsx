@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Menu,
   MapPin,
@@ -17,7 +17,11 @@ import {
   Search,
   CheckCircle2,
   CalendarDays,
-  Bike
+  Bike,
+  ShieldCheck,
+  ChevronDown,
+  Award,
+  Phone
 } from 'lucide-react';
 import {
   IronSheet,
@@ -43,6 +47,14 @@ import { InterCountyDesk } from '../components/wairo/InterCountyDesk';
 import { UniversalCreatePostModal, Post } from '../components/posts/UniversalCreatePostModal';
 import { SheetDetailScreen, SheetDetailScreenProps } from './SheetDetailScreen';
 import { SubcategoryDrillScreen, SubcategoryDrillScreenProps } from './SubcategoryDrillScreen';
+import {
+  NEIGHBORHOODS,
+  Neighborhood,
+  getPrimaryNeighborhood,
+  setPrimaryNeighborhood
+} from '../model/neighborhoods';
+import { NeighborhoodPickerModal } from '../components/neighborhood/NeighborhoodPickerModal';
+import { CommunityChampionModal } from '../components/neighborhood/CommunityChampionModal';
 import { soundEngine } from '../utils/SoundEngine';
 
 export interface LandingScreenProps {
@@ -54,6 +66,11 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
   onNavigateTab,
   selectedLocation = "Lang'ata"
 }) => {
+  // Primary Neighborhood State (Week 2: Neighborhood Identity)
+  const [activeNeighborhood, setActiveNeighborhood] = useState<Neighborhood>(() => getPrimaryNeighborhood());
+  const [isNeighborhoodPickerOpen, setIsNeighborhoodPickerOpen] = useState(false);
+  const [isChampionModalOpen, setIsChampionModalOpen] = useState(false);
+
   // Section Switcher State (0: Today, 1: Districts, 2: Shelf)
   const [selectedSection, setSelectedSection] = useState<0 | 1 | 2>(0);
   const [activeBottomNav, setActiveBottomNav] = useState<number>(1); // 1 = Nearby/Home
@@ -63,6 +80,17 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
   const [wairoMiniAppOpen, setWairoMiniAppOpen] = useState(false);
   const [wairoLocation, setWairoLocation] = useState<WairoLocation>(LOCATIONS[0]);
   const [wairoDelivery, setWairoDelivery] = useState<WairoDelivery>(INITIAL_ACTIVE_DELIVERY);
+
+  // Sync wairo location with active neighborhood when neighborhood changes
+  const handleSelectNeighborhood = (nh: Neighborhood) => {
+    setActiveNeighborhood(nh);
+    setPrimaryNeighborhood(nh.id);
+    const matchedLoc = LOCATIONS.find((l) => l.id.toLowerCase() === nh.id.toLowerCase());
+    if (matchedLoc) {
+      setWairoLocation(matchedLoc);
+    }
+    showToast(`Neighborhood switched to ${nh.name} (${nh.zone})`);
+  };
 
   // Wairo Submodals
   const [isTelemetryOpen, setIsTelemetryOpen] = useState(false);
@@ -134,24 +162,82 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
       {/* ================= SCROLLABLE VIEWPORT ================= */}
       <div className="max-w-xl mx-auto px-4 sm:px-6 pt-3 pb-36 min-h-screen">
         
-        {/* ── COMPACT HEADER ── */}
-        <header className="pr-20 py-2 flex items-center space-x-3">
-          <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-[#8B4FFF] to-[#E85D75] flex items-center justify-center text-white font-black text-lg shadow-md shrink-0">
-            L
+        {/* ── COMPACT HEADER WITH NEIGHBORHOOD IDENTITY ── */}
+        <header className="pr-20 py-2 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#8B4FFF] to-[#E85D75] flex items-center justify-center text-white font-black text-lg shadow-md shrink-0">
+              L
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#6B7280]">
+                AROUND YOU
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  soundEngine.play('tap');
+                  setIsNeighborhoodPickerOpen(true);
+                }}
+                className="flex items-center space-x-1.5 text-left group cursor-pointer"
+              >
+                <h1 className="text-2xl font-black text-[#1A1F2E] leading-none tracking-tight group-hover:text-[#B8621F] transition-colors">
+                  Home · {activeNeighborhood.name}
+                </h1>
+                <ChevronDown className="w-4 h-4 text-[#6B7280] group-hover:text-[#B8621F]" />
+              </button>
+            </div>
           </div>
-          <div className="flex flex-col">
-            <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#6B7280]">
-              AROUND YOU
+
+          <button
+            type="button"
+            onClick={() => {
+              soundEngine.play('tap');
+              setIsChampionModalOpen(true);
+            }}
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-white/80 hover:bg-white text-[#1A1F2E] text-xs font-black shadow-sm transition-transform active:scale-95 cursor-pointer"
+          >
+            <span className="text-sm">{activeNeighborhood.champion.avatar}</span>
+            <span className="hidden sm:inline text-[11px]">{activeNeighborhood.champion.name}</span>
+            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-800 font-extrabold uppercase">
+              Champion
             </span>
-            <h1 className="text-2xl font-black text-[#1A1F2E] leading-none tracking-tight">
-              Home
-            </h1>
-          </div>
+          </button>
         </header>
+
+        {/* ── NEIGHBORHOOD 3KM MICRO-HUB LIVE BANNER ── */}
+        <div className="my-2 p-3.5 rounded-2xl bg-[#1A1F2E] text-white flex items-center justify-between shadow-sm">
+          <div className="flex items-center space-x-2.5 overflow-hidden">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+            <div className="space-y-0.5 min-w-0">
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-black text-white truncate">
+                  {activeNeighborhood.name} Micro-Hub
+                </span>
+                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#00BFEF]/20 text-[#00BFEF] font-bold">
+                  {activeNeighborhood.stats.activeRidersCount} BODA RIDERS
+                </span>
+              </div>
+              <p className="text-[11px] text-gray-300 truncate">
+                {activeNeighborhood.recentActivity[0]?.text || activeNeighborhood.tagline}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              soundEngine.play('tap');
+              setIsNeighborhoodPickerOpen(true);
+            }}
+            className="ml-2 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[10px] font-bold text-gray-200 transition-colors cursor-pointer shrink-0"
+          >
+            Switch
+          </button>
+        </div>
 
         {/* ── BRIEF BUILDER STRIP & CUSTOMIZER ── */}
         <BriefBuilderSection
-          initialCities={['Machakos']}
+          initialCities={[activeNeighborhood.name]}
           onBuildBrief={({ cities, interests }) => {
             showToast(`Brief calibrated for ${cities.length} places & ${interests.length} topics!`);
           }}
@@ -194,10 +280,10 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
               <div className="flex items-center space-x-2">
                 <span className="w-2 h-2 rounded-full bg-[#E8985E]" />
                 <span className="text-xs font-black tracking-widest uppercase text-[#1A1F2E]">
-                  Today's Opportunities
+                  Today in {activeNeighborhood.name}
                 </span>
               </div>
-              <span className="text-[11px] font-semibold text-[#6B7280]">Live</span>
+              <span className="text-[11px] font-semibold text-[#6B7280]">Live · 3km Radius</span>
             </div>
 
             {/* 2-Column IronSheet Grid (WAIRO · Chamas · Gigs · Events) */}
@@ -205,19 +291,19 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
               <IronSheet
                 material="jade"
                 title="Paid Gigs"
-                subtitle="Waiter · Delivery · Cashier"
-                bigNumber="3"
+                subtitle={activeNeighborhood.activeGigs[0]?.title || "Waiter · Delivery · Cashier"}
+                bigNumber={String(activeNeighborhood.stats.verifiedGigsCount || 3)}
                 badge="GIGS"
                 animationDelayMs={0}
                 onTap={() =>
                   openCategoryDetail({
                     material: 'jade',
-                    title: 'Paid Gigs',
-                    subtitle: 'Waiter · Delivery · Cashier · Live opportunities',
+                    title: `${activeNeighborhood.name} Paid Gigs`,
+                    subtitle: `${activeNeighborhood.activeGigs[0]?.employer || 'Local Businesses'} · 48h settlement`,
                     emoji: '💼',
                     badge: 'GIGS',
                     heroDescription:
-                      'Verified local employers post gigs daily. Apply once, get matched instantly, and receive payment within 48 hours. No agency fees. No middlemen.'
+                      `Verified employers in ${activeNeighborhood.name} post gigs daily. Apply once, get matched instantly, and receive payment within 48 hours. No agency fees.`
                   })
                 }
               />
@@ -225,7 +311,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
               <IronSheet
                 material="steel"
                 title="Fresh Harvest"
-                subtitle="Avocados & Honey from Nyeri"
+                subtitle="Avocados & Produce from Nyamataro"
                 bigNumber="5"
                 badge="PRODUCE"
                 animationDelayMs={80}
@@ -245,7 +331,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
               <IronSheet
                 material="copper"
                 title="WAIRO Logistics"
-                subtitle="Courier · Errands · Cargo"
+                subtitle={`${activeNeighborhood.activeRiders[0]?.name || 'Otieno'} · ${activeNeighborhood.activeRiders[0]?.distance || '0.4 km'} · ${activeNeighborhood.activeRiders[0]?.eta || '3 mins'}`}
                 emoji="📦"
                 badge="90/10"
                 animationDelayMs={160}
@@ -258,7 +344,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
               <IronSheet
                 material="obsidian"
                 title="Chama Savings"
-                subtitle="Cycle 5 · 14 Members Live"
+                subtitle={`${activeNeighborhood.activeChamas[0]?.name || 'Traders Circle'} · ${activeNeighborhood.activeChamas[0]?.cycle || 'Cycle 5'}`}
                 emoji="🌸"
                 badge="CHAMA"
                 animationDelayMs={240}
@@ -266,26 +352,6 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                   soundEngine.play('heavyTap');
                   setChamaOpen(true);
                 }}
-              />
-
-              <IronSheet
-                material="brass"
-                title="Events & Markets"
-                subtitle="Live gigs & street markets"
-                emoji="🎉"
-                badge="EVENTS"
-                animationDelayMs={320}
-                onTap={() =>
-                  openCategoryDetail({
-                    material: 'brass',
-                    title: 'Local Events & Markets',
-                    subtitle: 'Live music, weekend flea markets, and neighbourhood drops',
-                    emoji: '🎉',
-                    badge: 'EVENTS',
-                    heroDescription:
-                      'Discover real community happenings, local gigs, and verified flea market popups near you.'
-                  })
-                }
               />
             </div>
           </div>
@@ -299,7 +365,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
               <div className="flex items-center space-x-2">
                 <span className="w-2 h-2 rounded-full bg-[#E8985E]" />
                 <span className="text-xs font-black tracking-widest uppercase text-[#1A1F2E]">
-                  Town Centre Districts
+                  Town Centre Districts · {activeNeighborhood.name}
                 </span>
               </div>
               <span className="text-[11px] font-semibold text-[#6B7280]">4 Core Pillars</span>
@@ -323,17 +389,17 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
               <IronSheet
                 material="obsidian"
                 title="Chama & Table Bank"
-                subtitle="Merry-Go-Round · Rotational"
+                subtitle={activeNeighborhood.activeChamas[0]?.name || "Merry-Go-Round · Rotational"}
                 emoji="🌸"
-                badge="CYCLE 5"
+                badge={activeNeighborhood.activeChamas[0]?.cycle || "CYCLE 5"}
                 animationDelayMs={80}
                 onTap={() =>
                   openHubDetail({
                     material: 'obsidian',
                     title: 'Chama & Table Bank',
-                    subtitle: 'Cycle 5 · 14 Members · KES 28,000 pool',
+                    subtitle: `${activeNeighborhood.name} verified circular savings`,
                     emoji: '🌸',
-                    badge: 'CYCLE 5',
+                    badge: 'CHAMA',
                     heroDescription:
                       'Transparent community savings, rotational payouts, and micro-loans with instant M-Pesa ledger verification.',
                     onJoinSuccess: () => setChamaOpen(true)
@@ -430,13 +496,19 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                   onTap={() =>
                     openCategoryDetail({
                       material: 'brass',
-                      title: 'Community Events',
-                      subtitle: 'Upcoming gatherings & markets',
+                      title: 'Community Events & Pop-ups',
+                      subtitle: 'Live performances, weekend markets & gatherings',
                       emoji: '🎉',
                       badge: 'EVENTS',
                       heroDescription: 'Local events, cultural nights, and community gatherings.'
                     })
                   }
+                />
+                <MetalTag
+                  label="Champion Desk"
+                  icon={<ShieldCheck className="w-3.5 h-3.5" />}
+                  material="brass"
+                  onTap={() => setIsChampionModalOpen(true)}
                 />
                 <MetalTag
                   label="Harambee"
@@ -745,6 +817,23 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
           </div>
         </div>
       )}
+
+      {/* ================= MODAL: NEIGHBORHOOD PICKER (WEEK 2) ================= */}
+      <NeighborhoodPickerModal
+        isOpen={isNeighborhoodPickerOpen}
+        selectedId={activeNeighborhood.id}
+        onSelect={handleSelectNeighborhood}
+        onClose={() => setIsNeighborhoodPickerOpen(false)}
+      />
+
+      {/* ================= MODAL: COMMUNITY CHAMPION (WEEK 2) ================= */}
+      <CommunityChampionModal
+        isOpen={isChampionModalOpen}
+        neighborhood={activeNeighborhood}
+        onClose={() => setIsChampionModalOpen(false)}
+        onCallChampion={(phone: string) => showToast(`Calling ${activeNeighborhood.champion.name} (${phone})`)}
+        onVouchRider={() => showToast(`Vouch form opened for ${activeNeighborhood.name}`)}
+      />
 
       {/* ================= MODAL: POST CREATOR ================= */}
       {createPostOpen && (
