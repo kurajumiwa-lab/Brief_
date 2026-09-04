@@ -467,8 +467,33 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
 
         <p className="flex items-center gap-1.5 px-1 pt-1 text-[9.5px] text-[#0D1117]/60">
           <Lock className="h-3 w-3 shrink-0" aria-hidden="true" />
-          Coming later — Courses · Data desk · Premium
+          Coming later — Courses · Data desk · Premium (regulatory review in progress)
         </p>
+
+        {/* ── HOW BRIEF WORKS (NEIGHBORHOOD TRUST OS) ── */}
+        <div className="p-4 rounded-2xl bg-[#F0EDE8] space-y-2 mt-4">
+          <span className="text-xs font-black uppercase tracking-wider text-[#1A1F2E] block">
+            How Brief Works · Neighborhood Trust OS
+          </span>
+          <ul className="text-[11px] text-[#4A5568] space-y-1.5 leading-relaxed">
+            <li className="flex items-start gap-1.5">
+              <span>•</span>
+              <span><strong>Brief is not a bank:</strong> Brief does not hold your money or deposit funds.</span>
+            </li>
+            <li className="flex items-start gap-1.5">
+              <span>•</span>
+              <span><strong>Direct M-Pesa Rails:</strong> Money moves directly between members using M-Pesa.</span>
+            </li>
+            <li className="flex items-start gap-1.5">
+              <span>•</span>
+              <span><strong>Self-Governing Groups:</strong> Chamas and Harambees govern themselves with transparent ledgers.</span>
+            </li>
+            <li className="flex items-start gap-1.5">
+              <span>•</span>
+              <span><strong>Direct Peer Logistics:</strong> WAIRO connects senders with independent verified riders (90/10 split).</span>
+            </li>
+          </ul>
+        </div>
       </div>
       </div>
     </div>

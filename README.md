@@ -1,12 +1,21 @@
-# Brief
+# Brief Kenya — Neighborhood Trust OS
 
-An information layer for what is happening around you. Brief structures what
-communities already post — on Telegram, on the web, in feeds — into objects you
-can find, verify and act on. It is deliberately **not** a marketplace: commerce
-happens inside context, reached through discovery. And through **Mshikano**,
-members cooperate directly — stating what they have, need, can help with or
-are looking for — building a record of confirmed cooperation rather than a
-wall of ratings.
+**The operating system for how Kenyan neighborhoods coordinate money, work, and favors — without pretending to be a bank.**
+
+Brief is built around four hyper-local core pillars:
+1. **WAIRO** — Send things across town (courier & errands, 90/10 payout, local & inter-county toggle)
+2. **Chama OS** — Run rotating savings groups, merry-go-rounds & table banks with self-governing ledgers
+3. **Harambee Desks** — Coordinate community support, bereavement & emergency funds
+4. **Local Gigs** — Find verified micro-work with 48h settlement in your neighborhood
+
+---
+
+## Non-Promises Disclaimers & Trust Architecture
+
+- **Brief is not a bank:** Brief does not hold user funds, provide banking services, or manage investments.
+- **Direct M-Pesa Rails:** Money moves directly between members using standard M-Pesa channels.
+- **Self-Governing Groups:** Chamas and Harambees maintain transparent records and govern themselves.
+- **Direct Peer Logistics:** WAIRO connects senders with independent verified riders.
 
 ---
 

@@ -27,7 +27,7 @@ import { InterCountyDesk } from '../components/wairo/InterCountyDesk';
 import { PrivateCarrierAuctionDesk } from '../components/wairo/PrivateCarrierAuctionDesk';
 import { OfflineSyncQueueDesk } from '../components/offline/OfflineSyncQueueDesk';
 import { UniversalCreatePostModal } from '../components/posts/UniversalCreatePostModal';
-import { DiscoverScreen } from './DiscoverScreen';
+import { DiscoverScreen, DiscoverSection } from './DiscoverScreen';
 import { BriefBuilderSection, WairoBookmark } from '../components/ui';
 import {
   NEIGHBORHOODS,
@@ -696,31 +696,23 @@ export function NearbyScreen(props: NearbyScreenProps) {
                   {discoveryTab === 'home' && sessionUser && personalState && (
                     <section className="mb-8" aria-label="My Brief">
                       <BriefBuilderSection
-                        initialCities={personalPicks.locations.length > 0 ? personalPicks.locations : ['Machakos', 'Kilimani', 'Westlands']}
-                        initialInterests={personalPicks.topics.length > 0 ? personalPicks.topics : ['Jobs', 'Food', 'Experience']}
+                        suggestedLocations={personalState.suggestedLocations?.length ? personalState.suggestedLocations : ['Machakos', 'Kilimani', 'Westlands']}
+                        availableTypes={availableTypes.map(t => ({ id: t, label: getObjectTypeMeta(t).label }))}
+                        topics={personalState.topics ?? []}
+                        initialCities={personalPicks.locations}
+                        initialTypes={personalPicks.types}
+                        initialInterests={personalPicks.topics}
                         initialExpanded={!personalHasInterests && !personalBriefDismissed}
                         followedCount={(personalState.followed ?? []).length}
                         updatesCount={notifUnread}
                         onCityToggle={(city) => togglePersonalPick('locations', city)}
-                        onInterestToggle={(interest) => {
-                          const lc = interest.toLowerCase();
-                          if (['experience', 'offer', 'place', 'event', 'opportunity'].includes(lc)) {
-                            togglePersonalPick('types', lc);
-                          } else {
-                            togglePersonalPick('topics', interest);
-                          }
-                        }}
+                        onTypeToggle={(typeId) => togglePersonalPick('types', typeId)}
+                        onTopicToggle={(topicId) => togglePersonalPick('topics', topicId)}
                         onSkip={() => setPersonalBriefDismissed(true)}
-                        onBuildBrief={({ cities, interests }) => {
-                          cities.forEach(c => { if (!personalPicks.locations.includes(c)) togglePersonalPick('locations', c); });
-                          interests.forEach(i => {
-                            const lc = i.toLowerCase();
-                            if (['experience', 'offer', 'place', 'event', 'opportunity'].includes(lc)) {
-                              if (!personalPicks.types.includes(lc)) togglePersonalPick('types', lc);
-                            } else {
-                              if (!personalPicks.topics.includes(i)) togglePersonalPick('topics', i);
-                            }
-                          });
+                        onBuildBrief={({ cities, types, topics: selectedTopics }) => {
+                          (cities || []).forEach(c => { if (!personalPicks.locations.includes(c)) togglePersonalPick('locations', c); });
+                          (types || []).forEach(t => { if (!personalPicks.types.includes(t)) togglePersonalPick('types', t); });
+                          (selectedTopics || []).forEach(top => { if (!personalPicks.topics.includes(top)) togglePersonalPick('topics', top); });
                           void savePersonalBrief();
                         }}
                         onOpenCollections={() => setCollectionsOpen(true)}
@@ -1706,6 +1698,11 @@ export function NearbyScreen(props: NearbyScreenProps) {
                 <p className="text-sm font-bold">No tea in this edition yet.</p>
               </div>
             )}
+
+            {/* ── 2x2 DISCOVERY SECTION (TASK 8) ── */}
+            <div className="mt-8 border-t border-black/5 pt-4">
+              <DiscoverSection onSelectPost={(p) => showToast(`Selected "${p.title}"`)} />
+            </div>
           </section>
         )}
         {nearbySection === 'quests' && (

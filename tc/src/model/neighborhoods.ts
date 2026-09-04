@@ -788,6 +788,56 @@ export const NEIGHBORHOODS: Neighborhood[] = [
 ];
 
 const STORAGE_KEY = 'brief_primary_neighborhood_id';
+const LOCK_KEY = 'brief_neighborhood_locked_until';
+const JOIN_DATE_KEY = 'brief_neighborhood_joined_date';
+
+export interface UserTrustProfile {
+  primary_neighborhood: string;
+  neighborhood_locked_until: string;
+  reputation_score: {
+    wairo: number;
+    chama: number;
+    harambee: number;
+    gigs: number;
+  };
+  is_community_champion: boolean;
+  joined_neighborhood_date: string;
+  trust_flags: string[];
+}
+
+export interface GroupTrustProfile {
+  membership_type: 'invite_only' | 'champion_approved_public';
+  trust_score: number;
+  is_verified: boolean;
+  visibility: 'private' | 'neighborhood' | 'citywide';
+  dispute_count: number;
+}
+
+export function isNewToNeighborhood(joinedDate?: string): boolean {
+  if (!joinedDate) return true;
+  const joinedMs = Date.parse(joinedDate);
+  if (isNaN(joinedMs)) return false;
+  const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+  return Date.now() - joinedMs < thirtyDaysMs;
+}
+
+export function canChangeNeighborhood(): { allowed: boolean; remainingDays: number } {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const lockedUntilStr = window.localStorage.getItem(LOCK_KEY);
+      if (lockedUntilStr) {
+        const lockedUntilMs = Date.parse(lockedUntilStr);
+        if (!isNaN(lockedUntilMs) && Date.now() < lockedUntilMs) {
+          const remainingDays = Math.ceil((lockedUntilMs - Date.now()) / (24 * 60 * 60 * 1000));
+          return { allowed: false, remainingDays };
+        }
+      }
+    }
+  } catch {
+    // Fallback
+  }
+  return { allowed: true, remainingDays: 0 };
+}
 
 export function getPrimaryNeighborhood(): Neighborhood {
   try {
@@ -804,14 +854,23 @@ export function getPrimaryNeighborhood(): Neighborhood {
   return NEIGHBORHOODS[0]; // Kilimani default
 }
 
-export function setPrimaryNeighborhood(id: string): Neighborhood {
+export function setPrimaryNeighborhood(id: string): { neighborhood: Neighborhood; lockedUntil: string } {
   const found = NEIGHBORHOODS.find((n) => n.id === id) || NEIGHBORHOODS[0];
+  const lockDate = new Date();
+  lockDate.setDate(lockDate.getDate() + 90);
+  const lockedUntil = lockDate.toISOString();
+  const joinedDate = new Date().toISOString();
+
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
       window.localStorage.setItem(STORAGE_KEY, found.id);
+      window.localStorage.setItem(LOCK_KEY, lockedUntil);
+      if (!window.localStorage.getItem(JOIN_DATE_KEY)) {
+        window.localStorage.setItem(JOIN_DATE_KEY, joinedDate);
+      }
     }
   } catch {
     // Ignore storage failure
   }
-  return found;
+  return { neighborhood: found, lockedUntil };
 }

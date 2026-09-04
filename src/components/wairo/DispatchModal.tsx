@@ -303,6 +303,11 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
             )}
           </button>
 
+          {/* ── NON-PROMISES DISCLAIMER (NEIGHBORHOOD TRUST OS) ── */}
+          <p className="text-[10px] text-gray-400 text-center leading-snug px-2">
+            You are booking a rider directly. Brief connects you and records the trip — resolving issues is between you and the rider, with support from your Community Champion if needed.
+          </p>
+
         </form>
 
       </div>

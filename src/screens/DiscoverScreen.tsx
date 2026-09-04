@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Sparkles,
   CalendarDays,
@@ -14,7 +14,9 @@ import {
   Tag,
   Share2,
   Check,
-  ExternalLink
+  ExternalLink,
+  Users,
+  Bike
 } from 'lucide-react';
 import {
   DepthBackground,
@@ -23,7 +25,7 @@ import {
   VisualToggle,
   VisualToggleOption
 } from '../components/ui';
-import { AppPalette, AppTypography, AppSpacing } from '../styles/appPalette';
+import { AppPalette } from '../styles/appPalette';
 import { UniversalCreatePostModal, Post } from '../components/posts/UniversalCreatePostModal';
 import { soundEngine } from '../utils/SoundEngine';
 
@@ -42,13 +44,13 @@ export interface DiscoverPost {
   telegram?: string;
 }
 
-const INITIAL_POSTS: DiscoverPost[] = [
+export const INITIAL_DISCOVER_POSTS: DiscoverPost[] = [
   {
     id: 'post-1',
     title: 'Kilimani Weekend Creators Market & Live Acoustic',
     description: 'Join local artisans, organic coffee roasters, and live vinyl DJs at the Kilimani Community Grounds. Over 40 verified creative vendors.',
     image: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&auto=format&fit=crop',
-    date: 'Jun 15',
+    date: 'Saturday',
     time: '11:00 AM',
     location: 'Kilimani Grounds, Nairobi',
     type: 'event',
@@ -92,38 +94,107 @@ const INITIAL_POSTS: DiscoverPost[] = [
     author: 'Kitui Pure Harvest',
     phone: '+254733445566',
     telegram: 'kitui_honey'
-  },
-  {
-    id: 'post-5',
-    title: 'Nairobi Tech Founders & Esports Meetup',
-    description: 'Casual networking evening for gaming clan leads, indie devs, and tech founders. Fast internet, FIFA tournament bracket, and bites.',
-    image: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=800&auto=format&fit=crop',
-    date: 'Jun 20',
-    time: '06:00 PM',
-    location: 'Sarit Centre Tech Hub',
-    type: 'event',
-    author: 'Brief Arena League',
-    phone: '+254799887766',
-    telegram: 'brief_arena_ke'
-  },
-  {
-    id: 'post-6',
-    title: 'Handmade Kitenge Laptop Sleeve (14-16 inch)',
-    description: 'Water-resistant padded sleeve crafted with authentic East African wax print fabric and heavy-duty brass zippers.',
-    image: 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=800&auto=format&fit=crop',
-    price: 'KES 1,800',
-    location: 'Eastleigh Duka',
-    type: 'product',
-    author: 'AfroThreads Nairobi',
-    phone: '+254711223344',
-    telegram: 'afrothreads'
   }
 ];
+
+export const DiscoverSection: React.FC<{
+  onSelectPost?: (post: DiscoverPost) => void;
+}> = ({ onSelectPost }) => {
+  const [selectedCategory, setSelectedCategory] = useState<number>(0);
+
+  const categories: VisualToggleOption[] = [
+    { id: 'all', label: 'All', icon: <Sparkles className="w-5 h-5" /> },
+    { id: 'events', label: 'Events', icon: <CalendarDays className="w-5 h-5" /> },
+    { id: 'wairo', label: 'WAIRO', icon: <Bike className="w-5 h-5" /> },
+    { id: 'chamas', label: 'Chamas', icon: <Users className="w-5 h-5" /> }
+  ];
+
+  const filteredPosts = INITIAL_DISCOVER_POSTS.filter((p) => {
+    if (selectedCategory === 1) return p.type === 'event';
+    if (selectedCategory === 2) return p.type === 'product';
+    return true;
+  });
+
+  return (
+    <div className="space-y-6 pt-4">
+      {/* 2x2 Clean Minimal Switcher Grid */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-black uppercase tracking-wider text-[#1A1F2E]">
+            Neighborhood Discover
+          </span>
+          <span className="text-[10px] font-mono font-bold text-[#6B7280]">
+            ESTATE FEED
+          </span>
+        </div>
+
+        <VisualToggle
+          options={categories}
+          selectedIndex={selectedCategory}
+          onChanged={(idx) => {
+            soundEngine.play('tap');
+            setSelectedCategory(idx);
+          }}
+        />
+      </div>
+
+      {/* Large Full-Width Image Cards with Soft Bottom Gradient Overlays */}
+      <div className="space-y-4">
+        {filteredPosts.map((post) => (
+          <div
+            key={post.id}
+            onClick={() => onSelectPost?.(post)}
+            className="group relative aspect-[16/10] w-full rounded-3xl overflow-hidden shadow-lg cursor-pointer transition-transform duration-300 hover:scale-[1.01] active:scale-[0.99] bg-[#1A1F2E]"
+          >
+            <img
+              src={post.image}
+              alt={post.title}
+              loading="lazy"
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />
+
+            {post.price && (
+              <div className="absolute top-3.5 right-3.5 px-3 py-1.5 rounded-full bg-[#B8621F] text-white text-xs font-black shadow-md">
+                {post.price}
+              </div>
+            )}
+            {post.date && (
+              <div className="absolute top-3.5 right-3.5 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-md text-white text-xs font-bold flex items-center space-x-1 shadow-md">
+                <CalendarDays className="w-3.5 h-3.5" />
+                <span>{post.date}</span>
+              </div>
+            )}
+
+            <div className="absolute bottom-4 left-4 right-4 text-white space-y-1">
+              <div className="flex items-center space-x-2">
+                <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded-full bg-white/20 text-white font-black">
+                  {post.type.toUpperCase()}
+                </span>
+                <span className="text-[11px] text-gray-300 flex items-center space-x-1">
+                  <MapPin className="w-3 h-3 text-[#E8985E]" />
+                  <span>{post.location}</span>
+                </span>
+              </div>
+
+              <h3 className="text-base sm:text-lg font-black text-white leading-snug drop-shadow-md">
+                {post.title}
+              </h3>
+              <p className="text-xs text-gray-200 line-clamp-1 leading-relaxed opacity-90">
+                {post.description}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 export const DiscoverScreen: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<number>(0);
   const [scrollOffset, setScrollOffset] = useState<number>(0);
-  const [posts, setPosts] = useState<DiscoverPost[]>(INITIAL_POSTS);
+  const [posts, setPosts] = useState<DiscoverPost[]>(INITIAL_DISCOVER_POSTS);
   const [activeDetailPost, setActiveDetailPost] = useState<DiscoverPost | null>(null);
   const [createPostModalOpen, setCreatePostModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -181,19 +252,13 @@ export const DiscoverScreen: React.FC = () => {
 
   return (
     <div className="relative min-h-screen w-full bg-[#F0EDE8] overflow-x-hidden font-sans">
-      
-      {/* 3D Depth Layer Backdrop */}
       <DepthBackground scrollOffset={scrollOffset} className="min-h-screen">
-        
         <div
           onScroll={(e) => setScrollOffset((e.target as HTMLDivElement).scrollTop)}
           className="relative max-w-xl mx-auto px-4 sm:px-6 pt-6 pb-36 min-h-screen overflow-y-auto"
         >
-          
-          {/* ================= HEADER ================= */}
+          {/* Header */}
           <header className="pt-2 pb-6 space-y-6">
-            
-            {/* Greeting & Avatar */}
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <span className="text-sm font-medium text-[#F0EDE8]/70 block">
@@ -204,7 +269,6 @@ export const DiscoverScreen: React.FC = () => {
                 </h1>
               </div>
 
-              {/* Profile Avatar with Ambient Glow */}
               <button
                 type="button"
                 onClick={() => soundEngine.play('tap')}
@@ -219,7 +283,6 @@ export const DiscoverScreen: React.FC = () => {
               </button>
             </div>
 
-            {/* Visual Category Switcher */}
             <VisualToggle
               options={categories}
               selectedIndex={selectedCategory}
@@ -227,7 +290,7 @@ export const DiscoverScreen: React.FC = () => {
             />
           </header>
 
-          {/* ================= POST SHELF (STAGGERED GLASS CARDS) ================= */}
+          {/* Post Shelf */}
           <main className="space-y-4">
             {filteredPosts.map((post, idx) => (
               <GlassCard
@@ -235,20 +298,16 @@ export const DiscoverScreen: React.FC = () => {
                 padding="0px"
                 animationDelayMs={100 + idx * 80}
                 onTap={() => setActiveDetailPost(post)}
-                className="overflow-hidden group"
+                className="overflow-hidden group rounded-[20px]"
               >
-                {/* Full-bleed hero media */}
                 <div className="relative aspect-[16/10] w-full overflow-hidden rounded-t-[20px] bg-[#E8E4DD]">
                   <img
                     src={post.image}
                     alt={post.title}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
-
-                  {/* Gradient overlay for contrast */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
 
-                  {/* Price / Date Badge */}
                   {post.price && (
                     <div className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-white text-xs font-bold tracking-wide shadow-md"
                       style={{ backgroundColor: AppPalette.accent }}
@@ -266,14 +325,12 @@ export const DiscoverScreen: React.FC = () => {
                     </div>
                   )}
 
-                  {/* District / Author pill */}
                   <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm text-white px-2.5 py-1 rounded-lg text-[11px] font-mono flex items-center space-x-1">
                     <MapPin className="w-3 h-3 text-[#E8985E]" />
                     <span>{post.location || 'Nairobi Hub'}</span>
                   </div>
                 </div>
 
-                {/* Card Content */}
                 <div className="p-4 space-y-1.5 bg-[#FAFAF8]">
                   <h3 className="text-base font-bold text-[#1A1F2E] leading-snug group-hover:text-[#0B6E6E] transition-colors">
                     {post.title}
@@ -288,12 +345,10 @@ export const DiscoverScreen: React.FC = () => {
               </GlassCard>
             ))}
           </main>
-
         </div>
-
       </DepthBackground>
 
-      {/* ================= FLOATING ACTION PILL (CREATE BUTTON) ================= */}
+      {/* Floating Action Pill */}
       <div className="fixed bottom-6 left-0 right-0 flex justify-center z-40 pointer-events-none">
         <div className="pointer-events-auto">
           <FloatingPill
@@ -304,7 +359,7 @@ export const DiscoverScreen: React.FC = () => {
         </div>
       </div>
 
-      {/* ================= TOAST NOTIFICATION ================= */}
+      {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-[#1A1F2E] text-white text-xs font-bold shadow-2xl flex items-center space-x-2 animate-fadeIn border border-white/10">
           <Check className="w-4 h-4 text-[#2ECC71]" />
@@ -312,7 +367,7 @@ export const DiscoverScreen: React.FC = () => {
         </div>
       )}
 
-      {/* ================= POST DETAIL BOTTOM SHEET ================= */}
+      {/* Post Detail Bottom Sheet */}
       {activeDetailPost && (
         <div
           role="dialog"
@@ -324,15 +379,11 @@ export const DiscoverScreen: React.FC = () => {
             onClick={(e) => e.stopPropagation()}
             className="w-full max-w-xl mx-auto bg-[#FAFAF8] text-[#1A1F2E] rounded-t-[32px] overflow-hidden shadow-2xl max-h-[88vh] flex flex-col animate-slideUp"
           >
-            {/* Sheet Drag Handle */}
             <div className="w-full flex justify-center pt-3 pb-1">
               <div className="w-10 h-1 rounded-full bg-[#1A1F2E]/20" />
             </div>
 
-            {/* Scrollable Sheet Content */}
             <div className="overflow-y-auto flex-1 pb-6">
-              
-              {/* Hero Image */}
               <div className="relative aspect-video w-full overflow-hidden bg-[#E8E4DD]">
                 <img
                   src={activeDetailPost.image}
@@ -352,7 +403,6 @@ export const DiscoverScreen: React.FC = () => {
                 </button>
               </div>
 
-              {/* Body Details */}
               <div className="p-6 space-y-4">
                 <div className="space-y-1">
                   <div className="flex items-center space-x-2">
@@ -375,36 +425,10 @@ export const DiscoverScreen: React.FC = () => {
                   </h2>
                 </div>
 
-                {/* Price / Time Row */}
-                {(activeDetailPost.price || activeDetailPost.date) && (
-                  <div className="p-3.5 rounded-2xl bg-[#E8E4DD]/40 flex items-center justify-between text-xs font-bold">
-                    <div className="flex items-center space-x-2 text-[#0B6E6E]">
-                      {activeDetailPost.date ? (
-                        <>
-                          <CalendarDays className="w-4 h-4" />
-                          <span>{activeDetailPost.date} {activeDetailPost.time && `@ ${activeDetailPost.time}`}</span>
-                        </>
-                      ) : (
-                        <>
-                          <Tag className="w-4 h-4 text-[#E8985E]" />
-                          <span>In Stock • Ready for Pickup / Delivery</span>
-                        </>
-                      )}
-                    </div>
-
-                    {activeDetailPost.price && (
-                      <span className="text-base font-extrabold text-[#1A1F2E]">
-                        {activeDetailPost.price}
-                      </span>
-                    )}
-                  </div>
-                )}
-
                 <p className="text-sm text-[#6B7280] leading-relaxed">
                   {activeDetailPost.description}
                 </p>
 
-                {/* Direct Action Buttons: WhatsApp & Telegram */}
                 <div className="pt-2 space-y-2">
                   <span className="text-xs font-bold text-[#1A1F2E] block">
                     Contact Organizer / Seller Directly:
@@ -434,13 +458,11 @@ export const DiscoverScreen: React.FC = () => {
                 </div>
 
               </div>
-
             </div>
           </div>
         </div>
       )}
 
-      {/* ================= UNIVERSAL CREATE POST MODAL ================= */}
       {createPostModalOpen && (
         <UniversalCreatePostModal
           isOpen={createPostModalOpen}
@@ -448,7 +470,6 @@ export const DiscoverScreen: React.FC = () => {
           onPostCreated={handlePostCreated}
         />
       )}
-
     </div>
   );
 };

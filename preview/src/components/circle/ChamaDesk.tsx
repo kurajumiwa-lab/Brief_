@@ -722,6 +722,14 @@ export function ChamaDesk({
         </div>
       )}
 
+      {/* ── NON-PROMISES DISCLAIMER (NEIGHBORHOOD TRUST OS) ── */}
+      <div className="mt-6 p-4 rounded-2xl bg-black/5 text-[11px] text-gray-500 leading-relaxed space-y-1">
+        <span className="font-bold text-gray-700 block">Self-Governing Group Records</span>
+        <p>
+          Brief helps you organize your chama. Money moves directly between members through M-Pesa — Brief does not hold your funds and does not guarantee any payout. Your group governs itself.
+        </p>
+      </div>
+
     </div>
   );
 }

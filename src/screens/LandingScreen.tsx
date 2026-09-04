@@ -646,16 +646,38 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
             {/* Title & Status */}
             <div className="mt-4 space-y-1">
               <h2 className="text-2xl sm:text-3xl font-black text-white">
-                Courier & Errands
+                WAIRO · Courier & Errands
               </h2>
               <p className="text-sm text-white/85 flex items-center space-x-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>Currently in transit · {wairoLocation.name}</span>
+                <span>Active Boda Stage · {activeNeighborhood.name}</span>
               </p>
             </div>
 
+            {/* Mode Toggle: Local Errand vs Cross-County Cargo */}
+            <div className="mt-4 p-1 rounded-xl bg-black/20 flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => soundEngine.play('tap')}
+                className="flex-1 py-2 rounded-lg bg-white/25 text-white text-xs font-bold text-center cursor-pointer"
+              >
+                Local Errand (Boda)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  soundEngine.play('tap');
+                  setWairoSheetOpen(false);
+                  setInterCountyOpen(true);
+                }}
+                className="flex-1 py-2 rounded-lg text-white/70 hover:text-white text-xs font-bold text-center cursor-pointer"
+              >
+                Cross-County Cargo
+              </button>
+            </div>
+
             {/* Actions: Track, History, Book */}
-            <div className="mt-6 grid grid-cols-3 gap-2">
+            <div className="mt-4 grid grid-cols-3 gap-2">
               <MetalTag
                 label="Track"
                 icon={<Search className="w-3.5 h-3.5" />}
@@ -663,7 +685,16 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                 selected={true}
                 onTap={() => {
                   setWairoSheetOpen(false);
-                  setWairoMiniAppOpen(true);
+                  setIsTelemetryOpen(true);
+                }}
+              />
+              <MetalTag
+                label="Dispatch"
+                icon={<Plus className="w-3.5 h-3.5" />}
+                material="copper"
+                onTap={() => {
+                  setWairoSheetOpen(false);
+                  setIsDispatchModalOpen(true);
                 }}
               />
               <MetalTag
@@ -675,16 +706,12 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                   setWairoMiniAppOpen(true);
                 }}
               />
-              <MetalTag
-                label="Book"
-                icon={<Plus className="w-3.5 h-3.5" />}
-                material="copper"
-                onTap={() => {
-                  setWairoSheetOpen(false);
-                  setCreatePostOpen(true);
-                }}
-              />
             </div>
+
+            {/* Non-Promises Disclaimer */}
+            <p className="mt-4 text-[10px] text-white/70 leading-snug text-center">
+              You are booking a rider directly. Brief connects you and records the trip — resolving issues is between you and the rider, with support from your Community Champion if needed.
+            </p>
           </div>
         </div>
       )}

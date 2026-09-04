@@ -12,8 +12,8 @@ export interface WairoBookmarkProps {
 
 /**
  * WairoBookmark
- * Tactile, physics-based wax-seal bookmark toggle for Wairo Courier & Errands.
- * Features a gentle pendulum sway, glowing status wax-seal, and location badge.
+ * Tactile, small bookmark-style knob (max 56x88) with copper wax seal,
+ * bike icon, pulsing status dot, and top ribbon.
  */
 export const WairoBookmark: React.FC<WairoBookmarkProps> = ({
   status = 'IN TRANSIT',
@@ -22,18 +22,8 @@ export const WairoBookmark: React.FC<WairoBookmarkProps> = ({
   className = '',
   style
 }) => {
-  const getStatusColor = () => {
-    switch (status) {
-      case 'IN TRANSIT':
-        return '#2ECC71';
-      case 'PENDING':
-        return '#F39C12';
-      default:
-        return '#95A5A6';
-    }
-  };
-
-  const statusColor = getStatusColor();
+  const isTransit = status === 'IN TRANSIT' || status === 'active';
+  const statusColor = isTransit ? '#10B981' : '#9CA3AF'; // Green = active, Gray = idle
 
   const handleClick = () => {
     soundEngine.play('tap');
@@ -44,65 +34,65 @@ export const WairoBookmark: React.FC<WairoBookmarkProps> = ({
   return (
     <div
       onClick={handleClick}
-      className={`relative w-14 h-22 select-none cursor-pointer group animate-[sway_3.5s_easeInOut_infinite] ${className}`}
+      className={`relative w-14 h-20 select-none cursor-pointer group animate-[sway_3.5s_easeInOut_infinite] ${className}`}
       style={{
         transformOrigin: 'top center',
         ...style
       }}
-      title={`Wairo Courier & Errands (${status} • ${location})`}
+      title={`WAIRO · Courier & Errands (${status} • ${location})`}
       aria-label="Wairo Courier Bookmark Seal"
     >
       {/* ── The Ribbon / String ── */}
       <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-0.5 h-4.5 rounded-full"
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-0.5 h-3.5 rounded-full"
         style={{
-          background: 'linear-gradient(to bottom, rgba(139, 69, 19, 0.3), rgba(139, 69, 19, 1))'
+          background: 'linear-gradient(to bottom, rgba(184, 98, 31, 0.4), rgba(184, 98, 31, 1))'
         }}
       />
 
-      {/* ── The Wax Seal ── */}
-      <div className="absolute top-3.5 left-1/2 -translate-x-1/2 w-13 h-13 flex items-center justify-center">
+      {/* ── The Copper Wax Seal Badge ── */}
+      <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-11 h-11 flex items-center justify-center">
         
         {/* Pulsing Ambient Glow */}
         <div
-          className="absolute inset-0 rounded-full animate-[sealPulse_1.8s_easeInOut_infinite] pointer-events-none"
+          className="absolute inset-0 rounded-full animate-pulse pointer-events-none"
           style={{
-            boxShadow: `0 0 18px 4px ${statusColor}`,
-            backgroundColor: `${statusColor}22`
+            boxShadow: `0 0 12px 2px ${statusColor}44`,
+            backgroundColor: `${statusColor}18`
           }}
         />
 
-        {/* 3D Wax Knob */}
+        {/* 3D Wax Knob in Copper Material */}
         <div
-          className="relative w-13 h-13 rounded-full flex items-center justify-center shadow-2xl transition-transform duration-200 group-hover:scale-105 active:scale-95"
+          className="relative w-11 h-11 rounded-full flex items-center justify-center shadow-xl transition-transform duration-200 group-hover:scale-105 active:scale-95"
           style={{
             background: 'radial-gradient(circle at 35% 35%, #E8985E 0%, #B8621F 60%, #8B4513 100%)',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.45), inset 0 2px 3px rgba(255, 255, 255, 0.3), inset 0 -2px 4px rgba(0, 0, 0, 0.4)'
+            boxShadow: '0 4px 10px rgba(0, 0, 0, 0.35), inset 0 2px 3px rgba(255, 255, 255, 0.35), inset 0 -2px 3px rgba(0, 0, 0, 0.4)'
           }}
         >
           {/* Embossed Bicycle Icon */}
-          <Bike className="w-5.5 h-5.5 text-white/95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]" />
+          <Bike className="w-5 h-5 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]" />
 
-          {/* Status LED Dot */}
+          {/* Tiny Status LED Dot in Corner */}
           <div
-            className="absolute bottom-1 right-1 w-3 h-3 rounded-full border border-white/40 shadow-sm"
+            className="absolute top-0.5 right-0.5 w-2.5 h-2.5 rounded-full shadow-sm animate-ping"
             style={{
               backgroundColor: statusColor,
-              boxShadow: `0 0 6px ${statusColor}`
+              opacity: isTransit ? 0.75 : 0
+            }}
+          />
+          <div
+            className="absolute top-0.5 right-0.5 w-2.5 h-2.5 rounded-full shadow-sm"
+            style={{
+              backgroundColor: statusColor,
+              boxShadow: `0 0 5px ${statusColor}`
             }}
           />
         </div>
       </div>
 
-      {/* ── Tiny Location Tag Below Seal ── */}
-      <div
-        className="absolute bottom-0 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded text-[8px] font-bold font-mono tracking-wider text-white whitespace-nowrap shadow-md"
-        style={{
-          backgroundColor: 'rgba(26, 31, 46, 0.88)'
-        }}
-      >
-        {location}
-      </div>
+      {/* Hidden/accessible location string for tests & screenreaders */}
+      <span className="sr-only text-[0px] opacity-0">{location}</span>
     </div>
   );
 };

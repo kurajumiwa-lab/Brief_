@@ -66,9 +66,12 @@ export function usePersonalLayer(params: UsePersonalLayerParams) {
       [group]: p[group].includes(value) ? p[group].filter((v: any) => v !== value) : [...p[group], value]
     }));
 
-  const savePersonalBrief = async () => {
+  const savePersonalBrief = async (overridePicks?: { locations: string[]; types: string[]; topics: string[] }) => {
     setPersonalBusy(true);
-    const res = await briefApi.putInterests(personalPicks);
+    const picks = overridePicks && (overridePicks.locations?.length || overridePicks.types?.length || overridePicks.topics?.length)
+      ? overridePicks
+      : personalPicks;
+    const res = await briefApi.putInterests(picks);
     setPersonalBusy(false);
     if (!res.ok) {
       showToast(res.error ?? 'Could not save your Brief.');

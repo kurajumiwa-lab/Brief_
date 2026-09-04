@@ -628,6 +628,14 @@ export function CommitteeDesk({
         </div>
       )}
 
+      {/* ── NON-PROMISES DISCLAIMER (NEIGHBORHOOD TRUST OS) ── */}
+      <div className="mt-6 p-4 rounded-2xl bg-black/5 text-[11px] text-gray-500 leading-relaxed space-y-1">
+        <span className="font-bold text-gray-700 block">Voluntary Community Support</span>
+        <p>
+          This is a voluntary community support fund. Contributions are gifts, not investments. Brief does not manage funds or guarantee outcomes.
+        </p>
+      </div>
+
     </div>
   );
 }

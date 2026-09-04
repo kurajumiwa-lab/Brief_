@@ -4,6 +4,7 @@ import * as briefApi from '../api/briefApi';
 import type { AuthedUser, AuthProviders, OnboardingGoal, OnboardingState } from '../api/briefApi';
 import type { ArrivalChannel } from './arrival';
 import { isRestrictedWebview } from './arrival';
+import { setPrimaryNeighborhood } from '../model/neighborhoods';
 
 // ---------------------------------------------------------------------------
 // FIRST RUN
@@ -54,12 +55,27 @@ export interface OnboardingProps {
 }
 
 const CITIES = [
+  { lat: -1.2921, lng: 36.7865, label: 'Kilimani' },
+  { lat: -1.3142, lng: 36.8364, label: 'South B' },
+  { lat: -1.3624, lng: 36.7628, label: "Lang'ata" },
+  { lat: -1.2683, lng: 36.8044, label: 'Westlands' },
+  { lat: -1.2811, lng: 36.7901, label: 'Kileleshwa' },
+  { lat: -1.3197, lng: 36.7065, label: 'Karen' },
+  { lat: -1.2789, lng: 36.7648, label: 'Lavington' },
+  { lat: -1.2235, lng: 36.8967, label: 'Kasarani' },
+  { lat: -1.3214, lng: 36.8288, label: 'South C' },
+  { lat: -1.2064, lng: 36.7773, label: 'Ruaka' },
+  { lat: -1.3967, lng: 36.7592, label: 'Rongai' },
+  { lat: -1.4808, lng: 36.9602, label: 'Kitengela' },
+  { lat: -1.3619, lng: 36.6566, label: 'Ngong' },
+  { lat: -1.2543, lng: 36.6631, label: 'Kikuyu' },
+  { lat: -1.1026, lng: 37.0144, label: 'Juja' },
+  { lat: -1.4586, lng: 36.9796, label: 'Athi River' },
+  { lat: -1.5177, lng: 37.2634, label: 'Machakos' },
+  { lat: -0.6780, lng: 34.7725, label: 'Nyamataro' },
   { lat: -1.2921, lng: 36.8219, label: 'Nairobi' },
   { lat: -4.0435, lng: 39.6682, label: 'Mombasa' },
-  { lat: -0.0917, lng: 34.768, label: 'Kisumu' },
-  { lat: -6.7924, lng: 39.2083, label: 'Dar es Salaam' },
-  { lat: 0.3476, lng: 32.5825, label: 'Kampala' },
-  { lat: -1.9441, lng: 30.0619, label: 'Kigali' }
+  { lat: -0.0917, lng: 34.768, label: 'Kisumu' }
 ];
 
 const GOOGLE_SCRIPT = 'https://accounts.google.com/gsi/client';
@@ -420,6 +436,7 @@ export function Onboarding({
                   key={city.label}
                   type="button"
                   onClick={() => {
+                    setPrimaryNeighborhood(city.label);
                     onChooseCity(city);
                     void briefApi.setOnboardingPlace(city.label).then((res) => {
                       if (res.ok) onStateChange(res.data);
