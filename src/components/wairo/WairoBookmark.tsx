@@ -5,7 +5,7 @@ import { soundEngine } from '../../utils/SoundEngine';
 export interface WairoBookmarkProps {
   status?: 'IN TRANSIT' | 'IDLE' | 'PENDING' | string;
   location?: string;
-  onTap: () => void;
+  onTap?: () => void;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -38,7 +38,7 @@ export const WairoBookmark: React.FC<WairoBookmarkProps> = ({
   const handleClick = () => {
     soundEngine.play('tap');
     soundEngine.triggerHaptic([25, 30, 45]);
-    onTap();
+    onTap?.();
   };
 
   return (
@@ -52,17 +52,6 @@ export const WairoBookmark: React.FC<WairoBookmarkProps> = ({
       title={`Wairo Courier & Errands (${status} • ${location})`}
       aria-label="Wairo Courier Bookmark Seal"
     >
-      <style>{`
-        @keyframes sway {
-          0%, 100% { transform: rotate(-1.5deg); }
-          50% { transform: rotate(1.5deg); }
-        }
-        @keyframes sealPulse {
-          0%, 100% { transform: scale(1); opacity: 0.35; }
-          50% { transform: scale(1.08); opacity: 0.65; }
-        }
-      `}</style>
-
       {/* ── The Ribbon / String ── */}
       <div
         className="absolute top-0 left-1/2 -translate-x-1/2 w-0.5 h-4.5 rounded-full"

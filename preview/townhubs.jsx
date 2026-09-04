@@ -723,7 +723,7 @@ async function main() {
       buildTrigger.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
     });
   }
-  check('expands customize panel with WHERE DO YOU WANT YOUR BRIEF?', host22.textContent.includes('Make this your Brief') && host22.textContent.includes('WHERE DO YOU WANT YOUR BRIEF?'));
+  check('expands customize panel with WHERE DO YOU WANT YOUR BRIEF?', host22.textContent.includes('Make this your Brief') && host22.textContent.toLowerCase().includes('where do you want your brief?'));
   check('shows Kenyan cities and interest tags', host22.textContent.includes('Machakos') && host22.textContent.includes('Nairobi') && host22.textContent.includes('Jobs') && host22.textContent.includes('Knowledge'));
 
   // Select another city: "Nairobi"

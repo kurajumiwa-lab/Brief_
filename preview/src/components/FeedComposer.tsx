@@ -764,8 +764,8 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
                   type="button"
                   onClick={() => void openCollectionByKey(collection)}
                   aria-label={title}
-                  className="group relative min-h-28 overflow-hidden rounded-2xl border p-3 text-left transition-colors hover:border-[#2563EB]"
-                  style={{ borderColor: openCollection?.key === (collection.key || collection.id) ? T.green : T.line, background: T.surface }}
+                  className="group relative min-h-28 overflow-hidden rounded-2xl border-0 p-3 text-left transition-colors shadow-sm"
+                  style={{ background: T.surface }}
                 >
                   {image && <img src={image} alt="" aria-hidden="true" loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-60 transition-transform duration-500 group-hover:scale-[1.03]" />}
                   <div className="absolute inset-0" style={{ background: image ? 'linear-gradient(180deg, rgba(13, 17, 23,0.12), rgba(13, 17, 23,0.88))' : 'linear-gradient(135deg, #E5E8EC, #EFF1F4)' }} />
@@ -783,25 +783,6 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
               ))}
             </div>
           )}
-        </section>
-      )}
-
-      {tags.length > 0 && (
-        <section>
-          <SectionTitle>Topics</SectionTitle>
-          <div className="flex flex-wrap gap-2 px-1">
-            {tags.map((tag) => (
-              <button
-                key={tag}
-                type="button"
-                onClick={() => onOpenTag?.(tag)}
-                className="rounded-full border px-3 py-2 text-[12px] font-semibold transition-colors hover:border-[#2563EB]"
-                style={{ borderColor: T.line, background: T.surface, color: T.ink }}
-              >
-                {tag}
-              </button>
-            ))}
-          </div>
         </section>
       )}
     </div>

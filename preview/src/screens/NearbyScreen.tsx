@@ -30,6 +30,7 @@ import { PrivateCarrierAuctionDesk } from '../components/wairo/PrivateCarrierAuc
 import { OfflineSyncQueueDesk } from '../components/offline/OfflineSyncQueueDesk';
 import { UniversalCreatePostModal } from '../components/posts/UniversalCreatePostModal';
 import { DiscoverScreen } from './DiscoverScreen';
+import { BriefBuilderSection, WairoBookmark } from '../components/ui';
 import { soundEngine } from '../utils/SoundEngine';
 import type { ArenaMatch, BriefObject, Destination, NearbySection, Pursuit, Quest, TeaEdition, WorkflowSection } from '../model/core';
 import type { AuthedUser, PersonalState } from '../api/briefApi';
@@ -685,160 +686,41 @@ export function NearbyScreen(props: NearbyScreenProps) {
                       skippable and never blocks the Brief. */}
                   {discoveryTab === 'home' && sessionUser && personalState && (
                     <section className="mb-8" aria-label="My Brief">
-                      <div className="mb-3 flex items-center justify-between gap-2 px-1">
-                        <h2 className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#0D1117]/60">
-                          My Brief
-                        </h2>
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setCollectionsOpen(true)}
-                            className="flex items-center gap-1.5 rounded-full border border-[#E5E8EC] bg-[#FFFFFF] px-3 py-1 text-[10px] font-extrabold text-[#0D1117]/60 cursor-pointer hover:border-[#2563EB]"
-                          >
-                            <FolderPlus className="h-3 w-3" />
-                            Collections
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setFollowingOpen(true)}
-                            className="flex items-center gap-1.5 rounded-full border border-[#E5E8EC] bg-[#FFFFFF] px-3 py-1 text-[10px] font-extrabold text-[#0D1117]/60 cursor-pointer hover:border-[#2563EB]"
-                          >
-                            <Users className="h-3 w-3" />
-                            Following
-                            {(personalState.followed ?? []).length > 0 && (
-                              <span className="rounded-full bg-[#FF5A1F] px-1.5 text-[9px] font-extrabold text-[#0D1117]">
-                                {(personalState.followed ?? []).length}
-                              </span>
-                            )}
-                          </button>
-<button
-                            type="button"
-                            onClick={() => setNotificationsOpen(true)}
-                            aria-label={notifUnread > 0 ? `Updates, ${notifUnread} unread` : 'Updates'}
-                            className="relative flex items-center gap-1.5 rounded-full border border-[#E5E8EC] bg-[#FFFFFF] px-3 py-1 text-[10px] font-extrabold text-[#0D1117]/60 cursor-pointer hover:border-[#2563EB]"
-                          >
-                            <Bell className="h-3 w-3" />
-                            Updates
-                            {notifUnread > 0 && (
-                              <span className="rounded-full bg-[#DC2626] px-1.5 text-[9px] font-extrabold text-white">
-                                {notifUnread > 99 ? '99+' : notifUnread}
-                              </span>
-                            )}
-                          </button>
-                          {personalHasInterests && (
-                            <button
-                              type="button"
-                              onClick={() => setPersonalBriefDismissed(false)}
-                              className="rounded-full border border-[#E5E8EC] bg-[#FFFFFF] px-3 py-1 text-[10px] font-extrabold text-[#0D1117]/60 cursor-pointer hover:border-[#2563EB]"
-                            >
-                              Edit
-                            </button>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* ONBOARDING — where + what, as chips. Skipping closes
-                          the card; the Brief stays fully global until then. */}
-                      {!personalHasInterests && !personalBriefDismissed && (
-                        <div className="rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] p-4">
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <h3 className="text-sm font-extrabold text-[#0D1117]">
-                                Make this your Brief
-                              </h3>
-                              <p className="mt-0.5 text-[11px] text-[#0D1117]/55">
-                                Your daily city briefing: the same Brief feed,
-                                ordered around the places and things you follow.
-                                Skip anytime — nothing is blocked.
-                              </p>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => setPersonalBriefDismissed(true)}
-                              className="shrink-0 rounded-full border border-[#E5E8EC] px-3 py-1 text-[10px] font-extrabold text-[#0D1117]/70 cursor-pointer"
-                            >
-                              Skip
-                            </button>
-                          </div>
-
-                          <p className="mt-4 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#0D1117]/60">
-                            Where do you want your Brief?
-                          </p>
-                          <div className="mt-2 flex flex-wrap gap-1.5">
-                            {personalState.suggestedLocations.map((loc: any) => (
-                              <button
-                                key={loc}
-                                type="button"
-                                onClick={() => togglePersonalPick('locations', loc)}
-                                className={`rounded-full border px-3 py-1.5 text-[11px] font-bold cursor-pointer transition ${
-                                  personalPicks.locations.includes(loc)
-                                    ? 'bg-[#FF5A1F] text-[#0D1117] border-[#2563EB]'
-                                    : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC] hover:border-[#2563EB]'
-                                }`}
-                              >
-                                {loc}
-                              </button>
-                            ))}
-                          </div>
-
-                          <p className="mt-4 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#0D1117]/60">
-                            What do you care about?
-                          </p>
-                          {availableTypes.length > 0 && (
-                            <div className="mt-2 flex flex-wrap gap-1.5">
-                              {availableTypes.map((t: any) => (
-                                <button
-                                  key={t}
-                                  type="button"
-                                  onClick={() => togglePersonalPick('types', t)}
-                                  className={`rounded-full border px-3 py-1.5 text-[11px] font-bold cursor-pointer transition ${
-                                    personalPicks.types.includes(t)
-                                      ? 'bg-[#FF5A1F] text-[#0D1117] border-[#2563EB]'
-                                      : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC] hover:border-[#2563EB]'
-                                  }`}
-                                >
-                                  {getObjectTypeMeta(t).label}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                          {personalState.topics.length > 0 && (
-                            <div className="mt-2 flex flex-wrap gap-1.5">
-                              {personalState.topics.slice(0, 8).map((topic) => (
-                                <button
-                                  key={topic.id}
-                                  type="button"
-                                  onClick={() => togglePersonalPick('topics', topic.id)}
-                                  className={`rounded-full border px-3 py-1.5 text-[11px] font-bold cursor-pointer transition ${
-                                    personalPicks.topics.includes(topic.id)
-                                      ? 'bg-[#FF5A1F] text-[#0D1117] border-[#2563EB]'
-                                      : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC] hover:border-[#2563EB]'
-                                  }`}
-                                >
-                                  {topic.label}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-
-                          <div className="mt-4 flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => void savePersonalBrief()}
-                              disabled={personalBusy || (personalPicks.locations.length === 0 && personalPicks.types.length === 0 && personalPicks.topics.length === 0)}
-                              className="rounded-full bg-[#FF5A1F] px-4 py-2 text-[11px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
-                            >
-                              {personalBusy ? 'Saving…' : 'Build my Brief'}
-                            </button>
-                            <span className="text-[10px] text-[#0D1117]/60">
-                              Pick anything, or skip — your feed stays global.
-                            </span>
-                          </div>
-                        </div>
-                      )}
+                      <BriefBuilderSection
+                        initialCities={personalPicks.locations.length > 0 ? personalPicks.locations : ['Machakos', 'Kilimani', 'Westlands']}
+                        initialInterests={personalPicks.topics.length > 0 ? personalPicks.topics : ['Jobs', 'Food', 'Experience']}
+                        initialExpanded={!personalHasInterests && !personalBriefDismissed}
+                        followedCount={(personalState.followed ?? []).length}
+                        updatesCount={notifUnread}
+                        onCityToggle={(city) => togglePersonalPick('locations', city)}
+                        onInterestToggle={(interest) => {
+                          const lc = interest.toLowerCase();
+                          if (['experience', 'offer', 'place', 'event', 'opportunity'].includes(lc)) {
+                            togglePersonalPick('types', lc);
+                          } else {
+                            togglePersonalPick('topics', interest);
+                          }
+                        }}
+                        onSkip={() => setPersonalBriefDismissed(true)}
+                        onBuildBrief={({ cities, interests }) => {
+                          cities.forEach(c => { if (!personalPicks.locations.includes(c)) togglePersonalPick('locations', c); });
+                          interests.forEach(i => {
+                            const lc = i.toLowerCase();
+                            if (['experience', 'offer', 'place', 'event', 'opportunity'].includes(lc)) {
+                              if (!personalPicks.types.includes(lc)) togglePersonalPick('types', lc);
+                            } else {
+                              if (!personalPicks.topics.includes(i)) togglePersonalPick('topics', i);
+                            }
+                          });
+                          void savePersonalBrief();
+                        }}
+                        onOpenCollections={() => setCollectionsOpen(true)}
+                        onOpenFollowing={() => setFollowingOpen(true)}
+                        onOpenUpdates={() => setNotificationsOpen(true)}
+                      />
 
                       {!personalHasInterests && personalBriefDismissed && (
-                        <p className="rounded-2xl border border-dashed border-[#E5E8EC] px-4 py-3 text-[11px] text-[#0D1117]/70">
+                        <p className="rounded-2xl border border-dashed border-[#E5E8EC] px-4 py-3 text-[11px] text-[#0D1117]/70 mt-3">
                           Your Brief is global until you follow places or topics.{' '}
                           <button
                             type="button"

@@ -11,7 +11,13 @@ import { soundEngine } from '../../utils/SoundEngine';
 export interface BriefBuilderSectionProps {
   initialCities?: string[];
   initialInterests?: string[];
+  initialExpanded?: boolean;
+  followedCount?: number;
+  updatesCount?: number;
+  onCityToggle?: (city: string) => void;
+  onInterestToggle?: (interest: string) => void;
   onBuildBrief?: (selected: { cities: string[]; interests: string[] }) => void;
+  onSkip?: () => void;
   onOpenCollections?: () => void;
   onOpenFollowing?: () => void;
   onOpenUpdates?: () => void;
@@ -20,12 +26,18 @@ export interface BriefBuilderSectionProps {
 export const BriefBuilderSection: React.FC<BriefBuilderSectionProps> = ({
   initialCities = ['Machakos'],
   initialInterests = [],
+  initialExpanded = false,
+  followedCount = 0,
+  updatesCount = 0,
+  onCityToggle,
+  onInterestToggle,
   onBuildBrief,
+  onSkip,
   onOpenCollections,
   onOpenFollowing,
   onOpenUpdates
 }) => {
-  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const [isExpanded, setIsExpanded] = useState<boolean>(initialExpanded);
   const [selectedCities, setSelectedCities] = useState<Set<string>>(new Set(initialCities));
   const [selectedInterests, setSelectedInterests] = useState<Set<string>>(new Set(initialInterests));
 
@@ -44,7 +56,11 @@ export const BriefBuilderSection: React.FC<BriefBuilderSectionProps> = ({
 
   const toggleExpansion = () => {
     soundEngine.play('tap');
-    setIsExpanded(!isExpanded);
+    if (isExpanded) {
+      handleBuildBrief();
+    } else {
+      setIsExpanded(true);
+    }
   };
 
   const toggleCity = (city: string) => {
@@ -58,6 +74,7 @@ export const BriefBuilderSection: React.FC<BriefBuilderSectionProps> = ({
       }
       return next;
     });
+    onCityToggle?.(city);
   };
 
   const toggleInterest = (interest: string) => {
@@ -71,6 +88,7 @@ export const BriefBuilderSection: React.FC<BriefBuilderSectionProps> = ({
       }
       return next;
     });
+    onInterestToggle?.(interest);
   };
 
   const handleBuildBrief = () => {
@@ -127,6 +145,11 @@ export const BriefBuilderSection: React.FC<BriefBuilderSectionProps> = ({
             >
               <Users className="w-3.5 h-3.5 text-[#6B7280]" />
               <span>Following</span>
+              {followedCount > 0 && (
+                <span className="rounded-full bg-[#FF5A1F] px-1.5 text-[9px] font-extrabold text-[#0D1117] ml-1">
+                  {followedCount}
+                </span>
+              )}
             </button>
 
             <button
@@ -139,6 +162,11 @@ export const BriefBuilderSection: React.FC<BriefBuilderSectionProps> = ({
             >
               <Bell className="w-3.5 h-3.5 text-[#6B7280]" />
               <span>Updates</span>
+              {updatesCount > 0 && (
+                <span className="rounded-full bg-[#DC2626] px-1.5 text-[9px] font-extrabold text-white ml-1">
+                  {updatesCount > 99 ? '99+' : updatesCount}
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -161,7 +189,11 @@ export const BriefBuilderSection: React.FC<BriefBuilderSectionProps> = ({
 
             <button
               type="button"
-              onClick={toggleExpansion}
+              onClick={() => {
+                soundEngine.play('tap');
+                setIsExpanded(false);
+                onSkip?.();
+              }}
               className="px-4 py-2 rounded-full bg-gray-200 hover:bg-gray-300 text-[#4A5568] text-xs font-bold transition-colors cursor-pointer shrink-0"
             >
               Skip
@@ -173,7 +205,7 @@ export const BriefBuilderSection: React.FC<BriefBuilderSectionProps> = ({
             <div className="flex items-center space-x-2">
               <span className="w-1.5 h-1.5 rounded-full bg-[#1A1F2E]" />
               <span className="text-[11px] font-black uppercase tracking-wider text-[#1A1F2E]">
-                WHERE DO YOU WANT YOUR BRIEF?
+                Where do you want your Brief?
               </span>
             </div>
 
@@ -198,7 +230,7 @@ export const BriefBuilderSection: React.FC<BriefBuilderSectionProps> = ({
             <div className="flex items-center space-x-2">
               <span className="w-1.5 h-1.5 rounded-full bg-[#1A1F2E]" />
               <span className="text-[11px] font-black uppercase tracking-wider text-[#1A1F2E]">
-                WHAT DO YOU CARE ABOUT?
+                What do you care about?
               </span>
             </div>
 
