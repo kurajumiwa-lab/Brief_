@@ -10,15 +10,14 @@ import {
   Coins,
   Activity,
   Truck,
-  FileText,
-  Compass,
   Sparkles,
   X,
   Plus,
   Clock,
   Search,
   CheckCircle2,
-  CalendarDays
+  CalendarDays,
+  Bike
 } from 'lucide-react';
 import {
   IronSheet,
@@ -41,8 +40,6 @@ import { CommitteeDesk } from '../components/life/CommitteeDesk';
 import { ChamaDesk } from '../components/circle/ChamaDesk';
 import { WellbeingDesk } from '../components/wellbeing/WellbeingDesk';
 import { InterCountyDesk } from '../components/wairo/InterCountyDesk';
-import { CivicKnowledgeGuide } from '../components/civic/CivicKnowledgeGuide';
-import { BriefAiAssistant } from '../components/ai/BriefAiAssistant';
 import { UniversalCreatePostModal, Post } from '../components/posts/UniversalCreatePostModal';
 import { SheetDetailScreen, SheetDetailScreenProps } from './SheetDetailScreen';
 import { SubcategoryDrillScreen, SubcategoryDrillScreenProps } from './SubcategoryDrillScreen';
@@ -76,13 +73,11 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
   const [isUssdOpen, setIsUssdOpen] = useState(false);
   const [isOfflineSyncOpen, setIsOfflineSyncOpen] = useState(false);
 
-  // Hub Desks Modals
+  // Hub Desks Modals (Core 4 Pillars: WAIRO · Chamas · Gigs · Events)
   const [committeeOpen, setCommitteeOpen] = useState(false);
   const [chamaOpen, setChamaOpen] = useState(false);
   const [wellbeingOpen, setWellbeingOpen] = useState(false);
   const [interCountyOpen, setInterCountyOpen] = useState(false);
-  const [civicGuideOpen, setCivicGuideOpen] = useState(false);
-  const [briefAiOpen, setBriefAiOpen] = useState(false);
   const [createPostOpen, setCreatePostOpen] = useState(false);
 
   // Detail Screens Navigation Stack
@@ -205,7 +200,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
               <span className="text-[11px] font-semibold text-[#6B7280]">Live</span>
             </div>
 
-            {/* 2-Column IronSheet Grid */}
+            {/* 2-Column IronSheet Grid (WAIRO · Chamas · Gigs · Events) */}
             <div className="grid grid-cols-2 gap-3">
               <IronSheet
                 material="jade"
@@ -249,60 +244,46 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
 
               <IronSheet
                 material="copper"
-                title="Skills Workshop"
-                subtitle="2:00 PM · Online Zoom"
-                emoji="✨"
-                badge="LEARNING"
+                title="WAIRO Logistics"
+                subtitle="Courier · Errands · Cargo"
+                emoji="📦"
+                badge="90/10"
                 animationDelayMs={160}
-                onTap={() =>
-                  openCategoryDetail({
-                    material: 'copper',
-                    title: 'Skills Workshop',
-                    subtitle: '2:00 PM · Online Zoom',
-                    emoji: '✨',
-                    badge: 'LEARNING',
-                    heroDescription:
-                      'Join a workshop that connects local skills with real opportunities. Learn from vetted instructors, earn a certificate, and get matched to gigs that pay within 48 hours.'
-                  })
-                }
-              />
-
-              <IronSheet
-                material="brass"
-                title="Thrift Drop"
-                subtitle="12:00 PM · Nyamataro Market"
-                emoji="👕"
-                badge="THRIFT"
-                animationDelayMs={240}
-                onTap={() =>
-                  openCategoryDetail({
-                    material: 'brass',
-                    title: 'Thrift Drop',
-                    subtitle: '12:00 PM · Nyamataro Market',
-                    emoji: '👕',
-                    badge: 'THRIFT',
-                    heroDescription:
-                      'Exclusive local pre-loved fashion and gear drop. Reserve items directly with instant verified M-Pesa escrow.'
-                  })
-                }
+                onTap={() => {
+                  soundEngine.play('heavyTap');
+                  setWairoSheetOpen(true);
+                }}
               />
 
               <IronSheet
                 material="obsidian"
-                title="J Segera"
-                subtitle="Live at 7:00 PM · Kisii Lounge"
-                emoji="🎤"
-                badge="CREATOR"
+                title="Chama Savings"
+                subtitle="Cycle 5 · 14 Members Live"
+                emoji="🌸"
+                badge="CHAMA"
+                animationDelayMs={240}
+                onTap={() => {
+                  soundEngine.play('heavyTap');
+                  setChamaOpen(true);
+                }}
+              />
+
+              <IronSheet
+                material="brass"
+                title="Events & Markets"
+                subtitle="Live gigs & street markets"
+                emoji="🎉"
+                badge="EVENTS"
                 animationDelayMs={320}
                 onTap={() =>
                   openCategoryDetail({
-                    material: 'obsidian',
-                    title: 'J Segera Live',
-                    subtitle: 'Live at 7:00 PM · Kisii Lounge',
-                    emoji: '🎤',
-                    badge: 'CREATOR',
+                    material: 'brass',
+                    title: 'Local Events & Markets',
+                    subtitle: 'Live music, weekend flea markets, and neighbourhood drops',
+                    emoji: '🎉',
+                    badge: 'EVENTS',
                     heroDescription:
-                      'Live creator acoustic session and Q&A. Connect with local fans and stream backstage access.'
+                      'Discover real community happenings, local gigs, and verified flea market popups near you.'
                   })
                 }
               />
@@ -321,36 +302,28 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                   Town Centre Districts
                 </span>
               </div>
-              <span className="text-[11px] font-semibold text-[#6B7280]">4 Live Hubs</span>
+              <span className="text-[11px] font-semibold text-[#6B7280]">4 Core Pillars</span>
             </div>
 
-            {/* 2-Column IronSheet Grid */}
+            {/* 2-Column IronSheet Grid (WAIRO · Chamas · Gigs · Events) */}
             <div className="grid grid-cols-2 gap-3">
               <IronSheet
-                material="steel"
-                title="Life-Events Hub"
-                subtitle="Burial & Harambee"
-                emoji="🕊️"
-                badge="72% FUNDED"
+                material="copper"
+                title="WAIRO Logistics & Cargo"
+                subtitle="Courier · Errands · 47 Counties"
+                emoji="🚚"
+                badge="WAIRO 90/10"
                 animationDelayMs={0}
-                onTap={() =>
-                  openHubDetail({
-                    material: 'steel',
-                    title: 'Life-Events Hub',
-                    subtitle: 'Community-funded burial & harambee coordination',
-                    emoji: '🕊️',
-                    badge: '72% FUNDED',
-                    heroDescription:
-                      'When life hits, the community responds. Track contributions, coordinate logistics, honor traditions — all in one place.',
-                    onJoinSuccess: () => setCommitteeOpen(true)
-                  })
-                }
+                onTap={() => {
+                  soundEngine.play('heavyTap');
+                  setWairoSheetOpen(true);
+                }}
               />
 
               <IronSheet
                 material="obsidian"
                 title="Chama & Table Bank"
-                subtitle="Merry-Go-Round"
+                subtitle="Merry-Go-Round · Rotational"
                 emoji="🌸"
                 badge="CYCLE 5"
                 animationDelayMs={80}
@@ -369,65 +342,44 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
               />
 
               <IronSheet
-                material="zinc"
-                title="Wellbeing Hub"
-                subtitle="Circles & Therapists"
-                emoji="💚"
-                badge="PRIVATE"
+                material="jade"
+                title="Paid Gigs Hub"
+                subtitle="Waiter · Delivery · Cashier"
+                emoji="💼"
+                badge="LIVE GIGS"
                 animationDelayMs={160}
                 onTap={() =>
-                  openHubDetail({
-                    material: 'zinc',
-                    title: 'Wellbeing Hub',
-                    subtitle: 'Private check-ins · Peer listeners',
-                    emoji: '💚',
-                    badge: 'PRIVATE',
+                  openCategoryDetail({
+                    material: 'jade',
+                    title: 'Paid Gigs Hub',
+                    subtitle: 'Verified local micro-work with 48h settlement',
+                    emoji: '💼',
+                    badge: 'LIVE GIGS',
                     heroDescription:
-                      'Safe, confidential peer support and licensed counseling circles for youth and workers.',
-                    onJoinSuccess: () => setWellbeingOpen(true)
+                      'Local employers post shifts and tasks daily. Work verified gigs, get rated, and receive payment directly.'
                   })
                 }
               />
 
               <IronSheet
                 material="steel"
-                title="Inter-County Cargo"
-                subtitle="Mombasa · Kisumu"
-                emoji="🚚"
-                badge="4-COUNTY"
+                title="Life-Events Hub"
+                subtitle="Burial & Harambee"
+                emoji="🕊️"
+                badge="72% FUNDED"
                 animationDelayMs={240}
                 onTap={() =>
                   openHubDetail({
                     material: 'steel',
-                    title: 'Inter-County Cargo',
-                    subtitle: 'Mombasa · Nakuru · Kisumu · Eldoret',
-                    emoji: '🚚',
-                    badge: '4-COUNTY',
+                    title: 'Life-Events Hub',
+                    subtitle: 'Community-funded burial & harambee coordination',
+                    emoji: '🕊️',
+                    badge: '72% FUNDED',
                     heroDescription:
-                      'Shared carrier logistics for parcels and merchant freight across Kenya with scheduled pickups.',
-                    onJoinSuccess: () => setInterCountyOpen(true)
+                      'When life hits, the community responds. Track contributions, coordinate logistics, honor traditions — all in one place.',
+                    onJoinSuccess: () => setCommitteeOpen(true)
                   })
                 }
-              />
-
-              <IronSheet
-                material="copper"
-                title="Town Concierge"
-                subtitle="Local Guide"
-                emoji="🤖"
-                badge="THE MAYOR"
-                animationDelayMs={320}
-                onTap={() => setBriefAiOpen(true)}
-              />
-
-              <IronSheet
-                material="brass"
-                title="Civic Guides"
-                subtitle="Permits & Licenses"
-                emoji="🏛️"
-                badge="VERIFIED"
-                animationDelayMs={400}
-                onTap={() => setCivicGuideOpen(true)}
               />
             </div>
 
@@ -438,77 +390,59 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
               </span>
               <div className="flex items-center space-x-2 overflow-x-auto pb-2">
                 <MetalTag
-                  label="Burial"
-                  icon={<Heart className="w-3.5 h-3.5" />}
-                  material="steel"
+                  label="WAIRO"
+                  icon={<Bike className="w-3.5 h-3.5" />}
+                  material="copper"
                   selected={true}
-                  onTap={() =>
-                    openSubcategoryDrill({
-                      material: 'steel',
-                      parentCategory: 'Life-Events Hub',
-                      subcategory: 'Burial Logistics'
-                    })
-                  }
-                />
-                <MetalTag
-                  label="Harambee"
-                  icon={<Users className="w-3.5 h-3.5" />}
-                  material="steel"
-                  onTap={() =>
-                    openSubcategoryDrill({
-                      material: 'copper',
-                      parentCategory: 'Life-Events Hub',
-                      subcategory: 'Harambee Pledges'
-                    })
-                  }
-                />
-                <MetalTag
-                  label="Chama"
-                  icon={<Coins className="w-3.5 h-3.5" />}
-                  material="obsidian"
-                  onTap={() =>
-                    openSubcategoryDrill({
-                      material: 'obsidian',
-                      parentCategory: 'Chama & Table Bank',
-                      subcategory: 'Chama Cycles'
-                    })
-                  }
-                />
-                <MetalTag
-                  label="Therapy"
-                  icon={<Activity className="w-3.5 h-3.5" />}
-                  material="zinc"
-                  onTap={() =>
-                    openSubcategoryDrill({
-                      material: 'zinc',
-                      parentCategory: 'Wellbeing Hub',
-                      subcategory: 'Peer Therapy'
-                    })
-                  }
+                  onTap={() => setWairoSheetOpen(true)}
                 />
                 <MetalTag
                   label="Cargo"
                   icon={<Truck className="w-3.5 h-3.5" />}
                   material="steel"
+                  onTap={() => {
+                    setWairoLocation(LOCATIONS[0]);
+                    setInterCountyOpen(true);
+                  }}
+                />
+                <MetalTag
+                  label="Chama"
+                  icon={<Coins className="w-3.5 h-3.5" />}
+                  material="obsidian"
+                  onTap={() => setChamaOpen(true)}
+                />
+                <MetalTag
+                  label="Gigs"
+                  icon={<Briefcase className="w-3.5 h-3.5" />}
+                  material="jade"
                   onTap={() =>
                     openSubcategoryDrill({
-                      material: 'steel',
-                      parentCategory: 'Inter-County Cargo',
-                      subcategory: 'Route Schedules'
+                      material: 'jade',
+                      parentCategory: 'Paid Gigs',
+                      subcategory: 'Open Shifts'
                     })
                   }
                 />
                 <MetalTag
-                  label="Permits"
-                  icon={<FileText className="w-3.5 h-3.5" />}
+                  label="Events"
+                  icon={<CalendarDays className="w-3.5 h-3.5" />}
                   material="brass"
                   onTap={() =>
-                    openSubcategoryDrill({
+                    openCategoryDetail({
                       material: 'brass',
-                      parentCategory: 'Civic Guides',
-                      subcategory: 'County Permits'
+                      title: 'Community Events',
+                      subtitle: 'Upcoming gatherings & markets',
+                      emoji: '🎉',
+                      badge: 'EVENTS',
+                      heroDescription: 'Local events, cultural nights, and community gatherings.'
                     })
                   }
+                />
+                <MetalTag
+                  label="Harambee"
+                  icon={<Heart className="w-3.5 h-3.5" />}
+                  material="steel"
+                  onTap={() => setCommitteeOpen(true)}
                 />
               </div>
             </div>
@@ -808,24 +742,6 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
           <div className="w-full max-w-3xl my-auto">
             <InterCountyDesk onClose={() => setInterCountyOpen(false)} />
-          </div>
-        </div>
-      )}
-
-      {/* ================= MODAL: CIVIC KNOWLEDGE GUIDE ================= */}
-      {civicGuideOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="w-full max-w-2xl my-auto">
-            <CivicKnowledgeGuide onClose={() => setCivicGuideOpen(false)} />
-          </div>
-        </div>
-      )}
-
-      {/* ================= MODAL: BRIEF AI MAYOR ================= */}
-      {briefAiOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="w-full max-w-2xl my-auto">
-            <BriefAiAssistant onClose={() => setBriefAiOpen(false)} />
           </div>
         </div>
       )}

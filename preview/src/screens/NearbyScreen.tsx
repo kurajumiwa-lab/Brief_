@@ -22,8 +22,6 @@ import { TickerBanner } from '../components/SignalBanner';
 import { TodayOpportunities } from '../components/home/TodayOpportunities';
 import { CommitteeDesk } from '../components/life/CommitteeDesk';
 import { WellbeingDesk } from '../components/wellbeing/WellbeingDesk';
-import { BriefAiAssistant } from '../components/ai/BriefAiAssistant';
-import { CivicKnowledgeGuide } from '../components/civic/CivicKnowledgeGuide';
 import { ChamaDesk } from '../components/circle/ChamaDesk';
 import { InterCountyDesk } from '../components/wairo/InterCountyDesk';
 import { PrivateCarrierAuctionDesk } from '../components/wairo/PrivateCarrierAuctionDesk';
@@ -232,8 +230,6 @@ export function NearbyScreen(props: NearbyScreenProps) {
   const [committeeOpen, setCommitteeOpen] = useState(false);
   const [chamaOpen, setChamaOpen] = useState(false);
   const [wellbeingOpen, setWellbeingOpen] = useState(false);
-  const [briefAiOpen, setBriefAiOpen] = useState(false);
-  const [civicGuideOpen, setCivicGuideOpen] = useState(false);
   const [interCountyOpen, setInterCountyOpen] = useState(false);
   const [carrierAuctionOpen, setCarrierAuctionOpen] = useState(false);
   const [offlineSyncOpen, setOfflineSyncOpen] = useState(false);
@@ -583,46 +579,54 @@ export function NearbyScreen(props: NearbyScreenProps) {
                           <div className="flex items-center justify-between">
                             <span className="text-xl">🚚</span>
                             <span className="text-[8px] font-mono uppercase bg-[#00BFEF] text-[#0D1117] px-1.5 py-0.5 rounded font-black">
-                              4-County Hub
+                              WAIRO 90/10
                             </span>
                           </div>
                           <div className="mt-2">
-                            <span className="font-black text-xs block text-white leading-tight">Inter-County Cargo</span>
-                            <span className="text-[10px] text-cyan-200/70 block mt-0.5">Mombasa • Kisumu</span>
+                            <span className="font-black text-xs block text-white leading-tight">WAIRO Cargo & Logistics</span>
+                            <span className="text-[10px] text-cyan-200/70 block mt-0.5">Courier · Errands · 47 Counties</span>
                           </div>
                         </button>
 
                         <button
                           type="button"
-                          onClick={() => { soundEngine.play('heavyTap'); setBriefAiOpen(true); }}
+                          onClick={() => {
+                            soundEngine.play('tap');
+                            setSelectedObjectType('opportunity');
+                            setDiscoveryTab('opportunities');
+                          }}
+                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#064E3B] to-[#022C22] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xl">💼</span>
+                            <span className="text-[8px] font-mono uppercase bg-emerald-500/30 text-emerald-300 px-1.5 py-0.5 rounded font-bold">
+                              Live Gigs
+                            </span>
+                          </div>
+                          <div className="mt-2">
+                            <span className="font-black text-xs block text-white leading-tight">Paid Gigs Hub</span>
+                            <span className="text-[10px] text-emerald-200/70 block mt-0.5">Verified local micro-work</span>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            soundEngine.play('tap');
+                            setSelectedObjectType('experience');
+                            setDiscoveryTab('events');
+                          }}
                           className="p-3.5 rounded-2xl bg-gradient-to-br from-[#7C2D12] to-[#431407] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
                         >
                           <div className="flex items-center justify-between">
-                            <span className="text-xl">🤖</span>
+                            <span className="text-xl">🎉</span>
                             <span className="text-[8px] font-mono uppercase bg-[#FF5A1F] text-white px-1.5 py-0.5 rounded font-bold">
-                              The Mayor
+                              Events
                             </span>
                           </div>
                           <div className="mt-2">
-                            <span className="font-black text-xs block text-white leading-tight">Town Concierge</span>
-                            <span className="text-[10px] text-orange-200/70 block mt-0.5">Local Guide</span>
-                          </div>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => { soundEngine.play('heavyTap'); setCivicGuideOpen(true); }}
-                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#1E1B4B] to-[#0F0E2A] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xl">🏛️</span>
-                            <span className="text-[8px] font-mono uppercase bg-indigo-500/30 text-indigo-300 px-1.5 py-0.5 rounded font-bold">
-                              Verified
-                            </span>
-                          </div>
-                          <div className="mt-2">
-                            <span className="font-black text-xs block text-white leading-tight">Civic Guides</span>
-                            <span className="text-[10px] text-indigo-200/70 block mt-0.5">Permits & Licenses</span>
+                            <span className="font-black text-xs block text-white leading-tight">Events & Markets</span>
+                            <span className="text-[10px] text-orange-200/70 block mt-0.5">Gigs, markets & popups</span>
                           </div>
                         </button>
 
@@ -1914,40 +1918,6 @@ export function NearbyScreen(props: NearbyScreenProps) {
               showToast(`Published ${post.type.toUpperCase()}: "${post.title}"`);
             }}
           />
-        )}
-
-        {/* ================= MODAL: BRIEF AI ASSISTANT ================= */}
-        {briefAiOpen && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-            <div className="w-full max-w-2xl my-auto">
-              <BriefAiAssistant
-                onClose={() => setBriefAiOpen(false)}
-                onOpenCardAction={(type) => {
-                  setBriefAiOpen(false);
-                  if (type === 'civic') setCivicGuideOpen(true);
-                  else if (type === 'vendor') showToast(`Opening verified vendor details`);
-                  else if (type === 'event') {
-                    setSelectedObjectType('experience');
-                    setDiscoveryTab('events');
-                  }
-                }}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* ================= MODAL: CIVIC KNOWLEDGE GUIDE ================= */}
-        {civicGuideOpen && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-            <div className="w-full max-w-2xl my-auto">
-              <CivicKnowledgeGuide
-                onClose={() => setCivicGuideOpen(false)}
-                onAction={(act) => {
-                  showToast(`${act} recorded`);
-                }}
-              />
-            </div>
-          </div>
         )}
     </>
   );
