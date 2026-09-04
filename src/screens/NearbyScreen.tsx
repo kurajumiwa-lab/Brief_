@@ -409,8 +409,8 @@ export function NearbyScreen(props: NearbyScreenProps) {
                     </button>
                   )}
                   <div className="min-w-0">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#7A8494]">Around you</p>
-                    <h1 className="truncate font-display text-xl font-semibold leading-tight tracking-tight text-[#0D1117] sm:text-2xl">Home</h1>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#7A8494]">{activeNeighborhood.name.toUpperCase()} · Home</p>
+                    <h1 className="truncate font-display text-xl font-semibold leading-tight tracking-tight text-[#0D1117] sm:text-2xl">{activeNeighborhood.name} Feed</h1>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1493,14 +1493,17 @@ export function NearbyScreen(props: NearbyScreenProps) {
                       </>
                     ) : (
                       <>
-                        <h2 className="text-base font-semibold text-[#0D1117]">Nothing nearby</h2>
+                        <h2 className="text-base font-semibold text-[#0D1117]">This is your {activeNeighborhood.name} feed</h2>
+                        <p className="mt-1 text-xs text-[#0D1117]/60 max-w-sm mx-auto">
+                          When your neighbors post gigs, harambees, or events, you'll see them here first.
+                        </p>
                         <div className="mt-4 flex justify-center gap-2">
                           <button
                             type="button"
                             onClick={() => setCaptureOpen(true)}
-                            className="rounded-full bg-[#FF5A1F] px-4 py-2 text-[11px] font-bold text-[#0D1117]"
+                            className="rounded-full bg-[#B8621F] px-4 py-2 text-[11px] font-bold text-white shadow-sm"
                           >
-                            Add
+                            Post to {activeNeighborhood.name}
                           </button>
                         </div>
                       </>

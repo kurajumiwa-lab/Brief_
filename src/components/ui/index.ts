@@ -23,3 +23,5 @@ export { MetalTag } from './MetalTag';
 export type { MetalTagProps } from './MetalTag';
 export { BriefBuilderSection } from '../home/BriefBuilderSection';
 export type { BriefBuilderSectionProps } from '../home/BriefBuilderSection';
+export { UserTrustBadge, GroupTrustBadge } from '../trust/TrustBadges';
+export type { UserTrustBadgeProps, GroupTrustBadgeProps } from '../trust/TrustBadges';

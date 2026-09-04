@@ -207,10 +207,10 @@ export const BriefBuilderSection: React.FC<BriefBuilderSectionProps> = ({
           <div className="flex items-start justify-between space-x-4">
             <div className="space-y-1">
               <h3 className="text-lg font-black text-[#1A1F2E] tracking-tight leading-tight">
-                Make this your Brief
+                Make Brief feel like your neighborhood
               </h3>
               <p className="text-xs text-[#6B7280] leading-relaxed font-medium">
-                Your daily city briefing: ordered around the places and things you follow. Skip anytime — nothing is blocked.
+                Make this your Brief: ordered around the places and things you follow. Skip anytime — nothing is blocked.
               </p>
             </div>
 
