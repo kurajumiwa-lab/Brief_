@@ -15,7 +15,8 @@ import {
   Zap,
   Navigation,
   MapPin,
-  Check
+  Check,
+  Repeat
 } from 'lucide-react';
 import { soundEngine } from '../../utils/SoundEngine';
 
@@ -138,7 +139,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
 }) => {
   const [selectedBundleId, setSelectedBundleId] = useState<string>(initialBundleId);
   const [quantity, setQuantity] = useState<number>(1);
-  const [deliveryType, setDeliveryType] = useState<'fargo_pickup' | 'wairo_gate' | 'wairo_door' | 'sendy_express' | 'bolt_rapid' | 'pickup'>('fargo_pickup');
+  const [deliveryType, setDeliveryType] = useState<'fargo_pickup' | 'lori_backhaul' | 'wairo_gate' | 'wairo_door' | 'sendy_express' | 'bolt_rapid' | 'pickup'>('fargo_pickup');
   const [selectedFargoPoint, setSelectedFargoPoint] = useState<string>(FARGO_DROP_POINTS[0]);
   const [deliveryWard, setDeliveryWard] = useState<string>('Machakos Town (Gate 4)');
   const [parentName, setParentName] = useState<string>('Madam Beatrice Mwangi');
@@ -152,6 +153,8 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
   const currentBundle = SAMPLE_CBC_BUNDLES.find(b => b.id === selectedBundleId) || SAMPLE_CBC_BUNDLES[0];
   const deliveryFeeKes = deliveryType === 'fargo_pickup'
     ? 50
+    : deliveryType === 'lori_backhaul'
+    ? 80
     : deliveryType === 'wairo_gate'
     ? 120
     : deliveryType === 'wairo_door'
@@ -234,10 +237,10 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
 
           <div>
             <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center space-x-2">
-              <span>CBC Textbooks & WAIRO Courier</span>
+              <span>CBC Textbooks & WAIRO Freight</span>
             </h2>
             <p className="text-xs text-stone-300 mt-0.5">
-              Verified curriculum book packs with Fargo KES 50 nationwide pickup or express door delivery.
+              Verified curriculum book packs with Fargo KES 50 pickup counters and Lori Systems 50% backhaul heavy freight.
             </p>
           </div>
 
@@ -317,10 +320,18 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                   <Truck className="w-5 h-5 text-[#00BFEF] animate-bounce" />
                   <div>
                     <span className="text-xs font-black block">
-                      {completedOrder.deliveryType === 'fargo_pickup' ? 'Fargo 200+ Network Dispatch' : 'WAIRO Express Assigned'}
+                      {completedOrder.deliveryType === 'fargo_pickup' 
+                        ? 'Fargo 200+ Network Dispatch' 
+                        : completedOrder.deliveryType === 'lori_backhaul'
+                        ? 'Lori Systems 10-Ton Return Haulage'
+                        : 'WAIRO Express Assigned'}
                     </span>
                     <span className="text-[10px] text-cyan-300">
-                      {completedOrder.deliveryType === 'fargo_pickup' ? 'Next-Morning Pickup Ready at Station' : 'Courier Partner in Transit'}
+                      {completedOrder.deliveryType === 'fargo_pickup' 
+                        ? 'Next-Morning Pickup Ready at Station' 
+                        : completedOrder.deliveryType === 'lori_backhaul'
+                        ? 'Coastal Corridor Freight Manifest Active'
+                        : 'Courier Partner in Transit'}
                     </span>
                   </div>
                 </div>
@@ -391,10 +402,10 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-black uppercase tracking-wider text-[#1A1F2E] flex items-center space-x-1.5">
-                    <span>1. Delivery Tier & Pickup Arbitrage</span>
+                    <span>1. Delivery Tier & Backhaul Arbitrage</span>
                   </label>
                   <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                    Fargo 200+ Points: KES 50 Only
+                    Fargo KES 50 • Lori -50%
                   </span>
                 </div>
 
@@ -418,6 +429,28 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                     <div>
                       <span className="text-xs font-black block">Fargo Drop Point</span>
                       <span className="text-[10px] font-bold opacity-90">KES 50 (200+ Hubs)</span>
+                    </div>
+                  </button>
+
+                  {/* Option 2: Lori Systems Backhaul Freight (-50% Return Pallet) */}
+                  <button
+                    type="button"
+                    onClick={() => { soundEngine.play('tap'); setDeliveryType('lori_backhaul'); }}
+                    className={`p-3 rounded-xl text-left transition-all cursor-pointer flex flex-col justify-between ring-2 ${
+                      deliveryType === 'lori_backhaul'
+                        ? 'bg-[#1D4ED8] text-white ring-[#1D4ED8] shadow-sm'
+                        : 'bg-white hover:bg-blue-50/50 text-[#374151] ring-blue-400/40 shadow-xs'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <Repeat className="w-4 h-4 mb-1 text-cyan-300" />
+                      <span className="text-[8px] font-black uppercase px-1.5 py-0.5 rounded bg-cyan-300 text-blue-950">
+                        -50% LORI
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-xs font-black block">Lori Backhaul 🚛</span>
+                      <span className="text-[10px] font-bold opacity-90">+KES 80 (Heavy Pallet)</span>
                     </div>
                   </button>
 
@@ -484,22 +517,6 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                       <span className="text-[10px] opacity-80">+KES 380 (Rapid GPS)</span>
                     </div>
                   </button>
-
-                  <button
-                    type="button"
-                    onClick={() => { soundEngine.play('tap'); setDeliveryType('pickup'); }}
-                    className={`p-3 rounded-xl text-left transition-all cursor-pointer flex flex-col justify-between ${
-                      deliveryType === 'pickup'
-                        ? 'bg-[#B8621F] text-white shadow-sm'
-                        : 'bg-white hover:bg-white/80 text-[#374151] shadow-xs'
-                    }`}
-                  >
-                    <Clock className="w-4 h-4 mb-1" />
-                    <div>
-                      <span className="text-xs font-bold block">Depot Pickup</span>
-                      <span className="text-[10px] opacity-80">Free (KES 0)</span>
-                    </div>
-                  </button>
                 </div>
 
                 {/* Fargo Point Selector or Ward Input */}
@@ -525,6 +542,28 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                     </select>
                     <p className="text-[10px] text-emerald-800 leading-tight">
                       💡 <b>Pickup-Point Arbitrage:</b> Instead of KES 250+ home delivery, collect your package safely at Fargo Courier counter for just KES 50.
+                    </p>
+                  </div>
+                ) : deliveryType === 'lori_backhaul' ? (
+                  <div className="p-3 rounded-2xl bg-blue-50/70 border border-blue-200 space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-blue-900 flex items-center space-x-1">
+                        <Repeat className="w-3.5 h-3.5 text-blue-700" />
+                        <span>Lori Systems Backhaul Heavy Corridor Hub:</span>
+                      </span>
+                      <span className="text-[10px] font-mono text-blue-700 font-bold">
+                        50% Off Return Rate
+                      </span>
+                    </div>
+                    <input
+                      type="text"
+                      value={deliveryWard}
+                      onChange={(e) => setDeliveryWard(e.target.value)}
+                      placeholder="School Depot / Port CFS / Highway Hub"
+                      className="w-full bg-white border border-blue-300 rounded-xl px-3 py-2 text-xs font-bold text-[#1A1F2E] outline-none focus:border-blue-600"
+                    />
+                    <p className="text-[10px] text-blue-800 leading-tight">
+                      🚛 <b>Backhaul Arbitrage:</b> Leverages empty returning 10-ton trucks on the Nairobi ⇄ Mombasa/Kisumu corridors at 50% wholesale savings.
                     </p>
                   </div>
                 ) : (
@@ -600,7 +639,11 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                 </div>
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-gray-600">
-                    {deliveryType === 'fargo_pickup' ? 'Fargo 200+ Pickup Station:' : 'Freight & Logistics:'}
+                    {deliveryType === 'fargo_pickup' 
+                      ? 'Fargo 200+ Pickup Station:' 
+                      : deliveryType === 'lori_backhaul'
+                      ? 'Lori Backhaul Pallet (-50% Return):'
+                      : 'Freight & Logistics:'}
                   </span>
                   <span className="font-mono font-bold text-emerald-700">
                     KES {deliveryFeeKes.toLocaleString()}
@@ -622,7 +665,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                   {isProcessing ? (
                     <div className="flex items-center space-x-2">
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>Securing CBC Bundle & Assigning Fargo/WAIRO Carrier...</span>
+                      <span>Securing CBC Bundle & Assigning Lori/Fargo Freight Carrier...</span>
                     </div>
                   ) : (
                     <>

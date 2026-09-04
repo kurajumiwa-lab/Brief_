@@ -23,11 +23,12 @@ import {
   Zap,
   Navigation,
   Check,
-  Layers
+  Layers,
+  Repeat
 } from 'lucide-react';
 import { soundEngine } from '../../utils/SoundEngine';
 
-export type DeliveryTier = 'standard_peer' | 'sendy_express' | 'bolt_instant' | 'fargo_pickup';
+export type DeliveryTier = 'standard_peer' | 'sendy_express' | 'bolt_instant' | 'fargo_pickup' | 'lori_backhaul';
 
 export interface InterCountyRoute {
   id: string;
@@ -37,9 +38,11 @@ export interface InterCountyRoute {
   plateNumber: string;
   hasLogbookVerified: boolean;
   tier: DeliveryTier;
-  partnerBrand?: 'Fargo Courier' | 'Sendy' | 'Bolt' | 'WAIRO';
+  partnerBrand?: 'Fargo Courier' | 'Sendy' | 'Bolt' | 'WAIRO' | 'Lori Systems';
   insuranceCoverKes?: number;
   slaGuarantee?: string;
+  isBackhaul?: boolean;
+  backhaulDiscountPct?: number;
   fromCounty: string;
   fromHub: string;
   toCounty: string;
@@ -73,6 +76,32 @@ export interface ParcelBooking {
 }
 
 const INITIAL_ROUTES: InterCountyRoute[] = [
+  {
+    id: 'route-lori-msa-backhaul',
+    driverName: 'Lori Systems 10-Ton Return Haulage',
+    driverPhone: 'Lori Freight Control (+254 700 567 400)',
+    vehicleType: 'Light Truck',
+    plateNumber: 'KCU 849T (Lori Backhaul)',
+    hasLogbookVerified: true,
+    tier: 'lori_backhaul',
+    partnerBrand: 'Lori Systems',
+    isBackhaul: true,
+    backhaulDiscountPct: 50,
+    insuranceCoverKes: 500000,
+    slaGuarantee: 'Backhaul Return Arbitrage (50% Off Heavy Freight)',
+    fromCounty: 'Nairobi',
+    fromHub: 'Lori Freight Terminal (Mombasa Rd Depot)',
+    toCounty: 'Mombasa',
+    toHub: 'Mombasa Port CFS / Coastal Schools Depot',
+    departureDate: 'Tonight, 10:00 PM (Return Trip)',
+    departureTime: '22:00',
+    availableCapacityKg: 8500,
+    pricePerKgKes: 12,
+    baseFeeKes: 600,
+    status: 'scheduled',
+    reputationRating: 4.99,
+    totalTrips: 920
+  },
   {
     id: 'route-fargo-nationwide-0',
     driverName: 'Fargo Courier 200+ Drop-Point Network',
@@ -248,7 +277,7 @@ export function InterCountyDesk({
 
   // Filter state
   const [filterCounty, setFilterCounty] = useState<string>('All');
-  const [selectedTierFilter, setSelectedTierFilter] = useState<'all' | 'fargo_pickup' | 'sendy_express' | 'bolt_instant' | 'standard_peer'>('all');
+  const [selectedTierFilter, setSelectedTierFilter] = useState<'all' | 'lori_backhaul' | 'fargo_pickup' | 'sendy_express' | 'bolt_instant' | 'standard_peer'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Booking modal form state
@@ -274,6 +303,23 @@ export function InterCountyDesk({
 
   // Active bookings list
   const [bookings, setBookings] = useState<ParcelBooking[]>([
+    {
+      id: 'BKG-LORI-8821',
+      senderName: 'Nairobi Publishers Guild',
+      senderPhone: '0722119933',
+      recipientName: 'Coast Secondary Schools Consortium (Mombasa)',
+      recipientPhone: '0711994422',
+      itemDescription: 'CBC Grade 7 & 8 Textbook Bulk Pallet (120 Packs - Lori Backhaul)',
+      weightKg: 450,
+      routeId: 'route-lori-msa-backhaul',
+      tier: 'lori_backhaul',
+      partnerBrand: 'Lori Systems 10-Ton Return',
+      fromCounty: 'Nairobi',
+      toCounty: 'Mombasa',
+      feeKes: 6000,
+      escrowStatus: 'in_transit',
+      pinCode: '8914'
+    },
     {
       id: 'BKG-FARGO-102',
       senderName: 'Madam Beatrice Mwangi',
@@ -440,7 +486,7 @@ export function InterCountyDesk({
               <Sparkles className="w-5 h-5 text-[#FF5A1F]" />
             </h2>
             <p className="text-xs text-indigo-200/80 mt-0.5 max-w-xl">
-              WAIRO multi-tier freight ecosystem: Fargo KES 50 pickup-point arbitrage, Sendy Freight Express, and Bolt Rapid Courier across Kenya.
+              WAIRO multi-tier freight ecosystem: Lori Systems 50% backhaul arbitrage, Fargo KES 50 pickup counters, Sendy Freight, and Bolt Rapid.
             </p>
           </div>
 
@@ -458,15 +504,19 @@ export function InterCountyDesk({
         {/* Tier Badges Banner */}
         <div className="mt-4 pt-3 border-t border-white/10 flex items-center space-x-2 overflow-x-auto text-[11px] font-bold">
           <span className="text-gray-400 text-[10px] uppercase tracking-wider">Integrated Tiers:</span>
-          <span className="px-2.5 py-0.5 rounded-full bg-[#0B6E6E]/40 text-emerald-300 border border-emerald-400/40 flex items-center space-x-1">
+          <span className="px-2.5 py-0.5 rounded-full bg-blue-500/25 text-cyan-300 border border-cyan-400/40 flex items-center space-x-1 shrink-0">
+            <Repeat className="w-3 h-3 text-cyan-400" />
+            <span>Lori Systems Backhaul (50% Off Return Trip)</span>
+          </span>
+          <span className="px-2.5 py-0.5 rounded-full bg-[#0B6E6E]/40 text-emerald-300 border border-emerald-400/40 flex items-center space-x-1 shrink-0">
             <MapPin className="w-3 h-3 text-emerald-300" />
-            <span>Fargo 200+ Drop Points (KES 50 Arbitrage)</span>
+            <span>Fargo 200+ Points (KES 50 Arbitrage)</span>
           </span>
-          <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center space-x-1">
+          <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center space-x-1 shrink-0">
             <ShieldCheck className="w-3 h-3" />
-            <span>Sendy Freight (Insured)</span>
+            <span>Sendy Freight</span>
           </span>
-          <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center space-x-1">
+          <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center space-x-1 shrink-0">
             <Zap className="w-3 h-3" />
             <span>Bolt Instant Rapid</span>
           </span>
@@ -513,8 +563,9 @@ export function InterCountyDesk({
             <div className="flex items-center space-x-1.5 overflow-x-auto pb-1">
               {[
                 { id: 'all', label: 'All Fleet Tiers' },
-                { id: 'fargo_pickup', label: 'Fargo 200+ Points 📦 (KES 50 Arbitrage)' },
-                { id: 'sendy_express', label: 'Sendy Express ⚡ (Insured Van)' },
+                { id: 'lori_backhaul', label: 'Lori Backhaul 50% Off 🚛 (Empty Return)' },
+                { id: 'fargo_pickup', label: 'Fargo 200+ Points 📦 (KES 50)' },
+                { id: 'sendy_express', label: 'Sendy Express ⚡ (Insured)' },
                 { id: 'bolt_instant', label: 'Bolt Instant 🚀 (Rapid GPS)' },
                 { id: 'standard_peer', label: 'Standard SACCO & Peer' }
               ].map(t => (
@@ -555,7 +606,7 @@ export function InterCountyDesk({
                 <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-2.5" />
                 <input
                   type="text"
-                  placeholder="Search Fargo, Sendy, Bolt, plate..."
+                  placeholder="Search Lori, Fargo, Sendy, Bolt, plate..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-8 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:border-[#2563EB] w-full sm:w-56"
@@ -567,6 +618,7 @@ export function InterCountyDesk({
           {/* Routes Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
             {filteredRoutes.map((route) => {
+              const isLori = route.tier === 'lori_backhaul';
               const isFargo = route.tier === 'fargo_pickup';
               const isSendy = route.tier === 'sendy_express';
               const isBolt = route.tier === 'bolt_instant';
@@ -575,7 +627,9 @@ export function InterCountyDesk({
                 <div
                   key={route.id}
                   className={`border rounded-2xl p-4 transition-all shadow-xs space-y-3 relative group ${
-                    isFargo
+                    isLori
+                      ? 'bg-blue-50/60 border-blue-400 hover:border-blue-600 ring-1 ring-blue-400/40'
+                      : isFargo
                       ? 'bg-emerald-50/60 border-emerald-400 hover:border-emerald-600 ring-1 ring-emerald-400/30'
                       : isSendy
                       ? 'bg-emerald-50/30 border-emerald-300 hover:border-emerald-500'
@@ -589,6 +643,12 @@ export function InterCountyDesk({
                     <div className="space-y-0.5">
                       <div className="flex items-center space-x-1.5">
                         <span className="font-bold text-xs text-[#0D1117]">{route.driverName}</span>
+                        {isLori && (
+                          <span className="bg-blue-600 text-white text-[9px] font-mono font-black px-1.5 py-0.5 rounded flex items-center space-x-1">
+                            <Repeat className="w-2.5 h-2.5" />
+                            <span>LORI BACKHAUL -50%</span>
+                          </span>
+                        )}
                         {isFargo && (
                           <span className="bg-[#0B6E6E] text-white text-[9px] font-mono font-black px-1.5 py-0.5 rounded">
                             FARGO 200+ POINTS
@@ -894,7 +954,7 @@ export function InterCountyDesk({
                     <span className="text-base font-black font-mono tracking-widest text-[#0D1117] bg-white px-3 py-1 rounded-lg border border-gray-300">
                       {b.pinCode}
                     </span>
-                    <span className="text-[10px] text-gray-500">Share with driver or Fargo agent upon parcel collection</span>
+                    <span className="text-[10px] text-gray-500">Share with driver or Fargo/Lori agent upon parcel collection</span>
                   </div>
                 </div>
 
@@ -933,7 +993,18 @@ export function InterCountyDesk({
       {activeTab === 'logbook_info' && (
         <div className="p-5 sm:p-6 space-y-4 text-xs">
           
-          {/* Pickup Point Arbitrage Spotlight */}
+          {/* Lori Backhaul Arbitrage Spotlight */}
+          <div className="p-4 rounded-2xl bg-blue-50 border border-blue-300 text-blue-950 space-y-2">
+            <h4 className="font-black text-sm flex items-center space-x-1.5 text-blue-900">
+              <Repeat className="w-4 h-4 text-blue-700" />
+              <span>Lori Systems Backhaul Capacity Arbitrage (50% Off Return Trips)</span>
+            </h4>
+            <p className="text-[11px] text-blue-900 leading-relaxed">
+              Trucks delivering goods from Nairobi to Mombasa return empty <b>40–60% of the time</b>. Lori Systems' API tracks live available backhaul capacity across heavy freight corridors. Brief's WAIRO module offers bulk textbook palettes and agricultural freight heading to coastal schools and businesses at discounted return rates. You pay Lori the 50% backhaul rate, parents and traders save massively, and WAIRO retains the spread.
+            </p>
+          </div>
+
+          {/* Fargo Pickup Point Arbitrage Spotlight */}
           <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-950 space-y-2">
             <h4 className="font-black text-sm flex items-center space-x-1.5 text-emerald-900">
               <MapPin className="w-4 h-4 text-emerald-700" />
@@ -961,13 +1032,13 @@ export function InterCountyDesk({
             </div>
 
             <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200 space-y-1">
-              <span className="font-bold text-[#0D1117] block">2. 200+ Drop Points</span>
+              <span className="font-bold text-[#0D1117] block">2. 200+ Fargo Hubs</span>
               <p className="text-[10px] text-gray-600 font-sans">Collect or drop at any verified Fargo counter nationwide.</p>
             </div>
 
             <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200 space-y-1">
-              <span className="font-bold text-[#0D1117] block">3. Zero Fleet Leases</span>
-              <p className="text-[10px] text-gray-600 font-sans">No daily vehicle rental targets eating into your profits.</p>
+              <span className="font-bold text-[#0D1117] block">3. 50% Lori Backhaul</span>
+              <p className="text-[10px] text-gray-600 font-sans">Leverage empty returning 10-ton lorries on heavy corridors.</p>
             </div>
           </div>
         </div>
@@ -1052,6 +1123,16 @@ export function InterCountyDesk({
                 </div>
               </div>
 
+              {selectedRoute.tier === 'lori_backhaul' && (
+                <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-300 text-blue-950 text-[11px] space-y-1">
+                  <div className="flex items-center space-x-1 font-bold text-blue-900">
+                    <Repeat className="w-3.5 h-3.5 text-blue-700" />
+                    <span>Lori Systems Backhaul Empty Return Capacity Active</span>
+                  </div>
+                  <p>50% discounted freight rate applied. Goods insured up to KES 500,000 across the Northern Corridor.</p>
+                </div>
+              )}
+
               {selectedRoute.tier === 'fargo_pickup' && (
                 <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-950 text-[11px] space-y-1">
                   <div className="flex items-center space-x-1 font-bold text-emerald-900">
@@ -1087,7 +1168,7 @@ export function InterCountyDesk({
                   <Lock className="w-3.5 h-3.5 text-blue-600" />
                   <span>Escrow Hold via M-Pesa</span>
                 </div>
-                <p>Funds remain securely in escrow until recipient gives the driver or Fargo agent the 4-digit PIN upon arrival.</p>
+                <p>Funds remain securely in escrow until recipient gives the driver, Lori agent, or Fargo counter the 4-digit PIN upon arrival.</p>
               </div>
 
               <button
