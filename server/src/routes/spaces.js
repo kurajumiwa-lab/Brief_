@@ -2,7 +2,6 @@
 //
 // Exposes the Space domain over HTTP.
 // Identity is always caller-authoritative; pricing is server-derived.
-import { store } from '../store.js';
 import { callerId } from '../identity.js';
 import * as spaces from '../domain/space.js';
 import { requireAuth, recordError } from './helpers.js';
@@ -187,6 +186,128 @@ export function register(app) {
     } catch (err) {
       recordError('space_conversation_create_failed', err);
       res.status(400).json({ error: err.message || 'failed to create conversation' });
+    }
+  });
+
+  // --- Post message in conversation ---
+  app.post('/api/spaces/:id/conversations/:convId/messages', requireAuth, (req, res) => {
+    try {
+      const me = callerId(req);
+      const { text, sender, from } = req.body || {};
+      if (!text || !String(text).trim()) {
+        return res.status(400).json({ error: 'Message text is required' });
+      }
+
+      const conv = spaces.postSpaceMessage({
+        spaceId: req.params.id,
+        conversationId: req.params.convId,
+        text,
+        sender: sender || 'Seller',
+        from: from || 'owner',
+        callerId: me
+      });
+
+      res.json({ conversation: conv });
+    } catch (err) {
+      recordError('space_message_post_failed', err);
+      res.status(400).json({ error: err.message || 'failed to post message' });
+    }
+  });
+
+  // --- Send Quote in conversation ---
+  app.post('/api/spaces/:id/conversations/:convId/quote', requireAuth, (req, res) => {
+    try {
+      const me = callerId(req);
+      const { title, priceKes, notes } = req.body || {};
+      if (!title || !priceKes) {
+        return res.status(400).json({ error: 'title and priceKes are required' });
+      }
+
+      const quote = spaces.createSpaceQuote({
+        spaceId: req.params.id,
+        conversationId: req.params.convId,
+        title,
+        priceKes,
+        notes,
+        callerId: me
+      });
+
+      res.status(201).json({ quote });
+    } catch (err) {
+      recordError('space_quote_create_failed', err);
+      res.status(400).json({ error: err.message || 'failed to create quote' });
+    }
+  });
+
+  // --- Trigger M-Pesa STK Prompt ---
+  app.post('/api/spaces/:id/conversations/:convId/mpesa-prompt', requireAuth, (req, res) => {
+    try {
+      const me = callerId(req);
+      const { quoteId, phoneNumber, amountKes, description } = req.body || {};
+      if (!amountKes) {
+        return res.status(400).json({ error: 'amountKes is required' });
+      }
+
+      const prompt = spaces.triggerMpesaPrompt({
+        spaceId: req.params.id,
+        conversationId: req.params.convId,
+        quoteId,
+        phoneNumber,
+        amountKes,
+        description,
+        callerId: me
+      });
+
+      res.status(201).json({ prompt });
+    } catch (err) {
+      recordError('space_mpesa_prompt_failed', err);
+      res.status(400).json({ error: err.message || 'failed to trigger M-Pesa prompt' });
+    }
+  });
+
+  // --- Complete M-Pesa Payment & Auto-Convert to Order ---
+  app.post('/api/spaces/:id/conversations/:convId/mpesa-complete', (req, res) => {
+    try {
+      const { paymentRequestId, mpesaReceipt, amountPaid } = req.body || {};
+      if (!paymentRequestId) {
+        return res.status(400).json({ error: 'paymentRequestId is required' });
+      }
+
+      const result = spaces.completeMpesaPayment({
+        spaceId: req.params.id,
+        conversationId: req.params.convId,
+        paymentRequestId,
+        mpesaReceipt,
+        amountPaid
+      });
+
+      res.json(result);
+    } catch (err) {
+      recordError('space_mpesa_complete_failed', err);
+      res.status(400).json({ error: err.message || 'failed to complete M-Pesa payment' });
+    }
+  });
+
+  // --- Inbound WhatsApp Webhook Router ---
+  app.post('/api/spaces/:id/whatsapp/inbound', (req, res) => {
+    try {
+      const { from, customerName, text, offerId } = req.body || {};
+      if (!from || !text) {
+        return res.status(400).json({ error: 'from phone and text are required' });
+      }
+
+      const conversation = spaces.routeInboundWhatsAppMessage({
+        spaceId: req.params.id,
+        from,
+        customerName: customerName || 'WhatsApp Customer',
+        text,
+        offerId
+      });
+
+      res.status(201).json({ conversation });
+    } catch (err) {
+      recordError('space_whatsapp_inbound_failed', err);
+      res.status(400).json({ error: err.message || 'failed to route WhatsApp message' });
     }
   });
 

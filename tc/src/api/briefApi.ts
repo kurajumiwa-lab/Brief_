@@ -94,7 +94,9 @@ import type {
   SpaceCreate,
   SpaceOfferCreate,
   SpaceActivity,
-  SpaceConversation
+  SpaceConversation,
+  SpaceQuote,
+  SpacePaymentPrompt
 } from './types';
 import { enqueue, replayQueue, queueDepth, type QueuedWrite } from './offlineQueue';
 import { asTarget } from './types';
@@ -4345,5 +4347,67 @@ export function createSpaceOrder(spaceId: string, input: {
     method: 'POST',
     body: JSON.stringify(input)
   }, (r) => r && r.order ? { order: r.order } : undefined);
+}
+
+/** Post a chat message into a Space conversation thread. */
+export function postSpaceMessage(spaceId: string, convId: string, input: {
+  text: string;
+  sender?: string;
+  from?: 'customer' | 'owner' | 'seller';
+}): Promise<ApiResult<{ conversation: SpaceConversation }>> {
+  return request<{ conversation: SpaceConversation }>(`/api/spaces/${encodeURIComponent(spaceId)}/conversations/${encodeURIComponent(convId)}/messages`, {
+    method: 'POST',
+    body: JSON.stringify(input)
+  }, (r) => r && r.conversation ? { conversation: r.conversation } : undefined);
+}
+
+/** Send a customized quotation card in a Space conversation thread. */
+export function createSpaceQuote(spaceId: string, convId: string, input: {
+  title: string;
+  priceKes: number;
+  notes?: string;
+}): Promise<ApiResult<{ quote: SpaceQuote }>> {
+  return request<{ quote: SpaceQuote }>(`/api/spaces/${encodeURIComponent(spaceId)}/conversations/${encodeURIComponent(convId)}/quote`, {
+    method: 'POST',
+    body: JSON.stringify(input)
+  }, (r) => r && r.quote ? { quote: r.quote } : undefined);
+}
+
+/** Trigger an M-Pesa STK Push prompt to the customer's phone number. */
+export function triggerSpaceMpesaPrompt(spaceId: string, convId: string, input: {
+  quoteId?: string;
+  phoneNumber?: string;
+  amountKes: number;
+  description?: string;
+}): Promise<ApiResult<{ prompt: SpacePaymentPrompt }>> {
+  return request<{ prompt: SpacePaymentPrompt }>(`/api/spaces/${encodeURIComponent(spaceId)}/conversations/${encodeURIComponent(convId)}/mpesa-prompt`, {
+    method: 'POST',
+    body: JSON.stringify(input)
+  }, (r) => r && r.prompt ? { prompt: r.prompt } : undefined);
+}
+
+/** Complete an M-Pesa payment, settle transaction, and auto-convert to order. */
+export function completeSpaceMpesaPayment(spaceId: string, convId: string, input: {
+  paymentRequestId: string;
+  mpesaReceipt?: string;
+  amountPaid?: number;
+}): Promise<ApiResult<{ order: Order; receipt: string; status: string }>> {
+  return request<{ order: Order; receipt: string; status: string }>(`/api/spaces/${encodeURIComponent(spaceId)}/conversations/${encodeURIComponent(convId)}/mpesa-complete`, {
+    method: 'POST',
+    body: JSON.stringify(input)
+  }, (r) => r && r.order ? { order: r.order, receipt: r.receipt, status: r.status } : undefined);
+}
+
+/** Route an inbound WhatsApp customer message into a Space conversation. */
+export function routeInboundWhatsApp(spaceId: string, input: {
+  from: string;
+  customerName?: string;
+  text: string;
+  offerId?: string;
+}): Promise<ApiResult<{ conversation: SpaceConversation }>> {
+  return request<{ conversation: SpaceConversation }>(`/api/spaces/${encodeURIComponent(spaceId)}/whatsapp/inbound`, {
+    method: 'POST',
+    body: JSON.stringify(input)
+  }, (r) => r && r.conversation ? { conversation: r.conversation } : undefined);
 }
 

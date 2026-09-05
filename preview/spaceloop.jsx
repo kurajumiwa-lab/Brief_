@@ -1,13 +1,16 @@
 // ---------------------------------------------------------------------------
-// BRIEF 2.0: SPACE FIRST-LOOP TEST SUITE (Digital Landlord)
+// BRIEF 2.0: SPACE & CONVERSATION RAILS TEST SUITE (Digital Landlord)
 //
 // Tests:
 // 1. HomeSurface rendering & empty state
 // 2. Space creation flow (Amina's Cakes)
 // 3. SpaceShell with metrics, offers, activities
 // 4. Offer creation & publication (Birthday Cake, KES 4,500)
-// 5. Customer conversation / contextual inquiry
-// 6. Navigation and AppShell integration
+// 5. Customer conversation & WhatsApp thread
+// 6. SpaceConversationThread (In-chat Quote & M-Pesa STK push rails)
+// 7. SpacePeople with active customer chats & converted order badge
+// 8. PublicOfferModal customer view
+// 9. Navigation and AppShell integration
 // ---------------------------------------------------------------------------
 
 const React = require('react');
@@ -31,6 +34,8 @@ const { SpaceShell } = require('./src/features/spaces/SpaceShell.tsx');
 const { SpaceHeader } = require('./src/features/spaces/SpaceHeader.tsx');
 const { SpaceOffers } = require('./src/features/spaces/SpaceOffers.tsx');
 const { SpaceActivity } = require('./src/features/spaces/SpaceActivity.tsx');
+const { SpacePeople } = require('./src/features/spaces/SpacePeople.tsx');
+const { SpaceConversationThread } = require('./src/features/spaces/SpaceConversationThread.tsx');
 const { CreateSpaceModal } = require('./src/features/spaces/CreateSpaceModal.tsx');
 const { CreateOfferModal } = require('./src/features/spaces/CreateOfferModal.tsx');
 const { PublicOfferModal } = require('./src/features/offers/PublicOfferModal.tsx');
@@ -50,7 +55,7 @@ function check(name, condition, extra = '') {
 }
 
 async function runTests() {
-  console.log('\n=== BRIEF 2.0: SPACES & THE DIGITAL LANDLORD SUITE ===');
+  console.log('\n=== BRIEF 2.0: SPACES & CHAT RAILS SUITE ===');
 
   // --- 1. HomeSurface ---
   console.log('\n--- 1. HomeSurface Decision Screen ---');
@@ -151,8 +156,36 @@ async function runTests() {
         customerName: 'Mary',
         customerContact: '+254712345678',
         offerTitle: 'Birthday Cake',
-        status: 'new',
-        messages: [{ id: 'm1', from: 'customer', sender: 'Mary', text: 'Can you make it for Saturday?', at: new Date().toISOString() }],
+        offerPriceKes: 4500,
+        status: 'converted',
+        messages: [
+          { id: 'm1', from: 'customer', sender: 'Mary', text: 'Can you make it for Saturday?', at: new Date().toISOString() },
+          {
+            id: 'm2',
+            from: 'owner',
+            sender: "Amina's Cakes",
+            text: 'Quotation: 2-Tier Chocolate Birthday Cake — KES 5,200',
+            quote: {
+              id: 'quot_1',
+              title: '2-Tier Chocolate Birthday Cake',
+              priceKes: 5200,
+              notes: 'Including Saturday Kilimani delivery',
+              status: 'sent',
+              createdAt: new Date().toISOString()
+            },
+            at: new Date().toISOString()
+          }
+        ],
+        quotes: [
+          {
+            id: 'quot_1',
+            title: '2-Tier Chocolate Birthday Cake',
+            priceKes: 5200,
+            notes: 'Including Saturday Kilimani delivery',
+            status: 'sent',
+            createdAt: new Date().toISOString()
+          }
+        ],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }
@@ -219,13 +252,54 @@ async function runTests() {
 
   await act(async () => { root5.unmount(); host5.remove(); });
 
-  // --- 6. PublicOfferModal (Customer Contextual Inquiry) ---
-  console.log('\n--- 6. PublicOfferModal (Customer View) ---');
+  // --- 6. SpaceConversationThread (Phase 2 In-Chat Rails) ---
+  console.log('\n--- 6. SpaceConversationThread & In-Chat Commerce Rails ---');
   const host6 = document.createElement('div');
   document.body.appendChild(host6);
   const root6 = createRoot(host6);
   await act(async () => {
-    root6.render(React.createElement(PublicOfferModal, {
+    root6.render(React.createElement(SpaceConversationThread, {
+      spaceId: mockSpace.id,
+      conversation: mockSpace.recentConversations[0]
+    }));
+  });
+
+  const text6 = host6.textContent;
+  check('shows customer name and phone', text6.includes('Mary') && text6.includes('+254712345678'));
+  check('shows contextual offer inquiry', text6.includes('Birthday Cake'));
+  check('shows official quotation card in thread', text6.includes('Official Quote') && text6.includes('2-Tier Chocolate Birthday Cake'));
+  check('shows quote price KES 5,200', text6.includes('5,200'));
+  check('shows in-chat M-Pesa STK prompt button', text6.includes('Send M-Pesa STK Prompt'));
+
+  await act(async () => { root6.unmount(); host6.remove(); });
+
+  // --- 7. SpacePeople ---
+  console.log('\n--- 7. SpacePeople with Active Chats & Conversion Badges ---');
+  const host7 = document.createElement('div');
+  document.body.appendChild(host7);
+  const root7 = createRoot(host7);
+  await act(async () => {
+    root7.render(React.createElement(SpacePeople, {
+      spaceId: mockSpace.id,
+      conversations: mockSpace.recentConversations,
+      customers: [{ name: 'Mary', contact: '+254712345678' }]
+    }));
+  });
+
+  const text7 = host7.textContent;
+  check('renders active inquiries header', text7.includes('Active Inquiries & WhatsApp Chats'));
+  check('shows customer name and message preview', text7.includes('Mary') && (text7.includes('Quotation') || text7.includes('Saturday')));
+  check('shows order converted badge on converted conversation', text7.includes('Order Paid'));
+
+  await act(async () => { root7.unmount(); host7.remove(); });
+
+  // --- 8. PublicOfferModal (Customer Contextual Inquiry) ---
+  console.log('\n--- 8. PublicOfferModal (Customer View) ---');
+  const host8 = document.createElement('div');
+  document.body.appendChild(host8);
+  const root8 = createRoot(host8);
+  await act(async () => {
+    root8.render(React.createElement(PublicOfferModal, {
       isOpen: true,
       offer: mockSpace.offers[0],
       spaceName: "Amina's Cakes",
@@ -233,29 +307,29 @@ async function runTests() {
     }));
   });
 
-  const text6 = host6.textContent;
-  check('shows public offer title and price', text6.includes('Birthday Cake') && text6.includes('4,500'));
-  check('shows verified seller space name', text6.includes("Amina's Cakes"));
+  const text8 = host8.textContent;
+  check('shows public offer title and price', text8.includes('Birthday Cake') && text8.includes('4,500'));
+  check('shows verified seller space name', text8.includes("Amina's Cakes"));
   check('shows customer action buttons: Ask about this & Order Now',
-    text6.includes('Ask about this') && text6.includes('Order Now'));
+    text8.includes('Ask about this') && text8.includes('Order Now'));
 
-  await act(async () => { root6.unmount(); host6.remove(); });
+  await act(async () => { root8.unmount(); host8.remove(); });
 
-  // --- 7. AppShell Integration ---
-  console.log('\n--- 7. AppShell Navigation ---');
-  const host7 = document.createElement('div');
-  document.body.appendChild(host7);
-  const root7 = createRoot(host7);
+  // --- 9. AppShell Integration ---
+  console.log('\n--- 9. AppShell Navigation ---');
+  const host9 = document.createElement('div');
+  document.body.appendChild(host9);
+  const root9 = createRoot(host9);
   await act(async () => {
-    root7.render(React.createElement(AppShell, {
+    root9.render(React.createElement(AppShell, {
       initialTab: 'home'
     }));
   });
 
-  const text7 = host7.textContent;
-  check('renders AppShell Home tab by default', text7.includes('What are you working on?'));
+  const text9 = host9.textContent;
+  check('renders AppShell Home tab by default', text9.includes('What are you working on?'));
 
-  await act(async () => { root7.unmount(); host7.remove(); });
+  await act(async () => { root9.unmount(); host9.remove(); });
 
   console.log(`\nPASSED ${passed} / FAILED ${failed}`);
   process.exit(failed === 0 ? 0 : 1);

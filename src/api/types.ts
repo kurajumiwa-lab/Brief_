@@ -1695,6 +1695,36 @@ export interface SpaceActivity {
   createdAt: string;
 }
 
+export interface SpaceQuote {
+  id: string;
+  title: string;
+  priceKes: number;
+  notes?: string;
+  status: 'sent' | 'accepted' | 'declined';
+  createdAt: string;
+}
+
+export interface SpacePaymentPrompt {
+  id: string;
+  quoteId?: string | null;
+  phoneNumber: string;
+  amountKes: number;
+  description: string;
+  status: 'pending' | 'paid' | 'failed';
+  receipt?: string;
+  createdAt: string;
+}
+
+export interface SpaceMessage {
+  id: string;
+  from: 'customer' | 'owner' | 'seller' | 'system';
+  sender: string;
+  text: string;
+  quote?: SpaceQuote | null;
+  paymentPrompt?: SpacePaymentPrompt | null;
+  at: string;
+}
+
 export interface SpaceConversation {
   id: string;
   spaceId: string;
@@ -1703,14 +1733,11 @@ export interface SpaceConversation {
   offerPriceKes?: number | null;
   customerName: string;
   customerContact?: string;
-  status: 'new' | 'replied' | 'order_created' | 'closed';
-  messages: Array<{
-    id: string;
-    from: 'customer' | 'seller';
-    sender: string;
-    text: string;
-    at: string;
-  }>;
+  status: 'new' | 'active' | 'replied' | 'converted' | 'order_created' | 'closed';
+  orderId?: string | null;
+  messages: SpaceMessage[];
+  quotes?: SpaceQuote[];
+  paymentPrompts?: SpacePaymentPrompt[];
   createdAt: string;
   updatedAt: string;
 }

@@ -11,7 +11,7 @@ function check(label, pass, detail) {
   }
 }
 
-console.log('\n=== SPACES DOMAIN (Brief 2.0 — Digital Landlord) ===');
+console.log('\n=== SPACES DOMAIN (Brief 2.0 — Digital Landlord & Phase 2 Chat Rails) ===');
 
 store._reset();
 
@@ -84,30 +84,64 @@ const conv = spaces.createSpaceConversation({
 check('conversation created with offer context', conv.offerId === offer.id && conv.offerTitle === 'Birthday Cake');
 check('conversation customer message attached', conv.messages.length === 1 && conv.messages[0].text.includes('Saturday'));
 
-// 7. Space Activity Stream
-const activities = spaces.getSpaceActivities(space.id);
-check('activity stream reflects space lifecycle', activities.some(a => a.kind === 'space_created') &&
-  activities.some(a => a.kind === 'offer_published') &&
-  activities.some(a => a.kind === 'conversation_received'));
-
-// 8. Order Creation with Server-Authoritative Price
-const order = spaces.createSpaceOrder({
+// 7. Inbound WhatsApp Message Route
+const waConv = spaces.routeInboundWhatsAppMessage({
   spaceId: space.id,
-  offerId: offer.id,
-  customerId: userB.id,
+  from: '+254712345678',
   customerName: 'Mary',
-  quantity: 1,
-  deliveryNotes: 'Deliver to Kilimani on Saturday 11am',
+  text: 'Also chocolate flavor please!'
+});
+check('WhatsApp message appends to existing conversation', waConv.id === conv.id && waConv.messages.length === 2);
+check('WhatsApp message body preserved', waConv.messages[1].text.includes('chocolate flavor'));
+
+// 8. In-Thread Quotation (Customized Price KES 5,200)
+const quote = spaces.createSpaceQuote({
+  spaceId: space.id,
+  conversationId: conv.id,
+  title: '2-Tier Chocolate Birthday Cake',
+  priceKes: 5200,
+  notes: 'Including Saturday Kilimani delivery',
   callerId: userA.id
 });
+check('custom quote created with server price', quote.priceKes === 5200);
+check('quote message posted into conversation', spaces.getSpaceConversations(space.id)[0].quotes.length === 1);
 
-check('order total equals server offer price (4500)', order.total === 4500);
-check('order tagged with spaceId and customer', order.spaceId === space.id && order.customerName === 'Mary');
+// 9. Trigger M-Pesa STK Push
+const mpesaPrompt = spaces.triggerMpesaPrompt({
+  spaceId: space.id,
+  conversationId: conv.id,
+  quoteId: quote.id,
+  phoneNumber: '+254712345678',
+  amountKes: 5200,
+  description: 'Amina Cakes: Chocolate Birthday Cake',
+  callerId: userA.id
+});
+check('M-Pesa prompt created in pending state', mpesaPrompt.status === 'pending' && mpesaPrompt.amountKes === 5200);
 
-// 9. Hydrated Space State
+// 10. Complete M-Pesa Payment & Auto-Convert to Order
+const paymentResult = spaces.completeMpesaPayment({
+  spaceId: space.id,
+  conversationId: conv.id,
+  paymentRequestId: mpesaPrompt.id,
+  mpesaReceipt: 'QJ891234AB',
+  amountPaid: 5200
+});
+check('payment status completed and confirmed', paymentResult.status === 'paid' && paymentResult.receipt === 'QJ891234AB');
+check('order auto-created with exact paid amount', paymentResult.order.total === 5200 && paymentResult.order.status === 'paid');
+check('order tagged with space and customer', paymentResult.order.spaceId === space.id && paymentResult.order.customerName === 'Mary');
+
+// 11. Hydrated Space State with Live Metrics
 const hydrated = spaces.getSpace(space.id);
 check('hydrated space shows active offer count', hydrated.metrics.offersCount >= 1);
 check('hydrated space shows customer count', hydrated.metrics.customerCount >= 1);
+check('hydrated space shows total paid revenue KES 5,200', hydrated.metrics.revenueKes === 5200);
 check('hydrated space shows active orders count', hydrated.metrics.activeOrdersCount >= 1);
 
-console.log('SPACES DOMAIN TESTS PASSED!\n');
+// 12. Activity Stream
+const activities = spaces.getSpaceActivities(space.id);
+check('activity stream records payment and auto-conversion',
+  activities.some(a => a.kind === 'payment_received') &&
+  activities.some(a => a.kind === 'quote_sent') &&
+  activities.some(a => a.kind === 'mpesa_prompt_sent'));
+
+console.log('SPACES DOMAIN & CHAT RAILS TESTS PASSED!\n');

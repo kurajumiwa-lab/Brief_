@@ -78,3 +78,7 @@ export { CreateOfferModal } from '../../features/spaces/CreateOfferModal';
 export type { CreateOfferModalProps } from '../../features/spaces/CreateOfferModal';
 export { PublicOfferModal } from '../../features/offers/PublicOfferModal';
 export type { PublicOfferModalProps } from '../../features/offers/PublicOfferModal';
+export { SpaceConversationThread } from '../../features/spaces/SpaceConversationThread';
+export type { SpaceConversationThreadProps } from '../../features/spaces/SpaceConversationThread';
+export { SpacePeople } from '../../features/spaces/SpacePeople';
+export type { SpacePeopleProps } from '../../features/spaces/SpacePeople';

@@ -9,9 +9,10 @@
 // coordinates the underlying capabilities.
 //
 // Invariants:
-//   1. Money is never read from client body. Prices are derived from listings.
+//   1. Money is never read from client body. Prices are derived from listings/quotes.
 //   2. Identity is caller-authoritative.
 //   3. Activity stream is append-only and reflects real server events.
+//   4. Conversations support quotes, M-Pesa STK push triggers, and automatic order conversion.
 // ---------------------------------------------------------------------------
 
 import { store, newId } from '../store.js';
@@ -38,36 +39,37 @@ export function createSpace({
   name,
   type = 'business',
   goal = '',
-  targetValueKes = 0,
+  targetValueKes = null,
   initialOffer = null
 }) {
-  if (!ownerId) throw new Error('ownerId is required');
-  if (!name || !String(name).trim()) throw new Error('Space name is required');
-
-  const cleanName = String(name).trim();
-  const cleanType = SPACE_TYPES.includes(type) ? type : 'other';
-
-  // Ensure an underlying vendor identity exists for commerce operations
-  let vendor = store.find('vendors', (v) => v.ownerId === ownerId);
-  if (!vendor) {
-    vendor = vendors.createVendor({
-      ownerId,
-      displayName: cleanName,
-      description: goal || `Space: ${cleanName}`
-    });
-  }
+  if (!ownerId) throw new Error('Space must have an ownerId');
+  if (!name || !name.trim()) throw new Error('Space name cannot be empty');
 
   const spaceId = newId('spc');
   const now = new Date().toISOString();
 
+  // Provision an underlying vendor row so existing commerce primitives link cleanly
+  let vendorId = null;
+  const existingVendor = store.find('vendors', (v) => v.ownerId === ownerId);
+  if (existingVendor) {
+    vendorId = existingVendor.id;
+  } else {
+    const newVend = vendors.createVendor({
+      ownerId,
+      displayName: name.trim(),
+      description: `Space: ${name.trim()} (${type})`
+    });
+    vendorId = newVend.id;
+  }
+
   const space = {
     id: spaceId,
     ownerId,
-    vendorId: vendor.id,
-    name: cleanName,
-    type: cleanType,
-    goal: String(goal || '').trim(),
-    targetValueKes: Number(targetValueKes) || 0,
+    vendorId,
+    name: name.trim(),
+    type: SPACE_TYPES.includes(type) ? type : 'business',
+    goal: goal ? goal.trim() : '',
+    targetValueKes: targetValueKes ? Number(targetValueKes) : null,
     status: 'active',
     capabilities: ['commerce', 'communication', 'ledger', 'activity'],
     createdAt: now,
@@ -80,15 +82,20 @@ export function createSpace({
   recordSpaceActivity({
     spaceId,
     kind: 'space_created',
-    title: `Created Space: ${cleanName}`,
-    description: goal ? `Goal: ${goal}` : 'Space initialized',
-    actorId: ownerId
+    title: `Created Space: ${space.name}`,
+    description: goal ? `Goal: ${goal}` : `Initialized ${type} space`,
+    actorId: ownerId,
+    metadata: { type, goal }
   });
 
-  // If an initial offer was provided, create it now
+  // If initial offer provided, create it immediately
   if (initialOffer && initialOffer.title && initialOffer.price) {
     createSpaceOffer(spaceId, {
-      ...initialOffer,
+      title: initialOffer.title,
+      price: initialOffer.price,
+      currency: initialOffer.currency || 'KES',
+      type: initialOffer.type || 'product',
+      description: initialOffer.description || '',
       callerId: ownerId
     });
   }
@@ -97,12 +104,12 @@ export function createSpace({
 }
 
 /**
- * Retrieves a Space by id, hydrated with its offers, metrics, and activities.
+ * Retrieves a Space with live metrics, active offers, recent activities, and conversations.
  */
 export function getSpace(spaceId, { callerId = null } = {}) {
   const space = store.find('spaces', (s) => s.id === spaceId);
   if (!space) return null;
-  return hydrateSpace(space);
+  return hydrateSpace(space, { callerId });
 }
 
 /**
@@ -110,12 +117,12 @@ export function getSpace(spaceId, { callerId = null } = {}) {
  */
 export function listSpacesForOwner(ownerId) {
   if (!ownerId) return [];
-  const rows = store.filter('spaces', (s) => s.ownerId === ownerId && s.status !== 'archived');
-  return rows.map(hydrateSpace);
+  const rows = store.filter('spaces', (s) => s.ownerId === ownerId);
+  return rows.map((s) => hydrateSpace(s));
 }
 
 /**
- * Updates a space.
+ * Updates space properties (name, goal, targetValueKes, status).
  */
 export function updateSpace(spaceId, updates = {}, { callerId }) {
   const space = store.find('spaces', (s) => s.id === spaceId);
@@ -124,20 +131,18 @@ export function updateSpace(spaceId, updates = {}, { callerId }) {
     throw new Error('Not authorized to update this space');
   }
 
-  const allowed = {};
-  if (typeof updates.name === 'string' && updates.name.trim()) allowed.name = updates.name.trim();
-  if (typeof updates.goal === 'string') allowed.goal = updates.goal.trim();
-  if (typeof updates.targetValueKes === 'number') allowed.targetValueKes = updates.targetValueKes;
-  if (SPACE_TYPES.includes(updates.type)) allowed.type = updates.type;
+  const patch = { updatedAt: new Date().toISOString() };
+  if (updates.name && updates.name.trim()) patch.name = updates.name.trim();
+  if (updates.goal !== undefined) patch.goal = String(updates.goal).trim();
+  if (updates.targetValueKes !== undefined) patch.targetValueKes = updates.targetValueKes ? Number(updates.targetValueKes) : null;
+  if (updates.status) patch.status = updates.status;
 
-  allowed.updatedAt = new Date().toISOString();
-  store.update('spaces', space.id, allowed);
-
-  return hydrateSpace({ ...space, ...allowed });
+  const updated = store.update('spaces', spaceId, patch);
+  return hydrateSpace(updated);
 }
 
 /**
- * Creates an offer (listing) associated with this space and its vendor.
+ * Creates an offer/listing linked to this space with server-authoritative pricing.
  */
 export function createSpaceOffer(spaceId, {
   title,
@@ -151,39 +156,43 @@ export function createSpaceOffer(spaceId, {
   const space = store.find('spaces', (s) => s.id === spaceId);
   if (!space) throw new Error('Space not found');
   if (callerId && space.ownerId !== callerId) {
-    throw new Error('Not authorized to create offers in this space');
+    throw new Error('Not authorized to add offers to this space');
   }
 
+  const numPrice = Number(price);
+  if (isNaN(numPrice) || numPrice < 0) {
+    throw new Error('Price must be a valid non-negative number');
+  }
+
+  // Create listing using authoritative listing domain
   const listing = listings.createListing({
     vendorId: space.vendorId,
-    title,
-    description,
-    price,
+    title: title.trim(),
+    description: description ? description.trim() : '',
+    price: numPrice,
     currency,
     type,
     images
   });
 
-  // Attach space tag
+  // Attach space linkage to listing
   const updatedListing = store.update('listings', listing.id, { spaceId: space.id });
 
+  // Record activity
   recordSpaceActivity({
     spaceId: space.id,
     kind: 'offer_created',
-    title: `Drafted offer: ${listing.title}`,
-    description: `Price: ${listing.currency} ${(listing.price || 0).toLocaleString()}`,
-    actorId: callerId || space.ownerId,
-    metadata: { listingId: listing.id, price: listing.price }
+    title: `Added offer: ${listing.title}`,
+    description: `${currency} ${numPrice.toLocaleString()} · Draft`,
+    actorId: callerId,
+    metadata: { offerId: listing.id, price: numPrice }
   });
 
-  return {
-    ...listing,
-    spaceId: space.id
-  };
+  return updatedListing;
 }
 
 /**
- * Publishes an offer, transitioning it to 'active'.
+ * Publishes an offer, making it active in the catalog.
  */
 export function publishSpaceOffer(spaceId, offerId, { callerId }) {
   const space = store.find('spaces', (s) => s.id === spaceId);
@@ -195,47 +204,53 @@ export function publishSpaceOffer(spaceId, offerId, { callerId }) {
   const listing = store.find('listings', (l) => l.id === offerId);
   if (!listing) throw new Error('Offer not found');
 
-  const { listing: updated } = listings.transitionListing(offerId, 'active');
+  const res = listings.transitionListing(offerId, 'active');
+  const published = res.listing;
 
+  // Record activity
   recordSpaceActivity({
     spaceId: space.id,
     kind: 'offer_published',
-    title: `Published offer: ${listing.title}`,
-    description: `${listing.currency} ${(listing.price || 0).toLocaleString()} · Live and accepting orders`,
-    actorId: callerId || space.ownerId,
-    metadata: { listingId: listing.id, price: listing.price }
+    title: `Published offer: ${published.title}`,
+    description: `${published.currency} ${(published.priceKes || published.price || 0).toLocaleString()} · Live and accepting orders`,
+    actorId: callerId,
+    metadata: { offerId: published.id }
   });
 
-  return updated;
+  return published;
 }
 
 /**
- * Records an immutable activity event in the Space.
+ * Records an immutable activity event inside a Space.
  */
 export function recordSpaceActivity({
   spaceId,
   kind,
   title,
   description = '',
-  metadata = {},
-  actorId = null
+  actorId = null,
+  metadata = {}
 }) {
-  const act = {
-    id: newId('act'),
+  const activityId = newId('act');
+  const now = new Date().toISOString();
+
+  const activity = {
+    id: activityId,
     spaceId,
     kind,
     title,
     description,
-    metadata: metadata || {},
     actorId,
-    createdAt: new Date().toISOString()
+    metadata,
+    createdAt: now
   };
-  store.insert('spaceActivities', act);
-  return act;
+
+  store.insert('spaceActivities', activity);
+  return activity;
 }
 
 /**
- * Retrieves activity stream for a space (most recent first).
+ * Retrieves the activity log for a Space.
  */
 export function getSpaceActivities(spaceId, { limit = 50 } = {}) {
   const rows = store.filter('spaceActivities', (a) => a.spaceId === spaceId);
@@ -284,6 +299,8 @@ export function createSpaceConversation({
         at: now
       }
     ],
+    quotes: [],
+    paymentPrompts: [],
     createdAt: now,
     updatedAt: now
   };
@@ -308,6 +325,354 @@ export function getSpaceConversations(spaceId) {
   const rows = store.filter('spaceConversations', (c) => c.spaceId === spaceId);
   rows.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   return rows;
+}
+
+/**
+ * Posts a message into a conversation thread (from seller or customer).
+ */
+export function postSpaceMessage({
+  spaceId,
+  conversationId,
+  text,
+  from = 'owner',
+  sender = 'Seller',
+  quote = null,
+  paymentPrompt = null,
+  callerId = null
+}) {
+  const space = store.find('spaces', (s) => s.id === spaceId);
+  if (!space) throw new Error('Space not found');
+
+  const conversation = store.find('spaceConversations', (c) => c.id === conversationId);
+  if (!conversation) throw new Error('Conversation not found');
+
+  const now = new Date().toISOString();
+  const msgId = newId('msg');
+
+  const newMsg = {
+    id: msgId,
+    from,
+    sender,
+    text: String(text || '').trim(),
+    quote,
+    paymentPrompt,
+    at: now
+  };
+
+  const updatedMessages = [...(conversation.messages || []), newMsg];
+  const patch = { messages: updatedMessages, updatedAt: now };
+
+  if (from === 'owner' && conversation.status === 'new') {
+    patch.status = 'active';
+  }
+
+  const updatedConv = store.update('spaceConversations', conversationId, patch);
+
+  if (from === 'owner' && !quote && !paymentPrompt) {
+    recordSpaceActivity({
+      spaceId,
+      kind: 'message_sent',
+      title: `Replied to ${conversation.customerName}`,
+      description: `"${String(text).slice(0, 80)}"`,
+      actorId: callerId,
+      metadata: { conversationId }
+    });
+  }
+
+  return updatedConv;
+}
+
+/**
+ * Creates a formal in-chat quotation card for customized pricing.
+ */
+export function createSpaceQuote({
+  spaceId,
+  conversationId,
+  title,
+  priceKes,
+  notes = '',
+  callerId = null
+}) {
+  const space = store.find('spaces', (s) => s.id === spaceId);
+  if (!space) throw new Error('Space not found');
+  if (callerId && space.ownerId !== callerId) {
+    throw new Error('Not authorized to quote in this space');
+  }
+
+  const conversation = store.find('spaceConversations', (c) => c.id === conversationId);
+  if (!conversation) throw new Error('Conversation not found');
+
+  const numPrice = Number(priceKes);
+  if (isNaN(numPrice) || numPrice <= 0) {
+    throw new Error('Quote price must be a positive amount');
+  }
+
+  const quoteId = newId('quot');
+  const now = new Date().toISOString();
+
+  const quote = {
+    id: quoteId,
+    title: String(title).trim(),
+    priceKes: numPrice,
+    notes: String(notes || '').trim(),
+    status: 'sent',
+    createdAt: now
+  };
+
+  const existingQuotes = conversation.quotes || [];
+  store.update('spaceConversations', conversationId, {
+    quotes: [...existingQuotes, quote],
+    updatedAt: now
+  });
+
+  // Post quotation message in thread
+  postSpaceMessage({
+    spaceId,
+    conversationId,
+    from: 'owner',
+    sender: space.name,
+    text: `Quotation: ${quote.title} — KES ${numPrice.toLocaleString()}${notes ? ` (${notes})` : ''}`,
+    quote,
+    callerId
+  });
+
+  // Record space activity
+  recordSpaceActivity({
+    spaceId,
+    kind: 'quote_sent',
+    title: `Sent quote to ${conversation.customerName}`,
+    description: `${quote.title} · KES ${numPrice.toLocaleString()}`,
+    actorId: callerId,
+    metadata: { conversationId, quoteId, priceKes: numPrice }
+  });
+
+  return quote;
+}
+
+/**
+ * Triggers an M-Pesa STK push prompt card into the conversation.
+ */
+export function triggerMpesaPrompt({
+  spaceId,
+  conversationId,
+  quoteId = null,
+  phoneNumber,
+  amountKes,
+  description = 'Order Payment',
+  callerId = null
+}) {
+  const space = store.find('spaces', (s) => s.id === spaceId);
+  if (!space) throw new Error('Space not found');
+
+  const conversation = store.find('spaceConversations', (c) => c.id === conversationId);
+  if (!conversation) throw new Error('Conversation not found');
+
+  const numAmount = Number(amountKes);
+  if (isNaN(numAmount) || numAmount <= 0) {
+    throw new Error('Amount must be positive');
+  }
+
+  const cleanPhone = String(phoneNumber || conversation.customerContact || '').replace(/[^\d+]/g, '');
+  if (!cleanPhone) {
+    throw new Error('Phone number is required for M-Pesa STK push');
+  }
+
+  const paymentRequestId = newId('payreq');
+  const now = new Date().toISOString();
+
+  const prompt = {
+    id: paymentRequestId,
+    quoteId,
+    phoneNumber: cleanPhone,
+    amountKes: numAmount,
+    description: String(description).trim(),
+    status: 'pending',
+    createdAt: now
+  };
+
+  const existingPrompts = conversation.paymentPrompts || [];
+  store.update('spaceConversations', conversationId, {
+    paymentPrompts: [...existingPrompts, prompt],
+    updatedAt: now
+  });
+
+  // Post payment prompt into thread
+  postSpaceMessage({
+    spaceId,
+    conversationId,
+    from: 'system',
+    sender: 'M-Pesa Express',
+    text: `M-Pesa STK Push sent to ${cleanPhone} for KES ${numAmount.toLocaleString()} (${description})`,
+    paymentPrompt: prompt,
+    callerId
+  });
+
+  // Record activity
+  recordSpaceActivity({
+    spaceId,
+    kind: 'mpesa_prompt_sent',
+    title: `M-Pesa prompt sent to ${conversation.customerName}`,
+    description: `KES ${numAmount.toLocaleString()} · Waiting for PIN confirmation`,
+    actorId: callerId,
+    metadata: { conversationId, paymentRequestId, amountKes: numAmount, phone: cleanPhone }
+  });
+
+  return prompt;
+}
+
+/**
+ * Completes an M-Pesa payment, settles the transaction, and auto-converts inquiry to a paid order.
+ */
+export function completeMpesaPayment({
+  spaceId,
+  conversationId,
+  paymentRequestId,
+  mpesaReceipt = null,
+  amountPaid = null
+}) {
+  const space = store.find('spaces', (s) => s.id === spaceId);
+  if (!space) throw new Error('Space not found');
+
+  const conversation = store.find('spaceConversations', (c) => c.id === conversationId);
+  if (!conversation) throw new Error('Conversation not found');
+
+  const prompt = (conversation.paymentPrompts || []).find((p) => p.id === paymentRequestId);
+  const finalAmount = amountPaid !== null ? Number(amountPaid) : (prompt ? prompt.amountKes : 0);
+  const receipt = mpesaReceipt || `QA${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+  const now = new Date().toISOString();
+
+  // Update prompt status
+  if (prompt) {
+    prompt.status = 'paid';
+    prompt.receipt = receipt;
+    prompt.paidAt = now;
+  }
+
+  // Auto-convert to a paid Order
+  const orderId = newId('ord');
+  const newOrder = {
+    id: orderId,
+    vendorId: space.vendorId,
+    spaceId: space.id,
+    listingId: conversation.offerId || null,
+    buyerId: `cust_${newId('guest')}`,
+    customerName: conversation.customerName,
+    customerContact: conversation.customerContact,
+    quantity: 1,
+    subtotal: finalAmount,
+    discountKes: 0,
+    total: finalAmount,
+    currency: 'KES',
+    status: 'paid',
+    paymentMethod: 'mpesa',
+    mpesaReceipt: receipt,
+    note: `Ordered via chat conversation #${conversation.id.slice(-4)}`,
+    createdAt: now,
+    updatedAt: now
+  };
+
+  store.insert('orders', newOrder);
+
+  // Update conversation status and attach orderId
+  store.update('spaceConversations', conversationId, {
+    status: 'converted',
+    orderId: newOrder.id,
+    updatedAt: now
+  });
+
+  // Post success message in conversation thread
+  postSpaceMessage({
+    spaceId,
+    conversationId,
+    from: 'system',
+    sender: 'M-Pesa Verified',
+    text: `Payment Confirmed! ${receipt} — KES ${finalAmount.toLocaleString()} received. Order #${orderId.slice(-4)} created.`,
+    paymentPrompt: { ...prompt, status: 'paid', receipt }
+  });
+
+  // Record space activities
+  recordSpaceActivity({
+    spaceId,
+    kind: 'payment_received',
+    title: `Payment Received: KES ${finalAmount.toLocaleString()}`,
+    description: `M-Pesa Receipt: ${receipt} from ${conversation.customerName}`,
+    metadata: { conversationId, orderId: newOrder.id, receipt, amountKes: finalAmount }
+  });
+
+  recordSpaceActivity({
+    spaceId,
+    kind: 'order_created',
+    title: `Order #${orderId.slice(-4)} paid by ${conversation.customerName}`,
+    description: `KES ${finalAmount.toLocaleString()} · Ready for preparation / dispatch`,
+    metadata: { orderId: newOrder.id, total: finalAmount }
+  });
+
+  return {
+    order: newOrder,
+    receipt,
+    status: 'paid'
+  };
+}
+
+/**
+ * Inbound WhatsApp message router: routes customer WhatsApp chats into seller's Space inbox.
+ */
+export function routeInboundWhatsAppMessage({
+  spaceId,
+  from,
+  customerName = 'WhatsApp Customer',
+  text,
+  offerId = null
+}) {
+  const space = store.find('spaces', (s) => s.id === spaceId);
+  if (!space) throw new Error('Space not found');
+
+  // Look for existing active conversation with this customer phone number in this space
+  let conversation = store.find(
+    'spaceConversations',
+    (c) => c.spaceId === spaceId && c.customerContact === from && c.status !== 'archived'
+  );
+
+  const now = new Date().toISOString();
+
+  if (conversation) {
+    // Append to existing thread
+    const updatedMessages = [
+      ...(conversation.messages || []),
+      {
+        id: newId('msg'),
+        from: 'customer',
+        sender: customerName,
+        text: String(text).trim(),
+        at: now
+      }
+    ];
+
+    conversation = store.update('spaceConversations', conversation.id, {
+      messages: updatedMessages,
+      status: conversation.status === 'converted' ? 'active' : conversation.status,
+      updatedAt: now
+    });
+
+    recordSpaceActivity({
+      spaceId,
+      kind: 'whatsapp_message_received',
+      title: `New WhatsApp message from ${customerName}`,
+      description: `"${String(text).slice(0, 80)}"`,
+      metadata: { conversationId: conversation.id, from }
+    });
+  } else {
+    // Create new conversation
+    conversation = createSpaceConversation({
+      spaceId,
+      offerId,
+      customerName,
+      customerContact: from,
+      message: text
+    });
+  }
+
+  return conversation;
 }
 
 /**
@@ -357,7 +722,7 @@ export function createSpaceOrder({
 /**
  * Helper to hydrate a Space with real metrics and connected items.
  */
-function hydrateSpace(space) {
+function hydrateSpace(space, { callerId = null } = {}) {
   const spaceListings = store.filter('listings', (l) => (l.spaceId === space.id || l.vendorId === space.vendorId) && l.status !== 'archived');
   const spaceOrders = store.filter('orders', (o) => o.spaceId === space.id || o.vendorId === space.vendorId);
   const spaceConversations = store.filter('spaceConversations', (c) => c.spaceId === space.id);
@@ -381,17 +746,19 @@ function hydrateSpace(space) {
     if (c.customerName) customerSet.add(c.customerName);
   });
 
+  const activeOrdersCount = spaceOrders.filter((o) => o.status === 'pending' || o.status === 'paid' || o.status === 'processing').length;
+
   return {
     ...space,
     metrics: {
       revenueKes,
       customerCount: customerSet.size,
-      activeOrdersCount: spaceOrders.filter((o) => o.status === 'ordered' || o.status === 'accepted' || o.status === 'preparing' || o.status === 'ready').length,
+      activeOrdersCount,
       totalOrdersCount: spaceOrders.length,
-      offersCount: spaceListings.length
+      offersCount: spaceListings.filter((l) => l.status === 'active').length
     },
     offers: spaceListings,
     recentActivities: activities,
-    recentConversations: spaceConversations.slice(0, 5)
+    recentConversations: spaceConversations.slice(0, 10)
   };
 }

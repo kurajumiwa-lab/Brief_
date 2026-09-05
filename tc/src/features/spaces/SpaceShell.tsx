@@ -24,7 +24,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
 }) => {
   const [space, setSpace] = useState<Space | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'offers' | 'activity' | 'money'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'offers' | 'people' | 'activity' | 'money'>('overview');
   const [createOfferOpen, setCreateOfferOpen] = useState<boolean>(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
@@ -94,9 +94,10 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
     );
   }
 
-  const tabs: Array<{ id: 'overview' | 'offers' | 'activity' | 'money'; label: string }> = [
+  const tabs: Array<{ id: 'overview' | 'offers' | 'people' | 'activity' | 'money'; label: string }> = [
     { id: 'overview', label: 'Overview' },
     { id: 'offers', label: `Offers (${space.offers?.length || 0})` },
+    { id: 'people', label: `Chats (${space.recentConversations?.length || 0})` },
     { id: 'activity', label: 'Activity' },
     { id: 'money', label: 'Money' }
   ];
@@ -155,11 +156,14 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
           />
 
           <SpacePeople
+            spaceId={space.id}
+            conversations={space.recentConversations}
             customers={space.recentConversations?.map((c) => ({
               name: c.customerName,
               contact: c.customerContact
             }))}
             onMessage={(c) => showToast(`Opening chat with ${c.name}`)}
+            onRefresh={loadSpace}
           />
         </div>
       )}
@@ -171,6 +175,21 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
             onAddOffer={() => setCreateOfferOpen(true)}
             onPublishOffer={handlePublishOffer}
             onShareOffer={(o) => showToast(`Link for "${o.title}" copied!`)}
+          />
+        </div>
+      )}
+
+      {activeTab === 'people' && (
+        <div className="animate-fadeIn">
+          <SpacePeople
+            spaceId={space.id}
+            conversations={space.recentConversations}
+            customers={space.recentConversations?.map((c) => ({
+              name: c.customerName,
+              contact: c.customerContact
+            }))}
+            onMessage={(c) => showToast(`Opening chat with ${c.name}`)}
+            onRefresh={loadSpace}
           />
         </div>
       )}
