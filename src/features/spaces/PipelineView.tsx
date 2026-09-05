@@ -13,7 +13,10 @@ import {
   Clock,
   ArrowRight,
   TrendingUp,
-  Share2
+  Share2,
+  ExternalLink,
+  MessageCircle,
+  Package
 } from 'lucide-react';
 import { soundEngine } from '../../utils/SoundEngine';
 
@@ -40,6 +43,12 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
 }) => {
   const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
   const [activeDispatchCardId, setActiveDispatchCardId] = useState<string | null>(null);
+
+  // Quote drafting state
+  const [activeQuoteCardId, setActiveQuoteCardId] = useState<string | null>(null);
+  const [quoteTitle, setQuoteTitle] = useState('Custom Order Proposal');
+  const [quotePrice, setQuotePrice] = useState('4500');
+  const [quoteNotes, setQuoteNotes] = useState('Includes packaging & stage drop-off');
 
   // Inline chat state
   const [replyText, setReplyText] = useState<Record<string, string>>({});
@@ -78,6 +87,24 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
       console.error('Failed to send reply:', err);
     } finally {
       setSendingMsg(false);
+    }
+  };
+
+  const handleSendQuote = async (conv: SpaceConversation) => {
+    const numPrice = Number(quotePrice) || 0;
+    if (numPrice <= 0) return;
+    soundEngine.play('heavyTap');
+    try {
+      await briefApi.createSpaceQuote(space.id, conv.id, {
+        title: quoteTitle.trim() || 'Custom Order Proposal',
+        priceKes: numPrice,
+        notes: quoteNotes.trim()
+      });
+      setActiveQuoteCardId(null);
+      showToast(`Quote sent for KES ${numPrice.toLocaleString()}`);
+      onRefresh();
+    } catch (err) {
+      console.error('Failed to create quote:', err);
     }
   };
 
@@ -139,20 +166,29 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
     }
   };
 
-  const handleShareTracking = (conv: SpaceConversation) => {
+  const handleShareTracking = (conv: SpaceConversation, saccoName = '2NK Sacco', town = 'Nakuru') => {
     soundEngine.play('tap');
     const msg = encodeURIComponent(
-      `Habari ${conv.customerName}! Your order from ${space.name} is on the way via ${carrierSacco} to ${destTown} (${destCounty}). Asante sana!`
+      `Habari ${conv.customerName}! Your order from ${space.name} is on the way via ${saccoName} to ${town}. Asante sana!`
     );
     const phone = (conv.customerContact || '').replace(/[^\d]/g, '');
     const url = phone ? `https://wa.me/${phone}?text=${msg}` : `https://wa.me/?text=${msg}`;
     if (typeof window !== 'undefined') {
       window.open(url, '_blank');
     }
-    showToast(`WhatsApp tracking prepared for ${conv.customerName}`);
+    showToast(`WhatsApp tracking link opened for ${conv.customerName}`);
+  };
+
+  const handleOpenWhatsAppChat = (phone?: string) => {
+    const cleanPhone = (phone || '').replace(/[^\d]/g, '');
+    const url = cleanPhone ? `https://wa.me/${cleanPhone}` : `https://wa.me/`;
+    if (typeof window !== 'undefined') {
+      window.open(url, '_blank');
+    }
   };
 
   const conversations = space.recentConversations || [];
+  const dispatches = (space as any).recentDispatches || [];
   const revenueKes = space.metrics?.revenueKes || 0;
   const activeOrdersCount = space.metrics?.activeOrdersCount || 0;
 
@@ -169,14 +205,14 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
       <div className="p-4 rounded-3xl bg-white shadow-2xs border border-black/5 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center space-x-2">
-            <h2 className="text-sm font-black text-[#1A1F2E] truncate">{space.name}</h2>
+            <span className="text-xs text-[#64748B] font-semibold">Good morning, Amina</span>
             <span className="text-[10px] text-[#64748B] bg-[#FAFAF8] px-2 py-0.5 rounded-full font-bold">
               {space.type}
             </span>
           </div>
-          <p className="text-[11px] text-[#64748B] truncate mt-0.5">
-            {space.goal || 'Active Pipeline'}
-          </p>
+          <h2 className="text-sm sm:text-base font-black text-[#1A1F2E] truncate mt-0.5">
+            {space.name} — Pipeline
+          </h2>
         </div>
 
         <div className="flex items-center space-x-2 shrink-0">
@@ -212,10 +248,23 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
             {conversations.map((conv) => {
               const isExpanded = expandedCardId === conv.id;
               const isDispatching = activeDispatchCardId === conv.id;
-              const isConverted = conv.status === 'converted';
-              const lastMsg = conv.messages?.[conv.messages.length - 1];
+              const isQuoting = activeQuoteCardId === conv.id;
+
+              const hasDispatches = dispatches.filter((d: any) => d.receiverName === conv.customerName || d.orderId === conv.orderId);
+              const latestDispatch = hasDispatches[0];
+
               const pendingPrompt = conv.paymentPrompts?.find((p) => p.status === 'pending');
               const paidPrompt = conv.paymentPrompts?.find((p) => p.status === 'paid');
+              const latestQuote = conv.quotes?.[conv.quotes.length - 1];
+
+              // Lifecycle status calculation
+              const isDispatched = !!latestDispatch;
+              const isPaid = conv.status === 'converted' || !!paidPrompt;
+              const isQuoteSent = !isPaid && !!latestQuote;
+              const isInquiry = !isPaid && !isQuoteSent;
+
+              const lastMessages = conv.messages?.slice(-2) || [];
+              const price = conv.offerPriceKes || latestQuote?.priceKes || 4500;
 
               return (
                 <div
@@ -232,20 +281,38 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                       <div className="flex items-center space-x-2 min-w-0">
                         <span
                           className={`text-[9px] font-extrabold px-2.5 py-0.5 rounded-full shrink-0 ${
-                            isConverted
+                            isDispatched
+                              ? 'bg-teal-100 text-teal-800'
+                              : isPaid
                               ? 'bg-[#93EE34] text-[#1A1F2E]'
+                              : isQuoteSent
+                              ? 'bg-blue-100 text-blue-800'
                               : 'bg-amber-100 text-amber-800'
                           }`}
                         >
-                          {isConverted ? 'PAID & READY' : 'NEW INQUIRY'}
+                          {isDispatched
+                            ? 'DISPATCHED'
+                            : isPaid
+                            ? 'PAID & READY'
+                            : isQuoteSent
+                            ? 'QUOTE SENT'
+                            : 'INQUIRY'}
                         </span>
                         <span className="text-xs font-bold text-[#1A1F2E] truncate">
                           {conv.customerName}
                         </span>
                         {conv.customerContact && (
-                          <span className="text-[10px] text-[#64748B] font-mono hidden sm:inline">
-                            {conv.customerContact}
-                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenWhatsAppChat(conv.customerContact);
+                            }}
+                            className="p-1 rounded-md bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors cursor-pointer"
+                            title="Chat on WhatsApp"
+                          >
+                            <MessageCircle className="w-3 h-3" />
+                          </button>
                         )}
                       </div>
 
@@ -260,15 +327,41 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                         🎂 {conv.offerTitle || 'Custom Order'}
                       </p>
                       <span className="font-black text-[#1A1F2E] shrink-0 ml-2">
-                        KES {(conv.offerPriceKes || 4500).toLocaleString()}
+                        KES {price.toLocaleString()}
                       </span>
                     </div>
 
-                    {/* Latest message snippet */}
-                    {lastMsg && (
-                      <p className="text-[11px] text-[#64748B] bg-[#F4F7F2] p-2 rounded-xl truncate">
-                        💬 <strong className="text-[#1A1F2E]">{lastMsg.from === 'customer' ? conv.customerName : 'You'}:</strong> {lastMsg.text}
-                      </p>
+                    {/* Dispatched Info if available */}
+                    {isDispatched && (
+                      <div className="p-2 rounded-xl bg-teal-50/70 border border-teal-200 text-teal-900 text-[11px] flex items-center justify-between">
+                        <span className="flex items-center space-x-1 truncate">
+                          <Truck className="w-3.5 h-3.5 text-teal-700 shrink-0" />
+                          <span className="font-bold">{latestDispatch.carrierSacco}</span>
+                          <span>→ {latestDispatch.destinationTown}</span>
+                          <span className="font-mono text-[10px]">({latestDispatch.waybillRef})</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleShareTracking(conv, latestDispatch.carrierSacco, latestDispatch.destinationTown);
+                          }}
+                          className="text-[10px] font-bold text-teal-800 underline ml-2 shrink-0 cursor-pointer"
+                        >
+                          Share Tracking
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Recent 2 messages snippet */}
+                    {lastMessages.length > 0 && (
+                      <div className="space-y-1 pt-0.5">
+                        {lastMessages.map((m) => (
+                          <p key={m.id} className="text-[11px] text-[#64748B] bg-[#F4F7F2] p-1.5 rounded-xl truncate">
+                            💬 <strong className="text-[#1A1F2E]">{m.from === 'customer' ? conv.customerName : 'You'}:</strong> {m.text}
+                          </p>
+                        ))}
+                      </div>
                     )}
                   </div>
 
@@ -329,18 +422,78 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                         </button>
                       </form>
 
-                      {/* Payment Action Bar */}
-                      {!isConverted ? (
-                        <div className="p-3 rounded-2xl bg-[#93EE34]/15 border border-[#93EE34]/30 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#1A1F2E]">
-                              Payment Required
-                            </span>
-                            <span className="text-xs font-black text-[#1A1F2E]">
-                              KES {(conv.offerPriceKes || 4500).toLocaleString()}
-                            </span>
+                      {/* ── INLINE ACTION BAR BASED ON STATE ── */}
+                      {isInquiry && (
+                        <div className="space-y-2">
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setActiveQuoteCardId(isQuoting ? null : conv.id)}
+                              className="py-2 rounded-xl bg-[#FAFAF8] hover:bg-black/5 text-[#1A1F2E] text-xs font-bold border border-black/5 cursor-pointer"
+                            >
+                              {isQuoting ? 'Cancel Quote' : '📝 Send Quote'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleTriggerMpesa(conv, price)}
+                              className="py-2 rounded-xl bg-[#1A1F2E] hover:bg-black text-[#93EE34] text-xs font-black shadow-xs cursor-pointer flex items-center justify-center space-x-1"
+                            >
+                              <Smartphone className="w-3.5 h-3.5" />
+                              <span>Trigger M-Pesa</span>
+                            </button>
                           </div>
 
+                          {/* Inline Quote Drawer Form */}
+                          {isQuoting && (
+                            <div className="p-3 bg-white rounded-2xl border border-black/5 space-y-2 animate-fadeIn">
+                              <span className="text-[10px] font-black uppercase tracking-wider text-[#5B2EA6]">
+                                Prepare Quotation for {conv.customerName}
+                              </span>
+                              <input
+                                type="text"
+                                placeholder="Proposal Title"
+                                value={quoteTitle}
+                                onChange={(e) => setQuoteTitle(e.target.value)}
+                                className="w-full px-2.5 py-1.5 rounded-lg bg-[#FAFAF8] text-xs border border-black/5"
+                              />
+                              <div className="grid grid-cols-2 gap-2">
+                                <input
+                                  type="number"
+                                  placeholder="Price (KES)"
+                                  value={quotePrice}
+                                  onChange={(e) => setQuotePrice(e.target.value)}
+                                  className="px-2.5 py-1.5 rounded-lg bg-[#FAFAF8] text-xs border border-black/5"
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="Notes"
+                                  value={quoteNotes}
+                                  onChange={(e) => setQuoteNotes(e.target.value)}
+                                  className="px-2.5 py-1.5 rounded-lg bg-[#FAFAF8] text-xs border border-black/5"
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleSendQuote(conv)}
+                                className="w-full py-2 rounded-xl bg-[#5B2EA6] text-white text-xs font-bold cursor-pointer"
+                              >
+                                Post Quote into Conversation
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {isQuoteSent && !isPaid && (
+                        <div className="p-3 rounded-2xl bg-blue-50/70 border border-blue-200 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-900">
+                              Quote Sent · Waiting on Customer
+                            </span>
+                            <span className="text-xs font-black text-blue-900">
+                              KES {price.toLocaleString()}
+                            </span>
+                          </div>
                           {pendingPrompt ? (
                             <button
                               type="button"
@@ -352,23 +505,24 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                           ) : (
                             <button
                               type="button"
-                              onClick={() => handleTriggerMpesa(conv, conv.offerPriceKes || 4500)}
+                              onClick={() => handleTriggerMpesa(conv, price)}
                               className="w-full py-2 rounded-xl bg-[#1A1F2E] hover:bg-black text-[#93EE34] text-xs font-black shadow-xs cursor-pointer flex items-center justify-center space-x-1.5"
                             >
                               <Smartphone className="w-3.5 h-3.5" />
-                              <span>Trigger M-Pesa STK Push (KES {(conv.offerPriceKes || 4500).toLocaleString()})</span>
+                              <span>Trigger M-Pesa STK Push (KES {price.toLocaleString()})</span>
                             </button>
                           )}
                         </div>
-                      ) : (
-                        /* Paid State: Shipping & Dispatch Action */
+                      )}
+
+                      {isPaid && (
                         <div className="space-y-2">
                           <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-900 text-xs font-bold flex items-center justify-between">
                             <span className="flex items-center space-x-1">
                               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
                               <span>M-Pesa Verified (Receipt {paidPrompt?.receipt || 'Confirmed'})</span>
                             </span>
-                            <span>KES {(conv.offerPriceKes || 4500).toLocaleString()}</span>
+                            <span>KES {price.toLocaleString()}</span>
                           </div>
 
                           {/* Inline WAIRO Dispatch Action */}
@@ -447,7 +601,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => handleShareTracking(conv)}
+                                  onClick={() => handleShareTracking(conv, carrierSacco, destTown)}
                                   className="p-2 rounded-xl bg-emerald-50 text-emerald-800 hover:bg-emerald-100 transition-colors"
                                   title="Share WhatsApp tracking"
                                 >

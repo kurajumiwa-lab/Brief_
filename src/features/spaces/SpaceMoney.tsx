@@ -12,7 +12,9 @@ import {
   MessageCircle,
   CheckCircle2,
   FileText,
-  CreditCard
+  CreditCard,
+  Zap,
+  Sparkles
 } from 'lucide-react';
 import { soundEngine } from '../../utils/SoundEngine';
 
@@ -24,6 +26,13 @@ export interface SpaceMoneyProps {
   onViewLedger?: () => void;
   className?: string;
 }
+
+const QUICK_CATEGORIES = [
+  { id: 'Ingredients', label: '🌾 Ingredients' },
+  { id: 'Transport', label: '🛵 Transport' },
+  { id: 'Packaging', label: '📦 Packaging' },
+  { id: 'Airtime', label: '📱 Airtime' }
+];
 
 export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
   spaceId = '',
@@ -41,6 +50,11 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
   const [expCategory, setExpCategory] = useState<string>('supplies');
   const [expDesc, setExpDesc] = useState<string>('');
   const [expAmount, setExpAmount] = useState<string>('');
+
+  // Quick Expense Logger state (<3s entry)
+  const [quickAmount, setQuickAmount] = useState<string>('');
+  const [quickCategory, setQuickCategory] = useState<string>('Ingredients');
+  const [loggingQuick, setLoggingQuick] = useState<boolean>(false);
 
   // Tab form state
   const [showTabForm, setShowTabForm] = useState<boolean>(false);
@@ -101,6 +115,29 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
       loadSummary();
     } catch (err) {
       console.error('Failed to record expense:', err);
+    }
+  };
+
+  const handleQuickLogExpense = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const numAmount = Number(quickAmount);
+    if (isNaN(numAmount) || numAmount <= 0) return;
+
+    setLoggingQuick(true);
+    soundEngine.play('heavyTap');
+    try {
+      await briefApi.recordSpaceExpense(spaceId, {
+        category: quickCategory.toLowerCase(),
+        description: `${quickCategory} purchase`,
+        amountKes: numAmount
+      });
+      setQuickAmount('');
+      showToast(`Logged KES ${numAmount.toLocaleString()} for ${quickCategory}`);
+      loadSummary();
+    } catch (err) {
+      console.error('Failed to quick log expense:', err);
+    } finally {
+      setLoggingQuick(false);
     }
   };
 
@@ -171,7 +208,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
   const receivables = summary?.totalReceivablesKes ?? 0;
 
   return (
-    <section className={`space-y-6 ${className}`}>
+    <section className={`space-y-6 max-w-2xl mx-auto ${className}`}>
       {/* Toast */}
       {toastMsg && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-[#1A1F2E] text-white text-xs font-bold shadow-2xl animate-fadeIn border border-white/10">
@@ -179,8 +216,8 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
         </div>
       )}
 
-      {/* ── PROFIT & CASH FLOW HERO METER ── */}
-      <div className="p-5 rounded-3xl bg-white shadow-sm space-y-4">
+      {/* ── PROFIT & CASH FLOW HERO METER (ZERO-ERP) ── */}
+      <div className="p-5 rounded-3xl bg-white shadow-2xs space-y-4 border border-black/5">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <div className="p-1.5 rounded-xl bg-[#5B2EA6]/10 text-[#5B2EA6]">
@@ -190,12 +227,13 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
               Profit & Cash Flow
             </h3>
           </div>
-          <span className="text-[10px] font-mono text-[#64748B] bg-[#FAFAF8] px-2 py-0.5 rounded-full">
-            Server Authoritative
-          </span>
+          <div className="flex items-center space-x-1 px-2.5 py-1 rounded-full bg-[#93EE34]/20 text-[#1A1F2E] text-[10px] font-black animate-pulse">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#93EE34]" />
+            <span>Server Authoritative</span>
+          </div>
         </div>
 
-        {/* 3-Way Financial Balance */}
+        {/* 3-Way Cashflow Breakdown */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {/* Money In */}
           <div className="p-4 rounded-2xl bg-[#93EE34]/15 border border-[#93EE34]/30 space-y-1">
@@ -207,7 +245,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
               KES {totalRev.toLocaleString()}
             </p>
             <p className="text-[10px] text-[#64748B]">
-              From completed space orders
+              Completed space orders
             </p>
           </div>
 
@@ -226,19 +264,19 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
           </div>
 
           {/* Net Profit */}
-          <div className="p-4 rounded-2xl bg-[#5B2EA6] text-white space-y-1 shadow-sm">
+          <div className="p-4 rounded-2xl bg-[#1A1F2E] text-white space-y-1 shadow-sm">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold uppercase tracking-wider text-white/80">
                 Net Profit
               </span>
-              <span className="text-[9px] font-extrabold bg-white/20 px-1.5 py-0.5 rounded-full">
+              <span className="text-[9px] font-extrabold bg-white/20 text-[#93EE34] px-1.5 py-0.5 rounded-full">
                 {marginPct}% Margin
               </span>
             </div>
             <p className="text-lg font-black text-[#93EE34]">
               KES {netProfit.toLocaleString()}
             </p>
-            <p className="text-[10px] text-white/80">
+            <p className="text-[10px] text-white/70">
               Clear operator take-home
             </p>
           </div>
@@ -270,13 +308,64 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
             <span>+ Open DukaBook Tab</span>
           </button>
         </div>
+
+        {/* ── EXPENSE QUICK-LOGGER (<3s entry) ── */}
+        <div className="p-3.5 rounded-2xl bg-[#FAFAF8] border border-black/5 space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-black uppercase tracking-wider text-[#1A1F2E] flex items-center space-x-1">
+              <Zap className="w-3.5 h-3.5 text-amber-500" />
+              <span>Quick-Log Outflow (&lt; 3s)</span>
+            </span>
+            <span className="text-[10px] text-[#64748B]">Instant ledger update</span>
+          </div>
+
+          <form onSubmit={handleQuickLogExpense} className="space-y-2">
+            <div className="flex items-center space-x-1.5 overflow-x-auto pb-1">
+              {QUICK_CATEGORIES.map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setQuickCategory(cat.id)}
+                  className={`px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 transition-all cursor-pointer ${
+                    quickCategory === cat.id
+                      ? 'bg-[#1A1F2E] text-[#93EE34]'
+                      : 'bg-white border border-black/5 text-[#64748B] hover:text-[#1A1F2E]'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <span className="absolute left-3 top-2 text-xs font-bold text-[#64748B]">KES</span>
+                <input
+                  type="number"
+                  placeholder="350"
+                  value={quickAmount}
+                  onChange={(e) => setQuickAmount(e.target.value)}
+                  className="w-full pl-11 pr-3 py-1.5 rounded-xl bg-white text-xs border border-black/5 font-bold focus:outline-none"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loggingQuick || !quickAmount}
+                className="px-4 py-1.5 rounded-xl bg-[#1A1F2E] hover:bg-black text-[#93EE34] font-bold text-xs transition-all cursor-pointer shadow-xs disabled:opacity-40 shrink-0"
+              >
+                {loggingQuick ? 'Logging...' : 'Log Outflow'}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
 
-      {/* ── EXPENSE DRAWER FORM ── */}
+      {/* ── FULL EXPENSE FORM ── */}
       {showExpenseForm && (
         <form onSubmit={handleAddExpense} className="p-5 rounded-3xl bg-[#F4F7F2] border border-black/5 shadow-sm space-y-3 animate-fadeIn">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#1A1F2E]">Record Supplies or Operational Cost</span>
+            <span className="text-xs font-bold text-[#1A1F2E]">Record Operating Expense</span>
             <button
               type="button"
               onClick={() => setShowExpenseForm(false)}
@@ -286,24 +375,13 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <select
-              value={expCategory}
-              onChange={(e) => setExpCategory(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-white text-xs border border-black/5 focus:outline-none"
-            >
-              <option value="supplies">Ingredients / Supplies</option>
-              <option value="packaging">Packaging & Boxes</option>
-              <option value="transport">Boda / Matatu Transport</option>
-              <option value="utilities">Cooking Gas / Power</option>
-              <option value="other">Other Operational</option>
-            </select>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <input
               type="text"
-              placeholder="Description (e.g. 5kg Flour, Cocoa powder)"
+              placeholder="Description (e.g. 5kg Flour, Cake boxes)"
               value={expDesc}
               onChange={(e) => setExpDesc(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-white text-xs border border-black/5 focus:outline-none sm:col-span-1"
+              className="px-3 py-2 rounded-xl bg-white text-xs border border-black/5 focus:outline-none"
               required
             />
             <input
@@ -384,7 +462,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
         </form>
       )}
 
-      {/* ── TAB PAYMENT MODAL / INLINE FORM ── */}
+      {/* ── TAB PAYMENT INLINE FORM ── */}
       {activePayingTab && (
         <form onSubmit={handleRecordTabPayment} className="p-5 rounded-3xl bg-emerald-50 border border-emerald-200 shadow-sm space-y-3 animate-fadeIn">
           <div className="flex items-center justify-between">
@@ -513,7 +591,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
         )}
       </div>
 
-      {/* ── EXPENSES FEED ── */}
+      {/* ── RECENT SUPPLIES & EXPENSES AUDIT FEED ── */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
