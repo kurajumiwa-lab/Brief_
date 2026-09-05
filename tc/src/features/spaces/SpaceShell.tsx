@@ -6,6 +6,7 @@ import { SpaceOffers } from './SpaceOffers';
 import { SpaceActivity } from './SpaceActivity';
 import { SpacePeople } from './SpacePeople';
 import { SpaceMoney } from './SpaceMoney';
+import { SpaceDispatches } from './SpaceDispatches';
 import { CreateOfferModal } from './CreateOfferModal';
 import { soundEngine } from '../../utils/SoundEngine';
 
@@ -24,7 +25,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
 }) => {
   const [space, setSpace] = useState<Space | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'offers' | 'people' | 'activity' | 'money'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'offers' | 'people' | 'cargo' | 'activity' | 'money'>('overview');
   const [createOfferOpen, setCreateOfferOpen] = useState<boolean>(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
@@ -94,10 +95,11 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
     );
   }
 
-  const tabs: Array<{ id: 'overview' | 'offers' | 'people' | 'activity' | 'money'; label: string }> = [
+  const tabs: Array<{ id: 'overview' | 'offers' | 'people' | 'cargo' | 'activity' | 'money'; label: string }> = [
     { id: 'overview', label: 'Overview' },
     { id: 'offers', label: `Offers (${space.offers?.length || 0})` },
     { id: 'people', label: `Chats (${space.recentConversations?.length || 0})` },
+    { id: 'cargo', label: 'Cargo' },
     { id: 'activity', label: 'Activity' },
     { id: 'money', label: 'Money' }
   ];
@@ -189,6 +191,16 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
               contact: c.customerContact
             }))}
             onMessage={(c) => showToast(`Opening chat with ${c.name}`)}
+            onRefresh={loadSpace}
+          />
+        </div>
+      )}
+
+      {activeTab === 'cargo' && (
+        <div className="animate-fadeIn">
+          <SpaceDispatches
+            spaceId={space.id}
+            spaceName={space.name}
             onRefresh={loadSpace}
           />
         </div>

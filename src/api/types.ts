@@ -1834,3 +1834,36 @@ export interface SpaceMoneySummary {
   tabs: SpaceCustomerTab[];
 }
 
+export type SpaceDispatchStatus = 'staged' | 'in_transit' | 'ready_at_stage' | 'collected' | 'cancelled';
+
+export interface SpaceDispatch {
+  id: string;
+  spaceId: string;
+  orderId?: string | null;
+  destinationCounty: string;
+  destinationTown: string;
+  carrierSacco: string;
+  waybillRef: string;
+  receiverName: string;
+  receiverPhone: string;
+  conductorContact?: string;
+  stageFeeKes: number;
+  status: SpaceDispatchStatus;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SpaceDispatchCreate {
+  orderId?: string | null;
+  destinationCounty: string;
+  destinationTown: string;
+  carrierSacco: string;
+  waybillRef?: string;
+  receiverName: string;
+  receiverPhone: string;
+  conductorContact?: string;
+  stageFeeKes?: number;
+  notes?: string;
+}
+

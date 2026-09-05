@@ -183,4 +183,37 @@ check('total expenses reflects recorded supplies (1,850)', moneySummary.totalExp
 check('net profit is 3,350 (5,200 - 1,850)', moneySummary.netProfitKes === 3350);
 check('total receivables reflects remaining tab (1,000)', moneySummary.totalReceivablesKes === 1000);
 
-console.log('SPACES DOMAIN, CHAT & MONEY RAILS TESTS PASSED!\n');
+// 17. Inter-County Cargo Dispatch (Option C)
+const dispatch = spaces.createSpaceDispatch({
+  spaceId: space.id,
+  orderId: paymentResult.order.id,
+  destinationCounty: 'Nakuru',
+  destinationTown: 'Nakuru Town (KFA Stage)',
+  carrierSacco: '2NK Sacco',
+  waybillRef: 'WAY-2NK-4491',
+  receiverName: 'Mary Wanjiku',
+  receiverPhone: '+254712345678',
+  conductorContact: '+254722000111',
+  stageFeeKes: 400,
+  notes: 'Fragile: 2-Tier Birthday Cake, handle with care',
+  callerId: userA.id
+});
+
+check('cargo dispatch created with waybill', dispatch.waybillRef === 'WAY-2NK-4491' && dispatch.status === 'in_transit');
+check('dispatch tags destination stage', dispatch.destinationTown.includes('Nakuru'));
+
+// 18. Dispatch Status Update
+const updatedDispatch = spaces.updateDispatchStatus({
+  spaceId: space.id,
+  dispatchId: dispatch.id,
+  status: 'ready_at_stage',
+  conductorContact: '+254722000111',
+  callerId: userA.id
+});
+check('dispatch transitions to ready_at_stage', updatedDispatch.status === 'ready_at_stage');
+
+// 19. Space Activity Log contains parcel_dispatched
+const finalActivities = spaces.getSpaceActivities(space.id);
+check('activity log records parcel_dispatched event', finalActivities.some(a => a.kind === 'parcel_dispatched'));
+
+console.log('SPACES DOMAIN, CHAT, MONEY & CARGO DISPATCH TESTS PASSED!\n');

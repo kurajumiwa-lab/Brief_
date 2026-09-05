@@ -82,3 +82,7 @@ export { SpaceConversationThread } from '../../features/spaces/SpaceConversation
 export type { SpaceConversationThreadProps } from '../../features/spaces/SpaceConversationThread';
 export { SpacePeople } from '../../features/spaces/SpacePeople';
 export type { SpacePeopleProps } from '../../features/spaces/SpacePeople';
+export { SpaceDispatches } from '../../features/spaces/SpaceDispatches';
+export type { SpaceDispatchesProps } from '../../features/spaces/SpaceDispatches';
+export { CreateDispatchModal } from '../../features/spaces/CreateDispatchModal';
+export type { CreateDispatchModalProps } from '../../features/spaces/CreateDispatchModal';

@@ -328,12 +328,13 @@ const EMPTY = {
   // --- Brief 2.0 Spaces (The Digital Landlord) -----------------------------
   // A Space is something a person is trying to make happen (a business,
   // project, community, or side-hustle). Spaces own capabilities, goals,
-  // people relationships, conversations, activity streams, and ledger rails.
+  // people relationships, conversations, activity streams, ledger rails, and cargo dispatches.
   spaces: [],
   spaceActivities: [],
   spaceConversations: [],
   spaceExpenses: [],
-  spaceCustomerTabs: []
+  spaceCustomerTabs: [],
+  spaceDispatches: []
 };
 
 function ensureDir() {

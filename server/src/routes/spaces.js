@@ -418,6 +418,77 @@ export function register(app) {
     }
   });
 
+  // --- Create an Inter-County Cargo Dispatch ---
+  app.post('/api/spaces/:id/dispatches', requireAuth, (req, res) => {
+    try {
+      const me = callerId(req);
+      const {
+        orderId,
+        destinationCounty,
+        destinationTown,
+        carrierSacco,
+        waybillRef,
+        receiverName,
+        receiverPhone,
+        conductorContact,
+        stageFeeKes,
+        notes
+      } = req.body || {};
+
+      const dispatch = spaces.createSpaceDispatch({
+        spaceId: req.params.id,
+        orderId,
+        destinationCounty,
+        destinationTown,
+        carrierSacco,
+        waybillRef,
+        receiverName,
+        receiverPhone,
+        conductorContact,
+        stageFeeKes,
+        notes,
+        callerId: me
+      });
+
+      res.status(201).json({ dispatch });
+    } catch (err) {
+      recordError('space_dispatch_create_failed', err);
+      res.status(400).json({ error: err.message || 'failed to create cargo dispatch' });
+    }
+  });
+
+  // --- List Space Dispatches ---
+  app.get('/api/spaces/:id/dispatches', requireAuth, (req, res) => {
+    try {
+      const dispatches = spaces.getSpaceDispatches(req.params.id);
+      res.json({ dispatches });
+    } catch (err) {
+      recordError('space_dispatches_list_failed', err);
+      res.status(500).json({ error: 'failed to list dispatches' });
+    }
+  });
+
+  // --- Update Dispatch Status ---
+  app.patch('/api/spaces/:id/dispatches/:dispatchId', requireAuth, (req, res) => {
+    try {
+      const me = callerId(req);
+      const { status, conductorContact } = req.body || {};
+
+      const updated = spaces.updateDispatchStatus({
+        spaceId: req.params.id,
+        dispatchId: req.params.dispatchId,
+        status,
+        conductorContact,
+        callerId: me
+      });
+
+      res.json({ dispatch: updated });
+    } catch (err) {
+      recordError('space_dispatch_update_failed', err);
+      res.status(400).json({ error: err.message || 'failed to update dispatch' });
+    }
+  });
+
   // --- Create order from space ---
   app.post('/api/spaces/:id/orders', requireAuth, (req, res) => {
     try {

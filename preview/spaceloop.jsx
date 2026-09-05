@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// BRIEF 2.0: SPACE, CHAT & MONEY RAILS TEST SUITE (Digital Landlord)
+// BRIEF 2.0: SPACE, CHAT, MONEY & CARGO DISPATCH SUITE (Digital Landlord)
 //
 // Tests:
 // 1. HomeSurface rendering & empty state
@@ -10,8 +10,10 @@
 // 6. SpaceConversationThread (In-chat Quote & M-Pesa STK push rails)
 // 7. SpacePeople with active customer chats & conversion badges
 // 8. SpaceMoney (Daily Profit Meter, Expenses & DukaBook Lipa Pole Pole tabs)
-// 9. PublicOfferModal customer view
-// 10. Navigation and AppShell integration
+// 9. SpaceDispatches (WAIRO Inter-County Cargo waybills & Sacco stages)
+// 10. CreateDispatchModal (Cross-county Matatu Sacco parcel dispatch)
+// 11. PublicOfferModal customer view
+// 12. Navigation and AppShell integration
 // ---------------------------------------------------------------------------
 
 const React = require('react');
@@ -37,6 +39,8 @@ const { SpaceOffers } = require('./src/features/spaces/SpaceOffers.tsx');
 const { SpaceActivity } = require('./src/features/spaces/SpaceActivity.tsx');
 const { SpacePeople } = require('./src/features/spaces/SpacePeople.tsx');
 const { SpaceMoney } = require('./src/features/spaces/SpaceMoney.tsx');
+const { SpaceDispatches } = require('./src/features/spaces/SpaceDispatches.tsx');
+const { CreateDispatchModal } = require('./src/features/spaces/CreateDispatchModal.tsx');
 const { SpaceConversationThread } = require('./src/features/spaces/SpaceConversationThread.tsx');
 const { CreateSpaceModal } = require('./src/features/spaces/CreateSpaceModal.tsx');
 const { CreateOfferModal } = require('./src/features/spaces/CreateOfferModal.tsx');
@@ -57,7 +61,7 @@ function check(name, condition, extra = '') {
 }
 
 async function runTests() {
-  console.log('\n=== BRIEF 2.0: SPACES, CHAT & MONEY RAILS SUITE ===');
+  console.log('\n=== BRIEF 2.0: SPACES, CHAT, MONEY & CARGO RAILS SUITE ===');
 
   // --- 1. HomeSurface ---
   console.log('\n--- 1. HomeSurface Decision Screen ---');
@@ -319,13 +323,55 @@ async function runTests() {
 
   await act(async () => { root8.unmount(); host8.remove(); });
 
-  // --- 9. PublicOfferModal (Customer Contextual Inquiry) ---
-  console.log('\n--- 9. PublicOfferModal (Customer View) ---');
+  // --- 9. SpaceDispatches (Phase 4 Inter-County Cargo) ---
+  console.log('\n--- 9. SpaceDispatches & WAIRO Cargo Waybills ---');
   const host9 = document.createElement('div');
   document.body.appendChild(host9);
   const root9 = createRoot(host9);
   await act(async () => {
-    root9.render(React.createElement(PublicOfferModal, {
+    root9.render(React.createElement(SpaceDispatches, {
+      spaceId: mockSpace.id,
+      spaceName: "Amina's Cakes"
+    }));
+  });
+
+  const text9 = host9.textContent;
+  check('renders Cargo Dispatches header', text9.includes('Inter-County Cargo Dispatches'));
+  check('shows Dispatch Parcel action button', text9.includes('Dispatch Parcel'));
+
+  await act(async () => { root9.unmount(); host9.remove(); });
+
+  // --- 10. CreateDispatchModal ---
+  console.log('\n--- 10. CreateDispatchModal (Sacco & Stage Selector) ---');
+  const host10 = document.createElement('div');
+  document.body.appendChild(host10);
+  const root10 = createRoot(host10);
+  await act(async () => {
+    root10.render(React.createElement(CreateDispatchModal, {
+      isOpen: true,
+      spaceId: mockSpace.id,
+      defaultReceiverName: 'Mary Wanjiku',
+      defaultReceiverPhone: '+254712345678',
+      onClose: () => {},
+      onDispatchCreated: () => {}
+    }));
+  });
+
+  const text10 = host10.textContent;
+  check('renders WAIRO Cargo Dispatch header', text10.includes('WAIRO Cargo Dispatch'));
+  check('shows destination stage selector', text10.includes('Destination Stage'));
+  check('shows carrier / matatu sacco selector', text10.includes('Carrier / Matatu Sacco'));
+  check('shows generate waybill button', text10.includes('Generate Waybill & Dispatch'));
+
+  await act(async () => { root10.unmount(); host10.remove(); });
+
+  // --- 11. PublicOfferModal (Customer Contextual Inquiry) ---
+  console.log('\n--- 11. PublicOfferModal (Customer View) ---');
+  const host11 = document.createElement('div');
+  document.body.appendChild(host11);
+  const root11 = createRoot(host11);
+  await act(async () => {
+    root11.render(React.createElement(PublicOfferModal, {
       isOpen: true,
       offer: mockSpace.offers[0],
       spaceName: "Amina's Cakes",
@@ -333,29 +379,29 @@ async function runTests() {
     }));
   });
 
-  const text9 = host9.textContent;
-  check('shows public offer title and price', text9.includes('Birthday Cake') && text9.includes('4,500'));
-  check('shows verified seller space name', text9.includes("Amina's Cakes"));
+  const text11 = host11.textContent;
+  check('shows public offer title and price', text11.includes('Birthday Cake') && text11.includes('4,500'));
+  check('shows verified seller space name', text11.includes("Amina's Cakes"));
   check('shows customer action buttons: Ask about this & Order Now',
-    text9.includes('Ask about this') && text9.includes('Order Now'));
+    text11.includes('Ask about this') && text11.includes('Order Now'));
 
-  await act(async () => { root9.unmount(); host9.remove(); });
+  await act(async () => { root11.unmount(); host11.remove(); });
 
-  // --- 10. AppShell Integration ---
-  console.log('\n--- 10. AppShell Navigation ---');
-  const host10 = document.createElement('div');
-  document.body.appendChild(host10);
-  const root10 = createRoot(host10);
+  // --- 12. AppShell Integration ---
+  console.log('\n--- 12. AppShell Navigation ---');
+  const host12 = document.createElement('div');
+  document.body.appendChild(host12);
+  const root12 = createRoot(host12);
   await act(async () => {
-    root10.render(React.createElement(AppShell, {
+    root12.render(React.createElement(AppShell, {
       initialTab: 'home'
     }));
   });
 
-  const text10 = host10.textContent;
-  check('renders AppShell Home tab by default', text10.includes('What are you working on?'));
+  const text12 = host12.textContent;
+  check('renders AppShell Home tab by default', text12.includes('What are you working on?'));
 
-  await act(async () => { root10.unmount(); host10.remove(); });
+  await act(async () => { root12.unmount(); host12.remove(); });
 
   console.log(`\nPASSED ${passed} / FAILED ${failed}`);
   process.exit(failed === 0 ? 0 : 1);

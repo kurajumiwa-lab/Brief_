@@ -958,6 +958,142 @@ export function getSpaceMoneySummary(spaceId) {
 }
 
 /**
+ * Creates an Inter-County Cargo waybill / dispatch record for an order or space item.
+ */
+export function createSpaceDispatch({
+  spaceId,
+  orderId = null,
+  destinationCounty,
+  destinationTown,
+  carrierSacco,
+  waybillRef = null,
+  receiverName,
+  receiverPhone,
+  conductorContact = '',
+  stageFeeKes = 0,
+  notes = '',
+  callerId = null
+}) {
+  const space = store.find('spaces', (s) => s.id === spaceId);
+  if (!space) throw new Error('Space not found');
+  if (callerId && space.ownerId !== callerId) {
+    throw new Error('Not authorized to dispatch from this space');
+  }
+
+  if (!destinationCounty || !String(destinationCounty).trim()) {
+    throw new Error('Destination county is required');
+  }
+  if (!destinationTown || !String(destinationTown).trim()) {
+    throw new Error('Destination town/stage is required');
+  }
+  if (!carrierSacco || !String(carrierSacco).trim()) {
+    throw new Error('Carrier/Sacco name is required');
+  }
+  if (!receiverName || !String(receiverName).trim()) {
+    throw new Error('Receiver name is required');
+  }
+  if (!receiverPhone || !String(receiverPhone).trim()) {
+    throw new Error('Receiver phone is required');
+  }
+
+  const dispatchId = newId('dsp');
+  const now = new Date().toISOString();
+  const generatedWaybill = waybillRef || `WAY-${carrierSacco.slice(0, 3).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+  const dispatch = {
+    id: dispatchId,
+    spaceId,
+    orderId,
+    destinationCounty: String(destinationCounty).trim(),
+    destinationTown: String(destinationTown).trim(),
+    carrierSacco: String(carrierSacco).trim(),
+    waybillRef: generatedWaybill,
+    receiverName: String(receiverName).trim(),
+    receiverPhone: String(receiverPhone).trim(),
+    conductorContact: String(conductorContact || '').trim(),
+    stageFeeKes: Number(stageFeeKes || 0),
+    status: 'in_transit',
+    notes: String(notes || '').trim(),
+    createdAt: now,
+    updatedAt: now
+  };
+
+  store.insert('spaceDispatches', dispatch);
+
+  // If tied to an order, update order status to fulfilled/dispatched
+  if (orderId) {
+    store.update('orders', orderId, {
+      dispatchId: dispatch.id,
+      dispatchWaybill: generatedWaybill,
+      status: 'fulfilled',
+      updatedAt: now
+    });
+  }
+
+  recordSpaceActivity({
+    spaceId,
+    kind: 'parcel_dispatched',
+    title: `Dispatched to ${dispatch.destinationTown} (${dispatch.destinationCounty})`,
+    description: `Via ${dispatch.carrierSacco} · Waybill: ${dispatch.waybillRef} · Receiver: ${dispatch.receiverName}`,
+    actorId: callerId,
+    metadata: {
+      dispatchId,
+      orderId,
+      carrierSacco: dispatch.carrierSacco,
+      waybillRef: dispatch.waybillRef
+    }
+  });
+
+  return dispatch;
+}
+
+/**
+ * Updates the status of an active cargo dispatch.
+ */
+export function updateDispatchStatus({
+  spaceId,
+  dispatchId,
+  status,
+  conductorContact = null,
+  callerId = null
+}) {
+  const space = store.find('spaces', (s) => s.id === spaceId);
+  if (!space) throw new Error('Space not found');
+  if (callerId && space.ownerId !== callerId) {
+    throw new Error('Not authorized to update dispatch in this space');
+  }
+
+  const dispatch = store.find('spaceDispatches', (d) => d.id === dispatchId && d.spaceId === spaceId);
+  if (!dispatch) throw new Error('Dispatch not found');
+
+  const patch = { updatedAt: new Date().toISOString() };
+  if (status) patch.status = status;
+  if (conductorContact !== null) patch.conductorContact = String(conductorContact).trim();
+
+  const updated = store.update('spaceDispatches', dispatchId, patch);
+
+  recordSpaceActivity({
+    spaceId,
+    kind: 'dispatch_status_updated',
+    title: `Dispatch #${dispatch.waybillRef} is now ${status}`,
+    description: `Destination: ${dispatch.destinationTown} · Receiver: ${dispatch.receiverName}`,
+    actorId: callerId,
+    metadata: { dispatchId, status, waybillRef: dispatch.waybillRef }
+  });
+
+  return updated;
+}
+
+/**
+ * Lists all dispatches for a space.
+ */
+export function getSpaceDispatches(spaceId) {
+  const rows = store.filter('spaceDispatches', (d) => d.spaceId === spaceId);
+  rows.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  return rows;
+}
+
+/**
  * Helper to hydrate a Space with real metrics and connected items.
  */
 function hydrateSpace(space, { callerId = null } = {}) {

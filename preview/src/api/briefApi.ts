@@ -99,7 +99,10 @@ import type {
   SpacePaymentPrompt,
   SpaceExpense,
   SpaceCustomerTab,
-  SpaceMoneySummary
+  SpaceMoneySummary,
+  SpaceDispatch,
+  SpaceDispatchCreate,
+  SpaceDispatchStatus
 } from './types';
 import { enqueue, replayQueue, queueDepth, type QueuedWrite } from './offlineQueue';
 import { asTarget } from './types';
@@ -4461,5 +4464,30 @@ export function recordSpaceTabPayment(spaceId: string, tabId: string, input: {
 export function getSpaceTabs(spaceId: string): Promise<ApiResult<{ tabs: SpaceCustomerTab[] }>> {
   return request<{ tabs: SpaceCustomerTab[] }>(`/api/spaces/${encodeURIComponent(spaceId)}/tabs`, undefined, (r) =>
     r && Array.isArray(r.tabs) ? { tabs: r.tabs } : undefined);
+}
+
+/** Create an Inter-County Cargo dispatch waybill (Matatu Sacco parcel / courier). */
+export function createSpaceDispatch(spaceId: string, input: SpaceDispatchCreate): Promise<ApiResult<{ dispatch: SpaceDispatch }>> {
+  return request<{ dispatch: SpaceDispatch }>(`/api/spaces/${encodeURIComponent(spaceId)}/dispatches`, {
+    method: 'POST',
+    body: JSON.stringify(input)
+  }, (r) => r && r.dispatch ? { dispatch: r.dispatch } : undefined);
+}
+
+/** Update the delivery status of an active cargo dispatch. */
+export function updateSpaceDispatchStatus(spaceId: string, dispatchId: string, input: {
+  status: SpaceDispatchStatus;
+  conductorContact?: string;
+}): Promise<ApiResult<{ dispatch: SpaceDispatch }>> {
+  return request<{ dispatch: SpaceDispatch }>(`/api/spaces/${encodeURIComponent(spaceId)}/dispatches/${encodeURIComponent(dispatchId)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input)
+  }, (r) => r && r.dispatch ? { dispatch: r.dispatch } : undefined);
+}
+
+/** List all cargo dispatches for a space. */
+export function getSpaceDispatches(spaceId: string): Promise<ApiResult<{ dispatches: SpaceDispatch[] }>> {
+  return request<{ dispatches: SpaceDispatch[] }>(`/api/spaces/${encodeURIComponent(spaceId)}/dispatches`, undefined, (r) =>
+    r && Array.isArray(r.dispatches) ? { dispatches: r.dispatches } : undefined);
 }
 
