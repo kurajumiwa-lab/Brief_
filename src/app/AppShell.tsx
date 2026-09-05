@@ -6,6 +6,7 @@ import { HomeSurface } from '../features/home/HomeSurface';
 import { PipelineView } from '../features/spaces/PipelineView';
 import { SpaceMoney } from '../features/spaces/SpaceMoney';
 import { CatalogView } from '../features/spaces/CatalogView';
+import { CityFeedView } from '../features/city/CityFeedView';
 import { CreateFlowModal } from '../features/spaces/CreateFlowModal';
 import { PublicOfferModal } from '../features/offers/PublicOfferModal';
 import { soundEngine } from '../utils/SoundEngine';
@@ -40,6 +41,9 @@ export const AppShell: React.FC<AppShellProps> = ({
   const [manualCustomerPhone, setManualCustomerPhone] = useState<string>('');
   const [manualItemTitle, setManualItemTitle] = useState<string>('');
   const [manualPrice, setManualPrice] = useState<string>('');
+
+  // Citizen Post Dialog on City Tab
+  const [cityPostModalOpen, setCityPostModalOpen] = useState<boolean>(false);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -172,8 +176,23 @@ export const AppShell: React.FC<AppShellProps> = ({
     }
   };
 
+  // Deep link detection on mount / URL change
   useEffect(() => {
     loadSpaces();
+
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      if (hash.startsWith('#offer/')) {
+        const offerId = hash.replace('#offer/', '');
+        const targetOffer = activeSpace?.offers?.find((o) => o.id === offerId);
+        if (targetOffer) {
+          setActivePublicOffer(targetOffer);
+          setPublicOfferModalOpen(true);
+        }
+      } else if (hash === '#city' || hash === '#events') {
+        setActiveTab('city');
+      }
+    }
   }, [initialSpaceId]);
 
   const handlePublishOffer = async (offerId: string) => {
@@ -189,18 +208,21 @@ export const AppShell: React.FC<AppShellProps> = ({
     }
   };
 
-  // Contextual FAB triggers
+  // Contextual FAB triggers based on active tab
   const handleContextualFab = () => {
     soundEngine.play('heavyTap');
-    if (activeTab === 'catalog') {
-      // Contextual: Add Offer (Skips to Step 2)
+    if (activeTab === 'city') {
+      // Contextual on City: Post an Event, Listing, or Ticket
+      setCityPostModalOpen(true);
+    } else if (activeTab === 'catalog') {
+      // Contextual on Catalog: Add Offer (Skips to Step 2)
       setCreateFlowInitialStep(2);
       setCreateFlowOpen(true);
     } else if (activeTab === 'ledger') {
-      // Contextual: Log Expense
-      showToast('Quick-Log an Outflow above or open a DukaBook Tab');
+      // Contextual on Ledger: Log Outflow
+      showToast('Log an outflow via the quick category buttons above');
     } else {
-      // Contextual: Pipeline -> New Order / Quote for walk-in customers
+      // Contextual on Pipeline: New Order / Quote
       setManualOrderOpen(true);
     }
   };
@@ -248,7 +270,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         </div>
       )}
 
-      {/* 3-Surface Navigation (Sidebar on desktop, bottom dock on mobile) */}
+      {/* 4-Tab Navigation (Desktop Sidebar / Mobile Bottom Dock) */}
       <Navigation
         activeTab={activeTab}
         onSelectTab={(tab) => setActiveTab(tab)}
@@ -257,7 +279,7 @@ export const AppShell: React.FC<AppShellProps> = ({
 
       {/* Main Content Viewport */}
       <main className="flex-1 min-w-0 px-4 sm:px-6 py-6 pb-28 md:pb-6 overflow-y-auto min-h-screen">
-        {/* Legacy Home Surface Compatibility */}
+        {/* Legacy Home Surface Compatibility for tests */}
         {activeTab === 'home' ? (
           <HomeSurface
             userName="Amina"
@@ -265,26 +287,28 @@ export const AppShell: React.FC<AppShellProps> = ({
               setActiveTab('pipeline');
               loadSpaces();
             }}
-            onExploreDiscover={() => setActiveTab('catalog')}
+            onExploreDiscover={() => setActiveTab('city')}
             onGetPaid={() => setActiveTab('ledger')}
           />
-        ) : loading && !activeSpace ? (
-          <div className="p-12 text-center text-xs text-[#64748B]">
-            Loading Space...
-          </div>
-        ) : activeSpace ? (
+        ) : (
           <div>
-            {/* ── SURFACE 1: PIPELINE (Primary Landing) ── */}
-            {(activeTab === 'pipeline' || activeTab === 'spaces' || activeTab === 'activity') && (
+            {/* ── TAB 1: CITY (Full Citizen Experience) ── */}
+            {(activeTab === 'city' || activeTab === 'discover') && (
+              <CityFeedView onOpenSpace={(id) => setActiveTab('pipeline')} />
+            )}
+
+            {/* ── TAB 2: PIPELINE (Primary Seller Workspace + Integrated City Highlights) ── */}
+            {(activeTab === 'pipeline' || activeTab === 'spaces' || activeTab === 'activity') && activeSpace && (
               <PipelineView
                 space={activeSpace}
                 onRefresh={loadSpaces}
+                onViewCityFeed={() => setActiveTab('city')}
                 onShareOffer={(t) => showToast(`Share link for "${t}" copied!`)}
               />
             )}
 
-            {/* ── SURFACE 2: LEDGER (Financial Truth) ── */}
-            {activeTab === 'ledger' && (
+            {/* ── TAB 3: LEDGER (Financial Truth) ── */}
+            {activeTab === 'ledger' && activeSpace && (
               <SpaceMoney
                 spaceId={activeSpace.id}
                 revenueKes={activeSpace.metrics?.revenueKes}
@@ -294,8 +318,8 @@ export const AppShell: React.FC<AppShellProps> = ({
               />
             )}
 
-            {/* ── SURFACE 3: CATALOG (What You Sell) ── */}
-            {(activeTab === 'catalog' || activeTab === 'discover') && (
+            {/* ── TAB 4: CATALOG (What You Sell) ── */}
+            {activeTab === 'catalog' && activeSpace && (
               <CatalogView
                 offers={activeSpace.offers}
                 onAddOffer={() => {
@@ -310,23 +334,59 @@ export const AppShell: React.FC<AppShellProps> = ({
               />
             )}
           </div>
-        ) : (
-          <div className="max-w-md mx-auto p-8 rounded-3xl bg-white text-center space-y-3 mt-12 shadow-sm">
-            <h3 className="text-base font-black text-[#1A1F2E]">No Space Created Yet</h3>
-            <p className="text-xs text-[#64748B]">Create your first space to start receiving orders and tracking revenue.</p>
-            <button
-              type="button"
-              onClick={() => {
-                setCreateFlowInitialStep(1);
-                setCreateFlowOpen(true);
-              }}
-              className="px-4 py-2.5 rounded-full bg-[#1A1F2E] text-[#93EE34] text-xs font-black cursor-pointer"
-            >
-              + Create Your First Space
-            </button>
-          </div>
         )}
       </main>
+
+      {/* Citizen Post Dialog on City Tab */}
+      {cityPostModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fadeIn">
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden p-6 space-y-4 border border-black/5 animate-scaleIn">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-[#93EE34] bg-[#1A1F2E] px-2 py-0.5 rounded-full">
+                  City Feed Post
+                </span>
+                <h3 className="text-base font-black text-[#1A1F2E] mt-1">Share with Nairobi</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCityPostModalOpen(false)}
+                className="text-xs text-[#64748B] hover:text-[#1A1F2E]"
+              >
+                Cancel
+              </button>
+            </div>
+
+            <p className="text-xs text-[#64748B]">
+              Post an event, a marketplace drop, or an EPL matchday challenge to the Nairobi public feed.
+            </p>
+
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setCityPostModalOpen(false);
+                  showToast('Opening event creator');
+                }}
+                className="p-3 rounded-2xl bg-[#FAFAF8] hover:bg-[#1A1F2E] hover:text-white transition-all text-xs font-bold border border-black/5 text-center"
+              >
+                🎟️ Post Event
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setCityPostModalOpen(false);
+                  setCreateFlowInitialStep(2);
+                  setCreateFlowOpen(true);
+                }}
+                className="p-3 rounded-2xl bg-[#FAFAF8] hover:bg-[#1A1F2E] hover:text-white transition-all text-xs font-bold border border-black/5 text-center"
+              >
+                🛍️ Drop Product
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Manual Order Drawer on Pipeline FAB */}
       {manualOrderOpen && (

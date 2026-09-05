@@ -92,3 +92,5 @@ export { CatalogView } from '../../features/spaces/CatalogView';
 export type { CatalogViewProps } from '../../features/spaces/CatalogView';
 export { CreateFlowModal } from '../../features/spaces/CreateFlowModal';
 export type { CreateFlowModalProps } from '../../features/spaces/CreateFlowModal';
+export { CityFeedView } from '../../features/city/CityFeedView';
+export type { CityFeedViewProps } from '../../features/city/CityFeedView';

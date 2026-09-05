@@ -16,7 +16,10 @@ import {
   Share2,
   ExternalLink,
   MessageCircle,
-  Package
+  Package,
+  Sparkles,
+  ShoppingBag,
+  Trophy
 } from 'lucide-react';
 import { soundEngine } from '../../utils/SoundEngine';
 
@@ -24,6 +27,7 @@ export interface PipelineViewProps {
   space: Space;
   onRefresh: () => void;
   onShareOffer?: (offerTitle: string) => void;
+  onViewCityFeed?: () => void;
   className?: string;
 }
 
@@ -39,6 +43,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
   space,
   onRefresh,
   onShareOffer,
+  onViewCityFeed,
   className = ''
 }) => {
   const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
@@ -201,7 +206,72 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
         </div>
       )}
 
-      {/* ── COMPACT KPI HEADER STRIP ── */}
+      {/* ── 1. "NAIROBI TONIGHT" CITY PREVIEW STRIP (Horizontal 3-Card Strip) ── */}
+      <div className="p-4 rounded-3xl bg-[#1A1F2E] text-white space-y-3 shadow-md border border-white/5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-1.5">
+            <span className="w-2 h-2 rounded-full bg-[#93EE34] animate-ping" />
+            <span className="text-[10px] font-black uppercase tracking-wider text-[#93EE34]">
+              Nairobi Tonight · Live City Highlights
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              soundEngine.play('tap');
+              onViewCityFeed?.();
+            }}
+            className="text-[11px] font-bold text-[#93EE34] hover:underline flex items-center space-x-1 cursor-pointer"
+          >
+            <span>See Full City Feed</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* 3 Horizontal Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          {/* Card 1: Events */}
+          <div
+            onClick={() => onViewCityFeed?.()}
+            className="p-3 rounded-2xl bg-white/10 hover:bg-white/15 transition-all cursor-pointer space-y-1 border border-white/5"
+          >
+            <div className="flex items-center space-x-1 text-white/70 text-[9px] uppercase font-bold">
+              <Clock className="w-3 h-3 text-[#93EE34]" />
+              <span>Events & Night Market</span>
+            </div>
+            <p className="text-xs font-bold text-white truncate">Alchemist Street Festival</p>
+            <p className="text-[10px] text-white/60">Tonight 7PM · Westlands</p>
+          </div>
+
+          {/* Card 2: Marketplace */}
+          <div
+            onClick={() => onViewCityFeed?.()}
+            className="p-3 rounded-2xl bg-white/10 hover:bg-white/15 transition-all cursor-pointer space-y-1 border border-white/5"
+          >
+            <div className="flex items-center space-x-1 text-white/70 text-[9px] uppercase font-bold">
+              <ShoppingBag className="w-3 h-3 text-[#E8985E]" />
+              <span>Marketplace Drop</span>
+            </div>
+            <p className="text-xs font-bold text-white truncate">Zawadi Leather Tote</p>
+            <p className="text-[10px] text-white/60">KES 2,800 · Kilimani</p>
+          </div>
+
+          {/* Card 3: EPL */}
+          <div
+            onClick={() => onViewCityFeed?.()}
+            className="p-3 rounded-2xl bg-white/10 hover:bg-white/15 transition-all cursor-pointer space-y-1 border border-white/5"
+          >
+            <div className="flex items-center space-x-1 text-white/70 text-[9px] uppercase font-bold">
+              <Trophy className="w-3 h-3 text-amber-400" />
+              <span>EPL Matchday Room</span>
+            </div>
+            <p className="text-xs font-bold text-white truncate">Arsenal vs Chelsea</p>
+            <p className="text-[10px] text-white/60">Gameweek 4 · 12 Spots</p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 2. COMPACT KPI HEADER STRIP ── */}
       <div className="p-4 rounded-3xl bg-white shadow-2xs border border-black/5 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center space-x-2">
@@ -226,7 +296,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
         </div>
       </div>
 
-      {/* ── PIPELINE TIMELINE OF ORDERS & CHATS ── */}
+      {/* ── 3. PIPELINE TIMELINE OF ORDERS & CHATS ── */}
       <div className="space-y-3">
         <div className="flex items-center justify-between px-1">
           <span className="text-xs font-black uppercase tracking-wider text-[#1A1F2E]">
@@ -621,24 +691,19 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
         )}
       </div>
 
-      {/* ── RECENT ACTIVITY AUDIT FEED ── */}
-      {space.recentActivities && space.recentActivities.length > 0 && (
-        <div className="p-4 rounded-3xl bg-white border border-black/5 shadow-2xs space-y-2">
-          <span className="text-[10px] font-black uppercase tracking-wider text-[#64748B]">
-            Recent Pipeline Activity
-          </span>
-          <div className="space-y-1.5">
-            {space.recentActivities.slice(0, 4).map((a) => (
-              <div key={a.id} className="text-xs text-[#1A1F2E] flex items-center justify-between">
-                <span className="truncate">⚡ {a.title}</span>
-                <span className="text-[9px] text-[#64748B] shrink-0 ml-2">
-                  {new Date(a.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
-              </div>
-            ))}
+      {/* ── 4. SINGLE NET-PROFIT PILL AT BOTTOM OF SCROLL ── */}
+      <div className="p-4 rounded-3xl bg-[#1A1F2E] text-white flex items-center justify-between shadow-xs border border-white/10">
+        <div className="flex items-center space-x-2">
+          <TrendingUp className="w-4 h-4 text-[#93EE34]" />
+          <div>
+            <span className="text-[10px] text-white/70 uppercase font-bold block">Today's Net Take-Home</span>
+            <span className="text-sm font-black text-[#93EE34]">KES {revenueKes.toLocaleString()}</span>
           </div>
         </div>
-      )}
+        <span className="text-[10px] text-white/60 bg-white/10 px-2.5 py-1 rounded-full font-bold">
+          {space.name}
+        </span>
+      </div>
     </div>
   );
 };

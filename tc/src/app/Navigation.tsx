@@ -1,8 +1,8 @@
 import React from 'react';
-import { Layers, BookOpen, Tag, Plus } from 'lucide-react';
+import { Home, Layers, BookOpen, Tag, Plus, Compass } from 'lucide-react';
 import { soundEngine } from '../utils/SoundEngine';
 
-export type BriefNavigationTab = 'pipeline' | 'ledger' | 'catalog' | 'home' | 'spaces' | 'discover' | 'activity' | 'you';
+export type BriefNavigationTab = 'city' | 'pipeline' | 'ledger' | 'catalog' | 'home' | 'spaces' | 'discover' | 'activity' | 'you';
 
 export interface NavigationProps {
   activeTab: BriefNavigationTab;
@@ -17,29 +17,30 @@ export const Navigation: React.FC<NavigationProps> = ({
   onCreateAction,
   className = ''
 }) => {
-  // 3 Primary Surfaces
-  const navItems: Array<{ id: 'pipeline' | 'ledger' | 'catalog'; label: string; icon: React.ReactNode }> = [
+  // 4 Primary Surfaces
+  const navItems: Array<{ id: 'city' | 'pipeline' | 'ledger' | 'catalog'; label: string; icon: React.ReactNode }> = [
+    { id: 'city', label: 'City', icon: <Home className="w-5 h-5" /> },
     { id: 'pipeline', label: 'Pipeline', icon: <Layers className="w-5 h-5" /> },
     { id: 'ledger', label: 'Ledger', icon: <BookOpen className="w-5 h-5" /> },
     { id: 'catalog', label: 'Catalog', icon: <Tag className="w-5 h-5" /> }
   ];
 
   const currentActive = (
-    activeTab === 'home' || activeTab === 'spaces' || activeTab === 'activity'
+    activeTab === 'discover'
+      ? 'city'
+      : activeTab === 'home' || activeTab === 'spaces' || activeTab === 'activity'
       ? 'pipeline'
-      : activeTab === 'discover'
-      ? 'catalog'
       : activeTab
-  ) as 'pipeline' | 'ledger' | 'catalog';
+  ) as 'city' | 'pipeline' | 'ledger' | 'catalog';
 
   return (
     <>
-      {/* ── MOBILE BOTTOM NAVIGATION DOCK (3 Tabs + Floating FAB) ── */}
+      {/* ── MOBILE BOTTOM NAVIGATION DOCK (4 Tabs + Floating FAB) ── */}
       <nav
         aria-label="Mobile Navigation"
-        className={`md:hidden fixed bottom-3 left-4 right-4 bg-white/95 backdrop-blur-md rounded-full py-2 px-5 shadow-2xl border border-black/5 flex items-center justify-between z-40 ${className}`}
+        className={`md:hidden fixed bottom-3 left-3 right-3 bg-white/95 backdrop-blur-md rounded-full py-2 px-4 shadow-2xl border border-black/5 flex items-center justify-between z-40 ${className}`}
       >
-        <div className="flex items-center space-x-6">
+        <div className="flex items-center space-x-3.5 sm:space-x-5">
           {navItems.map((item) => {
             const isSelected = currentActive === item.id;
             return (
@@ -80,8 +81,8 @@ export const Navigation: React.FC<NavigationProps> = ({
             soundEngine.play('heavyTap');
             onCreateAction?.();
           }}
-          className="p-2.5 rounded-full bg-[#1A1F2E] text-[#93EE34] shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center"
-          aria-label="Create new space or offer"
+          className="p-2.5 rounded-full bg-[#1A1F2E] text-[#93EE34] shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center ml-1"
+          aria-label="Contextual Action"
         >
           <Plus className="w-5 h-5" />
         </button>
@@ -132,7 +133,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             className="w-full py-2.5 rounded-full bg-[#1A1F2E] hover:bg-black text-[#93EE34] font-bold text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-sm"
           >
             <Plus className="w-4 h-4 text-[#93EE34]" />
-            <span>+ New Offer / Space</span>
+            <span>+ Action</span>
           </button>
         </div>
       </aside>
