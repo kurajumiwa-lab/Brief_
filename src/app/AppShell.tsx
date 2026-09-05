@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { Space, Listing } from '../../src/api/types';
+import type { Space, Listing } from '../api/types';
 import * as briefApi from '../api/briefApi';
 import { Navigation, BriefNavigationTab } from './Navigation';
 import { HomeSurface } from '../features/home/HomeSurface';
@@ -33,6 +33,13 @@ export const AppShell: React.FC<AppShellProps> = ({
   const [publicOfferModalOpen, setPublicOfferModalOpen] = useState<boolean>(false);
   const [activePublicOffer, setActivePublicOffer] = useState<Listing | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  // Manual Walk-in Order State on Pipeline
+  const [manualOrderOpen, setManualOrderOpen] = useState<boolean>(false);
+  const [manualCustomerName, setManualCustomerName] = useState<string>('');
+  const [manualCustomerPhone, setManualCustomerPhone] = useState<string>('');
+  const [manualItemTitle, setManualItemTitle] = useState<string>('');
+  const [manualPrice, setManualPrice] = useState<string>('');
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -182,13 +189,54 @@ export const AppShell: React.FC<AppShellProps> = ({
     }
   };
 
-  const handleOpenFab = () => {
+  // Contextual FAB triggers
+  const handleContextualFab = () => {
+    soundEngine.play('heavyTap');
     if (activeTab === 'catalog') {
+      // Contextual: Add Offer (Skips to Step 2)
       setCreateFlowInitialStep(2);
+      setCreateFlowOpen(true);
+    } else if (activeTab === 'ledger') {
+      // Contextual: Log Expense
+      showToast('Quick-Log an Outflow above or open a DukaBook Tab');
     } else {
-      setCreateFlowInitialStep(1);
+      // Contextual: Pipeline -> New Order / Quote for walk-in customers
+      setManualOrderOpen(true);
     }
-    setCreateFlowOpen(true);
+  };
+
+  const handleCreateManualOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeSpace || !manualCustomerName.trim()) return;
+
+    soundEngine.play('reward');
+    try {
+      const convRes = await briefApi.createSpaceConversation(activeSpace.id, {
+        customerName: manualCustomerName.trim(),
+        customerContact: manualCustomerPhone.trim() || '+254700000000',
+        message: `Walk-in inquiry for ${manualItemTitle.trim() || 'Custom Order'}`
+      });
+
+      if (convRes.ok && convRes.data?.conversation) {
+        const conv = convRes.data.conversation;
+        if (manualPrice && Number(manualPrice) > 0) {
+          await briefApi.createSpaceQuote(activeSpace.id, conv.id, {
+            title: manualItemTitle.trim() || 'Custom Order',
+            priceKes: Number(manualPrice),
+            notes: 'Walk-in customer order'
+          });
+        }
+        showToast(`Order created for ${manualCustomerName}`);
+        setManualCustomerName('');
+        setManualCustomerPhone('');
+        setManualItemTitle('');
+        setManualPrice('');
+        setManualOrderOpen(false);
+        loadSpaces();
+      }
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to create order');
+    }
   };
 
   return (
@@ -204,7 +252,7 @@ export const AppShell: React.FC<AppShellProps> = ({
       <Navigation
         activeTab={activeTab}
         onSelectTab={(tab) => setActiveTab(tab)}
-        onCreateAction={handleOpenFab}
+        onCreateAction={handleContextualFab}
       />
 
       {/* Main Content Viewport */}
@@ -279,6 +327,70 @@ export const AppShell: React.FC<AppShellProps> = ({
           </div>
         )}
       </main>
+
+      {/* Manual Order Drawer on Pipeline FAB */}
+      {manualOrderOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fadeIn">
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden p-6 space-y-4 border border-black/5 animate-scaleIn">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-[#5B2EA6]">
+                  Quick Manual Order
+                </span>
+                <h3 className="text-base font-black text-[#1A1F2E]">New Walk-in Customer</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setManualOrderOpen(false)}
+                className="text-xs text-[#64748B] hover:text-[#1A1F2E]"
+              >
+                Cancel
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateManualOrder} className="space-y-3">
+              <input
+                type="text"
+                placeholder="Customer Name (e.g. John Kamau)"
+                value={manualCustomerName}
+                onChange={(e) => setManualCustomerName(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAFAF8] text-xs border border-black/5 focus:outline-none"
+                required
+              />
+              <input
+                type="tel"
+                placeholder="WhatsApp Phone (e.g. 0712345678)"
+                value={manualCustomerPhone}
+                onChange={(e) => setManualCustomerPhone(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAFAF8] text-xs border border-black/5 focus:outline-none"
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  placeholder="Item Title (e.g. Birthday Cake)"
+                  value={manualItemTitle}
+                  onChange={(e) => setManualItemTitle(e.target.value)}
+                  className="px-3.5 py-2.5 rounded-xl bg-[#FAFAF8] text-xs border border-black/5 focus:outline-none"
+                />
+                <input
+                  type="number"
+                  placeholder="Price (KES)"
+                  value={manualPrice}
+                  onChange={(e) => setManualPrice(e.target.value)}
+                  className="px-3.5 py-2.5 rounded-xl bg-[#FAFAF8] text-xs border border-black/5 focus:outline-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-2.5 rounded-2xl bg-[#1A1F2E] hover:bg-black text-[#93EE34] text-xs font-black shadow-md transition-all cursor-pointer"
+              >
+                Create Pipeline Order
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Unified Progressive Create Flow Modal */}
       {createFlowOpen && (
