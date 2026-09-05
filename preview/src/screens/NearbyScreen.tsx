@@ -1,8 +1,53 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { Bell, ArrowRight, Bookmark, FolderPlus, Heart, MapPin, Newspaper, Plus, Search, ShieldCheck, Users, X, Sparkles } from 'lucide-react';
+import React, { useCallback, useMemo, useState, useEffect } from 'react';
+import { 
+  Bell, 
+  ArrowRight, 
+  Bookmark, 
+  FolderPlus, 
+  Heart, 
+  MapPin, 
+  Newspaper, 
+  Plus, 
+  Search, 
+  ShieldCheck, 
+  Users, 
+  X, 
+  Sparkles,
+  Bike,
+  Truck,
+  TrendingUp,
+  Clock,
+  Briefcase,
+  Zap,
+  CheckCircle2,
+  ChevronRight
+} from 'lucide-react';
 import * as briefApi from '../api/briefApi';
-import { DESTINATION_STATE_LABELS, TEA_EDITIONS, briefWhenLabel, entityChipsFor, formatCount, getCardLevel, getDestinationState, getDestinationVendors, getDistanceLabel, getEditionMeta, getLifecycleBadge, getObjectTypeMeta, getPostKindMeta, getPublishedLine, getRelativeTime, getSourceChip, isDestinationObject, objectFromServer, resolveAction , buildDiscoveryBrief, buildPersonalSections, getCurrentEdition } from '../model/core';
-import type { ObjectType , PursuitStatus, WatchCondition } from '../model/core';
+import { 
+  DESTINATION_STATE_LABELS, 
+  TEA_EDITIONS, 
+  briefWhenLabel, 
+  entityChipsFor, 
+  formatCount, 
+  getCardLevel, 
+  getDestinationState, 
+  getDestinationVendors, 
+  getDistanceLabel, 
+  getEditionMeta, 
+  getLifecycleBadge, 
+  getObjectTypeMeta, 
+  getPostKindMeta, 
+  getPublishedLine, 
+  getRelativeTime, 
+  getSourceChip, 
+  isDestinationObject, 
+  objectFromServer, 
+  resolveAction, 
+  buildDiscoveryBrief, 
+  buildPersonalSections, 
+  getCurrentEdition 
+} from '../model/core';
+import type { ObjectType, PursuitStatus, WatchCondition } from '../model/core';
 import type { BriefPost } from '../model/core';
 import { FILTERS, HOME_MORE } from '../ui/names';
 import { showsLadder } from '../components/ladder';
@@ -27,6 +72,13 @@ import { InterCountyDesk } from '../components/wairo/InterCountyDesk';
 import { PrivateCarrierAuctionDesk } from '../components/wairo/PrivateCarrierAuctionDesk';
 import { OfflineSyncQueueDesk } from '../components/offline/OfflineSyncQueueDesk';
 import { UniversalCreatePostModal } from '../components/posts/UniversalCreatePostModal';
+import { WairoMiniApp } from '../components/wairo/WairoMiniApp';
+import { LiveTelemetryModal } from '../components/wairo/LiveTelemetryModal';
+import { LocationModal } from '../components/wairo/LocationModal';
+import { DispatchModal } from '../components/wairo/DispatchModal';
+import { EmbedSDKModal } from '../components/wairo/EmbedSDKModal';
+import { UssdSimulatorDesk } from '../components/offline/UssdSimulatorDesk';
+import { LOCATIONS, INITIAL_ACTIVE_DELIVERY, WairoLocation, WairoDelivery } from '../components/wairo/wairoData';
 import { DiscoverScreen, DiscoverSection } from './DiscoverScreen';
 import {
   BriefBuilderSection,
@@ -50,12 +102,6 @@ import { soundEngine } from '../utils/SoundEngine';
 import type { BriefObject, Destination, NearbySection, Pursuit, Quest, TeaEdition, WorkflowSection } from '../model/core';
 import type { AuthedUser, PersonalState } from '../api/briefApi';
 import type { GeoPoint } from '../components/LocationChip';
-
-// ---------------------------------------------------------------------------
-// NEARBY SCREEN -- extracted from App.tsx (Phase 1: JSX move; shell keeps the
-// state, colocation pass tightens types afterwards). Section switching is
-// verbatim; what each section renders did not change.
-// ---------------------------------------------------------------------------
 
 export interface NearbyScreenProps {
   boardMode: 'contributors' | 'earners';
@@ -99,8 +145,8 @@ export interface NearbyScreenProps {
   objects: BriefObject[];
   openEntityPage: any;
   openPostSubject: any;
-posts: BriefPost[];
-    personalBriefDismissed: any;
+  posts: BriefPost[];
+  personalBriefDismissed: any;
   personalBusy: any;
   personalHasInterests: any;
   personalInterests: any;
@@ -146,7 +192,6 @@ posts: BriefPost[];
 export function NearbyScreen(props: NearbyScreenProps) {
   const {
     posts,
-
     activeEdition,
     activeTab,
     chooseCity,
@@ -231,10 +276,6 @@ export function NearbyScreen(props: NearbyScreenProps) {
     setPursuitDraft,
   } = props;
 
-  // -- colocated from App (ownership pass) -----------------
-
-  // §14 — recent searches: real, user's own queries, persisted locally. Never
-  // seeded with fake "popular" terms.
   const RECENT_KEY = 'brief.recentSearches.v1';
   const [cbcCheckoutOpen, setCbcCheckoutOpen] = useState(false);
   const [activeCbcBundleId, setActiveCbcBundleId] = useState('cbc-g7');
@@ -261,6 +302,27 @@ export function NearbyScreen(props: NearbyScreenProps) {
   const [eventLogisticsOpen, setEventLogisticsOpen] = useState(false);
   const [creatorDeskOpen, setCreatorDeskOpen] = useState(false);
 
+  // WAIRO & Errands Companion State
+  const [wairoMiniAppOpen, setWairoMiniAppOpen] = useState(false);
+  const [wairoLocation, setWairoLocation] = useState<WairoLocation>(LOCATIONS[0]);
+  const [wairoDelivery, setWairoDelivery] = useState<WairoDelivery>(INITIAL_ACTIVE_DELIVERY);
+  const [isTelemetryOpen, setIsTelemetryOpen] = useState(false);
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  const [isDispatchModalOpen, setIsDispatchModalOpen] = useState(false);
+  const [isSDKModalOpen, setIsSDKModalOpen] = useState(false);
+  const [isUssdOpen, setIsUssdOpen] = useState(false);
+
+  // Sync wairo location with active neighborhood
+  useEffect(() => {
+    const matchedLoc = LOCATIONS.find(l => 
+      l.name.toLowerCase().includes(activeNeighborhood.name.toLowerCase()) ||
+      activeNeighborhood.name.toLowerCase().includes(l.name.toLowerCase())
+    );
+    if (matchedLoc) {
+      setWairoLocation(matchedLoc);
+    }
+  }, [activeNeighborhood]);
+
   const commitRecentSearch = React.useCallback((term: string) => {
     const t = term.trim();
     if (!t) return;
@@ -271,9 +333,6 @@ export function NearbyScreen(props: NearbyScreenProps) {
     });
   }, []);
 
-  // Nearby categories — derived from the REAL objects in the current feed,
-  // most frequent first. Nothing invented; the chips only appear when data
-  // actually has categories.
   const nearbyCategories = React.useMemo(() => {
     const counts = new Map<string, number>();
     for (const o of objects) {
@@ -288,9 +347,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
     setUserLocation(null);
     setFeedArea(null);
     setSelectedLocation('Your area');
-  }, []);
-
-
+  }, [setLocError, setUserLocation, setFeedArea, setSelectedLocation]);
 
   const handlePrimaryAction = (object: BriefObject) => {
     const action = resolveAction(object);
@@ -356,7 +413,6 @@ export function NearbyScreen(props: NearbyScreenProps) {
     setPursuits((prev) => prev.filter((p) => p.id !== id));
     showToast('Pursuit removed');
   };
-
 
   const openQuests = useMemo(
     () => quests.filter((q) => q.status === 'open'),
@@ -424,592 +480,486 @@ export function NearbyScreen(props: NearbyScreenProps) {
         />
       </div>
 
-      { (
-          <div className="max-w-5xl mx-auto px-0 sm:px-4 pt-2">
-            <div className="mb-5">
-              <div className="flex items-center justify-between gap-3 px-1 pb-3 pr-28 sm:pr-32">
-                <div className="flex min-w-0 items-center gap-3">
-                  {sessionUser && (
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('mylayer')}
-                      aria-label="Your profile"
-                      title="Your profile"
-                      className="shrink-0 flex h-9 w-9 items-center justify-center rounded-full border border-[#E5E8EC] bg-gradient-to-br from-[#FF5A1F] to-[#2563EB] text-[13px] font-black text-[#0D1117] shadow-md cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0"
-                    >
-                      {(sessionUser.displayName || sessionUser.handle || '?').charAt(0).toUpperCase()}
-                    </button>
-                  )}
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#7A8494]">{activeNeighborhood.name.toUpperCase()} · Home</p>
-                    <h1 className="truncate font-display text-xl font-semibold leading-tight tracking-tight text-[#0D1117] sm:text-2xl">{activeNeighborhood.name} Feed</h1>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => { soundEngine.play('heavyTap'); setCreatePostModalOpen(true); }}
-                    className="px-3 py-1.5 rounded-xl bg-[#0D1117] hover:bg-[#1E293B] text-white font-bold text-xs flex items-center space-x-1.5 shadow-sm cursor-pointer transition-all active:scale-95"
-                    title="Publish Event, Product or Announcement"
-                  >
-                    <Plus className="w-3.5 h-3.5 text-[#FF5A1F]" />
-                    <span>Post</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => { soundEngine.play('tap'); setIsNeighborhoodPickerOpen(true); }}
-                    className="px-3 py-1.5 rounded-xl bg-black/5 hover:bg-black/10 text-[#1A1F2E] font-bold text-xs flex items-center space-x-1.5 shadow-sm cursor-pointer transition-all active:scale-95"
-                    title={`Current neighborhood: ${activeNeighborhood.name} (${activeNeighborhood.county})`}
-                  >
-                    <MapPin className="w-3.5 h-3.5 text-[#B8621F]" />
-                    <span className="truncate max-w-[120px]">Ward · {activeNeighborhood.name}</span>
-                  </button>
-                </div>
+      <div className="max-w-5xl mx-auto px-2 sm:px-4 pt-2">
+        <div className="mb-5">
+          {/* Top Neighborhood Identity Header */}
+          <div className="flex items-center justify-between gap-3 px-1 pb-3 pr-28 sm:pr-32">
+            <div className="flex min-w-0 items-center gap-3">
+              {sessionUser && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('mylayer')}
+                  aria-label="Your profile"
+                  title="Your profile"
+                  className="shrink-0 flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#8B4FFF] to-[#E85D75] text-[13px] font-black text-white shadow-md cursor-pointer transition-transform duration-150 hover:scale-105 active:scale-95"
+                >
+                  {(sessionUser.displayName || sessionUser.handle || '?').charAt(0).toUpperCase()}
+                </button>
+              )}
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#7A8494]">
+                  {activeNeighborhood.name.toUpperCase()} · HOME
+                </p>
+                <h1 className="truncate font-display text-xl font-black leading-tight tracking-tight text-[#1A1F2E] sm:text-2xl">
+                  {activeNeighborhood.name} Feed
+                </h1>
               </div>
-              {runtimeCheck === 'old' && (
-                <div className="mb-3 flex items-start justify-between gap-3 rounded-2xl border border-[#2563EB] bg-[#FFFFFF] px-4 py-3">
-                  <div>
-                    <p className="text-[11px] font-extrabold text-[#0D1117]">Update needed before testing</p>
-                    <p className="mt-1 text-[10px] leading-snug text-[#0D1117]/60">This app is newer than the API behind it. Deploy the current server so gallery, banner, and news checks use the same contract.</p>
-                  </div>
-                  <button type="button" onClick={() => window.location.reload()} className="shrink-0 rounded-lg bg-[#FF5A1F] px-3 py-2 text-[10px] font-extrabold text-[#0D1117]">Refresh</button>
-                </div>
-              )}
-              {runtimeCheck === 'unavailable' && (
-                <div className="mb-3 rounded-2xl border border-dashed border-[#E5E8EC] bg-[#FFFFFF] px-4 py-3">
-                  <p className="text-[11px] font-extrabold text-[#0D1117]">Live services are not reachable</p>
-                  <p className="mt-1 text-[10px] leading-snug text-[#0D1117]/60">The shelf still works as navigation, but live news and create actions will wait for the API. No placeholder counts are shown.</p>
-                </div>
-              )}
-              {nearbySection === 'stream' && (
-                <>
-                  {/* The ladder's one card: the rung they are on and the
-                      single thing that opens the next one. Home only — Saved
-                      and Actions stay quiet. */}
-                  {!nextStepHidden && showsLadder('nearby') && (
-                    <div className="mb-3">
-                      <NextStep
-                        ladder={ladder}
-                        onDismiss={() => setNextStepHidden(true)}
-                        onAct={(rungId) => {
-                          if (rungId === 'identity' || rungId === 'orient') {
-                            setFirstRunOpen(true);
-                            return;
-                          }
-                          if (rungId === 'value') {
-                            setActiveTab('nearby');
-                            setNearbySection('stream');
-                            return;
-                          }
-                          if (rungId === 'contribute') {
-                            setCaptureOpen(true);
-                            return;
-                          }
-                          setActiveTab('workflows');
-                          setWorkflowSection('campaigns');
-                          setWorkflowView('screen');
-                        }}
-                      />
-                    </div>
-                  )}
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => { soundEngine.play('heavyTap'); setCreatePostModalOpen(true); }}
+                className="px-3.5 py-1.5 rounded-xl bg-[#1A1F2E] hover:bg-black text-white font-bold text-xs flex items-center space-x-1.5 shadow-sm cursor-pointer transition-all active:scale-95"
+                title="Publish Event, Product or Announcement"
+              >
+                <Plus className="w-3.5 h-3.5 text-[#E8985E]" />
+                <span>Post</span>
+              </button>
 
-                  {/* ================= TODAY'S OPPORTUNITIES STRIP ================= */}
-                  {discoveryTab === 'home' && (
-                    <div className="mb-6">
-                      <TodayOpportunities
-                        onSelectOpportunity={(opp) => {
-                          if (opp.category === 'gigs') {
-                            setSelectedObjectType('opportunity');
-                            setDiscoveryTab('opportunities');
-                          } else if (opp.category === 'cargo') {
-                            setInterCountyOpen(true);
-                          } else if (opp.category === 'demand') {
-                            setActiveCbcBundleId('cbc-g7');
-                            setCbcCheckoutOpen(true);
-                          } else if (opp.category === 'chama') {
-                            setChamaOpen(true);
-                          } else if (opp.category === 'events') {
-                            setSelectedObjectType('experience');
-                            setDiscoveryTab('events');
-                          } else if (opp.category === 'creator') {
-                            setCreatorDeskOpen(true);
-                          }
-                        }}
-                      />
-                    </div>
-                  )}
+              <button
+                type="button"
+                onClick={() => { soundEngine.play('tap'); setIsNeighborhoodPickerOpen(true); }}
+                className="px-3 py-1.5 rounded-xl bg-black/5 hover:bg-black/10 text-[#1A1F2E] font-bold text-xs flex items-center space-x-1.5 shadow-sm cursor-pointer transition-all active:scale-95"
+                title={`Current neighborhood: ${activeNeighborhood.name} (${activeNeighborhood.county})`}
+              >
+                <MapPin className="w-3.5 h-3.5 text-[#B8621F]" />
+                <span className="truncate max-w-[120px]">Ward · {activeNeighborhood.name}</span>
+              </button>
+            </div>
+          </div>
 
-                  {/* ================= TOWN CENTRE DISTRICTS & HUBS ================= */}
-                  {discoveryTab === 'home' && (
-                    <section className="mb-6 space-y-2.5" aria-label="Town Centre Districts">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-1.5">
-                          <span className="w-2 h-2 rounded-full bg-[#00BFEF] animate-pulse" />
-                          <h3 className="text-xs font-black uppercase tracking-[0.16em] text-[#0D1117]">
-                            Town Centre Districts & Services
-                          </h3>
-                        </div>
-                        <span className="text-[10px] font-mono text-gray-500 font-bold">6 Active Desks</span>
-                      </div>
-
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-                        {/* 1. WAIRO Cargo */}
-                        <button
-                          type="button"
-                          onClick={() => { soundEngine.play('heavyTap'); setInterCountyOpen(true); }}
-                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0A101D] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xl">🚚</span>
-                            <span className="text-[8px] font-mono uppercase bg-[#00BFEF] text-[#0D1117] px-1.5 py-0.5 rounded font-black">
-                              WAIRO 90/10
-                            </span>
-                          </div>
-                          <div className="mt-2">
-                            <span className="font-black text-xs block text-white leading-tight">WAIRO Cargo</span>
-                            <span className="text-[10px] text-cyan-200/70 block mt-0.5">47 Counties Courier</span>
-                          </div>
-                        </button>
-
-                        {/* 2. Chama & Table Banking */}
-                        <button
-                          type="button"
-                          onClick={() => { soundEngine.play('heavyTap'); setChamaOpen(true); }}
-                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#311042] to-[#1E092B] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xl">🌸</span>
-                            <span className="text-[8px] font-mono uppercase bg-amber-400/20 text-amber-300 px-1.5 py-0.5 rounded font-bold">
-                              Cycle 5 (KES 60k)
-                            </span>
-                          </div>
-                          <div className="mt-2">
-                            <span className="font-black text-xs block text-white leading-tight">Chama & Table Bank</span>
-                            <span className="text-[10px] text-purple-200/70 block mt-0.5">Merry-Go-Round</span>
-                          </div>
-                        </button>
-
-                        {/* 3. CBC Bulk Runs */}
-                        <button
-                          type="button"
-                          onClick={() => { soundEngine.play('heavyTap'); setDemandRunOpen(true); }}
-                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#292524] via-[#1C1917] to-[#0C0A09] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xl">📚</span>
-                            <span className="text-[8px] font-mono uppercase bg-[#B8621F] text-white px-1.5 py-0.5 rounded font-black">
-                              Bulk Runs
-                            </span>
-                          </div>
-                          <div className="mt-2">
-                            <span className="font-black text-xs block text-white leading-tight">CBC School Books</span>
-                            <span className="text-[10px] text-amber-200/70 block mt-0.5">PTA & Wholesale</span>
-                          </div>
-                        </button>
-
-                        {/* 4. Paid Gigs */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            soundEngine.play('tap');
-                            setSelectedObjectType('opportunity');
-                            setDiscoveryTab('opportunities');
-                          }}
-                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#064E3B] to-[#022C22] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xl">💼</span>
-                            <span className="text-[8px] font-mono uppercase bg-emerald-500/30 text-emerald-300 px-1.5 py-0.5 rounded font-bold">
-                              Live Gigs
-                            </span>
-                          </div>
-                          <div className="mt-2">
-                            <span className="font-black text-xs block text-white leading-tight">Paid Gigs Hub</span>
-                            <span className="text-[10px] text-emerald-200/70 block mt-0.5">Verified micro-work</span>
-                          </div>
-                        </button>
-
-                        {/* 5. Group Events & Touring */}
-                        <button
-                          type="button"
-                          onClick={() => { soundEngine.play('heavyTap'); setEventLogisticsOpen(true); }}
-                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#1E1B4B] via-[#312E81] to-[#1E1B4B] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xl">🚌</span>
-                            <span className="text-[8px] font-mono uppercase bg-indigo-400/30 text-indigo-300 px-1.5 py-0.5 rounded font-bold">
-                              Touring Ops
-                            </span>
-                          </div>
-                          <div className="mt-2">
-                            <span className="font-black text-xs block text-white leading-tight">Group Touring</span>
-                            <span className="text-[10px] text-indigo-200/70 block mt-0.5">Choirs & Charters</span>
-                          </div>
-                        </button>
-
-                        {/* 6. Creator Partner Desk */}
-                        <button
-                          type="button"
-                          onClick={() => { soundEngine.play('heavyTap'); setCreatorDeskOpen(true); }}
-                          className="p-3.5 rounded-2xl bg-gradient-to-br from-[#451A03] via-[#78350F] to-[#451A03] text-left text-white shadow-sm hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xl">🏅</span>
-                            <span className="text-[8px] font-mono uppercase bg-amber-400/30 text-amber-300 px-1.5 py-0.5 rounded font-bold">
-                              15% Cut
-                            </span>
-                          </div>
-                          <div className="mt-2">
-                            <span className="font-black text-xs block text-white leading-tight">Creator Partner</span>
-                            <span className="text-[10px] text-amber-200/70 block mt-0.5">Bring living groups</span>
-                          </div>
-                        </button>
-                      </div>
-                    </section>
-                  )}
-
-                  <MainShelf
-                    onSelect={handleMenuSelect}
+          {/* Ladder Next Step (Home View) */}
+          {nearbySection === 'stream' && (
+            <>
+              {!nextStepHidden && showsLadder('nearby') && (
+                <div className="mb-3">
+                  <NextStep
                     ladder={ladder}
-                    onLocked={(info) => {
-                      noteActivation('service_locked_tapped', { card: info.cardId, requires: info.requires });
-                      showToast(info.unlocksAfter ? `Opens after: ${info.unlocksAfter}` : 'Not open yet');
+                    onDismiss={() => setNextStepHidden(true)}
+                    onAct={(rungId) => {
+                      if (rungId === 'identity' || rungId === 'orient') {
+                        setFirstRunOpen(true);
+                        return;
+                      }
+                      if (rungId === 'value') {
+                        setActiveTab('nearby');
+                        setNearbySection('stream');
+                        return;
+                      }
+                      if (rungId === 'contribute') {
+                        setCaptureOpen(true);
+                        return;
+                      }
+                      setActiveTab('workflows');
+                      setWorkflowSection('campaigns');
+                      setWorkflowView('screen');
                     }}
                   />
-                  {/* No demo seeding on Home: when production data is thin the
-                      FeedComposer below renders honest, contextual empty
-                      states — the no-fake-live-data rule. */}
-                  {/* MY BRIEF — the personal daily-city-briefing layer. The
-                      SAME persisted objects, re-ranked per user; sections
-                      render only when real data backs them; onboarding is
-                      skippable and never blocks the Brief. */}
-                  {discoveryTab === 'home' && sessionUser && personalState && (
-                    <section className="mb-8" aria-label="My Brief">
-                      <BriefBuilderSection
-                        suggestedLocations={personalState.suggestedLocations?.length ? personalState.suggestedLocations : ['Machakos', 'Nairobi', 'Kilimani', 'Westlands', 'Eastlands']}
-                        availableTypes={availableTypes.map(t => ({ id: t, label: getObjectTypeMeta(t).label }))}
-                        topics={personalState.topics ?? []}
-                        initialCities={personalPicks.locations}
-                        initialTypes={personalPicks.types}
-                        initialInterests={personalPicks.topics}
-                        initialExpanded={!personalHasInterests && !personalBriefDismissed}
-                        followedCount={(personalState.followed ?? []).length}
-                        updatesCount={notifUnread}
-                        onCityToggle={(city) => togglePersonalPick('locations', city)}
-                        onTypeToggle={(typeId) => togglePersonalPick('types', typeId)}
-                        onTopicToggle={(topicId) => togglePersonalPick('topics', topicId)}
-                        onSkip={() => setPersonalBriefDismissed(true)}
-                        onBuildBrief={({ cities, types, topics: selectedTopics }) => {
-                          void savePersonalBrief({
-                            locations: cities ?? personalPicks.locations,
-                            types: types ?? personalPicks.types,
-                            topics: selectedTopics ?? personalPicks.topics
-                          });
-                        }}
-                        onOpenCollections={() => setCollectionsOpen(true)}
-                        onOpenFollowing={() => setFollowingOpen(true)}
-                        onOpenUpdates={() => setNotificationsOpen(true)}
-                      />
+                </div>
+              )}
 
-                      {!personalHasInterests && personalBriefDismissed && (
-                        <p className="rounded-2xl border border-dashed border-[#E5E8EC] px-4 py-3 text-[11px] text-[#0D1117]/70 mt-3">
-                          Your Brief is global until you follow places or topics.{' '}
-                          <button
-                            type="button"
-                            onClick={() => setPersonalBriefDismissed(false)}
-                            className="font-extrabold text-[#FF5A1F] cursor-pointer"
-                          >
-                            Personalize
-                          </button>
-                        </p>
-                      )}
+              {/* ================= TODAY'S OPPORTUNITIES STRIP ================= */}
+              {discoveryTab === 'home' && (
+                <div className="mb-6">
+                  <TodayOpportunities
+                    onSelectOpportunity={(opp) => {
+                      if (opp.category === 'gigs') {
+                        setSelectedObjectType('opportunity');
+                        setDiscoveryTab('opportunities');
+                      } else if (opp.category === 'cargo') {
+                        setInterCountyOpen(true);
+                      } else if (opp.category === 'demand') {
+                        setActiveCbcBundleId('cbc-g7');
+                        setCbcCheckoutOpen(true);
+                      } else if (opp.category === 'chama') {
+                        setChamaOpen(true);
+                      } else if (opp.category === 'events') {
+                        setSelectedObjectType('experience');
+                        setDiscoveryTab('events');
+                      } else if (opp.category === 'creator') {
+                        setCreatorDeskOpen(true);
+                      }
+                    }}
+                  />
+                </div>
+              )}
 
-                      {/* FOLLOWING — the chips you follow, each with an
-                          obvious unfollow; plus quick-adds for what is left. */}
-                      {personalHasInterests && (
-                        <div className="mb-4 flex flex-wrap items-center gap-1.5">
-                          {personalInterests.locations.map((loc: any) => (
-                            <button
-                              key={`loc_${loc}`}
-                              type="button"
-                              onClick={() => void unfollowOne('location', loc)}
-                              title={`Stop following ${loc}`}
-                              className="flex items-center gap-1 rounded-full bg-[#FF5A1F] px-3 py-1.5 text-[11px] font-extrabold text-[#0D1117] cursor-pointer"
-                            >
-                              {loc} <X className="h-3 w-3" />
-                            </button>
-                          ))}
-                          {personalInterests.types.map((t: any) => (
-                            <button
-                              key={`typ_${t}`}
-                              type="button"
-                              onClick={() => void unfollowOne('type', t)}
-                              title={`Stop following ${getObjectTypeMeta(t as ObjectType).label}`}
-                              className="flex items-center gap-1 rounded-full border border-[#2563EB] bg-[#F0F2F5] px-3 py-1.5 text-[11px] font-extrabold text-[#FF5A1F] cursor-pointer"
-                            >
-                              {getObjectTypeMeta(t as ObjectType).label} <X className="h-3 w-3" />
-                            </button>
-                          ))}
-                          {personalInterests.topics.map((topicId: any) => {
-                            const topic = personalState.topics.find((t: any) => t.id === topicId);
-                            if (!topic) return null;
-                            return (
-                              <button
-                                key={`top_${topicId}`}
-                                type="button"
-                                onClick={() => void unfollowOne('topic', topicId)}
-                                title={`Stop following ${topic.label}`}
-                                className="flex items-center gap-1 rounded-full border border-[#2563EB] bg-[#F0F2F5] px-3 py-1.5 text-[11px] font-extrabold text-[#FF5A1F] cursor-pointer"
-                              >
-                                {topic.label} <X className="h-3 w-3" />
-                              </button>
-                            );
-                          })}
-                          {(personalState.followed ?? []).map((f) => (
-                            <button
-                              key={f.id}
-                              type="button"
-                              onClick={() => openEntityPage(f.id)}
-                              title={`Open ${f.name}`}
-                              className="flex items-center gap-1 rounded-full border border-[#2563EB] bg-[#EFF1F4] px-3 py-1.5 text-[11px] font-extrabold text-[#FF5A1F] cursor-pointer"
-                            >
-                              {f.name}
-                            </button>
-                          ))}
-                          {(personalState.followed ?? []).map((f) => (
-                            <button
-                              key={`unf_${f.id}`}
-                              type="button"
-                              onClick={() => void unfollowEntityOne(f.id)}
-                              title={`Stop following ${f.name}`}
-                              className="flex items-center gap-1 rounded-full border border-dashed border-[#E5E8EC] px-2 py-1 text-[9px] font-bold text-[#0D1117]/60 cursor-pointer hover:border-[#DC2626] hover:text-[#DC2626]"
-                            >
-                              <X className="h-2.5 w-2.5" /> {f.kind}
-                            </button>
-                          ))}
-                          {personalState.suggestedLocations
-                            .filter((loc: any) => !personalInterests.locations.includes(loc))
-                            .slice(0, 5)
-                            .map((loc: any) => (
-                              <button
-                                key={`add_${loc}`}
-                                type="button"
-                                onClick={() => void followOne('location', loc)}
-                                className="flex items-center gap-1 rounded-full border border-dashed border-[#E5E8EC] px-3 py-1.5 text-[11px] font-bold text-[#0D1117]/60 cursor-pointer hover:border-[#2563EB]"
-                              >
-                                <Plus className="h-3 w-3" /> {loc}
-                              </button>
-                            ))}
-                          {availableTypes
-                            .filter((t: any) => !personalInterests.types.includes(t))
-                            .slice(0, 3)
-                            .map((t: any) => (
-                              <button
-                                key={`addt_${t}`}
-                                type="button"
-                                onClick={() => void followOne('type', t)}
-                                className="flex items-center gap-1 rounded-full border border-dashed border-[#E5E8EC] px-3 py-1.5 text-[11px] font-bold text-[#0D1117]/60 cursor-pointer hover:border-[#2563EB]"
-                              >
-                                <Plus className="h-3 w-3" /> {getObjectTypeMeta(t).label}
-                              </button>
-                            ))}
+              {/* ================= TOWN CENTRE DISTRICTS & SERVICES (6 PILLARS) ================= */}
+              {discoveryTab === 'home' && (
+                <section className="mb-6 space-y-2.5" aria-label="Town Centre Districts">
+                  <div className="flex items-center justify-between px-1">
+                    <div className="flex items-center space-x-2">
+                      <span className="w-2 h-2 rounded-full bg-[#06B6D4] animate-pulse" />
+                      <h3 className="text-xs font-black uppercase tracking-[0.16em] text-[#1A1F2E]">
+                        Town Centre Districts & Services
+                      </h3>
+                    </div>
+                    <span className="text-[10px] font-mono text-gray-500 font-bold">6 Verified Desks</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+                    {/* 1. WAIRO Cargo Desk */}
+                    <button
+                      type="button"
+                      onClick={() => { soundEngine.play('heavyTap'); setInterCountyOpen(true); }}
+                      className="p-3.5 rounded-2xl bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0A101D] text-left text-white shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer flex flex-col justify-between group"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xl">🚚</span>
+                        <span className="text-[8px] font-mono uppercase bg-[#06B6D4] text-[#0D1117] px-1.5 py-0.5 rounded font-black">
+                          WAIRO 90/10
+                        </span>
+                      </div>
+                      <div className="mt-3">
+                        <span className="font-black text-xs block text-white leading-tight group-hover:text-cyan-300 transition-colors">
+                          WAIRO Cargo
+                        </span>
+                        <span className="text-[10px] text-cyan-200/70 block mt-0.5 font-medium">
+                          47 Counties Courier
+                        </span>
+                      </div>
+                    </button>
+
+                    {/* 2. Chama & Table Banking */}
+                    <button
+                      type="button"
+                      onClick={() => { soundEngine.play('heavyTap'); setChamaOpen(true); }}
+                      className="p-3.5 rounded-2xl bg-gradient-to-br from-[#311042] via-[#240c31] to-[#1E092B] text-left text-white shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer flex flex-col justify-between group"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xl">🌸</span>
+                        <span className="text-[8px] font-mono uppercase bg-purple-400/25 text-purple-300 px-1.5 py-0.5 rounded font-bold">
+                          Cycle 5 (KES 60k)
+                        </span>
+                      </div>
+                      <div className="mt-3">
+                        <span className="font-black text-xs block text-white leading-tight group-hover:text-purple-300 transition-colors">
+                          Chama & Table Bank
+                        </span>
+                        <span className="text-[10px] text-purple-200/70 block mt-0.5 font-medium">
+                          Pezesha Scoring
+                        </span>
+                      </div>
+                    </button>
+
+                    {/* 3. CBC School Books & Bulk Runs */}
+                    <button
+                      type="button"
+                      onClick={() => { soundEngine.play('heavyTap'); setDemandRunOpen(true); }}
+                      className="p-3.5 rounded-2xl bg-gradient-to-br from-[#292524] via-[#1C1917] to-[#0C0A09] text-left text-white shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer flex flex-col justify-between group"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xl">📚</span>
+                        <span className="text-[8px] font-mono uppercase bg-[#B8621F] text-white px-1.5 py-0.5 rounded font-black">
+                          Save 28%
+                        </span>
+                      </div>
+                      <div className="mt-3">
+                        <span className="font-black text-xs block text-white leading-tight group-hover:text-amber-300 transition-colors">
+                          CBC School Books
+                        </span>
+                        <span className="text-[10px] text-amber-200/70 block mt-0.5 font-medium">
+                          Fargo KES 50 Pickup
+                        </span>
+                      </div>
+                    </button>
+
+                    {/* 4. Paid Gigs & Errand Runner (With Live Blinking Signal) */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundEngine.play('tap');
+                        setSelectedObjectType('opportunity');
+                        setDiscoveryTab('opportunities');
+                      }}
+                      className="relative p-3.5 rounded-2xl bg-gradient-to-br from-[#064E3B] via-[#043d2e] to-[#022C22] text-left text-white shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer flex flex-col justify-between group overflow-hidden"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xl">💼</span>
+                        <div className="flex items-center space-x-1 bg-emerald-500/30 text-emerald-300 px-1.5 py-0.5 rounded text-[8px] font-mono font-bold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
+                          <span>2 Live Gigs</span>
                         </div>
-                      )}
+                      </div>
+                      <div className="mt-3">
+                        <span className="font-black text-xs block text-white leading-tight group-hover:text-emerald-300 transition-colors">
+                          Paid Gigs & Errands
+                        </span>
+                        <span className="text-[10px] text-emerald-200/70 block mt-0.5 font-medium">
+                          Boda & Micro-work
+                        </span>
+                      </div>
+                    </button>
 
-                      {/* PERSONAL SECTIONS — YOUR BRIEF / AROUND YOU / TODAY /
-                          COMING UP / FOR YOU. Only non-empty sections render,
-                          and every row is a real persisted object. */}
-                      {personalSections.length > 0 && (
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          {personalSections.map((section: any) => (
-                            <div
-                              key={section.key}
-                              className="rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] p-3"
-                            >
-                              <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-[#0D1117]/70">
-                                {section.title}
-                              </p>
-                              <div className="mt-2 space-y-0.5">
-                                {section.objects.slice(0, 4).map((obj: any) => (
-                                  <button
-                                    key={obj.id}
-                                    type="button"
-                                    onClick={() => setSelectedObjectForDetail(obj)}
-                                    className="flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 text-left transition-colors hover:bg-[#EFF1F4] cursor-pointer"
-                                  >
-                                    {obj.imageUrl ? (
-                                      <img
-                                        src={obj.imageUrl}
-                                        alt=""
-                                        aria-hidden="true"
-                                        loading="lazy"
-                                        className="h-9 w-9 shrink-0 rounded-lg object-cover"
-                                      />
-                                    ) : (
-                                      <span
-                                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[15px]"
-                                        style={{ background: '#F0F2F5', color: '#2563EB' }}
-                                        aria-hidden="true"
-                                      >
-                                        {getObjectTypeMeta(obj.type).label.charAt(0)}
-                                      </span>
-                                    )}
-                                    <span className="min-w-0 flex-1">
-                                      <span className="block truncate text-[12px] font-semibold text-[#0D1117]">
-                                        {obj.title}
-                                      </span>
-                                      {briefWhenLabel(obj) && (
-                                        <span className="block truncate text-[9px] font-semibold text-[#0D1117]/55">
-                                          {briefWhenLabel(obj)}
-                                        </span>
-                                      )}
-                                      <span className="mt-0.5 flex flex-wrap gap-1">
-                                        {entityChipsFor(obj).slice(0, 2).map((chip, ci) => (
-                                          <EntityChip
-                                            key={`${chip.kind}_${chip.name ?? chip.directId}_${ci}`}
-                                            kind={chip.kind}
-                                            name={chip.name}
-                                            directId={chip.directId}
-                                            onOpenEntity={openEntityPage}
-                                          />
-                                        ))}
-                                      </span>
-                                    </span>
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                    {/* 5. Group Events & Touring */}
+                    <button
+                      type="button"
+                      onClick={() => { soundEngine.play('heavyTap'); setEventLogisticsOpen(true); }}
+                      className="p-3.5 rounded-2xl bg-gradient-to-br from-[#1E1B4B] via-[#312E81] to-[#1E1B4B] text-left text-white shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer flex flex-col justify-between group"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xl">🚌</span>
+                        <span className="text-[8px] font-mono uppercase bg-indigo-400/30 text-indigo-300 px-1.5 py-0.5 rounded font-bold">
+                          Touring Ops
+                        </span>
+                      </div>
+                      <div className="mt-3">
+                        <span className="font-black text-xs block text-white leading-tight group-hover:text-indigo-300 transition-colors">
+                          Group Touring
+                        </span>
+                        <span className="text-[10px] text-indigo-200/70 block mt-0.5 font-medium">
+                          Choirs & Charters
+                        </span>
+                      </div>
+                    </button>
 
-                      {/* SAVED — grouped Upcoming / Active / News / Places /
-                          Offers. Expired rows read as expired, never active. */}
-                      {personalSavedGroups.length > 0 && (
-                        <div className="mt-4 rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] p-3">
-                          <div className="mb-2 flex items-center gap-2">
-                            <Bookmark className="h-3.5 w-3.5 text-[#0D1117]/60" />
-                            <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-[#0D1117]/70">
-                              Saved
-                            </p>
-                          </div>
-                          <div className="grid gap-4 sm:grid-cols-2">
-                            {personalSavedGroups.map((group: any) => (
-                              <div key={group.key}>
-                                <p className="text-[10px] font-extrabold text-[#0D1117]/70">
-                                  {group.title}
-                                  <span className="ml-1.5 text-[10px] font-bold text-[#0D1117]/60">
-                                    {group.items.length + group.expired.length}
-                                  </span>
-                                </p>
-                                <div className="mt-1.5 space-y-0.5">
-                                  {group.items.slice(0, 3).map((obj: any) => (
-                                    <button
-                                      key={obj.id}
-                                      type="button"
-                                      onClick={() => setSelectedObjectForDetail(obj)}
-                                      className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-[#EFF1F4] cursor-pointer"
-                                    >
-                                      <span className="min-w-0 flex-1">
-                                        <span className="block truncate text-[11px] font-semibold text-[#0D1117]">
-                                          {obj.title}
-                                        </span>
-                                        {briefWhenLabel(obj) && (
-                                          <span className="block truncate text-[9px] font-semibold text-[#0D1117]/70">
-                                            {briefWhenLabel(obj)}
-                                          </span>
-                                        )}
-                                      </span>
-                                    </button>
-                                  ))}
-                                  {group.expired.slice(0, 3).map((obj: any) => (
-                                    <button
-                                      key={obj.id}
-                                      type="button"
-                                      onClick={() => setSelectedObjectForDetail(obj)}
-                                      className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-[#EFF1F4] cursor-pointer opacity-60"
-                                    >
-                                      <span className="min-w-0 flex-1">
-                                        <span className="block truncate text-[11px] font-semibold text-[#0D1117] line-through">
-                                          {obj.title}
-                                        </span>
-                                        <span className="block truncate text-[9px] font-bold text-[#FF5A1F]">
-                                          Expired
-                                        </span>
-                                      </span>
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </section>
+                    {/* 6. Creator Partner Desk */}
+                    <button
+                      type="button"
+                      onClick={() => { soundEngine.play('heavyTap'); setCreatorDeskOpen(true); }}
+                      className="p-3.5 rounded-2xl bg-gradient-to-br from-[#451A03] via-[#78350F] to-[#451A03] text-left text-white shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer flex flex-col justify-between group"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xl">🏅</span>
+                        <span className="text-[8px] font-mono uppercase bg-amber-400/30 text-amber-300 px-1.5 py-0.5 rounded font-bold">
+                          15% Cut
+                        </span>
+                      </div>
+                      <div className="mt-3">
+                        <span className="font-black text-xs block text-white leading-tight group-hover:text-amber-300 transition-colors">
+                          Creator Partner
+                        </span>
+                        <span className="text-[10px] text-amber-200/70 block mt-0.5 font-medium">
+                          Living Groups
+                        </span>
+                      </div>
+                    </button>
+                  </div>
+                </section>
+              )}
+
+              {/* Main Shelf Component */}
+              <MainShelf
+                onSelect={handleMenuSelect}
+                ladder={ladder}
+                onLocked={(info) => {
+                  noteActivation('service_locked_tapped', { card: info.cardId, requires: info.requires });
+                  showToast(info.unlocksAfter ? `Opens after: ${info.unlocksAfter}` : 'Not open yet');
+                }}
+              />
+
+              {/* MY BRIEF SECTION (For signed-in users) */}
+              {discoveryTab === 'home' && sessionUser && personalState && (
+                <section className="mb-8" aria-label="My Brief">
+                  <BriefBuilderSection
+                    suggestedLocations={personalState.suggestedLocations?.length ? personalState.suggestedLocations : ['Machakos', 'Nairobi', 'Kilimani', 'Westlands', 'Eastlands']}
+                    availableTypes={availableTypes.map(t => ({ id: t, label: getObjectTypeMeta(t).label }))}
+                    topics={personalState.topics ?? []}
+                    initialCities={personalPicks.locations}
+                    initialTypes={personalPicks.types}
+                    initialInterests={personalPicks.topics}
+                    initialExpanded={!personalHasInterests && !personalBriefDismissed}
+                    followedCount={(personalState.followed ?? []).length}
+                    updatesCount={notifUnread}
+                    onCityToggle={(city) => togglePersonalPick('locations', city)}
+                    onTypeToggle={(typeId) => togglePersonalPick('types', typeId)}
+                    onTopicToggle={(topicId) => togglePersonalPick('topics', topicId)}
+                    onSkip={() => setPersonalBriefDismissed(true)}
+                    onBuildBrief={({ cities, types, topics: selectedTopics }) => {
+                      void savePersonalBrief({
+                        locations: cities ?? personalPicks.locations,
+                        types: types ?? personalPicks.types,
+                        topics: selectedTopics ?? personalPicks.topics
+                      });
+                    }}
+                    onOpenCollections={() => setCollectionsOpen(true)}
+                    onOpenFollowing={() => setFollowingOpen(true)}
+                    onOpenUpdates={() => setNotificationsOpen(true)}
+                  />
+
+                  {!personalHasInterests && personalBriefDismissed && (
+                    <p className="rounded-2xl bg-white/70 shadow-sm px-4 py-3 text-[11px] text-[#1A1F2E]/70 mt-3">
+                      Your Brief is global until you follow places or topics.{' '}
+                      <button
+                        type="button"
+                        onClick={() => setPersonalBriefDismissed(false)}
+                        className="font-black text-[#B8621F] cursor-pointer"
+                      >
+                        Personalize
+                      </button>
+                    </p>
                   )}
 
-                  {/* TODAY'S BRIEF — the compact discovery summary: TODAY /
-                      NEAR YOU / NOW / COMING UP, every row a real persisted
-                      object. Only rendered when it has data. */}
-                  {discoveryTab === 'home' && discoveryBrief.length > 0 && (
-                    <section className="mb-8" aria-label="Today's Brief">
-                      <h2 className="mb-3 px-1 text-[11px] font-bold uppercase tracking-[0.22em] text-[#0D1117]/60">
-                        Today's Brief
-                      </h2>
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        {discoveryBrief.map((section: any) => (
-                          <div
-                            key={section.key}
-                            className="rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] p-3"
+                  {/* FOLLOWING Chips */}
+                  {personalHasInterests && (
+                    <div className="mb-4 flex flex-wrap items-center gap-1.5">
+                      {personalInterests.locations.map((loc: any) => (
+                        <button
+                          key={`loc_${loc}`}
+                          type="button"
+                          onClick={() => void unfollowOne('location', loc)}
+                          title={`Stop following ${loc}`}
+                          className="flex items-center gap-1 rounded-full bg-[#1A1F2E] px-3 py-1.5 text-[11px] font-bold text-white cursor-pointer shadow-sm"
+                        >
+                          {loc} <X className="h-3 w-3" />
+                        </button>
+                      ))}
+                      {personalInterests.types.map((t: any) => (
+                        <button
+                          key={`typ_${t}`}
+                          type="button"
+                          onClick={() => void unfollowOne('type', t)}
+                          title={`Stop following ${getObjectTypeMeta(t as ObjectType).label}`}
+                          className="flex items-center gap-1 rounded-full bg-[#F0EDE8] px-3 py-1.5 text-[11px] font-bold text-[#1A1F2E] cursor-pointer"
+                        >
+                          {getObjectTypeMeta(t as ObjectType).label} <X className="h-3 w-3" />
+                        </button>
+                      ))}
+                      {personalInterests.topics.map((topicId: any) => {
+                        const topic = personalState.topics.find((t: any) => t.id === topicId);
+                        if (!topic) return null;
+                        return (
+                          <button
+                            key={`top_${topicId}`}
+                            type="button"
+                            onClick={() => void unfollowOne('topic', topicId)}
+                            title={`Stop following ${topic.label}`}
+                            className="flex items-center gap-1 rounded-full bg-[#F0EDE8] px-3 py-1.5 text-[11px] font-bold text-[#1A1F2E] cursor-pointer"
                           >
-                            <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-[#0D1117]/70">
-                              {section.title}
+                            {topic.label} <X className="h-3 w-3" />
+                          </button>
+                        );
+                      })}
+                      {(personalState.followed ?? []).map((f) => (
+                        <button
+                          key={f.id}
+                          type="button"
+                          onClick={() => openEntityPage(f.id)}
+                          title={`Open ${f.name}`}
+                          className="flex items-center gap-1 rounded-full bg-white shadow-sm px-3 py-1.5 text-[11px] font-bold text-[#1A1F2E] cursor-pointer"
+                        >
+                          {f.name}
+                        </button>
+                      ))}
+                      {(personalState.followed ?? []).map((f) => (
+                        <button
+                          key={`unf_${f.id}`}
+                          type="button"
+                          onClick={() => void unfollowEntityOne(f.id)}
+                          title={`Stop following ${f.name}`}
+                          className="flex items-center gap-1 rounded-full bg-black/5 px-2 py-1 text-[9px] font-bold text-[#1A1F2E]/60 cursor-pointer hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                        >
+                          <X className="h-2.5 w-2.5" /> {f.kind}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* PERSONAL SECTIONS */}
+                  {personalSections.length > 0 && (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {personalSections.map((section: any) => (
+                        <div
+                          key={section.key}
+                          className="rounded-2xl bg-white p-3.5 shadow-sm"
+                        >
+                          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#1A1F2E]/60">
+                            {section.title}
+                          </p>
+                          <div className="mt-2 space-y-1">
+                            {section.objects.slice(0, 4).map((obj: any) => (
+                              <button
+                                key={obj.id}
+                                type="button"
+                                onClick={() => setSelectedObjectForDetail(obj)}
+                                className="flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 text-left transition-colors hover:bg-[#F7F7F5] cursor-pointer"
+                              >
+                                {obj.imageUrl ? (
+                                  <img
+                                    src={obj.imageUrl}
+                                    alt=""
+                                    aria-hidden="true"
+                                    loading="lazy"
+                                    className="h-9 w-9 shrink-0 rounded-lg object-cover"
+                                  />
+                                ) : (
+                                  <span
+                                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[15px] bg-[#F0EDE8] text-[#B8621F] font-bold"
+                                    aria-hidden="true"
+                                  >
+                                    {getObjectTypeMeta(obj.type).label.charAt(0)}
+                                  </span>
+                                )}
+                                <span className="min-w-0 flex-1">
+                                  <span className="block truncate text-[12px] font-bold text-[#1A1F2E]">
+                                    {obj.title}
+                                  </span>
+                                  {briefWhenLabel(obj) && (
+                                    <span className="block truncate text-[9px] font-medium text-[#6B7280]">
+                                      {briefWhenLabel(obj)}
+                                    </span>
+                                  )}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* SAVED GROUPS PANEL */}
+                  {personalSavedGroups && personalSavedGroups.length > 0 && (
+                    <div className="mt-4 rounded-2xl bg-white p-3.5 shadow-sm">
+                      <div className="mb-2 flex items-center gap-2">
+                        <Bookmark className="h-3.5 w-3.5 text-[#1A1F2E]/60" />
+                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#1A1F2E]/70">
+                          Saved
+                        </p>
+                      </div>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        {personalSavedGroups.map((group: any) => (
+                          <div key={group.key}>
+                            <p className="text-[10px] font-black text-[#1A1F2E]/70">
+                              {group.title}
+                              <span className="ml-1.5 text-[10px] font-bold text-[#1A1F2E]/60">
+                                {group.items.length + group.expired.length}
+                              </span>
                             </p>
-                            <div className="mt-2 space-y-0.5">
-                              {section.objects.slice(0, 4).map((obj: any) => (
+                            <div className="mt-1.5 space-y-0.5">
+                              {group.items.slice(0, 3).map((obj: any) => (
                                 <button
                                   key={obj.id}
                                   type="button"
                                   onClick={() => setSelectedObjectForDetail(obj)}
-                                  className="flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 text-left transition-colors hover:bg-[#EFF1F4] cursor-pointer"
+                                  className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-[#F0EDE8] cursor-pointer"
                                 >
-                                  {obj.imageUrl ? (
-                                    <img
-                                      src={obj.imageUrl}
-                                      alt=""
-                                      aria-hidden="true"
-                                      loading="lazy"
-                                      className="h-9 w-9 shrink-0 rounded-lg object-cover"
-                                    />
-                                  ) : (
-                                    <span
-                                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[15px]"
-                                      style={{ background: '#F0F2F5', color: '#2563EB' }}
-                                      aria-hidden="true"
-                                    >
-                                      {getObjectTypeMeta(obj.type).label.charAt(0)}
-                                    </span>
-                                  )}
                                   <span className="min-w-0 flex-1">
-                                    <span className="block truncate text-[12px] font-semibold text-[#0D1117]">
+                                    <span className="block truncate text-[11px] font-bold text-[#1A1F2E]">
                                       {obj.title}
                                     </span>
                                     {briefWhenLabel(obj) && (
-                                      <span className="block truncate text-[9px] font-semibold text-[#0D1117]/55">
+                                      <span className="block truncate text-[9px] font-medium text-[#6B7280]">
                                         {briefWhenLabel(obj)}
                                       </span>
                                     )}
-                                    <span className="mt-0.5 flex flex-wrap gap-1">
-                                      {entityChipsFor(obj).slice(0, 2).map((chip, ci) => (
-                                        <EntityChip
-                                          key={`${chip.kind}_${chip.name ?? chip.directId}_${ci}`}
-                                          kind={chip.kind}
-                                          name={chip.name}
-                                          directId={chip.directId}
-                                          onOpenEntity={openEntityPage}
-                                        />
-                                      ))}
+                                  </span>
+                                </button>
+                              ))}
+                              {group.expired.slice(0, 3).map((obj: any) => (
+                                <button
+                                  key={obj.id}
+                                  type="button"
+                                  onClick={() => setSelectedObjectForDetail(obj)}
+                                  className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-[#F0EDE8] cursor-pointer opacity-60"
+                                >
+                                  <span className="min-w-0 flex-1">
+                                    <span className="block truncate text-[11px] font-bold text-[#1A1F2E] line-through">
+                                      {obj.title}
+                                    </span>
+                                    <span className="block truncate text-[9px] font-black text-[#B8621F]">
+                                      Expired
                                     </span>
                                   </span>
                                 </button>
@@ -1018,188 +968,442 @@ export function NearbyScreen(props: NearbyScreenProps) {
                           </div>
                         ))}
                       </div>
-                    </section>
+                    </div>
                   )}
+                </section>
+              )}
 
-                  {/* FEED COMPOSER — the composed, deduplicated magazine feed:
-                      hero → tea → discovery → opportunities. Real server rows via
-                      /api/feed; card variety by type, never a repeating grid. */}
-                  <FeedComposer
-                    key={feedReload}
-                    typeFilter={selectedObjectType}
-                    onFeedStatus={setHomeFeedStatus}
-                    area={feedArea}
-                    geo={userLocation ? { lat: userLocation.lat, lng: userLocation.lng, radiusKm: 40 } : null}
-                    type={discoveryTab === 'events' ? 'experience'
-                      : discoveryTab === 'offers' ? 'offer'
-                        : discoveryTab === 'places' ? 'place'
-                          : discoveryTab === 'news' ? 'news'
-                            : discoveryTab === 'opportunities' ? 'opportunity'
-                              : null}
-                    browse={discoveryTab === 'explore'}
-                    onOpen={(raw) => {
-                      if (!raw?.id) return;
-                      const local = objects.find((object) => object.id === String(raw.id));
-                      setSelectedObjectForDetail(local ?? objectFromServer(raw));
-                    }}
-                    onOpenTea={(slug) => setSelectedTeaSlug(slug)}
-                    onOpenTag={(tag: any) => {
-                      setSearchQuery(tag);
+              {/* TODAY'S BRIEF */}
+              {discoveryTab === 'home' && discoveryBrief.length > 0 && (
+                <section className="mb-8" aria-label="Today's Brief">
+                  <h2 className="mb-3 px-1 text-[11px] font-black uppercase tracking-[0.22em] text-[#1A1F2E]/70">
+                    Today's Brief
+                  </h2>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {discoveryBrief.map((section: any) => (
+                      <div
+                        key={section.key}
+                        className="rounded-2xl bg-white p-3.5 shadow-sm"
+                      >
+                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#1A1F2E]/60">
+                          {section.title}
+                        </p>
+                        <div className="mt-2 space-y-1">
+                          {section.objects.slice(0, 4).map((obj: any) => (
+                            <button
+                              key={obj.id}
+                              type="button"
+                              onClick={() => setSelectedObjectForDetail(obj)}
+                              className="flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 text-left transition-colors hover:bg-[#F7F7F5] cursor-pointer"
+                            >
+                              {obj.imageUrl ? (
+                                <img
+                                  src={obj.imageUrl}
+                                  alt=""
+                                  aria-hidden="true"
+                                  loading="lazy"
+                                  className="h-9 w-9 shrink-0 rounded-lg object-cover"
+                                />
+                              ) : (
+                                <span
+                                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[15px] bg-[#F0EDE8] text-[#B8621F] font-bold"
+                                  aria-hidden="true"
+                                >
+                                  {getObjectTypeMeta(obj.type).label.charAt(0)}
+                                </span>
+                              )}
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate text-[12px] font-bold text-[#1A1F2E]">
+                                  {obj.title}
+                                </span>
+                                {briefWhenLabel(obj) && (
+                                  <span className="block truncate text-[9px] font-medium text-[#6B7280]">
+                                    {briefWhenLabel(obj)}
+                                  </span>
+                                )}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* DYNAMIC ERRAND & GIG NOTIFICATION BANNER (When Opportunities/Gigs active) */}
+              {discoveryTab === 'opportunities' && (
+                <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-[#0F172A] to-[#1E293B] text-white shadow-md animate-fadeIn">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-start space-x-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                        <Bike className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center space-x-2">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-300">
+                            WAIRO Boda Gig Dispatch
+                          </span>
+                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/30 text-emerald-200 font-bold">
+                            90% Payout
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-bold text-white mt-0.5">
+                          2 Courier & Errand Runs Ready in {activeNeighborhood.name}
+                        </h4>
+                        <p className="text-xs text-gray-300 mt-0.5">
+                          Westlands Sarit ➔ CBD Kencom (KES 250) · Kilimani Drop (KES 320)
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundEngine.play('heavyTap');
+                        setWairoMiniAppOpen(true);
+                      }}
+                      className="px-4 py-2 rounded-xl bg-[#10B981] hover:bg-[#059669] text-white font-bold text-xs flex items-center justify-center space-x-1.5 shadow-md cursor-pointer transition-transform active:scale-95"
+                    >
+                      <Zap className="w-3.5 h-3.5" />
+                      <span>Open Courier Mini App</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Feed Composer Magazine */}
+              <FeedComposer
+                key={feedReload}
+                typeFilter={selectedObjectType}
+                onFeedStatus={setHomeFeedStatus}
+                area={feedArea}
+                geo={userLocation ? { lat: userLocation.lat, lng: userLocation.lng, radiusKm: 40 } : null}
+                type={discoveryTab === 'events' ? 'experience'
+                  : discoveryTab === 'offers' ? 'offer'
+                    : discoveryTab === 'places' ? 'place'
+                      : discoveryTab === 'news' ? 'news'
+                        : discoveryTab === 'opportunities' ? 'opportunity'
+                          : null}
+                browse={discoveryTab === 'explore'}
+                onOpen={(raw) => {
+                  if (!raw?.id) return;
+                  const local = objects.find((object) => object.id === String(raw.id));
+                  setSelectedObjectForDetail(local ?? objectFromServer(raw));
+                }}
+                onOpenTea={(slug) => setSelectedTeaSlug(slug)}
+                onOpenTag={(tag: any) => {
+                  setSearchQuery(tag);
+                  setNearbySection('stream');
+                }}
+              />
+            </>
+          )}
+        </div>
+
+        {/* Discovery Navigation Pill Tabs */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
+          {(() => {
+            const counts: Record<string, number> = {};
+            for (const o of objects) {
+              counts[o.type] = (counts[o.type] ?? 0) + 1;
+            }
+            const has = (types: string[]) => types.some((t: any) => (counts[t] ?? 0) > 0);
+            const tabs = [
+              { id: 'home', label: 'Home', types: null as string[] | null },
+              { id: 'events', label: 'Events', types: ['experience', 'event'] },
+              { id: 'explore', label: 'Explore', types: null as string[] | null },
+              { id: 'offers', label: 'Offers', types: ['offer'] },
+              { id: 'places', label: 'Places', types: ['place'] },
+              { id: 'news', label: 'News', types: ['news'] },
+              { id: 'opportunities', label: 'Opportunities', types: ['opportunity'] }
+            ];
+            return tabs
+              .filter((tab) => !tab.types || has(tab.types))
+              .map((tab) => {
+                const isActive = nearbySection === 'stream' && discoveryTab === tab.id;
+                const isOpportunities = tab.id === 'opportunities';
+
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      soundEngine.play('tap');
+                      setDiscoveryTab(tab.id as typeof discoveryTab);
+                      const type = tab.id === 'events' ? 'experience'
+                        : tab.id === 'offers' ? 'offer'
+                          : tab.id === 'places' ? 'place'
+                            : tab.id === 'news' ? 'news'
+                              : tab.id === 'opportunities' ? 'opportunity'
+                                : 'all';
+                      setSelectedObjectType(type);
                       setNearbySection('stream');
                     }}
-                  />
-                </>
-              )}
-            </div>
-            {/* Discovery navigation — Home, Events, Explore, Offers, Places,
-                News, Opportunities. A category appears only when the real
-                persisted data has rows for it; nothing is ever padded to make
-                a tab exist. Selecting a category scopes the feed server-side
-                (type= on /api/feed); Explore is the whole catalog in one grid.
-                Tea/Today/Pursuits/Quests and the remaining types live behind
-                "More" so they never permanently occupy the feed. Lives in the
-                OUTER nearby block so it is reachable from every section. */}
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
-              {(() => {
-                const counts: Record<string, number> = {};
-                for (const o of objects) {
-                  counts[o.type] = (counts[o.type] ?? 0) + 1;
-                }
-                const has = (types: string[]) => types.some((t: any) => (counts[t] ?? 0) > 0);
-                const tabs = [
-                  { id: 'home', label: 'Home', types: null as string[] | null },
-                  { id: 'events', label: 'Events', types: ['experience', 'event'] },
-                  { id: 'explore', label: 'Explore', types: null as string[] | null },
-                  { id: 'offers', label: 'Offers', types: ['offer'] },
-                  { id: 'places', label: 'Places', types: ['place'] },
-                  { id: 'news', label: 'News', types: ['news'] },
-                  { id: 'opportunities', label: 'Opportunities', types: ['opportunity'] }
-                ];
-                return tabs
-                  .filter((tab) => !tab.types || has(tab.types))
-                  .map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => {
-                        setDiscoveryTab(tab.id as typeof discoveryTab);
-                        // Keep the legacy client-side filter in step so the
-                        // fallback grid matches the tab when the composed
-                        // feed is unavailable.
-                        const type = tab.id === 'events' ? 'experience'
-                          : tab.id === 'offers' ? 'offer'
-                            : tab.id === 'places' ? 'place'
-                              : tab.id === 'news' ? 'news'
-                                : tab.id === 'opportunities' ? 'opportunity'
-                                  : 'all';
-                        setSelectedObjectType(type);
-                        setNearbySection('stream');
-                      }}
-                      className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border transition ${
-                        nearbySection === 'stream' && discoveryTab === tab.id
-                          ? 'bg-[#FF5A1F] text-[#0D1117] border-[#2563EB]'
-                          : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC] hover:border-[#2563EB]'
-                      }`}
-                    >
-                      {tab.label}
-                    </button>
-                  ));
-              })()}
+                    className={`shrink-0 relative px-3.5 py-1.5 rounded-full text-[11px] font-black transition-all cursor-pointer flex items-center space-x-1.5 ${
+                      isActive
+                        ? 'bg-[#1A1F2E] text-white shadow-sm scale-[1.02]'
+                        : 'bg-white text-[#1A1F2E]/75 hover:bg-[#F0EDE8] hover:text-[#1A1F2E]'
+                    }`}
+                  >
+                    <span>{tab.label}</span>
+                    {isOpportunities && (
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
+                    )}
+                  </button>
+                );
+              });
+          })()}
+
+          <button
+            onClick={() => {
+              soundEngine.play('tap');
+              setMoreFilters((v) => !v);
+            }}
+            className={`shrink-0 px-3.5 py-1.5 rounded-full text-[11px] font-black transition-all cursor-pointer ${
+              moreFilters
+                ? 'bg-[#B8621F] text-white shadow-sm'
+                : 'bg-white text-[#1A1F2E]/75 hover:bg-[#F0EDE8]'
+            }`}
+          >
+            More
+          </button>
+        </div>
+
+        {/* More Filters Panel */}
+        {moreFilters && (
+          <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto no-scrollbar pt-2 animate-fadeIn">
+            {([
+              ['tea', HOME_MORE.tea],
+              ['today', `${HOME_MORE.today}${dailyBrief.length > 0 ? ' *' : ''}`],
+              ['pursuits', `${HOME_MORE.pursuits}${pursuits.length > 0 ? ` (${pursuits.length})` : ''}`],
+              ['quests', `${HOME_MORE.quests}${openQuests.length > 0 ? ` (${openQuests.length})` : ''}`],
+              ['market', HOME_MORE.market],
+              ['events', HOME_MORE.events]
+            ] as [NearbySection, string][]).map(([id, label]) => (
               <button
-                onClick={() => setMoreFilters((v) => !v)}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border transition ${
-                  moreFilters
-                    ? 'bg-[#FF5A1F] text-[#0D1117] border-[#2563EB]'
-                    : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC] hover:border-[#2563EB]'
+                key={id}
+                onClick={() => {
+                  soundEngine.play('tap');
+                  setNearbySection(id);
+                }}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold cursor-pointer transition-all ${
+                  nearbySection === id
+                    ? 'bg-[#B8621F] text-white shadow-sm'
+                    : 'bg-white text-[#1A1F2E]/70 hover:bg-[#F0EDE8]'
                 }`}
               >
-                More
+                {label}
               </button>
-            </div>
-
-            {/* More filters — reachable from every section, not permanently
-                occupying the feed. */}
-            {moreFilters && (
-              <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto no-scrollbar">
-                {([
-                  ['tea', HOME_MORE.tea],
-                  ['today', `${HOME_MORE.today}${dailyBrief.length > 0 ? ' *' : ''}`],
-                  ['pursuits', `${HOME_MORE.pursuits}${pursuits.length > 0 ? ` (${pursuits.length})` : ''}`],
-                  ['quests', `${HOME_MORE.quests}${openQuests.length > 0 ? ` (${openQuests.length})` : ''}`],
-                  ['market', HOME_MORE.market],
-                  ['events', HOME_MORE.events]
-                ] as [NearbySection, string][]).map(([id, label]) => (
-                  <button
-                    key={id}
-                    onClick={() => setNearbySection(id)}
-                    className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
-                      nearbySection === id
-                        ? 'bg-[#FF5A1F] text-[#0D1117] border-[#2563EB]'
-                        : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-                {[
-                  { id: 'service', label: FILTERS.service },
-                  { id: 'product', label: FILTERS.product },
-                ].map((filter) => (
-                  <button
-                    key={filter.id}
-                    onClick={() => { setSelectedObjectType(filter.id); setNearbySection('stream'); }}
-                    className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
-                      nearbySection === 'stream' && selectedObjectType === filter.id
-                        ? 'bg-[#FF5A1F] text-[#0D1117] border-[#2563EB]'
-                        : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
-                    }`}
-                  >
-                    {filter.label}
-                  </button>
-                ))}
-              </div>
-            )}
+            ))}
+            {[
+              { id: 'service', label: FILTERS.service },
+              { id: 'product', label: FILTERS.product },
+            ].map((filter) => (
+              <button
+                key={filter.id}
+                onClick={() => {
+                  soundEngine.play('tap');
+                  setSelectedObjectType(filter.id);
+                  setNearbySection('stream');
+                }}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold cursor-pointer transition-all ${
+                  nearbySection === 'stream' && selectedObjectType === filter.id
+                    ? 'bg-[#1A1F2E] text-white shadow-sm'
+                    : 'bg-white text-[#1A1F2E]/70 hover:bg-[#F0EDE8]'
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
           </div>
         )}
-        {nearbySection === 'stream' && (
-          <>
-            {/* MONEY BAND — real asks/offers around you, density-gated. */}
-            <MoneyBand
-              objects={objects}
-              areaHint={feedArea}
-              onOpenSection={(section: any) => setNearbySection(section)}
+      </div>
+
+      {/* ================= STREAM SECTION ================= */}
+      {nearbySection === 'stream' && (
+        <div className="max-w-5xl mx-auto px-2 sm:px-4 mt-6">
+          {/* Money Band */}
+          <MoneyBand
+            objects={objects}
+            areaHint={feedArea}
+            onOpenSection={(section: any) => setNearbySection(section)}
+          />
+
+          {/* Happening Nearby Rail */}
+          {(() => {
+            const active = objects
+              .filter((obj: any) => {
+                if (!isDestinationObject(obj)) return false;
+                const state = getDestinationState(obj);
+                return state === 'live' || state === 'today';
+              })
+              .sort((a, b) => {
+                const da = a.metadata?.distanceKm ?? Number.MAX_SAFE_INTEGER;
+                const db = b.metadata?.distanceKm ?? Number.MAX_SAFE_INTEGER;
+                return da - db;
+              })
+              .slice(0, 3);
+            if (active.length === 0) return null;
+            return (
+              <section className="mx-auto mb-8 max-w-5xl">
+                <h2 className="mb-3 px-1 text-[11px] font-black uppercase tracking-[0.22em] text-[#1A1F2E]/70">
+                  Happening nearby
+                </h2>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {active.map((obj: any) => {
+                    const vendors = getDestinationVendors(obj, objects);
+                    return (
+                      <button
+                        key={obj.id}
+                        type="button"
+                        onClick={() => setSelectedObjectForDetail(obj)}
+                        aria-label={obj.title}
+                        className="group relative min-h-[170px] overflow-hidden rounded-2xl bg-white text-left transition-transform duration-200 hover:-translate-y-0.5 shadow-sm"
+                      >
+                        {obj.imageUrl ? (
+                          <img
+                            src={obj.imageUrl}
+                            alt=""
+                            aria-hidden="true"
+                            loading="lazy"
+                            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 bg-gradient-to-br from-[#1E293B] to-[#0D1117]" />
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                        <div className="absolute inset-x-3 bottom-3">
+                          <h3 className="line-clamp-2 text-[14px] font-bold leading-snug text-white">
+                            {obj.title}
+                          </h3>
+                          {(() => {
+                            const dist = getDistanceLabel(obj);
+                            const loc = obj.locationName ? String(obj.locationName).trim() : null;
+                            if (!dist && !loc) return null;
+                            return (
+                              <p className="mt-0.5 text-[10px] font-medium text-white/80">
+                                {[dist, loc].filter(Boolean).join(' · ')}
+                              </p>
+                            );
+                          })()}
+                          {vendors.length > 0 && (
+                            <p className="mt-1 text-[10px] font-bold text-amber-300">
+                              {vendors.length} {vendors.length === 1 ? 'vendor' : 'vendors'} inside
+                            </p>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })()}
+
+          {/* Search Input Box */}
+          {homeFeedStatus === 'ready' && (
+            <div className="mx-auto mb-4 max-w-5xl px-1">
+              <label className="relative block">
+                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#1A1F2E]/50" />
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setSearchFocused(true)}
+                  onBlur={() => setSearchFocused(false)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') commitRecentSearch(searchQuery); }}
+                  placeholder="Search venues, businesses, organizers, areas…"
+                  aria-label="Search Brief"
+                  className="w-full rounded-2xl bg-white shadow-sm py-2.5 pl-10 pr-10 text-[13px] font-bold text-[#1A1F2E] outline-none transition-colors placeholder:text-[#1A1F2E]/40 focus:ring-2 focus:ring-[#B8621F]/20"
+                />
+                {searchQuery !== '' && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    aria-label="Clear search"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-[#1A1F2E]/50 transition-colors hover:text-[#1A1F2E] cursor-pointer"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </label>
+
+              {searchQuery === '' && searchFocused && (recentSearches.length > 0 || nearbyCategories.length > 0) && (
+                <div className="mt-3 space-y-3 p-3 rounded-2xl bg-white shadow-md animate-fadeIn">
+                  {recentSearches.length > 0 && (
+                    <div>
+                      <p className="mb-1.5 px-1 text-[10px] font-black uppercase tracking-[0.16em] text-[#1A1F2E]/60">Recent</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {recentSearches.map((term) => (
+                          <button
+                            key={term}
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => setSearchQuery(term)}
+                            className="rounded-full bg-[#F0EDE8] px-3 py-1.5 text-[12px] font-bold text-[#1A1F2E] transition-colors hover:bg-[#B8621F] hover:text-white cursor-pointer"
+                          >
+                            {term}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {nearbyCategories.length > 0 && (
+                    <div>
+                      <p className="mb-1.5 px-1 text-[10px] font-black uppercase tracking-[0.16em] text-[#1A1F2E]/60">Nearby categories</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {nearbyCategories.map((cat) => (
+                          <button
+                            key={cat}
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => setSearchQuery(cat)}
+                            className="rounded-full bg-[#F7F7F5] px-3 py-1.5 text-[12px] font-bold text-[#1A1F2E]/80 transition-colors hover:bg-[#1A1F2E] hover:text-white cursor-pointer"
+                          >
+                            {cat}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Search Results */}
+          {searchQuery.trim() !== '' && (
+            <SearchResults
+              query={searchQuery}
+              onOpenObject={(o) => setSelectedObjectForDetail(objectFromServer(o))}
+              onOpenEntity={openEntityPage}
             />
+          )}
 
-
-            {/* A small live rail for destinations. Keep it visual and concise. */}
-            {(() => {
-              const active = objects
-                .filter((obj: any) => {
-                  if (!isDestinationObject(obj)) return false;
-                  const state = getDestinationState(obj);
-                  return state === 'live' || state === 'today';
-                })
-                .sort((a, b) => {
-                  const da = a.metadata?.distanceKm ?? Number.MAX_SAFE_INTEGER;
-                  const db = b.metadata?.distanceKm ?? Number.MAX_SAFE_INTEGER;
-                  return da - db;
-                })
-                .slice(0, 3);
-              if (active.length === 0) return null;
-              return (
-                <section className="mx-auto mb-8 max-w-5xl">
-                  <h2 className="mb-3 px-1 text-[11px] font-bold uppercase tracking-[0.22em] text-[#0D1117]/60">
-                    Happening nearby
-                  </h2>
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                    {active.map((obj: any) => {
-                      const vendors = getDestinationVendors(obj, objects);
+          {/* Legacy Objects Fallback Stream */}
+          {(homeFeedStatus !== 'ready' || searchQuery.trim() !== '') && (
+            <>
+              {filteredObjects.length > 0 ? (
+                <section className="mx-auto max-w-5xl">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                    {filteredObjects.map((obj: any) => {
+                      const destVendors = isDestinationObject(obj)
+                        ? getDestinationVendors(obj, objects)
+                        : [];
+                      const level = getCardLevel(obj, destVendors.length);
+                      const destState = getDestinationState(obj);
+                      const status = level >= 2
+                        ? DESTINATION_STATE_LABELS[destState]
+                        : obj.metadata?.statusBadge;
                       return (
-                        <button
+                        <div
                           key={obj.id}
-                          type="button"
                           onClick={() => setSelectedObjectForDetail(obj)}
-                          aria-label={obj.title}
-                          className="group relative min-h-[170px] overflow-hidden rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] text-left transition-transform duration-200 hover:-translate-y-0.5 hover:border-[#2563EB]"
+                          className={`group relative min-h-[210px] cursor-pointer overflow-hidden rounded-2xl bg-white transition-transform duration-200 hover:-translate-y-0.5 shadow-sm ${
+                            level === 3 ? 'sm:col-span-2 sm:row-span-2 min-h-[270px]' : ''
+                          }`}
                         >
                           {obj.imageUrl ? (
                             <img
@@ -1210,988 +1414,916 @@ export function NearbyScreen(props: NearbyScreenProps) {
                               className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                             />
                           ) : (
-                            <div className="absolute inset-0 bg-gradient-to-br from-[#232A36] to-[#0D1117]" />
+                            <div className="absolute inset-0 bg-gradient-to-br from-[#1E293B] to-[#0D1117]" />
                           )}
-                          <div className="absolute inset-0 bg-gradient-to-t from-[#0D1117]/90 via-[#0D1117]/10 to-transparent" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent" />
+                          <div className="absolute left-3 top-3 flex max-w-[calc(100%-24px)] flex-wrap gap-1.5">
+                            <span className="rounded-full bg-white/90 backdrop-blur-sm px-2 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[#1A1F2E]">
+                              {getObjectTypeMeta(obj.type).label}
+                            </span>
+                            {!obj.imageUrl && obj.category && (
+                              <span className="rounded-full bg-white/90 backdrop-blur-sm px-2 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[#1A1F2E]">
+                                {obj.category}
+                              </span>
+                            )}
+                            {obj.isVerified && (
+                              <span className="rounded-full bg-[#10B981] px-2 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-white">
+                                VERIFIED
+                              </span>
+                            )}
+                            {status && (
+                              <span className="rounded-full bg-white/90 backdrop-blur-sm px-2 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[#1A1F2E]">
+                                {status}
+                              </span>
+                            )}
+                            {(() => {
+                              const life = getLifecycleBadge(obj);
+                              if (!life) return null;
+                              return (
+                                <span className={`rounded-full px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] ${
+                                  life.expired
+                                    ? 'bg-[#0D1117]/80 text-[#FFFFFF]'
+                                    : 'bg-[#F0EDE8] text-[#1A1F2E]'
+                                }`}>
+                                  {life.label}
+                                </span>
+                              );
+                            })()}
+                          </div>
                           <div className="absolute inset-x-3 bottom-3">
-                            <h3 className="line-clamp-2 text-[14px] font-semibold leading-snug text-[#FFFFFF]">
+                            <h3 className="line-clamp-3 pr-2 text-[14px] font-bold leading-snug text-white">
                               {obj.title}
                             </h3>
                             {(() => {
-                              const dist = getDistanceLabel(obj);
-                              const loc = obj.locationName ? String(obj.locationName).trim() : null;
-                              if (!dist && !loc) return null;
+                              const sourceChip = getSourceChip(obj);
+                              const published = getPublishedLine(obj);
+                              if (!sourceChip && !published) return null;
+                              const bits = [sourceChip, published].filter(Boolean);
                               return (
-                                <p className="mt-0.5 text-[10px] font-semibold text-[#FFFFFF]/80">
-                                  {[dist, loc].filter(Boolean).join(' · ')}
+                                <p className="mt-1 text-[9px] font-semibold text-white/80 truncate">
+                                  {bits.join(' · ')}
                                 </p>
                               );
                             })()}
-                            {vendors.length > 0 && (
-                              <p className="mt-1 text-[10px] font-semibold text-[#FFFFFF]">
-                                {vendors.length} {vendors.length === 1 ? 'vendor' : 'vendors'} inside
-                              </p>
-                            )}
+                            {(() => {
+                              const chips = entityChipsFor(obj);
+                              if (chips.length === 0) return null;
+                              return (
+                                <div className="mt-1.5 flex flex-wrap gap-1">
+                                  {chips.map((chip, i) => (
+                                    <EntityChip
+                                      key={`${chip.kind}_${chip.name ?? chip.directId}_${i}`}
+                                      kind={chip.kind}
+                                      name={chip.name}
+                                      directId={chip.directId}
+                                      onOpenEntity={openEntityPage}
+                                      className="bg-black/60 text-white hover:bg-[#B8621F]"
+                                    />
+                                  ))}
+                                </div>
+                              );
+                            })()}
+                            <div className="mt-2 flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  if (level === 3 && destVendors.length > 0) {
+                                    setSelectedObjectForDetail(obj);
+                                  } else {
+                                    handlePrimaryAction(obj);
+                                  }
+                                }}
+                                className="rounded-full bg-white/90 backdrop-blur-sm px-3 py-1 text-[10px] font-bold text-[#1A1F2E] transition-colors hover:bg-[#B8621F] hover:text-white"
+                              >
+                                {level === 3 && destVendors.length > 0 ? "See what's here" : resolveAction(obj).label}
+                              </button>
+                              <button
+                                type="button"
+                                aria-label={`Save ${obj.title}`}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  handleExecuteProtocolAction('save', obj);
+                                }}
+                                className="ml-auto inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 backdrop-blur-sm text-[#1A1F2E] transition-colors hover:bg-[#B8621F] hover:text-white"
+                              >
+                                <Bookmark className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
                           </div>
-                        </button>
+                        </div>
                       );
                     })}
                   </div>
                 </section>
-              );
-            })()}
-
-            {/* Search (Local Activity Graph brief): typing a venue, business
-                or organizer name surfaces the objects CONNECTED to it —
-                events at the venue, offers from the business — alongside the
-                matching entities themselves. Search stays object-first:
-                results never hide the global stream, and the input is a
-                quiet row above it. */}
-            {homeFeedStatus === 'ready' && (
-              <div className="mx-auto mb-4 max-w-5xl px-1">
-                <label className="relative block">
-                  <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#0D1117]/60" />
-                  <input
-                    type="search"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onFocus={() => setSearchFocused(true)}
-                    onBlur={() => setSearchFocused(false)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') commitRecentSearch(searchQuery); }}
-                    placeholder="Search venues, businesses, organizers, areas…"
-                    aria-label="Search Brief"
-                    className="w-full rounded-full border border-[#E5E8EC] bg-[#FFFFFF] py-2.5 pl-10 pr-10 text-[13px] font-semibold text-[#0D1117] outline-none transition-colors placeholder:text-[#0D1117]/60 focus:border-[#2563EB]"
-                  />
-                  {searchQuery !== '' && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchQuery('')}
-                      aria-label="Clear search"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-[#0D1117]/60 transition-colors hover:text-[#0D1117] cursor-pointer"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-                </label>
-                {/* §14 — the search surface: recent searches (real, yours) and
-                    nearby categories (derived from the live feed), shown only
-                    while the field is empty and focused. */}
-                {searchQuery === '' && searchFocused && (recentSearches.length > 0 || nearbyCategories.length > 0) && (
-                  <div className="mt-3 space-y-3">
-                    {recentSearches.length > 0 && (
-                      <div>
-                        <p className="mb-1.5 px-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#0D1117]/60">Recent</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {recentSearches.map((term) => (
-                            <button
-                              key={term}
-                              type="button"
-                              onMouseDown={(e) => e.preventDefault()}
-                              onClick={() => setSearchQuery(term)}
-                              className="rounded-full border border-[#E5E8EC] bg-[#FFFFFF] px-3 py-1.5 text-[12px] font-semibold text-[#0D1117]/70 transition-colors hover:border-[#2563EB] cursor-pointer"
-                            >
-                              {term}
-                            </button>
-                          ))}
-                        </div>
+              ) : (
+                <section className="mx-auto max-w-5xl py-10 text-center rounded-3xl bg-white p-8 shadow-sm">
+                  {searchQuery.trim() !== '' ? (
+                    <>
+                      <h2 className="text-base font-bold text-[#1A1F2E]">Nothing nearby matching "{searchQuery}"</h2>
+                      <p className="mt-1 text-xs text-[#6B7280]">Start a verified neighborhood pursuit to track updates automatically.</p>
+                      <button
+                        type="button"
+                        onClick={() => handleCreatePursuit(searchQuery)}
+                        className="mt-4 rounded-xl bg-[#1A1F2E] text-white px-4 py-2 text-[11px] font-bold shadow-sm"
+                      >
+                        Keep pursuing "{searchQuery}"
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-12 h-12 rounded-2xl bg-[#B8621F]/10 text-[#B8621F] flex items-center justify-center mx-auto mb-3">
+                        <Sparkles className="w-6 h-6" />
                       </div>
-                    )}
-                    {nearbyCategories.length > 0 && (
-                      <div>
-                        <p className="mb-1.5 px-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#0D1117]/60">Nearby categories</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {nearbyCategories.map((cat) => (
-                            <button
-                              key={cat}
-                              type="button"
-                              onMouseDown={(e) => e.preventDefault()}
-                              onClick={() => setSearchQuery(cat)}
-                              className="rounded-full border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-1.5 text-[12px] font-semibold text-[#0D1117]/70 transition-colors hover:border-[#FF5A1F] cursor-pointer"
-                            >
-                              {cat}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Search stays above the visual stream, but the cards themselves
-                are title-first. */}
-            {searchQuery.trim() !== '' && (
-              <SearchResults
-                query={searchQuery}
-                onOpenObject={(o) => setSelectedObjectForDetail(objectFromServer(o))}
-                onOpenEntity={openEntityPage}
-              />
-            )}
-
-            {/* The legacy object stream is a fallback for deployments where the
-                composed feed is unavailable. Keep one visual language in both
-                paths: photo, title, and the one action the record supports. */}
-            {(homeFeedStatus !== 'ready' || searchQuery.trim() !== '') && (
-              <>
-                {filteredObjects.length > 0 ? (
-                  <section className="mx-auto max-w-5xl">
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                      {filteredObjects.map((obj: any) => {
-                        const destVendors = isDestinationObject(obj)
-                          ? getDestinationVendors(obj, objects)
-                          : [];
-                        const level = getCardLevel(obj, destVendors.length);
-                        const destState = getDestinationState(obj);
-                        const status = level >= 2
-                          ? DESTINATION_STATE_LABELS[destState]
-                          : obj.metadata?.statusBadge;
-                        return (
-                          <div
-                            key={obj.id}
-                            onClick={() => setSelectedObjectForDetail(obj)}
-                            className={`group relative min-h-[210px] cursor-pointer overflow-hidden rounded-2xl border bg-[#FFFFFF] transition-transform duration-200 hover:-translate-y-0.5 hover:border-[#2563EB] ${
-                              level === 3 ? 'sm:col-span-2 sm:row-span-2 min-h-[270px]' : ''
-                            }`}
-                          >
-                            {obj.imageUrl ? (
-                              <img
-                                src={obj.imageUrl}
-                                alt=""
-                                aria-hidden="true"
-                                loading="lazy"
-                                className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                              />
-                            ) : (
-                              <div className="absolute inset-0 bg-gradient-to-br from-[#232A36] to-[#0D1117]" />
-                            )}
-                            <div className="absolute inset-0 bg-gradient-to-t from-[#0D1117]/95 via-[#0D1117]/20 to-[#0D1117]/05" />
-                            <div className="absolute left-3 top-3 flex max-w-[calc(100%-24px)] flex-wrap gap-1.5">
-                              <span className="rounded-full bg-[#F0F2F5]/75 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-[#0D1117]">
-                                {getObjectTypeMeta(obj.type).label}
-                              </span>
-                              {!obj.imageUrl && obj.category && (
-                                <span className="rounded-full bg-[#F0F2F5]/75 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-[#0D1117]">
-                                  {obj.category}
-                                </span>
-                              )}
-                              {obj.isVerified && (
-                                <span className="rounded-full bg-[#FF5A1F] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-[#0D1117]">
-                                  VERIFIED
-                                </span>
-                              )}
-                              {status && (
-                                <span className="rounded-full bg-[#F0F2F5]/75 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-[#0D1117]">
-                                  {status}
-                                </span>
-                              )}
-                              {(() => {
-                                const life = getLifecycleBadge(obj);
-                                if (!life) return null;
-                                return (
-                                  <span className={`rounded-full px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] ${
-                                    life.expired
-                                      ? 'bg-[#0D1117]/80 text-[#FFFFFF]'
-                                      : 'bg-[#F0F2F5]/75 text-[#0D1117]'
-                                  }`}>
-                                    {life.label}
-                                  </span>
-                                );
-                              })()}
-                            </div>
-                            <div className="absolute inset-x-3 bottom-3">
-                              <h3 className="line-clamp-3 pr-2 text-[14px] font-semibold leading-snug text-[#FFFFFF]">
-                                {obj.title}
-                              </h3>
-                              {(() => {
-                                const sourceChip = getSourceChip(obj);
-                                const published = getPublishedLine(obj);
-                                if (!sourceChip && !published) return null;
-                                const bits = [sourceChip, published].filter(Boolean);
-                                return (
-                                  <p className="mt-1 text-[9px] font-semibold text-[#FFFFFF]/75 truncate">
-                                    {bits.join(' · ')}
-                                  </p>
-                                );
-                              })()}
-                              {(() => {
-                                const chips = entityChipsFor(obj);
-                                if (chips.length === 0) return null;
-                                return (
-                                  <div className="mt-1.5 flex flex-wrap gap-1">
-                                    {chips.map((chip, i) => (
-                                      <EntityChip
-                                        key={`${chip.kind}_${chip.name ?? chip.directId}_${i}`}
-                                        kind={chip.kind}
-                                        name={chip.name}
-                                        directId={chip.directId}
-                                        onOpenEntity={openEntityPage}
-                                        className="bg-[#0D1117]/70 text-[#F0F2F5] hover:bg-[#FF5A1F] hover:text-[#0D1117]"
-                                      />
-                                    ))}
-                                  </div>
-                                );
-                              })()}
-                              {level === 3 && destVendors.length > 0 && (
-                                <p className="mt-1 text-[10px] font-semibold text-[#0D1117]">
-                                  {destVendors.length} {destVendors.length === 1 ? 'vendor' : 'vendors'} inside
-                                </p>
-                              )}
-                              <div className="mt-2 flex items-center gap-2">
-                                <button
-                                  type="button"
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    if (level === 3 && destVendors.length > 0) {
-                                      setSelectedObjectForDetail(obj);
-                                    } else {
-                                      handlePrimaryAction(obj);
-                                    }
-                                  }}
-                                  className="rounded-full border border-[#2563EB]/70 bg-[#F0F2F5]/60 px-2.5 py-1 text-[10px] font-bold text-[#0D1117]/80 transition-colors hover:bg-[#FF5A1F] hover:text-[#0D1117]"
-                                >
-                                  {level === 3 && destVendors.length > 0 ? "See what's here" : resolveAction(obj).label}
-                                </button>
-                                <button
-                                  type="button"
-                                  aria-label={`Save ${obj.title}`}
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    handleExecuteProtocolAction('save', obj);
-                                  }}
-                                  className="ml-auto inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#E5E8EC]/35 bg-[#F0F2F5]/60 text-[#0D1117] transition-colors hover:border-[#2563EB] hover:text-[#0D1117]"
-                                >
-                                  <Bookmark className="h-3.5 w-3.5" />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </section>
-                ) : (
-                  <section className="mx-auto max-w-5xl py-10 text-center">
-                    {searchQuery.trim() !== '' ? (
-                      <>
-                        <h2 className="text-base font-semibold text-[#0D1117]">Nothing nearby</h2>
+                      <h2 className="text-base font-black text-[#1A1F2E]">Welcome to {activeNeighborhood.name} Feed</h2>
+                      <p className="mt-1 text-xs text-[#6B7280] max-w-sm mx-auto">
+                        Your neighbors' gigs, bulk runs, and events appear here in real time.
+                      </p>
+                      <div className="mt-4 flex justify-center gap-2">
                         <button
                           type="button"
-                          onClick={() => handleCreatePursuit(searchQuery)}
-                          className="mt-4 rounded-full border border-[#2563EB]/60 px-4 py-2 text-[11px] font-bold text-[#0D1117]"
+                          onClick={() => setCreatePostModalOpen(true)}
+                          className="rounded-xl bg-[#B8621F] px-4 py-2 text-[11px] font-bold text-white shadow-sm hover:bg-[#8B4513] transition-colors"
                         >
-                          Keep pursuing
+                          Post to {activeNeighborhood.name}
                         </button>
-                      </>
-                    ) : (
-                      <>
-                        <h2 className="text-base font-semibold text-[#0D1117]">This is your {activeNeighborhood.name} feed</h2>
-                        <p className="mt-1 text-xs text-[#0D1117]/60 max-w-sm mx-auto">
-                          When your neighbors post gigs, harambees, or events, you'll see them here first.
-                        </p>
-                        <div className="mt-4 flex justify-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setCaptureOpen(true)}
-                            className="rounded-full bg-[#B8621F] px-4 py-2 text-[11px] font-bold text-white shadow-sm"
-                          >
-                            Post to {activeNeighborhood.name}
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </section>
-                )}
-              </>
-            )}
+                      </div>
+                    </>
+                  )}
+                </section>
+              )}
+            </>
+          )}
 
-            {/* ================= WELCOMING MAT: DISCREET MUTUAL AID & SOLIDARITY ================= */}
+          {/* Welcoming Mat Component */}
+          <div className="mt-8">
             <WelcomingMat
               onOpenSolidarity={() => setCommitteeOpen(true)}
               onOpenWellbeing={() => setWellbeingOpen(true)}
               className="max-w-5xl mx-auto px-1"
             />
+          </div>
 
-            {/* ================= CURATED NEIGHBORHOOD DISCOVERY MATRIX ================= */}
-            <section className="mx-auto my-10 max-w-5xl px-1">
-              <div className="rounded-[28px] bg-[#F7F7F5] p-6 sm:p-8 shadow-sm">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-6 border-b border-black/[0.06]">
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <span className="w-2 h-2 rounded-full bg-[#B8621F]" />
-                      <h2 className="text-sm font-black uppercase tracking-widest text-[#1A1F2E]">
-                        {activeNeighborhood.name} Discovery & Operations
-                      </h2>
-                    </div>
-                    <p className="text-xs text-[#6B7280] mt-1 ml-4 font-medium">
-                      Verified community desks, bulk supply runs, and logistics corridors in {activeNeighborhood.county}
-                    </p>
+          {/* Curated Neighborhood Discovery Matrix */}
+          <section className="mx-auto my-10 max-w-5xl px-1">
+            <div className="rounded-[28px] bg-white p-6 sm:p-8 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-6 border-b border-black/[0.06]">
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <span className="w-2 h-2 rounded-full bg-[#B8621F]" />
+                    <h2 className="text-sm font-black uppercase tracking-widest text-[#1A1F2E]">
+                      {activeNeighborhood.name} Discovery & Operations
+                    </h2>
                   </div>
-                  <span className="self-start sm:self-auto text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#B8621F]/15 text-[#B8621F]">
-                    47 Counties Active
-                  </span>
+                  <p className="text-xs text-[#6B7280] mt-1 ml-4 font-medium">
+                    Verified community desks, bulk supply runs, and logistics corridors in {activeNeighborhood.county}
+                  </p>
                 </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-                  {/* Card 1: Chamas & Table Banking */}
-                  <button
-                    type="button"
-                    onClick={() => { soundEngine.play('heavyTap'); setChamaOpen(true); }}
-                    className="p-5 rounded-[20px] bg-white hover:bg-white/90 shadow-sm transition-all duration-200 cursor-pointer group flex flex-col justify-between text-left"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-2xl">🌸</span>
-                        <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-purple-50 text-purple-700">
-                          Table Bank
-                        </span>
-                      </div>
-                      <h3 className="text-sm font-black text-[#1A1F2E] mt-3 group-hover:text-[#B8621F] transition-colors">
-                        Chamas & Merry-Go-Rounds
-                      </h3>
-                      <p className="text-xs text-[#6B7280] mt-1 leading-relaxed">
-                        Join verified neighborhood savings circles, rotating payouts, and table banking pools.
-                      </p>
-                    </div>
-                    <div className="mt-4 pt-3 border-t border-black/[0.04] flex items-center justify-between w-full">
-                      <span className="text-[11px] font-bold text-[#B8621F]">Open Chama Desk →</span>
-                      <span className="text-[10px] text-[#9CA3AF] font-medium">Cycle 5 Live</span>
-                    </div>
-                  </button>
-
-                  {/* Card 2: Bulk CBC Textbook & Demand Runs */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundEngine.play('heavyTap');
-                      setActiveCbcBundleId('cbc-g7');
-                      setCbcCheckoutOpen(true);
-                    }}
-                    className="p-5 rounded-[20px] bg-white hover:bg-white/90 shadow-sm transition-all duration-200 cursor-pointer group flex flex-col justify-between text-left"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-2xl">📚</span>
-                        <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
-                          CBC Run
-                        </span>
-                      </div>
-                      <h3 className="text-sm font-black text-[#1A1F2E] mt-3 group-hover:text-[#B8621F] transition-colors">
-                        CBC School Books & Wholesale
-                      </h3>
-                      <p className="text-xs text-[#6B7280] mt-1 leading-relaxed">
-                        Direct textbook and bulk supply orders aggregated at wholesale discount for PTAs & schools.
-                      </p>
-                    </div>
-                    <div className="mt-4 pt-3 border-t border-black/[0.04] flex items-center justify-between w-full">
-                      <span className="text-[11px] font-bold text-[#B8621F]">View Bulk Runs →</span>
-                      <span className="text-[10px] text-[#9CA3AF] font-medium">Save 28%</span>
-                    </div>
-                  </button>
-
-                  {/* Card 3: WAIRO Cargo & Inter-County Gate */}
-                  <button
-                    type="button"
-                    onClick={() => { soundEngine.play('heavyTap'); setInterCountyOpen(true); }}
-                    className="p-5 rounded-[20px] bg-white hover:bg-white/90 shadow-sm transition-all duration-200 cursor-pointer group flex flex-col justify-between text-left"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-2xl">🚚</span>
-                        <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700">
-                          47 Counties
-                        </span>
-                      </div>
-                      <h3 className="text-sm font-black text-[#1A1F2E] mt-3 group-hover:text-[#B8621F] transition-colors">
-                        WAIRO Cargo & Logistics Gate
-                      </h3>
-                      <p className="text-xs text-[#6B7280] mt-1 leading-relaxed">
-                        Inter-county parcel booking, direct carrier auctions, and town gate collection.
-                      </p>
-                    </div>
-                    <div className="mt-4 pt-3 border-t border-black/[0.04] flex items-center justify-between w-full">
-                      <span className="text-[11px] font-bold text-[#B8621F]">Send / Track Parcel →</span>
-                      <span className="text-[10px] text-[#9CA3AF] font-medium">Door & Stage</span>
-                    </div>
-                  </button>
-
-                  {/* Card 4: Group Event Touring & Logistics */}
-                  <button
-                    type="button"
-                    onClick={() => { soundEngine.play('heavyTap'); setEventLogisticsOpen(true); }}
-                    className="p-5 rounded-[20px] bg-white hover:bg-white/90 shadow-sm transition-all duration-200 cursor-pointer group flex flex-col justify-between text-left"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-2xl">🚌</span>
-                        <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
-                          Touring Ops
-                        </span>
-                      </div>
-                      <h3 className="text-sm font-black text-[#1A1F2E] mt-3 group-hover:text-[#B8621F] transition-colors">
-                        Choir, Sports & Retreat Charters
-                      </h3>
-                      <p className="text-xs text-[#6B7280] mt-1 leading-relaxed">
-                        Group transport charters, member roster check-ins, and target funding trackers.
-                      </p>
-                    </div>
-                    <div className="mt-4 pt-3 border-t border-black/[0.04] flex items-center justify-between w-full">
-                      <span className="text-[11px] font-bold text-[#B8621F]">Coordinate Event →</span>
-                      <span className="text-[10px] text-[#9CA3AF] font-medium">Live Rosters</span>
-                    </div>
-                  </button>
-
-                  {/* Card 5: Paid Gigs & Local Micro-Work */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundEngine.play('tap');
-                      setSelectedObjectType('opportunity');
-                      setDiscoveryTab('opportunities');
-                    }}
-                    className="p-5 rounded-[20px] bg-white hover:bg-white/90 shadow-sm transition-all duration-200 cursor-pointer group flex flex-col justify-between text-left"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-2xl">💼</span>
-                        <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
-                          Micro-Work
-                        </span>
-                      </div>
-                      <h3 className="text-sm font-black text-[#1A1F2E] mt-3 group-hover:text-[#B8621F] transition-colors">
-                        Local Verified Gigs
-                      </h3>
-                      <p className="text-xs text-[#6B7280] mt-1 leading-relaxed">
-                        Handyman tasks, inventory counters, event ushers, and local tutoring assignments.
-                      </p>
-                    </div>
-                    <div className="mt-4 pt-3 border-t border-black/[0.04] flex items-center justify-between w-full">
-                      <span className="text-[11px] font-bold text-[#B8621F]">Browse Gigs →</span>
-                      <span className="text-[10px] text-[#9CA3AF] font-medium">Daily Payouts</span>
-                    </div>
-                  </button>
-
-                  {/* Card 6: Creator Partner Program */}
-                  <button
-                    type="button"
-                    onClick={() => { soundEngine.play('heavyTap'); setCreatorDeskOpen(true); }}
-                    className="p-5 rounded-[20px] bg-white hover:bg-white/90 shadow-sm transition-all duration-200 cursor-pointer group flex flex-col justify-between text-left"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-2xl">🏅</span>
-                        <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">
-                          15% Net Cut
-                        </span>
-                      </div>
-                      <h3 className="text-sm font-black text-[#1A1F2E] mt-3 group-hover:text-[#B8621F] transition-colors">
-                        Creator Partner Program
-                      </h3>
-                      <p className="text-xs text-[#6B7280] mt-1 leading-relaxed">
-                        Earn 15% net commission on every bulk supply run, ticket sale, and cargo run for your community.
-                      </p>
-                    </div>
-                    <div className="mt-4 pt-3 border-t border-black/[0.04] flex items-center justify-between w-full">
-                      <span className="text-[11px] font-bold text-[#B8621F]">Open Creator Desk →</span>
-                      <span className="text-[10px] text-[#9CA3AF] font-medium">Instant Ledger</span>
-                    </div>
-                  </button>
-                </div>
-              </div>
-            </section>
-          </>
-        )}
-        {nearbySection === 'tea' && (
-          <section className="space-y-4">
-            <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-5">
-              <div className="flex items-center gap-2 mb-2">
-                <Newspaper className="w-4 h-4 text-[#0D1117]" />
-                <span className="text-[10px] text-[#0D1117]">
-                  Tea
+                <span className="self-start sm:self-auto text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#B8621F]/15 text-[#B8621F]">
+                  47 Counties Active
                 </span>
               </div>
 
-              <h2 className="text-xl font-extrabold">
-                What people are talking about
-              </h2>
-
-              <p className="text-xs text-[#0D1117] mt-1">
-                News, notices and neighbourhood chatter, alongside the
-                directory. Posts link back to the places they are about.
-              </p>
-            </div>
-
-            {/* Ticker (§5.2): a scrolling strip of live topics, each a door. */}
-            <TickerBanner
-              items={objects.slice(0, 12).map((o: any) => ({
-                id: o.id,
-                label: o.title,
-                accent: o.category === 'Offer' || o.category === 'Opportunity' ? 'var(--tea)' : undefined
-              }))}
-              onOpen={(id) => {
-                const obj = objects.find((o: any) => o.id === id);
-                if (obj) setSelectedObjectForDetail(obj);
-              }}
-            />
-
-            {/* Edition switcher */}
-            <div className="flex gap-2 overflow-x-auto no-scrollbar">
-              {TEA_EDITIONS.map(({ edition, label, Icon }) => {
-                const isActive = edition === activeEdition;
-                const count = posts.filter((p: any) => p.edition === edition).length;
-
-                return (
-                  <button
-                    key={edition}
-                    onClick={() => setActiveEdition(edition)}
-                    className={`shrink-0 flex items-center gap-1.5 rounded-full px-3 py-1.5 border transition cursor-pointer ${
-                      isActive
-                        ? 'bg-[#FF5A1F] text-[#0D1117] border-[#2563EB]'
-                        : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC] hover:border-[#2563EB]'
-                    }`}
-                  >
-                    <Icon className="w-3.5 h-3.5 shrink-0" />
-                    <span className="text-[11px] font-extrabold whitespace-nowrap">
-                      {label}
-                    </span>
-                    <span
-                      className={`text-[10px] ${
-                        isActive ? 'text-[#0D1117]/70' : 'text-[#0D1117]/60'
-                      }`}
-                    >
-                      {count}
-                    </span>
-                    {edition === liveEdition && !isActive && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#FF5A1F] shrink-0" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="flex items-center justify-between text-[10px] text-[#0D1117]/60 px-1">
-              <span className="font-extrabold">
-                {getEditionMeta(activeEdition).label}
-              </span>
-              <span>
-                {activeEdition === liveEdition
-                  ? 'Live now'
-                  : getEditionMeta(activeEdition).window}
-              </span>
-            </div>
-
-            {/* Posts */}
-            {editionPosts.map((post: any) => {
-              const kindMeta = getPostKindMeta(post.kind);
-              const subject = objects.find(
-                (item) => item.id === post.relatedObjectId
-              );
-              const isLiked = likedPostIds.includes(post.id);
-
-              return (
-                <article
-                  key={post.id}
-                  className={`bg-[#FFFFFF] border rounded-2xl p-4 ${
-                    post.isPromoted ? 'border-[#2563EB]' : 'border-[#E5E8EC]'
-                  }`}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+                {/* Card 1: Chamas & Table Banking */}
+                <button
+                  type="button"
+                  onClick={() => { soundEngine.play('heavyTap'); setChamaOpen(true); }}
+                  className="p-5 rounded-[20px] bg-[#F7F7F5] hover:bg-white shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group flex flex-col justify-between text-left"
                 >
-                  <div className="flex items-center gap-2 flex-wrap mb-2">
-                    <span
-                      className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full border bg-[#F0F2F5] ${kindMeta.tone}`}
-                    >
-                      {kindMeta.label}
-                    </span>
-
-                    <span className="text-[11px] font-bold text-[#0D1117]">
-                      {post.authorName}
-                    </span>
-
-                    {post.authorIsVerified && (
-                      <ShieldCheck className="w-3 h-3 text-[#0D1117] shrink-0" />
-                    )}
-
-                    <span className="text-[10px] text-[#0D1117]/60">
-                      {getRelativeTime(post.publishedAt)}
-                    </span>
-                  </div>
-
-                  <h3 className="text-sm font-extrabold text-[#0D1117] leading-snug">
-                    {post.title}
-                  </h3>
-
-                  <p className="text-xs text-[#0D1117] mt-1.5 leading-relaxed">
-                    {post.body}
-                  </p>
-
-                  {post.isPromoted && (
-                    <p className="text-[10px] text-[#0D1117] mt-2">
-                      Paid distribution by {post.promotedBy}.
-                    </p>
-                  )}
-
-                  {subject && (
-                    <button
-                      onClick={() => openPostSubject(post)}
-                      className="mt-3 w-full flex items-center gap-2 bg-[#F0F2F5] border border-[#E5E8EC] hover:border-[#2563EB] rounded-xl p-2.5 transition cursor-pointer group text-left"
-                    >
-                      {subject.imageUrl && (
-                        <img
-                          src={subject.imageUrl}
-                          alt=""
-                          className="w-9 h-9 rounded-lg object-cover shrink-0"
-                        />
-                      )}
-
-                      <div className="min-w-0 flex-1">
-                        <div className="text-[9px] text-[#0D1117]/60">
-                          About this {getObjectTypeMeta(subject.type).label}
-                        </div>
-                        <div className="text-[11px] font-extrabold truncate group-hover:text-[#0D1117]">
-                          {subject.title}
-                        </div>
-                      </div>
-
-                      <ArrowRight className="w-3.5 h-3.5 text-[#0D1117] shrink-0" />
-                    </button>
-                  )}
-
-                  <div className="flex items-center gap-4 mt-3 pt-3 border-t border-[#E5E8EC]">
-                    <button
-                      onClick={() => toggleLike(post)}
-                      className={`flex items-center gap-1.5 text-[11px] font-bold cursor-pointer transition ${
-                        isLiked ? 'text-[#0D1117]' : 'text-[#0D1117]/60 hover:text-[#0D1117]'
-                      }`}
-                    >
-                      <Heart
-                        className={`w-3.5 h-3.5 ${isLiked ? 'fill-current' : ''}`}
-                      />
-                      {formatCount(post.reactionsCount + (isLiked ? 1 : 0))}
-                    </button>
-
-                    <span className="flex items-center gap-1.5 text-[11px] font-bold text-[#0D1117]/60">
-                      No discussion yet
-                    </span>
-
-                    {post.tags && post.tags.length > 0 && (
-                      <span className="ml-auto text-[10px] text-[#0D1117]/60 truncate">
-                        {post.tags.map((tag: any) => `#${tag}`).join(' ')}
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl">🌸</span>
+                      <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                        Table Bank
                       </span>
-                    )}
+                    </div>
+                    <h3 className="text-sm font-black text-[#1A1F2E] mt-3 group-hover:text-[#B8621F] transition-colors">
+                      Chamas & Merry-Go-Rounds
+                    </h3>
+                    <p className="text-xs text-[#6B7280] mt-1 leading-relaxed">
+                      Join verified neighborhood savings circles, rotating payouts, and table banking pools.
+                    </p>
                   </div>
-                </article>
-              );
-            })}
+                  <div className="mt-4 pt-3 border-t border-black/[0.04] flex items-center justify-between w-full">
+                    <span className="text-[11px] font-bold text-[#B8621F]">Open Chama Desk →</span>
+                    <span className="text-[10px] text-[#9CA3AF] font-medium">Cycle 5 Live</span>
+                  </div>
+                </button>
 
-            {editionPosts.length === 0 && (
-              <div className="py-16 text-center border border-dashed border-[#E5E8EC] rounded-2xl">
-                <Newspaper className="w-8 h-8 mx-auto mb-3 text-[#0D1117]/60" />
-                <p className="text-sm font-bold">No tea in this edition yet.</p>
+                {/* Card 2: Bulk CBC Textbook & Demand Runs */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundEngine.play('heavyTap');
+                    setActiveCbcBundleId('cbc-g7');
+                    setCbcCheckoutOpen(true);
+                  }}
+                  className="p-5 rounded-[20px] bg-[#F7F7F5] hover:bg-white shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group flex flex-col justify-between text-left"
+                >
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl">📚</span>
+                      <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                        CBC Run
+                      </span>
+                    </div>
+                    <h3 className="text-sm font-black text-[#1A1F2E] mt-3 group-hover:text-[#B8621F] transition-colors">
+                      CBC School Books & Wholesale
+                    </h3>
+                    <p className="text-xs text-[#6B7280] mt-1 leading-relaxed">
+                      Direct textbook and bulk supply orders aggregated at wholesale discount for PTAs & schools.
+                    </p>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-black/[0.04] flex items-center justify-between w-full">
+                    <span className="text-[11px] font-bold text-[#B8621F]">View Bulk Runs →</span>
+                    <span className="text-[10px] text-[#9CA3AF] font-medium">Save 28%</span>
+                  </div>
+                </button>
+
+                {/* Card 3: WAIRO Cargo & Inter-County Gate */}
+                <button
+                  type="button"
+                  onClick={() => { soundEngine.play('heavyTap'); setInterCountyOpen(true); }}
+                  className="p-5 rounded-[20px] bg-[#F7F7F5] hover:bg-white shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group flex flex-col justify-between text-left"
+                >
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl">🚚</span>
+                      <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-800">
+                        47 Counties
+                      </span>
+                    </div>
+                    <h3 className="text-sm font-black text-[#1A1F2E] mt-3 group-hover:text-[#B8621F] transition-colors">
+                      WAIRO Cargo & Logistics Gate
+                    </h3>
+                    <p className="text-xs text-[#6B7280] mt-1 leading-relaxed">
+                      Inter-county parcel booking, direct carrier auctions, and town gate collection.
+                    </p>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-black/[0.04] flex items-center justify-between w-full">
+                    <span className="text-[11px] font-bold text-[#B8621F]">Send / Track Parcel →</span>
+                    <span className="text-[10px] text-[#9CA3AF] font-medium">Door & Stage</span>
+                  </div>
+                </button>
+
+                {/* Card 4: Group Event Touring & Logistics */}
+                <button
+                  type="button"
+                  onClick={() => { soundEngine.play('heavyTap'); setEventLogisticsOpen(true); }}
+                  className="p-5 rounded-[20px] bg-[#F7F7F5] hover:bg-white shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group flex flex-col justify-between text-left"
+                >
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl">🚌</span>
+                      <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+                        Touring Ops
+                      </span>
+                    </div>
+                    <h3 className="text-sm font-black text-[#1A1F2E] mt-3 group-hover:text-[#B8621F] transition-colors">
+                      Choir, Sports & Retreat Charters
+                    </h3>
+                    <p className="text-xs text-[#6B7280] mt-1 leading-relaxed">
+                      Group transport charters, member roster check-ins, and target funding trackers.
+                    </p>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-black/[0.04] flex items-center justify-between w-full">
+                    <span className="text-[11px] font-bold text-[#B8621F]">Coordinate Event →</span>
+                    <span className="text-[10px] text-[#9CA3AF] font-medium">Live Rosters</span>
+                  </div>
+                </button>
+
+                {/* Card 5: Paid Gigs & Local Micro-Work */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundEngine.play('tap');
+                    setSelectedObjectType('opportunity');
+                    setDiscoveryTab('opportunities');
+                  }}
+                  className="p-5 rounded-[20px] bg-[#F7F7F5] hover:bg-white shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group flex flex-col justify-between text-left"
+                >
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl">💼</span>
+                      <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                        Micro-Work
+                      </span>
+                    </div>
+                    <h3 className="text-sm font-black text-[#1A1F2E] mt-3 group-hover:text-[#B8621F] transition-colors">
+                      Local Verified Gigs
+                    </h3>
+                    <p className="text-xs text-[#6B7280] mt-1 leading-relaxed">
+                      Handyman tasks, inventory counters, event ushers, and local tutoring assignments.
+                    </p>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-black/[0.04] flex items-center justify-between w-full">
+                    <span className="text-[11px] font-bold text-[#B8621F]">Browse Gigs →</span>
+                    <span className="text-[10px] text-[#9CA3AF] font-medium">Daily Payouts</span>
+                  </div>
+                </button>
+
+                {/* Card 6: Creator Partner Program */}
+                <button
+                  type="button"
+                  onClick={() => { soundEngine.play('heavyTap'); setCreatorDeskOpen(true); }}
+                  className="p-5 rounded-[20px] bg-[#F7F7F5] hover:bg-white shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group flex flex-col justify-between text-left"
+                >
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl">🏅</span>
+                      <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                        15% Net Cut
+                      </span>
+                    </div>
+                    <h3 className="text-sm font-black text-[#1A1F2E] mt-3 group-hover:text-[#B8621F] transition-colors">
+                      Creator Partner Program
+                    </h3>
+                    <p className="text-xs text-[#6B7280] mt-1 leading-relaxed">
+                      Earn 15% net commission on every bulk supply run, ticket sale, and cargo run for your community.
+                    </p>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-black/[0.04] flex items-center justify-between w-full">
+                    <span className="text-[11px] font-bold text-[#B8621F]">Open Creator Desk →</span>
+                    <span className="text-[10px] text-[#9CA3AF] font-medium">Instant Ledger</span>
+                  </div>
+                </button>
               </div>
-            )}
-
-            {/* ── 2x2 DISCOVERY SECTION (TASK 8) ── */}
-            <div className="mt-8 border-t border-black/5 pt-4">
-              <DiscoverSection onSelectPost={(p) => showToast(`Selected "${p.title}"`)} />
             </div>
           </section>
-        )}
-        {nearbySection === 'quests' && (
-          <Quests
-            quests={quests}
-            boardMode={boardMode}
-            setBoardMode={setBoardMode}
-            handleSubmitQuest={handleSubmitQuest}
-            setActiveTab={setActiveTab}
-          />
-        )}
-        {nearbySection === 'events' && (
-          <div className="max-w-3xl mx-auto px-4 py-6">
-            <EventsHub />
-          </div>
-        )}
-        {nearbySection === 'market' && (
-          <div className="max-w-3xl mx-auto px-4 py-6">
-            <Marketplace />
-          </div>
-        )}
-        {nearbySection === 'mshikano' && (
-          <MshikanoDesk />
-        )}
-        {nearbySection === 'today' && (
-          <div className="space-y-4">
-            <div>
-              <h2 className="text-lg font-extrabold text-[#0D1117]">Today</h2>
-              <p className="text-[11px] text-[#0D1117]/60 leading-snug mt-1">
-                Only what relates to your pursuits, saved and watched things.
-              </p>
+        </div>
+      )}
+
+      {/* ================= TEA SECTION ================= */}
+      {nearbySection === 'tea' && (
+        <section className="max-w-4xl mx-auto px-3 py-4 space-y-4">
+          <div className="bg-white rounded-2xl p-5 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <Newspaper className="w-4 h-4 text-[#1A1F2E]" />
+              <span className="text-[10px] font-black uppercase tracking-wider text-[#1A1F2E]/60">
+                Tea
+              </span>
             </div>
 
-            {dailyBrief.length === 0 && (
-              <div className="border border-dashed border-[#E5E8EC] rounded-2xl p-8 text-center">
-                <p className="text-xs text-[#0D1117]/60">Nothing to report.</p>
-                <p className="text-[10px] text-[#0D1117]/60 mt-1">
-                  Save something, or start a pursuit, and this fills itself in.
-                </p>
-              </div>
-            )}
+            <h2 className="text-xl font-black text-[#1A1F2E]">
+              What people are talking about
+            </h2>
 
-            {dailyBrief.map((section: any) => (
-              <div key={section.key} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-[11px] font-extrabold text-[#0D1117]">
-                    {section.title}
-                  </h3>
-                  <span className="text-[10px] text-[#0D1117]/60">
-                    {section.objects.length + section.pursuits.length}
+            <p className="text-xs text-[#6B7280] mt-1">
+              News, notices and neighbourhood chatter, alongside the directory. Posts link back to the places they are about.
+            </p>
+          </div>
+
+          <TickerBanner
+            items={objects.slice(0, 12).map((o: any) => ({
+              id: o.id,
+              label: o.title,
+              accent: o.category === 'Offer' || o.category === 'Opportunity' ? 'var(--tea)' : undefined
+            }))}
+            onOpen={(id) => {
+              const obj = objects.find((o: any) => o.id === id);
+              if (obj) setSelectedObjectForDetail(obj);
+            }}
+          />
+
+          {/* Edition switcher */}
+          <div className="flex gap-2 overflow-x-auto no-scrollbar">
+            {TEA_EDITIONS.map(({ edition, label, Icon }) => {
+              const isActive = edition === activeEdition;
+              const count = posts.filter((p: any) => p.edition === edition).length;
+
+              return (
+                <button
+                  key={edition}
+                  onClick={() => {
+                    soundEngine.play('tap');
+                    setActiveEdition(edition);
+                  }}
+                  className={`shrink-0 flex items-center gap-1.5 rounded-full px-3.5 py-1.5 transition cursor-pointer ${
+                    isActive
+                      ? 'bg-[#1A1F2E] text-white shadow-sm font-bold'
+                      : 'bg-white text-[#1A1F2E]/70 hover:bg-[#F0EDE8]'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5 shrink-0" />
+                  <span className="text-[11px] font-bold whitespace-nowrap">
+                    {label}
+                  </span>
+                  <span className="text-[10px] opacity-70">
+                    {count}
+                  </span>
+                  {edition === liveEdition && !isActive && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#B8621F] shrink-0" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center justify-between text-[10px] text-[#6B7280] px-1">
+            <span className="font-bold">
+              {getEditionMeta(activeEdition).label}
+            </span>
+            <span>
+              {activeEdition === liveEdition
+                ? 'Live now'
+                : getEditionMeta(activeEdition).window}
+            </span>
+          </div>
+
+          {/* Posts */}
+          {editionPosts.map((post: any) => {
+            const kindMeta = getPostKindMeta(post.kind);
+            const subject = objects.find(
+              (item) => item.id === post.relatedObjectId
+            );
+            const isLiked = likedPostIds.includes(post.id);
+
+            return (
+              <article
+                key={post.id}
+                className="bg-white rounded-2xl p-4 shadow-sm"
+              >
+                <div className="flex items-center gap-2 flex-wrap mb-2">
+                  <span
+                    className={`text-[9px] font-black px-2 py-0.5 rounded-full bg-[#F0EDE8] ${kindMeta.tone}`}
+                  >
+                    {kindMeta.label}
+                  </span>
+
+                  <span className="text-[11px] font-bold text-[#1A1F2E]">
+                    {post.authorName}
+                  </span>
+
+                  {post.authorIsVerified && (
+                    <ShieldCheck className="w-3 h-3 text-[#10B981] shrink-0" />
+                  )}
+
+                  <span className="text-[10px] text-[#6B7280]">
+                    {getRelativeTime(post.publishedAt)}
                   </span>
                 </div>
 
-                {section.objects.map((obj: any) => (
+                <h3 className="text-sm font-bold text-[#1A1F2E] leading-snug">
+                  {post.title}
+                </h3>
+
+                <p className="text-xs text-[#4B5563] mt-1.5 leading-relaxed">
+                  {post.body}
+                </p>
+
+                {subject && (
                   <button
-                    key={obj.id}
-                    onClick={() => setSelectedObjectForDetail(obj)}
-                    className="w-full text-left bg-[#FFFFFF] border border-[#E5E8EC] hover:border-[#E5E8EC] rounded-xl p-3 cursor-pointer transition"
+                    onClick={() => openPostSubject(post)}
+                    className="mt-3 w-full flex items-center gap-2 bg-[#F7F7F5] hover:bg-[#F0EDE8] rounded-xl p-2.5 transition cursor-pointer group text-left"
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[9px] text-[#0D1117]/60">
-                        {getObjectTypeMeta(obj.type).label}
-                      </span>
-                      {getDistanceLabel(obj) && (
-                        <span className="text-[9px] text-[#0D1117]/60">
-                          {getDistanceLabel(obj)}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[12px] font-bold text-[#0D1117] leading-snug mt-0.5">
-                      {obj.title}
-                    </p>
-                    {obj.metadata?.statusBadge && (
-                      <p className="text-[10px] text-[#0D1117] mt-0.5">
-                        {obj.metadata.statusBadge}
-                      </p>
+                    {subject.imageUrl && (
+                      <img
+                        src={subject.imageUrl}
+                        alt=""
+                        className="w-9 h-9 rounded-lg object-cover shrink-0"
+                      />
                     )}
-                  </button>
-                ))}
 
-                {section.pursuits.map((pursuit: any) => (
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[9px] text-[#6B7280]">
+                        About this {getObjectTypeMeta(subject.type).label}
+                      </div>
+                      <div className="text-[11px] font-bold truncate group-hover:text-[#B8621F]">
+                        {subject.title}
+                      </div>
+                    </div>
+
+                    <ArrowRight className="w-3.5 h-3.5 text-[#6B7280] shrink-0" />
+                  </button>
+                )}
+
+                <div className="flex items-center gap-4 mt-3 pt-3 border-t border-black/[0.04]">
                   <button
-                    key={pursuit.id}
-                    onClick={() => { setActiveTab('nearby'); setNearbySection('pursuits'); }}
-                    className="w-full text-left bg-[#FFFFFF] border border-[#E5E8EC] rounded-xl p-3 cursor-pointer"
+                    onClick={() => toggleLike(post)}
+                    className={`flex items-center gap-1.5 text-[11px] font-bold cursor-pointer transition ${
+                      isLiked ? 'text-rose-600' : 'text-[#6B7280] hover:text-[#1A1F2E]'
+                    }`}
                   >
-                    <p className="text-[11px] text-[#0D1117]/60">{pursuit.query}</p>
-                    <p className="text-[9px] text-[#0D1117]/60 mt-0.5">
-                      Nothing useful yet. Brief is still looking.
-                    </p>
+                    <Heart
+                      className={`w-3.5 h-3.5 ${isLiked ? 'fill-current text-rose-600' : ''}`}
+                    />
+                    {formatCount(post.reactionsCount + (isLiked ? 1 : 0))}
                   </button>
-                ))}
+
+                  <span className="flex items-center gap-1.5 text-[11px] font-medium text-[#6B7280]">
+                    No discussion yet
+                  </span>
+                </div>
+              </article>
+            );
+          })}
+
+          {editionPosts.length === 0 && (
+            <div className="py-16 text-center bg-white rounded-2xl shadow-sm">
+              <Newspaper className="w-8 h-8 mx-auto mb-3 text-[#6B7280]" />
+              <p className="text-sm font-bold text-[#1A1F2E]">No tea in this edition yet.</p>
+            </div>
+          )}
+
+          <div className="mt-8 border-t border-black/5 pt-4">
+            <DiscoverSection onSelectPost={(p) => showToast(`Selected "${p.title}"`)} />
+          </div>
+        </section>
+      )}
+
+      {/* ================= QUESTS SECTION ================= */}
+      {nearbySection === 'quests' && (
+        <Quests
+          quests={quests}
+          boardMode={boardMode}
+          setBoardMode={setBoardMode}
+          handleSubmitQuest={handleSubmitQuest}
+          setActiveTab={setActiveTab}
+        />
+      )}
+
+      {/* ================= EVENTS SECTION ================= */}
+      {nearbySection === 'events' && (
+        <div className="max-w-3xl mx-auto px-4 py-6">
+          <EventsHub />
+        </div>
+      )}
+
+      {/* ================= MARKETPLACE SECTION ================= */}
+      {nearbySection === 'market' && (
+        <div className="max-w-3xl mx-auto px-4 py-6">
+          <Marketplace />
+        </div>
+      )}
+
+      {/* ================= MSHIKANO SECTION ================= */}
+      {nearbySection === 'mshikano' && (
+        <MshikanoDesk />
+      )}
+
+      {/* ================= TODAY SECTION ================= */}
+      {nearbySection === 'today' && (
+        <div className="max-w-4xl mx-auto px-3 py-4 space-y-4">
+          <div className="bg-white rounded-2xl p-5 shadow-sm">
+            <h2 className="text-lg font-black text-[#1A1F2E]">Today</h2>
+            <p className="text-[11px] text-[#6B7280] leading-snug mt-1">
+              Only what relates to your pursuits, saved and watched things.
+            </p>
+          </div>
+
+          {dailyBrief.length === 0 && (
+            <div className="bg-white rounded-2xl p-8 text-center shadow-sm">
+              <div className="w-10 h-10 rounded-full bg-[#F0EDE8] text-[#B8621F] flex items-center justify-center mx-auto mb-2">
+                <Bookmark className="w-5 h-5" />
               </div>
-            ))}
-          </div>
-        )}
-        {nearbySection === 'pursuits' && (
-          <Pursuits
-            pursuits={pursuits}
-            pursuitResults={pursuitResults}
-            pursuitDraft={pursuitDraft}
-            setPursuitDraft={setPursuitDraft}
-            handleCreatePursuit={handleCreatePursuit}
-            handleRemovePursuit={handleRemovePursuit}
-            handleSetPursuitStatus={handleSetPursuitStatus}
-            handleTogglePursuitWatch={handleTogglePursuitWatch}
-            handleTogglePursuitCondition={handleTogglePursuitCondition}
-            setSelectedObjectForDetail={setSelectedObjectForDetail}
-          />
-        )}
-
-        {/* ================= MODAL: LIFE-EVENTS COMMITTEE HUB ================= */}
-        {committeeOpen && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-            <div className="w-full max-w-2xl my-auto">
-              <CommitteeDesk
-                onClose={() => setCommitteeOpen(false)}
-                onOpenVendor={(vendor) => {
-                  setCommitteeOpen(false);
-                  showToast(`Opening ${vendor} profile in town directory`);
-                }}
-              />
+              <p className="text-xs font-bold text-[#1A1F2E]">Nothing to report yet.</p>
+              <p className="text-[10px] text-[#6B7280] mt-1">
+                Save something, or start a pursuit, and this fills itself in.
+              </p>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* ================= MODAL: CHAMA & TABLE BANKING HUB ================= */}
-        {chamaOpen && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-            <div className="w-full max-w-2xl my-auto">
-              <ChamaDesk
-                onClose={() => setChamaOpen(false)}
-                onOpenCircle={() => {
-                  setChamaOpen(false);
-                  showToast('Opening Chama circle details');
-                }}
-              />
+          {dailyBrief.map((section: any) => (
+            <div key={section.key} className="space-y-2">
+              <div className="flex items-center justify-between px-1">
+                <h3 className="text-[11px] font-black uppercase tracking-wider text-[#1A1F2E]">
+                  {section.title}
+                </h3>
+                <span className="text-[10px] font-bold text-[#6B7280]">
+                  {section.objects.length + section.pursuits.length}
+                </span>
+              </div>
+
+              {section.objects.map((obj: any) => (
+                <button
+                  key={obj.id}
+                  onClick={() => setSelectedObjectForDetail(obj)}
+                  className="w-full text-left bg-white rounded-xl p-3.5 cursor-pointer shadow-sm hover:shadow-md transition-all"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-[#B8621F]">
+                      {getObjectTypeMeta(obj.type).label}
+                    </span>
+                    {getDistanceLabel(obj) && (
+                      <span className="text-[9px] text-[#6B7280]">
+                        {getDistanceLabel(obj)}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[12px] font-bold text-[#1A1F2E] leading-snug mt-0.5">
+                    {obj.title}
+                  </p>
+                </button>
+              ))}
+
+              {section.pursuits.map((pursuit: any) => (
+                <button
+                  key={pursuit.id}
+                  onClick={() => { setActiveTab('nearby'); setNearbySection('pursuits'); }}
+                  className="w-full text-left bg-white rounded-xl p-3.5 cursor-pointer shadow-sm hover:shadow-md transition-all"
+                >
+                  <p className="text-[11px] font-bold text-[#1A1F2E]">{pursuit.query}</p>
+                  <p className="text-[9px] text-[#6B7280] mt-0.5">
+                    Brief is actively matching signals in {activeNeighborhood.name}…
+                  </p>
+                </button>
+              ))}
             </div>
+          ))}
+        </div>
+      )}
+
+      {/* ================= PURSUITS SECTION ================= */}
+      {nearbySection === 'pursuits' && (
+        <Pursuits
+          pursuits={pursuits}
+          pursuitResults={pursuitResults}
+          pursuitDraft={pursuitDraft}
+          setPursuitDraft={setPursuitDraft}
+          handleCreatePursuit={handleCreatePursuit}
+          handleRemovePursuit={handleRemovePursuit}
+          handleSetPursuitStatus={handleSetPursuitStatus}
+          handleTogglePursuitWatch={handleTogglePursuitWatch}
+          handleTogglePursuitCondition={handleTogglePursuitCondition}
+          setSelectedObjectForDetail={setSelectedObjectForDetail}
+        />
+      )}
+
+      {/* ================= WAIRO MINI APP MODAL (ERRANDS / RUNNER SUITE) ================= */}
+      {wairoMiniAppOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-fadeIn">
+          <div className="relative w-full max-w-lg h-[88vh] rounded-[32px] overflow-hidden bg-white shadow-2xl flex flex-col">
+            <button
+              type="button"
+              onClick={() => {
+                soundEngine.play('tap');
+                setWairoMiniAppOpen(false);
+              }}
+              className="absolute top-3 right-3 z-50 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center cursor-pointer hover:bg-black transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <WairoMiniApp
+              onOpenTelemetry={() => setIsTelemetryOpen(true)}
+              onOpenLocationModal={() => setIsLocationModalOpen(true)}
+              onOpenDispatchModal={() => setIsDispatchModalOpen(true)}
+              onOpenSDKModal={() => setIsSDKModalOpen(true)}
+              onOpenUssdSim={() => setIsUssdOpen(true)}
+              onOpenInterCounty={() => {
+                setWairoMiniAppOpen(false);
+                setInterCountyOpen(true);
+              }}
+              onOpenCarrierAuction={() => {
+                setWairoMiniAppOpen(false);
+                setCarrierAuctionOpen(true);
+              }}
+              onOpenOfflineSync={() => {
+                setWairoMiniAppOpen(false);
+                setOfflineSyncOpen(true);
+              }}
+              selectedLocation={wairoLocation}
+              activeDelivery={wairoDelivery}
+            />
           </div>
-        )}
+        </div>
+      )}
 
-        {/* ================= MODAL: EMOTIONAL WELLBEING HUB ================= */}
-        {wellbeingOpen && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-            <div className="w-full max-w-2xl my-auto">
-              <WellbeingDesk
-                onClose={() => setWellbeingOpen(false)}
-                onBookTherapist={(doc) => {
-                  showToast(`Booking request sent to ${doc}`);
-                }}
-              />
-            </div>
+      {/* ================= WAIRO SUB-MODALS ================= */}
+      <LiveTelemetryModal 
+        isOpen={isTelemetryOpen} 
+        onClose={() => setIsTelemetryOpen(false)}
+        activeDelivery={wairoDelivery}
+        selectedLocation={wairoLocation}
+      />
+
+      <LocationModal 
+        isOpen={isLocationModalOpen}
+        onClose={() => setIsLocationModalOpen(false)}
+        selectedLocation={wairoLocation}
+        onSelectLocation={(loc) => {
+          setWairoLocation(loc);
+          setWairoDelivery(prev => ({
+            ...prev,
+            destination: loc.fullName,
+            locationId: loc.id,
+            etaMinutes: loc.etaMins
+          }));
+        }}
+      />
+
+      <DispatchModal 
+        isOpen={isDispatchModalOpen}
+        onClose={() => setIsDispatchModalOpen(false)}
+        onDispatchSuccess={(newOrder) => {
+          setWairoDelivery(newOrder);
+          const found = LOCATIONS.find(l => l.id === newOrder.locationId);
+          if (found) setWairoLocation(found);
+        }}
+        currentLocation={wairoLocation}
+      />
+
+      <EmbedSDKModal 
+        isOpen={isSDKModalOpen}
+        onClose={() => setIsSDKModalOpen(false)}
+      />
+
+      {isUssdOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="w-full max-w-3xl my-auto">
+            <UssdSimulatorDesk onClose={() => setIsUssdOpen(false)} />
           </div>
-        )}
+        </div>
+      )}
 
-        {/* ================= MODAL: INTER-COUNTY CARGO & TRAVELER MATCHING ================= */}
-        {interCountyOpen && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-            <div className="w-full max-w-3xl my-auto">
-              <InterCountyDesk
-                onClose={() => setInterCountyOpen(false)}
-                onBookingComplete={(bkg) => {
-                  showToast(`Cargo booking ${bkg.id} placed! Escrow secured via M-Pesa.`);
-                }}
-              />
-            </div>
+      {/* ================= MODAL: LIFE-EVENTS COMMITTEE HUB ================= */}
+      {committeeOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="w-full max-w-2xl my-auto">
+            <CommitteeDesk
+              onClose={() => setCommitteeOpen(false)}
+              onOpenVendor={(vendor) => {
+                setCommitteeOpen(false);
+                showToast(`Opening ${vendor} profile in town directory`);
+              }}
+            />
           </div>
-        )}
+        </div>
+      )}
 
-        {/* ================= MODAL: PRIVATE CARRIER REVERSE AUCTION ================= */}
-        {carrierAuctionOpen && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-            <div className="w-full max-w-3xl my-auto">
-              <PrivateCarrierAuctionDesk
-                onClose={() => setCarrierAuctionOpen(false)}
-                onDispatchSelected={(carrier) => {
-                  showToast(`Assigned ${carrier.carrierName} for KES ${carrier.bidPriceKes}`);
-                }}
-              />
-            </div>
+      {/* ================= MODAL: CHAMA & TABLE BANKING HUB ================= */}
+      {chamaOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="w-full max-w-2xl my-auto">
+            <ChamaDesk
+              onClose={() => setChamaOpen(false)}
+              onOpenCircle={() => {
+                setChamaOpen(false);
+                showToast('Opening Chama circle details');
+              }}
+            />
           </div>
-        )}
+        </div>
+      )}
 
-        {/* ================= MODAL: OFFLINE PWA INDEXEDDB SYNC ================= */}
-        {offlineSyncOpen && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-            <div className="w-full max-w-3xl my-auto">
-              <OfflineSyncQueueDesk
-                onClose={() => setOfflineSyncOpen(false)}
-                onActionSynced={(act) => {
-                  showToast(`Reconciled offline mutation ${act.title}`);
-                }}
-              />
-            </div>
+      {/* ================= MODAL: EMOTIONAL WELLBEING HUB ================= */}
+      {wellbeingOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="w-full max-w-2xl my-auto">
+            <WellbeingDesk
+              onClose={() => setWellbeingOpen(false)}
+              onBookTherapist={(doc) => {
+                showToast(`Booking request sent to ${doc}`);
+              }}
+            />
           </div>
-        )}
+        </div>
+      )}
 
-        {/* ================= MODAL: 3D DISCOVER VIEW ================= */}
-        {discoverViewOpen && (
-          <div className="fixed inset-0 z-50 bg-[#F0EDE8] overflow-y-auto animate-fadeIn">
-            <div className="sticky top-3 left-3 z-50 p-3">
-              <button
-                type="button"
-                onClick={() => { soundEngine.play('tap'); setDiscoverViewOpen(false); }}
-                className="px-3.5 py-1.5 rounded-full bg-[#1A1F2E] text-white text-xs font-bold shadow-xl flex items-center space-x-1.5 cursor-pointer hover:bg-black transition-colors"
-              >
-                <X className="w-4 h-4" />
-                <span>Exit Discover</span>
-              </button>
-            </div>
-            <DiscoverScreen />
+      {/* ================= MODAL: INTER-COUNTY CARGO & TRAVELER MATCHING ================= */}
+      {interCountyOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="w-full max-w-3xl my-auto">
+            <InterCountyDesk
+              onClose={() => setInterCountyOpen(false)}
+              onBookingComplete={(bkg) => {
+                showToast(`Cargo booking ${bkg.id} placed! Escrow secured via M-Pesa.`);
+              }}
+            />
           </div>
-        )}
+        </div>
+      )}
 
-        {/* ================= MODAL: UNIVERSAL CREATE POST ================= */}
-        {createPostModalOpen && (
-          <UniversalCreatePostModal
-            isOpen={createPostModalOpen}
-            onClose={() => setCreatePostModalOpen(false)}
-            onPostCreated={(post) => {
-              showToast(`Published ${post.type.toUpperCase()}: "${post.title}"`);
-            }}
-          />
-        )}
+      {/* ================= MODAL: PRIVATE CARRIER REVERSE AUCTION ================= */}
+      {carrierAuctionOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="w-full max-w-3xl my-auto">
+            <PrivateCarrierAuctionDesk
+              onClose={() => setCarrierAuctionOpen(false)}
+              onDispatchSelected={(carrier) => {
+                showToast(`Assigned ${carrier.carrierName} for KES ${carrier.bidPriceKes}`);
+              }}
+            />
+          </div>
+        </div>
+      )}
 
-        {/* ================= MODAL: NEIGHBORHOOD PICKER (WEEK 2) ================= */}
-        <NeighborhoodPickerModal
-          isOpen={isNeighborhoodPickerOpen}
-          selectedId={activeNeighborhood.id}
-          onSelect={(nh: Neighborhood) => {
-            setActiveNeighborhood(nh);
-            setPrimaryNeighborhood(nh.id);
-            showToast(`Neighborhood updated to ${nh.name}`);
+      {/* ================= MODAL: OFFLINE PWA INDEXEDDB SYNC ================= */}
+      {offlineSyncOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="w-full max-w-3xl my-auto">
+            <OfflineSyncQueueDesk
+              onClose={() => setOfflineSyncOpen(false)}
+              onActionSynced={(act) => {
+                showToast(`Reconciled offline mutation ${act.title}`);
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: 3D DISCOVER VIEW ================= */}
+      {discoverViewOpen && (
+        <div className="fixed inset-0 z-50 bg-[#F0EDE8] overflow-y-auto animate-fadeIn">
+          <div className="sticky top-3 left-3 z-50 p-3">
+            <button
+              type="button"
+              onClick={() => { soundEngine.play('tap'); setDiscoverViewOpen(false); }}
+              className="px-3.5 py-1.5 rounded-full bg-[#1A1F2E] text-white text-xs font-bold shadow-xl flex items-center space-x-1.5 cursor-pointer hover:bg-black transition-colors"
+            >
+              <X className="w-4 h-4" />
+              <span>Exit Discover</span>
+            </button>
+          </div>
+          <DiscoverScreen />
+        </div>
+      )}
+
+      {/* ================= MODAL: UNIVERSAL CREATE POST ================= */}
+      {createPostModalOpen && (
+        <UniversalCreatePostModal
+          isOpen={createPostModalOpen}
+          onClose={() => setCreatePostModalOpen(false)}
+          onPostCreated={(post) => {
+            showToast(`Published ${post.type.toUpperCase()}: "${post.title}"`);
           }}
-          onClose={() => setIsNeighborhoodPickerOpen(false)}
         />
+      )}
 
-        {/* ================= MODAL: COMMUNITY CHAMPION (WEEK 2) ================= */}
-        <CommunityChampionModal
-          isOpen={isChampionModalOpen}
-          neighborhood={activeNeighborhood}
-          onClose={() => setIsChampionModalOpen(false)}
-          onCallChampion={(phone: string) => showToast(`Calling ${activeNeighborhood.champion.name} (${phone})`)}
-          onVouchRider={() => showToast(`Vouch form opened for ${activeNeighborhood.name}`)}
+      {/* ================= MODAL: NEIGHBORHOOD PICKER ================= */}
+      <NeighborhoodPickerModal
+        isOpen={isNeighborhoodPickerOpen}
+        selectedId={activeNeighborhood.id}
+        onSelect={(nh: Neighborhood) => {
+          setActiveNeighborhood(nh);
+          setPrimaryNeighborhood(nh.id);
+          showToast(`Neighborhood updated to ${nh.name}`);
+        }}
+        onClose={() => setIsNeighborhoodPickerOpen(false)}
+      />
+
+      {/* ================= MODAL: COMMUNITY CHAMPION ================= */}
+      <CommunityChampionModal
+        isOpen={isChampionModalOpen}
+        neighborhood={activeNeighborhood}
+        onClose={() => setIsChampionModalOpen(false)}
+        onCallChampion={(phone: string) => showToast(`Calling ${activeNeighborhood.champion.name} (${phone})`)}
+        onVouchRider={() => showToast(`Vouch form opened for ${activeNeighborhood.name}`)}
+      />
+
+      {/* ================= MODAL: GROUP DEMAND RUNS ================= */}
+      {demandRunOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="w-full max-w-3xl my-auto">
+            <GroupDemandRunDesk
+              onClose={() => setDemandRunOpen(false)}
+              onPledgeRun={(runId, qty) => {
+                showToast(`Pledged ${qty} bundle(s) on bulk run ${runId}`);
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: GROUP EVENT LOGISTICS ================= */}
+      {eventLogisticsOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="w-full max-w-3xl my-auto">
+            <GroupEventLogisticsDesk
+              onClose={() => setEventLogisticsOpen(false)}
+              onContributeBudget={(evtId, amt) => {
+                showToast(`Contributed KES ${amt.toLocaleString()} to group event pool`);
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: CREATOR PARTNER DESK ================= */}
+      {creatorDeskOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="w-full max-w-3xl my-auto">
+            <CreatorPartnerDesk
+              onClose={() => setCreatorDeskOpen(false)}
+              onShareLink={(code) => {
+                showToast(`Attribution code ${code} generated`);
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: 1-CLICK CBC TEXTBOOK BUNDLE CHECKOUT ================= */}
+      {cbcCheckoutOpen && (
+        <CBCTextbookBundleCheckoutModal
+          isOpen={cbcCheckoutOpen}
+          initialBundleId={activeCbcBundleId}
+          onClose={() => setCbcCheckoutOpen(false)}
+          onOrderSuccess={(order) => {
+            showToast(`Confirmed ${order.grade} Textbooks order! Waybill: ${order.wairoTrackingCode}`);
+          }}
         />
-
-        {/* ================= MODAL: GROUP DEMAND RUNS (INSTITUTIONAL / PTA GOODS) ================= */}
-        {demandRunOpen && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-            <div className="w-full max-w-3xl my-auto">
-              <GroupDemandRunDesk
-                onClose={() => setDemandRunOpen(false)}
-                onPledgeRun={(runId, qty) => {
-                  showToast(`Pledged ${qty} bundle(s) on bulk run ${runId}`);
-                }}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* ================= MODAL: GROUP EVENT LOGISTICS (CHOIR, RETREAT, SPORTS) ================= */}
-        {eventLogisticsOpen && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-            <div className="w-full max-w-3xl my-auto">
-              <GroupEventLogisticsDesk
-                onClose={() => setEventLogisticsOpen(false)}
-                onContributeBudget={(evtId, amt) => {
-                  showToast(`Contributed KES ${amt.toLocaleString()} to group event pool`);
-                }}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* ================= MODAL: CREATOR PARTNER DESK ================= */}
-        {creatorDeskOpen && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-            <div className="w-full max-w-3xl my-auto">
-              <CreatorPartnerDesk
-                onClose={() => setCreatorDeskOpen(false)}
-                onShareLink={(code) => {
-                  showToast(`Attribution code ${code} generated`);
-                }}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* ================= MODAL: 1-CLICK CBC TEXTBOOK BUNDLE CHECKOUT ================= */}
-        {cbcCheckoutOpen && (
-          <CBCTextbookBundleCheckoutModal
-            isOpen={cbcCheckoutOpen}
-            initialBundleId={activeCbcBundleId}
-            onClose={() => setCbcCheckoutOpen(false)}
-            onOrderSuccess={(order) => {
-              showToast(`Confirmed ${order.grade} Textbooks order! Waybill: ${order.wairoTrackingCode}`);
-            }}
-          />
-        )}
+      )}
     </>
   );
 }
