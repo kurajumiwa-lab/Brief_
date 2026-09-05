@@ -550,7 +550,16 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
 
   const feed = state.feed;
   if (!feed) {
-    return <WireSection />;
+    return (
+      <div
+        className="mx-1 rounded-2xl p-6 text-center shadow-sm"
+        style={{ background: T.surface }}
+      >
+        <p className="text-xs" style={{ color: T.muted }}>
+          No updates for this shelf.
+        </p>
+      </div>
+    );
   }
 
   const all = [...(feed.hero ?? []), ...(feed.discovery ?? []), ...(feed.opportunities ?? []), ...(feed.more ?? [])];
@@ -576,42 +585,38 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
     // Honest emptiness, scoped to what the person actually asked for: the
     // filter, the place, the category. Never invent rows to fill the space
     // (the no-fake-live-data rule).
-    const EmptyIcon = type === 'news' ? Newspaper
-      : type === 'offer' || type === 'opportunity' ? Tag
-        : type === 'place' ? MapPin
-          : type === 'experience' || type === 'event' ? CalendarDays
-            : type === 'alert' ? Megaphone
-              : Info;
+    const EmptyIcon = type === 'offer' || type === 'opportunity' ? Tag
+      : type === 'place' ? MapPin
+        : type === 'experience' || type === 'event' ? CalendarDays
+          : type === 'alert' ? Megaphone
+            : Info;
     const EmptyTitle = type
       ? `No ${TYPE_LABELS[type]?.toLowerCase() ?? 'items'} in ${area ?? 'this area'} yet`
       : area
         ? `Nothing new in ${area} yet`
         : 'Nothing here yet';
     const EmptyBody = area
-      ? 'When people around here publish events, offers, news and openings, they will appear in this feed. Nothing is hidden — there is simply no real data for this place yet.'
+      ? 'When people around here publish events, offers, gigs, and community runs, they will appear in this feed. Nothing is hidden — there is simply no real data for this place yet.'
       : type
         ? `This category only shows real published content. When the first ${TYPE_LABELS[type]?.toLowerCase() ?? 'item'} arrives in ${area ?? 'this area'}, it will appear here.`
-        : 'This feed fills with what people publish around you: events, offers, news, places and alerts. It is empty because nothing has been published yet — not because something failed.';
+        : 'This feed fills with what people publish around you: events, offers, gigs, places and alerts. It is empty because nothing has been published yet — not because something failed.';
     return (
-      <>
-        <WireSection />
-        <section
-          aria-label={`No ${type ?? 'content'} in ${area ?? 'this area'}`}
-          className="mx-1 rounded-2xl border p-6 text-center"
-          style={{ borderColor: T.line, background: T.surface }}
-        >
-          <EmptyIcon className="mx-auto h-7 w-7" style={{ color: T.muted }} aria-hidden="true" />
-          <h2 className="mt-3 text-base font-semibold" style={{ color: T.ink }}>{EmptyTitle}</h2>
-          <p className="mx-auto mt-2 max-w-sm text-[12px] leading-relaxed" style={{ color: T.muted }}>
-            {EmptyBody}
+      <section
+        aria-label={`No ${type ?? 'content'} in ${area ?? 'this area'}`}
+        className="mx-1 rounded-2xl p-6 text-center shadow-sm"
+        style={{ background: T.surface }}
+      >
+        <EmptyIcon className="mx-auto h-7 w-7" style={{ color: T.muted }} aria-hidden="true" />
+        <h2 className="mt-3 text-base font-bold" style={{ color: T.ink }}>{EmptyTitle}</h2>
+        <p className="mx-auto mt-2 max-w-sm text-[12px] leading-relaxed" style={{ color: T.muted }}>
+          {EmptyBody}
+        </p>
+        {(area || geo) && (
+          <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: T.muted }}>
+            Try another location
           </p>
-          {(area || geo) && (
-            <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: T.muted }}>
-              Try another location
-            </p>
-          )}
-        </section>
-      </>
+        )}
+      </section>
     );
   }
 
