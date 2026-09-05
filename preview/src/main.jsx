@@ -3,6 +3,7 @@ import './ui/theme.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App, { PublicCampaignPage, campaignSlugFromPath } from './App.tsx';
+import { AppShell } from './app/AppShell.tsx';
 import { flushOfflineQueue } from './api/briefApi.ts';
 
 // A shared campaign link opens the public page. Everything else goes straight
@@ -43,7 +44,7 @@ installOfflineFlush();
 
 function Root() {
   if (slug) return <PublicCampaignPage slug={slug} />;
-  return <App />;
+  return <AppShell />;
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
