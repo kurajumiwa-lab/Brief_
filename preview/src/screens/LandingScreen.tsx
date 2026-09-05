@@ -38,7 +38,14 @@ import {
   ShelfRow,
   ShelfPlank,
   DarkShelfBookCard,
-  CBCTextbookBundleCheckoutModal
+  CBCTextbookBundleCheckoutModal,
+  OptimizelyHeroSection,
+  AnnouncementPinkBanner,
+  TrustedPartnerRibbon,
+  PartnerPill,
+  AgenticFeatureGrid,
+  AgenticCalloutBanner,
+  IntegrationsStackSection
 } from '../components/ui';
 import { AppPalette } from '../styles/appPalette';
 import { WairoMiniApp } from '../components/wairo/WairoMiniApp';
@@ -227,6 +234,60 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
           </button>
         </header>
 
+        {/* ── OPTIMIZELY HERO SECTION (3D STACKED HEADLINE & LIVE CTAS) ── */}
+        <div className="my-3">
+          <OptimizelyHeroSection
+            locationName={activeNeighborhood.name}
+            onExploreWard={() => {
+              soundEngine.play('tap');
+              setSelectedSection(1);
+            }}
+            onOpenCargo={() => {
+              soundEngine.play('heavyTap');
+              setInterCountyOpen(true);
+            }}
+            onOpenChama={() => {
+              soundEngine.play('heavyTap');
+              setChamaOpen(true);
+            }}
+            onOpenCbc={() => {
+              setActiveCbcBundleId('cbc-g7');
+              setCbcCheckoutOpen(true);
+            }}
+          />
+        </div>
+
+        {/* ── ANNOUNCEMENT PASTEL PINK BANNER ── */}
+        <div className="my-3">
+          <AnnouncementPinkBanner
+            tag="LIVE WARD RUNS"
+            title="Save your spot at Ward Chama & CBC Bulk Runs"
+            buttonText="Register now"
+            onAction={() => {
+              soundEngine.play('heavyTap');
+              setDemandRunOpen(true);
+            }}
+          />
+        </div>
+
+        {/* ── TRUSTED PARTNER & COUNTY LOGO PILL RIBBON ── */}
+        <div className="my-2">
+          <TrustedPartnerRibbon
+            onPartnerClick={(p: PartnerPill) => {
+              if (p.id === 'fargo' || p.id === 'lori' || p.id === 'sendy') {
+                setInterCountyOpen(true);
+              } else if (p.id === 'pezesha' || p.id === 'mpesa') {
+                setChamaOpen(true);
+              } else if (p.id === 'kicd') {
+                setActiveCbcBundleId('cbc-g7');
+                setCbcCheckoutOpen(true);
+              } else {
+                showToast(`Verified integration: ${p.name}`);
+              }
+            }}
+          />
+        </div>
+
         {/* ── NEIGHBORHOOD 3KM MICRO-HUB LIVE BANNER ── */}
         <div className="my-2 p-3.5 rounded-2xl bg-[#1A1F2E] text-white flex items-center justify-between shadow-sm">
           <div className="flex items-center space-x-2.5 overflow-hidden">
@@ -297,7 +358,23 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
 
         {/* ================= SECTION 0: TODAY ================= */}
         {selectedSection === 0 && (
-          <div className="space-y-4 animate-fadeIn">
+          <div className="space-y-6 animate-fadeIn">
+            {/* ── 3-COLUMN AGENTIC FEATURE CARDS (CBC · CHAMA · CARGO) ── */}
+            <AgenticFeatureGrid
+              onOpenCbc={() => {
+                setActiveCbcBundleId('cbc-g7');
+                setCbcCheckoutOpen(true);
+              }}
+              onOpenChama={() => {
+                soundEngine.play('heavyTap');
+                setChamaOpen(true);
+              }}
+              onOpenCargo={() => {
+                soundEngine.play('heavyTap');
+                setInterCountyOpen(true);
+              }}
+            />
+
             {/* Section Header Label */}
             <div className="flex items-center justify-between pt-1 pb-2">
               <div className="flex items-center space-x-2">
@@ -377,6 +454,21 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                 }}
               />
             </div>
+
+            {/* ── BOLD CALLOUT BANNER ── */}
+            <AgenticCalloutBanner
+              onAction={() => {
+                soundEngine.play('tap');
+                setSelectedSection(1);
+              }}
+            />
+
+            {/* ── SLOTS STRAIGHT INTO EXISTING STACK (INTEGRATIONS CLOUD) ── */}
+            <IntegrationsStackSection
+              onOpenIntegrations={() => {
+                showToast('Integrations: M-Pesa STK, Pezesha Credit, Fargo Courier, Lori Systems, Sendy, KICD');
+              }}
+            />
           </div>
         )}
 

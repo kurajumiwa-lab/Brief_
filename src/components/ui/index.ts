@@ -43,3 +43,22 @@ export { ModernDarkShelfWrapper, ShelfRow, DarkShelfBookCard, DARK_SHELF_TOKENS 
 export type { ModernDarkShelfWrapperProps, ShelfRowProps, DarkShelfBookCardProps } from '../shelf/ModernDarkShelfWrapper';
 export { CBCTextbookBundleCheckoutModal, SAMPLE_CBC_BUNDLES } from '../shelf/CBCTextbookBundleCheckoutModal';
 export type { CBCTextbookBundleCheckoutModalProps, CBCTextbookBundle } from '../shelf/CBCTextbookBundleCheckoutModal';
+
+// Optimizely / Landingfolio Inspired Design Language Elements
+export {
+  AnnouncementPinkBanner,
+  TrustedPartnerRibbon,
+  AgenticFeatureGrid,
+  AgenticCalloutBanner,
+  IntegrationsStackSection,
+  OptimizelyHeroSection
+} from '../landing';
+export type {
+  AnnouncementPinkBannerProps,
+  TrustedPartnerRibbonProps,
+  PartnerPill,
+  AgenticFeatureGridProps,
+  AgenticCalloutBannerProps,
+  IntegrationsStackSectionProps,
+  OptimizelyHeroSectionProps
+} from '../landing';

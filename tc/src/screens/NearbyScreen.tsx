@@ -88,7 +88,14 @@ import {
   GroupDemandRunDesk,
   GroupEventLogisticsDesk,
   CreatorPartnerDesk,
-  CBCTextbookBundleCheckoutModal
+  CBCTextbookBundleCheckoutModal,
+  OptimizelyHeroSection,
+  AnnouncementPinkBanner,
+  TrustedPartnerRibbon,
+  PartnerPill,
+  AgenticFeatureGrid,
+  AgenticCalloutBanner,
+  IntegrationsStackSection
 } from '../components/ui';
 import {
   NEIGHBORHOODS,
@@ -559,6 +566,71 @@ export function NearbyScreen(props: NearbyScreenProps) {
                 </div>
               )}
 
+              {/* ================= OPTIMIZELY HERO & TRUST BANNER ================= */}
+              {discoveryTab === 'home' && (
+                <div className="space-y-4 mb-6">
+                  <OptimizelyHeroSection
+                    locationName={activeNeighborhood.name}
+                    onExploreWard={() => {
+                      soundEngine.play('tap');
+                      setDiscoveryTab('explore');
+                    }}
+                    onOpenCargo={() => {
+                      soundEngine.play('heavyTap');
+                      setInterCountyOpen(true);
+                    }}
+                    onOpenChama={() => {
+                      soundEngine.play('heavyTap');
+                      setChamaOpen(true);
+                    }}
+                    onOpenCbc={() => {
+                      setActiveCbcBundleId('cbc-g7');
+                      setCbcCheckoutOpen(true);
+                    }}
+                  />
+
+                  <AnnouncementPinkBanner
+                    tag="LIVE WARD RUNS"
+                    title="Save your spot at Ward Chama & CBC Bulk Runs"
+                    buttonText="Register now"
+                    onAction={() => {
+                      soundEngine.play('heavyTap');
+                      setDemandRunOpen(true);
+                    }}
+                  />
+
+                  <TrustedPartnerRibbon
+                    onPartnerClick={(p: PartnerPill) => {
+                      if (p.id === 'fargo' || p.id === 'lori' || p.id === 'sendy') {
+                        setInterCountyOpen(true);
+                      } else if (p.id === 'pezesha' || p.id === 'mpesa') {
+                        setChamaOpen(true);
+                      } else if (p.id === 'kicd') {
+                        setActiveCbcBundleId('cbc-g7');
+                        setCbcCheckoutOpen(true);
+                      } else {
+                        showToast(`Verified integration: ${p.name}`);
+                      }
+                    }}
+                  />
+
+                  <AgenticFeatureGrid
+                    onOpenCbc={() => {
+                      setActiveCbcBundleId('cbc-g7');
+                      setCbcCheckoutOpen(true);
+                    }}
+                    onOpenChama={() => {
+                      soundEngine.play('heavyTap');
+                      setChamaOpen(true);
+                    }}
+                    onOpenCargo={() => {
+                      soundEngine.play('heavyTap');
+                      setInterCountyOpen(true);
+                    }}
+                  />
+                </div>
+              )}
+
               {/* ================= TODAY'S OPPORTUNITIES STRIP ================= */}
               {discoveryTab === 'home' && (
                 <div className="mb-6">
@@ -748,6 +820,24 @@ export function NearbyScreen(props: NearbyScreenProps) {
                   showToast(info.unlocksAfter ? `Opens after: ${info.unlocksAfter}` : 'Not open yet');
                 }}
               />
+
+              {/* ================= OPTIMIZELY CALLOUT & INTEGRATIONS STACK ================= */}
+              {discoveryTab === 'home' && (
+                <div className="space-y-6 my-8">
+                  <AgenticCalloutBanner
+                    onAction={() => {
+                      soundEngine.play('tap');
+                      setDiscoveryTab('explore');
+                    }}
+                  />
+
+                  <IntegrationsStackSection
+                    onOpenIntegrations={() => {
+                      showToast('Brief integrates directly with M-Pesa, Pezesha Credit, Fargo Courier, Lori Systems, Sendy, WhatsApp & KICD.');
+                    }}
+                  />
+                </div>
+              )}
 
               {/* MY BRIEF SECTION (For signed-in users) */}
               {discoveryTab === 'home' && sessionUser && personalState && (
