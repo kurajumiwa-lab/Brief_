@@ -62,3 +62,19 @@ export type {
   IntegrationsStackSectionProps,
   OptimizelyHeroSectionProps
 } from '../landing';
+
+// Brief 2.0: The Digital Landlord (Spaces & Home Surface)
+export { AppShell } from '../../app/AppShell';
+export type { AppShellProps } from '../../app/AppShell';
+export { Navigation } from '../../app/Navigation';
+export type { NavigationProps, BriefNavigationTab } from '../../app/Navigation';
+export { HomeSurface } from '../../features/home/HomeSurface';
+export type { HomeSurfaceProps } from '../../features/home/HomeSurface';
+export { SpaceShell } from '../../features/spaces/SpaceShell';
+export type { SpaceShellProps } from '../../features/spaces/SpaceShell';
+export { CreateSpaceModal } from '../../features/spaces/CreateSpaceModal';
+export type { CreateSpaceModalProps } from '../../features/spaces/CreateSpaceModal';
+export { CreateOfferModal } from '../../features/spaces/CreateOfferModal';
+export type { CreateOfferModalProps } from '../../features/spaces/CreateOfferModal';
+export { PublicOfferModal } from '../../features/offers/PublicOfferModal';
+export type { PublicOfferModalProps } from '../../features/offers/PublicOfferModal';

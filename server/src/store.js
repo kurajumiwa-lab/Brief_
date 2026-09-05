@@ -323,7 +323,15 @@ const EMPTY = {
   verificationRecords: [],
   // T7: email subscriptions with double opt-in + delivery log.
   emailSubscriptions: [],
-  emailLog: []
+  emailLog: [],
+
+  // --- Brief 2.0 Spaces (The Digital Landlord) -----------------------------
+  // A Space is something a person is trying to make happen (a business,
+  // project, community, or side-hustle). Spaces own capabilities, goals,
+  // people relationships, conversations, and activity streams.
+  spaces: [],
+  spaceActivities: [],
+  spaceConversations: []
 };
 
 function ensureDir() {

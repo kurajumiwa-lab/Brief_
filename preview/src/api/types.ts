@@ -1670,3 +1670,96 @@ export interface SubscriptionJoin {
   charged: boolean;
   note: string;
 }
+
+// ---------------------------------------------------------------------------
+// BRIEF 2.0: SPACES & THE DIGITAL LANDLORD
+// ---------------------------------------------------------------------------
+
+export type SpaceType =
+  | 'business'
+  | 'side_hustle'
+  | 'creator'
+  | 'community'
+  | 'event'
+  | 'project'
+  | 'other';
+
+export interface SpaceActivity {
+  id: string;
+  spaceId: string;
+  kind: 'space_created' | 'offer_created' | 'offer_published' | 'conversation_received' | 'order_created' | 'payment_received' | 'note';
+  title: string;
+  description: string;
+  metadata?: Record<string, any>;
+  actorId?: string | null;
+  createdAt: string;
+}
+
+export interface SpaceConversation {
+  id: string;
+  spaceId: string;
+  offerId?: string | null;
+  offerTitle?: string | null;
+  offerPriceKes?: number | null;
+  customerName: string;
+  customerContact?: string;
+  status: 'new' | 'replied' | 'order_created' | 'closed';
+  messages: Array<{
+    id: string;
+    from: 'customer' | 'seller';
+    sender: string;
+    text: string;
+    at: string;
+  }>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SpaceMetrics {
+  revenueKes: number;
+  customerCount: number;
+  activeOrdersCount: number;
+  totalOrdersCount: number;
+  offersCount: number;
+}
+
+export interface Space {
+  id: string;
+  ownerId: string;
+  vendorId?: string;
+  name: string;
+  type: SpaceType;
+  goal: string;
+  targetValueKes: number;
+  status: 'active' | 'archived';
+  capabilities: string[];
+  metrics: SpaceMetrics;
+  offers: Listing[];
+  recentActivities: SpaceActivity[];
+  recentConversations: SpaceConversation[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SpaceCreate {
+  name: string;
+  type?: SpaceType;
+  goal?: string;
+  targetValueKes?: number;
+  initialOffer?: {
+    title: string;
+    description?: string;
+    price: number;
+    currency?: string;
+  };
+}
+
+export interface SpaceOfferCreate {
+  title: string;
+  description?: string;
+  price: number;
+  currency?: string;
+  type?: 'product' | 'service' | 'experience' | 'event';
+  images?: string[];
+}
+

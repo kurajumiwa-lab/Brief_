@@ -78,6 +78,7 @@ import { register as hudumaRoutes } from './routes/huduma.js';
 import { register as engineRoutes } from './routes/engine.js';
 import { register as coopRoutes } from './routes/coop.js';
 import { register as groupBuyRoutes } from './routes/groupbuy.js';
+import { register as spacesRoutes } from './routes/spaces.js';
 
 const app = express();
 
@@ -242,6 +243,7 @@ hudumaRoutes(app);
 engineRoutes(app);
 coopRoutes(app);
 groupBuyRoutes(app);
+spacesRoutes(app);
 
 // --- Production frontend serving -------------------------------------------
 //

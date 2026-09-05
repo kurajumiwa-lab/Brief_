@@ -89,7 +89,12 @@ import type {
   VaultEntry,
   Ticket,
   CheckInResult,
-  CommandCentre
+  CommandCentre,
+  Space,
+  SpaceCreate,
+  SpaceOfferCreate,
+  SpaceActivity,
+  SpaceConversation
 } from './types';
 import { enqueue, replayQueue, queueDepth, type QueuedWrite } from './offlineQueue';
 import { asTarget } from './types';
@@ -4262,3 +4267,83 @@ export function shareCollection(id: string): Promise<ApiResult<{ ok: boolean; ur
   return request(`/api/me/collections/${encodeURIComponent(id)}/share`, { method: 'POST', body: '{}' }, (r) =>
     r && r.ok === true ? r as { ok: boolean; url: string | null } : undefined);
 }
+
+// ---------------------------------------------------------------------------
+// BRIEF 2.0: SPACES API
+// ---------------------------------------------------------------------------
+
+/** List all spaces owned by current user. */
+export function listMySpaces(): Promise<ApiResult<{ spaces: Space[] }>> {
+  return request<{ spaces: Space[] }>('/api/spaces', undefined, (r) =>
+    r && Array.isArray(r.spaces) ? { spaces: r.spaces } : undefined);
+}
+
+/** Create a new Space. */
+export function createSpace(input: SpaceCreate): Promise<ApiResult<{ space: Space }>> {
+  return request<{ space: Space }>('/api/spaces', {
+    method: 'POST',
+    body: JSON.stringify(input)
+  }, (r) => r && r.space ? { space: r.space } : undefined);
+}
+
+/** Get a space by ID with hydrated metrics, offers and activities. */
+export function getSpace(spaceId: string): Promise<ApiResult<{ space: Space }>> {
+  return request<{ space: Space }>(`/api/spaces/${encodeURIComponent(spaceId)}`, undefined, (r) =>
+    r && r.space ? { space: r.space } : undefined);
+}
+
+/** Create an offer inside a space. */
+export function createSpaceOffer(spaceId: string, input: SpaceOfferCreate): Promise<ApiResult<{ offer: Listing }>> {
+  return request<{ offer: Listing }>(`/api/spaces/${encodeURIComponent(spaceId)}/offers`, {
+    method: 'POST',
+    body: JSON.stringify(input)
+  }, (r) => r && r.offer ? { offer: r.offer } : undefined);
+}
+
+/** Publish an offer inside a space (makes it public and active). */
+export function publishSpaceOffer(spaceId: string, offerId: string): Promise<ApiResult<{ offer: Listing }>> {
+  return request<{ offer: Listing }>(`/api/spaces/${encodeURIComponent(spaceId)}/offers/${encodeURIComponent(offerId)}/publish`, {
+    method: 'POST',
+    body: '{}'
+  }, (r) => r && r.offer ? { offer: r.offer } : undefined);
+}
+
+/** List activities in a space. */
+export function getSpaceActivities(spaceId: string): Promise<ApiResult<{ activities: SpaceActivity[] }>> {
+  return request<{ activities: SpaceActivity[] }>(`/api/spaces/${encodeURIComponent(spaceId)}/activities`, undefined, (r) =>
+    r && Array.isArray(r.activities) ? { activities: r.activities } : undefined);
+}
+
+/** Customer asks a question about an offer in a space. */
+export function createSpaceConversation(spaceId: string, input: {
+  offerId?: string | null;
+  customerName: string;
+  customerContact?: string;
+  message: string;
+}): Promise<ApiResult<{ conversation: SpaceConversation }>> {
+  return request<{ conversation: SpaceConversation }>(`/api/spaces/${encodeURIComponent(spaceId)}/conversations`, {
+    method: 'POST',
+    body: JSON.stringify(input)
+  }, (r) => r && r.conversation ? { conversation: r.conversation } : undefined);
+}
+
+/** Get conversations inside a space. */
+export function getSpaceConversations(spaceId: string): Promise<ApiResult<{ conversations: SpaceConversation[] }>> {
+  return request<{ conversations: SpaceConversation[] }>(`/api/spaces/${encodeURIComponent(spaceId)}/conversations`, undefined, (r) =>
+    r && Array.isArray(r.conversations) ? { conversations: r.conversations } : undefined);
+}
+
+/** Create an order from an offer in a space (server-authoritative price). */
+export function createSpaceOrder(spaceId: string, input: {
+  offerId: string;
+  customerId?: string;
+  customerName?: string;
+  quantity?: number;
+  deliveryNotes?: string;
+}): Promise<ApiResult<{ order: Order }>> {
+  return request<{ order: Order }>(`/api/spaces/${encodeURIComponent(spaceId)}/orders`, {
+    method: 'POST',
+    body: JSON.stringify(input)
+  }, (r) => r && r.order ? { order: r.order } : undefined);
+}
+
