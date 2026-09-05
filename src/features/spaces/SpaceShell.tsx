@@ -205,6 +205,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
       {activeTab === 'money' && (
         <div className="animate-fadeIn">
           <SpaceMoney
+            spaceId={space.id}
             revenueKes={space.metrics?.revenueKes}
             pendingKes={0}
             ordersCount={space.metrics?.totalOrdersCount}

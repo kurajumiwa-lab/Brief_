@@ -1790,3 +1790,47 @@ export interface SpaceOfferCreate {
   images?: string[];
 }
 
+export interface SpaceExpense {
+  id: string;
+  spaceId: string;
+  category: string;
+  description: string;
+  amountKes: number;
+  date: string;
+  createdAt: string;
+}
+
+export interface SpaceTabRecord {
+  id: string;
+  type: 'credit' | 'payment';
+  amountKes: number;
+  date: string;
+  note: string;
+}
+
+export interface SpaceCustomerTab {
+  id: string;
+  spaceId: string;
+  customerName: string;
+  customerContact?: string;
+  initialDebtKes: number;
+  balanceKes: number;
+  status: 'active' | 'cleared';
+  notes?: string;
+  records: SpaceTabRecord[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SpaceMoneySummary {
+  spaceId: string;
+  totalRevenueKes: number;
+  totalExpensesKes: number;
+  netProfitKes: number;
+  marginPercent: number;
+  totalReceivablesKes: number;
+  activeTabsCount: number;
+  recentExpenses: SpaceExpense[];
+  tabs: SpaceCustomerTab[];
+}
+

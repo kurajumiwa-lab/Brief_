@@ -720,6 +720,244 @@ export function createSpaceOrder({
 }
 
 /**
+ * Records a supply or operational expense for a space.
+ */
+export function recordSpaceExpense({
+  spaceId,
+  category = 'supplies',
+  description,
+  amountKes,
+  date = null,
+  callerId = null
+}) {
+  const space = store.find('spaces', (s) => s.id === spaceId);
+  if (!space) throw new Error('Space not found');
+  if (callerId && space.ownerId !== callerId) {
+    throw new Error('Not authorized to record expenses for this space');
+  }
+
+  const numAmount = Number(amountKes);
+  if (isNaN(numAmount) || numAmount <= 0) {
+    throw new Error('Expense amount must be a positive number');
+  }
+  if (!description || !String(description).trim()) {
+    throw new Error('Expense description is required');
+  }
+
+  const expenseId = newId('exp');
+  const now = new Date().toISOString();
+
+  const expense = {
+    id: expenseId,
+    spaceId,
+    category: String(category).trim(),
+    description: String(description).trim(),
+    amountKes: numAmount,
+    date: date || now.split('T')[0],
+    createdAt: now
+  };
+
+  store.insert('spaceExpenses', expense);
+
+  recordSpaceActivity({
+    spaceId,
+    kind: 'expense_recorded',
+    title: `Recorded expense: ${expense.description}`,
+    description: `KES ${numAmount.toLocaleString()} · ${expense.category}`,
+    actorId: callerId,
+    metadata: { expenseId, amountKes: numAmount, category: expense.category }
+  });
+
+  return expense;
+}
+
+/**
+ * Lists all expenses for a space.
+ */
+export function getSpaceExpenses(spaceId) {
+  const rows = store.filter('spaceExpenses', (e) => e.spaceId === spaceId);
+  rows.sort((a, b) => new Date(b.date || b.createdAt).getTime() - new Date(a.date || a.createdAt).getTime());
+  return rows;
+}
+
+/**
+ * Opens a customer credit tab (DukaBook / Lipa Pole Pole balance).
+ */
+export function recordCustomerTab({
+  spaceId,
+  customerName,
+  customerContact = '',
+  amountKes,
+  note = '',
+  callerId = null
+}) {
+  const space = store.find('spaces', (s) => s.id === spaceId);
+  if (!space) throw new Error('Space not found');
+  if (callerId && space.ownerId !== callerId) {
+    throw new Error('Not authorized to manage tabs for this space');
+  }
+
+  const numAmount = Number(amountKes);
+  if (isNaN(numAmount) || numAmount <= 0) {
+    throw new Error('Credit amount must be a positive number');
+  }
+  if (!customerName || !String(customerName).trim()) {
+    throw new Error('Customer name is required');
+  }
+
+  const tabId = newId('tab');
+  const now = new Date().toISOString();
+
+  const tab = {
+    id: tabId,
+    spaceId,
+    customerName: String(customerName).trim(),
+    customerContact: String(customerContact || '').trim(),
+    initialDebtKes: numAmount,
+    balanceKes: numAmount,
+    status: 'active',
+    notes: String(note || '').trim(),
+    records: [
+      {
+        id: newId('rec'),
+        type: 'credit',
+        amountKes: numAmount,
+        date: now.split('T')[0],
+        note: note || 'Initial credit extended'
+      }
+    ],
+    createdAt: now,
+    updatedAt: now
+  };
+
+  store.insert('spaceCustomerTabs', tab);
+
+  recordSpaceActivity({
+    spaceId,
+    kind: 'tab_created',
+    title: `Extended credit to ${tab.customerName}`,
+    description: `KES ${numAmount.toLocaleString()} balance recorded in DukaBook`,
+    actorId: callerId,
+    metadata: { tabId, amountKes: numAmount, customerName: tab.customerName }
+  });
+
+  return tab;
+}
+
+/**
+ * Records a partial or full payment towards a customer credit tab.
+ */
+export function recordTabPayment({
+  spaceId,
+  tabId,
+  amountKes,
+  note = '',
+  callerId = null
+}) {
+  const space = store.find('spaces', (s) => s.id === spaceId);
+  if (!space) throw new Error('Space not found');
+  if (callerId && space.ownerId !== callerId) {
+    throw new Error('Not authorized to update tabs for this space');
+  }
+
+  const tab = store.find('spaceCustomerTabs', (t) => t.id === tabId && t.spaceId === spaceId);
+  if (!tab) throw new Error('Customer tab not found');
+
+  const numAmount = Number(amountKes);
+  if (isNaN(numAmount) || numAmount <= 0) {
+    throw new Error('Payment amount must be a positive number');
+  }
+
+  const now = new Date().toISOString();
+  const newBalance = Math.max(0, tab.balanceKes - numAmount);
+  const newStatus = newBalance === 0 ? 'cleared' : 'active';
+
+  const updatedRecords = [
+    ...(tab.records || []),
+    {
+      id: newId('rec'),
+      type: 'payment',
+      amountKes: numAmount,
+      date: now.split('T')[0],
+      note: note || 'Payment received on tab'
+    }
+  ];
+
+  const updatedTab = store.update('spaceCustomerTabs', tabId, {
+    balanceKes: newBalance,
+    status: newStatus,
+    records: updatedRecords,
+    updatedAt: now
+  });
+
+  recordSpaceActivity({
+    spaceId,
+    kind: 'tab_payment_received',
+    title: `Received KES ${numAmount.toLocaleString()} from ${tab.customerName}`,
+    description: newBalance === 0 ? 'Tab fully cleared!' : `Remaining balance: KES ${newBalance.toLocaleString()}`,
+    actorId: callerId,
+    metadata: { tabId, paymentAmountKes: numAmount, remainingBalanceKes: newBalance }
+  });
+
+  return updatedTab;
+}
+
+/**
+ * Lists all customer credit tabs for a space.
+ */
+export function getSpaceTabs(spaceId) {
+  const rows = store.filter('spaceCustomerTabs', (t) => t.spaceId === spaceId);
+  rows.sort((a, b) => (b.balanceKes || 0) - (a.balanceKes || 0));
+  return rows;
+}
+
+/**
+ * Retrieves the comprehensive financial summary for a space.
+ */
+export function getSpaceMoneySummary(spaceId) {
+  const space = store.find('spaces', (s) => s.id === spaceId);
+  if (!space) throw new Error('Space not found');
+
+  const spaceOrders = store.filter('orders', (o) => o.spaceId === space.id || o.vendorId === space.vendorId);
+  const expenses = getSpaceExpenses(spaceId);
+  const tabs = getSpaceTabs(spaceId);
+
+  let totalRevenueKes = 0;
+  for (const ord of spaceOrders) {
+    if (ord.status === 'paid' || ord.status === 'completed' || ord.status === 'settled' || ord.status === 'fulfilled') {
+      totalRevenueKes += (ord.total || 0);
+    }
+  }
+
+  let totalExpensesKes = 0;
+  for (const exp of expenses) {
+    totalExpensesKes += (exp.amountKes || 0);
+  }
+
+  let totalReceivablesKes = 0;
+  for (const tab of tabs) {
+    if (tab.status === 'active') {
+      totalReceivablesKes += (tab.balanceKes || 0);
+    }
+  }
+
+  const netProfitKes = totalRevenueKes - totalExpensesKes;
+  const marginPercent = totalRevenueKes > 0 ? Math.round((netProfitKes / totalRevenueKes) * 100) : 0;
+
+  return {
+    spaceId,
+    totalRevenueKes,
+    totalExpensesKes,
+    netProfitKes,
+    marginPercent,
+    totalReceivablesKes,
+    activeTabsCount: tabs.filter((t) => t.status === 'active').length,
+    recentExpenses: expenses.slice(0, 10),
+    tabs: tabs.slice(0, 20)
+  };
+}
+
+/**
  * Helper to hydrate a Space with real metrics and connected items.
  */
 function hydrateSpace(space, { callerId = null } = {}) {

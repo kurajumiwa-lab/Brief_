@@ -1,16 +1,17 @@
 // ---------------------------------------------------------------------------
-// BRIEF 2.0: SPACE & CONVERSATION RAILS TEST SUITE (Digital Landlord)
+// BRIEF 2.0: SPACE, CHAT & MONEY RAILS TEST SUITE (Digital Landlord)
 //
 // Tests:
 // 1. HomeSurface rendering & empty state
 // 2. Space creation flow (Amina's Cakes)
-// 3. SpaceShell with metrics, offers, activities
-// 4. Offer creation & publication (Birthday Cake, KES 4,500)
-// 5. Customer conversation & WhatsApp thread
+// 3. SpaceHeader & concise 3-metrics
+// 4. SpaceOffers & server-authoritative pricing
+// 5. SpaceActivity stream
 // 6. SpaceConversationThread (In-chat Quote & M-Pesa STK push rails)
-// 7. SpacePeople with active customer chats & converted order badge
-// 8. PublicOfferModal customer view
-// 9. Navigation and AppShell integration
+// 7. SpacePeople with active customer chats & conversion badges
+// 8. SpaceMoney (Daily Profit Meter, Expenses & DukaBook Lipa Pole Pole tabs)
+// 9. PublicOfferModal customer view
+// 10. Navigation and AppShell integration
 // ---------------------------------------------------------------------------
 
 const React = require('react');
@@ -35,6 +36,7 @@ const { SpaceHeader } = require('./src/features/spaces/SpaceHeader.tsx');
 const { SpaceOffers } = require('./src/features/spaces/SpaceOffers.tsx');
 const { SpaceActivity } = require('./src/features/spaces/SpaceActivity.tsx');
 const { SpacePeople } = require('./src/features/spaces/SpacePeople.tsx');
+const { SpaceMoney } = require('./src/features/spaces/SpaceMoney.tsx');
 const { SpaceConversationThread } = require('./src/features/spaces/SpaceConversationThread.tsx');
 const { CreateSpaceModal } = require('./src/features/spaces/CreateSpaceModal.tsx');
 const { CreateOfferModal } = require('./src/features/spaces/CreateOfferModal.tsx');
@@ -55,7 +57,7 @@ function check(name, condition, extra = '') {
 }
 
 async function runTests() {
-  console.log('\n=== BRIEF 2.0: SPACES & CHAT RAILS SUITE ===');
+  console.log('\n=== BRIEF 2.0: SPACES, CHAT & MONEY RAILS SUITE ===');
 
   // --- 1. HomeSurface ---
   console.log('\n--- 1. HomeSurface Decision Screen ---');
@@ -293,13 +295,37 @@ async function runTests() {
 
   await act(async () => { root7.unmount(); host7.remove(); });
 
-  // --- 8. PublicOfferModal (Customer Contextual Inquiry) ---
-  console.log('\n--- 8. PublicOfferModal (Customer View) ---');
+  // --- 8. SpaceMoney (Phase 3 Profit Meter & DukaBook Tabs) ---
+  console.log('\n--- 8. SpaceMoney & DukaBook Credit Ledger ---');
   const host8 = document.createElement('div');
   document.body.appendChild(host8);
   const root8 = createRoot(host8);
   await act(async () => {
-    root8.render(React.createElement(PublicOfferModal, {
+    root8.render(React.createElement(SpaceMoney, {
+      spaceId: mockSpace.id,
+      revenueKes: 84200
+    }));
+  });
+
+  const text8 = host8.textContent;
+  check('renders Profit & Cash Flow section', text8.includes('Profit & Cash Flow'));
+  check('renders Money In (Sales)', text8.includes('Money In (Sales)') && text8.includes('84,200'));
+  check('renders Money Out (Supplies)', text8.includes('Money Out (Supplies)'));
+  check('renders Net Profit card', text8.includes('Net Profit'));
+  check('shows + Record Expense button', text8.includes('Record Expense'));
+  check('shows + Open DukaBook Tab button', text8.includes('Open DukaBook Tab'));
+  check('renders DukaBook Credit section', text8.includes('DukaBook Credit'));
+  check('renders Recent Supplies & Expenses section', text8.includes('Recent Supplies & Expenses'));
+
+  await act(async () => { root8.unmount(); host8.remove(); });
+
+  // --- 9. PublicOfferModal (Customer Contextual Inquiry) ---
+  console.log('\n--- 9. PublicOfferModal (Customer View) ---');
+  const host9 = document.createElement('div');
+  document.body.appendChild(host9);
+  const root9 = createRoot(host9);
+  await act(async () => {
+    root9.render(React.createElement(PublicOfferModal, {
       isOpen: true,
       offer: mockSpace.offers[0],
       spaceName: "Amina's Cakes",
@@ -307,29 +333,29 @@ async function runTests() {
     }));
   });
 
-  const text8 = host8.textContent;
-  check('shows public offer title and price', text8.includes('Birthday Cake') && text8.includes('4,500'));
-  check('shows verified seller space name', text8.includes("Amina's Cakes"));
+  const text9 = host9.textContent;
+  check('shows public offer title and price', text9.includes('Birthday Cake') && text9.includes('4,500'));
+  check('shows verified seller space name', text9.includes("Amina's Cakes"));
   check('shows customer action buttons: Ask about this & Order Now',
-    text8.includes('Ask about this') && text8.includes('Order Now'));
+    text9.includes('Ask about this') && text9.includes('Order Now'));
 
-  await act(async () => { root8.unmount(); host8.remove(); });
+  await act(async () => { root9.unmount(); host9.remove(); });
 
-  // --- 9. AppShell Integration ---
-  console.log('\n--- 9. AppShell Navigation ---');
-  const host9 = document.createElement('div');
-  document.body.appendChild(host9);
-  const root9 = createRoot(host9);
+  // --- 10. AppShell Integration ---
+  console.log('\n--- 10. AppShell Navigation ---');
+  const host10 = document.createElement('div');
+  document.body.appendChild(host10);
+  const root10 = createRoot(host10);
   await act(async () => {
-    root9.render(React.createElement(AppShell, {
+    root10.render(React.createElement(AppShell, {
       initialTab: 'home'
     }));
   });
 
-  const text9 = host9.textContent;
-  check('renders AppShell Home tab by default', text9.includes('What are you working on?'));
+  const text10 = host10.textContent;
+  check('renders AppShell Home tab by default', text10.includes('What are you working on?'));
 
-  await act(async () => { root9.unmount(); host9.remove(); });
+  await act(async () => { root10.unmount(); host10.remove(); });
 
   console.log(`\nPASSED ${passed} / FAILED ${failed}`);
   process.exit(failed === 0 ? 0 : 1);

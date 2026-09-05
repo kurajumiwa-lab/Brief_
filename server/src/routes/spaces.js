@@ -311,6 +311,113 @@ export function register(app) {
     }
   });
 
+  // --- Get Space Money & Duka Ledger Summary ---
+  app.get('/api/spaces/:id/money', requireAuth, (req, res) => {
+    try {
+      const summary = spaces.getSpaceMoneySummary(req.params.id);
+      res.json({ money: summary });
+    } catch (err) {
+      recordError('space_money_summary_failed', err);
+      res.status(500).json({ error: 'failed to get money summary' });
+    }
+  });
+
+  // --- Record an Expense / Supply Cost ---
+  app.post('/api/spaces/:id/expenses', requireAuth, (req, res) => {
+    try {
+      const me = callerId(req);
+      const { category, description, amountKes, date } = req.body || {};
+      if (!description || !amountKes) {
+        return res.status(400).json({ error: 'description and amountKes are required' });
+      }
+
+      const expense = spaces.recordSpaceExpense({
+        spaceId: req.params.id,
+        category,
+        description,
+        amountKes,
+        date,
+        callerId: me
+      });
+
+      res.status(201).json({ expense });
+    } catch (err) {
+      recordError('space_expense_record_failed', err);
+      res.status(400).json({ error: err.message || 'failed to record expense' });
+    }
+  });
+
+  // --- List Space Expenses ---
+  app.get('/api/spaces/:id/expenses', requireAuth, (req, res) => {
+    try {
+      const expenses = spaces.getSpaceExpenses(req.params.id);
+      res.json({ expenses });
+    } catch (err) {
+      recordError('space_expenses_list_failed', err);
+      res.status(500).json({ error: 'failed to list expenses' });
+    }
+  });
+
+  // --- Record a Customer Credit Tab (DukaBook) ---
+  app.post('/api/spaces/:id/tabs', requireAuth, (req, res) => {
+    try {
+      const me = callerId(req);
+      const { customerName, customerContact, amountKes, note } = req.body || {};
+      if (!customerName || !amountKes) {
+        return res.status(400).json({ error: 'customerName and amountKes are required' });
+      }
+
+      const tab = spaces.recordCustomerTab({
+        spaceId: req.params.id,
+        customerName,
+        customerContact,
+        amountKes,
+        note,
+        callerId: me
+      });
+
+      res.status(201).json({ tab });
+    } catch (err) {
+      recordError('space_tab_record_failed', err);
+      res.status(400).json({ error: err.message || 'failed to record customer tab' });
+    }
+  });
+
+  // --- Record Payment on Customer Tab ---
+  app.post('/api/spaces/:id/tabs/:tabId/payments', requireAuth, (req, res) => {
+    try {
+      const me = callerId(req);
+      const { amountKes, note } = req.body || {};
+      if (!amountKes) {
+        return res.status(400).json({ error: 'amountKes is required' });
+      }
+
+      const updatedTab = spaces.recordTabPayment({
+        spaceId: req.params.id,
+        tabId: req.params.tabId,
+        amountKes,
+        note,
+        callerId: me
+      });
+
+      res.json({ tab: updatedTab });
+    } catch (err) {
+      recordError('space_tab_payment_failed', err);
+      res.status(400).json({ error: err.message || 'failed to record tab payment' });
+    }
+  });
+
+  // --- List Customer Tabs ---
+  app.get('/api/spaces/:id/tabs', requireAuth, (req, res) => {
+    try {
+      const tabs = spaces.getSpaceTabs(req.params.id);
+      res.json({ tabs });
+    } catch (err) {
+      recordError('space_tabs_list_failed', err);
+      res.status(500).json({ error: 'failed to list customer tabs' });
+    }
+  });
+
   // --- Create order from space ---
   app.post('/api/spaces/:id/orders', requireAuth, (req, res) => {
     try {

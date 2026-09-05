@@ -96,7 +96,10 @@ import type {
   SpaceActivity,
   SpaceConversation,
   SpaceQuote,
-  SpacePaymentPrompt
+  SpacePaymentPrompt,
+  SpaceExpense,
+  SpaceCustomerTab,
+  SpaceMoneySummary
 } from './types';
 import { enqueue, replayQueue, queueDepth, type QueuedWrite } from './offlineQueue';
 import { asTarget } from './types';
@@ -4409,5 +4412,54 @@ export function routeInboundWhatsApp(spaceId: string, input: {
     method: 'POST',
     body: JSON.stringify(input)
   }, (r) => r && r.conversation ? { conversation: r.conversation } : undefined);
+}
+
+/** Get the Money & DukaBook financial summary for a space. */
+export function getSpaceMoneySummary(spaceId: string): Promise<ApiResult<{ money: SpaceMoneySummary }>> {
+  return request<{ money: SpaceMoneySummary }>(`/api/spaces/${encodeURIComponent(spaceId)}/money`, undefined, (r) =>
+    r && r.money ? { money: r.money } : undefined);
+}
+
+/** Record a supply or operational cost for a space. */
+export function recordSpaceExpense(spaceId: string, input: {
+  category?: string;
+  description: string;
+  amountKes: number;
+  date?: string;
+}): Promise<ApiResult<{ expense: SpaceExpense }>> {
+  return request<{ expense: SpaceExpense }>(`/api/spaces/${encodeURIComponent(spaceId)}/expenses`, {
+    method: 'POST',
+    body: JSON.stringify(input)
+  }, (r) => r && r.expense ? { expense: r.expense } : undefined);
+}
+
+/** Record a customer credit tab in DukaBook (Lipa Pole Pole). */
+export function recordSpaceCustomerTab(spaceId: string, input: {
+  customerName: string;
+  customerContact?: string;
+  amountKes: number;
+  note?: string;
+}): Promise<ApiResult<{ tab: SpaceCustomerTab }>> {
+  return request<{ tab: SpaceCustomerTab }>(`/api/spaces/${encodeURIComponent(spaceId)}/tabs`, {
+    method: 'POST',
+    body: JSON.stringify(input)
+  }, (r) => r && r.tab ? { tab: r.tab } : undefined);
+}
+
+/** Record payment towards a customer tab. */
+export function recordSpaceTabPayment(spaceId: string, tabId: string, input: {
+  amountKes: number;
+  note?: string;
+}): Promise<ApiResult<{ tab: SpaceCustomerTab }>> {
+  return request<{ tab: SpaceCustomerTab }>(`/api/spaces/${encodeURIComponent(spaceId)}/tabs/${encodeURIComponent(tabId)}/payments`, {
+    method: 'POST',
+    body: JSON.stringify(input)
+  }, (r) => r && r.tab ? { tab: r.tab } : undefined);
+}
+
+/** List all customer tabs for a space. */
+export function getSpaceTabs(spaceId: string): Promise<ApiResult<{ tabs: SpaceCustomerTab[] }>> {
+  return request<{ tabs: SpaceCustomerTab[] }>(`/api/spaces/${encodeURIComponent(spaceId)}/tabs`, undefined, (r) =>
+    r && Array.isArray(r.tabs) ? { tabs: r.tabs } : undefined);
 }
 

@@ -144,4 +144,43 @@ check('activity stream records payment and auto-conversion',
   activities.some(a => a.kind === 'quote_sent') &&
   activities.some(a => a.kind === 'mpesa_prompt_sent'));
 
-console.log('SPACES DOMAIN & CHAT RAILS TESTS PASSED!\n');
+// 13. Money Rails: Record Expense
+const expense1 = spaces.recordSpaceExpense({
+  spaceId: space.id,
+  category: 'supplies',
+  description: 'Baking flour, eggs & vanilla essence',
+  amountKes: 1850,
+  callerId: userA.id
+});
+check('expense recorded with server amount', expense1.amountKes === 1850);
+check('expense attached to space', expense1.spaceId === space.id);
+
+// 14. DukaBook: Customer Credit Tab (Lipa Pole Pole)
+const tab1 = spaces.recordCustomerTab({
+  spaceId: space.id,
+  customerName: 'Mary',
+  customerContact: '+254712345678',
+  amountKes: 3000,
+  note: 'Balance for weekend celebration cupcakes',
+  callerId: userA.id
+});
+check('customer tab created with balance', tab1.balanceKes === 3000 && tab1.status === 'active');
+
+// 15. Record Tab Repayment
+const tabPaid = spaces.recordTabPayment({
+  spaceId: space.id,
+  tabId: tab1.id,
+  amountKes: 2000,
+  note: 'M-Pesa partial installment',
+  callerId: userA.id
+});
+check('partial payment updates remaining balance to 1,000', tabPaid.balanceKes === 1000 && tabPaid.status === 'active');
+
+// 16. Comprehensive Money Summary & Profit Calculation
+const moneySummary = spaces.getSpaceMoneySummary(space.id);
+check('total revenue reflects paid order (5,200)', moneySummary.totalRevenueKes === 5200);
+check('total expenses reflects recorded supplies (1,850)', moneySummary.totalExpensesKes === 1850);
+check('net profit is 3,350 (5,200 - 1,850)', moneySummary.netProfitKes === 3350);
+check('total receivables reflects remaining tab (1,000)', moneySummary.totalReceivablesKes === 1000);
+
+console.log('SPACES DOMAIN, CHAT & MONEY RAILS TESTS PASSED!\n');
