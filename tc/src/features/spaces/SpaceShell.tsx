@@ -1,32 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import type { Space, Listing } from '../../api/types';
 import * as briefApi from '../../api/briefApi';
-import { SpaceHeader } from './SpaceHeader';
-import { SpaceOffers } from './SpaceOffers';
-import { SpaceActivity } from './SpaceActivity';
-import { SpacePeople } from './SpacePeople';
+import { PipelineView } from './PipelineView';
 import { SpaceMoney } from './SpaceMoney';
-import { SpaceDispatches } from './SpaceDispatches';
-import { CreateOfferModal } from './CreateOfferModal';
+import { CatalogView } from './CatalogView';
+import { CreateFlowModal } from './CreateFlowModal';
 import { soundEngine } from '../../utils/SoundEngine';
 
 export interface SpaceShellProps {
   spaceId: string;
+  initialTab?: 'pipeline' | 'ledger' | 'catalog';
   onBack?: () => void;
   onShare?: (space: Space) => void;
   className?: string;
 }
 
+export type SpaceSurfaceTab = 'pipeline' | 'ledger' | 'catalog' | 'overview' | 'offers' | 'people' | 'cargo' | 'activity' | 'money';
+
 export const SpaceShell: React.FC<SpaceShellProps> = ({
   spaceId,
+  initialTab = 'pipeline',
   onBack,
   onShare,
   className = ''
 }) => {
   const [space, setSpace] = useState<Space | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'offers' | 'people' | 'cargo' | 'activity' | 'money'>('overview');
-  const [createOfferOpen, setCreateOfferOpen] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<SpaceSurfaceTab>(initialTab);
+  const [createFlowOpen, setCreateFlowOpen] = useState<boolean>(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -57,17 +58,12 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
     try {
       const res = await briefApi.publishSpaceOffer(space.id, offerId);
       if (res.ok) {
-        showToast('Offer published and live!');
+        showToast('Offer published and live in catalog!');
         loadSpace();
       }
     } catch (err: any) {
       showToast(err?.message || 'Failed to publish offer');
     }
-  };
-
-  const handleOfferCreated = (newOffer: Listing) => {
-    showToast(`Created offer: "${newOffer.title}"`);
-    loadSpace();
   };
 
   if (isLoading && !space) {
@@ -95,17 +91,26 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
     );
   }
 
-  const tabs: Array<{ id: 'overview' | 'offers' | 'people' | 'cargo' | 'activity' | 'money'; label: string }> = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'offers', label: `Offers (${space.offers?.length || 0})` },
-    { id: 'people', label: `Chats (${space.recentConversations?.length || 0})` },
-    { id: 'cargo', label: 'Cargo' },
-    { id: 'activity', label: 'Activity' },
-    { id: 'money', label: 'Money' }
+  // 3 Consolidated Surfaces
+  const tabs: Array<{ id: 'pipeline' | 'ledger' | 'catalog'; label: string }> = [
+    { id: 'pipeline', label: 'Pipeline' },
+    { id: 'ledger', label: 'Ledger' },
+    { id: 'catalog', label: `Catalog (${space.offers?.length || 0})` }
   ];
 
+  // Map legacy tabs to the 3 consolidated surfaces
+  const currentTab = (
+    activeTab === 'overview' || activeTab === 'people' || activeTab === 'cargo' || activeTab === 'activity'
+      ? 'pipeline'
+      : activeTab === 'money'
+      ? 'ledger'
+      : activeTab === 'offers'
+      ? 'catalog'
+      : activeTab
+  ) as 'pipeline' | 'ledger' | 'catalog';
+
   return (
-    <div className={`space-y-6 max-w-2xl mx-auto ${className}`}>
+    <div className={`space-y-4 max-w-2xl mx-auto ${className}`}>
       {/* Toast Notification */}
       {toastMsg && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-[#1A1F2E] text-white text-xs font-bold shadow-2xl animate-fadeIn border border-white/10">
@@ -113,108 +118,53 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
         </div>
       )}
 
-      {/* Header */}
-      <SpaceHeader
-        space={space}
-        onBack={onBack}
-        onAddOffer={() => setCreateOfferOpen(true)}
-        onCreateOrder={() => showToast('Select an offer or conversation to create an order')}
-        onShare={() => onShare?.(space) || showToast(`Share link for ${space.name} copied!`)}
-      />
+      {/* Surface Navigation Selector */}
+      <div className="flex items-center justify-between pb-1 border-b border-black/5">
+        <div className="flex items-center space-x-1.5">
+          {tabs.map((tab) => {
+            const isSelected = currentTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => {
+                  soundEngine.play('tap');
+                  setActiveTab(tab.id);
+                }}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                  isSelected
+                    ? 'bg-[#1A1F2E] text-white shadow-xs'
+                    : 'text-[#64748B] hover:text-[#1A1F2E] hover:bg-black/5'
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
 
-      {/* Tabs */}
-      <div className="flex items-center space-x-1.5 border-b border-black/5 pb-2">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => {
-              soundEngine.play('tap');
-              setActiveTab(tab.id);
-            }}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-              activeTab === tab.id
-                ? 'bg-[#1A1F2E] text-white shadow-xs'
-                : 'text-[#64748B] hover:text-[#1A1F2E] hover:bg-black/5'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+        <button
+          type="button"
+          onClick={() => setCreateFlowOpen(true)}
+          className="px-3 py-1.5 rounded-full bg-[#5B2EA6] hover:bg-[#4a2489] text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
+        >
+          + Add Offer
+        </button>
       </div>
 
-      {/* Tab Content */}
-      {activeTab === 'overview' && (
-        <div className="space-y-6 animate-fadeIn">
-          <SpaceOffers
-            offers={space.offers}
-            onAddOffer={() => setCreateOfferOpen(true)}
-            onPublishOffer={handlePublishOffer}
-            onShareOffer={(o) => showToast(`Link for "${o.title}" copied!`)}
-          />
-
-          <SpaceActivity
-            activities={space.recentActivities}
-          />
-
-          <SpacePeople
-            spaceId={space.id}
-            conversations={space.recentConversations}
-            customers={space.recentConversations?.map((c) => ({
-              name: c.customerName,
-              contact: c.customerContact
-            }))}
-            onMessage={(c) => showToast(`Opening chat with ${c.name}`)}
+      {/* ── SURFACE 1: PIPELINE (Primary Landing) ── */}
+      {currentTab === 'pipeline' && (
+        <div className="animate-fadeIn">
+          <PipelineView
+            space={space}
             onRefresh={loadSpace}
+            onShareOffer={(t) => showToast(`Link for "${t}" copied!`)}
           />
         </div>
       )}
 
-      {activeTab === 'offers' && (
-        <div className="animate-fadeIn">
-          <SpaceOffers
-            offers={space.offers}
-            onAddOffer={() => setCreateOfferOpen(true)}
-            onPublishOffer={handlePublishOffer}
-            onShareOffer={(o) => showToast(`Link for "${o.title}" copied!`)}
-          />
-        </div>
-      )}
-
-      {activeTab === 'people' && (
-        <div className="animate-fadeIn">
-          <SpacePeople
-            spaceId={space.id}
-            conversations={space.recentConversations}
-            customers={space.recentConversations?.map((c) => ({
-              name: c.customerName,
-              contact: c.customerContact
-            }))}
-            onMessage={(c) => showToast(`Opening chat with ${c.name}`)}
-            onRefresh={loadSpace}
-          />
-        </div>
-      )}
-
-      {activeTab === 'cargo' && (
-        <div className="animate-fadeIn">
-          <SpaceDispatches
-            spaceId={space.id}
-            spaceName={space.name}
-            onRefresh={loadSpace}
-          />
-        </div>
-      )}
-
-      {activeTab === 'activity' && (
-        <div className="animate-fadeIn">
-          <SpaceActivity
-            activities={space.recentActivities}
-          />
-        </div>
-      )}
-
-      {activeTab === 'money' && (
+      {/* ── SURFACE 2: LEDGER (Financial Truth) ── */}
+      {currentTab === 'ledger' && (
         <div className="animate-fadeIn">
           <SpaceMoney
             spaceId={space.id}
@@ -226,13 +176,29 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
         </div>
       )}
 
-      {/* Modals */}
-      {createOfferOpen && (
-        <CreateOfferModal
-          isOpen={createOfferOpen}
-          spaceId={space.id}
-          onClose={() => setCreateOfferOpen(false)}
-          onOfferCreated={handleOfferCreated}
+      {/* ── SURFACE 3: CATALOG (What You Sell) ── */}
+      {currentTab === 'catalog' && (
+        <div className="animate-fadeIn">
+          <CatalogView
+            offers={space.offers}
+            onAddOffer={() => setCreateFlowOpen(true)}
+            onPublishOffer={handlePublishOffer}
+            onShareOffer={(o) => showToast(`Share link for "${o.title}" copied!`)}
+          />
+        </div>
+      )}
+
+      {/* Unified Create Flow Modal */}
+      {createFlowOpen && (
+        <CreateFlowModal
+          isOpen={createFlowOpen}
+          existingSpaceId={space.id}
+          onClose={() => setCreateFlowOpen(false)}
+          onCompleted={(updatedSpace) => {
+            setSpace(updatedSpace);
+            showToast('Catalog offer added and published!');
+            loadSpace();
+          }}
         />
       )}
     </div>
