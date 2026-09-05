@@ -19,7 +19,7 @@ import {
   Package,
   Sparkles,
   ShoppingBag,
-  Trophy
+  Users
 } from 'lucide-react';
 import { soundEngine } from '../../utils/SoundEngine';
 
@@ -256,17 +256,17 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
             <p className="text-[10px] text-white/60">KES 2,800 · Kilimani</p>
           </div>
 
-          {/* Card 3: EPL */}
+          {/* Card 3: Community Circles */}
           <div
             onClick={() => onViewCityFeed?.()}
             className="p-3 rounded-2xl bg-white/10 hover:bg-white/15 transition-all cursor-pointer space-y-1 border border-white/5"
           >
             <div className="flex items-center space-x-1 text-white/70 text-[9px] uppercase font-bold">
-              <Trophy className="w-3 h-3 text-amber-400" />
-              <span>EPL Matchday Room</span>
+              <Users className="w-3 h-3 text-[#5B2EA6]" />
+              <span>Community Circles</span>
             </div>
-            <p className="text-xs font-bold text-white truncate">Arsenal vs Chelsea</p>
-            <p className="text-[10px] text-white/60">Gameweek 4 · 12 Spots</p>
+            <p className="text-xs font-bold text-white truncate">Kilimani Organic Co-op</p>
+            <p className="text-[10px] text-white/60">Weekly Gathering · 34 Members</p>
           </div>
         </div>
       </div>

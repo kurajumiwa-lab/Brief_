@@ -362,7 +362,7 @@ export const AppShell: React.FC<AppShellProps> = ({
             </div>
 
             <p className="text-xs text-[#64748B]">
-              Post an event, a marketplace drop, or an EPL matchday challenge to the Nairobi public feed.
+              Post an event or a marketplace product drop to the Nairobi public feed.
             </p>
 
             <div className="grid grid-cols-2 gap-2">

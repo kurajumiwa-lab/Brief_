@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   Sparkles,
   ShoppingBag,
-  Trophy,
   Users,
   Lock,
   ArrowRight,
@@ -14,18 +13,17 @@ import {
 } from 'lucide-react';
 import { EventsHub } from '../../components/EventsHub';
 import { Marketplace } from '../../components/Marketplace';
-import { EplDesk } from '../../components/EplDesk';
 import { Circles } from '../../components/Circles';
 import { Vault } from '../../components/vault/Vault';
 import { soundEngine } from '../../utils/SoundEngine';
 
 export interface CityFeedViewProps {
-  initialSubTab?: 'all' | 'events' | 'marketplace' | 'epl' | 'circles' | 'vault';
+  initialSubTab?: 'all' | 'events' | 'marketplace' | 'circles' | 'vault';
   onOpenSpace?: (spaceId: string) => void;
   className?: string;
 }
 
-type CitySubTab = 'all' | 'events' | 'marketplace' | 'epl' | 'circles' | 'vault';
+type CitySubTab = 'all' | 'events' | 'marketplace' | 'circles' | 'vault';
 
 export const CityFeedView: React.FC<CityFeedViewProps> = ({
   initialSubTab = 'all',
@@ -44,7 +42,6 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
     { id: 'all', label: '🌆 All City' },
     { id: 'events', label: '🎟️ Events & Festivals' },
     { id: 'marketplace', label: '🛍️ Marketplace' },
-    { id: 'epl', label: '⚽ EPL Matchday' },
     { id: 'circles', label: '🤝 Circles & Chamas' },
     { id: 'vault', label: '🔐 Vault & Drops' }
   ];
@@ -72,7 +69,7 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
               Everything Happening Around You
             </h1>
             <p className="text-xs text-white/70 max-w-md mt-0.5">
-              Verified local events, creator drops, EPL rooms, and community circles across Nairobi.
+              Verified local events, creator drops, community circles, and secret drops across Nairobi.
             </p>
           </div>
 
@@ -159,33 +156,14 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
               </div>
             </section>
 
-            {/* EPL Matchday & Community Section */}
+            {/* Community Circles & Vault Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <section className="p-4 rounded-3xl bg-white border border-black/5 shadow-2xs space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Trophy className="w-4 h-4 text-amber-500" />
-                    <h3 className="text-xs font-black uppercase tracking-wider text-[#1A1F2E]">
-                      EPL Matchday Desk
-                    </h3>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setActiveSubTab('epl')}
-                    className="text-[11px] font-bold text-[#5B2EA6] hover:underline cursor-pointer"
-                  >
-                    Open Desk →
-                  </button>
-                </div>
-                <EplDesk meId="usr_me" onToast={showToast} />
-              </section>
-
               <section className="p-4 rounded-3xl bg-white border border-black/5 shadow-2xs space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Users className="w-4 h-4 text-[#5B2EA6]" />
                     <h3 className="text-xs font-black uppercase tracking-wider text-[#1A1F2E]">
-                      Community Circles
+                      Community Circles & Mutual Aid
                     </h3>
                   </div>
                   <button
@@ -197,6 +175,25 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
                   </button>
                 </div>
                 <Circles />
+              </section>
+
+              <section className="p-4 rounded-3xl bg-white border border-black/5 shadow-2xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Lock className="w-4 h-4 text-[#1A1F2E]" />
+                    <h3 className="text-xs font-black uppercase tracking-wider text-[#1A1F2E]">
+                      Vault & Special Drops
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSubTab('vault')}
+                    className="text-[11px] font-bold text-[#5B2EA6] hover:underline cursor-pointer"
+                  >
+                    Open Vault →
+                  </button>
+                </div>
+                <Vault />
               </section>
             </div>
           </div>
@@ -212,12 +209,6 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
         {activeSubTab === 'marketplace' && (
           <div className="p-4 rounded-3xl bg-white border border-black/5 shadow-2xs animate-fadeIn">
             <Marketplace />
-          </div>
-        )}
-
-        {activeSubTab === 'epl' && (
-          <div className="p-4 rounded-3xl bg-white border border-black/5 shadow-2xs animate-fadeIn">
-            <EplDesk meId="usr_me" onToast={showToast} />
           </div>
         )}
 
