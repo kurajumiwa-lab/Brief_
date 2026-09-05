@@ -14,7 +14,8 @@ import {
   FileText,
   CreditCard,
   Zap,
-  Sparkles
+  Sparkles,
+  Clock
 } from 'lucide-react';
 import { soundEngine } from '../../utils/SoundEngine';
 
@@ -32,6 +33,17 @@ const QUICK_CATEGORIES = [
   { id: 'Transport', label: '🛵 Transport' },
   { id: 'Packaging', label: '📦 Packaging' },
   { id: 'Airtime', label: '📱 Airtime' }
+];
+
+// Mock 7-day profit history for sparkline trend
+const SPARKLINE_DATA = [
+  { day: 'Mon', profit: 6500 },
+  { day: 'Tue', profit: 9200 },
+  { day: 'Wed', profit: 7800 },
+  { day: 'Thu', profit: 11400 },
+  { day: 'Fri', profit: 14200 },
+  { day: 'Sat', profit: 18500 },
+  { day: 'Sun', profit: 16600 }
 ];
 
 export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
@@ -282,6 +294,39 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
           </div>
         </div>
 
+        {/* ── 7-DAY PROFIT TREND SPARKLINES ── */}
+        <div className="p-3.5 rounded-2xl bg-[#FAFAF8] border border-black/5 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black uppercase tracking-wider text-[#1A1F2E] flex items-center space-x-1">
+              <Clock className="w-3 h-3 text-[#5B2EA6]" />
+              <span>Weekly Profit Momentum (KES)</span>
+            </span>
+            <span className="text-[10px] font-bold text-emerald-700">+34% vs last week</span>
+          </div>
+
+          <div className="flex items-end justify-between gap-1.5 pt-2 h-16 px-1">
+            {SPARKLINE_DATA.map((d, i) => {
+              const maxProfit = 20000;
+              const heightPct = Math.round((d.profit / maxProfit) * 100);
+              const isToday = i === SPARKLINE_DATA.length - 1;
+
+              return (
+                <div key={d.day} className="flex-1 flex flex-col items-center gap-1 group">
+                  <div className="w-full bg-black/5 rounded-t-lg h-12 flex items-end justify-center p-0.5">
+                    <div
+                      className={`w-full rounded-t-sm transition-all duration-300 ${
+                        isToday ? 'bg-[#93EE34]' : 'bg-[#5B2EA6]/40 group-hover:bg-[#5B2EA6]/70'
+                      }`}
+                      style={{ height: `${heightPct}%` }}
+                    />
+                  </div>
+                  <span className="text-[9px] font-bold text-[#64748B]">{d.day}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Action Button Strip */}
         <div className="flex items-center gap-2 pt-1">
           <button
@@ -472,7 +517,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
             <button
               type="button"
               onClick={() => setActivePayingTab(null)}
-              className="text-[11px] text-[#64748B] hover:text-[#1A1F2E]"
+              className="text-[11px] text-[#64748B]"
             >
               Cancel
             </button>
@@ -490,7 +535,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
             />
             <input
               type="text"
-              placeholder="Payment Note (e.g. M-Pesa partial installment)"
+              placeholder="Payment Note (e.g. M-Pesa installment)"
               value={paymentNote}
               onChange={(e) => setPaymentNote(e.target.value)}
               className="px-3 py-2 rounded-xl bg-white text-xs border border-black/5 focus:outline-none"
@@ -499,7 +544,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
 
           <button
             type="submit"
-            className="w-full py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-all cursor-pointer shadow-sm"
+            className="w-full py-2 rounded-xl bg-emerald-700 text-white text-xs font-bold cursor-pointer"
           >
             Credit Payment to Tab
           </button>
