@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { ShelfPlank } from './ShelfPlank';
 import { soundEngine } from '../../utils/SoundEngine';
+import { ShieldCheck } from 'lucide-react';
 
 export const DARK_SHELF_TOKENS = {
   canvasBase: '#0F1013',
@@ -30,12 +31,25 @@ export interface DarkShelfBookCardProps {
   className?: string;
   locked?: boolean;
   unlockText?: string;
+  
+  // High-Signal 3-Token Microcopy & Zero-CLS Placeholders
+  gradeToken?: string;
+  kicdApproved?: boolean;
+  wairoDeliveryToken?: string;
+  priceKes?: number;
+  dominantColor?: string;
+  isElevated?: boolean;
+  isDimmed?: boolean;
+  onDirectBuy?: () => void;
+  onChamaSplit?: () => void;
 }
 
 /**
  * Modern Dark Shelf Book/Item Card:
- * Seated physically flush on top of the shelf with high-contrast bottom contact shadow,
- * crisp borders, matte dark styling, 60fps haptic touch, and long-press peek preview.
+ * - Seated physically flush on top of the shelf with high-contrast bottom contact shadow.
+ * - 4-Tier Asset Pipeline: 6-char dominant color swatch (0ms paint / 0 CLS) + 3D spine fold edge shading.
+ * - 3-Token High-Signal Microcopy: [ KICD ✓ ] [ G4 • CORE ] [ WAIRO 48h ] KES 480.
+ * - Bottom-aligned to anchor securely to the 1px highlight shelf deck regardless of book aspect ratio.
  */
 export const DarkShelfBookCard: React.FC<DarkShelfBookCardProps> = ({
   id,
@@ -53,6 +67,15 @@ export const DarkShelfBookCard: React.FC<DarkShelfBookCardProps> = ({
   className = '',
   locked = false,
   unlockText,
+  gradeToken,
+  kicdApproved,
+  wairoDeliveryToken,
+  priceKes,
+  dominantColor = '#1E2027',
+  isElevated = false,
+  isDimmed = false,
+  onDirectBuy,
+  onChamaSplit
 }) => {
   const timerRef = useRef<any>(null);
   const isLongPressRef = useRef(false);
@@ -94,14 +117,26 @@ export const DarkShelfBookCard: React.FC<DarkShelfBookCardProps> = ({
       onMouseDown={handleTouchStart}
       onMouseUp={handleTouchEnd}
       onMouseLeave={handleTouchEnd}
-      className={`group relative shrink-0 w-[140px] sm:w-[155px] h-[195px] sm:h-[215px] rounded-[3px] overflow-hidden text-left transition-all duration-200 hover:-translate-y-1.5 focus:outline-none cursor-pointer select-none ${className}`}
+      className={`group relative shrink-0 w-[140px] sm:w-[155px] h-[195px] sm:h-[215px] rounded-[3px] overflow-hidden text-left transition-all duration-300 focus:outline-none cursor-pointer select-none ${
+        isElevated 
+          ? 'scale-105 -translate-y-2.5 z-30 ring-2 ring-[#E8985E]/60 shadow-2xl' 
+          : isDimmed 
+          ? 'opacity-35 scale-95' 
+          : 'hover:-translate-y-1.5'
+      } ${className}`}
       style={{
         boxShadow: DARK_SHELF_TOKENS.bookCoverContactShadow,
         filter: DARK_SHELF_TOKENS.bookCoverDropShadowFilter,
-        backgroundColor: '#1E2027',
+        backgroundColor: dominantColor,
       }}
     >
-      {/* Spine / Book Cover Art */}
+      {/* 1. Dominant Color Swatch Background (0ms Paint / Zero-CLS) */}
+      <div 
+        className="absolute inset-0 transition-opacity duration-300"
+        style={{ backgroundColor: dominantColor }}
+      />
+
+      {/* 2. Cover Art Image (Lazy loaded over dominant swatch) */}
       {image ? (
         <img
           src={image}
@@ -113,40 +148,56 @@ export const DarkShelfBookCard: React.FC<DarkShelfBookCardProps> = ({
         <div
           className="absolute inset-0"
           style={{
-            background: 'linear-gradient(135deg, #242731 0%, #17181F 100%)',
+            background: `linear-gradient(135deg, ${dominantColor} 0%, #17181F 100%)`,
           }}
         />
       )}
 
-      {/* Spine Shadow on Left Edge simulating a physical book fold */}
+      {/* 3. Physical 3D Spine Fold Affordance (Left Edge 2.5px Gradient Shadow) */}
       <div
-        className="absolute inset-y-0 left-0 w-2.5 pointer-events-none z-10"
+        className="absolute inset-y-0 left-0 w-3 pointer-events-none z-10"
         style={{
-          background: 'linear-gradient(90deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 100%)',
-          borderRight: '1px solid rgba(255,255,255,0.06)',
+          background: 'linear-gradient(90deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 65%, rgba(0,0,0,0) 100%)',
+          borderRight: '1px solid rgba(255,255,255,0.08)',
         }}
       />
 
-      {/* Dark gradient overlay for typography readability */}
+      {/* 4. Contrast Scrim Overlay for Typographic Hierarchy */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            'linear-gradient(180deg, rgba(15,16,19,0.2) 0%, rgba(15,16,19,0.85) 70%, rgba(15,16,19,0.98) 100%)',
+            'linear-gradient(180deg, rgba(15,16,19,0.25) 0%, rgba(15,16,19,0.75) 60%, rgba(15,16,19,0.98) 100%)',
         }}
       />
 
-      {/* Top badges & indicators */}
+      {/* Top badges & High-Signal Pill Tokens */}
       <div className="absolute top-2.5 left-3 right-2.5 flex items-center justify-between z-20">
-        {Icon && (
+        {Icon ? (
           <div
-            className="w-6 h-6 rounded flex items-center justify-center backdrop-blur-sm"
-            style={{ backgroundColor: 'rgba(26, 27, 33, 0.85)', color: accentColor }}
+            className="w-6 h-6 rounded flex items-center justify-center backdrop-blur-sm shadow-sm"
+            style={{ backgroundColor: 'rgba(26, 27, 33, 0.90)', color: accentColor }}
           >
             <Icon className="w-3.5 h-3.5" />
           </div>
+        ) : kicdApproved ? (
+          <div
+            className="px-1.5 py-0.5 rounded-[3px] bg-amber-500/20 text-amber-300 flex items-center space-x-0.5 text-[7.5px] font-black uppercase tracking-wider border border-amber-400/30"
+          >
+            <ShieldCheck className="w-2.5 h-2.5 text-amber-400" />
+            <span>KICD ✓</span>
+          </div>
+        ) : (
+          <div />
         )}
-        {badge && (
+
+        {gradeToken ? (
+          <span
+            className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-[3px] bg-[#1F232D] text-[#7D818F] border border-white/10"
+          >
+            {gradeToken}
+          </span>
+        ) : badge ? (
           <span
             className="ml-auto text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-[2px]"
             style={{
@@ -157,10 +208,10 @@ export const DarkShelfBookCard: React.FC<DarkShelfBookCardProps> = ({
           >
             {badge}
           </span>
-        )}
+        ) : null}
       </div>
 
-      {/* Seated Bottom Cover Text Info */}
+      {/* Seated Bottom Cover Text & Microcopy */}
       <div className="absolute inset-x-3 bottom-2.5 z-20">
         {category && (
           <p
@@ -170,17 +221,31 @@ export const DarkShelfBookCard: React.FC<DarkShelfBookCardProps> = ({
             {category}
           </p>
         )}
+        
         <h4 className="text-xs font-black text-white leading-tight line-clamp-2">
           {title}
         </h4>
-        {(subtitle || author || unlockText) && (
+
+        {/* 3-Token High-Signal Strip (Price / WAIRO / Progress) */}
+        {priceKes ? (
+          <div className="mt-1.5 flex items-center justify-between pt-1 border-t border-white/10">
+            <span className="text-[10.5px] font-black text-amber-300">
+              KES {priceKes.toLocaleString()}
+            </span>
+            {wairoDeliveryToken && (
+              <span className="text-[7.5px] font-mono font-bold text-cyan-300 bg-cyan-950/60 px-1 py-0.2 rounded">
+                {wairoDeliveryToken}
+              </span>
+            )}
+          </div>
+        ) : (subtitle || author || unlockText) ? (
           <p
             className="text-[9.5px] font-medium leading-snug mt-1 line-clamp-1"
             style={{ color: locked ? '#FBBF24' : DARK_SHELF_TOKENS.mutedText }}
           >
             {locked && unlockText ? `Opens: ${unlockText}` : (subtitle || author)}
           </p>
-        )}
+        ) : null}
       </div>
     </button>
   );
@@ -196,8 +261,8 @@ export interface ShelfRowProps {
 }
 
 /**
- * A single tiered shelf row where items sit flush on top of the physical ShelfPlank
- * with ambient contact drop shadows.
+ * A single tiered shelf row where items sit flush on top of the physical ShelfPlank.
+ * Pinned with `items-end` to guarantee CBC books of varying physical aspect ratios sit firmly on the deck.
  */
 export const ShelfRow: React.FC<ShelfRowProps> = ({
   label,
@@ -237,7 +302,7 @@ export const ShelfRow: React.FC<ShelfRowProps> = ({
         </div>
       )}
 
-      {/* Seated Items Container */}
+      {/* Seated Items Container - Bottom-Anchored to Shelf Deck Lip */}
       <div className="relative z-10 w-full flex items-end overflow-x-auto no-scrollbar scroll-smooth space-x-3.5 pb-0 pt-2 px-1">
         {children}
       </div>
@@ -261,8 +326,8 @@ export interface ModernDarkShelfWrapperProps {
  * 🎨 Modern Dark Shelf UI Container:
  * - Ambient dark radial gradient: #1A1B21 at top-center transitioning to #0F1013 at base.
  * - Flat-bevel slate-dark shelf planks with 1px #3A3C44 highlight lip.
- * - Deep contact shadows under items.
- * - Modern charcoal matte aesthetic (zero brown/wood textures).
+ * - Bottom-anchored card alignment for physical stability on the deck.
+ * - Deep baked contact shadows under items (low-end GPU optimized).
  */
 export const ModernDarkShelfWrapper: React.FC<ModernDarkShelfWrapperProps> = ({
   children,

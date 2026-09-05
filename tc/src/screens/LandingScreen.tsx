@@ -592,6 +592,11 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                   badge="BULK RUN"
                   badgeColor="#10B981"
                   accentColor="#38BDF8"
+                  kicdApproved={true}
+                  gradeToken="G7 • CORE"
+                  priceKes={5180}
+                  wairoDeliveryToken="WAIRO 48h"
+                  dominantColor="#1E3A5F"
                   onClick={() => {
                     setActiveCbcBundleId('cbc-g7');
                     setCbcCheckoutOpen(true);
@@ -605,6 +610,9 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                   badge="15% CUT"
                   badgeColor="#EF4444"
                   accentColor="#E8985E"
+                  gradeToken="VOL. 4"
+                  priceKes={350}
+                  dominantColor="#451A03"
                   onClick={() => setCreatorDeskOpen(true)}
                 />
                 <DarkShelfBookCard
@@ -615,6 +623,9 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                   badge="CARGO"
                   badgeColor="#E8985E"
                   accentColor="#E8985E"
+                  gradeToken="47 COUNTIES"
+                  wairoDeliveryToken="FARGO KES 50"
+                  dominantColor="#0F172A"
                   onClick={() => {
                     soundEngine.play('tap');
                     setInterCountyOpen(true);
@@ -628,6 +639,8 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                   badge="TOURING"
                   badgeColor="#F59E0B"
                   accentColor="#10B981"
+                  gradeToken="U-17 CUP"
+                  dominantColor="#1E1B4B"
                   onClick={() => setEventLogisticsOpen(true)}
                 />
               </ShelfRow>
