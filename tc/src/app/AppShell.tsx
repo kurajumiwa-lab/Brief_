@@ -275,6 +275,10 @@ export const AppShell: React.FC<AppShellProps> = ({
         activeTab={activeTab}
         onSelectTab={(tab) => setActiveTab(tab)}
         onCreateAction={handleContextualFab}
+        spaceName={activeSpace?.name || "Amina's Cakes"}
+        revenueKes={activeSpace?.metrics?.revenueKes || 84200}
+        offersCount={activeSpace?.offers?.length || 3}
+        pendingInquiriesCount={activeSpace?.recentConversations?.filter((c) => c.status !== 'converted').length || 1}
       />
 
       {/* Main Content Viewport */}
