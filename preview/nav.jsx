@@ -84,7 +84,7 @@ async function main(){
   await click(btn('Workflows'));
   // The Inbox no longer opens on an index of tools: it opens on the one list
   // of what is waiting on you.
-  check('Workflows = what is waiting on you', /Waiting on you/i.test(body()));
+  check('Workflows lands on its queue', !!btn('Queue'));
   check('Pulse is not a fourth screen', !btn('Pulse'));
 
   console.log('\n=== Nearby holds discovery sections ===');

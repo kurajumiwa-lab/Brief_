@@ -152,11 +152,6 @@ export function TriageQueue({ onOpenSection, onNotice }: TriageQueueProps) {
       <div className="max-w-3xl mx-auto px-4 py-6">
         <div className="border border-dashed border-[#E5E8EC] rounded-2xl p-8 text-center">
           <p className="text-xs font-extrabold text-[#0D1117]">Sign in to see what is waiting</p>
-          <p className="text-[10px] text-[#0D1117]/70 mt-1">
-            The queue is yours alone — tasks handed to you, orders on your shelf,
-            doors you are opening, messages to review. Nobody is signed in, so
-            there is nothing to show rather than nothing waiting.
-          </p>
         </div>
       </div>
     );
@@ -183,13 +178,7 @@ export function TriageQueue({ onOpenSection, onNotice }: TriageQueueProps) {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-4 space-y-3">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[11px] text-[#0D1117]/60 leading-snug">
-            Everything blocked on you right now, newest waiting first. Nothing here is
-            suggested work — it is all real rows that name you.
-          </p>
-        </div>
+      <div className="flex items-center justify-end">
         <button
           onClick={() => { setStatus('loading'); void load(); }}
           className="shrink-0 px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117] font-extrabold text-[11px] cursor-pointer"
@@ -209,10 +198,6 @@ export function TriageQueue({ onOpenSection, onNotice }: TriageQueueProps) {
       {items.length === 0 && (
         <div className="border border-dashed border-[#E5E8EC] rounded-2xl p-8 text-center">
           <p className="text-xs font-extrabold text-[#0D1117]">Nothing is waiting on you</p>
-          <p className="text-[10px] text-[#0D1117]/70 mt-1">
-            When a task is handed to you, an order lands on your shelf, a door needs
-            opening, or a message arrives, it appears here.
-          </p>
         </div>
       )}
 

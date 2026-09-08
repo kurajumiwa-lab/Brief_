@@ -115,7 +115,7 @@ async function main(){
   await click(btn('Nearby'));
   check('stream still renders objects', document.querySelectorAll('div.grid > div[class*="cursor-pointer"]').length>0);
   await goto('Workflows','Review');
-  check('the Workflows destination answers with its queue', /Waiting on you|waiting/i.test(body()) || !!btn('Review'));
+  check('the Workflows destination answers with its queue', !!btn('Queue'));
   await click(btn('Nearby'));
   check('My Layer still present', !!btn('My Layer'));
   console.log(`\n${'='.repeat(46)}\nPASSED ${pass}   FAILED ${fail}\n${'='.repeat(46)}`);

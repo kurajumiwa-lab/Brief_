@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Briefcase, CheckCircle2, Circle } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
-import { WORKFLOW_BUNDLES, QUEUE_LABEL, QUEUE_CHIP, QUEUE_HINT, INBOX_TABS, ROOM } from '../ui/names';
+import { WORKFLOW_BUNDLES, QUEUE_CHIP, INBOX_TABS, ROOM } from '../ui/names';
 import type { YardSection } from '../components/YardEngineDesk';
 import { getSourceHealth, getSourceHealthLabel } from '../model/core';
 import { ActionsEngine } from '../components/ActionsEngine';
@@ -131,17 +131,7 @@ export function WorkflowsScreen(props: WorkflowsScreenProps) {
                 <h1 className="text-lg font-extrabold text-[#0D1117] tracking-tight">
                   {workflowView === 'queue' ? ROOM.workflows.label : `Workflows — ${activeWorkflowBundle.label}`}
                 </h1>
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#0D1117]/70 mt-0.5">
-                  {workflowView === 'queue' ? `${QUEUE_LABEL} — ${QUEUE_HINT}` : activeWorkflowBundle.hint}
-                </p>
               </div>
-              {/* No count on the queue: how much is waiting is the queue's own
-                  answer, and a header badge would be a second, worse copy. */}
-              {workflowView === 'screen' && (
-                <span className="text-[10px] font-bold uppercase tracking-[0.14em] bg-[#EFF1F4] text-[#0D1117]/60 px-2.5 py-1 rounded-full">
-                  {activeWorkflowBundle.sections.length} screens
-                </span>
-              )}
             </div>
 
             {/* The landing row. The queue is first because it is the reason you
