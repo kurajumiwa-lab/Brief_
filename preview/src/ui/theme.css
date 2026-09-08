@@ -46,7 +46,6 @@
   --ink-dim: var(--brief-muted);
   --ink-faint: var(--brief-faint);
   --signal-live: #16A34A;     /* live/fresh — success green */
-  --signal-arena: #2563EB;    /* Arena — blue */
   --signal-urgent: #DC2626;   /* countdown / closing soon — danger */
 
   /* --- Spec-named accent tokens (§3) --- */

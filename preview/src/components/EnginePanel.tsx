@@ -13,7 +13,7 @@ import {
   type EngineRoute,
   type GroupBuy
 } from '../api/briefApi';
-import { listGroupBuys, getArenaMatches } from '../api/briefApi';
+import { listGroupBuys } from '../api/briefApi';
 import type { EngineTicketBar as EngineTicketBarT } from '../api/briefApi';
 import { StageStepper } from './StageStepper';
 
@@ -59,7 +59,6 @@ export function EnginePanel({ onObjectsChanged }: EnginePanelProps) {
   const [pending, setPending] = useState(false);
   const [routes, setRoutes] = useState<EngineRoute[]>([]);
   const [groupBuys, setGroupBuys] = useState<GroupBuy[]>([]);
-  const [matches, setMatches] = useState<any[]>([]);
   const [ticket, setTicket] = useState<EngineTicketBarT | null>(null);
   const [deliveries, setDeliveries] = useState<any[]>([]);
   const [routeError, setRouteError] = useState<string | null>(null);
@@ -82,12 +81,11 @@ export function EnginePanel({ onObjectsChanged }: EnginePanelProps) {
     if (d.ok) setDeliveries(d.data);
   }, []);
 
-  // The tenancy cockpit: financial pipelines + live gaming + the active
+  // The tenancy cockpit: financial pipelines + the active
   // ticket — one orchestration layer, every workflow it tracks.
   const refreshTenancy = useCallback(async () => {
-    const [g, m, t] = await Promise.all([listGroupBuys(), getArenaMatches(), getEngineTicketBar()]);
+    const [g, t] = await Promise.all([listGroupBuys(), getEngineTicketBar()]);
     if (g.ok) setGroupBuys(g.data);
-    if (m.ok) setMatches(m.data);
     if (t.ok) setTicket(t.data);
   }, []);
 
@@ -226,27 +224,6 @@ export function EnginePanel({ onObjectsChanged }: EnginePanelProps) {
               <div className="mt-1.5">
                 <StageStepper stages={b.stages} currentIndex={b.stageIndex} compact />
               </div>
-            </div>
-          ))}
-        </div>
-
-        {/* live gaming alerts: real match states */}
-        <div className="space-y-1.5">
-          <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#0D1117]/60">Gaming alerts</p>
-          {matches.length === 0 && (
-            <p className="text-[10px] text-[#0D1117]/60">No matches in flight.</p>
-          )}
-          {matches.slice(0, 3).map((m) => (
-            <div key={m.id} className="flex items-center justify-between gap-2 text-[10px]">
-              <span className="min-w-0 truncate text-[#0D1117]/70">
-                {m.playerAName ?? 'Player A'} vs {m.playerBName ?? 'Player B'}
-              </span>
-              <span
-                className="shrink-0 rounded-full border px-1.5 py-0.5 font-bold"
-                style={{ borderColor: m.status === 'confirmed' ? '#FF5A1F' : '#E5E8EC', color: '#0D1117' }}
-              >
-                {m.status ?? 'scheduled'}
-              </span>
             </div>
           ))}
         </div>

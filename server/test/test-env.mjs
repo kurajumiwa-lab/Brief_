@@ -9,3 +9,6 @@
 //
 // The directory is pid-unique so parallel runs cannot share rows.
 process.env.BRIEF_DATA_DIR = '/tmp/brief-test-data-' + process.pid;
+
+// Set before any app import: tests own ephemeral listeners, not the preview port.
+process.env.NODE_ENV = 'test';

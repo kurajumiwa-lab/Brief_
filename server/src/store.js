@@ -23,6 +23,13 @@ const EMPTY = {
   // Authentication. Passwords are scrypt-hashed with a per-user salt; only a
   // SHA-256 fingerprint of each session token is stored, never the token.
   users: [],
+  workOrders: [], // Frozen commercial agreements and explicit two-party fulfillment.
+  quoteRequests: [], // Explicit, scoped commercial invitations.
+  requestQuotes: [], // Drafts plus immutable submitted offer versions; no ledger link.
+  matches: [], // Revision-bound demand-to-capability relationships.
+  capabilities: [], // Capability records reference the existing vendor identity.
+  requestParticipants: [], // Owner-curated potential options, not matches.
+  requests: [], // Structured economic demand; additive, no data migration.
   sessions: [],
   // Server-held secrets that must survive a restart but must never reach a
   // client (currently: the HMAC key that signs one-tap email links).
@@ -94,23 +101,6 @@ const EMPTY = {
   // listing is an order; a contested order has a dispute. Money lives in
   // ledgerTransactions as it always has -- there is deliberately no order
   // balance and no second transaction table.
-  // Arena. Competitive play, persisted server-side. Results require BOTH
-  // players to agree; Brief never decides a winner. No Arena wallet exists --
-  // paid contests go through the compliance gate and the one ledger.
-  arenaChallenges: [],
-  arenaMatches: [],
-  // The controlled eFootball pilot. Signup rows carry cohort intent; pilot
-  // counters are derived from these rows plus the ordinary Arena matches.
-  arenaBetaSignups: [],
-  // Fantasy 11. Non-economic core: pool, entries, stats and derived scores.
-  // No Fantasy wallet -- paid entry would use the one ledger, once legal.
-  // The bare /api/fantasy HTTP surface was removed (F5); the domain engine
-  // lives on behind Ligi and the EPL contest routes.
-  fantasyCompetitions: [],
-  fantasyPlayers: [],
-  fantasyEntries: [],
-  fantasyStats: [],
-
   // --- Commerce -------------------------------------------------------------
   vendors: [],
   listings: [],
@@ -232,14 +222,6 @@ const EMPTY = {
   // UTM click attribution: one row per tracked click. See domain/distribution.js.
   clickEvents: [],
 
-  // --- Lobby (Arena integration: 1-tap room codes) -------------------------
-  // Private game rooms (code + mode + slots + status), host vouches, scoreboard
-  // receipts, and clan matches. See domain/lobby.js.
-  lobbyRooms: [],
-  lobbyVouches: [],
-  scoreboardReceipts: [],
-  clanMatches: [],
-
   // --- Automation engine (CCS §3.1) ----------------------------------------
   // Trigger→condition→action workflows evaluated against the signal log, and
   // their append-only run history. See domain/workflow.js.
@@ -263,24 +245,9 @@ const EMPTY = {
   // only — never probabilistic inference.
   people: [],
   personAliases: [],
-  // Explicit Play availability. Off by default: a missing row is offline.
-  // Presence is not consent — only an opted-in row is listed.
-  arenaAvailability: [],
-
-  // --- Arena entities (server models) -------------------------------------
-  // A player's game identity is NOT their Brief account: one person holds many.
-  arenaPlayers: [],
-  // Arena progression: append-only XP/coin events (idempotent by key).
-  arenaEvents: [],
-  // T5: the shared EPL player catalog. Rows carry their source; 'seed' rows
-  // 'seed' rows are clearly mock development data.
-  eplCatalog: [],
   // Mshikano: cooperation posts + two-party-confirmed partnerships.
   coopPosts: [],
   coopPartnerships: [],
-  arenaVenues: [],
-  arenaTournaments: [],
-  arenaResults: [], // agreed match results; leaderboards are derived from these
 
   // --- HudumaLink (WhatsApp + M-Pesa distributed action layer) -------------
   // A self-contained product module living inside the same store. Identity is
@@ -466,7 +433,17 @@ function load() {
 
 let db = load();
 
+let transactionDepth = 0;
+// Derived lookup indexes, never another source of truth. Invalidate on writes
+// and rollback; no full collection scan is needed per match card or page read.
+const versions = new Map();
+const indexes = new Map();
+function touched(collection) { versions.set(collection, (versions.get(collection) ?? 0) + 1); indexes.delete(collection); }
+function invalidateIndexes() { for (const key of Object.keys(db)) touched(key); }
+
+
 function persist() {
+  if (transactionDepth) return;
   ensureDir();
   const tmp = `${DB_FILE}.tmp`;
   fs.writeFileSync(tmp, JSON.stringify(db, null, 2));
@@ -474,6 +451,26 @@ function persist() {
 }
 
 export const store = {
+  // Synchronous multi-row mutations share the existing atomic file swap.
+  // No second persistence layer; failed writes restore the whole snapshot.
+  transaction(fn) {
+    if (transactionDepth) return fn();
+    const before = structuredClone(db);
+    transactionDepth++;
+    try { const result = fn(); transactionDepth--; persist(); return result; }
+    catch (error) { transactionDepth = 0; db = before; invalidateIndexes(); throw error; }
+  },
+  version(collection) { return versions.get(collection) ?? 0; },
+  indexed(collection, field, value) {
+    let fields = indexes.get(collection);
+    if (!fields) { fields = new Map(); indexes.set(collection, fields); }
+    let index = fields.get(field);
+    if (!index) { index = new Map(); for (const row of db[collection] ?? []) {
+      const key = row[field]; if (!index.has(key)) index.set(key, []); index.get(key).push(row);
+    } fields.set(field, index); }
+    return [...(index.get(value) ?? [])];
+  },
+  lookup(collection, id) { return this.indexed(collection, 'id', id)[0] ?? null; },
   all(collection) {
     return db[collection] ?? [];
   },
@@ -484,18 +481,27 @@ export const store = {
     return (db[collection] ?? []).filter(predicate);
   },
   insert(collection, row) {
+    touched(collection);
     db[collection].push(row);
-    persist();
+    try { persist(); } catch (e) { db[collection].pop(); touched(collection); throw e; }
     return row;
   },
   update(collection, id, patch) {
     const row = db[collection].find((r) => r.id === id);
     if (!row) return null;
+    touched(collection);
+    const before = structuredClone(row);
     Object.assign(row, patch, { updatedAt: new Date().toISOString() });
-    persist();
+    try { persist(); } catch (e) {
+      for (const key of Object.keys(row)) delete row[key];
+      Object.assign(row, before);
+      touched(collection);
+      throw e;
+    }
     return row;
   },
   remove(collection, id) {
+    touched(collection);
     const before = db[collection].length;
     db[collection] = db[collection].filter((r) => r.id !== id);
     persist();
@@ -504,6 +510,7 @@ export const store = {
   /** Test helper: wipes everything. Never called by a route. */
   _reset() {
     db = structuredClone(EMPTY);
+    invalidateIndexes();
     db.__schemaVersion = SCHEMA_VERSION;
     persist();
   },

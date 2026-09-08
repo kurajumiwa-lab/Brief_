@@ -22,7 +22,7 @@ import { soundEngine } from '../../utils/SoundEngine';
 export interface OfflineActionRecord {
   id: string;
   idempotencyKey: string;
-  category: 'wairo_logistics' | 'duka_sales' | 'chama_ledger' | 'arena_scores';
+  category: 'wairo_logistics' | 'duka_sales' | 'chama_ledger';
   title: string;
   details: string;
   amountKes?: number;
@@ -79,7 +79,7 @@ export function OfflineSyncQueueDesk({
   const [syncStatusMsg, setSyncStatusMsg] = useState<string>('');
 
   // New offline action form state
-  const [newCategory, setNewCategory] = useState<'wairo_logistics' | 'duka_sales' | 'chama_ledger' | 'arena_scores'>('wairo_logistics');
+  const [newCategory, setNewCategory] = useState<'wairo_logistics' | 'duka_sales' | 'chama_ledger'>('wairo_logistics');
   const [newTitle, setNewTitle] = useState<string>('Delivery Hand-off Confirmation');
   const [newDetails, setNewDetails] = useState<string>('Recorded offline recipient hand-off and signature.');
   const [newAmount, setNewAmount] = useState<number>(300);
@@ -343,7 +343,6 @@ export function OfflineSyncQueueDesk({
               <option value="wairo_logistics">Wairo Courier Drop-off & PIN</option>
               <option value="duka_sales">Duka POS Cash Sale</option>
               <option value="chama_ledger">Chama Table Banking Contribution</option>
-              <option value="arena_scores">Arena 1v1 Staked Match Score</option>
             </select>
           </div>
 
@@ -410,11 +409,7 @@ export function OfflineSyncQueueDesk({
               <span className="text-[10px] text-blue-600 font-bold block">1 Record (3.1 KB)</span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-1.5">
-              <span className="font-black text-[#0D1117] text-xs">🎮 arena_match_results</span>
-              <p className="text-[11px] text-gray-600 font-sans">Stores signed match completion proofs, room score tallies, and referee escalation logs.</p>
-              <span className="text-[10px] text-blue-600 font-bold block">0 Records (0 KB)</span>
-            </div>
+
           </div>
         </div>
       )}

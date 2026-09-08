@@ -6,7 +6,7 @@ import * as briefApi from '../api/briefApi';
 import type { Campaign as ApiCampaign, CampaignType as ApiCampaignType } from '../api/types';
 import { SAVED_BUNDLES, SAVED_TABS } from '../ui/names';
 import type { BriefObject, ConnectedSource, Destination, GroupCommandResult, MyLayerSection, ObjectRelationship, WorkflowSection , GroupAccess, GroupKnowledgeEntry, ObjectType, Quest, SaveLabel } from '../model/core';
-import { SAVE_LABELS, GROUP_MESSAGES, formatSourceDate, getDistanceLabel, getUnansweredQuestions, isResultConfirmed, resolveAction , getBriefRank, runGroupCommand } from '../model/core';
+import { SAVE_LABELS, GROUP_MESSAGES, formatSourceDate, getDistanceLabel, getUnansweredQuestions, resolveAction, getBriefRank, runGroupCommand } from "../model/core";
 
 import { Bookmark } from 'lucide-react';
 import { Plus } from 'lucide-react';

@@ -4,8 +4,11 @@
 // implied). Editorial: record/approve a category image for the fallback chain.
 // Uploads: accept an actual image FILE, store it, and serve its bytes back.
 import fs from 'node:fs';
+import { canReadWorkEvidence } from '../domain/workOrders.js';
+import { canReadQuoteEvidence } from '../domain/quotes.js';
 import multer from 'multer';
-import { requireAuth } from './helpers.js';
+import { hasCapability } from '../identity.js';
+import { requireAuth, requireCap } from './helpers.js';
 import { requireFeature } from '../features.js';
 import { store } from '../store.js';
 import * as media from '../domain/media.js';
@@ -85,7 +88,8 @@ export function register(app) {
         bytes: req.file.buffer,
         ownerId: req.auth?.userId ?? null,
         originalName: req.file.originalname,
-        alt: req.body?.alt
+        alt: req.body?.alt,
+        purpose: req.body?.purpose ?? 'public'
       });
       if (!result.ok) {
         return res.status(result.status).json({
@@ -184,6 +188,12 @@ export function register(app) {
    * rather than hidden.
    */
   app.get('/api/media/file/:id', (req, res) => {
+    const row = upload.getUpload(req.params.id);
+    const privateEvidence = row?.purpose === 'private_evidence' || row?.purpose === 'private_request' || row?.purpose === 'private_quote' || row?.purpose === 'private_work';
+    if (privateEvidence && (!req.auth?.userId || (row.ownerId !== req.auth.userId && !(row.purpose === 'private_evidence' && hasCapability(req.auth.userId,'moderate')) && !(row.purpose === 'private_quote' && canReadQuoteEvidence(req.auth.userId,row.id)) && !(row.purpose === 'private_work' && canReadWorkEvidence(req.auth.userId,row.id))))) {
+      res.setHeader('Cache-Control','no-store');
+      return res.status(404).json({error:'image not found',code:'not_found'});
+    }
     const result = upload.readFile(req.params.id);
     if (!result.ok) {
       return res.status(result.status).json({ error: result.error, code: result.code });
@@ -191,8 +201,9 @@ export function register(app) {
     const ext = result.row.mimeType.split('/')[1] ?? 'bin';
     res.setHeader('content-type', result.row.mimeType);
     res.setHeader('content-length', String(result.size));
-    // The bytes behind an id never change, so a reader can cache hard.
-    res.setHeader('cache-control', 'public, max-age=31536000, immutable');
+    // Public bytes are immutable. Private evidence is never publicly cached.
+    res.setHeader('cache-control', privateEvidence ? 'private, no-store' : 'public, max-age=31536000, immutable');
+    if (privateEvidence) res.setHeader('vary', 'Authorization, Cookie');
     // An image is served as an image: never sniffed into something else, and
     // never allowed to run anything.
     res.setHeader('x-content-type-options', 'nosniff');

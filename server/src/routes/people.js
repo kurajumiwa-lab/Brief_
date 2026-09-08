@@ -17,31 +17,8 @@ export function register(app) {
     const mine = person.ensurePersonForUser(me);
     res.json({
       person: mine,
-      standing: person.standing(mine.id),
-      availability: person.getAvailability(me)
+      standing: person.standing(mine.id)
     });
-  });
-
-  /** Explicit availability. Off by default. Presence is not consent. */
-  app.put('/api/person/me/availability', (req, res) => {
-    const me = requireAuth(req, res);
-    if (!me) return;
-    try {
-      res.json({ availability: person.setAvailability(me, req.body ?? {}) });
-    } catch (e) {
-      res.status(400).json({ error: String(e.message ?? e) });
-    }
-  });
-
-  app.get('/api/person/me/availability', (req, res) => {
-    const me = requireAuth(req, res);
-    if (!me) return;
-    res.json({ availability: person.getAvailability(me) });
-  });
-
-  /** Opted-in available players only. Not a public people search. */
-  app.get('/api/person/available', (req, res) => {
-    res.json({ available: person.listAvailable({ gameId: req.query.gameId ?? null }) });
   });
 
   /** A person by id. Operator-readable; existence is not disclosed widely. */

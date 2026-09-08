@@ -474,6 +474,24 @@ async function run() {
   check('the amount refusal reason reaches the caller',
     !negTx.ok && /greater than zero/.test(negTx.error));
 
+  // Request/Quote/Work decisions are explicitly retried, never replayed silently.
+  const oldStorage=globalThis.localStorage;
+  const storage=new Map();
+  globalThis.localStorage={getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v)};
+  route=()=>({throws:'simulated lost response'});
+  const operations=[
+    ['work action',()=>api.changeWorkOrder('work_fixture',{action:'start',revision:1,agreementRevision:1,idempotencyKey:'work-retry-fixture'})],
+    ['work creation',()=>api.createWorkOrder('quote_fixture')],
+    ['quote creation',()=>api.startRequestQuote('invitation_fixture',1)],
+    ['quote action',()=>api.changeRequestQuote('quote_fixture',{action:'submit',revision:1,requestRevision:1,idempotencyKey:'quote-retry-fixture'})],
+  ];
+  try{
+    for(const [name,call] of operations){
+      storage.clear();const result=await call();
+      check(name+' network failure stays explicit and outside the offline queue',!result.ok&&!result.queued&&api.offlineQueueDepth()===0);
+    }
+  }finally{globalThis.localStorage=oldStorage;}
+
   console.log('\n====================================================');
 
   console.log('PASSED ' + pass + '   FAILED ' + fail);

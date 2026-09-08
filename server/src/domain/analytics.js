@@ -5,7 +5,6 @@
 // store and the signal log, never from a stored counter or a guessed funnel.
 //
 //   ACTIVATION  — first location selection, first save, first contribution,
-//                 first Arena interaction, per user, from recorded signals.
 //   ENGAGEMENT  — views / saves / shares / challenges / matches, aggregated.
 //   RETENTION   — returning users (repeat actors) and location revisits.
 //   QUALITY     — verification rate, confirmation rate, open reports.
@@ -27,8 +26,6 @@ function activationEvents() {
     firstView: distinctActors('object_viewed'),
     firstSave: distinctActors('object_saved'),
     firstContribution: distinctActors('object_created'),
-    firstArena: distinctActors('arena_challenge_opened'),
-    firstArenaBeta: distinctActors('arena_beta_joined')
   };
 }
 
@@ -37,9 +34,6 @@ function engagementCounts() {
     views: signalMeta('object_viewed').length,
     saves: signalMeta('object_saved').length,
     shares: signalMeta('object_shared').length,
-    betaSignups: signalMeta('arena_beta_joined').length,
-    challengesCreated: signalMeta('arena_challenge_opened').length,
-    matchesCompleted: signalMeta('arena_result_confirmed').length,
     // Entity layer: exactly the five tracked acts from the following brief —
     // viewed, followed, unfollowed, entity object opened, source opened.
     entityViews: signalMeta('entity_viewed').length,
@@ -101,9 +95,6 @@ export function dashboard() {
       campaigns: store.all('campaigns').length,
       banners: store.all('campaignBanners').length,
       vaults: store.all('vaults').length,
-      betaSignups: store.all('arenaBetaSignups').length,
-      challenges: store.all('arenaChallenges').length,
-      matches: store.all('arenaMatches').length,
       notifications: store.all('notifications').length
     }
   };

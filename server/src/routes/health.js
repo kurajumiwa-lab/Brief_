@@ -7,7 +7,6 @@ import * as ops from '../ops.js';
 import * as ledger from '../domain/ledger.js';
 import * as settlement from '../domain/settlement.js';
 import * as payment from '../domain/payment.js';
-import * as compliance from '../domain/compliance.js';
 import * as telegram from '../connectors/telegram.js';
 import * as smileid from '../connectors/smileid.js';
 import * as web from '../connectors/web.js';
@@ -89,7 +88,6 @@ app.get('/api/capabilities', (_req, res) => {
     payments: ledger.providerStatus(),
     // KYC assist rail: honest configured state for the verification queue.
     kyc: smileid.status(),
-    arenaMoney: compliance.arenaMoneyStatus(),
     auth: authStatus(),
     // Outbound messaging: which channels can Brief actually SEND on. Honest
     // per-channel configured state, so the client never implies a reply rail

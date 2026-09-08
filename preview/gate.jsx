@@ -37,7 +37,7 @@ async function renderApp({ session }) {
   {
     const { body } = await renderApp({ session: false });
     check('the gate wall is on screen', body().includes('An account opens everything'));
-    check('the capabilities copy states what an account unlocks', /publish your own stories/i.test(body()) && /EPL fantasy rooms/i.test(body()));
+    check('the capabilities copy states what an account unlocks', /publish your own stories/i.test(body()) && /business demand in Requests/i.test(body()));
     check('Google honesty: activation depends on deployment credentials', /Google sign-in activates/i.test(body()));
     check('the primary registry is named as an option', /Brief handle/i.test(body()));
     check('NO app content leaks past the wall', !body().includes('What do you want to do?'));

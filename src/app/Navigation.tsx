@@ -3,6 +3,8 @@ import { Sparkles, TrendingUp, Search } from 'lucide-react';
 import { soundEngine } from '../utils/SoundEngine';
 
 export type BriefNavigationTab =
+  | 'supply'
+  | 'requests'
   | 'home'
   | 'spaces'
   | 'discover'
@@ -100,14 +102,16 @@ export const Navigation: React.FC<NavigationProps> = ({
   activeTab,
   onSelectTab,
   onCreateAction,
-  spaceName = "Amina's Cakes",
+  spaceName = 'Your Brief',
   pendingInquiriesCount = 0,
-  revenueKes = 84200,
-  offersCount = 3,
+  revenueKes = 0,
+  offersCount = 0,
   className = ''
 }) => {
   // Normalize active tab to one of the 4 primary slots
-  const getNormalizedActive = (): 'home' | 'spaces' | 'discover' | 'activity' => {
+  const getNormalizedActive = (): 'supply' | 'requests' | 'home' | 'spaces' | 'discover' | 'activity' => {
+    if (activeTab === 'supply') return 'supply';
+    if (activeTab === 'requests') return 'requests';
     if (activeTab === 'home' || activeTab === 'city') return 'home';
     if (activeTab === 'spaces' || activeTab === 'pipeline') return 'spaces';
     if (activeTab === 'discover' || activeTab === 'catalog') return 'discover';
@@ -227,6 +231,8 @@ export const Navigation: React.FC<NavigationProps> = ({
         className="hidden md:flex flex-col w-60 p-5 space-y-6 border-r border-black/5 bg-[#FAFAF8] shrink-0 min-h-screen justify-between"
       >
         <div className="space-y-6">
+          <button className={`w-full rounded-xl p-3 text-left text-sm font-bold ${activeTab === 'requests' ? 'bg-[#203e31] text-white' : 'bg-white text-[#203e31]'}`} onClick={() => { window.location.hash = 'requests'; onSelectTab('requests'); }}>My Requests ↗</button>
+          <button className={`w-full rounded-xl p-3 text-left text-sm font-bold ${activeTab === 'supply' ? 'bg-[#203e31] text-white' : 'bg-white text-[#203e31]'}`} onClick={() => { window.location.hash = 'supply/mine'; onSelectTab('supply'); }}>Capabilities ↗</button>
           {/* Top Brand & Space Switcher Block */}
           <div className="space-y-2">
             <div className="flex items-center space-x-2.5">

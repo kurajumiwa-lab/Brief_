@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "install:all": "npm install && npm --workspace=preview install && npm --workspace=server install && npm --workspace=tc install",
-    "build:client": "npm --workspace=preview run build",
+    "build:client": "bash sync.sh && npm --workspace=preview run build",
     "build": "npm run build:client",
     "start": "NODE_ENV=production node server/src/index.js",
     "start:dev": "cd server && npm start",
@@ -24,7 +24,17 @@
     "demo:vault": "node scripts/demo-vault.mjs",
     "seed": "node scripts/seed-demo.mjs",
     "seed:clear": "node scripts/seed-demo.mjs --clear",
-    "smoke:seeded": "node scripts/smoke-seeded.mjs"
+    "smoke:seeded": "node scripts/smoke-seeded.mjs",
+    "test:requests": "node server/test/requests.mjs",
+    "test:requests:ui": "npm run build:client && playwright test",
+    "test:supply": "node server/test/supply.mjs",
+    "test:supply:ui": "playwright test tests/supply.spec.js",
+    "test:matching": "node server/test/matching.mjs",
+    "test:matching:ui": "npm run build:client && playwright test tests/matching.spec.js",
+    "test:quotes": "node server/test/quotes.mjs",
+    "test:quotes:ui": "npm run build:client && playwright test tests/quotes.spec.js",
+    "test:work": "node server/test/workOrders.mjs",
+    "test:work:ui": "npm run build:client && playwright test tests/workOrders.spec.js"
   },
   "engines": {
     "node": ">=18.0.0",
@@ -37,6 +47,7 @@
     "communities"
   ],
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "esbuild": "^0.28.2",
     "lucide-react": "^1.40.0",
     "typescript": "^7.0.2"

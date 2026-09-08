@@ -72,13 +72,13 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
       } else {
         // Create Space + First Offer combined
         const res = await briefApi.createSpace({
-          name: name.trim() || "Amina's Cakes",
+          name: name.trim(),
           type,
           goal: goal.trim(),
           initialOffer: {
-            title: offerTitle.trim() || 'Birthday Cake',
+            title: offerTitle.trim(),
             description: offerDescription.trim(),
-            price: Number(offerPrice) || 4500,
+            price: Number(offerPrice),
             currency: 'KES'
           }
         });
@@ -293,7 +293,7 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
                   Ready to Launch
                 </span>
                 <p className="text-sm font-black text-[#1A1F2E]">
-                  {name || "Amina's Cakes"}
+                  {name || 'Your business name'}
                 </p>
                 <div className="p-3 rounded-xl bg-white shadow-xs border border-black/5 space-y-1">
                   <div className="flex items-center justify-between">

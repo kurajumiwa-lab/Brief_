@@ -157,7 +157,7 @@ export function search(q, filters = {}) {
     .slice(0, 10)
     .map((a) => ({ id: a.id, slug: a.slug, title: a.title, dek: a.dek, category: a.category, readingTime: a.readingTime }));
 
-  const vendors = store.filter('vendors', (v) => v.status !== 'inactive')
+  const vendors = store.filter('vendors', (v) => v.status !== 'inactive' && (!v.enterprise || (v.enterprise.publication === 'public' && v.enterprise.operatingStatus === 'active')))
     .filter((v) => !needle || matchOn(needle, (x) => x.displayName, (x) => x.description)(v))
     .slice(0, 10)
     .map((v) => ({ id: v.id, name: v.displayName, description: v.description }));
@@ -196,4 +196,39 @@ export function search(q, filters = {}) {
     // the caller may jump straight to its page.
     entityMatch: entityIds.size === 1 ? [...entityIds][0] : null
   };
+}
+
+// Capability retrieval shared by supply browsing and Request matching. The JSON
+// store has no database search index; this derived inverted index rebuilds only
+// after capability/vendor writes, not on every render. No private fields indexed.
+const STOP = new Set('a an the and or of for to in on by at with within need needs needed want looking please help get done business supplier supply supplies sourcing source manufacture manufacturing manufacturer make makes service services general retail packaging branded custom units unit piece pieces pcs order quantity days day week weeks month months kg kilogram kilograms litre litres urgent standard flexible'.split(' '));
+const FORMS = {printing:'print',printed:'print',prints:'print',bottles:'bottle',boxes:'box',batteries:'battery',cartons:'carton',bags:'bag',labels:'label',repairs:'repair'};
+export function capabilityTerms(text) {
+  return [...new Set(String(text??'').toLowerCase().normalize('NFKC').match(/[\p{L}]+/gu)?.map(t=>FORMS[t]??(t.length>4&&t.endsWith('s')&&!t.endsWith('ss')?t.slice(0,-1):t)).filter(t=>t.length>1&&!STOP.has(t))??[])];
+}
+let capabilityIndex = null;
+export function activeCapabilityCatalog() {
+  const key = `${store.version('capabilities')}:${store.version('vendors')}`;
+  if (capabilityIndex?.key === key) return capabilityIndex;
+  const rows=[], postings=new Map();
+  for (const c of store.all('capabilities')) {
+    const p=store.lookup('vendors',c.participantId);
+    if(!p?.enterprise || p.status!=='active' || p.enterprise.publication!=='public' || p.enterprise.operatingStatus!=='active' || c.operatingStatus!=='active')continue;
+    rows.push(c);
+    for(const term of capabilityTerms([c.name,...c.productsServices,...c.sourcingAccess.products,c.description,...c.materials].join(' '))) {
+      if(!postings.has(term))postings.set(term,[]);postings.get(term).push(c.id);
+    }
+  }
+  capabilityIndex={key,rows,postings};return capabilityIndex;
+}
+export function capabilityCandidates({text,category='',location='',limit=300}) {
+  const index=activeCapabilityCatalog(), terms=capabilityTerms(text), hits=new Map();let limited=false;
+  for(const term of terms){const ids=index.postings.get(term)??[];if(ids.length>5000)limited=true;
+    for(const id of ids.slice(0,5000))hits.set(id,(hits.get(id)??0)+1);
+  }
+  const ranked=[...hits].map(([id,overlap])=>{const c=store.lookup('capabilities',id),p=store.lookup('vendors',c.participantId);return {c,priority:overlap*10+(category&&c.category.toLowerCase()===category.toLowerCase()?2:0)+(location&&p.enterprise.location.toLowerCase().includes(location.toLowerCase())?1:0)};}).sort((a,b)=>b.priority-a.priority||a.c.id.localeCompare(b.c.id));
+  // Bound expensive assessment while retaining participant diversity.
+  const counts=new Map(), rows=[];
+  for(const {c}of ranked){const n=counts.get(c.participantId)??0;if(n>=5)continue;counts.set(c.participantId,n+1);if(rows.length===limit){limited=true;break;}rows.push(c);}
+  return {capabilities:rows,limited,candidateCount:hits.size};
 }

@@ -6,7 +6,7 @@
 //   * a dot appears ONLY when real server data says something changed:
 //       - unread notifications (signed in) — each kind routed to the
 //         destination it belongs to;
-//       - public freshness: feed items / EPL rooms created AFTER the last
+//       - public freshness: feed items created AFTER the last
 //         time the viewer opened that destination.
 //   * first visit baselines silently (no fake "everything is new").
 //   * nothing is invented to make the UI look alive; unreachable services

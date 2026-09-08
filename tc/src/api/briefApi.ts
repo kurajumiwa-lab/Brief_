@@ -16,94 +16,7 @@
 //      rather than stubbed.
 // ---------------------------------------------------------------------------
 
-import type {
-  ApiResult,
-  Block,
-  ResaleTicket,
-  ResaleListing,
-  ResaleListingRow,
-  TicketOrder,
-  CapabilityUnavailable,
-  Circle,
-  CircleCreate,
-  CircleUpdate,
-  Member,
-  Signal,
-  TargetView,
-  AppConfig,
-  ReleaseStatus,
-  AuthStatus,
-  Campaign,
-  CampaignCreate,
-  CampaignUpdate,
-  PublicCampaign,
-  Registration,
-  RegistrationStatus,
-  ShareChannel,
-  ShareLink,
-  ShareChannels,
-  CampaignShare,
-  CampaignBanner,
-  MediaUpload,
-  MediaStorageStatus,
-  TriageQueue,
-  Subscription,
-  Subscriber,
-  SubscriptionJoin,
-  PaymentConfirmation,
-  Transaction,
-  TransactionCreate,
-  TransactionStatus,
-  VerificationKind,
-  Wallet,
-  Source,
-  RawItem,
-  VoteTally,
-  MemberEvidence,
-  BriefItPreview,
-  BriefItSaved,
-  Vendor,
-  VendorCreate,
-  VendorUpdate,
-  Listing,
-  ListingCreate,
-  ListingUpdate,
-  ListingStatus,
-  Order,
-  OrderCreate,
-  Dispute,
-  VendorEarnings,
-  ArenaMoneyStatus,
-  ArenaBetaSegment,
-  ArenaBetaSignup,
-  ArenaBetaSummary,
-  PaymentIntent,
-  PaymentInitiation,
-  Vault,
-  VaultCreate,
-  Footstep,
-  FootstepPage,
-  VaultRequest,
-  VaultSearchResult,
-  ResolutionItem,
-  VaultEntry,
-  Ticket,
-  CheckInResult,
-  CommandCentre,
-  Space,
-  SpaceCreate,
-  SpaceOfferCreate,
-  SpaceActivity,
-  SpaceConversation,
-  SpaceQuote,
-  SpacePaymentPrompt,
-  SpaceExpense,
-  SpaceCustomerTab,
-  SpaceMoneySummary,
-  SpaceDispatch,
-  SpaceDispatchCreate,
-  SpaceDispatchStatus
-} from './types';
+import type { ApiResult, Block, ResaleTicket, ResaleListing, ResaleListingRow, TicketOrder, CapabilityUnavailable, Circle, CircleCreate, CircleUpdate, Member, Signal, TargetView, AppConfig, ReleaseStatus, AuthStatus, Campaign, CampaignCreate, CampaignUpdate, PublicCampaign, Registration, RegistrationStatus, ShareChannel, ShareLink, ShareChannels, CampaignShare, CampaignBanner, MediaUpload, MediaStorageStatus, TriageQueue, Subscription, Subscriber, SubscriptionJoin, PaymentConfirmation, Transaction, TransactionCreate, TransactionStatus, VerificationKind, Wallet, Source, RawItem, VoteTally, MemberEvidence, BriefItPreview, BriefItSaved, Vendor, VendorCreate, VendorUpdate, Listing, ListingCreate, ListingUpdate, ListingStatus, Order, OrderCreate, Dispute, VendorEarnings, PaymentIntent, PaymentInitiation, Vault, VaultCreate, Footstep, FootstepPage, VaultRequest, VaultSearchResult, ResolutionItem, VaultEntry, Ticket, CheckInResult, CommandCentre, Space, SpaceCreate, SpaceOfferCreate, SpaceActivity, SpaceConversation, SpaceQuote, SpacePaymentPrompt, SpaceExpense, SpaceCustomerTab, SpaceMoneySummary, SpaceDispatch, SpaceDispatchCreate, SpaceDispatchStatus } from "./types";
 import { enqueue, replayQueue, queueDepth, type QueuedWrite } from './offlineQueue';
 import { asTarget } from './types';
 import {
@@ -221,7 +134,8 @@ async function send<T>(
     // retrying with a token the server has already rejected.
     if (res.status === 401) {
       const stale = getSessionToken();
-      if (stale) {
+      // A delayed anonymous/old-session response must not clear a newer login.
+      if (token && stale === token) {
         setSessionToken(null);
         onSessionExpired?.();
       }
@@ -267,6 +181,16 @@ async function send<T>(
     // Network failure, offline server, aborted request. A WRITE is not lost:
     // it is parked with a clientKey and replays after reconnect — the
     // server-side idempotency makes the replay safe. A read is just offline.
+    // Requests, Quotes and Work have explicit retry/revision semantics. Never silently replay
+    // private demand after the user has edited or discarded their form.
+    if (/^\/api\/(requests|request-quotes|quote-requests|work-orders|matches|enterprises|supply|ops\/supply-verification)(?:\/|$)/.test(path)) {
+      return { ok: false, status: null, error: 'Could not confirm the save. Your form is still here. Retry to check or save it safely.' };
+    }
+    // Credentials must never enter the durable offline queue. Multipart
+    // uploads also cannot be replayed: that queue only serializes JSON.
+    if (/^\/api\/auth(?:\/|$)/.test(path) || (init.body != null && typeof init.body !== 'string')) {
+      return { ok: false, status: null, error: 'Connection interrupted. Please try again.' };
+    }
     const method = (init.method ?? 'GET').toUpperCase();
     if (method !== 'GET' && method !== 'HEAD') {
       const body = typeof init.body === 'string' ? init.body : null;
@@ -1157,7 +1081,6 @@ export type ConnectorCapabilities = {
   whatsapp?: Record<string, unknown>;
   manual?: Record<string, unknown>;
   payments?: Record<string, unknown>;
-  arenaMoney?: Record<string, unknown>;
   auth?: Record<string, unknown>;
   outbound?: Record<string, unknown>;
   features?: Record<string, unknown>;
@@ -1553,13 +1476,7 @@ export function getMyEarnings(): Promise<ApiResult<VendorEarnings>> {
  * Returns the unmet requirements so the client states the actual reason
  * instead of "coming soon".
  */
-export function getArenaMoneyStatus(): Promise<ApiResult<ArenaMoneyStatus>> {
-  return request('/api/arena/status', undefined, (r) =>
-    r?.arenaMoney && typeof r.arenaMoney.enabled === 'boolean'
-      ? (r.arenaMoney as ArenaMoneyStatus)
-      : undefined
-  );
-}
+
 
 
 // ---------------------------------------------------------------------------
@@ -1585,25 +1502,13 @@ export interface PersonStanding {
   arrived: number;
   registered: number;
   vendor: { id: string; displayName: string } | null;
-  gameTags: { id: string; gameId: string; gamerTag: string; verified: boolean }[];
 }
 
-export interface PersonAvailability {
-  userId: string;
-  personId: string | null;
-  state: 'available' | 'offline';
-  gameId: string | null;
-  mode: string | null;
-  format: string | null;
-  window: string | null;
-  locationKind: string | null;
-  updatedAt: string | null;
-}
+
 
 export interface PersonMe {
   person: { id: string; displayName: string | null; tags: string[]; aliases: any[] };
   standing: PersonStanding | null;
-  availability: PersonAvailability;
 }
 
 /** Register and sign in. The token is stored centrally on success. */
@@ -1997,113 +1902,6 @@ export function getCommandCentre(): Promise<ApiResult<CommandCentre>> {
 }
 
 // ---------------------------------------------------------------------------
-// ARENA — real backend
-//
-// The server Arena is the single source of truth for challenges and matches.
-// These functions return the server's actual rows; App.tsx maps them onto its
-// display model. Creating/accepting/cancelling all go through the server so a
-// challenge is real, persisted, and attributable.
-// ---------------------------------------------------------------------------
-
-export function getArenaGames(): Promise<ApiResult<{ games: any[]; activity: Record<string, number> }>> {
-  return request('/api/arena/games', undefined, (r) =>
-    Array.isArray(r?.games)
-      ? {
-          games: r.games,
-          activity: r.activity && typeof r.activity === 'object' ? r.activity : {}
-        }
-      : undefined
-  );
-}
-
-/** Aggregate pilot counters. A missing server is an unavailable scoreboard, not zero players. */
-export function getArenaBeta(): Promise<ApiResult<ArenaBetaSummary>> {
-  return request('/api/arena/beta', undefined, (r) => {
-    const beta = r?.beta;
-    if (!beta || typeof beta.id !== 'string' || typeof beta.gameId !== 'string') return undefined;
-    if (!beta.targets || !beta.actual || !beta.segments) return undefined;
-    return beta as ArenaBetaSummary;
-  });
-}
-
-export function joinArenaBeta(body: {
-  segment: ArenaBetaSegment;
-  acquisitionSource?: string | null;
-}): Promise<ApiResult<{ signup: ArenaBetaSignup; reused: boolean }>> {
-  return request(
-    '/api/arena/beta/join',
-    { method: 'POST', body: JSON.stringify(body) },
-    (r) => r?.signup && typeof r.signup.id === 'string'
-      ? { signup: r.signup as ArenaBetaSignup, reused: Boolean(r.reused) }
-      : undefined
-  );
-}
-
-export function getArenaChallenges(gameId?: string): Promise<ApiResult<any[]>> {
-  const q = gameId ? `?gameId=${encodeURIComponent(gameId)}` : '';
-  return request(`/api/arena/challenges${q}`, undefined, (r) =>
-    Array.isArray(r?.challenges) ? r.challenges : undefined
-  );
-}
-
-export function createArenaChallenge(body: {
-  gameId: string; mode?: string; stake?: string; entryFeeKes?: number | null;
-  note?: string; venue?: string | null; openMinutes?: number;
-}): Promise<ApiResult<any>> {
-  return request('/api/arena/challenges', { method: 'POST', body: JSON.stringify(body) }, (r) =>
-    r?.challenge ? r.challenge : undefined
-  );
-}
-
-export function acceptArenaChallenge(id: string): Promise<ApiResult<any>> {
-  return request(`/api/arena/challenges/${encodeURIComponent(id)}/accept`, { method: 'POST', body: '{}' }, (r) =>
-    r?.match || r?.challenge ? r : undefined
-  );
-}
-
-export function cancelArenaChallenge(id: string): Promise<ApiResult<any>> {
-  return request(`/api/arena/challenges/${encodeURIComponent(id)}/cancel`, { method: 'POST', body: '{}' }, (r) =>
-    r?.challenge ? r : undefined
-  );
-}
-
-export function getArenaMatches(): Promise<ApiResult<any[]>> {
-  return request('/api/arena/matches', undefined, (r) =>
-    Array.isArray(r?.matches) ? r.matches : undefined
-  );
-}
-
-export function reportArenaMatch(
-  id: string,
-  body: { winnerPlayerId?: string | null; scoreLine?: string | null }
-): Promise<ApiResult<any>> {
-  return request(
-    `/api/arena/matches/${encodeURIComponent(id)}/report`,
-    { method: 'POST', body: JSON.stringify(body) },
-    (r) => (r?.match ? r.match : undefined)
-  );
-}
-
-export function confirmArenaMatch(
-  id: string,
-  body: { winnerPlayerId?: string | null } = {}
-): Promise<ApiResult<any>> {
-  return request(
-    `/api/arena/matches/${encodeURIComponent(id)}/confirm`,
-    { method: 'POST', body: JSON.stringify(body) },
-    (r) => (r?.match ? r : undefined)
-  );
-}
-
-export function abandonArenaMatch(id: string, reason = ''): Promise<ApiResult<any>> {
-  return request(
-    `/api/arena/matches/${encodeURIComponent(id)}/abandon`,
-    { method: 'POST', body: JSON.stringify({ reason }) },
-    (r) => (r?.match ? r.match : undefined)
-  );
-}
-
-// ---------------------------------------------------------------------------
 // DEMO SEED — in-process, authenticated. Lets an authorised user populate or
 // clear demo content from within the running server (the CLI wrote to a file
 // the server never re-read).
@@ -2254,31 +2052,6 @@ export function searchAll(q: string, filters: SearchFilters = {}): Promise<ApiRe
   const qs = params.toString();
   return request(`/api/search${qs ? `?${qs}` : ''}`, undefined, (r) => (r?.results ? r.results : undefined));
 }
-
-// --- Lobby (Arena: 1-tap room codes) ----------------------------------------
-
-export function getLobbyRooms(gameId?: string): Promise<ApiResult<any[]>> {
-  const q = gameId ? `?gameId=${encodeURIComponent(gameId)}` : '';
-  return request(`/api/lobby/rooms${q}`, undefined, (r) => Array.isArray(r?.rooms) ? r.rooms : undefined);
-}
-
-export function hostLobbyRoom(fields: Record<string, unknown>): Promise<ApiResult<any>> {
-  return request('/api/lobby/rooms', { method: 'POST', body: JSON.stringify(fields) }, (r) => r?.room ?? undefined);
-}
-
-export function claimLobbySlot(roomId: string): Promise<ApiResult<any>> {
-  return request(`/api/lobby/rooms/${encodeURIComponent(roomId)}/claim`, { method: 'POST', body: '{}' }, (r) => r?.room ?? undefined);
-}
-
-export function startLobbyRoom(roomId: string): Promise<ApiResult<any>> {
-  return request(`/api/lobby/rooms/${encodeURIComponent(roomId)}/start`, { method: 'POST', body: '{}' }, (r) => r?.room ?? undefined);
-}
-
-export function vouchHost(hostId: string, up: boolean): Promise<ApiResult<any>> {
-  return request(`/api/lobby/hosts/${encodeURIComponent(hostId)}/vouch`, { method: 'POST', body: JSON.stringify({ up }) }, (r) => r?.trust ?? undefined);
-}
-
-// --- Telegram Mini App -------------------------------------------------------
 
 /**
  * Exchange Telegram Mini App initData for a Brief session. Only callable from
@@ -2504,43 +2277,18 @@ export function updateVendorCapabilities(id: string, fields: Record<string, unkn
   return request(`/api/vendors/${encodeURIComponent(id)}/capabilities`, { method: 'PUT', body: JSON.stringify(fields) }, (r) => r?.capabilities ?? undefined);
 }
 
-// --- Arena: real server entities (players/venues/tournaments/leaderboard) ----
 
-export function getArenaPlayers(gameId?: string): Promise<ApiResult<any[]>> {
-  const q = gameId ? `?gameId=${encodeURIComponent(gameId)}` : '';
-  return request(`/api/arena/players${q}`, undefined, (r) => Array.isArray(r?.players) ? r.players : undefined);
-}
 
-export function getArenaVenues(gameId?: string): Promise<ApiResult<any[]>> {
-  const q = gameId ? `?gameId=${encodeURIComponent(gameId)}` : '';
-  return request(`/api/arena/venues${q}`, undefined, (r) => Array.isArray(r?.venues) ? r.venues : undefined);
-}
 
-export function getArenaTournaments(gameId?: string): Promise<ApiResult<any[]>> {
-  const q = gameId ? `?gameId=${encodeURIComponent(gameId)}` : '';
-  return request(`/api/arena/tournaments${q}`, undefined, (r) => Array.isArray(r?.tournaments) ? r.tournaments : undefined);
-}
 
-export function getArenaLeaderboard(gameId: string): Promise<ApiResult<any[]>> {
-  return request(`/api/arena/leaderboard?gameId=${encodeURIComponent(gameId)}`, undefined, (r) => Array.isArray(r?.leaderboard) ? r.leaderboard : undefined);
-}
 
-export function createArenaPlayer(body: {
-  gameId: string;
-  gamerTag: string;
-  platform?: string | null;
-  region?: string | null;
-}): Promise<ApiResult<any>> {
-  return request('/api/arena/players', { method: 'POST', body: JSON.stringify(body) }, (r) =>
-    r?.player ? r.player : undefined
-  );
-}
 
-export function getMyArenaPlayers(): Promise<ApiResult<any[]>> {
-  return request('/api/arena/players/me', undefined, (r) =>
-    Array.isArray(r?.players) ? r.players : undefined
-  );
-}
+
+
+
+
+
+
 
 export function getPersonMe(): Promise<ApiResult<PersonMe>> {
   return request('/api/person/me', undefined, (r) =>
@@ -2548,27 +2296,9 @@ export function getPersonMe(): Promise<ApiResult<PersonMe>> {
   );
 }
 
-export function setMyAvailability(body: {
-  state: 'available' | 'offline';
-  gameId?: string | null;
-  mode?: string | null;
-  format?: string | null;
-  window?: string | null;
-  locationKind?: string | null;
-}): Promise<ApiResult<PersonAvailability>> {
-  return request(
-    '/api/person/me/availability',
-    { method: 'PUT', body: JSON.stringify(body) },
-    (r) => (r?.availability ? (r.availability as PersonAvailability) : undefined)
-  );
-}
 
-export function getAvailablePlayers(gameId?: string): Promise<ApiResult<any[]>> {
-  const q = gameId ? `?gameId=${encodeURIComponent(gameId)}` : '';
-  return request(`/api/arena/available${q}`, undefined, (r) =>
-    Array.isArray(r?.available) ? r.available : undefined
-  );
-}
+
+
 
 // ---------------------------------------------------------------------------
 // ENGINE — the power-plant layer: sync pipeline, universal router, tiers.
@@ -2883,7 +2613,7 @@ export function getMyVerification(): Promise<ApiResult<{
 
 export const EMAIL_TOPICS = [
   'event_announcements', 'new_ticket_listings', 'bargain_alerts',
-  'contribution_updates', 'arena_announcements', 'product_updates'
+  'contribution_updates', 'product_updates'
 ] as const;
 export type EmailTopic = typeof EMAIL_TOPICS[number];
 
@@ -2892,7 +2622,6 @@ export const EMAIL_TOPIC_LABELS: Record<EmailTopic, string> = {
   new_ticket_listings: 'Ticket resale',
   bargain_alerts: 'Bargain bands',
   contribution_updates: 'Causes you back',
-  arena_announcements: 'Arena',
   product_updates: 'Brief itself'
 };
 
@@ -3084,136 +2813,6 @@ export function getEventCategories(): Promise<ApiResult<{ categories: string[]; 
   );
 }
 
-// --- EPL contest rooms (Tikiti T5) ------------------------------------------------
-
-export interface EplProviderStatus {
-  configured: boolean;
-  reason?: string;
-}
-
-export interface EplClubRow { id: string; name: string; shortName?: string | null }
-
-export interface EplCatalogPlayer {
-  id: string;
-  name: string;
-  club: string;
-  position: 'GK' | 'DEF' | 'MID' | 'FWD';
-  price: number;
-  /** 'seed' or a provider name -- never invented. */
-  source: string;
-}
-
-export function getEplClubs(): Promise<ApiResult<{ clubs: EplClubRow[]; provider: EplProviderStatus }>> {
-  return request('/api/epl/clubs', undefined, (r) =>
-    Array.isArray(r?.clubs) ? { clubs: r.clubs, provider: r.provider ?? { configured: false } } : undefined
-  );
-}
-
-export function getEplCatalog(opts: { club?: string; position?: string } = {}): Promise<ApiResult<{ players: EplCatalogPlayer[]; provider: EplProviderStatus }>> {
-  const q = new URLSearchParams();
-  if (opts.club) q.set('club', opts.club);
-  if (opts.position) q.set('position', opts.position);
-  const qs = q.toString();
-  return request(`/api/epl/catalog${qs ? `?${qs}` : ''}`, undefined, (r) =>
-    Array.isArray(r?.players) ? { players: r.players, provider: r.provider ?? { configured: false } } : undefined
-  );
-}
-
-export type EplLobbyState =
-  | 'waiting_for_players' | 'open' | 'full' | 'in_progress'
-  | 'completed' | 'cancelled';
-
-export interface EplRoomRow {
-  id: string;
-  title: string;
-  status: string;
-  createdAt?: string;
-  kickoffAt: string;
-  budgetKes: number | null;
-  minEntries: number | null;
-  maxEntries: number | null;
-  mine: boolean;
-  lobbyState: EplLobbyState;
-  entries: number;
-}
-
-export function listEplRooms(): Promise<ApiResult<EplRoomRow[]>> {
-  return request('/api/epl/competitions', undefined, (r) =>
-    Array.isArray(r?.competitions) ? (r.competitions as EplRoomRow[]) : undefined
-  );
-}
-
-export function createEplRoom(body: {
-  title: string; kickoffAt: string;
-  budgetKes?: number | null; minEntries?: number | null; maxEntries?: number | null;
-}): Promise<ApiResult<{ competition: { id: string; title: string; status: string; budgetKes: number | null; minEntries: number | null; maxEntries: number | null }; lobbyState: EplLobbyState }>> {
-  return request('/api/epl/competitions', { method: 'POST', body: JSON.stringify(body) }, (r) =>
-    r?.competition ? { competition: r.competition, lobbyState: r.lobbyState } : undefined
-  );
-}
-
-/** A room's imported pool -- the rows picks are validated against. */
-export function getEplPool(competitionId: string): Promise<ApiResult<{ players: EplCatalogPlayer[] }>> {
-  return request(
-    `/api/epl/competitions/${encodeURIComponent(competitionId)}/pool`,
-    undefined,
-    (r) => (Array.isArray(r?.players) ? { players: r.players as EplCatalogPlayer[] } : undefined)
-  );
-}
-
-/** Import the (seed or provider) catalog into a room's pool. Organiser-only. */
-export function importEplPool(competitionId: string, club?: string): Promise<ApiResult<{ imported: number; opened: boolean; openNote: string | null }>> {
-  return request(
-    `/api/epl/competitions/${encodeURIComponent(competitionId)}/pool/import`,
-    { method: 'POST', body: JSON.stringify(club ? { club } : {}) },
-    (r) => (typeof r?.imported === 'number'
-      ? { imported: r.imported, opened: Boolean(r?.opened), openNote: (r?.openNote as string | null) ?? null }
-      : undefined)
-  );
-}
-
-/**
- * Seat a team in a room. No price is sent; the server derives everything and
- * a refusal carries the arithmetic.
- */
-export function submitEplEntry(
-  competitionId: string,
-  body: { playerIds: string[]; captainId: string }
-): Promise<ApiResult<{
-  created: boolean;
-  entry: { id: string; playerIds: string[]; captainId: string | null; points: number | null };
-  lobbyState: EplLobbyState;
-  entries: number;
-}>> {
-  return request(
-    `/api/epl/competitions/${encodeURIComponent(competitionId)}/entries`,
-    { method: 'POST', body: JSON.stringify(body) },
-    (r) => (r?.entry ? { created: Boolean(r.created), entry: r.entry, lobbyState: r.lobbyState, entries: Number(r.entries ?? 0) } : undefined)
-  );
-}
-
-/** The waiting-room wall: cancel an underfilled room, or lock a filled one. */
-export function settleEplLobby(competitionId: string): Promise<ApiResult<{
-  competition: { id: string; status: string; cancelledReason?: string | null };
-  changed: boolean;
-  lobbyState: EplLobbyState;
-}>> {
-  return request(
-    `/api/epl/competitions/${encodeURIComponent(competitionId)}/settle-lobby`,
-    { method: 'POST', body: '{}' },
-    (r) => (r?.competition ? { competition: r.competition, changed: Boolean(r.changed), lobbyState: r.lobbyState } : undefined)
-  );
-}
-
-export function getEplStandings(competitionId: string): Promise<ApiResult<{
-  competition: { id: string; title: string; status: string };
-  standings: { entryId: string; userId: string; points: number | null; rank: number | null }[];
-}>> {
-  return request(`/api/epl/competitions/${encodeURIComponent(competitionId)}/standings`, undefined, (r) =>
-    r?.competition ? { competition: r.competition, standings: r.standings ?? [] } : undefined
-  );
-}
-
 // --- The dynamic ticket bar ------------------------------------------------------
 
 export interface EngineTicketBar {
@@ -3272,11 +2871,12 @@ export function mediaFileUrl(url: string): string {
  */
 export function uploadMediaFile(
   file: File,
-  opts: { alt?: string } = {}
+  opts: { alt?: string; purpose?: 'public' | 'private_evidence' | 'private_request' | 'private_quote' | 'private_work' } = {}
 ): Promise<ApiResult<{ upload: MediaUpload; duplicate: boolean }>> {
   const form = new FormData();
   form.append('file', file, file.name);
   if (opts.alt) form.append('alt', opts.alt.slice(0, 240));
+  if (opts.purpose) form.append('purpose', opts.purpose);
   return requestForm('/api/media/upload', form, (r) =>
     isMediaUpload(r?.upload)
       ? { upload: r.upload as MediaUpload, duplicate: Boolean(r.duplicate) }
@@ -3665,56 +3265,6 @@ export function convertReferralPoints(points: number): Promise<ApiResult<{ conve
     typeof r?.conversion?.id === 'string' && typeof r?.conversion?.kes === 'number'
       ? { conversion: r.conversion as ReferralConversion }
       : undefined);
-}
-
-// ---------------------------------------------------------------------------
-// ARENA PROGRESSION — the retention layer. XP and Arena Coins are POINTS:
-// they buy nothing and cash out nowhere. Totals are derived server-side from
-// confirmed matches and claimed missions; ratings/streaks are replays.
-// ---------------------------------------------------------------------------
-
-export interface ArenaProfile {
-  userId: string; level: number; xpIntoLevel: number; xpPerLevel: number;
-  seasonXp: number; seasonCoins: number; totalXp: number; totalCoins: number; matchesToday: number;
-}
-export interface ArenaMission {
-  key: string; label: string; target: number; hint: string;
-  reward: { xp: number; coins: number }; progress: number; complete: boolean; claimed: boolean; claimable: boolean;
-}
-export interface ArenaRival { userId: string; displayName: string; played: number; iWon: number; theyWon: number }
-export interface ArenaPlayerStats { playerId: string; rating: number; streak: number; played: number; won: number; winRate: number | null }
-export interface ArenaSeason { id: string; label: string; startedAt: string; endsAt: string; daysRemaining: number }
-export interface MyArenaProgress {
-  profile: ArenaProfile; missions: ArenaMission[]; rivals: ArenaRival[];
-  seasonRank: { rank: number; xp: number; coins: number } | null;
-  players: (ArenaPlayerStats & { gamerTag: string })[];
-}
-export interface ArenaLive {
-  playersActiveLastHour: number; matchesAwaitingConfirmation: number; openChallenges: number; season: ArenaSeason;
-}
-
-export function myArenaProgress(): Promise<ApiResult<MyArenaProgress>> {
-  return request('/api/arena/progress/me', undefined, (r): MyArenaProgress | undefined =>
-    r?.profile?.xpPerLevel > 0 && Array.isArray(r?.missions) && Array.isArray(r?.players)
-      ? r as MyArenaProgress
-      : undefined);
-}
-
-export function arenaLive(): Promise<ApiResult<ArenaLive>> {
-  return request('/api/arena/live', undefined, (r): ArenaLive | undefined =>
-    r?.season?.daysRemaining >= 0 && typeof r?.playersActiveLastHour === 'number'
-      ? r as ArenaLive
-      : undefined);
-}
-
-export function claimArenaMission(key: string): Promise<ApiResult<{ claimed: { xp: number; coins: number }; missions: ArenaMission[]; profile: ArenaProfile }>> {
-  return request(`/api/arena/missions/${encodeURIComponent(key)}/claim`, { method: 'POST', body: '{}' }, (r) =>
-    r?.claimed && Array.isArray(r?.missions) ? r as { claimed: { xp: number; coins: number }; missions: ArenaMission[]; profile: ArenaProfile } : undefined);
-}
-
-export function arenaSeasonLeaderboard(): Promise<ApiResult<{ season: ArenaSeason; rows: { rank: number; userId: string; displayName: string; xp: number; coins: number }[]; you: { rank: number; xp: number; coins: number } | null }>> {
-  return request('/api/arena/season/leaderboard', undefined, (r) =>
-    Array.isArray(r?.rows) ? r as { season: ArenaSeason; rows: { rank: number; userId: string; displayName: string; xp: number; coins: number }[]; you: { rank: number; xp: number; coins: number } | null } : undefined);
 }
 
 // ---------------------------------------------------------------------------
@@ -4491,3 +4041,82 @@ export function getSpaceDispatches(spaceId: string): Promise<ApiResult<{ dispatc
     r && Array.isArray(r.dispatches) ? { dispatches: r.dispatches } : undefined);
 }
 
+
+// Requests: durable demand. Never offline-queue a creation as if it were saved.
+import type { DemandRequest, RequestInput, RequestStatus } from './requestTypes';
+function demandRequest(raw: any): DemandRequest | undefined {
+  return raw && typeof raw.id === 'string' && typeof raw.requesterId === 'string'
+    && typeof raw.title === 'string' && Number.isSafeInteger(raw.revision)
+    && Array.isArray(raw.history) && Array.isArray(raw.attachments) ? raw as DemandRequest : undefined;
+}
+export function listMyRequests(): Promise<ApiResult<DemandRequest[]>> {
+  return request('/api/me/requests', undefined, r => Array.isArray(r?.requests)
+    && r.requests.every((v: any) => demandRequest(v)) ? r.requests : undefined);
+}
+export function getRequest(id: string): Promise<ApiResult<DemandRequest>> {
+  return request(`/api/requests/${encodeURIComponent(id)}`, undefined, r => demandRequest(r?.request));
+}
+export function createRequest(body: Partial<RequestInput> & { title: string; intent: 'draft' | 'submit'; idempotencyKey?: string }): Promise<ApiResult<DemandRequest>> {
+  return request('/api/requests', { method: 'POST', body: JSON.stringify(body) }, r => demandRequest(r?.request));
+}
+export function updateRequest(id: string, body: Partial<RequestInput> & { revision: number }): Promise<ApiResult<DemandRequest>> {
+  return request(`/api/requests/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(body) }, r => demandRequest(r?.request));
+}
+export function changeRequestStatus(id: string, status: RequestStatus, revision: number): Promise<ApiResult<DemandRequest>> {
+  return request(`/api/requests/${encodeURIComponent(id)}/status`, { method: 'PATCH', body: JSON.stringify({ status, revision }) }, r => demandRequest(r?.request));
+}
+
+// Supply uses the same API transport, session and error contract as Requests.
+import type { Enterprise, EnterpriseInput, Capability, CapabilityInput, SourcingInput, CapabilitySearch, SupplyVerification, VerificationKind as SupplyVerificationKind, SupplyEvidence, PotentialParticipant } from './supplyTypes';
+const enterpriseOf = (r: any): Enterprise | undefined => typeof r?.id === 'string' && Array.isArray(r?.capabilities) && r.verification ? r : undefined;
+const capabilityOf = (r: any): Capability | undefined => typeof r?.id === 'string' && typeof r?.participantId === 'string' && Number.isSafeInteger(r?.revision) ? r : undefined;
+export function getMyEnterprise(): Promise<ApiResult<{enterprise: Enterprise | null}>> { return request('/api/me/enterprise',undefined,r=>r?.enterprise===null?{enterprise:null}:enterpriseOf(r?.enterprise)?{enterprise:r.enterprise}:undefined); }
+export function getEnterprise(id: string, publicView = false): Promise<ApiResult<Enterprise>> {return request(`/api/${publicView?'public/':''}enterprises/${encodeURIComponent(id)}`,undefined,r=>enterpriseOf(r?.enterprise));}
+export function createEnterprise(body: EnterpriseInput & {firstCapability?: Partial<CapabilityInput>}): Promise<ApiResult<Enterprise>> {return request('/api/enterprises',{method:'POST',body:JSON.stringify(body)},r=>enterpriseOf(r?.enterprise));}
+export function updateEnterprise(id: string, body: Partial<EnterpriseInput> & {revision:number}): Promise<ApiResult<Enterprise>> {return request(`/api/enterprises/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify(body)},r=>enterpriseOf(r?.enterprise));}
+export function createCapability(id: string, body: Partial<CapabilityInput> & {idempotencyKey?:string}): Promise<ApiResult<Capability>> {return request(`/api/enterprises/${encodeURIComponent(id)}/capabilities`,{method:'POST',body:JSON.stringify(body)},r=>capabilityOf(r?.capability));}
+export function updateCapability(id: string, body: Partial<CapabilityInput> & {revision:number}): Promise<ApiResult<Capability>> {return request(`/api/supply/capabilities/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify(body)},r=>capabilityOf(r?.capability));}
+export function archiveCapability(id:string,revision:number): Promise<ApiResult<Capability>> {return request(`/api/supply/capabilities/${encodeURIComponent(id)}`,{method:'DELETE',body:JSON.stringify({revision})},r=>capabilityOf(r?.capability));}
+export function saveSourcingProfile(id:string,body:SourcingInput&{revision:number}): Promise<ApiResult<Enterprise>> {return request(`/api/enterprises/${encodeURIComponent(id)}/sourcing`,{method:'PUT',body:JSON.stringify(body)},r=>enterpriseOf(r?.enterprise));}
+export function searchCapabilities(filters: Record<string,string>): Promise<ApiResult<CapabilitySearch>> {return request(`/api/capabilities/search?${new URLSearchParams(filters)}`,undefined,r=>Array.isArray(r?.capabilities)&&typeof r.total==='number'?r:undefined);}
+export function getSupplyVerification(id:string): Promise<ApiResult<SupplyVerification[]>> {return request(`/api/enterprises/${encodeURIComponent(id)}/verification`,undefined,r=>Array.isArray(r?.records)?r.records:undefined);}
+export function submitSupplyVerification(id:string,body:{kind:SupplyVerificationKind;capabilityId:string|null;participantRevision:number;evidence:SupplyEvidence[];note:string}): Promise<ApiResult<SupplyVerification>> {return request(`/api/enterprises/${encodeURIComponent(id)}/verification`,{method:'POST',body:JSON.stringify(body)},r=>r?.record?.id?r.record:undefined);}
+export function supplyReviewQueue(): Promise<ApiResult<SupplyVerification[]>> {return request('/api/ops/supply-verification',undefined,r=>Array.isArray(r?.records)?r.records:undefined);}
+export function reviewSupplyVerification(id:string,body:{status:string;revision:number;reason:string;expiresAt?:string}): Promise<ApiResult<SupplyVerification>> {return request(`/api/ops/supply-verification/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify(body)},r=>r?.record?.id?r.record:undefined);}
+export function getPotentialParticipants(id:string): Promise<ApiResult<PotentialParticipant[]>> {return request(`/api/requests/${encodeURIComponent(id)}/participants`,undefined,r=>Array.isArray(r?.participants)?r.participants:undefined);}
+export function addPotentialParticipant(id:string,capabilityId:string): Promise<ApiResult<PotentialParticipant>> {return request(`/api/requests/${encodeURIComponent(id)}/participants`,{method:'POST',body:JSON.stringify({capabilityId})},r=>r?.participant?.id?r.participant:undefined);}
+export function removePotentialParticipant(requestId:string,id:string,revision:number): Promise<ApiResult<{removed:boolean}>> {return request(`/api/requests/${encodeURIComponent(requestId)}/participants/${encodeURIComponent(id)}`,{method:'DELETE',body:JSON.stringify({revision})},r=>r?.removed?{removed:true}:undefined);}
+/** Private image bytes use an authenticated fetch, never a token in a URL. */
+export async function readPrivateEvidence(id:string): Promise<ApiResult<Blob>> {
+  try {
+    const token=getSessionToken();const res=await fetch(`${INGEST_API}/api/media/file/${encodeURIComponent(id)}`,{headers:token?{authorization:`Bearer ${token}`}:{},cache:'no-store'});
+    if(!res.ok)return {ok:false,status:res.status,error:'Private evidence is unavailable or you do not have access. Sign in again if your session expired.'};
+    return {ok:true,data:await res.blob()};
+  }catch{return {ok:false,status:null,error:'Could not load the evidence. Please retry.'};}
+}
+
+// Request matching: private requester relationships and expressly shared briefs.
+import type {DemandMatch,RequestMatches,RelevantRequest} from './matchTypes';
+export function getRequestMatches(id:string,filters:Record<string,string>={}):Promise<ApiResult<RequestMatches>> {return request(`/api/requests/${encodeURIComponent(id)}/matches?${new URLSearchParams(filters)}`,undefined,r=>Array.isArray(r?.matches)&&r?.counts?r:undefined);}
+export function refreshRequestMatches(id:string,body:{requestRevision:number;generationRevision:number;idempotencyKey:string}):Promise<ApiResult<RequestMatches>> {return request(`/api/requests/${encodeURIComponent(id)}/matches`,{method:'POST',body:JSON.stringify(body)},r=>Array.isArray(r?.matches)&&r?.counts?r:undefined);}
+export function changeMatch(id:string,body:{requestRevision:number;revision:number;status:'viewed'|'saved'|'dismissed'|'suggested'}):Promise<ApiResult<DemandMatch>> {return request(`/api/matches/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify(body)},r=>r?.match?.id?r.match:undefined);}
+export function relevantRequests():Promise<ApiResult<RelevantRequest[]>> {return request('/api/supply/relevant-requests',undefined,r=>Array.isArray(r?.requests)?r.requests:undefined);}
+export function expressMatchInterest(id:string,requestRevision:number,revision:number):Promise<ApiResult<RelevantRequest>> {return request(`/api/matches/${encodeURIComponent(id)}/interest`,{method:'POST',body:JSON.stringify({requestRevision,revision})},r=>r?.request?.matchId?r.request:undefined);}
+export function withdrawMatchInterest(id:string,revision:number):Promise<ApiResult<{withdrawn:boolean}>> {return request(`/api/matches/${encodeURIComponent(id)}/interest`,{method:'DELETE',body:JSON.stringify({revision})},r=>r?.withdrawn?{withdrawn:true}:undefined);}
+
+// Commercial proposals reuse this transport; never queue offline or settle money.
+import type { Quote, QuoteInvitation, CommercialWorkspace, QuoteAction } from './quoteTypes';
+export function requestMatchQuote(id:string,body:{requestRevision:number;matchRevision:number;shareRequirements:boolean}):Promise<ApiResult<QuoteInvitation>> {return request(`/api/matches/${encodeURIComponent(id)}/quote-request`,{method:'POST',body:JSON.stringify(body)},r=>r?.invitation?.id?r.invitation:undefined);}
+export function getRequestQuotes(id:string):Promise<ApiResult<CommercialWorkspace>> {return request(`/api/requests/${encodeURIComponent(id)}/quotes`,undefined,r=>Array.isArray(r?.quotes)&&Array.isArray(r?.invitations)?r:undefined);}
+export function getMyQuotes():Promise<ApiResult<CommercialWorkspace>> {return request('/api/supply/quotes',undefined,r=>Array.isArray(r?.quotes)&&Array.isArray(r?.invitations)?r:undefined);}
+export function startRequestQuote(id:string,revision:number):Promise<ApiResult<Quote>> {return request(`/api/quote-requests/${encodeURIComponent(id)}/quote`,{method:'POST',body:JSON.stringify({revision})},r=>r?.quote?.id?r.quote:undefined);}
+export function getRequestQuote(id:string):Promise<ApiResult<Quote>> {return request(`/api/request-quotes/${encodeURIComponent(id)}`,undefined,r=>r?.quote?.id?r.quote:undefined);}
+export function changeRequestQuote(id:string,body:QuoteAction):Promise<ApiResult<Quote>> {return request(`/api/request-quotes/${encodeURIComponent(id)}/actions`,{method:'POST',body:JSON.stringify(body)},r=>r?.quote?.id?r.quote:undefined);}
+
+// Explicit work coordination, using the existing session and retry transport.
+import type {WorkOrder,WorkInput,WorkCollection} from './workTypes';
+export function getWorkOrder(id:string):Promise<ApiResult<WorkOrder>> {return request(`/api/work-orders/${encodeURIComponent(id)}`,undefined,r=>r?.workOrder?.id?r.workOrder:undefined);}
+export function getRequestWork(id:string):Promise<ApiResult<WorkCollection>> {return request(`/api/requests/${encodeURIComponent(id)}/work-orders`,undefined,r=>Array.isArray(r?.workOrders)?r:undefined);}
+export function getMyWork():Promise<ApiResult<WorkCollection>> {return request('/api/supply/work-orders',undefined,r=>Array.isArray(r?.workOrders)?r:undefined);}
+export function createWorkOrder(quoteId:string):Promise<ApiResult<WorkOrder>> {return request(`/api/request-quotes/${encodeURIComponent(quoteId)}/work-order`,{method:'POST',body:JSON.stringify({})},r=>r?.workOrder?.id?r.workOrder:undefined);}
+export function changeWorkOrder(id:string,body:WorkInput):Promise<ApiResult<WorkOrder>> {return request(`/api/work-orders/${encodeURIComponent(id)}/actions`,{method:'POST',body:JSON.stringify(body)},r=>r?.workOrder?.id?r.workOrder:undefined);}

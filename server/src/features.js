@@ -29,6 +29,11 @@ import * as telegram from './connectors/telegram.js';
 import * as whatsapp from './connectors/whatsapp.js';
 
 const DEFINITIONS = [
+  { key: 'work_orders', domain: 'workOrders', label: 'Work and fulfillment coordination', configured: () => true },
+  { key: 'request_quotes', domain: 'quotes', label: 'Request commercial proposals', configured: () => true },
+  { key: 'request_matching', domain: 'matching', label: 'Demand-to-capability matching', configured: () => true },
+  { key: 'supply', domain: 'supply', label: 'Enterprises and capabilities', configured: () => true },
+  { key: 'requests', domain: 'requests', label: 'Business requests', configured: () => true },
   // Always-configured: these run on the local store and need no credential.
   { key: 'auth',      domain: 'auth',       label: 'Accounts & sessions',             configured: () => true },
   { key: 'onboarding',domain: 'onboarding', label: 'Onboarding & service ladder',     configured: () => true },
@@ -42,9 +47,7 @@ const DEFINITIONS = [
   { key: 'commerce',  domain: 'commerce',   label: 'Commerce (vendors/listings/orders)', configured: () => true },
   { key: 'campaigns', domain: 'campaigns',  label: 'Campaigns, registration & gate',  configured: () => true },
   { key: 'vaults',    domain: 'vaults',     label: 'The Vault (context layer)',       configured: () => true },
-  { key: 'arena',     domain: 'arena',      label: 'Arena',                           configured: () => true },
   { key: 'auction',   domain: 'auction',    label: 'Auctions',                        configured: () => true },
-  { key: 'fantasy',   domain: 'fantasy',    label: 'Fantasy 11',                      configured: () => true },
   { key: 'command',   domain: 'command',    label: 'Host command centre',             configured: () => true },
   { key: 'people',    domain: 'people',     label: 'Person entity (timeline & identity)', configured: () => true },
   { key: 'tea',       domain: 'tea',        label: 'Tea editorial system',              configured: () => true },
@@ -55,7 +58,6 @@ const DEFINITIONS = [
   { key: 'search',     domain: 'search',      label: 'Cross-entity search',              configured: () => true },
   { key: 'assist',     domain: 'assist',      label: 'AI-assisted editorial drafting',    configured: () => true },
   { key: 'distribution', domain: 'distribution', label: 'Campaign blast + UTM attribution',  configured: () => true },
-  { key: 'lobby',      domain: 'lobby',       label: 'Lobby code board & clan matches',       configured: () => true },
   { key: 'workflows',  domain: 'workflow',    label: 'Automation engine (trigger/condition/action)', configured: () => true },
   { key: 'partnership', domain: 'creator',    label: 'Media kit, partnership, inbox & subscriptions', configured: () => true },
   // Yard Engine shelves. These are local logic and can be disabled independently

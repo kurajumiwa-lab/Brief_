@@ -3,7 +3,7 @@ import React from 'react';
 // ---------------------------------------------------------------------------
 // SIGNAL BANNER — the one banner pattern (§5)
 //
-// A Signal Banner does one of three jobs (four with the Arena Jumbotron). If a
+// A Signal Banner does one of three jobs. If a
 // banner can't be sorted into one of these, it doesn't ship. Every variant is
 // either wired to a real number/state, opens a real detail on tap, or is the
 // whole call-to-action for an empty section — never a dead graphic.
@@ -100,83 +100,6 @@ export function PromptBanner({ line1, line2, action, onAction }: PromptBannerPro
         {action}
       </span>
     </button>
-  );
-}
-
-/* --- 5.4 JUMBOTRON (Arena-only): rotating full-width banners on the static bg. */
-export interface JumbotronItem {
-  id: string;
-  glyph: string;
-  title: string;
-  meta: string;
-  urgent?: boolean;
-  /** Optional lines revealed on tap, so a disclaimer lives IN the banner. */
-  detail?: string[];
-}
-
-export interface JumbotronBannerProps {
-  items: JumbotronItem[];
-  onOpen: (id: string) => void;
-}
-
-export function JumbotronBanner({ items, onOpen }: JumbotronBannerProps) {
-  const [index, setIndex] = React.useState(0);
-  const [paused, setPaused] = React.useState(false);
-  const [expanded, setExpanded] = React.useState(false);
-
-  React.useEffect(() => {
-    if (items.length < 2 || paused) return;
-    const t = setInterval(() => { setIndex((i) => (i + 1) % items.length); setExpanded(false); }, 4000);
-    return () => clearInterval(t);
-  }, [items.length, paused]);
-
-  if (items.length === 0) return null;
-  const item = items[index];
-
-  return (
-    <div
-      className="relative w-full overflow-hidden rounded-2xl border border-[var(--hairline)]"
-      onTouchStart={() => setPaused(true)}
-      onTouchEnd={() => setPaused(false)}
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-    >
-      <div
-        className="absolute inset-0"
-        style={{ background: 'radial-gradient(circle at 80% 20%, rgba(17,17,17,0.05), transparent 60%), var(--overlay-scrim)' }}
-      />
-      <button
-        onClick={() => {
-          if (item.detail) { setExpanded((e) => !e); return; }
-          onOpen(item.id);
-        }}
-        className="relative flex min-h-36 w-full items-center justify-between gap-3 px-5 py-4 text-left"
-      >
-        <div className="min-w-0">
-          <p className="font-mono-live text-[10px] font-semibold uppercase tracking-[0.2em]" style={{ color: item.urgent ? 'var(--signal-urgent)' : 'var(--signal-arena)' }}>
-            {item.urgent ? 'Closing soon' : 'Now in the lobby'}
-          </p>
-          <p className="font-display mt-1 text-xl font-semibold text-[var(--ink)]">{item.title}</p>
-          <p className="mt-1 text-[11px] text-[var(--ink-dim)]">{item.meta}</p>
-          {expanded && item.detail && (
-            <ul className="mt-2 space-y-0.5 border-t border-[var(--hairline)] pt-2">
-              {item.detail.map((d, i) => (
-                <li key={i} className="text-[10px] text-[var(--ink-dim)]">· {d}</li>
-              ))}
-            </ul>
-          )}
-        </div>
-        <span className="brief-banner-in shrink-0 text-5xl drop-shadow-[0_0_18px_rgba(17,17,17,0.35)]">{item.glyph}</span>
-      </button>
-      {/* rotation dots */}
-      {items.length > 1 && (
-        <div className="absolute bottom-2.5 right-4 flex gap-1.5">
-          {items.map((_, i) => (
-            <span key={i} className="h-1.5 rounded-full transition-all" style={{ width: i === index ? 16 : 6, background: i === index ? 'var(--signal-arena)' : 'var(--hairline)' }} />
-          ))}
-        </div>
-      )}
-    </div>
   );
 }
 

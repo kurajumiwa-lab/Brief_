@@ -1,3 +1,4 @@
+import './test-env.mjs';
 import { store } from '../src/store.js';
 import * as spaces from '../src/domain/space.js';
 import * as auth from '../src/domain/auth.js';

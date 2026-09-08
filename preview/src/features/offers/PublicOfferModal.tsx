@@ -15,7 +15,7 @@ export interface PublicOfferModalProps {
 export const PublicOfferModal: React.FC<PublicOfferModalProps> = ({
   isOpen,
   offer,
-  spaceName = "Amina's Cakes",
+  spaceName = 'Business',
   onClose,
   onInquirySent
 }) => {

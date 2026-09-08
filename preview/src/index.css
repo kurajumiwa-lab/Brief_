@@ -23,7 +23,6 @@
   --ink-faint:      #7A8494;  /* tertiary/meta: timestamps, counters — >=4.5:1 */
 
   --signal-live:    #16A34A;  /* live/active state ONLY — success green */
-  --signal-arena:   #2563EB;  /* Arena / tournament system ONLY — blue */
   --signal-urgent:  #DC2626;  /* countdown / closing-soon / expiring ONLY — danger */
 
   --tea:            #FF5A1F;  /* Tea category — warm orange */
