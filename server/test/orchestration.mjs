@@ -102,37 +102,43 @@ console.log('\n=== PACKAGE 1: GROUP BUY FINANCIAL ENGINE ===');
 
 console.log('\n=== UNIFIED PAYLOAD ROUTING (one pipeline for money and matches) ===');
 {
-  store._reset();
-  // A chama treasurer routes contribution signals to the group's webhook.
-  ROUTER.createRoute(
-    { ownerId: 'usr_org', name: 'Chama thread', match: { signalType: 'group_buy_contribution' }, channels: [{ kind: 'webhook', to: 'https://hook.test/chama' }] },
-    { maxRoutes: null }
-  );
-  const buy = GB.createGroupBuy({ ownerId: 'usr_org', title: 'Rice group buy', targetAmount: 2_000 }, { maxActive: null });
-  const before = store.all('engineDeliveries').length;
-  GB.contribute({ groupBuyId: buy.id, memberRef: 'Wanjiku', amount: 500, source: 'mpesa' });
-  // emitSignal fans out fire-and-forget; let the microtasks run.
-  await new Promise((r) => setTimeout(r, 25));
-  const rows = store.all('engineDeliveries');
-  check('contribution signal reached the router ledger', rows.length === before + 1, `${rows.length - before}`);
-  check('delivery attributed to the chama route', rows[rows.length - 1]?.routeId != null);
-  check('the same router serves gaming + finance (one ledger)', Array.isArray(rows));
+  // Keep the documented offline fixture off DNS/network. Production transport
+  // remains unchanged; only this test's explicit fake webhook is intercepted.
+  const originalFetch=globalThis.fetch;
+  globalThis.fetch=async (url,options)=>String(url).startsWith('https://hook.test/') ? new Response('',{status:200}) : originalFetch(url,options);
+  try {
+    store._reset();
+    // A chama treasurer routes contribution signals to the group's webhook.
+    ROUTER.createRoute(
+      { ownerId: 'usr_org', name: 'Chama thread', match: { signalType: 'group_buy_contribution' }, channels: [{ kind: 'webhook', to: 'https://hook.test/chama' }] },
+      { maxRoutes: null }
+    );
+    const buy = GB.createGroupBuy({ ownerId: 'usr_org', title: 'Rice group buy', targetAmount: 2_000 }, { maxActive: null });
+    const before = store.all('engineDeliveries').length;
+    GB.contribute({ groupBuyId: buy.id, memberRef: 'Wanjiku', amount: 500, source: 'mpesa' });
+    // emitSignal fans out fire-and-forget; let the microtasks run.
+    await new Promise((r) => setTimeout(r, 25));
+    const rows = store.all('engineDeliveries');
+    check('contribution signal reached the router ledger', rows.length === before + 1, `${rows.length - before}`);
+    check('delivery attributed to the chama route', rows[rows.length - 1]?.routeId != null);
+    check('the same router serves gaming + finance (one ledger)', Array.isArray(rows));
 
-  // A gaming signal on the same route set stays unrouted unless matched.
-  const { emitSignal } = await import('../src/domain/signal.js');
-  const before2 = store.all('engineDeliveries').length;
-  emitSignal({ type: 'order_placed', actorId: 'usr_org' });
-  await new Promise((r) => setTimeout(r, 10));
-  check('unmatched signals do not dispatch', store.all('engineDeliveries').length === before2);
+    // A gaming signal on the same route set stays unrouted unless matched.
+    const { emitSignal } = await import('../src/domain/signal.js');
+    const before2 = store.all('engineDeliveries').length;
+    emitSignal({ type: 'order_placed', actorId: 'usr_org' });
+    await new Promise((r) => setTimeout(r, 10));
+    check('unmatched signals do not dispatch', store.all('engineDeliveries').length === before2);
 
-  // The signed payload is verifiable end to end.
-  const payload = ROUTER.compilePayload({
-    id: 'sig_test', type: 'group_buy_contribution', value: 500,
-    objectId: null, createdAt: '2026-08-26T00:00:00Z'
-  });
-  const sig = ROUTER.signPayload(ROUTER.payloadBytes(payload));
-  const expect = crypto.createHmac('sha256', 'orchestration-secret').update(ROUTER.payloadBytes(payload)).digest('hex');
-  check('receipt payload signature verifies', sig === expect);
+    // The signed payload is verifiable end to end.
+    const payload = ROUTER.compilePayload({
+      id: 'sig_test', type: 'group_buy_contribution', value: 500,
+      objectId: null, createdAt: '2026-08-26T00:00:00Z'
+    });
+    const sig = ROUTER.signPayload(ROUTER.payloadBytes(payload));
+    const expect = crypto.createHmac('sha256', 'orchestration-secret').update(ROUTER.payloadBytes(payload)).digest('hex');
+    check('receipt payload signature verifies', sig === expect);
+  } finally { globalThis.fetch=originalFetch; }
 }
 
 console.log('\n=== PACKAGE 3: DYNAMIC TICKET BAR ===');

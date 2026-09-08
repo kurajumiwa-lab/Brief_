@@ -1,9 +1,11 @@
 // ---------------------------------------------------------------------------
 // VERIFICATION (Tikiti T6)
 //
-// A KYC architecture that stores NO documents: a verification record is
+// Person verification stores no documents. Supply-scoped records reuse the
+// collection, but are handled only by supplyVerification.js and excluded here.
+// A person verification record is
 // status + provider reference + review provenance, nothing else. The record
-// feeds the compliance gates (arena money, payouts) so "identity verified"
+// feeds the compliance gates (payouts) so "identity verified"
 // is a reviewed fact, never a self-declared checkbox.
 // ---------------------------------------------------------------------------
 
@@ -20,7 +22,7 @@ export const VERIFICATION_STATUSES = ['pending', 'approved', 'rejected', 'revoke
 export function submitVerification(userId, { kind, providerRef = null, note = null }) {
   if (!VERIFICATION_KINDS.includes(kind)) throw new Error(`kind must be one of ${VERIFICATION_KINDS.join(', ')}`);
   const open = store.find('verificationRecords',
-    (r) => r.userId === userId && r.kind === kind && r.status === 'pending');
+    (r) => r.scope !== 'supply' && r.userId === userId && r.kind === kind && r.status === 'pending');
   if (open) return { record: open, changed: false };
   const record = store.insert('verificationRecords', {
     id: newId('ver'),
@@ -40,13 +42,13 @@ export function submitVerification(userId, { kind, providerRef = null, note = nu
 }
 
 export function myRecords(userId) {
-  return store.filter('verificationRecords', (r) => r.userId === userId)
+  return store.filter('verificationRecords', (r) => r.scope !== 'supply' && r.userId === userId)
     .sort((a, b) => String(b.submittedAt).localeCompare(String(a.submittedAt)));
 }
 
 /** The user's standing, derived -- never stored as a second source of truth. */
 export function standingOf(userId) {
-  const rows = store.filter('verificationRecords', (r) => r.userId === userId);
+  const rows = store.filter('verificationRecords', (r) => r.scope !== 'supply' && r.userId === userId);
   const out = {};
   for (const kind of VERIFICATION_KINDS) {
     const approved = rows.find((r) => r.kind === kind && r.status === 'approved' && !isRevokedLater(rows, r));
@@ -62,7 +64,7 @@ function isRevokedLater(rows, record) {
 }
 
 export function reviewQueue() {
-  return store.filter('verificationRecords', (r) => r.status === 'pending')
+  return store.filter('verificationRecords', (r) => r.scope !== 'supply' && r.status === 'pending')
     .sort((a, b) => String(a.submittedAt).localeCompare(String(b.submittedAt)));
 }
 
@@ -71,7 +73,7 @@ export function reviewQueue() {
  * records provenance and emits the signal Pulse can surface.
  */
 export function decide(reviewerId, recordId, { decision, reason = null }) {
-  const record = store.find('verificationRecords', (r) => r.id === recordId);
+  const record = store.find('verificationRecords', (r) => r.scope !== 'supply' && r.id === recordId);
   if (!record) throw new Error('verification record not found');
   if (record.status !== 'pending') throw new Error(`this record is already ${record.status}`);
   if (decision !== 'approved' && decision !== 'rejected') {
@@ -97,7 +99,7 @@ export function decide(reviewerId, recordId, { decision, reason = null }) {
 
 /** Revocation is a separate, explicit act with its own reason. */
 export function revoke(reviewerId, recordId, reason) {
-  const record = store.find('verificationRecords', (r) => r.id === recordId);
+  const record = store.find('verificationRecords', (r) => r.scope !== 'supply' && r.id === recordId);
   if (!record) throw new Error('verification record not found');
   if (record.status !== 'approved') throw new Error('only an approved record can be revoked');
   if (!reason || !String(reason).trim()) throw new Error('a revocation carries a reason');
@@ -120,7 +122,7 @@ export function revoke(reviewerId, recordId, reason) {
 
 export const EMAIL_TOPICS = [
   'event_announcements', 'new_ticket_listings', 'bargain_alerts',
-  'contribution_updates', 'arena_announcements', 'product_updates'
+  'contribution_updates', 'product_updates'
 ];
 
 const normaliseEmail = (e) => String(e ?? '').trim().toLowerCase();

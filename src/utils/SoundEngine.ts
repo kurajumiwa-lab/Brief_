@@ -11,7 +11,7 @@
 
 type SoundType = 'tap' | 'heavyTap' | 'reward' | 'victory' | 'defeat' | 'countdown' | 'matchReady' | 'cheer';
 
-const MUTE_KEY = 'brief_arena_sound_muted';
+const MUTE_KEY = 'brief_sound_muted';
 
 function safeReadMuted(): boolean {
   if (typeof window === 'undefined') return false;

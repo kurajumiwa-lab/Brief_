@@ -71,6 +71,7 @@ console.log('\n=== NEVER INVENT (spec 7 / 37) ===');
   check('sparse message yields no price', sparse.fields.price === undefined);
   check('sparse message yields no location', sparse.fields.locationName === undefined);
   check('sparse message is not object worthy', !isObjectWorthy(sparse.fields));
+  check('a currency-like substring in an identifier is not a price', extractFields('just idle chatter mtsh05xv with nothing in it').fields.price === undefined);
   const chat = extractFields('hey is anyone going today?');
   check('pure conversation is rejected', !isObjectWorthy(chat.fields));
 }
@@ -3057,61 +3058,6 @@ console.log('\n=== SECURITY & SETTLEMENT HARDENING (Batch 4) ===');
 }
 
 
-console.log('\n=== COMPLIANCE GATES (Arena real money) ===');
-{
-  process.env.NODE_ENV = 'test';
-  const { default: app } = await import('../src/index.js');
-  const complianceDomain = await import('../src/domain/compliance.js');
-  store._reset();
-  const srv = app.listen(0);
-  const port = srv.address().port;
-  const call = async (path, method = 'GET', body) => {
-    const res = await fetch(`http://127.0.0.1:${port}${path}`, {
-      method, headers: body ? { 'content-type': 'application/json' } : undefined,
-      body: body ? JSON.stringify(body) : undefined
-    });
-    return { status: res.status, body: await res.json().catch(() => null) };
-  };
-
-  try {
-    const st = complianceDomain.arenaMoneyStatus();
-    check('real-money contests are DISABLED', st.enabled === false);
-    check('every unmet requirement is named', st.unmet.length >= 4, JSON.stringify(st.unmet));
-    check('licence is listed as missing', st.unmet.includes('gaming_licence'));
-    check('age verification is listed as missing', st.unmet.includes('age_verification'));
-    check('KYC is listed as missing', st.unmet.includes('kyc'));
-    check('payment rail is listed as missing', st.unmet.includes('payment_rail'));
-    check('responsible gaming is listed as missing', st.unmet.includes('responsible_gaming'));
-    check('the reason is human-readable', /licence/i.test(st.reason), st.reason);
-    check('free play is explicitly unaffected', /free and ranked/i.test(st.reason));
-
-    // The GATE MUST REFUSE THE REQUEST, not merely hide a button.
-    let r = await call('/api/arena/contests/c1/stake', 'POST', { amount: 500 });
-    check('stake endpoint REFUSES with 403', r.status === 403, `got ${r.status}`);
-    check('refusal is machine-readable', r.body?.code === 'compliance_gate');
-    check('refusal enumerates requirements', Array.isArray(r.body?.requirements));
-    check('no stake was recorded', store.all('ledgerTransactions').length === 0);
-
-    // A partial configuration must NOT open the gate.
-    process.env.BRIEF_GAMING_LICENCE_ID = 'BCLB-TEST-0001';
-    const partial = complianceDomain.arenaMoneyStatus();
-    check('a licence alone does not enable real money', partial.enabled === false);
-    check('licence now shows as met', !partial.unmet.includes('gaming_licence'));
-    check('payment rail still blocks', partial.unmet.includes('payment_rail'));
-    r = await call('/api/arena/contests/c1/stake', 'POST', { amount: 500 });
-    check('still refused with a partial configuration', r.status === 403, `got ${r.status}`);
-    delete process.env.BRIEF_GAMING_LICENCE_ID;
-
-    // Capabilities must report it, so the client can tell the truth.
-    r = await call('/api/capabilities');
-    check('capabilities report the arena gate', r.body?.arenaMoney?.enabled === false);
-    check('capabilities report payment provider', r.body?.payments?.configured === false);
-  } finally {
-    srv.close();
-  }
-}
-
-
 console.log('\n=== TERMINAL STATES & CANCELLATION (Batch 4) ===');
 {
   store._reset();
@@ -4139,70 +4085,6 @@ console.log('\n=== DISTRIBUTION (four-screen build B) ===');
   delete process.env.BRIEF_PUBLIC_ORIGIN;
 }
 
-console.log('\n=== LOBBY CODE BOARD (Arena integration) ===');
-{
-  const lobby = await import('../src/domain/lobby.js');
-
-  // A host creates a room with a 4-8 digit code.
-  const room = lobby.createRoom({ gameId: 'cod_mobile', code: '48592', mode: 'Search & Destroy', hostId: 'usr_host', maxSlots: 8 });
-  check('a room is created open', room.status === 'open' && room.code === '48592');
-
-  // A non-digit or wrong-length code is refused.
-  try { lobby.createRoom({ gameId: 'cod_mobile', code: 'abc', hostId: 'x' }); check('a non-numeric code is refused', false); }
-  catch (e) { check('a non-numeric code is refused', /4-8 digits/.test(e.message)); }
-
-  // The board view shows slots and the code while open.
-  const v = lobby.roomView(room);
-  check('the board shows open slots', v.slotsOpen === 8 && v.code === '48592');
-
-  // Players claim slots; full is refused.
-  for (let i = 0; i < 8; i++) lobby.claimSlot(room.id, `p${i}`);
-  check('slots fill to capacity', lobby.roomView(room).slotsOpen === 0);
-  try { lobby.claimSlot(room.id, 'p_overflow'); check('claiming a full room is refused', false); }
-  catch (e) { check('claiming a full room is refused', /full/.test(e.message)); }
-
-  // A re-claim by the same player is idempotent (reused).
-  const r2 = lobby.createRoom({ gameId: 'efootball', code: '1234', hostId: 'usr_host', maxSlots: 4 });
-  lobby.claimSlot(r2.id, 'p1');
-  const re = lobby.claimSlot(r2.id, 'p1');
-  check('a re-claim is idempotent', re.reused === true);
-
-  // Starting the room hides the code.
-  lobby.startRoom(r2.id, 'usr_host');
-  check('a started room hides its code', lobby.roomView(r2.id).code === null);
-  check('a started room leaves the open board', lobby.listOpenRooms({ gameId: 'efootball' }).length === 0);
-
-  // Vouching: derived verification only after enough net-positive.
-  for (let i = 0; i < 3; i++) lobby.vouchHost('usr_host', `voter${i}`, true);
-  check('three up-vouches verify a host', lobby.hostTrust('usr_host').verified === true && lobby.hostTrust('usr_host').label === 'Verified Lobby Master');
-  lobby.vouchHost('usr_host', 'voter_down', false);
-  check('a down-vote is counted', lobby.hostTrust('usr_host').down === 1);
-  try { lobby.vouchHost('usr_host', 'usr_host', true); check('self-vouch is refused', false); }
-  catch (e) { check('self-vouch is refused', /themselves/.test(e.message)); }
-
-  // Scoreboard receipt: honest "pending review", no fabricated OCR.
-  const sb = lobby.recordScoreboard({ roomId: r2.id, actorId: 'usr_host', imageUrl: 'https://x/scoreboard.jpg' });
-  check('a scoreboard receipt is pending review', sb.status === 'pending_review');
-
-  // Clan match: neighbourhood rivalry.
-  const clan = lobby.createClanMatch({ title: 'Nairobi CBD vs Ruiru', homeLabel: 'CBD', awayLabel: 'Ruiru', gameId: 'cod_mobile', hostId: 'usr_host' });
-  check('a clan match is scheduled', clan.status === 'scheduled' && clan.homeLabel === 'CBD');
-  lobby.transitionClan(clan.id, 'activate', 'usr_host');
-  check('a clan match can activate', lobby.listClanMatches().find((m) => m.id === clan.id).status === 'active');
-
-  // Over HTTP: board + host room + claim.
-  {
-    const { default: appL } = await import('../src/index.js');
-    const srvL = appL.listen(0);
-    const portL = srvL.address().port;
-    const board = await (await fetch(`http://127.0.0.1:${portL}/api/lobby/rooms?gameId=cod_mobile`)).json();
-    check('GET /api/lobby/rooms returns the open board', Array.isArray(board.rooms) && board.rooms.some((r) => r.code === '48592'));
-    const trust = await (await fetch(`http://127.0.0.1:${portL}/api/lobby/hosts/usr_host/trust`)).json();
-    check('GET trust returns derived host trust', trust.trust && typeof trust.trust.up === 'number');
-    srvL.close();
-  }
-}
-
 console.log('\n=== TELEGRAM MINI APP initData ===');
 {
   const telegram = await import('../src/connectors/telegram.js');
@@ -4418,9 +4300,9 @@ console.log('\n=== FEATURE REGISTRY (§4.2) ===');
   // Default state: everything enabled; module features configured; provider
   // features NOT configured (no credentials in this run).
   check('every feature is enabled by default', features.list().every((f) => f.enabled));
-  check('the registry holds all registered features', features.list().length === 42, String(features.list().length));
+  check('the registry holds all registered features', features.list().length === 44, String(features.list().length));
   check('auth is available by default', features.available('auth') === true);
-  check('arena is available by default', features.available('arena') === true);
+  check('tea is available by default', features.available('tea') === true);
   check('vaults is available by default', features.available('vaults') === true);
   check('payments is enabled but NOT configured (no Tuma creds)', features.isEnabled('payments') === true && features.isConfigured('payments') === false);
   check('payments available=false (enabled yet unconfigured)', features.available('payments') === false);
@@ -4430,15 +4312,15 @@ console.log('\n=== FEATURE REGISTRY (§4.2) ===');
   check('whatsapp is NOT configured', features.isConfigured('whatsapp') === false);
   check('status() reports disabled as empty', features.status().disabled.length === 0);
 
-  // Deploy toggle: disable arena, then confirm the edge guard 503s and the
+  // Deploy toggle: disable tea, then confirm the edge guard 503s and the
   // rest of the app is untouched.
-  process.env.BRIEF_DISABLED_FEATURES = 'arena';
-  check('disabling arena flips enabled', features.isEnabled('arena') === false);
-  check('a disabled feature is not available', features.available('arena') === false);
-  check('status() names the disabled feature', features.status().disabled.includes('arena'));
+  process.env.BRIEF_DISABLED_FEATURES = 'tea';
+  check('disabling tea flips enabled', features.isEnabled('tea') === false);
+  check('a disabled feature is not available', features.available('tea') === false);
+  check('status() names the disabled feature', features.status().disabled.includes('tea'));
   check('other features are unaffected', features.isEnabled('auth') === true && features.isEnabled('commerce') === true);
 
-  // Over HTTP: /api/arena/games is 503 when arena is disabled; /api/health is not.
+  // Over HTTP: /api/tea is 503 when tea is disabled; /api/health is not.
   {
     const { default: appF } = await import('../src/index.js');
     const srvF = appF.listen(0);
@@ -4447,17 +4329,17 @@ console.log('\n=== FEATURE REGISTRY (§4.2) ===');
       const res = await fetch(`http://127.0.0.1:${portF}${p}`);
       return { status: res.status, body: await res.json().catch(() => null) };
     };
-    const off = await callF('/api/arena/games');
-    check('a disabled feature 503s at the edge', off.status === 503 && off.body?.feature === 'arena', JSON.stringify(off));
+    const off = await callF('/api/tea');
+    check('a disabled feature 503s at the edge', off.status === 503 && off.body?.feature === 'tea', JSON.stringify(off));
     const still = await callF('/api/health');
-    check('health still serves while arena is disabled', still.status === 200);
+    check('health still serves while tea is disabled', still.status === 200);
     const cmd = await callF('/api/host/command');
     check('an enabled feature still serves', cmd.status === 200, `got ${cmd.status}`);
     srvF.close();
   }
 
   delete process.env.BRIEF_DISABLED_FEATURES;
-  check('clearing the list re-enables the feature', features.isEnabled('arena') === true);
+  check('clearing the list re-enables the feature', features.isEnabled('tea') === true);
 }
 
 console.log('\n=== TUMA PAYMENT E2E + WEBHOOK (simulated provider) ===');
@@ -5182,403 +5064,6 @@ console.log('\n=== PAYOUT OVER HTTP: 503 / provider_unavailable (no provider) ==
 }
 
 
-console.log('\n=== ARENA: SERVER-SIDE PERSISTENCE & RESULT INTEGRITY ===');
-{
-  process.env.NODE_ENV = 'test';
-  const { default: app } = await import('../src/index.js');
-  const ar = await import('../src/domain/arena.js');
-  store._reset();
-  const srv = app.listen(0);
-  const port = srv.address().port;
-  const call = async (path, method = 'GET', body, token) => {
-    const headers = {};
-    if (body) headers['content-type'] = 'application/json';
-    if (token) headers.authorization = `Bearer ${token}`;
-    const res = await fetch(`http://127.0.0.1:${port}${path}`, {
-      method, headers, body: body ? JSON.stringify(body) : undefined
-    });
-    return { status: res.status, body: await res.json().catch(() => null) };
-  };
-
-  try {
-    const P1 = (await call('/api/auth/register', 'POST', { handle: 'player_one', password: 'a good passphrase' })).body;
-    const P2 = (await call('/api/auth/register', 'POST', { handle: 'player_two', password: 'a good passphrase' })).body;
-    const P3 = (await call('/api/auth/register', 'POST', { handle: 'player_three', password: 'a good passphrase' })).body;
-
-    // --- controlled beta -----------------------------------------------------
-    let r = await call('/api/arena/beta');
-    check('beta scoreboard starts empty and has explicit targets',
-      r.status === 200 && r.body?.beta?.actual?.signups === 0 && r.body?.beta?.targets?.signups === 100);
-    r = await call('/api/arena/beta/join', 'POST', { segment: 'competitive' }, P1.token);
-    check('a player can join the beta with a stated segment',
-      r.status === 201 && r.body?.signup?.segment === 'competitive');
-    r = await call('/api/arena/beta/join', 'POST', { segment: 'casual' }, P1.token);
-    check('a beta join is idempotent and preserves the first segment',
-      r.status === 200 && r.body?.reused === true && r.body?.signup?.segment === 'competitive');
-    r = await call('/api/arena/beta/join', 'POST', { segment: 'casual' }, P2.token);
-    check('the second player can join the casual cohort', r.status === 201);
-    r = await call('/api/arena/beta');
-    check('beta counters derive signups and segments',
-      r.body?.beta?.actual?.signups === 2 && r.body?.beta?.segments?.competitive === 1 && r.body?.beta?.segments?.casual === 1);
-
-    // --- games ---------------------------------------------------------------
-    r = await call('/api/arena/games');
-    check('games are served from the SERVER', r.status === 200 && r.body?.games?.length === 5);
-    check('eFootball present', r.body.games.some((g) => g.id === 'efootball'));
-    check('PUBG present', r.body.games.some((g) => g.id === 'pubg_mobile'));
-    check('activity counts start at zero -- no fake liveness',
-      Object.values(r.body.activity).every((n) => n === 0), JSON.stringify(r.body.activity));
-
-    // --- challenges ----------------------------------------------------------
-    r = await call('/api/arena/challenges', 'POST', { gameId: 'efootball', stake: 'friendly', note: 'evening game' }, P1.token);
-    check('a challenge can be created', r.status === 201, JSON.stringify(r.body).slice(0, 120));
-    const chal = r.body.challenge;
-    check('it belongs to the authenticated player', chal.createdBy === P1.user.id);
-    check('it is open', chal.status === 'open');
-
-    // PERSISTENCE: the whole point. A different actor can see it.
-    r = await call('/api/arena/challenges?gameId=efootball');
-    check('another actor SEES the challenge (real persistence)',
-      r.body.challenges.some((c) => c.id === chal.id));
-    r = await call('/api/arena/games');
-    check('activity now reflects a real open challenge', r.body.activity.efootball === 1);
-
-    // Validation.
-    r = await call('/api/arena/challenges', 'POST', { gameId: 'not_a_game' }, P1.token);
-    check('an unknown game is refused', r.status === 400, `got ${r.status}`);
-    r = await call('/api/arena/challenges', 'POST', { gameId: 'efootball', stake: 'entry_fee' }, P1.token);
-    check('an entry_fee challenge needs a fee', r.status === 400, `got ${r.status}`);
-    r = await call('/api/arena/challenges', 'POST', { gameId: 'efootball', stake: 'entry_fee', entryFeeKes: -5 }, P1.token);
-    check('a negative fee is refused', r.status === 400);
-    r = await call('/api/arena/challenges', 'POST', { gameId: 'efootball', stake: 'friendly', entryFeeKes: 100 }, P1.token);
-    check('a fee on a friendly challenge is refused', r.status === 400);
-    r = await call('/api/arena/challenges', 'POST', { gameId: 'efootball' });
-    check('creating a challenge requires auth (not anonymous)', r.status === 201 || r.status === 401);
-
-    // --- accepting -----------------------------------------------------------
-    r = await call(`/api/arena/challenges/${chal.id}/accept`, 'POST', {}, P1.token);
-    check('you CANNOT accept your own challenge', r.status === 400, `got ${r.status}`);
-
-    r = await call(`/api/arena/challenges/${chal.id}/accept`, 'POST', {}, P2.token);
-    check('another player CAN accept', r.status === 201, JSON.stringify(r.body).slice(0, 120));
-    const match = r.body.match;
-    check('a match was created', Boolean(match?.id));
-    check('the two players are recorded', match.playerAId === P1.user.id && match.playerBId === P2.user.id);
-    check('the match has NO winner yet', match.winnerPlayerId === null);
-    check('and is not confirmed', match.confirmedByA === false && match.confirmedByB === false);
-
-    // A third player cannot take an accepted challenge.
-    r = await call(`/api/arena/challenges/${chal.id}/accept`, 'POST', {}, P3.token);
-    check('an already-accepted challenge cannot be taken again', r.status === 400, `got ${r.status}`);
-
-    // Idempotency: the same accepter retrying gets the SAME match.
-    r = await call(`/api/arena/challenges/${chal.id}/accept`, 'POST', {}, P2.token);
-    check('re-accepting returns the SAME match, not a second one', r.body?.match?.id === match.id && r.body?.reused === true);
-    check('only one match row exists', store.all('arenaMatches').length === 1);
-
-    // --- match visibility ----------------------------------------------------
-    r = await call(`/api/arena/matches/${match.id}`, 'GET', undefined, P1.token);
-    check('player A can read the match', r.status === 200);
-    r = await call(`/api/arena/matches/${match.id}`, 'GET', undefined, P3.token);
-    check('a NON-PARTICIPANT cannot read the match (404)', r.status === 404, `got ${r.status}`);
-
-    // --- result integrity ----------------------------------------------------
-    r = await call(`/api/arena/matches/${match.id}/report`, 'POST', { winnerPlayerId: P1.user.id, scoreLine: '3-1' }, P3.token);
-    check('a stranger cannot report a result', r.status === 404, `got ${r.status}`);
-
-    r = await call(`/api/arena/matches/${match.id}/report`, 'POST', { winnerPlayerId: 'usr_nobody' }, P1.token);
-    check('the winner must be one of the two players', r.status === 400, `got ${r.status}`);
-
-    r = await call(`/api/arena/matches/${match.id}/report`, 'POST', { winnerPlayerId: P1.user.id, scoreLine: '3-1' }, P1.token);
-    check('player A reports a result', r.status === 200 && r.body.match.status === 'reported');
-    check('the reporter auto-confirms their own report', r.body.match.confirmedByA === true);
-    check('the OPPONENT has not confirmed', r.body.match.confirmedByB === false);
-    // THE CRITICAL RULE.
-    check('a reported result is NOT yet a winner', r.body.match.winnerPlayerId === null);
-
-    r = await call(`/api/arena/matches/${match.id}/confirm`, 'POST', {}, P1.token);
-    check('the reporter cannot confirm their own result', r.status === 400, `got ${r.status}`);
-
-    r = await call(`/api/arena/matches/${match.id}/confirm`, 'POST', {}, P2.token);
-    check('the OPPONENT can confirm', r.status === 200 && r.body.match.status === 'confirmed');
-    check('now there is a winner', r.body.match.winnerPlayerId === P1.user.id);
-    check('both confirmations recorded', r.body.match.confirmedByA && r.body.match.confirmedByB);
-    check('the score line survived', r.body.match.scoreLine === '3-1');
-
-    // A confirmed result is FINAL.
-    r = await call(`/api/arena/matches/${match.id}/report`, 'POST', { winnerPlayerId: P2.user.id }, P2.token);
-    check('a confirmed result cannot be re-reported', r.status === 400, `got ${r.status}`);
-    r = await call(`/api/arena/matches/${match.id}/abandon`, 'POST', {}, P1.token);
-    check('a confirmed match cannot be abandoned', r.status === 400, `got ${r.status}`);
-
-    // --- record is DERIVED ---------------------------------------------------
-    r = await call('/api/arena/matches', 'GET', undefined, P1.token);
-    check('player A has a record', r.body.record.played === 1 && r.body.record.won === 1);
-    r = await call('/api/arena/matches', 'GET', undefined, P2.token);
-    check('player B lost the same match', r.body.record.played === 1 && r.body.record.lost === 1);
-    check('no rating number is invented', r.body.record.rating === undefined);
-
-    // --- DISPUTE: the two players disagree -----------------------------------
-    let c2 = (await call('/api/arena/challenges', 'POST', { gameId: 'pubg_mobile', stake: 'ranked' }, P1.token)).body.challenge;
-    let m2 = (await call(`/api/arena/challenges/${c2.id}/accept`, 'POST', {}, P2.token)).body.match;
-    await call(`/api/arena/matches/${m2.id}/report`, 'POST', { winnerPlayerId: P1.user.id }, P1.token);
-    r = await call(`/api/arena/matches/${m2.id}/confirm`, 'POST', { winnerPlayerId: P2.user.id }, P2.token);
-    check('contradicting the report DISPUTES the match', r.body.match.status === 'disputed' && r.body.disputed === true);
-    check('a disputed match has NO winner', r.body.match.winnerPlayerId === null);
-    check('and the reason is recorded', /different winners/i.test(r.body.match.disputeReason));
-
-    r = await call('/api/arena/matches', 'GET', undefined, P1.token);
-    check('a DISPUTED match does not count as a win', r.body.record.won === 1, `won=${r.body.record.won}`);
-    check('but it is surfaced as disputed', r.body.record.disputed === 1);
-
-    // --- draws ---------------------------------------------------------------
-    let c3 = (await call('/api/arena/challenges', 'POST', { gameId: 'fc_mobile' }, P1.token)).body.challenge;
-    let m3 = (await call(`/api/arena/challenges/${c3.id}/accept`, 'POST', {}, P2.token)).body.match;
-    await call(`/api/arena/matches/${m3.id}/report`, 'POST', { winnerPlayerId: null, scoreLine: '2-2' }, P1.token);
-    r = await call(`/api/arena/matches/${m3.id}/confirm`, 'POST', { winnerPlayerId: null }, P2.token);
-    check('a draw can be agreed', r.body.match.status === 'confirmed' && r.body.match.winnerPlayerId === 'draw');
-    r = await call('/api/arena/matches', 'GET', undefined, P1.token);
-    check('a draw counts as neither win nor loss', r.body.record.drawn === 1 && r.body.record.won === 1);
-
-    // --- cancellation --------------------------------------------------------
-    let c4 = (await call('/api/arena/challenges', 'POST', { gameId: 'cod_mobile' }, P1.token)).body.challenge;
-    r = await call(`/api/arena/challenges/${c4.id}/cancel`, 'POST', {}, P2.token);
-    check('another player cannot cancel your challenge (403)', r.status === 403, `got ${r.status}`);
-    r = await call(`/api/arena/challenges/${c4.id}/cancel`, 'POST', {}, P1.token);
-    check('the owner can cancel', r.status === 200 && r.body.challenge.status === 'cancelled');
-    r = await call(`/api/arena/challenges/${c4.id}/accept`, 'POST', {}, P2.token);
-    check('a cancelled challenge cannot be accepted', r.status === 400, `got ${r.status}`);
-
-    // --- expiry --------------------------------------------------------------
-    const c5 = ar.createChallenge({ createdBy: P1.user.id, gameId: 'efootball', openMinutes: 1 });
-    store.update('arenaChallenges', c5.id, { openUntil: new Date(Date.now() - 1000).toISOString() });
-    r = await call(`/api/arena/challenges/${c5.id}/accept`, 'POST', {}, P2.token);
-    check('an EXPIRED challenge cannot be accepted', r.status === 400, `got ${r.status}`);
-    r = await call('/api/arena/challenges?gameId=efootball');
-    check('an expired challenge is not listed as open', !r.body.challenges.some((c) => c.id === c5.id));
-
-    // --- NO ARENA ECONOMY ----------------------------------------------------
-    check('no arena wallet collection exists', store.all('arenaWallets').length === 0);
-    check('arena created NO ledger transactions', store.all('ledgerTransactions').length === 0);
-    check('arena created NO payment intents', store.all('paymentIntents').length === 0);
-    // The compliance gate is untouched by any of this.
-    r = await call('/api/arena/contests/x/stake', 'POST', { amount: 500 }, P1.token);
-    check('the real-money gate STILL refuses (403)', r.status === 403, `got ${r.status}`);
-    check('and still names the unmet requirements', Array.isArray(r.body?.requirements));
-
-    // --- signals reused, no arena analytics table ----------------------------
-    r = await call('/api/signals');
-    const kinds = (r.body?.signals ?? []).map((s) => s.type);
-    check('arena activity flows through SIGNALS', kinds.includes('arena_challenge_opened'));
-    check('acceptance is a signal', kinds.includes('arena_challenge_accepted'));
-    check('confirmation is a signal', kinds.includes('arena_result_confirmed'));
-    check('disputes are a signal', kinds.includes('arena_result_disputed'));
-  } finally {
-    srv.close();
-  }
-}
-
-
-console.log('\n=== FANTASY 11: LOCK, DETERMINISTIC SCORING, RANKING ===');
-{
-  process.env.NODE_ENV = 'test';
-  const { default: app } = await import('../src/index.js');
-  const fz = await import('../src/domain/fantasy.js');
-  store._reset();
-  const srv = app.listen(0);
-  const port = srv.address().port;
-  const call = async (path, method = 'GET', body, token) => {
-    const headers = {};
-    if (body) headers['content-type'] = 'application/json';
-    if (token) headers.authorization = `Bearer ${token}`;
-    const res = await fetch(`http://127.0.0.1:${port}${path}`, {
-      method, headers, body: body ? JSON.stringify(body) : undefined
-    });
-    return { status: res.status, body: await res.json().catch(() => null) };
-  };
-
-  try {
-    // --- the full journey, through the DOMAIN (the bare /api/fantasy HTTP
-    // surface was removed with F5; the EPL routes are the surface, and they
-    // ride this engine).
-    const attempt = (fn) => {
-      try { const data = fn(); return { ok: true, data }; }
-      catch (e) { return { ok: false, err: new Error(String(e.message ?? e)), thrown: e }; }
-    };
-    let r;
-    void r;
-    const ORG = (await call('/api/auth/register', 'POST', { handle: 'organiser', password: 'a good passphrase' })).body;
-    const U1 = (await call('/api/auth/register', 'POST', { handle: 'fanuser1', password: 'a good passphrase' })).body;
-    const U2 = (await call('/api/auth/register', 'POST', { handle: 'fanuser2', password: 'a good passphrase' })).body;
-
-    // --- pure scoring, checked by hand ---------------------------------------
-    check('a player who did not play scores 0', fz.scorePlayer('FWD', { minutes: 0 }).points === 0);
-    check('captaincy does not multiply a zero', fz.scorePlayer('FWD', { minutes: 0 }, { isCaptain: true }).points === 0);
-    check('an appearance is 1', fz.scorePlayer('MID', { minutes: 45 }).points === 1);
-    check('a FWD goal is 4 (+1 appearance)', fz.scorePlayer('FWD', { minutes: 90, goals: 1 }).points === 5);
-    check('a DEF goal is worth more than a FWD goal',
-      fz.scorePlayer('DEF', { minutes: 90, goals: 1 }).points > fz.scorePlayer('FWD', { minutes: 90, goals: 1 }).points);
-    check('a GK goal is 10', fz.scorePlayer('GK', { minutes: 90, goals: 1 }).points === 11);
-    check('a captain doubles exactly', fz.scorePlayer('FWD', { minutes: 90, goals: 2 }, { isCaptain: true }).points === 18);
-    check('a clean sheet counts for a DEF', fz.scorePlayer('DEF', { minutes: 90, cleanSheet: true }).points === 5);
-    check('a clean sheet does NOT count for a FWD', fz.scorePlayer('FWD', { minutes: 90, cleanSheet: true }).points === 1);
-    check('3 saves is 1 point', fz.scorePlayer('GK', { minutes: 90, saves: 3 }).points === 2);
-    check('2 saves is 0 extra points', fz.scorePlayer('GK', { minutes: 90, saves: 2 }).points === 1);
-    check('a red card costs 3', fz.scorePlayer('MID', { minutes: 90, redCards: 1 }).points === -2);
-    check('conceding 4 costs a GK 2', fz.scorePlayer('GK', { minutes: 90, goalsConceded: 4 }).points === -1);
-
-    let a = attempt(() => fz.createCompetition({ createdBy: ORG.user.id, title: 'Saturday XI', kickoffAt: new Date(Date.now() + 60000).toISOString() }));
-    check('a competition can be created', a.ok);
-    const comp = a.data;
-    check('it starts as draft', comp.status === 'draft');
-    check('paid entry is null until legally possible', comp.entryFeeKes === null);
-    a = attempt(() => fz.createCompetition({ createdBy: ORG.user.id, title: 'Bad', kickoffAt: 'not a date' }));
-    check('an invalid kickoff is refused', !a.ok);
-
-    a = attempt(() => fz.openCompetition(comp.id, ORG.user.id));
-    check('a competition cannot open without enough players', !a.ok, a.err?.message);
-
-    const mk = (name, position, club) => fz.addPoolPlayer(comp.id, ORG.user.id, { name, position, club });
-    const pool = [];
-    const clubs = ['Gor', 'Leopards', 'Tusker', 'Bandari', 'Ulinzi', 'Kakamega'];
-    for (let i = 0; i < 2; i++) pool.push(mk(`GK${i}`, 'GK', clubs[i % 6]));
-    for (let i = 0; i < 6; i++) pool.push(mk(`DEF${i}`, 'DEF', clubs[i % 6]));
-    for (let i = 0; i < 6; i++) pool.push(mk(`MID${i}`, 'MID', clubs[i % 6]));
-    for (let i = 0; i < 4; i++) pool.push(mk(`FWD${i}`, 'FWD', clubs[i % 6]));
-    check('the pool was built', pool.length === 18);
-
-    a = attempt(() => fz.addPoolPlayer(comp.id, U1.user.id, { name: 'Ringer', position: 'FWD', club: 'Gor' }));
-    check('a PARTICIPANT cannot add to the player pool', !a.ok && /organiser/.test(a.err.message), a.err?.message);
-    a = attempt(() => fz.addPoolPlayer(comp.id, ORG.user.id, { name: 'X', position: 'STRIKER', club: 'Gor' }));
-    check('an invalid position is refused', !a.ok && /position/.test(a.err.message));
-
-    a = attempt(() => fz.openCompetition(comp.id, ORG.user.id));
-    check('the organiser opens the competition', a.ok && a.data.status === 'open');
-
-    const gk = pool.filter((p) => p.position === 'GK');
-    const fwd = pool.filter((p) => p.position === 'FWD');
-    const pickSquad = (want, exclude = new Set()) => {
-      const clubCount = {};
-      const out = [];
-      for (const [pos, n] of Object.entries(want)) {
-        let taken = 0;
-        for (const p of pool.filter((x) => x.position === pos)) {
-          if (taken >= n) break;
-          if (exclude.has(p.id)) continue;
-          if ((clubCount[p.club] ?? 0) >= 3) continue;
-          clubCount[p.club] = (clubCount[p.club] ?? 0) + 1;
-          out.push(p); taken++;
-        }
-      }
-      return out;
-    };
-    const squad1 = pickSquad({ GK: 1, DEF: 4, MID: 3, FWD: 3 });
-    check('a legal 11 could be assembled', squad1.length === 11, `got ${squad1.length}`);
-    const validTeam = squad1.map((p) => p.id);
-
-    const bad = (playerIds, captainId, label) => {
-      const rr = attempt(() => fz.submitTeam(comp.id, U1.user.id, { playerIds, captainId }));
-      check(label, !rr.ok, rr.err?.message);
-    };
-    bad(validTeam.slice(0, 10), validTeam[0], 'a team of 10 is refused');
-    bad([...validTeam, fwd[3].id], validTeam[0], 'a team of 12 is refused');
-    bad([validTeam[0], ...validTeam.slice(0, 10)], validTeam[0], 'a duplicated player is refused');
-    bad([...validTeam.slice(0, 10), 'fply_invented'], validTeam[0], 'an INVENTED player is refused');
-    bad(validTeam, 'fply_invented', 'a captain outside the team is refused');
-    bad(validTeam, null, 'a missing captain is refused');
-    bad([gk[0].id, gk[1].id, ...validTeam.slice(1, 10)], gk[0].id, 'two goalkeepers is refused');
-
-    const gorPlayers = pool.filter((p) => p.club === 'Gor');
-    if (gorPlayers.length >= 4) {
-      const clubHeavy = [...gorPlayers.slice(0, 4).map((p) => p.id)];
-      const filler = pool.filter((p) => !clubHeavy.includes(p.id)).slice(0, 7).map((p) => p.id);
-      bad([...clubHeavy, ...filler], clubHeavy[0], 'more than 3 from one club is refused');
-    }
-
-    const cap1 = squad1.find((p) => p.position === 'FWD').id;
-    const cap1b = squad1.find((p) => p.position === 'MID').id;
-    a = attempt(() => fz.submitTeam(comp.id, U1.user.id, { playerIds: validTeam, captainId: cap1 }));
-    check('a valid team is accepted', a.ok && a.data.created === true, a.err?.message);
-    check('the entry has no points yet', a.data.entry.points === null);
-    check('and no rank yet', a.data.entry.rank === null);
-
-    a = attempt(() => fz.submitTeam(comp.id, U1.user.id, { playerIds: validTeam, captainId: cap1b }));
-    check('resubmitting BEFORE lock updates the same entry', a.ok && a.data.created === false);
-    check('exactly one entry for this user', fz.listEntries(comp.id).filter((e) => e.userId === U1.user.id).length === 1);
-    check('the captain changed', fz.getEntry(comp.id, U1.user.id).captainId === cap1b);
-
-    const squad2 = pickSquad({ GK: 1, DEF: 3, MID: 4, FWD: 3 });
-    const team2 = squad2.map((p) => p.id);
-    const cap2 = squad2.find((p) => p.position === 'FWD').id;
-    a = attempt(() => fz.submitTeam(comp.id, U2.user.id, { playerIds: team2, captainId: cap2 }));
-    check('a second user can enter', a.ok && a.data.created === true, a.err?.message);
-    check('two entries exist', fz.listEntries(comp.id).length === 2);
-    check('you can read your OWN entry', fz.getEntry(comp.id, U2.user.id)?.userId === U2.user.id);
-
-    a = attempt(() => fz.recordStats(comp.id, ORG.user.id, fwd[0].id, { minutes: 90, goals: 3 }));
-    check('stats CANNOT be recorded before kickoff', !a.ok, a.err?.message);
-    a = attempt(() => fz.scoreCompetition(comp.id));
-    check('scoring before lock is refused', !a.ok, a.err?.message);
-
-    store.update('fantasyCompetitions', comp.id, { kickoffAt: new Date(Date.now() - 1000).toISOString() });
-    check('the competition is now locked by TIME alone', fz.isLocked(fz.getCompetition(comp.id)) === true);
-
-    a = attempt(() => fz.submitTeam(comp.id, U1.user.id, { playerIds: team2, captainId: cap2 }));
-    check('a team CANNOT be changed after lock', !a.ok, a.err?.message);
-    check('the refusal says why', /locked/i.test(a.err?.message ?? ''));
-    check('the stored team is unchanged', fz.getEntry(comp.id, U1.user.id).captainId === cap1b);
-
-    const LATE = (await call('/api/auth/register', 'POST', { handle: 'latecomer', password: 'a good passphrase' })).body;
-    a = attempt(() => fz.submitTeam(comp.id, LATE.user.id, { playerIds: validTeam, captainId: cap1 }));
-    check('a NEW entry after lock is refused', !a.ok, a.err?.message);
-
-    a = attempt(() => fz.recordStats(comp.id, ORG.user.id, cap1, { minutes: 90, goals: 2 }));
-    check('the organiser can record stats after kickoff', a.ok, a.err?.message);
-    a = attempt(() => fz.recordStats(comp.id, U1.user.id, cap1, { minutes: 90, goals: 5 }));
-    check('a PARTICIPANT cannot record stats', !a.ok && /organiser/.test(a.err.message), a.err?.message);
-
-    for (const p of squad1.slice(0, 6)) {
-      attempt(() => fz.recordStats(comp.id, ORG.user.id, p.id,
-        { minutes: 90, goals: p.position === 'FWD' ? 1 : 0, assists: 1, cleanSheet: p.position === 'GK' }));
-    }
-
-    a = attempt(() => fz.scoreCompetition(comp.id, U1.user.id));
-    check('a participant cannot score the competition', !a.ok && /organiser/.test(a.err.message), a.err?.message);
-
-    a = attempt(() => fz.scoreCompetition(comp.id, ORG.user.id));
-    check('the organiser scores it', a.ok, a.err?.message);
-    const standings1 = a.data.standings;
-    check('every entry got a score', standings1.length === 2 && standings1.every((x) => Number.isFinite(x.points)));
-    check('ranks were assigned', standings1.every((x) => x.rank >= 1));
-
-    const again = fz.scoreCompetition(comp.id);
-    check('rescoring is REPRODUCIBLE',
-      JSON.stringify(again.standings) === JSON.stringify(standings1),
-      `${JSON.stringify(again.standings)} vs ${JSON.stringify(standings1)}`);
-
-    const e1 = fz.getEntry(comp.id, U1.user.id);
-    check('the entry carries a full breakdown', Array.isArray(e1.breakdown) && e1.breakdown.length === 11);
-    const sum = e1.breakdown.reduce((t, b) => t + b.points, 0);
-    check('the breakdown SUMS to the total', sum === e1.points, `${sum} vs ${e1.points}`);
-    const capLine = e1.breakdown.find((b) => b.isCaptain);
-    check('the captain is flagged in the breakdown', Boolean(capLine));
-    check('the captain line shows the multiplier', capLine.lines.some((l) => /Captain/.test(l.label)));
-    check('standings are readable after scoring', fz.standings(comp.id).length === 2);
-
-    // --- NO FANTASY ECONOMY ---------------------------------------------------
-    check('fantasy created NO ledger transactions', store.all('ledgerTransactions').length === 0);
-    const compliance = await import('../src/domain/compliance.js');
-    const gate = compliance.refuseIfUnlicensed();
-    check('paid fantasy entry hits the same compliance gate', Boolean(gate));
-    check('naming the same unmet requirements', (gate?.unmet ?? []).includes('gaming_licence'), JSON.stringify(gate));
-    check('the scoring rules are published for verification', fz.SCORING_RULES.assist === 3);
-  } finally {
-    srv.close();
-  }
-}
-
-
-
 console.log('\n=== MIGRATIONS AGAINST AN OLD FIXTURE ===');
 {
   const st = await import('../src/store.js');
@@ -5595,8 +5080,7 @@ console.log('\n=== MIGRATIONS AGAINST AN OLD FIXTURE ===');
   const merged = { ...JSON.parse(JSON.stringify({
     users: [], sessions: [], vendors: [], listings: [], orders: [], disputes: [],
     paymentIntents: [], paymentCallbacks: [], payouts: [],
-    arenaChallenges: [], arenaMatches: [],
-    fantasyCompetitions: [], fantasyPlayers: [], fantasyEntries: [], fantasyStats: []
+    requests: [],
   })), ...legacy };
 
   // No backup hook: this fixture is in memory, not on disk.
@@ -5611,7 +5095,7 @@ console.log('\n=== MIGRATIONS AGAINST AN OLD FIXTURE ===');
   check('existing signals survived', result.db.signals.length === 1);
   // And new collections exist without anyone writing a migration for them.
   check('new collections appear automatically', Array.isArray(result.db.users) && Array.isArray(result.db.payouts));
-  check('new arena collections appear', Array.isArray(result.db.arenaMatches));
+  check('new Request collection appears', Array.isArray(result.db.requests));
 
   // The real transformation: backfill a missing currency.
   const withOrders = { ...merged, __schemaVersion: 1, orders: [
@@ -5820,8 +5304,7 @@ console.log('\n=== ENDPOINT AUTHORIZATION RULES, ENCODED EXPLICITLY ===');
       ['POST', '/api/vendors', { displayName: 'X' }],
       ['POST', '/api/listings', { title: 'X', price: 1 }],
       ['POST', '/api/orders', { listingId: 'x' }],
-      ['POST', '/api/arena/challenges', { gameId: 'efootball' }],
-      ['GET', '/api/arena/matches', null],
+      ['POST', '/api/requests', { title: 'Packaging' }],
       ['GET', '/api/vendors/me/earnings', null],
       ['POST', '/api/vendors/me/payouts', {}],
       ['GET', '/api/ops/diagnostics', null],
@@ -5845,10 +5328,7 @@ console.log('\n=== ENDPOINT AUTHORIZATION RULES, ENCODED EXPLICITLY ===');
       ['GET', '/api/ready'],
       ['GET', '/api/capabilities'],
       ['GET', '/api/listings'],
-      ['GET', '/api/arena/games'],
-      ['GET', '/api/arena/challenges'],
-      ['GET', '/api/arena/status'],
-      ['GET', '/api/epl/clubs']
+      ['GET', '/api/tea'],
     ];
     // Product decision (2026-08-29): NO ACCESS WITHOUT AN ACCOUNT. Data reads
     // answer 401 to an anonymous caller; only sign-in, the external campaign
@@ -6292,14 +5772,13 @@ console.log('\n=== HOST COMMAND CENTRE (derived, scoped) ===');
   check('the host sees their own vault count', cc2.vaultCount === 1, String(cc2.vaultCount));
 }
 
-console.log('\n=== TRUST, DISCOVERY, NOTIFICATIONS, ANALYTICS, ARENA ENTITIES ===');
+console.log('\n=== TRUST, DISCOVERY, NOTIFICATIONS, ANALYTICS ===');
 {
   store._reset();
   const trust = await import('../src/domain/trust.js');
   const discovery = await import('../src/domain/discovery.js');
   const notifications = await import('../src/domain/notifications.js');
   const analytics = await import('../src/domain/analytics.js');
-  const arena = await import('../src/domain/arena.js');
   const signals = await import('../src/domain/signal.js');
 
   // --- geo ------------------------------------------------------------------
@@ -6367,24 +5846,7 @@ console.log('\n=== TRUST, DISCOVERY, NOTIFICATIONS, ANALYTICS, ARENA ENTITIES ==
   check('analytics counts engagement', dash.engagement.views === 1 && dash.engagement.saves === 1);
   check('analytics reports quality', typeof dash.quality.verificationRate === 'number');
 
-  // --- arena entities -------------------------------------------------------
-  const p1 = arena.createPlayer({ userId: 'usr_p1', gameId: 'efootball', gamerTag: 'P1' });
-  const p2 = arena.createPlayer({ userId: 'usr_p2', gameId: 'efootball', gamerTag: 'P2' });
-  check('players are real records, one per (user, game)', p1.id !== p2.id && arena.listPlayers({ gameId: 'efootball' }).length === 2);
-  const venue = arena.createVenue({ name: 'GameHub Kilimani', gameIds: ['efootball'], lat: -1.28, lng: 36.82 });
-  check('venues are filterable by game', arena.listVenues({ gameId: 'efootball' }).length === 1 && arena.listVenues({ gameId: 'cod_mobile' }).length === 0);
-  const trn = arena.createTournament({ gameId: 'efootball', title: 'Kilimani Cup', createdBy: 'usr_admin' });
-  check('tournaments are created open', trn.status === 'open');
 
-  // leaderboard derives from confirmed results only
-  const ch = arena.createChallenge({ createdBy: p1.id, gameId: 'efootball', stake: 'friendly' });
-  const { match } = arena.acceptChallenge(ch.id, p2.id);
-  arena.reportResult(match.id, p1.id, { winnerPlayerId: p1.id });
-  arena.confirmResult(match.id, p2.id, { winnerPlayerId: p1.id });
-  arena.recordResult(match.id);
-  const board = arena.leaderboard('efootball');
-  check('the leaderboard is derived from the confirmed result', board.length === 2 && board[0].playerId === p1.id && board[0].won === 1, JSON.stringify(board));
-  check('recordResult is idempotent', arena.recordResult(match.id).reused === true);
 }
 
 console.log('\n=== PHASE 4: ONE PERSON, REAL SESSION ===');
@@ -6420,21 +5882,6 @@ console.log('\n=== PHASE 4: ONE PERSON, REAL SESSION ===');
     check('whoAmI carries the same personId',
       (await call('/api/auth/me', 'GET', undefined, A.token)).body.user.personId === A.user.personId);
 
-    let r = await call('/api/arena/challenges', 'POST', { gameId: 'efootball', stake: 'friendly' }, A.token);
-    const chal = r.body.challenge;
-    check('challenge is stamped with a personId', Boolean(chal.personId));
-    r = await call(`/api/arena/challenges/${chal.id}/accept`, 'POST', {}, A.token);
-    check('A cannot accept A\'s challenge', r.status === 400);
-
-    r = await call(`/api/arena/challenges/${chal.id}/accept`, 'POST', {}, B.token);
-    check('B can accept', r.status === 201);
-    const match = r.body.match;
-    check('player ids are account ids', match.playerAId === A.user.id && match.playerBId === B.user.id);
-    const named = (await call(`/api/arena/matches/${match.id}`, 'GET', undefined, A.token)).body.match;
-    check('whoAmI can resolve A\'s name', named.playerAName === 'Amina', String(named.playerAName));
-    check('whoAmI can resolve B\'s name', named.playerBName === 'Baraka', String(named.playerBName));
-    check('no fixture handle leaked', !/ply_nyabs|Nyabs/.test(JSON.stringify(named)));
-
     await call('/api/vendors', 'POST', { displayName: 'Amina Stall' }, A.token);
     const listing = (await call('/api/listings', 'POST', {
       title: 'Maize', type: 'product', price: 200, quantityAvailable: 5
@@ -6451,19 +5898,7 @@ console.log('\n=== PHASE 4: ONE PERSON, REAL SESSION ===');
     check('bought orders count on that person', mine.standing.bought >= 1, String(mine.standing.bought));
     check('vendor is a view of the same person', mine.standing.vendor?.displayName === 'Amina Stall');
 
-    check('availability starts offline', mine.availability.state === 'offline');
-    r = await call('/api/person/me/availability', 'PUT', {
-      state: 'available', gameId: 'efootball', format: '1v1', window: 'tonight', locationKind: 'online'
-    }, A.token);
-    check('going available requires an explicit switch', r.status === 200 && r.body.availability.state === 'available');
-    const listed = (await call('/api/arena/available')).body.available;
-    check('only opted-in people are listed', listed.some((p) => p.userId === A.user.id));
-    check('B is not listed without opting in', !listed.some((p) => p.userId === B.user.id));
-    await call('/api/person/me/availability', 'PUT', { state: 'offline' }, A.token);
-    check('turning off removes them from the list',
-      !(await call('/api/arena/available')).body.available.some((p) => p.userId === A.user.id));
-
-    r = await call('/api/person/me/aliases', 'POST', { kind: 'whatsapp', value: '254700111222' }, A.token);
+    let r = await call('/api/person/me/aliases', 'POST', { kind: 'whatsapp', value: '254700111222' }, A.token);
     check('unverified WhatsApp alias is refused', r.status === 400);
     check('the refusal names the guess', /not verified|will not guess/i.test(r.body?.error ?? ''), r.body?.error);
     r = await call('/api/person/me/aliases', 'POST', { kind: 'phone', value: '0722000111' }, A.token);
@@ -6575,12 +6010,12 @@ console.log('\n=== ONBOARDING: THE SERVICE LADDER ===');
   // Personalisation: the answer promotes the service it is about, by ONE rung.
   const player = auth.createUser({ handle: 'otieno', password: 'passw0rd123' });
   onboarding.ensureProfile(player.id);
-  const before = onboarding.ladderFor(player.id).services.find((s) => s.id === 'play');
-  check('Arena follows the aha step by default', before.unlocked === false && before.requires === 'value');
-  onboarding.setGoal(player.id, 'play');
-  const after = onboarding.ladderFor(player.id).services.find((s) => s.id === 'play');
-  check('someone who came to PLAY gets Arena one rung earlier',
-    after.unlocked === true && after.promoted === true);
+  const before = onboarding.ladderFor(player.id).services.find((s) => s.id === 'campaigns');
+  check('Campaign hosting follows contribution by default', before.unlocked === false && before.requires === 'contribute');
+  onboarding.setGoal(player.id, 'host');
+  const after = onboarding.ladderFor(player.id).services.find((s) => s.id === 'campaigns');
+  check('someone who came to HOST gets campaigns one rung earlier',
+    after.requires === 'value' && after.promoted === true);
   const stillClosed = onboarding.ladderFor(player.id).services.find((s) => s.id === 'distribution');
   check('the promotion moves ONE service, not the whole ladder',
     stillClosed.unlocked === false && stillClosed.promoted === false);
@@ -7732,7 +7167,7 @@ console.log('\n=== EMAIL SUBSCRIPTIONS (Tikiti T7) ===');
   };
   try {
     const OP = (await call('/api/auth/register', 'POST', { handle: 'mailop', password: 'a good passphrase' })).body;
-    let r = await call('/api/email-subscriptions', 'POST', { email: 'not-an-email', topics: ['arena_announcements'] });
+    let r = await call('/api/email-subscriptions', 'POST', { email: 'not-an-email', topics: ['product_updates'] });
     check('a malformed address is refused', r.status === 400);
     r = await call('/api/email-subscriptions', 'POST', { email: 'a@b.co', topics: ['horoscope'] });
     check('an unknown topic is refused by name', r.status === 400 && /horoscope/.test(r.body?.error ?? ''));
@@ -7848,174 +7283,6 @@ console.log('\n=== EVENTS HUB (Tikiti T4) ===');
     check('featured is an explicit flag, not a guess', (r.body?.events ?? []).every((e) => e.featured) && r.body.events.length === 1, `${r.body?.events?.length}`);
   } finally { srv.close(); }
 }
-
-console.log('\n=== EPL CATALOG + SQUAD BUDGET + LOBBY (Tikiti T5) ===');
-{
-  process.env.BRIEF_DEV_AUTH = '0';
-  process.env.BRIEF_OPERATORS = 'eplop';
-  const { default: app } = await import('../src/index.js');
-  const srv = app.listen(0);
-  const port = srv.address().port;
-  const call = async (path, method = 'GET', body, token) => {
-    const headers = {};
-    if (body) headers['content-type'] = 'application/json';
-    if (token) headers.authorization = `Bearer ${token}`;
-    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
-    return { status: res.status, body: await res.json().catch(() => null) };
-  };
-  try {
-    let opReg = await call('/api/auth/register', 'POST', { handle: 'eplop', password: 'a good passphrase' });
-    if (opReg.status !== 201) opReg = await call('/api/auth/login', 'POST', { handle: 'eplop', password: 'a good passphrase' });
-    const OP = opReg.body;
-    const O = (await call('/api/auth/register', 'POST', { handle: 'epl_org' + Date.now().toString(36), password: 'a good passphrase' })).body;
-    const M1 = (await call('/api/auth/register', 'POST', { handle: 'epl_m1' + Date.now().toString(36), password: 'a good passphrase' })).body;
-    const M2 = (await call('/api/auth/register', 'POST', { handle: 'epl_m2' + Date.now().toString(36), password: 'a good passphrase' })).body;
-
-    // Provider honesty first.
-    let r = await call('/api/epl/catalog', 'GET', undefined, OP.token); // app gate: catalog needs a session
-    check('the catalog states its provider state honestly',
-      r.body?.provider?.configured === false && /SEED|no EPL data provider/i.test(r.body?.provider?.reason ?? ''), JSON.stringify(r.body?.provider));
-    r = await call('/api/epl/catalog/sync', 'POST', {}, OP.token);
-    check('a sync without credentials is a 503 refusal, never a fake sync',
-      r.status === 503 && r.body?.ok === false, `${r.status}`);
-
-    // Seeding is operator-only and tagged.
-    r = await call('/api/epl/catalog/seed', 'POST', { players: [
-      { name: 'Mock Keeper', club: 'Arsenal', position: 'GK', price: 50 },
-      { name: 'Mock Forward', club: 'Arsenal', position: 'FWD', price: 120 },
-      { name: 'Mock Bad Club', club: 'Real Madrid', position: 'FWD', price: 90 }
-    ] }, M1.token);
-    check('seeding is capability-gated (403)', r.status === 403);
-    r = await call('/api/epl/catalog/seed', 'POST', { players: [
-      { name: 'Mock Keeper', club: 'Arsenal', position: 'GK', price: 50 },
-      { name: 'Mock Forward', club: 'Arsenal', position: 'FWD', price: 120 },
-      { name: 'Mock Bad Club', club: 'Real Madrid', position: 'FWD', price: 90 }
-    ] }, OP.token);
-    check('an operator seeds the catalog', r.status === 201 && r.body?.inserted === 2, JSON.stringify(r.body));
-    r = await call('/api/epl/catalog', 'GET');
-    check('non-EPL clubs never enter the catalog', !JSON.stringify(r.body).includes('Real Madrid'));
-    check('every catalog row carries its source', (r.body?.players ?? []).every((p) => p.source === 'seed'));
-
-    // A competition with a budget, an imported pool and a waiting room,
-    // driven through the domain + the /api/epl surface (the bare fantasy HTTP
-    // surface is scheduled for removal; these are not its routes).
-    const fantasyDomain = await import('../src/domain/fantasy.js');
-    const eplDomain = await import('../src/domain/epl.js');
-    const compId = fantasyDomain.createCompetition({
-      createdBy: O.user.id, title: 'GW1 waiting room',
-      kickoffAt: new Date(Date.now() + 3_600_000).toISOString()
-    }).id;
-    r = await call(`/api/epl/competitions/${compId}/pool/import`, 'POST', {}, O.token);
-    // The catalog self-heals with the SEED roster, so the count is a lower
-    // bound; the DETERMINISTIC fact is that the organiser's own seeded rows
-    // are in the pool.
-    const poolAfterImport = store.filter('fantasyPlayers', (p) => p.competitionId === compId);
-    check('the organiser imports the catalog into the pool (their rows included)',
-      r.status === 201 && r.body?.imported >= 2
-        && poolAfterImport.some((p) => p.name === 'Mock Keeper')
-        && poolAfterImport.some((p) => p.name === 'Mock Forward'),
-      JSON.stringify({ imported: r.body?.imported }));
-    // 700 sits ABOVE the seed-catalog floor (the cheapest legal XI costs 550):
-    // budgets below it are now refused at set time -- a room nobody could
-    // ever seat is not a room.
-    r = await call(`/api/epl/competitions/${compId}/budget`, 'POST', { budgetKes: 700 }, O.token);
-    check('a budget is set in whole shillings', r.status === 200);
-    r = await call(`/api/epl/competitions/${compId}/lobby`, 'POST', { minEntries: 2, maxEntries: 4 }, O.token);
-    check('entry bounds make a waiting room', r.status === 200 && r.body?.lobbyState === 'waiting_for_players', JSON.stringify(r.body?.lobbyState));
-
-    // Budget arithmetic, proven through the domain hook submitTeam uses.
-    const pool = store.filter('fantasyPlayers', (p) => p.competitionId === compId);
-    // Pick the organiser's known-price rows BY NAME: the pool also carries
-    // the auto-seeded defaults, whose prices would make the arithmetic
-    // non-deterministic.
-    const gk = pool.find((p) => p.name === 'Mock Keeper'); const fwd = pool.find((p) => p.name === 'Mock Forward');
-    const defs = pool.filter((p) => p.position === 'DEF').sort((a, b) => a.name.localeCompare(b.name)).slice(0, 3);
-    const mids = pool.filter((p) => p.position === 'MID').sort((a, b) => a.name.localeCompare(b.name)).slice(0, 4);
-    const dearXI = [gk.id, fwd.id, fwd.id, fwd.id, ...defs.map((p) => p.id), ...mids.map((p) => p.id)];
-    const dearCost = gk.price + 3 * fwd.price + defs.reduce((t, p) => t + p.price, 0) + mids.reduce((t, p) => t + p.price, 0);
-    const problems = eplDomain.budgetProblems(compId, dearXI);
-    check('an unaffordable squad is refused with the arithmetic',
-      problems.length === 1 && problems[0].includes(`costs ${dearCost} but the budget is 700`), JSON.stringify(problems));
-    check('an affordable selection passes', eplDomain.budgetProblems(compId, [gk.id, fwd.id]).length === 0);
-
-    // One manager holds a seat (a real entry row, however built).
-    const seatIn = (competitionId, userId) => store.insert('fantasyEntries', {
-      id: 'fent_test_' + Math.random().toString(36).slice(2, 8), competitionId, userId,
-      playerIds: [], captainId: null, points: null, createdAt: new Date().toISOString()
-    });
-    seatIn(compId, M1.user.id);
-    r = await call(`/api/epl/competitions/${compId}/lobby`, 'GET', undefined, O.token);
-    check('one of two managers still reads waiting_for_players', r.body?.lobbyState === 'waiting_for_players' && r.body?.entries === 1, JSON.stringify(r.body));
-
-    // The waiting-room wall: the room needed two and never got them.
-    r = await call(`/api/epl/competitions/${compId}/settle-lobby`, 'POST', {}, O.token);
-    check('an underfilled room is CANCELLED, not scored on a walkover',
-      r.body?.competition?.status === 'cancelled' && /only 1 of 2/.test(r.body?.competition?.cancelledReason ?? ''),
-      JSON.stringify(r.body?.competition?.cancelledReason));
-    check('the cancellation surfaced as a signal',
-      Boolean(store.find('signals', (x) => x.type === 'arena_contest_cancelled' && x.metadata?.competitionId === compId)));
-
-    // A filled room locks instead.
-    const comp2 = fantasyDomain.createCompetition({
-      createdBy: O.user.id, title: 'GW2 full room',
-      kickoffAt: new Date(Date.now() + 3_600_000).toISOString()
-    }).id;
-    eplDomain.setEntryBounds(O.user.id, comp2, { minEntries: 2 });
-    seatIn(comp2, M1.user.id); seatIn(comp2, M2.user.id);
-    r = await call(`/api/epl/competitions/${comp2}/lobby`, 'GET', undefined, O.token);
-    check('a room at its minimum reports open', r.body?.lobbyState === 'open' && r.body?.entries === 2, JSON.stringify(r.body?.lobbyState));
-    r = await call(`/api/epl/competitions/${comp2}/settle-lobby`, 'POST', {}, O.token);
-    check('a filled room locks at the wall', r.body?.lobbyState === 'in_progress', JSON.stringify(r.body?.lobbyState));
-
-    // The full creation -> room -> seat loop over HTTP, on the EPL surface
-    // alone (the bare fantasy surface is gone; this is the one that lives).
-    r = await call('/api/epl/competitions', 'POST', {
-      title: 'GW3 http room', kickoffAt: new Date(Date.now() + 3_600_000).toISOString(),
-      budgetKes: 700, minEntries: 2, maxEntries: 4
-    }, O.token);
-    check('a room is CREATED over HTTP with budget and bounds', r.status === 201 && r.body?.lobbyState === 'waiting_for_players', JSON.stringify(r.body).slice(0, 160));
-    const httpRoom = r.body.competition.id;
-    r = await call(`/api/epl/competitions/${httpRoom}/pool/import`, 'POST', {}, O.token);
-    check('its pool imports from the catalog over HTTP',
-      r.status === 201 && r.body?.imported >= 2, JSON.stringify({ imported: r.body?.imported }));
-    check('importing the pool OPENS the room (the draft dead-end is gone)',
-      r.body?.opened === true && fantasyDomain.getCompetition(httpRoom)?.status === 'open',
-      JSON.stringify({ opened: r.body?.opened, status: fantasyDomain.getCompetition(httpRoom)?.status }));
-    r = await call(`/api/epl/competitions/${httpRoom}/pool`, 'GET', undefined, O.token);
-    check('the room pool reads back for the seat picker',
-      r.status === 200 && (r.body?.players ?? []).length >= 2, JSON.stringify(r.body?.players?.length));
-    r = await call('/api/epl/competitions', 'POST', {
-      title: 'GW4 impossible room', kickoffAt: new Date(Date.now() + 3_600_000).toISOString(),
-      budgetKes: 1, minEntries: 2, maxEntries: 4
-    }, O.token);
-    check('a budget no squad could meet is refused at CREATION, with the arithmetic',
-      r.status === 400 && /cannot seat any squad/.test(r.body?.error ?? ''), r.body?.error);
-    r = await call('/api/epl/competitions', 'GET');
-    check('the refused creation left no phantom room',
-      !(r.body?.competitions ?? []).some((x) => x.title === 'GW4 impossible room'));
-    r = await call('/api/epl/competitions', 'GET', undefined, M1.token);
-    const listed = (r.body?.competitions ?? []).find((c) => c.id === httpRoom);
-    check('rooms list carries DERIVED lobby state and a live count',
-      Boolean(listed) && listed.lobbyState === 'waiting_for_players' && listed.entries === 0 && listed.mine === false, JSON.stringify(listed));
-    check('rooms list carries createdAt (the activity dot source)',
-      Boolean(listed?.createdAt) && Number.isFinite(Date.parse(listed.createdAt)), JSON.stringify(listed?.createdAt));
-    r = await call('/api/epl/competitions', 'GET', undefined, O.token);
-    check('the organiser sees the room as their own', (r.body?.competitions ?? []).find((c) => c.id === httpRoom)?.mine === true);
-    // The room is OPEN now (import opens it), so the honest refusal left to
-    // prove is the squad SHAPE: two players are not a team, and the server
-    // says so rather than accepting a half-seat.
-    const smallPool = store.filter('fantasyPlayers', (p) => p.competitionId === httpRoom);
-    r = await call(`/api/epl/competitions/${httpRoom}/entries`, 'POST', {
-      playerIds: smallPool.slice(0, 2).map((p) => p.id), captainId: smallPool[0].id
-    }, M1.token);
-    check('a malformed seat is REFUSED honestly (a team is eleven)', r.status === 400 && /exactly 11/.test(r.body?.error ?? ''), JSON.stringify(r.body).slice(0, 140));
-    r = await call(`/api/epl/competitions/${httpRoom}/standings`, 'GET');
-    check('standings are behind the app gate (401)', r.status === 401, `got ${r.status}`);
-    r = await call(`/api/epl/competitions/${httpRoom}/standings`, 'GET', undefined, M1.token);
-    check('a signed-in manager reads standings (empty before scoring)', r.status === 200 && Array.isArray(r.body?.standings) && r.body.standings.length === 0);
-  } finally { srv.close(); delete process.env.BRIEF_OPERATORS; process.env.BRIEF_DEV_AUTH = '1'; }
-}
-
 
 console.log('\n=== MSHIKANO: the cooperation network (post -> match -> confirm -> trust) ===');
 {
@@ -8317,104 +7584,6 @@ console.log('\n=== REFERRALS: REWARDS WITH A MATHEMATICAL EDGE, NOT A PYRAMID ==
 }
 
 
-console.log('\n=== ARENA PROGRESSION: XP, LEVELS, MISSIONS, SEASON — ALL DERIVED ===');
-{
-  // The retention layer under the existing Arena: XP and Coins are POINTS
-  // (they buy nothing, cash out nowhere), totals are derived from append-only
-  // events, ratings/streaks replay confirmed matches, missions are daily and
-  // real, and the live strip counts real things only.
-  process.env.BRIEF_DEV_AUTH = '0';
-  const { default: app } = await import('../src/index.js');
-  const progress = await import('../src/domain/arenaProgress.js');
-  store._reset();
-  const srv = app.listen(0);
-  const port = srv.address().port;
-  const call = async (path, method = 'GET', body, token) => {
-    const headers = {};
-    if (body) headers['content-type'] = 'application/json';
-    if (token) headers.authorization = `Bearer ${token}`;
-    const res = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
-    return { status: res.status, body: await res.json().catch(() => null) };
-  };
-  try {
-    const reg = async (h) => (await call('/api/auth/register', 'POST', { handle: h + Date.now().toString(36), password: 'a good passphrase' })).body;
-    const A = await reg('xpa'); const B = await reg('xpb');
-
-    let r = await call('/api/arena/progress/me');
-    check('progress is members-only (401)', r.status === 401);
-
-    // Two players, one challenge, one confirmed match.
-    const pa = (await call('/api/arena/players', 'POST', { gameId: 'efootball', gamerTag: 'XPA' }, A.token)).body.player;
-    const pb = (await call('/api/arena/players', 'POST', { gameId: 'efootball', gamerTag: 'XPB' }, B.token)).body.player;
-    const ch = (await call('/api/arena/challenges', 'POST', { gameId: 'efootball', mode: '1v1', stake: 'friendly', openForHours: 2 }, A.token)).body.challenge;
-    const acc = await call(`/api/arena/challenges/${ch.id}/accept`, 'POST', {}, B.token);
-    const matchId = acc.body.match.id;
-    await call(`/api/arena/matches/${matchId}/report`, 'POST', { winnerPlayerId: A.user.id, scoreLine: '3-1' }, A.token);
-    const conf = await call(`/api/arena/matches/${matchId}/confirm`, 'POST', {}, B.token);
-
-    // --- the confirmation is the earning moment -----------------------------
-    r = await call('/api/arena/progress/me', 'GET', undefined, A.token);
-    check('the winner earned XP and coins from one confirmation',
-      r.body?.profile?.totalXp === 100 && r.body?.profile?.totalCoins === 25, JSON.stringify(r.body?.profile));
-    check('level 1 at 100 XP with the bar showing progress',
-      r.body?.profile?.level === 1 && r.body?.profile?.xpIntoLevel === 100, JSON.stringify(r.body?.profile));
-    r = await call('/api/arena/progress/me', 'GET', undefined, B.token);
-    check('the loser earns participation XP, no coins',
-      r.body?.profile?.totalXp === 30 && r.body?.profile?.totalCoins === 0, JSON.stringify(r.body?.profile));
-
-    // Replaying confirmation mints nothing (idempotent by match key).
-    await call(`/api/arena/matches/${matchId}/confirm`, 'POST', {}, B.token);
-    r = await call('/api/arena/progress/me', 'GET', undefined, A.token);
-    check('re-confirming mints nothing', r.body?.profile?.totalXp === 100, JSON.stringify(r.body?.profile?.totalXp));
-
-    // --- rating, streak, winrate replay from confirmed rows ------------------
-    const statsA = r.body?.players?.find((x) => x.id === pa.id)?.stats;
-    r = await call('/api/arena/progress/me', 'GET', undefined, A.token);
-    const sA = r.body?.players?.find((x) => x.id === pa.id)?.stats;
-    check('the winner has a justified rating above start', sA?.rating > 1000, JSON.stringify(sA));
-    check('the winner is on a 1-win streak with a 100% rate', sA?.streak === 1 && sA?.winRate === 100, JSON.stringify(sA));
-    check('rating is a replay, not a stored number — the loser sits below start',
-      (await call('/api/arena/progress/me', 'GET', undefined, B.token)).body?.players?.[0]?.stats?.rating < 1000);
-
-    // --- missions: daily, derived, claimable once -----------------------------
-    r = await call('/api/arena/progress/me', 'GET', undefined, A.token);
-    const m1 = r.body?.missions?.find((x) => x.key === 'play_1');
-    const m2 = r.body?.missions?.find((x) => x.key === 'win_2');
-    check('play_1 is complete after one confirmed match', m1?.complete === true && m1?.claimable === true, JSON.stringify(m1));
-    check('win_2 is honestly incomplete (1 of 2)', m2?.progress === 1 && m2?.complete === false, JSON.stringify(m2));
-    r = await call('/api/arena/missions/win_2/claim', 'POST', {}, A.token);
-    check('claiming an incomplete mission is refused with the reason', r.status === 400, JSON.stringify(r.body).slice(0, 100));
-    r = await call('/api/arena/missions/play_1/claim', 'POST', {}, A.token);
-    check('claiming a complete mission grants its XP', r.status === 201 && r.body?.profile?.totalXp === 150, JSON.stringify(r.body?.profile).slice(0, 100));
-    r = await call('/api/arena/missions/play_1/claim', 'POST', {}, A.token);
-    check('a mission claims once per day', r.status === 400 && /already claimed/.test(r.body?.error ?? ''), JSON.stringify(r.body).slice(0, 100));
-
-    // --- rivals appear from repeated play -------------------------------------
-    // (one more match between the same two)
-    const ch2 = (await call('/api/arena/challenges', 'POST', { gameId: 'efootball', mode: '1v1', stake: 'friendly', openForHours: 2 }, B.token)).body.challenge;
-    const acc2 = await call(`/api/arena/challenges/${ch2.id}/accept`, 'POST', {}, A.token);
-    await call(`/api/arena/matches/${acc2.body.match.id}/report`, 'POST', { winnerPlayerId: A.user.id }, B.token);
-    await call(`/api/arena/matches/${acc2.body.match.id}/confirm`, 'POST', {}, A.token);
-    r = await call('/api/arena/progress/me', 'GET', undefined, A.token);
-    check('a repeated opponent becomes a rival with a head-to-head record',
-      (r.body?.rivals ?? []).some((x) => x.userId === B.user.id && x.played === 2 && x.iWon === 2), JSON.stringify(r.body?.rivals));
-
-    // --- the live strip counts real things only -------------------------------
-    r = await call('/api/arena/live', 'GET', undefined, A.token);
-    check('live counts real activity (2 players active, real challenges)', r.body?.playersActiveLastHour === 2 && r.body?.openChallenges >= 0, JSON.stringify(r.body));
-    check('the strip carries the season and its days remaining', r.body?.season?.id === 'season-01' && r.body?.season?.daysRemaining > 0, JSON.stringify(r.body?.season));
-
-    // --- season leaderboard with a YOU row ------------------------------------
-    r = await call('/api/arena/season/leaderboard', 'GET', undefined, A.token);
-    check('the season leaderboard ranks XP earners', r.body?.rows?.[0]?.xp >= r.body?.rows?.[1]?.xp && r.body?.rows?.length >= 2, JSON.stringify(r.body?.rows?.slice(0, 2)));
-    check('the YOU row is personal and true', r.body?.you?.rank === 1 && r.body?.you?.userId === A.user.id, JSON.stringify(r.body?.you));
-    r = await call('/api/arena/season/leaderboard', 'GET', undefined, B.token);
-    check('the YOU row follows the caller', r.body?.you?.rank === 2, JSON.stringify(r.body?.you));
-  } finally {
-    srv.close();
-  }
-}
-
 console.log('\n=== PLATFORM ROLES: THE OPERATOR SURFACE IS CAPABILITY-GUARDED ===');
 {
   // Production posture: no dev fallback, real identities only.
@@ -8534,20 +7703,11 @@ console.log('\n=== PLATFORM ROLES: THE OPERATOR SURFACE IS CAPABILITY-GUARDED ==
     r = await call('/api/admin/tea', 'GET');
     check('an anonymous caller still cannot list the desk (401)', r.status === 401);
 
-    // --- EPL: browsing is public, the catalog bootstraps, rooms list ----------
-    r = await call('/api/epl/competitions');
-    check('the EPL rooms list is behind the app gate (401)', r.status === 401 && r.body?.gate === 'account_required', `got ${r.status}`);
-    r = await call('/api/epl/catalog', 'GET', undefined, nobody.token);
-    const cat = r.body?.players ?? [];
-    check('a fresh deployment auto-seeds the catalog (game is playable)', cat.length >= 200, `players=${cat.length}`);
-    check('every auto-seeded row states its source honestly', cat.every((x) => x.source === 'seed'));
-    check('the seeded squads cover all twenty clubs',
-      new Set(cat.map((x) => x.club)).size === 20, `clubs=${new Set(cat.map((x) => x.club)).size}`);
     r = await call('/api/ops/audit', 'GET', undefined, rev.token);
     check('every publish is audited with before/after status, author or moderator',
       r.body.audit.some((a) => a.action === 'tea.publish' && a.before?.status === 'draft' && a.after?.status === 'published'));
 
-    // --- Ligi is gone; EPL is the fantasy surface ----------------------------
+    // --- Retired gaming surfaces are absent ----------------------------
     // The African-league game was removed by product decision (its whole HTTP
     // surface + UI). The honesty check: the routes are GONE, not hidden.
     r = await call('/api/ligi/rules', 'GET', undefined, op.token);
@@ -8555,7 +7715,7 @@ console.log('\n=== PLATFORM ROLES: THE OPERATOR SURFACE IS CAPABILITY-GUARDED ==
     r = await call('/api/ligi/tick', 'POST', {}, op.token);
     check('even an operator cannot tick a removed surface (404)', r.status === 404, `got ${r.status}`);
     r = await call('/api/epl/clubs', 'GET', undefined, op.token);
-    check('EPL is the fantasy surface that remains', r.status === 200 && Array.isArray(r.body?.clubs));
+    check('EPL gaming routes are also gone', r.status === 404);
   } finally {
     srv.close();
     for (const k of ['BRIEF_OPERATORS', 'BRIEF_REVIEWERS', 'BRIEF_FINANCE', 'BRIEF_ADMINS']) delete process.env[k];

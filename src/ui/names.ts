@@ -5,7 +5,6 @@ export const ROOM = {
   // §2: exactly these destinations, in the brief's own words. The ids are the
   // stable contract (URLs, tests); the labels are what the brief calls them.
   nearby: { label: 'Nearby', hint: "What's happening near you" },
-  arena: { label: 'Arena', hint: 'Find people to play with' },
   mylayer: { label: 'My Layer', hint: 'Places and events you kept' },
   workflows: { label: 'Workflows', hint: "What's waiting on you" }
 } as const;
@@ -22,7 +21,6 @@ export const HOME_MORE: Record<string, string> = {
 export const SAVED_TABS: Record<string, string> = {
   saved: 'Saved',
   activity: 'Activity',
-  arena: 'Matches',
   points: 'Points',
   circles: 'Groups',
   groups: 'Chats',
@@ -106,7 +104,7 @@ export const SAVED_BUNDLES = [
   { id: 'kept', label: 'Kept', hint: 'What you kept, and your own history',
     sections: ['saved', 'activity', 'points', 'campaigns', 'tickets', 'verification'] },
   { id: 'groups', label: 'Groups', hint: 'Circles, chats and matches',
-    sections: ['circles', 'groups', 'arena'] },
+    sections: ['circles', 'groups'] },
   { id: 'creator', label: 'Creator', hint: 'Your public side',
     sections: ['mediakit', 'opportunities', 'messages', 'subscriptions'] }
 ] as const;

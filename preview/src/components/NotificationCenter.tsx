@@ -29,7 +29,6 @@ const TYPE_LABELS: Record<string, string> = {
   correction: 'Corrected',
   source_update: 'News',
   confirmed: 'Confirmed',
-  challenge: 'Arena',
   saved_changed: 'Saved',
   event_soon: 'Event',
   system: 'Brief',

@@ -77,10 +77,10 @@ export const RUNG_IDS = RUNGS.map((r) => r.id);
  * router cannot drift apart.
  */
 export const SERVICES = [
+  { id: 'requests', label: 'Create a Request', requires: 'identity', surface: { tab: 'requests' } },
   { id: 'stream',       label: 'Around you',            requires: 'identity',   surface: { tab: 'nearby', section: 'stream' } },
   { id: 'saved',        label: 'Your layer',            requires: 'identity',   surface: { tab: 'mylayer', section: 'saved' } },
   { id: 'capture',      label: 'Capture',               requires: 'value',      surface: { tab: 'capture' } },
-  { id: 'play',         label: 'Arena',                 requires: 'value',      surface: { tab: 'arena' } },
   { id: 'campaigns',    label: 'Host an event',         requires: 'contribute', surface: { tab: 'workflows', section: 'campaigns' } },
   { id: 'market',       label: 'Sell something',        requires: 'contribute', surface: { tab: 'nearby', section: 'market' } },
   { id: 'tea',          label: 'Story studio',          requires: 'contribute', surface: { tab: 'workflows', section: 'tea' } },
@@ -93,17 +93,17 @@ export const SERVICES = [
 
 /** Segmentation answers. Short on purpose: one question, four honest options. */
 export const GOALS = [
+  { id: 'request', label: 'Find who can get something done', leadsTo: { tab: 'requests' } },
   { id: 'discover', label: 'Find what is happening near me', leadsTo: { tab: 'nearby', section: 'stream' } },
   { id: 'host',     label: 'Organise an event or gathering',  leadsTo: { tab: 'nearby', section: 'stream' } },
   { id: 'sell',     label: 'Sell a product or service',       leadsTo: { tab: 'nearby', section: 'market' } },
-  { id: 'play',     label: 'Play and compete',                leadsTo: { tab: 'arena' } }
 ];
 
 /**
  * Personalisation, kept to one honest move.
  *
  * The segmentation answer promotes the service that answer is ABOUT by one
- * rung — someone who said they came to play should not find Arena behind a
+ * rung — the service a person asked for should not be hidden behind a
  * step about saving things. It never promotes below `orient` (you have to have
  * answered for it to apply) and it never promotes anything else, so the ladder
  * stays a ladder instead of quietly collapsing for anyone who picks the right
@@ -113,7 +113,7 @@ export const GOAL_SERVICE = {
   discover: 'stream',
   host: 'campaigns',
   sell: 'market',
-  play: 'play'
+  request: 'requests'
 };
 
 function promotedRequirement(requires) {

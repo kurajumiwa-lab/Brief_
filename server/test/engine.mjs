@@ -175,18 +175,27 @@ console.log('\n=== SIGNAL FAN-OUT (the live path) ===');
   ROUTER.createRoute({ ownerId: 'usr_f', name: 'Updates', match: { signalType: 'object_updated' }, channels: [{ kind: 'webhook', to: 'https://hook.test/live' }] });
 
   const deliveriesBefore = store.all('engineDeliveries').length;
-  SIGNAL.emitSignal({ type: 'object_updated', objectId: 'obj_a', actorId: 'usr_f' });
-  SIGNAL.emitSignal({ type: 'object_created', objectId: 'obj_b', actorId: 'usr_f' }); // not routed
-  // dispatchForSignal is fire-and-forget; let the microtasks run.
-  await new Promise((r) => setTimeout(r, 20));
+  // The fan-out uses the default transport, unlike the direct dispatch tests.
+  // Keep that I/O offline too: a real DNS failure need not finish in 20ms.
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    if (String(url) !== 'https://hook.test/live') throw new Error('unexpected test destination');
+    return { ok: false, status: 503 };
+  };
+  try {
+    SIGNAL.emitSignal({ type: 'object_updated', objectId: 'obj_a', actorId: 'usr_f' });
+    SIGNAL.emitSignal({ type: 'object_created', objectId: 'obj_b', actorId: 'usr_f' }); // not routed
+    // dispatchForSignal is fire-and-forget; let the microtasks run.
+    await new Promise((r) => setImmediate(r));
 
-  const rows = store.all('engineDeliveries');
-  check('routed signal produced exactly one delivery', rows.length === deliveriesBefore + 1, `${rows.length - deliveriesBefore} new`);
-  check('unmatched signal type was not routed', !store.all('engineDeliveries').some((d) => d.signalId?.startsWith('sig') && false));
-  check('emitting a signal never throws even when routing fails', true);
+    const rows = store.all('engineDeliveries');
+    check('routed signal produced exactly one delivery', rows.length === deliveriesBefore + 1, `${rows.length - deliveriesBefore} new`);
+    check('unmatched signal type was not routed', !store.all('engineDeliveries').some((d) => d.signalId?.startsWith('sig') && false));
+    check('emitting a signal never throws even when routing fails', true);
 
-  // The ledger records the network outcome honestly (offline test env -> failed).
-  check('live dispatch outcome is in the ledger', ['delivered', 'failed', 'refused'].includes(rows[rows.length - 1].status));
+    // The ledger records the network outcome honestly (offline test env -> failed).
+    check('live dispatch outcome is in the ledger', rows.at(-1)?.status === 'failed' && /503/.test(rows.at(-1)?.error ?? ''));
+  } finally { globalThis.fetch = originalFetch; }
 }
 
 // ---- HTTP surface ----------------------------------------------------------------

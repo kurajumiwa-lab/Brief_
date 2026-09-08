@@ -74,7 +74,6 @@ export const TYPE_LABELS = {
   correction: 'Corrected',
   source_update: 'News',
   confirmed: 'Confirmed',
-  challenge: 'Arena',
   saved_changed: 'Saved',
   event_soon: 'Event',
   system: 'Brief',

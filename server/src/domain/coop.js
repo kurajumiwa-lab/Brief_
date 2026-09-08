@@ -152,7 +152,7 @@ export function matchesForPost(postId, viewerId) {
 // --- cooperations (the relationship unit) ---------------------------------------
 //
 // A cooperation row exists only as a PROPOSAL until the partner confirms.
-// Only confirmed rows build the graph and trust. This mirrors the arena
+// Only confirmed rows build the graph and trust. This uses the same
 // report/confirm pattern: the two parties are the witnesses.
 
 export function proposeCooperation(actorId, { postId = null, partnerUserId = null, summary = null } = {}) {

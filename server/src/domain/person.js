@@ -158,9 +158,6 @@ export function standing(personId) {
     userIds.has(r.userId) || r.personId === personId
   );
   const arrived = registrations.filter((r) => r.status === 'checked_in');
-  const gameTags = store.filter('arenaPlayers', (p) =>
-    userIds.has(p.userId) || p.personId === personId
-  );
 
   return {
     personId,
@@ -172,12 +169,7 @@ export function standing(personId) {
     vendor: vendor
       ? { id: vendor.id, displayName: vendor.displayName }
       : null,
-    gameTags: gameTags.map((p) => ({
-      id: p.id,
-      gameId: p.gameId,
-      gamerTag: p.gamerTag,
-      verified: Boolean(p.verified)
-    }))
+
   };
 }
 
@@ -285,112 +277,4 @@ export function timeline(personId, opts = {}) {
     .sort((a, b) => String(a.at).localeCompare(String(b.at)));
 
   return { person, counts: { registrations: registrations.length, orders: orders.length, footsteps: footsteps.length, checkIns: checkins.length }, events: opts.limit ? events.slice(-opts.limit) : events };
-}
-
-// ---------------------------------------------------------------------------
-// AVAILABILITY — explicit, off by default. Presence is not consent.
-// ---------------------------------------------------------------------------
-
-export const AVAILABILITY_STATES = ['available', 'offline'];
-export const AVAILABILITY_WINDOWS = ['now', 'today', 'tonight', 'this_week'];
-export const AVAILABILITY_FORMATS = ['1v1', '2v2', 'team'];
-
-/**
- * The caller's availability row, or a synthetic offline default. Brief never
- * invents "available" from last-seen or activity.
- */
-export function getAvailability(userId) {
-  if (!userId) return null;
-  const row = store.find('arenaAvailability', (a) => a.userId === userId);
-  if (row) return row;
-  return {
-    userId,
-    personId: findByAlias('user', userId)?.id ?? null,
-    state: 'offline',
-    gameId: null,
-    mode: null,
-    format: null,
-    window: null,
-    locationKind: null,
-    updatedAt: null
-  };
-}
-
-/**
- * Set availability. Off (offline) is the default and clears the listing.
- * Turning on requires an explicit game + format + window + place.
- */
-export function setAvailability(userId, patch = {}) {
-  if (!userId) throw new Error('a player is required');
-  const personId = personIdForUser(userId);
-  const state = patch.state ?? 'offline';
-  if (!AVAILABILITY_STATES.includes(state)) {
-    throw new Error(`state must be one of ${AVAILABILITY_STATES.join(', ')}`);
-  }
-
-  const existing = store.find('arenaAvailability', (a) => a.userId === userId);
-  const now = new Date().toISOString();
-
-  if (state !== 'available') {
-    const row = {
-      userId,
-      personId,
-      state: 'offline',
-      gameId: null,
-      mode: null,
-      format: null,
-      window: null,
-      locationKind: null,
-      updatedAt: now
-    };
-    if (existing) return store.update('arenaAvailability', existing.id, row);
-    return store.insert('arenaAvailability', { id: newId('av'), ...row, createdAt: now });
-  }
-
-  const gameId = patch.gameId ?? existing?.gameId ?? null;
-  const format = patch.format ?? existing?.format ?? '1v1';
-  const window = patch.window ?? existing?.window ?? 'tonight';
-  const locationKind = patch.locationKind ?? existing?.locationKind ?? 'online';
-  const mode = patch.mode ?? existing?.mode ?? '1v1';
-  if (!gameId) throw new Error('pick a game before going available');
-  if (!AVAILABILITY_FORMATS.includes(format)) {
-    throw new Error(`format must be one of ${AVAILABILITY_FORMATS.join(', ')}`);
-  }
-  if (!AVAILABILITY_WINDOWS.includes(window)) {
-    throw new Error(`window must be one of ${AVAILABILITY_WINDOWS.join(', ')}`);
-  }
-
-  const row = {
-    userId,
-    personId,
-    state: 'available',
-    gameId,
-    mode: String(mode).slice(0, 16),
-    format,
-    window,
-    locationKind: locationKind === 'venue' ? 'venue' : 'online',
-    updatedAt: now
-  };
-  if (existing) return store.update('arenaAvailability', existing.id, row);
-  return store.insert('arenaAvailability', { id: newId('av'), ...row, createdAt: now });
-}
-
-/**
- * Public list of people who switched available on. No social graph, no
- * search of everyone who ever created a game tag.
- */
-export function listAvailable({ gameId = null } = {}) {
-  let rows = store.filter('arenaAvailability', (a) => a.state === 'available');
-  if (gameId) rows = rows.filter((a) => a.gameId === gameId);
-  return rows.map((a) => ({
-    userId: a.userId,
-    personId: a.personId,
-    displayName: resolveDisplayName(a.userId),
-    gameId: a.gameId,
-    mode: a.mode,
-    format: a.format,
-    window: a.window,
-    locationKind: a.locationKind,
-    updatedAt: a.updatedAt
-  }));
 }

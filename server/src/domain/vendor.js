@@ -55,7 +55,7 @@ export function createVendor({
   }
 
   const existing = store.find('vendors', (v) => v.ownerId === ownerId);
-  if (existing) return hydrate(existing);
+  if (existing) return hydrate(existing, true);
 
   // A vendor may be backed by an already-extracted identity object, which is
   // how an ingested trader becomes a real seller without losing provenance.
@@ -87,7 +87,11 @@ export function createVendor({
  * actually recorded against that person somewhere in Brief. A vendor does not
  * get to assert its own verification.
  */
-function hydrate(vendor) {
+function hydrate(vendor, ownerView = false) {
+  if (vendor.enterprise && !ownerView && (vendor.enterprise.publication !== 'public' || vendor.enterprise.operatingStatus !== 'active')) {
+    return { id: vendor.id, ownerId: vendor.ownerId, displayName: 'Private enterprise', description: '', contactMethod: null, status: vendor.status,
+      createdAt: vendor.createdAt, updatedAt: vendor.updatedAt, verification: {evidence:[],verifiedCount:0,facts:[]}, activeListingCount:0 };
+  }
   const memberRows = store.filter('members', (m) => m.userId === vendor.ownerId);
   const kinds = new Set();
   for (const m of memberRows) {
@@ -136,7 +140,7 @@ function hydrate(vendor) {
   });
 
   return {
-    ...vendor,
+    ...Object.fromEntries(Object.entries(vendor).filter(([key]) => key !== 'enterprise')),
     // Explicitly no score. Consumers render the evidence list and the facts.
     verification: { evidence, verifiedCount: evidence.length, facts },
     activeListingCount: activeListings
@@ -151,11 +155,11 @@ export function getVendor(id) {
 /** The vendor owned by this user, or null. Used to answer "am I a seller?". */
 export function getVendorByOwner(ownerId) {
   const v = store.find('vendors', (x) => x.ownerId === ownerId);
-  return v ? hydrate(v) : null;
+  return v ? hydrate(v, true) : null;
 }
 
 export function listVendors({ status = null } = {}) {
-  let rows = store.all('vendors');
+  let rows = store.all('vendors').filter(v => !v.enterprise || (v.enterprise.publication === 'public' && v.enterprise.operatingStatus === 'active'));
   if (status) rows = rows.filter((v) => v.status === status);
   return rows.map(hydrate);
 }
@@ -178,10 +182,17 @@ export function updateVendor(id, patch) {
   if ('displayName' in clean && !String(clean.displayName ?? '').trim()) {
     throw new Error('displayName cannot be empty');
   }
+  const enrolled = store.find('vendors', v => v.id === id)?.enterprise;
+  if (enrolled) {
+    // Legacy commerce edits also invalidate optimistic enterprise revisions.
+    clean.enterprise = { ...enrolled, operatingStatus: clean.status ?? enrolled.operatingStatus, revision: enrolled.revision + 1, updatedAt: new Date().toISOString(),
+      history: [...enrolled.history, { id: newId('suevt'), actorId: store.find('vendors', v => v.id === id).ownerId,
+        action: 'legacy_vendor_updated', changedFields: Object.keys(clean), at: new Date().toISOString() }] };
+  }
   clean.updatedAt = new Date().toISOString();
 
   const updated = store.update('vendors', id, clean);
-  return updated ? hydrate(updated) : null;
+  return updated ? hydrate(updated, true) : null;
 }
 
 /** True when this user owns this vendor. The only ownership question routes ask. */

@@ -12,7 +12,7 @@ import type { CommandCentre } from '../api/types';
 // MENU — a navigation surface, not a modal from another product.
 //
 // Design rules (kept deliberately):
-//   * The SAME visual system as the Arena screen: lavender page, white
+//   * The shared Brief visual system: lavender page, white
 //     cards, deep-purple actions, one gold accent reserved for membership
 //     status. No dark navy, no neon, no gradients fighting each other.
 //   * ONE close control: the × in the header. No second giant button.

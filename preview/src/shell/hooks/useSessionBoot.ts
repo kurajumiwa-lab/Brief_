@@ -179,7 +179,7 @@ export function useSessionBoot(params: UseSessionBootParams) {
   React.useEffect(() => {
     const onScroll = () => {
       const y = typeof window === 'undefined' ? 0 : window.scrollY;
-      if (menuOpen || activeTab === 'arena') {
+      if (menuOpen) {
         setDockOn(true);
         dockLastY.current = y;
         return;

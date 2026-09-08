@@ -55,7 +55,6 @@ export const SIGNAL_TYPES = [
   'verification_decision',
   // Fraud (Tikiti T10): a listing was auto-flagged for review.
   'ticket_flagged',
-  'arena_contest_cancelled',
   'campaign_registration_started',
   'campaign_registered',
   'campaign_registration_updated',
@@ -94,16 +93,8 @@ export const SIGNAL_TYPES = [
   // Money genuinely confirmed by a payment provider. Emitted only from the
   // webhook path after a real ledger transaction exists.
   'order_paid',
-  // --- Arena ---------------------------------------------------------------
-  // Arena reuses the ONE activity layer rather than getting its own analytics
   // table. Every one of these is a real state change on a challenge, match, or
   // beta cohort signup.
-  'arena_beta_joined',
-  'arena_challenge_opened',
-  'arena_challenge_accepted',
-  'arena_result_reported',
-  'arena_result_confirmed',
-  'arena_result_disputed',
   'order_fulfilled',
   'order_settled',
   'order_disputed',

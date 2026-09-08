@@ -100,12 +100,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
             const isDraft = currentStat === 'draft';
             const isPaused = currentStat === 'paused';
             const price = (offer as any).priceKes ?? offer.price ?? 0;
-            const stock = offer.quantityAvailable ?? 12;
-
-            // Mock realistic analytics for visual feedback
-            const viewsCount = 142 + (price % 50);
-            const inquiryCount = 18 + (price % 9);
-            const conversionCount = 12 + (price % 5);
+            const stock = offer.quantityAvailable;
 
             return (
               <div
@@ -135,7 +130,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                         {isPaused ? 'PAUSED' : isDraft ? 'DRAFT' : 'ACTIVE'}
                       </span>
                       <span className="text-[9px] font-mono text-[#64748B] bg-[#FAFAF8] px-1.5 py-0.5 rounded-md">
-                        {stock} in stock
+                        {stock == null ? 'Stock not specified' : `${stock} in stock`}
                       </span>
                     </div>
                   </div>
@@ -146,21 +141,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                     </p>
                   )}
 
-                  {/* ── OFFER ANALYTICS STRIP (Views / Inquiries / Conversions) ── */}
-                  <div className="p-2 rounded-xl bg-[#FAFAF8] border border-black/5 flex items-center justify-between text-[10px] text-[#64748B]">
-                    <span className="flex items-center space-x-1">
-                      <Eye className="w-3 h-3 text-[#5B2EA6]" />
-                      <span>{viewsCount} views</span>
-                    </span>
-                    <span className="flex items-center space-x-1">
-                      <MessageCircle className="w-3 h-3 text-amber-600" />
-                      <span>{inquiryCount} chats</span>
-                    </span>
-                    <span className="flex items-center space-x-1">
-                      <TrendingUp className="w-3 h-3 text-emerald-600" />
-                      <span className="font-bold text-[#1A1F2E]">{conversionCount} sales</span>
-                    </span>
-                  </div>
+
                 </div>
 
                 <div className="flex items-center justify-between pt-2 border-t border-black/5">

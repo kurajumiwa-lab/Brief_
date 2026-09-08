@@ -53,6 +53,8 @@ try {
 
   const advertiserToken = await register('yard_advertiser', 'Yard Advertiser');
   const creatorToken = await register('yard_creator', 'Yard Creator');
+  const operatorToken = await register('yard_operator', 'Test Operator');
+  process.env.BRIEF_OPERATORS = 'yard_operator';
 
   let result = await request('/api/creator/profile', 'GET', undefined, creatorToken);
   expect(result.response.status === 200, 'creator profile unavailable', result.text);
@@ -162,6 +164,8 @@ try {
   const firstReg = store.find('registrations', (row) => row.attendeeRef === 'first-attendee');
   await request(`/api/campaigns/${waitCampaign.id}/registrations/${firstReg.id}/status`, 'POST', { status: 'cancelled' }, advertiserToken);
   result = await request('/api/calendar/sweep', 'POST', {}, advertiserToken);
+  expect(result.response.status === 403, 'ordinary advertiser must not run platform sweeps');
+  result = await request('/api/calendar/sweep', 'POST', {}, operatorToken);
   expect(result.response.status === 200 && result.body.offered >= 1, 'sweep did not offer the next wait-list slot', result.text);
   result = await request(`/api/waitlist/${waitId}/accept`, 'POST', { attendeeRef: 'backup-attendee' });
   expect(result.response.status === 201 && result.body.entry.status === 'registered', 'wait-list offer did not complete', result.text);
@@ -173,12 +177,13 @@ try {
   const vendorId = result.body.vendor.id;
   result = await request(`/api/vendors/${vendorId}/capabilities`, 'PUT', { services: ['transport', 'printing'], regions: ['KE'], escrowSupported: true }, advertiserToken);
   expect(result.response.status === 200 && result.body.capabilities.escrowSupported === true, 'vendor capabilities failed', result.text);
-  result = await request(`/api/vendors/${vendorId}/capabilities`);
+  result = await request(`/api/vendors/${vendorId}/capabilities`, 'GET', undefined, creatorToken);
   expect(result.response.status === 200 && result.body.capabilities.services.includes('transport'), 'public vendor capabilities failed', result.text);
   expect(result.body.capabilities.isVerifiedLicense === false, 'vendor self-verified a license');
 
   console.log('Yard Engine HTTP loop: passed');
 } finally {
   delete providers.DISBURSEMENT_PROVIDERS.testyard;
+  delete process.env.BRIEF_OPERATORS;
   server.close();
 }

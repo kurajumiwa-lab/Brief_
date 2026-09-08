@@ -275,7 +275,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
       <div className="p-4 rounded-3xl bg-white shadow-2xs border border-black/5 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center space-x-2">
-            <span className="text-xs text-[#64748B] font-semibold">Good morning, Amina</span>
+            <span className="text-xs text-[#64748B] font-semibold">Your business workspace</span>
             <span className="text-[10px] text-[#64748B] bg-[#FAFAF8] px-2 py-0.5 rounded-full font-bold">
               {space.type}
             </span>

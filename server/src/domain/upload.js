@@ -124,7 +124,8 @@ export function getUpload(id) {
  * error }`. Never throws for an ordinary refusal — a person picking the wrong
  * file is a normal event, not an exception.
  */
-export function saveUpload({ bytes, ownerId, originalName = null, alt = null }) {
+export function saveUpload({ bytes, ownerId, originalName = null, alt = null, purpose = 'public' }) {
+  if (!['public','private_evidence','private_request','private_quote','private_work'].includes(purpose)) return {ok:false,status:400,code:'invalid_purpose',error:'invalid upload purpose'};
   const buf = Buffer.isBuffer(bytes) ? bytes : Buffer.from(bytes ?? []);
   if (!ownerId) {
     return { ok: false, status: 401, code: 'no_identity', error: 'authentication required' };
@@ -158,7 +159,7 @@ export function saveUpload({ bytes, ownerId, originalName = null, alt = null }) 
 
   // The same person uploading the same bytes twice gets the same asset back
   // rather than a second copy: an image is content, not an event.
-  const existing = store.find('uploads', (u) => u.ownerId === ownerId && u.sha256 === sha256);
+  const existing = store.find('uploads', (u) => u.ownerId === ownerId && u.sha256 === sha256 && (u.purpose ?? 'public') === purpose);
   if (existing && fs.existsSync(filePathFor(existing))) {
     return { ok: true, upload: existing, duplicate: true };
   }
@@ -166,6 +167,7 @@ export function saveUpload({ bytes, ownerId, originalName = null, alt = null }) 
   const row = store.insert('uploads', {
     id: newId('upl'),
     ownerId,
+    purpose,
     mimeType,
     bytes: buf.length,
     sha256,
@@ -202,7 +204,7 @@ export function saveUpload({ bytes, ownerId, originalName = null, alt = null }) 
 /** The caller's own uploads, newest first. */
 export function listUploads(ownerId) {
   return store
-    .filter('uploads', (u) => u.ownerId === ownerId)
+    .filter('uploads', (u) => u.ownerId === ownerId && (u.purpose ?? 'public') === 'public')
     .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
 }
 
@@ -212,6 +214,13 @@ export function deleteUpload(id, ownerId) {
   // 404, not 403: existence is not disclosed to a stranger.
   if (!row || row.ownerId !== ownerId) {
     return { ok: false, status: 404, code: 'not_found', error: 'upload not found' };
+  }
+  if(row.purpose==='private_work' && store.find('workOrders',w=>w.evidence.some(e=>e.uploadId===id)))return {ok:false,status:409,code:'evidence_in_use',error:'Operational evidence is retained in Work history'};
+  if (row.purpose === 'private_quote' && store.find('requestQuotes', q => [...q.offers.map(o=>o.terms),q.draft].filter(Boolean).some(t=>t.evidence.some(e=>e.uploadId===id)))) {
+    return {ok:false,status:409,code:'evidence_in_use',error:'This image is retained as part of a commercial record'};
+  }
+  if (row.purpose === 'private_evidence' && store.find('verificationRecords', r => r.scope === 'supply' && r.evidence?.some(e => e.uploadId === id))) {
+    return {ok:false,status:409,code:'evidence_retained',error:'Submitted evidence is retained for verification history'};
   }
   try {
     const p = filePathFor(row);

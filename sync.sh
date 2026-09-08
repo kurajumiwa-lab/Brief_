@@ -21,7 +21,7 @@ for dest in preview/src tc/src; do
   cp -R src/components "$dest/components"
   cp -R src/nav "$dest/nav"
   cp -R src/ui "$dest/ui"
-  # Static assets imported by components (e.g. arena key-art). tc needs the
+  # Static assets imported by components (e.g. discovery imagery). tc needs the
   # images.d.ts shim to type-check the imports; preview needs the bytes to build.
   cp -R src/assets "$dest/assets"
   # The engine sync machine (src/engine) is imported by components.
@@ -29,7 +29,7 @@ for dest in preview/src tc/src; do
   cp -R src/model "$dest/model"
   cp -R src/screens "$dest/screens"
   # Utility/service modules (e.g. SoundEngine) and scoped stylesheets (e.g.
-  # arenaArcade.css) are imported by screens/components, so mirror them too.
+  # requests.css) are imported by screens/components, so mirror them too.
   cp -R src/utils "$dest/utils"
   cp -R src/styles "$dest/styles"
   cp -R src/app "$dest/app"

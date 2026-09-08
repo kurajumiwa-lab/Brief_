@@ -21,11 +21,9 @@ import * as ops from './ops.js';
 import * as workflow from './domain/workflow.js';
 import * as campaigns from './domain/campaign.js';
 import * as ledger from './domain/ledger.js';
-import * as epl from './domain/epl.js';
 import * as telegram from './connectors/telegram.js';
 import * as whatsapp from './connectors/whatsapp.js';
 import * as scheduler from './pipeline/scheduler.js';
-import * as compliance from './domain/compliance.js';
 import * as calendar from './domain/calendar.js';
 import * as demoSeed from './domain/seed.js';
 import { authStatus } from './identity.js';
@@ -38,7 +36,11 @@ import { register as entitiesRoutes } from './routes/entities.js';
 import { register as graphRoutes } from './routes/graph.js';
 import { register as healthRoutes } from './routes/health.js';
 import { register as opsRoutes } from './routes/ops.js';
-import { register as arenaRoutes } from './routes/arena.js';
+import { register as quoteRoutes } from './routes/quotes.js';
+import { register as workOrderRoutes } from './routes/workOrders.js';
+import { register as matchingRoutes } from './routes/matching.js';
+import { register as supplyRoutes } from './routes/supply.js';
+import { register as requestsRoutes } from './routes/requests.js';
 import { register as sourcesRoutes } from './routes/sources.js';
 import { register as connectorsRoutes } from './routes/connectors.js';
 import { register as briefitRoutes } from './routes/briefit.js';
@@ -55,7 +57,6 @@ import { register as commandRoutes } from './routes/command.js';
 import { register as campaignsRoutes } from './routes/campaigns.js';
 import { register as ticketMarketRoutes } from './routes/ticketmarket.js';
 import { register as verificationRoutes } from './routes/verification.js';
-import { register as eplRoutes } from './routes/epl.js';
 import { register as eventsRoutes } from './routes/events.js';
 import { register as bannersRoutes } from './routes/banners.js';
 import { register as vaultsRoutes } from './routes/vaults.js';
@@ -69,7 +70,6 @@ import { register as personalCollectionsRoutes } from './routes/personalCollecti
 import { register as searchRoutes } from './routes/search.js';
 import { register as assistRoutes } from './routes/assist.js';
 import { register as distributionRoutes } from './routes/distribution.js';
-import { register as lobbyRoutes } from './routes/lobby.js';
 import { register as workflowRoutes } from './routes/workflow.js';
 import { register as creatorRoutes } from './routes/creator.js';
 import { register as advertisingRoutes } from './routes/advertising.js';
@@ -158,7 +158,7 @@ app.use(ops.requestLogger);
 //   /api/media/telegram/*  Telegram image references resolved at render time
 //                          for public feed cards (object id is an unlisted
 //                          handle; the route still enforces publication=public)
-// Everything else -- feed, EPL, objects, signals -- answers 401 until the
+// Everything else -- feed, objects, signals -- answers 401 until the
 // caller has an account. The client enforces the same rule with a wall; this
 // is the enforcement that actually matters.
 // ---------------------------------------------------------------------------
@@ -181,7 +181,7 @@ app.use(ops.requestLogger);
 //                           (public location discovery pages like /explore/
 //                           kilimani, related content, nearby) — every payload
 //                           is the public projection of public objects only
-const PUBLIC_WITHOUT_SESSION = /^\/(auth|entities|locations|graph|nearby|collections\/personal|public\/(campaigns|feed)|health|ready|readiness|media\/(file|telegram)|config|release|email-subscriptions|webhooks|telegram\/init|huduma\/webhooks)(\/|$)/;
+const PUBLIC_WITHOUT_SESSION = /^\/(auth|entities|locations|graph|nearby|collections\/personal|public\/(campaigns|feed|enterprises|capabilities)|health|ready|readiness|media\/(file|telegram)|config|release|email-subscriptions|webhooks|telegram\/init|huduma\/webhooks)(\/|$)/;
 app.use('/api', (req, res, next) => {
   if (PUBLIC_WITHOUT_SESSION.test(req.path)) return next();
   const me = callerId(req);
@@ -203,7 +203,11 @@ entitiesRoutes(app);
 graphRoutes(app);
 healthRoutes(app);
 opsRoutes(app);
-arenaRoutes(app);
+requestsRoutes(app);
+supplyRoutes(app);
+matchingRoutes(app);
+quoteRoutes(app);
+workOrderRoutes(app);
 sourcesRoutes(app);
 connectorsRoutes(app);
 briefitRoutes(app);
@@ -220,7 +224,6 @@ commandRoutes(app);
 campaignsRoutes(app);
 ticketMarketRoutes(app);
 verificationRoutes(app);
-eplRoutes(app);
 eventsRoutes(app);
 bannersRoutes(app);
 vaultsRoutes(app);
@@ -234,7 +237,6 @@ personalCollectionsRoutes(app);
 searchRoutes(app);
 assistRoutes(app);
 distributionRoutes(app);
-lobbyRoutes(app);
 workflowRoutes(app);
 creatorRoutes(app);
 advertisingRoutes(app);
@@ -370,12 +372,6 @@ if (process.env.NODE_ENV !== 'test') {
   // volume), and take rolling snapshots so a crash or forced kill never loses
   // more than the last interval. The graceful-shutdown backup still runs too.
   ops.restoreLatestBackupIfEmpty(store);
-  // EPL playability bootstrap: an empty catalog gets the clearly-tagged SEED
-  // roster so rooms can draw a pool. No-op when the catalog already has rows.
-  {
-    const seeded = epl.ensureCatalogSeeded();
-    if (seeded > 0) ops.logInfo('epl_catalog_autoseed', { inserted: seeded, source: 'seed' });
-  }
   ops.installPeriodicBackup(store, {
     intervalMs: Number(process.env.BRIEF_BACKUP_INTERVAL_MS) || 15 * 60 * 1000
   });
@@ -414,7 +410,6 @@ if (process.env.NODE_ENV !== 'test') {
       whatsapp: whatsapp.isConfigured(),
       payments: ledger.providerConfigured(),
       auth: authStatus().configured,
-      arenaMoney: compliance.arenaMoneyStatus().enabled
     });
     // The synchronous `configured` flag above is only half the truth. Fire the
     // verified getMe + getWebhookInfo round trip once at boot so an operator

@@ -10,7 +10,7 @@ import {
   DEFAULT_ROUTE,
   type BriefRoute
 } from './nav/routes';
-import type { ArenaMoneyStatus } from './api/types';
+
 import QRCode from 'qrcode';
 import { deriveDestinationAlerts, readLastSeen, writeLastSeen, alertLabel, type DestinationAlerts } from './nav/alerts';
 import { EntityPage } from './components/EntityPage';
@@ -33,14 +33,13 @@ import { EventResale } from './components/EventResale';
 import { EventsHub } from './components/EventsHub';
 import { MshikanoDesk } from './components/MshikanoDesk';
 import { VerificationPanel } from './components/VerificationPanel';
-import { EplDesk } from './components/EplDesk';
 import { Vault } from './components/vault/Vault';
 import ServiceFees from './components/ServiceFees';
 import { WhatsAppShopBuilder } from './components/WhatsAppShopBuilder';
 import RewardsDesk from './components/RewardsDesk';
 import { CheckIn } from './components/CheckIn';
 import { HostCommand } from './components/HostCommand';
-import { TickerBanner, PromptBanner, JumbotronBanner } from './components/SignalBanner';
+import { TickerBanner, PromptBanner } from "./components/SignalBanner";
 import { ActionsEngine } from './components/ActionsEngine';
 import { Circles } from './components/Circles';
 import { Marketplace } from './components/Marketplace';
@@ -59,7 +58,7 @@ import { arrivalSource, linkTokenFrom, urlWithoutArrivalParams, type ArrivalChan
 import { EnginePanel } from './components/EnginePanel';
 import { GroupBuyPortal } from './components/GroupBuyPortal';
 import { TicketBar } from './components/TicketBar';
-import { LobbyBoard } from './components/LobbyBoard';
+
 import { FeedComposer } from './components/FeedComposer';
 import { WireSection } from './components/WireSection';
 import { TeaDesk } from './components/TeaDesk';
@@ -123,7 +122,7 @@ import {
 import { MenuSheet } from './components/MenuSheet';
 import { AdminDesk } from './components/AdminDesk';
 import type { MenuTarget } from './components/MenuSheet';
-import { PlayAs } from './components/PlayAs';
+
 import type { LucideIcon } from 'lucide-react';
 import {
   ROOM, HOME_MORE, SAVED_TABS, INBOX_TABS, FILTERS,
@@ -149,131 +148,8 @@ import { usePersonalLayer } from './shell/hooks/usePersonalLayer';
 import { useIngestionDesk } from './shell/hooks/useIngestionDesk';
 import { useCaptureFlow } from './shell/hooks/useCaptureFlow';
 import { useCampaignHub } from './shell/hooks/useCampaignHub';
-import {
-  ALL_GROUPS,
-  ARENA_GAMES,
-  ActivityDot,
-  CLIENT_TO_SERVER_GAME,
-  DESTINATIONS,
-  DESTINATION_ICONS,
-  DESTINATION_STATE_LABELS,
-  EXPLICIT_LINK_FLOOR,
-  GROUP_MESSAGES,
-  INITIAL_JOURNEYS,
-  INITIAL_OBJECTS,
-  INITIAL_POSTS,
-  INITIAL_QUESTS,
-  INITIAL_SOURCES,
-  REPORT_REASONS,
-  REWARD_CATALOGUE,
-  SAVE_LABELS,
-  SERVER_TO_CLIENT_GAME,
-  TEA_EDITIONS,
-  areTypesAffine,
-  arenaPlayerLabel,
-  bootRoute,
-  briefWhenLabel,
-  buildCaptureMessage,
-  buildDailyBrief,
-  buildDiscoveryBrief,
-  buildGroupIndex,
-  buildKeyFacts,
-  buildMapsHref,
-  buildPersonalSections,
-  buildTelHref,
-  campaignSlugFromPath,
-  canRedeem,
-  canUserAccessGroup,
-  countKeywordOverlap,
-  createBriefGraph,
-  createDirectChallenge,
-  createPursuit,
-  declineChallenge,
-  detectMatchRequest,
-  diffObjects,
-  entityChipsFor,
-  extractTitle,
-  formatCount,
-  formatSourceDate,
-  getActionNote,
-  getAppearanceReasons,
-  getBriefRank,
-  getCardLevel,
-  getCorroborationLabel,
-  getCurrentEdition,
-  getDestinationAccess,
-  getDestinationState,
-  getDestinationVendors,
-  getDistanceLabel,
-  getEditionMeta,
-  getFreshness,
-  getKeywords,
-  getLifecycleBadge,
-  getNextRankRequirement,
-  getObjectTypeMeta,
-  getPivotMessage,
-  getPostKindMeta,
-  getPublishedLine,
-  getReasonChip,
-  getRelatedHeading,
-  getRelativeTime,
-  getSourceChip,
-  getSourceHealth,
-  getSourceHealthLabel,
-  getSourceKindChip,
-  getSuggestedActions,
-  getUnansweredQuestions,
-  getVendorDestinations,
-  getVendorOfferings,
-  isDestinationObject,
-  isResultConfirmed,
-  matchExistsForChallenge,
-  matchPursuit,
-  objectFromServer,
-  parseInboundMessage,
-  resolveAction,
-  runGroupCommand,
-  scoreObjectForPhrase,
-  suggestChallengeTime,
-  summariseContribution
-} from './model/core';
-import type {
-  ArenaChallenge,
-  ArenaGameId,
-  ArenaMatch,
-  BriefObject,
-  BriefPost,
-  CandidateStatus,
-  ChallengeStake,
-  ChallengeStatus,
-  ConnectedSource,
-  Destination,
-  FlowState,
-  GroupAccess,
-  GroupCommandResult,
-  GroupKnowledgeEntry,
-  IngestionCandidate,
-  Journey,
-  MyLayerSection,
-  NearbySection,
-  ObjectRelationship,
-  ObjectType,
-  ProtocolAction,
-  Pursuit,
-  PursuitMatch,
-  PursuitStatus,
-  Quest,
-  QuestStatus,
-  RelationReason,
-  Reward,
-  SaveLabel,
-  ScoredRelation,
-  Source,
-  SourceType,
-  TeaEdition,
-  WatchCondition,
-  WorkflowSection
-} from './model/core';
+import { ALL_GROUPS, ActivityDot, DESTINATIONS, DESTINATION_ICONS, DESTINATION_STATE_LABELS, EXPLICIT_LINK_FLOOR, GROUP_MESSAGES, INITIAL_JOURNEYS, INITIAL_OBJECTS, INITIAL_POSTS, INITIAL_QUESTS, INITIAL_SOURCES, REPORT_REASONS, REWARD_CATALOGUE, SAVE_LABELS, TEA_EDITIONS, areTypesAffine, bootRoute, briefWhenLabel, buildCaptureMessage, buildDailyBrief, buildDiscoveryBrief, buildGroupIndex, buildKeyFacts, buildMapsHref, buildPersonalSections, buildTelHref, campaignSlugFromPath, canRedeem, canUserAccessGroup, countKeywordOverlap, createBriefGraph, createPursuit, diffObjects, entityChipsFor, extractTitle, formatCount, formatSourceDate, getActionNote, getAppearanceReasons, getBriefRank, getCardLevel, getCorroborationLabel, getCurrentEdition, getDestinationAccess, getDestinationState, getDestinationVendors, getDistanceLabel, getEditionMeta, getFreshness, getKeywords, getLifecycleBadge, getNextRankRequirement, getObjectTypeMeta, getPivotMessage, getPostKindMeta, getPublishedLine, getReasonChip, getRelatedHeading, getRelativeTime, getSourceChip, getSourceHealth, getSourceHealthLabel, getSourceKindChip, getSuggestedActions, getUnansweredQuestions, getVendorDestinations, getVendorOfferings, isDestinationObject, matchPursuit, objectFromServer, parseInboundMessage, resolveAction, runGroupCommand, scoreObjectForPhrase, summariseContribution } from "./model/core";
+import type { BriefObject, BriefPost, CandidateStatus, ConnectedSource, Destination, FlowState, GroupAccess, GroupCommandResult, GroupKnowledgeEntry, IngestionCandidate, Journey, MyLayerSection, NearbySection, ObjectRelationship, ObjectType, ProtocolAction, Pursuit, PursuitMatch, PursuitStatus, Quest, QuestStatus, RelationReason, Reward, SaveLabel, ScoredRelation, Source, SourceType, TeaEdition, WatchCondition, WorkflowSection } from "./model/core";
 // Public surface preserved: components import these names from '../App'.
 export * from './model/core';
 
@@ -1390,13 +1266,13 @@ export function App() {
               An account opens everything
             </h1>
             <p className="mt-3 text-[12px] leading-relaxed text-[#251045]/70">
-              Brief is members-only: the live feed, the Tea studio, EPL fantasy rooms,
+              Brief is members-only: the live feed, the Tea studio,
               the marketplace and every tool behind this wall need an account.
             </p>
             <ul className="mt-4 space-y-1.5 text-left mx-auto w-fit">
               {[
                 'Write and publish your own stories',
-                'Open and seat EPL fantasy rooms',
+                'Keep your business demand in Requests',
                 'Sell, campaign and run groups',
                 'Sign in with Google, email link, or your Brief handle'
               ].map((line) => (

@@ -69,7 +69,7 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
               Everything Happening Around You
             </h1>
             <p className="text-xs text-white/70 max-w-md mt-0.5">
-              Verified local events, creator drops, community circles, and secret drops across Nairobi.
+              Local events, creator drops, community circles, and secret drops across Nairobi.
             </p>
           </div>
 

@@ -17,7 +17,7 @@ const TRIGGERS = [
   '*', 'member_joined', 'object_saved', 'object_viewed', 'object_confirmed',
   'campaign_published', 'campaign_shared', 'campaign_banner_created', 'campaign_registered', 'campaign_checkin',
   'order_placed', 'order_paid', 'order_settled', 'order_fulfilled',
-  'arena_challenge_accepted', 'arena_result_confirmed', 'vendor_created',
+  'vendor_created',
   'listing_published', 'auction_closed', 'circle_created',
   'advertiser_campaign_submitted', 'advertiser_campaign_funded',
   'creator_match_proposed', 'creator_match_accepted', 'campaign_fulfilment_verified',

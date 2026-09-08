@@ -10,3 +10,11 @@ preview/dist/
 
 # Runtime data store + backups (never commit live data)
 server/data/
+
+# Disposable tests, browser artifacts and local preview data
+.cache/
+test-results/
+playwright-report/
+
+# Isolated local preview records (not production data or test fixtures)
+.preview-data/

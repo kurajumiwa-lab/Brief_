@@ -9,6 +9,8 @@ import { CatalogView } from '../features/spaces/CatalogView';
 import { CityFeedView } from '../features/city/CityFeedView';
 import { CreateFlowModal } from '../features/spaces/CreateFlowModal';
 import { PublicOfferModal } from '../features/offers/PublicOfferModal';
+import { SupplyWorkspace } from '../features/supply/SupplyWorkspace';
+import { RequestEntry, RequestsWorkspace, requestPath } from '../features/requests/RequestsWorkspace';
 import { soundEngine } from '../utils/SoundEngine';
 
 export interface AppShellProps {
@@ -19,12 +21,15 @@ export interface AppShellProps {
 }
 
 export const AppShell: React.FC<AppShellProps> = ({
-  initialTab = 'pipeline',
+  initialTab = 'city',
   initialSpaceId = null,
   onNavigateLegacyTab,
   className = ''
 }) => {
   const [activeTab, setActiveTab] = useState<BriefNavigationTab>(initialTab);
+  const [supplyRoute, setSupplyRoute] = useState(() => window.location.hash.replace(/^#\/?supply\/?/, ''));
+  const [requestRoute, setRequestRoute] = useState('');
+  const [spaceError, setSpaceError] = useState('');
   const [activeSpace, setActiveSpace] = useState<Space | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -52,125 +57,18 @@ export const AppShell: React.FC<AppShellProps> = ({
 
   const loadSpaces = async () => {
     setLoading(true);
+    setSpaceError('');
     try {
       const res = await briefApi.listMySpaces();
       if (res.ok && res.data?.spaces && res.data.spaces.length > 0) {
         setActiveSpace(res.data.spaces[0]);
       } else {
-        // Fallback default space for Amina if offline or unseeded
-        setActiveSpace({
-          id: 'spc_amina_cakes_1',
-          ownerId: 'usr_amina',
-          vendorId: 'vend_amina_1',
-          name: "Amina's Cakes",
-          type: 'side_hustle',
-          goal: 'Get my first 20 customers',
-          targetValueKes: 100000,
-          status: 'active',
-          capabilities: ['commerce', 'communication', 'ledger', 'activity'],
-          metrics: {
-            revenueKes: 84200,
-            customerCount: 23,
-            activeOrdersCount: 7,
-            totalOrdersCount: 19,
-            offersCount: 3
-          },
-          offers: [
-            {
-              id: 'list_bday_1',
-              vendorId: 'vend_amina_1',
-              title: 'Birthday Cake',
-              description: 'Custom 2-tier celebration cake for 10-15 people',
-              price: 4500,
-              currency: 'KES',
-              type: 'product',
-              status: 'active',
-              quantityAvailable: 10,
-              locationName: 'Kilimani, Nairobi',
-              objectId: 'obj_bday_1',
-              media: [],
-              tags: ['cakes', 'birthday'],
-              category: 'food',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            } as unknown as Listing
-          ],
-          recentActivities: [
-            {
-              id: 'act_1',
-              spaceId: 'spc_amina_cakes_1',
-              kind: 'space_created',
-              title: "Created Space: Amina's Cakes",
-              description: 'Goal: Get my first 20 customers',
-              createdAt: new Date().toISOString()
-            },
-            {
-              id: 'act_2',
-              spaceId: 'spc_amina_cakes_1',
-              kind: 'offer_published',
-              title: 'Published offer: Birthday Cake',
-              description: 'KES 4,500 · Live and accepting orders',
-              createdAt: new Date().toISOString()
-            }
-          ],
-          recentConversations: [
-            {
-              id: 'cnv_1',
-              spaceId: 'spc_amina_cakes_1',
-              customerName: 'Mary Wanjiku',
-              customerContact: '+254712345678',
-              offerTitle: 'Birthday Cake',
-              offerPriceKes: 4500,
-              status: 'converted',
-              messages: [
-                { id: 'm1', from: 'customer', sender: 'Mary Wanjiku', text: 'Can you make it for Saturday?', at: new Date().toISOString() },
-                {
-                  id: 'm2',
-                  from: 'owner',
-                  sender: "Amina's Cakes",
-                  text: 'Quotation: 2-Tier Chocolate Birthday Cake — KES 5,200',
-                  quote: {
-                    id: 'quot_1',
-                    title: '2-Tier Chocolate Birthday Cake',
-                    priceKes: 5200,
-                    notes: 'Including Saturday Kilimani delivery',
-                    status: 'sent',
-                    createdAt: new Date().toISOString()
-                  },
-                  at: new Date().toISOString()
-                }
-              ],
-              quotes: [
-                {
-                  id: 'quot_1',
-                  title: '2-Tier Chocolate Birthday Cake',
-                  priceKes: 5200,
-                  notes: 'Including Saturday Kilimani delivery',
-                  status: 'sent',
-                  createdAt: new Date().toISOString()
-                }
-              ],
-              paymentPrompts: [
-                {
-                  id: 'pay_1',
-                  phoneNumber: '+254712345678',
-                  amountKes: 5200,
-                  description: 'Birthday Cake Order',
-                  status: 'paid',
-                  receipt: 'QJ891234AB',
-                  createdAt: new Date().toISOString()
-                }
-              ],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            }
-          ],
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        });
+        setActiveSpace(null);
+        setSpaceError(res.ok ? '' : res.error);
       }
     } catch {
-      // Offline fallback
+      setActiveSpace(null);
+      setSpaceError('Could not load your spaces. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -180,20 +78,24 @@ export const AppShell: React.FC<AppShellProps> = ({
   useEffect(() => {
     loadSpaces();
 
-    if (typeof window !== 'undefined') {
-      const hash = window.location.hash;
-      if (hash.startsWith('#offer/')) {
-        const offerId = hash.replace('#offer/', '');
-        const targetOffer = activeSpace?.offers?.find((o) => o.id === offerId);
-        if (targetOffer) {
-          setActivePublicOffer(targetOffer);
-          setPublicOfferModalOpen(true);
-        }
-      } else if (hash === '#city' || hash === '#events') {
-        setActiveTab('city');
+    const navigate = () => {
+      const hash = window.location.hash.slice(1);
+      if (hash === 'supply' || hash.startsWith('supply/')) {
+        setActiveTab('supply');
+        setSupplyRoute(hash.slice(7) || 'mine');
+      } else if (hash === 'requests' || hash.startsWith('requests/')) {
+        setActiveTab('requests');
+        try { setRequestRoute(decodeURIComponent(hash.slice(9))); } catch { setRequestRoute('invalid'); }
+      } else {
+        const tabs: Record<string, BriefNavigationTab> = { home: 'city', city: 'city', events: 'city', spaces: 'pipeline', pipeline: 'pipeline', discover: 'catalog', catalog: 'catalog', activity: 'ledger', ledger: 'ledger' };
+        if (tabs[hash]) setActiveTab(tabs[hash]);
+        else if (!hash) setActiveTab(initialTab);
       }
-    }
-  }, [initialSpaceId]);
+    };
+    navigate();
+    window.addEventListener('hashchange', navigate);
+    return () => window.removeEventListener('hashchange', navigate);
+  }, [initialSpaceId, initialTab]);
 
   const handlePublishOffer = async (offerId: string) => {
     if (!activeSpace) return;
@@ -211,7 +113,9 @@ export const AppShell: React.FC<AppShellProps> = ({
   // Contextual FAB triggers based on active tab
   const handleContextualFab = () => {
     soundEngine.play('heavyTap');
-    if (activeTab === 'city') {
+    if (activeTab === 'requests' || activeTab === 'supply') {
+      requestPath('new');
+    } else if (activeTab === 'city') {
       // Contextual on City: Post an Event, Listing, or Ticket
       setCityPostModalOpen(true);
     } else if (activeTab === 'catalog') {
@@ -275,18 +179,25 @@ export const AppShell: React.FC<AppShellProps> = ({
         activeTab={activeTab}
         onSelectTab={(tab) => setActiveTab(tab)}
         onCreateAction={handleContextualFab}
-        spaceName={activeSpace?.name || "Amina's Cakes"}
-        revenueKes={activeSpace?.metrics?.revenueKes || 84200}
-        offersCount={activeSpace?.offers?.length || 3}
-        pendingInquiriesCount={activeSpace?.recentConversations?.filter((c) => c.status !== 'converted').length || 1}
+        spaceName={activeSpace?.name || 'Your Brief'}
+        revenueKes={activeSpace?.metrics?.revenueKes ?? 0}
+        offersCount={activeSpace?.offers?.length ?? 0}
+        pendingInquiriesCount={activeSpace?.recentConversations?.filter((c) => c.status !== 'converted').length ?? 0}
       />
 
       {/* Main Content Viewport */}
       <main className="flex-1 min-w-0 px-4 sm:px-6 py-6 pb-28 md:pb-6 overflow-y-auto min-h-screen">
+        {activeTab === 'requests' ? <RequestsWorkspace route={requestRoute} /> : activeTab === 'supply' ? <SupplyWorkspace route={supplyRoute || 'mine'} /> : <RequestEntry />}
+        {['pipeline', 'spaces', 'activity', 'ledger', 'catalog'].includes(activeTab) && !activeSpace && (
+          <section className="max-w-3xl mx-auto py-12">
+            <h2 className="text-xl font-bold">{loading ? 'Loading your workspace…' : 'A space for what you offer'}</h2>
+            {spaceError ? <><p role="alert" className="my-4">{spaceError}</p><button onClick={loadSpaces}>Retry</button><button className="ml-4 underline" onClick={() => requestPath()}>Sign in through My Requests</button></> : !loading && <><p className="my-4">No business space yet. Create a Request to describe what you need, or create a space for what you sell.</p><button className="px-4 py-3 rounded-xl bg-[#203e31] text-white" onClick={() => { setCreateFlowInitialStep(1); setCreateFlowOpen(true); }}>Create a space</button></>}
+          </section>
+        )}
         {/* Legacy Home Surface Compatibility for tests */}
         {activeTab === 'home' ? (
           <HomeSurface
-            userName="Amina"
+            userName="there"
             onOpenSpace={(id) => {
               setActiveTab('pipeline');
               loadSpaces();

@@ -26,7 +26,7 @@ export interface HomeSurfaceProps {
 }
 
 export const HomeSurface: React.FC<HomeSurfaceProps> = ({
-  userName = 'Amina',
+  userName = 'there',
   onOpenSpace,
   onExploreDiscover,
   onGetPaid,
