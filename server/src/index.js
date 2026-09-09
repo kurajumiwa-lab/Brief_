@@ -80,6 +80,7 @@ import { register as coopRoutes } from './routes/coop.js';
 import { register as groupBuyRoutes } from './routes/groupbuy.js';
 import { register as spacesRoutes } from './routes/spaces.js';
 import { register as procurementRoutes } from './routes/procurement.js';
+import { register as participantTrustRoutes } from './routes/participantTrust.js';
 
 const app = express();
 
@@ -248,6 +249,7 @@ coopRoutes(app);
 groupBuyRoutes(app);
 spacesRoutes(app);
 procurementRoutes(app);
+participantTrustRoutes(app);
 
 // --- Production frontend serving -------------------------------------------
 //

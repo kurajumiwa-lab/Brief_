@@ -5,6 +5,7 @@ import * as supply from "./supply.js";
 import * as v from "./supplyValidation.js";
 import { capabilityCandidates } from "./search.js";
 import { ALGORITHM, assessCapability, demandTerms } from "./matchRanking.js";
+import * as participantTrust from "./participantTrust.js";
 import { available } from "../features.js";
 export const MATCH_STATUSES = [
   "suggested",
@@ -148,6 +149,27 @@ function view(r, m) {
           ).length,
         }
       : null,
+    // Phase 7 (§17): explainable trust context. Derived, privacy-safe, and
+    // explicitly separate from capability fit — trust never overrides the
+    // capability assessment that produced this match.
+    trust: (() => {
+      try {
+        const t = participantTrust.decisionContext(
+          m.participantId,
+          m.capabilityId,
+        );
+        return {
+          verifiedCapability: t.verifiedCapability,
+          completedWorkOrders: t.completedWorkOrders,
+          requesterConfirmedCompletions: t.requesterConfirmedCompletions,
+          repeatRelationships: t.repeatRelationships,
+          limited: t.limited,
+          statements: t.statements.slice(0, 4),
+        };
+      } catch {
+        return null;
+      }
+    })(),
     interested: interest?.status === "interested",
     interest: interest
       ? {

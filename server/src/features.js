@@ -35,6 +35,7 @@ const DEFINITIONS = [
   { key: 'supply', domain: 'supply', label: 'Enterprises and capabilities', configured: () => true },
   { key: 'requests', domain: 'requests', label: 'Business requests', configured: () => true },
   { key: 'repeat_procurement', domain: 'procurement', label: 'Repeat procurement memory', configured: () => true },
+  { key: 'participant_trust', domain: 'participantTrust', label: 'Participant trust & economic history', configured: () => true },
   // Always-configured: these run on the local store and need no credential.
   { key: 'auth',      domain: 'auth',       label: 'Accounts & sessions',             configured: () => true },
   { key: 'onboarding',domain: 'onboarding', label: 'Onboarding & service ladder',     configured: () => true },

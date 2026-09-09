@@ -1,6 +1,7 @@
 import {WorkWorkspace} from "../work/LazyWork";
 import {QuoteWorkspace} from "../quotes/LazyQuotes";
 import { RelevantRequests } from "../matching/RelevantRequests";
+import { TrustSection } from "./TrustSection";
 import React from "react";
 import { mediaFileUrl } from "../../api/briefApi";
 import type { Enterprise, Capability } from "../../api/supplyTypes";
@@ -260,6 +261,7 @@ export function SupplyProfile({
           </CapabilitySummary>
         ))}
       </section>
+      <TrustSection enterpriseId={p.id} />
       {p.supplyRole !== "direct_supplier" && (
         <section className="supply-section">
           <span className="request-eyebrow">

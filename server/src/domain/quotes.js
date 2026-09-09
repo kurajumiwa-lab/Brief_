@@ -5,6 +5,7 @@ import { store, newId } from "../store.js";
 import * as v from "./supplyValidation.js";
 import * as supply from "./supply.js";
 import * as matching from "./matching.js";
+import * as participantTrust from "./participantTrust.js";
 import { recordAudit } from "../routes/helpers.js";
 import {
   validate,
@@ -141,6 +142,16 @@ function view(user, q) {
     })),
     acceptedOfferRevision: q.acceptedOfferRevision ?? null,
     workOrderId: store.indexed("workOrders","acceptedQuoteId",q.id)[0]?.id ?? null,
+    // Phase 7 (§18): relevant trust context for comparing proposals. Derived,
+    // privacy-safe, never a star rating. Shown to the requester as evidence,
+    // not as a ranking that overrides the commercial terms.
+    participantTrust: (() => {
+      try {
+        return participantTrust.decisionContext(q.participantId, q.capabilityId);
+      } catch {
+        return null;
+      }
+    })(),
     history: q.history,
     createdAt: q.createdAt,
     updatedAt: q.updatedAt,

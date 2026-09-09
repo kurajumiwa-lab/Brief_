@@ -204,7 +204,28 @@ export function RequestMatches({
                 <span aria-hidden="true">✓</span> {x.text}
               </li>
             ))}
+            {m.previousFulfillment && (
+              <li key="previous">
+                <span aria-hidden="true">↻</span> {m.previousFulfillment.label}
+              </li>
+            )}
           </ul>
+          {m.trust && (
+            <div className="match-trust">
+              <h4>Fulfillment history</h4>
+              {m.trust.limited ? (
+                <p className="request-hint">Limited fulfillment history.</p>
+              ) : (
+                <ul className="match-reasons">
+                  {m.trust.statements.map((s, i) => (
+                    <li key={i}>
+                      <span aria-hidden="true">✓</span> {s}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
           <details className="match-warnings" open={m.tier !== "strong"}>
             <summary>
               What still needs confirmation ({m.warnings.length})

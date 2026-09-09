@@ -3,6 +3,14 @@ export interface MatchReason {
   code: string;
   text: string;
 }
+export interface MatchTrustContext {
+  verifiedCapability: boolean;
+  completedWorkOrders: number;
+  requesterConfirmedCompletions: number;
+  repeatRelationships: number;
+  limited: boolean;
+  statements: string[];
+}
 export interface DemandMatch {
   id: string;
   requestId: string;
@@ -56,6 +64,8 @@ export interface DemandMatch {
     time: string;
     verified: boolean;
   } | null;
+  previousFulfillment: { label: string; count: number } | null;
+  trust: MatchTrustContext | null;
   interested: boolean;
   interest: {
     id: string;

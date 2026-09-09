@@ -4138,3 +4138,15 @@ export function getWorkOrderProcurement(workOrderId: string): Promise<ApiResult<
   return request(`/api/work-orders/${encodeURIComponent(workOrderId)}/procurement`, undefined, r =>
     r && 'procurement' in r ? (r.procurement === null || procurementOf(r.procurement) ? r.procurement : undefined) : undefined);
 }
+
+// Participant trust & economic history (Phase 7): derived, privacy-safe.
+import type { TrustProfile, CapabilityTrust } from './trustTypes';
+const trustProfileOf = (r: any): TrustProfile | undefined =>
+  r && typeof r.participantId === 'string' && r.verification && r.history && r.signals ? r : undefined;
+export function getPublicTrust(id: string): Promise<ApiResult<TrustProfile>> {
+  return request(`/api/public/enterprises/${encodeURIComponent(id)}/trust`, undefined, trustProfileOf);
+}
+export function getPublicCapabilityTrust(id: string, capabilityId: string): Promise<ApiResult<CapabilityTrust>> {
+  return request(`/api/public/enterprises/${encodeURIComponent(id)}/capabilities/${encodeURIComponent(capabilityId)}/trust`, undefined, r =>
+    r && typeof r.participantId === 'string' && r.verification && r.history ? r : undefined);
+}
