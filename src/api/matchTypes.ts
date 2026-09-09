@@ -58,6 +58,7 @@ export interface DemandMatch {
   >[];
   matchReasons: MatchReason[];
   warnings: MatchReason[];
+  requesterSelected?: boolean;
   signals: {
     quantity: string;
     location: string;

@@ -100,6 +100,7 @@ function view(r, m) {
     requesterState: m.requesterState,
     matchType: m.matchType,
     tier: stale ? null : m.tier,
+    requesterSelected: Boolean(m.requesterSelected),
     stale: !!stale,
     staleReason: stale,
     participant: p
@@ -208,6 +209,25 @@ export function generateForRequest(userId, r, { idempotencyKey = null } = {}) {
     );
   const now = Date.now(),
     old = store.indexed("matches", "requestId", r.id);
+
+  // Phase 9 integration: the requester's own shortlist (requester_selected
+  // potential participants — e.g. a repeat-procurement "previous supplier")
+  // must flow into matching. Quotes require a match, so a selected-but-
+  // unsurfaced participant could never be quoted. These are the requester's
+  // deliberate choices, not a trust-based override.
+  const requesterSelected = new Map(); // participantId -> Set(capabilityIds)
+  for (const link of store.filter(
+    "requestParticipants",
+    (x) =>
+      x.requestId === r.id &&
+      x.origin === "requester_selected" &&
+      x.status === "potential",
+  )) {
+    if (!requesterSelected.has(link.participantId))
+      requesterSelected.set(link.participantId, new Set());
+    requesterSelected.get(link.participantId).add(link.capabilityId);
+  }
+
   const candidates = capabilityCandidates({
     text: demandTerms(r).join(" "),
     category: r.category,
@@ -215,6 +235,13 @@ export function generateForRequest(userId, r, { idempotencyKey = null } = {}) {
     limit: 300,
   });
   const groups = new Map();
+  const seenCapability = new Set();
+  const addAssessment = (a, participantId) => {
+    if (!a || seenCapability.has(a.capabilityId)) return;
+    seenCapability.add(a.capabilityId);
+    if (!groups.has(participantId)) groups.set(participantId, []);
+    groups.get(participantId).push(a);
+  };
   for (const c of candidates.capabilities) {
     const raw = supply.rawEnterprise(c.participantId);
     if (raw.ownerId === userId) continue;
@@ -224,8 +251,67 @@ export function generateForRequest(userId, r, { idempotencyKey = null } = {}) {
       cv = supply.getCapability(null, c.id),
       a = assessCapability(r, p, cv, { now });
     if (!a) continue;
-    if (!groups.has(p.id)) groups.set(p.id, []);
-    groups.get(p.id).push(a);
+    // A capability surfaced by BOTH the text search AND the requester's own
+    // shortlist must carry the explainable requester-selected reason.
+    if (requesterSelected.get(p.id)?.has(c.id)) {
+      a.requesterSelected = true;
+      a.matchReasons = [
+        ...(a.matchReasons ?? []),
+        { code: "requester_selected", text: "You selected this participant." },
+      ];
+    }
+    addAssessment(a, p.id);
+  }
+  // Surface requester-selected participants even when the text search did not
+  // surface them (capability wording may have drifted). Assessed honestly; if
+  // the capability cannot overlap the request terms, an explicit "you selected
+  // this participant" reason replaces a silent drop.
+  for (const [participantId, capabilityIds] of requesterSelected) {
+    for (const capabilityId of capabilityIds) {
+      if (seenCapability.has(capabilityId)) continue;
+      try {
+        const raw = supply.rawEnterprise(participantId);
+        if (raw.ownerId === userId) continue;
+        const p = supply.getEnterprise(null, participantId, {
+            includeCapabilities: false,
+          }),
+          cv = supply.getCapability(null, capabilityId);
+        const a = assessCapability(r, p, cv, { now });
+        if (a) {
+          a.requesterSelected = true;
+          addAssessment(a, participantId);
+        } else {
+          addAssessment(
+            {
+              capabilityId,
+              score: 0,
+              relevance: 0,
+              quantity: "unknown",
+              location: "unknown",
+              time: "unknown",
+              tier: "potential",
+              requesterSelected: true,
+              matchReasons: [
+                {
+                  code: "requester_selected",
+                  text: "You selected this participant. Capability overlap with this Request needs confirmation.",
+                },
+              ],
+              warnings: [
+                {
+                  code: "selected_no_overlap",
+                  text: "This participant was selected by you but its stated capability does not clearly overlap the Request terms. Confirm before requesting a quote.",
+                },
+              ],
+            },
+            participantId,
+          );
+        }
+      } catch {
+        // Archived / no-longer-public participant: skip rather than surface a
+        // broken match. The shortlist still lists it as unavailable.
+      }
+    }
   }
   const ranked = [...groups]
     .map(([participantId, assessments]) => ({
@@ -274,6 +360,7 @@ export function generateForRequest(userId, r, { idempotencyKey = null } = {}) {
         tier: best.tier,
         matchReasons: best.matchReasons,
         warnings: best.warnings,
+        requesterSelected: Boolean(best.requesterSelected),
         signals: {
           quantity: best.quantity,
           location: best.location,
