@@ -4150,3 +4150,19 @@ export function getPublicCapabilityTrust(id: string, capabilityId: string): Prom
   return request(`/api/public/enterprises/${encodeURIComponent(id)}/capabilities/${encodeURIComponent(capabilityId)}/trust`, undefined, r =>
     r && typeof r.participantId === 'string' && r.verification && r.history ? r : undefined);
 }
+
+// Work Order payments (Phase 8): the financial rail under the economic chain.
+import type { WorkOrderPayments, WorkPaymentIntent } from './workPaymentTypes';
+const workPaymentsOf = (r: any): WorkOrderPayments | undefined =>
+  r && Array.isArray(r?.payments) && r.state ? r : undefined;
+export function getWorkOrderPayments(id: string): Promise<ApiResult<WorkOrderPayments>> {
+  return request(`/api/work-orders/${encodeURIComponent(id)}/payments`, undefined, workPaymentsOf);
+}
+export function payWorkOrder(id: string, body: { phone: string; idempotencyKey?: string }): Promise<ApiResult<{ intent: WorkPaymentIntent; reused: boolean; charged: boolean; customerMessage?: string | null; error?: string; detail?: unknown }>> {
+  return request(`/api/work-orders/${encodeURIComponent(id)}/pay`, { method: 'POST', body: JSON.stringify(body) }, r =>
+    r && r.intent?.id ? r : undefined);
+}
+export function getMyWorkPayments(): Promise<ApiResult<WorkPaymentIntent[]>> {
+  return request('/api/me/work-payments', undefined, r =>
+    Array.isArray(r?.payments) ? r.payments : undefined);
+}

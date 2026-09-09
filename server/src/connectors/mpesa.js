@@ -113,7 +113,9 @@ export function status() {
     provider: 'mpesa-daraja',
     baseUrl: baseUrl(),
     env: env('MPESA_ENV') === 'production' ? 'production' : 'sandbox',
-    callbackUrl: callbackUrl(),
+    // The callback URL embeds the callback secret and is NEVER reported to a
+    // caller (Daraja does not sign callbacks; the secret path is the only
+    // defence). The boolean credentialState() is all an operator needs.
     configured: isConfigured(),
     missing: missingCredentials(),
     payoutConfigured: isPayoutConfigured(),

@@ -81,6 +81,7 @@ import { register as groupBuyRoutes } from './routes/groupbuy.js';
 import { register as spacesRoutes } from './routes/spaces.js';
 import { register as procurementRoutes } from './routes/procurement.js';
 import { register as participantTrustRoutes } from './routes/participantTrust.js';
+import { register as workPaymentRoutes } from './routes/workPayment.js';
 
 const app = express();
 
@@ -250,6 +251,7 @@ groupBuyRoutes(app);
 spacesRoutes(app);
 procurementRoutes(app);
 participantTrustRoutes(app);
+workPaymentRoutes(app);
 
 // --- Production frontend serving -------------------------------------------
 //

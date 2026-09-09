@@ -110,7 +110,10 @@ export function status() {
   return {
     provider: 'tuma',
     baseUrl: baseUrl(),
-    callbackUrl: callbackUrl(),
+    // The callback URL embeds the webhook secret and is NEVER reported to a
+    // caller: exposing it would let an attacker forge unsigned callbacks
+    // (Tuma does not sign them). credentialState() already reports whether
+    // the secret is present via a boolean, which is all an operator needs.
     configured: isConfigured(),
     missing: missingCredentials(),
     reason: isConfigured()

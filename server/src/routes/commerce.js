@@ -8,6 +8,7 @@ import * as listings from '../domain/listing.js';
 import * as orders from '../domain/order.js';
 import * as ledger from '../domain/ledger.js';
 import * as payment from '../domain/payment.js';
+import * as workPayment from '../domain/workPayment.js';
 import * as settlement from '../domain/settlement.js';
 import * as tuma from '../connectors/tuma.js';
 import * as mpesa from '../connectors/mpesa.js';
@@ -653,6 +654,24 @@ app.post('/api/webhooks/tuma/:secret', (req, res) => {
     cancelled: parsed.cancelled
   });
 
+  // Phase 8: the SAME Tuma callback also serves Work Order payments. The
+  // provider reference is globally unique across both rails, so dispatch is
+  // unambiguous and both confirmations are idempotent.
+  let appliedWork = null;
+  if (!applied.ok && applied.reason === 'unknown_reference') {
+    appliedWork = workPayment.confirmPayment({
+      providerRef: parsed.checkoutRequestId,
+      succeeded: parsed.succeeded,
+      amount: parsed.amount,
+      receipt: parsed.receipt,
+      failureReason: parsed.failureReason,
+      cancelled: parsed.cancelled
+    });
+  }
+  if (appliedWork && appliedWork.ok) {
+    return res.json({ ok: true, duplicate: Boolean(appliedWork.duplicate) });
+  }
+
   if (!applied.ok) {
     recordError('tuma_webhook', null, `callback not applied: ${applied.reason}`);
     // 200 to the provider: retrying will not help, and Tuma retries on
@@ -661,7 +680,7 @@ app.post('/api/webhooks/tuma/:secret', (req, res) => {
     return res.status(200).json({ ok: false, reason: applied.reason });
   }
 
-  if (applied.transactionId && !applied.duplicate) {
+  if (applied.transactionId && !applied.duplicate && applied.intent?.orderId) {
     // Attach the money to the order and emit the signal. Settlement itself
     // still goes through the existing guarded transition.
     try {

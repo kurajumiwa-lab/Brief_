@@ -17,6 +17,7 @@ import {
 } from "./WorkActionPanel";
 import { openWork } from "./navigation";
 import { requestPath } from "../requests/RequestsWorkspace";
+import { WorkPaymentSection } from "./WorkPaymentSection";
 import "../quotes/quotes.css";
 import "./work.css";
 const words = (s: string) => s.split("_").join(" ");
@@ -309,6 +310,17 @@ function WorkCard({
             </span>
           </div>
           <WorkAgreement work={w} agreement={a} />
+          <WorkPaymentSection
+            workOrderId={w.id}
+            requesterView={w.viewerRole === "requester"}
+            agreementTotalMinor={a.terms.totalMinor ?? 0}
+            agreementCurrency={a.terms.currency}
+            sourcingBreakdown={{
+              sourceCostMinor: a.terms.subtotalMinor ?? null,
+              sourcingFeeMinor: a.terms.sourcingFeeMinor ?? 0,
+              logisticsCostMinor: a.terms.deliveryCostMinor ?? 0,
+            }}
+          />
           <div className="request-actions work-actions">
             {primary.map((action) => (
               <button
