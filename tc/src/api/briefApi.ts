@@ -4120,3 +4120,21 @@ export function getRequestWork(id:string):Promise<ApiResult<WorkCollection>> {re
 export function getMyWork():Promise<ApiResult<WorkCollection>> {return request('/api/supply/work-orders',undefined,r=>Array.isArray(r?.workOrders)?r:undefined);}
 export function createWorkOrder(quoteId:string):Promise<ApiResult<WorkOrder>> {return request(`/api/request-quotes/${encodeURIComponent(quoteId)}/work-order`,{method:'POST',body:JSON.stringify({})},r=>r?.workOrder?.id?r.workOrder:undefined);}
 export function changeWorkOrder(id:string,body:WorkInput):Promise<ApiResult<WorkOrder>> {return request(`/api/work-orders/${encodeURIComponent(id)}/actions`,{method:'POST',body:JSON.stringify(body)},r=>r?.workOrder?.id?r.workOrder:undefined);}
+
+// Repeat procurement: private business memory of completed procurements.
+import type { ProcurementReference, RepeatProcurementInput, RepeatProcurementResult } from './procurementTypes';
+const procurementOf = (r: any): ProcurementReference | undefined =>
+  r && typeof r.id === 'string' && typeof r.sourceWorkOrderId === 'string' && r.lastAgreedPrice ? r : undefined;
+export function listProcurement(): Promise<ApiResult<ProcurementReference[]>> {
+  return request('/api/me/procurement', undefined, r => Array.isArray(r?.procurements) && r.procurements.every(procurementOf) ? r.procurements : undefined);
+}
+export function getProcurement(id: string): Promise<ApiResult<{ procurement: ProcurementReference; prefill: Record<string, unknown> }>> {
+  return request(`/api/me/procurement/${encodeURIComponent(id)}`, undefined, r => procurementOf(r?.procurement) ? { procurement: r.procurement, prefill: r.prefill } : undefined);
+}
+export function repeatProcurement(id: string, body: RepeatProcurementInput): Promise<ApiResult<RepeatProcurementResult>> {
+  return request(`/api/me/procurement/${encodeURIComponent(id)}/repeat`, { method: 'POST', body: JSON.stringify(body ?? {}) }, r => r?.request?.id ? r : undefined);
+}
+export function getWorkOrderProcurement(workOrderId: string): Promise<ApiResult<ProcurementReference | null>> {
+  return request(`/api/work-orders/${encodeURIComponent(workOrderId)}/procurement`, undefined, r =>
+    r && 'procurement' in r ? (r.procurement === null || procurementOf(r.procurement) ? r.procurement : undefined) : undefined);
+}

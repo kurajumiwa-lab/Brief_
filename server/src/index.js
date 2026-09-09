@@ -79,6 +79,7 @@ import { register as engineRoutes } from './routes/engine.js';
 import { register as coopRoutes } from './routes/coop.js';
 import { register as groupBuyRoutes } from './routes/groupbuy.js';
 import { register as spacesRoutes } from './routes/spaces.js';
+import { register as procurementRoutes } from './routes/procurement.js';
 
 const app = express();
 
@@ -246,6 +247,7 @@ engineRoutes(app);
 coopRoutes(app);
 groupBuyRoutes(app);
 spacesRoutes(app);
+procurementRoutes(app);
 
 // --- Production frontend serving -------------------------------------------
 //

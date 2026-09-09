@@ -16,6 +16,7 @@ import {
   amendmentFields,
 } from "./WorkActionPanel";
 import { openWork } from "./navigation";
+import { requestPath } from "../requests/RequestsWorkspace";
 import "../quotes/quotes.css";
 import "./work.css";
 const words = (s: string) => s.split("_").join(" ");
@@ -332,6 +333,14 @@ function WorkCard({
               </button>
             ))}
           </div>
+          {w.status === "completed" && w.viewerRole === "requester" && (
+            <button
+              className="request-primary"
+              onClick={() => requestPath("procurement")}
+            >
+              ↻ Request again
+            </button>
+          )}
           {additional.length > 0 && (
             <details>
               <summary>Changes, cancellation & issues</summary>

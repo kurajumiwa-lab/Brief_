@@ -9,6 +9,7 @@ import {
 } from "./quoteValidation.js";
 import { readFile } from "./upload.js";
 import { recordAudit } from "../routes/helpers.js";
+import * as procurement from "./procurement.js";
 export const WORK_STATUSES = [
   "created",
   "specification_pending",
@@ -787,6 +788,18 @@ export function mutate(user, id, input) {
     patch.history = [...w.history, ...events];
     const updated = store.update("workOrders", id, patch);
     for (const e of events) audit(updated, e);
+    // Phase 6: a completed Work Order becomes a reusable procurement memory.
+    // Idempotent — one reference per Work Order, never a duplicate, never a
+    // mutation of the original Request/Quote/Work Order.
+    if (action === "complete") {
+      try {
+        procurement.recordCompletion(updated);
+      } catch (err) {
+        // Completion must never be blocked by memory recording. The Work Order
+        // is already completed; a failed memory write is surfaced, not fatal.
+        console.error("Repeat-procurement memory write failed", err);
+      }
+    }
     return view(user, updated);
   });
 }

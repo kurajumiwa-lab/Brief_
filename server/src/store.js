@@ -30,6 +30,7 @@ const EMPTY = {
   capabilities: [], // Capability records reference the existing vendor identity.
   requestParticipants: [], // Owner-curated potential options, not matches.
   requests: [], // Structured economic demand; additive, no data migration.
+  procurements: [], // Repeat-procurement memory: one historical row per completed Work Order.
   sessions: [],
   // Server-held secrets that must survive a restart but must never reach a
   // client (currently: the HMAC key that signs one-tap email links).

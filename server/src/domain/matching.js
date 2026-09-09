@@ -129,6 +129,25 @@ function view(r, m) {
     matchReasons: stale ? [] : m.matchReasons,
     warnings: stale ? [] : m.warnings,
     signals: stale ? null : m.signals,
+    // Phase 6 (spec §15): a previous successful fulfillment is an EXPLAINABLE
+    // signal, never a ranking input. Derived from the requester's own
+    // procurement memory; read directly from the store to avoid an import
+    // cycle with the procurement module.
+    previousFulfillment: store.filter(
+      "procurements",
+      (x) =>
+        x.ownerId === r.requesterId && x.participantId === m.participantId,
+    ).length > 0
+      ? {
+          label: "Previously completed a similar request for this business.",
+          count: store.filter(
+            "procurements",
+            (x) =>
+              x.ownerId === r.requesterId &&
+              x.participantId === m.participantId,
+          ).length,
+        }
+      : null,
     interested: interest?.status === "interested",
     interest: interest
       ? {

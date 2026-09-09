@@ -3,6 +3,7 @@ import {QuoteWorkspace} from "../quotes/LazyQuotes";
 import { RequestMatches } from "../matching/RequestMatches";
 import { RequestImage } from "../matching/RequestImage";
 import { RequestPotentialParticipants } from "../supply/RequestPotentialParticipants";
+import { ProcurementWorkspace } from "../procurement/ProcurementWorkspace";
 import "../supply/supply.css";
 import { SessionSignIn } from "../../components/SessionSignIn";
 import React, { useEffect, useState } from "react";
@@ -158,6 +159,8 @@ export function RequestsWorkspace({ route = "" }: { route?: string }) {
     }
   };
   const filtered = rows.filter((r) => groups[tab].includes(r.status));
+  if (route === "procurement")
+    return <ProcurementWorkspace onOpenRequest={requestPath} />;
   return (
     <div className="requests-workspace">
       <header className="request-workspace-header">
@@ -456,6 +459,16 @@ export function RequestsWorkspace({ route = "" }: { route?: string }) {
                 What your business needs, all in one place. Start small; add the
                 detail that helps someone get it done.
               </p>
+              <button
+                className="request-row procurement-entry"
+                onClick={() => requestPath("procurement")}
+              >
+                <div className="request-row-title">
+                  <h2>↻ Repeat procurement</h2>
+                  <span className="request-status">Memory</span>
+                </div>
+                <p>Things you have sourced before — re-request in one tap.</p>
+              </button>
               <div
                 className="request-tabs"
                 role="group"
