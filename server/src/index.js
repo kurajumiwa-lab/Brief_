@@ -85,6 +85,7 @@ import { register as workPaymentRoutes } from './routes/workPayment.js';
 import { register as attributionRoutes } from './routes/attribution.js';
 import { register as partnerRoutes } from './routes/partner.js';
 import { register as fieldAgentRoutes } from './routes/fieldAgent.js';
+import { register as lipaMdogoRoutes } from './routes/lipaMdogo.js';
 
 const app = express();
 
@@ -258,6 +259,7 @@ workPaymentRoutes(app);
 attributionRoutes(app);
 partnerRoutes(app);
 fieldAgentRoutes(app);
+lipaMdogoRoutes(app);
 
 // --- Production frontend serving -------------------------------------------
 //

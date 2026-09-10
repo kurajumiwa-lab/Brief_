@@ -110,6 +110,13 @@ const EMPTY = {
   // src/domain/fieldAgent.js.
   vendorClaims: [],
   fieldAgentSettlements: [],
+  // Lipa Mdogo — asset-financing RECORDS + collection. Brief is not the
+  // lender: the lender is a bank/sacco/cooperative partner who owns the risk;
+  // these rows record the contract, the derived schedule, and provider-
+  // confirmed installment payments with a signed receipt hash. See
+  // src/domain/lipaMdogo.js.
+  lipaMdogoContracts: [],
+  lipaMdogoPayments: [],
   // P2P ticket resale (Tikiti integration T1). A ticket is ONE admitted
   // seat, born from a confirmed campaign registration; its scannable code
   // IS the registration's gate code, versioned so a transfer kills every

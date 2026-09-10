@@ -9,6 +9,7 @@ import * as orders from '../domain/order.js';
 import * as ledger from '../domain/ledger.js';
 import * as payment from '../domain/payment.js';
 import * as workPayment from '../domain/workPayment.js';
+import * as lipaMdogo from '../domain/lipaMdogo.js';
 import * as settlement from '../domain/settlement.js';
 import * as tuma from '../connectors/tuma.js';
 import * as mpesa from '../connectors/mpesa.js';
@@ -673,6 +674,24 @@ app.post('/api/webhooks/tuma/:secret', (req, res) => {
   }
   if (appliedWork && appliedWork.ok) {
     return res.json({ ok: true, duplicate: Boolean(appliedWork.duplicate) });
+  }
+
+  // Lipa Mdogo: the same callback also serves installment collections. The
+  // reference is globally unique across all three rails; confirmation is
+  // idempotent and records a signed receipt hash.
+  let appliedLmd = null;
+  if (!applied.ok && (!appliedWork || !appliedWork.ok)) {
+    appliedLmd = lipaMdogo.confirmPayment({
+      providerRef: parsed.checkoutRequestId,
+      succeeded: parsed.succeeded,
+      amount: parsed.amount,
+      receipt: parsed.receipt,
+      failureReason: parsed.failureReason,
+      cancelled: parsed.cancelled
+    });
+  }
+  if (appliedLmd && appliedLmd.ok) {
+    return res.json({ ok: true, duplicate: Boolean(appliedLmd.duplicate) });
   }
 
   if (!applied.ok) {
