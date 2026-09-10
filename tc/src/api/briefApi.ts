@@ -4166,3 +4166,43 @@ export function getMyWorkPayments(): Promise<ApiResult<WorkPaymentIntent[]>> {
   return request('/api/me/work-payments', undefined, r =>
     Array.isArray(r?.payments) ? r.payments : undefined);
 }
+
+// Distribution provenance (Phase 11): how this member arrived, plus their
+// derived economic activity. Honest null acquisition/provenance when the
+// member had no provenance captured at sign-up.
+export interface Acquisition {
+  id: string;
+  userId: string;
+  partnerKey?: string | null;
+  partnerName?: string | null;
+  programKey?: string | null;
+  programName?: string | null;
+  cohortKey?: string | null;
+  cohortName?: string | null;
+  inviteCode?: string | null;
+  channel?: string | null;
+  source?: string | null;
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
+  utmContent?: string | null;
+  referrerId?: string | null;
+  createdAt: string;
+}
+export interface EconomicActivity {
+  orders: { bought: { count: number; totalKes: number }; sold: { count: number; totalKes: number } };
+  work: { requested: { count: number; totalKes: number }; fulfilled: { count: number; totalKes: number } };
+  procurement: { repeatPatterns: number };
+  requests: { created: number };
+  verifiedCommercialKes: number;
+  currency: string;
+}
+export interface MyAcquisition {
+  acquisition: Acquisition | null;
+  provenance: Array<{ hop: string; key?: string; name?: string; code?: string; id?: string }> | null;
+  activity: EconomicActivity;
+}
+export function getMyAcquisition(): Promise<ApiResult<MyAcquisition>> {
+  return request('/api/me/acquisition', undefined, r =>
+    r && typeof r?.activity === 'object' ? r : undefined);
+}

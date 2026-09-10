@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import * as api from "../../api/briefApi";
+import { MotionList } from "../../ui/motion/MotionList";
+import { MotionNumber } from "../../ui/motion/MotionNumber";
 
 // ---------------------------------------------------------------------------
 // ACTIVITY — the user's operational inbox (§11 / Phase 10 §15).
@@ -7,8 +9,13 @@ import * as api from "../../api/briefApi";
 // "What happened to me, and what needs my action?" Distinct from Discover (the
 // outside world) and Spaces (a persistent work context). This surface shows
 // the user's OWN real economic activity — their Requests, Work, Payments and
-// repeat-procurement memory — with honest empty / signed-out states. Nothing
-// here is invented.
+// repeat-procurement memory — plus, honestly, the provenance of how they
+// arrived (partner/program/cohort), which is null when none was captured.
+//
+// Colors reference the canonical design tokens (src/ui/theme.css) only — the
+// stale purple/slate palette is gone. The stat figures use MotionNumber so a
+// real change reads as economic causality; a card with no prior value shows
+// the number plainly (never a rolling counter).
 // ---------------------------------------------------------------------------
 
 interface ActivityState {
@@ -17,6 +24,8 @@ interface ActivityState {
   payments: number;
   confirmedPayments: number;
   procurement: number;
+  verifiedCommercialKes: number | null;
+  provenanceLabel: string | null;
 }
 
 const initialState: ActivityState = {
@@ -25,6 +34,8 @@ const initialState: ActivityState = {
   payments: 0,
   confirmedPayments: 0,
   procurement: 0,
+  verifiedCommercialKes: null,
+  provenanceLabel: null,
 };
 
 export function ActivitySurface({ onOpenRequests }: { onOpenRequests: () => void }) {
@@ -36,11 +47,12 @@ export function ActivitySurface({ onOpenRequests }: { onOpenRequests: () => void
     let live = true;
     setLoading(true);
     (async () => {
-      const [reqs, work, pays, proc] = await Promise.all([
+      const [reqs, work, pays, proc, acq] = await Promise.all([
         api.listMyRequests(),
         api.getMyWork(),
         api.getMyWorkPayments(),
         api.listProcurement(),
+        api.getMyAcquisition(),
       ]);
       if (!live) return;
       setLoading(false);
@@ -52,6 +64,18 @@ export function ActivitySurface({ onOpenRequests }: { onOpenRequests: () => void
         return;
       }
       setSignedOut(false);
+
+      // Provenance: derive a single honest line from the chain, or null.
+      let provenanceLabel: string | null = null;
+      if (acq.ok && acq.data.acquisition) {
+        const a = acq.data.acquisition;
+        const parts: string[] = [];
+        if (a.partnerName || a.partnerKey) parts.push(a.partnerName ?? a.partnerKey!);
+        if (a.cohortName || a.cohortKey) parts.push(a.cohortName ?? a.cohortKey!);
+        if (a.channel) parts.push(`via ${a.channel}`);
+        provenanceLabel = parts.join(" · ");
+      }
+
       setState({
         requests: reqs.ok ? reqs.data.length : 0,
         work: work.ok ? work.data.workOrders.length : 0,
@@ -60,6 +84,8 @@ export function ActivitySurface({ onOpenRequests }: { onOpenRequests: () => void
           ? pays.data.filter((p) => p.status === "confirmed").length
           : 0,
         procurement: proc.ok ? proc.data.length : 0,
+        verifiedCommercialKes: acq.ok ? acq.data.activity.verifiedCommercialKes : null,
+        provenanceLabel,
       });
     })();
     return () => {
@@ -71,82 +97,159 @@ export function ActivitySurface({ onOpenRequests }: { onOpenRequests: () => void
     <section className="max-w-3xl mx-auto" aria-label="Activity">
       <div className="flex items-end justify-between">
         <div>
-          <span className="text-xs font-black uppercase tracking-widest text-[#5B2EA6]">
+          <span
+            className="text-xs font-black uppercase tracking-widest"
+            style={{ color: "var(--color-primary)" }}
+          >
             Your operational inbox
           </span>
-          <h1 className="text-2xl sm:text-3xl font-black text-[#1A1F2E] tracking-tight mt-1">
+          <h1
+            className="text-2xl sm:text-3xl font-black tracking-tight mt-1"
+            style={{ color: "var(--color-text)" }}
+          >
             Activity
           </h1>
         </div>
       </div>
-      <p className="text-sm text-[#64748B] mt-1">
+      <p className="text-sm mt-1" style={{ color: "var(--color-text-muted)" }}>
         What happened to you, and what needs your action.
       </p>
 
       {loading ? (
-        <p className="text-sm text-[#64748B] mt-6">Reading your activity…</p>
+        <p className="text-sm mt-6" style={{ color: "var(--color-text-muted)" }}>
+          Reading your activity…
+        </p>
       ) : signedOut ? (
-        <div className="mt-6 rounded-2xl border border-dashed border-[#1A1F2E]/20 bg-white p-8 text-center">
-          <h2 className="text-lg font-black text-[#1A1F2E]">Sign in to see your activity</h2>
-          <p className="text-sm text-[#64748B] mt-1">
+        <div
+          className="mt-6 rounded-2xl border border-dashed p-8 text-center"
+          style={{
+            borderColor: "var(--color-border)",
+            background: "var(--color-surface)",
+          }}
+        >
+          <h2 className="text-lg font-black" style={{ color: "var(--color-text)" }}>
+            Sign in to see your activity
+          </h2>
+          <p className="text-sm mt-1" style={{ color: "var(--color-text-muted)" }}>
             Your Requests, Work and payments are yours alone.
           </p>
         </div>
       ) : state ? (
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        <MotionList className="mt-6 grid gap-3 sm:grid-cols-2" stagger={45}>
           <button
             type="button"
             onClick={onOpenRequests}
-            className="text-left rounded-2xl border border-[#1A1F2E]/10 bg-white p-5 hover:border-[#5B2EA6] transition-colors"
+            className="text-left rounded-2xl p-5 transition-colors"
+            style={{
+              border: "1px solid var(--color-border)",
+              background: "var(--color-surface)",
+            }}
           >
-            <p className="text-2xl font-black text-[#1A1F2E]">{state.requests}</p>
-            <p className="text-xs font-black uppercase tracking-wider text-[#64748B] mt-1">
+            <MotionNumber value={state.requests} tier="consequential" />
+            <p
+              className="text-xs font-black uppercase tracking-wider mt-1"
+              style={{ color: "var(--color-text-muted)" }}
+            >
               Requests
             </p>
-            <p className="text-sm text-[#64748B] mt-2">
+            <p className="text-sm mt-2" style={{ color: "var(--color-text-muted)" }}>
               {state.requests > 0
                 ? "What your business has asked for."
                 : "No requests yet. Create one to begin."}
             </p>
           </button>
 
-          <div className="rounded-2xl border border-[#1A1F2E]/10 bg-white p-5">
-            <p className="text-2xl font-black text-[#1A1F2E]">{state.work}</p>
-            <p className="text-xs font-black uppercase tracking-wider text-[#64748B] mt-1">
+          <div
+            className="rounded-2xl p-5"
+            style={{ border: "1px solid var(--color-border)", background: "var(--color-surface)" }}
+          >
+            <MotionNumber value={state.work} tier="consequential" />
+            <p
+              className="text-xs font-black uppercase tracking-wider mt-1"
+              style={{ color: "var(--color-text-muted)" }}
+            >
               Work Orders
             </p>
-            <p className="text-sm text-[#64748B] mt-2">
+            <p className="text-sm mt-2" style={{ color: "var(--color-text-muted)" }}>
               {state.work > 0 ? "Work you are involved in." : "No work yet."}
             </p>
           </div>
 
-          <div className="rounded-2xl border border-[#1A1F2E]/10 bg-white p-5">
-            <p className="text-2xl font-black text-[#1A1F2E]">
-              {state.confirmedPayments}
-              <span className="text-sm font-bold text-[#64748B]"> / {state.payments}</span>
-            </p>
-            <p className="text-xs font-black uppercase tracking-wider text-[#64748B] mt-1">
+          <div
+            className="rounded-2xl p-5"
+            style={{ border: "1px solid var(--color-border)", background: "var(--color-surface)" }}
+          >
+            <MotionNumber value={state.confirmedPayments} tier="consequential" />
+            <span
+              className="text-sm font-bold"
+              style={{ color: "var(--color-text-muted)" }}
+            >
+              {" "}/ {state.payments}
+            </span>
+            <p
+              className="text-xs font-black uppercase tracking-wider mt-1"
+              style={{ color: "var(--color-text-muted)" }}
+            >
               Payments confirmed
             </p>
-            <p className="text-sm text-[#64748B] mt-2">
+            <p className="text-sm mt-2" style={{ color: "var(--color-text-muted)" }}>
               {state.payments > 0
                 ? "Confirmed payments out of your total attempts."
                 : "No payment activity yet."}
             </p>
           </div>
 
-          <div className="rounded-2xl border border-[#1A1F2E]/10 bg-white p-5">
-            <p className="text-2xl font-black text-[#1A1F2E]">{state.procurement}</p>
-            <p className="text-xs font-black uppercase tracking-wider text-[#64748B] mt-1">
+          <div
+            className="rounded-2xl p-5"
+            style={{ border: "1px solid var(--color-border)", background: "var(--color-surface)" }}
+          >
+            <MotionNumber value={state.procurement} tier="consequential" />
+            <p
+              className="text-xs font-black uppercase tracking-wider mt-1"
+              style={{ color: "var(--color-text-muted)" }}
+            >
               Repeat procurement
             </p>
-            <p className="text-sm text-[#64748B] mt-2">
+            <p className="text-sm mt-2" style={{ color: "var(--color-text-muted)" }}>
               {state.procurement > 0
                 ? "Things you have sourced before."
                 : "Completed work will appear here for re-ordering."}
             </p>
           </div>
-        </div>
+
+          {/* Provenance — how you arrived. Honest: hidden entirely when no
+              provenance was captured at sign-up. */}
+          {state.provenanceLabel && (
+            <div
+              className="rounded-2xl p-5 sm:col-span-2"
+              style={{
+                border: "1px solid var(--color-border)",
+                background: "var(--color-surface-elevated)",
+              }}
+            >
+              <p
+                className="text-xs font-black uppercase tracking-wider"
+                style={{ color: "var(--color-text-muted)" }}
+              >
+                You came through
+              </p>
+              <p className="text-sm mt-1" style={{ color: "var(--color-text)" }}>
+                {state.provenanceLabel}
+              </p>
+              {state.verifiedCommercialKes !== null && (
+                <p
+                  className="text-sm mt-2"
+                  style={{ color: "var(--color-text-muted)" }}
+                >
+                  Verified commercial activity:{" "}
+                  <span style={{ color: "var(--color-success)", fontWeight: 700 }}>
+                    KES {state.verifiedCommercialKes.toLocaleString()}
+                  </span>
+                </p>
+              )}
+            </div>
+          )}
+        </MotionList>
       ) : null}
     </section>
   );

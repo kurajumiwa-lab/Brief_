@@ -192,8 +192,8 @@ export const Navigation: React.FC<NavigationProps> = ({
                 <div
                   className={`transition-all duration-200 ${
                     isSelected
-                      ? 'text-[#111827] scale-105'
-                      : 'text-[#94A3B8] group-hover:text-[#111827]'
+                      ? 'text-[color:var(--color-text)] scale-105'
+                      : 'text-[color:var(--color-text-muted)] group-hover:text-[color:var(--color-text)]'
                   }`}
                 >
                   {item.icon}
@@ -201,8 +201,8 @@ export const Navigation: React.FC<NavigationProps> = ({
                 <span
                   className={`text-[10px] tracking-tight mt-1 transition-colors ${
                     isSelected
-                      ? 'text-[#111827] font-extrabold'
-                      : 'text-[#94A3B8] font-medium group-hover:text-[#111827]'
+                      ? 'text-[color:var(--color-text)] font-extrabold'
+                      : 'text-[color:var(--color-text-muted)] font-medium group-hover:text-[color:var(--color-text)]'
                   }`}
                 >
                   {item.label}
@@ -212,15 +212,15 @@ export const Navigation: React.FC<NavigationProps> = ({
           })}
         </div>
 
-        {/* ── GLOWING NEON SPARKLES FAB ── */}
+        {/* ── PRIMARY ACTION FAB (orange accent) ── */}
         <button
           type="button"
           onClick={handleFabClick}
           aria-label="Create Action"
           title="Create"
-          className="w-11 h-11 rounded-full bg-[#111827] text-[#93EE34] shadow-[0_0_18px_rgba(147,238,52,0.45)] hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center shrink-0 border border-black/10"
+          className="w-11 h-11 rounded-full bg-[color:var(--color-text)] text-[color:var(--color-primary)] shadow-[0_8px_24px_rgba(255,90,31,0.28)] hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center shrink-0 border border-black/10"
         >
-          <Sparkles className="w-5 h-5 text-[#93EE34]" />
+          <Sparkles className="w-5 h-5 text-[color:var(--color-primary)]" />
         </button>
       </nav>
 
@@ -228,18 +228,18 @@ export const Navigation: React.FC<NavigationProps> = ({
       <aside
         role="navigation"
         aria-label="Primary Desktop Navigation"
-        className="hidden md:flex flex-col w-60 p-5 space-y-6 border-r border-black/5 bg-[#FAFAF8] shrink-0 min-h-screen justify-between"
+        className="hidden md:flex flex-col w-60 p-5 space-y-6 border-r border-black/5 bg-[color:var(--color-bg)] shrink-0 min-h-screen justify-between"
       >
         <div className="space-y-6">
-          <button className={`w-full rounded-xl p-3 text-left text-sm font-bold ${activeTab === 'requests' ? 'bg-[#203e31] text-white' : 'bg-white text-[#203e31]'}`} onClick={() => { window.location.hash = 'requests'; onSelectTab('requests'); }}>My Requests ↗</button>
-          <button className={`w-full rounded-xl p-3 text-left text-sm font-bold ${activeTab === 'supply' ? 'bg-[#203e31] text-white' : 'bg-white text-[#203e31]'}`} onClick={() => { window.location.hash = 'supply/mine'; onSelectTab('supply'); }}>Capabilities ↗</button>
+          <button className={`w-full rounded-xl p-3 text-left text-sm font-bold ${activeTab === 'requests' ? 'bg-[color:var(--color-primary)] text-[color:var(--accent-ink)]' : 'bg-white text-[color:var(--color-text)]'}`} onClick={() => { window.location.hash = 'requests'; onSelectTab('requests'); }}>My Requests ↗</button>
+          <button className={`w-full rounded-xl p-3 text-left text-sm font-bold ${activeTab === 'supply' ? 'bg-[color:var(--color-primary)] text-[color:var(--accent-ink)]' : 'bg-white text-[color:var(--color-text)]'}`} onClick={() => { window.location.hash = 'supply/mine'; onSelectTab('supply'); }}>Capabilities ↗</button>
           {/* Top Brand & Space Switcher Block */}
           <div className="space-y-2">
             <div className="flex items-center space-x-2.5">
-              <div className="w-9 h-9 rounded-2xl bg-[#111827] text-[#93EE34] font-black text-base flex items-center justify-center shadow-xs">
+              <div className="w-9 h-9 rounded-2xl bg-[color:var(--color-text)] text-[color:var(--color-primary)] font-black text-base flex items-center justify-center shadow-xs">
                 B
               </div>
-              <span className="text-xl font-black text-[#111827] tracking-tight">
+              <span className="text-xl font-black text-[color:var(--color-text)] tracking-tight">
                 Brief
               </span>
             </div>
@@ -247,12 +247,12 @@ export const Navigation: React.FC<NavigationProps> = ({
             {/* Active Space Selector Pill */}
             <div className="p-2.5 rounded-2xl bg-white border border-black/5 shadow-2xs flex items-center justify-between cursor-pointer hover:border-black/15 transition-all">
               <div className="flex items-center space-x-2 min-w-0">
-                <span className="w-2 h-2 rounded-full bg-[#93EE34] shrink-0" />
-                <span className="text-xs font-black text-[#111827] truncate">
+                <span className="w-2 h-2 rounded-full bg-[color:var(--color-primary)] shrink-0" />
+                <span className="text-xs font-black text-[color:var(--color-text)] truncate">
                   {spaceName}
                 </span>
               </div>
-              <span className="text-[10px] text-[#94A3B8]">▾</span>
+              <span className="text-[10px] text-[color:var(--color-text-muted)]">▾</span>
             </div>
           </div>
 
@@ -270,8 +270,8 @@ export const Navigation: React.FC<NavigationProps> = ({
                   onClick={() => handleTabClick(item.id)}
                   className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                     isSelected
-                      ? 'bg-[#111827] text-[#93EE34] shadow-xs'
-                      : 'text-[#64748B] hover:text-[#111827] hover:bg-black/5'
+                      ? 'bg-[color:var(--color-text)] text-[color:var(--color-primary)] shadow-xs'
+                      : 'text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] hover:bg-black/5'
                   }`}
                 >
                   <div className="flex items-center space-x-3">
@@ -280,12 +280,12 @@ export const Navigation: React.FC<NavigationProps> = ({
                   </div>
 
                   {item.id === 'activity' && revenueKes > 0 && (
-                    <span className="text-[10px] font-black text-[#93EE34] bg-[#111827] px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] font-black text-[color:var(--color-primary)] bg-[color:var(--color-text)] px-2 py-0.5 rounded-full">
                       KES {(revenueKes / 1000).toFixed(1)}k
                     </span>
                   )}
                   {item.id === 'discover' && (
-                    <span className="text-[10px] font-black bg-black/5 px-2 py-0.5 rounded-full text-[#111827]">
+                    <span className="text-[10px] font-black bg-black/5 px-2 py-0.5 rounded-full text-[color:var(--color-text)]">
                       {offersCount}
                     </span>
                   )}
@@ -295,14 +295,14 @@ export const Navigation: React.FC<NavigationProps> = ({
           </nav>
         </div>
 
-        {/* Bottom Glowing Quick Action CTA */}
+        {/* Bottom Quick Action CTA */}
         <div className="pt-4 border-t border-black/5">
           <button
             type="button"
             onClick={handleFabClick}
-            className="w-full py-3 rounded-2xl bg-[#111827] hover:bg-black text-[#93EE34] font-black text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-[0_0_15px_rgba(147,238,52,0.35)] active:scale-98"
+            className="w-full py-3 rounded-2xl bg-[color:var(--color-text)] hover:bg-black text-[color:var(--color-primary)] font-black text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-[0_6px_18px_rgba(255,90,31,0.24)] active:scale-98"
           >
-            <Sparkles className="w-4 h-4 text-[#93EE34]" />
+            <Sparkles className="w-4 h-4 text-[color:var(--color-primary)]" />
             <span>+ Create Action</span>
           </button>
         </div>
