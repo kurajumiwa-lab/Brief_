@@ -10,7 +10,8 @@ import { CityFeedView } from '../features/city/CityFeedView';
 import { CreateFlowModal } from '../features/spaces/CreateFlowModal';
 import { PublicOfferModal } from '../features/offers/PublicOfferModal';
 import { SupplyWorkspace } from '../features/supply/SupplyWorkspace';
-import { RequestEntry, RequestsWorkspace, requestPath } from '../features/requests/RequestsWorkspace';
+import { RequestsWorkspace, requestPath } from '../features/requests/RequestsWorkspace';
+import { ActivitySurface } from '../features/activity/ActivitySurface';
 import { soundEngine } from '../utils/SoundEngine';
 
 export interface AppShellProps {
@@ -87,7 +88,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         setActiveTab('requests');
         try { setRequestRoute(decodeURIComponent(hash.slice(9))); } catch { setRequestRoute('invalid'); }
       } else {
-        const tabs: Record<string, BriefNavigationTab> = { home: 'city', city: 'city', events: 'city', spaces: 'pipeline', pipeline: 'pipeline', discover: 'catalog', catalog: 'catalog', activity: 'ledger', ledger: 'ledger' };
+        const tabs: Record<string, BriefNavigationTab> = { home: 'home', city: 'city', events: 'city', spaces: 'pipeline', pipeline: 'pipeline', discover: 'city', catalog: 'catalog', activity: 'activity', ledger: 'ledger' };
         if (tabs[hash]) setActiveTab(tabs[hash]);
         else if (!hash) setActiveTab(initialTab);
       }
@@ -187,8 +188,8 @@ export const AppShell: React.FC<AppShellProps> = ({
 
       {/* Main Content Viewport */}
       <main className="flex-1 min-w-0 px-4 sm:px-6 py-6 pb-28 md:pb-6 overflow-y-auto min-h-screen">
-        {activeTab === 'requests' ? <RequestsWorkspace route={requestRoute} /> : activeTab === 'supply' ? <SupplyWorkspace route={supplyRoute || 'mine'} /> : <RequestEntry />}
-        {['pipeline', 'spaces', 'activity', 'ledger', 'catalog'].includes(activeTab) && !activeSpace && (
+        {activeTab === 'requests' ? <RequestsWorkspace route={requestRoute} /> : activeTab === 'supply' ? <SupplyWorkspace route={supplyRoute || 'mine'} /> : null}
+        {['pipeline', 'spaces', 'ledger', 'catalog'].includes(activeTab) && !activeSpace && (
           <section className="max-w-3xl mx-auto py-12">
             <h2 className="text-xl font-bold">{loading ? 'Loading your workspace…' : 'A space for what you offer'}</h2>
             {spaceError ? <><p role="alert" className="my-4">{spaceError}</p><button onClick={loadSpaces}>Retry</button><button className="ml-4 underline" onClick={() => requestPath()}>Sign in through My Requests</button></> : !loading && <><p className="my-4">No business space yet. Create a Request to describe what you need, or create a space for what you sell.</p><button className="px-4 py-3 rounded-xl bg-[#203e31] text-white" onClick={() => { setCreateFlowInitialStep(1); setCreateFlowOpen(true); }}>Create a space</button></>}
@@ -212,14 +213,19 @@ export const AppShell: React.FC<AppShellProps> = ({
               <CityFeedView onOpenSpace={(id) => setActiveTab('pipeline')} />
             )}
 
-            {/* ── TAB 2: PIPELINE (Primary Seller Workspace + Integrated City Highlights) ── */}
-            {(activeTab === 'pipeline' || activeTab === 'spaces' || activeTab === 'activity') && activeSpace && (
+            {/* ── TAB 2: SPACES (Primary Seller Workspace + Integrated City Highlights) ── */}
+            {(activeTab === 'pipeline' || activeTab === 'spaces') && activeSpace && (
               <PipelineView
                 space={activeSpace}
                 onRefresh={loadSpaces}
                 onViewCityFeed={() => setActiveTab('city')}
                 onShareOffer={(t) => showToast(`Share link for "${t}" copied!`)}
               />
+            )}
+
+            {/* ── TAB 4: ACTIVITY (the user's own operational inbox) ── */}
+            {activeTab === 'activity' && (
+              <ActivitySurface onOpenRequests={() => requestPath()} />
             )}
 
             {/* ── TAB 3: LEDGER (Financial Truth) ── */}

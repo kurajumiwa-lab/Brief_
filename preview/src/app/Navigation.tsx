@@ -127,10 +127,10 @@ export const Navigation: React.FC<NavigationProps> = ({
       window.location.hash = `#${tabId}`;
     }
     // Map to the appropriate underlying view
-    if (tabId === 'home') onSelectTab('city');
+    if (tabId === 'home') onSelectTab('home');
     else if (tabId === 'spaces') onSelectTab('pipeline');
-    else if (tabId === 'discover') onSelectTab('catalog');
-    else if (tabId === 'activity') onSelectTab('ledger');
+    else if (tabId === 'discover') onSelectTab('city');
+    else if (tabId === 'activity') onSelectTab('activity');
     else onSelectTab(tabId);
   };
 
