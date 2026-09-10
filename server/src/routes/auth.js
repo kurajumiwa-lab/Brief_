@@ -2,6 +2,7 @@
 // Each route keeps its original body verbatim; only its home file changed.
 import * as auth from '../domain/auth.js';
 import * as referrals from '../domain/referrals.js';
+import * as attribution from '../domain/attribution.js';
 import * as federated from '../domain/federated.js';
 import * as onboarding from '../domain/onboarding.js';
 import * as person from '../domain/person.js';
@@ -9,6 +10,30 @@ import { callerId, platformRolesOf, capabilitiesOf } from '../identity.js';
 import { requireAuth } from './helpers.js';
 
 import { requireFeature } from '../features.js';
+
+// Build the provenance context a sign-up arrived with, from body and query
+// (UTM / deep-link / invite params). Anything unrecognised is ignored by
+// attribution.capture — the row only ever carries known provenance fields.
+function acquisitionContext(req) {
+  const q = req.query ?? {};
+  const b = req.body ?? {};
+  return {
+    partnerKey: b.partnerKey ?? b.partner ?? q.partner ?? q.partner_key,
+    partnerName: b.partnerName,
+    programKey: b.programKey ?? b.program ?? q.program ?? q.program_key,
+    programName: b.programName,
+    cohortKey: b.cohortKey ?? b.cohort ?? q.cohort ?? q.cohort_key,
+    cohortName: b.cohortName,
+    inviteCode: b.inviteCode ?? b.invite ?? q.invite,
+    channel: b.channel ?? q.channel,
+    source: b.source,
+    utmSource: b.utmSource ?? q.utm_source,
+    utmMedium: b.utmMedium ?? q.utm_medium,
+    utmCampaign: b.utmCampaign ?? q.utm_campaign,
+    utmContent: b.utmContent ?? q.utm_content,
+    referrerId: null
+  };
+}
 
 export function register(app) {
 app.use('/api/auth', requireFeature('auth'));
@@ -31,6 +56,14 @@ app.post('/api/auth/register', (req, res) => {
     // Referral attribution: a code the new member brought with them credits
     // the DIRECT referrer only, once — depth is hard-capped at one level.
     try { referrals.recordSignup(user.id, req.body?.ref ?? req.body?.refCode ?? null); } catch { /* attribution must never break registration */ }
+    // Provenance: capture partner/program/cohort/invite/channel ONCE (first
+    // touch wins). Never blocks registration, and never fabricates a partner.
+    try {
+      const ctx = acquisitionContext(req);
+      const ref = req.body?.ref ?? req.body?.refCode ?? null;
+      if (ref) ctx.referrerId = referrals.userIdForCode(ref);
+      attribution.capture(user.id, ctx);
+    } catch { /* attribution must never break registration */ }
     res.status(201).json({
       user: { ...auth.publicUser(user), personId: mine.id },
       token,
@@ -161,6 +194,7 @@ app.post('/api/auth/google', async (req, res) => {
     onboarding.ensureProfile(user.id);
     onboarding.recordEvent(user.id, 'signed_in', { provider: 'google', created });
     if (req.body?.source) onboarding.setSource(user.id, req.body.source);
+    if (created) { try { attribution.capture(user.id, acquisitionContext(req)); } catch { /* attribution must never break sign-in */ } }
     res.status(created ? 201 : 200).json({
       user: { ...auth.publicUser(user), personId: mine.id },
       token,
@@ -199,6 +233,7 @@ app.post('/api/auth/email-link', (req, res) => {
     onboarding.recordEvent(user.id, 'signed_in', { provider: 'email_link', created });
     const source = req.body?.source ?? redeemed.source;
     if (source) onboarding.setSource(user.id, source);
+    if (created) { try { attribution.capture(user.id, acquisitionContext(req)); } catch { /* attribution must never break sign-in */ } }
     res.status(created ? 201 : 200).json({
       user: { ...auth.publicUser(user), personId: mine.id },
       token,

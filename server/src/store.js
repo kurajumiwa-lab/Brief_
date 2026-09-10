@@ -88,6 +88,11 @@ const EMPTY = {
   // metrics are derived, never stored. See src/domain/campaign.js.
   campaigns: [],
   registrations: [],
+  // Distribution provenance: how each member arrived — partner / program /
+  // cohort / invite / channel — captured ONCE at signup (first-touch-wins).
+  // Economic value per member/partner is DERIVED from real rows, never
+  // stored. See src/domain/attribution.js.
+  acquisitions: [],
   // P2P ticket resale (Tikiti integration T1). A ticket is ONE admitted
   // seat, born from a confirmed campaign registration; its scannable code
   // IS the registration's gate code, versioned so a transfer kills every
