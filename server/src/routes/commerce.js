@@ -314,7 +314,10 @@ app.post('/api/orders', (req, res) => {
       // Client-supplied key. Safe to trust because it is scoped to the
       // authenticated buyer: the worst a caller can do with a forged key is
       // deduplicate their OWN orders.
-      idempotencyKey: req.body?.idempotencyKey ?? null
+      idempotencyKey: req.body?.idempotencyKey ?? null,
+      // The field agent who generated this lead, if any. Server-validated
+      // (must be a real third-party member — never the buyer or the vendor).
+      leadAgentId: req.body?.leadAgentId ?? null
     });
     signals.emitSignal({
       type: 'order_placed',

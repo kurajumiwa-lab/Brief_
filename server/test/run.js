@@ -7534,6 +7534,38 @@ console.log('\n=== REFERRALS: REWARDS WITH A MATHEMATICAL EDGE, NOT A PYRAMID ==
     r = await call('/api/referrals/mine', 'GET', undefined, A.token);
     check('replaying fulfilment mints nothing', r.body?.balance?.earned === 700, JSON.stringify(r.body?.balance));
 
+    // --- a CLOSED lead rewards the field agent once, deterministically ------
+    const agent = await reg('refagent'); // a third-party rider/field agent
+    const buyer2 = await reg('refbuyer2'); // a fresh, unreferred buyer
+    const mk2 = await call('/api/listings', 'POST', { title: 'Crate of onions', description: 'Grade A', type: 'product', price: 10000, currency: 'KES', locationName: 'Wote' }, S.token);
+    const listing2 = mk2.body.listing.id;
+    await call(`/api/listings/${listing2}/status`, 'POST', { status: 'active' }, S.token);
+    // The buyer may not be their own lead agent.
+    const selfDeal = await call('/api/orders', 'POST', { listingId: listing2, quantity: 1, leadAgentId: buyer2.user.id }, buyer2.token);
+    check('a buyer cannot be their own lead agent', selfDeal.status === 400, `got ${selfDeal.status}`);
+    // The vendor may not be the lead agent for their own listing either.
+    const vendorDeal = await call('/api/orders', 'POST', { listingId: listing2, quantity: 1, leadAgentId: S.user.id }, buyer2.token);
+    check('a vendor cannot be the lead agent for their own listing', vendorDeal.status === 400, `got ${vendorDeal.status}`);
+    // A genuine third-party agent: the order records them, and the reward is
+    // minted ONLY when the order fulfils.
+    const o2 = await call('/api/orders', 'POST', { listingId: listing2, quantity: 1, leadAgentId: agent.user.id }, buyer2.token);
+    check('an order records the lead agent', o2.body.order.leadAgentId === agent.user.id, o2.body.order.leadAgentId);
+    r = await call('/api/referrals/mine', 'GET', undefined, agent.token);
+    check('no points minted before the lead closes', r.body?.balance?.earned === 0, JSON.stringify(r.body?.balance));
+    await call(`/api/orders/${o2.body.order.id}/fulfil`, 'POST', {}, S.token);
+    r = await call('/api/referrals/mine', 'GET', undefined, agent.token);
+    check('a closed lead mints the deterministic flat reward', r.body?.balance?.earned === referrals.POINTS.leadClosed, JSON.stringify(r.body?.balance));
+    await call(`/api/orders/${o2.body.order.id}/fulfil`, 'POST', {}, S.token); // replay
+    r = await call('/api/referrals/mine', 'GET', undefined, agent.token);
+    check('replaying fulfilment does not re-mint the lead reward', r.body?.balance?.earned === referrals.POINTS.leadClosed, JSON.stringify(r.body?.balance));
+    // The distribution budget: the cash-equivalent of ALL point awards on a
+    // representative order stays under the 6.5% cap. (purchase 500 + lead 250
+    // = 750 pts = KES 75 on a KES 10,000 order = 0.75% — plus a referred
+    // purchase would add 500 pts = another 0.5%, still far below 6.5%.)
+    const leadKes = referrals.POINTS.leadClosed * referrals.CONVERSION.ptsToKes;
+    check('lead reward is a deterministic fraction of a typical order', leadKes / 10000 < referrals.DISTRIBUTION_CAP, String(leadKes / 10000));
+    check('the distribution cap is 6.5%', referrals.DISTRIBUTION_CAP === 0.065, String(referrals.DISTRIBUTION_CAP));
+
     // --- event traffic: deduped, capped, worth one point --------------------
     const camp = await call('/api/campaigns', 'POST', { title: 'Referral Night ' + Date.now().toString(36), description: 'x', type: 'event', startsAt: new Date(Date.now() + 86400000).toISOString() }, A.token);
     const pub = await call(`/api/campaigns/${camp.body.campaign.id}/publish`, 'POST', {}, A.token);

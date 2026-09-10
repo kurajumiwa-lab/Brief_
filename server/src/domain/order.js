@@ -78,7 +78,7 @@ const VALID_TRANSITIONS = {
  *                   never from the request body
  * @param quantity   whole number >= 1
  */
-export function createOrder({ listingId, buyerId, quantity = 1, note = '', idempotencyKey = null }) {
+export function createOrder({ listingId, buyerId, quantity = 1, note = '', idempotencyKey = null, leadAgentId = null }) {
   if (!buyerId) throw new Error('buyerId is required');
 
   // DUPLICATE SUBMISSION PROTECTION.
@@ -105,6 +105,23 @@ export function createOrder({ listingId, buyerId, quantity = 1, note = '', idemp
   // history on their own shelf.
   if (vendor.ownerId === buyerId) {
     throw new Error('a vendor cannot order from their own listing');
+  }
+
+  // A FIELD AGENT is the third party who generated this lead (a rider or
+  // door-to-door agent). It must be a real member, and it can never be the
+  // buyer or the vendor — otherwise a self-dealing party could mint a lead
+  // reward on their own transaction, which would be a farming hole, not a
+  // lead. The reward itself is minted only at fulfilment, in referrals.js.
+  if (leadAgentId != null) {
+    if (!store.find('users', (u) => u.id === leadAgentId)) {
+      throw new Error('lead agent not found');
+    }
+    if (leadAgentId === buyerId) {
+      throw new Error('a buyer cannot be the lead agent for their own order');
+    }
+    if (leadAgentId === vendor.ownerId) {
+      throw new Error('a vendor cannot be the lead agent for their own listing');
+    }
   }
 
   // A quantity must be a sane whole number. Number.isInteger(1e308) is TRUE
@@ -161,6 +178,7 @@ export function createOrder({ listingId, buyerId, quantity = 1, note = '', idemp
     currency,
     note: String(note ?? ''),
     idempotencyKey: idempotencyKey ?? null,
+    leadAgentId: leadAgentId ?? null,
     status: 'ordered',
     // Set only when a real settled transaction backs this order. Until then
     // the order is explicitly unpaid, and the UI says so.

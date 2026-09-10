@@ -34,10 +34,18 @@ export const POINTS = {
   perHundredKes: 5,     // purchase + referral_order: 5 pts per KES 100
   eventSignup: 25,      // a public event registration through your link
   traffic: 1,           // one unique visit through your link
-  trafficPerDay: 50     // daily cap — traffic points cannot be farmed
+  trafficPerDay: 50,    // daily cap — traffic points cannot be farmed
+  leadClosed: 250       // a CLOSED lead: a fulfilled order a field agent generated
 };
 export const CONVERSION = { ptsToKes: 0.10, minPoints: 500 };
 export const POOL_RATE = 0.10; // of confirmed service-fee revenue
+
+// The distribution budget — the single ceiling on what ONE order may pay out
+// to distribution (field-agent lead reward here, plus partner share + rider
+// override built on the same rails), as a fraction of the order's value. The
+// cash-equivalent of every point award on an order is asserted against this
+// in the test suite; raise it only after re-deriving the unit economics.
+export const DISTRIBUTION_CAP = 0.065; // 6.5%
 
 /** A member's referral code is DERIVED from their handle — nothing to guess,
  *  nothing extra to store, stable for the life of the account. */
@@ -97,6 +105,18 @@ export function recordOrder(orderId) {
     rows.push(store.insert('referralEvents', {
       id: newId('refv'), kind: 'referral_order', key: `referral_order:${orderId}`,
       actorId: order.buyerId, referrerId: refEvent.referrerId, points, valueKes: total,
+      at: new Date().toISOString()
+    }));
+  }
+  // A field agent generated this lead: reward them ONCE, only when the lead
+  // actually closes (the order fulfils). Deterministic flat points, idempotent
+  // per order, credited to the agent only — depth stays at one, and the agent
+  // can never be the buyer or the vendor (enforced at order creation).
+  if (order.leadAgentId && !eventExists(`lead_closed:${orderId}`)) {
+    rows.push(store.insert('referralEvents', {
+      id: newId('refv'), kind: 'lead_closed', key: `lead_closed:${orderId}`,
+      actorId: order.buyerId, referrerId: order.leadAgentId,
+      points: POINTS.leadClosed, valueKes: total,
       at: new Date().toISOString()
     }));
   }
