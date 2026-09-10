@@ -84,10 +84,10 @@ export const SpaceDispatches: React.FC<SpaceDispatchesProps> = ({
   };
 
   const statusColors: Record<SpaceDispatchStatus, { bg: string; text: string; label: string }> = {
-    staged: { bg: 'bg-amber-100', text: 'text-amber-800', label: 'Staged at Sacco' },
+    staged: { bg: 'bg-[color:var(--color-surface-elevated)]', text: 'text-[color:var(--color-warning)]', label: 'Staged at Sacco' },
     in_transit: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'In Transit on Road' },
-    ready_at_stage: { bg: 'bg-[#93EE34]/30', text: 'text-[#1A1F2E]', label: 'Ready at Destination Stage' },
-    collected: { bg: 'bg-emerald-100', text: 'text-emerald-800', label: 'Collected by Receiver' },
+    ready_at_stage: { bg: 'bg-[color:var(--color-primary-subtle)]', text: 'text-[color:var(--color-text)]', label: 'Ready at Destination Stage' },
+    collected: { bg: 'bg-[color:var(--color-surface-elevated)]', text: 'text-[color:var(--color-success)]', label: 'Collected by Receiver' },
     cancelled: { bg: 'bg-rose-100', text: 'text-rose-800', label: 'Cancelled' }
   };
 
@@ -95,7 +95,7 @@ export const SpaceDispatches: React.FC<SpaceDispatchesProps> = ({
     <section className={`space-y-4 ${className}`}>
       {/* Toast */}
       {toastMsg && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-[#1A1F2E] text-white text-xs font-bold shadow-2xl animate-fadeIn border border-white/10">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-[color:var(--color-text)] text-white text-xs font-bold shadow-2xl animate-fadeIn border border-white/10">
           {toastMsg}
         </div>
       )}
@@ -103,8 +103,8 @@ export const SpaceDispatches: React.FC<SpaceDispatchesProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <Truck className="w-4 h-4 text-[#1A1F2E]" />
-          <h3 className="text-sm font-black uppercase tracking-wider text-[#1A1F2E]">
+          <Truck className="w-4 h-4 text-[color:var(--color-text)]" />
+          <h3 className="text-sm font-black uppercase tracking-wider text-[color:var(--color-text)]">
             Inter-County Cargo Dispatches ({dispatches.length})
           </h3>
         </div>
@@ -114,7 +114,7 @@ export const SpaceDispatches: React.FC<SpaceDispatchesProps> = ({
             soundEngine.play('heavyTap');
             setCreateModalOpen(true);
           }}
-          className="px-3 py-1.5 rounded-full bg-[#1A1F2E] hover:bg-black text-[#93EE34] font-bold text-xs flex items-center space-x-1.5 transition-all cursor-pointer shadow-xs"
+          className="px-3 py-1.5 rounded-full bg-[color:var(--color-text)] hover:bg-black text-[color:var(--color-primary)] font-bold text-xs flex items-center space-x-1.5 transition-all cursor-pointer shadow-xs"
         >
           <Plus className="w-3.5 h-3.5" />
           <span>Dispatch Parcel</span>
@@ -124,9 +124,9 @@ export const SpaceDispatches: React.FC<SpaceDispatchesProps> = ({
       {/* Dispatches List */}
       {dispatches.length === 0 ? (
         <div className="p-6 rounded-3xl bg-white border border-black/5 text-center space-y-2 shadow-sm">
-          <Truck className="w-8 h-8 text-[#64748B] mx-auto opacity-40" />
-          <p className="text-xs font-bold text-[#1A1F2E]">No cargo dispatches recorded yet</p>
-          <p className="text-[11px] text-[#64748B] max-w-sm mx-auto">
+          <Truck className="w-8 h-8 text-[color:var(--color-text-muted)] mx-auto opacity-40" />
+          <p className="text-xs font-bold text-[color:var(--color-text)]">No cargo dispatches recorded yet</p>
+          <p className="text-[11px] text-[color:var(--color-text-muted)] max-w-sm mx-auto">
             Connect your home-baked cakes and goods to cross-county distribution stages (2NK, Easy Coach, Mololine).
           </p>
         </div>
@@ -144,15 +144,15 @@ export const SpaceDispatches: React.FC<SpaceDispatchesProps> = ({
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <div className="flex items-center space-x-2">
-                      <span className="text-xs font-black text-[#1A1F2E] font-mono">
+                      <span className="text-xs font-black text-[color:var(--color-text)] font-mono">
                         {d.waybillRef}
                       </span>
-                      <span className="text-[10px] font-bold text-[#5B2EA6] bg-[#5B2EA6]/10 px-2 py-0.5 rounded-full">
+                      <span className="text-[10px] font-bold text-[color:var(--color-primary)] bg-[color:var(--color-primary-subtle)] px-2 py-0.5 rounded-full">
                         {d.carrierSacco}
                       </span>
                     </div>
-                    <p className="text-xs font-bold text-[#1A1F2E] mt-1 flex items-center space-x-1">
-                      <MapPin className="w-3.5 h-3.5 text-emerald-700 inline shrink-0" />
+                    <p className="text-xs font-bold text-[color:var(--color-text)] mt-1 flex items-center space-x-1">
+                      <MapPin className="w-3.5 h-3.5 text-[color:var(--color-success)] inline shrink-0" />
                       <span>{d.destinationTown} ({d.destinationCounty})</span>
                     </p>
                   </div>
@@ -163,22 +163,22 @@ export const SpaceDispatches: React.FC<SpaceDispatchesProps> = ({
                 </div>
 
                 {/* Receiver details */}
-                <div className="p-3 rounded-2xl bg-[#FAFAF8] text-[11px] space-y-1 text-[#64748B]">
+                <div className="p-3 rounded-2xl bg-[color:var(--color-surface)] text-[11px] space-y-1 text-[color:var(--color-text-muted)]">
                   <p>
-                    <strong className="text-[#1A1F2E]">Receiver:</strong> {d.receiverName} ({d.receiverPhone})
+                    <strong className="text-[color:var(--color-text)]">Receiver:</strong> {d.receiverName} ({d.receiverPhone})
                   </p>
                   {d.conductorContact && (
                     <p>
-                      <strong className="text-[#1A1F2E]">Conductor Contact:</strong> {d.conductorContact}
+                      <strong className="text-[color:var(--color-text)]">Conductor Contact:</strong> {d.conductorContact}
                     </p>
                   )}
                   {d.notes && (
-                    <p className="italic text-[#1A1F2E]/80">
+                    <p className="italic text-[color:var(--color-text-muted)]">
                       "{d.notes}"
                     </p>
                   )}
                   {d.stageFeeKes > 0 && (
-                    <p className="text-[10px] font-mono text-[#1A1F2E]">
+                    <p className="text-[10px] font-mono text-[color:var(--color-text)]">
                       Parcel Stage Fee: KES {d.stageFeeKes.toLocaleString()}
                     </p>
                   )}
@@ -189,9 +189,9 @@ export const SpaceDispatches: React.FC<SpaceDispatchesProps> = ({
                   <button
                     type="button"
                     onClick={() => handleShareTracking(d)}
-                    className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[10px] font-bold transition-all cursor-pointer flex items-center space-x-1"
+                    className="px-3 py-1.5 rounded-xl bg-[color:var(--color-surface-elevated)] hover:bg-[color:var(--color-surface-elevated)] text-[color:var(--color-success)] text-[10px] font-bold transition-all cursor-pointer flex items-center space-x-1"
                   >
-                    <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
+                    <MessageCircle className="w-3.5 h-3.5 text-[color:var(--color-success)]" />
                     <span>Share WhatsApp Tracking</span>
                   </button>
 
@@ -200,7 +200,7 @@ export const SpaceDispatches: React.FC<SpaceDispatchesProps> = ({
                       <button
                         type="button"
                         onClick={() => handleUpdateStatus(d.id, 'ready_at_stage')}
-                        className="px-2.5 py-1.5 rounded-xl bg-[#93EE34]/20 hover:bg-[#93EE34]/40 text-[#1A1F2E] text-[10px] font-extrabold transition-all cursor-pointer"
+                        className="px-2.5 py-1.5 rounded-xl bg-[color:var(--color-primary-subtle)] hover:bg-[color:var(--color-primary-subtle)] text-[color:var(--color-text)] text-[10px] font-extrabold transition-all cursor-pointer"
                       >
                         Mark Ready at Stage
                       </button>
@@ -209,7 +209,7 @@ export const SpaceDispatches: React.FC<SpaceDispatchesProps> = ({
                       <button
                         type="button"
                         onClick={() => handleUpdateStatus(d.id, 'collected')}
-                        className="px-2.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-[10px] font-bold transition-all cursor-pointer"
+                        className="px-2.5 py-1.5 rounded-xl bg-[color:var(--color-success)] hover:bg-[color:var(--color-success)] text-white text-[10px] font-bold transition-all cursor-pointer"
                       >
                         Mark Collected
                       </button>

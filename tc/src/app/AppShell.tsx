@@ -167,10 +167,10 @@ export const AppShell: React.FC<AppShellProps> = ({
   };
 
   return (
-    <div className={`min-h-screen w-full bg-[#F0EDE8] text-[#1A1F2E] font-sans flex ${className}`}>
+    <div className={`min-h-screen w-full bg-[color:var(--color-bg)] text-[color:var(--color-text)] font-sans flex ${className}`}>
       {/* Toast */}
       {toastMsg && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-[#1A1F2E] text-white text-xs font-bold shadow-2xl animate-fadeIn border border-white/10">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-[color:var(--color-text)] text-white text-xs font-bold shadow-2xl animate-fadeIn border border-white/10">
           {toastMsg}
         </div>
       )}
@@ -192,7 +192,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         {['pipeline', 'spaces', 'ledger', 'catalog'].includes(activeTab) && !activeSpace && (
           <section className="max-w-3xl mx-auto py-12">
             <h2 className="text-xl font-bold">{loading ? 'Loading your workspace…' : 'A space for what you offer'}</h2>
-            {spaceError ? <><p role="alert" className="my-4">{spaceError}</p><button onClick={loadSpaces}>Retry</button><button className="ml-4 underline" onClick={() => requestPath()}>Sign in through My Requests</button></> : !loading && <><p className="my-4">No business space yet. Create a Request to describe what you need, or create a space for what you sell.</p><button className="px-4 py-3 rounded-xl bg-[#203e31] text-white" onClick={() => { setCreateFlowInitialStep(1); setCreateFlowOpen(true); }}>Create a space</button></>}
+            {spaceError ? <><p role="alert" className="my-4">{spaceError}</p><button onClick={loadSpaces}>Retry</button><button className="ml-4 underline" onClick={() => requestPath()}>Sign in through My Requests</button></> : !loading && <><p className="my-4">No business space yet. Create a Request to describe what you need, or create a space for what you sell.</p><button className="px-4 py-3 rounded-xl bg-[color:var(--color-primary)] text-[color:var(--accent-ink)]" onClick={() => { setCreateFlowInitialStep(1); setCreateFlowOpen(true); }}>Create a space</button></>}
           </section>
         )}
         {/* Legacy Home Surface Compatibility for tests */}
@@ -264,21 +264,21 @@ export const AppShell: React.FC<AppShellProps> = ({
           <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden p-6 space-y-4 border border-black/5 animate-scaleIn">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-[#93EE34] bg-[#1A1F2E] px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-black uppercase tracking-wider text-[color:var(--color-primary)] bg-[color:var(--color-text)] px-2 py-0.5 rounded-full">
                   City Feed Post
                 </span>
-                <h3 className="text-base font-black text-[#1A1F2E] mt-1">Share with Nairobi</h3>
+                <h3 className="text-base font-black text-[color:var(--color-text)] mt-1">Share with Nairobi</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setCityPostModalOpen(false)}
-                className="text-xs text-[#64748B] hover:text-[#1A1F2E]"
+                className="text-xs text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)]"
               >
                 Cancel
               </button>
             </div>
 
-            <p className="text-xs text-[#64748B]">
+            <p className="text-xs text-[color:var(--color-text-muted)]">
               Post an event or a marketplace product drop to the Nairobi public feed.
             </p>
 
@@ -289,7 +289,7 @@ export const AppShell: React.FC<AppShellProps> = ({
                   setCityPostModalOpen(false);
                   showToast('Opening event creator');
                 }}
-                className="p-3 rounded-2xl bg-[#FAFAF8] hover:bg-[#1A1F2E] hover:text-white transition-all text-xs font-bold border border-black/5 text-center"
+                className="p-3 rounded-2xl bg-[color:var(--color-surface)] hover:bg-[color:var(--color-text)] hover:text-white transition-all text-xs font-bold border border-black/5 text-center"
               >
                 🎟️ Post Event
               </button>
@@ -300,7 +300,7 @@ export const AppShell: React.FC<AppShellProps> = ({
                   setCreateFlowInitialStep(2);
                   setCreateFlowOpen(true);
                 }}
-                className="p-3 rounded-2xl bg-[#FAFAF8] hover:bg-[#1A1F2E] hover:text-white transition-all text-xs font-bold border border-black/5 text-center"
+                className="p-3 rounded-2xl bg-[color:var(--color-surface)] hover:bg-[color:var(--color-text)] hover:text-white transition-all text-xs font-bold border border-black/5 text-center"
               >
                 🛍️ Drop Product
               </button>
@@ -315,15 +315,15 @@ export const AppShell: React.FC<AppShellProps> = ({
           <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden p-6 space-y-4 border border-black/5 animate-scaleIn">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-[#5B2EA6]">
+                <span className="text-[10px] font-black uppercase tracking-wider text-[color:var(--color-primary)]">
                   Quick Manual Order
                 </span>
-                <h3 className="text-base font-black text-[#1A1F2E]">New Walk-in Customer</h3>
+                <h3 className="text-base font-black text-[color:var(--color-text)]">New Walk-in Customer</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setManualOrderOpen(false)}
-                className="text-xs text-[#64748B] hover:text-[#1A1F2E]"
+                className="text-xs text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)]"
               >
                 Cancel
               </button>
@@ -335,7 +335,7 @@ export const AppShell: React.FC<AppShellProps> = ({
                 placeholder="Customer Name (e.g. John Kamau)"
                 value={manualCustomerName}
                 onChange={(e) => setManualCustomerName(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAFAF8] text-xs border border-black/5 focus:outline-none"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[color:var(--color-surface)] text-xs border border-black/5 focus:outline-none"
                 required
               />
               <input
@@ -343,7 +343,7 @@ export const AppShell: React.FC<AppShellProps> = ({
                 placeholder="WhatsApp Phone (e.g. 0712345678)"
                 value={manualCustomerPhone}
                 onChange={(e) => setManualCustomerPhone(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAFAF8] text-xs border border-black/5 focus:outline-none"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[color:var(--color-surface)] text-xs border border-black/5 focus:outline-none"
               />
               <div className="grid grid-cols-2 gap-2">
                 <input
@@ -351,20 +351,20 @@ export const AppShell: React.FC<AppShellProps> = ({
                   placeholder="Item Title (e.g. Birthday Cake)"
                   value={manualItemTitle}
                   onChange={(e) => setManualItemTitle(e.target.value)}
-                  className="px-3.5 py-2.5 rounded-xl bg-[#FAFAF8] text-xs border border-black/5 focus:outline-none"
+                  className="px-3.5 py-2.5 rounded-xl bg-[color:var(--color-surface)] text-xs border border-black/5 focus:outline-none"
                 />
                 <input
                   type="number"
                   placeholder="Price (KES)"
                   value={manualPrice}
                   onChange={(e) => setManualPrice(e.target.value)}
-                  className="px-3.5 py-2.5 rounded-xl bg-[#FAFAF8] text-xs border border-black/5 focus:outline-none"
+                  className="px-3.5 py-2.5 rounded-xl bg-[color:var(--color-surface)] text-xs border border-black/5 focus:outline-none"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full py-2.5 rounded-2xl bg-[#1A1F2E] hover:bg-black text-[#93EE34] text-xs font-black shadow-md transition-all cursor-pointer"
+                className="w-full py-2.5 rounded-2xl bg-[color:var(--color-text)] hover:bg-black text-[color:var(--color-primary)] text-xs font-black shadow-md transition-all cursor-pointer"
               >
                 Create Pipeline Order
               </button>

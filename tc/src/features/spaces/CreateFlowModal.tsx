@@ -106,22 +106,22 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fadeIn">
       <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden animate-scaleIn border border-black/5">
         {/* Progress Bar */}
-        <div className="w-full bg-[#FAFAF8] h-1.5">
+        <div className="w-full bg-[color:var(--color-surface)] h-1.5">
           <div
-            className="bg-[#5B2EA6] h-full transition-all duration-300"
+            className="bg-[color:var(--color-primary)] h-full transition-all duration-300"
             style={{ width: `${(step / 3) * 100}%` }}
           />
         </div>
 
         {/* Modal Header */}
-        <div className="p-5 bg-[#FAFAF8] flex items-center justify-between border-b border-black/5">
+        <div className="p-5 bg-[color:var(--color-surface)] flex items-center justify-between border-b border-black/5">
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-[10px] font-black uppercase tracking-wider text-[#5B2EA6]">
+              <span className="text-[10px] font-black uppercase tracking-wider text-[color:var(--color-primary)]">
                 Step {step} of 3
               </span>
             </div>
-            <h3 className="text-base font-black text-[#1A1F2E]">
+            <h3 className="text-base font-black text-[color:var(--color-text)]">
               {step === 1 && 'What are you building?'}
               {step === 2 && 'Add your first Offer'}
               {step === 3 && 'Ready to Publish'}
@@ -130,7 +130,7 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-full text-[#64748B] hover:text-[#1A1F2E] hover:bg-black/5 transition-colors cursor-pointer"
+            className="p-1.5 rounded-full text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] hover:bg-black/5 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -161,37 +161,37 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
                       }}
                       className={`p-3.5 rounded-2xl text-left transition-all cursor-pointer border ${
                         isSelected
-                          ? 'bg-[#5B2EA6]/10 border-[#5B2EA6] shadow-2xs'
-                          : 'bg-[#FAFAF8] border-black/5 hover:bg-black/5'
+                          ? 'bg-[color:var(--color-primary-subtle)] border-[color:var(--color-primary)] shadow-2xs'
+                          : 'bg-[color:var(--color-surface)] border-black/5 hover:bg-black/5'
                       }`}
                     >
-                      <Icon className={`w-5 h-5 mb-1.5 ${isSelected ? 'text-[#5B2EA6]' : 'text-[#64748B]'}`} />
-                      <p className="text-xs font-bold text-[#1A1F2E]">{opt.title}</p>
-                      <p className="text-[10px] text-[#64748B] leading-tight mt-0.5">{opt.desc}</p>
+                      <Icon className={`w-5 h-5 mb-1.5 ${isSelected ? 'text-[color:var(--color-primary)]' : 'text-[color:var(--color-text-muted)]'}`} />
+                      <p className="text-xs font-bold text-[color:var(--color-text)]">{opt.title}</p>
+                      <p className="text-[10px] text-[color:var(--color-text-muted)] leading-tight mt-0.5">{opt.desc}</p>
                     </button>
                   );
                 })}
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-[#1A1F2E]">Space Name</label>
+                <label className="text-[11px] font-bold text-[color:var(--color-text)]">Space Name</label>
                 <input
                   type="text"
                   placeholder="e.g. Amina's Cakes, Zawadi Leather"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAFAF8] text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[#5B2EA6]"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[color:var(--color-surface)] text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[color:var(--color-primary)]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-[#1A1F2E]">Primary Goal</label>
+                <label className="text-[11px] font-bold text-[color:var(--color-text)]">Primary Goal</label>
                 <input
                   type="text"
                   placeholder="e.g. Get my first 20 customers, Reach KES 100k revenue"
                   value={goal}
                   onChange={(e) => setGoal(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAFAF8] text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[#5B2EA6]"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[color:var(--color-surface)] text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[color:var(--color-primary)]"
                 />
               </div>
 
@@ -201,7 +201,7 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
                   soundEngine.play('tap');
                   setStep(2);
                 }}
-                className="w-full py-2.5 rounded-2xl bg-[#1A1F2E] hover:bg-black text-[#93EE34] text-xs font-black transition-all cursor-pointer flex items-center justify-center space-x-1"
+                className="w-full py-2.5 rounded-2xl bg-[color:var(--color-text)] hover:bg-black text-[color:var(--color-primary)] text-xs font-black transition-all cursor-pointer flex items-center justify-center space-x-1"
               >
                 <span>Continue to First Offer</span>
                 <ArrowRight className="w-4 h-4" />
@@ -213,35 +213,35 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
           {step === 2 && (
             <div className="space-y-4 animate-fadeIn">
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-[#1A1F2E]">Offer Title</label>
+                <label className="text-[11px] font-bold text-[color:var(--color-text)]">Offer Title</label>
                 <input
                   type="text"
                   placeholder="e.g. Birthday Cake, Custom Dress, Makeup Session"
                   value={offerTitle}
                   onChange={(e) => setOfferTitle(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAFAF8] text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[#5B2EA6]"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[color:var(--color-surface)] text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[color:var(--color-primary)]"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-2.5">
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-[#1A1F2E]">Price (KES)</label>
+                  <label className="text-[11px] font-bold text-[color:var(--color-text)]">Price (KES)</label>
                   <input
                     type="number"
                     placeholder="4500"
                     value={offerPrice}
                     onChange={(e) => setOfferPrice(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAFAF8] text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[#5B2EA6]"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[color:var(--color-surface)] text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[color:var(--color-primary)]"
                     required
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-[#1A1F2E]">Type</label>
+                  <label className="text-[11px] font-bold text-[color:var(--color-text)]">Type</label>
                   <select
                     value={offerType}
                     onChange={(e) => setOfferType(e.target.value as any)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAFAF8] text-xs border border-black/5 focus:outline-none"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[color:var(--color-surface)] text-xs border border-black/5 focus:outline-none"
                   >
                     <option value="product">Product (Goods)</option>
                     <option value="service">Service (Skill / Booking)</option>
@@ -250,13 +250,13 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-[#1A1F2E]">Description</label>
+                <label className="text-[11px] font-bold text-[color:var(--color-text)]">Description</label>
                 <textarea
                   rows={2}
                   placeholder="Brief description for customers on WhatsApp and web"
                   value={offerDescription}
                   onChange={(e) => setOfferDescription(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAFAF8] text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[#5B2EA6]"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[color:var(--color-surface)] text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[color:var(--color-primary)]"
                 />
               </div>
 
@@ -265,7 +265,7 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setStep(1)}
-                    className="py-2.5 px-4 rounded-2xl bg-[#FAFAF8] hover:bg-black/5 text-[#64748B] text-xs font-bold transition-all cursor-pointer"
+                    className="py-2.5 px-4 rounded-2xl bg-[color:var(--color-surface)] hover:bg-black/5 text-[color:var(--color-text-muted)] text-xs font-bold transition-all cursor-pointer"
                   >
                     Back
                   </button>
@@ -276,7 +276,7 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
                     soundEngine.play('tap');
                     setStep(3);
                   }}
-                  className="flex-1 py-2.5 rounded-2xl bg-[#1A1F2E] hover:bg-black text-[#93EE34] text-xs font-black transition-all cursor-pointer flex items-center justify-center space-x-1"
+                  className="flex-1 py-2.5 rounded-2xl bg-[color:var(--color-text)] hover:bg-black text-[color:var(--color-primary)] text-xs font-black transition-all cursor-pointer flex items-center justify-center space-x-1"
                 >
                   <span>Preview & Publish</span>
                   <ArrowRight className="w-4 h-4" />
@@ -288,21 +288,21 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
           {/* STEP 3: PREVIEW & PUBLISH */}
           {step === 3 && (
             <div className="space-y-4 animate-fadeIn">
-              <div className="p-4 rounded-2xl bg-[#93EE34]/15 border border-[#93EE34]/30 space-y-2">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#1A1F2E]">
+              <div className="p-4 rounded-2xl bg-[color:var(--color-primary-subtle)] border border-[color:var(--color-primary)] space-y-2">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[color:var(--color-text)]">
                   Ready to Launch
                 </span>
-                <p className="text-sm font-black text-[#1A1F2E]">
+                <p className="text-sm font-black text-[color:var(--color-text)]">
                   {name || 'Your business name'}
                 </p>
                 <div className="p-3 rounded-xl bg-white shadow-xs border border-black/5 space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-[#1A1F2E]">{offerTitle}</span>
-                    <span className="text-xs font-black text-[#1A1F2E]">
+                    <span className="text-xs font-bold text-[color:var(--color-text)]">{offerTitle}</span>
+                    <span className="text-xs font-black text-[color:var(--color-text)]">
                       KES {Number(offerPrice || 0).toLocaleString()}
                     </span>
                   </div>
-                  <p className="text-[10px] text-[#64748B]">{offerDescription}</p>
+                  <p className="text-[10px] text-[color:var(--color-text-muted)]">{offerDescription}</p>
                 </div>
               </div>
 
@@ -310,7 +310,7 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setStep(2)}
-                  className="py-2.5 px-4 rounded-2xl bg-[#FAFAF8] hover:bg-black/5 text-[#64748B] text-xs font-bold transition-all cursor-pointer"
+                  className="py-2.5 px-4 rounded-2xl bg-[color:var(--color-surface)] hover:bg-black/5 text-[color:var(--color-text-muted)] text-xs font-bold transition-all cursor-pointer"
                 >
                   Back
                 </button>
@@ -318,7 +318,7 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
                   type="button"
                   onClick={handleFinish}
                   disabled={submitting}
-                  className="flex-1 py-2.5 rounded-2xl bg-[#1A1F2E] hover:bg-black text-[#93EE34] text-xs font-black transition-all cursor-pointer flex items-center justify-center space-x-1.5 shadow-md"
+                  className="flex-1 py-2.5 rounded-2xl bg-[color:var(--color-text)] hover:bg-black text-[color:var(--color-primary)] text-xs font-black transition-all cursor-pointer flex items-center justify-center space-x-1.5 shadow-md"
                 >
                   <Sparkles className="w-4 h-4" />
                   <span>{submitting ? 'Launching...' : 'Publish Space & Offer'}</span>

@@ -212,7 +212,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
     <section className={`space-y-6 max-w-2xl mx-auto ${className}`}>
       {/* Toast */}
       {toastMsg && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-[#1A1F2E] text-white text-xs font-bold shadow-2xl animate-fadeIn border border-white/10">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-[color:var(--color-text)] text-white text-xs font-bold shadow-2xl animate-fadeIn border border-white/10">
           {toastMsg}
         </div>
       )}
@@ -221,15 +221,15 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
       <div className="p-5 rounded-3xl bg-white shadow-2xs space-y-4 border border-black/5">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="p-1.5 rounded-xl bg-[#5B2EA6]/10 text-[#5B2EA6]">
+            <div className="p-1.5 rounded-xl bg-[color:var(--color-primary-subtle)] text-[color:var(--color-primary)]">
               <TrendingUp className="w-4 h-4" />
             </div>
-            <h3 className="text-sm font-black uppercase tracking-wider text-[#1A1F2E]">
+            <h3 className="text-sm font-black uppercase tracking-wider text-[color:var(--color-text)]">
               Profit & Cash Flow
             </h3>
           </div>
-          <div className="flex items-center space-x-1 px-2.5 py-1 rounded-full bg-[#93EE34]/20 text-[#1A1F2E] text-[10px] font-black animate-pulse">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#93EE34]" />
+          <div className="flex items-center space-x-1 px-2.5 py-1 rounded-full bg-[color:var(--color-primary-subtle)] text-[color:var(--color-text)] text-[10px] font-black animate-pulse">
+            <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--color-primary)]" />
             <span>Server Authoritative</span>
           </div>
         </div>
@@ -237,44 +237,44 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
         {/* 3-Way Cashflow Breakdown */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {/* Money In */}
-          <div className="p-4 rounded-2xl bg-[#93EE34]/15 border border-[#93EE34]/30 space-y-1">
-            <div className="flex items-center space-x-1 text-[#1A1F2E] text-[10px] font-bold uppercase tracking-wider">
-              <TrendingUp className="w-3.5 h-3.5 text-emerald-700" />
+          <div className="p-4 rounded-2xl bg-[color:var(--color-primary-subtle)] border border-[color:var(--color-primary)] space-y-1">
+            <div className="flex items-center space-x-1 text-[color:var(--color-text)] text-[10px] font-bold uppercase tracking-wider">
+              <TrendingUp className="w-3.5 h-3.5 text-[color:var(--color-success)]" />
               <span>Money In (Sales)</span>
             </div>
-            <p className="text-lg font-black text-[#1A1F2E]">
+            <p className="text-lg font-black text-[color:var(--color-text)]">
               KES {totalRev.toLocaleString()}
             </p>
-            <p className="text-[10px] text-[#64748B]">
+            <p className="text-[10px] text-[color:var(--color-text-muted)]">
               Completed space orders
             </p>
           </div>
 
           {/* Money Out */}
-          <div className="p-4 rounded-2xl bg-[#FCE3EA] border border-[#E8985E]/20 space-y-1">
-            <div className="flex items-center space-x-1 text-[#1A1F2E] text-[10px] font-bold uppercase tracking-wider">
+          <div className="p-4 rounded-2xl bg-[color:var(--color-surface-elevated)] border border-[color:var(--color-accent)] space-y-1">
+            <div className="flex items-center space-x-1 text-[color:var(--color-text)] text-[10px] font-bold uppercase tracking-wider">
               <ArrowUp className="w-3.5 h-3.5 text-rose-700" />
               <span>Money Out (Supplies)</span>
             </div>
-            <p className="text-lg font-black text-[#1A1F2E]">
+            <p className="text-lg font-black text-[color:var(--color-text)]">
               KES {totalExp.toLocaleString()}
             </p>
-            <p className="text-[10px] text-[#64748B]">
+            <p className="text-[10px] text-[color:var(--color-text-muted)]">
               Ingredients & costs
             </p>
           </div>
 
           {/* Net Profit */}
-          <div className="p-4 rounded-2xl bg-[#1A1F2E] text-white space-y-1 shadow-sm">
+          <div className="p-4 rounded-2xl bg-[color:var(--color-text)] text-white space-y-1 shadow-sm">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold uppercase tracking-wider text-white/80">
                 Net Profit
               </span>
-              <span className="text-[9px] font-extrabold bg-white/20 text-[#93EE34] px-1.5 py-0.5 rounded-full">
+              <span className="text-[9px] font-extrabold bg-white/20 text-[color:var(--color-primary)] px-1.5 py-0.5 rounded-full">
                 {marginPct}% Margin
               </span>
             </div>
-            <p className="text-lg font-black text-[#93EE34]">
+            <p className="text-lg font-black text-[color:var(--color-primary)]">
               KES {netProfit.toLocaleString()}
             </p>
             <p className="text-[10px] text-white/70">
@@ -283,7 +283,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
           </div>
         </div>
 
-        <p className="text-xs text-[#64748B]">Weekly profit trends will appear when recorded history is available.</p>
+        <p className="text-xs text-[color:var(--color-text-muted)]">Weekly profit trends will appear when recorded history is available.</p>
 
         {/* Action Button Strip */}
         <div className="flex items-center gap-2 pt-1">
@@ -293,9 +293,9 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
               setShowExpenseForm(!showExpenseForm);
               setShowTabForm(false);
             }}
-            className="flex-1 py-2 rounded-xl bg-[#FAFAF8] hover:bg-black/5 text-[#1A1F2E] font-bold text-xs flex items-center justify-center space-x-1.5 transition-all cursor-pointer border border-black/5"
+            className="flex-1 py-2 rounded-xl bg-[color:var(--color-surface)] hover:bg-black/5 text-[color:var(--color-text)] font-bold text-xs flex items-center justify-center space-x-1.5 transition-all cursor-pointer border border-black/5"
           >
-            <ShoppingBag className="w-3.5 h-3.5 text-[#E8985E]" />
+            <ShoppingBag className="w-3.5 h-3.5 text-[color:var(--color-accent)]" />
             <span>+ Record Expense</span>
           </button>
 
@@ -305,21 +305,21 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
               setShowTabForm(!showTabForm);
               setShowExpenseForm(false);
             }}
-            className="flex-1 py-2 rounded-xl bg-[#FAFAF8] hover:bg-black/5 text-[#1A1F2E] font-bold text-xs flex items-center justify-center space-x-1.5 transition-all cursor-pointer border border-black/5"
+            className="flex-1 py-2 rounded-xl bg-[color:var(--color-surface)] hover:bg-black/5 text-[color:var(--color-text)] font-bold text-xs flex items-center justify-center space-x-1.5 transition-all cursor-pointer border border-black/5"
           >
-            <BookOpen className="w-3.5 h-3.5 text-[#5B2EA6]" />
+            <BookOpen className="w-3.5 h-3.5 text-[color:var(--color-primary)]" />
             <span>+ Open DukaBook Tab</span>
           </button>
         </div>
 
         {/* ── EXPENSE QUICK-LOGGER (<3s entry) ── */}
-        <div className="p-3.5 rounded-2xl bg-[#FAFAF8] border border-black/5 space-y-2.5">
+        <div className="p-3.5 rounded-2xl bg-[color:var(--color-surface)] border border-black/5 space-y-2.5">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase tracking-wider text-[#1A1F2E] flex items-center space-x-1">
-              <Zap className="w-3.5 h-3.5 text-amber-500" />
+            <span className="text-[11px] font-black uppercase tracking-wider text-[color:var(--color-text)] flex items-center space-x-1">
+              <Zap className="w-3.5 h-3.5 text-[color:var(--color-warning)]" />
               <span>Quick-Log Outflow (&lt; 3s)</span>
             </span>
-            <span className="text-[10px] text-[#64748B]">Instant ledger update</span>
+            <span className="text-[10px] text-[color:var(--color-text-muted)]">Instant ledger update</span>
           </div>
 
           <form onSubmit={handleQuickLogExpense} className="space-y-2">
@@ -331,8 +331,8 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
                   onClick={() => setQuickCategory(cat.id)}
                   className={`px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 transition-all cursor-pointer ${
                     quickCategory === cat.id
-                      ? 'bg-[#1A1F2E] text-[#93EE34]'
-                      : 'bg-white border border-black/5 text-[#64748B] hover:text-[#1A1F2E]'
+                      ? 'bg-[color:var(--color-text)] text-[color:var(--color-primary)]'
+                      : 'bg-white border border-black/5 text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)]'
                   }`}
                 >
                   {cat.label}
@@ -342,7 +342,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
 
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
-                <span className="absolute left-3 top-2 text-xs font-bold text-[#64748B]">KES</span>
+                <span className="absolute left-3 top-2 text-xs font-bold text-[color:var(--color-text-muted)]">KES</span>
                 <input
                   type="number"
                   placeholder="350"
@@ -355,7 +355,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
               <button
                 type="submit"
                 disabled={loggingQuick || !quickAmount}
-                className="px-4 py-1.5 rounded-xl bg-[#1A1F2E] hover:bg-black text-[#93EE34] font-bold text-xs transition-all cursor-pointer shadow-xs disabled:opacity-40 shrink-0"
+                className="px-4 py-1.5 rounded-xl bg-[color:var(--color-text)] hover:bg-black text-[color:var(--color-primary)] font-bold text-xs transition-all cursor-pointer shadow-xs disabled:opacity-40 shrink-0"
               >
                 {loggingQuick ? 'Logging...' : 'Log Outflow'}
               </button>
@@ -366,13 +366,13 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
 
       {/* ── FULL EXPENSE FORM ── */}
       {showExpenseForm && (
-        <form onSubmit={handleAddExpense} className="p-5 rounded-3xl bg-[#F4F7F2] border border-black/5 shadow-sm space-y-3 animate-fadeIn">
+        <form onSubmit={handleAddExpense} className="p-5 rounded-3xl bg-[color:var(--color-surface-elevated)] border border-black/5 shadow-sm space-y-3 animate-fadeIn">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#1A1F2E]">Record Operating Expense</span>
+            <span className="text-xs font-bold text-[color:var(--color-text)]">Record Operating Expense</span>
             <button
               type="button"
               onClick={() => setShowExpenseForm(false)}
-              className="text-[11px] text-[#64748B] hover:text-[#1A1F2E]"
+              className="text-[11px] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)]"
             >
               Cancel
             </button>
@@ -399,7 +399,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
 
           <button
             type="submit"
-            className="w-full py-2 rounded-xl bg-[#1A1F2E] hover:bg-black text-white text-xs font-bold transition-all cursor-pointer shadow-sm"
+            className="w-full py-2 rounded-xl bg-[color:var(--color-text)] hover:bg-black text-white text-xs font-bold transition-all cursor-pointer shadow-sm"
           >
             Save Expense
           </button>
@@ -408,13 +408,13 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
 
       {/* ── DUKABOOK TAB FORM ── */}
       {showTabForm && (
-        <form onSubmit={handleAddTab} className="p-5 rounded-3xl bg-[#FCE3EA]/50 border border-black/5 shadow-sm space-y-3 animate-fadeIn">
+        <form onSubmit={handleAddTab} className="p-5 rounded-3xl bg-[color:var(--color-surface-elevated)] border border-black/5 shadow-sm space-y-3 animate-fadeIn">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#1A1F2E]">Open Customer Credit Tab (Lipa Pole Pole)</span>
+            <span className="text-xs font-bold text-[color:var(--color-text)]">Open Customer Credit Tab (Lipa Pole Pole)</span>
             <button
               type="button"
               onClick={() => setShowTabForm(false)}
-              className="text-[11px] text-[#64748B] hover:text-[#1A1F2E]"
+              className="text-[11px] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)]"
             >
               Cancel
             </button>
@@ -458,7 +458,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
 
           <button
             type="submit"
-            className="w-full py-2 rounded-xl bg-[#5B2EA6] hover:bg-[#4a2489] text-white text-xs font-bold transition-all cursor-pointer shadow-sm"
+            className="w-full py-2 rounded-xl bg-[color:var(--color-primary)] hover:bg-[color:var(--color-primary-strong)] text-[color:var(--accent-ink)] text-xs font-bold transition-all cursor-pointer shadow-sm"
           >
             Record in DukaBook
           </button>
@@ -467,15 +467,15 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
 
       {/* ── TAB PAYMENT INLINE FORM ── */}
       {activePayingTab && (
-        <form onSubmit={handleRecordTabPayment} className="p-5 rounded-3xl bg-emerald-50 border border-emerald-200 shadow-sm space-y-3 animate-fadeIn">
+        <form onSubmit={handleRecordTabPayment} className="p-5 rounded-3xl bg-[color:var(--color-surface-elevated)] border border-[color:var(--color-border)] shadow-sm space-y-3 animate-fadeIn">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-emerald-900">
+            <span className="text-xs font-bold text-[color:var(--color-success)]">
               Record Payment from {activePayingTab.customerName} (Current Balance: KES {activePayingTab.balanceKes.toLocaleString()})
             </span>
             <button
               type="button"
               onClick={() => setActivePayingTab(null)}
-              className="text-[11px] text-[#64748B]"
+              className="text-[11px] text-[color:var(--color-text-muted)]"
             >
               Cancel
             </button>
@@ -502,7 +502,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
 
           <button
             type="submit"
-            className="w-full py-2 rounded-xl bg-emerald-700 text-white text-xs font-bold cursor-pointer"
+            className="w-full py-2 rounded-xl bg-[color:var(--color-success)] text-white text-xs font-bold cursor-pointer"
           >
             Credit Payment to Tab
           </button>
@@ -513,13 +513,13 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <BookOpen className="w-4 h-4 text-[#5B2EA6]" />
-            <h3 className="text-sm font-black uppercase tracking-wider text-[#1A1F2E]">
+            <BookOpen className="w-4 h-4 text-[color:var(--color-primary)]" />
+            <h3 className="text-sm font-black uppercase tracking-wider text-[color:var(--color-text)]">
               DukaBook Credit ({summary?.tabs?.length ?? 0})
             </h3>
           </div>
           {receivables > 0 && (
-            <span className="text-[11px] font-bold text-[#E8985E]">
+            <span className="text-[11px] font-bold text-[color:var(--color-accent)]">
               KES {receivables.toLocaleString()} outstanding
             </span>
           )}
@@ -527,7 +527,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
 
         {(!summary?.tabs || summary.tabs.length === 0) ? (
           <div className="p-4 rounded-2xl bg-white border border-black/5 text-center">
-            <p className="text-xs text-[#64748B]">No customer credit tabs recorded. Keep track of informal "Lipa Pole Pole" balances here.</p>
+            <p className="text-xs text-[color:var(--color-text-muted)]">No customer credit tabs recorded. Keep track of informal "Lipa Pole Pole" balances here.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -538,14 +538,14 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="text-xs font-bold text-[#1A1F2E]">{tab.customerName}</h4>
-                    {tab.notes && <p className="text-[10px] text-[#64748B]">{tab.notes}</p>}
+                    <h4 className="text-xs font-bold text-[color:var(--color-text)]">{tab.customerName}</h4>
+                    {tab.notes && <p className="text-[10px] text-[color:var(--color-text-muted)]">{tab.notes}</p>}
                   </div>
                   <span
                     className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full ${
                       tab.status === 'cleared'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-amber-100 text-amber-800'
+                        ? 'bg-[color:var(--color-surface-elevated)] text-[color:var(--color-success)]'
+                        : 'bg-[color:var(--color-surface-elevated)] text-[color:var(--color-warning)]'
                     }`}
                   >
                     {tab.status === 'cleared' ? 'Cleared' : `KES ${tab.balanceKes.toLocaleString()} due`}
@@ -553,9 +553,9 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
                 </div>
 
                 {/* Progress bar */}
-                <div className="w-full bg-[#FAFAF8] h-1.5 rounded-full overflow-hidden">
+                <div className="w-full bg-[color:var(--color-surface)] h-1.5 rounded-full overflow-hidden">
                   <div
-                    className="bg-[#5B2EA6] h-full rounded-full transition-all"
+                    className="bg-[color:var(--color-primary)] h-full rounded-full transition-all"
                     style={{
                       width: `${Math.min(
                         100,
@@ -573,14 +573,14 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
                         setActivePayingTab(tab);
                         setPaymentAmount(String(tab.balanceKes));
                       }}
-                      className="flex-1 py-1.5 rounded-lg bg-[#FAFAF8] hover:bg-black/5 text-emerald-800 text-[10px] font-bold transition-colors cursor-pointer border border-black/5"
+                      className="flex-1 py-1.5 rounded-lg bg-[color:var(--color-surface)] hover:bg-black/5 text-[color:var(--color-success)] text-[10px] font-bold transition-colors cursor-pointer border border-black/5"
                     >
                       Record Payment
                     </button>
                     <button
                       type="button"
                       onClick={() => handleSendReminder(tab)}
-                      className="p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-colors cursor-pointer"
+                      className="p-1.5 rounded-lg bg-[color:var(--color-surface-elevated)] hover:bg-[color:var(--color-surface-elevated)] text-[color:var(--color-success)] transition-colors cursor-pointer"
                       title="Send gentle WhatsApp reminder"
                       aria-label="Send gentle WhatsApp reminder"
                     >
@@ -598,8 +598,8 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <FileText className="w-4 h-4 text-[#E8985E]" />
-            <h3 className="text-sm font-black uppercase tracking-wider text-[#1A1F2E]">
+            <FileText className="w-4 h-4 text-[color:var(--color-accent)]" />
+            <h3 className="text-sm font-black uppercase tracking-wider text-[color:var(--color-text)]">
               Recent Supplies & Expenses ({summary?.recentExpenses?.length ?? 0})
             </h3>
           </div>
@@ -607,7 +607,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
 
         {(!summary?.recentExpenses || summary.recentExpenses.length === 0) ? (
           <div className="p-4 rounded-2xl bg-white border border-black/5 text-center">
-            <p className="text-xs text-[#64748B]">No expenses recorded yet. Track ingredients and delivery costs to see your true daily take-home.</p>
+            <p className="text-xs text-[color:var(--color-text-muted)]">No expenses recorded yet. Track ingredients and delivery costs to see your true daily take-home.</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -617,8 +617,8 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
                 className="p-3 rounded-2xl bg-white border border-black/5 shadow-2xs flex items-center justify-between gap-3"
               >
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-[#1A1F2E] truncate">{exp.description}</p>
-                  <p className="text-[10px] text-[#64748B]">
+                  <p className="text-xs font-bold text-[color:var(--color-text)] truncate">{exp.description}</p>
+                  <p className="text-[10px] text-[color:var(--color-text-muted)]">
                     {exp.category} · {exp.date}
                   </p>
                 </div>

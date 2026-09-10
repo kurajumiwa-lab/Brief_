@@ -51,8 +51,8 @@ export const SpacePeople: React.FC<SpacePeopleProps> = ({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <MessageSquare className="w-4 h-4 text-[#5B2EA6]" />
-            <h3 className="text-sm font-black uppercase tracking-wider text-[#1A1F2E]">
+            <MessageSquare className="w-4 h-4 text-[color:var(--color-primary)]" />
+            <h3 className="text-sm font-black uppercase tracking-wider text-[color:var(--color-text)]">
               Active Inquiries & WhatsApp Chats ({conversations.length})
             </h3>
           </div>
@@ -60,7 +60,7 @@ export const SpacePeople: React.FC<SpacePeopleProps> = ({
 
         {conversations.length === 0 ? (
           <div className="p-5 rounded-2xl bg-white border border-black/5 text-center">
-            <p className="text-xs text-[#64748B]">No customer chats yet. Inbound WhatsApp messages and inquiries will appear here.</p>
+            <p className="text-xs text-[color:var(--color-text-muted)]">No customer chats yet. Inbound WhatsApp messages and inquiries will appear here.</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -76,31 +76,31 @@ export const SpacePeople: React.FC<SpacePeopleProps> = ({
                     soundEngine.play('tap');
                     setSelectedConv(conv);
                   }}
-                  className="p-3.5 rounded-2xl bg-white hover:bg-[#FAFAF8] border border-black/5 shadow-2xs flex items-center justify-between gap-3 cursor-pointer transition-all"
+                  className="p-3.5 rounded-2xl bg-white hover:bg-[color:var(--color-surface)] border border-black/5 shadow-2xs flex items-center justify-between gap-3 cursor-pointer transition-all"
                 >
                   <div className="flex items-center space-x-3 min-w-0">
-                    <div className="w-9 h-9 rounded-full bg-[#5B2EA6]/10 text-[#5B2EA6] font-black text-xs flex items-center justify-center shrink-0">
+                    <div className="w-9 h-9 rounded-full bg-[color:var(--color-primary-subtle)] text-[color:var(--color-primary)] font-black text-xs flex items-center justify-center shrink-0">
                       {conv.customerName.charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center space-x-2">
-                        <span className="text-xs font-bold text-[#1A1F2E] truncate">
+                        <span className="text-xs font-bold text-[color:var(--color-text)] truncate">
                           {conv.customerName}
                         </span>
                         {conv.status === 'converted' && (
-                          <span className="px-2 py-0.5 rounded-full bg-[#93EE34]/20 text-[#1A1F2E] text-[9px] font-bold">
+                          <span className="px-2 py-0.5 rounded-full bg-[color:var(--color-primary-subtle)] text-[color:var(--color-text)] text-[9px] font-bold">
                             Order Paid
                           </span>
                         )}
                       </div>
                       {conv.offerTitle && (
-                        <p className="text-[10px] text-[#5B2EA6] font-semibold truncate flex items-center space-x-1">
+                        <p className="text-[10px] text-[color:var(--color-primary)] font-semibold truncate flex items-center space-x-1">
                           <Tag className="w-2.5 h-2.5 inline" />
                           <span>{conv.offerTitle}</span>
                         </p>
                       )}
                       {lastMsg && (
-                        <p className="text-[11px] text-[#64748B] truncate mt-0.5">
+                        <p className="text-[11px] text-[color:var(--color-text-muted)] truncate mt-0.5">
                           {lastMsg.from === 'customer' ? `${conv.customerName}: ` : 'You: '}
                           {lastMsg.text}
                         </p>
@@ -108,7 +108,7 @@ export const SpacePeople: React.FC<SpacePeopleProps> = ({
                     </div>
                   </div>
 
-                  <ArrowRight className="w-4 h-4 text-[#64748B] shrink-0" />
+                  <ArrowRight className="w-4 h-4 text-[color:var(--color-text-muted)] shrink-0" />
                 </div>
               );
             })}
@@ -120,8 +120,8 @@ export const SpacePeople: React.FC<SpacePeopleProps> = ({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Users className="w-4 h-4 text-[#5B2EA6]" />
-            <h3 className="text-sm font-black uppercase tracking-wider text-[#1A1F2E]">
+            <Users className="w-4 h-4 text-[color:var(--color-primary)]" />
+            <h3 className="text-sm font-black uppercase tracking-wider text-[color:var(--color-text)]">
               Customers ({customers.length})
             </h3>
           </div>
@@ -129,7 +129,7 @@ export const SpacePeople: React.FC<SpacePeopleProps> = ({
 
         {customers.length === 0 ? (
           <div className="p-4 rounded-2xl bg-white border border-black/5 text-center">
-            <p className="text-xs text-[#64748B]">No saved customers yet.</p>
+            <p className="text-xs text-[color:var(--color-text-muted)]">No saved customers yet.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -139,14 +139,14 @@ export const SpacePeople: React.FC<SpacePeopleProps> = ({
                 className="p-3 rounded-2xl bg-white border border-black/5 shadow-2xs flex items-center justify-between gap-3"
               >
                 <div className="flex items-center space-x-2.5 min-w-0">
-                  <div className="w-8 h-8 rounded-full bg-[#1A1F2E]/10 text-[#1A1F2E] font-bold text-xs flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-[color:var(--color-surface-elevated)] text-[color:var(--color-text)] font-bold text-xs flex items-center justify-center shrink-0">
                     {c.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <span className="text-xs font-bold text-[#1A1F2E] block truncate">
+                    <span className="text-xs font-bold text-[color:var(--color-text)] block truncate">
                       {c.name}
                     </span>
-                    <span className="text-[10px] text-[#64748B] block truncate">
+                    <span className="text-[10px] text-[color:var(--color-text-muted)] block truncate">
                       {c.contact || 'WhatsApp Customer'}
                     </span>
                   </div>
@@ -159,7 +159,7 @@ export const SpacePeople: React.FC<SpacePeopleProps> = ({
                     soundEngine.play('heavyTap');
                     onMessage?.(c);
                   }}
-                  className="p-2 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-all cursor-pointer"
+                  className="p-2 rounded-full bg-[color:var(--color-surface-elevated)] hover:bg-[color:var(--color-surface-elevated)] text-[color:var(--color-success)] transition-all cursor-pointer"
                   title="Message on WhatsApp"
                   aria-label={`Message ${c.name}`}
                 >

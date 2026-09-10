@@ -43,13 +43,13 @@ export const SpaceHeader: React.FC<SpaceHeaderProps> = ({
               soundEngine.play('tap');
               onBack();
             }}
-            className="flex items-center space-x-1.5 text-xs font-bold text-[#64748B] hover:text-[#1A1F2E] transition-colors cursor-pointer py-1"
+            className="flex items-center space-x-1.5 text-xs font-bold text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] transition-colors cursor-pointer py-1"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Spaces</span>
           </button>
         ) : (
-          <span className="text-[10px] font-bold uppercase tracking-widest text-[#64748B]">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-[color:var(--color-text-muted)]">
             YOUR SPACE
           </span>
         )}
@@ -61,7 +61,7 @@ export const SpaceHeader: React.FC<SpaceHeaderProps> = ({
               soundEngine.play('tap');
               onShare?.();
             }}
-            className="p-2 rounded-full bg-white hover:bg-gray-100 text-[#1A1F2E] shadow-2xs transition-all cursor-pointer"
+            className="p-2 rounded-full bg-white hover:bg-gray-100 text-[color:var(--color-text)] shadow-2xs transition-all cursor-pointer"
             title="Share Space"
             aria-label="Share Space"
           >
@@ -77,11 +77,11 @@ export const SpaceHeader: React.FC<SpaceHeaderProps> = ({
             <span className="text-2xl sm:text-3xl select-none" role="img" aria-label="space icon">
               {getSpaceEmoji(space.type)}
             </span>
-            <h1 className="text-2xl sm:text-3xl font-black text-[#1A1F2E] tracking-tight leading-tight">
+            <h1 className="text-2xl sm:text-3xl font-black text-[color:var(--color-text)] tracking-tight leading-tight">
               {space.name}
             </h1>
           </div>
-          <p className="text-xs sm:text-sm font-medium text-[#64748B]">
+          <p className="text-xs sm:text-sm font-medium text-[color:var(--color-text-muted)]">
             {space.goal || `${space.type.replace('_', ' ')} workspace`}
           </p>
         </div>
@@ -90,28 +90,28 @@ export const SpaceHeader: React.FC<SpaceHeaderProps> = ({
       {/* Primary Metrics Strip (3 concise numbers) */}
       <div className="grid grid-cols-3 gap-2.5 sm:gap-3 py-1">
         <div className="p-3.5 rounded-2xl bg-white shadow-2xs border border-black/5">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-[#64748B] block font-semibold">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-[color:var(--color-text-muted)] block font-semibold">
             Revenue
           </span>
-          <span className="text-base sm:text-lg font-black text-[#1A1F2E] block mt-0.5 truncate">
+          <span className="text-base sm:text-lg font-black text-[color:var(--color-text)] block mt-0.5 truncate">
             KES {(space.metrics?.revenueKes || 0).toLocaleString()}
           </span>
         </div>
 
         <div className="p-3.5 rounded-2xl bg-white shadow-2xs border border-black/5">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-[#64748B] block font-semibold">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-[color:var(--color-text-muted)] block font-semibold">
             Customers
           </span>
-          <span className="text-base sm:text-lg font-black text-[#1A1F2E] block mt-0.5">
+          <span className="text-base sm:text-lg font-black text-[color:var(--color-text)] block mt-0.5">
             {space.metrics?.customerCount || 0}
           </span>
         </div>
 
         <div className="p-3.5 rounded-2xl bg-white shadow-2xs border border-black/5">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-[#64748B] block font-semibold">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-[color:var(--color-text-muted)] block font-semibold">
             Active Orders
           </span>
-          <span className="text-base sm:text-lg font-black text-[#1A1F2E] block mt-0.5">
+          <span className="text-base sm:text-lg font-black text-[color:var(--color-text)] block mt-0.5">
             {space.metrics?.activeOrdersCount || 0}
           </span>
         </div>
@@ -125,9 +125,9 @@ export const SpaceHeader: React.FC<SpaceHeaderProps> = ({
             soundEngine.play('heavyTap');
             onAddOffer?.();
           }}
-          className="px-4 py-2 rounded-full bg-[#5B2EA6] hover:bg-[#4A238A] active:scale-95 text-white font-bold text-xs flex items-center space-x-1.5 shadow-sm transition-all cursor-pointer"
+          className="px-4 py-2 rounded-full bg-[color:var(--color-primary)] hover:bg-[color:var(--color-primary-strong)] active:scale-95 text-[color:var(--accent-ink)] font-bold text-xs flex items-center space-x-1.5 shadow-sm transition-all cursor-pointer"
         >
-          <Plus className="w-3.5 h-3.5 text-[#93EE34]" />
+          <Plus className="w-3.5 h-3.5 text-[color:var(--color-primary)]" />
           <span>Add Offer</span>
         </button>
 
@@ -137,9 +137,9 @@ export const SpaceHeader: React.FC<SpaceHeaderProps> = ({
             soundEngine.play('tap');
             onCreateOrder?.();
           }}
-          className="px-4 py-2 rounded-full bg-white hover:bg-gray-50 active:scale-95 text-[#1A1F2E] font-bold text-xs border border-black/10 shadow-2xs transition-all cursor-pointer flex items-center space-x-1.5"
+          className="px-4 py-2 rounded-full bg-white hover:bg-gray-50 active:scale-95 text-[color:var(--color-text)] font-bold text-xs border border-black/10 shadow-2xs transition-all cursor-pointer flex items-center space-x-1.5"
         >
-          <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
+          <DollarSign className="w-3.5 h-3.5 text-[color:var(--color-success)]" />
           <span>Create Order</span>
         </button>
       </div>

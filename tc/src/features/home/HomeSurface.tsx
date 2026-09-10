@@ -72,17 +72,17 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
     <div className={`space-y-6 max-w-2xl mx-auto ${className}`}>
       {/* Toast */}
       {toastMsg && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-[#1A1F2E] text-white text-xs font-bold shadow-2xl animate-fadeIn border border-white/10">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-[color:var(--color-text)] text-white text-xs font-bold shadow-2xl animate-fadeIn border border-white/10">
           {toastMsg}
         </div>
       )}
 
       {/* Greeting */}
       <div className="space-y-1">
-        <span className="text-xs font-semibold text-[#64748B]">
+        <span className="text-xs font-semibold text-[color:var(--color-text-muted)]">
           Good morning, {userName}
         </span>
-        <h1 className="text-2xl sm:text-3xl font-black text-[#1A1F2E] tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-black text-[color:var(--color-text)] tracking-tight">
           What are you working on?
         </h1>
       </div>
@@ -100,22 +100,22 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
             <div className="space-y-1">
               <div className="flex items-center space-x-2">
                 <span className="text-2xl">🍰</span>
-                <h2 className="text-xl font-black text-[#1A1F2E] group-hover:text-[#5B2EA6] transition-colors">
+                <h2 className="text-xl font-black text-[color:var(--color-text)] group-hover:text-[color:var(--color-primary)] transition-colors">
                   {primarySpace.name}
                 </h2>
               </div>
-              <p className="text-xs text-[#64748B]">
+              <p className="text-xs text-[color:var(--color-text-muted)]">
                 {primarySpace.goal || `${primarySpace.type} space`}
               </p>
             </div>
 
-            <span className="px-3 py-1 rounded-full bg-[#93EE34]/20 text-[#0C221F] text-[10px] font-mono font-bold">
+            <span className="px-3 py-1 rounded-full bg-[color:var(--color-primary-subtle)] text-[color:var(--color-text)] text-[10px] font-mono font-bold">
               ACTIVE
             </span>
           </div>
 
-          <div className="flex items-center justify-between text-xs text-[#64748B] pt-1 border-t border-black/5">
-            <span className="font-bold text-[#1A1F2E]">
+          <div className="flex items-center justify-between text-xs text-[color:var(--color-text-muted)] pt-1 border-t border-black/5">
+            <span className="font-bold text-[color:var(--color-text)]">
               KES {(primarySpace.metrics?.revenueKes || 0).toLocaleString()} this month
             </span>
             <span>
@@ -125,18 +125,18 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
 
           <button
             type="button"
-            className="w-full py-2.5 rounded-full bg-[#5B2EA6] hover:bg-[#4A238A] text-white font-bold text-xs flex items-center justify-center space-x-2 transition-all"
+            className="w-full py-2.5 rounded-full bg-[color:var(--color-primary)] hover:bg-[color:var(--color-primary-strong)] text-[color:var(--accent-ink)] font-bold text-xs flex items-center justify-center space-x-2 transition-all"
           >
             <span>Open space</span>
-            <ArrowRight className="w-3.5 h-3.5 text-[#93EE34]" />
+            <ArrowRight className="w-3.5 h-3.5 text-[color:var(--color-primary)]" />
           </button>
         </div>
       ) : (
         <div className="p-6 rounded-3xl bg-white border border-dashed border-gray-300 text-center space-y-3">
-          <p className="text-sm font-bold text-[#1A1F2E]">
+          <p className="text-sm font-bold text-[color:var(--color-text)]">
             You don't have a space yet.
           </p>
-          <p className="text-xs text-[#64748B]">
+          <p className="text-xs text-[color:var(--color-text-muted)]">
             Start a bakery, side-hustle, craft studio, or community circular fund.
           </p>
           <button
@@ -145,9 +145,9 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
               soundEngine.play('heavyTap');
               setCreateSpaceOpen(true);
             }}
-            className="px-5 py-2.5 rounded-full bg-[#5B2EA6] hover:bg-[#4A238A] text-white font-bold text-xs inline-flex items-center space-x-2 transition-all cursor-pointer shadow-sm"
+            className="px-5 py-2.5 rounded-full bg-[color:var(--color-primary)] hover:bg-[color:var(--color-primary-strong)] text-[color:var(--accent-ink)] font-bold text-xs inline-flex items-center space-x-2 transition-all cursor-pointer shadow-sm"
           >
-            <Plus className="w-4 h-4 text-[#93EE34]" />
+            <Plus className="w-4 h-4 text-[color:var(--color-primary)]" />
             <span>Create your first space</span>
           </button>
         </div>
@@ -156,31 +156,31 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
       {/* ── TODAY DECISION QUEUE (MAX 3 URGENT ITEMS) ── */}
       <section className="space-y-3" aria-label="Today Action Queue">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-black uppercase tracking-wider text-[#1A1F2E]">
+          <h3 className="text-xs font-black uppercase tracking-wider text-[color:var(--color-text)]">
             Today
           </h3>
-          <span className="text-[10px] font-mono text-[#64748B]">Action Queue</span>
+          <span className="text-[10px] font-mono text-[color:var(--color-text-muted)]">Action Queue</span>
         </div>
 
         <div className="space-y-2.5">
           <div className="p-4 rounded-2xl bg-white border border-black/5 shadow-2xs space-y-3">
             <div className="flex items-start justify-between">
               <div className="space-y-0.5">
-                <span className="text-xs font-bold text-[#1A1F2E] block">
+                <span className="text-xs font-bold text-[color:var(--color-text)] block">
                   Mary asked for a birthday cake
                 </span>
-                <span className="text-[10px] text-[#64748B] block">
+                <span className="text-[10px] text-[color:var(--color-text-muted)] block">
                   12 minutes ago · Context: Birthday Cake (KES 4,500)
                 </span>
               </div>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-[color:var(--color-success)] animate-pulse" />
             </div>
 
             <div className="flex items-center space-x-2">
               <button
                 type="button"
                 onClick={() => showToast('Opening WhatsApp reply with Mary')}
-                className="px-4 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-[#1A1F2E] text-xs font-bold transition-all cursor-pointer"
+                className="px-4 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-[color:var(--color-text)] text-xs font-bold transition-all cursor-pointer"
               >
                 Reply
               </button>
@@ -189,7 +189,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
                 onClick={() => {
                   if (primarySpace) onOpenSpace(primarySpace.id);
                 }}
-                className="px-4 py-1.5 rounded-full bg-[#5B2EA6] hover:bg-[#4A238A] text-white text-xs font-bold transition-all cursor-pointer"
+                className="px-4 py-1.5 rounded-full bg-[color:var(--color-primary)] hover:bg-[color:var(--color-primary-strong)] text-[color:var(--accent-ink)] text-xs font-bold transition-all cursor-pointer"
               >
                 Create order
               </button>
@@ -199,14 +199,14 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
           <div className="p-4 rounded-2xl bg-white border border-black/5 shadow-2xs space-y-3">
             <div className="flex items-start justify-between">
               <div className="space-y-0.5">
-                <span className="text-xs font-bold text-[#1A1F2E] block">
+                <span className="text-xs font-bold text-[color:var(--color-text)] block">
                   Your chocolate cake is getting attention
                 </span>
-                <span className="text-[10px] text-[#64748B] block">
+                <span className="text-[10px] text-[color:var(--color-text-muted)] block">
                   17 views in Kilimani · 3 new enquiries
                 </span>
               </div>
-              <span className="text-xs font-bold text-emerald-600 font-mono">+17</span>
+              <span className="text-xs font-bold text-[color:var(--color-success)] font-mono">+17</span>
             </div>
 
             <button
@@ -214,7 +214,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
               onClick={() => {
                 if (primarySpace) onOpenSpace(primarySpace.id);
               }}
-              className="px-4 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-[#1A1F2E] text-xs font-bold transition-all cursor-pointer"
+              className="px-4 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-[color:var(--color-text)] text-xs font-bold transition-all cursor-pointer"
             >
               View enquiries
             </button>
@@ -224,7 +224,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
 
       {/* ── WHAT DO YOU WANT TO DO? (4 QUICK ACTION PILLS) ── */}
       <section className="space-y-3" aria-label="Quick Actions">
-        <h3 className="text-xs font-black uppercase tracking-wider text-[#1A1F2E]">
+        <h3 className="text-xs font-black uppercase tracking-wider text-[color:var(--color-text)]">
           What do you want to do?
         </h3>
 
@@ -238,12 +238,12 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
             }}
             className="p-3.5 rounded-2xl bg-white hover:bg-gray-50 border border-black/5 shadow-2xs text-left transition-all cursor-pointer flex items-center space-x-2.5"
           >
-            <div className="w-8 h-8 rounded-xl bg-purple-50 text-[#5B2EA6] flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-[color:var(--color-primary-subtle)] text-[color:var(--color-primary)] flex items-center justify-center shrink-0">
               <ShoppingBag className="w-4 h-4" />
             </div>
             <div>
-              <span className="text-xs font-bold text-[#1A1F2E] block">Sell something</span>
-              <span className="text-[10px] text-[#64748B] block">Create offer</span>
+              <span className="text-xs font-bold text-[color:var(--color-text)] block">Sell something</span>
+              <span className="text-[10px] text-[color:var(--color-text-muted)] block">Create offer</span>
             </div>
           </button>
 
@@ -255,12 +255,12 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
             }}
             className="p-3.5 rounded-2xl bg-white hover:bg-gray-50 border border-black/5 shadow-2xs text-left transition-all cursor-pointer flex items-center space-x-2.5"
           >
-            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-[color:var(--color-surface-elevated)] text-[color:var(--color-success)] flex items-center justify-center shrink-0">
               <Compass className="w-4 h-4" />
             </div>
             <div>
-              <span className="text-xs font-bold text-[#1A1F2E] block">Find customers</span>
-              <span className="text-[10px] text-[#64748B] block">Nearby radar</span>
+              <span className="text-xs font-bold text-[color:var(--color-text)] block">Find customers</span>
+              <span className="text-[10px] text-[color:var(--color-text-muted)] block">Nearby radar</span>
             </div>
           </button>
 
@@ -272,12 +272,12 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
             }}
             className="p-3.5 rounded-2xl bg-white hover:bg-gray-50 border border-black/5 shadow-2xs text-left transition-all cursor-pointer flex items-center space-x-2.5"
           >
-            <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-[color:var(--color-surface-elevated)] text-[color:var(--color-warning)] flex items-center justify-center shrink-0">
               <DollarSign className="w-4 h-4" />
             </div>
             <div>
-              <span className="text-xs font-bold text-[#1A1F2E] block">Get paid</span>
-              <span className="text-[10px] text-[#64748B] block">M-Pesa Ledger</span>
+              <span className="text-xs font-bold text-[color:var(--color-text)] block">Get paid</span>
+              <span className="text-[10px] text-[color:var(--color-text-muted)] block">M-Pesa Ledger</span>
             </div>
           </button>
 
@@ -293,8 +293,8 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
               <Plus className="w-4 h-4" />
             </div>
             <div>
-              <span className="text-xs font-bold text-[#1A1F2E] block">Create space</span>
-              <span className="text-[10px] text-[#64748B] block">New venture</span>
+              <span className="text-xs font-bold text-[color:var(--color-text)] block">Create space</span>
+              <span className="text-[10px] text-[color:var(--color-text-muted)] block">New venture</span>
             </div>
           </button>
         </div>
@@ -304,13 +304,13 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
       {spaces.length > 1 && (
         <section className="space-y-3" aria-label="My Spaces">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-black uppercase tracking-wider text-[#1A1F2E]">
+            <h3 className="text-xs font-black uppercase tracking-wider text-[color:var(--color-text)]">
               My Spaces ({spaces.length})
             </h3>
             <button
               type="button"
               onClick={() => setCreateSpaceOpen(true)}
-              className="text-xs font-bold text-[#5B2EA6] hover:underline cursor-pointer"
+              className="text-xs font-bold text-[color:var(--color-primary)] hover:underline cursor-pointer"
             >
               + Start another
             </button>
@@ -329,17 +329,17 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
                 <div className="flex items-center space-x-2.5">
                   <span className="text-lg">🌱</span>
                   <div>
-                    <span className="text-xs font-bold text-[#1A1F2E] block">
+                    <span className="text-xs font-bold text-[color:var(--color-text)] block">
                       {s.name}
                     </span>
-                    <span className="text-[10px] text-[#64748B] block">
+                    <span className="text-[10px] text-[color:var(--color-text-muted)] block">
                       {s.goal || `${s.type} space`}
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-center space-x-2">
-                  <span className="text-xs font-mono font-bold text-[#1A1F2E]">
+                  <span className="text-xs font-mono font-bold text-[color:var(--color-text)]">
                     KES {(s.metrics?.revenueKes || 0).toLocaleString()}
                   </span>
                   <ArrowRight className="w-3.5 h-3.5 text-gray-400" />

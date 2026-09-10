@@ -85,12 +85,12 @@ export const CreateOfferModal: React.FC<CreateOfferModalProps> = ({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md bg-[#FAFAF8] text-[#1A1F2E] rounded-3xl p-6 shadow-2xl space-y-5 animate-slideUp border border-black/5"
+        className="w-full max-w-md bg-[color:var(--color-surface)] text-[color:var(--color-text)] rounded-3xl p-6 shadow-2xl space-y-5 animate-slideUp border border-black/5"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Tag className="w-5 h-5 text-[#5B2EA6]" />
-            <h2 className="text-xl font-black text-[#1A1F2E]">
+            <Tag className="w-5 h-5 text-[color:var(--color-primary)]" />
+            <h2 className="text-xl font-black text-[color:var(--color-text)]">
               Create Offer
             </h2>
           </div>
@@ -110,36 +110,36 @@ export const CreateOfferModal: React.FC<CreateOfferModalProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#1A1F2E]">What are you offering?</label>
+            <label className="text-xs font-bold text-[color:var(--color-text)]">What are you offering?</label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Birthday Cake, Wedding Photography"
               autoFocus
-              className="w-full px-4 py-2.5 rounded-xl bg-white border border-black/10 text-xs font-bold text-[#1A1F2E] focus:outline-hidden focus:border-[#5B2EA6]"
+              className="w-full px-4 py-2.5 rounded-xl bg-white border border-black/10 text-xs font-bold text-[color:var(--color-text)] focus:outline-hidden focus:border-[color:var(--color-primary)]"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#1A1F2E]">Price (KES)</label>
+            <label className="text-xs font-bold text-[color:var(--color-text)]">Price (KES)</label>
             <input
               type="number"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               placeholder="4500"
-              className="w-full px-4 py-2.5 rounded-xl bg-white border border-black/10 text-xs font-mono font-bold text-[#1A1F2E] focus:outline-hidden focus:border-[#5B2EA6]"
+              className="w-full px-4 py-2.5 rounded-xl bg-white border border-black/10 text-xs font-mono font-bold text-[color:var(--color-text)] focus:outline-hidden focus:border-[color:var(--color-primary)]"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#1A1F2E]">Tell people about it</label>
+            <label className="text-xs font-bold text-[color:var(--color-text)]">Tell people about it</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Custom birthday cake for 10-15 people. Vanilla sponge with strawberry butter cream."
               rows={3}
-              className="w-full px-4 py-2.5 rounded-xl bg-white border border-black/10 text-xs text-[#1A1F2E] focus:outline-hidden focus:border-[#5B2EA6]"
+              className="w-full px-4 py-2.5 rounded-xl bg-white border border-black/10 text-xs text-[color:var(--color-text)] focus:outline-hidden focus:border-[color:var(--color-primary)]"
             />
           </div>
 
@@ -149,9 +149,9 @@ export const CreateOfferModal: React.FC<CreateOfferModalProps> = ({
                 type="checkbox"
                 checked={publishImmediately}
                 onChange={(e) => setPublishImmediately(e.target.checked)}
-                className="rounded text-[#5B2EA6] w-4 h-4"
+                className="rounded text-[color:var(--color-primary)] w-4 h-4"
               />
-              <span className="text-xs font-bold text-[#1A1F2E]">Publish immediately (Make public)</span>
+              <span className="text-xs font-bold text-[color:var(--color-text)]">Publish immediately (Make public)</span>
             </label>
           </div>
 
@@ -163,7 +163,7 @@ export const CreateOfferModal: React.FC<CreateOfferModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-full bg-gray-100 hover:bg-gray-200 text-xs font-bold text-[#1A1F2E] transition-all cursor-pointer"
+              className="px-4 py-2.5 rounded-full bg-gray-100 hover:bg-gray-200 text-xs font-bold text-[color:var(--color-text)] transition-all cursor-pointer"
             >
               Cancel
             </button>
@@ -171,10 +171,10 @@ export const CreateOfferModal: React.FC<CreateOfferModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 py-3 rounded-full bg-[#5B2EA6] hover:bg-[#4A238A] active:scale-95 text-white font-black text-xs shadow-md transition-all cursor-pointer flex items-center justify-center space-x-2 disabled:opacity-50"
+              className="flex-1 py-3 rounded-full bg-[color:var(--color-primary)] hover:bg-[color:var(--color-primary-strong)] active:scale-95 text-[color:var(--accent-ink)] font-black text-xs shadow-md transition-all cursor-pointer flex items-center justify-center space-x-2 disabled:opacity-50"
             >
               <span>{isSubmitting ? 'Saving...' : 'Publish Offer'}</span>
-              <Check className="w-4 h-4 text-[#93EE34]" />
+              <Check className="w-4 h-4 text-[color:var(--color-primary)]" />
             </button>
           </div>
         </form>

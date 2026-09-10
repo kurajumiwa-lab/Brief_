@@ -15,14 +15,14 @@ export const SpaceActivity: React.FC<SpaceActivityProps> = ({
     switch (kind) {
       case 'order_created':
       case 'payment_received':
-        return <DollarSign className="w-3.5 h-3.5 text-emerald-600" />;
+        return <DollarSign className="w-3.5 h-3.5 text-[color:var(--color-success)]" />;
       case 'conversation_received':
         return <MessageCircle className="w-3.5 h-3.5 text-blue-600" />;
       case 'offer_created':
       case 'offer_published':
-        return <Tag className="w-3.5 h-3.5 text-purple-600" />;
+        return <Tag className="w-3.5 h-3.5 text-[color:var(--color-primary)]" />;
       default:
-        return <Sparkles className="w-3.5 h-3.5 text-amber-500" />;
+        return <Sparkles className="w-3.5 h-3.5 text-[color:var(--color-warning)]" />;
     }
   };
 
@@ -42,17 +42,17 @@ export const SpaceActivity: React.FC<SpaceActivityProps> = ({
     <section className={`space-y-3 ${className}`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <Activity className="w-4 h-4 text-[#5B2EA6]" />
-          <h3 className="text-sm font-black uppercase tracking-wider text-[#1A1F2E]">
+          <Activity className="w-4 h-4 text-[color:var(--color-primary)]" />
+          <h3 className="text-sm font-black uppercase tracking-wider text-[color:var(--color-text)]">
             Recent Activity
           </h3>
         </div>
-        <span className="text-[10px] font-mono text-[#64748B]">Real-time</span>
+        <span className="text-[10px] font-mono text-[color:var(--color-text-muted)]">Real-time</span>
       </div>
 
       {activities.length === 0 ? (
         <div className="p-5 rounded-2xl bg-white border border-black/5 text-center">
-          <p className="text-xs text-[#64748B]">No activity recorded yet.</p>
+          <p className="text-xs text-[color:var(--color-text-muted)]">No activity recorded yet.</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -67,7 +67,7 @@ export const SpaceActivity: React.FC<SpaceActivityProps> = ({
 
               <div className="flex-1 min-w-0 space-y-0.5">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-bold text-[#1A1F2E] truncate">
+                  <span className="text-xs font-bold text-[color:var(--color-text)] truncate">
                     {act.title}
                   </span>
                   <span className="text-[10px] font-mono text-[#94A3B8] shrink-0">
@@ -75,7 +75,7 @@ export const SpaceActivity: React.FC<SpaceActivityProps> = ({
                   </span>
                 </div>
                 {act.description && (
-                  <p className="text-[11px] text-[#64748B] leading-relaxed line-clamp-2">
+                  <p className="text-[11px] text-[color:var(--color-text-muted)] leading-relaxed line-clamp-2">
                     {act.description}
                   </p>
                 )}

@@ -68,7 +68,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
 
   if (isLoading && !space) {
     return (
-      <div className="p-10 text-center text-xs text-[#64748B]">
+      <div className="p-10 text-center text-xs text-[color:var(--color-text-muted)]">
         Loading space...
       </div>
     );
@@ -77,12 +77,12 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
   if (!space) {
     return (
       <div className="p-10 text-center space-y-3">
-        <p className="text-sm font-bold text-[#1A1F2E]">Space not found</p>
+        <p className="text-sm font-bold text-[color:var(--color-text)]">Space not found</p>
         {onBack && (
           <button
             type="button"
             onClick={onBack}
-            className="px-4 py-2 rounded-full bg-gray-200 text-xs font-bold text-[#1A1F2E] cursor-pointer"
+            className="px-4 py-2 rounded-full bg-gray-200 text-xs font-bold text-[color:var(--color-text)] cursor-pointer"
           >
             Go Back
           </button>
@@ -113,7 +113,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
     <div className={`space-y-4 max-w-2xl mx-auto ${className}`}>
       {/* Toast Notification */}
       {toastMsg && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-[#1A1F2E] text-white text-xs font-bold shadow-2xl animate-fadeIn border border-white/10">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-[color:var(--color-text)] text-white text-xs font-bold shadow-2xl animate-fadeIn border border-white/10">
           {toastMsg}
         </div>
       )}
@@ -133,8 +133,8 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
                 }}
                 className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                   isSelected
-                    ? 'bg-[#1A1F2E] text-white shadow-xs'
-                    : 'text-[#64748B] hover:text-[#1A1F2E] hover:bg-black/5'
+                    ? 'bg-[color:var(--color-text)] text-white shadow-xs'
+                    : 'text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] hover:bg-black/5'
                 }`}
               >
                 {tab.label}
@@ -146,7 +146,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
         <button
           type="button"
           onClick={() => setCreateFlowOpen(true)}
-          className="px-3 py-1.5 rounded-full bg-[#5B2EA6] hover:bg-[#4a2489] text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
+          className="px-3 py-1.5 rounded-full bg-[color:var(--color-primary)] hover:bg-[color:var(--color-primary-strong)] text-[color:var(--accent-ink)] text-xs font-bold shadow-xs transition-all cursor-pointer"
         >
           + Add Offer
         </button>

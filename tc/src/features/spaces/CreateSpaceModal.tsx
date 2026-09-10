@@ -77,13 +77,13 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md bg-[#FAFAF8] text-[#1A1F2E] rounded-3xl p-6 shadow-2xl space-y-5 animate-slideUp border border-black/5"
+        className="w-full max-w-md bg-[color:var(--color-surface)] text-[color:var(--color-text)] rounded-3xl p-6 shadow-2xl space-y-5 animate-slideUp border border-black/5"
       >
         {/* Top Progress & Close */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#5B2EA6]" />
-            <span className="text-[10px] font-mono font-bold text-[#64748B] uppercase tracking-wider">
+            <span className="w-2 h-2 rounded-full bg-[color:var(--color-primary)]" />
+            <span className="text-[10px] font-mono font-bold text-[color:var(--color-text-muted)] uppercase tracking-wider">
               Step {step} of 4
             </span>
           </div>
@@ -105,10 +105,10 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
         {step === 1 && (
           <div className="space-y-4">
             <div className="space-y-1">
-              <h2 className="text-xl font-black text-[#1A1F2E]">
+              <h2 className="text-xl font-black text-[color:var(--color-text)]">
                 What are you building?
               </h2>
-              <p className="text-xs text-[#64748B]">
+              <p className="text-xs text-[color:var(--color-text-muted)]">
                 Brief will assemble the right tools and rails for your goal.
               </p>
             </div>
@@ -124,8 +124,8 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
                   }}
                   className={`p-3 rounded-2xl text-left transition-all border cursor-pointer flex flex-col justify-between ${
                     selectedType === opt.type
-                      ? 'bg-[#5B2EA6] text-white border-[#5B2EA6] shadow-sm'
-                      : 'bg-white text-[#1A1F2E] border-black/5 hover:border-black/15'
+                      ? 'bg-[color:var(--color-primary)] text-[color:var(--accent-ink)] border-[color:var(--color-primary)] shadow-sm'
+                      : 'bg-white text-[color:var(--color-text)] border-black/5 hover:border-black/15'
                   }`}
                 >
                   <span className="text-xl">{opt.emoji}</span>
@@ -135,7 +135,7 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
                     </span>
                     <span
                       className={`text-[10px] block mt-0.5 line-clamp-1 ${
-                        selectedType === opt.type ? 'text-white/80' : 'text-[#64748B]'
+                        selectedType === opt.type ? 'text-white/80' : 'text-[color:var(--color-text-muted)]'
                       }`}
                     >
                       {opt.desc}
@@ -151,10 +151,10 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
                 soundEngine.play('tap');
                 setStep(2);
               }}
-              className="w-full py-3 rounded-full bg-[#1A1F2E] hover:bg-black text-white font-bold text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer"
+              className="w-full py-3 rounded-full bg-[color:var(--color-text)] hover:bg-black text-white font-bold text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer"
             >
               <span>Continue</span>
-              <ArrowRight className="w-4 h-4 text-[#93EE34]" />
+              <ArrowRight className="w-4 h-4 text-[color:var(--color-primary)]" />
             </button>
           </div>
         )}
@@ -163,23 +163,23 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
         {step === 2 && (
           <div className="space-y-4">
             <div className="space-y-1">
-              <h2 className="text-xl font-black text-[#1A1F2E]">
+              <h2 className="text-xl font-black text-[color:var(--color-text)]">
                 What should we call it?
               </h2>
-              <p className="text-xs text-[#64748B]">
+              <p className="text-xs text-[color:var(--color-text-muted)]">
                 Give your space a clear, recognizable name.
               </p>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#1A1F2E]">Space Name</label>
+              <label className="text-xs font-bold text-[color:var(--color-text)]">Space Name</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Amina's Cakes, Kilimani Food Circle"
                 autoFocus
-                className="w-full px-4 py-3 rounded-xl bg-white border border-black/10 text-sm font-bold text-[#1A1F2E] focus:outline-hidden focus:border-[#5B2EA6]"
+                className="w-full px-4 py-3 rounded-xl bg-white border border-black/10 text-sm font-bold text-[color:var(--color-text)] focus:outline-hidden focus:border-[color:var(--color-primary)]"
               />
             </div>
 
@@ -187,7 +187,7 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="px-4 py-3 rounded-full bg-gray-100 hover:bg-gray-200 text-xs font-bold text-[#1A1F2E] transition-all cursor-pointer"
+                className="px-4 py-3 rounded-full bg-gray-100 hover:bg-gray-200 text-xs font-bold text-[color:var(--color-text)] transition-all cursor-pointer"
               >
                 Back
               </button>
@@ -202,10 +202,10 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
                   soundEngine.play('tap');
                   setStep(3);
                 }}
-                className="flex-1 py-3 rounded-full bg-[#1A1F2E] hover:bg-black text-white font-bold text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer"
+                className="flex-1 py-3 rounded-full bg-[color:var(--color-text)] hover:bg-black text-white font-bold text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer"
               >
                 <span>Continue</span>
-                <ArrowRight className="w-4 h-4 text-[#93EE34]" />
+                <ArrowRight className="w-4 h-4 text-[color:var(--color-primary)]" />
               </button>
             </div>
           </div>
@@ -215,34 +215,34 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
         {step === 3 && (
           <div className="space-y-4">
             <div className="space-y-1">
-              <h2 className="text-xl font-black text-[#1A1F2E]">
+              <h2 className="text-xl font-black text-[color:var(--color-text)]">
                 What do you want to achieve?
               </h2>
-              <p className="text-xs text-[#64748B]">
+              <p className="text-xs text-[color:var(--color-text-muted)]">
                 A measurable goal keeps your space focused.
               </p>
             </div>
 
             <div className="space-y-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[#1A1F2E]">Goal Description</label>
+                <label className="text-xs font-bold text-[color:var(--color-text)]">Goal Description</label>
                 <input
                   type="text"
                   value={goal}
                   onChange={(e) => setGoal(e.target.value)}
                   placeholder="e.g. Get my first 20 customers"
-                  className="w-full px-4 py-2.5 rounded-xl bg-white border border-black/10 text-xs font-medium text-[#1A1F2E] focus:outline-hidden focus:border-[#5B2EA6]"
+                  className="w-full px-4 py-2.5 rounded-xl bg-white border border-black/10 text-xs font-medium text-[color:var(--color-text)] focus:outline-hidden focus:border-[color:var(--color-primary)]"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[#1A1F2E]">Monthly Target (KES)</label>
+                <label className="text-xs font-bold text-[color:var(--color-text)]">Monthly Target (KES)</label>
                 <input
                   type="number"
                   value={targetValueKes}
                   onChange={(e) => setTargetValueKes(e.target.value)}
                   placeholder="100000"
-                  className="w-full px-4 py-2.5 rounded-xl bg-white border border-black/10 text-xs font-mono font-bold text-[#1A1F2E] focus:outline-hidden focus:border-[#5B2EA6]"
+                  className="w-full px-4 py-2.5 rounded-xl bg-white border border-black/10 text-xs font-mono font-bold text-[color:var(--color-text)] focus:outline-hidden focus:border-[color:var(--color-primary)]"
                 />
               </div>
             </div>
@@ -251,7 +251,7 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
               <button
                 type="button"
                 onClick={() => setStep(2)}
-                className="px-4 py-3 rounded-full bg-gray-100 hover:bg-gray-200 text-xs font-bold text-[#1A1F2E] transition-all cursor-pointer"
+                className="px-4 py-3 rounded-full bg-gray-100 hover:bg-gray-200 text-xs font-bold text-[color:var(--color-text)] transition-all cursor-pointer"
               >
                 Back
               </button>
@@ -261,10 +261,10 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
                   soundEngine.play('tap');
                   setStep(4);
                 }}
-                className="flex-1 py-3 rounded-full bg-[#1A1F2E] hover:bg-black text-white font-bold text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer"
+                className="flex-1 py-3 rounded-full bg-[color:var(--color-text)] hover:bg-black text-white font-bold text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer"
               >
                 <span>Continue</span>
-                <ArrowRight className="w-4 h-4 text-[#93EE34]" />
+                <ArrowRight className="w-4 h-4 text-[color:var(--color-primary)]" />
               </button>
             </div>
           </div>
@@ -274,10 +274,10 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
         {step === 4 && (
           <div className="space-y-4">
             <div className="space-y-1">
-              <h2 className="text-xl font-black text-[#1A1F2E]">
+              <h2 className="text-xl font-black text-[color:var(--color-text)]">
                 What do you already have?
               </h2>
-              <p className="text-xs text-[#64748B]">
+              <p className="text-xs text-[color:var(--color-text-muted)]">
                 Check what's ready so we can connect rails.
               </p>
             </div>
@@ -288,9 +288,9 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
                   type="checkbox"
                   checked={hasWhatsApp}
                   onChange={(e) => setHasWhatsApp(e.target.checked)}
-                  className="rounded text-[#5B2EA6] w-4 h-4"
+                  className="rounded text-[color:var(--color-primary)] w-4 h-4"
                 />
-                <span className="text-xs font-bold text-[#1A1F2E]">WhatsApp Customers</span>
+                <span className="text-xs font-bold text-[color:var(--color-text)]">WhatsApp Customers</span>
               </label>
 
               <label className="flex items-center space-x-3 p-3 rounded-xl bg-white border border-black/5 cursor-pointer">
@@ -298,9 +298,9 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
                   type="checkbox"
                   checked={hasProducts}
                   onChange={(e) => setHasProducts(e.target.checked)}
-                  className="rounded text-[#5B2EA6] w-4 h-4"
+                  className="rounded text-[color:var(--color-primary)] w-4 h-4"
                 />
-                <span className="text-xs font-bold text-[#1A1F2E]">Products / Services Ready</span>
+                <span className="text-xs font-bold text-[color:var(--color-text)]">Products / Services Ready</span>
               </label>
 
               <label className="flex items-center space-x-3 p-3 rounded-xl bg-white border border-black/5 cursor-pointer">
@@ -308,9 +308,9 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
                   type="checkbox"
                   checked={hasCustomers}
                   onChange={(e) => setHasCustomers(e.target.checked)}
-                  className="rounded text-[#5B2EA6] w-4 h-4"
+                  className="rounded text-[color:var(--color-primary)] w-4 h-4"
                 />
-                <span className="text-xs font-bold text-[#1A1F2E]">Physical Shop / Stall</span>
+                <span className="text-xs font-bold text-[color:var(--color-text)]">Physical Shop / Stall</span>
               </label>
             </div>
 
@@ -322,7 +322,7 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
               <button
                 type="button"
                 onClick={() => setStep(3)}
-                className="px-4 py-3 rounded-full bg-gray-100 hover:bg-gray-200 text-xs font-bold text-[#1A1F2E] transition-all cursor-pointer"
+                className="px-4 py-3 rounded-full bg-gray-100 hover:bg-gray-200 text-xs font-bold text-[color:var(--color-text)] transition-all cursor-pointer"
               >
                 Back
               </button>
@@ -330,10 +330,10 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
                 type="button"
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="flex-1 py-3 rounded-full bg-[#5B2EA6] hover:bg-[#4A238A] active:scale-95 text-white font-black text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-md disabled:opacity-50"
+                className="flex-1 py-3 rounded-full bg-[color:var(--color-primary)] hover:bg-[color:var(--color-primary-strong)] active:scale-95 text-[color:var(--accent-ink)] font-black text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-md disabled:opacity-50"
               >
                 <span>{isSubmitting ? 'Creating Space...' : 'Create Space'}</span>
-                <Check className="w-4 h-4 text-[#93EE34]" />
+                <Check className="w-4 h-4 text-[color:var(--color-primary)]" />
               </button>
             </div>
           </div>

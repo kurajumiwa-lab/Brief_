@@ -50,18 +50,18 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
     <div className={`space-y-6 max-w-4xl mx-auto ${className}`}>
       {/* Toast */}
       {toastMsg && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-[#1A1F2E] text-white text-xs font-bold shadow-2xl animate-fadeIn border border-white/10">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-[color:var(--color-text)] text-white text-xs font-bold shadow-2xl animate-fadeIn border border-white/10">
           {toastMsg}
         </div>
       )}
 
       {/* ── CITY FEED HERO HEADER ── */}
-      <div className="p-6 rounded-3xl bg-[#1A1F2E] text-white space-y-4 shadow-xl border border-white/10 relative overflow-hidden">
+      <div className="p-6 rounded-3xl bg-[color:var(--color-text)] text-white space-y-4 shadow-xl border border-white/10 relative overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center space-x-2">
-              <span className="w-2 h-2 rounded-full bg-[#93EE34] animate-ping" />
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#93EE34]">
+              <span className="w-2 h-2 rounded-full bg-[color:var(--color-primary)] animate-ping" />
+              <span className="text-[10px] font-extrabold uppercase tracking-widest text-[color:var(--color-primary)]">
                 Live Nairobi Activity
               </span>
             </div>
@@ -74,7 +74,7 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
           </div>
 
           <div className="flex items-center space-x-2 shrink-0">
-            <span className="px-3 py-1.5 rounded-2xl bg-white/10 text-[#93EE34] text-xs font-bold border border-white/10">
+            <span className="px-3 py-1.5 rounded-2xl bg-white/10 text-[color:var(--color-primary)] text-xs font-bold border border-white/10">
               📍 Nairobi · Kilimani · CBD
             </span>
           </div>
@@ -94,7 +94,7 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
                 }}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-bold shrink-0 transition-all cursor-pointer flex items-center space-x-1.5 ${
                   isSelected
-                    ? 'bg-[#93EE34] text-[#1A1F2E] shadow-sm'
+                    ? 'bg-[color:var(--color-primary)] text-[color:var(--color-text)] shadow-sm'
                     : 'bg-white/10 text-white/80 hover:bg-white/20'
                 }`}
               >
@@ -114,15 +114,15 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
             <section className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <Clock className="w-4 h-4 text-[#5B2EA6]" />
-                  <h3 className="text-sm font-black uppercase tracking-wider text-[#1A1F2E]">
+                  <Clock className="w-4 h-4 text-[color:var(--color-primary)]" />
+                  <h3 className="text-sm font-black uppercase tracking-wider text-[color:var(--color-text)]">
                     Featured Events & Experiences
                   </h3>
                 </div>
                 <button
                   type="button"
                   onClick={() => setActiveSubTab('events')}
-                  className="text-xs font-bold text-[#5B2EA6] hover:underline flex items-center space-x-1 cursor-pointer"
+                  className="text-xs font-bold text-[color:var(--color-primary)] hover:underline flex items-center space-x-1 cursor-pointer"
                 >
                   <span>View All Events</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -137,15 +137,15 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
             <section className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <ShoppingBag className="w-4 h-4 text-[#E8985E]" />
-                  <h3 className="text-sm font-black uppercase tracking-wider text-[#1A1F2E]">
+                  <ShoppingBag className="w-4 h-4 text-[color:var(--color-accent)]" />
+                  <h3 className="text-sm font-black uppercase tracking-wider text-[color:var(--color-text)]">
                     Community Marketplace & Second-Hand Drops
                   </h3>
                 </div>
                 <button
                   type="button"
                   onClick={() => setActiveSubTab('marketplace')}
-                  className="text-xs font-bold text-[#E8985E] hover:underline flex items-center space-x-1 cursor-pointer"
+                  className="text-xs font-bold text-[color:var(--color-accent)] hover:underline flex items-center space-x-1 cursor-pointer"
                 >
                   <span>Explore Market</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -161,15 +161,15 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
               <section className="p-4 rounded-3xl bg-white border border-black/5 shadow-2xs space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <Users className="w-4 h-4 text-[#5B2EA6]" />
-                    <h3 className="text-xs font-black uppercase tracking-wider text-[#1A1F2E]">
+                    <Users className="w-4 h-4 text-[color:var(--color-primary)]" />
+                    <h3 className="text-xs font-black uppercase tracking-wider text-[color:var(--color-text)]">
                       Community Circles & Mutual Aid
                     </h3>
                   </div>
                   <button
                     type="button"
                     onClick={() => setActiveSubTab('circles')}
-                    className="text-[11px] font-bold text-[#5B2EA6] hover:underline cursor-pointer"
+                    className="text-[11px] font-bold text-[color:var(--color-primary)] hover:underline cursor-pointer"
                   >
                     All Circles →
                   </button>
@@ -180,15 +180,15 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
               <section className="p-4 rounded-3xl bg-white border border-black/5 shadow-2xs space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <Lock className="w-4 h-4 text-[#1A1F2E]" />
-                    <h3 className="text-xs font-black uppercase tracking-wider text-[#1A1F2E]">
+                    <Lock className="w-4 h-4 text-[color:var(--color-text)]" />
+                    <h3 className="text-xs font-black uppercase tracking-wider text-[color:var(--color-text)]">
                       Vault & Special Drops
                     </h3>
                   </div>
                   <button
                     type="button"
                     onClick={() => setActiveSubTab('vault')}
-                    className="text-[11px] font-bold text-[#5B2EA6] hover:underline cursor-pointer"
+                    className="text-[11px] font-bold text-[color:var(--color-primary)] hover:underline cursor-pointer"
                   >
                     Open Vault →
                   </button>

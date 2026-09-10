@@ -96,6 +96,7 @@
   --color-surface-elevated: #F0F2F5;
   --color-primary: var(--brief-green);      /* warm orange */
   --color-primary-strong: #E64A14;          /* darker orange (hover/pressed) */
+  --color-primary-subtle: #FFF1EA;          /* very light orange tint (highlight pills) */
   --color-accent: var(--accent-2);          /* blue secondary */
   --color-success: var(--success);
   --color-warning: var(--warning);

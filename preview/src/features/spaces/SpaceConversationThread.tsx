@@ -120,28 +120,28 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
   return (
     <div className={`flex flex-col h-full bg-white rounded-3xl shadow-sm overflow-hidden ${className}`}>
       {/* ── THREAD HEADER ── */}
-      <div className="p-4 bg-[#FAFAF8] flex items-center justify-between border-b border-black/5">
+      <div className="p-4 bg-[color:var(--color-surface)] flex items-center justify-between border-b border-black/5">
         <div className="flex items-center space-x-3">
           {onBack && (
             <button
               type="button"
               onClick={onBack}
-              className="p-1.5 rounded-full hover:bg-black/5 text-[#64748B] transition-colors cursor-pointer"
+              className="p-1.5 rounded-full hover:bg-black/5 text-[color:var(--color-text-muted)] transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
           )}
           <div>
             <div className="flex items-center space-x-2">
-              <h3 className="font-bold text-[#1A1F2E] text-sm">{conversation.customerName}</h3>
+              <h3 className="font-bold text-[color:var(--color-text)] text-sm">{conversation.customerName}</h3>
               {conversation.customerContact && (
-                <span className="text-[10px] font-mono text-[#64748B] bg-white px-2 py-0.5 rounded-full shadow-xs">
+                <span className="text-[10px] font-mono text-[color:var(--color-text-muted)] bg-white px-2 py-0.5 rounded-full shadow-xs">
                   {conversation.customerContact}
                 </span>
               )}
             </div>
             {conversation.offerTitle && (
-              <p className="text-[11px] text-[#5B2EA6] font-semibold mt-0.5 flex items-center space-x-1">
+              <p className="text-[11px] text-[color:var(--color-primary)] font-semibold mt-0.5 flex items-center space-x-1">
                 <Tag className="w-3 h-3" />
                 <span>Inquiring about: {conversation.offerTitle}</span>
                 {conversation.offerPriceKes && (
@@ -153,8 +153,8 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
         </div>
 
         {conversation.status === 'converted' && (
-          <div className="flex items-center space-x-1 px-2.5 py-1 rounded-full bg-[#93EE34]/20 text-[#1A1F2E] text-[10px] font-bold">
-            <CheckCircle2 className="w-3.5 h-3.5 text-[#1A1F2E]" />
+          <div className="flex items-center space-x-1 px-2.5 py-1 rounded-full bg-[color:var(--color-primary-subtle)] text-[color:var(--color-text)] text-[10px] font-bold">
+            <CheckCircle2 className="w-3.5 h-3.5 text-[color:var(--color-text)]" />
             <span>Order Converted</span>
           </div>
         )}
@@ -168,13 +168,13 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
 
           if (isSystem) {
             return (
-              <div key={msg.id} className="p-3 rounded-2xl bg-[#93EE34]/15 border border-[#93EE34]/30 text-center text-xs text-[#1A1F2E] space-y-1">
+              <div key={msg.id} className="p-3 rounded-2xl bg-[color:var(--color-primary-subtle)] border border-[color:var(--color-primary)] text-center text-xs text-[color:var(--color-text)] space-y-1">
                 <p className="font-bold">{msg.text}</p>
                 {msg.paymentPrompt && msg.paymentPrompt.status === 'pending' && (
                   <button
                     type="button"
                     onClick={() => handleSimulatePayment(msg.paymentPrompt!.id, msg.paymentPrompt!.amountKes)}
-                    className="mt-1 px-3 py-1 rounded-full bg-[#1A1F2E] text-white text-[10px] font-bold shadow-xs hover:bg-black transition-all cursor-pointer"
+                    className="mt-1 px-3 py-1 rounded-full bg-[color:var(--color-text)] text-white text-[10px] font-bold shadow-xs hover:bg-black transition-all cursor-pointer"
                   >
                     Simulate Customer M-Pesa PIN Entry
                   </button>
@@ -191,21 +191,21 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
               <div
                 className={`max-w-[80%] rounded-2xl p-3 shadow-xs ${
                   isCustomer
-                    ? 'bg-[#F4F7F2] text-[#1A1F2E]'
-                    : 'bg-[#5B2EA6] text-white'
+                    ? 'bg-[color:var(--color-surface-elevated)] text-[color:var(--color-text)]'
+                    : 'bg-[color:var(--color-primary)] text-[color:var(--accent-ink)]'
                 }`}
               >
                 <p className="text-xs font-medium leading-relaxed whitespace-pre-wrap">{msg.text}</p>
                 
                 {/* Embedded Quote Card */}
                 {msg.quote && (
-                  <div className="mt-2 p-3 rounded-xl bg-white text-[#1A1F2E] shadow-sm space-y-1.5 border border-black/5">
+                  <div className="mt-2 p-3 rounded-xl bg-white text-[color:var(--color-text)] shadow-sm space-y-1.5 border border-black/5">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase tracking-wider font-extrabold text-[#5B2EA6]">Official Quote</span>
-                      <span className="text-xs font-black text-[#1A1F2E]">KES {msg.quote.priceKes.toLocaleString()}</span>
+                      <span className="text-[10px] uppercase tracking-wider font-extrabold text-[color:var(--color-primary)]">Official Quote</span>
+                      <span className="text-xs font-black text-[color:var(--color-text)]">KES {msg.quote.priceKes.toLocaleString()}</span>
                     </div>
                     <p className="text-xs font-bold">{msg.quote.title}</p>
-                    {msg.quote.notes && <p className="text-[11px] text-[#64748B]">{msg.quote.notes}</p>}
+                    {msg.quote.notes && <p className="text-[11px] text-[color:var(--color-text-muted)]">{msg.quote.notes}</p>}
                     <button
                       type="button"
                       onClick={() => {
@@ -214,7 +214,7 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
                         setPromptDesc(`Payment for ${msg.quote!.title}`);
                         setShowPromptForm(true);
                       }}
-                      className="w-full mt-1 py-1.5 rounded-lg bg-[#93EE34] hover:bg-[#85e028] text-[#1A1F2E] text-[11px] font-black transition-all cursor-pointer flex items-center justify-center space-x-1"
+                      className="w-full mt-1 py-1.5 rounded-lg bg-[color:var(--color-primary)] hover:bg-[#85e028] text-[color:var(--color-text)] text-[11px] font-black transition-all cursor-pointer flex items-center justify-center space-x-1"
                     >
                       <Smartphone className="w-3.5 h-3.5" />
                       <span>Send M-Pesa STK Prompt</span>
@@ -225,7 +225,7 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
                 {/* Timestamp */}
                 <div
                   className={`text-[9px] mt-1 text-right ${
-                    isCustomer ? 'text-[#64748B]' : 'text-white/70'
+                    isCustomer ? 'text-[color:var(--color-text-muted)]' : 'text-white/70'
                   }`}
                 >
                   {new Date(msg.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -238,13 +238,13 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
 
       {/* ── INLINE ACTION DRAWER (QUOTE / M-PESA) ── */}
       {showQuoteForm && (
-        <form onSubmit={handleSendQuote} className="p-4 bg-[#F4F7F2] border-t border-black/5 space-y-3">
+        <form onSubmit={handleSendQuote} className="p-4 bg-[color:var(--color-surface-elevated)] border-t border-black/5 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#1A1F2E]">Create Custom Quote</span>
+            <span className="text-xs font-bold text-[color:var(--color-text)]">Create Custom Quote</span>
             <button
               type="button"
               onClick={() => setShowQuoteForm(false)}
-              className="text-[11px] text-[#64748B] hover:text-[#1A1F2E] font-medium"
+              className="text-[11px] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] font-medium"
             >
               Cancel
             </button>
@@ -255,7 +255,7 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
               placeholder="Item / Custom variation title"
               value={quoteTitle}
               onChange={(e) => setQuoteTitle(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-white text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[#5B2EA6]"
+              className="px-3 py-2 rounded-xl bg-white text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[color:var(--color-primary)]"
               required
             />
             <input
@@ -263,7 +263,7 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
               placeholder="Price in KES"
               value={quotePrice}
               onChange={(e) => setQuotePrice(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-white text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[#5B2EA6]"
+              className="px-3 py-2 rounded-xl bg-white text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[color:var(--color-primary)]"
               required
             />
           </div>
@@ -272,12 +272,12 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
             placeholder="Notes (e.g. including delivery, specific flavors...)"
             value={quoteNotes}
             onChange={(e) => setQuoteNotes(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl bg-white text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[#5B2EA6]"
+            className="w-full px-3 py-2 rounded-xl bg-white text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[color:var(--color-primary)]"
           />
           <button
             type="submit"
             disabled={sending}
-            className="w-full py-2 rounded-xl bg-[#5B2EA6] hover:bg-[#4a2489] text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
+            className="w-full py-2 rounded-xl bg-[color:var(--color-primary)] hover:bg-[color:var(--color-primary-strong)] text-[color:var(--accent-ink)] text-xs font-bold shadow-sm transition-all cursor-pointer"
           >
             {sending ? 'Sending Quote...' : 'Send Quote in Chat'}
           </button>
@@ -285,13 +285,13 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
       )}
 
       {showPromptForm && (
-        <form onSubmit={handleTriggerMpesa} className="p-4 bg-[#FCE3EA]/40 border-t border-black/5 space-y-3">
+        <form onSubmit={handleTriggerMpesa} className="p-4 bg-[color:var(--color-surface-elevated)] border-t border-black/5 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#1A1F2E]">Send M-Pesa STK Push Prompt</span>
+            <span className="text-xs font-bold text-[color:var(--color-text)]">Send M-Pesa STK Push Prompt</span>
             <button
               type="button"
               onClick={() => setShowPromptForm(false)}
-              className="text-[11px] text-[#64748B] hover:text-[#1A1F2E] font-medium"
+              className="text-[11px] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] font-medium"
             >
               Cancel
             </button>
@@ -302,7 +302,7 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
               placeholder="Customer Phone (e.g. 254712345678)"
               value={promptPhone}
               onChange={(e) => setPromptPhone(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-white text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[#5B2EA6]"
+              className="px-3 py-2 rounded-xl bg-white text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[color:var(--color-primary)]"
               required
             />
             <input
@@ -310,14 +310,14 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
               placeholder="Amount in KES"
               value={promptAmount}
               onChange={(e) => setPromptAmount(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-white text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[#5B2EA6]"
+              className="px-3 py-2 rounded-xl bg-white text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[color:var(--color-primary)]"
               required
             />
           </div>
           <button
             type="submit"
             disabled={sending}
-            className="w-full py-2 rounded-xl bg-[#1A1F2E] hover:bg-black text-[#93EE34] text-xs font-black shadow-sm transition-all cursor-pointer flex items-center justify-center space-x-1.5"
+            className="w-full py-2 rounded-xl bg-[color:var(--color-text)] hover:bg-black text-[color:var(--color-primary)] text-xs font-black shadow-sm transition-all cursor-pointer flex items-center justify-center space-x-1.5"
           >
             <Smartphone className="w-4 h-4" />
             <span>{sending ? 'Prompting...' : `Prompt M-Pesa (KES ${Number(promptAmount || 0).toLocaleString()})`}</span>
@@ -326,14 +326,14 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
       )}
 
       {/* ── QUICK ACTIONS BAR ── */}
-      <div className="p-2 bg-[#FAFAF8] border-t border-black/5 flex items-center space-x-2">
+      <div className="p-2 bg-[color:var(--color-surface)] border-t border-black/5 flex items-center space-x-2">
         <button
           type="button"
           onClick={() => {
             setShowQuoteForm(!showQuoteForm);
             setShowPromptForm(false);
           }}
-          className="px-3 py-1.5 rounded-xl bg-white hover:bg-black/5 text-[#5B2EA6] text-[11px] font-bold shadow-xs transition-colors flex items-center space-x-1 cursor-pointer"
+          className="px-3 py-1.5 rounded-xl bg-white hover:bg-black/5 text-[color:var(--color-primary)] text-[11px] font-bold shadow-xs transition-colors flex items-center space-x-1 cursor-pointer"
         >
           <Tag className="w-3.5 h-3.5" />
           <span>Quote</span>
@@ -345,7 +345,7 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
             setShowPromptForm(!showPromptForm);
             setShowQuoteForm(false);
           }}
-          className="px-3 py-1.5 rounded-xl bg-white hover:bg-black/5 text-[#1A1F2E] text-[11px] font-bold shadow-xs transition-colors flex items-center space-x-1 cursor-pointer"
+          className="px-3 py-1.5 rounded-xl bg-white hover:bg-black/5 text-[color:var(--color-text)] text-[11px] font-bold shadow-xs transition-colors flex items-center space-x-1 cursor-pointer"
         >
           <Smartphone className="w-3.5 h-3.5 text-[#059669]" />
           <span>M-Pesa STK</span>
@@ -358,12 +358,12 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
             placeholder="Type a reply..."
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            className="flex-1 px-3 py-1.5 rounded-xl bg-white text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[#5B2EA6]"
+            className="flex-1 px-3 py-1.5 rounded-xl bg-white text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[color:var(--color-primary)]"
           />
           <button
             type="submit"
             disabled={!inputText.trim() || sending}
-            className="p-1.5 rounded-xl bg-[#5B2EA6] hover:bg-[#4a2489] text-white disabled:opacity-40 transition-all cursor-pointer"
+            className="p-1.5 rounded-xl bg-[color:var(--color-primary)] hover:bg-[color:var(--color-primary-strong)] text-[color:var(--accent-ink)] disabled:opacity-40 transition-all cursor-pointer"
           >
             <Send className="w-4 h-4" />
           </button>

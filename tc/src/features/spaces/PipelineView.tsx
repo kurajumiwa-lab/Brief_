@@ -201,17 +201,17 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
     <div className={`space-y-5 max-w-2xl mx-auto ${className}`}>
       {/* Toast */}
       {toastMsg && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-[#1A1F2E] text-white text-xs font-bold shadow-2xl animate-fadeIn border border-white/10">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-[color:var(--color-text)] text-white text-xs font-bold shadow-2xl animate-fadeIn border border-white/10">
           {toastMsg}
         </div>
       )}
 
       {/* ── 1. "NAIROBI TONIGHT" CITY PREVIEW STRIP (Horizontal 3-Card Strip) ── */}
-      <div className="p-4 rounded-3xl bg-[#1A1F2E] text-white space-y-3 shadow-md border border-white/5">
+      <div className="p-4 rounded-3xl bg-[color:var(--color-text)] text-white space-y-3 shadow-md border border-white/5">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#93EE34] animate-ping" />
-            <span className="text-[10px] font-black uppercase tracking-wider text-[#93EE34]">
+            <span className="w-2 h-2 rounded-full bg-[color:var(--color-primary)] animate-ping" />
+            <span className="text-[10px] font-black uppercase tracking-wider text-[color:var(--color-primary)]">
               Nairobi Tonight · Live City Highlights
             </span>
           </div>
@@ -221,7 +221,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
               soundEngine.play('tap');
               onViewCityFeed?.();
             }}
-            className="text-[11px] font-bold text-[#93EE34] hover:underline flex items-center space-x-1 cursor-pointer"
+            className="text-[11px] font-bold text-[color:var(--color-primary)] hover:underline flex items-center space-x-1 cursor-pointer"
           >
             <span>See Full City Feed</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -236,7 +236,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
             className="p-3 rounded-2xl bg-white/10 hover:bg-white/15 transition-all cursor-pointer space-y-1 border border-white/5"
           >
             <div className="flex items-center space-x-1 text-white/70 text-[9px] uppercase font-bold">
-              <Clock className="w-3 h-3 text-[#93EE34]" />
+              <Clock className="w-3 h-3 text-[color:var(--color-primary)]" />
               <span>Events & Night Market</span>
             </div>
             <p className="text-xs font-bold text-white truncate">Alchemist Street Festival</p>
@@ -249,7 +249,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
             className="p-3 rounded-2xl bg-white/10 hover:bg-white/15 transition-all cursor-pointer space-y-1 border border-white/5"
           >
             <div className="flex items-center space-x-1 text-white/70 text-[9px] uppercase font-bold">
-              <ShoppingBag className="w-3 h-3 text-[#E8985E]" />
+              <ShoppingBag className="w-3 h-3 text-[color:var(--color-accent)]" />
               <span>Marketplace Drop</span>
             </div>
             <p className="text-xs font-bold text-white truncate">Zawadi Leather Tote</p>
@@ -262,7 +262,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
             className="p-3 rounded-2xl bg-white/10 hover:bg-white/15 transition-all cursor-pointer space-y-1 border border-white/5"
           >
             <div className="flex items-center space-x-1 text-white/70 text-[9px] uppercase font-bold">
-              <Users className="w-3 h-3 text-[#5B2EA6]" />
+              <Users className="w-3 h-3 text-[color:var(--color-primary)]" />
               <span>Community Circles</span>
             </div>
             <p className="text-xs font-bold text-white truncate">Kilimani Organic Co-op</p>
@@ -275,22 +275,22 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
       <div className="p-4 rounded-3xl bg-white shadow-2xs border border-black/5 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center space-x-2">
-            <span className="text-xs text-[#64748B] font-semibold">Your business workspace</span>
-            <span className="text-[10px] text-[#64748B] bg-[#FAFAF8] px-2 py-0.5 rounded-full font-bold">
+            <span className="text-xs text-[color:var(--color-text-muted)] font-semibold">Your business workspace</span>
+            <span className="text-[10px] text-[color:var(--color-text-muted)] bg-[color:var(--color-surface)] px-2 py-0.5 rounded-full font-bold">
               {space.type}
             </span>
           </div>
-          <h2 className="text-sm sm:text-base font-black text-[#1A1F2E] truncate mt-0.5">
+          <h2 className="text-sm sm:text-base font-black text-[color:var(--color-text)] truncate mt-0.5">
             {space.name} — Pipeline
           </h2>
         </div>
 
         <div className="flex items-center space-x-2 shrink-0">
-          <div className="px-3 py-1.5 rounded-2xl bg-[#93EE34]/20 border border-[#93EE34]/40 text-[#1A1F2E] text-right">
-            <span className="text-[9px] uppercase tracking-wider font-extrabold block text-[#1A1F2E]/70">Take-home</span>
-            <span className="text-xs font-black block text-[#1A1F2E]">KES {revenueKes.toLocaleString()}</span>
+          <div className="px-3 py-1.5 rounded-2xl bg-[color:var(--color-primary-subtle)] border border-[color:var(--color-primary)] text-[color:var(--color-text)] text-right">
+            <span className="text-[9px] uppercase tracking-wider font-extrabold block text-[color:var(--color-text-muted)]">Take-home</span>
+            <span className="text-xs font-black block text-[color:var(--color-text)]">KES {revenueKes.toLocaleString()}</span>
           </div>
-          <div className="px-2.5 py-1.5 rounded-2xl bg-[#1A1F2E] text-[#93EE34] text-xs font-black">
+          <div className="px-2.5 py-1.5 rounded-2xl bg-[color:var(--color-text)] text-[color:var(--color-primary)] text-xs font-black">
             {activeOrdersCount} Active
           </div>
         </div>
@@ -299,17 +299,17 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
       {/* ── 3. PIPELINE TIMELINE OF ORDERS & CHATS ── */}
       <div className="space-y-3">
         <div className="flex items-center justify-between px-1">
-          <span className="text-xs font-black uppercase tracking-wider text-[#1A1F2E]">
+          <span className="text-xs font-black uppercase tracking-wider text-[color:var(--color-text)]">
             Active Orders & Inquiries ({conversations.length})
           </span>
-          <span className="text-[10px] text-[#64748B]">Real-time stream</span>
+          <span className="text-[10px] text-[color:var(--color-text-muted)]">Real-time stream</span>
         </div>
 
         {conversations.length === 0 ? (
           <div className="p-8 rounded-3xl bg-white border border-black/5 text-center space-y-2">
-            <MessageSquare className="w-8 h-8 text-[#64748B] mx-auto opacity-40" />
-            <p className="text-xs font-bold text-[#1A1F2E]">No active orders in pipeline</p>
-            <p className="text-[11px] text-[#64748B] max-w-sm mx-auto">
+            <MessageSquare className="w-8 h-8 text-[color:var(--color-text-muted)] mx-auto opacity-40" />
+            <p className="text-xs font-bold text-[color:var(--color-text)]">No active orders in pipeline</p>
+            <p className="text-[11px] text-[color:var(--color-text-muted)] max-w-sm mx-auto">
               Share your catalog offers on WhatsApp or social channels to receive inbound inquiries and orders.
             </p>
           </div>
@@ -344,7 +344,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                   {/* Card Main Row */}
                   <div
                     onClick={() => setExpandedCardId(isExpanded ? null : conv.id)}
-                    className="p-4 cursor-pointer hover:bg-[#FAFAF8] transition-colors space-y-2.5"
+                    className="p-4 cursor-pointer hover:bg-[color:var(--color-surface)] transition-colors space-y-2.5"
                   >
                     {/* Header: Status badge, customer name, contact */}
                     <div className="flex items-center justify-between gap-2">
@@ -352,12 +352,12 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                         <span
                           className={`text-[9px] font-extrabold px-2.5 py-0.5 rounded-full shrink-0 ${
                             isDispatched
-                              ? 'bg-teal-100 text-teal-800'
+                              ? 'bg-[color:var(--color-surface-elevated)] text-[color:var(--color-accent)]'
                               : isPaid
-                              ? 'bg-[#93EE34] text-[#1A1F2E]'
+                              ? 'bg-[color:var(--color-primary)] text-[color:var(--color-text)]'
                               : isQuoteSent
                               ? 'bg-blue-100 text-blue-800'
-                              : 'bg-amber-100 text-amber-800'
+                              : 'bg-[color:var(--color-surface-elevated)] text-[color:var(--color-warning)]'
                           }`}
                         >
                           {isDispatched
@@ -368,7 +368,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                             ? 'QUOTE SENT'
                             : 'INQUIRY'}
                         </span>
-                        <span className="text-xs font-bold text-[#1A1F2E] truncate">
+                        <span className="text-xs font-bold text-[color:var(--color-text)] truncate">
                           {conv.customerName}
                         </span>
                         {conv.customerContact && (
@@ -378,7 +378,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                               e.stopPropagation();
                               handleOpenWhatsAppChat(conv.customerContact);
                             }}
-                            className="p-1 rounded-md bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors cursor-pointer"
+                            className="p-1 rounded-md bg-[color:var(--color-surface-elevated)] text-[color:var(--color-success)] hover:bg-[color:var(--color-surface-elevated)] transition-colors cursor-pointer"
                             title="Chat on WhatsApp"
                           >
                             <MessageCircle className="w-3 h-3" />
@@ -387,25 +387,25 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                       </div>
 
                       <div className="flex items-center space-x-1.5 shrink-0">
-                        <ChevronDown className={`w-4 h-4 text-[#64748B] transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                        <ChevronDown className={`w-4 h-4 text-[color:var(--color-text-muted)] transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
                       </div>
                     </div>
 
                     {/* Single-line token summary */}
                     <div className="flex items-center justify-between text-xs">
-                      <p className="font-bold text-[#1A1F2E] truncate">
+                      <p className="font-bold text-[color:var(--color-text)] truncate">
                         🎂 {conv.offerTitle || 'Custom Order'}
                       </p>
-                      <span className="font-black text-[#1A1F2E] shrink-0 ml-2">
+                      <span className="font-black text-[color:var(--color-text)] shrink-0 ml-2">
                         KES {price.toLocaleString()}
                       </span>
                     </div>
 
                     {/* Dispatched Info if available */}
                     {isDispatched && (
-                      <div className="p-2 rounded-xl bg-teal-50/70 border border-teal-200 text-teal-900 text-[11px] flex items-center justify-between">
+                      <div className="p-2 rounded-xl bg-[color:var(--color-surface-elevated)] border border-[color:var(--color-border)] text-[color:var(--color-accent)] text-[11px] flex items-center justify-between">
                         <span className="flex items-center space-x-1 truncate">
-                          <Truck className="w-3.5 h-3.5 text-teal-700 shrink-0" />
+                          <Truck className="w-3.5 h-3.5 text-[color:var(--color-accent)] shrink-0" />
                           <span className="font-bold">{latestDispatch.carrierSacco}</span>
                           <span>→ {latestDispatch.destinationTown}</span>
                           <span className="font-mono text-[10px]">({latestDispatch.waybillRef})</span>
@@ -416,7 +416,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                             e.stopPropagation();
                             handleShareTracking(conv, latestDispatch.carrierSacco, latestDispatch.destinationTown);
                           }}
-                          className="text-[10px] font-bold text-teal-800 underline ml-2 shrink-0 cursor-pointer"
+                          className="text-[10px] font-bold text-[color:var(--color-accent)] underline ml-2 shrink-0 cursor-pointer"
                         >
                           Share Tracking
                         </button>
@@ -427,8 +427,8 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                     {lastMessages.length > 0 && (
                       <div className="space-y-1 pt-0.5">
                         {lastMessages.map((m) => (
-                          <p key={m.id} className="text-[11px] text-[#64748B] bg-[#F4F7F2] p-1.5 rounded-xl truncate">
-                            💬 <strong className="text-[#1A1F2E]">{m.from === 'customer' ? conv.customerName : 'You'}:</strong> {m.text}
+                          <p key={m.id} className="text-[11px] text-[color:var(--color-text-muted)] bg-[color:var(--color-surface-elevated)] p-1.5 rounded-xl truncate">
+                            💬 <strong className="text-[color:var(--color-text)]">{m.from === 'customer' ? conv.customerName : 'You'}:</strong> {m.text}
                           </p>
                         ))}
                       </div>
@@ -437,7 +437,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
 
                   {/* ── EXPANDED LIFECYCLE CONTROLS ── */}
                   {isExpanded && (
-                    <div className="p-4 bg-[#FAFAF8] border-t border-black/5 space-y-3.5 animate-fadeIn">
+                    <div className="p-4 bg-[color:var(--color-surface)] border-t border-black/5 space-y-3.5 animate-fadeIn">
                       {/* Full Chat Thread */}
                       <div className="space-y-2 max-h-48 overflow-y-auto p-2 bg-white rounded-2xl border border-black/5">
                         {conv.messages?.map((m) => (
@@ -448,20 +448,20 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                             <div
                               className={`max-w-[85%] rounded-xl p-2 text-xs font-medium ${
                                 m.from === 'customer'
-                                  ? 'bg-[#F4F7F2] text-[#1A1F2E]'
+                                  ? 'bg-[color:var(--color-surface-elevated)] text-[color:var(--color-text)]'
                                   : m.from === 'system'
-                                  ? 'bg-[#93EE34]/20 text-[#1A1F2E]'
-                                  : 'bg-[#5B2EA6] text-white'
+                                  ? 'bg-[color:var(--color-primary-subtle)] text-[color:var(--color-text)]'
+                                  : 'bg-[color:var(--color-primary)] text-[color:var(--accent-ink)]'
                               }`}
                             >
                               <p>{m.text}</p>
                               {m.quote && (
-                                <div className="mt-1 p-2 rounded-lg bg-white text-[#1A1F2E] shadow-2xs text-[11px]">
+                                <div className="mt-1 p-2 rounded-lg bg-white text-[color:var(--color-text)] shadow-2xs text-[11px]">
                                   <strong>Quote:</strong> KES {m.quote.priceKes.toLocaleString()} ({m.quote.title})
                                 </div>
                               )}
                             </div>
-                            <span className="text-[8px] text-[#64748B] mt-0.5">
+                            <span className="text-[8px] text-[color:var(--color-text-muted)] mt-0.5">
                               {new Date(m.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
@@ -486,7 +486,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                         <button
                           type="submit"
                           disabled={!replyText[conv.id]?.trim() || sendingMsg}
-                          className="p-2 rounded-xl bg-[#1A1F2E] text-[#93EE34] disabled:opacity-40 transition-all cursor-pointer"
+                          className="p-2 rounded-xl bg-[color:var(--color-text)] text-[color:var(--color-primary)] disabled:opacity-40 transition-all cursor-pointer"
                         >
                           <Send className="w-3.5 h-3.5" />
                         </button>
@@ -499,14 +499,14 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                             <button
                               type="button"
                               onClick={() => setActiveQuoteCardId(isQuoting ? null : conv.id)}
-                              className="py-2 rounded-xl bg-[#FAFAF8] hover:bg-black/5 text-[#1A1F2E] text-xs font-bold border border-black/5 cursor-pointer"
+                              className="py-2 rounded-xl bg-[color:var(--color-surface)] hover:bg-black/5 text-[color:var(--color-text)] text-xs font-bold border border-black/5 cursor-pointer"
                             >
                               {isQuoting ? 'Cancel Quote' : '📝 Send Quote'}
                             </button>
                             <button
                               type="button"
                               onClick={() => handleTriggerMpesa(conv, price)}
-                              className="py-2 rounded-xl bg-[#1A1F2E] hover:bg-black text-[#93EE34] text-xs font-black shadow-xs cursor-pointer flex items-center justify-center space-x-1"
+                              className="py-2 rounded-xl bg-[color:var(--color-text)] hover:bg-black text-[color:var(--color-primary)] text-xs font-black shadow-xs cursor-pointer flex items-center justify-center space-x-1"
                             >
                               <Smartphone className="w-3.5 h-3.5" />
                               <span>Trigger M-Pesa</span>
@@ -516,7 +516,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                           {/* Inline Quote Drawer Form */}
                           {isQuoting && (
                             <div className="p-3 bg-white rounded-2xl border border-black/5 space-y-2 animate-fadeIn">
-                              <span className="text-[10px] font-black uppercase tracking-wider text-[#5B2EA6]">
+                              <span className="text-[10px] font-black uppercase tracking-wider text-[color:var(--color-primary)]">
                                 Prepare Quotation for {conv.customerName}
                               </span>
                               <input
@@ -524,7 +524,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                                 placeholder="Proposal Title"
                                 value={quoteTitle}
                                 onChange={(e) => setQuoteTitle(e.target.value)}
-                                className="w-full px-2.5 py-1.5 rounded-lg bg-[#FAFAF8] text-xs border border-black/5"
+                                className="w-full px-2.5 py-1.5 rounded-lg bg-[color:var(--color-surface)] text-xs border border-black/5"
                               />
                               <div className="grid grid-cols-2 gap-2">
                                 <input
@@ -532,20 +532,20 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                                   placeholder="Price (KES)"
                                   value={quotePrice}
                                   onChange={(e) => setQuotePrice(e.target.value)}
-                                  className="px-2.5 py-1.5 rounded-lg bg-[#FAFAF8] text-xs border border-black/5"
+                                  className="px-2.5 py-1.5 rounded-lg bg-[color:var(--color-surface)] text-xs border border-black/5"
                                 />
                                 <input
                                   type="text"
                                   placeholder="Notes"
                                   value={quoteNotes}
                                   onChange={(e) => setQuoteNotes(e.target.value)}
-                                  className="px-2.5 py-1.5 rounded-lg bg-[#FAFAF8] text-xs border border-black/5"
+                                  className="px-2.5 py-1.5 rounded-lg bg-[color:var(--color-surface)] text-xs border border-black/5"
                                 />
                               </div>
                               <button
                                 type="button"
                                 onClick={() => handleSendQuote(conv)}
-                                className="w-full py-2 rounded-xl bg-[#5B2EA6] text-white text-xs font-bold cursor-pointer"
+                                className="w-full py-2 rounded-xl bg-[color:var(--color-primary)] text-[color:var(--accent-ink)] text-xs font-bold cursor-pointer"
                               >
                                 Post Quote into Conversation
                               </button>
@@ -568,7 +568,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                             <button
                               type="button"
                               onClick={() => handleSimulatePayment(conv.id, pendingPrompt.id, pendingPrompt.amountKes)}
-                              className="w-full py-2 rounded-xl bg-[#1A1F2E] hover:bg-black text-[#93EE34] text-xs font-black shadow-xs cursor-pointer"
+                              className="w-full py-2 rounded-xl bg-[color:var(--color-text)] hover:bg-black text-[color:var(--color-primary)] text-xs font-black shadow-xs cursor-pointer"
                             >
                               Simulate Customer M-Pesa PIN Confirmation
                             </button>
@@ -576,7 +576,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                             <button
                               type="button"
                               onClick={() => handleTriggerMpesa(conv, price)}
-                              className="w-full py-2 rounded-xl bg-[#1A1F2E] hover:bg-black text-[#93EE34] text-xs font-black shadow-xs cursor-pointer flex items-center justify-center space-x-1.5"
+                              className="w-full py-2 rounded-xl bg-[color:var(--color-text)] hover:bg-black text-[color:var(--color-primary)] text-xs font-black shadow-xs cursor-pointer flex items-center justify-center space-x-1.5"
                             >
                               <Smartphone className="w-3.5 h-3.5" />
                               <span>Trigger M-Pesa STK Push (KES {price.toLocaleString()})</span>
@@ -587,9 +587,9 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
 
                       {isPaid && (
                         <div className="space-y-2">
-                          <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-900 text-xs font-bold flex items-center justify-between">
+                          <div className="p-2.5 rounded-xl bg-[color:var(--color-surface-elevated)] text-[color:var(--color-success)] text-xs font-bold flex items-center justify-between">
                             <span className="flex items-center space-x-1">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+                              <CheckCircle2 className="w-3.5 h-3.5 text-[color:var(--color-success)]" />
                               <span>M-Pesa Verified (Receipt {paidPrompt?.receipt || 'Confirmed'})</span>
                             </span>
                             <span>KES {price.toLocaleString()}</span>
@@ -600,7 +600,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                             <button
                               type="button"
                               onClick={() => setActiveDispatchCardId(conv.id)}
-                              className="w-full py-2 rounded-xl bg-[#1A1F2E] hover:bg-black text-[#93EE34] text-xs font-black transition-all cursor-pointer flex items-center justify-center space-x-1.5 shadow-xs"
+                              className="w-full py-2 rounded-xl bg-[color:var(--color-text)] hover:bg-black text-[color:var(--color-primary)] text-xs font-black transition-all cursor-pointer flex items-center justify-center space-x-1.5 shadow-xs"
                             >
                               <Truck className="w-4 h-4" />
                               <span>Ship via WAIRO Cargo (Inter-County Matatu Stage)</span>
@@ -609,14 +609,14 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                             /* Inline WAIRO Cargo Expansion Form */
                             <div className="p-3.5 rounded-2xl bg-white border border-black/5 shadow-xs space-y-2.5 animate-fadeIn">
                               <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold text-[#1A1F2E] flex items-center space-x-1">
-                                  <Truck className="w-3.5 h-3.5 text-[#5B2EA6]" />
+                                <span className="text-xs font-bold text-[color:var(--color-text)] flex items-center space-x-1">
+                                  <Truck className="w-3.5 h-3.5 text-[color:var(--color-primary)]" />
                                   <span>Inline WAIRO Dispatch to {conv.customerName}</span>
                                 </span>
                                 <button
                                   type="button"
                                   onClick={() => setActiveDispatchCardId(null)}
-                                  className="text-[10px] text-[#64748B] hover:text-[#1A1F2E]"
+                                  className="text-[10px] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)]"
                                 >
                                   Cancel
                                 </button>
@@ -626,7 +626,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                                 <select
                                   value={destCounty}
                                   onChange={(e) => setDestCounty(e.target.value)}
-                                  className="px-2.5 py-1.5 rounded-xl bg-[#FAFAF8] text-xs border border-black/5 focus:outline-none"
+                                  className="px-2.5 py-1.5 rounded-xl bg-[color:var(--color-surface)] text-xs border border-black/5 focus:outline-none"
                                 >
                                   {COMMON_COUNTIES.map((c) => (
                                     <option key={c} value={c}>{c}</option>
@@ -637,7 +637,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                                   placeholder="Stage (e.g. KFA Stage)"
                                   value={destTown}
                                   onChange={(e) => setDestTown(e.target.value)}
-                                  className="px-2.5 py-1.5 rounded-xl bg-[#FAFAF8] text-xs border border-black/5 focus:outline-none"
+                                  className="px-2.5 py-1.5 rounded-xl bg-[color:var(--color-surface)] text-xs border border-black/5 focus:outline-none"
                                 />
                               </div>
 
@@ -645,7 +645,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                                 <select
                                   value={carrierSacco}
                                   onChange={(e) => setCarrierSacco(e.target.value)}
-                                  className="px-2.5 py-1.5 rounded-xl bg-[#FAFAF8] text-xs border border-black/5 focus:outline-none"
+                                  className="px-2.5 py-1.5 rounded-xl bg-[color:var(--color-surface)] text-xs border border-black/5 focus:outline-none"
                                 >
                                   {POPULAR_CARRIERS.map((s) => (
                                     <option key={s} value={s}>{s}</option>
@@ -656,7 +656,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                                   placeholder="Conductor Phone (opt)"
                                   value={conductorPhone}
                                   onChange={(e) => setConductorPhone(e.target.value)}
-                                  className="px-2.5 py-1.5 rounded-xl bg-[#FAFAF8] text-xs border border-black/5 focus:outline-none"
+                                  className="px-2.5 py-1.5 rounded-xl bg-[color:var(--color-surface)] text-xs border border-black/5 focus:outline-none"
                                 />
                               </div>
 
@@ -665,14 +665,14 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                                   type="button"
                                   onClick={() => handleSubmitInlineDispatch(conv)}
                                   disabled={submittingDispatch}
-                                  className="flex-1 py-2 rounded-xl bg-[#1A1F2E] hover:bg-black text-[#93EE34] text-xs font-black transition-all cursor-pointer"
+                                  className="flex-1 py-2 rounded-xl bg-[color:var(--color-text)] hover:bg-black text-[color:var(--color-primary)] text-xs font-black transition-all cursor-pointer"
                                 >
                                   {submittingDispatch ? 'Waybill Issuing...' : 'Generate Waybill & Mark Dispatched'}
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => handleShareTracking(conv, carrierSacco, destTown)}
-                                  className="p-2 rounded-xl bg-emerald-50 text-emerald-800 hover:bg-emerald-100 transition-colors"
+                                  className="p-2 rounded-xl bg-[color:var(--color-surface-elevated)] text-[color:var(--color-success)] hover:bg-[color:var(--color-surface-elevated)] transition-colors"
                                   title="Share WhatsApp tracking"
                                 >
                                   <Share2 className="w-4 h-4" />
@@ -692,12 +692,12 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
       </div>
 
       {/* ── 4. SINGLE NET-PROFIT PILL AT BOTTOM OF SCROLL ── */}
-      <div className="p-4 rounded-3xl bg-[#1A1F2E] text-white flex items-center justify-between shadow-xs border border-white/10">
+      <div className="p-4 rounded-3xl bg-[color:var(--color-text)] text-white flex items-center justify-between shadow-xs border border-white/10">
         <div className="flex items-center space-x-2">
-          <TrendingUp className="w-4 h-4 text-[#93EE34]" />
+          <TrendingUp className="w-4 h-4 text-[color:var(--color-primary)]" />
           <div>
             <span className="text-[10px] text-white/70 uppercase font-bold block">Today's Net Take-Home</span>
-            <span className="text-sm font-black text-[#93EE34]">KES {revenueKes.toLocaleString()}</span>
+            <span className="text-sm font-black text-[color:var(--color-primary)]">KES {revenueKes.toLocaleString()}</span>
           </div>
         </div>
         <span className="text-[10px] text-white/60 bg-white/10 px-2.5 py-1 rounded-full font-bold">

@@ -80,10 +80,10 @@ export const PublicOfferModal: React.FC<PublicOfferModalProps> = ({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md bg-[#FAFAF8] text-[#1A1F2E] rounded-3xl overflow-hidden shadow-2xl animate-slideUp border border-black/5 flex flex-col max-h-[90vh]"
+        className="w-full max-w-md bg-[color:var(--color-surface)] text-[color:var(--color-text)] rounded-3xl overflow-hidden shadow-2xl animate-slideUp border border-black/5 flex flex-col max-h-[90vh]"
       >
         {/* Cover image or placeholder */}
-        <div className="relative aspect-[16/10] w-full bg-gradient-to-br from-[#1E293B] to-[#0F172A] p-6 flex flex-col justify-between text-white">
+        <div className="relative aspect-[16/10] w-full bg-gradient-to-br from-[color:var(--color-text)] to-[color:var(--color-text)] p-6 flex flex-col justify-between text-white">
           <div className="flex items-center justify-between z-10">
             <span className="px-2.5 py-1 rounded-full bg-white/20 text-white text-[10px] font-mono font-bold backdrop-blur-md">
               VERIFIED OFFER
@@ -107,7 +107,7 @@ export const PublicOfferModal: React.FC<PublicOfferModalProps> = ({
               {offer.currency || 'KES'} {(offer.price || 0).toLocaleString()}
             </span>
             <div className="flex items-center space-x-1.5 text-xs text-gray-200">
-              <CheckCircle2 className="w-3.5 h-3.5 text-[#93EE34]" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-[color:var(--color-primary)]" />
               <span>{spaceName}</span>
             </div>
           </div>
@@ -116,10 +116,10 @@ export const PublicOfferModal: React.FC<PublicOfferModalProps> = ({
         {/* Details & Actions */}
         <div className="p-6 space-y-4 overflow-y-auto flex-1">
           <div className="space-y-1">
-            <h2 className="text-xl font-black text-[#1A1F2E]">
+            <h2 className="text-xl font-black text-[color:var(--color-text)]">
               {offer.title}
             </h2>
-            <p className="text-xs text-[#64748B] leading-relaxed">
+            <p className="text-xs text-[color:var(--color-text-muted)] leading-relaxed">
               {offer.description || 'Direct offer from verified creator.'}
             </p>
           </div>
@@ -127,40 +127,40 @@ export const PublicOfferModal: React.FC<PublicOfferModalProps> = ({
           {/* Ask / Inquire Form */}
           {isAsking ? (
             <form onSubmit={handleSendInquiry} className="space-y-3 pt-2 border-t border-black/5 animate-fadeIn">
-              <span className="text-xs font-bold text-[#1A1F2E] block">
+              <span className="text-xs font-bold text-[color:var(--color-text)] block">
                 Message {spaceName}:
               </span>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-[#64748B]">Your Name</label>
+                <label className="text-[11px] font-bold text-[color:var(--color-text-muted)]">Your Name</label>
                 <input
                   type="text"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
                   placeholder="e.g. Mary"
                   autoFocus
-                  className="w-full px-3.5 py-2 rounded-xl bg-white border border-black/10 text-xs font-bold text-[#1A1F2E] focus:outline-hidden focus:border-[#5B2EA6]"
+                  className="w-full px-3.5 py-2 rounded-xl bg-white border border-black/10 text-xs font-bold text-[color:var(--color-text)] focus:outline-hidden focus:border-[color:var(--color-primary)]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-[#64748B]">WhatsApp Phone</label>
+                <label className="text-[11px] font-bold text-[color:var(--color-text-muted)]">WhatsApp Phone</label>
                 <input
                   type="text"
                   value={contact}
                   onChange={(e) => setContact(e.target.value)}
                   placeholder="+254 700 000 000"
-                  className="w-full px-3.5 py-2 rounded-xl bg-white border border-black/10 text-xs font-mono text-[#1A1F2E] focus:outline-hidden focus:border-[#5B2EA6]"
+                  className="w-full px-3.5 py-2 rounded-xl bg-white border border-black/10 text-xs font-mono text-[color:var(--color-text)] focus:outline-hidden focus:border-[color:var(--color-primary)]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-[#64748B]">Your Question</label>
+                <label className="text-[11px] font-bold text-[color:var(--color-text-muted)]">Your Question</label>
                 <textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   rows={2}
-                  className="w-full px-3.5 py-2 rounded-xl bg-white border border-black/10 text-xs text-[#1A1F2E] focus:outline-hidden focus:border-[#5B2EA6]"
+                  className="w-full px-3.5 py-2 rounded-xl bg-white border border-black/10 text-xs text-[color:var(--color-text)] focus:outline-hidden focus:border-[color:var(--color-primary)]"
                 />
               </div>
 
@@ -169,8 +169,8 @@ export const PublicOfferModal: React.FC<PublicOfferModalProps> = ({
               )}
 
               {isSent ? (
-                <div className="p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-bold flex items-center justify-center space-x-2">
-                  <Check className="w-4 h-4 text-emerald-600" />
+                <div className="p-3 rounded-xl bg-[color:var(--color-surface-elevated)] text-[color:var(--color-success)] text-xs font-bold flex items-center justify-center space-x-2">
+                  <Check className="w-4 h-4 text-[color:var(--color-success)]" />
                   <span>Message sent to {spaceName}!</span>
                 </div>
               ) : (
@@ -178,14 +178,14 @@ export const PublicOfferModal: React.FC<PublicOfferModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setIsAsking(false)}
-                    className="px-4 py-2 rounded-full bg-gray-100 text-xs font-bold text-[#1A1F2E]"
+                    className="px-4 py-2 rounded-full bg-gray-100 text-xs font-bold text-[color:var(--color-text)]"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 py-2.5 rounded-full bg-[#5B2EA6] hover:bg-[#4A238A] text-white font-bold text-xs shadow-sm flex items-center justify-center space-x-1.5 cursor-pointer disabled:opacity-50"
+                    className="flex-1 py-2.5 rounded-full bg-[color:var(--color-primary)] hover:bg-[color:var(--color-primary-strong)] text-[color:var(--accent-ink)] font-bold text-xs shadow-sm flex items-center justify-center space-x-1.5 cursor-pointer disabled:opacity-50"
                   >
                     <span>{isSubmitting ? 'Sending...' : 'Send Inquiry'}</span>
                     <MessageCircle className="w-3.5 h-3.5" />
@@ -201,9 +201,9 @@ export const PublicOfferModal: React.FC<PublicOfferModalProps> = ({
                   soundEngine.play('tap');
                   setIsAsking(true);
                 }}
-                className="flex-1 py-3 rounded-full bg-white hover:bg-gray-50 border border-black/10 text-[#1A1F2E] font-bold text-xs shadow-2xs flex items-center justify-center space-x-2 cursor-pointer transition-transform active:scale-95"
+                className="flex-1 py-3 rounded-full bg-white hover:bg-gray-50 border border-black/10 text-[color:var(--color-text)] font-bold text-xs shadow-2xs flex items-center justify-center space-x-2 cursor-pointer transition-transform active:scale-95"
               >
-                <MessageCircle className="w-4 h-4 text-[#5B2EA6]" />
+                <MessageCircle className="w-4 h-4 text-[color:var(--color-primary)]" />
                 <span>Ask about this</span>
               </button>
 
@@ -213,9 +213,9 @@ export const PublicOfferModal: React.FC<PublicOfferModalProps> = ({
                   soundEngine.play('heavyTap');
                   setIsAsking(true);
                 }}
-                className="flex-1 py-3 rounded-full bg-[#5B2EA6] hover:bg-[#4A238A] text-white font-black text-xs shadow-sm flex items-center justify-center space-x-2 cursor-pointer transition-transform active:scale-95"
+                className="flex-1 py-3 rounded-full bg-[color:var(--color-primary)] hover:bg-[color:var(--color-primary-strong)] text-[color:var(--accent-ink)] font-black text-xs shadow-sm flex items-center justify-center space-x-2 cursor-pointer transition-transform active:scale-95"
               >
-                <ShoppingBag className="w-4 h-4 text-[#93EE34]" />
+                <ShoppingBag className="w-4 h-4 text-[color:var(--color-primary)]" />
                 <span>Order Now</span>
               </button>
             </div>

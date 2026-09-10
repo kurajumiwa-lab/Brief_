@@ -70,9 +70,9 @@
 }
 .request-entry .request-primary,
 .requests-workspace .request-primary {
-  background: #203e31;
+  background: var(--color-primary);
   color: #fff;
-  border-color: #203e31;
+  border-color: var(--color-primary);
 }
 .request-entry .request-primary:hover,
 .requests-workspace .request-primary:hover {
@@ -120,7 +120,7 @@
   padding: 10px 14px;
 }
 .request-tabs button[aria-pressed="true"] {
-  background: #203e31;
+  background: var(--color-primary);
   color: white;
 }
 .request-tabs span {
