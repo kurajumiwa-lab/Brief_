@@ -197,11 +197,16 @@ function memberIdsFor({ partnerKey, programKey, cohortKey } = {}) {
 export function cohortSummary(filter = {}) {
   const ids = memberIdsFor(filter);
   const members = [...ids];
-  const rows = members.map((userId) => ({
-    userId,
-    acquisition: acquisitionOf(userId),
-    activity: economicActivityOf(userId)
-  }));
+  const rows = members.map((userId) => {
+    const u = store.find('users', (x) => x.id === userId);
+    return {
+      userId,
+      handle: u?.handle ?? null,
+      displayName: u?.displayName ?? null,
+      acquisition: acquisitionOf(userId),
+      activity: economicActivityOf(userId)
+    };
+  });
 
   const sum = (f) => rows.reduce((s, r) => s + (f(r.activity) || 0), 0);
   const count = (f) => rows.reduce((s, r) => s + (f(r.activity) || 0), 0);

@@ -228,6 +228,15 @@ test("cohortSummary aggregates only members whose provenance matches", () => {
   assert.equal(cohort.members, 2);
   assert.ok(Array.isArray(cohort.rows));
   assert.equal(cohort.rows.length, 2);
+  // Drill-down enrichment: every row carries the member's identity so an
+  // operator can see WHO the members are, not just anonymous ids.
+  for (const row of cohort.rows) {
+    assert.equal(typeof row.userId, "string");
+    assert.equal(typeof row.handle, "string");
+    assert.equal(typeof row.activity.verifiedCommercialKes, "number");
+  }
+  assert.ok(cohort.rows.some((row) => row.handle === "at_alice"));
+  assert.ok(cohort.rows.some((row) => row.handle === "at_carol"));
 
   // An empty filter matches nobody — a report is always an explicit ask.
   assert.equal(att.cohortSummary({}).members, 0);

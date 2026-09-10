@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import * as api from "../../api/briefApi";
-import type { PartnerView, JoinLink, PartnerSettlement } from "../../api/briefApi";
+import type { PartnerView, JoinLink, PartnerSettlement, CohortSummary } from "../../api/briefApi";
 import { MotionList } from "../../ui/motion/MotionList";
 import { MotionNumber } from "../../ui/motion/MotionNumber";
 import { MotionStatus } from "../../ui/motion/MotionStatus";
@@ -39,6 +39,10 @@ export function PartnerDesk() {
   const [refuseNote, setRefuseNote] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<Record<string, boolean>>({});
+  // Cohort drill-down: which cohort is open, and its derived member rows.
+  const [openCohort, setOpenCohort] = useState<string | null>(null);
+  const [cohortData, setCohortData] = useState<Record<string, CohortSummary | null>>({});
+  const [cohortLoading, setCohortLoading] = useState<Record<string, boolean>>({});
 
   const loadPartners = async () => {
     const res = await api.getPartners();
@@ -65,6 +69,24 @@ export function PartnerDesk() {
   const requestInvite = async (partner: PartnerView) => {
     const res = await api.getPartnerInviteLink(partner.id);
     setInvites((prev) => ({ ...prev, [partner.id]: res.ok ? res.data : null }));
+  };
+
+  const cohortKeyOf = (partner: PartnerView, programKey: string | null, cohortKey: string) =>
+    `${partner.key}|${programKey ?? ""}|${cohortKey}`;
+
+  const toggleCohort = async (partner: PartnerView, programKey: string | null, cohortKey: string) => {
+    const k = cohortKeyOf(partner, programKey, cohortKey);
+    if (openCohort === k) {
+      setOpenCohort(null);
+      return;
+    }
+    setOpenCohort(k);
+    if (cohortData[k] === undefined) {
+      setCohortLoading((prev) => ({ ...prev, [k]: true }));
+      const res = await api.getCohortMembers(partner.key, programKey, cohortKey);
+      setCohortLoading((prev) => ({ ...prev, [k]: false }));
+      setCohortData((prev) => ({ ...prev, [k]: res.ok ? res.data : null }));
+    }
   };
 
   const toggleManage = async (partner: PartnerView) => {
@@ -254,12 +276,101 @@ export function PartnerDesk() {
                 </div>
 
                 {p.programs.length > 0 && (
-                  <p className="text-xs mt-3" style={{ color: "var(--color-text-muted)" }}>
-                    {p.programs.map((pr) => pr.name).join(" · ")}
-                    {p.programs.some((pr) => pr.cohorts.length > 0)
-                      ? ` — ${p.programs.reduce((n, pr) => n + pr.cohorts.length, 0)} cohort(s)`
-                      : ""}
-                  </p>
+                  <div className="mt-3 space-y-2">
+                    {p.programs.map((pr) => (
+                      <div key={pr.id}>
+                        {pr.cohorts.length > 0 && (
+                          <p className="text-xs font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>
+                            {pr.name}
+                          </p>
+                        )}
+                        {pr.cohorts.map((c) => {
+                          const k = cohortKeyOf(p, pr.key, c.key);
+                          const isOpen = openCohort === k;
+                          const loading = cohortLoading[k];
+                          const data = cohortData[k];
+                          return (
+                            <div key={c.id} className="mt-1">
+                              <button
+                                type="button"
+                                onClick={() => toggleCohort(p, pr.key, c.key)}
+                                aria-expanded={isOpen}
+                                className="rounded-full px-3 py-1.5 text-xs font-bold"
+                                style={{
+                                  background: isOpen ? "var(--color-primary)" : "var(--color-surface-elevated)",
+                                  color: isOpen ? "var(--accent-ink)" : "var(--color-text)"
+                                }}
+                              >
+                                {c.name} {isOpen ? "▾" : "▸"}
+                              </button>
+
+                              {isOpen && (
+                                <div
+                                  className="mt-2 rounded-2xl p-3"
+                                  style={{ background: "var(--color-surface-elevated)" }}
+                                >
+                                  {loading ? (
+                                    <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                                      Reading members…
+                                    </p>
+                                  ) : data === null ? (
+                                    <p className="text-xs" style={{ color: "var(--color-danger)" }}>
+                                      Could not read this cohort's members.
+                                    </p>
+                                  ) : data === undefined ? null : data.rows.length === 0 ? (
+                                    <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                                      No members attributed to this cohort yet — every number is derived from real sign-ups.
+                                    </p>
+                                  ) : (
+                                    <>
+                                      <div className="flex items-center justify-between mb-2">
+                                        <p className="text-xs font-bold" style={{ color: "var(--color-text)" }}>
+                                          {data.members} member{data.members === 1 ? "" : "s"}
+                                        </p>
+                                        <p className="text-xs font-bold" style={{ color: "var(--color-success)" }}>
+                                          KES {data.verifiedCommercialKes.toLocaleString()} verified
+                                        </p>
+                                      </div>
+                                      <ul className="space-y-1.5">
+                                        {[...data.rows]
+                                          .sort((a, b) => b.activity.verifiedCommercialKes - a.activity.verifiedCommercialKes)
+                                          .map((m) => (
+                                            <li
+                                              key={m.userId}
+                                              className="rounded-xl px-3 py-2 flex items-center justify-between"
+                                              style={{ background: "var(--color-surface)" }}
+                                            >
+                                              <div className="min-w-0">
+                                                <p className="text-sm font-bold truncate" style={{ color: "var(--color-text)" }}>
+                                                  {m.displayName ?? m.handle ?? "Member"}
+                                                </p>
+                                                {m.handle && (
+                                                  <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                                                    @{m.handle}
+                                                  </p>
+                                                )}
+                                              </div>
+                                              <div className="text-right shrink-0 ml-3">
+                                                <p className="text-sm font-bold" style={{ color: "var(--color-success)" }}>
+                                                  KES {m.activity.verifiedCommercialKes.toLocaleString()}
+                                                </p>
+                                                <p className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>
+                                                  {m.activity.work.fulfilled.count} work · {m.activity.orders.bought.count} bought · {m.activity.orders.sold.count} sold
+                                                </p>
+                                              </div>
+                                            </li>
+                                          ))}
+                                      </ul>
+                                    </>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
                 )}
 
                 <div className="mt-4 flex items-center gap-2">

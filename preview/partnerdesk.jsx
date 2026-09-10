@@ -60,7 +60,7 @@ const partner = {
   economics: {
     partner: { id: 'ptn_1', key: 'wef', name: 'Women Enterprise Fund', partnerType: 'women_org', status: 'active' },
     members: 3,
-    activity: { ordersBought: 0, ordersSold: 0, workRequested: 2, workFulfilled: 0, repeatPatterns: 1, requestsCreated: 2 },
+    activity: { ordersBought: 0, ordersSold: 1, workRequested: 2, workFulfilled: 0, repeatPatterns: 1, requestsCreated: 2 },
     grossKes: 17000,
     basis: 'verified_commercial',
     shareRate: 0.2,
@@ -68,6 +68,23 @@ const partner = {
     settlements: { pendingKes: 0, confirmedKes: 0 },
     note: 'derived'
   }
+};
+
+const cohortSummary = {
+  filter: { partnerKey: 'wef', programKey: 'women-enterprise-2026', cohortKey: 'nairobi-west' },
+  members: 2,
+  ordersBought: 1, ordersBoughtKes: 1200,
+  ordersSold: 1, ordersSoldKes: 1200,
+  workRequested: 1, workRequestedKes: 8500,
+  workFulfilled: 0, workFulfilledKes: 0,
+  repeatPatterns: 1, requestsCreated: 1,
+  verifiedCommercialKes: 10900,
+  currency: 'KES',
+  note: 'Gross activity across members.',
+  rows: [
+    { userId: 'usr_alice', handle: 'alice', displayName: 'Alice Njeri', acquisition: null, activity: { orders: { bought: { count: 1, totalKes: 1200 }, sold: { count: 0, totalKes: 0 } }, work: { requested: { count: 0, totalKes: 0 }, fulfilled: { count: 0, totalKes: 0 } }, procurement: { repeatPatterns: 0 }, requests: { created: 0 }, verifiedCommercialKes: 1200, currency: 'KES' } },
+    { userId: 'usr_carol', handle: 'carol', displayName: 'Carol Wanjiku', acquisition: null, activity: { orders: { bought: { count: 0, totalKes: 0 }, sold: { count: 1, totalKes: 1200 } }, work: { requested: { count: 1, totalKes: 8500 }, fulfilled: { count: 0, totalKes: 0 } }, procurement: { repeatPatterns: 1 }, requests: { created: 1 }, verifiedCommercialKes: 9700, currency: 'KES' } }
+  ]
 };
 
 const settlement = (status) => ({
@@ -142,6 +159,48 @@ async function main() {
     assert.ok(text(container).includes('No public origin configured'));
     pass('PartnerDesk: invite link is honest when no public origin is configured');
     root.unmount();
+  }
+
+  // --- 4b. cohort drill-down: click a cohort -> members + verified activity ---
+  fetchHandler = async (url) => {
+    if (url.includes('/attribution/cohort')) {
+      return { ok: true, status: 200, text: async () => JSON.stringify(cohortSummary) };
+    }
+    return { ok: true, status: 200, text: async () => JSON.stringify({ partners: [partner] }) };
+  };
+  {
+    const { container } = mount(React.createElement(PartnerDesk));
+    await flush();
+    // The cohort chip is present.
+    assert.ok(text(container).includes('Nairobi West'), 'cohort chip shown');
+    // Click it -> drill-down opens with member rows.
+    act(() => { btn('Nairobi West').click(); });
+    await flush();
+    const t = text(container);
+    assert.ok(t.includes('2 members'), 'member count shown');
+    assert.ok(t.includes('KES 10,900'), 'cohort verified total shown');
+    assert.ok(t.includes('Alice Njeri'), 'member displayName shown');
+    assert.ok(t.includes('@alice'), 'member handle shown');
+    assert.ok(t.includes('Carol Wanjiku'), 'second member shown');
+    // The member with higher activity sorts first (Carol 9700 > Alice 1200).
+    assert.ok(t.indexOf('Carol Wanjiku') < t.indexOf('Alice Njeri'), 'members sorted by activity descending');
+    pass('PartnerDesk: clicking a cohort drills down to members + verified activity');
+  }
+
+  // --- 4c. cohort drill-down: honest empty state ---
+  fetchHandler = async (url) => {
+    if (url.includes('/attribution/cohort')) {
+      return { ok: true, status: 200, text: async () => JSON.stringify({ ...cohortSummary, members: 0, rows: [], verifiedCommercialKes: 0 }) };
+    }
+    return { ok: true, status: 200, text: async () => JSON.stringify({ partners: [partner] }) };
+  };
+  {
+    const { container } = mount(React.createElement(PartnerDesk));
+    await flush();
+    act(() => { btn('Nairobi West').click(); });
+    await flush();
+    assert.ok(text(container).includes('No members attributed to this cohort yet'));
+    pass('PartnerDesk: an empty cohort shows an honest no-members state');
   }
 
   // --- 5. agreement editor + finance 403 honesty ---

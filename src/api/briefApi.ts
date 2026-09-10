@@ -4218,6 +4218,41 @@ export function getMyAcquisition(): Promise<ApiResult<MyAcquisition>> {
     r && typeof r?.activity === 'object' ? r : undefined);
 }
 
+// Cohort drill-down (Phase 2): the members of a partner/program/cohort slice,
+// each with their derived activity. Derived server-side from real rows only —
+// a cohort with no attributed members returns an honest empty list.
+export interface CohortMember {
+  userId: string;
+  handle: string | null;
+  displayName: string | null;
+  acquisition: Acquisition | null;
+  activity: EconomicActivity;
+}
+export interface CohortSummary {
+  filter: { partnerKey: string | null; programKey: string | null; cohortKey: string | null };
+  members: number;
+  ordersBought: number;
+  ordersBoughtKes: number;
+  ordersSold: number;
+  ordersSoldKes: number;
+  workRequested: number;
+  workRequestedKes: number;
+  workFulfilled: number;
+  workFulfilledKes: number;
+  repeatPatterns: number;
+  requestsCreated: number;
+  verifiedCommercialKes: number;
+  currency: string;
+  note: string;
+  rows: CohortMember[];
+}
+export function getCohortMembers(partnerKey: string, programKey: string | null, cohortKey: string): Promise<ApiResult<CohortSummary>> {
+  const qs = new URLSearchParams({ partner: partnerKey, cohort: cohortKey });
+  if (programKey) qs.set('program', programKey);
+  return request(`/api/ops/attribution/cohort?${qs.toString()}`, undefined, r =>
+    r && Array.isArray(r?.rows) ? r : undefined);
+}
+
 // Partner distribution (Phase 2): operator-only reads for the partner desk.
 // A non-operator caller gets 403 from the server; the surface reports that
 // honestly rather than fabricating partner data.
