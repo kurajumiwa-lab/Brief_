@@ -87,38 +87,11 @@ class SoundEngine {
     }
   }
 
-  public play(type: SoundType): void {
-    if (this.isMuted) return;
-    if (!this.initContext() || !this.ctx) return;
-
-    try {
-      switch (type) {
-        case 'tap':
-          this.synthesizeTap();
-          break;
-        case 'heavyTap':
-          this.synthesizeHeavyTap();
-          break;
-        case 'reward':
-          this.synthesizeReward();
-          break;
-        case 'victory':
-        case 'cheer':
-          this.synthesizeVictory();
-          break;
-        case 'defeat':
-          this.synthesizeDefeat();
-          break;
-        case 'countdown':
-          this.synthesizeCountdown();
-          break;
-        case 'matchReady':
-          this.synthesizeMatchReady();
-          break;
-      }
-    } catch {
-      // Fail silently if audio subsystem is blocked.
-    }
+  public play(_type: SoundType): void {
+    // SOUND IS DISABLED (product decision). All 377 call sites remain intact so
+    // callers never break, but no AudioContext is ever created and no haptic
+    // fires. Re-enable by restoring the synthesize* dispatch here.
+    return;
   }
 
   // --- Synthesis Subroutines ---
