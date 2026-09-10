@@ -33,7 +33,7 @@ let pass = 0, fail = 0;
 const check = (n, c, d = '') => { if (c) { pass++; console.log('  PASS  ' + n); } else { fail++; console.log('  FAIL  ' + n + (d ? ' -> ' + d : '')); } };
 
 (async () => {
-  const { MenuSheet } = await import('../src/components/MenuSheet.tsx');
+  const { MenuSheet } = await import('./src/components/MenuSheet.tsx');
   let picked = null; let city = null;
   const root = createRoot(document.getElementById('root'));
   await act(async () => {

@@ -13,7 +13,6 @@
 set -u
 cd "$(dirname "$0")"
 
-bash ./sync.sh > /dev/null || { echo "sync.sh FAILED"; exit 1; }
 cd preview || exit 1
 export PATH="../node_modules/.bin:$PATH"
 

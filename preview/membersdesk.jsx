@@ -69,7 +69,7 @@ let pass = 0, fail = 0;
 const check = (n, c, d = '') => { if (c) { pass++; console.log('  PASS  ' + n); } else { fail++; console.log('  FAIL  ' + n + (d ? ' -> ' + d : '')); } };
 
 (async () => {
-  const { AdminDesk } = await import('../src/components/AdminDesk.tsx');
+  const { AdminDesk } = await import('./src/components/AdminDesk.tsx');
   let tick = 0;
   const root = createRoot(document.getElementById('root'));
   const render = async () => {

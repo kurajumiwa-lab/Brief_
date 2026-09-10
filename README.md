@@ -134,8 +134,12 @@ preview/                Vite build + the jsdom client suites.
 tc/                     Strict TypeScript typecheck harness.
 ```
 
-`sync.sh` copies the root `App.tsx` and `src/*` into `preview/src` and `tc/src`
-(the dev server and typechecker read those copies).
+`preview/src/` is the single canonical client source tree — built by Vite and
+read directly by the typechecker (`tc/tsconfig.json` includes
+`../preview/src`). The legacy `App.tsx` shell remains only as the test harness
+for the older feature suites (Circles, Marketplace, events, tickets, …); the
+production entry (`preview/src/main.jsx`) renders `AppShell` and never imports
+it.
 
 ---
 
@@ -167,8 +171,7 @@ breaks the app.
 Run from the repo root after `npm run install:all`:
 
 ```bash
-./sync.sh                  # refresh preview/src + tc/src copies
-npm run build:client       # Vite production build
+npm run build:client       # Vite production build (preview/src is the source)
 ./run-suites.sh            # client suites (jsdom)
 cd server && npm test      # server suite (run.js + per-domain files)
 npx tsc -p tc/tsconfig.json  # strict typecheck (expects exit 0)

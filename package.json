@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "install:all": "npm install && npm --workspace=preview install && npm --workspace=server install && npm --workspace=tc install",
-    "build:client": "bash sync.sh && npm --workspace=preview run build",
+    "build:client": "npm --workspace=preview run build",
     "build": "npm run build:client",
     "start": "NODE_ENV=production node server/src/index.js",
     "start:dev": "cd server && npm start",

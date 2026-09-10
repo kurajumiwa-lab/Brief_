@@ -45,7 +45,7 @@ let pass = 0, fail = 0;
 const check = (n, c, d = '') => { if (c) { pass++; console.log('  PASS  ' + n); } else { fail++; console.log('  FAIL  ' + n + (d ? ' -> ' + d : '')); } };
 
 (async () => {
-  const { default: RewardsDesk } = await import('../src/components/RewardsDesk.tsx');
+  const { default: RewardsDesk } = await import('./src/components/RewardsDesk.tsx');
   const root = createRoot(document.getElementById('root'));
   await act(async () => { root.render(React.createElement(RewardsDesk, { settledPoints: 42, rank: 'new', accepted: 3, pending: 1 })); });
   await act(async () => { await new Promise((r) => setTimeout(r, 10)); });

@@ -57,7 +57,7 @@ let pass = 0, fail = 0;
 const check = (n, c, d = '') => { if (c) { pass++; console.log('  PASS  ' + n); } else { fail++; console.log('  FAIL  ' + n + (d ? ' -> ' + d : '')); } };
 
 (async () => {
-  const { WhatsAppShopBuilder } = await import('../src/components/WhatsAppShopBuilder.tsx');
+  const { WhatsAppShopBuilder } = await import('./src/components/WhatsAppShopBuilder.tsx');
   let feesOpened = false;
   const root = createRoot(document.getElementById('root'));
   await act(async () => { root.render(React.createElement(WhatsAppShopBuilder, { onOpenFees: () => { feesOpened = true; } })); });

@@ -74,8 +74,8 @@ let pass = 0, fail = 0;
 const check = (n, c, d = '') => { if (c) { pass++; console.log('  PASS  ' + n); } else { fail++; console.log('  FAIL  ' + n + (d ? ' -> ' + d : '')); } };
 
 (async () => {
-  const { WhatsAppShopBuilder } = await import('../src/components/WhatsAppShopBuilder.tsx');
-  const briefApi = await import('../src/api/briefApi.ts');
+  const { WhatsAppShopBuilder } = await import('./src/components/WhatsAppShopBuilder.tsx');
+  const briefApi = await import('./src/api/briefApi.ts');
   const root = createRoot(document.getElementById('root'));
   await act(async () => { root.render(React.createElement(WhatsAppShopBuilder, { onOpenFees: () => {} })); });
   await act(async () => { await new Promise((r) => setTimeout(r, 20)); });

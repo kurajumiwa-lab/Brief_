@@ -49,7 +49,7 @@ let pass = 0, fail = 0;
 const check = (n, c, d = '') => { if (c) { pass++; console.log('  PASS  ' + n); } else { fail++; console.log('  FAIL  ' + n + (d ? ' -> ' + d : '')); } };
 
 (async () => {
-  const { default: ServiceFees } = await import('../src/components/ServiceFees.tsx');
+  const { default: ServiceFees } = await import('./src/components/ServiceFees.tsx');
   const root = createRoot(document.getElementById('root'));
   await act(async () => { root.render(React.createElement(ServiceFees)); });
   await act(async () => { await new Promise((r) => setTimeout(r, 10)); });
