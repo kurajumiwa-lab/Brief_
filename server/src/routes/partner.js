@@ -5,8 +5,12 @@
 // or a shilling.
 import * as partner from '../domain/partner.js';
 import { requireCap } from './helpers.js';
+import { requireFeature } from '../features.js';
 
 export function register(app) {
+  app.use('/api/ops/partners', requireFeature('partner'));
+  app.use('/api/ops/programs', requireFeature('partner'));
+  app.use('/api/ops/settlements', requireFeature('partner'));
   // List all partners with derived economics.
   app.get('/api/ops/partners', (req, res) => {
     if (!requireCap(req, res, 'moderate')) return;

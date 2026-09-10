@@ -2,8 +2,12 @@
 // and the derived cohort economics an operator can see about a partner slice.
 import * as attribution from '../domain/attribution.js';
 import { requireAuth, requireCap } from './helpers.js';
+import { requireFeature } from '../features.js';
 
 export function register(app) {
+  app.use('/api/me/acquisition', requireFeature('attribution'));
+  app.use('/api/ops/attribution', requireFeature('attribution'));
+
   // A member sees their own provenance chain and derived activity. Honest
   // null when no provenance was captured at sign-up.
   app.get('/api/me/acquisition', (req, res) => {

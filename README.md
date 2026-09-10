@@ -1,45 +1,141 @@
-# Brief Kenya — Neighborhood Trust OS
+# Brief — Economic coordination for Kenyan women, workers and micro-enterprises
 
-**The operating system for how Kenyan neighborhoods coordinate money, work, and favors — without pretending to be a bank.**
+**Brief is a distribution-and-economic infrastructure layer for organizations that already have trusted groups of women, workers, traders, suppliers and entrepreneurs — not a bank, and not another consumer app.**
 
-Brief is built around four hyper-local core pillars:
-1. **WAIRO** — Send things across town (courier & errands, 90/10 payout, local & inter-county toggle)
-2. **Chama OS** — Run rotating savings groups, merry-go-rounds & table banks with self-governing ledgers
-3. **Harambee Desks** — Coordinate community support, bereavement & emergency funds
-4. **Local Gigs** — Find verified micro-work with 48h settlement in your neighborhood
+A member requests something they source, a supplier quotes it, the two agree on
+terms and run the work to completion, the completion is remembered so the same
+sourcing is one tap next time, both parties build a **derived, explainable**
+track record, and payment is collected and settled through real rails — with
+every figure derived from real rows, never stored as a second source of truth.
 
 ---
 
-## Non-Promises Disclaimers & Trust Architecture
+## What Brief is, and what it is not
 
-- **Brief is not a bank:** Brief does not hold user funds, provide banking services, or manage investments.
-- **Direct M-Pesa Rails:** Money moves directly between members using standard M-Pesa channels.
-- **Self-Governing Groups:** Chamas and Harambees maintain transparent records and govern themselves.
-- **Direct Peer Logistics:** WAIRO connects senders with independent verified riders.
+**The positioning.** Brief does not try to become a bigger consumer app. It is
+a *distribution and economic-coordination layer* for organizations that already
+hold a trusted group — women-focused banks, SACCOs, chamas, coops, employers,
+NGOs, KNCCI-type networks, corporate supplier-diversity programs. They bring
+the cohort; Brief supplies the shop, the records, the verification and the
+money rails; the ledger proves what the cohort actually did.
+
+**Not a bank, not a lender.** Brief does not hold user funds, does not lend,
+does not score credit, does not insure, and does not touch crypto. "Brief is
+not a bank" is a hard constraint, not a slogan.
+
+**Honesty is the product.** Every number the UI shows — earnings, commission,
+withdrawable, trust history, partner revenue share — is **derived** by scanning
+real rows. A stored total is a second source of truth waiting to disagree with
+the first. When something is unavailable, Brief says so instead of fabricating
+success: an unconfigured payment rail returns `503` with a reason, not a fake
+"paid".
+
+---
+
+## The product surface
+
+Production serves a **four-tab dock** (see `src/app/Navigation.tsx`):
+
+| Tab | What it is |
+|---|---|
+| **Home** | The owner-scoped home surface (`src/features/home/HomeSurface.tsx`). |
+| **Spaces** | The pipeline — your requests, work and supply (`src/features/spaces/PipelineView.tsx`). |
+| **Discover** | The city feed — what is being sourced and supplied around you (`src/features/city/CityFeedView.tsx`). |
+| **Activity** | Your own real counts: requests, work, payments, procurement (`src/features/activity/ActivitySurface.tsx`). |
+
+---
+
+## The core economic loop
+
+One chain, all derived, all honest:
+
+1. **Request** — a member posts structured demand (`domain/requests.js`): quantity, unit, category, budget, deadline, specs.
+2. **Match** — demand is matched to participant capabilities, every match explaining itself in words (`domain/matching.js`).
+3. **Quote** — the participant proposes integer-minor-unit terms; totals are BigInt-exact (`domain/quotes.js`, `quoteValidation.js`).
+4. **Work order** — accepting a quote freezes an agreement and runs a two-party fulfillment state machine (`domain/workOrders.js`).
+5. **Repeat procurement** — completing a work order records a repeatable pattern, so "request again" is one tap (`domain/procurement.js`).
+6. **Trust** — economic history is derived per participant/capability with explainable signals, never a secret score (`domain/participantTrust.js`).
+7. **Payment** — collection via Tuma STK push, disbursement via M-Pesa B2C, each attempt recorded and reconciled (`domain/workPayment.js`).
+
+The **supply layer** (`domain/supply.js`, `supplyVerification.js`) models
+enterprises and their capabilities (production / stock / service / logistics /
+sourcing access), with scoped verification records (identity, business type,
+sourcing role, capability, capacity, authorization) — never an aggregate
+"fully verified" badge.
+
+---
+
+## The distribution layer (attribution + partners)
+
+The strategic core of the product. Two first-class domains:
+
+**Attribution** (`domain/attribution.js`) — the provenance chain. When a member
+arrives, Brief captures *once* (first-touch-wins) how they got here:
+
+```
+partner=WEF → program=women-enterprise-2026 → cohort=nairobi-west
+  → invite=ABC123 → member=USER456 → work order → KES 12,500
+```
+
+Economic activity per member and per partner/cohort is **derived** from real
+rows (fulfilled orders, completed work, repeat patterns) — never stored. A
+partner with no members shows zero, plainly.
+
+**Partner** (`domain/partner.js`) — first-class distribution partners. A
+partner is a *stored, contracted* record (organisation → programs → cohorts)
+keyed against the attribution keys. Its revenue share is a **derived
+obligation** (`floor(shareRate × verifiedCommercialKes)`) that becomes money
+only through a settlement that finance confirms, writing a real ledger
+transaction (`partner_revenue_share`). The transparent ledger reads:
+
+```
+Partner generated KES 482,300 → Partner share KES 48,230 → Brief KES 38,584 → costs KES 9,646
+```
+
+These are operator-created records, not member claims; revenue share is a
+derived number, never fabricated money.
+
+---
+
+## One economic layer
+
+`ledgerTransactions` is the single source of economic truth. There is no
+wallet, no balance column and no per-feature economy. Money is
+server-authoritative: a client posting `{price: 1}` against a KES 2,500 listing
+gets an order for 2,500. Settlement is refused unless a genuinely settled
+ledger transaction backs it.
+
+- **Collection:** Tuma STK push (`connectors/tuma.js`) — fails closed when unconfigured.
+- **Disbursement:** M-Pesa B2C (`connectors/mpesa.js`) — payouts refuse with `503 provider_unavailable` until credentials are set.
+- **Referrals** (`domain/referrals.js`): depth hard-capped at **one level**, no entry fee anywhere, points convert to cash only from a pool backed by a fixed fraction of confirmed service-fee revenue.
 
 ---
 
 ## Repository layout
 
 ```
-App.tsx              Client application shell (React + TS)
-src/api/             Typed API client -- the ONLY place fetch() is called
-src/components/      Extracted client surfaces (Circles, Marketplace, Pulse, ...)
-server/              Backend: connectors, pipeline, domain modules, HTTP API
-  src/domain/        17 domain modules (auth, payment, settlement, ledger,
-                     arena, fantasy, auction, order, listing, campaign,
-                     coop, ...)
-  src/ops.js         Structured logging, readiness, diagnostics, backup
-  test/run.js        Server suite (1907 assertions)
-preview/             Vite dev server + the jsdom client suites (38 suites)
-tc/                  Strict TypeScript typecheck harness
-live/                Smoke tests against the PRODUCTION build over HTTP
-uploads/             Screenshots of the deployed app
+preview/src/main.jsx    The ONLY entry point. Renders src/app/AppShell.tsx for
+                        app routes and PublicCampaignPage for /c/:slug.
+App.tsx                 Root client shell (React + TS).
+src/app/                AppShell + Navigation (the production shell).
+src/features/           Modular surfaces: home, city, spaces, activity,
+                        matching, quotes, requests, supply, work, procurement.
+src/api/                Typed API client — the ONLY place fetch() is called.
+src/model/              Core types, scoring, destinations.
+server/                 Backend: connectors, domain modules, HTTP routes.
+  src/domain/           The domain logic (auth, requests, matching, quotes,
+                        workOrders, procurement, participantTrust, workPayment,
+                        supply, attribution, partner, ledger, settlement, ...).
+  src/routes/           Express route modules, one per domain.
+  src/store.js          File-backed JSON store; EMPTY enumerates every
+                        collection; additive migrations only.
+  test/                 Server suite (run.js + per-domain *.mjs).
+preview/                Vite build + the jsdom client suites.
+tc/                     Strict TypeScript typecheck harness.
 ```
 
-`App.tsx` at the root is the source of truth. `preview/src/App.tsx` and
-`tc/src/App.tsx` are working copies that the dev server and typechecker read;
-both are refreshed by copying the root file over them.
+`sync.sh` copies the root `App.tsx` and `src/*` into `preview/src` and `tc/src`
+(the dev server and typechecker read those copies).
 
 ---
 
@@ -48,320 +144,73 @@ both are refreshed by copying the root file over them.
 ### The app
 
 ```bash
-cd preview
-npm install
-npm run dev            # http://localhost:5173
+npm run install:all        # installs root + preview + server + tc workspaces
+npm run dev                # Vite dev server (proxies /ingest/* to :8787)
 ```
 
-The dev server proxies `/ingest/*` to the ingestion API on port 8787, so the
-browser never talks to the backend directly.
-
-### The ingestion server
+### The server
 
 ```bash
 cd server
-npm install
-cp .env.example .env   # fill in tokens for live connectors
-npm start              # http://localhost:8787
+cp .env.example .env       # fill in tokens for live connectors
+npm start                  # http://localhost:8787 (binds 0.0.0.0:PORT)
 ```
 
-It runs without any credentials. Web, RSS and manual ingestion work
-immediately; Telegram and WhatsApp report **"Needs authorization"** in the
-connector dashboard until their tokens are set. Brief keeps working either way
-— a dead connector never breaks the app.
-
-### Temporary release-test content
-
-When a new deployment needs a welcoming first page, run `npm run seed` (or use
-the authenticated Demo action). The seed is server-side, marked as demo data,
-and gets a seven-day expiry from its first creation. Once expired, public
-objects are withdrawn, stories expire, campaigns close, listings archive, and
-the marker remains so a later boot cannot silently resurrect the cohort. Use
-`npm run seed:clear` only for an explicit reset.
-
-The browser can run a release smoke check through the same `/ingest` proxy used
-in production:
-
-```bash
-node live/5-release-smoke.mjs
-RELEASE_SMOKE_WRITES=1 node live/5-release-smoke.mjs
-```
-
-The check verifies the release handshake, current home-feed timestamp, news
-wire shape, Arena entry point, and (with writes enabled) a real registration,
-challenge, campaign, WhatsApp-share/banner, and archive cycle.
+It runs with no credentials. Local domains work immediately; connectors that
+need a token report "not configured" and fail closed — a dead connector never
+breaks the app.
 
 ---
 
 ## Tests
 
-```bash
-./run-suites.sh              # all client suites (syncs App.tsx first)
-./run-suites.sh commerce     # or a single named suite
-
-cd server && node test/run.js         # server suite
-cd server && OFFLINE=1 node test/run.js   # skip anything needing the network
-cd server && node test/livecamp.mjs   # live campaign integration
-
-cd tc && npx tsc -p tsconfig.json     # strict typecheck (expects exit 0)
-npm run test:yard              # Yard Engine HTTP completion loop
-```
-
-Against a running production build (`cd preview && npx vite preview`, plus the
-API on :8787):
+Run from the repo root after `npm run install:all`:
 
 ```bash
-node live/2-commerce-over-http.mjs    # buyer journey, two real actors
-node live/3-public-campaign.mjs       # public distribution
-node live/4-full-chain.mjs            # identity -> ... -> payout, Arena,
-                                      # Fantasy, Auction, ops
-node live/5-release-smoke.mjs         # release handshake & feed shape
-node live/6-completion-walk.mjs       # walk every loop end to end
-node live/7-android-bug-replay.mjs    # replay the reported bugs
-node live/8-mshikano.mjs              # cooperation network: intents, matches,
-                                      # two-sided confirmation, trust evidence
-node live/9-pochi-fees.mjs            # service fees via Pochi la Biashara:
-                                      # M-PESA code, pending -> finance confirms
-node live/10-referrals.mjs            # referrals: one level, no entry fee,
-                                      # cash only from the revenue-backed pool
-node live/11-arena-progression.mjs    # Arena retention layer: XP/Coins/missions/
-                                      # season/rivals/rating replay, over HTTP
-node live/12-whatsapp-shop.mjs        # WhatsApp shop: formatting, wa.me link,
-                                      # publish gated on a confirmed Pochi fee
-node live/13-duka-book.mjs            # the SME layer: logged sales + derived
-                                      # book, idempotent offline replays, pooled
-                                      # restocks, escrow records — over HTTP
-node live/14-members-desk.mjs         # the members desk: directory, rungs,
-                                      # funnel, immediate audited suspension
+./sync.sh                  # refresh preview/src + tc/src copies
+npm run build:client       # Vite production build
+./run-suites.sh            # client suites (jsdom)
+cd server && npm test      # server suite (run.js + per-domain files)
+npx tsc -p tc/tsconfig.json  # strict typecheck (expects exit 0)
 ```
 
-**Current state: 3953 assertions, 0 failing** — measured 2026-08-30 against a
-production build over HTTP, not inherited from an earlier report.
+**Current state — measured 2026-09-10 from a clean install, not copied forward:**
 
 | Suite | Result |
 |---|---|
-| `server/test/run.js` | 2048 passed / 0 failed / 1 skipped |
-| `server/test/livecamp.mjs` | 111 passed / 0 failed |
-| `./run-suites.sh` (45 client suites) | 1420 passed / 0 failed |
-| `tc` strict typecheck | exit 0 |
-| `live/` against the production build | 43+27+82+18+35+26+34+16+17+14+17+13+11 = 353 / 0 |
+| Server (`cd server && npm test`, 21 suites) | **2892 passed / 0 failed / 1 skipped** |
+| Client (`./run-suites.sh`) | **1861 passed / 0 failed** |
+| Strict typecheck (`tc`) | exit 0 |
 
-The server suite hits real third parties (BBC's RSS feed, GitHub's robots.txt,
-Telegram's API). Those tests **skip** rather than pass when the network is
-unavailable, so a green run always means something real happened.
-
-These numbers were produced by re-running everything from a clean install, not
-copied forward. [`VERIFICATION-REPORT.md`](VERIFICATION-REPORT.md) records what
-that sweep found and fixed — three write routes that accepted an anonymous
-caller, a manual capture that claimed extraction confidence it had not earned —
-and what is still weak.
-
----
-
-## Architecture notes
-
-**Five primary destinations** — Nearby, Arena, My Layer, Workflows, Pulse.
-There is no router: navigation is conceptual, driven by state. Do not add a
-sixth destination; put new surfaces under an existing one's secondary nav.
-
-**Two desks are filed into bundles, and the Inbox opens on a queue.** The
-Inbox (Workflows) used to open on a list of 18 tools; it now opens on one
-*waiting-on-you* queue (`GET /api/triage`), and the tools sit in four bundles
-behind it — Create · Sell · Run · Records. My Layer's 11 options became three:
-Kept · Groups · Creator. Every screen still exists at the same section id and
-the same URL; the bundles only decide which sub-tabs are shown next to each
-other. See `src/ui/names.ts` (`WORKFLOW_BUNDLES`, `SAVED_BUNDLES`) — that is
-the single place the filing lives.
-
-**A loop is not finished until somebody can walk it.** Three of them were
-half-built and are now whole: a circle can be started, joined and left
-(`POST /api/circles` makes the creator its coordinator; `POST/DELETE
-/api/circles/:id/members[/me]`); a public plan can be joined and left
-(`/api/subscriptions?browse=1`, `POST /api/subscriptions/:id/subscribe`); and
-the queue answers "is anything waiting for me?" in one list instead of leaving
-a badge on eighteen screens.
-
-**Onboarding is a ladder.** A new person passes through five rungs — account,
-intent, keep your first thing (the aha), contribute something, put it in front
-of people — and each rung opens the secondary services above it. Progress is
-DERIVED from real rows plus an append-only event stream, never stored as a step
-counter, and the lock shapes what is *offered*, never what is permitted. Saved
-and Actions deliberately show no ladder chrome. Google sign-in leads the first
-screen and Telegram is never required. See
-[`ONBOARDING.md`](ONBOARDING.md).
-
-**Ligi runs itself.** The Arena's African fantasy football game opens, locks,
-prices and settles every gameweek on a clock with no human in the loop — house
-lines are DERIVED from each player's own settled history, not set by a
-commissioner, and a week whose match stats have not arrived stays unsettled
-rather than being guessed. It holds the priority listing on the main shelf. The
-free seat is the whole game, staked in units that have no cash value; the cash
-seat is listed, priced, and refused with the five requirements it is missing.
-See [`LIGI.md`](LIGI.md).
-
-**Mshikano: the unit is the relationship.** The cooperation network lives
-under Nearby (the five-destination rule holds — it is a secondary surface, the
-seventh door on the main shelf). Members post in one of four intents — have,
-need, can help, looking for — and matching joins only complements
-(HAVE↔NEED, CAN_HELP↔LOOKING_FOR), every match explaining itself with reasons
-in words. A cooperation exists only when **both sides confirm it**: the
-proposer cannot self-confirm, nobody outside the pair can respond, and only
-confirmed rows reach the graph. Trust is counted evidence — confirmed
-cooperations, repeat partners, recommendations, a verified identity — never a
-star rating, and the level says what it means in words. "Who can help?"
-answers with real people, active businesses, published guides and **real
-circles** that match the question (with their true member count) — and stays
-empty, saying so, when nothing matches. A member who says a cooperation did
-not go as written can **dispute** it: the credit is withdrawn from both
-records, the reason is kept, and the row stays listed. Nothing under
-`/api/mshikano/*` is reachable without an account. See
-[`MSHIKANO-INTEGRATION-REPORT.md`](MSHIKANO-INTEGRATION-REPORT.md).
-
-**No fabricated data.** The rule the ingestion pipeline exists to enforce is
-that a field which was not stated stays unstated. "Saturday popup" yields a
-day, never a calendar date. Messages with nothing concrete in them produce no
-object at all. Every extracted value stores the substring it came from so the
-parser can be audited rather than trusted.
-
-**Images are files, not links.** The editorial surfaces upload a real image
-(`POST /api/media/upload`, multipart) rather than pasting a URL, because a
-photo Brief does not hold can rot, hotlink-block or change under a published
-story. The server decides what a file really is from its **magic bytes** — a
-declared type, a filename and an extension prove nothing — accepts only JPEG,
-PNG, WebP and GIF (never SVG, which is a document that can carry script), caps
-the size on the wire, stores the file under a name it generates itself, and
-serves the bytes with `nosniff` and a CSP that allows nothing. Bytes live on
-the deployment's local disk, so they survive a restart and **not** a redeploy,
-and the scheduled backup copies the store's rows but not the bytes;
-`/api/media/status` says so, and a request for bytes that are gone answers 404
-with that reason rather than serving a broken image. Point `BRIEF_UPLOAD_DIR`
-at a mounted volume to keep them. See `server/src/domain/upload.js`.
-
-**Provenance is first-class.** One real-world thing is one canonical object
-with many attached sources. Seeing the same event on Telegram and in a WhatsApp
-export escalates it to `cross_source_confirmed` — it does not create two
-events.
-
-**Privacy.** Objects derived from a private source default to `source_members`,
-not `public`. "From your groups" renders only when a real membership record
-exists; membership is never inferred.
-
-**One economic layer.** `ledgerTransactions` is the single source of economic
-truth. There is no wallet, no balance column and no per-feature economy --
-not for vendors, campaigns, Circles, Arena, Fantasy or Auctions. Every figure
-the UI shows (earnings, commission, withdrawable, auction price) is **derived**
-by scanning rows, because a stored total is a second source of truth waiting to
-disagree with the first.
-
-**Money is server-authoritative.** Prices come from the listing row and
-auction amounts from the winning bid row; a client posting `{price: 1}` against
-a 2500 listing gets an order for 2500. Settlement is refused unless a genuinely
-settled ledger transaction backs it.
-
-**Referrals are rewards, not a pyramid.** Members earn points for bringing
-people, products, services and real traffic: a code is derived from the
-handle, signups credit the direct referrer once, fulfilled orders credit the
-buyer and the referrer, event links (`?via=code`) count unique visits —
-deduped per visitor per day and capped daily — and event registrations earn
-once per attendee. Three structural rules keep it honest, and the tests pin
-them: **depth is hard-capped at one level** (a referral of a referral credits
-nobody above), **there is no entry fee anywhere**, and points convert to
-cash **only from a pool backed by a fixed fraction of confirmed service-fee
-revenue** — floor(10%) minus what is already paid or promised, refused with
-the reason when empty. Payouts are manual M-Pesa sends confirmed by finance,
-carried in the one economic layer. See `domain/referrals.js`.
-
-**Brief's own services are paid by Pochi la Biashara, manually.** Pochi has
-no developer API, so nothing pretends otherwise: the price lives in one
-server-side catalog (`domain/fees.js`), the member pays Brief's Pochi number
-in their M-PESA app and submits the confirmation code, and the fee stays
-**pending** — a service never activates on trust alone — until a
-finance-capable operator confirms the code. One M-PESA code is one payment,
-ever; a refused code stays locked with its reason on the row; and revenue is
-derived by scanning confirmed rows in the one economic layer.
-
-**Honest refusal over fake success.** No payment provider is connected, so
-paying returns **503 with `charged:false`** and a stated reason -- it never
-fabricates a payment. Real-money Arena and paid Fantasy return **403
-`compliance_gate`** naming the five unmet requirements. `/api/capabilities`
-reports all of this truthfully.
-
-See [`BRIEF-FINAL-REPORT.md`](BRIEF-FINAL-REPORT.md) for what is built, partial
-and missing, and [`BRIEF-COVERAGE-MATRIX.md`](BRIEF-COVERAGE-MATRIX.md) for
-evidence-cited coverage per area.
-
-The anonymous, read-only feed contract is documented in
-[`PUBLIC-FEED-API.md`](PUBLIC-FEED-API.md). Use `GET /api/public/feed` for
-external integrations; `GET /api/feed` remains the first-party alias.
-
-See [`server/CONNECTORS.md`](server/CONNECTORS.md) for exactly what each
-connector can and cannot do, including the things that are genuinely impossible
-(WhatsApp group ingestion, Telegram history backfill) and why.
+The server suite skips (rather than passes) network-dependent assertions when
+the network is unavailable, so a green run always means something real
+happened.
 
 ---
 
 ## Deployment
 
-The client is a static Vite build:
+`railway.json` builds the client with `npm run build:client` and starts
+`NODE_ENV=production node server/src/index.js`, serving the compiled frontend
+from `preview/dist`. The server binds `0.0.0.0:$PORT` (default 8787) and
+exposes `/api/health` and `/api/ready`.
 
-```
-Build command:     npm run build
-Output directory:  dist
-Install command:   npm install
-```
+Environment variables: server secrets must **never** carry the `VITE_` prefix —
+that prefix is what exposes a value to the browser. See `.env.example` and
+`server/.env.example`.
 
-Environment variables for the client need the `VITE_` prefix to be exposed to
-the browser. The ingestion server's secrets must **never** carry that prefix —
-they stay server-side.
+---
 
-## Arena progression (retention layer)
+## Deliberately out of scope
 
-XP and Arena Coins are **points, not money** — they buy nothing, cash out nowhere, and never touch the ledger. Every number is **derived**: ratings/streaks are a single-pass chronological replay of confirmed matches; totals come from idempotent grant events (`arena:match:<mid>:<uid>`) and once-daily mission claims (`arena:mission:<day>:<key>:<uid>`).
+No star ratings, no review walls, no credit scoring, no lending, no BNPL, no
+insurance, no crypto, no opaque AI scoring, no M-Pesa onboarding that pretends
+a payment happened. Keep Brief "not a bank".
 
-- `GET /api/arena/progress/me` — level (500 XP/level), season XP, coins, daily missions, rivals (≥2 confirmed matches), season rank, per-player stats.
-- `GET /api/arena/live` — real counts only: active in last hour, awaiting confirmation, open challenges, Season 01 clock.
-- `POST /api/arena/missions/:key/claim` — once per day; incomplete missions refuse with the reason.
-- `GET /api/arena/season/leaderboard` — ranked XP rows plus the caller's `you` row.
-- `confirm` responses include `yourRewards` for the confirming player's toast.
-- Client: `ArenaPulse` in the lobby (tagline "Play. Compete. Build your record.", honest quiet states) and `SeasonStrip` above the per-game leaderboard. No new navigation.
+---
 
+## Further reading
 
-## WhatsApp shop (build on Brief, sell in WhatsApp)
-
-The architecture is stated in the product, not hidden: **Brief builds the shop, WhatsApp IS the shop.** A member writes a name, a one-liner, an order number and a price list; Brief derives the exact WhatsApp message (real formatting — `*bold*`, `_italic_` — that survives a screenshot, a status post and a broadcast) plus a `wa.me` deep link that opens a chat with the catalog pre-filled. The conversation is where selling happens; Brief does not sit in the middle.
-
-- No WhatsApp payments, by design. Buyers and sellers arrange money the way they already do (Pochi la Biashara, till, send money).
-- Drafting is free. **Publishing is gated** on the `store_monthly` service (KES 250/month) — paid through the same manual Pochi flow as every Brief fee and activated only when a finance-capable operator confirms the M-Pesa code. A pending code opens nothing.
-- One shop per member; up to 40 items so a forwarded list stays readable; the share output is derived, never stored.
-- Photos belong in the free WhatsApp Business catalog (500 items, 10 images) — this builder makes the price list people actually forward. The panel says so.
-- Routes: `GET/PUT /api/shop/mine`, `POST /api/shop/mine/publish|unpublish`; the publish refusal is machine-readable (`requiresService`) and the client deep-links to the fee desk.
-- Client: `WhatsAppShopBuilder` under Workflows → Sell → WhatsApp Shop, and a door in the redesigned Menu.
-
-## Menu, redesigned as part of the same app
-
-The Menu was rebuilt to the Arena screen's visual system instead of a dark modal: lavender page, white cards, deep-purple actions, and gold reserved for membership status alone. It is a full navigation surface beneath the dock (the bottom nav stays visible), with exactly one close control. The account is one compact card (standing derived on demand), Explore is a four-door icon grid — no photography, since Menu navigates while the home screen explores — Quick Actions are compact rows in one card, and coming-later items are a single quiet line. `preview/menusheet.jsx` holds the rules (one `×`, no neon, no `img`).
-
-
-## The Duka layer: book, pools, escrow records, offline shell
-
-The SME-digitization build (see `MARKET-GAPS-ADVISORY.md`), all on existing seams:
-
-- **The Duka book** — the paper-ledger replacement. Brief never claims to see inside WhatsApp: the shopkeeper LOGS a sale in 3 fields (item, qty, price) and everything is derived — today/yesterday/7-day totals, top items, low stock (price-list stock minus the week). `GET /api/shop/mine/book`, `POST /api/shop/mine/sales`. Sales carry a `clientKey`; a replay of the same key returns the original row (`replayed: true`), never a second sale.
-- **Pooled restocks** — "pool this item" opens a real Group Buy (`POST /api/shop/mine/pool`): the shopkeeper declares the bulk unit cost and a goal, pledges their own units, and the engine's funding → escrow → dispatched → delivered stepper takes over. Other shops contribute; the share text is a forwardable WhatsApp call (`*RESTOCK POOL*`).
-- **Escrow-as-records** — `GET /api/escrows/mine` derives what is HELD and what is RELEASED for one member across every escrow pattern (group buys, ticket resale orders; HudumaLink citizen escrow stays phone-keyed at the operator desk). Records only: Brief moves no money.
-- **The offline shell** — PWA manifest + service worker (`preview/public/`): hashed assets cache-first, navigations network-first with a cached-shell fallback, and the API is NEVER cached (a cached read pretending to be live is a lie). Writes survive a dead signal through `src/api/offlineQueue.ts`: a failed POST is parked in localStorage with its clientKey, the surface says "queued", and the browser's `online` event drains the queue oldest-first; server-side idempotency makes a double-send harmless. Refusals on replay land in `deadLetters`, visible — never silently deleted.
-
-
-## The members desk (onboarding real people)
-
-The admin side of onboarding, in the Operate desk's first tab:
-
-- **Directory** — `GET /api/ops/members?q=` (admin-only): handle, name, joined date, status, platform roles, verification, whether they run a shop, and the rung they actually climbed — all derived per request. The rung mapping is honest: `reach` has no named activation event yet, so nobody is shown as having reached it.
-- **Onboarding funnel** — `GET /api/ops/onboarding`: counts of real activation events, members with any event, finished onboarding. "A member with no events has genuinely not started."
-- **Suspension** — `POST /api/ops/members/:id/status`: a suspension **revokes every live session immediately** (locked out on the next request, not the next login), refuses new logins, requires an audited reason, and lands in the audit log with before/after. Reinstatement is the same route.
-- **Roles** — grant/revoke operator/reviewer/finance/admin chips in the member panel, riding the existing audited `/api/ops/roles`.
-- The first admin of a deployment is named by the `BRIEF_ADMINS` bootstrap env (the same mechanism as `BRIEF_OPERATORS`).
-
-## Menu: a two-thirds sheet
-
-The Menu owns the lower **2/3** of the screen; the top 1/3 stays the live app behind a light scrim (tap it to close). One close control remains (the header ×), the dock stays visible above the sheet, and the lavender/card/purple visual system is unchanged — the Menu is part of the same product, not a screen that replaces it.
+- `PUBLIC-FEED-API.md` — the anonymous, read-only feed contract (`GET /api/public/feed`).
+- `ONBOARDING.md` — the service ladder (progress derived from real rows, never a stored counter).
+- `server/CONNECTORS.md` — what each connector can and cannot do, and why.

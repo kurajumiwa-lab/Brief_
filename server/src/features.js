@@ -36,6 +36,8 @@ const DEFINITIONS = [
   { key: 'requests', domain: 'requests', label: 'Business requests', configured: () => true },
   { key: 'repeat_procurement', domain: 'procurement', label: 'Repeat procurement memory', configured: () => true },
   { key: 'participant_trust', domain: 'participantTrust', label: 'Participant trust & economic history', configured: () => true },
+  { key: 'attribution', domain: 'attribution', label: 'Distribution provenance (partner/program/cohort/invite)', configured: () => true },
+  { key: 'partner', domain: 'partner', label: 'Distribution partners & revenue share', configured: () => true },
   // Always-configured: these run on the local store and need no credential.
   { key: 'auth',      domain: 'auth',       label: 'Accounts & sessions',             configured: () => true },
   { key: 'onboarding',domain: 'onboarding', label: 'Onboarding & service ladder',     configured: () => true },
@@ -49,7 +51,6 @@ const DEFINITIONS = [
   { key: 'commerce',  domain: 'commerce',   label: 'Commerce (vendors/listings/orders)', configured: () => true },
   { key: 'campaigns', domain: 'campaigns',  label: 'Campaigns, registration & gate',  configured: () => true },
   { key: 'vaults',    domain: 'vaults',     label: 'The Vault (context layer)',       configured: () => true },
-  { key: 'auction',   domain: 'auction',    label: 'Auctions',                        configured: () => true },
   { key: 'command',   domain: 'command',    label: 'Host command centre',             configured: () => true },
   { key: 'people',    domain: 'people',     label: 'Person entity (timeline & identity)', configured: () => true },
   { key: 'tea',       domain: 'tea',        label: 'Tea editorial system',              configured: () => true },
