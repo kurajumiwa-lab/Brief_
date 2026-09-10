@@ -4263,3 +4263,71 @@ export function getPartnerInviteLink(id: string, programKey?: string | null, coh
   const suffix = qs.toString() ? `?${qs.toString()}` : '';
   return request(`/api/ops/partners/${encodeURIComponent(id)}/invite${suffix}`, undefined, r => r?.link ? r.link : undefined);
 }
+
+// Partner settlement + agreement (Phase 2): finance-gated write actions. The
+// server owns the state machine and the derived share — this client sends a
+// share rate (0..1) or a period, never a money amount.
+export interface PartnerAgreement {
+  id: string;
+  partnerId: string;
+  shareRate: number;
+  basis: string;
+  status: string;
+  effectiveAt: string;
+  supersededAt: string | null;
+  createdAt: string;
+}
+export interface PartnerSettlement {
+  id: string;
+  partnerId: string;
+  periodKey: string;
+  periodFrom: string | null;
+  periodTo: string | null;
+  grossKes: number;
+  shareRate: number;
+  shareKes: number;
+  basis: string;
+  ledgerId: string;
+  status: 'pending' | 'confirmed' | 'refused';
+  requestedBy: string | null;
+  confirmedBy: string | null;
+  confirmedAt: string | null;
+  refusedReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+const partnerSettlementOf = (r: any): PartnerSettlement | undefined =>
+  r && typeof r.id === 'string' && typeof r.shareKes === 'number' && typeof r.grossKes === 'number' ? r : undefined;
+
+export function setPartnerAgreement(id: string, shareRate: number, basis = 'verified_commercial'): Promise<ApiResult<PartnerAgreement>> {
+  return request(`/api/ops/partners/${encodeURIComponent(id)}/agreement`, {
+    method: 'POST',
+    body: JSON.stringify({ shareRate, basis })
+  }, r => r?.agreement?.id ? r.agreement : undefined);
+}
+
+export function getPartnerSettlements(id: string): Promise<ApiResult<PartnerSettlement[]>> {
+  return request(`/api/ops/partners/${encodeURIComponent(id)}/settlements`, undefined, r =>
+    Array.isArray(r?.settlements) && r.settlements.every(partnerSettlementOf) ? r.settlements : undefined);
+}
+
+export function requestPartnerSettlement(id: string, from?: string | null, to?: string | null): Promise<ApiResult<PartnerSettlement>> {
+  return request(`/api/ops/partners/${encodeURIComponent(id)}/settlements`, {
+    method: 'POST',
+    body: JSON.stringify({ from: from ?? null, to: to ?? null })
+  }, r => partnerSettlementOf(r?.settlement));
+}
+
+export function confirmPartnerSettlement(settlementId: string, note = ''): Promise<ApiResult<PartnerSettlement>> {
+  return request(`/api/ops/settlements/${encodeURIComponent(settlementId)}/confirm`, {
+    method: 'POST',
+    body: JSON.stringify({ note })
+  }, r => partnerSettlementOf(r?.settlement));
+}
+
+export function refusePartnerSettlement(settlementId: string, note = ''): Promise<ApiResult<PartnerSettlement>> {
+  return request(`/api/ops/settlements/${encodeURIComponent(settlementId)}/refuse`, {
+    method: 'POST',
+    body: JSON.stringify({ note })
+  }, r => partnerSettlementOf(r?.settlement));
+}

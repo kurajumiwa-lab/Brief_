@@ -6,6 +6,8 @@
 //   2. PartnerDesk honest states: 403 -> operator-only, empty -> no partners
 //   3. PartnerDesk list renders DERIVED economics (members/gross/share)
 //   4. generate-invite-link produces a real URL (no public-origin -> honest)
+//   5. agreement editor: save + finance-403 honesty
+//   6. settlements: request / confirm / refuse (incl. the reason-length rule)
 // ---------------------------------------------------------------------------
 const assert = require('assert').strict;
 const { JSDOM } = require('jsdom');
@@ -22,7 +24,6 @@ global.Node = dom.window.Node;
 global.MouseEvent = dom.window.MouseEvent;
 global.getComputedStyle = dom.window.getComputedStyle;
 global.IS_REACT_ACT_ENVIRONMENT = true;
-// The acquisition helper + briefApi read window.localStorage; expose it.
 global.localStorage = dom.window.localStorage;
 
 const React = require('react');
@@ -37,6 +38,9 @@ const pass = (name) => { count++; console.log('PASS ' + name); };
 const flush = (ms = 40) => new Promise((r) => setTimeout(r, ms));
 
 function mount(el) {
+  // Fresh body per mount: earlier blocks may leave unmounted instances whose
+  // buttons would otherwise capture clicks meant for the new one.
+  document.body.innerHTML = '';
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);
@@ -46,6 +50,37 @@ function mount(el) {
 
 const text = (el) => (el.textContent || '').replace(/\s+/g, ' ').trim();
 const btn = (label) => Array.from(document.querySelectorAll('button')).find((b) => text(b).startsWith(label));
+const input = (label) => Array.from(document.querySelectorAll('input')).find((i) => (i.getAttribute('aria-label') || '').includes(label));
+
+// A partner whose economics have real numbers to derive from.
+const partner = {
+  id: 'ptn_1', key: 'wef', name: 'Women Enterprise Fund', partnerType: 'women_org', status: 'active',
+  programs: [{ id: 'prg_1', key: 'women-enterprise-2026', name: 'Women Enterprise 2026', status: 'active', cohorts: [{ id: 'ch_1', key: 'nairobi-west', name: 'Nairobi West', status: 'active' }] }],
+  agreement: { id: 'agr_1', shareRate: 0.2, basis: 'verified_commercial', status: 'active' },
+  economics: {
+    partner: { id: 'ptn_1', key: 'wef', name: 'Women Enterprise Fund', partnerType: 'women_org', status: 'active' },
+    members: 3,
+    activity: { ordersBought: 0, ordersSold: 0, workRequested: 2, workFulfilled: 0, repeatPatterns: 1, requestsCreated: 2 },
+    grossKes: 17000,
+    basis: 'verified_commercial',
+    shareRate: 0.2,
+    partnerShareKes: 3400,
+    settlements: { pendingKes: 0, confirmedKes: 0 },
+    note: 'derived'
+  }
+};
+
+const settlement = (status) => ({
+  id: `pstl_${status}`, partnerId: 'ptn_1', periodKey: 'ptn_1:all:all',
+  periodFrom: null, periodTo: null, grossKes: 17000, shareRate: 0.2, shareKes: 3400,
+  basis: 'verified_commercial', ledgerId: 'txn_1', status,
+  requestedBy: 'usr_fin', confirmedBy: null, confirmedAt: null, refusedReason: null,
+  createdAt: '2026-09-10T00:00:00Z', updatedAt: '2026-09-10T00:00:00Z'
+});
+
+// A controllable fetch mock.
+let fetchHandler;
+global.fetch = async (input, init) => fetchHandler(String(input?.url ?? input ?? ''), init);
 
 async function main() {
   // --- 1. acquisition helper ---
@@ -57,81 +92,163 @@ async function main() {
   assert.equal(ctx.cohortKey, 'nairobi-west');
   pass('acquisition: captures partner/program/cohort from the landing URL');
 
-  // First-touch-wins: a second capture with a different URL must not rewrite.
   dom.window.history.replaceState(null, '', '/join?partner=OTHER&cohort=eldoret');
   acq.captureAcquisitionFromUrl();
-  const ctx2 = acq.pendingAcquisition();
-  assert.equal(ctx2.partnerKey, 'WEF', 'first touch wins, not rewritten');
+  assert.equal(acq.pendingAcquisition().partnerKey, 'WEF', 'first touch wins');
   pass('acquisition: first-touch-wins — a later link never rewrites the origin');
 
   acq.clearAcquisition();
   assert.equal(acq.pendingAcquisition(), null, 'cleared');
   pass('acquisition: clear removes the captured context');
 
-  // --- 2. PartnerDesk: 403 -> operator-only ---
-  global.fetch = async () => ({
-    ok: false, status: 403,
-    text: async () => JSON.stringify({ error: 'forbidden_capability' })
-  });
+  // --- 2. 403 -> operator-only ---
+  fetchHandler = async () => ({ ok: false, status: 403, text: async () => JSON.stringify({ error: 'forbidden_capability' }) });
   {
     const { container } = mount(React.createElement(PartnerDesk));
     await flush();
-    assert.ok(text(container).includes('Operator access only'), '403 state shown');
+    assert.ok(text(container).includes('Operator access only'));
   }
   pass('PartnerDesk: a non-operator sees an honest operator-only state');
 
-  // --- 3. PartnerDesk: empty -> no partners ---
-  global.fetch = async () => ({
-    ok: true, status: 200,
-    text: async () => JSON.stringify({ partners: [] })
-  });
+  // --- 3. empty -> no partners ---
+  fetchHandler = async () => ({ ok: true, status: 200, text: async () => JSON.stringify({ partners: [] }) });
   {
     const { container } = mount(React.createElement(PartnerDesk));
     await flush();
-    assert.ok(text(container).includes('No partners yet'), 'empty state shown');
+    assert.ok(text(container).includes('No partners yet'));
   }
   pass('PartnerDesk: an operator with no partners sees an honest empty state');
 
-  // --- 4. PartnerDesk: list renders derived economics + invite link ---
-  const partnerList = [{
-    id: 'ptn_1', key: 'wef', name: 'Women Enterprise Fund', partnerType: 'women_org', status: 'active',
-    programs: [{ id: 'prg_1', key: 'women-enterprise-2026', name: 'Women Enterprise 2026', status: 'active', cohorts: [{ id: 'ch_1', key: 'nairobi-west', name: 'Nairobi West', status: 'active' }] }],
-    agreement: { id: 'agr_1', shareRate: 0.2, basis: 'verified_commercial', status: 'active' },
-    economics: {
-      partner: { id: 'ptn_1', key: 'wef', name: 'Women Enterprise Fund', partnerType: 'women_org', status: 'active' },
-      members: 3,
-      activity: { ordersBought: 0, ordersSold: 0, workRequested: 2, workFulfilled: 0, repeatPatterns: 1, requestsCreated: 2 },
-      grossKes: 17000,
-      basis: 'verified_commercial',
-      shareRate: 0.2,
-      partnerShareKes: 3400,
-      settlements: { pendingKes: 0, confirmedKes: 0 },
-      note: 'derived'
-    }
-  }];
-  global.fetch = async (input) => {
-    const u = String(input?.url ?? input ?? '');
-    if (u.includes('/api/ops/partners/') && u.includes('/invite')) {
+  // --- 4. list + invite link ---
+  fetchHandler = async (url) => {
+    if (url.includes('/invite')) {
       return { ok: true, status: 200, text: async () => JSON.stringify({ link: { available: false, reason: 'public_origin_not_configured', partnerKey: 'wef' } }) };
     }
-    return { ok: true, status: 200, text: async () => JSON.stringify({ partners: partnerList }) };
+    return { ok: true, status: 200, text: async () => JSON.stringify({ partners: [partner] }) };
   };
   {
     const { container, root } = mount(React.createElement(PartnerDesk));
     await flush();
     const t = text(container);
-    assert.ok(t.includes('Women Enterprise Fund'), 'partner name rendered');
-    assert.ok(t.includes('3'), 'members rendered');
-    assert.ok(t.includes('17,000'), 'gross rendered');
-    assert.ok(t.includes('3,400'), 'share rendered');
-    assert.ok(t.includes('20%'), 'share rate rendered');
+    assert.ok(t.includes('Women Enterprise Fund'));
+    assert.ok(t.includes('3'));
+    assert.ok(t.includes('17,000'));
+    assert.ok(t.includes('3,400'));
+    assert.ok(t.includes('20%'));
     pass('PartnerDesk: renders derived economics (members/gross/share)');
 
-    // Generate invite link -> honest unavailable (no public origin).
     act(() => { btn('Generate invite link').click(); });
     await flush();
-    assert.ok(text(container).includes('No public origin configured'), 'honest unavailable link');
+    assert.ok(text(container).includes('No public origin configured'));
     pass('PartnerDesk: invite link is honest when no public origin is configured');
+    root.unmount();
+  }
+
+  // --- 5. agreement editor + finance 403 honesty ---
+  fetchHandler = async (url, init) => {
+    if (url.includes('/agreement')) {
+      // Simulate the server refusing a non-finance caller.
+      return { ok: false, status: 403, text: async () => JSON.stringify({ error: 'forbidden_capability', requiredCapability: 'finance' }) };
+    }
+    if (url.includes('/settlements')) {
+      return { ok: true, status: 200, text: async () => JSON.stringify({ settlements: [] }) };
+    }
+    return { ok: true, status: 200, text: async () => JSON.stringify({ partners: [partner] }) };
+  };
+  {
+    const { container } = mount(React.createElement(PartnerDesk));
+    await flush();
+    act(() => { btn('Agreement & settlement').click(); });
+    await flush();
+    const t = text(container);
+    assert.ok(t.includes('Revenue-share agreement'));
+    assert.ok(t.includes('Settlements'));
+    pass('PartnerDesk: the manage panel opens with agreement + settlements');
+
+    // Enter 30 and save -> finance 403 is shown verbatim.
+    const share = input('Share percentage');
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+      setter.call(share, '30');
+      share.dispatchEvent(new window.Event('input', { bubbles: true }));
+    });
+    act(() => { btn('Save agreement').click(); });
+    await flush();
+    assert.ok(text(container).includes('Finance access is required to set an agreement'));
+    pass('PartnerDesk: a finance-403 on agreement is shown honestly');
+  }
+
+  // --- 6. settlements: request / confirm / refuse ---
+  let settlementRows = [];
+  fetchHandler = async (url, init) => {
+    const method = init?.method ?? 'GET';
+    if (url.includes('/agreement')) {
+      return { ok: true, status: 201, text: async () => JSON.stringify({ agreement: { id: 'agr_2', shareRate: 0.3, basis: 'verified_commercial', status: 'active' } }) };
+    }
+    // confirm/refuse BEFORE settlements: their URLs also contain "settlements".
+    if (url.includes('/confirm')) {
+      const id = url.split('/').at(-2);
+      const row = settlementRows.find((s) => s.id === id);
+      const updated = { ...row, status: 'confirmed', confirmedBy: 'usr_fin', confirmedAt: '2026-09-10T01:00:00Z' };
+      settlementRows = settlementRows.map((s) => (s.id === id ? updated : s));
+      return { ok: true, status: 200, text: async () => JSON.stringify({ settlement: updated }) };
+    }
+    if (url.includes('/refuse')) {
+      const id = url.split('/').at(-2);
+      const body = JSON.parse(init.body || '{}');
+      const row = settlementRows.find((s) => s.id === id);
+      const updated = { ...row, status: 'refused', refusedReason: body.note };
+      settlementRows = settlementRows.map((s) => (s.id === id ? updated : s));
+      return { ok: true, status: 200, text: async () => JSON.stringify({ settlement: updated }) };
+    }
+    if (url.includes('/settlements')) {
+      if (method === 'POST') {
+        const row = settlement('pending');
+        settlementRows.push(row);
+        return { ok: true, status: 201, text: async () => JSON.stringify({ settlement: row }) };
+      }
+      return { ok: true, status: 200, text: async () => JSON.stringify({ settlements: settlementRows }) };
+    }
+    return { ok: true, status: 200, text: async () => JSON.stringify({ partners: [partner] }) };
+  };
+  {
+    const { container } = mount(React.createElement(PartnerDesk));
+    await flush();
+    act(() => { btn('Agreement & settlement').click(); });
+    await flush();
+
+    // Request a settlement -> a pending row appears.
+    act(() => { btn('Request settlement').click(); });
+    await flush();
+    assert.ok(text(container).includes('KES 3,400'), 'settlement amount shown');
+    assert.ok(text(container).includes('Confirm paid'), 'confirm action shown for pending');
+    pass('PartnerDesk: requesting a settlement surfaces a pending row');
+
+    // Refuse with a too-short reason is refused client-side.
+    const reason = input('Refusal reason');
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+      setter.call(reason, 'no');
+      reason.dispatchEvent(new window.Event('input', { bubbles: true }));
+    });
+    act(() => { btn('Refuse').click(); });
+    await flush();
+    assert.ok(text(container).includes('Say why (at least 4 characters)'));
+    pass('PartnerDesk: a too-short refusal reason is refused client-side');
+
+    // A valid refusal reason flips the row to refused. Re-query the input:
+    // the notice re-render replaces the DOM node, so the earlier reference is
+    // stale and a dispatch on it would not reach React's listener.
+    const reason2 = input('Refusal reason');
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+      setter.call(reason2, 'not this quarter');
+      reason2.dispatchEvent(new window.Event('input', { bubbles: true }));
+    });
+    act(() => { btn('Refuse').click(); });
+    await flush();
+    assert.ok(text(container).includes('not this quarter'), 'refusal reason shown');
+    pass('PartnerDesk: a valid refusal marks the settlement refused with the reason');
   }
 
   console.log('\nPASS ' + count);
