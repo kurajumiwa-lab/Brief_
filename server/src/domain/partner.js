@@ -313,3 +313,58 @@ export function partnerView(partnerId) {
 export function listPartnerViews() {
   return listPartners().map((p) => partnerView(p.id));
 }
+
+// ---------------------------------------------------------------------------
+// INVITE LINK — the distribution primitive ("give us your cohort").
+//
+// A partner shares ONE deep link; every member who arrives through it carries
+// the partner/program/cohort keys in the query string, which the sign-up flow
+// forwards to attribution.capture() (first-touch-wins). The link is built from
+// STORED keys only — it never invents a partner, and it refuses a program or
+// cohort key that does not belong to this partner (so a link cannot mis-route
+// attribution to a foreign program). Returns honest null when the deployment
+// has no public origin (BRIEF_PUBLIC_ORIGIN), exactly like a campaign share.
+// ---------------------------------------------------------------------------
+export function joinLink(partnerId, { programKey = null, cohortKey = null, origin = null } = {}) {
+  const partner = getPartner(partnerId);
+  if (!partner) fail('partner not found', 404, 'not_found');
+
+  const params = new URLSearchParams({ partner: partner.key });
+  if (programKey) {
+    const p = programsOf(partnerId).find((x) => x.key === keyOf(programKey));
+    if (!p) fail('program not found for this partner', 404, 'not_found');
+    params.set('program', p.key);
+  }
+  if (cohortKey) {
+    // A cohort must resolve within the partner's programs (or be scoped by the
+    // program above) — otherwise the link would attribute to a foreign cohort.
+    const cohorts = programKey
+      ? cohortsOf(programsOf(partnerId).find((x) => x.key === keyOf(programKey))?.id)
+      : programsOf(partnerId).flatMap((p) => cohortsOf(p.id));
+    const c = cohorts.find((x) => x.key === keyOf(cohortKey));
+    if (!c) fail('cohort not found for this partner', 404, 'not_found');
+    params.set('cohort', c.key);
+  }
+  // UTM so the click is traceable through the existing distribution rails.
+  params.set('utm_source', 'partner');
+  params.set('utm_medium', 'invite');
+  params.set('utm_campaign', partner.key);
+
+  const base = origin || process.env.BRIEF_PUBLIC_ORIGIN || null;
+  if (!base) {
+    return {
+      available: false,
+      reason: 'public_origin_not_configured',
+      partnerKey: partner.key,
+      programKey: programKey ? keyOf(programKey) : null,
+      cohortKey: cohortKey ? keyOf(cohortKey) : null
+    };
+  }
+  return {
+    available: true,
+    url: `${String(base).replace(/\/+$/, '')}/join?${params.toString()}`,
+    partnerKey: partner.key,
+    programKey: programKey ? keyOf(programKey) : null,
+    cohortKey: cohortKey ? keyOf(cohortKey) : null
+  };
+}

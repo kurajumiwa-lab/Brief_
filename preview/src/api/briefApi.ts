@@ -1512,6 +1512,14 @@ export interface PersonMe {
 }
 
 /** Register and sign in. The token is stored centrally on success. */
+// The acquisition context captured at page load, forwarded on sign-up so the
+// server records provenance once (first-touch-wins). See ./acquisition.ts.
+import { pendingAcquisition, clearAcquisition } from './acquisition';
+function acquisitionPayload(): Record<string, string> {
+  const ctx = pendingAcquisition();
+  return ctx ? (ctx as Record<string, string>) : {};
+}
+
 export async function register(
   handle: string,
   password: string,
@@ -1519,11 +1527,12 @@ export async function register(
 ): Promise<ApiResult<AuthedUser>> {
   const res = await request<{ user: AuthedUser; token: string }>(
     '/api/auth/register',
-    { method: 'POST', body: JSON.stringify({ handle, password, displayName }) },
+    { method: 'POST', body: JSON.stringify({ handle, password, displayName, ...acquisitionPayload() }) },
     (r) => (r?.user && r?.token ? { user: r.user, token: r.token } : undefined)
   );
   if (!res.ok) return res;
   setSessionToken(res.data.token);
+  clearAcquisition();
   return { ok: true, data: res.data.user };
 }
 
@@ -1589,11 +1598,12 @@ export async function googleSignIn(
 ): Promise<ApiResult<AuthedUser>> {
   const res = await request<{ user: AuthedUser; token: string }>(
     '/api/auth/google',
-    { method: 'POST', body: JSON.stringify({ credential, source: source ?? null }) },
+    { method: 'POST', body: JSON.stringify({ credential, source: source ?? null, ...acquisitionPayload() }) },
     (r) => (r?.user && r?.token ? { user: r.user, token: r.token } : undefined)
   );
   if (!res.ok) return res;
   setSessionToken(res.data.token);
+  clearAcquisition();
   return { ok: true, data: res.data.user };
 }
 
@@ -1610,11 +1620,12 @@ export async function continueFromLinkToken(
 ): Promise<ApiResult<AuthedUser>> {
   const res = await request<{ user: AuthedUser; token: string }>(
     '/api/auth/email-link',
-    { method: 'POST', body: JSON.stringify({ token, source: source ?? null }) },
+    { method: 'POST', body: JSON.stringify({ token, source: source ?? null, ...acquisitionPayload() }) },
     (r) => (r?.user && r?.token ? { user: r.user, token: r.token } : undefined)
   );
   if (!res.ok) return res;
   setSessionToken(res.data.token);
+  clearAcquisition();
   return { ok: true, data: res.data.user };
 }
 
@@ -4205,4 +4216,50 @@ export interface MyAcquisition {
 export function getMyAcquisition(): Promise<ApiResult<MyAcquisition>> {
   return request('/api/me/acquisition', undefined, r =>
     r && typeof r?.activity === 'object' ? r : undefined);
+}
+
+// Partner distribution (Phase 2): operator-only reads for the partner desk.
+// A non-operator caller gets 403 from the server; the surface reports that
+// honestly rather than fabricating partner data.
+export interface PartnerEconomics {
+  partner: { id: string; key: string; name: string; partnerType: string; status: string };
+  members: number;
+  activity: {
+    ordersBought: number; ordersSold: number; workRequested: number;
+    workFulfilled: number; repeatPatterns: number; requestsCreated: number;
+  };
+  grossKes: number;
+  basis: string | null;
+  shareRate: number | null;
+  partnerShareKes: number | null;
+  settlements: { pendingKes: number; confirmedKes: number };
+  note: string;
+}
+export interface PartnerView {
+  id: string;
+  key: string;
+  name: string;
+  partnerType: string;
+  status: string;
+  programs: Array<{ id: string; key: string; name: string; status: string; cohorts: Array<{ id: string; key: string; name: string; status: string }> }>;
+  agreement: { id: string; shareRate: number; basis: string; status: string } | null;
+  economics: PartnerEconomics;
+}
+export interface JoinLink {
+  available: boolean;
+  reason?: string;
+  url?: string;
+  partnerKey: string;
+  programKey?: string | null;
+  cohortKey?: string | null;
+}
+export function getPartners(): Promise<ApiResult<PartnerView[]>> {
+  return request('/api/ops/partners', undefined, r => Array.isArray(r?.partners) ? r.partners : undefined);
+}
+export function getPartnerInviteLink(id: string, programKey?: string | null, cohortKey?: string | null): Promise<ApiResult<JoinLink>> {
+  const qs = new URLSearchParams();
+  if (programKey) qs.set('program', programKey);
+  if (cohortKey) qs.set('cohort', cohortKey);
+  const suffix = qs.toString() ? `?${qs.toString()}` : '';
+  return request(`/api/ops/partners/${encodeURIComponent(id)}/invite${suffix}`, undefined, r => r?.link ? r.link : undefined);
 }

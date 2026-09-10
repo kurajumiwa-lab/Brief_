@@ -12,6 +12,7 @@ import { PublicOfferModal } from '../features/offers/PublicOfferModal';
 import { SupplyWorkspace } from '../features/supply/SupplyWorkspace';
 import { RequestsWorkspace, requestPath } from '../features/requests/RequestsWorkspace';
 import { ActivitySurface } from '../features/activity/ActivitySurface';
+import { PartnerDesk } from '../features/partner/PartnerDesk';
 import { soundEngine } from '../utils/SoundEngine';
 
 export interface AppShellProps {
@@ -88,7 +89,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         setActiveTab('requests');
         try { setRequestRoute(decodeURIComponent(hash.slice(9))); } catch { setRequestRoute('invalid'); }
       } else {
-        const tabs: Record<string, BriefNavigationTab> = { home: 'home', city: 'city', events: 'city', spaces: 'pipeline', pipeline: 'pipeline', discover: 'city', catalog: 'catalog', activity: 'activity', ledger: 'ledger' };
+        const tabs: Record<string, BriefNavigationTab> = { home: 'home', city: 'city', events: 'city', spaces: 'pipeline', pipeline: 'pipeline', discover: 'city', catalog: 'catalog', activity: 'activity', ledger: 'ledger', partners: 'partners' };
         if (tabs[hash]) setActiveTab(tabs[hash]);
         else if (!hash) setActiveTab(initialTab);
       }
@@ -227,6 +228,9 @@ export const AppShell: React.FC<AppShellProps> = ({
             {activeTab === 'activity' && (
               <ActivitySurface onOpenRequests={() => requestPath()} />
             )}
+
+            {/* ── OPERATOR: PARTNER DESK (distribution partners) ── */}
+            {activeTab === 'partners' && <PartnerDesk />}
 
             {/* ── TAB 3: LEDGER (Financial Truth) ── */}
             {activeTab === 'ledger' && activeSpace && (

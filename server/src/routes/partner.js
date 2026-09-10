@@ -102,6 +102,20 @@ export function register(app) {
     }
   });
 
+  // Generate the partner's invite (join) link — the distribution primitive.
+  app.get('/api/ops/partners/:id/invite', (req, res) => {
+    if (!requireCap(req, res, 'moderate')) return;
+    try {
+      const link = partner.joinLink(req.params.id, {
+        programKey: req.query.program ?? null,
+        cohortKey: req.query.cohort ?? null
+      });
+      res.json({ link });
+    } catch (e) {
+      res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
+    }
+  });
+
   // List a partner's settlements (moderate).
   app.get('/api/ops/partners/:id/settlements', (req, res) => {
     if (!requireCap(req, res, 'moderate')) return;

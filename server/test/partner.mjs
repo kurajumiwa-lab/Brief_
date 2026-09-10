@@ -236,6 +236,37 @@ test("requestSettlement refuses when there is no agreement or no activity", () =
 });
 
 // ---------------------------------------------------------------------------
+// INVITE LINK — the distribution primitive.
+// ---------------------------------------------------------------------------
+test("joinLink builds the deep link from stored keys and carries UTM", () => {
+  const wef = partner.getPartnerByKey("wef");
+  const link = partner.joinLink(wef.id, { programKey: "women-enterprise-2026", cohortKey: "nairobi-west", origin: "https://brief.example.com" });
+  assert.equal(link.available, true);
+  assert.ok(link.url.startsWith("https://brief.example.com/join?"));
+  assert.match(link.url, /partner=wef/);
+  assert.match(link.url, /program=women-enterprise-2026/);
+  assert.match(link.url, /cohort=nairobi-west/);
+  assert.match(link.url, /utm_source=partner/);
+  assert.match(link.url, /utm_campaign=wef/);
+});
+
+test("joinLink refuses a program or cohort that does not belong to the partner", () => {
+  const wef = partner.getPartnerByKey("wef");
+  rejects(() => partner.joinLink(wef.id, { programKey: "does-not-exist", origin: "https://x.example.com" }), "not_found");
+  rejects(() => partner.joinLink(wef.id, { cohortKey: "foreign-cohort", origin: "https://x.example.com" }), "not_found");
+  // Unknown partner is a 404 too.
+  rejects(() => partner.joinLink("nonexistent", {}), "not_found");
+});
+
+test("joinLink without a public origin is honest null, never a fabricated URL", () => {
+  const wef = partner.getPartnerByKey("wef");
+  const link = partner.joinLink(wef.id, { origin: null });
+  assert.equal(link.available, false);
+  assert.equal(link.reason, "public_origin_not_configured");
+  assert.equal(link.url, undefined);
+});
+
+// ---------------------------------------------------------------------------
 // HTTP — capability gating.
 // ---------------------------------------------------------------------------
 {
@@ -294,6 +325,23 @@ test("requestSettlement refuses when there is no agreement or no activity", () =
     assert.equal(created.body.partner.key, "kcb");
     count++;
     console.log("PASS API: creating a partner requires admin, not finance");
+
+    // Invite link: moderate-gated, and honest (no public origin -> unavailable).
+    const deniedInvite = await call(`/api/ops/partners/${wef.id}/invite`, "GET", undefined, memberToken);
+    assert.equal(deniedInvite.status, 403);
+    const noOrigin = await call(`/api/ops/partners/${wef.id}/invite`, "GET", undefined, reviewerToken);
+    assert.equal(noOrigin.status, 200);
+    assert.equal(noOrigin.body.link.available, false);
+    assert.equal(noOrigin.body.link.reason, "public_origin_not_configured");
+    // With a public origin configured, the same call yields a real URL.
+    process.env.BRIEF_PUBLIC_ORIGIN = "https://brief.example.com";
+    const invite = await call(`/api/ops/partners/${wef.id}/invite?program=women-enterprise-2026&cohort=nairobi-west`, "GET", undefined, reviewerToken);
+    assert.equal(invite.status, 200);
+    assert.equal(invite.body.link.available, true);
+    assert.ok(invite.body.link.url.includes("/join?partner=wef"));
+    delete process.env.BRIEF_PUBLIC_ORIGIN;
+    count++;
+    console.log("PASS API: the invite link is moderate-gated and honest about its origin");
 
     const deniedAgreement = await call(`/api/ops/partners/${wef.id}/agreement`, "POST", { shareRate: 0.3 }, reviewerToken);
     assert.equal(deniedAgreement.status, 403);

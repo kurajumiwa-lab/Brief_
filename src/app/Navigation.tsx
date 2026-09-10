@@ -13,6 +13,7 @@ export type BriefNavigationTab =
   | 'pipeline'
   | 'ledger'
   | 'catalog'
+  | 'partners'
   | 'you';
 
 export interface NavigationProps {

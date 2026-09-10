@@ -5,6 +5,12 @@ import ReactDOM from 'react-dom/client';
 import App, { PublicCampaignPage, campaignSlugFromPath } from './App.tsx';
 import { AppShell } from './app/AppShell.tsx';
 import { flushOfflineQueue } from './api/briefApi.ts';
+import { captureAcquisitionFromUrl } from './api/acquisition.ts';
+
+// Capture the partner/cohort provenance from the landing URL before anything
+// else runs, so a member who arrived through a partner's join link is
+// attributed at sign-up (first-touch-wins on the server).
+captureAcquisitionFromUrl();
 
 // A shared campaign link opens the public page. Everything else goes straight
 // into the app — there is no interstitial landing page.
