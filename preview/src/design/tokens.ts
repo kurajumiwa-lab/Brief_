@@ -1,52 +1,57 @@
 // ---------------------------------------------------------------------------
-// BRIEF 2.0 DESIGN TOKENS
+// BRIEF DESIGN TOKENS — the TypeScript mirror of the canonical design system.
 //
-// Neutral surfaces first. Restrained borders. Clear hierarchy.
-// Primary Brand: Deep Purple (#5B2EA6)
-// Accent / Energy: Electric Lime (#93EE34) & Warm Amber (#E8985E)
-// Neutral: Warm Linen Background (#F0EDE8 / #F8F7F4), Crisp White Surfaces
+// The single source of truth for COLORS lives in src/ui/theme.css (:root) —
+// the LIGHT system: white page, dark ink, a warm orange primary and a blue
+// secondary. This module mirrors those values for the rare case a component
+// needs a color/radius/type constant in JS rather than a `var(--…)` reference.
+// (The motion tokens live separately in src/ui/motion/tokens.ts.)
+//
+// Honesty: there is exactly ONE palette. The earlier purple/lime draft is gone
+// — it never shipped and was removed because a second, conflicting palette is
+// a second source of truth waiting to disagree with the first.
 // ---------------------------------------------------------------------------
+
+import { MotionDuration, MotionEasing } from '../ui/motion/tokens';
 
 export const DesignTokens = {
   colors: {
-    background: '#F0EDE8',      // Warm linen
-    backgroundAlt: '#FAFAF8',   // Soft cream
-    surface: '#FFFFFF',          // Crisp pure white for cards
-    surfaceMuted: '#F4F7F2',     // Soft sage mint
-    surfaceDark: '#0C221F',      // Deep forest pine
-    surfaceMidnight: '#1A1F2E',  // Midnight dark
-    border: '#E2E8F0',           // Restrained subtle border
-    borderSubtle: 'rgba(0, 0, 0, 0.06)',
-    textPrimary: '#1A1F2E',      // Ink
-    textSecondary: '#64748B',    // Slate secondary
-    textMuted: '#94A3B8',        // Faint metadata
-    textOnDark: '#FFFFFF',       // Crisp text on dark
-    brand: '#5B2EA6',            // Signature Deep Purple
-    brandHover: '#4A238A',
-    accentLime: '#93EE34',       // Chartreuse / Neon Lime
-    accentAmber: '#E8985E',      // Warm amber
-    success: '#10B981',          // Emerald
-    warning: '#F59E0B',          // Amber
-    danger: '#EF4444'            // Rose red
+    // Light system — see src/ui/theme.css for the --brief-*/--color-* names.
+    background: '#F7F8FA',        // --color-bg
+    surface: '#FFFFFF',           // --color-surface
+    surfaceElevated: '#F0F2F5',   // --color-surface-elevated
+    border: '#E5E8EC',            // --color-border
+    textPrimary: '#0D1117',       // --color-text (ink)
+    textSecondary: '#5A6472',     // --color-text-muted
+    textMuted: '#7A8494',         // meta / timestamps (>=4.5:1)
+    primary: '#FF5A1F',           // --color-primary (warm orange)
+    primaryStrong: '#E64A14',     // --color-primary-strong (hover/pressed)
+    accent: '#2563EB',            // --color-accent (blue secondary)
+    success: '#16A34A',
+    warning: '#B45309',
+    danger: '#DC2626'
   },
   typography: {
-    pageTitle: 'text-2xl sm:text-3xl font-black tracking-tight text-[#1A1F2E]',
-    sectionTitle: 'text-lg sm:text-xl font-black tracking-tight text-[#1A1F2E]',
-    cardTitle: 'text-base font-bold text-[#1A1F2E]',
-    body: 'text-sm text-[#4B5563] leading-relaxed',
-    bodySmall: 'text-xs text-[#64748B] leading-normal',
-    metadata: 'text-[11px] font-mono text-[#94A3B8]'
+    // Type scale mirrors --text-* in src/ui/theme.css.
+    display: '34px',
+    page: '26px',
+    section: '21px',
+    card: '18px',
+    body: '15px',
+    meta: '12px',
+    family:
+      "'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
   },
   radius: {
-    sm: 'rounded-xl',
-    md: 'rounded-2xl',
-    lg: 'rounded-3xl',
-    full: 'rounded-full'
+    card: '24px',
+    hero: '28px',
+    button: '16px',
+    input: '18px',
+    pill: '999px'
   },
-  shadow: {
-    subtle: 'shadow-xs',
-    card: 'shadow-sm hover:shadow-md transition-shadow',
-    elevated: 'shadow-lg'
+  motion: {
+    durations: MotionDuration,
+    easings: MotionEasing
   }
 } as const;
 
