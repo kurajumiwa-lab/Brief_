@@ -4366,3 +4366,89 @@ export function refusePartnerSettlement(settlementId: string, note = ''): Promis
     body: JSON.stringify({ note })
   }, r => partnerSettlementOf(r?.settlement));
 }
+
+// ---------------------------------------------------------------------------
+// FIELD AGENT — the member's own territory claims + derived override (#2).
+// ---------------------------------------------------------------------------
+export interface FieldAgentClaim {
+  id: string;
+  vendorId: string;
+  agentId: string;
+  claimType: 'menu_upload' | 'full_registration';
+  territoryKey: string | null;
+  status: string;
+  claimedAt: string;
+  expiresAt: string | null;
+  createdAt: string;
+}
+export interface FieldAgentOverride {
+  agentId: string;
+  rate: number;
+  months: number;
+  claims: Array<{
+    claimId: string;
+    vendorId: string;
+    vendorName: string | null;
+    claimedAt: string;
+    expiresAt: string | null;
+    settledOrders: number;
+    grossKes: number;
+    overrideKes: number;
+  }>;
+  grossKes: number;
+  overrideKes: number;
+  currency: string;
+  note: string;
+}
+export interface FieldAgentSettlement {
+  id: string;
+  agentId: string;
+  periodKey: string;
+  periodFrom: string | null;
+  periodTo: string | null;
+  grossKes: number;
+  rate: number;
+  overrideKes: number;
+  ledgerId: string;
+  status: 'pending' | 'confirmed' | 'refused';
+  confirmedAt: string | null;
+  refusedReason: string | null;
+  createdAt: string;
+}
+export interface FieldAgentOverview {
+  claims: FieldAgentClaim[];
+  override: FieldAgentOverride;
+  settlements: FieldAgentSettlement[];
+}
+export function getMyFieldAgent(): Promise<ApiResult<FieldAgentOverview>> {
+  return request('/api/me/field-agent', undefined, r =>
+    r && Array.isArray(r?.claims) && r?.override ? r : undefined);
+}
+
+// ---------------------------------------------------------------------------
+// LIPA MDOGO — the member's own contracts + derived maturity (#3).
+// ---------------------------------------------------------------------------
+export interface LipaMdogoSchedule {
+  index: number;
+  dueDate: string;
+  amountDue: number;
+  paid: number;
+  state: 'pending' | 'paid' | 'overdue';
+}
+export interface LipaMdogoContract {
+  id: string;
+  status: string;
+  asset: { deviceId: string; name: string | null; totalValue: number; downPayment: number; financed: number; termMonths: number };
+  lender: { id: string; key: string; name: string };
+  vendorId: string | null;
+  customerId: string;
+  onboardingRiderId: string | null;
+  schedule: LipaMdogoSchedule[];
+  summary: { totalFinanced: number; totalPaid: number; remaining: number; paidCount: number; overdueCount: number; matured: boolean };
+  maturity: 'started' | 'paying' | 'overdue' | 'matured';
+  note: string;
+}
+export function getMyLipaMdogo(): Promise<ApiResult<LipaMdogoContract[]>> {
+  return request('/api/me/lipa-mdogo', undefined, r =>
+    Array.isArray(r?.contracts) ? r.contracts : undefined);
+}

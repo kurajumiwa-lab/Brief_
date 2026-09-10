@@ -4,6 +4,7 @@ import type { AuthedUser, PersonMe, FollowsGroups } from "../../api/briefApi";
 import type { Subscription, SubscriptionJoin } from "../../api/types";
 import { MotionList } from "../../ui/motion/MotionList";
 import { MotionStatus } from "../../ui/motion/MotionStatus";
+import { EarnSurface } from "./EarnSurface";
 
 // ---------------------------------------------------------------------------
 // YOU — the member's own profile, follows and subscriptions (Phase 3).
@@ -31,7 +32,7 @@ const KIND_LABELS: Record<string, string> = {
   community: "Communities"
 };
 
-type Section = "profile" | "following" | "subscriptions";
+type Section = "profile" | "following" | "subscriptions" | "earn";
 
 export function YouSurface({
   onOpenEntity,
@@ -176,6 +177,7 @@ export function YouSurface({
         {tab("profile", "Profile")}
         {tab("following", "Following")}
         {tab("subscriptions", "Subscriptions")}
+        {tab("earn", "Earn")}
       </div>
 
       {notice && (
@@ -333,6 +335,10 @@ export function YouSurface({
             )}
           </div>
         </div>
+      )}
+
+      {section === "earn" && (
+        <EarnSurface onRequireAuth={onRequireAuth} />
       )}
     </section>
   );
