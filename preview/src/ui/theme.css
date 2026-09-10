@@ -88,6 +88,33 @@
   --brief-ui: 13px;
   --brief-label: 12px;
   --dur-tap: 100ms;
+
+  /* --- Canonical color names (the critique's --color-* set, §1). Components
+         reference these; arbitrary hex in components is banned. --- */
+  --color-bg: var(--brief-bg);
+  --color-surface: var(--brief-card);
+  --color-surface-elevated: #F0F2F5;
+  --color-primary: var(--brief-green);      /* warm orange */
+  --color-primary-strong: #E64A14;          /* darker orange (hover/pressed) */
+  --color-accent: var(--accent-2);          /* blue secondary */
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-text: var(--brief-ink);
+  --color-text-muted: var(--brief-muted);
+  --color-border: var(--brief-line);
+
+  /* --- Motion tiers + easings (the critique's --motion-* / --ease-* set, §4).
+         Mirrored in src/ui/motion/tokens.ts. Stateful motion ONLY:
+         no bounce, no elastic. --- */
+  --motion-fast: 140ms;    /* micro — buttons/toggles/chips (100–180ms) */
+  --motion-normal: 260ms;  /* structural — cards/nav/sheets (200–350ms) */
+  --motion-slow: 480ms;    /* consequential — payment confirmed / completed
+                              order / onboarding rung / trust event / partner
+                              milestone (350–700ms) */
+  --ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0.0, 0.0, 1.0);
+  --ease-decelerate: cubic-bezier(0.0, 0.0, 0.2, 1.0);
 }
 
 html, body, #root {

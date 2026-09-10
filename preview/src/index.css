@@ -56,6 +56,15 @@
   --dur-tap:         100ms;
   --ease-out:        cubic-bezier(0.16, 1, 0.3, 1);
   --ease-entrance:   cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* --- Motion tiers + easings (canonical; mirrored in src/ui/theme.css and
+       src/ui/motion/tokens.ts). Stateful motion only — no bounce, no elastic. */
+  --motion-fast:      140ms;
+  --motion-normal:    260ms;
+  --motion-slow:      480ms;
+  --ease-standard:    cubic-bezier(0.4, 0.0, 0.2, 1);
+  --ease-emphasized:  cubic-bezier(0.2, 0.0, 0.0, 1.0);
+  --ease-decelerate:  cubic-bezier(0.0, 0.0, 0.2, 1.0);
 }
 
 /* Apply the system type by default; components override with mono for readouts. */
