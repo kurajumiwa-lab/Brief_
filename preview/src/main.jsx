@@ -2,7 +2,10 @@ import './index.css';
 import './ui/theme.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App, { PublicCampaignPage, campaignSlugFromPath } from './App.tsx';
+// The campaign page and its slug helper live in model/core — the legacy App.tsx
+// shell is NOT part of the production entry. (App.tsx remains only as the test
+// harness for the legacy feature suites.)
+import { PublicCampaignPage, campaignSlugFromPath } from './model/core';
 import { AppShell } from './app/AppShell.tsx';
 import { flushOfflineQueue } from './api/briefApi.ts';
 import { captureAcquisitionFromUrl } from './api/acquisition.ts';

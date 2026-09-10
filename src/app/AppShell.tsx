@@ -13,6 +13,8 @@ import { SupplyWorkspace } from '../features/supply/SupplyWorkspace';
 import { RequestsWorkspace, requestPath } from '../features/requests/RequestsWorkspace';
 import { ActivitySurface } from '../features/activity/ActivitySurface';
 import { PartnerDesk } from '../features/partner/PartnerDesk';
+import { YouSurface } from '../features/you/YouSurface';
+import { EntityDetail } from '../features/you/EntityDetail';
 import { soundEngine } from '../utils/SoundEngine';
 
 export interface AppShellProps {
@@ -34,6 +36,8 @@ export const AppShell: React.FC<AppShellProps> = ({
   const [spaceError, setSpaceError] = useState('');
   const [activeSpace, setActiveSpace] = useState<Space | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [authed, setAuthed] = useState<boolean>(true);
+  const [entityId, setEntityId] = useState<string | null>(null);
 
   // Modals
   const [createFlowOpen, setCreateFlowOpen] = useState<boolean>(false);
@@ -79,6 +83,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   // Deep link detection on mount / URL change
   useEffect(() => {
     loadSpaces();
+    briefApi.whoAmI().then((res) => setAuthed(res.ok));
 
     const navigate = () => {
       const hash = window.location.hash.slice(1);
@@ -88,9 +93,12 @@ export const AppShell: React.FC<AppShellProps> = ({
       } else if (hash === 'requests' || hash.startsWith('requests/')) {
         setActiveTab('requests');
         try { setRequestRoute(decodeURIComponent(hash.slice(9))); } catch { setRequestRoute('invalid'); }
+      } else if (hash === 'entity' || hash.startsWith('entity/')) {
+        const id = decodeURIComponent(hash.slice(7));
+        if (id) { setEntityId(id); setActiveTab('you'); }
       } else {
-        const tabs: Record<string, BriefNavigationTab> = { home: 'home', city: 'city', events: 'city', spaces: 'pipeline', pipeline: 'pipeline', discover: 'city', catalog: 'catalog', activity: 'activity', ledger: 'ledger', partners: 'partners' };
-        if (tabs[hash]) setActiveTab(tabs[hash]);
+        const tabs: Record<string, BriefNavigationTab> = { home: 'home', city: 'city', events: 'city', spaces: 'pipeline', pipeline: 'pipeline', discover: 'city', catalog: 'catalog', activity: 'activity', ledger: 'ledger', partners: 'partners', you: 'you' };
+        if (tabs[hash]) { setEntityId(null); setActiveTab(tabs[hash]); }
         else if (!hash) setActiveTab(initialTab);
       }
     };
@@ -231,6 +239,23 @@ export const AppShell: React.FC<AppShellProps> = ({
 
             {/* ── OPERATOR: PARTNER DESK (distribution partners) ── */}
             {activeTab === 'partners' && <PartnerDesk />}
+
+            {/* ── YOU (profile, follows, subscriptions) ── */}
+            {activeTab === 'you' && (
+              entityId ? (
+                <EntityDetail
+                  entityId={entityId}
+                  authed={authed}
+                  onClose={() => { setEntityId(null); window.location.hash = '#you'; }}
+                  onRequireAuth={() => showToast('Sign in to follow entities.')}
+                />
+              ) : (
+                <YouSurface
+                  onOpenEntity={(id) => { setEntityId(id); window.location.hash = `#entity/${id}`; }}
+                  onRequireAuth={() => showToast('Sign in to continue.')}
+                />
+              )
+            )}
 
             {/* ── TAB 3: LEDGER (Financial Truth) ── */}
             {activeTab === 'ledger' && activeSpace && (

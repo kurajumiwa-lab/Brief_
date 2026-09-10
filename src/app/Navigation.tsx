@@ -99,6 +99,22 @@ const ActivityIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' 
   </svg>
 );
 
+// 5. You Person Icon (profile / account)
+const YouIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.9"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5" />
+  </svg>
+);
+
 export const Navigation: React.FC<NavigationProps> = ({
   activeTab,
   onSelectTab,
@@ -109,20 +125,21 @@ export const Navigation: React.FC<NavigationProps> = ({
   offersCount = 0,
   className = ''
 }) => {
-  // Normalize active tab to one of the 4 primary slots
-  const getNormalizedActive = (): 'supply' | 'requests' | 'home' | 'spaces' | 'discover' | 'activity' => {
+  // Normalize active tab to one of the primary slots
+  const getNormalizedActive = (): 'supply' | 'requests' | 'home' | 'spaces' | 'discover' | 'activity' | 'you' => {
     if (activeTab === 'supply') return 'supply';
     if (activeTab === 'requests') return 'requests';
     if (activeTab === 'home' || activeTab === 'city') return 'home';
     if (activeTab === 'spaces' || activeTab === 'pipeline') return 'spaces';
     if (activeTab === 'discover' || activeTab === 'catalog') return 'discover';
     if (activeTab === 'activity' || activeTab === 'ledger') return 'activity';
+    if (activeTab === 'you') return 'you';
     return 'home';
   };
 
   const normalizedActive = getNormalizedActive();
 
-  const handleTabClick = (tabId: 'home' | 'spaces' | 'discover' | 'activity') => {
+  const handleTabClick = (tabId: 'home' | 'spaces' | 'discover' | 'activity' | 'you') => {
     soundEngine.play('tap');
     if (typeof window !== 'undefined') {
       window.location.hash = `#${tabId}`;
@@ -140,9 +157,9 @@ export const Navigation: React.FC<NavigationProps> = ({
     onCreateAction?.();
   };
 
-  // The 4 Navigation Tabs from the screenshot
+  // The Navigation Tabs from the screenshot + You
   const navItems: Array<{
-    id: 'home' | 'spaces' | 'discover' | 'activity';
+    id: 'home' | 'spaces' | 'discover' | 'activity' | 'you';
     label: string;
     icon: React.ReactNode;
   }> = [
@@ -165,6 +182,11 @@ export const Navigation: React.FC<NavigationProps> = ({
       id: 'activity',
       label: 'Activity',
       icon: <ActivityIcon className="w-5 h-5" />
+    },
+    {
+      id: 'you',
+      label: 'You',
+      icon: <YouIcon className="w-5 h-5" />
     }
   ];
 
