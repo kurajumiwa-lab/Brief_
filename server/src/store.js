@@ -103,6 +103,13 @@ const EMPTY = {
   partnerCohorts: [],
   commercialAgreements: [], // append-only; one active agreement per partner
   partnerSettlements: [],   // finance-confirmed revenue-share payouts (ledger-backed)
+  // Field agents (riders / door-to-door agents) who onboard vendors. A claim is
+  // first-touch-wins per vendor; a full_registration claim opens a 24-month
+  // override on settled orders (derived), a menu_upload claim pays a one-off
+  // bounty. Settlements are finance-confirmed ledger payouts. See
+  // src/domain/fieldAgent.js.
+  vendorClaims: [],
+  fieldAgentSettlements: [],
   // P2P ticket resale (Tikiti integration T1). A ticket is ONE admitted
   // seat, born from a confirmed campaign registration; its scannable code
   // IS the registration's gate code, versioned so a transfer kills every

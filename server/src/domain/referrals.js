@@ -139,6 +139,20 @@ export function recordTraffic(code, visitorKey, day = new Date().toISOString().s
   });
 }
 
+/** A field agent's one-off bounty for onboarding a vendor (menu upload). Flat,
+ *  deterministic, pool-capped at conversion like every other reward. One per
+ *  vendor, ever — a replay cannot mint a second bounty. */
+export function recordFieldBounty(agentId, vendorId, points) {
+  if (!agentId || !vendorId) return null;
+  const key = `menu_upload_bounty:${vendorId}`;
+  if (eventExists(key)) return null;
+  return store.insert('referralEvents', {
+    id: newId('refv'), kind: 'menu_upload_bounty', key,
+    actorId: null, referrerId: agentId, points, valueKes: 0,
+    at: new Date().toISOString()
+  });
+}
+
 /** A public event registration through a member's link. */
 export function recordEventSignup(code, campaignId, attendeeRef) {
   const referrerId = userIdForCode(code);
