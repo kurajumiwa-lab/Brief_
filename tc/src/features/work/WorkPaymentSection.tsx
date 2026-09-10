@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import * as api from "../../api/briefApi";
 import type { WorkOrderPayments, WorkPaymentStatus } from "../../api/workPaymentTypes";
 import { money } from "../quotes/money";
+import { MotionStatus } from "../../ui/motion/MotionStatus";
 
 // ---------------------------------------------------------------------------
 // WORK ORDER PAYMENT SECTION (Phase 8).
@@ -26,13 +27,6 @@ const statusLabel = (status: string): string =>
             : status === "pending"
               ? "Payment pending"
               : "Payment not started";
-
-function statusClass(status: string): string {
-  if (status === "confirmed") return "is-confirmed";
-  if (status === "failed" || status === "cancelled" || status === "expired") return "is-failed";
-  if (status === "processing" || status === "pending") return "is-processing";
-  return "is-idle";
-}
 
 export function WorkPaymentSection({
   workOrderId,
@@ -101,9 +95,7 @@ export function WorkPaymentSection({
       </p>
 
       {state && (
-        <p className={`work-payment-status ${statusClass(state.status)}`}>
-          {statusLabel(state.status)}
-        </p>
+        <MotionStatus status={state.status} label={statusLabel(state.status)} tier="consequential" />
       )}
 
       {sourcingBreakdown && sourcingBreakdown.sourcingFeeMinor > 0 && (
