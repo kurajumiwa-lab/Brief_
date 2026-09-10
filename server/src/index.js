@@ -83,6 +83,7 @@ import { register as procurementRoutes } from './routes/procurement.js';
 import { register as participantTrustRoutes } from './routes/participantTrust.js';
 import { register as workPaymentRoutes } from './routes/workPayment.js';
 import { register as attributionRoutes } from './routes/attribution.js';
+import { register as partnerRoutes } from './routes/partner.js';
 
 const app = express();
 
@@ -254,6 +255,7 @@ procurementRoutes(app);
 participantTrustRoutes(app);
 workPaymentRoutes(app);
 attributionRoutes(app);
+partnerRoutes(app);
 
 // --- Production frontend serving -------------------------------------------
 //

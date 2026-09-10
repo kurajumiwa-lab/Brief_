@@ -93,6 +93,16 @@ const EMPTY = {
   // Economic value per member/partner is DERIVED from real rows, never
   // stored. See src/domain/attribution.js.
   acquisitions: [],
+  // First-class distribution partners (B2B2C infrastructure). A partner is a
+  // STORED, contracted record (organisation → programs → cohorts) whose keys
+  // join against the attribution keys above. Revenue share is DERIVED from
+  // verified commercial activity and becomes money only via a finance-confirmed
+  // settlement (ledger-backed). See src/domain/partner.js.
+  partners: [],
+  partnerPrograms: [],
+  partnerCohorts: [],
+  commercialAgreements: [], // append-only; one active agreement per partner
+  partnerSettlements: [],   // finance-confirmed revenue-share payouts (ledger-backed)
   // P2P ticket resale (Tikiti integration T1). A ticket is ONE admitted
   // seat, born from a confirmed campaign registration; its scannable code
   // IS the registration's gate code, versioned so a transfer kills every
