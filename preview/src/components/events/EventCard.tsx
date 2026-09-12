@@ -89,6 +89,13 @@ export function EventCard({ event, onOpen }: { event: EventListing; onOpen: (slu
           <span>{event.goalAmount != null ? "Cause / pot" : money(event.price, event.currency)}</span>
           <span>{event.popularity} going</span>
         </div>
+        {/* Chama overlap — the unique, derived social proof. Only shown when
+            the viewer's own group genuinely has members going. */}
+        {event.chamaOverlap && event.chamaOverlap.length > 0 && (
+          <p className="text-[10px] font-bold" style={{ color: "var(--color-primary)" }}>
+            {event.chamaOverlap.map((o) => `${o.memberCount} from ${o.chamaName ?? "your chama"}`).join(" · ")} going
+          </p>
+        )}
       </div>
     </button>
   );

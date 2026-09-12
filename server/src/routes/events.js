@@ -4,6 +4,7 @@
 
 import * as events from '../domain/events.js';
 import { requireAuth } from './helpers.js';
+import { callerId } from '../identity.js';
 
 export function register(app) {
   app.get('/api/events', (req, res) => {
@@ -15,7 +16,10 @@ export function register(app) {
         to: req.query?.to ?? null,
         featured: req.query?.featured === '1' || req.query?.featured === 'true' ? true : null,
         sort: req.query?.sort === 'popularity' ? 'popularity' : 'date',
-        limit: Number(req.query?.limit) || 50
+        limit: Number(req.query?.limit) || 50,
+        // The viewer is resolved from the session token (server-authoritative),
+        // never from the query string. Anonymous -> null -> no chama overlap.
+        viewerId: callerId(req)
       });
       res.json(result);
     } catch (e) {

@@ -7270,6 +7270,9 @@ console.log('\n=== EVENTS HUB (Tikiti T4) ===');
     // never a fabricated image).
     const nightMarket = r.body?.events?.find((e) => e.title === 'Night Market X');
     check('a browse listing carries coverImageUrl and description', 'coverImageUrl' in nightMarket && 'description' in nightMarket, JSON.stringify(nightMarket));
+    // chamaOverlap is derived per viewer: null anonymously, real when the
+    // viewer's chama members registered.
+    check('anonymous browse has no chama overlap', nightMarket.chamaOverlap === null, JSON.stringify(nightMarket.chamaOverlap));
     r = await call('/api/events?location=kilimani', 'GET');
     check('location search is case-insensitive', (r.body?.events ?? []).length === 2, `${r.body?.events?.length}`);
     r = await call('/api/events?category=horoscope', 'GET');

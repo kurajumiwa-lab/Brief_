@@ -2819,6 +2819,8 @@ export interface EventListing {
   featured: boolean;
   /** COUNTED registrations, never a seeded number. */
   popularity: number;
+  /** DERIVED per-viewer: which of the viewer's chamas have members going. */
+  chamaOverlap: Array<{ chamaId: string; chamaName: string | null; memberCount: number }> | null;
 }
 
 export function browseEvents(opts: {
