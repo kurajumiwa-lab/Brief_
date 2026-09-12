@@ -16,6 +16,7 @@ import { PartnerDesk } from '../features/partner/PartnerDesk';
 import { YouSurface } from '../features/you/YouSurface';
 import { EntityDetail } from '../features/you/EntityDetail';
 import { soundEngine } from '../utils/SoundEngine';
+import { SyncStatusDot } from '../ui/SyncStatusDot';
 
 export interface AppShellProps {
   initialTab?: BriefNavigationTab;
@@ -183,6 +184,12 @@ export const AppShell: React.FC<AppShellProps> = ({
           {toastMsg}
         </div>
       )}
+
+      {/* Persistent, honest sync status: the offline queue's state, not a
+          fake "synced". */}
+      <div className="fixed top-3 right-3 z-40 md:top-4 md:right-4">
+        <SyncStatusDot />
+      </div>
 
       {/* 4-Tab Navigation (Desktop Sidebar / Mobile Bottom Dock) */}
       <Navigation

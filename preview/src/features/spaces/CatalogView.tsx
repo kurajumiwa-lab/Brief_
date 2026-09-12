@@ -1,19 +1,9 @@
 import React, { useState } from 'react';
 import type { Listing } from '../../api/types';
-import {
-  Tag,
-  Plus,
-  Share2,
-  CheckCircle2,
-  ShoppingBag,
-  ArrowUpRight,
-  MessageCircle,
-  Eye,
-  Check,
-  TrendingUp,
-  Copy
-} from 'lucide-react';
+import { Tag, Plus, ShoppingBag } from 'lucide-react';
 import { soundEngine } from '../../utils/SoundEngine';
+import { MicroBadge } from '../../ui/MicroBadge';
+import { ContextMenu } from '../../ui/ContextMenu';
 
 export interface CatalogViewProps {
   offers: Listing[];
@@ -118,20 +108,14 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                       </span>
                     </div>
                     <div className="flex items-center space-x-1 shrink-0">
-                      <span
-                        className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full ${
-                          isDraft
-                            ? 'bg-[color:var(--color-surface-elevated)] text-[color:var(--color-warning)]'
-                            : isPaused
-                            ? 'bg-zinc-200 text-zinc-700'
-                            : 'bg-[color:var(--color-primary-subtle)] text-[color:var(--color-text)]'
-                        }`}
-                      >
-                        {isPaused ? 'PAUSED' : isDraft ? 'DRAFT' : 'ACTIVE'}
-                      </span>
-                      <span className="text-[9px] font-mono text-[color:var(--color-text-muted)] bg-[color:var(--color-surface)] px-1.5 py-0.5 rounded-md">
-                        {stock == null ? 'Stock not specified' : `${stock} in stock`}
-                      </span>
+                      {/* Metadata offloaded to micro-badges: status + stock,
+                          one line, token-based (bronze border per spec). */}
+                      <MicroBadge tone={isPaused ? "warning" : isDraft ? "warning" : "success"}>
+                        {isPaused ? "PAUSED" : isDraft ? "DRAFT" : "ACTIVE"}
+                      </MicroBadge>
+                      <MicroBadge tone="neutral">
+                        {stock == null ? "Stock not specified" : `${stock} in stock`}
+                      </MicroBadge>
                     </div>
                   </div>
 
@@ -150,6 +134,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                   </span>
 
                   <div className="flex items-center space-x-1.5">
+                    {/* The consequential PRIMARY action stays inline. */}
                     {isDraft && onPublishOffer && (
                       <button
                         type="button"
@@ -163,33 +148,20 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                       </button>
                     )}
 
-                    <button
-                      type="button"
-                      onClick={() => togglePause(offer.id, offer.status)}
-                      className="p-1.5 rounded-xl bg-[color:var(--color-surface)] hover:bg-black/5 text-[color:var(--color-text-muted)] text-[10px] font-bold transition-colors cursor-pointer"
-                      title={isPaused ? 'Activate offer' : 'Pause offer'}
-                    >
-                      {isPaused ? '▶ Resume' : '⏸ Pause'}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleCopyLink(offer)}
-                      className="px-2.5 py-1 rounded-xl bg-[color:var(--color-primary-subtle)] hover:bg-[color:var(--color-primary-subtle)] text-[color:var(--color-text)] text-[10px] font-bold transition-colors cursor-pointer flex items-center space-x-1"
-                      title="Copy PublicOfferModal link"
-                    >
-                      {copiedId === offer.id ? (
-                        <>
-                          <Check className="w-3 h-3 text-[color:var(--color-success)]" />
-                          <span className="text-[color:var(--color-success)]">Copied!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Share2 className="w-3 h-3 text-[color:var(--color-text)]" />
-                          <span>Share Link</span>
-                        </>
-                      )}
-                    </button>
+                    {/* Secondary actions collapse behind a context menu. */}
+                    <ContextMenu
+                      ariaLabel={`Actions for ${offer.title}`}
+                      actions={[
+                        {
+                          label: isPaused ? "Resume offer" : "Pause offer",
+                          onSelect: () => togglePause(offer.id, offer.status)
+                        },
+                        {
+                          label: copiedId === offer.id ? "Link copied" : "Share link",
+                          onSelect: () => handleCopyLink(offer)
+                        }
+                      ]}
+                    />
                   </div>
                 </div>
               </div>
