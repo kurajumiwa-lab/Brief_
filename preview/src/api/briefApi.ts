@@ -38,6 +38,10 @@ import {
  * so this must stay a relative path: never call localhost from client code.
  */
 export const INGEST_API = '/ingest';
+// How long a request may wait before we abort it and report a timeout. A
+// stalled connection (half-open socket on a flaky mobile network) otherwise
+// hangs the UI forever — the exact "button spins forever" failure.
+const REQUEST_TIMEOUT_MS = 15000;
 /** Shared with /api/config so a deployed frontend can detect an older API. */
 export const CLIENT_API_CONTRACT = 'gallery-banners-v1';
 
@@ -119,6 +123,13 @@ async function send<T>(
   init: RequestInit,
   select?: (raw: any) => T | undefined
 ): Promise<ApiResult<T>> {
+  // A stalled connection must never hang the UI forever. Every request races
+  // a timeout; if the network neither resolves nor rejects in time, we abort
+  // and return an honest "timed out" instead of leaving a button spinning.
+  // (This was the root cause of "create a space / vault never finishes":
+  // fetch had no timeout, so a half-open mobile connection hung indefinitely.)
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
     const token = getSessionToken();
     const headers: Record<string, string> = {
@@ -127,8 +138,10 @@ async function send<T>(
     if (token) headers.authorization = `Bearer ${token}`;
     const res = await fetch(`${INGEST_API}${path}`, {
       ...init,
-      headers
+      headers,
+      signal: controller.signal
     });
+    clearTimeout(timer);
 
     // A dead session must clear itself rather than leaving the client
     // retrying with a token the server has already rejected.
@@ -178,6 +191,12 @@ async function send<T>(
     }
     return { ok: true, data };
   } catch (e) {
+    clearTimeout(timer);
+    // Our own timeout fired — the connection stalled rather than failing.
+    // Report it honestly so the button stops spinning and the user can retry.
+    if (e && ((e as any)?.name === 'AbortError' || (e as any)?.code === 20)) {
+      return { ok: false, status: null, error: 'The request timed out. Check your connection and try again.' };
+    }
     // Network failure, offline server, aborted request. A WRITE is not lost:
     // it is parked with a clientKey and replays after reconnect — the
     // server-side idempotency makes the replay safe. A read is just offline.

@@ -92,7 +92,7 @@ export function CollectionPicker({ objectId, onChanged }: {
         </p>
         {!creating && (
           <button type="button" onClick={() => setCreating(true)}
-            className="flex items-center gap-1 text-[10px] font-bold text-[#C8963E] cursor-pointer hover:underline">
+            className="flex items-center gap-1 text-[10px] font-bold text-[#4F46E5] cursor-pointer hover:underline">
             <Plus className="h-3 w-3" /> New
           </button>
         )}
@@ -107,10 +107,10 @@ export function CollectionPicker({ objectId, onChanged }: {
             onKeyDown={(e) => { if (e.key === 'Enter') create(); if (e.key === 'Escape') setCreating(false); }}
             placeholder="Collection name"
             aria-label="New collection name"
-            className="min-w-0 flex-1 rounded-xl border border-[#E5E8EC] px-2.5 py-1.5 text-[12px] font-semibold text-[#0D1117] outline-none focus:border-[#2563EB]"
+            className="min-w-0 flex-1 rounded-xl border border-[#E5E8EC] px-2.5 py-1.5 text-[12px] font-semibold text-[#0D1117] outline-none focus:border-[#06B6D4]"
           />
           <button type="button" onClick={create} disabled={busy || !name.trim()}
-            className="rounded-full bg-[#C8963E] px-3 py-1.5 text-[10px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40">
+            className="rounded-full bg-[#4F46E5] px-3 py-1.5 text-[10px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40">
             Create
           </button>
           <button type="button" onClick={() => setCreating(false)} aria-label="Cancel"
@@ -131,10 +131,10 @@ export function CollectionPicker({ objectId, onChanged }: {
             return (
               <button key={c.id} type="button" onClick={() => toggle(c)} disabled={busy}
                 className={`flex w-full items-center gap-2 rounded-xl border px-2.5 py-2 text-left cursor-pointer transition-colors disabled:opacity-50 ${
-                  isMember ? 'border-[#2563EB] bg-[#F0F2F5]' : 'border-[#E5E8EC] bg-[#FFFFFF] hover:border-[#2563EB]/50'
+                  isMember ? 'border-[#06B6D4] bg-[#F0F2F5]' : 'border-[#E5E8EC] bg-[#FFFFFF] hover:border-[#06B6D4]/50'
                 }`}>
                 <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${
-                  isMember ? 'border-[#C8963E] bg-[#C8963E] text-[#0D1117]' : 'border-[#E5E8EC] text-transparent'
+                  isMember ? 'border-[#4F46E5] bg-[#4F46E5] text-[#0D1117]' : 'border-[#E5E8EC] text-transparent'
                 }`}>
                   <Check className="h-3 w-3" />
                 </span>

@@ -163,10 +163,10 @@ export function EnginePanel({ onObjectsChanged }: EnginePanelProps) {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full" style={{ background: run ? '#C8963E' : '#E5E8EC' }} />
+              <span className="h-2 w-2 rounded-full" style={{ background: run ? '#4F46E5' : '#E5E8EC' }} />
               <h2 className="text-sm font-extrabold text-[#0D1117]">Brief Engine</h2>
               {guardrail && (
-                <span className="rounded-md bg-[#C8963E] px-1.5 py-0.5 text-[8px] font-extrabold text-[#0D1117]">
+                <span className="rounded-md bg-[#4F46E5] px-1.5 py-0.5 text-[8px] font-extrabold text-[#0D1117]">
                   {guardrail.label}
                 </span>
               )}
@@ -185,7 +185,7 @@ export function EnginePanel({ onObjectsChanged }: EnginePanelProps) {
             onClick={() => void manualSync()}
             disabled={pending}
             className="shrink-0 rounded-lg px-3 py-1.5 text-[11px] font-extrabold cursor-pointer disabled:opacity-40"
-            style={{ border: '1px solid #C8963E', color: '#0D1117', background: '#FFFFFF' }}
+            style={{ border: '1px solid #4F46E5', color: '#0D1117', background: '#FFFFFF' }}
           >
             {pending ? 'Beating…' : 'Sync now'}
           </button>
@@ -318,7 +318,7 @@ export function EnginePanel({ onObjectsChanged }: EnginePanelProps) {
               onClick={() => void addRoute()}
               disabled={creating || !form.name.trim() || !form.url.trim()}
               className="shrink-0 rounded-lg px-3 py-1.5 text-[11px] font-extrabold cursor-pointer disabled:opacity-40"
-              style={{ background: '#C8963E', color: '#0D1117' }}
+              style={{ background: '#4F46E5', color: '#0D1117' }}
             >
               {creating ? '…' : 'Add'}
             </button>

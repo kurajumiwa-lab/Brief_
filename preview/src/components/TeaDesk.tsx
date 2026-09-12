@@ -74,7 +74,7 @@ export function TeaDesk() {
         </div>
         <button
           onClick={() => setEditing('new')}
-          className="rounded-full bg-[#C8963E] px-4 py-2 text-[12px] font-bold text-[#0D1117] cursor-pointer"
+          className="rounded-full bg-[#4F46E5] px-4 py-2 text-[12px] font-bold text-[#0D1117] cursor-pointer"
         >
           New story
         </button>

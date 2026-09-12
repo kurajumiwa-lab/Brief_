@@ -81,7 +81,7 @@ function ResultRow({ title, image, meta, source, onClick }: {
     </>
   );
 
-  const cls = `flex w-full items-center gap-3 rounded-2xl border p-2 text-left transition-colors ${onClick ? 'hover:border-[#2563EB]' : ''}`;
+  const cls = `flex w-full items-center gap-3 rounded-2xl border p-2 text-left transition-colors ${onClick ? 'hover:border-[#06B6D4]' : ''}`;
   const style = { borderColor: T.line, background: T.surface };
 
   if (onClick) {
@@ -126,20 +126,20 @@ function ObjectResultCard({ object, onClick }: { object: any; onClick: () => voi
       type="button"
       onClick={onClick}
       aria-label={mapped.title}
-      className="group flex w-full items-center gap-3 rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] p-2 text-left transition-colors hover:border-[#2563EB] cursor-pointer"
+      className="group flex w-full items-center gap-3 rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] p-2 text-left transition-colors hover:border-[#06B6D4] cursor-pointer"
     >
       <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl">
         {image ? (
           <img src={image} alt="" aria-hidden="true" loading="lazy" className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#EFF1F4] to-[#E5E8EC]">
-            <TypeGlyph className="h-6 w-6 text-[#2563EB]" aria-hidden="true" strokeWidth={1.6} />
+            <TypeGlyph className="h-6 w-6 text-[#06B6D4]" aria-hidden="true" strokeWidth={1.6} />
           </div>
         )}
         {(() => {
           const t = trustStateOf(mapped);
           const tone = t.tone === 'green' ? { glyph: '✓', bg: '#16A34A', fg: '#FFFFFF' }
-            : t.tone === 'cyan' ? { glyph: '●', bg: '#2563EB', fg: '#FFFFFF' }
+            : t.tone === 'cyan' ? { glyph: '●', bg: '#06B6D4', fg: '#FFFFFF' }
             : t.tone === 'muted' ? { glyph: '◉', bg: 'rgba(13,17,23,0.14)', fg: '#0D1117' }
             : null;
           if (!tone) return null;
@@ -265,20 +265,20 @@ export function SearchResults({ query, onOpenObject, onOpenEntity }: {
           onClick={openSheet}
           aria-label="Filter results"
           aria-expanded={sheetOpen}
-          className="flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-colors hover:border-[#2563EB] cursor-pointer"
-          style={{ borderColor: activeFilterCount > 0 ? '#C8963E' : T.line, background: T.surface, color: T.ink }}
+          className="flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-colors hover:border-[#06B6D4] cursor-pointer"
+          style={{ borderColor: activeFilterCount > 0 ? '#4F46E5' : T.line, background: T.surface, color: T.ink }}
         >
-          <SlidersHorizontal className="h-3.5 w-3.5" style={{ color: activeFilterCount > 0 ? '#C8963E' : T.muted }} />
+          <SlidersHorizontal className="h-3.5 w-3.5" style={{ color: activeFilterCount > 0 ? '#4F46E5' : T.muted }} />
           Filters
           {activeFilterCount > 0 && (
-            <span className="rounded-full bg-[#C8963E] px-1.5 py-0.5 text-[9px] font-extrabold text-[#0D1117]">{activeFilterCount}</span>
+            <span className="rounded-full bg-[#4F46E5] px-1.5 py-0.5 text-[9px] font-extrabold text-[#0D1117]">{activeFilterCount}</span>
           )}
         </button>
         {activeFilterCount > 0 && (
           <button
             type="button"
             onClick={() => setFilters({})}
-            className="rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-colors hover:border-[#2563EB] cursor-pointer"
+            className="rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-colors hover:border-[#06B6D4] cursor-pointer"
             style={{ borderColor: T.line, background: T.surface, color: T.muted }}
           >
             Clear
@@ -299,7 +299,7 @@ export function SearchResults({ query, onOpenObject, onOpenEntity }: {
           <div className="brief-sheet-up max-h-[78vh] overflow-y-auto bg-[#EFF1F4] border-t border-[#E5E8EC] rounded-t-[28px] shadow-2xl px-4 pb-6 pt-5" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-[16px] font-black tracking-tight text-[#0D1117]">Filter results</h3>
-              <button type="button" onClick={() => setSheetOpen(false)} aria-label="Close filters" className="h-9 w-9 flex items-center justify-center rounded-full bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117] text-[18px] font-light hover:border-[#C8963E] cursor-pointer">×</button>
+              <button type="button" onClick={() => setSheetOpen(false)} aria-label="Close filters" className="h-9 w-9 flex items-center justify-center rounded-full bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117] text-[18px] font-light hover:border-[#4F46E5] cursor-pointer">×</button>
             </div>
 
             <div className="space-y-5">
@@ -315,7 +315,7 @@ export function SearchResults({ query, onOpenObject, onOpenEntity }: {
                         type="button"
                         onClick={() => setDraft((d) => ({ ...d, type: value || undefined }))}
                         aria-pressed={selected}
-                        className={`rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-colors cursor-pointer ${selected ? 'bg-[#C8963E] text-[#0D1117] border-[#2563EB]' : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC] hover:border-[#2563EB]'}`}
+                        className={`rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-colors cursor-pointer ${selected ? 'bg-[#4F46E5] text-[#0D1117] border-[#06B6D4]' : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC] hover:border-[#06B6D4]'}`}
                       >
                         {label}
                       </button>
@@ -332,7 +332,7 @@ export function SearchResults({ query, onOpenObject, onOpenEntity }: {
                   placeholder="Anywhere (e.g. Kisumu)"
                   value={draft.location ?? ''}
                   onChange={(e) => setDraft((d) => ({ ...d, location: e.target.value || undefined }))}
-                  className="w-full rounded-xl border border-[#E5E8EC] bg-[#FFFFFF] px-3 py-2.5 text-[13px] font-semibold text-[#0D1117] outline-none focus:border-[#2563EB] placeholder:text-[#0D1117]/60"
+                  className="w-full rounded-xl border border-[#E5E8EC] bg-[#FFFFFF] px-3 py-2.5 text-[13px] font-semibold text-[#0D1117] outline-none focus:border-[#06B6D4] placeholder:text-[#0D1117]/60"
                 />
               </label>
 
@@ -344,7 +344,7 @@ export function SearchResults({ query, onOpenObject, onOpenEntity }: {
                   type="date"
                   value={draft.date ?? ''}
                   onChange={(e) => setDraft((d) => ({ ...d, date: e.target.value || undefined }))}
-                  className="w-full rounded-xl border border-[#E5E8EC] bg-[#FFFFFF] px-3 py-2.5 text-[13px] font-semibold text-[#0D1117] outline-none focus:border-[#2563EB]"
+                  className="w-full rounded-xl border border-[#E5E8EC] bg-[#FFFFFF] px-3 py-2.5 text-[13px] font-semibold text-[#0D1117] outline-none focus:border-[#06B6D4]"
                 />
               </label>
 
@@ -356,7 +356,7 @@ export function SearchResults({ query, onOpenObject, onOpenEntity }: {
                   placeholder="Any source (e.g. City Wire)"
                   value={draft.source ?? ''}
                   onChange={(e) => setDraft((d) => ({ ...d, source: e.target.value || undefined }))}
-                  className="w-full rounded-xl border border-[#E5E8EC] bg-[#FFFFFF] px-3 py-2.5 text-[13px] font-semibold text-[#0D1117] outline-none focus:border-[#2563EB] placeholder:text-[#0D1117]/60"
+                  className="w-full rounded-xl border border-[#E5E8EC] bg-[#FFFFFF] px-3 py-2.5 text-[13px] font-semibold text-[#0D1117] outline-none focus:border-[#06B6D4] placeholder:text-[#0D1117]/60"
                 />
               </label>
             </div>
@@ -372,7 +372,7 @@ export function SearchResults({ query, onOpenObject, onOpenEntity }: {
               <button
                 type="button"
                 onClick={applySheet}
-                className="h-11 flex-1 rounded-xl bg-[#C8963E] text-[13px] font-extrabold text-[#0D1117] cursor-pointer"
+                className="h-11 flex-1 rounded-xl bg-[#4F46E5] text-[13px] font-extrabold text-[#0D1117] cursor-pointer"
               >
                 Apply
               </button>
@@ -394,10 +394,10 @@ export function SearchResults({ query, onOpenObject, onOpenEntity }: {
               key={entity.id}
               type="button"
               onClick={() => onOpenEntity?.(entity.id)}
-              className="flex w-full items-center gap-3 rounded-2xl border border-[#2563EB]/30 bg-[#F0F2F5]/60 p-2 text-left transition-colors hover:border-[#2563EB] cursor-pointer"
+              className="flex w-full items-center gap-3 rounded-2xl border border-[#06B6D4]/30 bg-[#F0F2F5]/60 p-2 text-left transition-colors hover:border-[#06B6D4] cursor-pointer"
               aria-label={entity.name}
             >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#C8963E] to-[#EFF1F4] text-[10px] font-extrabold uppercase text-white">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#4F46E5] to-[#EFF1F4] text-[10px] font-extrabold uppercase text-white">
                 {ENTITY_KIND_LABEL[entity.kind]?.slice(0, 2) ?? entity.kind?.slice(0, 2)}
               </span>
               <span className="min-w-0 flex-1">
@@ -409,7 +409,7 @@ export function SearchResults({ query, onOpenObject, onOpenEntity }: {
                   {typeof entity.followCount === 'number' ? ` · ${entity.followCount} follower${entity.followCount === 1 ? '' : 's'}` : ''}
                 </span>
               </span>
-              <span className="rounded-full bg-[#C8963E] px-2.5 py-1 text-[10px] font-extrabold text-[#0D1117]">Open</span>
+              <span className="rounded-full bg-[#4F46E5] px-2.5 py-1 text-[10px] font-extrabold text-[#0D1117]">Open</span>
             </button>
           ))}
         </div>

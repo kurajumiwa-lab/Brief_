@@ -121,7 +121,7 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
               type="button"
               onClick={() => void save(false)}
               disabled={!canSave}
-              className="h-8 rounded-lg border border-[#2563EB] px-3 text-[11px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
+              className="h-8 rounded-lg border border-[#06B6D4] px-3 text-[11px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
             >
               {busy ? '…' : 'Save'}
             </button>
@@ -129,7 +129,7 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
               type="button"
               onClick={() => void save(true)}
               disabled={!canSave}
-              className="h-8 rounded-lg bg-[#C8963E] px-3 text-[11px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
+              className="h-8 rounded-lg bg-[#4F46E5] px-3 text-[11px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
             >
               {busy ? '…' : 'Publish'}
             </button>
@@ -147,20 +147,20 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Headline"
-              className="w-full rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[14px] font-bold text-[#0D1117] outline-none focus:border-[#2563EB]"
+              className="w-full rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[14px] font-bold text-[#0D1117] outline-none focus:border-[#06B6D4]"
             />
             <input
               value={dek}
               onChange={(e) => setDek(e.target.value)}
               placeholder="Dek (one-line summary)"
-              className="w-full rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117] outline-none focus:border-[#2563EB]"
+              className="w-full rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117] outline-none focus:border-[#06B6D4]"
             />
             <textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
               placeholder="Body — hook → what's happening → why it matters → what you can do."
               rows={6}
-              className="w-full rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] leading-relaxed text-[#0D1117] outline-none focus:border-[#2563EB]"
+              className="w-full rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] leading-relaxed text-[#0D1117] outline-none focus:border-[#06B6D4]"
             />
             <div className="flex gap-2">
               <select
@@ -174,7 +174,7 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="Location"
-                className="flex-1 rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117] outline-none focus:border-[#2563EB]"
+                className="flex-1 rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117] outline-none focus:border-[#06B6D4]"
               />
             </div>
           </section>
@@ -192,9 +192,9 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
                     onClick={() => patchDesign({ theme: t.id })}
                     className="rounded-xl border p-2.5 text-left cursor-pointer transition-all"
                     style={{
-                      borderColor: active ? '#C8963E' : '#E5E8EC',
+                      borderColor: active ? '#4F46E5' : '#E5E8EC',
                       background: t.surface,
-                      boxShadow: active ? '0 0 0 1px #2563EB' : undefined
+                      boxShadow: active ? '0 0 0 1px #06B6D4' : undefined
                     }}
                   >
                     <p className="text-[11px] font-extrabold" style={{ color: t.ink }}>{t.label}</p>
@@ -218,18 +218,18 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
                     type="button"
                     onClick={() => patchDesign({ layout: l.id })}
                     className="rounded-xl border p-2.5 text-left cursor-pointer transition-all"
-                    style={{ borderColor: active ? '#C8963E' : '#E5E8EC', background: '#FFFFFF', boxShadow: active ? '0 0 0 1px #2563EB' : undefined }}
+                    style={{ borderColor: active ? '#4F46E5' : '#E5E8EC', background: '#FFFFFF', boxShadow: active ? '0 0 0 1px #06B6D4' : undefined }}
                   >
                     {/* mini wireframe of the layout */}
                     <div className="flex h-9 gap-1">
                       {l.id !== 'center' && l.id !== 'left' && (
                         <div className="flex h-9 w-9 flex-col justify-end gap-0.5 rounded border border-[#E5E8EC] bg-[#F0F2F5] p-0.5">
-                          <div className="h-1 w-3/4 rounded-full bg-[#C8963E]" />
+                          <div className="h-1 w-3/4 rounded-full bg-[#4F46E5]" />
                           <div className="h-0.5 w-full rounded-full bg-[#E5E8EC]" />
                         </div>
                       )}
                       <div className={`flex flex-1 flex-col justify-end gap-0.5 rounded border border-[#E5E8EC] bg-[#F0F2F5] p-0.5 ${l.id === 'center' ? 'items-center' : l.id === 'left' ? 'items-start' : l.id === 'split' ? 'items-start' : 'items-start'}`}>
-                        <div className="h-1.5 w-2/3 rounded-full bg-[#C8963E]" />
+                        <div className="h-1.5 w-2/3 rounded-full bg-[#4F46E5]" />
                         <div className="h-0.5 w-full rounded-full bg-[#E5E8EC]" />
                         <div className="h-0.5 w-1/2 rounded-full bg-[#E5E8EC]" />
                       </div>
@@ -312,7 +312,7 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
                   {images.map((url) => (
                     <div key={url} className="group relative overflow-hidden rounded-lg border border-[#E5E8EC]">
                       <img src={url} alt="" className="h-16 w-full object-cover" />
-                      <div className="absolute inset-0 flex items-center justify-center gap-1 bg-[#C8963E]/0 opacity-0 transition-all group-hover:bg-[#C8963E]/45 group-hover:opacity-100">
+                      <div className="absolute inset-0 flex items-center justify-center gap-1 bg-[#4F46E5]/0 opacity-0 transition-all group-hover:bg-[#4F46E5]/45 group-hover:opacity-100">
                         <button
                           type="button"
                           onClick={() => makeHero(url)}

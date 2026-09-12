@@ -206,8 +206,8 @@ export function GroupBuyPortal() {
                   onClick={() => { setSelectedId(b.id); setLastReceipt(null); }}
                   className="rounded-lg border px-2.5 py-1 text-[10px] font-extrabold cursor-pointer"
                   style={{
-                    borderColor: b.id === selected?.id ? '#C8963E' : '#E5E8EC',
-                    background: b.id === selected?.id ? '#C8963E' : '#FFFFFF',
+                    borderColor: b.id === selected?.id ? '#4F46E5' : '#E5E8EC',
+                    background: b.id === selected?.id ? '#4F46E5' : '#FFFFFF',
                     color: b.id === selected?.id ? '#0D1117' : '#0D1117'
                   }}
                 >
@@ -232,20 +232,20 @@ export function GroupBuyPortal() {
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 placeholder="Title (e.g. Unga December cycle)"
-                className="min-w-[180px] flex-1 rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117] outline-none focus:border-[#2563EB]"
+                className="min-w-[180px] flex-1 rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117] outline-none focus:border-[#06B6D4]"
               />
               <input
                 value={newTarget}
                 onChange={(e) => setNewTarget(e.target.value)}
                 inputMode="numeric"
                 placeholder="Target KSh"
-                className="w-32 rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117] outline-none focus:border-[#2563EB]"
+                className="w-32 rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117] outline-none focus:border-[#06B6D4]"
               />
               <button
                 type="button"
                 onClick={() => void create()}
                 disabled={creating || !newTitle.trim() || !newTarget.trim()}
-                className="rounded-lg bg-[#C8963E] px-4 py-2 text-[11px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
+                className="rounded-lg bg-[#4F46E5] px-4 py-2 text-[11px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
               >
                 {creating ? '…' : 'Open'}
               </button>
@@ -263,12 +263,12 @@ export function GroupBuyPortal() {
                       {money(selected.total)} of {money(selected.targetAmount)} · {selected.progressPct}% · {selected.contributionCount} contribution{selected.contributionCount === 1 ? '' : 's'}
                     </p>
                   </div>
-                  <span className="rounded-md bg-[#C8963E] px-2 py-0.5 text-[9px] font-extrabold text-[#0D1117]">
+                  <span className="rounded-md bg-[#4F46E5] px-2 py-0.5 text-[9px] font-extrabold text-[#0D1117]">
                     {selected.stages[selected.stageIndex]?.label}
                   </span>
                 </div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-[#E5E8EC]">
-                  <div className="h-full rounded-full bg-[#C8963E] transition-all" style={{ width: `${selected.progressPct}%` }} />
+                  <div className="h-full rounded-full bg-[#4F46E5] transition-all" style={{ width: `${selected.progressPct}%` }} />
                 </div>
                 <div className="mt-4">
                   <StageStepper stages={selected.stages} currentIndex={selected.stageIndex} />
@@ -278,7 +278,7 @@ export function GroupBuyPortal() {
                   <button
                     type="button"
                     onClick={() => void advance(selected.stages[selected.stageIndex + 1].id)}
-                    className="mt-3 rounded-lg border border-[#2563EB] px-3 py-1.5 text-[11px] font-extrabold text-[#0D1117] cursor-pointer"
+                    className="mt-3 rounded-lg border border-[#06B6D4] px-3 py-1.5 text-[11px] font-extrabold text-[#0D1117] cursor-pointer"
                   >
                     Mark: {selected.stages[selected.stageIndex + 1].label}
                   </button>
@@ -347,7 +347,7 @@ export function GroupBuyPortal() {
                         type="button"
                         onClick={() => void priceBargain()}
                         disabled={bargainBusy}
-                        className="rounded-lg bg-[#C8963E] px-4 py-2 text-[11px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
+                        className="rounded-lg bg-[#4F46E5] px-4 py-2 text-[11px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
                       >
                         {bargainBusy ? '…' : 'Price this bargain'}
                       </button>
@@ -405,7 +405,7 @@ export function GroupBuyPortal() {
                         type="button"
                         onClick={() => void joinOrLeave()}
                         disabled={bargainBusy || bargain.expired}
-                        className="rounded-lg bg-[#C8963E] px-4 py-2 text-[11px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
+                        className="rounded-lg bg-[#4F46E5] px-4 py-2 text-[11px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
                       >
                         {bargainBusy ? '…' : mySeat ? 'Leave the bargain' : 'Join at the current price'}
                       </button>
@@ -427,14 +427,14 @@ export function GroupBuyPortal() {
                     value={memberRef}
                     onChange={(e) => setMemberRef(e.target.value)}
                     placeholder="Member ID"
-                    className="rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117] outline-none focus:border-[#2563EB]"
+                    className="rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117] outline-none focus:border-[#06B6D4]"
                   />
                   <input
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     inputMode="numeric"
                     placeholder="Amount KSh"
-                    className="rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117] outline-none focus:border-[#2563EB]"
+                    className="rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117] outline-none focus:border-[#06B6D4]"
                   />
                   <select
                     value={source}
@@ -449,7 +449,7 @@ export function GroupBuyPortal() {
                   type="button"
                   onClick={() => void contribute()}
                   disabled={busy || !memberRef.trim() || !Number(amount)}
-                  className="w-full rounded-lg bg-[#C8963E] py-2.5 text-[12px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
+                  className="w-full rounded-lg bg-[#4F46E5] py-2.5 text-[12px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
                 >
                   {busy ? 'Recording…' : 'Record contribution'}
                 </button>
@@ -462,7 +462,7 @@ export function GroupBuyPortal() {
 
                 {/* the structured receipt */}
                 {lastReceipt && (
-                  <div className="rounded-xl border border-[#2563EB] bg-[#F0F2F5] p-3">
+                  <div className="rounded-xl border border-[#06B6D4] bg-[#F0F2F5] p-3">
                     <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#0D1117]">Ledger receipt</p>
                     <div className="mt-1 flex items-center justify-between gap-2 text-[11px]">
                       <span className="font-bold text-[#0D1117]">{lastReceipt.memberRef} · {money(lastReceipt.amount)}</span>

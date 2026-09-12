@@ -350,7 +350,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
             <button
               onClick={() => void handleJoin(circle.id)}
               disabled={busyId === circle.id}
-              className="px-3 py-1.5 rounded-xl bg-[#C8963E] text-[#0D1117] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+              className="px-3 py-1.5 rounded-xl bg-[#4F46E5] text-[#0D1117] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
             >
               {busyId === circle.id ? 'Joining…' : 'Join'}
             </button>
@@ -370,7 +370,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
               setSection('overview');
               setNotice(null);
             }}
-            className="px-3 py-1.5 rounded-xl bg-[#C8963E] text-[#0D1117] font-extrabold text-[10px] cursor-pointer"
+            className="px-3 py-1.5 rounded-xl bg-[#4F46E5] text-[#0D1117] font-extrabold text-[10px] cursor-pointer"
           >
             Open
           </button>
@@ -414,7 +414,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
           </div>
           <button
             onClick={() => setShowCreate((v) => !v)}
-            className="shrink-0 px-3 py-2 rounded-xl bg-[#C8963E] text-[#0D1117] font-extrabold text-[10px] cursor-pointer"
+            className="shrink-0 px-3 py-2 rounded-xl bg-[#4F46E5] text-[#0D1117] font-extrabold text-[10px] cursor-pointer"
           >
             {showCreate ? 'Cancel' : 'Start a circle'}
           </button>
@@ -453,7 +453,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
             <button
               type="submit"
               disabled={creating || !newName.trim()}
-              className="px-3 py-2 rounded-xl bg-[#C8963E] text-[#0D1117] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+              className="px-3 py-2 rounded-xl bg-[#4F46E5] text-[#0D1117] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
             >
               {creating ? 'Starting…' : 'Start circle'}
             </button>
@@ -579,7 +579,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
               <button
                 onClick={() => void handleJoin(open.id)}
                 disabled={busyId === open.id}
-                className="shrink-0 px-3 py-1.5 rounded-xl bg-[#C8963E] text-[#0D1117] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+                className="shrink-0 px-3 py-1.5 rounded-xl bg-[#4F46E5] text-[#0D1117] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
               >
                 {busyId === open.id ? 'Joining…' : 'Join circle'}
               </button>
@@ -611,7 +611,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
                 onClick={() => setSection(s.id)}
                 className={`px-3 py-1.5 rounded-xl text-[10px] font-extrabold cursor-pointer ${
                   section === s.id
-                    ? 'bg-[#C8963E] text-[#0D1117]'
+                    ? 'bg-[#4F46E5] text-[#0D1117]'
                     : 'bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117]/70'
                 }`}
               >

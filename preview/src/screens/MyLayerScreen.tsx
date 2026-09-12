@@ -311,10 +311,10 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                 here is decorative or invented. */}
             {sessionUser && (
               <section aria-label="Your profile" className="mb-3 overflow-hidden rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF]">
-                <div className="relative h-16 bg-gradient-to-r from-[#C8963E] via-[#C8963E]/70 to-[#2563EB]/50" aria-hidden="true" />
+                <div className="relative h-16 bg-gradient-to-r from-[#4F46E5] via-[#4F46E5]/70 to-[#06B6D4]/50" aria-hidden="true" />
                 <div className="px-4 pb-3.5 -mt-6">
                   <div className="flex items-end gap-3">
-                    <div className="h-14 w-14 shrink-0 rounded-2xl border-2 border-[#FFFFFF] bg-gradient-to-br from-[#C8963E] to-[#2563EB] flex items-center justify-center text-[20px] font-black text-[#0D1117] shadow-lg" aria-hidden="true">
+                    <div className="h-14 w-14 shrink-0 rounded-2xl border-2 border-[#FFFFFF] bg-gradient-to-br from-[#4F46E5] to-[#06B6D4] flex items-center justify-center text-[20px] font-black text-[#0D1117] shadow-lg" aria-hidden="true">
                       {(sessionUser.displayName || sessionUser.handle || '?').charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1 pb-0.5">
@@ -335,7 +335,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                       approved. Neither is invented. */}
                   <div className="mt-2.5 flex flex-wrap items-center gap-1.5" aria-label="Trust and verification">
                     <span className="inline-flex items-center gap-1 rounded-full bg-[#F0F2F5] border border-[#E5E8EC] px-2.5 py-1 text-[10px] font-extrabold text-[#0D1117]">
-                      <ShieldCheck className="h-3 w-3 text-[#2563EB]" aria-hidden="true" />
+                      <ShieldCheck className="h-3 w-3 text-[#06B6D4]" aria-hidden="true" />
                       {myRank}
                     </span>
                     {profileVerification && (() => {
@@ -394,7 +394,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                   onClick={() => setMyLayerSection(bundle.sections[0] as MyLayerSection)}
                   className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
                     activeSavedBundle.id === bundle.id
-                      ? 'bg-[#C8963E] text-[#0D1117] border-[#2563EB]'
+                      ? 'bg-[#4F46E5] text-[#0D1117] border-[#06B6D4]'
                       : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
                   }`}
                 >
@@ -409,7 +409,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                   onClick={() => setMyLayerSection(id as MyLayerSection)}
                   className={`shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition cursor-pointer ${
                     myLayerSection === id
-                      ? 'bg-[#C8963E] text-[#0D1117]'
+                      ? 'bg-[#4F46E5] text-[#0D1117]'
                       : 'text-[#0D1117]/70 hover:text-[#0D1117] bg-[#F0F2F5]'
                   }`}
                 >
@@ -459,7 +459,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                     return (
                       <div
                         key={obj.id}
-                        className="bg-[#FFFFFF] border border-[#E5E8EC] hover:border-[#2563EB] rounded-2xl p-3 transition"
+                        className="bg-[#FFFFFF] border border-[#E5E8EC] hover:border-[#06B6D4] rounded-2xl p-3 transition"
                       >
                         <button
                           onClick={() => setSelectedObjectForDetail(obj)}
@@ -514,7 +514,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                                   { silent: true }
                                 )
                               }
-                              className="flex-1 py-2 rounded-xl bg-[#C8963E] text-[#0D1117] font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer"
+                              className="flex-1 py-2 rounded-xl bg-[#4F46E5] text-[#0D1117] font-extrabold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer"
                             >
                               {action.label}
                               <ArrowRight className="w-3 h-3" />
@@ -524,7 +524,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                           <button
                             onClick={() => handleCreatePursuit(obj.title)}
                             title="Pursue similar"
-                            className="p-2 rounded-xl bg-[#FFFFFF] text-[#0D1117] border border-[#E5E8EC] hover:border-[#2563EB] cursor-pointer"
+                            className="p-2 rounded-xl bg-[#FFFFFF] text-[#0D1117] border border-[#E5E8EC] hover:border-[#06B6D4] cursor-pointer"
                           >
                             <Search className="w-3.5 h-3.5" />
                           </button>
@@ -532,7 +532,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                           <button
                             onClick={() => handleUnsave(obj)}
                             title="Remove from saved"
-                            className="p-2 rounded-xl bg-[#FFFFFF] text-[#0D1117] border border-[#E5E8EC] hover:border-[#2563EB] cursor-pointer"
+                            className="p-2 rounded-xl bg-[#FFFFFF] text-[#0D1117] border border-[#E5E8EC] hover:border-[#06B6D4] cursor-pointer"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -550,7 +550,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                                 onClick={() => handleSetSaveLabel(obj, label)}
                                 className={`text-[9px] font-bold px-2 py-0.5 rounded-full border cursor-pointer transition ${
                                   active
-                                    ? 'bg-[#C8963E] text-[#0D1117] border-[#2563EB]'
+                                    ? 'bg-[#4F46E5] text-[#0D1117] border-[#06B6D4]'
                                     : 'bg-transparent text-[#0D1117]/60 border-[#E5E8EC] hover:border-[#E5E8EC]'
                                 }`}
                               >
@@ -724,7 +724,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                   });
                   setCreateStep('form');
                 }}
-                className="shrink-0 px-3 py-2 rounded-xl bg-[#C8963E] text-[#0D1117] font-extrabold text-[11px] cursor-pointer flex items-center gap-1"
+                className="shrink-0 px-3 py-2 rounded-xl bg-[#4F46E5] text-[#0D1117] font-extrabold text-[11px] cursor-pointer flex items-center gap-1"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Create
@@ -756,7 +756,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                 </p>
                 <button
                   onClick={loadCampaigns}
-                  className="px-3 py-1.5 rounded-xl bg-[#C8963E] text-[#0D1117] font-extrabold text-[10px] cursor-pointer"
+                  className="px-3 py-1.5 rounded-xl bg-[#4F46E5] text-[#0D1117] font-extrabold text-[10px] cursor-pointer"
                 >
                   Retry
                 </button>
@@ -812,7 +812,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                     <div className="flex items-center gap-2 pt-1">
                       <button
                         onClick={() => openCampaign(c.id)}
-                        className="px-3 py-1.5 rounded-xl bg-[#C8963E] text-[#0D1117] font-extrabold text-[10px] cursor-pointer"
+                        className="px-3 py-1.5 rounded-xl bg-[#4F46E5] text-[#0D1117] font-extrabold text-[10px] cursor-pointer"
                       >
                         Open
                       </button>
@@ -875,7 +875,7 @@ export function MyLayerScreen(props: MyLayerScreenProps) {
                           loadCampaigns();
                           showToast('Published');
                         }}
-                        className="px-3 py-1.5 rounded-xl bg-[#C8963E] text-[#0D1117] font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
+                        className="px-3 py-1.5 rounded-xl bg-[#4F46E5] text-[#0D1117] font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
                       >
                         Publish
                       </button>

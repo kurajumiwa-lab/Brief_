@@ -37,9 +37,9 @@ import { soundEngine } from '../../utils/SoundEngine';
 export const AppColors = {
   primary: '#0D1117',
   primaryHover: '#1E293B',
-  accent: '#C8963E',
+  accent: '#4F46E5',
   accentHover: '#E04D18',
-  secondary: '#6366F1',
+  secondary: '#4F46E5',
   teal: '#00BFEF',
   emerald: '#00D26A',
   surfaceLight: '#FFFFFF',
@@ -188,7 +188,7 @@ export function CustomTextField({
         className={`relative flex items-center rounded-2xl transition-all duration-200 ${
           hasError
             ? 'bg-red-50/70 dark:bg-red-950/30 border-2 border-red-500'
-            : 'bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus-within:border-[#2563EB] focus-within:ring-2 focus-within:ring-blue-100 dark:focus-within:ring-blue-900/30'
+            : 'bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus-within:border-[#06B6D4] focus-within:ring-2 focus-within:ring-blue-100 dark:focus-within:ring-blue-900/30'
         }`}
       >
         {icon && (
@@ -383,7 +383,7 @@ export function MultiImagePicker({
               onClick={() => setActiveViewerIdx(idx)}
               className={`relative aspect-square rounded-2xl overflow-hidden border cursor-pointer transition-all hover:shadow-md group ${
                 isCover
-                  ? 'border-2 border-[#C8963E] ring-2 ring-orange-100 dark:ring-orange-950/40'
+                  ? 'border-2 border-[#4F46E5] ring-2 ring-orange-100 dark:ring-orange-950/40'
                   : 'border-slate-200 dark:border-slate-700'
               }`}
             >
@@ -395,7 +395,7 @@ export function MultiImagePicker({
 
               {/* Cover Badge */}
               {isCover && (
-                <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-[#C8963E] text-white text-[9px] font-black uppercase tracking-wider shadow-sm flex items-center space-x-0.5">
+                <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-[#4F46E5] text-white text-[9px] font-black uppercase tracking-wider shadow-sm flex items-center space-x-0.5">
                   <Star className="w-2.5 h-2.5 fill-current" />
                   <span>Cover</span>
                 </div>
@@ -409,7 +409,7 @@ export function MultiImagePicker({
                       type="button"
                       onClick={(e) => handleSetAsCover(idx, e)}
                       title="Set as Cover Photo"
-                      className="px-1.5 py-1 rounded-lg bg-black/70 hover:bg-[#C8963E] text-white text-[9px] font-bold flex items-center space-x-0.5 transition-colors"
+                      className="px-1.5 py-1 rounded-lg bg-black/70 hover:bg-[#4F46E5] text-white text-[9px] font-bold flex items-center space-x-0.5 transition-colors"
                     >
                       <span>★ Cover</span>
                     </button>
@@ -460,7 +460,7 @@ export function MultiImagePicker({
             <button
               type="button"
               onClick={handleAddSampleImage}
-              className="aspect-square rounded-2xl bg-slate-50 dark:bg-slate-800/60 border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-[#2563EB] hover:bg-blue-50/50 dark:hover:bg-blue-950/20 flex flex-col items-center justify-center text-slate-500 hover:text-[#2563EB] cursor-pointer transition-all duration-200"
+              className="aspect-square rounded-2xl bg-slate-50 dark:bg-slate-800/60 border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-[#06B6D4] hover:bg-blue-50/50 dark:hover:bg-blue-950/20 flex flex-col items-center justify-center text-slate-500 hover:text-[#06B6D4] cursor-pointer transition-all duration-200"
             >
               <ImagePlus className="w-5 h-5" />
               <span className="text-[10px] font-bold mt-1">Add Photo</span>
@@ -953,7 +953,7 @@ export function UniversalCreatePostModal({
         <div className="bg-[#0D1117] text-white p-4 sm:p-5 flex items-center justify-between border-b border-white/10">
           <div className="space-y-0.5">
             <div className="flex items-center space-x-2">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-[#C8963E] font-black">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-[#4F46E5] font-black">
                 UNIVERSAL PUBLISHER
               </span>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/10 text-slate-300">
@@ -998,7 +998,7 @@ export function UniversalCreatePostModal({
                 }}
                 className={`flex items-center space-x-1.5 text-xs font-bold transition-colors cursor-pointer ${
                   isActive
-                    ? 'text-[#C8963E] font-black'
+                    ? 'text-[#4F46E5] font-black'
                     : isCompleted
                     ? 'text-slate-700 dark:text-slate-300 hover:text-[#0D1117]'
                     : 'text-slate-400 dark:text-slate-600'
@@ -1007,7 +1007,7 @@ export function UniversalCreatePostModal({
                 <div
                   className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-mono font-black ${
                     isActive
-                      ? 'bg-[#C8963E] text-white'
+                      ? 'bg-[#4F46E5] text-white'
                       : isCompleted
                       ? 'bg-emerald-600 text-white'
                       : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
@@ -1145,7 +1145,7 @@ export function UniversalCreatePostModal({
                 <select
                   value={district}
                   onChange={(e) => setDistrict(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none focus:border-[#2563EB]"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none focus:border-[#06B6D4]"
                 >
                   {kenyanDistricts.map((d) => (
                     <option key={d} value={d}>
@@ -1232,7 +1232,7 @@ export function UniversalCreatePostModal({
                       <select
                         value={category}
                         onChange={(e) => setCategory(e.target.value)}
-                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3 px-3 text-xs outline-none focus:border-[#2563EB]"
+                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3 px-3 text-xs outline-none focus:border-[#06B6D4]"
                       >
                         {categories.map((c) => (
                           <option key={c} value={c}>
@@ -1450,7 +1450,7 @@ export function UniversalCreatePostModal({
               className="flex-1 max-w-[220px] py-3 rounded-2xl bg-[#0D1117] hover:bg-[#1E293B] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center space-x-1.5 shadow-md cursor-pointer transition-all active:scale-95"
             >
               <span>Next: {currentStep === 1 ? 'Media & Details' : 'Preview'}</span>
-              <ArrowRight className="w-3.5 h-3.5 text-[#C8963E]" />
+              <ArrowRight className="w-3.5 h-3.5 text-[#4F46E5]" />
             </button>
           ) : (
             <button
@@ -1459,7 +1459,7 @@ export function UniversalCreatePostModal({
               disabled={isSubmitting}
               className="flex-1 max-w-[240px] py-3.5 rounded-2xl bg-[#0D1117] hover:bg-[#1E293B] text-white font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50 transition-all active:scale-95"
             >
-              <Sparkles className="w-4 h-4 text-[#C8963E]" />
+              <Sparkles className="w-4 h-4 text-[#4F46E5]" />
               <span>{isSubmitting ? 'Publishing…' : `Publish ${postType.toUpperCase()}`}</span>
             </button>
           )}

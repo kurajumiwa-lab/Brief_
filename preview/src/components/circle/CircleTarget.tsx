@@ -39,7 +39,7 @@ export function CircleTarget({ circle, compact = false }: CircleTargetProps) {
     <div>
       <div className="h-1.5 bg-[#F0F2F5] rounded-full overflow-hidden">
         <div
-          className={`h-full ${reached ? 'bg-[#C8963E]' : 'bg-[#C8963E]'}`}
+          className={`h-full ${reached ? 'bg-[#4F46E5]' : 'bg-[#4F46E5]'}`}
           style={{ width: `${Math.min(100, pct)}%` }}
         />
       </div>

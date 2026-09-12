@@ -61,7 +61,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
     <button
       onClick={onClick}
       className={`shrink-0 px-2.5 py-1 rounded-full text-[10px] font-extrabold border cursor-pointer transition ${
-        active ? 'bg-[#C8963E] text-[#0D1117] border-[#2563EB]' : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
+        active ? 'bg-[#4F46E5] text-[#0D1117] border-[#06B6D4]' : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
       }`}
     >
       {children}
@@ -193,7 +193,7 @@ function HostPanel({ vault, onChanged }: { vault: VaultType; onChanged: () => vo
 
       <div className="flex gap-1.5">
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name"
-          className="flex-1 min-w-0 bg-[#F0F2F5] border border-[#E5E8EC] rounded-lg px-2.5 py-1.5 text-xs text-[#0D1117] placeholder:text-[#0D1117]/60 outline-none focus:border-[#2563EB]" />
+          className="flex-1 min-w-0 bg-[#F0F2F5] border border-[#E5E8EC] rounded-lg px-2.5 py-1.5 text-xs text-[#0D1117] placeholder:text-[#0D1117]/60 outline-none focus:border-[#06B6D4]" />
         <select value={role} onChange={(e) => setRole(e.target.value)}
           className="bg-[#F0F2F5] border border-[#E5E8EC] rounded-lg px-2 py-1.5 text-xs text-[#0D1117] outline-none">
           <option value="guest">Guest</option>
@@ -201,7 +201,7 @@ function HostPanel({ vault, onChanged }: { vault: VaultType; onChanged: () => vo
           <option value="admin">Admin</option>
         </select>
         <button onClick={addParticipant} disabled={busy || !name.trim()}
-          className="px-2.5 py-1.5 rounded-lg bg-[#C8963E] text-[#0D1117] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">
+          className="px-2.5 py-1.5 rounded-lg bg-[#4F46E5] text-[#0D1117] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">
           Add
         </button>
       </div>
@@ -297,7 +297,7 @@ function Requests({ vault, onChanged }: { vault: VaultType; onChanged: () => voi
                     className="w-28 px-2 py-1 rounded-lg border border-[#E5E8EC] text-[10px] text-[#0D1117]"
                   />
                   <button onClick={() => void route(r.id)} disabled={routeBusy || !vendorId.trim()}
-                    className="px-2.5 py-1.5 rounded-lg bg-[#C8963E] text-[#0D1117] text-[10px] font-extrabold cursor-pointer disabled:opacity-50">
+                    className="px-2.5 py-1.5 rounded-lg bg-[#4F46E5] text-[#0D1117] text-[10px] font-extrabold cursor-pointer disabled:opacity-50">
                     {routeBusy ? '…' : 'Route'}
                   </button>
                   <button onClick={() => { setRouteFor(null); setRouteError(null); }}
@@ -314,7 +314,7 @@ function Requests({ vault, onChanged }: { vault: VaultType; onChanged: () => voi
             )}
             {vault.role === 'vendor' && (r.status === 'routed' || r.status === 'open') && (
               <button onClick={async () => { await briefApi.acceptVaultRequest(vault.id, r.id); onChanged(); }}
-                className="px-2.5 py-1.5 rounded-lg bg-[#C8963E] text-[#0D1117] text-[10px] font-extrabold cursor-pointer">
+                className="px-2.5 py-1.5 rounded-lg bg-[#4F46E5] text-[#0D1117] text-[10px] font-extrabold cursor-pointer">
                 Accept
               </button>
             )}
@@ -370,7 +370,7 @@ function VaultDetail({ vault, onBack, onChanged }: { vault: VaultType; onBack: (
       {vault.role !== 'vendor' && (
         <Card className="p-3 space-y-2">
           <input value={ask} onChange={(e) => setAsk(e.target.value)} placeholder="Ask a question…"
-            className="w-full bg-[#F0F2F5] border border-[#E5E8EC] rounded-lg px-3 py-2 text-xs text-[#0D1117] placeholder:text-[#0D1117]/60 outline-none focus:border-[#2563EB]" />
+            className="w-full bg-[#F0F2F5] border border-[#E5E8EC] rounded-lg px-3 py-2 text-xs text-[#0D1117] placeholder:text-[#0D1117]/60 outline-none focus:border-[#06B6D4]" />
           <button onClick={askQuestion} disabled={!ask.trim()}
             className="w-full py-2 rounded-lg bg-[#FFFFFF] text-[#0D1117] text-[10px] font-extrabold border border-[#E5E8EC] cursor-pointer disabled:opacity-40">
             Ask
@@ -381,7 +381,7 @@ function VaultDetail({ vault, onBack, onChanged }: { vault: VaultType; onBack: (
       {vault.role !== 'vendor' && (
         <Card className="p-3 space-y-2">
           <input value={request} onChange={(e) => setRequest(e.target.value)} placeholder="Request something (e.g. extra chairs)…"
-            className="w-full bg-[#F0F2F5] border border-[#E5E8EC] rounded-lg px-3 py-2 text-xs text-[#0D1117] placeholder:text-[#0D1117]/60 outline-none focus:border-[#2563EB]" />
+            className="w-full bg-[#F0F2F5] border border-[#E5E8EC] rounded-lg px-3 py-2 text-xs text-[#0D1117] placeholder:text-[#0D1117]/60 outline-none focus:border-[#06B6D4]" />
           <button onClick={makeRequest} disabled={!request.trim()}
             className="w-full py-2 rounded-lg bg-[#FFFFFF] text-[#0D1117] text-[10px] font-extrabold border border-[#E5E8EC] cursor-pointer disabled:opacity-40">
             Request
@@ -447,7 +447,7 @@ function VaultHome({ onOpen, refreshKey }: { onOpen: (v: VaultType) => void; ref
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-lg font-extrabold text-[#0D1117]">The Vault</h2>
         <button onClick={() => setCreating((c) => !c)}
-          className="px-3 py-1.5 rounded-full bg-[#C8963E] text-[#0D1117] text-[10px] font-extrabold cursor-pointer">
+          className="px-3 py-1.5 rounded-full bg-[#4F46E5] text-[#0D1117] text-[10px] font-extrabold cursor-pointer">
           + New vault
         </button>
       </div>
@@ -455,7 +455,7 @@ function VaultHome({ onOpen, refreshKey }: { onOpen: (v: VaultType) => void; ref
       {creating && (
         <Card className="p-3 space-y-2">
           <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="What is this activity?"
-            className="w-full bg-[#F0F2F5] border border-[#E5E8EC] rounded-lg px-3 py-2 text-xs text-[#0D1117] placeholder:text-[#0D1117]/60 outline-none focus:border-[#2563EB]" />
+            className="w-full bg-[#F0F2F5] border border-[#E5E8EC] rounded-lg px-3 py-2 text-xs text-[#0D1117] placeholder:text-[#0D1117]/60 outline-none focus:border-[#06B6D4]" />
           <div className="flex gap-1.5">
             <select value={type} onChange={(e) => setType(e.target.value)}
               className="flex-1 bg-[#F0F2F5] border border-[#E5E8EC] rounded-lg px-2 py-1.5 text-xs text-[#0D1117] outline-none">
@@ -475,7 +475,7 @@ function VaultHome({ onOpen, refreshKey }: { onOpen: (v: VaultType) => void; ref
             </select>
           </div>
           <button onClick={create} disabled={!title.trim()}
-            className="w-full py-2 rounded-lg bg-[#C8963E] text-[#0D1117] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">
+            className="w-full py-2 rounded-lg bg-[#4F46E5] text-[#0D1117] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">
             Create
           </button>
         </Card>
@@ -483,7 +483,7 @@ function VaultHome({ onOpen, refreshKey }: { onOpen: (v: VaultType) => void; ref
 
       <div className="relative">
         <input value={q} onChange={(e) => void search(e.target.value)} placeholder="Search people, requests, payments…"
-          className="w-full bg-[#FFFFFF] border border-[#E5E8EC] rounded-xl px-3 py-2.5 text-xs text-[#0D1117] placeholder:text-[#0D1117]/60 outline-none focus:border-[#2563EB]" />
+          className="w-full bg-[#FFFFFF] border border-[#E5E8EC] rounded-xl px-3 py-2.5 text-xs text-[#0D1117] placeholder:text-[#0D1117]/60 outline-none focus:border-[#06B6D4]" />
       </div>
       {results.length > 0 && (
         <Card className="p-3 space-y-1.5">

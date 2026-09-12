@@ -10,9 +10,9 @@
    ============================================================================= */
 
 :root {
-  /* --- Color: the LIGHT system. White page, dark ink, bronze gold accent with
-       a blue secondary. Hierarchy comes from weight and size first; muted/
-       faint are the SAME ink at reduced alpha. --- */
+  /* --- Color: the LIGHT system. White page, dark ink, electric indigo accent
+       with a cyan secondary. Hierarchy comes from weight and size first;
+       muted/faint are the SAME ink at reduced alpha. --- */
   --ground:         #F7F8FA;  /* base background — very light */
   --surface:        #FFFFFF;  /* raised cards, banners */
   --overlay-scrim:  #0D1117;  /* dark scrim wash (over the light page) */
@@ -25,15 +25,15 @@
   --signal-live:    #16A34A;  /* live/active state ONLY — success green */
   --signal-urgent:  #DC2626;  /* countdown / closing-soon / expiring ONLY — danger */
 
-  --tea:            #C8963E;  /* Tea category — bronze gold */
-  --today:          #2563EB;  /* Today category — blue */
+  --tea:            #4F46E5;  /* Tea category — electric indigo */
+  --today:          #06B6D4;  /* Today category — cyan */
   --pursuits:       #16A34A;  /* Pursuits category — green */
   --quests:         #16A34A;  /* Quests (shares live — quests ARE the live layer) */
 
   /* --- Spec-named accent tokens (§3) --- */
-  --accent:      #C8963E;   /* bronze gold (primary) */
-  --accent-2:    #2563EB;   /* blue (secondary) */
-  --accent-ink:  #0D1117;   /* text on the bronze accent — dark, for contrast */
+  --accent:      #4F46E5;   /* electric indigo (primary) */
+  --accent-2:    #06B6D4;   /* terminal cyan (secondary) */
+  --accent-ink:  #FFFFFF;   /* text on indigo — white, for contrast */
   --success:     #16A34A;
   --warning:     #B45309;
   --danger:      #DC2626;
@@ -206,7 +206,7 @@ html, body {
    coexist with the earlier tokens so non-home surfaces are unaffected.
    ============================================================================= */
 :root {
-  /* Color — M3 tokens mapped onto the light + bronze/blue system. */
+  /* Color — M3 tokens mapped onto the light + indigo/cyan system. */
   --m3-background:             #F7F8FA;
   --m3-surface:                #F7F8FA;
   --m3-surface-dim:            #F0F2F5;
@@ -218,16 +218,16 @@ html, body {
   --m3-surface-container-highest: #E5E8EC;
   --m3-surface-variant:        #E5E8EC;
 
-  --m3-primary:                #C8963E;
-  --m3-primary-fixed:          #C8963E;
-  --m3-primary-fixed-dim:      #2563EB;
-  --m3-primary-container:      #C8963E;
-  --m3-on-primary:             #0D1117;
-  --m3-on-primary-container:   #0D1117;
+  --m3-primary:                #4F46E5;
+  --m3-primary-fixed:          #4F46E5;
+  --m3-primary-fixed-dim:      #06B6D4;
+  --m3-primary-container:      #4F46E5;
+  --m3-on-primary:             #FFFFFF;
+  --m3-on-primary-container:   #FFFFFF;
 
-  --m3-secondary:              #2563EB;
-  --m3-secondary-fixed:        #2563EB;
-  --m3-secondary-fixed-dim:    #2563EB;
+  --m3-secondary:              #06B6D4;
+  --m3-secondary-fixed:        #06B6D4;
+  --m3-secondary-fixed-dim:    #06B6D4;
   --m3-secondary-container:    #F0F2F5;
   --m3-on-secondary-container: #0D1117;
 
@@ -251,10 +251,10 @@ html, body {
   --m3-font-code:    'JetBrains Mono', monospace;
 }
 
-/* Status ring (the "new" story affordance) — bronze arc for new, hairline
+/*/* Status ring (the "new" story affordance) — indigo arc for new, hairline
    full ring once seen. */
 .m3-status-ring {
-  background: conic-gradient(from 180deg at 50% 50%, #C8963E 0deg, #C8963E 120deg, transparent 120deg, transparent 360deg);
+  background: conic-gradient(from 180deg at 50% 50%, #4F46E5 0deg, #4F46E5 120deg, transparent 120deg, transparent 360deg);
 }
 .m3-status-ring-seen {
   background: conic-gradient(from 180deg at 50% 50%, #E5E8EC 0deg, #E5E8EC 360deg);

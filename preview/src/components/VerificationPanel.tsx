@@ -27,7 +27,7 @@ const KIND_LABEL: Record<AccountVerificationKind, string> = {
 
 const STATUS_STYLE: Record<string, string> = {
   pending: 'bg-[#E5E8EC] text-[#0D1117]/60',
-  approved: 'bg-[#C8963E] text-[#0D1117]',
+  approved: 'bg-[#4F46E5] text-[#0D1117]',
   rejected: 'bg-[#FFFFFF] text-[#0D1117]',
   revoked: 'bg-[#E5E8EC] text-[#0D1117]/60'
 };
@@ -160,7 +160,7 @@ export function VerificationPanel() {
               key={k}
               onClick={() => setKind(k)}
               className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer border ${
-                kind === k ? 'bg-[#C8963E] text-[#0D1117] border-[#2563EB]' : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
+                kind === k ? 'bg-[#4F46E5] text-[#0D1117] border-[#06B6D4]' : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
               }`}
             >
               {KIND_LABEL[k]}
@@ -179,7 +179,7 @@ export function VerificationPanel() {
           type="button"
           onClick={() => void submit()}
           disabled={busy || !note.trim()}
-          className="rounded-lg bg-[#C8963E] px-4 py-2 text-[11px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
+          className="rounded-lg bg-[#4F46E5] px-4 py-2 text-[11px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
         >
           {busy ? 'Submitting…' : 'Submit for review'}
         </button>

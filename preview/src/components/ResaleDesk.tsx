@@ -89,7 +89,7 @@ export function ResaleDesk() {
         <div className="text-xs bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl px-3 py-2.5 text-[#0D1117]">{notice}</div>
       )}
       {actionError && (
-        <div className="text-xs border border-[#2563EB] rounded-xl px-3 py-2.5 text-[#0D1117]">{actionError}</div>
+        <div className="text-xs border border-[#06B6D4] rounded-xl px-3 py-2.5 text-[#0D1117]">{actionError}</div>
       )}
 
       {/* --- your seats ------------------------------------------------- */}
@@ -124,13 +124,13 @@ export function ResaleDesk() {
                     onChange={(e) => setPrice(e.target.value)}
                     inputMode="numeric"
                     placeholder="price in whole KES"
-                    className="text-xs bg-[#FFFFFF] text-[#0D1117] rounded-xl px-3 py-2 border border-[#E5E8EC] focus:border-[#2563EB] focus:outline-none w-40"
+                    className="text-xs bg-[#FFFFFF] text-[#0D1117] rounded-xl px-3 py-2 border border-[#E5E8EC] focus:border-[#06B6D4] focus:outline-none w-40"
                   />
                   <input
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     placeholder="why you're selling (optional)"
-                    className="flex-1 min-w-40 text-xs bg-[#FFFFFF] text-[#0D1117] rounded-xl px-3 py-2 border border-[#E5E8EC] focus:border-[#2563EB] focus:outline-none"
+                    className="flex-1 min-w-40 text-xs bg-[#FFFFFF] text-[#0D1117] rounded-xl px-3 py-2 border border-[#E5E8EC] focus:border-[#06B6D4] focus:outline-none"
                   />
                 </div>
                 <div className="flex gap-2">
@@ -140,7 +140,7 @@ export function ResaleDesk() {
                       () => briefApi.createResaleListing(t.id, Number(price), note.trim() || undefined),
                       `Listed at ${money(Number(price), 'KES')}. Buyers see it in the event's resale section.`
                     )}
-                    className="text-xs font-bold px-3 py-2 rounded-xl bg-[#C8963E] text-[#0D1117] cursor-pointer disabled:opacity-40"
+                    className="text-xs font-bold px-3 py-2 rounded-xl bg-[#4F46E5] text-[#0D1117] cursor-pointer disabled:opacity-40"
                   >
                     Put it up for sale
                   </button>
@@ -155,7 +155,7 @@ export function ResaleDesk() {
             ) : (
               <button
                 onClick={() => { setListFor(t.id); setActionError(null); }}
-                className="text-xs font-bold px-3 py-2 rounded-xl bg-[#C8963E] text-[#0D1117] cursor-pointer"
+                className="text-xs font-bold px-3 py-2 rounded-xl bg-[#4F46E5] text-[#0D1117] cursor-pointer"
               >
                 List this seat
               </button>
@@ -205,7 +205,7 @@ export function ResaleDesk() {
                         () => briefApi.confirmTicketOrderReceived(held.id),
                         `Payment confirmed — the seat moved to the buyer and their code is live. Recorded in the ledger.`
                       )}
-                      className="text-xs font-bold px-3 py-2 rounded-xl bg-[#C8963E] text-[#0D1117] cursor-pointer disabled:opacity-40"
+                      className="text-xs font-bold px-3 py-2 rounded-xl bg-[#4F46E5] text-[#0D1117] cursor-pointer disabled:opacity-40"
                     >
                       I received {money(held.total, held.currency)}
                     </button>

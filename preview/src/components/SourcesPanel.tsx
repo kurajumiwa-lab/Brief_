@@ -85,7 +85,7 @@ export function SourcesPanel({
           <button
             onClick={runBriefItPreview}
             disabled={briefItBusy || !briefItText.trim()}
-            className="px-3 py-1.5 rounded-full text-[11px] font-extrabold bg-[#C8963E] text-[#0D1117] cursor-pointer disabled:opacity-40"
+            className="px-3 py-1.5 rounded-full text-[11px] font-extrabold bg-[#4F46E5] text-[#0D1117] cursor-pointer disabled:opacity-40"
           >
             {briefItBusy ? 'Reading...' : 'Brief it'}
           </button>

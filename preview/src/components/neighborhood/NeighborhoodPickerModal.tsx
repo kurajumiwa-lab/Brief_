@@ -77,7 +77,7 @@ export const NeighborhoodPickerModal: React.FC<NeighborhoodPickerModalProps> = (
                 }}
                 className={`w-full p-4 rounded-2xl text-left transition-all duration-200 cursor-pointer flex items-start justify-between ${
                   isSelected
-                    ? 'bg-gradient-to-r from-[#00BFEF]/20 to-[#2563EB]/20 shadow-lg'
+                    ? 'bg-gradient-to-r from-[#00BFEF]/20 to-[#06B6D4]/20 shadow-lg'
                     : 'bg-[#262D3D] hover:bg-[#2F374A]'
                 }`}
               >

@@ -84,7 +84,7 @@ export function EventsHub() {
         <button
           onClick={() => setCategory(null)}
           className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer border ${
-            category === null ? 'bg-[#C8963E] text-[#0D1117] border-[#2563EB]' : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
+            category === null ? 'bg-[#4F46E5] text-[#0D1117] border-[#06B6D4]' : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
           }`}
         >
           Everything
@@ -94,7 +94,7 @@ export function EventsHub() {
             key={c}
             onClick={() => setCategory(category === c ? null : c)}
             className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer border ${
-              category === c ? 'bg-[#C8963E] text-[#0D1117] border-[#2563EB]' : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
+              category === c ? 'bg-[#4F46E5] text-[#0D1117] border-[#06B6D4]' : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
             }`}
           >
             {labels[c] ?? c}
@@ -131,7 +131,7 @@ export function EventsHub() {
           <button
             onClick={() => setFeaturedOnly((v) => !v)}
             className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer border ${
-              featuredOnly ? 'bg-[#C8963E] text-[#0D1117] border-[#2563EB]' : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
+              featuredOnly ? 'bg-[#4F46E5] text-[#0D1117] border-[#06B6D4]' : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
             }`}
           >
             ★ Featured only
@@ -162,7 +162,7 @@ export function EventsHub() {
           <button
             key={e.slug}
             onClick={() => open(e.slug)}
-            className="w-full text-left bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-3.5 space-y-1.5 cursor-pointer hover:border-[#2563EB]"
+            className="w-full text-left bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-3.5 space-y-1.5 cursor-pointer hover:border-[#06B6D4]"
           >
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
@@ -172,7 +172,7 @@ export function EventsHub() {
                 <p className="text-sm font-extrabold text-[#0D1117] truncate">{e.title}</p>
               </div>
               {e.featured && (
-                <span className="shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-[#C8963E] text-[#0D1117]">
+                <span className="shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-[#4F46E5] text-[#0D1117]">
                   ★ Featured
                 </span>
               )}

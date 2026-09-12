@@ -36,7 +36,7 @@ export function NextStep({ ladder, onAct, onDismiss, compact = false }: NextStep
     <section
       data-testid="next-step"
       aria-label="Your next step"
-      className="rounded-2xl border border-[#2563EB] bg-[#FFFFFF] px-4 py-3.5 shadow-sm"
+      className="rounded-2xl border border-[#06B6D4] bg-[#FFFFFF] px-4 py-3.5 shadow-sm"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -62,7 +62,7 @@ export function NextStep({ ladder, onAct, onDismiss, compact = false }: NextStep
           <span
             key={rung.id}
             title={rung.reached ? `${rung.label} — ${rung.how ?? 'done'}` : rung.label}
-            className={`h-1.5 flex-1 rounded-full ${rung.reached ? 'bg-[#C8963E]' : 'bg-[#E5E8EC]'}`}
+            className={`h-1.5 flex-1 rounded-full ${rung.reached ? 'bg-[#4F46E5]' : 'bg-[#E5E8EC]'}`}
           />
         ))}
       </div>
@@ -71,7 +71,7 @@ export function NextStep({ ladder, onAct, onDismiss, compact = false }: NextStep
         <button
           type="button"
           onClick={() => onAct(next.id)}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-[#C8963E] px-3.5 py-2 text-[11px] font-extrabold text-[#0D1117] cursor-pointer"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-[#4F46E5] px-3.5 py-2 text-[11px] font-extrabold text-[#0D1117] cursor-pointer"
         >
           {next.cta} <ArrowRight className="h-3 w-3" />
         </button>

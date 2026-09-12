@@ -47,7 +47,7 @@ export default function ServiceFees() {
     <div className="space-y-4">
       <section aria-label="Pay for Brief services" className="rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] p-4 space-y-3">
         <div className="flex items-center gap-2">
-          <Wallet className="w-4 h-4 text-[#C8963E]" aria-hidden="true" />
+          <Wallet className="w-4 h-4 text-[#4F46E5]" aria-hidden="true" />
           <h2 className="text-[13px] font-extrabold text-[#0D1117]">Pay for Brief services</h2>
         </div>
 
@@ -60,13 +60,13 @@ export default function ServiceFees() {
 
         <div className="space-y-2">
           {(data?.services ?? []).map((svcItem) => (
-            <label key={svcItem.key} className={`flex items-center justify-between gap-2 rounded-xl border px-3 py-2 cursor-pointer ${service === svcItem.key ? 'border-[#C8963E] bg-[#F0F2F5]' : 'border-[#E5E8EC]'}`}>
+            <label key={svcItem.key} className={`flex items-center justify-between gap-2 rounded-xl border px-3 py-2 cursor-pointer ${service === svcItem.key ? 'border-[#4F46E5] bg-[#F0F2F5]' : 'border-[#E5E8EC]'}`}>
               <span className="flex items-center gap-2">
                 <input type="radio" name="fee-service" checked={service === svcItem.key} onChange={() => setService(svcItem.key)} aria-label={svcItem.label} />
                 <span className="text-[11px] font-bold text-[#0D1117]">{svcItem.label}</span>
               </span>
               {/* The price comes from the server catalog — the client never sets it. */}
-              <span className="text-[11px] font-extrabold text-[#C8963E]">KES {svcItem.amountKes}</span>
+              <span className="text-[11px] font-extrabold text-[#4F46E5]">KES {svcItem.amountKes}</span>
             </label>
           ))}
           {data && data.services.length === 0 && (
@@ -83,7 +83,7 @@ export default function ServiceFees() {
             className="flex-1 rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] tracking-wide text-[#0D1117]"
           />
           <button type="button" onClick={() => void pay()} disabled={busy || !service || code.trim().length < 8}
-            className="rounded-lg bg-[#C8963E] px-3 py-2 text-[11px] font-extrabold text-[#0D1117] disabled:opacity-40">
+            className="rounded-lg bg-[#4F46E5] px-3 py-2 text-[11px] font-extrabold text-[#0D1117] disabled:opacity-40">
             Submit
           </button>
         </div>

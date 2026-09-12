@@ -662,7 +662,7 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
                 className="w-full p-3.5 rounded-2xl bg-white border border-blue-500/40 hover:border-blue-500 flex items-center justify-between text-left transition-colors cursor-pointer group shadow-xs"
               >
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#06B6D4] flex items-center justify-center">
                     <Award className="w-4 h-4" />
                   </div>
                   <div>

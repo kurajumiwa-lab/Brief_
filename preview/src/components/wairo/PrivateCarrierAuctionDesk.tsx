@@ -294,7 +294,7 @@ export function PrivateCarrierAuctionDesk({
               <select
                 value={cargoType}
                 onChange={(e) => setCargoType(e.target.value)}
-                className="w-full bg-white border border-gray-200 rounded-xl px-2.5 py-1.5 text-xs outline-none focus:border-[#2563EB]"
+                className="w-full bg-white border border-gray-200 rounded-xl px-2.5 py-1.5 text-xs outline-none focus:border-[#06B6D4]"
               >
                 <option value="Express Parcel">Express Parcel (Documents)</option>
                 <option value="Electronics">Electronics / Gadgets</option>
@@ -309,7 +309,7 @@ export function PrivateCarrierAuctionDesk({
                 type="text"
                 value={pickupHub}
                 onChange={(e) => setPickupHub(e.target.value)}
-                className="w-full bg-white border border-gray-200 rounded-xl px-2.5 py-1.5 text-xs outline-none focus:border-[#2563EB]"
+                className="w-full bg-white border border-gray-200 rounded-xl px-2.5 py-1.5 text-xs outline-none focus:border-[#06B6D4]"
               />
             </div>
 
@@ -319,7 +319,7 @@ export function PrivateCarrierAuctionDesk({
                 type="text"
                 value={dropoffHub}
                 onChange={(e) => setDropoffHub(e.target.value)}
-                className="w-full bg-white border border-gray-200 rounded-xl px-2.5 py-1.5 text-xs outline-none focus:border-[#2563EB]"
+                className="w-full bg-white border border-gray-200 rounded-xl px-2.5 py-1.5 text-xs outline-none focus:border-[#06B6D4]"
               />
             </div>
 
@@ -328,7 +328,7 @@ export function PrivateCarrierAuctionDesk({
                 type="button"
                 onClick={handleRunAuction}
                 disabled={isSimulatingAuction}
-                className="w-full py-2 px-3 rounded-xl bg-[#C8963E] hover:bg-[#ff6f3b] text-white font-black text-xs flex items-center justify-center space-x-1.5 shadow-sm cursor-pointer disabled:opacity-50 transition-all"
+                className="w-full py-2 px-3 rounded-xl bg-[#4F46E5] hover:bg-[#ff6f3b] text-white font-black text-xs flex items-center justify-center space-x-1.5 shadow-sm cursor-pointer disabled:opacity-50 transition-all"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isSimulatingAuction ? 'animate-spin' : ''}`} />
                 <span>{isSimulatingAuction ? 'Computing Bids…' : 'Run Silent Auction'}</span>
@@ -361,7 +361,7 @@ export function PrivateCarrierAuctionDesk({
                   key={carrier.id}
                   className={`p-4 rounded-2xl border transition-all flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shadow-xs ${
                     idx === 0
-                      ? 'bg-gradient-to-r from-blue-50/70 to-indigo-50/70 border-[#2563EB] ring-1 ring-[#2563EB]/20'
+                      ? 'bg-gradient-to-r from-blue-50/70 to-indigo-50/70 border-[#06B6D4] ring-1 ring-[#06B6D4]/20'
                       : 'bg-white border-[#E5E8EC] hover:border-gray-300'
                   }`}
                 >
@@ -417,7 +417,7 @@ export function PrivateCarrierAuctionDesk({
                         onClick={() => handleSelectCarrier(carrier)}
                         className={`px-3 py-1.5 rounded-xl font-bold text-xs cursor-pointer transition-all shadow-xs ${
                           idx === 0
-                            ? 'bg-[#2563EB] hover:bg-[#1D4ED8] text-white'
+                            ? 'bg-[#06B6D4] hover:bg-[#1D4ED8] text-white'
                             : 'bg-[#0D1117] hover:bg-[#1E293B] text-white'
                         }`}
                       >
@@ -490,7 +490,7 @@ export function PrivateCarrierAuctionDesk({
             <div className="space-y-1.5">
               <div className="flex items-center justify-between font-bold">
                 <span>Price Competitiveness Weight</span>
-                <span className="font-mono text-[#2563EB]">{priceWeight}%</span>
+                <span className="font-mono text-[#06B6D4]">{priceWeight}%</span>
               </div>
               <input
                 type="range"
@@ -498,7 +498,7 @@ export function PrivateCarrierAuctionDesk({
                 max="70"
                 value={priceWeight}
                 onChange={(e) => setPriceWeight(Number(e.target.value))}
-                className="w-full cursor-pointer accent-[#2563EB]"
+                className="w-full cursor-pointer accent-[#06B6D4]"
               />
               <p className="text-[10px] text-gray-500">Rewards carriers offering the lowest cost for the shipper.</p>
             </div>
@@ -506,7 +506,7 @@ export function PrivateCarrierAuctionDesk({
             <div className="space-y-1.5">
               <div className="flex items-center justify-between font-bold">
                 <span>Trust & Completion History Weight</span>
-                <span className="font-mono text-[#2563EB]">{trustWeight}%</span>
+                <span className="font-mono text-[#06B6D4]">{trustWeight}%</span>
               </div>
               <input
                 type="range"
@@ -514,7 +514,7 @@ export function PrivateCarrierAuctionDesk({
                 max="70"
                 value={trustWeight}
                 onChange={(e) => setTrustWeight(Number(e.target.value))}
-                className="w-full cursor-pointer accent-[#2563EB]"
+                className="w-full cursor-pointer accent-[#06B6D4]"
               />
               <p className="text-[10px] text-gray-500">Rewards carriers with verified 5-star ratings and high successful drop count.</p>
             </div>
@@ -522,7 +522,7 @@ export function PrivateCarrierAuctionDesk({
             <div className="space-y-1.5">
               <div className="flex items-center justify-between font-bold">
                 <span>Transit Speed & Proximity Weight</span>
-                <span className="font-mono text-[#2563EB]">{speedWeight}%</span>
+                <span className="font-mono text-[#06B6D4]">{speedWeight}%</span>
               </div>
               <input
                 type="range"
@@ -530,7 +530,7 @@ export function PrivateCarrierAuctionDesk({
                 max="40"
                 value={speedWeight}
                 onChange={(e) => setSpeedWeight(Number(e.target.value))}
-                className="w-full cursor-pointer accent-[#2563EB]"
+                className="w-full cursor-pointer accent-[#06B6D4]"
               />
               <p className="text-[10px] text-gray-500">Rewards drivers nearest to the pickup staging point.</p>
             </div>
@@ -538,7 +538,7 @@ export function PrivateCarrierAuctionDesk({
             <div className="space-y-1.5">
               <div className="flex items-center justify-between font-bold">
                 <span>Logbook Vehicle Ownership Bonus</span>
-                <span className="font-mono text-[#2563EB]">{logbookWeight}%</span>
+                <span className="font-mono text-[#06B6D4]">{logbookWeight}%</span>
               </div>
               <input
                 type="range"
@@ -546,7 +546,7 @@ export function PrivateCarrierAuctionDesk({
                 max="30"
                 value={logbookWeight}
                 onChange={(e) => setLogbookWeight(Number(e.target.value))}
-                className="w-full cursor-pointer accent-[#2563EB]"
+                className="w-full cursor-pointer accent-[#06B6D4]"
               />
               <p className="text-[10px] text-gray-500">Direct algorithmic boost to independent owners who avoid daily fleet lease debt.</p>
             </div>

@@ -61,7 +61,7 @@ export function TierGuardrail({ guardrail }: TierGuardrailProps) {
         <h3 className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#0D1117]">
           Tier
         </h3>
-        <span className="rounded-md bg-[#C8963E] px-2 py-0.5 text-[9px] font-extrabold text-[#0D1117]">
+        <span className="rounded-md bg-[#4F46E5] px-2 py-0.5 text-[9px] font-extrabold text-[#0D1117]">
           {guardrail.label}
         </span>
       </div>
@@ -91,7 +91,7 @@ export function TierGuardrail({ guardrail }: TierGuardrailProps) {
             onClick={() => void tryUpgrade()}
             disabled={busy}
             className="mt-2.5 w-full h-8 rounded-lg text-[11px] font-extrabold cursor-pointer disabled:opacity-40"
-            style={{ background: '#C8963E', color: '#0D1117' }}
+            style={{ background: '#4F46E5', color: '#0D1117' }}
           >
             {busy ? 'Checking…' : `Unlock ${guardrail.next.label}`}
           </button>

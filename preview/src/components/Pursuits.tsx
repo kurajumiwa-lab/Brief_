@@ -74,7 +74,7 @@ export function Pursuits({
         />
         <button
           type="submit"
-          className="px-4 py-2.5 rounded-xl bg-[#C8963E] text-[#0D1117] font-extrabold text-[11px] cursor-pointer"
+          className="px-4 py-2.5 rounded-xl bg-[#4F46E5] text-[#0D1117] font-extrabold text-[11px] cursor-pointer"
         >
           Search
         </button>
@@ -119,7 +119,7 @@ export function Pursuits({
               <button
                 onClick={() => handleRemovePursuit(pursuit.id)}
                 title="Remove pursuit"
-                className="shrink-0 p-2 rounded-xl bg-[#FFFFFF] text-[#0D1117] border border-[#E5E8EC] hover:border-[#2563EB] cursor-pointer"
+                className="shrink-0 p-2 rounded-xl bg-[#FFFFFF] text-[#0D1117] border border-[#E5E8EC] hover:border-[#06B6D4] cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
@@ -199,7 +199,7 @@ export function Pursuits({
                     onClick={() => handleSetPursuitStatus(pursuit.id, status)}
                     className={`text-[9px] font-bold px-2 py-0.5 rounded-full border cursor-pointer transition ${
                       pursuit.status === status
-                        ? 'bg-[#C8963E] text-[#0D1117] border-[#2563EB]'
+                        ? 'bg-[#4F46E5] text-[#0D1117] border-[#06B6D4]'
                         : 'bg-transparent text-[#0D1117]/60 border-[#E5E8EC] hover:border-[#E5E8EC]'
                     }`}
                   >

@@ -137,12 +137,12 @@ export function PayOrder({ order, onPaid }: PayOrderProps) {
             onChange={(e) => setPhone(e.target.value)}
             placeholder="M-Pesa number, e.g. 0722 000 111"
             inputMode="tel"
-            className="w-full bg-[#F0F2F5] border border-[#E5E8EC] rounded-lg px-3 py-2 text-xs text-[#0D1117] placeholder:text-[#0D1117]/60 outline-none focus:border-[#2563EB]"
+            className="w-full bg-[#F0F2F5] border border-[#E5E8EC] rounded-lg px-3 py-2 text-xs text-[#0D1117] placeholder:text-[#0D1117]/60 outline-none focus:border-[#06B6D4]"
           />
           <button
             onClick={pay}
             disabled={busy || phone.trim().length < 9}
-            className="w-full px-3 py-2 rounded-lg bg-[#C8963E] text-[#0D1117] font-extrabold text-[11px] cursor-pointer disabled:opacity-40"
+            className="w-full px-3 py-2 rounded-lg bg-[#4F46E5] text-[#0D1117] font-extrabold text-[11px] cursor-pointer disabled:opacity-40"
           >
             {busy ? 'Requesting payment…' : 'Pay now'}
           </button>

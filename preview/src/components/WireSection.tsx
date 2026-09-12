@@ -32,7 +32,7 @@ function Row({ item }: { item: WireItem }) {
       href={item.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex min-h-16 items-center gap-3 rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] p-2 transition-colors hover:border-[#2563EB]"
+      className="group flex min-h-16 items-center gap-3 rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] p-2 transition-colors hover:border-[#06B6D4]"
     >
       {item.image && (
         <img src={item.image} alt="" aria-hidden="true" loading="lazy" className="h-12 w-12 shrink-0 rounded-xl object-cover" />

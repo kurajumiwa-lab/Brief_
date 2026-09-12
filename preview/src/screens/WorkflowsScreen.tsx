@@ -148,7 +148,7 @@ export function WorkflowsScreen(props: WorkflowsScreenProps) {
                 }}
                 className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
                   workflowView === 'queue'
-                    ? 'bg-[#C8963E] text-[#0D1117] border-[#2563EB]'
+                    ? 'bg-[#4F46E5] text-[#0D1117] border-[#06B6D4]'
                     : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
                 }`}
               >
@@ -163,7 +163,7 @@ export function WorkflowsScreen(props: WorkflowsScreenProps) {
                   }}
                   className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
                     workflowView === 'screen' && activeWorkflowBundle.id === bundle.id
-                      ? 'bg-[#C8963E] text-[#0D1117] border-[#2563EB]'
+                      ? 'bg-[#4F46E5] text-[#0D1117] border-[#06B6D4]'
                       : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
                   }`}
                 >
@@ -180,7 +180,7 @@ export function WorkflowsScreen(props: WorkflowsScreenProps) {
                     onClick={() => setWorkflowSection(id as WorkflowSection)}
                     className={`shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition cursor-pointer ${
                       workflowSection === id
-                        ? 'bg-[#C8963E] text-[#0D1117]'
+                        ? 'bg-[#4F46E5] text-[#0D1117]'
                         : 'text-[#0D1117]/70 hover:text-[#0D1117] bg-[#F0F2F5]'
                     }`}
                   >
@@ -274,7 +274,7 @@ export function WorkflowsScreen(props: WorkflowsScreenProps) {
 
                   <div className="h-1.5 bg-[#F0F2F5] rounded-full mt-5 overflow-hidden">
                     <div
-                      className="h-full bg-[#C8963E] rounded-full"
+                      className="h-full bg-[#4F46E5] rounded-full"
                       style={{ width: `${journey.progressPercent}%` }}
                     />
                   </div>

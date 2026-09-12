@@ -155,7 +155,7 @@ export function Inbox({
             ))}
 
             {candidate.duplicates.length > 0 && (
-              <div className="border border-[#2563EB] bg-[#FFFFFF] rounded-xl p-2 space-y-0.5">
+              <div className="border border-[#06B6D4] bg-[#FFFFFF] rounded-xl p-2 space-y-0.5">
                 <p className="text-[9px] text-[#0D1117]">
                   Possible duplicate
                 </p>
@@ -180,7 +180,7 @@ export function Inbox({
               </button>
               <button
                 onClick={() => handleAcceptCandidate(candidate)}
-                className="flex-[2] py-2 rounded-xl bg-[#C8963E] text-[#0D1117] font-extrabold text-[11px] cursor-pointer"
+                className="flex-[2] py-2 rounded-xl bg-[#4F46E5] text-[#0D1117] font-extrabold text-[11px] cursor-pointer"
               >
                 Publish to Brief
               </button>

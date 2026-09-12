@@ -728,13 +728,13 @@ export const getPostKindMeta = (
     case 'news':
       return { label: 'News', tone: 'text-[#0D1117] border-[#E5E8EC]' };
     case 'notice':
-      return { label: 'Notice', tone: 'text-[#0D1117] border-[#2563EB]' };
+      return { label: 'Notice', tone: 'text-[#0D1117] border-[#06B6D4]' };
     case 'chatter':
       return { label: 'Chatter', tone: 'text-[#0D1117] border-[#E5E8EC]' };
     case 'question':
-      return { label: 'Question', tone: 'text-[#0D1117] border-[#2563EB]' };
+      return { label: 'Question', tone: 'text-[#0D1117] border-[#06B6D4]' };
     case 'promo':
-      return { label: 'Promoted', tone: 'text-[#0D1117] border-[#2563EB]' };
+      return { label: 'Promoted', tone: 'text-[#0D1117] border-[#06B6D4]' };
   }
 };
 
@@ -3977,7 +3977,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
   const c = load.data;
 
   return (
-    <div className="min-h-screen bg-[#0D1117] text-[#0D1117] font-sans selection:bg-[#C8963E] selection:text-[#0D1117] flex flex-col">
+    <div className="min-h-screen bg-[#0D1117] text-[#0D1117] font-sans selection:bg-[#4F46E5] selection:text-[#0D1117] flex flex-col">
       <div className="flex-1 w-full max-w-lg mx-auto px-4 py-8 space-y-5">
         <div className="flex items-center gap-2">
           <svg width="18" height="18" viewBox="0 0 26 26" aria-hidden="true">
@@ -3995,7 +3995,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
             <p className="text-sm font-extrabold text-[#0D1117]">{load.error}</p>
             <button
               onClick={fetchCampaign}
-              className="px-3 py-1.5 rounded-xl bg-[#C8963E] text-[#0D1117] font-extrabold text-[10px] cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-[#4F46E5] text-[#0D1117] font-extrabold text-[10px] cursor-pointer"
             >
               Try again
             </button>
@@ -4177,18 +4177,18 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Name"
-                    className="w-full bg-[#FFFFFF] text-[#0D1117] text-sm rounded-xl px-3 py-3 border border-[#E5E8EC] focus:border-[#2563EB] focus:outline-none"
+                    className="w-full bg-[#FFFFFF] text-[#0D1117] text-sm rounded-xl px-3 py-3 border border-[#E5E8EC] focus:border-[#06B6D4] focus:outline-none"
                   />
                   <input
                     value={contact}
                     onChange={(e) => setContact(e.target.value)}
                     placeholder="Phone or email"
-                    className="w-full bg-[#FFFFFF] text-[#0D1117] text-sm rounded-xl px-3 py-3 border border-[#E5E8EC] focus:border-[#2563EB] focus:outline-none"
+                    className="w-full bg-[#FFFFFF] text-[#0D1117] text-sm rounded-xl px-3 py-3 border border-[#E5E8EC] focus:border-[#06B6D4] focus:outline-none"
                   />
                   <button
                     disabled={waitlistBusy}
                     onClick={joinWaitlist}
-                    className="w-full py-3 rounded-xl border border-[#2563EB] text-[#0D1117] font-extrabold text-xs cursor-pointer disabled:opacity-40"
+                    className="w-full py-3 rounded-xl border border-[#06B6D4] text-[#0D1117] font-extrabold text-xs cursor-pointer disabled:opacity-40"
                   >
                     {waitlistBusy ? 'Saving...' : 'Join wait list'}
                   </button>
@@ -4214,7 +4214,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Name"
-                      className="w-full bg-[#FFFFFF] text-[#0D1117] text-sm rounded-xl px-3 py-3 border border-[#E5E8EC] focus:border-[#2563EB] focus:outline-none"
+                      className="w-full bg-[#FFFFFF] text-[#0D1117] text-sm rounded-xl px-3 py-3 border border-[#E5E8EC] focus:border-[#06B6D4] focus:outline-none"
                     />
                   </div>
                   <div>
@@ -4225,7 +4225,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                       value={contact}
                       onChange={(e) => setContact(e.target.value)}
                       placeholder="So the organiser can reach you"
-                      className="w-full bg-[#FFFFFF] text-[#0D1117] text-sm rounded-xl px-3 py-3 border border-[#E5E8EC] focus:border-[#2563EB] focus:outline-none"
+                      className="w-full bg-[#FFFFFF] text-[#0D1117] text-sm rounded-xl px-3 py-3 border border-[#E5E8EC] focus:border-[#06B6D4] focus:outline-none"
                     />
                   </div>
                   {/* Pots (T3): the supporter states a whole-shillings amount.
@@ -4240,7 +4240,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                         onChange={(e) => setAmount(e.target.value)}
                         inputMode="numeric"
                         placeholder="Whole shillings you are putting in"
-                        className="w-full bg-[#FFFFFF] text-[#0D1117] text-sm rounded-xl px-3 py-3 border border-[#E5E8EC] focus:border-[#2563EB] focus:outline-none"
+                        className="w-full bg-[#FFFFFF] text-[#0D1117] text-sm rounded-xl px-3 py-3 border border-[#E5E8EC] focus:border-[#06B6D4] focus:outline-none"
                       />
                       <p className="mt-1 text-[9px] text-[#0D1117]/60 leading-snug">
                         State what you are putting in. It counts toward the pot once the money
@@ -4251,7 +4251,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                   <button
                     disabled={busy || (c.goalAmount != null && !Number(amount))}
                     onClick={submit}
-                    className="w-full py-4 rounded-xl bg-[#C8963E] text-[#0D1117] font-extrabold text-sm cursor-pointer disabled:opacity-40"
+                    className="w-full py-4 rounded-xl bg-[#4F46E5] text-[#0D1117] font-extrabold text-sm cursor-pointer disabled:opacity-40"
                   >
                     {busy
                       ? 'Registering...'

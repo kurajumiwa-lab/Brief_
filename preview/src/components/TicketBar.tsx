@@ -42,7 +42,7 @@ export function TicketBar({ onOpenTickets }: { onOpenTickets?: () => void } = {}
       role="status"
       aria-label="Active event entry"
     >
-      <div className="overflow-hidden rounded-2xl border border-[#2563EB] bg-[#FFFFFF] shadow-lg">
+      <div className="overflow-hidden rounded-2xl border border-[#06B6D4] bg-[#FFFFFF] shadow-lg">
         {/* the locked gate pass */}
         <div className="flex items-center gap-3 px-3.5 py-2.5">
           <div
@@ -51,9 +51,9 @@ export function TicketBar({ onOpenTickets }: { onOpenTickets?: () => void } = {}
           >
             <span
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
-              style={{ background: t.entryState === 'upcoming' ? '#F0F2F5' : '#C8963E', border: '1px solid #C8963E' }}
+              style={{ background: t.entryState === 'upcoming' ? '#F0F2F5' : '#4F46E5', border: '1px solid #4F46E5' }}
             >
-              <Ticket className="h-4 w-4" style={{ color: t.entryState === 'upcoming' ? '#C8963E' : '#FFFFFF' }} />
+              <Ticket className="h-4 w-4" style={{ color: t.entryState === 'upcoming' ? '#4F46E5' : '#FFFFFF' }} />
             </span>
             <div className="min-w-0 flex-1">
               <p className="truncate text-[12px] font-extrabold text-[#0D1117]">{t.eventTitle}</p>

@@ -2,7 +2,7 @@
 // MICRO BADGE — one small, border-anchored label for compact metadata.
 //
 // The critique's spec: secondary metadata (status, tags, counts) goes into a
-// "subtle micro-badge (#C8963E border)" instead of eating horizontal card
+// "subtle micro-badge (#4F46E5 border)" instead of eating horizontal card
 // space. This is that badge — token-based, three variants, no arbitrary hex.
 // It is a PRESENTATION primitive: it renders a label, never invents one.
 // ---------------------------------------------------------------------------

@@ -53,7 +53,7 @@ const T = {
   line: '#E5E8EC',
   ink: '#0D1117',
   muted: 'rgba(13, 17, 23,0.62)',
-  green: '#C8963E'  /* legacy name: the accent, used for the selected-collection border */
+  green: '#4F46E5'  /* legacy name: the accent, used for the selected-collection border */
 };
 
 // ---------------------------------------------------------------------------
@@ -308,14 +308,14 @@ function PhotoTitleCard({
                   : item?.type === 'product' ? Package
                     : item?.type === 'knowledge' ? BookOpen
                       : Sparkles;
-  const glyphTint = isAlert ? '#DC2626' : '#2563EB';
+  const glyphTint = isAlert ? '#DC2626' : '#06B6D4';
 
   return (
     <button
       type="button"
       onClick={() => onOpen(item)}
       aria-label={`${title}${when ? `, ${when}` : ''}${where ? `, ${where}` : ''}`}
-      className={`group relative block min-h-[190px] overflow-hidden rounded-2xl border text-left transition-transform duration-200 hover:-translate-y-0.5 hover:border-[#2563EB] active:scale-[0.99] ${className}`}
+      className={`group relative block min-h-[190px] overflow-hidden rounded-2xl border text-left transition-transform duration-200 hover:-translate-y-0.5 hover:border-[#06B6D4] active:scale-[0.99] ${className}`}
       style={{ borderColor: T.line, background: T.surface }}
     >
       {image ? (
@@ -365,7 +365,7 @@ function PhotoTitleCard({
       {trustBadge(item) && (() => {
         const b = trustBadge(item)!;
         const glyph = b.tone === 'green' ? '✓' : b.tone === 'cyan' ? '●' : '◉';
-        const bg = b.tone === 'green' ? '#16A34A' : b.tone === 'cyan' ? '#2563EB' : 'rgba(13,17,23,0.14)';
+        const bg = b.tone === 'green' ? '#16A34A' : b.tone === 'cyan' ? '#06B6D4' : 'rgba(13,17,23,0.14)';
         const fg = b.tone === 'muted' ? '#0D1117' : '#FFFFFF';
         return (
           <span
@@ -442,7 +442,7 @@ function TitleRow({
       type="button"
       onClick={() => onOpen(item)}
       aria-label={`${title}${when ? `, ${when}` : ''}${where ? `, ${where}` : ''}`}
-      className="group flex min-h-16 w-full items-center gap-3 rounded-2xl border p-2 text-left transition-colors hover:border-[#2563EB]"
+      className="group flex min-h-16 w-full items-center gap-3 rounded-2xl border p-2 text-left transition-colors hover:border-[#06B6D4]"
       style={{ borderColor: T.line, background: T.surface }}
     >
       {image && thumb && (
@@ -678,7 +678,7 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
             type="button"
             onClick={() => onOpenTea(feed.tea.slug)}
             aria-label={titleOf(feed.tea)}
-            className="group relative block min-h-[190px] w-full overflow-hidden rounded-2xl border text-left transition-transform duration-200 hover:-translate-y-0.5 hover:border-[#2563EB]"
+            className="group relative block min-h-[190px] w-full overflow-hidden rounded-2xl border text-left transition-transform duration-200 hover:-translate-y-0.5 hover:border-[#06B6D4]"
             style={{ borderColor: T.line, background: T.surface }}
           >
             {imageOf(feed.tea) ? (

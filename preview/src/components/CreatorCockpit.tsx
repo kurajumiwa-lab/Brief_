@@ -112,7 +112,7 @@ export function CreatorCockpit() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Name (e.g. Welcome new members)"
-          className="w-full rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[13px] text-[#0D1117] outline-none focus:border-[#2563EB]"
+          className="w-full rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[13px] text-[#0D1117] outline-none focus:border-[#06B6D4]"
         />
         <div className="flex flex-wrap gap-2 text-[11px]">
           <div className="flex items-center gap-1.5">
@@ -129,16 +129,16 @@ export function CreatorCockpit() {
           </div>
         </div>
         {actionType === 'tag' ? (
-          <input value={actionTitle} onChange={(e) => setActionTitle(e.target.value)} placeholder="Tag (e.g. Outdoor enthusiast)" className="w-full rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117] outline-none focus:border-[#2563EB]" />
+          <input value={actionTitle} onChange={(e) => setActionTitle(e.target.value)} placeholder="Tag (e.g. Outdoor enthusiast)" className="w-full rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117] outline-none focus:border-[#06B6D4]" />
         ) : actionType === 'blast' ? (
-          <input value={actionBody} onChange={(e) => setActionBody(e.target.value)} placeholder="Message text" className="w-full rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117] outline-none focus:border-[#2563EB]" />
+          <input value={actionBody} onChange={(e) => setActionBody(e.target.value)} placeholder="Message text" className="w-full rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117] outline-none focus:border-[#06B6D4]" />
         ) : (
           <>
-            <input value={actionTitle} onChange={(e) => setActionTitle(e.target.value)} placeholder="Notification title" className="w-full rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117] outline-none focus:border-[#2563EB]" />
-            <input value={actionBody} onChange={(e) => setActionBody(e.target.value)} placeholder="Notification body (optional)" className="w-full rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117] outline-none focus:border-[#2563EB]" />
+            <input value={actionTitle} onChange={(e) => setActionTitle(e.target.value)} placeholder="Notification title" className="w-full rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117] outline-none focus:border-[#06B6D4]" />
+            <input value={actionBody} onChange={(e) => setActionBody(e.target.value)} placeholder="Notification body (optional)" className="w-full rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117] outline-none focus:border-[#06B6D4]" />
           </>
         )}
-        <button onClick={() => void create()} disabled={busy || !name.trim()} className="flex items-center gap-1.5 rounded-full bg-[#C8963E] px-4 py-2 text-[12px] font-bold text-[#0D1117] disabled:opacity-40 cursor-pointer">
+        <button onClick={() => void create()} disabled={busy || !name.trim()} className="flex items-center gap-1.5 rounded-full bg-[#4F46E5] px-4 py-2 text-[12px] font-bold text-[#0D1117] disabled:opacity-40 cursor-pointer">
           <Plus className="h-3.5 w-3.5" /> Create automation
         </button>
       </div>
@@ -160,7 +160,7 @@ export function CreatorCockpit() {
             </div>
             <button
               onClick={() => void toggle(w)}
-              className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-bold cursor-pointer ${w.enabled ? 'bg-[#C8963E] text-[#0D1117]' : 'bg-[#FFFFFF] text-[#0D1117]/70 border border-[#E5E8EC]'}`}
+              className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-bold cursor-pointer ${w.enabled ? 'bg-[#4F46E5] text-[#0D1117]' : 'bg-[#FFFFFF] text-[#0D1117]/70 border border-[#E5E8EC]'}`}
             >
               {w.enabled ? 'On' : 'Off'}
             </button>

@@ -89,7 +89,7 @@ export function CheckIn() {
           onChange={(e) => { setCode(e.target.value); setTicket(null); setError(null); setResult(null); }}
           onKeyDown={(e) => { if (e.key === 'Enter') void lookup(code); }}
           placeholder="Ticket code, e.g. BRF-XXXX-XXXX-XXXX"
-          className="w-full bg-[#F0F2F5] border border-[#E5E8EC] rounded-lg px-3 py-2.5 text-xs text-[#0D1117] placeholder:text-[#0D1117]/60 outline-none focus:border-[#2563EB]"
+          className="w-full bg-[#F0F2F5] border border-[#E5E8EC] rounded-lg px-3 py-2.5 text-xs text-[#0D1117] placeholder:text-[#0D1117]/60 outline-none focus:border-[#06B6D4]"
         />
         <button
           onClick={() => void lookup(code)}
@@ -145,7 +145,7 @@ export function CheckIn() {
             <button
               onClick={checkIn}
               disabled={busy}
-              className="w-full py-2.5 rounded-lg bg-[#C8963E] text-[#0D1117] text-[11px] font-extrabold cursor-pointer disabled:opacity-40"
+              className="w-full py-2.5 rounded-lg bg-[#4F46E5] text-[#0D1117] text-[11px] font-extrabold cursor-pointer disabled:opacity-40"
             >
               {busy ? 'Checking in…' : 'Check in'}
             </button>

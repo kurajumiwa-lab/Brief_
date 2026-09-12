@@ -345,7 +345,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-xl bg-[#C8963E]/10 text-[#C8963E]">
+              <span className="p-1.5 rounded-xl bg-[#4F46E5]/10 text-[#4F46E5]">
                 <Ticket className="w-5 h-5" />
               </span>
               <h2 className="text-xl font-black text-[#0D1117] tracking-tight">My tickets</h2>
@@ -368,7 +368,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
             {onBrowseEvents && (
               <button
                 onClick={onBrowseEvents}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#C8963E] text-[#0D1117] hover:opacity-90 transition cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#4F46E5] text-[#0D1117] hover:opacity-90 transition cursor-pointer"
               >
                 <span>Find Events</span>
               </button>
@@ -388,12 +388,12 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
               <p className="text-lg font-black text-[#16A34A] leading-tight mt-0.5">{counts.active}</p>
             </div>
             <div className="bg-[#F0F2F5] rounded-2xl p-2.5">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-[#C8963E]">On Resale</p>
-              <p className="text-lg font-black text-[#C8963E] leading-tight mt-0.5">{counts.listed}</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#4F46E5]">On Resale</p>
+              <p className="text-lg font-black text-[#4F46E5] leading-tight mt-0.5">{counts.listed}</p>
             </div>
             <div className="bg-[#F0F2F5] rounded-2xl p-2.5">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-[#2563EB]">Checked In</p>
-              <p className="text-lg font-black text-[#2563EB] leading-tight mt-0.5">{counts.checkedIn}</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#06B6D4]">Checked In</p>
+              <p className="text-lg font-black text-[#06B6D4] leading-tight mt-0.5">{counts.checkedIn}</p>
             </div>
           </div>
         )}
@@ -401,9 +401,9 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
 
       {/* --- Notification Toast --- */}
       {notice && (
-        <div className="flex items-center justify-between text-xs bg-[#F0F2F5] border border-[#2563EB]/40 rounded-2xl px-4 py-3 text-[#0D1117] animate-in fade-in">
+        <div className="flex items-center justify-between text-xs bg-[#F0F2F5] border border-[#06B6D4]/40 rounded-2xl px-4 py-3 text-[#0D1117] animate-in fade-in">
           <div className="flex items-center gap-2">
-            <Info className="w-4 h-4 text-[#2563EB] shrink-0" />
+            <Info className="w-4 h-4 text-[#06B6D4] shrink-0" />
             <span>{notice}</span>
           </div>
           <button
@@ -426,7 +426,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by event name, venue, or ticket code…"
-                className="w-full bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl pl-10 pr-4 py-2.5 text-xs text-[#0D1117] placeholder:text-[#0D1117]/40 focus:border-[#2563EB] focus:outline-none transition"
+                className="w-full bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl pl-10 pr-4 py-2.5 text-xs text-[#0D1117] placeholder:text-[#0D1117]/40 focus:border-[#06B6D4] focus:outline-none transition"
               />
               {search && (
                 <button
@@ -445,7 +445,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
               onClick={() => setFilter('all')}
               className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-extrabold transition cursor-pointer ${
                 filter === 'all'
-                  ? 'bg-[#C8963E] text-[#0D1117] shadow-xs'
+                  ? 'bg-[#4F46E5] text-[#0D1117] shadow-xs'
                   : 'bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117]/70 hover:text-[#0D1117]'
               }`}
             >
@@ -455,7 +455,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
               onClick={() => setFilter('active')}
               className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-extrabold transition cursor-pointer ${
                 filter === 'active'
-                  ? 'bg-[#C8963E] text-[#0D1117] shadow-xs'
+                  ? 'bg-[#4F46E5] text-[#0D1117] shadow-xs'
                   : 'bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117]/70 hover:text-[#0D1117]'
               }`}
             >
@@ -466,7 +466,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
                 onClick={() => setFilter('listed')}
                 className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-extrabold transition cursor-pointer ${
                   filter === 'listed'
-                    ? 'bg-[#C8963E] text-[#0D1117] shadow-xs'
+                    ? 'bg-[#4F46E5] text-[#0D1117] shadow-xs'
                     : 'bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117]/70 hover:text-[#0D1117]'
                 }`}
               >
@@ -478,7 +478,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
                 onClick={() => setFilter('checked_in')}
                 className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-extrabold transition cursor-pointer ${
                   filter === 'checked_in'
-                    ? 'bg-[#C8963E] text-[#0D1117] shadow-xs'
+                    ? 'bg-[#4F46E5] text-[#0D1117] shadow-xs'
                     : 'bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117]/70 hover:text-[#0D1117]'
                 }`}
               >
@@ -490,7 +490,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
                 onClick={() => setFilter('void')}
                 className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-extrabold transition cursor-pointer ${
                   filter === 'void'
-                    ? 'bg-[#C8963E] text-[#0D1117] shadow-xs'
+                    ? 'bg-[#4F46E5] text-[#0D1117] shadow-xs'
                     : 'bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117]/70 hover:text-[#0D1117]'
                 }`}
               >
@@ -504,7 +504,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
       {/* --- Loading State --- */}
       {load.status === 'loading' && (
         <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-3xl p-10 text-center space-y-3">
-          <RefreshCw className="w-6 h-6 animate-spin text-[#C8963E] mx-auto" />
+          <RefreshCw className="w-6 h-6 animate-spin text-[#4F46E5] mx-auto" />
           <p className="text-xs font-bold text-[#0D1117]">Loading your tickets…</p>
           <p className="text-[11px] text-[#0D1117]/60">Verifying live gate pass versions from the ledger.</p>
         </div>
@@ -513,11 +513,11 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
       {/* --- Error State --- */}
       {load.status === 'error' && (
         <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-3xl p-6 text-center space-y-3">
-          <AlertTriangle className="w-6 h-6 text-[#C8963E] mx-auto" />
+          <AlertTriangle className="w-6 h-6 text-[#4F46E5] mx-auto" />
           <p className="text-xs font-extrabold text-[#0D1117]">{load.error || 'Failed to load tickets'}</p>
           <button
             onClick={() => void fetchTickets()}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#C8963E] text-[#0D1117] cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#4F46E5] text-[#0D1117] cursor-pointer"
           >
             Try again
           </button>
@@ -528,7 +528,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
       {load.status === 'ready' && tickets.length === 0 && (
         <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-3xl p-8 text-center space-y-4">
           <div className="w-16 h-16 rounded-3xl bg-[#F0F2F5] border border-[#E5E8EC] flex items-center justify-center mx-auto text-[#0D1117]">
-            <Ticket className="w-8 h-8 text-[#C8963E]" />
+            <Ticket className="w-8 h-8 text-[#4F46E5]" />
           </div>
           <div className="max-w-md mx-auto space-y-1.5">
             <h3 className="text-base font-extrabold text-[#0D1117]">No tickets yet</h3>
@@ -540,7 +540,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
           {onBrowseEvents && (
             <button
               onClick={onBrowseEvents}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[#C8963E] text-[#0D1117] text-xs font-black hover:opacity-90 transition cursor-pointer shadow-sm"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[#4F46E5] text-[#0D1117] text-xs font-black hover:opacity-90 transition cursor-pointer shadow-sm"
             >
               <span>Explore What's On</span>
               <ExternalLink className="w-3.5 h-3.5" />
@@ -551,7 +551,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-6 border-t border-[#E5E8EC] text-left">
             <div className="bg-[#F0F2F5] rounded-2xl p-3.5 space-y-1">
               <p className="text-xs font-extrabold text-[#0D1117] flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#2563EB]" />
+                <ShieldCheck className="w-3.5 h-3.5 text-[#06B6D4]" />
                 <span>Anti-Fraud QR</span>
               </p>
               <p className="text-[10px] text-[#0D1117]/70 leading-relaxed">
@@ -560,7 +560,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
             </div>
             <div className="bg-[#F0F2F5] rounded-2xl p-3.5 space-y-1">
               <p className="text-xs font-extrabold text-[#0D1117] flex items-center gap-1.5">
-                <Gift className="w-3.5 h-3.5 text-[#C8963E]" />
+                <Gift className="w-3.5 h-3.5 text-[#4F46E5]" />
                 <span>Gift Instantly</span>
               </p>
               <p className="text-[10px] text-[#0D1117]/70 leading-relaxed">
@@ -587,7 +587,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
           <p className="text-[11px] text-[#0D1117]/60">Try changing your search term or select "All Passes".</p>
           <button
             onClick={() => { setSearch(''); setFilter('all'); }}
-            className="text-xs font-bold text-[#2563EB] underline cursor-pointer mt-2"
+            className="text-xs font-bold text-[#06B6D4] underline cursor-pointer mt-2"
           >
             Clear filters
           </button>
@@ -610,8 +610,8 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
               isVoid
                 ? 'border-[#E5E8EC] opacity-80'
                 : isListed
-                ? 'border-[#C8963E]/50 shadow-sm'
-                : 'border-[#E5E8EC] hover:border-[#2563EB]/40 shadow-xs'
+                ? 'border-[#4F46E5]/50 shadow-sm'
+                : 'border-[#E5E8EC] hover:border-[#06B6D4]/40 shadow-xs'
             } rounded-3xl overflow-hidden transition-all space-y-0`}
           >
             {/* Top Pass Header */}
@@ -626,7 +626,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
                       Code version {t.codeVersion}
                     </span>
                     {countdown && !isVoid && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#C8963E]/10 text-[#C8963E]">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#4F46E5]/10 text-[#4F46E5]">
                         {countdown}
                       </span>
                     )}
@@ -649,8 +649,8 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
                       <span>CHECKED IN</span>
                     </span>
                   ) : isListed ? (
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-extrabold bg-[#C8963E]/15 text-[#0D1117] border border-[#C8963E]/30">
-                      <Tag className="w-3 h-3 text-[#C8963E]" />
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-extrabold bg-[#4F46E5]/15 text-[#0D1117] border border-[#4F46E5]/30">
+                      <Tag className="w-3 h-3 text-[#4F46E5]" />
                       <span>LISTED FOR RESALE</span>
                     </span>
                   ) : (
@@ -665,12 +665,12 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
               {/* Event Schedule & Location */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 pt-3 border-t border-[#E5E8EC]">
                 <div className="flex items-center gap-2 text-xs text-[#0D1117]/80">
-                  <CalendarDays className="w-3.5 h-3.5 text-[#2563EB] shrink-0" />
+                  <CalendarDays className="w-3.5 h-3.5 text-[#06B6D4] shrink-0" />
                   <span className="truncate">{formatEventDate(t.eventStartsAt, t.eventEndsAt)}</span>
                 </div>
                 {t.eventLocation && (
                   <div className="flex items-center gap-2 text-xs text-[#0D1117]/80">
-                    <MapPin className="w-3.5 h-3.5 text-[#C8963E] shrink-0" />
+                    <MapPin className="w-3.5 h-3.5 text-[#4F46E5] shrink-0" />
                     <span className="truncate">{t.eventLocation}</span>
                   </div>
                 )}
@@ -678,8 +678,8 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
 
               {/* Dynamic Delta Notice (Engine Update) */}
               {hasDelta && (
-                <div className="mt-3 flex items-start gap-2 bg-[#F0F2F5] border border-[#2563EB]/30 rounded-2xl p-2.5">
-                  <AlertTriangle className="w-4 h-4 text-[#C8963E] shrink-0 mt-0.5" />
+                <div className="mt-3 flex items-start gap-2 bg-[#F0F2F5] border border-[#06B6D4]/30 rounded-2xl p-2.5">
+                  <AlertTriangle className="w-4 h-4 text-[#4F46E5] shrink-0 mt-0.5" />
                   <p className="text-[11px] text-[#0D1117] leading-snug">
                     <span className="font-extrabold">Event details updated:</span> The organiser updated event
                     timing or venue. Your gate pass code and version remain fully valid for entry.
@@ -768,7 +768,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
                     </p>
                     <button
                       onClick={() => toggleHistory(t.id)}
-                      className="text-[10px] font-bold text-[#2563EB] hover:underline cursor-pointer flex items-center gap-0.5"
+                      className="text-[10px] font-bold text-[#06B6D4] hover:underline cursor-pointer flex items-center gap-0.5"
                     >
                       <span>{historyOpenIds.has(t.id) ? 'Hide details' : `View ${t.transfers.length} events`}</span>
                       <ChevronDown className={`w-3 h-3 transition ${historyOpenIds.has(t.id) ? 'rotate-180' : ''}`} />
@@ -792,7 +792,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
 
               {/* Active Resale Listing Banner */}
               {isListed && (
-                <div className="mt-4 p-3.5 rounded-2xl bg-[#C8963E]/10 border border-[#C8963E]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="mt-4 p-3.5 rounded-2xl bg-[#4F46E5]/10 border border-[#4F46E5]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="space-y-0.5">
                     <p className="text-xs font-extrabold text-[#0D1117]">
                       Listed for resale {t.listingPrice ? `at ${money(t.listingPrice, t.currency)}` : ''}
@@ -812,7 +812,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
                     {onSell && (
                       <button
                         onClick={onSell}
-                        className="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#C8963E] text-[#0D1117] hover:opacity-90 cursor-pointer"
+                        className="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#4F46E5] text-[#0D1117] hover:opacity-90 cursor-pointer"
                       >
                         Resale Desk
                       </button>
@@ -828,7 +828,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
                     {onSell && (
                       <button
                         onClick={onSell}
-                        className="text-xs font-bold px-3.5 py-2 rounded-xl bg-[#C8963E] text-[#0D1117] hover:opacity-90 transition cursor-pointer shadow-xs"
+                        className="text-xs font-bold px-3.5 py-2 rounded-xl bg-[#4F46E5] text-[#0D1117] hover:opacity-90 transition cursor-pointer shadow-xs"
                       >
                         Sell this seat
                       </button>
@@ -840,12 +840,12 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
                           value={handle}
                           onChange={(e) => setHandle(e.target.value)}
                           placeholder="recipient handle (e.g. wanjiku)"
-                          className="text-xs bg-[#FFFFFF] text-[#0D1117] rounded-xl px-3 py-2 border border-[#E5E8EC] focus:border-[#2563EB] focus:outline-none min-w-44"
+                          className="text-xs bg-[#FFFFFF] text-[#0D1117] rounded-xl px-3 py-2 border border-[#E5E8EC] focus:border-[#06B6D4] focus:outline-none min-w-44"
                         />
                         <button
                           disabled={busy || !handle.trim()}
                           onClick={() => void gift(t.id)}
-                          className="text-xs font-bold px-3 py-2 rounded-xl bg-[#2563EB] text-white cursor-pointer disabled:opacity-40"
+                          className="text-xs font-bold px-3 py-2 rounded-xl bg-[#06B6D4] text-white cursor-pointer disabled:opacity-40"
                         >
                           {busy ? 'Gifting…' : 'Gift'}
                         </button>
@@ -861,7 +861,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
                         onClick={() => { setGiftFor(t.id); setGiftError(null); }}
                         className="text-xs font-bold px-3.5 py-2 rounded-xl border border-[#E5E8EC] bg-[#FFFFFF] hover:bg-[#F0F2F5] text-[#0D1117] transition cursor-pointer inline-flex items-center gap-1.5"
                       >
-                        <Gift className="w-3.5 h-3.5 text-[#2563EB]" />
+                        <Gift className="w-3.5 h-3.5 text-[#06B6D4]" />
                         <span>Gift to someone</span>
                       </button>
                     )}
@@ -892,7 +892,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
                   </div>
 
                   {giftFor === t.id && giftError && (
-                    <p className="text-[11px] text-[#C8963E] font-semibold">{giftError}</p>
+                    <p className="text-[11px] text-[#4F46E5] font-semibold">{giftError}</p>
                   )}
                 </div>
               )}
@@ -913,7 +913,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
             </button>
 
             <div className="text-center space-y-1">
-              <span className="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#C8963E]/10 text-[#C8963E]">
+              <span className="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#4F46E5]/10 text-[#4F46E5]">
                 {expandedTicket.eventType || 'Official Pass'}
               </span>
               <h3 className="text-lg font-black text-[#0D1117] leading-tight pt-1">
@@ -937,7 +937,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
             <div className="space-y-2 text-xs text-[#0D1117]/80">
               {expandedTicket.eventLocation && (
                 <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-[#C8963E] shrink-0" />
+                  <MapPin className="w-4 h-4 text-[#4F46E5] shrink-0" />
                   <span>{expandedTicket.eventLocation}</span>
                 </div>
               )}

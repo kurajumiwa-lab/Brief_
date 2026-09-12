@@ -60,7 +60,7 @@ export function RelatedContent({ edges, onOpenObject, onOpenLocation }: {
               <button
                 type="button"
                 onClick={() => onOpenLocation(edge.location?.name ?? '')}
-                className="flex items-center gap-1 rounded-full bg-[#C8963E] px-2.5 py-1 text-[9px] font-extrabold text-[#0D1117] transition-colors hover:bg-[#C2410C]"
+                className="flex items-center gap-1 rounded-full bg-[#4F46E5] px-2.5 py-1 text-[9px] font-extrabold text-[#0D1117] transition-colors hover:bg-[#C2410C]"
               >
                 View area <ArrowUpRight className="h-3 w-3" />
               </button>
@@ -75,7 +75,7 @@ export function RelatedContent({ edges, onOpenObject, onOpenLocation }: {
                   key={o.id}
                   type="button"
                   onClick={() => onOpenObject(o)}
-                  className="group flex items-center gap-2.5 rounded-xl border border-[#E5E8EC] bg-[#FFFFFF] p-2 text-left shadow-sm transition-transform hover:-translate-y-0.5 hover:border-[#2563EB]"
+                  className="group flex items-center gap-2.5 rounded-xl border border-[#E5E8EC] bg-[#FFFFFF] p-2 text-left shadow-sm transition-transform hover:-translate-y-0.5 hover:border-[#06B6D4]"
                 >
                   {image ? (
                     <img src={image} alt="" aria-hidden="true" loading="lazy" className="h-11 w-11 shrink-0 rounded-lg object-cover" />
@@ -85,7 +85,7 @@ export function RelatedContent({ edges, onOpenObject, onOpenLocation }: {
                     </div>
                   )}
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[11px] font-semibold text-[#0D1117] group-hover:text-[#C8963E]">{o.title}</span>
+                    <span className="block truncate text-[11px] font-semibold text-[#0D1117] group-hover:text-[#4F46E5]">{o.title}</span>
                     <span className="flex flex-wrap items-center gap-1 text-[9px] font-semibold text-[#0D1117]/55">
                       {l && <span className="flex items-center gap-0.5"><Clock className="h-2.5 w-2.5" />{l}</span>}
                       {(o.area || o.county) && <span>{[o.area, o.county].filter(Boolean).join(', ')}</span>}

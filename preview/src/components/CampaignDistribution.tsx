@@ -79,7 +79,7 @@ export function CampaignDistribution({
       <div className="flex items-center gap-2">
         <button
           onClick={onCopy}
-          className={`flex-1 rounded-xl bg-[#C8963E] text-[#0D1117] font-extrabold cursor-pointer ${
+          className={`flex-1 rounded-xl bg-[#4F46E5] text-[#0D1117] font-extrabold cursor-pointer ${
             compact ? 'py-2.5 text-[11px]' : 'py-3 text-xs'
           }`}
         >

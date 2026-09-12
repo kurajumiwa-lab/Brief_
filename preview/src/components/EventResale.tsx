@@ -95,7 +95,7 @@ export function EventResale({ slug }: { slug: string }) {
       )}
 
       {order && (
-        <div className="border border-[#2563EB] rounded-2xl p-4 space-y-2 bg-[#F0F2F5]">
+        <div className="border border-[#06B6D4] rounded-2xl p-4 space-y-2 bg-[#F0F2F5]">
           <p className="text-xs font-extrabold text-[#0D1117]">
             Order {order.reference} — {money(order.total, order.currency)} held for you
           </p>
@@ -139,7 +139,7 @@ export function EventResale({ slug }: { slug: string }) {
             <button
               disabled={busy || Boolean(order)}
               onClick={() => void buy(l.id)}
-              className="shrink-0 text-xs font-bold px-3 py-2 rounded-xl bg-[#C8963E] text-[#0D1117] cursor-pointer disabled:opacity-40"
+              className="shrink-0 text-xs font-bold px-3 py-2 rounded-xl bg-[#4F46E5] text-[#0D1117] cursor-pointer disabled:opacity-40"
             >
               Buy
             </button>

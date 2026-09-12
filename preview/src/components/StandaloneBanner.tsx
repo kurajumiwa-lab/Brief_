@@ -19,7 +19,7 @@ export interface StandaloneBannerProps {
 export function StandaloneBanner({ banner }: StandaloneBannerProps) {
   const image = banner.imageUrl || bannerArt;
   return (
-    <article className="group relative min-h-[190px] overflow-hidden rounded-2xl border border-[#E5E8EC] bg-[#C8963E]">
+    <article className="group relative min-h-[190px] overflow-hidden rounded-2xl border border-[#E5E8EC] bg-[#4F46E5]">
       <img src={image} alt="" aria-hidden="true" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
       <div className="absolute inset-0 bg-gradient-to-t from-[#0D1117]/95 via-[#0D1117]/55 to-[#0D1117]/10" />
       <div className="relative flex min-h-[190px] flex-col justify-between p-4 text-[#FFFFFF]">

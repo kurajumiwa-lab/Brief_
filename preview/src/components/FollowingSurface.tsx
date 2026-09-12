@@ -121,14 +121,14 @@ export function FollowingSurface({ authed, onClose, onOpenObject, onOpenEntity, 
             <button
               type="button"
               onClick={() => setTab('following')}
-              className={`rounded-full px-3 py-1 text-[11px] font-bold transition-colors ${tab === 'following' ? 'bg-[#C8963E] text-[#0D1117]' : 'text-[#0D1117]/70 hover:bg-[#F0F2F5]'}`}
+              className={`rounded-full px-3 py-1 text-[11px] font-bold transition-colors ${tab === 'following' ? 'bg-[#4F46E5] text-[#0D1117]' : 'text-[#0D1117]/70 hover:bg-[#F0F2F5]'}`}
             >
               Following
             </button>
             <button
               type="button"
               onClick={() => setTab('manage')}
-              className={`rounded-full px-3 py-1 text-[11px] font-bold transition-colors ${tab === 'manage' ? 'bg-[#C8963E] text-[#0D1117]' : 'text-[#0D1117]/70 hover:bg-[#F0F2F5]'}`}
+              className={`rounded-full px-3 py-1 text-[11px] font-bold transition-colors ${tab === 'manage' ? 'bg-[#4F46E5] text-[#0D1117]' : 'text-[#0D1117]/70 hover:bg-[#F0F2F5]'}`}
             >
               Manage{follows && follows.total > 0 ? ` (${follows.total})` : ''}
             </button>
@@ -146,14 +146,14 @@ export function FollowingSurface({ authed, onClose, onOpenObject, onOpenEntity, 
         <div className="flex-1 overflow-y-auto pb-safe">
           {!authed && (
             <div className="flex flex-col items-center gap-3 px-6 py-20 text-center">
-              <Users className="h-8 w-8 text-[#C8963E]" />
+              <Users className="h-8 w-8 text-[#4F46E5]" />
               <p className="max-w-xs text-[13px] font-semibold text-[#0D1117]">
                 Sign in to follow places, businesses, publishers, organizers and communities.
               </p>
               <button
                 type="button"
                 onClick={onRequireAuth}
-                className="rounded-full bg-[#C8963E] px-5 py-2.5 text-[13px] font-bold text-[#0D1117]"
+                className="rounded-full bg-[#4F46E5] px-5 py-2.5 text-[13px] font-bold text-[#0D1117]"
               >
                 Sign in
               </button>
@@ -162,7 +162,7 @@ export function FollowingSurface({ authed, onClose, onOpenObject, onOpenEntity, 
 
           {authed && loading && (
             <div className="flex flex-col items-center justify-center gap-3 py-24 text-[rgba(13, 17, 23,0.62)]">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#2563EB] border-t-transparent" />
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#06B6D4] border-t-transparent" />
               <p className="text-[12px] font-semibold">Loading…</p>
             </div>
           )}
@@ -186,10 +186,10 @@ export function FollowingSurface({ authed, onClose, onOpenObject, onOpenEntity, 
                     onClick={() => onOpenEntity(section.entityId)}
                     className="group mb-2 flex w-full items-center gap-2 text-left"
                   >
-                    <span className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#0D1117] group-hover:text-[#C8963E]">
+                    <span className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#0D1117] group-hover:text-[#4F46E5]">
                       {section.name}
                     </span>
-                    <span className="rounded-full bg-[#F0F2F5] px-2 py-0.5 text-[10px] font-bold text-[#C8963E]">
+                    <span className="rounded-full bg-[#F0F2F5] px-2 py-0.5 text-[10px] font-bold text-[#4F46E5]">
                       {KIND_SINGULAR[section.kind] ?? section.kind}
                     </span>
                     {section.location?.area && (
@@ -206,7 +206,7 @@ export function FollowingSurface({ authed, onClose, onOpenObject, onOpenEntity, 
                           key={o.id}
                           type="button"
                           onClick={() => onOpenObject(o)}
-                          className="group flex items-stretch gap-2.5 rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] p-2 text-left shadow-sm transition-transform hover:-translate-y-0.5 hover:border-[#2563EB]"
+                          className="group flex items-stretch gap-2.5 rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] p-2 text-left shadow-sm transition-transform hover:-translate-y-0.5 hover:border-[#06B6D4]"
                         >
                           {o.imageUrl ? (
                             <img src={o.imageUrl} alt="" aria-hidden="true" loading="lazy" className="h-16 w-16 shrink-0 rounded-xl object-cover" />
@@ -217,10 +217,10 @@ export function FollowingSurface({ authed, onClose, onOpenObject, onOpenEntity, 
                           )}
                           <div className="min-w-0 py-0.5">
                             <div className="flex flex-wrap items-center gap-1.5">
-                              <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-[#2563EB]">{o.type}</span>
+                              <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-[#06B6D4]">{o.type}</span>
                               {line && <span className="text-[9px] font-semibold text-[rgba(13, 17, 23,0.62)]">{line}</span>}
                             </div>
-                            <h4 className="mt-0.5 line-clamp-2 text-[12px] font-semibold leading-snug text-[#0D1117] group-hover:text-[#C8963E]">
+                            <h4 className="mt-0.5 line-clamp-2 text-[12px] font-semibold leading-snug text-[#0D1117] group-hover:text-[#4F46E5]">
                               {o.title}
                             </h4>
                           </div>
@@ -261,7 +261,7 @@ export function FollowingSurface({ authed, onClose, onOpenObject, onOpenEntity, 
                           {f.imageUrl ? (
                             <img src={f.imageUrl} alt="" aria-hidden="true" className="h-10 w-10 rounded-xl object-cover" />
                           ) : (
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#C8963E] to-[#EFF1F4] text-[#0D1117]">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#4F46E5] to-[#EFF1F4] text-[#0D1117]">
                               <Users className="h-4 w-4" />
                             </div>
                           )}
@@ -270,7 +270,7 @@ export function FollowingSurface({ authed, onClose, onOpenObject, onOpenEntity, 
                             onClick={() => onOpenEntity(f.id)}
                             className="min-w-0 flex-1 text-left"
                           >
-                            <p className="truncate text-[13px] font-bold text-[#0D1117] hover:text-[#C8963E]">{f.name}</p>
+                            <p className="truncate text-[13px] font-bold text-[#0D1117] hover:text-[#4F46E5]">{f.name}</p>
                             <p className="truncate text-[10px] font-semibold text-[rgba(13, 17, 23,0.62)]">
                               {f.objectCount} {f.objectCount === 1 ? 'item' : 'items'}
                               {f.location?.area ? ` · ${f.location.area}` : ''}

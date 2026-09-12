@@ -184,7 +184,7 @@ export function ImageField({
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#C8963E] px-3 py-1.5 text-[10px] font-extrabold text-[#0D1117] cursor-pointer hover:bg-[#000000]"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#4F46E5] px-3 py-1.5 text-[10px] font-extrabold text-[#0D1117] cursor-pointer hover:bg-[#000000]"
             >
               {multiple ? <UploadCloud className="h-3.5 w-3.5" /> : <ImagePlus className="h-3.5 w-3.5" />}
               {multiple ? 'Choose photos' : 'Choose photo'}
@@ -216,7 +216,7 @@ export function ImageField({
             value={link}
             onChange={(e) => setLink(e.target.value)}
             placeholder="https://…/photo.jpg"
-            className="flex-1 rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-2.5 py-1.5 text-[11px] text-[#0D1117] outline-none focus:border-[#2563EB]"
+            className="flex-1 rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-2.5 py-1.5 text-[11px] text-[#0D1117] outline-none focus:border-[#06B6D4]"
           />
           <button
             type="button"
@@ -228,7 +228,7 @@ export function ImageField({
               else onChange?.(url);
               setLink('');
             }}
-            className="rounded-lg bg-[#C8963E] px-2.5 py-1.5 text-[10px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
+            className="rounded-lg bg-[#4F46E5] px-2.5 py-1.5 text-[10px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
           >
             Use
           </button>

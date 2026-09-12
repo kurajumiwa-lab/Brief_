@@ -190,7 +190,7 @@ export function OfflineSyncQueueDesk({
               >
                 <span>{tab.label}</span>
                 {tab.count !== undefined && tab.count > 0 && (
-                  <span className="text-[10px] px-1.5 py-0.2 rounded-full font-mono bg-[#C8963E] text-white">
+                  <span className="text-[10px] px-1.5 py-0.2 rounded-full font-mono bg-[#4F46E5] text-white">
                     {tab.count}
                   </span>
                 )}
@@ -252,7 +252,7 @@ export function OfflineSyncQueueDesk({
                 type="button"
                 onClick={handleDrainQueue}
                 disabled={isDraining || pendingCount === 0}
-                className="w-full py-1.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-xs flex items-center justify-center space-x-1 shadow-xs cursor-pointer disabled:opacity-50 transition-all"
+                className="w-full py-1.5 rounded-xl bg-[#06B6D4] hover:bg-[#1D4ED8] text-white font-bold text-xs flex items-center justify-center space-x-1 shadow-xs cursor-pointer disabled:opacity-50 transition-all"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isDraining ? 'animate-spin' : ''}`} />
                 <span>{isDraining ? 'Draining Queue…' : 'Drain Sync Queue'}</span>
@@ -325,7 +325,7 @@ export function OfflineSyncQueueDesk({
         <form onSubmit={handleCreateOfflineAction} className="p-5 sm:p-6 space-y-4 max-w-lg mx-auto text-xs">
           <div className="p-3.5 rounded-2xl bg-gray-50 border border-gray-200 text-gray-700 space-y-1">
             <h4 className="font-bold text-[#0D1117] flex items-center space-x-1.5">
-              <Plus className="w-4 h-4 text-[#C8963E]" />
+              <Plus className="w-4 h-4 text-[#4F46E5]" />
               <span>Simulate Local Mutation While Disconnected</span>
             </h4>
             <p className="text-[11px] leading-relaxed">
@@ -338,7 +338,7 @@ export function OfflineSyncQueueDesk({
             <select
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value as any)}
-              className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2563EB]"
+              className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
             >
               <option value="wairo_logistics">Wairo Courier Drop-off & PIN</option>
               <option value="duka_sales">Duka POS Cash Sale</option>
@@ -353,7 +353,7 @@ export function OfflineSyncQueueDesk({
               required
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
-              className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2563EB]"
+              className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
             />
           </div>
 
@@ -364,7 +364,7 @@ export function OfflineSyncQueueDesk({
               required
               value={newDetails}
               onChange={(e) => setNewDetails(e.target.value)}
-              className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2563EB]"
+              className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
             />
           </div>
 
@@ -374,7 +374,7 @@ export function OfflineSyncQueueDesk({
               type="number"
               value={newAmount}
               onChange={(e) => setNewAmount(Number(e.target.value))}
-              className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2563EB]"
+              className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
             />
           </div>
 

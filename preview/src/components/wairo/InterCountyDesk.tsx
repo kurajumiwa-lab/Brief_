@@ -483,7 +483,7 @@ export function InterCountyDesk({
 
             <h2 className="text-xl sm:text-2xl font-black mt-2 text-white tracking-tight flex items-center space-x-2">
               <span>Long-Distance Traveler & Cargo Matching</span>
-              <Sparkles className="w-5 h-5 text-[#C8963E]" />
+              <Sparkles className="w-5 h-5 text-[#4F46E5]" />
             </h2>
             <p className="text-xs text-indigo-200/80 mt-0.5 max-w-xl">
               WAIRO multi-tier freight ecosystem: Lori Systems 50% backhaul arbitrage, Fargo KES 50 pickup counters, Sendy Freight, and Bolt Rapid.
@@ -543,7 +543,7 @@ export function InterCountyDesk({
               <span>{tab.label}</span>
               {tab.count !== undefined && (
                 <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                  activeTab === tab.id ? 'bg-[#C8963E] text-white' : 'bg-white/20 text-white'
+                  activeTab === tab.id ? 'bg-[#4F46E5] text-white' : 'bg-white/20 text-white'
                 }`}>
                   {tab.count}
                 </span>
@@ -609,7 +609,7 @@ export function InterCountyDesk({
                   placeholder="Search Lori, Fargo, Sendy, Bolt, plate..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:border-[#2563EB] w-full sm:w-56"
+                  className="pl-8 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:border-[#06B6D4] w-full sm:w-56"
                 />
               </div>
             </div>
@@ -751,7 +751,7 @@ export function InterCountyDesk({
         <div className="p-5 sm:p-6 space-y-5">
           <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 flex items-start justify-between gap-3">
             <div className="space-y-1">
-              <span className="text-[10px] font-mono font-bold text-[#C8963E] uppercase tracking-wider">
+              <span className="text-[10px] font-mono font-bold text-[#4F46E5] uppercase tracking-wider">
                 COMMISSION TRANSPARENCY
               </span>
               <h4 className="text-sm font-black text-[#0D1117]">
@@ -761,7 +761,7 @@ export function InterCountyDesk({
                 Traveling to Mombasa, Kisumu, Nakuru, or Eldoret? Carry vetted boxes and parcels. Get paid directly to your M-Pesa upon recipient PIN verification.
               </p>
             </div>
-            <div className="p-3 rounded-2xl bg-[#C8963E] text-white font-mono font-black text-center shrink-0">
+            <div className="p-3 rounded-2xl bg-[#4F46E5] text-white font-mono font-black text-center shrink-0">
               <span className="text-lg block leading-none">90%</span>
               <span className="text-[9px] uppercase tracking-wider">PAYOUT</span>
             </div>
@@ -777,7 +777,7 @@ export function InterCountyDesk({
                   placeholder="e.g. Samuel Kimani"
                   value={driverNameInput}
                   onChange={(e) => setDriverNameInput(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2563EB]"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
                 />
               </div>
 
@@ -789,7 +789,7 @@ export function InterCountyDesk({
                   placeholder="e.g. KDF 123A"
                   value={plateInput}
                   onChange={(e) => setPlateInput(e.target.value.toUpperCase())}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono uppercase outline-none focus:border-[#2563EB]"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono uppercase outline-none focus:border-[#06B6D4]"
                 />
               </div>
             </div>
@@ -804,14 +804,14 @@ export function InterCountyDesk({
                     placeholder="From County"
                     value={fromCountyInput}
                     onChange={(e) => setFromCountyInput(e.target.value)}
-                    className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2563EB]"
+                    className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
                   />
                   <input
                     type="text"
                     placeholder="Staging Hub"
                     value={fromHubInput}
                     onChange={(e) => setFromHubInput(e.target.value)}
-                    className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2563EB]"
+                    className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
                   />
                 </div>
               </div>
@@ -825,14 +825,14 @@ export function InterCountyDesk({
                     placeholder="To County"
                     value={toCountyInput}
                     onChange={(e) => setToCountyInput(e.target.value)}
-                    className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2563EB]"
+                    className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
                   />
                   <input
                     type="text"
                     placeholder="Drop Hub"
                     value={toHubInput}
                     onChange={(e) => setToHubInput(e.target.value)}
-                    className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2563EB]"
+                    className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
                   />
                 </div>
               </div>
@@ -844,7 +844,7 @@ export function InterCountyDesk({
                 <select
                   value={vehicleTypeInput}
                   onChange={(e) => setVehicleTypeInput(e.target.value as any)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2563EB]"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
                 >
                   <option value="Car Trunk">Private Car Boot (Trunk)</option>
                   <option value="Van / Pickup">Pickup Bed / Commercial Van</option>
@@ -860,7 +860,7 @@ export function InterCountyDesk({
                   placeholder="e.g. Tomorrow, 6:00 AM"
                   value={departureDateInput}
                   onChange={(e) => setDepartureDateInput(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2563EB]"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
                 />
               </div>
 
@@ -872,7 +872,7 @@ export function InterCountyDesk({
                   max="2000"
                   value={capacityKgInput}
                   onChange={(e) => setCapacityKgInput(Number(e.target.value))}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono outline-none focus:border-[#2563EB]"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono outline-none focus:border-[#06B6D4]"
                 />
               </div>
             </div>
@@ -920,7 +920,7 @@ export function InterCountyDesk({
                 <div>
                   <div className="flex items-center space-x-2">
                     <span className="font-mono font-black text-xs text-[#0D1117]">{b.id}</span>
-                    <span className="text-[10px] bg-blue-50 text-[#2563EB] font-bold px-2 py-0.5 rounded border border-blue-200">
+                    <span className="text-[10px] bg-blue-50 text-[#06B6D4] font-bold px-2 py-0.5 rounded border border-blue-200">
                       {b.fromCounty} ➔ {b.toCounty}
                     </span>
                     {b.partnerBrand && (
@@ -966,7 +966,7 @@ export function InterCountyDesk({
                       placeholder="Enter PIN"
                       value={enteredPin}
                       onChange={(e) => setEnteredPin(e.target.value)}
-                      className="w-24 bg-white border border-gray-300 rounded-xl px-2.5 py-1.5 font-mono text-xs text-center outline-none focus:border-[#2563EB]"
+                      className="w-24 bg-white border border-gray-300 rounded-xl px-2.5 py-1.5 font-mono text-xs text-center outline-none focus:border-[#06B6D4]"
                     />
                     <button
                       type="button"
@@ -1072,7 +1072,7 @@ export function InterCountyDesk({
                   placeholder="e.g. 2 Cartons of avocado, Spare parts box"
                   value={itemDescription}
                   onChange={(e) => setItemDescription(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2563EB]"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
                 />
               </div>
 
@@ -1085,7 +1085,7 @@ export function InterCountyDesk({
                     max={selectedRoute.availableCapacityKg}
                     value={weightKg}
                     onChange={(e) => setWeightKg(Number(e.target.value))}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2563EB]"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
                   />
                 </div>
 
@@ -1106,7 +1106,7 @@ export function InterCountyDesk({
                     placeholder="Recipient Name"
                     value={recipientName}
                     onChange={(e) => setRecipientName(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2563EB]"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
                   />
                 </div>
 
@@ -1118,7 +1118,7 @@ export function InterCountyDesk({
                     placeholder="07..."
                     value={recipientPhone}
                     onChange={(e) => setRecipientPhone(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2563EB]"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
                   />
                 </div>
               </div>

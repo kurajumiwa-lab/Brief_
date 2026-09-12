@@ -18,7 +18,7 @@ import { CollectionPage } from './CollectionPage';
 const INK = '#0D1117';
 const MUTED = 'rgba(13, 17, 23,0.62)';
 const LINE = '#E5E8EC';
-const ACCENT = '#C8963E';
+const ACCENT = '#4F46E5';
 
 function CoverThumb({ cover, name }: { cover: briefApi.CollectionCover; name: string }) {
   const urls = cover.kind === 'mosaic' ? (cover.urls ?? []) : cover.kind === 'single' || cover.kind === 'custom' ? [cover.url ?? ''] : [];
@@ -116,12 +116,12 @@ export function CollectionsSurface({ authed, savedCount, onClose, onOpenObject, 
         {/* Header */}
         <div className="mb-4 flex items-center justify-between">
           <button type="button" onClick={onClose} aria-label="Back"
-            className="flex items-center gap-1 rounded-full border border-[#E5E8EC] bg-[#FFFFFF] px-3 py-1.5 text-[11px] font-bold text-[#0D1117] cursor-pointer hover:border-[#2563EB]">
+            className="flex items-center gap-1 rounded-full border border-[#E5E8EC] bg-[#FFFFFF] px-3 py-1.5 text-[11px] font-bold text-[#0D1117] cursor-pointer hover:border-[#06B6D4]">
             <ArrowLeft className="h-3.5 w-3.5" /> Back
           </button>
           <h1 className="text-[16px] font-extrabold text-[#0D1117]">Collections</h1>
           <button type="button" onClick={() => { setCreating((v) => !v); setError(null); }} aria-label="New collection"
-            className="flex items-center gap-1 rounded-full bg-[#C8963E] px-3 py-1.5 text-[10px] font-extrabold text-[#0D1117] cursor-pointer hover:bg-[#EFF1F4]">
+            className="flex items-center gap-1 rounded-full bg-[#4F46E5] px-3 py-1.5 text-[10px] font-extrabold text-[#0D1117] cursor-pointer hover:bg-[#EFF1F4]">
             <Plus className="h-3.5 w-3.5" /> New
           </button>
         </div>
@@ -135,7 +135,7 @@ export function CollectionsSurface({ authed, savedCount, onClose, onOpenObject, 
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search your collections and items…"
             aria-label="Search collections"
-            className="w-full rounded-full border border-[#E5E8EC] bg-[#FFFFFF] py-2 pl-9 pr-9 text-[12px] font-semibold text-[#0D1117] outline-none placeholder:text-[#0D1117]/60 focus:border-[#2563EB]"
+            className="w-full rounded-full border border-[#E5E8EC] bg-[#FFFFFF] py-2 pl-9 pr-9 text-[12px] font-semibold text-[#0D1117] outline-none placeholder:text-[#0D1117]/60 focus:border-[#06B6D4]"
           />
           {q && (
             <button type="button" onClick={() => setQ('')} aria-label="Clear search"
@@ -147,7 +147,7 @@ export function CollectionsSurface({ authed, savedCount, onClose, onOpenObject, 
 
         {/* Quick create */}
         {creating && (
-          <div className="mb-4 rounded-2xl border border-[#2563EB]/40 bg-[#FFFFFF] p-3 shadow-sm">
+          <div className="mb-4 rounded-2xl border border-[#06B6D4]/40 bg-[#FFFFFF] p-3 shadow-sm">
             <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#0D1117]">New collection</p>
             <input
               autoFocus
@@ -156,19 +156,19 @@ export function CollectionsSurface({ authed, savedCount, onClose, onOpenObject, 
               onKeyDown={(e) => { if (e.key === 'Enter') create(); if (e.key === 'Escape') setCreating(false); }}
               placeholder="Name (e.g. Weekend Plans, Job Hunt)"
               aria-label="Collection name"
-              className="w-full rounded-xl border border-[#E5E8EC] px-3 py-2 text-[13px] font-semibold text-[#0D1117] outline-none focus:border-[#2563EB]"
+              className="w-full rounded-xl border border-[#E5E8EC] px-3 py-2 text-[13px] font-semibold text-[#0D1117] outline-none focus:border-[#06B6D4]"
             />
             <input
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Optional description"
               aria-label="Collection description"
-              className="mt-2 w-full rounded-xl border border-[#E5E8EC] px-3 py-2 text-[12px] font-semibold text-[#0D1117] outline-none focus:border-[#2563EB]"
+              className="mt-2 w-full rounded-xl border border-[#E5E8EC] px-3 py-2 text-[12px] font-semibold text-[#0D1117] outline-none focus:border-[#06B6D4]"
             />
             {error && <p className="mt-2 text-[10px] font-bold text-[#DC2626]">{error}</p>}
             <div className="mt-3 flex gap-2">
               <button type="button" onClick={create} disabled={busy || !name.trim()}
-                className="rounded-full bg-[#C8963E] px-4 py-1.5 text-[10px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40">
+                className="rounded-full bg-[#4F46E5] px-4 py-1.5 text-[10px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40">
                 Create
               </button>
               <button type="button" onClick={() => setCreating(false)}
@@ -184,8 +184,8 @@ export function CollectionsSurface({ authed, savedCount, onClose, onOpenObject, 
 
         {/* Saved (quick-save bucket — the existing server saves). */}
         <button type="button" onClick={onOpenSaved}
-          className="mb-3 flex w-full items-center gap-3 rounded-2xl border border-[#2563EB]/30 bg-gradient-to-r from-[#F0F2F5] to-[#EFF1F4] p-3 text-left cursor-pointer hover:border-[#2563EB]">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#C8963E] text-[#0D1117]">
+          className="mb-3 flex w-full items-center gap-3 rounded-2xl border border-[#06B6D4]/30 bg-gradient-to-r from-[#F0F2F5] to-[#EFF1F4] p-3 text-left cursor-pointer hover:border-[#06B6D4]">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#4F46E5] text-[#0D1117]">
             <Bookmark className="h-5 w-5" />
           </span>
           <span className="min-w-0 flex-1">
@@ -194,7 +194,7 @@ export function CollectionsSurface({ authed, savedCount, onClose, onOpenObject, 
               Your quick saves — organise them into collections any time
             </span>
           </span>
-          <span className="rounded-full bg-[#FFFFFF] px-2.5 py-1 text-[10px] font-extrabold text-[#C8963E]">
+          <span className="rounded-full bg-[#FFFFFF] px-2.5 py-1 text-[10px] font-extrabold text-[#4F46E5]">
             {savedCount} {savedCount === 1 ? 'item' : 'items'}
           </span>
         </button>
@@ -218,7 +218,7 @@ export function CollectionsSurface({ authed, savedCount, onClose, onOpenObject, 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {collections.map((c) => (
               <button key={c.id} type="button" onClick={() => setOpenId(c.id)}
-                className="group overflow-hidden rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] text-left shadow-sm transition-transform hover:-translate-y-0.5 hover:border-[#2563EB] cursor-pointer">
+                className="group overflow-hidden rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] text-left shadow-sm transition-transform hover:-translate-y-0.5 hover:border-[#06B6D4] cursor-pointer">
                 <div className="h-24 w-full sm:h-28">
                   <CoverThumb cover={c.cover} name={c.name} />
                 </div>
@@ -226,14 +226,14 @@ export function CollectionsSurface({ authed, savedCount, onClose, onOpenObject, 
                   <div className="flex items-center justify-between gap-1">
                     <h3 className="truncate text-[13px] font-extrabold text-[#0D1117]">{c.name}</h3>
                     {c.visibility === 'public'
-                      ? <Globe className="h-3 w-3 shrink-0 text-[#C8963E]" />
+                      ? <Globe className="h-3 w-3 shrink-0 text-[#4F46E5]" />
                       : <Lock className="h-3 w-3 shrink-0 text-[rgba(13, 17, 23,0.4)]" />}
                   </div>
                   <p className="mt-0.5 text-[10px] font-semibold text-[rgba(13, 17, 23,0.62)]">
                     {c.count} {c.count === 1 ? 'item' : 'items'} · {relativeDay(c.updatedAt)}
                   </p>
                   {c.locations.areas.length > 0 && (
-                    <p className="mt-1 flex items-center gap-0.5 truncate text-[9px] font-semibold text-[#C8963E]">
+                    <p className="mt-1 flex items-center gap-0.5 truncate text-[9px] font-semibold text-[#4F46E5]">
                       <MapPin className="h-2.5 w-2.5 shrink-0" />
                       {c.locations.areas.slice(0, 2).join(' · ')}
                     </p>

@@ -109,7 +109,7 @@ export function ListingDetail({
           <button
             onClick={onOrder}
             disabled={busy}
-            className="w-full py-2 rounded-full bg-[#C8963E] text-[#0D1117] text-xs font-extrabold cursor-pointer disabled:opacity-50"
+            className="w-full py-2 rounded-full bg-[#4F46E5] text-[#0D1117] text-xs font-extrabold cursor-pointer disabled:opacity-50"
           >
             {busy ? 'Placing order...' : 'Place order'}
           </button>
