@@ -80,13 +80,18 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
     setSendingMsg(true);
     soundEngine.play('tap');
     try {
-      await briefApi.postSpaceMessage(space.id, convId, {
+      const res = await briefApi.postSpaceMessage(space.id, convId, {
         text: text.trim(),
         from: 'owner',
         sender: space.name
       });
       setReplyText((prev) => ({ ...prev, [convId]: '' }));
-      showToast('Reply sent');
+      // Honest: reflect whether the reply actually reached the customer's
+      // WhatsApp, rather than always claiming "sent".
+      const delivery = res.ok ? res.data.whatsappDelivery : null;
+      if (delivery && delivery.ok) showToast('Reply sent via WhatsApp');
+      else if (delivery) showToast(`Reply saved — not delivered (${delivery.reason ?? 'no provider'})`);
+      else showToast('Reply saved');
       onRefresh();
     } catch (err) {
       console.error('Failed to send reply:', err);
