@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
-    "test": "node test/run.js && node test/discovery.mjs && node test/feed-experience.mjs && node test/trust.mjs && node test/personal.mjs && node test/entities.mjs && node test/graph.mjs && node test/collections.mjs && node test/notifications.mjs && node test/spaces.mjs && node test/requests.mjs && node test/supply.mjs && node test/matching.mjs && node test/quotes.mjs && node test/workOrders.mjs && node test/procurement.mjs && node test/participantTrust.mjs && node test/workPayment.mjs && node test/attribution.mjs && node test/partner.mjs && node test/fieldAgent.mjs && node test/lipaMdogo.mjs && node test/chama.mjs && node test/integrity.mjs && node test/whatsappOutbound.mjs && node test/spaceHttpAuth.mjs && node test/integration.mjs",
+    "test": "node test/run.js && node test/discovery.mjs && node test/feed-experience.mjs && node test/trust.mjs && node test/personal.mjs && node test/entities.mjs && node test/graph.mjs && node test/collections.mjs && node test/notifications.mjs && node test/spaces.mjs && node test/requests.mjs && node test/supply.mjs && node test/matching.mjs && node test/quotes.mjs && node test/workOrders.mjs && node test/procurement.mjs && node test/participantTrust.mjs && node test/workPayment.mjs && node test/attribution.mjs && node test/partner.mjs && node test/fieldAgent.mjs && node test/lipaMdogo.mjs && node test/chama.mjs && node test/integrity.mjs && node test/chamaLoop.mjs && node test/whatsappOutbound.mjs && node test/spaceHttpAuth.mjs && node test/integration.mjs",
     "test:huduma": "node test/huduma.mjs",
     "test:yard": "node test/yard-loop.mjs"
   },

@@ -127,6 +127,11 @@ const EMPTY = {
   chamaLoans: [],
   chamaRepayments: [],
   chamaPayouts: [],
+  // A chama placing a COLLECTIVE order rides the ordinary Request -> Match ->
+  // Quote -> WorkOrder chain; this row records which chama a request was placed
+  // on behalf of (provenance + the member breakdown), so the chama surface can
+  // list its collective demand. See chama.placeCollectiveRequest.
+  chamaRequests: [],
   // P2P ticket resale (Tikiti integration T1). A ticket is ONE admitted
   // seat, born from a confirmed campaign registration; its scannable code
   // IS the registration's gate code, versioned so a transfer kills every

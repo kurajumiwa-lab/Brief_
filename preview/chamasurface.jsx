@@ -46,6 +46,7 @@ const chamaRow = {
 };
 
 let fetchHandler;
+let collectiveOrders = [];
 global.fetch = async (input, init) => fetchHandler(String(input?.url ?? input ?? ''), init);
 
 async function main() {
@@ -78,6 +79,10 @@ async function main() {
   // --- indicators ---
   fetchHandler = async (url, init) => {
     if (url.includes('/me/chamas')) return { ok: true, status: 200, text: async () => JSON.stringify({ chamas: [chamaRow] }) };
+    if (url.includes('/api/chamas/chm_1/requests')) {
+      // Collective orders: empty by default, or the sample after a POST.
+      return { ok: true, status: 200, text: async () => JSON.stringify({ collective: collectiveOrders }) };
+    }
     if (url.includes('/api/chamas/chm_1') && (!init?.method || init.method === 'GET')) {
       return { ok: true, status: 200, text: async () => JSON.stringify({
         chama: chamaRow,
@@ -116,6 +121,10 @@ async function main() {
     assert.ok(t.includes('Alice'), 'rotation member');
     // The record-contribution action is present.
     assert.ok(btn('Record contribution'), 'contribution action present');
+    // Collective orders: the section + place-bulk-order action are present.
+    assert.ok(t.includes('Collective orders'), 'collective orders section');
+    assert.ok(t.includes('No collective orders yet'), 'honest empty collective state');
+    assert.ok(btn('Place bulk order'), 'place bulk order action present');
   }
   pass('ChamaSurface: indicators show what can happen and what did happen');
 

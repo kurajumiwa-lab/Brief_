@@ -177,6 +177,11 @@ function validate(input, userId) {
           "buyingFrequency",
           "recurringQuantity",
           "recurringUnit",
+          // Chama provenance: a collective request carries the id + name of the
+          // group that placed it, so the whole Request->Match->Quote->Work
+          // chain can attribute demand to a chama rather than a lone member.
+          "chamaId",
+          "chamaName",
         ],
         field,
       );

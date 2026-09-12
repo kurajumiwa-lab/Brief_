@@ -4551,3 +4551,21 @@ export function applyChamaLoan(id: string, body: { principal: number; interestTy
 export function repayChamaLoan(loanId: string, body: { amount: number; receiptHash?: string | null; idempotencyKey?: string }): Promise<ApiResult<{ repayment: any; balance: any }>> {
   return request(`/api/chama-loans/${encodeURIComponent(loanId)}/repay`, { method: 'POST', body: JSON.stringify(body) }, r => r?.repayment ? r : undefined);
 }
+
+// Collective demand — a chama places a bulk Request riding the economic chain.
+export interface ChamaCollectiveRequest {
+  id: string;
+  chamaId: string;
+  requestId: string;
+  placedBy: string;
+  aggregateQuantity: number;
+  memberBreakdown: Array<{ memberId?: string; name?: string; quantity: number }>;
+  placedAt: string;
+  request: any | null;
+}
+export function getChamaCollectiveRequests(id: string): Promise<ApiResult<ChamaCollectiveRequest[]>> {
+  return request(`/api/chamas/${encodeURIComponent(id)}/requests`, undefined, r => Array.isArray(r?.collective) ? r.collective : undefined);
+}
+export function placeChamaCollectiveRequest(id: string, body: Record<string, unknown>): Promise<ApiResult<{ request: any; collective: ChamaCollectiveRequest }>> {
+  return request(`/api/chamas/${encodeURIComponent(id)}/requests`, { method: 'POST', body: JSON.stringify(body) }, r => r?.request?.id ? r : undefined);
+}

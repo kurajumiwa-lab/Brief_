@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import * as api from "../../api/briefApi";
-import type { ChamaRow, ChamaDetail } from "../../api/briefApi";
+import type { ChamaRow, ChamaDetail, ChamaCollectiveRequest } from "../../api/briefApi";
 import { MotionList } from "../../ui/motion/MotionList";
 import { MotionNumber } from "../../ui/motion/MotionNumber";
 import { MotionStatus } from "../../ui/motion/MotionStatus";
@@ -27,6 +27,9 @@ export function ChamaSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [detail, setDetail] = useState<Record<string, ChamaDetail | null>>({});
   const [notice, setNotice] = useState("");
+  const [collective, setCollective] = useState<Record<string, ChamaCollectiveRequest[] | undefined>>({});
+  const [orderOpen, setOrderOpen] = useState<Record<string, boolean>>({});
+  const [orderForm, setOrderForm] = useState<Record<string, { title: string; description: string; category: string; quantity: string; unit: string }>>({});
 
   const load = async () => {
     setLoading(true);
@@ -46,6 +49,34 @@ export function ChamaSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
       const res = await api.getChama(id);
       setDetail((prev) => ({ ...prev, [id]: res.ok ? res.data : null }));
     }
+    if (collective[id] === undefined) {
+      const res = await api.getChamaCollectiveRequests(id);
+      setCollective((prev) => ({ ...prev, [id]: res.ok ? res.data : [] }));
+    }
+  };
+
+  const placeOrder = async (chama: ChamaRow) => {
+    const f = orderForm[chama.id];
+    if (!f || !f.title.trim() || !f.description.trim() || !f.category.trim()) {
+      setNotice("Title, description and category are required for a bulk order.");
+      return;
+    }
+    const res = await api.placeChamaCollectiveRequest(chama.id, {
+      title: f.title.trim(),
+      description: f.description.trim(),
+      category: f.category.trim(),
+      quantity: Number(f.quantity) || 0,
+      unit: f.unit.trim() || "units",
+      location: "Nairobi",
+      intent: "submit"
+    });
+    if (res.ok) {
+      setNotice(`Bulk order placed — it's now a Request in the economic loop.`);
+      setOrderOpen((prev) => ({ ...prev, [chama.id]: false }));
+      const list = await api.getChamaCollectiveRequests(chama.id);
+      if (list.ok) setCollective((prev) => ({ ...prev, [chama.id]: list.data }));
+    } else if (res.status === 401) onRequireAuth();
+    else setNotice(res.error ?? "Could not place the bulk order.");
   };
 
   const contribute = async (chama: ChamaRow) => {
@@ -141,6 +172,58 @@ export function ChamaSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
                       ))}
                     </div>
                   )}
+
+                  {/* Collective orders — the chama in the economic loop */}
+                  <div className="rounded-xl p-3" style={{ background: "var(--color-surface-elevated)" }}>
+                    <p className="text-xs font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>Collective orders</p>
+                    {collective[c.id] === undefined ? (
+                      <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>Reading orders…</p>
+                    ) : collective[c.id]!.length === 0 ? (
+                      <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>No collective orders yet. Place one to buy as a group.</p>
+                    ) : (
+                      <ul className="mt-1 space-y-1">
+                        {collective[c.id]!.map((o) => (
+                          <li key={o.id} className="text-xs flex items-center justify-between">
+                            <span className="truncate" style={{ color: "var(--color-text)" }}>{o.request?.title ?? "Order"}</span>
+                            <span className="shrink-0 ml-2" style={{ color: "var(--color-text-muted)" }}>{o.aggregateQuantity} {o.request?.unit ?? ""} · {o.request?.status ?? "?"}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setOrderOpen((prev) => ({ ...prev, [c.id]: !prev[c.id] }))}
+                      className="mt-2 rounded-full px-3 py-1.5 text-xs font-bold"
+                      style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}
+                    >
+                      {orderOpen[c.id] ? "Cancel" : "Place bulk order"}
+                    </button>
+                    {orderOpen[c.id] && (
+                      <div className="mt-2 space-y-1.5">
+                        {(["title", "description", "category", "quantity", "unit"] as const).map((k) => (
+                          <input
+                            key={k}
+                            type="text"
+                            placeholder={k === "quantity" ? "Total quantity (e.g. 24)" : k}
+                            value={orderForm[c.id]?.[k] ?? ""}
+                            aria-label={`Bulk ${k} for ${c.name}`}
+                            onChange={(e) => setOrderForm((prev) => ({ ...prev, [c.id]: { ...(prev[c.id] ?? { title: "", description: "", category: "", quantity: "", unit: "" }), [k]: e.target.value } }))}
+                            className="w-full rounded-lg px-2.5 py-1.5 text-xs border"
+                            style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
+                          />
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => placeOrder(c)}
+                          className="w-full rounded-full px-3 py-1.5 text-xs font-bold"
+                          style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}
+                        >
+                          Submit bulk order
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
                   <p className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>{s.note}</p>
                 </div>
               )}

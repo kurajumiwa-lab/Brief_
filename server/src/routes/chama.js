@@ -105,6 +105,27 @@ export function register(app) {
     }
   });
 
+  // Collective demand — a chama places a bulk Request riding the economic chain.
+  app.get('/api/chamas/:id/requests', (req, res) => {
+    const me = requireAuth(req, res);
+    if (!me) return;
+    try {
+      res.json({ collective: chama.listCollectiveRequests(req.params.id) });
+    } catch (e) {
+      res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
+    }
+  });
+  app.post('/api/chamas/:id/requests', (req, res) => {
+    const me = requireAuth(req, res);
+    if (!me) return;
+    try {
+      const result = chama.placeCollectiveRequest(req.params.id, me, req.body ?? {});
+      res.status(201).json(result);
+    } catch (e) {
+      res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
+    }
+  });
+
   // Loans.
   app.post('/api/chamas/:id/loans', (req, res) => {
     const me = requireAuth(req, res);

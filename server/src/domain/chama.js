@@ -31,6 +31,7 @@
 import crypto from 'node:crypto';
 import { store, newId } from '../store.js';
 import { getUser } from './auth.js';
+import * as requests from './requests.js';
 
 export const CHAMA_STATUS = ['active', 'archived'];
 export const PAYOUT_STATUS = ['pending', 'confirmed'];
@@ -453,4 +454,84 @@ export function memberView(chamaId, userId) {
     owesKes: myLoans.reduce((x, l) => x + outstandingBalance(l.id).remaining, 0),
     loans: myLoans.map((l) => ({ id: l.id, remaining: outstandingBalance(l.id).remaining, status: l.status }))
   };
+}
+
+// ---------------------------------------------------------------------------
+// COLLECTIVE DEMAND — a chama places a bulk Request as a first-class
+// participant in the existing economic chain.
+//
+// This is the "community that does things" seam. The chama does NOT get a
+// parallel procurement system: it rides the SAME Request -> Match -> Quote ->
+// WorkOrder -> Payment chain every other requester uses. The only additions are
+// (a) provenance — the request carries the chama id + name — and (b) the
+// member breakdown, so the chama's collective buying power is legible.
+// ---------------------------------------------------------------------------
+
+/**
+ * Place a bulk request on behalf of the chama. `actingMemberId` must be a
+ * member (the treasurer/owner will act as requester in the chain). The request
+ * is created through the ordinary requests.createRequest path, carrying the
+ * chama provenance, and a chamaRequests row links it back to the group.
+ */
+export function placeCollectiveRequest(chamaId, actingMemberId, input = {}) {
+  const chama = getChama(chamaId);
+  if (!chama) fail('chama not found', 404, 'not_found');
+  requireMember(chama, actingMemberId);
+
+  // The member-level breakdown is the honest "who needed how much". It is a
+  // RECORD of the aggregation, not a second source of demand.
+  const breakdown = Array.isArray(input.breakdown) ? input.breakdown.slice(0, 200) : [];
+  const aggregateQuantity = breakdown.length
+    ? breakdown.reduce((s, b) => s + (Number(b.quantity) || 0), 0)
+    : (Number(input.quantity) || 0);
+
+  // Only pass DEFINED fields: requests.validate() iterates every key it is
+  // given, so an `undefined` value (e.g. an omitted subcategory) would fail.
+  const reqInput = {
+    title: input.title,
+    description: input.description,
+    category: input.category,
+    quantity: aggregateQuantity || input.quantity,
+    unit: input.unit,
+    currency: input.currency ?? 'KES',
+    location: input.location,
+    intent: input.intent ?? 'submit',
+    specifications: input.specifications ?? {},
+    businessContext: {
+      ...(input.businessContext ?? {}),
+      companyName: input.businessContext?.companyName ?? chama.name,
+      chamaId: chama.id,
+      chamaName: chama.name
+    }
+  };
+  if (input.subcategory) reqInput.subcategory = input.subcategory;
+  if (input.budgetMax != null) reqInput.budgetMax = input.budgetMax;
+  if (input.deliveryLocation) reqInput.deliveryLocation = input.deliveryLocation;
+  if (input.requiredBy) reqInput.requiredBy = input.requiredBy;
+  if (input.urgency) reqInput.urgency = input.urgency;
+
+  const request = requests.createRequest(actingMemberId, reqInput);
+
+  const row = store.insert('chamaRequests', {
+    id: newId('chrq'),
+    chamaId: chama.id,
+    requestId: request.id,
+    placedBy: actingMemberId,
+    aggregateQuantity,
+    memberBreakdown: breakdown,
+    placedAt: new Date().toISOString()
+  });
+
+  return { request, collective: row };
+}
+
+/** The chama's collective requests, newest first, with live request status. */
+export function listCollectiveRequests(chamaId) {
+  return store.filter('chamaRequests', (r) => r.chamaId === chamaId)
+    .slice()
+    .sort((a, b) => (a.placedAt < b.placedAt ? 1 : -1))
+    .map((row) => ({
+      ...row,
+      request: store.find('requests', (r) => r.id === row.requestId) ?? null
+    }));
 }
