@@ -82,6 +82,8 @@ import {
   Terminal,
   Activity,
   MapPin,
+  Navigation,
+  CalendarPlus,
   Users,
   Briefcase,
   ArrowRight,
@@ -944,6 +946,35 @@ const PIVOT_TYPES: ObjectType[] = ['place', 'product', 'service'];
 
 export const buildMapsHref = (query: string): string =>
   `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+
+/**
+ * A data-URI .ics download for an event, built client-side from the public
+ * campaign fields. Honest: it renders only what the campaign actually carries
+ * (a missing end time falls back to +1h; a missing description is empty). No
+ * server round-trip, no fabricated data — just a standards-compliant VEVENT.
+ */
+export function eventIcsUrl({ title, description, location, startsAt, endsAt }: {
+  title: string; description: string | null; location: string | null;
+  startsAt: string | null; endsAt: string | null;
+}): string | null {
+  if (!startsAt) return null; // a calendar entry needs a start time
+  const toIcs = (iso: string) => iso.replace(/[-:]/g, '').replace(/\.\d{3}/, '').slice(0, 15) + 'Z';
+  const start = toIcs(startsAt);
+  const end = endsAt ? toIcs(endsAt) : toIcs(new Date(Date.parse(startsAt) + 3600000).toISOString());
+  const esc = (s: string) => String(s).replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/,/g, '\\,');
+  const lines = [
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Brief//EN',
+    'BEGIN:VEVENT',
+    `UID:${Date.now()}@brief`,
+    `DTSTAMP:${toIcs(new Date().toISOString())}`,
+    `DTSTART:${start}`, `DTEND:${end}`,
+    `SUMMARY:${esc(title)}`,
+    ...(description ? [`DESCRIPTION:${esc(description)}`] : []),
+    ...(location ? [`LOCATION:${esc(location)}`] : []),
+    'END:VEVENT', 'END:VCALENDAR'
+  ];
+  return `data:text/calendar;charset=utf-8,${encodeURIComponent(lines.join('\r\n'))}`;
+}
 
 export const buildTelHref = (phone: string): string =>
   `tel:${phone.replace(/[^\d+]/g, '')}`;
@@ -4096,17 +4127,38 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
 
             <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-4 space-y-2">
               {c.startsAt && (
-                <div className="flex items-center gap-2">
-                  <Clock className="w-3.5 h-3.5 text-[#0D1117] shrink-0" />
-                  <span className="text-xs text-[#0D1117]">
-                    {c.startsAt.slice(0, 16).replace('T', ' ')}
-                  </span>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-3.5 h-3.5 text-[#0D1117] shrink-0" />
+                    <span className="text-xs text-[#0D1117]">
+                      {c.startsAt.slice(0, 16).replace('T', ' ')}
+                    </span>
+                  </div>
+                  <a
+                    href={eventIcsUrl({ title: c.title, description: c.description, location: c.location, startsAt: c.startsAt, endsAt: c.endsAt }) ?? undefined}
+                    download="event.ics"
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold cursor-pointer"
+                    style={{ background: "var(--color-primary-subtle)", color: "var(--color-primary)" }}
+                  >
+                    <CalendarPlus className="w-3 h-3" /> Add to calendar
+                  </a>
                 </div>
               )}
               {c.location && (
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-3.5 h-3.5 text-[#0D1117] shrink-0" />
-                  <span className="text-xs text-[#0D1117]">{c.location}</span>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-3.5 h-3.5 text-[#0D1117] shrink-0" />
+                    <span className="text-xs text-[#0D1117]">{c.location}</span>
+                  </div>
+                  <a
+                    href={buildMapsHref(c.location)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold cursor-pointer"
+                    style={{ background: "var(--color-primary-subtle)", color: "var(--color-primary)" }}
+                  >
+                    <Navigation className="w-3 h-3" /> Get directions
+                  </a>
                 </div>
               )}
               <div className="flex items-center gap-2">

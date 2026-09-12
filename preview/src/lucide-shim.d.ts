@@ -53,6 +53,7 @@ declare module 'lucide-react' {
   export const Sun: LucideIcon;
   export const Sunset: LucideIcon;
   export const CalendarDays: LucideIcon;
+  export const CalendarPlus: LucideIcon;
   export const Newspaper: LucideIcon;
   export const Heart: LucideIcon;
   export const MessageCircle: LucideIcon;
