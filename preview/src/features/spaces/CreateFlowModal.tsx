@@ -79,15 +79,20 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
             title: offerTitle.trim(),
             description: offerDescription.trim(),
             price: Number(offerPrice),
-            currency: 'KES'
+            currency: 'KES',
+            type: offerType
           }
         });
 
         if (res.ok && res.data?.space) {
           const createdSpace = res.data.space;
-          // Publish initial offer if created
-          if (createdSpace.offers && createdSpace.offers.length > 0) {
-            await briefApi.publishSpaceOffer(createdSpace.id, createdSpace.offers[0].id);
+          // Publish the specific initial offer the server created. Do NOT
+          // guess `offers[0]` — a space shares the owner's vendor, so the
+          // first offer in the list may be a pre-existing listing.
+          const offerId = (createdSpace as any).initialOfferId
+            ?? createdSpace.offers?.[0]?.id;
+          if (offerId) {
+            await briefApi.publishSpaceOffer(createdSpace.id, offerId);
           }
           onCompleted(createdSpace);
           onClose();

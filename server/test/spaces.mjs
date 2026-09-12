@@ -217,4 +217,36 @@ check('dispatch transitions to ready_at_stage', updatedDispatch.status === 'read
 const finalActivities = spaces.getSpaceActivities(space.id);
 check('activity log records parcel_dispatched event', finalActivities.some(a => a.kind === 'parcel_dispatched'));
 
+// ---------------------------------------------------------------------------
+// REGRESSION: a space shares its owner's vendor, so `offers` can contain
+// pre-existing listings. `createSpace` must return the SPECIFIC initial offer
+// id (`initialOfferId`), never force the caller to guess `offers[0]`.
+// ---------------------------------------------------------------------------
+const repeatOwner = auth.createUser({ handle: 'repeatowner', displayName: 'Repeat', password: 'password123' });
+// The owner already has a vendor with an ACTIVE listing (e.g. from Marketplace).
+const { createVendor } = await import('../src/domain/vendor.js');
+const { createListing, transitionListing } = await import('../src/domain/listing.js');
+const preVendor = createVendor({ ownerId: repeatOwner.id, displayName: 'Old Shop' });
+const oldListing = createListing({ vendorId: preVendor.id, title: 'Old Widget', price: 100, currency: 'KES' });
+transitionListing(oldListing.id, 'active');
+
+const space2 = spaces.createSpace({
+  ownerId: repeatOwner.id,
+  name: 'My New Shop',
+  type: 'business',
+  goal: 'launch',
+  initialOffer: { title: 'New Cake', price: 4500, currency: 'KES' }
+});
+
+check('createSpace returns the specific initialOfferId', Boolean(space2.initialOfferId) && space2.initialOfferId.startsWith('list_'));
+check('initialOfferId is the NEW offer, not a pre-existing listing', space2.initialOfferId !== oldListing.id);
+check('offers still include the pre-existing listing (shared vendor)', space2.offers.some((o) => o.id === oldListing.id));
+
+const pub2 = spaces.publishSpaceOffer(space2.id, space2.initialOfferId, { callerId: repeatOwner.id });
+check('publishing by initialOfferId activates the NEW offer', pub2.status === 'active' && pub2.id === space2.initialOfferId);
+
+const again2 = spaces.getSpace(space2.id, { callerId: repeatOwner.id });
+const newOffer = again2.offers.find((o) => o.id === space2.initialOfferId);
+check('the new offer is active after publishing it specifically', newOffer && newOffer.status === 'active');
+
 console.log('SPACES DOMAIN, CHAT, MONEY & CARGO DISPATCH TESTS PASSED!\n');

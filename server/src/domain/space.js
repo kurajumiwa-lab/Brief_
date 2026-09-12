@@ -88,9 +88,13 @@ export function createSpace({
     metadata: { type, goal }
   });
 
-  // If initial offer provided, create it immediately
+  // If initial offer provided, create it immediately and remember its id so
+  // the caller can target it precisely. (Do NOT force the caller to guess
+  // `offers[0]` — a space shares the owner's vendor, so `offers` can contain
+  // pre-existing listings that are NOT this offer.)
+  let initialOfferId = null;
   if (initialOffer && initialOffer.title && initialOffer.price) {
-    createSpaceOffer(spaceId, {
+    const created = createSpaceOffer(spaceId, {
       title: initialOffer.title,
       price: initialOffer.price,
       currency: initialOffer.currency || 'KES',
@@ -98,9 +102,11 @@ export function createSpace({
       description: initialOffer.description || '',
       callerId: ownerId
     });
+    initialOfferId = created.id;
   }
 
-  return hydrateSpace(space);
+  const hydrated = hydrateSpace(space);
+  return initialOfferId ? { ...hydrated, initialOfferId } : hydrated;
 }
 
 /**

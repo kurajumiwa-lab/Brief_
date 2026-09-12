@@ -1720,6 +1720,7 @@ export interface SpaceCreate {
     description?: string;
     price: number;
     currency?: string;
+    type?: 'product' | 'service' | 'experience' | 'event';
   };
 }
 
