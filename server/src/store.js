@@ -117,6 +117,16 @@ const EMPTY = {
   // src/domain/lipaMdogo.js.
   lipaMdogoContracts: [],
   lipaMdogoPayments: [],
+  // Chama — the ledger + calculator for EXISTING table-banking groups. Brief
+  // is not the chama and not the lender: these rows record contributions,
+  // rotation, loans (computed schedules, not lent), repayments, and
+  // maker-checker payouts. The pool is derived; no money touches Brief. See
+  // src/domain/chama.js.
+  chamas: [],
+  chamaContributions: [],
+  chamaLoans: [],
+  chamaRepayments: [],
+  chamaPayouts: [],
   // P2P ticket resale (Tikiti integration T1). A ticket is ONE admitted
   // seat, born from a confirmed campaign registration; its scannable code
   // IS the registration's gate code, versioned so a transfer kills every

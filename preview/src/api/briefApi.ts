@@ -4452,3 +4452,83 @@ export function getMyLipaMdogo(): Promise<ApiResult<LipaMdogoContract[]>> {
   return request('/api/me/lipa-mdogo', undefined, r =>
     Array.isArray(r?.contracts) ? r.contracts : undefined);
 }
+
+// ---------------------------------------------------------------------------
+// CHAMA — the table-banking ledger + calculator (tool for existing groups).
+// ---------------------------------------------------------------------------
+export interface ChamaSummary {
+  id: string;
+  name: string;
+  contributionAmount: number;
+  currency: string;
+  members: number;
+  cashOnHand: number;
+  totalContributed: number;
+  totalPaidOut: number;
+  loanedOut: number;
+  totalRepaid: number;
+  nextRecipient: string | null;
+  nextRecipientName: string | null;
+  membersNotYetContributed: string[];
+  membersNotYetReceived: string[];
+  activeLoans: Array<{ id: string; borrowerId: string; principal: number; ratePercent: number; remaining: number }>;
+  note: string;
+}
+export interface ChamaRow {
+  id: string;
+  name: string;
+  ownerId: string;
+  contributionAmount: number;
+  currency: string;
+  cycleDays: number;
+  status: string;
+  members: Array<{ userId: string; joinedAt: string }>;
+  summary?: ChamaSummary;
+}
+export interface ChamaRotation {
+  order: Array<{ userId: string; handle: string | null; displayName: string | null; isCurrent: boolean; received: boolean }>;
+  currentIndex: number;
+  currentMemberId: string | null;
+  nextMemberId: string | null;
+  note: string;
+}
+export interface ChamaMe {
+  memberId: string;
+  contributedKes: number;
+  contributedCount: number;
+  receivedKes: number;
+  isNext: boolean;
+  owesKes: number;
+  loans: Array<{ id: string; remaining: number; status: string }>;
+}
+export interface ChamaDetail {
+  chama: ChamaRow;
+  summary: ChamaSummary;
+  rotation: ChamaRotation;
+  me: ChamaMe;
+}
+export function getMyChamas(): Promise<ApiResult<ChamaRow[]>> {
+  return request('/api/me/chamas', undefined, r => Array.isArray(r?.chamas) ? r.chamas : undefined);
+}
+export function getChama(id: string): Promise<ApiResult<ChamaDetail>> {
+  return request(`/api/chamas/${encodeURIComponent(id)}`, undefined, r =>
+    r?.chama && r?.summary && r?.rotation ? r : undefined);
+}
+export function createChama(body: { name: string; contributionAmount: number; currency?: string; cycleDays?: number; latePenaltyKes?: number }): Promise<ApiResult<ChamaRow>> {
+  return request('/api/chamas', { method: 'POST', body: JSON.stringify(body) }, r => r?.chama ? r.chama : undefined);
+}
+export function joinChama(id: string): Promise<ApiResult<ChamaRow>> {
+  return request(`/api/chamas/${encodeURIComponent(id)}/join`, { method: 'POST', body: '{}' }, r => r?.chama ? r.chama : undefined);
+}
+export function recordChamaContribution(id: string, body: { amount: number; receiptHash?: string | null; idempotencyKey?: string }): Promise<ApiResult<{ contribution: any; summary: ChamaSummary }>> {
+  return request(`/api/chamas/${encodeURIComponent(id)}/contributions`, { method: 'POST', body: JSON.stringify(body) }, r => r?.contribution ? r : undefined);
+}
+export function advanceChamaTurn(id: string): Promise<ApiResult<{ rotation: ChamaRotation }>> {
+  return request(`/api/chamas/${encodeURIComponent(id)}/rotate`, { method: 'POST', body: '{}' }, r => r?.rotation ? r : undefined);
+}
+export function applyChamaLoan(id: string, body: { principal: number; interestType?: 'flat' | 'reducing_balance'; ratePercent?: number; termMonths: number; guarantorsRequired?: number }): Promise<ApiResult<{ loan: any; schedule: any }>> {
+  return request(`/api/chamas/${encodeURIComponent(id)}/loans`, { method: 'POST', body: JSON.stringify(body) }, r => r?.loan ? r : undefined);
+}
+export function repayChamaLoan(loanId: string, body: { amount: number; receiptHash?: string | null; idempotencyKey?: string }): Promise<ApiResult<{ repayment: any; balance: any }>> {
+  return request(`/api/chama-loans/${encodeURIComponent(loanId)}/repay`, { method: 'POST', body: JSON.stringify(body) }, r => r?.repayment ? r : undefined);
+}

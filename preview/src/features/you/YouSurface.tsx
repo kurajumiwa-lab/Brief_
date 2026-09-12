@@ -5,6 +5,7 @@ import type { Subscription, SubscriptionJoin } from "../../api/types";
 import { MotionList } from "../../ui/motion/MotionList";
 import { MotionStatus } from "../../ui/motion/MotionStatus";
 import { EarnSurface } from "./EarnSurface";
+import { ChamaSurface } from "./ChamaSurface";
 
 // ---------------------------------------------------------------------------
 // YOU — the member's own profile, follows and subscriptions (Phase 3).
@@ -32,7 +33,7 @@ const KIND_LABELS: Record<string, string> = {
   community: "Communities"
 };
 
-type Section = "profile" | "following" | "subscriptions" | "earn";
+type Section = "profile" | "following" | "subscriptions" | "earn" | "chama";
 
 export function YouSurface({
   onOpenEntity,
@@ -178,6 +179,7 @@ export function YouSurface({
         {tab("following", "Following")}
         {tab("subscriptions", "Subscriptions")}
         {tab("earn", "Earn")}
+        {tab("chama", "Chama")}
       </div>
 
       {notice && (
@@ -339,6 +341,10 @@ export function YouSurface({
 
       {section === "earn" && (
         <EarnSurface onRequireAuth={onRequireAuth} />
+      )}
+
+      {section === "chama" && (
+        <ChamaSurface onRequireAuth={onRequireAuth} />
       )}
     </section>
   );

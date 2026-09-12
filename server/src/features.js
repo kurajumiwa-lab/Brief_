@@ -40,6 +40,7 @@ const DEFINITIONS = [
   { key: 'partner', domain: 'partner', label: 'Distribution partners & revenue share', configured: () => true },
   { key: 'field_agents', domain: 'fieldAgent', label: 'Field agents & territory overrides', configured: () => true },
   { key: 'lipa_mdogo', domain: 'lipaMdogo', label: 'Asset-financing records & collection (Lipa Mdogo)', configured: () => true },
+  { key: 'chama', domain: 'chama', label: 'Chama / table-banking ledger & calculator', configured: () => true },
   // Always-configured: these run on the local store and need no credential.
   { key: 'auth',      domain: 'auth',       label: 'Accounts & sessions',             configured: () => true },
   { key: 'onboarding',domain: 'onboarding', label: 'Onboarding & service ladder',     configured: () => true },
