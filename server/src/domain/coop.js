@@ -38,6 +38,13 @@ function tokens(...texts) {
 
 // --- posts ---------------------------------------------------------------------
 
+// A modest rate limit: one actor may post at most this many intents per hour.
+// This is sybil-friction, not a full KYC gate — it stops a single account from
+// flooding the cooperation graph with fake "have/need" posts to farm
+// confirmations, without blocking a genuine member.
+export const MAX_POSTS_PER_HOUR = 10;
+const POST_WINDOW_MS = 60 * 60 * 1000;
+
 export function createPost(actorId, input = {}) {
   if (!actorId) throw new Error('sign in to post');
   const intent = String(input.intent ?? '');
@@ -46,6 +53,16 @@ export function createPost(actorId, input = {}) {
   if (!title || title.length < 4) throw new Error('say what you have or need (at least a few words)');
   const county = input.county ? String(input.county).trim().slice(0, 40) : null;
   const town = input.town ? String(input.town).trim().slice(0, 40) : null;
+
+  // Enforce the cooldown BEFORE writing: count this actor's posts in the last
+  // hour from real rows, and refuse past the cap. A post that never lands
+  // cannot be farmed.
+  const cutoff = new Date(Date.now() - POST_WINDOW_MS).toISOString();
+  const recent = store.filter('coopPosts', (p) => p.userId === actorId && p.status === 'open' && p.createdAt >= cutoff);
+  if (recent.length >= MAX_POSTS_PER_HOUR) {
+    throw new Error(`you can post at most ${MAX_POSTS_PER_HOUR} intents per hour`);
+  }
+
   return store.insert('coopPosts', {
     id: newId('coop'),
     userId: actorId,

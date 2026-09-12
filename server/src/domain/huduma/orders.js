@@ -27,26 +27,32 @@
 import { store, newId } from '../../store.js';
 import { getService, priceFor } from './catalog.js';
 
-export const ORDER_STATUS = ['PENDING', 'PAID', 'RUNNING', 'COMPLETED', 'REFUNDED'];
-export const ESCROW_STATUS = ['NONE', 'LOCKED', 'RELEASED', 'REFUNDED'];
+export const ORDER_STATUS = ['PENDING', 'PAID', 'RUNNING', 'COMPLETED', 'REFUNDED', 'EXPIRED'];
+export const ESCROW_STATUS = ['NONE', 'LOCKED', 'RELEASED', 'REFUNDED', 'EXPIRED'];
 
 // Server-authoritative lifecycle. Same rule as every other domain here: no
 // backwards edge out of a terminal/economic state, and no skipping the
 // reconciled-payment gate. COMPLETED requires the escrow to have been LOCKED,
 // which requires real money — so completion can never be faked.
+// EXPIRED is the escalation path that was missing: a paid order whose executor
+// never completes (or never starts) must not sit in permanent lock forever.
+// It is RECORDS-ONLY (no money moves): expiry flags the escrow for a manual
+// refund by an operator, exactly like refundOrder.
 const VALID_ORDER_TRANSITIONS = {
-  PENDING: ['PAID', 'REFUNDED'],
-  PAID: ['RUNNING', 'REFUNDED'],
-  RUNNING: ['COMPLETED', 'REFUNDED'],
+  PENDING: ['PAID', 'REFUNDED', 'EXPIRED'],
+  PAID: ['RUNNING', 'REFUNDED', 'EXPIRED'],
+  RUNNING: ['COMPLETED', 'REFUNDED', 'EXPIRED'],
   COMPLETED: [],
-  REFUNDED: []
+  REFUNDED: [],
+  EXPIRED: []
 };
 
 const VALID_ESCROW_TRANSITIONS = {
   NONE: ['LOCKED'],
-  LOCKED: ['RELEASED', 'REFUNDED'],
+  LOCKED: ['RELEASED', 'REFUNDED', 'EXPIRED'],
   RELEASED: [],
-  REFUNDED: []
+  REFUNDED: [],
+  EXPIRED: []
 };
 
 function history(row) {
@@ -279,6 +285,38 @@ export function refundOrder(orderId, { reason = 'refunded' } = {}) {
     setEscrow(orderId, 'REFUNDED', new Date().toISOString(), reason);
   }
   return hydrate(store.find('hudumaOrders', (o) => o.id === orderId));
+}
+
+/**
+ * Expire an order stuck in a non-terminal state (paid but never executed, or
+ * running past its deadline). This is the ESCALATION PATH a permanent-lock
+ * scenario needs: a citizen's money must never sit in LOCKED escrow with no
+ * way out. It is RECORDS-ONLY — the escrow is flagged EXPIRED for a manual
+ * refund by an operator, exactly like refundOrder; no money moves here.
+ */
+export function expireOrder(orderId, { reason = 'expired' } = {}) {
+  const order = store.find('hudumaOrders', (o) => o.id === orderId);
+  if (!order) throw new Error('order not found');
+  if (order.status === 'COMPLETED' || order.status === 'REFUNDED' || order.status === 'EXPIRED') {
+    throw new Error(`a ${order.status} order cannot be expired`);
+  }
+  transitionOrder(orderId, 'EXPIRED', { note: reason });
+  if (order.escrowStatus === 'LOCKED') {
+    setEscrow(orderId, 'EXPIRED', new Date().toISOString(), reason);
+  }
+  return hydrate(store.find('hudumaOrders', (o) => o.id === orderId));
+}
+
+/**
+ * The operator-facing sweep: orders in a non-terminal paid state that are older
+ * than a deadline, so a human can expire them. Derived, never stored — it reads
+ * rows and reports, it does not mutate.
+ */
+export function listExpiringOrders(olderThanMs = 7 * 86400000) {
+  const cutoff = new Date(Date.now() - olderThanMs).toISOString();
+  return store.filter('hudumaOrders', (o) =>
+    (o.status === 'PAID' || o.status === 'RUNNING') && o.createdAt < cutoff
+  );
 }
 
 // ---- internal transition helpers -----------------------------------------

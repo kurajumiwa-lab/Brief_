@@ -58,7 +58,8 @@ export function register(app) {
         groupBuyId: req.params.id,
         memberRef: req.body?.memberRef,
         amount: req.body?.amount,
-        source: req.body?.source ?? 'mpesa'
+        source: req.body?.source ?? 'mpesa',
+        actorId: me // the authenticated caller is stamped on the record
       });
       res.status(201).json(result);
     } catch (e) {

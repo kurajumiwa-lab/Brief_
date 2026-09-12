@@ -488,7 +488,19 @@ function persist() {
   if (transactionDepth) return;
   ensureDir();
   const tmp = `${DB_FILE}.tmp`;
+  // writeFileSync is the mock point the disk-failure tests intercept — keep it.
   fs.writeFileSync(tmp, JSON.stringify(db, null, 2));
+  // fsync BEFORE the rename: an atomic rename is only durable if the new file's
+  // contents have actually reached disk. Without this, a power loss after
+  // renameSync can leave the visible file truncated or empty while the data is
+  // still in the OS page cache — the exact "lost settled write" the money paths
+  // must never suffer.
+  const fd = fs.openSync(tmp, 'r+');
+  try {
+    fs.fsyncSync(fd);
+  } finally {
+    fs.closeSync(fd);
+  }
   fs.renameSync(tmp, DB_FILE); // atomic swap
 }
 
@@ -531,6 +543,17 @@ export const store = {
   update(collection, id, patch) {
     const row = db[collection].find((r) => r.id === id);
     if (!row) return null;
+    // LEDGER IMMUTABILITY: the money record's amount, currency and type are
+    // set once at creation and must never change. A status transition may
+    // update `status` + `history`, but rewriting the amount after the fact is
+    // how a forged total becomes forged money. Reject it at the store so no
+    // future caller can do it silently.
+    if (collection === 'ledgerTransactions') {
+      const forbidden = ['amount', 'currency', 'type'].filter((k) => Object.prototype.hasOwnProperty.call(patch, k));
+      if (forbidden.length > 0) {
+        throw new Error(`ledger fields are immutable: ${forbidden.join(', ')}`);
+      }
+    }
     touched(collection);
     const before = structuredClone(row);
     Object.assign(row, patch, { updatedAt: new Date().toISOString() });

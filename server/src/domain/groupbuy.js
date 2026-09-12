@@ -143,6 +143,7 @@ export function receiptHash(contribution) {
     contribution.memberRef,
     contribution.amount,
     contribution.source,
+    contribution.contributorId, // bind the recording actor into the hash
     contribution.createdAt
   ].join('|');
   return crypto.createHash('sha256').update(canonical).digest('hex').slice(0, 24);
@@ -153,7 +154,7 @@ export function receiptHash(contribution) {
  * Records the contribution, writes the ledger money-record, emits the signal
  * the router fans out, and returns the structured receipt.
  */
-export function contribute({ groupBuyId, memberRef, amount, source = 'mpesa' }) {
+export function contribute({ groupBuyId, memberRef, amount, source = 'mpesa', actorId = null }) {
   const buy = store.find('groupBuys', (b) => b.id === groupBuyId);
   if (!buy || buy.status === 'closed') throw new Error('group buy not found');
   if (!memberRef || !String(memberRef).trim()) throw new Error('member reference is required');
@@ -172,6 +173,10 @@ export function contribute({ groupBuyId, memberRef, amount, source = 'mpesa' }) 
     memberRef: String(memberRef).trim().slice(0, 80),
     amount: value,
     source,
+    // The authenticated actor who RECORDED this. A contribution is still a
+    // self-attested cash record (no provider), but it must be traceable to a
+    // real account — an anonymous phantom contribution is the spoofing hole.
+    contributorId: actorId ?? null,
     createdAt: now
   };
   contribution.receiptHash = receiptHash(contribution);
@@ -221,6 +226,7 @@ export function contribute({ groupBuyId, memberRef, amount, source = 'mpesa' }) 
       memberRef: contribution.memberRef,
       amount: value,
       source,
+      contributorId: contribution.contributorId,
       receiptHash: contribution.receiptHash,
       createdAt: now
     },
