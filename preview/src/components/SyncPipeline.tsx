@@ -82,7 +82,7 @@ export function SyncPipeline({ run, pending }: SyncPipelineProps) {
                       '#0D1117/40',
                     borderColor:
                       state === 'done' ? '#0D1117' :
-                      state === 'active' ? '#FF5A1F' : '#E5E8EC'
+                      state === 'active' ? '#C8963E' : '#E5E8EC'
                   }}
                 >
                   {state === 'done' ? '✓' : state === 'blocked' ? '⏸' : i + 1}
@@ -110,7 +110,7 @@ export function SyncPipeline({ run, pending }: SyncPipelineProps) {
                     style={{
                       background:
                         stageFor(run, NODES[i + 1].id) && !pending
-                          ? '#FF5A1F' : '#E5E8EC'
+                          ? '#C8963E' : '#E5E8EC'
                     }}
                   />
                 </div>

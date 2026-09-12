@@ -18,7 +18,7 @@ import { CollectionPage } from './CollectionPage';
 const INK = '#0D1117';
 const MUTED = 'rgba(13, 17, 23,0.62)';
 const LINE = '#E5E8EC';
-const ACCENT = '#FF5A1F';
+const ACCENT = '#C8963E';
 
 function CoverThumb({ cover, name }: { cover: briefApi.CollectionCover; name: string }) {
   const urls = cover.kind === 'mosaic' ? (cover.urls ?? []) : cover.kind === 'single' || cover.kind === 'custom' ? [cover.url ?? ''] : [];
@@ -121,7 +121,7 @@ export function CollectionsSurface({ authed, savedCount, onClose, onOpenObject, 
           </button>
           <h1 className="text-[16px] font-extrabold text-[#0D1117]">Collections</h1>
           <button type="button" onClick={() => { setCreating((v) => !v); setError(null); }} aria-label="New collection"
-            className="flex items-center gap-1 rounded-full bg-[#FF5A1F] px-3 py-1.5 text-[10px] font-extrabold text-[#0D1117] cursor-pointer hover:bg-[#EFF1F4]">
+            className="flex items-center gap-1 rounded-full bg-[#C8963E] px-3 py-1.5 text-[10px] font-extrabold text-[#0D1117] cursor-pointer hover:bg-[#EFF1F4]">
             <Plus className="h-3.5 w-3.5" /> New
           </button>
         </div>
@@ -168,7 +168,7 @@ export function CollectionsSurface({ authed, savedCount, onClose, onOpenObject, 
             {error && <p className="mt-2 text-[10px] font-bold text-[#DC2626]">{error}</p>}
             <div className="mt-3 flex gap-2">
               <button type="button" onClick={create} disabled={busy || !name.trim()}
-                className="rounded-full bg-[#FF5A1F] px-4 py-1.5 text-[10px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40">
+                className="rounded-full bg-[#C8963E] px-4 py-1.5 text-[10px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40">
                 Create
               </button>
               <button type="button" onClick={() => setCreating(false)}
@@ -185,7 +185,7 @@ export function CollectionsSurface({ authed, savedCount, onClose, onOpenObject, 
         {/* Saved (quick-save bucket — the existing server saves). */}
         <button type="button" onClick={onOpenSaved}
           className="mb-3 flex w-full items-center gap-3 rounded-2xl border border-[#2563EB]/30 bg-gradient-to-r from-[#F0F2F5] to-[#EFF1F4] p-3 text-left cursor-pointer hover:border-[#2563EB]">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#FF5A1F] text-[#0D1117]">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#C8963E] text-[#0D1117]">
             <Bookmark className="h-5 w-5" />
           </span>
           <span className="min-w-0 flex-1">
@@ -194,7 +194,7 @@ export function CollectionsSurface({ authed, savedCount, onClose, onOpenObject, 
               Your quick saves — organise them into collections any time
             </span>
           </span>
-          <span className="rounded-full bg-[#FFFFFF] px-2.5 py-1 text-[10px] font-extrabold text-[#FF5A1F]">
+          <span className="rounded-full bg-[#FFFFFF] px-2.5 py-1 text-[10px] font-extrabold text-[#C8963E]">
             {savedCount} {savedCount === 1 ? 'item' : 'items'}
           </span>
         </button>
@@ -226,14 +226,14 @@ export function CollectionsSurface({ authed, savedCount, onClose, onOpenObject, 
                   <div className="flex items-center justify-between gap-1">
                     <h3 className="truncate text-[13px] font-extrabold text-[#0D1117]">{c.name}</h3>
                     {c.visibility === 'public'
-                      ? <Globe className="h-3 w-3 shrink-0 text-[#FF5A1F]" />
+                      ? <Globe className="h-3 w-3 shrink-0 text-[#C8963E]" />
                       : <Lock className="h-3 w-3 shrink-0 text-[rgba(13, 17, 23,0.4)]" />}
                   </div>
                   <p className="mt-0.5 text-[10px] font-semibold text-[rgba(13, 17, 23,0.62)]">
                     {c.count} {c.count === 1 ? 'item' : 'items'} · {relativeDay(c.updatedAt)}
                   </p>
                   {c.locations.areas.length > 0 && (
-                    <p className="mt-1 flex items-center gap-0.5 truncate text-[9px] font-semibold text-[#FF5A1F]">
+                    <p className="mt-1 flex items-center gap-0.5 truncate text-[9px] font-semibold text-[#C8963E]">
                       <MapPin className="h-2.5 w-2.5 shrink-0" />
                       {c.locations.areas.slice(0, 2).join(' · ')}
                     </p>

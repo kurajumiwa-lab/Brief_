@@ -483,7 +483,7 @@ export function InterCountyDesk({
 
             <h2 className="text-xl sm:text-2xl font-black mt-2 text-white tracking-tight flex items-center space-x-2">
               <span>Long-Distance Traveler & Cargo Matching</span>
-              <Sparkles className="w-5 h-5 text-[#FF5A1F]" />
+              <Sparkles className="w-5 h-5 text-[#C8963E]" />
             </h2>
             <p className="text-xs text-indigo-200/80 mt-0.5 max-w-xl">
               WAIRO multi-tier freight ecosystem: Lori Systems 50% backhaul arbitrage, Fargo KES 50 pickup counters, Sendy Freight, and Bolt Rapid.
@@ -543,7 +543,7 @@ export function InterCountyDesk({
               <span>{tab.label}</span>
               {tab.count !== undefined && (
                 <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                  activeTab === tab.id ? 'bg-[#FF5A1F] text-white' : 'bg-white/20 text-white'
+                  activeTab === tab.id ? 'bg-[#C8963E] text-white' : 'bg-white/20 text-white'
                 }`}>
                   {tab.count}
                 </span>
@@ -751,7 +751,7 @@ export function InterCountyDesk({
         <div className="p-5 sm:p-6 space-y-5">
           <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 flex items-start justify-between gap-3">
             <div className="space-y-1">
-              <span className="text-[10px] font-mono font-bold text-[#FF5A1F] uppercase tracking-wider">
+              <span className="text-[10px] font-mono font-bold text-[#C8963E] uppercase tracking-wider">
                 COMMISSION TRANSPARENCY
               </span>
               <h4 className="text-sm font-black text-[#0D1117]">
@@ -761,7 +761,7 @@ export function InterCountyDesk({
                 Traveling to Mombasa, Kisumu, Nakuru, or Eldoret? Carry vetted boxes and parcels. Get paid directly to your M-Pesa upon recipient PIN verification.
               </p>
             </div>
-            <div className="p-3 rounded-2xl bg-[#FF5A1F] text-white font-mono font-black text-center shrink-0">
+            <div className="p-3 rounded-2xl bg-[#C8963E] text-white font-mono font-black text-center shrink-0">
               <span className="text-lg block leading-none">90%</span>
               <span className="text-[9px] uppercase tracking-wider">PAYOUT</span>
             </div>

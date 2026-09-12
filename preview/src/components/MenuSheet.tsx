@@ -170,7 +170,7 @@ function LocalCard({ onSelect }: { onSelect: (target: MenuTarget) => void }) {
           aria-label="Open your profile"
           className="flex min-w-0 flex-1 items-center gap-3 text-left cursor-pointer"
         >
-          <span className="h-10 w-10 rounded-xl bg-[#FF5A1F] text-[#0D1117] flex items-center justify-center text-[13px] font-black shrink-0" aria-hidden="true">
+          <span className="h-10 w-10 rounded-xl bg-[#C8963E] text-[#0D1117] flex items-center justify-center text-[13px] font-black shrink-0" aria-hidden="true">
             {initials(displayName)}
           </span>
           <span className="min-w-0 flex-1">
@@ -187,7 +187,7 @@ function LocalCard({ onSelect }: { onSelect: (target: MenuTarget) => void }) {
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-extrabold text-[#FF5A1F] hover:bg-[#F0F2F5] cursor-pointer"
+          className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-extrabold text-[#C8963E] hover:bg-[#F0F2F5] cursor-pointer"
         >
           {open ? 'Close' : 'View'} →
         </button>
@@ -207,7 +207,7 @@ function LocalCard({ onSelect }: { onSelect: (target: MenuTarget) => void }) {
             <button
               type="button"
               onClick={() => void shareCard()}
-              className="flex-1 h-9 rounded-xl bg-[#FF5A1F] text-[#0D1117] text-[11.5px] font-extrabold flex items-center justify-center gap-1.5 cursor-pointer"
+              className="flex-1 h-9 rounded-xl bg-[#C8963E] text-[#0D1117] text-[11.5px] font-extrabold flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <Share2 className="h-3.5 w-3.5" /> Share profile
             </button>
@@ -259,10 +259,10 @@ function ExploreGrid({ onSelect }: { onSelect: (target: MenuTarget) => void }) {
             key={label}
             type="button"
             onClick={() => onSelect(target)}
-            className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-3 text-left hover:border-[#FF5A1F] transition-colors cursor-pointer"
+            className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-3 text-left hover:border-[#C8963E] transition-colors cursor-pointer"
           >
             <span className="h-8 w-8 rounded-xl bg-[#F0F2F5] flex items-center justify-center">
-              <Icon className="h-4 w-4 text-[#FF5A1F]" />
+              <Icon className="h-4 w-4 text-[#C8963E]" />
             </span>
             <p className="mt-2 text-[13px] font-extrabold text-[#0D1117] leading-tight">{label}</p>
             <p className="mt-0.5 text-[9.5px] text-[#0D1117]/55 leading-snug">{detail}</p>
@@ -298,7 +298,7 @@ function QuickActions({ onSelect, unread }: { onSelect: (target: MenuTarget) => 
           }`}
         >
           <span className="h-7 w-7 rounded-lg bg-[#F0F2F5] flex items-center justify-center shrink-0">
-            <Icon className="h-3.5 w-3.5 text-[#FF5A1F]" />
+            <Icon className="h-3.5 w-3.5 text-[#C8963E]" />
           </span>
           <span className="flex-1 min-w-0">
             <span className="block text-[12.5px] font-extrabold text-[#0D1117] leading-tight">{label}</span>
@@ -345,12 +345,12 @@ function RegionGallery({
               aria-pressed={selected}
               className={`rounded-xl border p-2.5 text-center transition-colors cursor-pointer ${
                 selected
-                  ? 'border-[#FF5A1F] bg-[#FFFFFF] shadow-sm'
-                  : 'border-[#E5E8EC] bg-[#FFFFFF] hover:border-[#FF5A1F]'
+                  ? 'border-[#C8963E] bg-[#FFFFFF] shadow-sm'
+                  : 'border-[#E5E8EC] bg-[#FFFFFF] hover:border-[#C8963E]'
               }`}
             >
               <span className="block text-[20px] leading-none" aria-hidden="true">{region.flag}</span>
-              <span className={`mt-1 block truncate text-[10px] font-extrabold ${selected ? 'text-[#FF5A1F]' : 'text-[#0D1117]'}`}>
+              <span className={`mt-1 block truncate text-[10px] font-extrabold ${selected ? 'text-[#C8963E]' : 'text-[#0D1117]'}`}>
                 {region.label}
               </span>
             </button>
@@ -411,7 +411,7 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
         <div className="flex items-center gap-2.5">
           {/* §13 — the Brief mark: a small, ownable brand mark, not another
               product's logo. */}
-          <span className="h-8 w-8 shrink-0 rounded-lg bg-[#FF5A1F] text-[#0D1117] flex items-center justify-center text-[14px] font-black" aria-hidden="true">B</span>
+          <span className="h-8 w-8 shrink-0 rounded-lg bg-[#C8963E] text-[#0D1117] flex items-center justify-center text-[14px] font-black" aria-hidden="true">B</span>
           <div>
             <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#0D1117]/60">Brief · Menu</p>
             <h1 className="mt-0.5 text-[19px] sm:text-[21px] font-black tracking-tight text-[#0D1117]">
@@ -424,7 +424,7 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
           type="button"
           onClick={onClose}
           aria-label="Close menu"
-          className="h-10 w-10 shrink-0 flex items-center justify-center rounded-full bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117] text-[20px] font-light hover:border-[#FF5A1F] transition-colors cursor-pointer"
+          className="h-10 w-10 shrink-0 flex items-center justify-center rounded-full bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117] text-[20px] font-light hover:border-[#C8963E] transition-colors cursor-pointer"
         >
           ×
         </button>
@@ -452,10 +452,10 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
           <button
             type="button"
             onClick={() => onSelect({ tab: 'operate' })}
-            className="w-full bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl px-3.5 py-2.5 flex items-center gap-3 hover:border-[#FF5A1F] transition-colors cursor-pointer"
+            className="w-full bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl px-3.5 py-2.5 flex items-center gap-3 hover:border-[#C8963E] transition-colors cursor-pointer"
           >
             <span className="h-7 w-7 rounded-lg bg-[#F0F2F5] flex items-center justify-center shrink-0">
-              <Settings className="h-3.5 w-3.5 text-[#FF5A1F]" />
+              <Settings className="h-3.5 w-3.5 text-[#C8963E]" />
             </span>
             <span className="flex-1 min-w-0 text-left">
               <span className="block text-[12.5px] font-extrabold text-[#0D1117] leading-tight">Operate</span>

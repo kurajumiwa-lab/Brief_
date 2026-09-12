@@ -129,7 +129,7 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
               type="button"
               onClick={() => void save(true)}
               disabled={!canSave}
-              className="h-8 rounded-lg bg-[#FF5A1F] px-3 text-[11px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
+              className="h-8 rounded-lg bg-[#C8963E] px-3 text-[11px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
             >
               {busy ? '…' : 'Publish'}
             </button>
@@ -192,7 +192,7 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
                     onClick={() => patchDesign({ theme: t.id })}
                     className="rounded-xl border p-2.5 text-left cursor-pointer transition-all"
                     style={{
-                      borderColor: active ? '#FF5A1F' : '#E5E8EC',
+                      borderColor: active ? '#C8963E' : '#E5E8EC',
                       background: t.surface,
                       boxShadow: active ? '0 0 0 1px #2563EB' : undefined
                     }}
@@ -218,18 +218,18 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
                     type="button"
                     onClick={() => patchDesign({ layout: l.id })}
                     className="rounded-xl border p-2.5 text-left cursor-pointer transition-all"
-                    style={{ borderColor: active ? '#FF5A1F' : '#E5E8EC', background: '#FFFFFF', boxShadow: active ? '0 0 0 1px #2563EB' : undefined }}
+                    style={{ borderColor: active ? '#C8963E' : '#E5E8EC', background: '#FFFFFF', boxShadow: active ? '0 0 0 1px #2563EB' : undefined }}
                   >
                     {/* mini wireframe of the layout */}
                     <div className="flex h-9 gap-1">
                       {l.id !== 'center' && l.id !== 'left' && (
                         <div className="flex h-9 w-9 flex-col justify-end gap-0.5 rounded border border-[#E5E8EC] bg-[#F0F2F5] p-0.5">
-                          <div className="h-1 w-3/4 rounded-full bg-[#FF5A1F]" />
+                          <div className="h-1 w-3/4 rounded-full bg-[#C8963E]" />
                           <div className="h-0.5 w-full rounded-full bg-[#E5E8EC]" />
                         </div>
                       )}
                       <div className={`flex flex-1 flex-col justify-end gap-0.5 rounded border border-[#E5E8EC] bg-[#F0F2F5] p-0.5 ${l.id === 'center' ? 'items-center' : l.id === 'left' ? 'items-start' : l.id === 'split' ? 'items-start' : 'items-start'}`}>
-                        <div className="h-1.5 w-2/3 rounded-full bg-[#FF5A1F]" />
+                        <div className="h-1.5 w-2/3 rounded-full bg-[#C8963E]" />
                         <div className="h-0.5 w-full rounded-full bg-[#E5E8EC]" />
                         <div className="h-0.5 w-1/2 rounded-full bg-[#E5E8EC]" />
                       </div>
@@ -312,7 +312,7 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
                   {images.map((url) => (
                     <div key={url} className="group relative overflow-hidden rounded-lg border border-[#E5E8EC]">
                       <img src={url} alt="" className="h-16 w-full object-cover" />
-                      <div className="absolute inset-0 flex items-center justify-center gap-1 bg-[#FF5A1F]/0 opacity-0 transition-all group-hover:bg-[#FF5A1F]/45 group-hover:opacity-100">
+                      <div className="absolute inset-0 flex items-center justify-center gap-1 bg-[#C8963E]/0 opacity-0 transition-all group-hover:bg-[#C8963E]/45 group-hover:opacity-100">
                         <button
                           type="button"
                           onClick={() => makeHero(url)}

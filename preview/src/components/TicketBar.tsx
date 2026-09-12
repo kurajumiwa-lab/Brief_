@@ -51,9 +51,9 @@ export function TicketBar({ onOpenTickets }: { onOpenTickets?: () => void } = {}
           >
             <span
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
-              style={{ background: t.entryState === 'upcoming' ? '#F0F2F5' : '#FF5A1F', border: '1px solid #FF5A1F' }}
+              style={{ background: t.entryState === 'upcoming' ? '#F0F2F5' : '#C8963E', border: '1px solid #C8963E' }}
             >
-              <Ticket className="h-4 w-4" style={{ color: t.entryState === 'upcoming' ? '#FF5A1F' : '#FFFFFF' }} />
+              <Ticket className="h-4 w-4" style={{ color: t.entryState === 'upcoming' ? '#C8963E' : '#FFFFFF' }} />
             </span>
             <div className="min-w-0 flex-1">
               <p className="truncate text-[12px] font-extrabold text-[#0D1117]">{t.eventTitle}</p>

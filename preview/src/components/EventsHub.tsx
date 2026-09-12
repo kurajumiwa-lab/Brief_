@@ -84,7 +84,7 @@ export function EventsHub() {
         <button
           onClick={() => setCategory(null)}
           className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer border ${
-            category === null ? 'bg-[#FF5A1F] text-[#0D1117] border-[#2563EB]' : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
+            category === null ? 'bg-[#C8963E] text-[#0D1117] border-[#2563EB]' : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
           }`}
         >
           Everything
@@ -94,7 +94,7 @@ export function EventsHub() {
             key={c}
             onClick={() => setCategory(category === c ? null : c)}
             className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer border ${
-              category === c ? 'bg-[#FF5A1F] text-[#0D1117] border-[#2563EB]' : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
+              category === c ? 'bg-[#C8963E] text-[#0D1117] border-[#2563EB]' : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
             }`}
           >
             {labels[c] ?? c}
@@ -131,7 +131,7 @@ export function EventsHub() {
           <button
             onClick={() => setFeaturedOnly((v) => !v)}
             className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer border ${
-              featuredOnly ? 'bg-[#FF5A1F] text-[#0D1117] border-[#2563EB]' : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
+              featuredOnly ? 'bg-[#C8963E] text-[#0D1117] border-[#2563EB]' : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
             }`}
           >
             ★ Featured only
@@ -172,7 +172,7 @@ export function EventsHub() {
                 <p className="text-sm font-extrabold text-[#0D1117] truncate">{e.title}</p>
               </div>
               {e.featured && (
-                <span className="shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-[#FF5A1F] text-[#0D1117]">
+                <span className="shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-[#C8963E] text-[#0D1117]">
                   ★ Featured
                 </span>
               )}

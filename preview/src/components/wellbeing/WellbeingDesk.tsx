@@ -373,7 +373,7 @@ export function WellbeingDesk({
                     <p className="text-[11px] text-gray-500">{grp.desc}</p>
                     <div className="flex items-center space-x-3 text-[10px] font-mono text-gray-400 pt-1">
                       <span className="flex items-center space-x-1">
-                        <Clock className="w-3 h-3 text-[#FF5A1F]" />
+                        <Clock className="w-3 h-3 text-[#C8963E]" />
                         <span>{grp.schedule}</span>
                       </span>
                       <span className="flex items-center space-x-1">

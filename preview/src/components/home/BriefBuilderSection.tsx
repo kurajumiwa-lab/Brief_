@@ -150,7 +150,7 @@ export const BriefBuilderSection: React.FC<BriefBuilderSectionProps> = ({
       
       {/* ═══ THE HORIZONTAL PILLS ROW ═══ */}
       <div className="px-5 py-2.5 flex items-center space-x-2.5 overflow-x-auto no-scrollbar">
-        {/* 1. "Build my Brief" Action Pill (Copper / Orange Accent) */}
+        {/* 1. "Build my Brief" Action Pill (Copper / Bronze Accent) */}
         <button
           type="button"
           onClick={toggleExpansionOrSave}

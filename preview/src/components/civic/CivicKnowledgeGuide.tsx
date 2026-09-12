@@ -50,7 +50,7 @@ export function CivicKnowledgeGuide({
     { id: 'share', label: 'Share', icon: Share2, color: '#8B5CF6' },
     { id: 'contact', label: 'Contact', icon: Phone, color: '#3B82F6' },
     { id: 'book', label: 'Book', icon: CalendarDays, color: '#EC4899' },
-    { id: 'buy', label: 'Buy', icon: ShoppingBag, color: '#FF5A1F' },
+    { id: 'buy', label: 'Buy', icon: ShoppingBag, color: '#C8963E' },
     { id: 'report', label: 'Report', icon: Flag, color: '#EF4444' },
     { id: 'verify', label: 'Verify', icon: ShieldCheck, color: '#10B981' },
     { id: 'follow', label: followed ? 'Following' : 'Follow', icon: Plus, color: '#6366F1' }
@@ -149,7 +149,7 @@ export function CivicKnowledgeGuide({
             href="https://brief.ke"
             target="_blank"
             rel="noreferrer"
-            className="text-[#FF5A1F] font-bold flex items-center space-x-1 hover:underline"
+            className="text-[#C8963E] font-bold flex items-center space-x-1 hover:underline"
           >
             <span>Official County Portal</span>
             <ExternalLink className="w-3.5 h-3.5" />

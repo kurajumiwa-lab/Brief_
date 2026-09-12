@@ -81,7 +81,7 @@ export function LocationChip({ label, locating, locError, hasLocation, onLocate,
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close location sheet"
-                className="h-9 w-9 flex items-center justify-center rounded-full bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117] text-[18px] font-light hover:border-[#FF5A1F] cursor-pointer"
+                className="h-9 w-9 flex items-center justify-center rounded-full bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117] text-[18px] font-light hover:border-[#C8963E] cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -91,7 +91,7 @@ export function LocationChip({ label, locating, locError, hasLocation, onLocate,
             <button
               type="button"
               onClick={() => { onLocate(); }}
-              className="flex w-full items-center gap-3 rounded-2xl bg-[#FF5A1F] px-4 py-3.5 text-left text-[13px] font-extrabold text-[#0D1117] cursor-pointer transition-opacity hover:opacity-90"
+              className="flex w-full items-center gap-3 rounded-2xl bg-[#C8963E] px-4 py-3.5 text-left text-[13px] font-extrabold text-[#0D1117] cursor-pointer transition-opacity hover:opacity-90"
             >
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#0D1117]/10">
                 <Compass className="h-5 w-5" />
@@ -117,7 +117,7 @@ export function LocationChip({ label, locating, locError, hasLocation, onLocate,
                     aria-pressed={selected}
                     className={`rounded-xl border px-2 py-2.5 text-[12px] font-semibold transition-colors cursor-pointer ${
                       selected
-                        ? 'bg-[#FF5A1F] text-[#0D1117] border-[#2563EB]'
+                        ? 'bg-[#C8963E] text-[#0D1117] border-[#2563EB]'
                         : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC] hover:border-[#2563EB]'
                     }`}
                   >

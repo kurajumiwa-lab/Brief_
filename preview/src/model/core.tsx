@@ -3977,7 +3977,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
   const c = load.data;
 
   return (
-    <div className="min-h-screen bg-[#0D1117] text-[#0D1117] font-sans selection:bg-[#FF5A1F] selection:text-[#0D1117] flex flex-col">
+    <div className="min-h-screen bg-[#0D1117] text-[#0D1117] font-sans selection:bg-[#C8963E] selection:text-[#0D1117] flex flex-col">
       <div className="flex-1 w-full max-w-lg mx-auto px-4 py-8 space-y-5">
         <div className="flex items-center gap-2">
           <svg width="18" height="18" viewBox="0 0 26 26" aria-hidden="true">
@@ -3995,7 +3995,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
             <p className="text-sm font-extrabold text-[#0D1117]">{load.error}</p>
             <button
               onClick={fetchCampaign}
-              className="px-3 py-1.5 rounded-xl bg-[#FF5A1F] text-[#0D1117] font-extrabold text-[10px] cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-[#C8963E] text-[#0D1117] font-extrabold text-[10px] cursor-pointer"
             >
               Try again
             </button>
@@ -4251,7 +4251,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                   <button
                     disabled={busy || (c.goalAmount != null && !Number(amount))}
                     onClick={submit}
-                    className="w-full py-4 rounded-xl bg-[#FF5A1F] text-[#0D1117] font-extrabold text-sm cursor-pointer disabled:opacity-40"
+                    className="w-full py-4 rounded-xl bg-[#C8963E] text-[#0D1117] font-extrabold text-sm cursor-pointer disabled:opacity-40"
                   >
                     {busy
                       ? 'Registering...'

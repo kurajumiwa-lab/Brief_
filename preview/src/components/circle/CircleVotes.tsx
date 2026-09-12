@@ -108,7 +108,7 @@ export function CircleVotes({
                 </div>
                 <div className="h-1 bg-[#F0F2F5] rounded-full overflow-hidden">
                   <div
-                    className={`h-full ${isLeader ? 'bg-[#FF5A1F]' : 'bg-[#E5E8EC]'}`}
+                    className={`h-full ${isLeader ? 'bg-[#C8963E]' : 'bg-[#E5E8EC]'}`}
                     style={{ width: `${r.pct ?? 0}%` }}
                   />
                 </div>

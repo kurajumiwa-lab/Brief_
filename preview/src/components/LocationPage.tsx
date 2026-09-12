@@ -70,12 +70,12 @@ function GraphCard({ object, onOpenObject }: { object: GraphObject; onOpenObject
           <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-[#2563EB]">{object.type}</span>
           {line && <span className="text-[9px] font-semibold text-[#0D1117]/60">{line}</span>}
           {typeof object.distanceKm === 'number' && (
-            <span className="rounded-full bg-[#F0F2F5] px-1.5 py-0.5 text-[9px] font-bold text-[#FF5A1F]">
+            <span className="rounded-full bg-[#F0F2F5] px-1.5 py-0.5 text-[9px] font-bold text-[#C8963E]">
               {object.distanceKm < 1 ? '<1 km' : `${object.distanceKm} km`}
             </span>
           )}
         </div>
-        <h4 className="mt-0.5 line-clamp-2 text-[12px] font-semibold leading-snug text-[#0D1117] group-hover:text-[#FF5A1F]">
+        <h4 className="mt-0.5 line-clamp-2 text-[12px] font-semibold leading-snug text-[#0D1117] group-hover:text-[#C8963E]">
           {object.title}
         </h4>
         {(object.area || object.county || object.locationName) && (
@@ -158,7 +158,7 @@ export function LocationPage({ name, authed, followedLocations, onClose, onOpenO
         <div className="flex-1 overflow-y-auto pb-safe">
           {missing && (
             <div className="flex flex-col items-center gap-3 px-6 py-24 text-center">
-              <Globe2 className="h-8 w-8 text-[#FF5A1F]" />
+              <Globe2 className="h-8 w-8 text-[#C8963E]" />
               <p className="max-w-xs text-[13px] font-semibold text-[#0D1117]">
                 We don't have that location on Brief.
               </p>
@@ -178,7 +178,7 @@ export function LocationPage({ name, authed, followedLocations, onClose, onOpenO
           {page && (
             <div className="px-4 pb-10 pt-5 sm:px-5">
               {/* Header: name, kind, hierarchy, follow. */}
-              <div className="mb-1 flex flex-wrap items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#FF5A1F]">
+              <div className="mb-1 flex flex-wrap items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#C8963E]">
                 <span className="rounded-full bg-[#F0F2F5] px-2 py-0.5">{KIND_LABEL[page.location.kind] ?? page.location.kind}</span>
                 {page.location.county && page.location.kind !== 'county' && (
                   <button
@@ -202,7 +202,7 @@ export function LocationPage({ name, authed, followedLocations, onClose, onOpenO
                   <button
                     type="button"
                     onClick={() => onFollowLocation(page.location.name)}
-                    className={`flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-[12px] font-extrabold transition-colors ${followed ? 'bg-[#FF5A1F] text-[#0D1117]' : 'bg-[#FF5A1F] text-[#0D1117] hover:bg-[#C2410C]'}`}
+                    className={`flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-[12px] font-extrabold transition-colors ${followed ? 'bg-[#C8963E] text-[#0D1117]' : 'bg-[#C8963E] text-[#0D1117] hover:bg-[#C2410C]'}`}
                   >
                     {followed ? <><Check className="h-3.5 w-3.5" /> Following area</> : <><Plus className="h-3.5 w-3.5" /> Follow this area</>}
                   </button>
@@ -210,7 +210,7 @@ export function LocationPage({ name, authed, followedLocations, onClose, onOpenO
                   <button
                     type="button"
                     onClick={onRequireAuth}
-                    className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#FF5A1F] px-4 py-2 text-[12px] font-extrabold text-[#0D1117] transition-colors hover:bg-[#C2410C]"
+                    className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#C8963E] px-4 py-2 text-[12px] font-extrabold text-[#0D1117] transition-colors hover:bg-[#C2410C]"
                   >
                     <Plus className="h-3.5 w-3.5" /> Follow this area
                   </button>

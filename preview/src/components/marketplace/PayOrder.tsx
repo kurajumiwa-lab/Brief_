@@ -142,7 +142,7 @@ export function PayOrder({ order, onPaid }: PayOrderProps) {
           <button
             onClick={pay}
             disabled={busy || phone.trim().length < 9}
-            className="w-full px-3 py-2 rounded-lg bg-[#FF5A1F] text-[#0D1117] font-extrabold text-[11px] cursor-pointer disabled:opacity-40"
+            className="w-full px-3 py-2 rounded-lg bg-[#C8963E] text-[#0D1117] font-extrabold text-[11px] cursor-pointer disabled:opacity-40"
           >
             {busy ? 'Requesting payment…' : 'Pay now'}
           </button>

@@ -196,7 +196,7 @@ export function BriefAiAssistant({
       {/* ================= HEADER ================= */}
       <div className="bg-[#0D1117] text-white p-4 flex items-center justify-between border-b border-white/10">
         <div className="flex items-center space-x-3">
-          <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-[#FF5A1F] to-[#FF8A00] flex items-center justify-center text-white shadow-md">
+          <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-[#C8963E] to-[#FF8A00] flex items-center justify-center text-white shadow-md">
             <Bot className="w-5 h-5" />
           </div>
           <div>
@@ -229,7 +229,7 @@ export function BriefAiAssistant({
             <div
               className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs shadow-xs ${
                 msg.sender === 'user'
-                  ? 'bg-[#FF5A1F] text-white rounded-tr-none font-medium'
+                  ? 'bg-[#C8963E] text-white rounded-tr-none font-medium'
                   : 'bg-white border border-[#E5E8EC] text-[#0D1117] rounded-tl-none space-y-2'
               }`}
             >
@@ -241,7 +241,7 @@ export function BriefAiAssistant({
                   {msg.cards.map(card => (
                     <div
                       key={card.id}
-                      className="p-3 bg-[#F7F8FA] border border-[#E5E8EC] rounded-xl flex items-center justify-between gap-2 hover:border-[#FF5A1F] transition-colors"
+                      className="p-3 bg-[#F7F8FA] border border-[#E5E8EC] rounded-xl flex items-center justify-between gap-2 hover:border-[#C8963E] transition-colors"
                     >
                       <div className="space-y-0.5 min-w-0">
                         <span className="font-bold text-xs text-[#0D1117] block truncate">
@@ -285,9 +285,9 @@ export function BriefAiAssistant({
 
         {isTyping && (
           <div className="flex items-center space-x-1.5 bg-white border border-gray-200 px-3 py-2 rounded-2xl w-24">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#FF5A1F] animate-bounce" />
-            <span className="w-1.5 h-1.5 rounded-full bg-[#FF5A1F] animate-bounce delay-100" />
-            <span className="w-1.5 h-1.5 rounded-full bg-[#FF5A1F] animate-bounce delay-200" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[#C8963E] animate-bounce" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[#C8963E] animate-bounce delay-100" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[#C8963E] animate-bounce delay-200" />
           </div>
         )}
       </div>
@@ -316,11 +316,11 @@ export function BriefAiAssistant({
           value={inputText}
           onChange={e => setInputText(e.target.value)}
           placeholder="Ask Brief AI anything in your town..."
-          className="flex-1 bg-[#F7F8FA] border border-gray-300 rounded-2xl px-4 py-2.5 text-xs text-[#0D1117] focus:outline-none focus:border-[#FF5A1F]"
+          className="flex-1 bg-[#F7F8FA] border border-gray-300 rounded-2xl px-4 py-2.5 text-xs text-[#0D1117] focus:outline-none focus:border-[#C8963E]"
         />
         <button
           type="submit"
-          className="w-10 h-10 rounded-2xl bg-[#FF5A1F] hover:bg-[#ff4605] text-white flex items-center justify-center cursor-pointer shadow-md transition-all shrink-0"
+          className="w-10 h-10 rounded-2xl bg-[#C8963E] hover:bg-[#ff4605] text-white flex items-center justify-center cursor-pointer shadow-md transition-all shrink-0"
         >
           <Send className="w-4 h-4" />
         </button>

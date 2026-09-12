@@ -71,13 +71,13 @@ export default function RewardsDesk({ settledPoints, rank, accepted, pending }: 
         <>
           <section aria-label="Your referral code" className="rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] p-4 space-y-2">
             <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-[#FF5A1F]" aria-hidden="true" />
+              <Users className="w-4 h-4 text-[#C8963E]" aria-hidden="true" />
               <h3 className="text-[13px] font-extrabold text-[#0D1117]">Your code</h3>
             </div>
-            <p className="text-lg font-extrabold tracking-widest text-[#FF5A1F]">{data.code}</p>
+            <p className="text-lg font-extrabold tracking-widest text-[#C8963E]">{data.code}</p>
             <p className="text-[10px] text-[#0D1117]/60 break-all">{data.link}</p>
             <button type="button" onClick={() => { soundEngine.play('tap'); void copyShare(); }}
-              className="rounded-lg bg-[#FF5A1F] px-3 py-2 text-[11px] font-extrabold text-[#0D1117]">
+              className="rounded-lg bg-[#C8963E] px-3 py-2 text-[11px] font-extrabold text-[#0D1117]">
               Copy WhatsApp share message
             </button>
             {shareMsg && (
@@ -99,7 +99,7 @@ export default function RewardsDesk({ settledPoints, rank, accepted, pending }: 
                 aria-label="Points to convert"
                 className="flex-1 rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117]" />
               <button type="button" onClick={() => { soundEngine.play('heavyTap'); void convert(); }} disabled={busy || !points}
-                className="rounded-lg bg-[#FF5A1F] px-3 py-2 text-[11px] font-extrabold text-[#0D1117] disabled:opacity-40">
+                className="rounded-lg bg-[#C8963E] px-3 py-2 text-[11px] font-extrabold text-[#0D1117] disabled:opacity-40">
                 Convert
               </button>
             </div>

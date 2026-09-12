@@ -118,7 +118,7 @@ export function CircleMembers({
               <button
                 type="submit"
                 disabled={!inviteId.trim() || busyUserId === 'invite'}
-                className="shrink-0 px-3 py-1.5 rounded-xl bg-[#FF5A1F] text-[#0D1117] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+                className="shrink-0 px-3 py-1.5 rounded-xl bg-[#C8963E] text-[#0D1117] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
               >
                 Invite
               </button>
@@ -175,7 +175,7 @@ export function CircleMembers({
                         <button
                           onClick={() => { setConfirmRemove(null); onRemove?.(member.userId); }}
                           disabled={busyUserId === member.userId}
-                          className="px-2.5 py-1 rounded-xl bg-[#FF5A1F] text-[#0D1117] font-extrabold text-[9px] cursor-pointer disabled:opacity-50"
+                          className="px-2.5 py-1 rounded-xl bg-[#C8963E] text-[#0D1117] font-extrabold text-[9px] cursor-pointer disabled:opacity-50"
                         >
                           Confirm remove
                         </button>

@@ -18,7 +18,7 @@ import {
 import * as briefApi from '../api/briefApi';
 import type { BriefEntity, EntityKind } from '../api/briefApi';
 
-const T = { muted: 'rgba(13, 17, 23,0.62)', ink: '#0D1117', line: '#E5E8EC', surface: '#FFFFFF', primary: '#2563EB', deep: '#FF5A1F', dark: '#0D1117' };
+const T = { muted: 'rgba(13, 17, 23,0.62)', ink: '#0D1117', line: '#E5E8EC', surface: '#FFFFFF', primary: '#2563EB', deep: '#C8963E', dark: '#0D1117' };
 
 export const ENTITY_KIND_META: Record<EntityKind, { label: string; icon: React.ReactNode; plural: string }> = {
   venue: { label: 'Place', icon: <MapPin className="h-4 w-4" />, plural: 'Places' },
@@ -130,7 +130,7 @@ function ContentCard({ o, onOpen }: { o: BriefEntity['objects'][number]; onOpen:
             </span>
           )}
         </div>
-        <h4 className="mt-0.5 line-clamp-2 text-[13px] font-semibold leading-snug text-[#0D1117] group-hover:text-[#FF5A1F]">
+        <h4 className="mt-0.5 line-clamp-2 text-[13px] font-semibold leading-snug text-[#0D1117] group-hover:text-[#C8963E]">
           {o.title}
         </h4>
         <p className="mt-0.5 truncate text-[10px] text-[rgba(13, 17, 23,0.62)]">
@@ -150,7 +150,7 @@ function Section({ title, count, children }: { title: string; count: number; chi
         <h3 className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#0D1117]">
           {title}
         </h3>
-        <span className="rounded-full bg-[#F0F2F5] px-2 py-0.5 text-[10px] font-bold text-[#FF5A1F]">
+        <span className="rounded-full bg-[#F0F2F5] px-2 py-0.5 text-[10px] font-bold text-[#C8963E]">
           {count}
         </span>
       </div>
@@ -272,7 +272,7 @@ export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, on
 
           {status === 'notfound' && (
             <div className="flex flex-col items-center justify-center gap-2 px-6 py-24 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F0F2F5] text-[#FF5A1F]">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F0F2F5] text-[#C8963E]">
                 <Users className="h-7 w-7" />
               </div>
               <h3 className="text-[16px] font-bold text-[#0D1117]">This entity isn't on Brief</h3>
@@ -289,7 +289,7 @@ export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, on
               <button
                 type="button"
                 onClick={load}
-                className="rounded-full bg-[#FF5A1F] px-4 py-2 text-[12px] font-bold text-[#0D1117]"
+                className="rounded-full bg-[#C8963E] px-4 py-2 text-[12px] font-bold text-[#0D1117]"
               >
                 Try again
               </button>
@@ -306,7 +306,7 @@ export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, on
                 </div>
               ) : (
                 <div className="relative h-32 bg-gradient-to-br from-[#EFF1F4] via-[#F0F2F5] to-[#E5E8EC] sm:h-40">
-                  <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 20% 30%, #2563EB 0, transparent 45%), radial-gradient(circle at 80% 70%, #FF5A1F 0, transparent 40%)' }} />
+                  <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 20% 30%, #2563EB 0, transparent 45%), radial-gradient(circle at 80% 70%, #C8963E 0, transparent 40%)' }} />
                 </div>
               )}
 
@@ -316,17 +316,17 @@ export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, on
                   {entity.imageUrl ? (
                     <img src={entity.imageUrl} alt="" aria-hidden="true" className="h-16 w-16 rounded-2xl border-2 border-[#FFFFFF] bg-[#FFFFFF] object-cover shadow-lg" />
                   ) : (
-                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-[#FFFFFF] bg-gradient-to-br from-[#FF5A1F] to-[#EFF1F4] text-[#0D1117] shadow-lg">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-[#FFFFFF] bg-gradient-to-br from-[#C8963E] to-[#EFF1F4] text-[#0D1117] shadow-lg">
                       {kindMeta.icon}
                     </div>
                   )}
                   <div className="flex-1 pb-1">
                     <div className="flex items-center gap-2">
-                      <span className="rounded-full bg-[#F0F2F5] px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.12em] text-[#FF5A1F]">
+                      <span className="rounded-full bg-[#F0F2F5] px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.12em] text-[#C8963E]">
                         {kindMeta.label}
                       </span>
                       {entity.category && entity.category !== entity.kind && (
-                        <span className="rounded-full bg-[#F0F2F5] px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.12em] text-[#FF5A1F]">
+                        <span className="rounded-full bg-[#F0F2F5] px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.12em] text-[#C8963E]">
                           {entity.category}
                         </span>
                       )}
@@ -341,8 +341,8 @@ export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, on
                     disabled={busy}
                     className={`mb-1 flex items-center gap-1.5 rounded-full px-4 py-2.5 text-[13px] font-bold transition-colors ${
                       entity.isFollowed
-                        ? 'border border-[#2563EB]/40 bg-[#F0F2F5] text-[#FF5A1F] hover:bg-[#EFF1F4]'
-                        : 'bg-[#FF5A1F] text-[#0D1117] hover:bg-[#EFF1F4]'
+                        ? 'border border-[#2563EB]/40 bg-[#F0F2F5] text-[#C8963E] hover:bg-[#EFF1F4]'
+                        : 'bg-[#C8963E] text-[#0D1117] hover:bg-[#EFF1F4]'
                     }`}
                   >
                     {entity.isFollowed ? (<><Check className="h-4 w-4" /> Following</>) : 'Follow'}
@@ -355,7 +355,7 @@ export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, on
                     <button
                       type="button"
                       onClick={() => onOpenLocation?.(entity.location?.area ?? entity.location?.county ?? '')}
-                      className="flex items-center gap-1 rounded-full bg-[#F0F2F5] px-2 py-0.5 text-[10px] font-bold text-[#FF5A1F] transition-colors hover:bg-[#FF5A1F] hover:text-[#0D1117]"
+                      className="flex items-center gap-1 rounded-full bg-[#F0F2F5] px-2 py-0.5 text-[10px] font-bold text-[#C8963E] transition-colors hover:bg-[#C8963E] hover:text-[#0D1117]"
                       title={`Explore ${entity.location.area ?? entity.location.county}`}
                     >
                       <MapPin className="h-3.5 w-3.5" />
@@ -383,7 +383,7 @@ export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, on
                 )}
                 {!entity.trust.degraded && entity.trust.corroborated && (
                   <p className="mt-2 flex items-center gap-1.5 text-[11px] font-semibold text-[rgba(13, 17, 23,0.62)]">
-                    <Check className="h-3.5 w-3.5 text-[#FF5A1F]" />
+                    <Check className="h-3.5 w-3.5 text-[#C8963E]" />
                     Its content has been reported across multiple sources.
                   </p>
                 )}

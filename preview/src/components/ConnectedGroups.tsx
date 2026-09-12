@@ -113,7 +113,7 @@ export function ConnectedGroups({
                       setOpenGroupId(group.id);
                       setCommandResult(null);
                     }}
-                    className="shrink-0 px-3 py-1.5 rounded-xl bg-[#FF5A1F] text-[#0D1117] font-extrabold text-[10px] cursor-pointer"
+                    className="shrink-0 px-3 py-1.5 rounded-xl bg-[#C8963E] text-[#0D1117] font-extrabold text-[10px] cursor-pointer"
                   >
                     Open
                   </button>
@@ -193,7 +193,7 @@ export function ConnectedGroups({
         />
         <button
           type="submit"
-          className="px-4 py-2.5 rounded-xl bg-[#FF5A1F] text-[#0D1117] font-extrabold text-[11px] cursor-pointer"
+          className="px-4 py-2.5 rounded-xl bg-[#C8963E] text-[#0D1117] font-extrabold text-[11px] cursor-pointer"
         >
           Run
         </button>

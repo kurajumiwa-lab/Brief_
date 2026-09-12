@@ -138,7 +138,7 @@ export function CreatorCockpit() {
             <input value={actionBody} onChange={(e) => setActionBody(e.target.value)} placeholder="Notification body (optional)" className="w-full rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117] outline-none focus:border-[#2563EB]" />
           </>
         )}
-        <button onClick={() => void create()} disabled={busy || !name.trim()} className="flex items-center gap-1.5 rounded-full bg-[#FF5A1F] px-4 py-2 text-[12px] font-bold text-[#0D1117] disabled:opacity-40 cursor-pointer">
+        <button onClick={() => void create()} disabled={busy || !name.trim()} className="flex items-center gap-1.5 rounded-full bg-[#C8963E] px-4 py-2 text-[12px] font-bold text-[#0D1117] disabled:opacity-40 cursor-pointer">
           <Plus className="h-3.5 w-3.5" /> Create automation
         </button>
       </div>
@@ -160,7 +160,7 @@ export function CreatorCockpit() {
             </div>
             <button
               onClick={() => void toggle(w)}
-              className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-bold cursor-pointer ${w.enabled ? 'bg-[#FF5A1F] text-[#0D1117]' : 'bg-[#FFFFFF] text-[#0D1117]/70 border border-[#E5E8EC]'}`}
+              className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-bold cursor-pointer ${w.enabled ? 'bg-[#C8963E] text-[#0D1117]' : 'bg-[#FFFFFF] text-[#0D1117]/70 border border-[#E5E8EC]'}`}
             >
               {w.enabled ? 'On' : 'Off'}
             </button>

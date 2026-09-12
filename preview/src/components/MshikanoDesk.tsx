@@ -44,7 +44,7 @@ function TrustChip({ trust }: { trust: CoopPost['trust'] }) {
     >
       <span
         aria-hidden="true"
-        className={`h-1.5 w-1.5 rounded-full ${trust.level === 'new' ? 'bg-[#7A8494]' : 'bg-[#FF5A1F]'}`}
+        className={`h-1.5 w-1.5 rounded-full ${trust.level === 'new' ? 'bg-[#7A8494]' : 'bg-[#C8963E]'}`}
       />
       {trust.level === 'new' ? 'new member' : bits.join(' · ')}
     </span>
@@ -148,7 +148,7 @@ export function MshikanoDesk() {
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
       <header className="space-y-1">
         <div className="flex items-center gap-2">
-          <Heart className="w-5 h-5 text-[#FF5A1F]" aria-hidden="true" />
+          <Heart className="w-5 h-5 text-[#C8963E]" aria-hidden="true" />
           <h1 className="font-display text-2xl font-semibold tracking-tight text-[#0D1117]">Mshikano</h1>
         </div>
         <p className="text-[11px] leading-snug text-[#0D1117]/60">
@@ -191,7 +191,7 @@ export function MshikanoDesk() {
             type="button"
             onClick={() => void submit()}
             disabled={busy || title.trim().length < 4}
-            className="ml-auto rounded-lg bg-[#FF5A1F] px-4 py-2 text-[11px] font-extrabold text-[#0D1117] disabled:opacity-40"
+            className="ml-auto rounded-lg bg-[#C8963E] px-4 py-2 text-[11px] font-extrabold text-[#0D1117] disabled:opacity-40"
           >
             Post it
           </button>
@@ -202,7 +202,7 @@ export function MshikanoDesk() {
       {/* Who can help? */}
       <section aria-label="Who can help" className="rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] p-4 space-y-2">
         <div className="flex items-center gap-2">
-          <Search className="w-4 h-4 text-[#FF5A1F]" aria-hidden="true" />
+          <Search className="w-4 h-4 text-[#C8963E]" aria-hidden="true" />
           <h2 className="text-[13px] font-extrabold text-[#0D1117]">Who can help?</h2>
         </div>
         <div className="flex gap-2">
@@ -215,7 +215,7 @@ export function MshikanoDesk() {
             className="flex-1 rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117]"
           />
           <button type="button" onClick={() => void ask()} disabled={busy || question.trim().length < 3}
-            className="rounded-lg bg-[#FF5A1F] px-3 py-2 text-[11px] font-extrabold text-[#0D1117] disabled:opacity-40">
+            className="rounded-lg bg-[#C8963E] px-3 py-2 text-[11px] font-extrabold text-[#0D1117] disabled:opacity-40">
             Ask
           </button>
         </div>
@@ -252,7 +252,7 @@ export function MshikanoDesk() {
               </p>
               <span className="flex gap-1.5 shrink-0">
                 <button type="button" onClick={() => void respond(c.id, true)} disabled={busy}
-                  className="rounded-lg bg-[#FF5A1F] px-3 py-1.5 text-[10px] font-extrabold text-[#0D1117]">Confirm</button>
+                  className="rounded-lg bg-[#C8963E] px-3 py-1.5 text-[10px] font-extrabold text-[#0D1117]">Confirm</button>
                 <button type="button" onClick={() => void respond(c.id, false)} disabled={busy}
                   className="rounded-lg border border-[#E5E8EC] px-3 py-1.5 text-[10px] font-extrabold text-[#0D1117]/70">Decline</button>
               </span>
@@ -265,7 +265,7 @@ export function MshikanoDesk() {
       <section aria-label="Cooperation posts" className="space-y-3">
         <div className="flex flex-wrap items-center gap-1.5">
           <button type="button" onClick={() => setFilter(null)} aria-pressed={filter === null}
-            className={`rounded-full px-3 py-1 text-[10px] font-extrabold ${filter === null ? 'bg-[#FF5A1F] text-[#0D1117]' : 'border border-[#E5E8EC] text-[#0D1117]/70'}`}>
+            className={`rounded-full px-3 py-1 text-[10px] font-extrabold ${filter === null ? 'bg-[#C8963E] text-[#0D1117]' : 'border border-[#E5E8EC] text-[#0D1117]/70'}`}>
             All
           </button>
           {INTENTS.map((it) => (
@@ -305,13 +305,13 @@ export function MshikanoDesk() {
             <div className="flex gap-1.5">
               {!p.mine && (
                 <button type="button" onClick={() => void markWorked(p)} disabled={busy}
-                  className="rounded-lg bg-[#FF5A1F] px-3 py-1.5 text-[10px] font-extrabold text-[#0D1117] disabled:opacity-40">
+                  className="rounded-lg bg-[#C8963E] px-3 py-1.5 text-[10px] font-extrabold text-[#0D1117] disabled:opacity-40">
                   We worked together
                 </button>
               )}
               <button type="button" onClick={() => void openMatches(p)}
                 aria-expanded={matchesFor?.post.id === p.id}
-                className="rounded-lg border border-[#2563EB] px-3 py-1.5 text-[10px] font-extrabold text-[#FF5A1F]">
+                className="rounded-lg border border-[#2563EB] px-3 py-1.5 text-[10px] font-extrabold text-[#C8963E]">
                 {matchesFor?.post.id === p.id ? 'Hide matches' : 'See matches'}
               </button>
             </div>
@@ -325,13 +325,13 @@ export function MshikanoDesk() {
                     <p className="text-[11px] font-bold text-[#0D1117]">{m.post.title}</p>
                     <p className="text-[9px] text-[#0D1117]/55">{m.post.author.displayName}{m.post.county ? ` · ${m.post.county}` : ''}</p>
                     {m.reasons.length > 0 && (
-                      <p className="mt-0.5 text-[9px] text-[#FF5A1F] font-bold">Why: {m.reasons.join(' · ')}</p>
+                      <p className="mt-0.5 text-[9px] text-[#C8963E] font-bold">Why: {m.reasons.join(' · ')}</p>
                     )}
                     {!m.post.mine && (
                       <button
                         type="button"
                         onClick={() => setIntroFor(m.post)}
-                        className="mt-1.5 cursor-pointer rounded-full border border-[#FF5A1F] px-2.5 py-0.5 text-[9px] font-extrabold text-[#FF5A1F] hover:bg-[#F0F2F5]"
+                        className="mt-1.5 cursor-pointer rounded-full border border-[#C8963E] px-2.5 py-0.5 text-[9px] font-extrabold text-[#C8963E] hover:bg-[#F0F2F5]"
                       >
                         Get introduced — priority
                       </button>

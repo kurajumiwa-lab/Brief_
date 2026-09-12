@@ -110,7 +110,7 @@ function StepDots({ step }: { step: number }) {
         <span
           key={n}
           className={`h-1.5 rounded-full transition-all ${
-            n === step ? 'w-6 bg-[#FF5A1F]' : n < step ? 'w-3 bg-[#FF5A1F]/45' : 'w-3 bg-[#E5E8EC]'
+            n === step ? 'w-6 bg-[#C8963E]' : n < step ? 'w-3 bg-[#C8963E]/45' : 'w-3 bg-[#E5E8EC]'
           }`}
         />
       ))}
@@ -264,7 +264,7 @@ export function Onboarding({
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center bg-[#FF5A1F]/45 backdrop-blur-[2px] px-3 pb-3 sm:p-6"
+      className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center bg-[#C8963E]/45 backdrop-blur-[2px] px-3 pb-3 sm:p-6"
       role="dialog"
       aria-modal="true"
       aria-label="Welcome to Brief"
@@ -321,7 +321,7 @@ export function Onboarding({
               <button
                 type="button"
                 onClick={() => setShowPasswordForm(true)}
-                className="w-full rounded-xl border border-[#2563EB] bg-[#FF5A1F] px-4 py-3 text-[12px] font-extrabold text-[#0D1117] cursor-pointer"
+                className="w-full rounded-xl border border-[#2563EB] bg-[#C8963E] px-4 py-3 text-[12px] font-extrabold text-[#0D1117] cursor-pointer"
               >
                 Create an account with a handle
               </button>
@@ -351,7 +351,7 @@ export function Onboarding({
                     type="button"
                     disabled={busy !== null}
                     onClick={() => void submitPassword('register')}
-                    className="flex-1 rounded-xl bg-[#FF5A1F] px-4 py-2.5 text-[12px] font-extrabold text-[#0D1117] disabled:opacity-50 cursor-pointer"
+                    className="flex-1 rounded-xl bg-[#C8963E] px-4 py-2.5 text-[12px] font-extrabold text-[#0D1117] disabled:opacity-50 cursor-pointer"
                   >
                     {busy === 'register' ? 'Creating…' : 'Create account'}
                   </button>
@@ -414,7 +414,7 @@ export function Onboarding({
                   onClick={() => void chooseGoal(g.id)}
                   data-goal={g.id}
                   className={`flex items-center justify-between rounded-xl border px-3.5 py-3 text-left transition cursor-pointer ${
-                    goal === g.id ? 'border-[#2563EB] bg-[#FF5A1F] text-[#0D1117]' : 'border-[#E5E8EC] hover:border-[#2563EB]'
+                    goal === g.id ? 'border-[#2563EB] bg-[#C8963E] text-[#0D1117]' : 'border-[#E5E8EC] hover:border-[#2563EB]'
                   }`}
                 >
                   <span className="text-[12.5px] font-extrabold">{g.label}</span>
@@ -453,7 +453,7 @@ export function Onboarding({
               onClick={() => {
                 onUseLocation();
               }}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#2563EB] bg-[#FF5A1F] px-4 py-3 text-[12px] font-extrabold text-[#0D1117] cursor-pointer"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#2563EB] bg-[#C8963E] px-4 py-3 text-[12px] font-extrabold text-[#0D1117] cursor-pointer"
             >
               <MapPin className="h-3.5 w-3.5" /> Use my location
             </button>
@@ -471,7 +471,7 @@ export function Onboarding({
                   }}
                   className={`rounded-full border px-3 py-1.5 text-[11px] font-extrabold transition cursor-pointer ${
                     placeLabel === city.label
-                      ? 'border-[#2563EB] bg-[#FF5A1F] text-[#0D1117]'
+                      ? 'border-[#2563EB] bg-[#C8963E] text-[#0D1117]'
                       : 'border-[#E5E8EC] text-[#0D1117]/70 hover:border-[#2563EB]'
                   }`}
                 >
@@ -483,7 +483,7 @@ export function Onboarding({
               type="button"
               disabled={busy !== null}
               onClick={() => void finish(false)}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#FF5A1F] px-4 py-3 text-[12px] font-extrabold text-[#0D1117] disabled:opacity-50 cursor-pointer"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#C8963E] px-4 py-3 text-[12px] font-extrabold text-[#0D1117] disabled:opacity-50 cursor-pointer"
               data-testid="onboarding-finish"
             >
               <Sparkles className="h-3.5 w-3.5" /> Show me what is around

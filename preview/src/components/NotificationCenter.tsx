@@ -37,18 +37,18 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_COLORS: Record<string, string> = {
-  following: '#FF5A1F',
+  following: '#C8963E',
   location: '#16A34A',
-  event: '#FF5A1F',
-  offer: '#FF5A1F',
+  event: '#C8963E',
+  offer: '#C8963E',
   alert: '#DC2626',
   collection: '#0D1117',
   correction: '#DC2626',
   source_update: '#16A34A',
   confirmed: '#16A34A',
-  challenge: '#FF5A1F',
+  challenge: '#C8963E',
   saved_changed: '#0D1117',
-  event_soon: '#FF5A1F',
+  event_soon: '#C8963E',
   system: '#0D1117',
   workflow: '#0D1117',
   coop: '#16A34A'
@@ -202,7 +202,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
         }`}
       >
         {/* Unread marker */}
-        {!n.read && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#FF5A1F]" aria-label="Unread" />}
+        {!n.read && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#C8963E]" aria-label="Unread" />}
         {n.read && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-transparent" aria-hidden="true" />}
 
         {n.imageUrl ? (
@@ -240,7 +240,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
             <p className="mt-1 text-[9.5px] font-semibold text-[#0D1117]/60">{n.sourceName}</p>
           )}
           {n.context && (
-            <p className="mt-0.5 text-[9.5px] font-semibold text-[#FF5A1F]/70">{n.context}</p>
+            <p className="mt-0.5 text-[9.5px] font-semibold text-[#C8963E]/70">{n.context}</p>
           )}
         </div>
       </button>
@@ -270,7 +270,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
           <div className="min-w-0 text-center">
             <p className="text-[13px] font-extrabold text-[#0D1117]">Notifications</p>
             {unread > 0 && (
-              <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#FF5A1F]">
+              <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#C8963E]">
                 {unread} unread
               </p>
             )}
@@ -306,7 +306,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
               <button
                 type="button"
                 onClick={() => setPrefsOpen(false)}
-                className="rounded-full px-2 py-0.5 text-[10px] font-bold text-[#FF5A1F] hover:bg-[#F0F2F5]"
+                className="rounded-full px-2 py-0.5 text-[10px] font-bold text-[#C8963E] hover:bg-[#F0F2F5]"
               >
                 Done
               </button>
@@ -325,7 +325,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
                   }`}
                 >
                   <span className="truncate">{CATEGORY_LABELS[key]}</span>
-                  <span className="shrink-0 text-[#FF5A1F]">{prefs[key] !== false ? 'On' : 'Off'}</span>
+                  <span className="shrink-0 text-[#C8963E]">{prefs[key] !== false ? 'On' : 'Off'}</span>
                 </button>
               ))}
             </div>
@@ -338,7 +338,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
         <div className="flex-1 overflow-y-auto pb-safe">
           {!authed && (
             <div className="flex flex-col items-center gap-3 px-6 py-20 text-center">
-              <Bell className="h-8 w-8 text-[#FF5A1F]" />
+              <Bell className="h-8 w-8 text-[#C8963E]" />
               <p className="max-w-xs text-[13px] font-semibold text-[#0D1117]">
                 Sign in to see what changed while you were away.
               </p>
@@ -377,7 +377,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
                   <button
                     type="button"
                     onClick={() => void markAll()}
-                    className="flex items-center gap-1 rounded-full border border-[#E5E8EC] bg-[#FFFFFF] px-3 py-1.5 text-[10px] font-bold text-[#FF5A1F] transition-colors hover:border-[#2563EB]"
+                    className="flex items-center gap-1 rounded-full border border-[#E5E8EC] bg-[#FFFFFF] px-3 py-1.5 text-[10px] font-bold text-[#C8963E] transition-colors hover:border-[#2563EB]"
                   >
                     <CheckCheck className="h-3 w-3" /> Mark all read
                   </button>
@@ -407,7 +407,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
                           aria-label="Mark unread"
                           title="Mark unread"
                           onClick={(e) => { e.stopPropagation(); void setRead(n, false); }}
-                          className="absolute right-2 top-2 rounded-full bg-[#FFFFFF]/90 p-1 text-[#0D1117]/60 opacity-0 transition-opacity hover:text-[#FF5A1F] group-hover:opacity-100"
+                          className="absolute right-2 top-2 rounded-full bg-[#FFFFFF]/90 p-1 text-[#0D1117]/60 opacity-0 transition-opacity hover:text-[#C8963E] group-hover:opacity-100"
                         >
                           <Bell className="h-3 w-3" />
                         </button>

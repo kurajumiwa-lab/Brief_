@@ -74,7 +74,7 @@ export function Pursuits({
         />
         <button
           type="submit"
-          className="px-4 py-2.5 rounded-xl bg-[#FF5A1F] text-[#0D1117] font-extrabold text-[11px] cursor-pointer"
+          className="px-4 py-2.5 rounded-xl bg-[#C8963E] text-[#0D1117] font-extrabold text-[11px] cursor-pointer"
         >
           Search
         </button>
@@ -199,7 +199,7 @@ export function Pursuits({
                     onClick={() => handleSetPursuitStatus(pursuit.id, status)}
                     className={`text-[9px] font-bold px-2 py-0.5 rounded-full border cursor-pointer transition ${
                       pursuit.status === status
-                        ? 'bg-[#FF5A1F] text-[#0D1117] border-[#2563EB]'
+                        ? 'bg-[#C8963E] text-[#0D1117] border-[#2563EB]'
                         : 'bg-transparent text-[#0D1117]/60 border-[#E5E8EC] hover:border-[#E5E8EC]'
                     }`}
                   >

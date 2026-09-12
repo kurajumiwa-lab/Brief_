@@ -235,13 +235,13 @@ export const Navigation: React.FC<NavigationProps> = ({
           })}
         </div>
 
-        {/* ── PRIMARY ACTION FAB (orange accent) ── */}
+        {/* ── PRIMARY ACTION FAB (bronze accent) ── */}
         <button
           type="button"
           onClick={handleFabClick}
           aria-label="Create Action"
           title="Create"
-          className="w-11 h-11 rounded-full bg-[color:var(--color-text)] text-[color:var(--color-primary)] shadow-[0_8px_24px_rgba(255,90,31,0.28)] hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center shrink-0 border border-black/10"
+          className="w-11 h-11 rounded-full bg-[color:var(--color-text)] text-[color:var(--color-primary)] shadow-[0_8px_24px_rgba(200,150,62,0.28)] hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center shrink-0 border border-black/10"
         >
           <Sparkles className="w-5 h-5 text-[color:var(--color-primary)]" />
         </button>
@@ -323,7 +323,7 @@ export const Navigation: React.FC<NavigationProps> = ({
           <button
             type="button"
             onClick={handleFabClick}
-            className="w-full py-3 rounded-2xl bg-[color:var(--color-text)] hover:bg-black text-[color:var(--color-primary)] font-black text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-[0_6px_18px_rgba(255,90,31,0.24)] active:scale-98"
+            className="w-full py-3 rounded-2xl bg-[color:var(--color-text)] hover:bg-black text-[color:var(--color-primary)] font-black text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-[0_6px_18px_rgba(200,150,62,0.24)] active:scale-98"
           >
             <Sparkles className="w-4 h-4 text-[color:var(--color-primary)]" />
             <span>+ Create Action</span>

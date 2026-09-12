@@ -184,7 +184,7 @@ export function Quests({
                   </p>
                   <button
                     onClick={() => handleSubmitQuest(q)}
-                    className="mt-1 px-3 py-1 rounded-xl bg-[#FF5A1F] text-[#0D1117] font-extrabold text-[10px] cursor-pointer"
+                    className="mt-1 px-3 py-1 rounded-xl bg-[#C8963E] text-[#0D1117] font-extrabold text-[10px] cursor-pointer"
                   >
                     Submit
                   </button>
@@ -225,7 +225,7 @@ export function Quests({
             onClick={() => setBoardMode('contributors')}
             className={`px-3 py-1.5 rounded-xl text-[10px] font-extrabold cursor-pointer border ${
               boardMode === 'contributors'
-                ? 'bg-[#FF5A1F] text-[#0D1117] border-[#2563EB]'
+                ? 'bg-[#C8963E] text-[#0D1117] border-[#2563EB]'
                 : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
             }`}
           >
@@ -235,7 +235,7 @@ export function Quests({
             onClick={() => setBoardMode('earners')}
             className={`px-3 py-1.5 rounded-xl text-[10px] font-extrabold cursor-pointer border ${
               boardMode === 'earners'
-                ? 'bg-[#FF5A1F] text-[#0D1117] border-[#2563EB]'
+                ? 'bg-[#C8963E] text-[#0D1117] border-[#2563EB]'
                 : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
             }`}
           >

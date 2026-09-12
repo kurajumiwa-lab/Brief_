@@ -165,7 +165,7 @@ export function TriageQueue({ onOpenSection, onNotice }: TriageQueueProps) {
           <p className="text-[10px] text-[#0D1117]/70 mt-1">{unavailableReason}</p>
           <button
             onClick={() => { setStatus('loading'); void load(); }}
-            className="mt-3 px-3 py-2 rounded-xl bg-[#FF5A1F] text-[#0D1117] font-extrabold text-[11px] cursor-pointer"
+            className="mt-3 px-3 py-2 rounded-xl bg-[#C8963E] text-[#0D1117] font-extrabold text-[11px] cursor-pointer"
           >
             Try again
           </button>
@@ -253,7 +253,7 @@ export function TriageQueue({ onOpenSection, onNotice }: TriageQueueProps) {
                     else void act(item, button.action);
                   }}
                   disabled={busy}
-                  className="px-2.5 py-1.5 rounded-lg bg-[#FF5A1F] text-[#0D1117] text-[10px] font-extrabold cursor-pointer disabled:opacity-50"
+                  className="px-2.5 py-1.5 rounded-lg bg-[#C8963E] text-[#0D1117] text-[10px] font-extrabold cursor-pointer disabled:opacity-50"
                 >
                   {busy ? '…' : button.label}
                 </button>

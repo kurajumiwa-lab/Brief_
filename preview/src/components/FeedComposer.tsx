@@ -53,7 +53,7 @@ const T = {
   line: '#E5E8EC',
   ink: '#0D1117',
   muted: 'rgba(13, 17, 23,0.62)',
-  green: '#FF5A1F'  /* legacy name: the accent, used for the selected-collection border */
+  green: '#C8963E'  /* legacy name: the accent, used for the selected-collection border */
 };
 
 // ---------------------------------------------------------------------------

@@ -190,7 +190,7 @@ export function OfflineSyncQueueDesk({
               >
                 <span>{tab.label}</span>
                 {tab.count !== undefined && tab.count > 0 && (
-                  <span className="text-[10px] px-1.5 py-0.2 rounded-full font-mono bg-[#FF5A1F] text-white">
+                  <span className="text-[10px] px-1.5 py-0.2 rounded-full font-mono bg-[#C8963E] text-white">
                     {tab.count}
                   </span>
                 )}
@@ -325,7 +325,7 @@ export function OfflineSyncQueueDesk({
         <form onSubmit={handleCreateOfflineAction} className="p-5 sm:p-6 space-y-4 max-w-lg mx-auto text-xs">
           <div className="p-3.5 rounded-2xl bg-gray-50 border border-gray-200 text-gray-700 space-y-1">
             <h4 className="font-bold text-[#0D1117] flex items-center space-x-1.5">
-              <Plus className="w-4 h-4 text-[#FF5A1F]" />
+              <Plus className="w-4 h-4 text-[#C8963E]" />
               <span>Simulate Local Mutation While Disconnected</span>
             </h4>
             <p className="text-[11px] leading-relaxed">

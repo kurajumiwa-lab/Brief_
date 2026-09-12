@@ -1,8 +1,8 @@
-/* One Brief. The LIGHT system: white page, dark ink, and a blue + orange
+/* One Brief. The LIGHT system: white page, dark ink, and a blue + bronze-gold
    accent pair. Hierarchy comes from weight and size first; muted/faint are
    the SAME ink at reduced alpha.
 
-   Palette (light + blue/orange):
+   Palette (light + blue/bronze):
      ground    #F7F8FA   primary background (very light)
      surface   #FFFFFF   cards
      surface-2 #F0F2F5   raised cards, input wells
@@ -11,13 +11,13 @@
      ink       #0D1117   primary text
      ink-dim   #5A6472   secondary text
      ink-faint #7A8494   meta / timestamps (>=4.5:1 on ground/surface)
-     accent    #FF5A1F   warm orange (primary)
+     accent    #C8963E   bronze gold (primary)
      accent-2  #2563EB   blue (secondary)
      success   #16A34A   success / live
      warning   #B45309   warning
      danger    #DC2626   danger / urgent
 
-   `--brief-green` is a legacy name; it resolves to the orange accent.
+   `--brief-green` is a legacy name; it resolves to the bronze-gold accent.
    All consumers were migrated by the palette remap, so the name is the ONLY
    thing that stays "green". */
 
@@ -29,8 +29,8 @@
   --brief-muted: #5A6472;
   --brief-faint: #7A8494;
   --brief-line: #E5E8EC;
-  --brief-green: #FF5A1F;   /* primary accent = warm orange (legacy name kept) */
-  --brief-green-ink: #0D1117;  /* text on the orange accent — dark, for contrast */
+  --brief-green: #C8963E;   /* primary accent = bronze gold (legacy name kept) */
+  --brief-green-ink: #0D1117;  /* text on the bronze accent — dark, for contrast */
   --brief-warn: #B45309;
   --brief-danger: #DC2626;
 
@@ -49,7 +49,7 @@
   --signal-urgent: #DC2626;   /* countdown / closing soon — danger */
 
   /* --- Spec-named accent tokens (§3) --- */
-  --accent: #FF5A1F;
+  --accent: #C8963E;
   --accent-2: #2563EB;
   --accent-ink: #0D1117;
   --success: #16A34A;
@@ -75,7 +75,7 @@
   --m3-surface: var(--brief-bg);
   --m3-surface-container: var(--brief-card);
   --m3-surface-container-low: #F0F2F5;
-  --m3-primary: #FF5A1F;
+  --m3-primary: #C8963E;
   --m3-on-primary: #FFFFFF;
   --m3-secondary-container: #F0F2F5;
   --m3-on-surface: var(--brief-ink);
@@ -94,9 +94,9 @@
   --color-bg: var(--brief-bg);
   --color-surface: var(--brief-card);
   --color-surface-elevated: #F0F2F5;
-  --color-primary: var(--brief-green);      /* warm orange */
-  --color-primary-strong: #E64A14;          /* darker orange (hover/pressed) */
-  --color-primary-subtle: #FFF1EA;          /* very light orange tint (highlight pills) */
+  --color-primary: var(--brief-green);      /* bronze gold */
+  --color-primary-strong: #A8782C;          /* darker bronze (hover/pressed) */
+  --color-primary-subtle: #F6EBD3;          /* very light bronze tint (highlight pills) */
   --color-accent: var(--accent-2);          /* blue secondary */
   --color-success: var(--success);
   --color-warning: var(--warning);

@@ -10,7 +10,7 @@
    ============================================================================= */
 
 :root {
-  /* --- Color: the LIGHT system. White page, dark ink, warm orange accent with
+  /* --- Color: the LIGHT system. White page, dark ink, bronze gold accent with
        a blue secondary. Hierarchy comes from weight and size first; muted/
        faint are the SAME ink at reduced alpha. --- */
   --ground:         #F7F8FA;  /* base background — very light */
@@ -25,15 +25,15 @@
   --signal-live:    #16A34A;  /* live/active state ONLY — success green */
   --signal-urgent:  #DC2626;  /* countdown / closing-soon / expiring ONLY — danger */
 
-  --tea:            #FF5A1F;  /* Tea category — warm orange */
+  --tea:            #C8963E;  /* Tea category — bronze gold */
   --today:          #2563EB;  /* Today category — blue */
   --pursuits:       #16A34A;  /* Pursuits category — green */
   --quests:         #16A34A;  /* Quests (shares live — quests ARE the live layer) */
 
   /* --- Spec-named accent tokens (§3) --- */
-  --accent:      #FF5A1F;   /* warm orange (primary) */
+  --accent:      #C8963E;   /* bronze gold (primary) */
   --accent-2:    #2563EB;   /* blue (secondary) */
-  --accent-ink:  #0D1117;   /* text on the orange accent — dark, for contrast */
+  --accent-ink:  #0D1117;   /* text on the bronze accent — dark, for contrast */
   --success:     #16A34A;
   --warning:     #B45309;
   --danger:      #DC2626;
@@ -206,7 +206,7 @@ html, body {
    coexist with the earlier tokens so non-home surfaces are unaffected.
    ============================================================================= */
 :root {
-  /* Color — M3 tokens mapped onto the light + orange/blue system. */
+  /* Color — M3 tokens mapped onto the light + bronze/blue system. */
   --m3-background:             #F7F8FA;
   --m3-surface:                #F7F8FA;
   --m3-surface-dim:            #F0F2F5;
@@ -218,10 +218,10 @@ html, body {
   --m3-surface-container-highest: #E5E8EC;
   --m3-surface-variant:        #E5E8EC;
 
-  --m3-primary:                #FF5A1F;
-  --m3-primary-fixed:          #FF5A1F;
+  --m3-primary:                #C8963E;
+  --m3-primary-fixed:          #C8963E;
   --m3-primary-fixed-dim:      #2563EB;
-  --m3-primary-container:      #FF5A1F;
+  --m3-primary-container:      #C8963E;
   --m3-on-primary:             #0D1117;
   --m3-on-primary-container:   #0D1117;
 
@@ -251,10 +251,10 @@ html, body {
   --m3-font-code:    'JetBrains Mono', monospace;
 }
 
-/* Status ring (the "new" story affordance) — orange arc for new, hairline
+/* Status ring (the "new" story affordance) — bronze arc for new, hairline
    full ring once seen. */
 .m3-status-ring {
-  background: conic-gradient(from 180deg at 50% 50%, #FF5A1F 0deg, #FF5A1F 120deg, transparent 120deg, transparent 360deg);
+  background: conic-gradient(from 180deg at 50% 50%, #C8963E 0deg, #C8963E 120deg, transparent 120deg, transparent 360deg);
 }
 .m3-status-ring-seen {
   background: conic-gradient(from 180deg at 50% 50%, #E5E8EC 0deg, #E5E8EC 360deg);

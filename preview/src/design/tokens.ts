@@ -2,7 +2,7 @@
 // BRIEF DESIGN TOKENS — the TypeScript mirror of the canonical design system.
 //
 // The single source of truth for COLORS lives in src/ui/theme.css (:root) —
-// the LIGHT system: white page, dark ink, a warm orange primary and a blue
+// the LIGHT system: white page, dark ink, a bronze gold primary and a blue
 // secondary. This module mirrors those values for the rare case a component
 // needs a color/radius/type constant in JS rather than a `var(--…)` reference.
 // (The motion tokens live separately in src/ui/motion/tokens.ts.)
@@ -24,8 +24,8 @@ export const DesignTokens = {
     textPrimary: '#0D1117',       // --color-text (ink)
     textSecondary: '#5A6472',     // --color-text-muted
     textMuted: '#7A8494',         // meta / timestamps (>=4.5:1)
-    primary: '#FF5A1F',           // --color-primary (warm orange)
-    primaryStrong: '#E64A14',     // --color-primary-strong (hover/pressed)
+    primary: '#C8963E',           // --color-primary (bronze gold)
+    primaryStrong: '#A8782C',     // --color-primary-strong (hover/pressed)
     accent: '#2563EB',            // --color-accent (blue secondary)
     success: '#16A34A',
     warning: '#B45309',

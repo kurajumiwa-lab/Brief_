@@ -285,7 +285,7 @@ export function ChamaDesk({
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-[10px] font-mono font-black px-2.5 py-0.5 rounded-full bg-[#FF5A1F] text-white uppercase tracking-wider">
+              <span className="text-[10px] font-mono font-black px-2.5 py-0.5 rounded-full bg-[#C8963E] text-white uppercase tracking-wider">
                 CHAMA & TABLE BANKING
               </span>
               <span className="text-xs text-indigo-200 font-bold flex items-center space-x-1">
@@ -372,7 +372,7 @@ export function ChamaDesk({
         {/* Stepper Progress Bar */}
         <div className="h-3 w-full bg-gray-200 rounded-full overflow-hidden p-0.5">
           <div
-            className="h-full bg-gradient-to-r from-[#FF5A1F] via-[#FF8A00] to-emerald-500 rounded-full transition-all duration-500"
+            className="h-full bg-gradient-to-r from-[#C8963E] via-[#FF8A00] to-emerald-500 rounded-full transition-all duration-500"
             style={{ width: `${cyclePercentComplete}%` }}
           />
         </div>
@@ -442,7 +442,7 @@ export function ChamaDesk({
                   <div className="flex items-center space-x-3">
                     <div className={`w-8 h-8 rounded-xl font-mono font-black text-xs flex items-center justify-center shrink-0 ${
                       isCurrent
-                        ? 'bg-[#FF5A1F] text-white shadow-md'
+                        ? 'bg-[#C8963E] text-white shadow-md'
                         : isReceived
                         ? 'bg-emerald-100 text-emerald-800'
                         : 'bg-gray-100 text-gray-600'
@@ -473,7 +473,7 @@ export function ChamaDesk({
                     </span>
                     <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded uppercase ${
                       isCurrent
-                        ? 'bg-[#FF5A1F] text-white'
+                        ? 'bg-[#C8963E] text-white'
                         : isReceived
                         ? 'bg-emerald-100 text-emerald-800'
                         : 'bg-gray-100 text-gray-600'
@@ -506,7 +506,7 @@ export function ChamaDesk({
               onClick={() => { soundEngine.play('tap'); setIsLogPayOpen(true); }}
               className="px-3.5 py-1.5 rounded-xl bg-[#0D1117] hover:bg-black text-white text-xs font-bold flex items-center space-x-1.5 shadow-sm cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5 text-[#FF5A1F]" />
+              <Plus className="w-3.5 h-3.5 text-[#C8963E]" />
               <span>Log M-Pesa</span>
             </button>
           </div>
@@ -584,7 +584,7 @@ export function ChamaDesk({
               onClick={() => { soundEngine.play('tap'); setIsNewLoanOpen(true); }}
               className="px-3.5 py-1.5 rounded-xl bg-[#0D1117] hover:bg-black text-white text-xs font-bold flex items-center space-x-1.5 shadow-sm cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5 text-[#FF5A1F]" />
+              <Plus className="w-3.5 h-3.5 text-[#C8963E]" />
               <span>Apply Loan</span>
             </button>
           </div>
@@ -706,7 +706,7 @@ export function ChamaDesk({
 
                 <div className="p-2.5 rounded-xl bg-gray-50 flex items-center justify-between text-[11px] text-gray-700 font-mono">
                   <div className="flex items-center space-x-1.5 truncate max-w-[280px]">
-                    <Truck className="w-3.5 h-3.5 text-[#FF5A1F] shrink-0" />
+                    <Truck className="w-3.5 h-3.5 text-[#C8963E] shrink-0" />
                     <span className="truncate">{order.courierRoute}</span>
                   </div>
                   <span className={`font-bold shrink-0 ${
@@ -730,7 +730,7 @@ export function ChamaDesk({
         <div className="p-5 sm:p-6 space-y-4">
           <div className="p-4 rounded-2xl bg-[#F7F8FA] border border-[#E5E8EC] space-y-3">
             <div className="flex items-center space-x-2">
-              <FileText className="w-4 h-4 text-[#FF5A1F]" />
+              <FileText className="w-4 h-4 text-[#C8963E]" />
               <h4 className="text-xs font-black uppercase tracking-wider text-[#0D1117]">
                 Last Meeting Minutes (10 May 2026)
               </h4>

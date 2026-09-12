@@ -206,8 +206,8 @@ export function GroupBuyPortal() {
                   onClick={() => { setSelectedId(b.id); setLastReceipt(null); }}
                   className="rounded-lg border px-2.5 py-1 text-[10px] font-extrabold cursor-pointer"
                   style={{
-                    borderColor: b.id === selected?.id ? '#FF5A1F' : '#E5E8EC',
-                    background: b.id === selected?.id ? '#FF5A1F' : '#FFFFFF',
+                    borderColor: b.id === selected?.id ? '#C8963E' : '#E5E8EC',
+                    background: b.id === selected?.id ? '#C8963E' : '#FFFFFF',
                     color: b.id === selected?.id ? '#0D1117' : '#0D1117'
                   }}
                 >
@@ -245,7 +245,7 @@ export function GroupBuyPortal() {
                 type="button"
                 onClick={() => void create()}
                 disabled={creating || !newTitle.trim() || !newTarget.trim()}
-                className="rounded-lg bg-[#FF5A1F] px-4 py-2 text-[11px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
+                className="rounded-lg bg-[#C8963E] px-4 py-2 text-[11px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
               >
                 {creating ? '…' : 'Open'}
               </button>
@@ -263,12 +263,12 @@ export function GroupBuyPortal() {
                       {money(selected.total)} of {money(selected.targetAmount)} · {selected.progressPct}% · {selected.contributionCount} contribution{selected.contributionCount === 1 ? '' : 's'}
                     </p>
                   </div>
-                  <span className="rounded-md bg-[#FF5A1F] px-2 py-0.5 text-[9px] font-extrabold text-[#0D1117]">
+                  <span className="rounded-md bg-[#C8963E] px-2 py-0.5 text-[9px] font-extrabold text-[#0D1117]">
                     {selected.stages[selected.stageIndex]?.label}
                   </span>
                 </div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-[#E5E8EC]">
-                  <div className="h-full rounded-full bg-[#FF5A1F] transition-all" style={{ width: `${selected.progressPct}%` }} />
+                  <div className="h-full rounded-full bg-[#C8963E] transition-all" style={{ width: `${selected.progressPct}%` }} />
                 </div>
                 <div className="mt-4">
                   <StageStepper stages={selected.stages} currentIndex={selected.stageIndex} />
@@ -347,7 +347,7 @@ export function GroupBuyPortal() {
                         type="button"
                         onClick={() => void priceBargain()}
                         disabled={bargainBusy}
-                        className="rounded-lg bg-[#FF5A1F] px-4 py-2 text-[11px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
+                        className="rounded-lg bg-[#C8963E] px-4 py-2 text-[11px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
                       >
                         {bargainBusy ? '…' : 'Price this bargain'}
                       </button>
@@ -405,7 +405,7 @@ export function GroupBuyPortal() {
                         type="button"
                         onClick={() => void joinOrLeave()}
                         disabled={bargainBusy || bargain.expired}
-                        className="rounded-lg bg-[#FF5A1F] px-4 py-2 text-[11px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
+                        className="rounded-lg bg-[#C8963E] px-4 py-2 text-[11px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
                       >
                         {bargainBusy ? '…' : mySeat ? 'Leave the bargain' : 'Join at the current price'}
                       </button>
@@ -449,7 +449,7 @@ export function GroupBuyPortal() {
                   type="button"
                   onClick={() => void contribute()}
                   disabled={busy || !memberRef.trim() || !Number(amount)}
-                  className="w-full rounded-lg bg-[#FF5A1F] py-2.5 text-[12px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
+                  className="w-full rounded-lg bg-[#C8963E] py-2.5 text-[12px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40"
                 >
                   {busy ? 'Recording…' : 'Record contribution'}
                 </button>

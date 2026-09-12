@@ -328,7 +328,7 @@ export function PrivateCarrierAuctionDesk({
                 type="button"
                 onClick={handleRunAuction}
                 disabled={isSimulatingAuction}
-                className="w-full py-2 px-3 rounded-xl bg-[#FF5A1F] hover:bg-[#ff6f3b] text-white font-black text-xs flex items-center justify-center space-x-1.5 shadow-sm cursor-pointer disabled:opacity-50 transition-all"
+                className="w-full py-2 px-3 rounded-xl bg-[#C8963E] hover:bg-[#ff6f3b] text-white font-black text-xs flex items-center justify-center space-x-1.5 shadow-sm cursor-pointer disabled:opacity-50 transition-all"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isSimulatingAuction ? 'animate-spin' : ''}`} />
                 <span>{isSimulatingAuction ? 'Computing Bids…' : 'Run Silent Auction'}</span>

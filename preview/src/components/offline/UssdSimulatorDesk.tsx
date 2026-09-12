@@ -278,7 +278,7 @@ export function UssdSimulatorDesk({
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-[10px] font-mono font-black px-2.5 py-0.5 rounded-full bg-[#FF5A1F] text-white uppercase tracking-wider">
+              <span className="text-[10px] font-mono font-black px-2.5 py-0.5 rounded-full bg-[#C8963E] text-white uppercase tracking-wider">
                 OFFLINE GSM PROTOCOL
               </span>
               <span className="text-xs text-indigo-200 font-bold flex items-center space-x-1">
@@ -437,13 +437,13 @@ export function UssdSimulatorDesk({
                     handleDialUssd();
                     setTimeout(() => handleSendUssdResponse('3'), 150);
                   }}
-                  className="p-3 rounded-2xl bg-white border border-[#E5E8EC] hover:border-[#FF5A1F] text-left transition-all shadow-xs cursor-pointer flex items-center justify-between"
+                  className="p-3 rounded-2xl bg-white border border-[#E5E8EC] hover:border-[#C8963E] text-left transition-all shadow-xs cursor-pointer flex items-center justify-between"
                 >
                   <div>
                     <span className="font-bold text-[#0D1117] block">Confirm Delivery (PIN #4821)</span>
                     <span className="text-[10px] text-gray-500">Unlocks 90% payout instantly to rider's M-Pesa</span>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-[#FF5A1F]" />
+                  <ArrowRight className="w-4 h-4 text-[#C8963E]" />
                 </button>
 
                 <button
@@ -452,13 +452,13 @@ export function UssdSimulatorDesk({
                     handleDialUssd();
                     setTimeout(() => handleSendUssdResponse('2'), 150);
                   }}
-                  className="p-3 rounded-2xl bg-white border border-[#E5E8EC] hover:border-[#FF5A1F] text-left transition-all shadow-xs cursor-pointer flex items-center justify-between"
+                  className="p-3 rounded-2xl bg-white border border-[#E5E8EC] hover:border-[#C8963E] text-left transition-all shadow-xs cursor-pointer flex items-center justify-between"
                 >
                   <div>
                     <span className="font-bold text-[#0D1117] block">Accept Nearby Boda Gig</span>
                     <span className="text-[10px] text-gray-500">View real-time dispatches and claim jobs via GSM</span>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-[#FF5A1F]" />
+                  <ArrowRight className="w-4 h-4 text-[#C8963E]" />
                 </button>
 
                 <button
@@ -467,13 +467,13 @@ export function UssdSimulatorDesk({
                     handleDialUssd();
                     setTimeout(() => handleSendUssdResponse('4'), 150);
                   }}
-                  className="p-3 rounded-2xl bg-white border border-[#E5E8EC] hover:border-[#FF5A1F] text-left transition-all shadow-xs cursor-pointer flex items-center justify-between"
+                  className="p-3 rounded-2xl bg-white border border-[#E5E8EC] hover:border-[#C8963E] text-left transition-all shadow-xs cursor-pointer flex items-center justify-between"
                 >
                   <div>
                     <span className="font-bold text-[#0D1117] block">Check M-Pesa Ledger Balance</span>
                     <span className="text-[10px] text-gray-500">View settled balance and daily payout schedule</span>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-[#FF5A1F]" />
+                  <ArrowRight className="w-4 h-4 text-[#C8963E]" />
                 </button>
               </div>
             </div>
@@ -487,7 +487,7 @@ export function UssdSimulatorDesk({
         <div className="p-5 sm:p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <MessageSquare className="w-4 h-4 text-[#FF5A1F]" />
+              <MessageSquare className="w-4 h-4 text-[#C8963E]" />
               <h3 className="text-xs font-black uppercase tracking-wider text-[#0D1117]">
                 Live Shortcode Gateway: 22880 (Africa's Talking / Twilio)
               </h3>
@@ -529,7 +529,7 @@ export function UssdSimulatorDesk({
             />
             <button
               type="submit"
-              className="px-5 py-2.5 rounded-2xl bg-[#FF5A1F] hover:bg-[#ff6f3b] text-white font-bold text-xs flex items-center space-x-1.5 shadow-sm cursor-pointer transition-all"
+              className="px-5 py-2.5 rounded-2xl bg-[#C8963E] hover:bg-[#ff6f3b] text-white font-bold text-xs flex items-center space-x-1.5 shadow-sm cursor-pointer transition-all"
             >
               <Send className="w-3.5 h-3.5" />
               <span>Send SMS</span>

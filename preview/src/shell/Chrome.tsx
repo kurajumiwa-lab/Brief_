@@ -16,7 +16,7 @@ export function StatusToasts(props: { setSpringOverlayOpen: any, springOverlayOp
   return (
     <>
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#FF5A1F] text-[#0D1117] px-4 py-2.5 rounded-xl font-extrabold shadow-2xl flex items-center gap-2">
+        <div className="fixed bottom-6 right-6 z-50 bg-[#C8963E] text-[#0D1117] px-4 py-2.5 rounded-xl font-extrabold shadow-2xl flex items-center gap-2">
           <Sparkles className="w-4 h-4 shrink-0" />
           <span className="text-xs">{toastMessage}</span>
         </div>
@@ -67,7 +67,7 @@ export function DesktopRail(props: { activeTab: any, destinationAlerts: any, goT
           >
             <span
               className={`absolute left-0 top-1/2 -translate-y-1/2 w-0.5 rounded-r transition-all ${
-                menuOpen ? 'h-7 bg-[#FF5A1F]' : 'h-0 bg-transparent'
+                menuOpen ? 'h-7 bg-[#C8963E]' : 'h-0 bg-transparent'
               }`}
             />
             <Menu className="w-5 h-5 shrink-0" />
@@ -93,7 +93,7 @@ export function DesktopRail(props: { activeTab: any, destinationAlerts: any, goT
                 {/* Active marker on the edge, not a heavy filled pill. */}
                 <span
                   className={`absolute left-0 top-1/2 -translate-y-1/2 w-0.5 rounded-r transition-all ${
-                    active ? 'h-7 bg-[#FF5A1F]' : 'h-0 bg-transparent'
+                    active ? 'h-7 bg-[#C8963E]' : 'h-0 bg-transparent'
                   }`}
                 />
                 <span className="relative shrink-0">
@@ -156,7 +156,7 @@ export function DockNav(props: { activeTab: any, destinationAlerts: any, dockOn:
 
       {/* Floating dock — §11: a rounded, elevated pill that floats above the
           content instead of a full-width bar, with the selected item picked
-          out by the orange accent. Safe-area aware, high contrast. */}
+          out by the bronze accent. Safe-area aware, high contrast. */}
       <nav
         aria-label="Primary"
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }}
@@ -172,10 +172,10 @@ export function DockNav(props: { activeTab: any, destinationAlerts: any, dockOn:
             aria-expanded={menuOpen}
             title="Menu"
             className={`flex flex-1 flex-col items-center justify-center gap-1 rounded-2xl py-1.5 cursor-pointer transition-colors ${
-              menuOpen ? 'text-[#FF5A1F]' : 'text-[#7A8494] hover:text-[#5A6472]'
+              menuOpen ? 'text-[#C8963E]' : 'text-[#7A8494] hover:text-[#5A6472]'
             }`}
           >
-            <span className={`flex h-7 w-11 items-center justify-center rounded-full transition-colors ${menuOpen ? 'bg-[#FF5A1F] text-[#0D1117]' : ''}`}>
+            <span className={`flex h-7 w-11 items-center justify-center rounded-full transition-colors ${menuOpen ? 'bg-[#C8963E] text-[#0D1117]' : ''}`}>
               <Menu className="w-5 h-5" />
             </span>
             <span className="text-[11px] font-bold leading-none">Menu</span>
@@ -190,10 +190,10 @@ export function DockNav(props: { activeTab: any, destinationAlerts: any, dockOn:
                 aria-current={active ? 'page' : undefined}
                 title={d.hint}
                 className={`flex flex-1 flex-col items-center justify-center gap-1 rounded-2xl py-1.5 cursor-pointer transition-colors ${
-                  active ? 'text-[#FF5A1F]' : 'text-[#7A8494] hover:text-[#5A6472]'
+                  active ? 'text-[#C8963E]' : 'text-[#7A8494] hover:text-[#5A6472]'
                 }`}
               >
-                <span className={`relative flex h-7 w-11 items-center justify-center rounded-full transition-colors ${active ? 'bg-[#FF5A1F] text-[#0D1117]' : ''}`}>
+                <span className={`relative flex h-7 w-11 items-center justify-center rounded-full transition-colors ${active ? 'bg-[#C8963E] text-[#0D1117]' : ''}`}>
                   <Icon className="w-5 h-5" />
                   <span className="absolute -right-1 -top-1">
                     <ActivityDot n={destinationAlerts[d.id] ?? 0} />

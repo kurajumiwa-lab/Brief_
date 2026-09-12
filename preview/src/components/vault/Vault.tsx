@@ -61,7 +61,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
     <button
       onClick={onClick}
       className={`shrink-0 px-2.5 py-1 rounded-full text-[10px] font-extrabold border cursor-pointer transition ${
-        active ? 'bg-[#FF5A1F] text-[#0D1117] border-[#2563EB]' : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
+        active ? 'bg-[#C8963E] text-[#0D1117] border-[#2563EB]' : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
       }`}
     >
       {children}
@@ -201,7 +201,7 @@ function HostPanel({ vault, onChanged }: { vault: VaultType; onChanged: () => vo
           <option value="admin">Admin</option>
         </select>
         <button onClick={addParticipant} disabled={busy || !name.trim()}
-          className="px-2.5 py-1.5 rounded-lg bg-[#FF5A1F] text-[#0D1117] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">
+          className="px-2.5 py-1.5 rounded-lg bg-[#C8963E] text-[#0D1117] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">
           Add
         </button>
       </div>
@@ -297,7 +297,7 @@ function Requests({ vault, onChanged }: { vault: VaultType; onChanged: () => voi
                     className="w-28 px-2 py-1 rounded-lg border border-[#E5E8EC] text-[10px] text-[#0D1117]"
                   />
                   <button onClick={() => void route(r.id)} disabled={routeBusy || !vendorId.trim()}
-                    className="px-2.5 py-1.5 rounded-lg bg-[#FF5A1F] text-[#0D1117] text-[10px] font-extrabold cursor-pointer disabled:opacity-50">
+                    className="px-2.5 py-1.5 rounded-lg bg-[#C8963E] text-[#0D1117] text-[10px] font-extrabold cursor-pointer disabled:opacity-50">
                     {routeBusy ? '…' : 'Route'}
                   </button>
                   <button onClick={() => { setRouteFor(null); setRouteError(null); }}
@@ -314,7 +314,7 @@ function Requests({ vault, onChanged }: { vault: VaultType; onChanged: () => voi
             )}
             {vault.role === 'vendor' && (r.status === 'routed' || r.status === 'open') && (
               <button onClick={async () => { await briefApi.acceptVaultRequest(vault.id, r.id); onChanged(); }}
-                className="px-2.5 py-1.5 rounded-lg bg-[#FF5A1F] text-[#0D1117] text-[10px] font-extrabold cursor-pointer">
+                className="px-2.5 py-1.5 rounded-lg bg-[#C8963E] text-[#0D1117] text-[10px] font-extrabold cursor-pointer">
                 Accept
               </button>
             )}
@@ -447,7 +447,7 @@ function VaultHome({ onOpen, refreshKey }: { onOpen: (v: VaultType) => void; ref
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-lg font-extrabold text-[#0D1117]">The Vault</h2>
         <button onClick={() => setCreating((c) => !c)}
-          className="px-3 py-1.5 rounded-full bg-[#FF5A1F] text-[#0D1117] text-[10px] font-extrabold cursor-pointer">
+          className="px-3 py-1.5 rounded-full bg-[#C8963E] text-[#0D1117] text-[10px] font-extrabold cursor-pointer">
           + New vault
         </button>
       </div>
@@ -475,7 +475,7 @@ function VaultHome({ onOpen, refreshKey }: { onOpen: (v: VaultType) => void; ref
             </select>
           </div>
           <button onClick={create} disabled={!title.trim()}
-            className="w-full py-2 rounded-lg bg-[#FF5A1F] text-[#0D1117] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">
+            className="w-full py-2 rounded-lg bg-[#C8963E] text-[#0D1117] text-[10px] font-extrabold cursor-pointer disabled:opacity-40">
             Create
           </button>
         </Card>

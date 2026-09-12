@@ -101,7 +101,7 @@ export function CircleTasks({
             <button
               onClick={() => onAssign(task.id)}
               disabled={busy}
-              className="px-3 py-1.5 rounded-xl bg-[#FF5A1F] text-[#0D1117] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+              className="px-3 py-1.5 rounded-xl bg-[#C8963E] text-[#0D1117] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
             >
               {busy ? 'Working...' : 'Take this on'}
             </button>
@@ -112,7 +112,7 @@ export function CircleTasks({
               <button
                 onClick={() => onComplete(task.id)}
                 disabled={busy}
-                className="px-3 py-1.5 rounded-xl bg-[#FF5A1F] text-[#0D1117] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+                className="px-3 py-1.5 rounded-xl bg-[#C8963E] text-[#0D1117] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
               >
                 {busy ? 'Working...' : 'Mark complete'}
               </button>

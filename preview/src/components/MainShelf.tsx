@@ -193,7 +193,7 @@ function ShelfCardView({
       {!locked && card.priority && (
         <span
           className={`absolute right-2 top-2 rounded-full px-1.5 py-0.5 text-[7px] font-extrabold uppercase tracking-[0.14em] ${
-            isDark ? 'bg-[#16A34A] text-[#0D1117]' : 'bg-[#FF5A1F] text-[#0D1117]'
+            isDark ? 'bg-[#16A34A] text-[#0D1117]' : 'bg-[#C8963E] text-[#0D1117]'
           }`}
         >
           Free to play
@@ -217,7 +217,7 @@ function ShelfCardView({
         className={`absolute left-2 top-2 flex items-center justify-center rounded-md ${
           isDark
             ? 'bg-[#151D2A]/90 border border-[#2B374C] text-[#16A34A]'
-            : 'bg-[#FF5A1F]/85 text-[#0D1117]'
+            : 'bg-[#C8963E]/85 text-[#0D1117]'
         } ${compact ? 'h-5 w-5' : 'h-6 w-6'}`}
       >
         <Icon className={compact ? 'h-2.5 w-2.5' : 'h-3 w-3'} />

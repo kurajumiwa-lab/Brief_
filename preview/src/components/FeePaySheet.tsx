@@ -72,7 +72,7 @@ export function FeePaySheet({ title, intro, serviceKeys, target, afterSubmit, on
       <div className="w-full max-w-md rounded-t-3xl border border-[#E5E8EC] bg-[#FFFFFF] p-5 shadow-2xl sm:rounded-3xl">
         <div className="mb-3 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Wallet className="h-4 w-4 text-[#FF5A1F]" aria-hidden="true" />
+            <Wallet className="h-4 w-4 text-[#C8963E]" aria-hidden="true" />
             <h2 className="text-[13px] font-extrabold text-[#0D1117]">{title}</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Close" className="cursor-pointer rounded-full p-1 text-[#0D1117]/70 hover:bg-[#F0F2F5]">
@@ -104,13 +104,13 @@ export function FeePaySheet({ title, intro, serviceKeys, target, afterSubmit, on
             </p>
 
             {offered.map((svcItem) => (
-              <label key={svcItem.key} className={`flex cursor-pointer items-center justify-between gap-2 rounded-xl border px-3 py-2 ${service === svcItem.key ? 'border-[#FF5A1F] bg-[#F0F2F5]' : 'border-[#E5E8EC]'}`}>
+              <label key={svcItem.key} className={`flex cursor-pointer items-center justify-between gap-2 rounded-xl border px-3 py-2 ${service === svcItem.key ? 'border-[#C8963E] bg-[#F0F2F5]' : 'border-[#E5E8EC]'}`}>
                 <span className="flex items-center gap-2">
                   <input type="radio" name="feepay-service" checked={service === svcItem.key} onChange={() => setService(svcItem.key)} aria-label={svcItem.label} />
                   <span className="text-[11px] font-bold text-[#0D1117]">{svcItem.label}</span>
                 </span>
                 {/* The price comes from the server catalog — never from this file. */}
-                <span className="text-[11px] font-extrabold text-[#FF5A1F]">KES {svcItem.amountKes}</span>
+                <span className="text-[11px] font-extrabold text-[#C8963E]">KES {svcItem.amountKes}</span>
               </label>
             ))}
 
@@ -126,7 +126,7 @@ export function FeePaySheet({ title, intro, serviceKeys, target, afterSubmit, on
               type="button"
               onClick={() => void pay()}
               disabled={busy || !service || code.trim().length < 8}
-              className="w-full cursor-pointer rounded-xl bg-[#FF5A1F] py-2.5 text-[12px] font-extrabold text-[#0D1117] disabled:cursor-not-allowed disabled:opacity-40"
+              className="w-full cursor-pointer rounded-xl bg-[#C8963E] py-2.5 text-[12px] font-extrabold text-[#0D1117] disabled:cursor-not-allowed disabled:opacity-40"
             >
               {busy ? 'Recording…' : 'Submit confirmation code'}
             </button>
