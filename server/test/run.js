@@ -7266,6 +7266,10 @@ console.log('\n=== EVENTS HUB (Tikiti T4) ===');
     }
     let r = await call('/api/events?category=popup', 'GET');
     check('browsing by category finds the market', r.body?.events?.some((e) => e.title === 'Night Market X') ?? false, JSON.stringify(r.body).slice(0, 120));
+    // The card's cover + description are surfaced (null when unset — honest,
+    // never a fabricated image).
+    const nightMarket = r.body?.events?.find((e) => e.title === 'Night Market X');
+    check('a browse listing carries coverImageUrl and description', 'coverImageUrl' in nightMarket && 'description' in nightMarket, JSON.stringify(nightMarket));
     r = await call('/api/events?location=kilimani', 'GET');
     check('location search is case-insensitive', (r.body?.events ?? []).length === 2, `${r.body?.events?.length}`);
     r = await call('/api/events?category=horoscope', 'GET');

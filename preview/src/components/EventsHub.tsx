@@ -1,6 +1,7 @@
 import React from 'react';
 import * as briefApi from '../api/briefApi';
 import type { EventListing } from '../api/briefApi';
+import { EventCard } from './events/EventCard';
 
 // ---------------------------------------------------------------------------
 // EVENTS HUB (Tikiti T4) — one browse surface over everything that is
@@ -157,33 +158,9 @@ export function EventsHub() {
         </p>
       )}
 
-      <div className="space-y-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {(rows ?? []).map((e) => (
-          <button
-            key={e.slug}
-            onClick={() => open(e.slug)}
-            className="w-full text-left bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-3.5 space-y-1.5 cursor-pointer hover:border-[#06B6D4]"
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#0D1117]/60">
-                  {e.categoryLabel}
-                </p>
-                <p className="text-sm font-extrabold text-[#0D1117] truncate">{e.title}</p>
-              </div>
-              {e.featured && (
-                <span className="shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-[#4F46E5] text-[#0D1117]">
-                  ★ Featured
-                </span>
-              )}
-            </div>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-[#0D1117]/60">
-              {e.startsAt && <span>{e.startsAt.slice(0, 10)}</span>}
-              {e.location && <span className="truncate">{e.location}</span>}
-              <span>{e.goalAmount != null ? 'Cause / pot' : money(e.price, e.currency)}</span>
-              <span>{e.popularity} going</span>
-            </div>
-          </button>
+          <EventCard key={e.slug} event={e} onOpen={open} />
         ))}
       </div>
     </div>

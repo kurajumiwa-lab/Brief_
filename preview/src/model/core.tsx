@@ -4005,6 +4005,25 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
         {load.status === 'ready' && c && (
           <>
             <div className="space-y-2">
+              {/* Cover image hero — the real image when the organiser set one;
+                  a deterministic gradient fallback otherwise. Never a void. */}
+              {c.image ? (
+                <img
+                  src={c.image}
+                  alt={c.title}
+                  className="w-full h-44 sm:h-52 rounded-2xl object-cover border border-[#E5E8EC]"
+                  style={{ background: "var(--color-surface-elevated)" }}
+                />
+              ) : (
+                <div
+                  className="w-full h-32 rounded-2xl flex items-center justify-center"
+                  style={{ background: "linear-gradient(135deg, #4F46E5, #06B6D4)" }}
+                >
+                  <span className="text-5xl font-black text-white/80">
+                    {(c.title || "?").trim().charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
               <p className="text-[9px] text-[#0D1117]">
                 {c.type}
               </p>

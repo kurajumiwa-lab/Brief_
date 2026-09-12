@@ -62,6 +62,10 @@ export function browseEvents({
     // The public identity of an event is its slug; internal ids stay private.
     slug: c.publicSlug,
     title: c.title,
+    description: c.description ?? null,
+    // A cover image is surfaced only when it actually exists; the client
+    // derives a deterministic gradient fallback, never renders an empty box.
+    coverImageUrl: c.metadata?.image ?? null,
     category: c.type,
     categoryLabel: CATEGORY_LABELS[c.type] ?? c.type,
     location: c.location ?? null,

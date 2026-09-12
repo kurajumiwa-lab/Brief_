@@ -2806,6 +2806,8 @@ export interface EventListing {
   /** The public identity; internal ids stay private. */
   slug: string;
   title: string;
+  description: string | null;
+  coverImageUrl: string | null;
   category: string;
   categoryLabel: string;
   location: string | null;
