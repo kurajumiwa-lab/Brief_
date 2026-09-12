@@ -4,7 +4,8 @@
 // Identity is always caller-authoritative; pricing is server-derived.
 import { callerId } from '../identity.js';
 import * as spaces from '../domain/space.js';
-import { requireAuth, recordError } from './helpers.js';
+import * as outbound from '../outbound.js';
+import { requireAuthMw, recordError } from './helpers.js';
 
 export function register(app) {
   // --- List caller's spaces ---
@@ -23,7 +24,7 @@ export function register(app) {
   });
 
   // --- Create a new space ---
-  app.post('/api/spaces', requireAuth, (req, res) => {
+  app.post('/api/spaces', requireAuthMw, (req, res) => {
     try {
       const me = callerId(req);
       const { name, type, goal, targetValueKes, initialOffer } = req.body || {};
@@ -64,7 +65,7 @@ export function register(app) {
   });
 
   // --- Update a space ---
-  app.patch('/api/spaces/:id', requireAuth, (req, res) => {
+  app.patch('/api/spaces/:id', requireAuthMw, (req, res) => {
     try {
       const me = callerId(req);
       const updated = spaces.updateSpace(req.params.id, req.body || {}, { callerId: me });
@@ -79,7 +80,7 @@ export function register(app) {
   });
 
   // --- Create an offer inside a space ---
-  app.post('/api/spaces/:id/offers', requireAuth, (req, res) => {
+  app.post('/api/spaces/:id/offers', requireAuthMw, (req, res) => {
     try {
       const me = callerId(req);
       const { title, description, price, currency, type, images } = req.body || {};
@@ -106,7 +107,7 @@ export function register(app) {
   });
 
   // --- Publish an offer inside a space ---
-  app.post('/api/spaces/:id/offers/:offerId/publish', requireAuth, (req, res) => {
+  app.post('/api/spaces/:id/offers/:offerId/publish', requireAuthMw, (req, res) => {
     try {
       const me = callerId(req);
       const published = spaces.publishSpaceOffer(req.params.id, req.params.offerId, { callerId: me });
@@ -130,7 +131,7 @@ export function register(app) {
   });
 
   // --- Record a custom space activity ---
-  app.post('/api/spaces/:id/activities', requireAuth, (req, res) => {
+  app.post('/api/spaces/:id/activities', requireAuthMw, (req, res) => {
     try {
       const me = callerId(req);
       const { kind, title, description, metadata } = req.body || {};
@@ -155,7 +156,7 @@ export function register(app) {
   });
 
   // --- Get space conversations ---
-  app.get('/api/spaces/:id/conversations', requireAuth, (req, res) => {
+  app.get('/api/spaces/:id/conversations', requireAuthMw, (req, res) => {
     try {
       const convs = spaces.getSpaceConversations(req.params.id);
       res.json({ conversations: convs });
@@ -190,12 +191,27 @@ export function register(app) {
   });
 
   // --- Post message in conversation ---
-  app.post('/api/spaces/:id/conversations/:convId/messages', requireAuth, (req, res) => {
+  app.post('/api/spaces/:id/conversations/:convId/messages', requireAuthMw, async (req, res) => {
     try {
       const me = callerId(req);
       const { text, sender, from } = req.body || {};
       if (!text || !String(text).trim()) {
         return res.status(400).json({ error: 'Message text is required' });
+      }
+      const f = from || 'owner';
+
+      // Two-way WhatsApp: an owner/seller reply to a customer who has a known
+      // WhatsApp number is dispatched out through the outbound seam (Meta
+      // Cloud API direct, or a BSP fallback). The delivery result is stored on
+      // the message, never fabricated — no provider => an honest "not sent".
+      let whatsappDelivery = null;
+      const existing = spaces.getSpaceConversation(req.params.convId);
+      if (existing && (f === 'owner' || f === 'seller') && existing.customerContact) {
+        whatsappDelivery = await outbound.send({
+          channel: 'whatsapp',
+          to: existing.customerContact,
+          text: String(text).trim()
+        });
       }
 
       const conv = spaces.postSpaceMessage({
@@ -203,11 +219,12 @@ export function register(app) {
         conversationId: req.params.convId,
         text,
         sender: sender || 'Seller',
-        from: from || 'owner',
-        callerId: me
+        from: f,
+        callerId: me,
+        whatsappDelivery
       });
 
-      res.json({ conversation: conv });
+      res.json({ conversation: conv, whatsappDelivery });
     } catch (err) {
       recordError('space_message_post_failed', err);
       res.status(400).json({ error: err.message || 'failed to post message' });
@@ -215,7 +232,7 @@ export function register(app) {
   });
 
   // --- Send Quote in conversation ---
-  app.post('/api/spaces/:id/conversations/:convId/quote', requireAuth, (req, res) => {
+  app.post('/api/spaces/:id/conversations/:convId/quote', requireAuthMw, (req, res) => {
     try {
       const me = callerId(req);
       const { title, priceKes, notes } = req.body || {};
@@ -240,7 +257,7 @@ export function register(app) {
   });
 
   // --- Trigger M-Pesa STK Prompt ---
-  app.post('/api/spaces/:id/conversations/:convId/mpesa-prompt', requireAuth, (req, res) => {
+  app.post('/api/spaces/:id/conversations/:convId/mpesa-prompt', requireAuthMw, (req, res) => {
     try {
       const me = callerId(req);
       const { quoteId, phoneNumber, amountKes, description } = req.body || {};
@@ -312,7 +329,7 @@ export function register(app) {
   });
 
   // --- Get Space Money & Duka Ledger Summary ---
-  app.get('/api/spaces/:id/money', requireAuth, (req, res) => {
+  app.get('/api/spaces/:id/money', requireAuthMw, (req, res) => {
     try {
       const summary = spaces.getSpaceMoneySummary(req.params.id);
       res.json({ money: summary });
@@ -323,7 +340,7 @@ export function register(app) {
   });
 
   // --- Record an Expense / Supply Cost ---
-  app.post('/api/spaces/:id/expenses', requireAuth, (req, res) => {
+  app.post('/api/spaces/:id/expenses', requireAuthMw, (req, res) => {
     try {
       const me = callerId(req);
       const { category, description, amountKes, date } = req.body || {};
@@ -348,7 +365,7 @@ export function register(app) {
   });
 
   // --- List Space Expenses ---
-  app.get('/api/spaces/:id/expenses', requireAuth, (req, res) => {
+  app.get('/api/spaces/:id/expenses', requireAuthMw, (req, res) => {
     try {
       const expenses = spaces.getSpaceExpenses(req.params.id);
       res.json({ expenses });
@@ -359,7 +376,7 @@ export function register(app) {
   });
 
   // --- Record a Customer Credit Tab (DukaBook) ---
-  app.post('/api/spaces/:id/tabs', requireAuth, (req, res) => {
+  app.post('/api/spaces/:id/tabs', requireAuthMw, (req, res) => {
     try {
       const me = callerId(req);
       const { customerName, customerContact, amountKes, note } = req.body || {};
@@ -384,7 +401,7 @@ export function register(app) {
   });
 
   // --- Record Payment on Customer Tab ---
-  app.post('/api/spaces/:id/tabs/:tabId/payments', requireAuth, (req, res) => {
+  app.post('/api/spaces/:id/tabs/:tabId/payments', requireAuthMw, (req, res) => {
     try {
       const me = callerId(req);
       const { amountKes, note } = req.body || {};
@@ -408,7 +425,7 @@ export function register(app) {
   });
 
   // --- List Customer Tabs ---
-  app.get('/api/spaces/:id/tabs', requireAuth, (req, res) => {
+  app.get('/api/spaces/:id/tabs', requireAuthMw, (req, res) => {
     try {
       const tabs = spaces.getSpaceTabs(req.params.id);
       res.json({ tabs });
@@ -419,7 +436,7 @@ export function register(app) {
   });
 
   // --- Create an Inter-County Cargo Dispatch ---
-  app.post('/api/spaces/:id/dispatches', requireAuth, (req, res) => {
+  app.post('/api/spaces/:id/dispatches', requireAuthMw, (req, res) => {
     try {
       const me = callerId(req);
       const {
@@ -458,7 +475,7 @@ export function register(app) {
   });
 
   // --- List Space Dispatches ---
-  app.get('/api/spaces/:id/dispatches', requireAuth, (req, res) => {
+  app.get('/api/spaces/:id/dispatches', requireAuthMw, (req, res) => {
     try {
       const dispatches = spaces.getSpaceDispatches(req.params.id);
       res.json({ dispatches });
@@ -469,7 +486,7 @@ export function register(app) {
   });
 
   // --- Update Dispatch Status ---
-  app.patch('/api/spaces/:id/dispatches/:dispatchId', requireAuth, (req, res) => {
+  app.patch('/api/spaces/:id/dispatches/:dispatchId', requireAuthMw, (req, res) => {
     try {
       const me = callerId(req);
       const { status, conductorContact } = req.body || {};
@@ -490,7 +507,7 @@ export function register(app) {
   });
 
   // --- Create order from space ---
-  app.post('/api/spaces/:id/orders', requireAuth, (req, res) => {
+  app.post('/api/spaces/:id/orders', requireAuthMw, (req, res) => {
     try {
       const me = callerId(req);
       const { offerId, customerId, customerName, quantity, deliveryNotes } = req.body || {};

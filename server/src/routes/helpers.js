@@ -23,6 +23,19 @@ export function requireAuth(req, res) {
   return null;
 }
 
+/**
+ * The Express-middleware form of requireAuth. requireAuth itself is a GUARD
+ * (returns the caller id, sends 401 otherwise, and does NOT call next()); using
+ * it directly as a route middleware (app.post(path, requireAuth, handler)) made
+ * the handler never run and the request hang forever. This wrapper is the
+ * correct middleware: it calls next() when authenticated and lets requireAuth
+ * send the 401 otherwise.
+ */
+export function requireAuthMw(req, res, next) {
+  if (requireAuth(req, res)) return next();
+  // requireAuth already wrote the 401 response when the caller is missing.
+}
+
 export const now = () => new Date().toISOString();
 export const CURRENT_USER = 'usr_me'; // single-user deployment; auth slots in here
 

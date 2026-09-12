@@ -21,8 +21,13 @@
 // ---------------------------------------------------------------------------
 
 import * as twilio from './connectors/twilio.js';
+import * as whatsappMeta from './connectors/whatsappMeta.js';
 
-export const OUTBOUND_PROVIDERS = { twilio };
+// Order matters: providerForChannel() returns the FIRST configured provider for
+// a channel. whatsappMeta (direct Meta Cloud API, no middleman) is preferred
+// for the whatsapp channel; twilio (a BSP) is the fallback when Meta-direct
+// credentials are not mounted, and is the only sms provider.
+export const OUTBOUND_PROVIDERS = { whatsappMeta, twilio };
 
 /** Every channel Brief might send on, so status() can report the gaps too. */
 export const CHANNELS = ['sms', 'whatsapp', 'email', 'telegram'];
@@ -46,12 +51,12 @@ export function canSend(channel) {
  * Send an outbound message on a channel, through whatever provider is
  * configured for it. Fail-closed: no provider -> a named refusal.
  */
-export async function send({ channel, to, text }) {
+export async function send({ channel, to, text, fetchImpl = fetch }) {
   const hit = providerForChannel(channel);
   if (!hit) {
     return { ok: false, reason: 'no_provider', channel };
   }
-  return hit.provider.send({ channel, to, text });
+  return hit.provider.send({ channel, to, text, fetchImpl });
 }
 
 /**

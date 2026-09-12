@@ -336,6 +336,10 @@ export function getSpaceConversations(spaceId) {
 /**
  * Posts a message into a conversation thread (from seller or customer).
  */
+export function getSpaceConversation(conversationId) {
+  return store.find('spaceConversations', (c) => c.id === conversationId) ?? null;
+}
+
 export function postSpaceMessage({
   spaceId,
   conversationId,
@@ -344,7 +348,8 @@ export function postSpaceMessage({
   sender = 'Seller',
   quote = null,
   paymentPrompt = null,
-  callerId = null
+  callerId = null,
+  whatsappDelivery = null
 }) {
   const space = store.find('spaces', (s) => s.id === spaceId);
   if (!space) throw new Error('Space not found');
@@ -362,6 +367,9 @@ export function postSpaceMessage({
     text: String(text || '').trim(),
     quote,
     paymentPrompt,
+    // An owner/seller reply that was dispatched to the customer's WhatsApp
+    // carries the honest delivery result (or null when nothing was sent).
+    whatsappDelivery,
     at: now
   };
 

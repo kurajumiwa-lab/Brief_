@@ -196,7 +196,17 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
                 }`}
               >
                 <p className="text-xs font-medium leading-relaxed whitespace-pre-wrap">{msg.text}</p>
-                
+
+                {/* WhatsApp delivery status on owner replies — honest, from the
+                    stored result (sent ✓ / not delivered + reason). */}
+                {!isCustomer && (msg as any).whatsappDelivery && (
+                  <p className="mt-1 text-[10px] font-bold" style={{ color: (msg as any).whatsappDelivery.ok ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.7)' }}>
+                    {(msg as any).whatsappDelivery.ok
+                      ? '✓ Sent via WhatsApp'
+                      : `Not delivered — ${(msg as any).whatsappDelivery.reason ?? 'no provider'}`}
+                  </p>
+                )}
+
                 {/* Embedded Quote Card */}
                 {msg.quote && (
                   <div className="mt-2 p-3 rounded-xl bg-white text-[color:var(--color-text)] shadow-sm space-y-1.5 border border-black/5">

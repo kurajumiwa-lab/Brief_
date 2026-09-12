@@ -3940,11 +3940,11 @@ export function postSpaceMessage(spaceId: string, convId: string, input: {
   text: string;
   sender?: string;
   from?: 'customer' | 'owner' | 'seller';
-}): Promise<ApiResult<{ conversation: SpaceConversation }>> {
-  return request<{ conversation: SpaceConversation }>(`/api/spaces/${encodeURIComponent(spaceId)}/conversations/${encodeURIComponent(convId)}/messages`, {
+}): Promise<ApiResult<{ conversation: SpaceConversation; whatsappDelivery: { ok: boolean; reason?: string; messageId?: string } | null }>> {
+  return request<{ conversation: SpaceConversation; whatsappDelivery: { ok: boolean; reason?: string; messageId?: string } | null }>(`/api/spaces/${encodeURIComponent(spaceId)}/conversations/${encodeURIComponent(convId)}/messages`, {
     method: 'POST',
     body: JSON.stringify(input)
-  }, (r) => r && r.conversation ? { conversation: r.conversation } : undefined);
+  }, (r) => r && r.conversation ? { conversation: r.conversation, whatsappDelivery: r.whatsappDelivery ?? null } : undefined);
 }
 
 /** Send a customized quotation card in a Space conversation thread. */
