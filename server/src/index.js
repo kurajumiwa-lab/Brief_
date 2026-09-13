@@ -89,6 +89,7 @@ import { register as lipaMdogoRoutes } from './routes/lipaMdogo.js';
 import { register as tableBankingRoutes } from './routes/tableBanking.js';
 import { register as rolesRoutes } from './routes/roles.js';
 import { register as gapsRoutes } from './routes/gaps.js';
+import { register as priceSignalsRoutes } from './routes/priceSignals.js';
 
 const app = express();
 
@@ -266,6 +267,7 @@ lipaMdogoRoutes(app);
 tableBankingRoutes(app);
 rolesRoutes(app);
 gapsRoutes(app);
+priceSignalsRoutes(app);
 
 // --- Production frontend serving -------------------------------------------
 //
