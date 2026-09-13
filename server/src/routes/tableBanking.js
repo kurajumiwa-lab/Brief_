@@ -1,28 +1,28 @@
-// CHAMA ROUTES — the table-banking ledger + calculator. A chama is a TOOL an
-// existing group applies to itself; Brief is not the chama and not the lender.
-import * as chama from '../domain/chama.js';
+// TABLE BANKING ROUTES — the table-banking ledger + calculator. A group is a TOOL an
+// existing group applies to itself; Brief is not the group and not the lender.
+import * as tableBanking from '../domain/tableBanking.js';
 import { requireAuth, requireCap } from './helpers.js';
 import { requireFeature } from '../features.js';
 import { callerId } from '../identity.js';
 
 export function register(app) {
-  app.use('/api/chama', requireFeature('chama'));
-  app.use('/api/me/chamas', requireFeature('chama'));
-  app.use('/api/chamas', requireFeature('chama'));
+  app.use('/api/table-banking', requireFeature('table_banking'));
+  app.use('/api/me/table-banking', requireFeature('table_banking'));
+  app.use('/api/table-banking', requireFeature('table_banking'));
 
-  // The member's own chamas.
-  app.get('/api/me/chamas', (req, res) => {
+  // The member's own groups.
+  app.get('/api/me/table-banking', (req, res) => {
     const me = requireAuth(req, res);
     if (!me) return;
-    res.json({ chamas: chama.listChamas(me).map((c) => ({ ...c, summary: chama.summary(c.id) })) });
+    res.json({ groups: tableBanking.listTableBanking(me).map((c) => ({ ...c, summary: tableBanking.summary(c.id) })) });
   });
 
-  // Create a chama (the owner is the first member + secretary/maker).
-  app.post('/api/chamas', (req, res) => {
+  // Create a table-banking group (the owner is the first member + secretary/maker).
+  app.post('/api/table-banking', (req, res) => {
     const me = requireAuth(req, res);
     if (!me) return;
     try {
-      const created = chama.createChama({
+      const created = tableBanking.createTableBanking({
         ownerId: me,
         name: req.body?.name,
         contributionAmount: req.body?.contributionAmount,
@@ -30,37 +30,37 @@ export function register(app) {
         cycleDays: req.body?.cycleDays ?? 30,
         latePenaltyKes: req.body?.latePenaltyKes ?? 0
       });
-      res.status(201).json({ chama: { ...created, summary: chama.summary(created.id) } });
+      res.status(201).json({ group: { ...created, summary: tableBanking.summary(created.id) } });
     } catch (e) {
       res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
     }
   });
 
-  // Join a chama (the group's own members; no discovery, no directory).
-  app.post('/api/chamas/:id/join', (req, res) => {
+  // Join a group (the group's own members; no discovery, no directory).
+  app.post('/api/table-banking/:id/join', (req, res) => {
     const me = requireAuth(req, res);
     if (!me) return;
     try {
-      const joined = chama.joinChama(req.params.id, me);
-      res.json({ chama: { ...joined, summary: chama.summary(joined.id) } });
+      const joined = tableBanking.joinTableBanking(req.params.id, me);
+      res.json({ group: { ...joined, summary: tableBanking.summary(joined.id) } });
     } catch (e) {
       res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
     }
   });
 
   // Summary + rotation + member's own view (the indicators).
-  app.get('/api/chamas/:id', (req, res) => {
+  app.get('/api/table-banking/:id', (req, res) => {
     const me = requireAuth(req, res);
     if (!me) return;
     try {
-      const c = chama.getChama(req.params.id);
-      if (!c) return res.status(404).json({ error: 'chama not found', code: 'not_found' });
+      const c = tableBanking.getTableBanking(req.params.id);
+      if (!c) return res.status(404).json({ error: 'group not found', code: 'not_found' });
       if (!c.members.some((m) => m.userId === me)) return res.status(403).json({ error: 'you are not a member', code: 'not_member' });
       res.json({
-        chama: c,
-        summary: chama.summary(c.id),
-        rotation: chama.rotationView(c.id),
-        me: chama.memberView(c.id, me)
+        group: c,
+        summary: tableBanking.summary(c.id),
+        rotation: tableBanking.rotationView(c.id),
+        me: tableBanking.memberView(c.id, me)
       });
     } catch (e) {
       res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
@@ -68,58 +68,58 @@ export function register(app) {
   });
 
   // Record a contribution (member attestation with receipt hash).
-  app.post('/api/chamas/:id/contributions', (req, res) => {
+  app.post('/api/table-banking/:id/contributions', (req, res) => {
     const me = requireAuth(req, res);
     if (!me) return;
     try {
-      const row = chama.recordContribution(req.params.id, me, {
+      const row = tableBanking.recordContribution(req.params.id, me, {
         amount: req.body?.amount,
         receiptHash: req.body?.receiptHash ?? null,
         idempotencyKey: req.body?.idempotencyKey ?? null
       });
-      res.status(201).json({ contribution: row, summary: chama.summary(req.params.id) });
+      res.status(201).json({ contribution: row, summary: tableBanking.summary(req.params.id) });
     } catch (e) {
       res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
     }
   });
 
   // Rotation actions.
-  app.post('/api/chamas/:id/rotate', (req, res) => {
+  app.post('/api/table-banking/:id/rotate', (req, res) => {
     const me = requireAuth(req, res);
     if (!me) return;
     try {
-      chama.advanceTurn(req.params.id, me);
-      res.json({ rotation: chama.rotationView(req.params.id) });
+      tableBanking.advanceTurn(req.params.id, me);
+      res.json({ rotation: tableBanking.rotationView(req.params.id) });
     } catch (e) {
       res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
     }
   });
-  app.post('/api/chamas/:id/skip', (req, res) => {
+  app.post('/api/table-banking/:id/skip', (req, res) => {
     const me = requireAuth(req, res);
     if (!me) return;
     try {
-      chama.skipTurn(req.params.id, req.body?.memberId ?? me);
-      res.json({ rotation: chama.rotationView(req.params.id) });
+      tableBanking.skipTurn(req.params.id, req.body?.memberId ?? me);
+      res.json({ rotation: tableBanking.rotationView(req.params.id) });
     } catch (e) {
       res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
     }
   });
 
-  // Collective demand — a chama places a bulk Request riding the economic chain.
-  app.get('/api/chamas/:id/requests', (req, res) => {
+  // Collective demand — a group places a bulk Request riding the economic chain.
+  app.get('/api/table-banking/:id/requests', (req, res) => {
     const me = requireAuth(req, res);
     if (!me) return;
     try {
-      res.json({ collective: chama.listCollectiveRequests(req.params.id) });
+      res.json({ collective: tableBanking.listCollectiveRequests(req.params.id) });
     } catch (e) {
       res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
     }
   });
-  app.post('/api/chamas/:id/requests', (req, res) => {
+  app.post('/api/table-banking/:id/requests', (req, res) => {
     const me = requireAuth(req, res);
     if (!me) return;
     try {
-      const result = chama.placeCollectiveRequest(req.params.id, me, req.body ?? {});
+      const result = tableBanking.placeCollectiveRequest(req.params.id, me, req.body ?? {});
       res.status(201).json(result);
     } catch (e) {
       res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
@@ -127,88 +127,88 @@ export function register(app) {
   });
 
   // Loans.
-  app.post('/api/chamas/:id/loans', (req, res) => {
+  app.post('/api/table-banking/:id/loans', (req, res) => {
     const me = requireAuth(req, res);
     if (!me) return;
     try {
-      const loan = chama.applyLoan(req.params.id, me, {
+      const loan = tableBanking.applyLoan(req.params.id, me, {
         principal: req.body?.principal,
         interestType: req.body?.interestType ?? 'flat',
         ratePercent: req.body?.ratePercent ?? 0,
         termMonths: req.body?.termMonths,
         guarantorsRequired: req.body?.guarantorsRequired ?? 0
       });
-      res.status(201).json({ loan, schedule: chama.loanSchedule(loan.id) });
+      res.status(201).json({ loan, schedule: tableBanking.loanSchedule(loan.id) });
     } catch (e) {
       res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
     }
   });
-  app.get('/api/chama-loans/:id/schedule', (req, res) => {
+  app.get('/api/table-banking-loans/:id/schedule', (req, res) => {
     const me = requireAuth(req, res);
     if (!me) return;
     try {
-      res.json({ schedule: chama.loanSchedule(req.params.id), balance: chama.outstandingBalance(req.params.id) });
+      res.json({ schedule: tableBanking.loanSchedule(req.params.id), balance: tableBanking.outstandingBalance(req.params.id) });
     } catch (e) {
       res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
     }
   });
-  app.post('/api/chama-loans/:id/guarantee', (req, res) => {
+  app.post('/api/table-banking-loans/:id/guarantee', (req, res) => {
     const me = requireAuth(req, res);
     if (!me) return;
     try {
-      res.json({ loan: chama.signGuarantee(req.params.id, me) });
+      res.json({ loan: tableBanking.signGuarantee(req.params.id, me) });
     } catch (e) {
       res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
     }
   });
-  app.post('/api/chama-loans/:id/approve', (req, res) => {
+  app.post('/api/table-banking-loans/:id/approve', (req, res) => {
     const me = requireAuth(req, res);
     if (!me) return;
     try {
-      res.json({ loan: chama.approveLoan(req.params.id, me) });
+      res.json({ loan: tableBanking.approveLoan(req.params.id, me) });
     } catch (e) {
       res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
     }
   });
-  app.post('/api/chama-loans/:id/repay', (req, res) => {
+  app.post('/api/table-banking-loans/:id/repay', (req, res) => {
     const me = requireAuth(req, res);
     if (!me) return;
     try {
-      const row = chama.recordRepayment(req.params.id, {
+      const row = tableBanking.recordRepayment(req.params.id, {
         amount: req.body?.amount,
         receiptHash: req.body?.receiptHash ?? null,
         idempotencyKey: req.body?.idempotencyKey ?? null
       });
-      res.status(201).json({ repayment: row, balance: chama.outstandingBalance(req.params.id) });
+      res.status(201).json({ repayment: row, balance: tableBanking.outstandingBalance(req.params.id) });
     } catch (e) {
       res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
     }
   });
 
   // Payouts (maker-checker).
-  app.post('/api/chamas/:id/payouts', (req, res) => {
+  app.post('/api/table-banking/:id/payouts', (req, res) => {
     const me = requireAuth(req, res);
     if (!me) return;
     try {
-      const payout = chama.requestPayout(req.params.id, req.body?.memberId, me, { amount: req.body?.amount, cycle: req.body?.cycle ?? null });
+      const payout = tableBanking.requestPayout(req.params.id, req.body?.memberId, me, { amount: req.body?.amount, cycle: req.body?.cycle ?? null });
       res.status(201).json({ payout });
     } catch (e) {
       res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
     }
   });
-  app.post('/api/chama-payouts/:id/confirm', (req, res) => {
+  app.post('/api/table-banking-payouts/:id/confirm', (req, res) => {
     const me = requireAuth(req, res);
     if (!me) return;
     try {
-      res.json({ payout: chama.confirmPayout(req.params.id, me) });
+      res.json({ payout: tableBanking.confirmPayout(req.params.id, me) });
     } catch (e) {
       res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
     }
   });
 
   // Operator read (moderate) — never a public directory.
-  app.get('/api/ops/chamas', (req, res) => {
+  app.get('/api/ops/table-banking', (req, res) => {
     if (!requireCap(req, res, 'moderate')) return;
-    res.json({ chamas: chama.listChamas(callerId(req)).map((c) => ({ ...c, summary: chama.summary(c.id) })) });
+    res.json({ groups: tableBanking.listTableBanking(callerId(req)).map((c) => ({ ...c, summary: tableBanking.summary(c.id) })) });
   });
 }

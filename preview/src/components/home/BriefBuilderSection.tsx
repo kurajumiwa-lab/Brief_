@@ -62,7 +62,7 @@ export const BriefBuilderSection: React.FC<BriefBuilderSectionProps> = ({
     { id: 'entertainment', label: 'Entertainment' },
     { id: 'community', label: 'Community' },
     { id: 'cbc', label: 'CBC School Textbooks' },
-    { id: 'chama', label: 'Chamas & Table Banking' },
+    { id: 'circle', label: 'Circles & Table Banking' },
     { id: 'wairo', label: 'WAIRO Cargo' }
   ],
   followedCount = 0,

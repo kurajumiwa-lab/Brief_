@@ -26,7 +26,7 @@ import { store, newId, newTicketCode } from '../store.js';
 import * as ticketMarket from './ticketMarket.js';
 import { emitSignal } from './signal.js';
 import { personIdIfUser } from './person.js';
-import { chamaOverlapFor } from './events.js';
+import { tableBankingOverlapFor } from './events.js';
 
 export const CAMPAIGN_TYPES = ['popup', 'session', 'drop', 'event', 'contribution'];
 // A contribution campaign is a pot with a GOAL, not seats with a price: its
@@ -497,7 +497,7 @@ export function getPublicBySlug(slug) {
  *
  * `viewerId` is resolved SERVER-SIDE from the session token (never a client
  * claim) and enables two honest, per-viewer derivations:
- *   - `chamaOverlap` ("N from your chama going") — null anonymously;
+ *   - `tableBankingOverlap` ("N from your Circle going") — null anonymously;
  *   - `host`/related context is always derivable regardless of viewer.
  */
 export function publicView(campaign, viewerId = null) {
@@ -558,8 +558,8 @@ export function publicView(campaign, viewerId = null) {
     // Host profile: display name + a counted number of their public events.
     // Derived on every read; never a stored roster, never the ownerId.
     host,
-    // "N from your chama going" — derived per viewer, null anonymously.
-    chamaOverlap: chamaOverlapFor(campaign.id, viewerId)
+    // "N from your Circle going" — derived per viewer, null anonymously.
+    tableBankingOverlap: tableBankingOverlapFor(campaign.id, viewerId)
   };
 }
 

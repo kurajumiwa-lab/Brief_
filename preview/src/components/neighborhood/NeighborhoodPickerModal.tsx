@@ -59,7 +59,7 @@ export const NeighborhoodPickerModal: React.FC<NeighborhoodPickerModalProps> = (
         </div>
 
         <p className="text-xs text-gray-400 leading-relaxed">
-          Brief connects you to active Boda stages, verified Chama circles, and local shifts right in your estate.
+          Brief connects you to active Boda stages, verified Circle circles, and local shifts right in your estate.
         </p>
 
         {/* Neighborhood Grid */}
@@ -105,7 +105,7 @@ export const NeighborhoodPickerModal: React.FC<NeighborhoodPickerModalProps> = (
                     </span>
                     <span className="flex items-center space-x-1 text-emerald-400">
                       <Users className="w-3.5 h-3.5" />
-                      <span>{nh.stats.activeChamasCount} Chamas</span>
+                      <span>{nh.stats.activeCirclesCount} Circles</span>
                     </span>
                     <span className="flex items-center space-x-1 text-amber-400">
                       <ShieldCheck className="w-3.5 h-3.5" />

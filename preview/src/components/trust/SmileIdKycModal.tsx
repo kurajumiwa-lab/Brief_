@@ -41,7 +41,7 @@ export interface SmileIdKycModalProps {
   onClose: () => void;
   onVerificationComplete?: (result: SmileKycResult) => void;
   initialDocType?: DocType;
-  targetRole?: 'general' | 'driver_logbook' | 'chama_signatory' | 'vendor_seller';
+  targetRole?: 'general' | 'driver_logbook' | 'circle_signatory' | 'vendor_seller';
 }
 
 export const SmileIdKycModal: React.FC<SmileIdKycModalProps> = ({

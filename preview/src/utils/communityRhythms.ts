@@ -31,9 +31,9 @@ export const COMMUNITY_BEATS: Record<string, CommunityBeat> = {
   },
   Wednesday: {
     day: 'Wednesday',
-    title: 'Chama Mid-Week Pulse',
+    title: 'Circle Mid-Week Pulse',
     subtitle: 'Check your table banking cycle and rotational merry-go-round targets.',
-    notificationCopy: '🌸 Chama Pulse: Your group cycle is due this Friday. View transparent records.',
+    notificationCopy: '🌸 Circle Pulse: Your group cycle is due this Friday. View transparent records.',
     coreVerb: 'Save',
     icon: '🌸'
   },
@@ -48,8 +48,8 @@ export const COMMUNITY_BEATS: Record<string, CommunityBeat> = {
   Friday: {
     day: 'Friday',
     title: 'Weekend Dispatch & Payouts',
-    subtitle: 'Chama rotational disbursements and weekend event setup runs.',
-    notificationCopy: '⚡ Weekend Dispatch: Chama cycle disbursements recorded. 90/10 rider rates live.',
+    subtitle: 'Circle rotational disbursements and weekend event setup runs.',
+    notificationCopy: '⚡ Weekend Dispatch: Circle cycle disbursements recorded. 90/10 rider rates live.',
     coreVerb: 'Save',
     icon: '⚡'
   },
@@ -64,8 +64,8 @@ export const COMMUNITY_BEATS: Record<string, CommunityBeat> = {
   Sunday: {
     day: 'Sunday',
     title: 'Weekly Neighborhood Wrap',
-    subtitle: 'Public celebration of chama milestones, completed runs, and top riders.',
-    notificationCopy: '☕ Estate Wrap: Your neighborhood completed 148 runs and KES 200k in Chama savings.',
+    subtitle: 'Public celebration of circle milestones, completed runs, and top riders.',
+    notificationCopy: '☕ Estate Wrap: Your neighborhood completed 148 runs and KES 200k in Circle savings.',
     coreVerb: 'Experience',
     icon: '☕'
   }

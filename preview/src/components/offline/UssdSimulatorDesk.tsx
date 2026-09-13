@@ -40,7 +40,7 @@ export function UssdSimulatorDesk({
   const [ussdInput, setUssdInput] = useState('*483*88#');
   const [ussdSessionActive, setUssdSessionActive] = useState(false);
   const [ussdScreenText, setUssdScreenText] = useState('');
-  const [ussdMenuState, setUssdMenuState] = useState<'root' | 'active_orders' | 'nearby_gigs' | 'enter_pin' | 'balance' | 'chama' | 'ended'>('root');
+  const [ussdMenuState, setUssdMenuState] = useState<'root' | 'active_orders' | 'nearby_gigs' | 'enter_pin' | 'balance' | 'circle' | 'ended'>('root');
   const [ussdPromptInput, setUssdPromptInput] = useState('');
   const [ussdHistory, setUssdHistory] = useState<string[]>([]);
 
@@ -84,7 +84,7 @@ export function UssdSimulatorDesk({
       `2. Find Nearby Gigs (Boda/Van)\n` +
       `3. Confirm Delivery (4-Digit PIN)\n` +
       `4. Check M-Pesa Payout Balance\n` +
-      `5. Chama & Life Events\n` +
+      `5. Circle & Life Events\n` +
       `0. Exit`
     );
     setUssdPromptInput('');
@@ -132,9 +132,9 @@ export function UssdSimulatorDesk({
           `Automatic M-Pesa disbursement sent at 6:00 PM daily.`
         );
       } else if (val === '5') {
-        setUssdMenuState('chama');
+        setUssdMenuState('circle');
         setUssdScreenText(
-          `CON Kilimani Traders Chama (Cycle 5):\n` +
+          `CON Kilimani Traders Circle (Cycle 5):\n` +
           `Pot: KES 50,000 / KES 60,000 (83%)\n` +
           `Beneficiary: Grace Wanjiku\n\n` +
           `1. Pay KES 5,500 via M-Pesa\n` +
@@ -179,12 +179,12 @@ export function UssdSimulatorDesk({
       } else {
         setUssdScreenText(`CON Invalid PIN. Must be 4 digits. Please re-enter recipient PIN:`);
       }
-    } else if (ussdMenuState === 'chama') {
+    } else if (ussdMenuState === 'circle') {
       if (val === '1') {
         soundEngine.play('victory');
         setUssdMenuState('ended');
         setUssdScreenText(
-          `END M-Pesa STK Push initiated for KES 5,500 to Kilimani Chama.\n` +
+          `END M-Pesa STK Push initiated for KES 5,500 to Kilimani Circle.\n` +
           `Enter your M-Pesa PIN on the prompt to complete.`
         );
       } else if (val === '2') {
@@ -254,10 +254,10 @@ export function UssdSimulatorDesk({
         replyText = `SUCCESS: Order marked delivered! 90% payout of KES 225.00 has been sent to your M-Pesa. Ref: QKM990123A. Thank you for riding with Wairo!`;
       } else if (upper.includes('BAL') || upper.includes('WALLET')) {
         replyText = `WAIRO WALLET: Your settled balance is KES 3,450.00. Automatic daily M-Pesa disbursement active.`;
-      } else if (upper.includes('CHAMA')) {
-        replyText = `KILIMANI CHAMA (Cycle 5): KES 50,000 / KES 60,000 collected (83%). Recipient: Grace Wanjiku. Your status: PAID. Next meeting: 14 June.`;
+      } else if (upper.includes('CIRCLE')) {
+        replyText = `KILIMANI CIRCLE (Cycle 5): KES 50,000 / KES 60,000 collected (83%). Recipient: Grace Wanjiku. Your status: PAID. Next meeting: 14 June.`;
       } else {
-        replyText = `BRIEF SMS GATEWAY (22880):\nAvailable keywords:\n- WAIRO ACC <ID> (Accept Gig)\n- WAIRO PIN <ID> <PIN> (Complete Job)\n- WAIRO BAL (Wallet)\n- CHAMA BAL (Cycle Status)\n- HELP`;
+        replyText = `BRIEF SMS GATEWAY (22880):\nAvailable keywords:\n- WAIRO ACC <ID> (Accept Gig)\n- WAIRO PIN <ID> <PIN> (Complete Job)\n- WAIRO BAL (Wallet)\n- CIRCLE BAL (Cycle Status)\n- HELP`;
       }
 
       const botReply: SmsMessage = {
@@ -522,7 +522,7 @@ export function UssdSimulatorDesk({
           <form onSubmit={handleSendSms} className="flex gap-2">
             <input
               type="text"
-              placeholder="Try keywords: WAIRO ACC 9821, WAIRO PIN 9821 4821, WAIRO BAL, CHAMA BAL"
+              placeholder="Try keywords: WAIRO ACC 9821, WAIRO PIN 9821 4821, WAIRO BAL, CIRCLE BAL"
               value={smsDraft}
               onChange={(e) => setSmsDraft(e.target.value)}
               className="flex-1 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-2.5 text-xs text-[#0D1117] outline-none focus:border-[#06B6D4]"
@@ -543,7 +543,7 @@ export function UssdSimulatorDesk({
               'WAIRO ACC 9821',
               'WAIRO PIN 9821 4821',
               'WAIRO BAL',
-              'CHAMA BAL',
+              'CIRCLE BAL',
               'BRIEF HELP'
             ].map(cmd => (
               <button

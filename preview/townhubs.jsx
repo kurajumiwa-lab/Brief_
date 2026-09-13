@@ -26,7 +26,7 @@ const { CommitteeDesk } = require('./src/components/life/CommitteeDesk.tsx');
 const { WellbeingDesk } = require('./src/components/wellbeing/WellbeingDesk.tsx');
 const { CivicKnowledgeGuide } = require('./src/components/civic/CivicKnowledgeGuide.tsx');
 const { BriefAiAssistant } = require('./src/components/ai/BriefAiAssistant.tsx');
-const { ChamaDesk } = require('./src/components/circle/ChamaDesk.tsx');
+const { TableBankingDesk } = require('./src/components/circle/TableBankingDesk.tsx');
 const { UssdSimulatorDesk } = require('./src/components/offline/UssdSimulatorDesk.tsx');
 const { InterCountyDesk } = require('./src/components/wairo/InterCountyDesk.tsx');
 const { PrivateCarrierAuctionDesk } = require('./src/components/wairo/PrivateCarrierAuctionDesk.tsx');
@@ -72,7 +72,7 @@ async function main() {
   check('renders Paid Gigs card', text1.includes('Paid Gigs'));
   check('renders WAIRO Gate Run card', text1.includes('WAIRO Gate Run'));
   check('renders CBC Books Run card', text1.includes('CBC Books Run'));
-  check('renders Chama Table Bank card', text1.includes('Chama Table Bank'));
+  check('renders Circle Table Bank card', text1.includes('Circle Table Bank'));
   check('renders Community Gigs card', text1.includes('Community Gigs'));
   check('renders Creator Program card', text1.includes('Creator Program'));
 
@@ -184,20 +184,20 @@ async function main() {
   check('renders greeting message', text5.includes('Hello Neighbor!') && text5.includes('Town Concierge'));
   await act(async () => { root5.unmount(); host5.remove(); });
 
-  // --- 6. ChamaDesk (Merry-Go-Round & Table Banking) ---
-  console.log('\n--- 6. ChamaDesk ---');
+  // --- 6. TableBankingDesk (Merry-Go-Round & Table Banking) ---
+  console.log('\n--- 6. TableBankingDesk ---');
   const host6 = document.createElement('div');
   document.body.appendChild(host6);
   const root6 = createRoot(host6);
   await act(async () => {
-    root6.render(React.createElement(ChamaDesk, {
+    root6.render(React.createElement(TableBankingDesk, {
       onClose: () => {},
       onOpenCircle: () => {}
     }));
   });
 
   const text6 = host6.textContent;
-  check('renders Chama title', text6.includes('Kilimani Women Traders Chama'));
+  check('renders Circle title', text6.includes('Kilimani Women Traders Circle'));
   check('shows Merry-Go-Round pot and recipient', text6.includes('GRACE WANJIKU') && text6.includes('ROUND 5'));
   check('shows rotational roster', text6.includes('Payout Roster') && text6.includes('Mary Atieno'));
 

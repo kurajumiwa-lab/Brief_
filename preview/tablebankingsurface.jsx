@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// CHAMA SURFACE SUITE — the indicators behind the table-banking door.
+// TABLE BANKING SURFACE SUITE — the indicators behind the table-banking door.
 // ---------------------------------------------------------------------------
 const assert = require('assert').strict;
 const { JSDOM } = require('jsdom');
@@ -18,7 +18,7 @@ global.localStorage = dom.window.localStorage;
 const React = require('react');
 const { createRoot } = require('react-dom/client');
 const { act } = require('react-dom/test-utils');
-const { ChamaSurface } = require('./src/features/you/ChamaSurface.tsx');
+const { TableBankingSurface } = require('./src/features/you/TableBankingSurface.tsx');
 
 let count = 0;
 const pass = (name) => { count++; console.log('PASS ' + name); };
@@ -34,11 +34,11 @@ function mount(el) {
 const text = (el) => (el.textContent || '').replace(/\s+/g, ' ').trim();
 const btn = (label) => Array.from(document.querySelectorAll('button')).find((b) => text(b).startsWith(label));
 
-const chamaRow = {
-  id: 'chm_1', name: 'Kiama Chama', ownerId: 'u1', contributionAmount: 5000, currency: 'KES', cycleDays: 30, status: 'active',
+const groupRow = {
+  id: 'chm_1', name: 'Kiama Circle', ownerId: 'u1', contributionAmount: 5000, currency: 'KES', cycleDays: 30, status: 'active',
   members: [{ userId: 'u1', joinedAt: '2026-01-01T00:00:00Z' }, { userId: 'u2', joinedAt: '2026-01-02T00:00:00Z' }],
   summary: {
-    id: 'chm_1', name: 'Kiama Chama', contributionAmount: 5000, currency: 'KES', members: 2,
+    id: 'chm_1', name: 'Kiama Circle', contributionAmount: 5000, currency: 'KES', members: 2,
     cashOnHand: 10000, totalContributed: 10000, totalPaidOut: 0, loanedOut: 0, totalRepaid: 0,
     nextRecipient: 'u1', nextRecipientName: 'Alice', membersNotYetContributed: [], membersNotYetReceived: ['u1', 'u2'],
     activeLoans: [], note: 'derived'
@@ -52,41 +52,41 @@ global.fetch = async (input, init) => fetchHandler(String(input?.url ?? input ??
 async function main() {
   // --- signed out ---
   fetchHandler = async (url) => {
-    if (url.includes('/me/chamas')) return { ok: false, status: 401, text: async () => JSON.stringify({ error: 'authentication required' }) };
+    if (url.includes('/me/table-banking')) return { ok: false, status: 401, text: async () => JSON.stringify({ error: 'authentication required' }) };
     return { ok: false, status: 401, text: async () => JSON.stringify({ error: 'x' }) };
   };
   {
-    const { container } = mount(React.createElement(ChamaSurface, { onRequireAuth: () => {} }));
+    const { container } = mount(React.createElement(TableBankingSurface, { onRequireAuth: () => {} }));
     await flush();
-    assert.ok(text(container).includes('Sign in to see your chamas'));
+    assert.ok(text(container).includes('Sign in to see your Circles'));
   }
-  pass('ChamaSurface: signed-out state');
+  pass('TableBankingSurface: signed-out state');
 
-  // --- empty (no chama) ---
+  // --- empty (no group) ---
   fetchHandler = async (url) => {
-    if (url.includes('/me/chamas')) return { ok: true, status: 200, text: async () => JSON.stringify({ chamas: [] }) };
+    if (url.includes('/me/table-banking')) return { ok: true, status: 200, text: async () => JSON.stringify({ groups: [] }) };
     return { ok: false, status: 404, text: async () => JSON.stringify({}) };
   };
   {
-    const { container } = mount(React.createElement(ChamaSurface, { onRequireAuth: () => {} }));
+    const { container } = mount(React.createElement(TableBankingSurface, { onRequireAuth: () => {} }));
     await flush();
     const t = text(container);
-    assert.ok(t.includes('You belong to no chama yet'));
+    assert.ok(t.includes('You belong to no Circle yet'));
     assert.ok(t.includes('not a directory'), 'states Brief is not a directory');
   }
-  pass('ChamaSurface: honest empty state, not a directory');
+  pass('TableBankingSurface: honest empty state, not a directory');
 
   // --- indicators ---
   fetchHandler = async (url, init) => {
-    if (url.includes('/me/chamas')) return { ok: true, status: 200, text: async () => JSON.stringify({ chamas: [chamaRow] }) };
-    if (url.includes('/api/chamas/chm_1/requests')) {
+    if (url.includes('/me/table-banking')) return { ok: true, status: 200, text: async () => JSON.stringify({ groups: [groupRow] }) };
+    if (url.includes('/api/table-banking/chm_1/requests')) {
       // Collective orders: empty by default, or the sample after a POST.
       return { ok: true, status: 200, text: async () => JSON.stringify({ collective: collectiveOrders }) };
     }
-    if (url.includes('/api/chamas/chm_1') && (!init?.method || init.method === 'GET')) {
+    if (url.includes('/api/table-banking/chm_1') && (!init?.method || init.method === 'GET')) {
       return { ok: true, status: 200, text: async () => JSON.stringify({
-        chama: chamaRow,
-        summary: chamaRow.summary,
+        group: groupRow,
+        summary: groupRow.summary,
         rotation: {
           order: [
             { userId: 'u1', handle: 'alice', displayName: 'Alice', isCurrent: true, received: false },
@@ -98,15 +98,15 @@ async function main() {
       }) };
     }
     if (url.includes('/contributions')) {
-      return { ok: true, status: 201, text: async () => JSON.stringify({ contribution: { id: 'c1' }, summary: { ...chamaRow.summary, cashOnHand: 15000 } }) };
+      return { ok: true, status: 201, text: async () => JSON.stringify({ contribution: { id: 'c1' }, summary: { ...groupRow.summary, cashOnHand: 15000 } }) };
     }
     return { ok: false, status: 404, text: async () => JSON.stringify({}) };
   };
   {
-    const { container } = mount(React.createElement(ChamaSurface, { onRequireAuth: () => {} }));
+    const { container } = mount(React.createElement(TableBankingSurface, { onRequireAuth: () => {} }));
     await flush();
     let t = text(container);
-    assert.ok(t.includes('Kiama Chama'), 'chama name');
+    assert.ok(t.includes('Kiama Circle'), 'group name');
     assert.ok(t.includes('cash on hand'), 'cash indicator');
     assert.ok(t.includes('next to receive'), 'next-recipient indicator');
     assert.ok(t.includes('Alice'), 'next recipient name');
@@ -126,7 +126,7 @@ async function main() {
     assert.ok(t.includes('No collective orders yet'), 'honest empty collective state');
     assert.ok(btn('Place bulk order'), 'place bulk order action present');
   }
-  pass('ChamaSurface: indicators show what can happen and what did happen');
+  pass('TableBankingSurface: indicators show what can happen and what did happen');
 
   console.log('\nPASS ' + count);
   process.exit(0);

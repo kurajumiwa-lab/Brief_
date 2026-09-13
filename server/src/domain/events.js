@@ -31,20 +31,20 @@ function registrationsOf(campaignId) {
 }
 
 // ---------------------------------------------------------------------------
-// CHAMA OVERLAP (derived, per viewer)
+// TABLE-BANKING OVERLAP (derived, per viewer)
 //
-// "3 from your chama going" is computed by scanning the viewer's own groups
+// "3 from your Circle going" is computed by scanning the viewer's own groups
 // against the registrations of the event. It is never stored and never seeded;
-// an anonymous viewer (or a viewer in no chama) gets null, because no overlap
+// an anonymous viewer (or a viewer in no group) gets null, because no overlap
 // can be honestly computed.
 // ---------------------------------------------------------------------------
 
-/** chamaId -> Set(userId), built once for a viewer. Null when none/no viewer. */
-function chamaMemberIdsFor(viewerId) {
+/** tableBankingId -> Set(userId), built once for a viewer. Null when none. */
+function tableBankingMemberIdsFor(viewerId) {
   if (!viewerId) return null;
   const map = new Map();
-  for (const ch of store.filter('chamas', (c) => c.members.some((m) => m.userId === viewerId))) {
-    map.set(ch.id, new Set((ch.members ?? []).map((m) => m.userId)));
+  for (const grp of store.filter('tableBanking', (c) => c.members.some((m) => m.userId === viewerId))) {
+    map.set(grp.id, new Set((grp.members ?? []).map((m) => m.userId)));
   }
   return map.size > 0 ? map : null;
 }
@@ -53,19 +53,19 @@ function overlapOf(campaignId, map) {
   if (!map) return null;
   const regs = store.filter('registrations', (r) => r.campaignId === campaignId && r.userId && r.status !== 'cancelled');
   const out = [];
-  for (const [chamaId, memberSet] of map) {
+  for (const [tableBankingId, memberSet] of map) {
     const count = regs.filter((r) => memberSet.has(r.userId)).length;
     if (count > 0) {
-      const chama = store.find('chamas', (c) => c.id === chamaId);
-      out.push({ chamaId, chamaName: chama?.name ?? null, memberCount: count });
+      const grp = store.find('tableBanking', (c) => c.id === tableBankingId);
+      out.push({ tableBankingId, tableBankingName: grp?.name ?? null, memberCount: count });
     }
   }
   return out.length ? out : null;
 }
 
 /** The overlap for a single campaign, resolved from a server-derived viewer. */
-export function chamaOverlapFor(campaignId, viewerId) {
-  return overlapOf(campaignId, chamaMemberIdsFor(viewerId));
+export function tableBankingOverlapFor(campaignId, viewerId) {
+  return overlapOf(campaignId, tableBankingMemberIdsFor(viewerId));
 }
 
 /**
@@ -92,7 +92,7 @@ export function listingView(campaign) {
     featured: campaign.metadata?.featured === true,
     popularity: registrationsOf(campaign.id),
     // No overlap here: it is a per-viewer fact, attached by the caller.
-    chamaOverlap: null
+    tableBankingOverlap: null
   };
 }
 
@@ -131,13 +131,13 @@ export function browseEvents({
   }
   if (featured === true) rows = rows.filter((c) => c.metadata?.featured === true);
 
-  // Chama overlap: the viewer's own groups, and how many of their members have
-  // registered for each event. DERIVED by scanning real rows — the viewer is
-  // resolved from the auth token server-side, never a client claim. Anonymous
-  // viewers get null (no overlap can be honestly computed).
-  const memberMap = chamaMemberIdsFor(viewerId);
+  // Table-banking overlap: the viewer's own groups, and how many of their
+  // members have registered for each event. DERIVED by scanning real rows —
+  // the viewer is resolved from the auth token server-side, never a client
+  // claim. Anonymous viewers get null (no overlap can be honestly computed).
+  const memberMap = tableBankingMemberIdsFor(viewerId);
 
-  const views = rows.map((c) => ({ ...listingView(c), chamaOverlap: overlapOf(c.id, memberMap) }));
+  const views = rows.map((c) => ({ ...listingView(c), tableBankingOverlap: overlapOf(c.id, memberMap) }));
 
   if (sort === 'popularity') views.sort((a, b) => b.popularity - a.popularity);
   else views.sort((a, b) => String(a.startsAt ?? '9999').localeCompare(String(b.startsAt ?? '9999')));

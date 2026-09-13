@@ -54,7 +54,7 @@ export const SHEET_MATERIALS: Record<SheetMaterial, SheetPaletteConfig> = {
     badgeBackground: '#52C795',
     badgeText: '#0F2E24',
   },
-  // OBSIDIAN — mystery, exclusive (Chama, Silent)
+  // OBSIDIAN — mystery, exclusive (Circle, Silent)
   obsidian: {
     base: '#1A0F2E',
     highlight: '#2E1A4A',

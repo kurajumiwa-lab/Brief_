@@ -715,8 +715,8 @@ export interface PublicCampaign {
   seriesId?: string | null;
   /** DERIVED host profile: a display name plus a counted number of their events. */
   host?: { name: string | null; eventsHosted: number } | null;
-  /** DERIVED per-viewer: which of the viewer's chamas have members going. */
-  chamaOverlap?: Array<{ chamaId: string; chamaName: string | null; memberCount: number }> | null;
+  /** DERIVED per-viewer: which of the viewer's groups have members going. */
+  tableBankingOverlap?: Array<{ tableBankingId: string; tableBankingName: string | null; memberCount: number }> | null;
 }
 
 /** A structured venue (T4 detail model). All fields optional; lat/lng are numbers. */

@@ -18,7 +18,7 @@ export function register(app) {
         sort: req.query?.sort === 'popularity' ? 'popularity' : 'date',
         limit: Number(req.query?.limit) || 50,
         // The viewer is resolved from the session token (server-authoritative),
-        // never from the query string. Anonymous -> null -> no chama overlap.
+        // never from the query string. Anonymous -> null -> no group overlap.
         viewerId: callerId(req)
       });
       res.json(result);

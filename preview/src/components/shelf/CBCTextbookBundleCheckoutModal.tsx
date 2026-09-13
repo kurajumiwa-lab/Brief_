@@ -144,7 +144,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
   const [deliveryWard, setDeliveryWard] = useState<string>('Machakos Town (Gate 4)');
   const [parentName, setParentName] = useState<string>('Madam Beatrice Mwangi');
   const [parentPhone, setParentPhone] = useState<string>('0722 849 102');
-  const [paymentSource, setPaymentSource] = useState<'mpesa' | 'chama_table_bank'>('chama_table_bank');
+  const [paymentSource, setPaymentSource] = useState<'mpesa' | 'circle_table_bank'>('circle_table_bank');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [completedOrder, setCompletedOrder] = useState<any | null>(null);
 
@@ -189,7 +189,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
         totalAmountKes,
         deliveryLocation: locationText,
         deliveryType,
-        paymentMethod: paymentSource === 'chama_table_bank' ? 'Chama Table Bank (Circle Payout)' : 'Direct M-Pesa STK',
+        paymentMethod: paymentSource === 'circle_table_bank' ? 'Circle Table Bank (Circle Payout)' : 'Direct M-Pesa STK',
         wairoTrackingCode: tracking,
         mpesaReceipt: mpesaRef,
         parentName,
@@ -579,7 +579,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                 )}
               </div>
 
-              {/* Step 2: Payment Method (Chama Balance vs Direct M-Pesa) */}
+              {/* Step 2: Payment Method (Circle Balance vs Direct M-Pesa) */}
               <div className="space-y-2.5">
                 <label className="text-xs font-black uppercase tracking-wider text-[#1A1F2E] flex items-center justify-between">
                   <span>2. Payment Source</span>
@@ -589,9 +589,9 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => { soundEngine.play('tap'); setPaymentSource('chama_table_bank'); }}
+                    onClick={() => { soundEngine.play('tap'); setPaymentSource('circle_table_bank'); }}
                     className={`p-3 rounded-xl text-left transition-all cursor-pointer flex flex-col justify-between ${
-                      paymentSource === 'chama_table_bank'
+                      paymentSource === 'circle_table_bank'
                         ? 'bg-[#4C1D95] text-white shadow-sm'
                         : 'bg-white hover:bg-white/80 text-[#374151] shadow-xs'
                     }`}
@@ -603,7 +603,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                       </span>
                     </div>
                     <div className="mt-2">
-                      <span className="text-xs font-black block">Chama Table Bank</span>
+                      <span className="text-xs font-black block">Circle Table Bank</span>
                       <span className="text-[10px] text-purple-200">Cycle 5 Payout Balance</span>
                     </div>
                   </button>

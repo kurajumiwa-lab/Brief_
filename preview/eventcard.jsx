@@ -36,7 +36,7 @@ const base = {
   slug: 's1', title: 'Kilimani Wellness Day', description: 'A day of calm', coverImageUrl: null,
   category: 'session', categoryLabel: 'Sessions & classes', location: 'Kilimani', startsAt: '2026-09-14T12:00:00Z',
   endsAt: null, price: 500, currency: 'KES', goalAmount: null, featured: true, popularity: 34,
-  chamaOverlap: null
+  tableBankingOverlap: null
 };
 
 async function main() {
@@ -67,21 +67,21 @@ async function main() {
     assert.ok(t.includes('Sessions & classes'), 'category chip');
     assert.ok(t.includes('34 going'), 'counted popularity');
     assert.ok(t.includes('KES 500'), 'price');
-    assert.ok(!t.includes('from your chama'), 'no chama overlap when null');
+    assert.ok(!t.includes('from your Circle'), 'no group overlap when null');
   }
   pass('EventCard shows title, category, price and counted popularity');
 
-  // --- chama overlap social proof ---
+  // --- group overlap social proof ---
   {
     const { container } = mount(React.createElement(EventCard, {
-      event: { ...base, chamaOverlap: [{ chamaId: 'c1', chamaName: 'Kilimani Chama', memberCount: 8 }] },
+      event: { ...base, tableBankingOverlap: [{ tableBankingId: 'c1', tableBankingName: 'Kilimani Circle', memberCount: 8 }] },
       onOpen: () => {}
     }));
     const t = text(container);
-    assert.ok(t.includes('8 from Kilimani Chama'), 'chama overlap line');
+    assert.ok(t.includes('8 from Kilimani Circle'), 'group overlap line');
     assert.ok(t.includes('going'), 'overlap ends with going');
   }
-  pass('EventCard surfaces the derived chama overlap ("8 from Kilimani Chama")');
+  pass('EventCard surfaces the derived group overlap ("8 from Kilimani Circle")');
 
   console.log('\nPASS ' + count);
   process.exit(0);

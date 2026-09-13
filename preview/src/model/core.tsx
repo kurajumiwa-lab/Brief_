@@ -4359,16 +4359,16 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                   </span>
                 </div>
               )}
-              {/* "N from your chama" (T4) — derived per viewer, only for a
-                  signed-in viewer whose chama members are actually going. */}
-              {c.chamaOverlap && c.chamaOverlap.length > 0 && (
+              {/* "N from your Circle" (T4) — derived per viewer, only for a
+                  signed-in viewer whose group members are actually going. */}
+              {c.tableBankingOverlap && c.tableBankingOverlap.length > 0 && (
                 <div className="flex items-start gap-2">
                   <Users className="w-3.5 h-3.5 text-[#0D1117] shrink-0 mt-0.5" />
                   <span className="text-xs text-[#0D1117]">
-                    {c.chamaOverlap.map((o, i) => (
-                      <span key={o.chamaId}>
+                    {c.tableBankingOverlap.map((o, i) => (
+                      <span key={o.tableBankingId}>
                         {i > 0 && ', '}
-                        {o.memberCount} from {o.chamaName ?? 'your chama'} going
+                        {o.memberCount} from {o.tableBankingName ?? 'your Circle'} going
                       </span>
                     ))}
                   </span>

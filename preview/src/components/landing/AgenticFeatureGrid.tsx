@@ -25,14 +25,14 @@ export interface AgenticFeatureCardProps {
 
 export interface AgenticFeatureGridProps {
   onOpenCbc?: () => void;
-  onOpenChama?: () => void;
+  onOpenCircle?: () => void;
   onOpenCargo?: () => void;
   className?: string;
 }
 
 export const AgenticFeatureGrid: React.FC<AgenticFeatureGridProps> = ({
   onOpenCbc,
-  onOpenChama,
+  onOpenCircle,
   onOpenCargo,
   className = ''
 }) => {
@@ -100,7 +100,7 @@ export const AgenticFeatureGrid: React.FC<AgenticFeatureGridProps> = ({
         </div>
       </div>
 
-      {/* ── CARD 2: CHAMA TABLE BANKING ── */}
+      {/* ── CARD 2: CIRCLE TABLE BANKING ── */}
       <div 
         className="rounded-[28px] sm:rounded-[32px] p-5 sm:p-6 flex flex-col justify-between transition-all duration-300 hover:shadow-lg bg-[#F4F7F2] text-[#1A1F2E]"
       >
@@ -136,7 +136,7 @@ export const AgenticFeatureGrid: React.FC<AgenticFeatureGridProps> = ({
               Turn collective trust into capital
             </span>
             <h3 className="text-xl sm:text-2xl font-black text-[#0C221F] tracking-tight leading-tight">
-              Chama Table Banking
+              Circle Table Banking
             </h3>
             <p className="text-xs sm:text-sm text-[#4B5563] leading-relaxed">
               Continuously pool savings, issue micro-loans, and optimize rotational payouts with instant M-Pesa ledgers.
@@ -149,7 +149,7 @@ export const AgenticFeatureGrid: React.FC<AgenticFeatureGridProps> = ({
             type="button"
             onClick={() => {
               soundEngine.play('heavyTap');
-              onOpenChama?.();
+              onOpenCircle?.();
             }}
             className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-[#0C221F] hover:bg-[#071614] active:scale-95 text-white font-extrabold text-xs transition-all shadow-sm cursor-pointer text-center"
           >

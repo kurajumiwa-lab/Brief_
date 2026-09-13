@@ -14,7 +14,7 @@ const SPACE_OPTIONS: Array<{ type: SpaceType; label: string; desc: string; emoji
   { type: 'business', label: 'Business', desc: 'Shop, bakery, service, or company', emoji: '🍰' },
   { type: 'side_hustle', label: 'Side Hustle', desc: 'Selling products or weekend gigs', emoji: '🌱' },
   { type: 'creator', label: 'Creator Work', desc: 'Music, photography, crafts, or art', emoji: '🎨' },
-  { type: 'community', label: 'Community / Chama', desc: 'Savings circle, clan group, or PTA', emoji: '🌸' },
+  { type: 'community', label: 'Community / Circle', desc: 'Savings circle, clan group, or PTA', emoji: '🌸' },
   { type: 'event', label: 'Event / Gathering', desc: 'Market, tournament, or celebration', emoji: '🎉' },
   { type: 'project', label: 'Project', desc: 'Campaign, build, or initiative', emoji: '🚀' }
 ];

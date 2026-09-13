@@ -73,7 +73,7 @@ export const INITIAL_DISCOVER_POSTS: DiscoverPost[] = [
   {
     id: 'post-3',
     title: 'Westlands Neighborhood Clean-up & Tree Planting',
-    description: 'Civic community drive to green the Rhapta Road wetland corridor. Gloves, seedlings, and refreshments provided by local resident chama.',
+    description: 'Civic community drive to green the Rhapta Road wetland corridor. Gloves, seedlings, and refreshments provided by local resident circle.',
     image: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&auto=format&fit=crop',
     date: 'Jun 18',
     time: '08:30 AM',
@@ -106,7 +106,7 @@ export const DiscoverSection: React.FC<{
     { id: 'all', label: 'All', icon: <Sparkles className="w-5 h-5" /> },
     { id: 'events', label: 'Events', icon: <CalendarDays className="w-5 h-5" /> },
     { id: 'wairo', label: 'WAIRO', icon: <Bike className="w-5 h-5" /> },
-    { id: 'chamas', label: 'Chamas', icon: <Users className="w-5 h-5" /> }
+    { id: 'circles', label: 'Circles', icon: <Users className="w-5 h-5" /> }
   ];
 
   const filteredPosts = INITIAL_DISCOVER_POSTS.filter((p) => {

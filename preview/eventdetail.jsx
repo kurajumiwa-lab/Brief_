@@ -2,7 +2,7 @@
 // EVENT DETAIL (Tikiti T4) — the client-side contract of the rich detail
 // screen. Three things must hold for the wiring to be honest:
 //   1. the client validator ACCEPTS the server's new projection (venue,
-//      agenda, seriesId, host, chamaOverlap) so the screen actually renders;
+//      agenda, seriesId, host, tableBankingOverlap) so the screen actually renders;
 //   2. it still REJECTS any private leak (ownerId / id / objectId / metrics);
 //   3. the small pure helpers (maps link, friendly date) behave truthfully.
 // ---------------------------------------------------------------------------
@@ -22,7 +22,7 @@ const full = {
   agenda: [{ at: '18:00', title: 'Doors open' }, { title: 'Keynote', description: 'A talk' }],
   seriesId: 'rooftop-series',
   host: { name: 'Amina K', eventsHosted: 3 },
-  chamaOverlap: [{ chamaId: 'chm_1', chamaName: 'Kilimani Chama', memberCount: 2 }]
+  tableBankingOverlap: [{ tableBankingId: 'chm_1', tableBankingName: 'Kilimani Circle', memberCount: 2 }]
 };
 
 // --- the new projection is ACCEPTED (so the detail screen renders) ---

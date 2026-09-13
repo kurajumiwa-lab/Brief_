@@ -41,7 +41,7 @@ export interface DarkShelfBookCardProps {
   isElevated?: boolean;
   isDimmed?: boolean;
   onDirectBuy?: () => void;
-  onChamaSplit?: () => void;
+  onCircleSplit?: () => void;
 }
 
 /**
@@ -75,7 +75,7 @@ export const DarkShelfBookCard: React.FC<DarkShelfBookCardProps> = ({
   isElevated = false,
   isDimmed = false,
   onDirectBuy,
-  onChamaSplit
+  onCircleSplit
 }) => {
   const timerRef = useRef<any>(null);
   const isLongPressRef = useRef(false);

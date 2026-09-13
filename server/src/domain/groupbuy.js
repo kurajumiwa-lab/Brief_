@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
-// GROUP BUY ENGINE — the "Chama & Group Buy" financial package.
+// GROUP BUY ENGINE — the "Table Banking & Group Buy" financial package.
 //
-// A Group Buy is a tracked funding pipeline for a chama cycle or a group
+// A Group Buy is a tracked funding pipeline for a table-banking cycle or a group
 // order. It runs on the same orchestration layer as everything else:
 //
 //   CONTRIBUTIONS  a rapid 3-field intake (member ref, amount, payment source)

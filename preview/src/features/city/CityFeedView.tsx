@@ -42,7 +42,7 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
     { id: 'all', label: '🌆 All City' },
     { id: 'events', label: '🎟️ Events & Festivals' },
     { id: 'marketplace', label: '🛍️ Marketplace' },
-    { id: 'circles', label: '🤝 Circles & Chamas' },
+    { id: 'circles', label: '🤝 Circles' },
     { id: 'vault', label: '🔐 Vault & Drops' }
   ];
 

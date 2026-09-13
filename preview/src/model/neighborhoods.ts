@@ -3,9 +3,9 @@
  * Focuses Brief on the hyper-local 3km micro-economy:
  * - Estate nodes & local Boda stages
  * - Active verified riders with live ETA & ratings
- * - Hyper-local Chamas with target milestones
+ * - Hyper-local Circles with target milestones
  * - Hyper-local Gigs with verified 48h settlement
- * - Local Community Champions (Stage Chairmen, Chama Secretaries, Duka Anchors)
+ * - Local Community Champions (Stage Chairmen, Circle Secretaries, Duka Anchors)
  */
 
 export interface NeighborhoodRider {
@@ -22,7 +22,7 @@ export interface NeighborhoodRider {
   phone?: string;
 }
 
-export interface NeighborhoodChama {
+export interface NeighborhoodCircle {
   id: string;
   name: string;
   type: 'Merry-Go-Round' | 'Table Bank' | 'Harambee / Life-Events';
@@ -64,7 +64,7 @@ export interface CommunityChampion {
   role: string;
   title: string;
   neighborhoodId: string;
-  badge: 'Stage Chairman' | 'Chama Secretary' | 'Duka Anchor' | 'Market Organizer';
+  badge: 'Stage Chairman' | 'Circle Secretary' | 'Duka Anchor' | 'Market Organizer';
   vouchedRidersCount: number;
   verifiedMerchantsCount: number;
   communityVolume: string;
@@ -93,7 +93,7 @@ export interface Neighborhood {
   landmarkStages: string[];
   champion: CommunityChampion;
   activeRiders: NeighborhoodRider[];
-  activeChamas: NeighborhoodChama[];
+  activeCircles: NeighborhoodCircle[];
   activeGigs: NeighborhoodGig[];
   activeEvents: NeighborhoodEvent[];
   recentActivity: NeighborhoodActivity[];
@@ -101,7 +101,7 @@ export interface Neighborhood {
     activeRidersCount: number;
     weeklyVolume: string;
     verifiedGigsCount: number;
-    activeChamasCount: number;
+    activeCirclesCount: number;
   };
 }
 
@@ -168,9 +168,9 @@ export const NEIGHBORHOODS: Neighborhood[] = [
         isAvailable: false
       }
     ],
-    activeChamas: [
+    activeCircles: [
       {
-        id: 'chama-kili-1',
+        id: 'circle-kili-1',
         name: 'Kilimani Women Traders Circle',
         type: 'Merry-Go-Round',
         cycle: 'Cycle 5 · Round 8',
@@ -178,11 +178,11 @@ export const NEIGHBORHOODS: Neighborhood[] = [
         targetAmount: 'KES 280,000',
         fundedPercentage: 85,
         nextPayout: 'This Friday (Mama Grace)',
-        coordinator: 'Mama Grace (Chama Secretary)',
+        coordinator: 'Mama Grace (Circle Secretary)',
         verified: true
       },
       {
-        id: 'chama-kili-2',
+        id: 'circle-kili-2',
         name: 'Woodley Boda Welfare & Emergency Table Bank',
         type: 'Table Bank',
         cycle: 'Active Loan Cycle',
@@ -274,7 +274,7 @@ export const NEIGHBORHOODS: Neighborhood[] = [
       activeRidersCount: 18,
       weeklyVolume: 'KES 148,000',
       verifiedGigsCount: 6,
-      activeChamasCount: 4
+      activeCirclesCount: 4
     }
   },
   {
@@ -289,7 +289,7 @@ export const NEIGHBORHOODS: Neighborhood[] = [
     champion: {
       id: 'champ-southb-1',
       name: 'Evans Maina',
-      role: 'Plainsview Merchants Anchor & Chama Trustee',
+      role: 'Plainsview Merchants Anchor & Circle Trustee',
       title: 'Plainsview Community Anchor',
       neighborhoodId: 'south-b',
       badge: 'Duka Anchor',
@@ -327,9 +327,9 @@ export const NEIGHBORHOODS: Neighborhood[] = [
         isAvailable: true
       }
     ],
-    activeChamas: [
+    activeCircles: [
       {
-        id: 'chama-sb-1',
+        id: 'circle-sb-1',
         name: 'South B Youth Enterprise Table Bank',
         type: 'Table Bank',
         cycle: 'Cycle 3 · 18 Members',
@@ -341,7 +341,7 @@ export const NEIGHBORHOODS: Neighborhood[] = [
         verified: true
       },
       {
-        id: 'chama-sb-2',
+        id: 'circle-sb-2',
         name: 'Mariakani Estate Emergency Welfare Pool',
         type: 'Harambee / Life-Events',
         cycle: 'Emergency Fund Active',
@@ -410,7 +410,7 @@ export const NEIGHBORHOODS: Neighborhood[] = [
       activeRidersCount: 14,
       weeklyVolume: 'KES 118,000',
       verifiedGigsCount: 5,
-      activeChamasCount: 3
+      activeCirclesCount: 3
     }
   },
   {
@@ -428,7 +428,7 @@ export const NEIGHBORHOODS: Neighborhood[] = [
       role: 'Otiende Community Elder & Welfare Secretary',
       title: 'Otiende Community Secretary',
       neighborhoodId: 'langata',
-      badge: 'Chama Secretary',
+      badge: 'Circle Secretary',
       vouchedRidersCount: 15,
       verifiedMerchantsCount: 18,
       communityVolume: 'KES 310,000/mo',
@@ -451,9 +451,9 @@ export const NEIGHBORHOODS: Neighborhood[] = [
         isAvailable: true
       }
     ],
-    activeChamas: [
+    activeCircles: [
       {
-        id: 'chama-lang-1',
+        id: 'circle-lang-1',
         name: "Lang'ata Friends Table Banking & Micro-Loans",
         type: 'Table Bank',
         cycle: 'Cycle 6',
@@ -503,7 +503,7 @@ export const NEIGHBORHOODS: Neighborhood[] = [
       activeRidersCount: 11,
       weeklyVolume: 'KES 94,000',
       verifiedGigsCount: 4,
-      activeChamasCount: 2
+      activeCirclesCount: 2
     }
   },
   {
@@ -544,9 +544,9 @@ export const NEIGHBORHOODS: Neighborhood[] = [
         isAvailable: true
       }
     ],
-    activeChamas: [
+    activeCircles: [
       {
-        id: 'chama-west-1',
+        id: 'circle-west-1',
         name: 'Westlands Hospitality Workers Pool',
         type: 'Merry-Go-Round',
         cycle: 'Cycle 4',
@@ -596,7 +596,7 @@ export const NEIGHBORHOODS: Neighborhood[] = [
       activeRidersCount: 24,
       weeklyVolume: 'KES 210,000',
       verifiedGigsCount: 8,
-      activeChamasCount: 3
+      activeCirclesCount: 3
     }
   },
   {
@@ -611,10 +611,10 @@ export const NEIGHBORHOODS: Neighborhood[] = [
     champion: {
       id: 'champ-roy-1',
       name: 'Madam Beatrice',
-      role: 'Mirema Traders & Student Chama Lead',
+      role: 'Mirema Traders & Student Circle Lead',
       title: 'Mirema Community Lead',
       neighborhoodId: 'roysambu',
-      badge: 'Chama Secretary',
+      badge: 'Circle Secretary',
       vouchedRidersCount: 20,
       verifiedMerchantsCount: 22,
       communityVolume: 'KES 340,000/mo',
@@ -637,9 +637,9 @@ export const NEIGHBORHOODS: Neighborhood[] = [
         isAvailable: true
       }
     ],
-    activeChamas: [
+    activeCircles: [
       {
-        id: 'chama-roy-1',
+        id: 'circle-roy-1',
         name: 'Mirema Campus & Traders Revolving Fund',
         type: 'Merry-Go-Round',
         cycle: 'Cycle 7',
@@ -689,7 +689,7 @@ export const NEIGHBORHOODS: Neighborhood[] = [
       activeRidersCount: 16,
       weeklyVolume: 'KES 124,000',
       verifiedGigsCount: 7,
-      activeChamasCount: 3
+      activeCirclesCount: 3
     }
   },
   {
@@ -730,10 +730,10 @@ export const NEIGHBORHOODS: Neighborhood[] = [
         isAvailable: true
       }
     ],
-    activeChamas: [
+    activeCircles: [
       {
-        id: 'chama-nyam-1',
-        name: 'Kisii Soapstone & Avocado Farmers Chama',
+        id: 'circle-nyam-1',
+        name: 'Kisii Soapstone & Avocado Farmers Circle',
         type: 'Table Bank',
         cycle: 'Cycle 8 · KES 500k Fund',
         membersCount: 28,
@@ -782,7 +782,7 @@ export const NEIGHBORHOODS: Neighborhood[] = [
       activeRidersCount: 22,
       weeklyVolume: 'KES 165,000',
       verifiedGigsCount: 5,
-      activeChamasCount: 4
+      activeCirclesCount: 4
     }
   }
 ];
@@ -796,7 +796,7 @@ export interface UserTrustProfile {
   neighborhood_locked_until: string;
   reputation_score: {
     wairo: number;
-    chama: number;
+    circle: number;
     harambee: number;
     gigs: number;
   };

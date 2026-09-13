@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
 import * as api from "../../api/briefApi";
-import type { ChamaRow, ChamaDetail, ChamaCollectiveRequest } from "../../api/briefApi";
+import type { TableBankingGroup, TableBankingDetail, TableBankingCollectiveRequest } from "../../api/briefApi";
 import { MotionList } from "../../ui/motion/MotionList";
 import { MotionNumber } from "../../ui/motion/MotionNumber";
 import { MotionStatus } from "../../ui/motion/MotionStatus";
 
 // ---------------------------------------------------------------------------
-// CHAMA — the indicators behind the table-banking door.
+// TABLE BANKING — the indicators behind the table-banking door.
 //
-// Brief is NOT the chama and NOT a directory of chamas. This surface shows a
+// Brief is NOT the group and NOT a directory of groups. This surface shows a
 // member the groups they already belong to, and — crucially — WHAT CAN HAPPEN
 // and WHAT DID HAPPEN, all DERIVED from real rows:
 //
@@ -16,52 +16,52 @@ import { MotionStatus } from "../../ui/motion/MotionStatus";
 //   did happen:  cash on hand, total contributed, loans outstanding
 //   your own:    have you contributed, do you owe, is it your turn
 //
-// Empty state is honest: "you belong to no chama" means exactly that. There is
-// no "browse chamas" (Brief is not a listing).
+// Empty state is honest: "you belong to no Circle" means exactly that. There is
+// no "browse groups" (Brief is not a listing).
 // ---------------------------------------------------------------------------
 
-export function ChamaSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
+export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
   const [loading, setLoading] = useState(true);
   const [signedOut, setSignedOut] = useState(false);
-  const [chamas, setChamas] = useState<ChamaRow[] | null>(null);
+  const [groups, setGroups] = useState<TableBankingGroup[] | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
-  const [detail, setDetail] = useState<Record<string, ChamaDetail | null>>({});
+  const [detail, setDetail] = useState<Record<string, TableBankingDetail | null>>({});
   const [notice, setNotice] = useState("");
-  const [collective, setCollective] = useState<Record<string, ChamaCollectiveRequest[] | undefined>>({});
+  const [collective, setCollective] = useState<Record<string, TableBankingCollectiveRequest[] | undefined>>({});
   const [orderOpen, setOrderOpen] = useState<Record<string, boolean>>({});
   const [orderForm, setOrderForm] = useState<Record<string, { title: string; description: string; category: string; quantity: string; unit: string }>>({});
 
   const load = async () => {
     setLoading(true);
-    const res = await api.getMyChamas();
+    const res = await api.getMyTableBanking();
     setLoading(false);
     if (!res.ok && res.status === 401) { setSignedOut(true); return; }
     setSignedOut(false);
-    setChamas(res.ok ? res.data : null);
+    setGroups(res.ok ? res.data : null);
   };
 
   useEffect(() => { void load(); }, []);
 
-  const openChama = async (id: string) => {
+  const openGroup = async (id: string) => {
     if (openId === id) { setOpenId(null); return; }
     setOpenId(id);
     if (detail[id] === undefined) {
-      const res = await api.getChama(id);
+      const res = await api.getTableBanking(id);
       setDetail((prev) => ({ ...prev, [id]: res.ok ? res.data : null }));
     }
     if (collective[id] === undefined) {
-      const res = await api.getChamaCollectiveRequests(id);
+      const res = await api.getTableBankingCollectiveRequests(id);
       setCollective((prev) => ({ ...prev, [id]: res.ok ? res.data : [] }));
     }
   };
 
-  const placeOrder = async (chama: ChamaRow) => {
-    const f = orderForm[chama.id];
+  const placeOrder = async (group: TableBankingGroup) => {
+    const f = orderForm[group.id];
     if (!f || !f.title.trim() || !f.description.trim() || !f.category.trim()) {
       setNotice("Title, description and category are required for a bulk order.");
       return;
     }
-    const res = await api.placeChamaCollectiveRequest(chama.id, {
+    const res = await api.placeTableBankingCollectiveRequest(group.id, {
       title: f.title.trim(),
       description: f.description.trim(),
       category: f.category.trim(),
@@ -72,29 +72,29 @@ export function ChamaSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
     });
     if (res.ok) {
       setNotice(`Bulk order placed — it's now a Request in the economic loop.`);
-      setOrderOpen((prev) => ({ ...prev, [chama.id]: false }));
-      const list = await api.getChamaCollectiveRequests(chama.id);
-      if (list.ok) setCollective((prev) => ({ ...prev, [chama.id]: list.data }));
+      setOrderOpen((prev) => ({ ...prev, [group.id]: false }));
+      const list = await api.getTableBankingCollectiveRequests(group.id);
+      if (list.ok) setCollective((prev) => ({ ...prev, [group.id]: list.data }));
     } else if (res.status === 401) onRequireAuth();
     else setNotice(res.error ?? "Could not place the bulk order.");
   };
 
-  const contribute = async (chama: ChamaRow) => {
-    const res = await api.recordChamaContribution(chama.id, { amount: chama.contributionAmount, idempotencyKey: `contrib-${Date.now()}` });
+  const contribute = async (group: TableBankingGroup) => {
+    const res = await api.recordTableBankingContribution(group.id, { amount: group.contributionAmount, idempotencyKey: `contrib-${Date.now()}` });
     if (res.ok) { setNotice(`Recorded your contribution. Cash on hand: KES ${res.data.summary.cashOnHand.toLocaleString()}.`); void load(); }
     else if (res.status === 401) onRequireAuth();
     else setNotice(res.error ?? "Could not record the contribution.");
   };
 
-  if (loading) return <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>Reading your chamas…</p>;
+  if (loading) return <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>Reading your Circles…</p>;
   if (signedOut) {
     return <div className="mt-6 rounded-2xl border border-dashed p-8 text-center" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}>
-      <h2 className="text-lg font-black" style={{ color: "var(--color-text)" }}>Sign in to see your chamas</h2>
+      <h2 className="text-lg font-black" style={{ color: "var(--color-text)" }}>Sign in to see your Circles</h2>
     </div>;
   }
-  if (!chamas || chamas.length === 0) {
+  if (!groups || groups.length === 0) {
     return <div className="mt-6 rounded-2xl border border-dashed p-8 text-center" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}>
-      <h2 className="text-lg font-black" style={{ color: "var(--color-text)" }}>You belong to no chama yet</h2>
+      <h2 className="text-lg font-black" style={{ color: "var(--color-text)" }}>You belong to no Circle yet</h2>
       <p className="text-sm mt-1" style={{ color: "var(--color-text-muted)" }}>
         Brief is a tool for groups that already exist — not a directory. Start one with your group, or join one you were invited to.
       </p>
@@ -105,7 +105,7 @@ export function ChamaSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
     <div className="mt-4 space-y-3">
       {notice && <p className="text-xs" role="status" style={{ color: "var(--color-text-muted)" }}>{notice}</p>}
       <MotionList className="space-y-3" stagger={40}>
-        {chamas.map((c) => {
+        {groups.map((c) => {
           const s = c.summary;
           const d = detail[c.id];
           const open = openId === c.id;
@@ -116,7 +116,7 @@ export function ChamaSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
                   <p className="text-sm font-black" style={{ color: "var(--color-text)" }}>{c.name}</p>
                   <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>{c.members.length} members · KES {c.contributionAmount.toLocaleString()} / cycle</p>
                 </div>
-                <button type="button" onClick={() => openChama(c.id)} className="rounded-full px-3 py-1.5 text-xs font-bold" style={{ background: "var(--color-surface-elevated)", color: "var(--color-text)" }}>
+                <button type="button" onClick={() => openGroup(c.id)} className="rounded-full px-3 py-1.5 text-xs font-bold" style={{ background: "var(--color-surface-elevated)", color: "var(--color-text)" }}>
                   {open ? "Close" : "Indicators"}
                 </button>
               </div>
@@ -173,7 +173,7 @@ export function ChamaSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
                     </div>
                   )}
 
-                  {/* Collective orders — the chama in the economic loop */}
+                  {/* Collective orders — the group in the economic loop */}
                   <div className="rounded-xl p-3" style={{ background: "var(--color-surface-elevated)" }}>
                     <p className="text-xs font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>Collective orders</p>
                     {collective[c.id] === undefined ? (

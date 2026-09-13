@@ -67,7 +67,7 @@ import { TickerBanner } from '../components/SignalBanner';
 import { TodayOpportunities } from '../components/home/TodayOpportunities';
 import { CommitteeDesk } from '../components/life/CommitteeDesk';
 import { WellbeingDesk } from '../components/wellbeing/WellbeingDesk';
-import { ChamaDesk } from '../components/circle/ChamaDesk';
+import { TableBankingDesk } from '../components/circle/TableBankingDesk';
 import { InterCountyDesk } from '../components/wairo/InterCountyDesk';
 import { PrivateCarrierAuctionDesk } from '../components/wairo/PrivateCarrierAuctionDesk';
 import { OfflineSyncQueueDesk } from '../components/offline/OfflineSyncQueueDesk';
@@ -298,7 +298,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
   const [isNeighborhoodPickerOpen, setIsNeighborhoodPickerOpen] = useState(false);
   const [isChampionModalOpen, setIsChampionModalOpen] = useState(false);
   const [committeeOpen, setCommitteeOpen] = useState(false);
-  const [chamaOpen, setChamaOpen] = useState(false);
+  const [circleOpen, setCircleOpen] = useState(false);
   const [wellbeingOpen, setWellbeingOpen] = useState(false);
   const [interCountyOpen, setInterCountyOpen] = useState(false);
   const [carrierAuctionOpen, setCarrierAuctionOpen] = useState(false);
@@ -579,9 +579,9 @@ export function NearbyScreen(props: NearbyScreenProps) {
                       soundEngine.play('heavyTap');
                       setInterCountyOpen(true);
                     }}
-                    onOpenChama={() => {
+                    onOpenCircle={() => {
                       soundEngine.play('heavyTap');
-                      setChamaOpen(true);
+                      setCircleOpen(true);
                     }}
                     onOpenCbc={() => {
                       setActiveCbcBundleId('cbc-g7');
@@ -591,7 +591,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
 
                   <AnnouncementPinkBanner
                     tag="LIVE WARD RUNS"
-                    title="Save your spot at Ward Chama & CBC Bulk Runs"
+                    title="Save your spot at Ward Circle & CBC Bulk Runs"
                     buttonText="Register now"
                     onAction={() => {
                       soundEngine.play('heavyTap');
@@ -604,7 +604,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                       if (p.id === 'fargo' || p.id === 'lori' || p.id === 'sendy') {
                         setInterCountyOpen(true);
                       } else if (p.id === 'pezesha' || p.id === 'mpesa') {
-                        setChamaOpen(true);
+                        setCircleOpen(true);
                       } else if (p.id === 'kicd') {
                         setActiveCbcBundleId('cbc-g7');
                         setCbcCheckoutOpen(true);
@@ -619,9 +619,9 @@ export function NearbyScreen(props: NearbyScreenProps) {
                       setActiveCbcBundleId('cbc-g7');
                       setCbcCheckoutOpen(true);
                     }}
-                    onOpenChama={() => {
+                    onOpenCircle={() => {
                       soundEngine.play('heavyTap');
-                      setChamaOpen(true);
+                      setCircleOpen(true);
                     }}
                     onOpenCargo={() => {
                       soundEngine.play('heavyTap');
@@ -644,8 +644,8 @@ export function NearbyScreen(props: NearbyScreenProps) {
                       } else if (opp.category === 'demand') {
                         setActiveCbcBundleId('cbc-g7');
                         setCbcCheckoutOpen(true);
-                      } else if (opp.category === 'chama') {
-                        setChamaOpen(true);
+                      } else if (opp.category === 'circle') {
+                        setCircleOpen(true);
                       } else if (opp.category === 'events') {
                         setSelectedObjectType('experience');
                         setDiscoveryTab('events');
@@ -693,10 +693,10 @@ export function NearbyScreen(props: NearbyScreenProps) {
                       </div>
                     </button>
 
-                    {/* 2. Chama & Table Banking */}
+                    {/* 2. Circle & Table Banking */}
                     <button
                       type="button"
-                      onClick={() => { soundEngine.play('heavyTap'); setChamaOpen(true); }}
+                      onClick={() => { soundEngine.play('heavyTap'); setCircleOpen(true); }}
                       className="p-3.5 rounded-2xl bg-gradient-to-br from-[#311042] via-[#240c31] to-[#1E092B] text-left text-white shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer flex flex-col justify-between group"
                     >
                       <div className="flex items-center justify-between">
@@ -707,7 +707,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                       </div>
                       <div className="mt-3">
                         <span className="font-black text-xs block text-white leading-tight group-hover:text-purple-300 transition-colors">
-                          Chama & Table Bank
+                          Circle & Table Bank
                         </span>
                         <span className="text-[10px] text-purple-200/70 block mt-0.5 font-medium">
                           Pezesha Scoring
@@ -1675,10 +1675,10 @@ export function NearbyScreen(props: NearbyScreenProps) {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-                {/* Card 1: Chamas & Table Banking */}
+                {/* Card 1: Circles & Table Banking */}
                 <button
                   type="button"
-                  onClick={() => { soundEngine.play('heavyTap'); setChamaOpen(true); }}
+                  onClick={() => { soundEngine.play('heavyTap'); setCircleOpen(true); }}
                   className="p-5 rounded-[20px] bg-[#F7F7F5] hover:bg-white shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group flex flex-col justify-between text-left"
                 >
                   <div>
@@ -1689,14 +1689,14 @@ export function NearbyScreen(props: NearbyScreenProps) {
                       </span>
                     </div>
                     <h3 className="text-sm font-black text-[#1A1F2E] mt-3 group-hover:text-[#B8621F] transition-colors">
-                      Chamas & Merry-Go-Rounds
+                      Circles & Merry-Go-Rounds
                     </h3>
                     <p className="text-xs text-[#6B7280] mt-1 leading-relaxed">
                       Join verified neighborhood savings circles, rotating payouts, and table banking pools.
                     </p>
                   </div>
                   <div className="mt-4 pt-3 border-t border-black/[0.04] flex items-center justify-between w-full">
-                    <span className="text-[11px] font-bold text-[#B8621F]">Open Chama Desk →</span>
+                    <span className="text-[11px] font-bold text-[#B8621F]">Open Circle Desk →</span>
                     <span className="text-[10px] text-[#9CA3AF] font-medium">Cycle 5 Live</span>
                   </div>
                 </button>
@@ -2241,15 +2241,15 @@ export function NearbyScreen(props: NearbyScreenProps) {
         </div>
       )}
 
-      {/* ================= MODAL: CHAMA & TABLE BANKING HUB ================= */}
-      {chamaOpen && (
+      {/* ================= MODAL: CIRCLE & TABLE BANKING HUB ================= */}
+      {circleOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
           <div className="w-full max-w-2xl my-auto">
-            <ChamaDesk
-              onClose={() => setChamaOpen(false)}
+            <TableBankingDesk
+              onClose={() => setCircleOpen(false)}
               onOpenCircle={() => {
-                setChamaOpen(false);
-                showToast('Opening Chama circle details');
+                setCircleOpen(false);
+                showToast('Opening Circle circle details');
               }}
             />
           </div>

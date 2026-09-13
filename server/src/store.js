@@ -117,21 +117,22 @@ const EMPTY = {
   // src/domain/lipaMdogo.js.
   lipaMdogoContracts: [],
   lipaMdogoPayments: [],
-  // Chama — the ledger + calculator for EXISTING table-banking groups. Brief
-  // is not the chama and not the lender: these rows record contributions,
+  // Table banking — the ledger + calculator for EXISTING table-banking groups.
+  // Brief is not the group and not the lender: these rows record contributions,
   // rotation, loans (computed schedules, not lent), repayments, and
   // maker-checker payouts. The pool is derived; no money touches Brief. See
-  // src/domain/chama.js.
-  chamas: [],
-  chamaContributions: [],
-  chamaLoans: [],
-  chamaRepayments: [],
-  chamaPayouts: [],
-  // A chama placing a COLLECTIVE order rides the ordinary Request -> Match ->
-  // Quote -> WorkOrder chain; this row records which chama a request was placed
-  // on behalf of (provenance + the member breakdown), so the chama surface can
-  // list its collective demand. See chama.placeCollectiveRequest.
-  chamaRequests: [],
+  // src/domain/tableBanking.js.
+  tableBanking: [],
+  tableBankingContributions: [],
+  tableBankingLoans: [],
+  tableBankingRepayments: [],
+  tableBankingPayouts: [],
+  // A table-banking group placing a COLLECTIVE order rides the ordinary
+  // Request -> Match -> Quote -> WorkOrder chain; this row records which group
+  // a request was placed on behalf of (provenance + the member breakdown), so
+  // the table-banking surface can list its collective demand. See
+  // tableBanking.placeCollectiveRequest.
+  tableBankingRequests: [],
   // P2P ticket resale (Tikiti integration T1). A ticket is ONE admitted
   // seat, born from a confirmed campaign registration; its scannable code
   // IS the registration's gate code, versioned so a transfer kills every
@@ -322,7 +323,7 @@ const EMPTY = {
   // rows — never a stored counter that can drift from the records.
   articleLikes: [],
 
-  // --- Group Buy engine (Chama & group-order pipelines) ---------------------
+  // --- Group Buy engine (Table banking & group-order pipelines) ---------------------
   // A group buy is a tracked funding pipeline; contributions are records with
   // verifiable receipt digests. Money records also ride the one ledger —
   // there is deliberately no second balance here.

@@ -16,7 +16,7 @@ const SPACE_OPTIONS: Array<{ id: SpaceType; title: string; desc: string; icon: a
   { id: 'business', title: 'Business', desc: 'Bakery, shop, catering, physical store', icon: Store },
   { id: 'side_hustle', title: 'Side Hustle', desc: 'Home-based selling, WhatsApp commerce', icon: Briefcase },
   { id: 'creator', title: 'Creator Work', desc: 'Bespoke crafts, services, content', icon: Tag },
-  { id: 'community', title: 'Community & Co-op', desc: 'Chama, group projects, circular funds', icon: Users }
+  { id: 'community', title: 'Community & Co-op', desc: 'Circle, group projects, circular funds', icon: Users }
 ];
 
 export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({

@@ -2452,7 +2452,7 @@ export function unlikeTeaArticle(id: string): Promise<ApiResult<{ liked: boolean
   );
 }
 
-// --- Group Buy engine (Chama & group-order pipelines) ---------------------------
+// --- Group Buy engine (Table banking & group-order pipelines) ---------------------------
 
 export interface GroupBuyContribution {
   id: string;
@@ -2842,8 +2842,8 @@ export interface EventListing {
   featured: boolean;
   /** COUNTED registrations, never a seeded number. */
   popularity: number;
-  /** DERIVED per-viewer: which of the viewer's chamas have members going. */
-  chamaOverlap: Array<{ chamaId: string; chamaName: string | null; memberCount: number }> | null;
+  /** DERIVED per-viewer: which of the viewer's groups have members going. */
+  tableBankingOverlap: Array<{ tableBankingId: string; tableBankingName: string | null; memberCount: number }> | null;
 }
 
 export function browseEvents(opts: {
@@ -4500,9 +4500,9 @@ export function getMyLipaMdogo(): Promise<ApiResult<LipaMdogoContract[]>> {
 }
 
 // ---------------------------------------------------------------------------
-// CHAMA — the table-banking ledger + calculator (tool for existing groups).
+// TABLE BANKING — the table-banking ledger + calculator (tool for existing groups).
 // ---------------------------------------------------------------------------
-export interface ChamaSummary {
+export interface TableBankingSummary {
   id: string;
   name: string;
   contributionAmount: number;
@@ -4520,7 +4520,7 @@ export interface ChamaSummary {
   activeLoans: Array<{ id: string; borrowerId: string; principal: number; ratePercent: number; remaining: number }>;
   note: string;
 }
-export interface ChamaRow {
+export interface TableBankingGroup {
   id: string;
   name: string;
   ownerId: string;
@@ -4529,16 +4529,16 @@ export interface ChamaRow {
   cycleDays: number;
   status: string;
   members: Array<{ userId: string; joinedAt: string }>;
-  summary?: ChamaSummary;
+  summary?: TableBankingSummary;
 }
-export interface ChamaRotation {
+export interface TableBankingRotation {
   order: Array<{ userId: string; handle: string | null; displayName: string | null; isCurrent: boolean; received: boolean }>;
   currentIndex: number;
   currentMemberId: string | null;
   nextMemberId: string | null;
   note: string;
 }
-export interface ChamaMe {
+export interface TableBankingMe {
   memberId: string;
   contributedKes: number;
   contributedCount: number;
@@ -4547,42 +4547,42 @@ export interface ChamaMe {
   owesKes: number;
   loans: Array<{ id: string; remaining: number; status: string }>;
 }
-export interface ChamaDetail {
-  chama: ChamaRow;
-  summary: ChamaSummary;
-  rotation: ChamaRotation;
-  me: ChamaMe;
+export interface TableBankingDetail {
+  group: TableBankingGroup;
+  summary: TableBankingSummary;
+  rotation: TableBankingRotation;
+  me: TableBankingMe;
 }
-export function getMyChamas(): Promise<ApiResult<ChamaRow[]>> {
-  return request('/api/me/chamas', undefined, r => Array.isArray(r?.chamas) ? r.chamas : undefined);
+export function getMyTableBanking(): Promise<ApiResult<TableBankingGroup[]>> {
+  return request('/api/me/table-banking', undefined, r => Array.isArray(r?.groups) ? r.groups : undefined);
 }
-export function getChama(id: string): Promise<ApiResult<ChamaDetail>> {
-  return request(`/api/chamas/${encodeURIComponent(id)}`, undefined, r =>
-    r?.chama && r?.summary && r?.rotation ? r : undefined);
+export function getTableBanking(id: string): Promise<ApiResult<TableBankingDetail>> {
+  return request(`/api/table-banking/${encodeURIComponent(id)}`, undefined, r =>
+    r?.group && r?.summary && r?.rotation ? r : undefined);
 }
-export function createChama(body: { name: string; contributionAmount: number; currency?: string; cycleDays?: number; latePenaltyKes?: number }): Promise<ApiResult<ChamaRow>> {
-  return request('/api/chamas', { method: 'POST', body: JSON.stringify(body) }, r => r?.chama ? r.chama : undefined);
+export function createTableBanking(body: { name: string; contributionAmount: number; currency?: string; cycleDays?: number; latePenaltyKes?: number }): Promise<ApiResult<TableBankingGroup>> {
+  return request('/api/table-banking', { method: 'POST', body: JSON.stringify(body) }, r => r?.group ? r.group : undefined);
 }
-export function joinChama(id: string): Promise<ApiResult<ChamaRow>> {
-  return request(`/api/chamas/${encodeURIComponent(id)}/join`, { method: 'POST', body: '{}' }, r => r?.chama ? r.chama : undefined);
+export function joinTableBanking(id: string): Promise<ApiResult<TableBankingGroup>> {
+  return request(`/api/table-banking/${encodeURIComponent(id)}/join`, { method: 'POST', body: '{}' }, r => r?.group ? r.group : undefined);
 }
-export function recordChamaContribution(id: string, body: { amount: number; receiptHash?: string | null; idempotencyKey?: string }): Promise<ApiResult<{ contribution: any; summary: ChamaSummary }>> {
-  return request(`/api/chamas/${encodeURIComponent(id)}/contributions`, { method: 'POST', body: JSON.stringify(body) }, r => r?.contribution ? r : undefined);
+export function recordTableBankingContribution(id: string, body: { amount: number; receiptHash?: string | null; idempotencyKey?: string }): Promise<ApiResult<{ contribution: any; summary: TableBankingSummary }>> {
+  return request(`/api/table-banking/${encodeURIComponent(id)}/contributions`, { method: 'POST', body: JSON.stringify(body) }, r => r?.contribution ? r : undefined);
 }
-export function advanceChamaTurn(id: string): Promise<ApiResult<{ rotation: ChamaRotation }>> {
-  return request(`/api/chamas/${encodeURIComponent(id)}/rotate`, { method: 'POST', body: '{}' }, r => r?.rotation ? r : undefined);
+export function advanceTableBankingTurn(id: string): Promise<ApiResult<{ rotation: TableBankingRotation }>> {
+  return request(`/api/table-banking/${encodeURIComponent(id)}/rotate`, { method: 'POST', body: '{}' }, r => r?.rotation ? r : undefined);
 }
-export function applyChamaLoan(id: string, body: { principal: number; interestType?: 'flat' | 'reducing_balance'; ratePercent?: number; termMonths: number; guarantorsRequired?: number }): Promise<ApiResult<{ loan: any; schedule: any }>> {
-  return request(`/api/chamas/${encodeURIComponent(id)}/loans`, { method: 'POST', body: JSON.stringify(body) }, r => r?.loan ? r : undefined);
+export function applyTableBankingLoan(id: string, body: { principal: number; interestType?: 'flat' | 'reducing_balance'; ratePercent?: number; termMonths: number; guarantorsRequired?: number }): Promise<ApiResult<{ loan: any; schedule: any }>> {
+  return request(`/api/table-banking/${encodeURIComponent(id)}/loans`, { method: 'POST', body: JSON.stringify(body) }, r => r?.loan ? r : undefined);
 }
-export function repayChamaLoan(loanId: string, body: { amount: number; receiptHash?: string | null; idempotencyKey?: string }): Promise<ApiResult<{ repayment: any; balance: any }>> {
-  return request(`/api/chama-loans/${encodeURIComponent(loanId)}/repay`, { method: 'POST', body: JSON.stringify(body) }, r => r?.repayment ? r : undefined);
+export function repayTableBankingLoan(loanId: string, body: { amount: number; receiptHash?: string | null; idempotencyKey?: string }): Promise<ApiResult<{ repayment: any; balance: any }>> {
+  return request(`/api/table-banking-loans/${encodeURIComponent(loanId)}/repay`, { method: 'POST', body: JSON.stringify(body) }, r => r?.repayment ? r : undefined);
 }
 
-// Collective demand — a chama places a bulk Request riding the economic chain.
-export interface ChamaCollectiveRequest {
+// Collective demand — a group places a bulk Request riding the economic chain.
+export interface TableBankingCollectiveRequest {
   id: string;
-  chamaId: string;
+  tableBankingId: string;
   requestId: string;
   placedBy: string;
   aggregateQuantity: number;
@@ -4590,9 +4590,9 @@ export interface ChamaCollectiveRequest {
   placedAt: string;
   request: any | null;
 }
-export function getChamaCollectiveRequests(id: string): Promise<ApiResult<ChamaCollectiveRequest[]>> {
-  return request(`/api/chamas/${encodeURIComponent(id)}/requests`, undefined, r => Array.isArray(r?.collective) ? r.collective : undefined);
+export function getTableBankingCollectiveRequests(id: string): Promise<ApiResult<TableBankingCollectiveRequest[]>> {
+  return request(`/api/table-banking/${encodeURIComponent(id)}/requests`, undefined, r => Array.isArray(r?.collective) ? r.collective : undefined);
 }
-export function placeChamaCollectiveRequest(id: string, body: Record<string, unknown>): Promise<ApiResult<{ request: any; collective: ChamaCollectiveRequest }>> {
-  return request(`/api/chamas/${encodeURIComponent(id)}/requests`, { method: 'POST', body: JSON.stringify(body) }, r => r?.request?.id ? r : undefined);
+export function placeTableBankingCollectiveRequest(id: string, body: Record<string, unknown>): Promise<ApiResult<{ request: any; collective: TableBankingCollectiveRequest }>> {
+  return request(`/api/table-banking/${encodeURIComponent(id)}/requests`, { method: 'POST', body: JSON.stringify(body) }, r => r?.request?.id ? r : undefined);
 }

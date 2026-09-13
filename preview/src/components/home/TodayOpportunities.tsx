@@ -55,11 +55,11 @@ export function TodayOpportunities({
     {
       id: 'opp-4',
       badge: 'KES 60k',
-      title: 'Chama Table Bank',
+      title: 'Circle Table Bank',
       subtitle: 'Cycle 5 Contribution Live',
       bgGradient: 'from-[#4C1D95] to-[#7C3AED]',
       textColor: 'text-white',
-      category: 'chama'
+      category: 'circle'
     },
     {
       id: 'opp-5',

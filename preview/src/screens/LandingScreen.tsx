@@ -58,7 +58,7 @@ import { UssdSimulatorDesk } from '../components/offline/UssdSimulatorDesk';
 import { OfflineSyncQueueDesk } from '../components/offline/OfflineSyncQueueDesk';
 import { LOCATIONS, INITIAL_ACTIVE_DELIVERY, WairoLocation, WairoDelivery } from '../components/wairo/wairoData';
 import { CommitteeDesk } from '../components/life/CommitteeDesk';
-import { ChamaDesk } from '../components/circle/ChamaDesk';
+import { TableBankingDesk } from '../components/circle/TableBankingDesk';
 import { WellbeingDesk } from '../components/wellbeing/WellbeingDesk';
 import { InterCountyDesk } from '../components/wairo/InterCountyDesk';
 import { UniversalCreatePostModal, Post } from '../components/posts/UniversalCreatePostModal';
@@ -119,9 +119,9 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
   const [isUssdOpen, setIsUssdOpen] = useState(false);
   const [isOfflineSyncOpen, setIsOfflineSyncOpen] = useState(false);
 
-  // Hub Desks Modals (Core 4 Pillars: WAIRO · Chamas · Gigs · Events)
+  // Hub Desks Modals (Core 4 Pillars: WAIRO · Circles · Gigs · Events)
   const [committeeOpen, setCommitteeOpen] = useState(false);
-  const [chamaOpen, setChamaOpen] = useState(false);
+  const [circleOpen, setCircleOpen] = useState(false);
   const [wellbeingOpen, setWellbeingOpen] = useState(false);
   const [interCountyOpen, setInterCountyOpen] = useState(false);
   const [createPostOpen, setCreatePostOpen] = useState(false);
@@ -246,9 +246,9 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
               soundEngine.play('heavyTap');
               setInterCountyOpen(true);
             }}
-            onOpenChama={() => {
+            onOpenCircle={() => {
               soundEngine.play('heavyTap');
-              setChamaOpen(true);
+              setCircleOpen(true);
             }}
             onOpenCbc={() => {
               setActiveCbcBundleId('cbc-g7');
@@ -261,7 +261,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
         <div className="my-3">
           <AnnouncementPinkBanner
             tag="LIVE WARD RUNS"
-            title="Save your spot at Ward Chama & CBC Bulk Runs"
+            title="Save your spot at Ward Circle & CBC Bulk Runs"
             buttonText="Register now"
             onAction={() => {
               soundEngine.play('heavyTap');
@@ -277,7 +277,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
               if (p.id === 'fargo' || p.id === 'lori' || p.id === 'sendy') {
                 setInterCountyOpen(true);
               } else if (p.id === 'pezesha' || p.id === 'mpesa') {
-                setChamaOpen(true);
+                setCircleOpen(true);
               } else if (p.id === 'kicd') {
                 setActiveCbcBundleId('cbc-g7');
                 setCbcCheckoutOpen(true);
@@ -359,15 +359,15 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
         {/* ================= SECTION 0: TODAY ================= */}
         {selectedSection === 0 && (
           <div className="space-y-6 animate-fadeIn">
-            {/* ── 3-COLUMN AGENTIC FEATURE CARDS (CBC · CHAMA · CARGO) ── */}
+            {/* ── 3-COLUMN AGENTIC FEATURE CARDS (CBC · CIRCLE · CARGO) ── */}
             <AgenticFeatureGrid
               onOpenCbc={() => {
                 setActiveCbcBundleId('cbc-g7');
                 setCbcCheckoutOpen(true);
               }}
-              onOpenChama={() => {
+              onOpenCircle={() => {
                 soundEngine.play('heavyTap');
-                setChamaOpen(true);
+                setCircleOpen(true);
               }}
               onOpenCargo={() => {
                 soundEngine.play('heavyTap');
@@ -386,7 +386,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
               <span className="text-[11px] font-semibold text-[#6B7280]">Live · 3km Radius</span>
             </div>
 
-            {/* 2-Column IronSheet Grid (WAIRO · Chamas · Gigs · Events) */}
+            {/* 2-Column IronSheet Grid (WAIRO · Circles · Gigs · Events) */}
             <div className="grid grid-cols-2 gap-3">
               <IronSheet
                 material="jade"
@@ -443,14 +443,14 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
 
               <IronSheet
                 material="obsidian"
-                title="Chama Savings"
-                subtitle={`${activeNeighborhood.activeChamas[0]?.name || 'Traders Circle'} · ${activeNeighborhood.activeChamas[0]?.cycle || 'Cycle 5'}`}
+                title="Circle Savings"
+                subtitle={`${activeNeighborhood.activeCircles[0]?.name || 'Traders Circle'} · ${activeNeighborhood.activeCircles[0]?.cycle || 'Cycle 5'}`}
                 emoji="🌸"
-                badge="CHAMA"
+                badge="CIRCLE"
                 animationDelayMs={240}
                 onTap={() => {
                   soundEngine.play('heavyTap');
-                  setChamaOpen(true);
+                  setCircleOpen(true);
                 }}
               />
             </div>
@@ -486,7 +486,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
               <span className="text-[11px] font-semibold text-[#6B7280]">4 Core Pillars</span>
             </div>
 
-            {/* 2-Column IronSheet Grid (WAIRO · Chamas · Gigs · Events) */}
+            {/* 2-Column IronSheet Grid (WAIRO · Circles · Gigs · Events) */}
             <div className="grid grid-cols-2 gap-3">
               <IronSheet
                 material="copper"
@@ -503,21 +503,21 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
 
               <IronSheet
                 material="obsidian"
-                title="Chama & Table Bank"
-                subtitle={activeNeighborhood.activeChamas[0]?.name || "Merry-Go-Round · Rotational"}
+                title="Circle & Table Bank"
+                subtitle={activeNeighborhood.activeCircles[0]?.name || "Merry-Go-Round · Rotational"}
                 emoji="🌸"
-                badge={activeNeighborhood.activeChamas[0]?.cycle || "CYCLE 5"}
+                badge={activeNeighborhood.activeCircles[0]?.cycle || "CYCLE 5"}
                 animationDelayMs={80}
                 onTap={() =>
                   openHubDetail({
                     material: 'obsidian',
-                    title: 'Chama & Table Bank',
+                    title: 'Circle & Table Bank',
                     subtitle: `${activeNeighborhood.name} verified circular savings`,
                     emoji: '🌸',
-                    badge: 'CHAMA',
+                    badge: 'CIRCLE',
                     heroDescription:
                       'Transparent community savings, rotational payouts, and micro-loans with instant M-Pesa ledger verification.',
-                    onJoinSuccess: () => setChamaOpen(true)
+                    onJoinSuccess: () => setCircleOpen(true)
                   })
                 }
               />
@@ -587,10 +587,10 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                   }}
                 />
                 <MetalTag
-                  label="Chama"
+                  label="Circle"
                   icon={<Coins className="w-3.5 h-3.5" />}
                   material="obsidian"
-                  onTap={() => setChamaOpen(true)}
+                  onTap={() => setCircleOpen(true)}
                 />
                 <MetalTag
                   label="Gigs"
@@ -1074,11 +1074,11 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
         </div>
       )}
 
-      {/* ================= MODAL: CHAMA TABLE BANK ================= */}
-      {chamaOpen && (
+      {/* ================= MODAL: CIRCLE TABLE BANK ================= */}
+      {circleOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
           <div className="w-full max-w-3xl my-auto">
-            <ChamaDesk onClose={() => setChamaOpen(false)} />
+            <TableBankingDesk onClose={() => setCircleOpen(false)} />
           </div>
         </div>
       )}

@@ -1,4 +1,4 @@
-// GROUP BUY ROUTES — the Chama & Group Buy package over the engine layer.
+// GROUP BUY ROUTES — the Table Banking & Group Buy package over the engine layer.
 // The 3-field intake, the ledger stepper, and the stage controls. Tier
 // guardrails (active-buy caps) are enforced server-side at creation.
 import { callerId } from '../identity.js';

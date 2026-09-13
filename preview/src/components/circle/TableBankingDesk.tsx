@@ -33,7 +33,7 @@ import {
 } from 'lucide-react';
 import { soundEngine } from '../../utils/SoundEngine';
 
-export interface ChamaMemberCycle {
+export interface TableBankingMemberCycle {
   id: string;
   name: string;
   phone: string;
@@ -64,7 +64,7 @@ export interface TableLoan {
   collectionChannel?: string;
 }
 
-export interface ChamaOrderDispatch {
+export interface TableBankingOrderDispatch {
   id: string;
   title: string;
   category: string;
@@ -76,7 +76,7 @@ export interface ChamaOrderDispatch {
   savingsPct: number;
 }
 
-export function ChamaDesk({
+export function TableBankingDesk({
   onClose,
   onOpenCircle
 }: {
@@ -87,8 +87,8 @@ export function ChamaDesk({
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState('Just now');
   
-  // Chama State
-  const [members, setMembers] = useState<ChamaMemberCycle[]>([
+  // Group State
+  const [members, setMembers] = useState<TableBankingMemberCycle[]>([
     { id: 'm-1', name: 'Grace Wanjiku', phone: '0722***410', payoutMonth: 'May 2026', roundNumber: 5, merryContributionKes: 5000, welfareContributionKes: 500, status: 'paid', mpesaRef: 'QKD89102A', payoutStatus: 'current_recipient', paidAt: 'May 18' },
     { id: 'm-2', name: 'Mary Atieno', phone: '0711***928', payoutMonth: 'Jan 2026', roundNumber: 1, merryContributionKes: 5000, welfareContributionKes: 500, status: 'paid', mpesaRef: 'QKB12849B', payoutStatus: 'received', paidAt: 'May 17' },
     { id: 'm-3', name: 'Faith Mwangi', phone: '0733***112', payoutMonth: 'Feb 2026', roundNumber: 2, merryContributionKes: 5000, welfareContributionKes: 500, status: 'paid', mpesaRef: 'QKC44910C', payoutStatus: 'received', paidAt: 'May 18' },
@@ -138,7 +138,7 @@ export function ChamaDesk({
     }
   ]);
 
-  const [communityOrders] = useState<ChamaOrderDispatch[]>([
+  const [communityOrders] = useState<TableBankingOrderDispatch[]>([
     {
       id: 'order-cbc-01',
       title: 'CBC Grade 7 Curriculum Full 6-Book Pack',
@@ -263,13 +263,13 @@ export function ChamaDesk({
   const handleShareWhatsAppReminder = () => {
     soundEngine.play('tap');
     const pendingNames = members.filter(m => m.status === 'pending').map(m => m.name).join(', ');
-    const text = `*Kilimani Traders & Agri Chama — Cycle 5 Update 🌸*\n\n` +
+    const text = `*Kilimani Traders & Agri Circle — Cycle 5 Update 🌸*\n\n` +
       `*Merry-Go-Round Pot:* KES ${totalCollectedMerryKes.toLocaleString()} / KES ${cycleTargetPoolKes.toLocaleString()} (${cyclePercentComplete}%)\n` +
       `*This Month Beneficiary:* ${currentRecipient.name} (KES ${cycleTargetPoolKes.toLocaleString()})\n` +
       `*Welfare Reserve Balance:* KES ${totalWelfareReserveKes.toLocaleString()}\n` +
       `*Pending Members (${members.length - paidMembersCount}):* ${pendingNames || 'All Cleared!'}\n\n` +
       `*Next Meeting:* Saturday, 14 June 2026 at 3:00 PM (Kilimani Social Hall)\n` +
-      `_Encrypted Ledger Ref: CHAMA-CYC5-2026_`;
+      `_Encrypted Ledger Ref: GROUP-CYC5-2026_`;
 
     if (navigator.clipboard) {
       navigator.clipboard.writeText(text);
@@ -286,7 +286,7 @@ export function ChamaDesk({
           <div>
             <div className="flex items-center space-x-2">
               <span className="text-[10px] font-mono font-black px-2.5 py-0.5 rounded-full bg-[#4F46E5] text-white uppercase tracking-wider">
-                CHAMA & TABLE BANKING
+                TABLE BANKING
               </span>
               <span className="text-xs text-indigo-200 font-bold flex items-center space-x-1">
                 <Users className="w-3.5 h-3.5 text-[#00BFEF]" />
@@ -295,7 +295,7 @@ export function ChamaDesk({
             </div>
 
             <h2 className="text-xl sm:text-2xl font-black mt-2 text-white tracking-tight flex items-center space-x-2">
-              <span>Kilimani Women Traders Chama</span>
+              <span>Kilimani Women Traders Circle</span>
               <Sparkles className="w-5 h-5 text-amber-400" />
             </h2>
             <p className="text-xs text-indigo-200/80 mt-0.5">
@@ -307,8 +307,8 @@ export function ChamaDesk({
             <button
               type="button"
               onClick={handlePullToRefresh}
-              title="Sync Chama Ledger"
-              aria-label="Refresh Chama Ledger"
+              title="Sync Group Ledger"
+              aria-label="Refresh Group Ledger"
               className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white cursor-pointer transition-colors"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-[#00BFEF]' : ''}`} />
@@ -576,7 +576,7 @@ export function ChamaDesk({
               <h3 className="text-xs font-black uppercase tracking-wider text-[#0D1117]">
                 Table Banking Loans & Welfare Kitty
               </h3>
-              <p className="text-[11px] text-gray-500">Emergency & business loans funded from Chama welfare reserve</p>
+              <p className="text-[11px] text-gray-500">Emergency & business loans funded from group welfare reserve</p>
             </div>
 
             <button
@@ -664,7 +664,7 @@ export function ChamaDesk({
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-xs font-black uppercase tracking-wider text-[#0D1117] flex items-center space-x-1.5">
-                <span>Chama Bulk Procurement & WAIRO Dispatches</span>
+                <span>Group Bulk Procurement & WAIRO Dispatches</span>
               </h3>
               <p className="text-[11px] text-gray-500">Collective wholesale purchasing with door-to-door cargo logistics</p>
             </div>
@@ -748,7 +748,7 @@ export function ChamaDesk({
           <div className="p-4 rounded-2xl bg-[#0D1117] text-white space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-black uppercase tracking-wider text-[#00BFEF]">
-                1-Tap WhatsApp Chama Broadcast
+                1-Tap WhatsApp Group Broadcast
               </span>
               <span className="text-[10px] font-mono text-gray-400">Official Format</span>
             </div>
@@ -942,7 +942,7 @@ export function ChamaDesk({
                   <BadgeCheck className="w-3.5 h-3.5 text-blue-600" />
                   <span>Pezesha Alternative Scoring Active (Grade AAA)</span>
                 </span>
-                <p>Based on {loanBorrower}&apos;s M-Pesa turnover and 100% rotational Chama repayment record.</p>
+                <p>Based on {loanBorrower}&apos;s M-Pesa turnover and 100% rotational group repayment record.</p>
               </div>
 
               <div className="pt-2 flex gap-2">
@@ -978,7 +978,7 @@ export function ChamaDesk({
       <div className="p-4 rounded-b-3xl bg-black/5 text-[11px] text-gray-500 leading-relaxed space-y-1">
         <span className="font-bold text-gray-700 block">Self-Governing Group Records</span>
         <p>
-          Brief helps you organize your chama. Money moves directly between members through M-Pesa — Brief does not hold your funds and does not guarantee any payout. Your group governs itself.
+          Brief helps you organize your group. Money moves directly between members through M-Pesa — Brief does not hold your funds and does not guarantee any payout. Your group governs itself.
         </p>
       </div>
 

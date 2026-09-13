@@ -486,7 +486,7 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
             </li>
             <li className="flex items-start gap-1.5">
               <span>•</span>
-              <span><strong>Self-Governing Groups:</strong> Chamas and Harambees govern themselves with transparent ledgers.</span>
+              <span><strong>Self-Governing Groups:</strong> Circles and Harambees govern themselves with transparent ledgers.</span>
             </li>
             <li className="flex items-start gap-1.5">
               <span>•</span>

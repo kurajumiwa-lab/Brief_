@@ -211,7 +211,7 @@ export function EnginePanel({ onObjectsChanged }: EnginePanelProps) {
         <div className="space-y-2">
           <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#0D1117]/60">Group buys</p>
           {groupBuys.length === 0 && (
-            <p className="text-[10px] text-[#0D1117]/60">No active chama cycles or group orders.</p>
+            <p className="text-[10px] text-[#0D1117]/60">No active circle cycles or group orders.</p>
           )}
           {groupBuys.slice(0, 2).map((b) => (
             <div key={b.id} className="rounded-xl border border-[#E5E8EC] bg-[#F0F2F5] p-2.5">

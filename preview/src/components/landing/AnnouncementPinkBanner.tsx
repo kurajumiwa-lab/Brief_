@@ -12,7 +12,7 @@ export interface AnnouncementPinkBannerProps {
 
 export const AnnouncementPinkBanner: React.FC<AnnouncementPinkBannerProps> = ({
   tag = 'LIVE WARD RUNS',
-  title = 'Save your spot at Ward Chama & CBC Bulk Runs',
+  title = 'Save your spot at Ward Circle & CBC Bulk Runs',
   buttonText = 'Register now',
   onAction,
   className = ''

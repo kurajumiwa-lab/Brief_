@@ -22,7 +22,7 @@ import { soundEngine } from '../../utils/SoundEngine';
 export interface OfflineActionRecord {
   id: string;
   idempotencyKey: string;
-  category: 'wairo_logistics' | 'duka_sales' | 'chama_ledger';
+  category: 'wairo_logistics' | 'duka_sales' | 'circle_ledger';
   title: string;
   details: string;
   amountKes?: number;
@@ -54,8 +54,8 @@ const INITIAL_QUEUE: OfflineActionRecord[] = [
   },
   {
     id: 'act-3',
-    idempotencyKey: 'IDEMP-CHAMA-88194',
-    category: 'chama_ledger',
+    idempotencyKey: 'IDEMP-CIRCLE-88194',
+    category: 'circle_ledger',
     title: 'Merry-Go-Round Cash Table Contribution',
     details: 'Recorded KES 5,500 contribution for Cycle 5 (Grace Wanjiku pot).',
     amountKes: 5500,
@@ -79,7 +79,7 @@ export function OfflineSyncQueueDesk({
   const [syncStatusMsg, setSyncStatusMsg] = useState<string>('');
 
   // New offline action form state
-  const [newCategory, setNewCategory] = useState<'wairo_logistics' | 'duka_sales' | 'chama_ledger'>('wairo_logistics');
+  const [newCategory, setNewCategory] = useState<'wairo_logistics' | 'duka_sales' | 'circle_ledger'>('wairo_logistics');
   const [newTitle, setNewTitle] = useState<string>('Delivery Hand-off Confirmation');
   const [newDetails, setNewDetails] = useState<string>('Recorded offline recipient hand-off and signature.');
   const [newAmount, setNewAmount] = useState<number>(300);
@@ -154,7 +154,7 @@ export function OfflineSyncQueueDesk({
               <Zap className="w-5 h-5 text-amber-400" />
             </h2>
             <p className="text-xs text-indigo-200/80 mt-0.5 max-w-xl">
-              Never lose a delivery, Duka sale, or Chama payment during network blackouts. Actions record instantly to local storage and sync idempotently on reconnect.
+              Never lose a delivery, Duka sale, or Circle payment during network blackouts. Actions record instantly to local storage and sync idempotently on reconnect.
             </p>
           </div>
 
@@ -342,7 +342,7 @@ export function OfflineSyncQueueDesk({
             >
               <option value="wairo_logistics">Wairo Courier Drop-off & PIN</option>
               <option value="duka_sales">Duka POS Cash Sale</option>
-              <option value="chama_ledger">Chama Table Banking Contribution</option>
+              <option value="circle_ledger">Circle Table Banking Contribution</option>
             </select>
           </div>
 
@@ -404,7 +404,7 @@ export function OfflineSyncQueueDesk({
             </div>
 
             <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-1.5">
-              <span className="font-black text-[#0D1117] text-xs">🌸 chama_offline_ledger</span>
+              <span className="font-black text-[#0D1117] text-xs">🌸 circle_offline_ledger</span>
               <p className="text-[11px] text-gray-600 font-sans">Stores meeting attendance, cash Merry-Go-Round collections, and loan disbursement notes.</p>
               <span className="text-[10px] text-blue-600 font-bold block">1 Record (3.1 KB)</span>
             </div>

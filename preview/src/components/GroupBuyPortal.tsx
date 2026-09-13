@@ -4,7 +4,7 @@ import * as briefApi from '../api/briefApi';
 import type { GroupBuy } from '../api/briefApi';
 
 // ---------------------------------------------------------------------------
-// GROUP BUY PORTAL — the "Chama & Group Buy" financial package.
+// GROUP BUY PORTAL — the "Circle & Group Buy" financial package.
 //
 //   INTAKE     the rapid 3-field contribution form: Member ID, amount,
 //              payment source — the moment a member contributes, the engine
@@ -187,7 +187,7 @@ export function GroupBuyPortal() {
       <div>
         <h2 className="text-lg font-extrabold text-[#0D1117]">Group Buy</h2>
         <p className="text-[10px] text-[#0D1117]/60">
-          Chama cycles and group orders — contributions, receipts and the pipeline, tracked by the engine.
+          Circle cycles and group orders — contributions, receipts and the pipeline, tracked by the engine.
         </p>
       </div>
 
@@ -220,7 +220,7 @@ export function GroupBuyPortal() {
           {!selected && (
             <div className="rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] p-4">
               <p className="text-[13px] font-bold text-[#0D1117]">No group buys yet.</p>
-              <p className="mt-1 text-[11px] text-[#0D1117]/60">Open the first chama cycle or group order below.</p>
+              <p className="mt-1 text-[11px] text-[#0D1117]/60">Open the first circle cycle or group order below.</p>
             </div>
           )}
 

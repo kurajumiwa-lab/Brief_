@@ -35,7 +35,7 @@ console.log('\n=== PACKAGE 1: GROUP BUY FINANCIAL ENGINE ===');
   store._reset();
 
   // Creation + tier cap (free = 1 active buy).
-  const buy = GB.createGroupBuy({ ownerId: 'usr_org', title: 'Chama Unga December', targetAmount: 10_000 }, { maxActive: 1 });
+  const buy = GB.createGroupBuy({ ownerId: 'usr_org', title: 'Unga December Group Buy', targetAmount: 10_000 }, { maxActive: 1 });
   check('buy created at the funding stage', buy.stage === 'funding');
   check('five pipeline stages defined', GB.GROUP_BUY_STAGES.length === 5);
   check('stage labels match the blueprint', GB.GROUP_BUY_STAGES.map((s) => s.label).join(' -> ').includes('Target Achieved'));
@@ -108,9 +108,9 @@ console.log('\n=== UNIFIED PAYLOAD ROUTING (one pipeline for money and matches) 
   globalThis.fetch=async (url,options)=>String(url).startsWith('https://hook.test/') ? new Response('',{status:200}) : originalFetch(url,options);
   try {
     store._reset();
-    // A chama treasurer routes contribution signals to the group's webhook.
+    // A group treasurer routes contribution signals to the group's webhook.
     ROUTER.createRoute(
-      { ownerId: 'usr_org', name: 'Chama thread', match: { signalType: 'group_buy_contribution' }, channels: [{ kind: 'webhook', to: 'https://hook.test/chama' }] },
+      { ownerId: 'usr_org', name: 'Group thread', match: { signalType: 'group_buy_contribution' }, channels: [{ kind: 'webhook', to: 'https://hook.test/table-banking' }] },
       { maxRoutes: null }
     );
     const buy = GB.createGroupBuy({ ownerId: 'usr_org', title: 'Rice group buy', targetAmount: 2_000 }, { maxActive: null });
@@ -120,7 +120,7 @@ console.log('\n=== UNIFIED PAYLOAD ROUTING (one pipeline for money and matches) 
     await new Promise((r) => setTimeout(r, 25));
     const rows = store.all('engineDeliveries');
     check('contribution signal reached the router ledger', rows.length === before + 1, `${rows.length - before}`);
-    check('delivery attributed to the chama route', rows[rows.length - 1]?.routeId != null);
+    check('delivery attributed to the group route', rows[rows.length - 1]?.routeId != null);
     check('the same router serves gaming + finance (one ledger)', Array.isArray(rows));
 
     // A gaming signal on the same route set stays unrouted unless matched.

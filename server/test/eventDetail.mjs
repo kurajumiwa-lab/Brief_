@@ -98,7 +98,7 @@ const other = auth.createUser({ handle: "ed_other", password: "detail-pw" });
   assert.equal(pub.agenda.length, 1, "agenda is surfaced");
   assert.equal(pub.host.name, "Amina K", "host name is the chosen creatorName");
   assert.equal(pub.host.eventsHosted, 1, "host event count is DERIVED from published rows");
-  assert.equal(pub.chamaOverlap, null, "no overlap anonymously");
+  assert.equal(pub.tableBankingOverlap, null, "no overlap anonymously");
   pass("publicView surfaces venue/agenda/host and a derived host count");
 
   // The host count grows as the owner publishes more — derived, never stored.

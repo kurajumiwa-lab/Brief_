@@ -86,7 +86,7 @@ import { register as attributionRoutes } from './routes/attribution.js';
 import { register as partnerRoutes } from './routes/partner.js';
 import { register as fieldAgentRoutes } from './routes/fieldAgent.js';
 import { register as lipaMdogoRoutes } from './routes/lipaMdogo.js';
-import { register as chamaRoutes } from './routes/chama.js';
+import { register as tableBankingRoutes } from './routes/tableBanking.js';
 
 const app = express();
 
@@ -261,7 +261,7 @@ attributionRoutes(app);
 partnerRoutes(app);
 fieldAgentRoutes(app);
 lipaMdogoRoutes(app);
-chamaRoutes(app);
+tableBankingRoutes(app);
 
 // --- Production frontend serving -------------------------------------------
 //

@@ -16,7 +16,7 @@ export interface OptimizelyHeroSectionProps {
   locationName?: string;
   onExploreWard?: () => void;
   onOpenCargo?: () => void;
-  onOpenChama?: () => void;
+  onOpenCircle?: () => void;
   onOpenCbc?: () => void;
   className?: string;
 }
@@ -25,7 +25,7 @@ export const OptimizelyHeroSection: React.FC<OptimizelyHeroSectionProps> = ({
   locationName = "Lang'ata",
   onExploreWard,
   onOpenCargo,
-  onOpenChama,
+  onOpenCircle,
   onOpenCbc,
   className = ''
 }) => {
@@ -71,7 +71,7 @@ export const OptimizelyHeroSection: React.FC<OptimizelyHeroSectionProps> = ({
         {/* Left Sub-Card */}
         <div className="lg:col-span-7 space-y-4">
           <p className="text-sm sm:text-base text-gray-200 leading-relaxed font-medium max-w-lg">
-            Brief gives you automated tools, verified 47-county freight, and Chama table banking right where your community lives. Zero agency friction.
+            Brief gives you automated tools, verified 47-county freight, and Circle table banking right where your community lives. Zero agency friction.
           </p>
 
           <div className="flex flex-wrap items-center gap-3 pt-2">
@@ -106,7 +106,7 @@ export const OptimizelyHeroSection: React.FC<OptimizelyHeroSectionProps> = ({
           <div 
             onClick={() => {
               soundEngine.play('tap');
-              onOpenChama?.();
+              onOpenCircle?.();
             }}
             className="p-3.5 rounded-2xl bg-white/10 hover:bg-white/15 backdrop-blur-md border border-white/10 transition-all cursor-pointer flex items-center justify-between"
           >
@@ -115,7 +115,7 @@ export const OptimizelyHeroSection: React.FC<OptimizelyHeroSectionProps> = ({
                 <Coins className="w-4 h-4" />
               </div>
               <div>
-                <h4 className="text-xs font-black text-white">Chama Table Bank</h4>
+                <h4 className="text-xs font-black text-white">Circle Table Bank</h4>
                 <p className="text-[10px] text-gray-300">Pezesha score 740 · Cycle 5 Live</p>
               </div>
             </div>

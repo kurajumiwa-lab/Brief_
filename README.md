@@ -14,7 +14,7 @@ every figure derived from real rows, never stored as a second source of truth.
 
 **The positioning.** Brief does not try to become a bigger consumer app. It is
 a *distribution and economic-coordination layer* for organizations that already
-hold a trusted group — women-focused banks, SACCOs, chamas, coops, employers,
+hold a trusted group — women-focused banks, SACCOs, table-banking groups, coops, employers,
 NGOs, KNCCI-type networks, corporate supplier-diversity programs. They bring
 the cohort; Brief supplies the shop, the records, the verification and the
 money rails; the ledger proves what the cohort actually did.
