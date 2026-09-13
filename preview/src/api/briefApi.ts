@@ -4715,3 +4715,18 @@ export interface TreasurerDashboard {
 export function getTreasurerDashboard(id: string): Promise<ApiResult<TreasurerDashboard>> {
   return request(`/api/table-banking/${encodeURIComponent(id)}/treasurer`, undefined, r => r?.dashboard?.summary ? r.dashboard : undefined);
 }
+
+// --- PDF EXPORT — minutes as a download (auth via Bearer, not a plain link) -
+export async function downloadMinutesPdf(id: string): Promise<{ ok: true; blob: Blob } | { ok: false; error: string }> {
+  const token = getSessionToken();
+  const res = await fetch(`/api/table-banking/${encodeURIComponent(id)}/minutes.pdf`, {
+    headers: token ? { authorization: `Bearer ${token}` } : undefined
+  });
+  if (!res.ok) {
+    let msg = 'Could not export minutes.';
+    try { const j = await res.json(); msg = j?.error ?? msg; } catch { /* non-JSON error body */ }
+    return { ok: false, error: msg };
+  }
+  const blob = await res.blob();
+  return { ok: true, blob };
+}

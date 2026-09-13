@@ -199,6 +199,7 @@ async function main() {
     assert.ok(t.includes('June 14 meeting'), 'minutes title');
     assert.ok(t.includes('Advance the turn'), 'minutes decisions');
     assert.ok(btn('Record minutes'), 'record-minutes action present');
+    assert.ok(btn('Export PDF'), 'export-pdf action present');
     // Add members: the invite-by-phone flow.
     assert.ok(t.includes('Add members'), 'add-members section');
     assert.ok(btn('Invite a member'), 'invite-a-member action present');

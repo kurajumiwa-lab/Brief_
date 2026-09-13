@@ -140,6 +140,19 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
     else setNotice(res.error ?? "Could not issue the invite.");
   };
 
+  const exportMinutesPdf = async (group: TableBankingGroup) => {
+    const res = await api.downloadMinutesPdf(group.id);
+    if (!res.ok) { if ((res as any).status === 401) { onRequireAuth(); return; } setNotice(res.error); return; }
+    const url = URL.createObjectURL(res.blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `minutes-${group.id}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
   const saveMinutes = async (group: TableBankingGroup) => {
     const f = minutesForm[group.id];
     if (!f || !f.title.trim() || !f.body.trim()) { setNotice("Minutes need a title and a body."); return; }
@@ -437,6 +450,9 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
                     )}
                     <button type="button" onClick={() => setMinutesOpen((p) => ({ ...p, [c.id]: !p[c.id] }))} className="mt-2 rounded-full px-3 py-1.5 text-xs font-bold" style={{ background: "var(--color-surface)", color: "var(--color-text)", border: "1px solid var(--color-border)" }}>
                       {minutesOpen[c.id] ? "Cancel" : "Record minutes"}
+                    </button>
+                    <button type="button" onClick={() => exportMinutesPdf(c)} className="ml-1 mt-2 rounded-full px-3 py-1.5 text-xs font-bold" style={{ background: "var(--color-surface)", color: "var(--color-text)", border: "1px solid var(--color-border)" }}>
+                      Export PDF
                     </button>
                     {minutesOpen[c.id] && (
                       <div className="mt-2 space-y-1.5">

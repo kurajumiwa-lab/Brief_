@@ -2,6 +2,7 @@
 // existing group applies to itself; Brief is not the group and not the lender.
 import * as tableBanking from '../domain/tableBanking.js';
 import * as quoteVotes from '../domain/quoteVotes.js';
+import * as pdf from '../pdf.js';
 import * as outbound from '../outbound.js';
 import { requireAuth, requireCap } from './helpers.js';
 import { requireFeature } from '../features.js';
@@ -291,6 +292,24 @@ export function register(app) {
         heldAt: req.body?.heldAt ?? null
       });
       res.status(201).json({ minutes: row });
+    } catch (e) {
+      res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
+    }
+  });
+
+  // PDF export of the group's minutes — a member may download the record for
+  // a dispute or a SACCO registration. Generated server-side, no library.
+  app.get('/api/table-banking/:id/minutes.pdf', (req, res) => {
+    const me = requireAuth(req, res);
+    if (!me) return;
+    try {
+      const group = tableBanking.getTableBanking(req.params.id);
+      if (!group) return res.status(404).json({ error: 'group not found', code: 'not_found' });
+      if (!group.members.some((m) => m.userId === me)) return res.status(403).json({ error: 'you are not a member', code: 'not_member' });
+      const buf = pdf.minutesPdf({ groupName: group.name, minutes: tableBanking.listMinutes(req.params.id) });
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="minutes-${group.id}.pdf"`);
+      res.send(buf);
     } catch (e) {
       res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
     }
