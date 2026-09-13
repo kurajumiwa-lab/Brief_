@@ -35,6 +35,24 @@ export function register(app) {
     }
   });
 
+  // Onboard a NEW vendor (create it + record the territory claim atomically).
+  // This is the door-to-door agent's primary act: bring a shop into Brief.
+  app.post('/api/me/field-agent/onboard', (req, res) => {
+    const me = requireAuth(req, res);
+    if (!me) return;
+    try {
+      const result = fieldAgent.onboardVendor({
+        agentId: me,
+        displayName: req.body?.displayName,
+        contactMethod: req.body?.contactMethod ?? null,
+        claimType: req.body?.claimType ?? 'full_registration'
+      });
+      res.status(201).json(result);
+    } catch (e) {
+      res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
+    }
+  });
+
   // The member's own claims + derived override.
   app.get('/api/me/field-agent', (req, res) => {
     const me = requireAuth(req, res);

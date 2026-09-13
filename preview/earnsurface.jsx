@@ -140,6 +140,7 @@ async function main() {
   // --- territory onboarding: pick a vendor and claim it (no dead end) ---
   let claimedVendorId = null;
   let claimedType = null;
+  let onboardedName = null;
   fetchHandler = async (url, init) => {
     if (url.includes('/referrals/mine')) {
       return { ok: true, status: 200, text: async () => JSON.stringify({
@@ -149,6 +150,10 @@ async function main() {
         conversion: { ptsToKes: 0.10, minPoints: 500 },
         events: [], conversions: []
       }) };
+    }
+    if (url.includes('/field-agent/onboard')) {
+      onboardedName = init?.body ? JSON.parse(init.body).displayName : null;
+      return { ok: true, status: 201, text: async () => JSON.stringify({ vendor: { id: 'vnew', ownerId: 'a1', displayName: onboardedName, description: '', contactMethod: null, objectId: null, status: 'active', verification: { evidence: [], facts: [], verifiedCount: 0 }, activeListingCount: 0, createdAt: '2026-09-10T00:00:00Z', updatedAt: '2026-09-10T00:00:00Z' }, claim: { id: 'cnew', vendorId: 'vnew', agentId: 'a1', claimType: 'full_registration', territoryKey: null, status: 'active', claimedAt: '2026-09-10T00:00:00Z', expiresAt: '2028-09-10T00:00:00Z', createdAt: '2026-09-10T00:00:00Z' } }) };
     }
     if (url.includes('/field-agent')) {
       // No claims yet -> the "Onboard a vendor" action must appear.
@@ -181,16 +186,38 @@ async function main() {
 
     act(() => { btn('Onboard a vendor').click(); });
     await flush();
+    assert.ok(text(container).includes('Onboard a new shop'), 'onboard-new-shop input present');
     assert.ok(text(container).includes('Mama Njeri Grocers'), 'vendor list renders');
     assert.ok(btn('Claim territory'), 'claim-territory action present');
     assert.ok(btn('Menu'), 'menu-upload action present');
 
+    // Claim an EXISTING vendor (the claim flow, exercised first since it closes the panel).
     act(() => { btn('Claim territory').click(); });
     await flush();
     assert.equal(claimedVendorId, 'v9', 'claim posted for the chosen vendor');
     assert.equal(claimedType, 'full_registration', 'claim type is full_registration');
   }
-  pass('EarnSurface: a member can onboard a vendor and claim territory (no dead end)');
+  pass('EarnSurface: a member can claim an existing vendor for territory');
+
+  // --- Onboard a brand-new shop (the primary act when the market is empty) ---
+  {
+    const { container } = mount(React.createElement(EarnSurface, { onRequireAuth: () => {} }));
+    await flush();
+    act(() => { btn('Onboard a vendor').click(); });
+    await flush();
+
+    const nameInput = Array.from(document.querySelectorAll('input')).find((i) => (i.getAttribute('aria-label') || '') === 'New vendor name');
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+      setter.call(nameInput, 'Mama Njeri Grocers');
+      nameInput.dispatchEvent(new window.Event('input', { bubbles: true }));
+    });
+    act(() => { btn('Add shop').click(); });
+    await flush();
+    assert.equal(onboardedName, 'Mama Njeri Grocers', 'onboard posted the shop name');
+  }
+  pass('EarnSurface: a member can onboard a brand-new vendor (no dead end)');
+  pass('EarnSurface: a member can onboard a new vendor and claim territory (no dead end)');
 
   console.log('\nPASS ' + count);
   process.exit(0);

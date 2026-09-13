@@ -102,6 +102,29 @@ test("a rival with no claim earns nothing, even on the same orders", () => {
 });
 
 // ---------------------------------------------------------------------------
+// ONBOARD VENDOR — the agent brings a shop into Brief + claims it atomically.
+// ---------------------------------------------------------------------------
+test("onboardVendor creates the vendor AND records the territory claim", () => {
+  const rider = user("fa_rider2");
+  const result = fa.onboardVendor({ agentId: rider.id, displayName: "Mama Njeri Grocers", claimType: "full_registration" });
+  assert.ok(result.vendor.id, "a vendor was created");
+  assert.equal(result.vendor.ownerId, rider.id, "the onboarded shop is held by the agent");
+  assert.equal(result.claim.claimType, "full_registration");
+  assert.equal(result.claim.agentId, rider.id);
+  assert.equal(result.claim.status, "active");
+  // The claim is real and readable through the agent's own overview.
+  assert.equal(fa.vendorClaim(result.vendor.id)?.agentId, rider.id);
+});
+
+test("onboardVendor refuses a duplicate claim and requires a name", () => {
+  const rider = user("fa_rider3");
+  rejects(() => fa.onboardVendor({ agentId: rider.id, displayName: "", claimType: "menu_upload" }), "validation_error");
+  fa.onboardVendor({ agentId: rider.id, displayName: "Stall A", claimType: "full_registration" });
+  // full_registration is first-touch-wins per vendor.
+  rejects(() => fa.onboardVendor({ agentId: rider.id, displayName: "Stall A", claimType: "full_registration" }), "already_claimed");
+});
+
+// ---------------------------------------------------------------------------
 // SETTLEMENT — the only place the override becomes money.
 // ---------------------------------------------------------------------------
 test("requestOverrideSettlement snapshots the obligation and writes ONE pending tx", () => {

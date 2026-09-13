@@ -4508,6 +4508,22 @@ export function claimVendor(
   }, r => r?.claim?.id ? (r.claim as FieldAgentClaim) : undefined);
 }
 
+/**
+ * Onboard a NEW vendor: create the shop AND record the territory claim in one
+ * step. This is the door-to-door agent's primary act — bring a shop into Brief
+ * that has no profile yet (there is no existing vendor to "claim" first).
+ */
+export function onboardVendor(body: {
+  displayName: string;
+  contactMethod?: string | null;
+  claimType?: 'menu_upload' | 'full_registration';
+}): Promise<ApiResult<{ vendor: Vendor; claim: FieldAgentClaim }>> {
+  return request('/api/me/field-agent/onboard', {
+    method: 'POST',
+    body: JSON.stringify(body)
+  }, r => r?.claim?.id && r?.vendor?.id ? r : undefined);
+}
+
 // ---------------------------------------------------------------------------
 // LIPA MDOGO — the member's own contracts + derived maturity (#3).
 // ---------------------------------------------------------------------------

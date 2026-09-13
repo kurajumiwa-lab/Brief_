@@ -108,6 +108,30 @@ export function EarnSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
     }
   };
 
+  // Onboard a NEW vendor: the door-to-door agent's primary act. Creates the
+  // shop AND records the territory claim in one step — no existing vendor to
+  // "claim" first. This is what "onboard" means when the market is empty.
+  const [onboardName, setOnboardName] = useState("");
+  const [onboardBusy, setOnboardBusy] = useState(false);
+  const onboardNewVendor = async () => {
+    const name = onboardName.trim();
+    if (!name) { setNotice("Enter the shop's name to onboard it."); return; }
+    setOnboardBusy(true);
+    const res = await api.onboardVendor({ displayName: name, claimType: 'full_registration' });
+    setOnboardBusy(false);
+    if (res.ok) {
+      setNotice(`Onboarded ${name} — territory claimed, 0.75% of their settled orders for 24 months.`);
+      setOnboardName("");
+      setOnboardOpen(false);
+      setVendors(null);
+      void load();
+    } else if (res.status === 401) {
+      onRequireAuth();
+    } else {
+      setNotice(res.error ?? "Could not onboard that vendor.");
+    }
+  };
+
   if (loading) return <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>Reading your earnings…</p>;
   if (signedOut) {
     return (
@@ -198,11 +222,37 @@ export function EarnSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
             </button>
             {onboardOpen && (
               <div className="mt-3 space-y-2">
+                {/* Onboard a NEW vendor — the primary act when the market has no
+                    vendors to claim yet (or alongside claiming existing ones). */}
+                <div className="rounded-lg p-2 border" style={{ borderColor: "var(--color-border)" }}>
+                  <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>Onboard a new shop</p>
+                  <div className="mt-1 flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Shop name (e.g. Mama Njeri Grocers)"
+                      aria-label="New vendor name"
+                      value={onboardName}
+                      onChange={(e) => setOnboardName(e.target.value)}
+                      className="flex-1 rounded-lg px-2.5 py-1.5 text-xs border"
+                      style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
+                    />
+                    <button
+                      type="button"
+                      disabled={onboardBusy}
+                      onClick={onboardNewVendor}
+                      className="rounded-full px-3 py-1.5 text-[10px] font-bold shrink-0"
+                      style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}
+                    >
+                      {onboardBusy ? "…" : "Add shop"}
+                    </button>
+                  </div>
+                </div>
+
                 {vendors === null ? (
                   <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>Reading vendors…</p>
                 ) : vendors.length === 0 ? (
                   <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-                    No vendors to onboard yet. When a vendor joins, claim them here to earn the override.
+                    No vendors to claim yet — onboard a new shop above, or claim one here once it exists.
                   </p>
                 ) : (
                   vendors.map((v) => (

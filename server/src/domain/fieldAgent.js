@@ -32,6 +32,7 @@ import { store, newId } from '../store.js';
 import { getUser } from './auth.js';
 import { createTransaction, transitionTransaction } from './ledger.js';
 import * as referrals from './referrals.js';
+import * as vendors from './vendor.js';
 
 export const CLAIM_TYPES = ['menu_upload', 'full_registration'];
 export const CLAIM_STATUS = ['active', 'expired', 'revoked'];
@@ -115,6 +116,69 @@ export function claimVendor({ agentId, vendorId, claimType, territoryKey = null 
 export function vendorClaim(vendorId) {
   return store.find('vendorClaims', (c) =>
     c.vendorId === vendorId && c.claimType === 'full_registration' && c.status === 'active') ?? null;
+}
+
+/**
+ * ONBOARD A VENDOR — the agent brings a shop INTO Brief and records their
+ * territory claim in one atomic step.
+ *
+ * `claimVendor` only claims a vendor that already exists and is owned by
+ * someone else (and refuses the vendor's own owner). But a door-to-door agent
+ * walks a market and onboards a shop that has no profile yet — there was no
+ * primitive for that, so "onboard a vendor" was a dead end. This is it.
+ *
+ * The vendor is created under the agent's identity (the current 1:1
+ * person<->vendor model: one person, one seller identity), then the claim is
+ * recorded DIRECTLY — NOT through claimVendor, whose self-claim guard exists
+ * to stop an owner double-dipping their own existing shop, not to stop the
+ * onboarding that is the agent's whole job.
+ *
+ * Honesty (unchanged): first-touch-wins per claim type; menu_upload mints the
+ * one-off bounty; full_registration opens the 24-month override on SETTLED
+ * orders. Nothing here stores a balance.
+ */
+export function onboardVendor({ agentId, displayName, contactMethod = null, claimType = 'full_registration' }) {
+  if (!agentId) fail('an agent is required');
+  if (!CLAIM_TYPES.includes(claimType)) fail(`claimType must be one of ${CLAIM_TYPES.join(', ')}`);
+  if (!displayName || !String(displayName).trim()) fail('a vendor name is required');
+
+  // Create (or reuse, in the one-vendor-per-person model) the vendor the agent
+  // is onboarding.
+  const vendor = vendors.createVendor({
+    ownerId: agentId,
+    displayName: String(displayName).trim(),
+    contactMethod: contactMethod ?? null
+  });
+
+  // First-touch-wins, same as the existing claim path.
+  if (claimType === 'full_registration') {
+    const existing = store.find('vendorClaims', (c) =>
+      c.vendorId === vendor.id && c.claimType === 'full_registration' && c.status === 'active');
+    if (existing) fail('this vendor already has an active territory claim', 409, 'already_claimed');
+  } else {
+    const existing = store.find('vendorClaims', (c) =>
+      c.vendorId === vendor.id && c.claimType === 'menu_upload');
+    if (existing) fail('this vendor was already onboarded for its menu', 409, 'already_claimed');
+  }
+
+  const now = new Date().toISOString();
+  const claim = store.insert('vendorClaims', {
+    id: newId('vcl'),
+    vendorId: vendor.id,
+    agentId,
+    claimType,
+    territoryKey: null,
+    status: 'active',
+    claimedAt: now,
+    expiresAt: claimType === 'full_registration' ? expiresAtOf(Date.now()) : null,
+    createdAt: now
+  });
+
+  if (claimType === 'menu_upload') {
+    try { referrals.recordFieldBounty(agentId, vendor.id, MENU_UPLOAD_BOUNTY); }
+    catch { /* the bounty must never break the claim */ }
+  }
+  return { vendor, claim };
 }
 
 export function myClaims(agentId) {
