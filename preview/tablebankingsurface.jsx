@@ -74,7 +74,7 @@ async function main() {
   }
   pass('TableBankingSurface: signed-out state');
 
-  // --- empty (no group) ---
+  // --- empty (no group): the first-run checklist replaces the void ---
   fetchHandler = async (url) => {
     if (url.includes('/me/table-banking')) return { ok: true, status: 200, text: async () => JSON.stringify({ groups: [] }) };
     return { ok: false, status: 404, text: async () => JSON.stringify({}) };
@@ -83,11 +83,11 @@ async function main() {
     const { container } = mount(React.createElement(TableBankingSurface, { onRequireAuth: () => {} }));
     await flush();
     const t = text(container);
-    assert.ok(t.includes('You belong to no Circle yet'));
-    assert.ok(t.includes('not a directory'), 'states Brief is not a directory');
-    assert.ok(btn('Start a group'), 'start-a-group action present');
+    assert.ok(t.includes('Start your group'), 'checklist step 1');
+    assert.ok(t.includes('Add members'), 'checklist step 2');
+    assert.ok(t.includes('0 of 4 done'), 'honest progress');
   }
-  pass('TableBankingSurface: honest empty state with a start-a-group action');
+  pass('TableBankingSurface: the empty state is the first-run checklist, not a void');
 
   // --- start-a-group flow (templates) ---
   fetchHandler = async (url) => {
@@ -101,7 +101,7 @@ async function main() {
   {
     const { container } = mount(React.createElement(TableBankingSurface, { onRequireAuth: () => {} }));
     await flush();
-    act(() => { btn('Start a group').click(); });
+    act(() => { btn('Start your group').click(); });
     await flush();
     const t = text(container);
     assert.ok(t.includes('Merry-Go-Round'), 'template label renders');
@@ -109,8 +109,7 @@ async function main() {
     assert.ok(t.includes('welfare KES 500'), 'template welfare default shown');
     assert.ok(btn('Create'), 'create action present');
   }
-  pass('TableBankingSurface: start-a-group flow shows templates');
-  pass('TableBankingSurface: honest empty state, not a directory');
+  pass('TableBankingSurface: the checklist "Start your group" step opens the template flow');
 
   // --- indicators ---
   fetchHandler = async (url, init) => {

@@ -7,6 +7,7 @@ import { MotionStatus } from "../../ui/motion/MotionStatus";
 import { Presence } from "../../ui/motion/Presence";
 import { CardSkeleton } from "../../components/ui/Skeleton";
 import { EmptyState } from "../../components/ui/EmptyState";
+import { FirstRunChecklist, deriveChecklist } from "./FirstRunChecklist";
 
 // ---------------------------------------------------------------------------
 // TABLE BANKING — the indicators behind the table-banking door.
@@ -53,6 +54,7 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
   const [treasurerOpen, setTreasurerOpen] = useState<Record<string, boolean>>({});
   // Start-a-group flow: a name + a template (assisted replication).
   const [createOpen, setCreateOpen] = useState(false);
+  const [checklistDismissed, setChecklistDismissed] = useState(false);
   const [templates, setTemplates] = useState<api.TableBankingTemplate[]>([]);
   const [createName, setCreateName] = useState("");
   const [createTemplate, setCreateTemplate] = useState<string>("merry_go_round");
@@ -264,11 +266,13 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
   }
   if (!groups || groups.length === 0) {
     return (
-      <div className="mt-6">
-        <EmptyState
-          title="You belong to no Circle yet"
-          description="Brief is a tool for groups that already exist — not a directory. Start one with your group, or join one you were invited to."
-          action={<button type="button" onClick={openCreate} className="rounded-full px-4 py-2 text-xs font-bold" style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}>Start a group</button>}
+      <div className="mt-6 space-y-3">
+        <FirstRunChecklist
+          groups={[]}
+          onStartGroup={openCreate}
+          onAddMembers={() => setNotice("Start your group first.")}
+          onRecordContribution={() => setNotice("Start your group first.")}
+          onSeeLedger={() => setNotice("Start your group first.")}
         />
         {createOpen && startGroupForm}
       </div>
@@ -278,6 +282,17 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
   return (
     <div className="mt-4 space-y-3">
       {notice && <p className="text-xs" role="status" style={{ color: "var(--color-text-muted)" }}>{notice}</p>}
+      {!checklistDismissed && groups.length > 0 && deriveChecklist(groups, { onStartGroup: openCreate, onAddMembers: () => {}, onRecordContribution: () => {}, onSeeLedger: () => {} }).some((s) => !s.done) && (
+        <FirstRunChecklist
+          compact
+          groups={groups}
+          onStartGroup={openCreate}
+          onAddMembers={() => openGroup(groups[0].id)}
+          onRecordContribution={() => contribute(groups[0])}
+          onSeeLedger={() => openGroup(groups[0].id)}
+          onDismiss={() => setChecklistDismissed(true)}
+        />
+      )}
       <div className="flex items-center justify-between">
         <p className="text-xs font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>Your Circles</p>
         <button type="button" onClick={openCreate} className="rounded-full px-3 py-1.5 text-xs font-bold" style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}>Start a group</button>

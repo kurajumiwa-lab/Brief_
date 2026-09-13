@@ -15,6 +15,7 @@ import { ActivitySurface } from '../features/activity/ActivitySurface';
 import { PartnerDesk } from '../features/partner/PartnerDesk';
 import { YouSurface } from '../features/you/YouSurface';
 import { EntityDetail } from '../features/you/EntityDetail';
+import { FirstRunChecklist } from '../features/you/FirstRunChecklist';
 import { soundEngine } from '../utils/SoundEngine';
 import { SyncStatusDot } from '../ui/SyncStatusDot';
 
@@ -39,6 +40,8 @@ export const AppShell: React.FC<AppShellProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [authed, setAuthed] = useState<boolean>(true);
   const [entityId, setEntityId] = useState<string | null>(null);
+  const [firstRun, setFirstRun] = useState<boolean>(false);
+  const [firstRunChecked, setFirstRunChecked] = useState<boolean>(false);
 
   // Modals
   const [createFlowOpen, setCreateFlowOpen] = useState<boolean>(false);
@@ -84,7 +87,18 @@ export const AppShell: React.FC<AppShellProps> = ({
   // Deep link detection on mount / URL change
   useEffect(() => {
     loadSpaces();
-    briefApi.whoAmI().then((res) => setAuthed(res.ok));
+    briefApi.whoAmI().then(async (res) => {
+      setAuthed(res.ok);
+      // First-run onboarding: a signed-in member with NO table-banking group
+      // yet gets a guided checklist instead of a passive dashboard. Derived
+      // from real rows (getMyTableBanking), dismissible once, never re-shown
+      // after they dismiss it or once a group exists.
+      if (res.ok && !firstRunChecked && typeof window !== 'undefined' && !window.localStorage.getItem('brief.firstRunDismissed')) {
+        setFirstRunChecked(true);
+        const tb = await briefApi.getMyTableBanking();
+        if (tb.ok && tb.data.length === 0) setFirstRun(true);
+      }
+    });
 
     const navigate = () => {
       const hash = window.location.hash.slice(1);
@@ -175,6 +189,34 @@ export const AppShell: React.FC<AppShellProps> = ({
       showToast(err?.message || 'Failed to create order');
     }
   };
+
+  // First-run onboarding: a signed-in member with no group yet is intercepted
+  // by a guided checklist (the "dedicated onboarding state" similar apps use).
+  // "Start your group" drops them into the You tab, where the group flow lives;
+  // "Skip for now" is remembered so they are never nagged again.
+  if (firstRun) {
+    return (
+      <div className="min-h-screen w-full bg-[color:var(--color-bg)] text-[color:var(--color-text)] font-sans flex items-center justify-center px-4">
+        <div className="w-full max-w-md">
+          <FirstRunChecklist
+            groups={[]}
+            onStartGroup={() => {
+              setFirstRun(false);
+              setActiveTab('you');
+              if (typeof window !== 'undefined') window.location.hash = '#you';
+            }}
+            onAddMembers={() => {}}
+            onRecordContribution={() => {}}
+            onSeeLedger={() => {}}
+            onDismiss={() => {
+              if (typeof window !== 'undefined') window.localStorage.setItem('brief.firstRunDismissed', '1');
+              setFirstRun(false);
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen w-full bg-[color:var(--color-bg)] text-[color:var(--color-text)] font-sans flex ${className}`}>
