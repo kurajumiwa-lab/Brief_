@@ -58,7 +58,7 @@ import { UssdSimulatorDesk } from '../components/offline/UssdSimulatorDesk';
 import { OfflineSyncQueueDesk } from '../components/offline/OfflineSyncQueueDesk';
 import { LOCATIONS, INITIAL_ACTIVE_DELIVERY, WairoLocation, WairoDelivery } from '../components/wairo/wairoData';
 import { CommitteeDesk } from '../components/life/CommitteeDesk';
-import { TableBankingDesk } from '../components/circle/TableBankingDesk';
+
 import { WellbeingDesk } from '../components/wellbeing/WellbeingDesk';
 import { InterCountyDesk } from '../components/wairo/InterCountyDesk';
 import { UniversalCreatePostModal, Post } from '../components/posts/UniversalCreatePostModal';
@@ -1077,8 +1077,10 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
       {/* ================= MODAL: CIRCLE TABLE BANK ================= */}
       {circleOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="w-full max-w-3xl my-auto">
-            <TableBankingDesk onClose={() => setCircleOpen(false)} />
+          <div className="w-full max-w-md my-auto bg-white rounded-3xl p-6 text-center text-[#0D1117]">
+            <p className="text-sm font-black">Table banking lives in your You tab</p>
+            <p className="text-xs text-gray-500 mt-1">Open the You tab to run contributions, rotation, loans, welfare and minutes — every number derived from real rows.</p>
+            <button onClick={() => setCircleOpen(false)} className="mt-4 px-4 py-2 rounded-xl bg-[#4F46E5] text-white text-xs font-bold">Close</button>
           </div>
         </div>
       )}

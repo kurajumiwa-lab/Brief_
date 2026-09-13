@@ -67,7 +67,7 @@ import { TickerBanner } from '../components/SignalBanner';
 import { TodayOpportunities } from '../components/home/TodayOpportunities';
 import { CommitteeDesk } from '../components/life/CommitteeDesk';
 import { WellbeingDesk } from '../components/wellbeing/WellbeingDesk';
-import { TableBankingDesk } from '../components/circle/TableBankingDesk';
+
 import { InterCountyDesk } from '../components/wairo/InterCountyDesk';
 import { PrivateCarrierAuctionDesk } from '../components/wairo/PrivateCarrierAuctionDesk';
 import { OfflineSyncQueueDesk } from '../components/offline/OfflineSyncQueueDesk';
@@ -2244,14 +2244,10 @@ export function NearbyScreen(props: NearbyScreenProps) {
       {/* ================= MODAL: CIRCLE & TABLE BANKING HUB ================= */}
       {circleOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="w-full max-w-2xl my-auto">
-            <TableBankingDesk
-              onClose={() => setCircleOpen(false)}
-              onOpenCircle={() => {
-                setCircleOpen(false);
-                showToast('Opening Circle circle details');
-              }}
-            />
+          <div className="w-full max-w-md my-auto bg-white rounded-3xl p-6 text-center text-[#0D1117]">
+            <p className="text-sm font-black">Table banking lives in your You tab</p>
+            <p className="text-xs text-gray-500 mt-1">Open the You tab to run contributions, rotation, loans, welfare and minutes — every number derived from real rows.</p>
+            <button onClick={() => setCircleOpen(false)} className="mt-4 px-4 py-2 rounded-xl bg-[#4F46E5] text-white text-xs font-bold">Close</button>
           </div>
         </div>
       )}

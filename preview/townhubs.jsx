@@ -26,7 +26,6 @@ const { CommitteeDesk } = require('./src/components/life/CommitteeDesk.tsx');
 const { WellbeingDesk } = require('./src/components/wellbeing/WellbeingDesk.tsx');
 const { CivicKnowledgeGuide } = require('./src/components/civic/CivicKnowledgeGuide.tsx');
 const { BriefAiAssistant } = require('./src/components/ai/BriefAiAssistant.tsx');
-const { TableBankingDesk } = require('./src/components/circle/TableBankingDesk.tsx');
 const { UssdSimulatorDesk } = require('./src/components/offline/UssdSimulatorDesk.tsx');
 const { InterCountyDesk } = require('./src/components/wairo/InterCountyDesk.tsx');
 const { PrivateCarrierAuctionDesk } = require('./src/components/wairo/PrivateCarrierAuctionDesk.tsx');
@@ -183,33 +182,6 @@ async function main() {
   check('renders Town Concierge header', text5.includes('Town Concierge') && text5.includes('The Mayor'));
   check('renders greeting message', text5.includes('Hello Neighbor!') && text5.includes('Town Concierge'));
   await act(async () => { root5.unmount(); host5.remove(); });
-
-  // --- 6. TableBankingDesk (Merry-Go-Round & Table Banking) ---
-  console.log('\n--- 6. TableBankingDesk ---');
-  const host6 = document.createElement('div');
-  document.body.appendChild(host6);
-  const root6 = createRoot(host6);
-  await act(async () => {
-    root6.render(React.createElement(TableBankingDesk, {
-      onClose: () => {},
-      onOpenCircle: () => {}
-    }));
-  });
-
-  const text6 = host6.textContent;
-  check('renders Circle title', text6.includes('Kilimani Women Traders Circle'));
-  check('shows Merry-Go-Round pot and recipient', text6.includes('GRACE WANJIKU') && text6.includes('ROUND 5'));
-  check('shows rotational roster', text6.includes('Payout Roster') && text6.includes('Mary Atieno'));
-
-  // Switch to Table Banking loans tab
-  const loansBtn = Array.from(host6.querySelectorAll('button')).find(b => b.textContent.includes('Table Banking'));
-  if (loansBtn) {
-    await act(async () => {
-      loansBtn.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
-    });
-  }
-  check('shows table loans and interest', host6.textContent.includes('Table Banking Loans') && host6.textContent.includes('5% Int'));
-  await act(async () => { root6.unmount(); host6.remove(); });
 
   // --- 7. UssdSimulatorDesk (2G GSM / SMS Fallback) ---
   console.log('\n--- 7. UssdSimulatorDesk ---');
