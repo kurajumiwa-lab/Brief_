@@ -101,6 +101,11 @@ export function listPartners() {
 export function createProgram(partnerId, { key, name }) {
   const partner = getPartner(partnerId);
   if (!partner) fail('partner not found', 404, 'not_found');
+  // The "not fabricated money" principle applied to distribution: a partner
+  // cannot mint cohorts until a signed commercial agreement exists as a row.
+  if (!activeAgreement(partnerId)) {
+    fail('a signed commercial agreement is required before a partner can create programs', 409, 'no_agreement');
+  }
   const n = nameOf(name);
   if (!n) fail('program name is required');
   const k = keyOf(key, n);
@@ -117,6 +122,10 @@ export function createProgram(partnerId, { key, name }) {
 export function createCohort(programId, { key, name }) {
   const program = store.find('partnerPrograms', (p) => p.id === programId);
   if (!program) fail('program not found', 404, 'not_found');
+  // Cohorts inherit the contract gate from their program's partner.
+  if (!activeAgreement(program.partnerId)) {
+    fail('a signed commercial agreement is required before a partner can create cohorts', 409, 'no_agreement');
+  }
   const n = nameOf(name);
   if (!n) fail('cohort name is required');
   const k = keyOf(key, n);

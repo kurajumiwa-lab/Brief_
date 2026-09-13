@@ -1842,3 +1842,49 @@ export interface SpaceDispatchCreate {
   notes?: string;
 }
 
+
+// ---------------------------------------------------------------------------
+// ROLES + INVITES — the membership hierarchy (nine additive, scoped rungs).
+// ---------------------------------------------------------------------------
+
+export type Role =
+  | 'operator' | 'partner' | 'program_lead' | 'cohort_anchor'
+  | 'circle_treasurer' | 'circle_member' | 'vendor' | 'field_agent' | 'auditor';
+
+export type RoleScopeKind =
+  | 'platform' | 'org' | 'program' | 'cohort' | 'circle' | 'self' | 'scope';
+
+/** A role assignment: a role bounded to a scope. Authority, not attribution. */
+export interface RoleAssignment {
+  role: Role;
+  scopeKind: RoleScopeKind;
+  scopeId: string | null;
+}
+
+/** A scoped, expiring invite — one primitive, nine rungs. */
+export interface Invite {
+  id: string;
+  code: string;
+  issuedBy: string;
+  grantsRole: Role;
+  grantsScope: { kind: RoleScopeKind; id: string | null };
+  /** Immutable provenance: "partner→program→cohort". */
+  attributionKey: string | null;
+  expiresAt: string;
+  singleUse: boolean;
+  redeemedBy: string | null;
+  createdAt: string;
+}
+
+export interface IssueInviteInput {
+  grantsRole: Role;
+  grantsScope?: { kind: RoleScopeKind; id: string | null };
+  attributionKey?: string | null;
+  expiresAt?: string | null;
+  singleUse?: boolean | null;
+}
+
+export interface RedeemInviteResult {
+  invite: Invite;
+  role: RoleAssignment;
+}

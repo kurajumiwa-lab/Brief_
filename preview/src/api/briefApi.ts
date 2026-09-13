@@ -16,7 +16,7 @@
 //      rather than stubbed.
 // ---------------------------------------------------------------------------
 
-import type { ApiResult, Block, ResaleTicket, ResaleListing, ResaleListingRow, TicketOrder, CapabilityUnavailable, Circle, CircleCreate, CircleUpdate, Member, Signal, TargetView, AppConfig, ReleaseStatus, AuthStatus, Campaign, CampaignCreate, CampaignUpdate, PublicCampaign, Registration, RegistrationStatus, ShareChannel, ShareLink, ShareChannels, CampaignShare, CampaignBanner, Venue, MediaUpload, MediaStorageStatus, TriageQueue, Subscription, Subscriber, SubscriptionJoin, PaymentConfirmation, Transaction, TransactionCreate, TransactionStatus, VerificationKind, Wallet, Source, RawItem, VoteTally, MemberEvidence, BriefItPreview, BriefItSaved, Vendor, VendorCreate, VendorUpdate, Listing, ListingCreate, ListingUpdate, ListingStatus, Order, OrderCreate, Dispute, VendorEarnings, PaymentIntent, PaymentInitiation, Vault, VaultCreate, Footstep, FootstepPage, VaultRequest, VaultSearchResult, ResolutionItem, VaultEntry, Ticket, CheckInResult, CommandCentre, Space, SpaceCreate, SpaceOfferCreate, SpaceActivity, SpaceConversation, SpaceQuote, SpacePaymentPrompt, SpaceExpense, SpaceCustomerTab, SpaceMoneySummary, SpaceDispatch, SpaceDispatchCreate, SpaceDispatchStatus, SpaceUpdate } from "./types";
+import type { ApiResult, Block, ResaleTicket, ResaleListing, ResaleListingRow, TicketOrder, CapabilityUnavailable, Circle, CircleCreate, CircleUpdate, Member, Signal, TargetView, AppConfig, ReleaseStatus, AuthStatus, Campaign, CampaignCreate, CampaignUpdate, PublicCampaign, Registration, RegistrationStatus, ShareChannel, ShareLink, ShareChannels, CampaignShare, CampaignBanner, Venue, MediaUpload, MediaStorageStatus, TriageQueue, Subscription, Subscriber, SubscriptionJoin, PaymentConfirmation, Transaction, TransactionCreate, TransactionStatus, VerificationKind, Wallet, Source, RawItem, VoteTally, MemberEvidence, BriefItPreview, BriefItSaved, Vendor, VendorCreate, VendorUpdate, Listing, ListingCreate, ListingUpdate, ListingStatus, Order, OrderCreate, Dispute, VendorEarnings, PaymentIntent, PaymentInitiation, Vault, VaultCreate, Footstep, FootstepPage, VaultRequest, VaultSearchResult, ResolutionItem, VaultEntry, Ticket, CheckInResult, CommandCentre, Space, SpaceCreate, SpaceOfferCreate, SpaceActivity, SpaceConversation, SpaceQuote, SpacePaymentPrompt, SpaceExpense, SpaceCustomerTab, SpaceMoneySummary, SpaceDispatch, SpaceDispatchCreate, SpaceDispatchStatus, SpaceUpdate, RoleAssignment, Invite, IssueInviteInput, RedeemInviteResult } from "./types";
 import { enqueue, replayQueue, queueDepth, type QueuedWrite } from './offlineQueue';
 import { asTarget } from './types';
 import {
@@ -4744,4 +4744,26 @@ export async function downloadMinutesPdf(id: string): Promise<{ ok: true; blob: 
   }
   const blob = await res.blob();
   return { ok: true, blob };
+}
+
+// ---------------------------------------------------------------------------
+// ROLES + INVITES — the membership hierarchy's authority surface.
+// ---------------------------------------------------------------------------
+
+/** The caller's own active role assignments (authority, not attribution). */
+export function getMyRoles(): Promise<ApiResult<RoleAssignment[]>> {
+  return request('/api/me/roles', undefined, (r) =>
+    Array.isArray(r?.roles) ? (r.roles as RoleAssignment[]) : undefined);
+}
+
+/** Issue a scoped, expiring invite. The server enforces role breadth. */
+export function issueInvite(input: IssueInviteInput): Promise<ApiResult<Invite>> {
+  return request('/api/invites', { method: 'POST', body: JSON.stringify(input) }, (r) =>
+    r?.invite?.code ? (r.invite as Invite) : undefined);
+}
+
+/** Redeem an invite — binds the scoped role and captures first-touch attribution. */
+export function redeemInvite(code: string, attributionContext?: Record<string, string>): Promise<ApiResult<RedeemInviteResult>> {
+  return request('/api/invites/redeem', { method: 'POST', body: JSON.stringify({ code, attributionContext: attributionContext ?? {} }) }, (r) =>
+    r?.role?.role ? (r as RedeemInviteResult) : undefined);
 }

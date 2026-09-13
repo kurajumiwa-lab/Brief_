@@ -115,18 +115,6 @@ test("a partner with no key derives one from its name", () => {
   assert.equal(p.key, "nairobi-sacco");
 });
 
-test("programs and cohorts are keyed under their parent", () => {
-  const wef = partner.getPartnerByKey("wef");
-  const program = partner.createProgram(wef.id, { key: "women-enterprise-2026", name: "Women Enterprise 2026" });
-  assert.equal(program.partnerId, wef.id);
-  const cohort = partner.createCohort(program.id, { key: "nairobi-west", name: "Nairobi West" });
-  assert.equal(cohort.partnerId, wef.id);
-  assert.equal(cohort.programId, program.id);
-  // Duplicate keys within the same parent are refused.
-  rejects(() => partner.createProgram(wef.id, { key: "women-enterprise-2026", name: "Dup" }), "duplicate_key");
-  rejects(() => partner.createCohort(program.id, { key: "nairobi-west", name: "Dup" }), "duplicate_key");
-});
-
 test("agreement is append-only; only one active agreement per partner", () => {
   const wef = partner.getPartnerByKey("wef");
   const a1 = partner.setAgreement(wef.id, { shareRate: 0.1 });
@@ -143,6 +131,22 @@ test("agreement is append-only; only one active agreement per partner", () => {
   // Invalid rate refused.
   rejects(() => partner.setAgreement(wef.id, { shareRate: 1.5 }));
   rejects(() => partner.setAgreement(wef.id, { shareRate: -0.1 }));
+});
+
+test("programs and cohorts are keyed under their parent, and need a signed agreement", () => {
+  const wef = partner.getPartnerByKey("wef"); // has an active agreement (0.2)
+  // A partner with no agreement cannot mint programs or cohorts.
+  const sacco = partner.getPartnerByKey("nairobi-sacco");
+  rejects(() => partner.createProgram(sacco.id, { key: "sacco-prog", name: "Sacco Prog" }), "no_agreement");
+
+  const program = partner.createProgram(wef.id, { key: "women-enterprise-2026", name: "Women Enterprise 2026" });
+  assert.equal(program.partnerId, wef.id);
+  const cohort = partner.createCohort(program.id, { key: "nairobi-west", name: "Nairobi West" });
+  assert.equal(cohort.partnerId, wef.id);
+  assert.equal(cohort.programId, program.id);
+  // Duplicate keys within the same parent are refused.
+  rejects(() => partner.createProgram(wef.id, { key: "women-enterprise-2026", name: "Dup" }), "duplicate_key");
+  rejects(() => partner.createCohort(program.id, { key: "nairobi-west", name: "Dup" }), "duplicate_key");
 });
 
 // ---------------------------------------------------------------------------

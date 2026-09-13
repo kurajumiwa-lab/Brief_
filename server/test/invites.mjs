@@ -103,5 +103,46 @@ test("redemption captures immutable attribution (first-touch-wins)", async () =>
   assert.equal(acq.cohortKey, "chrt_nw");
 });
 
+// (console.log + process.exit moved to the very end — see bottom)
+
+// ---------------------------------------------------------------------------
+// HTTP — issue/redeem over the wire, operator list, /api/me/roles.
+// ---------------------------------------------------------------------------
+test("API: issue + redeem an invite, and read /api/me/roles", async () => {
+  const { default: app } = await import("../src/index.js");
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (p, m = "GET", body, token) => {
+    const headers = { "content-type": "application/json" };
+    if (token) headers.authorization = `Bearer ${token}`;
+    const r = await fetch(`http://127.0.0.1:${port}${p}`, { method: m, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: r.status, body: await r.json().catch(() => null) };
+  };
+  try {
+    const P = (await call("/api/auth/register", "POST", { handle: "iv_http_p" + Date.now().toString(36), password: "a good passphrase" })).body;
+    const J = (await call("/api/auth/register", "POST", { handle: "iv_http_j" + Date.now().toString(36), password: "a good passphrase" })).body;
+    // Make the first user a partner so they may invite a cohort anchor.
+    roles.assignRole({ userId: P.user.id, role: "partner", scopeKind: "org", scopeId: "org_w" });
+
+    const issued = await call("/api/invites", "POST", { grantsRole: "cohort_anchor", grantsScope: { kind: "cohort", id: "chrt_nw" } }, P.token);
+    assert.equal(issued.status, 201);
+    assert.ok(issued.body.invite.code);
+
+    const redeemed = await call("/api/invites/redeem", "POST", { code: issued.body.invite.code }, J.token);
+    assert.equal(redeemed.status, 200);
+    assert.equal(redeemed.body.role.role, "cohort_anchor");
+
+    const myRoles = await call("/api/me/roles", "GET", undefined, J.token);
+    assert.equal(myRoles.status, 200);
+    assert.ok(myRoles.body.roles.some((r) => r.role === "cohort_anchor"), "redeemer now holds the scoped role");
+
+    // A non-member cannot invite a broader role than they hold.
+    const denied = await call("/api/invites", "POST", { grantsRole: "partner", grantsScope: { kind: "org", id: "org_z" } }, J.token);
+    assert.equal(denied.status, 403);
+  } finally {
+    srv.close();
+  }
+});
+
 console.log(`\nPASS ${count}`);
 process.exit(0);

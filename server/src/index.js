@@ -87,6 +87,7 @@ import { register as partnerRoutes } from './routes/partner.js';
 import { register as fieldAgentRoutes } from './routes/fieldAgent.js';
 import { register as lipaMdogoRoutes } from './routes/lipaMdogo.js';
 import { register as tableBankingRoutes } from './routes/tableBanking.js';
+import { register as rolesRoutes } from './routes/roles.js';
 
 const app = express();
 
@@ -262,6 +263,7 @@ partnerRoutes(app);
 fieldAgentRoutes(app);
 lipaMdogoRoutes(app);
 tableBankingRoutes(app);
+rolesRoutes(app);
 
 // --- Production frontend serving -------------------------------------------
 //
