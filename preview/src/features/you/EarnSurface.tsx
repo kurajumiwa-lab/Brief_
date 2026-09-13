@@ -160,7 +160,15 @@ export function EarnSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
         </ul>
         <button
           type="button"
-          onClick={() => document.getElementById("earn-territory")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+          onClick={() => {
+            // One tap = straight to the onboard input, not a scroll-and-hunt.
+            // Open the panel (force-open, never toggle) and bring it into view.
+            setOnboardOpen(true);
+            if (vendors === null) {
+              void api.getVendors().then((res) => setVendors(res.ok ? res.data : []));
+            }
+            requestAnimationFrame(() => document.getElementById("earn-territory")?.scrollIntoView({ behavior: "smooth", block: "center" }));
+          }}
           className="mt-3 rounded-full px-4 py-2 text-xs font-bold"
           style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}
         >
