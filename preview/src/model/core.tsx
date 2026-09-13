@@ -66,7 +66,7 @@ import { SearchResults } from '../components/SearchResults';
 import { YardEngineDesk } from '../components/YardEngineDesk';
 import type { YardSection } from '../components/YardEngineDesk';
 import { TeaReader } from '../components/TeaReader';
-import type { CircleDetail as ApiCircleDetail } from '../api/briefApi';
+import type { CircleDetail as ApiCircleDetail, EventListing, PublicCampaignContext } from '../api/briefApi';
 import type {
   Campaign as ApiCampaign,
   CampaignType as ApiCampaignType,
@@ -3906,6 +3906,93 @@ function PublicShareRow({ title, description }: { title: string; description: st
   );
 }
 
+// ---------------------------------------------------------------------------
+// T4 RICH DETAIL — helpers for the detail screen's DERIVED rails.
+//
+// Every rail below is fed by the /context endpoint, which derives related
+// events, the host's other events, and series occurrences from real campaign
+// rows on every read. Nothing is seeded; an empty rail simply does not render.
+// ---------------------------------------------------------------------------
+
+const RAIL_GRADIENTS = [
+  "linear-gradient(135deg, #4F46E5, #06B6D4)",
+  "linear-gradient(135deg, #06B6D4, #10B981)",
+  "linear-gradient(135deg, #8B5CF6, #4F46E5)",
+  "linear-gradient(135deg, #0EA5E9, #4F46E5)",
+  "linear-gradient(135deg, #14B8A6, #06B6D4)"
+];
+
+function railTitleHash(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h;
+}
+
+const railMoney = (n: number, c: string) => (n === 0 ? "Free" : `${c} ${n.toLocaleString()}`);
+
+/** A maps link for a structured venue: coordinates when present, otherwise the
+ *  venue address/name or the campaign's flat location string. */
+export function venueMapsHref(
+  venue: { name?: string | null; address?: string | null; lat?: number | null; lng?: number | null } | null | undefined,
+  location: string | null
+): string | null {
+  if (venue?.lat != null && venue?.lng != null) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${venue.lat},${venue.lng}`)}`;
+  }
+  const q = venue?.address || venue?.name || location;
+  return q ? buildMapsHref(q) : null;
+}
+
+/** Friendly "day, date · time" from an ISO string; honest when absent. */
+export function formatStartsAt(startsAt: string | null): string | null {
+  if (!startsAt) return null;
+  const d = new Date(startsAt);
+  if (Number.isNaN(d.getTime())) return startsAt;
+  const date = d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+  const time = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  return `${date} · ${time}`;
+}
+
+/** A compact card in a rail; links to the other event's own public page. */
+function CompactEventCard({ listing }: { listing: EventListing }) {
+  const gradient = RAIL_GRADIENTS[railTitleHash(listing.title) % RAIL_GRADIENTS.length];
+  const initial = (listing.title || '?').trim().charAt(0).toUpperCase();
+  return (
+    <a
+      href={`/c/${encodeURIComponent(listing.slug)}`}
+      className="shrink-0 w-40 rounded-xl overflow-hidden border border-[#E5E8EC] bg-[#FFFFFF] no-underline"
+    >
+      <div className="relative h-20 w-full">
+        {listing.coverImageUrl ? (
+          <img src={listing.coverImageUrl} alt={listing.title} loading="lazy" className="absolute inset-0 h-full w-full object-cover" style={{ background: "var(--color-surface-elevated)" }} />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center" style={{ background: gradient }}>
+            <span className="text-3xl font-black text-white/80">{initial}</span>
+          </div>
+        )}
+      </div>
+      <div className="p-2 space-y-0.5">
+        <p className="text-[10px] font-extrabold text-[#0D1117] leading-snug">{listing.title}</p>
+        <p className="text-[9px] text-[#0D1117]/60">{formatStartsAt(listing.startsAt) ?? listing.categoryLabel}</p>
+        <p className="text-[9px] font-extrabold text-[#0D1117]">{railMoney(listing.price, listing.currency)}</p>
+      </div>
+    </a>
+  );
+}
+
+/** A horizontal rail of derived events; renders nothing when there are none. */
+function EventRail({ title, listings }: { title: string; listings: EventListing[] }) {
+  if (!listings.length) return null;
+  return (
+    <div className="space-y-2">
+      <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#0D1117]/70">{title}</p>
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4">
+        {listings.map((l) => <CompactEventCard key={l.slug} listing={l} />)}
+      </div>
+    </div>
+  );
+}
+
 /**
  * PUBLIC CAMPAIGN PAGE
  *
@@ -3932,6 +4019,8 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
   const [amount, setAmount] = useState('');
   // Updates feed: the organiser's own words, read from the public route.
   const [updates, setUpdates] = useState<briefApi.CampaignUpdatePost[] | null>(null);
+  // T4 context rails: related + more-from-this-host + series, all derived.
+  const [ctx, setCtx] = useState<PublicCampaignContext | null>(null);
 
   React.useEffect(() => {
     let live = true;
@@ -3941,6 +4030,15 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
     });
     return () => { live = false; };
   }, [slug, load.data?.registered]);
+
+  React.useEffect(() => {
+    let live = true;
+    setCtx(null);
+    void briefApi.getPublicCampaignContext(slug).then((res) => {
+      if (live) setCtx(res.ok ? res.data : null);
+    });
+    return () => { live = false; };
+  }, [slug]);
 
   const fetchCampaign = React.useCallback(async () => {
     setLoad({ status: 'loading', data: null, error: null });
@@ -4065,6 +4163,28 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
               {c.description && (
                 <p className="text-xs text-[#0D1117]/60 leading-relaxed">{c.description}</p>
               )}
+              {/* Host row (T4): a derived profile — the organiser's chosen name
+                  plus a counted number of their public events. No internal id. */}
+              {c.host && (c.host.name || c.host.eventsHosted > 0) && (
+                <div className="flex items-center gap-2.5 pt-1">
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+                    style={{ background: "var(--color-primary-subtle)", color: "var(--color-primary)" }}
+                  >
+                    <User className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0 leading-tight">
+                    <p className="text-[11px] font-extrabold text-[#0D1117]">
+                      {c.host.name ?? 'Organiser'}
+                    </p>
+                    <p className="text-[9px] text-[#0D1117]/60">
+                      {c.host.eventsHosted === 0
+                        ? 'First event'
+                        : `${c.host.eventsHosted} event${c.host.eventsHosted === 1 ? '' : 's'} hosted`}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Contribution pot (T3): a goal, stated amounts, settled-only
@@ -4104,6 +4224,62 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                   Progress counts SETTLED money only — a pledge that has not settled is not raised.
                   Contributors are counted, never listed.
                 </p>
+              </div>
+            )}
+
+            {/* Venue (T4): the structured venue — name, address, coordinates —
+                rendered only when the organiser actually set one. */}
+            {c.venue && (c.venue.name || c.venue.address) && (
+              <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-4 space-y-2">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#0D1117]/70">
+                  Venue
+                </p>
+                {c.venue.name && (
+                  <p className="text-xs font-extrabold text-[#0D1117]">{c.venue.name}</p>
+                )}
+                {c.venue.address && (
+                  <p className="text-[11px] text-[#0D1117]/60 leading-snug">{c.venue.address}</p>
+                )}
+                <a
+                  href={venueMapsHref(c.venue, c.location) ?? undefined}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold"
+                  style={{ background: "var(--color-primary-subtle)", color: "var(--color-primary)" }}
+                >
+                  <Navigation className="w-3 h-3" /> Open in maps
+                </a>
+              </div>
+            )}
+
+            {/* Agenda (T4): the organiser's ordered run of show, when set. */}
+            {c.agenda && c.agenda.length > 0 && (
+              <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-4 space-y-3">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#0D1117]/70">
+                  Agenda
+                </p>
+                {c.agenda.map((item, i) => (
+                  <div key={i} className="flex gap-3">
+                    <div className="flex flex-col items-center">
+                      <div
+                        className="w-2 h-2 rounded-full shrink-0 mt-1"
+                        style={{ background: "var(--color-primary)" }}
+                      />
+                      {i < c.agenda!.length - 1 && (
+                        <div className="w-px flex-1" style={{ background: "var(--ground)" }} />
+                      )}
+                    </div>
+                    <div className="min-w-0 pb-1">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <p className="text-xs font-extrabold text-[#0D1117]">{item.title}</p>
+                        {item.at && <p className="shrink-0 text-[9px] text-[#0D1117]/60">{item.at}</p>}
+                      </div>
+                      {item.description && (
+                        <p className="text-[11px] leading-snug text-[#0D1117]/60">{item.description}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
 
@@ -4151,7 +4327,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                     <span className="text-xs text-[#0D1117]">{c.location}</span>
                   </div>
                   <a
-                    href={buildMapsHref(c.location)}
+                    href={venueMapsHref(c.venue, c.location) ?? undefined}
                     target="_blank"
                     rel="noreferrer"
                     className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold cursor-pointer"
@@ -4183,6 +4359,21 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                   </span>
                 </div>
               )}
+              {/* "N from your chama" (T4) — derived per viewer, only for a
+                  signed-in viewer whose chama members are actually going. */}
+              {c.chamaOverlap && c.chamaOverlap.length > 0 && (
+                <div className="flex items-start gap-2">
+                  <Users className="w-3.5 h-3.5 text-[#0D1117] shrink-0 mt-0.5" />
+                  <span className="text-xs text-[#0D1117]">
+                    {c.chamaOverlap.map((o, i) => (
+                      <span key={o.chamaId}>
+                        {i > 0 && ', '}
+                        {o.memberCount} from {o.chamaName ?? 'your chama'} going
+                      </span>
+                    ))}
+                  </span>
+                </div>
+              )}
               {c.capacity !== null && c.remaining !== null && c.capacity > 0 && (
                 <div className="space-y-1 pt-1">
                   <div className="flex items-center justify-between text-[10px]">
@@ -4203,6 +4394,21 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                 </div>
               )}
             </div>
+
+            {/* T4 derived rails — each renders nothing when there are genuinely
+                no other events; none of this is seeded. */}
+            {ctx && ctx.seriesOccurrences.length > 0 && (
+              <EventRail title="More in this series" listings={ctx.seriesOccurrences} />
+            )}
+            {ctx && ctx.fromHost.length > 0 && (
+              <EventRail
+                title={`More from ${c.host?.name ?? 'this organiser'}`}
+                listings={ctx.fromHost}
+              />
+            )}
+            {ctx && ctx.related.length > 0 && (
+              <EventRail title="You may also like" listings={ctx.related} />
+            )}
 
             <PublicShareRow title={c.title} description={c.description} />
 
@@ -4241,7 +4447,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
             )}
 
             {!done && c.soldOut && c.status !== 'closed' && c.status !== 'cancelled' && (
-              <div className="border border-[#E5E8EC] rounded-2xl p-5 space-y-3">
+              <div id="waitlist-form" className="border border-[#E5E8EC] rounded-2xl p-5 space-y-3">
                 <p className="text-sm font-extrabold text-[#0D1117]">This one is full.</p>
                 <div className="space-y-2">
                   <input
@@ -4271,7 +4477,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
             {!done &&
               !c.soldOut &&
               (c.status === 'published' || c.status === 'live') && (
-                <div className="space-y-3">
+                <div id="register-form" className="space-y-3">
                   {regError && (
                     <div className="border border-[#E5E8EC] bg-[#FFFFFF] rounded-xl p-3">
                       <p className="text-[11px] text-[#0D1117] break-words">{regError}</p>
@@ -4348,6 +4554,33 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
           </>
         )}
       </div>
+
+      {/* Sticky RSVP bar (T4): the single decision a stranger needs — the price
+          and the action. It appears only while registration is actually open,
+          and simply scrolls to the form (which owns the real submit + honesty
+          notes). No duplicated money/state logic lives here. */}
+      {load.status === 'ready' && c && !done && (c.status === 'published' || c.status === 'live') && (
+        <div className="sticky bottom-0 z-20 border-t border-[#E5E8EC] bg-[#FFFFFF] px-4 py-3">
+          <div className="w-full max-w-lg mx-auto flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[9px] uppercase tracking-[0.14em] text-[#0D1117]/60">This event</p>
+              <p className="text-sm font-extrabold text-[#0D1117]">
+                {c.price === 0 ? 'Free' : `${c.currency} ${c.price.toLocaleString()}`}
+              </p>
+            </div>
+            <button
+              onClick={() =>
+                document
+                  .getElementById(c.soldOut ? 'waitlist-form' : 'register-form')
+                  ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+              }
+              className="px-5 py-3 rounded-xl bg-[#4F46E5] text-[#0D1117] font-extrabold text-xs cursor-pointer"
+            >
+              {c.soldOut ? 'Join wait list' : c.goalAmount != null ? 'Contribute' : 'Register'}
+            </button>
+          </div>
+        </div>
+      )}
 
       <footer className="border-t border-[#E5E8EC] py-6 text-[10px] text-[#0D1117]/60 text-center">
         Brief

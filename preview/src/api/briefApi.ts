@@ -16,7 +16,7 @@
 //      rather than stubbed.
 // ---------------------------------------------------------------------------
 
-import type { ApiResult, Block, ResaleTicket, ResaleListing, ResaleListingRow, TicketOrder, CapabilityUnavailable, Circle, CircleCreate, CircleUpdate, Member, Signal, TargetView, AppConfig, ReleaseStatus, AuthStatus, Campaign, CampaignCreate, CampaignUpdate, PublicCampaign, Registration, RegistrationStatus, ShareChannel, ShareLink, ShareChannels, CampaignShare, CampaignBanner, MediaUpload, MediaStorageStatus, TriageQueue, Subscription, Subscriber, SubscriptionJoin, PaymentConfirmation, Transaction, TransactionCreate, TransactionStatus, VerificationKind, Wallet, Source, RawItem, VoteTally, MemberEvidence, BriefItPreview, BriefItSaved, Vendor, VendorCreate, VendorUpdate, Listing, ListingCreate, ListingUpdate, ListingStatus, Order, OrderCreate, Dispute, VendorEarnings, PaymentIntent, PaymentInitiation, Vault, VaultCreate, Footstep, FootstepPage, VaultRequest, VaultSearchResult, ResolutionItem, VaultEntry, Ticket, CheckInResult, CommandCentre, Space, SpaceCreate, SpaceOfferCreate, SpaceActivity, SpaceConversation, SpaceQuote, SpacePaymentPrompt, SpaceExpense, SpaceCustomerTab, SpaceMoneySummary, SpaceDispatch, SpaceDispatchCreate, SpaceDispatchStatus } from "./types";
+import type { ApiResult, Block, ResaleTicket, ResaleListing, ResaleListingRow, TicketOrder, CapabilityUnavailable, Circle, CircleCreate, CircleUpdate, Member, Signal, TargetView, AppConfig, ReleaseStatus, AuthStatus, Campaign, CampaignCreate, CampaignUpdate, PublicCampaign, Registration, RegistrationStatus, ShareChannel, ShareLink, ShareChannels, CampaignShare, CampaignBanner, Venue, MediaUpload, MediaStorageStatus, TriageQueue, Subscription, Subscriber, SubscriptionJoin, PaymentConfirmation, Transaction, TransactionCreate, TransactionStatus, VerificationKind, Wallet, Source, RawItem, VoteTally, MemberEvidence, BriefItPreview, BriefItSaved, Vendor, VendorCreate, VendorUpdate, Listing, ListingCreate, ListingUpdate, ListingStatus, Order, OrderCreate, Dispute, VendorEarnings, PaymentIntent, PaymentInitiation, Vault, VaultCreate, Footstep, FootstepPage, VaultRequest, VaultSearchResult, ResolutionItem, VaultEntry, Ticket, CheckInResult, CommandCentre, Space, SpaceCreate, SpaceOfferCreate, SpaceActivity, SpaceConversation, SpaceQuote, SpacePaymentPrompt, SpaceExpense, SpaceCustomerTab, SpaceMoneySummary, SpaceDispatch, SpaceDispatchCreate, SpaceDispatchStatus } from "./types";
 import { enqueue, replayQueue, queueDepth, type QueuedWrite } from './offlineQueue';
 import { asTarget } from './types';
 import {
@@ -826,6 +826,29 @@ export function deleteCampaign(
 export function getPublicCampaign(slug: string): Promise<ApiResult<PublicCampaign>> {
   return request(`/api/public/campaigns/${encodeURIComponent(slug)}`, undefined, (r) =>
     isPublicCampaign(r?.campaign) ? r.campaign : undefined
+  );
+}
+
+/** The derived context rails of the rich detail screen (T4). */
+export interface PublicCampaignContext {
+  related: EventListing[];
+  fromHost: EventListing[];
+  seriesOccurrences: EventListing[];
+}
+
+/** Related events + more-from-this-host + series occurrences, all derived. */
+export function getPublicCampaignContext(slug: string): Promise<ApiResult<PublicCampaignContext>> {
+  return request(
+    `/api/public/campaigns/${encodeURIComponent(slug)}/context`,
+    undefined,
+    (r) =>
+      Array.isArray(r?.related) && Array.isArray(r?.fromHost) && Array.isArray(r?.seriesOccurrences)
+        ? {
+            related: r.related as EventListing[],
+            fromHost: r.fromHost as EventListing[],
+            seriesOccurrences: r.seriesOccurrences as EventListing[]
+          }
+        : undefined
   );
 }
 

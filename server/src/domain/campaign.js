@@ -26,6 +26,7 @@ import { store, newId, newTicketCode } from '../store.js';
 import * as ticketMarket from './ticketMarket.js';
 import { emitSignal } from './signal.js';
 import { personIdIfUser } from './person.js';
+import { chamaOverlapFor } from './events.js';
 
 export const CAMPAIGN_TYPES = ['popup', 'session', 'drop', 'event', 'contribution'];
 // A contribution campaign is a pot with a GOAL, not seats with a price: its
@@ -289,6 +290,82 @@ function normaliseOutdoor(metadata) {
 }
 
 /**
+ * Structured venue (T4 detail model). The campaign keeps its flat `location`
+ * string for browse/search, and this OPTIONAL object for the rich detail page:
+ * a venue name, an address, and (optionally) a coordinate for a map pin.
+ * Unknown keys are dropped; a malformed value is refused, never stored.
+ */
+function normaliseVenue(venue) {
+  if (venue === null || venue === undefined) return null;
+  if (typeof venue !== 'object' || Array.isArray(venue)) throw new Error('venue must be an object');
+  const out = {};
+  if (venue.name !== undefined) {
+    if (typeof venue.name !== 'string') throw new Error('venue.name must be text');
+    const name = venue.name.trim().slice(0, 120);
+    if (name) out.name = name;
+  }
+  if (venue.address !== undefined) {
+    if (typeof venue.address !== 'string') throw new Error('venue.address must be text');
+    const address = venue.address.trim().slice(0, 240);
+    if (address) out.address = address;
+  }
+  if (venue.lat !== undefined) {
+    const n = Number(venue.lat);
+    if (!Number.isFinite(n) || n < -90 || n > 90) throw new Error('venue.lat must be a latitude');
+    out.lat = n;
+  }
+  if (venue.lng !== undefined) {
+    const n = Number(venue.lng);
+    if (!Number.isFinite(n) || n < -180 || n > 180) throw new Error('venue.lng must be a longitude');
+    out.lng = n;
+  }
+  return Object.keys(out).length > 0 ? out : null;
+}
+
+/**
+ * Ordered agenda (T4 detail model). A list of `{ at?, title, description? }`
+ * items. `at` is free-form text (a time, a session label); every item needs a
+ * title. A malformed item is refused rather than stored as arbitrary JSON.
+ */
+function normaliseAgenda(agenda) {
+  if (agenda === null || agenda === undefined) return null;
+  if (!Array.isArray(agenda)) throw new Error('agenda must be a list');
+  const out = [];
+  for (const item of agenda) {
+    if (item === null || typeof item !== 'object' || Array.isArray(item)) {
+      throw new Error('each agenda item must be an object');
+    }
+    if (typeof item.title !== 'string' || !item.title.trim()) {
+      throw new Error('each agenda item needs a title');
+    }
+    const clean = { title: item.title.trim().slice(0, 120) };
+    if (item.at !== undefined) {
+      if (typeof item.at !== 'string') throw new Error('agenda item time must be text');
+      const at = item.at.trim().slice(0, 40);
+      if (at) clean.at = at;
+    }
+    if (item.description !== undefined) {
+      if (typeof item.description !== 'string') throw new Error('agenda item description must be text');
+      const description = item.description.trim().slice(0, 500);
+      if (description) clean.description = description;
+    }
+    out.push(clean);
+  }
+  return out.length > 0 ? out : null;
+}
+
+/**
+ * A recurring series is identified by an organiser-chosen token. No `series`
+ * table: occurrences are derived by scanning campaigns that carry the same
+ * token. Null (and absent from the public view) until actually used.
+ */
+function normaliseSeriesId(seriesId) {
+  if (seriesId === null || seriesId === undefined) return null;
+  if (typeof seriesId !== 'string' || !seriesId.trim()) throw new Error('seriesId must be text');
+  return seriesId.trim().slice(0, 64);
+}
+
+/**
  * Create a campaign AND the Brief object it wraps. `ownerId` is supplied by
  * the route from the authenticated caller -- never from the request body.
  */
@@ -297,7 +374,7 @@ export function createCampaign(ownerId, input = {}) {
     title, description = '', type = 'popup', location = null,
     startsAt = null, endsAt = null, capacity = null,
     price = 0, currency = 'KES', circleId = null, metadata = {},
-    objectId = null
+    objectId = null, venue = null, agenda = null, seriesId = null
   } = input;
 
   if (!title || !String(title).trim()) throw new Error('title is required');
@@ -320,6 +397,12 @@ export function createCampaign(ownerId, input = {}) {
   if (circleId && !store.find('circles', (c) => c.id === circleId)) {
     throw new Error('circle not found');
   }
+
+  // T4 detail model: structured venue, ordered agenda, optional series token.
+  // Each is validated and normalised here; a malformed value is refused.
+  const venueNorm = normaliseVenue(venue);
+  const agendaNorm = normaliseAgenda(agenda);
+  const seriesIdNorm = normaliseSeriesId(seriesId);
 
   const now = new Date().toISOString();
 
@@ -369,6 +452,10 @@ export function createCampaign(ownerId, input = {}) {
     currency,
     // Contribution pots only (Tikiti T3); null otherwise.
     goalAmount,
+    // T4 detail model: structured venue, ordered agenda, recurring series.
+    venue: venueNorm,
+    agenda: agendaNorm,
+    seriesId: seriesIdNorm,
     publicSlug: makeSlug(title),
     createdAt: now,
     updatedAt: now,
@@ -407,9 +494,24 @@ export function getPublicBySlug(slug) {
 /**
  * The public projection. Deliberately allow-listed: internal ids, ownerId,
  * transactions, member data and analytics never appear.
+ *
+ * `viewerId` is resolved SERVER-SIDE from the session token (never a client
+ * claim) and enables two honest, per-viewer derivations:
+ *   - `chamaOverlap` ("N from your chama going") — null anonymously;
+ *   - `host`/related context is always derivable regardless of viewer.
  */
-export function publicView(campaign) {
+export function publicView(campaign, viewerId = null) {
   const m = analytics(campaign.id);
+  // The host is a DERIVED profile, never a stored `host` row and never the
+  // internal ownerId: a display name (the organiser chose one, or null) plus a
+  // COUNT of their public events scanned from real rows.
+  const hostEvents = store.filter(
+    'campaigns',
+    (c) => c.ownerId === campaign.ownerId && ['published', 'live', 'closed', 'completed'].includes(c.status)
+  ).length;
+  const host = (campaign.metadata?.creatorName ?? null) !== null || hostEvents > 0
+    ? { name: campaign.metadata?.creatorName ?? null, eventsHosted: hostEvents }
+    : null;
   return {
     slug: campaign.publicSlug,
     title: campaign.title,
@@ -448,12 +550,22 @@ export function publicView(campaign) {
     requirements: campaign.metadata?.requirements ?? null,
     equipmentList: campaign.metadata?.equipmentList ?? null,
     emergencyContact: campaign.metadata?.emergencyContact ?? null,
-    routeInfo: campaign.metadata?.routeInfo ?? null
+    routeInfo: campaign.metadata?.routeInfo ?? null,
+    // T4 detail model — surfaced only when actually set (no placeholders).
+    venue: campaign.venue ?? null,
+    agenda: campaign.agenda ?? null,
+    seriesId: campaign.seriesId ?? null,
+    // Host profile: display name + a counted number of their public events.
+    // Derived on every read; never a stored roster, never the ownerId.
+    host,
+    // "N from your chama going" — derived per viewer, null anonymously.
+    chamaOverlap: chamaOverlapFor(campaign.id, viewerId)
   };
 }
 
 const WRITABLE = [
-  'title', 'description', 'location', 'startsAt', 'endsAt', 'price', 'currency', 'metadata'
+  'title', 'description', 'location', 'startsAt', 'endsAt', 'price', 'currency', 'metadata',
+  'venue', 'agenda', 'seriesId'
 ];
 
 /**
@@ -494,6 +606,11 @@ export function updateCampaign(id, patch = {}, ownerId = null) {
   if ('price' in clean && (!Number.isFinite(clean.price) || clean.price < 0)) {
     throw new Error('price must be a non-negative number');
   }
+  // T4 detail fields are validated on update exactly as on create, so a patch
+  // cannot smuggle an unvalidated venue/agenda/series token into the row.
+  if ('venue' in clean) clean.venue = normaliseVenue(clean.venue);
+  if ('agenda' in clean) clean.agenda = normaliseAgenda(clean.agenda);
+  if ('seriesId' in clean) clean.seriesId = normaliseSeriesId(clean.seriesId);
 
   const updated = store.update('campaigns', id, clean);
   return updated ? hydrate(updated) : null;

@@ -4,6 +4,7 @@ import crypto from 'node:crypto';
 import { store } from '../store.js';
 import { callerId } from '../identity.js';
 import * as campaigns from '../domain/campaign.js';
+import * as events from '../domain/events.js';
 import * as referrals from '../domain/referrals.js';
 import * as checkin from '../domain/checkin.js';
 import * as ticketMarket from '../domain/ticketMarket.js';
@@ -57,6 +58,9 @@ app.post('/api/campaigns', (req, res) => {
       currency: req.body?.currency,
       circleId: req.body?.circleId ?? null,
       metadata: req.body?.metadata,
+      venue: req.body?.venue ?? null,
+      agenda: req.body?.agenda ?? null,
+      seriesId: req.body?.seriesId ?? null,
       // Attach an existing Brief object instead of creating one. Authority is
       // checked in the domain layer against source membership.
       objectId: req.body?.objectId ?? null
@@ -380,7 +384,24 @@ app.get('/api/public/campaigns/:slug', (req, res) => {
   // Traffic attribution for the member whose link brought the visitor:
   // deduped per visitor per day, capped per day, worth one point each.
   try { referrals.recordTraffic(req.query?.via ?? req.query?.ref ?? null, viewerRef); } catch { /* attribution must never break a public read */ }
-  res.json({ campaign: campaigns.publicView(c) });
+  res.json({ campaign: campaigns.publicView(c, req.auth?.userId ?? null) });
+});
+
+// --- PUBLIC CONTEXT (T4 detail model) ---------------------------------------
+//
+// The rich detail screen needs three rails of derived context — related events,
+// more from the same host, and series occurrences. All three are scanned from
+// real campaign rows on read (see domain/events.js); none is stored, none is
+// seeded. A public read, like the detail endpoint itself.
+
+app.get('/api/public/campaigns/:slug/context', (req, res) => {
+  const c = campaigns.getPublicBySlug(req.params.slug);
+  if (!c) return res.status(404).json({ error: 'campaign not found' });
+  res.json({
+    related: events.relatedEvents(c, 6),
+    fromHost: events.hostEvents(c.ownerId, c.id, 6),
+    seriesOccurrences: events.seriesOccurrences(c.seriesId ?? null, c.id, 12)
+  });
 });
 
 
@@ -415,7 +436,7 @@ app.post('/api/public/campaigns/:slug/register', (req, res) => {
     // leak.
     res.status(201).json({
       registration: { id: reg.id, status: reg.status, createdAt: reg.createdAt, ticketCode: reg.ticketCode ?? null },
-      campaign: campaigns.publicView(campaigns.getPublicBySlug(req.params.slug) ?? c)
+      campaign: campaigns.publicView(campaigns.getPublicBySlug(req.params.slug) ?? c, req.auth?.userId ?? null)
     });
   } catch (e) {
     const full = /full|not open/.test(String(e.message));

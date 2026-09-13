@@ -707,6 +707,24 @@ export interface PublicCampaign {
   raised?: number | null;
   /** HOW MANY contributions, never WHO. */
   contributors?: number | null;
+  /** T4 detail model — a structured venue; null until the organiser sets one. */
+  venue?: Venue | null;
+  /** T4 detail model — an ordered agenda; null until the organiser sets one. */
+  agenda?: Array<{ at?: string | null; title: string; description?: string | null }> | null;
+  /** T4 detail model — a recurring-series token; null when not part of a series. */
+  seriesId?: string | null;
+  /** DERIVED host profile: a display name plus a counted number of their events. */
+  host?: { name: string | null; eventsHosted: number } | null;
+  /** DERIVED per-viewer: which of the viewer's chamas have members going. */
+  chamaOverlap?: Array<{ chamaId: string; chamaName: string | null; memberCount: number }> | null;
+}
+
+/** A structured venue (T4 detail model). All fields optional; lat/lng are numbers. */
+export interface Venue {
+  name?: string | null;
+  address?: string | null;
+  lat?: number | null;
+  lng?: number | null;
 }
 
 export interface Registration {
