@@ -38,6 +38,11 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
   const [minutes, setMinutes] = useState<Record<string, TableBankingMinutes[] | null>>({});
   const [minutesOpen, setMinutesOpen] = useState<Record<string, boolean>>({});
   const [minutesForm, setMinutesForm] = useState<Record<string, { title: string; body: string }>>({});
+  // Add members: issue a join invite by phone; the member replies YES <code>.
+  const [invites, setInvites] = useState<Record<string, api.TableBankingInvite[] | null>>({});
+  const [inviteOpen, setInviteOpen] = useState<Record<string, boolean>>({});
+  const [inviteForm, setInviteForm] = useState<Record<string, { phone: string; name: string }>>({});
+  const [lastInvite, setLastInvite] = useState<Record<string, { code: string; message: string; delivery: string } | null>>({});
   // Start-a-group flow: a name + a template (assisted replication).
   const [createOpen, setCreateOpen] = useState(false);
   const [templates, setTemplates] = useState<api.TableBankingTemplate[]>([]);
@@ -93,6 +98,22 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
       const res = await api.getTableBankingMinutes(id);
       setMinutes((prev) => ({ ...prev, [id]: res.ok ? res.data : null }));
     }
+    if (invites[id] === undefined) {
+      const res = await api.listTableBankingInvites(id);
+      setInvites((prev) => ({ ...prev, [id]: res.ok ? res.data : null }));
+    }
+  };
+
+  const sendInvite = async (group: TableBankingGroup) => {
+    const f = inviteForm[group.id];
+    if (!f || !f.phone.trim()) { setNotice("An invite needs a phone number."); return; }
+    const res = await api.issueJoinInvite(group.id, { phone: f.phone.trim(), name: f.name.trim() || null, channel: "whatsapp" });
+    if (res.ok) {
+      setLastInvite((p) => ({ ...p, [group.id]: { code: res.data.invite.code, message: res.data.invite.message ?? "", delivery: res.data.delivery.ok ? "sent" : `not sent (${res.data.delivery.reason ?? "no provider"})` } }));
+      const list = await api.listTableBankingInvites(group.id);
+      if (list.ok) setInvites((prev) => ({ ...prev, [group.id]: list.data }));
+    } else if (res.status === 401) onRequireAuth();
+    else setNotice(res.error ?? "Could not issue the invite.");
   };
 
   const saveMinutes = async (group: TableBankingGroup) => {
@@ -369,6 +390,36 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
                         <input type="text" placeholder="Title (e.g. June 14 meeting)" aria-label="Minutes title" value={minutesForm[c.id]?.title ?? ""} onChange={(e) => setMinutesForm((p) => ({ ...p, [c.id]: { ...(p[c.id] ?? { title: "", body: "" }), title: e.target.value } }))} className="w-full rounded-lg px-2.5 py-1.5 text-xs border" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }} />
                         <textarea placeholder="What was decided" aria-label="Minutes body" rows={2} value={minutesForm[c.id]?.body ?? ""} onChange={(e) => setMinutesForm((p) => ({ ...p, [c.id]: { ...(p[c.id] ?? { title: "", body: "" }), body: e.target.value } }))} className="w-full rounded-lg px-2.5 py-1.5 text-xs border" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }} />
                         <button type="button" onClick={() => saveMinutes(c)} className="w-full rounded-full px-3 py-1.5 text-xs font-bold" style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}>Save minutes</button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Add members — the treasurer invites by phone; the member
+                      replies YES <code>. Delivery is fail-closed (honest). */}
+                  <div className="rounded-xl p-3" style={{ background: "var(--color-surface-elevated)" }}>
+                    <p className="text-xs font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>Add members</p>
+                    {invites[c.id] && invites[c.id]!.length > 0 && (
+                      <ul className="mt-1 space-y-0.5">
+                        {invites[c.id]!.map((inv) => (
+                          <li key={inv.id} className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>
+                            {inv.name ?? inv.phone} · {inv.status === "accepted" ? "accepted ✓" : "pending (code " + inv.code + ")"}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {lastInvite[c.id] && (
+                      <p className="text-[10px] mt-1" style={{ color: "var(--color-text-muted)" }}>
+                        "{lastInvite[c.id]!.message}" — {lastInvite[c.id]!.delivery}
+                      </p>
+                    )}
+                    <button type="button" onClick={() => setInviteOpen((p) => ({ ...p, [c.id]: !p[c.id] }))} className="mt-2 rounded-full px-3 py-1.5 text-xs font-bold" style={{ background: "var(--color-surface)", color: "var(--color-text)", border: "1px solid var(--color-border)" }}>
+                      {inviteOpen[c.id] ? "Cancel" : "Invite a member"}
+                    </button>
+                    {inviteOpen[c.id] && (
+                      <div className="mt-2 space-y-1.5">
+                        <input type="text" placeholder="Phone (e.g. 0712 345678)" aria-label="Invite phone" value={inviteForm[c.id]?.phone ?? ""} onChange={(e) => setInviteForm((p) => ({ ...p, [c.id]: { ...(p[c.id] ?? { phone: "", name: "" }), phone: e.target.value } }))} className="w-full rounded-lg px-2.5 py-1.5 text-xs border" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }} />
+                        <input type="text" placeholder="Name (optional)" aria-label="Invite name" value={inviteForm[c.id]?.name ?? ""} onChange={(e) => setInviteForm((p) => ({ ...p, [c.id]: { ...(p[c.id] ?? { phone: "", name: "" }), name: e.target.value } }))} className="w-full rounded-lg px-2.5 py-1.5 text-xs border" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }} />
+                        <button type="button" onClick={() => sendInvite(c)} className="w-full rounded-full px-3 py-1.5 text-xs font-bold" style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}>Send invite</button>
                       </div>
                     )}
                   </div>

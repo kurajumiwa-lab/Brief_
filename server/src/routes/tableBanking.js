@@ -1,6 +1,7 @@
 // TABLE BANKING ROUTES — the table-banking ledger + calculator. A group is a TOOL an
 // existing group applies to itself; Brief is not the group and not the lender.
 import * as tableBanking from '../domain/tableBanking.js';
+import * as outbound from '../outbound.js';
 import { requireAuth, requireCap } from './helpers.js';
 import { requireFeature } from '../features.js';
 import { callerId } from '../identity.js';
@@ -289,6 +290,51 @@ export function register(app) {
         heldAt: req.body?.heldAt ?? null
       });
       res.status(201).json({ minutes: row });
+    } catch (e) {
+      res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
+    }
+  });
+
+  // JOIN INVITES — the treasurer adds a member by phone; the member confirms
+  // by replying YES <code>. The outbound message is attempted here and is
+  // fail-closed: with no provider configured, the invite still exists and the
+  // delivery is reported as a named refusal (never "sent").
+  app.get('/api/table-banking/:id/invites', (req, res) => {
+    const me = requireAuth(req, res);
+    if (!me) return;
+    try {
+      res.json({ invites: tableBanking.listInvites(req.params.id) });
+    } catch (e) {
+      res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
+    }
+  });
+
+  app.post('/api/table-banking/:id/invites', async (req, res) => {
+    const me = requireAuth(req, res);
+    if (!me) return;
+    try {
+      const invite = tableBanking.issueJoinInvite(req.params.id, me, { phone: req.body?.phone, name: req.body?.name ?? null });
+      // Attempt the send on the requested channel; fail closed when none is configured.
+      let delivery = { ok: false, reason: 'not_attempted' };
+      const channel = req.body?.channel;
+      if (channel) {
+        try { delivery = await outbound.send({ channel, to: invite.phone, text: invite.message }); }
+        catch (e) { delivery = { ok: false, reason: String(e.message ?? e) }; }
+      }
+      res.status(201).json({ invite, delivery });
+    } catch (e) {
+      res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
+    }
+  });
+
+  // The gateway webhook: a "YES <code>" reply resolves here. It is PUBLIC (a
+  // Twilio/Meta callback carries no session) — the code is the credential.
+  // Wiring an inbound WhatsApp/SMS router to POST here is a separate
+  // integration; this endpoint is the honest seam it would call.
+  app.post('/api/webhooks/table-banking-invites', (req, res) => {
+    try {
+      const invite = tableBanking.acceptJoinInvite(req.body?.code, req.body?.phone ?? null);
+      res.json({ invite });
     } catch (e) {
       res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
     }

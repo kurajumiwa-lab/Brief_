@@ -125,6 +125,9 @@ async function main() {
     if (url.includes('/minutes')) {
       return { ok: true, status: 200, text: async () => JSON.stringify({ minutes: minutesList }) };
     }
+    if (url.includes('/invites')) {
+      return { ok: true, status: 200, text: async () => JSON.stringify({ invites: [] }) };
+    }
     if (url.includes('/api/table-banking/chm_1') && (!init?.method || init.method === 'GET')) {
       return { ok: true, status: 200, text: async () => JSON.stringify({
         group: groupRow,
@@ -179,6 +182,9 @@ async function main() {
     assert.ok(t.includes('June 14 meeting'), 'minutes title');
     assert.ok(t.includes('Advance the turn'), 'minutes decisions');
     assert.ok(btn('Record minutes'), 'record-minutes action present');
+    // Add members: the invite-by-phone flow.
+    assert.ok(t.includes('Add members'), 'add-members section');
+    assert.ok(btn('Invite a member'), 'invite-a-member action present');
   }
   pass('TableBankingSurface: indicators show what can happen and what did happen');
 

@@ -716,3 +716,61 @@ export function listMinutes(tableBankingId) {
     .slice()
     .sort((a, b) => (a.heldAt < b.heldAt ? 1 : -1));
 }
+
+// ---------------------------------------------------------------------------
+// JOIN INVITES — the treasurer adds a member by phone; the member confirms by
+// replying YES <code>. An invite is a real row; accepting it records the
+// phone as a confirmed invitee (still a phone, NOT a fabricated user — they
+// become a full member only when they register). The outbound message is sent
+// by the ROUTE (fail-closed); this module only mints and resolves the code.
+// ---------------------------------------------------------------------------
+
+const INVITE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // no 0/O, 1/I/L
+
+function newInviteCode() {
+  let s = '';
+  for (let i = 0; i < 6; i++) s += INVITE_ALPHABET[Math.floor(Math.random() * INVITE_ALPHABET.length)];
+  return s;
+}
+
+export function issueJoinInvite(tableBankingId, inviterId, { phone, name = null }) {
+  const group = getTableBanking(tableBankingId);
+  if (!group) fail('group not found', 404, 'not_found');
+  requireMember(group, inviterId);
+  if (!phone || !String(phone).trim()) fail('an invite needs a phone number');
+  const cleanPhone = String(phone).trim().slice(0, 40);
+  const code = newInviteCode();
+  const at = new Date().toISOString();
+  const invite = store.insert('tableBankingInvites', {
+    id: newId('tbinv'),
+    tableBankingId,
+    inviterId,
+    phone: cleanPhone,
+    name: name ? String(name).trim().slice(0, 80) : null,
+    code,
+    status: 'pending',
+    createdAt: at,
+    acceptedAt: null
+  });
+  return {
+    ...invite,
+    message: `${invite.name ?? 'A member'} added you to ${group.name}. Reply YES ${code} to join.`
+  };
+}
+
+/** Resolve a "YES <code>" reply. The code is the bearer credential; when the
+ *  gateway also supplies the sender's phone it must match the invite. */
+export function acceptJoinInvite(code, phone = null) {
+  if (!code || !String(code).trim()) fail('a code is required');
+  const invite = store.find('tableBankingInvites', (i) => i.code === String(code).trim() && i.status === 'pending');
+  if (!invite) fail('invite not found or already used', 404, 'not_found');
+  if (phone && String(phone).trim() !== invite.phone) fail('this code does not match that phone', 409, 'phone_mismatch');
+  const updated = store.update('tableBankingInvites', invite.id, { status: 'accepted', acceptedAt: new Date().toISOString() });
+  return { ...updated, tableBankingId: invite.tableBankingId };
+}
+
+export function listInvites(tableBankingId) {
+  return store.filter('tableBankingInvites', (i) => i.tableBankingId === tableBankingId)
+    .slice()
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+}

@@ -4663,3 +4663,23 @@ export function getTableBankingMinutes(id: string): Promise<ApiResult<TableBanki
 export function recordTableBankingMinutes(id: string, body: { title: string; body: string; decisions?: string[] | null; actionItems?: string[] | null; heldAt?: string | null }): Promise<ApiResult<TableBankingMinutes>> {
   return request(`/api/table-banking/${encodeURIComponent(id)}/minutes`, { method: 'POST', body: JSON.stringify(body) }, r => r?.minutes?.id ? r.minutes : undefined);
 }
+
+// --- JOIN INVITES — the treasurer adds a member by phone --------------------
+export interface TableBankingInvite {
+  id: string;
+  tableBankingId: string;
+  inviterId: string;
+  phone: string;
+  name: string | null;
+  code: string;
+  status: 'pending' | 'accepted';
+  message?: string;
+  createdAt: string;
+  acceptedAt: string | null;
+}
+export function listTableBankingInvites(id: string): Promise<ApiResult<TableBankingInvite[]>> {
+  return request(`/api/table-banking/${encodeURIComponent(id)}/invites`, undefined, r => Array.isArray(r?.invites) ? r.invites : undefined);
+}
+export function issueJoinInvite(id: string, body: { phone: string; name?: string | null; channel?: 'sms' | 'whatsapp' }): Promise<ApiResult<{ invite: TableBankingInvite; delivery: { ok: boolean; reason?: string } }>> {
+  return request(`/api/table-banking/${encodeURIComponent(id)}/invites`, { method: 'POST', body: JSON.stringify(body) }, r => r?.invite?.id ? r : undefined);
+}

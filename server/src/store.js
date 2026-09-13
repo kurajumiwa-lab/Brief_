@@ -143,6 +143,10 @@ const EMPTY = {
   // Meeting minutes: a member-authored log of what the group decided. Real
   // rows; the treasurer/members keep them for disputes and records.
   tableBankingMinutes: [],
+  // Join invites: the treasurer adds a member by phone; the member confirms by
+  // replying YES <code>. Accepted invites are phones awaiting registration,
+  // never fabricated users.
+  tableBankingInvites: [],
   // P2P ticket resale (Tikiti integration T1). A ticket is ONE admitted
   // seat, born from a confirmed campaign registration; its scannable code
   // IS the registration's gate code, versioned so a transfer kills every
