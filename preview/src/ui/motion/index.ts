@@ -4,6 +4,7 @@
 export * from './tokens';
 export * from './transitions';
 export { Entering } from './Entering';
+export { Presence } from './Presence';
 export { MotionButton } from './MotionButton';
 export { MotionCard } from './MotionCard';
 export { MotionList } from './MotionList';

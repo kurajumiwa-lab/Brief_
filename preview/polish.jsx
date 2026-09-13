@@ -22,6 +22,8 @@ const React = require('react');
 const { createRoot } = require('react-dom/client');
 const { act } = require('react-dom/test-utils');
 const { Skeleton, CardSkeleton } = require('./src/components/ui/Skeleton.tsx');
+const { EmptyState } = require('./src/components/ui/EmptyState.tsx');
+const { Presence } = require('./src/ui/motion/Presence.tsx');
 const { Navigation } = require('./src/app/Navigation.tsx');
 
 let count = 0;
@@ -63,6 +65,30 @@ async function main() {
     assert.ok((pill.style.background || '').includes('--color-primary-subtle'), 'uses the canonical tint');
   }
   pass('Navigation slides its active-tab pill with the canonical easing (no jump)');
+
+  // --- EmptyState renders a headline, an honest description and an action ---
+  {
+    const { container } = mount(React.createElement(EmptyState, {
+      title: 'Sign in to see your Circles',
+      description: 'Create an account to see your groups.',
+      action: React.createElement('button', null, 'Sign in')
+    }));
+    const t = (container.textContent || '').replace(/\s+/g, ' ').trim();
+    assert.ok(t.includes('Sign in to see your Circles'), 'headline');
+    assert.ok(t.includes('Create an account'), 'description');
+    assert.ok(t.includes('Sign in'), 'action');
+  }
+  pass('EmptyState renders a headline, description and action (no raw error string)');
+
+  // --- Presence keeps its child mounted through an exit, then unmounts ---
+  {
+    const { container, root } = mount(React.createElement(Presence, { open: true }, React.createElement('div', { id: 'inner' }, 'content')));
+    assert.ok(container.querySelector('#inner'), 'renders when open');
+    // Close: the child should STILL be mounted (exiting), then unmount after the beat.
+    act(() => root.render(React.createElement(Presence, { open: false }, React.createElement('div', { id: 'inner' }, 'content'))));
+    assert.ok(container.querySelector('#inner'), 'deferred unmount — the child lingers for the exit');
+  }
+  pass('Presence defers unmount so a section exits instead of teleporting away');
 
   console.log('\nPASS ' + count);
   process.exit(0);

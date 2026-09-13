@@ -4,7 +4,9 @@ import type { TableBankingGroup, TableBankingDetail, TableBankingCollectiveReque
 import { MotionList } from "../../ui/motion/MotionList";
 import { MotionNumber } from "../../ui/motion/MotionNumber";
 import { MotionStatus } from "../../ui/motion/MotionStatus";
+import { Presence } from "../../ui/motion/Presence";
 import { CardSkeleton } from "../../components/ui/Skeleton";
+import { EmptyState } from "../../components/ui/EmptyState";
 
 // ---------------------------------------------------------------------------
 // TABLE BANKING — the indicators behind the table-banking door.
@@ -250,19 +252,27 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
 
   if (loading) return <div className="mt-4 space-y-3" aria-busy="true" aria-label="Loading your Circles"><CardSkeleton /><CardSkeleton /><CardSkeleton /></div>;
   if (signedOut) {
-    return <div className="mt-6 rounded-2xl border border-dashed p-8 text-center" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}>
-      <h2 className="text-lg font-black" style={{ color: "var(--color-text)" }}>Sign in to see your Circles</h2>
-    </div>;
+    return (
+      <div className="mt-6">
+        <EmptyState
+          title="Sign in to see your Circles"
+          description="Create an account to see your groups, table banking, and collective orders."
+          action={<button type="button" onClick={onRequireAuth} className="rounded-full px-4 py-2 text-xs font-bold" style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}>Sign in</button>}
+        />
+      </div>
+    );
   }
   if (!groups || groups.length === 0) {
-    return <div className="mt-6 rounded-2xl border border-dashed p-8 text-center" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}>
-      <h2 className="text-lg font-black" style={{ color: "var(--color-text)" }}>You belong to no Circle yet</h2>
-      <p className="text-sm mt-1" style={{ color: "var(--color-text-muted)" }}>
-        Brief is a tool for groups that already exist — not a directory. Start one with your group, or join one you were invited to.
-      </p>
-      <button type="button" onClick={openCreate} className="mt-3 rounded-full px-4 py-2 text-xs font-bold" style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}>Start a group</button>
-      {createOpen && startGroupForm}
-    </div>;
+    return (
+      <div className="mt-6">
+        <EmptyState
+          title="You belong to no Circle yet"
+          description="Brief is a tool for groups that already exist — not a directory. Start one with your group, or join one you were invited to."
+          action={<button type="button" onClick={openCreate} className="rounded-full px-4 py-2 text-xs font-bold" style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}>Start a group</button>}
+        />
+        {createOpen && startGroupForm}
+      </div>
+    );
   }
 
   return (
@@ -303,7 +313,8 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
                 </div>
               )}
 
-              {open && d && s && (
+              <Presence open={open}>
+              {d && s && (
                 <div className="mt-3 space-y-3">
                   {/* Treasurer dashboard — the owner's derived view. */}
                   <button type="button" onClick={() => toggleTreasurer(c)} className="w-full rounded-full px-3 py-1.5 text-xs font-bold" style={{ background: "var(--color-surface)", color: "var(--color-text)", border: "1px solid var(--color-border)" }}>
@@ -567,6 +578,7 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
                   <p className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>{s.note}</p>
                 </div>
               )}
+              </Presence>
             </div>
           );
         })}
