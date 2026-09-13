@@ -124,7 +124,9 @@ export function getTableBanking(id) {
   return store.find('tableBanking', (c) => c.id === id) ?? null;
 }
 export function listTableBanking(userId) {
-  return store.filter('tableBanking', (c) => c.members.some((m) => m.userId === userId));
+  // The member's ACTIVE groups. An archived group drops out of this list but
+  // stays resolvable by id — its history is permanent.
+  return store.filter('tableBanking', (c) => c.members.some((m) => m.userId === userId) && c.status !== 'archived');
 }
 
 export function joinTableBanking(tableBankingId, userId) {
@@ -146,6 +148,31 @@ export function leaveTableBanking(tableBankingId, userId) {
   const order = group.order.filter((id) => id !== userId);
   const turnIndex = Math.min(group.turnIndex, order.length - 1);
   return store.update('tableBanking', tableBankingId, { members, order, turnIndex, updatedAt: new Date().toISOString() });
+}
+
+/**
+ * ARCHIVE — the owner's escape hatch, and the only way a group is ever
+ * closed. It is NOT a delete: the ledger, contributions, loans, payouts,
+ * welfare and minutes are permanent history, so archiving only marks the
+ * group inactive. Guard rails (honesty over convenience):
+ *   * owner-only — a member cannot archive someone else's group;
+ *   * refused while a loan is ACTIVE (money still outstanding to the pool);
+ *   * refused while a payout is PENDING (a maker-checker pair not confirmed).
+ * Idempotent: archiving an already-archived group returns it unchanged.
+ */
+export function archiveTableBanking(tableBankingId, actorId) {
+  const group = getTableBanking(tableBankingId);
+  if (!group) fail('group not found', 404, 'not_found');
+  if (group.ownerId !== actorId) fail('only the owner may archive the group', 403, 'owner_only');
+  if (group.status === 'archived') return group; // idempotent
+
+  const activeLoan = store.find('tableBankingLoans', (l) => l.tableBankingId === tableBankingId && l.status === 'active');
+  if (activeLoan) fail('archive refused: a loan is still outstanding to the pool', 409, 'loan_outstanding');
+
+  const pendingPayout = store.find('tableBankingPayouts', (p) => p.tableBankingId === tableBankingId && p.status === 'pending');
+  if (pendingPayout) fail('archive refused: a payout is still awaiting confirmation', 409, 'payout_pending');
+
+  return store.update('tableBanking', tableBankingId, { status: 'archived', updatedAt: new Date().toISOString() });
 }
 
 // ---------------------------------------------------------------------------

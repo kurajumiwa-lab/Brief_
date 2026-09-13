@@ -4577,6 +4577,12 @@ export function getTableBanking(id: string): Promise<ApiResult<TableBankingDetai
   return request(`/api/table-banking/${encodeURIComponent(id)}`, undefined, r =>
     r?.group && r?.summary && r?.rotation ? r : undefined);
 }
+/** Archive a group (owner-only). Not a delete — history is permanent. Refused
+ *  while a loan is outstanding or a payout is pending. */
+export function archiveTableBanking(id: string): Promise<ApiResult<TableBankingGroup>> {
+  return request(`/api/table-banking/${encodeURIComponent(id)}/archive`, { method: 'POST', body: '{}' }, r =>
+    r?.group?.id ? r.group : undefined);
+}
 export interface TableBankingTemplate {
   id: string;
   label: string;

@@ -103,6 +103,18 @@ export function register(app) {
       res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
     }
   });
+
+  // ARCHIVE — the owner's only way to close a group. Not a delete: history is
+  // permanent. Refused while a loan is outstanding or a payout is pending.
+  app.post('/api/table-banking/:id/archive', (req, res) => {
+    const me = requireAuth(req, res);
+    if (!me) return;
+    try {
+      res.json({ group: tableBanking.archiveTableBanking(req.params.id, me) });
+    } catch (e) {
+      res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
+    }
+  });
   app.post('/api/table-banking/:id/skip', (req, res) => {
     const me = requireAuth(req, res);
     if (!me) return;
