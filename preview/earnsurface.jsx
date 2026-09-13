@@ -98,6 +98,10 @@ async function main() {
     await flush();
     const t = text(container);
 
+    // Onboarding welcome + the "next step" CTA (no dead end).
+    assert.ok(t.includes('How you earn'), 'onboarding welcome card shown');
+    assert.ok(t.includes('Set up your territory'), 'next-step CTA present');
+
     // Points + the deterministic, non-gambling ratio.
     assert.ok(t.includes('1,500'), 'earned points shown');
     assert.ok(t.includes('100 points = KES 10'), 'deterministic ratio stated');

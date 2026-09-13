@@ -136,26 +136,6 @@ export const AppShell: React.FC<AppShellProps> = ({
   };
 
   // Contextual FAB triggers based on active tab
-  const handleContextualFab = () => {
-    soundEngine.play('heavyTap');
-    if (activeTab === 'requests' || activeTab === 'supply') {
-      requestPath('new');
-    } else if (activeTab === 'city') {
-      // Contextual on City: Post an Event, Listing, or Ticket
-      setCityPostModalOpen(true);
-    } else if (activeTab === 'catalog') {
-      // Contextual on Catalog: Add Offer (Skips to Step 2)
-      setCreateFlowInitialStep(2);
-      setCreateFlowOpen(true);
-    } else if (activeTab === 'ledger') {
-      // Contextual on Ledger: Log Outflow
-      showToast('Log an outflow via the quick category buttons above');
-    } else {
-      // Contextual on Pipeline: New Order / Quote
-      setManualOrderOpen(true);
-    }
-  };
-
   const handleCreateManualOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeSpace || !manualCustomerName.trim()) return;
@@ -237,7 +217,6 @@ export const AppShell: React.FC<AppShellProps> = ({
       <Navigation
         activeTab={activeTab}
         onSelectTab={(tab) => setActiveTab(tab)}
-        onCreateAction={handleContextualFab}
         spaceName={activeSpace?.name || 'Your Brief'}
         revenueKes={activeSpace?.metrics?.revenueKes ?? 0}
         offersCount={activeSpace?.offers?.length ?? 0}

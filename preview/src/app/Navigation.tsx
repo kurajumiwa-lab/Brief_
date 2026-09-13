@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, TrendingUp, Search } from 'lucide-react';
+import { TrendingUp, Search } from 'lucide-react';
 import { soundEngine } from '../utils/SoundEngine';
 
 export type BriefNavigationTab =
@@ -19,7 +19,6 @@ export type BriefNavigationTab =
 export interface NavigationProps {
   activeTab: BriefNavigationTab;
   onSelectTab: (tab: BriefNavigationTab) => void;
-  onCreateAction?: () => void;
   spaceName?: string;
   pendingInquiriesCount?: number;
   revenueKes?: number;
@@ -118,7 +117,6 @@ const YouIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) =>
 export const Navigation: React.FC<NavigationProps> = ({
   activeTab,
   onSelectTab,
-  onCreateAction,
   spaceName = 'Your Brief',
   pendingInquiriesCount = 0,
   revenueKes = 0,
@@ -167,11 +165,6 @@ export const Navigation: React.FC<NavigationProps> = ({
     else if (tabId === 'discover') onSelectTab('city');
     else if (tabId === 'activity') onSelectTab('activity');
     else onSelectTab(tabId);
-  };
-
-  const handleFabClick = () => {
-    soundEngine.play('heavyTap');
-    onCreateAction?.();
   };
 
   // The Navigation Tabs from the screenshot + You
@@ -264,17 +257,6 @@ export const Navigation: React.FC<NavigationProps> = ({
             );
           })}
         </div>
-
-        {/* ── PRIMARY ACTION FAB (bronze accent) ── */}
-        <button
-          type="button"
-          onClick={handleFabClick}
-          aria-label="Create Action"
-          title="Create"
-          className="w-11 h-11 rounded-full bg-[color:var(--color-text)] text-[color:var(--color-primary)] shadow-[0_8px_24px_rgba(79,70,229,0.28)] hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center shrink-0 border border-black/10"
-        >
-          <Sparkles className="w-5 h-5 text-[color:var(--color-primary)]" />
-        </button>
       </nav>
 
       {/* ── DESKTOP SIDEBAR RAIL ── */}
@@ -284,8 +266,6 @@ export const Navigation: React.FC<NavigationProps> = ({
         className="hidden md:flex flex-col w-60 p-5 space-y-6 border-r border-black/5 bg-[color:var(--color-bg)] shrink-0 min-h-screen justify-between"
       >
         <div className="space-y-6">
-          <button className={`w-full rounded-xl p-3 text-left text-sm font-bold ${activeTab === 'requests' ? 'bg-[color:var(--color-primary)] text-[color:var(--accent-ink)]' : 'bg-white text-[color:var(--color-text)]'}`} onClick={() => { window.location.hash = 'requests'; onSelectTab('requests'); }}>My Requests ↗</button>
-          <button className={`w-full rounded-xl p-3 text-left text-sm font-bold ${activeTab === 'supply' ? 'bg-[color:var(--color-primary)] text-[color:var(--accent-ink)]' : 'bg-white text-[color:var(--color-text)]'}`} onClick={() => { window.location.hash = 'supply/mine'; onSelectTab('supply'); }}>Capabilities ↗</button>
           {/* Top Brand & Space Switcher Block */}
           <div className="space-y-2">
             <div className="flex items-center space-x-2.5">
@@ -346,18 +326,6 @@ export const Navigation: React.FC<NavigationProps> = ({
               );
             })}
           </nav>
-        </div>
-
-        {/* Bottom Quick Action CTA */}
-        <div className="pt-4 border-t border-black/5">
-          <button
-            type="button"
-            onClick={handleFabClick}
-            className="w-full py-3 rounded-2xl bg-[color:var(--color-text)] hover:bg-black text-[color:var(--color-primary)] font-black text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-[0_6px_18px_rgba(79,70,229,0.24)] active:scale-98"
-          >
-            <Sparkles className="w-4 h-4 text-[color:var(--color-primary)]" />
-            <span>+ Create Action</span>
-          </button>
         </div>
       </aside>
     </>

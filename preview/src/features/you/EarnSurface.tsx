@@ -92,6 +92,25 @@ export function EarnSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
     <div className="mt-4 space-y-5">
       {notice && <p className="text-xs" style={{ color: "var(--color-text-muted)" }} role="status">{notice}</p>}
 
+      {/* --- 0. ONBOARDING — the first thing a new member sees, an action not a dead end. --- */}
+      <section className="rounded-2xl p-5" style={{ border: "1px solid var(--color-border)", background: "var(--color-surface)" }}>
+        <p className="text-xs font-black uppercase tracking-wider" style={{ color: "var(--color-primary)" }}>How you earn</p>
+        <p className="text-sm mt-1 font-bold" style={{ color: "var(--color-text)" }}>Three honest ways, all derived from real activity.</p>
+        <ul className="mt-2 space-y-1 text-xs" style={{ color: "var(--color-text-muted)" }}>
+          <li><strong style={{ color: "var(--color-text)" }}>Points</strong> — deterministic, no chance, no spin.</li>
+          <li><strong style={{ color: "var(--color-text)" }}>Territory</strong> — a 0.75% override on vendors you onboard, for 24 months.</li>
+          <li><strong style={{ color: "var(--color-text)" }}>Lipa Mdogo</strong> — asset-financing contracts you are party to.</li>
+        </ul>
+        <button
+          type="button"
+          onClick={() => document.getElementById("earn-territory")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+          className="mt-3 rounded-full px-4 py-2 text-xs font-bold"
+          style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}
+        >
+          Set up your territory →
+        </button>
+      </section>
+
       {/* --- 1. POINTS (deterministic, non-gambling) --- */}
       <section className="rounded-2xl p-5" style={{ border: "1px solid var(--color-border)", background: "var(--color-surface)" }}>
         <p className="text-xs font-black uppercase tracking-wider" style={{ color: "var(--color-primary)" }}>Points</p>
@@ -126,14 +145,17 @@ export function EarnSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
       </section>
 
       {/* --- 2. FIELD AGENT (territory override) --- */}
-      <section className="rounded-2xl p-5" style={{ border: "1px solid var(--color-border)", background: "var(--color-surface)" }}>
+      <section id="earn-territory" className="rounded-2xl p-5" style={{ border: "1px solid var(--color-border)", background: "var(--color-surface)" }}>
         <p className="text-xs font-black uppercase tracking-wider" style={{ color: "var(--color-primary)" }}>Territory</p>
         {agent === null ? (
           <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>Reading your territory…</p>
         ) : agent.override.claims.length === 0 ? (
-          <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>
-            No territory yet. Onboard a vendor (menu upload or full registration) to start earning an override.
-          </p>
+          <div className="mt-2 rounded-xl p-3" style={{ background: "var(--color-surface-elevated)" }}>
+            <p className="text-xs font-bold" style={{ color: "var(--color-text)" }}>No territory yet</p>
+            <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>
+              Onboard a vendor — menu upload or full registration — and you earn a 0.75% override on their settled orders for 24 months.
+            </p>
+          </div>
         ) : (
           <>
             <div className="mt-2 flex items-baseline gap-2">
