@@ -78,9 +78,8 @@ async function runTests() {
   const text1 = host1.textContent;
   check('renders greeting with user name', text1.includes('Good morning, Amina'));
   check('renders core question: What are you working on?', text1.includes('What are you working on?'));
-  check('shows Today action queue', text1.includes('Today') && text1.includes('Action Queue'));
-  check('shows 4 quick action options: Sell, Find customers, Get paid, Create space',
-    text1.includes('Sell something') && text1.includes('Find customers') && text1.includes('Get paid') && text1.includes('Create space'));
+  check('shows the honest create-your-first-space empty state (no mock queue)', text1.includes("You don't have a space yet") && text1.includes('Create your first space'));
+  check('no fabricated Today queue', !text1.includes('Mary asked for a birthday cake') && !text1.includes('Action Queue'));
 
   await act(async () => { root1.unmount(); host1.remove(); });
 

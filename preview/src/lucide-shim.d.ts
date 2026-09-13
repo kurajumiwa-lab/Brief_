@@ -16,6 +16,7 @@ declare module 'lucide-react' {
   export const Crown: LucideIcon;
   export const Database: LucideIcon;
   export const Inbox: LucideIcon;
+  export const Archive: LucideIcon;
   export const Send: LucideIcon;
   export const ShoppingBag: LucideIcon;
   export const Trophy: LucideIcon;
