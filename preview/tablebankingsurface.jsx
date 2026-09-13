@@ -85,7 +85,31 @@ async function main() {
     const t = text(container);
     assert.ok(t.includes('You belong to no Circle yet'));
     assert.ok(t.includes('not a directory'), 'states Brief is not a directory');
+    assert.ok(btn('Start a group'), 'start-a-group action present');
   }
+  pass('TableBankingSurface: honest empty state with a start-a-group action');
+
+  // --- start-a-group flow (templates) ---
+  fetchHandler = async (url) => {
+    if (url.includes('/me/table-banking')) return { ok: true, status: 200, text: async () => JSON.stringify({ groups: [] }) };
+    if (url.includes('/templates')) return { ok: true, status: 200, text: async () => JSON.stringify({ templates: [
+      { id: 'merry_go_round', label: 'Merry-Go-Round', description: 'A simple rotation', defaults: { contributionAmount: 1000, welfareContributionAmount: 0, cycleDays: 30, latePenaltyKes: 0 } },
+      { id: 'welfare_first', label: 'Welfare First', description: 'Smaller rotation with a pot', defaults: { contributionAmount: 1000, welfareContributionAmount: 500, cycleDays: 30, latePenaltyKes: 0 } }
+    ] }) };
+    return { ok: false, status: 404, text: async () => JSON.stringify({}) };
+  };
+  {
+    const { container } = mount(React.createElement(TableBankingSurface, { onRequireAuth: () => {} }));
+    await flush();
+    act(() => { btn('Start a group').click(); });
+    await flush();
+    const t = text(container);
+    assert.ok(t.includes('Merry-Go-Round'), 'template label renders');
+    assert.ok(t.includes('Welfare First'), 'second template renders');
+    assert.ok(t.includes('welfare KES 500'), 'template welfare default shown');
+    assert.ok(btn('Create'), 'create action present');
+  }
+  pass('TableBankingSurface: start-a-group flow shows templates');
   pass('TableBankingSurface: honest empty state, not a directory');
 
   // --- indicators ---

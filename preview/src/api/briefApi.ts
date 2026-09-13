@@ -4562,7 +4562,16 @@ export function getTableBanking(id: string): Promise<ApiResult<TableBankingDetai
   return request(`/api/table-banking/${encodeURIComponent(id)}`, undefined, r =>
     r?.group && r?.summary && r?.rotation ? r : undefined);
 }
-export function createTableBanking(body: { name: string; contributionAmount: number; currency?: string; cycleDays?: number; latePenaltyKes?: number; welfareContributionAmount?: number }): Promise<ApiResult<TableBankingGroup>> {
+export interface TableBankingTemplate {
+  id: string;
+  label: string;
+  description: string;
+  defaults: { contributionAmount: number; welfareContributionAmount: number; cycleDays: number; latePenaltyKes: number };
+}
+export function getTableBankingTemplates(): Promise<ApiResult<TableBankingTemplate[]>> {
+  return request('/api/table-banking/templates', undefined, r => Array.isArray(r?.templates) ? r.templates : undefined);
+}
+export function createTableBanking(body: { name: string; contributionAmount?: number; currency?: string; cycleDays?: number; latePenaltyKes?: number; welfareContributionAmount?: number; template?: string | null }): Promise<ApiResult<TableBankingGroup>> {
   return request('/api/table-banking', { method: 'POST', body: JSON.stringify(body) }, r => r?.group ? r.group : undefined);
 }
 export function joinTableBanking(id: string): Promise<ApiResult<TableBankingGroup>> {

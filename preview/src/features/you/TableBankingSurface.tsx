@@ -38,6 +38,30 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
   const [minutes, setMinutes] = useState<Record<string, TableBankingMinutes[] | null>>({});
   const [minutesOpen, setMinutesOpen] = useState<Record<string, boolean>>({});
   const [minutesForm, setMinutesForm] = useState<Record<string, { title: string; body: string }>>({});
+  // Start-a-group flow: a name + a template (assisted replication).
+  const [createOpen, setCreateOpen] = useState(false);
+  const [templates, setTemplates] = useState<api.TableBankingTemplate[]>([]);
+  const [createName, setCreateName] = useState("");
+  const [createTemplate, setCreateTemplate] = useState<string>("merry_go_round");
+
+  const startGroup = async () => {
+    const name = createName.trim();
+    if (!name) { setNotice("A group needs a name."); return; }
+    const res = await api.createTableBanking({ name, template: createTemplate });
+    if (res.ok) {
+      setNotice(`Started "${name}".`); setCreateOpen(false); setCreateName("");
+      await load();
+    } else if (res.status === 401) onRequireAuth();
+    else setNotice(res.error ?? "Could not start the group.");
+  };
+
+  const openCreate = async () => {
+    setCreateOpen((v) => !v);
+    if (templates.length === 0) {
+      const res = await api.getTableBankingTemplates();
+      if (res.ok) setTemplates(res.data);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -141,6 +165,30 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
     else setNotice(res.error ?? "Could not record the contribution.");
   };
 
+  // The start-a-group form: a name + a template (assisted replication). A
+  // template pre-fills defaults; explicit fields always win.
+  const startGroupForm = (
+    <div className="rounded-2xl p-4 space-y-2" style={{ border: "1px solid var(--color-border)", background: "var(--color-surface)" }}>
+      <input type="text" placeholder="Group name" aria-label="Group name" value={createName} onChange={(e) => setCreateName(e.target.value)} className="w-full rounded-lg px-2.5 py-2 text-sm border" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }} />
+      <div className="space-y-1">
+        {templates.map((t) => (
+          <label key={t.id} className={`flex items-start gap-2 rounded-lg p-2 border cursor-pointer ${createTemplate === t.id ? "" : ""}`} style={{ borderColor: createTemplate === t.id ? "var(--color-primary)" : "var(--color-border)" }}>
+            <input type="radio" name="template" checked={createTemplate === t.id} onChange={() => setCreateTemplate(t.id)} />
+            <span className="min-w-0">
+              <span className="block text-xs font-bold" style={{ color: "var(--color-text)" }}>{t.label}</span>
+              <span className="block text-[10px]" style={{ color: "var(--color-text-muted)" }}>{t.description}</span>
+              <span className="block text-[10px]" style={{ color: "var(--color-text-muted)" }}>KES {t.defaults.contributionAmount.toLocaleString()} / cycle{t.defaults.welfareContributionAmount > 0 ? ` · welfare KES ${t.defaults.welfareContributionAmount.toLocaleString()}` : ""}</span>
+            </span>
+          </label>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <button type="button" onClick={startGroup} className="rounded-full px-4 py-1.5 text-xs font-bold" style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}>Create</button>
+        <button type="button" onClick={() => setCreateOpen(false)} className="rounded-full px-4 py-1.5 text-xs font-bold" style={{ background: "var(--color-surface)", color: "var(--color-text)", border: "1px solid var(--color-border)" }}>Cancel</button>
+      </div>
+    </div>
+  );
+
   if (loading) return <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>Reading your Circles…</p>;
   if (signedOut) {
     return <div className="mt-6 rounded-2xl border border-dashed p-8 text-center" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}>
@@ -153,12 +201,19 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
       <p className="text-sm mt-1" style={{ color: "var(--color-text-muted)" }}>
         Brief is a tool for groups that already exist — not a directory. Start one with your group, or join one you were invited to.
       </p>
+      <button type="button" onClick={openCreate} className="mt-3 rounded-full px-4 py-2 text-xs font-bold" style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}>Start a group</button>
+      {createOpen && startGroupForm}
     </div>;
   }
 
   return (
     <div className="mt-4 space-y-3">
       {notice && <p className="text-xs" role="status" style={{ color: "var(--color-text-muted)" }}>{notice}</p>}
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>Your Circles</p>
+        <button type="button" onClick={openCreate} className="rounded-full px-3 py-1.5 text-xs font-bold" style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}>Start a group</button>
+      </div>
+      {createOpen && startGroupForm}
       <MotionList className="space-y-3" stagger={40}>
         {groups.map((c) => {
           const s = c.summary;

@@ -16,6 +16,11 @@ export function register(app) {
     res.json({ groups: tableBanking.listTableBanking(me).map((c) => ({ ...c, summary: tableBanking.summary(c.id) })) });
   });
 
+  // Templates — assisted replication: the presets a new group can start from.
+  app.get('/api/table-banking/templates', (_req, res) => {
+    res.json({ templates: tableBanking.listTemplates() });
+  });
+
   // Create a table-banking group (the owner is the first member + secretary/maker).
   app.post('/api/table-banking', (req, res) => {
     const me = requireAuth(req, res);
@@ -28,7 +33,8 @@ export function register(app) {
         currency: req.body?.currency ?? 'KES',
         cycleDays: req.body?.cycleDays ?? 30,
         latePenaltyKes: req.body?.latePenaltyKes ?? 0,
-        welfareContributionAmount: req.body?.welfareContributionAmount ?? 0
+        welfareContributionAmount: req.body?.welfareContributionAmount ?? 0,
+        template: req.body?.template ?? null
       });
       res.status(201).json({ group: { ...created, summary: tableBanking.summary(created.id) } });
     } catch (e) {

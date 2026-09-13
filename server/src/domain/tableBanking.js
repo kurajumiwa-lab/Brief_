@@ -35,6 +35,27 @@ import * as requests from './requests.js';
 
 export const TABLE_BANKING_STATUS = ['active', 'archived'];
 export const PAYOUT_STATUS = ['pending', 'confirmed'];
+
+// ---------------------------------------------------------------------------
+// TEMPLATES — assisted replication for a new group. Each template is a
+// DEFAULT PRESET (contribution amount, welfare amount, cycle, penalty). It
+// pre-fills the create form; it does not fabricate data and does not gate
+// capabilities — every group has the same capabilities, a template only
+// suggests starting numbers. Explicit create fields always win over a
+// template's defaults.
+// ---------------------------------------------------------------------------
+export const TABLE_BANKING_TEMPLATES = [
+  { id: 'merry_go_round', label: 'Merry-Go-Round', description: 'A simple rotation: everyone contributes, one member receives each cycle.', defaults: { contributionAmount: 1000, welfareContributionAmount: 0, cycleDays: 30, latePenaltyKes: 0 } },
+  { id: 'table_banking', label: 'Table Banking', description: 'Rotation plus internal lending, with a late penalty.', defaults: { contributionAmount: 5000, welfareContributionAmount: 0, cycleDays: 30, latePenaltyKes: 100 } },
+  { id: 'welfare_first', label: 'Welfare First', description: 'A smaller rotation with an earmarked emergency pot.', defaults: { contributionAmount: 1000, welfareContributionAmount: 500, cycleDays: 30, latePenaltyKes: 0 } },
+  { id: 'group_procurement', label: 'Group Procurement', description: 'Pool demand for bulk buying, with a light rotation.', defaults: { contributionAmount: 500, welfareContributionAmount: 0, cycleDays: 30, latePenaltyKes: 0 } },
+  { id: 'mixed', label: 'Mixed', description: 'Rotation, lending and a welfare pot together.', defaults: { contributionAmount: 5000, welfareContributionAmount: 500, cycleDays: 30, latePenaltyKes: 100 } }
+];
+
+/** The templates a new group can start from. Pure config; never seeded data. */
+export function listTemplates() {
+  return TABLE_BANKING_TEMPLATES;
+}
 export const LOAN_STATUS = ['pending_guarantees', 'approved', 'active', 'settled', 'defaulted'];
 export const INTEREST_TYPES = ['flat', 'reducing_balance'];
 
@@ -63,17 +84,22 @@ function requireMember(group, userId) {
 // ---------------------------------------------------------------------------
 // TABLE BANKING + MEMBERSHIP
 // ---------------------------------------------------------------------------
-export function createTableBanking({ ownerId, name, contributionAmount, currency = 'KES', cycleDays = 30, latePenaltyKes = 0, welfareContributionAmount = 0 }) {
+export function createTableBanking({ ownerId, name, contributionAmount, currency = 'KES', cycleDays, latePenaltyKes, welfareContributionAmount, template = null }) {
   if (!ownerId) fail('an owner is required');
   const n = String(name ?? '').trim();
   if (!n) fail('group name is required');
-  const amt = money(contributionAmount, 'contributionAmount');
-  const cyc = Number(cycleDays);
+  // A named template supplies defaults; an explicit field always wins.
+  const tmpl = template ? TABLE_BANKING_TEMPLATES.find((x) => x.id === template) : null;
+  if (template && !tmpl) fail(`unknown template: ${template}`);
+  const d = tmpl?.defaults ?? {};
+  const amt = money(contributionAmount ?? d.contributionAmount ?? 5000, 'contributionAmount');
+  const cyc = Number(cycleDays ?? d.cycleDays ?? 30);
   if (!Number.isInteger(cyc) || cyc < 1) fail('cycleDays must be a whole number of one or more');
   // The welfare amount is optional (0 = this group runs no welfare fund), but
   // when set it must be a whole number of shillings.
-  const welf = Number(welfareContributionAmount) || 0;
+  const welf = Number(welfareContributionAmount ?? d.welfareContributionAmount ?? 0) || 0;
   if (!Number.isInteger(welf) || welf < 0) fail('welfareContributionAmount must be a whole number of shillings or zero');
+  const penalty = Number(latePenaltyKes ?? d.latePenaltyKes ?? 0) > 0 ? Math.round(Number(latePenaltyKes ?? d.latePenaltyKes ?? 0)) : 0;
   const now = new Date().toISOString();
   const group = store.insert('tableBanking', {
     id: newId('chm'),
@@ -82,7 +108,7 @@ export function createTableBanking({ ownerId, name, contributionAmount, currency
     contributionAmount: amt,
     currency,
     cycleDays: cyc,
-    latePenaltyKes: Number(latePenaltyKes) > 0 ? Math.round(Number(latePenaltyKes)) : 0,
+    latePenaltyKes: penalty,
     welfareContributionAmount: welf,
     members: [{ userId: ownerId, joinedAt: now }],
     order: [ownerId],
