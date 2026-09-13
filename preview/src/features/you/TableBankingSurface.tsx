@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import * as api from "../../api/briefApi";
-import type { TableBankingGroup, TableBankingDetail, TableBankingCollectiveRequest, WelfareFund, WelfareClaim } from "../../api/briefApi";
+import type { TableBankingGroup, TableBankingDetail, TableBankingCollectiveRequest, WelfareFund, WelfareClaim, TableBankingMinutes } from "../../api/briefApi";
 import { MotionList } from "../../ui/motion/MotionList";
 import { MotionNumber } from "../../ui/motion/MotionNumber";
 import { MotionStatus } from "../../ui/motion/MotionStatus";
@@ -34,6 +34,10 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
   const [welfare, setWelfare] = useState<Record<string, { fund: WelfareFund; claims: WelfareClaim[] } | null>>({});
   const [claimOpen, setClaimOpen] = useState<Record<string, boolean>>({});
   const [claimForm, setClaimForm] = useState<Record<string, { reason: string; amount: string }>>({});
+  // Meeting minutes: the group's own record of decisions.
+  const [minutes, setMinutes] = useState<Record<string, TableBankingMinutes[] | null>>({});
+  const [minutesOpen, setMinutesOpen] = useState<Record<string, boolean>>({});
+  const [minutesForm, setMinutesForm] = useState<Record<string, { title: string; body: string }>>({});
 
   const load = async () => {
     setLoading(true);
@@ -61,6 +65,19 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
       const res = await api.getWelfareFund(id);
       setWelfare((prev) => ({ ...prev, [id]: res.ok ? res.data : null }));
     }
+    if (minutes[id] === undefined) {
+      const res = await api.getTableBankingMinutes(id);
+      setMinutes((prev) => ({ ...prev, [id]: res.ok ? res.data : null }));
+    }
+  };
+
+  const saveMinutes = async (group: TableBankingGroup) => {
+    const f = minutesForm[group.id];
+    if (!f || !f.title.trim() || !f.body.trim()) { setNotice("Minutes need a title and a body."); return; }
+    const res = await api.recordTableBankingMinutes(group.id, { title: f.title.trim(), body: f.body.trim() });
+    if (res.ok) { setNotice("Minutes recorded."); setMinutesOpen((p) => ({ ...p, [group.id]: false })); setMinutesForm((p) => ({ ...p, [group.id]: { title: "", body: "" } })); const m = await api.getTableBankingMinutes(group.id); if (m.ok) setMinutes((prev) => ({ ...prev, [group.id]: m.data })); }
+    else if (res.status === 401) onRequireAuth();
+    else setNotice(res.error ?? "Could not record the minutes.");
   };
 
   const refreshWelfare = async (id: string) => {
@@ -264,6 +281,40 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
                           </div>
                         )}
                       </>
+                    )}
+                  </div>
+
+                  {/* Minutes — the group's own record of decisions. */}
+                  <div className="rounded-xl p-3" style={{ background: "var(--color-surface-elevated)" }}>
+                    <p className="text-xs font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>Minutes</p>
+                    {minutes[c.id] === undefined ? (
+                      <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>Reading minutes…</p>
+                    ) : minutes[c.id] === null ? (
+                      <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>Could not load minutes.</p>
+                    ) : minutes[c.id]!.length === 0 ? (
+                      <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>No minutes yet. Record what your group decided.</p>
+                    ) : (
+                      <ul className="mt-1 space-y-1.5">
+                        {minutes[c.id]!.map((m) => (
+                          <li key={m.id}>
+                            <p className="text-xs font-bold" style={{ color: "var(--color-text)" }}>{m.title}</p>
+                            <p className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>{m.body}</p>
+                            {m.decisions && m.decisions.length > 0 && (
+                              <p className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>Decisions: {m.decisions.join(" · ")}</p>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <button type="button" onClick={() => setMinutesOpen((p) => ({ ...p, [c.id]: !p[c.id] }))} className="mt-2 rounded-full px-3 py-1.5 text-xs font-bold" style={{ background: "var(--color-surface)", color: "var(--color-text)", border: "1px solid var(--color-border)" }}>
+                      {minutesOpen[c.id] ? "Cancel" : "Record minutes"}
+                    </button>
+                    {minutesOpen[c.id] && (
+                      <div className="mt-2 space-y-1.5">
+                        <input type="text" placeholder="Title (e.g. June 14 meeting)" aria-label="Minutes title" value={minutesForm[c.id]?.title ?? ""} onChange={(e) => setMinutesForm((p) => ({ ...p, [c.id]: { ...(p[c.id] ?? { title: "", body: "" }), title: e.target.value } }))} className="w-full rounded-lg px-2.5 py-1.5 text-xs border" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }} />
+                        <textarea placeholder="What was decided" aria-label="Minutes body" rows={2} value={minutesForm[c.id]?.body ?? ""} onChange={(e) => setMinutesForm((p) => ({ ...p, [c.id]: { ...(p[c.id] ?? { title: "", body: "" }), body: e.target.value } }))} className="w-full rounded-lg px-2.5 py-1.5 text-xs border" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }} />
+                        <button type="button" onClick={() => saveMinutes(c)} className="w-full rounded-full px-3 py-1.5 text-xs font-bold" style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}>Save minutes</button>
+                      </div>
                     )}
                   </div>
 

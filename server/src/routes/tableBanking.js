@@ -260,6 +260,34 @@ export function register(app) {
     }
   });
 
+  // MEETING MINUTES — the group's own record of decisions, kept by members.
+  app.get('/api/table-banking/:id/minutes', (req, res) => {
+    const me = requireAuth(req, res);
+    if (!me) return;
+    try {
+      res.json({ minutes: tableBanking.listMinutes(req.params.id) });
+    } catch (e) {
+      res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
+    }
+  });
+
+  app.post('/api/table-banking/:id/minutes', (req, res) => {
+    const me = requireAuth(req, res);
+    if (!me) return;
+    try {
+      const row = tableBanking.recordMinutes(req.params.id, me, {
+        title: req.body?.title,
+        body: req.body?.body,
+        decisions: req.body?.decisions ?? null,
+        actionItems: req.body?.actionItems ?? null,
+        heldAt: req.body?.heldAt ?? null
+      });
+      res.status(201).json({ minutes: row });
+    } catch (e) {
+      res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
+    }
+  });
+
   // Operator read (moderate) — never a public directory.
   app.get('/api/ops/table-banking', (req, res) => {
     if (!requireCap(req, res, 'moderate')) return;

@@ -53,6 +53,9 @@ const welfareFund = {
 const welfareClaims = [
   { id: 'wc_1', tableBankingId: 'chm_1', claimantId: 'u2', reason: 'Bereavement support', amount: 600, status: 'pending', votes: [], createdAt: '2026-01-05T00:00:00Z', updatedAt: '2026-01-05T00:00:00Z' }
 ];
+const minutesList = [
+  { id: 'mn_1', tableBankingId: 'chm_1', authorId: 'u1', title: 'June 14 meeting', body: 'Agreed the rotation.', decisions: ['Advance the turn'], actionItems: null, heldAt: '2026-06-14T00:00:00Z', createdAt: '2026-06-14T00:00:00Z' }
+];
 
 let fetchHandler;
 let collectiveOrders = [];
@@ -94,6 +97,9 @@ async function main() {
     }
     if (url.includes('/welfare')) {
       return { ok: true, status: 200, text: async () => JSON.stringify({ fund: welfareFund, claims: welfareClaims }) };
+    }
+    if (url.includes('/minutes')) {
+      return { ok: true, status: 200, text: async () => JSON.stringify({ minutes: minutesList }) };
     }
     if (url.includes('/api/table-banking/chm_1') && (!init?.method || init.method === 'GET')) {
       return { ok: true, status: 200, text: async () => JSON.stringify({
@@ -144,6 +150,11 @@ async function main() {
     assert.ok(btn('Approve') && btn('Decline'), 'claim vote actions present');
     assert.ok(btn('File a claim'), 'file-a-claim action present');
     assert.ok(btn('Record welfare contribution (KES 500)'), 'welfare contribution action shows the configured amount');
+    // Meeting minutes: the group's own record of decisions.
+    assert.ok(t.includes('Minutes'), 'minutes section');
+    assert.ok(t.includes('June 14 meeting'), 'minutes title');
+    assert.ok(t.includes('Advance the turn'), 'minutes decisions');
+    assert.ok(btn('Record minutes'), 'record-minutes action present');
   }
   pass('TableBankingSurface: indicators show what can happen and what did happen');
 

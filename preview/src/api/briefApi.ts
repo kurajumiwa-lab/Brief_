@@ -4635,3 +4635,22 @@ export function fileWelfareClaim(id: string, body: { reason: string; amount: num
 export function voteOnWelfareClaim(id: string, claimId: string, approve: boolean): Promise<ApiResult<{ claim: WelfareClaim; fund: WelfareFund }>> {
   return request(`/api/table-banking/${encodeURIComponent(id)}/welfare/claims/${encodeURIComponent(claimId)}/vote`, { method: 'POST', body: JSON.stringify({ approve }) }, r => r?.claim?.id ? r : undefined);
 }
+
+// --- MEETING MINUTES — the group's own record of decisions ------------------
+export interface TableBankingMinutes {
+  id: string;
+  tableBankingId: string;
+  authorId: string;
+  title: string;
+  body: string;
+  decisions: string[] | null;
+  actionItems: string[] | null;
+  heldAt: string;
+  createdAt: string;
+}
+export function getTableBankingMinutes(id: string): Promise<ApiResult<TableBankingMinutes[]>> {
+  return request(`/api/table-banking/${encodeURIComponent(id)}/minutes`, undefined, r => Array.isArray(r?.minutes) ? r.minutes : undefined);
+}
+export function recordTableBankingMinutes(id: string, body: { title: string; body: string; decisions?: string[] | null; actionItems?: string[] | null; heldAt?: string | null }): Promise<ApiResult<TableBankingMinutes>> {
+  return request(`/api/table-banking/${encodeURIComponent(id)}/minutes`, { method: 'POST', body: JSON.stringify(body) }, r => r?.minutes?.id ? r.minutes : undefined);
+}

@@ -652,3 +652,41 @@ export function listWelfareClaims(tableBankingId) {
     .slice()
     .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }
+
+// ---------------------------------------------------------------------------
+// MEETING MINUTES — the group's own record of what was decided.
+//
+// Minutes are a member-authored log: a title, the body, an optional meeting
+// date, and optional lists of decisions and action items. They are real rows;
+// nothing here is fabricated. The treasurer (owner) and any member may keep
+// them, but only members may write.
+// ---------------------------------------------------------------------------
+
+export function recordMinutes(tableBankingId, authorId, { title, body, decisions = null, actionItems = null, heldAt = null }) {
+  const group = getTableBanking(tableBankingId);
+  if (!group) fail('group not found', 404, 'not_found');
+  requireMember(group, authorId);
+  if (!title || !String(title).trim()) fail('minutes need a title');
+  if (!body || !String(body).trim()) fail('minutes need a body');
+  const dec = Array.isArray(decisions) ? decisions.map((d) => String(d).trim()).filter(Boolean).slice(0, 50) : null;
+  const acts = Array.isArray(actionItems) ? actionItems.map((a) => String(a).trim()).filter(Boolean).slice(0, 50) : null;
+  const at = new Date().toISOString();
+  return store.insert('tableBankingMinutes', {
+    id: newId('tbmin'),
+    tableBankingId,
+    authorId,
+    title: String(title).trim().slice(0, 120),
+    body: String(body).trim().slice(0, 4000),
+    decisions: dec && dec.length ? dec : null,
+    actionItems: acts && acts.length ? acts : null,
+    heldAt: heldAt ?? at,
+    createdAt: at
+  });
+}
+
+/** The group's minutes, newest meeting first. */
+export function listMinutes(tableBankingId) {
+  return store.filter('tableBankingMinutes', (m) => m.tableBankingId === tableBankingId)
+    .slice()
+    .sort((a, b) => (a.heldAt < b.heldAt ? 1 : -1));
+}

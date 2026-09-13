@@ -140,6 +140,9 @@ const EMPTY = {
   // claims), never stored. See tableBanking.fileWelfareClaim / welfareFund.
   tableBankingWelfareContributions: [],
   tableBankingClaims: [],
+  // Meeting minutes: a member-authored log of what the group decided. Real
+  // rows; the treasurer/members keep them for disputes and records.
+  tableBankingMinutes: [],
   // P2P ticket resale (Tikiti integration T1). A ticket is ONE admitted
   // seat, born from a confirmed campaign registration; its scannable code
   // IS the registration's gate code, versioned so a transfer kills every
