@@ -43,6 +43,8 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
   const [inviteOpen, setInviteOpen] = useState<Record<string, boolean>>({});
   const [inviteForm, setInviteForm] = useState<Record<string, { phone: string; name: string }>>({});
   const [lastInvite, setLastInvite] = useState<Record<string, { code: string; message: string; delivery: string } | null>>({});
+  // Group quotes: the group decides which quote to accept for collective orders.
+  const [groupQuotes, setGroupQuotes] = useState<Record<string, api.GroupQuote[] | null>>({});
   // Start-a-group flow: a name + a template (assisted replication).
   const [createOpen, setCreateOpen] = useState(false);
   const [templates, setTemplates] = useState<api.TableBankingTemplate[]>([]);
@@ -102,6 +104,17 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
       const res = await api.listTableBankingInvites(id);
       setInvites((prev) => ({ ...prev, [id]: res.ok ? res.data : null }));
     }
+    if (groupQuotes[id] === undefined) {
+      const res = await api.listTableBankingQuotes(id);
+      setGroupQuotes((prev) => ({ ...prev, [id]: res.ok ? res.data : null }));
+    }
+  };
+
+  const voteQuote = async (group: TableBankingGroup, quoteId: string, approve: boolean) => {
+    const res = await api.voteOnTableBankingQuote(group.id, quoteId, approve);
+    if (res.ok) { setNotice(approve ? "Your approving vote is recorded." : "Your declining vote is recorded."); const q = await api.listTableBankingQuotes(group.id); if (q.ok) setGroupQuotes((prev) => ({ ...prev, [group.id]: q.data })); }
+    else if (res.status === 401) onRequireAuth();
+    else setNotice(res.error ?? "Could not record the vote.");
   };
 
   const sendInvite = async (group: TableBankingGroup) => {
@@ -423,6 +436,25 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
                       </div>
                     )}
                   </div>
+
+                  {/* Group quotes — the group votes on which quote to accept. */}
+                  {groupQuotes[c.id] && groupQuotes[c.id]!.length > 0 && (
+                    <div className="rounded-xl p-3" style={{ background: "var(--color-surface-elevated)" }}>
+                      <p className="text-xs font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>Group quotes</p>
+                      {groupQuotes[c.id]!.map((q) => (
+                        <div key={q.quoteId} className="mt-1.5 rounded-lg p-2 border" style={{ borderColor: "var(--color-border)" }}>
+                          <p className="text-xs font-bold" style={{ color: "var(--color-text)" }}>{q.requestTitle}</p>
+                          <p className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>
+                            {q.vote.approveCount} approve · {q.vote.declineCount} decline · needs {q.quorum} to accept
+                          </p>
+                          <div className="mt-1 flex gap-2">
+                            <button type="button" onClick={() => voteQuote(c, q.quoteId, true)} className="rounded-full px-2.5 py-1 text-xs font-bold" style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}>Approve</button>
+                            <button type="button" onClick={() => voteQuote(c, q.quoteId, false)} className="rounded-full px-2.5 py-1 text-xs font-bold" style={{ background: "var(--color-surface)", color: "var(--color-text)", border: "1px solid var(--color-border)" }}>Decline</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Collective orders — the group in the economic loop */}
                   <div className="rounded-xl p-3" style={{ background: "var(--color-surface-elevated)" }}>

@@ -147,6 +147,10 @@ const EMPTY = {
   // replying YES <code>. Accepted invites are phones awaiting registration,
   // never fabricated users.
   tableBankingInvites: [],
+  // Quote votes: a group decides which quote to accept for a COLLECTIVE
+  // request. One vote per member; the tally is derived; the accept reuses the
+  // normal quote-accept path.
+  quoteVotes: [],
   // P2P ticket resale (Tikiti integration T1). A ticket is ONE admitted
   // seat, born from a confirmed campaign registration; its scannable code
   // IS the registration's gate code, versioned so a transfer kills every

@@ -4683,3 +4683,20 @@ export function listTableBankingInvites(id: string): Promise<ApiResult<TableBank
 export function issueJoinInvite(id: string, body: { phone: string; name?: string | null; channel?: 'sms' | 'whatsapp' }): Promise<ApiResult<{ invite: TableBankingInvite; delivery: { ok: boolean; reason?: string } }>> {
   return request(`/api/table-banking/${encodeURIComponent(id)}/invites`, { method: 'POST', body: JSON.stringify(body) }, r => r?.invite?.id ? r : undefined);
 }
+
+// --- QUOTE VOTES — the group decides which quote to accept ------------------
+export interface GroupQuote {
+  quoteId: string;
+  requestId: string;
+  requestTitle: string;
+  requesterId: string;
+  status: string;
+  vote: { approveCount: number; declineCount: number; total: number };
+  quorum: number;
+}
+export function listTableBankingQuotes(id: string): Promise<ApiResult<GroupQuote[]>> {
+  return request(`/api/table-banking/${encodeURIComponent(id)}/quotes`, undefined, r => Array.isArray(r?.quotes) ? r.quotes : undefined);
+}
+export function voteOnTableBankingQuote(id: string, quoteId: string, approve: boolean): Promise<ApiResult<{ approveCount: number; declineCount: number; total: number }>> {
+  return request(`/api/table-banking/${encodeURIComponent(id)}/quotes/${encodeURIComponent(quoteId)}/vote`, { method: 'POST', body: JSON.stringify({ approve }) }, r => typeof r?.vote?.approveCount === 'number' ? r.vote : undefined);
+}

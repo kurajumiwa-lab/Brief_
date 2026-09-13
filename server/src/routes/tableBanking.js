@@ -1,6 +1,7 @@
 // TABLE BANKING ROUTES — the table-banking ledger + calculator. A group is a TOOL an
 // existing group applies to itself; Brief is not the group and not the lender.
 import * as tableBanking from '../domain/tableBanking.js';
+import * as quoteVotes from '../domain/quoteVotes.js';
 import * as outbound from '../outbound.js';
 import { requireAuth, requireCap } from './helpers.js';
 import { requireFeature } from '../features.js';
@@ -335,6 +336,38 @@ export function register(app) {
     try {
       const invite = tableBanking.acceptJoinInvite(req.body?.code, req.body?.phone ?? null);
       res.json({ invite });
+    } catch (e) {
+      res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
+    }
+  });
+
+  // QUOTE VOTES — the group decides which quote to accept for a collective
+  // request. Votes are real rows; the accept reuses the normal quote path.
+  app.get('/api/table-banking/:id/quotes', (req, res) => {
+    const me = requireAuth(req, res);
+    if (!me) return;
+    try {
+      res.json({ quotes: quoteVotes.listGroupQuotes(req.params.id) });
+    } catch (e) {
+      res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
+    }
+  });
+
+  app.post('/api/table-banking/:id/quotes/:quoteId/vote', (req, res) => {
+    const me = requireAuth(req, res);
+    if (!me) return;
+    try {
+      res.json({ vote: quoteVotes.voteOnQuote(req.params.id, me, req.params.quoteId, req.body?.approve === true) });
+    } catch (e) {
+      res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
+    }
+  });
+
+  app.post('/api/table-banking/:id/quotes/:quoteId/accept', (req, res) => {
+    const me = requireAuth(req, res);
+    if (!me) return;
+    try {
+      res.json({ quote: quoteVotes.acceptQuoteByGroupVote(req.params.id, req.params.quoteId) });
     } catch (e) {
       res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
     }

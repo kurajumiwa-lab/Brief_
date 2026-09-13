@@ -128,6 +128,11 @@ async function main() {
     if (url.includes('/invites')) {
       return { ok: true, status: 200, text: async () => JSON.stringify({ invites: [] }) };
     }
+    if (url.includes('/quotes')) {
+      return { ok: true, status: 200, text: async () => JSON.stringify({ quotes: [
+        { quoteId: 'q_1', requestId: 'r_1', requestTitle: 'Fertilizer bulk buy', requesterId: 'u1', status: 'submitted', vote: { approveCount: 1, declineCount: 0, total: 1 }, quorum: 2 }
+      ] }) };
+    }
     if (url.includes('/api/table-banking/chm_1') && (!init?.method || init.method === 'GET')) {
       return { ok: true, status: 200, text: async () => JSON.stringify({
         group: groupRow,
@@ -185,6 +190,10 @@ async function main() {
     // Add members: the invite-by-phone flow.
     assert.ok(t.includes('Add members'), 'add-members section');
     assert.ok(btn('Invite a member'), 'invite-a-member action present');
+    // Group quotes: the group votes on which quote to accept.
+    assert.ok(t.includes('Group quotes'), 'group-quotes section');
+    assert.ok(t.includes('Fertilizer bulk buy'), 'quote request title');
+    assert.ok(t.includes('needs 2 to accept'), 'quorum shown');
   }
   pass('TableBankingSurface: indicators show what can happen and what did happen');
 
