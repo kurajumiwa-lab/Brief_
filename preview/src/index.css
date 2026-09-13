@@ -107,6 +107,16 @@ html, body {
   animation: briefBreathe 2.4s ease-in-out infinite;
 }
 
+/* Skeleton shimmer — a quiet placeholder while a surface is loading. A muted
+   opacity pulse over the elevated surface; killed by prefers-reduced-motion. */
+@keyframes briefSkeleton {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+.brief-skeleton {
+  animation: briefSkeleton 1.4s ease-in-out infinite;
+}
+
 /* Ticker / marquee scroll — functional motion, ~40px/s, linear. Pauses on touch. */
 @keyframes briefMarquee {
   0%   { transform: translateX(0); }
@@ -159,6 +169,7 @@ html, body {
 @media (prefers-reduced-motion: reduce) {
   .brief-breathe,
   .brief-marquee,
+  .brief-skeleton,
   .brief-flow-connector,
   .brief-sheen::after,
   .brief-silk,

@@ -139,6 +139,23 @@ export const Navigation: React.FC<NavigationProps> = ({
 
   const normalizedActive = getNormalizedActive();
 
+  // The active-tab pill SLIDES between tabs (a shared indicator, not a jump).
+  // Measured from the live DOM and moved with the canonical structural easing.
+  const tabRefs = React.useRef<Record<string, HTMLButtonElement | null>>({});
+  const [pill, setPill] = React.useState<{ left: number; width: number }>({ left: 0, width: 0 });
+  React.useLayoutEffect(() => {
+    const measure = () => {
+      const el = tabRefs.current[normalizedActive];
+      if (!el) return;
+      setPill({ left: el.offsetLeft, width: el.offsetWidth });
+    };
+    measure();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', measure);
+      return () => window.removeEventListener('resize', measure);
+    }
+  }, [normalizedActive]);
+
   const handleTabClick = (tabId: 'home' | 'spaces' | 'discover' | 'activity' | 'you') => {
     soundEngine.play('tap');
     if (typeof window !== 'undefined') {
@@ -199,18 +216,31 @@ export const Navigation: React.FC<NavigationProps> = ({
         className={`md:hidden fixed bottom-4 left-4 right-4 max-w-sm sm:max-w-md mx-auto bg-white/95 backdrop-blur-md rounded-full px-5 py-2.5 shadow-[0_10px_35px_rgba(0,0,0,0.12)] border border-black/[0.04] flex items-center justify-between z-50 transition-all ${className}`}
         style={{ paddingBottom: 'calc(0.625rem + env(safe-area-inset-bottom, 0px))' }}
       >
-        <div className="flex items-center justify-between flex-1 pr-3">
+        <div className="relative flex items-center justify-between flex-1 pr-3">
+          {/* Sliding active-tab pill — moves instead of jumping (§4 stateful motion). */}
+          <div
+            aria-hidden="true"
+            className="absolute top-0.5 bottom-0.5 rounded-full pointer-events-none"
+            style={{
+              left: pill.left,
+              width: pill.width,
+              background: 'var(--color-primary-subtle)',
+              zIndex: 0,
+              transition: `left var(--motion-normal) var(--ease-emphasized), width var(--motion-normal) var(--ease-emphasized)`
+            }}
+          />
           {navItems.map((item) => {
             const isSelected = normalizedActive === item.id;
             return (
               <button
                 key={item.id}
+                ref={(el) => { tabRefs.current[item.id] = el; }}
                 type="button"
                 role="tab"
                 aria-selected={isSelected}
                 aria-current={isSelected ? 'page' : undefined}
                 onClick={() => handleTabClick(item.id)}
-                className="flex flex-col items-center justify-center cursor-pointer select-none py-0.5 group min-w-[52px]"
+                className="relative z-[1] flex flex-col items-center justify-center cursor-pointer select-none py-0.5 group min-w-[52px]"
               >
                 <div
                   className={`transition-all duration-200 ${

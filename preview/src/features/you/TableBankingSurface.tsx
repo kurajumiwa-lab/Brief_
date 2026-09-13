@@ -4,6 +4,7 @@ import type { TableBankingGroup, TableBankingDetail, TableBankingCollectiveReque
 import { MotionList } from "../../ui/motion/MotionList";
 import { MotionNumber } from "../../ui/motion/MotionNumber";
 import { MotionStatus } from "../../ui/motion/MotionStatus";
+import { CardSkeleton } from "../../components/ui/Skeleton";
 
 // ---------------------------------------------------------------------------
 // TABLE BANKING — the indicators behind the table-banking door.
@@ -247,7 +248,7 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
     </div>
   );
 
-  if (loading) return <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>Reading your Circles…</p>;
+  if (loading) return <div className="mt-4 space-y-3" aria-busy="true" aria-label="Loading your Circles"><CardSkeleton /><CardSkeleton /><CardSkeleton /></div>;
   if (signedOut) {
     return <div className="mt-6 rounded-2xl border border-dashed p-8 text-center" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}>
       <h2 className="text-lg font-black" style={{ color: "var(--color-text)" }}>Sign in to see your Circles</h2>
