@@ -133,6 +133,18 @@ async function main() {
         { quoteId: 'q_1', requestId: 'r_1', requestTitle: 'Fertilizer bulk buy', requesterId: 'u1', status: 'submitted', vote: { approveCount: 1, declineCount: 0, total: 1 }, quorum: 2 }
       ] }) };
     }
+    if (url.includes('/treasurer')) {
+      return { ok: true, status: 200, text: async () => JSON.stringify({ dashboard: {
+        group: { id: 'chm_1', name: 'Kiama Circle' },
+        summary: { ...groupRow.summary, cashOnHand: 10000 },
+        rotation: { currentMemberId: 'u1', nextMemberId: 'u2', order: [ { userId: 'u1', handle: 'alice', displayName: 'Alice', isCurrent: true, received: false }, { userId: 'u2', handle: 'bob', displayName: 'Bob', isCurrent: false, received: false } ] },
+        members: [ { userId: 'u1', handle: 'alice', displayName: 'Alice', contributed: true, received: false, owesKes: 0 }, { userId: 'u2', handle: 'bob', displayName: 'Bob', contributed: false, received: false, owesKes: 0 } ],
+        activeLoans: [],
+        welfare: { ...welfareFund },
+        pendingInvites: 1,
+        note: 'derived'
+      } }) };
+    }
     if (url.includes('/api/table-banking/chm_1') && (!init?.method || init.method === 'GET')) {
       return { ok: true, status: 200, text: async () => JSON.stringify({
         group: groupRow,
@@ -194,6 +206,12 @@ async function main() {
     assert.ok(t.includes('Group quotes'), 'group-quotes section');
     assert.ok(t.includes('Fertilizer bulk buy'), 'quote request title');
     assert.ok(t.includes('needs 2 to accept'), 'quorum shown');
+    // Treasurer dashboard: the owner's derived view.
+    act(() => { btn('Treasurer dashboard').click(); });
+    await flush();
+    const t2 = text(container);
+    assert.ok(t2.includes('Pool'), 'treasurer pool shown');
+    assert.ok(t2.includes('not contributed'), 'treasurer member status shown');
   }
   pass('TableBankingSurface: indicators show what can happen and what did happen');
 

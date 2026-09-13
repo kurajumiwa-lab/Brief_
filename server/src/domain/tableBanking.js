@@ -774,3 +774,47 @@ export function listInvites(tableBankingId) {
     .slice()
     .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }
+
+// ---------------------------------------------------------------------------
+// TREASURER DASHBOARD — the owner's (treasurer's) single derived view: who has
+// paid, who has not, the pool, the rotation, outstanding loans, the welfare
+// pot and pending invites. Every figure is recomputed from real rows on read;
+// nothing is stored as a counter. Only the owner (treasurer/secretary) may
+// read it — a member's own view stays memberView().
+// ---------------------------------------------------------------------------
+
+export function treasurerView(tableBankingId, treasurerId) {
+  const group = getTableBanking(tableBankingId);
+  if (!group) fail('group not found', 404, 'not_found');
+  if (group.ownerId !== treasurerId) fail('only the treasurer can view this dashboard', 403, 'not_treasurer');
+
+  const s = summary(tableBankingId);
+  const rot = rotationView(tableBankingId);
+  const contribs = contributionsFor(tableBankingId);
+  const contributedIds = new Set(contribs.map((c) => c.memberId));
+  const confirmed = store.filter('tableBankingPayouts', (p) => p.tableBankingId === tableBankingId && p.status === 'confirmed');
+  const receivedIds = new Set(confirmed.map((p) => p.memberId));
+
+  const members = group.members.map((m) => ({
+    userId: m.userId,
+    handle: getUser(m.userId)?.handle ?? null,
+    displayName: getUser(m.userId)?.displayName ?? null,
+    contributed: contributedIds.has(m.userId),
+    received: receivedIds.has(m.userId),
+    owesKes: memberView(tableBankingId, m.userId).owesKes
+  }));
+
+  const activeLoans = store.filter('tableBankingLoans', (l) => l.tableBankingId === tableBankingId && l.status === 'active')
+    .map((l) => ({ id: l.id, borrowerId: l.borrowerId, remaining: outstandingBalance(l.id).remaining, ratePercent: l.ratePercent }));
+
+  return {
+    group: { id: group.id, name: group.name },
+    summary: s,
+    rotation: { currentMemberId: rot.currentMemberId, nextMemberId: rot.nextMemberId, order: rot.order },
+    members,
+    activeLoans,
+    welfare: welfareFund(tableBankingId),
+    pendingInvites: listInvites(tableBankingId).filter((i) => i.status === 'pending').length,
+    note: 'Every figure is derived from real rows. Brief holds none of this money.'
+  };
+}

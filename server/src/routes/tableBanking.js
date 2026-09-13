@@ -373,6 +373,18 @@ export function register(app) {
     }
   });
 
+  // TREASURER DASHBOARD — the owner's single derived view. Role-gated: only
+  // the owner (treasurer/secretary) may read it; everything is derived.
+  app.get('/api/table-banking/:id/treasurer', (req, res) => {
+    const me = requireAuth(req, res);
+    if (!me) return;
+    try {
+      res.json({ dashboard: tableBanking.treasurerView(req.params.id, me) });
+    } catch (e) {
+      res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
+    }
+  });
+
   // Operator read (moderate) — never a public directory.
   app.get('/api/ops/table-banking', (req, res) => {
     if (!requireCap(req, res, 'moderate')) return;

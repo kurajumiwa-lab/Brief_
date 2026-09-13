@@ -45,6 +45,9 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
   const [lastInvite, setLastInvite] = useState<Record<string, { code: string; message: string; delivery: string } | null>>({});
   // Group quotes: the group decides which quote to accept for collective orders.
   const [groupQuotes, setGroupQuotes] = useState<Record<string, api.GroupQuote[] | null>>({});
+  // Treasurer dashboard: the owner's single derived view.
+  const [treasurer, setTreasurer] = useState<Record<string, api.TreasurerDashboard | null>>({});
+  const [treasurerOpen, setTreasurerOpen] = useState<Record<string, boolean>>({});
   // Start-a-group flow: a name + a template (assisted replication).
   const [createOpen, setCreateOpen] = useState(false);
   const [templates, setTemplates] = useState<api.TableBankingTemplate[]>([]);
@@ -115,6 +118,14 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
     if (res.ok) { setNotice(approve ? "Your approving vote is recorded." : "Your declining vote is recorded."); const q = await api.listTableBankingQuotes(group.id); if (q.ok) setGroupQuotes((prev) => ({ ...prev, [group.id]: q.data })); }
     else if (res.status === 401) onRequireAuth();
     else setNotice(res.error ?? "Could not record the vote.");
+  };
+
+  const toggleTreasurer = async (group: TableBankingGroup) => {
+    setTreasurerOpen((p) => ({ ...p, [group.id]: !p[group.id] }));
+    if (treasurer[group.id] === undefined) {
+      const res = await api.getTreasurerDashboard(group.id);
+      setTreasurer((prev) => ({ ...prev, [group.id]: res.ok ? res.data : null }));
+    }
   };
 
   const sendInvite = async (group: TableBankingGroup) => {
@@ -280,6 +291,35 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
 
               {open && d && s && (
                 <div className="mt-3 space-y-3">
+                  {/* Treasurer dashboard — the owner's derived view. */}
+                  <button type="button" onClick={() => toggleTreasurer(c)} className="w-full rounded-full px-3 py-1.5 text-xs font-bold" style={{ background: "var(--color-surface)", color: "var(--color-text)", border: "1px solid var(--color-border)" }}>
+                    {treasurerOpen[c.id] ? "Hide treasurer dashboard" : "Treasurer dashboard"}
+                  </button>
+                  {treasurerOpen[c.id] && (treasurer[c.id] === undefined ? (
+                    <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>Reading dashboard…</p>
+                  ) : treasurer[c.id] === null ? (
+                    <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>Only the treasurer can see this dashboard.</p>
+                  ) : (
+                    <div className="rounded-xl p-3 space-y-2" style={{ background: "var(--color-surface-elevated)" }}>
+                      <div className="flex items-baseline justify-between">
+                        <span className="text-xs font-bold" style={{ color: "var(--color-text)" }}>Pool</span>
+                        <span className="text-xs font-bold" style={{ color: "var(--color-text)" }}>KES {treasurer[c.id]!.summary.cashOnHand.toLocaleString()}</span>
+                      </div>
+                      <p className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>Next to receive: {treasurer[c.id]!.rotation.nextMemberId ? (treasurer[c.id]!.rotation.order.find((o) => o.userId === treasurer[c.id]!.rotation.nextMemberId)?.displayName ?? treasurer[c.id]!.rotation.order.find((o) => o.userId === treasurer[c.id]!.rotation.nextMemberId)?.handle ?? "—") : "—"}</p>
+                      <ul className="space-y-0.5">
+                        {treasurer[c.id]!.members.map((m) => (
+                          <li key={m.userId} className="flex items-center justify-between text-[10px]">
+                            <span style={{ color: "var(--color-text)" }}>{m.displayName ?? m.handle ?? "Member"}</span>
+                            <span style={{ color: "var(--color-text-muted)" }}>{m.contributed ? "contributed ✓" : "not contributed"}{m.owesKes > 0 ? ` · owes KES ${m.owesKes.toLocaleString()}` : ""}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>
+                        Welfare: KES {treasurer[c.id]!.welfare.balance.toLocaleString()} · {treasurer[c.id]!.pendingInvites} pending invite{treasurer[c.id]!.pendingInvites === 1 ? "" : "s"} · {treasurer[c.id]!.activeLoans.length} active loan{treasurer[c.id]!.activeLoans.length === 1 ? "" : "s"}
+                      </p>
+                    </div>
+                  ))}
+
                   {/* YOUR own indicator */}
                   <div className="rounded-xl p-3" style={{ background: "var(--color-surface-elevated)" }}>
                     <p className="text-xs font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>Your position</p>

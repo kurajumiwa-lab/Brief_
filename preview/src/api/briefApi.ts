@@ -4700,3 +4700,18 @@ export function listTableBankingQuotes(id: string): Promise<ApiResult<GroupQuote
 export function voteOnTableBankingQuote(id: string, quoteId: string, approve: boolean): Promise<ApiResult<{ approveCount: number; declineCount: number; total: number }>> {
   return request(`/api/table-banking/${encodeURIComponent(id)}/quotes/${encodeURIComponent(quoteId)}/vote`, { method: 'POST', body: JSON.stringify({ approve }) }, r => typeof r?.vote?.approveCount === 'number' ? r.vote : undefined);
 }
+
+// --- TREASURER DASHBOARD — the owner's single derived view ------------------
+export interface TreasurerDashboard {
+  group: { id: string; name: string };
+  summary: TableBankingSummary;
+  rotation: { currentMemberId: string | null; nextMemberId: string | null; order: Array<{ userId: string; handle: string | null; displayName: string | null; isCurrent: boolean; received: boolean }> };
+  members: Array<{ userId: string; handle: string | null; displayName: string | null; contributed: boolean; received: boolean; owesKes: number }>;
+  activeLoans: Array<{ id: string; borrowerId: string; remaining: number; ratePercent: number }>;
+  welfare: WelfareFund;
+  pendingInvites: number;
+  note: string;
+}
+export function getTreasurerDashboard(id: string): Promise<ApiResult<TreasurerDashboard>> {
+  return request(`/api/table-banking/${encodeURIComponent(id)}/treasurer`, undefined, r => r?.dashboard?.summary ? r.dashboard : undefined);
+}
