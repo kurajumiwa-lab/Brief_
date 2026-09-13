@@ -4438,7 +4438,15 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
               </div>
             )}
 
-            {!done && (c.status === 'closed' || c.status === 'completed' || c.status === 'cancelled') && (
+            {!done && c.hasEnded && (
+              <div className="border border-[#E5E8EC] rounded-2xl p-5">
+                <p className="text-sm font-extrabold text-[#0D1117]/60">
+                  This event has ended.
+                </p>
+              </div>
+            )}
+
+            {!done && !c.hasEnded && (c.status === 'closed' || c.status === 'completed' || c.status === 'cancelled') && (
               <div className="border border-[#E5E8EC] rounded-2xl p-5">
                 <p className="text-sm font-extrabold text-[#0D1117]/60">
                   Registration is closed.
@@ -4446,7 +4454,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
               </div>
             )}
 
-            {!done && c.soldOut && c.status !== 'closed' && c.status !== 'cancelled' && (
+            {!done && c.soldOut && !c.hasEnded && c.status !== 'closed' && c.status !== 'cancelled' && (
               <div id="waitlist-form" className="border border-[#E5E8EC] rounded-2xl p-5 space-y-3">
                 <p className="text-sm font-extrabold text-[#0D1117]">This one is full.</p>
                 <div className="space-y-2">
@@ -4476,6 +4484,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
 
             {!done &&
               !c.soldOut &&
+              !c.hasEnded &&
               (c.status === 'published' || c.status === 'live') && (
                 <div id="register-form" className="space-y-3">
                   {regError && (
@@ -4559,7 +4568,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
           and the action. It appears only while registration is actually open,
           and simply scrolls to the form (which owns the real submit + honesty
           notes). No duplicated money/state logic lives here. */}
-      {load.status === 'ready' && c && !done && (c.status === 'published' || c.status === 'live') && (
+      {load.status === 'ready' && c && !done && !c.hasEnded && (c.status === 'published' || c.status === 'live') && (
         <div className="sticky bottom-0 z-20 border-t border-[#E5E8EC] bg-[#FFFFFF] px-4 py-3">
           <div className="w-full max-w-lg mx-auto flex items-center justify-between gap-3">
             <div className="min-w-0">

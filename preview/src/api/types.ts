@@ -717,6 +717,8 @@ export interface PublicCampaign {
   host?: { name: string | null; eventsHosted: number } | null;
   /** DERIVED per-viewer: which of the viewer's groups have members going. */
   tableBankingOverlap?: Array<{ tableBankingId: string; tableBankingName: string | null; memberCount: number }> | null;
+  /** DERIVED: a dated event whose endsAt has passed. The page says "ended". */
+  hasEnded?: boolean;
 }
 
 /** A structured venue (T4 detail model). All fields optional; lat/lng are numbers. */
@@ -1718,6 +1720,8 @@ export interface Space {
   type: SpaceType;
   goal: string;
   targetValueKes: number;
+  /** Cover image reference (an uploaded media URL, e.g. /api/media/file/<id>). */
+  image?: string | null;
   status: 'active' | 'archived';
   capabilities: string[];
   metrics: SpaceMetrics;
@@ -1733,6 +1737,7 @@ export interface SpaceCreate {
   type?: SpaceType;
   goal?: string;
   targetValueKes?: number;
+  image?: string | null;
   initialOffer?: {
     title: string;
     description?: string;
@@ -1740,6 +1745,15 @@ export interface SpaceCreate {
     currency?: string;
     type?: 'product' | 'service' | 'experience' | 'event';
   };
+}
+
+/** Editable space fields (name, goal, targetValueKes, image, status). */
+export interface SpaceUpdate {
+  name?: string;
+  goal?: string;
+  targetValueKes?: number | null;
+  image?: string | null;
+  status?: 'active' | 'archived';
 }
 
 export interface SpaceOfferCreate {

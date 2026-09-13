@@ -26,7 +26,7 @@ import { store, newId, newTicketCode } from '../store.js';
 import * as ticketMarket from './ticketMarket.js';
 import { emitSignal } from './signal.js';
 import { personIdIfUser } from './person.js';
-import { tableBankingOverlapFor } from './events.js';
+import { tableBankingOverlapFor, hasEnded } from './events.js';
 
 export const CAMPAIGN_TYPES = ['popup', 'session', 'drop', 'event', 'contribution'];
 // A contribution campaign is a pot with a GOAL, not seats with a price: its
@@ -559,7 +559,11 @@ export function publicView(campaign, viewerId = null) {
     // Derived on every read; never a stored roster, never the ownerId.
     host,
     // "N from your Circle going" — derived per viewer, null anonymously.
-    tableBankingOverlap: tableBankingOverlapFor(campaign.id, viewerId)
+    tableBankingOverlap: tableBankingOverlapFor(campaign.id, viewerId),
+    // Natural expiry — a dated event that has passed ends itself on the
+    // calendar. Derived from endsAt; the public page can say "ended" instead
+    // of showing a registration form that the server would refuse.
+    hasEnded: hasEnded(campaign)
   };
 }
 

@@ -40,6 +40,7 @@ export function createSpace({
   type = 'business',
   goal = '',
   targetValueKes = null,
+  image = null,
   initialOffer = null
 }) {
   if (!ownerId) throw new Error('Space must have an ownerId');
@@ -70,6 +71,9 @@ export function createSpace({
     type: SPACE_TYPES.includes(type) ? type : 'business',
     goal: goal ? goal.trim() : '',
     targetValueKes: targetValueKes ? Number(targetValueKes) : null,
+    // A cover image reference (an uploaded media URL, e.g. /api/media/file/<id>).
+    // null until the owner sets one.
+    image: image ? String(image) : null,
     status: 'active',
     capabilities: ['commerce', 'communication', 'ledger', 'activity'],
     createdAt: now,
@@ -142,9 +146,35 @@ export function updateSpace(spaceId, updates = {}, { callerId }) {
   if (updates.goal !== undefined) patch.goal = String(updates.goal).trim();
   if (updates.targetValueKes !== undefined) patch.targetValueKes = updates.targetValueKes ? Number(updates.targetValueKes) : null;
   if (updates.status) patch.status = updates.status;
+  // The cover image may be set, changed, or cleared (null).
+  if (updates.image !== undefined) patch.image = updates.image ? String(updates.image) : null;
 
   const updated = store.update('spaces', spaceId, patch);
   return hydrateSpace(updated);
+}
+
+/**
+ * Delete a space. Owner-only. The space row is removed and its own offers
+ * (listings) are ARCHIVED — withdrawn, terminal — rather than hard-deleted,
+ * because orders and the ledger still refer to what those listings were.
+ * Economic history is append-only; deleting the space never rewrites it.
+ */
+export function deleteSpace(spaceId, { callerId }) {
+  const space = store.find('spaces', (s) => s.id === spaceId);
+  if (!space) return null;
+  if (callerId && space.ownerId !== callerId) {
+    throw new Error('Not authorized to delete this space');
+  }
+  // Withdraw this space's own offers so they stop being offered. Listings on a
+  // shared vendor that were NOT created by this space are left alone.
+  const ownListings = store.filter('listings', (l) => l.spaceId === spaceId);
+  for (const l of ownListings) {
+    if (l.status !== 'archived') {
+      store.update('listings', l.id, { status: 'archived', updatedAt: new Date().toISOString() });
+    }
+  }
+  store.remove('spaces', spaceId);
+  return { removed: true, id: spaceId };
 }
 
 /**
@@ -170,7 +200,9 @@ export function createSpaceOffer(spaceId, {
     throw new Error('Price must be a valid non-negative number');
   }
 
-  // Create listing using authoritative listing domain
+  // Create listing using authoritative listing domain. NOTE: `images` maps to
+  // the listing's `media` field — createListing stores `media`, so passing the
+  // key `images` here was silently DROPPED (product images never landed).
   const listing = listings.createListing({
     vendorId: space.vendorId,
     title: title.trim(),
@@ -178,7 +210,7 @@ export function createSpaceOffer(spaceId, {
     price: numPrice,
     currency,
     type,
-    images
+    media: images
   });
 
   // Attach space linkage to listing

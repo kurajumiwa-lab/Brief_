@@ -30,6 +30,15 @@ function registrationsOf(campaignId) {
   return store.filter('registrations', (r) => r.campaignId === campaignId && r.status !== 'cancelled').length;
 }
 
+/**
+ * NATURAL EXPIRY — a dated event that has passed ends itself on the calendar,
+ * not on someone remembering to close it. Derived from endsAt, never a stored
+ * "expired" flag that could drift. An event with no endsAt never expires.
+ */
+export function hasEnded(campaign) {
+  return Boolean(campaign.endsAt && Date.parse(campaign.endsAt) <= Date.now());
+}
+
 // ---------------------------------------------------------------------------
 // TABLE-BANKING OVERLAP (derived, per viewer)
 //
@@ -131,6 +140,10 @@ export function browseEvents({
   }
   if (featured === true) rows = rows.filter((c) => c.metadata?.featured === true);
 
+  // Natural expiry: a dated event whose endsAt has passed no longer belongs in
+  // "what's on". It stays resolvable by its slug; it just stops being advertised.
+  rows = rows.filter((c) => !hasEnded(c));
+
   // Table-banking overlap: the viewer's own groups, and how many of their
   // members have registered for each event. DERIVED by scanning real rows —
   // the viewer is resolved from the auth token server-side, never a client
@@ -155,6 +168,7 @@ export function relatedEvents(campaign, limit = 6) {
   const same = (c) =>
     (c.status === 'published' || c.status === 'live') &&
     c.id !== campaign.id &&
+    !hasEnded(c) &&
     (c.type === campaign.type || (campaign.location != null && c.location === campaign.location));
   return store.filter('campaigns', same)
     .sort((a, b) => String(a.startsAt ?? '9999').localeCompare(String(b.startsAt ?? '9999')))
@@ -189,7 +203,8 @@ export function seriesOccurrences(seriesId, excludeId, limit = 12) {
   return store.filter('campaigns', (c) =>
     c.seriesId === seriesId &&
     c.id !== excludeId &&
-    ['published', 'live', 'closed', 'completed'].includes(c.status)
+    ['published', 'live', 'closed', 'completed'].includes(c.status) &&
+    !hasEnded(c)
   )
     .sort((a, b) => String(a.startsAt ?? '').localeCompare(String(b.startsAt ?? '')))
     .slice(0, limit)
