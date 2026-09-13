@@ -4486,6 +4486,28 @@ export function getMyFieldAgent(): Promise<ApiResult<FieldAgentOverview>> {
     r && Array.isArray(r?.claims) && r?.override ? r : undefined);
 }
 
+/** Who holds this vendor's territory (the active full_registration claim), or null. */
+export function getVendorClaim(vendorId: string): Promise<ApiResult<FieldAgentClaim | null>> {
+  return request(`/api/vendors/${encodeURIComponent(vendorId)}/claim`, undefined, r =>
+    r && ('claim' in r) ? r.claim : undefined);
+}
+
+/**
+ * Onboard (claim) a vendor as a field agent. `menu_upload` mints a one-off
+ * bounty; `full_registration` opens the 24-month territory override. The
+ * server refuses self-claims and duplicate claims.
+ */
+export function claimVendor(
+  vendorId: string,
+  claimType: 'menu_upload' | 'full_registration',
+  territoryKey?: string | null
+): Promise<ApiResult<FieldAgentClaim>> {
+  return request(`/api/vendors/${encodeURIComponent(vendorId)}/claims`, {
+    method: 'POST',
+    body: JSON.stringify({ claimType, territoryKey: territoryKey ?? null })
+  }, r => r?.claim?.id ? (r.claim as FieldAgentClaim) : undefined);
+}
+
 // ---------------------------------------------------------------------------
 // LIPA MDOGO — the member's own contracts + derived maturity (#3).
 // ---------------------------------------------------------------------------

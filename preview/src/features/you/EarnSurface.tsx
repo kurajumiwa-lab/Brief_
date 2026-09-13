@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import * as api from "../../api/briefApi";
 import type { MyReferrals, FieldAgentOverview, LipaMdogoContract } from "../../api/briefApi";
+import type { Vendor } from "../../api/types";
 import { MotionList } from "../../ui/motion/MotionList";
 import { MotionNumber } from "../../ui/motion/MotionNumber";
 import { MotionStatus } from "../../ui/motion/MotionStatus";
@@ -31,6 +32,11 @@ export function EarnSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
   const [convertPts, setConvertPts] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+  // Territory onboarding: pick a vendor and claim it (menu_upload or
+  // full_registration). Vendors come from the real public vendor list.
+  const [onboardOpen, setOnboardOpen] = useState(false);
+  const [vendors, setVendors] = useState<Vendor[] | null>(null);
+  const [claimBusy, setClaimBusy] = useState<Record<string, boolean>>({});
 
   const load = async () => {
     setLoading(true);
@@ -72,6 +78,33 @@ export function EarnSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
     } else {
       // The server's honest refusal (below minimum / pool empty) is the useful text.
       setNotice(res.error ?? "Could not convert points.");
+    }
+  };
+
+  const openOnboard = async () => {
+    setOnboardOpen((v) => !v);
+    if (vendors === null) {
+      const res = await api.getVendors();
+      setVendors(res.ok ? res.data : []);
+    }
+  };
+
+  const claim = async (vendor: Vendor, claimType: 'menu_upload' | 'full_registration') => {
+    setClaimBusy((p) => ({ ...p, [vendor.id]: true }));
+    const res = await api.claimVendor(vendor.id, claimType);
+    setClaimBusy((p) => ({ ...p, [vendor.id]: false }));
+    if (res.ok) {
+      setNotice(claimType === 'full_registration'
+        ? `Territory claimed on ${vendor.displayName} — 0.75% of their settled orders for 24 months.`
+        : `Menu onboarded for ${vendor.displayName} — bounty credited.`);
+      setOnboardOpen(false);
+      setVendors(null);
+      void load();
+    } else if (res.status === 401) {
+      onRequireAuth();
+    } else {
+      // The server's honest refusal (self_claim / already_claimed) is the useful text.
+      setNotice(res.error ?? "Could not claim that vendor.");
     }
   };
 
@@ -153,8 +186,44 @@ export function EarnSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
           <div className="mt-2 rounded-xl p-3" style={{ background: "var(--color-surface-elevated)" }}>
             <p className="text-xs font-bold" style={{ color: "var(--color-text)" }}>No territory yet</p>
             <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>
-              Onboard a vendor — menu upload or full registration — and you earn a 0.75% override on their settled orders for 24 months.
+              Onboard a vendor and earn a 0.75% override on their settled orders for 24 months.
             </p>
+            <button
+              type="button"
+              onClick={openOnboard}
+              className="mt-2 rounded-full px-4 py-1.5 text-xs font-bold"
+              style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}
+            >
+              {onboardOpen ? "Close" : "Onboard a vendor"}
+            </button>
+            {onboardOpen && (
+              <div className="mt-3 space-y-2">
+                {vendors === null ? (
+                  <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>Reading vendors…</p>
+                ) : vendors.length === 0 ? (
+                  <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                    No vendors to onboard yet. When a vendor joins, claim them here to earn the override.
+                  </p>
+                ) : (
+                  vendors.map((v) => (
+                    <div key={v.id} className="rounded-lg p-2 flex items-center justify-between gap-2 border" style={{ borderColor: "var(--color-border)" }}>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold truncate" style={{ color: "var(--color-text)" }}>{v.displayName}</p>
+                        <p className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>{v.activeListingCount} active listing{v.activeListingCount === 1 ? "" : "s"}</p>
+                      </div>
+                      <div className="flex gap-1 shrink-0">
+                        <button type="button" disabled={claimBusy[v.id]} onClick={() => claim(v, "full_registration")} className="rounded-full px-2.5 py-1 text-[10px] font-bold" style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}>
+                          {claimBusy[v.id] ? "…" : "Claim territory"}
+                        </button>
+                        <button type="button" disabled={claimBusy[v.id]} onClick={() => claim(v, "menu_upload")} className="rounded-full px-2.5 py-1 text-[10px] font-bold" style={{ background: "var(--color-surface)", color: "var(--color-text)", border: "1px solid var(--color-border)" }}>
+                          Menu
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </div>
         ) : (
           <>

@@ -137,6 +137,61 @@ async function main() {
   }
   pass('EarnSurface: convert action sends the deterministic point count');
 
+  // --- territory onboarding: pick a vendor and claim it (no dead end) ---
+  let claimedVendorId = null;
+  let claimedType = null;
+  fetchHandler = async (url, init) => {
+    if (url.includes('/referrals/mine')) {
+      return { ok: true, status: 200, text: async () => JSON.stringify({
+        code: 'WANJIKU', maxDepth: 1, link: 'https://x/ref=WANJIKU',
+        balance: { earned: 0, locked: 0, available: 0 },
+        pool: { backingKes: 0, paidOrPromisedKes: 0, availableKes: 0 },
+        conversion: { ptsToKes: 0.10, minPoints: 500 },
+        events: [], conversions: []
+      }) };
+    }
+    if (url.includes('/field-agent')) {
+      // No claims yet -> the "Onboard a vendor" action must appear.
+      return { ok: true, status: 200, text: async () => JSON.stringify({
+        claims: [],
+        override: { agentId: 'a1', rate: 0.0075, months: 24, claims: [], grossKes: 0, overrideKes: 0, currency: 'KES', note: 'derived' },
+        settlements: []
+      }) };
+    }
+    if (url.includes('/lipa-mdogo')) {
+      return { ok: true, status: 200, text: async () => JSON.stringify({ contracts: [] }) };
+    }
+    if (url.includes('/claims')) {
+      claimedVendorId = url.split('/vendors/')[1]?.split('/')[0] ?? null;
+      claimedType = init?.body ? JSON.parse(init.body).claimType : null;
+      return { ok: true, status: 201, text: async () => JSON.stringify({ claim: { id: 'c2', vendorId: claimedVendorId, agentId: 'a1', claimType: claimedType, territoryKey: null, status: 'active', claimedAt: '2026-09-10T00:00:00Z', expiresAt: null, createdAt: '2026-09-10T00:00:00Z' } }) };
+    }
+    if (url.includes('/api/vendors')) {
+      return { ok: true, status: 200, text: async () => JSON.stringify({ vendors: [
+        { id: 'v9', ownerId: 'o9', displayName: 'Mama Njeri Grocers', description: '', contactMethod: null, objectId: null, status: 'active', verification: { evidence: [], facts: [], verifiedCount: 0 }, activeListingCount: 2, createdAt: '2026-09-01T00:00:00Z', updatedAt: '2026-09-01T00:00:00Z' }
+      ] }) };
+    }
+    return { ok: false, status: 404, text: async () => JSON.stringify({}) };
+  };
+  {
+    const { container } = mount(React.createElement(EarnSurface, { onRequireAuth: () => {} }));
+    await flush();
+    assert.ok(text(container).includes('No territory yet'), 'empty territory state');
+    assert.ok(btn('Onboard a vendor'), 'onboard action present (no dead end)');
+
+    act(() => { btn('Onboard a vendor').click(); });
+    await flush();
+    assert.ok(text(container).includes('Mama Njeri Grocers'), 'vendor list renders');
+    assert.ok(btn('Claim territory'), 'claim-territory action present');
+    assert.ok(btn('Menu'), 'menu-upload action present');
+
+    act(() => { btn('Claim territory').click(); });
+    await flush();
+    assert.equal(claimedVendorId, 'v9', 'claim posted for the chosen vendor');
+    assert.equal(claimedType, 'full_registration', 'claim type is full_registration');
+  }
+  pass('EarnSurface: a member can onboard a vendor and claim territory (no dead end)');
+
   console.log('\nPASS ' + count);
   process.exit(0);
 }
