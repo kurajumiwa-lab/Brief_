@@ -8,7 +8,6 @@ import { callerId } from '../identity.js';
 export function register(app) {
   app.use('/api/table-banking', requireFeature('table_banking'));
   app.use('/api/me/table-banking', requireFeature('table_banking'));
-  app.use('/api/table-banking', requireFeature('table_banking'));
 
   // The member's own groups.
   app.get('/api/me/table-banking', (req, res) => {
@@ -28,7 +27,8 @@ export function register(app) {
         contributionAmount: req.body?.contributionAmount,
         currency: req.body?.currency ?? 'KES',
         cycleDays: req.body?.cycleDays ?? 30,
-        latePenaltyKes: req.body?.latePenaltyKes ?? 0
+        latePenaltyKes: req.body?.latePenaltyKes ?? 0,
+        welfareContributionAmount: req.body?.welfareContributionAmount ?? 0
       });
       res.status(201).json({ group: { ...created, summary: tableBanking.summary(created.id) } });
     } catch (e) {
@@ -201,6 +201,60 @@ export function register(app) {
     if (!me) return;
     try {
       res.json({ payout: tableBanking.confirmPayout(req.params.id, me) });
+    } catch (e) {
+      res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
+    }
+  });
+
+  // WELFARE FUND — the group's own earmarked emergency pool. Not insurance:
+  // the group's money, paid out by the group's vote. Nothing here moves money
+  // through Brief; it records the group's agreement and the fund balance is
+  // derived from contributions minus approved claims.
+  app.get('/api/table-banking/:id/welfare', (req, res) => {
+    const me = requireAuth(req, res);
+    if (!me) return;
+    try {
+      res.json({ fund: tableBanking.welfareFund(req.params.id), claims: tableBanking.listWelfareClaims(req.params.id) });
+    } catch (e) {
+      res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
+    }
+  });
+
+  app.post('/api/table-banking/:id/welfare/contributions', (req, res) => {
+    const me = requireAuth(req, res);
+    if (!me) return;
+    try {
+      const row = tableBanking.recordWelfareContribution(req.params.id, me, {
+        amount: req.body?.amount,
+        receiptHash: req.body?.receiptHash ?? null,
+        idempotencyKey: req.body?.idempotencyKey ?? null
+      });
+      res.status(201).json({ contribution: row, fund: tableBanking.welfareFund(req.params.id) });
+    } catch (e) {
+      res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
+    }
+  });
+
+  app.post('/api/table-banking/:id/welfare/claims', (req, res) => {
+    const me = requireAuth(req, res);
+    if (!me) return;
+    try {
+      const claim = tableBanking.fileWelfareClaim(req.params.id, me, {
+        reason: req.body?.reason,
+        amount: req.body?.amount
+      });
+      res.status(201).json({ claim, fund: tableBanking.welfareFund(req.params.id) });
+    } catch (e) {
+      res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
+    }
+  });
+
+  app.post('/api/table-banking/:id/welfare/claims/:claimId/vote', (req, res) => {
+    const me = requireAuth(req, res);
+    if (!me) return;
+    try {
+      const claim = tableBanking.voteOnWelfareClaim(req.params.claimId, me, req.body?.approve === true);
+      res.json({ claim, fund: tableBanking.welfareFund(claim.tableBankingId) });
     } catch (e) {
       res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
     }

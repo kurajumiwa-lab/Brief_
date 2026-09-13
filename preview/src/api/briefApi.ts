@@ -4506,6 +4506,7 @@ export interface TableBankingSummary {
   id: string;
   name: string;
   contributionAmount: number;
+  welfareContributionAmount: number;
   currency: string;
   members: number;
   cashOnHand: number;
@@ -4525,6 +4526,7 @@ export interface TableBankingGroup {
   name: string;
   ownerId: string;
   contributionAmount: number;
+  welfareContributionAmount: number;
   currency: string;
   cycleDays: number;
   status: string;
@@ -4560,7 +4562,7 @@ export function getTableBanking(id: string): Promise<ApiResult<TableBankingDetai
   return request(`/api/table-banking/${encodeURIComponent(id)}`, undefined, r =>
     r?.group && r?.summary && r?.rotation ? r : undefined);
 }
-export function createTableBanking(body: { name: string; contributionAmount: number; currency?: string; cycleDays?: number; latePenaltyKes?: number }): Promise<ApiResult<TableBankingGroup>> {
+export function createTableBanking(body: { name: string; contributionAmount: number; currency?: string; cycleDays?: number; latePenaltyKes?: number; welfareContributionAmount?: number }): Promise<ApiResult<TableBankingGroup>> {
   return request('/api/table-banking', { method: 'POST', body: JSON.stringify(body) }, r => r?.group ? r.group : undefined);
 }
 export function joinTableBanking(id: string): Promise<ApiResult<TableBankingGroup>> {
@@ -4595,4 +4597,41 @@ export function getTableBankingCollectiveRequests(id: string): Promise<ApiResult
 }
 export function placeTableBankingCollectiveRequest(id: string, body: Record<string, unknown>): Promise<ApiResult<{ request: any; collective: TableBankingCollectiveRequest }>> {
   return request(`/api/table-banking/${encodeURIComponent(id)}/requests`, { method: 'POST', body: JSON.stringify(body) }, r => r?.request?.id ? r : undefined);
+}
+
+// --- WELFARE FUND — the group's own earmarked emergency pool -----------------
+// Not insurance: the group's money, paid out by the group's vote. The fund
+// balance is DERIVED (contributions minus approved claims), never stored.
+export interface WelfareFund {
+  tableBankingId: string;
+  totalContributed: number;
+  paidOut: number;
+  balance: number;
+  claimCount: number;
+  pendingClaims: number;
+  note: string;
+}
+export interface WelfareClaim {
+  id: string;
+  tableBankingId: string;
+  claimantId: string;
+  reason: string;
+  amount: number;
+  status: 'pending' | 'approved' | 'declined';
+  votes: Array<{ voterId: string; approve: boolean; at: string }>;
+  createdAt: string;
+  updatedAt: string;
+}
+export function getWelfareFund(id: string): Promise<ApiResult<{ fund: WelfareFund; claims: WelfareClaim[] }>> {
+  return request(`/api/table-banking/${encodeURIComponent(id)}/welfare`, undefined, r =>
+    r?.fund && Array.isArray(r?.claims) ? r : undefined);
+}
+export function recordWelfareContribution(id: string, body: { amount: number; receiptHash?: string | null; idempotencyKey?: string }): Promise<ApiResult<{ contribution: any; fund: WelfareFund }>> {
+  return request(`/api/table-banking/${encodeURIComponent(id)}/welfare/contributions`, { method: 'POST', body: JSON.stringify(body) }, r => r?.contribution ? r : undefined);
+}
+export function fileWelfareClaim(id: string, body: { reason: string; amount: number }): Promise<ApiResult<{ claim: WelfareClaim; fund: WelfareFund }>> {
+  return request(`/api/table-banking/${encodeURIComponent(id)}/welfare/claims`, { method: 'POST', body: JSON.stringify(body) }, r => r?.claim?.id ? r : undefined);
+}
+export function voteOnWelfareClaim(id: string, claimId: string, approve: boolean): Promise<ApiResult<{ claim: WelfareClaim; fund: WelfareFund }>> {
+  return request(`/api/table-banking/${encodeURIComponent(id)}/welfare/claims/${encodeURIComponent(claimId)}/vote`, { method: 'POST', body: JSON.stringify({ approve }) }, r => r?.claim?.id ? r : undefined);
 }

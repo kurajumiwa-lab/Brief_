@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import * as api from "../../api/briefApi";
-import type { TableBankingGroup, TableBankingDetail, TableBankingCollectiveRequest } from "../../api/briefApi";
+import type { TableBankingGroup, TableBankingDetail, TableBankingCollectiveRequest, WelfareFund, WelfareClaim } from "../../api/briefApi";
 import { MotionList } from "../../ui/motion/MotionList";
 import { MotionNumber } from "../../ui/motion/MotionNumber";
 import { MotionStatus } from "../../ui/motion/MotionStatus";
@@ -30,6 +30,10 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
   const [collective, setCollective] = useState<Record<string, TableBankingCollectiveRequest[] | undefined>>({});
   const [orderOpen, setOrderOpen] = useState<Record<string, boolean>>({});
   const [orderForm, setOrderForm] = useState<Record<string, { title: string; description: string; category: string; quantity: string; unit: string }>>({});
+  // Welfare fund: the group's own earmarked emergency pool (not insurance).
+  const [welfare, setWelfare] = useState<Record<string, { fund: WelfareFund; claims: WelfareClaim[] } | null>>({});
+  const [claimOpen, setClaimOpen] = useState<Record<string, boolean>>({});
+  const [claimForm, setClaimForm] = useState<Record<string, { reason: string; amount: string }>>({});
 
   const load = async () => {
     setLoading(true);
@@ -53,6 +57,40 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
       const res = await api.getTableBankingCollectiveRequests(id);
       setCollective((prev) => ({ ...prev, [id]: res.ok ? res.data : [] }));
     }
+    if (welfare[id] === undefined) {
+      const res = await api.getWelfareFund(id);
+      setWelfare((prev) => ({ ...prev, [id]: res.ok ? res.data : null }));
+    }
+  };
+
+  const refreshWelfare = async (id: string) => {
+    const res = await api.getWelfareFund(id);
+    if (res.ok) setWelfare((prev) => ({ ...prev, [id]: res.data }));
+  };
+
+  const recordWelfare = async (group: TableBankingGroup) => {
+    const amt = group.welfareContributionAmount ?? 0;
+    if (amt <= 0) { setNotice("This group has no welfare contribution amount set."); return; }
+    const res = await api.recordWelfareContribution(group.id, { amount: amt, idempotencyKey: `welfare-${Date.now()}` });
+    if (res.ok) { setNotice(`Recorded a welfare contribution. Fund balance: KES ${res.data.fund.balance.toLocaleString()}.`); void refreshWelfare(group.id); }
+    else if (res.status === 401) onRequireAuth();
+    else setNotice(res.error ?? "Could not record the welfare contribution.");
+  };
+
+  const fileClaim = async (group: TableBankingGroup) => {
+    const f = claimForm[group.id];
+    if (!f || !f.reason.trim()) { setNotice("A claim needs a reason."); return; }
+    const res = await api.fileWelfareClaim(group.id, { reason: f.reason.trim(), amount: Number(f.amount) || 0 });
+    if (res.ok) { setNotice(`Claim filed — it now needs the group's vote.`); setClaimOpen((p) => ({ ...p, [group.id]: false })); void refreshWelfare(group.id); }
+    else if (res.status === 401) onRequireAuth();
+    else setNotice(res.error ?? "Could not file the claim.");
+  };
+
+  const voteClaim = async (group: TableBankingGroup, claimId: string, approve: boolean) => {
+    const res = await api.voteOnWelfareClaim(group.id, claimId, approve);
+    if (res.ok) { setNotice(approve ? "Your approving vote is recorded." : "Your declining vote is recorded."); void refreshWelfare(group.id); }
+    else if (res.status === 401) onRequireAuth();
+    else setNotice(res.error ?? "Could not record the vote.");
   };
 
   const placeOrder = async (group: TableBankingGroup) => {
@@ -172,6 +210,62 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
                       ))}
                     </div>
                   )}
+
+                  {/* Welfare fund — the group's own earmarked emergency pool.
+                      NOT insurance: the group's money, paid by the group's vote. */}
+                  <div className="rounded-xl p-3" style={{ background: "var(--color-surface-elevated)" }}>
+                    <p className="text-xs font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>Welfare fund</p>
+                    {welfare[c.id] === undefined ? (
+                      <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>Reading fund…</p>
+                    ) : welfare[c.id] === null ? (
+                      <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>Could not load the welfare fund.</p>
+                    ) : (
+                      <>
+                        <div className="mt-1 flex items-baseline gap-2">
+                          <MotionNumber value={welfare[c.id]!.fund.balance} currency="KES" tier="consequential" />
+                          <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>in the pot</span>
+                        </div>
+                        <p className="text-[10px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>
+                          {welfare[c.id]!.fund.totalContributed.toLocaleString()} contributed · {welfare[c.id]!.fund.paidOut.toLocaleString()} paid out
+                        </p>
+
+                        {/* Pending claims: eligible members vote approve/decline. */}
+                        {welfare[c.id]!.claims.filter((cl) => cl.status === "pending").map((cl) => (
+                          <div key={cl.id} className="mt-2 rounded-lg p-2 border" style={{ borderColor: "var(--color-border)" }}>
+                            <p className="text-xs font-bold" style={{ color: "var(--color-text)" }}>Claim: {cl.reason}</p>
+                            <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>KES {cl.amount.toLocaleString()} · {cl.votes.length} vote{cl.votes.length === 1 ? "" : "s"}</p>
+                            <div className="mt-1 flex gap-2">
+                              <button type="button" onClick={() => voteClaim(c, cl.id, true)} className="rounded-full px-2.5 py-1 text-xs font-bold" style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}>Approve</button>
+                              <button type="button" onClick={() => voteClaim(c, cl.id, false)} className="rounded-full px-2.5 py-1 text-xs font-bold" style={{ background: "var(--color-surface)", color: "var(--color-text)", border: "1px solid var(--color-border)" }}>Decline</button>
+                            </div>
+                          </div>
+                        ))}
+
+                        {/* Resolved claims (approved/declined), shown honestly. */}
+                        {welfare[c.id]!.claims.filter((cl) => cl.status !== "pending").map((cl) => (
+                          <p key={cl.id} className="text-[10px] mt-1" style={{ color: "var(--color-text-muted)" }}>
+                            {cl.status === "approved" ? "Approved" : "Declined"}: {cl.reason} — KES {cl.amount.toLocaleString()}
+                          </p>
+                        ))}
+
+                        <button type="button" onClick={() => recordWelfare(c)} className="mt-2 rounded-full px-3 py-1.5 text-xs font-bold" style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}>
+                          {c.welfareContributionAmount > 0
+                            ? `Record welfare contribution (KES ${c.welfareContributionAmount.toLocaleString()})`
+                            : "No welfare amount set"}
+                        </button>
+                        <button type="button" onClick={() => setClaimOpen((p) => ({ ...p, [c.id]: !p[c.id] }))} className="ml-1 mt-2 rounded-full px-3 py-1.5 text-xs font-bold" style={{ background: "var(--color-surface)", color: "var(--color-text)", border: "1px solid var(--color-border)" }}>
+                          {claimOpen[c.id] ? "Cancel" : "File a claim"}
+                        </button>
+                        {claimOpen[c.id] && (
+                          <div className="mt-2 space-y-1.5">
+                            <input type="text" placeholder="Reason (e.g. bereavement, hospitalisation)" aria-label="Claim reason" value={claimForm[c.id]?.reason ?? ""} onChange={(e) => setClaimForm((p) => ({ ...p, [c.id]: { ...(p[c.id] ?? { reason: "", amount: "" }), reason: e.target.value } }))} className="w-full rounded-lg px-2.5 py-1.5 text-xs border" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }} />
+                            <input type="text" inputMode="numeric" placeholder="Amount (KES)" aria-label="Claim amount" value={claimForm[c.id]?.amount ?? ""} onChange={(e) => setClaimForm((p) => ({ ...p, [c.id]: { ...(p[c.id] ?? { reason: "", amount: "" }), amount: e.target.value } }))} className="w-full rounded-lg px-2.5 py-1.5 text-xs border" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }} />
+                            <button type="button" onClick={() => fileClaim(c)} className="w-full rounded-full px-3 py-1.5 text-xs font-bold" style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}>Submit claim</button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
 
                   {/* Collective orders — the group in the economic loop */}
                   <div className="rounded-xl p-3" style={{ background: "var(--color-surface-elevated)" }}>

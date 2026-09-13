@@ -133,6 +133,13 @@ const EMPTY = {
   // the table-banking surface can list its collective demand. See
   // tableBanking.placeCollectiveRequest.
   tableBankingRequests: [],
+  // WELFARE FUND — a second, earmarked pool the group keeps for member
+  // emergencies. It is NOT insurance: the group's own money, paid out by the
+  // group's own vote. Contributions are receipt-hashed records; claims carry a
+  // vote trail; the fund balance is DERIVED (contributions minus approved
+  // claims), never stored. See tableBanking.fileWelfareClaim / welfareFund.
+  tableBankingWelfareContributions: [],
+  tableBankingClaims: [],
   // P2P ticket resale (Tikiti integration T1). A ticket is ONE admitted
   // seat, born from a confirmed campaign registration; its scannable code
   // IS the registration's gate code, versioned so a transfer kills every

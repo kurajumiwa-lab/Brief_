@@ -35,15 +35,24 @@ const text = (el) => (el.textContent || '').replace(/\s+/g, ' ').trim();
 const btn = (label) => Array.from(document.querySelectorAll('button')).find((b) => text(b).startsWith(label));
 
 const groupRow = {
-  id: 'chm_1', name: 'Kiama Circle', ownerId: 'u1', contributionAmount: 5000, currency: 'KES', cycleDays: 30, status: 'active',
+  id: 'chm_1', name: 'Kiama Circle', ownerId: 'u1', contributionAmount: 5000, welfareContributionAmount: 500, currency: 'KES', cycleDays: 30, status: 'active',
   members: [{ userId: 'u1', joinedAt: '2026-01-01T00:00:00Z' }, { userId: 'u2', joinedAt: '2026-01-02T00:00:00Z' }],
   summary: {
-    id: 'chm_1', name: 'Kiama Circle', contributionAmount: 5000, currency: 'KES', members: 2,
+    id: 'chm_1', name: 'Kiama Circle', contributionAmount: 5000, welfareContributionAmount: 500, currency: 'KES', members: 2,
     cashOnHand: 10000, totalContributed: 10000, totalPaidOut: 0, loanedOut: 0, totalRepaid: 0,
     nextRecipient: 'u1', nextRecipientName: 'Alice', membersNotYetContributed: [], membersNotYetReceived: ['u1', 'u2'],
     activeLoans: [], note: 'derived'
   }
 };
+
+const welfareFund = {
+  tableBankingId: 'chm_1', totalContributed: 1000, paidOut: 0, balance: 1000,
+  claimCount: 1, pendingClaims: 1,
+  note: "The welfare fund is the group's own earmarked money. Brief holds none of it."
+};
+const welfareClaims = [
+  { id: 'wc_1', tableBankingId: 'chm_1', claimantId: 'u2', reason: 'Bereavement support', amount: 600, status: 'pending', votes: [], createdAt: '2026-01-05T00:00:00Z', updatedAt: '2026-01-05T00:00:00Z' }
+];
 
 let fetchHandler;
 let collectiveOrders = [];
@@ -82,6 +91,9 @@ async function main() {
     if (url.includes('/api/table-banking/chm_1/requests')) {
       // Collective orders: empty by default, or the sample after a POST.
       return { ok: true, status: 200, text: async () => JSON.stringify({ collective: collectiveOrders }) };
+    }
+    if (url.includes('/welfare')) {
+      return { ok: true, status: 200, text: async () => JSON.stringify({ fund: welfareFund, claims: welfareClaims }) };
     }
     if (url.includes('/api/table-banking/chm_1') && (!init?.method || init.method === 'GET')) {
       return { ok: true, status: 200, text: async () => JSON.stringify({
@@ -125,6 +137,13 @@ async function main() {
     assert.ok(t.includes('Collective orders'), 'collective orders section');
     assert.ok(t.includes('No collective orders yet'), 'honest empty collective state');
     assert.ok(btn('Place bulk order'), 'place bulk order action present');
+    // Welfare fund: the derived pot, the pending claim, and vote + file actions.
+    assert.ok(t.includes('Welfare fund'), 'welfare fund section');
+    assert.ok(t.includes('in the pot'), 'welfare balance indicator');
+    assert.ok(t.includes('Bereavement support'), 'pending claim reason');
+    assert.ok(btn('Approve') && btn('Decline'), 'claim vote actions present');
+    assert.ok(btn('File a claim'), 'file-a-claim action present');
+    assert.ok(btn('Record welfare contribution (KES 500)'), 'welfare contribution action shows the configured amount');
   }
   pass('TableBankingSurface: indicators show what can happen and what did happen');
 

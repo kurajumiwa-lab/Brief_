@@ -63,13 +63,17 @@ function requireMember(group, userId) {
 // ---------------------------------------------------------------------------
 // TABLE BANKING + MEMBERSHIP
 // ---------------------------------------------------------------------------
-export function createTableBanking({ ownerId, name, contributionAmount, currency = 'KES', cycleDays = 30, latePenaltyKes = 0 }) {
+export function createTableBanking({ ownerId, name, contributionAmount, currency = 'KES', cycleDays = 30, latePenaltyKes = 0, welfareContributionAmount = 0 }) {
   if (!ownerId) fail('an owner is required');
   const n = String(name ?? '').trim();
   if (!n) fail('group name is required');
   const amt = money(contributionAmount, 'contributionAmount');
   const cyc = Number(cycleDays);
   if (!Number.isInteger(cyc) || cyc < 1) fail('cycleDays must be a whole number of one or more');
+  // The welfare amount is optional (0 = this group runs no welfare fund), but
+  // when set it must be a whole number of shillings.
+  const welf = Number(welfareContributionAmount) || 0;
+  if (!Number.isInteger(welf) || welf < 0) fail('welfareContributionAmount must be a whole number of shillings or zero');
   const now = new Date().toISOString();
   const group = store.insert('tableBanking', {
     id: newId('chm'),
@@ -79,6 +83,7 @@ export function createTableBanking({ ownerId, name, contributionAmount, currency
     currency,
     cycleDays: cyc,
     latePenaltyKes: Number(latePenaltyKes) > 0 ? Math.round(Number(latePenaltyKes)) : 0,
+    welfareContributionAmount: welf,
     members: [{ userId: ownerId, joinedAt: now }],
     order: [ownerId],
     turnIndex: 0,
@@ -418,6 +423,7 @@ export function summary(tableBankingId) {
     id: group.id,
     name: group.name,
     contributionAmount: group.contributionAmount,
+    welfareContributionAmount: group.welfareContributionAmount ?? 0,
     currency: group.currency,
     members: group.members.length,
     // The pool, DERIVED: what the group has on hand after payouts and loans.
@@ -534,4 +540,115 @@ export function listCollectiveRequests(tableBankingId) {
       ...row,
       request: store.find('requests', (r) => r.id === row.requestId) ?? null
     }));
+}
+
+// ---------------------------------------------------------------------------
+// WELFARE FUND — the group's own earmarked emergency pool.
+//
+// NOT insurance, NOT lending, NOT Brief's money. This is a second pot the
+// group keeps for member emergencies (bereavement, hospitalisation, fire).
+// The group's own members contribute to it, and the group's own vote pays it
+// out. Every figure is DERIVED from real rows; there is no stored balance.
+//
+// Honesty rules (same as the rest of this module):
+//   * the fund balance is contributions MINUS approved claims — recomputed.
+//   * a claim cannot exceed the fund (you cannot pay out money the pot holds).
+//   * a claimant cannot vote on their own claim.
+//   * one vote per member; a strict majority of eligible voters decides.
+//   * approval does NOT move money through Brief — it records that the group
+//     agreed to pay; the members transfer among themselves as they always do.
+// ---------------------------------------------------------------------------
+
+/** Record a member's welfare contribution (receipt-hashed, idempotent). */
+export function recordWelfareContribution(tableBankingId, memberId, { amount, receiptHash = null, idempotencyKey = null } = {}) {
+  const group = getTableBanking(tableBankingId);
+  if (!group) fail('group not found', 404, 'not_found');
+  requireMember(group, memberId);
+  const amt = money(amount, 'welfare contribution');
+  if (idempotencyKey) {
+    const prior = store.find('tableBankingWelfareContributions',
+      (c) => c.idempotencyKey === idempotencyKey && c.tableBankingId === tableBankingId);
+    if (prior) return prior;
+  }
+  return store.insert('tableBankingWelfareContributions', {
+    id: newId('tbwc'),
+    tableBankingId,
+    memberId,
+    amount: amt,
+    receiptHash: receiptHash ? sha256(receiptHash) : null,
+    idempotencyKey: idempotencyKey ?? null,
+    at: new Date().toISOString()
+  });
+}
+
+/** The derived welfare fund: contributions in, approved claims out. */
+export function welfareFund(tableBankingId) {
+  const group = getTableBanking(tableBankingId);
+  if (!group) fail('group not found', 404, 'not_found');
+  const contribs = store.filter('tableBankingWelfareContributions', (c) => c.tableBankingId === tableBankingId);
+  const totalContributed = contribs.reduce((s, c) => s + c.amount, 0);
+  const claims = store.filter('tableBankingClaims', (c) => c.tableBankingId === tableBankingId);
+  const paidOut = claims.filter((c) => c.status === 'approved').reduce((s, c) => s + c.amount, 0);
+  const pending = claims.filter((c) => c.status === 'pending');
+  return {
+    tableBankingId,
+    totalContributed,
+    paidOut,
+    balance: totalContributed - paidOut,
+    claimCount: claims.length,
+    pendingClaims: pending.length,
+    note: "The welfare fund is the group's own earmarked money. Brief holds none of it."
+  };
+}
+
+/** File a claim. Honesty: the amount cannot exceed what the fund actually holds. */
+export function fileWelfareClaim(tableBankingId, claimantId, { reason, amount }) {
+  const group = getTableBanking(tableBankingId);
+  if (!group) fail('group not found', 404, 'not_found');
+  requireMember(group, claimantId);
+  if (!reason || !String(reason).trim()) fail('a claim needs a reason');
+  const amt = money(amount, 'claim');
+  const fund = welfareFund(tableBankingId);
+  if (amt > fund.balance) fail('the claim exceeds the welfare fund balance', 409, 'insufficient_funds');
+  const at = new Date().toISOString();
+  return store.insert('tableBankingClaims', {
+    id: newId('tbcl'),
+    tableBankingId,
+    claimantId,
+    reason: String(reason).trim().slice(0, 200),
+    amount: amt,
+    status: 'pending',
+    votes: [],
+    createdAt: at,
+    updatedAt: at
+  });
+}
+
+/** One member's vote. A strict majority of eligible voters decides the claim. */
+export function voteOnWelfareClaim(claimId, voterId, approve) {
+  const claim = store.find('tableBankingClaims', (c) => c.id === claimId);
+  if (!claim) fail('claim not found', 404, 'not_found');
+  if (claim.status !== 'pending') fail(`this claim is already ${claim.status}`, 409, 'invalid_state');
+  const group = getTableBanking(claim.tableBankingId);
+  if (!group) fail('group not found', 404, 'not_found');
+  requireMember(group, voterId);
+  if (claim.claimantId === voterId) fail('the claimant cannot vote on their own claim', 409, 'self_vote');
+  if (claim.votes.some((v) => v.voterId === voterId)) fail('you already voted on this claim', 409, 'already_voted');
+
+  const votes = [...claim.votes, { voterId, approve: Boolean(approve), at: new Date().toISOString() }];
+  const approveCount = votes.filter((v) => v.approve).length;
+  const declineCount = votes.length - approveCount;
+  const eligible = group.members.filter((m) => m.userId !== claim.claimantId).length;
+  const quorum = Math.max(1, Math.floor(eligible / 2) + 1);
+  let status = 'pending';
+  if (approveCount >= quorum) status = 'approved';
+  else if (declineCount >= quorum) status = 'declined';
+  return store.update('tableBankingClaims', claimId, { votes, status, updatedAt: new Date().toISOString() });
+}
+
+/** The group's welfare claims, newest first. */
+export function listWelfareClaims(tableBankingId) {
+  return store.filter('tableBankingClaims', (c) => c.tableBankingId === tableBankingId)
+    .slice()
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }
