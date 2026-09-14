@@ -25,6 +25,7 @@ import { store } from '../store.js';
 import { overrideObligation } from './fieldAgent.js';
 import { listFor as lipaMdogoContracts, contractState } from './lipaMdogo.js';
 import { unmetDemand } from './gaps.js';
+import { categoryClosure } from './precedent.js';
 
 // Same end-of-day-in-Nairobi semantics the quote layer uses, so an expiring
 // quote is judged by the same clock everywhere.
@@ -114,6 +115,9 @@ export function positionFor(userId) {
 
   // --- OPEN: still-open unmet demand (action framing, not loss) -------------
   const gaps = unmetDemand();
+  // Precedent: how many requests in each category have actually closed lately.
+  const closure = categoryClosure();
+  const closedByCategory = new Map(closure.byCategory.map((c) => [c.category, c.closed]));
 
   return {
     decay: {
@@ -134,7 +138,9 @@ export function positionFor(userId) {
         category: g.category,
         location: g.location,
         severityLabel: g.severityLabel,
-        collective: g.collective
+        collective: g.collective,
+        // Honest precedent: this category has closed N× recently (null = never).
+        closesMonthly: closedByCategory.get(g.category) ?? null
       }))
     },
     derivedAt: new Date().toISOString(),

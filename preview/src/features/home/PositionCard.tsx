@@ -139,7 +139,8 @@ export function PositionCard({ className = '' }: { className?: string }) {
             </p>
             {firstOpen && (
               <p className="text-[11px] truncate" style={{ color: 'var(--color-text-muted)' }}>
-                “{firstOpen.title}” · {firstOpen.severityLabel}.
+                “{firstOpen.title}” · {firstOpen.severityLabel}
+                {firstOpen.closesMonthly ? ` · this category has closed ${firstOpen.closesMonthly}× this month` : ''}.
               </p>
             )}
           </div>

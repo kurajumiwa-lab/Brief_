@@ -4667,6 +4667,8 @@ export interface PositionOpenGap {
   location: string | null;
   severityLabel: string;
   collective: boolean;
+  /** Real precedent: how many requests in this category closed lately (null = never). */
+  closesMonthly: number | null;
 }
 export interface MyPosition {
   decay: {
@@ -4720,6 +4722,37 @@ export function getMyCommitments(): Promise<ApiResult<MyCommitments>> {
   return request('/api/me/commitments', undefined, r =>
     r?.commitments && Array.isArray(r.commitments.owedByMe) && Array.isArray(r.commitments.owedToMe)
       ? (r.commitments as MyCommitments)
+      : undefined);
+}
+
+// ---------------------------------------------------------------------------
+// RECIPROCITY — the derived social-debt ledger (who went out of their way).
+// ---------------------------------------------------------------------------
+export interface ReciprocityEntry {
+  id: string;
+  kind: 'loan_guarantee' | 'recommendation' | 'delivery_cover';
+  fromParty: string | null;
+  toParty: string | null;
+  value: { amount: number; currency: string } | null;
+  status: 'open' | 'fulfilled';
+  createdAt: string;
+  fulfilledAt: string | null;
+  evidence: { table: string; id: string };
+  ageDays?: number;
+}
+export interface MyReciprocity {
+  owedToMe: ReciprocityEntry[];
+  owedByMe: ReciprocityEntry[];
+  fulfilled: ReciprocityEntry[];
+  aging: ReciprocityEntry[];
+  windowDays: number;
+  derivedAt: string;
+  note: string;
+}
+export function getMyReciprocity(): Promise<ApiResult<MyReciprocity>> {
+  return request('/api/me/reciprocity', undefined, r =>
+    r?.reciprocity && Array.isArray(r.reciprocity.owedToMe) && Array.isArray(r.reciprocity.owedByMe)
+      ? (r.reciprocity as MyReciprocity)
       : undefined);
 }
 

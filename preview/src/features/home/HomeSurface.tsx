@@ -18,6 +18,7 @@ import { attentionQueue, needsAttention, splitSpaces } from './spaceSignals';
 import { PromoCarousel } from '../spaces/PromoCarousel';
 import { PositionCard } from './PositionCard';
 import { CommitmentsCard } from './CommitmentsCard';
+import { ReciprocityCard } from './ReciprocityCard';
 
 export interface HomeSurfaceProps {
   userName?: string;
@@ -118,6 +119,9 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
 
       {/* ── YOUR COMMITMENTS — the reciprocal ledger: owed to you / you owe. ── */}
       <CommitmentsCard />
+
+      {/* ── RECIPROCITY — who went out of their way for you (real favors). ── */}
+      <ReciprocityCard />
 
       <div className="p-3 rounded-2xl bg-[color:var(--color-primary-subtle)] border border-[color:var(--color-primary)]">
         <p className="text-[11px] leading-snug" style={{ color: "var(--color-text)" }}>

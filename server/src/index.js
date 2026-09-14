@@ -93,6 +93,7 @@ import { register as priceSignalsRoutes } from './routes/priceSignals.js';
 import { register as pickupsRoutes } from './routes/pickups.js';
 import { register as positionRoutes } from './routes/position.js';
 import { register as commitmentsRoutes } from './routes/commitments.js';
+import { register as reciprocityRoutes } from './routes/reciprocity.js';
 
 const app = express();
 
@@ -274,6 +275,7 @@ priceSignalsRoutes(app);
 pickupsRoutes(app);
 positionRoutes(app);
 commitmentsRoutes(app);
+reciprocityRoutes(app);
 
 // --- Production frontend serving -------------------------------------------
 //
