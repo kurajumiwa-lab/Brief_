@@ -11,8 +11,8 @@
  *      (src/api/offlineQueue.ts) with server-side idempotency keys.
  *   4. Cross-origin (fonts, Telegram SDK): pass through untouched.
  */
-const SHELL_CACHE = 'brief-shell-v1';
-const ASSET_CACHE = 'brief-assets-v1';
+const SHELL_CACHE = 'brief-shell-v2';
+const ASSET_CACHE = 'brief-assets-v2';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

@@ -2,8 +2,16 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="theme-color" content="#D8D2E1" />
+    <meta name="theme-color" content="#F7F8FA" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- CRITICAL SHELL STYLE — the light background is guaranteed at first paint,
+         before any stylesheet loads, so no surface (events, share pages, or a
+         half-loaded shell) can ever flash a black background. This is the
+         single source of truth for the page background; the design tokens below
+         inherit it. -->
+    <style>
+      html, body, #root { background: #F7F8FA !important; color: #0D1117; margin: 0; }
+    </style>
     <title>Brief</title>
     <!-- The offline shell: installable, and it paints from cache when the
          signal dies. Writes survive via the offline queue (idempotent,
