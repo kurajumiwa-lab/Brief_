@@ -24,6 +24,24 @@ const user = (handle) => auth.createUser({ handle, password: "spacelife-pw" });
 const owner = user("sl_owner");
 const other = user("sl_other");
 
+test("a space is private by default and its visibility can be changed by the owner", () => {
+  const s = spaces.createSpace({ ownerId: owner.id, name: "Visibility Space" });
+  assert.equal(s.visibility, "private", "default is private");
+
+  const pub = spaces.updateSpace(s.id, { visibility: "public" }, { callerId: owner.id });
+  assert.equal(pub.visibility, "public");
+
+  const unlisted = spaces.updateSpace(s.id, { visibility: "unlisted" }, { callerId: owner.id });
+  assert.equal(unlisted.visibility, "unlisted");
+
+  rejects(() => spaces.updateSpace(s.id, { visibility: "world" }, { callerId: owner.id }), "must be one of");
+});
+
+test("a non-owner cannot change visibility", () => {
+  const s = spaces.createSpace({ ownerId: owner.id, name: "Guarded" });
+  rejects(() => spaces.updateSpace(s.id, { visibility: "public" }, { callerId: other.id }), "Not authorized");
+});
+
 test("a space may carry a cover image, set at create and edited later", () => {
   const s = spaces.createSpace({ ownerId: owner.id, name: "Kilimani Kitchen", image: "/api/media/file/img1" });
   assert.equal(s.image, "/api/media/file/img1");

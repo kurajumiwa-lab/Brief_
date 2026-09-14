@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Space, Listing } from '../../api/types';
 import * as briefApi from '../../api/briefApi';
+import { ArrowLeft, Archive, RotateCcw, Globe, Lock, Link2 } from 'lucide-react';
 import { PipelineView } from './PipelineView';
 import { SpaceMoney } from './SpaceMoney';
 import { CatalogView } from './CatalogView';
@@ -29,6 +30,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
   const [activeTab, setActiveTab] = useState<SpaceSurfaceTab>(initialTab);
   const [createFlowOpen, setCreateFlowOpen] = useState<boolean>(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [busy, setBusy] = useState<boolean>(false);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -63,6 +65,37 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
       }
     } catch (err: any) {
       showToast(err?.message || 'Failed to publish offer');
+    }
+  };
+
+  const setVisibility = async (visibility: 'private' | 'unlisted' | 'public') => {
+    if (!space) return;
+    setBusy(true);
+    const res = await briefApi.updateSpace(space.id, { visibility });
+    setBusy(false);
+    if (res.ok) {
+      setSpace(res.data.space);
+      showToast(visibility === 'public'
+        ? 'Space is now public — anyone can discover it.'
+        : visibility === 'unlisted'
+        ? 'Space is unlisted — reachable by link only.'
+        : 'Space is private — only you can see it.');
+    } else {
+      showToast(res.error ?? 'Could not change visibility.');
+    }
+  };
+
+  const toggleArchive = async () => {
+    if (!space) return;
+    setBusy(true);
+    const next = space.status === 'archived' ? 'active' : 'archived';
+    const res = await briefApi.updateSpace(space.id, { status: next });
+    setBusy(false);
+    if (res.ok) {
+      setSpace(res.data.space);
+      showToast(next === 'archived' ? `Archived "${space.name}".` : `Restored "${space.name}".`);
+    } else {
+      showToast(res.error ?? 'Could not update that space.');
     }
   };
 
@@ -109,6 +142,8 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
       : activeTab
   ) as 'pipeline' | 'ledger' | 'catalog';
 
+  const vis = space?.visibility ?? 'private';
+
   return (
     <div className={`space-y-4 max-w-2xl mx-auto ${className}`}>
       {/* Toast Notification */}
@@ -117,6 +152,73 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
           {toastMsg}
         </div>
       )}
+
+      {/* Space identity + controls (this is the "portal", not a register) */}
+      <header className="space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <button
+            type="button"
+            onClick={() => { soundEngine.play('tap'); onBack?.(); }}
+            className="flex items-center gap-1 text-xs font-bold text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] transition-colors cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4" /> Spaces
+          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => onShare?.(space!)}
+              disabled={!space}
+              className="p-2 rounded-full bg-white text-[color:var(--color-text)] shadow-2xs border border-black/5 hover:bg-gray-100 transition-all cursor-pointer"
+              aria-label="Share space"
+              title="Share"
+            >
+              <Link2 className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={toggleArchive}
+              disabled={busy || !space}
+              className="p-2 rounded-full bg-white text-[color:var(--color-text)] shadow-2xs border border-black/5 hover:bg-gray-100 transition-all cursor-pointer"
+              aria-label={space?.status === 'archived' ? 'Restore space' : 'Archive space'}
+              title={space?.status === 'archived' ? 'Restore' : 'Archive'}
+            >
+              {space?.status === 'archived' ? <RotateCcw className="w-4 h-4" /> : <Archive className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <h1 className="text-2xl font-black text-[color:var(--color-text)] tracking-tight leading-tight">
+            {space?.name ?? 'Space'}
+          </h1>
+          <p className="text-xs text-[color:var(--color-text-muted)]">
+            {space?.goal || (space?.type ?? 'business').replace('_', ' ')}
+          </p>
+        </div>
+
+        {/* Visibility — the owner decides who can discover this space */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-[color:var(--color-text-muted)]">Visibility</span>
+          {(['private', 'unlisted', 'public'] as const).map((v) => {
+            const active = vis === v;
+            const Icon = v === 'private' ? Lock : v === 'unlisted' ? Link2 : Globe;
+            return (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setVisibility(v)}
+                disabled={busy}
+                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all cursor-pointer ${
+                  active ? 'bg-[color:var(--color-primary)] text-[color:var(--accent-ink)]' : 'bg-white text-[color:var(--color-text-muted)] border border-black/5 hover:text-[color:var(--color-text)]'
+                }`}
+              >
+                <Icon className="w-3 h-3" />
+                {v === 'private' ? 'Private' : v === 'unlisted' ? 'Unlisted' : 'Public'}
+              </button>
+            );
+          })}
+        </div>
+      </header>
 
       {/* Surface Navigation Selector */}
       <div className="flex items-center justify-between pb-1 border-b border-black/5">

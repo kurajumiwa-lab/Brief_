@@ -3,7 +3,7 @@ import type { Space, Listing } from '../api/types';
 import * as briefApi from '../api/briefApi';
 import { Navigation, BriefNavigationTab } from './Navigation';
 import { HomeSurface } from '../features/home/HomeSurface';
-import { PipelineView } from '../features/spaces/PipelineView';
+import { SpaceShell } from '../features/spaces/SpaceShell';
 import { SpaceMoney } from '../features/spaces/SpaceMoney';
 import { CatalogView } from '../features/spaces/CatalogView';
 import { CityFeedView } from '../features/city/CityFeedView';
@@ -250,13 +250,12 @@ export const AppShell: React.FC<AppShellProps> = ({
               <CityFeedView onOpenSpace={(id) => setActiveTab('pipeline')} />
             )}
 
-            {/* ── TAB 2: SPACES (Primary Seller Workspace + Integrated City Highlights) ── */}
+            {/* ── TAB 2: SPACES (the full workspace: build, sell, track) ── */}
             {(activeTab === 'pipeline' || activeTab === 'spaces') && activeSpace && (
-              <PipelineView
-                space={activeSpace}
-                onRefresh={loadSpaces}
-                onViewCityFeed={() => setActiveTab('city')}
-                onShareOffer={(t) => showToast(`Share link for "${t}" copied!`)}
+              <SpaceShell
+                spaceId={activeSpace.id}
+                onBack={() => { setActiveSpace(null); setActiveTab('home'); }}
+                onShare={(space) => showToast(`Share link for "${space.name}" copied!`)}
               />
             )}
 

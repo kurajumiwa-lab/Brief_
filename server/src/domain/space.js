@@ -30,6 +30,10 @@ export const SPACE_TYPES = [
   'other'
 ];
 
+// A space is private by default: only its owner sees it. Making it public
+// (or unlisted) is the owner's explicit act, and changes who can discover it.
+export const SPACE_VISIBILITY = ['private', 'unlisted', 'public'];
+
 /**
  * Creates a Space for an owner. If this is a commercial space (business / side_hustle),
  * it ensures an underlying vendor identity exists in the commerce layer.
@@ -41,10 +45,14 @@ export function createSpace({
   goal = '',
   targetValueKes = null,
   image = null,
+  visibility = 'private',
   initialOffer = null
 }) {
   if (!ownerId) throw new Error('Space must have an ownerId');
   if (!name || !name.trim()) throw new Error('Space name cannot be empty');
+  if (!SPACE_VISIBILITY.includes(visibility)) {
+    throw new Error(`visibility must be one of ${SPACE_VISIBILITY.join(', ')}`);
+  }
 
   const spaceId = newId('spc');
   const now = new Date().toISOString();
@@ -74,6 +82,8 @@ export function createSpace({
     // A cover image reference (an uploaded media URL, e.g. /api/media/file/<id>).
     // null until the owner sets one.
     image: image ? String(image) : null,
+    // Who can discover this space. `private` (default) = owner only.
+    visibility: SPACE_VISIBILITY.includes(visibility) ? visibility : 'private',
     status: 'active',
     capabilities: ['commerce', 'communication', 'ledger', 'activity'],
     createdAt: now,
@@ -148,6 +158,14 @@ export function updateSpace(spaceId, updates = {}, { callerId }) {
   if (updates.status) patch.status = updates.status;
   // The cover image may be set, changed, or cleared (null).
   if (updates.image !== undefined) patch.image = updates.image ? String(updates.image) : null;
+  // Visibility: private (owner only) / unlisted / public. The owner's explicit
+  // act; making a space public is what lets strangers discover and collaborate.
+  if (updates.visibility !== undefined) {
+    if (!SPACE_VISIBILITY.includes(updates.visibility)) {
+      throw new Error(`visibility must be one of ${SPACE_VISIBILITY.join(', ')}`);
+    }
+    patch.visibility = updates.visibility;
+  }
 
   const updated = store.update('spaces', spaceId, patch);
   return hydrateSpace(updated);

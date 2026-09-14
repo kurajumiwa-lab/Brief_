@@ -27,7 +27,7 @@ export function register(app) {
   app.post('/api/spaces', requireAuthMw, (req, res) => {
     try {
       const me = callerId(req);
-      const { name, type, goal, targetValueKes, image, initialOffer } = req.body || {};
+      const { name, type, goal, targetValueKes, image, visibility, initialOffer } = req.body || {};
 
       if (!name || !String(name).trim()) {
         return res.status(400).json({ error: 'Space name is required' });
@@ -40,6 +40,7 @@ export function register(app) {
         goal,
         targetValueKes,
         image,
+        visibility,
         initialOffer
       });
 

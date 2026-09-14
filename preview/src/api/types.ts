@@ -1722,6 +1722,8 @@ export interface Space {
   targetValueKes: number;
   /** Cover image reference (an uploaded media URL, e.g. /api/media/file/<id>). */
   image?: string | null;
+  /** Who can discover this space: private (owner only) / unlisted / public. */
+  visibility?: 'private' | 'unlisted' | 'public';
   status: 'active' | 'archived';
   capabilities: string[];
   metrics: SpaceMetrics;
@@ -1738,6 +1740,7 @@ export interface SpaceCreate {
   goal?: string;
   targetValueKes?: number;
   image?: string | null;
+  visibility?: 'private' | 'unlisted' | 'public';
   initialOffer?: {
     title: string;
     description?: string;
@@ -1747,12 +1750,13 @@ export interface SpaceCreate {
   };
 }
 
-/** Editable space fields (name, goal, targetValueKes, image, status). */
+/** Editable space fields (name, goal, targetValueKes, image, visibility, status). */
 export interface SpaceUpdate {
   name?: string;
   goal?: string;
   targetValueKes?: number | null;
   image?: string | null;
+  visibility?: 'private' | 'unlisted' | 'public';
   status?: 'active' | 'archived';
 }
 
