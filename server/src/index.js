@@ -91,6 +91,7 @@ import { register as rolesRoutes } from './routes/roles.js';
 import { register as gapsRoutes } from './routes/gaps.js';
 import { register as priceSignalsRoutes } from './routes/priceSignals.js';
 import { register as pickupsRoutes } from './routes/pickups.js';
+import { register as positionRoutes } from './routes/position.js';
 
 const app = express();
 
@@ -270,6 +271,7 @@ rolesRoutes(app);
 gapsRoutes(app);
 priceSignalsRoutes(app);
 pickupsRoutes(app);
+positionRoutes(app);
 
 // --- Production frontend serving -------------------------------------------
 //

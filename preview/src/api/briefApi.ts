@@ -4636,6 +4636,64 @@ export function getMyPickupFeeSettlements(): Promise<ApiResult<PickupFeeSettleme
 }
 
 // ---------------------------------------------------------------------------
+// POSITION — the user's derived position in time (decay / missed / open).
+// Every number is derived from real rows on read; nothing is stored.
+// ---------------------------------------------------------------------------
+export interface PositionExpiringQuote {
+  quoteId: string;
+  requestId: string;
+  title: string;
+  validUntil: string | null;
+  hoursLeft: number;
+}
+export interface PositionWaitlist {
+  entryId: string;
+  campaignId: string;
+  campaignTitle: string;
+  position: number | null;
+  status: string;
+  offerExpiresAt: string | null;
+  hoursLeft: number | null;
+}
+export interface PositionMissed {
+  requestId: string;
+  title: string;
+  at: string | null;
+}
+export interface PositionOpenGap {
+  requestId: string;
+  title: string;
+  category: string | null;
+  location: string | null;
+  severityLabel: string;
+  collective: boolean;
+}
+export interface MyPosition {
+  decay: {
+    expiringQuotes: PositionExpiringQuote[];
+    waitlist: PositionWaitlist[];
+    override: { claimCount: number; monthsLeft: number; expiresAt: string } | null;
+    overdueInstallments: number;
+  };
+  missedCapture: {
+    count: number;
+    recent: PositionMissed[];
+  };
+  open: {
+    total: number;
+    top: PositionOpenGap[];
+  };
+  derivedAt: string;
+  note: string;
+}
+export function getMyPosition(): Promise<ApiResult<MyPosition>> {
+  return request('/api/me/position', undefined, r =>
+    r?.position && r.position.decay && r.position.missedCapture && r.position.open
+      ? (r.position as MyPosition)
+      : undefined);
+}
+
+// ---------------------------------------------------------------------------
 // LIPA MDOGO — the member's own contracts + derived maturity (#3).
 // ---------------------------------------------------------------------------
 export interface LipaMdogoSchedule {
