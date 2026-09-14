@@ -133,8 +133,8 @@ export function MuseumGallery({ className = "" }: { className?: string }) {
           {/* Horizontal scroller — snap-mandatory, native momentum, hidden bar */}
           <div
             ref={scrollerRef}
-            className="flex gap-3 overflow-x-auto snap-x snap-mandatory no-scrollbar px-[9vw] pb-4"
-            style={{ scrollPaddingLeft: "9vw", scrollPaddingRight: "9vw" }}
+            className="flex gap-3 overflow-x-auto snap-x snap-mandatory no-scrollbar px-[22.5vw] pb-4"
+            style={{ scrollPaddingLeft: "22.5vw", scrollPaddingRight: "22.5vw" }}
           >
             {events.map((e, i) => (
               <MuseumCard key={e.slug} event={e} isActive={i === activeIndex} onOpen={open} />

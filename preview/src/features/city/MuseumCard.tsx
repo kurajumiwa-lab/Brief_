@@ -47,7 +47,7 @@ export function MuseumCard({
 
   return (
     <article
-      className={`snap-center shrink-0 w-[82vw] max-w-sm h-[68vh] max-h-[560px] relative overflow-hidden rounded-[28px] transition-all duration-500 ease-out ${
+      className={`snap-center shrink-0 w-[55vw] max-w-sm h-[45vh] max-h-[560px] relative overflow-hidden rounded-[28px] transition-all duration-500 ease-out ${
         isActive ? "scale-100 opacity-100" : "scale-[0.92] opacity-60"
       }`}
     >
@@ -88,7 +88,7 @@ export function MuseumCard({
       {/* Fallback monogram — if no image, the title's initial, huge */}
       {!event.coverImageUrl && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-[120px] font-black text-white/25 select-none">{initial}</span>
+          <span className="text-[80px] font-black text-white/25 select-none">{initial}</span>
         </div>
       )}
 
