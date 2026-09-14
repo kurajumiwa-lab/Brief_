@@ -45,6 +45,9 @@ export function register(app) {
         agentId: me,
         displayName: req.body?.displayName,
         contactMethod: req.body?.contactMethod ?? null,
+        businessType: req.body?.businessType ?? null,
+        location: req.body?.location ?? null,
+        description: req.body?.description ?? '',
         claimType: req.body?.claimType ?? 'full_registration'
       });
       res.status(201).json(result);

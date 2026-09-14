@@ -967,6 +967,10 @@ export interface Vendor {
   contactMethod: string | null;
   /** The extracted identity object this seller came from, when there is one. */
   objectId: string | null;
+  /** What the shop IS (from the supply business-type vocabulary). */
+  businessType?: string | null;
+  /** Where the shop physically is — the anti-fraud onboarding fact. */
+  location?: string | null;
   status: VendorStatus;
   verification: VendorVerification;
   activeListingCount: number;

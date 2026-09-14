@@ -91,6 +91,22 @@ async function main() {
   }
   pass('PromoCarousel renders nothing when there are no published events');
 
+  // --- vertical variant: a compact ticker, one event at a time, no cover image ---
+  fetchHandler = async (url) => {
+    if (url.includes('/api/events')) return { ok: true, status: 200, text: async () => JSON.stringify({ events: [event()], total: 1 }) };
+    return { ok: false, status: 404, text: async () => JSON.stringify({}) };
+  };
+  {
+    const { container } = mount(React.createElement(PromoCarousel, { variant: 'vertical' }));
+    await flush();
+    const t = text(container);
+    assert.ok(t.includes('Kilimani Night Market'), 'vertical ticker shows the title');
+    assert.ok(t.includes('KES 500'), 'vertical ticker shows the price');
+    assert.equal(container.querySelector('img'), null, 'vertical ticker has no cover image');
+    assert.ok(container.querySelector('a'), 'vertical ticker is tappable');
+  }
+  pass('PromoCarousel vertical variant is a compact, honest ticker');
+
   // --- multiple events render dots ---
   fetchHandler = async (url) => {
     if (url.includes('/api/events')) return { ok: true, status: 200, text: async () => JSON.stringify({ events: [event(), event({ slug: 'e2', title: 'Second Event' })] , total: 2 }) };

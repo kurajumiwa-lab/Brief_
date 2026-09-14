@@ -4522,7 +4522,10 @@ export function claimVendor(
  */
 export function onboardVendor(body: {
   displayName: string;
+  businessType: string;
+  location: string;
   contactMethod?: string | null;
+  description?: string;
   claimType?: 'menu_upload' | 'full_registration';
 }): Promise<ApiResult<{ vendor: Vendor; claim: FieldAgentClaim }>> {
   return request('/api/me/field-agent/onboard', {

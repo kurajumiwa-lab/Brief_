@@ -141,6 +141,8 @@ async function main() {
   let claimedVendorId = null;
   let claimedType = null;
   let onboardedName = null;
+  let onboardedType = null;
+  let onboardedLocation = null;
   fetchHandler = async (url, init) => {
     if (url.includes('/referrals/mine')) {
       return { ok: true, status: 200, text: async () => JSON.stringify({
@@ -152,8 +154,11 @@ async function main() {
       }) };
     }
     if (url.includes('/field-agent/onboard')) {
-      onboardedName = init?.body ? JSON.parse(init.body).displayName : null;
-      return { ok: true, status: 201, text: async () => JSON.stringify({ vendor: { id: 'vnew', ownerId: 'a1', displayName: onboardedName, description: '', contactMethod: null, objectId: null, status: 'active', verification: { evidence: [], facts: [], verifiedCount: 0 }, activeListingCount: 0, createdAt: '2026-09-10T00:00:00Z', updatedAt: '2026-09-10T00:00:00Z' }, claim: { id: 'cnew', vendorId: 'vnew', agentId: 'a1', claimType: 'full_registration', territoryKey: null, status: 'active', claimedAt: '2026-09-10T00:00:00Z', expiresAt: '2028-09-10T00:00:00Z', createdAt: '2026-09-10T00:00:00Z' } }) };
+      const body = init?.body ? JSON.parse(init.body) : {};
+      onboardedName = body.displayName ?? null;
+      onboardedType = body.businessType ?? null;
+      onboardedLocation = body.location ?? null;
+      return { ok: true, status: 201, text: async () => JSON.stringify({ vendor: { id: 'vnew', ownerId: 'a1', displayName: onboardedName, description: '', contactMethod: null, objectId: null, businessType: onboardedType, location: onboardedLocation, status: 'active', verification: { evidence: [], facts: [], verifiedCount: 0 }, activeListingCount: 0, createdAt: '2026-09-10T00:00:00Z', updatedAt: '2026-09-10T00:00:00Z' }, claim: { id: 'cnew', vendorId: 'vnew', agentId: 'a1', claimType: 'full_registration', territoryKey: null, status: 'active', claimedAt: '2026-09-10T00:00:00Z', expiresAt: '2028-09-10T00:00:00Z', createdAt: '2026-09-10T00:00:00Z' } }) };
     }
     if (url.includes('/field-agent')) {
       // No claims yet -> the "Onboard a vendor" action must appear.
@@ -206,17 +211,28 @@ async function main() {
     act(() => { btn('Onboard a vendor').click(); });
     await flush();
 
-    const nameInput = Array.from(document.querySelectorAll('input')).find((i) => (i.getAttribute('aria-label') || '') === 'New vendor name');
-    act(() => {
+    const setInput = (aria, value) => {
+      const el = Array.from(document.querySelectorAll('input')).find((i) => (i.getAttribute('aria-label') || '') === aria);
       const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-      setter.call(nameInput, 'Mama Njeri Grocers');
-      nameInput.dispatchEvent(new window.Event('input', { bubbles: true }));
-    });
+      setter.call(el, value);
+      el.dispatchEvent(new window.Event('input', { bubbles: true }));
+    };
+    setInput('New vendor name', 'Mama Njeri Grocers');
+    setInput('Shop location', 'Gikomba Market, Stall 12');
+
+    // Select the business type (select element -> 'change' event).
+    const typeSelect = Array.from(document.querySelectorAll('select')).find((s) => (s.getAttribute('aria-label') || '') === 'Business type');
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, 'value').set;
+    setter.call(typeSelect, 'retailer');
+    typeSelect.dispatchEvent(new window.Event('change', { bubbles: true }));
+
     act(() => { btn('Add shop').click(); });
     await flush();
     assert.equal(onboardedName, 'Mama Njeri Grocers', 'onboard posted the shop name');
+    assert.equal(onboardedType, 'retailer', 'onboard posted the business type');
+    assert.equal(onboardedLocation, 'Gikomba Market, Stall 12', 'onboard posted the physical location');
   }
-  pass('EarnSurface: a member can onboard a brand-new vendor (no dead end)');
+  pass('EarnSurface: a member can onboard a brand-new vendor with type + location');
   pass('EarnSurface: a member can onboard a new vendor and claim territory (no dead end)');
 
   console.log('\nPASS ' + count);

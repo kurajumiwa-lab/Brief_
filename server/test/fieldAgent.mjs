@@ -106,9 +106,15 @@ test("a rival with no claim earns nothing, even on the same orders", () => {
 // ---------------------------------------------------------------------------
 test("onboardVendor creates the vendor AND records the territory claim", () => {
   const rider = user("fa_rider2");
-  const result = fa.onboardVendor({ agentId: rider.id, displayName: "Mama Njeri Grocers", claimType: "full_registration" });
+  const result = fa.onboardVendor({
+    agentId: rider.id, displayName: "Mama Njeri Grocers",
+    businessType: "retailer", location: "Gikomba Market, Stall 12",
+    contactMethod: "0712 345678", claimType: "full_registration"
+  });
   assert.ok(result.vendor.id, "a vendor was created");
   assert.equal(result.vendor.ownerId, rider.id, "the onboarded shop is held by the agent");
+  assert.equal(result.vendor.businessType, "retailer", "business type is stored");
+  assert.equal(result.vendor.location, "Gikomba Market, Stall 12", "physical location is stored");
   assert.equal(result.claim.claimType, "full_registration");
   assert.equal(result.claim.agentId, rider.id);
   assert.equal(result.claim.status, "active");
@@ -116,12 +122,15 @@ test("onboardVendor creates the vendor AND records the territory claim", () => {
   assert.equal(fa.vendorClaim(result.vendor.id)?.agentId, rider.id);
 });
 
-test("onboardVendor refuses a duplicate claim and requires a name", () => {
+test("onboardVendor refuses a shell shop (no type / no location) and a duplicate claim", () => {
   const rider = user("fa_rider3");
   rejects(() => fa.onboardVendor({ agentId: rider.id, displayName: "", claimType: "menu_upload" }), "validation_error");
-  fa.onboardVendor({ agentId: rider.id, displayName: "Stall A", claimType: "full_registration" });
+  // Anti-fraud: a shop needs a business type and a physical location.
+  rejects(() => fa.onboardVendor({ agentId: rider.id, displayName: "Shell", location: "Market" }), "validation_error");
+  rejects(() => fa.onboardVendor({ agentId: rider.id, displayName: "Shell", businessType: "retailer" }), "validation_error");
+  fa.onboardVendor({ agentId: rider.id, displayName: "Stall A", businessType: "retailer", location: "Wakulima Market", claimType: "full_registration" });
   // full_registration is first-touch-wins per vendor.
-  rejects(() => fa.onboardVendor({ agentId: rider.id, displayName: "Stall A", claimType: "full_registration" }), "already_claimed");
+  rejects(() => fa.onboardVendor({ agentId: rider.id, displayName: "Stall A", businessType: "retailer", location: "Wakulima Market", claimType: "full_registration" }), "already_claimed");
 });
 
 // ---------------------------------------------------------------------------

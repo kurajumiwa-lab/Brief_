@@ -47,7 +47,9 @@ export function createVendor({
   displayName,
   description = '',
   contactMethod = null,
-  objectId = null
+  objectId = null,
+  businessType = null,
+  location = null
 }) {
   if (!ownerId) throw new Error('ownerId is required');
   if (!displayName || !String(displayName).trim()) {
@@ -72,6 +74,11 @@ export function createVendor({
     description: String(description ?? ''),
     contactMethod: contactMethod ?? null,
     objectId: objectId ?? null,
+    // Onboarding facts about the shop — what it is and where it physically is.
+    // A vendor without these was created before the anti-fraud gate; new
+    // onboardings through the field agent always set them.
+    businessType: businessType ? String(businessType).trim() : null,
+    location: location ? String(location).trim() : null,
     status: 'active',
     createdAt: now,
     updatedAt: now
@@ -172,7 +179,7 @@ export function listVendors({ status = null } = {}) {
  * otherwise be a way to steal a verified seller identity.
  */
 export function updateVendor(id, patch) {
-  const allowed = ['displayName', 'description', 'contactMethod', 'status'];
+  const allowed = ['displayName', 'description', 'contactMethod', 'status', 'businessType', 'location'];
   const clean = {};
   for (const k of allowed) if (k in patch) clean[k] = patch[k];
 

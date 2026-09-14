@@ -22,7 +22,6 @@ import {
   Users
 } from 'lucide-react';
 import { soundEngine } from '../../utils/SoundEngine';
-import { PromoCarousel } from './PromoCarousel';
 
 export interface PipelineViewProps {
   space: Space;
@@ -212,8 +211,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
         </div>
       )}
 
-      {/* ── 1. PROMO CAROUSEL — real published events, auto-advancing ── */}
-      <PromoCarousel />
+
 
       {/* ── 2. COMPACT KPI HEADER STRIP ── */}
       <div className="p-4 rounded-3xl bg-white shadow-2xs border border-black/5 flex items-center justify-between gap-3">

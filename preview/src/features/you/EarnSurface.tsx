@@ -112,16 +112,27 @@ export function EarnSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
   // shop AND records the territory claim in one step — no existing vendor to
   // "claim" first. This is what "onboard" means when the market is empty.
   const [onboardName, setOnboardName] = useState("");
+  const [onboardType, setOnboardType] = useState("");
+  const [onboardLocation, setOnboardLocation] = useState("");
+  const [onboardPhone, setOnboardPhone] = useState("");
   const [onboardBusy, setOnboardBusy] = useState(false);
   const onboardNewVendor = async () => {
     const name = onboardName.trim();
     if (!name) { setNotice("Enter the shop's name to onboard it."); return; }
+    if (!onboardType) { setNotice("Choose what kind of business this is."); return; }
+    if (!onboardLocation.trim()) { setNotice("Enter the shop's physical location — this prevents false shops."); return; }
     setOnboardBusy(true);
-    const res = await api.onboardVendor({ displayName: name, claimType: 'full_registration' });
+    const res = await api.onboardVendor({
+      displayName: name,
+      businessType: onboardType,
+      location: onboardLocation.trim(),
+      contactMethod: onboardPhone.trim() || null,
+      claimType: 'full_registration'
+    });
     setOnboardBusy(false);
     if (res.ok) {
       setNotice(`Onboarded ${name} — territory claimed, 0.75% of their settled orders for 24 months.`);
-      setOnboardName("");
+      setOnboardName(""); setOnboardType(""); setOnboardLocation(""); setOnboardPhone("");
       setOnboardOpen(false);
       setVendors(null);
       void load();
@@ -232,28 +243,59 @@ export function EarnSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
               <div className="mt-3 space-y-2">
                 {/* Onboard a NEW vendor — the primary act when the market has no
                     vendors to claim yet (or alongside claiming existing ones). */}
-                <div className="rounded-lg p-2 border" style={{ borderColor: "var(--color-border)" }}>
+                <div className="rounded-lg p-2 border space-y-1.5" style={{ borderColor: "var(--color-border)" }}>
                   <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>Onboard a new shop</p>
-                  <div className="mt-1 flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Shop name (e.g. Mama Njeri Grocers)"
-                      aria-label="New vendor name"
-                      value={onboardName}
-                      onChange={(e) => setOnboardName(e.target.value)}
-                      className="flex-1 rounded-lg px-2.5 py-1.5 text-xs border"
-                      style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
-                    />
-                    <button
-                      type="button"
-                      disabled={onboardBusy}
-                      onClick={onboardNewVendor}
-                      className="rounded-full px-3 py-1.5 text-[10px] font-bold shrink-0"
-                      style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}
-                    >
-                      {onboardBusy ? "…" : "Add shop"}
-                    </button>
-                  </div>
+                  <p className="text-[9px]" style={{ color: "var(--color-text-muted)" }}>
+                    Name, what it is, and where it is — so a false shop never counts in the vendor list.
+                  </p>
+                  <input
+                    type="text"
+                    placeholder="Shop name (e.g. Mama Njeri Grocers)"
+                    aria-label="New vendor name"
+                    value={onboardName}
+                    onChange={(e) => setOnboardName(e.target.value)}
+                    className="w-full rounded-lg px-2.5 py-1.5 text-xs border"
+                    style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
+                  />
+                  <select
+                    aria-label="Business type"
+                    value={onboardType}
+                    onChange={(e) => setOnboardType(e.target.value)}
+                    className="w-full rounded-lg px-2.5 py-1.5 text-xs border"
+                    style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
+                  >
+                    <option value="">What kind of business?</option>
+                    {["retailer", "wholesaler", "distributor", "manufacturer", "service_provider", "logistics_provider", "warehouse", "processor", "repair_provider"].map((t) => (
+                      <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    placeholder="Physical location (e.g. Gikomba Market, Stall 12)"
+                    aria-label="Shop location"
+                    value={onboardLocation}
+                    onChange={(e) => setOnboardLocation(e.target.value)}
+                    className="w-full rounded-lg px-2.5 py-1.5 text-xs border"
+                    style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Shop phone (optional)"
+                    aria-label="Shop phone"
+                    value={onboardPhone}
+                    onChange={(e) => setOnboardPhone(e.target.value)}
+                    className="w-full rounded-lg px-2.5 py-1.5 text-xs border"
+                    style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
+                  />
+                  <button
+                    type="button"
+                    disabled={onboardBusy}
+                    onClick={onboardNewVendor}
+                    className="w-full rounded-full px-3 py-1.5 text-[10px] font-bold"
+                    style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}
+                  >
+                    {onboardBusy ? "…" : "Add shop"}
+                  </button>
                 </div>
 
                 {vendors === null ? (

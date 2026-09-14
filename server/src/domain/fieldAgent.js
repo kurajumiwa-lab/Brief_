@@ -33,6 +33,7 @@ import { getUser } from './auth.js';
 import { createTransaction, transitionTransaction } from './ledger.js';
 import * as referrals from './referrals.js';
 import * as vendors from './vendor.js';
+import { BUSINESS_TYPES } from './supply.js';
 
 export const CLAIM_TYPES = ['menu_upload', 'full_registration'];
 export const CLAIM_STATUS = ['active', 'expired', 'revoked'];
@@ -137,17 +138,27 @@ export function vendorClaim(vendorId) {
  * one-off bounty; full_registration opens the 24-month override on SETTLED
  * orders. Nothing here stores a balance.
  */
-export function onboardVendor({ agentId, displayName, contactMethod = null, claimType = 'full_registration' }) {
+export function onboardVendor({ agentId, displayName, contactMethod = null, businessType = null, location = null, description = '', claimType = 'full_registration' }) {
   if (!agentId) fail('an agent is required');
   if (!CLAIM_TYPES.includes(claimType)) fail(`claimType must be one of ${CLAIM_TYPES.join(', ')}`);
   if (!displayName || !String(displayName).trim()) fail('a vendor name is required');
+  // ANTI-FRAUD GATE: an onboarded shop must say what it IS and where it
+  // physically is, before it is created. A shell shop with no type or no
+  // location would otherwise slip into the public vendor list.
+  if (!businessType || !BUSINESS_TYPES.includes(businessType)) {
+    fail(`businessType must be one of ${BUSINESS_TYPES.join(', ')}`);
+  }
+  if (!location || !String(location).trim()) fail('a physical store location is required');
 
   // Create (or reuse, in the one-vendor-per-person model) the vendor the agent
   // is onboarding.
   const vendor = vendors.createVendor({
     ownerId: agentId,
     displayName: String(displayName).trim(),
-    contactMethod: contactMethod ?? null
+    contactMethod: contactMethod ?? null,
+    businessType,
+    location: String(location).trim(),
+    description: String(description ?? '')
   });
 
   // First-touch-wins, same as the existing claim path.

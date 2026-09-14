@@ -15,6 +15,7 @@ import * as briefApi from '../../api/briefApi';
 import { CreateSpaceModal } from '../spaces/CreateSpaceModal';
 import { soundEngine } from '../../utils/SoundEngine';
 import { attentionQueue, needsAttention, splitSpaces } from './spaceSignals';
+import { PromoCarousel } from '../spaces/PromoCarousel';
 
 export interface HomeSurfaceProps {
   userName?: string;
@@ -104,6 +105,16 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
         <h1 className="text-2xl sm:text-3xl font-black text-[color:var(--color-text)] tracking-tight">
           What are you working on?
         </h1>
+      </div>
+
+      {/* ── WHAT'S ON — a compact vertical ticker of real events + a one-line
+             feature-education note, so the home screen teaches as it sells. ── */}
+      <PromoCarousel variant="vertical" />
+
+      <div className="p-3 rounded-2xl bg-[color:var(--color-primary-subtle)] border border-[color:var(--color-primary)]">
+        <p className="text-[11px] leading-snug" style={{ color: "var(--color-text)" }}>
+          <strong style={{ color: "var(--color-primary)" }}>Tip:</strong> a space is your project — add an offer, take orders, track the money. Make it <strong>Public</strong> to be found by others, or keep it <strong>Private</strong>.
+        </p>
       </div>
 
       {isLoading ? (

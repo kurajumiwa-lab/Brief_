@@ -55,7 +55,7 @@ function useReducedMotion(): boolean {
   return reduced;
 }
 
-export function PromoCarousel({ className = "" }: { className?: string }) {
+export function PromoCarousel({ className = "", variant = 'horizontal' }: { className?: string; variant?: 'horizontal' | 'vertical' }) {
   const [events, setEvents] = useState<EventListing[] | null>(null);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -84,6 +84,60 @@ export function PromoCarousel({ className = "" }: { className?: string }) {
   if (!events || events.length === 0) return null;
 
   const go = (i: number) => setIndex(((i % events.length) + events.length) % events.length);
+
+  // VERTICAL VARIANT — a compact auto-cycling ticker. One event at a time,
+  // advancing on the same timer, with a subtle vertical slide. Honest: no
+  // cover image, just title + category + date · price · count.
+  if (variant === 'vertical') {
+    const e = events[index];
+    const gradient = GRADIENTS[titleHash(e.title) % GRADIENTS.length];
+    const initial = (e.title || '?').trim().charAt(0).toUpperCase();
+    return (
+      <div
+        className={`relative overflow-hidden rounded-2xl border border-black/5 shadow-sm ${className}`}
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+        role="region"
+        aria-label="Featured events"
+      >
+        <div
+          key={e.slug}
+          className="w-full"
+          style={{ animation: reduced ? 'none' : 'brief-rise-in var(--motion-normal) var(--ease-emphasized) both' }}
+        >
+          <a href={`/c/${encodeURIComponent(e.slug)}`} className="flex items-center gap-3 p-3 no-underline">
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: gradient }}
+            >
+              <span className="text-lg font-black text-white/80">{initial}</span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-black text-[color:var(--color-text)] truncate">{e.title}</p>
+              <p className="text-[10px] text-[color:var(--color-text-muted)] truncate">
+                {[e.categoryLabel, fmtDate(e.startsAt), money(e.price, e.currency), e.popularity > 0 ? `${e.popularity} going` : null]
+                  .filter(Boolean).join(' · ')}
+              </p>
+            </div>
+          </a>
+        </div>
+        {events.length > 1 && (
+          <div className="absolute bottom-2 right-3 flex items-center gap-1">
+            {events.map((ev, i) => (
+              <button
+                key={ev.slug}
+                type="button"
+                aria-label={`Go to slide ${i + 1}`}
+                onClick={() => go(i)}
+                className="h-1 rounded-full transition-all"
+                style={{ width: i === index ? 12 : 4, background: i === index ? 'var(--color-primary)' : 'var(--color-border)' }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
