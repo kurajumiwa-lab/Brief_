@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   ShoppingBag,
   Users,
@@ -47,34 +47,6 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
   const [eventBusy, setEventBusy] = useState(false);
   const [eventError, setEventError] = useState<string | null>(null);
   const [eventsKey, setEventsKey] = useState(0);
-
-  // Derived headline counts for the head card's scoreboard. Fetched from real
-  // rows, never invented: events (published campaigns), marketplace listings,
-  // public spaces, circles. null = the read did not resolve (rendered as "—"),
-  // so a failed fetch never masquerades as a zero.
-  const [counts, setCounts] = useState<{ events: number | null; listings: number | null; spaces: number | null; circles: number | null }>(
-    { events: null, listings: null, spaces: null, circles: null }
-  );
-
-  useEffect(() => {
-    let live = true;
-    (async () => {
-      const [ev, li, sp, ci] = await Promise.all([
-        briefApi.browseEvents({ limit: 1 }),
-        briefApi.getListings(),
-        briefApi.discoverPublicSpaces(50),
-        briefApi.getCircles()
-      ]);
-      if (!live) return;
-      setCounts({
-        events: ev.ok ? ev.data.total : null,
-        listings: li.ok ? li.data.length : null,
-        spaces: sp.ok ? sp.data.length : null,
-        circles: ci.ok ? ci.data.length : null
-      });
-    })();
-    return () => { live = false; };
-  }, []);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -127,8 +99,6 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
     { id: 'circles', label: 'Circles' },
     { id: 'vault', label: 'Vault' }
   ];
-  const fmtCount = (n: number | null) => (n === null ? '—' : String(n));
-  const activeDot = Math.max(0, subTabs.findIndex((t) => t.id === activeSubTab));
 
   return (
     <div className={`space-y-6 max-w-4xl mx-auto ${className}`}>
@@ -139,25 +109,14 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
         </div>
       )}
 
-      {/* ── CITY FEED HEAD — segmented control + scoreboard + dots ── */}
+      {/* ── CITY FEED HEAD — clean premium light header ── */}
       <DiscoveryHead
+        eyebrow="Discover"
+        title="Everything happening around you"
+        subtitle="Events, marketplace drops, community circles and vaults — from people nearby."
         segments={subTabs}
         activeSegmentId={activeSubTab}
         onSegmentChange={(id) => { soundEngine.play('tap'); setActiveSubTab(id as CitySubTab); }}
-        left={{
-          label: 'Events',
-          icon: <Clock className="w-4 h-4 text-white/80" />
-        }}
-        right={{
-          label: 'Marketplace',
-          icon: <ShoppingBag className="w-4 h-4 text-white/80" />
-        }}
-        heroLeft={fmtCount(counts.events)}
-        heroRight={fmtCount(counts.listings)}
-        statusLabel="Nairobi · Kilimani · CBD"
-        chips={{ left: fmtCount(counts.spaces), right: fmtCount(counts.circles) }}
-        dotCount={subTabs.length}
-        activeDot={activeDot}
       />
 
       {/* ── MOUNTED CITIZEN SURFACES ── */}

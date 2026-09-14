@@ -87,22 +87,27 @@ async function main() {
   }
   pass('CityFeedView exposes event + marketplace input surfaces');
 
-  // --- 2b. The head card clones the four-primitive shell -------------------
+  // --- 2b. The head card is a clean, premium light header ------------------
   {
     const c = mount(React.createElement(CityFeedView, { onOpenSpace: () => {} }));
     await flush();
-    const tablist = c.querySelector('[role="tablist"]');
-    assert.ok(tablist, 'the head renders a segmented control (tablist)');
-    const segs = Array.from(tablist.querySelectorAll('[role="tab"]'));
-    assert.equal(segs.length, 5, 'five discover sections');
-    assert.equal(segs[0].getAttribute('aria-selected'), 'true', 'the first (All) section is active by default');
-    const heroEl = Array.from(c.querySelectorAll('div')).find((d) => (d.getAttribute('class') || '').includes('text-3xl'));
-    assert.ok(heroEl, 'the head renders a hero scoreboard element');
-    assert.ok(/^\d+\s*:\s*\d+$/.test(text(heroEl)), `hero shows two derived counts split by a colon (got "${text(heroEl)}")`);
-    const dashes = Array.from(c.querySelectorAll('div[aria-hidden="true"] div')).filter((d) => (d.getAttribute('class') || '').includes('h-1 w-5'));
-    assert.equal(dashes.length, 5, 'five carousel dashes');
+    // No dark gradient card, no scoreboard, no pagination dots.
+    const card = c.querySelector('.bg-gradient-to-b');
+    assert.ok(!card, 'no dark gradient card remains');
+    const t = text(c);
+    assert.ok(t.includes('Everything happening around you'), 'a premium title is present');
+    assert.ok(t.includes('Discover'), 'an eyebrow label is present');
+    // Section navigation survives as light chips.
+    const nav = c.querySelector('nav[aria-label="Discover sections"]');
+    assert.ok(nav, 'the section navigation is present');
+    const chips = Array.from(nav.querySelectorAll('button'));
+    assert.equal(chips.length, 5, 'five discover sections');
+    assert.equal(chips[0].getAttribute('aria-pressed'), 'true', 'the first (All) section is active by default');
+    // No scoreboard "0 : 0" hero.
+    const hero = Array.from(c.querySelectorAll('div')).find((d) => (d.getAttribute('class') || '').includes('text-3xl'));
+    assert.ok(!hero, 'no scoreboard hero remains');
   }
-  pass('DiscoveryHead clones the segmented control + scoreboard + pagination dots');
+  pass('DiscoveryHead is a clean premium light header (no scoreboard, no dark card)');
 
   // --- 3. Host opens a real event form; Post-a-listing opens Selling -------
   {
