@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import * as briefApi from '../../api/briefApi';
 import { DiscoveryHead } from './DiscoveryHead';
+import { MuseumGallery } from './MuseumGallery';
 import { PublicSpaces } from './PublicSpaces';
 import { WairoDispatchPanel } from './WairoDispatchPanel';
 import { EventsHub } from '../../components/EventsHub';
@@ -124,13 +125,13 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
         {/* ALL CITY STREAM VIEW */}
         {activeSubTab === 'all' && (
           <div className="space-y-8 animate-fadeIn">
-            {/* Top Events Section */}
-            <section className="space-y-3">
+            {/* Top Events Section — the museum gallery (swiping inventory, not feed) */}
+            <section className="space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Clock className="w-4 h-4 text-[color:var(--color-primary)]" />
                     <h3 className="text-sm font-black uppercase tracking-wider text-[color:var(--color-text)]">
-                      Featured Events & Experiences
+                      Events around you
                     </h3>
                   </div>
                   <div className="flex items-center gap-2">
@@ -147,14 +148,12 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
                       onClick={() => setActiveSubTab('events')}
                       className="text-xs font-bold text-[color:var(--color-primary)] hover:underline flex items-center space-x-1 cursor-pointer"
                     >
-                      <span>View All Events</span>
+                      <span>All filters</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
-                <div className="p-4 rounded-3xl bg-white border border-black/5 shadow-2xs">
-                  <EventsHub key={eventsKey} />
-                </div>
+                <MuseumGallery />
             </section>
 
             {/* Marketplace Section */}
