@@ -19,7 +19,7 @@
 
 import React, { useEffect, useState } from "react";
 import * as api from "../../api/briefApi";
-import type { PickupOrigin, Pickup, PickupOriginObligation, Rider } from "../../api/briefApi";
+import type { PickupOrigin, Pickup, PickupOriginObligation, Rider, PickupFeeSettlement } from "../../api/briefApi";
 import { Bike, MapPin, Package, CheckCircle2, Plus, ArrowRight, Wallet, User } from "lucide-react";
 import { soundEngine } from "../../utils/SoundEngine";
 
@@ -28,6 +28,7 @@ export function WairoDispatchPanel({ className = "" }: { className?: string }) {
   const [riders, setRiders] = useState<Rider[] | null>(null);
   const [pickups, setPickups] = useState<Pickup[] | null>(null);
   const [fee, setFee] = useState<PickupOriginObligation | null>(null);
+  const [settlements, setSettlements] = useState<PickupFeeSettlement[] | null>(null);
   const [notice, setNotice] = useState("");
 
   // Assign form state
@@ -40,16 +41,18 @@ export function WairoDispatchPanel({ className = "" }: { className?: string }) {
   const [busy, setBusy] = useState(false);
 
   const load = async () => {
-    const [o, r, p, f] = await Promise.all([
+    const [o, r, p, f, s] = await Promise.all([
       api.getPickupOrigins(),
       api.getPickupRiders(),
       api.listMyPickups(),
-      api.getMyPickupOriginFee()
+      api.getMyPickupOriginFee(),
+      api.getMyPickupFeeSettlements()
     ]);
     setOrigins(o.ok ? o.data : []);
     setRiders(r.ok ? r.data : []);
     setPickups(p.ok ? p.data : []);
     setFee(f.ok ? f.data : null);
+    setSettlements(s.ok ? s.data : []);
   };
 
   useEffect(() => { void load(); }, []);
@@ -187,7 +190,7 @@ export function WairoDispatchPanel({ className = "" }: { className?: string }) {
         )}
       </div>
 
-      {/* ── Origin fee (the onboarding agent's take) ── */}
+      {/* ── Origin fee (the onboarding agent's take) + settlement state ── */}
       {fee && (
         <div className="p-3 rounded-2xl flex items-center justify-between gap-2" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)", border: "1px solid var(--color-border)" }}>
           <div className="min-w-0">
@@ -195,6 +198,16 @@ export function WairoDispatchPanel({ className = "" }: { className?: string }) {
               <Wallet className="w-3 h-3 inline mr-1" /> Your origin fee
             </p>
             <p className="text-[10px] leading-snug" style={{ color: "var(--color-text-muted)" }}>{fee.note}</p>
+            {(settlements ?? []).length > 0 && (() => {
+              const latest = settlements![0];
+              const color = latest.status === "confirmed"
+                ? "var(--color-success)"
+                : latest.status === "refused" ? "var(--color-danger)" : "var(--color-warning)";
+              const label = latest.status === "confirmed"
+                ? `KES ${latest.originFeeKes.toLocaleString()} settled by finance`
+                : latest.status === "refused" ? "Last settlement refused by finance" : "Settlement pending — awaiting finance";
+              return <p className="text-[10px] font-bold mt-0.5" style={{ color }}>{label}</p>;
+            })()}
           </div>
           <span className="shrink-0 text-sm font-black" style={{ color: "var(--color-success)" }}>KES {fee.originFeeKes.toLocaleString()}</span>
         </div>

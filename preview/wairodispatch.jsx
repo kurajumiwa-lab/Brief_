@@ -62,6 +62,11 @@ async function main() {
     if (url.includes('/pickup-origin-fee')) {
       return { ok: true, status: 200, text: async () => JSON.stringify({ obligation: { agentId: 'a1', pickupCount: 1, feePerPickupKes: 20, originFeeKes: 20, note: 'derived' } }) };
     }
+    if (url.includes('/pickup-fee/settlements')) {
+      return { ok: true, status: 200, text: async () => JSON.stringify({ settlements: [
+        { id: 's1', agentId: 'a1', periodKey: 'a1:all:all', periodFrom: null, periodTo: null, pickupCount: 1, feePerPickupKes: 20, originFeeKes: 20, ledgerId: 'tx1', status: 'confirmed', confirmedAt: '2026-09-12T00:00:00Z', refusedReason: null, createdAt: '2026-09-11T00:00:00Z' }
+      ] }) };
+    }
     if (url.includes('/complete')) {
       completedId = url.split('/pickups/')[1]?.split('/')[0] ?? null;
       return { ok: true, status: 200, text: async () => JSON.stringify({ pickup: { id: completedId, status: 'delivered' } }) };
@@ -80,8 +85,9 @@ async function main() {
   assert.ok(t.includes('Kilimani Grocers'), 'origin (claimed shop) renders');
   assert.ok(t.includes('Assign a pickup'), 'assign form present');
   assert.ok(t.includes('KES 20'), 'derived origin fee shown');
+  assert.ok(t.includes('settled by finance'), 'a confirmed settlement is shown against the fee');
   assert.ok(!t.includes('auction') && !t.includes('90%'), 'no fabricated bid/payout copy');
-  pass('WairoDispatchPanel renders origins, assign form and the derived fee — no fabrication');
+  pass('WairoDispatchPanel renders origins, assign form, fee and settlement state — no fabrication');
 
   // The rider picker lists other riders but never fabricates a person.
   const riderSelect = Array.from(document.querySelectorAll('select')).find((s) => (s.getAttribute('aria-label') || '') === 'Rider (who delivers)');
