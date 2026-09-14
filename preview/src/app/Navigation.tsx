@@ -123,13 +123,19 @@ export const Navigation: React.FC<NavigationProps> = ({
   offersCount = 0,
   className = ''
 }) => {
-  // Normalize active tab to one of the primary slots
+  // Normalize active tab to one of the primary slots.
+  //
+  // NOTE: the Discover nav button maps to the internal 'city' tab (the City
+  // Feed), NOT 'home'. Mapping 'city' -> 'home' made the nav pill highlight
+  // "Home" while the City Feed was on screen — the Discover tab looked
+  // unselectable and the two screens appeared to "merge". 'city' belongs to
+  // Discover. 'catalog' is the legacy alias for the same slot.
   const getNormalizedActive = (): 'supply' | 'requests' | 'home' | 'spaces' | 'discover' | 'activity' | 'you' => {
     if (activeTab === 'supply') return 'supply';
     if (activeTab === 'requests') return 'requests';
-    if (activeTab === 'home' || activeTab === 'city') return 'home';
+    if (activeTab === 'home') return 'home';
     if (activeTab === 'spaces' || activeTab === 'pipeline') return 'spaces';
-    if (activeTab === 'discover' || activeTab === 'catalog') return 'discover';
+    if (activeTab === 'city' || activeTab === 'discover' || activeTab === 'catalog') return 'discover';
     if (activeTab === 'activity' || activeTab === 'ledger') return 'activity';
     if (activeTab === 'you') return 'you';
     return 'home';

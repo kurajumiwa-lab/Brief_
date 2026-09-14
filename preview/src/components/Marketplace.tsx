@@ -44,10 +44,12 @@ type View =
 
 export interface MarketplaceProps {
   currentUserId?: string;
+  /** Which section to open on mount. 'selling' deep-links to the post-a-listing flow. */
+  initialSection?: Section;
 }
 
-export function Marketplace({ currentUserId = 'usr_me' }: MarketplaceProps = {}) {
-  const [section, setSection] = React.useState<Section>('browse');
+export function Marketplace({ currentUserId = 'usr_me', initialSection = 'browse' }: MarketplaceProps = {}) {
+  const [section, setSection] = React.useState<Section>(initialSection);
   const [view, setView] = React.useState<View>({ kind: 'list' });
 
   const [listings, setListings] = React.useState<{
