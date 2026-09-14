@@ -9,8 +9,10 @@ import {
   TrendingUp,
   Flame,
   Search,
-  Clock
+  Clock,
+  Store
 } from 'lucide-react';
+import { PublicSpaces } from './PublicSpaces';
 import { EventsHub } from '../../components/EventsHub';
 import { Marketplace } from '../../components/Marketplace';
 import { Circles } from '../../components/Circles';
@@ -154,6 +156,17 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
               <div className="p-4 rounded-3xl bg-white border border-black/5 shadow-2xs">
                 <Marketplace />
               </div>
+            </section>
+
+            {/* Public Spaces Section — projects owners chose to make discoverable */}
+            <section className="p-4 rounded-3xl bg-white border border-black/5 shadow-2xs space-y-3">
+              <div className="flex items-center space-x-2">
+                <Store className="w-4 h-4 text-[color:var(--color-primary)]" />
+                <h3 className="text-xs font-black uppercase tracking-wider text-[color:var(--color-text)]">
+                  Public Spaces
+                </h3>
+              </div>
+              <PublicSpaces onOpenSpace={(id) => onOpenSpace?.(id)} />
             </section>
 
             {/* Community Circles & Vault Section */}

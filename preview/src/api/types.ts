@@ -1760,6 +1760,19 @@ export interface SpaceUpdate {
   status?: 'active' | 'archived';
 }
 
+/** The PUBLIC projection of a space — the safe directory card, no private economics. */
+export interface PublicSpace {
+  id: string;
+  name: string;
+  type: SpaceType;
+  goal: string;
+  image: string | null;
+  activeOfferCount: number;
+  sampleOffers: Array<{ title: string; price: number; currency: string }>;
+  visibility: 'public';
+  createdAt: string;
+}
+
 export interface SpaceOfferCreate {
   title: string;
   description?: string;

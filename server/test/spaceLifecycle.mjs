@@ -42,6 +42,27 @@ test("a non-owner cannot change visibility", () => {
   rejects(() => spaces.updateSpace(s.id, { visibility: "public" }, { callerId: other.id }), "Not authorized");
 });
 
+test("the public directory lists only public, active spaces, with a safe projection", () => {
+  const pub = spaces.createSpace({ ownerId: owner.id, name: "Public Kitchen", visibility: "public" });
+  const priv = spaces.createSpace({ ownerId: owner.id, name: "Private Vault", visibility: "private" });
+  const unlisted = spaces.createSpace({ ownerId: owner.id, name: "Unlisted", visibility: "unlisted" });
+  const archived = spaces.createSpace({ ownerId: owner.id, name: "Archived Public", visibility: "public" });
+  spaces.updateSpace(archived.id, { status: "archived" }, { callerId: owner.id });
+
+  const dir = spaces.listPublicSpaces();
+  const names = dir.map((s) => s.name);
+  assert.ok(names.includes("Public Kitchen"), "public space is listed");
+  assert.ok(!names.includes("Private Vault"), "private space is not listed");
+  assert.ok(!names.includes("Unlisted"), "unlisted space is not listed");
+  assert.ok(!names.includes("Archived Public"), "archived public space is not listed");
+
+  // The projection is safe: no private economics leak.
+  const row = dir.find((s) => s.name === "Public Kitchen");
+  assert.ok(!("ownerId" in row) && !("vendorId" in row) && !("metrics" in row) && !("revenueKes" in row), "no private fields");
+  assert.equal(row.visibility, "public");
+  assert.equal(row.activeOfferCount, 0);
+});
+
 test("a space may carry a cover image, set at create and edited later", () => {
   const s = spaces.createSpace({ ownerId: owner.id, name: "Kilimani Kitchen", image: "/api/media/file/img1" });
   assert.equal(s.image, "/api/media/file/img1");

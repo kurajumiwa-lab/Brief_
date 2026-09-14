@@ -172,6 +172,42 @@ export function updateSpace(spaceId, updates = {}, { callerId }) {
 }
 
 /**
+ * The PUBLIC projection of a space — what a stranger may see when browsing
+ * the directory. Deliberately reduced: no ownerId, no vendorId, no revenue,
+ * no customer counts, no conversations. A public space advertises what it IS
+ * and what it OFFERS, not its private economics.
+ */
+export function publicSpaceView(space) {
+  const activeOffers = store.filter('listings', (l) =>
+    (l.spaceId === space.id || l.vendorId === space.vendorId) && l.status === 'active');
+  return {
+    id: space.id,
+    name: space.name,
+    type: space.type,
+    goal: space.goal || '',
+    image: space.image ?? null,
+    activeOfferCount: activeOffers.length,
+    // A taste of what they sell, for the directory card. Real titles only.
+    sampleOffers: activeOffers.slice(0, 3).map((o) => ({ title: o.title, price: o.price, currency: o.currency })),
+    visibility: space.visibility,
+    createdAt: space.createdAt
+  };
+}
+
+/**
+ * The public directory: every PUBLIC, ACTIVE space, for discovery and
+ * collaboration. Private and unlisted spaces never appear; archived never
+ * appears. Derived from real rows, ordered newest first.
+ */
+export function listPublicSpaces(limit = 50) {
+  return store.filter('spaces', (s) => s.visibility === 'public' && s.status === 'active')
+    .slice()
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+    .slice(0, Math.min(limit, 100))
+    .map(publicSpaceView);
+}
+
+/**
  * Delete a space. Owner-only. The space row is removed and its own offers
  * (listings) are ARCHIVED — withdrawn, terminal — rather than hard-deleted,
  * because orders and the ledger still refer to what those listings were.

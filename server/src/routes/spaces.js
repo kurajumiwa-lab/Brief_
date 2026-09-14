@@ -8,6 +8,12 @@ import * as outbound from '../outbound.js';
 import { requireAuthMw, recordError } from './helpers.js';
 
 export function register(app) {
+  // --- The PUBLIC DIRECTORY: every public, active space, for discovery and
+  // collaboration. No session required; the projection is the safe public one. ---
+  app.get('/api/public/spaces', (req, res) => {
+    res.json({ spaces: spaces.listPublicSpaces(Number(req.query?.limit) || 50) });
+  });
+
   // --- List caller's spaces ---
   app.get('/api/spaces', (req, res) => {
     try {

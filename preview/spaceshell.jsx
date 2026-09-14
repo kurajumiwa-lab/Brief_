@@ -61,11 +61,13 @@ async function main() {
   assert.ok(t.includes('First 20 customers'), 'goal');
   // Build capability: the + Add Offer button is present.
   assert.ok(t.includes('Add Offer'), 'add-offer action present');
-  // The three consolidated surfaces.
-  assert.ok(t.includes('Pipeline') && t.includes('Ledger') && t.includes('Catalog'), 'three tabs present');
+  // Action-oriented tabs (not accounting nouns).
+  assert.ok(t.includes('Inbox') && t.includes('Money') && t.includes('Offers'), 'action-oriented tabs present');
+  // The derived next-step hero: one obvious action, not a menu.
+  assert.ok(t.includes('Next step') && t.includes('Add an offer'), 'next-step hero present');
   // Visibility controls: the owner decides who discovers the space.
   assert.ok(t.includes('Private') && t.includes('Unlisted') && t.includes('Public'), 'visibility choices present');
-  pass('SpaceShell exposes identity, add-offer, tabs, and visibility — not a register');
+  pass('SpaceShell exposes identity, next-step, action tabs, and visibility — not a register');
 
   console.log('\nPASS ' + count);
   process.exit(0);

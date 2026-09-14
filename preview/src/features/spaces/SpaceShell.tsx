@@ -7,6 +7,7 @@ import { SpaceMoney } from './SpaceMoney';
 import { CatalogView } from './CatalogView';
 import { CreateFlowModal } from './CreateFlowModal';
 import { soundEngine } from '../../utils/SoundEngine';
+import { needsAttention } from '../home/spaceSignals';
 
 export interface SpaceShellProps {
   spaceId: string;
@@ -126,9 +127,9 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
 
   // 3 Consolidated Surfaces
   const tabs: Array<{ id: 'pipeline' | 'ledger' | 'catalog'; label: string }> = [
-    { id: 'pipeline', label: 'Pipeline' },
-    { id: 'ledger', label: 'Ledger' },
-    { id: 'catalog', label: `Catalog (${space.offers?.length || 0})` }
+    { id: 'pipeline', label: 'Inbox' },
+    { id: 'ledger', label: 'Money' },
+    { id: 'catalog', label: `Offers (${space.offers?.length || 0})` }
   ];
 
   // Map legacy tabs to the 3 consolidated surfaces
@@ -195,6 +196,41 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
             {space?.goal || (space?.type ?? 'business').replace('_', ' ')}
           </p>
         </div>
+
+        {/* NEXT STEP — one obvious action, derived from real rows. Not a menu. */}
+        {space && (
+          <div className="p-3 rounded-2xl bg-[color:var(--color-primary-subtle)] border border-[color:var(--color-primary)] space-y-1">
+            <span className="text-[9px] font-black uppercase tracking-wider text-[color:var(--color-primary)]">▶ Next step</span>
+            {(space.offers?.length ?? 0) === 0 ? (
+              <p className="text-xs font-bold text-[color:var(--color-text)]">Add your first offer to make this space sellable.</p>
+            ) : (
+              <p className="text-xs font-bold text-[color:var(--color-text)]">
+                {(() => {
+                  const items = needsAttention(space);
+                  if (items.length === 0) return 'All caught up — open your inbox or add another offer.';
+                  const first = items[0];
+                  return first.label.charAt(0).toUpperCase() + first.label.slice(1) + '.';
+                })()}
+              </p>
+            )}
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setCreateFlowOpen(true)}
+                className="px-3 py-1.5 rounded-full bg-[color:var(--color-primary)] text-[color:var(--accent-ink)] text-xs font-bold cursor-pointer"
+              >
+                Add an offer
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('pipeline')}
+                className="px-3 py-1.5 rounded-full bg-white text-[color:var(--color-text)] text-xs font-bold border border-black/10 cursor-pointer"
+              >
+                Open inbox
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Visibility — the owner decides who can discover this space */}
         <div className="flex items-center gap-1.5">
