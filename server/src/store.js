@@ -123,6 +123,11 @@ const EMPTY = {
   // original onboarding agent claimed, that agent earns a flat per-pickup
   // origin fee (derived, never stored as a balance). See src/domain/pickups.js.
   pickups: [],
+  // Finance-confirmed payouts of the derived pickup origin fee. The fee is
+  // derived on read (delivered pickups x PICKUP_ORIGIN_FEE_KES); it only
+  // becomes money through one of these ledger-backed settlements, mirroring
+  // fieldAgentSettlements exactly. See src/domain/pickups.js.
+  pickupFeeSettlements: [],
   // Lipa Mdogo — asset-financing RECORDS + collection. Brief is not the
   // lender: the lender is a bank/sacco/cooperative partner who owns the risk;
   // these rows record the contract, the derived schedule, and provider-

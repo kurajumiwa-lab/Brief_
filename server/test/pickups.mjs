@@ -254,5 +254,81 @@ test("API: a dispatcher can route to a DIFFERENT rider by id", async () => {
   }
 });
 
+// ---------------------------------------------------------------------------
+// ORIGIN-FEE SETTLEMENT — the only place the derived fee becomes money.
+// ---------------------------------------------------------------------------
+test("requestPickupFeeSettlement writes a pending pickup_origin_fee ledger entry", () => {
+  // Two delivered pickups from the onboarder's shop => 2 x PICKUP_ORIGIN_FEE_KES.
+  const s = pickups.requestPickupFeeSettlement(onboarder.id, {});
+  assert.equal(s.status, "pending");
+  assert.equal(s.originFeeKes, 2 * pickups.PICKUP_ORIGIN_FEE_KES);
+  assert.equal(s.pickupCount, 2);
+  const tx = store.find("ledgerTransactions", (t) => t.id === s.ledgerId);
+  assert.ok(tx, "a ledger transaction was written");
+  assert.equal(tx.type, "pickup_origin_fee");
+  assert.equal(tx.status, "pending");
+  assert.equal(tx.amount, 2 * pickups.PICKUP_ORIGIN_FEE_KES);
+});
+
+test("a duplicate settlement for the same period is refused", () => {
+  rejects(() => pickups.requestPickupFeeSettlement(onboarder.id, {}), "duplicate_settlement");
+});
+
+test("confirmPickupFeeSettlement confirms the ledger; a second confirm is refused", () => {
+  const pending = store.find("pickupFeeSettlements", (s) => s.agentId === onboarder.id && s.status === "pending");
+  const confirmed = pickups.confirmPickupFeeSettlement(pending.id, { accept: true });
+  assert.equal(confirmed.status, "confirmed");
+  assert.ok(confirmed.confirmedAt);
+  assert.equal(store.find("ledgerTransactions", (t) => t.id === pending.ledgerId).status, "confirmed");
+  rejects(() => pickups.confirmPickupFeeSettlement(pending.id, { accept: true }), "invalid_state");
+});
+
+test("a refused settlement writes no money and marks the ledger failed", () => {
+  const s = pickups.requestPickupFeeSettlement(onboarder.id, { from: "2026-01-01" });
+  const refused = pickups.confirmPickupFeeSettlement(s.id, { accept: false, note: "not this quarter" });
+  assert.equal(refused.status, "refused");
+  assert.equal(refused.refusedReason, "not this quarter");
+  assert.equal(store.find("ledgerTransactions", (t) => t.id === s.ledgerId).status, "failed");
+  // A refused period can be re-requested (status !== 'refused' is the guard).
+  const again = pickups.requestPickupFeeSettlement(onboarder.id, { from: "2026-01-01" });
+  assert.equal(again.status, "pending");
+});
+
+test("listPickupFeeSettlements returns the agent's rows, newest first", () => {
+  const rows = pickups.listPickupFeeSettlements(onboarder.id);
+  assert.ok(rows.length >= 2);
+  assert.equal(rows[0].agentId, onboarder.id);
+  // The delivering rider (no claims) has no settlements.
+  assert.equal(pickups.listPickupFeeSettlements(rider.id).length, 0);
+});
+
+test("requestPickupFeeSettlement refuses when there are no delivered pickups", () => {
+  rejects(() => pickups.requestPickupFeeSettlement(rider.id, {}), "no_activity");
+});
+
+test("API: pickup-fee settlement routes are wired; the request is finance-gated", async () => {
+  const { default: app } = await import("../src/index.js");
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (p, m = "GET", body, token) => {
+    const headers = { "content-type": "application/json" };
+    if (token) headers.authorization = `Bearer ${token}`;
+    const r = await fetch(`http://127.0.0.1:${port}${p}`, { method: m, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: r.status, body: await r.json().catch(() => null) };
+  };
+  try {
+    const P = (await call("/api/auth/register", "POST", { handle: "pk_plainf" + Date.now().toString(36), password: "a good passphrase" })).body;
+    // The read list is plain auth.
+    const list = await call("/api/me/pickup-fee/settlements", "GET", undefined, P.token);
+    assert.equal(list.status, 200);
+    assert.ok(Array.isArray(list.body.settlements));
+    // The request is finance-gated: a non-finance caller is refused.
+    const denied = await call("/api/me/pickup-fee/settle", "POST", {}, P.token);
+    assert.equal(denied.status, 403);
+  } finally {
+    srv.close();
+  }
+});
+
 console.log(`\nPASS ${count}`);
 process.exit(0);

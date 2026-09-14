@@ -24,6 +24,8 @@
 // ---------------------------------------------------------------------------
 
 import { store, newId } from '../store.js';
+import { getUser } from './auth.js';
+import { createTransaction, transitionTransaction } from './ledger.js';
 
 export const PICKUP_STATUS = ['assigned', 'picked_up', 'delivered', 'cancelled'];
 
@@ -193,4 +195,69 @@ export function listRiders({ selfId = null } = {}) {
   return riders.sort((a, b) =>
     (b.isSelf ? 1 : 0) - (a.isSelf ? 1 : 0) ||
     String(a.displayName).localeCompare(String(b.displayName)));
+}
+
+// ---------------------------------------------------------------------------
+// SETTLEMENT — the only place the derived origin fee becomes money. Mirrors
+// the field-agent override settlement: a finance-gated request writes a real
+// ledger transaction (type pickup_origin_fee); finance confirms or refuses.
+// ---------------------------------------------------------------------------
+export function requestPickupFeeSettlement(agentId, { from = null, to = null } = {}) {
+  if (!getUser(agentId)) fail('agent not found', 404, 'not_found');
+  const obl = pickupOriginObligation(agentId);
+  if (obl.originFeeKes <= 0) fail('no delivered pickups to settle against', 409, 'no_activity');
+
+  const periodKey = `${agentId}:${from ?? 'all'}:${to ?? 'all'}`;
+  if (store.find('pickupFeeSettlements', (s) => s.periodKey === periodKey && s.status !== 'refused')) {
+    fail('a settlement for this period already exists', 409, 'duplicate_settlement');
+  }
+
+  const tx = createTransaction({
+    amount: obl.originFeeKes,
+    type: 'pickup_origin_fee',
+    description: `Pickup origin fee — ${obl.pickupCount} delivered pickup(s)`,
+    counterparty: agentId,
+    metadata: { agentId, pickupCount: obl.pickupCount, feePerPickupKes: obl.feePerPickupKes, periodFrom: from, periodTo: to }
+  });
+  transitionTransaction(tx.id, 'pending', 'awaiting finance confirmation of pickup origin fee');
+  const now = new Date().toISOString();
+  return store.insert('pickupFeeSettlements', {
+    id: newId('pfs'),
+    agentId,
+    periodKey,
+    periodFrom: from,
+    periodTo: to,
+    pickupCount: obl.pickupCount,
+    feePerPickupKes: obl.feePerPickupKes,
+    originFeeKes: obl.originFeeKes,
+    ledgerId: tx.id,
+    status: 'pending',
+    confirmedAt: null,
+    refusedReason: null,
+    createdAt: now,
+    updatedAt: now
+  });
+}
+
+export function confirmPickupFeeSettlement(settlementId, { accept = true, note = '' } = {}) {
+  const row = store.find('pickupFeeSettlements', (s) => s.id === settlementId);
+  if (!row) fail('settlement not found', 404, 'not_found');
+  if (row.status !== 'pending') fail(`this settlement is already ${row.status}`, 409, 'invalid_state');
+  const reason = String(note ?? '').trim();
+  if (!accept) {
+    if (reason.length < 4) fail('say why the settlement is refused');
+    transitionTransaction(row.ledgerId, 'failed', reason.slice(0, 200));
+    return store.update('pickupFeeSettlements', row.id, {
+      status: 'refused', refusedReason: reason.slice(0, 300), updatedAt: new Date().toISOString()
+    });
+  }
+  transitionTransaction(row.ledgerId, 'confirmed', 'pickup origin fee confirmed by finance');
+  return store.update('pickupFeeSettlements', row.id, {
+    status: 'confirmed', confirmedAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+  });
+}
+
+export function listPickupFeeSettlements(agentId) {
+  return store.filter('pickupFeeSettlements', (s) => s.agentId === agentId)
+    .slice().sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }

@@ -4607,6 +4607,27 @@ export function getPickupRiders(): Promise<ApiResult<Rider[]>> {
     Array.isArray(r?.riders) ? (r.riders as Rider[]) : undefined);
 }
 
+/** A finance-confirmed payout of the derived pickup origin fee. */
+export interface PickupFeeSettlement {
+  id: string;
+  agentId: string;
+  periodKey: string;
+  periodFrom: string | null;
+  periodTo: string | null;
+  pickupCount: number;
+  feePerPickupKes: number;
+  originFeeKes: number;
+  ledgerId: string;
+  status: 'pending' | 'confirmed' | 'refused';
+  confirmedAt: string | null;
+  refusedReason: string | null;
+  createdAt: string;
+}
+export function getMyPickupFeeSettlements(): Promise<ApiResult<PickupFeeSettlement[]>> {
+  return request('/api/me/pickup-fee/settlements', undefined, r =>
+    Array.isArray(r?.settlements) ? (r.settlements as PickupFeeSettlement[]) : undefined);
+}
+
 // ---------------------------------------------------------------------------
 // LIPA MDOGO — the member's own contracts + derived maturity (#3).
 // ---------------------------------------------------------------------------
