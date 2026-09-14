@@ -4694,6 +4694,36 @@ export function getMyPosition(): Promise<ApiResult<MyPosition>> {
 }
 
 // ---------------------------------------------------------------------------
+// COMMITMENTS — the derived reciprocal-obligation graph (owed to me / I owe).
+// ---------------------------------------------------------------------------
+export interface Commitment {
+  id: string;
+  kind: 'quote_honor' | 'delivery' | 'payment' | 'repayment';
+  fromParty: string | null;
+  toParty: string | null;
+  value: { amount: number; currency: string } | null;
+  deadline: string | null;
+  status: 'open' | 'fulfilled' | 'lapsed';
+  evidence: { table: string; id: string };
+}
+export interface MyCommitments {
+  owedByMe: Commitment[];
+  owedToMe: Commitment[];
+  fulfilled: Commitment[];
+  lapsed: Commitment[];
+  owedByMeKes: number;
+  owedToMeKes: number;
+  derivedAt: string;
+  note: string;
+}
+export function getMyCommitments(): Promise<ApiResult<MyCommitments>> {
+  return request('/api/me/commitments', undefined, r =>
+    r?.commitments && Array.isArray(r.commitments.owedByMe) && Array.isArray(r.commitments.owedToMe)
+      ? (r.commitments as MyCommitments)
+      : undefined);
+}
+
+// ---------------------------------------------------------------------------
 // LIPA MDOGO — the member's own contracts + derived maturity (#3).
 // ---------------------------------------------------------------------------
 export interface LipaMdogoSchedule {
