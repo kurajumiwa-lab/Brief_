@@ -4593,6 +4593,20 @@ export function getMyPickupOriginFee(): Promise<ApiResult<PickupOriginObligation
     r?.obligation && typeof r.obligation.originFeeKes === 'number' ? (r.obligation as PickupOriginObligation) : undefined);
 }
 
+/** A rider a dispatcher can route a pickup to, with the derived reason why. */
+export interface Rider {
+  id: string;
+  handle: string | null;
+  displayName: string;
+  isSelf: boolean;
+  /** Why this person is listed: onboarding_agent | rider | you. */
+  reasons: string[];
+}
+export function getPickupRiders(): Promise<ApiResult<Rider[]>> {
+  return request('/api/pickups/riders', undefined, r =>
+    Array.isArray(r?.riders) ? (r.riders as Rider[]) : undefined);
+}
+
 // ---------------------------------------------------------------------------
 // LIPA MDOGO — the member's own contracts + derived maturity (#3).
 // ---------------------------------------------------------------------------

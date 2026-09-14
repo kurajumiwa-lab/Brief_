@@ -186,5 +186,73 @@ test("API: assign defaults the rider to the caller (self-dispatch)", async () =>
   }
 });
 
+// ---------------------------------------------------------------------------
+// RIDERS — the dispatch directory, derived (never fabricated).
+// ---------------------------------------------------------------------------
+test("listRiders derives the directory: onboarding agent + known rider + self", () => {
+  // At this point: `onboarder` actively claims the shop (onboarding agent),
+  // `rider` has been assigned pickups (known rider). Add a third user who is
+  // neither — they must NOT appear.
+  const bystander = user("pk_bystander");
+  const riders = pickups.listRiders({ selfId: onboarder.id });
+
+  const byId = (id) => riders.find((r) => r.id === id);
+  assert.ok(byId(onboarder.id), "the caller is listed");
+  assert.equal(byId(onboarder.id).isSelf, true);
+  assert.ok(byId(onboarder.id).reasons.includes("you"), "the caller is marked 'you'");
+  assert.ok(byId(onboarder.id).reasons.includes("onboarding_agent"), "the caller is also an onboarding agent");
+  assert.ok(byId(rider.id), "a known rider is listed");
+  assert.ok(byId(rider.id).reasons.includes("rider"), "the known rider is marked 'rider'");
+  assert.equal(byId(rider.id).isSelf, false);
+  assert.ok(!byId(bystander.id), "a user who is neither agent nor rider is NOT listed");
+  // Self sorts first.
+  assert.equal(riders[0].id, onboarder.id, "self is first in the directory");
+});
+
+test("listRiders drops ids with no user row (no fabricated people)", () => {
+  // An orphan riderId that points at no user must be dropped, not shown.
+  store.insert('pickups', {
+    id: 'pkp_orphan', originVendorId: vendor.id, riderId: 'usr_ghost',
+    destinationTown: 'Nakuru', receiverName: 'X', receiverPhone: '07xx',
+    status: 'assigned', createdAt: new Date().toISOString(), completedAt: null
+  });
+  const riders = pickups.listRiders({ selfId: onboarder.id });
+  assert.ok(!riders.some((r) => r.id === 'usr_ghost'), 'orphan riderId is dropped');
+});
+
+test("API: a dispatcher can route to a DIFFERENT rider by id", async () => {
+  const { default: app } = await import("../src/index.js");
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (p, m = "GET", body, token) => {
+    const headers = { "content-type": "application/json" };
+    if (token) headers.authorization = `Bearer ${token}`;
+    const r = await fetch(`http://127.0.0.1:${port}${p}`, { method: m, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: r.status, body: await r.json().catch(() => null) };
+  };
+  try {
+    const D = (await call("/api/auth/register", "POST", { handle: "pk_disp" + Date.now().toString(36), password: "a good passphrase" })).body;
+    const R = (await call("/api/auth/register", "POST", { handle: "pk_ride" + Date.now().toString(36), password: "a good passphrase" })).body;
+
+    // The directory lists both (the dispatcher as self, the rider as… the rider
+    // will only appear once they've ridden; so first assign to them).
+    const assigned = await call("/api/pickups", "POST", {
+      originVendorId: vendor.id, riderId: R.user.id,
+      destinationTown: "Nyeri", receiverName: "Routed Buyer", receiverPhone: "0716 000000"
+    }, D.token);
+    assert.equal(assigned.status, 201);
+    assert.equal(assigned.body.pickup.riderId, R.user.id, "rider is the named person, not the dispatcher");
+    assert.equal(assigned.body.pickup.assignedBy, D.user.id, "assignedBy is the dispatcher");
+
+    const riders = await call("/api/pickups/riders", "GET", undefined, D.token);
+    assert.equal(riders.status, 200);
+    const list = riders.body.riders;
+    assert.ok(list.some((r) => r.id === R.user.id), "the named rider now appears in the directory");
+    assert.ok(list.some((r) => r.id === D.user.id && r.isSelf), "the dispatcher is listed as self");
+  } finally {
+    srv.close();
+  }
+});
+
 console.log(`\nPASS ${count}`);
 process.exit(0);

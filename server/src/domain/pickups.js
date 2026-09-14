@@ -151,3 +151,46 @@ export function listOrigins() {
     };
   });
 }
+
+/**
+ * The DISPATCHABLE RIDERS — the people a dispatcher can route a pickup TO.
+ * Derived, never fabricated; every entry is a real user, listed for a real
+ * reason:
+ *   * every onboarding agent who actively claims a shop (they are out in the
+ *     field onboarding AND delivering),
+ *   * every rider who has already been assigned a pickup (a known rider),
+ *   * you (selfId), so self-dispatch stays available.
+ * An id with no user row is dropped — it is not a real person you can route to.
+ */
+export function listRiders({ selfId = null } = {}) {
+  const reasons = new Map(); // userId -> Set(reason)
+  const add = (id, reason) => {
+    if (!id) return;
+    if (!reasons.has(id)) reasons.set(id, new Set());
+    reasons.get(id).add(reason);
+  };
+
+  for (const c of store.filter('vendorClaims', (c) =>
+    c.claimType === 'full_registration' && c.status === 'active')) {
+    add(c.agentId, 'onboarding_agent');
+  }
+  for (const p of store.all('pickups')) add(p.riderId, 'rider');
+  if (selfId) add(selfId, 'you');
+
+  const riders = [];
+  for (const [id, rs] of reasons) {
+    const u = store.find('users', (x) => x.id === id);
+    if (!u) continue;
+    riders.push({
+      id,
+      handle: u.handle ?? null,
+      displayName: u.displayName ?? u.handle ?? 'Rider',
+      isSelf: id === selfId,
+      reasons: [...rs]
+    });
+  }
+  // Self first, then by display name.
+  return riders.sort((a, b) =>
+    (b.isSelf ? 1 : 0) - (a.isSelf ? 1 : 0) ||
+    String(a.displayName).localeCompare(String(b.displayName)));
+}

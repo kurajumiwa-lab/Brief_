@@ -59,6 +59,14 @@ export function register(app) {
     res.json({ origins: pickups.listOrigins() });
   });
 
+  // The riders a dispatcher can route to (onboarding agents + known riders +
+  // you). Derived from real rows; assigning names a rider by id.
+  app.get('/api/pickups/riders', (req, res) => {
+    const me = requireAuth(req, res);
+    if (!me) return;
+    res.json({ riders: pickups.listRiders({ selfId: me }) });
+  });
+
   // Operator read of all pickups.
   app.get('/api/ops/pickups', (req, res) => {
     if (!requireCap(req, res, 'moderate')) return;

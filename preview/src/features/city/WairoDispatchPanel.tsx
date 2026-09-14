@@ -6,6 +6,9 @@
 //   * ORIGINS — shops a field agent onboarded (active full_registration claim).
 //   * ASSIGN — route a rider to pick up from an origin, to a town, for a
 //     receiver. The server refuses a shop nobody claimed (unclaimed_origin).
+//   * ROUTE — the rider picker lets a dispatcher name WHO delivers: default is
+//     self-dispatch, but any derived rider (an onboarding agent or a known
+//     rider) can be assigned by id. The directory is derived, never seeded.
 //   * DELIVERED — the rider marks a pickup delivered; the ONBOARDING agent
 //     earns a derived flat per-pickup origin fee (shown honestly, "not money
 //     until finance confirms").
@@ -16,30 +19,35 @@
 
 import React, { useEffect, useState } from "react";
 import * as api from "../../api/briefApi";
-import type { PickupOrigin, Pickup, PickupOriginObligation } from "../../api/briefApi";
-import { Bike, MapPin, Package, CheckCircle2, Plus, ArrowRight, Wallet } from "lucide-react";
+import type { PickupOrigin, Pickup, PickupOriginObligation, Rider } from "../../api/briefApi";
+import { Bike, MapPin, Package, CheckCircle2, Plus, ArrowRight, Wallet, User } from "lucide-react";
 import { soundEngine } from "../../utils/SoundEngine";
 
 export function WairoDispatchPanel({ className = "" }: { className?: string }) {
   const [origins, setOrigins] = useState<PickupOrigin[] | null>(null);
+  const [riders, setRiders] = useState<Rider[] | null>(null);
   const [pickups, setPickups] = useState<Pickup[] | null>(null);
   const [fee, setFee] = useState<PickupOriginObligation | null>(null);
   const [notice, setNotice] = useState("");
 
   // Assign form state
   const [originId, setOriginId] = useState("");
+  // Empty string = self-dispatch (the server defaults riderId to the caller).
+  const [riderId, setRiderId] = useState("");
   const [town, setTown] = useState("");
   const [receiver, setReceiver] = useState("");
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
 
   const load = async () => {
-    const [o, p, f] = await Promise.all([
+    const [o, r, p, f] = await Promise.all([
       api.getPickupOrigins(),
+      api.getPickupRiders(),
       api.listMyPickups(),
       api.getMyPickupOriginFee()
     ]);
     setOrigins(o.ok ? o.data : []);
+    setRiders(r.ok ? r.data : []);
     setPickups(p.ok ? p.data : []);
     setFee(f.ok ? f.data : null);
   };
@@ -54,7 +62,9 @@ export function WairoDispatchPanel({ className = "" }: { className?: string }) {
     setBusy(true);
     const res = await api.assignPickup({
       originVendorId: originId,
-      // Self-dispatch (the server defaults riderId to the caller).
+      // Only sent when the dispatcher chose a DIFFERENT rider; otherwise the
+      // server defaults to the caller (self-dispatch).
+      ...(riderId ? { riderId } : {}),
       destinationTown: town.trim(),
       receiverName: receiver.trim(),
       receiverPhone: phone.trim()
@@ -62,7 +72,7 @@ export function WairoDispatchPanel({ className = "" }: { className?: string }) {
     setBusy(false);
     if (res.ok) {
       setNotice(`Pickup assigned — deliver to ${town.trim()}.`);
-      setTown(""); setReceiver(""); setPhone(""); setOriginId("");
+      setTown(""); setReceiver(""); setPhone(""); setOriginId(""); setRiderId("");
       void load();
     } else {
       setNotice(res.error ?? "Could not assign the pickup.");
@@ -119,6 +129,25 @@ export function WairoDispatchPanel({ className = "" }: { className?: string }) {
           <Package className="w-3 h-3 inline mr-1" /> Assign a pickup
         </p>
         <div className="mt-2 space-y-1.5">
+          <div className="relative">
+            <User className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--color-text-muted)" }} />
+            <select
+              aria-label="Rider (who delivers)"
+              value={riderId}
+              onChange={(e) => { soundEngine.play('tap'); setRiderId(e.target.value); }}
+              className="w-full rounded-lg pl-7 pr-2.5 py-1.5 text-xs border appearance-none cursor-pointer"
+              style={{ borderColor: "var(--color-border)", background: "var(--color-surface)", color: "var(--color-text)" }}
+            >
+              <option value="">Me (self-dispatch)</option>
+              {(riders ?? [])
+                .filter((r) => !r.isSelf)
+                .map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.displayName}{r.reasons.includes("onboarding_agent") ? " · onboarding agent" : ""}
+                  </option>
+                ))}
+            </select>
+          </div>
           <input type="text" placeholder="Destination town / stage" aria-label="Pickup destination town" value={town} onChange={(e) => setTown(e.target.value)} className="w-full rounded-lg px-2.5 py-1.5 text-xs border" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }} />
           <input type="text" placeholder="Receiver name" aria-label="Receiver name" value={receiver} onChange={(e) => setReceiver(e.target.value)} className="w-full rounded-lg px-2.5 py-1.5 text-xs border" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }} />
           <input type="text" placeholder="Receiver phone" aria-label="Receiver phone" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full rounded-lg px-2.5 py-1.5 text-xs border" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }} />

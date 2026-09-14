@@ -48,6 +48,12 @@ async function main() {
         { vendorId: 'v1', shopName: 'Kilimani Grocers', businessType: 'retailer', location: 'Kilimani', onboardingAgentId: 'a1' }
       ] }) };
     }
+    if (url.includes('/pickups/riders')) {
+      return { ok: true, status: 200, text: async () => JSON.stringify({ riders: [
+        { id: 'me', handle: 'me', displayName: 'Me', isSelf: true, reasons: ['you'] },
+        { id: 'r1', handle: 'riderone', displayName: 'Rider One', isSelf: false, reasons: ['onboarding_agent'] }
+      ] }) };
+    }
     if (url.includes('/pickups/mine')) {
       return { ok: true, status: 200, text: async () => JSON.stringify({ pickups: [
         { id: 'p1', originVendorId: 'v1', riderId: 'r1', assignedBy: 'r1', destinationTown: 'Nakuru', receiverName: 'Buyer', receiverPhone: '0712', notes: '', status: 'assigned', createdAt: '2026-09-10T00:00:00Z', completedAt: null }
@@ -62,7 +68,7 @@ async function main() {
     }
     if (url.includes('/api/pickups')) {
       assignedBody = JSON.parse(init.body);
-      return { ok: true, status: 201, text: async () => JSON.stringify({ pickup: { id: 'p2', originVendorId: assignedBody.originVendorId, riderId: 'r1', destinationTown: assignedBody.destinationTown, status: 'assigned' } }) };
+      return { ok: true, status: 201, text: async () => JSON.stringify({ pickup: { id: 'p2', originVendorId: assignedBody.originVendorId, riderId: assignedBody.riderId ?? 'me', destinationTown: assignedBody.destinationTown, status: 'assigned' } }) };
     }
     return { ok: false, status: 404, text: async () => JSON.stringify({}) };
   };
@@ -76,6 +82,14 @@ async function main() {
   assert.ok(t.includes('KES 20'), 'derived origin fee shown');
   assert.ok(!t.includes('auction') && !t.includes('90%'), 'no fabricated bid/payout copy');
   pass('WairoDispatchPanel renders origins, assign form and the derived fee — no fabrication');
+
+  // The rider picker lists other riders but never fabricates a person.
+  const riderSelect = Array.from(document.querySelectorAll('select')).find((s) => (s.getAttribute('aria-label') || '') === 'Rider (who delivers)');
+  assert.ok(riderSelect, 'rider picker present');
+  const optionLabels = Array.from(riderSelect.querySelectorAll('option')).map((o) => text(o));
+  assert.ok(optionLabels.some((l) => l.includes('Me (self-dispatch)')), 'self-dispatch is the default option');
+  assert.ok(optionLabels.some((l) => l.includes('Rider One')), 'a real other rider is listed');
+  pass('WairoDispatchPanel shows a rider picker (self + derived riders)');
 
   // Assign (self-dispatch, no riderId -> server defaults to caller).
   act(() => {
@@ -95,6 +109,31 @@ async function main() {
   assert.equal(assignedBody.destinationTown, 'Nakuru', 'assign posted the destination');
   assert.equal(assignedBody.riderId, undefined, 'riderId defaults to caller (self-dispatch)');
   pass('WairoDispatchPanel assigns a self-dispatched pickup');
+
+  // Route to a DIFFERENT rider: re-select origin, re-fill, pick a rider, assign.
+  act(() => { document.querySelectorAll('button').forEach(b => { if (text(b).startsWith('Kilimani Grocers')) b.click(); }); });
+  act(() => {
+    const setInput = (aria, v) => {
+      const el = Array.from(document.querySelectorAll('input')).find((i) => (i.getAttribute('aria-label') || '') === aria);
+      const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+      setter.call(el, v); el.dispatchEvent(new window.Event('input', { bubbles: true }));
+    };
+    setInput('Pickup destination town', 'Nyeri');
+    setInput('Receiver name', 'Routed');
+    setInput('Receiver phone', '0716');
+  });
+  await flush();
+  act(() => {
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, 'value').set;
+    setter.call(riderSelect, 'r1');
+    riderSelect.dispatchEvent(new window.Event('change', { bubbles: true }));
+  });
+  await flush();
+  act(() => { btn('Assign rider').click(); });
+  await flush();
+  assert.equal(assignedBody.riderId, 'r1', 'assign posts the chosen rider id');
+  assert.equal(assignedBody.destinationTown, 'Nyeri', 'assign posted the second destination');
+  pass('WairoDispatchPanel routes a pickup to a different rider');
 
   // Mark delivered.
   act(() => { btn('Delivered').click(); });
