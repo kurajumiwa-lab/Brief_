@@ -22,6 +22,7 @@ import {
   Users
 } from 'lucide-react';
 import { soundEngine } from '../../utils/SoundEngine';
+import { PromoCarousel } from './PromoCarousel';
 
 export interface PipelineViewProps {
   space: Space;
@@ -211,70 +212,8 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
         </div>
       )}
 
-      {/* ── 1. "NAIROBI TONIGHT" CITY PREVIEW STRIP (Horizontal 3-Card Strip) ── */}
-      <div className="p-4 rounded-3xl bg-[color:var(--color-text)] text-white space-y-3 shadow-md border border-white/5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-1.5">
-            <span className="w-2 h-2 rounded-full bg-[color:var(--color-primary)] animate-ping" />
-            <span className="text-[10px] font-black uppercase tracking-wider text-[color:var(--color-primary)]">
-              Nairobi Tonight · Live City Highlights
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              soundEngine.play('tap');
-              onViewCityFeed?.();
-            }}
-            className="text-[11px] font-bold text-[color:var(--color-primary)] hover:underline flex items-center space-x-1 cursor-pointer"
-          >
-            <span>See Full City Feed</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {/* 3 Horizontal Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-          {/* Card 1: Events */}
-          <div
-            onClick={() => onViewCityFeed?.()}
-            className="p-3 rounded-2xl bg-white/10 hover:bg-white/15 transition-all cursor-pointer space-y-1 border border-white/5"
-          >
-            <div className="flex items-center space-x-1 text-white/70 text-[9px] uppercase font-bold">
-              <Clock className="w-3 h-3 text-[color:var(--color-primary)]" />
-              <span>Events & Night Market</span>
-            </div>
-            <p className="text-xs font-bold text-white truncate">Alchemist Street Festival</p>
-            <p className="text-[10px] text-white/60">Tonight 7PM · Westlands</p>
-          </div>
-
-          {/* Card 2: Marketplace */}
-          <div
-            onClick={() => onViewCityFeed?.()}
-            className="p-3 rounded-2xl bg-white/10 hover:bg-white/15 transition-all cursor-pointer space-y-1 border border-white/5"
-          >
-            <div className="flex items-center space-x-1 text-white/70 text-[9px] uppercase font-bold">
-              <ShoppingBag className="w-3 h-3 text-[color:var(--color-accent)]" />
-              <span>Marketplace Drop</span>
-            </div>
-            <p className="text-xs font-bold text-white truncate">Zawadi Leather Tote</p>
-            <p className="text-[10px] text-white/60">KES 2,800 · Kilimani</p>
-          </div>
-
-          {/* Card 3: Community Circles */}
-          <div
-            onClick={() => onViewCityFeed?.()}
-            className="p-3 rounded-2xl bg-white/10 hover:bg-white/15 transition-all cursor-pointer space-y-1 border border-white/5"
-          >
-            <div className="flex items-center space-x-1 text-white/70 text-[9px] uppercase font-bold">
-              <Users className="w-3 h-3 text-[color:var(--color-primary)]" />
-              <span>Community Circles</span>
-            </div>
-            <p className="text-xs font-bold text-white truncate">Kilimani Organic Co-op</p>
-            <p className="text-[10px] text-white/60">Weekly Gathering · 34 Members</p>
-          </div>
-        </div>
-      </div>
+      {/* ── 1. PROMO CAROUSEL — real published events, auto-advancing ── */}
+      <PromoCarousel />
 
       {/* ── 2. COMPACT KPI HEADER STRIP ── */}
       <div className="p-4 rounded-3xl bg-white shadow-2xs border border-black/5 flex items-center justify-between gap-3">
