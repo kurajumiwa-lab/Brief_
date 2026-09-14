@@ -4106,7 +4106,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
   const c = load.data;
 
   return (
-    <div className="min-h-screen bg-[#0D1117] text-[#0D1117] font-sans selection:bg-[#4F46E5] selection:text-[#0D1117] flex flex-col">
+    <div className="min-h-screen bg-[#F7F8FA] text-[#0D1117] font-sans selection:bg-[#4F46E5] selection:text-[#FFFFFF] flex flex-col">
       <div className="flex-1 w-full max-w-lg mx-auto px-4 py-8 space-y-5">
         <div className="flex items-center gap-2">
           <svg width="18" height="18" viewBox="0 0 26 26" aria-hidden="true">
@@ -4133,58 +4133,70 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
 
         {load.status === 'ready' && c && (
           <>
-            <div className="space-y-2">
-              {/* Cover image hero — the real image when the organiser set one;
-                  a deterministic gradient fallback otherwise. Never a void. */}
-              {c.image ? (
-                <img
-                  src={c.image}
-                  alt={c.title}
-                  className="w-full h-44 sm:h-52 rounded-2xl object-cover border border-[#E5E8EC]"
-                  style={{ background: "var(--color-surface-elevated)" }}
-                />
-              ) : (
-                <div
-                  className="w-full h-32 rounded-2xl flex items-center justify-center"
-                  style={{ background: "linear-gradient(135deg, #4F46E5, #06B6D4)" }}
-                >
-                  <span className="text-5xl font-black text-white/80">
-                    {(c.title || "?").trim().charAt(0).toUpperCase()}
-                  </span>
-                </div>
-              )}
-              <p className="text-[9px] text-[#0D1117]">
-                {c.type}
-              </p>
-              <h1 className="text-2xl font-extrabold leading-tight">{c.title}</h1>
-              {c.creator && (
-                <p className="text-[11px] text-[#0D1117] font-extrabold">by {c.creator}</p>
-              )}
-              {c.description && (
-                <p className="text-xs text-[#0D1117]/60 leading-relaxed">{c.description}</p>
-              )}
-              {/* Host row (T4): a derived profile — the organiser's chosen name
-                  plus a counted number of their public events. No internal id. */}
-              {c.host && (c.host.name || c.host.eventsHosted > 0) && (
-                <div className="flex items-center gap-2.5 pt-1">
+            <div className="space-y-3">
+              {/* Cover — an Instagram-style event splash: full-bleed image with a
+                  gradient scrim, the category chip and title overlaid on it, and
+                  a deterministic gradient fallback when no image was set. */}
+              <div className="relative overflow-hidden rounded-2xl border border-[#E5E8EC]">
+                {c.image ? (
+                  <img
+                    src={c.image}
+                    alt={c.title}
+                    className="w-full h-64 sm:h-80 object-cover"
+                    style={{ background: "var(--color-surface-elevated)" }}
+                  />
+                ) : (
                   <div
-                    className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
-                    style={{ background: "var(--color-primary-subtle)", color: "var(--color-primary)" }}
+                    className="w-full h-52 sm:h-64 flex items-center justify-center"
+                    style={{ background: "linear-gradient(135deg, #4F46E5, #06B6D4)" }}
                   >
-                    <User className="w-4 h-4" />
+                    <span className="text-6xl font-black text-white/80">
+                      {(c.title || "?").trim().charAt(0).toUpperCase()}
+                    </span>
                   </div>
-                  <div className="min-w-0 leading-tight">
-                    <p className="text-[11px] font-extrabold text-[#0D1117]">
-                      {c.host.name ?? 'Organiser'}
-                    </p>
-                    <p className="text-[9px] text-[#0D1117]/60">
-                      {c.host.eventsHosted === 0
-                        ? 'First event'
-                        : `${c.host.eventsHosted} event${c.host.eventsHosted === 1 ? '' : 's'} hosted`}
-                    </p>
-                  </div>
+                )}
+                {/* Gradient scrim — lifts the overlaid text off any cover. */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
+                {/* Overlaid identity: category chip + title. */}
+                <div className="absolute bottom-0 left-0 right-0 p-4 text-white space-y-1.5">
+                  <span className="inline-block px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-[10px] font-bold uppercase tracking-wider">
+                    {c.type}
+                  </span>
+                  <h1 className="text-2xl sm:text-3xl font-black leading-tight drop-shadow-md">{c.title}</h1>
                 </div>
-              )}
+              </div>
+
+              {/* Host + creator + description, below the splash. */}
+              <div className="space-y-2">
+                {/* Host row (T4): a derived profile — the organiser's chosen name
+                    plus a counted number of their public events. No internal id. */}
+                {c.host && (c.host.name || c.host.eventsHosted > 0) && (
+                  <div className="flex items-center gap-2.5 pt-1">
+                    <div
+                      className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+                      style={{ background: "var(--color-primary-subtle)", color: "var(--color-primary)" }}
+                    >
+                      <User className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0 leading-tight">
+                      <p className="text-[11px] font-extrabold text-[#0D1117]">
+                        {c.host.name ?? 'Organiser'}
+                      </p>
+                      <p className="text-[9px] text-[#0D1117]/60">
+                        {c.host.eventsHosted === 0
+                          ? 'First event'
+                          : `${c.host.eventsHosted} event${c.host.eventsHosted === 1 ? '' : 's'} hosted`}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {c.creator && (
+                  <p className="text-[11px] text-[#0D1117] font-extrabold">by {c.creator}</p>
+                )}
+                {c.description && (
+                  <p className="text-xs text-[#0D1117]/60 leading-relaxed">{c.description}</p>
+                )}
+              </div>
             </div>
 
             {/* Contribution pot (T3): a goal, stated amounts, settled-only
