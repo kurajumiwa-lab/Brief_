@@ -109,17 +109,23 @@ test("onboardVendor creates the vendor AND records the territory claim", () => {
   const result = fa.onboardVendor({
     agentId: rider.id, displayName: "Mama Njeri Grocers",
     businessType: "retailer", location: "Gikomba Market, Stall 12",
-    contactMethod: "0712 345678", claimType: "full_registration"
+    contactMethod: "0712 345678", contactName: "Mama Njeri", claimType: "full_registration"
   });
   assert.ok(result.vendor.id, "a vendor was created");
   assert.equal(result.vendor.ownerId, rider.id, "the onboarded shop is held by the agent");
   assert.equal(result.vendor.businessType, "retailer", "business type is stored");
   assert.equal(result.vendor.location, "Gikomba Market, Stall 12", "physical location is stored");
+  assert.equal(result.vendor.contactName, "Mama Njeri", "the direct contact name is stored");
+  assert.equal(result.vendor.contactMethod, "0712 345678", "the direct contact phone is stored");
   assert.equal(result.claim.claimType, "full_registration");
   assert.equal(result.claim.agentId, rider.id);
   assert.equal(result.claim.status, "active");
   // The claim is real and readable through the agent's own overview.
   assert.equal(fa.vendorClaim(result.vendor.id)?.agentId, rider.id);
+  // The direct contact is surfaced on the agent's derived override rows too.
+  const row = fa.overrideObligation(rider.id).claims.find((c) => c.vendorId === result.vendor.id);
+  assert.equal(row.contactName, "Mama Njeri", "override rows carry the direct contact name");
+  assert.equal(row.contactMethod, "0712 345678", "override rows carry the direct contact phone");
 });
 
 test("onboardVendor refuses a shell shop (no type / no location) and a duplicate claim", () => {

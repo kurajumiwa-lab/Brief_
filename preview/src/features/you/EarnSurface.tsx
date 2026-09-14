@@ -114,25 +114,28 @@ export function EarnSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
   const [onboardName, setOnboardName] = useState("");
   const [onboardType, setOnboardType] = useState("");
   const [onboardLocation, setOnboardLocation] = useState("");
+  const [onboardContact, setOnboardContact] = useState("");
   const [onboardPhone, setOnboardPhone] = useState("");
   const [onboardBusy, setOnboardBusy] = useState(false);
   const onboardNewVendor = async () => {
     const name = onboardName.trim();
-    if (!name) { setNotice("Enter the shop's name to onboard it."); return; }
+    if (!name) { setNotice("Name the shop first."); return; }
     if (!onboardType) { setNotice("Choose what kind of business this is."); return; }
-    if (!onboardLocation.trim()) { setNotice("Enter the shop's physical location — this prevents false shops."); return; }
+    if (!onboardLocation.trim()) { setNotice("Enter the physical location — this is the proof a shop is real."); return; }
+    if (!onboardContact.trim()) { setNotice("Name your direct contact — the person you reached."); return; }
     setOnboardBusy(true);
     const res = await api.onboardVendor({
       displayName: name,
       businessType: onboardType,
       location: onboardLocation.trim(),
+      contactName: onboardContact.trim(),
       contactMethod: onboardPhone.trim() || null,
       claimType: 'full_registration'
     });
     setOnboardBusy(false);
     if (res.ok) {
-      setNotice(`Onboarded ${name} — territory claimed, 0.75% of their settled orders for 24 months.`);
-      setOnboardName(""); setOnboardType(""); setOnboardLocation(""); setOnboardPhone("");
+      setNotice(`Connection made at ${name} — ${onboardContact.trim()} is on file. Territory claimed for 24 months.`);
+      setOnboardName(""); setOnboardType(""); setOnboardLocation(""); setOnboardContact(""); setOnboardPhone("");
       setOnboardOpen(false);
       setVendors(null);
       void load();
@@ -141,6 +144,23 @@ export function EarnSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
     } else {
       setNotice(res.error ?? "Could not onboard that vendor.");
     }
+  };
+
+  // Build honest contact links from the phone the agent captured. tel: dials
+  // as-is; wa.me needs international digits, so a Kenyan "07xx…" is normalised
+  // to 2547xx…. A malformed/empty number yields null (no dead link).
+  const contactLinks = (phone: string | null): { call: string | null; wa: string | null } => {
+    if (!phone) return { call: null, wa: null };
+    const digits = phone.replace(/[^\d+]/g, '');
+    if (!digits) return { call: null, wa: null };
+    const call = `tel:${digits}`;
+    let wa: string | null = null;
+    const d = digits.replace(/\D/g, '');
+    if (d.length === 9 && d.startsWith('7')) wa = `https://wa.me/254${d}`;
+    else if (d.length === 10 && d.startsWith('0')) wa = `https://wa.me/254${d.slice(1)}`;
+    else if (d.length === 12 && d.startsWith('254')) wa = `https://wa.me/${d}`;
+    else if (d.length >= 10 && !d.startsWith('0')) wa = `https://wa.me/${d}`;
+    return { call, wa };
   };
 
   if (loading) return <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>Reading your earnings…</p>;
@@ -225,128 +245,166 @@ export function EarnSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
         <p className="text-xs font-black uppercase tracking-wider" style={{ color: "var(--color-primary)" }}>Territory</p>
         {agent === null ? (
           <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>Reading your territory…</p>
-        ) : agent.override.claims.length === 0 ? (
-          <div className="mt-2 rounded-xl p-3" style={{ background: "var(--color-surface-elevated)" }}>
-            <p className="text-xs font-bold" style={{ color: "var(--color-text)" }}>No territory yet</p>
-            <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>
-              Onboard a vendor and earn a 0.75% override on their settled orders for 24 months.
-            </p>
-            <button
-              type="button"
-              onClick={openOnboard}
-              className="mt-2 rounded-full px-4 py-1.5 text-xs font-bold"
-              style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}
-            >
-              {onboardOpen ? "Close" : "Onboard a vendor"}
-            </button>
-            {onboardOpen && (
-              <div className="mt-3 space-y-2">
-                {/* Onboard a NEW vendor — the primary act when the market has no
-                    vendors to claim yet (or alongside claiming existing ones). */}
-                <div className="rounded-lg p-2 border space-y-1.5" style={{ borderColor: "var(--color-border)" }}>
-                  <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>Onboard a new shop</p>
-                  <p className="text-[9px]" style={{ color: "var(--color-text-muted)" }}>
-                    Name, what it is, and where it is — so a false shop never counts in the vendor list.
-                  </p>
-                  <input
-                    type="text"
-                    placeholder="Shop name (e.g. Mama Njeri Grocers)"
-                    aria-label="New vendor name"
-                    value={onboardName}
-                    onChange={(e) => setOnboardName(e.target.value)}
-                    className="w-full rounded-lg px-2.5 py-1.5 text-xs border"
-                    style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
-                  />
-                  <select
-                    aria-label="Business type"
-                    value={onboardType}
-                    onChange={(e) => setOnboardType(e.target.value)}
-                    className="w-full rounded-lg px-2.5 py-1.5 text-xs border"
-                    style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
-                  >
-                    <option value="">What kind of business?</option>
-                    {["retailer", "wholesaler", "distributor", "manufacturer", "service_provider", "logistics_provider", "warehouse", "processor", "repair_provider"].map((t) => (
-                      <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>
-                    ))}
-                  </select>
-                  <input
-                    type="text"
-                    placeholder="Physical location (e.g. Gikomba Market, Stall 12)"
-                    aria-label="Shop location"
-                    value={onboardLocation}
-                    onChange={(e) => setOnboardLocation(e.target.value)}
-                    className="w-full rounded-lg px-2.5 py-1.5 text-xs border"
-                    style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Shop phone (optional)"
-                    aria-label="Shop phone"
-                    value={onboardPhone}
-                    onChange={(e) => setOnboardPhone(e.target.value)}
-                    className="w-full rounded-lg px-2.5 py-1.5 text-xs border"
-                    style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
-                  />
-                  <button
-                    type="button"
-                    disabled={onboardBusy}
-                    onClick={onboardNewVendor}
-                    className="w-full rounded-full px-3 py-1.5 text-[10px] font-bold"
-                    style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}
-                  >
-                    {onboardBusy ? "…" : "Add shop"}
-                  </button>
-                </div>
-
-                {vendors === null ? (
-                  <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>Reading vendors…</p>
-                ) : vendors.length === 0 ? (
-                  <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-                    No vendors to claim yet — onboard a new shop above, or claim one here once it exists.
-                  </p>
-                ) : (
-                  vendors.map((v) => (
-                    <div key={v.id} className="rounded-lg p-2 flex items-center justify-between gap-2 border" style={{ borderColor: "var(--color-border)" }}>
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold truncate" style={{ color: "var(--color-text)" }}>{v.displayName}</p>
-                        <p className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>{v.activeListingCount} active listing{v.activeListingCount === 1 ? "" : "s"}</p>
-                      </div>
-                      <div className="flex gap-1 shrink-0">
-                        <button type="button" disabled={claimBusy[v.id]} onClick={() => claim(v, "full_registration")} className="rounded-full px-2.5 py-1 text-[10px] font-bold" style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}>
-                          {claimBusy[v.id] ? "…" : "Claim territory"}
-                        </button>
-                        <button type="button" disabled={claimBusy[v.id]} onClick={() => claim(v, "menu_upload")} className="rounded-full px-2.5 py-1 text-[10px] font-bold" style={{ background: "var(--color-surface)", color: "var(--color-text)", border: "1px solid var(--color-border)" }}>
-                          Menu
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
         ) : (
           <>
-            <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-2xl font-black" style={{ color: "var(--color-text)" }}>KES {agent.override.overrideKes.toLocaleString()}</span>
-              <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-                derived at {(agent.override.rate * 100).toFixed(2)}% of settled orders · {agent.override.months} months
-              </span>
-            </div>
-            <MotionList className="mt-3 space-y-2" stagger={30}>
-              {agent.override.claims.map((cl) => (
-                <div key={cl.claimId} className="rounded-xl p-3 flex items-center justify-between" style={{ background: "var(--color-surface-elevated)" }}>
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold truncate" style={{ color: "var(--color-text)" }}>{cl.vendorName ?? "Vendor"}</p>
-                    <p className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>
-                      {cl.settledOrders} settled order{cl.settledOrders === 1 ? "" : "s"} · KES {cl.grossKes.toLocaleString()} gross
-                    </p>
-                  </div>
-                  <span className="text-sm font-bold shrink-0 ml-2" style={{ color: "var(--color-success)" }}>KES {cl.overrideKes.toLocaleString()}</span>
+            {agent.override.claims.length === 0 ? (
+              <div className="mt-2 rounded-xl p-3" style={{ background: "var(--color-surface-elevated)" }}>
+                <p className="text-xs font-bold" style={{ color: "var(--color-text)" }}>No territory yet</p>
+                <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>
+                  Make your first connection and earn a 0.75% override on their settled orders for 24 months.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-2xl font-black" style={{ color: "var(--color-text)" }}>KES {agent.override.overrideKes.toLocaleString()}</span>
+                  <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                    derived at {(agent.override.rate * 100).toFixed(2)}% of settled orders · {agent.override.months} months
+                  </span>
                 </div>
-              ))}
-            </MotionList>
-            <p className="text-[10px] mt-2" style={{ color: "var(--color-text-muted)" }}>{agent.override.note}</p>
+                <MotionList className="mt-3 space-y-2" stagger={30}>
+                  {agent.override.claims.map((cl) => {
+                    const links = contactLinks(cl.contactMethod);
+                    return (
+                      <div key={cl.claimId} className="rounded-xl p-3" style={{ background: "var(--color-surface-elevated)" }}>
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-bold truncate" style={{ color: "var(--color-text)" }}>{cl.vendorName ?? "Vendor"}</p>
+                          <span className="text-sm font-bold shrink-0 ml-2" style={{ color: "var(--color-success)" }}>KES {cl.overrideKes.toLocaleString()}</span>
+                        </div>
+                        <p className="text-[10px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>
+                          {[cl.businessType, cl.location].filter(Boolean).join(' · ')} · {cl.settledOrders} settled order{cl.settledOrders === 1 ? "" : "s"}
+                        </p>
+                        {/* The direct contact the agent captured — call or WhatsApp. */}
+                        <div className="mt-2 flex items-center justify-between gap-2">
+                          <p className="text-[11px] min-w-0 truncate" style={{ color: "var(--color-text-muted)" }}>
+                            <strong style={{ color: "var(--color-text)" }}>{cl.contactName ?? "Contact"}</strong>
+                            {cl.contactMethod ? ` · ${cl.contactMethod}` : ""}
+                          </p>
+                          {links.call && (
+                            <div className="flex gap-1.5 shrink-0">
+                              <a href={links.call} className="rounded-full px-2.5 py-1 text-[10px] font-bold no-underline" style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}>Call</a>
+                              {links.wa && <a href={links.wa} target="_blank" rel="noopener noreferrer" className="rounded-full px-2.5 py-1 text-[10px] font-bold no-underline" style={{ background: "#16A34A", color: "#fff" }}>WhatsApp</a>}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </MotionList>
+                <p className="text-[10px] mt-2" style={{ color: "var(--color-text-muted)" }}>{agent.override.note}</p>
+              </>
+            )}
+
+            {/* Always-available onboarding — the agent repeats this over time.
+                Every shop is a detail Google Maps can't give us and proof the
+                shop is real. This must NEVER disappear after the first move. */}
+            <div className="mt-4 rounded-xl p-3 border" style={{ borderColor: "var(--color-border)", background: "var(--color-surface-elevated)" }}>
+              <p className="text-xs font-bold" style={{ color: "var(--color-text)" }}>Make a connection</p>
+              <p className="text-[10px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>
+                Every shop you onboard is proof it is real and a contact Google Maps can't give you. Do it as many times as you like.
+              </p>
+              <button
+                type="button"
+                onClick={openOnboard}
+                className="mt-2 rounded-full px-4 py-1.5 text-xs font-bold"
+                style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}
+              >
+                {onboardOpen ? "Close" : "+ Onboard another shop"}
+              </button>
+              {onboardOpen && (
+                <div className="mt-3 space-y-2">
+                  {/* Onboard a NEW vendor — the door-to-door agent's primary act. */}
+                  <div className="rounded-lg p-2 border space-y-1.5" style={{ borderColor: "var(--color-border)" }}>
+                    <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>Make the initial connection</p>
+                    <p className="text-[9px]" style={{ color: "var(--color-text-muted)" }}>
+                      Name, what it is, where it is, and who you reached — so a false shop never counts in the vendor list.
+                    </p>
+                    <input
+                      type="text"
+                      placeholder="Shop name (e.g. Mama Njeri Grocers)"
+                      aria-label="New vendor name"
+                      value={onboardName}
+                      onChange={(e) => setOnboardName(e.target.value)}
+                      className="w-full rounded-lg px-2.5 py-1.5 text-xs border"
+                      style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
+                    />
+                    <select
+                      aria-label="Business type"
+                      value={onboardType}
+                      onChange={(e) => setOnboardType(e.target.value)}
+                      className="w-full rounded-lg px-2.5 py-1.5 text-xs border"
+                      style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
+                    >
+                      <option value="">What kind of business?</option>
+                      {["retailer", "wholesaler", "distributor", "manufacturer", "service_provider", "logistics_provider", "warehouse", "processor", "repair_provider"].map((t) => (
+                        <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      placeholder="Physical location (e.g. Gikomba Market, Stall 12)"
+                      aria-label="Shop location"
+                      value={onboardLocation}
+                      onChange={(e) => setOnboardLocation(e.target.value)}
+                      className="w-full rounded-lg px-2.5 py-1.5 text-xs border"
+                      style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Direct contact — who did you reach? (name)"
+                      aria-label="Direct contact name"
+                      value={onboardContact}
+                      onChange={(e) => setOnboardContact(e.target.value)}
+                      className="w-full rounded-lg px-2.5 py-1.5 text-xs border"
+                      style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Their phone / WhatsApp (optional)"
+                      aria-label="Shop phone"
+                      value={onboardPhone}
+                      onChange={(e) => setOnboardPhone(e.target.value)}
+                      className="w-full rounded-lg px-2.5 py-1.5 text-xs border"
+                      style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
+                    />
+                    <button
+                      type="button"
+                      disabled={onboardBusy}
+                      onClick={onboardNewVendor}
+                      className="w-full rounded-full px-3 py-1.5 text-[10px] font-bold"
+                      style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}
+                    >
+                      {onboardBusy ? "…" : "Save connection"}
+                    </button>
+                  </div>
+
+                  {vendors === null ? (
+                    <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>Reading vendors…</p>
+                  ) : vendors.length === 0 ? (
+                    <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                      No shops to claim yet — onboard a new one above, or claim one here once it exists.
+                    </p>
+                  ) : (
+                    vendors.map((v) => (
+                      <div key={v.id} className="rounded-lg p-2 flex items-center justify-between gap-2 border" style={{ borderColor: "var(--color-border)" }}>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold truncate" style={{ color: "var(--color-text)" }}>{v.displayName}</p>
+                          <p className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>{v.activeListingCount} active listing{v.activeListingCount === 1 ? "" : "s"}</p>
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          <button type="button" disabled={claimBusy[v.id]} onClick={() => claim(v, "full_registration")} className="rounded-full px-2.5 py-1 text-[10px] font-bold" style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}>
+                            {claimBusy[v.id] ? "…" : "Claim territory"}
+                          </button>
+                          <button type="button" disabled={claimBusy[v.id]} onClick={() => claim(v, "menu_upload")} className="rounded-full px-2.5 py-1 text-[10px] font-bold" style={{ background: "var(--color-surface)", color: "var(--color-text)", border: "1px solid var(--color-border)" }}>
+                            Menu
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
           </>
         )}
       </section>

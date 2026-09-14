@@ -47,6 +47,7 @@ export function createVendor({
   displayName,
   description = '',
   contactMethod = null,
+  contactName = null,
   objectId = null,
   businessType = null,
   location = null
@@ -73,6 +74,10 @@ export function createVendor({
     displayName: String(displayName).trim(),
     description: String(description ?? ''),
     contactMethod: contactMethod ?? null,
+    // The named person the field agent reached at the shop — the "direct
+    // contact" (e.g. the owner, manager or the runner who handles sourcing).
+    // Google Maps cannot give you this; the agent asked in person.
+    contactName: contactName ? String(contactName).trim() : null,
     objectId: objectId ?? null,
     // Onboarding facts about the shop — what it is and where it physically is.
     // A vendor without these was created before the anti-fraud gate; new
@@ -179,7 +184,7 @@ export function listVendors({ status = null } = {}) {
  * otherwise be a way to steal a verified seller identity.
  */
 export function updateVendor(id, patch) {
-  const allowed = ['displayName', 'description', 'contactMethod', 'status', 'businessType', 'location'];
+  const allowed = ['displayName', 'description', 'contactMethod', 'contactName', 'status', 'businessType', 'location'];
   const clean = {};
   for (const k of allowed) if (k in patch) clean[k] = patch[k];
 

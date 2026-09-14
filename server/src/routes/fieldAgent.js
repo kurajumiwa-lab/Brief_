@@ -45,6 +45,7 @@ export function register(app) {
         agentId: me,
         displayName: req.body?.displayName,
         contactMethod: req.body?.contactMethod ?? null,
+        contactName: req.body?.contactName ?? null,
         businessType: req.body?.businessType ?? null,
         location: req.body?.location ?? null,
         description: req.body?.description ?? '',

@@ -967,6 +967,8 @@ export interface Vendor {
   contactMethod: string | null;
   /** The extracted identity object this seller came from, when there is one. */
   objectId: string | null;
+  /** The named person reached at the shop — the direct contact. */
+  contactName?: string | null;
   /** What the shop IS (from the supply business-type vocabulary). */
   businessType?: string | null;
   /** Where the shop physically is — the anti-fraud onboarding fact. */

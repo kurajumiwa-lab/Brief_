@@ -4462,6 +4462,11 @@ export interface FieldAgentOverride {
     settledOrders: number;
     grossKes: number;
     overrideKes: number;
+    /** The direct contact captured at onboarding: who you reach + their number. */
+    contactName: string | null;
+    contactMethod: string | null;
+    businessType: string | null;
+    location: string | null;
   }>;
   grossKes: number;
   overrideKes: number;
@@ -4525,6 +4530,8 @@ export function onboardVendor(body: {
   businessType: string;
   location: string;
   contactMethod?: string | null;
+  /** The named person reached at the shop (owner / manager / sourcing runner). */
+  contactName?: string | null;
   description?: string;
   claimType?: 'menu_upload' | 'full_registration';
 }): Promise<ApiResult<{ vendor: Vendor; claim: FieldAgentClaim }>> {

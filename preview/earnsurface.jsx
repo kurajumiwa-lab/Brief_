@@ -70,7 +70,7 @@ async function main() {
         claims: [{ id: 'c1', vendorId: 'v1', agentId: 'a1', claimType: 'full_registration', territoryKey: null, status: 'active', claimedAt: '2026-09-01T00:00:00Z', expiresAt: '2028-09-01T00:00:00Z', createdAt: '2026-09-01T00:00:00Z' }],
         override: {
           agentId: 'a1', rate: 0.0075, months: 24,
-          claims: [{ claimId: 'c1', vendorId: 'v1', vendorName: 'Kiko Bakery', claimedAt: '2026-09-01T00:00:00Z', expiresAt: '2028-09-01T00:00:00Z', settledOrders: 3, grossKes: 30000, overrideKes: 225 }],
+          claims: [{ claimId: 'c1', vendorId: 'v1', vendorName: 'Kiko Bakery', claimedAt: '2026-09-01T00:00:00Z', expiresAt: '2028-09-01T00:00:00Z', settledOrders: 3, grossKes: 30000, overrideKes: 225, contactName: 'Papa Kiko', contactMethod: '0712345678', businessType: 'retailer', location: 'Kilimani' }],
           grossKes: 30000, overrideKes: 225, currency: 'KES', note: 'not money until settled'
         },
         settlements: []
@@ -111,6 +111,15 @@ async function main() {
     assert.ok(t.includes('KES 225'), 'derived override shown');
     assert.ok(t.includes('Kiko Bakery'), 'territory vendor named');
     assert.ok(t.includes('3 settled orders'), 'settled order count shown');
+    // The direct contact the agent captured, with Call + WhatsApp affordances.
+    assert.ok(t.includes('Papa Kiko'), 'direct contact name shown');
+    assert.ok(t.includes('0712345678'), 'direct contact phone shown');
+    const callLink = Array.from(container.querySelectorAll('a')).find((a) => (a.getAttribute('href') || '').startsWith('tel:'));
+    const waLink = Array.from(container.querySelectorAll('a')).find((a) => (a.getAttribute('href') || '').includes('wa.me'));
+    assert.ok(callLink, 'a Call link exists for the contact');
+    assert.equal(waLink?.getAttribute('href'), 'https://wa.me/254712345678', 'a WhatsApp link is normalised to international');
+    // Repeatability: onboarding is STILL offered even with an existing claim.
+    assert.ok(btn('+ Onboard another shop'), 'onboard action remains available after the first claim');
 
     // Lipa Mdogo contract + maturity.
     assert.ok(t.includes('Home Radio'), 'asset named');
@@ -143,6 +152,7 @@ async function main() {
   let onboardedName = null;
   let onboardedType = null;
   let onboardedLocation = null;
+  let onboardedContact = null;
   fetchHandler = async (url, init) => {
     if (url.includes('/referrals/mine')) {
       return { ok: true, status: 200, text: async () => JSON.stringify({
@@ -158,6 +168,7 @@ async function main() {
       onboardedName = body.displayName ?? null;
       onboardedType = body.businessType ?? null;
       onboardedLocation = body.location ?? null;
+      onboardedContact = body.contactName ?? null;
       return { ok: true, status: 201, text: async () => JSON.stringify({ vendor: { id: 'vnew', ownerId: 'a1', displayName: onboardedName, description: '', contactMethod: null, objectId: null, businessType: onboardedType, location: onboardedLocation, status: 'active', verification: { evidence: [], facts: [], verifiedCount: 0 }, activeListingCount: 0, createdAt: '2026-09-10T00:00:00Z', updatedAt: '2026-09-10T00:00:00Z' }, claim: { id: 'cnew', vendorId: 'vnew', agentId: 'a1', claimType: 'full_registration', territoryKey: null, status: 'active', claimedAt: '2026-09-10T00:00:00Z', expiresAt: '2028-09-10T00:00:00Z', createdAt: '2026-09-10T00:00:00Z' } }) };
     }
     if (url.includes('/field-agent')) {
@@ -187,11 +198,11 @@ async function main() {
     const { container } = mount(React.createElement(EarnSurface, { onRequireAuth: () => {} }));
     await flush();
     assert.ok(text(container).includes('No territory yet'), 'empty territory state');
-    assert.ok(btn('Onboard a vendor'), 'onboard action present (no dead end)');
+    assert.ok(btn('+ Onboard another shop'), 'onboard action present (no dead end)');
 
-    act(() => { btn('Onboard a vendor').click(); });
+    act(() => { btn('+ Onboard another shop').click(); });
     await flush();
-    assert.ok(text(container).includes('Onboard a new shop'), 'onboard-new-shop input present');
+    assert.ok(text(container).includes('Make the initial connection'), 'onboard-new-shop input present');
     assert.ok(text(container).includes('Mama Njeri Grocers'), 'vendor list renders');
     assert.ok(btn('Claim territory'), 'claim-territory action present');
     assert.ok(btn('Menu'), 'menu-upload action present');
@@ -208,7 +219,7 @@ async function main() {
   {
     const { container } = mount(React.createElement(EarnSurface, { onRequireAuth: () => {} }));
     await flush();
-    act(() => { btn('Onboard a vendor').click(); });
+    act(() => { btn('+ Onboard another shop').click(); });
     await flush();
 
     const setInput = (aria, value) => {
@@ -219,6 +230,7 @@ async function main() {
     };
     setInput('New vendor name', 'Mama Njeri Grocers');
     setInput('Shop location', 'Gikomba Market, Stall 12');
+    setInput('Direct contact name', 'Mama Njeri');
 
     // Select the business type (select element -> 'change' event).
     const typeSelect = Array.from(document.querySelectorAll('select')).find((s) => (s.getAttribute('aria-label') || '') === 'Business type');
@@ -226,13 +238,14 @@ async function main() {
     setter.call(typeSelect, 'retailer');
     typeSelect.dispatchEvent(new window.Event('change', { bubbles: true }));
 
-    act(() => { btn('Add shop').click(); });
+    act(() => { btn('Save connection').click(); });
     await flush();
     assert.equal(onboardedName, 'Mama Njeri Grocers', 'onboard posted the shop name');
     assert.equal(onboardedType, 'retailer', 'onboard posted the business type');
     assert.equal(onboardedLocation, 'Gikomba Market, Stall 12', 'onboard posted the physical location');
+    assert.equal(onboardedContact, 'Mama Njeri', 'onboard posted the direct contact name');
   }
-  pass('EarnSurface: a member can onboard a brand-new vendor with type + location');
+  pass('EarnSurface: a member can onboard a brand-new vendor with type, location + direct contact');
   pass('EarnSurface: a member can onboard a new vendor and claim territory (no dead end)');
 
   console.log('\nPASS ' + count);

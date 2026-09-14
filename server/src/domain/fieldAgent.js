@@ -138,7 +138,7 @@ export function vendorClaim(vendorId) {
  * one-off bounty; full_registration opens the 24-month override on SETTLED
  * orders. Nothing here stores a balance.
  */
-export function onboardVendor({ agentId, displayName, contactMethod = null, businessType = null, location = null, description = '', claimType = 'full_registration' }) {
+export function onboardVendor({ agentId, displayName, contactMethod = null, contactName = null, businessType = null, location = null, description = '', claimType = 'full_registration' }) {
   if (!agentId) fail('an agent is required');
   if (!CLAIM_TYPES.includes(claimType)) fail(`claimType must be one of ${CLAIM_TYPES.join(', ')}`);
   if (!displayName || !String(displayName).trim()) fail('a vendor name is required');
@@ -156,6 +156,7 @@ export function onboardVendor({ agentId, displayName, contactMethod = null, busi
     ownerId: agentId,
     displayName: String(displayName).trim(),
     contactMethod: contactMethod ?? null,
+    contactName: contactName ?? null,
     businessType,
     location: String(location).trim(),
     description: String(description ?? '')
@@ -224,7 +225,14 @@ export function overrideObligation(agentId) {
       expiresAt: claim.expiresAt,
       settledOrders: orders.length,
       grossKes,
-      overrideKes
+      overrideKes,
+      // The direct contact the agent captured at onboarding — the person you
+      // actually reach at the shop (name + phone). Surfaced here so the agent
+      // can call or WhatsApp their own onboarded contacts.
+      contactName: vendor?.contactName ?? null,
+      contactMethod: vendor?.contactMethod ?? null,
+      businessType: vendor?.businessType ?? null,
+      location: vendor?.location ?? null
     };
   });
 
