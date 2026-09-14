@@ -6,14 +6,15 @@ import * as pickups from '../domain/pickups.js';
 import { requireAuth, requireCap } from './helpers.js';
 
 export function register(app) {
-  // Assign a rider to pick up from an onboarded shop.
+  // Assign a rider to pick up from an onboarded shop. The rider defaults to
+  // the caller (self-dispatch); a dispatcher may name a different rider by id.
   app.post('/api/pickups', (req, res) => {
     const me = requireAuth(req, res);
     if (!me) return;
     try {
       const pickup = pickups.assignPickup({
         originVendorId: req.body?.originVendorId,
-        riderId: req.body?.riderId,
+        riderId: req.body?.riderId || me,
         destinationTown: req.body?.destinationTown,
         receiverName: req.body?.receiverName,
         receiverPhone: req.body?.receiverPhone,
@@ -49,6 +50,13 @@ export function register(app) {
     const me = requireAuth(req, res);
     if (!me) return;
     res.json({ obligation: pickups.pickupOriginObligation(me) });
+  });
+
+  // The dispatchable origins — every shop with an active onboarding claim.
+  app.get('/api/pickups/origins', (req, res) => {
+    const me = requireAuth(req, res);
+    if (!me) return;
+    res.json({ origins: pickups.listOrigins() });
   });
 
   // Operator read of all pickups.

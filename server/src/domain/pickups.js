@@ -131,3 +131,23 @@ export function pickupOriginObligation(agentId) {
     note: 'Derived from delivered pickups at shops you onboarded. Not money until a finance-confirmed settlement.'
   };
 }
+
+/**
+ * The DISPATCHABLE ORIGINS — every shop that has an ACTIVE onboarding claim,
+ * i.e. every place a rider can be routed to pick up from. Derived by joining
+ * active full_registration claims to their vendors. No claim, no origin.
+ */
+export function listOrigins() {
+  const claims = store.filter('vendorClaims', (c) =>
+    c.claimType === 'full_registration' && c.status === 'active');
+  return claims.map((c) => {
+    const vendor = store.find('vendors', (v) => v.id === c.vendorId);
+    return {
+      vendorId: c.vendorId,
+      shopName: vendor?.displayName ?? 'Shop',
+      businessType: vendor?.businessType ?? null,
+      location: vendor?.location ?? null,
+      onboardingAgentId: c.agentId
+    };
+  });
+}

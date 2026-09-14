@@ -4557,9 +4557,21 @@ export interface PickupOriginObligation {
   originFeeKes: number;
   note: string;
 }
+export interface PickupOrigin {
+  vendorId: string;
+  shopName: string;
+  businessType: string | null;
+  location: string | null;
+  onboardingAgentId: string;
+}
+export function getPickupOrigins(): Promise<ApiResult<PickupOrigin[]>> {
+  return request('/api/pickups/origins', undefined, r =>
+    Array.isArray(r?.origins) ? (r.origins as PickupOrigin[]) : undefined);
+}
 export function assignPickup(body: {
   originVendorId: string;
-  riderId: string;
+  /** Defaults to the caller (self-dispatch) when omitted. */
+  riderId?: string;
   destinationTown: string;
   receiverName: string;
   receiverPhone: string;

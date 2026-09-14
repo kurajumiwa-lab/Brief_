@@ -10,9 +10,11 @@ import {
   Flame,
   Search,
   Clock,
-  Store
+  Store,
+  Bike
 } from 'lucide-react';
 import { PublicSpaces } from './PublicSpaces';
+import { WairoDispatchPanel } from './WairoDispatchPanel';
 import { EventsHub } from '../../components/EventsHub';
 import { Marketplace } from '../../components/Marketplace';
 import { Circles } from '../../components/Circles';
@@ -167,6 +169,17 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
                 </h3>
               </div>
               <PublicSpaces onOpenSpace={(id) => onOpenSpace?.(id)} />
+            </section>
+
+            {/* WAIRO Rider Dispatch — route riders to onboarded shops */}
+            <section className="p-4 rounded-3xl bg-white border border-black/5 shadow-2xs space-y-3">
+              <div className="flex items-center space-x-2">
+                <Bike className="w-4 h-4 text-[color:var(--color-primary)]" />
+                <h3 className="text-xs font-black uppercase tracking-wider text-[color:var(--color-text)]">
+                  WAIRO · Rider Dispatch
+                </h3>
+              </div>
+              <WairoDispatchPanel />
             </section>
 
             {/* Community Circles & Vault Section */}

@@ -148,5 +148,43 @@ test("API: assign, complete, and read the derived origin fee", async () => {
   }
 });
 
+// ---------------------------------------------------------------------------
+// ORIGINS + self-dispatch default (the dispatch panel's server contract).
+// ---------------------------------------------------------------------------
+test("listOrigins returns only shops with an active claim, joined to their vendor", () => {
+  const origins = pickups.listOrigins();
+  assert.ok(origins.some((o) => o.vendorId === vendor.id && o.shopName === "Kilimani Grocers"), "the claimed shop is an origin");
+  assert.equal(origins.find((o) => o.vendorId === vendor.id).businessType, "retailer");
+  // The unclaimed shop from earlier is NOT an origin.
+  assert.ok(!origins.some((o) => o.shopName === "Unclaimed Stall"), "an unclaimed shop is not an origin");
+});
+
+test("API: assign defaults the rider to the caller (self-dispatch)", async () => {
+  const { default: app } = await import("../src/index.js");
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const call = async (p, m = "GET", body, token) => {
+    const headers = { "content-type": "application/json" };
+    if (token) headers.authorization = `Bearer ${token}`;
+    const r = await fetch(`http://127.0.0.1:${port}${p}`, { method: m, headers, body: body ? JSON.stringify(body) : undefined });
+    return { status: r.status, body: await r.json().catch(() => null) };
+  };
+  try {
+    const A = (await call("/api/auth/register", "POST", { handle: "pk_self" + Date.now().toString(36), password: "a good passphrase" })).body;
+    const assigned = await call("/api/pickups", "POST", {
+      originVendorId: vendor.id, destinationTown: "Kisumu", receiverName: "Self", receiverPhone: "0715"
+    }, A.token);
+    assert.equal(assigned.status, 201);
+    assert.equal(assigned.body.pickup.riderId, A.user.id, "riderId defaults to the caller");
+    assert.equal(assigned.body.pickup.assignedBy, A.user.id);
+
+    const origins = await call("/api/pickups/origins", "GET", undefined, A.token);
+    assert.equal(origins.status, 200);
+    assert.ok(Array.isArray(origins.body.origins));
+  } finally {
+    srv.close();
+  }
+});
+
 console.log(`\nPASS ${count}`);
 process.exit(0);
