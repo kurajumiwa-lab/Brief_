@@ -4107,14 +4107,76 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
 
   return (
     <div className="min-h-screen bg-[#F7F8FA] text-[#0D1117] font-sans selection:bg-[#4F46E5] selection:text-[#FFFFFF] flex flex-col">
-      <div className="flex-1 w-full max-w-lg mx-auto px-4 py-8 space-y-5">
-        <div className="flex items-center gap-2">
-          <svg width="18" height="18" viewBox="0 0 26 26" aria-hidden="true">
-            <circle cx="13" cy="13" r="9" fill="var(--signal-live)" opacity="0.15" />
-            <circle cx="13" cy="13" r="4" fill="var(--signal-live)" />
-          </svg>
-        </div>
+      {/* ── FULL-BLEED HERO — the Instagram event splash, edge to edge. ── */}
+      {load.status === 'ready' && c && (
+        <div className="relative">
+          {c.image ? (
+            <img
+              src={c.image}
+              alt={c.title}
+              className="w-full h-72 sm:h-96 object-cover"
+              style={{ background: "var(--color-surface-elevated)" }}
+            />
+          ) : (
+            <div
+              className="w-full h-64 sm:h-80 flex items-center justify-center"
+              style={{ background: "linear-gradient(135deg, #4F46E5, #06B6D4)" }}
+            >
+              <span className="text-7xl font-black text-white/80">
+                {(c.title || "?").trim().charAt(0).toUpperCase()}
+              </span>
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/20" />
 
+          {/* Floating back + share, over the image — the splash affordances. */}
+          <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  if (window.history.length > 1) window.history.back();
+                  else window.location.href = '/';
+                }
+              }}
+              aria-label="Back"
+              className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/55 transition-colors cursor-pointer"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== 'undefined' && navigator.clipboard) {
+                  navigator.clipboard.writeText(window.location.href).catch(() => {});
+                }
+              }}
+              aria-label="Copy link"
+              className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/55 transition-colors cursor-pointer"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Overlaid identity: chips + title + meta, like an IG post caption. */}
+          <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 text-white space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-[10px] font-bold uppercase tracking-wider">
+                {c.type}
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-[10px] font-bold">
+                {c.price === 0 ? 'Free' : `${c.currency} ${c.price.toLocaleString()}`}
+              </span>
+            </div>
+            <h1 className="text-2xl sm:text-4xl font-black leading-tight drop-shadow-md">{c.title}</h1>
+            <p className="text-[11px] sm:text-xs text-white/85">
+              {[formatStartsAt(c.startsAt), c.location].filter(Boolean).join('  ·  ')}
+            </p>
+          </div>
+        </div>
+      )}
+
+      <div className="flex-1 w-full max-w-lg mx-auto px-4 py-6 space-y-5">
         {load.status === 'loading' && (
           <p className="text-xs text-[#0D1117]/60 py-12 text-center">Loading...</p>
         )}
@@ -4133,70 +4195,35 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
 
         {load.status === 'ready' && c && (
           <>
-            <div className="space-y-3">
-              {/* Cover — an Instagram-style event splash: full-bleed image with a
-                  gradient scrim, the category chip and title overlaid on it, and
-                  a deterministic gradient fallback when no image was set. */}
-              <div className="relative overflow-hidden rounded-2xl border border-[#E5E8EC]">
-                {c.image ? (
-                  <img
-                    src={c.image}
-                    alt={c.title}
-                    className="w-full h-64 sm:h-80 object-cover"
-                    style={{ background: "var(--color-surface-elevated)" }}
-                  />
-                ) : (
+            <div className="space-y-2">
+              {/* Host row (T4): a derived profile — the organiser's chosen name
+                  plus a counted number of their public events. No internal id. */}
+              {c.host && (c.host.name || c.host.eventsHosted > 0) && (
+                <div className="flex items-center gap-2.5 pt-1">
                   <div
-                    className="w-full h-52 sm:h-64 flex items-center justify-center"
-                    style={{ background: "linear-gradient(135deg, #4F46E5, #06B6D4)" }}
+                    className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+                    style={{ background: "var(--color-primary-subtle)", color: "var(--color-primary)" }}
                   >
-                    <span className="text-6xl font-black text-white/80">
-                      {(c.title || "?").trim().charAt(0).toUpperCase()}
-                    </span>
+                    <User className="w-4 h-4" />
                   </div>
-                )}
-                {/* Gradient scrim — lifts the overlaid text off any cover. */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
-                {/* Overlaid identity: category chip + title. */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 text-white space-y-1.5">
-                  <span className="inline-block px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-[10px] font-bold uppercase tracking-wider">
-                    {c.type}
-                  </span>
-                  <h1 className="text-2xl sm:text-3xl font-black leading-tight drop-shadow-md">{c.title}</h1>
+                  <div className="min-w-0 leading-tight">
+                    <p className="text-[11px] font-extrabold text-[#0D1117]">
+                      {c.host.name ?? 'Organiser'}
+                    </p>
+                    <p className="text-[9px] text-[#0D1117]/60">
+                      {c.host.eventsHosted === 0
+                        ? 'First event'
+                        : `${c.host.eventsHosted} event${c.host.eventsHosted === 1 ? '' : 's'} hosted`}
+                    </p>
+                  </div>
                 </div>
-              </div>
-
-              {/* Host + creator + description, below the splash. */}
-              <div className="space-y-2">
-                {/* Host row (T4): a derived profile — the organiser's chosen name
-                    plus a counted number of their public events. No internal id. */}
-                {c.host && (c.host.name || c.host.eventsHosted > 0) && (
-                  <div className="flex items-center gap-2.5 pt-1">
-                    <div
-                      className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
-                      style={{ background: "var(--color-primary-subtle)", color: "var(--color-primary)" }}
-                    >
-                      <User className="w-4 h-4" />
-                    </div>
-                    <div className="min-w-0 leading-tight">
-                      <p className="text-[11px] font-extrabold text-[#0D1117]">
-                        {c.host.name ?? 'Organiser'}
-                      </p>
-                      <p className="text-[9px] text-[#0D1117]/60">
-                        {c.host.eventsHosted === 0
-                          ? 'First event'
-                          : `${c.host.eventsHosted} event${c.host.eventsHosted === 1 ? '' : 's'} hosted`}
-                      </p>
-                    </div>
-                  </div>
-                )}
-                {c.creator && (
-                  <p className="text-[11px] text-[#0D1117] font-extrabold">by {c.creator}</p>
-                )}
-                {c.description && (
-                  <p className="text-xs text-[#0D1117]/60 leading-relaxed">{c.description}</p>
-                )}
-              </div>
+              )}
+              {c.creator && (
+                <p className="text-[11px] text-[#0D1117] font-extrabold">by {c.creator}</p>
+              )}
+              {c.description && (
+                <p className="text-xs text-[#0D1117]/60 leading-relaxed">{c.description}</p>
+              )}
             </div>
 
             {/* Contribution pot (T3): a goal, stated amounts, settled-only
