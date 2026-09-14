@@ -1,20 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Sparkles,
   ShoppingBag,
   Users,
   Lock,
   ArrowRight,
-  MapPin,
-  TrendingUp,
-  Flame,
-  Search,
   Clock,
   Store,
   Bike,
   Plus
 } from 'lucide-react';
 import * as briefApi from '../../api/briefApi';
+import { DiscoveryHead } from './DiscoveryHead';
 import { PublicSpaces } from './PublicSpaces';
 import { WairoDispatchPanel } from './WairoDispatchPanel';
 import { EventsHub } from '../../components/EventsHub';
@@ -51,6 +47,34 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
   const [eventBusy, setEventBusy] = useState(false);
   const [eventError, setEventError] = useState<string | null>(null);
   const [eventsKey, setEventsKey] = useState(0);
+
+  // Derived headline counts for the head card's scoreboard. Fetched from real
+  // rows, never invented: events (published campaigns), marketplace listings,
+  // public spaces, circles. null = the read did not resolve (rendered as "—"),
+  // so a failed fetch never masquerades as a zero.
+  const [counts, setCounts] = useState<{ events: number | null; listings: number | null; spaces: number | null; circles: number | null }>(
+    { events: null, listings: null, spaces: null, circles: null }
+  );
+
+  useEffect(() => {
+    let live = true;
+    (async () => {
+      const [ev, li, sp, ci] = await Promise.all([
+        briefApi.browseEvents({ limit: 1 }),
+        briefApi.getListings(),
+        briefApi.discoverPublicSpaces(50),
+        briefApi.getCircles()
+      ]);
+      if (!live) return;
+      setCounts({
+        events: ev.ok ? ev.data.total : null,
+        listings: li.ok ? li.data.length : null,
+        spaces: sp.ok ? sp.data.length : null,
+        circles: ci.ok ? ci.data.length : null
+      });
+    })();
+    return () => { live = false; };
+  }, []);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -97,12 +121,14 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
   };
 
   const subTabs: Array<{ id: CitySubTab; label: string }> = [
-    { id: 'all', label: '🌆 All City' },
-    { id: 'events', label: '🎟️ Events & Festivals' },
-    { id: 'marketplace', label: '🛍️ Marketplace' },
-    { id: 'circles', label: '🤝 Circles' },
-    { id: 'vault', label: '🔐 Vault & Drops' }
+    { id: 'all', label: 'All' },
+    { id: 'events', label: 'Events' },
+    { id: 'marketplace', label: 'Market' },
+    { id: 'circles', label: 'Circles' },
+    { id: 'vault', label: 'Vault' }
   ];
+  const fmtCount = (n: number | null) => (n === null ? '—' : String(n));
+  const activeDot = Math.max(0, subTabs.findIndex((t) => t.id === activeSubTab));
 
   return (
     <div className={`space-y-6 max-w-4xl mx-auto ${className}`}>
@@ -113,55 +139,26 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
         </div>
       )}
 
-      {/* ── CITY FEED HERO HEADER ── */}
-      <div className="p-6 rounded-3xl bg-[color:var(--color-text)] text-white space-y-4 shadow-xl border border-white/10 relative overflow-hidden">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center space-x-2">
-              <span className="w-2 h-2 rounded-full bg-[color:var(--color-primary)] animate-ping" />
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-[color:var(--color-primary)]">
-                Live Nairobi Activity
-              </span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-1">
-              Everything Happening Around You
-            </h1>
-            <p className="text-xs text-white/70 max-w-md mt-0.5">
-              Local events, creator drops, community circles, and secret drops across Nairobi.
-            </p>
-          </div>
-
-          <div className="flex items-center space-x-2 shrink-0">
-            <span className="px-3 py-1.5 rounded-2xl bg-white/10 text-[color:var(--color-primary)] text-xs font-bold border border-white/10">
-              📍 Nairobi · Kilimani · CBD
-            </span>
-          </div>
-        </div>
-
-        {/* Filter Navigation Chips */}
-        <div className="flex items-center space-x-2 overflow-x-auto pb-1 pt-2 scrollbar-none">
-          {subTabs.map((tab) => {
-            const isSelected = activeSubTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => {
-                  soundEngine.play('tap');
-                  setActiveSubTab(tab.id);
-                }}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold shrink-0 transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  isSelected
-                    ? 'bg-[color:var(--color-primary)] text-[color:var(--color-text)] shadow-sm'
-                    : 'bg-white/10 text-white/80 hover:bg-white/20'
-                }`}
-              >
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      {/* ── CITY FEED HEAD — segmented control + scoreboard + dots ── */}
+      <DiscoveryHead
+        segments={subTabs}
+        activeSegmentId={activeSubTab}
+        onSegmentChange={(id) => { soundEngine.play('tap'); setActiveSubTab(id as CitySubTab); }}
+        left={{
+          label: 'Events',
+          icon: <Clock className="w-4 h-4 text-white/80" />
+        }}
+        right={{
+          label: 'Marketplace',
+          icon: <ShoppingBag className="w-4 h-4 text-white/80" />
+        }}
+        heroLeft={fmtCount(counts.events)}
+        heroRight={fmtCount(counts.listings)}
+        statusLabel="Nairobi · Kilimani · CBD"
+        chips={{ left: fmtCount(counts.spaces), right: fmtCount(counts.circles) }}
+        dotCount={subTabs.length}
+        activeDot={activeDot}
+      />
 
       {/* ── MOUNTED CITIZEN SURFACES ── */}
       <div className="space-y-6">

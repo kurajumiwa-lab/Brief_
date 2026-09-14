@@ -87,6 +87,23 @@ async function main() {
   }
   pass('CityFeedView exposes event + marketplace input surfaces');
 
+  // --- 2b. The head card clones the four-primitive shell -------------------
+  {
+    const c = mount(React.createElement(CityFeedView, { onOpenSpace: () => {} }));
+    await flush();
+    const tablist = c.querySelector('[role="tablist"]');
+    assert.ok(tablist, 'the head renders a segmented control (tablist)');
+    const segs = Array.from(tablist.querySelectorAll('[role="tab"]'));
+    assert.equal(segs.length, 5, 'five discover sections');
+    assert.equal(segs[0].getAttribute('aria-selected'), 'true', 'the first (All) section is active by default');
+    const heroEl = Array.from(c.querySelectorAll('div')).find((d) => (d.getAttribute('class') || '').includes('text-3xl'));
+    assert.ok(heroEl, 'the head renders a hero scoreboard element');
+    assert.ok(/^\d+\s*:\s*\d+$/.test(text(heroEl)), `hero shows two derived counts split by a colon (got "${text(heroEl)}")`);
+    const dashes = Array.from(c.querySelectorAll('div[aria-hidden="true"] div')).filter((d) => (d.getAttribute('class') || '').includes('h-1 w-5'));
+    assert.equal(dashes.length, 5, 'five carousel dashes');
+  }
+  pass('DiscoveryHead clones the segmented control + scoreboard + pagination dots');
+
   // --- 3. Host opens a real event form; Post-a-listing opens Selling -------
   {
     mount(React.createElement(CityFeedView, { onOpenSpace: () => {} }));
