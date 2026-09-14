@@ -118,6 +118,11 @@ const EMPTY = {
   // src/domain/fieldAgent.js.
   vendorClaims: [],
   fieldAgentSettlements: [],
+  // Rider pickups — a local delivery assigned to a rider, originating from an
+  // onboarded shop. When a DIFFERENT rider completes a pickup from a shop the
+  // original onboarding agent claimed, that agent earns a flat per-pickup
+  // origin fee (derived, never stored as a balance). See src/domain/pickups.js.
+  pickups: [],
   // Lipa Mdogo — asset-financing RECORDS + collection. Brief is not the
   // lender: the lender is a bank/sacco/cooperative partner who owns the risk;
   // these rows record the contract, the derived schedule, and provider-

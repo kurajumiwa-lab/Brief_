@@ -4535,6 +4535,53 @@ export function onboardVendor(body: {
 }
 
 // ---------------------------------------------------------------------------
+// PICKUPS — rider routing to onboarded shops + the derived origin fee.
+// ---------------------------------------------------------------------------
+export interface Pickup {
+  id: string;
+  originVendorId: string;
+  riderId: string;
+  assignedBy: string | null;
+  destinationTown: string;
+  receiverName: string;
+  receiverPhone: string;
+  notes: string;
+  status: 'assigned' | 'picked_up' | 'delivered' | 'cancelled';
+  createdAt: string;
+  completedAt: string | null;
+}
+export interface PickupOriginObligation {
+  agentId: string;
+  pickupCount: number;
+  feePerPickupKes: number;
+  originFeeKes: number;
+  note: string;
+}
+export function assignPickup(body: {
+  originVendorId: string;
+  riderId: string;
+  destinationTown: string;
+  receiverName: string;
+  receiverPhone: string;
+  notes?: string;
+}): Promise<ApiResult<Pickup>> {
+  return request('/api/pickups', { method: 'POST', body: JSON.stringify(body) }, r =>
+    r?.pickup?.id ? (r.pickup as Pickup) : undefined);
+}
+export function completePickup(pickupId: string): Promise<ApiResult<Pickup>> {
+  return request(`/api/pickups/${encodeURIComponent(pickupId)}/complete`, { method: 'POST', body: '{}' }, r =>
+    r?.pickup?.id ? (r.pickup as Pickup) : undefined);
+}
+export function listMyPickups(): Promise<ApiResult<Pickup[]>> {
+  return request('/api/pickups/mine', undefined, r =>
+    Array.isArray(r?.pickups) ? (r.pickups as Pickup[]) : undefined);
+}
+export function getMyPickupOriginFee(): Promise<ApiResult<PickupOriginObligation>> {
+  return request('/api/me/pickup-origin-fee', undefined, r =>
+    r?.obligation && typeof r.obligation.originFeeKes === 'number' ? (r.obligation as PickupOriginObligation) : undefined);
+}
+
+// ---------------------------------------------------------------------------
 // LIPA MDOGO — the member's own contracts + derived maturity (#3).
 // ---------------------------------------------------------------------------
 export interface LipaMdogoSchedule {

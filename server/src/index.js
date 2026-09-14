@@ -90,6 +90,7 @@ import { register as tableBankingRoutes } from './routes/tableBanking.js';
 import { register as rolesRoutes } from './routes/roles.js';
 import { register as gapsRoutes } from './routes/gaps.js';
 import { register as priceSignalsRoutes } from './routes/priceSignals.js';
+import { register as pickupsRoutes } from './routes/pickups.js';
 
 const app = express();
 
@@ -268,6 +269,7 @@ tableBankingRoutes(app);
 rolesRoutes(app);
 gapsRoutes(app);
 priceSignalsRoutes(app);
+pickupsRoutes(app);
 
 // --- Production frontend serving -------------------------------------------
 //
