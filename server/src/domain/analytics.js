@@ -82,12 +82,71 @@ function quality() {
   };
 }
 
+/**
+ * SPACE HEALTH — the activation number the operator watches.
+ *
+ * "A space is activated when it has at least one offer." Derived by scanning
+ * spaces against their linked listings (the SAME predicate hydrateSpace uses:
+ * a listing belongs to a space by `spaceId` OR the space's vendor, and is not
+ * archived). "Activated within 7 days" is the headline: the earliest offer's
+ * createdAt sits inside the space's first week.
+ *
+ * Every figure is a scan of real rows — no stored counter, no guessed funnel.
+ * Rates are null (not 0) when there are no spaces to measure, because an
+ * unmeasured rate and a measured zero are different facts.
+ */
+function spaceHealth() {
+  const spaces = store.all('spaces');
+  const active = spaces.filter((s) => s.status === 'active');
+
+  // "A space added an offer" means the space itself created it — which is the
+  // only thing `spaceId` records. The `vendorId` fallback would let SIBLING
+  // spaces (which share one vendor) claim each other's offers, double-counting
+  // activation. Activation is precise: offers with spaceId === this space.
+  const offersOf = (space) => store.filter('listings', (l) =>
+    l.spaceId === space.id && l.status !== 'archived');
+
+  const withOffer = active.filter((s) => offersOf(s).length > 0);
+  const withOrder = active.filter((s) =>
+    store.filter('orders', (o) => o.spaceId === s.id).length > 0);
+
+  const activatedWithin7d = withOffer.filter((s) => {
+    const earliest = offersOf(s).reduce(
+      (min, o) => (o.createdAt < min ? o.createdAt : min),
+      '9999-12-31T00:00:00.000Z'
+    );
+    const created = Date.parse(s.createdAt);
+    const offerAt = Date.parse(earliest);
+    // A space with no offer never reaches here (withOffer already filtered);
+    // the guard just makes the arithmetic robust.
+    return Number.isFinite(created) && Number.isFinite(offerAt)
+      ? offerAt - created <= 7 * 86400000
+      : false;
+  });
+
+  return {
+    total: spaces.length,
+    active: active.length,
+    public: active.filter((s) => s.visibility === 'public').length,
+    // THE activation metric: how many active spaces have ≥1 offer.
+    withOffer: withOffer.length,
+    activationRate: active.length ? withOffer.length / active.length : null,
+    // The doc's headline: % that activated within their first week.
+    activatedWithin7d: activatedWithin7d.length,
+    activationRate7d: active.length ? activatedWithin7d.length / active.length : null,
+    // Economic activity: spaces with ≥1 order.
+    withOrder: withOrder.length,
+    economicRate: active.length ? withOrder.length / active.length : null
+  };
+}
+
 export function dashboard() {
   return {
     activation: activationEvents(),
     engagement: engagementCounts(),
     retention: retention(),
     quality: quality(),
+    spaces: spaceHealth(),
     // Collection sizes, so the operator sees the system is alive.
     counts: {
       users: store.all('users').length,
