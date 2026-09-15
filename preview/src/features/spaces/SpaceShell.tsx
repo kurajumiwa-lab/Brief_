@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import type { Space, Listing } from '../../api/types';
 import * as briefApi from '../../api/briefApi';
-import { ArrowLeft, Archive, RotateCcw, Globe, Lock, Link2 } from 'lucide-react';
+import { ArrowLeft, Archive, RotateCcw, Globe, Lock, Link2, Pencil } from 'lucide-react';
+import type { ListingUpdate } from '../../api/types';
 import { PipelineView } from './PipelineView';
 import { SpaceOperatingPanel } from './SpaceOperatingPanel';
 import { SpaceMoney } from './SpaceMoney';
@@ -37,6 +38,15 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
   const [createFlowOpen, setCreateFlowOpen] = useState<boolean>(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState<boolean>(false);
+  // The identity editor: a space is NOT frozen by publishing. Its name, goal,
+  // target and cover stay editable by the owner, and the public directory is
+  // derived per read, so the next look shows the change.
+  const [identityOpen, setIdentityOpen] = useState<boolean>(false);
+  const [identity, setIdentity] = useState<{ name: string; goal: string; target: string; image: string | null }>({
+    name: '', goal: '', target: '', image: null
+  });
+  const [identityBusy, setIdentityBusy] = useState<boolean>(false);
+  const [identityError, setIdentityError] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -60,6 +70,98 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
   useEffect(() => {
     loadSpace();
   }, [spaceId]);
+
+  const openIdentity = () => {
+    soundEngine.play('tap');
+    setIdentity({
+      name: space?.name ?? '',
+      goal: space?.goal ?? '',
+      target: space?.targetValueKes ? String(space.targetValueKes) : '',
+      image: space?.image ?? null
+    });
+    setIdentityError(null);
+    setIdentityOpen(true);
+  };
+
+  const saveIdentity = async () => {
+    if (!space) return;
+    if (!identity.name.trim()) { setIdentityError('A space needs a name.'); return; }
+    setIdentityBusy(true);
+    setIdentityError(null);
+    const res = await briefApi.updateSpace(space.id, {
+      name: identity.name.trim(),
+      goal: identity.goal.trim(),
+      // null clears the target rather than silently meaning "zero".
+      targetValueKes: identity.target.trim() === '' ? null : Number(identity.target),
+      image: identity.image
+    });
+    setIdentityBusy(false);
+    if (res.ok) {
+      setSpace(res.data.space);
+      setIdentityOpen(false);
+      showToast(space.visibility === 'public'
+        ? 'Saved. Your space is public, so the directory shows this on the next read.'
+        : 'Saved.');
+      // No refetch: PATCH returns the fully hydrated row, and re-reading it
+      // straight back is how a UI ends up briefly showing the OLD name.
+    } else {
+      setIdentityError(res.error ?? 'Could not save those changes.');
+    }
+  };
+
+  /**
+   * Lifecycle moves go through the server's transition table. `changed:false`
+   * is reported for what it is — a no-op, not a second publication — and a
+   * refusal returns its reason so the card can show it.
+   */
+  const offerStatus = async (offerId: string, next: 'active' | 'paused' | 'sold_out' | 'archived') => {
+    const res = await briefApi.setListingStatus(offerId, next);
+    if (!res.ok) return res.error ?? 'That move was refused.';
+    if (res.data.changed === false) showToast('It was already in that state — nothing changed.');
+    loadSpace();
+    return null;
+  };
+
+  const saveOffer = async (offerId: string, patch: ListingUpdate) => {
+    const res = await briefApi.updateListing(offerId, patch);
+    if (!res.ok) return res.error ?? 'Could not save that offer.';
+    showToast('Offer saved.');
+    loadSpace();
+    return null;
+  };
+
+  /**
+   * Sharing, honestly. A space has no page of its own — a public space is
+   * found in the directory — so there is no "your space link" to copy, and the
+   * button used to claim one. Now: copy what actually works, or say why there
+   * is nothing to copy yet.
+   */
+  const copyText = async (value: string) => {
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(value);
+        return true;
+      }
+    } catch {
+      /* the fallback below is the honest path */
+    }
+    return false;
+  };
+
+  const shareSpace = async () => {
+    if (!space) return;
+    soundEngine.play('tap');
+    if (space.visibility !== 'public') {
+      showToast(`This space is ${space.visibility}, so there is nothing public to share yet. Set it to Public first.`);
+      return;
+    }
+    const url = `${window.location.origin}${window.location.pathname}#discover`;
+    const copied = await copyText(url);
+    showToast(copied
+      ? 'Copied the Discover link — people find public spaces in its Spaces list. A space has no page of its own.'
+      : `Copy it yourself: ${url}`);
+    onShare?.(space);
+  };
 
   const handlePublishOffer = async (offerId: string) => {
     if (!space) return;
@@ -177,13 +279,23 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
           <div className="flex items-center gap-1.5">
             <button
               type="button"
-              onClick={() => onShare?.(space!)}
+              onClick={() => void shareSpace()}
               disabled={!space}
               className="p-2 rounded-full bg-white text-[color:var(--color-text)] shadow-2xs border border-black/5 hover:bg-gray-100 transition-all cursor-pointer"
-              aria-label="Share space"
-              title="Share"
+              aria-label="Copy the link that reaches this space"
+              title="Copy link"
             >
               <Link2 className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={openIdentity}
+              disabled={busy}
+              className="inline-flex items-center gap-1 p-2 rounded-full bg-white text-[color:var(--color-text)] shadow-2xs border border-black/5 hover:bg-gray-100 transition-all cursor-pointer"
+              aria-label="Edit this space"
+              title="Edit name, goal, target"
+            >
+              <Pencil className="w-4 h-4" />
             </button>
             <button
               type="button"
@@ -237,6 +349,60 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
                 className="px-3 py-1.5 rounded-full bg-white text-[color:var(--color-text)] text-xs font-bold border border-black/10 cursor-pointer"
               >
                 Open inbox
+              </button>
+            </div>
+          </div>
+        )}
+
+        {identityOpen && (
+          <div className="p-4 rounded-2xl border space-y-3" style={{ borderColor: 'var(--color-primary)' }}>
+            <p className="text-[9px] font-black uppercase tracking-wider" style={{ color: 'var(--color-primary)' }}>
+              Edit this space
+            </p>
+            <p className="text-[10px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
+              Publishing does not freeze anything. These stay yours to change, and the public directory
+              reads the current row on each look — there is no copy to update.
+            </p>
+            <input
+              type="text"
+              aria-label="Space name"
+              value={identity.name}
+              onChange={(e) => setIdentity((v) => ({ ...v, name: e.target.value }))}
+              className="w-full px-3 py-2 rounded-xl text-xs border border-black/10 bg-white"
+            />
+            <input
+              type="text"
+              aria-label="Space goal"
+              value={identity.goal}
+              onChange={(e) => setIdentity((v) => ({ ...v, goal: e.target.value }))}
+              className="w-full px-3 py-2 rounded-xl text-xs border border-black/10 bg-white"
+            />
+            <input
+              type="number"
+              min={0}
+              aria-label="Monthly target"
+              placeholder="Monthly target (KES)"
+              value={identity.target}
+              onChange={(e) => setIdentity((v) => ({ ...v, target: e.target.value }))}
+              className="w-40 px-3 py-2 rounded-xl text-xs font-mono border border-black/10 bg-white"
+            />
+            {identityError && <p className="text-[11px] font-bold" role="alert" style={{ color: 'var(--color-danger)' }}>{identityError}</p>}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={identityBusy}
+                onClick={() => void saveIdentity()}
+                className="px-3.5 py-2 rounded-full text-[11px] font-black cursor-pointer disabled:opacity-50"
+                style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
+              >
+                {identityBusy ? 'Saving…' : 'Save'}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setIdentityOpen(false); setIdentityError(null); }}
+                className="px-3.5 py-2 rounded-full text-[11px] font-bold cursor-pointer border border-black/10"
+              >
+                Cancel
               </button>
             </div>
           </div>
@@ -331,7 +497,9 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
             offers={space.offers}
             onAddOffer={() => setCreateFlowOpen(true)}
             onPublishOffer={handlePublishOffer}
-            onShareOffer={(o) => showToast(`Share link for "${o.title}" copied!`)}
+            onShareOffer={(o) => showToast(`Link for "${o.title}" copied — buyers sign in to open it.`)}
+            onOfferStatus={(id, next) => offerStatus(id, next)}
+            onSaveOffer={(id, patch) => saveOffer(id, patch)}
           />
         </div>
       )}

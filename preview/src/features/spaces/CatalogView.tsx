@@ -1,15 +1,69 @@
 import React, { useState } from 'react';
-import type { Listing } from '../../api/types';
-import { Tag, Plus, ShoppingBag } from 'lucide-react';
+import type { Listing, ListingUpdate } from '../../api/types';
+import { Tag, Plus, ShoppingBag, X } from 'lucide-react';
 import { soundEngine } from '../../utils/SoundEngine';
 import { MicroBadge } from '../../ui/MicroBadge';
 import { ContextMenu } from '../../ui/ContextMenu';
+
+// ---------------------------------------------------------------------------
+// CATALOG VIEW — the seller's own offers, with REAL controls.
+//
+// Two rules this screen exists to honour:
+//
+//   1. NOTHING HERE IS COSMETIC. This used to carry a Pause/Resume button that
+//      only flipped local React state — the offer stayed live to buyers, so
+//      the control was a lie with a checkmark. Status now goes through
+//      POST /api/listings/:id/status and the card re-renders from the row the
+//      server sends back. A no-op is reported as a no-op (`changed: false`).
+//
+//   2. AN OFFER IS EDITABLE AFTER PUBLISHING, WITHIN ITS LAWFUL MOVES.
+//      Content (title, description, price, stock, place) PATCHes the listing;
+//      the lifecycle moves through the transition table. `archived` is
+//      terminal by design — withdrawn offers do not come back, because orders
+//      already placed refer to what the listing was. Re-listing means a new
+//      offer, and the UI says so instead of offering a button that would be
+//      refused.
+//
+// The transition map below is a COURTESY, so a menu never offers what the
+// server will refuse. The server stays authoritative and its refusal is shown
+// word for word.
+// ---------------------------------------------------------------------------
+
+type LifecycleMove = 'active' | 'paused' | 'sold_out' | 'archived';
+
+const NEXT_MOVES: Record<string, Array<{ to: LifecycleMove; label: string; tone?: 'default' | 'danger' }>> = {
+  // A draft has nothing to pause — it is already invisible to buyers. It can
+  // be published (the inline primary action) or withdrawn.
+  draft: [{ to: 'archived', label: 'Withdraw this offer', tone: 'danger' }],
+  active: [
+    { to: 'paused', label: 'Pause — hidden from buyers' },
+    { to: 'sold_out', label: 'Mark sold out' },
+    { to: 'archived', label: 'Withdraw this offer', tone: 'danger' }
+  ],
+  paused: [
+    { to: 'active', label: 'Resume — live again' },
+    { to: 'archived', label: 'Withdraw this offer', tone: 'danger' }
+  ],
+  sold_out: [
+    { to: 'active', label: 'Back in stock — relist' },
+    { to: 'archived', label: 'Withdraw this offer', tone: 'danger' }
+  ],
+  archived: []
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  draft: 'DRAFT', active: 'ACTIVE', paused: 'PAUSED', sold_out: 'SOLD OUT', archived: 'WITHDRAWN'
+};
 
 export interface CatalogViewProps {
   offers: Listing[];
   onAddOffer: () => void;
   onPublishOffer?: (offerId: string) => void;
   onShareOffer?: (offer: Listing) => void;
+  /** A real lifecycle move. Resolves to an error string, or null on success. */
+  onOfferStatus?: (offerId: string, next: LifecycleMove) => Promise<string | null | undefined> | void;
+  /** A real content edit. Resolves to an error string, or null on success. */
+  onSaveOffer?: (offerId: string, patch: ListingUpdate) => Promise<string | null | undefined> | void;
   className?: string;
 }
 
@@ -18,17 +72,50 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
   onAddOffer,
   onPublishOffer,
   onShareOffer,
+  onOfferStatus,
+  onSaveOffer,
   className = ''
 }) => {
-  const [offerStatuses, setOfferStatuses] = useState<Record<string, string>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<ListingUpdate>({});
+  const [busy, setBusy] = useState(false);
+  const [rowError, setRowError] = useState<Record<string, string>>({});
 
-  const togglePause = (offerId: string, currentStatus: string) => {
+  const move = async (offerId: string, to: LifecycleMove) => {
     soundEngine.play('tap');
-    setOfferStatuses((prev) => ({
-      ...prev,
-      [offerId]: prev[offerId] === 'paused' || currentStatus === 'paused' ? 'active' : 'paused'
-    }));
+    if (!onOfferStatus) return;
+    setBusy(true);
+    const err = await onOfferStatus(offerId, to);
+    setBusy(false);
+    // A refusal stays on the card it belongs to — the server's words, not ours.
+    setRowError((p) => (err ? { ...p, [offerId]: String(err) } : (() => { const n = { ...p }; delete n[offerId]; return n; })()));
+  };
+
+  const startEdit = (offer: Listing) => {
+    soundEngine.play('tap');
+    setDraft({
+      title: offer.title,
+      description: offer.description ?? '',
+      price: offer.price,
+      currency: offer.currency ?? 'KES',
+      quantityAvailable: offer.quantityAvailable ?? null,
+      locationName: (offer as { locationName?: string }).locationName ?? null
+    });
+    setEditingId(offer.id);
+  };
+
+  const saveEdit = async (offerId: string) => {
+    if (!onSaveOffer) return;
+    setBusy(true);
+    const err = await onSaveOffer(offerId, draft);
+    setBusy(false);
+    if (err) {
+      setRowError((p) => ({ ...p, [offerId]: String(err) }));
+      return;
+    }
+    setEditingId(null);
+    setRowError((p) => { const n = { ...p }; delete n[offerId]; return n; });
   };
 
   const handleCopyLink = (offer: Listing) => {
@@ -86,9 +173,15 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {offers.map((offer) => {
-            const currentStat = offerStatuses[offer.id] || offer.status;
+            // Status is read from the row the server returned — never from a
+            // local optimistic flip, which is how a control ends up lying.
+            const currentStat = offer.status;
             const isDraft = currentStat === 'draft';
             const isPaused = currentStat === 'paused';
+            const isArchived = currentStat === 'archived';
+            // An action with nowhere to go is a lie with an icon, so lifecycle
+            // moves are offered only when the host wired the real transition.
+            const moves = onOfferStatus ? (NEXT_MOVES[currentStat] ?? []) : [];
             const price = (offer as any).priceKes ?? offer.price ?? 0;
             const stock = offer.quantityAvailable;
 
@@ -110,8 +203,8 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                     <div className="flex items-center space-x-1 shrink-0">
                       {/* Metadata offloaded to micro-badges: status + stock,
                           one line, token-based (bronze border per spec). */}
-                      <MicroBadge tone={isPaused ? "warning" : isDraft ? "warning" : "success"}>
-                        {isPaused ? "PAUSED" : isDraft ? "DRAFT" : "ACTIVE"}
+                      <MicroBadge tone={isPaused || isDraft || isArchived ? "warning" : "success"}>
+                        {STATUS_LABEL[currentStat] ?? String(currentStat).toUpperCase()}
                       </MicroBadge>
                       <MicroBadge tone="neutral">
                         {stock == null ? "Stock not specified" : `${stock} in stock`}
@@ -148,22 +241,111 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                       </button>
                     )}
 
+                    {!isArchived && onSaveOffer && (
+                      <button
+                        type="button"
+                        onClick={() => (editingId === offer.id ? setEditingId(null) : startEdit(offer))}
+                        className="px-2.5 py-1 rounded-xl border border-black/10 text-[10px] font-bold text-[color:var(--color-text)] hover:bg-black/5 transition-all cursor-pointer"
+                      >
+                        {editingId === offer.id ? 'Close' : 'Edit'}
+                      </button>
+                    )}
+                    {isArchived && (
+                      <span className="text-[10px] font-bold" style={{ color: 'var(--color-text-muted)' }}>
+                        Withdrawn — a new offer re-lists it
+                      </span>
+                    )}
+
                     {/* Secondary actions collapse behind a context menu. */}
                     <ContextMenu
                       ariaLabel={`Actions for ${offer.title}`}
                       actions={[
                         {
-                          label: isPaused ? "Resume offer" : "Pause offer",
-                          onSelect: () => togglePause(offer.id, offer.status)
-                        },
-                        {
                           label: copiedId === offer.id ? "Link copied" : "Share link",
                           onSelect: () => handleCopyLink(offer)
-                        }
+                        },
+                        ...moves.map((m) => ({
+                          label: m.label,
+                          tone: m.tone,
+                          onSelect: () => void move(offer.id, m.to)
+                        }))
                       ]}
                     />
                   </div>
                 </div>
+
+                {rowError[offer.id] && (
+                  <p className="text-[10px] font-bold" role="alert" style={{ color: 'var(--color-danger)' }}>
+                    {rowError[offer.id]}
+                  </p>
+                )}
+
+                {editingId === offer.id && (
+                  <div className="pt-3 border-t border-black/5 space-y-2">
+                    <input
+                      type="text"
+                      aria-label="Offer title"
+                      value={draft.title ?? ''}
+                      onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
+                      className="w-full px-3 py-2 rounded-xl text-xs border border-black/10 bg-white"
+                    />
+                    <textarea
+                      aria-label="Offer description"
+                      rows={2}
+                      value={draft.description ?? ''}
+                      onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
+                      className="w-full px-3 py-2 rounded-xl text-[11px] border border-black/10 bg-white resize-none"
+                    />
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        min={0}
+                        aria-label="Offer price"
+                        value={draft.price ?? 0}
+                        onChange={(e) => setDraft((d) => ({ ...d, price: Number(e.target.value) }))}
+                        className="w-28 px-3 py-2 rounded-xl text-xs font-mono border border-black/10 bg-white"
+                      />
+                      <input
+                        type="number"
+                        min={0}
+                        aria-label="Stock available"
+                        placeholder="stock"
+                        value={draft.quantityAvailable ?? ''}
+                        onChange={(e) => setDraft((d) => ({ ...d, quantityAvailable: e.target.value === '' ? null : Number(e.target.value) }))}
+                        className="w-24 px-3 py-2 rounded-xl text-xs font-mono border border-black/10 bg-white"
+                      />
+                      <input
+                        type="text"
+                        aria-label="Offer location"
+                        placeholder="Place (optional)"
+                        value={draft.locationName ?? ''}
+                        onChange={(e) => setDraft((d) => ({ ...d, locationName: e.target.value }))}
+                        className="flex-1 min-w-0 px-3 py-2 rounded-xl text-xs border border-black/10 bg-white"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void saveEdit(offer.id)}
+                        className="px-3 py-1.5 rounded-full text-[11px] font-black cursor-pointer disabled:opacity-50"
+                        style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
+                      >
+                        {busy ? 'Saving…' : 'Save changes'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingId(null)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold cursor-pointer border border-black/10"
+                      >
+                        <X className="w-3 h-3" /> Cancel
+                      </button>
+                      <span className="text-[9px]" style={{ color: 'var(--color-text-muted)' }}>
+                        Buyers see the new price on their next look
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}

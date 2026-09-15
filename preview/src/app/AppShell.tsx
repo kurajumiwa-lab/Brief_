@@ -35,6 +35,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   const [activeTab, setActiveTab] = useState<BriefNavigationTab>(initialTab);
   const [supplyRoute, setSupplyRoute] = useState(() => window.location.hash.replace(/^#\/?supply\/?/, ''));
   const [requestRoute, setRequestRoute] = useState('');
+  const [offerLinkId, setOfferLinkId] = useState('');
   const [spaceError, setSpaceError] = useState('');
   const [activeSpace, setActiveSpace] = useState<Space | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -112,6 +113,11 @@ export const AppShell: React.FC<AppShellProps> = ({
       } else if (hash === 'requests' || hash.startsWith('requests/')) {
         setActiveTab('requests');
         try { setRequestRoute(decodeURIComponent(hash.slice(9))); } catch { setRequestRoute('invalid'); }
+      } else if (hash.startsWith('offer/')) {
+        // Sellers copy this link from their catalog. It resolves to the real
+        // public offer view — for a signed-in buyer, because ordering needs a
+        // session. It is not presented as an anonymous storefront link.
+        try { setOfferLinkId(decodeURIComponent(hash.slice(6))); } catch { setOfferLinkId('invalid'); }
       } else if (hash === 'entity' || hash.startsWith('entity/')) {
         const id = decodeURIComponent(hash.slice(7));
         if (id) { setEntityId(id); setActiveTab('you'); }
@@ -125,6 +131,32 @@ export const AppShell: React.FC<AppShellProps> = ({
     window.addEventListener('hashchange', navigate);
     return () => window.removeEventListener('hashchange', navigate);
   }, [initialSpaceId, initialTab]);
+
+  // The copied #offer/<id> link is answered by reading the listing from the
+  // server. A 404 or a signed-out visitor is reported, not papered over.
+  useEffect(() => {
+    if (!offerLinkId) return;
+    let live = true;
+    if (offerLinkId === 'invalid') {
+      showToast('That offer link is not a valid offer id.');
+      setOfferLinkId('');
+      return;
+    }
+    void briefApi.getListing(offerLinkId).then((res) => {
+      if (!live) return;
+      if (res.ok) {
+        setActivePublicOffer(res.data);
+        setPublicOfferModalOpen(true);
+      } else {
+        showToast(res.status === 401
+          ? 'Sign in to open that offer — offer links are not anonymous pages yet.'
+          : res.error ?? 'That offer is no longer available.');
+      }
+      if (typeof window !== 'undefined') window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      setOfferLinkId('');
+    });
+    return () => { live = false; };
+  }, [offerLinkId]);
 
   const handlePublishOffer = async (offerId: string) => {
     if (!activeSpace) return;
@@ -267,7 +299,7 @@ export const AppShell: React.FC<AppShellProps> = ({
               <SpaceShell
                 spaceId={activeSpace.id}
                 onBack={() => { setActiveSpace(null); setActiveTab('home'); }}
-                onShare={(space) => showToast(`Share link for "${space.name}" copied!`)}
+                onShare={() => { /* SpaceShell copies and reports the truth itself */ }}
               />
             )}
 
@@ -319,6 +351,18 @@ export const AppShell: React.FC<AppShellProps> = ({
                 onShareOffer={(o) => {
                   setActivePublicOffer(o);
                   setPublicOfferModalOpen(true);
+                }}
+                onOfferStatus={async (id, next) => {
+                  const res = await briefApi.setListingStatus(id, next as any);
+                  if (!res.ok) return res.error ?? 'That move was refused.';
+                  loadSpaces();
+                  return null;
+                }}
+                onSaveOffer={async (id, patch) => {
+                  const res = await briefApi.updateListing(id, patch);
+                  if (!res.ok) return res.error ?? 'Could not save that offer.';
+                  loadSpaces();
+                  return null;
                 }}
               />
             )}
@@ -457,11 +501,11 @@ export const AppShell: React.FC<AppShellProps> = ({
       )}
 
       {/* Customer-Facing Public Offer View */}
-      {publicOfferModalOpen && activePublicOffer && activeSpace && (
+      {publicOfferModalOpen && activePublicOffer && (
         <PublicOfferModal
           isOpen={publicOfferModalOpen}
           offer={activePublicOffer}
-          spaceName={activeSpace.name}
+          spaceName={activeSpace?.name ?? 'Brief seller'}
           onClose={() => setPublicOfferModalOpen(false)}
           onInquirySent={() => showToast('Inquiry submitted to seller!')}
         />

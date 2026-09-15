@@ -100,12 +100,13 @@ async function main() {
       { id: 'o1', title: 'Birthday Cake', description: 'Vanilla', price: 2500, currency: 'KES', quantityAvailable: 5, status: 'draft' },
       { id: 'o2', title: 'Bread', description: 'Fresh', price: 60, currency: 'KES', quantityAvailable: null, status: 'active' }
     ];
-    let published = null, shared = null, paused = null;
+    let published = null, shared = null, moved = null;
     const { container } = mount(React.createElement(CatalogView, {
       offers,
       onAddOffer: () => {},
       onPublishOffer: (id) => { published = id; },
-      onShareOffer: (o) => { shared = o.id; }
+      onShareOffer: (o) => { shared = o.id; },
+      onOfferStatus: (id, next) => { moved = { id, next }; return Promise.resolve(null); }
     }));
     await flush();
     // Metadata is now micro-badges, not inline spans.
@@ -114,16 +115,33 @@ async function main() {
     // The consequential Publish action stays inline (draft card).
     assert.ok(btn('Publish'), 'Publish stays inline as the primary action');
     // Pause / Share are NOT inline — they live behind the context menu.
-    assert.equal(btn('Pause offer'), undefined, 'pause is not an inline button');
+    assert.equal(btn('Pause — hidden from buyers'), undefined, 'pause is not an inline button');
     assert.equal(btn('Share link'), undefined, 'share is not an inline button');
     // Open the menu on the draft card.
     act(() => { document.querySelector('button[aria-label="Actions for Birthday Cake"]').click(); });
     await flush();
-    assert.ok(btn('Pause offer'), 'pause revealed behind the menu');
+    // A draft cannot be paused — the server's transition table says so, so the
+    // menu must not offer it. Withdrawing is the only lifecycle move it has.
+    assert.equal(btn('Pause — hidden from buyers'), undefined, 'a draft is never offered a pause');
+    assert.ok(btn('Withdraw this offer'), 'a draft can be withdrawn');
     assert.ok(btn('Share link'), 'share revealed behind the menu');
+    // Choosing an action closes the sheet, so each action gets its own opening.
+    act(() => { btn('Withdraw this offer').click(); });
+    await flush();
+    assert.deepEqual(moved, { id: 'o1', next: 'archived' }, 'a menu action calls the real transition rail');
+
+    const openDraftMenu = () => act(() => { document.querySelector('button[aria-label="Actions for Birthday Cake"]').click(); });
+    openDraftMenu();
+    await flush();
     act(() => { btn('Share link').click(); });
     await flush();
     assert.equal(shared, 'o1', 'share action still fires from the menu');
+
+    // The active card has the moves its status allows.
+    act(() => { document.querySelector('button[aria-label="Actions for Bread"]').click(); });
+    await flush();
+    assert.ok(btn('Pause — hidden from buyers'), 'an active offer is offered a real pause');
+    assert.ok(btn('Mark sold out'), 'and a sold-out mark');
   }
   pass('CatalogView: metadata = micro-badges, secondary actions = context menu, Publish inline');
 
