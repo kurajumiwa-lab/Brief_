@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import * as api from "../../api/briefApi";
-import type { AuthedUser, PersonMe, FollowsGroups } from "../../api/briefApi";
+import type { AuthedUser, PersonMe, FollowsGroups, MyCommitments, MyPosition, MyReciprocity, Precedent } from "../../api/briefApi";
+import type { Space } from "../../api/types";
 import type { Subscription, SubscriptionJoin } from "../../api/types";
 import { MotionList } from "../../ui/motion/MotionList";
 import { MotionStatus } from "../../ui/motion/MotionStatus";
 import { EarnSurface } from "./EarnSurface";
 import { TableBankingSurface } from "./TableBankingSurface";
 import { Marketplace } from "../../components/Marketplace";
+import { PositionHero } from "./PositionHero";
 import { PositionCard } from "../home/PositionCard";
 import { CommitmentsCard } from "../home/CommitmentsCard";
 import { ReciprocityCard } from "../home/ReciprocityCard";
@@ -58,6 +60,15 @@ export function YouSurface({
   const [plans, setPlans] = useState<Subscription[] | null>(null);
   const [myPlans, setMyPlans] = useState<Subscription[] | null>(null);
   const [notice, setNotice] = useState<string>("");
+  // The position reads. Fetched here, once, and handed to every surface that
+  // renders them so the hero and the detail cards can never disagree.
+  const [position, setPosition] = useState<MyPosition | null>(null);
+  const [commitments, setCommitments] = useState<MyCommitments | null>(null);
+  const [reciprocity, setReciprocity] = useState<MyReciprocity | null>(null);
+  const [precedent, setPrecedent] = useState<Precedent | null>(null);
+  const [mySpaces, setMySpaces] = useState<Space[]>([]);
+  const [positionDenied, setPositionDenied] = useState<boolean>(false);
+  const [positionAttempt, setPositionAttempt] = useState(0);
   const [busy, setBusy] = useState<Record<string, boolean>>({});
 
   const load = async () => {
@@ -98,6 +109,27 @@ export function YouSurface({
   useEffect(() => {
     void load();
   }, []);
+
+  // The dossier read: five derived endpoints, one pass, no refetch storm.
+  useEffect(() => {
+    let live = true;
+    void Promise.all([
+      api.getMyPosition(),
+      api.getMyCommitments(),
+      api.getMyReciprocity(),
+      api.getPrecedent(),
+      api.listMySpaces()
+    ]).then(([pos, cmt, rec, pre, sp]) => {
+      if (!live) return;
+      setPositionDenied(!pos.ok && pos.status === 401);
+      setPosition(pos.ok ? pos.data : null);
+      setCommitments(cmt.ok ? cmt.data : null);
+      setReciprocity(rec.ok ? rec.data : null);
+      setPrecedent(pre.ok ? pre.data : null);
+      setMySpaces(sp.ok && sp.data?.spaces ? sp.data.spaces : []);
+    });
+    return () => { live = false; };
+  }, [positionAttempt]);
 
   useEffect(() => {
     if (section === "following") void loadFollowing();
@@ -197,6 +229,19 @@ export function YouSurface({
 
       {section === "profile" && (
         <div className="mt-4 space-y-3">
+          {/* POSITION FIRST — the shape of a rating hero, with the rating
+              removed: what is expiring, what is owed, how your spaces read,
+              what you defended. Numbers and rows, never a score. */}
+          <PositionHero
+            position={position}
+            commitments={commitments}
+            reciprocity={reciprocity}
+            spaces={mySpaces}
+            precedent={precedent}
+            denied={positionDenied}
+            onRetry={() => setPositionAttempt((a) => a + 1)}
+          />
+
           {/* Standing — derived from real rows */}
           {person?.standing && (
             <div
@@ -354,9 +399,9 @@ export function YouSurface({
              into a lie. ── */}
       {section === "standing" && (
         <div className="mt-4 space-y-3">
-          <PositionCard />
-          <CommitmentsCard />
-          <ReciprocityCard />
+          <PositionCard position={position} />
+          <CommitmentsCard commitments={commitments} />
+          <ReciprocityCard reciprocity={reciprocity} />
           <p className="text-[11px] leading-snug" style={{ color: "var(--color-text-muted)" }}>
             Nothing here is a score. Each line is a count over rows you could read yourself — a quote you
             sent, an order you owe, a favour that went unreturned — and a line is shown only while its row

@@ -60,7 +60,9 @@ async function main() {
     assert.ok(t.includes('KES 1,500'), 'owed-to-me amount renders');
     assert.ok(t.includes('You owe'), 'owed-by-me section renders');
     assert.ok(t.includes('KES 850'), 'owed-by-me amount renders');
-    assert.ok(t.includes('every line traces to a real record'), 'honesty note renders');
+    assert.ok(t.includes('tap a reference to copy the row id'), 'the audit affordance is stated');
+    const copyBtn = Array.from(c.querySelectorAll('button')).find((b) => (b.getAttribute('aria-label') ?? '').includes('o1'));
+    assert.ok(copyBtn, 'each row exposes its source row id for copying');
   }
   pass('CommitmentsCard renders the reciprocal ledger with real KES');
 

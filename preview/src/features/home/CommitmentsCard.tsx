@@ -9,6 +9,7 @@ import React, { useEffect, useState } from 'react';
 import type { MyCommitments } from '../../api/briefApi';
 import * as briefApi from '../../api/briefApi';
 import { ArrowDown, ArrowUpRight, TrendingUp } from 'lucide-react';
+import { CopyId } from '../../ui/CopyId';
 
 const KIND_LABEL: Record<string, string> = {
   quote_honor: 'held price',
@@ -51,7 +52,7 @@ export function CommitmentsCard({
           <TrendingUp className="w-3.5 h-3.5 inline mr-1" /> Your commitments
         </h3>
         <span className="text-[10px] font-semibold" style={{ color: 'var(--color-text-muted)' }}>
-          every line traces to a real record
+          tap a reference to copy the row id
         </span>
       </div>
 
@@ -64,10 +65,13 @@ export function CommitmentsCard({
           </p>
           <ul className="mt-1 space-y-1">
             {c.owedToMe.slice(0, 3).map((x) => (
-              <li key={x.id} className="text-[11px] truncate" style={{ color: 'var(--color-text-muted)' }}>
-                {KIND_LABEL[x.kind] ?? x.kind}
-                {x.value ? ` · KES ${x.value.amount.toLocaleString()}` : ''}
-                {x.deadline ? ` · due ${x.deadline}` : ''}
+              <li key={x.id} className="text-[11px] flex items-center gap-1.5 min-w-0" style={{ color: 'var(--color-text-muted)' }}>
+                <span className="truncate min-w-0">
+                  {KIND_LABEL[x.kind] ?? x.kind}
+                  {x.value ? ` · KES ${x.value.amount.toLocaleString()}` : ''}
+                  {x.deadline ? ` · due ${x.deadline}` : ''}
+                </span>
+                <CopyId value={x.evidence.id} label={x.evidence.table} className="shrink-0" />
               </li>
             ))}
           </ul>
@@ -83,10 +87,13 @@ export function CommitmentsCard({
           </p>
           <ul className="mt-1 space-y-1">
             {c.owedByMe.slice(0, 3).map((x) => (
-              <li key={x.id} className="text-[11px] truncate" style={{ color: 'var(--color-text-muted)' }}>
-                {KIND_LABEL[x.kind] ?? x.kind}
-                {x.value ? ` · KES ${x.value.amount.toLocaleString()}` : ''}
-                {x.deadline ? ` · due ${x.deadline}` : ''}
+              <li key={x.id} className="text-[11px] flex items-center gap-1.5 min-w-0" style={{ color: 'var(--color-text-muted)' }}>
+                <span className="truncate min-w-0">
+                  {KIND_LABEL[x.kind] ?? x.kind}
+                  {x.value ? ` · KES ${x.value.amount.toLocaleString()}` : ''}
+                  {x.deadline ? ` · due ${x.deadline}` : ''}
+                </span>
+                <CopyId value={x.evidence.id} label={x.evidence.table} className="shrink-0" />
               </li>
             ))}
           </ul>

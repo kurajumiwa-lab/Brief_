@@ -12,6 +12,7 @@ import React, { useEffect, useState } from 'react';
 import type { MyPosition } from '../../api/briefApi';
 import * as briefApi from '../../api/briefApi';
 import { Clock, AlertTriangle, ChevronRight, Ticket } from 'lucide-react';
+import { CopyId } from '../../ui/CopyId';
 
 export function PositionCard({
   className = '',
@@ -78,8 +79,9 @@ export function PositionCard({
               {missed} proposal{missed === 1 ? '' : 's'} you made went to someone else
             </p>
             {firstMissed && (
-              <p className="text-[11px] truncate" style={{ color: 'var(--color-text-muted)' }}>
-                “{firstMissed.title}” — the buyer selected another option.
+              <p className="text-[11px] truncate flex items-center gap-1.5" style={{ color: 'var(--color-text-muted)' }}>
+                <span className="truncate min-w-0">“{firstMissed.title}” — the buyer selected another option.</span>
+                {firstMissed.evidence && <CopyId value={firstMissed.evidence.id} label={firstMissed.evidence.table} className="shrink-0" />}
               </p>
             )}
             {pos.missedCapture.value && (
