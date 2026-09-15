@@ -141,6 +141,12 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
 
   const { active, archived } = splitSpaces(spaces);
   const queue = attentionQueue(active);
+  // Upkeep is DERIVED by the server from each space's own rows (a field past
+  // its cadence, a never-answered question, a reply owed, a draft offer). Home
+  // only adds those counts up — it invents no urgency and no reward for it.
+  const upkeepBySpace = new Map(active.map((sp) => [sp.id, sp.editorialOpen ?? 0]));
+  const upkeepItems = [...upkeepBySpace.values()].reduce((n, x) => n + x, 0);
+  const spacesWithUpkeep = [...upkeepBySpace.values()].filter((n) => n > 0).length;
 
   const ATTENTION_ICON: Record<string, React.ReactNode> = {
     conversation: <MessageCircle className="w-3 h-3" />,
@@ -310,6 +316,11 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
                   <div className="flex items-center justify-between">
                     <h3 className="text-[10px] font-black uppercase tracking-wider text-[color:var(--color-text-muted)]">
                       Active spaces
+                      {upkeepItems > 0 && (
+                        <span className="ml-1.5 normal-case font-bold" style={{ color: 'var(--color-primary)' }}>
+                          · {upkeepItems} open item{upkeepItems === 1 ? '' : 's'} across {spacesWithUpkeep} space{spacesWithUpkeep === 1 ? '' : 's'}
+                        </span>
+                      )}
                     </h3>
                     {onGetPaid && (
                       <button
@@ -343,7 +354,26 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
                                 {attention.length === 0
                                   ? 'All caught up'
                                   : attention.map((a) => a.label).join(' · ')}
+                                {(upkeepBySpace.get(s.id) ?? 0) > 0 &&
+                                  ` · ${upkeepBySpace.get(s.id)} open in the space file`}
                               </span>
+                              {s.maintenance?.state && s.maintenance.state !== 'unstarted' && (
+                                <span
+                                  className="text-[9px] font-black uppercase tracking-wider"
+                                  style={{
+                                    color:
+                                      s.maintenance.state === 'fresh' ? 'var(--color-success)'
+                                        : s.maintenance.state === 'active' ? 'var(--color-primary)'
+                                          : s.maintenance.state === 'stale' ? 'var(--color-warning)'
+                                            : 'var(--color-danger)'
+                                  }}
+                                >
+                                  {s.maintenance.state}
+                                  {s.maintenance.ageHours != null
+                                    ? ` · ${s.maintenance.ageHours < 24 ? `${s.maintenance.ageHours}h` : `${Math.round(s.maintenance.ageHours / 24)}d`} since any change`
+                                    : ''}
+                                </span>
+                              )}
                             </div>
                           </button>
                           <button

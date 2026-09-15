@@ -1736,8 +1736,91 @@ export interface Space {
   offers: Listing[];
   recentActivities: SpaceActivity[];
   recentConversations: SpaceConversation[];
+  /** The maintained operating schema (see server/src/domain/spaceProfile.js). */
+  profile?: SpaceProfile | null;
+  /** DERIVED on read: how current the space's answers are. Never stored. */
+  maintenance?: SpaceMaintenance | null;
+  /** DERIVED: how many real items the editorial queue currently holds. */
+  editorialOpen?: number;
+  /** DERIVED, owner-only: how the network is reading this space. */
+  pipeline?: SpacePipeline | null;
   createdAt: string;
   updatedAt: string;
+}
+
+/** One maintained answer. Timestamps are written by the server only. */
+export interface SpaceProfileEntry {
+  value: Record<string, unknown>;
+  updatedAt: string;
+  lastConfirmedAt: string | null;
+  confirmations: number;
+  updatedBy?: string | null;
+}
+export interface SpaceProfile {
+  fields: Record<string, SpaceProfileEntry>;
+  createdAt?: string;
+  updatedAt?: string;
+}
+export type SpaceFieldState = 'unanswered' | 'current' | 'due' | 'overdue';
+export interface SpaceFieldStatus {
+  key: string;
+  question: string;
+  help?: string;
+  kind: 'text' | 'measure' | 'schedule' | 'list';
+  cadenceHours: number;
+  state: SpaceFieldState;
+  ageHours: number | null;
+  dueInHours: number;
+  updatedAt: string | null;
+  lastConfirmedAt: string | null;
+  confirmations: number;
+  value: Record<string, unknown> | null;
+  /** Server-rendered answer text (the stored shape, formatted). */
+  answer?: string | null;
+  raw?: Record<string, unknown> | null;
+}
+export interface SpaceMaintenance {
+  state: 'unstarted' | 'fresh' | 'active' | 'stale' | 'dormant';
+  lastTouchedAt: string | null;
+  ageHours: number | null;
+  answered: number;
+  unanswered: number;
+  due: number;
+  overdue: number;
+  openConversations: number;
+  draftOffers: number;
+  pendingOrders: number;
+  fields: SpaceFieldStatus[];
+  facts: string[];
+  note: string;
+}
+export interface SpaceEditorialItem {
+  id: string;
+  kind: 'profile' | 'reply' | 'offer' | 'order' | 'demand';
+  field?: string;
+  label: string;
+  detail: string;
+  urgency: 'overdue' | 'missing' | 'due' | 'open';
+  action: 'edit' | 'confirm' | 'inbox' | 'offers' | 'request';
+  requestId?: string;
+  evidence: { table: string; id: string; field?: string; at?: string | null };
+}
+export interface SpacePipeline {
+  discoverable: boolean;
+  directory: string;
+  listings: { active: number; drafts: number; titles: string[] };
+  matchQueries30d: { count: number; wording: string };
+  proposals: { total: number; accepted: number; declined: number };
+  settled: { orders: number; value: number; currency: string | null };
+  workOrders: number;
+  needs: Array<{ text: string; canPostAsRequest: boolean }>;
+  note: string;
+}
+/** What a public space declares about itself, with the age of each answer. */
+export interface SpaceOperating {
+  fields: Record<string, { answer: string | null; confirmedAt: string | null; ageDays: number | null }>;
+  /** Days since the freshest answer, when every answer is older than a week. */
+  staleDays: number | null;
 }
 
 export interface SpaceCreate {
@@ -1747,6 +1830,8 @@ export interface SpaceCreate {
   targetValueKes?: number;
   image?: string | null;
   visibility?: 'private' | 'unlisted' | 'public';
+  /** The genesis set: structured operating answers, stored with server time. */
+  profile?: Partial<Record<string, unknown>>;
   initialOffer?: {
     title: string;
     description?: string;
@@ -1764,6 +1849,8 @@ export interface SpaceUpdate {
   image?: string | null;
   visibility?: 'private' | 'unlisted' | 'public';
   status?: 'active' | 'archived';
+  /** Validated + stamped server-side; a client cannot write a timestamp. */
+  profile?: Partial<Record<string, unknown>>;
 }
 
 /** The PUBLIC projection of a space — the safe directory card, no private economics. */
@@ -1775,6 +1862,8 @@ export interface PublicSpace {
   image: string | null;
   activeOfferCount: number;
   sampleOffers: Array<{ title: string; price: number; currency: string }>;
+  /** The declared operating facts + how old they are. No economics, no rank. */
+  operating?: SpaceOperating;
   visibility: 'public';
   createdAt: string;
 }

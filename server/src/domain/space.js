@@ -19,6 +19,7 @@ import { store, newId } from '../store.js';
 import * as vendors from './vendor.js';
 import * as listings from './listing.js';
 import * as orders from './order.js';
+import * as profile from './spaceProfile.js';
 
 export const SPACE_TYPES = [
   'business',
@@ -46,7 +47,9 @@ export function createSpace({
   targetValueKes = null,
   image = null,
   visibility = 'private',
-  initialOffer = null
+  initialOffer = null,
+  /** The genesis set: structured operating answers (see spaceProfile.js). */
+  spaceProfile = null
 }) {
   if (!ownerId) throw new Error('Space must have an ownerId');
   if (!name || !name.trim()) throw new Error('Space name cannot be empty');
@@ -86,6 +89,11 @@ export function createSpace({
     visibility: SPACE_VISIBILITY.includes(visibility) ? visibility : 'private',
     status: 'active',
     capabilities: ['commerce', 'communication', 'ledger', 'activity'],
+    // The maintained schema. Every field carries its own timestamp, which is
+    // what makes "how current is this?" answerable instead of guessable.
+    profile: spaceProfile
+      ? { fields: profile.profileFromGenesis(spaceProfile, { actorId: ownerId, now }), createdAt: now, updatedAt: now }
+      : null,
     createdAt: now,
     updatedAt: now
   };
@@ -167,8 +175,37 @@ export function updateSpace(spaceId, updates = {}, { callerId }) {
     patch.visibility = updates.visibility;
   }
 
+  // Profile answers may be sent on the ordinary PATCH too, so one call can
+  // rename the space and refresh capacity. They go through the SAME validator
+  // and the same per-field stamping as the dedicated route — never a raw write.
+  if (updates.profile && typeof updates.profile === 'object') {
+    const result = profile.setProfile(spaceId, { callerId, fields: updates.profile });
+    if (result.error) throw new Error(result.error);
+    return hydrateSpace(result.space);
+  }
+
   const updated = store.update('spaces', spaceId, patch);
   return hydrateSpace(updated);
+}
+
+/**
+ * The maintained schema + its derived reads, for the owner's surfaces. This is
+ * the "is my space alive?" answer, computed from timestamps and rows.
+ */
+export function getSpaceOperating(spaceId, { callerId }) {
+  const space = store.find('spaces', (s) => s.id === spaceId);
+  if (!space) return null;
+  if (callerId && space.ownerId !== callerId) throw new Error('Not authorized to read this space');
+  return {
+    fields: profile.fieldsView(space),
+    maintenance: profile.maintenanceFor(space),
+    editorial: profile.editorialQueueFor(space),
+    pipeline: profile.pipelineFor(space)
+  };
+}
+
+export function spaceProfileSchema() {
+  return profile.PROFILE_FIELDS;
 }
 
 /**
@@ -189,6 +226,10 @@ export function publicSpaceView(space) {
     activeOfferCount: activeOffers.length,
     // A taste of what they sell, for the directory card. Real titles only.
     sampleOffers: activeOffers.slice(0, 3).map((o) => ({ title: o.title, price: o.price, currency: o.currency })),
+    // What the space says it IS — capacity, hours, reach, limits. Buyers are
+    // also told how old those answers are, because that is true; they are not
+    // told a rank, because no rank exists.
+    operating: profile.publicProfile(space),
     visibility: space.visibility,
     createdAt: space.createdAt
   };
@@ -1222,8 +1263,19 @@ function hydrateSpace(space, { callerId = null } = {}) {
 
   const activeOrdersCount = spaceOrders.filter((o) => o.status === 'pending' || o.status === 'paid' || o.status === 'processing').length;
 
+  // The derived maintenance reads ride along on every hydrate, so Home, the
+  // space workspace and the directory can never disagree about them.
+  const isOwnerView = callerId === null || callerId === space.ownerId;
+  const derived = {
+    profile: space.profile ?? null,
+    maintenance: profile.maintenanceFor(space),
+    editorialOpen: profile.editorialQueueFor(space).length,
+    pipeline: isOwnerView ? profile.pipelineFor(space) : null
+  };
+
   return {
     ...space,
+    ...derived,
     metrics: {
       revenueKes,
       customerCount: customerSet.size,

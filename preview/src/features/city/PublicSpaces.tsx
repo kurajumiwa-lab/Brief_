@@ -56,6 +56,28 @@ export function PublicSpaces({ onOpenSpace }: { onOpenSpace: (spaceId: string) =
               {s.activeOfferCount} active offer{s.activeOfferCount === 1 ? '' : 's'}
               {s.sampleOffers.length > 0 && ` · ${s.sampleOffers.map((o) => o.title).join(', ')}`}
             </p>
+            {/* The declared operating facts. A buyer is told how old these
+                answers are, because that is true — not that the seller is
+                worse, and not a rank, because no rank exists. */}
+            {s.operating && Object.keys(s.operating.fields).length > 0 && (
+              <div className="mt-1.5 space-y-0.5">
+                {(['what', 'capacity', 'availability', 'coverage', 'constraints'] as const)
+                  .flatMap((k) => {
+                    const f = s.operating?.fields[k];
+                    return f?.answer ? [{ key: k, answer: f.answer }] : [];
+                  })
+                  .map(({ key, answer }) => (
+                    <p key={key} className="text-[10px] leading-snug" style={{ color: 'var(--color-text)' }}>
+                      {answer}
+                    </p>
+                  ))}
+                {s.operating.staleDays !== null && (
+                  <p className="text-[10px] font-bold" style={{ color: 'var(--color-warning)' }}>
+                    Answers last confirmed {s.operating.staleDays} days ago
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </button>
       ))}

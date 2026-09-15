@@ -4,6 +4,7 @@
 // Identity is always caller-authoritative; pricing is server-derived.
 import { callerId } from '../identity.js';
 import * as spaces from '../domain/space.js';
+import * as spaceProfileDomain from '../domain/spaceProfile.js';
 import * as outbound from '../outbound.js';
 import { requireAuthMw, recordError } from './helpers.js';
 
@@ -33,7 +34,7 @@ export function register(app) {
   app.post('/api/spaces', requireAuthMw, (req, res) => {
     try {
       const me = callerId(req);
-      const { name, type, goal, targetValueKes, image, visibility, initialOffer } = req.body || {};
+      const { name, type, goal, targetValueKes, image, visibility, initialOffer, profile } = req.body || {};
 
       if (!name || !String(name).trim()) {
         return res.status(400).json({ error: 'Space name is required' });
@@ -47,7 +48,10 @@ export function register(app) {
         targetValueKes,
         image,
         visibility,
-        initialOffer
+        initialOffer,
+        // The genesis set — validated + timestamped by the profile domain, so a
+        // client cannot write a fake "confirmed today" stamp.
+        spaceProfile: profile ?? null
       });
 
       res.status(201).json({ space: created });
@@ -55,6 +59,13 @@ export function register(app) {
       recordError('space_create_failed', err);
       res.status(400).json({ error: err.message || 'failed to create space' });
     }
+  });
+
+  // --- The space SCHEMA: its definition, its answers, and what they imply ---
+  // The field list comes from the server so the wizard and the workspace render
+  // the same questions the pipeline reads. Nothing is invented client-side.
+  app.get('/api/spaces/profile-schema', (_req, res) => {
+    res.json({ fields: spaces.spaceProfileSchema() });
   });
 
   // --- Get space by ID ---
@@ -80,6 +91,48 @@ export function register(app) {
       res.json(result);
     } catch (e) {
       res.status(403).json({ error: String(e.message ?? e) });
+    }
+  });
+
+  app.get('/api/spaces/:id/operating', requireAuthMw, (req, res) => {
+    try {
+      const view = spaces.getSpaceOperating(req.params.id, { callerId: callerId(req) });
+      if (!view) return res.status(404).json({ error: 'space not found' });
+      res.json(view);
+    } catch (err) {
+      const status = /not authorized/i.test(err.message ?? String(err)) ? 403 : 400;
+      res.status(status).json({ error: err.message || 'failed to read the space profile' });
+    }
+  });
+
+  app.patch('/api/spaces/:id/profile', requireAuthMw, (req, res) => {
+    try {
+      const result = spaceProfileDomain.setProfile(req.params.id, {
+        callerId: callerId(req),
+        fields: (req.body || {}).fields ?? (req.body || {})
+      });
+      if (result.error) return res.status(result.status ?? 400).json({ error: result.error });
+      res.json({
+        space: spaces.getSpace(req.params.id, { callerId: callerId(req) }),
+        changed: result.changed,
+        confirmed: result.confirmed
+      });
+    } catch (err) {
+      recordError('space_profile_update_failed', err);
+      res.status(400).json({ error: err.message || 'failed to update the space profile' });
+    }
+  });
+
+  // "Still true." A confirmation is a real event with a timestamp — it is NOT a
+  // silent reset of a countdown and it does not pretend to be new information.
+  app.post('/api/spaces/:id/profile/:key/confirm', requireAuthMw, (req, res) => {
+    try {
+      const result = spaceProfileDomain.confirmField(req.params.id, req.params.key, { callerId: callerId(req) });
+      if (result.error) return res.status(result.status ?? 400).json({ error: result.error });
+      res.json({ space: spaces.getSpace(req.params.id, { callerId: callerId(req) }) });
+    } catch (err) {
+      recordError('space_profile_confirm_failed', err);
+      res.status(400).json({ error: err.message || 'failed to confirm that answer' });
     }
   });
 

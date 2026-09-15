@@ -16,7 +16,7 @@
 //      rather than stubbed.
 // ---------------------------------------------------------------------------
 
-import type { ApiResult, Block, ResaleTicket, ResaleListing, ResaleListingRow, TicketOrder, CapabilityUnavailable, Circle, CircleCreate, CircleUpdate, Member, Signal, TargetView, AppConfig, ReleaseStatus, AuthStatus, Campaign, CampaignCreate, CampaignUpdate, PublicCampaign, Registration, RegistrationStatus, ShareChannel, ShareLink, ShareChannels, CampaignShare, CampaignBanner, Venue, MediaUpload, MediaStorageStatus, TriageQueue, Subscription, Subscriber, SubscriptionJoin, PaymentConfirmation, Transaction, TransactionCreate, TransactionStatus, VerificationKind, Wallet, Source, RawItem, VoteTally, MemberEvidence, BriefItPreview, BriefItSaved, Vendor, VendorCreate, VendorUpdate, Listing, ListingCreate, ListingUpdate, ListingStatus, Order, OrderCreate, Dispute, VendorEarnings, PaymentIntent, PaymentInitiation, Vault, VaultCreate, Footstep, FootstepPage, VaultRequest, VaultSearchResult, ResolutionItem, VaultEntry, Ticket, CheckInResult, CommandCentre, Space, SpaceCreate, SpaceOfferCreate, SpaceActivity, SpaceConversation, SpaceQuote, SpacePaymentPrompt, SpaceExpense, SpaceCustomerTab, SpaceMoneySummary, SpaceDispatch, SpaceDispatchCreate, SpaceDispatchStatus, SpaceUpdate, PublicSpace, RoleAssignment, Invite, IssueInviteInput, RedeemInviteResult } from "./types";
+import type { ApiResult, Block, ResaleTicket, ResaleListing, ResaleListingRow, TicketOrder, CapabilityUnavailable, Circle, CircleCreate, CircleUpdate, Member, Signal, TargetView, AppConfig, ReleaseStatus, AuthStatus, Campaign, CampaignCreate, CampaignUpdate, PublicCampaign, Registration, RegistrationStatus, ShareChannel, ShareLink, ShareChannels, CampaignShare, CampaignBanner, Venue, MediaUpload, MediaStorageStatus, TriageQueue, Subscription, Subscriber, SubscriptionJoin, PaymentConfirmation, Transaction, TransactionCreate, TransactionStatus, VerificationKind, Wallet, Source, RawItem, VoteTally, MemberEvidence, BriefItPreview, BriefItSaved, Vendor, VendorCreate, VendorUpdate, Listing, ListingCreate, ListingUpdate, ListingStatus, Order, OrderCreate, Dispute, VendorEarnings, PaymentIntent, PaymentInitiation, Vault, VaultCreate, Footstep, FootstepPage, VaultRequest, VaultSearchResult, ResolutionItem, VaultEntry, Ticket, CheckInResult, CommandCentre, Space, SpaceCreate, SpaceOfferCreate, SpaceActivity, SpaceConversation, SpaceQuote, SpacePaymentPrompt, SpaceExpense, SpaceCustomerTab, SpaceMoneySummary, SpaceDispatch, SpaceDispatchCreate, SpaceDispatchStatus, SpaceUpdate, PublicSpace, SpaceFieldStatus, SpaceMaintenance, SpaceEditorialItem, SpacePipeline, RoleAssignment, Invite, IssueInviteInput, RedeemInviteResult } from "./types";
 import { enqueue, replayQueue, queueDepth, type QueuedWrite } from './offlineQueue';
 import { asTarget } from './types';
 import {
@@ -3914,6 +3914,50 @@ export function discoverPublicSpaces(limit?: number): Promise<ApiResult<PublicSp
   const q = limit ? `?limit=${limit}` : '';
   return request<PublicSpace[]>(`/api/public/spaces${q}`, undefined, (r) =>
     Array.isArray(r?.spaces) ? (r.spaces as PublicSpace[]) : undefined);
+}
+
+/**
+ * The space SCHEMA, straight from the server, so the creation wizard and the
+ * workspace ask the same questions the pipeline reads.
+ */
+export function getSpaceProfileSchema(): Promise<ApiResult<{ fields: SpaceFieldStatus[] }>> {
+  return request<{ fields: SpaceFieldStatus[] }>('/api/spaces/profile-schema', undefined, (r) =>
+    Array.isArray(r?.fields) ? { fields: r.fields as SpaceFieldStatus[] } : undefined);
+}
+
+/** The maintained answers plus their derived reads (owner-only). */
+export interface SpaceOperatingView {
+  fields: SpaceFieldStatus[];
+  maintenance: SpaceMaintenance;
+  editorial: SpaceEditorialItem[];
+  pipeline: SpacePipeline;
+}
+export function getSpaceOperating(spaceId: string): Promise<ApiResult<SpaceOperatingView>> {
+  return request<SpaceOperatingView>(`/api/spaces/${encodeURIComponent(spaceId)}/operating`, undefined, (r) =>
+    r && r.maintenance && Array.isArray(r.editorial) && r.pipeline ? (r as SpaceOperatingView) : undefined);
+}
+
+/** Write structured answers. Only fields you send are touched; each keeps its
+ *  own server timestamp, and re-sending an unchanged answer records a
+ *  CONFIRMATION rather than pretending to be new information. */
+export function updateSpaceProfile(
+  spaceId: string,
+  fields: Record<string, unknown>
+): Promise<ApiResult<{ space: Space; changed: string[]; confirmed: string[] }>> {
+  return request<{ space: Space; changed: string[]; confirmed: string[] }>(
+    `/api/spaces/${encodeURIComponent(spaceId)}/profile`,
+    { method: 'PATCH', body: JSON.stringify({ fields }) },
+    (r) => (r && r.space ? { space: r.space, changed: r.changed ?? [], confirmed: r.confirmed ?? [] } : undefined)
+  );
+}
+
+/** "Still true." A real, timestamped confirmation of one existing answer. */
+export function confirmSpaceField(spaceId: string, key: string): Promise<ApiResult<{ space: Space }>> {
+  return request<{ space: Space }>(
+    `/api/spaces/${encodeURIComponent(spaceId)}/profile/${encodeURIComponent(key)}/confirm`,
+    { method: 'POST', body: '{}' },
+    (r) => (r && r.space ? { space: r.space } : undefined)
+  );
 }
 
 /** Edit a space (name, goal, targetValueKes, image, status). Owner-only. */

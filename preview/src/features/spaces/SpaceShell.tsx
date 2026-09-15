@@ -3,6 +3,7 @@ import type { Space, Listing } from '../../api/types';
 import * as briefApi from '../../api/briefApi';
 import { ArrowLeft, Archive, RotateCcw, Globe, Lock, Link2 } from 'lucide-react';
 import { PipelineView } from './PipelineView';
+import { SpaceOperatingPanel } from './SpaceOperatingPanel';
 import { SpaceMoney } from './SpaceMoney';
 import { CatalogView } from './CatalogView';
 import { CreateFlowModal } from './CreateFlowModal';
@@ -11,13 +12,15 @@ import { needsAttention } from '../home/spaceSignals';
 
 export interface SpaceShellProps {
   spaceId: string;
-  initialTab?: 'pipeline' | 'ledger' | 'catalog';
+  initialTab?: 'pipeline' | 'ledger' | 'catalog' | 'operating';
   onBack?: () => void;
   onShare?: (space: Space) => void;
   className?: string;
 }
 
-export type SpaceSurfaceTab = 'pipeline' | 'ledger' | 'catalog' | 'overview' | 'offers' | 'people' | 'cargo' | 'activity' | 'money';
+export type SpaceSurfaceTab =
+  | 'pipeline' | 'ledger' | 'catalog' | 'operating'
+  | 'overview' | 'offers' | 'people' | 'cargo' | 'activity' | 'money';
 
 export const SpaceShell: React.FC<SpaceShellProps> = ({
   spaceId,
@@ -28,6 +31,8 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
 }) => {
   const [space, setSpace] = useState<Space | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  // A freshly created space (nothing answered yet) opens on its own file, so
+  // the first thing a vendor sees is the set of questions, not an empty inbox.
   const [activeTab, setActiveTab] = useState<SpaceSurfaceTab>(initialTab);
   const [createFlowOpen, setCreateFlowOpen] = useState<boolean>(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -125,14 +130,19 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
     );
   }
 
-  // 3 Consolidated Surfaces
-  const tabs: Array<{ id: 'pipeline' | 'ledger' | 'catalog'; label: string }> = [
+  // 4 Surfaces: the three operational ones, plus the maintained SPACE FILE.
+  // The fourth is the one that keeps a space alive between orders — the schema,
+  // its editorial queue, and how the pipeline is reading it. Its badge count is
+  // the number of REAL open items the server derived, not a notification tally.
+  const openItems = space?.editorialOpen ?? 0;
+  const tabs: Array<{ id: 'pipeline' | 'ledger' | 'catalog' | 'operating'; label: string }> = [
+    { id: 'operating', label: openItems > 0 ? `Space · ${openItems}` : 'Space' },
     { id: 'pipeline', label: 'Inbox' },
     { id: 'ledger', label: 'Money' },
     { id: 'catalog', label: `Offers (${space.offers?.length || 0})` }
   ];
 
-  // Map legacy tabs to the 3 consolidated surfaces
+  // Map legacy tabs to the consolidated surfaces
   const currentTab = (
     activeTab === 'overview' || activeTab === 'people' || activeTab === 'cargo' || activeTab === 'activity'
       ? 'pipeline'
@@ -141,7 +151,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
       : activeTab === 'offers'
       ? 'catalog'
       : activeTab
-  ) as 'pipeline' | 'ledger' | 'catalog';
+  ) as 'pipeline' | 'ledger' | 'catalog' | 'operating';
 
   const vis = space?.visibility ?? 'private';
 
@@ -322,6 +332,18 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
             onAddOffer={() => setCreateFlowOpen(true)}
             onPublishOffer={handlePublishOffer}
             onShareOffer={(o) => showToast(`Share link for "${o.title}" copied!`)}
+          />
+        </div>
+      )}
+
+      {/* ── SURFACE 4: THE SPACE FILE — schema, editorial queue, pipeline ── */}
+      {currentTab === 'operating' && (
+        <div className="animate-fadeIn">
+          <SpaceOperatingPanel
+            spaceId={space.id}
+            maintenance={space.maintenance ?? null}
+            onSwitchTab={(t) => setActiveTab(t)}
+            onChanged={loadSpace}
           />
         </div>
       )}

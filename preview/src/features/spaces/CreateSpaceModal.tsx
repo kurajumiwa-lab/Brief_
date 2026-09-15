@@ -1,8 +1,52 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, Sparkles, ArrowRight, ArrowLeft, Check } from 'lucide-react';
-import type { Space, SpaceType } from '../../api/types';
+import type { Space, SpaceType, SpaceFieldStatus } from '../../api/types';
 import * as briefApi from '../../api/briefApi';
+import { SpaceFieldInputs, type FieldValues } from './SpaceFieldInputs';
 import { soundEngine } from '../../utils/SoundEngine';
+
+// ---------------------------------------------------------------------------
+// THE GENESIS SET — step 4 asks the operational questions whose answers become
+// structured data the pipeline reads: what you sell, how much you can carry,
+// when you are on, where, how far, what you CANNOT do, what you need from the
+// network, what you give it. They are asked here because a space created without
+// them is a container; with them it is an instrument.
+//
+// Every question comes from the server schema (GET /api/spaces/profile-schema),
+// so the wizard and the workspace can never drift apart. Answering is optional —
+// and that is stated honestly: an unanswered field is listed in the space's own
+// queue as "never answered" instead of being defaulted to a plausible zero.
+// ---------------------------------------------------------------------------
+
+/** Only send a field when it actually holds an answer. */
+function answeredOnly(values: FieldValues): FieldValues {
+  const out: FieldValues = {};
+  for (const [key, raw] of Object.entries(values)) {
+    const v = raw as Record<string, unknown> | undefined;
+    if (!v) continue;
+    if (typeof v.text === 'string') { if (v.text.trim().length >= 3) out[key] = { text: v.text.trim() }; continue; }
+    if ('value' in v && 'unit' in v) {
+      const n = Number(v.value);
+      if (Number.isFinite(n) && n > 0 && String(v.unit ?? '').trim()) {
+        out[key] = { value: n, unit: String(v.unit).trim(), per: String(v.per ?? 'day').trim() || 'day' };
+      }
+      continue;
+    }
+    if ('days' in v || 'summary' in v) {
+      const days = Array.isArray(v.days) ? (v.days as string[]) : [];
+      const summary = String(v.summary ?? '').trim();
+      const from = v.from ? String(v.from) : null;
+      const to = v.to ? String(v.to) : null;
+      if (days.length || summary) out[key] = { days, summary, from, to };
+      continue;
+    }
+    if ('items' in v) {
+      const items = (Array.isArray(v.items) ? (v.items as string[]) : []).map((x) => String(x).trim()).filter(Boolean);
+      if (items.length) out[key] = { items: items.slice(0, 12) };
+    }
+  }
+  return out;
+}
 
 export interface CreateSpaceModalProps {
   isOpen: boolean;
@@ -34,6 +78,21 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
   const [hasCustomers, setHasCustomers] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  // The questions themselves are server-owned data, not a client-side form spec.
+  const [schemaFields, setSchemaFields] = useState<SpaceFieldStatus[]>([]);
+  const [schemaError, setSchemaError] = useState<string | null>(null);
+  const [genesis, setGenesis] = useState<FieldValues>({});
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let live = true;
+    void briefApi.getSpaceProfileSchema().then((res) => {
+      if (!live) return;
+      if (res.ok) setSchemaFields(res.data.fields);
+      else setSchemaError(res.error ?? 'The operational questions could not be loaded.');
+    });
+    return () => { live = false; };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -51,7 +110,10 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
         name: name.trim(),
         type: selectedType,
         goal: goal.trim() || 'Get first customers',
-        targetValueKes: parseInt(targetValueKes, 10) || 0
+        targetValueKes: parseInt(targetValueKes, 10) || 0,
+        // The genesis answers travel as structured data; the server validates
+        // each one and stamps its own timestamp.
+        profile: answeredOnly(genesis)
       });
 
       if (res.ok && res.data?.space) {
@@ -84,7 +146,7 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
           <div className="flex items-center space-x-1.5">
             <span className="w-2 h-2 rounded-full bg-[color:var(--color-primary)]" />
             <span className="text-[10px] font-mono font-bold text-[color:var(--color-text-muted)] uppercase tracking-wider">
-              Step {step} of 4
+              Step {step} of 5
             </span>
           </div>
 
@@ -270,8 +332,72 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
           </div>
         )}
 
-        {/* STEP 4: What you have & Confirm */}
+        {/* STEP 4: the genesis set — operational answers, structured */}
         {step === 4 && (
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <h2 className="text-xl font-black text-[color:var(--color-text)]">
+                What can you actually do?
+              </h2>
+              <p className="text-xs text-[color:var(--color-text-muted)]">
+                These become the fields the pipeline reads when it matches demand to you. Answer what you
+                can — anything left blank shows up in your space's queue as unanswered, never as a zero.
+              </p>
+            </div>
+
+            {schemaError && (
+              <p className="text-xs font-bold" style={{ color: 'var(--color-danger)' }}>{schemaError}</p>
+            )}
+            {!schemaError && schemaFields.length === 0 && (
+              <p className="text-xs text-[color:var(--color-text-muted)]">Loading the questions…</p>
+            )}
+
+            {schemaFields.length > 0 && (
+              <SpaceFieldInputs
+                fields={schemaFields}
+                values={genesis}
+                onChange={(key, value) => setGenesis((g) => ({ ...g, [key]: value }))}
+                idPrefix="genesis"
+              />
+            )}
+
+            {errorMsg && <p className="text-xs text-rose-600 font-bold">{errorMsg}</p>}
+
+            <div className="flex items-center space-x-2 pt-1">
+              <button
+                type="button"
+                onClick={() => { soundEngine.play('tap'); setStep(3); }}
+                className="px-4 py-3 rounded-full bg-gray-100 hover:bg-gray-200 text-xs font-bold text-[color:var(--color-text)] transition-all cursor-pointer"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={() => { setErrorMsg(null); soundEngine.play('tap'); setStep(5); }}
+                className="flex-1 py-3 rounded-full bg-gray-100 hover:bg-gray-200 text-xs font-bold text-[color:var(--color-text)] transition-all cursor-pointer"
+              >
+                Skip for now
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const n = Object.keys(answeredOnly(genesis)).length;
+                  if (n === 0) { setErrorMsg('Answer at least one, or press Skip for now.'); return; }
+                  setErrorMsg(null);
+                  soundEngine.play('tap');
+                  setStep(5);
+                }}
+                className="flex-1 py-3 rounded-full bg-[color:var(--color-text)] hover:bg-black text-white font-bold text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer"
+              >
+                <span>Continue</span>
+                <ArrowRight className="w-4 h-4 text-[color:var(--color-primary)]" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 5: What you have & Confirm */}
+        {step === 5 && (
           <div className="space-y-4">
             <div className="space-y-1">
               <h2 className="text-xl font-black text-[color:var(--color-text)]">
@@ -321,7 +447,7 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
             <div className="flex items-center space-x-2 pt-2">
               <button
                 type="button"
-                onClick={() => setStep(3)}
+                onClick={() => setStep(4)}
                 className="px-4 py-3 rounded-full bg-gray-100 hover:bg-gray-200 text-xs font-bold text-[color:var(--color-text)] transition-all cursor-pointer"
               >
                 Back
