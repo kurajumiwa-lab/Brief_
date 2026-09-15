@@ -49,15 +49,24 @@ async function main() {
   }
   pass('EventCard renders a lazy-loaded cover image when present');
 
-  // --- no cover -> gradient fallback with the title initial, never black ---
+  // --- no cover -> the CATEGORY's tint, and no monogram letter anywhere ---
   {
     const { container } = mount(React.createElement(EventCard, { event: base, onOpen: () => {} }));
     assert.equal(container.querySelector('img'), null, 'no img when no cover');
-    const fallback = Array.from(container.querySelectorAll('div')).find((d) => d.textContent.trim() === 'K');
-    assert.ok(fallback, 'gradient fallback shows the title initial');
-    assert.ok(fallback.style.background.includes('gradient'), 'fallback is a gradient, not a void');
+    // The monogram is gone on purpose: "K" for "Kilimani Wellness Day" mapped to
+    // nothing the reader knows, so it read as a placeholder rather than a design.
+    const loneLetter = Array.from(container.querySelectorAll('span')).find((d) => /^[A-Z]$/.test(d.textContent.trim()));
+    assert.equal(loneLetter, undefined, 'no oversized title initial is rendered');
+    const tint = Array.from(container.querySelectorAll('div')).find((d) => (d.style.background || '').includes('gradient'));
+    assert.ok(tint, 'fallback is a gradient, not a void');
+    // ...and the tint means something: a different category is a different colour.
+    const { container: other } = mount(
+      React.createElement(EventCard, { event: { ...base, category: 'popup' }, onOpen: () => {} })
+    );
+    const otherTint = Array.from(other.querySelectorAll('div')).find((d) => (d.style.background || '').includes('gradient'));
+    assert.notEqual(tint.style.background, otherTint.style.background, 'category drives the palette');
   }
-  pass('EventCard derives a deterministic gradient fallback (never a black box)');
+  pass('EventCard tints by category and never falls back to a monogram or a black box');
 
   // --- meta + social proof ---
   {

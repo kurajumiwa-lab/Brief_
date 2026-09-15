@@ -1,47 +1,40 @@
 // ---------------------------------------------------------------------------
 // MUSEUM CARD — one "exhibit" in the swipe gallery. Frameless, edge-to-edge,
-// full-bleed: the image (or a deterministic gradient) is the frame. The active
-// card is the only one with an action; every other card recedes (scaled + dim).
+// full-bleed: the photo is the frame. The active card is the only one with an
+// action; every other card recedes (scaled + dim).
+//
+// The monogram is gone. A giant "W" for "Wedding" mapped to nothing the user
+// knows, so it read as a placeholder. A cover-less exhibit now carries its
+// CATEGORY's tint instead — a colour that means something (the same wing is
+// always the same colour) rather than a letter that means nothing.
 //
 // Every figure on the card is real, from the EventListing the server derived:
 //   title / categoryLabel / location / startsAt / price / popularity (COUNTED
 //   registrations) / tableBankingOverlap (the viewer's own group, derived).
-// There is no seeded "going" count and no fabricated social proof.
+// "Opened 2d ago" is also real, but local: it is this device's own record of
+// opening the event (viewMemory). Nothing else about the viewer is claimed.
 // ---------------------------------------------------------------------------
 
 import React from "react";
+import { Eye, Sparkles } from "lucide-react";
 import type { EventListing } from "../../api/briefApi";
 import { formatStartsAt } from "../../model/core";
-
-// Deterministic two-tone gradients keyed by title, so the same event always
-// gets the same identity and a cover-less event never renders a blank box.
-const GRADIENTS = [
-  "linear-gradient(135deg, #4F46E5, #06B6D4)",
-  "linear-gradient(135deg, #06B6D4, #10B981)",
-  "linear-gradient(135deg, #8B5CF6, #4F46E5)",
-  "linear-gradient(135deg, #0EA5E9, #4F46E5)",
-  "linear-gradient(135deg, #14B8A6, #06B6D4)"
-];
-
-function titleHash(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
-  return h;
-}
+import { categoryGradient } from "./categoryPalette";
 
 const money = (n: number, c: string) => (n === 0 ? "Free" : `${c} ${n.toLocaleString()}`);
 
-export function MuseumCard({
-  event,
-  isActive,
-  onOpen
-}: {
+export interface MuseumCardProps {
   event: EventListing;
   isActive: boolean;
   onOpen: (slug: string) => void;
-}) {
-  const gradient = GRADIENTS[titleHash(event.title) % GRADIENTS.length];
-  const initial = (event.title || "?").trim().charAt(0).toUpperCase();
+  /** Real: this exhibit appeared in the case after you last looked at it. */
+  isNew?: boolean;
+  /** Real: days since THIS DEVICE opened it. Null when it never did. */
+  openedAgoDays?: number | null;
+}
+
+export function MuseumCard({ event, isActive, onOpen, isNew = false, openedAgoDays = null }: MuseumCardProps) {
+  const gradient = categoryGradient(event.category);
   const price = event.goalAmount != null ? "Cause / pot" : money(event.price, event.currency);
   const date = formatStartsAt(event.startsAt);
 
@@ -51,7 +44,7 @@ export function MuseumCard({
         isActive ? "scale-100 opacity-100" : "scale-[0.92] opacity-60"
       }`}
     >
-      {/* Background — image OR deterministic gradient, frameless, edge-to-edge */}
+      {/* Background — real image, or the category's tint. Never a letter. */}
       <div className="absolute inset-0">
         {event.coverImageUrl ? (
           <img
@@ -66,29 +59,42 @@ export function MuseumCard({
         )}
       </div>
 
-      {/* Scrim — makes the text legible over any photo */}
+      {/* Scrim — keeps the text legible over any photo */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/35" />
 
-      {/* Category chip — top-left */}
-      <div className="absolute top-4 left-4">
+      {/* Breathing accent — one pixel at the foot of the active exhibit. It is
+          decoration, not data: no count, no claim, and reduced-motion kills it. */}
+      {isActive && (
+        <div
+          className="brief-card-breathe absolute bottom-0 left-0 right-0 h-px"
+          style={{ background: "rgba(255,255,255,0.9)" }}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Category wing + the honest "new" mark (a row that appeared since you
+          last looked — derived from the listing set, not pushed to you) */}
+      <div className="absolute top-4 left-4 flex items-center gap-1.5">
         <span className="text-[10px] font-extrabold uppercase tracking-wider bg-white/95 text-black px-3 py-1 rounded-full">
           {event.categoryLabel}
         </span>
+        {isNew && (
+          <span className="text-[10px] font-extrabold px-2 py-1 rounded-full bg-white/95 text-black flex items-center gap-1">
+            <Sparkles className="w-3 h-3" />
+            New
+          </span>
+        )}
       </div>
 
-      {/* Featured mark */}
+      {/* Featured mark — the organiser's explicit choice, never a ranking */}
       {event.featured && (
         <div className="absolute top-4 right-4">
-          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full" style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}>
+          <span
+            className="text-[10px] font-extrabold px-2.5 py-1 rounded-full"
+            style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}
+          >
             ★ Featured
           </span>
-        </div>
-      )}
-
-      {/* Fallback monogram — if no image, the title's initial, huge */}
-      {!event.coverImageUrl && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-[80px] font-black text-white/25 select-none">{initial}</span>
         </div>
       )}
 
@@ -96,7 +102,7 @@ export function MuseumCard({
       <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
         <h3 className="text-[22px] font-extrabold leading-tight line-clamp-2">{event.title}</h3>
 
-        {/* Meta line */}
+        {/* Meta line — the format that worked, kept verbatim */}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[13px] text-white/85">
           {date && <span>{date}</span>}
           {event.location && (
@@ -118,7 +124,15 @@ export function MuseumCard({
           </p>
         )}
 
-        {/* Action row — appears on the ACTIVE card only (rule #8). */}
+        {/* A real local fact: this device opened this exhibit. */}
+        {openedAgoDays != null && (
+          <p className="mt-1.5 flex items-center gap-1 text-[11px] text-white/70">
+            <Eye className="w-3 h-3" />
+            you opened this {openedAgoDays === 0 ? "today" : `${openedAgoDays}d ago`}
+          </p>
+        )}
+
+        {/* Action row — the ACTIVE card only (the exhibit gets the price tag). */}
         {isActive && (
           <div className="flex gap-2 mt-4">
             <button

@@ -25,7 +25,8 @@ import { store } from '../store.js';
 import { overrideObligation } from './fieldAgent.js';
 import { listFor as lipaMdogoContracts, contractState } from './lipaMdogo.js';
 import { unmetDemand } from './gaps.js';
-import { categoryClosure } from './precedent.js';
+import { categoryClosure, fillStats } from './precedent.js';
+import { offerValue } from './offerValue.js';
 
 // Same end-of-day-in-Nairobi semantics the quote layer uses, so an expiring
 // quote is judged by the same clock everywhere.
@@ -34,6 +35,112 @@ const HOUR = 3600000;
 const MONTH = 30.44 * 24 * HOUR;
 
 const CLOSED_QUOTE = new Set(['accepted', 'declined', 'withdrawn']);
+
+function vendorOwner(vendorId) {
+  return store.find('vendors', (v) => v.id === vendorId)?.ownerId ?? null;
+}
+
+/**
+ * The ONE move worth making next, chosen from real rows — and only from them.
+ *
+ * Ranking uses facts that already exist:
+ *   1. demand the matching engine put in front of one of MY enterprises
+ *      (a live `matches` row naming me, not expired);
+ *   2. demand I already have a live proposal on (a `requestQuotes` row of mine
+ *      that is still open) — following up on it is a real next step;
+ *   3. otherwise the most acute open gap the gap engine already ranked.
+ *
+ * Everything carried along is a field of the request row or a count derived
+ * from real rows: the severity label, the number of matched suppliers, the age
+ * of the request, the requester's own `requiredBy` date (only while it is in
+ * the future), and this category's real closure precedent. NO invented run
+ * price, NO "closes in 6h" without a stored date, NO queue position, NO tier.
+ * Returns null when nothing is open — the absence is the honest answer.
+ */
+function nextMoveFor(userId, gaps) {
+  if (!gaps.length) return null;
+
+  const matchedToMe = new Set(
+    store
+      .filter('matches', (m) => m.status !== 'expired' && vendorOwner(m.participantId) === userId)
+      .map((m) => m.requestId)
+  );
+  const myOpenQuoteByRequest = new Map();
+  for (const q of store.filter('requestQuotes', (x) => x.participantUserId === userId)) {
+    if (CLOSED_QUOTE.has(q.status) || myOpenQuoteByRequest.has(q.requestId)) continue;
+    myOpenQuoteByRequest.set(q.requestId, q);
+  }
+
+  const ranked = gaps
+    .map((g, index) => ({
+      g,
+      index,
+      rank: matchedToMe.has(g.requestId) ? 0 : myOpenQuoteByRequest.has(g.requestId) ? 1 : 2
+    }))
+    .sort((a, b) => a.rank - b.rank || a.index - b.index)[0];
+
+  const gap = ranked.g;
+  const row = store.find('requests', (r) => r.id === gap.requestId);
+  const nowMs = Date.now();
+  const openedMs = row?.createdAt ? Date.parse(row.createdAt) : NaN;
+  const deadlineMs = row?.requiredBy ? expiryMs(row.requiredBy) : null;
+  // A countdown is only ever allowed when the row itself carries a date that
+  // is still ahead. No date, or a past one -> null, and no number on screen.
+  const hasDeadline = deadlineMs !== null && deadlineMs > nowMs;
+
+  const myQuote = myOpenQuoteByRequest.get(gap.requestId) ?? null;
+  const myOffer = myQuote ? offerValue(myQuote.offers.at(-1)) : null;
+  const offerExpiryMs = myQuote?.offers.at(-1)?.terms?.validUntil
+    ? expiryMs(myQuote.offers.at(-1).terms.validUntil)
+    : null;
+
+  const precedent = fillStats({ category: row?.category || null });
+
+  return {
+    requestId: gap.requestId,
+    title: gap.title,
+    category: gap.category,
+    location: gap.location,
+    quantity: gap.quantity,
+    unit: gap.unit,
+    currency: gap.currency,
+    severityLabel: gap.severityLabel,
+    matchCount: gap.matchCount,
+    collective: gap.collective,
+    openedAt: row?.createdAt ?? null,
+    ageHours: Number.isFinite(openedMs) ? Math.max(1, Math.round((nowMs - openedMs) / HOUR)) : null,
+    // The requester's own stated date, and only while it is still ahead. A row
+    // without one reports null — never a made-up countdown.
+    requiredBy: hasDeadline ? row.requiredBy : null,
+    hoursUntilRequiredBy: hasDeadline ? Math.max(1, Math.round((deadlineMs - nowMs) / HOUR)) : null,
+    myQuote: myQuote
+      ? {
+          quoteId: myQuote.id,
+          status: myQuote.status,
+          offerValue: myOffer,
+          validUntil: myQuote.offers.at(-1)?.terms?.validUntil ?? null,
+          hoursLeft:
+            offerExpiryMs !== null && Number.isFinite(offerExpiryMs) && offerExpiryMs > nowMs
+              ? Math.max(1, Math.round((offerExpiryMs - nowMs) / HOUR))
+              : null
+        }
+      : null,
+    // Real precedent for demand in this category — counts of rows, not stories.
+    precedent: {
+      closedInWindow: precedent.closed,
+      windowDays: precedent.windowDays,
+      avgHoursToFill: precedent.avgHoursToFill,
+      avgValue: precedent.avgValue
+    },
+    why:
+      ranked.rank === 0
+        ? 'This was matched to one of your enterprises'
+        : ranked.rank === 1
+          ? 'You already have a live proposal on this'
+          : 'Open demand on the platform right now',
+    evidence: { table: 'requests', id: gap.requestId }
+  };
+}
 
 export function positionFor(userId) {
   const now = Date.now();
@@ -97,6 +204,10 @@ export function positionFor(userId) {
   }
 
   // --- MISSED: my quotes declined because another was selected -------------
+  // The value attached to each is MY OWN offer's derived total (from my row's
+  // terms, with the quote engine's own arithmetic) — never the winner's price,
+  // which Brief does not store, and never an estimate of "what you could have
+  // earned". Where my offer carried no completed price, no figure is shown.
   const missed = [];
   for (const q of myQuotes) {
     if (q.status !== 'declined') continue;
@@ -108,10 +219,24 @@ export function positionFor(userId) {
     missed.push({
       requestId: q.requestId,
       title: request?.title ?? 'Proposal',
-      at: lost.at ?? q.updatedAt ?? null
+      at: lost.at ?? q.updatedAt ?? null,
+      value: offerValue(q.offers.at(-1)),
+      evidence: { table: 'requestQuotes', id: q.id }
     });
   }
   missed.sort((a, b) => (a.at < b.at ? 1 : -1));
+  const THIRTY_DAYS = 30 * 24 * HOUR;
+  const valuedRecent = missed.filter(
+    (m) => m.value && Date.parse(m.at ?? '') >= now - THIRTY_DAYS
+  );
+  const missedValue = valuedRecent.length
+    ? {
+        amount: Math.round(valuedRecent.reduce((s, m) => s + m.value.amount, 0) * 100) / 100,
+        currency: valuedRecent[0].value.currency,
+        over: `${Math.round(THIRTY_DAYS / (24 * HOUR))} days`,
+        sampleCount: valuedRecent.length
+      }
+    : null;
 
   // --- OPEN: still-open unmet demand (action framing, not loss) -------------
   const gaps = unmetDemand();
@@ -128,8 +253,13 @@ export function positionFor(userId) {
     },
     missedCapture: {
       count: missed.length,
-      recent: missed.slice(0, 5)
+      recent: missed.slice(0, 5),
+      // The sum of MY OWN declined offers' derived totals in the window — each
+      // one traceable to a quote row of mine. null when no such figure exists.
+      value: missedValue
     },
+    // The single move worth making, chosen from real rows. null = nothing open.
+    nextMove: nextMoveFor(userId, gaps.gaps),
     open: {
       total: gaps.total,
       top: gaps.gaps.slice(0, 3).map((g) => ({
@@ -145,6 +275,6 @@ export function positionFor(userId) {
     },
     derivedAt: new Date().toISOString(),
     note:
-      'Every number here is derived by scanning real rows on read. Nothing is stored, estimated, or rounded up — a missed capture is only ever a real "selected another option" event you can trace to your own quote.'
+      'Every number here is derived by scanning real rows on read. Nothing is stored, estimated, or rounded up — a missed capture is only ever a real "selected another option" event you can trace to your own quote, its value is your own offer\'s total, and the next move is a real open request with its own timestamps. Where a row holds no date or no price, no figure is shown.'
   };
 }

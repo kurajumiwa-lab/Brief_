@@ -172,6 +172,60 @@ async function main() {
   }
   pass('EntityDetail: follow/unfollow toggle updates the count from the real rail');
 
+  // --- 6. The rails the reformation moved HERE: Standing, Orders, Selling ---
+  fetchHandler = async (url, init) => {
+    const ok = (b) => ({ ok: true, status: 200, text: async () => JSON.stringify(b) });
+    if (url.includes('/auth/me')) return ok({ user: authedUser });
+    if (url.includes('/person/me')) return ok(personMe);
+    if (url.includes('/me/acquisition')) return ok({ acquisition: null, provenance: null, activity: { verifiedCommercialKes: 0, currency: 'KES' } });
+    if (url.includes('/me/position')) {
+      return ok({ position: {
+        decay: { expiringQuotes: [{ quoteId: 'q1', requestId: 'r1', title: 'Catering for 50', validUntil: '2026-09-20', hoursLeft: 24 }], waitlist: [], override: null, overdueInstallments: 0 },
+        missedCapture: { count: 0, recent: [], value: null },
+        nextMove: null,
+        open: { total: 1, top: [{ requestId: 'r1', title: 'Catering for 50', category: 'catering', location: 'Kilimani', severityLabel: 'Suppliers matched; no quote yet', collective: false, closesMonthly: null }] },
+        derivedAt: '2026-09-15T00:00:00Z', note: 'derived'
+      } });
+    }
+    if (url.includes('/me/commitments')) return ok({ commitments: { owedByMe: [], owedToMe: [], fulfilled: [], lapsed: [], owedByMeKes: 0, owedToMeKes: 0, derivedAt: '', note: 'derived' } });
+    if (url.includes('/me/reciprocity')) return ok({ reciprocity: { owedToMe: [], owedByMe: [], fulfilled: [], aging: [], windowDays: 14, derivedAt: '', note: 'derived' } });
+    if (url.includes('/listings/mine')) return ok({ vendor: null, listings: [] });
+    if (url.includes('/vendor/orders')) return ok({ orders: [] });
+    if (url.includes('/earnings')) return ok({ earnings: { gross: 0, net: 0, payoutAvailable: false } });
+    if (url.includes('/api/listings')) return ok({ listings: [] });
+    if (url.includes('/api/orders')) return ok({ orders: [] });
+    if (url.includes('/disputes')) return ok({ disputes: [] });
+    return { ok: false, status: 404, text: async () => JSON.stringify({}) };
+  };
+  {
+    const { container } = mount(React.createElement(YouSurface, { onOpenEntity: () => {}, onRequireAuth: () => {} }));
+    await flush();
+    const t0 = text(container);
+    for (const label of ['Standing', 'Orders', 'Selling']) {
+      assert.ok(new RegExp(label).test(t0), `the ${label} rail exists in You`);
+    }
+
+    // Standing: derived rows only, and it says so.
+    act(() => { btn('Standing').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
+    await flush();
+    const ts = text(container);
+    assert.ok(ts.includes('Your position'), 'the derived position renders here');
+    assert.ok(ts.includes('1 proposal'), 'a real expiring proposal is counted');
+    assert.ok(ts.includes('Nothing here is a score'), 'and the surface names its own basis');
+    assert.ok(!/tier/i.test(ts), 'no tier ladder is invented');
+
+    // Orders + Selling: the personal halves of commerce, off the browse screen.
+    act(() => { btn('Orders').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
+    await flush();
+    assert.ok(/orders/i.test(text(container)), 'the orders rail renders');
+    assert.ok(!/KES \d/.test(text(container)), 'no money figure is invented from an empty ledger');
+
+    act(() => { btn('Selling').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
+    await flush();
+    assert.ok(text(container).includes('Start selling'), 'the real selling flow is reachable from You');
+  }
+  pass('YouSurface: Standing, Orders and Selling rails exist and stay derived-only');
+
   console.log('\nPASS ' + count);
   process.exit(0);
 }

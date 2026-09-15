@@ -90,6 +90,8 @@ import { register as tableBankingRoutes } from './routes/tableBanking.js';
 import { register as rolesRoutes } from './routes/roles.js';
 import { register as gapsRoutes } from './routes/gaps.js';
 import { register as priceSignalsRoutes } from './routes/priceSignals.js';
+import { register as pulseRoutes } from './routes/pulse.js';
+import { register as precedentRoutes } from './routes/precedent.js';
 import { register as pickupsRoutes } from './routes/pickups.js';
 import { register as positionRoutes } from './routes/position.js';
 import { register as commitmentsRoutes } from './routes/commitments.js';
@@ -196,7 +198,7 @@ app.use(ops.requestLogger);
 //                           (public location discovery pages like /explore/
 //                           kilimani, related content, nearby) — every payload
 //                           is the public projection of public objects only
-const PUBLIC_WITHOUT_SESSION = /^\/(auth|entities|locations|graph|nearby|collections\/personal|public\/(campaigns|feed|enterprises|capabilities|spaces)|health|ready|readiness|media\/(file|telegram)|config|release|email-subscriptions|webhooks|telegram\/init|huduma\/webhooks|price-signals)(\/|$)/;
+const PUBLIC_WITHOUT_SESSION = /^\/(auth|entities|locations|graph|nearby|collections\/personal|public\/(campaigns|feed|enterprises|capabilities|spaces)|health|ready|readiness|media\/(file|telegram)|config|release|email-subscriptions|webhooks|telegram\/init|huduma\/webhooks|price-signals|pulse)(\/|$)/;
 app.use('/api', (req, res, next) => {
   if (PUBLIC_WITHOUT_SESSION.test(req.path)) return next();
   const me = callerId(req);
@@ -272,6 +274,8 @@ tableBankingRoutes(app);
 rolesRoutes(app);
 gapsRoutes(app);
 priceSignalsRoutes(app);
+pulseRoutes(app);
+precedentRoutes(app);
 pickupsRoutes(app);
 positionRoutes(app);
 commitmentsRoutes(app);

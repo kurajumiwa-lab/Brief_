@@ -99,6 +99,9 @@ export function listingView(campaign) {
     currency: campaign.currency,
     goalAmount: campaign.goalAmount ?? null,
     featured: campaign.metadata?.featured === true,
+    // The row's own timestamp, so a surface can honestly say "published 2d ago"
+    // instead of implying realtime it does not have.
+    publishedAt: campaign.createdAt ?? null,
     popularity: registrationsOf(campaign.id),
     // No overlap here: it is a per-viewer fact, attached by the caller.
     tableBankingOverlap: null

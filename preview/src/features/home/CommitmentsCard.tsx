@@ -17,11 +17,19 @@ const KIND_LABEL: Record<string, string> = {
   repayment: 'repayment'
 };
 
-export function CommitmentsCard({ className = '' }: { className?: string }) {
-  const [c, setC] = useState<MyCommitments | null>(null);
-  const [loaded, setLoaded] = useState(false);
+export function CommitmentsCard({
+  className = '',
+  commitments
+}: {
+  className?: string;
+  /** The parent's already-derived read — passed in so a screen reads once. */
+  commitments?: MyCommitments | null;
+}) {
+  const [own, setC] = useState<MyCommitments | null>(null);
+  const [loaded, setLoaded] = useState(commitments !== undefined);
 
   useEffect(() => {
+    if (commitments !== undefined) return;
     let live = true;
     briefApi.getMyCommitments().then((res) => {
       if (!live) return;
@@ -29,7 +37,9 @@ export function CommitmentsCard({ className = '' }: { className?: string }) {
       setLoaded(true);
     });
     return () => { live = false; };
-  }, []);
+  }, [commitments]);
+
+  const c = commitments ?? own;
 
   if (!loaded || !c) return null;
   if (c.owedByMe.length === 0 && c.owedToMe.length === 0) return null;

@@ -41,6 +41,10 @@ export const AppShell: React.FC<AppShellProps> = ({
   const [authed, setAuthed] = useState<boolean>(true);
   const [entityId, setEntityId] = useState<string | null>(null);
   const [firstRun, setFirstRun] = useState<boolean>(false);
+  // Which Discover segment a jump from Home should land on ('pulse' is the
+  // world's numbers; the rest are the browse surfaces).
+  const [discoverSubTab, setDiscoverSubTab] =
+    useState<'all' | 'events' | 'marketplace' | 'circles' | 'vault' | 'pulse'>('all');
   const [firstRunChecked, setFirstRunChecked] = useState<boolean>(false);
 
   // Modals
@@ -240,14 +244,22 @@ export const AppShell: React.FC<AppShellProps> = ({
               setActiveTab('pipeline');
               loadSpaces();
             }}
-            onExploreDiscover={() => setActiveTab('city')}
+            onExploreDiscover={(sub) => {
+              if (sub) setDiscoverSubTab(sub);
+              setActiveTab('city');
+            }}
+            onOpenSpaces={() => setActiveTab('pipeline')}
             onGetPaid={() => setActiveTab('ledger')}
           />
         ) : (
           <div>
             {/* ── TAB 1: CITY (Full Citizen Experience) ── */}
             {(activeTab === 'city' || activeTab === 'discover') && (
-              <CityFeedView onOpenSpace={(id) => setActiveTab('pipeline')} />
+              <CityFeedView
+                key={discoverSubTab}
+                initialSubTab={discoverSubTab}
+                onOpenSpace={(id) => setActiveTab('pipeline')}
+              />
             )}
 
             {/* ── TAB 2: SPACES (the full workspace: build, sell, track) ── */}

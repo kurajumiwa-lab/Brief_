@@ -148,6 +148,72 @@ test("an empty account returns honest zeroes, never fabricated numbers", () => {
   assert.equal(typeof p.open.total, "number");
 });
 
+// ---------------------------------------------------------------------------
+// NEXT MOVE + MISSED VALUE — the two places a number could be invented, so
+// both are pinned to rows.
+// ---------------------------------------------------------------------------
+store.insert("matches", {
+  id: "mtch_1", requestId: "req_open", participantId: "vnd_1", capabilityId: null,
+  status: "suggested", requesterState: "suggested", revision: 1,
+  createdAt: now.toISOString(), updatedAt: now.toISOString(), history: []
+});
+
+test("nextMove is the real open request a match row put in front of me", () => {
+  const mv = position.positionFor(me.id).nextMove;
+  assert.ok(mv, "a move exists because a real request is open");
+  assert.equal(mv.requestId, "req_open", "the still-open request is the one");
+  assert.equal(mv.why, "This was matched to one of your enterprises", "the ranking reason is the real match row");
+  assert.equal(mv.matchCount, 1, "the match count is the counted match rows, not a seeded number");
+  assert.equal(mv.title, "200kg of Irish potatoes", "the title is the request's own");
+  // No deadline on the row -> no countdown on the card. Never "closes in 6h".
+  assert.equal(mv.requiredBy, null, "no invented deadline");
+  assert.equal(mv.hoursUntilRequiredBy, null, "no invented countdown");
+  // The only price allowed is MY OWN offer's, and my offer carries none.
+  assert.ok(mv.myQuote, "my live quote on it is recognised");
+  assert.equal(mv.myQuote.offerValue, null, "an offer with no completed price reports no value");
+  assert.equal("valueKes" in mv, false, "the move itself exposes no price field to misuse");
+  // Precedent for 'produce' is genuinely zero, reported as zero, not smoothed.
+  assert.equal(mv.precedent.closedInWindow, 0, "no closure precedent in this category");
+  assert.equal(mv.precedent.avgValue, null, "no average price is manufactured");
+  assert.equal(mv.evidence.table, "requests", "the figure is traceable to a row");
+});
+
+test("a missed capture carries only MY OWN declined offer's derived total", () => {
+  const before = position.positionFor(me.id).missedCapture;
+  assert.equal(before.count, 1);
+  assert.equal(before.value, null, "my lost offer had no price -> no money figure at all");
+
+  // Now a lost offer that DID carry a price: 10 units x KES 1,500.
+  store.insert("requestQuotes", {
+    id: "q_lost_priced", requestId: "req_closed", requesterId: buyer.id,
+    participantId: "part_lost2", participantUserId: me.id, capabilityId: null,
+    matchId: null, status: "declined", revision: 2,
+    offers: [{
+      revision: 1,
+      terms: { quotedQuantity: 10, unit: "kg", unitPriceMinor: 150000, currency: "KES", deliveryCostMinor: 0, sourcingFeeMinor: 0, otherCosts: [] }
+    }],
+    draft: null,
+    history: [{ action: "quote_declined", actorId: buyer.id, reason: "Selected another option", at: now.toISOString() }],
+    operations: [], createdAt: now.toISOString(), updatedAt: now.toISOString()
+  });
+
+  const after = position.positionFor(me.id).missedCapture;
+  assert.equal(after.count, 2, "both real declines are counted");
+  assert.equal(after.value.amount, 15000, "the sum is my own priced offer only (10 x 1500)");
+  assert.equal(after.value.sampleCount, 1, "and it says how many offers it averaged");
+  assert.equal(after.value.currency, "KES", "the currency is the offer's own");
+  const priced = after.recent.find((m) => m.value);
+  assert.equal(priced.value.amount, 15000, "per-row value traces to that row's terms");
+  assert.equal(priced.evidence.id, "q_lost_priced", "with the row id it came from");
+});
+
+test("a stranger's move falls back to real open demand, never a story", () => {
+  const mv = position.positionFor(buyer.id).nextMove;
+  assert.ok(mv, "open demand is platform-wide, so a move can still exist");
+  assert.equal(mv.why, "Open demand on the platform right now", "the fallback states what it is");
+  assert.equal(mv.myQuote, null, "no quote is attributed to someone who has none");
+});
+
 test("API: /api/me/position is wired and auth-gated", async () => {
   const { default: app } = await import("../src/index.js");
   const srv = app.listen(0);

@@ -13,19 +13,29 @@ import type { MyPosition } from '../../api/briefApi';
 import * as briefApi from '../../api/briefApi';
 import { Clock, AlertTriangle, ChevronRight, Ticket } from 'lucide-react';
 
-export function PositionCard({ className = '' }: { className?: string }) {
-  const [pos, setPos] = useState<MyPosition | null>(null);
-  const [loaded, setLoaded] = useState(false);
+export function PositionCard({
+  className = '',
+  position
+}: {
+  className?: string;
+  /** The parent's already-derived read — passed in so a screen reads once. */
+  position?: MyPosition | null;
+}) {
+  const [own, setOwn] = useState<MyPosition | null>(null);
+  const [loaded, setLoaded] = useState(position !== undefined);
 
   useEffect(() => {
+    if (position !== undefined) return;
     let live = true;
     briefApi.getMyPosition().then((res) => {
       if (!live) return;
-      setPos(res.ok ? res.data : null);
+      setOwn(res.ok ? res.data : null);
       setLoaded(true);
     });
     return () => { live = false; };
-  }, []);
+  }, [position]);
+
+  const pos = position ?? own;
 
   // Nothing derived and nothing to say -> render nothing (never a fake empty).
   if (!loaded || !pos) return null;
@@ -70,6 +80,14 @@ export function PositionCard({ className = '' }: { className?: string }) {
             {firstMissed && (
               <p className="text-[11px] truncate" style={{ color: 'var(--color-text-muted)' }}>
                 “{firstMissed.title}” — the buyer selected another option.
+              </p>
+            )}
+            {pos.missedCapture.value && (
+              <p className="text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
+                {pos.missedCapture.value.sampleCount} of your own priced offer
+                {pos.missedCapture.value.sampleCount === 1 ? '' : 's'} in {pos.missedCapture.value.over} = KES{' '}
+                {Number(pos.missedCapture.value.amount).toLocaleString('en-KE')}. What a winner charged is not
+                stored, so it is not shown.
               </p>
             )}
           </div>

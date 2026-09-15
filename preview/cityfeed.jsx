@@ -61,6 +61,38 @@ global.fetch = async (input) => {
   if (url.includes('/pickup-origin-fee')) return ok({ obligation: { agentId: 'me', pickupCount: 0, feePerPickupKes: 20, originFeeKes: 0, note: 'derived' } });
   if (url.includes('/pickup-fee/settlements')) return ok({ settlements: [] });
   if (url.includes('/api/circles')) return ok({ circles: [] });
+  if (url.includes('/api/pulse')) {
+    return ok({
+      asOf: null,
+      sections: {
+        demand: { open: 0, bySeverity: { no_supplier: 0, awaiting_quote: 0, awaiting_accept: 0 }, collective: 0 },
+        closure: { windowDays: 30, closed: 0, topCategory: null },
+        fill: { windowDays: 30, closed: 0, avgHoursToFill: null, hoursSampleCount: 0, avgValue: null },
+        money: { windowDays: 30, settledOrders: 0, settledValue: null, settledCurrency: null, completedWorkOrders: 0, deliveredPickups: 0 },
+        listings: { active: 0, snapshot: [] },
+        events: { open: 0, newLast24h: { requests: 0, events: 0, listings: 0, orders: 0 } }
+      },
+      facts: [], empty: true, note: 'derived'
+    });
+  }
+  if (url.includes('/api/me/position')) {
+    return ok({
+      position: {
+        decay: { expiringQuotes: [], waitlist: [], override: null, overdueInstallments: 0 },
+        missedCapture: { count: 0, recent: [], value: null },
+        nextMove: null,
+        open: { total: 0, top: [] },
+        derivedAt: '2026-09-15T00:00:00Z', note: 'derived'
+      }
+    });
+  }
+  if (url.includes('/api/me/commitments')) {
+    return ok({ commitments: { owedByMe: [], owedToMe: [], fulfilled: [], lapsed: [], owedByMeKes: 0, owedToMeKes: 0, derivedAt: '2026-09-15T00:00:00Z', note: 'derived' } });
+  }
+  if (url.includes('/api/me/reciprocity')) {
+    return ok({ reciprocity: { owedToMe: [], owedByMe: [], fulfilled: [], aging: [], windowDays: 14, derivedAt: '2026-09-15T00:00:00Z', note: 'derived' } });
+  }
+  if (url.includes('/api/auth/me')) return ok({ user: { id: 'usr_1', handle: 'amina', displayName: 'Amina' } });
   if (url.includes('/api/vaults')) return ok({ vaults: [] });
   return { ok: false, status: 404, text: async () => JSON.stringify({}) };
 };
@@ -101,7 +133,7 @@ async function main() {
     const nav = c.querySelector('nav[aria-label="Discover sections"]');
     assert.ok(nav, 'the section navigation is present');
     const chips = Array.from(nav.querySelectorAll('button'));
-    assert.equal(chips.length, 5, 'five discover sections');
+    assert.equal(chips.length, 6, 'six discover sections (Pulse is now one of them)');
     assert.equal(chips[0].getAttribute('aria-pressed'), 'true', 'the first (All) section is active by default');
     // No scoreboard "0 : 0" hero.
     const hero = Array.from(c.querySelectorAll('div')).find((d) => (d.getAttribute('class') || '').includes('text-3xl'));
@@ -126,6 +158,41 @@ async function main() {
     assert.ok(text(document.body).includes('Start selling'), 'Post a listing deep-links to the marketplace Selling flow');
   }
   pass('Host opens the event form; Post-a-listing opens the Selling flow');
+
+  // --- 4. The All tab is a decision screen, not a catalogue --------------
+  {
+    const c = mount(React.createElement(CityFeedView, { onOpenSpace: () => {} }));
+    await flush();
+    const t = text(c);
+    // The orphaned, clipped "COMMUNITY MARKETPLACE & SECOND-HAND DROPS" block
+    // and its Browse/My orders/Selling row no longer sit on the browse screen.
+    assert.ok(!/Community Marketplace/i.test(t), 'the marketplace block is off the All tab');
+    assert.ok(!/My orders/.test(t), 'the marketplace tab row is off the All tab');
+    // Commerce is reachable as its own segment instead.
+    const nav = c.querySelector('nav[aria-label="Discover sections"]');
+    assert.ok(Array.from(nav.querySelectorAll('button')).some((b) => text(b) === 'Market'), 'Market is its own segment');
+    // The three zones exist above the fold: world, decision, inventory.
+    assert.ok(t.includes("What's moving"), 'a signal line is present');
+    assert.ok(t.includes('Events around you'), 'the case (gallery) heads the browse zone');
+    // Deep filters are not a four-row panel anymore — nothing is on screen but
+    // a sheet trigger.
+    assert.ok(!/shown\b/.test(t), 'no result counter anywhere on the browse screen');
+  }
+  pass('All tab: no orphaned marketplace block, no result counter, three zones present');
+
+  // --- 5. Pulse is its own segment (the world, kept apart from you) --------
+  {
+    const c = mount(React.createElement(CityFeedView, { onOpenSpace: () => {} }));
+    await flush();
+    const nav = c.querySelector('nav[aria-label="Discover sections"]');
+    const pulse = Array.from(nav.querySelectorAll('button')).find((b) => text(b) === 'Pulse');
+    act(() => { pulse.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
+    await flush();
+    assert.ok(/Pulse/.test(text(c)), 'Pulse renders as a surface');
+    // Its empty state is honest: nothing is pre-filled to look busy.
+    assert.ok(/Nothing has moved yet|Pulse is unavailable/.test(text(c)), 'Pulse reports real emptiness or a real error');
+  }
+  pass('Pulse is a Discover segment with an honest empty state');
 
   console.log('\nPASS ' + count);
   process.exit(0);

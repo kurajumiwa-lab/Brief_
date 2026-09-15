@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import {
-  ShoppingBag,
   Users,
   Lock,
   ArrowRight,
-  Clock,
   Store,
   Bike,
-  Plus
+  Plus,
+  CalendarPlus
 } from 'lucide-react';
 import * as briefApi from '../../api/briefApi';
 import { DiscoveryHead } from './DiscoveryHead';
@@ -18,15 +17,36 @@ import { EventsHub } from '../../components/EventsHub';
 import { Marketplace } from '../../components/Marketplace';
 import { Circles } from '../../components/Circles';
 import { Vault } from '../../components/vault/Vault';
+import { PulseSurface } from './PulseSurface';
+import { SignalBar } from '../home/SignalBar';
+import { NextMoveCard } from '../home/NextMoveCard';
 import { soundEngine } from '../../utils/SoundEngine';
 
+// ---------------------------------------------------------------------------
+// DISCOVER — the browse screen, reformed.
+//
+// What changed and why (from the screenshot review):
+//   * the Marketplace block is GONE from the All tab. "COMMUNITY MARKETPLACE &
+//     SECOND-HAND DROPS" was clipped mid-word at the fold and its own
+//     Browse/My orders/Selling row sat right on top of the bottom navigation.
+//     Commerce is a mode, so it lives in its own segment now;
+//   * the six category chips + four-row filter panel collapsed into the
+//     gallery's one control line, with the deep filters behind a sheet;
+//   * result counters ("2 shown") are removed — if you can see the exhibits,
+//     you can count them;
+//   * the two ways to ADD something became a floating action group, because a
+//     primary action should not be orphaned text at the bottom of a scroll;
+//   * Pulse is a segment of its own: the world's numbers, kept apart from your
+//     own position, which lives on Home and in You.
+// ---------------------------------------------------------------------------
+
 export interface CityFeedViewProps {
-  initialSubTab?: 'all' | 'events' | 'marketplace' | 'circles' | 'vault';
+  initialSubTab?: 'all' | 'events' | 'marketplace' | 'circles' | 'vault' | 'pulse';
   onOpenSpace?: (spaceId: string) => void;
   className?: string;
 }
 
-type CitySubTab = 'all' | 'events' | 'marketplace' | 'circles' | 'vault';
+type CitySubTab = 'all' | 'pulse' | 'events' | 'marketplace' | 'circles' | 'vault';
 
 export const CityFeedView: React.FC<CityFeedViewProps> = ({
   initialSubTab = 'all',
@@ -42,12 +62,13 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
   const [marketplaceKey, setMarketplaceKey] = useState(0);
 
   // Host-an-event form (a REAL createCampaign -> publish flow, not a dead
-  // toast). The event appears in the Events hub once published.
+  // toast). The event appears in the gallery once published.
   const [hostOpen, setHostOpen] = useState(false);
   const [eventDraft, setEventDraft] = useState({ title: '', description: '', location: '', startsAt: '', price: '' });
   const [eventBusy, setEventBusy] = useState(false);
   const [eventError, setEventError] = useState<string | null>(null);
   const [eventsKey, setEventsKey] = useState(0);
+  const [galleryKey, setGalleryKey] = useState(0);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -79,7 +100,7 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
       setEventError(created.error ?? 'Could not create the event.');
       return;
     }
-    // Publish so it actually shows up in the Events hub (drafts are private).
+    // Publish so it actually shows up in the case (drafts are private).
     const published = await briefApi.campaignAction(created.data.id, 'publish');
     setEventBusy(false);
     if (!published.ok) {
@@ -89,12 +110,14 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
     setHostOpen(false);
     setEventDraft({ title: '', description: '', location: '', startsAt: '', price: '' });
     setEventsKey((k) => k + 1);
-    setActiveSubTab('events');
-    showToast(`"${created.data.title}" is now live in Events.`);
+    setGalleryKey((k) => k + 1);
+    setActiveSubTab('all');
+    showToast(`"${created.data.title}" is now live in the case.`);
   };
 
   const subTabs: Array<{ id: CitySubTab; label: string }> = [
     { id: 'all', label: 'All' },
+    { id: 'pulse', label: 'Pulse' },
     { id: 'events', label: 'Events' },
     { id: 'marketplace', label: 'Market' },
     { id: 'circles', label: 'Circles' },
@@ -110,7 +133,7 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
         </div>
       )}
 
-      {/* ── CITY FEED HEAD — clean premium light header ── */}
+      {/* ── HEAD — clean premium light header + the section chips ── */}
       <DiscoveryHead
         eyebrow="Discover"
         title="Everything happening around you"
@@ -120,73 +143,32 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
         onSegmentChange={(id) => { soundEngine.play('tap'); setActiveSubTab(id as CitySubTab); }}
       />
 
-      {/* ── MOUNTED CITIZEN SURFACES ── */}
+      {/* ── MOUNTED SURFACES ── */}
       <div className="space-y-6">
-        {/* ALL CITY STREAM VIEW */}
         {activeSubTab === 'all' && (
-          <div className="space-y-8 animate-fadeIn">
-            {/* Top Events Section — the museum gallery (swiping inventory, not feed) */}
-            <section className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Clock className="w-4 h-4 text-[color:var(--color-primary)]" />
-                    <h3 className="text-sm font-black uppercase tracking-wider text-[color:var(--color-text)]">
-                      Events around you
-                    </h3>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => { soundEngine.play('tap'); setEventError(null); setHostOpen(true); }}
-                      className="text-xs font-bold text-[color:var(--color-primary)] hover:underline flex items-center space-x-1 cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Host</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveSubTab('events')}
-                      className="text-xs font-bold text-[color:var(--color-primary)] hover:underline flex items-center space-x-1 cursor-pointer"
-                    >
-                      <span>All filters</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-                <MuseumGallery />
-            </section>
+          <div className="space-y-6 animate-fadeIn">
+            {/* One line of world context, then your own next move — so a browse
+                screen never asks you to scroll past a catalogue to find a
+                reason to be here. */}
+            <SignalBar onOpenPulse={() => setActiveSubTab('pulse')} />
+            <NextMoveCard />
 
-            {/* Marketplace Section */}
-            <section className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <ShoppingBag className="w-4 h-4 text-[color:var(--color-accent)]" />
-                    <h3 className="text-sm font-black uppercase tracking-wider text-[color:var(--color-text)]">
-                      Community Marketplace & Second-Hand Drops
-                    </h3>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={openSelling}
-                      className="text-xs font-bold text-[color:var(--color-accent)] hover:underline flex items-center space-x-1 cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Post a listing</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveSubTab('marketplace')}
-                      className="text-xs font-bold text-[color:var(--color-accent)] hover:underline flex items-center space-x-1 cursor-pointer"
-                    >
-                      <span>Explore Market</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-                <div className="p-4 rounded-3xl bg-white border border-black/5 shadow-2xs">
-                  <Marketplace />
-                </div>
+            {/* THE CASE — swiping inventory, not a feed */}
+            <section className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-black uppercase tracking-wider text-[color:var(--color-text)]">
+                  Events around you
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setActiveSubTab('events')}
+                  className="text-xs font-bold text-[color:var(--color-primary)] hover:underline flex items-center space-x-1 cursor-pointer"
+                >
+                  <span>All filters</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <MuseumGallery key={galleryKey} />
             </section>
 
             {/* Public Spaces Section — projects owners chose to make discoverable */}
@@ -254,41 +236,20 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
           </div>
         )}
 
-        {/* SPECIFIC SUB-TABS */}
+        {activeSubTab === 'pulse' && (
+          <div className="p-4 rounded-3xl bg-white border border-black/5 shadow-2xs animate-fadeIn">
+            <PulseSurface />
+          </div>
+        )}
+
         {activeSubTab === 'events' && (
           <div className="p-4 rounded-3xl bg-white border border-black/5 shadow-2xs animate-fadeIn">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-xs font-black uppercase tracking-wider text-[color:var(--color-text)]">
-                🎟️ Events & Festivals
-              </h3>
-              <button
-                type="button"
-                onClick={() => { soundEngine.play('tap'); setEventError(null); setHostOpen(true); }}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold text-white cursor-pointer"
-                style={{ background: 'var(--color-primary)' }}
-              >
-                <Plus className="w-3.5 h-3.5" /> Host an event
-              </button>
-            </div>
             <EventsHub key={eventsKey} />
           </div>
         )}
 
         {activeSubTab === 'marketplace' && (
           <div className="p-4 rounded-3xl bg-white border border-black/5 shadow-2xs animate-fadeIn">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-xs font-black uppercase tracking-wider text-[color:var(--color-text)]">
-                🛍️ Marketplace
-              </h3>
-              <button
-                type="button"
-                onClick={openSelling}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold text-white cursor-pointer"
-                style={{ background: 'var(--color-accent)' }}
-              >
-                <Plus className="w-3.5 h-3.5" /> Post a listing
-              </button>
-            </div>
             <Marketplace key={marketplaceKey} initialSection={marketplaceSection} />
           </div>
         )}
@@ -306,9 +267,33 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
         )}
       </div>
 
+      {/* ── FLOATING ACTION GROUP — the two real ways to add something.
+          Above the dock (z-50 for the sheets, so this stays reachable) and
+          every button posts to a real endpoint. ── */}
+      <div className="fixed right-4 bottom-24 z-40 flex flex-col items-end gap-2">
+        <button
+          type="button"
+          onClick={() => { soundEngine.play('tap'); setEventError(null); setHostOpen(true); }}
+          className="inline-flex items-center gap-1.5 pl-3 pr-4 py-2.5 rounded-full text-xs font-black shadow-lg cursor-pointer active:scale-95 transition"
+          style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
+        >
+          <CalendarPlus className="w-4 h-4" />
+          Host an event
+        </button>
+        <button
+          type="button"
+          onClick={openSelling}
+          className="inline-flex items-center gap-1.5 pl-3 pr-4 py-2.5 rounded-full text-xs font-black bg-white border shadow-lg cursor-pointer active:scale-95 transition"
+          style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+        >
+          <Plus className="w-4 h-4" style={{ color: 'var(--color-accent)' }} />
+          Post a listing
+        </button>
+      </div>
+
       {/* ── HOST AN EVENT (real createCampaign -> publish) ── */}
       {hostOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fadeIn">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fadeIn">
           <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden p-6 space-y-4 border border-black/5 animate-scaleIn">
             <div className="flex items-center justify-between">
               <div>
@@ -320,14 +305,14 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
               <button
                 type="button"
                 onClick={() => { setHostOpen(false); setEventError(null); }}
-                className="text-xs text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)]"
+                className="text-xs text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] cursor-pointer"
               >
                 Cancel
               </button>
             </div>
 
             <p className="text-xs text-[color:var(--color-text-muted)]">
-              It is published immediately and appears in Events &amp; Festivals for everyone.
+              It is published immediately and appears in the case for everyone.
             </p>
 
             {eventError && <p role="alert" className="text-xs font-bold text-[color:var(--color-danger)]">{eventError}</p>}

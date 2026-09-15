@@ -6,36 +6,21 @@
 //
 //   * a REAL cover image when the campaign carries one (metadata.image), lazy
 //     loaded with a solid placeholder so it never flashes;
-//   * otherwise a DETERMINISTIC gradient derived from the title (stable per
-//     event, two-tone, never a black box) with the title's initial overlaid;
+//   * otherwise the CATEGORY's tint — the same wing is always the same colour.
+//     The oversized title initial is gone: "W" for "Wedding" mapped to nothing
+//     the reader knows, so it read as a placeholder rather than a design;
 //   * category chip, title, date · location · price, and the counted
 //     "N going" — every figure derived, never seeded.
 // ---------------------------------------------------------------------------
 
 import React from "react";
 import type { EventListing } from "../../api/briefApi";
-
-// Two-tone gradients keyed by a stable hash of the title, so the same event
-// always gets the same visual identity and no event renders a blank box.
-const GRADIENTS = [
-  "linear-gradient(135deg, #4F46E5, #06B6D4)",
-  "linear-gradient(135deg, #06B6D4, #10B981)",
-  "linear-gradient(135deg, #8B5CF6, #4F46E5)",
-  "linear-gradient(135deg, #0EA5E9, #4F46E5)",
-  "linear-gradient(135deg, #14B8A6, #06B6D4)"
-];
-
-function titleHash(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
-  return h;
-}
+import { categoryGradient } from "../../features/city/categoryPalette";
 
 const money = (n: number, c: string) => (n === 0 ? "Free" : `${c} ${n.toLocaleString()}`);
 
 export function EventCard({ event, onOpen }: { event: EventListing; onOpen: (slug: string) => void }) {
-  const gradient = GRADIENTS[titleHash(event.title) % GRADIENTS.length];
-  const initial = (event.title || "?").trim().charAt(0).toUpperCase();
+  const gradient = categoryGradient(event.category);
 
   return (
     <button
@@ -54,12 +39,7 @@ export function EventCard({ event, onOpen }: { event: EventListing; onOpen: (slu
             style={{ background: "var(--color-surface-elevated)" }}
           />
         ) : (
-          <div
-            className="absolute inset-0 flex items-center justify-center"
-            style={{ background: gradient }}
-          >
-            <span className="text-4xl font-black text-white/80">{initial}</span>
-          </div>
+          <div className="absolute inset-0" style={{ background: gradient }} />
         )}
         {/* Category chip over the cover */}
         <span

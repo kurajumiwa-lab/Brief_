@@ -2840,6 +2840,8 @@ export interface EventListing {
   currency: string;
   goalAmount: number | null;
   featured: boolean;
+  /** The campaign row's own createdAt — when this was actually published. */
+  publishedAt?: string | null;
   /** COUNTED registrations, never a seeded number. */
   popularity: number;
   /** DERIVED per-viewer: which of the viewer's groups have members going. */
@@ -4636,6 +4638,96 @@ export function getMyPickupFeeSettlements(): Promise<ApiResult<PickupFeeSettleme
 }
 
 // ---------------------------------------------------------------------------
+// PULSE — "what is moving", derived from real rows on read. Every fact is a
+// count/sum over rows that exist; the payload carries no estimate, no trend
+// percentage and no "live" claim (it is a snapshot stamped with the newest row).
+// ---------------------------------------------------------------------------
+export interface PulseFact { id: string; text: string; }
+export interface PulseListingSnapshot {
+  type: string;
+  count: number;
+  currency: string;
+  minPrice: number;
+  avgPrice: number;
+  maxPrice: number;
+}
+export interface Pulse {
+  /** Newest real row timestamp among everything considered — NOT a clock. */
+  asOf: string | null;
+  sections: {
+    demand: { open: number; bySeverity: Record<string, number>; collective: number };
+    closure: {
+      windowDays: number;
+      closed: number;
+      topCategory: { category: string; closed: number } | null;
+    };
+    fill: {
+      windowDays: number;
+      closed: number;
+      avgHoursToFill: number | null;
+      hoursSampleCount: number;
+      avgValue: { amount: number; currency: string; sampleCount: number } | null;
+    };
+    money: {
+      windowDays: number;
+      settledOrders: number;
+      settledValue: number | null;
+      settledCurrency: string | null;
+      completedWorkOrders: number;
+      deliveredPickups: number;
+    };
+    listings: { active: number; snapshot: PulseListingSnapshot[] };
+    events: {
+      open: number;
+      newLast24h: { requests: number; events: number; listings: number; orders: number };
+    };
+  };
+  facts: PulseFact[];
+  empty: boolean;
+  note: string;
+}
+export function getPulse(): Promise<ApiResult<Pulse>> {
+  return request('/api/pulse', undefined, r =>
+    r && Array.isArray(r.facts) && r.sections ? (r as Pulse) : undefined);
+}
+
+// ---------------------------------------------------------------------------
+// PRECEDENT — "does demand like this actually close?" Counts over real rows
+// plus the arithmetic of accepted offer terms. No identities, no budgets.
+// ---------------------------------------------------------------------------
+export interface PrecedentFill {
+  category: string | null;
+  windowDays: number;
+  closed: number;
+  avgHoursToFill: number | null;
+  hoursSampleCount: number;
+  avgValue: { amount: number; currency: string; sampleCount: number } | null;
+  note: string;
+}
+export interface Precedent {
+  category: string | null;
+  closure: {
+    windowDays: number;
+    byCategory: Array<{ category: string; closed: number }>;
+  };
+  fill: PrecedentFill;
+  movement: {
+    windowDays: number;
+    settledOrders: number;
+    settledOrdersKes: number;
+    settledCurrency: string | null;
+    completedWorkOrders: number;
+    deliveredPickups: number;
+  };
+  note: string;
+}
+export function getPrecedent(category?: string): Promise<ApiResult<Precedent>> {
+  const q = category ? `?category=${encodeURIComponent(category)}` : '';
+  return request(`/api/precedent${q}`, undefined, r =>
+    r && r.fill && r.closure ? (r as Precedent) : undefined);
+}
+
+// ---------------------------------------------------------------------------
 // POSITION — the user's derived position in time (decay / missed / open).
 // Every number is derived from real rows on read; nothing is stored.
 // ---------------------------------------------------------------------------
@@ -4655,10 +4747,56 @@ export interface PositionWaitlist {
   offerExpiresAt: string | null;
   hoursLeft: number | null;
 }
+export interface OfferValue {
+  minor: number;
+  amount: number;
+  currency: string;
+}
 export interface PositionMissed {
   requestId: string;
   title: string;
   at: string | null;
+  /** MY OWN declined offer's derived total, or null when it carried no price. */
+  value: OfferValue | null;
+  evidence?: { table: string; id: string };
+}
+export interface PositionMissedValue {
+  amount: number;
+  currency: string;
+  over: string;
+  sampleCount: number;
+}
+export interface PositionNextMove {
+  requestId: string;
+  title: string;
+  category: string | null;
+  location: string | null;
+  quantity: number | null;
+  unit: string | null;
+  currency: string;
+  severityLabel: string;
+  matchCount: number;
+  collective: boolean;
+  openedAt: string | null;
+  ageHours: number | null;
+  /** The requester's own stated date, present only while it is still ahead. */
+  requiredBy: string | null;
+  hoursUntilRequiredBy: number | null;
+  myQuote: {
+    quoteId: string;
+    status: string;
+    offerValue: OfferValue | null;
+    validUntil: string | null;
+    hoursLeft: number | null;
+  } | null;
+  precedent: {
+    closedInWindow: number;
+    windowDays: number;
+    avgHoursToFill: number | null;
+    avgValue: { amount: number; currency: string; sampleCount: number } | null;
+  };
+  why: string;
+  evidence: { table: string; id: string };
 }
 export interface PositionOpenGap {
   requestId: string;
@@ -4680,7 +4818,11 @@ export interface MyPosition {
   missedCapture: {
     count: number;
     recent: PositionMissed[];
+    /** Sum of my own declined offers' real totals in the window (null = none). */
+    value: PositionMissedValue | null;
   };
+  /** The one move worth making, chosen from real rows. null = nothing open. */
+  nextMove: PositionNextMove | null;
   open: {
     total: number;
     top: PositionOpenGap[];

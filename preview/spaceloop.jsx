@@ -30,7 +30,48 @@ global.navigator = dom.window.navigator;
 global.HTMLElement = dom.window.HTMLElement;
 global.Request = dom.window.Request || class {};
 global.Response = dom.window.Response || class {};
-global.fetch = async () => ({ ok: true, json: async () => ({}) });
+// Bodies are answered through text() because that is the one read path
+// briefApi.send() uses. The three derived reads Home renders get real-shaped
+// EMPTY payloads, so Home must say "nothing pending" rather than invent a
+// standing, a rank or a next step out of an empty ledger.
+global.fetch = async (input) => {
+  const url = String(typeof input === 'string' ? input : input?.url ?? input);
+  const ok = (body) => ({ ok: true, status: 200, text: async () => JSON.stringify(body) });
+  if (url.includes('/api/pulse')) {
+    return ok({
+      asOf: null,
+      sections: {
+        demand: { open: 0, bySeverity: { no_supplier: 0, awaiting_quote: 0, awaiting_accept: 0 }, collective: 0 },
+        closure: { windowDays: 30, closed: 0, topCategory: null },
+        fill: { windowDays: 30, closed: 0, avgHoursToFill: null, hoursSampleCount: 0, avgValue: null },
+        money: { windowDays: 30, settledOrders: 0, settledValue: null, settledCurrency: null, completedWorkOrders: 0, deliveredPickups: 0 },
+        listings: { active: 0, snapshot: [] },
+        events: { open: 0, newLast24h: { requests: 0, events: 0, listings: 0, orders: 0 } }
+      },
+      facts: [], empty: true, note: 'derived'
+    });
+  }
+  if (url.includes('/api/me/position')) {
+    return ok({ position: {
+      decay: { expiringQuotes: [], waitlist: [], override: null, overdueInstallments: 0 },
+      missedCapture: { count: 0, recent: [], value: null },
+      nextMove: null,
+      open: { total: 0, top: [] },
+      derivedAt: '2026-09-15T00:00:00Z', note: 'derived'
+    } });
+  }
+  if (url.includes('/api/me/commitments')) {
+    return ok({ commitments: { owedByMe: [], owedToMe: [], fulfilled: [], lapsed: [], owedByMeKes: 0, owedToMeKes: 0, derivedAt: '2026-09-15T00:00:00Z', note: 'derived' } });
+  }
+  if (url.includes('/api/me/reciprocity')) {
+    return ok({ reciprocity: { owedToMe: [], owedByMe: [], fulfilled: [], aging: [], windowDays: 14, derivedAt: '2026-09-15T00:00:00Z', note: 'derived' } });
+  }
+  if (url.includes('/api/auth/me')) {
+    return ok({ user: { id: 'usr_amina', handle: 'amina', displayName: 'Amina' } });
+  }
+  if (url.includes('/api/circles')) return ok({ circles: [] });
+  return ok({});
+};
 
 const { HomeSurface } = require('./src/features/home/HomeSurface.tsx');
 const { SpaceShell } = require('./src/features/spaces/SpaceShell.tsx');
@@ -76,10 +117,25 @@ async function runTests() {
   });
 
   const text1 = host1.textContent;
-  check('renders greeting with user name', text1.includes('Good morning, Amina'));
-  check('renders core question: What are you working on?', text1.includes('What are you working on?'));
-  check('shows the honest create-your-first-space empty state (no mock queue)', text1.includes("You don't have a space yet") && text1.includes('Create your first space'));
-  check('no fabricated Today queue', !text1.includes('Mary asked for a birthday cake') && !text1.includes('Action Queue'));
+  // Zone 0: the greeting uses the name the caller has (no invented "Jane").
+  check('renders greeting with user name', text1.includes('Hi Amina'));
+  // The three zones the reformation requires, in order.
+  check('zone 1: what the world is doing (signal line)', text1.includes("What's moving"));
+  check('zone 2: what I should do next (one decision)', text1.includes('Your next step'));
+  check('zone 3: what is out there (the case)', text1.includes('What’s out there'));
+  check('standing line reports a real read instead of a rank or sector',
+    text1.includes('Nothing pending on your ledger.') || text1.includes('Your standing'));
+  check('no invented standing: no position number, sector, tier or queue',
+    !/Position #\d/.test(text1) && !/Sector \d/i.test(text1) && !/tier/i.test(text1));
+  // Management is behind a tap, but the honest empty state is still reachable.
+  const manageBtn = Array.from(host1.querySelectorAll('button')).find((b) => (b.textContent || '').includes('Run your spaces'));
+  check('space management is collapsed behind one tap', Boolean(manageBtn));
+  if (manageBtn) await act(async () => { manageBtn.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
+  const text1b = host1.textContent;
+  check('shows the honest create-your-first-space empty state (no mock queue)', text1b.includes("You don’t have a space yet") && text1b.includes('Create your first space'));
+  check('no fabricated Today queue', !text1b.includes('Mary asked for a birthday cake') && !text1b.includes('Action Queue'));
+  // Commerce is no longer mounted on Home.
+  check('marketplace is off Home', !/Community Marketplace/i.test(text1b));
 
   await act(async () => { root1.unmount(); host1.remove(); });
 
@@ -398,7 +454,7 @@ async function runTests() {
   });
 
   const text12 = host12.textContent;
-  check('renders AppShell Home tab by default', text12.includes('What are you working on?'));
+  check('renders AppShell Home tab by default', text12.includes('What’s out there') || text12.includes('Hi '));
 
   await act(async () => { root12.unmount(); host12.remove(); });
 

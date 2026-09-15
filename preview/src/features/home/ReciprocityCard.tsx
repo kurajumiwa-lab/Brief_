@@ -17,11 +17,19 @@ const KIND_LABEL: Record<string, string> = {
   delivery_cover: 'delivered for your shop'
 };
 
-export function ReciprocityCard({ className = '' }: { className?: string }) {
-  const [r, setR] = useState<MyReciprocity | null>(null);
-  const [loaded, setLoaded] = useState(false);
+export function ReciprocityCard({
+  className = '',
+  reciprocity
+}: {
+  className?: string;
+  /** The parent's already-derived read — passed in so a screen reads once. */
+  reciprocity?: MyReciprocity | null;
+}) {
+  const [own, setR] = useState<MyReciprocity | null>(null);
+  const [loaded, setLoaded] = useState(reciprocity !== undefined);
 
   useEffect(() => {
+    if (reciprocity !== undefined) return;
     let live = true;
     briefApi.getMyReciprocity().then((res) => {
       if (!live) return;
@@ -29,7 +37,9 @@ export function ReciprocityCard({ className = '' }: { className?: string }) {
       setLoaded(true);
     });
     return () => { live = false; };
-  }, []);
+  }, [reciprocity]);
+
+  const r = reciprocity ?? own;
 
   if (!loaded || !r) return null;
   if (r.owedToMe.length === 0 && r.owedByMe.length === 0) return null;

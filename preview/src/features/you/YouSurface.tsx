@@ -6,6 +6,10 @@ import { MotionList } from "../../ui/motion/MotionList";
 import { MotionStatus } from "../../ui/motion/MotionStatus";
 import { EarnSurface } from "./EarnSurface";
 import { TableBankingSurface } from "./TableBankingSurface";
+import { Marketplace } from "../../components/Marketplace";
+import { PositionCard } from "../home/PositionCard";
+import { CommitmentsCard } from "../home/CommitmentsCard";
+import { ReciprocityCard } from "../home/ReciprocityCard";
 
 // ---------------------------------------------------------------------------
 // YOU — the member's own profile, follows and subscriptions (Phase 3).
@@ -33,7 +37,9 @@ const KIND_LABELS: Record<string, string> = {
   community: "Communities"
 };
 
-type Section = "profile" | "following" | "subscriptions" | "earn" | "tableBanking";
+type Section =
+  | "profile" | "standing" | "following" | "subscriptions"
+  | "earn" | "orders" | "selling" | "tableBanking";
 
 export function YouSurface({
   onOpenEntity,
@@ -176,9 +182,12 @@ export function YouSurface({
 
       <div className="mt-4 flex flex-wrap gap-2">
         {tab("profile", "Profile")}
+        {tab("standing", "Standing")}
         {tab("following", "Following")}
         {tab("subscriptions", "Subscriptions")}
         {tab("earn", "Earn")}
+        {tab("orders", "Orders")}
+        {tab("selling", "Selling")}
         {tab("tableBanking", "Table Banking")}
       </div>
 
@@ -336,6 +345,38 @@ export function YouSurface({
               ))
             )}
           </div>
+        </div>
+      )}
+
+      {/* ── STANDING — where a member defends their position. Every figure is
+             derived from their own rows at read time; there is no rank, no
+             tier, no score and nothing stored, so there is nothing to decay
+             into a lie. ── */}
+      {section === "standing" && (
+        <div className="mt-4 space-y-3">
+          <PositionCard />
+          <CommitmentsCard />
+          <ReciprocityCard />
+          <p className="text-[11px] leading-snug" style={{ color: "var(--color-text-muted)" }}>
+            Nothing here is a score. Each line is a count over rows you could read yourself — a quote you
+            sent, an order you owe, a favour that went unreturned — and a line is shown only while its row
+            still exists.
+          </p>
+        </div>
+      )}
+
+      {/* ── ORDERS / SELLING — the personal halves of commerce, moved off the
+             browse screen. Same Marketplace rails, same server-authoritative
+             money; only the address changed. ── */}
+      {section === "orders" && (
+        <div className="mt-4 rounded-2xl border p-4" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}>
+          <Marketplace initialSection="orders" />
+        </div>
+      )}
+
+      {section === "selling" && (
+        <div className="mt-4 rounded-2xl border p-4" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}>
+          <Marketplace initialSection="selling" />
         </div>
       )}
 
