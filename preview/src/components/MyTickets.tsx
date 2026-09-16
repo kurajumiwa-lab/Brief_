@@ -655,7 +655,10 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold bg-[#16A34A]/10 text-[#16A34A] border border-[#16A34A]/30">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] animate-pulse" />
+                      {/* A static fact gets a static dot: a pulse next to
+                          "VALID PASS" reads as live movement, and nothing here
+                          is moving — validity is checked on read. */}
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A]" />
                       <span>VALID PASS</span>
                     </span>
                   )}
