@@ -43,9 +43,11 @@ import { ReciprocityCard } from './ReciprocityCard';
 export interface HomeSurfaceProps {
   userName?: string;
   onOpenSpace: (spaceId: string) => void;
-  onExploreDiscover?: (subTab?: 'all' | 'events' | 'marketplace' | 'circles' | 'vault' | 'pulse') => void;
+  onExploreDiscover?: (subTab?: 'events' | 'marketplace' | 'errands') => void;
   onGetPaid?: () => void;
   onOpenSpaces?: () => void;
+  /** Pulse — the ledger's own numbers — now lives on the Activity tab. */
+  onOpenPulse?: () => void;
   className?: string;
 }
 
@@ -55,6 +57,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
   onExploreDiscover,
   onGetPaid,
   onOpenSpaces,
+  onOpenPulse,
   className = ''
 }) => {
   const [spaces, setSpaces] = useState<Space[]>([]);
@@ -171,7 +174,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
       </div>
 
       {/* ── ZONE 1 — WHAT THE WORLD IS DOING ── */}
-      <SignalBar onOpenPulse={() => onExploreDiscover?.('pulse')} />
+      <SignalBar onOpenPulse={() => (onOpenPulse ? onOpenPulse() : onExploreDiscover?.('events'))} />
 
       {/* ── ZONE 2 — WHAT YOU SHOULD DO NEXT ── */}
       <NextMoveCard position={position} denied={positionDenied} />
@@ -184,7 +187,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
           </h2>
           <button
             type="button"
-            onClick={() => { soundEngine.play('tap'); onExploreDiscover?.('all'); }}
+            onClick={() => { soundEngine.play('tap'); onExploreDiscover?.('events'); }}
             className="inline-flex items-center gap-1 text-[11px] font-bold text-[color:var(--color-primary)] hover:underline cursor-pointer"
           >
             Full browse

@@ -61,6 +61,17 @@ global.fetch = async (input) => {
   if (url.includes('/pickup-origin-fee')) return ok({ obligation: { agentId: 'me', pickupCount: 0, feePerPickupKes: 20, originFeeKes: 0, note: 'derived' } });
   if (url.includes('/pickup-fee/settlements')) return ok({ settlements: [] });
   if (url.includes('/api/circles')) return ok({ circles: [] });
+  if (url.includes('/api/errands/providers')) {
+    return ok({ integrated: [], usedHere: [], external: [], disclosure: 'derived' });
+  }
+  if (url.includes('/api/errands')) {
+    return ok({
+      open: [], mine: [],
+      eligibility: { eligible: false, basis: [], howToJoin: 'Carry rights follow a real record.', note: 'derived' },
+      carriersAround: 0,
+      stages: [{ key: 'posted', label: 'Posted' }, { key: 'accepted', label: 'A carrier took it' }, { key: 'picked_up', label: 'Collected' }, { key: 'delivered', label: 'Delivered' }, { key: 'settled', label: 'Fee agreed' }, { key: 'rated', label: 'Rated' }]
+    });
+  }
   if (url.includes('/api/pulse')) {
     return ok({
       asOf: null,
@@ -133,7 +144,8 @@ async function main() {
     const nav = c.querySelector('nav[aria-label="Discover sections"]');
     assert.ok(nav, 'the section navigation is present');
     const chips = Array.from(nav.querySelectorAll('button'));
-    assert.equal(chips.length, 6, 'six discover sections (Pulse is now one of them)');
+    assert.equal(chips.length, 3, 'Discover is exactly three rooms: Events, Marketplace, Errands');
+    assert.deepEqual(chips.map((b) => b.textContent.trim()), ['Events', 'Marketplace', 'Errands'], 'in that order');
     assert.equal(chips[0].getAttribute('aria-pressed'), 'true', 'the first (All) section is active by default');
     // No scoreboard "0 : 0" hero.
     const hero = Array.from(c.querySelectorAll('div')).find((d) => (d.getAttribute('class') || '').includes('text-3xl'));
@@ -159,40 +171,54 @@ async function main() {
   }
   pass('Host opens the event form; Post-a-listing opens the Selling flow');
 
-  // --- 4. The All tab is a decision screen, not a catalogue --------------
+  // --- 4. The events room is inventory alone ------------------------------
   {
     const c = mount(React.createElement(CityFeedView, { onOpenSpace: () => {} }));
     await flush();
     const t = text(c);
-    // The orphaned, clipped "COMMUNITY MARKETPLACE & SECOND-HAND DROPS" block
-    // and its Browse/My orders/Selling row no longer sit on the browse screen.
-    assert.ok(!/Community Marketplace/i.test(t), 'the marketplace block is off the All tab');
-    assert.ok(!/My orders/.test(t), 'the marketplace tab row is off the All tab');
-    // Commerce is reachable as its own segment instead.
-    const nav = c.querySelector('nav[aria-label="Discover sections"]');
-    assert.ok(Array.from(nav.querySelectorAll('button')).some((b) => text(b) === 'Market'), 'Market is its own segment');
-    // The three zones exist above the fold: world, decision, inventory.
-    assert.ok(t.includes("What's moving"), 'a signal line is present');
-    assert.ok(t.includes('Events around you'), 'the case (gallery) heads the browse zone');
-    // Deep filters are not a four-row panel anymore — nothing is on screen but
-    // a sheet trigger.
+    assert.ok(t.includes('Events around you'), 'the case opens Discover');
+    // What was taken OUT, and why.
+    assert.ok(!/Community Marketplace/i.test(t), 'the marketplace block is not stacked under the gallery');
+    assert.ok(!/My orders/.test(t), 'its tab row is not parked over the bottom nav');
+    assert.ok(!/Community Circles & Mutual Aid/.test(t), 'circles are not browsed like posters');
+    assert.ok(!/Vault & Special Drops/.test(t), 'vaults are not either');
+    assert.ok(!/WAIRO/.test(t), 'the rider card belongs to errands, not the gallery');
+    assert.ok(!/What's moving/.test(t), 'the signal line is Home’s job, not a browse header');
     assert.ok(!/shown\b/.test(t), 'no result counter anywhere on the browse screen');
+    assert.ok(!/KES \d/.test(t), 'no fabricated money figure appears anywhere');
   }
-  pass('All tab: no orphaned marketplace block, no result counter, three zones present');
+  pass('Discover’s events room is inventory alone: no commerce, circles, vaults or WAIRO');
 
-  // --- 5. Pulse is its own segment (the world, kept apart from you) --------
+  // --- 5. Errands is its own room, and WAIRO lives inside it ---------------
   {
     const c = mount(React.createElement(CityFeedView, { onOpenSpace: () => {} }));
     await flush();
     const nav = c.querySelector('nav[aria-label="Discover sections"]');
-    const pulse = Array.from(nav.querySelectorAll('button')).find((b) => text(b) === 'Pulse');
-    act(() => { pulse.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
+    const errandsBtn = Array.from(nav.querySelectorAll('button')).find((b) => text(b) === 'Errands');
+    act(() => { errandsBtn.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
     await flush();
-    assert.ok(/Pulse/.test(text(c)), 'Pulse renders as a surface');
-    // Its empty state is honest: nothing is pre-filled to look busy.
-    assert.ok(/Nothing has moved yet|Pulse is unavailable/.test(text(c)), 'Pulse reports real emptiness or a real error');
+    const t = text(c);
+    assert.ok(t.includes('The lobby'), 'the errands room renders');
+    assert.ok(t.includes('Errands people need carried'), 'named for what it is');
+    assert.ok(document.querySelector('input[aria-label="Pickup destination town"]'), 'the WAIRO contact card lives here only');
+    assert.ok(/Nothing is posted right now|could not be read/.test(t), 'an empty board says so');
+    assert.ok(!/\d+ riders? (nearby|around)/i.test(t), 'no invented crowd size');
+    assert.equal(btn('Post an errand') === undefined, false, 'the lobby carries its own post action');
   }
-  pass('Pulse is a Discover segment with an honest empty state');
+  pass('Errands is its own room, and WAIRO lives inside it');
+
+  // --- 6. Circles and vaults are reachable where they belong --------------
+  {
+    const { CoordinationSurface } = require('./src/features/spaces/CoordinationSurface.tsx');
+    const c = mount(React.createElement(CoordinationSurface, { onOpenSpace: () => {} }));
+    await flush();
+    const t = text(c);
+    assert.ok(t.includes('Who you are organised with'), 'the coordination screen names itself');
+    assert.ok(t.includes('Circles & mutual aid') || t.includes('Circles'), 'circles live here');
+    assert.ok(t.includes('Vaults'), 'vaults live here');
+    assert.ok(t.includes('No space yet') || t.includes('Your spaces'), 'and your spaces, with their state');
+  }
+  pass('Circles and vaults land on the coordination screen');
 
   console.log('\nPASS ' + count);
   process.exit(0);

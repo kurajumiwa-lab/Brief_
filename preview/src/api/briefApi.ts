@@ -4682,6 +4682,106 @@ export function getMyPickupFeeSettlements(): Promise<ApiResult<PickupFeeSettleme
 }
 
 // ---------------------------------------------------------------------------
+// ERRANDS — the lobby board. Posting is open to any member; carrying needs a
+// real record (agent role, partner role, an active shop claim, or a pickup
+// already assigned to you). The fee is the POSTER'S stated amount: Brief moves
+// no money for an errand, and "settled" means both parties confirmed it off
+// platform. Ratings are one per person per completed delivery, listed as said —
+// no average, no score, no rank is computed from them.
+// ---------------------------------------------------------------------------
+export interface ErrandStage {
+  key: string;
+  label: string;
+  at: string | null;
+  done: boolean;
+}
+export interface ErrandRating {
+  id: string;
+  by: string;
+  about: 'carrier' | 'poster';
+  stars: number;
+  note: string | null;
+  createdAt: string;
+}
+export interface Errand {
+  id: string;
+  what: string;
+  pickup: string;
+  dropoff: string;
+  sizeOrWeight: string | null;
+  whenNeeded: string | null;
+  offeredFeeKes: number | null;
+  currency: string;
+  note: string;
+  status: 'open' | 'accepted' | 'picked_up' | 'delivered' | 'cancelled';
+  posterId: string;
+  posterName: string;
+  acceptedBy: string | null;
+  carrierName: string | null;
+  carrierBasis: string[];
+  settlement: { amountKes: number | null; currency: string; confirmedBy: string[]; confirmedNames: string[]; at: string | null; movedBy: null } | null;
+  cancelReason: string | null;
+  isMine: boolean;
+  iAmTheCarrier: boolean;
+  iAmThePoster: boolean;
+  canRate: boolean;
+  canConfirmFee: boolean;
+  createdAt: string;
+  updatedAt: string;
+  history: Array<{ action: string; at: string; by: string }>;
+  loop: ErrandStage[];
+  ratings: ErrandRating[];
+  ratingsNote: string;
+}
+export interface ErrandEligibility {
+  eligible: boolean;
+  basis: string[];
+  howToJoin: string;
+  note: string;
+  carriersAround?: number;
+}
+export interface ErrandBoard {
+  open: Errand[];
+  mine: Errand[];
+  eligibility: ErrandEligibility;
+  carriersAround: number;
+  stages: Array<{ key: string; label: string }>;
+}
+export function getErrandBoard(): Promise<ApiResult<ErrandBoard>> {
+  return request<ErrandBoard>('/api/errands', undefined, (r) =>
+    r && Array.isArray(r.open) && Array.isArray(r.mine) && r.eligibility ? (r as ErrandBoard) : undefined);
+}
+export function postErrand(body: {
+  what: string; pickup: string; dropoff: string;
+  whenNeeded?: string | null; offeredFeeKes?: number | null; note?: string; sizeOrWeight?: string | null;
+}): Promise<ApiResult<{ errand: Errand; notified: { notified: number; skippedByPreference: number; channels: Record<string, string>; note: string } }>> {
+  return request('/api/errands', { method: 'POST', body: JSON.stringify(body) }, (r) =>
+    r?.errand ? { errand: r.errand, notified: r.notified } : undefined);
+}
+export function errandAction(
+  id: string,
+  action: 'accept' | 'picked' | 'delivered' | 'cancel' | 'settle',
+  body: Record<string, unknown> = {}
+): Promise<ApiResult<{ errand: Errand; settled?: boolean; note?: string; eligibility?: ErrandEligibility }>> {
+  return request(`/api/errands/${encodeURIComponent(id)}/${action}`, { method: 'POST', body: JSON.stringify(body) }, (r) =>
+    r?.errand ? r : undefined);
+}
+export function rateErrand(id: string, stars: number, note?: string): Promise<ApiResult<{ rating: ErrandRating }>> {
+  return request(`/api/errands/${encodeURIComponent(id)}/rate`, { method: 'POST', body: JSON.stringify({ stars, note }) }, (r) =>
+    r?.rating ? { rating: r.rating } : undefined);
+}
+export interface ErrandProviders {
+  integrated: Array<{ key: string; name: string; what: string; canDispatchThroughBrief: boolean; agentsOnRecord?: number; deliveredPickups?: number; note: string }>;
+  usedHere: Array<{ key: string; name: string; what: string; canDispatchThroughBrief: boolean; dispatchesRecorded: number; waybillsCaptured: number; note: string }>;
+  external: Array<{ key: string; name: string; canDispatchThroughBrief: boolean; reason: string }>;
+  disclosure: string;
+}
+export function getErrandProviders(): Promise<ApiResult<ErrandProviders>> {
+  return request<ErrandProviders>('/api/errands/providers', undefined, (r) =>
+    r && Array.isArray(r.integrated) && Array.isArray(r.external) ? (r as ErrandProviders) : undefined);
+}
+
+// ---------------------------------------------------------------------------
 // PULSE — "what is moving", derived from real rows on read. Every fact is a
 // count/sum over rows that exist; the payload carries no estimate, no trend
 // percentage and no "live" claim (it is a snapshot stamped with the newest row).

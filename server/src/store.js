@@ -123,6 +123,18 @@ const EMPTY = {
   // original onboarding agent claimed, that agent earns a flat per-pickup
   // origin fee (derived, never stored as a balance). See src/domain/pickups.js.
   pickups: [],
+  // Errands — a posted task someone can carry (a parcel, a queue, a document,
+  // a small buy-and-drop). Only registered agents/partners may ACCEPT one;
+  // anyone may post. The fee a poster states is a stated amount, NOT money
+  // Brief moves: settlement is recorded as the two parties agreeing it happened
+  // off-platform, because no payment provider is wired for errands.
+  // See src/domain/errands.js.
+  errands: [],
+  // One rating per person per delivered errand — the only reputation-shaped row
+  // in Brief, and it is deliberately narrow: it records what a named party said
+  // about ONE completed delivery. Nothing aggregates it into a score, a tier or
+  // a ranking, and no endpoint computes one.
+  errandRatings: [],
   // Finance-confirmed payouts of the derived pickup origin fee. The fee is
   // derived on read (delivered pickups x PICKUP_ORIGIN_FEE_KES); it only
   // becomes money through one of these ledger-backed settlements, mirroring

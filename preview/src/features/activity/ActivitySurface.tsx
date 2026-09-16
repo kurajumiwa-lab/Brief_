@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import * as api from "../../api/briefApi";
 import { MotionList } from "../../ui/motion/MotionList";
 import { MotionNumber } from "../../ui/motion/MotionNumber";
+import { PulseSurface } from "../city/PulseSurface";
+import { ErrandLoops } from "./ErrandLoops";
 
 // ---------------------------------------------------------------------------
 // ACTIVITY — the user's operational inbox (§11 / Phase 10 §15).
@@ -114,6 +116,10 @@ export function ActivitySurface({ onOpenRequests }: { onOpenRequests: () => void
       <p className="text-sm mt-1" style={{ color: "var(--color-text-muted)" }}>
         What happened to you, and what needs your action.
       </p>
+
+      {/* Your errand loops, stage by stage — the one place the whole cycle is
+          visible at once, because Activity is where "what is mid-flight" lives. */}
+      {!loading && !signedOut && <ErrandLoops />}
 
       {loading ? (
         <p className="text-sm mt-6" style={{ color: "var(--color-text-muted)" }}>
@@ -251,6 +257,12 @@ export function ActivitySurface({ onOpenRequests }: { onOpenRequests: () => void
           )}
         </MotionList>
       ) : null}
+      {/* PULSE — what the ledger as a whole is doing. It was a Discover room
+          and did not belong in a gallery: this screen is where "what happened"
+          lives, for you and for everyone. */}
+      <div className="mt-8 pt-6 border-t" style={{ borderColor: "var(--color-border)" }}>
+        <PulseSurface />
+      </div>
     </section>
   );
 }

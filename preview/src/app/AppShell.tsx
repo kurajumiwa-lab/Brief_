@@ -7,6 +7,7 @@ import { SpaceShell } from '../features/spaces/SpaceShell';
 import { SpaceMoney } from '../features/spaces/SpaceMoney';
 import { CatalogView } from '../features/spaces/CatalogView';
 import { CityFeedView } from '../features/city/CityFeedView';
+import { CoordinationSurface } from '../features/spaces/CoordinationSurface';
 import { CreateFlowModal } from '../features/spaces/CreateFlowModal';
 import { PublicOfferModal } from '../features/offers/PublicOfferModal';
 import { SupplyWorkspace } from '../features/supply/SupplyWorkspace';
@@ -45,7 +46,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   // Which Discover segment a jump from Home should land on ('pulse' is the
   // world's numbers; the rest are the browse surfaces).
   const [discoverSubTab, setDiscoverSubTab] =
-    useState<'all' | 'events' | 'marketplace' | 'circles' | 'vault' | 'pulse'>('all');
+    useState<'events' | 'marketplace' | 'errands'>('events');
   const [firstRunChecked, setFirstRunChecked] = useState<boolean>(false);
 
   // Modals
@@ -262,7 +263,22 @@ export const AppShell: React.FC<AppShellProps> = ({
       {/* Main Content Viewport */}
       <main className="flex-1 min-w-0 px-4 sm:px-6 py-6 pb-28 md:pb-6 overflow-y-auto min-h-screen">
         {activeTab === 'requests' ? <RequestsWorkspace route={requestRoute} /> : activeTab === 'supply' ? <SupplyWorkspace route={supplyRoute || 'mine'} /> : null}
-        {['pipeline', 'spaces', 'ledger', 'catalog'].includes(activeTab) && !activeSpace && (
+        {/* SPACES with no space open is the COORDINATION screen: your spaces,
+            the circles you are in, the vaults you can reach. Circles and vaults
+            came here from Discover because they have doors, not shelves. */}
+        {['pipeline', 'spaces'].includes(activeTab) && !activeSpace && (
+          <CoordinationSurface
+            onOpenSpace={(id) => {
+              setActiveSpace(null);
+              void (async () => {
+                const res = await briefApi.getSpace(id);
+                if (res.ok && res.data?.space) setActiveSpace(res.data.space);
+                else loadSpaces();
+              })();
+            }}
+          />
+        )}
+        {['ledger', 'catalog'].includes(activeTab) && !activeSpace && (
           <section className="max-w-3xl mx-auto py-12">
             <h2 className="text-xl font-bold">{loading ? 'Loading your workspace…' : 'A space for what you offer'}</h2>
             {spaceError ? <><p role="alert" className="my-4">{spaceError}</p><button onClick={loadSpaces}>Retry</button><button className="ml-4 underline" onClick={() => requestPath()}>Sign in through My Requests</button></> : !loading && <><p className="my-4">No business space yet. Create a Request to describe what you need, or create a space for what you sell.</p><button className="px-4 py-3 rounded-xl bg-[color:var(--color-primary)] text-[color:var(--accent-ink)]" onClick={() => { setCreateFlowInitialStep(1); setCreateFlowOpen(true); }}>Create a space</button></>}
@@ -277,9 +293,10 @@ export const AppShell: React.FC<AppShellProps> = ({
               loadSpaces();
             }}
             onExploreDiscover={(sub) => {
-              if (sub) setDiscoverSubTab(sub);
+              if (sub === 'events' || sub === 'marketplace' || sub === 'errands') setDiscoverSubTab(sub);
               setActiveTab('city');
             }}
+            onOpenPulse={() => setActiveTab('activity')}
             onOpenSpaces={() => setActiveTab('pipeline')}
             onGetPaid={() => setActiveTab('ledger')}
           />
@@ -298,7 +315,7 @@ export const AppShell: React.FC<AppShellProps> = ({
             {(activeTab === 'pipeline' || activeTab === 'spaces') && activeSpace && (
               <SpaceShell
                 spaceId={activeSpace.id}
-                onBack={() => { setActiveSpace(null); setActiveTab('home'); }}
+                onBack={() => { setActiveSpace(null); setActiveTab('pipeline'); }}
                 onShare={() => { /* SpaceShell copies and reports the truth itself */ }}
               />
             )}

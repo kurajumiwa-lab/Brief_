@@ -174,6 +174,82 @@ html, body {
   animation: briefSpringIntro 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
+
+/* =============================================================================
+   THE LOBBY — the errands surface theme.
+   Deliberately a different room from the museum case: a public noticeboard in a
+   waiting area, not a gallery. Warmer paper, thicker edges, human-scale type,
+   big thumb targets, and no horizontal snapping — an errand is read standing
+   up, not swiped. Still the light theme: no dark panels anywhere in Brief.
+   ============================================================================= */
+.brief-lobby {
+  --lobby-paper: #FFFDF7;
+  --lobby-edge: #E7E0D2;
+  --lobby-ink: #241F1A;
+  background:
+    radial-gradient(120% 60% at 50% -10%, rgba(79, 70, 229, 0.07), transparent 60%),
+    var(--lobby-paper);
+  border: 1px solid var(--lobby-edge);
+  border-radius: 28px;
+}
+.brief-lobby-card {
+  background: #fff;
+  border: 2px solid var(--lobby-edge);
+  border-left: 6px solid var(--color-primary);
+  border-radius: 22px;
+  box-shadow: 0 1px 0 rgba(36, 31, 26, 0.04);
+}
+.brief-lobby-card[data-urgency="now"] { border-left-color: var(--color-warning); }
+.brief-lobby-card[data-urgency="quiet"] { border-left-color: var(--color-border); }
+.brief-lobby-btn {
+  min-height: 44px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 13px;
+  padding: 0 18px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 120ms ease, background 160ms ease;
+}
+.brief-lobby-btn:active { transform: scale(0.98); }
+.brief-lobby-btn--primary { background: var(--color-primary); color: var(--accent-ink); }
+.brief-lobby-btn--quiet { background: #fff; color: var(--lobby-ink); border-color: var(--lobby-edge); }
+.brief-lobby-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 2px solid var(--lobby-edge);
+  background: #fff;
+  font-size: 14px;
+  color: var(--lobby-ink);
+}
+.brief-lobby-stage {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--lobby-edge);
+  background: #fff;
+}
+.brief-lobby-stage[data-done="true"] { background: var(--color-primary-subtle); border-color: var(--color-primary); }
+/* Star control: buttons, not a slider — a rating is a deliberate act. */
+.brief-lobby-star {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 2px solid var(--lobby-edge);
+  background: #fff;
+  font-weight: 900;
+  font-size: 15px;
+  cursor: pointer;
+}
+.brief-lobby-star[aria-pressed="true"] { background: var(--color-primary); color: var(--accent-ink); border-color: transparent; }
+@media (prefers-reduced-motion: reduce) {
+  .brief-lobby-btn { transition: none; }
+}
+
 /* =============================================================================
    ACCESSIBILITY — prefers-reduced-motion kills every loop (§4)
    ============================================================================= */
