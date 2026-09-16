@@ -253,6 +253,30 @@ async function main() {
   }
   pass('A public space shares a link that actually opens something');
 
+  // --- 7. a settled figure never dresses itself as today's net profit ------
+  {
+    global.fetch = async (input, init) => {
+      const url = String(input?.url ?? input ?? '');
+      const method = init?.method ?? 'GET';
+      const okp = (b) => ({ ok: true, status: 200, text: async () => JSON.stringify(b) });
+      if (url.includes('/audience')) return okp({ slug: 'jj', followers: 0, followerList: [], iAmFollowing: false, broadcasts: [], pastBroadcasts: 0, templates: [], insights: null, canManage: true, followable: false });
+      if (url.includes('/api/spaces/spc_1') && method === 'GET') {
+        return okp({ space: spaceWith({ metrics: { revenueKes: 84200, customerCount: 23, activeOrdersCount: 7, totalOrdersCount: 9, offersCount: 2 } }) });
+      }
+      return { ok: false, status: 404, text: async () => JSON.stringify({}) };
+    };
+    const { container } = mount(React.createElement(SpaceShell, { spaceId: 'spc_1', onBack: () => {}, onShare: () => {}, initialTab: 'pipeline' }));
+    await flush();
+    const t = text(container);
+    assert.ok(t.includes('Pipeline') || t.includes('Inbox'), 'the pipeline surface rendered at all');
+    assert.ok(!/today's net take-home/i.test(t), 'no all-time figure is labelled as today');
+    assert.ok(!/\bnet take-home\b/i.test(t), 'and nothing is called net while expenses are untouched');
+    assert.ok(/Settled through Brief|Settled · all time/i.test(t), 'the honest label is used instead');
+    assert.ok(t.includes('84,200'), 'with the real figure');
+    assert.ok(/Expenses are not subtracted here/i.test(t), 'and it says what it excludes');
+  }
+  pass('A settled total is labelled as a settled total, not as profit');
+
   console.log('\nPASS ' + count);
   process.exit(0);
 }

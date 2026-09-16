@@ -229,7 +229,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
 
         <div className="flex items-center space-x-2 shrink-0">
           <div className="px-3 py-1.5 rounded-2xl bg-[color:var(--color-primary-subtle)] border border-[color:var(--color-primary)] text-[color:var(--color-text)] text-right">
-            <span className="text-[9px] uppercase tracking-wider font-extrabold block text-[color:var(--color-text-muted)]">Take-home</span>
+            <span className="text-[9px] uppercase tracking-wider font-extrabold block text-[color:var(--color-text-muted)]">Settled · all time</span>
             <span className="text-xs font-black block text-[color:var(--color-text)]">KES {revenueKes.toLocaleString()}</span>
           </div>
           <div className="px-2.5 py-1.5 rounded-2xl bg-[color:var(--color-text)] text-[color:var(--color-primary)] text-xs font-black">
@@ -633,16 +633,27 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
         )}
       </div>
 
-      {/* ── 4. SINGLE NET-PROFIT PILL AT BOTTOM OF SCROLL ── */}
-      <div className="p-4 rounded-3xl bg-[color:var(--color-text)] text-white flex items-center justify-between shadow-xs border border-white/10">
+      {/* ── 4. THE RESULT, LABELLED AS A RESULT ──
+          It used to read "Today's Net Take-Home" over an all-time, pre-expense
+          figure: wrong window and wrong word. A vendor repeats a number like
+          that to a supplier, so it says what the rows actually are, on a light
+          card like the rest of Brief. */}
+      <div className="p-4 rounded-3xl bg-white flex items-center justify-between border" style={{ borderColor: '#E5E7EB' }}>
         <div className="flex items-center space-x-2">
-          <TrendingUp className="w-4 h-4 text-[color:var(--color-primary)]" />
+          <TrendingUp className="w-4 h-4" style={{ color: 'var(--color-success)' }} />
           <div>
-            <span className="text-[10px] text-white/70 uppercase font-bold block">Today's Net Take-Home</span>
-            <span className="text-sm font-black text-[color:var(--color-primary)]">KES {revenueKes.toLocaleString()}</span>
+            <span className="text-[10px] uppercase font-bold block" style={{ color: '#6B7280' }}>
+              Settled through Brief · all time
+            </span>
+            <span className="text-sm font-black font-mono" style={{ color: '#0A0A0A' }}>
+              KES {revenueKes.toLocaleString()}
+            </span>
+            <span className="text-[9px] block" style={{ color: '#9CA3AF' }}>
+              Expenses are not subtracted here — they are in the Money tab.
+            </span>
           </div>
         </div>
-        <span className="text-[10px] text-white/60 bg-white/10 px-2.5 py-1 rounded-full font-bold">
+        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ background: '#F4F4F7', color: '#6B7280' }}>
           {space.name}
         </span>
       </div>
