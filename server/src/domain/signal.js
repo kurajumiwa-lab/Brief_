@@ -36,6 +36,9 @@ export const SIGNAL_TYPES = [
   'campaign_cancelled',
   'campaign_completed',
   'campaign_viewed',
+  // A space's public page was opened. Its own type, so a space's view count
+  // never mixes with object/campaign analytics that compute other things.
+  'space_viewed',
   'campaign_shared',
   'campaign_banner_created',
   // Ticket resale market (Tikiti T1): a seat is a real-world thing whose

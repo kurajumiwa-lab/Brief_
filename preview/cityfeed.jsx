@@ -144,8 +144,8 @@ async function main() {
     const nav = c.querySelector('nav[aria-label="Discover sections"]');
     assert.ok(nav, 'the section navigation is present');
     const chips = Array.from(nav.querySelectorAll('button'));
-    assert.equal(chips.length, 3, 'Discover is exactly three rooms: Events, Marketplace, Errands');
-    assert.deepEqual(chips.map((b) => b.textContent.trim()), ['Events', 'Marketplace', 'Errands'], 'in that order');
+    assert.equal(chips.length, 4, 'Discover is four rooms: on, for sale, communities, errands');
+    assert.deepEqual(chips.map((b) => b.textContent.trim()), ['Events', 'Marketplace', 'Communities', 'Errands'], 'in that order');
     assert.equal(chips[0].getAttribute('aria-pressed'), 'true', 'the first (All) section is active by default');
     // No scoreboard "0 : 0" hero.
     const hero = Array.from(c.querySelectorAll('div')).find((d) => (d.getAttribute('class') || '').includes('text-3xl'));
@@ -207,18 +207,29 @@ async function main() {
   }
   pass('Errands is its own room, and WAIRO lives inside it');
 
-  // --- 6. Circles and vaults are reachable where they belong --------------
+  // --- 6. where each noun actually lives ---------------------------------
   {
-    const { CoordinationSurface } = require('./src/features/spaces/CoordinationSurface.tsx');
-    const c = mount(React.createElement(CoordinationSurface, { onOpenSpace: () => {} }));
+    // Belonging is exploration: Communities is a Discover room.
+    const c = mount(React.createElement(CityFeedView, { onOpenSpace: () => {} }));
     await flush();
-    const t = text(c);
-    assert.ok(t.includes('Who you are organised with'), 'the coordination screen names itself');
-    assert.ok(t.includes('Circles & mutual aid') || t.includes('Circles'), 'circles live here');
-    assert.ok(t.includes('Vaults'), 'vaults live here');
-    assert.ok(t.includes('No space yet') || t.includes('Your spaces'), 'and your spaces, with their state');
+    const nav = c.querySelector('nav[aria-label="Discover sections"]');
+    const communities = Array.from(nav.querySelectorAll('button')).find((b) => text(b) === 'Communities');
+    act(() => { communities.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
+    await flush();
+    assert.ok(/Communities/.test(text(c)), 'Communities renders as its own room');
+    assert.ok(text(c).includes('Groups with a door'), 'and says what a community is here');
+
+    // Filing is personal: the Archive lives in You, not in a gallery or a shop.
+    const { Vault } = require('./src/components/vault/Vault.tsx');
+    assert.ok(Vault, 'the vault component exists for the You screen');
+    const { SpacesLanding } = require('./src/features/spaces/SpacesLanding.tsx');
+    const c2 = mount(React.createElement(SpacesLanding, { onOpenSpace: () => {}, onOpenPublicSpace: () => {} }));
+    await flush();
+    const t2 = text(c2);
+    assert.ok(t2.includes('Your shopfronts'), 'Spaces is shops only');
+    assert.ok(!/Vaults/.test(t2) && !/Circles/.test(t2), 'with no cabinet and no neighbourhood inside it');
   }
-  pass('Circles and vaults land on the coordination screen');
+  pass('Belonging went to Discover, filing went to You, Spaces kept only shops');
 
   console.log('\nPASS ' + count);
   process.exit(0);

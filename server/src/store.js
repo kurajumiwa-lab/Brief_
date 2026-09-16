@@ -123,6 +123,14 @@ const EMPTY = {
   // original onboarding agent claimed, that agent earns a flat per-pickup
   // origin fee (derived, never stored as a balance). See src/domain/pickups.js.
   pickups: [],
+  // Space audience — who follows a space, what it has broadcast to them, and
+  // the message templates its owner reuses. All three are ordinary rows: a
+  // follower is a person who chose to follow, a broadcast is a message with a
+  // real expiry, a template is text the vendor wrote. Nothing here is a
+  // vanity metric and nothing is pre-filled to make a space look followed.
+  spaceFollowers: [],
+  spaceBroadcasts: [],
+  spaceTemplates: [],
   // Errands — a posted task someone can carry (a parcel, a queue, a document,
   // a small buy-and-drop). Only registered agents/partners may ACCEPT one;
   // anyone may post. The fee a poster states is a stated amount, NOT money

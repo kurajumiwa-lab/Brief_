@@ -14,6 +14,7 @@ import { MuseumGallery } from './MuseumGallery';
 import { EventsHub } from '../../components/EventsHub';
 import { Marketplace } from '../../components/Marketplace';
 import { ErrandsLobby } from './ErrandsLobby';
+import { Circles } from '../../components/Circles';
 import { soundEngine } from '../../utils/SoundEngine';
 
 // ---------------------------------------------------------------------------
@@ -35,7 +36,7 @@ import { soundEngine } from '../../utils/SoundEngine';
 // ---------------------------------------------------------------------------
 
 export interface CityFeedViewProps {
-  initialSubTab?: 'events' | 'marketplace' | 'errands';
+  initialSubTab?: 'events' | 'marketplace' | 'communities' | 'errands';
   onOpenSpace?: (spaceId: string) => void;
   className?: string;
 }
@@ -45,7 +46,7 @@ export interface CityFeedViewProps {
 // they live on the coordination screen (Spaces). WAIRO dispatch belongs to
 // errands, because a rider you push and an errand you post are the same walk.
 // The market's numbers moved to Activity, where "what happened" lives.
-type CitySubTab = 'events' | 'marketplace' | 'errands';
+type CitySubTab = 'events' | 'marketplace' | 'communities' | 'errands';
 
 export const CityFeedView: React.FC<CityFeedViewProps> = ({
   initialSubTab = 'events',
@@ -114,9 +115,14 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
     showToast(`"${created.data.title}" is now live in the case.`);
   };
 
+  // Four rooms. "Circles" is called Communities here because "circle" is
+  // jargon a stranger has to be taught, and belonging needs no lecture. It
+  // lives in Discover rather than in Spaces: exploring a neighbourhood is not
+  // administering a business.
   const subTabs: Array<{ id: CitySubTab; label: string }> = [
     { id: 'events', label: 'Events' },
     { id: 'marketplace', label: 'Marketplace' },
+    { id: 'communities', label: 'Communities' },
     { id: 'errands', label: 'Errands' }
   ];
 
@@ -133,7 +139,7 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
       <DiscoveryHead
         eyebrow="Discover"
         title="Everything happening around you"
-        subtitle="Three rooms: what is on, what is for sale, and what needs carrying."
+        subtitle="What is on, what is for sale, who to belong with, and what needs carrying."
         segments={subTabs}
         activeSegmentId={activeSubTab}
         onSegmentChange={(id) => { soundEngine.play('tap'); setActiveSubTab(id as CitySubTab); }}
@@ -163,6 +169,19 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
         {activeSubTab === 'marketplace' && (
           <div className="p-4 rounded-3xl bg-white border border-black/5 shadow-2xs animate-fadeIn">
             <Marketplace key={marketplaceKey} initialSection={marketplaceSection} />
+          </div>
+        )}
+
+        {activeSubTab === 'communities' && (
+          <div className="p-4 rounded-3xl bg-white border border-black/5 shadow-2xs animate-fadeIn space-y-2">
+            <h3 className="text-[11px] font-black uppercase tracking-wider" style={{ color: '#0A0A0A' }}>
+              Communities
+            </h3>
+            <p className="text-[11px] -mt-1" style={{ color: '#6B7280' }}>
+              Groups with a door: members, shared work, a pot whose progress moves only when money actually
+              settles. Nothing here is counted until somebody joins one.
+            </p>
+            <Circles />
           </div>
         )}
 

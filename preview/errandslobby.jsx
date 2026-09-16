@@ -116,7 +116,8 @@ async function main() {
     await flush();
     const nav = container.querySelector('nav[aria-label="Discover sections"]');
     const chips = Array.from(nav.querySelectorAll('button')).map((b) => text(b));
-    assert.deepEqual(chips, ['Events', 'Marketplace', 'Errands'], `three rooms only (got ${JSON.stringify(chips)})`);
+    assert.deepEqual(chips, ['Events', 'Marketplace', 'Communities', 'Errands'],
+      `four rooms: on, sale, belonging, carrying (got ${JSON.stringify(chips)})`);
     const t = text(container);
     assert.ok(t.includes('Events around you'), 'the case opens Discover');
     // A private arrangement is no longer scrolled past like a poster.

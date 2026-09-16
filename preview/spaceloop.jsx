@@ -75,7 +75,7 @@ global.fetch = async (input) => {
 
 const { HomeSurface } = require('./src/features/home/HomeSurface.tsx');
 const { SpaceShell } = require('./src/features/spaces/SpaceShell.tsx');
-const { SpaceHeader } = require('./src/features/spaces/SpaceHeader.tsx');
+const { SpaceStorefrontHeader } = require('./src/features/spaces/SpaceStorefrontHeader.tsx');
 const { SpaceOffers } = require('./src/features/spaces/SpaceOffers.tsx');
 const { SpaceActivity } = require('./src/features/spaces/SpaceActivity.tsx');
 const { SpacePeople } = require('./src/features/spaces/SpacePeople.tsx');
@@ -259,20 +259,30 @@ async function runTests() {
   document.body.appendChild(host3);
   const root3 = createRoot(host3);
   await act(async () => {
-    root3.render(React.createElement(SpaceHeader, {
+    root3.render(React.createElement(SpaceStorefrontHeader, {
       space: mockSpace,
       onAddOffer: () => {},
-      onCreateOrder: () => {}
+      onOpenInbox: () => {},
+      onEdit: () => {},
+      onShare: () => {}
     }));
   });
 
   const text3 = host3.textContent;
   check('renders space title correctly', text3.includes("Amina's Cakes"));
   check('renders space goal', text3.includes('Get my first 20 customers'));
-  check('renders concise 3 metrics: Revenue 84,200, 23 Customers, 7 Active Orders',
-    text3.includes('84,200') && text3.includes('23') && text3.includes('7'));
-  check('shows fast action buttons: Add Offer & Create Order',
-    text3.includes('Add Offer') && text3.includes('Create Order'));
+  // THE FLIP: revenue is no longer the headline of a shopfront. The counter
+  // (offers, inquiries, views) comes first and the money is the result, shown
+  // in the money tab and the sticky bar, not as the identity of the business.
+  check('does not lead with a revenue figure', !text3.includes('84,200'));
+  check('drops the type-emoji costume for a real cover',
+    !/🍰|🌱|🎨|🌸|🎉|🚀/.test(text3));
+  check('shows the stats strip with dashes where nothing is measured',
+    /views/i.test(text3) && text3.includes('inquiries') && text3.includes('—'));
+  check('no invented conversion percentage without rows', !/%\b/.test(text3.replace('—', '')));
+  check('offers the two real actions on a shopfront', text3.includes('Add offer') && /Inbox/.test(text3));
+  check('names its own absences instead of implying a scoreboard',
+    text3.includes('no sector averages') || text3.includes('No place or hours stated yet'));
 
   await act(async () => { root3.unmount(); host3.remove(); });
 

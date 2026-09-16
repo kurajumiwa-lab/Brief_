@@ -64,6 +64,8 @@ export interface CatalogViewProps {
   onOfferStatus?: (offerId: string, next: LifecycleMove) => Promise<string | null | undefined> | void;
   /** A real content edit. Resolves to an error string, or null on success. */
   onSaveOffer?: (offerId: string, patch: ListingUpdate) => Promise<string | null | undefined> | void;
+  /** The ids the VENDOR pinned to the front of this catalog. */
+  featured?: string[];
   className?: string;
 }
 
@@ -74,6 +76,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
   onShareOffer,
   onOfferStatus,
   onSaveOffer,
+  featured,
   className = ''
 }) => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -179,6 +182,12 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
             const isDraft = currentStat === 'draft';
             const isPaused = currentStat === 'paused';
             const isArchived = currentStat === 'archived';
+            const pinned = (featured ?? []).includes(offer.id);
+            const mediaUrl = (offer.media ?? [])[0]
+              ? (/^https?:|^\/api\//.test((offer.media as string[])[0])
+                  ? (offer.media as string[])[0]
+                  : `/api/media/file/${(offer.media as string[])[0]}`)
+              : ((offer as { image?: string | null }).image ?? null);
             // An action with nowhere to go is a lie with an icon, so lifecycle
             // moves are offered only when the host wired the real transition.
             const moves = onOfferStatus ? (NEXT_MOVES[currentStat] ?? []) : [];
@@ -188,11 +197,38 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
             return (
               <div
                 key={offer.id}
-                className={`p-4 rounded-3xl bg-white border border-black/5 shadow-2xs flex flex-col justify-between space-y-3 transition-all ${
+                className={`rounded-3xl overflow-hidden bg-white border shadow-2xs flex flex-col justify-between transition-all ${
                   isPaused ? 'opacity-60 bg-[color:var(--color-surface)]' : ''
-                }`}
+                } ${pinned ? 'ring-2' : ''}`}
+                style={{
+                  borderColor: '#E5E7EB',
+                  ...(pinned ? { boxShadow: '0 0 0 2px var(--color-primary)' } : {})
+                }}
               >
-                <div className="space-y-2">
+                {/* The photo, when there is one. A real photo of the actual
+                    goods, or no photo at all: never a stock image standing in
+                    for a shop nobody has photographed. */}
+                <div className="relative h-28 w-full" style={{ background: '#F4F4F7' }}>
+                  {mediaUrl ? (
+                    <img src={mediaUrl} alt={offer.title} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
+                  ) : (
+                    <div className="absolute inset-0 grid place-items-center">
+                      <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: '#C4C7CE' }}>
+                        no photo yet
+                      </span>
+                    </div>
+                  )}
+                  {pinned && (
+                    <span
+                      className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider"
+                      style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
+                    >
+                      Pinned
+                    </span>
+                  )}
+                </div>
+
+                <div className="p-4 space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center space-x-2 min-w-0">
                       <span className="text-base shrink-0">🎂</span>

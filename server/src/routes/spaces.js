@@ -5,6 +5,7 @@
 import { callerId } from '../identity.js';
 import * as spaces from '../domain/space.js';
 import * as spaceProfileDomain from '../domain/spaceProfile.js';
+import * as audience from '../domain/spaceAudience.js';
 import * as outbound from '../outbound.js';
 import { requireAuthMw, recordError } from './helpers.js';
 
@@ -13,6 +14,102 @@ export function register(app) {
   // collaboration. No session required; the projection is the safe public one. ---
   app.get('/api/public/spaces', (req, res) => {
     res.json({ spaces: spaces.listPublicSpaces(Number(req.query?.limit) || 50) });
+  });
+
+  // --- ONE public space, by slug. This is the page a shared link opens ---
+  // The view is recorded here and nowhere else, so "N people opened this"
+  // counts real page openings — and only for a public, active space.
+  app.get('/api/public/spaces/:slug', (req, res) => {
+    const view = spaces.findPublicSpace(req.params.slug);
+    if (!view) return res.status(404).json({ error: 'space not found' });
+    // The record is the count. No identity is attached to it: who opened the
+    // page is not stored, and "how many distinct people" stays null unless a
+    // reference was supplied by a session.
+    audience.recordView(view.id, { viewerId: callerId(req) });
+    // The follow state is that person's own row, so it may be returned to them.
+    // Without this a page would offer "Follow" to someone already following.
+    const me = callerId(req);
+    res.json({ space: me ? { ...view, following: audience.isFollowing(view.id, me) } : view });
+  });
+
+  // --- The owner's audience panel: followers, broadcasts, insights, templates
+  app.get('/api/spaces/:id/audience', requireAuthMw, (req, res) => {
+    try {
+      const space = spaces.getRawSpace(req.params.id);
+      if (!space) return res.status(404).json({ error: 'space not found' });
+      const me = callerId(req);
+      if (space.ownerId !== me) {
+        // A non-owner gets only what a stranger may see, never the numbers.
+        return res.json({ ...audience.publicExtras(space), canManage: false, insights: null });
+      }
+      res.json(audience.audienceView(space, { viewerId: me }));
+    } catch (err) {
+      res.status(400).json({ error: String(err.message ?? err) });
+    }
+  });
+
+  app.post('/api/spaces/:id/follow', requireAuthMw, (req, res) => {
+    const result = audience.followSpace(req.params.id, callerId(req));
+    if (result.error) return res.status(result.status ?? 400).json({ error: result.error });
+    res.json(result);
+  });
+
+  app.delete('/api/spaces/:id/follow', requireAuthMw, (req, res) => {
+    const result = audience.unfollowSpace(req.params.id, callerId(req));
+    if (result.error) return res.status(result.status ?? 400).json({ error: result.error });
+    res.json(result);
+  });
+
+  app.post('/api/spaces/:id/broadcasts', requireAuthMw, (req, res) => {
+    const result = audience.postBroadcast(req.params.id, {
+      actorId: callerId(req), text: (req.body ?? {}).text, kind: (req.body ?? {}).kind ?? 'update'
+    });
+    if (result.error) return res.status(result.status ?? 400).json({ error: result.error });
+    res.status(201).json(result);
+  });
+
+  app.delete('/api/spaces/:id/broadcasts/:broadcastId', requireAuthMw, (req, res) => {
+    const result = audience.deleteBroadcast(req.params.broadcastId, { actorId: callerId(req) });
+    if (result.error) return res.status(result.status ?? 400).json({ error: result.error });
+    res.json(result);
+  });
+
+  app.get('/api/spaces/:id/templates', requireAuthMw, (req, res) => {
+    res.json({ templates: audience.templatesFor(req.params.id) });
+  });
+
+  app.post('/api/spaces/:id/templates', requireAuthMw, (req, res) => {
+    const result = audience.createTemplate(req.params.id, {
+      actorId: callerId(req), label: (req.body ?? {}).label, body: (req.body ?? {}).body
+    });
+    if (result.error) return res.status(result.status ?? 400).json({ error: result.error });
+    res.status(201).json({ ...result, templates: audience.templatesFor(req.params.id) });
+  });
+
+  app.patch('/api/spaces/:id/templates/:templateId', requireAuthMw, (req, res) => {
+    const result = audience.updateTemplate(req.params.templateId, {
+      actorId: callerId(req), label: (req.body ?? {}).label, body: (req.body ?? {}).body
+    });
+    if (result.error) return res.status(result.status ?? 400).json({ error: result.error });
+    res.json({ ...result, templates: audience.templatesFor(req.params.id) });
+  });
+
+  app.delete('/api/spaces/:id/templates/:templateId', requireAuthMw, (req, res) => {
+    const result = audience.deleteTemplate(req.params.templateId, { actorId: callerId(req) });
+    if (result.error) return res.status(result.status ?? 400).json({ error: result.error });
+    res.json({ ...result, templates: audience.templatesFor(req.params.id) });
+  });
+
+  app.patch('/api/spaces/:id/featured', requireAuthMw, (req, res) => {
+    try {
+      const updated = spaces.setFeatured(req.params.id, {
+        callerId: callerId(req), listingIds: (req.body ?? {}).listingIds ?? []
+      });
+      if (!updated) return res.status(404).json({ error: 'space not found' });
+      res.json({ space: updated });
+    } catch (err) {
+      res.status(400).json({ error: String(err.message ?? err) });
+    }
   });
 
   // --- List caller's spaces ---
@@ -28,6 +125,16 @@ export function register(app) {
       recordError('spaces_list_failed', err);
       res.status(500).json({ error: 'failed to list spaces' });
     }
+  });
+
+  // The spaces this member follows. Public projections only.
+  app.get('/api/spaces/followed/mine', requireAuthMw, (req, res) => {
+    const me = callerId(req);
+    const rows = audience.followedSpaces(me);
+    res.json({
+      spaces: rows.map((r) => ({ ...spaces.publicSpaceView(r.space), followedAt: r.followedAt })),
+      note: 'A card appears because you followed it. Unfollow it and it disappears here.'
+    });
   });
 
   // --- Create a new space ---

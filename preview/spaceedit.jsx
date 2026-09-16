@@ -175,8 +175,11 @@ async function main() {
     assert.ok(t.includes('ACTIVE'), 'the badge follows the row, not the click');
     assert.ok(!t.includes('PAUSED'), 'no optimistic lie about a paused offer');
 
-    // Editing content after publishing.
-    click(btn('Edit'));
+    // Editing content after publishing. Exact match: the header has its own
+    // "Edit space" control, and the two must not be confused.
+    const editOffer = Array.from(container.querySelectorAll('button')).find((b) => text(b) === 'Edit');
+    assert.ok(editOffer, 'the offer card carries its own Edit control');
+    click(editOffer);
     await flush();
     assert.ok(q('input[aria-label="Offer price"]'), 'the offer editor opens');
     setValue(q('input[aria-label="Offer price"]'), '3900');
@@ -217,10 +220,38 @@ async function main() {
     click(byAria('Copy the link that reaches this space'));
     await flush();
     const t = text(container);
-    assert.ok(t.includes('there is nothing public to share yet'), 'a private space is not given a fake share link');
+    assert.ok(t.includes('no public page to link to'), 'a private space is not given a fake share link');
+    assert.ok(t.includes('Set it to Public first'), 'and is told the one thing that changes it');
     assert.ok(!t.includes('copied!'), 'and no toast claims a copy that did not happen');
   }
   pass('Share is honest: no copied-link claim for a space that is not public');
+
+  // --- 6. a public space links to a page that exists ----------------------
+  {
+    const publicSpace = {
+      id: 'spc_7', ownerId: 'u1', vendorId: 'v7', name: 'Jj Cakes', type: 'business', goal: 'First 20 customers',
+      targetValueKes: 0, image: null, slug: 'jj-cakes', visibility: 'public', status: 'active', capabilities: [],
+      offers: [], recentActivities: [], recentConversations: [], featured: [], followers: 2, broadcastsLive: 0,
+      metrics: { revenueKes: 0, customerCount: 0, activeOrdersCount: 0, totalOrdersCount: 0, offersCount: 0 },
+      createdAt: '', updatedAt: ''
+    };
+    global.fetch = async (input) => {
+      const url = String(input?.url ?? input ?? '');
+      const ok = (b) => ({ ok: true, status: 200, text: async () => JSON.stringify(b) });
+      if (url.includes('/audience')) return ok({ slug: 'jj-cakes', followers: 2, followerList: [], iAmFollowing: false, broadcasts: [], pastBroadcasts: 0, templates: [], insights: null, canManage: true, followable: false });
+      if (url.includes('/api/spaces/spc_7')) return ok({ space: publicSpace });
+      return { ok: false, status: 404, text: async () => JSON.stringify({}) };
+    };
+    const { container } = mount(React.createElement(SpaceShell, { spaceId: 'spc_7', onBack: () => {}, onShare: () => {} }));
+    await flush();
+    const share = Array.from(container.querySelectorAll('button')).find((b) => (b.getAttribute('aria-label') ?? '').includes('Copy the link'));
+    act(() => share.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })));
+    await flush();
+    const t = text(container);
+    assert.ok(t.includes('#space/jj-cakes'), 'the copied link is the page that resolves, by slug');
+    assert.ok(!t.includes('copied!'), 'no triumphant toast about a clipboard the test browser denies');
+  }
+  pass('A public space shares a link that actually opens something');
 
   console.log('\nPASS ' + count);
   process.exit(0);

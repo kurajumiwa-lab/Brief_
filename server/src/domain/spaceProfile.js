@@ -135,7 +135,10 @@ function validate(kind, raw, label) {
     if (!days.length && !summary) throw new Error(`${label}: pick the days you operate, or describe them`);
     const from = raw?.from && TIME.test(raw.from) ? raw.from : null;
     const to = raw?.to && TIME.test(raw.to) ? raw.to : null;
-    return { days, from, to, summary: summary || days.join('–') };
+    // The summary is only ever what the human typed. Turning "tue, sat" into
+    // "tue–sat" would claim every day in between, so it is rendered by
+    // formatAnswer instead of being written into the row.
+    return { days, from, to, summary };
   }
   if (kind === 'list') {
     // An EMPTY list is a real answer ("no constraints"), distinct from never

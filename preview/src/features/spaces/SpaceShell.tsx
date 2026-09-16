@@ -5,6 +5,10 @@ import { ArrowLeft, Archive, RotateCcw, Globe, Lock, Link2, Pencil } from 'lucid
 import type { ListingUpdate } from '../../api/types';
 import { PipelineView } from './PipelineView';
 import { SpaceOperatingPanel } from './SpaceOperatingPanel';
+import { SpaceStorefrontHeader } from './SpaceStorefrontHeader';
+import { BroadcastRail } from './SpaceBroadcastRail';
+import { SpaceTools } from './SpaceTools';
+import type { SpaceAudienceView } from '../../api/briefApi';
 import { SpaceMoney } from './SpaceMoney';
 import { CatalogView } from './CatalogView';
 import { CreateFlowModal } from './CreateFlowModal';
@@ -13,19 +17,19 @@ import { needsAttention } from '../home/spaceSignals';
 
 export interface SpaceShellProps {
   spaceId: string;
-  initialTab?: 'pipeline' | 'ledger' | 'catalog' | 'operating';
+  initialTab?: 'catalog' | 'pipeline' | 'ledger' | 'tools' | 'operating';
   onBack?: () => void;
   onShare?: (space: Space) => void;
   className?: string;
 }
 
 export type SpaceSurfaceTab =
-  | 'pipeline' | 'ledger' | 'catalog' | 'operating'
+  | 'catalog' | 'pipeline' | 'ledger' | 'tools' | 'operating'
   | 'overview' | 'offers' | 'people' | 'cargo' | 'activity' | 'money';
 
 export const SpaceShell: React.FC<SpaceShellProps> = ({
   spaceId,
-  initialTab = 'pipeline',
+  initialTab = 'catalog',
   onBack,
   onShare,
   className = ''
@@ -45,6 +49,9 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
   const [identity, setIdentity] = useState<{ name: string; goal: string; target: string; image: string | null }>({
     name: '', goal: '', target: '', image: null
   });
+  // The audience read: followers, live updates, insights, templates. Fetched
+  // once per load so the header strip and the Tools panel never disagree.
+  const [audience, setAudience] = useState<SpaceAudienceView | null>(null);
   const [identityBusy, setIdentityBusy] = useState<boolean>(false);
   const [identityError, setIdentityError] = useState<string | null>(null);
 
@@ -59,6 +66,8 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
       const res = await briefApi.getSpace(spaceId);
       if (res.ok && res.data?.space) {
         setSpace(res.data.space);
+        const aud = await briefApi.getSpaceAudience(spaceId);
+        if (aud.ok) setAudience(aud.data);
       }
     } catch {
       // Offline fallback
@@ -151,16 +160,36 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
   const shareSpace = async () => {
     if (!space) return;
     soundEngine.play('tap');
-    if (space.visibility !== 'public') {
-      showToast(`This space is ${space.visibility}, so there is nothing public to share yet. Set it to Public first.`);
+    if (space.visibility !== 'public' || space.status !== 'active') {
+      showToast(
+        space.status !== 'active'
+          ? 'This space is archived, so its page is closed. Restore it first.'
+          : `This space is ${space.visibility}, so it has no public page to link to. Set it to Public first.`
+      );
       return;
     }
-    const url = `${window.location.origin}${window.location.pathname}#discover`;
+    const url = `${window.location.origin}${window.location.pathname}#space/${encodeURIComponent(space.slug ?? space.id)}`;
     const copied = await copyText(url);
     showToast(copied
-      ? 'Copied the Discover link — people find public spaces in its Spaces list. A space has no page of its own.'
+      ? 'Link copied. Opening it writes the view that counts toward your strip.'
       : `Copy it yourself: ${url}`);
     onShare?.(space);
+  };
+
+  const broadcast = async (text: string, kind: 'update' | 'stock' | 'hours' | 'drop') => {
+    if (!space) return 'No space is open.';
+    const res = await briefApi.postSpaceBroadcast(space.id, { text, kind });
+    if (!res.ok) return res.error ?? 'The update was not sent.';
+    showToast(res.data.delivery.note);
+    loadSpace();
+    return null;
+  };
+
+  const removeBroadcast = async (id: string) => {
+    if (!space) return;
+    const res = await briefApi.deleteSpaceBroadcast(space.id, id);
+    showToast(res.ok ? 'Taken down. Anyone who already read it keeps what they read.' : res.error ?? 'Could not take it down.');
+    loadSpace();
   };
 
   const handlePublishOffer = async (offerId: string) => {
@@ -237,11 +266,15 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
   // its editorial queue, and how the pipeline is reading it. Its badge count is
   // the number of REAL open items the server derived, not a notification tally.
   const openItems = space?.editorialOpen ?? 0;
-  const tabs: Array<{ id: 'pipeline' | 'ledger' | 'catalog' | 'operating'; label: string }> = [
-    { id: 'operating', label: openItems > 0 ? `Space · ${openItems}` : 'Space' },
-    { id: 'pipeline', label: 'Inbox' },
+  // ORDER MATTERS: a shopfront is a catalog first, the customer relationship
+  // second, the ledger third. The money tab is the RESULT of the first two, so
+  // it does not get to be the landing screen anymore.
+  const tabs: Array<{ id: 'catalog' | 'pipeline' | 'ledger' | 'tools' | 'operating'; label: string }> = [
+    { id: 'catalog', label: `Catalog (${space.offers?.length || 0})` },
+    { id: 'pipeline', label: space.recentConversations?.length ? `Inbox · ${space.recentConversations.length}` : 'Inbox' },
     { id: 'ledger', label: 'Money' },
-    { id: 'catalog', label: `Offers (${space.offers?.length || 0})` }
+    { id: 'tools', label: 'Tools' },
+    { id: 'operating', label: openItems > 0 ? `Space file · ${openItems}` : 'Space file' }
   ];
 
   // Map legacy tabs to the consolidated surfaces
@@ -253,7 +286,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
       : activeTab === 'offers'
       ? 'catalog'
       : activeTab
-  ) as 'pipeline' | 'ledger' | 'catalog' | 'operating';
+  ) as 'catalog' | 'pipeline' | 'ledger' | 'tools' | 'operating';
 
   const vis = space?.visibility ?? 'private';
 
@@ -310,14 +343,25 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
           </div>
         </div>
 
-        <div>
-          <h1 className="text-2xl font-black text-[color:var(--color-text)] tracking-tight leading-tight">
-            {space?.name ?? 'Space'}
-          </h1>
-          <p className="text-xs text-[color:var(--color-text-muted)]">
-            {space?.goal || (space?.type ?? 'business').replace('_', ' ')}
-          </p>
-        </div>
+        <SpaceStorefrontHeader
+          space={space!}
+          audience={audience}
+          busy={busy}
+          onAddOffer={() => { soundEngine.play('heavyTap'); setCreateFlowOpen(true); }}
+          onOpenInbox={() => setActiveTab('pipeline')}
+          onEdit={openIdentity}
+          onShare={() => void shareSpace()}
+        />
+
+        <BroadcastRail
+          broadcasts={(audience?.broadcasts ?? []) as any}
+          pastCount={audience?.pastBroadcasts ?? 0}
+          followers={audience?.followers ?? space.followers ?? 0}
+          canManage={audience?.canManage ?? true}
+          busy={busy}
+          onPost={broadcast}
+          onDelete={(id) => void removeBroadcast(id)}
+        />
 
         {/* NEXT STEP — one obvious action, derived from real rows. Not a menu. */}
         {space && (
@@ -500,11 +544,25 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
             onShareOffer={(o) => showToast(`Link for "${o.title}" copied — buyers sign in to open it.`)}
             onOfferStatus={(id, next) => offerStatus(id, next)}
             onSaveOffer={(id, patch) => saveOffer(id, patch)}
+            featured={space.featured ?? []}
           />
         </div>
       )}
 
-      {/* ── SURFACE 4: THE SPACE FILE — schema, editorial queue, pipeline ── */}
+      {/* ── SURFACE 4: TOOLS — hours, pinned offers, templates ── */}
+      {currentTab === 'tools' && (
+        <div className="animate-fadeIn p-4 rounded-3xl bg-white border border-black/5 shadow-2xs">
+          <SpaceTools
+            space={space}
+            offers={space.offers ?? []}
+            templates={(audience?.templates ?? []) as any}
+            featured={space.featured ?? []}
+            onChanged={loadSpace}
+          />
+        </div>
+      )}
+
+      {/* ── SURFACE 5: THE SPACE FILE — schema, editorial queue, pipeline ── */}
       {currentTab === 'operating' && (
         <div className="animate-fadeIn">
           <SpaceOperatingPanel
@@ -515,6 +573,35 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
           />
         </div>
       )}
+
+      {/* ── STICKY RESULT BAR — the outcome of the first two tabs, kept in view.
+              It says "settled through Brief" rather than "net take-home",
+              because that is exactly what the rows say: money whose ledger row
+              reached settled. Everything else is not this number's business. */}
+      <div
+        className="sticky bottom-20 md:bottom-4 z-30 rounded-2xl border px-4 py-3 flex items-center gap-3 shadow-lg"
+        style={{ background: '#fff', borderColor: '#E5E7EB' }}
+      >
+        <div className="min-w-0 flex-1">
+          <p className="text-[9px] font-black uppercase tracking-wider" style={{ color: '#6B7280' }}>
+            Settled through Brief
+          </p>
+          <p className="font-mono text-[17px] font-extrabold leading-none" style={{ color: 'var(--color-success)' }}>
+            KES {Number(space.metrics?.revenueKes ?? 0).toLocaleString('en-KE')}
+          </p>
+        </div>
+        <span className="text-[11px] font-mono shrink-0" style={{ color: '#6B7280' }}>
+          {space.metrics?.activeOrdersCount ?? 0} active · {space.metrics?.offersCount ?? 0} live
+        </span>
+        <button
+          type="button"
+          onClick={() => setActiveTab('ledger')}
+          className="shrink-0 text-[11px] font-black cursor-pointer"
+          style={{ color: 'var(--color-primary)' }}
+        >
+          Money
+        </button>
+      </div>
 
       {/* Unified Create Flow Modal */}
       {createFlowOpen && (

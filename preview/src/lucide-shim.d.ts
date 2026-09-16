@@ -106,6 +106,8 @@ declare module 'lucide-react' {
   export const Compass: LucideIcon;
   export const Copy: LucideIcon;
   export const Zap: LucideIcon;
+  export const Pin: LucideIcon;
+  export const PinOff: LucideIcon;
   export const Play: LucideIcon;
   export const Ticket: LucideIcon;
   export const AlertTriangle: LucideIcon;

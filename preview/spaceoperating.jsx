@@ -227,8 +227,8 @@ async function main() {
     const { container } = mount(React.createElement(SpaceShell, { spaceId: 'spc_9', onBack: () => {}, onShare: () => {} }));
     await flush();
     const t = text(container);
-    assert.ok(t.includes('Space · 3'), 'the tab badge counts the real open items');
-    click(btn('Space · 3'));
+    assert.ok(t.includes('Space file · 3'), 'the tab badge counts the real open items');
+    click(btn('Space file · 3'));
     await flush();
     assert.ok(text(container).includes('Editorial queue'), 'and it opens the space file');
   }

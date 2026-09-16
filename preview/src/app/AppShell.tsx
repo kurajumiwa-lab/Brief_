@@ -7,7 +7,8 @@ import { SpaceShell } from '../features/spaces/SpaceShell';
 import { SpaceMoney } from '../features/spaces/SpaceMoney';
 import { CatalogView } from '../features/spaces/CatalogView';
 import { CityFeedView } from '../features/city/CityFeedView';
-import { CoordinationSurface } from '../features/spaces/CoordinationSurface';
+import { SpacesLanding } from '../features/spaces/SpacesLanding';
+import { PublicSpacePage } from '../features/spaces/PublicSpacePage';
 import { CreateFlowModal } from '../features/spaces/CreateFlowModal';
 import { PublicOfferModal } from '../features/offers/PublicOfferModal';
 import { SupplyWorkspace } from '../features/supply/SupplyWorkspace';
@@ -37,6 +38,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   const [supplyRoute, setSupplyRoute] = useState(() => window.location.hash.replace(/^#\/?supply\/?/, ''));
   const [requestRoute, setRequestRoute] = useState('');
   const [offerLinkId, setOfferLinkId] = useState('');
+  const [spaceLink, setSpaceLink] = useState('');
   const [spaceError, setSpaceError] = useState('');
   const [activeSpace, setActiveSpace] = useState<Space | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -114,6 +116,8 @@ export const AppShell: React.FC<AppShellProps> = ({
       } else if (hash === 'requests' || hash.startsWith('requests/')) {
         setActiveTab('requests');
         try { setRequestRoute(decodeURIComponent(hash.slice(9))); } catch { setRequestRoute('invalid'); }
+      } else if (hash.startsWith('space/')) {
+        try { setSpaceLink(decodeURIComponent(hash.slice(6))); } catch { setSpaceLink(''); }
       } else if (hash.startsWith('offer/')) {
         // Sellers copy this link from their catalog. It resolves to the real
         // public offer view — for a signed-in buyer, because ordering needs a
@@ -263,20 +267,32 @@ export const AppShell: React.FC<AppShellProps> = ({
       {/* Main Content Viewport */}
       <main className="flex-1 min-w-0 px-4 sm:px-6 py-6 pb-28 md:pb-6 overflow-y-auto min-h-screen">
         {activeTab === 'requests' ? <RequestsWorkspace route={requestRoute} /> : activeTab === 'supply' ? <SupplyWorkspace route={supplyRoute || 'mine'} /> : null}
-        {/* SPACES with no space open is the COORDINATION screen: your spaces,
-            the circles you are in, the vaults you can reach. Circles and vaults
-            came here from Discover because they have doors, not shelves. */}
+        {/* SPACES with no space open is the STREET: the shopfronts you operate
+            and the ones you follow. Circles and vaults are not here — belonging
+            and filing are different nouns from operating a business. */}
         {['pipeline', 'spaces'].includes(activeTab) && !activeSpace && (
-          <CoordinationSurface
+          <SpacesLanding
             onOpenSpace={(id) => {
-              setActiveSpace(null);
               void (async () => {
                 const res = await briefApi.getSpace(id);
                 if (res.ok && res.data?.space) setActiveSpace(res.data.space);
                 else loadSpaces();
               })();
             }}
+            onOpenPublicSpace={(slug) => { window.location.hash = `space/${encodeURIComponent(slug)}`; }}
           />
+        )}
+
+        {/* A shared space link resolves here, and only here does a view row get
+            written — so the vendor's view count means page openings. */}
+        {spaceLink && (
+          <div className="fixed inset-0 z-40 bg-[color:var(--color-bg)] overflow-y-auto p-4 pb-24">
+            <PublicSpacePage
+              slug={spaceLink}
+              onBack={() => { window.location.hash = ''; setSpaceLink(''); }}
+              onOpenOffer={(id) => { window.location.hash = `offer/${encodeURIComponent(id)}`; }}
+            />
+          </div>
         )}
         {['ledger', 'catalog'].includes(activeTab) && !activeSpace && (
           <section className="max-w-3xl mx-auto py-12">

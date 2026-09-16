@@ -50,6 +50,7 @@ export const NOTIFICATION_TYPES = [
   'collection',     // a saved item's status changed
   'correction',     // important information on a saved/followed object corrected
   'source_update',  // a followed publisher/source produced new information
+  'broadcast',      // a space told its followers something (24h update)
   'errand',         // a posted errand an eligible carrier can pick up, or a
                     // stage change on one they are party to
   // --- legacy kinds (kept for the existing notification rail) ---------------
@@ -76,6 +77,7 @@ export const TYPE_LABELS = {
   correction: 'Corrected',
   source_update: 'News',
   errand: 'Errands',
+  broadcast: 'Updates',
   confirmed: 'Confirmed',
   saved_changed: 'Saved',
   event_soon: 'Event',
@@ -95,6 +97,7 @@ export const TYPE_TO_CATEGORY = {
   correction: 'saved',
   source_update: 'news',
   errand: 'alerts',
+  broadcast: 'alerts',
   confirmed: 'saved',
   challenge: 'events',
   saved_changed: 'saved',

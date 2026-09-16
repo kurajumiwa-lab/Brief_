@@ -1742,6 +1742,23 @@ export interface Space {
   maintenance?: SpaceMaintenance | null;
   /** DERIVED: how many real items the editorial queue currently holds. */
   editorialOpen?: number;
+  /** The stable URL name of this space. Written once, never renamed. */
+  slug?: string | null;
+  /** Pinned by the VENDOR, at most 3, validated server-side. Not a ranking. */
+  featured?: string[];
+  /** Server-rendered operating sentences (one formatter, no drift). */
+  profileLabels?: {
+    where?: string | null;
+    when?: string | null;
+    capacity?: string | null;
+    coverage?: string | null;
+    constraints?: string | null;
+  };
+  /** COUNTED rows of people who followed this space. */
+  followers?: number;
+  broadcastsLive?: number;
+  followable?: boolean;
+  iAmFollowing?: boolean;
   /** DERIVED, owner-only: how the network is reading this space. */
   pipeline?: SpacePipeline | null;
   createdAt: string;
@@ -1854,6 +1871,47 @@ export interface SpaceUpdate {
 }
 
 /** The PUBLIC projection of a space — the safe directory card, no private economics. */
+export interface SpaceBroadcast {
+  id: string;
+  kind: 'update' | 'stock' | 'hours' | 'drop';
+  text: string;
+  createdAt: string;
+  expiresAt: string;
+  live?: boolean;
+}
+export interface SpaceTemplate {
+  id: string;
+  label: string;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+}
+export interface SpaceInsights {
+  windowDays: number;
+  since: string;
+  views: { count: number; distinctViewers: number | null; ownOpensExcluded: number };
+  follows: { newInWindow: number; total: number };
+  inquiries: { newInWindow: number; awaitingYourReply: number };
+  orders: { newInWindow: number; total: number };
+  takeHome: { value: number; currency: string | null };
+  conversion: { viewsToOrdersPct: number | null; inquiriesToOrdersPct: number | null; note: string };
+  broadcasts: { liveNow: number; sentInWindow: number; notificationsCreated: number };
+  benchmark: null;
+  unavailable: string[];
+  note: string;
+}
+export interface SpaceAudience {
+  slug: string;
+  followers: number;
+  followerList: Array<{ userId: string; displayName: string; since: string }>;
+  iAmFollowing: boolean;
+  broadcasts: SpaceBroadcast[];
+  pastBroadcasts: number;
+  templates: SpaceTemplate[];
+  insights: SpaceInsights | null;
+  canManage: boolean;
+  followable: boolean;
+}
 export interface PublicSpace {
   id: string;
   name: string;
@@ -1861,9 +1919,17 @@ export interface PublicSpace {
   goal: string;
   image: string | null;
   activeOfferCount: number;
-  sampleOffers: Array<{ title: string; price: number; currency: string }>;
+  sampleOffers: Array<{ title: string; price: number; currency: string; id?: string; featured?: boolean }>;
   /** The declared operating facts + how old they are. No economics, no rank. */
   operating?: SpaceOperating;
+  /** URL name, follower count, live updates, and the two operating lines. */
+  slug?: string | null;
+  followers?: number;
+  /** Only present for a signed-in caller: their own follow row. */
+  following?: boolean;
+  broadcasts?: SpaceBroadcast[];
+  where?: string | null;
+  when?: string | null;
   visibility: 'public';
   createdAt: string;
 }

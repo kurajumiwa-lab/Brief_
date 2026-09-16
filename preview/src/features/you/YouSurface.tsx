@@ -9,6 +9,7 @@ import { EarnSurface } from "./EarnSurface";
 import { TableBankingSurface } from "./TableBankingSurface";
 import { Marketplace } from "../../components/Marketplace";
 import { PositionHero } from "./PositionHero";
+import { Vault } from "../../components/vault/Vault";
 import { PositionCard } from "../home/PositionCard";
 import { CommitmentsCard } from "../home/CommitmentsCard";
 import { ReciprocityCard } from "../home/ReciprocityCard";
@@ -41,7 +42,7 @@ const KIND_LABELS: Record<string, string> = {
 
 type Section =
   | "profile" | "standing" | "following" | "subscriptions"
-  | "earn" | "orders" | "selling" | "tableBanking";
+  | "earn" | "orders" | "selling" | "archive" | "tableBanking";
 
 export function YouSurface({
   onOpenEntity,
@@ -220,6 +221,7 @@ export function YouSurface({
         {tab("earn", "Earn")}
         {tab("orders", "Orders")}
         {tab("selling", "Selling")}
+        {tab("archive", "Archive")}
         {tab("tableBanking", "Table Banking")}
       </div>
 
@@ -397,6 +399,19 @@ export function YouSurface({
              derived from their own rows at read time; there is no rank, no
              tier, no score and nothing stored, so there is nothing to decay
              into a lie. ── */}
+      {/* ARCHIVE — the filing cabinet at home. Records and receipts you keep
+          for yourself, which is why it sits in You and not in a public gallery
+          or a business workspace. */}
+      {section === "archive" && (
+        <div className="mt-4 space-y-3">
+          <p className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>
+            Restricted records and drops you hold or have been granted. An archive is read slowly and kept — it is
+            not something to browse between posters.
+          </p>
+          <Vault />
+        </div>
+      )}
+
       {section === "standing" && (
         <div className="mt-4 space-y-3">
           <PositionCard position={position} />

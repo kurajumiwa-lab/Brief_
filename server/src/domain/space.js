@@ -20,6 +20,7 @@ import * as vendors from './vendor.js';
 import * as listings from './listing.js';
 import * as orders from './order.js';
 import * as profile from './spaceProfile.js';
+import * as audience from './spaceAudience.js';
 
 export const SPACE_TYPES = [
   'business',
@@ -99,6 +100,10 @@ export function createSpace({
   };
 
   store.insert('spaces', space);
+  // The URL name a sticker or a WhatsApp card would carry. Derived from the
+  // name, made unique here, and stable forever: renaming the space later must
+  // not break a link that is already printed somewhere.
+  const slug = audience.ensureSlug(space);
 
   // Record initial activity
   recordSpaceActivity({
@@ -127,8 +132,17 @@ export function createSpace({
     initialOfferId = created.id;
   }
 
-  const hydrated = hydrateSpace(space);
+  const hydrated = { ...hydrateSpace(store.find('spaces', (x) => x.id === spaceId)), slug };
   return initialOfferId ? { ...hydrated, initialOfferId } : hydrated;
+}
+
+/**
+ * The raw row, for a route that must decide authority before hydrating
+ * (hydration computes owner-only figures, and it would be wrong to compute them
+ * for a stranger and then forget to hide them).
+ */
+export function getRawSpace(spaceId) {
+  return store.find('spaces', (s) => s.id === spaceId) ?? null;
 }
 
 /**
@@ -217,7 +231,22 @@ export function spaceProfileSchema() {
 export function publicSpaceView(space) {
   const activeOffers = store.filter('listings', (l) =>
     (l.spaceId === space.id || l.vendorId === space.vendorId) && l.status === 'active');
+  // The pinned offers lead the sample, because the vendor chose them. They are
+  // not "recommended", not ranked, and no algorithm had a hand in the order.
+  const featuredIds = space.featured ?? [];
+  const ordered = [
+    ...featuredIds.map((id) => activeOffers.find((o) => o.id === id)).filter(Boolean),
+    ...activeOffers.filter((o) => !featuredIds.includes(o.id))
+  ];
+  const extras = audience.publicExtras(space);
   return {
+    slug: extras.slug,
+    // A follower count is a count of rows people wrote. It is shown, never
+    // inflated, and no engagement rate is derived from it.
+    followers: extras.followers,
+    broadcasts: extras.broadcasts.map((b) => ({ id: b.id, kind: b.kind, text: b.text, createdAt: b.createdAt, expiresAt: b.expiresAt })),
+    where: profile.formatAnswer('operatingFrom', space.profile?.fields?.operatingFrom?.value) ?? null,
+    when: profile.formatAnswer('availability', space.profile?.fields?.availability?.value) ?? null,
     id: space.id,
     name: space.name,
     type: space.type,
@@ -225,7 +254,9 @@ export function publicSpaceView(space) {
     image: space.image ?? null,
     activeOfferCount: activeOffers.length,
     // A taste of what they sell, for the directory card. Real titles only.
-    sampleOffers: activeOffers.slice(0, 3).map((o) => ({ title: o.title, price: o.price, currency: o.currency })),
+    sampleOffers: ordered.slice(0, 3).map((o) => ({
+      title: o.title, price: o.price, currency: o.currency, id: o.id, featured: featuredIds.includes(o.id)
+    })),
     // What the space says it IS — capacity, hours, reach, limits. Buyers are
     // also told how old those answers are, because that is true; they are not
     // told a rank, because no rank exists.
@@ -240,12 +271,54 @@ export function publicSpaceView(space) {
  * collaboration. Private and unlisted spaces never appear; archived never
  * appears. Derived from real rows, ordered newest first.
  */
+/**
+ * One public space by slug (or id). Private and unlisted spaces answer 404 —
+ * they are not hidden-but-findable, they are not there.
+ */
+export function findPublicSpace(slugOrId) {
+  const key = String(slugOrId ?? '').trim();
+  if (!key) return null;
+  const space = store.find('spaces', (s) => s.slug === key || s.id === key);
+  if (!space || space.visibility !== 'public' || space.status !== 'active') return null;
+  return publicSpaceView(space);
+}
+
 export function listPublicSpaces(limit = 50) {
   return store.filter('spaces', (s) => s.visibility === 'public' && s.status === 'active')
     .slice()
     .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
     .slice(0, Math.min(limit, 100))
     .map(publicSpaceView);
+}
+
+/**
+ * Pin 1-3 offers to the front of this space's catalog. The list is validated
+ * against the space's own ACTIVE listings, so a pinned offer cannot be
+ * somebody else's, an archived one, or a fourth pin past the cap.
+ */
+export function setFeatured(spaceId, { callerId, listingIds = [] } = {}) {
+  const space = store.find('spaces', (s) => s.id === spaceId);
+  if (!space) return null;
+  if (callerId && space.ownerId !== callerId) throw new Error('Not authorized to update this space');
+  const ids = Array.from(new Set((Array.isArray(listingIds) ? listingIds : []).map((x) => String(x))));
+  if (ids.length > audience.FEATURED_MAX) {
+    throw new Error(`pin at most ${audience.FEATURED_MAX} offers — a pinned rack nobody scans is decoration`);
+  }
+  const own = store.filter('listings', (l) =>
+    (l.spaceId === spaceId || l.vendorId === space.vendorId) && l.status === 'active');
+  for (const id of ids) {
+    if (!own.some((l) => l.id === id)) throw new Error(`only your own active offers can be pinned (${id} is not one)`);
+  }
+  const updated = store.update('spaces', spaceId, { featured: ids, updatedAt: new Date().toISOString() });
+  recordSpaceActivity({
+    spaceId,
+    kind: 'space_featured_updated',
+    title: ids.length ? `Pinned ${ids.length} offer${ids.length === 1 ? '' : 's'} to the front` : 'Unpinned every offer',
+    description: 'The vendor chose these. No ranking, no boost, no paid placement.',
+    actorId: callerId ?? null,
+    metadata: { listingIds: ids }
+  });
+  return hydrateSpace(updated);
 }
 
 /**
@@ -1266,8 +1339,30 @@ function hydrateSpace(space, { callerId = null } = {}) {
   // The derived maintenance reads ride along on every hydrate, so Home, the
   // space workspace and the directory can never disagree about them.
   const isOwnerView = callerId === null || callerId === space.ownerId;
+  const activeRows = store.filter('listings', (l) =>
+    (l.spaceId === space.id || l.vendorId === space.vendorId) && l.status === 'active');
+  const featuredIds = space.featured ?? [];
   const derived = {
+    slug: space.slug ?? null,
+    // Pinned offers first, so every surface that shows this space's catalog
+    // honours the vendor's own choice without re-implementing the rule.
+    offers: undefined,
+    featured: featuredIds.map((id) => activeRows.find((l) => l.id === id)).filter(Boolean).map((l) => l.id),
+    followers: audience.followerCount(space.id),
+    broadcastsLive: audience.broadcastsFor(space.id).length,
+    followable: space.visibility === 'public' && space.status === 'active' && callerId !== null && callerId !== space.ownerId,
+    iAmFollowing: audience.isFollowing(space.id, callerId),
     profile: space.profile ?? null,
+    // The same sentences the space file shows, rendered by the module that owns
+    // the format. Every surface reads these instead of re-implementing a
+    // formatter and drifting from it.
+    profileLabels: {
+      where: profile.formatAnswer('operatingFrom', space.profile?.fields?.operatingFrom?.value) ?? null,
+      when: profile.formatAnswer('availability', space.profile?.fields?.availability?.value) ?? null,
+      capacity: profile.formatAnswer('capacity', space.profile?.fields?.capacity?.value) ?? null,
+      coverage: profile.formatAnswer('coverage', space.profile?.fields?.coverage?.value) ?? null,
+      constraints: profile.formatAnswer('constraints', space.profile?.fields?.constraints?.value) ?? null
+    },
     maintenance: profile.maintenanceFor(space),
     editorialOpen: profile.editorialQueueFor(space).length,
     pipeline: isOwnerView ? profile.pipelineFor(space) : null

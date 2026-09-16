@@ -19,6 +19,7 @@
 import type { ApiResult, Block, ResaleTicket, ResaleListing, ResaleListingRow, TicketOrder, CapabilityUnavailable, Circle, CircleCreate, CircleUpdate, Member, Signal, TargetView, AppConfig, ReleaseStatus, AuthStatus, Campaign, CampaignCreate, CampaignUpdate, PublicCampaign, Registration, RegistrationStatus, ShareChannel, ShareLink, ShareChannels, CampaignShare, CampaignBanner, Venue, MediaUpload, MediaStorageStatus, TriageQueue, Subscription, Subscriber, SubscriptionJoin, PaymentConfirmation, Transaction, TransactionCreate, TransactionStatus, VerificationKind, Wallet, Source, RawItem, VoteTally, MemberEvidence, BriefItPreview, BriefItSaved, Vendor, VendorCreate, VendorUpdate, Listing, ListingCreate, ListingUpdate, ListingStatus, Order, OrderCreate, Dispute, VendorEarnings, PaymentIntent, PaymentInitiation, Vault, VaultCreate, Footstep, FootstepPage, VaultRequest, VaultSearchResult, ResolutionItem, VaultEntry, Ticket, CheckInResult, CommandCentre, Space, SpaceCreate, SpaceOfferCreate, SpaceActivity, SpaceConversation, SpaceQuote, SpacePaymentPrompt, SpaceExpense, SpaceCustomerTab, SpaceMoneySummary, SpaceDispatch, SpaceDispatchCreate, SpaceDispatchStatus, SpaceUpdate, PublicSpace, SpaceFieldStatus, SpaceMaintenance, SpaceEditorialItem, SpacePipeline, RoleAssignment, Invite, IssueInviteInput, RedeemInviteResult } from "./types";
 import { enqueue, replayQueue, queueDepth, type QueuedWrite } from './offlineQueue';
 import { asTarget } from './types';
+import type { SpaceBroadcast, SpaceInsights, SpaceTemplate } from './types';
 import {
   areBlocks, areCampaigns, areCircles, areMembers, areRegistrations,
   areSignals, areTransactions, isAuthStatus, isCampaign, isCircle, isBlock,
@@ -4679,6 +4680,81 @@ export interface PickupFeeSettlement {
 export function getMyPickupFeeSettlements(): Promise<ApiResult<PickupFeeSettlement[]>> {
   return request('/api/me/pickup-fee/settlements', undefined, r =>
     Array.isArray(r?.settlements) ? (r.settlements as PickupFeeSettlement[]) : undefined);
+}
+
+// ---------------------------------------------------------------------------
+// SPACE AUDIENCE — follows, broadcasts, insights, templates, pinned offers.
+// Every figure is a count of rows somebody wrote; none of it is estimated, and
+// there is no sector benchmark to compare against (Brief holds none).
+// ---------------------------------------------------------------------------
+export interface SpaceAudienceView {
+  slug: string;
+  followers: number;
+  followerList: Array<{ userId: string; displayName: string; since: string }>;
+  iAmFollowing: boolean;
+  broadcasts: SpaceBroadcast[];
+  pastBroadcasts: number;
+  templates: SpaceTemplate[];
+  insights: SpaceInsights | null;
+  canManage: boolean;
+  followable: boolean;
+}
+export function getSpaceAudience(spaceId: string): Promise<ApiResult<SpaceAudienceView>> {
+  return request<SpaceAudienceView>(`/api/spaces/${encodeURIComponent(spaceId)}/audience`, undefined, (r) =>
+    r && typeof r.followers === 'number' ? (r as SpaceAudienceView) : undefined);
+}
+export function followSpace(spaceId: string): Promise<ApiResult<{ following: boolean; reused?: boolean; followers: number }>> {
+  return request(`/api/spaces/${encodeURIComponent(spaceId)}/follow`, { method: 'POST', body: '{}' }, (r) =>
+    typeof r?.followers === 'number' ? r : undefined);
+}
+export function unfollowSpace(spaceId: string): Promise<ApiResult<{ following: boolean; removed: number; followers: number }>> {
+  return request(`/api/spaces/${encodeURIComponent(spaceId)}/follow`, { method: 'DELETE' }, (r) =>
+    typeof r?.followers === 'number' ? r : undefined);
+}
+export function postSpaceBroadcast(
+  spaceId: string,
+  body: { text: string; kind?: 'update' | 'stock' | 'hours' | 'drop' }
+): Promise<ApiResult<{ broadcast: SpaceBroadcast; delivery: { audience: number; notified: number; mutedByPreference: number; channels: Record<string, string>; note: string } }>> {
+  return request(`/api/spaces/${encodeURIComponent(spaceId)}/broadcasts`, { method: 'POST', body: JSON.stringify(body) }, (r) =>
+    r?.broadcast ? { broadcast: r.broadcast, delivery: r.delivery } : undefined);
+}
+export function deleteSpaceBroadcast(spaceId: string, broadcastId: string): Promise<ApiResult<{ removed: boolean }>> {
+  return request(`/api/spaces/${encodeURIComponent(spaceId)}/broadcasts/${encodeURIComponent(broadcastId)}`, { method: 'DELETE' }, (r) =>
+    r?.removed ? { removed: true } : undefined);
+}
+export function getSpaceTemplates(spaceId: string): Promise<ApiResult<{ templates: SpaceTemplate[] }>> {
+  return request(`/api/spaces/${encodeURIComponent(spaceId)}/templates`, undefined, (r) =>
+    Array.isArray(r?.templates) ? { templates: r.templates as SpaceTemplate[] } : undefined);
+}
+export function saveSpaceTemplate(
+  spaceId: string,
+  body: { label: string; body: string },
+  templateId?: string
+): Promise<ApiResult<{ template?: SpaceTemplate; templates: SpaceTemplate[] }>> {
+  return request(
+    templateId
+      ? `/api/spaces/${encodeURIComponent(spaceId)}/templates/${encodeURIComponent(templateId)}`
+      : `/api/spaces/${encodeURIComponent(spaceId)}/templates`,
+    { method: templateId ? 'PATCH' : 'POST', body: JSON.stringify(body) },
+    (r) => (r && Array.isArray(r.templates) ? { template: r.template, templates: r.templates } : undefined)
+  );
+}
+export function deleteSpaceTemplate(spaceId: string, templateId: string): Promise<ApiResult<{ removed: boolean; templates: SpaceTemplate[] }>> {
+  return request(`/api/spaces/${encodeURIComponent(spaceId)}/templates/${encodeURIComponent(templateId)}`, { method: 'DELETE' }, (r) =>
+    Array.isArray(r?.templates) ? { removed: Boolean(r.removed), templates: r.templates } : undefined);
+}
+/** Pin up to 3 of the space's own active offers. The server validates each id. */
+export function setSpaceFeatured(spaceId: string, listingIds: string[]): Promise<ApiResult<{ space: Space }>> {
+  return request(`/api/spaces/${encodeURIComponent(spaceId)}/featured`, { method: 'PATCH', body: JSON.stringify({ listingIds }) }, (r) =>
+    r?.space ? { space: r.space } : undefined);
+}
+export function getFollowedSpaces(): Promise<ApiResult<{ spaces: PublicSpace[]; note?: string }>> {
+  return request<{ spaces: PublicSpace[]; note?: string }>('/api/spaces/followed/mine', undefined, (r) =>
+    Array.isArray(r?.spaces) ? { spaces: r.spaces as PublicSpace[], note: r.note } : undefined);
+}
+/** One public space by slug — the page a shared link opens, and the only place a view row is written. */
+export function getPublicSpace(slugOrId: string): Promise<ApiResult<{ space: PublicSpace }>> {
+  return request(`/api/public/spaces/${encodeURIComponent(slugOrId)}`, undefined, (r) => (r?.space ? { space: r.space } : undefined));
 }
 
 // ---------------------------------------------------------------------------
