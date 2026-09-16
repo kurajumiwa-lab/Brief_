@@ -110,27 +110,39 @@ async function main() {
     return { ok: false, status: 404, text: async () => JSON.stringify({}) };
   };
 
-  // --- 1. Discover is three rooms, and the old ones are gone --------------
+  // --- 1. Discover is four rooms on tiles, and the old ones are gone --------
   {
     const { container } = mount(React.createElement(CityFeedView, { onOpenSpace: () => {} }));
     await flush();
-    const nav = container.querySelector('nav[aria-label="Discover sections"]');
-    const chips = Array.from(nav.querySelectorAll('button')).map((b) => text(b));
-    assert.deepEqual(chips, ['Events', 'Marketplace', 'Communities', 'Errands'],
-      `four rooms: on, sale, belonging, carrying (got ${JSON.stringify(chips)})`);
-    const t = text(container);
-    assert.ok(t.includes('Events around you'), 'the case opens Discover');
-    // A private arrangement is no longer scrolled past like a poster.
-    assert.ok(!/Community Circles & Mutual Aid/.test(t), 'circles left Discover');
-    assert.ok(!/Vault & Special Drops/.test(t), 'vaults left Discover');
-    // WAIRO appears only when errands is selected.
-    assert.ok(!document.querySelector('input[aria-label="Pickup destination town"]'), 'no WAIRO form on the events room');
-    click(Array.from(nav.querySelectorAll('button')).find((b) => text(b) === 'Errands'));
+    const tiles = Array.from(container.querySelectorAll('button[role="tab"]')).map((b) => text(b));
+    assert.ok(tiles.some((x) => /Marketplace/.test(x)), 'Marketplace is a tile');
+    assert.ok(tiles.some((x) => /Events/.test(x)), 'Events is a tile');
+    assert.ok(tiles.some((x) => /Circles/.test(x)), 'Circles is a tile');
+    assert.ok(tiles.some((x) => /Errands/.test(x)), 'Errands is a tile');
+    assert.ok(tiles.some((x) => /Everything at once/.test(x)), 'and All is a quiet strip, not a fifth competitor');
+    assert.equal(container.querySelector('nav[aria-label="Discover sections"]'), null, 'no chip row survives');
+    const errandsTile = Array.from(container.querySelectorAll('button[role="tab"]')).find((b) => text(b).includes('Errands'));
+    click(errandsTile);
     await flush();
-    assert.ok(document.querySelector('input[aria-label="Pickup destination town"]'), 'the WAIRO contact card shows in the errands room');
-    assert.ok(text(container).includes('The lobby'), 'and the lobby is themed as a room, not a gallery');
+    assert.ok(text(container).includes('The lobby'), 'the errands room opened from the grid');
+    assert.ok(document.querySelector('input[aria-label="Pickup destination town"]'), 'the WAIRO card lives here only');
+    assert.ok(text(container).includes('Seal a file at City Hall'), 'the real open errand from the rail is on the board');
+    assert.ok(!/\d+ riders? (nearby|around)/i.test(text(container)), 'no invented crowd size');
+    assert.ok(btn('Post an errand'), 'the lobby carries its own post action');
   }
-  pass('Discover is Events / Marketplace / Errands, with WAIRO only inside Errands');
+  pass('Discover navigates by tiles, and WAIRO lives only inside Errands');
+
+  // --- 1b. an empty board says so, in words a vendor can act on -----------
+  {
+    const saved = board;
+    board = { ...board, open: [] };
+    const { container } = mount(React.createElement(ErrandsLobby, {}));
+    await flush();
+    assert.ok(text(container).includes('Nothing is posted right now.'), 'the empty is stated plainly');
+    assert.ok(text(container).includes('not a hidden queue'), 'and refuses to imply a queue behind it');
+    board = saved;
+  }
+  pass('An empty errands board is reported as empty');
 
   // --- 2. the gate is real, and it does not dangle a button ----------------
   {

@@ -15,46 +15,80 @@ import { EventsHub } from '../../components/EventsHub';
 import { Marketplace } from '../../components/Marketplace';
 import { ErrandsLobby } from './ErrandsLobby';
 import { Circles } from '../../components/Circles';
+import { DiscoverCategoryGrid } from './DiscoverCategoryGrid';
+import { DiscoverFeatured } from './DiscoverFeatured';
+import type { DiscoverFeatured as FeaturedItem, DiscoverSummary } from '../../api/briefApi';
 import { soundEngine } from '../../utils/SoundEngine';
 
 // ---------------------------------------------------------------------------
-// DISCOVER — the browse screen, reformed.
+// DISCOVER — the shop window.
 //
-// What changed and why (from the screenshot review):
-//   * the Marketplace block is GONE from the All tab. "COMMUNITY MARKETPLACE &
-//     SECOND-HAND DROPS" was clipped mid-word at the fold and its own
-//     Browse/My orders/Selling row sat right on top of the bottom navigation.
-//     Commerce is a mode, so it lives in its own segment now;
-//   * the six category chips + four-row filter panel collapsed into the
-//     gallery's one control line, with the deep filters behind a sheet;
-//   * result counters ("2 shown") are removed — if you can see the exhibits,
-//     you can count them;
-//   * the two ways to ADD something became a floating action group, because a
-//     primary action should not be orphaned text at the bottom of a scroll;
-//   * Pulse is no longer a Discover room: it is "what happened in the ledger",
-//     which belongs beside your own activity, so it opens on the Activity tab.
+// The tile grid is the navigation. That is the one thing the old Discover
+// layout got right and the chip row lost: a tile is thumb-reachable and it can
+// carry a number, so you know whether a room is worth opening before you tap.
+// Marketplace sits top-left and is the default room, because a market is what
+// this network can settle today.
+//
+// What was NOT restored: the old layout's CONTENT. The screens under
+// preview/src/screens/ are driven by a hardcoded array — a "Kilimani Weekend
+// Creators Market" with "over 40 verified creative vendors", a borrowed
+// Unsplash photograph, a phone number that reaches nobody and a Telegram handle
+// nobody runs. It is not in the production tree at all (main.jsx mounts
+// AppShell). Copying it would have been the single fastest way to make Brief
+// dishonest, so the featured card here is built from rows: a real listing or a
+// published event, its own photo or a plain tint, counted orders or counted
+// registrations, and a chip naming the rule that chose it. A zero on a tile is
+// printed as a zero.
+//
+// Room names are the nouns of the product, not marketing: Circles (not
+// "Communities"), Events, Marketplace, Errands — plus "Everything at once" for
+// anyone who wants all four in one scroll.
 // ---------------------------------------------------------------------------
 
 export interface CityFeedViewProps {
-  initialSubTab?: 'events' | 'marketplace' | 'communities' | 'errands';
+  initialSubTab?: 'marketplace' | 'events' | 'circles' | 'errands' | 'all';
   onOpenSpace?: (spaceId: string) => void;
   className?: string;
 }
 
-// Three rooms, nothing else. Circles and the vaults are not inventory to be
-// browsed next to a public gallery — they are who you are organised WITH, so
-// they live on the coordination screen (Spaces). WAIRO dispatch belongs to
-// errands, because a rider you push and an errand you post are the same walk.
-// The market's numbers moved to Activity, where "what happened" lives.
-type CitySubTab = 'events' | 'marketplace' | 'communities' | 'errands';
+type CitySubTab = 'marketplace' | 'events' | 'circles' | 'errands' | 'all';
 
 export const CityFeedView: React.FC<CityFeedViewProps> = ({
-  initialSubTab = 'events',
+  initialSubTab = 'marketplace',
   onOpenSpace,
   className = ''
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<CitySubTab>(initialSubTab);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  // The tiles' numbers and the featured slot, from one read. Refreshed when the
+  // tab comes back to the foreground — and by the Re-read button — rather than
+  // on a 30-second timer, because a timer would imply a feed Brief does not have.
+  const [summary, setSummary] = useState<DiscoverSummary | null>(null);
+  const [summaryBusy, setSummaryBusy] = useState(false);
+
+  const loadSummary = React.useCallback(async () => {
+    setSummaryBusy(true);
+    const res = await briefApi.getDiscoverSummary();
+    setSummaryBusy(false);
+    if (res.ok) setSummary(res.data);
+  }, []);
+
+  React.useEffect(() => {
+    void loadSummary();
+    const onVisible = () => {
+      if (typeof document === 'undefined' || document.visibilityState === 'visible') void loadSummary();
+    };
+    window.addEventListener('focus', onVisible);
+    return () => window.removeEventListener('focus', onVisible);
+  }, [loadSummary]);
+
+  const openFeatured = (item: FeaturedItem) => {
+    soundEngine.play('tap');
+    if (typeof window === 'undefined') return;
+    if (item.kind === 'event') window.open(`/c/${item.id}`, '_self');
+    else window.location.hash = `offer/${encodeURIComponent(item.id)}`;
+  };
 
   // Marketplace deep-link: "Post a listing" opens Marketplace on its Selling
   // section (which holds the real create-vendor / create-listing flow).
@@ -115,16 +149,9 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
     showToast(`"${created.data.title}" is now live in the case.`);
   };
 
-  // Four rooms. "Circles" is called Communities here because "circle" is
-  // jargon a stranger has to be taught, and belonging needs no lecture. It
-  // lives in Discover rather than in Spaces: exploring a neighbourhood is not
-  // administering a business.
-  const subTabs: Array<{ id: CitySubTab; label: string }> = [
-    { id: 'events', label: 'Events' },
-    { id: 'marketplace', label: 'Marketplace' },
-    { id: 'communities', label: 'Communities' },
-    { id: 'errands', label: 'Errands' }
-  ];
+  // The room names and their counts live in ONE place: GET
+  // /api/discover/summary. The grid below renders that, so a label can never
+  // disagree with the number under it.
 
   return (
     <div className={`space-y-6 max-w-4xl mx-auto ${className}`}>
@@ -135,51 +162,87 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
         </div>
       )}
 
-      {/* ── HEAD — clean premium light header + the section chips ── */}
+      {/* ── HEAD ── */}
       <DiscoveryHead
         eyebrow="Discover"
-        title="Everything happening around you"
-        subtitle="What is on, what is for sale, who to belong with, and what needs carrying."
-        segments={subTabs}
+        title="What's happening nearby"
+        subtitle="Marketplace first: what people here are selling, hosting, organising and needing carried."
+        segments={[]}
         activeSegmentId={activeSubTab}
-        onSegmentChange={(id) => { soundEngine.play('tap'); setActiveSubTab(id as CitySubTab); }}
+        onSegmentChange={() => {}}
       />
 
-      {/* ── THE THREE ROOMS ── */}
+      {/* ── THE TILES: this screen's only primary navigation ── */}
+      <DiscoverCategoryGrid
+        tiles={summary?.tiles ?? [
+          { key: 'marketplace', label: 'Marketplace', count: 0, unit: 'live offer' },
+          { key: 'events', label: 'Events', count: 0, unit: 'published' },
+          { key: 'circles', label: 'Circles', count: 0, unit: 'you could join' },
+          { key: 'errands', label: 'Errands', count: 0, unit: 'open' }
+        ]}
+        active={activeSubTab}
+        allActive={activeSubTab === 'all'}
+        onSelect={(k) => setActiveSubTab(k)}
+        onSelectAll={() => setActiveSubTab('all')}
+      />
+      <div className="flex items-center justify-between px-1">
+        <p className="text-[10px]" style={{ color: '#9CA3AF' }}>
+          {summary ? summary.note : 'Counts are read from the rows on this screen, not seeded to fill the tiles.'}
+        </p>
+      </div>
+
+      {/* ── THE ROOMS ── */}
       <div className="space-y-6">
-        {activeSubTab === 'events' && (
-          <div className="space-y-4 animate-fadeIn">
-            {/* THE CASE — swiping inventory, not a feed. */}
-            <section className="space-y-1.5">
+        {(activeSubTab === 'marketplace' || activeSubTab === 'all') && (
+          <div className="space-y-5 animate-fadeIn">
+            <DiscoverFeatured
+              featured={summary?.featured ?? null}
+              asOf={summary?.asOf ?? null}
+              busy={summaryBusy}
+              onOpen={openFeatured}
+              onRefresh={() => void loadSummary()}
+              onPost={openSelling}
+            />
+            <section className="p-4 rounded-3xl bg-white border border-black/5 shadow-2xs space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-black uppercase tracking-wider text-[color:var(--color-text)]">
-                  Events around you
+                <h3 className="text-xs font-black uppercase tracking-wider text-[color:var(--color-text)]">
+                  The counter
                 </h3>
+                <button
+                  type="button"
+                  onClick={openSelling}
+                  className="text-[11px] font-bold text-[color:var(--color-primary)] hover:underline cursor-pointer"
+                >
+                  Sell something →
+                </button>
               </div>
+              <Marketplace key={marketplaceKey} initialSection={marketplaceSection} />
+            </section>
+          </div>
+        )}
+
+        {activeSubTab === 'events' && (
+          <div className="space-y-5 animate-fadeIn">
+            <section className="space-y-1.5">
+              <h3 className="text-sm font-black uppercase tracking-wider text-[color:var(--color-text)]">
+                Events around you
+              </h3>
               <MuseumGallery key={galleryKey} />
             </section>
-
-            {/* The full filter surface, for when the case is not enough. */}
             <div className="p-4 rounded-3xl bg-white border border-black/5 shadow-2xs">
               <EventsHub key={eventsKey} />
             </div>
           </div>
         )}
 
-        {activeSubTab === 'marketplace' && (
-          <div className="p-4 rounded-3xl bg-white border border-black/5 shadow-2xs animate-fadeIn">
-            <Marketplace key={marketplaceKey} initialSection={marketplaceSection} />
-          </div>
-        )}
-
-        {activeSubTab === 'communities' && (
+        {activeSubTab === 'circles' && (
           <div className="p-4 rounded-3xl bg-white border border-black/5 shadow-2xs animate-fadeIn space-y-2">
             <h3 className="text-[11px] font-black uppercase tracking-wider" style={{ color: '#0A0A0A' }}>
-              Communities
+              Circles
             </h3>
             <p className="text-[11px] -mt-1" style={{ color: '#6B7280' }}>
               Groups with a door: members, shared work, a pot whose progress moves only when money actually
-              settles. Nothing here is counted until somebody joins one.
+              settles. The count on the tile is circles you could join right now.
             </p>
             <Circles />
           </div>
@@ -188,6 +251,34 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
         {activeSubTab === 'errands' && (
           <div className="animate-fadeIn">
             <ErrandsLobby />
+          </div>
+        )}
+
+        {/* The 'all' scroll finishes with the two rooms that are not inventory,
+            so nobody has to hunt for them. */}
+        {activeSubTab === 'all' && (
+          <div className="space-y-5">
+            <section className="space-y-1.5">
+              <h3 className="text-sm font-black uppercase tracking-wider text-[color:var(--color-text)]">
+                Events around you
+              </h3>
+              <MuseumGallery key={galleryKey} />
+            </section>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <section className="p-4 rounded-3xl bg-white border border-black/5 shadow-2xs space-y-2">
+                <h3 className="text-[11px] font-black uppercase tracking-wider" style={{ color: '#0A0A0A' }}>Circles</h3>
+                <Circles />
+              </section>
+              <section className="p-4 rounded-3xl bg-white border border-black/5 shadow-2xs space-y-2">
+                <h3 className="text-[11px] font-black uppercase tracking-wider" style={{ color: '#0A0A0A' }}>Errands</h3>
+                <p className="text-[11px]" style={{ color: '#6B7280' }}>
+                  The board lives in its own room, where a carrier can take it.
+                </p>
+                <button type="button" onClick={() => setActiveSubTab('errands')} className="text-[11px] font-bold cursor-pointer" style={{ color: 'var(--color-primary)' }}>
+                  Open the lobby →
+                </button>
+              </section>
+            </div>
           </div>
         )}
       </div>

@@ -405,11 +405,11 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
       <section className="space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="text-lg font-extrabold text-[#0D1117]">Circles</h2>
-            <p className="text-[11px] text-[#0D1117]/60 leading-snug mt-1">
-              Communities, split by whether you are in them. People, purpose,
-              blocks, signals and targets -- with progress derived from real
-              contributions.
+            <h2 className="text-lg font-extrabold" style={{ color: 'var(--color-text)' }}>Circles</h2>
+            <p className="text-[11px] leading-snug mt-1" style={{ color: 'var(--color-text-muted)' }}>
+              Circles, split by whether you are in one. People, purpose, blocks,
+              signals and targets &mdash; with progress derived from contributions that
+              actually settled.
             </p>
           </div>
           <button

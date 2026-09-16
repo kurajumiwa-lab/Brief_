@@ -4683,6 +4683,49 @@ export function getMyPickupFeeSettlements(): Promise<ApiResult<PickupFeeSettleme
 }
 
 // ---------------------------------------------------------------------------
+// DISCOVER SUMMARY — the tile counts and the featured slot. The old Discover
+// screen in preview/src/screens/ hardcoded its "posts" (a fake market with 40
+// invented vendors and a borrowed Unsplash photo). This is the same shape with
+// rows behind it: a zero means zero, and the featured card carries the rule
+// that picked it.
+// ---------------------------------------------------------------------------
+export interface DiscoverTile {
+  key: 'marketplace' | 'events' | 'circles' | 'errands';
+  label: string;
+  count: number;
+  unit: string;
+}
+export interface DiscoverFeatured {
+  kind: 'listing' | 'event';
+  id: string;
+  title: string;
+  description: string | null;
+  price: number;
+  currency: string;
+  type?: string;
+  location: string | null;
+  startsAt?: string | null;
+  mediaUrl: string | null;
+  seller?: string | null;
+  stock?: number | null;
+  group?: string | null;
+  interest: { label: string; count: number };
+  why: string;
+}
+export interface DiscoverSummary {
+  tiles: DiscoverTile[];
+  featured: DiscoverFeatured | null;
+  featuredFrom: string | null;
+  counts: { listings: number; events: number; circles: number; errands: number };
+  asOf: string | null;
+  note: string;
+}
+export function getDiscoverSummary(): Promise<ApiResult<DiscoverSummary>> {
+  return request<DiscoverSummary>('/api/discover/summary', undefined, (r) =>
+    r && Array.isArray(r.tiles) ? (r as DiscoverSummary) : undefined);
+}
+
+// ---------------------------------------------------------------------------
 // SPACE AUDIENCE — follows, broadcasts, insights, templates, pinned offers.
 // Every figure is a count of rows somebody wrote; none of it is estimated, and
 // there is no sector benchmark to compare against (Brief holds none).

@@ -174,7 +174,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
       </div>
 
       {/* ── ZONE 1 — WHAT THE WORLD IS DOING ── */}
-      <SignalBar onOpenPulse={() => (onOpenPulse ? onOpenPulse() : onExploreDiscover?.('events'))} />
+      <SignalBar onOpenPulse={() => (onOpenPulse ? onOpenPulse() : onExploreDiscover?.('marketplace'))} />
 
       {/* ── ZONE 2 — WHAT YOU SHOULD DO NEXT ── */}
       <NextMoveCard position={position} denied={positionDenied} />
@@ -187,10 +187,10 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
           </h2>
           <button
             type="button"
-            onClick={() => { soundEngine.play('tap'); onExploreDiscover?.('events'); }}
+            onClick={() => { soundEngine.play('tap'); onExploreDiscover?.('marketplace'); }}
             className="inline-flex items-center gap-1 text-[11px] font-bold text-[color:var(--color-primary)] hover:underline cursor-pointer"
           >
-            Full browse
+            Browse everything
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>

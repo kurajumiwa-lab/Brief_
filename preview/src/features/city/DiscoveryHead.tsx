@@ -51,6 +51,7 @@ export function DiscoveryHead({
         )}
       </div>
 
+      {segments.length === 0 ? null : (
       <nav
         className="mt-5 flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar"
         aria-label="Discover sections"
@@ -79,6 +80,7 @@ export function DiscoveryHead({
           );
         })}
       </nav>
+      )}
     </header>
   );
 }

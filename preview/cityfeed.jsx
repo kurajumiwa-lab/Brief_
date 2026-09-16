@@ -138,15 +138,15 @@ async function main() {
     const card = c.querySelector('.bg-gradient-to-b');
     assert.ok(!card, 'no dark gradient card remains');
     const t = text(c);
-    assert.ok(t.includes('Everything happening around you'), 'a premium title is present');
+    assert.ok(t.includes("What's happening nearby"), 'the shop-window title is present');
     assert.ok(t.includes('Discover'), 'an eyebrow label is present');
-    // Section navigation survives as light chips.
+    // The chip row is gone: the tile grid is the navigation now.
     const nav = c.querySelector('nav[aria-label="Discover sections"]');
-    assert.ok(nav, 'the section navigation is present');
-    const chips = Array.from(nav.querySelectorAll('button'));
-    assert.equal(chips.length, 4, 'Discover is four rooms: on, for sale, communities, errands');
-    assert.deepEqual(chips.map((b) => b.textContent.trim()), ['Events', 'Marketplace', 'Communities', 'Errands'], 'in that order');
-    assert.equal(chips[0].getAttribute('aria-pressed'), 'true', 'the first (All) section is active by default');
+    assert.ok(!nav, 'no chip row survives on this screen');
+    const tiles = Array.from(c.querySelectorAll('button[role="tab"]'));
+    assert.equal(tiles.length, 5, 'four rooms + Everything at once');
+    assert.ok(tiles.find((b) => b.textContent.includes('Marketplace')), 'a Marketplace tile exists');
+    assert.equal(tiles.find((b) => b.textContent.includes('Marketplace')).getAttribute('aria-selected'), 'true', 'and it is the front door');
     // No scoreboard "0 : 0" hero.
     const hero = Array.from(c.querySelectorAll('div')).find((d) => (d.getAttribute('class') || '').includes('text-3xl'));
     assert.ok(!hero, 'no scoreboard hero remains');
@@ -176,12 +176,20 @@ async function main() {
     const c = mount(React.createElement(CityFeedView, { onOpenSpace: () => {} }));
     await flush();
     const t = text(c);
-    assert.ok(t.includes('Events around you'), 'the case opens Discover');
+    assert.ok(t.includes('The counter'), 'Discover opens on the marketplace, not the gallery');
     // What was taken OUT, and why.
-    assert.ok(!/Community Marketplace/i.test(t), 'the marketplace block is not stacked under the gallery');
-    assert.ok(!/My orders/.test(t), 'its tab row is not parked over the bottom nav');
+    // The complaint was the orphaned heading clipped mid-word under the
+    // gallery, not the sub-tabs themselves: in their own room they are correct.
+    assert.ok(!/Community Marketplace & Second-Hand Drops/i.test(t), 'no orphaned heading under the gallery');
+    assert.ok(t.includes('Browse') || t.includes('My orders'), 'the market sub-tabs live in the market room');
     assert.ok(!/Community Circles & Mutual Aid/.test(t), 'circles are not browsed like posters');
     assert.ok(!/Vault & Special Drops/.test(t), 'vaults are not either');
+    // and the tiles navigate instead of stacking: the Events room holds no market
+    const evTile = Array.from(c.querySelectorAll('button[role="tab"]')).find((b) => b.textContent.includes('Events'));
+    act(() => { evTile.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
+    await flush();
+    assert.ok(!/The counter/.test(text(c)), 'the Events room holds no market furniture');
+    assert.ok(text(c).includes('Events around you'), 'it holds the case instead');
     assert.ok(!/WAIRO/.test(t), 'the rider card belongs to errands, not the gallery');
     assert.ok(!/What's moving/.test(t), 'the signal line is Home’s job, not a browse header');
     assert.ok(!/shown\b/.test(t), 'no result counter anywhere on the browse screen');
@@ -193,8 +201,7 @@ async function main() {
   {
     const c = mount(React.createElement(CityFeedView, { onOpenSpace: () => {} }));
     await flush();
-    const nav = c.querySelector('nav[aria-label="Discover sections"]');
-    const errandsBtn = Array.from(nav.querySelectorAll('button')).find((b) => text(b) === 'Errands');
+    const errandsBtn = Array.from(c.querySelectorAll('button[role="tab"]')).find((b) => text(b).includes('Errands'));
     act(() => { errandsBtn.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
     await flush();
     const t = text(c);
@@ -209,14 +216,14 @@ async function main() {
 
   // --- 6. where each noun actually lives ---------------------------------
   {
-    // Belonging is exploration: Communities is a Discover room.
+    // Belonging is exploration: Circles is a Discover room, under its own name.
     const c = mount(React.createElement(CityFeedView, { onOpenSpace: () => {} }));
     await flush();
-    const nav = c.querySelector('nav[aria-label="Discover sections"]');
-    const communities = Array.from(nav.querySelectorAll('button')).find((b) => text(b) === 'Communities');
-    act(() => { communities.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
+    const circleTile = Array.from(c.querySelectorAll('button[role="tab"]')).find((b) => text(b).includes('Circles'));
+    assert.ok(circleTile, 'Circles is reachable from the grid');
+    act(() => { circleTile.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
     await flush();
-    assert.ok(/Communities/.test(text(c)), 'Communities renders as its own room');
+    assert.ok(/Circles/.test(text(c)) && !/Communities/.test(text(c)), 'the room keeps Brief\u2019s own noun');
     assert.ok(text(c).includes('Groups with a door'), 'and says what a community is here');
 
     // Filing is personal: the Archive lives in You, not in a gallery or a shop.
