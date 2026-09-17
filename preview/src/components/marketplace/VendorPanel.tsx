@@ -1,6 +1,8 @@
 import React from 'react';
 import { BoostSheet } from '../BoostSheet';
-import type { Listing, Order, Vendor, VendorEarnings } from '../../api/types';
+import type {
+  Listing, ListingDestinationKindDraft, ListingFlowDraft, ListingOriginKindDraft, Order, Vendor, VendorEarnings
+} from '../../api/types';
 import { money } from './ListingCard';
 import { OrderStatus } from './OrderStatus';
 
@@ -46,7 +48,13 @@ export interface VendorPanelProps {
   draft: { displayName: string; description: string; contactMethod: string };
   onDraftChange: (patch: Partial<VendorPanelProps['draft']>) => void;
   onCreateVendor: () => void;
-  listingDraft: { title: string; description: string; price: string; type: Listing['type']; quantity: string; location: string };
+  listingDraft: {
+    title: string; description: string; price: string; type: Listing['type'];
+    quantity: string; location: string;
+    /** The two axes of a flow. Optional, except where a flow needs them. */
+    flow: ListingFlowDraft; commodity: string; originKind: ListingOriginKindDraft; originName: string;
+    destinationKind: ListingDestinationKindDraft; destinationName: string; unit: string; minOrder: string;
+  };
   onListingDraftChange: (patch: Partial<VendorPanelProps['listingDraft']>) => void;
   onCreateListing: () => void;
   onSetStatus: (id: string, status: Listing['status']) => void;
@@ -204,6 +212,103 @@ export function VendorPanel({
             className="flex-1 bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl px-3 py-2 text-xs text-[#0D1117] outline-none"
           />
         </div>
+        {/* --- the flow: who it is going to, and where it comes from ---------
+             The endpoints are the seller's words. Bulk is refused by the server
+             without both, because "bulk" without a route is a sticker, not a
+             supply chain. Everything here is optional for a service or a
+             one-off, and the board shows 'no flow declared' rather than guessing. */}
+        <div className="pt-1.5 border-t border-[#E5E8EC] space-y-2">
+          <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#0D1117]/60">
+            Where this fits in the supply board (optional)
+          </p>
+          <div className="flex gap-2">
+            <select
+              aria-label="Flow"
+              value={listingDraft.flow}
+              onChange={(e) => onListingDraftChange({ flow: e.target.value as ListingFlowDraft })}
+              className="flex-1 bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl px-3 py-2 text-xs text-[#0D1117] outline-none"
+            >
+              <option value="">No flow — just a listing</option>
+              <option value="bulk">Bulk — for vendors &amp; shops</option>
+              <option value="direct">Direct — from the source</option>
+              <option value="niche">Niche — curated for consumers</option>
+              <option value="group">Group — pooled demand</option>
+            </select>
+            <input
+              aria-label="Commodity"
+              value={listingDraft.commodity}
+              onChange={(e) => onListingDraftChange({ commodity: e.target.value })}
+              placeholder="Commodity (tomatoes)"
+              className="flex-1 bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl px-3 py-2 text-xs text-[#0D1117] outline-none"
+            />
+          </div>
+          {(listingDraft.flow === 'bulk' || listingDraft.flow === 'direct' || listingDraft.flow === 'group') && (
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <input
+                  aria-label="Origin place"
+                  value={listingDraft.originName}
+                  onChange={(e) => onListingDraftChange({ originName: e.target.value })}
+                  placeholder={listingDraft.flow === 'direct' ? 'The source (Kamau Dairy, Limuru)' : 'Leaves from (Wakulima Market)'}
+                  className="flex-1 bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl px-3 py-2 text-xs text-[#0D1117] outline-none"
+                />
+                <select
+                  aria-label="Origin kind"
+                  value={listingDraft.originKind}
+                  onChange={(e) => onListingDraftChange({ originKind: e.target.value as ListingOriginKindDraft })}
+                  className="bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl px-2 py-2 text-xs text-[#0D1117] outline-none"
+                >
+                  <option value="">kind…</option>
+                  <option value="warehouse">warehouse / market</option>
+                  <option value="source">source (farm, fishery)</option>
+                  <option value="producer">producer (mill, dairy)</option>
+                  <option value="manufacturer">manufacturer</option>
+                  <option value="importer">importer</option>
+                </select>
+              </div>
+              {listingDraft.flow !== 'direct' && (
+                <div className="flex gap-2">
+                  <input
+                    aria-label="Destination place"
+                    value={listingDraft.destinationName}
+                    onChange={(e) => onListingDraftChange({ destinationName: e.target.value })}
+                    placeholder={listingDraft.flow === 'group' ? 'The pool (Kileleshwa flats)' : 'Goes to (Kilimani shops)'}
+                    className="flex-1 bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl px-3 py-2 text-xs text-[#0D1117] outline-none"
+                  />
+                  <select
+                    aria-label="Who it is for"
+                    value={listingDraft.destinationKind}
+                    onChange={(e) => onListingDraftChange({ destinationKind: e.target.value as ListingDestinationKindDraft })}
+                    className="bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl px-2 py-2 text-xs text-[#0D1117] outline-none"
+                  >
+                    <option value="">buyer…</option>
+                    <option value="vendors">shops &amp; vendors</option>
+                    <option value="consumers">households</option>
+                    <option value="pool">a pool / co-op</option>
+                  </select>
+                </div>
+              )}
+            </div>
+          )}
+          <div className="flex gap-2">
+            <input
+              aria-label="Unit label"
+              value={listingDraft.unit}
+              onChange={(e) => onListingDraftChange({ unit: e.target.value })}
+              placeholder="unit (crate, sack, litre)"
+              className="flex-1 bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl px-3 py-2 text-xs text-[#0D1117] outline-none"
+            />
+            <input
+              aria-label="Minimum order"
+              value={listingDraft.minOrder}
+              onChange={(e) => onListingDraftChange({ minOrder: e.target.value })}
+              placeholder="min order (5)"
+              inputMode="numeric"
+              className="w-32 bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl px-3 py-2 text-xs text-[#0D1117] outline-none"
+            />
+          </div>
+        </div>
+
         <button
           onClick={onCreateListing}
           disabled={busyId === 'listing'}

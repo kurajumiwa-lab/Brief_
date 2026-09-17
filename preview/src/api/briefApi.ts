@@ -4712,8 +4712,77 @@ export interface DiscoverFeatured {
   interest: { label: string; count: number };
   why: string;
 }
+export interface DiscoverFeedItem {
+  kind: 'listing' | 'event';
+  flow?: string | null;
+  commodity?: string | null;
+  origin?: string | null;
+  originKind?: string | null;
+  destination?: string | null;
+  destinationKind?: string | null;
+  unit?: string | null;
+  minOrder?: number | null;
+  id: string;
+  title: string;
+  description: string | null;
+  priceLabel: string | null;
+  dateLabel: string | null;
+  location: string | null;
+  mediaUrl: string | null;
+  seller: string | null;
+  stock: number | null;
+  orderable: boolean | null;
+  /** Only ever the contact the SELLER put on their own row. Never defaulted. */
+  contact: string | null;
+  contactNote: string | null;
+  interest: { label: string; count: number };
+  why: string;
+}
+export interface DiscoverFlow {
+  key: 'bulk' | 'direct' | 'niche' | 'group';
+  label: string;
+  sub: string;
+  subFilters: string[];
+  listings: number;
+  openDemand: number;
+}
+export interface DiscoverRoute {
+  origin: string;
+  destination: string;
+  flow: string | null;
+  listings: number;
+  sellers: string[];
+  topCommodities: string[];
+  commodities: string[];
+  commodityUndeclared: number | null;
+  minOrderFrom: number | null;
+  unit: string | null;
+  listingIds: string[];
+  openDemand: number;
+  openDemandQuantity: number | null;
+  openDemandRequestIds: string[];
+}
+export interface DiscoverGap {
+  requestId: string;
+  title: string;
+  category: string | null;
+  quantity: number | null;
+  unit: string | null;
+  location: string | null;
+  requiredBy: string | null;
+  requesterType: string | null;
+  coverage: 'routed' | 'listing_without_route' | 'no_route_declared';
+  destinationsInUse: string[];
+}
 export interface DiscoverSummary {
   tiles: DiscoverTile[];
+  feed: DiscoverFeedItem[];
+  flows?: DiscoverFlow[];
+  untagged?: number;
+  totals?: { activeListings: number; declaredRoutes: number; openPublicDemand: number };
+  routes?: DiscoverRoute[];
+  unmapped?: DiscoverGap[];
+  boardNote?: string;
   featured: DiscoverFeatured | null;
   featuredFrom: string | null;
   counts: { listings: number; events: number; circles: number; errands: number };

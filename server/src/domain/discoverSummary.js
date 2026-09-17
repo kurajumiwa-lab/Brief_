@@ -30,6 +30,7 @@
 import { store } from '../store.js';
 import { listListings } from './listing.js';
 import { browseEvents } from './events.js';
+import { flowSummary, routesFor, unmappedDemand } from './flows.js';
 import { listCircles } from './circle.js';
 
 const HOUR = 3600000;
@@ -41,6 +42,16 @@ function mediaUrl(listing) {
   return /^https?:\/\//.test(first) || String(first).startsWith('/api/')
     ? String(first)
     : `/api/media/file/${first}`;
+}
+
+/** A short, unambiguous date stamp for a card: "Sat 20 Sep", never a bare ISO. */
+function shortDate(iso) {
+  const ms = Date.parse(iso ?? '');
+  if (!Number.isFinite(ms)) return null;
+  const d = new Date(ms);
+  const day = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getUTCDay()];
+  const month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getUTCMonth()];
+  return `${day} ${d.getUTCDate()} ${month}`;
 }
 
 function newestTimestamp(values) {
@@ -75,6 +86,71 @@ export function discoverSummary({ viewerId = null, now = Date.now() } = {}) {
       ?? null;
 
   const events = browseEvents({ limit: 100, sort: 'date', viewerId });
+
+  // The feed itself: the same rows the tiles count, in the shape the old
+  // Discover screen drew them. Contact is carried ONLY when the seller wrote
+  // it on their own listing — never borrowed, never defaulted, never guessed.
+  const feed = [
+    ...listings.map((l) => {
+      const orders = settledCount(l.id);
+      return {
+        kind: 'listing',
+        id: l.id,
+        title: l.title,
+        description: l.description || null,
+        priceLabel: l.price === 0 ? 'Free' : `${l.currency ?? 'KES'} ${Number(l.price).toLocaleString('en-KE')}`,
+        dateLabel: null,
+        location: l.locationName ?? l.vendor?.location ?? null,
+        mediaUrl: mediaUrl(l),
+        seller: l.vendor?.displayName ?? null,
+        stock: l.quantityAvailable ?? null,
+        orderable: l.orderable !== false,
+        contact: l.vendor?.contactMethod ?? null,
+        contactNote: l.vendor?.contactMethod
+          ? 'The seller listed this contact themselves; Brief did not look it up or fill it in.'
+          : null,
+        flow: l.flow ?? null,
+        origin: l.originName ?? null,
+        originKind: l.originKind ?? null,
+        destination: l.destinationName ?? null,
+        destinationKind: l.destinationKind ?? null,
+        unit: l.unitLabel ?? null,
+        minOrder: l.minOrderQuantity ?? null,
+        commodity: l.commodity ?? null,
+        interest: { label: 'settled orders', count: orders },
+        why: pinnedIds.has(l.id)
+          ? 'pinned by the seller'
+          : orders > 0
+            ? `${orders} settled order${orders === 1 ? '' : 's'}`
+            : 'newest live listing'
+      };
+    }),
+    ...(events.events ?? []).map((e) => ({
+      kind: 'event',
+      id: e.slug,
+      title: e.title,
+      description: e.description || null,
+      priceLabel: e.goalAmount != null ? 'Contribution pot' : (e.price === 0 ? 'Free' : `${e.currency ?? 'KES'} ${Number(e.price).toLocaleString('en-KE')}`),
+      dateLabel: e.startsAt ? shortDate(e.startsAt) : null,
+      location: e.location ?? null,
+      mediaUrl: e.coverImageUrl ?? null,
+      seller: null,
+      stock: null,
+      orderable: null,
+      contact: null,
+      contactNote: null,
+      flow: null,
+      origin: null,
+      originKind: null,
+      destination: null,
+      destinationKind: null,
+      unit: null,
+      minOrder: null,
+      commodity: null,
+      interest: { label: 'registered', count: e.popularity ?? 0 },
+      why: e.featured ? 'the organiser marked it featured' : (e.popularity > 0 ? 'most registrations' : 'soonest date')
+    }))
+  ];
   const circles = listCircles(viewerId);
   const joinable = circles.filter((c) => c.canJoin).length;
   const openErrands = store.filter('errands', (e) => e.status === 'open').length;
@@ -137,7 +213,22 @@ export function discoverSummary({ viewerId = null, now = Date.now() } = {}) {
     { key: 'errands', label: 'Errands', count: openErrands, unit: 'open' }
   ];
 
+  const board = flowSummary();
+
   return {
+    tiles,
+    // The flow board: four tiles, the routes sellers have declared, and the
+    // open demand no declared route covers.
+    flows: board.flows,
+    untagged: board.untagged,
+    totals: board.totals,
+    routes: routesFor(null, { limit: 24 }),
+    unmapped: unmappedDemand({ limit: 8 }),
+    boardNote: board.note,
+    // Newest first, so the board reads as what just happened rather than as a
+    // ranked list. No score is computed and none could be: there is nothing to
+    // score with — no views of a listing, no saves, no seller rating.
+    feed: feed.sort((a, b) => String(b.id).localeCompare(String(a.id))),
     tiles,
     featured,
     featuredFrom,

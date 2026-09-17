@@ -216,7 +216,16 @@ app.post('/api/listings', (req, res) => {
         req.body?.quantityAvailable === undefined ? null : req.body.quantityAvailable,
       locationName: req.body?.locationName ?? null,
       objectId: req.body?.objectId ?? null,
-      media: req.body?.media ?? []
+      media: req.body?.media ?? [],
+      // The two axes a flow needs. Optional; the domain refuses a flow whose
+      // endpoints are missing, so the rule lives in one place, not in the UI.
+      flow: req.body?.flow ?? null,
+      originKind: req.body?.originKind ?? null,
+      originName: req.body?.originName ?? null,
+      destinationKind: req.body?.destinationKind ?? null,
+      destinationName: req.body?.destinationName ?? null,
+      unitLabel: req.body?.unitLabel ?? null,
+      minOrderQuantity: req.body?.minOrderQuantity ?? null
     });
     res.status(201).json({ listing: l });
   } catch (e) {

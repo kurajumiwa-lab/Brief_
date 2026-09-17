@@ -1,6 +1,8 @@
 import React from 'react';
 import * as briefApi from '../api/briefApi';
-import type { Dispute, Listing, Order, Vendor, VendorEarnings } from '../api/types';
+import type {
+  Dispute, Listing, ListingDestinationKindDraft, ListingFlowDraft, ListingOriginKindDraft, Order, Vendor, VendorEarnings
+} from '../api/types';
 import { ListingCard } from './marketplace/ListingCard';
 import { ListingDetail } from './marketplace/ListingDetail';
 import { VendorProfile } from './marketplace/VendorProfile';
@@ -84,7 +86,13 @@ export function Marketplace({ currentUserId = 'usr_me', initialSection = 'browse
   const [listingDraft, setListingDraft] = React.useState<{
     title: string; description: string; price: string;
     type: Listing['type']; quantity: string; location: string;
-  }>({ title: '', description: '', price: '', type: 'product', quantity: '', location: '' });
+    flow: ListingFlowDraft; commodity: string; originKind: ListingOriginKindDraft; originName: string;
+    destinationKind: ListingDestinationKindDraft; destinationName: string; unit: string; minOrder: string;
+  }>({
+    title: '', description: '', price: '', type: 'product', quantity: '', location: '',
+    flow: '', commodity: '', originKind: '', originName: '',
+    destinationKind: '', destinationName: '', unit: '', minOrder: ''
+  });
 
   // --- loaders -------------------------------------------------------------
 
@@ -219,12 +227,26 @@ export function Marketplace({ currentUserId = 'usr_me', initialSection = 'browse
           price,
           type: listingDraft.type,
           quantityAvailable: qty,
-          locationName: listingDraft.location || null
+          locationName: listingDraft.location || null,
+          // The flow axes travel as declared values. Blank stays absent rather
+          // than becoming 'unclassified' or a guessed warehouse.
+          flow: listingDraft.flow || null,
+          commodity: listingDraft.commodity.trim() || null,
+          originKind: listingDraft.originKind || null,
+          originName: listingDraft.originName.trim() || null,
+          destinationKind: listingDraft.destinationKind || null,
+          destinationName: listingDraft.destinationName.trim() || null,
+          unitLabel: listingDraft.unit.trim() || null,
+          minOrderQuantity: listingDraft.minOrder.trim() === '' ? null : Number(listingDraft.minOrder)
         }),
       loadSelling
     );
     if (ok) {
-      setListingDraft({ title: '', description: '', price: '', type: 'product', quantity: '', location: '' });
+      setListingDraft({
+        title: '', description: '', price: '', type: 'product', quantity: '', location: '',
+        flow: '', commodity: '', originKind: '', originName: '',
+        destinationKind: '', destinationName: '', unit: '', minOrder: ''
+      });
     }
   };
 

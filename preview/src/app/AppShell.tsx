@@ -7,6 +7,7 @@ import { SpaceShell } from '../features/spaces/SpaceShell';
 import { SpaceMoney } from '../features/spaces/SpaceMoney';
 import { CatalogView } from '../features/spaces/CatalogView';
 import { CityFeedView } from '../features/city/CityFeedView';
+import type { DiscoverRoom } from '../features/city/taxonomy';
 import { SpacesLanding } from '../features/spaces/SpacesLanding';
 import { PublicSpacePage } from '../features/spaces/PublicSpacePage';
 import { CreateFlowModal } from '../features/spaces/CreateFlowModal';
@@ -47,8 +48,9 @@ export const AppShell: React.FC<AppShellProps> = ({
   const [firstRun, setFirstRun] = useState<boolean>(false);
   // Which Discover segment a jump from Home should land on ('pulse' is the
   // world's numbers; the rest are the browse surfaces).
-  const [discoverSubTab, setDiscoverSubTab] =
-    useState<'events' | 'marketplace' | 'errands'>('events');
+  // One room per deep link, and the type comes from the taxonomy module so the
+  // shell can never name a room the board does not have.
+  const [discoverSubTab, setDiscoverSubTab] = useState<DiscoverRoom>('all');
   const [firstRunChecked, setFirstRunChecked] = useState<boolean>(false);
 
   // Modals
@@ -309,7 +311,7 @@ export const AppShell: React.FC<AppShellProps> = ({
               loadSpaces();
             }}
             onExploreDiscover={(sub) => {
-              if (sub === 'events' || sub === 'marketplace' || sub === 'errands') setDiscoverSubTab(sub);
+              if (sub) setDiscoverSubTab(sub);
               setActiveTab('city');
             }}
             onOpenPulse={() => setActiveTab('activity')}

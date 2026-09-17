@@ -349,28 +349,25 @@ async function main() {
 
   await act(async () => { root12.unmount(); host12.remove(); });
 
-  // --- 13. DiscoverScreen (Modern 3D Depth & Staggered GlassCard Hub) ---
-  console.log('\n--- 13. DiscoverScreen ---');
+  // --- 13. Discover: the legacy screen is now the production flow board ----
+  console.log('\n--- 13. DiscoverScreen (unified flow board) ---');
+  const discoverModule = require('./src/screens/DiscoverScreen.tsx');
+  check('the hardcoded discover posts are deleted from the tree', discoverModule.INITIAL_DISCOVER_POSTS === undefined);
   const host13 = document.createElement('div');
   document.body.appendChild(host13);
   const root13 = createRoot(host13);
   await act(async () => {
-    root13.render(React.createElement(DiscoverScreen));
+    root13.render(React.createElement(discoverModule.DiscoverScreen));
   });
 
-  const text13 = host13.textContent;
-  check('renders Discover title and warm greeting', text13.includes('Discover') && text13.includes('Good morning'));
-  check('shows visual toggle category options', text13.includes('All') && text13.includes('Events') && text13.includes('Products') && text13.includes('News'));
-  check('renders floating action pill Create button', text13.includes('Create'));
-
-  // Tap first card to open detail bottom sheet
-  const firstCard = host13.querySelector('.rounded-\\[20px\\]');
-  if (firstCard) {
-    await act(async () => {
-      firstCard.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
-    });
-  }
-  check('opens detail bottom sheet with direct WhatsApp & Telegram actions', host13.textContent.includes('WhatsApp') && host13.textContent.includes('Telegram') && host13.textContent.includes('Contact Organizer / Seller Directly:'));
+  const text13 = host13.textContent.replace(/\s+/g, ' ');
+  check('renders the four flows as the primary switcher',
+    /Bulk/.test(text13) && /Direct/.test(text13) && /Niche/.test(text13) && /Group/.test(text13));
+  check('the Create pill leads to a real loop', /Host an event/.test(text13));
+  check('no invented vendor crowd, no borrowed photography, no fake contact',
+    !/40 verified/.test(text13) && !/unsplash/i.test(host13.innerHTML) && !/\+254712345678/.test(host13.innerHTML));
+  check('an unreadable board says so instead of showing the demo',
+    /could not be read|Try again/.test(text13));
 
   await act(async () => { root13.unmount(); host13.remove(); });
 

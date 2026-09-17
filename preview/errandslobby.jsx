@@ -115,13 +115,13 @@ async function main() {
     const { container } = mount(React.createElement(CityFeedView, { onOpenSpace: () => {} }));
     await flush();
     const tiles = Array.from(container.querySelectorAll('button[role="tab"]')).map((b) => text(b));
-    assert.ok(tiles.some((x) => /Marketplace/.test(x)), 'Marketplace is a tile');
+    assert.ok(tiles.some((x) => /Bulk/.test(x)), 'the flows lead the grid');
     assert.ok(tiles.some((x) => /Events/.test(x)), 'Events is a tile');
-    assert.ok(tiles.some((x) => /Circles/.test(x)), 'Circles is a tile');
+    assert.ok(tiles.some((x) => /Circles/.test(x)), 'Circles is a side view');
     assert.ok(tiles.some((x) => /Errands/.test(x)), 'Errands is a tile');
-    assert.ok(tiles.some((x) => /Everything at once/.test(x)), 'and All is a quiet strip, not a fifth competitor');
+
     assert.equal(container.querySelector('nav[aria-label="Discover sections"]'), null, 'no chip row survives');
-    const errandsTile = Array.from(container.querySelectorAll('button[role="tab"]')).find((b) => text(b).includes('Errands'));
+    const errandsTile = Array.from(container.querySelectorAll('button[role="tab"]')).find((b) => /^\s*Errands/.test(text(b)));
     click(errandsTile);
     await flush();
     assert.ok(text(container).includes('The lobby'), 'the errands room opened from the grid');

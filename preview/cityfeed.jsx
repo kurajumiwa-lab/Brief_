@@ -144,9 +144,12 @@ async function main() {
     const nav = c.querySelector('nav[aria-label="Discover sections"]');
     assert.ok(!nav, 'no chip row survives on this screen');
     const tiles = Array.from(c.querySelectorAll('button[role="tab"]'));
-    assert.equal(tiles.length, 5, 'four rooms + Everything at once');
-    assert.ok(tiles.find((b) => b.textContent.includes('Marketplace')), 'a Marketplace tile exists');
-    assert.equal(tiles.find((b) => b.textContent.includes('Marketplace')).getAttribute('aria-selected'), 'true', 'and it is the front door');
+    assert.equal(tiles.length, 8, 'four flows, four side views: the tile grid is the navigation');
+    assert.ok(tiles.some((b) => /All/.test(b.textContent)), 'the mixed view is a tile, not a tab strip');
+    assert.ok(tiles.some((b) => b.textContent.includes('Bulk')), 'the flow tiles lead the screen');
+    const selected = tiles.filter((b) => b.getAttribute('aria-selected') === 'true');
+    assert.equal(selected.length, 1, 'exactly one view is active on open');
+    assert.ok(/All/.test(selected[0].textContent), 'and it is the mixed supply view, with the counter under it');
     // No scoreboard "0 : 0" hero.
     const hero = Array.from(c.querySelectorAll('div')).find((d) => (d.getAttribute('class') || '').includes('text-3xl'));
     assert.ok(!hero, 'no scoreboard hero remains');
@@ -159,7 +162,7 @@ async function main() {
     await flush();
     act(() => { btn('Host').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
     await flush();
-    assert.ok(text(document.body).includes('Put your event on the public feed'), 'the host-event form opens');
+    assert.ok(text(document.body).includes('Put your event on the board'), 'the host-event form opens');
     assert.ok(document.querySelector('input[aria-label="Event title"]'), 'the form has a title input');
     // close it
     act(() => { Array.from(document.querySelectorAll('button')).find((b) => text(b) === 'Cancel').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
@@ -176,7 +179,8 @@ async function main() {
     const c = mount(React.createElement(CityFeedView, { onOpenSpace: () => {} }));
     await flush();
     const t = text(c);
-    assert.ok(t.includes('The counter'), 'Discover opens on the marketplace, not the gallery');
+    assert.ok(t.includes('The counter'), 'Discover opens on the supply board, not the gallery');
+    assert.ok(t.includes('The flows'), 'with the flow tiles as its first control');
     // What was taken OUT, and why.
     // The complaint was the orphaned heading clipped mid-word under the
     // gallery, not the sub-tabs themselves: in their own room they are correct.
@@ -189,7 +193,7 @@ async function main() {
     act(() => { evTile.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
     await flush();
     assert.ok(!/The counter/.test(text(c)), 'the Events room holds no market furniture');
-    assert.ok(text(c).includes('Events around you'), 'it holds the case instead');
+    assert.ok(text(c).includes('The case — published events'), 'it holds the case instead');
     assert.ok(!/WAIRO/.test(t), 'the rider card belongs to errands, not the gallery');
     assert.ok(!/What's moving/.test(t), 'the signal line is Home’s job, not a browse header');
     assert.ok(!/shown\b/.test(t), 'no result counter anywhere on the browse screen');

@@ -1030,8 +1030,22 @@ export interface Listing {
 }
 
 /** `status` is absent: a listing moves through the lifecycle endpoint only. */
+/** Draft values are free-text-or-empty in the form; the API takes null. */
+export type ListingFlowDraft = '' | 'bulk' | 'direct' | 'niche' | 'group';
+export type ListingOriginKindDraft = '' | 'warehouse' | 'source' | 'producer' | 'manufacturer' | 'importer';
+export type ListingDestinationKindDraft = '' | 'consumers' | 'vendors' | 'pool';
+
 export interface ListingCreate {
   title: string;
+  /** The two axes a flow needs. Optional — a service has no origin. */
+  flow?: 'bulk' | 'direct' | 'niche' | 'group' | null;
+  commodity?: string | null;
+  originKind?: 'warehouse' | 'source' | 'producer' | 'manufacturer' | 'importer' | null;
+  originName?: string | null;
+  destinationKind?: 'consumers' | 'vendors' | 'pool' | null;
+  destinationName?: string | null;
+  unitLabel?: string | null;
+  minOrderQuantity?: number | null;
   description?: string;
   type?: ListingType;
   price: number;

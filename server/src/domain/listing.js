@@ -26,6 +26,47 @@ export const LISTING_TYPES = ['product', 'service', 'experience', 'event'];
 
 export const LISTING_STATUS = ['draft', 'active', 'paused', 'sold_out', 'archived'];
 
+// ---------------------------------------------------------------------------
+// THE TWO AXES A SUPPLY BOARD NEEDS (see the taxonomy module on the client).
+//
+//   flow       WHERE IT IS GOING  → niche (a consumer), bulk (shops/resellers),
+//                                   direct (bypassing the middle), group (a pool)
+//   originKind WHERE IT COMES FROM → warehouse/market, source, producer,
+//                                   manufacturer, importer
+//
+// They are OPTIONAL on a listing, and that is the honest part: a mobile
+// welder in Riruta has no origin and no destination, and forcing one would
+// make half the board invent addresses. What is NOT optional is the rule below
+// — a listing may not call itself bulk without saying where it leaves from and
+// where it goes. Bulk is a flow, and a flow without endpoints is a slogan.
+// ---------------------------------------------------------------------------
+export const LISTING_FLOWS = ['bulk', 'direct', 'niche', 'group'];
+export const LISTING_ORIGIN_KINDS = ['warehouse', 'source', 'producer', 'manufacturer', 'importer'];
+export const LISTING_DESTINATION_KINDS = ['consumers', 'vendors', 'pool'];
+
+/**
+ * The one rule that keeps the taxonomy honest. Returns an error string, or null.
+ * Called on create AND on update, against the merged row, so a listing cannot
+ * be reclassified into a flow it has no endpoints for.
+ */
+export function flowProblem(row) {
+  const flow = row?.flow ?? null;
+  if (!flow) return null;
+  if (!LISTING_FLOWS.includes(flow)) return `flow must be one of ${LISTING_FLOWS.join(', ')}`;
+  const origin = String(row.originName ?? '').trim();
+  const destination = String(row.destinationName ?? '').trim();
+  if (flow === 'bulk' && (!origin || !destination)) {
+    return 'a bulk listing has to name where it leaves from and where it goes — bulk is a flow, not a label';
+  }
+  if (flow === 'direct' && !origin) {
+    return 'a direct listing has to name its source (the farm, the fishery, the mill, the factory)';
+  }
+  if (flow === 'group' && !destination) {
+    return 'a group listing has to name the pool it is filling (the estate, the trade group, the circle)';
+  }
+  return null;
+}
+
 // Explicit and server-authoritative. A client cannot write a status directly;
 // it names a transition and the server decides whether that is legal.
 //
@@ -61,7 +102,15 @@ export function createListing({
   quantityAvailable = null,
   locationName = null,
   objectId = null,
-  media = []
+  media = [],
+  flow = null,
+  originKind = null,
+  originName = null,
+  destinationKind = null,
+  destinationName = null,
+  unitLabel = null,
+  minOrderQuantity = null,
+  commodity = null
 }) {
   const vendor = store.find('vendors', (v) => v.id === vendorId);
   if (!vendor) throw new Error('vendor not found');
@@ -89,6 +138,20 @@ export function createListing({
     throw new Error('object not found');
   }
 
+  const min = minOrderQuantity == null || minOrderQuantity === '' ? null : Number(minOrderQuantity);
+  if (min !== null && (!Number.isInteger(min) || min < 1)) {
+    throw new Error('minOrderQuantity must be a whole number of one or more, or left blank');
+  }
+  const draft = {
+    flow: flow || null,
+    originKind: originKind || null,
+    originName: originName || null,
+    destinationKind: destinationKind || null,
+    destinationName: destinationName || null
+  };
+  const problem = flowProblem(draft);
+  if (problem) throw new Error(problem);
+
   const now = new Date().toISOString();
   const listing = {
     id: newId('list'),
@@ -107,6 +170,20 @@ export function createListing({
     locationName: locationName ?? null,
     objectId: objectId ?? null,
     media: Array.isArray(media) ? media : [],
+    // The two axes. Optional, and null renders as "not stated" — never as a
+    // guessed warehouse or an invented destination.
+    flow: flow || null,
+    originKind: LISTING_ORIGIN_KINDS.includes(originKind) ? originKind : null,
+    originName: originName ? String(originName).trim().slice(0, 120) : null,
+    destinationKind: LISTING_DESTINATION_KINDS.includes(destinationKind) ? destinationKind : null,
+    destinationName: destinationName ? String(destinationName).trim().slice(0, 120) : null,
+    unitLabel: unitLabel ? String(unitLabel).trim().slice(0, 24) : null,
+    // What the goods ARE, in the seller's own word ("tomatoes", "secondhand
+    // shoes"). Demand is matched on this field rather than on a title, because
+    // guessing a commodity out of "Tomatoes, 20 crates — call before noon" is
+    // how a board ends up routing on a substring.
+    commodity: commodity ? String(commodity).trim().slice(0, 60) : null,
+    minOrderQuantity: min,
     // A listing starts as a draft. It is not offered to anyone until the
     // vendor activates it.
     status: 'draft',
@@ -184,7 +261,9 @@ export function updateListing(id, patch) {
 
   const allowed = [
     'title', 'description', 'type', 'price', 'currency',
-    'quantityAvailable', 'locationName', 'media'
+    'quantityAvailable', 'locationName', 'media',
+    'flow', 'originKind', 'originName', 'destinationKind', 'destinationName',
+    'unitLabel', 'minOrderQuantity', 'commodity'
   ];
   const clean = {};
   for (const k of allowed) if (k in patch) clean[k] = patch[k];
@@ -197,6 +276,19 @@ export function updateListing(id, patch) {
   }
   if ('price' in clean && (!Number.isFinite(clean.price) || clean.price <= 0)) {
     throw new Error('price must be a number greater than zero');
+  }
+  if ('minOrderQuantity' in clean) {
+    const v = clean.minOrderQuantity == null || clean.minOrderQuantity === '' ? null : Number(clean.minOrderQuantity);
+    if (v !== null && (!Number.isInteger(v) || v < 1)) {
+      throw new Error('minOrderQuantity must be a whole number of one or more, or left blank');
+    }
+    clean.minOrderQuantity = v;
+  }
+  // The flow rule is checked against the row AS IT WOULD BECOME, so a seller
+  // cannot strip the origin off a bulk listing and keep the badge.
+  if (['flow', 'originName', 'destinationName'].some((k) => k in clean)) {
+    const problem = flowProblem({ ...listing, ...clean });
+    if (problem) throw new Error(problem);
   }
   if ('quantityAvailable' in clean && clean.quantityAvailable !== null) {
     if (!Number.isInteger(clean.quantityAvailable) || clean.quantityAvailable < 0) {

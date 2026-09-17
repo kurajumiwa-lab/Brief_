@@ -20,7 +20,9 @@ import { store } from '../store.js';
 // Active demand = a request that is live and has no accepted quote yet. A
 // request with an accepted quote has status "ready_for_work" (or later), so
 // anything before that is still looking for supply.
-const UNMET_STATUSES = new Set(['open', 'matching', 'quoted']);
+// Exported so every read that asks "is this demand still open?" uses the SAME
+// definition — a second copy is how a board and a gap engine disagree.
+export const UNMET_STATUSES = new Set(['open', 'matching', 'quoted']);
 
 function severityOf(request, matchCount) {
   if (matchCount === 0) return 'no_supplier';
