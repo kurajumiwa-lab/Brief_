@@ -41,6 +41,12 @@ Two hard edges:
   the mood. (A colour alone also fails a colour-blind reader, which is why the
   optional one-word label exists.)
 
+Two token families, deliberately: `--state-*` (bright, **graphics only** — 2.1 to
+4.3:1 against paper, which clears the 3:1 bar for a shape and fails the 4.5:1 bar
+for text) and `--state-*-ink` (the same hues darkened to 4.6–7.0:1, which is what a
+`color:` may use). `room.jsx` test 12 measures both floors and fails if a bright hue
+shows up as small text anywhere.
+
 `preview/src/ui/StateDot.tsx` is the only source of these mappings, and
 `dotForMaintenance()` maps the server's `fresh/active/stale/dormant/unstarted` so
 five surfaces cannot disagree about what STALE looks like.

@@ -483,6 +483,51 @@ async function main() {
   }
   pass('The flow reads as numbers and dots; every explanation lives on one audit page');
 
+
+  // --- 12. the dot contract: bright for graphics, dark enough for text -------
+  // A state colour that cannot be read is a state colour that must not be used
+  // for words. Both floors are measured, and the app is checked for taking a
+  // graphic hue into a small-text `color:` slot.
+  {
+    const lum = (hex) => {
+      const f = (v) => (v <= 0.03928 ? v / 255 / 12.92 : (((v / 255) + 0.055) / 1.055) ** 2.4);
+      return 0.2126 * f(parseInt(hex.slice(1, 3), 16)) + 0.7152 * f(parseInt(hex.slice(3, 5), 16)) + 0.0722 * f(parseInt(hex.slice(5, 7), 16));
+    };
+    const contrast = (a, b) => {
+      const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m);
+      return (x + 0.05) / (y + 0.05);
+    };
+    const read = (name) => themeCss.match(new RegExp(`--${name}:\\s*(#[0-9A-Fa-f]{6})`))[1];
+    const paper = read('brief-card');
+    for (const g of ['state-live', 'state-quiet', 'state-moving', 'state-stale', 'state-empty']) {
+      assert.ok(contrast(read(g), paper) >= 2.0, `${g} is at least visible as a shape on paper`);
+      assert.ok(contrast(read(g), paper) < 4.5, `${g} stays a graphic — it is not allowed to become body copy`);
+    }
+    for (const t of ['state-live-ink', 'state-quiet-ink', 'state-moving-ink', 'state-stale-ink', 'state-empty-ink']) {
+      assert.ok(contrast(read(t), paper) >= 4.5, `${t} clears AA as text on paper (${contrast(read(t), paper).toFixed(2)})`);
+    }
+    // the only legal use of a bright state hue in the app is a dot or a bar
+    const fs2 = require('fs');
+    const path2 = require('path');
+    const bad = [];
+    const walk = (d) => {
+      if (!fs2.existsSync(d)) return;
+      for (const name of fs2.readdirSync(d)) {
+        const fp = path2.join(d, name);
+        if (fs2.statSync(fp).isDirectory()) { if (name !== 'node_modules') walk(fp); continue; }
+        if (!/\.tsx?$/.test(name)) continue;
+        fs2.readFileSync(fp, 'utf8').split('\n').forEach((line, i) => {
+          const m = line.match(/text-\[(9|1[0-5])px\][^\n]*color:\s*'var\(--state-(live|quiet|moving|stale|empty|)\)'/)
+            || line.match(/color:\s*'var\(--state-(live|quiet|moving|stale|empty|)\)'[^\n]*text-\[(9|1[0-5])px\]/);
+          if (m && !/-ink/.test(line)) bad.push(`${path2.relative(__dirname, fp)}:${i + 1}`);
+        });
+      }
+    };
+    for (const d of ['src/features', 'src/components', 'src/ui']) walk(path2.join(__dirname, d));
+    assert.deepEqual(bad, [], 'no bright state hue is used as small text anywhere');
+  }
+  pass('State hues are graphics, their -ink shades are text, and both floors are measured');
+
   console.log('\nPASS ' + count);
   process.exit(0);
 }

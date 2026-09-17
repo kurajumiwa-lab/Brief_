@@ -167,6 +167,17 @@
   --state-stale: #D97757;
   --state-empty: #B9AC97;
 
+  /* The same hues, dark enough to be TEXT. The five above clear 3:1 (a dot, an
+     icon, a bar) but not 4.5:1 — an amber dot at 2.2:1 is perfectly legible as a
+     shape and unreadable as a sentence. So a state that must be *written* takes
+     the -ink shade, and the bright one stays reserved for graphics. Measured in
+     room.jsx: every -ink pair clears 4.5:1 on paper, every graphic clears 3:1. */
+  --state-live-ink: #3B7A43;
+  --state-quiet-ink: #8A5A12;
+  --state-moving-ink: #1F4FB8;
+  --state-stale-ink: #A2492B;
+  --state-empty-ink: #7E7057;
+
   /* --- Shape language (§5) --- */
   --radius-card: 24px;
   --radius-hero: 28px;
