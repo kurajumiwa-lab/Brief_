@@ -36,12 +36,18 @@ const prefersReducedMotion = () => {
   }
 };
 
-const clockOf = (iso: string | null) => {
+// A time with no date next to it reads as "just now" — and on a snapshot taken
+// three days ago that is a lie by formatting. The stamp carries the day of the
+// newest row it came from, so "as of" can never be mistaken for a live clock.
+const stampOf = (iso: string | null) => {
   if (!iso) return null;
   const ms = Date.parse(iso);
   if (!Number.isFinite(ms)) return null;
   try {
-    return new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const d = new Date(ms);
+    const day = d.toLocaleDateString('en-KE', { day: 'numeric', month: 'short' });
+    const time = d.toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' });
+    return `${day} · ${time}`;
   } catch {
     return null;
   }
@@ -92,7 +98,7 @@ export function SignalBar({
     return () => clearInterval(t);
   }, [rotate, facts.length]);
 
-  const stamp = clockOf(pulse?.asOf ?? null);
+  const stamp = stampOf(pulse?.asOf ?? null);
   const current = facts[idx] ?? null;
   const counts = useMemo(() => {
     if (!pulse) return null;
@@ -153,7 +159,7 @@ export function SignalBar({
           What's moving
         </span>
         <span className="text-[11px] font-mono shrink-0" style={{ color: 'var(--color-text-muted)' }}>
-          {stamp ? `as of ${stamp}` : 'snapshot'}
+          {stamp ? `newest row ${stamp}` : 'no rows yet'}
         </span>
 
         <div className="min-w-0 flex-1 text-right">

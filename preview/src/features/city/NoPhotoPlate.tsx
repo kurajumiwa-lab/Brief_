@@ -32,10 +32,13 @@ export interface NoPhotoPlateProps {
   stamp?: string | null;
   /** Cover plates want no copy; a full card can carry the two quiet lines. */
   quiet?: boolean;
+  /** The hue of the wing or flow the row declares. A colour that means
+   *  something, never one derived from a title. */
+  accent?: string | null;
   className?: string;
 }
 
-export function NoPhotoPlate({ seller, mark = null, icon = null, stamp = null, quiet = false, className = '' }: NoPhotoPlateProps) {
+export function NoPhotoPlate({ seller, mark = null, icon = null, stamp = null, quiet = false, accent = null, className = '' }: NoPhotoPlateProps) {
   return (
     <span
       aria-hidden="true"
@@ -45,11 +48,11 @@ export function NoPhotoPlate({ seller, mark = null, icon = null, stamp = null, q
       {/* The plate is two layers: the room's plaster, then a corner of accent
           light. Painting the plaster first means a surface still looks right in
           a browser (or a test) that never parses a multi-layer background. */}
-      <span className="absolute inset-0" style={{ background: plateGlow('var(--color-primary)') }} />
+      <span className="absolute inset-0" style={{ background: plateGlow(accent ?? 'var(--color-primary)') }} />
       <span className="flex items-center justify-between gap-2">
         <span
           className="w-8 h-8 rounded-2xl grid place-items-center"
-          style={{ background: 'rgba(255,255,255,0.66)', color: 'var(--color-primary)' }}
+          style={{ background: 'rgba(255,255,255,0.72)', color: accent ?? 'var(--color-primary)' }}
         >
           {icon ?? <Package className="w-4 h-4" />}
         </span>

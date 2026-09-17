@@ -4,7 +4,8 @@ import {
   ShoppingBag, Sparkles, Users, X
 } from 'lucide-react';
 import * as briefApi from '../../api/briefApi';
-import type { DiscoverFeedItem, DiscoverRoute, DiscoverSummary } from '../../api/briefApi';
+import type { DiscoverFeedItem, DiscoverFlow, DiscoverRoute, DiscoverSummary } from '../../api/briefApi';
+import { DerivationNote } from '../../ui/DerivationNote';
 import { MuseumGallery } from './MuseumGallery';
 import { Marketplace } from '../../components/Marketplace';
 import { Circles } from '../../components/Circles';
@@ -58,6 +59,42 @@ import { soundEngine } from '../../utils/SoundEngine';
 /** Icon per FLOW, at plate size. The mark is the flow the SELLER declared, so an
     untagged listing gets no mark rather than a guessed one. */
 const BOARD_ICONS: Record<string, string> = { bulk: 'box', direct: 'bike', niche: 'leaf', group: 'users' };
+
+/** A hue per FLOW, as an identity — the same reasoning as the museum's wing
+    tints: the same flow is always the same colour, so the colour teaches the
+    taxonomy. It is never hashed from a title, and an untagged listing gets the
+    room's default rather than a guessed hue. */
+const FLOW_ACCENT: Record<string, string> = { bulk: '#4F46E5', direct: '#0E7C86', niche: '#8A5A2B', group: '#16A34A' };
+
+/** The one action that changes a given empty flow, in the flow's own words. */
+function zeroAction(f: DiscoverFlow, untagged: number): string {
+  if (f.zeroReason === 'untagged_only' && untagged > 0) return `Tag a live offer as ${f.key} →`;
+  if (f.key === 'bulk' || f.key === 'group') return 'Declare a route →';
+  return `Post the first ${f.label.toLowerCase()} offer →`;
+}
+
+const FIELD_LABEL: Record<string, string> = {
+  originName: 'where it leaves from',
+  destinationName: 'where it goes'
+};
+
+/**
+ * One sentence per empty flow, and a different one per REASON — because four
+ * tiles all saying "no offers yet, post one" is a form letter. The reason comes
+ * from the server's own counts (untagged offers, other flows, nothing at all),
+ * and the demand is quoted from the fields the flow requires.
+ */
+function zeroCopy(f: DiscoverFlow, untagged: number): string {
+  const needs = (f.requires ?? []).map((x) => FIELD_LABEL[x] ?? x);
+  const rule = needs.length ? ` A ${f.key} offer needs ${needs.join(' and ')}.` : '';
+  if (f.zeroReason === 'untagged_only') {
+    return `${untagged} live offer${untagged === 1 ? '' : 's'} on the board ${untagged === 1 ? 'declares' : 'declare'} no flow at all${rule}`;
+  }
+  if (f.zeroReason === 'other_flows_only') {
+    return `Other flows have offers; none has been declared ${f.key.toLowerCase()}${rule}`;
+  }
+  return `Nothing is published on the board yet${rule}`;
+}
 
 const ICONS: Record<string, React.ReactNode> = {
   box: <Package className="w-6 h-6" />,
@@ -129,6 +166,7 @@ function FeedCard({ item, onOpen }: { item: DiscoverFeedItem; onOpen: (item: Dis
           mark={item.flow ?? 'listing'}
           icon={plateIcon(item)}
           stamp={stamp}
+          accent={(item.flow && FLOW_ACCENT[item.flow]) || null}
         />
       )}
       <span className="absolute inset-0" style={{ background: PHOTO_SCRIM }} />
@@ -148,6 +186,17 @@ function FeedCard({ item, onOpen }: { item: DiscoverFeedItem; onOpen: (item: Dis
           style={{ background: 'rgba(24,19,12,0.6)', color: 'var(--accent-ink)' }}
         >
           <CalendarDays className="w-3 h-3" /> {dateLabel}
+        </span>
+      )}
+
+      {!item.mediaUrl && (
+        <span className="absolute left-3 top-3 block pointer-events-none">
+          <span className="block font-mono text-[26px] font-black leading-none" style={{ color: 'var(--brief-ink)' }}>
+            {item.interest.count}
+          </span>
+          <span className="block text-[9px] font-black uppercase tracking-[0.14em] mt-0.5" style={{ color: 'var(--brief-muted)' }}>
+            {item.interest.label}
+          </span>
         </span>
       )}
 
@@ -503,12 +552,13 @@ export function DiscoverFeed({
                   {src?.label ?? (f.key.charAt(0).toUpperCase() + f.key.slice(1))}
                 </span>
                 <span className="block text-[10px] leading-snug" style={{ color: isActive ? 'rgba(255,255,255,0.82)' : 'var(--brief-muted)' }}>
-                  {empty && onPostListing
-                    ? 'No offers yet — post one'
-                    : empty
-                      ? 'No offers yet'
-                      : unitFor(f.key)}
+                  {empty && src ? zeroCopy(src, summary?.untagged ?? 0) : unitFor(f.key)}
                 </span>
+                {empty && src && onPostListing && (
+                  <span className="block mt-1 text-[10px] font-black" style={{ color: isActive ? 'var(--accent-ink)' : 'var(--color-primary)' }}>
+                    {zeroAction(src, summary?.untagged ?? 0)}
+                  </span>
+                )}
                 {src && src.openDemand > 0 && (
                   <span className="absolute -bottom-0.5 right-3 text-[9px] font-mono" style={{ color: isActive ? 'rgba(255,255,255,0.8)' : 'var(--color-quiet)' }}>
                     {src.openDemand} ask{src.openDemand === 1 ? '' : 's'} name it
@@ -547,12 +597,12 @@ export function DiscoverFeed({
           })}
         </div>
 
-        {summary?.untagged ? (
-          <p className="text-[10px] leading-snug" style={{ color: 'var(--color-quiet)' }}>
-            {summary.untagged} live listing{summary.untagged === 1 ? ' has' : 's have'} no flow declared, so {summary.untagged === 1 ? 'it appears' : 'they appear'} under
-            All and in no route. Nothing here is sorted by guesswork.
-          </p>
-        ) : null}
+        <p className="text-[10px] leading-snug" style={{ color: 'var(--brief-muted)' }}>
+          {summary?.scope === 'national' || summary?.areaFiltered === false
+            ? 'This is the country\'s board — Brief does not filter by your area, so a zero here is nobody has declared it, not nothing is happening near you.'
+            : null}
+          {summary?.untagged ? ` ${summary.untagged} live listing${summary.untagged === 1 ? '' : 's'} sit${summary.untagged === 1 ? 's' : ''} outside every flow.` : ''}
+        </p>
       </section>
 
       {failed && (
@@ -688,7 +738,7 @@ export function DiscoverFeed({
 
       {room === 'events' && (
         <section className="space-y-2">
-          <h3 className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>The case — published events</h3>
+          <h3 className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>What's on — published events</h3>
           <MuseumGallery />
         </section>
       )}
@@ -755,7 +805,12 @@ export function DiscoverFeed({
       )}
 
       {summary?.boardNote && (
-        <p className="text-[10px] leading-snug px-1" style={{ color: 'var(--color-quiet)' }}>{summary.boardNote}</p>
+        <div className="px-1">
+          <DerivationNote
+            summary="Every figure here is a count of rows, recomputed as you read. Nothing is seeded or ranked."
+            detail={summary.boardNote}
+          />
+        </div>
       )}
 
       {/* ── the Create pill ─────────────────────────────────────────────── */}

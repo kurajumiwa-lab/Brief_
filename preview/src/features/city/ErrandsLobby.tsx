@@ -44,6 +44,18 @@ const money = (n: number | null, currency: string) => (n == null ? 'no fee state
 
 type Errors = Record<string, string>;
 
+/** A carrier's eligibility code, in the words the carrier uses. */
+export function basisLabel(code: string): string {
+  const raw = String(code ?? '');
+  if (raw === 'role:field_agent') return 'Field agent';
+  if (raw === 'role:partner') return 'Partner';
+  const claims = raw.match(/^agent:(\d+) active shop claims?$/);
+  if (claims) return `${claims[1]} shop${claims[1] === '1' ? '' : 's'} run from this account`;
+  const pickups = raw.match(/^rider:(\d+) pickups? assigned$/);
+  if (pickups) return `${pickups[1]} pickup${pickups[1] === '1' ? '' : 's'} assigned to you`;
+  return raw;
+}
+
 export function ErrandsLobby({ className = '' }: { className?: string }) {
   const [board, setBoard] = useState<ErrandBoard | null>(null);
   const [providers, setProviders] = useState<ErrandProviders | null>(null);
@@ -52,6 +64,9 @@ export function ErrandsLobby({ className = '' }: { className?: string }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [posting, setPosting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  // Which external carrier's "why" is open. One at a time, and only on this
+  // surface: the card states the limit in a clause, the reason is a tap away.
+  const [whyOpen, setWhyOpen] = useState<string | null>(null);
   const [draft, setDraft] = useState({ what: '', pickup: '', dropoff: '', sizeOrWeight: '', whenNeeded: '', offeredFeeKes: '', note: '' });
 
   const load = useCallback(async () => {
@@ -335,9 +350,27 @@ export function ErrandsLobby({ className = '' }: { className?: string }) {
           {(providers?.external ?? []).map((p) => (
             <div key={p.key} className="brief-lobby-card p-3" data-urgency="quiet">
               <p className="text-[13px] font-bold" style={{ color: '#241F1A' }}>{p.name}</p>
+              {/* One clause on the card, the reason a tap away: three cards each
+                  carrying the same disclaimer is what made this screen read as
+                  paperwork. Nothing is deleted — the sentence moves. */}
               <p className="text-[11px] mt-1" style={{ color: 'rgba(36,31,26,0.66)' }}>
-                Brief cannot book, price or track this one. {p.reason.charAt(0).toUpperCase() + p.reason.slice(1)}.
+                No booking, price or tracking inside Brief.{' '}
+                <button
+                  type="button"
+                  onClick={() => setWhyOpen(whyOpen === p.key ? null : p.key)}
+                  aria-expanded={whyOpen === p.key}
+                  className="font-bold underline decoration-dotted underline-offset-2 cursor-pointer"
+                  style={{ color: 'var(--color-primary)', background: 'none', border: 'none', padding: 0, font: 'inherit' }}
+                >
+                  Why
+                </button>
               </p>
+              {whyOpen === p.key && (
+                <p className="text-[10px] leading-relaxed mt-1 rounded-xl px-2.5 py-2" style={{ background: 'rgba(36,31,26,0.05)', color: 'rgba(36,31,26,0.72)' }}>
+                  {p.reason}. Brief will not quote a price for a carrier it cannot see, and no rating is shown here
+                  for a delivery that was not made through the app.
+                </p>
+              )}
             </div>
           ))}
         </div>

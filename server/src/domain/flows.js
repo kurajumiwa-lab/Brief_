@@ -58,6 +58,21 @@ export const FLOWS = [
   }
 ];
 
+/**
+ * What each flow demands of a listing, in field names. This is the same rule
+ * `listing.js` enforces on create and on update (`flowProblem`); it is restated
+ * here as data so the BOARD can explain an empty flow in the seller's own terms
+ * — "a bulk offer needs an origin and a destination; without both it is niche".
+ * A test in flows.mjs fails if the two ever disagree, so this cannot quietly
+ * drift into a friendlier lie about the rule.
+ */
+export const FLOW_REQUIRES = {
+  bulk: ['originName', 'destinationName'],
+  direct: ['originName'],
+  group: ['destinationName'],
+  niche: []
+};
+
 const norm = (v) => String(v ?? '').trim().toLowerCase();
 const wordHits = (haystack, needle) => {
   const h = norm(haystack);
@@ -209,17 +224,35 @@ export function flowSummary() {
     else untagged++;
   }
   const demand = openDemand();
+  const otherFlows = FLOWS.reduce((n, f) => n + (f.key ? byFlow.get(f.key) : 0), 0);
   return {
-    flows: FLOWS.map((f) => ({
+    // The board's own reach, stated rather than implied: nothing here is
+    // filtered by the viewer's area, because there is no area filter. Saying so
+    // is what stops "0 in Bulk" from being read as "0 near me".
+    scope: 'national',
+    areaFiltered: false,
+    flows: FLOWS.map((f) => {
+      const listings = byFlow.get(f.key);
+      const zeroReason = listings > 0
+        ? null
+        : untagged > 0
+          ? 'untagged_only'
+          : listings === 0 && otherFlows > 0
+            ? 'other_flows_only'
+            : 'nothing_on_the_board';
+      return {
       key: f.key,
       label: f.label,
       sub: f.sub,
       subFilters: f.subFilters,
-      listings: byFlow.get(f.key),
+      requires: FLOW_REQUIRES[f.key] ?? [],
+      zeroReason,
+      listings: listings,
       // How many open requests name this flow's usual commodity words — a hint
       // at where to look, counted from stated fields, not a match engine.
       openDemand: demand.filter((d) => wordHits(`${d.category} ${d.title}`, f.key === 'bulk' ? 'wholesale' : f.key)).length
-    })),
+      };
+    }),
     untagged,
     totals: {
       activeListings: listings.length,

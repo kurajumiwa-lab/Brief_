@@ -259,7 +259,8 @@ async function main() {
     const t = text(container);
     assert.ok(t.includes('Your shopfronts'), 'the screen is a street of businesses');
     assert.ok(t.includes('Jj Cakes') && /fresh/i.test(t), 'with the real state of each file');
-    assert.ok(t.includes('2 open'), 'and the open items in it');
+    assert.ok(t.includes('2 questions to answer'), 'and the open items in it, in words a person acts on');
+    assert.ok(!/\b2 open\b/.test(t), 'the bare "2 open" code is gone — it read like a fault, not a to-do');
     assert.ok(t.includes('Amina Bakery') && t.includes('9 follow'), 'the shops you follow, counted');
     assert.ok(!/Circles/i.test(t), 'no circles on this screen');
     assert.ok(!/Vaults/i.test(t), 'no vaults either');

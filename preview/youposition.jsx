@@ -131,12 +131,19 @@ async function main() {
     assert.ok(/stale/i.test(t) && t.includes('10d'), 'a stale space is labelled with its real age');
     const pill = Array.from(container.querySelectorAll('span')).find((x) => /stale/.test(x.textContent) && (x.getAttribute('class') || '').includes('uppercase'));
     assert.ok(pill, 'the state renders as an uppercase status pill');
-    assert.ok(t.includes('3 open'), 'and its derived open items');
+    assert.ok(t.includes('3 questions to answer'), 'and its derived open items, in words');
     assert.ok(t.includes('Weekend Bakery') && /fresh/i.test(t), 'a maintained space reads fresh');
 
     // Defended, with its denominator.
     assert.ok(t.includes('4 fulfilled · 1 lapsed · 80% defended across 5 closed commitments'), 'the defense figure is arithmetic over closed rows');
-    assert.ok(t.includes('not shown: Brief keeps no decay-event log'), 'and says what it refuses to invent');
+    // The cohort caveat is still shipped — it is simply one tap away instead of
+    // a paragraph in the middle of the screen. A deferred reason is not a hidden
+    // one, so the assertion opens the disclosure and demands the sentence.
+    const fold = Array.from(container.querySelectorAll('button')).find((b) => /How this is derived/.test(b.textContent || ''));
+    assert.ok(fold, 'the derivation is offered as a control');
+    act(() => { fold.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
+    await flush();
+    assert.ok(/no decay-event log or cohort table to divide by/.test(text(container)), 'and says what it refuses to invent, on demand');
 
     // Precedent band, counted not claimed.
     assert.ok(t.includes('4 requests reached an accepted quote'), 'platform precedent renders');
@@ -176,7 +183,10 @@ async function main() {
     }));
     const t = text(container);
     assert.ok(t.includes('Nothing pending on your ledger.'), 'the empty state is stated plainly');
-    assert.ok(t.includes('No commitment of yours has closed yet, so there is nothing to rate'), 'and no 0% score is manufactured');
+    assert.ok(/Nothing to defend yet/.test(t), 'the empty is stated as an absence, not a score');
+    assert.ok(/share of those you kept/.test(t), 'and the measure is taught, not just reported');
+    assert.ok(/first row that closes starts it/.test(t), 'with the row that would start it');
+    assert.ok(!/\b0%/.test(t), 'no 0% is manufactured out of an empty set');
     assert.ok(!/0%/.test(t), 'a zero rate never appears');
     assert.ok(!t.includes('Perfect'), 'no reward language for an empty ledger');
   }

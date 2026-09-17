@@ -4745,6 +4745,10 @@ export interface DiscoverFlow {
   label: string;
   sub: string;
   subFilters: string[];
+  /** Fields the seller must state for a listing to be in this flow at all. */
+  requires?: string[];
+  /** Why this flow is empty, as a code the surface words. null when it isn't. */
+  zeroReason?: 'untagged_only' | 'other_flows_only' | 'nothing_on_the_board' | null;
   listings: number;
   openDemand: number;
 }
@@ -4780,6 +4784,9 @@ export interface DiscoverSummary {
   tiles: DiscoverTile[];
   feed: DiscoverFeedItem[];
   flows?: DiscoverFlow[];
+  /** 'national' — the board is not filtered by the reader's area. */
+  scope?: string | null;
+  areaFiltered?: boolean;
   untagged?: number;
   totals?: { activeListings: number; declaredRoutes: number; openPublicDemand: number };
   routes?: DiscoverRoute[];
@@ -5020,6 +5027,54 @@ export interface Pulse {
   empty: boolean;
   note: string;
 }
+// ---------------------------------------------------------------------------
+// WORLD SIGNAL — what the world is doing, read from a real public provider.
+// The server owns the provider call; the client only renders what came back and
+// repeats the source, the retrieval time and the gaps it declared. There is no
+// client-side fallback text: an unavailable read says it is unavailable.
+// ---------------------------------------------------------------------------
+export interface WorldFact {
+  kind: string;
+  text: string;
+  value?: number | null;
+  unit?: string | null;
+  date?: string | null;
+  inDays?: number | null;
+  chance?: number | null;
+  thresholdMm?: number | null;
+}
+export interface WorldSignal {
+  ok?: boolean;
+  available: boolean;
+  provider: string | null;
+  providerLicence?: string | null;
+  kind?: string;
+  observedAt: string | null;
+  horizonDays?: number | null;
+  place: string | null;
+  placeIsDefault?: boolean;
+  defaultPlace?: string;
+  resolvedPlace?: { name: string; admin?: string | null; country?: string | null } | null;
+  elevationM?: number | null;
+  model?: string | null;
+  retrievedAt?: string | null;
+  ageHours?: number | null;
+  fromCache?: boolean;
+  stale?: boolean;
+  facts: WorldFact[];
+  heaviestRain?: { date: string; mm: number; inDays: number | null; chance?: number | null } | null;
+  dryRunDays?: number;
+  wetDays?: number;
+  prices?: { status: string; reason?: string };
+  fuel?: { status: string; reason?: string };
+  error: string | null;
+}
+export function getWorld(place?: string | null): Promise<ApiResult<WorldSignal>> {
+  const q = place && place.trim() ? `?place=${encodeURIComponent(place.trim().slice(0, 80))}` : '';
+  return request<WorldSignal>(`/api/world${q}`, undefined, (r) =>
+    r && Array.isArray(r.facts) ? (r as WorldSignal) : undefined);
+}
+
 export function getPulse(): Promise<ApiResult<Pulse>> {
   return request('/api/pulse', undefined, r =>
     r && Array.isArray(r.facts) && r.sections ? (r as Pulse) : undefined);

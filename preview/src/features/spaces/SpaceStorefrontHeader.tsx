@@ -27,6 +27,7 @@ import type { SpaceAudienceView } from '../../api/briefApi';
 // ---------------------------------------------------------------------------
 
 import { roomSurface, PHOTO_FILTER } from '../city/room';
+import { DerivationNote } from '../../ui/DerivationNote';
 
 const num = (n: number | null | undefined) => (n === null || n === undefined ? '—' : n.toLocaleString('en-KE'));
 
@@ -73,14 +74,48 @@ export function SpaceStorefrontHeader({
   const where = space.profileLabels?.where ?? null;
   const when = space.profileLabels?.when ?? null;
   const openInquiries = (space.recentConversations ?? []).filter((c) => ['new', 'active'].includes(c.status)).length;
+  // The vendor's own pin first, newest live offer otherwise. Neither is a
+  // ranking: it is the row the vendor chose to put at the front, and the server
+  // already returns offers in the pinned order.
+  const offers = space.offers ?? [];
+  const pinnedId = (space.featured ?? [])[0] ?? null;
+  const pinned = (pinnedId ? offers.find((o) => o.id === pinnedId) : null) ?? offers[0] ?? null;
+  const isPinned = Boolean(pinnedId && pinned && pinned.id === pinnedId);
+  const liveOffers = offers.length;
 
   return (
     <header className="rounded-3xl overflow-hidden brief-lift-2" style={{ background: 'var(--color-paper)' }}>
-      {/* Cover */}
-      <div className="relative h-[168px] w-full" style={{ background: roomSurface() }}>
+      {/* The cover is the shop window, not wallpaper. A photo wins; failing that,
+          the ONE offer the vendor pinned is what a buyer should meet first — a
+          blank 168px band was the most expensive emptiness in the app. Failing
+          both, the plate carries the name and says a cover is outstanding. */}
+      <div className="relative h-[168px] w-full" style={{ background: space.image ? 'var(--color-well)' : roomSurface() }}>
         {space.image ? (
           <img src={space.image} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ filter: PHOTO_FILTER }} />
-        ) : null}
+        ) : pinned ? (
+          <div className="absolute inset-0 flex flex-col justify-end p-4">
+            <span className="text-[9px] font-black uppercase tracking-[0.16em]" style={{ color: 'var(--brief-muted)' }}>
+              {isPinned ? 'Pinned by the vendor' : 'Newest live offer'}
+            </span>
+            <p className="mt-1 text-[19px] font-extrabold leading-tight line-clamp-2" style={{ color: 'var(--brief-ink)' }}>
+              {pinned.title}
+            </p>
+            <p className="mt-0.5 text-[12px] font-mono font-bold" style={{ color: 'var(--brief-ink)' }}>
+              {pinned.price === 0 ? 'Free' : `KES ${Number(pinned.price).toLocaleString('en-KE')}`}
+              {pinned.unitLabel ? ` / ${pinned.unitLabel}` : ''}
+              {pinned.minOrderQuantity ? ` · min ${pinned.minOrderQuantity}` : ''}
+            </p>
+          </div>
+        ) : (
+          <div className="absolute inset-0 flex flex-col justify-end p-4">
+            <p className="text-[24px] font-extrabold leading-tight line-clamp-2" style={{ color: 'var(--brief-ink)' }}>
+              {space.name}
+            </p>
+            <p className="mt-1 text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--brief-muted)' }}>
+              No cover photo yet · {liveOffers} live offer{liveOffers === 1 ? '' : 's'}
+            </p>
+          </div>
+        )}
         <div className="absolute top-3 right-3 flex items-center gap-1.5">
           <span
             className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider"
@@ -228,11 +263,15 @@ export function SpaceStorefrontHeader({
           ))}
         </div>
 
-        <p className="text-[10px] leading-snug mt-2" style={{ color: 'var(--brief-muted)' }}>
-          {isOwner
-            ? `${num(insights?.views.ownOpensExcluded)} of your own opens are left out of the view count. Brief has no sector averages and no browse log of who looked and left, so those numbers are absent rather than estimated.`
-            : 'Followed by a person, counted once. No view, no bot, no rounded-up number.'}
-        </p>
+        <DerivationNote
+          className="mt-2"
+          summary={isOwner
+            ? `${num(insights?.views.ownOpensExcluded)} of your own opens are left out of the view count.`
+            : 'Followed by a person, counted once.'}
+          detail={isOwner
+            ? 'A view is written only when somebody opens this space\'s public page. Your own opens are excluded, because a maintainer checking their own shop is not demand. There is no browse log of who looked and left, and no sector average to compare against, so both figures are absent rather than estimated — a dash, not a zero and not a guess.'
+            : 'Follows are rows of real people who pressed follow on this page. There is no view count shown to a visitor, no bot traffic, and no rounded-up number: an unmeasurable figure is a dash here.'}
+        />
       </div>
     </header>
   );

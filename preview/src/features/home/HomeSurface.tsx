@@ -18,6 +18,7 @@ import { soundEngine } from '../../utils/SoundEngine';
 import { attentionQueue, needsAttention, splitSpaces } from './spaceSignals';
 import { MuseumGallery } from '../city/MuseumGallery';
 import { SignalBar } from './SignalBar';
+import { WorldStrip } from './WorldStrip';
 import { NextMoveCard } from './NextMoveCard';
 import { StandingLine } from './StandingLine';
 import { CirclesStrip } from './CirclesStrip';
@@ -29,6 +30,7 @@ import { ReciprocityCard } from './ReciprocityCard';
 // HOME — three zones, one glance (§9 of the reformation).
 //
 //   1. What is the world doing?   → SignalBar   (real rows, snapshot-stamped)
+//                              + WorldStrip     (a public provider, dated)
 //   2. What should I do?          → NextMoveCard (one decision, derived)
 //   3. What is out there?         → MuseumGallery (real published events)
 //
@@ -175,6 +177,11 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
 
       {/* ── ZONE 1 — WHAT THE WORLD IS DOING ── */}
       <SignalBar onOpenPulse={() => (onOpenPulse ? onOpenPulse() : onExploreDiscover?.('all'))} />
+
+      {/* Zone 1's other half. The ledger is the user's; this is the country's —
+          so a first week in Brief has something true to read instead of four
+          zeros. Every sentence here came from the provider, not from this file. */}
+      <WorldStrip />
 
       {/* ── ZONE 2 — WHAT YOU SHOULD DO NEXT ── */}
       <NextMoveCard position={position} denied={positionDenied} />
@@ -358,7 +365,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
                                   ? 'All caught up'
                                   : attention.map((a) => a.label).join(' · ')}
                                 {(upkeepBySpace.get(s.id) ?? 0) > 0 &&
-                                  ` · ${upkeepBySpace.get(s.id)} open in the space file`}
+                                  ` · ${upkeepBySpace.get(s.id)} question${upkeepBySpace.get(s.id) === 1 ? '' : 's'} in the space file`}
                               </span>
                               {s.maintenance?.state && s.maintenance.state !== 'unstarted' && (
                                 <span

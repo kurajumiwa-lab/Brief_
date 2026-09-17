@@ -217,7 +217,13 @@ async function main() {
     const t = text(container);
     assert.ok(t.includes('Other ways to move a thing'), 'the strip exists');
     assert.ok(t.includes('Fargo Courier'), 'Fargo is revealed as an option');
-    assert.ok(t.includes('Brief cannot book, price or track this one'), 'with its limits stated');
+    assert.ok(t.includes('No booking, price or tracking inside Brief'), 'with its limits stated, in one clause');
+    assert.ok(!t.includes('Fargo has no integration in Brief'), 'the long reason is not pasted on every card');
+    const why = Array.from(container.querySelectorAll('button')).find((b) => (b.textContent || '').trim() === 'Why');
+    assert.ok(why, 'the reason is offered');
+    act(() => { why.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
+    await flush();
+    assert.ok(/no integration in Brief|will not quote a price/i.test(text(container)), 'and one tap states it in full');
     assert.ok(t.includes('Easy Ride'), 'and carriers people here actually use are counted from rows');
     // No fabricated contact details anywhere in the strip.
     const phoneish = t.match(/(\+?254|07\d{2}|0\d{2})[\s-]?\d{3}[\s-]?\d{3}/g);
@@ -225,6 +231,19 @@ async function main() {
     assert.ok(t.includes('no phone number, no price, no promise'), 'and the disclosure says so');
   }
   pass('Other mailing services are revealed honestly: a name, never invented details');
+
+
+  // --- the eligibility badge is words, with the code kept for audit ---------
+  {
+    const { basisLabel } = require('./src/features/city/ErrandsLobby.tsx');
+    assert.equal(basisLabel('role:field_agent'), 'Field agent', 'a role reads as a role');
+    assert.equal(basisLabel('agent:4 active shop claims'), '4 shops run from this account', 'and a count reads as a count of things');
+    assert.equal(basisLabel('rider:1 pickup assigned'), '1 pickup assigned to you');
+    assert.equal(basisLabel('whatever:else'), 'whatever:else', 'an unknown code is passed through, never guessed at');
+    assert.ok(!/agent:|rider:|role:/.test(basisLabel('agent:4 active shop claims') + basisLabel('rider:1 pickup assigned') + basisLabel('role:partner')),
+      'no raw code is printed for a person to decode');
+  }
+  pass('Eligibility says what it means, and keeps the audit code one attribute away');
 
   console.log('\nPASS ' + count);
   process.exit(0);

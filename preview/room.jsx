@@ -109,10 +109,10 @@ const SUMMARY = {
   ],
   feed: FEED,
   flows: [
-    { key: 'bulk', label: 'Bulk', sub: 'for vendors & shops', subFilters: ['Produce'], listings: 1, openDemand: 1 },
-    { key: 'direct', label: 'Direct', sub: 'source-direct', subFilters: [], listings: 0, openDemand: 0 },
-    { key: 'niche', label: 'Niche', sub: 'curated for consumers', subFilters: [], listings: 1, openDemand: 0 },
-    { key: 'group', label: 'Group', sub: 'pooled demand', subFilters: [], listings: 0, openDemand: 0 }
+    { key: 'bulk', label: 'Bulk', sub: 'for vendors & shops', subFilters: ['Produce'], requires: ['originName', 'destinationName'], zeroReason: null, listings: 1, openDemand: 1 },
+    { key: 'direct', label: 'Direct', sub: 'source-direct', subFilters: [], requires: ['originName'], zeroReason: 'nothing_on_the_board', listings: 0, openDemand: 0 },
+    { key: 'niche', label: 'Niche', sub: 'curated for consumers', subFilters: [], requires: [], zeroReason: null, listings: 1, openDemand: 0 },
+    { key: 'group', label: 'Group', sub: 'pooled demand', subFilters: [], requires: ['destinationName'], zeroReason: 'nothing_on_the_board', listings: 0, openDemand: 0 }
   ],
   untagged: 0,
   totals: { activeListings: 2, declaredRoutes: 1, openPublicDemand: 1 },
@@ -237,11 +237,12 @@ async function main() {
     const zeroMark = Array.from(direct.querySelectorAll('span')).find((el) => text(el) === '0' && /font-mono/.test(el.getAttribute('class') || ''));
     assert.ok(zeroMark, 'the Direct tile prints its zero');
     assert.ok(/--color-quiet/.test(styleOf(zeroMark)), 'the zero is in the quiet ink, so an empty flow does not read as an error');
-    assert.ok(text(direct).includes('No offers yet — post one'), 'and the tile offers the one step that could change it');
+    assert.ok(/Nothing is published on the board yet/.test(text(direct)) && /Post the first direct offer/.test(text(direct)),
+      'and an empty flow says what is missing and names the one step that changes it');
     const bulk = tab('Bulk');
     const fullMark = Array.from(bulk.querySelectorAll('span')).find((el) => text(el) === '1' && /font-mono/.test(el.getAttribute('class') || ''));
     assert.ok(fullMark && !/--color-quiet/.test(styleOf(fullMark)), 'a non-zero count is NOT quiet — the difference is the number, not decoration');
-    assert.ok(text(direct).includes('No offers yet'), 'and it says what the zero means');
+    assert.ok(/Nothing is published on the board yet/.test(text(direct)), 'and it says what the zero means');
     const group = tab('Group');
     assert.ok(text(group).includes('0'), 'same for every other empty view');
     // "hot / trending / buyers waiting / coming soon" is padding. A real sort by
@@ -436,6 +437,37 @@ async function main() {
       'the only identity left is the declared category, read from the row');
   }
   pass('A colour is never hashed from a title: only the declared category paints a plate');
+
+
+  // --- 11. the honesty layer is a footnote, not the product -----------------
+  // The screens used to carry two-, three- and four-sentence paragraphs about
+  // what Brief does NOT measure. That is true information in the wrong seat: a
+  // reader scanning for their next move reads "0 settled orders" and a wall of
+  // disclaimer, and the app feels like an audit. So the rule the room enforces:
+  // one clause on the surface, the full derivation one tap away, and NOTHING
+  // deleted. A fold that hides reasoning is dishonest; a fold that defers it is
+  // design. These are measured on what is rendered by default.
+  {
+    const { container } = mount(React.createElement(CityFeedView, {}));
+    await flush();
+    const ps = Array.from(container.querySelectorAll('p'))
+      .map((el) => text(el))
+      .filter((x) => x.length > 0);
+    const long = ps.filter((x) => x.length > 240);
+    assert.deepEqual(long, [], `no paragraph over 240 characters sits on the board by default (longest: ${Math.max(0, ...ps.map((x) => x.length))})`);
+    const walls = ps.filter((x) => x.length > 140);
+    assert.ok(walls.length <= 2, `at most two sentences may run long on a browse screen — found ${walls.length}`);
+    assert.ok(ps.some((x) => /count of rows|is a count/.test(x)) || Array.from(container.querySelectorAll('button')).some((b) => /How this is derived/.test(text(b))),
+      'and the provenance is still on the screen, as a control');
+    const fold = Array.from(container.querySelectorAll('button')).find((b) => /How this is derived/.test(text(b)));
+    if (fold) {
+      act(() => fold.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })));
+      await flush();
+      const opened = text(container);
+      assert.ok(/count of rows|nothing is seeded/i.test(opened), 'one tap yields the full derivation, verbatim');
+    }
+  }
+  pass('Disclaimers are one clause on the surface and the whole reasoning a tap away — nothing deleted');
 
   console.log('\nPASS ' + count);
   process.exit(0);

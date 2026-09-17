@@ -108,7 +108,8 @@ async function main() {
     const t = text(c);
     assert.ok(t.includes("What's moving"), 'the bar names itself');
     assert.ok(t.includes('3 requests open with no accepted quote'), 'a real derived fact renders');
-    assert.ok(/as of /.test(t), 'stamped with the newest real row time, not "LIVE"');
+    assert.ok(/newest row \d/.test(t), 'stamped with the newest real row, labelled as such');
+    assert.ok(/newest row [^·]* · \d\d:\d\d/.test(t), 'the stamp carries a DATE as well as a clock time, so a three-day-old snapshot cannot read as now');
     assert.ok(!/live/i.test(t), 'no live-stream claim');
     assert.ok(!t.includes('%'), 'no percentage movement is printed (no price history exists)');
     assert.ok(t.includes('3 signals'), 'the signal count is available');
@@ -121,6 +122,74 @@ async function main() {
     root.unmount(); c.remove();
   }
   pass('SignalBar renders only derived facts, stamped as a snapshot, with no fake trend');
+
+  // --- WorldStrip: the country's movement, not the user's ------------------
+  const WORLD = {
+    ok: true, available: true, provider: 'Open-Meteo', kind: 'forecast', observedAt: null, horizonDays: 7,
+    place: 'Nairobi', placeIsDefault: true, defaultPlace: 'Nairobi',
+    resolvedPlace: { name: 'Nairobi', admin: 'Nairobi County', country: 'Kenya' },
+    elevationM: 1671, model: 'best_match', retrievedAt: '2026-09-17T06:00:00Z', ageHours: 0.2, fromCache: false, stale: false,
+    facts: [
+      { kind: 'rain', text: 'Heavy rain forecast in 3 days (Sat): 24.3 mm, 99% likely', value: 24.3, unit: 'mm', date: '2026-09-20', inDays: 3, chance: 99 },
+      { kind: 'dry', text: 'Dry spell holds: no rain for the next 2 days', value: 2, unit: 'days', thresholdMm: 1 },
+      { kind: 'heat', text: 'Hottest afternoon in 5 days: 28.1 °C', value: 28.1, unit: '°C', date: '2026-09-22' }
+    ],
+    dryRunDays: 2, wetDays: 3,
+    prices: { status: 'not_configured', reason: 'no key-free commodity-price endpoint is reachable' },
+    fuel: { status: 'not_configured', reason: 'EPRA publishes a document, not an API' },
+    error: null
+  };
+  fetchHandler = async (url) => ({
+    ok: true, status: 200,
+    text: async () => JSON.stringify(String(url).includes('/api/world') ? WORLD : PULSE)
+  });
+  {
+    const { WorldStrip } = require('./src/features/home/WorldStrip.tsx');
+    const c = document.createElement('div');
+    document.body.appendChild(c);
+    const root = createRoot(c);
+    act(() => root.render(React.createElement(WorldStrip, {})));
+    await flush();
+    const t = text(c);
+    assert.ok(t.includes('The world, today'), 'the strip names what it is');
+    assert.ok(t.includes('Heavy rain forecast in 3 days (Sat): 24.3 mm, 99% likely'), 'every sentence is the server\'s, verbatim');
+    assert.ok(t.includes('Nairobi') && t.includes('Nairobi County'), 'the place and the gazetteer\'s own labels show');
+    assert.ok(/default/i.test(t), 'a place nobody chose is announced as the default');
+    assert.ok(t.includes('Open-Meteo'), 'the source is on the surface, not buried');
+    assert.ok(t.includes('Prices and fuel are not wired'), 'the gaps are stated, in one line');
+    assert.ok(!/\+\d+(\.\d+)?%\s|maize|KES \d/i.test(t), 'no commodity movement and no money figure is invented here');
+    assert.ok(!/\bLIVE\b/.test(t), 'a forecast is not a live feed');
+    // the provenance is deferred, not deleted: one tap shows the licence and the reasons
+    act(() => { btnByText('How this is derived').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
+    await flush();
+    const d = text(c);
+    assert.ok(d.includes('no seasonal average'), 'the rule is one tap away and still true');
+    assert.ok(d.includes('EPRA publishes a document, not an API'), 'the fuel gap states its own reason');
+    root.unmount(); c.remove();
+  }
+  pass('WorldStrip reports the provider\'s own sentences, dated and attributed, and invents nothing');
+
+  // --- WorldStrip: an outage is a gap, not a zero --------------------------
+  fetchHandler = async (url) => ({
+    ok: true, status: 200,
+    text: async () => JSON.stringify(String(url).includes('/api/world')
+      ? { ok: false, available: false, provider: 'Open-Meteo', facts: [], error: 'the provider could not be reached (socket hang up), and Brief has no recent read to show instead. A gap is shown as a gap.', place: 'Nairobi', placeIsDefault: true, prices: { status: 'not_configured' }, fuel: { status: 'not_configured' } }
+      : PULSE)
+  });
+  {
+    const { WorldStrip } = require('./src/features/home/WorldStrip.tsx');
+    const c = document.createElement('div');
+    document.body.appendChild(c);
+    const root = createRoot(c);
+    act(() => root.render(React.createElement(WorldStrip, {})));
+    await flush();
+    const t = text(c);
+    assert.ok(t.includes('could not be reached'), 'the failure is the provider\'s, stated');
+    assert.ok(!/0 mm|0 days|no rain/i.test(t), 'and it is not rendered as a measurement of zero');
+    assert.ok(Boolean(Array.from(c.querySelectorAll('button')).find((b) => text(b) === 'Retry')), 'with a way to try again');
+    root.unmount(); c.remove();
+  }
+  pass('A failed world read says it failed — no zeros, no stale fact dressed as current');
 
   // --- SignalBar: a dead read is an error, not an all-clear ----------------
   fetchHandler = async () => ({ ok: false, status: 500, text: async () => JSON.stringify({ error: 'boom' }) });

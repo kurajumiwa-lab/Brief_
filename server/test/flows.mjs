@@ -202,5 +202,42 @@ await test("the discover summary carries the board, and every flow tile is label
   assert.equal(s.totals.openPublicDemand >= 2, true, "the demand total is a count, and it is here");
 });
 
+await test("an empty flow says WHY it is empty, in the rule's own words", () => {
+  const board = flows.flowSummary();
+  const total = board.flows.reduce((n, f) => n + f.listings, 0);
+  assert.equal(board.scope, "national", "the board is the country's, because there is no area filter");
+  assert.equal(board.areaFiltered, false, "and it does not pretend to know where the reader is");
+  for (const f of board.flows) {
+    assert.ok(Array.isArray(f.requires), `${f.key} states what it demands of a listing`);
+    if (f.listings > 0) {
+      assert.equal(f.zeroReason, null, "a full flow gets no excuse");
+      continue;
+    }
+    assert.ok(["untagged_only", "other_flows_only", "nothing_on_the_board"].includes(f.zeroReason),
+      `an empty ${f.key} flow names its own reason`);
+    if (board.untagged > 0 && f.zeroReason !== "other_flows_only") {
+      assert.ok(["untagged_only", "other_flows_only"].includes(f.zeroReason),
+        "with live listings sitting untagged, an empty flow points at that rather than at nobody");
+    }
+    if (board.untagged === 0 && total > 0) assert.equal(f.zeroReason, "other_flows_only");
+    if (board.untagged === 0 && total === 0) assert.equal(f.zeroReason, "nothing_on_the_board");
+  }
+});
+
+await test("FLOW_REQUIRES is the same rule listing.js enforces, not a friendlier copy", () => {
+  const { FLOW_REQUIRES } = flows;
+  for (const f of flows.FLOWS) {
+    const need = FLOW_REQUIRES[f.key] ?? [];
+    const row = { flow: f.key, title: "anything", originName: null, destinationName: null };
+    for (const field of need) row[field] = field === "originName" ? "Wakulima" : "Kilimani shops";
+    assert.equal(listings.flowProblem(row), null, `${f.key} is satisfiable with exactly its declared fields`);
+    // dropping any one required field must be a problem again
+    for (const field of need) {
+      const broken = { ...row, [field]: null };
+      assert.notEqual(listings.flowProblem(broken), null, `${f.key} still needs ${field}`);
+    }
+  }
+});
+
 console.log(`\nPASS ${count}`);
 process.exit(0);

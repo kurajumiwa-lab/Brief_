@@ -1025,6 +1025,19 @@ export interface Listing {
   /** Server's answer to "can this be ordered right now", with the reason. */
   orderable: boolean;
   unorderableReason: string | null;
+  /** The flow axes as the SELLER declared them (see server/src/domain/listing.js).
+   *  Absent is absent: nothing here is inferred from the title, so an untagged
+   *  listing has no flow and appears under All and in no route. */
+  flow?: 'bulk' | 'direct' | 'niche' | 'group' | null;
+  commodity?: string | null;
+  originKind?: string | null;
+  originName?: string | null;
+  destinationKind?: string | null;
+  destinationName?: string | null;
+  /** "per crate" — a label, not a unit price. */
+  unitLabel?: string | null;
+  /** A whole number ≥ 1, or null when the seller stated no minimum. */
+  minOrderQuantity?: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -1756,6 +1769,8 @@ export interface Space {
   maintenance?: SpaceMaintenance | null;
   /** DERIVED: how many real items the editorial queue currently holds. */
   editorialOpen?: number;
+  /** The same queue, bucketed by the urgency each row already carries. */
+  editorialBreakdown?: { unanswered: number; overdue: number; due: number; replies: number };
   /** The stable URL name of this space. Written once, never renamed. */
   slug?: string | null;
   /** Pinned by the VENDOR, at most 3, validated server-side. Not a ranking. */

@@ -92,10 +92,10 @@ const SUMMARY = {
   ],
   feed: FEED,
   flows: [
-    { key: 'bulk', label: 'Bulk', sub: 'for vendors & shops', subFilters: ['Produce', 'Dry goods', 'Packaging'], listings: 1, openDemand: 1 },
-    { key: 'direct', label: 'Direct', sub: 'source-direct', subFilters: ['Farm-gate', 'Fishery'], listings: 0, openDemand: 0 },
-    { key: 'niche', label: 'Niche', sub: 'curated for consumers', subFilters: ['Craft', 'Vintage'], listings: 1, openDemand: 0 },
-    { key: 'group', label: 'Group', sub: 'pooled demand', subFilters: ['Neighbourhood', 'Cooperative'], listings: 0, openDemand: 0 }
+    { key: 'bulk', label: 'Bulk', sub: 'for vendors & shops', subFilters: ['Produce', 'Dry goods', 'Packaging'], listings: 1, openDemand: 1, requires: ['originName','destinationName'], zeroReason: null },
+    { key: 'direct', label: 'Direct', sub: 'source-direct', subFilters: ['Farm-gate', 'Fishery'], listings: 0, openDemand: 0, requires: ['originName'], zeroReason: 'untagged_only' },
+    { key: 'niche', label: 'Niche', sub: 'curated for consumers', subFilters: ['Craft', 'Vintage'], listings: 1, openDemand: 0, requires: [], zeroReason: null },
+    { key: 'group', label: 'Group', sub: 'pooled demand', subFilters: ['Neighbourhood', 'Cooperative'], listings: 0, openDemand: 0, requires: ['destinationName'], zeroReason: 'untagged_only' }
   ],
   untagged: 1,
   totals: { activeListings: 3, declaredRoutes: 1, openPublicDemand: 2 },
@@ -119,6 +119,8 @@ const SUMMARY = {
       destinationsInUse: []
     }
   ],
+  scope: 'national',
+  areaFiltered: false,
   boardNote: '1 active listing declares no flow, so it appears under All and in no route — this board will not infer a supply chain from a title.'
 };
 
@@ -165,7 +167,20 @@ async function main() {
     // counts: bulk has 1 declared listing; direct has none, and says 0 out loud
     assert.ok(/1/.test(text(tab('Bulk'))), 'the Bulk tile carries the server count');
     assert.ok(text(tab('Direct')).includes('0'), 'an empty flow reads as zero, not as a hidden tile');
-    assert.ok(text(container).includes('live listing has no flow declared'), 'and the untagged truth is on the screen');
+    assert.ok(/1 live listing sits outside every flow/.test(text(container)), 'and the untagged truth is still on the screen, in one clause');
+    assert.ok(/does not filter by your area/.test(text(container)), 'a zero is framed as a declaration gap, not as nothing-near-you');
+    // four empty tiles no longer say the same thing: each reason gets its own sentence
+    const zeroTiles = Array.from(container.querySelectorAll('button[role="tab"]')).slice(0, 4).map((b) => text(b));
+    assert.ok(zeroTiles.some((x) => /Other flows have offers/.test(x)) || zeroTiles.some((x) => /declares no flow at all/.test(x)),
+      'an empty flow explains which kind of emptiness it is');
+    assert.ok(zeroTiles.some((x) => /Declare a route|Tag a live offer|Post the first/.test(x)), 'and names the one action that changes it');
+    // the long reasoning is deferred, not deleted
+    assert.ok(!/will not infer a supply chain from a title/.test(text(container)), 'the board note is folded away by default');
+    const fold = Array.from(container.querySelectorAll('button')).find((b) => /How this is derived/.test(text(b)));
+    assert.ok(fold, 'a derivation control is offered');
+    click(fold);
+    await flush();
+    assert.ok(/will not infer a supply chain from a title/.test(text(container)), 'and one tap opens the full derivation');
     assert.ok(text(container).includes('Asked for, no route says it'), 'the gap board is part of the mixed view');
     assert.ok(!/40 verified|buyers waiting|trending/i.test(text(container)), "none of the mock's vocabulary survives");
   }

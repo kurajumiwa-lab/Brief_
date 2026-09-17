@@ -121,7 +121,26 @@ export function SpacesLanding({
                       {s.maintenance.ageHours != null
                         ? ` · ${s.maintenance.ageHours < 24 ? `${s.maintenance.ageHours}h` : `${Math.round(s.maintenance.ageHours / 24)}d`}`
                         : ''}
-                      {(s.editorialOpen ?? 0) > 0 ? ` · ${s.editorialOpen} open` : ''}
+                    </p>
+                  )}
+                  {/* "8 open" read like a fault code. The queue has always known
+                      the difference between a question never answered, one past
+                      its refresh window and a customer waiting on a reply — so
+                      the list says which of those it is, in the space's own
+                      numbers. */}
+                  {(s.editorialOpen ?? 0) > 0 && (
+                    <p className="text-[10px] font-bold mt-0.5" style={{ color: (s.editorialBreakdown?.overdue ?? 0) > 0 ? 'var(--color-warning)' : 'var(--brief-muted)' }}>
+                      {s.editorialOpen} question{s.editorialOpen === 1 ? '' : 's'} to answer
+                      {(() => {
+                        const b = s.editorialBreakdown;
+                        if (!b) return '';
+                        const parts = [
+                          b.unanswered ? `${b.unanswered} never answered` : null,
+                          b.overdue ? `${b.overdue} past the refresh window` : null,
+                          b.replies ? `${b.replies} waiting on a reply` : null
+                        ].filter(Boolean);
+                        return parts.length ? ` · ${parts.join(' · ')}` : '';
+                      })()}
                     </p>
                   )}
                 </div>

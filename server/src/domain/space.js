@@ -1342,6 +1342,9 @@ function hydrateSpace(space, { callerId = null } = {}) {
   const activeRows = store.filter('listings', (l) =>
     (l.spaceId === space.id || l.vendorId === space.vendorId) && l.status === 'active');
   const featuredIds = space.featured ?? [];
+  // One pass over the queue, shared by the count and the buckets below, so the
+  // list can say WHY something is open instead of only THAT it is.
+  const editorialQueue = profile.editorialQueueFor(space);
   const derived = {
     slug: space.slug ?? null,
     // Pinned offers first, so every surface that shows this space's catalog
@@ -1364,7 +1367,16 @@ function hydrateSpace(space, { callerId = null } = {}) {
       constraints: profile.formatAnswer('constraints', space.profile?.fields?.constraints?.value) ?? null
     },
     maintenance: profile.maintenanceFor(space),
-    editorialOpen: profile.editorialQueueFor(space).length,
+    // Counted AND bucketed by the urgency each queue row already carries, so a
+    // list can read "3 of 8 are past their refresh window" instead of a bare
+    // "8 open", which looked like a fault code rather than a to-do list.
+    editorialOpen: editorialQueue.length,
+    editorialBreakdown: {
+      unanswered: editorialQueue.filter((i) => i.urgency === 'missing').length,
+      overdue: editorialQueue.filter((i) => i.urgency === 'overdue').length,
+      due: editorialQueue.filter((i) => i.urgency === 'due').length,
+      replies: editorialQueue.filter((i) => i.kind === 'reply').length
+    },
     pipeline: isOwnerView ? profile.pipelineFor(space) : null
   };
 

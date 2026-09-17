@@ -93,6 +93,7 @@ import { register as priceSignalsRoutes } from './routes/priceSignals.js';
 import { register as pulseRoutes } from './routes/pulse.js';
 import { register as precedentRoutes } from './routes/precedent.js';
 import { register as errandsRoutes } from './routes/errands.js';
+import { register as worldRoutes } from './routes/world.js';
 import { register as discoverRoutes } from './routes/discover.js';
 import { register as pickupsRoutes } from './routes/pickups.js';
 import { register as positionRoutes } from './routes/position.js';
@@ -200,7 +201,7 @@ app.use(ops.requestLogger);
 //                           (public location discovery pages like /explore/
 //                           kilimani, related content, nearby) — every payload
 //                           is the public projection of public objects only
-const PUBLIC_WITHOUT_SESSION = /^\/(auth|entities|locations|graph|nearby|collections\/personal|public\/(campaigns|feed|enterprises|capabilities|spaces)|health|ready|readiness|media\/(file|telegram)|config|release|email-subscriptions|webhooks|telegram\/init|huduma\/webhooks|price-signals|pulse|discover\/summary)(\/|$)/;
+const PUBLIC_WITHOUT_SESSION = /^\/(auth|entities|locations|graph|nearby|collections\/personal|public\/(campaigns|feed|enterprises|capabilities|spaces)|health|ready|readiness|media\/(file|telegram)|config|release|email-subscriptions|webhooks|telegram\/init|huduma\/webhooks|price-signals|pulse|world|discover\/summary)(\/|$)/;
 app.use('/api', (req, res, next) => {
   if (PUBLIC_WITHOUT_SESSION.test(req.path)) return next();
   const me = callerId(req);
@@ -280,6 +281,7 @@ pulseRoutes(app);
 precedentRoutes(app);
 errandsRoutes(app);
 discoverRoutes(app);
+worldRoutes(app);
 pickupsRoutes(app);
 positionRoutes(app);
 commitmentsRoutes(app);

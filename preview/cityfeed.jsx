@@ -193,7 +193,8 @@ async function main() {
     act(() => { evTile.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
     await flush();
     assert.ok(!/The counter/.test(text(c)), 'the Events room holds no market furniture');
-    assert.ok(text(c).includes('The case — published events'), 'it holds the case instead');
+    assert.ok(text(c).includes("What's on — published events"), 'it holds the published events instead, named plainly');
+    assert.ok(!/The case/.test(text(c)), 'and the marketing word is gone from the surface');
     assert.ok(!/WAIRO/.test(t), 'the rider card belongs to errands, not the gallery');
     assert.ok(!/What's moving/.test(t), 'the signal line is Home’s job, not a browse header');
     assert.ok(!/shown\b/.test(t), 'no result counter anywhere on the browse screen');

@@ -224,6 +224,10 @@ export function discoverSummary({ viewerId = null, now = Date.now() } = {}) {
     // The flow board: four tiles, the routes sellers have declared, and the
     // open demand no declared route covers.
     tiles,
+    // The board is the country's: there is no area filter, so a zero means
+    // "nobody has declared this", never "nothing is happening near you".
+    scope: board.scope,
+    areaFiltered: board.areaFiltered,
     flows: board.flows,
     untagged: board.untagged,
     totals: board.totals,

@@ -214,7 +214,7 @@ export function MuseumGallery({ className = "" }: { className?: string }) {
           <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
             {activeCount > 0
               ? 'Widen the window or clear a filter — an honest empty beats a filled screen.'
-              : 'When an event goes live around you, it appears in the case here.'}
+              : 'When an event goes live around you, it appears here.'}
           </p>
           {activeCount > 0 && (
             <button

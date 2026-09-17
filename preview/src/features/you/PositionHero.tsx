@@ -3,6 +3,7 @@ import { AlertTriangle, ArrowRight, Clock, ShieldCheck, TrendingUp } from 'lucid
 import type { MyCommitments, MyPosition, MyReciprocity, Precedent } from '../../api/briefApi';
 import type { Space } from '../../api/types';
 import { CopyId } from '../../ui/CopyId';
+import { DerivationNote } from '../../ui/DerivationNote';
 
 // ---------------------------------------------------------------------------
 // POSITION HERO — the Chess.com "rating as the first thing you see" shape, with
@@ -159,12 +160,16 @@ export function PositionHero({
 
   const spacePills = spaces
     .filter((s) => s.status !== 'archived')
-    .map((s) => ({ id: s.id, name: s.name, state: s.maintenance?.state ?? 'unstarted', ageHours: s.maintenance?.ageHours ?? null, open: s.editorialOpen ?? 0 }));
+    .map((s) => ({
+      id: s.id, name: s.name, state: s.maintenance?.state ?? 'unstarted',
+      ageHours: s.maintenance?.ageHours ?? null, open: s.editorialOpen ?? 0,
+      overdue: s.editorialBreakdown?.overdue ?? 0
+    }));
 
   return (
     <section
-      className={`rounded-2xl border overflow-hidden ${className}`}
-      style={{ borderColor: 'var(--color-border)', background: 'var(--color-paper)' }}
+      className={`rounded-2xl overflow-hidden brief-card ${className}`}
+      style={{ background: 'var(--color-paper)' }}
       aria-label="Your position"
     >
       {/* Hero band */}
@@ -227,7 +232,11 @@ export function PositionHero({
                       {p.ageHours < 24 ? `${p.ageHours}h` : `${Math.round(p.ageHours / 24)}d`}
                     </span>
                   )}
-                  {p.open > 0 && <span className="font-mono">{p.open} open</span>}
+                  {p.open > 0 && (
+                    <span className="font-mono" style={{ color: p.overdue ? 'var(--color-warning)' : undefined }}>
+                      {p.open} question{p.open === 1 ? '' : 's'} to answer{p.overdue ? ` · ${p.overdue} past due` : ''}
+                    </span>
+                  )}
                 </span>
               );
             })}
@@ -289,18 +298,28 @@ export function PositionHero({
           Defended
         </p>
         {closed === 0 ? (
-          <p className="text-[11px] leading-snug" style={{ color: 'var(--color-text)' }}>
-            No commitment of yours has closed yet, so there is nothing to rate. The number appears with the first row that closes.
-          </p>
+          // An absence is only dead air when it is also undefined. Say what the
+          // measure is, what row starts it, and where to go — no invented
+          // "you're #1 because nobody else is here", which is a rank dressed as
+          // an encouragement.
+          <div className="space-y-1">
+            <p className="text-[13px] font-extrabold leading-snug" style={{ color: 'var(--color-text)' }}>
+              Nothing to defend yet.
+            </p>
+            <p className="text-[11px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
+              A commitment is a promise someone is waiting on — a quote of yours that was accepted, or an order you took.
+              This number is the share of those you kept. Post an offer or answer a request: the first row that closes starts it.
+            </p>
+          </div>
         ) : (
           <p className="text-[11px] leading-snug font-mono brief-countdown" style={{ color: 'var(--color-text)' }}>
             {fulfilled.length} fulfilled · {lapsed.length} lapsed · {defended}% defended across {closed} closed commitment{closed === 1 ? '' : 's'}
           </p>
         )}
-        <p className="text-[10px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
-          The 7-day version — of members whose position decayed last week, how many defended within 72 hours — is not shown: Brief keeps
-          no decay-event log or cohort table to divide by. It will be computed the day one exists, not before.
-        </p>
+        <DerivationNote
+          summary={`${closed} closed commitment${closed === 1 ? '' : 's'} counted, nothing estimated.`}
+          detail="The stricter version — of members whose position decayed in a given week, how many defended within 72 hours — is not shown, because Brief keeps no decay-event log or cohort table to divide by. It will be computed the day those rows exist, not before. Nothing here is a score, a rank or a tier: it is a fraction of your own closed rows, and with a small sample it is a small sample."
+        />
       </div>
 
       {/* What the platform has actually closed, so "does this work" is a count
