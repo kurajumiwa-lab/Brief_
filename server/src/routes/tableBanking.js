@@ -1,6 +1,7 @@
 // TABLE BANKING ROUTES — the table-banking ledger + calculator. A group is a TOOL an
 // existing group applies to itself; Brief is not the group and not the lender.
 import * as tableBanking from '../domain/tableBanking.js';
+import * as coopOperations from '../domain/coopOperations.js';
 import * as quoteVotes from '../domain/quoteVotes.js';
 import * as pdf from '../pdf.js';
 import * as outbound from '../outbound.js';
@@ -71,6 +72,26 @@ export function register(app) {
         rotation: tableBanking.rotationView(c.id),
         me: tableBanking.memberView(c.id, me)
       });
+    } catch (e) {
+      res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
+    }
+  });
+
+  // The operator's read — the group's own demand and what it did in Brief, next
+  // to the pool. Any member may read it: the shared finances are the group's
+  // business collectively. What a member's OTHER businesses earn is not, so the
+  // shopfront section is scoped inside the domain and the payload says so out
+  // loud rather than returning a silently empty list.
+  app.get('/api/table-banking/:id/operations', (req, res) => {
+    const me = requireAuth(req, res);
+    if (!me) return;
+    try {
+      const c = tableBanking.getTableBanking(req.params.id);
+      if (!c) return res.status(404).json({ error: 'group not found', code: 'not_found' });
+      if (!c.members.some((m) => m.userId === me)) return res.status(403).json({ error: 'you are not a member', code: 'not_member' });
+      const operations = coopOperations.operationsFor(c.id, { callerId: me });
+      if (!operations) return res.status(404).json({ error: 'group not found', code: 'not_found' });
+      res.json({ operations });
     } catch (e) {
       res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
     }

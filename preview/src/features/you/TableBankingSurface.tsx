@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import * as api from "../../api/briefApi";
-import type { TableBankingGroup, TableBankingDetail, TableBankingCollectiveRequest, WelfareFund, WelfareClaim, TableBankingMinutes } from "../../api/briefApi";
+import type { TableBankingGroup, TableBankingDetail, TableBankingCollectiveRequest, WelfareFund, WelfareClaim, TableBankingMinutes, CoopOperations } from "../../api/briefApi";
+import { DerivationNote } from "../../ui/DerivationNote";
 import { MotionList } from "../../ui/motion/MotionList";
 import { MotionNumber } from "../../ui/motion/MotionNumber";
 import { MotionStatus } from "../../ui/motion/MotionStatus";
@@ -51,6 +52,9 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
   const [groupQuotes, setGroupQuotes] = useState<Record<string, api.GroupQuote[] | null>>({});
   // Treasurer dashboard: the owner's single derived view.
   const [treasurer, setTreasurer] = useState<Record<string, api.TreasurerDashboard | null>>({});
+  // The operator read: what the group asked for and what actually settled here.
+  const [ops, setOps] = useState<Record<string, CoopOperations | null | undefined>>({});
+  const [opsOpen, setOpsOpen] = useState<Record<string, boolean>>({});
   const [treasurerOpen, setTreasurerOpen] = useState<Record<string, boolean>>({});
   // Start-a-group flow: a name + a template (assisted replication).
   const [createOpen, setCreateOpen] = useState(false);
@@ -132,6 +136,17 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
       setTreasurer((prev) => ({ ...prev, [group.id]: res.ok ? res.data : null }));
     }
   };
+
+  const toggleOps = async (group: TableBankingGroup) => {
+    setOpsOpen((prev) => ({ ...prev, [group.id]: !prev[group.id] }));
+    if (ops[group.id] === undefined) {
+      const res = await api.getCoopOperations(group.id);
+      setOps((prev) => ({ ...prev, [group.id]: res.ok ? res.data : null }));
+    }
+  };
+
+  const money = (n: number | null, cur: string) =>
+    n === null || n === undefined ? "—" : `${cur} ${Number(n).toLocaleString("en-KE")}`;
 
   const sendInvite = async (group: TableBankingGroup) => {
     const f = inviteForm[group.id];
@@ -357,6 +372,102 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
                       <p className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>
                         Welfare: KES {treasurer[c.id]!.welfare.balance.toLocaleString()} · {treasurer[c.id]!.pendingInvites} pending invite{treasurer[c.id]!.pendingInvites === 1 ? "" : "s"} · {treasurer[c.id]!.activeLoans.length} active loan{treasurer[c.id]!.activeLoans.length === 1 ? "" : "s"}
                       </p>
+                    </div>
+                  ))}
+
+                  {/* The operator read — the group's own demand and what settled
+                      in Brief. Nothing here is a projection: an absent figure is
+                      an em dash, and the questions this read cannot answer are
+                      printed as a list rather than filled in. */}
+                  <button type="button" onClick={() => toggleOps(c)} className="w-full rounded-full px-3 py-1.5 text-xs font-bold" style={{ background: "var(--color-surface)", color: "var(--color-text)", border: "1px solid var(--color-border)" }}>
+                    {opsOpen[c.id] ? "Hide the operator read" : "Operator read — what the group moved"}
+                  </button>
+                  {opsOpen[c.id] && (ops[c.id] === undefined ? (
+                    <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>Reading…</p>
+                  ) : ops[c.id] === null ? (
+                    <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>The read could not be taken. Nothing is shown in its place.</p>
+                  ) : (
+                    <div className="rounded-xl p-3 space-y-2.5" style={{ background: "var(--color-surface-elevated)" }}>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                        <span style={{ color: "var(--color-text)" }}>Pool <b className="font-mono">{money(ops[c.id]!.pool.cashOnHand, ops[c.id]!.currency)}</b></span>
+                        <span style={{ color: "var(--color-text-muted)" }}>Contributed <b className="font-mono">{money(ops[c.id]!.pool.totalContributed, ops[c.id]!.currency)}</b></span>
+                        <span style={{ color: "var(--color-text-muted)" }}>Outstanding loans <b className="font-mono">{money(ops[c.id]!.pool.outstandingLoansKes, ops[c.id]!.currency)}</b></span>
+                      </div>
+
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>
+                          What the group asked for
+                        </p>
+                        {ops[c.id]!.collective.placed === 0 ? (
+                          <p className="text-[11px] mt-1" style={{ color: "var(--color-text)" }}>
+                            No collective request has been placed yet. Until one is, there is nothing to quote, settle or count.
+                          </p>
+                        ) : (
+                          <>
+                            <p className="text-[11px] mt-1" style={{ color: "var(--color-text)" }}>
+                              {ops[c.id]!.collective.placed} placed · {ops[c.id]!.collective.open} still open · {ops[c.id]!.collective.quoted} with quotes · {ops[c.id]!.collective.accepted} accepted
+                            </p>
+                            <ul className="mt-1 space-y-1">
+                              {ops[c.id]!.collective.items.slice(0, 4).map((it) => (
+                                <li key={it.requestId} className="text-[11px]" style={{ color: "var(--color-text)" }}>
+                                  <span className="font-bold">{it.title}</span>
+                                  {it.quantity != null ? <span className="font-mono"> · {it.quantity}{it.unit ? ` ${it.unit}` : ""}</span> : null}
+                                  <span className="font-mono"> · {it.quotes} quote{it.quotes === 1 ? "" : "s"}</span>
+                                  <span> · {it.accepted ? `accepted at ${money(it.acceptedValueKes, it.acceptedValueCurrency ?? ops[c.id]!.currency)}` : "no accepted offer"}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </>
+                        )}
+                      </div>
+
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>
+                          Settled through Brief · last {ops[c.id]!.settledThroughBrief.windowDays} days
+                        </p>
+                        <p className="text-[13px] font-mono font-black mt-0.5" style={{ color: "var(--color-text)" }}>
+                          {money(ops[c.id]!.settledThroughBrief.settledKes, ops[c.id]!.settledThroughBrief.currency ?? ops[c.id]!.currency)}
+                          <span className="text-[10px] font-sans font-bold ml-1.5" style={{ color: "var(--color-text-muted)" }}>
+                            over {ops[c.id]!.settledThroughBrief.settlements} settlement{ops[c.id]!.settledThroughBrief.settlements === 1 ? "" : "s"}
+                            {ops[c.id]!.settledThroughBrief.settledKes === null && ops[c.id]!.settledThroughBrief.settlements > 0
+                              ? " · mixed currencies, so no single total is shown"
+                              : ""}
+                          </span>
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>
+                          Members' public shopfronts
+                        </p>
+                        {!ops[c.id]!.memberBusiness.visible ? (
+                          <p className="text-[11px] mt-1" style={{ color: "var(--color-text-muted)" }}>{ops[c.id]!.memberBusiness.reason}</p>
+                        ) : (
+                          <ul className="mt-1 space-y-1">
+                            {ops[c.id]!.memberBusiness.rows.map((r) => (
+                              <li key={r.userId} className="flex items-baseline justify-between gap-2 text-[11px]" style={{ color: "var(--color-text)" }}>
+                                <span className="truncate font-bold">{r.displayName ?? "a member"}</span>
+                                <span className="shrink-0 font-mono" style={{ color: "var(--color-text-muted)" }}>
+                                  {r.publicSpaces.length === 0
+                                    ? r.noPublicShopfront ?? "—"
+                                    : r.publicSpaces.map((sp) => `${sp.name}: ${sp.liveOffers} live offer${sp.liveOffers === 1 ? "" : "s"} · ${sp.maintenanceState}`).join(" | ")}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+
+                      <DerivationNote
+                        summary="The pool is the treasurer's own arithmetic; the demand and the money are counts over the group's rows."
+                        detail={
+                          <>
+                            {ops[c.id]!.note}{" "}
+                            What this read will not produce: {ops[c.id]!.unavailable.map((g) => g.label.toLowerCase()).join("; ")}.{" "}
+                            {ops[c.id]!.unavailable.map((g) => `${g.label}: ${g.reason}`).join(" ")}
+                          </>
+                        }
+                      />
                     </div>
                   ))}
 

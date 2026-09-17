@@ -123,6 +123,50 @@ async function main() {
   }
   pass('SignalBar renders only derived facts, stamped as a snapshot, with no fake trend');
 
+  // --- StakesLine: the loss frame, but only as far as a row carries it ------
+  const { StakesLine } = require('./src/features/home/StakesLine.tsx');
+  const moneyLine = (pos, sp, extra = {}) => {
+    const c = document.createElement('div');
+    document.body.appendChild(c);
+    const root = createRoot(c);
+    act(() => root.render(React.createElement(StakesLine, { position: pos, spaces: sp, loading: false, ...extra })));
+    const out = text(c);
+    root.unmount(); c.remove();
+    return out;
+  };
+  {
+    // A real lost order: the quote row says the buyer chose someone else, and the
+    // money is the sum of MY OWN declined offers.
+    const t = moneyLine(
+      { missedCapture: { count: 2, recent: [], value: { amount: 9600, currency: 'KES', over: '30 days', sampleCount: 2 } }, open: { total: 4, top: [{ title: 'Maize, 50 bags' }] } },
+      [{ id: 's1', name: 'Shop', offers: [{ id: 'l1', status: 'active' }] }]
+    );
+    assert.ok(t.includes('2 quotes of yours ended with the buyer choosing someone else'), 'a lost order is named as one');
+    assert.ok(t.includes('KES 9,600'), 'with the sum of the user’s own offers');
+    assert.ok(t.includes('at stake'), 'tagged as at stake, not as a score');
+    // …and when those offers carried no completed price, NO money appears.
+    const bare = moneyLine({ missedCapture: { count: 1, recent: [], value: null }, open: { total: 0, top: [] } }, []);
+    assert.ok(bare.includes('those offers carried no completed price'), 'the absence is stated');
+    assert.ok(!/KES/.test(bare), 'and no amount is conjured to fill it');
+    // Demand exists, nothing published: the gap is the story.
+    const invisible = moneyLine({ missedCapture: { count: 0, recent: [], value: null }, open: { total: 5, top: [] } }, [{ id: 's', name: 'S', offers: [] }]);
+    assert.ok(invisible.includes('5 requests are open') && invisible.includes('you have no live offer'), 'the findability gap, in row terms');
+    assert.ok(!/90%|invisible to most buyers/.test(invisible), 'and not as a made-up percentage of shoppers');
+    // A genuinely quiet week is said as a quiet week.
+    const quiet = moneyLine({ missedCapture: { count: 0, recent: [], value: null }, open: { total: 0, top: [] } }, [{ id: 's', name: 'S', offers: [{ id: 'l', status: 'active' }] }]);
+    assert.ok(/quiet week, not a warning/.test(quiet), 'a true zero is not dressed as failure');
+    assert.ok(!/losing|at stake/.test(quiet), 'and no stakes are invented against it');
+    // A failed read never becomes a calm all-clear.
+    const failed = moneyLine(null, null, { failed: true });
+    assert.ok(/could not be read, so nothing here is claimed/.test(failed), 'the failure is the message');
+    // The frame Brief will not use at all.
+    const all = moneyLine({ missedCapture: { count: 3, recent: [], value: { amount: 100, currency: 'KES', over: '30 days', sampleCount: 1 } }, open: { total: 0, top: [] } }, []);
+    assert.ok(!/staff hours|hours you can’t verify|hours you can't verify/i.test(all), 'no unverifiable staff-hours claim');
+    assert.ok(!/could have earned/.test(all), 'no counterfactual earnings figure');
+    assert.ok(all.includes('covers 1 of the 3'), 'a partial sum says what it covers');
+  }
+  pass('StakesLine frames loss only where a row exists, and says a quiet week is quiet');
+
   // --- WorldStrip: the country's movement, not the user's ------------------
   const WORLD = {
     ok: true, available: true, provider: 'Open-Meteo', kind: 'forecast', observedAt: null, horizonDays: 7,

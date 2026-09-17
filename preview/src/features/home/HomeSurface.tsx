@@ -19,6 +19,7 @@ import { attentionQueue, needsAttention, splitSpaces } from './spaceSignals';
 import { MuseumGallery } from '../city/MuseumGallery';
 import { SignalBar } from './SignalBar';
 import { WorldStrip } from './WorldStrip';
+import { StakesLine } from './StakesLine';
 import { NextMoveCard } from './NextMoveCard';
 import { StandingLine } from './StandingLine';
 import { CirclesStrip } from './CirclesStrip';
@@ -172,6 +173,18 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
         <h1 className="text-2xl sm:text-3xl font-black text-[color:var(--color-text)] tracking-tight">
           Hi {sessionName || userName}
         </h1>
+        {/* The hook, loss-framed but only as far as a row will carry it: a lost
+            quote is a real event, an unposted offer is a real absence, and a
+            quiet week is said as a quiet week. No invented "you are losing
+            KES 40,000", and no claim about staff hours Brief cannot see. */}
+        <StakesLine
+          position={position}
+          spaces={spaces}
+          loading={isLoading}
+          failed={position === null && !isLoading}
+          onOpenDiscover={() => onExploreDiscover?.('all')}
+          onPostOffer={() => onOpenSpaces?.()}
+        />
         <StandingLine position={position} commitments={commitments} reciprocity={reciprocity} />
       </div>
 

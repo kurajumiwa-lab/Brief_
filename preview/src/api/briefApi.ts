@@ -5524,6 +5524,69 @@ export function voteOnTableBankingQuote(id: string, quoteId: string, approve: bo
 }
 
 // --- TREASURER DASHBOARD — the owner's single derived view ------------------
+// ---------------------------------------------------------------------------
+// COOPERATIVE OPERATIONS — the operator's read on a group (pool + the group's
+// own demand + what settled in Brief). Everything is derived from rows the
+// group wrote; the payload also states, in `unavailable`, the figures it will
+// not produce. The client renders what came back and adds nothing.
+// ---------------------------------------------------------------------------
+export interface CoopOperationItem {
+  requestId: string;
+  placedAt: string | null;
+  title: string;
+  status: string;
+  open: boolean;
+  quantity: number | null;
+  unit: string | null;
+  category: string | null;
+  location: string | null;
+  quotes: number;
+  accepted: boolean;
+  acceptedValueKes: number | null;
+  acceptedValueCurrency: string | null;
+  closedAt: string | null;
+}
+export interface CoopOperations {
+  id: string;
+  name: string;
+  status: string;
+  currency: string;
+  cycleDays: number | null;
+  members: number;
+  callerRole: 'owner' | 'member';
+  pool: {
+    cashOnHand: number; totalContributed: number; totalPaidOut: number;
+    loanedOut: number; totalRepaid: number; perCycle: number; welfarePerCycle: number;
+    activeLoans: number; outstandingLoansKes: number; nextRecipientName: string | null;
+    notYetContributed: number; notYetReceived: number;
+  };
+  collective: {
+    placed: number; open: number; quoted: number; accepted: number;
+    byStatus: Record<string, number>; windowDays: number; items: CoopOperationItem[];
+  };
+  settledThroughBrief: {
+    settlements: number; settledKes: number | null; currency: string | null;
+    workOrders: number; workOrdersCompleted: number; windowDays: number; latestAt: string | null;
+  };
+  memberBusiness: {
+    visible: boolean;
+    reason: string;
+    rows: Array<{
+      userId: string; displayName: string | null; joinedAt: string | null;
+      publicSpaces: Array<{ id: string; name: string; slug: string | null; liveOffers: number; maintenanceState: string; openItems: number }>;
+      noPublicShopfront: string | null;
+    }>;
+  };
+  unavailable: Array<{ key: string; label: string; reason: string }>;
+  benchmark: null;
+  derivedAt: string;
+  note: string;
+}
+export function getCoopOperations(id: string): Promise<ApiResult<CoopOperations>> {
+  return request<CoopOperations>(`/api/table-banking/${encodeURIComponent(id)}/operations`, undefined, (r) =>
+    r && r.operations && r.operations.pool ? (r.operations as CoopOperations) : undefined);
+}
+
 export interface TreasurerDashboard {
   group: { id: string; name: string };
   summary: TableBankingSummary;

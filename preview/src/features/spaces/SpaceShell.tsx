@@ -583,8 +583,8 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
               because that is exactly what the rows say: money whose ledger row
               reached settled. Everything else is not this number's business. */}
       <div
-        className="sticky bottom-20 md:bottom-4 z-30 rounded-2xl border px-4 py-3 flex items-center gap-3 shadow-lg"
-        style={{ background: 'var(--color-paper)', borderColor: 'var(--brief-line)' }}
+        className="sticky bottom-20 md:bottom-4 z-30 rounded-2xl px-4 py-3 flex items-center gap-3"
+        style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-3), inset 0 0 0 1px var(--brief-line)' }}
       >
         <div className="min-w-0 flex-1">
           <p className="text-[9px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-muted)' }}>
@@ -593,6 +593,15 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
           <p className="font-mono text-[17px] font-extrabold leading-none" style={{ color: 'var(--color-success)' }}>
             KES {Number(space.metrics?.revenueKes ?? 0).toLocaleString('en-KE')}
           </p>
+          {/* A zero here is the true count of settled rows, so it is printed —
+              with the one row that would change it. Not a loss figure: sales made
+              off Brief are nobody's business but the owner's, and Brief cannot
+              see them. */}
+          {Number(space.metrics?.revenueKes ?? 0) === 0 && (
+            <p className="text-[10px] mt-1" style={{ color: 'var(--brief-muted)' }}>
+              Nothing has settled through Brief yet — this starts at your first settled order.
+            </p>
+          )}
         </div>
         <span className="text-[11px] font-mono shrink-0" style={{ color: 'var(--brief-muted)' }}>
           {space.metrics?.activeOrdersCount ?? 0} active · {space.metrics?.offersCount ?? 0} live

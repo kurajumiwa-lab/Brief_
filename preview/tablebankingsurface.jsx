@@ -57,6 +57,37 @@ const minutesList = [
   { id: 'mn_1', tableBankingId: 'chm_1', authorId: 'u1', title: 'June 14 meeting', body: 'Agreed the rotation.', decisions: ['Advance the turn'], actionItems: null, heldAt: '2026-06-14T00:00:00Z', createdAt: '2026-06-14T00:00:00Z' }
 ];
 
+// The operator read, as the server sends it: the pool, the group's own demand,
+// what settled (here in TWO currencies, so no single total exists), and a scope
+// note instead of member businesses.
+let opsFixture = {
+  id: 'chm_1', name: 'Kiama Circle', status: 'active', currency: 'KES', cycleDays: 30, members: 2,
+  callerRole: 'member',
+  pool: {
+    cashOnHand: 10000, totalContributed: 10000, totalPaidOut: 0, loanedOut: 0, totalRepaid: 0,
+    perCycle: 5000, welfarePerCycle: 500, activeLoans: 0, outstandingLoansKes: 0,
+    nextRecipientName: 'Alice', notYetContributed: 0, notYetReceived: 2
+  },
+  collective: {
+    placed: 2, open: 1, quoted: 1, accepted: 1, byStatus: { matching: 1, completed: 1 }, windowDays: 90,
+    items: [
+      { requestId: 'r_1', placedAt: '2026-06-01T00:00:00Z', title: 'Fertilizer bulk buy', status: 'matching', open: true, quantity: 40, unit: 'bag', category: 'fertilizer', location: 'Kiambu', quotes: 3, accepted: false, acceptedValueKes: null, acceptedValueCurrency: null, closedAt: null },
+      { requestId: 'r_2', placedAt: '2026-05-01T00:00:00Z', title: 'Napier grass, 40 bales', status: 'completed', open: false, quantity: 40, unit: 'bale', category: 'fodder', location: 'Kiambu', quotes: 2, accepted: true, acceptedValueKes: 48000, acceptedValueCurrency: 'KES', closedAt: '2026-05-20T00:00:00Z' }
+    ]
+  },
+  settledThroughBrief: { settlements: 2, settledKes: null, currency: null, workOrders: 2, workOrdersCompleted: 1, windowDays: 90, latestAt: '2026-05-20T00:00:00Z' },
+  memberBusiness: { visible: false, reason: 'Only the group owner sees member shopfronts. Your own position is yours below, and it is not shown to other members.', rows: [] },
+  unavailable: [
+    { key: 'member_turnover', label: 'A member’s revenue or turnover outside the group', reason: 'a member’s orders with people other than the group are their own business' },
+    { key: 'attributed_share', label: 'Share of a member’s sales that came through the group', reason: 'there is no attribution row, so any percentage would be invented' },
+    { key: 'staff_hours', label: 'Staff hours or attendance at member businesses', reason: 'Brief verifies no attendance' },
+    { key: 'member_rank', label: 'A ranking of members by contribution or reliability', reason: 'a grade from the ledger is a credit judgement' },
+    { key: 'benchmark', label: 'What a comparable group achieves', reason: 'Brief holds no cross-group benchmark table' }
+  ],
+  benchmark: null,
+  derivedAt: '2026-06-14T00:00:00Z',
+  note: 'Every figure here is a count or a sum over rows the group itself wrote.'
+};
 let fetchHandler;
 let collectiveOrders = [];
 global.fetch = async (input, init) => fetchHandler(String(input?.url ?? input ?? ''), init);
@@ -114,6 +145,7 @@ async function main() {
   // --- indicators ---
   fetchHandler = async (url, init) => {
     if (url.includes('/me/table-banking')) return { ok: true, status: 200, text: async () => JSON.stringify({ groups: [groupRow] }) };
+    if (url.includes('/operations')) return { ok: true, status: 200, text: async () => JSON.stringify({ operations: opsFixture }) };
     if (url.includes('/api/table-banking/chm_1/requests')) {
       // Collective orders: empty by default, or the sample after a POST.
       return { ok: true, status: 200, text: async () => JSON.stringify({ collective: collectiveOrders }) };
@@ -214,6 +246,35 @@ async function main() {
     assert.ok(t2.includes('not contributed'), 'treasurer member status shown');
   }
   pass('TableBankingSurface: indicators show what can happen and what did happen');
+  // --- the operator read: what the group moved, and what this view will not say ---
+  {
+    const { container } = mount(React.createElement(TableBankingSurface, { onRequireAuth: () => {} }));
+    await flush();
+    // The group's sections live behind its own disclosure, like the treasurer test.
+    act(() => { btn('Indicators').click(); });
+    await flush();
+    act(() => { btn('Operator read').click(); });
+    await flush();
+    const t = text(container);
+    assert.ok(t.includes('Pool KES 10,000'), 'the pool is the same number the treasurer sees');
+    assert.ok(t.includes('2 placed · 1 still open · 1 with quotes · 1 accepted'), 'demand is counts of the group’s own request rows');
+    assert.ok(t.includes('accepted at KES 48,000'), 'an accepted value is the offer’s own money');
+    assert.ok(t.includes('no accepted offer'), 'and a request without one says so');
+    assert.ok(t.includes('Settled through Brief · last 90 days'), 'the settled figure names its window');
+    assert.ok(t.includes('over 2 settlements'), 'the count of settlements is honest…');
+    assert.ok(t.includes('mixed currencies, so no single total is shown'), '…while the amount is refused, not summed across currencies');
+    assert.ok(/—\s*over 2 settlements/.test(t), 'an unmeasurable total is a dash beside the count that is real');
+    assert.ok(!/KES —/.test(t), 'and a dash is never dressed up as a KES amount');
+    assert.ok(t.includes('Only the group owner sees member shopfronts'), 'scope is stated on the surface');
+    assert.ok(!/top contributor|most active member|engagement/i.test(t), 'no member is graded or ranked');
+    act(() => { Array.from(container.querySelectorAll('button')).find((b) => /How this is derived/.test(text(b))).click(); });
+    await flush();
+    const d = text(container);
+    assert.ok(d.includes('rows the group itself wrote'), 'the derivation is one tap away');
+    assert.ok(d.includes('no attribution row'), 'and the gaps state their own reason');
+  }
+  pass('TableBankingSurface: the operator read counts the group’s rows and refuses the numbers that do not exist');
+
 
   console.log('\nPASS ' + count);
   process.exit(0);
