@@ -157,7 +157,10 @@ export function deriveFacts(daily, { nowMs, units } = {}) {
     if (typeof d.mm === 'number' && d.mm < WET_MM) dryRun += 1;
     else break;
   }
-  if (dryRun > 0) {
+  // One dry day before tomorrow's rain is not a "dry spell" — that phrasing
+  // would read as a forecast of a week of dust. Two days or more, or nothing:
+  // the wet-day fact carries the message instead.
+  if (dryRun >= 2) {
     facts.push({
       kind: 'dry',
       // The threshold is a field, not a number in the sentence: a figure shown
@@ -297,6 +300,7 @@ export async function worldSignal({ place = null, now = Date.now() } = {}) {
       retrievedAt: snap.retrievedAt,
       ageHours: Math.round(Math.max(0, (now - snap.at) / 3600_000) * 10) / 10,
       fromCache: snap.fromCache === true,
+      stale: false,
       ...derived,
       error: null
     };
