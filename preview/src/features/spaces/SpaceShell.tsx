@@ -20,6 +20,8 @@ export interface SpaceShellProps {
   initialTab?: 'catalog' | 'pipeline' | 'ledger' | 'tools' | 'operating';
   onBack?: () => void;
   onShare?: (space: Space) => void;
+  /** The walk-in enquiry loop: a customer at the counter, no order yet. */
+  onCreateOrder?: () => void;
   className?: string;
 }
 
@@ -32,6 +34,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
   initialTab = 'catalog',
   onBack,
   onShare,
+  onCreateOrder,
   className = ''
 }) => {
   const [space, setSpace] = useState<Space | null>(null);
@@ -351,6 +354,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
           onOpenInbox={() => setActiveTab('pipeline')}
           onEdit={openIdentity}
           onShare={() => void shareSpace()}
+          onCreateOrder={onCreateOrder}
         />
 
         <BroadcastRail

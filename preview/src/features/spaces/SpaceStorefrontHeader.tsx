@@ -39,6 +39,8 @@ export interface SpaceStorefrontHeaderProps {
   onFollow?: () => void;
   onMessage?: () => void;
   onOpenInbox?: () => void;
+  /** Records a walk-in enquiry. Named for what it actually does. */
+  onCreateOrder?: () => void;
   busy?: boolean;
 }
 
@@ -52,6 +54,7 @@ export function SpaceStorefrontHeader({
   onFollow,
   onMessage,
   onOpenInbox,
+  onCreateOrder,
   busy = false
 }: SpaceStorefrontHeaderProps) {
   const insights = audience?.insights ?? null;
@@ -131,6 +134,17 @@ export function SpaceStorefrontHeader({
                 <MessageCircle className="w-4 h-4" /> Inbox
                 {openInquiries > 0 && <span className="font-mono">· {openInquiries}</span>}
               </button>
+              {onCreateOrder && (
+                <button
+                  type="button"
+                  onClick={onCreateOrder}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-bold border cursor-pointer"
+                  style={{ borderColor: '#E5E7EB', color: '#0A0A0A', background: '#fff' }}
+                  title="Record who walked in, what they wanted, and what you quoted"
+                >
+                  <Plus className="w-4 h-4" /> Walk-in enquiry
+                </button>
+              )}
               <button
                 type="button"
                 onClick={onEdit}

@@ -120,30 +120,40 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
 
   const handleTriggerMpesa = async (conv: SpaceConversation, amount: number) => {
     soundEngine.play('heavyTap');
+    // No contact on the enquiry means no prompt. The number is not ours to make
+    // up, and the server refuses an empty one for exactly that reason.
+    if (!(conv.customerContact || '').trim()) {
+      showToast('This enquiry has no phone number on it, so no prompt was sent. Ask the customer for one.');
+      return;
+    }
     try {
-      await briefApi.triggerSpaceMpesaPrompt(space.id, conv.id, {
-        phoneNumber: conv.customerContact || '254712345678',
+      const res = await briefApi.triggerSpaceMpesaPrompt(space.id, conv.id, {
+        phoneNumber: conv.customerContact,
         amountKes: amount,
         description: `Payment for ${conv.offerTitle || 'Order'}`
       });
-      showToast(`M-Pesa STK Prompt sent for KES ${amount.toLocaleString()}`);
+      if (!res.ok) { showToast(res.error ?? 'The payment prompt was refused.'); return; }
+      showToast(`M-Pesa prompt requested for KES ${amount.toLocaleString()}`);
       onRefresh();
     } catch (err) {
-      console.error('Failed to trigger STK prompt:', err);
+      showToast('The payment prompt could not be sent.');
     }
   };
 
   const handleSimulatePayment = async (convId: string, promptId: string, amount: number) => {
     soundEngine.play('reward');
     try {
-      await briefApi.completeSpaceMpesaPayment(space.id, convId, {
+      const res = await briefApi.completeSpaceMpesaPayment(space.id, convId, {
         paymentRequestId: promptId,
         amountPaid: amount
       });
-      showToast(`Payment Confirmed! Order created for KES ${amount.toLocaleString()}`);
+      // A confirmation is a fact about money. It is never announced when the
+      // ledger did not accept it.
+      if (!res.ok) { showToast(res.error ?? 'The payment was not confirmed.'); return; }
+      showToast(`Payment confirmed · KES ${amount.toLocaleString()}`);
       onRefresh();
     } catch (err) {
-      console.error('Failed to complete payment:', err);
+      showToast('The payment could not be confirmed.');
     }
   };
 
@@ -158,7 +168,9 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
         destinationTown: destTown.trim(),
         carrierSacco: carrierSacco.trim(),
         receiverName: conv.customerName,
-        receiverPhone: conv.customerContact || '254712345678',
+        // Blank when the enquiry never carried one: the server refuses, and the
+        // seller is told why, instead of a waybill going out on an invented number.
+        receiverPhone: conv.customerContact || '',
         conductorContact: conductorPhone.trim(),
         stageFeeKes: Number(stageFee || 0),
         notes: dispatchNotes.trim()
@@ -168,9 +180,15 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
         showToast(`Dispatched via ${carrierSacco} (${res.data.dispatch.waybillRef})`);
         setActiveDispatchCardId(null);
         onRefresh();
+        return;
       }
+      // The refusal is the useful part: "receiver phone is required" means the
+      // enquiry has no number, and the parcel must not go out on a guess.
+      showToast(!conv.customerContact
+        ? 'This enquiry has no receiver phone. Get one from the buyer before the parcel moves.'
+        : (res as { error?: string }).error ?? 'The dispatch was refused.');
     } catch (err) {
-      console.error('Failed to create dispatch:', err);
+      showToast('The dispatch could not be created.');
     } finally {
       setSubmittingDispatch(false);
     }

@@ -25,15 +25,22 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
   // Quote generator state
   const [showQuoteForm, setShowQuoteForm] = useState(false);
   const [quoteTitle, setQuoteTitle] = useState(conversation.offerTitle ? `Custom ${conversation.offerTitle}` : 'Custom Order');
-  const [quotePrice, setQuotePrice] = useState<string>(conversation.offerPriceKes ? String(conversation.offerPriceKes) : '5000');
+  // A quote starts empty unless the enquiry itself carries a price. A default of
+  // "5000" is an invented number that one tap turns into a real quote sent to a
+  // real customer.
+  const [quotePrice, setQuotePrice] = useState<string>(conversation.offerPriceKes ? String(conversation.offerPriceKes) : '');
   const [quoteNotes, setQuoteNotes] = useState('');
 
   // M-Pesa prompt state
   const [showPromptForm, setShowPromptForm] = useState(false);
-  const [promptPhone, setPromptPhone] = useState(conversation.customerContact || '254712345678');
-  const [promptAmount, setPromptAmount] = useState<string>(conversation.offerPriceKes ? String(conversation.offerPriceKes) : '5000');
+  // Only the number the customer left. If there is none, the field is blank and
+  // the send is refused with a reason — a phone is not something to fill in.
+  const [promptPhone, setPromptPhone] = useState(conversation.customerContact || '');
+  const [promptAmount, setPromptAmount] = useState<string>(conversation.offerPriceKes ? String(conversation.offerPriceKes) : '');
   const [promptDesc, setPromptDesc] = useState(conversation.offerTitle ? `Payment for ${conversation.offerTitle}` : 'Order Payment');
   const [activeQuoteId, setActiveQuoteId] = useState<string | undefined>(undefined);
+  // Every refusal in this thread is shown, never console.error'd.
+  const [threadError, setThreadError] = useState<string | null>(null);
 
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -59,20 +66,26 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
   const handleSendQuote = async (e: React.FormEvent) => {
     e.preventDefault();
     const numPrice = Number(quotePrice);
-    if (!quoteTitle.trim() || isNaN(numPrice) || numPrice <= 0 || sending) return;
+    if (sending) return;
+    if (!quoteTitle.trim() || !quotePrice.trim()) { setThreadError('Write the item and the price you are quoting. Nothing is sent for you.'); return; }
+    if (isNaN(numPrice) || numPrice <= 0) { setThreadError('A quote price is a number above zero.'); return; }
 
     setSending(true);
     soundEngine.play('reward');
     try {
-      await briefApi.createSpaceQuote(spaceId, conversation.id, {
+      const res = await briefApi.createSpaceQuote(spaceId, conversation.id, {
         title: quoteTitle.trim(),
         priceKes: numPrice,
         notes: quoteNotes.trim()
       });
+      // briefApi never throws, so the refusal has to be READ, not caught. A
+      // silent failure here means a seller believes a quote went out when it did not.
+      if (!res.ok) { setThreadError(res.error ?? 'The quote was refused.'); return; }
+      setThreadError(null);
       setShowQuoteForm(false);
       onUpdated?.();
     } catch (err) {
-      console.error('Failed to create quote:', err);
+      setThreadError('The quote could not be sent.');
     } finally {
       setSending(false);
     }
@@ -81,21 +94,31 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
   const handleTriggerMpesa = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const numAmount = Number(promptAmount);
-    if (isNaN(numAmount) || numAmount <= 0 || sending) return;
+    if (sending) return;
+    if (!promptPhone.trim()) {
+      setThreadError('This enquiry has no phone number on it. Ask the customer for one — Brief will not fill a number in and send a payment prompt to a stranger.');
+      return;
+    }
+    if (!promptAmount.trim() || isNaN(numAmount) || numAmount <= 0) {
+      setThreadError('Type the amount to prompt for. An STK push moves money, so it is not guessed at.');
+      return;
+    }
 
     setSending(true);
     soundEngine.play('heavyTap');
     try {
-      await briefApi.triggerSpaceMpesaPrompt(spaceId, conversation.id, {
+      const res = await briefApi.triggerSpaceMpesaPrompt(spaceId, conversation.id, {
         quoteId: activeQuoteId,
-        phoneNumber: promptPhone,
+        phoneNumber: promptPhone.trim(),
         amountKes: numAmount,
         description: promptDesc
       });
+      if (!res.ok) { setThreadError(res.error ?? 'The payment prompt was refused.'); return; }
+      setThreadError(null);
       setShowPromptForm(false);
       onUpdated?.();
     } catch (err) {
-      console.error('Failed to trigger STK push:', err);
+      setThreadError('The payment prompt could not be sent.');
     } finally {
       setSending(false);
     }
@@ -119,6 +142,12 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
 
   return (
     <div className={`flex flex-col h-full bg-white rounded-3xl shadow-sm overflow-hidden ${className}`}>
+
+      {threadError && (
+        <p role="alert" className="px-4 py-2 text-[11px] font-bold"
+          style={{ background: '#FEF2F2', color: '#B91C1C' }}>{threadError}</p>
+      )}
+
       {/* ── THREAD HEADER ── */}
       <div className="p-4 bg-[color:var(--color-surface)] flex items-center justify-between border-b border-black/5">
         <div className="flex items-center space-x-3">
@@ -330,7 +359,15 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
             className="w-full py-2 rounded-xl bg-[color:var(--color-text)] hover:bg-black text-[color:var(--color-primary)] text-xs font-black shadow-sm transition-all cursor-pointer flex items-center justify-center space-x-1.5"
           >
             <Smartphone className="w-4 h-4" />
-            <span>{sending ? 'Prompting...' : `Prompt M-Pesa (KES ${Number(promptAmount || 0).toLocaleString()})`}</span>
+            {/* The amount is not shown until it is typed: a button reading
+                "KES 0" invites a tap that promises nothing. */}
+            <span>
+              {sending
+                ? 'Prompting…'
+                : promptAmount.trim()
+                  ? `Prompt M-Pesa (KES ${Number(promptAmount).toLocaleString()})`
+                  : 'Prompt M-Pesa'}
+            </span>
           </button>
         </form>
       )}

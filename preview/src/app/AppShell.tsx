@@ -187,20 +187,35 @@ export const AppShell: React.FC<AppShellProps> = ({
     try {
       const convRes = await briefApi.createSpaceConversation(activeSpace.id, {
         customerName: manualCustomerName.trim(),
-        customerContact: manualCustomerPhone.trim() || '+254700000000',
+        // Blank is blank. A contact is what the seller was given, and a recorded
+        // walk-in with no number is a real, ordinary state — not a number to invent.
+        customerContact: manualCustomerPhone.trim(),
         message: `Walk-in inquiry for ${manualItemTitle.trim() || 'Custom Order'}`
       });
 
-      if (convRes.ok && convRes.data?.conversation) {
+      if (!convRes.ok) {
+        // A silent failure here means the seller believes the walk-in is in the
+        // book when nothing was written.
+        showToast(convRes.error ?? 'The enquiry was not recorded.');
+        return;
+      }
+      if (convRes.data?.conversation) {
         const conv = convRes.data.conversation;
+        let quoted = false;
         if (manualPrice && Number(manualPrice) > 0) {
-          await briefApi.createSpaceQuote(activeSpace.id, conv.id, {
+          const q = await briefApi.createSpaceQuote(activeSpace.id, conv.id, {
             title: manualItemTitle.trim() || 'Custom Order',
             priceKes: Number(manualPrice),
             notes: 'Walk-in customer order'
           });
+          quoted = q.ok;
+          if (!q.ok) showToast(`Enquiry recorded, but the quote was refused: ${q.error ?? 'unknown reason'}`);
         }
-        showToast(`Order created for ${manualCustomerName}`);
+        // Not "Order created": what exists now is an enquiry, and maybe a quote.
+        // An order is what the customer agrees to, and the ledger will say so.
+        if (!quoted && !(manualPrice && Number(manualPrice) > 0)) {
+          showToast(`Enquiry recorded for ${manualCustomerName.trim()}. No order yet.`);
+        }
         setManualCustomerName('');
         setManualCustomerPhone('');
         setManualItemTitle('');
@@ -335,6 +350,7 @@ export const AppShell: React.FC<AppShellProps> = ({
                 spaceId={activeSpace.id}
                 onBack={() => { setActiveSpace(null); setActiveTab('pipeline'); }}
                 onShare={() => { /* SpaceShell copies and reports the truth itself */ }}
+                onCreateOrder={() => setManualOrderOpen(true)}
               />
             )}
 
