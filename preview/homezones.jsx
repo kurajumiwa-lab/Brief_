@@ -123,9 +123,9 @@ async function main() {
   }
   pass('SignalBar renders only derived facts, stamped as a snapshot, with no fake trend');
 
-  // --- StakesLine: the loss frame, but only as far as a row carries it ------
+  // --- StakesLine: numbers, a dot, one action; loss only where a row holds it --
   const { StakesLine } = require('./src/features/home/StakesLine.tsx');
-  const moneyLine = (pos, sp, extra = {}) => {
+  const line = (pos, sp, extra = {}) => {
     const c = document.createElement('div');
     document.body.appendChild(c);
     const root = createRoot(c);
@@ -135,37 +135,29 @@ async function main() {
     return out;
   };
   {
-    // A real lost order: the quote row says the buyer chose someone else, and the
-    // money is the sum of MY OWN declined offers.
-    const t = moneyLine(
-      { missedCapture: { count: 2, recent: [], value: { amount: 9600, currency: 'KES', over: '30 days', sampleCount: 2 } }, open: { total: 4, top: [{ title: 'Maize, 50 bags' }] } },
-      [{ id: 's1', name: 'Shop', offers: [{ id: 'l1', status: 'active' }] }]
-    );
-    assert.ok(t.includes('2 quotes of yours ended with the buyer choosing someone else'), 'a lost order is named as one');
-    assert.ok(t.includes('KES 9,600'), 'with the sum of the user’s own offers');
-    assert.ok(t.includes('at stake'), 'tagged as at stake, not as a score');
-    // …and when those offers carried no completed price, NO money appears.
-    const bare = moneyLine({ missedCapture: { count: 1, recent: [], value: null }, open: { total: 0, top: [] } }, []);
-    assert.ok(bare.includes('those offers carried no completed price'), 'the absence is stated');
-    assert.ok(!/KES/.test(bare), 'and no amount is conjured to fill it');
-    // Demand exists, nothing published: the gap is the story.
-    const invisible = moneyLine({ missedCapture: { count: 0, recent: [], value: null }, open: { total: 5, top: [] } }, [{ id: 's', name: 'S', offers: [] }]);
-    assert.ok(invisible.includes('5 requests are open') && invisible.includes('you have no live offer'), 'the findability gap, in row terms');
-    assert.ok(!/90%|invisible to most buyers/.test(invisible), 'and not as a made-up percentage of shoppers');
-    // A genuinely quiet week is said as a quiet week.
-    const quiet = moneyLine({ missedCapture: { count: 0, recent: [], value: null }, open: { total: 0, top: [] } }, [{ id: 's', name: 'S', offers: [{ id: 'l', status: 'active' }] }]);
-    assert.ok(/quiet week, not a warning/.test(quiet), 'a true zero is not dressed as failure');
-    assert.ok(!/losing|at stake/.test(quiet), 'and no stakes are invented against it');
-    // A failed read never becomes a calm all-clear.
-    const failed = moneyLine(null, null, { failed: true });
-    assert.ok(/could not be read, so nothing here is claimed/.test(failed), 'the failure is the message');
-    // The frame Brief will not use at all.
-    const all = moneyLine({ missedCapture: { count: 3, recent: [], value: { amount: 100, currency: 'KES', over: '30 days', sampleCount: 1 } }, open: { total: 0, top: [] } }, []);
-    assert.ok(!/staff hours|hours you can’t verify|hours you can't verify/i.test(all), 'no unverifiable staff-hours claim');
-    assert.ok(!/could have earned/.test(all), 'no counterfactual earnings figure');
-    assert.ok(all.includes('covers 1 of the 3'), 'a partial sum says what it covers');
+    const base = { decay: { expiringQuotes: [] }, open: { total: 0, top: [] } };
+    const lost = line({ ...base, missedCapture: { count: 2, recent: [], value: { amount: 9600, currency: 'KES', over: '30 days', sampleCount: 2 } } },
+      [{ id: 's1', name: 'Shop', offers: [{ id: 'l1', status: 'active' }] }]);
+    assert.ok(/2 lost/.test(lost), 'a lost order is counted in two words');
+    assert.ok(lost.includes('KES 9,600'), 'valued at the user’s own declined offers');
+    assert.ok(lost.length < 170, `it is a glance, not a paragraph (${lost.length} chars)`);
+    assert.ok(!/ended with the buyer choosing|that is a quiet|not a warning/.test(lost), 'and nothing is explained about the dot');
+    const bare = line({ ...base, missedCapture: { count: 1, recent: [], value: null } }, []);
+    assert.ok(!/KES/.test(bare), 'no amount appears when no row carried a price');
+    const gap = line({ ...base, open: { total: 5, top: [] }, missedCapture: { count: 0, recent: [], value: null } },
+      [{ id: 's', name: 'S', offers: [] }], { onPostOffer: () => {} });
+    assert.ok(/0 offers live/.test(gap) && /gap/.test(gap), 'the findability gap is a state, marked by a dot');
+    assert.ok(/Post an offer/.test(gap), 'with exactly one action');
+    assert.ok(!/90%|invisible to/.test(gap), 'never as a made-up share of buyers');
+    const quiet = line({ ...base, missedCapture: { count: 0, recent: [], value: null } }, [{ id: 's', name: 'S', offers: [{ id: 'l', status: 'active' }] }]);
+    assert.ok(/1 offers live/.test(quiet) && /quiet/.test(quiet), 'a quiet week is a dot and a word');
+    assert.ok(!/warning/.test(quiet), 'and the argument with the reader is gone');
+    const failed = line(null, null, { failed: true });
+    assert.ok(/No read — nothing claimed/.test(failed), 'a failed read claims nothing, in five words');
   }
-  pass('StakesLine frames loss only where a row exists, and says a quiet week is quiet');
+  pass('StakesLine: a count, a dot, one action — the loss only as big as the row behind it');
+
+
 
   // --- WorldStrip: the country's movement, not the user's ------------------
   const WORLD = {
@@ -195,23 +187,23 @@ async function main() {
     act(() => root.render(React.createElement(WorldStrip, {})));
     await flush();
     const t = text(c);
-    assert.ok(t.includes('The world, today'), 'the strip names what it is');
-    assert.ok(t.includes('Heavy rain forecast in 3 days (Sat): 24.3 mm, 99% likely'), 'every sentence is the server\'s, verbatim');
-    assert.ok(t.includes('Nairobi') && t.includes('Nairobi County'), 'the place and the gazetteer\'s own labels show');
-    assert.ok(/default/i.test(t), 'a place nobody chose is announced as the default');
-    assert.ok(t.includes('Open-Meteo'), 'the source is on the surface, not buried');
-    assert.ok(t.includes('Prices and fuel are not wired'), 'the gaps are stated, in one line');
-    assert.ok(!/\+\d+(\.\d+)?%\s|maize|KES \d/i.test(t), 'no commodity movement and no money figure is invented here');
+    // One line, expandable. This used to be a card with four facts, a licence
+    // paragraph and a derivation control; the glance is the forecast.
+    assert.ok(/Rain in 3 days \(Sat\): 24\.3 mm, 99% likely/.test(t), 'the headline fact is the server’s, compressed to a line');
+    assert.ok(t.includes('Nairobi'), 'the place rides on the line');
+    assert.ok(!/Nairobi County|Open-Meteo|not wired|Licence:|How this is derived/.test(t), 'no provenance paragraph, no footnote control');
+    assert.ok(!/\+\d+(\.\d+)?%\s|maize|KES \d/i.test(t), 'no invented commodity movement and no money figure');
     assert.ok(!/\bLIVE\b/.test(t), 'a forecast is not a live feed');
-    // the provenance is deferred, not deleted: one tap shows the licence and the reasons
-    act(() => { btnByText('How this is derived').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
+    act(() => c.querySelector('button[aria-label="See the week"]').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })));
     await flush();
-    const d = text(c);
-    assert.ok(d.includes('no seasonal average'), 'the rule is one tap away and still true');
-    assert.ok(d.includes('EPRA publishes a document, not an API'), 'the fuel gap states its own reason');
-    root.unmount(); c.remove();
+    const opened = text(c);
+    assert.ok(opened.includes('Dry spell holds') && opened.includes('Hottest afternoon'), 'one tap shows the rest of the week');
+    // the placeholder is an attribute, never textContent, in jsdom
+    const placeInput = c.querySelector('input[aria-label="Place"]');
+    assert.ok(placeInput && /place/i.test(placeInput.getAttribute('placeholder') || ''), 'with the place control inside the fold');
   }
-  pass('WorldStrip reports the provider\'s own sentences, dated and attributed, and invents nothing');
+  pass('WorldStrip is one line about the country, expandable, with no prose in the way');
+
 
   // --- WorldStrip: an outage is a gap, not a zero --------------------------
   fetchHandler = async (url) => ({

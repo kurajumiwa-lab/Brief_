@@ -4,6 +4,7 @@ import type { PublicSpace, Space } from '../../api/types';
 import * as briefApi from '../../api/briefApi';
 import { CreateSpaceModal } from './CreateSpaceModal';
 import { splitSpaces } from '../home/spaceSignals';
+import { StateDot, dotForMaintenance } from '../../ui/StateDot';
 import { soundEngine } from '../../utils/SoundEngine';
 
 import { roomSurface, PHOTO_FILTER } from '../city/room';
@@ -63,11 +64,7 @@ export function SpacesLanding({
         <h1 className="text-2xl sm:text-3xl font-black tracking-tight" style={{ color: 'var(--brief-ink)' }}>
           Your shopfronts
         </h1>
-        <p className="text-sm" style={{ color: 'var(--brief-muted)' }}>
-          A space is a business kept as a file: hours, the counter, the inbox, the money. {openItems > 0
-            ? `${openItems} item${openItems === 1 ? '' : 's'} in your space files need a look.`
-            : 'Nothing is waiting on you.'}
-        </p>
+
       </header>
 
       <section className="space-y-2" aria-label="Your spaces">
@@ -80,11 +77,7 @@ export function SpacesLanding({
           </p>
         ) : active.length === 0 ? (
           <div className="p-8 rounded-3xl bg-[color:var(--color-paper)] border border-dashed text-center space-y-2" style={{ boxShadow: 'var(--room-light), var(--lift-1)' }}>
-            <p className="text-sm font-bold" style={{ color: 'var(--brief-ink)' }}>No space yet.</p>
-            <p className="text-[12px]" style={{ color: 'var(--brief-muted)' }}>
-              A space is your project — a bakery, a stall, a fund. It stays a file the pipeline can read, not
-              a page you post to.
-            </p>
+            <p className="text-sm font-bold" style={{ color: 'var(--brief-ink)' }}>No space yet</p>
             <button
               type="button"
               onClick={() => { soundEngine.play('heavyTap'); setCreateOpen(true); }}
@@ -115,34 +108,21 @@ export function SpacesLanding({
                     {s.metrics?.offersCount ?? 0} live offer{s.metrics?.offersCount === 1 ? '' : 's'}
                     {s.visibility === 'public' ? ' · public' : ' · private'}
                   </p>
-                  {s.maintenance?.state && (
-                    <p className="text-[10px] font-black uppercase tracking-wider mt-1.5" style={{ color: stateColor(s.maintenance.state) }}>
-                      {s.maintenance.state}
-                      {s.maintenance.ageHours != null
-                        ? ` · ${s.maintenance.ageHours < 24 ? `${s.maintenance.ageHours}h` : `${Math.round(s.maintenance.ageHours / 24)}d`}`
-                        : ''}
-                    </p>
-                  )}
-                  {/* "8 open" read like a fault code. The queue has always known
-                      the difference between a question never answered, one past
-                      its refresh window and a customer waiting on a reply — so
-                      the list says which of those it is, in the space's own
-                      numbers. */}
-                  {(s.editorialOpen ?? 0) > 0 && (
-                    <p className="text-[10px] font-bold mt-0.5" style={{ color: (s.editorialBreakdown?.overdue ?? 0) > 0 ? 'var(--color-warning)' : 'var(--brief-muted)' }}>
-                      {s.editorialOpen} question{s.editorialOpen === 1 ? '' : 's'} to answer
-                      {(() => {
-                        const b = s.editorialBreakdown;
-                        if (!b) return '';
-                        const parts = [
-                          b.unanswered ? `${b.unanswered} never answered` : null,
-                          b.overdue ? `${b.overdue} past the refresh window` : null,
-                          b.replies ? `${b.replies} waiting on a reply` : null
-                        ].filter(Boolean);
-                        return parts.length ? ` · ${parts.join(' · ')}` : '';
-                      })()}
-                    </p>
-                  )}
+                  <span className="mt-1.5 flex items-center gap-2">
+                    {s.maintenance?.state && (
+                      <StateDot
+                        state={dotForMaintenance(s.maintenance.state)}
+                        label={s.maintenance.ageHours != null
+                          ? `${s.maintenance.state} · ${s.maintenance.ageHours < 24 ? `${s.maintenance.ageHours}h` : `${Math.round(s.maintenance.ageHours / 24)}d`}`
+                          : s.maintenance.state}
+                      />
+                    )}
+                    {(s.editorialOpen ?? 0) > 0 && (
+                      <span className="text-[10px] font-bold font-mono" style={{ color: (s.editorialBreakdown?.overdue ?? 0) > 0 ? 'var(--color-warning)' : 'var(--color-text-muted)' }}>
+                        {s.editorialOpen} to answer
+                      </span>
+                    )}
+                  </span>
                 </div>
               </button>
             ))}

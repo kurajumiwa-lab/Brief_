@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import * as api from "../../api/briefApi";
+import { Package } from "lucide-react";
 import { MotionList } from "../../ui/motion/MotionList";
 import { MotionNumber } from "../../ui/motion/MotionNumber";
-import { PulseSurface } from "../city/PulseSurface";
 import { ErrandLoops } from "./ErrandLoops";
 
 // ---------------------------------------------------------------------------
@@ -141,48 +141,60 @@ export function ActivitySurface({ onOpenRequests }: { onOpenRequests: () => void
           </p>
         </div>
       ) : state ? (
-        <MotionList className="mt-6 grid gap-3 sm:grid-cols-2" stagger={45}>
+        <div className="space-y-3">
+        {state.requests + state.work + state.payments + state.procurement === 0 && (
+          <div
+            className="rounded-3xl p-6 text-center space-y-2"
+            style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-1), inset 0 0 0 1px var(--brief-line)' }}
+          >
+            <Package className="w-7 h-7 mx-auto" style={{ color: 'var(--color-quiet)' }} />
+            <p className="text-[15px] font-extrabold" style={{ color: 'var(--brief-ink)' }}>Nothing yet</p>
+            <button
+              type="button"
+              onClick={onOpenRequests}
+              className="px-4 py-2 rounded-full text-[12px] font-black cursor-pointer"
+              style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)', boxShadow: 'var(--lift-signal)' }}
+            >
+              Post an offer
+            </button>
+          </div>
+        )}
+        <MotionList className="grid grid-cols-2 gap-2.5 sm:grid-cols-4" stagger={35}>
           <button
             type="button"
             onClick={onOpenRequests}
-            className="text-left rounded-2xl p-5 transition-colors"
+            className="text-left rounded-2xl p-3 transition-colors"
             style={{
-              border: "1px solid var(--color-border)",
-              background: "var(--color-surface)",
+              background: "var(--color-paper)",
+              boxShadow: "var(--room-light), var(--lift-1), inset 0 0 0 1px var(--brief-line)",
             }}
           >
             <MotionNumber value={state.requests} tier="consequential" />
             <p
-              className="text-xs font-black uppercase tracking-wider mt-1"
+              className="text-[10px] font-black uppercase tracking-wider mt-0.5"
               style={{ color: "var(--color-text-muted)" }}
             >
               Requests
             </p>
-            <p className="text-sm mt-2" style={{ color: "var(--color-text-muted)" }}>
-              {state.requests > 0
-                ? "What your business has asked for."
-                : "No requests yet. Create one to begin."}
-            </p>
+
           </button>
 
           <div
-            className="rounded-2xl p-5"
+            className="rounded-2xl p-3"
             style={{ border: "1px solid var(--color-border)", background: "var(--color-surface)" }}
           >
             <MotionNumber value={state.work} tier="consequential" />
             <p
-              className="text-xs font-black uppercase tracking-wider mt-1"
+              className="text-[10px] font-black uppercase tracking-wider mt-0.5"
               style={{ color: "var(--color-text-muted)" }}
             >
               Work Orders
             </p>
-            <p className="text-sm mt-2" style={{ color: "var(--color-text-muted)" }}>
-              {state.work > 0 ? "Work you are involved in." : "No work yet."}
-            </p>
+
           </div>
 
           <div
-            className="rounded-2xl p-5"
+            className="rounded-2xl p-3"
             style={{ border: "1px solid var(--color-border)", background: "var(--color-surface)" }}
           >
             <MotionNumber value={state.confirmedPayments} tier="consequential" />
@@ -193,34 +205,26 @@ export function ActivitySurface({ onOpenRequests }: { onOpenRequests: () => void
               {" "}/ {state.payments}
             </span>
             <p
-              className="text-xs font-black uppercase tracking-wider mt-1"
+              className="text-[10px] font-black uppercase tracking-wider mt-0.5"
               style={{ color: "var(--color-text-muted)" }}
             >
               Payments confirmed
             </p>
-            <p className="text-sm mt-2" style={{ color: "var(--color-text-muted)" }}>
-              {state.payments > 0
-                ? "Confirmed payments out of your total attempts."
-                : "No payment activity yet."}
-            </p>
+
           </div>
 
           <div
-            className="rounded-2xl p-5"
+            className="rounded-2xl p-3"
             style={{ border: "1px solid var(--color-border)", background: "var(--color-surface)" }}
           >
             <MotionNumber value={state.procurement} tier="consequential" />
             <p
-              className="text-xs font-black uppercase tracking-wider mt-1"
+              className="text-[10px] font-black uppercase tracking-wider mt-0.5"
               style={{ color: "var(--color-text-muted)" }}
             >
               Repeat procurement
             </p>
-            <p className="text-sm mt-2" style={{ color: "var(--color-text-muted)" }}>
-              {state.procurement > 0
-                ? "Things you have sourced before."
-                : "Completed work will appear here for re-ordering."}
-            </p>
+
           </div>
 
           {/* Provenance — how you arrived. Honest: hidden entirely when no
@@ -256,12 +260,12 @@ export function ActivitySurface({ onOpenRequests }: { onOpenRequests: () => void
             </div>
           )}
         </MotionList>
+        </div>
       ) : null}
       {/* PULSE — what the ledger as a whole is doing. It was a Discover room
           and did not belong in a gallery: this screen is where "what happened"
           lives, for you and for everyone. */}
       <div className="mt-8 pt-6 border-t" style={{ borderColor: "var(--color-border)" }}>
-        <PulseSurface />
       </div>
     </section>
   );

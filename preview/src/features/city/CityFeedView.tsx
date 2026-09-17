@@ -108,7 +108,7 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
       <DiscoveryHead
         eyebrow="Discover"
         title="What's happening nearby"
-        subtitle="What people here are selling, hosting, organising and needing carried — read from what they actually published."
+        subtitle="What people are selling, hosting and needing carried"
         segments={[]}
         activeSegmentId={room}
         onSegmentChange={() => {}}

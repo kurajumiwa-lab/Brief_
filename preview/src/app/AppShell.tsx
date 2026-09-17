@@ -42,6 +42,9 @@ export const AppShell: React.FC<AppShellProps> = ({
   const [spaceLink, setSpaceLink] = useState('');
   const [spaceError, setSpaceError] = useState('');
   const [activeSpace, setActiveSpace] = useState<Space | null>(null);
+  // Where the You tab opens. The ⓘ on a screen deep-links to the audit page
+  // rather than putting the explanation in the reader's way.
+  const [youSection, setYouSection] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [authed, setAuthed] = useState<boolean>(true);
   const [entityId, setEntityId] = useState<string | null>(null);
@@ -332,6 +335,7 @@ export const AppShell: React.FC<AppShellProps> = ({
             onOpenPulse={() => setActiveTab('activity')}
             onOpenSpaces={() => setActiveTab('pipeline')}
             onGetPaid={() => setActiveTab('ledger')}
+            onOpenHow={() => { setYouSection('how'); setActiveTab('you'); }}
           />
         ) : (
           <div>
@@ -373,6 +377,8 @@ export const AppShell: React.FC<AppShellProps> = ({
                 />
               ) : (
                 <YouSurface
+                  key={youSection ?? 'you'}
+                  initialSection={(youSection ?? 'profile') as any}
                   onOpenEntity={(id) => { setEntityId(id); window.location.hash = `#entity/${id}`; }}
                   onRequireAuth={() => showToast('Sign in to continue.')}
                 />

@@ -136,14 +136,21 @@ async function main() {
 
     // Defended, with its denominator.
     assert.ok(t.includes('4 fulfilled · 1 lapsed · 80% defended across 5 closed commitments'), 'the defense figure is arithmetic over closed rows');
-    // The cohort caveat is still shipped — it is simply one tap away instead of
-    // a paragraph in the middle of the screen. A deferred reason is not a hidden
-    // one, so the assertion opens the disclosure and demands the sentence.
-    const fold = Array.from(container.querySelectorAll('button')).find((b) => /How this is derived/.test(b.textContent || ''));
-    assert.ok(fold, 'the derivation is offered as a control');
-    act(() => { fold.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
-    await flush();
-    assert.ok(/no decay-event log or cohort table to divide by/.test(text(container)), 'and says what it refuses to invent, on demand');
+    // The cohort caveat no longer sits in the flow — but it must exist, on the
+    // one page that holds explanations. Moved, not deleted.
+    assert.ok(!/decay-event log/.test(t), 'no paragraph about what is not measured on the hero');
+    const { HowBriefWorks } = require('./src/features/you/HowBriefWorks.tsx');
+    {
+      const c2 = document.createElement('div');
+      document.body.appendChild(c2);
+      const r2 = createRoot(c2);
+      act(() => r2.render(React.createElement(HowBriefWorks, {})));
+      const a = text(c2);
+      assert.ok(/no decay-event log or cohort table to divide by/.test(a), 'the audit page carries the cohort reason');
+      assert.ok(/A commitment is a promise someone is waiting on/.test(a), 'and the definition, once');
+      assert.ok(/never a stored score|not a score, a rank or a tier|No seeded activity|never shows/.test(a), 'and the refusals');
+      r2.unmount(); c2.remove();
+    }
 
     // Precedent band, counted not claimed.
     assert.ok(t.includes('4 requests reached an accepted quote'), 'platform precedent renders');
@@ -183,10 +190,9 @@ async function main() {
     }));
     const t = text(container);
     assert.ok(t.includes('Nothing pending on your ledger.'), 'the empty state is stated plainly');
-    assert.ok(/Nothing to defend yet/.test(t), 'the empty is stated as an absence, not a score');
-    assert.ok(/share of those you kept/.test(t), 'and the measure is taught, not just reported');
-    assert.ok(/first row that closes starts it/.test(t), 'with the row that would start it');
-    assert.ok(!/\b0%/.test(t), 'no 0% is manufactured out of an empty set');
+    assert.ok(/No commitments closed yet/.test(t), 'the empty is five words, not a definition paragraph');
+    assert.ok(!/A commitment is a promise someone is waiting on/.test(t), 'the teaching moved to the audit page');
+    assert.ok(!/\b0%/.test(t), 'and no 0% is manufactured out of an empty set');
     assert.ok(!/0%/.test(t), 'a zero rate never appears');
     assert.ok(!t.includes('Perfect'), 'no reward language for an empty ledger');
   }

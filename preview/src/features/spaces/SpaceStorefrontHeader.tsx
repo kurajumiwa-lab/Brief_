@@ -27,7 +27,6 @@ import type { SpaceAudienceView } from '../../api/briefApi';
 // ---------------------------------------------------------------------------
 
 import { roomSurface, PHOTO_FILTER } from '../city/room';
-import { DerivationNote } from '../../ui/DerivationNote';
 
 const num = (n: number | null | undefined) => (n === null || n === undefined ? '—' : n.toLocaleString('en-KE'));
 
@@ -263,15 +262,7 @@ export function SpaceStorefrontHeader({
           ))}
         </div>
 
-        <DerivationNote
-          className="mt-2"
-          summary={isOwner
-            ? `${num(insights?.views.ownOpensExcluded)} of your own opens are left out of the view count.`
-            : 'Followed by a person, counted once.'}
-          detail={isOwner
-            ? 'A view is written only when somebody opens this space\'s public page. Your own opens are excluded, because a maintainer checking their own shop is not demand. There is no browse log of who looked and left, and no sector average to compare against, so both figures are absent rather than estimated — a dash, not a zero and not a guess.'
-            : 'Follows are rows of real people who pressed follow on this page. There is no view count shown to a visitor, no bot traffic, and no rounded-up number: an unmeasurable figure is a dash here.'}
-        />
+
       </div>
     </header>
   );

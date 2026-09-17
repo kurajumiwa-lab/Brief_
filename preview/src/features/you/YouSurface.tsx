@@ -7,6 +7,7 @@ import { MotionList } from "../../ui/motion/MotionList";
 import { MotionStatus } from "../../ui/motion/MotionStatus";
 import { EarnSurface } from "./EarnSurface";
 import { TableBankingSurface } from "./TableBankingSurface";
+import { HowBriefWorks } from "./HowBriefWorks";
 import { Marketplace } from "../../components/Marketplace";
 import { PositionHero } from "./PositionHero";
 import { Vault } from "../../components/vault/Vault";
@@ -42,16 +43,19 @@ const KIND_LABELS: Record<string, string> = {
 
 type Section =
   | "profile" | "standing" | "following" | "subscriptions"
-  | "earn" | "orders" | "selling" | "archive" | "tableBanking";
+  | "earn" | "orders" | "selling" | "archive" | "tableBanking" | "how";
 
 export function YouSurface({
   onOpenEntity,
-  onRequireAuth
+  onRequireAuth,
+  initialSection
 }: {
   onOpenEntity: (entityId: string) => void;
   onRequireAuth: () => void;
+  /** Deep link from the ⓘ on Home: the audit screen is a tab, not a footnote. */
+  initialSection?: Section;
 }) {
-  const [section, setSection] = useState<Section>("profile");
+  const [section, setSection] = useState<Section>(initialSection ?? "profile");
   const [loading, setLoading] = useState(true);
   const [signedOut, setSignedOut] = useState(false);
   const [me, setMe] = useState<AuthedUser | null>(null);
@@ -223,6 +227,7 @@ export function YouSurface({
         {tab("selling", "Selling")}
         {tab("archive", "Archive")}
         {tab("tableBanking", "Table Banking")}
+        {tab("how", "How Brief works")}
       </div>
 
       {notice && (
@@ -443,6 +448,8 @@ export function YouSurface({
       {section === "earn" && (
         <EarnSurface onRequireAuth={onRequireAuth} />
       )}
+
+      {section === "how" && <HowBriefWorks />}
 
       {section === "tableBanking" && (
         <TableBankingSurface onRequireAuth={onRequireAuth} />

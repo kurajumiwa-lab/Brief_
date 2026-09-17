@@ -3,7 +3,6 @@ import { AlertTriangle, ArrowRight, Clock, ShieldCheck, TrendingUp } from 'lucid
 import type { MyCommitments, MyPosition, MyReciprocity, Precedent } from '../../api/briefApi';
 import type { Space } from '../../api/types';
 import { CopyId } from '../../ui/CopyId';
-import { DerivationNote } from '../../ui/DerivationNote';
 
 // ---------------------------------------------------------------------------
 // POSITION HERO — the Chess.com "rating as the first thing you see" shape, with
@@ -302,24 +301,15 @@ export function PositionHero({
           // measure is, what row starts it, and where to go — no invented
           // "you're #1 because nobody else is here", which is a rank dressed as
           // an encouragement.
-          <div className="space-y-1">
-            <p className="text-[13px] font-extrabold leading-snug" style={{ color: 'var(--color-text)' }}>
-              Nothing to defend yet.
-            </p>
-            <p className="text-[11px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
-              A commitment is a promise someone is waiting on — a quote of yours that was accepted, or an order you took.
-              This number is the share of those you kept. Post an offer or answer a request: the first row that closes starts it.
-            </p>
-          </div>
+          <p className="text-[12px] font-semibold" style={{ color: 'var(--color-text-muted)' }}>
+            No commitments closed yet
+          </p>
         ) : (
           <p className="text-[11px] leading-snug font-mono brief-countdown" style={{ color: 'var(--color-text)' }}>
             {fulfilled.length} fulfilled · {lapsed.length} lapsed · {defended}% defended across {closed} closed commitment{closed === 1 ? '' : 's'}
           </p>
         )}
-        <DerivationNote
-          summary={`${closed} closed commitment${closed === 1 ? '' : 's'} counted, nothing estimated.`}
-          detail="The stricter version — of members whose position decayed in a given week, how many defended within 72 hours — is not shown, because Brief keeps no decay-event log or cohort table to divide by. It will be computed the day those rows exist, not before. Nothing here is a score, a rank or a tier: it is a fraction of your own closed rows, and with a small sample it is a small sample."
-        />
+
       </div>
 
       {/* What the platform has actually closed, so "does this work" is a count

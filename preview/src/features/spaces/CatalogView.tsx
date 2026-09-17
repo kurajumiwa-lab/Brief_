@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import type { Listing, ListingUpdate } from '../../api/types';
-import { Tag, Plus, ShoppingBag, X } from 'lucide-react';
+import { Tag, Plus, ShoppingBag, X, Package } from 'lucide-react';
 import { soundEngine } from '../../utils/SoundEngine';
 import { MicroBadge } from '../../ui/MicroBadge';
 import { ContextMenu } from '../../ui/ContextMenu';
+import { PLASTER, plateGlow } from '../city/room';
 
 // ---------------------------------------------------------------------------
 // CATALOG VIEW — the seller's own offers, with REAL controls.
@@ -212,10 +213,11 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                   {mediaUrl ? (
                     <img src={mediaUrl} alt={offer.title} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
                   ) : (
-                    <div className="absolute inset-0 grid place-items-center">
-                      <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: '#C4C7CE' }}>
-                        no photo yet
-                      </span>
+                    /* No photo is a plate in the room's own plaster carrying the
+                       goods' mark — a design decision, not a gap to be captioned. */
+                    <div className="absolute inset-0" style={{ background: PLASTER }}>
+                      <span className="absolute inset-0" style={{ background: plateGlow('var(--color-primary)') }} />
+                      <Package className="absolute bottom-2 left-2 w-4 h-4" style={{ color: 'var(--color-text-muted)' }} />
                     </div>
                   )}
                   {pinned && (

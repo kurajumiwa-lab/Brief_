@@ -237,18 +237,20 @@ async function main() {
     const zeroMark = Array.from(direct.querySelectorAll('span')).find((el) => text(el) === '0' && /font-mono/.test(el.getAttribute('class') || ''));
     assert.ok(zeroMark, 'the Direct tile prints its zero');
     assert.ok(/--color-quiet/.test(styleOf(zeroMark)), 'the zero is in the quiet ink, so an empty flow does not read as an error');
-    assert.ok(/Nothing is published on the board yet/.test(text(direct)) && /Post the first direct offer/.test(text(direct)),
-      'and an empty flow says what is missing and names the one step that changes it');
+    assert.ok(/none here/i.test(text(direct)), 'an empty flow is marked, not narrated');
+    assert.ok(/Post one|Tag one/.test(text(direct)), 'with one action, in three words');
     const bulk = tab('Bulk');
     const fullMark = Array.from(bulk.querySelectorAll('span')).find((el) => text(el) === '1' && /font-mono/.test(el.getAttribute('class') || ''));
     assert.ok(fullMark && !/--color-quiet/.test(styleOf(fullMark)), 'a non-zero count is NOT quiet — the difference is the number, not decoration');
-    assert.ok(/Nothing is published on the board yet/.test(text(direct)), 'and it says what the zero means');
+    assert.ok(/none here/i.test(text(direct)), 'an empty flow is marked, not explained');
+    assert.ok(/Post one|Tag one/.test(text(direct)), 'with exactly one action, in three words');
+    assert.ok(!/Nothing is published|no offers yet — post one/.test(text(direct)), 'and no sentence doing the dot\'s job');
     const group = tab('Group');
     assert.ok(text(group).includes('0'), 'same for every other empty view');
     // "hot / trending / buyers waiting / coming soon" is padding. A real sort by
     // counted registrations is not, so only the invented-urgency vocabulary fails.
     assert.ok(!/coming soon|trending|buyers waiting|people viewing|hot/i.test(text(container)), 'no filler language around an empty room');
-    assert.ok(text(container).includes('no settled orders through Brief yet'), 'an interest zero is a sentence, not a dashboard tile');
+    assert.ok(/0 settled/.test(text(container)), 'a zero interest figure is a count and one word');
     assert.ok(!/0 settled orders · newest live listing/.test(text(container)), 'the meta-junk line is gone');
   }
   pass('Zeros are honest and quiet: a count of rows, what it means, and the one step that changes it');
@@ -439,35 +441,47 @@ async function main() {
   pass('A colour is never hashed from a title: only the declared category paints a plate');
 
 
-  // --- 11. the honesty layer is a footnote, not the product -----------------
-  // The screens used to carry two-, three- and four-sentence paragraphs about
-  // what Brief does NOT measure. That is true information in the wrong seat: a
-  // reader scanning for their next move reads "0 settled orders" and a wall of
-  // disclaimer, and the app feels like an audit. So the rule the room enforces:
-  // one clause on the surface, the full derivation one tap away, and NOTHING
-  // deleted. A fold that hides reasoning is dishonest; a fold that defers it is
-  // design. These are measured on what is rendered by default.
+  // --- 11. the flow reads in a glance; the reasoning lives on one page -------
+  // Two rules, tested together, because one without the other is just deleting
+  // the audit trail: (a) no sentence does a dot's job on a working surface, and
+  // (b) every explanation that came out of the flow exists on the How Brief works
+  // screen. A terse UI that hides how a number was made is a marketing site; a
+  // documented UI that makes you read it is a legal disclaimer. This is neither.
   {
     const { container } = mount(React.createElement(CityFeedView, {}));
     await flush();
-    const ps = Array.from(container.querySelectorAll('p'))
+    const ps = Array.from(container.querySelectorAll('p, span'))
       .map((el) => text(el))
       .filter((x) => x.length > 0);
-    const long = ps.filter((x) => x.length > 240);
-    assert.deepEqual(long, [], `no paragraph over 240 characters sits on the board by default (longest: ${Math.max(0, ...ps.map((x) => x.length))})`);
-    const walls = ps.filter((x) => x.length > 140);
-    assert.ok(walls.length <= 2, `at most two sentences may run long on a browse screen — found ${walls.length}`);
-    assert.ok(ps.some((x) => /count of rows|is a count/.test(x)) || Array.from(container.querySelectorAll('button')).some((b) => /How this is derived/.test(text(b))),
-      'and the provenance is still on the screen, as a control');
-    const fold = Array.from(container.querySelectorAll('button')).find((b) => /How this is derived/.test(text(b)));
-    if (fold) {
-      act(() => fold.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })));
-      await flush();
-      const opened = text(container);
-      assert.ok(/count of rows|nothing is seeded/i.test(opened), 'one tap yields the full derivation, verbatim');
-    }
+    const over = ps.filter((x) => x.length > 120);
+    assert.deepEqual(over, [], `no sentence over 120 characters on the board (longest: ${Math.max(0, ...ps.map((x) => x.length))})`);
+    assert.ok(!/How this is derived/.test(text(container)), 'no derivation link in the flow');
+    assert.ok(!/Brief does not|will not infer|not a warning|not nothing is happening/.test(text(container)),
+      'no clause arguing with an imagined critic');
+    assert.ok(!/matched on stated fields|no market price index/.test(text(container)), 'no method notes on the surface');
   }
-  pass('Disclaimers are one clause on the surface and the whole reasoning a tap away — nothing deleted');
+  {
+    const { HowBriefWorks } = require('./src/features/you/HowBriefWorks.tsx');
+    const { container } = mount(React.createElement(HowBriefWorks, {}));
+    const t = text(container);
+    for (const [needle, why] of [
+      ['Every number is a count', 'the count rule'],
+      ['no browse log', 'why there is no view or trend figure'],
+      ['untagged', 'why a tile can be empty'],
+      ['Bulk needs where it leaves from', 'the flow rules, in one place'],
+      ['no key-free price source', 'why there is no price movement'],
+      ['forecast, not a measurement', 'that a forecast is not an observation'],
+      ['no decay-event log', 'why the 7-day cohort figure is absent'],
+      ['your own offer’s total', 'what a missed capture is and is not'],
+      ['maker and a checker', 'how the pool is actually run'],
+      ['no attribution row', 'the five figures an operator cannot get'],
+      ['never shows', 'the things the product refuses outright']
+    ]) {
+      assert.ok(t.includes(needle), `the audit page still carries ${why}`);
+    }
+    assert.ok(!/How this is derived/.test(t), 'and it is a page, not a footnote on a number');
+  }
+  pass('The flow reads as numbers and dots; every explanation lives on one audit page');
 
   console.log('\nPASS ' + count);
   process.exit(0);

@@ -121,8 +121,8 @@ async function main() {
     assert.ok(t.includes('Kilimani, Nairobi'), 'the stated place, from the profile row');
     assert.ok(t.includes('Tue, Sat 06:00–18:00') || t.includes('06:00–18:00'), 'the stated hours');
     assert.ok(t.includes('11'), 'views this week is the count of view rows');
-    assert.ok(t.includes('4'), 'and the owner sees how many of their own opens were left out');
-    assert.ok(t.includes('own opens are left out'), 'in words, not as a footnote to forget');
+    assert.ok(!/own opens are left out|How this is derived/.test(t), 'the view-count caveat left the header with the rest of the prose');
+    assert.ok(!/no browse log|no sector average/.test(t), 'and no sentence about what is absent sits on the shopfront');
     assert.ok(t.includes('9.1%'), 'conversion is the ratio of two real counts');
     assert.ok(t.includes('no benchmark exists'), 'and the comparator tile says there is none');
     assert.ok(!/sector avg/i.test(t), 'no sector average is printed');
@@ -259,7 +259,7 @@ async function main() {
     const t = text(container);
     assert.ok(t.includes('Your shopfronts'), 'the screen is a street of businesses');
     assert.ok(t.includes('Jj Cakes') && /fresh/i.test(t), 'with the real state of each file');
-    assert.ok(t.includes('2 questions to answer'), 'and the open items in it, in words a person acts on');
+    assert.ok(t.includes('2 to answer'), 'and the open items in it, in words a person acts on');
     assert.ok(!/\b2 open\b/.test(t), 'the bare "2 open" code is gone — it read like a fault, not a to-do');
     assert.ok(t.includes('Amina Bakery') && t.includes('9 follow'), 'the shops you follow, counted');
     assert.ok(!/Circles/i.test(t), 'no circles on this screen');

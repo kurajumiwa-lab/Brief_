@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import * as api from "../../api/briefApi";
 import type { TableBankingGroup, TableBankingDetail, TableBankingCollectiveRequest, WelfareFund, WelfareClaim, TableBankingMinutes, CoopOperations } from "../../api/briefApi";
-import { DerivationNote } from "../../ui/DerivationNote";
 import { MotionList } from "../../ui/motion/MotionList";
 import { MotionNumber } from "../../ui/motion/MotionNumber";
 import { MotionStatus } from "../../ui/motion/MotionStatus";
@@ -458,16 +457,9 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
                         )}
                       </div>
 
-                      <DerivationNote
-                        summary="The pool is the treasurer's own arithmetic; the demand and the money are counts over the group's rows."
-                        detail={
-                          <>
-                            {ops[c.id]!.note}{" "}
-                            What this read will not produce: {ops[c.id]!.unavailable.map((g) => g.label.toLowerCase()).join("; ")}.{" "}
-                            {ops[c.id]!.unavailable.map((g) => `${g.label}: ${g.reason}`).join(" ")}
-                          </>
-                        }
-                      />
+                      <p className="text-[10px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
+                        {ops[c.id]!.unavailable.length} figures an operator asks for are not computable here — see How Brief works.
+                      </p>
                     </div>
                   ))}
 

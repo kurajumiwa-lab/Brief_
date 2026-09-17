@@ -358,23 +358,8 @@ export function ErrandsLobby({ className = '' }: { className?: string }) {
                   carrying the same disclaimer is what made this screen read as
                   paperwork. Nothing is deleted — the sentence moves. */}
               <p className="text-[11px] mt-1" style={{ color: 'rgba(36,31,26,0.66)' }}>
-                No booking, price or tracking inside Brief.{' '}
-                <button
-                  type="button"
-                  onClick={() => setWhyOpen(whyOpen === p.key ? null : p.key)}
-                  aria-expanded={whyOpen === p.key}
-                  className="font-bold underline decoration-dotted underline-offset-2 cursor-pointer"
-                  style={{ color: 'var(--color-primary)', background: 'none', border: 'none', padding: 0, font: 'inherit' }}
-                >
-                  Why
-                </button>
+                Outside Brief — book them directly.
               </p>
-              {whyOpen === p.key && (
-                <p className="text-[10px] leading-relaxed mt-1 rounded-xl px-2.5 py-2" style={{ background: 'rgba(36,31,26,0.05)', color: 'rgba(36,31,26,0.72)' }}>
-                  {p.reason}. Brief will not quote a price for a carrier it cannot see, and no rating is shown here
-                  for a delivery that was not made through the app.
-                </p>
-              )}
             </div>
           ))}
         </div>
@@ -389,7 +374,6 @@ export function ErrandsLobby({ className = '' }: { className?: string }) {
           Push for a bike (WAIRO dispatch)
         </h3>
         <p className="text-[11px] mb-1" style={{ color: 'rgba(36,31,26,0.66)' }}>
-          A WAIRO dispatch is a rider you name and Brief tracks. An errand is a need you post and any eligible carrier can take. Both live here.
         </p>
         <WairoDispatchPanel />
       </section>

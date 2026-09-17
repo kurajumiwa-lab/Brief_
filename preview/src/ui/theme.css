@@ -149,6 +149,24 @@
   --line-35: rgba(228, 218, 203, 0.35);
   --line-60: rgba(228, 218, 203, 0.60);
 
+  /* --- STATE COLOURS (§4 of the readability pass) --------------------------------
+     State is a colour before it is a word. A dot is the entire explanation, so the
+     sentences that used to describe state come out of the flow. The hues are chosen
+     for what they MEAN, and each is a graphic token — a dot, a bar, a ring. Body
+     text never wears them, because amber-on-cream is 2.1:1 and unreadable: the word
+     next to a dot stays ink.
+       live    money in, verified activity — warm green
+       quiet   a true zero, nothing pending — warm amber
+       moving  in transit, in flight, being carried — cool blue
+       stale   past its refresh window, expiring — warm brick
+     The brand accent stays indigo (#4F46E5) and cyan (#06B6D4): these are semantic
+     state hues layered on top, not a re-skin of the identity. */
+  --state-live: #4C9A54;
+  --state-quiet: #E0A13C;
+  --state-moving: #2B6CFF;
+  --state-stale: #D97757;
+  --state-empty: #B9AC97;
+
   /* --- Shape language (§5) --- */
   --radius-card: 24px;
   --radius-hero: 28px;
@@ -274,6 +292,24 @@ button, [role="button"] {
 /* A photo-grade surface: a real picture in a warm room. The filter is a few
    percent, never a "sepia" costume — it only stops a cold photo fighting the
    plaster around it. */
+/* The dot. Sized for a thumb-scanned glance, ringed so it reads on cream, and
+   it animates a colour change over 400ms so a state SHIFT is felt, not read. */
+.brief-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex: none;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.75), 0 0 0 3px rgba(var(--room-shadow), 0.10);
+  transition: background-color 400ms var(--ease-emphasized);
+}
+.brief-dot--lg { width: 10px; height: 10px; }
+
+/* Feeling a state change is allowed; racing forever is not. Reduced motion
+   keeps the colour and drops the animation, exactly like every other loop. */
+@media (prefers-reduced-motion: reduce) {
+  .brief-dot { transition: none; }
+}
+
 .brief-photo {
   filter: saturate(1.05) contrast(1.02) brightness(1.005);
 }

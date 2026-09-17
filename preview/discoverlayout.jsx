@@ -167,20 +167,18 @@ async function main() {
     // counts: bulk has 1 declared listing; direct has none, and says 0 out loud
     assert.ok(/1/.test(text(tab('Bulk'))), 'the Bulk tile carries the server count');
     assert.ok(text(tab('Direct')).includes('0'), 'an empty flow reads as zero, not as a hidden tile');
-    assert.ok(/1 live listing sits outside every flow/.test(text(container)), 'and the untagged truth is still on the screen, in one clause');
-    assert.ok(/does not filter by your area/.test(text(container)), 'a zero is framed as a declaration gap, not as nothing-near-you');
-    // four empty tiles no longer say the same thing: each reason gets its own sentence
+    assert.ok(!/sits outside every flow|does not filter by your area/.test(text(container)),
+      'the untagged and scope sentences left the flow — they are on the audit page now');
+    assert.ok(/none here/i.test(text(tab('Direct'))), 'and an empty tile marks itself instead of explaining itself');
+    // an empty tile is marked, not narrated: a dot, two words, one action
     const zeroTiles = Array.from(container.querySelectorAll('button[role="tab"]')).slice(0, 4).map((b) => text(b));
-    assert.ok(zeroTiles.some((x) => /Other flows have offers/.test(x)) || zeroTiles.some((x) => /declares no flow at all/.test(x)),
-      'an empty flow explains which kind of emptiness it is');
-    assert.ok(zeroTiles.some((x) => /Declare a route|Tag a live offer|Post the first/.test(x)), 'and names the one action that changes it');
-    // the long reasoning is deferred, not deleted
-    assert.ok(!/will not infer a supply chain from a title/.test(text(container)), 'the board note is folded away by default');
-    const fold = Array.from(container.querySelectorAll('button')).find((b) => /How this is derived/.test(text(b)));
-    assert.ok(fold, 'a derivation control is offered');
-    click(fold);
-    await flush();
-    assert.ok(/will not infer a supply chain from a title/.test(text(container)), 'and one tap opens the full derivation');
+    assert.ok(zeroTiles.some((x) => /none here/i.test(x)), 'empty tiles read "none here"');
+    assert.ok(zeroTiles.every((x) => x.length < 90), `each tile stays a glance (longest ${Math.max(...zeroTiles.map((x) => x.length))})`);
+    assert.ok(zeroTiles.some((x) => /Post one|Tag one/.test(x)), 'with one action, in two words');
+    // the prose is gone from the board entirely; one action per empty state
+    assert.ok(!/will not infer a supply chain from a title/.test(text(container)), 'the board note left the surface');
+    assert.ok(!/How this is derived/.test(text(container)), 'and there is no footnote control to tap through');
+    assert.ok(!/is not padded|does not read titles/.test(text(container)), 'no method notes on the board');
     assert.ok(text(container).includes('Asked for, no route says it'), 'the gap board is part of the mixed view');
     assert.ok(!/40 verified|buyers waiting|trending/i.test(text(container)), "none of the mock's vocabulary survives");
   }
@@ -201,7 +199,7 @@ async function main() {
     assert.ok(t.includes('6 crate asked for'), 'quantities come from what buyers typed');
     assert.ok(t.includes('Tomatoes, 20 crates'), 'the listing itself is on show');
     assert.ok(t.includes('no photo from Mwangi Wholesale'), 'no photo on the row, so no photo on the card');
-    assert.ok(t.includes('min 5 crate · 3 settled orders'), 'the card carries min order and counted take-up');
+    assert.ok(t.includes('min 5 crate · 3 settled'), 'the card carries min order and the counted take-up, in two words');
 
     // Sub-filter strip: flat, one tap, and it narrows what is on the board.
     assert.ok(tab('Produce') === undefined, 'sub-filters are chips, not tabs');
@@ -210,7 +208,7 @@ async function main() {
     click(dryGoods);
     await flush();
     const filtered = text(container);
-    assert.ok(filtered.includes('Nothing on the board matches that filter.'), 'a chip that matches nothing says so instead of faking a shelf');
+    assert.ok(filtered.includes('Nothing matches that filter'), 'a chip that matches nothing says so instead of faking a shelf');
     assert.ok(filtered.includes('Clear the filters'), 'and offers the way back');
     click(btn('Clear the filters'));
     await flush();
@@ -225,9 +223,10 @@ async function main() {
     click(tab('Direct'));
     await flush();
     const t = text(container);
-    assert.ok(t.includes('No Direct route has been declared yet.'), 'empty is stated as empty');
-    assert.ok(t.includes('refuses to invent'), 'and the reason is the missing declaration');
-    assert.ok(t.includes('Declare a route'), 'with the one action that changes it');
+    assert.ok(t.includes('No Direct routes'), 'empty is stated as empty, in three words');
+    assert.ok(!/refuses to invent|nothing honest to list/.test(t), 'and the paragraph defending that choice is on the audit page, not here');
+    assert.ok(t.includes('Post an offer'), 'with one action, and nothing else');
+    assert.ok(t.includes('Post an offer'), 'with the one action that changes it');
     assert.ok(!/12 listings|8 buyers|Top:/i.test(t), 'no invented route card, no invented crowd');
   }
   pass('An undeclared flow is an honest empty, not a decorated one');
@@ -240,8 +239,16 @@ async function main() {
     assert.ok(t.includes('Milk, 40 litres daily'), 'open public demand with no declared route is listed');
     assert.ok(t.includes('no route declared'), 'labelled as a coverage state, not a verdict');
     assert.ok(t.includes('listed, unrouted'), 'and the third state exists too: a listing that never said where it goes');
-    assert.ok(t.includes('matched on stated fields'), 'the method is on the panel');
-    assert.ok(t.includes('does not turn a count into a shortage'), 'and the limit is stated');
+    assert.ok(!/matched on stated fields|does not turn a count into a shortage/.test(t),
+      'the method note left the panel; the audit page states it once');
+    // the limit sentence moved, it did not vanish
+    const { HowBriefWorks } = require('./src/features/you/HowBriefWorks.tsx');
+    const c2 = document.createElement('div');
+    document.body.appendChild(c2);
+    const r2 = createRoot(c2);
+    act(() => r2.render(React.createElement(HowBriefWorks, {})));
+    assert.ok(/arithmetic over fields, not a model reading titles/.test(text(c2)), 'the audit page owns the method and its limit');
+    r2.unmount(); c2.remove();
     assert.ok(text(container).includes('by 19 Sept') || text(container).includes('by'), 'the ask date is shown when the buyer typed one');
     click(btn('Open the ask'));
     assert.ok(String(dom.window.location.hash).includes('requests/req_milk'), 'and it opens the real request rail');

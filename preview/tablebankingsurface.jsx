@@ -267,11 +267,16 @@ async function main() {
     assert.ok(!/KES —/.test(t), 'and a dash is never dressed up as a KES amount');
     assert.ok(t.includes('Only the group owner sees member shopfronts'), 'scope is stated on the surface');
     assert.ok(!/top contributor|most active member|engagement/i.test(t), 'no member is graded or ranked');
-    act(() => { Array.from(container.querySelectorAll('button')).find((b) => /How this is derived/.test(text(b))).click(); });
-    await flush();
-    const d = text(container);
-    assert.ok(d.includes('rows the group itself wrote'), 'the derivation is one tap away');
-    assert.ok(d.includes('no attribution row'), 'and the gaps state their own reason');
+    assert.ok(!/How this is derived/.test(t), 'the operator read carries no footnote');
+    assert.ok(/not computable here/.test(t), 'and says the gaps exist, in one line');
+    const { HowBriefWorks } = require('./src/features/you/HowBriefWorks.tsx');
+    const c3 = document.createElement('div');
+    document.body.appendChild(c3);
+    const r3 = createRoot(c3);
+    act(() => r3.render(React.createElement(HowBriefWorks, {})));
+    assert.ok(/no attribution row/.test(text(c3)), 'the full reasons live on the audit page');
+    assert.ok(/ranking of members by contribution/.test(text(c3)), 'including why no member is graded');
+    r3.unmount(); c3.remove();
   }
   pass('TableBankingSurface: the operator read counts the group’s rows and refuses the numbers that do not exist');
 

@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Bike, CalendarDays, Check, ChevronRight, MapPin, MessageCircle, Package, Plus, Search, Sun,
+  Bike, CalendarDays, Check, ChevronRight, MapPin, MessageCircle, Package, Plus, RefreshCw, Search, Sun,
   ShoppingBag, Sparkles, Users, X
 } from 'lucide-react';
 import * as briefApi from '../../api/briefApi';
 import type { DiscoverFeedItem, DiscoverFlow, DiscoverRoute, DiscoverSummary } from '../../api/briefApi';
-import { DerivationNote } from '../../ui/DerivationNote';
 import { MuseumGallery } from './MuseumGallery';
+import { StateDot } from '../../ui/StateDot';
 import { Marketplace } from '../../components/Marketplace';
 import { Circles } from '../../components/Circles';
 import { ErrandsLobby } from './ErrandsLobby';
@@ -66,36 +66,6 @@ const BOARD_ICONS: Record<string, string> = { bulk: 'box', direct: 'bike', niche
     room's default rather than a guessed hue. */
 const FLOW_ACCENT: Record<string, string> = { bulk: '#4F46E5', direct: '#0E7C86', niche: '#8A5A2B', group: '#16A34A' };
 
-/** The one action that changes a given empty flow, in the flow's own words. */
-function zeroAction(f: DiscoverFlow, untagged: number): string {
-  if (f.zeroReason === 'untagged_only' && untagged > 0) return `Tag a live offer as ${f.key} →`;
-  if (f.key === 'bulk' || f.key === 'group') return 'Declare a route →';
-  return `Post the first ${f.label.toLowerCase()} offer →`;
-}
-
-const FIELD_LABEL: Record<string, string> = {
-  originName: 'where it leaves from',
-  destinationName: 'where it goes'
-};
-
-/**
- * One sentence per empty flow, and a different one per REASON — because four
- * tiles all saying "no offers yet, post one" is a form letter. The reason comes
- * from the server's own counts (untagged offers, other flows, nothing at all),
- * and the demand is quoted from the fields the flow requires.
- */
-function zeroCopy(f: DiscoverFlow, untagged: number): string {
-  const needs = (f.requires ?? []).map((x) => FIELD_LABEL[x] ?? x);
-  const rule = needs.length ? ` A ${f.key} offer needs ${needs.join(' and ')}.` : '';
-  if (f.zeroReason === 'untagged_only') {
-    return `${untagged} live offer${untagged === 1 ? '' : 's'} on the board ${untagged === 1 ? 'declares' : 'declare'} no flow at all${rule}`;
-  }
-  if (f.zeroReason === 'other_flows_only') {
-    return `Other flows have offers; none has been declared ${f.key.toLowerCase()}${rule}`;
-  }
-  return `Nothing is published on the board yet${rule}`;
-}
-
 const ICONS: Record<string, React.ReactNode> = {
   box: <Package className="w-6 h-6" />,
   leaf: <Sun className="w-6 h-6" />,
@@ -131,14 +101,11 @@ function plateIcon(item: DiscoverFeedItem): React.ReactNode {
  * (settled orders on a listing, registrations on an event); a zero is a real
  * zero, and it is written as a sentence instead of a dashboard tile.
  */
+// A count and one word. The sentence it replaces ("no settled orders through
+// Brief yet — this starts at your first settled order") was fifteen words for 0.
 function interestLine(item: DiscoverFeedItem): string {
-  const n = item.interest.count;
-  if (item.interest.label === 'settled orders') {
-    return n === 0
-      ? 'no settled orders through Brief yet'
-      : `${n} settled order${n === 1 ? '' : 's'} through Brief`;
-  }
-  return n === 0 ? 'nobody registered yet' : `${n} ${item.interest.label}`;
+  const label = item.interest.label === 'settled orders' ? 'settled' : item.interest.label;
+  return `${item.interest.count} ${label}`;
 }
 
 function FeedCard({ item, onOpen }: { item: DiscoverFeedItem; onOpen: (item: DiscoverFeedItem) => void }) {
@@ -219,9 +186,7 @@ function FeedCard({ item, onOpen }: { item: DiscoverFeedItem; onOpen: (item: Dis
         <span className="block text-[16px] font-extrabold leading-snug mt-1 line-clamp-2">{item.title}</span>
         <span className="block text-[11px] opacity-90 mt-0.5 truncate">
           {item.minOrder ? `min ${item.minOrder}${item.unit ? ` ${item.unit}` : ''} · ` : ''}
-          {interestLine(item)}
-          {item.why && item.why !== 'newest live listing' ? ` · ${item.why}` : ''}
-          {stamp ? ` · ${stamp}` : ''}
+          {interestLine(item)}{stamp ? ` · ${stamp}` : ''}
         </span>
       </span>
     </button>
@@ -511,8 +476,15 @@ export function DiscoverFeed({
           <h2 className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: 'var(--brief-ink)' }}>
             The flows
           </h2>
-          <button type="button" onClick={() => void load()} disabled={busy} className="text-[10px] font-mono cursor-pointer disabled:opacity-50" style={{ color: 'var(--color-quiet)' }}>
-            {busy ? 'reading…' : 're-read'}
+          <button
+            type="button"
+            onClick={() => void load()}
+            disabled={busy}
+            aria-label={busy ? 'Reading' : 'Re-read the board'}
+            className="w-7 h-7 rounded-lg grid place-items-center cursor-pointer disabled:opacity-40"
+            style={{ background: 'var(--color-well)', color: 'var(--color-text-muted)', border: 'none' }}
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
           </button>
         </div>
 
@@ -551,12 +523,12 @@ export function DiscoverFeed({
                 <span className="block mt-2.5 text-[15px] font-extrabold" style={{ color: isActive ? 'var(--accent-ink)' : 'var(--brief-ink)' }}>
                   {src?.label ?? (f.key.charAt(0).toUpperCase() + f.key.slice(1))}
                 </span>
-                <span className="block text-[10px] leading-snug" style={{ color: isActive ? 'rgba(255,255,255,0.82)' : 'var(--brief-muted)' }}>
-                  {empty && src ? zeroCopy(src, summary?.untagged ?? 0) : unitFor(f.key)}
+                <span className="mt-1 flex items-center gap-1.5">
+                  <StateDot state={empty ? 'unknown' : 'quiet'} label={empty ? 'none here' : src?.sub ?? ''} />
                 </span>
-                {empty && src && onPostListing && (
-                  <span className="block mt-1 text-[10px] font-black" style={{ color: isActive ? 'var(--accent-ink)' : 'var(--color-primary)' }}>
-                    {zeroAction(src, summary?.untagged ?? 0)}
+                {empty && onPostListing && (
+                  <span className="block mt-1.5 text-[10px] font-black" style={{ color: isActive ? 'var(--accent-ink)' : 'var(--color-primary)' }}>
+                    {src?.zeroReason === 'untagged_only' ? 'Tag one' : 'Post one'} →
                   </span>
                 )}
                 {src && src.openDemand > 0 && (
@@ -597,12 +569,7 @@ export function DiscoverFeed({
           })}
         </div>
 
-        <p className="text-[10px] leading-snug" style={{ color: 'var(--brief-muted)' }}>
-          {summary?.scope === 'national' || summary?.areaFiltered === false
-            ? 'This is the country\'s board — Brief does not filter by your area, so a zero here is nobody has declared it, not nothing is happening near you.'
-            : null}
-          {summary?.untagged ? ` ${summary.untagged} live listing${summary.untagged === 1 ? '' : 's'} sit${summary.untagged === 1 ? 's' : ''} outside every flow.` : ''}
-        </p>
+
       </section>
 
       {failed && (
@@ -666,14 +633,10 @@ export function DiscoverFeed({
           </div>
           {routes.length === 0 ? (
             <div className="p-4 rounded-2xl border border-dashed" style={{ borderColor: 'var(--brief-line)', background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-1)' }}>
-              <p className="text-[13px] font-bold" style={{ color: 'var(--brief-ink)' }}>No {flow?.label ?? room} route has been declared yet.</p>
-              <p className="text-[11px] mt-1 leading-snug" style={{ color: 'var(--brief-muted)' }}>
-                A route appears when a seller states where goods leave from and where they go — the two fields this board
-                refuses to invent. Until then there is nothing honest to list here.
-              </p>
+              <p className="text-[13px] font-bold" style={{ color: 'var(--brief-ink)' }}>No {flow?.label ?? room} routes</p>
               {onPostListing && (
                 <button type="button" onClick={onPostListing} className="mt-2.5 px-3.5 py-2 rounded-full text-[12px] font-black cursor-pointer transition-shadow" style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)', boxShadow: 'var(--lift-signal)' }}>
-                  Declare a route
+                  Post an offer
                 </button>
               )}
             </div>
@@ -697,26 +660,23 @@ export function DiscoverFeed({
         <section className="space-y-3">
           {feed.length === 0 && !failed ? (
             <div className="p-6 rounded-3xl border border-dashed text-center space-y-2" style={{ borderColor: 'var(--brief-line)', background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-1)' }}>
-              <p className="text-[15px] font-extrabold" style={{ color: 'var(--brief-ink)' }}>
-                {subFilter || routeFilter ? 'Nothing on the board matches that filter.' : 'Nothing is published on this flow yet.'}
-              </p>
-              <p className="text-[12px] leading-snug" style={{ color: 'var(--brief-muted)' }}>
-                This feed is what sellers have actually put up, with their own photos, prices and endpoints. It is not
-                padded, and it is not sorted by a model guessing what you want.
+              <Package className="w-7 h-7 mx-auto" style={{ color: 'var(--color-quiet)' }} />
+              <p className="text-[15px] font-extrabold pt-1.5" style={{ color: 'var(--brief-ink)' }}>
+                {subFilter || routeFilter ? 'Nothing matches that filter' : 'Nothing here yet'}
               </p>
               <div className="flex flex-wrap gap-2 justify-center pt-1">
-                {(subFilter || routeFilter) && (
-                  <button type="button" onClick={() => { setSubFilter(null); setRouteFilter(null); }} className="px-4 py-2 rounded-full text-[12px] font-black cursor-pointer" style={{ background: 'var(--color-well)', color: 'var(--brief-ink)' }}>
-                    Clear the filters
-                  </button>
-                )}
+                {/* Exactly one action per empty state. */}
                 <button
                   type="button"
-                  onClick={() => { soundEngine.play('tap'); onRoomChange?.('all'); }}
+                  onClick={() => {
+                    soundEngine.play('tap');
+                    if (subFilter || routeFilter) { setSubFilter(null); setRouteFilter(null); }
+                    else onRoomChange?.('all');
+                  }}
                   className="px-4 py-2 rounded-full text-[12px] font-black cursor-pointer transition-shadow"
                   style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)', boxShadow: 'var(--lift-signal)' }}
                 >
-                  See everything
+                  {subFilter || routeFilter ? 'Clear the filters' : 'See everything'}
                 </button>
               </div>
             </div>
@@ -745,11 +705,6 @@ export function DiscoverFeed({
 
       {room === 'circles' && (
         <section className="p-4 rounded-3xl bg-[color:var(--color-paper)] brief-card--raised space-y-2">
-          <h3 className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>Circles</h3>
-          <p className="text-[11px]" style={{ color: 'var(--brief-muted)' }}>
-            Groups with a door: members, shared work, a pot whose progress moves only when money settles. This is
-            not a poster to walk past, which is why it sits beside the flows instead of inside them.
-          </p>
           <Circles />
         </section>
       )}
@@ -768,9 +723,7 @@ export function DiscoverFeed({
             <h3 className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>
               Asked for, no route says it
             </h3>
-            <span className="text-[9px] font-mono" style={{ color: 'var(--color-quiet)' }}>
-              matched on stated fields
-            </span>
+
           </div>
           <ul className="space-y-2">
             {gaps.slice(0, 5).map((g) => (
@@ -796,22 +749,11 @@ export function DiscoverFeed({
               </li>
             ))}
           </ul>
-          <p className="text-[10px] leading-snug" style={{ color: 'var(--color-quiet)' }}>
-            A listing whose text mentions the commodity and the place but declares no endpoints is counted as “listed,
-            unrouted” — it may well cover the ask; nobody has said so in the fields. This board does not read titles as
-            promises, and it does not turn a count into a shortage.
-          </p>
+
         </section>
       )}
 
-      {summary?.boardNote && (
-        <div className="px-1">
-          <DerivationNote
-            summary="Every figure here is a count of rows, recomputed as you read. Nothing is seeded or ranked."
-            detail={summary.boardNote}
-          />
-        </div>
-      )}
+
 
       {/* ── the Create pill ─────────────────────────────────────────────── */}
       {room !== 'errands' && (onHostEvent || onPostListing) && (

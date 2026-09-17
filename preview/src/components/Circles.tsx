@@ -406,11 +406,6 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h2 className="text-lg font-extrabold" style={{ color: 'var(--color-text)' }}>Circles</h2>
-            <p className="text-[11px] leading-snug mt-1" style={{ color: 'var(--color-text-muted)' }}>
-              Circles, split by whether you are in one. People, purpose, blocks,
-              signals and targets &mdash; with progress derived from contributions that
-              actually settled.
-            </p>
           </div>
           <button
             onClick={() => setShowCreate((v) => !v)}

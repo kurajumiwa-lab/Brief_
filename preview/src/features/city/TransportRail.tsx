@@ -127,8 +127,7 @@ export function TransportRail({ className = '' }: { className?: string }) {
 
       {openCargo.length === 0 && livePickups.length === 0 ? (
         <p className="text-[12px] p-3 rounded-2xl" style={{ background: 'var(--color-well)', color: 'var(--brief-muted)' }}>
-          Nothing is with a carrier right now. A parcel appears here the moment you log a dispatch on a space,
-          and a pickup appears when one is routed to you.
+          No parcels in motion.
         </p>
       ) : (
         <ul className="space-y-2">

@@ -51,6 +51,8 @@ export interface HomeSurfaceProps {
   onOpenSpaces?: () => void;
   /** Pulse — the ledger's own numbers — now lives on the Activity tab. */
   onOpenPulse?: () => void;
+  /** Open the one screen that holds the explanations (You → How Brief works). */
+  onOpenHow?: () => void;
   className?: string;
 }
 
@@ -58,6 +60,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
   userName = 'there',
   onOpenSpace,
   onExploreDiscover,
+  onOpenHow,
   onGetPaid,
   onOpenSpaces,
   onOpenPulse,
@@ -178,6 +181,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
             quiet week is said as a quiet week. No invented "you are losing
             KES 40,000", and no claim about staff hours Brief cannot see. */}
         <StakesLine
+          onOpenHow={onOpenHow}
           position={position}
           spaces={spaces}
           loading={isLoading}
@@ -272,10 +276,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
                 <p className="text-sm font-bold text-[color:var(--color-text)]">
                   You don&rsquo;t have a space yet.
                 </p>
-                <p className="text-xs text-[color:var(--color-text-muted)]">
-                  A space is your project — a bakery, a side-hustle, a craft studio, a
-                  community fund. Add offers, take orders, track the money, all in one place.
-                </p>
+
                 <button
                   type="button"
                   onClick={() => { soundEngine.play('heavyTap'); setCreateSpaceOpen(true); }}

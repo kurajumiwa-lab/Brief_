@@ -277,7 +277,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
     { id: 'pipeline', label: space.recentConversations?.length ? `Inbox · ${space.recentConversations.length}` : 'Inbox' },
     { id: 'ledger', label: 'Money' },
     { id: 'tools', label: 'Tools' },
-    { id: 'operating', label: openItems > 0 ? `Space file · ${openItems}` : 'Space file' }
+    { id: 'operating', label: openItems > 0 ? `To do · ${openItems}` : 'To do' }
   ];
 
   // Map legacy tabs to the consolidated surfaces
@@ -593,15 +593,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
           <p className="font-mono text-[17px] font-extrabold leading-none" style={{ color: 'var(--color-success)' }}>
             KES {Number(space.metrics?.revenueKes ?? 0).toLocaleString('en-KE')}
           </p>
-          {/* A zero here is the true count of settled rows, so it is printed —
-              with the one row that would change it. Not a loss figure: sales made
-              off Brief are nobody's business but the owner's, and Brief cannot
-              see them. */}
-          {Number(space.metrics?.revenueKes ?? 0) === 0 && (
-            <p className="text-[10px] mt-1" style={{ color: 'var(--brief-muted)' }}>
-              Nothing has settled through Brief yet — this starts at your first settled order.
-            </p>
-          )}
+
         </div>
         <span className="text-[11px] font-mono shrink-0" style={{ color: 'var(--brief-muted)' }}>
           {space.metrics?.activeOrdersCount ?? 0} active · {space.metrics?.offersCount ?? 0} live

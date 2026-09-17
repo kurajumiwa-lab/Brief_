@@ -229,7 +229,11 @@ async function main() {
     act(() => { circleTile.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
     await flush();
     assert.ok(/Circles/.test(text(c)) && !/Communities/.test(text(c)), 'the room keeps Brief\u2019s own noun');
-    assert.ok(text(c).includes('Groups with a door'), 'and says what a community is here');
+    // the definition left the room: the circle list is the explanation, and the
+    // sentence about "a door" and "not a poster" now lives on How Brief works.
+    assert.ok(!/Groups with a door|not a poster to walk past/.test(text(c)), 'no defining paragraph sits above the list');
+    const heads = Array.from(c.querySelectorAll('h1,h2,h3,h4')).filter((el) => (el.textContent || '').trim() === 'Circles');
+    assert.equal(heads.length, 1, 'and the heading is printed once, not a heading above a heading');
 
     // Filing is personal: the Archive lives in You, not in a gallery or a shop.
     const { Vault } = require('./src/components/vault/Vault.tsx');

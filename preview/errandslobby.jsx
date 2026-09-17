@@ -217,13 +217,9 @@ async function main() {
     const t = text(container);
     assert.ok(t.includes('Other ways to move a thing'), 'the strip exists');
     assert.ok(t.includes('Fargo Courier'), 'Fargo is revealed as an option');
-    assert.ok(t.includes('No booking, price or tracking inside Brief'), 'with its limits stated, in one clause');
+    assert.ok(t.includes('Outside Brief — book them directly'), 'the limit is five words, and it is still the truth');
+    assert.ok(!/How this is derived|>Why</.test(container.innerHTML), 'no disclosure control on the card');
     assert.ok(!t.includes('Fargo has no integration in Brief'), 'the long reason is not pasted on every card');
-    const why = Array.from(container.querySelectorAll('button')).find((b) => (b.textContent || '').trim() === 'Why');
-    assert.ok(why, 'the reason is offered');
-    act(() => { why.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
-    await flush();
-    assert.ok(/no integration in Brief|will not quote a price/i.test(text(container)), 'and one tap states it in full');
     assert.ok(t.includes('Easy Ride'), 'and carriers people here actually use are counted from rows');
     // No fabricated contact details anywhere in the strip.
     const phoneish = t.match(/(\+?254|07\d{2}|0\d{2})[\s-]?\d{3}[\s-]?\d{3}/g);
