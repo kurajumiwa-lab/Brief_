@@ -507,7 +507,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#7A8494]">
                   {activeNeighborhood.name.toUpperCase()} · HOME
                 </p>
-                <h1 className="truncate font-display text-xl font-black leading-tight tracking-tight text-[#1A1F2E] sm:text-2xl">
+                <h1 className="truncate font-display text-xl font-black leading-tight tracking-tight text-[var(--brief-ink)] sm:text-2xl">
                   {activeNeighborhood.name} Feed
                 </h1>
               </div>
@@ -517,7 +517,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
               <button
                 type="button"
                 onClick={() => { soundEngine.play('heavyTap'); setCreatePostModalOpen(true); }}
-                className="px-3.5 py-1.5 rounded-xl bg-[#1A1F2E] hover:bg-black text-white font-bold text-xs flex items-center space-x-1.5 shadow-sm cursor-pointer transition-all active:scale-95"
+                className="px-3.5 py-1.5 rounded-xl bg-[color:var(--brief-ink)] hover:bg-black text-white font-bold text-xs flex items-center space-x-1.5 shadow-sm cursor-pointer transition-all active:scale-95"
                 title="Publish Event, Product or Announcement"
               >
                 <Plus className="w-3.5 h-3.5 text-[#E8985E]" />
@@ -527,7 +527,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
               <button
                 type="button"
                 onClick={() => { soundEngine.play('tap'); setIsNeighborhoodPickerOpen(true); }}
-                className="px-3 py-1.5 rounded-xl bg-black/5 hover:bg-black/10 text-[#1A1F2E] font-bold text-xs flex items-center space-x-1.5 shadow-sm cursor-pointer transition-all active:scale-95"
+                className="px-3 py-1.5 rounded-xl bg-black/5 hover:bg-black/10 text-[var(--brief-ink)] font-bold text-xs flex items-center space-x-1.5 shadow-sm cursor-pointer transition-all active:scale-95"
                 title={`Current neighborhood: ${activeNeighborhood.name} (${activeNeighborhood.county})`}
               >
                 <MapPin className="w-3.5 h-3.5 text-[#B8621F]" />
@@ -663,7 +663,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                   <div className="flex items-center justify-between px-1">
                     <div className="flex items-center space-x-2">
                       <span className="w-2 h-2 rounded-full bg-[#06B6D4] animate-pulse" />
-                      <h3 className="text-xs font-black uppercase tracking-[0.16em] text-[#1A1F2E]">
+                      <h3 className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brief-ink)]">
                         Town Centre Districts & Services
                       </h3>
                     </div>
@@ -679,7 +679,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-xl">🚚</span>
-                        <span className="text-[8px] font-mono uppercase bg-[#06B6D4] text-[#0D1117] px-1.5 py-0.5 rounded font-black">
+                        <span className="text-[8px] font-mono uppercase bg-[#06B6D4] text-[var(--brief-ink)] px-1.5 py-0.5 rounded font-black">
                           WAIRO 90/10
                         </span>
                       </div>
@@ -869,7 +869,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                   />
 
                   {!personalHasInterests && personalBriefDismissed && (
-                    <p className="rounded-2xl bg-white/70 shadow-sm px-4 py-3 text-[11px] text-[#1A1F2E]/70 mt-3">
+                    <p className="rounded-2xl bg-white/70 shadow-sm px-4 py-3 text-[11px] text-[var(--ink-70)] mt-3">
                       Your Brief is global until you follow places or topics.{' '}
                       <button
                         type="button"
@@ -890,7 +890,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                           type="button"
                           onClick={() => void unfollowOne('location', loc)}
                           title={`Stop following ${loc}`}
-                          className="flex items-center gap-1 rounded-full bg-[#1A1F2E] px-3 py-1.5 text-[11px] font-bold text-white cursor-pointer shadow-sm"
+                          className="flex items-center gap-1 rounded-full bg-[color:var(--brief-ink)] px-3 py-1.5 text-[11px] font-bold text-white cursor-pointer shadow-sm"
                         >
                           {loc} <X className="h-3 w-3" />
                         </button>
@@ -901,7 +901,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                           type="button"
                           onClick={() => void unfollowOne('type', t)}
                           title={`Stop following ${getObjectTypeMeta(t as ObjectType).label}`}
-                          className="flex items-center gap-1 rounded-full bg-[#F0EDE8] px-3 py-1.5 text-[11px] font-bold text-[#1A1F2E] cursor-pointer"
+                          className="flex items-center gap-1 rounded-full bg-[#F0EDE8] px-3 py-1.5 text-[11px] font-bold text-[var(--brief-ink)] cursor-pointer"
                         >
                           {getObjectTypeMeta(t as ObjectType).label} <X className="h-3 w-3" />
                         </button>
@@ -915,7 +915,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                             type="button"
                             onClick={() => void unfollowOne('topic', topicId)}
                             title={`Stop following ${topic.label}`}
-                            className="flex items-center gap-1 rounded-full bg-[#F0EDE8] px-3 py-1.5 text-[11px] font-bold text-[#1A1F2E] cursor-pointer"
+                            className="flex items-center gap-1 rounded-full bg-[#F0EDE8] px-3 py-1.5 text-[11px] font-bold text-[var(--brief-ink)] cursor-pointer"
                           >
                             {topic.label} <X className="h-3 w-3" />
                           </button>
@@ -927,7 +927,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                           type="button"
                           onClick={() => openEntityPage(f.id)}
                           title={`Open ${f.name}`}
-                          className="flex items-center gap-1 rounded-full bg-white shadow-sm px-3 py-1.5 text-[11px] font-bold text-[#1A1F2E] cursor-pointer"
+                          className="flex items-center gap-1 rounded-full bg-white shadow-sm px-3 py-1.5 text-[11px] font-bold text-[var(--brief-ink)] cursor-pointer"
                         >
                           {f.name}
                         </button>
@@ -938,7 +938,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                           type="button"
                           onClick={() => void unfollowEntityOne(f.id)}
                           title={`Stop following ${f.name}`}
-                          className="flex items-center gap-1 rounded-full bg-black/5 px-2 py-1 text-[9px] font-bold text-[#1A1F2E]/60 cursor-pointer hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                          className="flex items-center gap-1 rounded-full bg-black/5 px-2 py-1 text-[9px] font-bold text-[var(--ink-60)] cursor-pointer hover:bg-rose-50 hover:text-rose-600 transition-colors"
                         >
                           <X className="h-2.5 w-2.5" /> {f.kind}
                         </button>
@@ -954,7 +954,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                           key={section.key}
                           className="rounded-2xl bg-white p-3.5 shadow-sm"
                         >
-                          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#1A1F2E]/60">
+                          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--ink-60)]">
                             {section.title}
                           </p>
                           <div className="mt-2 space-y-1">
@@ -982,11 +982,11 @@ export function NearbyScreen(props: NearbyScreenProps) {
                                   </span>
                                 )}
                                 <span className="min-w-0 flex-1">
-                                  <span className="block truncate text-[12px] font-bold text-[#1A1F2E]">
+                                  <span className="block truncate text-[12px] font-bold text-[var(--brief-ink)]">
                                     {obj.title}
                                   </span>
                                   {briefWhenLabel(obj) && (
-                                    <span className="block truncate text-[9px] font-medium text-[#6B7280]">
+                                    <span className="block truncate text-[9px] font-medium text-[var(--brief-muted)]">
                                       {briefWhenLabel(obj)}
                                     </span>
                                   )}
@@ -1003,17 +1003,17 @@ export function NearbyScreen(props: NearbyScreenProps) {
                   {personalSavedGroups && personalSavedGroups.length > 0 && (
                     <div className="mt-4 rounded-2xl bg-white p-3.5 shadow-sm">
                       <div className="mb-2 flex items-center gap-2">
-                        <Bookmark className="h-3.5 w-3.5 text-[#1A1F2E]/60" />
-                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#1A1F2E]/70">
+                        <Bookmark className="h-3.5 w-3.5 text-[var(--ink-60)]" />
+                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--ink-70)]">
                           Saved
                         </p>
                       </div>
                       <div className="grid gap-4 sm:grid-cols-2">
                         {personalSavedGroups.map((group: any) => (
                           <div key={group.key}>
-                            <p className="text-[10px] font-black text-[#1A1F2E]/70">
+                            <p className="text-[10px] font-black text-[var(--ink-70)]">
                               {group.title}
-                              <span className="ml-1.5 text-[10px] font-bold text-[#1A1F2E]/60">
+                              <span className="ml-1.5 text-[10px] font-bold text-[var(--ink-60)]">
                                 {group.items.length + group.expired.length}
                               </span>
                             </p>
@@ -1026,11 +1026,11 @@ export function NearbyScreen(props: NearbyScreenProps) {
                                   className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-[#F0EDE8] cursor-pointer"
                                 >
                                   <span className="min-w-0 flex-1">
-                                    <span className="block truncate text-[11px] font-bold text-[#1A1F2E]">
+                                    <span className="block truncate text-[11px] font-bold text-[var(--brief-ink)]">
                                       {obj.title}
                                     </span>
                                     {briefWhenLabel(obj) && (
-                                      <span className="block truncate text-[9px] font-medium text-[#6B7280]">
+                                      <span className="block truncate text-[9px] font-medium text-[var(--brief-muted)]">
                                         {briefWhenLabel(obj)}
                                       </span>
                                     )}
@@ -1045,7 +1045,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                                   className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-[#F0EDE8] cursor-pointer opacity-60"
                                 >
                                   <span className="min-w-0 flex-1">
-                                    <span className="block truncate text-[11px] font-bold text-[#1A1F2E] line-through">
+                                    <span className="block truncate text-[11px] font-bold text-[var(--brief-ink)] line-through">
                                       {obj.title}
                                     </span>
                                     <span className="block truncate text-[9px] font-black text-[#B8621F]">
@@ -1066,7 +1066,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
               {/* TODAY'S BRIEF */}
               {discoveryTab === 'home' && discoveryBrief.length > 0 && (
                 <section className="mb-8" aria-label="Today's Brief">
-                  <h2 className="mb-3 px-1 text-[11px] font-black uppercase tracking-[0.22em] text-[#1A1F2E]/70">
+                  <h2 className="mb-3 px-1 text-[11px] font-black uppercase tracking-[0.22em] text-[var(--ink-70)]">
                     Today's Brief
                   </h2>
                   <div className="grid gap-3 sm:grid-cols-2">
@@ -1075,7 +1075,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                         key={section.key}
                         className="rounded-2xl bg-white p-3.5 shadow-sm"
                       >
-                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#1A1F2E]/60">
+                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--ink-60)]">
                           {section.title}
                         </p>
                         <div className="mt-2 space-y-1">
@@ -1103,11 +1103,11 @@ export function NearbyScreen(props: NearbyScreenProps) {
                                 </span>
                               )}
                               <span className="min-w-0 flex-1">
-                                <span className="block truncate text-[12px] font-bold text-[#1A1F2E]">
+                                <span className="block truncate text-[12px] font-bold text-[var(--brief-ink)]">
                                   {obj.title}
                                 </span>
                                 {briefWhenLabel(obj) && (
-                                  <span className="block truncate text-[9px] font-medium text-[#6B7280]">
+                                  <span className="block truncate text-[9px] font-medium text-[var(--brief-muted)]">
                                     {briefWhenLabel(obj)}
                                   </span>
                                 )}
@@ -1233,8 +1233,8 @@ export function NearbyScreen(props: NearbyScreenProps) {
                     }}
                     className={`shrink-0 relative px-3.5 py-1.5 rounded-full text-[11px] font-black transition-all cursor-pointer flex items-center space-x-1.5 ${
                       isActive
-                        ? 'bg-[#1A1F2E] text-white shadow-sm scale-[1.02]'
-                        : 'bg-white text-[#1A1F2E]/75 hover:bg-[#F0EDE8] hover:text-[#1A1F2E]'
+                        ? 'bg-[color:var(--brief-ink)] text-white shadow-sm scale-[1.02]'
+                        : 'bg-white text-[var(--ink-75)] hover:bg-[#F0EDE8] hover:text-[var(--brief-ink)]'
                     }`}
                   >
                     <span>{tab.label}</span>
@@ -1254,7 +1254,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
             className={`shrink-0 px-3.5 py-1.5 rounded-full text-[11px] font-black transition-all cursor-pointer ${
               moreFilters
                 ? 'bg-[#B8621F] text-white shadow-sm'
-                : 'bg-white text-[#1A1F2E]/75 hover:bg-[#F0EDE8]'
+                : 'bg-white text-[var(--ink-75)] hover:bg-[#F0EDE8]'
             }`}
           >
             More
@@ -1281,7 +1281,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                 className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold cursor-pointer transition-all ${
                   nearbySection === id
                     ? 'bg-[#B8621F] text-white shadow-sm'
-                    : 'bg-white text-[#1A1F2E]/70 hover:bg-[#F0EDE8]'
+                    : 'bg-white text-[var(--ink-70)] hover:bg-[#F0EDE8]'
                 }`}
               >
                 {label}
@@ -1300,8 +1300,8 @@ export function NearbyScreen(props: NearbyScreenProps) {
                 }}
                 className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold cursor-pointer transition-all ${
                   nearbySection === 'stream' && selectedObjectType === filter.id
-                    ? 'bg-[#1A1F2E] text-white shadow-sm'
-                    : 'bg-white text-[#1A1F2E]/70 hover:bg-[#F0EDE8]'
+                    ? 'bg-[color:var(--brief-ink)] text-white shadow-sm'
+                    : 'bg-white text-[var(--ink-70)] hover:bg-[#F0EDE8]'
                 }`}
               >
                 {filter.label}
@@ -1338,7 +1338,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
             if (active.length === 0) return null;
             return (
               <section className="mx-auto mb-8 max-w-5xl">
-                <h2 className="mb-3 px-1 text-[11px] font-black uppercase tracking-[0.22em] text-[#1A1F2E]/70">
+                <h2 className="mb-3 px-1 text-[11px] font-black uppercase tracking-[0.22em] text-[var(--ink-70)]">
                   Happening nearby
                 </h2>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -1361,7 +1361,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                             className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                           />
                         ) : (
-                          <div className="absolute inset-0 bg-gradient-to-br from-[#1E293B] to-[#0D1117]" />
+                          <div className="absolute inset-0 bg-gradient-to-br from-[#1E293B] to-[var(--brief-ink)]" />
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
                         <div className="absolute inset-x-3 bottom-3">
@@ -1396,7 +1396,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
           {homeFeedStatus === 'ready' && (
             <div className="mx-auto mb-4 max-w-5xl px-1">
               <label className="relative block">
-                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#1A1F2E]/50" />
+                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ink-50)]" />
                 <input
                   type="search"
                   value={searchQuery}
@@ -1406,14 +1406,14 @@ export function NearbyScreen(props: NearbyScreenProps) {
                   onKeyDown={(e) => { if (e.key === 'Enter') commitRecentSearch(searchQuery); }}
                   placeholder="Search venues, businesses, organizers, areas…"
                   aria-label="Search Brief"
-                  className="w-full rounded-2xl bg-white shadow-sm py-2.5 pl-10 pr-10 text-[13px] font-bold text-[#1A1F2E] outline-none transition-colors placeholder:text-[#1A1F2E]/40 focus:ring-2 focus:ring-[#B8621F]/20"
+                  className="w-full rounded-2xl bg-white shadow-sm py-2.5 pl-10 pr-10 text-[13px] font-bold text-[var(--brief-ink)] outline-none transition-colors placeholder:text-[var(--ink-40)] focus:ring-2 focus:ring-[#B8621F]/20"
                 />
                 {searchQuery !== '' && (
                   <button
                     type="button"
                     onClick={() => setSearchQuery('')}
                     aria-label="Clear search"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-[#1A1F2E]/50 transition-colors hover:text-[#1A1F2E] cursor-pointer"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-[var(--ink-50)] transition-colors hover:text-[var(--brief-ink)] cursor-pointer"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -1424,7 +1424,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                 <div className="mt-3 space-y-3 p-3 rounded-2xl bg-white shadow-md animate-fadeIn">
                   {recentSearches.length > 0 && (
                     <div>
-                      <p className="mb-1.5 px-1 text-[10px] font-black uppercase tracking-[0.16em] text-[#1A1F2E]/60">Recent</p>
+                      <p className="mb-1.5 px-1 text-[10px] font-black uppercase tracking-[0.16em] text-[var(--ink-60)]">Recent</p>
                       <div className="flex flex-wrap gap-1.5">
                         {recentSearches.map((term) => (
                           <button
@@ -1432,7 +1432,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                             type="button"
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={() => setSearchQuery(term)}
-                            className="rounded-full bg-[#F0EDE8] px-3 py-1.5 text-[12px] font-bold text-[#1A1F2E] transition-colors hover:bg-[#B8621F] hover:text-white cursor-pointer"
+                            className="rounded-full bg-[#F0EDE8] px-3 py-1.5 text-[12px] font-bold text-[var(--brief-ink)] transition-colors hover:bg-[#B8621F] hover:text-white cursor-pointer"
                           >
                             {term}
                           </button>
@@ -1442,7 +1442,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                   )}
                   {nearbyCategories.length > 0 && (
                     <div>
-                      <p className="mb-1.5 px-1 text-[10px] font-black uppercase tracking-[0.16em] text-[#1A1F2E]/60">Nearby categories</p>
+                      <p className="mb-1.5 px-1 text-[10px] font-black uppercase tracking-[0.16em] text-[var(--ink-60)]">Nearby categories</p>
                       <div className="flex flex-wrap gap-1.5">
                         {nearbyCategories.map((cat) => (
                           <button
@@ -1450,7 +1450,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                             type="button"
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={() => setSearchQuery(cat)}
-                            className="rounded-full bg-[#F7F7F5] px-3 py-1.5 text-[12px] font-bold text-[#1A1F2E]/80 transition-colors hover:bg-[#1A1F2E] hover:text-white cursor-pointer"
+                            className="rounded-full bg-[#F7F7F5] px-3 py-1.5 text-[12px] font-bold text-[var(--ink-80)] transition-colors hover:bg-[color:var(--brief-ink)] hover:text-white cursor-pointer"
                           >
                             {cat}
                           </button>
@@ -1504,15 +1504,15 @@ export function NearbyScreen(props: NearbyScreenProps) {
                               className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                             />
                           ) : (
-                            <div className="absolute inset-0 bg-gradient-to-br from-[#1E293B] to-[#0D1117]" />
+                            <div className="absolute inset-0 bg-gradient-to-br from-[#1E293B] to-[var(--brief-ink)]" />
                           )}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent" />
                           <div className="absolute left-3 top-3 flex max-w-[calc(100%-24px)] flex-wrap gap-1.5">
-                            <span className="rounded-full bg-white/90 backdrop-blur-sm px-2 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[#1A1F2E]">
+                            <span className="rounded-full bg-white/90 backdrop-blur-sm px-2 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[var(--brief-ink)]">
                               {getObjectTypeMeta(obj.type).label}
                             </span>
                             {!obj.imageUrl && obj.category && (
-                              <span className="rounded-full bg-white/90 backdrop-blur-sm px-2 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[#1A1F2E]">
+                              <span className="rounded-full bg-white/90 backdrop-blur-sm px-2 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[var(--brief-ink)]">
                                 {obj.category}
                               </span>
                             )}
@@ -1522,7 +1522,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                               </span>
                             )}
                             {status && (
-                              <span className="rounded-full bg-white/90 backdrop-blur-sm px-2 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[#1A1F2E]">
+                              <span className="rounded-full bg-white/90 backdrop-blur-sm px-2 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[var(--brief-ink)]">
                                 {status}
                               </span>
                             )}
@@ -1532,8 +1532,8 @@ export function NearbyScreen(props: NearbyScreenProps) {
                               return (
                                 <span className={`rounded-full px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] ${
                                   life.expired
-                                    ? 'bg-[#0D1117]/80 text-[#FFFFFF]'
-                                    : 'bg-[#F0EDE8] text-[#1A1F2E]'
+                                    ? 'bg-[rgba(36, 28, 18, 0.80)] text-[var(--brief-ink)]'
+                                    : 'bg-[#F0EDE8] text-[var(--brief-ink)]'
                                 }`}>
                                   {life.label}
                                 </span>
@@ -1584,7 +1584,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                                     handlePrimaryAction(obj);
                                   }
                                 }}
-                                className="rounded-full bg-white/90 backdrop-blur-sm px-3 py-1 text-[10px] font-bold text-[#1A1F2E] transition-colors hover:bg-[#B8621F] hover:text-white"
+                                className="rounded-full bg-white/90 backdrop-blur-sm px-3 py-1 text-[10px] font-bold text-[var(--brief-ink)] transition-colors hover:bg-[#B8621F] hover:text-white"
                               >
                                 {level === 3 && destVendors.length > 0 ? "See what's here" : resolveAction(obj).label}
                               </button>
@@ -1595,7 +1595,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                                   event.stopPropagation();
                                   handleExecuteProtocolAction('save', obj);
                                 }}
-                                className="ml-auto inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 backdrop-blur-sm text-[#1A1F2E] transition-colors hover:bg-[#B8621F] hover:text-white"
+                                className="ml-auto inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 backdrop-blur-sm text-[var(--brief-ink)] transition-colors hover:bg-[#B8621F] hover:text-white"
                               >
                                 <Bookmark className="h-3.5 w-3.5" />
                               </button>
@@ -1610,12 +1610,12 @@ export function NearbyScreen(props: NearbyScreenProps) {
                 <section className="mx-auto max-w-5xl py-10 text-center rounded-3xl bg-white p-8 shadow-sm">
                   {searchQuery.trim() !== '' ? (
                     <>
-                      <h2 className="text-base font-bold text-[#1A1F2E]">Nothing nearby matching "{searchQuery}"</h2>
-                      <p className="mt-1 text-xs text-[#6B7280]">Start a verified neighborhood pursuit to track updates automatically.</p>
+                      <h2 className="text-base font-bold text-[var(--brief-ink)]">Nothing nearby matching "{searchQuery}"</h2>
+                      <p className="mt-1 text-xs text-[var(--brief-muted)]">Start a verified neighborhood pursuit to track updates automatically.</p>
                       <button
                         type="button"
                         onClick={() => handleCreatePursuit(searchQuery)}
-                        className="mt-4 rounded-xl bg-[#1A1F2E] text-white px-4 py-2 text-[11px] font-bold shadow-sm"
+                        className="mt-4 rounded-xl bg-[color:var(--brief-ink)] text-white px-4 py-2 text-[11px] font-bold shadow-sm"
                       >
                         Keep pursuing "{searchQuery}"
                       </button>
@@ -1625,8 +1625,8 @@ export function NearbyScreen(props: NearbyScreenProps) {
                       <div className="w-12 h-12 rounded-2xl bg-[#B8621F]/10 text-[#B8621F] flex items-center justify-center mx-auto mb-3">
                         <Sparkles className="w-6 h-6" />
                       </div>
-                      <h2 className="text-base font-black text-[#1A1F2E]">Welcome to {activeNeighborhood.name} Feed</h2>
-                      <p className="mt-1 text-xs text-[#6B7280] max-w-sm mx-auto">
+                      <h2 className="text-base font-black text-[var(--brief-ink)]">Welcome to {activeNeighborhood.name} Feed</h2>
+                      <p className="mt-1 text-xs text-[var(--brief-muted)] max-w-sm mx-auto">
                         Your neighbors' gigs, bulk runs, and events appear here in real time.
                       </p>
                       <div className="mt-4 flex justify-center gap-2">
@@ -1661,11 +1661,11 @@ export function NearbyScreen(props: NearbyScreenProps) {
                 <div>
                   <div className="flex items-center space-x-2">
                     <span className="w-2 h-2 rounded-full bg-[#B8621F]" />
-                    <h2 className="text-sm font-black uppercase tracking-widest text-[#1A1F2E]">
+                    <h2 className="text-sm font-black uppercase tracking-widest text-[var(--brief-ink)]">
                       {activeNeighborhood.name} Discovery & Operations
                     </h2>
                   </div>
-                  <p className="text-xs text-[#6B7280] mt-1 ml-4 font-medium">
+                  <p className="text-xs text-[var(--brief-muted)] mt-1 ml-4 font-medium">
                     Verified community desks, bulk supply runs, and logistics corridors in {activeNeighborhood.county}
                   </p>
                 </div>
@@ -1688,16 +1688,16 @@ export function NearbyScreen(props: NearbyScreenProps) {
                         Table Bank
                       </span>
                     </div>
-                    <h3 className="text-sm font-black text-[#1A1F2E] mt-3 group-hover:text-[#B8621F] transition-colors">
+                    <h3 className="text-sm font-black text-[var(--brief-ink)] mt-3 group-hover:text-[#B8621F] transition-colors">
                       Circles & Merry-Go-Rounds
                     </h3>
-                    <p className="text-xs text-[#6B7280] mt-1 leading-relaxed">
+                    <p className="text-xs text-[var(--brief-muted)] mt-1 leading-relaxed">
                       Join verified neighborhood savings circles, rotating payouts, and table banking pools.
                     </p>
                   </div>
                   <div className="mt-4 pt-3 border-t border-black/[0.04] flex items-center justify-between w-full">
                     <span className="text-[11px] font-bold text-[#B8621F]">Open Circle Desk →</span>
-                    <span className="text-[10px] text-[#9CA3AF] font-medium">Cycle 5 Live</span>
+                    <span className="text-[10px] text-[var(--color-quiet)] font-medium">Cycle 5 Live</span>
                   </div>
                 </button>
 
@@ -1718,16 +1718,16 @@ export function NearbyScreen(props: NearbyScreenProps) {
                         CBC Run
                       </span>
                     </div>
-                    <h3 className="text-sm font-black text-[#1A1F2E] mt-3 group-hover:text-[#B8621F] transition-colors">
+                    <h3 className="text-sm font-black text-[var(--brief-ink)] mt-3 group-hover:text-[#B8621F] transition-colors">
                       CBC School Books & Wholesale
                     </h3>
-                    <p className="text-xs text-[#6B7280] mt-1 leading-relaxed">
+                    <p className="text-xs text-[var(--brief-muted)] mt-1 leading-relaxed">
                       Direct textbook and bulk supply orders aggregated at wholesale discount for PTAs & schools.
                     </p>
                   </div>
                   <div className="mt-4 pt-3 border-t border-black/[0.04] flex items-center justify-between w-full">
                     <span className="text-[11px] font-bold text-[#B8621F]">View Bulk Runs →</span>
-                    <span className="text-[10px] text-[#9CA3AF] font-medium">Save 28%</span>
+                    <span className="text-[10px] text-[var(--color-quiet)] font-medium">Save 28%</span>
                   </div>
                 </button>
 
@@ -1744,16 +1744,16 @@ export function NearbyScreen(props: NearbyScreenProps) {
                         47 Counties
                       </span>
                     </div>
-                    <h3 className="text-sm font-black text-[#1A1F2E] mt-3 group-hover:text-[#B8621F] transition-colors">
+                    <h3 className="text-sm font-black text-[var(--brief-ink)] mt-3 group-hover:text-[#B8621F] transition-colors">
                       WAIRO Cargo & Logistics Gate
                     </h3>
-                    <p className="text-xs text-[#6B7280] mt-1 leading-relaxed">
+                    <p className="text-xs text-[var(--brief-muted)] mt-1 leading-relaxed">
                       Inter-county parcel booking, direct carrier auctions, and town gate collection.
                     </p>
                   </div>
                   <div className="mt-4 pt-3 border-t border-black/[0.04] flex items-center justify-between w-full">
                     <span className="text-[11px] font-bold text-[#B8621F]">Send / Track Parcel →</span>
-                    <span className="text-[10px] text-[#9CA3AF] font-medium">Door & Stage</span>
+                    <span className="text-[10px] text-[var(--color-quiet)] font-medium">Door & Stage</span>
                   </div>
                 </button>
 
@@ -1770,16 +1770,16 @@ export function NearbyScreen(props: NearbyScreenProps) {
                         Touring Ops
                       </span>
                     </div>
-                    <h3 className="text-sm font-black text-[#1A1F2E] mt-3 group-hover:text-[#B8621F] transition-colors">
+                    <h3 className="text-sm font-black text-[var(--brief-ink)] mt-3 group-hover:text-[#B8621F] transition-colors">
                       Choir, Sports & Retreat Charters
                     </h3>
-                    <p className="text-xs text-[#6B7280] mt-1 leading-relaxed">
+                    <p className="text-xs text-[var(--brief-muted)] mt-1 leading-relaxed">
                       Group transport charters, member roster check-ins, and target funding trackers.
                     </p>
                   </div>
                   <div className="mt-4 pt-3 border-t border-black/[0.04] flex items-center justify-between w-full">
                     <span className="text-[11px] font-bold text-[#B8621F]">Coordinate Event →</span>
-                    <span className="text-[10px] text-[#9CA3AF] font-medium">Live Rosters</span>
+                    <span className="text-[10px] text-[var(--color-quiet)] font-medium">Live Rosters</span>
                   </div>
                 </button>
 
@@ -1800,16 +1800,16 @@ export function NearbyScreen(props: NearbyScreenProps) {
                         Micro-Work
                       </span>
                     </div>
-                    <h3 className="text-sm font-black text-[#1A1F2E] mt-3 group-hover:text-[#B8621F] transition-colors">
+                    <h3 className="text-sm font-black text-[var(--brief-ink)] mt-3 group-hover:text-[#B8621F] transition-colors">
                       Local Verified Gigs
                     </h3>
-                    <p className="text-xs text-[#6B7280] mt-1 leading-relaxed">
+                    <p className="text-xs text-[var(--brief-muted)] mt-1 leading-relaxed">
                       Handyman tasks, inventory counters, event ushers, and local tutoring assignments.
                     </p>
                   </div>
                   <div className="mt-4 pt-3 border-t border-black/[0.04] flex items-center justify-between w-full">
                     <span className="text-[11px] font-bold text-[#B8621F]">Browse Gigs →</span>
-                    <span className="text-[10px] text-[#9CA3AF] font-medium">Daily Payouts</span>
+                    <span className="text-[10px] text-[var(--color-quiet)] font-medium">Daily Payouts</span>
                   </div>
                 </button>
 
@@ -1826,16 +1826,16 @@ export function NearbyScreen(props: NearbyScreenProps) {
                         15% Net Cut
                       </span>
                     </div>
-                    <h3 className="text-sm font-black text-[#1A1F2E] mt-3 group-hover:text-[#B8621F] transition-colors">
+                    <h3 className="text-sm font-black text-[var(--brief-ink)] mt-3 group-hover:text-[#B8621F] transition-colors">
                       Creator Partner Program
                     </h3>
-                    <p className="text-xs text-[#6B7280] mt-1 leading-relaxed">
+                    <p className="text-xs text-[var(--brief-muted)] mt-1 leading-relaxed">
                       Earn 15% net commission on every bulk supply run, ticket sale, and cargo run for your community.
                     </p>
                   </div>
                   <div className="mt-4 pt-3 border-t border-black/[0.04] flex items-center justify-between w-full">
                     <span className="text-[11px] font-bold text-[#B8621F]">Open Creator Desk →</span>
-                    <span className="text-[10px] text-[#9CA3AF] font-medium">Instant Ledger</span>
+                    <span className="text-[10px] text-[var(--color-quiet)] font-medium">Instant Ledger</span>
                   </div>
                 </button>
               </div>
@@ -1849,17 +1849,17 @@ export function NearbyScreen(props: NearbyScreenProps) {
         <section className="max-w-4xl mx-auto px-3 py-4 space-y-4">
           <div className="bg-white rounded-2xl p-5 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
-              <Newspaper className="w-4 h-4 text-[#1A1F2E]" />
-              <span className="text-[10px] font-black uppercase tracking-wider text-[#1A1F2E]/60">
+              <Newspaper className="w-4 h-4 text-[var(--brief-ink)]" />
+              <span className="text-[10px] font-black uppercase tracking-wider text-[var(--ink-60)]">
                 Tea
               </span>
             </div>
 
-            <h2 className="text-xl font-black text-[#1A1F2E]">
+            <h2 className="text-xl font-black text-[var(--brief-ink)]">
               What people are talking about
             </h2>
 
-            <p className="text-xs text-[#6B7280] mt-1">
+            <p className="text-xs text-[var(--brief-muted)] mt-1">
               News, notices and neighbourhood chatter, alongside the directory. Posts link back to the places they are about.
             </p>
           </div>
@@ -1891,8 +1891,8 @@ export function NearbyScreen(props: NearbyScreenProps) {
                   }}
                   className={`shrink-0 flex items-center gap-1.5 rounded-full px-3.5 py-1.5 transition cursor-pointer ${
                     isActive
-                      ? 'bg-[#1A1F2E] text-white shadow-sm font-bold'
-                      : 'bg-white text-[#1A1F2E]/70 hover:bg-[#F0EDE8]'
+                      ? 'bg-[color:var(--brief-ink)] text-white shadow-sm font-bold'
+                      : 'bg-white text-[var(--ink-70)] hover:bg-[#F0EDE8]'
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5 shrink-0" />
@@ -1910,7 +1910,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
             })}
           </div>
 
-          <div className="flex items-center justify-between text-[10px] text-[#6B7280] px-1">
+          <div className="flex items-center justify-between text-[10px] text-[var(--brief-muted)] px-1">
             <span className="font-bold">
               {getEditionMeta(activeEdition).label}
             </span>
@@ -1941,7 +1941,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                     {kindMeta.label}
                   </span>
 
-                  <span className="text-[11px] font-bold text-[#1A1F2E]">
+                  <span className="text-[11px] font-bold text-[var(--brief-ink)]">
                     {post.authorName}
                   </span>
 
@@ -1949,16 +1949,16 @@ export function NearbyScreen(props: NearbyScreenProps) {
                     <ShieldCheck className="w-3 h-3 text-[#10B981] shrink-0" />
                   )}
 
-                  <span className="text-[10px] text-[#6B7280]">
+                  <span className="text-[10px] text-[var(--brief-muted)]">
                     {getRelativeTime(post.publishedAt)}
                   </span>
                 </div>
 
-                <h3 className="text-sm font-bold text-[#1A1F2E] leading-snug">
+                <h3 className="text-sm font-bold text-[var(--brief-ink)] leading-snug">
                   {post.title}
                 </h3>
 
-                <p className="text-xs text-[#4B5563] mt-1.5 leading-relaxed">
+                <p className="text-xs text-[var(--brief-muted)] mt-1.5 leading-relaxed">
                   {post.body}
                 </p>
 
@@ -1976,7 +1976,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                     )}
 
                     <div className="min-w-0 flex-1">
-                      <div className="text-[9px] text-[#6B7280]">
+                      <div className="text-[9px] text-[var(--brief-muted)]">
                         About this {getObjectTypeMeta(subject.type).label}
                       </div>
                       <div className="text-[11px] font-bold truncate group-hover:text-[#B8621F]">
@@ -1984,7 +1984,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                       </div>
                     </div>
 
-                    <ArrowRight className="w-3.5 h-3.5 text-[#6B7280] shrink-0" />
+                    <ArrowRight className="w-3.5 h-3.5 text-[var(--brief-muted)] shrink-0" />
                   </button>
                 )}
 
@@ -1992,7 +1992,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                   <button
                     onClick={() => toggleLike(post)}
                     className={`flex items-center gap-1.5 text-[11px] font-bold cursor-pointer transition ${
-                      isLiked ? 'text-rose-600' : 'text-[#6B7280] hover:text-[#1A1F2E]'
+                      isLiked ? 'text-rose-600' : 'text-[var(--brief-muted)] hover:text-[var(--brief-ink)]'
                     }`}
                   >
                     <Heart
@@ -2001,7 +2001,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
                     {formatCount(post.reactionsCount + (isLiked ? 1 : 0))}
                   </button>
 
-                  <span className="flex items-center gap-1.5 text-[11px] font-medium text-[#6B7280]">
+                  <span className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--brief-muted)]">
                     No discussion yet
                   </span>
                 </div>
@@ -2011,8 +2011,8 @@ export function NearbyScreen(props: NearbyScreenProps) {
 
           {editionPosts.length === 0 && (
             <div className="py-16 text-center bg-white rounded-2xl shadow-sm">
-              <Newspaper className="w-8 h-8 mx-auto mb-3 text-[#6B7280]" />
-              <p className="text-sm font-bold text-[#1A1F2E]">No tea in this edition yet.</p>
+              <Newspaper className="w-8 h-8 mx-auto mb-3 text-[var(--brief-muted)]" />
+              <p className="text-sm font-bold text-[var(--brief-ink)]">No tea in this edition yet.</p>
             </div>
           )}
 
@@ -2056,8 +2056,8 @@ export function NearbyScreen(props: NearbyScreenProps) {
       {nearbySection === 'today' && (
         <div className="max-w-4xl mx-auto px-3 py-4 space-y-4">
           <div className="bg-white rounded-2xl p-5 shadow-sm">
-            <h2 className="text-lg font-black text-[#1A1F2E]">Today</h2>
-            <p className="text-[11px] text-[#6B7280] leading-snug mt-1">
+            <h2 className="text-lg font-black text-[var(--brief-ink)]">Today</h2>
+            <p className="text-[11px] text-[var(--brief-muted)] leading-snug mt-1">
               Only what relates to your pursuits, saved and watched things.
             </p>
           </div>
@@ -2067,8 +2067,8 @@ export function NearbyScreen(props: NearbyScreenProps) {
               <div className="w-10 h-10 rounded-full bg-[#F0EDE8] text-[#B8621F] flex items-center justify-center mx-auto mb-2">
                 <Bookmark className="w-5 h-5" />
               </div>
-              <p className="text-xs font-bold text-[#1A1F2E]">Nothing to report yet.</p>
-              <p className="text-[10px] text-[#6B7280] mt-1">
+              <p className="text-xs font-bold text-[var(--brief-ink)]">Nothing to report yet.</p>
+              <p className="text-[10px] text-[var(--brief-muted)] mt-1">
                 Save something, or start a pursuit, and this fills itself in.
               </p>
             </div>
@@ -2077,10 +2077,10 @@ export function NearbyScreen(props: NearbyScreenProps) {
           {dailyBrief.map((section: any) => (
             <div key={section.key} className="space-y-2">
               <div className="flex items-center justify-between px-1">
-                <h3 className="text-[11px] font-black uppercase tracking-wider text-[#1A1F2E]">
+                <h3 className="text-[11px] font-black uppercase tracking-wider text-[var(--brief-ink)]">
                   {section.title}
                 </h3>
-                <span className="text-[10px] font-bold text-[#6B7280]">
+                <span className="text-[10px] font-bold text-[var(--brief-muted)]">
                   {section.objects.length + section.pursuits.length}
                 </span>
               </div>
@@ -2096,12 +2096,12 @@ export function NearbyScreen(props: NearbyScreenProps) {
                       {getObjectTypeMeta(obj.type).label}
                     </span>
                     {getDistanceLabel(obj) && (
-                      <span className="text-[9px] text-[#6B7280]">
+                      <span className="text-[9px] text-[var(--brief-muted)]">
                         {getDistanceLabel(obj)}
                       </span>
                     )}
                   </div>
-                  <p className="text-[12px] font-bold text-[#1A1F2E] leading-snug mt-0.5">
+                  <p className="text-[12px] font-bold text-[var(--brief-ink)] leading-snug mt-0.5">
                     {obj.title}
                   </p>
                 </button>
@@ -2113,8 +2113,8 @@ export function NearbyScreen(props: NearbyScreenProps) {
                   onClick={() => { setActiveTab('nearby'); setNearbySection('pursuits'); }}
                   className="w-full text-left bg-white rounded-xl p-3.5 cursor-pointer shadow-sm hover:shadow-md transition-all"
                 >
-                  <p className="text-[11px] font-bold text-[#1A1F2E]">{pursuit.query}</p>
-                  <p className="text-[9px] text-[#6B7280] mt-0.5">
+                  <p className="text-[11px] font-bold text-[var(--brief-ink)]">{pursuit.query}</p>
+                  <p className="text-[9px] text-[var(--brief-muted)] mt-0.5">
                     Brief is actively matching signals in {activeNeighborhood.name}…
                   </p>
                 </button>
@@ -2244,7 +2244,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
       {/* ================= MODAL: CIRCLE & TABLE BANKING HUB ================= */}
       {circleOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="w-full max-w-md my-auto bg-white rounded-3xl p-6 text-center text-[#0D1117]">
+          <div className="w-full max-w-md my-auto bg-white rounded-3xl p-6 text-center text-[var(--brief-ink)]">
             <p className="text-sm font-black">Table banking lives in your You tab</p>
             <p className="text-xs text-gray-500 mt-1">Open the You tab to run contributions, rotation, loans, welfare and minutes — every number derived from real rows.</p>
             <button onClick={() => setCircleOpen(false)} className="mt-4 px-4 py-2 rounded-xl bg-[#4F46E5] text-white text-xs font-bold">Close</button>
@@ -2315,7 +2315,7 @@ export function NearbyScreen(props: NearbyScreenProps) {
             <button
               type="button"
               onClick={() => { soundEngine.play('tap'); setDiscoverViewOpen(false); }}
-              className="px-3.5 py-1.5 rounded-full bg-[#1A1F2E] text-white text-xs font-bold shadow-xl flex items-center space-x-1.5 cursor-pointer hover:bg-black transition-colors"
+              className="px-3.5 py-1.5 rounded-full bg-[color:var(--brief-ink)] text-white text-xs font-bold shadow-xl flex items-center space-x-1.5 cursor-pointer hover:bg-black transition-colors"
             >
               <X className="w-4 h-4" />
               <span>Exit Discover</span>

@@ -26,6 +26,8 @@ import type { SpaceAudienceView } from '../../api/briefApi';
 // photograph of a shop that does not exist is a lie a buyer would walk into.
 // ---------------------------------------------------------------------------
 
+import { roomSurface, PHOTO_FILTER } from '../city/room';
+
 const num = (n: number | null | undefined) => (n === null || n === undefined ? '—' : n.toLocaleString('en-KE'));
 
 export interface SpaceStorefrontHeaderProps {
@@ -73,16 +75,16 @@ export function SpaceStorefrontHeader({
   const openInquiries = (space.recentConversations ?? []).filter((c) => ['new', 'active'].includes(c.status)).length;
 
   return (
-    <header className="rounded-3xl overflow-hidden border" style={{ borderColor: 'var(--color-border)', background: '#fff' }}>
+    <header className="rounded-3xl overflow-hidden brief-lift-2" style={{ background: 'var(--color-paper)' }}>
       {/* Cover */}
-      <div className="relative h-[168px] w-full" style={{ background: 'linear-gradient(135deg, #4F46E5, #22D3EE)' }}>
+      <div className="relative h-[168px] w-full" style={{ background: roomSurface() }}>
         {space.image ? (
-          <img src={space.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
+          <img src={space.image} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ filter: PHOTO_FILTER }} />
         ) : null}
         <div className="absolute top-3 right-3 flex items-center gap-1.5">
           <span
             className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider"
-            style={{ background: 'rgba(255,255,255,0.94)', color: '#0A0A0A' }}
+            style={{ background: 'rgba(255,255,255,0.94)', color: 'var(--brief-ink)', boxShadow: 'var(--lift-1)' }}
           >
             {space.visibility === 'public' ? 'Public' : space.visibility === 'unlisted' ? 'Unlisted' : <><Lock className="w-3 h-3" /> Private</>}
           </span>
@@ -93,19 +95,19 @@ export function SpaceStorefrontHeader({
         <div className="flex items-end gap-3 -mt-8">
           <span
             className="w-16 h-16 rounded-full grid place-items-center text-lg font-black shrink-0 border-4"
-            style={{ background: '#fff', borderColor: '#fff', color: 'var(--color-primary)', boxShadow: '0 0 0 1px var(--color-border)' }}
+            style={{ background: 'var(--color-paper)', borderColor: 'var(--color-paper)', color: 'var(--color-primary)', boxShadow: 'var(--lift-2)' }}
             aria-hidden="true"
           >
             {initials || '·'}
           </span>
           <div className="min-w-0 pb-1">
-            <h1 className="text-[22px] font-extrabold leading-tight truncate" style={{ color: '#0A0A0A' }}>
+            <h1 className="text-[22px] font-extrabold leading-tight truncate" style={{ color: 'var(--brief-ink)' }}>
               {space.name}
             </h1>
-            <p className="text-[13px] truncate" style={{ color: '#6B7280' }}>
+            <p className="text-[13px] truncate" style={{ color: 'var(--brief-muted)' }}>
               {space.goal || (space.type ?? 'business').replace('_', ' ')}
             </p>
-            <p className="text-[11px] font-medium tracking-wide truncate" style={{ color: '#6B7280' }}>
+            <p className="text-[11px] font-medium tracking-wide truncate" style={{ color: 'var(--brief-muted)' }}>
               {[where, when].filter(Boolean).join(' · ') || 'No place or hours stated yet'}
             </p>
           </div>
@@ -129,7 +131,7 @@ export function SpaceStorefrontHeader({
                 type="button"
                 onClick={onOpenInbox}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-bold border cursor-pointer"
-                style={{ borderColor: '#E5E7EB', color: '#0A0A0A', background: '#fff' }}
+                style={{ borderColor: 'var(--brief-line)', color: 'var(--brief-ink)', background: 'var(--color-paper)' }}
               >
                 <MessageCircle className="w-4 h-4" /> Inbox
                 {openInquiries > 0 && <span className="font-mono">· {openInquiries}</span>}
@@ -139,7 +141,7 @@ export function SpaceStorefrontHeader({
                   type="button"
                   onClick={onCreateOrder}
                   className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-bold border cursor-pointer"
-                  style={{ borderColor: '#E5E7EB', color: '#0A0A0A', background: '#fff' }}
+                  style={{ borderColor: 'var(--brief-line)', color: 'var(--brief-ink)', background: 'var(--color-paper)' }}
                   title="Record who walked in, what they wanted, and what you quoted"
                 >
                   <Plus className="w-4 h-4" /> Walk-in enquiry
@@ -150,7 +152,7 @@ export function SpaceStorefrontHeader({
                 onClick={onEdit}
                 disabled={busy}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-bold border cursor-pointer disabled:opacity-50"
-                style={{ borderColor: '#E5E7EB', color: '#0A0A0A', background: '#fff' }}
+                style={{ borderColor: 'var(--brief-line)', color: 'var(--brief-ink)', background: 'var(--color-paper)' }}
               >
                 <Pencil className="w-4 h-4" /> Edit space
               </button>
@@ -164,7 +166,7 @@ export function SpaceStorefrontHeader({
                   disabled={busy}
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-black cursor-pointer disabled:opacity-50"
                   style={space.iAmFollowing || audience.iAmFollowing
-                    ? { background: '#fff', color: '#0A0A0A', border: '1px solid #E5E7EB' }
+                    ? { background: 'var(--color-paper)', color: 'var(--brief-ink)', border: '1px solid var(--brief-line)' }
                     : { background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
                 >
                   {space.iAmFollowing || audience.iAmFollowing ? <><BellOff className="w-4 h-4" /> Following</> : <><Bell className="w-4 h-4" /> Follow</>}
@@ -174,7 +176,7 @@ export function SpaceStorefrontHeader({
                 type="button"
                 onClick={onMessage}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-bold border cursor-pointer"
-                style={{ borderColor: '#E5E7EB', color: '#0A0A0A', background: '#fff' }}
+                style={{ borderColor: 'var(--brief-line)', color: 'var(--brief-ink)', background: 'var(--color-paper)' }}
               >
                 <MessageCircle className="w-4 h-4" /> Message
               </button>
@@ -184,14 +186,14 @@ export function SpaceStorefrontHeader({
             type="button"
             onClick={onShare}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-bold border cursor-pointer"
-            style={{ borderColor: '#E5E7EB', color: '#0A0A0A', background: '#fff' }}
+            style={{ borderColor: 'var(--brief-line)', color: 'var(--brief-ink)', background: 'var(--color-paper)' }}
           >
             <Share2 className="w-4 h-4" /> Share
           </button>
         </div>
 
         {/* Stats strip. Instagram's shape; Brief's arithmetic. */}
-        <div className="flex items-stretch divide-x mt-4 rounded-2xl border overflow-hidden" style={{ borderColor: '#E5E7EB' }}>
+        <div className="flex items-stretch divide-x mt-4 rounded-2xl border overflow-hidden" style={{ borderColor: 'var(--brief-line)' }}>
           {(isOwner
             ? [
                 { label: 'views · 7d', value: num(insights?.views.count), sub: insights?.views.distinctViewers != null ? `${num(insights.views.distinctViewers)} people` : 'people not counted' },
@@ -210,15 +212,15 @@ export function SpaceStorefrontHeader({
                 { label: 'updates', value: num(audience?.broadcasts?.length ?? space.broadcastsLive ?? null), sub: 'live in 24h' }
               ]
           ).map((tile) => (
-            <div key={tile.label} className="flex-1 px-2 py-2.5 text-center" style={{ background: '#fff' }}>
-              <p className="font-mono text-[17px] font-extrabold leading-none brief-countdown" style={{ color: '#0A0A0A' }}>
+            <div key={tile.label} className="flex-1 px-2 py-2.5 text-center" style={{ background: 'var(--color-paper)' }}>
+              <p className="font-mono text-[17px] font-extrabold leading-none brief-countdown" style={{ color: 'var(--brief-ink)' }}>
                 {tile.value}
               </p>
-              <p className="text-[10px] font-medium tracking-wide uppercase mt-1" style={{ color: '#6B7280' }}>
+              <p className="text-[10px] font-medium tracking-wide uppercase mt-1" style={{ color: 'var(--brief-muted)' }}>
                 {tile.label}
               </p>
               {tile.sub && (
-                <p className="text-[9px] font-mono mt-0.5 truncate" style={{ color: '#9CA3AF' }}>
+                <p className="text-[9px] font-mono mt-0.5 truncate" style={{ color: 'var(--color-quiet)' }}>
                   {tile.sub}
                 </p>
               )}
@@ -226,7 +228,7 @@ export function SpaceStorefrontHeader({
           ))}
         </div>
 
-        <p className="text-[10px] leading-snug mt-2" style={{ color: '#6B7280' }}>
+        <p className="text-[10px] leading-snug mt-2" style={{ color: 'var(--brief-muted)' }}>
           {isOwner
             ? `${num(insights?.views.ownOpensExcluded)} of your own opens are left out of the view count. Brief has no sector averages and no browse log of who looked and left, so those numbers are absent rather than estimated.`
             : 'Followed by a person, counted once. No view, no bot, no rounded-up number.'}

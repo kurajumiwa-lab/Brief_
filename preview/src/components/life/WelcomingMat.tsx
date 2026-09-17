@@ -29,7 +29,7 @@ export const WelcomingMat: React.FC<WelcomingMatProps> = ({
           <div className="flex items-center space-x-2">
             <span className="text-base">🕊️</span>
             <div>
-              <h3 className="text-xs font-black uppercase tracking-wider text-[#1A1F2E]">
+              <h3 className="text-xs font-black uppercase tracking-wider text-[var(--brief-ink)]">
                 Welcoming Mat · Mutual Aid & Solidarity
               </h3>
               <p className="text-[11px] text-[#78716C] font-medium">
@@ -52,7 +52,7 @@ export const WelcomingMat: React.FC<WelcomingMatProps> = ({
               soundEngine.play('tap');
               onOpenSolidarity?.();
             }}
-            className="p-4 rounded-2xl bg-white/90 hover:bg-white text-left transition-all duration-200 shadow-sm cursor-pointer group flex flex-col justify-between"
+            className="p-4 rounded-2xl bg-white/90 hover:bg-[color:var(--color-paper)] text-left transition-all duration-200 shadow-sm cursor-pointer group flex flex-col justify-between"
           >
             <div>
               <div className="flex items-center justify-between">
@@ -61,7 +61,7 @@ export const WelcomingMat: React.FC<WelcomingMatProps> = ({
                   Family Circle
                 </span>
               </div>
-              <h4 className="text-xs font-black text-[#1A1F2E] mt-2 group-hover:text-[#B8621F] transition-colors">
+              <h4 className="text-xs font-black text-[var(--brief-ink)] mt-2 group-hover:text-[#B8621F] transition-colors">
                 Family & Life Support Desk
               </h4>
               <p className="text-[11px] text-[#78716C] mt-0.5 leading-snug">
@@ -81,7 +81,7 @@ export const WelcomingMat: React.FC<WelcomingMatProps> = ({
               soundEngine.play('tap');
               onOpenWellbeing?.();
             }}
-            className="p-4 rounded-2xl bg-white/90 hover:bg-white text-left transition-all duration-200 shadow-sm cursor-pointer group flex flex-col justify-between"
+            className="p-4 rounded-2xl bg-white/90 hover:bg-[color:var(--color-paper)] text-left transition-all duration-200 shadow-sm cursor-pointer group flex flex-col justify-between"
           >
             <div>
               <div className="flex items-center justify-between">
@@ -90,7 +90,7 @@ export const WelcomingMat: React.FC<WelcomingMatProps> = ({
                   Safe & Anonymous
                 </span>
               </div>
-              <h4 className="text-xs font-black text-[#1A1F2E] mt-2 group-hover:text-emerald-700 transition-colors">
+              <h4 className="text-xs font-black text-[var(--brief-ink)] mt-2 group-hover:text-emerald-700 transition-colors">
                 Wellbeing & Listening Circles
               </h4>
               <p className="text-[11px] text-[#78716C] mt-0.5 leading-snug">

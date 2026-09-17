@@ -216,7 +216,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
         <ReciprocityCard reciprocity={reciprocity} />
       </div>
 
-      <div className="p-3 rounded-2xl bg-[color:var(--color-primary-subtle)] border border-[color:var(--color-primary)]">
+      <div className="p-3 rounded-2xl bg-[color:var(--color-primary-subtle)]" style={{ boxShadow: 'var(--lift-signal)' }}>
         <p className="text-[11px] leading-snug" style={{ color: "var(--color-text)" }}>
           <strong style={{ color: "var(--color-primary)" }}>Tip:</strong> a space is your project — add an offer, take orders, track the money. Make it <strong>Public</strong> to be found by others, or keep it <strong>Private</strong>.
         </p>
@@ -224,7 +224,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
 
       {/* ── RUN YOUR SPACES — management, collapsed by default: it is work,
              not the thing you came to see. ── */}
-      <section className="rounded-2xl border" style={{ borderColor: 'var(--color-border)' }} aria-label="Run your spaces">
+      <section className="rounded-2xl brief-card bg-[color:var(--color-paper)]" aria-label="Run your spaces">
         <button
           type="button"
           onClick={() => { soundEngine.play('tap'); setManageOpen((v) => !v); }}
@@ -248,7 +248,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
               <p className="text-xs text-[color:var(--color-text-muted)]">Reading your spaces…</p>
             ) : spaces.length === 0 ? (
               /* A single create affordance, only when there is genuinely nothing yet. */
-              <div className="p-6 rounded-3xl bg-white border border-dashed border-gray-300 text-center space-y-3">
+              <div className="p-6 rounded-3xl bg-[color:var(--color-paper)] border border-dashed text-center space-y-3" style={{ boxShadow: 'var(--room-light), var(--lift-1)' }}>
                 <p className="text-sm font-bold text-[color:var(--color-text)]">
                   You don&rsquo;t have a space yet.
                 </p>
@@ -283,7 +283,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
                   </div>
 
                   {queue.length === 0 ? (
-                    <div className="p-3 rounded-2xl bg-white border border-black/5 flex items-center gap-2.5">
+                    <div className="p-3 rounded-2xl bg-[color:var(--color-paper)] brief-lift-1 flex items-center gap-2.5">
                       <CheckCircle2 className="w-4 h-4 text-[color:var(--color-success)]" />
                       <span className="text-xs font-bold text-[color:var(--color-text)]">All caught up.</span>
                       <span className="text-[10px] text-[color:var(--color-text-muted)]">No open conversations, draft offers or orders to fulfil.</span>
@@ -295,7 +295,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
                           key={space.id}
                           type="button"
                           onClick={() => { soundEngine.play('tap'); onOpenSpace(space.id); }}
-                          className="w-full text-left p-3.5 rounded-2xl bg-white border border-black/5 shadow-2xs hover:shadow-xs transition-all cursor-pointer space-y-2"
+                          className="w-full text-left p-3.5 rounded-2xl bg-[color:var(--color-paper)] brief-lift-1 transition-all cursor-pointer space-y-2"
                         >
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-bold text-[color:var(--color-text)]">{space.name}</span>
@@ -341,7 +341,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
                       return (
                         <div
                           key={s.id}
-                          className="p-3 rounded-2xl bg-white border border-black/5 shadow-2xs hover:shadow-xs transition-all flex items-center justify-between gap-2"
+                          className="p-3 rounded-2xl bg-[color:var(--color-paper)] brief-lift-1 transition-all flex items-center justify-between gap-2"
                         >
                           <button
                             type="button"
@@ -409,7 +409,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
                     {archivedOpen && (
                       <div className="space-y-2">
                         {archived.map((s) => (
-                          <div key={s.id} className="p-3 rounded-2xl bg-white/50 border border-dashed border-gray-200 flex items-center justify-between gap-2 opacity-70">
+                          <div key={s.id} className="p-3 rounded-2xl bg-[color:var(--color-well)] border border-dashed flex items-center justify-between gap-2 opacity-70">
                             <div className="flex items-center space-x-2.5 min-w-0">
                               <span className="text-lg">🗄️</span>
                               <span className="text-xs font-bold text-[color:var(--color-text)] truncate">{s.name}</span>

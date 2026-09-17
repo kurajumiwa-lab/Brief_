@@ -66,7 +66,7 @@ export const IntegrationsStackSection: React.FC<IntegrationsStackSectionProps> =
         <div className="absolute inset-0 max-w-md mx-auto rounded-full bg-[#93EE34]/15 blur-3xl pointer-events-none" />
 
         {/* Central Visual Portrait / Graphic */}
-        <div className="relative z-10 w-48 h-48 sm:w-64 sm:h-64 rounded-full overflow-hidden border-4 border-[#93EE34]/30 shadow-2xl bg-[#1A1F2E]">
+        <div className="relative z-10 w-48 h-48 sm:w-64 sm:h-64 rounded-full overflow-hidden border-4 border-[#93EE34]/30 shadow-2xl bg-[color:var(--brief-ink)]">
           <img
             src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&auto=format&fit=crop"
             alt="Community Leader"
@@ -79,7 +79,7 @@ export const IntegrationsStackSection: React.FC<IntegrationsStackSectionProps> =
         {INTEGRATION_BADGES.map((item) => (
           <div
             key={item.id}
-            className={`absolute ${item.position} z-20 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-md text-[#1A1F2E] shadow-xl flex items-center space-x-1.5 transition-transform duration-300 hover:scale-110`}
+            className={`absolute ${item.position} z-20 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-md text-[var(--brief-ink)] shadow-xl flex items-center space-x-1.5 transition-transform duration-300 hover:scale-110`}
           >
             {item.icon}
             <span className="text-[11px] font-black tracking-tight">{item.name}</span>

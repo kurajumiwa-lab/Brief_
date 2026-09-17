@@ -86,7 +86,7 @@ export function TodayOpportunities({
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-1.5">
           <span className="w-2 h-2 rounded-full bg-[#4F46E5] animate-pulse" />
-          <h3 className="text-xs font-black uppercase tracking-[0.16em] text-[#0D1117]">
+          <h3 className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brief-ink)]">
             Today's Opportunities
           </h3>
         </div>

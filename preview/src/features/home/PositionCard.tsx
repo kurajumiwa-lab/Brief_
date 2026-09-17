@@ -60,7 +60,7 @@ export function PositionCard({
   const firstOpen = pos.open.top[0];
 
   return (
-    <section className={`rounded-2xl border p-4 space-y-3 ${className}`} style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }} aria-label="Your position">
+    <section className={`rounded-2xl p-4 space-y-3 brief-card ${className}`} style={{ background: 'var(--color-paper)' }} aria-label="Your position">
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-black uppercase tracking-wider" style={{ color: 'var(--color-text)' }}>
           Your position

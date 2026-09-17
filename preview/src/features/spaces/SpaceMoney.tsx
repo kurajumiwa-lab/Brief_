@@ -218,7 +218,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
       )}
 
       {/* ── PROFIT & CASH FLOW HERO METER (ZERO-ERP) ── */}
-      <div className="p-5 rounded-3xl bg-white shadow-2xs space-y-4 border border-black/5">
+      <div className="p-5 rounded-3xl bg-[color:var(--color-paper)] shadow-2xs space-y-4 border border-black/5">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <div className="p-1.5 rounded-xl bg-[color:var(--color-primary-subtle)] text-[color:var(--color-primary)]">
@@ -332,7 +332,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
                   className={`px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 transition-all cursor-pointer ${
                     quickCategory === cat.id
                       ? 'bg-[color:var(--color-text)] text-[color:var(--color-primary)]'
-                      : 'bg-white border border-black/5 text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)]'
+                      : 'bg-[color:var(--color-paper)] border border-black/5 text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)]'
                   }`}
                 >
                   {cat.label}
@@ -348,7 +348,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
                   placeholder="350"
                   value={quickAmount}
                   onChange={(e) => setQuickAmount(e.target.value)}
-                  className="w-full pl-11 pr-3 py-1.5 rounded-xl bg-white text-xs border border-black/5 font-bold focus:outline-none"
+                  className="w-full pl-11 pr-3 py-1.5 rounded-xl bg-[color:var(--color-paper)] text-xs border border-black/5 font-bold focus:outline-none"
                   required
                 />
               </div>
@@ -384,7 +384,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
               placeholder="Description (e.g. 5kg Flour, Cake boxes)"
               value={expDesc}
               onChange={(e) => setExpDesc(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-white text-xs border border-black/5 focus:outline-none"
+              className="px-3 py-2 rounded-xl bg-[color:var(--color-paper)] text-xs border border-black/5 focus:outline-none"
               required
             />
             <input
@@ -392,7 +392,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
               placeholder="Amount (KES)"
               value={expAmount}
               onChange={(e) => setExpAmount(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-white text-xs border border-black/5 focus:outline-none"
+              className="px-3 py-2 rounded-xl bg-[color:var(--color-paper)] text-xs border border-black/5 focus:outline-none"
               required
             />
           </div>
@@ -426,7 +426,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
               placeholder="Customer Name"
               value={tabCustomerName}
               onChange={(e) => setTabCustomerName(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-white text-xs border border-black/5 focus:outline-none"
+              className="px-3 py-2 rounded-xl bg-[color:var(--color-paper)] text-xs border border-black/5 focus:outline-none"
               required
             />
             <input
@@ -434,7 +434,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
               placeholder="Phone (e.g. 254712345678)"
               value={tabCustomerPhone}
               onChange={(e) => setTabCustomerPhone(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-white text-xs border border-black/5 focus:outline-none"
+              className="px-3 py-2 rounded-xl bg-[color:var(--color-paper)] text-xs border border-black/5 focus:outline-none"
             />
           </div>
 
@@ -444,7 +444,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
               placeholder="Credit Balance (KES)"
               value={tabAmount}
               onChange={(e) => setTabAmount(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-white text-xs border border-black/5 focus:outline-none"
+              className="px-3 py-2 rounded-xl bg-[color:var(--color-paper)] text-xs border border-black/5 focus:outline-none"
               required
             />
             <input
@@ -452,7 +452,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
               placeholder="Notes (e.g. 2 birthday cakes for Mary)"
               value={tabNote}
               onChange={(e) => setTabNote(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-white text-xs border border-black/5 focus:outline-none"
+              className="px-3 py-2 rounded-xl bg-[color:var(--color-paper)] text-xs border border-black/5 focus:outline-none"
             />
           </div>
 
@@ -488,7 +488,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
               value={paymentAmount}
               onChange={(e) => setPaymentAmount(e.target.value)}
               max={activePayingTab.balanceKes}
-              className="px-3 py-2 rounded-xl bg-white text-xs border border-black/5 focus:outline-none"
+              className="px-3 py-2 rounded-xl bg-[color:var(--color-paper)] text-xs border border-black/5 focus:outline-none"
               required
             />
             <input
@@ -496,7 +496,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
               placeholder="Payment Note (e.g. M-Pesa installment)"
               value={paymentNote}
               onChange={(e) => setPaymentNote(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-white text-xs border border-black/5 focus:outline-none"
+              className="px-3 py-2 rounded-xl bg-[color:var(--color-paper)] text-xs border border-black/5 focus:outline-none"
             />
           </div>
 
@@ -526,7 +526,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
         </div>
 
         {(!summary?.tabs || summary.tabs.length === 0) ? (
-          <div className="p-4 rounded-2xl bg-white border border-black/5 text-center">
+          <div className="p-4 rounded-2xl bg-[color:var(--color-paper)] border border-black/5 text-center">
             <p className="text-xs text-[color:var(--color-text-muted)]">No customer credit tabs recorded. Keep track of informal "Lipa Pole Pole" balances here.</p>
           </div>
         ) : (
@@ -534,7 +534,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
             {summary.tabs.map((tab) => (
               <div
                 key={tab.id}
-                className="p-4 rounded-2xl bg-white border border-black/5 shadow-2xs space-y-2.5"
+                className="p-4 rounded-2xl bg-[color:var(--color-paper)] border border-black/5 shadow-2xs space-y-2.5"
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -606,7 +606,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
         </div>
 
         {(!summary?.recentExpenses || summary.recentExpenses.length === 0) ? (
-          <div className="p-4 rounded-2xl bg-white border border-black/5 text-center">
+          <div className="p-4 rounded-2xl bg-[color:var(--color-paper)] border border-black/5 text-center">
             <p className="text-xs text-[color:var(--color-text-muted)]">No expenses recorded yet. Track ingredients and delivery costs to see your true daily take-home.</p>
           </div>
         ) : (
@@ -614,7 +614,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
             {summary.recentExpenses.map((exp) => (
               <div
                 key={exp.id}
-                className="p-3 rounded-2xl bg-white border border-black/5 shadow-2xs flex items-center justify-between gap-3"
+                className="p-3 rounded-2xl bg-[color:var(--color-paper)] border border-black/5 shadow-2xs flex items-center justify-between gap-3"
               >
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-[color:var(--color-text)] truncate">{exp.description}</p>

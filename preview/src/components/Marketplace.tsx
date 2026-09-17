@@ -295,8 +295,8 @@ export function Marketplace({ currentUserId = 'usr_me', initialSection = 'browse
           }}
           className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
             section === s.id
-              ? 'bg-[#4F46E5] text-[#0D1117] border-[#06B6D4]'
-              : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
+              ? 'bg-[#4F46E5] text-[var(--accent-ink)] border-[#06B6D4]'
+              : 'bg-[color:var(--color-paper)] text-[var(--ink-70)] border-[var(--brief-line)]'
           }`}
         >
           {s.label}
@@ -344,14 +344,14 @@ export function Marketplace({ currentUserId = 'usr_me', initialSection = 'browse
       {section === 'browse' && (
         <div className="space-y-2">
           {listings.status === 'loading' && (
-            <p className="text-xs text-[#0D1117]/60">Loading listings...</p>
+            <p className="text-xs text-[var(--ink-60)]">Loading listings...</p>
           )}
           {listings.status === 'error' && (
-            <p className="text-xs text-[#0D1117]">{listings.error}</p>
+            <p className="text-xs text-[var(--brief-ink)]">{listings.error}</p>
           )}
           {listings.status === 'ready' && listings.data.length === 0 && (
             // Honest empty state. Nothing is invented to fill the screen.
-            <p className="text-xs text-[#0D1117]/60">
+            <p className="text-xs text-[var(--ink-60)]">
               Nothing is listed yet. When someone nearby offers something, it appears here.
             </p>
           )}
@@ -363,9 +363,9 @@ export function Marketplace({ currentUserId = 'usr_me', initialSection = 'browse
 
       {section === 'orders' && (
         <div className="space-y-2">
-          {notice && <p className="text-[10px] text-[#0D1117]">{notice}</p>}
+          {notice && <p className="text-[10px] text-[var(--brief-ink)]">{notice}</p>}
           {myOrders.length === 0 ? (
-            <p className="text-xs text-[#0D1117]/60">You have not ordered anything yet.</p>
+            <p className="text-xs text-[var(--ink-60)]">You have not ordered anything yet.</p>
           ) : (
             myOrders.map((o) => (
               <React.Fragment key={o.id}>
@@ -376,21 +376,21 @@ export function Marketplace({ currentUserId = 'usr_me', initialSection = 'browse
                   onDispute={dispute}
                   onCancel={cancel}
                 />
-                <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-2">
+                <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-2">
                   <button
                     onClick={() => void loadFresh(o.id)}
-                    className="text-[10px] font-extrabold text-[#0D1117]/60 cursor-pointer"
+                    className="text-[10px] font-extrabold text-[var(--ink-60)] cursor-pointer"
                   >
                     {fresh[o.id] && fresh[o.id] !== 'error' ? 'Hide record' : 'Server record'}
                   </button>
                   {fresh[o.id] === 'loading' && (
-                    <p className="text-[10px] text-[#0D1117]/60 mt-1">Fetching this order's current record…</p>
+                    <p className="text-[10px] text-[var(--ink-60)] mt-1">Fetching this order's current record…</p>
                   )}
                   {fresh[o.id] === 'error' && (
-                    <p className="text-[10px] text-[#0D1117] mt-1">Could not load this order.</p>
+                    <p className="text-[10px] text-[var(--brief-ink)] mt-1">Could not load this order.</p>
                   )}
                   {fresh[o.id] && fresh[o.id] !== 'loading' && fresh[o.id] !== 'error' && (
-                    <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap break-words text-[9px] text-[#0D1117]/60">
+                    <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap break-words text-[9px] text-[var(--ink-60)]">
                       {JSON.stringify(fresh[o.id], null, 2)}
                     </pre>
                   )}
@@ -404,24 +404,24 @@ export function Marketplace({ currentUserId = 'usr_me', initialSection = 'browse
             ))
           )}
           {disputes.length > 0 && (
-            <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-3 space-y-2">
-              <h4 className="text-[11px] font-extrabold text-[#0D1117]/60">
+            <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-3 space-y-2">
+              <h4 className="text-[11px] font-extrabold text-[var(--ink-60)]">
                 Problems you reported
               </h4>
               {disputes.map((d) => (
                 <div key={d.id} className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-[10px] font-bold text-[#0D1117] truncate">{d.reason}</p>
-                    <p className="text-[9px] text-[#0D1117]/60">
+                    <p className="text-[10px] font-bold text-[var(--brief-ink)] truncate">{d.reason}</p>
+                    <p className="text-[9px] text-[var(--ink-60)]">
                       {d.orderId} · raised {d.createdAt.slice(0, 10)}
                     </p>
                   </div>
-                  <span className="shrink-0 text-[9px] px-2 py-0.5 rounded-full bg-[#FFFFFF] text-[#0D1117]">
+                  <span className="shrink-0 text-[9px] px-2 py-0.5 rounded-full bg-[color:var(--color-paper)] text-[var(--brief-ink)]">
                     {d.status}
                   </span>
                 </div>
               ))}
-              <p className="text-[9px] text-[#0D1117]/60">
+              <p className="text-[9px] text-[var(--ink-60)]">
                 A dispute marks the order as contested. No refund is implied —
                 no money has moved.
               </p>

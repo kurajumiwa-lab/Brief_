@@ -181,10 +181,10 @@ export function WellbeingDesk({
   const activeMoodObj = moods.find(m => m.id === selectedMood);
 
   return (
-    <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-3xl overflow-hidden shadow-xl text-[#0D1117] max-w-2xl mx-auto">
+    <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-3xl overflow-hidden shadow-xl text-[var(--brief-ink)] max-w-2xl mx-auto">
       
       {/* ================= HERO HEADER ================= */}
-      <div className="bg-gradient-to-br from-[#064E3B] via-[#047857] to-[#0D1117] text-white p-5 sm:p-6 relative">
+      <div className="bg-gradient-to-br from-[#064E3B] via-[#047857] to-[var(--brief-ink)] text-white p-5 sm:p-6 relative">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="flex items-center space-x-2">
@@ -218,7 +218,7 @@ export function WellbeingDesk({
         {/* ================= 1-TAP MOOD CHECK-IN ================= */}
         <section className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-black uppercase tracking-wider text-[#0D1117]">
+            <h3 className="text-xs font-black uppercase tracking-wider text-[var(--brief-ink)]">
               How are you feeling today?
             </h3>
             <span className="text-[10px] font-mono text-gray-400">1-Tap Confidential Check-in</span>
@@ -235,11 +235,11 @@ export function WellbeingDesk({
                   className={`p-2.5 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
                     isSelected
                       ? 'bg-emerald-50 border-emerald-500 shadow-md transform scale-105'
-                      : 'bg-[#F7F8FA] border-[#E5E8EC] hover:bg-gray-100'
+                      : 'bg-[color:var(--brief-bg)] border-[var(--brief-line)] hover:bg-gray-100'
                   }`}
                 >
                   <span className="text-2xl block mb-1">{m.emoji}</span>
-                  <span className="text-[11px] font-bold text-[#0D1117] leading-tight block">
+                  <span className="text-[11px] font-bold text-[var(--brief-ink)] leading-tight block">
                     {m.label}
                   </span>
                 </button>
@@ -286,7 +286,7 @@ export function WellbeingDesk({
               onClick={() => { soundEngine.play('tap'); setActiveSubTab(tab.id as any); }}
               className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 activeSubTab === tab.id
-                  ? 'bg-[#0D1117] text-white'
+                  ? 'bg-[color:var(--brief-ink)] text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
@@ -299,7 +299,7 @@ export function WellbeingDesk({
         {(activeSubTab === 'all' || activeSubTab === 'professionals') && (
           <section className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-black uppercase tracking-wider text-[#0D1117]">
+              <h3 className="text-xs font-black uppercase tracking-wider text-[var(--brief-ink)]">
                 Find Professional Help (Licensed Therapists)
               </h3>
               <span className="text-[10px] text-emerald-700 font-bold flex items-center space-x-1">
@@ -312,11 +312,11 @@ export function WellbeingDesk({
               {professionals.map(doc => (
                 <div 
                   key={doc.id}
-                  className="p-4 bg-white border border-[#E5E8EC] rounded-2xl flex flex-col justify-between shadow-xs hover:border-emerald-500 transition-all space-y-3"
+                  className="p-4 bg-white border border-[var(--brief-line)] rounded-2xl flex flex-col justify-between shadow-xs hover:border-emerald-500 transition-all space-y-3"
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <h4 className="font-black text-xs text-[#0D1117]">{doc.name}</h4>
+                      <h4 className="font-black text-xs text-[var(--brief-ink)]">{doc.name}</h4>
                       <p className="text-[10px] text-emerald-700 font-bold">{doc.title}</p>
                       <p className="text-[10px] text-gray-500 mt-0.5">{doc.exp}</p>
                     </div>
@@ -332,7 +332,7 @@ export function WellbeingDesk({
                   </div>
 
                   <div className="flex items-center justify-between pt-1 border-t border-gray-100">
-                    <span className="text-[10px] font-mono font-bold text-[#0D1117]">{doc.fee}</span>
+                    <span className="text-[10px] font-mono font-bold text-[var(--brief-ink)]">{doc.fee}</span>
                     <button
                       type="button"
                       onClick={() => handleBook(doc.name)}
@@ -351,7 +351,7 @@ export function WellbeingDesk({
         {(activeSubTab === 'all' || activeSubTab === 'groups') && (
           <section className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-black uppercase tracking-wider text-[#0D1117]">
+              <h3 className="text-xs font-black uppercase tracking-wider text-[var(--brief-ink)]">
                 Free Community Peer Support Circles
               </h3>
               <span className="text-[10px] text-gray-400">100% Free • Non-Judgemental</span>
@@ -361,11 +361,11 @@ export function WellbeingDesk({
               {supportGroups.map(grp => (
                 <div 
                   key={grp.id}
-                  className="p-3.5 bg-white border border-[#E5E8EC] rounded-2xl flex items-center justify-between shadow-xs hover:border-[#00BFEF] transition-all"
+                  className="p-3.5 bg-white border border-[var(--brief-line)] rounded-2xl flex items-center justify-between shadow-xs hover:border-[#00BFEF] transition-all"
                 >
                   <div className="space-y-0.5">
                     <div className="flex items-center space-x-2">
-                      <h4 className="font-black text-xs text-[#0D1117]">{grp.title}</h4>
+                      <h4 className="font-black text-xs text-[var(--brief-ink)]">{grp.title}</h4>
                       <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-cyan-50 text-cyan-700 font-bold">
                         {grp.tag}
                       </span>
@@ -386,7 +386,7 @@ export function WellbeingDesk({
                   <button
                     type="button"
                     onClick={() => handleJoinGroup(grp.title)}
-                    className="ml-3 px-4 py-2 rounded-xl bg-[#0D1117] hover:bg-[#1E2633] text-white text-xs font-bold uppercase tracking-wider cursor-pointer whitespace-nowrap shadow-xs"
+                    className="ml-3 px-4 py-2 rounded-xl bg-[color:var(--brief-ink)] hover:bg-[#1E2633] text-white text-xs font-bold uppercase tracking-wider cursor-pointer whitespace-nowrap shadow-xs"
                   >
                     {joinedGroup === grp.title ? 'Joined ✓' : 'Join Circle'}
                   </button>
@@ -400,7 +400,7 @@ export function WellbeingDesk({
         {(activeSubTab === 'all' || activeSubTab === 'activities') && (
           <section className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-black uppercase tracking-wider text-[#0D1117]">
+              <h3 className="text-xs font-black uppercase tracking-wider text-[var(--brief-ink)]">
                 Community Wellbeing & Movement
               </h3>
             </div>
@@ -409,13 +409,13 @@ export function WellbeingDesk({
               {activities.map(act => (
                 <div 
                   key={act.id}
-                  className="p-3.5 bg-[#F7F8FA] border border-[#E5E8EC] rounded-2xl flex flex-col justify-between shadow-xs"
+                  className="p-3.5 bg-[color:var(--brief-bg)] border border-[var(--brief-line)] rounded-2xl flex flex-col justify-between shadow-xs"
                 >
                   <div>
                     <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
                       {act.tag}
                     </span>
-                    <h4 className="font-black text-xs text-[#0D1117] mt-1.5">{act.title}</h4>
+                    <h4 className="font-black text-xs text-[var(--brief-ink)] mt-1.5">{act.title}</h4>
                     <p className="text-[10px] text-gray-500 mt-0.5">{act.schedule} • {act.location}</p>
                   </div>
 
@@ -425,7 +425,7 @@ export function WellbeingDesk({
                       soundEngine.play('tap');
                       handleJoinGroup(act.title);
                     }}
-                    className="mt-3 w-full py-1.5 rounded-xl bg-white border border-gray-300 hover:border-emerald-500 text-[#0D1117] font-bold text-xs uppercase cursor-pointer"
+                    className="mt-3 w-full py-1.5 rounded-xl bg-white border border-gray-300 hover:border-emerald-500 text-[var(--brief-ink)] font-bold text-xs uppercase cursor-pointer"
                   >
                     {joinedGroup === act.title ? 'Added to Calendar ✓' : 'Interested / Join'}
                   </button>

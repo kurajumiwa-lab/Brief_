@@ -91,7 +91,7 @@ export function NextMoveCard({
   // Still reading: a skeleton, never a placeholder claim.
   if (!loaded) {
     return (
-      <section className={`brief-skeleton h-40 rounded-3xl ${className}`} style={{ background: 'var(--color-surface)' }} aria-busy="true" />
+      <section className={`brief-skeleton h-40 rounded-3xl ${className}`} style={{ background: 'var(--color-paper)' }} aria-busy="true" />
     );
   }
 
@@ -104,7 +104,7 @@ export function NextMoveCard({
     return (
       <section
         className={`rounded-3xl border p-4 ${className}`}
-        style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}
+        style={{ borderColor: 'var(--brief-line)', background: 'var(--color-paper)' }}
         role="status"
         aria-label="Your next step is unavailable"
       >
@@ -136,7 +136,7 @@ export function NextMoveCard({
     return (
       <section
         className={`rounded-3xl border p-4 ${className}`}
-        style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}
+        style={{ borderColor: 'var(--brief-line)', background: 'var(--color-paper)' }}
         aria-label="Your next step"
       >
         <p className="text-[10px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--color-primary)' }}>
@@ -163,7 +163,7 @@ export function NextMoveCard({
 
   if (hidden === move.requestId) {
     return (
-      <section className={`flex items-center gap-2 rounded-2xl border px-4 py-2.5 ${className}`} style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
+      <section className={`flex items-center gap-2 rounded-2xl border px-4 py-2.5 ${className}`} style={{ borderColor: 'var(--brief-line)', background: 'var(--color-paper)' }}>
         <EyeOff className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--color-text-muted)' }} />
         <p className="text-[11px] flex-1" style={{ color: 'var(--color-text-muted)' }}>
           Next step hidden on this device.
@@ -207,8 +207,8 @@ export function NextMoveCard({
 
   return (
     <section
-      className={`relative overflow-hidden rounded-3xl border-2 ${className}`}
-      style={{ borderColor: 'var(--color-primary)', background: '#fff' }}
+      className={`relative overflow-hidden rounded-3xl ${className}`}
+      style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-2), inset 0 0 0 2px var(--color-primary)' }}
       aria-label="Your next step"
     >
       <div className="px-4 py-2 flex items-center gap-1.5" style={{ background: 'var(--color-primary-subtle)' }}>
@@ -267,8 +267,8 @@ export function NextMoveCard({
           <button
             type="button"
             onClick={() => { writeHidden(move.requestId); setHidden(move.requestId); }}
-            className="px-3 py-3 rounded-2xl text-[11px] font-bold cursor-pointer border"
-            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}
+            className="px-3 py-3 rounded-2xl text-[11px] font-bold cursor-pointer"
+            style={{ color: 'var(--color-text-muted)', boxShadow: 'var(--room-light), var(--lift-1), inset 0 0 0 1px var(--brief-line)' }}
           >
             Not now
           </button>

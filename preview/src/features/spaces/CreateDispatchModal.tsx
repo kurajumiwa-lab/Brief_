@@ -100,7 +100,7 @@ export const CreateDispatchModal: React.FC<CreateDispatchModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-fadeIn">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-scaleIn border border-black/5">
+      <div className="w-full max-w-md bg-[color:var(--color-paper)] rounded-3xl shadow-2xl overflow-hidden animate-scaleIn border border-black/5">
         {/* Header */}
         <div className="p-5 bg-[color:var(--color-surface)] flex items-center justify-between border-b border-black/5">
           <div className="flex items-center space-x-2.5">

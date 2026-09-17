@@ -142,8 +142,8 @@ export interface OverlaysShellProps {
 // community = green (human corroboration), cross-source = cyan, single source
 // = muted. Unverified renders nothing. Same tiers as trustStateOf in core.
 const TRUST_TONE: Record<string, { glyph: string; bg: string; fg: string }> = {
-  green: { glyph: '✓', bg: '#16A34A', fg: '#FFFFFF' },
-  cyan: { glyph: '●', bg: '#06B6D4', fg: '#FFFFFF' },
+  green: { glyph: '✓', bg: '#16A34A', fg: 'var(--color-paper)' },
+  cyan: { glyph: '●', bg: '#06B6D4', fg: 'var(--color-paper)' },
   muted: { glyph: '◉', bg: 'rgba(13,17,23,0.14)', fg: '#0D1117' }
 };
 
@@ -264,7 +264,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
     <>
       {openCampaignId && (
         <div
-          className="fixed inset-0 z-50 bg-[#0D1117]/85 backdrop-blur-md flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4 overflow-hidden"
+          className="fixed inset-0 z-50 bg-[rgba(36, 28, 18, 0.85)] backdrop-blur-md flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4 overflow-hidden"
           onClick={() => {
             setOpenCampaignId(null);
             setCampaignDetail(null);
@@ -273,17 +273,17 @@ export function OverlaysShell(props: OverlaysShellProps) {
           }}
         >
           <div
-            className="w-full max-w-lg max-h-[92vh] sm:max-h-[85vh] flex flex-col bg-[#FFFFFF] border border-[#E5E8EC] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden mb-safe"
+            className="w-full max-w-lg max-h-[92vh] sm:max-h-[85vh] flex flex-col bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden mb-safe"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="p-4 sm:p-5 border-b border-[#E5E8EC] shrink-0 flex items-start justify-between gap-3 bg-[#FFFFFF]">
+            <div className="p-4 sm:p-5 border-b border-[var(--brief-line)] shrink-0 flex items-start justify-between gap-3 bg-[color:var(--color-paper)]">
               <div className="min-w-0">
-                <h2 className="text-base font-extrabold text-[#0D1117] truncate">
+                <h2 className="text-base font-extrabold text-[var(--brief-ink)] truncate">
                   {campaignDetail ? campaignDetail.title : 'Campaign'}
                 </h2>
                 {campaignDetail && (
-                  <p className="text-[9px] text-[#0D1117]/60 mt-0.5">
+                  <p className="text-[9px] text-[var(--ink-60)] mt-0.5">
                     {campaignDetail.type} &middot; {campaignDetail.status}
                   </p>
                 )}
@@ -294,7 +294,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                   setCampaignDetail(null);
                   setEditDraft(null);
                 }}
-                className="shrink-0 p-1.5 rounded-full hover:bg-[#EFF1F4] text-[#0D1117]/60 cursor-pointer"
+                className="shrink-0 p-1.5 rounded-full hover:bg-[#EFF1F4] text-[var(--ink-60)] cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -311,70 +311,70 @@ export function OverlaysShell(props: OverlaysShellProps) {
               )}
 
               {!campaignDetail && !campaignActionError && (
-                <p className="text-xs text-[#0D1117]/60 py-6 text-center">Loading campaign...</p>
+                <p className="text-xs text-[var(--ink-60)] py-6 text-center">Loading campaign...</p>
               )}
 
               {campaignDetail && editDraft && (
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-[9px] text-[#0D1117]/60 mb-1">Title</label>
+                    <label className="block text-[9px] text-[var(--ink-60)] mb-1">Title</label>
                     <input
                       value={editDraft.title}
                       onChange={(e) => setEditDraft((d) => (d ? { ...d, title: e.target.value } : d))}
-                      className="w-full bg-[#FFFFFF] text-[#0D1117] text-xs rounded-xl px-3 py-2.5 border border-[#E5E8EC] focus:border-[#06B6D4] focus:outline-none"
+                      className="w-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-xs rounded-xl px-3 py-2.5 border border-[var(--brief-line)] focus:border-[#06B6D4] focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[9px] text-[#0D1117]/60 mb-1">Description</label>
+                    <label className="block text-[9px] text-[var(--ink-60)] mb-1">Description</label>
                     <textarea
                       value={editDraft.description}
                       onChange={(e) => setEditDraft((d) => (d ? { ...d, description: e.target.value } : d))}
                       rows={2}
-                      className="w-full bg-[#FFFFFF] text-[#0D1117] text-xs rounded-xl px-3 py-2.5 border border-[#E5E8EC] focus:border-[#06B6D4] focus:outline-none resize-none"
+                      className="w-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-xs rounded-xl px-3 py-2.5 border border-[var(--brief-line)] focus:border-[#06B6D4] focus:outline-none resize-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[9px] text-[#0D1117]/60 mb-1">When</label>
+                    <label className="block text-[9px] text-[var(--ink-60)] mb-1">When</label>
                     <input
                       type="datetime-local"
                       value={editDraft.startsAt}
                       onChange={(e) => setEditDraft((d) => (d ? { ...d, startsAt: e.target.value } : d))}
-                      className="w-full bg-[#FFFFFF] text-[#0D1117] text-xs rounded-xl px-3 py-2.5 border border-[#E5E8EC] focus:border-[#06B6D4] focus:outline-none"
+                      className="w-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-xs rounded-xl px-3 py-2.5 border border-[var(--brief-line)] focus:border-[#06B6D4] focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[9px] text-[#0D1117]/60 mb-1">Where</label>
+                    <label className="block text-[9px] text-[var(--ink-60)] mb-1">Where</label>
                     <input
                       value={editDraft.location}
                       onChange={(e) => setEditDraft((d) => (d ? { ...d, location: e.target.value } : d))}
-                      className="w-full bg-[#FFFFFF] text-[#0D1117] text-xs rounded-xl px-3 py-2.5 border border-[#E5E8EC] focus:border-[#06B6D4] focus:outline-none"
+                      className="w-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-xs rounded-xl px-3 py-2.5 border border-[var(--brief-line)] focus:border-[#06B6D4] focus:outline-none"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[9px] text-[#0D1117]/60 mb-1">Spots</label>
+                      <label className="block text-[9px] text-[var(--ink-60)] mb-1">Spots</label>
                       <input
                         inputMode="numeric"
                         disabled={campaignDetail.status !== 'draft'}
                         value={editDraft.capacity}
                         onChange={(e) => setEditDraft((d) => (d ? { ...d, capacity: e.target.value } : d))}
                         placeholder="Unlimited"
-                        className="w-full bg-[#FFFFFF] text-[#0D1117] text-xs rounded-xl px-3 py-2.5 border border-[#E5E8EC] focus:border-[#06B6D4] focus:outline-none disabled:opacity-40"
+                        className="w-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-xs rounded-xl px-3 py-2.5 border border-[var(--brief-line)] focus:border-[#06B6D4] focus:outline-none disabled:opacity-40"
                       />
                     </div>
                     <div>
-                      <label className="block text-[9px] text-[#0D1117]/60 mb-1">Price (KES)</label>
+                      <label className="block text-[9px] text-[var(--ink-60)] mb-1">Price (KES)</label>
                       <input
                         inputMode="numeric"
                         value={editDraft.price}
                         onChange={(e) => setEditDraft((d) => (d ? { ...d, price: e.target.value } : d))}
                         placeholder="Free"
-                        className="w-full bg-[#FFFFFF] text-[#0D1117] text-xs rounded-xl px-3 py-2.5 border border-[#E5E8EC] focus:border-[#06B6D4] focus:outline-none"
+                        className="w-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-xs rounded-xl px-3 py-2.5 border border-[var(--brief-line)] focus:border-[#06B6D4] focus:outline-none"
                       />
                     </div>
                   </div>
                   {campaignDetail.status !== 'draft' && (
-                    <p className="text-[9px] text-[#0D1117]/60 leading-snug">
+                    <p className="text-[9px] text-[var(--ink-60)] leading-snug">
                       Spots cannot change after publishing. People have already
                       registered against this number.
                     </p>
@@ -397,7 +397,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
 
                   <button
                     onClick={() => beginEdit(campaignDetail)}
-                    className="w-full py-2.5 rounded-xl border border-[#E5E8EC] text-[#0D1117] font-extrabold text-[11px] cursor-pointer hover:bg-[#F0F2F5]"
+                    className="w-full py-2.5 rounded-xl border border-[var(--brief-line)] text-[var(--brief-ink)] font-extrabold text-[11px] cursor-pointer hover:bg-[color:var(--color-well)]"
                   >
                     Edit details
                   </button>
@@ -415,21 +415,21 @@ export function OverlaysShell(props: OverlaysShellProps) {
                         loadCampaigns();
                         showToast('Published');
                       }}
-                      className="w-full py-3 rounded-xl bg-[#4F46E5] text-[#0D1117] font-extrabold text-xs cursor-pointer disabled:opacity-40 hover:bg-[#000000]"
+                      className="w-full py-3 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] font-extrabold text-xs cursor-pointer disabled:opacity-40 hover:bg-[#000000]"
                     >
                       {campaignBusy ? 'Publishing...' : 'Publish'}
                     </button>
                   )}
 
                   {/* PEOPLE */}
-                  <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-4 space-y-2">
-                    <h3 className="text-[9px] text-[#0D1117]/60">
+                  <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-4 space-y-2">
+                    <h3 className="text-[9px] text-[var(--ink-60)]">
                       People
                     </h3>
-                    <p className="text-xl font-extrabold text-[#0D1117]">
+                    <p className="text-xl font-extrabold text-[var(--brief-ink)]">
                       {campaignDetail.metrics.slotsTaken}
                       {campaignDetail.metrics.capacity !== null && (
-                        <span className="text-[#0D1117]/60"> / {campaignDetail.metrics.capacity}</span>
+                        <span className="text-[var(--ink-60)]"> / {campaignDetail.metrics.capacity}</span>
                       )}
                     </p>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-1">
@@ -445,43 +445,43 @@ export function OverlaysShell(props: OverlaysShellProps) {
                         ['No-show', campaignDetail.metrics.noShows]
                       ] as [string, string | number][]).map(([label, value]) => (
                         <div key={label} className="flex items-baseline justify-between gap-2">
-                          <span className="text-[10px] text-[#0D1117]/60">{label}</span>
-                          <span className="text-[11px] text-[#0D1117]/60">{value}</span>
+                          <span className="text-[10px] text-[var(--ink-60)]">{label}</span>
+                          <span className="text-[11px] text-[var(--ink-60)]">{value}</span>
                         </div>
                       ))}
                     </div>
                     {campaignDetail.metrics.capacity !== null &&
                       campaignDetail.metrics.remaining === 0 && (
-                        <p className="text-[10px] font-extrabold text-[#0D1117]">Full</p>
+                        <p className="text-[10px] font-extrabold text-[var(--brief-ink)]">Full</p>
                       )}
                   </div>
 
                   {/* MONEY */}
-                  <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-4 space-y-2">
-                    <h3 className="text-[9px] text-[#0D1117]/60">
+                  <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-4 space-y-2">
+                    <h3 className="text-[9px] text-[var(--ink-60)]">
                       Money
                     </h3>
                     {campaignDetail.price === 0 ? (
-                      <p className="text-[11px] text-[#0D1117]/60">
+                      <p className="text-[11px] text-[var(--ink-60)]">
                         This is a free campaign. No money is collected.
                       </p>
                     ) : (
                       <>
                         <div className="flex items-baseline justify-between gap-2">
-                          <span className="text-[10px] text-[#0D1117]/60">Settled</span>
-                          <span className="text-sm font-extrabold text-[#0D1117]">
+                          <span className="text-[10px] text-[var(--ink-60)]">Settled</span>
+                          <span className="text-sm font-extrabold text-[var(--brief-ink)]">
                             {campaignDetail.metrics.currency}{' '}
                             {campaignDetail.metrics.revenueSettled.toLocaleString()}
                           </span>
                         </div>
                         <div className="flex items-baseline justify-between gap-2">
-                          <span className="text-[10px] text-[#0D1117]/60">Pending</span>
-                          <span className="text-sm font-extrabold text-[#0D1117]">
+                          <span className="text-[10px] text-[var(--ink-60)]">Pending</span>
+                          <span className="text-sm font-extrabold text-[var(--brief-ink)]">
                             {campaignDetail.metrics.currency}{' '}
                             {campaignDetail.metrics.revenuePending.toLocaleString()}
                           </span>
                         </div>
-                        <p className="text-[9px] text-[#0D1117]/60 leading-snug">
+                        <p className="text-[9px] text-[var(--ink-60)] leading-snug">
                           Pending is money that has not arrived.
                         </p>
                       </>
@@ -489,67 +489,67 @@ export function OverlaysShell(props: OverlaysShellProps) {
                   </div>
 
                   {/* CAMPAIGN */}
-                  <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-4 space-y-1">
-                    <h3 className="text-[9px] text-[#0D1117]/60">
+                  <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-4 space-y-1">
+                    <h3 className="text-[9px] text-[var(--ink-60)]">
                       Campaign
                     </h3>
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-[10px] text-[#0D1117]/60">Page loads</span>
-                      <span className="text-[11px] text-[#0D1117]/60">
+                      <span className="text-[10px] text-[var(--ink-60)]">Page loads</span>
+                      <span className="text-[11px] text-[var(--ink-60)]">
                         {campaignDetail.metrics.views}
                       </span>
                     </div>
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-[10px] text-[#0D1117]/60">Different devices</span>
-                      <span className="text-[11px] text-[#0D1117]/60">
+                      <span className="text-[10px] text-[var(--ink-60)]">Different devices</span>
+                      <span className="text-[11px] text-[var(--ink-60)]">
                         {campaignDetail.metrics.viewers === null
                           ? 'Not enough data'
                           : campaignDetail.metrics.viewers}
                       </span>
                     </div>
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-[10px] text-[#0D1117]/60">Times you shared</span>
-                      <span className="text-[11px] text-[#0D1117]/60">
+                      <span className="text-[10px] text-[var(--ink-60)]">Times you shared</span>
+                      <span className="text-[11px] text-[var(--ink-60)]">
                         {campaignDetail.metrics.shares}
                       </span>
                     </div>
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-[10px] text-[#0D1117]/60">Started registering</span>
-                      <span className="text-[11px] text-[#0D1117]/60">
+                      <span className="text-[10px] text-[var(--ink-60)]">Started registering</span>
+                      <span className="text-[11px] text-[var(--ink-60)]">
                         {campaignDetail.metrics.registrationsStarted}
                       </span>
                     </div>
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-[10px] text-[#0D1117]/60">Page load to registration</span>
-                      <span className="text-[11px] text-[#0D1117]/60">
+                      <span className="text-[10px] text-[var(--ink-60)]">Page load to registration</span>
+                      <span className="text-[11px] text-[var(--ink-60)]">
                         {campaignDetail.metrics.conversionPct === null
                           ? 'Not enough data'
                           : `${campaignDetail.metrics.conversionPct}%`}
                       </span>
                     </div>
-                    <p className="text-[9px] text-[#0D1117]/60 leading-snug pt-1">
+                    <p className="text-[9px] text-[var(--ink-60)] leading-snug pt-1">
                       Different devices is a rough count, not people. Times you shared counts your own taps, not how many people saw it.
                     </p>
                   </div>
 
                   {/* WHAT PEOPLE ARE GETTING */}
                   {campaignDetail.object && (
-                    <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-4 space-y-1">
-                      <h3 className="text-[9px] text-[#0D1117]/60">
+                    <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-4 space-y-1">
+                      <h3 className="text-[9px] text-[var(--ink-60)]">
                         What people get
                       </h3>
-                      <p className="text-xs text-[#0D1117]">{campaignDetail.object.title}</p>
+                      <p className="text-xs text-[var(--brief-ink)]">{campaignDetail.object.title}</p>
                       {campaignDetail.object.summary && (
-                        <p className="text-[10px] text-[#0D1117]/60 leading-snug">
+                        <p className="text-[10px] text-[var(--ink-60)] leading-snug">
                           {campaignDetail.object.summary}
                         </p>
                       )}
-                      <p className="text-[9px] text-[#0D1117]/60 pt-0.5">
+                      <p className="text-[9px] text-[var(--ink-60)] pt-0.5">
                         {campaignDetail.object.type}
                         {campaignDetail.ownsObject === false && ' \u00b7 existing item'}
                       </p>
                       {campaignDetail.ownsObject === false && (
-                        <p className="text-[9px] text-[#0D1117]/60 leading-snug">
+                        <p className="text-[9px] text-[var(--ink-60)] leading-snug">
                           Publishing the campaign does not change it.
                         </p>
                       )}
@@ -558,23 +558,23 @@ export function OverlaysShell(props: OverlaysShellProps) {
                         <button
                           disabled={campaignBusy}
                           onClick={loadAttachableObjects}
-                          className="text-[10px] text-[#0D1117] underline underline-offset-2 cursor-pointer disabled:opacity-40 pt-1"
+                          className="text-[10px] text-[var(--brief-ink)] underline underline-offset-2 cursor-pointer disabled:opacity-40 pt-1"
                         >
                           Link a different item
                         </button>
                       ) : (
-                        <div className="bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl p-2 space-y-1 max-h-44 overflow-y-auto mt-1">
+                        <div className="bg-[color:var(--color-well)] border border-[var(--brief-line)] rounded-xl p-2 space-y-1 max-h-44 overflow-y-auto mt-1">
                           {objectPicker.status === 'loading' && (
-                            <p className="text-[11px] text-[#0D1117]/60 p-2">Loading your items...</p>
+                            <p className="text-[11px] text-[var(--ink-60)] p-2">Loading your items...</p>
                           )}
                           {objectPicker.status === 'error' && (
-                            <p className="text-[11px] text-[#0D1117] p-2">
+                            <p className="text-[11px] text-[var(--brief-ink)] p-2">
                               Couldn't load your items. {objectPicker.error}
                             </p>
                           )}
                           {objectPicker.status === 'ready' &&
                             (objectPicker.data ?? []).length === 0 && (
-                              <p className="text-[11px] text-[#0D1117]/60 p-2">
+                              <p className="text-[11px] text-[var(--ink-60)] p-2">
                                 Nothing else to link yet.
                               </p>
                             )}
@@ -584,17 +584,17 @@ export function OverlaysShell(props: OverlaysShellProps) {
                                 key={o.id}
                                 disabled={campaignBusy}
                                 onClick={() => attachObjectToCampaign(campaignDetail.id, o.id)}
-                                className="w-full text-left px-2 py-2 rounded-lg hover:bg-[#FFFFFF] cursor-pointer disabled:opacity-40"
+                                className="w-full text-left px-2 py-2 rounded-lg hover:bg-[color:var(--color-paper)] cursor-pointer disabled:opacity-40"
                               >
-                                <p className="text-[11px] text-[#0D1117] truncate">{o.title}</p>
-                                <p className="text-[9px] text-[#0D1117]/60">
+                                <p className="text-[11px] text-[var(--brief-ink)] truncate">{o.title}</p>
+                                <p className="text-[9px] text-[var(--ink-60)]">
                                   {o.type}
                                 </p>
                               </button>
                             ))}
                           <button
                             onClick={() => setObjectPicker((p) => ({ ...p, open: false }))}
-                            className="w-full text-[10px] text-[#0D1117]/60 py-1 cursor-pointer"
+                            className="w-full text-[10px] text-[var(--ink-60)] py-1 cursor-pointer"
                           >
                             Cancel
                           </button>
@@ -605,21 +605,21 @@ export function OverlaysShell(props: OverlaysShellProps) {
 
                   {/* TARGET */}
                   {campaignCircle.status === 'loading' && (
-                    <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-4 space-y-1">
-                      <h3 className="text-[9px] text-[#0D1117]/60">
+                    <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-4 space-y-1">
+                      <h3 className="text-[9px] text-[var(--ink-60)]">
                         Target
                       </h3>
-                      <p className="text-[11px] text-[#0D1117]/60">Loading target...</p>
+                      <p className="text-[11px] text-[var(--ink-60)]">Loading target...</p>
                     </div>
                   )}
 
                   {campaignCircle.status === 'error' && (
-                    <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-4 space-y-1">
-                      <h3 className="text-[9px] text-[#0D1117]/60">
+                    <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-4 space-y-1">
+                      <h3 className="text-[9px] text-[var(--ink-60)]">
                         Target
                       </h3>
-                      <p className="text-[11px] text-[#0D1117]">Target unavailable.</p>
-                      <p className="text-[9px] text-[#0D1117]/60 break-words">
+                      <p className="text-[11px] text-[var(--brief-ink)]">Target unavailable.</p>
+                      <p className="text-[9px] text-[var(--ink-60)] break-words">
                         {campaignCircle.error}
                       </p>
                     </div>
@@ -631,14 +631,14 @@ export function OverlaysShell(props: OverlaysShellProps) {
                       campaignCircle.data.circle.targetValue !== null &&
                       campaignCircle.data.circle.targetValue > 0
                     ) && (
-                      <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-4 space-y-1">
-                        <h3 className="text-[9px] text-[#0D1117]/60">
+                      <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-4 space-y-1">
+                        <h3 className="text-[9px] text-[var(--ink-60)]">
                           Target
                         </h3>
-                        <p className="text-[11px] text-[#0D1117]">
+                        <p className="text-[11px] text-[var(--brief-ink)]">
                           {campaignCircle.data.circle.name}
                         </p>
-                        <p className="text-[10px] text-[#0D1117]/60">
+                        <p className="text-[10px] text-[var(--ink-60)]">
                           No target set on this circle.
                         </p>
                       </div>
@@ -648,27 +648,27 @@ export function OverlaysShell(props: OverlaysShellProps) {
                     campaignCircle.data &&
                     campaignCircle.data.circle.targetValue !== null &&
                     campaignCircle.data.circle.targetValue > 0 && (
-                      <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-4 space-y-2">
-                        <h3 className="text-[9px] text-[#0D1117]/60">
+                      <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-4 space-y-2">
+                        <h3 className="text-[9px] text-[var(--ink-60)]">
                           Target
                         </h3>
-                        <p className="text-xs text-[#0D1117]">
+                        <p className="text-xs text-[var(--brief-ink)]">
                           {campaignCircle.data.circle.goal || campaignCircle.data.circle.name}
                         </p>
                         <div className="flex items-baseline justify-between gap-2">
-                          <span className="text-sm font-extrabold text-[#0D1117]">
+                          <span className="text-sm font-extrabold text-[var(--brief-ink)]">
                             {campaignCircle.data.circle.currentValue.toLocaleString()}
                           </span>
-                          <span className="text-[10px] text-[#0D1117]/60">
+                          <span className="text-[10px] text-[var(--ink-60)]">
                             of {campaignCircle.data.circle.targetValue.toLocaleString()}
                           </span>
                         </div>
                         {campaignCircle.data.circle.progressPct !== null && (
-                          <p className="text-[10px] text-[#0D1117]">
+                          <p className="text-[10px] text-[var(--brief-ink)]">
                             {Math.round(campaignCircle.data.circle.progressPct)}%
                           </p>
                         )}
-                        <div className="h-1.5 rounded-full bg-[#E5E8EC] overflow-hidden">
+                        <div className="h-1.5 rounded-full bg-[color:var(--brief-line)] overflow-hidden">
                           <div
                             className="h-full bg-[#4F46E5]"
                             style={{
@@ -676,7 +676,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                             }}
                           />
                         </div>
-                        <p className="text-[9px] text-[#0D1117]/60 leading-snug">
+                        <p className="text-[9px] text-[var(--ink-60)] leading-snug">
                           Progress comes from settled transactions in
                           {' '}{campaignCircle.data.circle.name}, not from this campaign.
                         </p>
@@ -686,7 +686,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                   {/* POST AN UPDATE (T3): the organiser's words land on the
                       public page — the loop supporters read. */}
                   <div className="space-y-2">
-                    <h3 className="text-[9px] text-[#0D1117]/60">
+                    <h3 className="text-[9px] text-[var(--ink-60)]">
                       Post an update
                     </h3>
                     <input
@@ -694,7 +694,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                       onChange={(e) => setUpdateTitle(e.target.value)}
                       placeholder="Update title (e.g. Halfway there)"
                       aria-label="update title"
-                      className="w-full bg-[#FFFFFF] text-[#0D1117] text-xs rounded-xl px-3 py-2.5 border border-[#E5E8EC] focus:border-[#06B6D4] focus:outline-none"
+                      className="w-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-xs rounded-xl px-3 py-2.5 border border-[var(--brief-line)] focus:border-[#06B6D4] focus:outline-none"
                     />
                     <textarea
                       value={updateBody}
@@ -702,33 +702,33 @@ export function OverlaysShell(props: OverlaysShellProps) {
                       placeholder="What the people supporting this should know"
                       aria-label="update body"
                       rows={3}
-                      className="w-full bg-[#FFFFFF] text-[#0D1117] text-xs rounded-xl px-3 py-2.5 border border-[#E5E8EC] focus:border-[#06B6D4] focus:outline-none resize-none"
+                      className="w-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-xs rounded-xl px-3 py-2.5 border border-[var(--brief-line)] focus:border-[#06B6D4] focus:outline-none resize-none"
                     />
                     <button
                       type="button"
                       disabled={updateBusy || !updateTitle.trim() || !updateBody.trim()}
                       onClick={() => void postUpdate(campaignDetail.id)}
-                      className="px-4 py-2 rounded-xl bg-[#4F46E5] text-[#0D1117] text-[11px] font-extrabold cursor-pointer disabled:opacity-40"
+                      className="px-4 py-2 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] text-[11px] font-extrabold cursor-pointer disabled:opacity-40"
                     >
                       {updateBusy ? 'Posting…' : 'Post update'}
                     </button>
-                    {updateNote && <p className="text-[10px] text-[#0D1117]/60 break-words">{updateNote}</p>}
+                    {updateNote && <p className="text-[10px] text-[var(--ink-60)] break-words">{updateNote}</p>}
                   </div>
 
                   {/* REGISTRATIONS */}
                   <div className="space-y-2">
-                    <h3 className="text-[9px] text-[#0D1117]/60">
+                    <h3 className="text-[9px] text-[var(--ink-60)]">
                       Registrations
                     </h3>
 
                     {campaignRegs.status === 'loading' && (
-                      <p className="text-[11px] text-[#0D1117]/60">Loading people...</p>
+                      <p className="text-[11px] text-[var(--ink-60)]">Loading people...</p>
                     )}
 
                     {campaignRegs.status === 'error' && (
-                      <div className="border border-[#E5E8EC] bg-[#FFFFFF] rounded-xl p-3 space-y-1">
-                        <p className="text-[11px] text-[#0D1117]">Couldn't load registrations.</p>
-                        <p className="text-[9px] text-[#0D1117]/60 break-words">
+                      <div className="border border-[var(--brief-line)] bg-[color:var(--color-paper)] rounded-xl p-3 space-y-1">
+                        <p className="text-[11px] text-[var(--brief-ink)]">Couldn't load registrations.</p>
+                        <p className="text-[9px] text-[var(--ink-60)] break-words">
                           {campaignRegs.error}
                         </p>
                       </div>
@@ -736,7 +736,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
 
                     {campaignRegs.status === 'ready' &&
                       (campaignRegs.data ?? []).length === 0 && (
-                        <p className="text-[11px] text-[#0D1117]/60">
+                        <p className="text-[11px] text-[var(--ink-60)]">
                           Nobody has registered yet.
                         </p>
                       )}
@@ -755,13 +755,13 @@ export function OverlaysShell(props: OverlaysShellProps) {
                       (campaignRegs.data ?? []).map((r) => (
                         <div
                           key={r.id}
-                          className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-xl p-3 flex items-center justify-between gap-2"
+                          className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-xl p-3 flex items-center justify-between gap-2"
                         >
                           <div className="min-w-0">
-                            <p className="text-xs text-[#0D1117] truncate">
+                            <p className="text-xs text-[var(--brief-ink)] truncate">
                               {r.name || r.attendeeRef}
                             </p>
-                            <p className="text-[9px] text-[#0D1117]/60 mt-0.5">
+                            <p className="text-[9px] text-[var(--ink-60)] mt-0.5">
                               {r.status.replace('_', ' ')}
                             </p>
                           </div>
@@ -770,14 +770,14 @@ export function OverlaysShell(props: OverlaysShellProps) {
                               <button
                                 disabled={campaignBusy}
                                 onClick={() => setRegStatus(campaignDetail.id, r.id, 'checked_in')}
-                                className="px-2.5 py-1.5 rounded-lg bg-[#4F46E5] text-[#0D1117] font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
+                                className="px-2.5 py-1.5 rounded-lg bg-[#4F46E5] text-[var(--accent-ink)] font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
                               >
                                 Check in
                               </button>
                               <button
                                 disabled={campaignBusy}
                                 onClick={() => setRegStatus(campaignDetail.id, r.id, 'no_show')}
-                                className="px-2.5 py-1.5 rounded-lg border border-[#E5E8EC] text-[#0D1117]/60 font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
+                                className="px-2.5 py-1.5 rounded-lg border border-[var(--brief-line)] text-[var(--ink-60)] font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
                               >
                                 No-show
                               </button>
@@ -798,7 +798,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                         setCampaignDetail(res.data);
                         loadCampaigns();
                       }}
-                      className="w-full py-2.5 rounded-xl border border-[#E5E8EC] text-[#0D1117]/60 font-extrabold text-[11px] cursor-pointer disabled:opacity-40"
+                      className="w-full py-2.5 rounded-xl border border-[var(--brief-line)] text-[var(--ink-60)] font-extrabold text-[11px] cursor-pointer disabled:opacity-40"
                     >
                       Close campaign
                     </button>
@@ -809,19 +809,19 @@ export function OverlaysShell(props: OverlaysShellProps) {
 
             {/* Sticky Action Footer */}
             {campaignDetail && editDraft && (
-              <div className="p-4 pb-safe pb-8 sm:pb-4 border-t border-[#E5E8EC] bg-[#FFFFFF] shrink-0 space-y-2">
+              <div className="p-4 pb-safe pb-8 sm:pb-4 border-t border-[var(--brief-line)] bg-[color:var(--color-paper)] shrink-0 space-y-2">
                 <div className="flex items-center gap-2">
                   <button
                     disabled={campaignBusy}
                     onClick={() => setEditDraft(null)}
-                    className="flex-1 py-3 rounded-xl border border-[#E5E8EC] text-[#0D1117] font-extrabold text-xs cursor-pointer disabled:opacity-40 hover:bg-[#F0F2F5] transition-colors"
+                    className="flex-1 py-3 rounded-xl border border-[var(--brief-line)] text-[var(--brief-ink)] font-extrabold text-xs cursor-pointer disabled:opacity-40 hover:bg-[color:var(--color-well)] transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     disabled={campaignBusy || editDraft.title.trim() === ''}
                     onClick={() => saveCampaignEdit(campaignDetail)}
-                    className="flex-[2] py-3 rounded-xl bg-[#4F46E5] text-[#0D1117] font-extrabold text-xs cursor-pointer disabled:opacity-40 hover:bg-[#000000] transition-colors shadow-xs"
+                    className="flex-[2] py-3 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] font-extrabold text-xs cursor-pointer disabled:opacity-40 hover:bg-[#000000] transition-colors shadow-xs"
                   >
                     {campaignBusy ? 'Saving...' : 'Save'}
                   </button>
@@ -841,7 +841,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
             )}
 
             {campaignDetail && !editDraft && (
-              <div className="p-4 pb-safe pb-8 sm:pb-4 border-t border-[#E5E8EC] bg-[#FFFFFF] shrink-0 flex items-center gap-2">
+              <div className="p-4 pb-safe pb-8 sm:pb-4 border-t border-[var(--brief-line)] bg-[color:var(--color-paper)] shrink-0 flex items-center gap-2">
                 <button
                   disabled={campaignBusy}
                   onClick={() => {
@@ -860,15 +860,15 @@ export function OverlaysShell(props: OverlaysShellProps) {
       )}
       {createStep !== 'closed' && (
         <div
-          className="fixed inset-0 z-50 bg-[#0D1117]/85 backdrop-blur-md flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4 overflow-hidden"
+          className="fixed inset-0 z-50 bg-[rgba(36, 28, 18, 0.85)] backdrop-blur-md flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4 overflow-hidden"
           onClick={() => { if (!campaignBusy) setCreateStep('closed'); }}
         >
           <div
-            className="w-full max-w-lg max-h-[92vh] sm:max-h-[85vh] flex flex-col bg-[#FFFFFF] border border-[#E5E8EC] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden mb-safe"
+            className="w-full max-w-lg max-h-[92vh] sm:max-h-[85vh] flex flex-col bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden mb-safe"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-4 sm:p-5 border-b border-[#E5E8EC] shrink-0 flex items-start justify-between gap-3 bg-[#FFFFFF]">
-              <h2 className="text-base font-extrabold text-[#0D1117]">
+            <div className="p-4 sm:p-5 border-b border-[var(--brief-line)] shrink-0 flex items-start justify-between gap-3 bg-[color:var(--color-paper)]">
+              <h2 className="text-base font-extrabold text-[var(--brief-ink)]">
                 {createStep === 'form'
                   ? 'Create'
                   : createStep === 'preview'
@@ -877,7 +877,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
               </h2>
               <button
                 onClick={() => { if (!campaignBusy) setCreateStep('closed'); }}
-                className="shrink-0 p-1.5 rounded-full hover:bg-[#EFF1F4] text-[#0D1117]/60 cursor-pointer"
+                className="shrink-0 p-1.5 rounded-full hover:bg-[#EFF1F4] text-[var(--ink-60)] cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -895,7 +895,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
               {createStep === 'form' && (
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-[9px] text-[#0D1117]/60 mb-1">What is it</label>
+                    <label className="block text-[9px] text-[var(--ink-60)] mb-1">What is it</label>
                     <div className="flex flex-wrap gap-1.5">
                       {(['popup', 'session', 'drop', 'event'] as ApiCampaignType[]).map((t) => (
                         <button
@@ -903,8 +903,8 @@ export function OverlaysShell(props: OverlaysShellProps) {
                           onClick={() => setDraft((d) => ({ ...d, type: t }))}
                           className={`px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
                             draft.type === t
-                              ? 'bg-[#4F46E5] text-[#0D1117] border-[#06B6D4]'
-                              : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC]'
+                              ? 'bg-[#4F46E5] text-[var(--accent-ink)] border-[#06B6D4]'
+                              : 'bg-[color:var(--color-paper)] text-[var(--ink-70)] border-[var(--brief-line)]'
                           }`}
                         >
                           {t}
@@ -914,40 +914,40 @@ export function OverlaysShell(props: OverlaysShellProps) {
                   </div>
 
                   <div>
-                    <label className="block text-[9px] text-[#0D1117]/60 mb-1">Title</label>
+                    <label className="block text-[9px] text-[var(--ink-60)] mb-1">Title</label>
                     <input
                       value={draft.title}
                       onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
                       placeholder="Saturday plant sale"
-                      className="w-full bg-[#FFFFFF] text-[#0D1117] text-xs rounded-xl px-3 py-2.5 border border-[#E5E8EC] focus:border-[#06B6D4] focus:outline-none"
+                      className="w-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-xs rounded-xl px-3 py-2.5 border border-[var(--brief-line)] focus:border-[#06B6D4] focus:outline-none"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[9px] text-[#0D1117]/60 mb-1">Description</label>
+                    <label className="block text-[9px] text-[var(--ink-60)] mb-1">Description</label>
                     <textarea
                       value={draft.description}
                       onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
                       rows={2}
                       placeholder="One or two lines. What should people expect?"
-                      className="w-full bg-[#FFFFFF] text-[#0D1117] text-xs rounded-xl px-3 py-2.5 border border-[#E5E8EC] focus:border-[#06B6D4] focus:outline-none resize-none"
+                      className="w-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-xs rounded-xl px-3 py-2.5 border border-[var(--brief-line)] focus:border-[#06B6D4] focus:outline-none resize-none"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[9px] text-[#0D1117]/60 mb-1">
+                    <label className="block text-[9px] text-[var(--ink-60)] mb-1">
                       What people get
                     </label>
                     {objectPicker.selected ? (
-                      <div className="flex items-center justify-between gap-2 bg-[#FFFFFF] border border-[#E5E8EC] rounded-xl px-3 py-2.5">
-                        <p className="text-xs text-[#0D1117] truncate">
+                      <div className="flex items-center justify-between gap-2 bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-xl px-3 py-2.5">
+                        <p className="text-xs text-[var(--brief-ink)] truncate">
                           {objectPicker.selected.title}
                         </p>
                         <button
                           onClick={() =>
                             setObjectPicker((p) => ({ ...p, selected: null, open: false }))
                           }
-                          className="shrink-0 text-[10px] text-[#0D1117]/60 underline underline-offset-2 cursor-pointer"
+                          className="shrink-0 text-[10px] text-[var(--ink-60)] underline underline-offset-2 cursor-pointer"
                         >
                           Remove
                         </button>
@@ -955,23 +955,23 @@ export function OverlaysShell(props: OverlaysShellProps) {
                     ) : !objectPicker.open ? (
                       <button
                         onClick={loadAttachableObjects}
-                        className="w-full text-left bg-[#FFFFFF] border border-dashed border-[#E5E8EC] rounded-xl px-3 py-2.5 text-[11px] text-[#0D1117]/60 cursor-pointer"
+                        className="w-full text-left bg-[color:var(--color-paper)] border border-dashed border-[var(--brief-line)] rounded-xl px-3 py-2.5 text-[11px] text-[var(--ink-60)] cursor-pointer"
                       >
                         Something new &middot; tap to link an existing item instead
                       </button>
                     ) : (
-                      <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-xl p-2 space-y-1 max-h-44 overflow-y-auto">
+                      <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-xl p-2 space-y-1 max-h-44 overflow-y-auto">
                         {objectPicker.status === 'loading' && (
-                          <p className="text-[11px] text-[#0D1117]/60 p-2">Loading your items...</p>
+                          <p className="text-[11px] text-[var(--ink-60)] p-2">Loading your items...</p>
                         )}
                         {objectPicker.status === 'error' && (
-                          <p className="text-[11px] text-[#0D1117] p-2">
+                          <p className="text-[11px] text-[var(--brief-ink)] p-2">
                             Couldn't load your items. {objectPicker.error}
                           </p>
                         )}
                         {objectPicker.status === 'ready' &&
                           (objectPicker.data ?? []).length === 0 && (
-                            <p className="text-[11px] text-[#0D1117]/60 p-2">
+                            <p className="text-[11px] text-[var(--ink-60)] p-2">
                               Nothing to link yet. Carry on and describe it above.
                             </p>
                           )}
@@ -986,17 +986,17 @@ export function OverlaysShell(props: OverlaysShellProps) {
                                   open: false
                                 }))
                               }
-                              className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-[#FFFFFF] cursor-pointer"
+                              className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-[color:var(--color-paper)] cursor-pointer"
                             >
-                              <p className="text-[11px] text-[#0D1117] truncate">{o.title}</p>
-                              <p className="text-[9px] text-[#0D1117]/60">
+                              <p className="text-[11px] text-[var(--brief-ink)] truncate">{o.title}</p>
+                              <p className="text-[9px] text-[var(--ink-60)]">
                                 {o.type}
                               </p>
                             </button>
                           ))}
                         <button
                           onClick={() => setObjectPicker((p) => ({ ...p, open: false }))}
-                          className="w-full text-[10px] text-[#0D1117]/60 underline underline-offset-2 cursor-pointer py-1"
+                          className="w-full text-[10px] text-[var(--ink-60)] underline underline-offset-2 cursor-pointer py-1"
                         >
                           Cancel
                         </button>
@@ -1005,44 +1005,44 @@ export function OverlaysShell(props: OverlaysShellProps) {
                   </div>
 
                   <div>
-                    <label className="block text-[9px] text-[#0D1117]/60 mb-1">When</label>
+                    <label className="block text-[9px] text-[var(--ink-60)] mb-1">When</label>
                     <input
                       type="datetime-local"
                       value={draft.startsAt}
                       onChange={(e) => setDraft((d) => ({ ...d, startsAt: e.target.value }))}
-                      className="w-full bg-[#FFFFFF] text-[#0D1117] text-xs rounded-xl px-3 py-2.5 border border-[#E5E8EC] focus:border-[#06B6D4] focus:outline-none"
+                      className="w-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-xs rounded-xl px-3 py-2.5 border border-[var(--brief-line)] focus:border-[#06B6D4] focus:outline-none"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[9px] text-[#0D1117]/60 mb-1">Where</label>
+                    <label className="block text-[9px] text-[var(--ink-60)] mb-1">Where</label>
                     <input
                       value={draft.location}
                       onChange={(e) => setDraft((d) => ({ ...d, location: e.target.value }))}
                       placeholder="Kilimani, Nairobi"
-                      className="w-full bg-[#FFFFFF] text-[#0D1117] text-xs rounded-xl px-3 py-2.5 border border-[#E5E8EC] focus:border-[#06B6D4] focus:outline-none"
+                      className="w-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-xs rounded-xl px-3 py-2.5 border border-[var(--brief-line)] focus:border-[#06B6D4] focus:outline-none"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[9px] text-[#0D1117]/60 mb-1">Spots</label>
+                      <label className="block text-[9px] text-[var(--ink-60)] mb-1">Spots</label>
                       <input
                         inputMode="numeric"
                         value={draft.capacity}
                         onChange={(e) => setDraft((d) => ({ ...d, capacity: e.target.value }))}
                         placeholder="Unlimited"
-                        className="w-full bg-[#FFFFFF] text-[#0D1117] text-xs rounded-xl px-3 py-2.5 border border-[#E5E8EC] focus:border-[#06B6D4] focus:outline-none"
+                        className="w-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-xs rounded-xl px-3 py-2.5 border border-[var(--brief-line)] focus:border-[#06B6D4] focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="block text-[9px] text-[#0D1117]/60 mb-1">Price (KES)</label>
+                      <label className="block text-[9px] text-[var(--ink-60)] mb-1">Price (KES)</label>
                       <input
                         inputMode="numeric"
                         value={draft.price}
                         onChange={(e) => setDraft((d) => ({ ...d, price: e.target.value }))}
                         placeholder="Free"
-                        className="w-full bg-[#FFFFFF] text-[#0D1117] text-xs rounded-xl px-3 py-2.5 border border-[#E5E8EC] focus:border-[#06B6D4] focus:outline-none"
+                        className="w-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-xs rounded-xl px-3 py-2.5 border border-[var(--brief-line)] focus:border-[#06B6D4] focus:outline-none"
                       />
                     </div>
                   </div>
@@ -1051,25 +1051,25 @@ export function OverlaysShell(props: OverlaysShellProps) {
 
               {createStep === 'preview' && (
                 <div className="space-y-3">
-                  <p className="text-[11px] text-[#0D1117]/60">
+                  <p className="text-[11px] text-[var(--ink-60)]">
                     This is what people will see. Nothing is public yet.
                   </p>
-                  <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-4 space-y-1.5">
-                    <p className="text-[9px] text-[#0D1117]/60">{draft.type}</p>
-                    <p className="text-sm font-extrabold text-[#0D1117]">{draft.title}</p>
+                  <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-4 space-y-1.5">
+                    <p className="text-[9px] text-[var(--ink-60)]">{draft.type}</p>
+                    <p className="text-sm font-extrabold text-[var(--brief-ink)]">{draft.title}</p>
                     {draft.description && (
-                      <p className="text-[11px] text-[#0D1117]/60 leading-snug">{draft.description}</p>
+                      <p className="text-[11px] text-[var(--ink-60)] leading-snug">{draft.description}</p>
                     )}
                     <div className="pt-1 space-y-0.5">
                       {draft.startsAt && (
-                        <p className="text-[10px] text-[#0D1117]">
+                        <p className="text-[10px] text-[var(--brief-ink)]">
                           {draft.startsAt.replace('T', ' ')}
                         </p>
                       )}
                       {draft.location && (
-                        <p className="text-[10px] text-[#0D1117]">{draft.location}</p>
+                        <p className="text-[10px] text-[var(--brief-ink)]">{draft.location}</p>
                       )}
-                      <p className="text-[10px] text-[#0D1117]">
+                      <p className="text-[10px] text-[var(--brief-ink)]">
                         {draft.price.trim() === '' || Number(draft.price) === 0
                           ? 'Free'
                           : `KES ${draft.price}`}
@@ -1083,12 +1083,12 @@ export function OverlaysShell(props: OverlaysShellProps) {
               {createStep === 'published' && publishedCampaign && (
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-[#0D1117] shrink-0" />
-                    <p className="text-xs font-extrabold text-[#0D1117]">
+                    <CheckCircle2 className="w-4 h-4 text-[var(--brief-ink)] shrink-0" />
+                    <p className="text-xs font-extrabold text-[var(--brief-ink)]">
                       {publishedCampaign.title} is {publishedCampaign.status}
                     </p>
                   </div>
-                  <p className="text-[11px] text-[#0D1117]/60">
+                  <p className="text-[11px] text-[var(--ink-60)]">
                     Share this link anywhere. Anyone who opens it can register.
                   </p>
                   {(() => {
@@ -1110,7 +1110,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                   })()}
                   <button
                     onClick={() => { setCreateStep('closed'); openCampaign(publishedCampaign.id); }}
-                    className="w-full text-[10px] text-[#0D1117]/60 underline underline-offset-2 cursor-pointer"
+                    className="w-full text-[10px] text-[var(--ink-60)] underline underline-offset-2 cursor-pointer"
                   >
                     Open campaign
                   </button>
@@ -1120,11 +1120,11 @@ export function OverlaysShell(props: OverlaysShellProps) {
 
             {/* Sticky Action Footer */}
             {createStep === 'form' && (
-              <div className="p-4 pb-safe pb-8 sm:pb-4 border-t border-[#E5E8EC] bg-[#FFFFFF] shrink-0">
+              <div className="p-4 pb-safe pb-8 sm:pb-4 border-t border-[var(--brief-line)] bg-[color:var(--color-paper)] shrink-0">
                 <button
                   disabled={draft.title.trim() === ''}
                   onClick={() => { setCampaignActionError(null); setCreateStep('preview'); }}
-                  className="w-full py-3 rounded-xl bg-[#4F46E5] text-[#0D1117] font-extrabold text-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#000000] transition-colors"
+                  className="w-full py-3 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] font-extrabold text-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#000000] transition-colors"
                 >
                   Preview
                 </button>
@@ -1132,18 +1132,18 @@ export function OverlaysShell(props: OverlaysShellProps) {
             )}
 
             {createStep === 'preview' && (
-              <div className="p-4 pb-safe pb-8 sm:pb-4 border-t border-[#E5E8EC] bg-[#FFFFFF] shrink-0 flex items-center gap-2">
+              <div className="p-4 pb-safe pb-8 sm:pb-4 border-t border-[var(--brief-line)] bg-[color:var(--color-paper)] shrink-0 flex items-center gap-2">
                 <button
                   disabled={campaignBusy}
                   onClick={() => setCreateStep('form')}
-                  className="px-4 py-3 rounded-xl border border-[#E5E8EC] text-[#0D1117] font-extrabold text-xs cursor-pointer disabled:opacity-40 hover:bg-[#F0F2F5]"
+                  className="px-4 py-3 rounded-xl border border-[var(--brief-line)] text-[var(--brief-ink)] font-extrabold text-xs cursor-pointer disabled:opacity-40 hover:bg-[color:var(--color-well)]"
                 >
                   Back
                 </button>
                 <button
                   disabled={campaignBusy}
                   onClick={publishDraft}
-                  className="flex-1 py-3 rounded-xl bg-[#4F46E5] text-[#0D1117] font-extrabold text-xs cursor-pointer disabled:opacity-40 hover:bg-[#000000]"
+                  className="flex-1 py-3 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] font-extrabold text-xs cursor-pointer disabled:opacity-40 hover:bg-[#000000]"
                 >
                   {campaignBusy ? 'Publishing...' : 'Publish'}
                 </button>
@@ -1154,19 +1154,19 @@ export function OverlaysShell(props: OverlaysShellProps) {
       )}
       {captureOpen && (
         <div
-          className="fixed inset-0 z-50 bg-[#0D1117]/85 backdrop-blur-md flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4 overflow-hidden"
+          className="fixed inset-0 z-50 bg-[rgba(36, 28, 18, 0.85)] backdrop-blur-md flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4 overflow-hidden"
           onClick={handleCaptureCancel}
         >
           <div
-            className="w-full max-w-lg max-h-[92vh] sm:max-h-[85vh] flex flex-col bg-[#FFFFFF] border border-[#E5E8EC] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden mb-safe"
+            className="w-full max-w-lg max-h-[92vh] sm:max-h-[85vh] flex flex-col bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden mb-safe"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-4 sm:p-5 border-b border-[#E5E8EC] shrink-0 flex items-start justify-between gap-3 bg-[#FFFFFF]">
+            <div className="p-4 sm:p-5 border-b border-[var(--brief-line)] shrink-0 flex items-start justify-between gap-3 bg-[color:var(--color-paper)]">
               <div>
-                <h2 className="text-xl font-extrabold text-[#0D1117]">
+                <h2 className="text-xl font-extrabold text-[var(--brief-ink)]">
                   {captureMode === 'quick' ? 'Drop something here.' : 'Create news or post.'}
                 </h2>
-                <p className="text-[11px] text-[#0D1117]/60 mt-1">
+                <p className="text-[11px] text-[var(--ink-60)] mt-1">
                   {captureMode === 'quick'
                     ? 'A message, link, listing, event, opportunity or anything worth keeping.'
                     : 'Publish updates, news bulletins, opportunities or stories directly into Brief.'}
@@ -1174,7 +1174,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
               </div>
               <button
                 onClick={handleCaptureCancel}
-                className="p-2 rounded-full bg-[#F0F2F5]/80 text-[#0D1117] border border-[#E5E8EC] shrink-0 hover:bg-[#EFF1F4] cursor-pointer"
+                className="p-2 rounded-full bg-[rgba(240, 233, 222, 0.80)] text-[var(--brief-ink)] border border-[var(--brief-line)] shrink-0 hover:bg-[#EFF1F4] cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1187,7 +1187,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                   type="button"
                   onClick={() => { setCaptureMode('quick'); setCapturePreview(null); }}
                   className={`flex-1 py-1.5 rounded-lg text-xs font-extrabold transition cursor-pointer ${
-                    captureMode === 'quick' ? 'bg-[#FFFFFF] text-[#0D1117] shadow-xs' : 'text-[#0D1117]/60 hover:text-[#0D1117]'
+                    captureMode === 'quick' ? 'bg-[color:var(--color-paper)] text-[var(--brief-ink)] shadow-xs' : 'text-[var(--ink-60)] hover:text-[var(--brief-ink)]'
                   }`}
                 >
                   Quick Capture
@@ -1196,7 +1196,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                   type="button"
                   onClick={() => { setCaptureMode('direct'); setCapturePreview(null); }}
                   className={`flex-1 py-1.5 rounded-lg text-xs font-extrabold transition cursor-pointer ${
-                    captureMode === 'direct' ? 'bg-[#FFFFFF] text-[#0D1117] shadow-xs' : 'text-[#0D1117]/60 hover:text-[#0D1117]'
+                    captureMode === 'direct' ? 'bg-[color:var(--color-paper)] text-[var(--brief-ink)] shadow-xs' : 'text-[var(--ink-60)] hover:text-[var(--brief-ink)]'
                   }`}
                 >
                   Post News / Update
@@ -1213,7 +1213,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                     }}
                     rows={5}
                     placeholder="Paste or type anything (e.g. news update, meetup announcement, listing...)"
-                    className="w-full bg-[#FFFFFF] border border-[#E5E8EC] rounded-xl px-3 py-2.5 text-xs text-[#0D1117] placeholder:text-[#0D1117]/60 outline-none focus:border-[#06B6D4] resize-none"
+                    className="w-full bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-xl px-3 py-2.5 text-xs text-[var(--brief-ink)] placeholder:text-[var(--ink-60)] outline-none focus:border-[#06B6D4] resize-none"
                   />
 
                   {!capturePreview && (
@@ -1222,8 +1222,8 @@ export function OverlaysShell(props: OverlaysShellProps) {
                       disabled={captureText.trim() === ''}
                       className={`w-full py-3 rounded-xl font-extrabold text-xs transition ${
                         captureText.trim() === ''
-                          ? 'bg-[#FFFFFF] text-[#0D1117]/60 cursor-not-allowed border border-[#E5E8EC]'
-                          : 'bg-[#4F46E5] text-[#0D1117] cursor-pointer hover:bg-[#000000]'
+                          ? 'bg-[color:var(--color-paper)] text-[var(--ink-60)] cursor-not-allowed border border-[var(--brief-line)]'
+                          : 'bg-[#4F46E5] text-[var(--accent-ink)] cursor-pointer hover:bg-[#000000]'
                       }`}
                     >
                       Read it
@@ -1235,14 +1235,14 @@ export function OverlaysShell(props: OverlaysShellProps) {
                   {capturePreview && (
                     <div className="space-y-3">
                       {!capturePreview.isObjectWorthy ? (
-                        <div className="border border-[#E5E8EC] bg-[#F0F2F5] rounded-xl p-3">
-                          <p className="text-[11px] font-bold text-[#0D1117]">
+                        <div className="border border-[var(--brief-line)] bg-[color:var(--color-well)] rounded-xl p-3">
+                          <p className="text-[11px] font-bold text-[var(--brief-ink)]">
                             Brief could not make an object from this.
                           </p>
-                          <p className="text-[10px] text-[#0D1117]/60 mt-1">
+                          <p className="text-[10px] text-[var(--ink-60)] mt-1">
                             {capturePreview.rejectionReason}
                           </p>
-                          <p className="text-[10px] text-[#0D1117]/60 mt-1">
+                          <p className="text-[10px] text-[var(--ink-60)] mt-1">
                             Nothing was saved.
                           </p>
                           <button
@@ -1251,17 +1251,17 @@ export function OverlaysShell(props: OverlaysShellProps) {
                               setCaptureMode('direct');
                               setDirectTitle(captureText.slice(0, 60));
                             }}
-                            className="mt-2.5 inline-flex items-center text-[11px] font-extrabold text-[#0D1117] underline cursor-pointer"
+                            className="mt-2.5 inline-flex items-center text-[11px] font-extrabold text-[var(--brief-ink)] underline cursor-pointer"
                           >
                             Create directly as news or post instead →
                           </button>
                         </div>
                       ) : (
-                        <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-xl p-3 space-y-2">
-                          <p className="text-[9px] text-[#0D1117] font-bold uppercase tracking-wider">
+                        <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-xl p-3 space-y-2">
+                          <p className="text-[9px] text-[var(--brief-ink)] font-bold uppercase tracking-wider">
                             {getObjectTypeMeta(capturePreview.draft.type).label}
                           </p>
-                          <p className="text-sm font-extrabold text-[#0D1117] leading-snug">
+                          <p className="text-sm font-extrabold text-[var(--brief-ink)] leading-snug">
                             {capturePreview.draft.title}
                           </p>
 
@@ -1272,23 +1272,23 @@ export function OverlaysShell(props: OverlaysShellProps) {
                                 key={f.field}
                                 className="flex items-baseline justify-between gap-3"
                               >
-                                <span className="text-[10px] text-[#0D1117]/60">
+                                <span className="text-[10px] text-[var(--ink-60)]">
                                   {f.field}
                                 </span>
-                                <span className="text-[10px] text-[#0D1117]/60 truncate">
+                                <span className="text-[10px] text-[var(--ink-60)] truncate">
                                   {f.value}
                                 </span>
                               </div>
                             ))}
 
                           {capturePreview.duplicates.length > 0 && (
-                            <p className="text-[10px] text-[#0D1117]">
+                            <p className="text-[10px] text-[var(--brief-ink)]">
                               Possible duplicate of{' '}
                               {capturePreview.duplicates[0].item.title}
                             </p>
                           )}
 
-                          <p className="text-[9px] text-[#0D1117]/60">
+                          <p className="text-[9px] text-[var(--ink-60)]">
                             Unverified. Saved as your own capture.
                           </p>
                         </div>
@@ -1297,14 +1297,14 @@ export function OverlaysShell(props: OverlaysShellProps) {
                       <div className="flex gap-2">
                         <button
                           onClick={handleCaptureCancel}
-                          className="flex-1 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117]/60 font-bold text-[11px] cursor-pointer"
+                          className="flex-1 py-2.5 rounded-xl bg-[color:var(--color-paper)] border border-[var(--brief-line)] text-[var(--ink-60)] font-bold text-[11px] cursor-pointer"
                         >
                           Discard
                         </button>
                         {capturePreview.isObjectWorthy && (
                           <button
                             onClick={() => void handleCaptureConfirm()}
-                            className="flex-[2] py-2.5 rounded-xl bg-[#4F46E5] text-[#0D1117] font-extrabold text-[11px] cursor-pointer hover:bg-[#000000]"
+                            className="flex-[2] py-2.5 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] font-extrabold text-[11px] cursor-pointer hover:bg-[#000000]"
                           >
                             Save to Brief
                           </button>
@@ -1317,7 +1317,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                 /* Direct Post / News Creation */
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-[10px] font-extrabold uppercase tracking-wider text-[#0D1117]/60 mb-1">
+                    <label className="block text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-60)] mb-1">
                       Post Type
                     </label>
                     <div className="flex flex-wrap gap-1.5">
@@ -1337,8 +1337,8 @@ export function OverlaysShell(props: OverlaysShellProps) {
                           }}
                           className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition cursor-pointer border ${
                             directType === typeVal
-                              ? 'bg-[#4F46E5] text-[#0D1117] border-[#06B6D4]'
-                              : 'bg-[#F0F2F5] text-[#0D1117]/70 border-[#E5E8EC] hover:text-[#0D1117]'
+                              ? 'bg-[#4F46E5] text-[var(--accent-ink)] border-[#06B6D4]'
+                              : 'bg-[color:var(--color-well)] text-[var(--ink-70)] border-[var(--brief-line)] hover:text-[var(--brief-ink)]'
                           }`}
                         >
                           {label}
@@ -1348,7 +1348,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-extrabold uppercase tracking-wider text-[#0D1117]/60 mb-1">
+                    <label className="block text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-60)] mb-1">
                       Title / Headline <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -1356,12 +1356,12 @@ export function OverlaysShell(props: OverlaysShellProps) {
                       value={directTitle}
                       onChange={(e) => setDirectTitle(e.target.value)}
                       placeholder="e.g. Community Tech Meetup this Saturday"
-                      className="w-full bg-[#FFFFFF] border border-[#E5E8EC] rounded-xl px-3 py-2 text-xs text-[#0D1117] placeholder:text-[#0D1117]/60 outline-none focus:border-[#06B6D4]"
+                      className="w-full bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-xl px-3 py-2 text-xs text-[var(--brief-ink)] placeholder:text-[var(--ink-60)] outline-none focus:border-[#06B6D4]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-extrabold uppercase tracking-wider text-[#0D1117]/60 mb-1">
+                    <label className="block text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-60)] mb-1">
                       Post Details / Content <span className="text-red-500">*</span>
                     </label>
                     <textarea
@@ -1369,12 +1369,12 @@ export function OverlaysShell(props: OverlaysShellProps) {
                       onChange={(e) => setCaptureText(e.target.value)}
                       rows={4}
                       placeholder="Write your news or post details here..."
-                      className="w-full bg-[#FFFFFF] border border-[#E5E8EC] rounded-xl px-3 py-2 text-xs text-[#0D1117] placeholder:text-[#0D1117]/60 outline-none focus:border-[#06B6D4] resize-none"
+                      className="w-full bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-xl px-3 py-2 text-xs text-[var(--brief-ink)] placeholder:text-[var(--ink-60)] outline-none focus:border-[#06B6D4] resize-none"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-extrabold uppercase tracking-wider text-[#0D1117]/60 mb-1">
+                    <label className="block text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-60)] mb-1">
                       Location / Venue (Optional)
                     </label>
                     <input
@@ -1382,7 +1382,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                       value={directLocation}
                       onChange={(e) => setDirectLocation(e.target.value)}
                       placeholder="e.g. Alchemist Bar, Westlands, Nairobi"
-                      className="w-full bg-[#FFFFFF] border border-[#E5E8EC] rounded-xl px-3 py-2 text-xs text-[#0D1117] placeholder:text-[#0D1117]/60 outline-none focus:border-[#06B6D4]"
+                      className="w-full bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-xl px-3 py-2 text-xs text-[var(--brief-ink)] placeholder:text-[var(--ink-60)] outline-none focus:border-[#06B6D4]"
                     />
                   </div>
 
@@ -1390,7 +1390,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                     <button
                       type="button"
                       onClick={handleCaptureCancel}
-                      className="flex-1 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117]/60 font-bold text-[11px] cursor-pointer"
+                      className="flex-1 py-2.5 rounded-xl bg-[color:var(--color-paper)] border border-[var(--brief-line)] text-[var(--ink-60)] font-bold text-[11px] cursor-pointer"
                     >
                       Cancel
                     </button>
@@ -1400,8 +1400,8 @@ export function OverlaysShell(props: OverlaysShellProps) {
                       onClick={() => void handleDirectPost()}
                       className={`flex-[2] py-2.5 rounded-xl font-extrabold text-[11px] transition ${
                         !directTitle.trim() || !captureText.trim()
-                          ? 'bg-[#E5E8EC] text-[#0D1117]/60 cursor-not-allowed'
-                          : 'bg-[#4F46E5] text-[#0D1117] cursor-pointer hover:bg-[#000000]'
+                          ? 'bg-[color:var(--brief-line)] text-[var(--ink-60)] cursor-not-allowed'
+                          : 'bg-[#4F46E5] text-[var(--accent-ink)] cursor-pointer hover:bg-[#000000]'
                       }`}
                     >
                       Publish to Brief
@@ -1418,11 +1418,11 @@ export function OverlaysShell(props: OverlaysShellProps) {
       )}
       {selectedObjectForDetail && (
         <div
-          className="fixed inset-0 z-50 bg-[#0D1117]/85 backdrop-blur-md flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4 overflow-hidden"
+          className="fixed inset-0 z-50 bg-[rgba(36, 28, 18, 0.85)] backdrop-blur-md flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4 overflow-hidden"
           onClick={dismissOverlay}
         >
           <div
-            className="w-full max-w-2xl max-h-[92vh] sm:max-h-[88vh] flex flex-col bg-[#FFFFFF] border border-[#E5E8EC] rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl mb-safe"
+            className="w-full max-w-2xl max-h-[92vh] sm:max-h-[88vh] flex flex-col bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl mb-safe"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="overflow-y-auto flex-1 pb-safe pb-8 sm:pb-5">
@@ -1448,28 +1448,28 @@ export function OverlaysShell(props: OverlaysShellProps) {
                       <button
                         onClick={() => handleExecuteProtocolAction('save', selectedObjectForDetail)}
                         aria-label="Save"
-                        className="p-2 rounded-full bg-[#F0F2F5]/80 text-[#0D1117] border border-[#E5E8EC] hover:border-[#06B6D4]"
+                        className="p-2 rounded-full bg-[rgba(240, 233, 222, 0.80)] text-[var(--brief-ink)] border border-[var(--brief-line)] hover:border-[#06B6D4]"
                       >
                         <Bookmark className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleShare(selectedObjectForDetail)}
                         aria-label="Share"
-                        className="p-2 rounded-full bg-[#F0F2F5]/80 text-[#0D1117] border border-[#E5E8EC] hover:border-[#06B6D4]"
+                        className="p-2 rounded-full bg-[rgba(240, 233, 222, 0.80)] text-[var(--brief-ink)] border border-[var(--brief-line)] hover:border-[#06B6D4]"
                       >
                         <Share2 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => setSelectedObjectForDetail(null)}
                         aria-label="Close"
-                        className="p-2 rounded-full bg-[#F0F2F5]/80 text-[#0D1117] border border-[#E5E8EC] hover:border-[#DC2626]"
+                        className="p-2 rounded-full bg-[rgba(240, 233, 222, 0.80)] text-[var(--brief-ink)] border border-[var(--brief-line)] hover:border-[#DC2626]"
                       >
                         <X className="w-5 h-5" />
                       </button>
                     </div>
 
                     <div className="absolute bottom-4 left-4 flex gap-2">
-                      <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#F0F2F5]/85 text-[#0D1117] border border-[#E5E8EC]">
+                      <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[rgba(240, 233, 222, 0.85)] text-[var(--brief-ink)] border border-[var(--brief-line)]">
                         {selectedObjectForDetail.category}
                       </span>
 
@@ -1506,7 +1506,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                         target="_blank"
                         rel="noopener noreferrer"
                         aria-label={img.alt ?? 'Photo'}
-                        className="block aspect-square overflow-hidden rounded-xl border border-[#E5E8EC] transition-transform hover:scale-[1.02]"
+                        className="block aspect-square overflow-hidden rounded-xl border border-[var(--brief-line)] transition-transform hover:scale-[1.02]"
                       >
                         <img
                           src={img.url}
@@ -1524,9 +1524,9 @@ export function OverlaysShell(props: OverlaysShellProps) {
                   entirely, leaving backdrop-click as the only way out. This is
                   the same control set, laid out for an imageless record. */}
               {!selectedObjectForDetail.imageUrl && !selectedObjectForDetail.gallery?.[0]?.url && (
-                <div className="flex items-center justify-between gap-2 p-4 border-b border-[#E5E8EC]">
+                <div className="flex items-center justify-between gap-2 p-4 border-b border-[var(--brief-line)]">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#F0F2F5]/85 text-[#0D1117] border border-[#E5E8EC]">
+                    <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[rgba(240, 233, 222, 0.85)] text-[var(--brief-ink)] border border-[var(--brief-line)]">
                       {selectedObjectForDetail.category}
                     </span>
 
@@ -1546,21 +1546,21 @@ export function OverlaysShell(props: OverlaysShellProps) {
                     <button
                       onClick={() => handleExecuteProtocolAction('save', selectedObjectForDetail)}
                       aria-label="Save"
-                      className="p-2 rounded-full bg-[#F0F2F5]/80 text-[#0D1117] border border-[#E5E8EC] hover:border-[#06B6D4]"
+                      className="p-2 rounded-full bg-[rgba(240, 233, 222, 0.80)] text-[var(--brief-ink)] border border-[var(--brief-line)] hover:border-[#06B6D4]"
                     >
                       <Bookmark className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleShare(selectedObjectForDetail)}
                       aria-label="Share"
-                      className="p-2 rounded-full bg-[#F0F2F5]/80 text-[#0D1117] border border-[#E5E8EC] hover:border-[#06B6D4]"
+                      className="p-2 rounded-full bg-[rgba(240, 233, 222, 0.80)] text-[var(--brief-ink)] border border-[var(--brief-line)] hover:border-[#06B6D4]"
                     >
                       <Share2 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={dismissOverlay}
                       aria-label="Close"
-                      className="p-2 rounded-full bg-[#F0F2F5]/80 text-[#0D1117] border border-[#E5E8EC] hover:border-[#DC2626]"
+                      className="p-2 rounded-full bg-[rgba(240, 233, 222, 0.80)] text-[var(--brief-ink)] border border-[var(--brief-line)] hover:border-[#DC2626]"
                     >
                       <X className="w-5 h-5" />
                     </button>
@@ -1573,12 +1573,12 @@ export function OverlaysShell(props: OverlaysShellProps) {
 
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-[10px] text-[#0D1117]/60">
+                    <span className="text-[10px] text-[var(--ink-60)]">
                       {getObjectTypeMeta(selectedObjectForDetail.type).label}
                     </span>
                   </div>
 
-                  <h2 className="text-2xl font-extrabold text-[#0D1117]">
+                  <h2 className="text-2xl font-extrabold text-[var(--brief-ink)]">
                     {selectedObjectForDetail.title}
                   </h2>
 
@@ -1595,10 +1595,10 @@ export function OverlaysShell(props: OverlaysShellProps) {
                     const bits = [dist, place, fresh?.label].filter(Boolean);
                     if (bits.length === 0) return null;
                     return (
-                      <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] font-semibold text-[#0D1117]/70">
+                      <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] font-semibold text-[var(--ink-70)]">
                         {bits.map((b, i) => (
                           <span key={i} className="inline-flex items-center gap-2">
-                            {i > 0 && <span aria-hidden="true" className="text-[#0D1117]/40">·</span>}
+                            {i > 0 && <span aria-hidden="true" className="text-[var(--ink-40)]">·</span>}
                             {b}
                           </span>
                         ))}
@@ -1606,7 +1606,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                     );
                   })()}
 
-                  <p className="text-sm text-[#0D1117] mt-2 leading-relaxed">
+                  <p className="text-sm text-[var(--brief-ink)] mt-2 leading-relaxed">
                     {selectedObjectForDetail.summary}
                   </p>
 
@@ -1616,7 +1616,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                       at the original link, never reproduced here. */}
                   {selectedObjectForDetail.type === 'news' && (
                     <div className="mt-4 space-y-3">
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] font-semibold text-[#0D1117]/60">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] font-semibold text-[var(--ink-60)]">
                         {(() => {
                           const publisher = selectedObjectForDetail.sourceNames?.[0]
                             ?? (selectedObjectForDetail.sourceCount
@@ -1659,7 +1659,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                             href={readUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 rounded-full bg-[#4F46E5] px-5 py-2.5 text-[12px] font-extrabold text-[#0D1117] transition-opacity hover:opacity-90"
+                            className="inline-flex items-center gap-2 rounded-full bg-[#4F46E5] px-5 py-2.5 text-[12px] font-extrabold text-[var(--accent-ink)] transition-opacity hover:opacity-90"
                           >
                             <ExternalLink className="w-3.5 h-3.5" />
                             Read original
@@ -1679,9 +1679,9 @@ export function OverlaysShell(props: OverlaysShellProps) {
                       {facts.map((fact) => (
                         <div
                           key={fact.key}
-                          className="bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl p-3"
+                          className="bg-[color:var(--color-well)] border border-[var(--brief-line)] rounded-xl p-3"
                         >
-                          <div className="text-[10px] text-[#0D1117]/60">
+                          <div className="text-[10px] text-[var(--ink-60)]">
                             {fact.label}
                           </div>
                           <div className="text-xs font-bold mt-1">
@@ -1697,12 +1697,12 @@ export function OverlaysShell(props: OverlaysShellProps) {
                 {(selectedObjectForDetail.locationName ||
                   selectedObjectForDetail.creatorName ||
                   selectedObjectForDetail.metadata?.contactPhone) && (
-                  <div className="bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl p-3 space-y-3">
+                  <div className="bg-[color:var(--color-well)] border border-[var(--brief-line)] rounded-xl p-3 space-y-3">
                     {selectedObjectForDetail.locationName && (
                       <div className="flex items-start gap-2">
-                        <MapPin className="w-4 h-4 text-[#0D1117] shrink-0 mt-0.5" />
+                        <MapPin className="w-4 h-4 text-[var(--brief-ink)] shrink-0 mt-0.5" />
                         <div className="min-w-0">
-                          <div className="text-[10px] text-[#0D1117]/60">
+                          <div className="text-[10px] text-[var(--ink-60)]">
                             Location
                           </div>
                           <div className="text-xs font-bold">
@@ -1715,7 +1715,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                               )}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-[10px] font-extrabold text-[#0D1117] mt-1 hover:underline"
+                              className="inline-flex items-center gap-1 text-[10px] font-extrabold text-[var(--brief-ink)] mt-1 hover:underline"
                             >
                               Open in Maps
                               <ArrowRight className="w-3 h-3" />
@@ -1727,9 +1727,9 @@ export function OverlaysShell(props: OverlaysShellProps) {
 
                     {selectedObjectForDetail.creatorName && (
                       <div className="flex items-start gap-2">
-                        <User className="w-4 h-4 text-[#0D1117] shrink-0 mt-0.5" />
+                        <User className="w-4 h-4 text-[var(--brief-ink)] shrink-0 mt-0.5" />
                         <div className="min-w-0">
-                          <div className="text-[10px] text-[#0D1117]/60">
+                          <div className="text-[10px] text-[var(--ink-60)]">
                             {selectedObjectForDetail.type === 'product'
                               ? 'Seller'
                               : selectedObjectForDetail.type === 'service'
@@ -1747,16 +1747,16 @@ export function OverlaysShell(props: OverlaysShellProps) {
 
                     {selectedObjectForDetail.metadata?.contactPhone && (
                       <div className="flex items-start gap-2">
-                        <Building2 className="w-4 h-4 text-[#0D1117] shrink-0 mt-0.5" />
+                        <Building2 className="w-4 h-4 text-[var(--brief-ink)] shrink-0 mt-0.5" />
                         <div className="min-w-0">
-                          <div className="text-[10px] text-[#0D1117]/60">
+                          <div className="text-[10px] text-[var(--ink-60)]">
                             Contact
                           </div>
                           <a
                             href={buildTelHref(
                               selectedObjectForDetail.metadata.contactPhone
                             )}
-                            className="text-xs font-bold text-[#0D1117] hover:underline"
+                            className="text-xs font-bold text-[var(--brief-ink)] hover:underline"
                           >
                             {selectedObjectForDetail.metadata.contactPhone}
                           </a>
@@ -1812,10 +1812,10 @@ export function OverlaysShell(props: OverlaysShellProps) {
                   };
 
                   return (
-                    <div className="bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl px-4 py-3 space-y-2">
+                    <div className="bg-[color:var(--color-well)] border border-[var(--brief-line)] rounded-xl px-4 py-3 space-y-2">
                       <div className="flex items-center gap-2">
-                        <ShieldCheck className="w-4 h-4 text-[#0D1117] shrink-0" />
-                        <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#0D1117]/60">
+                        <ShieldCheck className="w-4 h-4 text-[var(--brief-ink)] shrink-0" />
+                        <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-60)]">
                           About this information
                         </span>
                         {(() => {
@@ -1831,23 +1831,23 @@ export function OverlaysShell(props: OverlaysShellProps) {
                       </div>
 
                       {/* Provider — stated when known, absence stated plainly. */}
-                      <p className="text-[10px] font-bold text-[#0D1117]/70">
+                      <p className="text-[10px] font-bold text-[var(--ink-70)]">
                         {subject.creatorName ? `Provider: ${subject.creatorName}` : 'Provider not stated'}
                       </p>
 
                       {/* Source — real names, never internal ids. */}
                       {subject.sourceNames && subject.sourceNames.length > 0 && (
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-[10px] font-bold text-[#0D1117]/80 truncate">
+                          <span className="text-[10px] font-bold text-[var(--ink-80)] truncate">
                             From {subject.sourceNames.slice(0, 3).join(', ')}
                           </span>
                           {sourceKind && (
-                            <span className="shrink-0 rounded-full bg-[#FFFFFF] border border-[#E5E8EC] px-1.5 py-0.5 text-[8px] font-bold text-[#0D1117]/70">
+                            <span className="shrink-0 rounded-full bg-[color:var(--color-paper)] border border-[var(--brief-line)] px-1.5 py-0.5 text-[8px] font-bold text-[var(--ink-70)]">
                               {sourceKind}
                             </span>
                           )}
                           {sourceChip && sourceChip !== `Source · ${subject.sourceNames[0]}` && (
-                            <span className="shrink-0 text-[9px] font-bold text-[#0D1117]/60">
+                            <span className="shrink-0 text-[9px] font-bold text-[var(--ink-60)]">
                               {sourceChip}
                             </span>
                           )}
@@ -1857,10 +1857,10 @@ export function OverlaysShell(props: OverlaysShellProps) {
                       {/* Published — publication age, separate from event time. */}
                       {published && (
                         <div className="flex items-center justify-between gap-3">
-                          <span className="text-[10px] font-bold text-[#0D1117]/70">
+                          <span className="text-[10px] font-bold text-[var(--ink-70)]">
                             {published}
                           </span>
-                          <span className="text-[10px] text-[#0D1117]/60">
+                          <span className="text-[10px] text-[var(--ink-60)]">
                             {new Date(subject.publishedAt ?? subject.createdAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })}
                           </span>
                         </div>
@@ -1869,10 +1869,10 @@ export function OverlaysShell(props: OverlaysShellProps) {
                       {/* Verification freshness — when this was last checked. */}
                       {fresh && (
                         <div className="flex items-center justify-between gap-3">
-                          <span className="text-[10px] font-bold text-[#0D1117]/70">
+                          <span className="text-[10px] font-bold text-[var(--ink-70)]">
                             {fresh.label}
                           </span>
-                          <span className="text-[10px] text-[#0D1117]/60">
+                          <span className="text-[10px] text-[var(--ink-60)]">
                             checked {fresh.verifiedOn}
                           </span>
                         </div>
@@ -1880,23 +1880,23 @@ export function OverlaysShell(props: OverlaysShellProps) {
 
                       {/* Corroboration — a count, explicitly not certainty. */}
                       {corroboration && (
-                        <p className="text-[10px] font-bold text-[#0D1117]/70">
+                        <p className="text-[10px] font-bold text-[var(--ink-70)]">
                           {corroboration}
                         </p>
                       )}
 
                       {/* Current status for time-sensitive content. */}
                       {life && (
-                        <p className={`text-[10px] font-extrabold ${life.expired ? 'text-[#DC2626]' : 'text-[#0D1117]/70'}`}>
+                        <p className={`text-[10px] font-extrabold ${life.expired ? 'text-[#DC2626]' : 'text-[var(--ink-70)]'}`}>
                           {life.label}
                         </p>
                       )}
 
                       {/* Operator corrections: original fact + corrected value. */}
                       {corrections && (
-                        <div className="space-y-1 border-t border-[#E5E8EC]/70 pt-2">
+                        <div className="space-y-1 border-t border-[rgba(228, 218, 203, 0.70)] pt-2">
                           {corrections.map((c) => (
-                            <p key={c.id} className="text-[10px] text-[#0D1117]/70 leading-snug">
+                            <p key={c.id} className="text-[10px] text-[var(--ink-70)] leading-snug">
                               Corrected {CORRECTION_LABELS[c.field] ?? c.field}
                               {c.originalValue !== null && c.originalValue !== c.correctedValue
                                 ? <> — was “{c.originalValue}”, now “{c.correctedValue}”</>
@@ -1913,7 +1913,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                         </p>
                       )}
 
-                      <p className="text-[10px] text-[#0D1117]/60 leading-snug">
+                      <p className="text-[10px] text-[var(--ink-60)] leading-snug">
                         Verification records when this was last checked. It is
                         not a guarantee of accuracy.
                       </p>
@@ -1924,7 +1924,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1.5 text-[10px] font-bold text-[#0D1117] underline underline-offset-2"
+                          className="inline-flex items-center gap-1.5 text-[10px] font-bold text-[var(--brief-ink)] underline underline-offset-2"
                         >
                           <ExternalLink className="w-3 h-3" />
                           Source
@@ -1942,7 +1942,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
 
                   return (
                     <div className="space-y-2">
-                      <p className="text-[10px] text-[#0D1117]/60">
+                      <p className="text-[10px] text-[var(--ink-60)]">
                         You can
                       </p>
                       <div className="flex flex-wrap gap-2">
@@ -1953,7 +1953,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                             target={a.key === 'call' ? undefined : '_blank'}
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            className="text-[11px] font-bold px-3 py-1.5 rounded-full bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117]"
+                            className="text-[11px] font-bold px-3 py-1.5 rounded-full bg-[color:var(--color-paper)] border border-[var(--brief-line)] text-[var(--brief-ink)]"
                           >
                             {a.label}
                           </a>
@@ -1973,7 +1973,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                           selectedObjectForDetail
                         )
                       }
-                      className="flex-1 py-3 rounded-xl bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117] font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer"
+                      className="flex-1 py-3 rounded-xl bg-[color:var(--color-paper)] border border-[var(--brief-line)] text-[var(--brief-ink)] font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <Bookmark className="w-4 h-4" />
                       Save
@@ -1982,7 +1982,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                     {(() => {
                       const action = resolveAction(selectedObjectForDetail);
                       const primaryClass =
-                        'flex-[2] py-3 rounded-xl bg-[#4F46E5] text-[#0D1117] font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer';
+                        'flex-[2] py-3 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer';
 
                       // Stays in Brief: pivot the stream sideways.
                       if (action.kind === 'internal') {
@@ -2024,14 +2024,14 @@ export function OverlaysShell(props: OverlaysShellProps) {
 
                       // No route -> say so plainly. Don't fake a transaction.
                       return (
-                        <div className="flex-[2] py-3 rounded-xl bg-[#FFFFFF] border border-dashed border-[#E5E8EC] text-[#0D1117]/60 font-extrabold text-xs flex items-center justify-center gap-2">
+                        <div className="flex-[2] py-3 rounded-xl bg-[color:var(--color-paper)] border border-dashed border-[var(--brief-line)] text-[var(--ink-60)] font-extrabold text-xs flex items-center justify-center gap-2">
                           {action.label} unavailable
                         </div>
                       );
                     })()}
                   </div>
 
-                  <p className="text-[10px] text-[#0D1117]/60 text-center">
+                  <p className="text-[10px] text-[var(--ink-60)] text-center">
                     {getActionNote(selectedObjectForDetail)}
                   </p>
 
@@ -2041,7 +2041,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleShare(selectedObjectForDetail)}
-                      className="flex-1 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117]/60 font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="flex-1 py-2.5 rounded-xl bg-[color:var(--color-paper)] border border-[var(--brief-line)] text-[var(--ink-60)] font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <Share2 className="w-3.5 h-3.5" />
                       Share
@@ -2051,7 +2051,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                       onClick={() =>
                         handleCreatePursuit(selectedObjectForDetail.title)
                       }
-                      className="flex-1 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117]/60 font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="flex-1 py-2.5 rounded-xl bg-[color:var(--color-paper)] border border-[var(--brief-line)] text-[var(--ink-60)] font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <Search className="w-3.5 h-3.5" />
                       Pursue
@@ -2061,8 +2061,8 @@ export function OverlaysShell(props: OverlaysShellProps) {
                       onClick={() => handleToggleWatch(selectedObjectForDetail)}
                       className={`flex-1 py-2.5 rounded-xl border font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer ${
                         watchedIds.has(selectedObjectForDetail.id)
-                          ? 'bg-[#FFFFFF] border-[#E5E8EC] text-[#0D1117]'
-                          : 'bg-[#FFFFFF] border-[#E5E8EC] text-[#0D1117]/60'
+                          ? 'bg-[color:var(--color-paper)] border-[var(--brief-line)] text-[var(--brief-ink)]'
+                          : 'bg-[color:var(--color-paper)] border-[var(--brief-line)] text-[var(--ink-60)]'
                       }`}
                     >
                       <Eye className="h-3.5 w-3.5" />
@@ -2071,7 +2071,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
 
                     <button
                       onClick={() => setCollectionPickerFor(selectedObjectForDetail.id)}
-                      className="flex-1 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#06B6D4]/50 text-[#4F46E5] font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="flex-1 py-2.5 rounded-xl bg-[color:var(--color-paper)] border border-[#06B6D4]/50 text-[#4F46E5] font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <FolderPlus className="w-3.5 h-3.5" />
                       Add to collection
@@ -2096,14 +2096,14 @@ export function OverlaysShell(props: OverlaysShellProps) {
                       the report reasons), and Not sure (declines to weigh in —
                       no record, nothing invented). The "Confirmed by N people"
                       readout is the object's real derived count. */}
-                  <div className="rounded-2xl border border-[#E5E8EC] bg-[#F0F2F5] p-3 space-y-2.5">
-                    <p className="text-[11px] font-extrabold text-[#0D1117]">Is this still accurate?</p>
+                  <div className="rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-well)] p-3 space-y-2.5">
+                    <p className="text-[11px] font-extrabold text-[var(--brief-ink)]">Is this still accurate?</p>
                     {/* Primary confirm is full-width; the two declinations sit
                         beside each other. No cramped 3-across grid. */}
                     <button
                       onClick={() => void handleConfirmObject(selectedObjectForDetail)}
                       disabled={objectCheckBusy === selectedObjectForDetail.id}
-                      className="w-full py-2.5 rounded-xl bg-[#4F46E5] text-[#0D1117] text-[12px] font-extrabold cursor-pointer disabled:opacity-50"
+                      className="w-full py-2.5 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] text-[12px] font-extrabold cursor-pointer disabled:opacity-50"
                     >
                       {objectCheckBusy === selectedObjectForDetail.id ? 'Recording…' : 'Yes, accurate'}
                     </button>
@@ -2113,15 +2113,15 @@ export function OverlaysShell(props: OverlaysShellProps) {
                         aria-expanded={reportForObject === selectedObjectForDetail.id}
                         className={`flex-1 py-2.5 rounded-xl border text-[11px] font-bold cursor-pointer ${
                           reportForObject === selectedObjectForDetail.id
-                            ? 'bg-[#FFFFFF] border-[#DC2626] text-[#DC2626]'
-                            : 'bg-[#FFFFFF] border-[#E5E8EC] text-[#0D1117]/70'
+                            ? 'bg-[color:var(--color-paper)] border-[#DC2626] text-[#DC2626]'
+                            : 'bg-[color:var(--color-paper)] border-[var(--brief-line)] text-[var(--ink-70)]'
                         }`}
                       >
                         Not accurate
                       </button>
                       <button
                         onClick={() => setReportForObject(null)}
-                        className="flex-1 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117]/60 text-[11px] font-bold cursor-pointer"
+                        className="flex-1 py-2.5 rounded-xl bg-[color:var(--color-paper)] border border-[var(--brief-line)] text-[var(--ink-60)] text-[11px] font-bold cursor-pointer"
                       >
                         Not sure
                       </button>
@@ -2138,7 +2138,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                             key={reason.id}
                             onClick={() => void handleReportObject(selectedObjectForDetail, reason.id)}
                             disabled={objectCheckBusy === selectedObjectForDetail.id}
-                            className="px-3 py-1.5 rounded-full border border-[#E5E8EC] text-[11px] font-bold text-[#0D1117]/70 cursor-pointer disabled:opacity-50"
+                            className="px-3 py-1.5 rounded-full border border-[var(--brief-line)] text-[11px] font-bold text-[var(--ink-70)] cursor-pointer disabled:opacity-50"
                           >
                             {reason.label}
                           </button>
@@ -2148,7 +2148,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                   </div>
 
                   {watchedIds.has(selectedObjectForDetail.id) && (
-                    <p className="text-[10px] text-[#0D1117]/60 text-center">
+                    <p className="text-[10px] text-[var(--ink-60)] text-center">
                       Brief will track changes to this record. Alerts are not live yet.
                     </p>
                   )}
@@ -2169,8 +2169,8 @@ export function OverlaysShell(props: OverlaysShellProps) {
                     ];
                     if (buttons.length === 0) return null;
                     return (
-                      <div className="border-t border-[#E5E8EC]/70 pt-3 mt-1">
-                        <p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-[#0D1117]/60 mb-2">
+                      <div className="border-t border-[rgba(228, 218, 203, 0.70)] pt-3 mt-1">
+                        <p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-[var(--ink-60)] mb-2">
                           Tune this in your Brief
                         </p>
                         <div className="flex flex-wrap gap-1.5">
@@ -2180,8 +2180,8 @@ export function OverlaysShell(props: OverlaysShellProps) {
                               onClick={() => void tuneObject(b.kind, selectedObjectForDetail)}
                               className={`px-2.5 py-1.5 rounded-full border text-[10px] font-bold cursor-pointer transition ${
                                 b.active
-                                  ? 'bg-[#4F46E5] text-[#0D1117] border-[#06B6D4]'
-                                  : 'bg-[#FFFFFF] text-[#0D1117]/70 border-[#E5E8EC] hover:border-[#06B6D4]'
+                                  ? 'bg-[#4F46E5] text-[var(--accent-ink)] border-[#06B6D4]'
+                                  : 'bg-[color:var(--color-paper)] text-[var(--ink-70)] border-[var(--brief-line)] hover:border-[#06B6D4]'
                               }`}
                             >
                               {b.active ? `✓ ${b.label}` : b.label}
@@ -2207,12 +2207,12 @@ export function OverlaysShell(props: OverlaysShellProps) {
 
                   return (
                     <details className="group">
-                      <summary className="text-[10px] text-[#0D1117]/60 cursor-pointer list-none">
+                      <summary className="text-[10px] text-[var(--ink-60)] cursor-pointer list-none">
                         Why this appeared
                       </summary>
                       <div className="mt-2 space-y-1">
                         {reasons.map((r) => (
-                          <p key={r.key} className="text-[10px] text-[#0D1117]/60">
+                          <p key={r.key} className="text-[10px] text-[var(--ink-60)]">
                             {r.label}
                           </p>
                         ))}
@@ -2228,7 +2228,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                     weak links never serialize. The location edge links into
                     the public /explore/:name surface. */}
                 {detailGraph && (
-                  <div className="mt-6 pt-5 border-t border-[#E5E8EC]">
+                  <div className="mt-6 pt-5 border-t border-[var(--brief-line)]">
                     <RelatedContent
                       edges={detailGraph}
                       onOpenObject={(raw) => {
@@ -2253,10 +2253,10 @@ export function OverlaysShell(props: OverlaysShellProps) {
                   const state = getDestinationState(dest);
                   const access = getDestinationAccess(dest);
                   return (
-                    <div className="mt-6 pt-5 border-t border-[#E5E8EC]">
+                    <div className="mt-6 pt-5 border-t border-[var(--brief-line)]">
                       <div className="flex items-center justify-between gap-3 mb-3">
                         <div>
-                          <p className="text-[10px] text-[#0D1117]">
+                          <p className="text-[10px] text-[var(--brief-ink)]">
                             {DESTINATION_STATE_LABELS[state]}
                           </p>
                           <h3 className="text-sm font-extrabold mt-1">
@@ -2264,20 +2264,20 @@ export function OverlaysShell(props: OverlaysShellProps) {
                           </h3>
                         </div>
                         {access && (
-                          <span className="text-[9px] font-extrabold text-[#0D1117] border border-[#E5E8EC] rounded-full px-2 py-0.5">
+                          <span className="text-[9px] font-extrabold text-[var(--brief-ink)] border border-[var(--brief-line)] rounded-full px-2 py-0.5">
                             {access}
                           </span>
                         )}
                       </div>
 
                       {vendors.length === 0 ? (
-                        <p className="text-xs text-[#0D1117]/60">
+                        <p className="text-xs text-[var(--ink-60)]">
                           Vendor information unavailable. Brief only lists
                           traders that are actually linked to this destination.
                         </p>
                       ) : (
                         <>
-                          <p className="text-[11px] text-[#0D1117] mb-2">
+                          <p className="text-[11px] text-[var(--brief-ink)] mb-2">
                             {vendors.length}{' '}
                             {vendors.length === 1 ? 'vendor' : 'vendors'} listed
                             here
@@ -2288,27 +2288,27 @@ export function OverlaysShell(props: OverlaysShellProps) {
                               return (
                                 <div
                                   key={vendor.id}
-                                  className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-3"
+                                  className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-3"
                                 >
                                   <div className="flex items-start justify-between gap-3">
                                     <div className="min-w-0">
                                       <div className="flex items-center gap-2">
-                                        <p className="text-xs font-extrabold text-[#0D1117] truncate">
+                                        <p className="text-xs font-extrabold text-[var(--brief-ink)] truncate">
                                           {vendor.title}
                                         </p>
                                         {vendor.isVerified && (
-                                          <span className="shrink-0 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-[#4F46E5] text-[#0D1117]">
+                                          <span className="shrink-0 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-[#4F46E5] text-[var(--accent-ink)]">
                                             VERIFIED
                                           </span>
                                         )}
                                       </div>
-                                      <p className="text-[10px] text-[#0D1117]/60 mt-0.5">
+                                      <p className="text-[10px] text-[var(--ink-60)] mt-0.5">
                                         {vendor.category}
                                       </p>
                                     </div>
                                     <button
                                       onClick={() => setSelectedObjectForDetail(vendor)}
-                                      className="shrink-0 text-[10px] font-extrabold text-[#0D1117] cursor-pointer"
+                                      className="shrink-0 text-[10px] font-extrabold text-[var(--brief-ink)] cursor-pointer"
                                     >
                                       View vendor
                                     </button>
@@ -2323,11 +2323,11 @@ export function OverlaysShell(props: OverlaysShellProps) {
                                           onClick={() => setSelectedObjectForDetail(item)}
                                           className="w-full flex items-center justify-between gap-3 text-left cursor-pointer"
                                         >
-                                          <span className="text-[10px] text-[#0D1117] truncate">
+                                          <span className="text-[10px] text-[var(--brief-ink)] truncate">
                                             {item.title}
                                           </span>
                                           {typeof item.metadata?.price === 'number' && (
-                                            <span className="shrink-0 text-[10px] text-[#0D1117]">
+                                            <span className="shrink-0 text-[10px] text-[var(--brief-ink)]">
                                               {item.metadata.currency || 'KES'}{' '}
                                               {item.metadata.price.toLocaleString()}
                                             </span>
@@ -2357,10 +2357,10 @@ export function OverlaysShell(props: OverlaysShellProps) {
                   const appearsAt = getVendorDestinations(vendor, objects);
                   if (offerings.length === 0 && appearsAt.length === 0) return null;
                   return (
-                    <div className="mt-6 pt-5 border-t border-[#E5E8EC]">
+                    <div className="mt-6 pt-5 border-t border-[var(--brief-line)]">
                       {appearsAt.length > 0 && (
                         <div className="mb-4">
-                          <p className="text-[10px] text-[#0D1117]">
+                          <p className="text-[10px] text-[var(--brief-ink)]">
                             Find them at
                           </p>
                           <div className="mt-2 space-y-1.5">
@@ -2370,17 +2370,17 @@ export function OverlaysShell(props: OverlaysShellProps) {
                                 <button
                                   key={dest.id}
                                   onClick={() => setSelectedObjectForDetail(dest)}
-                                  className="w-full text-left bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-3 cursor-pointer"
+                                  className="w-full text-left bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-3 cursor-pointer"
                                 >
                                   <div className="flex items-center gap-2">
                                     {(state === 'live' || state === 'today') && (
                                       <span className="w-1.5 h-1.5 rounded-full bg-[#4F46E5] shrink-0" />
                                     )}
-                                    <span className="text-xs text-[#0D1117] truncate">
+                                    <span className="text-xs text-[var(--brief-ink)] truncate">
                                       {dest.title}
                                     </span>
                                   </div>
-                                  <span className="text-[9px] text-[#0D1117]/60">
+                                  <span className="text-[9px] text-[var(--ink-60)]">
                                     {DESTINATION_STATE_LABELS[state]}
                                     {dest.locationName ? ` - ${dest.locationName}` : ''}
                                   </span>
@@ -2393,7 +2393,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
 
                       {offerings.length > 0 && (
                         <div>
-                          <p className="text-[10px] text-[#0D1117]">
+                          <p className="text-[10px] text-[var(--brief-ink)]">
                             What they offer
                           </p>
                           <div className="mt-2 space-y-1.5">
@@ -2401,18 +2401,18 @@ export function OverlaysShell(props: OverlaysShellProps) {
                               <button
                                 key={item.id}
                                 onClick={() => setSelectedObjectForDetail(item)}
-                                className="w-full flex items-center justify-between gap-3 bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-3 text-left cursor-pointer"
+                                className="w-full flex items-center justify-between gap-3 bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-3 text-left cursor-pointer"
                               >
                                 <span className="min-w-0">
-                                  <span className="block text-xs text-[#0D1117] truncate">
+                                  <span className="block text-xs text-[var(--brief-ink)] truncate">
                                     {item.title}
                                   </span>
-                                  <span className="block text-[9px] text-[#0D1117]/60">
+                                  <span className="block text-[9px] text-[var(--ink-60)]">
                                     {item.category}
                                   </span>
                                 </span>
                                 {typeof item.metadata?.price === 'number' && (
-                                  <span className="shrink-0 text-[11px] font-extrabold text-[#0D1117]">
+                                  <span className="shrink-0 text-[11px] font-extrabold text-[var(--brief-ink)]">
                                     {item.metadata.currency || 'KES'}{' '}
                                     {item.metadata.price.toLocaleString()}
                                   </span>
@@ -2428,10 +2428,10 @@ export function OverlaysShell(props: OverlaysShellProps) {
 
                 {/* Related */}
                 {relatedObjects.length > 0 && (
-                  <div className="mt-6 pt-5 border-t border-[#E5E8EC]">
+                  <div className="mt-6 pt-5 border-t border-[var(--brief-line)]">
                     <div className="flex items-center justify-between mb-3">
                       <div>
-                        <p className="text-[10px] text-[#0D1117]">
+                        <p className="text-[10px] text-[var(--brief-ink)]">
                           Continue exploring
                         </p>
                         <h3 className="text-sm font-extrabold mt-1">
@@ -2442,7 +2442,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                         </h3>
                       </div>
 
-                      <span className="text-[10px] text-[#0D1117]/60 shrink-0">
+                      <span className="text-[10px] text-[var(--ink-60)] shrink-0">
                         {relatedObjects.length} nearby
                       </span>
                     </div>
@@ -2456,7 +2456,7 @@ export function OverlaysShell(props: OverlaysShellProps) {
                           <button
                             key={related.id}
                             onClick={() => setSelectedObjectForDetail(related)}
-                            className="text-left bg-[#F0F2F5] border border-[#E5E8EC] hover:border-[#06B6D4] rounded-xl p-3 transition group cursor-pointer"
+                            className="text-left bg-[color:var(--color-well)] border border-[var(--brief-line)] hover:border-[#06B6D4] rounded-xl p-3 transition group cursor-pointer"
                           >
                             <div className="flex items-start gap-3">
                               {related.imageUrl && (
@@ -2469,28 +2469,28 @@ export function OverlaysShell(props: OverlaysShellProps) {
 
                               <div className="min-w-0">
                                 <div className="flex items-center gap-1.5 flex-wrap">
-                                  <p className="text-[9px] text-[#0D1117]/60">
+                                  <p className="text-[9px] text-[var(--ink-60)]">
                                     {related.category}
                                   </p>
                                   {chip && (
-                                    <span className="text-[8px] font-extrabold px-1.5 py-0.5 rounded-full border border-[#E5E8EC] text-[#0D1117]">
+                                    <span className="text-[8px] font-extrabold px-1.5 py-0.5 rounded-full border border-[var(--brief-line)] text-[var(--brief-ink)]">
                                       {chip}
                                     </span>
                                   )}
                                 </div>
 
-                                <p className="text-xs font-extrabold mt-1 line-clamp-2 group-hover:text-[#0D1117]">
+                                <p className="text-xs font-extrabold mt-1 line-clamp-2 group-hover:text-[var(--brief-ink)]">
                                   {related.title}
                                 </p>
 
                                 {related.locationName && (
-                                  <p className="text-[10px] text-[#0D1117] mt-1 truncate">
+                                  <p className="text-[10px] text-[var(--brief-ink)] mt-1 truncate">
                                     {related.locationName}
                                   </p>
                                 )}
 
                                 {distance && (
-                                  <p className="text-[10px] text-[#0D1117]/60 mt-0.5">
+                                  <p className="text-[10px] text-[var(--ink-60)] mt-0.5">
                                     {distance}
                                   </p>
                                 )}

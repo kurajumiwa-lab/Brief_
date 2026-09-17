@@ -47,7 +47,7 @@ export function CircleVotes({
     return (
       <div>
         <Heading>Votes</Heading>
-        <p className="text-xs text-[#0D1117]/60">No votes in this circle.</p>
+        <p className="text-xs text-[var(--ink-60)]">No votes in this circle.</p>
       </div>
     );
   }
@@ -67,21 +67,21 @@ export function CircleVotes({
     return (
       <div
         key={vote.id}
-        className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-3 space-y-2"
+        className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-3 space-y-2"
       >
         <div className="flex items-start justify-between gap-3">
-          <p className="text-xs font-extrabold text-[#0D1117] min-w-0">
+          <p className="text-xs font-extrabold text-[var(--brief-ink)] min-w-0">
             {vote.content}
           </p>
           {isClosed && (
-            <span className="shrink-0 text-[9px] px-2 py-0.5 rounded-full bg-[#E5E8EC] text-[#0D1117]/60">
+            <span className="shrink-0 text-[9px] px-2 py-0.5 rounded-full bg-[var(--brief-line)] text-[var(--ink-60)]">
               closed
             </span>
           )}
         </div>
 
         {/* Turnout, from real rows on both sides. */}
-        <p className="text-[10px] text-[#0D1117]/60">
+        <p className="text-[10px] text-[var(--ink-60)]">
           {tally?.totalVotes ?? 0} of {tally?.eligibleCount ?? 0} eligible{' '}
           {(tally?.eligibleCount ?? 0) === 1 ? 'member' : 'members'} voted
         </p>
@@ -94,21 +94,21 @@ export function CircleVotes({
                 <div className="flex items-center justify-between gap-3">
                   <span
                     className={`text-[11px] ${
-                      isLeader ? 'text-[#0D1117] font-extrabold' : 'text-[#0D1117]/60'
+                      isLeader ? 'text-[var(--brief-ink)] font-extrabold' : 'text-[var(--ink-60)]'
                     }`}
                   >
                     {r.option}
                   </span>
-                  <span className="text-[10px] text-[#0D1117]/60 shrink-0">
+                  <span className="text-[10px] text-[var(--ink-60)] shrink-0">
                     {r.count} {r.count === 1 ? 'vote' : 'votes'}
                     {/* Dash, not 0%: nobody has voted, so there is no share
                         to report. */}
                     {r.pct === null ? ' \u00b7 --' : ` \u00b7 ${Math.round(r.pct)}%`}
                   </span>
                 </div>
-                <div className="h-1 bg-[#F0F2F5] rounded-full overflow-hidden">
+                <div className="h-1 bg-[var(--color-well)] rounded-full overflow-hidden">
                   <div
-                    className={`h-full ${isLeader ? 'bg-[#4F46E5]' : 'bg-[#E5E8EC]'}`}
+                    className={`h-full ${isLeader ? 'bg-[#4F46E5]' : 'bg-[var(--brief-line)]'}`}
                     style={{ width: `${r.pct ?? 0}%` }}
                   />
                 </div>
@@ -119,7 +119,7 @@ export function CircleVotes({
 
         {/* Only a strict winner is announced. A tie says so. */}
         {isClosed && (
-          <p className="text-[10px] text-[#0D1117]">
+          <p className="text-[10px] text-[var(--brief-ink)]">
             {tally?.leader
               ? `Result: ${tally.leader}`
               : (tally?.totalVotes ?? 0) === 0
@@ -135,7 +135,7 @@ export function CircleVotes({
                 key={r.option}
                 onClick={() => onVote(vote.id, r.option)}
                 disabled={busy}
-                className="px-3 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+                className="px-3 py-1.5 rounded-xl bg-[color:var(--color-paper)] border border-[var(--brief-line)] text-[var(--brief-ink)] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
               >
                 {busy ? '...' : `Vote ${r.option}`}
               </button>
@@ -144,20 +144,20 @@ export function CircleVotes({
         )}
 
         {!isClosed && alreadyVoted && (
-          <p className="text-[10px] text-[#0D1117]">
+          <p className="text-[10px] text-[var(--brief-ink)]">
             You have voted. One vote per member.
           </p>
         )}
 
         {!isClosed && myRole === 'observer' && (
-          <p className="text-[10px] text-[#0D1117]/60">Observers cannot vote.</p>
+          <p className="text-[10px] text-[var(--ink-60)]">Observers cannot vote.</p>
         )}
 
         {!isClosed && isCoordinator && (
           <button
             onClick={() => onClose(vote.id)}
             disabled={busy}
-            className="text-[10px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-50"
+            className="text-[10px] font-extrabold text-[var(--brief-ink)] cursor-pointer disabled:opacity-50"
           >
             Close this vote
           </button>
@@ -188,11 +188,11 @@ export function CircleVotes({
 }
 
 const Heading = ({ children }: { children: React.ReactNode }) => (
-  <h3 className="text-[11px] font-extrabold text-[#0D1117]/60">
+  <h3 className="text-[11px] font-extrabold text-[var(--ink-60)]">
     {children}
   </h3>
 );
 
 const SubHeading = ({ children }: { children: React.ReactNode }) => (
-  <p className="text-[10px] text-[#0D1117]/60">{children}</p>
+  <p className="text-[10px] text-[var(--ink-60)]">{children}</p>
 );

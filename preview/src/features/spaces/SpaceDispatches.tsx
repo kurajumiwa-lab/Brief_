@@ -123,7 +123,7 @@ export const SpaceDispatches: React.FC<SpaceDispatchesProps> = ({
 
       {/* Dispatches List */}
       {dispatches.length === 0 ? (
-        <div className="p-6 rounded-3xl bg-white border border-black/5 text-center space-y-2 shadow-sm">
+        <div className="p-6 rounded-3xl bg-[color:var(--color-paper)] border border-black/5 text-center space-y-2 shadow-sm">
           <Truck className="w-8 h-8 text-[color:var(--color-text-muted)] mx-auto opacity-40" />
           <p className="text-xs font-bold text-[color:var(--color-text)]">No cargo dispatches recorded yet</p>
           <p className="text-[11px] text-[color:var(--color-text-muted)] max-w-sm mx-auto">
@@ -138,7 +138,7 @@ export const SpaceDispatches: React.FC<SpaceDispatchesProps> = ({
             return (
               <div
                 key={d.id}
-                className="p-4 rounded-3xl bg-white border border-black/5 shadow-2xs space-y-3"
+                className="p-4 rounded-3xl bg-[color:var(--color-paper)] border border-black/5 shadow-2xs space-y-3"
               >
                 {/* Top Row: Waybill & Status */}
                 <div className="flex items-start justify-between gap-2">

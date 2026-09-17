@@ -46,7 +46,7 @@ export function CommitmentsCard({
   if (c.owedByMe.length === 0 && c.owedToMe.length === 0) return null;
 
   return (
-    <section className={`rounded-2xl border p-4 space-y-3 ${className}`} style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }} aria-label="Your commitments">
+    <section className={`rounded-2xl p-4 space-y-3 brief-card ${className}`} style={{ background: 'var(--color-paper)' }} aria-label="Your commitments">
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-black uppercase tracking-wider" style={{ color: 'var(--color-text)' }}>
           <TrendingUp className="w-3.5 h-3.5 inline mr-1" /> Your commitments

@@ -52,10 +52,10 @@ export const CreatorPartnerDesk: React.FC<CreatorPartnerDeskProps> = ({
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto rounded-3xl bg-[#FAFAF8] shadow-2xl overflow-hidden font-sans text-[#1A1F2E]">
+    <div className="w-full max-w-3xl mx-auto rounded-3xl bg-[color:var(--color-paper)] shadow-2xl overflow-hidden font-sans text-[var(--brief-ink)]">
       
       {/* ── HEADER ── */}
-      <div className="p-6 sm:p-7 bg-gradient-to-br from-[#1A1F2E] via-[#2A3447] to-[#1A1F2E] text-white relative">
+      <div className="p-6 sm:p-7 bg-gradient-to-br from-[var(--brief-ink)] via-[#2A3447] to-[var(--brief-ink)] text-white relative">
         <div className="flex items-start justify-between">
           <div className="space-y-1.5">
             <div className="flex items-center space-x-2">
@@ -103,7 +103,7 @@ export const CreatorPartnerDesk: React.FC<CreatorPartnerDeskProps> = ({
               }}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${
                 activeCreator.id === c.id
-                  ? 'bg-white text-[#1A1F2E] shadow-md font-black'
+                  ? 'bg-[color:var(--color-paper)] text-[var(--brief-ink)] shadow-md font-black'
                   : 'bg-white/10 text-white/80 hover:bg-white/20'
               }`}
             >
@@ -117,28 +117,28 @@ export const CreatorPartnerDesk: React.FC<CreatorPartnerDeskProps> = ({
       <div className="p-6 sm:p-7 space-y-6">
         
         {/* Creator Info & Referral Card */}
-        <div className="p-5 rounded-2xl bg-white shadow-sm space-y-4">
+        <div className="p-5 rounded-2xl bg-[color:var(--color-paper)] shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <span className="text-[10px] font-mono font-black uppercase text-[#B8621F] tracking-wide">
                 {activeCreator.role.replace('_', ' ').toUpperCase()}
               </span>
-              <h3 className="text-lg font-black text-[#1A1F2E] leading-snug">
+              <h3 className="text-lg font-black text-[var(--brief-ink)] leading-snug">
                 {activeCreator.name}
               </h3>
-              <p className="text-xs text-[#6B7280]">{activeCreator.title}</p>
+              <p className="text-xs text-[var(--brief-muted)]">{activeCreator.title}</p>
             </div>
 
             {/* Shareable Code */}
             <div className="flex items-center space-x-2">
-              <div className="px-3.5 py-2 rounded-xl bg-[#F0EDE8] font-mono font-black text-xs text-[#1A1F2E] flex items-center space-x-2">
+              <div className="px-3.5 py-2 rounded-xl bg-[#F0EDE8] font-mono font-black text-xs text-[var(--brief-ink)] flex items-center space-x-2">
                 <span>REF:</span>
                 <span className="text-[#B8621F]">{activeCreator.referralCode}</span>
               </div>
               <button
                 type="button"
                 onClick={handleCopy}
-                className="py-2 px-3 rounded-xl bg-[#1A1F2E] hover:bg-black text-white text-xs font-bold flex items-center space-x-1.5 transition-transform active:scale-95 cursor-pointer shadow-sm"
+                className="py-2 px-3 rounded-xl bg-[color:var(--brief-ink)] hover:bg-black text-white text-xs font-bold flex items-center space-x-1.5 transition-transform active:scale-95 cursor-pointer shadow-sm"
               >
                 {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copiedCode ? 'Copied' : 'Copy Link'}</span>
@@ -149,21 +149,21 @@ export const CreatorPartnerDesk: React.FC<CreatorPartnerDeskProps> = ({
           {/* 3 Metrics Cards */}
           <div className="grid grid-cols-3 gap-3 pt-2">
             <div className="p-4 rounded-xl bg-[#F0EDE8] space-y-1">
-              <div className="flex items-center space-x-1 text-[10px] font-bold text-[#6B7280] uppercase">
+              <div className="flex items-center space-x-1 text-[10px] font-bold text-[var(--brief-muted)] uppercase">
                 <Users className="w-3.5 h-3.5 text-[#B8621F]" />
                 <span>Activated Groups</span>
               </div>
-              <span className="text-lg font-black text-[#1A1F2E]">
+              <span className="text-lg font-black text-[var(--brief-ink)]">
                 {activeCreator.activatedGroupsCount}
               </span>
             </div>
 
             <div className="p-4 rounded-xl bg-[#F0EDE8] space-y-1">
-              <div className="flex items-center space-x-1 text-[10px] font-bold text-[#6B7280] uppercase">
+              <div className="flex items-center space-x-1 text-[10px] font-bold text-[var(--brief-muted)] uppercase">
                 <TrendingUp className="w-3.5 h-3.5 text-[#0B6E6E]" />
                 <span>Coordinated Volume</span>
               </div>
-              <span className="text-lg font-black text-[#1A1F2E]">
+              <span className="text-lg font-black text-[var(--brief-ink)]">
                 KES {activeCreator.totalCoordinatedVolumeKes.toLocaleString()}
               </span>
             </div>
@@ -183,10 +183,10 @@ export const CreatorPartnerDesk: React.FC<CreatorPartnerDeskProps> = ({
         {/* Groups Brought Roster */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-black uppercase tracking-wider text-[#1A1F2E]">
+            <span className="text-xs font-black uppercase tracking-wider text-[var(--brief-ink)]">
               Groups Onboarded & Managed
             </span>
-            <span className="text-[10px] font-mono text-[#6B7280] font-bold">
+            <span className="text-[10px] font-mono text-[var(--brief-muted)] font-bold">
               15% NET TAKE-RATE CUT
             </span>
           </div>
@@ -195,16 +195,16 @@ export const CreatorPartnerDesk: React.FC<CreatorPartnerDeskProps> = ({
             {activeCreator.groupsBrought.map((grp) => (
               <div
                 key={grp.groupId}
-                className="p-4 rounded-2xl bg-white shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                className="p-4 rounded-2xl bg-[color:var(--color-paper)] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3"
               >
                 <div className="space-y-0.5">
                   <div className="flex items-center space-x-2">
-                    <h4 className="text-sm font-black text-[#1A1F2E]">{grp.groupName}</h4>
+                    <h4 className="text-sm font-black text-[var(--brief-ink)]">{grp.groupName}</h4>
                     <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
                       Activated
                     </span>
                   </div>
-                  <p className="text-xs text-[#6B7280]">
+                  <p className="text-xs text-[var(--brief-muted)]">
                     {grp.memberCount} active members · Category: {grp.groupCategory.replace('_', ' ')}
                   </p>
                 </div>
@@ -213,7 +213,7 @@ export const CreatorPartnerDesk: React.FC<CreatorPartnerDeskProps> = ({
                   <span className="text-xs font-black text-emerald-700 block">
                     +KES {grp.commissionAccruedKes.toLocaleString()}
                   </span>
-                  <span className="text-[10px] text-[#6B7280]">
+                  <span className="text-[10px] text-[var(--brief-muted)]">
                     From KES {grp.monthlyVolumeKes.toLocaleString()} monthly volume
                   </span>
                 </div>
@@ -225,23 +225,23 @@ export const CreatorPartnerDesk: React.FC<CreatorPartnerDeskProps> = ({
         {/* M-Pesa Settlement Note */}
         <div className="p-4 rounded-2xl bg-[#EFECE6] flex items-center justify-between">
           <div className="space-y-0.5">
-            <span className="text-xs font-black text-[#1A1F2E] block">
+            <span className="text-xs font-black text-[var(--brief-ink)] block">
               M-Pesa B2C Auto-Settlement
             </span>
-            <p className="text-[11px] text-[#6B7280]">
+            <p className="text-[11px] text-[var(--brief-muted)]">
               Disbursed on 1st of every month to registered line: {activeCreator.phone}
             </p>
           </div>
 
           <div className="text-right">
-            <span className="text-[10px] font-bold text-[#6B7280] uppercase block">Pending Payout</span>
+            <span className="text-[10px] font-bold text-[var(--brief-muted)] uppercase block">Pending Payout</span>
             <span className="text-sm font-black text-[#B8621F]">KES {activeCreator.pendingCommissionsKes.toLocaleString()}</span>
           </div>
         </div>
 
         {/* Commission Rules Disclaimer */}
         <div className="p-3.5 rounded-2xl bg-black/[0.03] space-y-1 text-center">
-          <p className="text-[10px] text-[#6B7280] leading-relaxed">
+          <p className="text-[10px] text-[var(--brief-muted)] leading-relaxed">
             Brief compensates creators on activated, retained community coordination value — never on raw registrations or vanity signups. Groups govern their own funds.
           </p>
         </div>
@@ -249,7 +249,7 @@ export const CreatorPartnerDesk: React.FC<CreatorPartnerDeskProps> = ({
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-[#1A1F2E] text-white text-xs font-bold shadow-2xl flex items-center space-x-2 animate-fadeIn border border-white/10">
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-[color:var(--brief-ink)] text-white text-xs font-bold shadow-2xl flex items-center space-x-2 animate-fadeIn border border-white/10">
           <CheckCircle2 className="w-4 h-4 text-[#2ECC71]" />
           <span>{toastMessage}</span>
         </div>

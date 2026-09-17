@@ -42,7 +42,7 @@ export function PublicSpaces({ onOpenSpace }: { onOpenSpace: (spaceId: string) =
           key={s.id}
           type="button"
           onClick={() => { soundEngine.play('tap'); onOpenSpace(s.id); }}
-          className="w-full text-left p-3.5 rounded-2xl bg-white border border-black/5 shadow-2xs hover:shadow-xs transition-all cursor-pointer flex items-center justify-between gap-3"
+          className="w-full text-left p-3.5 rounded-2xl bg-[color:var(--color-paper)] border border-black/5 shadow-2xs hover:shadow-xs transition-all cursor-pointer flex items-center justify-between gap-3"
         >
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">

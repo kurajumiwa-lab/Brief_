@@ -18,7 +18,7 @@ import {
 import * as briefApi from '../api/briefApi';
 import type { BriefEntity, EntityKind } from '../api/briefApi';
 
-const T = { muted: 'rgba(13, 17, 23,0.62)', ink: '#0D1117', line: '#E5E8EC', surface: '#FFFFFF', primary: '#06B6D4', deep: '#4F46E5', dark: '#0D1117' };
+const T = { muted: 'rgba(13, 17, 23,0.62)', ink: '#0D1117', line: 'var(--brief-line)', surface: 'var(--color-paper)', primary: '#06B6D4', deep: '#4F46E5', dark: '#0D1117' };
 
 export const ENTITY_KIND_META: Record<EntityKind, { label: string; icon: React.ReactNode; plural: string }> = {
   venue: { label: 'Place', icon: <MapPin className="h-4 w-4" />, plural: 'Places' },
@@ -104,7 +104,7 @@ function ContentCard({ o, onOpen }: { o: BriefEntity['objects'][number]; onOpen:
     <button
       type="button"
       onClick={onOpen}
-      className="group flex w-full items-stretch gap-3 rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] p-2.5 text-left shadow-sm transition-transform hover:-translate-y-0.5 hover:border-[#06B6D4]"
+      className="group flex w-full items-stretch gap-3 rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-2.5 text-left shadow-sm transition-transform hover:-translate-y-0.5 hover:border-[#06B6D4]"
     >
       {o.imageUrl ? (
         <img
@@ -115,7 +115,7 @@ function ContentCard({ o, onOpen }: { o: BriefEntity['objects'][number]; onOpen:
           className="h-20 w-20 shrink-0 rounded-xl object-cover"
         />
       ) : (
-        <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#EFF1F4] to-[#E5E8EC] text-[#5A6472]">
+        <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#EFF1F4] to-[var(--brief-line)] text-[#5A6472]">
           <CalendarDays className="h-6 w-6" />
         </div>
       )}
@@ -130,7 +130,7 @@ function ContentCard({ o, onOpen }: { o: BriefEntity['objects'][number]; onOpen:
             </span>
           )}
         </div>
-        <h4 className="mt-0.5 line-clamp-2 text-[13px] font-semibold leading-snug text-[#0D1117] group-hover:text-[#4F46E5]">
+        <h4 className="mt-0.5 line-clamp-2 text-[13px] font-semibold leading-snug text-[var(--brief-ink)] group-hover:text-[#4F46E5]">
           {o.title}
         </h4>
         <p className="mt-0.5 truncate text-[10px] text-[rgba(13, 17, 23,0.62)]">
@@ -147,10 +147,10 @@ function Section({ title, count, children }: { title: string; count: number; chi
   return (
     <section aria-label={title}>
       <div className="mb-2 flex items-center gap-2">
-        <h3 className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#0D1117]">
+        <h3 className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--brief-ink)]">
           {title}
         </h3>
-        <span className="rounded-full bg-[#F0F2F5] px-2 py-0.5 text-[10px] font-bold text-[#4F46E5]">
+        <span className="rounded-full bg-[color:var(--color-well)] px-2 py-0.5 text-[10px] font-bold text-[#4F46E5]">
           {count}
         </span>
       </div>
@@ -226,19 +226,19 @@ export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, on
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col justify-end overflow-hidden bg-[#0D1117]/85 backdrop-blur-md sm:justify-center sm:p-4"
+      className="fixed inset-0 z-50 flex flex-col justify-end overflow-hidden bg-[rgba(36, 28, 18, 0.85)] backdrop-blur-md sm:justify-center sm:p-4"
       onClick={onClose}
     >
       <div
-        className="flex h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl border border-[#E5E8EC] bg-[#FFFFFF] shadow-2xl mb-safe sm:h-[88vh] sm:rounded-3xl"
+        className="flex h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] shadow-2xl mb-safe sm:h-[88vh] sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between gap-2 border-b border-[#E5E8EC] px-4 py-3">
+        <div className="flex items-center justify-between gap-2 border-b border-[var(--brief-line)] px-4 py-3">
           <button
             type="button"
             onClick={onClose}
-            className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[12px] font-bold text-[#0D1117] transition-colors hover:bg-[#F0F2F5]"
+            className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[12px] font-bold text-[var(--brief-ink)] transition-colors hover:bg-[color:var(--color-well)]"
           >
             <ArrowLeft className="h-4 w-4" /> Back
           </button>
@@ -246,7 +246,7 @@ export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, on
             <button
               type="button"
               onClick={share}
-              className="flex items-center gap-1.5 rounded-full border border-[#E5E8EC] bg-[#FFFFFF] px-2.5 py-1.5 text-[11px] font-bold text-[#0D1117] transition-colors hover:bg-[#F0F2F5]"
+              className="flex items-center gap-1.5 rounded-full border border-[var(--brief-line)] bg-[color:var(--color-paper)] px-2.5 py-1.5 text-[11px] font-bold text-[var(--brief-ink)] transition-colors hover:bg-[color:var(--color-well)]"
             >
               <Share2 className="h-3.5 w-3.5" />
               {copied ? 'Link copied' : 'Share'}
@@ -256,7 +256,7 @@ export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, on
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="rounded-full p-2 text-[#0D1117] transition-colors hover:bg-[#F0F2F5]"
+            className="rounded-full p-2 text-[var(--brief-ink)] transition-colors hover:bg-[color:var(--color-well)]"
           >
             <X className="h-4 w-4" />
           </button>
@@ -272,10 +272,10 @@ export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, on
 
           {status === 'notfound' && (
             <div className="flex flex-col items-center justify-center gap-2 px-6 py-24 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F0F2F5] text-[#4F46E5]">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[color:var(--color-well)] text-[#4F46E5]">
                 <Users className="h-7 w-7" />
               </div>
-              <h3 className="text-[16px] font-bold text-[#0D1117]">This entity isn't on Brief</h3>
+              <h3 className="text-[16px] font-bold text-[var(--brief-ink)]">This entity isn't on Brief</h3>
               <p className="max-w-xs text-[12px] leading-relaxed text-[rgba(13, 17, 23,0.62)]">
                 There's no public profile behind this link. It may be private, or the
                 information behind it may no longer be on Brief.
@@ -285,11 +285,11 @@ export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, on
 
           {status === 'error' && (
             <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
-              <p className="text-[13px] font-semibold text-[#0D1117]">Couldn't load this page</p>
+              <p className="text-[13px] font-semibold text-[var(--brief-ink)]">Couldn't load this page</p>
               <button
                 type="button"
                 onClick={load}
-                className="rounded-full bg-[#4F46E5] px-4 py-2 text-[12px] font-bold text-[#0D1117]"
+                className="rounded-full bg-[#4F46E5] px-4 py-2 text-[12px] font-bold text-[var(--accent-ink)]"
               >
                 Try again
               </button>
@@ -302,10 +302,10 @@ export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, on
               {entity.imageUrl ? (
                 <div className="relative h-44 sm:h-56">
                   <img src={entity.imageUrl} alt="" aria-hidden="true" className="h-full w-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0D1117]/90 via-[#0D1117]/20 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[rgba(36, 28, 18, 0.90)] via-[rgba(36, 28, 18, 0.20)] to-transparent" />
                 </div>
               ) : (
-                <div className="relative h-32 bg-gradient-to-br from-[#EFF1F4] via-[#F0F2F5] to-[#E5E8EC] sm:h-40">
+                <div className="relative h-32 bg-gradient-to-br from-[#EFF1F4] via-[var(--color-well)] to-[var(--brief-line)] sm:h-40">
                   <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 20% 30%, #06B6D4 0, transparent 45%), radial-gradient(circle at 80% 70%, #4F46E5 0, transparent 40%)' }} />
                 </div>
               )}
@@ -314,24 +314,24 @@ export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, on
               <div className="relative px-4 sm:px-6">
                 <div className="-mt-8 flex flex-wrap items-end gap-3">
                   {entity.imageUrl ? (
-                    <img src={entity.imageUrl} alt="" aria-hidden="true" className="h-16 w-16 rounded-2xl border-2 border-[#FFFFFF] bg-[#FFFFFF] object-cover shadow-lg" />
+                    <img src={entity.imageUrl} alt="" aria-hidden="true" className="h-16 w-16 rounded-2xl border-2 border-[var(--color-paper)] bg-[color:var(--color-paper)] object-cover shadow-lg" />
                   ) : (
-                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-[#FFFFFF] bg-gradient-to-br from-[#4F46E5] to-[#EFF1F4] text-[#0D1117] shadow-lg">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-[var(--color-paper)] bg-gradient-to-br from-[#4F46E5] to-[#EFF1F4] text-[var(--brief-ink)] shadow-lg">
                       {kindMeta.icon}
                     </div>
                   )}
                   <div className="flex-1 pb-1">
                     <div className="flex items-center gap-2">
-                      <span className="rounded-full bg-[#F0F2F5] px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.12em] text-[#4F46E5]">
+                      <span className="rounded-full bg-[color:var(--color-well)] px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.12em] text-[#4F46E5]">
                         {kindMeta.label}
                       </span>
                       {entity.category && entity.category !== entity.kind && (
-                        <span className="rounded-full bg-[#F0F2F5] px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.12em] text-[#4F46E5]">
+                        <span className="rounded-full bg-[color:var(--color-well)] px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.12em] text-[#4F46E5]">
                           {entity.category}
                         </span>
                       )}
                     </div>
-                    <h2 className="mt-1 text-[22px] font-extrabold leading-tight text-[#0D1117]">
+                    <h2 className="mt-1 text-[22px] font-extrabold leading-tight text-[var(--brief-ink)]">
                       {entity.name}
                     </h2>
                   </div>
@@ -341,8 +341,8 @@ export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, on
                     disabled={busy}
                     className={`mb-1 flex items-center gap-1.5 rounded-full px-4 py-2.5 text-[13px] font-bold transition-colors ${
                       entity.isFollowed
-                        ? 'border border-[#06B6D4]/40 bg-[#F0F2F5] text-[#4F46E5] hover:bg-[#EFF1F4]'
-                        : 'bg-[#4F46E5] text-[#0D1117] hover:bg-[#EFF1F4]'
+                        ? 'border border-[#06B6D4]/40 bg-[color:var(--color-well)] text-[#4F46E5] hover:bg-[#EFF1F4]'
+                        : 'bg-[#4F46E5] text-[var(--accent-ink)] hover:bg-[#EFF1F4]'
                     }`}
                   >
                     {entity.isFollowed ? (<><Check className="h-4 w-4" /> Following</>) : 'Follow'}
@@ -355,7 +355,7 @@ export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, on
                     <button
                       type="button"
                       onClick={() => onOpenLocation?.(entity.location?.area ?? entity.location?.county ?? '')}
-                      className="flex items-center gap-1 rounded-full bg-[#F0F2F5] px-2 py-0.5 text-[10px] font-bold text-[#4F46E5] transition-colors hover:bg-[#4F46E5] hover:text-[#0D1117]"
+                      className="flex items-center gap-1 rounded-full bg-[color:var(--color-well)] px-2 py-0.5 text-[10px] font-bold text-[#4F46E5] transition-colors hover:bg-[#4F46E5] hover:text-[var(--accent-ink)]"
                       title={`Explore ${entity.location.area ?? entity.location.county}`}
                     >
                       <MapPin className="h-3.5 w-3.5" />
@@ -389,7 +389,7 @@ export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, on
                 )}
 
                 {entity.summary && (
-                  <p className="mt-3 text-[13px] leading-relaxed text-[#0D1117]">{entity.summary}</p>
+                  <p className="mt-3 text-[13px] leading-relaxed text-[var(--brief-ink)]">{entity.summary}</p>
                 )}
                 {entity.description && entity.description !== entity.summary && (
                   <p className="mt-2 text-[12px] leading-relaxed text-[rgba(13, 17, 23,0.62)]">
@@ -428,7 +428,7 @@ export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, on
                     </div>
                     <div className="grid gap-2 sm:grid-cols-2">
                       {groups.expired.map((o) => (
-                        <div key={o.id} className="rounded-2xl border border-[#E5E8EC]/60 bg-[#F0F2F5]/50 p-3">
+                        <div key={o.id} className="rounded-2xl border border-[rgba(228, 218, 203, 0.60)] bg-[rgba(240, 233, 222, 0.50)] p-3">
                           <p className="line-through text-[12px] font-semibold text-[rgba(13, 17, 23,0.55)]">{o.title}</p>
                           <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[rgba(13, 17, 23,0.45)]">Expired</p>
                         </div>
@@ -438,7 +438,7 @@ export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, on
                 )}
 
                 {groups.upcoming.length + groups.active.length + groups.latest.length === 0 && (
-                  <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[#E5E8EC] px-6 py-10 text-center">
+                  <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[var(--brief-line)] px-6 py-10 text-center">
                     <Clock className="h-6 w-6 text-[rgba(13, 17, 23,0.4)]" />
                     <p className="text-[12px] font-semibold text-[rgba(13, 17, 23,0.62)]">
                       Nothing current right now — follow this {kindMeta.label.toLowerCase()} and

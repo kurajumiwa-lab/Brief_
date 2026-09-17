@@ -55,13 +55,14 @@ const check = (n, c, d = '') => { if (c) { pass++; console.log('  PASS  ' + n); 
 
   console.log('=== one app, two purposes: Menu navigates ===');
   check('the header says what the page is for', body().includes('Your shortcuts, tools and account'));
-  check('the sheet is the light surface, not dark navy', Boolean(document.querySelector('.bg-\\[\\#EFF1F4\\]')), 'no light-surface sheet class');
+  check('the sheet is the light surface, not dark navy', Boolean(document.querySelector('.bg-\\[color\\:var\\(--surface-3\\)\\]')), 'no light-surface sheet token');
 
   console.log('\n=== two-thirds sheet, the app still visible behind ===');
   const sheet = document.querySelector('.h-\\[2\\/3\\]') ?? document.querySelector('.h-2\\/3');
   check('the Menu occupies exactly two-thirds of the screen', Boolean(sheet), 'no h-2/3 element');
   const scrim = Array.from(document.querySelectorAll('button')).find((b) => /dismiss/i.test(b.getAttribute('aria-label') ?? ''));
-  check('the remaining third is a see-through scrim over the live app', Boolean(scrim) && (scrim.className.includes('/25') || scrim.className.includes('/20')), scrim?.className);
+  check('the remaining third is a see-through scrim over the live app',
+    Boolean(scrim) && (/rgba\(36, 28, 18, 0\.2\d?\)/.test(scrim.className) || /\/2[05]/.test(scrim.className)), scrim?.className);
   check('the scrim closes the Menu on tap (the natural dismissal)', Boolean(scrim));
   check('no opaque blackout anywhere — the underlying screen is SEEN', !Array.from(document.querySelectorAll('[class*="bg-black"]')).length, 'found a bg-black element');
   check('no neon green anywhere on the page', !body().includes('#00DF8F') && !document.querySelector('[class*="00DF8F"]'));

@@ -102,7 +102,7 @@ export function TransportRail({ className = '' }: { className?: string }) {
 
   if (failed) {
     return (
-      <p className="text-[12px] font-bold" role="alert" style={{ color: '#E53935' }}>
+      <p className="text-[12px] font-bold" role="alert" style={{ color: 'var(--color-danger)' }}>
         {failed}{' '}
         <button type="button" onClick={() => void load()} className="underline cursor-pointer">Retry</button>
       </p>
@@ -115,18 +115,18 @@ export function TransportRail({ className = '' }: { className?: string }) {
   return (
     <section className={`space-y-3 ${className}`} aria-label="Transport in motion">
       <div className="flex items-baseline justify-between">
-        <h3 className="text-[11px] font-black uppercase tracking-wider" style={{ color: '#0A0A0A' }}>
+        <h3 className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>
           In motion
         </h3>
-        <button type="button" onClick={() => void load()} className="text-[10px] font-mono cursor-pointer" style={{ color: '#9CA3AF' }}>
+        <button type="button" onClick={() => void load()} className="text-[10px] font-mono cursor-pointer" style={{ color: 'var(--color-quiet)' }}>
           re-read
         </button>
       </div>
 
-      {error && <p className="text-[11px] font-bold" role="alert" style={{ color: '#E53935' }}>{error}</p>}
+      {error && <p className="text-[11px] font-bold" role="alert" style={{ color: 'var(--color-danger)' }}>{error}</p>}
 
       {openCargo.length === 0 && livePickups.length === 0 ? (
-        <p className="text-[12px] p-3 rounded-2xl" style={{ background: '#F4F4F7', color: '#6B7280' }}>
+        <p className="text-[12px] p-3 rounded-2xl" style={{ background: 'var(--color-well)', color: 'var(--brief-muted)' }}>
           Nothing is with a carrier right now. A parcel appears here the moment you log a dispatch on a space,
           and a pickup appears when one is routed to you.
         </p>
@@ -135,14 +135,14 @@ export function TransportRail({ className = '' }: { className?: string }) {
           {openCargo.map((d) => {
             const idx = STAGES.indexOf(d.status);
             return (
-              <li key={d.id} className="p-3 rounded-2xl border" style={{ borderColor: '#E5E7EB', background: '#fff' }}>
+              <li key={d.id} className="p-3 rounded-2xl border" style={{ borderColor: 'transparent', background: 'var(--color-paper)' }}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="text-[13px] font-bold truncate inline-flex items-center gap-1.5" style={{ color: '#0A0A0A' }}>
+                    <p className="text-[13px] font-bold truncate inline-flex items-center gap-1.5" style={{ color: 'var(--brief-ink)' }}>
                       <Truck className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--color-primary)' }} />
                       {d.destinationTown} · {d.destinationCounty}
                     </p>
-                    <p className="text-[11px] truncate mt-0.5" style={{ color: '#6B7280' }}>
+                    <p className="text-[11px] truncate mt-0.5" style={{ color: 'var(--brief-muted)' }}>
                       {d.carrierSacco} → {d.receiverName}
                       {d.stageFeeKes ? ` · stage fee KES ${d.stageFeeKes.toLocaleString('en-KE')}` : ''}
                       {` · moved ${ago(d.updatedAt) ?? '—'}`}
@@ -164,7 +164,7 @@ export function TransportRail({ className = '' }: { className?: string }) {
                       key={s}
                       title={STAGE_LABEL[s]}
                       className="flex-1 h-1.5 rounded-full"
-                      style={{ background: i <= idx ? 'var(--color-primary)' : '#E5E7EB' }}
+                      style={{ background: i <= idx ? 'var(--color-primary)' : 'var(--brief-line)' }}
                     />
                   ))}
                 </div>
@@ -181,7 +181,7 @@ export function TransportRail({ className = '' }: { className?: string }) {
                     {idx >= STAGES.length - 1 ? 'Collected' : `Mark “${STAGE_LABEL[STAGES[idx + 1]]}”`}
                   </button>
                 </div>
-                <p className="text-[10px] mt-1.5" style={{ color: '#9CA3AF' }}>
+                <p className="text-[10px] mt-1.5" style={{ color: 'var(--color-quiet)' }}>
                   No ETA and no live position: Brief has no carrier feed to read. A stage changes when someone who
                   handled the parcel says so.
                 </p>
@@ -190,14 +190,14 @@ export function TransportRail({ className = '' }: { className?: string }) {
           })}
 
           {livePickups.map((p) => (
-            <li key={p.id} className="p-3 rounded-2xl border" style={{ borderColor: '#E5E7EB', background: '#fff' }}>
+            <li key={p.id} className="p-3 rounded-2xl border" style={{ borderColor: 'transparent', background: 'var(--color-paper)' }}>
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="text-[13px] font-bold truncate inline-flex items-center gap-1.5" style={{ color: '#0A0A0A' }}>
+                  <p className="text-[13px] font-bold truncate inline-flex items-center gap-1.5" style={{ color: 'var(--brief-ink)' }}>
                     <Bike className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--color-primary)' }} />
                     Pickup for {p.destinationTown}
                   </p>
-                  <p className="text-[11px] truncate mt-0.5" style={{ color: '#6B7280' }}>
+                  <p className="text-[11px] truncate mt-0.5" style={{ color: 'var(--brief-muted)' }}>
                     receiver {p.receiverName} · {p.status.replace('_', ' ')} · assigned {ago(p.createdAt) ?? '—'}
                   </p>
                 </div>
@@ -211,13 +211,13 @@ export function TransportRail({ className = '' }: { className?: string }) {
                   <Check className="w-3.5 h-3.5" /> Delivered
                 </button>
               </div>
-              {p.notes && <p className="text-[11px] mt-1.5" style={{ color: '#6B7280' }}>{p.notes}</p>}
+              {p.notes && <p className="text-[11px] mt-1.5" style={{ color: 'var(--brief-muted)' }}>{p.notes}</p>}
             </li>
           ))}
         </ul>
       )}
 
-      <p className="text-[10px] inline-flex items-center gap-1" style={{ color: '#9CA3AF' }}>
+      <p className="text-[10px] inline-flex items-center gap-1" style={{ color: 'var(--color-quiet)' }}>
         <Package className="w-3 h-3" /> Cargo comes from your spaces&rsquo; dispatch logs ({(spaces ?? []).length} space
         {(spaces ?? []).length === 1 ? '' : 's'} read); pickups come from what is routed to you.
       </p>

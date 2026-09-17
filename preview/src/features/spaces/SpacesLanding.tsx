@@ -6,6 +6,8 @@ import { CreateSpaceModal } from './CreateSpaceModal';
 import { splitSpaces } from '../home/spaceSignals';
 import { soundEngine } from '../../utils/SoundEngine';
 
+import { roomSurface, PHOTO_FILTER } from '../city/room';
+
 // ---------------------------------------------------------------------------
 // SPACES LANDING — the street your shopfront sits on.
 //
@@ -58,10 +60,10 @@ export function SpacesLanding({
         <p className="text-[11px] font-black uppercase tracking-[0.2em]" style={{ color: 'var(--color-primary)' }}>
           Spaces
         </p>
-        <h1 className="text-2xl sm:text-3xl font-black tracking-tight" style={{ color: '#0A0A0A' }}>
+        <h1 className="text-2xl sm:text-3xl font-black tracking-tight" style={{ color: 'var(--brief-ink)' }}>
           Your shopfronts
         </h1>
-        <p className="text-sm" style={{ color: '#6B7280' }}>
+        <p className="text-sm" style={{ color: 'var(--brief-muted)' }}>
           A space is a business kept as a file: hours, the counter, the inbox, the money. {openItems > 0
             ? `${openItems} item${openItems === 1 ? '' : 's'} in your space files need a look.`
             : 'Nothing is waiting on you.'}
@@ -70,16 +72,16 @@ export function SpacesLanding({
 
       <section className="space-y-2" aria-label="Your spaces">
         {!mine ? (
-          <p className="text-xs" style={{ color: '#6B7280' }}>Reading your spaces…</p>
+          <p className="text-xs" style={{ color: 'var(--brief-muted)' }}>Reading your spaces…</p>
         ) : mineError ? (
-          <p className="text-[12px] font-bold" role="alert" style={{ color: '#E53935' }}>
+          <p className="text-[12px] font-bold" role="alert" style={{ color: 'var(--color-danger)' }}>
             {mineError}{' '}
             <button type="button" onClick={load} className="underline cursor-pointer">Retry</button>
           </p>
         ) : active.length === 0 ? (
-          <div className="p-8 rounded-3xl bg-white border border-dashed text-center space-y-2" style={{ borderColor: '#E5E7EB' }}>
-            <p className="text-sm font-bold" style={{ color: '#0A0A0A' }}>No space yet.</p>
-            <p className="text-[12px]" style={{ color: '#6B7280' }}>
+          <div className="p-8 rounded-3xl bg-[color:var(--color-paper)] border border-dashed text-center space-y-2" style={{ boxShadow: 'var(--room-light), var(--lift-1)' }}>
+            <p className="text-sm font-bold" style={{ color: 'var(--brief-ink)' }}>No space yet.</p>
+            <p className="text-[12px]" style={{ color: 'var(--brief-muted)' }}>
               A space is your project — a bakery, a stall, a fund. It stays a file the pipeline can read, not
               a page you post to.
             </p>
@@ -99,15 +101,17 @@ export function SpacesLanding({
                 key={s.id}
                 type="button"
                 onClick={() => { soundEngine.play('tap'); onOpenSpace(s.id); }}
-                className="text-left rounded-2xl overflow-hidden border bg-white cursor-pointer transition-shadow hover:shadow-md"
-                style={{ borderColor: '#E5E7EB' }}
+                className="text-left rounded-2xl overflow-hidden bg-[color:var(--color-paper)] cursor-pointer brief-lift-2"
               >
-                <div className="h-[76px]" style={{ background: 'linear-gradient(135deg, #4F46E5, #22D3EE)' }}>
-                  {s.image ? <img src={s.image} alt="" className="w-full h-full object-cover" /> : null}
+                {/* The cover is the room's plaster with the accent at 7% — a shop
+                    with no photograph has a WAITING cover, not somebody else's
+                    stock image and not a cold gradient swatch. */}
+                <div className="h-[76px]" style={{ background: roomSurface() }}>
+                  {s.image ? <img src={s.image} alt="" className="w-full h-full object-cover" style={{ filter: PHOTO_FILTER }} /> : null}
                 </div>
                 <div className="p-3">
-                  <p className="text-[14px] font-bold truncate" style={{ color: '#0A0A0A' }}>{s.name}</p>
-                  <p className="text-[11px] truncate mt-0.5" style={{ color: '#6B7280' }}>
+                  <p className="text-[14px] font-bold truncate" style={{ color: 'var(--brief-ink)' }}>{s.name}</p>
+                  <p className="text-[11px] truncate mt-0.5" style={{ color: 'var(--brief-muted)' }}>
                     {s.metrics?.offersCount ?? 0} live offer{s.metrics?.offersCount === 1 ? '' : 's'}
                     {s.visibility === 'public' ? ' · public' : ' · private'}
                   </p>
@@ -141,14 +145,14 @@ export function SpacesLanding({
       <section className="space-y-2" aria-label="Spaces you follow">
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4" style={{ color: 'var(--color-primary)' }} />
-          <h2 className="text-[11px] font-black uppercase tracking-wider" style={{ color: '#0A0A0A' }}>
+          <h2 className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>
             Spaces you follow
           </h2>
         </div>
         {!following ? (
-          <p className="text-xs" style={{ color: '#6B7280' }}>Reading your follows…</p>
+          <p className="text-xs" style={{ color: 'var(--brief-muted)' }}>Reading your follows…</p>
         ) : following.length === 0 ? (
-          <p className="text-[12px]" style={{ color: '#6B7280' }}>
+          <p className="text-[12px]" style={{ color: 'var(--brief-muted)' }}>
             You follow nobody yet. Follow a shop from its page and its updates land in your notifications.
           </p>
         ) : (
@@ -158,12 +162,11 @@ export function SpacesLanding({
                 <button
                   type="button"
                   onClick={() => { soundEngine.play('tap'); s.slug && onOpenPublicSpace?.(s.slug); }}
-                  className="w-full text-left p-3 rounded-2xl border bg-white flex items-center gap-3 cursor-pointer"
-                  style={{ borderColor: '#E5E7EB' }}
-                >
+                  className="w-full text-left p-3 rounded-2xl bg-[color:var(--color-paper)] flex items-center gap-3 cursor-pointer brief-lift-1"
+                                  >
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[13px] font-bold truncate" style={{ color: '#0A0A0A' }}>{s.name}</span>
-                    <span className="block text-[11px] font-mono truncate" style={{ color: '#6B7280' }}>
+                    <span className="block text-[13px] font-bold truncate" style={{ color: 'var(--brief-ink)' }}>{s.name}</span>
+                    <span className="block text-[11px] font-mono truncate" style={{ color: 'var(--brief-muted)' }}>
                       {s.followers ?? 0} follow · {s.activeOfferCount} offer{s.activeOfferCount === 1 ? '' : 's'}
                       {(s.broadcasts?.length ?? 0) > 0 && ' · update up'}
                     </span>
@@ -171,7 +174,7 @@ export function SpacesLanding({
                   {(s.broadcasts?.length ?? 0) > 0 && (
                     <Radio className="w-4 h-4 shrink-0" style={{ color: 'var(--color-primary)' }} />
                   )}
-                  <ArrowRight className="w-4 h-4 shrink-0" style={{ color: '#9CA3AF' }} />
+                  <ArrowRight className="w-4 h-4 shrink-0" style={{ color: 'var(--color-quiet)' }} />
                 </button>
               </li>
             ))}
@@ -190,12 +193,16 @@ export function SpacesLanding({
   );
 }
 
+// The derived maintenance state, in the room's own semantic colours — never a
+// neon green / purple / amber borrowed from another theme. State is a label on a
+// fact (a count of hours since the last real edit); it carries no privilege, no
+// rank and no enforcement, so it gets no costume either.
 function stateColor(state?: string | null) {
-  if (state === 'fresh') return '#00C853';
-  if (state === 'active') return '#5B4CFF';
-  if (state === 'stale') return '#F59E0B';
-  if (state === 'dormant') return '#E53935';
-  return '#6B7280';
+  if (state === 'fresh') return 'var(--color-success)';
+  if (state === 'active') return 'var(--color-primary)';
+  if (state === 'stale') return 'var(--color-warning)';
+  if (state === 'dormant') return 'var(--color-danger)';
+  return 'var(--brief-muted)';
 }
 
 export default SpacesLanding;

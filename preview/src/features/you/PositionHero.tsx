@@ -164,7 +164,7 @@ export function PositionHero({
   return (
     <section
       className={`rounded-2xl border overflow-hidden ${className}`}
-      style={{ borderColor: 'var(--color-border)', background: '#fff' }}
+      style={{ borderColor: 'var(--color-border)', background: 'var(--color-paper)' }}
       aria-label="Your position"
     >
       {/* Hero band */}

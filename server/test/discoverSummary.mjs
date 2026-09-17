@@ -191,5 +191,25 @@ await test("API: the summary is public, is a read, and reflects a new listing im
   }
 });
 
+await test("a feed row carries its own timestamp and nothing else about time", () => {
+  const s = discoverSummary({});
+  assert.equal(s.tiles.length, 4, "four tiles, from one key, not a duplicated literal");
+  assert.deepEqual(Object.keys(s).filter((k) => k === "tiles").length, 1, "the payload declares `tiles` exactly once");
+  const listing = s.feed.find((f) => f.kind === "listing");
+  assert.ok(listing, "a listing is on the feed");
+  assert.ok(typeof listing.listedAt === "string" && Number.isFinite(Date.parse(listing.listedAt)),
+    "listedAt is the row's own createdAt — the surface may print an age");
+  const row = store.filter("listings", (l) => l.id === listing.id)[0];
+  assert.equal(listing.listedAt, row.createdAt,
+    "and it is THAT field verbatim: no now(), no rounding, no invented date");
+  const event = s.feed.find((f) => f.kind === "event");
+  if (event) {
+    assert.ok(event.listedAt === null || Number.isFinite(Date.parse(event.listedAt)),
+      "an event's stamp is its publishedAt/startsAt, or nothing at all");
+  }
+  assert.ok(!s.feed.some((f) => "views" in f || "saves" in f || "rank" in f || "score" in f),
+    "no field pretends to measure interest a listing cannot have");
+});
+
 console.log(`\nPASS ${count}`);
 process.exit(0);

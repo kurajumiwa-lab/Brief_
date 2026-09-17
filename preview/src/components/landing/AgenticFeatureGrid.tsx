@@ -40,7 +40,7 @@ export const AgenticFeatureGrid: React.FC<AgenticFeatureGridProps> = ({
     <div className={`grid grid-cols-1 md:grid-cols-3 gap-5 ${className}`}>
       {/* ── CARD 1: CBC & BULK RUNS ── */}
       <div 
-        className="rounded-[28px] sm:rounded-[32px] p-5 sm:p-6 flex flex-col justify-between transition-all duration-300 hover:shadow-lg bg-[#F4F7F2] text-[#1A1F2E]"
+        className="rounded-[28px] sm:rounded-[32px] p-5 sm:p-6 flex flex-col justify-between transition-all duration-300 hover:shadow-lg bg-[#F4F7F2] text-[var(--brief-ink)]"
       >
         <div className="space-y-4">
           {/* Top Interactive Mock Window */}
@@ -74,13 +74,13 @@ export const AgenticFeatureGrid: React.FC<AgenticFeatureGridProps> = ({
           </div>
 
           <div className="space-y-1.5 pt-1">
-            <span className="text-xs font-bold text-[#6B7280] tracking-wide block">
+            <span className="text-xs font-bold text-[var(--brief-muted)] tracking-wide block">
               Let your schools coordinate
             </span>
             <h3 className="text-xl sm:text-2xl font-black text-[#0C221F] tracking-tight leading-tight">
               Agentic CBC Books
             </h3>
-            <p className="text-xs sm:text-sm text-[#4B5563] leading-relaxed">
+            <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] leading-relaxed">
               Publish bulk orders faster and keep every classroom equipped with direct school-gate delivery automatically.
             </p>
           </div>
@@ -102,7 +102,7 @@ export const AgenticFeatureGrid: React.FC<AgenticFeatureGridProps> = ({
 
       {/* ── CARD 2: CIRCLE TABLE BANKING ── */}
       <div 
-        className="rounded-[28px] sm:rounded-[32px] p-5 sm:p-6 flex flex-col justify-between transition-all duration-300 hover:shadow-lg bg-[#F4F7F2] text-[#1A1F2E]"
+        className="rounded-[28px] sm:rounded-[32px] p-5 sm:p-6 flex flex-col justify-between transition-all duration-300 hover:shadow-lg bg-[#F4F7F2] text-[var(--brief-ink)]"
       >
         <div className="space-y-4">
           {/* Top Interactive Mock Window */}
@@ -132,13 +132,13 @@ export const AgenticFeatureGrid: React.FC<AgenticFeatureGridProps> = ({
           </div>
 
           <div className="space-y-1.5 pt-1">
-            <span className="text-xs font-bold text-[#6B7280] tracking-wide block">
+            <span className="text-xs font-bold text-[var(--brief-muted)] tracking-wide block">
               Turn collective trust into capital
             </span>
             <h3 className="text-xl sm:text-2xl font-black text-[#0C221F] tracking-tight leading-tight">
               Circle Table Banking
             </h3>
-            <p className="text-xs sm:text-sm text-[#4B5563] leading-relaxed">
+            <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] leading-relaxed">
               Continuously pool savings, issue micro-loans, and optimize rotational payouts with instant M-Pesa ledgers.
             </p>
           </div>
@@ -160,7 +160,7 @@ export const AgenticFeatureGrid: React.FC<AgenticFeatureGridProps> = ({
 
       {/* ── CARD 3: WAIRO 47-COUNTY FREIGHT ── */}
       <div 
-        className="rounded-[28px] sm:rounded-[32px] p-5 sm:p-6 flex flex-col justify-between transition-all duration-300 hover:shadow-lg bg-[#F4F7F2] text-[#1A1F2E]"
+        className="rounded-[28px] sm:rounded-[32px] p-5 sm:p-6 flex flex-col justify-between transition-all duration-300 hover:shadow-lg bg-[#F4F7F2] text-[var(--brief-ink)]"
       >
         <div className="space-y-4">
           {/* Top Interactive Mock Window */}
@@ -190,13 +190,13 @@ export const AgenticFeatureGrid: React.FC<AgenticFeatureGridProps> = ({
           </div>
 
           <div className="space-y-1.5 pt-1">
-            <span className="text-xs font-bold text-[#6B7280] tracking-wide block">
+            <span className="text-xs font-bold text-[var(--brief-muted)] tracking-wide block">
               Put freight networks to work
             </span>
             <h3 className="text-xl sm:text-2xl font-black text-[#0C221F] tracking-tight leading-tight">
               WAIRO Cargo Freight
             </h3>
-            <p className="text-xs sm:text-sm text-[#4B5563] leading-relaxed">
+            <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] leading-relaxed">
               Automate cross-county deliveries, eliminate empty return trips, and scale cargo freight without friction.
             </p>
           </div>

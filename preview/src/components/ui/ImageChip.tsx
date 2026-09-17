@@ -32,7 +32,7 @@ export const ImageChip: React.FC<ImageChipProps> = ({
       type="button"
       onClick={handleClick}
       className={`inline-flex items-center space-x-1.5 px-4 py-2.5 rounded-full text-xs font-semibold transition-all duration-200 cursor-pointer select-none active:scale-95 ${
-        isSelected ? 'text-white' : 'text-[#6B7280] hover:text-[#1A1F2E]'
+        isSelected ? 'text-white' : 'text-[var(--brief-muted)] hover:text-[var(--brief-ink)]'
       } ${className}`}
       style={{
         backgroundColor: isSelected

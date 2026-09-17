@@ -284,7 +284,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             </div>
 
             {/* Active Space Selector Pill */}
-            <div className="p-2.5 rounded-2xl bg-white border border-black/5 shadow-2xs flex items-center justify-between cursor-pointer hover:border-black/15 transition-all">
+            <div className="p-2.5 rounded-2xl bg-[color:var(--color-paper)] border border-black/5 shadow-2xs flex items-center justify-between cursor-pointer hover:border-black/15 transition-all">
               <div className="flex items-center space-x-2 min-w-0">
                 <span className="w-2 h-2 rounded-full bg-[color:var(--color-primary)] shrink-0" />
                 <span className="text-xs font-black text-[color:var(--color-text)] truncate">

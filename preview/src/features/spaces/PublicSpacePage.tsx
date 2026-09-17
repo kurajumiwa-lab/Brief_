@@ -3,6 +3,8 @@ import { ArrowLeft, Bell, MessageCircle, Radio } from 'lucide-react';
 import * as briefApi from '../../api/briefApi';
 import type { PublicSpace } from '../../api/types';
 import { soundEngine } from '../../utils/SoundEngine';
+import { roomSurface, PHOTO_FILTER } from '../city/room';
+import { NoPhotoPlate } from '../city/NoPhotoPlate';
 
 // ---------------------------------------------------------------------------
 // PUBLIC SPACE PAGE — what a shared link actually opens.
@@ -88,13 +90,13 @@ export function PublicSpacePage({
   };
 
   if (status === 'loading') {
-    return <p className="text-xs" style={{ color: '#6B7280' }}>Opening the shop…</p>;
+    return <p className="text-xs" style={{ color: 'var(--brief-muted)' }}>Opening the shop…</p>;
   }
   if (status === 'gone' || status === 'error') {
     return (
       <div className={`p-6 text-center space-y-2 ${className}`}>
         <p className="text-sm font-bold">This shop is not open here.</p>
-        <p className="text-[12px]" style={{ color: '#6B7280' }}>
+        <p className="text-[12px]" style={{ color: 'var(--brief-muted)' }}>
           {status === 'gone'
             ? 'That space is private, unlisted, archived, or the link is wrong. A private space is not hidden-but-findable — it is not here.'
             : 'Brief could not read it just now. Nothing is shown in its place.'}
@@ -113,29 +115,31 @@ export function PublicSpacePage({
 
   return (
     <div className={`max-w-2xl mx-auto space-y-4 ${className}`}>
-      <header className="rounded-3xl overflow-hidden border" style={{ borderColor: '#E5E7EB', background: '#fff' }}>
-        <div className="h-[152px]" style={{ background: 'linear-gradient(135deg, #4F46E5, #22D3EE)' }}>
-          {s.image ? <img src={s.image} alt="" className="w-full h-full object-cover" /> : null}
+      <header className="rounded-3xl overflow-hidden brief-lift-2" style={{ background: 'var(--color-paper)' }}>
+        <div className="relative h-[152px]" style={{ background: roomSurface() }}>
+          {s.image ? <img src={s.image} alt="" className="w-full h-full object-cover" style={{ filter: PHOTO_FILTER }} /> : (
+            <NoPhotoPlate quiet />
+          )}
         </div>
         <div className="p-4 -mt-10">
           <div className="flex items-end justify-between gap-3">
             <div className="min-w-0">
-              <h1 className="text-[22px] font-extrabold leading-tight truncate" style={{ color: '#0A0A0A' }}>{s.name}</h1>
-              <p className="text-[13px]" style={{ color: '#6B7280' }}>{s.goal || `${s.type} on Brief`}</p>
-              <p className="text-[11px] font-medium mt-0.5" style={{ color: '#6B7280' }}>
+              <h1 className="text-[22px] font-extrabold leading-tight truncate" style={{ color: 'var(--brief-ink)' }}>{s.name}</h1>
+              <p className="text-[13px]" style={{ color: 'var(--brief-muted)' }}>{s.goal || `${s.type} on Brief`}</p>
+              <p className="text-[11px] font-medium mt-0.5" style={{ color: 'var(--brief-muted)' }}>
                 {[s.where, s.when].filter(Boolean).join(' · ') || 'Place and hours not stated'}
               </p>
             </div>
-            <span className="shrink-0 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full" style={{ background: '#EEEAFF', color: '#5B4CFF' }}>
+            <span className="shrink-0 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }}>
               {s.visibility}
             </span>
           </div>
 
           <div className="flex items-center gap-3 mt-3">
-            <p className="text-[13px] font-mono" style={{ color: '#0A0A0A' }}>
+            <p className="text-[13px] font-mono" style={{ color: 'var(--brief-ink)' }}>
               {audience?.followers ?? s.followers ?? 0} follow
             </p>
-            <span className="text-[13px] font-mono" style={{ color: '#0A0A0A' }}>
+            <span className="text-[13px] font-mono" style={{ color: 'var(--brief-ink)' }}>
               {s.activeOfferCount} offer{s.activeOfferCount === 1 ? '' : 's'}
             </span>
             <button
@@ -148,25 +152,25 @@ export function PublicSpacePage({
               <Bell className="w-4 h-4" /> {audience?.iAmFollowing ? 'Following' : 'Follow'}
             </button>
           </div>
-          {notice && <p role="status" className="text-[11px] font-bold mt-2" style={{ color: '#6B7280' }}>{notice}</p>}
+          {notice && <p role="status" className="text-[11px] font-bold mt-2" style={{ color: 'var(--brief-muted)' }}>{notice}</p>}
         </div>
       </header>
 
       {live.length > 0 && (
-        <section className="p-4 rounded-2xl" style={{ background: '#F4F4F7' }} aria-label="Latest update">
+        <section className="p-4 rounded-2xl" style={{ background: 'var(--color-well)' }} aria-label="Latest update">
           <p className="text-[9px] font-black uppercase tracking-wider inline-flex items-center gap-1" style={{ color: 'var(--color-primary)' }}>
             <Radio className="w-3 h-3" /> {live[0].kind}
           </p>
-          <p className="text-[14px] leading-snug mt-1" style={{ color: '#0A0A0A' }}>{live[0].text}</p>
+          <p className="text-[14px] leading-snug mt-1" style={{ color: 'var(--brief-ink)' }}>{live[0].text}</p>
         </section>
       )}
 
       <section className="space-y-2" aria-label="On the counter">
-        <h2 className="text-[11px] font-black uppercase tracking-wider" style={{ color: '#0A0A0A' }}>
+        <h2 className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>
           On the counter
         </h2>
         {s.sampleOffers.length === 0 ? (
-          <p className="text-[12px]" style={{ color: '#6B7280' }}>
+          <p className="text-[12px]" style={{ color: 'var(--brief-muted)' }}>
             Nothing is listed yet. The shop is open; the counter is empty.
           </p>
         ) : (
@@ -177,16 +181,16 @@ export function PublicSpacePage({
                 type="button"
                 onClick={() => o.id && onOpenOffer?.(o.id)}
                 disabled={!o.id}
-                className="text-left p-3 rounded-2xl border-2 bg-white cursor-pointer disabled:cursor-default"
-                style={{ borderColor: '#E5E7EB' }}
+                className="text-left p-3 rounded-2xl border-2 bg-[color:var(--color-paper)] cursor-pointer disabled:cursor-default"
+                style={{ borderColor: 'var(--brief-line)' }}
               >
                 {o.featured && (
                   <span className="text-[9px] font-black uppercase tracking-wider" style={{ color: 'var(--color-primary)' }}>
                     Pinned
                   </span>
                 )}
-                <p className="text-[13px] font-bold leading-snug" style={{ color: '#0A0A0A' }}>{o.title}</p>
-                <p className="text-[13px] font-mono mt-1" style={{ color: '#0A0A0A' }}>
+                <p className="text-[13px] font-bold leading-snug" style={{ color: 'var(--brief-ink)' }}>{o.title}</p>
+                <p className="text-[13px] font-mono mt-1" style={{ color: 'var(--brief-ink)' }}>
                   {o.currency} {Number(o.price).toLocaleString('en-KE')}
                 </p>
                 {o.id && <p className="text-[10px] mt-1 inline-flex items-center gap-1" style={{ color: 'var(--color-primary)' }}>
@@ -196,7 +200,7 @@ export function PublicSpacePage({
             ))}
           </div>
         )}
-        <p className="text-[10px] leading-snug" style={{ color: '#6B7280' }}>
+        <p className="text-[10px] leading-snug" style={{ color: 'var(--brief-muted)' }}>
           What you see here is what {s.name} chose to make public: prices and words. Their orders, customers and
           money stay in their own space.
         </p>

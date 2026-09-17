@@ -169,7 +169,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
   ];
 
   return (
-    <div className="relative min-h-screen w-full bg-[#E8E4DD] text-[#1A1F2E] font-sans overflow-x-hidden selection:bg-[#E8985E]/30">
+    <div className="relative min-h-screen w-full bg-[#E8E4DD] text-[var(--brief-ink)] font-sans overflow-x-hidden selection:bg-[#E8985E]/30">
       
       {/* ================= FLOATING DUAL BOOKMARKS (TOP-RIGHT) ================= */}
       <div className="fixed top-2 right-4 z-40 flex items-start space-x-1.5 pointer-events-auto">
@@ -199,7 +199,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
               L
             </div>
             <div className="flex flex-col">
-              <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#6B7280]">
+              <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--brief-muted)]">
                 AROUND YOU
               </span>
               <button
@@ -210,10 +210,10 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                 }}
                 className="flex items-center space-x-1.5 text-left group cursor-pointer"
               >
-                <h1 className="text-2xl font-black text-[#1A1F2E] leading-none tracking-tight group-hover:text-[#B8621F] transition-colors">
+                <h1 className="text-2xl font-black text-[var(--brief-ink)] leading-none tracking-tight group-hover:text-[#B8621F] transition-colors">
                   Home · {activeNeighborhood.name}
                 </h1>
-                <ChevronDown className="w-4 h-4 text-[#6B7280] group-hover:text-[#B8621F]" />
+                <ChevronDown className="w-4 h-4 text-[var(--brief-muted)] group-hover:text-[#B8621F]" />
               </button>
             </div>
           </div>
@@ -224,7 +224,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
               soundEngine.play('tap');
               setIsChampionModalOpen(true);
             }}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-white/80 hover:bg-white text-[#1A1F2E] text-xs font-black shadow-sm transition-transform active:scale-95 cursor-pointer"
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-white/80 hover:bg-white text-[var(--brief-ink)] text-xs font-black shadow-sm transition-transform active:scale-95 cursor-pointer"
           >
             <span className="text-sm">{activeNeighborhood.champion.avatar}</span>
             <span className="hidden sm:inline text-[11px]">{activeNeighborhood.champion.name}</span>
@@ -289,7 +289,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
         </div>
 
         {/* ── NEIGHBORHOOD 3KM MICRO-HUB LIVE BANNER ── */}
-        <div className="my-2 p-3.5 rounded-2xl bg-[#1A1F2E] text-white flex items-center justify-between shadow-sm">
+        <div className="my-2 p-3.5 rounded-2xl bg-[color:var(--brief-ink)] text-white flex items-center justify-between shadow-sm">
           <div className="flex items-center space-x-2.5 overflow-hidden">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
             <div className="space-y-0.5 min-w-0">
@@ -332,7 +332,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
 
         {/* ── SHARED SECTION SWITCHER ── */}
         <div className="py-2">
-          <div className="p-1 rounded-full bg-[#1A1F2E]/[0.07] flex items-center">
+          <div className="p-1 rounded-full bg-[color:var(--brief-ink)]/[0.07] flex items-center">
             {sections.map((sec, idx) => {
               const isSelected = selectedSection === idx;
               return (
@@ -345,8 +345,8 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                   }}
                   className={`flex-1 py-2.5 rounded-full text-xs font-bold transition-all duration-300 cursor-pointer text-center ${
                     isSelected
-                      ? 'bg-[#1A1F2E] text-white shadow-md'
-                      : 'text-[#6B7280] hover:text-[#1A1F2E]'
+                      ? 'bg-[color:var(--brief-ink)] text-white shadow-md'
+                      : 'text-[var(--brief-muted)] hover:text-[var(--brief-ink)]'
                   }`}
                 >
                   {sec}
@@ -379,11 +379,11 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
             <div className="flex items-center justify-between pt-1 pb-2">
               <div className="flex items-center space-x-2">
                 <span className="w-2 h-2 rounded-full bg-[#E8985E]" />
-                <span className="text-xs font-black tracking-widest uppercase text-[#1A1F2E]">
+                <span className="text-xs font-black tracking-widest uppercase text-[var(--brief-ink)]">
                   Today in {activeNeighborhood.name}
                 </span>
               </div>
-              <span className="text-[11px] font-semibold text-[#6B7280]">Live · 3km Radius</span>
+              <span className="text-[11px] font-semibold text-[var(--brief-muted)]">Live · 3km Radius</span>
             </div>
 
             {/* 2-Column IronSheet Grid (WAIRO · Circles · Gigs · Events) */}
@@ -479,11 +479,11 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
             <div className="flex items-center justify-between pt-1 pb-2">
               <div className="flex items-center space-x-2">
                 <span className="w-2 h-2 rounded-full bg-[#E8985E]" />
-                <span className="text-xs font-black tracking-widest uppercase text-[#1A1F2E]">
+                <span className="text-xs font-black tracking-widest uppercase text-[var(--brief-ink)]">
                   Town Centre Districts · {activeNeighborhood.name}
                 </span>
               </div>
-              <span className="text-[11px] font-semibold text-[#6B7280]">4 Core Pillars</span>
+              <span className="text-[11px] font-semibold text-[var(--brief-muted)]">4 Core Pillars</span>
             </div>
 
             {/* 2-Column IronSheet Grid (WAIRO · Circles · Gigs · Events) */}
@@ -572,7 +572,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
 
             {/* Subcategory Metal Tags Band */}
             <div className="pt-3 space-y-2">
-              <span className="text-[11px] font-extrabold tracking-wider uppercase text-[#6B7280] block">
+              <span className="text-[11px] font-extrabold tracking-wider uppercase text-[var(--brief-muted)] block">
                 Quick Access
               </span>
               <div className="flex items-center space-x-2 overflow-x-auto pb-2">
@@ -851,14 +851,14 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                 className={`p-2 rounded-full transition-all duration-200 ${
                   isSelected
                     ? 'bg-[#E8985E] text-white shadow-md'
-                    : 'text-[#6B7280] group-hover:text-[#1A1F2E]'
+                    : 'text-[var(--brief-muted)] group-hover:text-[var(--brief-ink)]'
                 }`}
               >
                 <Icon className="w-5 h-5" />
               </div>
               <span
                 className={`text-[10px] font-bold mt-0.5 transition-colors ${
-                  isSelected ? 'text-[#E8985E]' : 'text-[#6B7280]'
+                  isSelected ? 'text-[#E8985E]' : 'text-[var(--brief-muted)]'
                 }`}
               >
                 {item.label}
@@ -1077,7 +1077,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
       {/* ================= MODAL: CIRCLE TABLE BANK ================= */}
       {circleOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="w-full max-w-md my-auto bg-white rounded-3xl p-6 text-center text-[#0D1117]">
+          <div className="w-full max-w-md my-auto bg-white rounded-3xl p-6 text-center text-[var(--brief-ink)]">
             <p className="text-sm font-black">Table banking lives in your You tab</p>
             <p className="text-xs text-gray-500 mt-1">Open the You tab to run contributions, rotation, loans, welfare and minutes — every number derived from real rows.</p>
             <button onClick={() => setCircleOpen(false)} className="mt-4 px-4 py-2 rounded-xl bg-[#4F46E5] text-white text-xs font-bold">Close</button>
@@ -1133,7 +1133,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
 
       {/* ================= FULL-SCREEN ROUTE: SHEET DETAIL SCREEN ================= */}
       {activeDetailScreen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto animate-slideUp bg-[#1A1F2E]">
+        <div className="fixed inset-0 z-50 overflow-y-auto animate-slideUp bg-[color:var(--brief-ink)]">
           <SheetDetailScreen
             material={activeDetailScreen.material}
             title={activeDetailScreen.title}
@@ -1222,7 +1222,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
             <button
               type="button"
               onClick={() => { soundEngine.play('tap'); setDiscoverViewOpen(false); }}
-              className="px-3.5 py-1.5 rounded-full bg-[#1A1F2E] text-white text-xs font-bold shadow-xl flex items-center space-x-1.5 cursor-pointer hover:bg-black transition-colors"
+              className="px-3.5 py-1.5 rounded-full bg-[color:var(--brief-ink)] text-white text-xs font-bold shadow-xl flex items-center space-x-1.5 cursor-pointer hover:bg-black transition-colors"
             >
               <X className="w-4 h-4" />
               <span>Exit Discover</span>
@@ -1246,7 +1246,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
 
       {/* ================= TOAST NOTIFICATION ================= */}
       {toastMsg && (
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-[#1A1F2E] text-white text-xs font-bold shadow-2xl flex items-center space-x-2 animate-fadeIn border border-white/10">
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-[color:var(--brief-ink)] text-white text-xs font-bold shadow-2xl flex items-center space-x-2 animate-fadeIn border border-white/10">
           <CheckCircle2 className="w-4 h-4 text-[#2ECC71]" />
           <span>{toastMsg}</span>
         </div>

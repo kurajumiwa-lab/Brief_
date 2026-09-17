@@ -133,14 +133,14 @@ export function OfflineSyncQueueDesk({
   };
 
   return (
-    <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-3xl overflow-hidden shadow-2xl text-[#0D1117] max-w-4xl mx-auto">
+    <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-3xl overflow-hidden shadow-2xl text-[var(--brief-ink)] max-w-4xl mx-auto">
       
       {/* ================= HEADER ================= */}
       <div className="bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0A101D] text-white p-5 sm:p-6 relative">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-[10px] font-mono font-black px-2.5 py-0.5 rounded-full bg-[#10B981] text-[#0D1117] uppercase tracking-wider">
+              <span className="text-[10px] font-mono font-black px-2.5 py-0.5 rounded-full bg-[#10B981] text-[var(--brief-ink)] uppercase tracking-wider">
                 PWA SERVICE WORKER • INDEXEDDB ENGINE
               </span>
               <span className="text-xs text-indigo-200 font-bold flex items-center space-x-1">
@@ -184,7 +184,7 @@ export function OfflineSyncQueueDesk({
                 onClick={() => { soundEngine.play('tap'); setActiveTab(tab.id as any); }}
                 className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center space-x-1.5 ${
                   activeTab === tab.id
-                    ? 'bg-white text-[#0D1117] shadow-md font-black'
+                    ? 'bg-white text-[var(--brief-ink)] shadow-md font-black'
                     : 'bg-white/10 text-white/80 hover:bg-white/20'
                 }`}
               >
@@ -244,7 +244,7 @@ export function OfflineSyncQueueDesk({
             <div className="p-3.5 rounded-2xl bg-gray-50 border border-gray-200 space-y-1 flex flex-col justify-between">
               <div>
                 <span className="text-[10px] font-mono text-gray-500 uppercase font-bold block">Current Network</span>
-                <span className="text-xs font-black font-mono text-[#0D1117] block mt-1 uppercase">
+                <span className="text-xs font-black font-mono text-[var(--brief-ink)] block mt-1 uppercase">
                   {networkMode === 'online' ? '🟢 4G / Wi-Fi Active' : networkMode === 'flaky_2g' ? '🟡 2G Cellular Edge' : '🔴 Offline / No Signal'}
                 </span>
               </div>
@@ -279,12 +279,12 @@ export function OfflineSyncQueueDesk({
               {queue.map(item => (
                 <div
                   key={item.id}
-                  className="p-4 rounded-2xl bg-white border border-[#E5E8EC] space-y-2 shadow-xs"
+                  className="p-4 rounded-2xl bg-white border border-[var(--brief-line)] space-y-2 shadow-xs"
                 >
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="flex items-center space-x-2">
-                        <span className="font-mono text-xs font-black text-[#0D1117]">{item.title}</span>
+                        <span className="font-mono text-xs font-black text-[var(--brief-ink)]">{item.title}</span>
                         <span className="text-[9px] font-mono px-1.5 py-0.2 rounded uppercase font-bold bg-gray-100 text-gray-700">
                           {item.category.replace('_', ' ')}
                         </span>
@@ -294,7 +294,7 @@ export function OfflineSyncQueueDesk({
 
                     <div className="text-right">
                       {item.amountKes !== undefined && (
-                        <span className="font-mono font-black text-xs text-[#0D1117] block">
+                        <span className="font-mono font-black text-xs text-[var(--brief-ink)] block">
                           KES {item.amountKes}
                         </span>
                       )}
@@ -324,7 +324,7 @@ export function OfflineSyncQueueDesk({
       {activeTab === 'add_action' && (
         <form onSubmit={handleCreateOfflineAction} className="p-5 sm:p-6 space-y-4 max-w-lg mx-auto text-xs">
           <div className="p-3.5 rounded-2xl bg-gray-50 border border-gray-200 text-gray-700 space-y-1">
-            <h4 className="font-bold text-[#0D1117] flex items-center space-x-1.5">
+            <h4 className="font-bold text-[var(--brief-ink)] flex items-center space-x-1.5">
               <Plus className="w-4 h-4 text-[#4F46E5]" />
               <span>Simulate Local Mutation While Disconnected</span>
             </h4>
@@ -380,7 +380,7 @@ export function OfflineSyncQueueDesk({
 
           <button
             type="submit"
-            className="w-full py-2.5 rounded-2xl bg-[#0D1117] hover:bg-[#1E293B] text-white font-black text-xs shadow-md cursor-pointer transition-all"
+            className="w-full py-2.5 rounded-2xl bg-[color:var(--brief-ink)] hover:bg-[#1E293B] text-white font-black text-xs shadow-md cursor-pointer transition-all"
           >
             Record Mutation in Local IndexedDB
           </button>
@@ -392,19 +392,19 @@ export function OfflineSyncQueueDesk({
         <div className="p-5 sm:p-6 space-y-4 text-xs font-mono">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-1.5">
-              <span className="font-black text-[#0D1117] text-xs">📦 wairo_offline_deliveries</span>
+              <span className="font-black text-[var(--brief-ink)] text-xs">📦 wairo_offline_deliveries</span>
               <p className="text-[11px] text-gray-600 font-sans">Stores encrypted recipient verification PINs, driver GPS breadcrumbs, and pending escrow releases.</p>
               <span className="text-[10px] text-blue-600 font-bold block">1 Record (2.4 KB)</span>
             </div>
 
             <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-1.5">
-              <span className="font-black text-[#0D1117] text-xs">🛒 duka_offline_sales</span>
+              <span className="font-black text-[var(--brief-ink)] text-xs">🛒 duka_offline_sales</span>
               <p className="text-[11px] text-gray-600 font-sans">Stores cash transactions, barcodes, and inventory decrements before server ledger sync.</p>
               <span className="text-[10px] text-blue-600 font-bold block">1 Record (1.8 KB)</span>
             </div>
 
             <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-1.5">
-              <span className="font-black text-[#0D1117] text-xs">🌸 circle_offline_ledger</span>
+              <span className="font-black text-[var(--brief-ink)] text-xs">🌸 circle_offline_ledger</span>
               <p className="text-[11px] text-gray-600 font-sans">Stores meeting attendance, cash Merry-Go-Round collections, and loan disbursement notes.</p>
               <span className="text-[10px] text-blue-600 font-bold block">1 Record (3.1 KB)</span>
             </div>

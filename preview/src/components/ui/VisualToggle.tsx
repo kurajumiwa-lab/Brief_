@@ -55,7 +55,7 @@ export const VisualToggle: React.FC<VisualToggleProps> = ({
           >
             <div
               className={`w-10 h-10 mb-2 flex items-center justify-center transition-colors ${
-                isSelected ? 'text-[#0B6E6E]' : 'text-[#9CA3AF]'
+                isSelected ? 'text-[#0B6E6E]' : 'text-[var(--color-quiet)]'
               }`}
             >
               {opt.icon}
@@ -64,7 +64,7 @@ export const VisualToggle: React.FC<VisualToggleProps> = ({
               className={`text-xs text-center transition-colors ${
                 isSelected
                   ? 'font-bold text-[#0B6E6E]'
-                  : 'font-medium text-[#9CA3AF]'
+                  : 'font-medium text-[var(--color-quiet)]'
               }`}
             >
               {opt.label}

@@ -43,7 +43,7 @@ export function FilterSheet({ open, title, onClose, children, footer }: FilterSh
         className="absolute inset-0 bg-black/40"
       />
       <div
-        className="brief-sheet-up relative w-full max-w-lg rounded-t-3xl bg-white border-t border-black/5 shadow-2xl p-5 pb-7 max-h-[80vh] overflow-y-auto"
+        className="brief-sheet-up relative w-full max-w-lg rounded-t-3xl bg-[color:var(--color-paper)] border-t border-black/5 shadow-2xl p-5 pb-7 max-h-[80vh] overflow-y-auto"
       >
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-black tracking-tight" style={{ color: 'var(--color-text)' }}>

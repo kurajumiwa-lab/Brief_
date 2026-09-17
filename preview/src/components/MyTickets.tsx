@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import * as briefApi from '../api/briefApi';
 import type { ResaleTicket } from '../api/types';
 import QRCode from 'qrcode';
+import { QR_COLORS } from '../ui/qrPalette';
 import {
   Ticket,
   Search,
@@ -49,7 +50,7 @@ export function TicketQr({ code, size = 176 }: { code: string; size?: number }) 
     QRCode.toDataURL(code, {
       width: size,
       margin: 1,
-      color: { dark: '#0D1117', light: '#FFFFFF' }
+      color: QR_COLORS
     })
       .then((url) => { if (live) setDataUrl(url); })
       .catch(() => { if (live) setDataUrl(null); });
@@ -59,10 +60,10 @@ export function TicketQr({ code, size = 176 }: { code: string; size?: number }) 
   if (!dataUrl) {
     return (
       <div
-        className="w-44 h-44 bg-[#F0F2F5] border border-[#E5E8EC] rounded-2xl flex items-center justify-center animate-pulse"
+        className="w-44 h-44 bg-[color:var(--color-well)] border border-[var(--brief-line)] rounded-2xl flex items-center justify-center animate-pulse"
         aria-label={`Gate code ${code}`}
       >
-        <Ticket className="w-8 h-8 text-[#0D1117]/30" />
+        <Ticket className="w-8 h-8 text-[var(--ink-30)]" />
       </div>
     );
   }
@@ -71,7 +72,7 @@ export function TicketQr({ code, size = 176 }: { code: string; size?: number }) 
     <img
       src={dataUrl}
       alt={`Gate code ${code}`}
-      className="w-44 h-44 rounded-2xl border border-[#E5E8EC] shadow-sm bg-white p-1"
+      className="w-44 h-44 rounded-2xl border border-[var(--brief-line)] shadow-sm bg-white p-1"
     />
   );
 }
@@ -341,16 +342,16 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
   return (
     <div className="max-w-3xl mx-auto px-4 py-5 space-y-5">
       {/* --- Header & Intro --- */}
-      <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-3xl p-5 shadow-xs">
+      <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-3xl p-5 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="p-1.5 rounded-xl bg-[#4F46E5]/10 text-[#4F46E5]">
                 <Ticket className="w-5 h-5" />
               </span>
-              <h2 className="text-xl font-black text-[#0D1117] tracking-tight">My tickets</h2>
+              <h2 className="text-xl font-black text-[var(--brief-ink)] tracking-tight">My tickets</h2>
             </div>
-            <p className="text-xs text-[#0D1117]/70 max-w-xl leading-relaxed">
+            <p className="text-xs text-[var(--ink-70)] max-w-xl leading-relaxed">
               Seats you hold, with the code the gate accepts right now. Every transfer issues a
               fresh code — old screenshots stop working, on purpose.
             </p>
@@ -359,7 +360,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
             <button
               onClick={() => void fetchTickets()}
               disabled={load.status === 'loading'}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border border-[#E5E8EC] bg-[#F0F2F5] text-[#0D1117] hover:bg-[#E5E8EC] transition cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border border-[var(--brief-line)] bg-[color:var(--color-well)] text-[var(--brief-ink)] hover:bg-[color:var(--brief-line)] transition cursor-pointer"
               title="Refresh tickets"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${load.status === 'loading' ? 'animate-spin' : ''}`} />
@@ -368,7 +369,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
             {onBrowseEvents && (
               <button
                 onClick={onBrowseEvents}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#4F46E5] text-[#0D1117] hover:opacity-90 transition cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#4F46E5] text-[var(--accent-ink)] hover:opacity-90 transition cursor-pointer"
               >
                 <span>Find Events</span>
               </button>
@@ -378,20 +379,20 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
 
         {/* --- Quick Metrics Strip --- */}
         {load.status === 'ready' && tickets.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-4 pt-4 border-t border-[#E5E8EC]">
-            <div className="bg-[#F0F2F5] rounded-2xl p-2.5">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-[#0D1117]/60">Total Passes</p>
-              <p className="text-lg font-black text-[#0D1117] leading-tight mt-0.5">{counts.all}</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-4 pt-4 border-t border-[var(--brief-line)]">
+            <div className="bg-[color:var(--color-well)] rounded-2xl p-2.5">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--ink-60)]">Total Passes</p>
+              <p className="text-lg font-black text-[var(--brief-ink)] leading-tight mt-0.5">{counts.all}</p>
             </div>
-            <div className="bg-[#F0F2F5] rounded-2xl p-2.5">
+            <div className="bg-[color:var(--color-well)] rounded-2xl p-2.5">
               <p className="text-[10px] font-bold uppercase tracking-wider text-[#16A34A]">Ready to Scan</p>
               <p className="text-lg font-black text-[#16A34A] leading-tight mt-0.5">{counts.active}</p>
             </div>
-            <div className="bg-[#F0F2F5] rounded-2xl p-2.5">
+            <div className="bg-[color:var(--color-well)] rounded-2xl p-2.5">
               <p className="text-[10px] font-bold uppercase tracking-wider text-[#4F46E5]">On Resale</p>
               <p className="text-lg font-black text-[#4F46E5] leading-tight mt-0.5">{counts.listed}</p>
             </div>
-            <div className="bg-[#F0F2F5] rounded-2xl p-2.5">
+            <div className="bg-[color:var(--color-well)] rounded-2xl p-2.5">
               <p className="text-[10px] font-bold uppercase tracking-wider text-[#06B6D4]">Checked In</p>
               <p className="text-lg font-black text-[#06B6D4] leading-tight mt-0.5">{counts.checkedIn}</p>
             </div>
@@ -401,14 +402,14 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
 
       {/* --- Notification Toast --- */}
       {notice && (
-        <div className="flex items-center justify-between text-xs bg-[#F0F2F5] border border-[#06B6D4]/40 rounded-2xl px-4 py-3 text-[#0D1117] animate-in fade-in">
+        <div className="flex items-center justify-between text-xs bg-[color:var(--color-well)] border border-[#06B6D4]/40 rounded-2xl px-4 py-3 text-[var(--brief-ink)] animate-in fade-in">
           <div className="flex items-center gap-2">
             <Info className="w-4 h-4 text-[#06B6D4] shrink-0" />
             <span>{notice}</span>
           </div>
           <button
             onClick={() => setNotice(null)}
-            className="text-[#0D1117]/50 hover:text-[#0D1117] cursor-pointer"
+            className="text-[var(--ink-50)] hover:text-[var(--brief-ink)] cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -420,18 +421,18 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
         <div className="space-y-3">
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#0D1117]/40" />
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--ink-40)]" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by event name, venue, or ticket code…"
-                className="w-full bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl pl-10 pr-4 py-2.5 text-xs text-[#0D1117] placeholder:text-[#0D1117]/40 focus:border-[#06B6D4] focus:outline-none transition"
+                className="w-full bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl pl-10 pr-4 py-2.5 text-xs text-[var(--brief-ink)] placeholder:text-[var(--ink-40)] focus:border-[#06B6D4] focus:outline-none transition"
               />
               {search && (
                 <button
                   onClick={() => setSearch('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#0D1117]/40 hover:text-[#0D1117]"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ink-40)] hover:text-[var(--brief-ink)]"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -445,8 +446,8 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
               onClick={() => setFilter('all')}
               className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-extrabold transition cursor-pointer ${
                 filter === 'all'
-                  ? 'bg-[#4F46E5] text-[#0D1117] shadow-xs'
-                  : 'bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117]/70 hover:text-[#0D1117]'
+                  ? 'bg-[#4F46E5] text-[var(--accent-ink)] shadow-xs'
+                  : 'bg-[color:var(--color-paper)] border border-[var(--brief-line)] text-[var(--ink-70)] hover:text-[var(--brief-ink)]'
               }`}
             >
               All Passes ({counts.all})
@@ -455,8 +456,8 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
               onClick={() => setFilter('active')}
               className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-extrabold transition cursor-pointer ${
                 filter === 'active'
-                  ? 'bg-[#4F46E5] text-[#0D1117] shadow-xs'
-                  : 'bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117]/70 hover:text-[#0D1117]'
+                  ? 'bg-[#4F46E5] text-[var(--accent-ink)] shadow-xs'
+                  : 'bg-[color:var(--color-paper)] border border-[var(--brief-line)] text-[var(--ink-70)] hover:text-[var(--brief-ink)]'
               }`}
             >
               Ready to Scan ({counts.active})
@@ -466,8 +467,8 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
                 onClick={() => setFilter('listed')}
                 className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-extrabold transition cursor-pointer ${
                   filter === 'listed'
-                    ? 'bg-[#4F46E5] text-[#0D1117] shadow-xs'
-                    : 'bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117]/70 hover:text-[#0D1117]'
+                    ? 'bg-[#4F46E5] text-[var(--accent-ink)] shadow-xs'
+                    : 'bg-[color:var(--color-paper)] border border-[var(--brief-line)] text-[var(--ink-70)] hover:text-[var(--brief-ink)]'
                 }`}
               >
                 On Resale ({counts.listed})
@@ -478,8 +479,8 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
                 onClick={() => setFilter('checked_in')}
                 className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-extrabold transition cursor-pointer ${
                   filter === 'checked_in'
-                    ? 'bg-[#4F46E5] text-[#0D1117] shadow-xs'
-                    : 'bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117]/70 hover:text-[#0D1117]'
+                    ? 'bg-[#4F46E5] text-[var(--accent-ink)] shadow-xs'
+                    : 'bg-[color:var(--color-paper)] border border-[var(--brief-line)] text-[var(--ink-70)] hover:text-[var(--brief-ink)]'
                 }`}
               >
                 Checked In ({counts.checkedIn})
@@ -490,8 +491,8 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
                 onClick={() => setFilter('void')}
                 className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-extrabold transition cursor-pointer ${
                   filter === 'void'
-                    ? 'bg-[#4F46E5] text-[#0D1117] shadow-xs'
-                    : 'bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117]/70 hover:text-[#0D1117]'
+                    ? 'bg-[#4F46E5] text-[var(--accent-ink)] shadow-xs'
+                    : 'bg-[color:var(--color-paper)] border border-[var(--brief-line)] text-[var(--ink-70)] hover:text-[var(--brief-ink)]'
                 }`}
               >
                 Void ({counts.voidCount})
@@ -503,21 +504,21 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
 
       {/* --- Loading State --- */}
       {load.status === 'loading' && (
-        <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-3xl p-10 text-center space-y-3">
+        <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-3xl p-10 text-center space-y-3">
           <RefreshCw className="w-6 h-6 animate-spin text-[#4F46E5] mx-auto" />
-          <p className="text-xs font-bold text-[#0D1117]">Loading your tickets…</p>
-          <p className="text-[11px] text-[#0D1117]/60">Verifying live gate pass versions from the ledger.</p>
+          <p className="text-xs font-bold text-[var(--brief-ink)]">Loading your tickets…</p>
+          <p className="text-[11px] text-[var(--ink-60)]">Verifying live gate pass versions from the ledger.</p>
         </div>
       )}
 
       {/* --- Error State --- */}
       {load.status === 'error' && (
-        <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-3xl p-6 text-center space-y-3">
+        <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-3xl p-6 text-center space-y-3">
           <AlertTriangle className="w-6 h-6 text-[#4F46E5] mx-auto" />
-          <p className="text-xs font-extrabold text-[#0D1117]">{load.error || 'Failed to load tickets'}</p>
+          <p className="text-xs font-extrabold text-[var(--brief-ink)]">{load.error || 'Failed to load tickets'}</p>
           <button
             onClick={() => void fetchTickets()}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#4F46E5] text-[#0D1117] cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#4F46E5] text-[var(--accent-ink)] cursor-pointer"
           >
             Try again
           </button>
@@ -526,13 +527,13 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
 
       {/* --- Empty State --- */}
       {load.status === 'ready' && tickets.length === 0 && (
-        <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-3xl p-8 text-center space-y-4">
-          <div className="w-16 h-16 rounded-3xl bg-[#F0F2F5] border border-[#E5E8EC] flex items-center justify-center mx-auto text-[#0D1117]">
+        <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-3xl p-8 text-center space-y-4">
+          <div className="w-16 h-16 rounded-3xl bg-[color:var(--color-well)] border border-[var(--brief-line)] flex items-center justify-center mx-auto text-[var(--brief-ink)]">
             <Ticket className="w-8 h-8 text-[#4F46E5]" />
           </div>
           <div className="max-w-md mx-auto space-y-1.5">
-            <h3 className="text-base font-extrabold text-[#0D1117]">No tickets yet</h3>
-            <p className="text-xs text-[#0D1117]/70 leading-relaxed">
+            <h3 className="text-base font-extrabold text-[var(--brief-ink)]">No tickets yet</h3>
+            <p className="text-xs text-[var(--ink-70)] leading-relaxed">
               Register for an event and confirm your seat — a ticket appears here the moment it
               is yours. Seats from public links belong to whoever holds that code, not to an account.
             </p>
@@ -540,7 +541,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
           {onBrowseEvents && (
             <button
               onClick={onBrowseEvents}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[#4F46E5] text-[#0D1117] text-xs font-black hover:opacity-90 transition cursor-pointer shadow-sm"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[#4F46E5] text-[var(--accent-ink)] text-xs font-black hover:opacity-90 transition cursor-pointer shadow-sm"
             >
               <span>Explore What's On</span>
               <ExternalLink className="w-3.5 h-3.5" />
@@ -548,31 +549,31 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
           )}
 
           {/* Educational Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-6 border-t border-[#E5E8EC] text-left">
-            <div className="bg-[#F0F2F5] rounded-2xl p-3.5 space-y-1">
-              <p className="text-xs font-extrabold text-[#0D1117] flex items-center gap-1.5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-6 border-t border-[var(--brief-line)] text-left">
+            <div className="bg-[color:var(--color-well)] rounded-2xl p-3.5 space-y-1">
+              <p className="text-xs font-extrabold text-[var(--brief-ink)] flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-[#06B6D4]" />
                 <span>Anti-Fraud QR</span>
               </p>
-              <p className="text-[10px] text-[#0D1117]/70 leading-relaxed">
+              <p className="text-[10px] text-[var(--ink-70)] leading-relaxed">
                 Codes are versioned. Old screenshots die instantly upon any resale or transfer.
               </p>
             </div>
-            <div className="bg-[#F0F2F5] rounded-2xl p-3.5 space-y-1">
-              <p className="text-xs font-extrabold text-[#0D1117] flex items-center gap-1.5">
+            <div className="bg-[color:var(--color-well)] rounded-2xl p-3.5 space-y-1">
+              <p className="text-xs font-extrabold text-[var(--brief-ink)] flex items-center gap-1.5">
                 <Gift className="w-3.5 h-3.5 text-[#4F46E5]" />
                 <span>Gift Instantly</span>
               </p>
-              <p className="text-[10px] text-[#0D1117]/70 leading-relaxed">
+              <p className="text-[10px] text-[var(--ink-70)] leading-relaxed">
                 Gift a seat directly to any friend's @handle. Fresh code issues straight to their wallet.
               </p>
             </div>
-            <div className="bg-[#F0F2F5] rounded-2xl p-3.5 space-y-1">
-              <p className="text-xs font-extrabold text-[#0D1117] flex items-center gap-1.5">
+            <div className="bg-[color:var(--color-well)] rounded-2xl p-3.5 space-y-1">
+              <p className="text-xs font-extrabold text-[var(--brief-ink)] flex items-center gap-1.5">
                 <Tag className="w-3.5 h-3.5 text-[#16A34A]" />
                 <span>Official Resale</span>
               </p>
-              <p className="text-[10px] text-[#0D1117]/70 leading-relaxed">
+              <p className="text-[10px] text-[var(--ink-70)] leading-relaxed">
                 Can't make it? List your seat on the event's official resale market in Workflows → Sell.
               </p>
             </div>
@@ -582,9 +583,9 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
 
       {/* --- Filtered Empty State --- */}
       {load.status === 'ready' && tickets.length > 0 && filteredTickets.length === 0 && (
-        <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-3xl p-8 text-center space-y-2">
-          <p className="text-xs font-extrabold text-[#0D1117]">No tickets match this filter</p>
-          <p className="text-[11px] text-[#0D1117]/60">Try changing your search term or select "All Passes".</p>
+        <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-3xl p-8 text-center space-y-2">
+          <p className="text-xs font-extrabold text-[var(--brief-ink)]">No tickets match this filter</p>
+          <p className="text-[11px] text-[var(--ink-60)]">Try changing your search term or select "All Passes".</p>
           <button
             onClick={() => { setSearch(''); setFilter('all'); }}
             className="text-xs font-bold text-[#06B6D4] underline cursor-pointer mt-2"
@@ -606,12 +607,12 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
         return (
           <div
             key={t.id}
-            className={`bg-[#FFFFFF] border ${
+            className={`bg-[color:var(--color-paper)] border ${
               isVoid
-                ? 'border-[#E5E8EC] opacity-80'
+                ? 'border-[var(--brief-line)] opacity-80'
                 : isListed
                 ? 'border-[#4F46E5]/50 shadow-sm'
-                : 'border-[#E5E8EC] hover:border-[#06B6D4]/40 shadow-xs'
+                : 'border-[var(--brief-line)] hover:border-[#06B6D4]/40 shadow-xs'
             } rounded-3xl overflow-hidden transition-all space-y-0`}
           >
             {/* Top Pass Header */}
@@ -619,10 +620,10 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 space-y-1">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#F0F2F5] text-[#0D1117]">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[color:var(--color-well)] text-[var(--brief-ink)]">
                       {t.eventType || 'Event Entry'}
                     </span>
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#F0F2F5] text-[#0D1117]/70">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[color:var(--color-well)] text-[var(--ink-70)]">
                       Code version {t.codeVersion}
                     </span>
                     {countdown && !isVoid && (
@@ -631,7 +632,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
                       </span>
                     )}
                   </div>
-                  <h3 className="text-base sm:text-lg font-black text-[#0D1117] leading-tight truncate">
+                  <h3 className="text-base sm:text-lg font-black text-[var(--brief-ink)] leading-tight truncate">
                     {t.eventTitle ?? 'Event'}
                   </h3>
                 </div>
@@ -639,7 +640,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
                 {/* Status Badges */}
                 <div className="shrink-0">
                   {isVoid ? (
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-extrabold bg-[#F0F2F5] text-[#0D1117]/60">
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-extrabold bg-[color:var(--color-well)] text-[var(--ink-60)]">
                       <X className="w-3 h-3" />
                       <span>VOID</span>
                     </span>
@@ -649,7 +650,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
                       <span>CHECKED IN</span>
                     </span>
                   ) : isListed ? (
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-extrabold bg-[#4F46E5]/15 text-[#0D1117] border border-[#4F46E5]/30">
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-extrabold bg-[#4F46E5]/15 text-[var(--accent-ink)] border border-[#4F46E5]/30">
                       <Tag className="w-3 h-3 text-[#4F46E5]" />
                       <span>LISTED FOR RESALE</span>
                     </span>
@@ -666,13 +667,13 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
               </div>
 
               {/* Event Schedule & Location */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 pt-3 border-t border-[#E5E8EC]">
-                <div className="flex items-center gap-2 text-xs text-[#0D1117]/80">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 pt-3 border-t border-[var(--brief-line)]">
+                <div className="flex items-center gap-2 text-xs text-[var(--ink-80)]">
                   <CalendarDays className="w-3.5 h-3.5 text-[#06B6D4] shrink-0" />
                   <span className="truncate">{formatEventDate(t.eventStartsAt, t.eventEndsAt)}</span>
                 </div>
                 {t.eventLocation && (
-                  <div className="flex items-center gap-2 text-xs text-[#0D1117]/80">
+                  <div className="flex items-center gap-2 text-xs text-[var(--ink-80)]">
                     <MapPin className="w-3.5 h-3.5 text-[#4F46E5] shrink-0" />
                     <span className="truncate">{t.eventLocation}</span>
                   </div>
@@ -681,9 +682,9 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
 
               {/* Dynamic Delta Notice (Engine Update) */}
               {hasDelta && (
-                <div className="mt-3 flex items-start gap-2 bg-[#F0F2F5] border border-[#06B6D4]/30 rounded-2xl p-2.5">
+                <div className="mt-3 flex items-start gap-2 bg-[color:var(--color-well)] border border-[#06B6D4]/30 rounded-2xl p-2.5">
                   <AlertTriangle className="w-4 h-4 text-[#4F46E5] shrink-0 mt-0.5" />
-                  <p className="text-[11px] text-[#0D1117] leading-snug">
+                  <p className="text-[11px] text-[var(--brief-ink)] leading-snug">
                     <span className="font-extrabold">Event details updated:</span> The organiser updated event
                     timing or venue. Your gate pass code and version remain fully valid for entry.
                   </p>
@@ -693,9 +694,9 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
 
             {/* Perforated Divider Ticket Notch */}
             <div className="relative flex items-center justify-between my-1 px-0 overflow-hidden">
-              <div className="w-4 h-6 bg-[#F0F2F5] border-r border-[#E5E8EC] rounded-r-full -ml-1" />
-              <div className="flex-1 border-t-2 border-dashed border-[#E5E8EC] mx-2" />
-              <div className="w-4 h-6 bg-[#F0F2F5] border-l border-[#E5E8EC] rounded-l-full -mr-1" />
+              <div className="w-4 h-6 bg-[color:var(--color-well)] border-r border-[var(--brief-line)] rounded-r-full -ml-1" />
+              <div className="flex-1 border-t-2 border-dashed border-[var(--brief-line)] mx-2" />
+              <div className="w-4 h-6 bg-[color:var(--color-well)] border-l border-[var(--brief-line)] rounded-l-full -mr-1" />
             </div>
 
             {/* Gate Code & Scannable QR Body */}
@@ -716,14 +717,14 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
 
                   <div className="min-w-0 flex-1 space-y-2 text-center sm:text-left">
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#0D1117]/60">Gate Code</p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--ink-60)]">Gate Code</p>
                       <div className="flex items-center justify-center sm:justify-start gap-2 mt-0.5">
-                        <p className="font-mono text-sm sm:text-base font-black text-[#0D1117] tracking-wider select-all break-all">
+                        <p className="font-mono text-sm sm:text-base font-black text-[var(--brief-ink)] tracking-wider select-all break-all">
                           {t.scanCode}
                         </p>
                         <button
                           onClick={() => void copyToClipboard(t.scanCode, t.id)}
-                          className="p-1.5 rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] hover:bg-[#E5E8EC] text-[#0D1117] transition cursor-pointer"
+                          className="p-1.5 rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-well)] hover:bg-[color:var(--brief-line)] text-[var(--brief-ink)] transition cursor-pointer"
                           title="Copy full code"
                         >
                           {copiedCode === t.id ? (
@@ -735,28 +736,28 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
                       </div>
                     </div>
 
-                    <p className="text-[11px] text-[#0D1117]/70 leading-relaxed">
-                      Show this at the gate. The <span className="font-bold text-[#0D1117]">#{t.codeVersion}</span> is the
+                    <p className="text-[11px] text-[var(--ink-70)] leading-relaxed">
+                      Show this at the gate. The <span className="font-bold text-[var(--brief-ink)]">#{t.codeVersion}</span> is the
                       version — a scan of an older version is refused.
                     </p>
 
-                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 pt-1 text-[11px] text-[#0D1117]/60">
-                      <span>Admit: <strong className="text-[#0D1117] font-extrabold">1 Person</strong></span>
+                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 pt-1 text-[11px] text-[var(--ink-60)]">
+                      <span>Admit: <strong className="text-[var(--brief-ink)] font-extrabold">1 Person</strong></span>
                       <span>·</span>
-                      <span>Holder: <strong className="text-[#0D1117] font-extrabold">{t.attendeeName || 'You'}</strong></span>
+                      <span>Holder: <strong className="text-[var(--brief-ink)] font-extrabold">{t.attendeeName || 'You'}</strong></span>
                       {t.issuePrice !== undefined && (
                         <>
                           <span>·</span>
-                          <span>Value: <strong className="text-[#0D1117] font-extrabold">{t.issuePrice > 0 ? money(t.issuePrice, t.currency) : 'Free'}</strong></span>
+                          <span>Value: <strong className="text-[var(--brief-ink)] font-extrabold">{t.issuePrice > 0 ? money(t.issuePrice, t.currency) : 'Free'}</strong></span>
                         </>
                       )}
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="bg-[#F0F2F5] rounded-2xl p-4 text-center space-y-1">
-                  <p className="text-xs font-bold text-[#0D1117]">Pass Inactive / Void</p>
-                  <p className="text-[11px] text-[#0D1117]/60">
+                <div className="bg-[color:var(--color-well)] rounded-2xl p-4 text-center space-y-1">
+                  <p className="text-xs font-bold text-[var(--brief-ink)]">Pass Inactive / Void</p>
+                  <p className="text-[11px] text-[var(--ink-60)]">
                     This ticket was voided by moderation review or returned after a refund. It cannot be scanned at the gate.
                   </p>
                 </div>
@@ -764,9 +765,9 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
 
               {/* Provenance & Seat History Timeline */}
               {t.transfers.length > 0 && (
-                <div className="mt-4 pt-3 border-t border-[#E5E8EC] space-y-2">
+                <div className="mt-4 pt-3 border-t border-[var(--brief-line)] space-y-2">
                   <div className="flex items-center justify-between">
-                    <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#0D1117]/70">
+                    <p className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-70)]">
                       This seat's history
                     </p>
                     <button
@@ -780,11 +781,11 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
 
                   <div className="space-y-1.5">
                     {t.transfers.map((x, i) => (
-                      <div key={i} className="flex items-center justify-between text-[11px] text-[#0D1117]/70 bg-[#F0F2F5] px-3 py-1.5 rounded-xl">
-                        <span className="font-semibold text-[#0D1117]">
+                      <div key={i} className="flex items-center justify-between text-[11px] text-[var(--ink-70)] bg-[color:var(--color-well)] px-3 py-1.5 rounded-xl">
+                        <span className="font-semibold text-[var(--brief-ink)]">
                           {KIND_LABEL[x.kind] ?? x.kind}
                         </span>
-                        <span className="text-[10px] text-[#0D1117]/60">
+                        <span className="text-[10px] text-[var(--ink-60)]">
                           {new Date(x.at).toLocaleDateString('en-KE')} · code v{x.codeVersionAfter} issued
                         </span>
                       </div>
@@ -797,10 +798,10 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
               {isListed && (
                 <div className="mt-4 p-3.5 rounded-2xl bg-[#4F46E5]/10 border border-[#4F46E5]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="space-y-0.5">
-                    <p className="text-xs font-extrabold text-[#0D1117]">
+                    <p className="text-xs font-extrabold text-[var(--brief-ink)]">
                       Listed for resale {t.listingPrice ? `at ${money(t.listingPrice, t.currency)}` : ''}
                     </p>
-                    <p className="text-[10px] text-[#0D1117]/70">
+                    <p className="text-[10px] text-[var(--ink-70)]">
                       Buyers can reserve this seat on the event's page. Money settles with you out-of-band.
                     </p>
                   </div>
@@ -808,14 +809,14 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
                     <button
                       disabled={pullingListingId === t.activeListingId}
                       onClick={() => t.activeListingId && void pullListing(t.activeListingId)}
-                      className="px-3 py-1.5 rounded-xl text-xs font-bold border border-[#E5E8EC] bg-[#FFFFFF] text-[#0D1117] hover:bg-[#F0F2F5] cursor-pointer disabled:opacity-40"
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold border border-[var(--brief-line)] bg-[color:var(--color-paper)] text-[var(--brief-ink)] hover:bg-[color:var(--color-well)] cursor-pointer disabled:opacity-40"
                     >
                       {pullingListingId === t.activeListingId ? 'Pulling…' : 'Pull listing'}
                     </button>
                     {onSell && (
                       <button
                         onClick={onSell}
-                        className="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#4F46E5] text-[#0D1117] hover:opacity-90 cursor-pointer"
+                        className="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#4F46E5] text-[var(--accent-ink)] hover:opacity-90 cursor-pointer"
                       >
                         Resale Desk
                       </button>
@@ -826,24 +827,24 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
 
               {/* Action Toolbar */}
               {!isVoid && !isListed && (
-                <div className="mt-4 pt-3 border-t border-[#E5E8EC] space-y-3">
+                <div className="mt-4 pt-3 border-t border-[var(--brief-line)] space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
                     {onSell && (
                       <button
                         onClick={onSell}
-                        className="text-xs font-bold px-3.5 py-2 rounded-xl bg-[#4F46E5] text-[#0D1117] hover:opacity-90 transition cursor-pointer shadow-xs"
+                        className="text-xs font-bold px-3.5 py-2 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] hover:opacity-90 transition cursor-pointer shadow-xs"
                       >
                         Sell this seat
                       </button>
                     )}
 
                     {giftFor === t.id ? (
-                      <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0 p-2.5 bg-[#F0F2F5] rounded-2xl border border-[#E5E8EC]">
+                      <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0 p-2.5 bg-[color:var(--color-well)] rounded-2xl border border-[var(--brief-line)]">
                         <input
                           value={handle}
                           onChange={(e) => setHandle(e.target.value)}
                           placeholder="recipient handle (e.g. wanjiku)"
-                          className="text-xs bg-[#FFFFFF] text-[#0D1117] rounded-xl px-3 py-2 border border-[#E5E8EC] focus:border-[#06B6D4] focus:outline-none min-w-44"
+                          className="text-xs bg-[color:var(--color-paper)] text-[var(--brief-ink)] rounded-xl px-3 py-2 border border-[var(--brief-line)] focus:border-[#06B6D4] focus:outline-none min-w-44"
                         />
                         <button
                           disabled={busy || !handle.trim()}
@@ -854,7 +855,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
                         </button>
                         <button
                           onClick={() => { setGiftFor(null); setHandle(''); setGiftError(null); }}
-                          className="text-xs text-[#0D1117]/60 hover:text-[#0D1117] px-2 py-1 cursor-pointer"
+                          className="text-xs text-[var(--ink-60)] hover:text-[var(--brief-ink)] px-2 py-1 cursor-pointer"
                         >
                           Cancel
                         </button>
@@ -862,7 +863,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
                     ) : (
                       <button
                         onClick={() => { setGiftFor(t.id); setGiftError(null); }}
-                        className="text-xs font-bold px-3.5 py-2 rounded-xl border border-[#E5E8EC] bg-[#FFFFFF] hover:bg-[#F0F2F5] text-[#0D1117] transition cursor-pointer inline-flex items-center gap-1.5"
+                        className="text-xs font-bold px-3.5 py-2 rounded-xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] hover:bg-[color:var(--color-well)] text-[var(--brief-ink)] transition cursor-pointer inline-flex items-center gap-1.5"
                       >
                         <Gift className="w-3.5 h-3.5 text-[#06B6D4]" />
                         <span>Gift to someone</span>
@@ -872,10 +873,10 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
                     {/* Add to Calendar */}
                     <button
                       onClick={() => downloadIcs(t)}
-                      className="text-xs font-bold px-3 py-2 rounded-xl border border-[#E5E8EC] bg-[#FFFFFF] hover:bg-[#F0F2F5] text-[#0D1117]/80 hover:text-[#0D1117] transition cursor-pointer inline-flex items-center gap-1.5"
+                      className="text-xs font-bold px-3 py-2 rounded-xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] hover:bg-[color:var(--color-well)] text-[var(--ink-80)] hover:text-[var(--brief-ink)] transition cursor-pointer inline-flex items-center gap-1.5"
                       title="Download calendar event (.ics)"
                     >
-                      <Download className="w-3.5 h-3.5 text-[#0D1117]/60" />
+                      <Download className="w-3.5 h-3.5 text-[var(--ink-60)]" />
                       <span>Calendar</span>
                     </button>
 
@@ -885,7 +886,7 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
                       className={`text-xs font-bold px-3 py-2 rounded-xl border transition cursor-pointer inline-flex items-center gap-1.5 ${
                         isOfflineSaved
                           ? 'border-[#16A34A]/40 bg-[#16A34A]/10 text-[#16A34A]'
-                          : 'border-[#E5E8EC] bg-[#FFFFFF] hover:bg-[#F0F2F5] text-[#0D1117]/80'
+                          : 'border-[var(--brief-line)] bg-[color:var(--color-paper)] hover:bg-[color:var(--color-well)] text-[var(--ink-80)]'
                       }`}
                       title="Save for offline access without internet"
                     >
@@ -907,10 +908,10 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
       {/* --- Expanded Fullscreen Pass Modal --- */}
       {expandedTicket && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl relative animate-in zoom-in-95">
+          <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl relative animate-in zoom-in-95">
             <button
               onClick={() => setExpandedTicketId(null)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-[#F0F2F5] text-[#0D1117] hover:bg-[#E5E8EC] cursor-pointer"
+              className="absolute top-4 right-4 p-2 rounded-full bg-[color:var(--color-well)] text-[var(--brief-ink)] hover:bg-[color:var(--brief-line)] cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -919,25 +920,25 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
               <span className="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#4F46E5]/10 text-[#4F46E5]">
                 {expandedTicket.eventType || 'Official Pass'}
               </span>
-              <h3 className="text-lg font-black text-[#0D1117] leading-tight pt-1">
+              <h3 className="text-lg font-black text-[var(--brief-ink)] leading-tight pt-1">
                 {expandedTicket.eventTitle}
               </h3>
-              <p className="text-xs text-[#0D1117]/60">
+              <p className="text-xs text-[var(--ink-60)]">
                 {formatEventDate(expandedTicket.eventStartsAt, expandedTicket.eventEndsAt)}
               </p>
             </div>
 
-            <div className="flex flex-col items-center justify-center p-4 bg-[#F0F2F5] rounded-2xl border border-[#E5E8EC]">
+            <div className="flex flex-col items-center justify-center p-4 bg-[color:var(--color-well)] rounded-2xl border border-[var(--brief-line)]">
               <TicketQr code={expandedTicket.scanCode} size={220} />
-              <p className="font-mono text-base font-black text-[#0D1117] mt-3 tracking-wider select-all">
+              <p className="font-mono text-base font-black text-[var(--brief-ink)] mt-3 tracking-wider select-all">
                 {expandedTicket.scanCode}
               </p>
-              <p className="text-[10px] text-[#0D1117]/60 mt-1">
+              <p className="text-[10px] text-[var(--ink-60)] mt-1">
                 Version {expandedTicket.codeVersion} · Present at venue entrance
               </p>
             </div>
 
-            <div className="space-y-2 text-xs text-[#0D1117]/80">
+            <div className="space-y-2 text-xs text-[var(--ink-80)]">
               {expandedTicket.eventLocation && (
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-[#4F46E5] shrink-0" />
@@ -953,14 +954,14 @@ export function MyTickets({ onSell, onBrowseEvents, onOpenEvent }: MyTicketsProp
             <div className="flex gap-2 pt-2">
               <button
                 onClick={() => downloadIcs(expandedTicket)}
-                className="flex-1 py-2.5 rounded-xl border border-[#E5E8EC] text-xs font-bold text-[#0D1117] hover:bg-[#F0F2F5] cursor-pointer inline-flex items-center justify-center gap-1.5"
+                className="flex-1 py-2.5 rounded-xl border border-[var(--brief-line)] text-xs font-bold text-[var(--brief-ink)] hover:bg-[color:var(--color-well)] cursor-pointer inline-flex items-center justify-center gap-1.5"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Save to Calendar</span>
               </button>
               <button
                 onClick={() => setExpandedTicketId(null)}
-                className="flex-1 py-2.5 rounded-xl bg-[#0D1117] text-white text-xs font-bold cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl bg-[color:var(--brief-ink)] text-white text-xs font-bold cursor-pointer"
               >
                 Done
               </button>

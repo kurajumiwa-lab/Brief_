@@ -181,7 +181,7 @@ export function MuseumGallery({ className = "" }: { className?: string }) {
           style={{
             background: activeCount > 0 ? 'var(--color-primary)' : 'var(--color-surface)',
             color: activeCount > 0 ? 'var(--accent-ink)' : 'var(--color-text)',
-            borderColor: activeCount > 0 ? 'transparent' : 'var(--color-border)'
+            borderColor: activeCount > 0 ? 'transparent' : 'var(--brief-line)'
           }}
         >
           <span className="truncate">{summaryParts.join(' · ')}</span>
@@ -207,7 +207,7 @@ export function MuseumGallery({ className = "" }: { className?: string }) {
         <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>Loading…</p>
       )}
       {events !== null && rows.length === 0 && !error && (
-        <div className="p-5 rounded-3xl border border-dashed" style={{ borderColor: 'var(--color-border)' }}>
+        <div className="p-5 rounded-3xl border border-dashed" style={{ borderColor: 'var(--brief-line)', background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-1)' }}>
           <p className="text-sm font-bold" style={{ color: 'var(--color-text)' }}>
             {activeCount > 0 ? 'Nothing matches this filter.' : 'Nothing is published yet.'}
           </p>
@@ -254,7 +254,7 @@ export function MuseumGallery({ className = "" }: { className?: string }) {
               <div
                 key={i}
                 className={`h-1.5 rounded-full transition-all duration-300 ${i === activeIndex ? "w-6" : "w-1.5"}`}
-                style={{ background: i === activeIndex ? "var(--color-primary)" : "var(--color-border)" }}
+                style={{ background: i === activeIndex ? "var(--color-primary)" : "var(--brief-line)" }}
               />
             ))}
           </div>
@@ -271,7 +271,7 @@ export function MuseumGallery({ className = "" }: { className?: string }) {
               type="button"
               onClick={() => { setFilters(EMPTY); setApplied(EMPTY); setSheetOpen(false); }}
               className="flex-1 py-2.5 rounded-2xl text-xs font-bold cursor-pointer border"
-              style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}
+              style={{ borderColor: 'var(--brief-line)', color: 'var(--color-text-muted)', boxShadow: 'var(--room-light-dim)' }}
             >
               Clear all
             </button>
@@ -301,9 +301,9 @@ export function MuseumGallery({ className = "" }: { className?: string }) {
                   onClick={() => setFilters((f) => ({ ...f, category: active ? null : c }))}
                   className="px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer border"
                   style={{
-                    background: active ? 'var(--color-primary)' : '#fff',
+                    background: active ? 'var(--color-primary)' : 'var(--color-paper)',
                     color: active ? 'var(--accent-ink)' : 'var(--color-text-muted)',
-                    borderColor: active ? 'transparent' : 'var(--color-border)'
+                    borderColor: active ? 'transparent' : 'var(--brief-line)'
                   }}
                 >
                   {c === null ? 'Everything' : labels[c] ?? c}
@@ -328,7 +328,7 @@ export function MuseumGallery({ className = "" }: { className?: string }) {
             onChange={(e) => setFilters((f) => ({ ...f, location: e.target.value }))}
             placeholder="e.g. Kilimani"
             className="w-full px-3.5 py-2.5 rounded-xl text-xs border"
-            style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+            style={{ background: 'var(--color-well)', borderColor: 'var(--brief-line)' }}
           />
         </div>
 
@@ -342,7 +342,7 @@ export function MuseumGallery({ className = "" }: { className?: string }) {
               value={filters.from}
               onChange={(e) => setFilters((f) => ({ ...f, from: e.target.value }))}
               className="w-full px-2.5 py-2.5 rounded-xl text-xs border"
-              style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+              style={{ background: 'var(--color-well)', borderColor: 'var(--brief-line)' }}
             />
           </div>
           <div>
@@ -354,7 +354,7 @@ export function MuseumGallery({ className = "" }: { className?: string }) {
               value={filters.to}
               onChange={(e) => setFilters((f) => ({ ...f, to: e.target.value }))}
               className="w-full px-2.5 py-2.5 rounded-xl text-xs border"
-              style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+              style={{ background: 'var(--color-well)', borderColor: 'var(--brief-line)' }}
             />
           </div>
         </div>
@@ -366,7 +366,7 @@ export function MuseumGallery({ className = "" }: { className?: string }) {
             onClick={() => setFilters((f) => ({ ...f, featured: !f.featured }))}
             className="px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer border"
             style={{
-              background: filters.featured ? 'var(--color-primary)' : '#fff',
+              background: filters.featured ? 'var(--color-primary)' : 'var(--color-paper)',
               color: filters.featured ? 'var(--accent-ink)' : 'var(--color-text-muted)',
               borderColor: filters.featured ? 'transparent' : 'var(--color-border)'
             }}
@@ -377,7 +377,7 @@ export function MuseumGallery({ className = "" }: { className?: string }) {
             type="button"
             onClick={() => setFilters((f) => ({ ...f, sort: f.sort === 'date' ? 'popularity' : 'date' }))}
             className="px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer border"
-            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+            style={{ borderColor: 'var(--brief-line)', color: 'var(--color-text)' }}
           >
             Sort: {filters.sort === 'date' ? 'soonest first' : 'most people first'}
           </button>

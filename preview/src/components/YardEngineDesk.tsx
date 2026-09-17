@@ -23,15 +23,15 @@ import whatsappBannerArt from '../assets/shelf/whatsapp-share.webp';
 export type YardSection = 'campaigns' | 'matches' | 'distribution' | 'calendar' | 'vendors' | 'ai';
 
 const T = {
-  bg: '#F0F2F5',
-  surface: '#0D1117',
-  line: '#E5E8EC',
-  ink: '#0D1117',
+  bg: 'var(--color-well)',
+  surface: 'var(--brief-ink)',
+  line: 'var(--brief-line)',
+  ink: 'var(--brief-ink)',
   muted: 'rgba(17,17,17,0.62)',
   faint: 'rgba(17,17,17,0.45)',
-  green: '#0D1117',
-  amber: '#0D1117',
-  red: '#0D1117'
+  green: 'var(--brief-ink)',
+  amber: 'var(--brief-ink)',
+  red: 'var(--brief-ink)'
 };
 
 function Panel({ title, icon: Icon, children }: { title: string; icon: React.ElementType; children: React.ReactNode }) {

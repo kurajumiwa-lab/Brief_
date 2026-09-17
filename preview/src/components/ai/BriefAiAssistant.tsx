@@ -191,10 +191,10 @@ export function BriefAiAssistant({
   };
 
   return (
-    <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-3xl overflow-hidden shadow-2xl flex flex-col text-[#0D1117] h-[600px] max-w-2xl mx-auto">
+    <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-3xl overflow-hidden shadow-2xl flex flex-col text-[var(--brief-ink)] h-[600px] max-w-2xl mx-auto">
       
       {/* ================= HEADER ================= */}
-      <div className="bg-[#0D1117] text-white p-4 flex items-center justify-between border-b border-white/10">
+      <div className="bg-[var(--brief-ink)] text-white p-4 flex items-center justify-between border-b border-white/10">
         <div className="flex items-center space-x-3">
           <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-[#4F46E5] to-[#FF8A00] flex items-center justify-center text-white shadow-md">
             <Bot className="w-5 h-5" />
@@ -220,7 +220,7 @@ export function BriefAiAssistant({
       </div>
 
       {/* ================= CHAT STREAM ================= */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#F7F8FA]">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[var(--brief-bg)]">
         {messages.map(msg => (
           <div
             key={msg.id}
@@ -230,7 +230,7 @@ export function BriefAiAssistant({
               className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs shadow-xs ${
                 msg.sender === 'user'
                   ? 'bg-[#4F46E5] text-white rounded-tr-none font-medium'
-                  : 'bg-white border border-[#E5E8EC] text-[#0D1117] rounded-tl-none space-y-2'
+                  : 'bg-white border border-[var(--brief-line)] text-[var(--brief-ink)] rounded-tl-none space-y-2'
               }`}
             >
               <p className="leading-relaxed">{msg.text}</p>
@@ -241,10 +241,10 @@ export function BriefAiAssistant({
                   {msg.cards.map(card => (
                     <div
                       key={card.id}
-                      className="p-3 bg-[#F7F8FA] border border-[#E5E8EC] rounded-xl flex items-center justify-between gap-2 hover:border-[#4F46E5] transition-colors"
+                      className="p-3 bg-[var(--brief-bg)] border border-[var(--brief-line)] rounded-xl flex items-center justify-between gap-2 hover:border-[#4F46E5] transition-colors"
                     >
                       <div className="space-y-0.5 min-w-0">
-                        <span className="font-bold text-xs text-[#0D1117] block truncate">
+                        <span className="font-bold text-xs text-[var(--brief-ink)] block truncate">
                           {card.title}
                         </span>
                         <span className="text-[10px] text-gray-500 block truncate">
@@ -270,7 +270,7 @@ export function BriefAiAssistant({
                           soundEngine.play('tap');
                           if (onOpenCardAction) onOpenCardAction(card.actionType, card.id);
                         }}
-                        className="px-3 py-1.5 rounded-xl bg-[#0D1117] hover:bg-[#1E2633] text-white text-[10px] font-bold uppercase tracking-wider shrink-0 cursor-pointer shadow-xs"
+                        className="px-3 py-1.5 rounded-xl bg-[var(--brief-ink)] hover:bg-[#1E2633] text-white text-[10px] font-bold uppercase tracking-wider shrink-0 cursor-pointer shadow-xs"
                       >
                         {card.actionLabel} →
                       </button>
@@ -316,7 +316,7 @@ export function BriefAiAssistant({
           value={inputText}
           onChange={e => setInputText(e.target.value)}
           placeholder="Ask Brief AI anything in your town..."
-          className="flex-1 bg-[#F7F8FA] border border-gray-300 rounded-2xl px-4 py-2.5 text-xs text-[#0D1117] focus:outline-none focus:border-[#4F46E5]"
+          className="flex-1 bg-[var(--brief-bg)] border border-gray-300 rounded-2xl px-4 py-2.5 text-xs text-[var(--brief-ink)] focus:outline-none focus:border-[#4F46E5]"
         />
         <button
           type="submit"

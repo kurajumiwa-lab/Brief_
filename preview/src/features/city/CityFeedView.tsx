@@ -125,31 +125,31 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
 
       {/* ── HOST AN EVENT — the real createCampaign → publish loop ── */}
       {hostOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4" style={{ background: 'rgba(10,10,10,0.6)' }}>
-          <div className="w-full max-w-md bg-white rounded-3xl overflow-hidden p-6 space-y-4 border" style={{ borderColor: '#E5E7EB' }}>
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4" style={{ background: 'rgba(24,19,12,0.6)' }}>
+          <div className="w-full max-w-md bg-[color:var(--color-paper)] rounded-3xl overflow-hidden p-6 space-y-4 brief-lift-3">
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: 'var(--color-primary)' }}>
                   Host an event
                 </span>
-                <h3 className="text-base font-black mt-1" style={{ color: '#0A0A0A' }}>Put your event on the board</h3>
+                <h3 className="text-base font-black mt-1" style={{ color: 'var(--brief-ink)' }}>Put your event on the board</h3>
               </div>
               <button
                 type="button"
                 onClick={() => { setHostOpen(false); setEventError(null); }}
                 className="text-xs font-bold cursor-pointer"
-                style={{ color: '#6B7280' }}
+                style={{ color: 'var(--brief-muted)' }}
               >
                 Cancel
               </button>
             </div>
 
-            <p className="text-xs" style={{ color: '#6B7280' }}>
+            <p className="text-xs" style={{ color: 'var(--brief-muted)' }}>
               It publishes immediately, so it appears on Discover and in the case for everyone. Nobody gets a
               seeded audience: registrations count people who actually registered.
             </p>
 
-            {eventError && <p role="alert" className="text-xs font-bold" style={{ color: '#E53935' }}>{eventError}</p>}
+            {eventError && <p role="alert" className="text-xs font-bold" style={{ color: 'var(--color-danger)' }}>{eventError}</p>}
 
             <form onSubmit={hostEvent} className="space-y-3">
               <input
@@ -159,7 +159,7 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
                 value={eventDraft.title}
                 onChange={(e) => setEventDraft((d) => ({ ...d, title: e.target.value }))}
                 className="w-full px-3.5 py-2.5 rounded-xl text-xs border"
-                style={{ borderColor: '#E5E7EB', background: '#F4F4F7' }}
+                style={{ background: 'var(--color-well)', boxShadow: 'var(--room-light-dim), inset 0 0 0 1px var(--brief-line)' }}
                 required
               />
               <input
@@ -169,7 +169,7 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
                 value={eventDraft.location}
                 onChange={(e) => setEventDraft((d) => ({ ...d, location: e.target.value }))}
                 className="w-full px-3.5 py-2.5 rounded-xl text-xs border"
-                style={{ borderColor: '#E5E7EB', background: '#F4F4F7' }}
+                style={{ background: 'var(--color-well)', boxShadow: 'var(--room-light-dim), inset 0 0 0 1px var(--brief-line)' }}
               />
               <input
                 type="datetime-local"
@@ -177,7 +177,7 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
                 value={eventDraft.startsAt}
                 onChange={(e) => setEventDraft((d) => ({ ...d, startsAt: e.target.value }))}
                 className="w-full px-3.5 py-2.5 rounded-xl text-xs border"
-                style={{ borderColor: '#E5E7EB', background: '#F4F4F7' }}
+                style={{ background: 'var(--color-well)', boxShadow: 'var(--room-light-dim), inset 0 0 0 1px var(--brief-line)' }}
               />
               <textarea
                 placeholder="Description (what happens, who it is for)"
@@ -186,7 +186,7 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
                 onChange={(e) => setEventDraft((d) => ({ ...d, description: e.target.value }))}
                 rows={3}
                 className="w-full px-3.5 py-2.5 rounded-xl text-xs border resize-none"
-                style={{ borderColor: '#E5E7EB', background: '#F4F4F7' }}
+                style={{ background: 'var(--color-well)', boxShadow: 'var(--room-light-dim), inset 0 0 0 1px var(--brief-line)' }}
               />
               <input
                 type="number"
@@ -196,7 +196,7 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
                 value={eventDraft.price}
                 onChange={(e) => setEventDraft((d) => ({ ...d, price: e.target.value }))}
                 className="w-full px-3.5 py-2.5 rounded-xl text-xs font-mono border"
-                style={{ borderColor: '#E5E7EB', background: '#F4F4F7' }}
+                style={{ background: 'var(--color-well)', boxShadow: 'var(--room-light-dim), inset 0 0 0 1px var(--brief-line)' }}
               />
               <button
                 type="submit"

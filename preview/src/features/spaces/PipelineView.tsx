@@ -232,7 +232,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
 
 
       {/* ── 2. COMPACT KPI HEADER STRIP ── */}
-      <div className="p-4 rounded-3xl bg-white shadow-2xs border border-black/5 flex items-center justify-between gap-3">
+      <div className="p-4 rounded-3xl bg-[color:var(--color-paper)] shadow-2xs border border-black/5 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center space-x-2">
             <span className="text-xs text-[color:var(--color-text-muted)] font-semibold">Your business workspace</span>
@@ -266,7 +266,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
         </div>
 
         {conversations.length === 0 ? (
-          <div className="p-8 rounded-3xl bg-white border border-black/5 text-center space-y-2">
+          <div className="p-8 rounded-3xl bg-[color:var(--color-paper)] border border-black/5 text-center space-y-2">
             <MessageSquare className="w-8 h-8 text-[color:var(--color-text-muted)] mx-auto opacity-40" />
             <p className="text-xs font-bold text-[color:var(--color-text)]">No active orders in pipeline</p>
             <p className="text-[11px] text-[color:var(--color-text-muted)] max-w-sm mx-auto">
@@ -299,7 +299,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
               return (
                 <div
                   key={conv.id}
-                  className="rounded-3xl bg-white border border-black/5 shadow-2xs overflow-hidden transition-all"
+                  className="rounded-3xl bg-[color:var(--color-paper)] border border-black/5 shadow-2xs overflow-hidden transition-all"
                 >
                   {/* Card Main Row */}
                   <div
@@ -399,7 +399,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                   {isExpanded && (
                     <div className="p-4 bg-[color:var(--color-surface)] border-t border-black/5 space-y-3.5 animate-fadeIn">
                       {/* Full Chat Thread */}
-                      <div className="space-y-2 max-h-48 overflow-y-auto p-2 bg-white rounded-2xl border border-black/5">
+                      <div className="space-y-2 max-h-48 overflow-y-auto p-2 bg-[color:var(--color-paper)] rounded-2xl border border-black/5">
                         {conv.messages?.map((m) => (
                           <div
                             key={m.id}
@@ -416,7 +416,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                             >
                               <p>{m.text}</p>
                               {m.quote && (
-                                <div className="mt-1 p-2 rounded-lg bg-white text-[color:var(--color-text)] shadow-2xs text-[11px]">
+                                <div className="mt-1 p-2 rounded-lg bg-[color:var(--color-paper)] text-[color:var(--color-text)] shadow-2xs text-[11px]">
                                   <strong>Quote:</strong> KES {m.quote.priceKes.toLocaleString()} ({m.quote.title})
                                 </div>
                               )}
@@ -441,7 +441,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                           placeholder={`Reply to ${conv.customerName}...`}
                           value={replyText[conv.id] || ''}
                           onChange={(e) => setReplyText({ ...replyText, [conv.id]: e.target.value })}
-                          className="flex-1 px-3 py-1.5 rounded-xl bg-white text-xs border border-black/5 focus:outline-none"
+                          className="flex-1 px-3 py-1.5 rounded-xl bg-[color:var(--color-paper)] text-xs border border-black/5 focus:outline-none"
                         />
                         <button
                           type="submit"
@@ -475,7 +475,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
 
                           {/* Inline Quote Drawer Form */}
                           {isQuoting && (
-                            <div className="p-3 bg-white rounded-2xl border border-black/5 space-y-2 animate-fadeIn">
+                            <div className="p-3 bg-[color:var(--color-paper)] rounded-2xl border border-black/5 space-y-2 animate-fadeIn">
                               <span className="text-[10px] font-black uppercase tracking-wider text-[color:var(--color-primary)]">
                                 Prepare Quotation for {conv.customerName}
                               </span>
@@ -567,7 +567,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                             </button>
                           ) : (
                             /* Inline WAIRO Cargo Expansion Form */
-                            <div className="p-3.5 rounded-2xl bg-white border border-black/5 shadow-xs space-y-2.5 animate-fadeIn">
+                            <div className="p-3.5 rounded-2xl bg-[color:var(--color-paper)] border border-black/5 shadow-xs space-y-2.5 animate-fadeIn">
                               <div className="flex items-center justify-between">
                                 <span className="text-xs font-bold text-[color:var(--color-text)] flex items-center space-x-1">
                                   <Truck className="w-3.5 h-3.5 text-[color:var(--color-primary)]" />
@@ -656,22 +656,22 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
           figure: wrong window and wrong word. A vendor repeats a number like
           that to a supplier, so it says what the rows actually are, on a light
           card like the rest of Brief. */}
-      <div className="p-4 rounded-3xl bg-white flex items-center justify-between border" style={{ borderColor: '#E5E7EB' }}>
+      <div className="p-4 rounded-3xl bg-[color:var(--color-paper)] flex items-center justify-between border" style={{ borderColor: 'var(--brief-line)' }}>
         <div className="flex items-center space-x-2">
           <TrendingUp className="w-4 h-4" style={{ color: 'var(--color-success)' }} />
           <div>
-            <span className="text-[10px] uppercase font-bold block" style={{ color: '#6B7280' }}>
+            <span className="text-[10px] uppercase font-bold block" style={{ color: 'var(--brief-muted)' }}>
               Settled through Brief · all time
             </span>
-            <span className="text-sm font-black font-mono" style={{ color: '#0A0A0A' }}>
+            <span className="text-sm font-black font-mono" style={{ color: 'var(--brief-ink)' }}>
               KES {revenueKes.toLocaleString()}
             </span>
-            <span className="text-[9px] block" style={{ color: '#9CA3AF' }}>
+            <span className="text-[9px] block" style={{ color: 'var(--color-quiet)' }}>
               Expenses are not subtracted here — they are in the Money tab.
             </span>
           </div>
         </div>
-        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ background: '#F4F4F7', color: '#6B7280' }}>
+        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ background: 'var(--color-well)', color: 'var(--brief-muted)' }}>
           {space.name}
         </span>
       </div>

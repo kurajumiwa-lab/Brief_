@@ -465,14 +465,14 @@ export function InterCountyDesk({
   };
 
   return (
-    <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-3xl overflow-hidden shadow-2xl text-[#0D1117] max-w-4xl mx-auto">
+    <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-3xl overflow-hidden shadow-2xl text-[var(--brief-ink)] max-w-4xl mx-auto">
       
       {/* ================= HEADER ================= */}
       <div className="bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0A101D] text-white p-5 sm:p-6 relative">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-[10px] font-mono font-black px-2.5 py-0.5 rounded-full bg-[#00BFEF] text-[#0D1117] uppercase tracking-wider">
+              <span className="text-[10px] font-mono font-black px-2.5 py-0.5 rounded-full bg-[#00BFEF] text-[var(--brief-ink)] uppercase tracking-wider">
                 INTER-COUNTY CROSS-DOCKING
               </span>
               <span className="text-xs text-indigo-200 font-bold flex items-center space-x-1">
@@ -536,7 +536,7 @@ export function InterCountyDesk({
               onClick={() => { soundEngine.play('tap'); setActiveTab(tab.id as any); }}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center space-x-1.5 ${
                 activeTab === tab.id
-                  ? 'bg-white text-[#0D1117] shadow-md font-black'
+                  ? 'bg-white text-[var(--brief-ink)] shadow-md font-black'
                   : 'bg-white/10 text-white/80 hover:bg-white/20'
               }`}
             >
@@ -575,7 +575,7 @@ export function InterCountyDesk({
                   onClick={() => { soundEngine.play('tap'); setSelectedTierFilter(t.id as any); }}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                     selectedTierFilter === t.id
-                      ? 'bg-[#00BFEF] text-[#0D1117] font-black shadow-xs'
+                      ? 'bg-[#00BFEF] text-[var(--brief-ink)] font-black shadow-xs'
                       : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                   }`}
                 >
@@ -593,7 +593,7 @@ export function InterCountyDesk({
                     onClick={() => { soundEngine.play('tap'); setFilterCounty(c); }}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
                       filterCounty === c
-                        ? 'bg-[#0D1117] text-white'
+                        ? 'bg-[color:var(--brief-ink)] text-white'
                         : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                     }`}
                   >
@@ -635,14 +635,14 @@ export function InterCountyDesk({
                       ? 'bg-emerald-50/30 border-emerald-300 hover:border-emerald-500'
                       : isBolt
                       ? 'bg-amber-50/40 border-amber-300 hover:border-amber-500'
-                      : 'bg-white border-[#E5E8EC] hover:border-[#00BFEF]'
+                      : 'bg-white border-[var(--brief-line)] hover:border-[#00BFEF]'
                   }`}
                 >
                   {/* Header row: Driver info & Tier badge */}
                   <div className="flex items-start justify-between">
                     <div className="space-y-0.5">
                       <div className="flex items-center space-x-1.5">
-                        <span className="font-bold text-xs text-[#0D1117]">{route.driverName}</span>
+                        <span className="font-bold text-xs text-[var(--brief-ink)]">{route.driverName}</span>
                         {isLori && (
                           <span className="bg-blue-600 text-white text-[9px] font-mono font-black px-1.5 py-0.5 rounded flex items-center space-x-1">
                             <Repeat className="w-2.5 h-2.5" />
@@ -681,7 +681,7 @@ export function InterCountyDesk({
                     </div>
 
                     <div className="text-right">
-                      <span className="text-xs font-black font-mono text-[#0D1117] bg-white px-2 py-1 rounded-lg border border-gray-200 block">
+                      <span className="text-xs font-black font-mono text-[var(--brief-ink)] bg-white px-2 py-1 rounded-lg border border-gray-200 block">
                         KES {route.baseFeeKes}+
                       </span>
                       <span className="text-[9px] text-gray-500 font-mono">
@@ -694,7 +694,7 @@ export function InterCountyDesk({
                   <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-between text-xs">
                     <div className="space-y-0.5">
                       <span className="text-[10px] font-mono text-gray-400 uppercase block">From</span>
-                      <span className="font-bold text-[#0D1117]">{route.fromCounty}</span>
+                      <span className="font-bold text-[var(--brief-ink)]">{route.fromCounty}</span>
                       <span className="text-[10px] text-gray-500 block truncate max-w-[120px]">{route.fromHub}</span>
                     </div>
 
@@ -702,7 +702,7 @@ export function InterCountyDesk({
 
                     <div className="space-y-0.5 text-right">
                       <span className="text-[10px] font-mono text-gray-400 uppercase block">To</span>
-                      <span className="font-bold text-[#0D1117]">{route.toCounty}</span>
+                      <span className="font-bold text-[var(--brief-ink)]">{route.toCounty}</span>
                       <span className="text-[10px] text-gray-500 block truncate max-w-[120px]">{route.toHub}</span>
                     </div>
                   </div>
@@ -734,7 +734,7 @@ export function InterCountyDesk({
                   <button
                     type="button"
                     onClick={() => handleOpenBooking(route)}
-                    className="w-full py-2.5 rounded-xl bg-[#0D1117] hover:bg-black text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center space-x-1.5 cursor-pointer transition-transform active:scale-[0.99] shadow-xs"
+                    className="w-full py-2.5 rounded-xl bg-[color:var(--brief-ink)] hover:bg-black text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center space-x-1.5 cursor-pointer transition-transform active:scale-[0.99] shadow-xs"
                   >
                     <span>Book Freight Slot ({route.partnerBrand || 'WAIRO'})</span>
                     <ChevronRight className="w-3.5 h-3.5 text-[#00BFEF]" />
@@ -754,7 +754,7 @@ export function InterCountyDesk({
               <span className="text-[10px] font-mono font-bold text-[#4F46E5] uppercase tracking-wider">
                 COMMISSION TRANSPARENCY
               </span>
-              <h4 className="text-sm font-black text-[#0D1117]">
+              <h4 className="text-sm font-black text-[var(--brief-ink)]">
                 Earn 90% Commission on Empty Trunk Space
               </h4>
               <p className="text-xs text-gray-600 leading-relaxed">
@@ -892,7 +892,7 @@ export function InterCountyDesk({
 
             <button
               type="submit"
-              className="w-full py-3 rounded-2xl bg-[#0D1117] hover:bg-black text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center space-x-2 shadow-md cursor-pointer transition-all"
+              className="w-full py-3 rounded-2xl bg-[color:var(--brief-ink)] hover:bg-black text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center space-x-2 shadow-md cursor-pointer transition-all"
             >
               <Send className="w-4 h-4 text-[#00BFEF]" />
               <span>Publish Inter-County Route</span>
@@ -905,7 +905,7 @@ export function InterCountyDesk({
       {activeTab === 'my_bookings' && (
         <div className="p-5 sm:p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-black uppercase tracking-wider text-[#0D1117]">
+            <h3 className="text-xs font-black uppercase tracking-wider text-[var(--brief-ink)]">
               Active Cross-County Parcel Escrows
             </h3>
             <span className="text-[10px] font-mono text-gray-500">4-Digit PIN Release Active</span>
@@ -914,12 +914,12 @@ export function InterCountyDesk({
           {bookings.map((b) => (
             <div
               key={b.id}
-              className="p-4 rounded-2xl bg-white border border-[#E5E8EC] space-y-3 shadow-xs"
+              className="p-4 rounded-2xl bg-white border border-[var(--brief-line)] space-y-3 shadow-xs"
             >
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center space-x-2">
-                    <span className="font-mono font-black text-xs text-[#0D1117]">{b.id}</span>
+                    <span className="font-mono font-black text-xs text-[var(--brief-ink)]">{b.id}</span>
                     <span className="text-[10px] bg-blue-50 text-[#06B6D4] font-bold px-2 py-0.5 rounded border border-blue-200">
                       {b.fromCounty} ➔ {b.toCounty}
                     </span>
@@ -929,7 +929,7 @@ export function InterCountyDesk({
                       </span>
                     )}
                   </div>
-                  <p className="font-bold text-xs mt-1 text-[#0D1117]">{b.itemDescription}</p>
+                  <p className="font-bold text-xs mt-1 text-[var(--brief-ink)]">{b.itemDescription}</p>
                   <p className="text-[10px] text-gray-500">Weight: {b.weightKg} kg • Fee: KES {b.feeKes}</p>
                 </div>
 
@@ -951,7 +951,7 @@ export function InterCountyDesk({
                     Recipient Drop-off Release PIN:
                   </span>
                   <div className="flex items-center space-x-2">
-                    <span className="text-base font-black font-mono tracking-widest text-[#0D1117] bg-white px-3 py-1 rounded-lg border border-gray-300">
+                    <span className="text-base font-black font-mono tracking-widest text-[var(--brief-ink)] bg-white px-3 py-1 rounded-lg border border-gray-300">
                       {b.pinCode}
                     </span>
                     <span className="text-[10px] text-gray-500">Share with driver or Fargo/Lori agent upon parcel collection</span>
@@ -1027,17 +1027,17 @@ export function InterCountyDesk({
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono">
             <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200 space-y-1">
-              <span className="font-bold text-[#0D1117] block">1. 90% Direct Payout</span>
+              <span className="font-bold text-[var(--brief-ink)] block">1. 90% Direct Payout</span>
               <p className="text-[10px] text-gray-600 font-sans">You keep KES 90 out of every KES 100 paid by shippers.</p>
             </div>
 
             <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200 space-y-1">
-              <span className="font-bold text-[#0D1117] block">2. 200+ Fargo Hubs</span>
+              <span className="font-bold text-[var(--brief-ink)] block">2. 200+ Fargo Hubs</span>
               <p className="text-[10px] text-gray-600 font-sans">Collect or drop at any verified Fargo counter nationwide.</p>
             </div>
 
             <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200 space-y-1">
-              <span className="font-bold text-[#0D1117] block">3. 50% Lori Backhaul</span>
+              <span className="font-bold text-[var(--brief-ink)] block">3. 50% Lori Backhaul</span>
               <p className="text-[10px] text-gray-600 font-sans">Leverage empty returning 10-ton lorries on heavy corridors.</p>
             </div>
           </div>
@@ -1051,7 +1051,7 @@ export function InterCountyDesk({
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-[10px] font-mono text-[#00BFEF] font-bold uppercase">Booking Parcel Transport</span>
-                <h3 className="font-black text-base text-[#0D1117]">{selectedRoute.fromCounty} ➔ {selectedRoute.toCounty}</h3>
+                <h3 className="font-black text-base text-[var(--brief-ink)]">{selectedRoute.fromCounty} ➔ {selectedRoute.toCounty}</h3>
                 <span className="text-[10px] font-mono text-gray-500">Tier: {selectedRoute.partnerBrand || 'WAIRO Standard'}</span>
               </div>
               <button
@@ -1091,7 +1091,7 @@ export function InterCountyDesk({
 
                 <div className="space-y-1">
                   <label className="font-bold text-gray-700">Calculated Fee</label>
-                  <div className="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-[#0D1117]">
+                  <div className="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-[var(--brief-ink)]">
                     KES {selectedRoute.baseFeeKes + (weightKg * selectedRoute.pricePerKgKes)}
                   </div>
                 </div>
@@ -1173,7 +1173,7 @@ export function InterCountyDesk({
 
               <button
                 type="submit"
-                className="w-full py-2.5 rounded-2xl bg-[#00BFEF] hover:bg-[#00a8d6] text-[#0D1117] font-black text-xs shadow-md cursor-pointer transition-all"
+                className="w-full py-2.5 rounded-2xl bg-[#00BFEF] hover:bg-[#00a8d6] text-[var(--brief-ink)] font-black text-xs shadow-md cursor-pointer transition-all"
               >
                 Confirm Booking & Deposit Escrow
               </button>

@@ -42,7 +42,7 @@ export const AppColors = {
   secondary: '#4F46E5',
   teal: '#00BFEF',
   emerald: '#00D26A',
-  surfaceLight: '#FFFFFF',
+  surfaceLight: 'var(--color-paper)',
   surfaceSubtle: '#F8FAFC',
   surfaceMuted: '#F1F5F9',
   borderLight: '#E2E8F0',
@@ -207,7 +207,7 @@ export function CustomTextField({
             placeholder={placeholder}
             readOnly={readOnly}
             onClick={onTap}
-            className={`w-full bg-transparent p-3 text-xs text-[#0D1117] dark:text-slate-100 placeholder-slate-400 outline-none resize-none ${
+            className={`w-full bg-transparent p-3 text-xs text-[var(--brief-ink)] dark:text-slate-100 placeholder-slate-400 outline-none resize-none ${
               icon ? 'pl-10' : ''
             } ${suffixIcon ? 'pr-10' : ''}`}
           />
@@ -221,7 +221,7 @@ export function CustomTextField({
             placeholder={placeholder}
             readOnly={readOnly}
             onClick={onTap}
-            className={`w-full bg-transparent py-3 px-3 text-xs text-[#0D1117] dark:text-slate-100 placeholder-slate-400 outline-none ${
+            className={`w-full bg-transparent py-3 px-3 text-xs text-[var(--brief-ink)] dark:text-slate-100 placeholder-slate-400 outline-none ${
               icon ? 'pl-10' : ''
             } ${suffixIcon ? 'pr-10' : ''}`}
           />
@@ -528,7 +528,7 @@ export function DiscardConfirmationModal({
           <button
             type="button"
             onClick={onSaveDraftAndExit}
-            className="w-full py-2.5 rounded-xl bg-[#0D1117] hover:bg-[#1E293B] text-white font-bold text-xs cursor-pointer transition-colors"
+            className="w-full py-2.5 rounded-xl bg-[color:var(--brief-ink)] hover:bg-[#1E293B] text-white font-bold text-xs cursor-pointer transition-colors"
           >
             Save Draft & Close
           </button>
@@ -947,10 +947,10 @@ export function UniversalCreatePostModal({
       aria-labelledby="universal-publisher-title"
       className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
     >
-      <div className="w-full max-w-lg bg-[#FFFFFF] dark:bg-[#0D1117] text-[#0D1117] dark:text-slate-100 rounded-3xl border border-[#E2E8F0] dark:border-slate-800 shadow-2xl overflow-hidden my-auto animate-scaleUp transition-colors">
+      <div className="w-full max-w-lg bg-[color:var(--color-paper)] dark:bg-[color:var(--brief-ink)] text-[var(--accent-ink)] dark:text-slate-100 rounded-3xl border border-[#E2E8F0] dark:border-slate-800 shadow-2xl overflow-hidden my-auto animate-scaleUp transition-colors">
         
         {/* ================= MODAL HEADER ================= */}
-        <div className="bg-[#0D1117] text-white p-4 sm:p-5 flex items-center justify-between border-b border-white/10">
+        <div className="bg-[color:var(--brief-ink)] text-white p-4 sm:p-5 flex items-center justify-between border-b border-white/10">
           <div className="space-y-0.5">
             <div className="flex items-center space-x-2">
               <span className="text-[10px] font-mono uppercase tracking-wider text-[#4F46E5] font-black">
@@ -1000,7 +1000,7 @@ export function UniversalCreatePostModal({
                   isActive
                     ? 'text-[#4F46E5] font-black'
                     : isCompleted
-                    ? 'text-slate-700 dark:text-slate-300 hover:text-[#0D1117]'
+                    ? 'text-slate-700 dark:text-slate-300 hover:text-[var(--brief-ink)]'
                     : 'text-slate-400 dark:text-slate-600'
                 }`}
               >
@@ -1064,7 +1064,7 @@ export function UniversalCreatePostModal({
               }}
               className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
                 postType === tab.id
-                  ? 'bg-white dark:bg-slate-800 text-[#0D1117] dark:text-white shadow-sm font-black border border-slate-200 dark:border-slate-700'
+                  ? 'bg-white dark:bg-slate-800 text-[var(--brief-ink)] dark:text-white shadow-sm font-black border border-slate-200 dark:border-slate-700'
                   : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
@@ -1447,7 +1447,7 @@ export function UniversalCreatePostModal({
             <button
               type="button"
               onClick={handleNextStep}
-              className="flex-1 max-w-[220px] py-3 rounded-2xl bg-[#0D1117] hover:bg-[#1E293B] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center space-x-1.5 shadow-md cursor-pointer transition-all active:scale-95"
+              className="flex-1 max-w-[220px] py-3 rounded-2xl bg-[color:var(--brief-ink)] hover:bg-[#1E293B] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center space-x-1.5 shadow-md cursor-pointer transition-all active:scale-95"
             >
               <span>Next: {currentStep === 1 ? 'Media & Details' : 'Preview'}</span>
               <ArrowRight className="w-3.5 h-3.5 text-[#4F46E5]" />
@@ -1457,7 +1457,7 @@ export function UniversalCreatePostModal({
               type="button"
               onClick={handleFinalPublish}
               disabled={isSubmitting}
-              className="flex-1 max-w-[240px] py-3.5 rounded-2xl bg-[#0D1117] hover:bg-[#1E293B] text-white font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50 transition-all active:scale-95"
+              className="flex-1 max-w-[240px] py-3.5 rounded-2xl bg-[color:var(--brief-ink)] hover:bg-[#1E293B] text-white font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50 transition-all active:scale-95"
             >
               <Sparkles className="w-4 h-4 text-[#4F46E5]" />
               <span>{isSubmitting ? 'Publishing…' : `Publish ${postType.toUpperCase()}`}</span>

@@ -59,7 +59,7 @@ export const SpacePeople: React.FC<SpacePeopleProps> = ({
         </div>
 
         {conversations.length === 0 ? (
-          <div className="p-5 rounded-2xl bg-white border border-black/5 text-center">
+          <div className="p-5 rounded-2xl bg-[color:var(--color-paper)] border border-black/5 text-center">
             <p className="text-xs text-[color:var(--color-text-muted)]">No customer chats yet. Inbound WhatsApp messages and inquiries will appear here.</p>
           </div>
         ) : (
@@ -76,7 +76,7 @@ export const SpacePeople: React.FC<SpacePeopleProps> = ({
                     soundEngine.play('tap');
                     setSelectedConv(conv);
                   }}
-                  className="p-3.5 rounded-2xl bg-white hover:bg-[color:var(--color-surface)] border border-black/5 shadow-2xs flex items-center justify-between gap-3 cursor-pointer transition-all"
+                  className="p-3.5 rounded-2xl bg-[color:var(--color-paper)] hover:bg-[color:var(--color-surface)] border border-black/5 shadow-2xs flex items-center justify-between gap-3 cursor-pointer transition-all"
                 >
                   <div className="flex items-center space-x-3 min-w-0">
                     <div className="w-9 h-9 rounded-full bg-[color:var(--color-primary-subtle)] text-[color:var(--color-primary)] font-black text-xs flex items-center justify-center shrink-0">
@@ -128,7 +128,7 @@ export const SpacePeople: React.FC<SpacePeopleProps> = ({
         </div>
 
         {customers.length === 0 ? (
-          <div className="p-4 rounded-2xl bg-white border border-black/5 text-center">
+          <div className="p-4 rounded-2xl bg-[color:var(--color-paper)] border border-black/5 text-center">
             <p className="text-xs text-[color:var(--color-text-muted)]">No saved customers yet.</p>
           </div>
         ) : (
@@ -136,7 +136,7 @@ export const SpacePeople: React.FC<SpacePeopleProps> = ({
             {customers.map((c, idx) => (
               <div
                 key={idx}
-                className="p-3 rounded-2xl bg-white border border-black/5 shadow-2xs flex items-center justify-between gap-3"
+                className="p-3 rounded-2xl bg-[color:var(--color-paper)] border border-black/5 shadow-2xs flex items-center justify-between gap-3"
               >
                 <div className="flex items-center space-x-2.5 min-w-0">
                   <div className="w-8 h-8 rounded-full bg-[color:var(--color-surface-elevated)] text-[color:var(--color-text)] font-bold text-xs flex items-center justify-center shrink-0">

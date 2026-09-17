@@ -24,7 +24,7 @@ export const WairoBookmark: React.FC<WairoBookmarkProps> = ({
   style
 }) => {
   const isTransit = status === 'IN TRANSIT' || status === 'active';
-  const statusColor = isTransit ? '#10B981' : '#9CA3AF'; // Green = active, Gray = idle
+  const statusColor = isTransit ? '#10B981' : 'var(--color-quiet)'; // Green = active, Gray = idle
 
   const handleClick = () => {
     soundEngine.play('tap');

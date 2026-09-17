@@ -44,7 +44,7 @@ export const SpaceOffers: React.FC<SpaceOffersProps> = ({
       </div>
 
       {offers.length === 0 ? (
-        <div className="p-6 rounded-2xl bg-white border border-dashed border-gray-300 text-center space-y-2">
+        <div className="p-6 rounded-2xl bg-[color:var(--color-paper)] border border-dashed border-gray-300 text-center space-y-2">
           <p className="text-xs text-[color:var(--color-text-muted)]">
             No offers added to this space yet.
           </p>
@@ -67,7 +67,7 @@ export const SpaceOffers: React.FC<SpaceOffersProps> = ({
             return (
               <div
                 key={offer.id}
-                className="p-4 rounded-2xl bg-white border border-black/5 shadow-2xs hover:shadow-sm transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+                className="p-4 rounded-2xl bg-[color:var(--color-paper)] border border-black/5 shadow-2xs hover:shadow-sm transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
               >
                 <div className="space-y-1 min-w-0">
                   <div className="flex items-center space-x-2">

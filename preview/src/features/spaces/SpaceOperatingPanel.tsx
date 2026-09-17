@@ -164,8 +164,8 @@ export function SpaceOperatingPanel({
     <div className={`space-y-4 ${className}`}>
       {/* ── STATE ─────────────────────────────────────────────────────────── */}
       <section
-        className="p-4 rounded-2xl border space-y-2"
-        style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}
+        className="p-4 rounded-2xl  space-y-2 brief-card"
+        style={{ background: 'var(--color-paper)' }}
         aria-label="Space maintenance state"
       >
         <div className="flex items-center gap-2">
@@ -225,7 +225,7 @@ export function SpaceOperatingPanel({
         </div>
 
         {!editing && (
-          <div className="rounded-2xl border divide-y" style={{ borderColor: 'var(--color-border)' }}>
+          <div className="rounded-2xl border divide-y" style={{ borderColor: 'var(--brief-line)' }}>
             {fields.map((f) => (
               <div key={f.key} className="p-3 flex items-start gap-3">
                 <div className="min-w-0 flex-1">
@@ -248,7 +248,7 @@ export function SpaceOperatingPanel({
                     onClick={() => void confirm(f.key)}
                     disabled={busy}
                     className="shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-full cursor-pointer border disabled:opacity-50"
-                    style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}
+                    style={{ borderColor: 'var(--brief-line)', color: 'var(--color-text-muted)', boxShadow: 'var(--room-light-dim)' }}
                     title="Record that this answer still stands"
                   >
                     Still true
@@ -260,7 +260,7 @@ export function SpaceOperatingPanel({
         )}
 
         {editing && (
-          <div className="p-4 rounded-2xl border space-y-4" style={{ borderColor: 'var(--color-border)' }}>
+          <div className="p-4 rounded-2xl border space-y-4" style={{ borderColor: 'var(--brief-line)' }}>
             <SpaceFieldInputs
               fields={fields}
               values={draft}
@@ -296,7 +296,7 @@ export function SpaceOperatingPanel({
         </div>
 
         {queue.length === 0 ? (
-          <div className="p-4 rounded-2xl border flex items-center gap-2" style={{ borderColor: 'var(--color-border)' }}>
+          <div className="p-4 rounded-2xl border flex items-center gap-2" style={{ borderColor: 'var(--brief-line)' }}>
             <CheckCircle2 className="w-4 h-4" style={{ color: 'var(--color-success)' }} />
             <p className="text-xs font-bold" style={{ color: 'var(--color-text)' }}>
               Nothing open. Every answer is inside its window and no row is waiting on you.
@@ -310,7 +310,7 @@ export function SpaceOperatingPanel({
                 className="p-3 rounded-2xl border"
                 style={{
                   borderColor: item.urgency === 'overdue' || item.urgency === 'missing' ? 'var(--color-primary)' : 'var(--color-border)',
-                  background: '#fff'
+                  background: 'var(--color-paper)'
                 }}
               >
                 <p className="text-[13px] font-bold leading-snug" style={{ color: 'var(--color-text)' }}>
@@ -346,7 +346,7 @@ export function SpaceOperatingPanel({
                       type="button"
                       onClick={() => { soundEngine.play('tap'); onSwitchTab(item.action === 'inbox' ? 'pipeline' : 'catalog'); }}
                       className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1.5 rounded-full cursor-pointer border"
-                      style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+                      style={{ borderColor: 'var(--brief-line)', color: 'var(--color-text)' }}
                     >
                       {item.action === 'inbox' ? 'Open inbox' : 'Open offers'}
                       <ArrowRight className="w-3 h-3" />
@@ -357,7 +357,7 @@ export function SpaceOperatingPanel({
                       type="button"
                       onClick={() => { soundEngine.play('tap'); requestPath(item.requestId!); }}
                       className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1.5 rounded-full cursor-pointer border"
-                      style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+                      style={{ borderColor: 'var(--brief-line)', color: 'var(--color-text)' }}
                     >
                       Open the request
                       <ArrowRight className="w-3 h-3" />
@@ -379,7 +379,7 @@ export function SpaceOperatingPanel({
           <h3 className="text-xs font-black uppercase tracking-wider" style={{ color: 'var(--color-text)' }}>
             Pipeline
           </h3>
-          <div className="p-3 rounded-2xl border space-y-1.5" style={{ borderColor: 'var(--color-border)' }}>
+          <div className="p-3 rounded-2xl border space-y-1.5" style={{ borderColor: 'var(--brief-line)' }}>
             <Row
               icon={<Store className="w-3.5 h-3.5" />}
               label={pipeline.discoverable ? 'In the public directory' : 'Not in the public directory'}
@@ -412,7 +412,7 @@ export function SpaceOperatingPanel({
           </div>
 
           {pipeline.needs.length > 0 && (
-            <div className="p-3 rounded-2xl border space-y-2" style={{ borderColor: 'var(--color-border)' }}>
+            <div className="p-3 rounded-2xl border space-y-2" style={{ borderColor: 'var(--brief-line)' }}>
               <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
                 Your declared needs
               </p>
@@ -424,7 +424,7 @@ export function SpaceOperatingPanel({
                     onClick={() => void postNeedAsRequest(n.text)}
                     disabled={busy}
                     className="shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-full cursor-pointer border disabled:opacity-50"
-                    style={{ borderColor: 'var(--color-border)', color: 'var(--color-primary)' }}
+                    style={{ borderColor: 'var(--brief-line)', color: 'var(--color-primary)' }}
                     title="Creates a draft request you own — it goes live only when you submit it"
                   >
                     Post as a request

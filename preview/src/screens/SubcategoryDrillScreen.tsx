@@ -83,7 +83,7 @@ export const SubcategoryDrillScreen: React.FC<SubcategoryDrillScreenProps> = ({
   };
 
   return (
-    <div className="relative min-h-screen w-full bg-[#E8E4DD] font-sans text-[#1A1F2E] select-none overflow-x-hidden">
+    <div className="relative min-h-screen w-full bg-[#E8E4DD] font-sans text-[var(--brief-ink)] select-none overflow-x-hidden">
       
       {/* ── Top Metallic Band with Diagonal Streaks Overlay ── */}
       <div
@@ -238,7 +238,7 @@ export const SubcategoryDrillScreen: React.FC<SubcategoryDrillScreenProps> = ({
                   className={`flex-1 py-2.5 rounded-full text-xs font-bold transition-all duration-300 cursor-pointer text-center ${
                     isSelected
                       ? 'text-white shadow font-black'
-                      : 'text-[#6B7280] hover:text-[#1A1F2E]'
+                      : 'text-[var(--brief-muted)] hover:text-[var(--brief-ink)]'
                   }`}
                   style={{
                     backgroundColor: isSelected ? palette.base : 'transparent'
@@ -256,14 +256,14 @@ export const SubcategoryDrillScreen: React.FC<SubcategoryDrillScreenProps> = ({
           {filteredItems.length === 0 ? (
             <div className="text-center py-12 bg-white/60 rounded-3xl p-6 border border-black/5">
               <Sparkles className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm font-bold text-[#1A1F2E]">No items match "{selectedFilter}"</p>
+              <p className="text-sm font-bold text-[var(--brief-ink)]">No items match "{selectedFilter}"</p>
               <button
                 type="button"
                 onClick={() => {
                   setSelectedFilter('All');
                   setSearchQuery('');
                 }}
-                className="mt-3 px-4 py-2 rounded-full bg-[#1A1F2E] text-white text-xs font-bold"
+                className="mt-3 px-4 py-2 rounded-full bg-[color:var(--brief-ink)] text-white text-xs font-bold"
               >
                 Reset Filters
               </button>
@@ -290,7 +290,7 @@ export const SubcategoryDrillScreen: React.FC<SubcategoryDrillScreenProps> = ({
 
       {/* ================= NESTED ITEM DETAIL (Continuous Material Palette) ================= */}
       {activeItemDetail && (
-        <div className="fixed inset-0 z-50 overflow-y-auto animate-slideUp bg-[#1A1F2E]">
+        <div className="fixed inset-0 z-50 overflow-y-auto animate-slideUp bg-[color:var(--brief-ink)]">
           <SheetDetailScreen
             material={material}
             title={activeItemDetail.title}
@@ -308,7 +308,7 @@ export const SubcategoryDrillScreen: React.FC<SubcategoryDrillScreenProps> = ({
 
       {/* ================= TOAST ================= */}
       {toastMsg && (
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-[#1A1F2E] text-white text-xs font-bold shadow-2xl flex items-center space-x-2 animate-fadeIn border border-white/10">
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-[color:var(--brief-ink)] text-white text-xs font-bold shadow-2xl flex items-center space-x-2 animate-fadeIn border border-white/10">
           <CheckCircle2 className="w-4 h-4 text-[#2ECC71]" />
           <span>{toastMsg}</span>
         </div>

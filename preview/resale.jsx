@@ -74,8 +74,13 @@ async function main(){
   await click(btn('My Layer'));
   await click(sub('Kept'));
   await click(sub('My tickets'));
-  // let the QR data-URL promise land before asserting on it
-  await act(async()=>{await new Promise(r=>setTimeout(r,40));});
+  // let the QR data-URL promise land before asserting on it. The image is drawn
+  // asynchronously (a canvas encode), so poll for it rather than sleep on a
+  // fixed guess — the assertion below is unchanged.
+  for (let i = 0; i < 12; i++) {
+    if (Array.from(document.querySelectorAll('img')).some(x => (x.getAttribute('alt') || '').includes('#2'))) break;
+    await act(async () => { await new Promise(r => setTimeout(r, 40)); });
+  }
   check('the section renders', /My tickets/.test(body()));
   check('the CURRENT code (with version) is what renders',
     body().includes('BRF-AAAA-BBBB-CCCC#2'), body().slice(0,200));

@@ -71,10 +71,10 @@ export const GroupDemandRunDesk: React.FC<GroupDemandRunDeskProps> = ({
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto rounded-3xl bg-[#FAFAF8] shadow-2xl overflow-hidden font-sans text-[#1A1F2E]">
+    <div className="w-full max-w-3xl mx-auto rounded-3xl bg-[color:var(--color-paper)] shadow-2xl overflow-hidden font-sans text-[var(--brief-ink)]">
       
       {/* ── HEADER ── */}
-      <div className="p-6 sm:p-7 bg-gradient-to-br from-[#1A1F2E] via-[#2A3447] to-[#1A1F2E] text-white relative">
+      <div className="p-6 sm:p-7 bg-gradient-to-br from-[var(--brief-ink)] via-[#2A3447] to-[var(--brief-ink)] text-white relative">
         <div className="flex items-start justify-between">
           <div className="space-y-1.5">
             <div className="flex items-center space-x-2">
@@ -122,7 +122,7 @@ export const GroupDemandRunDesk: React.FC<GroupDemandRunDeskProps> = ({
               }}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${
                 activeRun.id === r.id
-                  ? 'bg-white text-[#1A1F2E] shadow-md font-black'
+                  ? 'bg-white text-[var(--brief-ink)] shadow-md font-black'
                   : 'bg-white/10 text-white/80 hover:bg-white/20'
               }`}
             >
@@ -148,12 +148,12 @@ export const GroupDemandRunDesk: React.FC<GroupDemandRunDeskProps> = ({
                 </span>
               </div>
               
-              <h3 className="text-lg font-black text-[#1A1F2E] leading-snug mt-1">
+              <h3 className="text-lg font-black text-[var(--brief-ink)] leading-snug mt-1">
                 {activeRun.title}
               </h3>
 
               {activeRun.creatorName && (
-                <div className="flex items-center space-x-1.5 mt-1 text-[11px] text-[#6B7280]">
+                <div className="flex items-center space-x-1.5 mt-1 text-[11px] text-[var(--brief-muted)]">
                   <Award className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                   <span>Organized by: <strong>{activeRun.creatorName}</strong></span>
                   {activeRun.creatorReferralCode && (
@@ -178,14 +178,14 @@ export const GroupDemandRunDesk: React.FC<GroupDemandRunDeskProps> = ({
             </div>
           </div>
 
-          <p className="text-xs text-[#6B7280] leading-relaxed">
+          <p className="text-xs text-[var(--brief-muted)] leading-relaxed">
             {activeRun.itemDescription}
           </p>
 
           {/* Progress Bar */}
           <div className="space-y-2 pt-2">
             <div className="flex items-center justify-between text-xs font-bold">
-              <span className="text-[#1A1F2E]">
+              <span className="text-[var(--brief-ink)]">
                 {activeRun.currentPledged} of {activeRun.targetQuantity} units committed
               </span>
               <span className="text-[#B8621F]">
@@ -200,7 +200,7 @@ export const GroupDemandRunDesk: React.FC<GroupDemandRunDeskProps> = ({
                 }}
               />
             </div>
-            <span className="text-[10px] font-mono text-[#6B7280] block">
+            <span className="text-[10px] font-mono text-[var(--brief-muted)] block">
               Deadline: {activeRun.deadlineIso}
             </span>
           </div>
@@ -208,11 +208,11 @@ export const GroupDemandRunDesk: React.FC<GroupDemandRunDeskProps> = ({
           {/* Savings Matrix */}
           <div className="grid grid-cols-3 gap-3 pt-3 border-t border-black/5">
             <div className="p-3 rounded-xl bg-[#F0EDE8]">
-              <span className="text-[9px] font-bold text-[#6B7280] block uppercase">Group Wholesale</span>
-              <span className="text-sm font-black text-[#1A1F2E]">KES {activeRun.unitWholesaleKes.toLocaleString()}</span>
+              <span className="text-[9px] font-bold text-[var(--brief-muted)] block uppercase">Group Wholesale</span>
+              <span className="text-sm font-black text-[var(--brief-ink)]">KES {activeRun.unitWholesaleKes.toLocaleString()}</span>
             </div>
             <div className="p-3 rounded-xl bg-[#F0EDE8]">
-              <span className="text-[9px] font-bold text-[#6B7280] block uppercase">Retail Store Price</span>
+              <span className="text-[9px] font-bold text-[var(--brief-muted)] block uppercase">Retail Store Price</span>
               <span className="text-sm font-bold text-gray-500 line-through">KES {activeRun.unitRetailKes.toLocaleString()}</span>
             </div>
             <div className="p-3 rounded-xl bg-emerald-500/10">
@@ -229,12 +229,12 @@ export const GroupDemandRunDesk: React.FC<GroupDemandRunDeskProps> = ({
           <div className="p-4 rounded-2xl bg-white shadow-sm space-y-2">
             <div className="flex items-center space-x-2">
               <ShieldCheck className="w-4 h-4 text-[#0B6E6E]" />
-              <span className="text-xs font-black uppercase tracking-wider text-[#1A1F2E]">
+              <span className="text-xs font-black uppercase tracking-wider text-[var(--brief-ink)]">
                 Verified Supplier Depot
               </span>
             </div>
-            <p className="text-xs font-bold text-[#1A1F2E]">{activeRun.supplier.name}</p>
-            <p className="text-[11px] text-[#6B7280]">{activeRun.supplier.location}</p>
+            <p className="text-xs font-bold text-[var(--brief-ink)]">{activeRun.supplier.name}</p>
+            <p className="text-[11px] text-[var(--brief-muted)]">{activeRun.supplier.location}</p>
             {activeRun.supplier.paybillOrTill && (
               <div className="flex items-center space-x-1.5 text-[11px] font-mono text-emerald-700 font-bold bg-emerald-50 px-2 py-1 rounded">
                 <CreditCard className="w-3.5 h-3.5" />
@@ -245,7 +245,7 @@ export const GroupDemandRunDesk: React.FC<GroupDemandRunDeskProps> = ({
             <button
               type="button"
               onClick={() => callSupplier(activeRun.supplier.phone, activeRun.supplier.name)}
-              className="mt-2 w-full py-2 px-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-xs font-bold text-[#1A1F2E] flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
+              className="mt-2 w-full py-2 px-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-xs font-bold text-[var(--brief-ink)] flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
             >
               <Phone className="w-3.5 h-3.5 text-[#0B6E6E]" />
               <span>Contact Depot ({activeRun.supplier.phone})</span>
@@ -256,12 +256,12 @@ export const GroupDemandRunDesk: React.FC<GroupDemandRunDeskProps> = ({
           <div className="p-4 rounded-2xl bg-white shadow-sm space-y-2">
             <div className="flex items-center space-x-2">
               <Truck className="w-4 h-4 text-[#B8621F]" />
-              <span className="text-xs font-black uppercase tracking-wider text-[#1A1F2E]">
+              <span className="text-xs font-black uppercase tracking-wider text-[var(--brief-ink)]">
                 WAIRO Gate Delivery
               </span>
             </div>
-            <p className="text-xs font-bold text-[#1A1F2E]">{activeRun.wairoCarrierInfo?.carrierName}</p>
-            <p className="text-[11px] text-[#6B7280]">Vehicle Plate: {activeRun.wairoCarrierInfo?.vehiclePlate}</p>
+            <p className="text-xs font-bold text-[var(--brief-ink)]">{activeRun.wairoCarrierInfo?.carrierName}</p>
+            <p className="text-[11px] text-[var(--brief-muted)]">Vehicle Plate: {activeRun.wairoCarrierInfo?.vehiclePlate}</p>
             {activeRun.wairoCarrierInfo?.trackingNumber && (
               <p className="text-[10px] font-mono text-gray-500">Tracking: {activeRun.wairoCarrierInfo.trackingNumber}</p>
             )}
@@ -275,7 +275,7 @@ export const GroupDemandRunDesk: React.FC<GroupDemandRunDeskProps> = ({
         {activeRun.pledges && activeRun.pledges.length > 0 && (
           <div className="p-4 rounded-2xl bg-white shadow-sm space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-black uppercase tracking-wider text-[#1A1F2E]">
+              <span className="text-xs font-black uppercase tracking-wider text-[var(--brief-ink)]">
                 Recent Group Pledges ({activeRun.pledges.length})
               </span>
               <span className="text-[10px] font-mono font-bold text-emerald-700">
@@ -287,8 +287,8 @@ export const GroupDemandRunDesk: React.FC<GroupDemandRunDeskProps> = ({
               {activeRun.pledges.slice(0, 6).map((p, idx) => (
                 <div key={idx} className="p-2.5 rounded-xl bg-[#F0EDE8] flex items-center justify-between">
                   <div>
-                    <span className="text-xs font-bold text-[#1A1F2E] block">{p.userName}</span>
-                    <span className="text-[10px] text-[#6B7280]">{p.pledgedAt}</span>
+                    <span className="text-xs font-bold text-[var(--brief-ink)] block">{p.userName}</span>
+                    <span className="text-[10px] text-[var(--brief-muted)]">{p.pledgedAt}</span>
                   </div>
                   <span className="text-xs font-black text-[#B8621F] px-2 py-0.5 rounded bg-white shadow-xs">
                     {p.quantity} {p.quantity === 1 ? 'pack' : 'packs'}
@@ -302,7 +302,7 @@ export const GroupDemandRunDesk: React.FC<GroupDemandRunDeskProps> = ({
         {/* Action Row */}
         <div className="p-5 rounded-2xl bg-[#EFECE6] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center space-x-3">
-            <span className="text-xs font-black text-[#1A1F2E]">Pledge Quantity:</span>
+            <span className="text-xs font-black text-[var(--brief-ink)]">Pledge Quantity:</span>
             <div className="flex items-center space-x-2">
               <button
                 type="button"
@@ -320,7 +320,7 @@ export const GroupDemandRunDesk: React.FC<GroupDemandRunDeskProps> = ({
                 +
               </button>
             </div>
-            <span className="text-xs text-[#6B7280] font-bold">
+            <span className="text-xs text-[var(--brief-muted)] font-bold">
               Total: KES {(activeRun.unitWholesaleKes * pledgeCount).toLocaleString()}
             </span>
           </div>
@@ -337,7 +337,7 @@ export const GroupDemandRunDesk: React.FC<GroupDemandRunDeskProps> = ({
 
         {/* Non-Promise Disclaimer */}
         <div className="p-3.5 rounded-2xl bg-black/[0.03] space-y-1 text-center">
-          <p className="text-[10px] text-[#6B7280] leading-relaxed">
+          <p className="text-[10px] text-[var(--brief-muted)] leading-relaxed">
             Brief aggregates group demand and connects you directly with verified suppliers. Payments settle directly via M-Pesa. Brief is not the merchant of record and holds zero retail inventory.
           </p>
         </div>
@@ -345,7 +345,7 @@ export const GroupDemandRunDesk: React.FC<GroupDemandRunDeskProps> = ({
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-[#1A1F2E] text-white text-xs font-bold shadow-2xl flex items-center space-x-2 animate-fadeIn border border-white/10">
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-[color:var(--brief-ink)] text-white text-xs font-bold shadow-2xl flex items-center space-x-2 animate-fadeIn border border-white/10">
           <CheckCircle2 className="w-4 h-4 text-[#2ECC71]" />
           <span>{toastMessage}</span>
         </div>

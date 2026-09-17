@@ -139,7 +139,7 @@ export const PublicOfferModal: React.FC<PublicOfferModalProps> = ({
                   onChange={(e) => setCustomerName(e.target.value)}
                   placeholder="e.g. Mary"
                   autoFocus
-                  className="w-full px-3.5 py-2 rounded-xl bg-white border border-black/10 text-xs font-bold text-[color:var(--color-text)] focus:outline-hidden focus:border-[color:var(--color-primary)]"
+                  className="w-full px-3.5 py-2 rounded-xl bg-[color:var(--color-paper)] border border-black/10 text-xs font-bold text-[color:var(--color-text)] focus:outline-hidden focus:border-[color:var(--color-primary)]"
                 />
               </div>
 
@@ -150,7 +150,7 @@ export const PublicOfferModal: React.FC<PublicOfferModalProps> = ({
                   value={contact}
                   onChange={(e) => setContact(e.target.value)}
                   placeholder="+254 700 000 000"
-                  className="w-full px-3.5 py-2 rounded-xl bg-white border border-black/10 text-xs font-mono text-[color:var(--color-text)] focus:outline-hidden focus:border-[color:var(--color-primary)]"
+                  className="w-full px-3.5 py-2 rounded-xl bg-[color:var(--color-paper)] border border-black/10 text-xs font-mono text-[color:var(--color-text)] focus:outline-hidden focus:border-[color:var(--color-primary)]"
                 />
               </div>
 
@@ -160,7 +160,7 @@ export const PublicOfferModal: React.FC<PublicOfferModalProps> = ({
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   rows={2}
-                  className="w-full px-3.5 py-2 rounded-xl bg-white border border-black/10 text-xs text-[color:var(--color-text)] focus:outline-hidden focus:border-[color:var(--color-primary)]"
+                  className="w-full px-3.5 py-2 rounded-xl bg-[color:var(--color-paper)] border border-black/10 text-xs text-[color:var(--color-text)] focus:outline-hidden focus:border-[color:var(--color-primary)]"
                 />
               </div>
 
@@ -201,7 +201,7 @@ export const PublicOfferModal: React.FC<PublicOfferModalProps> = ({
                   soundEngine.play('tap');
                   setIsAsking(true);
                 }}
-                className="flex-1 py-3 rounded-full bg-white hover:bg-gray-50 border border-black/10 text-[color:var(--color-text)] font-bold text-xs shadow-2xs flex items-center justify-center space-x-2 cursor-pointer transition-transform active:scale-95"
+                className="flex-1 py-3 rounded-full bg-[color:var(--color-paper)] hover:bg-gray-50 border border-black/10 text-[color:var(--color-text)] font-bold text-xs shadow-2xs flex items-center justify-center space-x-2 cursor-pointer transition-transform active:scale-95"
               >
                 <MessageCircle className="w-4 h-4 text-[color:var(--color-primary)]" />
                 <span>Ask about this</span>

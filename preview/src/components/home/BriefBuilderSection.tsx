@@ -172,9 +172,9 @@ export const BriefBuilderSection: React.FC<BriefBuilderSectionProps> = ({
             soundEngine.play('tap');
             onOpenCollections?.();
           }}
-          className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-white/70 hover:bg-white text-[#6B7280] hover:text-[#1A1F2E] text-xs font-semibold transition-colors cursor-pointer shrink-0 shadow-sm"
+          className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-white/70 hover:bg-white text-[var(--brief-muted)] hover:text-[var(--brief-ink)] text-xs font-semibold transition-colors cursor-pointer shrink-0 shadow-sm"
         >
-          <Bookmark className="w-3.5 h-3.5 text-[#6B7280]" />
+          <Bookmark className="w-3.5 h-3.5 text-[var(--brief-muted)]" />
           <span>Collections</span>
         </button>
 
@@ -185,9 +185,9 @@ export const BriefBuilderSection: React.FC<BriefBuilderSectionProps> = ({
             soundEngine.play('tap');
             onOpenFollowing?.();
           }}
-          className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-white/70 hover:bg-white text-[#6B7280] hover:text-[#1A1F2E] text-xs font-semibold transition-colors cursor-pointer shrink-0 shadow-sm"
+          className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-white/70 hover:bg-white text-[var(--brief-muted)] hover:text-[var(--brief-ink)] text-xs font-semibold transition-colors cursor-pointer shrink-0 shadow-sm"
         >
-          <Users className="w-3.5 h-3.5 text-[#6B7280]" />
+          <Users className="w-3.5 h-3.5 text-[var(--brief-muted)]" />
           <span>Following</span>
           {followedCount > 0 && (
             <span className="rounded-full bg-[#B8621F] px-1.5 text-[9px] font-extrabold text-white ml-1">
@@ -203,9 +203,9 @@ export const BriefBuilderSection: React.FC<BriefBuilderSectionProps> = ({
             soundEngine.play('tap');
             onOpenUpdates?.();
           }}
-          className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-white/70 hover:bg-white text-[#6B7280] hover:text-[#1A1F2E] text-xs font-semibold transition-colors cursor-pointer shrink-0 shadow-sm"
+          className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-white/70 hover:bg-white text-[var(--brief-muted)] hover:text-[var(--brief-ink)] text-xs font-semibold transition-colors cursor-pointer shrink-0 shadow-sm"
         >
-          <Bell className="w-3.5 h-3.5 text-[#6B7280]" />
+          <Bell className="w-3.5 h-3.5 text-[var(--brief-muted)]" />
           <span>Updates</span>
           {updatesCount > 0 && (
             <span className="rounded-full bg-[#DC2626] px-1.5 text-[9px] font-extrabold text-white ml-1">
@@ -217,15 +217,15 @@ export const BriefBuilderSection: React.FC<BriefBuilderSectionProps> = ({
 
       {/* ═══ THE EXPANDABLE INLINE ACCORDION (Pushes content down) ═══ */}
       {isExpanded && (
-        <div className="mx-5 mb-4 p-5 rounded-[24px] bg-[#FAFAF8] shadow-lg animate-slideUp space-y-5 transition-all duration-300">
+        <div className="mx-5 mb-4 p-5 rounded-[24px] bg-[color:var(--color-paper)] shadow-lg animate-slideUp space-y-5 transition-all duration-300">
           
           {/* Header & Skip */}
           <div className="flex items-start justify-between space-x-4">
             <div className="space-y-1">
-              <h3 className="text-lg font-black text-[#1A1F2E] tracking-tight leading-tight">
+              <h3 className="text-lg font-black text-[var(--brief-ink)] tracking-tight leading-tight">
                 Make this your Brief
               </h3>
-              <p className="text-xs text-[#6B7280] leading-relaxed font-medium">
+              <p className="text-xs text-[var(--brief-muted)] leading-relaxed font-medium">
                 Make this your Brief: ordered around the places and things you follow. Skip anytime — nothing is blocked.
               </p>
             </div>
@@ -245,7 +245,7 @@ export const BriefBuilderSection: React.FC<BriefBuilderSectionProps> = ({
 
           {/* Section: Where do you want your Brief? */}
           <div className="space-y-2.5">
-            <span className="text-[11px] font-black uppercase tracking-wider text-[#1A1F2E] block">
+            <span className="text-[11px] font-black uppercase tracking-wider text-[var(--brief-ink)] block">
               Where do you want your Brief?
             </span>
 
@@ -273,7 +273,7 @@ export const BriefBuilderSection: React.FC<BriefBuilderSectionProps> = ({
 
           {/* Section: What do you care about? */}
           <div className="space-y-2.5">
-            <span className="text-[11px] font-black uppercase tracking-wider text-[#1A1F2E] block">
+            <span className="text-[11px] font-black uppercase tracking-wider text-[var(--brief-ink)] block">
               What do you care about?
             </span>
 
@@ -336,7 +336,7 @@ export const BriefBuilderSection: React.FC<BriefBuilderSectionProps> = ({
               Build my Brief
             </button>
 
-            <p className="text-[11px] text-[#9CA3AF] leading-tight">
+            <p className="text-[11px] text-[var(--color-quiet)] leading-tight">
               Pick anything, or skip — your feed stays local.
             </p>
           </div>

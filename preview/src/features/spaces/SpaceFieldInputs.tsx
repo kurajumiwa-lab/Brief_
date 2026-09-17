@@ -22,7 +22,7 @@ const inputCls =
   "w-full px-3.5 py-2.5 rounded-xl text-xs border focus:outline-none";
 
 function inputStyle() {
-  return { background: 'var(--color-surface)', borderColor: 'var(--color-border)', color: 'var(--color-text)' };
+  return { background: 'var(--color-paper)', borderColor: 'var(--brief-line)', color: 'var(--color-text)' };
 }
 
 export function SpaceFieldInputs({
@@ -118,7 +118,7 @@ export function SpaceFieldInputs({
                         }}
                         className="px-2.5 py-1 rounded-full text-[11px] font-bold cursor-pointer border"
                         style={{
-                          background: on ? 'var(--color-primary)' : '#fff',
+                          background: on ? 'var(--color-primary)' : 'var(--color-paper)',
                           color: on ? 'var(--accent-ink)' : 'var(--color-text-muted)',
                           borderColor: on ? 'transparent' : 'var(--color-border)'
                         }}

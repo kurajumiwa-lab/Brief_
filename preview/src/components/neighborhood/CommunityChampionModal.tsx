@@ -34,7 +34,7 @@ export const CommunityChampionModal: React.FC<CommunityChampionModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-      <div className="w-full max-w-xl my-auto rounded-3xl bg-[#1A1F2E] text-white p-5 sm:p-6 shadow-2xl space-y-6 animate-slideUp">
+      <div className="w-full max-w-xl my-auto rounded-3xl bg-[color:var(--brief-ink)] text-white p-5 sm:p-6 shadow-2xl space-y-6 animate-slideUp">
         
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -143,7 +143,7 @@ export const CommunityChampionModal: React.FC<CommunityChampionModalProps> = ({
               soundEngine.play('heavyTap');
               onCallChampion?.(champion.phone);
             }}
-            className="flex-1 py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#0D1117] font-black text-xs flex items-center justify-center space-x-2 shadow-lg transition-transform active:scale-95 cursor-pointer"
+            className="flex-1 py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-[var(--brief-ink)] font-black text-xs flex items-center justify-center space-x-2 shadow-lg transition-transform active:scale-95 cursor-pointer"
           >
             <Phone className="w-4 h-4" />
             <span>Call {champion.name}</span>

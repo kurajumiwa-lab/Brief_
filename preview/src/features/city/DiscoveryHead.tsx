@@ -66,13 +66,13 @@ export function DiscoveryHead({
               onClick={() => onSegmentChange(s.id)}
               className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all cursor-pointer border ${
                 active
-                  ? 'border-transparent shadow-sm'
-                  : 'border-[color:var(--color-border)] hover:border-[color:var(--color-primary)]'
+                  ? 'border-transparent brief-lift-signal'
+                  : 'border-[color:var(--brief-line)] hover:border-[color:var(--color-primary)]'
               }`}
               style={
                 active
                   ? { background: 'var(--color-primary)', color: 'var(--accent-ink)' }
-                  : { background: 'var(--color-surface)', color: 'var(--color-text-muted)' }
+                  : { background: 'var(--color-paper)', color: 'var(--color-text-muted)' }
               }
             >
               {s.label}

@@ -102,6 +102,10 @@ export function discoverSummary({ viewerId = null, now = Date.now() } = {}) {
         dateLabel: null,
         location: l.locationName ?? l.vendor?.location ?? null,
         mediaUrl: mediaUrl(l),
+        // The row's own timestamp. A card may say "listed 2h ago" because the
+        // listing was written 2h ago; where there is no timestamp the card says
+        // nothing at all rather than inventing "new".
+        listedAt: l.createdAt ?? null,
         seller: l.vendor?.displayName ?? null,
         stock: l.quantityAvailable ?? null,
         orderable: l.orderable !== false,
@@ -134,6 +138,7 @@ export function discoverSummary({ viewerId = null, now = Date.now() } = {}) {
       dateLabel: e.startsAt ? shortDate(e.startsAt) : null,
       location: e.location ?? null,
       mediaUrl: e.coverImageUrl ?? null,
+      listedAt: e.publishedAt ?? e.startsAt ?? null,
       seller: null,
       stock: null,
       orderable: null,
@@ -216,20 +221,21 @@ export function discoverSummary({ viewerId = null, now = Date.now() } = {}) {
   const board = flowSummary();
 
   return {
-    tiles,
     // The flow board: four tiles, the routes sellers have declared, and the
     // open demand no declared route covers.
+    tiles,
     flows: board.flows,
     untagged: board.untagged,
     totals: board.totals,
     routes: routesFor(null, { limit: 24 }),
     unmapped: unmappedDemand({ limit: 8 }),
     boardNote: board.note,
-    // Newest first, so the board reads as what just happened rather than as a
-    // ranked list. No score is computed and none could be: there is nothing to
-    // score with — no views of a listing, no saves, no seller rating.
-    feed: feed.sort((a, b) => String(b.id).localeCompare(String(a.id))),
-    tiles,
+    // Newest first (the feed was built from listings sorted on createdAt, then
+    // the events sorted on their start date). There is deliberately no re-sort
+    // here on ids or on any score: nothing on this board is ranked, and no
+    // popularity could be computed anyway — a listing has no views, no saves
+    // and no seller rating to divide by.
+    feed,
     featured,
     featuredFrom,
     counts: {

@@ -159,7 +159,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
       </div>
 
       {offers.length === 0 ? (
-        <div className="p-8 rounded-3xl bg-white border border-black/5 text-center space-y-3 shadow-sm">
+        <div className="p-8 rounded-3xl bg-[color:var(--color-paper)] border border-black/5 text-center space-y-3 shadow-sm">
           <ShoppingBag className="w-8 h-8 text-[color:var(--color-text-muted)] mx-auto opacity-40" />
           <p className="text-xs font-bold text-[color:var(--color-text)]">No offers created yet</p>
           <p className="text-[11px] text-[color:var(--color-text-muted)] max-w-sm mx-auto">
@@ -197,18 +197,18 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
             return (
               <div
                 key={offer.id}
-                className={`rounded-3xl overflow-hidden bg-white border shadow-2xs flex flex-col justify-between transition-all ${
+                className={`rounded-3xl overflow-hidden bg-[color:var(--color-paper)] border shadow-2xs flex flex-col justify-between transition-all ${
                   isPaused ? 'opacity-60 bg-[color:var(--color-surface)]' : ''
                 } ${pinned ? 'ring-2' : ''}`}
                 style={{
-                  borderColor: '#E5E7EB',
+                  borderColor: 'var(--brief-line)',
                   ...(pinned ? { boxShadow: '0 0 0 2px var(--color-primary)' } : {})
                 }}
               >
                 {/* The photo, when there is one. A real photo of the actual
                     goods, or no photo at all: never a stock image standing in
                     for a shop nobody has photographed. */}
-                <div className="relative h-28 w-full" style={{ background: '#F4F4F7' }}>
+                <div className="relative h-28 w-full" style={{ background: 'var(--color-well)' }}>
                   {mediaUrl ? (
                     <img src={mediaUrl} alt={offer.title} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
                   ) : (
@@ -323,14 +323,14 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                       aria-label="Offer title"
                       value={draft.title ?? ''}
                       onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
-                      className="w-full px-3 py-2 rounded-xl text-xs border border-black/10 bg-white"
+                      className="w-full px-3 py-2 rounded-xl text-xs border border-black/10 bg-[color:var(--color-paper)]"
                     />
                     <textarea
                       aria-label="Offer description"
                       rows={2}
                       value={draft.description ?? ''}
                       onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
-                      className="w-full px-3 py-2 rounded-xl text-[11px] border border-black/10 bg-white resize-none"
+                      className="w-full px-3 py-2 rounded-xl text-[11px] border border-black/10 bg-[color:var(--color-paper)] resize-none"
                     />
                     <div className="flex gap-2">
                       <input
@@ -339,7 +339,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                         aria-label="Offer price"
                         value={draft.price ?? 0}
                         onChange={(e) => setDraft((d) => ({ ...d, price: Number(e.target.value) }))}
-                        className="w-28 px-3 py-2 rounded-xl text-xs font-mono border border-black/10 bg-white"
+                        className="w-28 px-3 py-2 rounded-xl text-xs font-mono border border-black/10 bg-[color:var(--color-paper)]"
                       />
                       <input
                         type="number"
@@ -348,7 +348,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                         placeholder="stock"
                         value={draft.quantityAvailable ?? ''}
                         onChange={(e) => setDraft((d) => ({ ...d, quantityAvailable: e.target.value === '' ? null : Number(e.target.value) }))}
-                        className="w-24 px-3 py-2 rounded-xl text-xs font-mono border border-black/10 bg-white"
+                        className="w-24 px-3 py-2 rounded-xl text-xs font-mono border border-black/10 bg-[color:var(--color-paper)]"
                       />
                       <input
                         type="text"
@@ -356,7 +356,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                         placeholder="Place (optional)"
                         value={draft.locationName ?? ''}
                         onChange={(e) => setDraft((d) => ({ ...d, locationName: e.target.value }))}
-                        className="flex-1 min-w-0 px-3 py-2 rounded-xl text-xs border border-black/10 bg-white"
+                        className="flex-1 min-w-0 px-3 py-2 rounded-xl text-xs border border-black/10 bg-[color:var(--color-paper)]"
                       />
                     </div>
                     <div className="flex items-center gap-2">

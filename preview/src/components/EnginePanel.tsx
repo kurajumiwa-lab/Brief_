@@ -159,19 +159,19 @@ export function EnginePanel({ onObjectsChanged }: EnginePanelProps) {
   return (
     <div className="space-y-4" data-tick={tick}>
       {/* --- header: the engine's live state --- */}
-      <div className="rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] p-4">
+      <div className="rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full" style={{ background: run ? '#4F46E5' : '#E5E8EC' }} />
-              <h2 className="text-sm font-extrabold text-[#0D1117]">Brief Engine</h2>
+              <span className="h-2 w-2 rounded-full" style={{ background: run ? '#4F46E5' : 'var(--brief-line)' }} />
+              <h2 className="text-sm font-extrabold text-[var(--brief-ink)]">Brief Engine</h2>
               {guardrail && (
-                <span className="rounded-md bg-[#4F46E5] px-1.5 py-0.5 text-[8px] font-extrabold text-[#0D1117]">
+                <span className="rounded-md bg-[#4F46E5] px-1.5 py-0.5 text-[8px] font-extrabold text-[var(--accent-ink)]">
                   {guardrail.label}
                 </span>
               )}
             </div>
-            <p className="mt-1 text-[10px] text-[#0D1117]/60">
+            <p className="mt-1 text-[10px] text-[var(--ink-60)]">
               {run
                 ? run.inSync
                   ? `In sync — verified ${timeAgo(run.at)}`
@@ -185,7 +185,7 @@ export function EnginePanel({ onObjectsChanged }: EnginePanelProps) {
             onClick={() => void manualSync()}
             disabled={pending}
             className="shrink-0 rounded-lg px-3 py-1.5 text-[11px] font-extrabold cursor-pointer disabled:opacity-40"
-            style={{ border: '1px solid #4F46E5', color: '#0D1117', background: '#FFFFFF' }}
+            style={{ border: '1px solid #4F46E5', color: 'var(--brief-ink)', background: 'var(--color-paper)' }}
           >
             {pending ? 'Beating…' : 'Sync now'}
           </button>
@@ -199,25 +199,25 @@ export function EnginePanel({ onObjectsChanged }: EnginePanelProps) {
       <TierGuardrail guardrail={guardrail} />
 
       {/* --- the tenancy cockpit: one engine, every workflow --- */}
-      <div className="rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] p-4 space-y-4">
+      <div className="rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-4 space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#0D1117]">
+          <h3 className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--brief-ink)]">
             Tenancy cockpit
           </h3>
-          <span className="text-[9px] text-[#0D1117]/60">financial pipelines · live gaming · entry</span>
+          <span className="text-[9px] text-[var(--ink-60)]">financial pipelines · live gaming · entry</span>
         </div>
 
         {/* financial summaries: group buys with live steppers */}
         <div className="space-y-2">
-          <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#0D1117]/60">Group buys</p>
+          <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-60)]">Group buys</p>
           {groupBuys.length === 0 && (
-            <p className="text-[10px] text-[#0D1117]/60">No active circle cycles or group orders.</p>
+            <p className="text-[10px] text-[var(--ink-60)]">No active circle cycles or group orders.</p>
           )}
           {groupBuys.slice(0, 2).map((b) => (
-            <div key={b.id} className="rounded-xl border border-[#E5E8EC] bg-[#F0F2F5] p-2.5">
+            <div key={b.id} className="rounded-xl border border-[var(--brief-line)] bg-[var(--color-well)] p-2.5">
               <div className="flex items-baseline justify-between gap-2">
-                <p className="min-w-0 truncate text-[11px] font-extrabold text-[#0D1117]">{b.title}</p>
-                <span className="shrink-0 font-mono text-[10px] text-[#0D1117]">
+                <p className="min-w-0 truncate text-[11px] font-extrabold text-[var(--brief-ink)]">{b.title}</p>
+                <span className="shrink-0 font-mono text-[10px] text-[var(--brief-ink)]">
                   KSh {b.total.toLocaleString()} / {b.targetAmount.toLocaleString()}
                 </span>
               </div>
@@ -230,31 +230,31 @@ export function EnginePanel({ onObjectsChanged }: EnginePanelProps) {
 
         {/* the active entry */}
         <div className="space-y-1">
-          <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#0D1117]/60">Event entry</p>
+          <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-60)]">Event entry</p>
           {ticket?.active && ticket.ticket ? (
-            <p className="text-[10px] text-[#0D1117]">
+            <p className="text-[10px] text-[var(--brief-ink)]">
               <span className="font-extrabold">{ticket.ticket.eventTitle}</span>
-              <span className="text-[#0D1117]/60"> · {ticket.ticket.entryState} · #{ticket.ticket.ticketCode.replace(/^BRF-/, '').slice(0, 4)}</span>
-              {(ticket.deltas?.length ?? 0) > 0 && <span className="text-[#0D1117]"> · details changed</span>}
+              <span className="text-[var(--ink-60)]"> · {ticket.ticket.entryState} · #{ticket.ticket.ticketCode.replace(/^BRF-/, '').slice(0, 4)}</span>
+              {(ticket.deltas?.length ?? 0) > 0 && <span className="text-[var(--brief-ink)]"> · details changed</span>}
             </p>
           ) : (
-            <p className="text-[10px] text-[#0D1117]/60">No active entry.</p>
+            <p className="text-[10px] text-[var(--ink-60)]">No active entry.</p>
           )}
         </div>
       </div>
 
       {/* --- the universal data router --- */}
-      <div className="rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] p-4 space-y-3">
+      <div className="rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-4 space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#0D1117]">
+          <h3 className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--brief-ink)]">
             Universal Router
           </h3>
           <span
             className="rounded-full px-2 py-0.5 text-[9px] font-extrabold"
             style={{
-              border: '1px solid #E5E8EC',
-              color: signingOk ? '#0D1117' : 'rgba(17,17,17,0.6)',
-              background: '#F0F2F5'
+              border: '1px solid var(--brief-line)',
+              color: signingOk ? 'var(--brief-ink)' : 'rgba(17,17,17,0.6)',
+              background: 'var(--color-well)'
             }}
             title={signingOk ? 'Payloads are HMAC-signed' : 'Webhook dispatch refuses unsigned until a secret is set'}
           >
@@ -263,24 +263,24 @@ export function EnginePanel({ onObjectsChanged }: EnginePanelProps) {
         </div>
 
         {routes.length === 0 && (
-          <p className="text-[10px] text-[#0D1117]/60 leading-snug">
+          <p className="text-[10px] text-[var(--ink-60)] leading-snug">
             No routing rules yet. A rule watches the live signal stream and dispatches a signed,
             lightweight payload to your endpoint the moment it matches.
           </p>
         )}
 
         {routes.map((r) => (
-          <div key={r.id} className="rounded-xl border border-[#E5E8EC] bg-[#F0F2F5] p-2.5 flex items-center justify-between gap-2">
+          <div key={r.id} className="rounded-xl border border-[var(--brief-line)] bg-[var(--color-well)] p-2.5 flex items-center justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-[11px] font-extrabold text-[#0D1117] truncate">{r.name}</p>
-              <p className="text-[9px] font-mono text-[#0D1117]/60 truncate">
+              <p className="text-[11px] font-extrabold text-[var(--brief-ink)] truncate">{r.name}</p>
+              <p className="text-[9px] font-mono text-[var(--ink-60)] truncate">
                 on {r.match.signalType === '*' ? 'any signal' : r.match.signalType} → {r.channels[0]?.kind} {r.channels[0]?.to}
               </p>
             </div>
             <button
               type="button"
               onClick={() => void removeRoute(r.id)}
-              className="shrink-0 text-[10px] font-extrabold text-[#0D1117]/60 cursor-pointer hover:text-[#0D1117]"
+              className="shrink-0 text-[10px] font-extrabold text-[var(--ink-60)] cursor-pointer hover:text-[var(--brief-ink)]"
             >
               Remove
             </button>
@@ -288,18 +288,18 @@ export function EnginePanel({ onObjectsChanged }: EnginePanelProps) {
         ))}
 
         {/* compact create form */}
-        <div className="rounded-xl border border-[#E5E8EC] bg-[#F0F2F5] p-2.5 space-y-2">
+        <div className="rounded-xl border border-[var(--brief-line)] bg-[var(--color-well)] p-2.5 space-y-2">
           <div className="flex gap-2">
             <input
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               placeholder="Route name"
-              className="flex-1 rounded-lg border border-[#E5E8EC] bg-[#FFFFFF] px-2.5 py-1.5 text-[11px] text-[#0D1117] placeholder:text-[#0D1117]/60 focus:outline-none"
+              className="flex-1 rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-paper)] px-2.5 py-1.5 text-[11px] text-[var(--brief-ink)] placeholder:text-[var(--ink-60)] focus:outline-none"
             />
             <select
               value={form.signalType}
               onChange={(e) => setForm((f) => ({ ...f, signalType: e.target.value }))}
-              className="rounded-lg border border-[#E5E8EC] bg-[#FFFFFF] px-2 py-1.5 text-[11px] text-[#0D1117] focus:outline-none"
+              className="rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-paper)] px-2 py-1.5 text-[11px] text-[var(--brief-ink)] focus:outline-none"
             >
               {SIGNAL_CHOICES.map((s) => (
                 <option key={s.id} value={s.id}>{s.label}</option>
@@ -311,35 +311,35 @@ export function EnginePanel({ onObjectsChanged }: EnginePanelProps) {
               value={form.url}
               onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))}
               placeholder="https://your-endpoint/hook"
-              className="flex-1 rounded-lg border border-[#E5E8EC] bg-[#FFFFFF] px-2.5 py-1.5 text-[11px] text-[#0D1117] placeholder:text-[#0D1117]/60 focus:outline-none"
+              className="flex-1 rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-paper)] px-2.5 py-1.5 text-[11px] text-[var(--brief-ink)] placeholder:text-[var(--ink-60)] focus:outline-none"
             />
             <button
               type="button"
               onClick={() => void addRoute()}
               disabled={creating || !form.name.trim() || !form.url.trim()}
               className="shrink-0 rounded-lg px-3 py-1.5 text-[11px] font-extrabold cursor-pointer disabled:opacity-40"
-              style={{ background: '#4F46E5', color: '#0D1117' }}
+              style={{ background: '#4F46E5', color: 'var(--brief-ink)' }}
             >
               {creating ? '…' : 'Add'}
             </button>
           </div>
           {routeError && (
-            <p className="text-[10px] text-[#0D1117] leading-snug">{routeError}</p>
+            <p className="text-[10px] text-[var(--brief-ink)] leading-snug">{routeError}</p>
           )}
         </div>
 
         {/* the dispatch ledger — real outcomes only */}
         {deliveries.length > 0 && (
           <div className="space-y-1">
-            <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#0D1117]/60">
+            <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-60)]">
               Dispatch ledger
             </p>
             {deliveries.slice(0, 5).map((d) => (
               <div key={d.id} className="flex items-center justify-between gap-2 text-[9px] font-mono">
-                <span className="text-[#0D1117]/60 truncate">{d.channel} → {String(d.target).slice(0, 34)}</span>
+                <span className="text-[var(--ink-60)] truncate">{d.channel} → {String(d.target).slice(0, 34)}</span>
                 <span
                   className="shrink-0 font-bold"
-                  style={{ color: d.status === 'delivered' ? '#0D1117' : 'rgba(17,17,17,0.55)' }}
+                  style={{ color: d.status === 'delivered' ? 'var(--brief-ink)' : 'rgba(17,17,17,0.55)' }}
                 >
                   {d.status}
                 </span>

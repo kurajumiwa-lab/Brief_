@@ -50,8 +50,8 @@ export function Pursuits({
     <div className="space-y-4">
 
       <div>
-        <h2 className="text-lg font-extrabold text-[#0D1117]">Alerts</h2>
-        <p className="text-[11px] text-[#0D1117]/60 leading-snug mt-1">
+        <h2 className="text-lg font-extrabold text-[var(--brief-ink)]">Alerts</h2>
+        <p className="text-[11px] text-[var(--ink-60)] leading-snug mt-1">
           Things you have asked Brief to find or keep an eye on. Brief
           searches only what it already holds, so results grow as more
           information arrives.
@@ -70,20 +70,20 @@ export function Pursuits({
           value={pursuitDraft}
           onChange={(e) => setPursuitDraft(e.target.value)}
           placeholder="find a plumber near me"
-          className="flex-1 bg-[#FFFFFF] border border-[#E5E8EC] rounded-xl px-3 py-2.5 text-xs text-[#0D1117] placeholder:text-[#0D1117]/60 outline-none focus:border-[#E5E8EC]"
+          className="flex-1 bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-xl px-3 py-2.5 text-xs text-[var(--brief-ink)] placeholder:text-[var(--ink-60)] outline-none focus:border-[var(--brief-line)]"
         />
         <button
           type="submit"
-          className="px-4 py-2.5 rounded-xl bg-[#4F46E5] text-[#0D1117] font-extrabold text-[11px] cursor-pointer"
+          className="px-4 py-2.5 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] font-extrabold text-[11px] cursor-pointer"
         >
           Search
         </button>
       </form>
 
       {pursuits.length === 0 && (
-        <div className="border border-dashed border-[#E5E8EC] rounded-2xl p-8 text-center">
-          <p className="text-xs text-[#0D1117]/60">Nothing being pursued yet.</p>
-          <p className="text-[10px] text-[#0D1117]/60 mt-1">
+        <div className="border border-dashed border-[var(--brief-line)] rounded-2xl p-8 text-center">
+          <p className="text-xs text-[var(--ink-60)]">Nothing being pursued yet.</p>
+          <p className="text-[10px] text-[var(--ink-60)] mt-1">
             Ask for something above, or start one from any object.
           </p>
         </div>
@@ -97,19 +97,19 @@ export function Pursuits({
         return (
           <div
             key={pursuit.id}
-            className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-4 space-y-3"
+            className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-4 space-y-3"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-sm font-extrabold text-[#0D1117] leading-snug">
+                <p className="text-sm font-extrabold text-[var(--brief-ink)] leading-snug">
                   {pursuit.query}
                 </p>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[9px] text-[#0D1117]/60">
+                  <span className="text-[9px] text-[var(--ink-60)]">
                     {pursuit.status}
                   </span>
                   {pursuit.watchChanges && (
-                    <span className="text-[9px] text-[#0D1117]">
+                    <span className="text-[9px] text-[var(--brief-ink)]">
                       watching
                     </span>
                   )}
@@ -119,7 +119,7 @@ export function Pursuits({
               <button
                 onClick={() => handleRemovePursuit(pursuit.id)}
                 title="Remove pursuit"
-                className="shrink-0 p-2 rounded-xl bg-[#FFFFFF] text-[#0D1117] border border-[#E5E8EC] hover:border-[#06B6D4] cursor-pointer"
+                className="shrink-0 p-2 rounded-xl bg-[color:var(--color-paper)] text-[var(--brief-ink)] border border-[var(--brief-line)] hover:border-[#06B6D4] cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
@@ -127,7 +127,7 @@ export function Pursuits({
 
             {!dormant && (
               <>
-                <p className="text-[10px] text-[#0D1117]/60">
+                <p className="text-[10px] text-[var(--ink-60)]">
                   {results.length > 0
                     ? `${results.length} match${results.length === 1 ? '' : 'es'} in Brief`
                     : 'Nothing matching yet'}
@@ -137,17 +137,17 @@ export function Pursuits({
                     failure state. Brief never pads this with guesses. */}
                 {results.length === 0 && (
                   <div className="space-y-2">
-                    <p className="text-[11px] font-bold text-[#0D1117]/60">
+                    <p className="text-[11px] font-bold text-[var(--ink-60)]">
                       Nothing useful yet.
                     </p>
-                    <p className="text-[10px] text-[#0D1117]/60 leading-snug">
+                    <p className="text-[10px] text-[var(--ink-60)] leading-snug">
                       Keep this pursuit open and Brief can match new
                       information later.
                     </p>
                     {!pursuit.watchChanges && (
                       <button
                         onClick={() => handleTogglePursuitWatch(pursuit.id)}
-                        className="px-3 py-1.5 rounded-full bg-[#FFFFFF] border border-[#E5E8EC] text-[#0D1117] font-extrabold text-[10px] cursor-pointer"
+                        className="px-3 py-1.5 rounded-full bg-[color:var(--color-paper)] border border-[var(--brief-line)] text-[var(--brief-ink)] font-extrabold text-[10px] cursor-pointer"
                       >
                         Keep watching
                       </button>
@@ -163,23 +163,23 @@ export function Pursuits({
                         <button
                           key={match.item.id}
                           onClick={() => setSelectedObjectForDetail(match.item)}
-                          className="w-full text-left bg-[#FFFFFF] border border-[#E5E8EC] hover:border-[#E5E8EC] rounded-xl p-2.5 cursor-pointer transition"
+                          className="w-full text-left bg-[color:var(--color-paper)] border border-[var(--brief-line)] hover:border-[var(--brief-line)] rounded-xl p-2.5 cursor-pointer transition"
                         >
                           <div className="flex items-center justify-between gap-2">
-                            <span className="text-[9px] text-[#0D1117]/60">
+                            <span className="text-[9px] text-[var(--ink-60)]">
                               {getObjectTypeMeta(match.item.type).label}
                             </span>
                             {distance && (
-                              <span className="text-[9px] text-[#0D1117]/60">
+                              <span className="text-[9px] text-[var(--ink-60)]">
                                 {distance}
                               </span>
                             )}
                           </div>
-                          <p className="text-[11px] font-bold text-[#0D1117] leading-snug mt-0.5">
+                          <p className="text-[11px] font-bold text-[var(--brief-ink)] leading-snug mt-0.5">
                             {match.item.title}
                           </p>
                           {match.item.metadata?.statusBadge && (
-                            <p className="text-[9px] text-[#0D1117] mt-0.5">
+                            <p className="text-[9px] text-[var(--brief-ink)] mt-0.5">
                               {match.item.metadata.statusBadge}
                             </p>
                           )}
@@ -199,8 +199,8 @@ export function Pursuits({
                     onClick={() => handleSetPursuitStatus(pursuit.id, status)}
                     className={`text-[9px] font-bold px-2 py-0.5 rounded-full border cursor-pointer transition ${
                       pursuit.status === status
-                        ? 'bg-[#4F46E5] text-[#0D1117] border-[#06B6D4]'
-                        : 'bg-transparent text-[#0D1117]/60 border-[#E5E8EC] hover:border-[#E5E8EC]'
+                        ? 'bg-[#4F46E5] text-[var(--accent-ink)] border-[#06B6D4]'
+                        : 'bg-transparent text-[var(--ink-60)] border-[var(--brief-line)] hover:border-[var(--brief-line)]'
                     }`}
                   >
                     {status}
@@ -212,8 +212,8 @@ export function Pursuits({
                 onClick={() => handleTogglePursuitWatch(pursuit.id)}
                 className={`text-[9px] font-bold px-2 py-0.5 rounded-full border cursor-pointer transition ${
                   pursuit.watchChanges
-                    ? 'bg-[#FFFFFF] text-[#0D1117] border-[#E5E8EC]'
-                    : 'bg-transparent text-[#0D1117]/60 border-[#E5E8EC] hover:border-[#E5E8EC]'
+                    ? 'bg-[color:var(--color-paper)] text-[var(--brief-ink)] border-[var(--brief-line)]'
+                    : 'bg-transparent text-[var(--ink-60)] border-[var(--brief-line)] hover:border-[var(--brief-line)]'
                 }`}
               >
                 watch changes
@@ -224,7 +224,7 @@ export function Pursuits({
                 nothing is monitoring in the background yet. */}
             {pursuit.watchChanges && (
               <div className="space-y-1.5 pt-1">
-                <p className="text-[9px] text-[#0D1117]/60">
+                <p className="text-[9px] text-[var(--ink-60)]">
                   Tell me about
                 </p>
                 <div className="flex flex-wrap gap-1.5">
@@ -241,8 +241,8 @@ export function Pursuits({
                           }
                           className={`text-[9px] font-bold px-2 py-0.5 rounded-full border cursor-pointer transition ${
                             on
-                              ? 'bg-[#FFFFFF] text-[#0D1117] border-[#E5E8EC]'
-                              : 'bg-transparent text-[#0D1117]/60 border-[#E5E8EC] hover:border-[#E5E8EC]'
+                              ? 'bg-[color:var(--color-paper)] text-[var(--brief-ink)] border-[var(--brief-line)]'
+                              : 'bg-transparent text-[var(--ink-60)] border-[var(--brief-line)] hover:border-[var(--brief-line)]'
                           }`}
                         >
                           {WATCH_CONDITION_LABELS[condition]}
@@ -251,7 +251,7 @@ export function Pursuits({
                     }
                   )}
                 </div>
-                <p className="text-[9px] text-[#0D1117]/60">
+                <p className="text-[9px] text-[var(--ink-60)]">
                   Alerts are not live yet. Brief records what matters to you.
                 </p>
               </div>

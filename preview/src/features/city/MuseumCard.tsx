@@ -19,7 +19,9 @@ import React from "react";
 import { Eye, Sparkles } from "lucide-react";
 import type { EventListing } from "../../api/briefApi";
 import { formatStartsAt } from "../../model/core";
-import { categoryGradient } from "./categoryPalette";
+import { categoryAccent, categoryWash } from "./categoryPalette";
+import { PLASTER } from "./room";
+import { PHOTO_FILTER, PHOTO_SCRIM } from "./room";
 
 const money = (n: number, c: string) => (n === 0 ? "Free" : `${c} ${n.toLocaleString()}`);
 
@@ -34,13 +36,15 @@ export interface MuseumCardProps {
 }
 
 export function MuseumCard({ event, isActive, onOpen, isNew = false, openedAgoDays = null }: MuseumCardProps) {
-  const gradient = categoryGradient(event.category);
+  // The wing's colour as a light on the room, not as a fill behind the text.
+  const wash = categoryWash(event.category);
+  const accent = categoryAccent(event.category);
   const price = event.goalAmount != null ? "Cause / pot" : money(event.price, event.currency);
   const date = formatStartsAt(event.startsAt);
 
   return (
     <article
-      className={`snap-center shrink-0 w-[55vw] max-w-sm h-[45vh] max-h-[560px] relative overflow-hidden rounded-[28px] transition-all duration-500 ease-out ${
+      className={`snap-center shrink-0 w-[55vw] max-w-sm h-[45vh] max-h-[560px] relative overflow-hidden rounded-[28px] transition-all duration-500 ease-out brief-lift-3 ${
         isActive ? "scale-100 opacity-100" : "scale-[0.92] opacity-60"
       }`}
     >
@@ -52,15 +56,27 @@ export function MuseumCard({ event, isActive, onOpen, isNew = false, openedAgoDa
             alt={event.title}
             draggable={false}
             className="w-full h-full object-cover"
-            style={{ background: "var(--color-surface-elevated)" }}
+            style={{ background: PLASTER, filter: PHOTO_FILTER }}
           />
         ) : (
-          <div className="w-full h-full" style={{ background: gradient }} />
+          // No cover: the wing's colour at wash strength over the room's own
+          // plaster, plus a mark that means something. Never a stock photo,
+          // never a letter, never a dark panel.
+          <div className="w-full h-full relative" style={{ background: PLASTER }}>
+            <span className="absolute inset-0" style={{ background: wash }} />
+            <span
+              className="absolute bottom-4 left-4 inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider"
+              style={{ color: accent }}
+            >
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: accent }} />
+              {event.categoryLabel ?? 'the case'} · waiting on a cover
+            </span>
+          </div>
         )}
       </div>
 
       {/* Scrim — keeps the text legible over any photo */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/35" />
+      <div className="absolute inset-0" style={{ background: PHOTO_SCRIM }} />
 
       {/* Breathing accent — one pixel at the foot of the active exhibit. It is
           decoration, not data: no count, no claim, and reduced-motion kills it. */}
@@ -75,11 +91,11 @@ export function MuseumCard({ event, isActive, onOpen, isNew = false, openedAgoDa
       {/* Category wing + the honest "new" mark (a row that appeared since you
           last looked — derived from the listing set, not pushed to you) */}
       <div className="absolute top-4 left-4 flex items-center gap-1.5">
-        <span className="text-[10px] font-extrabold uppercase tracking-wider bg-white/95 text-black px-3 py-1 rounded-full">
+        <span className="text-[10px] font-extrabold uppercase tracking-wider bg-[var(--paper-95)] text-black px-3 py-1 rounded-full">
           {event.categoryLabel}
         </span>
         {isNew && (
-          <span className="text-[10px] font-extrabold px-2 py-1 rounded-full bg-white/95 text-black flex items-center gap-1">
+          <span className="text-[10px] font-extrabold px-2 py-1 rounded-full bg-[var(--paper-95)] text-black flex items-center gap-1">
             <Sparkles className="w-3 h-3" />
             New
           </span>
@@ -107,13 +123,13 @@ export function MuseumCard({ event, isActive, onOpen, isNew = false, openedAgoDa
           {date && <span>{date}</span>}
           {event.location && (
             <>
-              <span className="w-1 h-1 rounded-full bg-white/40" />
+              <span className="w-1 h-1 rounded-full bg-[var(--paper-40)]" />
               <span className="truncate">{event.location}</span>
             </>
           )}
-          <span className="w-1 h-1 rounded-full bg-white/40" />
+          <span className="w-1 h-1 rounded-full bg-[var(--paper-40)]" />
           <span>{price}</span>
-          <span className="w-1 h-1 rounded-full bg-white/40" />
+          <span className="w-1 h-1 rounded-full bg-[var(--paper-40)]" />
           <span>{event.popularity} going</span>
         </div>
 

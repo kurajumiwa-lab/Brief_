@@ -115,7 +115,7 @@ export const CreatePostSheet: React.FC<CreatePostSheetProps> = ({
       >
         {/* Drag Handle */}
         <div className="w-full flex justify-center pt-3 pb-2">
-          <div className="w-10 h-1 rounded-full bg-[#1A1F2E]/20" />
+          <div className="w-10 h-1 rounded-full bg-[rgba(36, 28, 18, 0.20)]" />
         </div>
 
         {/* Header with Back/Close and Step Indicator */}
@@ -123,7 +123,7 @@ export const CreatePostSheet: React.FC<CreatePostSheetProps> = ({
           <button
             type="button"
             onClick={step === 1 ? handlePrevStep : onClose}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-[#6B7280] hover:text-[#1A1F2E] hover:bg-black/5 transition-colors cursor-pointer"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-[var(--brief-muted)] hover:text-[var(--brief-ink)] hover:bg-black/5 transition-colors cursor-pointer"
             aria-label={step === 1 ? 'Go back' : 'Close sheet'}
           >
             {step === 1 ? <ArrowLeft className="w-5 h-5" /> : <X className="w-5 h-5" />}
@@ -153,10 +153,10 @@ export const CreatePostSheet: React.FC<CreatePostSheetProps> = ({
           {step === 0 && (
             <div className="space-y-6 animate-fadeIn">
               <div className="space-y-1">
-                <h2 className="text-2xl font-extrabold text-[#1A1F2E]">
+                <h2 className="text-2xl font-extrabold text-[var(--brief-ink)]">
                   What are you sharing?
                 </h2>
-                <p className="text-xs text-[#6B7280]">
+                <p className="text-xs text-[var(--brief-muted)]">
                   Select the category that best matches your post.
                 </p>
               </div>
@@ -187,10 +187,10 @@ export const CreatePostSheet: React.FC<CreatePostSheetProps> = ({
           {step === 1 && (
             <div className="space-y-5 animate-fadeIn">
               <div className="space-y-1">
-                <h2 className="text-2xl font-extrabold text-[#1A1F2E]">
+                <h2 className="text-2xl font-extrabold text-[var(--brief-ink)]">
                   Add the details
                 </h2>
-                <p className="text-xs text-[#6B7280]">
+                <p className="text-xs text-[var(--brief-muted)]">
                   Upload photos and describe what you are offering to the community.
                 </p>
               </div>
@@ -206,7 +206,7 @@ export const CreatePostSheet: React.FC<CreatePostSheetProps> = ({
                   <span className="text-sm font-bold text-[#0B6E6E]">
                     Tap to add photos
                   </span>
-                  <span className="text-[11px] text-[#9CA3AF] mt-0.5">
+                  <span className="text-[11px] text-[var(--color-quiet)] mt-0.5">
                     Up to 5 images
                   </span>
                 </div>
@@ -241,8 +241,8 @@ export const CreatePostSheet: React.FC<CreatePostSheetProps> = ({
                       style={{ backgroundColor: 'rgba(232, 228, 221, 0.5)' }}
                       aria-label="Add more photos"
                     >
-                      <Plus className="w-6 h-6 text-[#9CA3AF]" />
-                      <span className="text-[10px] text-[#9CA3AF] font-bold mt-1">Add More</span>
+                      <Plus className="w-6 h-6 text-[var(--color-quiet)]" />
+                      <span className="text-[10px] text-[var(--color-quiet)] font-bold mt-1">Add More</span>
                     </button>
                   )}
                 </div>
@@ -255,7 +255,7 @@ export const CreatePostSheet: React.FC<CreatePostSheetProps> = ({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Give it a title..."
-                  className="w-full p-4 rounded-2xl text-base font-bold text-[#1A1F2E] placeholder-[#9CA3AF] outline-none border-none shadow-sm focus:ring-2 focus:ring-[#0B6E6E]"
+                  className="w-full p-4 rounded-2xl text-base font-bold text-[var(--brief-ink)] placeholder-[var(--color-quiet)] outline-none border-none shadow-sm focus:ring-2 focus:ring-[#0B6E6E]"
                   style={{ backgroundColor: AppPalette.surfaceAlt }}
                 />
               </div>
@@ -267,7 +267,7 @@ export const CreatePostSheet: React.FC<CreatePostSheetProps> = ({
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Tell people more..."
-                  className="w-full p-4 rounded-2xl text-sm text-[#1A1F2E] placeholder-[#9CA3AF] outline-none border-none shadow-sm focus:ring-2 focus:ring-[#0B6E6E] resize-none"
+                  className="w-full p-4 rounded-2xl text-sm text-[var(--brief-ink)] placeholder-[var(--color-quiet)] outline-none border-none shadow-sm focus:ring-2 focus:ring-[#0B6E6E] resize-none"
                   style={{ backgroundColor: AppPalette.surfaceAlt }}
                 />
               </div>

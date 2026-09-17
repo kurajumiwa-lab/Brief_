@@ -10,17 +10,20 @@
    ============================================================================= */
 
 :root {
-  /* --- Color: the LIGHT system. White page, dark ink, electric indigo accent
-       with a cyan secondary. Hierarchy comes from weight and size first;
-       muted/faint are the SAME ink at reduced alpha. --- */
-  --ground:         #F7F8FA;  /* base background — very light */
-  --surface:        #FFFFFF;  /* raised cards, banners */
-  --overlay-scrim:  #0D1117;  /* dark scrim wash (over the light page) */
-  --hairline:       #E5E8EC;  /* borders, dividers */
+  /* --- Color: the LIGHT system, warmed. Plaster page, paper cards, warm ink,
+       and the brand's electric indigo accent with a cyan secondary. Hierarchy
+       comes from weight, size and light (the --lift-* shadows in ui/theme.css)
+       before it comes from borders; muted/faint are the SAME ink at reduced
+       alpha. A card never carries a 1px outline: the room separates surfaces
+       with shadow, not with a stroke. --- */
+  --ground:         #F4EEE3;  /* the room — warm plaster, not an empty canvas */
+  --surface:        #FDFAF3;  /* raised cards, banners — warm paper, never pure white */
+  --overlay-scrim:  #241C12;  /* the scrim is the room's own ink over a photo */
+  --hairline:       #E4DACB;  /* dividers and input rings ONLY, never a card */
 
-  --ink:            #0D1117;  /* primary text — dark ink */
-  --ink-dim:        #5A6472;  /* secondary text */
-  --ink-faint:      #7A8494;  /* tertiary/meta: timestamps, counters — >=4.5:1 */
+  --ink:            #241C12;  /* primary text — warm ink */
+  --ink-dim:        #6E6152;  /* secondary text */
+  --ink-faint:      #7E7057;  /* tertiary/meta: timestamps, counters — >=4.5:1 */
 
   --signal-live:    #16A34A;  /* live/active state ONLY — success green */
   --signal-urgent:  #DC2626;  /* countdown / closing-soon / expiring ONLY — danger */
@@ -170,6 +173,20 @@ html, body {
 .brief-card-breathe {
   animation: briefCardBreathe 4s ease-in-out infinite;
 }
+
+/* The scrim: the room's own ink, fading up through a photograph. It is the
+   same colour as the text so a picture reads as lit inside the room rather
+   than pasted onto it. Mirrored as PHOTO_SCRIM in features/city/room.ts for
+   the inline-style cases. */
+.brief-scrim {
+  background: linear-gradient(
+    to top,
+    rgba(24, 19, 12, 0.95) 0%,
+    rgba(24, 19, 12, 0.62) 34%,
+    rgba(24, 19, 12, 0.16) 68%,
+    rgba(24, 19, 12, 0.04) 100%
+  );
+}
 .brief-spring-modal {
   animation: briefSpringIntro 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
@@ -184,44 +201,50 @@ html, body {
    ============================================================================= */
 .brief-lobby {
   --lobby-paper: #FFFDF7;
-  --lobby-edge: #E7E0D2;
-  --lobby-ink: #241F1A;
+  --lobby-edge: var(--brief-line);
+  --lobby-ink: var(--brief-ink);
   background:
     radial-gradient(120% 60% at 50% -10%, rgba(79, 70, 229, 0.07), transparent 60%),
     var(--lobby-paper);
   border: 1px solid var(--lobby-edge);
   border-radius: 28px;
+  box-shadow: var(--lift-2);
 }
 .brief-lobby-card {
-  background: #fff;
-  border: 2px solid var(--lobby-edge);
+  background: var(--lobby-paper);
+  border: none;
   border-left: 6px solid var(--color-primary);
   border-radius: 22px;
-  box-shadow: 0 1px 0 rgba(36, 31, 26, 0.04);
+  box-shadow: var(--lift-2);
 }
 .brief-lobby-card[data-urgency="now"] { border-left-color: var(--color-warning); }
-.brief-lobby-card[data-urgency="quiet"] { border-left-color: var(--color-border); }
+.brief-lobby-card[data-urgency="quiet"] { border-left-color: var(--color-quiet); }
 .brief-lobby-btn {
   min-height: 44px;
   border-radius: 999px;
   font-weight: 800;
   font-size: 13px;
   padding: 0 18px;
-  border: 2px solid transparent;
+  border: none;
   cursor: pointer;
   transition: transform 120ms ease, background 160ms ease;
 }
 .brief-lobby-btn:active { transform: scale(0.98); }
-.brief-lobby-btn--primary { background: var(--color-primary); color: var(--accent-ink); }
-.brief-lobby-btn--quiet { background: #fff; color: var(--lobby-ink); border-color: var(--lobby-edge); }
+.brief-lobby-btn--primary { background: var(--color-primary); color: var(--accent-ink); box-shadow: var(--lift-signal); }
+.brief-lobby-btn--quiet {
+  background: var(--brief-card);
+  color: var(--lobby-ink);
+  box-shadow: var(--lift-1), inset 0 0 0 1px var(--lobby-edge);
+}
 .brief-lobby-input {
   width: 100%;
   padding: 12px 14px;
   border-radius: 16px;
-  border: 2px solid var(--lobby-edge);
-  background: #fff;
+  border: none;
+  background: var(--well);
   font-size: 14px;
   color: var(--lobby-ink);
+  box-shadow: inset 0 0 0 1px var(--lobby-edge), var(--room-light-dim);
 }
 .brief-lobby-stage {
   display: flex;
@@ -230,22 +253,33 @@ html, body {
   font-size: 12px;
   padding: 6px 10px;
   border-radius: 999px;
-  border: 1px solid var(--lobby-edge);
-  background: #fff;
+  border: none;
+  background: var(--brief-card);
+  box-shadow: inset 0 0 0 1px var(--lobby-edge), var(--lift-1);
 }
-.brief-lobby-stage[data-done="true"] { background: var(--color-primary-subtle); border-color: var(--color-primary); }
+.brief-lobby-stage[data-done="true"] {
+  background: var(--color-primary-subtle);
+  color: var(--color-primary);
+  box-shadow: inset 0 0 0 1px var(--color-primary), var(--room-light-dim);
+}
 /* Star control: buttons, not a slider — a rating is a deliberate act. */
 .brief-lobby-star {
   width: 40px;
   height: 40px;
   border-radius: 12px;
-  border: 2px solid var(--lobby-edge);
-  background: #fff;
+  border: none;
+  background: var(--brief-card);
+  color: var(--lobby-ink);
   font-weight: 900;
   font-size: 15px;
   cursor: pointer;
+  box-shadow: inset 0 0 0 1px var(--lobby-edge), var(--lift-1);
 }
-.brief-lobby-star[aria-pressed="true"] { background: var(--color-primary); color: var(--accent-ink); border-color: transparent; }
+.brief-lobby-star[aria-pressed="true"] {
+  background: var(--color-primary);
+  color: var(--accent-ink);
+  box-shadow: var(--lift-signal);
+}
 @media (prefers-reduced-motion: reduce) {
   .brief-lobby-btn { transition: none; }
 }
@@ -305,17 +339,20 @@ html, body {
    coexist with the earlier tokens so non-home surfaces are unaffected.
    ============================================================================= */
 :root {
-  /* Color — M3 tokens mapped onto the light + indigo/cyan system. */
-  --m3-background:             #F7F8FA;
-  --m3-surface:                #F7F8FA;
-  --m3-surface-dim:            #F0F2F5;
-  --m3-surface-bright:         #FFFFFF;
-  --m3-surface-container-lowest: #FFFFFF;
-  --m3-surface-container-low:  #F0F2F5;
-  --m3-surface-container:      #FFFFFF;
-  --m3-surface-container-high: #EFF1F4;
-  --m3-surface-container-highest: #E5E8EC;
-  --m3-surface-variant:        #E5E8EC;
+  /* Color — M3 tokens mapped onto the warm light system. They are ALIASES of
+     the room tokens above rather than a second set of literals, because two
+     palettes that can drift apart is how a screen ends up half in one room and
+     half in another. */
+  --m3-background:             var(--brief-bg);
+  --m3-surface:                var(--brief-bg);
+  --m3-surface-dim:            var(--well);
+  --m3-surface-bright:         #FFFFFF;   /* pure white only ever as a highlight */
+  --m3-surface-container-lowest: var(--brief-card);
+  --m3-surface-container-low:  var(--well);
+  --m3-surface-container:      var(--brief-card);
+  --m3-surface-container-high: var(--surface-3);
+  --m3-surface-container-highest: var(--brief-line);
+  --m3-surface-variant:        var(--brief-line);
 
   --m3-primary:                #4F46E5;
   --m3-primary-fixed:          #4F46E5;
@@ -327,22 +364,22 @@ html, body {
   --m3-secondary:              #06B6D4;
   --m3-secondary-fixed:        #06B6D4;
   --m3-secondary-fixed-dim:    #06B6D4;
-  --m3-secondary-container:    #F0F2F5;
-  --m3-on-secondary-container: #0D1117;
+  --m3-secondary-container:    var(--well);
+  --m3-on-secondary-container: var(--brief-ink);
 
   --m3-tertiary:               #B45309;
-  --m3-tertiary-container:     #F0F2F5;
-  --m3-on-tertiary-container:  #0D1117;
+  --m3-tertiary-container:     var(--well);
+  --m3-on-tertiary-container:  var(--brief-ink);
 
-  --m3-error:                  #DC2626;
-  --m3-error-container:        #DC2626;
+  --m3-error:                  var(--brief-danger);
+  --m3-error-container:        var(--brief-danger);
 
-  --m3-outline:                #E5E8EC;
-  --m3-outline-variant:        #E5E8EC;
-  --m3-on-surface:             #0D1117;
-  --m3-on-surface-variant:     #5A6472;
-  --m3-on-background:          #0D1117;
-  --m3-inverse-surface:        #0D1117;
+  --m3-outline:                var(--brief-line);
+  --m3-outline-variant:        var(--brief-line);
+  --m3-on-surface:             var(--brief-ink);
+  --m3-on-surface-variant:     var(--brief-muted);
+  --m3-on-background:          var(--brief-ink);
+  --m3-inverse-surface:        var(--brief-ink);
 
   /* Type — M3 */
   --m3-font-headline: 'Plus Jakarta Sans', 'Inter', sans-serif;
@@ -356,5 +393,5 @@ html, body {
   background: conic-gradient(from 180deg at 50% 50%, #4F46E5 0deg, #4F46E5 120deg, transparent 120deg, transparent 360deg);
 }
 .m3-status-ring-seen {
-  background: conic-gradient(from 180deg at 50% 50%, #E5E8EC 0deg, #E5E8EC 360deg);
+  background: conic-gradient(from 180deg at 50% 50%, var(--brief-line) 0deg, var(--brief-line) 360deg);
 }

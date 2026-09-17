@@ -26,11 +26,11 @@ export const AnnouncementPinkBanner: React.FC<AnnouncementPinkBannerProps> = ({
       }}
     >
       <div className="flex items-center space-x-3 min-w-0">
-        <span className="shrink-0 px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase bg-[#1A1F2E] text-white flex items-center space-x-1 shadow-sm">
+        <span className="shrink-0 px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase bg-[color:var(--brief-ink)] text-white flex items-center space-x-1 shadow-sm">
           <Sparkles className="w-3 h-3 text-[#93EE34]" />
           <span>{tag}</span>
         </span>
-        <span className="text-xs sm:text-sm font-extrabold text-[#1A1F2E] tracking-tight truncate sm:whitespace-normal">
+        <span className="text-xs sm:text-sm font-extrabold text-[var(--brief-ink)] tracking-tight truncate sm:whitespace-normal">
           {title}
         </span>
       </div>

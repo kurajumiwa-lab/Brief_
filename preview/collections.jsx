@@ -338,12 +338,12 @@ async function main() {
     const wpRow = pickRows.find((b) => text(b).includes('Weekend Ideas'));
     const nrbRow = pickRows.find((b) => text(b).includes('Nairobi Food Spots'));
     check('picker lists collections with live membership',
-      pickRows.length === 2 && wpRow.className.includes('bg-[#F0F2F5]') && !nrbRow.className.includes('bg-[#F0F2F5]'));
+      pickRows.length === 2 && wpRow.className.includes('bg-[color:var(--color-well)]') && !nrbRow.className.includes('bg-[color:var(--color-well)]'));
     await h2.click(nrbRow);
     await h2.settle();
     await h2.settle();
     check('add persists server-side (ref only)', mock.get('pcol_2').items.some((i) => i.object.id === 'colc_event'));
-    check('picker row flips to checked', nrbRow.className.includes('bg-[#F0F2F5]'));
+    check('picker row flips to checked', nrbRow.className.includes('bg-[color:var(--color-well)]'));
     // Close the detail modal again before the public-route step.
     await h2.click(modal.querySelector('button'));
     await h2.settle();

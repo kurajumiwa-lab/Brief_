@@ -211,10 +211,10 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-xl bg-[#FAFAF8] rounded-[28px] overflow-hidden shadow-2xl text-[#1A1F2E] animate-slideUp my-auto max-h-[92vh] flex flex-col"
+        className="w-full max-w-xl bg-[color:var(--color-paper)] rounded-[28px] overflow-hidden shadow-2xl text-[var(--brief-ink)] animate-slideUp my-auto max-h-[92vh] flex flex-col"
       >
         {/* ================= MODAL HEADER ================= */}
-        <div className="p-5 sm:p-6 bg-gradient-to-r from-[#1E293B] via-[#0F172A] to-[#111827] text-white space-y-3 shrink-0">
+        <div className="p-5 sm:p-6 bg-gradient-to-r from-[#1E293B] via-[#0F172A] to-[var(--brief-ink)] text-white space-y-3 shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <span className="px-2.5 py-0.5 rounded-full bg-[#B8621F] text-white text-[10px] font-black uppercase tracking-wider">
@@ -283,10 +283,10 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                 <div className="w-12 h-12 rounded-full bg-emerald-500 text-white flex items-center justify-center mx-auto shadow-md">
                   <CheckCircle2 className="w-6 h-6" />
                 </div>
-                <h3 className="text-lg font-black text-[#1A1F2E]">
+                <h3 className="text-lg font-black text-[var(--brief-ink)]">
                   CBC Order Confirmed & Dispatched!
                 </h3>
-                <p className="text-xs text-[#4B5563]">
+                <p className="text-xs text-[var(--brief-muted)]">
                   Paid KES {completedOrder.totalAmountKes.toLocaleString()} via {completedOrder.paymentMethod}
                 </p>
               </div>
@@ -315,7 +315,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#1A1F2E] text-white flex items-center justify-between">
+              <div className="p-4 rounded-2xl bg-[color:var(--brief-ink)] text-white flex items-center justify-between">
                 <div className="flex items-center space-x-2.5">
                   <Truck className="w-5 h-5 text-[#00BFEF] animate-bounce" />
                   <div>
@@ -357,10 +357,10 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                     <span className="text-[9px] font-black uppercase tracking-wider text-[#B8621F] block">
                       {currentBundle.curriculum}
                     </span>
-                    <h3 className="text-base font-black text-[#1A1F2E] leading-tight mt-0.5">
+                    <h3 className="text-base font-black text-[var(--brief-ink)] leading-tight mt-0.5">
                       {currentBundle.title}
                     </h3>
-                    <p className="text-xs text-[#6B7280] mt-0.5">
+                    <p className="text-xs text-[var(--brief-muted)] mt-0.5">
                       {currentBundle.supplier}
                     </p>
                   </div>
@@ -384,10 +384,10 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
 
                 {/* Included Books Accordion preview */}
                 <div className="bg-[#F9F8F6] rounded-xl p-3 space-y-1.5 text-xs">
-                  <span className="font-bold text-[11px] text-[#4B5563] uppercase tracking-wider block">
+                  <span className="font-bold text-[11px] text-[var(--brief-muted)] uppercase tracking-wider block">
                     {currentBundle.booksIncluded.length} Textbooks in this Bundle:
                   </span>
-                  <ul className="space-y-1 text-[#374151] pl-1">
+                  <ul className="space-y-1 text-[var(--brief-muted)] pl-1">
                     {currentBundle.booksIncluded.map((book, idx) => (
                       <li key={idx} className="flex items-center space-x-1.5 text-[11.5px]">
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
@@ -401,7 +401,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
               {/* Step 1: Delivery Location & Multi-Tier Mode */}
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-black uppercase tracking-wider text-[#1A1F2E] flex items-center space-x-1.5">
+                  <label className="text-xs font-black uppercase tracking-wider text-[var(--brief-ink)] flex items-center space-x-1.5">
                     <span>1. Delivery Tier & Backhaul Arbitrage</span>
                   </label>
                   <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
@@ -417,7 +417,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                     className={`p-3 rounded-xl text-left transition-all cursor-pointer flex flex-col justify-between ring-2 ${
                       deliveryType === 'fargo_pickup'
                         ? 'bg-[#0B6E6E] text-white ring-[#0B6E6E] shadow-sm'
-                        : 'bg-white hover:bg-emerald-50/50 text-[#374151] ring-emerald-400/40 shadow-xs'
+                        : 'bg-white hover:bg-emerald-50/50 text-[var(--brief-muted)] ring-emerald-400/40 shadow-xs'
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -439,7 +439,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                     className={`p-3 rounded-xl text-left transition-all cursor-pointer flex flex-col justify-between ring-2 ${
                       deliveryType === 'lori_backhaul'
                         ? 'bg-[#1D4ED8] text-white ring-[#1D4ED8] shadow-sm'
-                        : 'bg-white hover:bg-blue-50/50 text-[#374151] ring-blue-400/40 shadow-xs'
+                        : 'bg-white hover:bg-blue-50/50 text-[var(--brief-muted)] ring-blue-400/40 shadow-xs'
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -460,7 +460,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                     className={`p-3 rounded-xl text-left transition-all cursor-pointer flex flex-col justify-between ${
                       deliveryType === 'wairo_gate'
                         ? 'bg-[#B8621F] text-white shadow-sm'
-                        : 'bg-white hover:bg-white/80 text-[#374151] shadow-xs'
+                        : 'bg-white hover:bg-white/80 text-[var(--brief-muted)] shadow-xs'
                     }`}
                   >
                     <Building2 className="w-4 h-4 mb-1" />
@@ -476,7 +476,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                     className={`p-3 rounded-xl text-left transition-all cursor-pointer flex flex-col justify-between ${
                       deliveryType === 'wairo_door'
                         ? 'bg-[#B8621F] text-white shadow-sm'
-                        : 'bg-white hover:bg-white/80 text-[#374151] shadow-xs'
+                        : 'bg-white hover:bg-white/80 text-[var(--brief-muted)] shadow-xs'
                     }`}
                   >
                     <Truck className="w-4 h-4 mb-1" />
@@ -492,7 +492,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                     className={`p-3 rounded-xl text-left transition-all cursor-pointer flex flex-col justify-between ${
                       deliveryType === 'sendy_express'
                         ? 'bg-emerald-700 text-white shadow-sm'
-                        : 'bg-white hover:bg-white/80 text-[#374151] shadow-xs'
+                        : 'bg-white hover:bg-white/80 text-[var(--brief-muted)] shadow-xs'
                     }`}
                   >
                     <ShieldCheck className="w-4 h-4 mb-1 text-emerald-300" />
@@ -508,7 +508,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                     className={`p-3 rounded-xl text-left transition-all cursor-pointer flex flex-col justify-between ${
                       deliveryType === 'bolt_rapid'
                         ? 'bg-amber-600 text-white shadow-sm'
-                        : 'bg-white hover:bg-white/80 text-[#374151] shadow-xs'
+                        : 'bg-white hover:bg-white/80 text-[var(--brief-muted)] shadow-xs'
                     }`}
                   >
                     <Zap className="w-4 h-4 mb-1 text-amber-200" />
@@ -534,7 +534,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                     <select
                       value={selectedFargoPoint}
                       onChange={(e) => setSelectedFargoPoint(e.target.value)}
-                      className="w-full bg-white border border-emerald-300 rounded-xl px-3 py-2 text-xs font-bold text-[#1A1F2E] outline-none focus:border-emerald-600"
+                      className="w-full bg-white border border-emerald-300 rounded-xl px-3 py-2 text-xs font-bold text-[var(--brief-ink)] outline-none focus:border-emerald-600"
                     >
                       {FARGO_DROP_POINTS.map(fp => (
                         <option key={fp} value={fp}>{fp}</option>
@@ -560,7 +560,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                       value={deliveryWard}
                       onChange={(e) => setDeliveryWard(e.target.value)}
                       placeholder="School Depot / Port CFS / Highway Hub"
-                      className="w-full bg-white border border-blue-300 rounded-xl px-3 py-2 text-xs font-bold text-[#1A1F2E] outline-none focus:border-blue-600"
+                      className="w-full bg-white border border-blue-300 rounded-xl px-3 py-2 text-xs font-bold text-[var(--brief-ink)] outline-none focus:border-blue-600"
                     />
                     <p className="text-[10px] text-blue-800 leading-tight">
                       🚛 <b>Backhaul Arbitrage:</b> Leverages empty returning 10-ton trucks on the Nairobi ⇄ Mombasa/Kisumu corridors at 50% wholesale savings.
@@ -573,7 +573,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                       type="text"
                       value={deliveryWard}
                       onChange={(e) => setDeliveryWard(e.target.value)}
-                      className="flex-1 text-xs font-bold text-[#1A1F2E] bg-transparent outline-none focus:text-[#B8621F]"
+                      className="flex-1 text-xs font-bold text-[var(--brief-ink)] bg-transparent outline-none focus:text-[#B8621F]"
                     />
                   </div>
                 )}
@@ -581,7 +581,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
 
               {/* Step 2: Payment Method (Circle Balance vs Direct M-Pesa) */}
               <div className="space-y-2.5">
-                <label className="text-xs font-black uppercase tracking-wider text-[#1A1F2E] flex items-center justify-between">
+                <label className="text-xs font-black uppercase tracking-wider text-[var(--brief-ink)] flex items-center justify-between">
                   <span>2. Payment Source</span>
                   <span className="text-[10px] text-emerald-600 font-bold">Encrypted & Instant</span>
                 </label>
@@ -593,7 +593,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                     className={`p-3 rounded-xl text-left transition-all cursor-pointer flex flex-col justify-between ${
                       paymentSource === 'circle_table_bank'
                         ? 'bg-[#4C1D95] text-white shadow-sm'
-                        : 'bg-white hover:bg-white/80 text-[#374151] shadow-xs'
+                        : 'bg-white hover:bg-white/80 text-[var(--brief-muted)] shadow-xs'
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -614,7 +614,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                     className={`p-3 rounded-xl text-left transition-all cursor-pointer flex flex-col justify-between ${
                       paymentSource === 'mpesa'
                         ? 'bg-[#008751] text-white shadow-sm'
-                        : 'bg-white hover:bg-white/80 text-[#374151] shadow-xs'
+                        : 'bg-white hover:bg-white/80 text-[var(--brief-muted)] shadow-xs'
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -660,7 +660,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                   type="button"
                   disabled={isProcessing}
                   onClick={handleExecuteCheckout}
-                  className="w-full py-3.5 rounded-2xl bg-[#0D1117] hover:bg-black text-white font-black text-xs uppercase tracking-wider flex items-center justify-center space-x-2 shadow-lg cursor-pointer transition-all active:scale-[0.99] disabled:opacity-50"
+                  className="w-full py-3.5 rounded-2xl bg-[color:var(--brief-ink)] hover:bg-black text-white font-black text-xs uppercase tracking-wider flex items-center justify-center space-x-2 shadow-lg cursor-pointer transition-all active:scale-[0.99] disabled:opacity-50"
                 >
                   {isProcessing ? (
                     <div className="flex items-center space-x-2">

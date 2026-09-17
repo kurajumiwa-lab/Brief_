@@ -57,10 +57,10 @@ export function CivicKnowledgeGuide({
   ];
 
   return (
-    <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-3xl overflow-hidden shadow-2xl text-[#0D1117] max-w-2xl mx-auto">
+    <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-3xl overflow-hidden shadow-2xl text-[var(--brief-ink)] max-w-2xl mx-auto">
       
       {/* ================= HEADER ================= */}
-      <div className="bg-[#0D1117] text-white p-5 sm:p-6 relative">
+      <div className="bg-[color:var(--brief-ink)] text-white p-5 sm:p-6 relative">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="flex items-center space-x-2">
@@ -93,7 +93,7 @@ export function CivicKnowledgeGuide({
         
         {/* ================= STEP-BY-STEP PROCESS ================= */}
         <section className="space-y-3">
-          <h3 className="text-xs font-black uppercase tracking-wider text-[#0D1117]">
+          <h3 className="text-xs font-black uppercase tracking-wider text-[var(--brief-ink)]">
             Step-by-Step Renewal Process
           </h3>
 
@@ -104,12 +104,12 @@ export function CivicKnowledgeGuide({
               { num: '3', title: 'Pay the Official County Renewal Fee via M-Pesa', desc: 'County Paybill invoice generated instantly. No cash accepted at county offices.' },
               { num: '4', title: 'Download & Print Your Verified SBP Certificate', desc: 'QR-coded certificate valid immediately across all county inspection checkpoints.' }
             ].map(step => (
-              <div key={step.num} className="p-3 bg-[#F7F8FA] border border-[#E5E8EC] rounded-2xl flex items-start space-x-3">
-                <span className="w-6 h-6 rounded-full bg-[#0D1117] text-white flex items-center justify-center font-bold text-xs shrink-0">
+              <div key={step.num} className="p-3 bg-[color:var(--brief-bg)] border border-[var(--brief-line)] rounded-2xl flex items-start space-x-3">
+                <span className="w-6 h-6 rounded-full bg-[color:var(--brief-ink)] text-white flex items-center justify-center font-bold text-xs shrink-0">
                   {step.num}
                 </span>
                 <div>
-                  <h4 className="font-bold text-[#0D1117]">{step.title}</h4>
+                  <h4 className="font-bold text-[var(--brief-ink)]">{step.title}</h4>
                   <p className="text-[11px] text-gray-500 mt-0.5">{step.desc}</p>
                 </div>
               </div>
@@ -119,7 +119,7 @@ export function CivicKnowledgeGuide({
 
         {/* ================= REQUIRED DOCUMENTS ================= */}
         <section className="p-4 bg-gray-50 border border-gray-200 rounded-2xl space-y-2">
-          <h3 className="text-xs font-black uppercase tracking-wider text-[#0D1117]">
+          <h3 className="text-xs font-black uppercase tracking-wider text-[var(--brief-ink)]">
             Required Documents Checklist
           </h3>
           <ul className="space-y-1.5 text-xs text-gray-700">
@@ -177,7 +177,7 @@ export function CivicKnowledgeGuide({
                   key={act.id}
                   type="button"
                   onClick={() => triggerAction(act.label)}
-                  className="p-2 rounded-xl bg-[#F7F8FA] border border-[#E5E8EC] hover:bg-gray-100 flex flex-col items-center justify-center space-y-1 transition-all cursor-pointer"
+                  className="p-2 rounded-xl bg-[color:var(--brief-bg)] border border-[var(--brief-line)] hover:bg-gray-100 flex flex-col items-center justify-center space-y-1 transition-all cursor-pointer"
                 >
                   <IconComp className="w-4 h-4" style={{ color: act.color }} />
                   <span className="text-[9px] font-bold text-gray-700 block">{act.label}</span>

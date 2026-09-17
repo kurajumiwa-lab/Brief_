@@ -20,11 +20,11 @@ import { OrderStatus } from './OrderStatus';
  */
 
 const STATUS_STYLE: Record<string, string> = {
-  draft: 'bg-[#E5E8EC] text-[#0D1117]/60',
-  active: 'bg-[#FFFFFF] text-[#0D1117]',
-  paused: 'bg-[#FFFFFF] text-[#0D1117]',
-  sold_out: 'bg-[#FFFFFF] text-[#0D1117]',
-  archived: 'bg-[#E5E8EC] text-[#0D1117]/60'
+  draft: 'bg-[var(--brief-line)] text-[var(--ink-60)]',
+  active: 'bg-[color:var(--color-paper)] text-[var(--brief-ink)]',
+  paused: 'bg-[color:var(--color-paper)] text-[var(--brief-ink)]',
+  sold_out: 'bg-[color:var(--color-paper)] text-[var(--brief-ink)]',
+  archived: 'bg-[var(--brief-line)] text-[var(--ink-60)]'
 };
 
 // Which moves the UI offers from each state. Mirrors the server's table; the
@@ -85,39 +85,39 @@ export function VendorPanel({
   if (!vendor) {
     return (
       <div className="space-y-3">
-        <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-4 space-y-3">
-          <h4 className="text-[11px] font-extrabold text-[#0D1117]/60">
+        <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-4 space-y-3">
+          <h4 className="text-[11px] font-extrabold text-[var(--ink-60)]">
             Start selling
           </h4>
-          <p className="text-xs text-[#0D1117]/60">
+          <p className="text-xs text-[var(--ink-60)]">
             A seller profile lets you list products, services and experiences.
           </p>
           <input
             value={draft.displayName}
             onChange={(e) => onDraftChange({ displayName: e.target.value })}
             placeholder="Business or trading name"
-            className="w-full bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl px-3 py-2 text-xs text-[#0D1117] outline-none"
+            className="w-full bg-[var(--color-well)] border border-[var(--brief-line)] rounded-xl px-3 py-2 text-xs text-[var(--brief-ink)] outline-none"
           />
           <input
             value={draft.description}
             onChange={(e) => onDraftChange({ description: e.target.value })}
             placeholder="What do you offer?"
-            className="w-full bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl px-3 py-2 text-xs text-[#0D1117] outline-none"
+            className="w-full bg-[var(--color-well)] border border-[var(--brief-line)] rounded-xl px-3 py-2 text-xs text-[var(--brief-ink)] outline-none"
           />
           <input
             value={draft.contactMethod}
             onChange={(e) => onDraftChange({ contactMethod: e.target.value })}
             placeholder="How should buyers reach you?"
-            className="w-full bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl px-3 py-2 text-xs text-[#0D1117] outline-none"
+            className="w-full bg-[var(--color-well)] border border-[var(--brief-line)] rounded-xl px-3 py-2 text-xs text-[var(--brief-ink)] outline-none"
           />
           <button
             onClick={onCreateVendor}
             disabled={busyId === 'vendor'}
-            className="w-full py-2 rounded-full bg-[#4F46E5] text-[#0D1117] text-xs font-extrabold cursor-pointer disabled:opacity-50"
+            className="w-full py-2 rounded-full bg-[#4F46E5] text-[var(--accent-ink)] text-xs font-extrabold cursor-pointer disabled:opacity-50"
           >
             Create seller profile
           </button>
-          {notice && <p className="text-[10px] text-[#0D1117]">{notice}</p>}
+          {notice && <p className="text-[10px] text-[var(--brief-ink)]">{notice}</p>}
         </div>
       </div>
     );
@@ -127,11 +127,11 @@ export function VendorPanel({
 
   return (
     <div className="space-y-4">
-      <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-4 space-y-1">
-        <h4 className="text-sm font-extrabold text-[#0D1117]">{vendor.displayName}</h4>
-        {vendor.description && <p className="text-xs text-[#0D1117]/60">{vendor.description}</p>}
+      <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-4 space-y-1">
+        <h4 className="text-sm font-extrabold text-[var(--brief-ink)]">{vendor.displayName}</h4>
+        {vendor.description && <p className="text-xs text-[var(--ink-60)]">{vendor.description}</p>}
         {vendor.verification.facts.map((f) => (
-          <p key={f.kind} className="text-[10px] text-[#0D1117]/60">
+          <p key={f.kind} className="text-[10px] text-[var(--ink-60)]">
             {f.label}
           </p>
         ))}
@@ -142,41 +142,41 @@ export function VendorPanel({
           settled orders sees nothing here rather than "KES 0", which reads
           like a balance they could withdraw. */}
       {earnings && earnings.orderCount > 0 && (
-        <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-4 space-y-1">
-          <h4 className="text-[11px] font-extrabold text-[#0D1117]/60">
+        <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-4 space-y-1">
+          <h4 className="text-[11px] font-extrabold text-[var(--ink-60)]">
             Settled earnings
           </h4>
-          <p className="text-lg font-extrabold text-[#0D1117]">
+          <p className="text-lg font-extrabold text-[var(--brief-ink)]">
             {money(earnings.net, earnings.currency)}
           </p>
-          <p className="text-[10px] text-[#0D1117]/60">
+          <p className="text-[10px] text-[var(--ink-60)]">
             From {earnings.orderCount} settled order{earnings.orderCount === 1 ? '' : 's'} -{' '}
             {money(earnings.gross, earnings.currency)} less {money(earnings.commission, earnings.currency)}{' '}
             platform commission
           </p>
           {/* The distinction that matters: earned is not withdrawable. */}
           {!earnings.payoutAvailable && (
-            <p className="text-[10px] text-[#0D1117]">{earnings.payoutReason}</p>
+            <p className="text-[10px] text-[var(--brief-ink)]">{earnings.payoutReason}</p>
           )}
         </div>
       )}
 
       {/* --- new listing ---------------------------------------------------- */}
-      <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-4 space-y-2">
-        <h4 className="text-[11px] font-extrabold text-[#0D1117]/60">
+      <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-4 space-y-2">
+        <h4 className="text-[11px] font-extrabold text-[var(--ink-60)]">
           New listing
         </h4>
         <input
           value={listingDraft.title}
           onChange={(e) => onListingDraftChange({ title: e.target.value })}
           placeholder="What are you offering?"
-          className="w-full bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl px-3 py-2 text-xs text-[#0D1117] outline-none"
+          className="w-full bg-[var(--color-well)] border border-[var(--brief-line)] rounded-xl px-3 py-2 text-xs text-[var(--brief-ink)] outline-none"
         />
         <input
           value={listingDraft.description}
           onChange={(e) => onListingDraftChange({ description: e.target.value })}
           placeholder="Description"
-          className="w-full bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl px-3 py-2 text-xs text-[#0D1117] outline-none"
+          className="w-full bg-[var(--color-well)] border border-[var(--brief-line)] rounded-xl px-3 py-2 text-xs text-[var(--brief-ink)] outline-none"
         />
         <div className="flex gap-2">
           <input
@@ -184,12 +184,12 @@ export function VendorPanel({
             onChange={(e) => onListingDraftChange({ price: e.target.value })}
             placeholder="Price"
             inputMode="numeric"
-            className="flex-1 bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl px-3 py-2 text-xs text-[#0D1117] outline-none"
+            className="flex-1 bg-[var(--color-well)] border border-[var(--brief-line)] rounded-xl px-3 py-2 text-xs text-[var(--brief-ink)] outline-none"
           />
           <select
             value={listingDraft.type}
             onChange={(e) => onListingDraftChange({ type: e.target.value as Listing['type'] })}
-            className="bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl px-3 py-2 text-xs text-[#0D1117] outline-none"
+            className="bg-[var(--color-well)] border border-[var(--brief-line)] rounded-xl px-3 py-2 text-xs text-[var(--brief-ink)] outline-none"
           >
             <option value="product">Product</option>
             <option value="service">Service</option>
@@ -203,13 +203,13 @@ export function VendorPanel({
             onChange={(e) => onListingDraftChange({ quantity: e.target.value })}
             placeholder="Quantity (blank for services)"
             inputMode="numeric"
-            className="flex-1 bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl px-3 py-2 text-xs text-[#0D1117] outline-none"
+            className="flex-1 bg-[var(--color-well)] border border-[var(--brief-line)] rounded-xl px-3 py-2 text-xs text-[var(--brief-ink)] outline-none"
           />
           <input
             value={listingDraft.location}
             onChange={(e) => onListingDraftChange({ location: e.target.value })}
             placeholder="Location (optional)"
-            className="flex-1 bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl px-3 py-2 text-xs text-[#0D1117] outline-none"
+            className="flex-1 bg-[var(--color-well)] border border-[var(--brief-line)] rounded-xl px-3 py-2 text-xs text-[var(--brief-ink)] outline-none"
           />
         </div>
         {/* --- the flow: who it is going to, and where it comes from ---------
@@ -217,8 +217,8 @@ export function VendorPanel({
              without both, because "bulk" without a route is a sticker, not a
              supply chain. Everything here is optional for a service or a
              one-off, and the board shows 'no flow declared' rather than guessing. */}
-        <div className="pt-1.5 border-t border-[#E5E8EC] space-y-2">
-          <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#0D1117]/60">
+        <div className="pt-1.5 border-t border-[var(--brief-line)] space-y-2">
+          <p className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-60)]">
             Where this fits in the supply board (optional)
           </p>
           <div className="flex gap-2">
@@ -226,7 +226,7 @@ export function VendorPanel({
               aria-label="Flow"
               value={listingDraft.flow}
               onChange={(e) => onListingDraftChange({ flow: e.target.value as ListingFlowDraft })}
-              className="flex-1 bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl px-3 py-2 text-xs text-[#0D1117] outline-none"
+              className="flex-1 bg-[var(--color-well)] border border-[var(--brief-line)] rounded-xl px-3 py-2 text-xs text-[var(--brief-ink)] outline-none"
             >
               <option value="">No flow — just a listing</option>
               <option value="bulk">Bulk — for vendors &amp; shops</option>
@@ -239,7 +239,7 @@ export function VendorPanel({
               value={listingDraft.commodity}
               onChange={(e) => onListingDraftChange({ commodity: e.target.value })}
               placeholder="Commodity (tomatoes)"
-              className="flex-1 bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl px-3 py-2 text-xs text-[#0D1117] outline-none"
+              className="flex-1 bg-[var(--color-well)] border border-[var(--brief-line)] rounded-xl px-3 py-2 text-xs text-[var(--brief-ink)] outline-none"
             />
           </div>
           {(listingDraft.flow === 'bulk' || listingDraft.flow === 'direct' || listingDraft.flow === 'group') && (
@@ -250,13 +250,13 @@ export function VendorPanel({
                   value={listingDraft.originName}
                   onChange={(e) => onListingDraftChange({ originName: e.target.value })}
                   placeholder={listingDraft.flow === 'direct' ? 'The source (Kamau Dairy, Limuru)' : 'Leaves from (Wakulima Market)'}
-                  className="flex-1 bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl px-3 py-2 text-xs text-[#0D1117] outline-none"
+                  className="flex-1 bg-[var(--color-well)] border border-[var(--brief-line)] rounded-xl px-3 py-2 text-xs text-[var(--brief-ink)] outline-none"
                 />
                 <select
                   aria-label="Origin kind"
                   value={listingDraft.originKind}
                   onChange={(e) => onListingDraftChange({ originKind: e.target.value as ListingOriginKindDraft })}
-                  className="bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl px-2 py-2 text-xs text-[#0D1117] outline-none"
+                  className="bg-[var(--color-well)] border border-[var(--brief-line)] rounded-xl px-2 py-2 text-xs text-[var(--brief-ink)] outline-none"
                 >
                   <option value="">kind…</option>
                   <option value="warehouse">warehouse / market</option>
@@ -273,13 +273,13 @@ export function VendorPanel({
                     value={listingDraft.destinationName}
                     onChange={(e) => onListingDraftChange({ destinationName: e.target.value })}
                     placeholder={listingDraft.flow === 'group' ? 'The pool (Kileleshwa flats)' : 'Goes to (Kilimani shops)'}
-                    className="flex-1 bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl px-3 py-2 text-xs text-[#0D1117] outline-none"
+                    className="flex-1 bg-[var(--color-well)] border border-[var(--brief-line)] rounded-xl px-3 py-2 text-xs text-[var(--brief-ink)] outline-none"
                   />
                   <select
                     aria-label="Who it is for"
                     value={listingDraft.destinationKind}
                     onChange={(e) => onListingDraftChange({ destinationKind: e.target.value as ListingDestinationKindDraft })}
-                    className="bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl px-2 py-2 text-xs text-[#0D1117] outline-none"
+                    className="bg-[var(--color-well)] border border-[var(--brief-line)] rounded-xl px-2 py-2 text-xs text-[var(--brief-ink)] outline-none"
                   >
                     <option value="">buyer…</option>
                     <option value="vendors">shops &amp; vendors</option>
@@ -296,7 +296,7 @@ export function VendorPanel({
               value={listingDraft.unit}
               onChange={(e) => onListingDraftChange({ unit: e.target.value })}
               placeholder="unit (crate, sack, litre)"
-              className="flex-1 bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl px-3 py-2 text-xs text-[#0D1117] outline-none"
+              className="flex-1 bg-[var(--color-well)] border border-[var(--brief-line)] rounded-xl px-3 py-2 text-xs text-[var(--brief-ink)] outline-none"
             />
             <input
               aria-label="Minimum order"
@@ -304,7 +304,7 @@ export function VendorPanel({
               onChange={(e) => onListingDraftChange({ minOrder: e.target.value })}
               placeholder="min order (5)"
               inputMode="numeric"
-              className="w-32 bg-[#F0F2F5] border border-[#E5E8EC] rounded-xl px-3 py-2 text-xs text-[#0D1117] outline-none"
+              className="w-32 bg-[var(--color-well)] border border-[var(--brief-line)] rounded-xl px-3 py-2 text-xs text-[var(--brief-ink)] outline-none"
             />
           </div>
         </div>
@@ -312,37 +312,37 @@ export function VendorPanel({
         <button
           onClick={onCreateListing}
           disabled={busyId === 'listing'}
-          className="w-full py-2 rounded-full bg-[#4F46E5] text-[#0D1117] text-xs font-extrabold cursor-pointer disabled:opacity-50"
+          className="w-full py-2 rounded-full bg-[#4F46E5] text-[var(--accent-ink)] text-xs font-extrabold cursor-pointer disabled:opacity-50"
         >
           Create listing
         </button>
-        <p className="text-[10px] text-[#0D1117]/60">
+        <p className="text-[10px] text-[var(--ink-60)]">
           New listings start as a draft. Publish when you are ready to take orders.
         </p>
-        {notice && <p className="text-[10px] text-[#0D1117]">{notice}</p>}
+        {notice && <p className="text-[10px] text-[var(--brief-ink)]">{notice}</p>}
       </div>
 
       {/* --- my listings ----------------------------------------------------- */}
       <div className="space-y-2">
-        <h4 className="text-[11px] font-extrabold text-[#0D1117]/60">
+        <h4 className="text-[11px] font-extrabold text-[var(--ink-60)]">
           My listings
         </h4>
         {listings.length === 0 ? (
-          <p className="text-xs text-[#0D1117]/60">You have not listed anything yet.</p>
+          <p className="text-xs text-[var(--ink-60)]">You have not listed anything yet.</p>
         ) : (
           listings.map((l) => (
-            <div key={l.id} className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-3 space-y-2">
+            <div key={l.id} className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-3 space-y-2">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-extrabold text-[#0D1117]">{l.title}</p>
-                  <p className="text-[10px] text-[#0D1117]/60">
+                  <p className="text-xs font-extrabold text-[var(--brief-ink)]">{l.title}</p>
+                  <p className="text-[10px] text-[var(--ink-60)]">
                     {money(l.price, l.currency)}
                     {l.quantityAvailable !== null ? ` - ${l.quantityAvailable} left` : ''}
                   </p>
                 </div>
                 <span
                   className={`shrink-0 text-[9px] px-2 py-0.5 rounded-full ${
-                    STATUS_STYLE[l.status] ?? 'bg-[#E5E8EC] text-[#0D1117]/60'
+                    STATUS_STYLE[l.status] ?? 'bg-[var(--brief-line)] text-[var(--ink-60)]'
                   }`}
                 >
                   {l.status}
@@ -354,7 +354,7 @@ export function VendorPanel({
                 <button
                   type="button"
                   onClick={() => setPromoteFor(l)}
-                  className="mr-1.5 cursor-pointer rounded-full border border-[#4F46E5] px-3 py-1 text-[10px] font-extrabold text-[#4F46E5] hover:bg-[#F0F2F5]"
+                  className="mr-1.5 cursor-pointer rounded-full border border-[#4F46E5] px-3 py-1 text-[10px] font-extrabold text-[#4F46E5] hover:bg-[var(--color-well)]"
                 >
                   Promote
                 </button>
@@ -364,7 +364,7 @@ export function VendorPanel({
                       key={a.status}
                       onClick={() => onSetStatus(l.id, a.status)}
                       disabled={busyId === l.id}
-                      className="px-3 py-1 rounded-full bg-[#FFFFFF] text-[#0D1117] text-[10px] font-extrabold cursor-pointer disabled:opacity-50"
+                      className="px-3 py-1 rounded-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-[10px] font-extrabold cursor-pointer disabled:opacity-50"
                     >
                       {a.label}
                     </button>
@@ -378,11 +378,11 @@ export function VendorPanel({
 
       {/* --- orders received -------------------------------------------------- */}
       <div className="space-y-2">
-        <h4 className="text-[11px] font-extrabold text-[#0D1117]/60">
+        <h4 className="text-[11px] font-extrabold text-[var(--ink-60)]">
           Orders received{pendingOrders.length > 0 ? ` (${pendingOrders.length} to fulfil)` : ''}
         </h4>
         {orders.length === 0 ? (
-          <p className="text-xs text-[#0D1117]/60">No one has ordered from you yet.</p>
+          <p className="text-xs text-[var(--ink-60)]">No one has ordered from you yet.</p>
         ) : (
           orders.map((o) => (
             <OrderStatus

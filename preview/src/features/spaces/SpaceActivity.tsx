@@ -51,7 +51,7 @@ export const SpaceActivity: React.FC<SpaceActivityProps> = ({
       </div>
 
       {activities.length === 0 ? (
-        <div className="p-5 rounded-2xl bg-white border border-black/5 text-center">
+        <div className="p-5 rounded-2xl bg-[color:var(--color-paper)] border border-black/5 text-center">
           <p className="text-xs text-[color:var(--color-text-muted)]">No activity recorded yet.</p>
         </div>
       ) : (
@@ -59,7 +59,7 @@ export const SpaceActivity: React.FC<SpaceActivityProps> = ({
           {activities.map((act) => (
             <div
               key={act.id}
-              className="p-3.5 rounded-2xl bg-white border border-black/5 shadow-2xs flex items-start space-x-3 transition-all hover:bg-gray-50/50"
+              className="p-3.5 rounded-2xl bg-[color:var(--color-paper)] border border-black/5 shadow-2xs flex items-start space-x-3 transition-all hover:bg-gray-50/50"
             >
               <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center shrink-0 mt-0.5">
                 {getIcon(act.kind)}

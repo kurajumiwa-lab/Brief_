@@ -165,7 +165,7 @@ export const SmileIdKycModal: React.FC<SmileIdKycModalProps> = ({
         <div className="p-5 bg-gradient-to-r from-[#1E293B] via-[#0F172A] to-[#1E1B4B] border-b border-slate-800 flex items-center justify-between">
           <div className="space-y-0.5">
             <div className="flex items-center space-x-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-[#00BFEF] text-[#0D1117] text-[10px] font-mono font-black uppercase tracking-wider">
+              <span className="px-2.5 py-0.5 rounded-full bg-[#00BFEF] text-[var(--brief-ink)] text-[10px] font-mono font-black uppercase tracking-wider">
                 SMILE IDENTITY API
               </span>
               <span className="text-[10px] text-emerald-400 font-mono font-bold flex items-center space-x-1">
@@ -231,7 +231,7 @@ export const SmileIdKycModal: React.FC<SmileIdKycModalProps> = ({
                     onClick={() => { soundEngine.play('tap'); setDocType(doc.id as any); }}
                     className={`py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                       docType === doc.id
-                        ? 'bg-[#00BFEF] text-[#0D1117] font-black shadow-md'
+                        ? 'bg-[#00BFEF] text-[var(--brief-ink)] font-black shadow-md'
                         : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700'
                     }`}
                   >
@@ -274,7 +274,7 @@ export const SmileIdKycModal: React.FC<SmileIdKycModalProps> = ({
 
             <button
               type="submit"
-              className="w-full py-3 rounded-2xl bg-[#00BFEF] hover:bg-[#00a8d6] text-[#0D1117] font-black text-xs uppercase tracking-wider flex items-center justify-center space-x-2 shadow-lg cursor-pointer transition-transform active:scale-[0.99]"
+              className="w-full py-3 rounded-2xl bg-[#00BFEF] hover:bg-[#00a8d6] text-[var(--brief-ink)] font-black text-xs uppercase tracking-wider flex items-center justify-center space-x-2 shadow-lg cursor-pointer transition-transform active:scale-[0.99]"
             >
               <Video className="w-4 h-4" />
               <span>Proceed to 3D Smart Selfie Scan</span>

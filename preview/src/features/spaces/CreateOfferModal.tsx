@@ -117,7 +117,7 @@ export const CreateOfferModal: React.FC<CreateOfferModalProps> = ({
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Birthday Cake, Wedding Photography"
               autoFocus
-              className="w-full px-4 py-2.5 rounded-xl bg-white border border-black/10 text-xs font-bold text-[color:var(--color-text)] focus:outline-hidden focus:border-[color:var(--color-primary)]"
+              className="w-full px-4 py-2.5 rounded-xl bg-[color:var(--color-paper)] border border-black/10 text-xs font-bold text-[color:var(--color-text)] focus:outline-hidden focus:border-[color:var(--color-primary)]"
             />
           </div>
 
@@ -128,7 +128,7 @@ export const CreateOfferModal: React.FC<CreateOfferModalProps> = ({
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               placeholder="4500"
-              className="w-full px-4 py-2.5 rounded-xl bg-white border border-black/10 text-xs font-mono font-bold text-[color:var(--color-text)] focus:outline-hidden focus:border-[color:var(--color-primary)]"
+              className="w-full px-4 py-2.5 rounded-xl bg-[color:var(--color-paper)] border border-black/10 text-xs font-mono font-bold text-[color:var(--color-text)] focus:outline-hidden focus:border-[color:var(--color-primary)]"
             />
           </div>
 
@@ -139,7 +139,7 @@ export const CreateOfferModal: React.FC<CreateOfferModalProps> = ({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Custom birthday cake for 10-15 people. Vanilla sponge with strawberry butter cream."
               rows={3}
-              className="w-full px-4 py-2.5 rounded-xl bg-white border border-black/10 text-xs text-[color:var(--color-text)] focus:outline-hidden focus:border-[color:var(--color-primary)]"
+              className="w-full px-4 py-2.5 rounded-xl bg-[color:var(--color-paper)] border border-black/10 text-xs text-[color:var(--color-text)] focus:outline-hidden focus:border-[color:var(--color-primary)]"
             />
           </div>
 

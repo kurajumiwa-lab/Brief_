@@ -4729,6 +4729,8 @@ export interface DiscoverFeedItem {
   dateLabel: string | null;
   location: string | null;
   mediaUrl: string | null;
+  /** The row's own createdAt (listing) / publishedAt (event). Null = unknown. */
+  listedAt?: string | null;
   seller: string | null;
   stock: number | null;
   orderable: boolean | null;

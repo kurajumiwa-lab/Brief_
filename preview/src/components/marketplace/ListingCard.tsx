@@ -35,36 +35,36 @@ export function ListingCard({ listing, onOpen }: ListingCardProps) {
   return (
     <button
       onClick={() => onOpen(listing.id)}
-      className="w-full text-left bg-[#FFFFFF] border border-[#E5E8EC] rounded-2xl p-3 space-y-1.5 cursor-pointer hover:border-[#E5E8EC] transition"
+      className="w-full text-left bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-3 space-y-1.5 cursor-pointer hover:border-[var(--brief-line)] transition"
     >
       <div className="flex items-start justify-between gap-3">
-        <p className="text-xs font-extrabold text-[#0D1117] min-w-0">{listing.title}</p>
-        <span className="shrink-0 text-[9px] px-2 py-0.5 rounded-full bg-[#E5E8EC] text-[#0D1117]/60">
+        <p className="text-xs font-extrabold text-[var(--brief-ink)] min-w-0">{listing.title}</p>
+        <span className="shrink-0 text-[9px] px-2 py-0.5 rounded-full bg-[var(--brief-line)] text-[var(--ink-60)]">
           {TYPE_LABEL[listing.type] ?? listing.type}
         </span>
       </div>
 
-      <p className="text-sm font-extrabold text-[#0D1117]">
+      <p className="text-sm font-extrabold text-[var(--brief-ink)]">
         {money(listing.price, listing.currency)}
       </p>
 
       {listing.vendor && (
-        <p className="text-[10px] text-[#0D1117]/60">{listing.vendor.displayName}</p>
+        <p className="text-[10px] text-[var(--ink-60)]">{listing.vendor.displayName}</p>
       )}
 
       {/* Optional by design: a mobile service has no single location. */}
       {listing.locationName && (
-        <p className="text-[10px] text-[#0D1117]/60">{listing.locationName}</p>
+        <p className="text-[10px] text-[var(--ink-60)]">{listing.locationName}</p>
       )}
 
       {/* Stock only when it is genuinely tracked. null means "not tracked",
           which is different from zero and must not render as "0 left". */}
       {listing.quantityAvailable !== null && listing.quantityAvailable > 0 && (
-        <p className="text-[10px] text-[#0D1117]/60">{listing.quantityAvailable} available</p>
+        <p className="text-[10px] text-[var(--ink-60)]">{listing.quantityAvailable} available</p>
       )}
 
       {!listing.orderable && listing.unorderableReason && (
-        <p className="text-[10px] text-[#0D1117]">{listing.unorderableReason}</p>
+        <p className="text-[10px] text-[var(--brief-ink)]">{listing.unorderableReason}</p>
       )}
     </button>
   );

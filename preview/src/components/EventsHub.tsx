@@ -115,7 +115,7 @@ export function EventsHub() {
           style={{
             borderColor: 'var(--color-border)',
             color: 'var(--color-text)',
-            background: activeCount > 0 ? 'var(--color-primary-subtle)' : '#fff'
+            background: activeCount > 0 ? 'var(--color-primary-subtle)' : 'var(--color-paper)'
           }}
         >
           <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -172,7 +172,7 @@ export function EventsHub() {
                   onClick={() => setCategory(active ? null : c)}
                   className="px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer border"
                   style={{
-                    background: active ? 'var(--color-primary)' : '#fff',
+                    background: active ? 'var(--color-primary)' : 'var(--color-paper)',
                     color: active ? 'var(--accent-ink)' : 'var(--color-text-muted)',
                     borderColor: active ? 'transparent' : 'var(--color-border)'
                   }}
@@ -232,7 +232,7 @@ export function EventsHub() {
             onClick={() => setFilters((f) => ({ ...f, featured: !f.featured }))}
             className="px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer border"
             style={{
-              background: filters.featured ? 'var(--color-primary)' : '#fff',
+              background: filters.featured ? 'var(--color-primary)' : 'var(--color-paper)',
               color: filters.featured ? 'var(--accent-ink)' : 'var(--color-text-muted)',
               borderColor: filters.featured ? 'transparent' : 'var(--color-border)'
             }}

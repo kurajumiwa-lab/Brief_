@@ -68,28 +68,28 @@ export function FeePaySheet({ title, intro, serviceKeys, target, afterSubmit, on
   };
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-[#0D1117]/40 p-0 sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-label={title}>
-      <div className="w-full max-w-md rounded-t-3xl border border-[#E5E8EC] bg-[#FFFFFF] p-5 shadow-2xl sm:rounded-3xl">
+    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-[rgba(36, 28, 18, 0.40)] p-0 sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-label={title}>
+      <div className="w-full max-w-md rounded-t-3xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-5 shadow-2xl sm:rounded-3xl">
         <div className="mb-3 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Wallet className="h-4 w-4 text-[#4F46E5]" aria-hidden="true" />
-            <h2 className="text-[13px] font-extrabold text-[#0D1117]">{title}</h2>
+            <h2 className="text-[13px] font-extrabold text-[var(--brief-ink)]">{title}</h2>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="cursor-pointer rounded-full p-1 text-[#0D1117]/70 hover:bg-[#F0F2F5]">
+          <button type="button" onClick={onClose} aria-label="Close" className="cursor-pointer rounded-full p-1 text-[var(--ink-70)] hover:bg-[color:var(--color-well)]">
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
 
-        <p className="mb-3 text-[11px] leading-relaxed text-[#0D1117]/70">{intro}</p>
+        <p className="mb-3 text-[11px] leading-relaxed text-[var(--ink-70)]">{intro}</p>
 
         {unavailable && (
-          <p className="rounded-xl border border-[#E5E8EC] bg-[#FFFFFF] p-3 text-[11px] font-semibold text-[#DC2626]">
+          <p className="rounded-xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-3 text-[11px] font-semibold text-[#DC2626]">
             Payments are unavailable right now: {unavailable}
           </p>
         )}
 
         {!unavailable && offered.length === 0 && (
-          <p className="rounded-xl border border-[#E5E8EC] bg-[#FFFFFF] p-3 text-[11px] font-semibold text-[#0D1117]/60">
+          <p className="rounded-xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-3 text-[11px] font-semibold text-[var(--ink-60)]">
             This service is not on the server's price list yet.
           </p>
         )}
@@ -97,17 +97,17 @@ export function FeePaySheet({ title, intro, serviceKeys, target, afterSubmit, on
         {offered.length > 0 && (
           <div className="space-y-2">
             {/* The Pochi number is stated or honestly absent — never invented. */}
-            <p className="text-[11px] text-[#0D1117]/70">
+            <p className="text-[11px] text-[var(--ink-70)]">
               {data?.pochi
-                ? <>Pay with M-PESA to <span className="font-bold text-[#0D1117]">Pochi la Biashara {data.pochi}</span>, then paste the confirmation code below.</>
+                ? <>Pay with M-PESA to <span className="font-bold text-[var(--brief-ink)]">Pochi la Biashara {data.pochi}</span>, then paste the confirmation code below.</>
                 : 'Pay to the Brief Pochi la Biashara number (ask for it if you do not have it), then paste the confirmation code below.'}
             </p>
 
             {offered.map((svcItem) => (
-              <label key={svcItem.key} className={`flex cursor-pointer items-center justify-between gap-2 rounded-xl border px-3 py-2 ${service === svcItem.key ? 'border-[#4F46E5] bg-[#F0F2F5]' : 'border-[#E5E8EC]'}`}>
+              <label key={svcItem.key} className={`flex cursor-pointer items-center justify-between gap-2 rounded-xl border px-3 py-2 ${service === svcItem.key ? 'border-[#4F46E5] bg-[color:var(--color-well)]' : 'border-[var(--brief-line)]'}`}>
                 <span className="flex items-center gap-2">
                   <input type="radio" name="feepay-service" checked={service === svcItem.key} onChange={() => setService(svcItem.key)} aria-label={svcItem.label} />
-                  <span className="text-[11px] font-bold text-[#0D1117]">{svcItem.label}</span>
+                  <span className="text-[11px] font-bold text-[var(--brief-ink)]">{svcItem.label}</span>
                 </span>
                 {/* The price comes from the server catalog — never from this file. */}
                 <span className="text-[11px] font-extrabold text-[#4F46E5]">KES {svcItem.amountKes}</span>
@@ -119,19 +119,19 @@ export function FeePaySheet({ title, intro, serviceKeys, target, afterSubmit, on
               onChange={(e) => setCode(e.target.value.toUpperCase())}
               placeholder="M-PESA code, e.g. QJD31X5K2S"
               aria-label="M-Pesa confirmation code"
-              className="w-full rounded-xl border border-[#E5E8EC] bg-[#FFFFFF] px-3 py-2 text-[12px] font-semibold text-[#0D1117] outline-none placeholder:text-[#0D1117]/60 focus:border-[#06B6D4]"
+              className="w-full rounded-xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] px-3 py-2 text-[12px] font-semibold text-[var(--brief-ink)] outline-none placeholder:text-[var(--ink-60)] focus:border-[#06B6D4]"
             />
 
             <button
               type="button"
               onClick={() => void pay()}
               disabled={busy || !service || code.trim().length < 8}
-              className="w-full cursor-pointer rounded-xl bg-[#4F46E5] py-2.5 text-[12px] font-extrabold text-[#0D1117] disabled:cursor-not-allowed disabled:opacity-40"
+              className="w-full cursor-pointer rounded-xl bg-[#4F46E5] py-2.5 text-[12px] font-extrabold text-[var(--accent-ink)] disabled:cursor-not-allowed disabled:opacity-40"
             >
               {busy ? 'Recording…' : 'Submit confirmation code'}
             </button>
 
-            {note && <p className="text-[11px] font-semibold leading-relaxed text-[#0D1117]/70">{note}</p>}
+            {note && <p className="text-[11px] font-semibold leading-relaxed text-[var(--ink-70)]">{note}</p>}
           </div>
         )}
       </div>

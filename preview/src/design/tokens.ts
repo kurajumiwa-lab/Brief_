@@ -16,20 +16,35 @@ import { MotionDuration, MotionEasing } from '../ui/motion/tokens';
 
 export const DesignTokens = {
   colors: {
-    // Light system — see src/ui/theme.css for the --brief-*/--color-* names.
-    background: '#F7F8FA',        // --color-bg
-    surface: '#FFFFFF',           // --color-surface
-    surfaceElevated: '#F0F2F5',   // --color-surface-elevated
-    border: '#E5E8EC',            // --color-border
-    textPrimary: '#0D1117',       // --color-text (ink)
-    textSecondary: '#5A6472',     // --color-text-muted
-    textMuted: '#7A8494',         // meta / timestamps (>=4.5:1)
-    primary: '#4F46E5',           // --color-primary (electric indigo)
+    // Warm light system — see src/ui/theme.css for the --brief-*/--color-* names.
+    // Nothing here is #FFFFFF-on-#F7F8FA any more: a cold neutral next to a warm
+    // accent is what made surfaces read as unpainted wireframe.
+    background: '#F4EEE3',        // --color-bg — the room, warm plaster
+    surface: '#FDFAF3',           // --color-surface / --color-paper — warm paper
+    surfaceElevated: '#F0E9DE',   // --color-well — input wells, inset rows
+    border: '#E4DACB',            // --color-border — dividers/rings only, never a card
+    textPrimary: '#241C12',       // --color-text (warm ink)
+    textSecondary: '#55493A',     // --color-text-secondary — card bodies
+    textMuted: '#6E6152',         // --color-text-muted (5.9:1 on paper)
+    textFaint: '#7E7057',         // meta / timestamps (>=4.5:1 on paper)
+    quiet: '#A08D74',             // a zero, a dash, an arrow: present, unbothered
+    primary: '#4F46E5',           // --color-primary (electric indigo — unchanged)
     primaryStrong: '#4338CA',     // --color-primary-strong (hover/pressed)
-    accent: '#06B6D4',            // --color-accent (cyan secondary)
+    accent: '#06B6D4',            // --color-accent (cyan secondary — unchanged)
     success: '#16A34A',
     warning: '#B45309',
-    danger: '#DC2626'
+    danger: '#C2483C'             // warm brick, not pure red
+  },
+  // Elevation is the room's depth language: an inset highlight at the top edge
+  // (the light source) plus a warm drop shadow. A card takes one of these and
+  // drops its border; `border: 1px solid <line>` on a surface is banned.
+  // Mirrored as --lift-1..4 / --lift-signal in src/ui/theme.css.
+  elevation: {
+    flat: 'inset 0 1px 0 rgba(255,255,255,0.9), 0 1px 2px rgba(60,46,30,0.05)',
+    raised: 'inset 0 1px 0 rgba(255,255,255,0.9), 0 2px 6px rgba(60,46,30,0.07), 0 10px 24px -10px rgba(60,46,30,0.12)',
+    lifted: 'inset 0 1px 0 rgba(255,255,255,0.9), 0 4px 10px rgba(60,46,30,0.09), 0 20px 40px -16px rgba(60,46,30,0.18)',
+    floating: 'inset 0 1px 0 rgba(255,255,255,0.9), 0 10px 22px rgba(60,46,30,0.13), 0 34px 60px -24px rgba(60,46,30,0.24)',
+    signal: '0 0 0 1px rgba(79,70,229,0.4), 0 10px 28px -6px rgba(79,70,229,0.34), inset 0 1px 0 rgba(255,255,255,0.5)'
   },
   typography: {
     // Type scale mirrors --text-* in src/ui/theme.css.

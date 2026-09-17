@@ -34,8 +34,8 @@ export function CirclesStrip({
 
   return (
     <section
-      className={`flex items-center gap-3 p-4 rounded-2xl border ${className}`}
-      style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}
+      className={`flex items-center gap-3 p-4 rounded-2xl brief-card ${className}`}
+      style={{ background: 'var(--color-paper)' }}
       aria-label="Your spaces and circles"
     >
       <Users className="w-4 h-4 shrink-0" style={{ color: 'var(--color-primary)' }} />

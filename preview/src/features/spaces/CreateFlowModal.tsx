@@ -109,7 +109,7 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fadeIn">
-      <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden animate-scaleIn border border-black/5">
+      <div className="w-full max-w-lg bg-[color:var(--color-paper)] rounded-3xl shadow-2xl overflow-hidden animate-scaleIn border border-black/5">
         {/* Progress Bar */}
         <div className="w-full bg-[color:var(--color-surface)] h-1.5">
           <div
@@ -300,7 +300,7 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
                 <p className="text-sm font-black text-[color:var(--color-text)]">
                   {name || 'Your business name'}
                 </p>
-                <div className="p-3 rounded-xl bg-white shadow-xs border border-black/5 space-y-1">
+                <div className="p-3 rounded-xl bg-[color:var(--color-paper)] shadow-xs border border-black/5 space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-[color:var(--color-text)]">{offerTitle}</span>
                     <span className="text-xs font-black text-[color:var(--color-text)]">

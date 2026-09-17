@@ -20,7 +20,7 @@ import type { CollectionPage as CollectionPageData } from '../api/briefApi';
 
 const INK = '#0D1117';
 const MUTED = 'rgba(13, 17, 23,0.62)';
-const LINE = '#E5E8EC';
+const LINE = 'var(--brief-line)';
 const ACCENT = '#4F46E5';
 
 /** Honest status label: expired content is never presented as active. */
@@ -83,12 +83,12 @@ function notFoundBlock(onClose: () => void) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
       <Bookmark className="h-8 w-8 text-[rgba(13, 17, 23,0.35)]" />
-      <p className="text-[14px] font-bold text-[#0D1117]">This collection isn't available</p>
+      <p className="text-[14px] font-bold text-[var(--brief-ink)]">This collection isn't available</p>
       <p className="max-w-sm text-[12px] leading-relaxed text-[rgba(13, 17, 23,0.62)]">
         It may have been deleted, or it's private. Brief never reveals the
         existence of private collections.
       </p>
-      <button type="button" onClick={onClose} className="mt-2 rounded-full bg-[#4F46E5] px-5 py-2 text-[11px] font-bold text-[#0D1117] cursor-pointer">
+      <button type="button" onClick={onClose} className="mt-2 rounded-full bg-[#4F46E5] px-5 py-2 text-[11px] font-bold text-[var(--accent-ink)] cursor-pointer">
         Back
       </button>
     </div>
@@ -187,8 +187,8 @@ export function CollectionPage({ collectionId, mode, onClose, onOpenObject, onCh
 
   if (loading) {
     return (
-      <div className="fixed inset-0 z-50 overflow-y-auto bg-[#0D1117]/85 backdrop-blur-md" role="dialog" aria-label="Collection">
-        <div className="mx-auto min-h-full max-w-3xl bg-[#FFFFFF] px-4 py-5 sm:px-6">
+      <div className="fixed inset-0 z-50 overflow-y-auto bg-[rgba(36, 28, 18, 0.85)] backdrop-blur-md" role="dialog" aria-label="Collection">
+        <div className="mx-auto min-h-full max-w-3xl bg-[color:var(--color-paper)] px-4 py-5 sm:px-6">
           <div className="h-24 animate-pulse rounded-2xl bg-[#EFF1F4]" />
         </div>
       </div>
@@ -205,29 +205,29 @@ export function CollectionPage({ collectionId, mode, onClose, onOpenObject, onCh
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-[#0D1117]/85 backdrop-blur-md" role="dialog" aria-label={`Collection ${page.name}`}>
-      <div className="mx-auto min-h-full max-w-3xl bg-[#FFFFFF] px-4 py-5 sm:px-6">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-[rgba(36, 28, 18, 0.85)] backdrop-blur-md" role="dialog" aria-label={`Collection ${page.name}`}>
+      <div className="mx-auto min-h-full max-w-3xl bg-[color:var(--color-paper)] px-4 py-5 sm:px-6">
         {/* Top bar */}
         <div className="mb-4 flex items-center justify-between">
-          <button type="button" onClick={onClose} aria-label="Back" className="flex items-center gap-1 rounded-full border border-[#E5E8EC] bg-[#FFFFFF] px-3 py-1.5 text-[11px] font-bold text-[#0D1117] cursor-pointer hover:border-[#06B6D4]">
+          <button type="button" onClick={onClose} aria-label="Back" className="flex items-center gap-1 rounded-full border border-[var(--brief-line)] bg-[color:var(--color-paper)] px-3 py-1.5 text-[11px] font-bold text-[var(--brief-ink)] cursor-pointer hover:border-[#06B6D4]">
             <ArrowLeft className="h-3.5 w-3.5" /> Back
           </button>
           <div className="flex items-center gap-2">
             {mode === 'owner' && (
               <button type="button" onClick={toggleVisibility} disabled={busy}
-                className="rounded-full border border-[#E5E8EC] bg-[#FFFFFF] px-3 py-1.5 text-[10px] font-extrabold text-[#0D1117]/70 cursor-pointer hover:border-[#06B6D4] disabled:opacity-50">
+                className="rounded-full border border-[var(--brief-line)] bg-[color:var(--color-paper)] px-3 py-1.5 text-[10px] font-extrabold text-[var(--ink-70)] cursor-pointer hover:border-[#06B6D4] disabled:opacity-50">
                 {isPublic ? <span className="flex items-center gap-1"><Globe className="h-3 w-3" /> Public</span> : <span className="flex items-center gap-1"><Check className="h-3 w-3" /> Private</span>}
               </button>
             )}
             {isPublic && (
               <button type="button" onClick={share}
-                className="flex items-center gap-1 rounded-full bg-[#4F46E5] px-3 py-1.5 text-[10px] font-extrabold text-[#0D1117] cursor-pointer hover:bg-[#EFF1F4]">
+                className="flex items-center gap-1 rounded-full bg-[#4F46E5] px-3 py-1.5 text-[10px] font-extrabold text-[var(--accent-ink)] cursor-pointer hover:bg-[#EFF1F4]">
                 <Share2 className="h-3 w-3" /> Share
               </button>
             )}
             {mode === 'owner' && (
               <button type="button" onClick={() => setConfirmDelete(true)}
-                className="rounded-full border border-[#E5E8EC] bg-[#FFFFFF] px-3 py-1.5 text-[10px] font-extrabold text-[#DC2626] cursor-pointer hover:border-[#DC2626]">
+                className="rounded-full border border-[var(--brief-line)] bg-[color:var(--color-paper)] px-3 py-1.5 text-[10px] font-extrabold text-[#DC2626] cursor-pointer hover:border-[#DC2626]">
                 <Trash2 className="h-3 w-3" />
               </button>
             )}
@@ -235,16 +235,16 @@ export function CollectionPage({ collectionId, mode, onClose, onOpenObject, onCh
         </div>
 
         {/* Cover + identity */}
-        <div className="overflow-hidden rounded-3xl border border-[#E5E8EC] bg-[#FFFFFF] shadow-sm">
+        <div className="overflow-hidden rounded-3xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] shadow-sm">
           <div className="h-44 w-full sm:h-56">
             <CoverMosaic cover={page.cover} name={page.name} />
           </div>
           <div className="p-4 sm:p-5">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-[#F0F2F5] px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#4F46E5]">
+              <span className="rounded-full bg-[color:var(--color-well)] px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#4F46E5]">
                 Collection
               </span>
-              <span className="rounded-full bg-[#F0F2F5] px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#4F46E5]">
+              <span className="rounded-full bg-[color:var(--color-well)] px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#4F46E5]">
                 {isPublic ? 'Public' : 'Private'}
               </span>
               <span className="text-[10px] font-semibold text-[rgba(13, 17, 23,0.62)]">
@@ -259,20 +259,20 @@ export function CollectionPage({ collectionId, mode, onClose, onOpenObject, onCh
                   value={draftName}
                   onChange={(e) => setDraftName(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setRenaming(false); }}
-                  className="flex-1 rounded-xl border border-[#06B6D4] px-3 py-1.5 text-[16px] font-extrabold text-[#0D1117] outline-none"
+                  className="flex-1 rounded-xl border border-[#06B6D4] px-3 py-1.5 text-[16px] font-extrabold text-[var(--brief-ink)] outline-none"
                   aria-label="Collection name"
                 />
                 <button type="button" onClick={commitRename} disabled={busy || !draftName.trim()}
-                  className="rounded-full bg-[#4F46E5] px-3 py-1.5 text-[10px] font-extrabold text-[#0D1117] cursor-pointer disabled:opacity-40">
+                  className="rounded-full bg-[#4F46E5] px-3 py-1.5 text-[10px] font-extrabold text-[var(--accent-ink)] cursor-pointer disabled:opacity-40">
                   Save
                 </button>
                 <button type="button" onClick={() => setRenaming(false)} aria-label="Cancel rename"
-                  className="rounded-full border border-[#E5E8EC] px-2 py-1.5 text-[#0D1117]/60 cursor-pointer">
+                  className="rounded-full border border-[var(--brief-line)] px-2 py-1.5 text-[var(--ink-60)] cursor-pointer">
                   <X className="h-3.5 w-3.5" />
                 </button>
               </div>
             ) : (
-              <h1 className="mt-1 text-[22px] font-extrabold leading-tight text-[#0D1117] sm:text-[26px]">
+              <h1 className="mt-1 text-[22px] font-extrabold leading-tight text-[var(--brief-ink)] sm:text-[26px]">
                 {page.name}
               </h1>
             )}
@@ -293,7 +293,7 @@ export function CollectionPage({ collectionId, mode, onClose, onOpenObject, onCh
               <div className="mt-3 flex flex-wrap items-center gap-1.5">
                 <MapPin className="h-3.5 w-3.5 text-[#4F46E5]" />
                 {[...page.locations.areas, ...page.locations.counties].slice(0, 6).map((loc) => (
-                  <span key={loc} className="rounded-full bg-[#F0F2F5] px-2.5 py-0.5 text-[10px] font-bold text-[#4F46E5]">
+                  <span key={loc} className="rounded-full bg-[color:var(--color-well)] px-2.5 py-0.5 text-[10px] font-bold text-[#4F46E5]">
                     {loc}
                   </span>
                 ))}
@@ -301,17 +301,17 @@ export function CollectionPage({ collectionId, mode, onClose, onOpenObject, onCh
             )}
 
             {sharedUrl && (
-              <div className="mt-3 flex items-center gap-2 rounded-xl border border-[#06B6D4]/40 bg-[#F0F2F5]/60 px-3 py-2">
+              <div className="mt-3 flex items-center gap-2 rounded-xl border border-[#06B6D4]/40 bg-[rgba(240, 233, 222, 0.60)] px-3 py-2">
                 <p className="min-w-0 flex-1 truncate text-[10px] font-semibold text-[#4F46E5]">{sharedUrl}</p>
                 <button type="button" onClick={openShareLink}
-                  className="shrink-0 rounded-full bg-[#4F46E5] px-2.5 py-1 text-[9px] font-extrabold text-[#0D1117] cursor-pointer">
+                  className="shrink-0 rounded-full bg-[#4F46E5] px-2.5 py-1 text-[9px] font-extrabold text-[var(--accent-ink)] cursor-pointer">
                   Open
                 </button>
               </div>
             )}
 
             {confirmDelete && (
-              <div className="mt-3 rounded-xl border border-[#DC2626]/40 bg-[#F0F2F5] px-3 py-2.5">
+              <div className="mt-3 rounded-xl border border-[#DC2626]/40 bg-[color:var(--color-well)] px-3 py-2.5">
                 <p className="text-[11px] font-bold text-[#DC2626]">Delete "{page.name}"?</p>
                 <p className="mt-0.5 text-[10px] text-[#DC2626]/80">The objects themselves are never deleted — only this collection.</p>
                 <div className="mt-2 flex gap-2">
@@ -320,7 +320,7 @@ export function CollectionPage({ collectionId, mode, onClose, onOpenObject, onCh
                     Delete
                   </button>
                   <button type="button" onClick={() => setConfirmDelete(false)}
-                    className="rounded-full border border-[#E5E8EC] bg-[#FFFFFF] px-3 py-1 text-[10px] font-extrabold text-[#0D1117] cursor-pointer">
+                    className="rounded-full border border-[var(--brief-line)] bg-[color:var(--color-paper)] px-3 py-1 text-[10px] font-extrabold text-[var(--brief-ink)] cursor-pointer">
                     Cancel
                   </button>
                 </div>
@@ -332,7 +332,7 @@ export function CollectionPage({ collectionId, mode, onClose, onOpenObject, onCh
         {/* Items */}
         <div className="mt-5 space-y-2">
           <div className="flex items-center justify-between px-1">
-            <h2 className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#0D1117]">
+            <h2 className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[var(--brief-ink)]">
               Items <span className="text-[rgba(13, 17, 23,0.45)]">· {page.count}</span>
             </h2>
             {mode === 'owner' && page.items.length > 1 && (
@@ -341,9 +341,9 @@ export function CollectionPage({ collectionId, mode, onClose, onOpenObject, onCh
           </div>
 
           {page.items.length === 0 && (
-            <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[#E5E8EC] px-6 py-12 text-center">
+            <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[var(--brief-line)] px-6 py-12 text-center">
               <Bookmark className="h-6 w-6 text-[rgba(13, 17, 23,0.35)]" />
-              <p className="text-[13px] font-semibold text-[#0D1117]">Nothing here yet</p>
+              <p className="text-[13px] font-semibold text-[var(--brief-ink)]">Nothing here yet</p>
               <p className="max-w-xs text-[12px] leading-relaxed text-[rgba(13, 17, 23,0.62)]">
                 Save an object from its page and add it to this collection.
               </p>
@@ -355,13 +355,13 @@ export function CollectionPage({ collectionId, mode, onClose, onOpenObject, onCh
             const line = status(o);
             const isExpired = expiredStyle(o);
             return (
-              <div key={item.id} className="group flex items-stretch gap-2 rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] p-2 shadow-sm transition-shadow hover:shadow-md">
+              <div key={item.id} className="group flex items-stretch gap-2 rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-2 shadow-sm transition-shadow hover:shadow-md">
                 <button type="button" onClick={() => onOpenObject(o)}
                   className="flex min-w-0 flex-1 items-stretch gap-2.5 text-left cursor-pointer">
                   {imageOf(o) ? (
                     <img src={imageOf(o) ?? ''} alt="" aria-hidden="true" loading="lazy" className="h-16 w-16 shrink-0 rounded-xl object-cover" />
                   ) : (
-                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#EFF1F4] to-[#E5E8EC] text-[10px] font-bold uppercase text-[#5A6472]">
+                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#EFF1F4] to-[var(--brief-line)] text-[10px] font-bold uppercase text-[#5A6472]">
                       {String(o.type ?? '').slice(0, 4)}
                     </div>
                   )}
@@ -379,7 +379,7 @@ export function CollectionPage({ collectionId, mode, onClose, onOpenObject, onCh
                         </span>
                       )}
                     </span>
-                    <span className="mt-0.5 line-clamp-2 block text-[12px] font-semibold leading-snug text-[#0D1117] group-hover:text-[#4F46E5]">
+                    <span className="mt-0.5 line-clamp-2 block text-[12px] font-semibold leading-snug text-[var(--brief-ink)] group-hover:text-[#4F46E5]">
                       {o.title}
                     </span>
                   </span>
@@ -388,15 +388,15 @@ export function CollectionPage({ collectionId, mode, onClose, onOpenObject, onCh
                 {mode === 'owner' && (
                   <span className="flex shrink-0 flex-col items-center justify-center gap-1">
                     <button type="button" aria-label="Move up" onClick={() => moveItem(o.id, -1)}
-                      className="rounded-full p-1 text-[rgba(13, 17, 23,0.4)] cursor-pointer hover:bg-[#F0F2F5] hover:text-[#4F46E5]">
+                      className="rounded-full p-1 text-[rgba(13, 17, 23,0.4)] cursor-pointer hover:bg-[color:var(--color-well)] hover:text-[#4F46E5]">
                       <ArrowUp className="h-3.5 w-3.5" />
                     </button>
                     <button type="button" aria-label="Remove" onClick={() => removeItem(o.id)}
-                      className="rounded-full p-1 text-[rgba(13, 17, 23,0.4)] cursor-pointer hover:bg-[#F0F2F5] hover:text-[#DC2626]">
+                      className="rounded-full p-1 text-[rgba(13, 17, 23,0.4)] cursor-pointer hover:bg-[color:var(--color-well)] hover:text-[#DC2626]">
                       <X className="h-3.5 w-3.5" />
                     </button>
                     <button type="button" aria-label="Move down" onClick={() => moveItem(o.id, 1)}
-                      className="rounded-full p-1 text-[rgba(13, 17, 23,0.4)] cursor-pointer hover:bg-[#F0F2F5] hover:text-[#4F46E5]">
+                      className="rounded-full p-1 text-[rgba(13, 17, 23,0.4)] cursor-pointer hover:bg-[color:var(--color-well)] hover:text-[#4F46E5]">
                       <ArrowDown className="h-3.5 w-3.5" />
                     </button>
                   </span>

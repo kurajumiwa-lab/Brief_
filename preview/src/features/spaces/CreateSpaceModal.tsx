@@ -187,7 +187,7 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
                   className={`p-3 rounded-2xl text-left transition-all border cursor-pointer flex flex-col justify-between ${
                     selectedType === opt.type
                       ? 'bg-[color:var(--color-primary)] text-[color:var(--accent-ink)] border-[color:var(--color-primary)] shadow-sm'
-                      : 'bg-white text-[color:var(--color-text)] border-black/5 hover:border-black/15'
+                      : 'bg-[color:var(--color-paper)] text-[color:var(--color-text)] border-black/5 hover:border-black/15'
                   }`}
                 >
                   <span className="text-xl">{opt.emoji}</span>
@@ -241,7 +241,7 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Amina's Cakes, Kilimani Food Circle"
                 autoFocus
-                className="w-full px-4 py-3 rounded-xl bg-white border border-black/10 text-sm font-bold text-[color:var(--color-text)] focus:outline-hidden focus:border-[color:var(--color-primary)]"
+                className="w-full px-4 py-3 rounded-xl bg-[color:var(--color-paper)] border border-black/10 text-sm font-bold text-[color:var(--color-text)] focus:outline-hidden focus:border-[color:var(--color-primary)]"
               />
             </div>
 
@@ -293,7 +293,7 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
                   value={goal}
                   onChange={(e) => setGoal(e.target.value)}
                   placeholder="e.g. Get my first 20 customers"
-                  className="w-full px-4 py-2.5 rounded-xl bg-white border border-black/10 text-xs font-medium text-[color:var(--color-text)] focus:outline-hidden focus:border-[color:var(--color-primary)]"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[color:var(--color-paper)] border border-black/10 text-xs font-medium text-[color:var(--color-text)] focus:outline-hidden focus:border-[color:var(--color-primary)]"
                 />
               </div>
 
@@ -304,7 +304,7 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
                   value={targetValueKes}
                   onChange={(e) => setTargetValueKes(e.target.value)}
                   placeholder="100000"
-                  className="w-full px-4 py-2.5 rounded-xl bg-white border border-black/10 text-xs font-mono font-bold text-[color:var(--color-text)] focus:outline-hidden focus:border-[color:var(--color-primary)]"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[color:var(--color-paper)] border border-black/10 text-xs font-mono font-bold text-[color:var(--color-text)] focus:outline-hidden focus:border-[color:var(--color-primary)]"
                 />
               </div>
             </div>
@@ -409,7 +409,7 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
             </div>
 
             <div className="space-y-2">
-              <label className="flex items-center space-x-3 p-3 rounded-xl bg-white border border-black/5 cursor-pointer">
+              <label className="flex items-center space-x-3 p-3 rounded-xl bg-[color:var(--color-paper)] border border-black/5 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={hasWhatsApp}
@@ -419,7 +419,7 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
                 <span className="text-xs font-bold text-[color:var(--color-text)]">WhatsApp Customers</span>
               </label>
 
-              <label className="flex items-center space-x-3 p-3 rounded-xl bg-white border border-black/5 cursor-pointer">
+              <label className="flex items-center space-x-3 p-3 rounded-xl bg-[color:var(--color-paper)] border border-black/5 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={hasProducts}
@@ -429,7 +429,7 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
                 <span className="text-xs font-bold text-[color:var(--color-text)]">Products / Services Ready</span>
               </label>
 
-              <label className="flex items-center space-x-3 p-3 rounded-xl bg-white border border-black/5 cursor-pointer">
+              <label className="flex items-center space-x-3 p-3 rounded-xl bg-[color:var(--color-paper)] border border-black/5 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={hasCustomers}

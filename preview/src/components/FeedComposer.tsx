@@ -48,9 +48,9 @@ interface FeedData {
 }
 
 const T = {
-  bg: '#F0F2F5',
-  surface: '#FFFFFF',
-  line: '#E5E8EC',
+  bg: 'var(--color-well)',
+  surface: 'var(--color-paper)',
+  line: 'var(--brief-line)',
   ink: '#0D1117',
   muted: 'rgba(13, 17, 23,0.62)',
   green: '#4F46E5'  /* legacy name: the accent, used for the selected-collection border */
@@ -353,7 +353,7 @@ function PhotoTitleCard({
         <span
           className="absolute left-3 top-3 rounded-full px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.12em]"
           style={image
-            ? { background: 'rgba(9,11,16,0.66)', color: '#FFFFFF' }
+            ? { background: 'rgba(9,11,16,0.66)', color: 'var(--color-paper)' }
             : { background: 'rgba(13, 17, 23,0.08)', color: T.ink }}
         >
           {type}
@@ -366,7 +366,7 @@ function PhotoTitleCard({
         const b = trustBadge(item)!;
         const glyph = b.tone === 'green' ? '✓' : b.tone === 'cyan' ? '●' : '◉';
         const bg = b.tone === 'green' ? '#16A34A' : b.tone === 'cyan' ? '#06B6D4' : 'rgba(13,17,23,0.14)';
-        const fg = b.tone === 'muted' ? '#0D1117' : '#FFFFFF';
+        const fg = b.tone === 'muted' ? '#0D1117' : 'var(--color-paper)';
         return (
           <span
             className="absolute left-3 top-9 rounded-full px-2 py-0.5 text-[8px] font-extrabold uppercase tracking-[0.12em]"
@@ -380,8 +380,8 @@ function PhotoTitleCard({
         <span
           className="absolute right-3 top-3 rounded-full px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.12em]"
           style={isAlert
-            ? { background: image ? 'rgba(255, 93, 108,0.92)' : 'rgba(255, 93, 108,0.12)', color: image ? '#FFFFFF' : '#DC2626' }
-            : { background: image ? 'rgba(9,11,16,0.66)' : 'rgba(13, 17, 23,0.08)', color: image ? '#FFFFFF' : T.ink }}
+            ? { background: image ? 'rgba(255, 93, 108,0.92)' : 'rgba(255, 93, 108,0.12)', color: image ? 'var(--color-paper)' : '#DC2626' }
+            : { background: image ? 'rgba(9,11,16,0.66)' : 'rgba(13, 17, 23,0.08)', color: image ? 'var(--color-paper)' : T.ink }}
         >
           {why}
         </span>
@@ -396,7 +396,7 @@ function PhotoTitleCard({
             {meta}
           </p>
         )}
-        <h3 className="line-clamp-3 text-[15px] font-semibold leading-snug" style={{ color: image ? '#FFFFFF' : T.ink }}>
+        <h3 className="line-clamp-3 text-[15px] font-semibold leading-snug" style={{ color: image ? 'var(--color-paper)' : T.ink }}>
           {title}
         </h3>
         {factLine(item) && (
@@ -625,16 +625,16 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
   return (
     <div className="space-y-8" style={{ fontFamily: 'var(--m3-font-body)', color: T.ink }}>
       {temporary && (
-        <div className="flex items-start justify-between gap-3 rounded-2xl border border-dashed border-[#E5E8EC] bg-[#FFFFFF] px-3 py-2.5">
+        <div className="flex items-start justify-between gap-3 rounded-2xl border border-dashed border-[var(--brief-line)] bg-[color:var(--color-paper)] px-3 py-2.5">
           <div>
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#0D1117]">{temporary.testContent.label}</p>
-            <p className="mt-1 text-[10px] leading-snug text-[#0D1117]/55">Temporary welcome content for release testing. It will leave the public feed at the expiry above and will not be silently reseeded.</p>
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--brief-ink)]">{temporary.testContent.label}</p>
+            <p className="mt-1 text-[10px] leading-snug text-[var(--ink-55)]">Temporary welcome content for release testing. It will leave the public feed at the expiry above and will not be silently reseeded.</p>
           </div>
-          <span className="shrink-0 text-right text-[9px] font-bold text-[#0D1117]/60">{temporaryExpiry ? `until ${temporaryExpiry}` : 'temporary'}</span>
+          <span className="shrink-0 text-right text-[9px] font-bold text-[var(--ink-60)]">{temporaryExpiry ? `until ${temporaryExpiry}` : 'temporary'}</span>
         </div>
       )}
       {updatedAt && (
-        <p className="px-1 text-[10px] text-[#0D1117]/60">
+        <p className="px-1 text-[10px] text-[var(--ink-60)]">
           Live Brief feed · refreshed {updatedAt}
         </p>
       )}
@@ -695,16 +695,16 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
             {imageOf(feed.tea) && (
               <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(9,11,16,0.04) 20%, rgba(9,11,16,0.86) 100%)' }} />
             )}
-            <h3 className="absolute inset-x-4 bottom-4 line-clamp-3 text-[18px] font-semibold leading-snug" style={{ color: imageOf(feed.tea) ? '#FFFFFF' : T.ink }}>
+            <h3 className="absolute inset-x-4 bottom-4 line-clamp-3 text-[18px] font-semibold leading-snug" style={{ color: imageOf(feed.tea) ? 'var(--color-paper)' : T.ink }}>
               {titleOf(feed.tea)}
             </h3>
             {/* The public rating, on the front page: the real derived count. */}
             {typeof (feed.tea as any).likeCount === 'number' && (feed.tea as any).likeCount > 0 && (
               <span
                 className="absolute right-3 top-3 flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold"
-                style={{ background: 'rgba(9,11,16,0.75)', color: '#FFFFFF' }}
+                style={{ background: 'rgba(9,11,16,0.75)', color: 'var(--color-paper)' }}
               >
-                <Heart className="h-3 w-3" style={{ fill: '#FFFFFF', stroke: '#FFFFFF' }} />
+                <Heart className="h-3 w-3" style={{ fill: 'var(--color-paper)', stroke: 'var(--color-paper)' }} />
                 {(feed.tea as any).likeCount}
               </span>
             )}
@@ -774,7 +774,7 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
                 >
                   {image && <img src={image} alt="" aria-hidden="true" loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-60 transition-transform duration-500 group-hover:scale-[1.03]" />}
                   <div className="absolute inset-0" style={{ background: image ? 'linear-gradient(180deg, rgba(13, 17, 23,0.12), rgba(13, 17, 23,0.88))' : 'linear-gradient(135deg, #E5E8EC, #EFF1F4)' }} />
-                  <span className="relative block line-clamp-3 text-[14px] font-semibold" style={{ color: image ? '#FFFFFF' : T.ink }}>{title}</span>
+                  <span className="relative block line-clamp-3 text-[14px] font-semibold" style={{ color: image ? 'var(--color-paper)' : T.ink }}>{title}</span>
                 </button>
               );
             })}

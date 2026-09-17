@@ -198,7 +198,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
         type="button"
         onClick={() => void open(n)}
         className={`group flex w-full items-stretch gap-2.5 rounded-2xl border p-2.5 text-left transition-all hover:-translate-y-0.5 hover:border-[#06B6D4] ${
-          n.read ? 'border-[#EFF1F4] bg-[#FFFFFF]' : 'border-[#06B6D4]/40 bg-[#FFFFFF] shadow-sm'
+          n.read ? 'border-[#EFF1F4] bg-[color:var(--color-paper)]' : 'border-[#06B6D4]/40 bg-[color:var(--color-paper)] shadow-sm'
         }`}
       >
         {/* Unread marker */}
@@ -208,8 +208,8 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
         {n.imageUrl ? (
           <img src={n.imageUrl} alt="" aria-hidden="true" loading="lazy" className="h-14 w-14 shrink-0 rounded-xl object-cover" />
         ) : (
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[#F0F2F5]">
-            <ImageOff className="h-4 w-4 text-[#0D1117]/60" />
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[color:var(--color-well)]">
+            <ImageOff className="h-4 w-4 text-[var(--ink-60)]" />
           </div>
         )}
 
@@ -219,25 +219,25 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
               {typeLabel(n.type)}
             </span>
             {n.priority === 'important' && (
-              <span className="flex items-center gap-0.5 rounded-full bg-[#F0F2F5] px-1.5 py-0.5 text-[9px] font-extrabold text-[#DC2626]">
+              <span className="flex items-center gap-0.5 rounded-full bg-[color:var(--color-well)] px-1.5 py-0.5 text-[9px] font-extrabold text-[#DC2626]">
                 <CircleAlert className="h-2.5 w-2.5" /> Important
               </span>
             )}
             {statusLine && (
               <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold ${
-                status === 'expired' || status === 'past' ? 'bg-[#F0F2F5] text-[#0D1117]/60' : 'bg-[#F0F2F5] text-[#16A34A]'
+                status === 'expired' || status === 'past' ? 'bg-[color:var(--color-well)] text-[var(--ink-60)]' : 'bg-[color:var(--color-well)] text-[#16A34A]'
               }`}>
                 {statusLine}
               </span>
             )}
-            <span className="text-[9px] font-semibold text-[#0D1117]/60">{freshness(n.createdAt)}</span>
+            <span className="text-[9px] font-semibold text-[var(--ink-60)]">{freshness(n.createdAt)}</span>
           </div>
-          <p className={`mt-1 line-clamp-2 text-[12.5px] leading-snug ${n.read ? 'text-[#0D1117]/70' : 'font-bold text-[#0D1117]'}`}>
+          <p className={`mt-1 line-clamp-2 text-[12.5px] leading-snug ${n.read ? 'text-[var(--ink-70)]' : 'font-bold text-[var(--brief-ink)]'}`}>
             {n.title}
           </p>
-          {n.body && <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-[#0D1117]/55">{n.body}</p>}
+          {n.body && <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-[var(--ink-55)]">{n.body}</p>}
           {n.sourceName && (
-            <p className="mt-1 text-[9.5px] font-semibold text-[#0D1117]/60">{n.sourceName}</p>
+            <p className="mt-1 text-[9.5px] font-semibold text-[var(--ink-60)]">{n.sourceName}</p>
           )}
           {n.context && (
             <p className="mt-0.5 text-[9.5px] font-semibold text-[#4F46E5]/70">{n.context}</p>
@@ -249,26 +249,26 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col justify-end overflow-hidden bg-[#0D1117]/85 backdrop-blur-md sm:justify-center sm:p-4"
+      className="fixed inset-0 z-50 flex flex-col justify-end overflow-hidden bg-[rgba(36, 28, 18, 0.85)] backdrop-blur-md sm:justify-center sm:p-4"
       onClick={onClose}
     >
       <div
-        className="flex h-[94vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl border border-[#E5E8EC] bg-[#FFFFFF] shadow-2xl mb-safe sm:h-[88vh] sm:rounded-3xl"
+        className="flex h-[94vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] shadow-2xl mb-safe sm:h-[88vh] sm:rounded-3xl"
         role="dialog"
         aria-label="Notifications"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between gap-2 border-b border-[#E5E8EC] px-4 py-3">
+        <div className="flex items-center justify-between gap-2 border-b border-[var(--brief-line)] px-4 py-3">
           <button
             type="button"
             onClick={onClose}
-            className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[12px] font-bold text-[#0D1117] transition-colors hover:bg-[#F0F2F5]"
+            className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[12px] font-bold text-[var(--brief-ink)] transition-colors hover:bg-[color:var(--color-well)]"
           >
             <ArrowLeft className="h-4 w-4" /> Back
           </button>
           <div className="min-w-0 text-center">
-            <p className="text-[13px] font-extrabold text-[#0D1117]">Notifications</p>
+            <p className="text-[13px] font-extrabold text-[var(--brief-ink)]">Notifications</p>
             {unread > 0 && (
               <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#4F46E5]">
                 {unread} unread
@@ -281,7 +281,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
               onClick={() => setPrefsOpen((v) => !v)}
               aria-label="Notification preferences"
               aria-expanded={prefsOpen}
-              className="rounded-full p-2 text-[#0D1117]/60 transition-colors hover:bg-[#F0F2F5] hover:text-[#0D1117]"
+              className="rounded-full p-2 text-[var(--ink-60)] transition-colors hover:bg-[color:var(--color-well)] hover:text-[var(--brief-ink)]"
             >
               <Settings2 className="h-4 w-4" />
             </button>
@@ -289,7 +289,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
               type="button"
               onClick={onClose}
               aria-label="Close"
-              className="rounded-full p-2 text-[#0D1117] transition-colors hover:bg-[#F0F2F5]"
+              className="rounded-full p-2 text-[var(--brief-ink)] transition-colors hover:bg-[color:var(--color-well)]"
             >
               <X className="h-4 w-4" />
             </button>
@@ -298,15 +298,15 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
 
         {/* Preferences (simple category toggles) */}
         {prefsOpen && (
-          <div className="shrink-0 border-b border-[#E5E8EC] bg-[#FFFFFF] px-4 py-3">
+          <div className="shrink-0 border-b border-[var(--brief-line)] bg-[color:var(--color-paper)] px-4 py-3">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#0D1117]/60">
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-60)]">
                 What reaches you
               </p>
               <button
                 type="button"
                 onClick={() => setPrefsOpen(false)}
-                className="rounded-full px-2 py-0.5 text-[10px] font-bold text-[#4F46E5] hover:bg-[#F0F2F5]"
+                className="rounded-full px-2 py-0.5 text-[10px] font-bold text-[#4F46E5] hover:bg-[color:var(--color-well)]"
               >
                 Done
               </button>
@@ -320,8 +320,8 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
                   aria-pressed={prefs[key] !== false}
                   className={`flex items-center justify-between gap-1 rounded-xl border px-2.5 py-1.5 text-[10px] font-bold transition-colors ${
                     prefs[key] !== false
-                      ? 'border-[#06B6D4]/40 bg-[#F0F2F5] text-[#0D1117]'
-                      : 'border-[#E5E8EC] bg-[#FFFFFF] text-[#0D1117]/60'
+                      ? 'border-[#06B6D4]/40 bg-[color:var(--color-well)] text-[var(--brief-ink)]'
+                      : 'border-[var(--brief-line)] bg-[color:var(--color-paper)] text-[var(--ink-60)]'
                   }`}
                 >
                   <span className="truncate">{CATEGORY_LABELS[key]}</span>
@@ -329,7 +329,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
                 </button>
               ))}
             </div>
-            <p className="mt-2 text-[9.5px] leading-snug text-[#0D1117]/60">
+            <p className="mt-2 text-[9.5px] leading-snug text-[var(--ink-60)]">
               Categories you turn off stop new notifications; everything already here stays until you dismiss it.
             </p>
           </div>
@@ -339,7 +339,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
           {!authed && (
             <div className="flex flex-col items-center gap-3 px-6 py-20 text-center">
               <Bell className="h-8 w-8 text-[#4F46E5]" />
-              <p className="max-w-xs text-[13px] font-semibold text-[#0D1117]">
+              <p className="max-w-xs text-[13px] font-semibold text-[var(--brief-ink)]">
                 Sign in to see what changed while you were away.
               </p>
             </div>
@@ -354,15 +354,15 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
 
           {authed && !loading && error && rows?.length === 0 && (
             <div className="flex flex-col items-center gap-3 px-6 py-20 text-center">
-              <BellOff className="h-8 w-8 text-[#0D1117]/60" />
-              <p className="max-w-xs text-[12px] font-semibold text-[#0D1117]/60">{error}</p>
+              <BellOff className="h-8 w-8 text-[var(--ink-60)]" />
+              <p className="max-w-xs text-[12px] font-semibold text-[var(--ink-60)]">{error}</p>
             </div>
           )}
 
           {authed && !loading && rows && rows.length === 0 && (
-            <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[#E5E8EC] px-6 py-14 text-center">
+            <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[var(--brief-line)] px-6 py-14 text-center">
               <Bell className="h-6 w-6 text-[rgba(13, 17, 23,0.4)]" />
-              <p className="text-[13px] font-semibold text-[#0D1117]">Nothing new yet</p>
+              <p className="text-[13px] font-semibold text-[var(--brief-ink)]">Nothing new yet</p>
               <p className="max-w-xs text-[12px] leading-relaxed text-[rgba(13, 17, 23,0.62)]">
                 Follow a place, save something, or pick a location in My Brief —
                 when something that matters changes, it lands here.
@@ -377,7 +377,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
                   <button
                     type="button"
                     onClick={() => void markAll()}
-                    className="flex items-center gap-1 rounded-full border border-[#E5E8EC] bg-[#FFFFFF] px-3 py-1.5 text-[10px] font-bold text-[#4F46E5] transition-colors hover:border-[#06B6D4]"
+                    className="flex items-center gap-1 rounded-full border border-[var(--brief-line)] bg-[color:var(--color-paper)] px-3 py-1.5 text-[10px] font-bold text-[#4F46E5] transition-colors hover:border-[#06B6D4]"
                   >
                     <CheckCheck className="h-3 w-3" /> Mark all read
                   </button>
@@ -386,7 +386,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
 
               {newRows.length > 0 && (
                 <section aria-label="New">
-                  <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#0D1117]">New</p>
+                  <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--brief-ink)]">New</p>
                   <div className="grid gap-2 sm:grid-cols-2">
                     {newRows.map((n) => <Row key={n.id} n={n} />)}
                   </div>
@@ -395,7 +395,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
 
               {earlierRows.length > 0 && (
                 <section aria-label="Earlier">
-                  <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#0D1117]/70">
+                  <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-70)]">
                     Earlier {now.toLocaleDateString('en-KE', { month: 'short', year: 'numeric' })}
                   </p>
                   <div className="grid gap-2 sm:grid-cols-2">
@@ -407,7 +407,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
                           aria-label="Mark unread"
                           title="Mark unread"
                           onClick={(e) => { e.stopPropagation(); void setRead(n, false); }}
-                          className="absolute right-2 top-2 rounded-full bg-[#FFFFFF]/90 p-1 text-[#0D1117]/60 opacity-0 transition-opacity hover:text-[#4F46E5] group-hover:opacity-100"
+                          className="absolute right-2 top-2 rounded-full bg-[rgba(253, 250, 243, 0.90)] p-1 text-[var(--ink-60)] opacity-0 transition-opacity hover:text-[#4F46E5] group-hover:opacity-100"
                         >
                           <Bell className="h-3 w-3" />
                         </button>
@@ -418,7 +418,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
               )}
 
               {busyId && (
-                <p className="flex items-center gap-2 text-[10px] font-semibold text-[#0D1117]/60">
+                <p className="flex items-center gap-2 text-[10px] font-semibold text-[var(--ink-60)]">
                   <Check className="h-3 w-3" /> Updating…
                 </p>
               )}

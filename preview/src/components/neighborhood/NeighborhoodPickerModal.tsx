@@ -28,7 +28,7 @@ export const NeighborhoodPickerModal: React.FC<NeighborhoodPickerModalProps> = (
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-      <div className="w-full max-w-xl my-auto rounded-3xl bg-[#1A1F2E] text-white p-5 sm:p-6 shadow-2xl space-y-5 animate-slideUp">
+      <div className="w-full max-w-xl my-auto rounded-3xl bg-[color:var(--brief-ink)] text-white p-5 sm:p-6 shadow-2xl space-y-5 animate-slideUp">
         
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -88,7 +88,7 @@ export const NeighborhoodPickerModal: React.FC<NeighborhoodPickerModalProps> = (
                       {nh.county}
                     </span>
                     {isSelected && (
-                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-[#00BFEF] text-[#0D1117] font-black uppercase">
+                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-[#00BFEF] text-[var(--brief-ink)] font-black uppercase">
                         Active
                       </span>
                     )}
@@ -116,7 +116,7 @@ export const NeighborhoodPickerModal: React.FC<NeighborhoodPickerModalProps> = (
 
                 <div className="shrink-0 pt-1">
                   {isSelected ? (
-                    <div className="w-6 h-6 rounded-full bg-[#00BFEF] text-[#0D1117] flex items-center justify-center font-black">
+                    <div className="w-6 h-6 rounded-full bg-[#00BFEF] text-[var(--brief-ink)] flex items-center justify-center font-black">
                       <Check className="w-3.5 h-3.5" />
                     </div>
                   ) : (

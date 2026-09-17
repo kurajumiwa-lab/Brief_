@@ -317,7 +317,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
               type="button"
               onClick={() => void shareSpace()}
               disabled={!space}
-              className="p-2 rounded-full bg-white text-[color:var(--color-text)] shadow-2xs border border-black/5 hover:bg-gray-100 transition-all cursor-pointer"
+              className="p-2 rounded-full bg-[color:var(--color-paper)] text-[color:var(--color-text)] shadow-2xs border border-black/5 hover:bg-gray-100 transition-all cursor-pointer"
               aria-label="Copy the link that reaches this space"
               title="Copy link"
             >
@@ -327,7 +327,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
               type="button"
               onClick={openIdentity}
               disabled={busy}
-              className="inline-flex items-center gap-1 p-2 rounded-full bg-white text-[color:var(--color-text)] shadow-2xs border border-black/5 hover:bg-gray-100 transition-all cursor-pointer"
+              className="inline-flex items-center gap-1 p-2 rounded-full bg-[color:var(--color-paper)] text-[color:var(--color-text)] shadow-2xs border border-black/5 hover:bg-gray-100 transition-all cursor-pointer"
               aria-label="Edit this space"
               title="Edit name, goal, target"
             >
@@ -337,7 +337,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
               type="button"
               onClick={toggleArchive}
               disabled={busy || !space}
-              className="p-2 rounded-full bg-white text-[color:var(--color-text)] shadow-2xs border border-black/5 hover:bg-gray-100 transition-all cursor-pointer"
+              className="p-2 rounded-full bg-[color:var(--color-paper)] text-[color:var(--color-text)] shadow-2xs border border-black/5 hover:bg-gray-100 transition-all cursor-pointer"
               aria-label={space?.status === 'archived' ? 'Restore space' : 'Archive space'}
               title={space?.status === 'archived' ? 'Restore' : 'Archive'}
             >
@@ -394,7 +394,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveTab('pipeline')}
-                className="px-3 py-1.5 rounded-full bg-white text-[color:var(--color-text)] text-xs font-bold border border-black/10 cursor-pointer"
+                className="px-3 py-1.5 rounded-full bg-[color:var(--color-paper)] text-[color:var(--color-text)] text-xs font-bold border border-black/10 cursor-pointer"
               >
                 Open inbox
               </button>
@@ -416,14 +416,14 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
               aria-label="Space name"
               value={identity.name}
               onChange={(e) => setIdentity((v) => ({ ...v, name: e.target.value }))}
-              className="w-full px-3 py-2 rounded-xl text-xs border border-black/10 bg-white"
+              className="w-full px-3 py-2 rounded-xl text-xs border border-black/10 bg-[color:var(--color-paper)]"
             />
             <input
               type="text"
               aria-label="Space goal"
               value={identity.goal}
               onChange={(e) => setIdentity((v) => ({ ...v, goal: e.target.value }))}
-              className="w-full px-3 py-2 rounded-xl text-xs border border-black/10 bg-white"
+              className="w-full px-3 py-2 rounded-xl text-xs border border-black/10 bg-[color:var(--color-paper)]"
             />
             <input
               type="number"
@@ -432,7 +432,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
               placeholder="Monthly target (KES)"
               value={identity.target}
               onChange={(e) => setIdentity((v) => ({ ...v, target: e.target.value }))}
-              className="w-40 px-3 py-2 rounded-xl text-xs font-mono border border-black/10 bg-white"
+              className="w-40 px-3 py-2 rounded-xl text-xs font-mono border border-black/10 bg-[color:var(--color-paper)]"
             />
             {identityError && <p className="text-[11px] font-bold" role="alert" style={{ color: 'var(--color-danger)' }}>{identityError}</p>}
             <div className="flex gap-2">
@@ -469,7 +469,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
                 onClick={() => setVisibility(v)}
                 disabled={busy}
                 className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all cursor-pointer ${
-                  active ? 'bg-[color:var(--color-primary)] text-[color:var(--accent-ink)]' : 'bg-white text-[color:var(--color-text-muted)] border border-black/5 hover:text-[color:var(--color-text)]'
+                  active ? 'bg-[color:var(--color-primary)] text-[color:var(--accent-ink)]' : 'bg-[color:var(--color-paper)] text-[color:var(--color-text-muted)] border border-black/5 hover:text-[color:var(--color-text)]'
                 }`}
               >
                 <Icon className="w-3 h-3" />
@@ -555,7 +555,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
 
       {/* ── SURFACE 4: TOOLS — hours, pinned offers, templates ── */}
       {currentTab === 'tools' && (
-        <div className="animate-fadeIn p-4 rounded-3xl bg-white border border-black/5 shadow-2xs">
+        <div className="animate-fadeIn p-4 rounded-3xl bg-[color:var(--color-paper)] border border-black/5 shadow-2xs">
           <SpaceTools
             space={space}
             offers={space.offers ?? []}
@@ -584,17 +584,17 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
               reached settled. Everything else is not this number's business. */}
       <div
         className="sticky bottom-20 md:bottom-4 z-30 rounded-2xl border px-4 py-3 flex items-center gap-3 shadow-lg"
-        style={{ background: '#fff', borderColor: '#E5E7EB' }}
+        style={{ background: 'var(--color-paper)', borderColor: 'var(--brief-line)' }}
       >
         <div className="min-w-0 flex-1">
-          <p className="text-[9px] font-black uppercase tracking-wider" style={{ color: '#6B7280' }}>
+          <p className="text-[9px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-muted)' }}>
             Settled through Brief
           </p>
           <p className="font-mono text-[17px] font-extrabold leading-none" style={{ color: 'var(--color-success)' }}>
             KES {Number(space.metrics?.revenueKes ?? 0).toLocaleString('en-KE')}
           </p>
         </div>
-        <span className="text-[11px] font-mono shrink-0" style={{ color: '#6B7280' }}>
+        <span className="text-[11px] font-mono shrink-0" style={{ color: 'var(--brief-muted)' }}>
           {space.metrics?.activeOrdersCount ?? 0} active · {space.metrics?.offersCount ?? 0} live
         </span>
         <button

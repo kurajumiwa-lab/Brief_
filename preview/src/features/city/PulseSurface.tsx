@@ -39,7 +39,7 @@ const clockOf = (iso: string | null) => {
 
 function Card({ title, right, children }: { title: string; right?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <section className="p-4 rounded-3xl bg-white border border-black/5 shadow-2xs space-y-3">
+    <section className="p-4 rounded-3xl bg-[color:var(--color-paper)] border border-black/5 shadow-2xs space-y-3">
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-xs font-black uppercase tracking-wider" style={{ color: 'var(--color-text)' }}>
           {title}
@@ -151,7 +151,7 @@ export function PulseSurface({ className = '' }: { className?: string }) {
               quote. Only the demand is shown — no requester, no budget.
             </p>
             {position.open.top.map((g) => (
-              <div key={g.requestId} className="rounded-2xl border p-3" style={{ borderColor: 'var(--color-border)' }}>
+              <div key={g.requestId} className="rounded-2xl border p-3" style={{ borderColor: 'var(--brief-line)' }}>
                 <button
                   type="button"
                   onClick={() => { soundEngine.play('tap'); requestPath(g.requestId); }}
@@ -178,7 +178,7 @@ export function PulseSurface({ className = '' }: { className?: string }) {
                 </button>
 
                 {openGap === (g.category ?? null) && (
-                  <div className="mt-2 pt-2 border-t text-[11px] space-y-1" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>
+                  <div className="mt-2 pt-2 border-t text-[11px] space-y-1" style={{ borderColor: 'var(--brief-line)', color: 'var(--color-text)' }}>
                     {precedentBusy || !precedent ? (
                       <p style={{ color: 'var(--color-text-muted)' }}>Reading closed rows…</p>
                     ) : (
@@ -217,7 +217,7 @@ export function PulseSurface({ className = '' }: { className?: string }) {
             { label: `work orders completed · ${s.money.windowDays}d`, value: String(s.money.completedWorkOrders) },
             { label: 'pickups delivered', value: String(s.money.deliveredPickups) }
           ].map((m) => (
-            <div key={m.label} className="p-3 rounded-2xl" style={{ background: 'var(--color-surface)' }}>
+            <div key={m.label} className="p-3 rounded-2xl" style={{ background: 'var(--color-paper)' }}>
               <p className="text-[9px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
                 {m.label}
               </p>

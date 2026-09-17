@@ -79,7 +79,7 @@ export function EntityChip({ kind, name, directId, onOpenEntity, className }: En
           e.stopPropagation();
           onOpenEntity(resolvedId);
         }}
-        className={`inline-flex items-center rounded-full bg-[#F0F2F5] px-2 py-0.5 text-[9px] font-bold text-[#4F46E5] transition-colors hover:bg-[#4F46E5] hover:text-[#0D1117] ${className ?? ''}`}
+        className={`inline-flex items-center rounded-full bg-[var(--color-well)] px-2 py-0.5 text-[9px] font-bold text-[#4F46E5] transition-colors hover:bg-[#4F46E5] hover:text-[var(--accent-ink)] ${className ?? ''}`}
         title={`Open ${name}`}
       >
         {text}
@@ -88,7 +88,7 @@ export function EntityChip({ kind, name, directId, onOpenEntity, className }: En
   }
 
   return (
-    <span className={`inline-flex items-center px-1 text-[9px] font-semibold text-[#0D1117]/60 ${className ?? ''}`}>
+    <span className={`inline-flex items-center px-1 text-[9px] font-semibold text-[var(--ink-60)] ${className ?? ''}`}>
       {text}
     </span>
   );

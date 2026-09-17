@@ -219,14 +219,14 @@ export function PrivateCarrierAuctionDesk({
   };
 
   return (
-    <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-3xl overflow-hidden shadow-2xl text-[#0D1117] max-w-4xl mx-auto">
+    <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-3xl overflow-hidden shadow-2xl text-[var(--brief-ink)] max-w-4xl mx-auto">
       
       {/* ================= HEADER ================= */}
       <div className="bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0A101D] text-white p-5 sm:p-6 relative">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-[10px] font-mono font-black px-2.5 py-0.5 rounded-full bg-[#00BFEF] text-[#0D1117] uppercase tracking-wider">
+              <span className="text-[10px] font-mono font-black px-2.5 py-0.5 rounded-full bg-[#00BFEF] text-[var(--brief-ink)] uppercase tracking-wider">
                 MATHEMATICAL REVERSE AUCTION
               </span>
               <span className="text-xs text-indigo-200 font-bold flex items-center space-x-1">
@@ -268,7 +268,7 @@ export function PrivateCarrierAuctionDesk({
               onClick={() => { soundEngine.play('tap'); setActiveTab(tab.id as any); }}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center space-x-1.5 ${
                 activeTab === tab.id
-                  ? 'bg-white text-[#0D1117] shadow-md font-black'
+                  ? 'bg-white text-[var(--brief-ink)] shadow-md font-black'
                   : 'bg-white/10 text-white/80 hover:bg-white/20'
               }`}
             >
@@ -362,14 +362,14 @@ export function PrivateCarrierAuctionDesk({
                   className={`p-4 rounded-2xl border transition-all flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shadow-xs ${
                     idx === 0
                       ? 'bg-gradient-to-r from-blue-50/70 to-indigo-50/70 border-[#06B6D4] ring-1 ring-[#06B6D4]/20'
-                      : 'bg-white border-[#E5E8EC] hover:border-gray-300'
+                      : 'bg-white border-[var(--brief-line)] hover:border-gray-300'
                   }`}
                 >
                   {/* Left: Carrier Identity & Verification */}
                   <div className="space-y-1">
                     <div className="flex items-center space-x-2">
-                      <span className="font-mono font-black text-xs text-[#0D1117]">#{idx + 1}</span>
-                      <span className="font-bold text-xs text-[#0D1117]">{carrier.carrierName}</span>
+                      <span className="font-mono font-black text-xs text-[var(--brief-ink)]">#{idx + 1}</span>
+                      <span className="font-bold text-xs text-[var(--brief-ink)]">{carrier.carrierName}</span>
                       {carrier.isBrandedCorporation && (
                         <span className="text-[9px] font-mono bg-blue-100 text-blue-800 px-1.5 py-0.2 rounded font-bold">
                           CORPORATE FLEET
@@ -397,7 +397,7 @@ export function PrivateCarrierAuctionDesk({
                     <div className="space-y-0.5">
                       <div className="flex items-center space-x-1.5 justify-end">
                         <Award className="w-3.5 h-3.5 text-amber-500" />
-                        <span className="font-mono font-black text-sm text-[#0D1117]">
+                        <span className="font-mono font-black text-sm text-[var(--brief-ink)]">
                           {carrier.mathScore}
                         </span>
                         <span className="text-[10px] text-gray-400 font-mono">/100</span>
@@ -409,7 +409,7 @@ export function PrivateCarrierAuctionDesk({
 
                     {/* Right: Price & Dispatch Button */}
                     <div className="space-y-1 text-right shrink-0">
-                      <span className="font-mono font-black text-base text-[#0D1117] block">
+                      <span className="font-mono font-black text-base text-[var(--brief-ink)] block">
                         KES {carrier.bidPriceKes}
                       </span>
                       <button
@@ -418,7 +418,7 @@ export function PrivateCarrierAuctionDesk({
                         className={`px-3 py-1.5 rounded-xl font-bold text-xs cursor-pointer transition-all shadow-xs ${
                           idx === 0
                             ? 'bg-[#06B6D4] hover:bg-[#1D4ED8] text-white'
-                            : 'bg-[#0D1117] hover:bg-[#1E293B] text-white'
+                            : 'bg-[color:var(--brief-ink)] hover:bg-[#1E293B] text-white'
                         }`}
                       >
                         Accept Bid
@@ -452,10 +452,10 @@ export function PrivateCarrierAuctionDesk({
               <div key={c.id} className="p-4 rounded-2xl bg-white border border-gray-200 space-y-2 shadow-xs">
                 <div className="flex items-start justify-between">
                   <div>
-                    <h5 className="font-black text-xs text-[#0D1117]">{c.carrierName}</h5>
+                    <h5 className="font-black text-xs text-[var(--brief-ink)]">{c.carrierName}</h5>
                     <p className="text-[10px] text-gray-500">{c.vehicleType} • Fully Insured Goods-in-Transit</p>
                   </div>
-                  <span className="font-mono font-black text-sm text-[#0D1117]">KES {c.fixedRateKes}</span>
+                  <span className="font-mono font-black text-sm text-[var(--brief-ink)]">KES {c.fixedRateKes}</span>
                 </div>
 
                 <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
@@ -463,7 +463,7 @@ export function PrivateCarrierAuctionDesk({
                   <button
                     type="button"
                     onClick={() => handleSelectCarrier(c)}
-                    className="px-3 py-1 rounded-xl bg-[#0D1117] hover:bg-[#1E293B] text-white font-bold text-xs cursor-pointer"
+                    className="px-3 py-1 rounded-xl bg-[color:var(--brief-ink)] hover:bg-[#1E293B] text-white font-bold text-xs cursor-pointer"
                   >
                     Direct Book
                   </button>

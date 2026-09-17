@@ -30,7 +30,7 @@ export const AgenticCalloutBanner: React.FC<AgenticCalloutBannerProps> = ({
         </h2>
       </div>
 
-      <p className="max-w-xl text-sm sm:text-base text-[#4B5563] leading-relaxed">
+      <p className="max-w-xl text-sm sm:text-base text-[var(--color-text-secondary)] leading-relaxed">
         {description}
       </p>
 

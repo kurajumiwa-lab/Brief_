@@ -45,7 +45,7 @@ export function ReciprocityCard({
   if (r.owedToMe.length === 0 && r.owedByMe.length === 0) return null;
 
   return (
-    <section className={`rounded-2xl border p-4 space-y-3 ${className}`} style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }} aria-label="Your reciprocity">
+    <section className={`rounded-2xl p-4 space-y-3 brief-card ${className}`} style={{ background: 'var(--color-paper)' }} aria-label="Your reciprocity">
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-black uppercase tracking-wider" style={{ color: 'var(--color-text)' }}>
           <Heart className="w-3.5 h-3.5 inline mr-1" style={{ color: 'var(--color-primary)' }} /> Reciprocity

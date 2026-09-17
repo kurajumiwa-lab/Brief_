@@ -34,7 +34,7 @@ export const TrustedPartnerRibbon: React.FC<TrustedPartnerRibbonProps> = ({
   return (
     <section className={`w-full space-y-3 py-2 ${className}`}>
       <div className="flex items-center justify-between px-1">
-        <span className="text-[11px] sm:text-xs font-bold text-[#6B7280] tracking-wide">
+        <span className="text-[11px] sm:text-xs font-bold text-[var(--brief-muted)] tracking-wide">
           {title}
         </span>
         <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#93EE34]/20 text-[#0C221F]">
@@ -51,9 +51,9 @@ export const TrustedPartnerRibbon: React.FC<TrustedPartnerRibbonProps> = ({
               soundEngine.play('tap');
               onPartnerClick?.(partner);
             }}
-            className="shrink-0 px-3.5 py-2 rounded-full bg-[#F4F7F2] hover:bg-[#EBF0E8] active:scale-95 transition-all text-[#1A1F2E] flex items-center space-x-2 shadow-xs cursor-pointer group"
+            className="shrink-0 px-3.5 py-2 rounded-full bg-[#F4F7F2] hover:bg-[#EBF0E8] active:scale-95 transition-all text-[var(--brief-ink)] flex items-center space-x-2 shadow-xs cursor-pointer group"
           >
-            <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center shadow-2xs group-hover:scale-110 transition-transform">
+            <div className="w-5 h-5 rounded-full bg-[color:var(--color-paper)] flex items-center justify-center shadow-2xs group-hover:scale-110 transition-transform">
               {partner.icon || <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
             </div>
             <div className="flex flex-col text-left">
@@ -61,7 +61,7 @@ export const TrustedPartnerRibbon: React.FC<TrustedPartnerRibbonProps> = ({
                 {partner.name}
               </span>
               {partner.sub && (
-                <span className="text-[9px] text-[#6B7280] font-medium leading-none">
+                <span className="text-[9px] text-[var(--brief-muted)] font-medium leading-none">
                   {partner.sub}
                 </span>
               )}

@@ -271,10 +271,10 @@ export function UssdSimulatorDesk({
   };
 
   return (
-    <div className="bg-[#FFFFFF] border border-[#E5E8EC] rounded-3xl overflow-hidden shadow-2xl text-[#0D1117] max-w-3xl mx-auto">
+    <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-3xl overflow-hidden shadow-2xl text-[var(--brief-ink)] max-w-3xl mx-auto">
       
       {/* ================= HEADER ================= */}
-      <div className="bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0D1117] text-white p-5 sm:p-6 relative">
+      <div className="bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[var(--brief-ink)] text-white p-5 sm:p-6 relative">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="flex items-center space-x-2">
@@ -320,7 +320,7 @@ export function UssdSimulatorDesk({
               onClick={() => { soundEngine.play('tap'); setActiveTab(tab.id as any); }}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 activeTab === tab.id
-                  ? 'bg-white text-[#0D1117] shadow-md font-black'
+                  ? 'bg-white text-[var(--brief-ink)] shadow-md font-black'
                   : 'bg-white/10 text-white/80 hover:bg-white/20'
               }`}
             >
@@ -413,10 +413,10 @@ export function UssdSimulatorDesk({
 
           {/* Right Column: Instructions & Quick Shortcuts */}
           <div className="md:col-span-6 space-y-4 text-xs">
-            <div className="p-4 rounded-2xl bg-[#F7F8FA] border border-[#E5E8EC] space-y-2">
+            <div className="p-4 rounded-2xl bg-[color:var(--brief-bg)] border border-[var(--brief-line)] space-y-2">
               <div className="flex items-center space-x-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <h4 className="font-black text-[#0D1117] uppercase tracking-wider text-xs">
+                <h4 className="font-black text-[var(--brief-ink)] uppercase tracking-wider text-xs">
                   How Kenyan Boda Riders Use USSD
                 </h4>
               </div>
@@ -437,10 +437,10 @@ export function UssdSimulatorDesk({
                     handleDialUssd();
                     setTimeout(() => handleSendUssdResponse('3'), 150);
                   }}
-                  className="p-3 rounded-2xl bg-white border border-[#E5E8EC] hover:border-[#4F46E5] text-left transition-all shadow-xs cursor-pointer flex items-center justify-between"
+                  className="p-3 rounded-2xl bg-white border border-[var(--brief-line)] hover:border-[#4F46E5] text-left transition-all shadow-xs cursor-pointer flex items-center justify-between"
                 >
                   <div>
-                    <span className="font-bold text-[#0D1117] block">Confirm Delivery (PIN #4821)</span>
+                    <span className="font-bold text-[var(--brief-ink)] block">Confirm Delivery (PIN #4821)</span>
                     <span className="text-[10px] text-gray-500">Unlocks 90% payout instantly to rider's M-Pesa</span>
                   </div>
                   <ArrowRight className="w-4 h-4 text-[#4F46E5]" />
@@ -452,10 +452,10 @@ export function UssdSimulatorDesk({
                     handleDialUssd();
                     setTimeout(() => handleSendUssdResponse('2'), 150);
                   }}
-                  className="p-3 rounded-2xl bg-white border border-[#E5E8EC] hover:border-[#4F46E5] text-left transition-all shadow-xs cursor-pointer flex items-center justify-between"
+                  className="p-3 rounded-2xl bg-white border border-[var(--brief-line)] hover:border-[#4F46E5] text-left transition-all shadow-xs cursor-pointer flex items-center justify-between"
                 >
                   <div>
-                    <span className="font-bold text-[#0D1117] block">Accept Nearby Boda Gig</span>
+                    <span className="font-bold text-[var(--brief-ink)] block">Accept Nearby Boda Gig</span>
                     <span className="text-[10px] text-gray-500">View real-time dispatches and claim jobs via GSM</span>
                   </div>
                   <ArrowRight className="w-4 h-4 text-[#4F46E5]" />
@@ -467,10 +467,10 @@ export function UssdSimulatorDesk({
                     handleDialUssd();
                     setTimeout(() => handleSendUssdResponse('4'), 150);
                   }}
-                  className="p-3 rounded-2xl bg-white border border-[#E5E8EC] hover:border-[#4F46E5] text-left transition-all shadow-xs cursor-pointer flex items-center justify-between"
+                  className="p-3 rounded-2xl bg-white border border-[var(--brief-line)] hover:border-[#4F46E5] text-left transition-all shadow-xs cursor-pointer flex items-center justify-between"
                 >
                   <div>
-                    <span className="font-bold text-[#0D1117] block">Check M-Pesa Ledger Balance</span>
+                    <span className="font-bold text-[var(--brief-ink)] block">Check M-Pesa Ledger Balance</span>
                     <span className="text-[10px] text-gray-500">View settled balance and daily payout schedule</span>
                   </div>
                   <ArrowRight className="w-4 h-4 text-[#4F46E5]" />
@@ -488,7 +488,7 @@ export function UssdSimulatorDesk({
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <MessageSquare className="w-4 h-4 text-[#4F46E5]" />
-              <h3 className="text-xs font-black uppercase tracking-wider text-[#0D1117]">
+              <h3 className="text-xs font-black uppercase tracking-wider text-[var(--brief-ink)]">
                 Live Shortcode Gateway: 22880 (Africa's Talking / Twilio)
               </h3>
             </div>
@@ -507,7 +507,7 @@ export function UssdSimulatorDesk({
                 <div
                   className={`max-w-[85%] p-3 rounded-2xl leading-relaxed whitespace-pre-line shadow-xs ${
                     m.sender === 'user'
-                      ? 'bg-[#0D1117] text-white rounded-tr-none'
+                      ? 'bg-[color:var(--brief-ink)] text-white rounded-tr-none'
                       : 'bg-white border border-gray-200 text-gray-800 rounded-tl-none font-mono text-[11px]'
                   }`}
                 >
@@ -525,7 +525,7 @@ export function UssdSimulatorDesk({
               placeholder="Try keywords: WAIRO ACC 9821, WAIRO PIN 9821 4821, WAIRO BAL, CIRCLE BAL"
               value={smsDraft}
               onChange={(e) => setSmsDraft(e.target.value)}
-              className="flex-1 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-2.5 text-xs text-[#0D1117] outline-none focus:border-[#06B6D4]"
+              className="flex-1 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-2.5 text-xs text-[var(--brief-ink)] outline-none focus:border-[#06B6D4]"
             />
             <button
               type="submit"
@@ -550,7 +550,7 @@ export function UssdSimulatorDesk({
                 key={cmd}
                 type="button"
                 onClick={() => setSmsDraft(cmd)}
-                className="px-2.5 py-1 rounded-xl bg-gray-100 hover:bg-gray-200 text-[#0D1117] font-mono text-[10px] font-bold cursor-pointer transition-colors"
+                className="px-2.5 py-1 rounded-xl bg-gray-100 hover:bg-gray-200 text-[var(--brief-ink)] font-mono text-[10px] font-bold cursor-pointer transition-colors"
               >
                 {cmd}
               </button>
@@ -563,32 +563,32 @@ export function UssdSimulatorDesk({
       {activeTab === 'architecture' && (
         <div className="p-5 sm:p-6 space-y-4 text-xs">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono">
-            <div className="p-4 rounded-2xl bg-[#F7F8FA] border border-[#E5E8EC] space-y-1.5">
+            <div className="p-4 rounded-2xl bg-[color:var(--brief-bg)] border border-[var(--brief-line)] space-y-1.5">
               <span className="text-xl">📡</span>
-              <h5 className="font-black text-[#0D1117] text-xs">1. Zero-Data GSM</h5>
+              <h5 className="font-black text-[var(--brief-ink)] text-xs">1. Zero-Data GSM</h5>
               <p className="text-[11px] text-gray-600 font-sans leading-relaxed">
                 USSD runs on the cellular signalling channel, working even with zero airtime and zero mobile data bundles.
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#F7F8FA] border border-[#E5E8EC] space-y-1.5">
+            <div className="p-4 rounded-2xl bg-[color:var(--brief-bg)] border border-[var(--brief-line)] space-y-1.5">
               <span className="text-xl">🔒</span>
-              <h5 className="font-black text-[#0D1117] text-xs">2. 4-Digit Escrow PIN</h5>
+              <h5 className="font-black text-[var(--brief-ink)] text-xs">2. 4-Digit Escrow PIN</h5>
               <p className="text-[11px] text-gray-600 font-sans leading-relaxed">
                 Delivery escrow cannot be released until the recipient shares their 4-digit PIN with the driver.
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#F7F8FA] border border-[#E5E8EC] space-y-1.5">
+            <div className="p-4 rounded-2xl bg-[color:var(--brief-bg)] border border-[var(--brief-line)] space-y-1.5">
               <span className="text-xl">💸</span>
-              <h5 className="font-black text-[#0D1117] text-xs">3. 90% High Payout</h5>
+              <h5 className="font-black text-[var(--brief-ink)] text-xs">3. 90% High Payout</h5>
               <p className="text-[11px] text-gray-600 font-sans leading-relaxed">
                 Couriers receive 90% of the total order fee directly disbursed to their M-Pesa phone number.
               </p>
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-[#0D1117] text-white space-y-2">
+          <div className="p-4 rounded-2xl bg-[color:var(--brief-ink)] text-white space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-black uppercase text-[#00BFEF]">
                 Offline-First Sync Engine Status

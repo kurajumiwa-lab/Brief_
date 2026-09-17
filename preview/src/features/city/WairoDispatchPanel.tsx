@@ -127,7 +127,7 @@ export function WairoDispatchPanel({ className = "" }: { className?: string }) {
       </div>
 
       {/* ── Assign a pickup ── */}
-      <div className="p-3 rounded-2xl border" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}>
+      <div className="p-3 rounded-2xl border" style={{ borderColor: "var(--color-border)", background: "var(--color-paper)" }}>
         <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>
           <Package className="w-3 h-3 inline mr-1" /> Assign a pickup
         </p>
@@ -139,7 +139,7 @@ export function WairoDispatchPanel({ className = "" }: { className?: string }) {
               value={riderId}
               onChange={(e) => { soundEngine.play('tap'); setRiderId(e.target.value); }}
               className="w-full rounded-lg pl-7 pr-2.5 py-1.5 text-xs border appearance-none cursor-pointer"
-              style={{ borderColor: "var(--color-border)", background: "var(--color-surface)", color: "var(--color-text)" }}
+              style={{ borderColor: "var(--color-border)", background: "var(--color-paper)", color: "var(--color-text)" }}
             >
               <option value="">Me (self-dispatch)</option>
               {(riders ?? [])
@@ -151,9 +151,9 @@ export function WairoDispatchPanel({ className = "" }: { className?: string }) {
                 ))}
             </select>
           </div>
-          <input type="text" placeholder="Destination town / stage" aria-label="Pickup destination town" value={town} onChange={(e) => setTown(e.target.value)} className="w-full rounded-lg px-2.5 py-1.5 text-xs border" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }} />
-          <input type="text" placeholder="Receiver name" aria-label="Receiver name" value={receiver} onChange={(e) => setReceiver(e.target.value)} className="w-full rounded-lg px-2.5 py-1.5 text-xs border" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }} />
-          <input type="text" placeholder="Receiver phone" aria-label="Receiver phone" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full rounded-lg px-2.5 py-1.5 text-xs border" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }} />
+          <input type="text" placeholder="Destination town / stage" aria-label="Pickup destination town" value={town} onChange={(e) => setTown(e.target.value)} className="w-full rounded-lg px-2.5 py-1.5 text-xs border" style={{ borderColor: "var(--color-border)", background: "var(--color-paper)" }} />
+          <input type="text" placeholder="Receiver name" aria-label="Receiver name" value={receiver} onChange={(e) => setReceiver(e.target.value)} className="w-full rounded-lg px-2.5 py-1.5 text-xs border" style={{ borderColor: "var(--color-border)", background: "var(--color-paper)" }} />
+          <input type="text" placeholder="Receiver phone" aria-label="Receiver phone" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full rounded-lg px-2.5 py-1.5 text-xs border" style={{ borderColor: "var(--color-border)", background: "var(--color-paper)" }} />
           <button type="button" disabled={busy || !originId} onClick={assign} className="w-full rounded-full px-3 py-2 text-xs font-bold flex items-center justify-center gap-1" style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}>
             <Plus className="w-3.5 h-3.5" /> {busy ? "Assigning…" : "Assign rider"}
           </button>
@@ -172,7 +172,7 @@ export function WairoDispatchPanel({ className = "" }: { className?: string }) {
         ) : (
           <div className="space-y-1.5">
             {pickups.map((p) => (
-              <div key={p.id} className="p-2.5 rounded-xl border flex items-center justify-between gap-2" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}>
+              <div key={p.id} className="p-2.5 rounded-xl border flex items-center justify-between gap-2" style={{ borderColor: "var(--color-border)", background: "var(--color-paper)" }}>
                 <div className="min-w-0">
                   <p className="text-xs font-bold truncate" style={{ color: "var(--color-text)" }}>{p.receiverName} → {p.destinationTown}</p>
                   <p className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>{p.status}</p>
@@ -192,7 +192,7 @@ export function WairoDispatchPanel({ className = "" }: { className?: string }) {
 
       {/* ── Origin fee (the onboarding agent's take) + settlement state ── */}
       {fee && (
-        <div className="p-3 rounded-2xl flex items-center justify-between gap-2" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)", border: "1px solid var(--color-border)" }}>
+        <div className="p-3 rounded-2xl flex items-center justify-between gap-2" style={{ borderColor: "var(--color-border)", background: "var(--color-paper)", border: "1px solid var(--color-border)" }}>
           <div className="min-w-0">
             <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>
               <Wallet className="w-3 h-3 inline mr-1" /> Your origin fee

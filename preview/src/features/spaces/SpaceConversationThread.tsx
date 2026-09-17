@@ -141,7 +141,7 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
   };
 
   return (
-    <div className={`flex flex-col h-full bg-white rounded-3xl shadow-sm overflow-hidden ${className}`}>
+    <div className={`flex flex-col h-full bg-[color:var(--color-paper)] rounded-3xl shadow-sm overflow-hidden ${className}`}>
 
       {threadError && (
         <p role="alert" className="px-4 py-2 text-[11px] font-bold"
@@ -164,7 +164,7 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
             <div className="flex items-center space-x-2">
               <h3 className="font-bold text-[color:var(--color-text)] text-sm">{conversation.customerName}</h3>
               {conversation.customerContact && (
-                <span className="text-[10px] font-mono text-[color:var(--color-text-muted)] bg-white px-2 py-0.5 rounded-full shadow-xs">
+                <span className="text-[10px] font-mono text-[color:var(--color-text-muted)] bg-[color:var(--color-paper)] px-2 py-0.5 rounded-full shadow-xs">
                   {conversation.customerContact}
                 </span>
               )}
@@ -238,7 +238,7 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
 
                 {/* Embedded Quote Card */}
                 {msg.quote && (
-                  <div className="mt-2 p-3 rounded-xl bg-white text-[color:var(--color-text)] shadow-sm space-y-1.5 border border-black/5">
+                  <div className="mt-2 p-3 rounded-xl bg-[color:var(--color-paper)] text-[color:var(--color-text)] shadow-sm space-y-1.5 border border-black/5">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] uppercase tracking-wider font-extrabold text-[color:var(--color-primary)]">Official Quote</span>
                       <span className="text-xs font-black text-[color:var(--color-text)]">KES {msg.quote.priceKes.toLocaleString()}</span>
@@ -294,7 +294,7 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
               placeholder="Item / Custom variation title"
               value={quoteTitle}
               onChange={(e) => setQuoteTitle(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-white text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[color:var(--color-primary)]"
+              className="px-3 py-2 rounded-xl bg-[color:var(--color-paper)] text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[color:var(--color-primary)]"
               required
             />
             <input
@@ -302,7 +302,7 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
               placeholder="Price in KES"
               value={quotePrice}
               onChange={(e) => setQuotePrice(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-white text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[color:var(--color-primary)]"
+              className="px-3 py-2 rounded-xl bg-[color:var(--color-paper)] text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[color:var(--color-primary)]"
               required
             />
           </div>
@@ -311,7 +311,7 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
             placeholder="Notes (e.g. including delivery, specific flavors...)"
             value={quoteNotes}
             onChange={(e) => setQuoteNotes(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl bg-white text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[color:var(--color-primary)]"
+            className="w-full px-3 py-2 rounded-xl bg-[color:var(--color-paper)] text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[color:var(--color-primary)]"
           />
           <button
             type="submit"
@@ -341,7 +341,7 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
               placeholder="Customer Phone (e.g. 254712345678)"
               value={promptPhone}
               onChange={(e) => setPromptPhone(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-white text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[color:var(--color-primary)]"
+              className="px-3 py-2 rounded-xl bg-[color:var(--color-paper)] text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[color:var(--color-primary)]"
               required
             />
             <input
@@ -349,7 +349,7 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
               placeholder="Amount in KES"
               value={promptAmount}
               onChange={(e) => setPromptAmount(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-white text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[color:var(--color-primary)]"
+              className="px-3 py-2 rounded-xl bg-[color:var(--color-paper)] text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[color:var(--color-primary)]"
               required
             />
           </div>
@@ -380,7 +380,7 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
             setShowQuoteForm(!showQuoteForm);
             setShowPromptForm(false);
           }}
-          className="px-3 py-1.5 rounded-xl bg-white hover:bg-black/5 text-[color:var(--color-primary)] text-[11px] font-bold shadow-xs transition-colors flex items-center space-x-1 cursor-pointer"
+          className="px-3 py-1.5 rounded-xl bg-[color:var(--color-paper)] hover:bg-black/5 text-[color:var(--color-primary)] text-[11px] font-bold shadow-xs transition-colors flex items-center space-x-1 cursor-pointer"
         >
           <Tag className="w-3.5 h-3.5" />
           <span>Quote</span>
@@ -392,7 +392,7 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
             setShowPromptForm(!showPromptForm);
             setShowQuoteForm(false);
           }}
-          className="px-3 py-1.5 rounded-xl bg-white hover:bg-black/5 text-[color:var(--color-text)] text-[11px] font-bold shadow-xs transition-colors flex items-center space-x-1 cursor-pointer"
+          className="px-3 py-1.5 rounded-xl bg-[color:var(--color-paper)] hover:bg-black/5 text-[color:var(--color-text)] text-[11px] font-bold shadow-xs transition-colors flex items-center space-x-1 cursor-pointer"
         >
           <Smartphone className="w-3.5 h-3.5 text-[#059669]" />
           <span>M-Pesa STK</span>
@@ -405,7 +405,7 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
             placeholder="Type a reply..."
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            className="flex-1 px-3 py-1.5 rounded-xl bg-white text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[color:var(--color-primary)]"
+            className="flex-1 px-3 py-1.5 rounded-xl bg-[color:var(--color-paper)] text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[color:var(--color-primary)]"
           />
           <button
             type="submit"

@@ -107,15 +107,15 @@ export function SignalBar({
 
   if (status === 'loading') {
     return (
-      <section className={`brief-skeleton h-12 rounded-2xl ${className}`} style={{ background: 'var(--color-surface)' }} aria-busy="true" />
+      <section className={`brief-skeleton h-12 rounded-2xl ${className}`} style={{ background: 'var(--color-paper)' }} aria-busy="true" />
     );
   }
 
   if (status === 'error') {
     return (
       <section
-        className={`flex items-center gap-2 px-4 py-3 rounded-2xl border ${className}`}
-        style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}
+        className={`flex items-center gap-2 px-4 py-3 rounded-2xl brief-card ${className}`}
+        style={{ background: 'var(--color-paper)' }}
         aria-label="Signals unavailable"
       >
         <Activity className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--color-text-muted)' }} />
@@ -136,8 +136,8 @@ export function SignalBar({
 
   return (
     <section
-      className={`rounded-2xl border overflow-hidden ${className}`}
-      style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}
+      className={`rounded-2xl overflow-hidden brief-card--raised ${className}`}
+      style={{ background: 'var(--color-paper)' }}
       aria-label="What's moving"
     >
       <div className="flex items-center gap-2 px-4 py-2.5">
@@ -187,7 +187,7 @@ export function SignalBar({
       </div>
 
       {detailsOpen && (
-        <div className="px-4 pb-3 space-y-1.5 border-t" style={{ borderColor: 'var(--color-border)' }}>
+        <div className="px-4 pb-3 space-y-1.5 border-t" style={{ borderColor: 'var(--brief-line)' }}>
           {facts.map((f) => (
             <p key={f.id} className="text-[11px] leading-snug" style={{ color: 'var(--color-text)' }}>
               {f.text}

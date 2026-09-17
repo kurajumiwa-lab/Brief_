@@ -7,24 +7,51 @@
 // tint does map to something: the same wing of the case is always the same
 // colour, so the palette teaches the taxonomy instead of decorating it.
 //
-// Light-theme canonical: indigo/cyan family, one tint per wing. A cover image
-// always wins over a tint — the tint is only the fallback, never a fake photo.
+// THE ROOM REVISION (2026-09-17): a wing used to be a hard indigo→cyan FILL laid
+// behind the text, which is why a card with no cover photo looked like a poster
+// from another app pasted into a page of paper cards. A category colour is now a
+// LIGHT on the room's own plaster (`categoryPlate`), not a fill. `categoryGradient`
+// stays for the rare surface that genuinely wants a band of colour, but it is
+// warm-shifted and used once, not as a card background.
+//
+// A real cover photograph always wins over a tint — the tint is only the
+// fallback, never a stock image standing in for goods nobody photographed.
 // ---------------------------------------------------------------------------
 
-export const CATEGORY_PALETTE: Record<string, { from: string; to: string; label: string }> = {
-  popup: { from: '#4F46E5', to: '#22D3EE', label: 'Popups & markets' },
-  session: { from: '#0EA5E9', to: '#4F46E5', label: 'Sessions & classes' },
-  drop: { from: '#7C3AED', to: '#06B6D4', label: 'Drops' },
-  event: { from: '#4338CA', to: '#0891B2', label: 'Events' },
-  contribution: { from: '#0F766E', to: '#4F46E5', label: 'Causes & pots' }
+import { plateGlow, roomPlate } from './room';
+
+export const CATEGORY_PALETTE: Record<string, { accent: string; label: string }> = {
+  popup: { accent: '#4F46E5', label: 'Popups & markets' },
+  session: { accent: '#0E7C86', label: 'Sessions & classes' },
+  drop: { accent: '#6D4AA6', label: 'Drops' },
+  event: { accent: '#4338CA', label: 'Events' },
+  contribution: { accent: '#8A5A2B', label: 'Causes & pots' }
 };
 
-const NEUTRAL = { from: '#334155', to: '#4F46E5' };
+const NEUTRAL = '#5A4B39';
 
+/** The wing's colour itself — for a 1px mark, a dot, an icon. */
+export function categoryAccent(category: string | null | undefined): string {
+  return (category && CATEGORY_PALETTE[category]?.accent) || NEUTRAL;
+}
+
+/** The wing's colour as a surface treatment: the room's plaster, lit by one hue.
+    A single string, for one-shot backgrounds. A card that owns a cover area
+    paints `categoryWash()` over `PLASTER` instead, in two layers. */
+export function categoryPlate(category: string | null | undefined): string {
+  return roomPlate(categoryAccent(category));
+}
+
+/** Just the wash of the wing's light, for the two-layer card case. */
+export function categoryWash(category: string | null | undefined): string {
+  return plateGlow(categoryAccent(category));
+}
+
+/** Kept for the one band-of-colour use (the event card's rail). Warm-shifted:
+    two stops, both muted, so it sits in the room instead of over it. */
 export function categoryGradient(category: string | null | undefined): string {
-  const p = category ? CATEGORY_PALETTE[category] : null;
-  const { from, to } = p ?? NEUTRAL;
-  return `linear-gradient(135deg, ${from}, ${to})`;
+  const accent = categoryAccent(category);
+  return `linear-gradient(135deg, ${accent} 0%, ${accent}cc 100%)`;
 }
 
 export function categoryLabel(category: string | null | undefined): string | null {

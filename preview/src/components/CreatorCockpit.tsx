@@ -93,74 +93,74 @@ export function CreatorCockpit() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
         <div>
-          <h2 className="text-lg font-extrabold text-[#0D1117]">Creator Cockpit</h2>
-          <p className="text-[10px] text-[#0D1117]/60">
+          <h2 className="text-lg font-extrabold text-[var(--brief-ink)]">Creator Cockpit</h2>
+          <p className="text-[10px] text-[var(--ink-60)]">
             Automate your streams: when something happens, do something. {stats ? `${stats.totalRuns} run${stats.totalRuns === 1 ? '' : 's'} so far.` : ''}
           </p>
         </div>
-        <button onClick={() => void sweep()} className="flex items-center gap-1 rounded-full border border-[#E5E8EC] px-3 py-1.5 text-[11px] font-bold text-[#0D1117] cursor-pointer">
+        <button onClick={() => void sweep()} className="flex items-center gap-1 rounded-full border border-[var(--brief-line)] px-3 py-1.5 text-[11px] font-bold text-[var(--brief-ink)] cursor-pointer">
           <Play className="h-3 w-3" /> Run now
         </button>
       </div>
 
       {/* Builder */}
-      <div className="rounded-2xl border border-[#E5E8EC] bg-[#FFFFFF] p-4 space-y-3">
-        <p className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#0D1117]">
+      <div className="rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-4 space-y-3">
+        <p className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--brief-ink)]">
           <Zap className="h-3.5 w-3.5" /> New automation
         </p>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Name (e.g. Welcome new members)"
-          className="w-full rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[13px] text-[#0D1117] outline-none focus:border-[#06B6D4]"
+          className="w-full rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-well)] px-3 py-2 text-[13px] text-[var(--brief-ink)] outline-none focus:border-[#06B6D4]"
         />
         <div className="flex flex-wrap gap-2 text-[11px]">
           <div className="flex items-center gap-1.5">
-            <span className="text-[#0D1117]/60">When</span>
-            <select value={trigger} onChange={(e) => setTrigger(e.target.value)} className="rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-2 py-1.5 text-[#0D1117]">
+            <span className="text-[var(--ink-60)]">When</span>
+            <select value={trigger} onChange={(e) => setTrigger(e.target.value)} className="rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-well)] px-2 py-1.5 text-[var(--brief-ink)]">
               {TRIGGERS.map((t) => <option key={t} value={t}>{t === '*' ? 'Anything happens' : t}</option>)}
             </select>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-[#0D1117]/60">do</span>
-            <select value={actionType} onChange={(e) => setActionType(e.target.value)} className="rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-2 py-1.5 text-[#0D1117]">
+            <span className="text-[var(--ink-60)]">do</span>
+            <select value={actionType} onChange={(e) => setActionType(e.target.value)} className="rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-well)] px-2 py-1.5 text-[var(--brief-ink)]">
               {ACTION_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
         </div>
         {actionType === 'tag' ? (
-          <input value={actionTitle} onChange={(e) => setActionTitle(e.target.value)} placeholder="Tag (e.g. Outdoor enthusiast)" className="w-full rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117] outline-none focus:border-[#06B6D4]" />
+          <input value={actionTitle} onChange={(e) => setActionTitle(e.target.value)} placeholder="Tag (e.g. Outdoor enthusiast)" className="w-full rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-well)] px-3 py-2 text-[12px] text-[var(--brief-ink)] outline-none focus:border-[#06B6D4]" />
         ) : actionType === 'blast' ? (
-          <input value={actionBody} onChange={(e) => setActionBody(e.target.value)} placeholder="Message text" className="w-full rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117] outline-none focus:border-[#06B6D4]" />
+          <input value={actionBody} onChange={(e) => setActionBody(e.target.value)} placeholder="Message text" className="w-full rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-well)] px-3 py-2 text-[12px] text-[var(--brief-ink)] outline-none focus:border-[#06B6D4]" />
         ) : (
           <>
-            <input value={actionTitle} onChange={(e) => setActionTitle(e.target.value)} placeholder="Notification title" className="w-full rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117] outline-none focus:border-[#06B6D4]" />
-            <input value={actionBody} onChange={(e) => setActionBody(e.target.value)} placeholder="Notification body (optional)" className="w-full rounded-lg border border-[#E5E8EC] bg-[#F0F2F5] px-3 py-2 text-[12px] text-[#0D1117] outline-none focus:border-[#06B6D4]" />
+            <input value={actionTitle} onChange={(e) => setActionTitle(e.target.value)} placeholder="Notification title" className="w-full rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-well)] px-3 py-2 text-[12px] text-[var(--brief-ink)] outline-none focus:border-[#06B6D4]" />
+            <input value={actionBody} onChange={(e) => setActionBody(e.target.value)} placeholder="Notification body (optional)" className="w-full rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-well)] px-3 py-2 text-[12px] text-[var(--brief-ink)] outline-none focus:border-[#06B6D4]" />
           </>
         )}
-        <button onClick={() => void create()} disabled={busy || !name.trim()} className="flex items-center gap-1.5 rounded-full bg-[#4F46E5] px-4 py-2 text-[12px] font-bold text-[#0D1117] disabled:opacity-40 cursor-pointer">
+        <button onClick={() => void create()} disabled={busy || !name.trim()} className="flex items-center gap-1.5 rounded-full bg-[#4F46E5] px-4 py-2 text-[12px] font-bold text-[var(--accent-ink)] disabled:opacity-40 cursor-pointer">
           <Plus className="h-3.5 w-3.5" /> Create automation
         </button>
       </div>
 
       {/* Workflow list */}
       <div className="space-y-2">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#0D1117]">Your automations ({workflows.length})</p>
-        {state === 'loading' && <p className="text-xs text-[#0D1117]/60">Loading…</p>}
+        <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--brief-ink)]">Your automations ({workflows.length})</p>
+        {state === 'loading' && <p className="text-xs text-[var(--ink-60)]">Loading…</p>}
         {state === 'ready' && workflows.length === 0 && (
-          <p className="text-xs text-[#0D1117]/60">No automations yet. Create one above.</p>
+          <p className="text-xs text-[var(--ink-60)]">No automations yet. Create one above.</p>
         )}
         {workflows.map((w) => (
-          <div key={w.id} className="flex items-center gap-3 rounded-xl border border-[#E5E8EC] bg-[#FFFFFF] p-3">
+          <div key={w.id} className="flex items-center gap-3 rounded-xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-3">
             <div className="min-w-0 flex-1">
-              <p className="text-[13px] font-semibold text-[#0D1117] truncate">{w.name}</p>
-              <p className="text-[10px] text-[#0D1117]/60">
-                when <span className="text-[#0D1117]">{w.trigger === '*' ? 'anything' : w.trigger}</span> → {w.actions.map((a) => a.type).join(', ')}
+              <p className="text-[13px] font-semibold text-[var(--brief-ink)] truncate">{w.name}</p>
+              <p className="text-[10px] text-[var(--ink-60)]">
+                when <span className="text-[var(--brief-ink)]">{w.trigger === '*' ? 'anything' : w.trigger}</span> → {w.actions.map((a) => a.type).join(', ')}
               </p>
             </div>
             <button
               onClick={() => void toggle(w)}
-              className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-bold cursor-pointer ${w.enabled ? 'bg-[#4F46E5] text-[#0D1117]' : 'bg-[#FFFFFF] text-[#0D1117]/70 border border-[#E5E8EC]'}`}
+              className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-bold cursor-pointer ${w.enabled ? 'bg-[#4F46E5] text-[var(--accent-ink)]' : 'bg-[color:var(--color-paper)] text-[var(--ink-70)] border border-[var(--brief-line)]'}`}
             >
               {w.enabled ? 'On' : 'Off'}
             </button>
@@ -171,12 +171,12 @@ export function CreatorCockpit() {
       {/* Recent runs */}
       {runs.length > 0 && (
         <div className="space-y-2">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#0D1117]/60">Recent activity</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--ink-60)]">Recent activity</p>
           {runs.slice(0, 8).map((r) => (
-            <div key={r.id} className="rounded-lg border border-[#E5E8EC] bg-[#FFFFFF] px-3 py-2 text-[10px] text-[#0D1117]/60">
-              <span className="text-[#0D1117]">{r.signalType}</span>
+            <div key={r.id} className="rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-paper)] px-3 py-2 text-[10px] text-[var(--ink-60)]">
+              <span className="text-[var(--brief-ink)]">{r.signalType}</span>
               {' → '}{r.results.map((x: any) => `${x.action}${x.ok ? ' ✓' : ' ✗'}`).join(', ')}
-              <span className="float-right text-[#0D1117]/60">{new Date(r.at).toLocaleTimeString()}</span>
+              <span className="float-right text-[var(--ink-60)]">{new Date(r.at).toLocaleTimeString()}</span>
             </div>
           ))}
         </div>

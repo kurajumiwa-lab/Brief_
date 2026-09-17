@@ -15,20 +15,23 @@
 
 import React from "react";
 import type { EventListing } from "../../api/briefApi";
-import { categoryGradient } from "../../features/city/categoryPalette";
+import { categoryWash } from "../../features/city/categoryPalette";
+import { PLASTER } from "../../features/city/room";
+import { PHOTO_FILTER } from "../../features/city/room";
 
 const money = (n: number, c: string) => (n === 0 ? "Free" : `${c} ${n.toLocaleString()}`);
 
 export function EventCard({ event, onOpen }: { event: EventListing; onOpen: (slug: string) => void }) {
-  const gradient = categoryGradient(event.category);
+  const wash = categoryWash(event.category);
 
   return (
     <button
       type="button"
       onClick={() => onOpen(event.slug)}
-      className="w-full text-left rounded-2xl overflow-hidden border border-[var(--color-border)] bg-[var(--color-surface)] cursor-pointer hover:border-[var(--color-accent)] transition-colors"
+      className="w-full text-left rounded-2xl overflow-hidden bg-[color:var(--color-paper)] brief-lift-2 cursor-pointer transition-shadow"
     >
-      {/* Cover — real image, or a deterministic gradient fallback. Never black. */}
+      {/* Cover — a real photograph, or the room's own plaster carrying the wing's
+          colour as light. Never black, never a stock image, never a cold swatch. */}
       <div className="relative h-28 w-full">
         {event.coverImageUrl ? (
           <img
@@ -36,10 +39,13 @@ export function EventCard({ event, onOpen }: { event: EventListing; onOpen: (slu
             alt={event.title}
             loading="lazy"
             className="absolute inset-0 h-full w-full object-cover"
-            style={{ background: "var(--color-surface-elevated)" }}
+            style={{ background: PLASTER, filter: PHOTO_FILTER }}
           />
         ) : (
-          <div className="absolute inset-0" style={{ background: gradient }} />
+          <>
+            <div className="absolute inset-0" style={{ background: PLASTER }} />
+            <div className="absolute inset-0" style={{ background: wash }} />
+          </>
         )}
         {/* Category chip over the cover */}
         <span

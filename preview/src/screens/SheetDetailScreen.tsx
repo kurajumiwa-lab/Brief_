@@ -153,7 +153,7 @@ export const SheetDetailScreen: React.FC<SheetDetailScreenProps> = ({
                 showToast(isBookmarked ? 'Removed from saved shelf' : 'Saved to My Shelf');
               }}
               className={`w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer ${
-                isBookmarked ? 'bg-white text-[#1A1F2E]' : 'bg-white/15 text-white hover:bg-white/25'
+                isBookmarked ? 'bg-white text-[var(--brief-ink)]' : 'bg-white/15 text-white hover:bg-white/25'
               }`}
               aria-label="Bookmark"
             >
@@ -276,13 +276,13 @@ export const SheetDetailScreen: React.FC<SheetDetailScreenProps> = ({
             <div className="space-y-4 animate-fadeIn">
               
               {/* About Card */}
-              <div className="bg-[#FAFAF8] text-[#1A1F2E] p-5 rounded-[20px] shadow-xl space-y-2">
+              <div className="bg-[color:var(--color-paper)] text-[var(--brief-ink)] p-5 rounded-[20px] shadow-xl space-y-2">
                 <div className="flex items-center space-x-2">
                   <span
                     className="w-2 h-2 rounded-full"
                     style={{ backgroundColor: palette.base }}
                   />
-                  <span className="text-[11px] font-black uppercase tracking-wider text-[#1A1F2E]">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-[var(--brief-ink)]">
                     About
                   </span>
                 </div>
@@ -292,13 +292,13 @@ export const SheetDetailScreen: React.FC<SheetDetailScreenProps> = ({
               </div>
 
               {/* Subcategories MetalTag Band */}
-              <div className="bg-[#FAFAF8] text-[#1A1F2E] p-5 rounded-[20px] shadow-xl space-y-3">
+              <div className="bg-[color:var(--color-paper)] text-[var(--brief-ink)] p-5 rounded-[20px] shadow-xl space-y-3">
                 <div className="flex items-center space-x-2">
                   <span
                     className="w-2 h-2 rounded-full"
                     style={{ backgroundColor: palette.base }}
                   />
-                  <span className="text-[11px] font-black uppercase tracking-wider text-[#1A1F2E]">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-[var(--brief-ink)]">
                     Explore Sub-Categories
                   </span>
                 </div>
@@ -428,13 +428,13 @@ export const SheetDetailScreen: React.FC<SheetDetailScreenProps> = ({
           {/* ──── TAB 1: RELATED ──── */}
           {selectedSubtab === 1 && (
             <div className="space-y-4 animate-fadeIn">
-              <div className="bg-[#FAFAF8] text-[#1A1F2E] p-5 rounded-[20px] shadow-xl space-y-3">
+              <div className="bg-[color:var(--color-paper)] text-[var(--brief-ink)] p-5 rounded-[20px] shadow-xl space-y-3">
                 <div className="flex items-center space-x-2">
                   <span
                     className="w-2 h-2 rounded-full"
                     style={{ backgroundColor: palette.base }}
                   />
-                  <span className="text-[11px] font-black uppercase tracking-wider text-[#1A1F2E]">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-[var(--brief-ink)]">
                     People Also Follow
                   </span>
                 </div>
@@ -461,8 +461,8 @@ export const SheetDetailScreen: React.FC<SheetDetailScreenProps> = ({
                           {row.emoji}
                         </div>
                         <div>
-                          <h4 className="font-bold text-xs text-[#1A1F2E]">{row.title}</h4>
-                          <span className="text-[11px] text-[#6B7280]">{row.meta}</span>
+                          <h4 className="font-bold text-xs text-[var(--brief-ink)]">{row.title}</h4>
+                          <span className="text-[11px] text-[var(--brief-muted)]">{row.meta}</span>
                         </div>
                       </div>
                       <ChevronRight className="w-4 h-4 text-gray-400" />
@@ -476,13 +476,13 @@ export const SheetDetailScreen: React.FC<SheetDetailScreenProps> = ({
           {/* ──── TAB 2: ACTIVITY ──── */}
           {selectedSubtab === 2 && (
             <div className="space-y-4 animate-fadeIn">
-              <div className="bg-[#FAFAF8] text-[#1A1F2E] p-5 rounded-[20px] shadow-xl space-y-3">
+              <div className="bg-[color:var(--color-paper)] text-[var(--brief-ink)] p-5 rounded-[20px] shadow-xl space-y-3">
                 <div className="flex items-center space-x-2">
                   <span
                     className="w-2 h-2 rounded-full"
                     style={{ backgroundColor: palette.base }}
                   />
-                  <span className="text-[11px] font-black uppercase tracking-wider text-[#1A1F2E]">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-[var(--brief-ink)]">
                     Recent Activity
                   </span>
                 </div>
@@ -497,8 +497,8 @@ export const SheetDetailScreen: React.FC<SheetDetailScreenProps> = ({
                     <div key={i} className="flex items-start space-x-3 text-xs">
                       <span className="w-2 h-2 rounded-full bg-[#E8985E] mt-1 shrink-0" />
                       <div className="flex-1">
-                        <p className="font-medium text-[#1A1F2E]">{act.text}</p>
-                        <span className="text-[10px] text-[#9CA3AF] font-mono">{act.time}</span>
+                        <p className="font-medium text-[var(--brief-ink)]">{act.text}</p>
+                        <span className="text-[10px] text-[var(--color-quiet)] font-mono">{act.time}</span>
                       </div>
                     </div>
                   ))}
@@ -535,7 +535,7 @@ export const SheetDetailScreen: React.FC<SheetDetailScreenProps> = ({
                 soundEngine.play('heavyTap');
                 setIsJoinModalOpen(true);
               }}
-              className="flex-1 py-4 rounded-full bg-white text-[#1A1F2E] font-black text-sm tracking-wide shadow-2xl hover:bg-white/95 transition-transform active:scale-98 cursor-pointer text-center"
+              className="flex-1 py-4 rounded-full bg-white text-[var(--brief-ink)] font-black text-sm tracking-wide shadow-2xl hover:bg-white/95 transition-transform active:scale-98 cursor-pointer text-center"
               style={{ color: palette.base }}
             >
               Join Now
@@ -602,7 +602,7 @@ export const SheetDetailScreen: React.FC<SheetDetailScreenProps> = ({
               <button
                 type="button"
                 onClick={handleConfirmJoin}
-                className="flex-[2] py-3.5 rounded-full bg-white text-[#1A1F2E] font-black text-xs shadow-lg hover:bg-white/95 transition-transform active:scale-95 cursor-pointer"
+                className="flex-[2] py-3.5 rounded-full bg-white text-[var(--brief-ink)] font-black text-xs shadow-lg hover:bg-white/95 transition-transform active:scale-95 cursor-pointer"
                 style={{ color: palette.base }}
               >
                 Confirm ✓
@@ -614,7 +614,7 @@ export const SheetDetailScreen: React.FC<SheetDetailScreenProps> = ({
 
       {/* ================= TOAST ================= */}
       {toastMsg && (
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-[#1A1F2E] text-white text-xs font-bold shadow-2xl flex items-center space-x-2 animate-fadeIn border border-white/10">
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-[color:var(--brief-ink)] text-white text-xs font-bold shadow-2xl flex items-center space-x-2 animate-fadeIn border border-white/10">
           <CheckCircle2 className="w-4 h-4 text-[#2ECC71]" />
           <span>{toastMsg}</span>
         </div>

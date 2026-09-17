@@ -107,15 +107,15 @@ export const WairoFloatingWidget: React.FC<WairoFloatingWidgetProps> = ({
             style={{
               boxShadow: '0px 8px 24px rgba(0, 0, 0, 0.06), 0px 2px 6px rgba(0, 0, 0, 0.04)'
             }}
-            className="group flex items-center bg-white/95 hover:bg-white text-[#0D1117] pl-3.5 pr-2.5 py-3 rounded-l-2xl border-l border-y border-r-0 border-[#E5E8EC] backdrop-blur-md transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98] hover:border-[#4F46E5]/40 cursor-pointer"
+            className="group flex items-center bg-white/95 hover:bg-white text-[var(--brief-ink)] pl-3.5 pr-2.5 py-3 rounded-l-2xl border-l border-y border-r-0 border-[var(--brief-line)] backdrop-blur-md transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98] hover:border-[#4F46E5]/40 cursor-pointer"
           >
-            <div className="w-8 h-8 rounded-xl bg-[#F0F2F5] group-hover:bg-[#FFF3EC] flex items-center justify-center mr-2.5 shrink-0 transition-colors">
+            <div className="w-8 h-8 rounded-xl bg-[var(--color-well)] group-hover:bg-[#FFF3EC] flex items-center justify-center mr-2.5 shrink-0 transition-colors">
               <Bike className="w-4 h-4 text-[#4F46E5]" />
             </div>
 
             <div className="flex flex-col items-start text-left pr-1">
               <div className="flex items-center space-x-1.5 mb-0.5">
-                <span className="text-[11px] font-black uppercase tracking-wider text-[#0D1117]">
+                <span className="text-[11px] font-black uppercase tracking-wider text-[var(--brief-ink)]">
                   WAIRO
                 </span>
                 <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/70">
@@ -123,11 +123,11 @@ export const WairoFloatingWidget: React.FC<WairoFloatingWidgetProps> = ({
                 </span>
               </div>
               
-              <span className="text-xs font-extrabold text-[#0D1117]/85 leading-snug">
+              <span className="text-xs font-extrabold text-[var(--ink-85)] leading-snug">
                 Courier & Errands
               </span>
               
-              <div className="flex items-center space-x-1.5 mt-1 text-[9.5px] font-mono text-[#0D1117]/55">
+              <div className="flex items-center space-x-1.5 mt-1 text-[9.5px] font-mono text-[var(--ink-55)]">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                 <span className="truncate max-w-[130px]">
                   Courier & Errands Only • {selectedLocation.name}
@@ -135,7 +135,7 @@ export const WairoFloatingWidget: React.FC<WairoFloatingWidgetProps> = ({
               </div>
             </div>
 
-            <div className="ml-1.5 text-[#0D1117]/40 group-hover:text-[#4F46E5] group-hover:-translate-x-0.5 transition-all">
+            <div className="ml-1.5 text-[var(--ink-40)] group-hover:text-[#4F46E5] group-hover:-translate-x-0.5 transition-all">
               <ChevronLeft className="w-4 h-4" />
             </div>
           </button>
@@ -269,17 +269,17 @@ export const WairoFloatingWidget: React.FC<WairoFloatingWidgetProps> = ({
             zIndex: 45,
             boxShadow: '0px 20px 48px rgba(0, 0, 0, 0.12), 0px 4px 12px rgba(0, 0, 0, 0.06)'
           }} 
-          className="w-[94vw] sm:w-[410px] rounded-3xl flex flex-col overflow-hidden border border-[#E5E8EC] bg-white animate-in slide-in-from-right-4 duration-300"
+          className="w-[94vw] sm:w-[410px] rounded-3xl flex flex-col overflow-hidden border border-[var(--brief-line)] bg-white animate-in slide-in-from-right-4 duration-300"
         >
           <div className="relative w-full h-full flex flex-col">
             
             {/* Top drawer header controls */}
-            <div className="absolute top-3 right-3 z-50 flex items-center space-x-1.5 bg-white/90 backdrop-blur-md border border-[#E5E8EC] p-1 rounded-full shadow-sm">
+            <div className="absolute top-3 right-3 z-50 flex items-center space-x-1.5 bg-white/90 backdrop-blur-md border border-[var(--brief-line)] p-1 rounded-full shadow-sm">
               <button
                 type="button"
                 onClick={() => setIsFullPhoneMode(true)}
                 title="Expand to Full Smartphone View"
-                className="text-gray-500 hover:text-[#0D1117] p-1 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+                className="text-gray-500 hover:text-[var(--brief-ink)] p-1 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
               >
                 <Smartphone className="w-3.5 h-3.5" />
               </button>
@@ -290,7 +290,7 @@ export const WairoFloatingWidget: React.FC<WairoFloatingWidgetProps> = ({
                   setIsOpen(false);
                 }}
                 title="Close Wairo Companion"
-                className="text-gray-500 hover:text-[#0D1117] p-1 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+                className="text-gray-500 hover:text-[var(--brief-ink)] p-1 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -320,7 +320,7 @@ export const WairoFloatingWidget: React.FC<WairoFloatingWidgetProps> = ({
           style={{ position: 'fixed', inset: 0, zIndex: 50 }} 
           className="bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
         >
-          <div className="relative w-[380px] sm:w-[412px] h-[780px] sm:h-[840px] bg-[#0D1117] rounded-[48px] p-3 shadow-2xl border-4 border-gray-800 ring-8 ring-black/40 flex flex-col">
+          <div className="relative w-[380px] sm:w-[412px] h-[780px] sm:h-[840px] bg-[var(--brief-ink)] rounded-[48px] p-3 shadow-2xl border-4 border-gray-800 ring-8 ring-black/40 flex flex-col">
             
             {/* Top Close / Dock back */}
             <button
