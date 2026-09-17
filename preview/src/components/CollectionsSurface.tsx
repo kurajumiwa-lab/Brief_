@@ -16,7 +16,7 @@ import type { BriefCollectionSummary } from '../api/briefApi';
 import { CollectionPage } from './CollectionPage';
 
 const INK = '#0D1117';
-const MUTED = 'rgba(13, 17, 23,0.62)';
+const MUTED = 'rgba(36, 28, 18,0.62)';
 const LINE = 'var(--brief-line)';
 const ACCENT = '#4F46E5';
 
@@ -176,7 +176,7 @@ export function CollectionsSurface({ authed, savedCount, onClose, onOpenObject, 
                 Cancel
               </button>
             </div>
-            <p className="mt-2 text-[9px] font-semibold text-[rgba(13, 17, 23,0.45)]">
+            <p className="mt-2 text-[9px] font-semibold text-[rgba(36, 28, 18,0.45)]">
               Private by default — make it public later to share it.
             </p>
           </div>
@@ -190,7 +190,7 @@ export function CollectionsSurface({ authed, savedCount, onClose, onOpenObject, 
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-[14px] font-extrabold text-[var(--brief-ink)]">Saved</span>
-            <span className="block text-[10px] font-semibold text-[rgba(13, 17, 23,0.62)]">
+            <span className="block text-[10px] font-semibold text-[rgba(36, 28, 18,0.62)]">
               Your quick saves — organise them into collections any time
             </span>
           </span>
@@ -204,11 +204,11 @@ export function CollectionsSurface({ authed, savedCount, onClose, onOpenObject, 
           <div className="h-40 animate-pulse rounded-2xl bg-[#EFF1F4]" />
         ) : collections.length === 0 ? (
           <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[var(--brief-line)] px-6 py-12 text-center">
-            <FolderPlus className="h-6 w-6 text-[rgba(13, 17, 23,0.35)]" />
+            <FolderPlus className="h-6 w-6 text-[rgba(36, 28, 18,0.35)]" />
             <p className="text-[13px] font-semibold text-[var(--brief-ink)]">
               {q ? 'No collections match your search' : 'No collections yet'}
             </p>
-            <p className="max-w-xs text-[12px] leading-relaxed text-[rgba(13, 17, 23,0.62)]">
+            <p className="max-w-xs text-[12px] leading-relaxed text-[rgba(36, 28, 18,0.62)]">
               {q
                 ? 'Try a different search — this only looks at your own collections.'
                 : 'Create a collection, then save objects into it from any object page.'}
@@ -227,9 +227,9 @@ export function CollectionsSurface({ authed, savedCount, onClose, onOpenObject, 
                     <h3 className="truncate text-[13px] font-extrabold text-[var(--brief-ink)]">{c.name}</h3>
                     {c.visibility === 'public'
                       ? <Globe className="h-3 w-3 shrink-0 text-[#4F46E5]" />
-                      : <Lock className="h-3 w-3 shrink-0 text-[rgba(13, 17, 23,0.4)]" />}
+                      : <Lock className="h-3 w-3 shrink-0 text-[rgba(36, 28, 18,0.4)]" />}
                   </div>
-                  <p className="mt-0.5 text-[10px] font-semibold text-[rgba(13, 17, 23,0.62)]">
+                  <p className="mt-0.5 text-[10px] font-semibold text-[rgba(36, 28, 18,0.62)]">
                     {c.count} {c.count === 1 ? 'item' : 'items'} · {relativeDay(c.updatedAt)}
                   </p>
                   {c.locations.areas.length > 0 && (
@@ -244,7 +244,7 @@ export function CollectionsSurface({ authed, savedCount, onClose, onOpenObject, 
           </div>
         )}
 
-        <p className="mt-6 text-center text-[9px] font-semibold text-[rgba(13, 17, 23,0.45)]">
+        <p className="mt-6 text-center text-[9px] font-semibold text-[rgba(36, 28, 18,0.45)]">
           Collections hold references only — saving or removing here never changes the objects themselves.
         </p>
       </div>

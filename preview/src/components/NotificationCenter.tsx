@@ -346,7 +346,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
           )}
 
           {authed && loading && (
-            <div className="flex flex-col items-center justify-center gap-3 py-24 text-[rgba(13, 17, 23,0.62)]">
+            <div className="flex flex-col items-center justify-center gap-3 py-24 text-[rgba(36, 28, 18,0.62)]">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#06B6D4] border-t-transparent" />
               <p className="text-[12px] font-semibold">Checking what changed…</p>
             </div>
@@ -361,9 +361,9 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
 
           {authed && !loading && rows && rows.length === 0 && (
             <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[var(--brief-line)] px-6 py-14 text-center">
-              <Bell className="h-6 w-6 text-[rgba(13, 17, 23,0.4)]" />
+              <Bell className="h-6 w-6 text-[rgba(36, 28, 18,0.4)]" />
               <p className="text-[13px] font-semibold text-[var(--brief-ink)]">Nothing new yet</p>
-              <p className="max-w-xs text-[12px] leading-relaxed text-[rgba(13, 17, 23,0.62)]">
+              <p className="max-w-xs text-[12px] leading-relaxed text-[rgba(36, 28, 18,0.62)]">
                 Follow a place, save something, or pick a location in My Brief —
                 when something that matters changes, it lands here.
               </p>

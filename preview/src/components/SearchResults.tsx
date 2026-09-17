@@ -27,7 +27,7 @@ interface Results {
   entityMatch: string | null;
 }
 
-const T = { muted: 'rgba(13, 17, 23,0.62)', ink: '#0D1117', line: 'var(--brief-line)', surface: 'var(--color-paper)' };
+const T = { muted: 'rgba(36, 28, 18,0.62)', ink: '#0D1117', line: 'var(--brief-line)', surface: 'var(--color-paper)' };
 
 const TYPE_OPTIONS = [
   ['', 'All types'],
@@ -140,7 +140,7 @@ function ObjectResultCard({ object, onClick }: { object: any; onClick: () => voi
           const t = trustStateOf(mapped);
           const tone = t.tone === 'green' ? { glyph: '✓', bg: '#16A34A', fg: 'var(--color-paper)' }
             : t.tone === 'cyan' ? { glyph: '●', bg: '#06B6D4', fg: 'var(--color-paper)' }
-            : t.tone === 'muted' ? { glyph: '◉', bg: 'rgba(13,17,23,0.14)', fg: '#0D1117' }
+            : t.tone === 'muted' ? { glyph: '◉', bg: 'rgba(36, 28, 18,0.14)', fg: '#0D1117' }
             : null;
           if (!tone) return null;
           return (

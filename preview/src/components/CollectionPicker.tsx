@@ -121,7 +121,7 @@ export function CollectionPicker({ objectId, onChanged }: {
       )}
 
       {collections.length === 0 && !creating ? (
-        <p className="py-2 text-center text-[11px] font-semibold text-[rgba(13, 17, 23,0.55)]">
+        <p className="py-2 text-center text-[11px] font-semibold text-[rgba(36, 28, 18,0.55)]">
           No collections yet — create one to start organizing.
         </p>
       ) : (
@@ -140,18 +140,18 @@ export function CollectionPicker({ objectId, onChanged }: {
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[12px] font-bold text-[var(--brief-ink)]">{c.name}</span>
-                  <span className="block text-[9px] font-semibold text-[rgba(13, 17, 23,0.55)]">
+                  <span className="block text-[9px] font-semibold text-[rgba(36, 28, 18,0.55)]">
                     {c.count} {c.count === 1 ? 'item' : 'items'} · {c.visibility}
                   </span>
                 </span>
-                <FolderPlus className="h-3.5 w-3.5 shrink-0 text-[rgba(13, 17, 23,0.4)]" />
+                <FolderPlus className="h-3.5 w-3.5 shrink-0 text-[rgba(36, 28, 18,0.4)]" />
               </button>
             );
           })}
         </div>
       )}
 
-      <p className="mt-2 text-[9px] font-semibold text-[rgba(13, 17, 23,0.45)]">
+      <p className="mt-2 text-[9px] font-semibold text-[rgba(36, 28, 18,0.45)]">
         This only adds a reference — the object itself is never copied.
       </p>
     </div>

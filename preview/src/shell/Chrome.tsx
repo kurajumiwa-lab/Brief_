@@ -148,7 +148,7 @@ export function DockNav(props: { activeTab: any, destinationAlerts: any, dockOn:
         type="button"
         aria-label="Show navigation"
         onClick={() => setDockOn(true)}
-        className={`md:hidden fixed bottom-3 left-1/2 z-[55] -translate-x-1/2 h-2 w-12 rounded-full bg-[#E5E8EC] cursor-pointer transition-transform ${
+        className={`md:hidden fixed bottom-3 left-1/2 z-[55] -translate-x-1/2 h-2 w-12 rounded-full bg-[color:var(--brief-line)] cursor-pointer transition-transform ${
           dockOn || isAnyModalActive ? 'translate-y-full pointer-events-none hidden' : ''
         } ${isAnyModalActive ? 'hidden' : ''}`}
         aria-hidden={dockOn || isAnyModalActive ? true : undefined}
@@ -164,7 +164,7 @@ export function DockNav(props: { activeTab: any, destinationAlerts: any, dockOn:
           dockOn && !isAnyModalActive ? 'translate-y-0' : 'translate-y-full pointer-events-none'
         }`}
       >
-        <div className="mx-auto flex max-w-md items-stretch gap-0.5 rounded-[24px] border border-[var(--brief-line)] bg-[rgba(253, 250, 243, 0.95)] px-1.5 py-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+        <div className="mx-auto flex max-w-md items-stretch gap-0.5 rounded-[24px] bg-[rgba(253, 250, 243, 0.94)] px-1.5 py-1.5 shadow-[var(--room-light),var(--lift-4),inset_0_0_0_1px_var(--brief-line)] backdrop-blur-xl">
           <button
             type="button"
             onClick={() => { setMenuOpen((v: any) => !v); setDockOn(true); }}

@@ -19,7 +19,7 @@ import * as briefApi from '../api/briefApi';
 import type { CollectionPage as CollectionPageData } from '../api/briefApi';
 
 const INK = '#0D1117';
-const MUTED = 'rgba(13, 17, 23,0.62)';
+const MUTED = 'rgba(36, 28, 18,0.62)';
 const LINE = 'var(--brief-line)';
 const ACCENT = '#4F46E5';
 
@@ -82,9 +82,9 @@ function CoverMosaic({ cover, name }: { cover: briefApi.CollectionCover; name: s
 function notFoundBlock(onClose: () => void) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
-      <Bookmark className="h-8 w-8 text-[rgba(13, 17, 23,0.35)]" />
+      <Bookmark className="h-8 w-8 text-[rgba(36, 28, 18,0.35)]" />
       <p className="text-[14px] font-bold text-[var(--brief-ink)]">This collection isn't available</p>
-      <p className="max-w-sm text-[12px] leading-relaxed text-[rgba(13, 17, 23,0.62)]">
+      <p className="max-w-sm text-[12px] leading-relaxed text-[rgba(36, 28, 18,0.62)]">
         It may have been deleted, or it's private. Brief never reveals the
         existence of private collections.
       </p>
@@ -247,7 +247,7 @@ export function CollectionPage({ collectionId, mode, onClose, onOpenObject, onCh
               <span className="rounded-full bg-[color:var(--color-well)] px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#4F46E5]">
                 {isPublic ? 'Public' : 'Private'}
               </span>
-              <span className="text-[10px] font-semibold text-[rgba(13, 17, 23,0.62)]">
+              <span className="text-[10px] font-semibold text-[rgba(36, 28, 18,0.62)]">
                 {page.count} {page.count === 1 ? 'item' : 'items'} · updated {new Date(page.updatedAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'short' })}
               </span>
             </div>
@@ -285,7 +285,7 @@ export function CollectionPage({ collectionId, mode, onClose, onOpenObject, onCh
             )}
 
             {page.description && (
-              <p className="mt-2 text-[12px] leading-relaxed text-[rgba(13, 17, 23,0.62)]">{page.description}</p>
+              <p className="mt-2 text-[12px] leading-relaxed text-[rgba(36, 28, 18,0.62)]">{page.description}</p>
             )}
 
             {/* Location context from the items' own fields — never duplicated. */}
@@ -333,18 +333,18 @@ export function CollectionPage({ collectionId, mode, onClose, onOpenObject, onCh
         <div className="mt-5 space-y-2">
           <div className="flex items-center justify-between px-1">
             <h2 className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[var(--brief-ink)]">
-              Items <span className="text-[rgba(13, 17, 23,0.45)]">· {page.count}</span>
+              Items <span className="text-[rgba(36, 28, 18,0.45)]">· {page.count}</span>
             </h2>
             {mode === 'owner' && page.items.length > 1 && (
-              <span className="text-[9px] font-semibold text-[rgba(13, 17, 23,0.45)]">Use the arrows to reorder</span>
+              <span className="text-[9px] font-semibold text-[rgba(36, 28, 18,0.45)]">Use the arrows to reorder</span>
             )}
           </div>
 
           {page.items.length === 0 && (
             <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[var(--brief-line)] px-6 py-12 text-center">
-              <Bookmark className="h-6 w-6 text-[rgba(13, 17, 23,0.35)]" />
+              <Bookmark className="h-6 w-6 text-[rgba(36, 28, 18,0.35)]" />
               <p className="text-[13px] font-semibold text-[var(--brief-ink)]">Nothing here yet</p>
-              <p className="max-w-xs text-[12px] leading-relaxed text-[rgba(13, 17, 23,0.62)]">
+              <p className="max-w-xs text-[12px] leading-relaxed text-[rgba(36, 28, 18,0.62)]">
                 Save an object from its page and add it to this collection.
               </p>
             </div>
@@ -369,12 +369,12 @@ export function CollectionPage({ collectionId, mode, onClose, onOpenObject, onCh
                     <span className="flex flex-wrap items-center gap-1.5">
                       <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-[#06B6D4]">{o.type}</span>
                       {line && (
-                        <span className={`text-[9px] font-extrabold ${isExpired ? 'text-[#DC2626]' : 'text-[rgba(13, 17, 23,0.62)]'}`}>
+                        <span className={`text-[9px] font-extrabold ${isExpired ? 'text-[#DC2626]' : 'text-[rgba(36, 28, 18,0.62)]'}`}>
                           {line}
                         </span>
                       )}
                       {o.locationName && (
-                        <span className="flex items-center gap-0.5 text-[9px] font-semibold text-[rgba(13, 17, 23,0.45)]">
+                        <span className="flex items-center gap-0.5 text-[9px] font-semibold text-[rgba(36, 28, 18,0.45)]">
                           <MapPin className="h-2.5 w-2.5" /> {o.locationName}
                         </span>
                       )}
@@ -388,15 +388,15 @@ export function CollectionPage({ collectionId, mode, onClose, onOpenObject, onCh
                 {mode === 'owner' && (
                   <span className="flex shrink-0 flex-col items-center justify-center gap-1">
                     <button type="button" aria-label="Move up" onClick={() => moveItem(o.id, -1)}
-                      className="rounded-full p-1 text-[rgba(13, 17, 23,0.4)] cursor-pointer hover:bg-[color:var(--color-well)] hover:text-[#4F46E5]">
+                      className="rounded-full p-1 text-[rgba(36, 28, 18,0.4)] cursor-pointer hover:bg-[color:var(--color-well)] hover:text-[#4F46E5]">
                       <ArrowUp className="h-3.5 w-3.5" />
                     </button>
                     <button type="button" aria-label="Remove" onClick={() => removeItem(o.id)}
-                      className="rounded-full p-1 text-[rgba(13, 17, 23,0.4)] cursor-pointer hover:bg-[color:var(--color-well)] hover:text-[#DC2626]">
+                      className="rounded-full p-1 text-[rgba(36, 28, 18,0.4)] cursor-pointer hover:bg-[color:var(--color-well)] hover:text-[#DC2626]">
                       <X className="h-3.5 w-3.5" />
                     </button>
                     <button type="button" aria-label="Move down" onClick={() => moveItem(o.id, 1)}
-                      className="rounded-full p-1 text-[rgba(13, 17, 23,0.4)] cursor-pointer hover:bg-[color:var(--color-well)] hover:text-[#4F46E5]">
+                      className="rounded-full p-1 text-[rgba(36, 28, 18,0.4)] cursor-pointer hover:bg-[color:var(--color-well)] hover:text-[#4F46E5]">
                       <ArrowDown className="h-3.5 w-3.5" />
                     </button>
                   </span>

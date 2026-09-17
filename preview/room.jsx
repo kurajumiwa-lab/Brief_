@@ -374,6 +374,37 @@ async function main() {
   }
   pass('Raster colours are literals: a tokenised palette may never silently break a QR or a canvas');
 
+
+  // --- 9. no cold black survives in the room's own files -------------------
+  // A pure-black scrim or shadow is the single easiest way to put a picture back
+  // outside the room: it reads as a different material. Every wash in the city /
+  // home / spaces surfaces is the ink of the room at an alpha.
+  {
+    const fs2 = require('fs');
+    const path2 = require('path');
+    const cold = [];
+    const walk = (d) => {
+      if (!fs2.existsSync(d)) return;
+      for (const name of fs2.readdirSync(d)) {
+        const fp = path2.join(d, name);
+        if (fs2.statSync(fp).isDirectory()) { walk(fp); continue; }
+        if (!/\.(tsx?|css)$/.test(name)) continue;
+        // Strip comments first: prose that NAMES a banned colour (e.g. theme.css
+        // explaining why the cold grey default was replaced) is a decision written
+        // down, not a colour painted.
+        fs2.readFileSync(fp, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').split('\n').forEach((raw, i) => {
+          const line = raw.replace(/\/\/.*$/, '');
+          if (/rgba\(\s*(0,\s*0,\s*0|13,\s*17,\s*23|10,\s*10,\s*10)\b/.test(line) || /#E5E7EB|#E5E8EC|#F7F8FA|#0D1117/i.test(line)) {
+            cold.push(`${path2.relative(__dirname, fp)}:${i + 1}`);
+          }
+        });
+      }
+    };
+    for (const d of ['src/features/city', 'src/features/home', 'src/features/spaces', 'src/ui', 'src/shell']) walk(path2.join(__dirname, d));
+    assert.deepEqual(cold, [], 'no pure-black scrim and no cold neutral is left in the room\'s own surfaces');
+  }
+  pass('No cold black or cold neutral survives on the room\'s own surfaces');
+
   console.log('\nPASS ' + count);
   process.exit(0);
 }

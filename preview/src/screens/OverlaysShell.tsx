@@ -144,7 +144,7 @@ export interface OverlaysShellProps {
 const TRUST_TONE: Record<string, { glyph: string; bg: string; fg: string }> = {
   green: { glyph: '✓', bg: '#16A34A', fg: 'var(--color-paper)' },
   cyan: { glyph: '●', bg: '#06B6D4', fg: 'var(--color-paper)' },
-  muted: { glyph: '◉', bg: 'rgba(13,17,23,0.14)', fg: '#0D1117' }
+  muted: { glyph: '◉', bg: 'rgba(36, 28, 18,0.14)', fg: '#0D1117' }
 };
 
 export function OverlaysShell(props: OverlaysShellProps) {

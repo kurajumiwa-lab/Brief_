@@ -161,7 +161,7 @@ export function FollowingSurface({ authed, onClose, onOpenObject, onOpenEntity, 
           )}
 
           {authed && loading && (
-            <div className="flex flex-col items-center justify-center gap-3 py-24 text-[rgba(13, 17, 23,0.62)]">
+            <div className="flex flex-col items-center justify-center gap-3 py-24 text-[rgba(36, 28, 18,0.62)]">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#06B6D4] border-t-transparent" />
               <p className="text-[12px] font-semibold">Loading…</p>
             </div>
@@ -171,9 +171,9 @@ export function FollowingSurface({ authed, onClose, onOpenObject, onOpenEntity, 
             <div className="space-y-5 px-4 pb-10 pt-4 sm:px-5">
               {(!feed || feed.length === 0) && (
                 <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[var(--brief-line)] px-6 py-12 text-center">
-                  <Plus className="h-6 w-6 text-[rgba(13, 17, 23,0.4)]" />
+                  <Plus className="h-6 w-6 text-[rgba(36, 28, 18,0.4)]" />
                   <p className="text-[13px] font-semibold text-[var(--brief-ink)]">Nothing followed yet</p>
-                  <p className="max-w-xs text-[12px] leading-relaxed text-[rgba(13, 17, 23,0.62)]">
+                  <p className="max-w-xs text-[12px] leading-relaxed text-[rgba(36, 28, 18,0.62)]">
                     Open any place, business, publisher, organizer or community and follow it —
                     its new information will collect here.
                   </p>
@@ -193,7 +193,7 @@ export function FollowingSurface({ authed, onClose, onOpenObject, onOpenEntity, 
                       {KIND_SINGULAR[section.kind] ?? section.kind}
                     </span>
                     {section.location?.area && (
-                      <span className="flex items-center gap-0.5 text-[10px] font-semibold text-[rgba(13, 17, 23,0.62)]">
+                      <span className="flex items-center gap-0.5 text-[10px] font-semibold text-[rgba(36, 28, 18,0.62)]">
                         <MapPin className="h-3 w-3" /> {section.location.area}
                       </span>
                     )}
@@ -218,7 +218,7 @@ export function FollowingSurface({ authed, onClose, onOpenObject, onOpenEntity, 
                           <div className="min-w-0 py-0.5">
                             <div className="flex flex-wrap items-center gap-1.5">
                               <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-[#06B6D4]">{o.type}</span>
-                              {line && <span className="text-[9px] font-semibold text-[rgba(13, 17, 23,0.62)]">{line}</span>}
+                              {line && <span className="text-[9px] font-semibold text-[rgba(36, 28, 18,0.62)]">{line}</span>}
                             </div>
                             <h4 className="mt-0.5 line-clamp-2 text-[12px] font-semibold leading-snug text-[var(--brief-ink)] group-hover:text-[#4F46E5]">
                               {o.title}
@@ -237,9 +237,9 @@ export function FollowingSurface({ authed, onClose, onOpenObject, onOpenEntity, 
             <div className="px-4 pb-10 pt-4 sm:px-5">
               {kindOrder.length === 0 && (
                 <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[var(--brief-line)] px-6 py-12 text-center">
-                  <Users className="h-6 w-6 text-[rgba(13, 17, 23,0.4)]" />
+                  <Users className="h-6 w-6 text-[rgba(36, 28, 18,0.4)]" />
                   <p className="text-[13px] font-semibold text-[var(--brief-ink)]">You're not following anything yet</p>
-                  <p className="max-w-xs text-[12px] leading-relaxed text-[rgba(13, 17, 23,0.62)]">
+                  <p className="max-w-xs text-[12px] leading-relaxed text-[rgba(36, 28, 18,0.62)]">
                     Follow a venue or business from its page and it will show up here.
                   </p>
                 </div>
@@ -250,7 +250,7 @@ export function FollowingSurface({ authed, onClose, onOpenObject, onOpenEntity, 
                 return (
                   <section key={kind} aria-label={KIND_LABELS[kind]} className="mb-5">
                     <h3 className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--brief-ink)]">
-                      {KIND_LABELS[kind]} <span className="text-[rgba(13, 17, 23,0.45)]">· {items.length}</span>
+                      {KIND_LABELS[kind]} <span className="text-[rgba(36, 28, 18,0.45)]">· {items.length}</span>
                     </h3>
                     <div className="grid gap-2">
                       {items.map((f) => (
@@ -271,7 +271,7 @@ export function FollowingSurface({ authed, onClose, onOpenObject, onOpenEntity, 
                             className="min-w-0 flex-1 text-left"
                           >
                             <p className="truncate text-[13px] font-bold text-[var(--brief-ink)] hover:text-[#4F46E5]">{f.name}</p>
-                            <p className="truncate text-[10px] font-semibold text-[rgba(13, 17, 23,0.62)]">
+                            <p className="truncate text-[10px] font-semibold text-[rgba(36, 28, 18,0.62)]">
                               {f.objectCount} {f.objectCount === 1 ? 'item' : 'items'}
                               {f.location?.area ? ` · ${f.location.area}` : ''}
                               {f.sourceNames?.[0] ? ` · ${f.sourceNames[0]}` : ''}
@@ -291,7 +291,7 @@ export function FollowingSurface({ authed, onClose, onOpenObject, onOpenEntity, 
                 );
               })}
               {kindOrder.length > 0 && (
-                <p className="flex items-center gap-1.5 text-[10px] font-semibold text-[rgba(13, 17, 23,0.5)]">
+                <p className="flex items-center gap-1.5 text-[10px] font-semibold text-[rgba(36, 28, 18,0.5)]">
                   <Check className="h-3 w-3" /> Your follows are private to you.
                 </p>
               )}

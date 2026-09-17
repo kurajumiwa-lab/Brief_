@@ -18,7 +18,7 @@ import {
 import * as briefApi from '../api/briefApi';
 import type { BriefEntity, EntityKind } from '../api/briefApi';
 
-const T = { muted: 'rgba(13, 17, 23,0.62)', ink: '#0D1117', line: 'var(--brief-line)', surface: 'var(--color-paper)', primary: '#06B6D4', deep: '#4F46E5', dark: '#0D1117' };
+const T = { muted: 'rgba(36, 28, 18,0.62)', ink: '#0D1117', line: 'var(--brief-line)', surface: 'var(--color-paper)', primary: '#06B6D4', deep: '#4F46E5', dark: '#0D1117' };
 
 export const ENTITY_KIND_META: Record<EntityKind, { label: string; icon: React.ReactNode; plural: string }> = {
   venue: { label: 'Place', icon: <MapPin className="h-4 w-4" />, plural: 'Places' },
@@ -125,7 +125,7 @@ function ContentCard({ o, onOpen }: { o: BriefEntity['objects'][number]; onOpen:
             {o.type}
           </span>
           {preview && (
-            <span className="text-[9px] font-semibold text-[rgba(13, 17, 23,0.62)]">
+            <span className="text-[9px] font-semibold text-[rgba(36, 28, 18,0.62)]">
               {preview}
             </span>
           )}
@@ -133,7 +133,7 @@ function ContentCard({ o, onOpen }: { o: BriefEntity['objects'][number]; onOpen:
         <h4 className="mt-0.5 line-clamp-2 text-[13px] font-semibold leading-snug text-[var(--brief-ink)] group-hover:text-[#4F46E5]">
           {o.title}
         </h4>
-        <p className="mt-0.5 truncate text-[10px] text-[rgba(13, 17, 23,0.62)]">
+        <p className="mt-0.5 truncate text-[10px] text-[rgba(36, 28, 18,0.62)]">
           {o.locationName || o.area || o.county || ''}
           {o.sourceNames?.[0] ? `${o.locationName || o.area || o.county ? ' · ' : ''}${o.sourceNames[0]}` : ''}
         </p>
@@ -264,7 +264,7 @@ export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, on
 
         <div className="flex-1 overflow-y-auto pb-safe">
           {status === 'loading' && (
-            <div className="flex flex-col items-center justify-center gap-3 py-24 text-[rgba(13, 17, 23,0.62)]">
+            <div className="flex flex-col items-center justify-center gap-3 py-24 text-[rgba(36, 28, 18,0.62)]">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#06B6D4] border-t-transparent" />
               <p className="text-[12px] font-semibold">Loading…</p>
             </div>
@@ -276,7 +276,7 @@ export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, on
                 <Users className="h-7 w-7" />
               </div>
               <h3 className="text-[16px] font-bold text-[var(--brief-ink)]">This entity isn't on Brief</h3>
-              <p className="max-w-xs text-[12px] leading-relaxed text-[rgba(13, 17, 23,0.62)]">
+              <p className="max-w-xs text-[12px] leading-relaxed text-[rgba(36, 28, 18,0.62)]">
                 There's no public profile behind this link. It may be private, or the
                 information behind it may no longer be on Brief.
               </p>
@@ -350,7 +350,7 @@ export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, on
                 </div>
 
                 {/* Meta line */}
-                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-semibold text-[rgba(13, 17, 23,0.62)]">
+                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-semibold text-[rgba(36, 28, 18,0.62)]">
                   {(entity.location?.area || entity.location?.county) && (
                     <button
                       type="button"
@@ -382,7 +382,7 @@ export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, on
                   </p>
                 )}
                 {!entity.trust.degraded && entity.trust.corroborated && (
-                  <p className="mt-2 flex items-center gap-1.5 text-[11px] font-semibold text-[rgba(13, 17, 23,0.62)]">
+                  <p className="mt-2 flex items-center gap-1.5 text-[11px] font-semibold text-[rgba(36, 28, 18,0.62)]">
                     <Check className="h-3.5 w-3.5 text-[#4F46E5]" />
                     Its content has been reported across multiple sources.
                   </p>
@@ -392,7 +392,7 @@ export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, on
                   <p className="mt-3 text-[13px] leading-relaxed text-[var(--brief-ink)]">{entity.summary}</p>
                 )}
                 {entity.description && entity.description !== entity.summary && (
-                  <p className="mt-2 text-[12px] leading-relaxed text-[rgba(13, 17, 23,0.62)]">
+                  <p className="mt-2 text-[12px] leading-relaxed text-[rgba(36, 28, 18,0.62)]">
                     {entity.description.slice(0, 400)}
                     {entity.description.length > 400 ? '…' : ''}
                   </p>
@@ -422,15 +422,15 @@ export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, on
                 {groups.expired.length > 0 && (
                   <section aria-label="Expired">
                     <div className="mb-2 flex items-center gap-2">
-                      <h3 className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[rgba(13, 17, 23,0.55)]">
+                      <h3 className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[rgba(36, 28, 18,0.55)]">
                         Ended or expired
                       </h3>
                     </div>
                     <div className="grid gap-2 sm:grid-cols-2">
                       {groups.expired.map((o) => (
                         <div key={o.id} className="rounded-2xl border border-[rgba(228, 218, 203, 0.60)] bg-[rgba(240, 233, 222, 0.50)] p-3">
-                          <p className="line-through text-[12px] font-semibold text-[rgba(13, 17, 23,0.55)]">{o.title}</p>
-                          <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[rgba(13, 17, 23,0.45)]">Expired</p>
+                          <p className="line-through text-[12px] font-semibold text-[rgba(36, 28, 18,0.55)]">{o.title}</p>
+                          <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[rgba(36, 28, 18,0.45)]">Expired</p>
                         </div>
                       ))}
                     </div>
@@ -439,8 +439,8 @@ export function EntityPage({ entityId, authed, origin, onClose, onOpenObject, on
 
                 {groups.upcoming.length + groups.active.length + groups.latest.length === 0 && (
                   <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[var(--brief-line)] px-6 py-10 text-center">
-                    <Clock className="h-6 w-6 text-[rgba(13, 17, 23,0.4)]" />
-                    <p className="text-[12px] font-semibold text-[rgba(13, 17, 23,0.62)]">
+                    <Clock className="h-6 w-6 text-[rgba(36, 28, 18,0.4)]" />
+                    <p className="text-[12px] font-semibold text-[rgba(36, 28, 18,0.62)]">
                       Nothing current right now — follow this {kindMeta.label.toLowerCase()} and
                       new information will land in your Following feed.
                     </p>

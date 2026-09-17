@@ -6,6 +6,7 @@ import {
 import * as briefApi from '../api/briefApi';
 import { WireSection } from './WireSection';
 import { StandaloneBanner } from './StandaloneBanner';
+import { PHOTO_SCRIM, PLASTER } from "../features/city/room";
 
 // ---------------------------------------------------------------------------
 // HOME FEED
@@ -52,7 +53,7 @@ const T = {
   surface: 'var(--color-paper)',
   line: 'var(--brief-line)',
   ink: '#0D1117',
-  muted: 'rgba(13, 17, 23,0.62)',
+  muted: 'rgba(36, 28, 18,0.62)',
   green: '#4F46E5'  /* legacy name: the accent, used for the selected-collection border */
 };
 
@@ -354,7 +355,7 @@ function PhotoTitleCard({
           className="absolute left-3 top-3 rounded-full px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.12em]"
           style={image
             ? { background: 'rgba(9,11,16,0.66)', color: 'var(--color-paper)' }
-            : { background: 'rgba(13, 17, 23,0.08)', color: T.ink }}
+            : { background: 'rgba(36, 28, 18,0.08)', color: T.ink }}
         >
           {type}
         </span>
@@ -365,7 +366,7 @@ function PhotoTitleCard({
       {trustBadge(item) && (() => {
         const b = trustBadge(item)!;
         const glyph = b.tone === 'green' ? '✓' : b.tone === 'cyan' ? '●' : '◉';
-        const bg = b.tone === 'green' ? '#16A34A' : b.tone === 'cyan' ? '#06B6D4' : 'rgba(13,17,23,0.14)';
+        const bg = b.tone === 'green' ? '#16A34A' : b.tone === 'cyan' ? '#06B6D4' : 'rgba(36, 28, 18,0.14)';
         const fg = b.tone === 'muted' ? '#0D1117' : 'var(--color-paper)';
         return (
           <span
@@ -381,7 +382,7 @@ function PhotoTitleCard({
           className="absolute right-3 top-3 rounded-full px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.12em]"
           style={isAlert
             ? { background: image ? 'rgba(255, 93, 108,0.92)' : 'rgba(255, 93, 108,0.12)', color: image ? 'var(--color-paper)' : '#DC2626' }
-            : { background: image ? 'rgba(9,11,16,0.66)' : 'rgba(13, 17, 23,0.08)', color: image ? 'var(--color-paper)' : T.ink }}
+            : { background: image ? 'rgba(9,11,16,0.66)' : 'rgba(36, 28, 18,0.08)', color: image ? 'var(--color-paper)' : T.ink }}
         >
           {why}
         </span>
@@ -773,7 +774,7 @@ export function FeedComposer({ onOpen, onOpenTea, onOpenTag, typeFilter = 'all',
                   style={{ background: T.surface }}
                 >
                   {image && <img src={image} alt="" aria-hidden="true" loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-60 transition-transform duration-500 group-hover:scale-[1.03]" />}
-                  <div className="absolute inset-0" style={{ background: image ? 'linear-gradient(180deg, rgba(13, 17, 23,0.12), rgba(13, 17, 23,0.88))' : 'linear-gradient(135deg, #E5E8EC, #EFF1F4)' }} />
+                  <div className="absolute inset-0" style={{ background: image ? PHOTO_SCRIM : PLASTER }} />
                   <span className="relative block line-clamp-3 text-[14px] font-semibold" style={{ color: image ? 'var(--color-paper)' : T.ink }}>{title}</span>
                 </button>
               );
