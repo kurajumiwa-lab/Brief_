@@ -64,7 +64,14 @@ async function main() {
   }
   pass('PromoCarousel renders a real event with cover, category, price — no mock');
 
-  // --- a cover-less event gets a gradient + initial, never a black box ---
+  // --- a cover-less event gets the ROOM's plate, not a hashed swatch -------
+  // This used to pin "five cold two-tone gradients, picked by hashing the title,
+  // with the title's first letter in 6xl on top". Two of those were fictions: the
+  // hue was derived from words rather than from anything about the event, and the
+  // giant 'K' mapped to nothing a reader knows. Both are gone by design; a plate
+  // in the room's own plaster, lit by the CATEGORY colour the row declares, is
+  // what replaces them — so the test asserts the plate, the wing's light, and the
+  // ABSENCE of the monogram.
   fetchHandler = async (url) => {
     if (url.includes('/api/events')) return { ok: true, status: 200, text: async () => JSON.stringify({ events: [event({ coverImageUrl: null })] , total: 1 }) };
     return { ok: false, status: 404, text: async () => JSON.stringify({}) };
@@ -72,12 +79,17 @@ async function main() {
   {
     const { container } = mount(React.createElement(PromoCarousel, null));
     await flush();
-    assert.equal(container.querySelector('img'), null, 'no img when no cover');
-    const fallback = Array.from(container.querySelectorAll('div')).find((d) => d.textContent.trim() === 'K');
-    assert.ok(fallback, 'gradient fallback shows the title initial');
-    assert.ok((fallback.style.background || '').includes('gradient'), 'fallback is a gradient');
+    assert.equal(container.querySelector('img'), null, 'no img when no cover, and no stock photo substituted');
+    const els = Array.from(container.querySelectorAll('div, span'));
+    const attr = (el) => el.getAttribute('style') || '';
+    assert.ok(els.some((el) => attr(el).includes('#F1E8DA')), 'the fallback is the room\'s warm plaster');
+    assert.ok(els.some((el) => /radial-gradient/.test(attr(el)) && attr(el).includes('#4F46E5')),
+      'lit by popup\'s hue — the category on the row, not a hash of its title');
+    assert.equal(els.find((el) => el.textContent.trim() === 'K'), undefined, 'no oversized title initial is rendered');
+    assert.ok(!/4F46E5, #06B6D4|#06B6D4, #10B981|#8B5CF6/.test(els.map(attr).join('')),
+      'none of the five cold two-tone swatches survives');
   }
-  pass('PromoCarousel derives a gradient fallback for a cover-less event');
+  pass('A cover-less event gets the room\'s plate in its category\'s light — no swatch, no monogram');
 
   // --- no events -> renders nothing (never a fabricated promo) ---
   fetchHandler = async (url) => {

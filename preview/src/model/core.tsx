@@ -44,6 +44,8 @@ import { Circles } from '../components/Circles';
 import { Marketplace } from '../components/Marketplace';
 import { Pursuits } from '../components/Pursuits';
 import { QR_COLORS } from '../ui/qrPalette';
+import { PLASTER, PHOTO_FILTER, PHOTO_SCRIM } from '../features/city/room';
+import { categoryWash, categoryAccent } from '../features/city/categoryPalette';
 import { Inbox } from '../components/Inbox';
 import { TriageQueue } from '../components/TriageQueue';
 import { Quests } from '../components/Quests';
@@ -3915,19 +3917,10 @@ function PublicShareRow({ title, description }: { title: string; description: st
 // rows on every read. Nothing is seeded; an empty rail simply does not render.
 // ---------------------------------------------------------------------------
 
-const RAIL_GRADIENTS = [
-  "linear-gradient(135deg, #4F46E5, #06B6D4)",
-  "linear-gradient(135deg, #06B6D4, #10B981)",
-  "linear-gradient(135deg, #8B5CF6, #4F46E5)",
-  "linear-gradient(135deg, #0EA5E9, #4F46E5)",
-  "linear-gradient(135deg, #14B8A6, #06B6D4)"
-];
-
-function railTitleHash(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
-  return h;
-}
+// A cover-less event is not a colour swatch keyed off its own title: a hue that
+// comes from a hash of words is a fake fact, exactly like the number nobody
+// counted. The plate is the room's plaster carrying the CATEGORY's light, the
+// same wing colour the case uses everywhere else.
 
 const railMoney = (n: number, c: string) => (n === 0 ? "Free" : `${c} ${n.toLocaleString()}`);
 
@@ -3956,8 +3949,7 @@ export function formatStartsAt(startsAt: string | null): string | null {
 
 /** A compact card in a rail; links to the other event's own public page. */
 function CompactEventCard({ listing }: { listing: EventListing }) {
-  const gradient = RAIL_GRADIENTS[railTitleHash(listing.title) % RAIL_GRADIENTS.length];
-  const initial = (listing.title || '?').trim().charAt(0).toUpperCase();
+  const wash = categoryWash(listing.category);
   return (
     <a
       href={`/c/${encodeURIComponent(listing.slug)}`}
@@ -3965,10 +3957,11 @@ function CompactEventCard({ listing }: { listing: EventListing }) {
     >
       <div className="relative h-20 w-full">
         {listing.coverImageUrl ? (
-          <img src={listing.coverImageUrl} alt={listing.title} loading="lazy" className="absolute inset-0 h-full w-full object-cover" style={{ background: "var(--color-surface-elevated)" }} />
+          <img src={listing.coverImageUrl} alt={listing.title} loading="lazy" className="absolute inset-0 h-full w-full object-cover" style={{ background: PLASTER, filter: PHOTO_FILTER }} />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center" style={{ background: gradient }}>
-            <span className="text-3xl font-black text-white/80">{initial}</span>
+          // No cover, no giant letter: a plaster plate carrying the wing's light.
+          <div className="absolute inset-0" style={{ background: PLASTER }}>
+            <span className="absolute inset-0" style={{ background: wash }} />
           </div>
         )}
       </div>
@@ -4116,19 +4109,21 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
               src={c.image}
               alt={c.title}
               className="w-full h-72 sm:h-96 object-cover"
-              style={{ background: "var(--color-surface-elevated)" }}
+              style={{ background: PLASTER, filter: PHOTO_FILTER }}
             />
           ) : (
-            <div
-              className="w-full h-64 sm:h-80 flex items-center justify-center"
-              style={{ background: "linear-gradient(135deg, #4F46E5, #06B6D4)" }}
-            >
-              <span className="text-7xl font-black text-white/80">
-                {(c.title || "?").trim().charAt(0).toUpperCase()}
+            // The cover-less hero used to be a blue-violet square with a giant
+            // first letter of the title: a colour and a character that mapped to
+            // nothing. It is the room's plaster, lit by the campaign's own type.
+            <div className="w-full h-64 sm:h-80 relative" style={{ background: PLASTER }}>
+              <span className="absolute inset-0" style={{ background: categoryWash(c.type) }} />
+              <span className="absolute bottom-4 left-4 inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider" style={{ color: 'var(--brief-muted)' }}>
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: categoryAccent(c.type) }} />
+                waiting on a cover
               </span>
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/20" />
+          <div className="absolute inset-0" style={{ background: PHOTO_SCRIM }} />
 
           {/* Floating back + share, over the image — the splash affordances. */}
           <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between">

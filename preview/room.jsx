@@ -405,6 +405,38 @@ async function main() {
   }
   pass('No cold black or cold neutral survives on the room\'s own surfaces');
 
+
+  // --- 10. a colour never comes from a hash of words ----------------------
+  // Five cold two-tone swatches, picked by hashing a title, was the last of it:
+  // a hue derived from letters is a fact about nothing, and it looked like data.
+  // Cover-less things take the room's plate and their CATEGORY's light, or none.
+  {
+    const fs2 = require('fs');
+    const path2 = require('path');
+    const suspects = [];
+    const BAD = /(charCodeAt|hash)[^\n]*%[^\n]*(GRADIENT|SWATCH|PALETTE)|(GRADIENT|SWATCH)S?\s*\[[^\]]*linear-gradient\(135deg/;
+    const files = [
+      'src/features/spaces/PromoCarousel.tsx', 'src/features/spaces/CatalogView.tsx',
+      'src/features/city/DiscoverFeed.tsx', 'src/features/city/MuseumCard.tsx',
+      'src/features/city/MuseumGallery.tsx', 'src/features/city/NoPhotoPlate.tsx',
+      'src/features/city/categoryPalette.ts', 'src/features/city/room.ts', 'src/model/core.tsx'
+    ];
+    for (const rel of files) {
+      const fp = path2.join(__dirname, rel);
+      if (!fs2.existsSync(fp)) continue;
+      const src = fs2.readFileSync(fp, 'utf8');
+      src.split('\n').forEach((line, i) => {
+        if (BAD.test(line)) suspects.push(`${rel}:${i + 1} ${line.trim().slice(0, 80)}`);
+      });
+      if (/titleHash|railTitleHash/.test(src)) suspects.push(`${rel}: a title-hash helper still exists`);
+    }
+    assert.deepEqual(suspects, [], 'no surface colour is keyed off a hash of a title');
+    const palette = fs2.readFileSync(path2.join(__dirname, 'src/features/city/categoryPalette.ts'), 'utf8');
+    assert.ok(/category: string/.test(palette) && /CATEGORY_PALETTE/.test(palette),
+      'the only identity left is the declared category, read from the row');
+  }
+  pass('A colour is never hashed from a title: only the declared category paints a plate');
+
   console.log('\nPASS ' + count);
   process.exit(0);
 }

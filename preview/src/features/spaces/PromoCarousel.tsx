@@ -15,22 +15,14 @@
 import React, { useEffect, useState } from "react";
 import * as briefApi from "../../api/briefApi";
 import type { EventListing } from "../../api/briefApi";
+import { PLASTER, PHOTO_FILTER, PHOTO_SCRIM } from "../city/room";
+import { categoryWash, categoryAccent } from "../city/categoryPalette";
 
-// Two-tone gradients keyed by a stable title hash — the same identity an event
-// has everywhere else in the app, so a cover-less event is never a black box.
-const GRADIENTS = [
-  "linear-gradient(135deg, #4F46E5, #06B6D4)",
-  "linear-gradient(135deg, #06B6D4, #10B981)",
-  "linear-gradient(135deg, #8B5CF6, #4F46E5)",
-  "linear-gradient(135deg, #0EA5E9, #4F46E5)",
-  "linear-gradient(135deg, #14B8A6, #06B6D4)"
-];
-
-function titleHash(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
-  return h;
-}
+// A cover-less event gets the room's plaster carrying its CATEGORY's light — the
+// same wing colour the case uses everywhere else. It used to be one of five cold
+// two-tone swatches picked by hashing the title, which is a colour standing in
+// for a fact: the same mistake as a number nobody counted. And the giant first
+// letter is gone with it (killed on the museum cards for the same reason).
 
 const money = (n: number, c: string) => (n === 0 ? "Free" : `${c} ${n.toLocaleString()}`);
 
@@ -90,8 +82,7 @@ export function PromoCarousel({ className = "", variant = 'horizontal' }: { clas
   // cover image, just title + category + date · price · count.
   if (variant === 'vertical') {
     const e = events[index];
-    const gradient = GRADIENTS[titleHash(e.title) % GRADIENTS.length];
-    const initial = (e.title || '?').trim().charAt(0).toUpperCase();
+    const wash = categoryWash(e.category);
     return (
       <div
         className={`relative overflow-hidden rounded-2xl border border-black/5 shadow-sm ${className}`}
@@ -107,10 +98,11 @@ export function PromoCarousel({ className = "", variant = 'horizontal' }: { clas
         >
           <a href={`/c/${encodeURIComponent(e.slug)}`} className="flex items-center gap-3 p-3 no-underline">
             <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-              style={{ background: gradient }}
+              className="w-10 h-10 rounded-xl shrink-0 relative"
+              style={{ background: PLASTER, boxShadow: 'inset 0 0 0 1px var(--brief-line)' }}
+              aria-hidden="true"
             >
-              <span className="text-lg font-black text-white/80">{initial}</span>
+              <span className="absolute inset-0 rounded-xl" style={{ background: wash }} />
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-xs font-black text-[color:var(--color-text)] truncate">{e.title}</p>
@@ -157,8 +149,7 @@ export function PromoCarousel({ className = "", variant = 'horizontal' }: { clas
         }}
       >
         {events.map((e) => {
-          const gradient = GRADIENTS[titleHash(e.title) % GRADIENTS.length];
-          const initial = (e.title || "?").trim().charAt(0).toUpperCase();
+          const wash = categoryWash(e.category);
           return (
             <a key={e.slug} href={`/c/${encodeURIComponent(e.slug)}`} className="shrink-0 w-full no-underline">
               <div className="relative h-44 sm:h-52 w-full">
@@ -167,14 +158,17 @@ export function PromoCarousel({ className = "", variant = 'horizontal' }: { clas
                     src={e.coverImageUrl}
                     alt={e.title}
                     className="absolute inset-0 h-full w-full object-cover"
-                    style={{ background: "var(--color-surface-elevated)" }}
+                    style={{ background: PLASTER, filter: PHOTO_FILTER }}
                   />
                 ) : (
-                  <div className="absolute inset-0 flex items-center justify-center" style={{ background: gradient }}>
-                    <span className="text-6xl font-black text-white/80">{initial}</span>
+                  <div className="absolute inset-0" style={{ background: PLASTER }}>
+                    <span className="absolute inset-0" style={{ background: wash }} />
+                    <span className="absolute bottom-3 left-3 text-[9px] font-black uppercase tracking-wider" style={{ color: categoryAccent(e.category) }}>
+                      waiting on a cover
+                    </span>
                   </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+                <div className="absolute inset-0" style={{ background: PHOTO_SCRIM }} />
                 <div className="absolute bottom-0 left-0 right-0 p-4 text-white space-y-1">
                   <span className="inline-block text-[9px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">
                     {e.categoryLabel}
