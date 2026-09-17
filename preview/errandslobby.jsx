@@ -242,6 +242,25 @@ async function main() {
     assert.equal(basisLabel('whatever:else'), 'whatever:else', 'an unknown code is passed through, never guessed at');
     assert.ok(!/agent:|rider:|role:/.test(basisLabel('agent:4 active shop claims') + basisLabel('rider:1 pickup assigned') + basisLabel('role:partner')),
       'no raw code is printed for a person to decode');
+
+    // …and the guarantee is checked on the RENDERED chip, not only on the
+    // helper. An earlier version of this test passed while the component still
+    // printed the raw code: a unit test that never touches the surface is a
+    // test of a function nobody calls.
+    board = { ...board, eligibility: ELIGIBLE };
+    {
+      const { container } = mount(React.createElement(ErrandsLobby, {}));
+      await flush();
+      const chips = Array.from(container.querySelectorAll('.brief-lobby-stage')).map((el) => ({
+        t: (el.textContent || '').trim(),
+        code: el.getAttribute('title')
+      }));
+      const claimed = chips.filter((c) => /shop/.test(c.t));
+      assert.ok(claimed.length > 0, `the claim basis renders as words (chips: ${JSON.stringify(chips.map((c) => c.t))})`);
+      assert.ok(claimed.every((c) => /^\d+ shops? run from this account$/.test(c.t)), 'a count reads as a count of shops');
+      assert.ok(claimed.every((c) => /^agent:\d+ active shop claims?$/.test(c.code || '')), 'and the raw basis rides on title= for the audit');
+      assert.ok(!chips.some((c) => /\brole:/.test(c.t)), 'no chip prints a role key');
+    }
   }
   pass('Eligibility says what it means, and keeps the audit code one attribute away');
 

@@ -203,8 +203,12 @@ export function ErrandsLobby({ className = '' }: { className?: string }) {
         {eligibility.basis.length > 0 ? (
           <div className="flex flex-wrap gap-1.5">
             {eligibility.basis.map((b) => (
-              <span key={b} className="brief-lobby-stage" data-done="true">
-                <Check className="w-3 h-3" /> {b}
+              /* Words on the chip, the audit code one attribute away: the server
+                 answers with `agent:4 …` because a log should read like a log,
+                 but a person deciding whether they can carry should not have to
+                 decode a key. Nothing is hidden — title={b} is the raw basis. */
+              <span key={b} className="brief-lobby-stage" data-done="true" title={b}>
+                <Check className="w-3 h-3" /> {basisLabel(b)}
               </span>
             ))}
           </div>
