@@ -45,12 +45,15 @@ type View =
   | { kind: 'vendor'; id: string };
 
 export interface MarketplaceProps {
-  currentUserId?: string;
   /** Which section to open on mount. 'selling' deep-links to the post-a-listing flow. */
   initialSection?: Section;
 }
 
-export function Marketplace({ currentUserId = 'usr_me', initialSection = 'browse' }: MarketplaceProps = {}) {
+// No `currentUserId` prop, on purpose: it was declared with a default of
+// 'usr_me' and never read — a fake identity parked in the bundle, in a component
+// whose ownership already comes from the server (`/api/listings/mine`). A name
+// that means nothing is a bug waiting for someone to trust it.
+export function Marketplace({ initialSection = 'browse' }: MarketplaceProps = {}) {
   const [section, setSection] = React.useState<Section>(initialSection);
   const [view, setView] = React.useState<View>({ kind: 'list' });
 
