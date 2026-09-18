@@ -88,6 +88,7 @@ global.fetch = async (input, init) => {
   calls.push({ u, method: init?.method ?? 'GET', body: init?.body ? String(init.body) : null });
   const ok = (b, status = 200) => ({ ok: status < 400, status, json: async () => b, text: async () => JSON.stringify(b) });
   if (u.includes('/api/circles/join/')) return ok({ circle: PREVIEW });
+  if (u.includes('/api/me')) return ok({ user: { id: 'usr_k', handle: 'wanjiru', displayName: 'Wanjiru K' } });
   if (u.includes('/history')) return ok({ history: [{ id: 'chx_1', kind: 'task_cancelled', subject: 'blk_1', subjectKind: 'task', field: 'status', before: 'open', after: 'cancelled', reason: 'supplier folded', redacted: false, actorId: 'usr_k', at: '2026-09-01T10:00:00.000Z', text: 'Task cancelled — supplier folded' }] });
   if (/\/api\/circles\/[^/]+$/.test(u)) return ok({ circle: CIRCLE, blocks: [], signals: [] });
   if (/\/api\/circles\/[^/]+\/members$/.test(u)) {
@@ -203,6 +204,15 @@ async function main() {
     assert.ok(/removed, with the reason/.test(body()) || /history/.test(body()), 'and the confirmation says where the reason went');
   }
   pass('The room shows its people by name, and refuses a silent removal or a silent role change');
+
+
+  // --- 5. "you" comes from the session, never from a placeholder ------------
+  {
+    const src = require('fs').readFileSync('src/components/Circles.tsx', 'utf8');
+    assert.ok(!/currentUserId\s*=\s*'usr_me'/.test(src), 'no fabricated id is the default for "you"');
+    assert.ok(/whoAmI\(\)/.test(src), 'the room asks the session who is looking');
+  }
+  pass('"You" is resolved from the session, so ownership claims cannot be attached to a stranger');
 
   console.log('\nPASS ' + count);
   process.exit(0);

@@ -22,7 +22,8 @@ const OPERATIONAL: MemberRole[] = ['coordinator', 'contributor', 'scout', 'logis
 export interface CircleTasksProps {
   blocks: Block[];
   /** The viewing user. Used to tell "my work" from everyone else's. */
-  currentUserId: string;
+  /** null until the session answers; never a placeholder id. */
+  currentUserId?: string | null;
   /** The viewer's role in THIS circle, or null when not a member. */
   myRole: MemberRole | null;
   busyId: string | null;
@@ -82,7 +83,9 @@ export function CircleTasks({
 
   const row = (task: Block) => {
     const state = task.task;
-    const mine = state?.assigneeId === currentUserId;
+    // null-safe on both sides: no session, no claim of ownership — and an
+    // unassigned task is nobody's, not the viewer's.
+    const mine = Boolean(currentUserId) && state?.assigneeId === currentUserId;
     const busy = busyId === task.id;
 
     return (

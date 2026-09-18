@@ -241,7 +241,10 @@ async function main() {
   const btn = (t) => buttons().find((b) => text(b) === t || text(b).startsWith(t));
   // Unmount first: <Circles> holds openId/section in state, so re-rendering
   // into a live root would keep the previous scenario's detail view open.
-  const mount = async (props = {}) => {
+  // The room is mounted WITH a viewer named, exactly as the app does: the
+  // component no longer defaults "you" to a placeholder id, so a test that wants
+  // ownership affordances has to say whose eyes it is looking through.
+  const mount = async (props = { currentUserId: 'usr_me' }) => {
     await act(async () => { root.render(null); });
     await act(async () => { root.render(React.createElement(Circles, props)); });
     await settle();
@@ -257,6 +260,22 @@ async function main() {
   check('no invented progress', !b.includes('100%'));
 
   // =========================================================================
+  console.log('\n=== Tasks: "you" is never assumed ===');
+  {
+    // Mounted with no viewer at all: the room must not attach anyone's work to a
+    // stranger, so no task may read "Assigned to you".
+    const bare = document.createElement('div');
+    document.body.appendChild(bare);
+    const r2 = (await import('react-dom/client')).createRoot(bare);
+    await act(async () => { r2.render(React.createElement(require('./src/components/Circles.tsx').Circles, {})); await new Promise((r) => setTimeout(r, 10)); });
+    await settle();
+    const b2 = (bare.textContent || '').replace(/\s+/g, ' ');
+    check('with no session, no task claims to be yours', !/Assigned to you/i.test(b2), b2.slice(0, 120));
+    check('and no placeholder id leaks as a label', !/usr_me/.test(b2), b2.slice(0, 120));
+    await act(async () => r2.unmount());
+    bare.remove();
+  }
+
   console.log('\n=== Overview: purpose, target, blocks, recent activity ===');
   await click(btn('Open'));
   // the room loads its detail and its history together, so let both land

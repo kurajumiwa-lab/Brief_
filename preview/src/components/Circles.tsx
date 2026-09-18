@@ -51,10 +51,14 @@ const SECTIONS: { id: Section; label: string }[] = [
 
 export interface CirclesProps {
   /** The viewing user. Defaults to the server's single-user constant. */
-  currentUserId?: string;
+  /** Whose eyes the room is rendered through. Left unset by the surfaces that
+   *  mount this on purpose — a default like `'usr_me'` silently makes a fabricated
+   *  id mean "you", which is how "Assigned to you" gets attached to a stranger's
+   *  work. When it is not passed, the session decides. */
+  currentUserId?: string | null;
 }
 
-export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
+export function Circles({ currentUserId = null }: CirclesProps = {}) {
   const [list, setList] = React.useState<{
     status: 'idle' | 'loading' | 'ready' | 'error';
     data: Circle[] | null;
@@ -79,6 +83,16 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
   const [expandedMember, setExpandedMember] = React.useState<string | null>(null);
 
   const [busyId, setBusyId] = React.useState<string | null>(null);
+  // "You", resolved from the session rather than guessed. null until it answers:
+  // a room that invents your id would also invent your rights.
+  const [selfId, setSelfId] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    if (currentUserId) return;
+    let live = true;
+    void briefApi.whoAmI().then((res) => { if (live && res.ok) setSelfId(res.data?.id ?? null); });
+    return () => { live = false; };
+  }, [currentUserId]);
+  const meId = currentUserId ?? selfId;
   // The room's own history, read on demand: what changed, who did it, and the
   // reason where a reason was required. It is the record the room is FOR.
   const [roomHistory, setRoomHistory] = React.useState<briefApi.CircleHistoryRow[] | null>(null);
@@ -165,9 +179,9 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
     if (detail.circle && 'viewerRole' in detail.circle) {
       return detail.circle.viewerRole ?? null;
     }
-    const row = members.find((m) => m.userId === currentUserId);
+    const row = meId ? members.find((m) => m.userId === meId) : null;
     return row ? row.role : null;
-  }, [detail.circle, members, currentUserId]);
+  }, [detail.circle, members, meId]);
 
   // --- actions --------------------------------------------------------------
   //
@@ -912,7 +926,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
           {section === 'tasks' && (
             <CircleTasks
               blocks={detail.blocks}
-              currentUserId={currentUserId}
+              currentUserId={meId ?? undefined}
               myRole={myRole}
               busyId={busyId}
               onAssign={handleAssign}
@@ -945,7 +959,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
               expandedId={expandedMember}
               onToggle={handleToggleMember}
               canGovern={myRole === 'coordinator'}
-              currentUserId={currentUserId}
+              currentUserId={meId ?? undefined}
               busyUserId={govBusy}
               onInvite={handleInviteMember}
               onRole={handleSetRole}
