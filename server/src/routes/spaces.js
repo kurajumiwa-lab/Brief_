@@ -3,33 +3,160 @@
 // Exposes the Space domain over HTTP.
 // Identity is always caller-authoritative; pricing is server-derived.
 import { callerId } from '../identity.js';
+import { store } from '../store.js';
 import * as spaces from '../domain/space.js';
 import * as spaceProfileDomain from '../domain/spaceProfile.js';
 import * as audience from '../domain/spaceAudience.js';
+import * as page from '../domain/spacePublicPage.js';
 import * as outbound from '../outbound.js';
 import { requireAuthMw, recordError } from './helpers.js';
 
+/**
+ * The origin a shared link should carry. Only ever an origin the deployment
+ * STATEMENT supplies (BRIEF_PUBLIC_ORIGIN): deriving it from a Host header
+ * would let a stranger print another hostname on a business's page, and a
+ * Railway app hostname is not something to engrave on a sticker. Without it the
+ * page still renders — it simply omits the canonical link rather than guessing.
+ */
+function publicOrigin() {
+  const raw = process.env.BRIEF_PUBLIC_ORIGIN;
+  return raw ? String(raw).replace(/\/+$/, '') : null;
+}
+
+/** A page is a mirror, so it must never be cached into a stale reflection. */
+function noCacheHtml(res, status = 200) {
+  res.status(status);
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.setHeader('X-Robots-Tag', 'noindex');
+  res.type('html');
+}
+
+/** A space row by slug or id — both, because a printed sticker and an API call
+ *  reach the same place, and a page must answer for whichever a caller has. */
+function requireSpace(slugOrId) {
+  const key = String(slugOrId ?? '').trim();
+  if (!key) return null;
+  return store.find('spaces', (s) => s.slug === key || s.id === key) ?? null;
+}
+
 export function register(app) {
+  // --- THE PUBLIC FACE: a real, server-rendered page per public Space -------
+  //
+  // Rendered here, not inside the React bundle, for one reason: the sharing
+  // channel is a WhatsApp status, and link previews do not execute JavaScript.
+  // The same projection backs the API, so the page and the directory can never
+  // disagree about a price or an hour.
+  app.get('/s/:slug', (req, res) => {
+    const row = requireSpace(req.params.slug);
+    if (!row || row.visibility !== 'public' || row.status !== 'active') {
+      const info = page.unavailableReason(req.params.slug);
+      noCacheHtml(res, info.status);
+      return res.send(page.renderUnavailable(info, { origin: publicOrigin() }));
+    }
+    const view = page.publicPageView(row, { origin: publicOrigin() });
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.type('html').status(200).send(page.renderPage(view));
+    // One view row per opening of the page, and nowhere else. A fetch of the
+    // JSON API is not somebody looking at the shop, so it does not record.
+    audience.recordView(row.id, { viewerId: callerId(req) });
+  });
+
+  // The same page as data: what the in-app mirror renders, and what anybody who
+  // wants to build on the projection can read. It records a view, because a page
+  // opening is what a view IS — whether the HTML was rendered here or the same
+  // rows were read by the app. The directory card read does NOT record: scrolling
+  // past a name is not walking up to a shop.
+  app.get('/api/public/spaces/:slug/page', (req, res) => {
+    const row = requireSpace(req.params.slug);
+    if (!row || row.visibility !== 'public' || row.status !== 'active') {
+      return res.status(404).json({ error: 'space not found', note: 'A private space has no public page.' });
+    }
+    audience.recordView(row.id, { viewerId: callerId(req) });
+    const view = page.publicPageView(row, { origin: publicOrigin() });
+    // A follow is that person's own row, so it may come back to them — and only
+    // to them. Without this, a page offers "Follow" to someone already following.
+    const me = callerId(req);
+    res.json({ space: me ? { ...view, following: audience.isFollowing(row.id, me) } : view });
+  });
+
+  // The only write a stranger may make against a public page: a report row.
+  // Accepts a plain form post so the page needs no JavaScript, and answers
+  // with HTML that states exactly what happened (and what did not).
+  app.post('/s/:slug/report', (req, res) => {
+    const reason = (req.body ?? {}).reason;
+    const result = page.reportSpace(req.params.slug, {
+      reason: typeof reason === 'string' ? reason : '',
+      reporterId: callerId(req)
+    });
+    if (result.error) {
+      noCacheHtml(res, result.status ?? 400);
+      return res.send(page.renderNote({ heading: 'That report was not recorded.', line: result.error }));
+    }
+    noCacheHtml(res, 200);
+    return res.send(page.renderNote({ heading: 'Reported.', line: result.note }));
+  });
+
+  // Index of live public pages. Only when the deployment states its own origin,
+  // because a sitemap must contain absolute URLs — an invented hostname would be
+  // a claim about whose site these pages are on.
+  app.get('/sitemap-spaces.xml', (_req, res) => {
+    const origin = publicOrigin();
+    if (!origin) {
+      res.status(503).type('text/plain').send(
+        'This Brief deployment has not declared its public origin (BRIEF_PUBLIC_ORIGIN), so it will not publish a sitemap of absolute URLs.'
+      );
+    }
+    const rows = page.publicSlugs();
+    res.setHeader('Cache-Control', 'no-store');
+    res.type('application/xml').status(200).send(page.sitemapXml(origin, rows));
+  });
+
   // --- The PUBLIC DIRECTORY: every public, active space, for discovery and
   // collaboration. No session required; the projection is the safe public one. ---
   app.get('/api/public/spaces', (req, res) => {
     res.json({ spaces: spaces.listPublicSpaces(Number(req.query?.limit) || 50) });
   });
 
-  // --- ONE public space, by slug. This is the page a shared link opens ---
-  // The view is recorded here and nowhere else, so "N people opened this"
-  // counts real page openings — and only for a public, active space.
+  // --- ONE public space, by slug: the DIRECTORY card. It deliberately does not
+  // record a view — a view belongs to a page opening (see /s/:slug and
+  // /api/public/spaces/:slug/page), and counting a card fetch would inflate the
+  // one number the vendor is shown.
   app.get('/api/public/spaces/:slug', (req, res) => {
     const view = spaces.findPublicSpace(req.params.slug);
     if (!view) return res.status(404).json({ error: 'space not found' });
-    // The record is the count. No identity is attached to it: who opened the
-    // page is not stored, and "how many distinct people" stays null unless a
-    // reference was supplied by a session.
-    audience.recordView(view.id, { viewerId: callerId(req) });
     // The follow state is that person's own row, so it may be returned to them.
     // Without this a page would offer "Follow" to someone already following.
     const me = callerId(req);
     res.json({ space: me ? { ...view, following: audience.isFollowing(view.id, me) } : view });
+  });
+
+  // The owner's own read of their public face: the link to paste, what a
+  // stranger sees, and any reports filed. Member-scoped, never public.
+  app.get('/api/spaces/:id/public-page', requireAuthMw, (req, res) => {
+    try {
+      const raw = requireSpace(req.params.id);
+      if (!raw) return res.status(404).json({ error: 'space not found' });
+      const me = callerId(req);
+      if (raw.ownerId !== me) return res.status(403).json({ error: 'only the owner can read this' });
+      const live = raw.visibility === 'public' && raw.status === 'active';
+      res.json({
+        // The mirror is what the owner sees here — the same projection a
+        // stranger gets, so they cannot be shown a better shop than they have.
+        view: live ? page.publicPageView(raw, { origin: publicOrigin() }) : null,
+        path: `/s/${raw.slug ?? raw.id}`,
+        originDeclared: Boolean(publicOrigin()),
+        open: live,
+        reason: !live
+          ? raw.status !== 'active'
+            ? 'This space is archived, so its page is down.'
+            : `This space is ${raw.visibility ?? 'private'}, so it has no public page.`
+          : null,
+        reports: page.reportsForSpace(raw.id),
+        note: 'The page is a mirror of this space. Edit the space; the page follows. Nothing here is editable from the page.'
+      });
+    } catch (err) {
+      res.status(400).json({ error: String(err.message ?? err) });
+    }
   });
 
   // --- The owner's audience panel: followers, broadcasts, insights, templates

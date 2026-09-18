@@ -281,7 +281,8 @@ await test("API: the profile routes are wired, auth-gated and owner-scoped", asy
     assert.equal(mine.status, 403, "another member's session is refused on someone else's space");
     const schema = await call("/api/spaces/profile-schema", "GET", undefined, A.token);
     assert.equal(schema.status, 200);
-    assert.equal(schema.body.fields.length, 8, "the schema is served from the server, not the client");
+    assert.equal(schema.body.fields.length, 9, "the schema is served from the server, not the client — 8 operating answers plus where to reach you");
+    assert.ok(schema.body.fields.some((f) => f.kind === 'contact'), "the contact channel is a schema field, so the public page button has a real source");
     assert.ok(schema.body.fields.every((f) => f.question && f.kind && f.cadenceHours > 0), "each field is fully described");
 
     // Owner path: register as the owner by driving the domain session directly.

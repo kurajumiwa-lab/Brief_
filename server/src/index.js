@@ -128,6 +128,9 @@ app.use(express.json({
   limit: '1mb',
   verify: (req, _res, buf) => { req.rawBody = buf; }
 }));
+// The public page's one form (an abuse report) is a plain HTML POST, so it
+// arrives urlencoded, not as JSON. 32kb is plenty for 500 characters of words.
+app.use(express.urlencoded({ extended: false, limit: '32kb' }));
 app.use((_req, res, next) => {
   res.setHeader('access-control-allow-origin', '*');
   res.setHeader('access-control-allow-headers', 'content-type,authorization,x-telegram-bot-api-secret-token,x-hub-signature-256');

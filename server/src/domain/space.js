@@ -228,16 +228,32 @@ export function spaceProfileSchema() {
  * no customer counts, no conversations. A public space advertises what it IS
  * and what it OFFERS, not its private economics.
  */
-export function publicSpaceView(space) {
-  const activeOffers = store.filter('listings', (l) =>
-    (l.spaceId === space.id || l.vendorId === space.vendorId) && l.status === 'active');
-  // The pinned offers lead the sample, because the vendor chose them. They are
-  // not "recommended", not ranked, and no algorithm had a hand in the order.
+/**
+ * The offers this space may show the world, and the ONE place that rule lives.
+ *
+ * A space shares its owner's vendor, so a plain `vendorId` scan would publish
+ * every active listing the owner has ever made on any one space's public page —
+ * the wrong project's prices, under a headline about this one. So: the space's
+ * OWN listings, plus any listing on the shared vendor that the owner explicitly
+ * PINNED to this space. A pin is a chosen act; a vendor scan is an accident.
+ *
+ * Pinned rows lead, in the owner's own order — not "recommended", not ranked.
+ */
+export function publicOffers(space, { limit = null } = {}) {
   const featuredIds = space.featured ?? [];
+  const rows = store.filter('listings', (l) =>
+    l.status === 'active' && (l.spaceId === space.id || (featuredIds.includes(l.id) && l.vendorId === space.vendorId)));
   const ordered = [
-    ...featuredIds.map((id) => activeOffers.find((o) => o.id === id)).filter(Boolean),
-    ...activeOffers.filter((o) => !featuredIds.includes(o.id))
+    ...featuredIds.map((id) => rows.find((o) => o.id === id)).filter(Boolean),
+    ...rows.filter((o) => !featuredIds.includes(o.id))
   ];
+  return limit === null ? ordered : ordered.slice(0, limit);
+}
+
+export function publicSpaceView(space) {
+  const activeOffers = publicOffers(space);
+  const featuredIds = space.featured ?? [];
+  const ordered = activeOffers;
   const extras = audience.publicExtras(space);
   return {
     slug: extras.slug,

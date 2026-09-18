@@ -136,6 +136,9 @@ const EMPTY = {
   spaceFollowers: [],
   spaceBroadcasts: [],
   spaceTemplates: [],
+  // One row per report filed from a public page. Nothing else writes here, and
+  // nothing here changes a space's visibility — see spacePublicPage.reportSpace.
+  spaceAbuseReports: [],
   // Errands — a posted task someone can carry (a parcel, a queue, a document,
   // a small buy-and-drop). Only registered agents/partners may ACCEPT one;
   // anyone may post. The fee a poster states is a stated amount, NOT money

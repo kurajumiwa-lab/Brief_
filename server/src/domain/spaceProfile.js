@@ -100,6 +100,17 @@ export const PROFILE_FIELDS = [
     kind: 'list',
     cadenceHours: 720,
     help: 'A margin for a rider who brings buyers, first refusal on leftovers, a standing price for a group.'
+  },
+  {
+    key: 'contactChannel',
+    question: 'Where should a buyer reach you?',
+    kind: 'contact',
+    // OPTIONAL by design: staying reachable only through the Brief inbox is a
+    // legitimate choice, not a gap. An unanswered optional field is never an
+    // open item, never counted as unanswered, and never nags the owner.
+    optional: true,
+    cadenceHours: 4320,
+    help: 'Your public page gets one button that opens WhatsApp to this number. Adding it here publishes it — leave it blank to stay reachable only through the Brief inbox.'
   }
 ];
 
@@ -147,13 +158,35 @@ function validate(kind, raw, label) {
     const out = items.map((i) => clean(i, 200)).filter(Boolean).slice(0, 12);
     return { items: out };
   }
+  if (kind === 'contact') {
+    // Only WhatsApp, because that is the only channel Brief can actually link
+    // to from a public page. A number is normalised to digits so the wa.me link
+    // is derivable. There is deliberately NO "hide the digits" toggle: a wa.me
+    // link contains the digits, so such a switch would be a control that does
+    // not do what its label says. The honest choice is whether to publish it.
+    const platform = clean(raw?.platform, 16) || 'whatsapp';
+    if (platform !== 'whatsapp') throw new Error(`${label}: Brief can only link a WhatsApp number today`);
+    const raw_phone = clean(raw?.phone, 32);
+    const digits = raw_phone.replace(/\D/g, '');
+    if (digits.length < 9 || digits.length > 15) {
+      throw new Error(`${label}: use a full number with country code, e.g. +254 700 000 000`);
+    }
+    return {
+      platform,
+      phone: digits,
+      message: clean(raw?.message, 200) || null
+    };
+  }
   throw new Error(`${label}: unknown field type`);
 }
 
 /** How a field reads right now, against the clock and its own cadence. */
 function fieldStatus(def, entry, nowMs) {
   if (!entry) {
-    return { key: def.key, question: def.question, state: 'unanswered', ageHours: null, dueInHours: def.cadenceHours, value: null };
+    // 'skipped' is its own state so an optional question cannot become a to-do,
+    // a red dot, or a count against the owner. It is not 'unanswered'.
+    const state = def.optional ? 'skipped' : 'unanswered';
+    return { key: def.key, question: def.question, state, ageHours: null, dueInHours: def.cadenceHours, value: null, optional: Boolean(def.optional) };
   }
   const at = Date.parse(entry.lastConfirmedAt ?? entry.updatedAt ?? '') || nowMs;
   const ageHours = Math.max(0, Math.round((nowMs - at) / HOUR));
@@ -187,6 +220,7 @@ export function formatAnswer(key, value) {
     const hours = value.from && value.to ? `${value.from}–${value.to}` : '';
     return `${days}${hours ? ` ${hours}` : ''}`.trim() || value.summary || null;
   }
+  if (def.kind === 'contact') return value.phone ? `WhatsApp +${value.phone}` : null;
   const items = (value.items ?? []).filter(Boolean);
   return items.length ? items.join(' · ') : 'nothing stated';
 }
@@ -249,7 +283,8 @@ export function maintenanceFor(space, { now = Date.now() } = {}) {
     state,
     lastTouchedAt: touched.at ? new Date(touched.at).toISOString() : null,
     ageHours: age,
-    answered: statuses.filter((s) => s.state !== 'unanswered').length,
+    answered: statuses.filter((s) => s.state !== 'unanswered' && s.state !== 'skipped').length,
+    // An optional answer nobody gave is not a gap, so it is not counted here.
     unanswered: statuses.filter((s) => s.state === 'unanswered').length,
     due: statuses.filter((s) => s.state === 'due').length,
     overdue: statuses.filter((s) => s.state === 'overdue').length,
@@ -284,6 +319,7 @@ export function editorialQueueFor(space, { now = Date.now() } = {}) {
 
   for (const def of PROFILE_FIELDS) {
     const entry = space.profile?.fields?.[def.key];
+    if (!entry && def.optional) continue; // never asked, never owed
     if (!entry) {
       items.push({
         id: `field_${def.key}_unanswered`,
