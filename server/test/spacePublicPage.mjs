@@ -199,6 +199,9 @@ await test("structured data never claims a rating, a review or a price range", (
   assert.equal(ld.review, undefined);
   assert.equal(ld.priceRange, undefined, "nobody stated one");
   assert.ok(ld.hasOfferCatalog.itemListElement[0].item[0].price > 0, "the price it does state is the listing's");
+  assert.equal(ld.hasOfferCatalog.itemListElement[0].item[0].availability, undefined,
+    "an offer nobody stock-tracks is not claimed in stock");
+  assert.equal(ld.foundingDate, undefined, "the row's createdAt is not the shop's birthday");
 });
 
 await test("a stock figure is the owner's number; no number is not zero", () => {
@@ -209,9 +212,20 @@ await test("a stock figure is the owner's number; no number is not zero", () => 
   let html = page.renderPage(page.publicPageView(store.find("spaces", (s) => s.id === sp.id), { nowMs: FRI_10AM_EAT }));
   assert.ok(!/in hand/.test(html), "untracked stock says nothing about stock");
   store.update("listings", offer.id, { quantityAvailable: 8 });
+  {
+    const ldHtml = page.renderPage(page.publicPageView(store.find("spaces", (s) => s.id === sp.id), { nowMs: FRI_10AM_EAT }));
+    const ld = JSON.parse(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(ldHtml)[1]);
+    assert.equal(ld.hasOfferCatalog.itemListElement[0].item[0].availability, "https://schema.org/InStock",
+      "eight in hand, by their own count, is a claim the markup may repeat");
+  }
   html = page.renderPage(page.publicPageView(store.find("spaces", (s) => s.id === sp.id), { nowMs: FRI_10AM_EAT }));
   assert.match(html, /8 in hand, by their own count/);
   store.update("listings", offer.id, { quantityAvailable: 0 });
+  {
+    const ldHtml = page.renderPage(page.publicPageView(store.find("spaces", (s) => s.id === sp.id), { nowMs: FRI_10AM_EAT }));
+    const ld = JSON.parse(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(ldHtml)[1]);
+    assert.equal(ld.hasOfferCatalog.itemListElement[0].item[0].availability, "https://schema.org/OutOfStock");
+  }
   html = page.renderPage(page.publicPageView(store.find("spaces", (s) => s.id === sp.id), { nowMs: FRI_10AM_EAT }));
   assert.match(html, /Sold out for now/, "a true zero is allowed, and says what it means");
 });

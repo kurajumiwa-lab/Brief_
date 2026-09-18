@@ -488,8 +488,10 @@ function JSON_LD(view) {
     name: o.title,
     price: o.price,
     priceCurrency: 'KES',
-    availability:
-      o.stock === null ? 'https://schema.org/InStock' : o.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock'
+    // `InStock` is a claim about stock. An offer the owner does not
+    // stock-track gets NO availability field — the absence is the true answer,
+    // and search engines read a missing value as unspecified rather than as 0.
+    ...(o.stock === null ? {} : { availability: o.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock' })
   }));
   const obj = {
     '@context': 'https://schema.org',
@@ -498,7 +500,9 @@ function JSON_LD(view) {
     description: DESCRIPTION_LINE(view),
     ...(view.image ? { image: view.image } : {}),
     ...(view.pageUrl ? { url: view.pageUrl } : {}),
-    ...(view.since ? { foundingDate: String(view.since).slice(0, 10) } : {}),
+    // No `foundingDate`. The space's createdAt is when this record started on
+    // Brief, not when the shop was founded, and a crawler would publish the
+    // difference as a fact about the business. Better silent than wrong.
     ...(view.where ? { address: { '@type': 'PostalAddress', addressLocality: view.where, addressCountry: 'KE' } } : {}),
     ...(view.contact ? { telephone: view.contact.display } : {}),
     ...(view.openingHours ? { openingHoursSpecification: view.openingHours } : {}),
