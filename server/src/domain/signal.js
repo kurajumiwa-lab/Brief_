@@ -75,6 +75,13 @@ export const SIGNAL_TYPES = [
   'task_assigned',
   'task_released',
   'task_completed',
+  // The full lifecycle, so the activity feed cannot show "done" for work that
+  // was later cancelled, and cannot hide a cancellation or a reopening at all.
+  'task_cancelled',
+  'task_reopened',
+  'task_verified',
+  'vote_cancelled',
+  'coordinator_transferred',
   // --- Group Buy engine (orchestration packages) ----------------------------
   // Emitted by real contribution records and stage transitions; the Universal
   // Data Router fans these to a group's WhatsApp/Telegram/webhook endpoints.

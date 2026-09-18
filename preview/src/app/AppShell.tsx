@@ -12,6 +12,7 @@ import { SpacesLanding } from '../features/spaces/SpacesLanding';
 import { PublicSpacePage } from '../features/spaces/PublicSpacePage';
 import { CreateFlowModal } from '../features/spaces/CreateFlowModal';
 import { PublicOfferModal } from '../features/offers/PublicOfferModal';
+import { JoinRoom } from '../features/city/JoinRoom';
 import { SupplyWorkspace } from '../features/supply/SupplyWorkspace';
 import { RequestsWorkspace, requestPath } from '../features/requests/RequestsWorkspace';
 import { ActivitySurface } from '../features/activity/ActivitySurface';
@@ -39,6 +40,11 @@ export const AppShell: React.FC<AppShellProps> = ({
   const [supplyRoute, setSupplyRoute] = useState(() => window.location.hash.replace(/^#\/?supply\/?/, ''));
   const [requestRoute, setRequestRoute] = useState('');
   const [offerLinkId, setOfferLinkId] = useState('');
+  // A join link pasted in a WhatsApp group opens a room's landing page for a
+  // person with no account and no session. It is NOT a tab: the nav is hidden
+  // while it is open, because a stranger deciding whether to join a room should
+  // not be looking at the app's own furniture.
+  const [joinCode, setJoinCode] = useState('');
   const [spaceLink, setSpaceLink] = useState('');
   const [spaceError, setSpaceError] = useState('');
   const [activeSpace, setActiveSpace] = useState<Space | null>(null);
@@ -123,6 +129,8 @@ export const AppShell: React.FC<AppShellProps> = ({
         try { setRequestRoute(decodeURIComponent(hash.slice(9))); } catch { setRequestRoute('invalid'); }
       } else if (hash.startsWith('space/')) {
         try { setSpaceLink(decodeURIComponent(hash.slice(6))); } catch { setSpaceLink(''); }
+      } else if (hash.startsWith('join/')) {
+        try { setJoinCode(decodeURIComponent(hash.slice(5))); } catch { setJoinCode(''); }
       } else if (hash.startsWith('offer/')) {
         // Sellers copy this link from their catalog. It resolves to the real
         // public offer view — for a signed-in buyer, because ordering needs a
@@ -131,7 +139,8 @@ export const AppShell: React.FC<AppShellProps> = ({
       } else if (hash === 'entity' || hash.startsWith('entity/')) {
         const id = decodeURIComponent(hash.slice(7));
         if (id) { setEntityId(id); setActiveTab('you'); }
-      } else {
+      } else if (hash === '' || (hash && hash !== 'join')) {
+        setJoinCode('');
         const tabs: Record<string, BriefNavigationTab> = { home: 'home', city: 'city', events: 'city', spaces: 'pipeline', pipeline: 'pipeline', discover: 'city', catalog: 'catalog', activity: 'activity', ledger: 'ledger', partners: 'partners', you: 'you' };
         if (tabs[hash]) { setEntityId(null); setActiveTab(tabs[hash]); }
         else if (!hash) setActiveTab(initialTab);
@@ -285,7 +294,7 @@ export const AppShell: React.FC<AppShellProps> = ({
       />
 
       {/* Main Content Viewport */}
-      <main className="flex-1 min-w-0 px-4 sm:px-6 py-6 pb-28 md:pb-6 overflow-y-auto min-h-screen">
+      <main className="flex-1 min-w-0 px-4 sm:px-6 py-6 pb-44 md:pb-8 overflow-y-auto min-h-screen">
         {activeTab === 'requests' ? <RequestsWorkspace route={requestRoute} /> : activeTab === 'supply' ? <SupplyWorkspace route={supplyRoute || 'mine'} /> : null}
         {/* SPACES with no space open is the STREET: the shopfronts you operate
             and the ones you follow. Circles and vaults are not here — belonging
@@ -555,6 +564,18 @@ export const AppShell: React.FC<AppShellProps> = ({
             loadSpaces();
           }}
         />
+      )}
+
+      {/* A shared join link, opened cold, before an account exists. */}
+      {joinCode && (
+        <div className="fixed inset-0 z-[60] overflow-y-auto px-4 py-6" style={{ background: 'var(--color-bg)' }}>
+          <JoinRoom
+            code={joinCode}
+            signedIn={authed}
+            onRequireAuth={() => showToast('Sign in or create an account to join a room.')}
+            onOpenCircles={() => { setJoinCode(''); window.location.hash = 'city'; setActiveTab('city'); }}
+          />
+        </div>
       )}
 
       {/* Customer-Facing Public Offer View */}

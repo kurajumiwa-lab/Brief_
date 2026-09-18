@@ -15,7 +15,9 @@
 
 export type CircleType = 'gathering' | 'build' | 'study' | 'treasury' | 'match' | 'target';
 export type CircleStatus = 'forming' | 'active' | 'completed' | 'dormant';
-export type CircleVisibility = 'open' | 'invite_only';
+// 'discoverable' sits between the two: listed, joinable by link, and still a
+// room — the list shows the shape of the place, never what is said inside it.
+export type CircleVisibility = 'open' | 'invite_only' | 'discoverable';
 
 /**
  * Fields the server persists. Note the ABSENCE of `currentValue` -- progress is
@@ -34,6 +36,16 @@ export interface CircleStored {
   deadline: string | null;
   completionCriteria: string | null;
   parentCircleId: string | null;
+  /**
+   * The room's pinned welcome, written by a coordinator. A first-class field
+   * rather than a block the client hunts for, because it is the room's identity:
+   * what a person reads first, and the one text that decides whether the room
+   * feels like a place or a table.
+   */
+  welcome?: string | null;
+  /** The organiser's own outside link (a WhatsApp invite), stored verbatim and
+   *  labelled as unverified. Brief does not paraphrase someone else's URL. */
+  externalLink?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -67,6 +79,9 @@ export interface CircleDerived {
   readonly isMember: boolean;
   /** Whether a self-join is permitted: an open circle, or one with nobody in it. */
   readonly canJoin: boolean;
+  /** The code in the room's join link. Minted once server-side; read-only here so
+   *  a client cannot offer to "regenerate" a link people have already shared. */
+  readonly joinCode?: string | null;
 }
 
 export type Circle = CircleStored & CircleDerived;
@@ -173,12 +188,23 @@ export interface Trust {
 export interface Member {
   id: string;
   circleId: string;
+  /** A database key. It is here for the API and must never be a label: a roster
+   *  that reads `usr_mt1y…` is a database dumped into the UI, and nobody in the
+   *  room can tell their neighbour apart. Render `displayName` / `initials`. */
   userId: string;
   role: MemberRole;
   verifications: VerificationKind[];
   joinedAt: string;
   updatedAt: string;
   trust: Trust;
+  /** SERVER-DERIVED: who the person is, for a human reader. */
+  readonly displayName: string | null;
+  readonly handle: string | null;
+  readonly initials: string;
+  /** false once the membership has ended — the row survives as history. */
+  readonly isActive: boolean;
+  readonly endedAt?: string | null;
+  readonly endReason?: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -201,13 +227,26 @@ export interface BlockSource {
 // server keeps this state inside block metadata and returns it hydrated, so
 // the client never has to know where it is stored.
 
-export type TaskStatus = 'open' | 'assigned' | 'completed';
+// 'cancelled' is a state, not an absence: the task stays in the record with its
+// reason. There is no 'deleted' because the room must still be able to answer
+// "what did we drop, and why?".
+export type TaskStatus = 'open' | 'assigned' | 'completed' | 'cancelled';
 
 export interface TaskState {
   status: TaskStatus;
   assigneeId: string | null;
   completedAt: string | null;
   completedBy: string | null;
+  /** Set by a coordinator, separately from `completed`: "I did it" is the
+   *  assignee's claim, "it landed" is somebody else's. One field for both would
+   *  let self-reporting read as approval. */
+  verifiedAt?: string | null;
+  verifiedBy?: string | null;
+  dueAt?: string | null;
+  cancelledAt?: string | null;
+  /** The published reason it was cancelled or reopened. Null until it is. */
+  cancelReason?: string | null;
+  evidence?: string | null;
 }
 
 // --- Vote tally --------------------------------------------------------------
@@ -227,11 +266,26 @@ export interface VoteTally {
   circleId: string;
   closed: boolean;
   totalVotes: number;
-  /** Members eligible to vote, counted from real membership rows. */
+  /** Eligible voters SNAPSHOT AT CREATION — not a live count. A coordinator who
+   *  can add members mid-vote can manufacture a majority, so the roll is fixed
+   *  when the vote opens and this figure never moves. */
   eligibleCount: number;
   results: VoteResult[];
   /** Strictly-ahead option, or null. A tie has no leader. */
   leader: string | null;
+  /** When the vote closes on its own. A time, not a button. */
+  closesAt?: string | null;
+  /** True when the deadline, not a person, ended it. */
+  autoClosed?: boolean;
+  quorum?: number | null;
+  quorumMet?: boolean | null;
+  secret?: boolean;
+  /** Ballots superseded by a change of mind. Counted once, visible always. */
+  changedVotes?: number;
+  status?: 'open' | 'resolved' | 'failed_quorum' | 'cancelled';
+  cancelled?: boolean;
+  cancelReason?: string | null;
+  note?: string;
 }
 
 export interface Block {

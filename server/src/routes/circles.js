@@ -4,8 +4,10 @@ import { store } from '../store.js';
 import { callerId, isSelf, isCoordinator, circleHasNoMembers, membershipOf, canOperate } from '../identity.js';
 import * as circles from '../domain/circle.js';
 import * as blocks from '../domain/block.js';
+import * as history from '../domain/circleHistory.js';
 import * as signals from '../domain/signal.js';
 import * as members from '../domain/member.js';
+import * as auth from '../domain/auth.js';
 import { requireAuth } from './helpers.js';
 
 import { requireFeature } from '../features.js';
@@ -115,7 +117,17 @@ app.post('/api/circles/:id/members', (req, res) => {
   const me = requireAuth(req, res);
   if (!me) return;
 
-  const requested = req.body?.userId;
+  // A coordinator may invite by HANDLE, because that is the thing a person
+  // knows about their neighbour. A raw user id is not something anyone should
+  // be asked to paste, and an unresolvable handle is refused rather than
+  // silently joined to a stranger.
+  const requestedHandle = String(req.body?.handle ?? '').trim().toLowerCase();
+  let requested = req.body?.userId;
+  if (requestedHandle) {
+    const found = auth.getUserByHandle(requestedHandle);
+    if (!found) return res.status(404).json({ error: `no Brief account with the handle @${requestedHandle}` });
+    requested = found.id;
+  }
 
   // Naming a different user is an act of authority, not a self-join.
   if (requested && requested !== me) {
@@ -175,11 +187,18 @@ app.delete('/api/circles/:id/members/me', (req, res) => {
   const circle = circles.getCircle(req.params.id);
   if (!circle) return res.status(404).json({ error: 'circle not found' });
 
-  const { left, reason } = members.removeMember(req.params.id, me);
-  if (!left) return res.status(404).json({ error: reason ?? 'you are not a member of this circle' });
-
-  signals.emitSignal({ type: 'member_left', circleId: req.params.id, actorId: me });
-  res.json({ left: true, circleId: req.params.id, userId: me });
+  // Leaving is not a deletion: the membership row ends, so the work and the
+  // ballots that name this person keep meaning something after they go. A
+  // reason is invited and never demanded — nobody owes a group an explanation
+  // for leaving.
+  try {
+    const { left, reason } = members.leaveCircle(req.params.id, me, { reason: req.body?.reason });
+    if (!left) return res.status(404).json({ error: reason ?? 'you are not a member of this circle' });
+    signals.emitSignal({ type: 'member_left', circleId: req.params.id, actorId: me });
+    res.json({ left: true, circleId: req.params.id, userId: me });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message ?? e) });
+  }
 });
 
 
@@ -198,7 +217,15 @@ app.delete('/api/circles/:id/members/:userId', (req, res) => {
     return res.status(403).json({ error: 'only a coordinator may remove another member' });
   }
 
-  const { left, reason } = members.removeMember(req.params.id, target);
+  let outcome;
+  try {
+    outcome = members.removeMember(req.params.id, target, { actorId: me, reason: req.body?.reason });
+  } catch (e) {
+    // A removal without a reason is refused here, in writing, because an
+    // unexplained expulsion is a silencing.
+    return res.status(400).json({ error: String(e.message ?? e) });
+  }
+  const { left, reason } = outcome;
   if (!left) return res.status(404).json({ error: reason ?? 'not a member of this circle' });
 
   signals.emitSignal({ type: 'member_removed', circleId: req.params.id, actorId: me });
@@ -214,7 +241,22 @@ app.patch('/api/circles/:id/members/:userId/role', (req, res) => {
     return res.status(403).json({ error: 'only a coordinator may change roles' });
   }
   try {
-    res.json({ member: members.setRole(req.params.id, req.params.userId, req.body?.role) });
+    res.json({ member: members.setRole(req.params.id, req.params.userId, req.body?.role, { actorId: callerId(req), reason: req.body?.reason }) });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message ?? e) });
+  }
+});
+
+
+// Handing the circle over. One operation, two rows, and never a moment with
+// two coordinators or none: both halves are validated before either is written.
+app.post('/api/circles/:id/members/:userId/transfer', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  try {
+    const out = members.transferCoordinator(req.params.id, req.params.userId, { actorId: me, reason: req.body?.reason });
+    signals.emitSignal({ type: 'coordinator_transferred', circleId: req.params.id, actorId: me, metadata: { to: req.params.userId } });
+    res.json(out);
   } catch (e) {
     res.status(400).json({ error: String(e.message ?? e) });
   }
@@ -237,6 +279,58 @@ app.post('/api/circles/:id/members/:userId/verify', (req, res) => {
   } catch (e) {
     res.status(400).json({ error: String(e.message ?? e) });
   }
+});
+
+
+// ---------------------------------------------------------------------------
+// THE DOOR — a circle's join link, and what a stranger may see through it.
+//
+// This is the only circle endpoint that answers without a session, and it answers
+// with the room's SHAPE, never its contents: a name, a purpose, how many people,
+// how much settled money, how many tasks and votes are live. Block text, member
+// names and the ledger detail stay behind membership, because "we found you on
+// WhatsApp and you can browse our private group" is not a trade anyone in a chama
+// agreed to. Listing is also opt-in: the coordinator sets `discoverable`.
+// ---------------------------------------------------------------------------
+
+app.get('/api/circles/join/:code', (req, res) => {
+  const view = circles.peek(req.params.code);
+  // A wrong code and an unlisted circle get the SAME answer: 404. Confirming
+  // that a code exists but is private tells an attacker which groups to press on.
+  if (!view || !view.listed) return res.status(404).json({ error: 'no joinable circle by that link' });
+  res.json({ circle: view });
+});
+
+
+// The pinned welcome: the room's own words, edited by its coordinators. Changing
+// it is a change of terms, so the route logs it with the actor.
+app.post('/api/circles/:id/welcome', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  if (!isCoordinator(store, req, req.params.id)) {
+    return res.status(403).json({ error: 'only a coordinator may pin the welcome note' });
+  }
+  try {
+    res.json({ circle: circles.setWelcome(req.params.id, req.body?.text, { actorId: me }) });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message ?? e) });
+  }
+});
+
+
+// The room's history, in the words the room can read. Every member may see it —
+// the point of a record is that it is shared, not that it is privileged.
+app.get('/api/circles/:id/history', (req, res) => {
+  const me = requireAuth(req, res);
+  if (!me) return;
+  if (!membershipOf(store, req, req.params.id)) {
+    return res.status(403).json({ error: 'only members may read this circle’s history' });
+  }
+  const rows = history.historyFor(req.params.id, {
+    subject: req.query?.subject || null,
+    limit: Number(req.query?.limit) || 50
+  });
+  res.json({ history: rows.map((r) => ({ ...r, text: history.describe(r) })) });
 });
 
 
@@ -517,5 +611,108 @@ app.get('/api/signals', (req, res) => {
     })
   });
 });
-}
 
+// ---------------------------------------------------------------------------
+// TASKS: the full lifecycle, with the record kept.
+//
+// Edit, cancel, reopen, verify — every one of these appends a row, and the three
+// that could be used to make a group forget something (cancel, reopen, move a
+// deadline after someone missed it) require a reason in writing. Deleting is not
+// offered at all: the only way a task leaves the active list is a cancellation
+// with a reason every member can read.
+// ---------------------------------------------------------------------------
+
+app.patch('/api/circles/:id/blocks/:blockId/task', (req, res) => {
+  const block = loadCircleBlock(req, res);
+  if (!block) return;
+  const me = callerId(req);
+  const state = blocks.taskState(block);
+  // Editing your own assignment is a contributor's right; editing the terms
+  // someone else is working to needs the coordinator's authority.
+  if (state?.assigneeId !== me && !canOperate(store, req, req.params.id)) {
+    return res.status(403).json({ error: 'only the assignee or a coordinator may edit this task' });
+  }
+  try {
+    const r = blocks.editTask(block.id, {
+      actorId: me,
+      title: req.body?.title,
+      description: req.body?.description,
+      dueAt: req.body?.dueAt,
+      reason: req.body?.reason
+    });
+    res.json({ block: r.block, changed: r.changed, edits: r.edits ?? 0 });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message ?? e) });
+  }
+});
+
+
+app.post('/api/circles/:id/blocks/:blockId/cancel', (req, res) => {
+  const block = loadCircleBlock(req, res);
+  if (!block) return;
+  if (!isCoordinator(store, req, req.params.id)) {
+    return res.status(403).json({ error: 'only a coordinator may cancel a task' });
+  }
+  try {
+    const r = blocks.cancelTask(block.id, { actorId: callerId(req), reason: req.body?.reason });
+    if (r.changed) signals.emitSignal({ type: 'task_cancelled', circleId: block.circleId, blockId: block.id, actorId: callerId(req) });
+    res.json({ block: r.block, changed: r.changed });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message ?? e) });
+  }
+});
+
+
+app.post('/api/circles/:id/blocks/:blockId/reopen', (req, res) => {
+  const block = loadCircleBlock(req, res);
+  if (!block) return;
+  if (!isCoordinator(store, req, req.params.id)) {
+    return res.status(403).json({ error: 'only a coordinator may reopen finished work' });
+  }
+  try {
+    const r = blocks.reopenTask(block.id, { actorId: callerId(req), reason: req.body?.reason });
+    if (r.changed) signals.emitSignal({ type: 'task_reopened', circleId: block.circleId, blockId: block.id, actorId: callerId(req) });
+    res.json({ block: r.block, changed: r.changed });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message ?? e) });
+  }
+});
+
+
+// Verification is its own act, deliberately: "I did it" is the assignee's claim,
+// "it landed" is the coordinator's. Folding them into one field would let a
+// group's records say "done" on the strength of self-reporting.
+app.post('/api/circles/:id/blocks/:blockId/verify', (req, res) => {
+  const block = loadCircleBlock(req, res);
+  if (!block) return;
+  if (!isCoordinator(store, req, req.params.id)) {
+    return res.status(403).json({ error: 'only a coordinator may verify completion' });
+  }
+  try {
+    const r = blocks.verifyTask(block.id, { actorId: callerId(req) });
+    if (r.changed) signals.emitSignal({ type: 'task_verified', circleId: block.circleId, blockId: block.id, actorId: callerId(req) });
+    res.json({ block: r.block, changed: r.changed });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message ?? e) });
+  }
+});
+
+
+// Cancelling a vote: the honest alternative to closing a count the coordinator
+// dislikes. The ballots stay, the reason is published, the result stands as
+// "cancelled" rather than being deleted.
+app.post('/api/circles/:id/blocks/:blockId/cancel-vote', (req, res) => {
+  const block = loadCircleBlock(req, res);
+  if (!block) return;
+  if (!isCoordinator(store, req, req.params.id)) {
+    return res.status(403).json({ error: 'only a coordinator may cancel a vote' });
+  }
+  try {
+    const r = blocks.cancelVote(block.id, { actorId: callerId(req), reason: req.body?.reason });
+    if (r.changed) signals.emitSignal({ type: 'vote_cancelled', circleId: block.circleId, blockId: block.id, actorId: callerId(req) });
+    res.json({ block: r.block, changed: r.changed, tally: blocks.tallyVote(block.id) });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message ?? e) });
+  }
+});
+}

@@ -371,14 +371,19 @@ export function joinCircle(
  * returns 403 otherwise. Named separately from joinCircle so the privileged
  * act is visible at the call site.
  */
+/**
+ * Add a member by @handle. The id is resolved by the server, which is where the
+ * lookup belongs: a client that guessed an id from a name could hand the room to
+ * the wrong person. An unknown handle comes back as a refusal, not a silent add.
+ */
 export function inviteMember(
   circleId: string,
-  userId: string,
+  handle: string,
   role?: Member['role']
 ): Promise<ApiResult<Member>> {
   return request(
     `/api/circles/${encodeURIComponent(circleId)}/members`,
-    { method: 'POST', body: JSON.stringify({ userId, role }) },
+    { method: 'POST', body: JSON.stringify({ handle: handle.replace(/^@/, ''), role }) },
     (r) => (isMember(r?.member) ? r.member : undefined)
   );
 }
@@ -397,14 +402,20 @@ export function recordVerification(
 }
 
 /** Change a member's role. Coordinator-only. */
+/**
+ * Change a member's role. `reason` is not decoration: the server refuses a silent
+ * role change, because a promotion nobody can explain is how a group gets
+ * captured and a quiet demotion is how dissent is tidied away.
+ */
 export function setMemberRole(
   circleId: string,
   userId: string,
-  role: Member['role']
+  role: Member['role'],
+  reason?: string
 ): Promise<ApiResult<Member>> {
   return request(
     `/api/circles/${encodeURIComponent(circleId)}/members/${encodeURIComponent(userId)}/role`,
-    { method: 'PATCH', body: JSON.stringify({ role }) },
+    { method: 'PATCH', body: JSON.stringify({ role, reason: reason ?? null }) },
     (r) => (isMember(r?.member) ? r.member : undefined)
   );
 }
@@ -523,6 +534,94 @@ export function closeVote(
     (r) => (isBlock(r?.block) && isVoteTally(r?.tally) ? { block: r.block, tally: r.tally } : undefined)
   );
 }
+
+/** A row of the circle's history: one change, with its pre-image and, where it
+ *  matters, the reason. `text` is the server's own one-line reading of it, so no
+ *  client can soften "cancelled" into "closed". */
+export interface CircleHistoryRow {
+  id: string;
+  kind: string;
+  subject: string | null;
+  subjectKind: string | null;
+  field: string | null;
+  before: unknown;
+  after: unknown;
+  reason: string | null;
+  redacted: boolean;
+  actorId: string | null;
+  at: string;
+  text: string;
+}
+export function getCircleHistory(circleId: string, opts: { subject?: string; limit?: number } = {}): Promise<ApiResult<{ history: CircleHistoryRow[] }>> {
+  const q = new URLSearchParams();
+  if (opts.subject) q.set('subject', opts.subject);
+  if (opts.limit) q.set('limit', String(opts.limit));
+  const qs = q.toString();
+  return request(`/api/circles/${encodeURIComponent(circleId)}/history${qs ? `?${qs}` : ''}`, undefined, (r) =>
+    r && Array.isArray(r.history) ? (r as { history: CircleHistoryRow[] }) : undefined);
+}
+
+export function pinWelcome(circleId: string, text: string): Promise<ApiResult<Circle>> {
+  return request<Circle>(`/api/circles/${encodeURIComponent(circleId)}/welcome`, { method: 'POST', body: JSON.stringify({ text }) },
+    (r) => (r?.circle ? (r.circle as Circle) : undefined));
+}
+
+/** Edit a task. `reason` is required by the server for a deadline move, and the
+ *  title is locked once somebody has claimed the work. */
+export function editTask(circleId: string, blockId: string, patch: { title?: string; description?: string; dueAt?: string; reason?: string }): Promise<ApiResult<{ block: Block; changed: boolean; edits: number }>> {
+  return request(`/api/circles/${encodeURIComponent(circleId)}/blocks/${encodeURIComponent(blockId)}/task`, { method: 'PATCH', body: JSON.stringify(patch) },
+    (r) => (r?.block ? (r as { block: Block; changed: boolean; edits: number }) : undefined));
+}
+export function cancelTask(circleId: string, blockId: string, reason: string): Promise<ApiResult<{ block: Block; changed: boolean }>> {
+  return request(`/api/circles/${encodeURIComponent(circleId)}/blocks/${encodeURIComponent(blockId)}/cancel`, { method: 'POST', body: JSON.stringify({ reason }) },
+    (r) => (r?.block ? (r as { block: Block; changed: boolean }) : undefined));
+}
+export function reopenTask(circleId: string, blockId: string, reason: string): Promise<ApiResult<{ block: Block; changed: boolean }>> {
+  return request(`/api/circles/${encodeURIComponent(circleId)}/blocks/${encodeURIComponent(blockId)}/reopen`, { method: 'POST', body: JSON.stringify({ reason }) },
+    (r) => (r?.block ? (r as { block: Block; changed: boolean }) : undefined));
+}
+export function verifyTask(circleId: string, blockId: string): Promise<ApiResult<{ block: Block; changed: boolean }>> {
+  return request(`/api/circles/${encodeURIComponent(circleId)}/blocks/${encodeURIComponent(blockId)}/verify`, { method: 'POST', body: '{}' },
+    (r) => (r?.block ? (r as { block: Block; changed: boolean }) : undefined));
+}
+/** Cancelling a vote. The ballots stay; the reason is published to the circle. */
+export function cancelVote(circleId: string, blockId: string, reason: string): Promise<ApiResult<{ block: Block; changed: boolean; tally: unknown }>> {
+  return request(`/api/circles/${encodeURIComponent(circleId)}/blocks/${encodeURIComponent(blockId)}/cancel-vote`, { method: 'POST', body: JSON.stringify({ reason }) },
+    (r) => (r?.block ? (r as { block: Block; changed: boolean; tally: unknown }) : undefined));
+}
+export function transferCoordinator(circleId: string, userId: string, reason?: string): Promise<ApiResult<{ to: Member; from: Member; coordinators: number }>> {
+  return request(`/api/circles/${encodeURIComponent(circleId)}/members/${encodeURIComponent(userId)}/transfer`, { method: 'POST', body: JSON.stringify({ reason: reason ?? null }) },
+    (r) => (r?.to ? (r as { to: Member; from: Member; coordinators: number }) : undefined));
+}
+/** Listing a private room needs a reason — the members are owed one. */
+export function setCircleVisibility(circleId: string, visibility: 'invite_only' | 'discoverable' | 'open', reason: string): Promise<ApiResult<Circle>> {
+  return request<Circle>(`/api/circles/${encodeURIComponent(circleId)}`, { method: 'PATCH', body: JSON.stringify({ visibility, reason }) },
+    (r) => (r?.circle ? (r.circle as Circle) : undefined));
+}
+export interface JoinPreview {
+  listed: boolean;
+  id: string;
+  name: string | null;
+  purpose: string | null;
+  type: string | null;
+  memberCount: number;
+  openTaskCount: number;
+  liveVoteCount: number;
+  externalLink: string | null;
+  externalLinkNote: string | null;
+  joinCode: string | null;
+  canJoin: boolean;
+  needsInvite: boolean;
+  targetValue: number | null;
+  currentValue: number;
+  currency: string;
+}
+/** What a stranger may see through a shared link, before signing up. */
+export function getJoinPreview(code: string): Promise<ApiResult<JoinPreview>> {
+  return request<JoinPreview>(`/api/circles/join/${encodeURIComponent(code)}`, undefined, (r) =>
+    r?.circle ? (r.circle as JoinPreview) : undefined);
+}
+
 
 export function getTally(circleId: string, blockId: string): Promise<ApiResult<VoteTally>> {
   return request(
@@ -3012,13 +3111,16 @@ export function leaveCircle(circleId: string): Promise<ApiResult<{ left: true; c
  * 403 otherwise. Separate from leaveCircle so the privileged act is visible
  * at the call site -- and so you cannot "remove" yourself by accident.
  */
+/** Remove a member — with a reason, always. The membership row ENDS rather than
+ *  disappears, so the work and ballots that name them still mean something. */
 export function removeMember(
   circleId: string,
-  userId: string
+  userId: string,
+  reason?: string
 ): Promise<ApiResult<{ left: true; userId: string }>> {
   return request(
     `/api/circles/${encodeURIComponent(circleId)}/members/${encodeURIComponent(userId)}`,
-    { method: 'DELETE' },
+    { method: 'DELETE', body: JSON.stringify({ reason: reason ?? null }) },
     (r) => (r?.left === true ? { left: true as const, userId } : undefined)
   );
 }

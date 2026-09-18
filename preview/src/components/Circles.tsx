@@ -3,6 +3,8 @@ import * as briefApi from '../api/briefApi';
 import type { Block, Circle, Member, MemberEvidence, Signal } from '../api/types';
 import { CircleTarget } from './circle/CircleTarget';
 import { CircleTasks } from './circle/CircleTasks';
+import { CopyId } from '../ui/CopyId';
+import { roomSurface } from '../features/city/room';
 import { CircleVotes } from './circle/CircleVotes';
 import { CircleActivity } from './circle/CircleActivity';
 import { CircleMembers } from './circle/CircleMembers';
@@ -77,6 +79,12 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
   const [expandedMember, setExpandedMember] = React.useState<string | null>(null);
 
   const [busyId, setBusyId] = React.useState<string | null>(null);
+  // The room's own history, read on demand: what changed, who did it, and the
+  // reason where a reason was required. It is the record the room is FOR.
+  const [roomHistory, setRoomHistory] = React.useState<briefApi.CircleHistoryRow[] | null>(null);
+  const [welcomeDraft, setWelcomeDraft] = React.useState<string | null>(null);
+  const [listingRoom, setListingRoom] = React.useState(false);
+  const [listReason, setListReason] = React.useState('');
   const [votedIds, setVotedIds] = React.useState<string[]>([]);
   const [notice, setNotice] = React.useState<string | null>(null);
 
@@ -132,6 +140,11 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
       });
     }
     setMembers(memberRes.ok ? memberRes.data : []);
+    // History is read with the room rather than lazily per panel: the header,
+    // the activity tab and the "what changed" line all need the same rows, and
+    // three fetches for one truth is three chances to disagree.
+    const hist = await briefApi.getCircleHistory(id, { limit: 30 });
+    setRoomHistory(hist.ok ? hist.data.history : null);
   }, []);
 
   React.useEffect(() => {
@@ -188,6 +201,50 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
   const handleComplete = (blockId: string) =>
     run(blockId, () => briefApi.completeTask(openId as string, blockId));
 
+  const handleCancelTask = (blockId: string, reason: string) =>
+    run(blockId, () => briefApi.cancelTask(openId as string, blockId, reason));
+
+  const handleReopenTask = (blockId: string, reason: string) =>
+    run(blockId, () => briefApi.reopenTask(openId as string, blockId, reason));
+
+  const handleVerifyTask = (blockId: string) =>
+    run(blockId, () => briefApi.verifyTask(openId as string, blockId));
+
+  const handleTaskDue = (blockId: string, dueAt: string, reason: string) =>
+    run(blockId, () => briefApi.editTask(openId as string, blockId, { dueAt, reason }));
+
+  /** Pin the welcome. One sentence the room chooses for itself — the difference
+   *  between a database row and a place somebody wants to be in. */
+  const handlePinWelcome = async () => {
+    if (!openId || welcomeDraft == null) return;
+    setGovBusy('welcome');
+    setNotice(null);
+    const res = await briefApi.pinWelcome(openId, welcomeDraft);
+    setGovBusy(null);
+    if (!res.ok) { setNotice(res.error); return; }
+    setWelcomeDraft(null);
+    setNotice('Pinned for everyone in the room.');
+    await loadDetail(openId);
+  };
+
+  /** Open the room to the list. The server demands a reason, because the people
+   *  already inside are the ones whose private room is being made findable. */
+  const handleListRoom = async () => {
+    if (!openId) return;
+    const reason = listReason.trim();
+    if (!reason) return;
+    setGovBusy('listing');
+    setNotice(null);
+    const nextVisibility = detail.circle?.visibility === 'discoverable' ? 'invite_only' : 'discoverable';
+    const res = await briefApi.setCircleVisibility(openId, nextVisibility, reason);
+    setGovBusy(null);
+    if (!res.ok) { setNotice(res.error); return; }
+    setListingRoom(false);
+    setListReason('');
+    setNotice(nextVisibility === 'invite_only' ? 'Taken off the list.' : 'Listed — share the link below.');
+    await loadDetail(openId);
+  };
+
   const handleVote = (blockId: string, option: string) =>
     run(blockId, () => briefApi.castVote(openId as string, blockId, option), () =>
       setVotedIds((prev) => (prev.includes(blockId) ? prev : [...prev, blockId]))
@@ -195,6 +252,9 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
 
   const handleCloseVote = (blockId: string) =>
     run(blockId, () => briefApi.closeVote(openId as string, blockId));
+
+  const handleCancelVote = (blockId: string, reason: string) =>
+    run(blockId, () => briefApi.cancelVote(openId as string, blockId, reason));
 
   const handleToggleMember = async (userId: string) => {
     if (expandedMember === userId) {
@@ -236,14 +296,27 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
     await loadDetail(openId);
   };
 
-  const handleInviteMember = (userId: string, role: Member['role']) =>
-    govern('invite', () => briefApi.inviteMember(openId as string, userId, role), `${userId} is now a member of this circle.`);
+  /** The one place a userId becomes a human being. Every panel that names a
+   *  person goes through here, so "no raw ids in the room" is one rule, not six. */
+  const nameOf = (userId?: string | null): string | null => {
+    if (!userId) return null;
+    const m = members.find((x) => x.userId === userId);
+    return m?.displayName || (m?.handle ? `@${m.handle}` : null);
+  };
 
-  const handleSetRole = (userId: string, role: Member['role']) =>
-    govern(userId, () => briefApi.setMemberRole(openId as string, userId, role), `${userId} is now ${role}.`);
+  // Invitations go by @handle and the server resolves the person, so no screen
+  // in this app ever asks a human to type or read a `usr_…` key.
+  const handleInviteMember = (handle: string, role: Member['role']) =>
+    govern('invite', () => briefApi.inviteMember(openId as string, handle, role), `@${handle.replace(/^@/, '')} is now a member of this room.`);
 
-  const handleRemoveMember = (userId: string) =>
-    govern(userId, () => briefApi.removeMember(openId as string, userId), `${userId} was removed from this circle.`);
+  const handleSetRole = (userId: string, role: Member['role'], reason: string) =>
+    govern(userId, () => briefApi.setMemberRole(openId as string, userId, role, reason), `${nameOf(userId) ?? 'A member'} is now ${role}.`);
+
+  const handleRemoveMember = (userId: string, reason: string) =>
+    govern(userId, () => briefApi.removeMember(openId as string, userId, reason), `${nameOf(userId) ?? 'That member'} has been removed, with the reason in the room's history.`);
+
+  const handleTransfer = (userId: string) =>
+    govern(userId, () => briefApi.transferCoordinator(openId as string, userId), `${nameOf(userId) ?? 'A new coordinator'} holds the room now.`);
 
   /**
    * JOIN A CIRCLE.
@@ -528,9 +601,18 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
     );
   }
 
-  // --- detail view ----------------------------------------------------------
+  // --- the room itself ------------------------------------------------------
+  //
+  // Full screen, not a card inside a browse page. A circle is a place you go to,
+  // and a place you can only see through a 55vw column of somebody else's layout
+  // is a record, not a room. The overlay covers the app chrome (nav and floating
+  // actions) and carries its own bottom padding, so the last row in any list here
+  // is reachable by a thumb and not parked under a button.
   return (
-    <section className="space-y-4">
+    <section
+      className="fixed inset-0 z-50 overflow-y-auto space-y-4 px-4 pt-4 pb-40 sm:pb-32"
+      style={{ background: 'var(--color-bg)' }}
+    >
       <button
         onClick={() => {
           setOpenId(null);
@@ -554,49 +636,184 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
 
       {detail.status === 'ready' && open && (
         <>
-          <div className="mt-2 flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h2 className="text-lg font-extrabold text-[var(--brief-ink)]">{open.name}</h2>
-              <p className="text-[9px] text-[var(--ink-60)] mt-0.5">
-                {TYPE_LABEL[open.type] ?? open.type} &middot; {open.visibility}
-                {myRole ? ` \u00b7 you are ${myRole}` : ' \u00b7 not a member'}
-              </p>
-            </div>
-            {myRole ? (
-              <button
-                onClick={() => void handleLeave(open.id)}
-                disabled={busyId === open.id}
-                className="shrink-0 px-3 py-1.5 rounded-xl border border-[var(--brief-line)] text-[10px] font-bold text-[var(--ink-60)] cursor-pointer disabled:opacity-50"
-              >
-                {busyId === open.id ? 'Leaving…' : 'Leave circle'}
-              </button>
-            ) : open.canJoin ? (
-              <button
-                onClick={() => void handleJoin(open.id)}
-                disabled={busyId === open.id}
-                className="shrink-0 px-3 py-1.5 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
-              >
-                {busyId === open.id ? 'Joining…' : 'Join circle'}
-              </button>
-            ) : (
-              <span className="shrink-0 text-[10px] text-[var(--ink-60)]">
-                Invite only
+          <header className="mt-1">
+            {/* A cover the room chose, or the room's own plaster. Never a
+                placeholder that apologises for itself. */}
+            <div
+              className="relative h-[92px] w-full rounded-3xl overflow-hidden"
+              style={{ background: roomSurface() }}
+            >
+              <span className="absolute inset-x-0 bottom-0 flex items-end justify-between p-3">
+                <span className="min-w-0">
+                  <span className="block text-[10px] font-black uppercase tracking-[0.16em]" style={{ color: 'var(--color-text-muted)' }}>
+                    {open.visibility === 'invite_only' ? 'A private room' : open.visibility === 'discoverable' ? 'Listed room' : 'Open room'}
+                    {' · '}{open.memberCount} {open.memberCount === 1 ? 'member' : 'members'}
+                  </span>
+                  <h2 className="text-[22px] font-extrabold leading-tight truncate" style={{ color: 'var(--brief-ink)' }}>
+                    {open.name}
+                  </h2>
+                </span>
+                {myRole ? (
+                  <span className="shrink-0 text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-full" style={{ background: 'rgba(255,255,255,0.72)', color: 'var(--color-primary)' }}>
+                    {myRole}
+                  </span>
+                ) : null}
               </span>
-            )}
-          </div>
+            </div>
 
-          {open.description && (
-            <p className="text-[11px] text-[var(--ink-60)] leading-snug mt-1">
-              {open.description}
-            </p>
-          )}
-          {/* Leaving is honest about what it does and does not undo. */}
-          {myRole && (
-            <p className="text-[10px] text-[var(--ink-60)] mt-1">
-              Leaving removes your membership. Work you were holding keeps your
-              name on it, and money that settled stays settled.
-            </p>
-          )}
+            {/* The pinned welcome is the room's identity — one sentence the
+                coordinator writes and everyone reads first. Set it, and the
+                metadata line nobody asked for is gone. */}
+            {(open.welcome || welcomeDraft != null || myRole === 'coordinator') && (
+              <div className="mt-2 rounded-2xl p-3" style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-1), inset 0 0 0 1px var(--brief-line)' }}>
+                {welcomeDraft == null ? (
+                  <p className="text-[13px] leading-snug" style={{ color: 'var(--brief-ink)' }}>
+                    {open.welcome ?? <span style={{ color: 'var(--color-text-muted)' }}>No welcome note yet — one line for whoever walks in.</span>}
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    <textarea
+                      value={welcomeDraft}
+                      onChange={(e) => setWelcomeDraft(e.target.value.slice(0, 400))}
+                      rows={2}
+                      maxLength={400}
+                      aria-label="welcome note"
+                      placeholder="Meet at the gate by 7. Bring the pump."
+                      className="w-full px-2.5 py-2 rounded-xl text-[12px] resize-none"
+                      style={{ background: 'var(--color-well)', color: 'var(--color-text)', boxShadow: 'inset 0 0 0 1px var(--brief-line)' }}
+                    />
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handlePinWelcome}
+                        disabled={govBusy === 'welcome' || !welcomeDraft.trim()}
+                        className="px-3 py-1.5 rounded-xl font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
+                        style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)', border: 'none' }}
+                      >
+                        Pin it
+                      </button>
+                      <button onClick={() => setWelcomeDraft(null)} className="px-2 py-1.5 rounded-xl text-[10px] font-bold cursor-pointer" style={{ color: 'var(--color-text-muted)', background: 'none', border: 'none' }}>
+                        Cancel
+                      </button>
+                      <span className="ml-auto text-[9px] font-mono" style={{ color: 'var(--color-text-muted)' }}>{400 - welcomeDraft.length}</span>
+                    </div>
+                  </div>
+                )}
+                {welcomeDraft == null && myRole === 'coordinator' && (
+                  <button onClick={() => setWelcomeDraft(open.welcome ?? '')} className="mt-1.5 text-[10px] font-black cursor-pointer" style={{ color: 'var(--color-primary)', background: 'none', border: 'none', padding: 0 }}>
+                    {open.welcome ? 'Edit' : 'Write one'}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* What is live in the room, in one card, with the one action that
+                moves it. A vote closing, then open work, then nothing — and
+                "nothing" is said as nothing, not padded. */}
+            {(() => {
+              const votes = detail.blocks.filter((b) => b.type === 'vote' && !b.tally?.closed && !b.tally?.cancelled);
+              const openTasks = detail.blocks.filter((b) => b.type === 'task' && (b.task?.status ?? 'open') === 'open');
+              const vote = votes[0] ?? null;
+              const card = (children: React.ReactNode, label: string) => (
+                <div className="mt-2 rounded-2xl p-3" style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-2), inset 0 0 0 1px var(--brief-line)' }}>
+                  <p className="text-[9px] font-black uppercase tracking-[0.16em]" style={{ color: 'var(--color-primary)' }}>{label}</p>
+                  {children}
+                </div>
+              );
+              if (vote) {
+                const t = vote.tally;
+                const closing = t?.closesAt ? Math.max(0, Math.round((Date.parse(t.closesAt) - Date.now()) / 3600000)) : null;
+                return card(
+                  <>
+                    <p className="text-[14px] font-extrabold mt-1" style={{ color: 'var(--brief-ink)' }}>{vote.content}</p>
+                    <p className="text-[10px] font-mono mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+                      {t ? `${t.totalVotes} of ${t.eligibleCount} voted` : 'no ballots yet'}
+                      {closing != null ? ` · closes in ${closing}h` : ''}
+                      {t?.quorum ? ` · quorum ${t.quorum}` : ''}
+                    </p>
+                  </>,
+                  'A decision is open'
+                );
+              }
+              if (openTasks.length) {
+                return card(
+                  <>
+                    <p className="text-[14px] font-extrabold mt-1" style={{ color: 'var(--brief-ink)' }}>
+                      {openTasks.length} {openTasks.length === 1 ? 'job' : 'jobs'} nobody has taken
+                    </p>
+                    <p className="text-[10px] mt-0.5 truncate" style={{ color: 'var(--color-text-muted)' }}>{openTasks[0].content}</p>
+                  </>,
+                  'Work waiting'
+                );
+              }
+              return null;
+            })()}
+
+            <div className="mt-2 flex items-center justify-between gap-3">
+              {myRole ? (
+                <button
+                  onClick={() => void handleLeave(open.id)}
+                  disabled={busyId === open.id}
+                  className="shrink-0 px-3 py-1.5 rounded-xl text-[10px] font-bold cursor-pointer disabled:opacity-50"
+                  style={{ color: 'var(--color-text-muted)', background: 'none', border: 'none' }}
+                >
+                  {busyId === open.id ? 'Leaving…' : 'Leave'}
+                </button>
+              ) : open.canJoin ? (
+                <button
+                  onClick={() => void handleJoin(open.id)}
+                  disabled={busyId === open.id}
+                  className="px-3 py-1.5 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+                >
+                  {busyId === open.id ? 'Joining…' : 'Join room'}
+                </button>
+              ) : (
+                <span className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>Invite only — ask a coordinator</span>
+              )}
+
+              {/* The join link. Real origin, real code, copy-on-tap: no vanity
+                  domain is claimed, because Brief.app is not ours to promise. */}
+              {open.joinCode && (myRole || open.visibility !== 'invite_only') && (
+                <CopyId
+                  value={`${typeof window !== 'undefined' ? window.location.origin : ''}/#join/${open.joinCode}`}
+                  label="join link"
+                />
+              )}
+            </div>
+
+            {/* Listing is the coordinator's call, and it costs a reason. */}
+            {myRole === 'coordinator' && (
+              <div className="mt-1 flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={() => setListingRoom((v) => !v)}
+                  className="text-[10px] font-black cursor-pointer"
+                  style={{ color: 'var(--color-primary)', background: 'none', border: 'none', padding: 0 }}
+                >
+                  {open.visibility === 'discoverable' ? 'Take it off the list' : 'List it so people can find it'}
+                </button>
+                {listingRoom && (
+                  <span className="flex items-center gap-1.5 w-full">
+                    <input
+                      value={listReason}
+                      onChange={(e) => setListReason(e.target.value)}
+                      maxLength={300}
+                      aria-label="reason for listing this room"
+                      placeholder="why should the list show this room? your members see this"
+                      className="min-w-0 flex-1 px-2.5 py-1.5 rounded-xl text-[10px]"
+                      style={{ background: 'var(--color-well)', color: 'var(--color-text)', boxShadow: 'inset 0 0 0 1px var(--brief-line)' }}
+                    />
+                    <button
+                      onClick={handleListRoom}
+                      disabled={govBusy === 'listing' || !listReason.trim()}
+                      className="px-3 py-1.5 rounded-xl font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
+                      style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)', border: 'none' }}
+                    >
+                      {open.visibility === 'discoverable' ? 'Unlist' : 'List it'}
+                    </button>
+                  </span>
+                )}
+              </div>
+            )}
+          </header>
 
           {/* Section rail. Same visual language as the rest of Brief. */}
           <div className="flex gap-1.5 flex-wrap">
@@ -624,57 +841,36 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
 
           {section === 'overview' && (
             <div className="space-y-4">
-              {open.goal && (
-                <div>
-                  <h3 className="text-[11px] font-extrabold text-[var(--ink-60)] mb-1">
-                    Purpose
-                  </h3>
-                  <p className="text-[11px] text-[var(--brief-ink)] leading-snug">{open.goal}</p>
-                </div>
+              {open.description && (
+                <p className="text-[11px] text-[var(--ink-60)] leading-snug">{open.description}</p>
               )}
 
-              <div>
-                <h3 className="text-[11px] font-extrabold text-[var(--ink-60)] mb-2">
-                  Target
-                </h3>
-                <CircleTarget circle={open} />
-              </div>
+              {/* What the room is working towards, in its own words — one line,
+                  with the money that has actually settled under it. Not a table
+                  of fields: a sentence and a figure. */}
+              {open.goal && (
+                <p className="text-[12px] leading-snug" style={{ color: 'var(--color-text-secondary)' }}>
+                  <span className="font-black uppercase tracking-wider text-[9px]" style={{ color: 'var(--color-primary)' }}>Working towards </span>
+                  {open.goal}
+                </p>
+              )}
 
-              <div className="flex flex-wrap gap-x-4 gap-y-1">
-                <span className="text-[10px] text-[var(--ink-60)]">
-                  {open.memberCount} {open.memberCount === 1 ? 'member' : 'members'}
-                </span>
-                <span className="text-[10px] text-[var(--ink-60)]">
-                  {open.blockCount} {open.blockCount === 1 ? 'block' : 'blocks'}
-                </span>
-              </div>
-
-              {/* Blocks that are neither tasks nor votes -- notes, pins and
-                  anything wrapping an extracted object. */}
+              {/* What is in the room: notes, pins, anything the group put on the
+                  wall. Tasks and votes have their own panels; this is the rest. */}
               <div>
-                <h3 className="text-[11px] font-extrabold text-[var(--ink-60)] mb-2">
-                  Blocks
-                </h3>
-                {detail.blocks.filter((b) => b.type !== 'task' && b.type !== 'vote')
-                  .length === 0 ? (
-                  <p className="text-xs text-[var(--ink-60)]">Nothing posted yet.</p>
+                <h3 className="text-[11px] font-extrabold text-[var(--ink-60)] mb-2">In the room</h3>
+                {detail.blocks.filter((b) => b.type !== 'task' && b.type !== 'vote').length === 0 ? (
+                  <p className="text-xs text-[var(--ink-60)]">Nothing pinned yet.</p>
                 ) : (
                   <div className="space-y-2">
                     {detail.blocks
                       .filter((b) => b.type !== 'task' && b.type !== 'vote')
                       .map((block) => (
-                        <div
-                          key={block.id}
-                          className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-3"
-                        >
-                          <p className="text-[9px] text-[var(--brief-ink)]">
-                            {block.type}
-                          </p>
+                        <div key={block.id} className="bg-[color:var(--color-paper)] rounded-2xl p-3" style={{ boxShadow: 'var(--room-light), var(--lift-1), inset 0 0 0 1px var(--brief-line)' }}>
+                          <p className="text-[9px] text-[var(--brief-ink)]">{block.type}</p>
                           <p className="text-xs text-[var(--brief-ink)] mt-1">{block.content}</p>
                           {block.sources.length > 0 && block.sources[0].sourceName && (
-                            <p className="text-[9px] text-[var(--ink-60)] mt-1">
-                              via {block.sources[0].sourceName}
-                            </p>
+                            <p className="text-[9px] text-[var(--ink-60)] mt-1">via {block.sources[0].sourceName}</p>
                           )}
                         </div>
                       ))}
@@ -682,7 +878,34 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
                 )}
               </div>
 
-              <CircleActivity signals={detail.signals} limit={5} />
+              {/* What changed, in the room's own words. Each line is one append:
+                  the act, the actor's name where it is public, and the reason
+                  where one was required. */}
+              <div>
+                <h3 className="text-[11px] font-extrabold text-[var(--ink-60)] mb-2">What changed</h3>
+                {roomHistory == null ? (
+                  <p className="text-xs text-[var(--ink-60)]">The history could not be read.</p>
+                ) : roomHistory.length === 0 ? (
+                  <p className="text-xs text-[var(--ink-60)]">Nothing has changed yet.</p>
+                ) : (
+                  <ul className="space-y-1.5">
+                    {roomHistory.slice(0, 6).map((row) => (
+                      <li key={row.id} className="flex items-baseline gap-2">
+                        <span className="w-1 h-1 rounded-full shrink-0" style={{ background: 'var(--color-primary)' }} />
+                        <span className="min-w-0 flex-1 text-[11px] leading-snug text-[var(--brief-ink)]">{row.text}</span>
+                        <span className="shrink-0 text-[9px] font-mono text-[var(--ink-60)]">{row.at.slice(5, 10)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {open.targetValue != null && (
+                <div>
+                  <h3 className="text-[11px] font-extrabold text-[var(--ink-60)] mb-2">Target</h3>
+                  <CircleTarget circle={open} />
+                </div>
+              )}
             </div>
           )}
 
@@ -695,6 +918,11 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
               onAssign={handleAssign}
               onRelease={handleRelease}
               onComplete={handleComplete}
+              nameOf={nameOf}
+              onCancel={handleCancelTask}
+              onReopen={handleReopenTask}
+              onVerify={handleVerifyTask}
+              onDue={handleTaskDue}
             />
           )}
 
@@ -706,6 +934,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
               votedIds={votedIds}
               onVote={handleVote}
               onClose={handleCloseVote}
+              onCancel={handleCancelVote}
             />
           )}
 
@@ -721,6 +950,7 @@ export function Circles({ currentUserId = 'usr_me' }: CirclesProps = {}) {
               onInvite={handleInviteMember}
               onRole={handleSetRole}
               onRemove={handleRemoveMember}
+              onTransfer={handleTransfer}
             />
           )}
 

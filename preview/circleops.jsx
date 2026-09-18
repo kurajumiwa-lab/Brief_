@@ -91,10 +91,12 @@ const reset = () => {
     ],
     members: [
       { id: 'm1', circleId: 'circ_1', userId: 'usr_me', role: 'coordinator',
+        displayName: 'Me Self', handle: 'me', initials: 'MS', isActive: true,
         verifications: ['phone_verified'], joinedAt: '2026-05-01T00:00:00Z', updatedAt: '2026-05-01T00:00:00Z',
         trust: { evidence: [{ kind: 'phone_verified', label: 'Phone verified' }], verifiedCount: 1,
                  facts: [{ kind: 'member_since', label: 'Member since May 2026' }] } },
       { id: 'm2', circleId: 'circ_1', userId: 'usr_ann', role: 'contributor',
+        displayName: 'Ann Njoki', handle: 'ann', initials: 'AN', isActive: true,
         verifications: [], joinedAt: '2026-06-01T00:00:00Z', updatedAt: '2026-06-01T00:00:00Z',
         trust: { evidence: [], verifiedCount: 0, facts: [{ kind: 'member_since', label: 'Member since June 2026' }] } },
       { id: 'm3', circleId: 'circ_1', userId: 'usr_obs', role: 'observer',
@@ -122,7 +124,7 @@ global.fetch = async (url, init) => {
     return err(state.refuse.status, state.refuse.message);
   }
 
-  const m = u.match(/\/api\/circles\/([^/]+)\/blocks\/([^/]+)\/(assign|release|complete|vote|close-vote)/);
+  const m = u.match(/\/api\/circles\/([^/]+)\/blocks\/([^/]+)\/(assign|release|complete|vote|close-vote|cancel-vote|cancel|reopen|verify|task)/);
   if (m) {
     const blk = findBlock(m[2]);
     if (m[3] === 'assign') {
@@ -147,8 +149,41 @@ global.fetch = async (url, init) => {
       return ok({ vote: { id: 'v1', option: body.option }, tally: blk.tally }, 201);
     }
     if (m[3] === 'close-vote') {
+      // the server refuses a hand-close once ballots exist; the mock says the
+      // same, so the UI cannot pass by talking to a softer stub
+      if ((blk.tally.totalVotes ?? 0) > 0) return err(400, 'a vote with ballots cannot be closed by hand — it closes at its own deadline, or you cancel it with a reason everyone can read');
       blk.tally.closed = true;
       return ok({ block: blk, changed: true, tally: blk.tally });
+    }
+    if (m[3] === 'cancel-vote') {
+      state.lastBody = JSON.stringify(body ?? {});
+      if (!String(body?.reason ?? '').trim()) return err(400, 'cancelling a vote needs a reason');
+      blk.tally.closed = true;
+      blk.tally.status = 'cancelled';
+      blk.tally.cancelled = true;
+      blk.tally.cancelReason = body.reason;
+      return ok({ block: blk, changed: true, tally: blk.tally });
+    }
+    if (m[3] === 'cancel') {
+      state.lastBody = JSON.stringify(body ?? {});
+      if (!String(body?.reason ?? '').trim()) return err(400, 'a cancellation needs a reason');
+      blk.task = { ...blk.task, status: 'cancelled', cancelledAt: '2026-08-19T00:00:00Z', cancelReason: body.reason };
+      return ok({ block: blk, changed: true });
+    }
+    if (m[3] === 'reopen') {
+      if (!String(body?.reason ?? '').trim()) return err(400, 'reopening finished work needs a reason');
+      blk.task = { ...blk.task, status: 'open', assigneeId: null };
+      return ok({ block: blk, changed: true });
+    }
+    if (m[3] === 'verify') {
+      if (blk.task?.status !== 'completed') return err(400, 'only a completed task can be verified');
+      blk.task = { ...blk.task, verifiedAt: '2026-08-19T00:00:00Z', verifiedBy: 'usr_me' };
+      return ok({ block: blk, changed: true });
+    }
+    if (m[3] === 'task') {
+      if (body?.dueAt && !String(body?.reason ?? '').trim()) return err(400, 'a deadline move needs a reason — it goes in the history');
+      if (body?.dueAt) blk.task = { ...blk.task, dueAt: `${body.dueAt}T00:00:00.000Z` };
+      return ok({ block: blk, changed: true, edits: 1 });
     }
   }
 
@@ -170,6 +205,14 @@ global.fetch = async (url, init) => {
   }
 
   if (/\/api\/circles\/[^/]+\/members$/.test(u)) return ok({ members: state.members });
+  if (u.includes('/history')) {
+    return ok({
+      history: [
+        { id: 'chx_1', kind: 'task_completed', subject: 'blk_2', subjectKind: 'task', field: 'status', before: 'assigned', after: 'completed', reason: null, redacted: false, actorId: 'usr_ann', at: '2026-08-05T10:00:00.000Z', text: 'Marked done' },
+        { id: 'chx_2', kind: 'member_joined', subject: 'memb_2', subjectKind: 'member', field: null, before: null, after: 'contributor', reason: null, redacted: false, actorId: 'usr_ann', at: '2026-08-03T09:00:00.000Z', text: 'Joined circle' }
+      ]
+    });
+  }
   if (/\/api\/circles\/[^/]+$/.test(u)) {
     const live = { ...CIRCLE, blockCount: state.blocks.length };
     return ok({ circle: live, blocks: state.blocks, signals: state.signals });
@@ -178,6 +221,11 @@ global.fetch = async (url, init) => {
   return err(404, 'not found');
 };
 dom.window.fetch = global.fetch;
+
+const type2 = (el, v) => act(() => {
+  Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value').set.call(el, v);
+  el.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+});
 
 async function main() {
   const root = createRoot(document.getElementById('root'));
@@ -211,15 +259,22 @@ async function main() {
   // =========================================================================
   console.log('\n=== Overview: purpose, target, blocks, recent activity ===');
   await click(btn('Open'));
+  // the room loads its detail and its history together, so let both land
+  await settle(); await settle();
   b = body();
   check('circle opened', b.includes('Kilimani Traders'));
-  check('role stated plainly', /you are coordinator/i.test(b));
+  check('role stated plainly', /coordinator/i.test(b));
+  // THE ROOM RULE: a person is never labelled with a database key.
+  check('no raw user id is shown as a label', !/usr_[a-z0-9]+/.test(b.replace(/join\/[a-z0-9]+/g, '')), b.match(/usr_[a-z0-9]+/g)?.[0]);
   check('purpose shown', b.includes('Shared stall fund'));
   check('target arithmetic from server', b.includes('2,500') && b.includes('10,000'));
   check('note block rendered', b.includes('Gate code changed'));
   check('block provenance shown', /via Traders WhatsApp/i.test(b));
   check('tasks NOT duplicated into the blocks list', !b.includes('Repair the market gate'));
-  check('recent activity present on overview', /Task completed/i.test(b));
+  // The overview carries the room's own history of changes — the record, in the
+  // server's words — and the Activity tab keeps the signal feed. Not both in one.
+  check('what-changed history on the overview', /What changed/i.test(b));
+  check('and a real change is named', /Marked done|Task cancelled|Took on task|Voted|Joined/.test(b), b.slice(0, 60));
 
   // =========================================================================
   console.log('\n=== Tasks: the full lifecycle ===');
@@ -228,7 +283,8 @@ async function main() {
   check('open task listed', b.includes('Repair the market gate'));
   check('completed task listed', b.includes('Collect August dues'));
   check('status groups rendered', /Open .* 1/i.test(b) && /Completed .* 1/i.test(b));
-  check('completion attributed', /Completed by usr_me/i.test(b));
+  check('completion attributed by name, never by key', /Completed by Me Self/i.test(b), b.slice(0, 200));
+  check('the tasks panel prints no database key', !/usr_[a-z0-9]+/i.test(b));
   check('open task offers the action', !!btn('Take this on'));
 
   await click(btn('Take this on'));
@@ -263,21 +319,53 @@ async function main() {
   b = body();
   check('tally reflects the cast ballot', /1 of 3 eligible members voted/i.test(b));
   check('percentage now shown from real total', b.includes('100%'));
-  check('one member one vote enforced in UI', /You have voted/i.test(b));
-  check('voting buttons withdrawn after voting', !btn('Vote Yes'));
+  check('a member may change their vote before the close', /Change to /i.test(b));
+  check('the rule is stated with the change', /One vote counts/i.test(b));
 
-  await click(btn('Close this vote'));
+  // A live count with ballots is not closable by hand: the control offered is a
+  // cancellation with a reason, and the reason is typed before it will submit.
+  check('no hand-close button once ballots exist', !btn('Close this vote') && !btn('Close it — nobody has voted'));
+  await click(Array.from(document.querySelectorAll('summary')).find((x) => /Cancel this vote/i.test(x.textContent || '')));
+  const reasonInput = document.querySelector('input[name="reason"]');
+  check('the cancellation asks for a reason in the flow', Boolean(reasonInput));
+  await type2(reasonInput, 'the market moved the Sunday, question is moot');
+  state.calls.length = 0;
+  await click(Array.from(document.querySelectorAll('form button[type="submit"]')).find((x) => /Cancel vote/i.test(x.textContent || '')));
   b = body();
-  check('closed vote hit the endpoint',
-    state.calls.some((c) => /close-vote/.test(c)));
-  check('result announced once closed', /Result: Yes/i.test(b));
-  check('closed vote accepts no more ballots', !btn('Vote No'));
+  check('the cancel hit its own endpoint', state.calls.some((c) => /cancel-vote/.test(c)));
+  check('with the reason in the body', /market moved the Sunday/.test(state.lastBody ?? ''), state.lastBody);
+  check('result announced once cancelled', /Result: Yes/i.test(b));
+  check('a cancelled count takes no more ballots', !btn('Vote No'));
+
+  // =========================================================================
+  console.log('\n=== Tasks: the lifecycle, with reasons where they are required ===');
+  await click(btn('Tasks'));
+  b = body();
+  check('a coordinator is offered a cancel on an open task', Boolean(btn('Cancel')), 'the act exists');
+  await click(btn('Cancel'));
+  const taskReason = Array.from(document.querySelectorAll('input')).find((i) => /reason for cancelling/i.test(i.getAttribute('aria-label') || ''));
+  check('the reason field appears inline', Boolean(taskReason));
+  const cancelBtn = btn('Cancel task');
+  check('and the act is disabled until it is typed', Boolean(cancelBtn && cancelBtn.disabled));
+  await type2(taskReason, 'the supplier folded');
+  state.calls.length = 0;
+  await click(btn('Cancel task'));
+  check('the cancel went to its own route', state.calls.some((c) => /\/cancel/.test(c)), state.calls.join(' | '));
+  check('with the reason attached', /supplier folded/.test(state.lastBody ?? ''), state.lastBody);
+  b = body();
+  check('a cancelled task is grouped, not vanished', /Cancelled · 1/i.test(b), b.slice(0, 80));
+  check('and its reason is readable next to it', /the supplier folded/i.test(b));
 
   // =========================================================================
   console.log('\n=== Members: evidence, never a score ===');
   await click(btn('Members'));
   b = body();
-  check('members listed', b.includes('usr_me') && b.includes('usr_ann'));
+  {
+    const rows = Array.from(document.querySelectorAll('div')).filter((d) => /Coordinator|Contributor/.test(d.textContent || '') && d.querySelector('span.rounded-full'));
+    check('members listed by name, not by key', rows.length >= 1, String(rows.length));
+    const text = (rows[0]?.textContent || '').replace(/\s+/g, ' ');
+    check('a member row shows an initial, a name and a role', /^[A-Z]?\s*\S/.test(text) && !/usr_/.test(text), text.slice(0, 60));
+  }
   check('roles shown', b.includes('Coordinator') && b.includes('Observer'));
   check('recorded verification shown as evidence', b.includes('Phone verified'));
   check('NO trust percentage anywhere', !/\d+% trust|trust score|reliability/i.test(b));

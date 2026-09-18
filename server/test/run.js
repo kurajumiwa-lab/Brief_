@@ -1146,8 +1146,18 @@ const call = async (path, method = 'GET', body) => {
     check('non-coordinator cannot change roles', r.status === 403, `got ${r.status}`);
 
     r = await call(`/api/circles/${c.id}/members/invited_person/role`, 'PATCH', { role: 'scout' });
+    check('a role change without a reason is refused', r.status === 400, `got ${r.status}`);
+    check('the refusal asks for the reason, not a permission', /needs a reason/.test(r.body?.error ?? ''), r.body?.error);
+    r = await call(`/api/circles/${c.id}/members/invited_person/role`, 'PATCH', { role: 'scout', reason: 'taking logistics for the market trip' });
     check('coordinator may change a role', r.status === 200, `got ${r.status}`);
     check('role actually updated', r.body?.member?.role === 'scout');
+    const roleRow = store.filter('circleRevisions', (x) => x.kind === 'member_role_changed' && x.circleId === c.id).at(-1);
+    check('the change is in the history with before and after',
+      roleRow?.before === 'contributor' && roleRow?.after === 'scout' && /market trip/.test(roleRow?.reason ?? ''),
+      JSON.stringify(roleRow));
+    // members carry names, not database keys, for the room's roster
+    const roster = (await call(`/api/circles/${c.id}/members`, 'GET')).body.members;
+    check('a member row carries a display name for the UI', roster.every((m) => 'displayName' in m && 'initials' in m), JSON.stringify(roster[0] ?? {}).slice(0, 120));
 
     // --- circle mutation ----------------------------------------------------
     r = await call(`/api/circles/${c2.id}`, 'PATCH', { name: 'Hijacked' });
@@ -2261,23 +2271,114 @@ console.log('\n=== CIRCLE OPERATIONS: BLOCKS (spec F5) ===');
         role: 'contributor', verifications: [], joinedAt: new Date().toISOString()
       });
     }
-    blocksDomain.castVote(voteBlock.id, 'usr_a', 'No');
-    blocksDomain.castVote(voteBlock.id, 'usr_b', 'No');
-    blocksDomain.castVote(voteBlock.id, 'usr_c', 'Abstain');
+    // --- the roll is locked when the vote opens --------------------------
+    // usr_a/b/c are members NOW, but the vote above opened before they were.
+    // Eligibility is a snapshot taken at creation, precisely so that stuffing a
+    // circle an hour before a count cannot manufacture a majority.
+    let refused = null;
+    try { blocksDomain.castVote(voteBlock.id, 'usr_a', 'No'); } catch (e) { refused = e.message; }
+    check('a member added after the vote opened cannot vote in it', /added you after the vote opened/.test(refused ?? ''), refused);
+    check('the refusal explains the rule', /majority cannot be manufactured/.test(refused ?? ''), refused);
+
+    const vote2 = blocksDomain.createBlock({
+      circleId: circle.id, type: 'vote', content: 'Split the stall fee?',
+      metadata: { options: ['Even', 'By weight'], quorum: 3 }
+    });
+    blocksDomain.castVote(vote2.id, 'usr_a', 'Even');
+    blocksDomain.castVote(vote2.id, 'usr_b', 'Even');
+    blocksDomain.castVote(vote2.id, 'usr_c', 'By weight');
+
+    // --- changing a vote: allowed, counted once, and never silent ----------
+    blocksDomain.changeVote(vote2.id, 'usr_c', 'Even');
+    t = blocksDomain.tallyVote(vote2.id);
+    check('a changed vote is still one vote', t.totalVotes === 3, `got ${t.totalVotes}`);
+    check('the change is counted as one row superseded', t.changedVotes === 1, `got ${t.changedVotes}`);
+    check('the new choice wins', t.results.find((x) => x.option === 'Even').count === 3, JSON.stringify(t.results));
+    const voteChanged = store.filter('circleRevisions', (x) => x.kind === 'vote_changed' && x.subject === vote2.id);
+    check('the change left a history row', voteChanged.length === 1, `got ${voteChanged.length}`);
+    check('the history row says from what to what', voteChanged[0]?.before === 'By weight' && voteChanged[0]?.after === 'Even', JSON.stringify(voteChanged[0]));
+    const ballots2 = store.filter('votes', (v) => v.blockId === vote2.id);
+    check('the earlier ballot row is still there, superseded not deleted', ballots2.length === 4 && ballots2.some((v) => v.supersededAt), `rows ${ballots2.length}`);
+
+    // --- a count cannot be closed by hand once it has ballots --------------
+    let closeErr = null;
+    try { blocksDomain.closeVote(vote2.id, { actorId: ME }); } catch (e) { closeErr = e.message; }
+    check('closing a live count is refused', /cannot be closed by hand/.test(closeErr ?? ''), closeErr);
+    let cancelErr = null;
+    try { blocksDomain.cancelVote(vote2.id, { actorId: ME }); } catch (e) { cancelErr = e.message; }
+    check('cancelling without a reason is refused', /needs a reason/.test(cancelErr ?? ''), cancelErr);
+    const cancelled = blocksDomain.cancelVote(vote2.id, { actorId: ME, reason: 'market moved, question is moot' });
+    check('cancelling with a reason works', cancelled.changed === true);
+    t = blocksDomain.tallyVote(vote2.id);
+    check('a cancelled vote reports its status', t.status === 'cancelled' && t.cancelled === true, JSON.stringify({ s: t.status }));
+    check('the reason is on the result', /market moved/.test(t.cancelReason ?? ''), t.cancelReason);
+    check('the ballots survive the cancellation', t.totalVotes === 3, `got ${t.totalVotes}`);
+
+    // --- quorum: a decision needs enough of the roll ----------------------
+    const small = blocksDomain.createBlock({
+      circleId: circle.id, type: 'vote', content: 'Buy the freezer?',
+      metadata: { options: ['Yes', 'No'], quorum: 4, closesAt: new Date(Date.now() + 3600_000).toISOString() }
+    });
+    let pastErr = null;
+    try {
+      blocksDomain.createBlock({ circleId: circle.id, type: 'vote', content: 'Past?', metadata: { options: ['a','b'], closesAt: '2020-01-01T00:00:00Z' } });
+    } catch (e) { pastErr = e.message; }
+    check('a vote cannot open already closed', /must be in the future/.test(pastErr ?? ''), pastErr);
+    blocksDomain.castVote(small.id, ME, 'Yes');
+    const tSmall = blocksDomain.tallyVote(small.id, { now: Date.now() + 2 * 3600_000 });
+    check('a count under quorum is not a decision', tSmall.status === 'failed_quorum', JSON.stringify({ s: tSmall.status, q: tSmall.quorumMet }));
+    check('the quorum figure is the one asked for', tSmall.quorum === 4 && tSmall.eligibleCount >= 4, JSON.stringify({ q: tSmall.quorum, e: tSmall.eligibleCount }));
+
+    // --- sealed ballots: countable, unreadable ---------------------------
+    const sealed = blocksDomain.createBlock({
+      circleId: circle.id, type: 'vote', content: 'Remove a member?',
+      metadata: { options: ['Yes', 'No'], secret: true }
+    });
+    blocksDomain.castVote(sealed.id, 'usr_a', 'Yes');
+    blocksDomain.castVote(sealed.id, 'usr_b', 'No');
+    const tSealed = blocksDomain.tallyVote(sealed.id);
+    check('a sealed tally still counts', tSealed.totalVotes === 2 && tSealed.secret === true, JSON.stringify({ n: tSealed.totalVotes }));
+    const sealedRows = store.filter('votes', (v) => v.blockId === sealed.id);
+    check('no ballot row names a voter', sealedRows.every((v) => v.voterId === null && v.voterHash), JSON.stringify(sealedRows.map((v) => v.voterId)));
+    check('the hash is stable and short', /^[0-9a-f]{32}$/.test(sealedRows[0].voterHash), sealedRows[0].voterHash);
+    const sealedHist = store.filter('circleRevisions', (x) => x.subject === sealed.id);
+    // Only the BALLOT rows are sealed. The options and the roll are public to
+    // members by design — a group can audit that a vote existed without being
+    // told who chose what.
+    const ballotsInHistory = sealedHist.filter((x) => x.kind === 'vote_cast' || x.kind === 'vote_changed');
+    check('the history of a sealed vote reveals no choice',
+      ballotsInHistory.every((x) => x.after === null && x.actorId === null && x.redacted === true),
+      JSON.stringify(ballotsInHistory[0]));
+    check('but it does record that a ballot happened', sealedHist.filter((x) => x.kind === 'vote_cast').length === 2, `got ${sealedHist.length}`);
+
+    // The tally arithmetic is checked on a vote whose roll actually contains the
+    // four members (the block above opened when only ME was in the circle, so the
+    // latecomers are refused there by design).
+    const voteFull = blocksDomain.createBlock({
+      circleId: circle.id, type: 'vote', content: 'Move market day to Sunday? (second call)',
+      metadata: { options: ['Yes', 'No', 'Abstain'], closesAt: new Date(Date.now() + 6 * 3600_000).toISOString() }
+    });
+    blocksDomain.castVote(voteFull.id, ME, 'Yes');
+    blocksDomain.castVote(voteFull.id, 'usr_a', 'No');
+    blocksDomain.castVote(voteFull.id, 'usr_b', 'No');
+    blocksDomain.castVote(voteFull.id, 'usr_c', 'Abstain');
 
     t = blocksDomain.tallyVote(voteBlock.id);
-    const byOpt = Object.fromEntries(t.results.map((x) => [x.option, x.count]));
+    check('a vote opened before the stuffing reports only its own roll', t.totalVotes === 1, `got ${t.totalVotes}`);
+    const tf = blocksDomain.tallyVote(voteFull.id);
+    const byOpt = Object.fromEntries(tf.results.map((x) => [x.option, x.count]));
     check('tally counts Yes correctly', byOpt.Yes === 1, JSON.stringify(byOpt));
     check('tally counts No correctly', byOpt.No === 2, JSON.stringify(byOpt));
     check('tally counts Abstain correctly', byOpt.Abstain === 1, JSON.stringify(byOpt));
-    check('total equals ballots cast', t.totalVotes === 4, String(t.totalVotes));
+    check('total equals ballots cast', tf.totalVotes === 4, String(tf.totalVotes));
     check('tally matches the underlying rows',
-      t.totalVotes === store.filter('votes', (v) => v.blockId === voteBlock.id).length);
-    check('leader is the strict winner', t.leader === 'No', String(t.leader));
+      tf.totalVotes === store.filter('votes', (v) => v.blockId === voteFull.id && !v.supersededAt).length);
+    check('leader is the strict winner', tf.leader === 'No', String(tf.leader));
     check('percentages derived from real total',
-      Math.round(byOpt.No / t.totalVotes * 100) === Math.round(t.results.find((x) => x.option === 'No').pct));
-    check('eligible count comes from real membership rows',
-      t.eligibleCount === store.filter('members', (m) => m.circleId === circle.id).length);
+      Math.round(byOpt.No / tf.totalVotes * 100) === Math.round(tf.results.find((x) => x.option === 'No').pct));
+    check('eligible count comes from the roll snapshot, not a live count',
+      tf.eligibleCount === store.filter('members', (m) => m.circleId === circle.id).length,
+      JSON.stringify({ e: tf.eligibleCount }));
 
     // A tie must not invent a winner.
     const tieVote = blocksDomain.createBlock({
@@ -2301,12 +2402,16 @@ console.log('\n=== CIRCLE OPERATIONS: BLOCKS (spec F5) ===');
     try { blocksDomain.castVote(foreignVote.id, 'usr_a', 'X'); } catch (e) { threw = e.message; }
     check('non-member of that circle cannot vote in it', /only members/.test(threw ?? ''), String(threw));
 
-    // --- closing a vote -----------------------------------------------------
-    r = await call(`/api/circles/${circle.id}/blocks/${voteBlock.id}/close-vote`, 'POST', {});
-    check('coordinator closes the vote', r.status === 200 && r.body?.block?.metadata?.vote?.closed === true);
-    r = await call(`/api/circles/${circle.id}/blocks/${voteBlock.id}/vote`, 'POST', { option: 'Yes' });
-    check('closed vote accepts no more ballots', r.status === 400, `got ${r.status}`);
-    check('tally survives closing', blocksDomain.tallyVote(voteBlock.id).totalVotes === 4);
+    // --- closing a vote: the clock closes it, not the coordinator ----------
+    r = await call(`/api/circles/${circle.id}/blocks/${voteFull.id}/close-vote`, 'POST', {});
+    check('a coordinator cannot close a live count by hand', r.status >= 400, `got ${r.status}`);
+    check('the refusal says what to do instead', /cancel it with a reason/.test(r.body?.error ?? ''), r.body?.error);
+    check('a future-deadline vote is still open now', blocksDomain.isVoteClosed(store.find('blocks', (b) => b.id === voteFull.id), Date.now()) === false);
+    const later = Date.now() + 30 * 24 * 3600_000;
+    const closedLater = blocksDomain.tallyVote(voteFull.id, { now: later });
+    check('the same vote is closed once its own deadline passed', closedLater.closed === true && closedLater.status === 'resolved');
+    check('the result survives the clock', blocksDomain.tallyVote(voteFull.id, { now: later }).totalVotes === 4);
+    check('tally survives closing', blocksDomain.tallyVote(voteFull.id).totalVotes === 4);
 
     // ================= SIGNALS AS ACTIVITY =================
     console.log('\n  -- signals / activity --');
@@ -6598,8 +6703,11 @@ console.log('\n=== THE CIRCLE LOOP: JOIN AND LEAVE ===');
     // --- leaving --------------------------------------------------------------
     r = await call(`/api/circles/${other.id}/members/me`, 'DELETE', undefined, TA);
     check('you can leave a circle', r.status === 200 && r.body.left === true, JSON.stringify(r.body).slice(0, 120));
-    check('the membership row is gone',
-      store.filter('members', (m) => m.circleId === other.id && m.userId === idA).length === 0);
+    const endedRow = store.find('members', (m) => m.circleId === other.id && m.userId === idA);
+    check('leaving ENDS the membership rather than erasing it', endedRow?.status === 'ended', JSON.stringify({ s: endedRow?.status }));
+    check('the row still says when it ended', Boolean(endedRow?.endedAt));
+    check('and the leave is in the history',
+      store.filter('circleRevisions', (x) => x.circleId === other.id && x.kind === 'member_left').length >= 1);
     list = (await call('/api/circles', 'GET', undefined, TA)).body.circles;
     check('the list stops claiming I am a member', list.find((c) => c.id === other.id).isMember === false);
 
@@ -6622,8 +6730,22 @@ console.log('\n=== THE CIRCLE LOOP: JOIN AND LEAVE ===');
     check('a plain member cannot remove somebody else', r.status === 403, `got ${r.status}`);
     check('the refusal names the missing authority', /coordinator/.test(r.body?.error ?? ''), r.body?.error);
     r = await call(`/api/circles/${other.id}/members/${idA}`, 'DELETE', undefined, TB);
+    check('a removal without a reason is refused', r.status === 400, `got ${r.status}`);
+    check('the refusal explains why a reason is needed', /needs a reason/.test(r.body?.error ?? ''), r.body?.error);
+    r = await call(`/api/circles/${other.id}/members/${idA}`, 'DELETE', { reason: 'stopped replying for six weeks' }, TB);
     check('the coordinator can remove a member', r.status === 200, `got ${r.status}`);
-    check('and they are gone', store.filter('members', (m) => m.circleId === other.id && m.userId === idA).length === 0);
+    const removedRow = store.find('members', (m) => m.circleId === other.id && m.userId === idA);
+    check('and they are ended, not deleted', removedRow?.status === 'ended', JSON.stringify({ s: removedRow?.status }));
+    check('the reason is on the row and in the history',
+      /six weeks/.test(removedRow?.endReason ?? '') &&
+      store.filter('circleRevisions', (x) => x.circleId === other.id && x.kind === 'member_removed').length >= 1);
+    check('their finished work still names them', Boolean(store.find('blocks', (b) => b.circleId === other.id)), 'blocks still present');
+    // rejoining reactivates the same relationship rather than spawning a second one
+    const again = (await call(`/api/circles/${other.id}/members`, 'POST', {}, TA)).body?.member ?? null;
+    const liveRows = store.filter('members', (m) => m.circleId === other.id && m.userId === idA);
+    check('rejoining reactivates the one row rather than adding a second',
+      liveRows.length === 1 && liveRows[0].status === 'active', `rows ${liveRows.length}`);
+    check('and the rejoin is recorded', store.filter('circleRevisions', (x) => x.kind === 'member_rejoined' && x.circleId === other.id).length >= 1);
     check('removing yourself goes through the leave route, not the removal one',
       (await call(`/api/circles/${created.id}/members/${idA}`, 'DELETE', undefined, TA)).status === 400);
 

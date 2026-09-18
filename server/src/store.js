@@ -66,6 +66,11 @@ const EMPTY = {
   // One row per ballot cast, keyed by (blockId, voterId). Vote tallies are
   // computed by scanning these rows -- there is deliberately no stored count.
   votes: [],
+  // APPEND-ONLY HISTORY (see src/domain/circleHistory.js). One row per change to
+  // a task, a membership or a vote: actor, timestamp, before, after, reason.
+  // Nothing in this table is ever updated or removed; the only correction is
+  // another row.
+  circleRevisions: [],
   signals: [],
   // Recorded money movements. See src/domain/ledger.js -- no provider is
   // connected, so these are records only.

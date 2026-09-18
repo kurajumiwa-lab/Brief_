@@ -102,9 +102,12 @@ export function isSelf(req, userId) {
  */
 export function isCoordinator(store, req, circleId) {
   const me = callerId(req);
+  // `status !== 'ended'` is not decoration: leaving a circle must end the
+  // member's POWER even though the row survives as history. A soft delete that
+  // the authority checks ignore is a privilege that never expires.
   const row = store.find(
     'members',
-    (m) => m.circleId === circleId && m.userId === me && m.role === 'coordinator'
+    (m) => m.circleId === circleId && m.userId === me && m.role === 'coordinator' && m.status !== 'ended'
   );
   return Boolean(row);
 }
@@ -115,7 +118,9 @@ export function isCoordinator(store, req, circleId) {
  * how a real circle bootstraps. Any later join needs a coordinator.
  */
 export function circleHasNoMembers(store, circleId) {
-  return store.filter('members', (m) => m.circleId === circleId).length === 0;
+  // "no members" means no LIVE members. A circle everybody left is reclaimable;
+  // a circle whose history rows still count as membership would be shut forever.
+  return store.filter('members', (m) => m.circleId === circleId && m.status !== 'ended').length === 0;
 }
 
 /**
@@ -126,7 +131,7 @@ export function circleHasNoMembers(store, circleId) {
  */
 export function membershipOf(store, req, circleId) {
   const me = callerId(req);
-  return store.find('members', (m) => m.circleId === circleId && m.userId === me);
+  return store.find('members', (m) => m.circleId === circleId && m.userId === me && m.status !== 'ended');
 }
 
 /**

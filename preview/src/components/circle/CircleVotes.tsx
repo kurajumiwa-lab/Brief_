@@ -31,6 +31,11 @@ export interface CircleVotesProps {
   votedIds: string[];
   onVote: (blockId: string, option: string) => void;
   onClose: (blockId: string) => void;
+  /** Cancelling a vote publishes a reason to the circle. It is the only way to
+   *  stop a count that already has ballots — closing one by hand is refused by
+   *  the server, because whoever can end a count at a moment of their choosing
+   *  can end it while they are ahead. */
+  onCancel?: (blockId: string, reason: string) => void;
 }
 
 export function CircleVotes({
@@ -39,6 +44,7 @@ export function CircleVotes({
   busyId,
   votedIds,
   onVote,
+  onCancel,
   onClose
 }: CircleVotesProps) {
   const votes = blocks.filter((b) => b.type === 'vote');
@@ -117,6 +123,22 @@ export function CircleVotes({
           })}
         </div>
 
+        {/* When it ends on its own, and how many it needs. A time and a number,
+            not a promise about the outcome. */}
+        {!isClosed && (tally?.closesAt || tally?.quorum) && (
+          <p className="text-[9px] font-mono text-[var(--ink-60)]">
+            {tally?.closesAt ? `closes ${String(tally.closesAt).slice(5, 10)}` : 'no deadline set'}
+            {tally?.quorum ? ` · quorum ${tally.quorum} of ${tally.eligibleCount}` : ''}
+          </p>
+        )}
+
+        {/* A count under quorum is not a decision, and is not shown as one. */}
+        {!isClosed && tally?.quorum != null && tally?.quorumMet === false && (
+          <p className="text-[10px] text-[var(--color-warning)]">
+            {tally.totalVotes} of {tally.quorum} needed — under quorum, whatever the lead.
+          </p>
+        )}
+
         {/* Only a strict winner is announced. A tie says so. */}
         {isClosed && (
           <p className="text-[10px] text-[var(--brief-ink)]">
@@ -124,6 +146,8 @@ export function CircleVotes({
               ? `Result: ${tally.leader}`
               : (tally?.totalVotes ?? 0) === 0
               ? 'Closed with no votes cast.'
+              : tally?.status === 'failed_quorum'
+              ? 'Closed under quorum — not a decision.'
               : 'Closed with no clear result.'}
           </p>
         )}
@@ -144,9 +168,23 @@ export function CircleVotes({
         )}
 
         {!isClosed && alreadyVoted && (
-          <p className="text-[10px] text-[var(--brief-ink)]">
-            You have voted. One vote per member.
-          </p>
+          <div className="pt-1">
+            <p className="text-[10px] text-[var(--brief-ink)]">
+              You have voted. One vote counts — changing it leaves the first on the record.
+            </p>
+            <div className="flex flex-wrap gap-2 mt-1">
+              {(tally?.results ?? []).map((r) => (
+                <button
+                  key={r.option}
+                  onClick={() => onVote(vote.id, r.option)}
+                  disabled={busy}
+                  className="px-2.5 py-1 rounded-xl border border-[var(--brief-line)] text-[9px] font-extrabold text-[var(--ink-60)] cursor-pointer disabled:opacity-50"
+                >
+                  Change to {r.option}
+                </button>
+              ))}
+            </div>
+          </div>
         )}
 
         {!isClosed && myRole === 'observer' && (
@@ -154,13 +192,40 @@ export function CircleVotes({
         )}
 
         {!isClosed && isCoordinator && (
-          <button
-            onClick={() => onClose(vote.id)}
-            disabled={busy}
-            className="text-[10px] font-extrabold text-[var(--brief-ink)] cursor-pointer disabled:opacity-50"
-          >
-            Close this vote
-          </button>
+          (tally?.totalVotes ?? 0) === 0 ? (
+            <button
+              onClick={() => onClose(vote.id)}
+              disabled={busy}
+              className="text-[10px] font-extrabold text-[var(--brief-ink)] cursor-pointer disabled:opacity-50"
+            >
+              Close it — nobody has voted
+            </button>
+          ) : (
+            <details className="text-[10px]">
+              <summary className="font-extrabold text-[var(--brief-ink)] cursor-pointer">Cancel this vote</summary>
+              <form
+                className="mt-1 flex items-center gap-1.5"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const el = (e.currentTarget as HTMLFormElement).elements.namedItem('reason') as HTMLInputElement | null;
+                  const reason = (el && el.value || '').trim();
+                  if (!reason || !el) return;
+                  onCancel?.(vote.id, reason);
+                  el.value = '';
+                }}
+              >
+                <input
+                  name="reason"
+                  aria-label="reason for cancelling this vote"
+                  placeholder="why? the circle reads this with the ballots"
+                  className="min-w-0 flex-1 px-2 py-1 rounded-lg border border-[var(--brief-line)] text-[9px] text-[var(--brief-ink)]"
+                />
+                <button type="submit" className="shrink-0 px-2 py-1 rounded-lg bg-[var(--color-danger)] text-[var(--accent-ink)] font-extrabold text-[9px] cursor-pointer">
+                  Cancel vote
+                </button>
+              </form>
+            </details>
+          )
         )}
       </div>
     );
