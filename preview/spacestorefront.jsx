@@ -216,11 +216,29 @@ async function main() {
   pass('SpaceTools writes one availability field, copies templates, and declares what it will not fake');
 
   // --- 5. the public page: the counter, nothing private ---------------------
+  // The page renders the SERVER's projection (the same rows the /s/:slug mirror
+  // paints), so the fixture below is the page shape, not a card shape.
+  const pageView = (over = {}) => ({
+    id: 'spc_1', slug: 'jj-cakes', name: 'Jj Cakes', type: 'business', goal: 'First 20 customers',
+    image: null, initials: 'JC', where: 'Kilimani, Nairobi', when: 'Tue, Sat 06:00–18:00',
+    open: { label: 'Open now', tone: 'live', stated: 'Tue, Sat 06:00–18:00', closesAt: '18:00' },
+    contact: null,
+    offers: [
+      { id: 'lst_a', title: 'Cupcakes x 24', blurb: 'Vanilla, 24 pieces', price: 3000, priceLabel: 'KES 3,000', unit: 'box', minimum: 1, stock: 12, featured: true },
+      { id: 'lst_b', title: 'Six-cup cake', blurb: null, price: 1200, priceLabel: 'KES 1,200', unit: null, minimum: null, stock: null, featured: false }
+    ],
+    offerCount: 2, moreOffers: 0,
+    updates: [{ kind: 'hours', text: 'Oven fixed — open from 6 tomorrow', createdAt: '', expiresAt: '' }],
+    facts: [{ key: 'what', label: 'What they say they provide', answer: 'Cakes to order, 48 hours notice' }],
+    followers: 3, activeOfferCount: 2,
+    lastStamp: { at: '2026-09-17T10:00:00.000Z', text: '17 Sep' },
+    pageUrl: null, clock: 'East Africa Time', since: null, visibility: 'public', createdAt: '', noindex: false,
+    ...over
+  });
   {
     handler = async (url) => {
-      if (url.includes('/api/public/spaces/jj-cakes')) {
-        return ok({ space: { id: 'spc_1', name: 'Jj Cakes', type: 'business', goal: 'First 20 customers', image: null, activeOfferCount: 2, sampleOffers: [{ id: 'lst_a', title: 'Cupcakes x 24', price: 3000, currency: 'KES', featured: true }, { title: 'Six-cup cake', price: 1200, currency: 'KES' }], visibility: 'public', createdAt: '', slug: 'jj-cakes', followers: 3, broadcasts: [{ id: 'spb_1', kind: 'hours', text: 'Oven fixed — open from 6 tomorrow', createdAt: '', expiresAt: '' }], where: 'Kilimani, Nairobi', when: 'Tue, Sat 06:00–18:00', operating: { fields: {}, staleDays: null } } });
-      }
+      if (url.includes('/api/public/spaces/jj-cakes/page')) return ok({ space: pageView() });
+      if (url.includes('/api/public/spaces/jj-cakes')) return ok({ space: pageView() });
       if (url.includes('/api/auth/me')) return { ok: false, status: 401, text: async () => JSON.stringify({ error: 'authentication required' }) };
       return { ok: false, status: 404, text: async () => JSON.stringify({}) };
     };
@@ -230,14 +248,48 @@ async function main() {
     assert.ok(t.includes('Jj Cakes'), 'the shop is named');
     assert.ok(t.includes('3 follow'), 'the follower count is the row count');
     assert.ok(t.includes('Pinned'), 'the vendor’s own pin shows');
-    assert.ok(t.includes('KES 3,000'), 'prices are the listing rows');
+    assert.ok(t.includes('KES 3,000'), 'the price is the label the server formatted, not re-invented here');
+    assert.ok(t.includes('12 in hand'), 'a tracked stock figure is shown as the owner stated it');
+    assert.ok(!/0 in hand/.test(t), 'an untracked offer says nothing about stock, not zero');
     assert.ok(t.includes('Oven fixed'), 'the live update is on the front');
+    assert.ok(t.includes('Cakes to order'), 'and the operating answers a buyer acts on');
     assert.ok(t.includes('Their orders, customers and money stay in their own space'), 'and the boundary is said');
+    assert.ok(t.includes('Open now until 18:00'), 'the open mark is only drawn because their hours answer supports it');
+    assert.ok(t.includes('East Africa Time'), 'with the clock it was read against, named');
     assert.ok(!/revenue/i.test(t), 'no revenue figure appears');
     assert.ok(!/trusted seller|top rated|★/i.test(t), 'no invented trust badge');
+    assert.ok(!/viewed|views/i.test(t), 'a buyer is never shown the view count');
+    assert.ok(t.includes('No contact number on this page'), 'no WhatsApp button exists without a published number');
     click(btn('Follow'));
     await flush();
     assert.ok(text(container).includes('Sign in to follow a space'), 'a follow without a session is explained, not swallowed');
+  }
+  {
+    // A number the owner published becomes a working button — the page's only
+    // real action — and nothing else about the page changes.
+    handler = async (url) => ok({ space: pageView({ contact: { platform: 'whatsapp', href: 'https://wa.me/254700111222', display: '+254700111222', digits: '254700111222' } }) });
+    const { container } = mount(React.createElement(PublicSpacePage, { slug: 'jj-cakes' }));
+    await flush();
+    const link = document.querySelector('a[href="https://wa.me/254700111222"]');
+    assert.ok(link, 'the button links the number the owner gave');
+    assert.ok(text(link).includes('Chat on WhatsApp'));
+    // the digits are printed as text too — the same as the server mirror, so the
+    // two renderings of one page cannot disagree
+    assert.ok(text(container).includes('+254700111222'), 'the published number is shown, not hidden');
+    assert.ok(document.querySelector('a[href="tel:+254700111222"]'), 'and dialable from the same row');
+    handler = async () => ({ ok: false, status: 404, text: async () => JSON.stringify({ error: 'space not found' }) });
+  }
+  {
+    // An empty mirror: the space exists, nothing is published. The page says so.
+    handler = async () => ok({ space: pageView({ offers: [], offerCount: 0, updates: [], facts: [], followers: 0, activeOfferCount: 0, lastStamp: null, open: { label: null, tone: 'empty', stated: null, reason: 'no hours stated' } }) });
+    const { container } = mount(React.createElement(PublicSpacePage, { slug: 'jj-cakes' }));
+    await flush();
+    const t = text(container);
+    assert.ok(t.includes('This shop is being set up'), 'an empty space reads as empty, not as a storefront');
+    assert.ok(!/Open now|Closed now/.test(t), 'no hours answer, no open/closed claim');
+    assert.ok(t.includes('2 follow') || t.includes('0 offer'), 'the count line stays true');
+    assert.ok(!/last written/.test(t), 'no timestamp row, no timestamp sentence');
+    handler = async (url) => ({ ok: false, status: 404, text: async () => JSON.stringify({}) });
   }
   {
     handler = async () => ({ ok: false, status: 404, text: async () => JSON.stringify({ error: 'space not found' }) });

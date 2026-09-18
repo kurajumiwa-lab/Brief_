@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import type { Space, Listing } from '../../api/types';
+import type { Space, Listing, SpacePublicFace } from '../../api/types';
 import * as briefApi from '../../api/briefApi';
 import { ArrowLeft, Archive, RotateCcw, Globe, Lock, Link2, Pencil } from 'lucide-react';
 import type { ListingUpdate } from '../../api/types';
 import { PipelineView } from './PipelineView';
 import { SpaceOperatingPanel } from './SpaceOperatingPanel';
 import { SpaceStorefrontHeader } from './SpaceStorefrontHeader';
+import { PublicFacePanel } from './PublicFacePanel';
 import { BroadcastRail } from './SpaceBroadcastRail';
 import { SpaceTools } from './SpaceTools';
 import type { SpaceAudienceView } from '../../api/briefApi';
@@ -55,6 +56,12 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
   // The audience read: followers, live updates, insights, templates. Fetched
   // once per load so the header strip and the Tools panel never disagree.
   const [audience, setAudience] = useState<SpaceAudienceView | null>(null);
+  // The owner's read of the public mirror: its path, what a stranger sees, any
+  // reports. Fetched with the space so the panel and the header agree.
+  const [face, setFace] = useState<SpacePublicFace | null>(null);
+  // Making a space public publishes it to the open internet, so it is confirmed
+  // in the panel rather than committed by a single tap on a chip.
+  const [pendingPublic, setPendingPublic] = useState<boolean>(false);
   const [identityBusy, setIdentityBusy] = useState<boolean>(false);
   const [identityError, setIdentityError] = useState<string | null>(null);
 
@@ -69,8 +76,12 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
       const res = await briefApi.getSpace(spaceId);
       if (res.ok && res.data?.space) {
         setSpace(res.data.space);
-        const aud = await briefApi.getSpaceAudience(spaceId);
+        const [aud, f] = await Promise.all([
+          briefApi.getSpaceAudience(spaceId),
+          briefApi.getSpacePublicFace(spaceId)
+        ]);
         if (aud.ok) setAudience(aud.data);
+        if (f.ok) setFace(f.data);
       }
     } catch {
       // Offline fallback
@@ -171,11 +182,13 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
       );
       return;
     }
-    const url = `${window.location.origin}${window.location.pathname}#space/${encodeURIComponent(space.slug ?? space.id)}`;
+    // The page's own address, from the server read — not a hash route inside the
+    // app, and not a shorter domain the deployment does not own.
+    const url = face?.view?.pageUrl ?? `${window.location.origin}${face?.path ?? `/s/${encodeURIComponent(space.slug ?? space.id)}`}`;
     const copied = await copyText(url);
     showToast(copied
       ? 'Link copied. Opening it writes the view that counts toward your strip.'
-      : `Copy it yourself: ${url}`);
+      : `Clipboard is blocked here, so copy it yourself: ${url}`);
     onShare?.(space);
   };
 
@@ -208,6 +221,11 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
     }
   };
 
+  /**
+   * Visibility, with the public case treated as what it is: a publication. The
+   * panel confirms before calling this, and going back to private is stated as
+   * taking the page down — which the server does on the next read, instantly.
+   */
   const setVisibility = async (visibility: 'private' | 'unlisted' | 'public') => {
     if (!space) return;
     setBusy(true);
@@ -215,11 +233,14 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
     setBusy(false);
     if (res.ok) {
       setSpace(res.data.space);
+      setPendingPublic(false);
+      const f = await briefApi.getSpacePublicFace(space.id);
+      if (f.ok) setFace(f.data);
       showToast(visibility === 'public'
-        ? 'Space is now public — anyone can discover it.'
+        ? `Published. Your page is at ${f.ok ? f.data.path : '/s/…'} — and it only shows what the space holds.`
         : visibility === 'unlisted'
-        ? 'Space is unlisted — reachable by link only.'
-        : 'Space is private — only you can see it.');
+        ? 'Unlisted: no public page, and it is not in the directory.'
+        : 'Private again. The public page is down — nothing is cached behind it.');
     } else {
       showToast(res.error ?? 'Could not change visibility.');
     }
@@ -357,6 +378,14 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
           onCreateOrder={onCreateOrder}
         />
 
+        <PublicFacePanel
+          space={space!}
+          face={face}
+          busy={busy}
+          onPublish={() => void setVisibility('public')}
+          onEditSpace={() => setActiveTab('operating')}
+        />
+
         <BroadcastRail
           broadcasts={(audience?.broadcasts ?? []) as any}
           pastCount={audience?.pastBroadcasts ?? 0}
@@ -466,7 +495,11 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
               <button
                 key={v}
                 type="button"
-                onClick={() => setVisibility(v)}
+                onClick={() => {
+                  // One tap must not publish a business to the open internet.
+                  if (v === 'public' && vis !== 'public') { setPendingPublic(true); return; }
+                  void setVisibility(v);
+                }}
                 disabled={busy}
                 className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all cursor-pointer ${
                   active ? 'bg-[color:var(--color-primary)] text-[color:var(--accent-ink)]' : 'bg-[color:var(--color-paper)] text-[color:var(--color-text-muted)] border border-black/5 hover:text-[color:var(--color-text)]'
@@ -479,6 +512,36 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
           })}
         </div>
       </header>
+
+      {/* The publication warning, in the app's own words, before the write. */}
+      {pendingPublic && (
+        <div className="p-3.5 rounded-2xl" style={{ background: 'var(--color-well)' }} role="alert">
+          <p className="text-[12px] leading-snug" style={{ color: 'var(--brief-ink)' }}>
+            This puts <strong>{space?.name}</strong> on the open internet at{' '}
+            <span className="font-mono">{face?.path ?? `/s/${space?.slug ?? ''}`}</span>: your name, cover photo, stated hours,
+            and every live offer with its price. Anyone can read it. Orders, customers and money stay private.
+          </p>
+          <div className="mt-2.5 flex gap-2">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void setVisibility('public')}
+              className="px-3.5 py-2 rounded-full text-[12px] font-black cursor-pointer disabled:opacity-50"
+              style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
+            >
+              Publish it
+            </button>
+            <button
+              type="button"
+              onClick={() => setPendingPublic(false)}
+              className="px-3.5 py-2 rounded-full text-[12px] font-bold cursor-pointer"
+              style={{ background: 'var(--brief-card)', color: 'var(--brief-ink)' }}
+            >
+              Stay private
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Surface Navigation Selector */}
       <div className="flex items-center justify-between pb-1 border-b border-black/5">

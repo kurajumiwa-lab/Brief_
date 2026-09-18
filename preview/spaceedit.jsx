@@ -227,14 +227,15 @@ async function main() {
   pass('Share is honest: no copied-link claim for a space that is not public');
 
   // --- 6. a public space links to a page that exists ----------------------
+  // Shared with 6b: the same row, read with and without a declared origin.
+  const publicSpace = {
+    id: 'spc_7', ownerId: 'u1', vendorId: 'v7', name: 'Jj Cakes', type: 'business', goal: 'First 20 customers',
+    targetValueKes: 0, image: null, slug: 'jj-cakes', visibility: 'public', status: 'active', capabilities: [],
+    offers: [], recentActivities: [], recentConversations: [], featured: [], followers: 2, broadcastsLive: 0,
+    metrics: { revenueKes: 0, customerCount: 0, activeOrdersCount: 0, totalOrdersCount: 0, offersCount: 0 },
+    createdAt: '', updatedAt: ''
+  };
   {
-    const publicSpace = {
-      id: 'spc_7', ownerId: 'u1', vendorId: 'v7', name: 'Jj Cakes', type: 'business', goal: 'First 20 customers',
-      targetValueKes: 0, image: null, slug: 'jj-cakes', visibility: 'public', status: 'active', capabilities: [],
-      offers: [], recentActivities: [], recentConversations: [], featured: [], followers: 2, broadcastsLive: 0,
-      metrics: { revenueKes: 0, customerCount: 0, activeOrdersCount: 0, totalOrdersCount: 0, offersCount: 0 },
-      createdAt: '', updatedAt: ''
-    };
     global.fetch = async (input) => {
       const url = String(input?.url ?? input ?? '');
       const ok = (b) => ({ ok: true, status: 200, text: async () => JSON.stringify(b) });
@@ -243,15 +244,45 @@ async function main() {
       return { ok: false, status: 404, text: async () => JSON.stringify({}) };
     };
     const { container } = mount(React.createElement(SpaceShell, { spaceId: 'spc_7', onBack: () => {}, onShare: () => {} }));
-    await flush();
+    // Two reads now back the shell (audience + the public-face read), so the
+    // first paint is one tick later than it used to be.
+    await flush(220);
     const share = Array.from(container.querySelectorAll('button')).find((b) => (b.getAttribute('aria-label') ?? '').includes('Copy the link'));
     act(() => share.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })));
     await flush();
     const t = text(container);
-    assert.ok(t.includes('#space/jj-cakes'), 'the copied link is the page that resolves, by slug');
+    // The canonical page URL, not an in-app hash route: a hash link previews as
+    // nothing in WhatsApp and cannot be printed on a sticker.
+    assert.ok(t.includes('/s/jj-cakes'), 'the copied link is the page that resolves, by slug');
+    assert.ok(!t.includes('#space/jj-cakes'), 'and never the in-app route, which is not a shareable address');
     assert.ok(!t.includes('copied!'), 'no triumphant toast about a clipboard the test browser denies');
+    // The panel is the same address, so a vendor can see what they are sharing.
+    assert.ok(t.includes('Public page'), 'the face panel is mounted in the shell');
   }
   pass('A public space shares a link that actually opens something');
+
+  // --- 6b. the shell shows the server-declared canonical link, not its own host
+  {
+    global.fetch = async (input) => {
+      const url = String(input?.url ?? input ?? '');
+      const ok = (b) => ({ ok: true, status: 200, text: async () => JSON.stringify(b) });
+      if (url.includes('/audience')) return ok({ slug: 'jj-cakes', followers: 2, followerList: [], iAmFollowing: false, broadcasts: [], pastBroadcasts: 0, templates: [], insights: null, canManage: true, followable: false });
+      if (url.includes('/public-page')) return ok({ view: null, path: '/s/jj-cakes', originDeclared: true, open: true, reason: null, reports: { count: 0, latest: null, note: 'No reports have been filed against this space.' }, note: 'mirror' });
+      if (url.includes('/api/spaces/spc_7')) return ok({ space: publicSpace });
+      return { ok: false, status: 404, text: async () => JSON.stringify({}) };
+    };
+    const { container } = mount(React.createElement(SpaceShell, { spaceId: 'spc_7', onBack: () => {}, onShare: () => {} }));
+    // Two reads now back the shell (audience + the public-face read), so the
+    // first paint is one tick later than it used to be.
+    await flush(220);
+    const t = text(container);
+    assert.ok(t.includes('Public page'), 'the face panel is mounted in the shell');
+    // No pageUrl in this read, so the address is the origin in use plus the
+    // server's path — and never a brand domain nobody declared.
+    assert.ok(t.includes('/s/jj-cakes'), 'the panel shows the same address the shell copies');
+    assert.ok(!/brief\.app/.test(t), 'no invented hostname when none is configured');
+  }
+  pass('The panel and the copy button agree on the address');
 
   // --- 7. a settled figure never dresses itself as today's net profit ------
   {

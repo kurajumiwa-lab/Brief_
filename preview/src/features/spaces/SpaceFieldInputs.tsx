@@ -11,6 +11,12 @@ import type { SpaceFieldStatus } from '../../api/types';
 // weight or a score, and nothing here can write a timestamp — the API stamps
 // those. An answer left blank stays blank: it is reported as "never answered"
 // in the queue rather than defaulted to zero or "none".
+//
+// The contact channel is the one field an owner may deliberately never answer,
+// so the server marks it optional and it never appears as a to-do. It renders as
+// a phone input plus the sentence a buyer should open with — no toggle to
+// "hide" the number, because a WhatsApp link is the number and a switch that
+// pretended otherwise would be a lie in a settings row.
 // ---------------------------------------------------------------------------
 
 const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
@@ -157,6 +163,37 @@ export function SpaceFieldInputs({
                     placeholder="or describe it: market days only"
                   />
                 </div>
+              </div>
+            )}
+
+            {f.kind === 'contact' && (
+              <div className="space-y-1.5">
+                <input
+                  id={`${idPrefix}-${f.key}`}
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  aria-label={`${f.key} phone`}
+                  maxLength={32}
+                  value={String((raw as { phone?: string })?.phone ?? '')}
+                  onChange={(e) => onChange(f.key, { platform: 'whatsapp', phone: e.target.value, message: (raw as { message?: string })?.message ?? '' })}
+                  className={inputCls}
+                  style={inputStyle()}
+                  placeholder="+254 700 000 000"
+                />
+                <input
+                  type="text"
+                  aria-label={`${f.key} first message`}
+                  maxLength={200}
+                  value={String((raw as { message?: string })?.message ?? '')}
+                  onChange={(e) => onChange(f.key, { platform: 'whatsapp', phone: (raw as { phone?: string })?.phone ?? '', message: e.target.value })}
+                  className={inputCls}
+                  style={inputStyle()}
+                  placeholder="what a buyer should say first (optional)"
+                />
+                <p className="text-[10px] leading-snug" style={{ color: 'var(--brief-faint, var(--color-text-muted))' }}>
+                  A wrong number is refused, not stored. Nothing is sent for you — this only builds the button.
+                </p>
               </div>
             )}
 

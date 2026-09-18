@@ -1861,12 +1861,17 @@ export interface SpaceProfile {
   createdAt?: string;
   updatedAt?: string;
 }
-export type SpaceFieldState = 'unanswered' | 'current' | 'due' | 'overdue';
+// `skipped` is a state the server uses for an OPTIONAL question nobody answered:
+// it is deliberately not `unanswered`, so it can never be counted, dot-coloured or
+// listed as a to-do. (See spaceProfile.js: the contact channel is optional.)
+export type SpaceFieldState = 'unanswered' | 'skipped' | 'current' | 'due' | 'overdue';
 export interface SpaceFieldStatus {
   key: string;
   question: string;
   help?: string;
-  kind: 'text' | 'measure' | 'schedule' | 'list';
+  /** `contact` is the one kind that may be left blank on purpose — see the
+   *  server's `optional: true` on that field, which is why it never nags. */
+  kind: 'text' | 'measure' | 'schedule' | 'list' | 'contact';
   cadenceHours: number;
   state: SpaceFieldState;
   ageHours: number | null;
@@ -2015,6 +2020,74 @@ export interface PublicSpace {
   when?: string | null;
   visibility: 'public';
   createdAt: string;
+}
+
+/** One offer as the public page renders it — words and numbers the owner stated. */
+export interface SpacePublicPageOffer {
+  id: string;
+  title: string;
+  blurb: string | null;
+  price: number;
+  priceLabel: string | null;
+  unit: string | null;
+  minimum: number | null;
+  /** null means the offer is not stock-tracked, which is not the same as 0. */
+  stock: number | null;
+  featured: boolean;
+}
+
+/** The server-rendered mirror of a Space. Every field here is a row read back. */
+export interface SpacePublicPageView {
+  id: string;
+  slug: string | null;
+  name: string;
+  type: string;
+  goal: string;
+  /** A cover only when the upload row exists and is public. */
+  image: string | null;
+  initials: string;
+  where: string | null;
+  when: string | null;
+  open: {
+    label: 'Open now' | 'Closed now' | null;
+    tone: 'live' | 'quiet' | 'empty';
+    stated: string | null;
+    closesAt?: string | null;
+    reason?: string;
+  };
+  contact: { platform: 'whatsapp'; href: string; display: string; digits: string } | null;
+  offers: SpacePublicPageOffer[];
+  offerCount: number;
+  moreOffers: number;
+  updates: Array<{ kind: string; text: string; createdAt: string; expiresAt: string }>;
+  facts: Array<{ key: string; label: string; answer: string }>;
+  followers: number;
+  activeOfferCount: number;
+  lastStamp: { at: string; text: string } | null;
+  /** Only set when the deployment declared its own public origin. */
+  pageUrl: string | null;
+  clock: string;
+  since: string | null;
+  visibility: 'public';
+  createdAt: string;
+  noindex: boolean;
+  /** Only present for a signed-in caller: their own follow row. */
+  following?: boolean;
+}
+
+/** The owner's read of their own public face: the link, and any reports. */
+export interface SpacePublicFace {
+  view: SpacePublicPageView | null;
+  path: string;
+  originDeclared: boolean;
+  open: boolean;
+  reason: string | null;
+  reports: {
+    count: number;
+    latest: { reason: string; at: string; handled: boolean } | null;
+    note: string;
+  };
+  note: string;
 }
 
 export interface SpaceOfferCreate {

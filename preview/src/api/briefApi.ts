@@ -16,7 +16,7 @@
 //      rather than stubbed.
 // ---------------------------------------------------------------------------
 
-import type { ApiResult, Block, ResaleTicket, ResaleListing, ResaleListingRow, TicketOrder, CapabilityUnavailable, Circle, CircleCreate, CircleUpdate, Member, Signal, TargetView, AppConfig, ReleaseStatus, AuthStatus, Campaign, CampaignCreate, CampaignUpdate, PublicCampaign, Registration, RegistrationStatus, ShareChannel, ShareLink, ShareChannels, CampaignShare, CampaignBanner, Venue, MediaUpload, MediaStorageStatus, TriageQueue, Subscription, Subscriber, SubscriptionJoin, PaymentConfirmation, Transaction, TransactionCreate, TransactionStatus, VerificationKind, Wallet, Source, RawItem, VoteTally, MemberEvidence, BriefItPreview, BriefItSaved, Vendor, VendorCreate, VendorUpdate, Listing, ListingCreate, ListingUpdate, ListingStatus, Order, OrderCreate, Dispute, VendorEarnings, PaymentIntent, PaymentInitiation, Vault, VaultCreate, Footstep, FootstepPage, VaultRequest, VaultSearchResult, ResolutionItem, VaultEntry, Ticket, CheckInResult, CommandCentre, Space, SpaceCreate, SpaceOfferCreate, SpaceActivity, SpaceConversation, SpaceQuote, SpacePaymentPrompt, SpaceExpense, SpaceCustomerTab, SpaceMoneySummary, SpaceDispatch, SpaceDispatchCreate, SpaceDispatchStatus, SpaceUpdate, PublicSpace, SpaceFieldStatus, SpaceMaintenance, SpaceEditorialItem, SpacePipeline, RoleAssignment, Invite, IssueInviteInput, RedeemInviteResult } from "./types";
+import type { ApiResult, Block, ResaleTicket, ResaleListing, ResaleListingRow, TicketOrder, CapabilityUnavailable, Circle, CircleCreate, CircleUpdate, Member, Signal, TargetView, AppConfig, ReleaseStatus, AuthStatus, Campaign, CampaignCreate, CampaignUpdate, PublicCampaign, Registration, RegistrationStatus, ShareChannel, ShareLink, ShareChannels, CampaignShare, CampaignBanner, Venue, MediaUpload, MediaStorageStatus, TriageQueue, Subscription, Subscriber, SubscriptionJoin, PaymentConfirmation, Transaction, TransactionCreate, TransactionStatus, VerificationKind, Wallet, Source, RawItem, VoteTally, MemberEvidence, BriefItPreview, BriefItSaved, Vendor, VendorCreate, VendorUpdate, Listing, ListingCreate, ListingUpdate, ListingStatus, Order, OrderCreate, Dispute, VendorEarnings, PaymentIntent, PaymentInitiation, Vault, VaultCreate, Footstep, FootstepPage, VaultRequest, VaultSearchResult, ResolutionItem, VaultEntry, Ticket, CheckInResult, CommandCentre, Space, SpaceCreate, SpaceOfferCreate, SpaceActivity, SpaceConversation, SpaceQuote, SpacePaymentPrompt, SpaceExpense, SpaceCustomerTab, SpaceMoneySummary, SpaceDispatch, SpaceDispatchCreate, SpaceDispatchStatus, SpaceUpdate, PublicSpace, SpaceFieldStatus, SpaceMaintenance, SpaceEditorialItem, SpacePipeline, SpacePublicPageView, SpacePublicFace, RoleAssignment, Invite, IssueInviteInput, RedeemInviteResult } from "./types";
 import { enqueue, replayQueue, queueDepth, type QueuedWrite } from './offlineQueue';
 import { asTarget } from './types';
 import type { SpaceBroadcast, SpaceInsights, SpaceTemplate } from './types';
@@ -4975,9 +4975,23 @@ export function getFollowedSpaces(): Promise<ApiResult<{ spaces: PublicSpace[]; 
   return request<{ spaces: PublicSpace[]; note?: string }>('/api/spaces/followed/mine', undefined, (r) =>
     Array.isArray(r?.spaces) ? { spaces: r.spaces as PublicSpace[], note: r.note } : undefined);
 }
-/** One public space by slug — the page a shared link opens, and the only place a view row is written. */
+/** One public space by slug — the DIRECTORY card. Reading it records nothing. */
 export function getPublicSpace(slugOrId: string): Promise<ApiResult<{ space: PublicSpace }>> {
   return request(`/api/public/spaces/${encodeURIComponent(slugOrId)}`, undefined, (r) => (r?.space ? { space: r.space } : undefined));
+}
+/**
+ * The public PAGE projection: the same rows the server-rendered mirror at
+ * /s/:slug paints, offered as data. Reading this records a view, because a page
+ * opening is what a view is — and it is the only way the in-app mirror can be
+ * counted alongside a shared link.
+ */
+export function getPublicSpacePage(slugOrId: string): Promise<ApiResult<{ space: SpacePublicPageView }>> {
+  return request(`/api/public/spaces/${encodeURIComponent(slugOrId)}/page`, undefined, (r) => (r?.space ? { space: r.space as SpacePublicPageView } : undefined));
+}
+/** The owner's read of their own public face: the link, what a buyer sees, reports. */
+export function getSpacePublicFace(spaceId: string): Promise<ApiResult<SpacePublicFace>> {
+  return request<SpacePublicFace>(`/api/spaces/${encodeURIComponent(spaceId)}/public-page`, undefined, (r) =>
+    r && typeof r.open === 'boolean' && typeof r.path === 'string' ? (r as SpacePublicFace) : undefined);
 }
 
 // ---------------------------------------------------------------------------

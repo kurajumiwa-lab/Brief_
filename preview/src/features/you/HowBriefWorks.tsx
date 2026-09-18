@@ -91,8 +91,8 @@ export function HowBriefWorks({ className = '' }: { className?: string }) {
       id: 'spacefile',
       title: 'The to-do list on a space',
       lines: [
-        'A space holds a small set of answers — what you sell, capacity, hours, where you operate from, coverage, what you cannot do, what you need, what you offer the network. Each answer carries the time it was written and the time it was last confirmed, both written by the server, and each has its own refresh window.',
-        'The list you are shown is derived from those timestamps plus the live rows around them: a question never answered, one past its window, a buyer’s message you have not replied to, a draft offer nobody can buy. Answering one removes its line. Nothing on the list can be bought, and none of it opens or closes a door to better placement.',
+        'A space holds a small set of answers — what you sell, capacity, hours, where you operate from, coverage, what you cannot do, what you need, what you offer the network, and optionally the number a buyer should reach you on. Each answer carries the time it was written and the time it was last confirmed, both written by the server, and each has its own refresh window.',
+        'The list you are shown is derived from those timestamps plus the live rows around them: a question never answered, one past its window, a buyer’s message you have not replied to, a draft offer nobody can buy. Answering one removes its line. Nothing on the list can be bought, and none of it opens or closes a door to better placement. The contact number is the one question you may leave blank on purpose: it is marked optional, so it never counts as an open item and never appears as a to-do.',
         'Re-sending an answer you already gave counts as a confirmation, not an edit. That is what keeps “fresh” meaningful: it is evidence someone touched the fact, not that a button was pressed.'
       ]
     },
@@ -113,6 +113,18 @@ export function HowBriefWorks({ className = '' }: { className?: string }) {
         'A group’s pool is derived from recorded contributions, payouts, loans and repayments every time it is read. Brief holds none of that money. Payouts need a maker and a checker, and a payout is not complete until both exist.',
         'The operator read shows what the group itself did: the requests it placed and what they became, the money that settled through Brief, and — to the group owner only — each member’s public shopfront: that it exists, how many live offers, how current its answers are.',
         'What it will not produce: a member’s turnover outside the group, the share of a member’s sales “brought by the group” (there is no attribution row), staff hours or attendance, a ranking of members by contribution or reliability, and any cross-group benchmark. Each is listed on the payload as an absent figure with the reason, so the gap is a decision rather than an oversight.'
+      ]
+    },
+    {
+      id: 'mirror',
+      title: 'Your public page is a mirror',
+      lines: [
+        'A public space has one page, at /s/ followed by the name the server minted from your space name. It is rendered by the server from the same rows the app reads, which is why a shared link shows a preview in WhatsApp and why a price cannot disagree with the counter.',
+        'There is nothing to design. No theme, no font, no section order, no builder. One layout, tinted by nothing but your own cover photo. A page you have to maintain is a page that goes stale, and a stale page about a live business is worse than no page.',
+        'What it shows: the name, your one line, the place and hours you stated, every live offer with its price, your unit and minimum, a stock figure if you track one, your latest update, the follower rows people wrote, and a WhatsApp button only if you published a number. Everything on it is something you already answered in the space.',
+        'What it cannot show: reviews or stars (Brief stores none per completed order as an average), a verified tick, a “popular” mark, a rank in your area, a sector benchmark, or an “open now” claim your own hours answer does not support. Hours are read against East Africa Time, and the page prints that fact rather than leaving you to wonder.',
+        'Making a space public publishes it, so it is confirmed first, in words, with the address it creates. Turning it private takes the page down on the next read — nothing is cached behind it, and no copy of it is kept.',
+        'A visitor may file one report from the page. It stores a row that you and Brief can read; it does not take a page down, because Brief has no automated review to promise. If that ever changes, this page is where the change is written down first.'
       ]
     },
     {
