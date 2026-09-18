@@ -102,7 +102,11 @@ export function register(app) {
   app.get('/sitemap-spaces.xml', (_req, res) => {
     const origin = publicOrigin();
     if (!origin) {
-      res.status(503).type('text/plain').send(
+      // RETURN, or the send below runs too and Express throws
+      // "cannot set headers after they are sent" — found by booting the built
+      // app locally, not by a suite: a response that is already half-sent makes
+      // any test that only reads the status code look fine.
+      return res.status(503).type('text/plain').send(
         'This Brief deployment has not declared its public origin (BRIEF_PUBLIC_ORIGIN), so it will not publish a sitemap of absolute URLs.'
       );
     }

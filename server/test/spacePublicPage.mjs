@@ -443,6 +443,51 @@ await test("leaving the contact channel blank is a choice, never a to-do", () =>
   assert.equal(answered.fields.find((f) => f.key === "contactChannel").state, "current");
 });
 
+await test("no branch can respond twice — a brace-depth scan, with its own self-test", () => {
+  // Why a static scan and not an HTTP assertion: the bug this catches is
+  // `res.status(503).send(msg)` followed by more writes in the same block.
+  // Express has already flushed, so the client sees a clean 503 and a status
+  // assertion passes, while the server logs ERR_HTTP_HEADERS_SENT and the error
+  // handler runs against a finished response. Only the shape of the code shows it.
+  const scan = (src) => {
+    const bad = [];
+    let depth = 0;
+    const respondedAt = new Map();
+    (Array.isArray(src) ? src : src.split("\n")).forEach((raw, i) => {
+      const line = raw.replace(/\/\/.*$/, "");
+      // Braces only. Counting '(' (or ';') as an opener drifts the depth upward
+      // on every call, so the "same block" test never lines up and the rule looks
+      // green while catching nothing.
+      const opens = (line.match(/\{/g) || []).length;
+      const closes = (line.match(/\}/g) || []).length;
+      // `res.status(503).type('text/plain').send(x)` is a write too, so the test
+      // is "this line reaches a response method on res", not "res.send(".
+      const isWrite = /\bres\b[^;]*\.(send|json|end)\(/.test(line);
+      const guarded = /^\s*return\b/.test(line) || /\breturn\s+res\./.test(line);
+      if (isWrite && !guarded) respondedAt.set(depth, i + 1);
+      else if ((/\bres\.(setHeader|type|status)\(/.test(line) || isWrite) && respondedAt.has(depth)) {
+        bad.push(`${i + 1}: writes after the response was sent at line ${respondedAt.get(depth)}`);
+        respondedAt.delete(depth);
+      }
+      depth += opens - closes;
+      // Forget marks only when their BLOCK closes (a shallower depth). Clearing
+      // at equal depth wiped the mark on the very line that set it, which is how
+      // a lint rule quietly becomes a no-op.
+      for (const k of [...respondedAt.keys()]) if (k > depth) respondedAt.delete(k);
+    });
+    return bad;
+  };
+  // the detector is proved on the bug it was written for, and on the fix
+  assert.deepEqual(
+    scan(["  if (!origin) {", "    res.status(503).type('text/plain').send(msg);", "    res.setHeader('Cache-Control', 'no-store');", "  }"]),
+    ["3: writes after the response was sent at line 2"],
+    "the scan must catch a setHeader after a send"
+  );
+  assert.deepEqual(scan(["  if (!origin) {", "    return res.status(503).send(msg);", "  }"]), [], "a returned send is fine");
+  const src = fs.readFileSync(new URL("../src/routes/spaces.js", import.meta.url), "utf8");
+  assert.deepEqual(scan(src), [], "no handler in the spaces router can respond twice");
+});
+
 await test("the page honours the app's type floor and shadow-not-stroke rule", () => {
   const src = fs.readFileSync(new URL("../src/domain/spacePublicPage.js", import.meta.url), "utf8");
   const css = src.slice(src.indexOf("const ROOM_CSS"), src.indexOf("`;", src.indexOf("const ROOM_CSS")));
